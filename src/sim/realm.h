@@ -179,7 +179,15 @@ public:
     // durability behind this -- both are sprint 7's -- and no swing speed either: MU paces a
     // swing by the attack clip's authored length, and inventing a mapping from a weapon's
     // `attack_speed` is the one thing this sprint will not do.
-    bool equip(int32_t weapon, int32_t shield);
+    // `given` is the cradle's exemption and nothing else: a character is CREATED holding what
+    // his class is given, and the strength and agility the item asks are not tested then. That
+    // is OpenMU's own shape -- AddSmallAxeForDarkKnight writes the axe straight into the hand
+    // slot, and the requirement check lives in whatever moves an item into a slot afterwards --
+    // and it is load-bearing rather than a convenience: a level-one Dark Knight has 28 strength
+    // and the Small Axe wants 50, so a knight made the strict way starts the game punching.
+    // MU2's `Beast.Wield` records the same decision. Everything a player does later goes
+    // through the check.
+    bool equip(int32_t weapon, int32_t shield, bool given = false);
     // Why the last equip was refused, or empty.
     const std::string& refusal() const { return refusal_; }
     void step();

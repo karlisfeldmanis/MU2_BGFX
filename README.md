@@ -17,7 +17,17 @@ than MU2's, and still traced to 0.75 or marked `invention`. MU2's `pipeline/`, `
     ./bootstrap.sh        # once: fetches bgfx, bx, bimg, cgltf, stb_image into extern/
     ./build.sh            # Ninja, Release, ccache when it is there
     ./build.sh --trace    # bgfx's own trace in the log, where Metal's refusals show
-    ./run.sh              # esc quits
+    ./main.sh             # the game: a new Dark Knight in Lorencia. esc quits
+    ./run.sh              # the same binary with nothing decided for you; esc quits
+
+`main.sh` is the one that plays. It makes a character the way MU makes one — the naked class
+body, level one, with the Small Axe his class is given and nothing else — puts him down in
+Lorencia's square, and turns vsync on, because a frame paced to the display is what a game
+wants and a number is what `run.sh` is for. Left click walks, left click on a monster fights
+it, right click stops. The spiders are the nest east of the town.
+
+`run.sh` is the same binary with every switch left to the caller, which is how every bench
+and every measurement below is taken.
 
 Needs `brew install cmake ninja glfw ccache`.
 

@@ -89,10 +89,19 @@ bool World::open(const std::string& assetDir, const std::string& name,
 
 bool World::play(const std::string& assetDir, const std::string& name, uint64_t seed, int kin,
                  int level, const std::string& weapon, const std::string& shield) {
+    // What the character looks like, built here rather than taken off a cooked row: the naked
+    // class body -- which is what a character IS before he has picked anything up -- holding
+    // whatever the sim is about to be told he holds. mu.db's own class enumeration, which is
+    // what `--kin` speaks: 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight.
+    //
+    // `FairyElf` is the elf's bare body and is named without the suffix the other two carry;
+    // that is index.json's spelling and not a slip.
+    const char* bare = kin == 0 ? "DarkWizardBare" : (kin == 1 ? "FairyElf" : "DarkKnightBare");
+    const FigureBody* look = figures_.dress("Hero", bare, weapon, shield);
     // The character is put down where the camera was told to look, which is the town by
     // default and `--at` otherwise. The realm moves him to the nearest tile he may stand on.
     if (!play_.open(assetDir, name, &ground_, &figures_, seed, kin, level, int(focusColumn_),
-                    int(focusRow_), weapon, shield)) {
+                    int(focusRow_), weapon, shield, look)) {
         return false;
     }
     // And the crowd stands down: the same monsters would otherwise be drawn twice, once where

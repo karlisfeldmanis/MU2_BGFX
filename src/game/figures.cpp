@@ -102,6 +102,17 @@ const FigureBody* Figures::body(const std::string& name) const {
     return found == bodies_.end() ? nullptr : found->second.get();
 }
 
+std::vector<const FigureBody*> Figures::bodiesOf(BodyKind kind) const {
+    std::vector<const FigureBody*> found;
+    for (const auto& [name, one] : bodies_) {
+        if (one->kind == kind) found.push_back(one.get());
+    }
+    std::sort(found.begin(), found.end(), [](const FigureBody* a, const FigureBody* b) {
+        return a->label < b->label;
+    });
+    return found;
+}
+
 const ClipLibrary* Figures::library(const std::string& name) const {
     auto found = libraries_.find(name);
     return found == libraries_.end() ? nullptr : found->second.get();
@@ -199,6 +210,78 @@ void Figures::bind(FigureBody& body) {
     }
 }
 
+void Figures::posture(FigureBody& body, const std::string& namedIdle) {
+    // The stances are a table, and one row asks who is standing in it: empty hands are (1, 15)
+    // for a man and (2, 16) for a woman, and every armed row is shared.
+    if (!body.library) return;
+    const auto [stand, walk] = stanceActions(body.stance, body.female);
+    // A named idle wins: the two guards carry one in index.json, and MU's own town stands a
+    // character in it whatever is in its hands.
+    const auto [bare, bareWalk] = stanceActions("", body.female);
+    body.idleClip = namedIdle.empty() ? body.library->find(stand) : body.library->find(namedIdle);
+    // Inside a safe zone the weapon goes on the back and the body stands unarmed -- unless
+    // index.json names this figure's idle, which is MU's own table for that NPC and not a
+    // stance to be picked over.
+    body.idleSafeClip = namedIdle.empty() ? body.library->find(bare) : body.idleClip;
+    body.walkClip = body.library->find(walk);
+    if (body.idleClip < 0) body.idleClip = body.library->find(0);
+    if (body.idleSafeClip < 0) body.idleSafeClip = body.idleClip;
+}
+
+const FigureBody* Figures::dress(const std::string& name, const std::string& base,
+                                 const std::string& weapon, const std::string& shield) {
+    const FigureBody* wearing = body(base);
+    if (!wearing) {
+        core::logError("nothing cooked called %s to dress %s in", base.c_str(), name.c_str());
+        return nullptr;
+    }
+    auto made = std::make_unique<FigureBody>();
+    made->name = name;
+    made->label = wearing->label;
+    made->kind = wearing->kind;
+    made->female = wearing->female;
+    made->scale = wearing->scale;
+    made->parts = wearing->parts;
+    made->library = wearing->library;
+
+    // The right hand first, because the weapon in it decides the stance the whole body stands
+    // and walks in -- and an empty right hand is the fist, which is a stance like any other.
+    for (int hand = 0; hand < 2; ++hand) {
+        const bool right = hand == 0;
+        const std::string& wanted = right ? weapon : shield;
+        const char* grip = right ? kRightGrip : kLeftGrip;
+        if (wanted.empty()) continue;
+        const content::Mesh* found = mesh(wanted);
+        if (!found) {
+            // Said rather than shrugged off: a starter weapon nobody cooked is a character who
+            // silently punches, and the reason is in the cook and not in the game.
+            core::logError("%s has no cooked mesh, so %s holds nothing in that hand "
+                           "(tools/cook.py --only figures)", wanted.c_str(), name.c_str());
+            continue;
+        }
+        HeldItem item;
+        item.mesh = found;
+        item.boneName = grip;
+        auto row = items_.find(found->name());
+        if (row != items_.end()) {
+            item.kind = row->second.kind;
+            item.stance = row->second.stance;
+        }
+        if (right) made->stance = item.stance;
+        made->held.push_back(item);
+    }
+
+    bind(*made);
+    posture(*made, "");
+    core::logf("dressed %s: %s with %zu parts, holding %s%s%s -- stands in %s", name.c_str(),
+               base.c_str(), made->parts.size(),
+               weapon.empty() ? "nothing" : weapon.c_str(), shield.empty() ? "" : " and ",
+               shield.c_str(), made->stance.empty() ? "bare hands" : made->stance.c_str());
+    FigureBody* kept = made.get();
+    bodies_[name] = std::move(made);
+    return kept;
+}
+
 bool Figures::open(const std::string& assetDir, const std::string& world,
                    content::Textures& textures) {
     const int64_t started = bx::getHPCounter();
@@ -258,18 +341,14 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     for (const auto& [name, entry] : manifest["clip_of"].members) clipOf_[name] = entry.string;
 
     // What each item is, from index.json's own rows: a crossbow is slung one way, a bow's
-    // quiver another, a shield a third. Never guessed from a name.
-    struct ItemKind {
-        std::string kind;
-        std::string stance;
-    };
-    std::unordered_map<std::string, ItemKind> items;
+    // quiver another, a shield a third. Never guessed from a name. Kept past open() because
+    // dress() builds held items of its own out of the same table.
     for (const auto& [name, entry] : manifest["items"].members) {
-        items[name] = ItemKind{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
+        items_[name] = ItemRow{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
     }
     auto describe = [&](HeldItem& item) {
-        auto found = items.find(item.mesh ? item.mesh->name() : std::string());
-        if (found == items.end()) return;
+        auto found = items_.find(item.mesh ? item.mesh->name() : std::string());
+        if (found == items_.end()) return;
         item.kind = found->second.kind;
         item.stance = found->second.stance;
     };
@@ -285,6 +364,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         auto made = std::make_unique<FigureBody>();
         made->name = entry["name"].string;
         made->label = entry["label"].stringOr(made->name.c_str());
+        made->kind = BodyKind::Character;
         made->female = entry["female"].boolOr(false);
         made->stance = entry["stance"].stringOr("");
         for (const core::Json& part : entry["parts"].items) {
@@ -314,28 +394,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
             made->held.push_back(item);
         }
         bind(*made);
-
-        // The stances are a table, and one row asks who is standing in it: empty hands are
-        // (1, 15) for a man and (2, 16) for a woman, and every armed row is shared. This
-        // sprint stands the figures still, so only the stand half is read; the walk is here
-        // because the bench asks for it by name.
-        const std::string idle = entry["idle"].stringOr("");
-        if (made->library) {
-            const auto [stand, walk] = stanceActions(made->stance, made->female);
-            // A named idle wins: the two guards carry one in index.json, and MU's own town
-            // stands a character in it whatever is in its hands.
-            const auto [bare, bareWalk] = stanceActions("", made->female);
-            made->idleClip = idle.empty() ? made->library->find(stand)
-                                          : made->library->find(idle);
-            // Inside a safe zone the weapon goes on the back and the body stands unarmed --
-            // unless index.json names this figure's idle, which is MU's own table for that
-            // NPC and not a stance to be picked over.
-            made->idleSafeClip = idle.empty() ? made->library->find(bare)
-                                              : made->idleClip;
-            made->walkClip = made->library->find(walk);
-            if (made->idleClip < 0) made->idleClip = made->library->find(0);
-            if (made->idleSafeClip < 0) made->idleSafeClip = made->idleClip;
-        }
+        posture(*made, entry["idle"].stringOr(""));
         bodies_[made->name] = std::move(made);
     }
 
@@ -344,6 +403,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         auto made = std::make_unique<FigureBody>();
         made->name = entry["name"].string;
         made->label = entry["label"].stringOr(made->name.c_str());
+        made->kind = BodyKind::Monster;
         made->scale = float(entry["scale"].numberOr(1.0));
         made->stance = entry["stance"].stringOr("");
         const content::Mesh* body = mesh(entry["mesh"].string);
@@ -390,6 +450,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         auto made = std::make_unique<FigureBody>();
         made->name = entry["name"].string;
         made->label = made->name;
+        made->kind = BodyKind::Townsfolk;
         const content::Mesh* body = mesh(entry["mesh"].string);
         if (!body) continue;
         made->parts.push_back(body);

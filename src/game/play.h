@@ -31,9 +31,13 @@ public:
     // `column` and `row` are where the character is put down; the realm moves him to the
     // nearest standable tile. False when the world has no cooked tables -- which is not fatal
     // to the run, only to playing it.
+    // `heroLook` is the body the character is drawn in -- the naked class body with whatever
+    // the game has put in his hands, built by Figures::dress. Null falls back to the cook's
+    // own armoured Dark Knight, which is what every run before the game had.
     bool open(const std::string& assetDir, const std::string& world, const content::Ground* ground,
               const Figures* figures, uint64_t seed, int kin, int level, int column, int row,
-              const std::string& weapon = "", const std::string& shield = "");
+              const std::string& weapon = "", const std::string& shield = "",
+              const FigureBody* heroLook = nullptr);
     void shutdown();
 
     bool isOpen() const { return realm_.tables() != nullptr; }

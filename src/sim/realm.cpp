@@ -110,7 +110,7 @@ void Realm::reswing(Body& hero) {
     hero.swingTicks = ticks > 0 ? ticks : kHeroSwingTicks;
 }
 
-bool Realm::equip(int32_t weapon, int32_t shield) {
+bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
     refusal_.clear();
     if (!tables_) return false;
     Body& hero = bodies_[0];
@@ -134,6 +134,11 @@ bool Realm::equip(int32_t weapon, int32_t shield) {
         // The requirement is the item's own, at its base level. An item's level raises what it
         // asks -- "a row's raw strength is not what the game asks" -- and levelled items are
         // sprint 7's along with the rest of what an item is.
+        //
+        // Not asked at all of what the cradle gives: see the note on equip() in realm.h. The
+        // class and the slot are still asked, because the cradle never gave anybody a shield
+        // in his sword hand.
+        if (given) return true;
         if (hero.points.strength < arm.wantsStrength) {
             refusal_ = arm.label + " wants " + std::to_string(arm.wantsStrength) +
                        " strength and he has " + std::to_string(hero.points.strength);

@@ -43,8 +43,10 @@ int attackSlotFor(const std::string& stance) {
     return 38;  // bare hands
 }
 
-// Which character the window plays. Sprint 9's character select is what replaces this; it is a
-// constant here rather than a switch because there is no save to read it out of yet.
+// What the character is drawn as when nobody dressed him: the cook's own armoured Dark Knight,
+// which is what every run before there was a game used. A game hands `heroLook` in instead --
+// the naked class body with the cradle's weapon in its hand -- and sprint 9's character select
+// is what decides which one that is.
 const char* kHeroFigure = "DarkKnight";
 
 }  // namespace
@@ -52,7 +54,7 @@ const char* kHeroFigure = "DarkKnight";
 bool Play::open(const std::string& assetDir, const std::string& world,
                 const content::Ground* ground, const Figures* figures, uint64_t seed, int kin,
                 int level, int column, int row, const std::string& weapon,
-                const std::string& shield) {
+                const std::string& shield, const FigureBody* heroLook) {
     ground_ = ground;
     figures_ = figures;
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
@@ -110,10 +112,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         realm_.spend(intoStrength + points, intoAgility, 0, 0);
     }
 
-    // What he holds. The character that is DRAWN carries whatever the cook put in his hands --
-    // `figures.json` gives the Dark Knight a Kris and a Plate Shield -- and the sim knows only
-    // what it was told here, so a mismatch is said out loud rather than left to be noticed as
-    // a fight that does not match the picture.
+    // What he holds. The drawn character is dressed from the same two names (Figures::dress, by
+    // way of World::play), so the picture and the fight agree by construction rather than by a
+    // warning -- which is what this used to have to settle for, when the cook chose the hands.
     if (!weapon.empty() || !shield.empty()) {
         const int32_t held = weapon.empty() ? -1 : tables_.armNamed(weapon);
         const int32_t worn = shield.empty() ? -1 : tables_.armNamed(shield);
@@ -121,7 +122,18 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             core::logError("no arm called %s%s%s", weapon.c_str(), shield.empty() ? "" : " or ",
                            shield.c_str());
         } else if (!realm_.equip(held, worn)) {
-            core::logError("he cannot hold that: %s", realm_.refusal().c_str());
+            // Refused on the strength or the agility, and then given anyway: what the character
+            // starts holding is the cradle's gift and the requirement belongs to the bag that
+            // picks one up. See Realm::equip. The shortfall is printed rather than hidden --
+            // a level-one knight is 22 strength short of his own axe, and that is the character
+            // the first hour is balanced around, not a fault in the run.
+            const std::string why = realm_.refusal();
+            if (!realm_.equip(held, worn, true)) {
+                core::logError("he cannot hold that: %s", realm_.refusal().c_str());
+            } else {
+                core::logf("play: %s -- given anyway, as a new character is given what his "
+                           "class starts with", why.c_str());
+            }
         } else {
             core::logf("play: holding %s%s%s -- damage %d to %d, defence %d, a swing every "
                        "%d ms (%d ticks)", weapon.c_str(), shield.empty() ? "" : " and ",
@@ -143,9 +155,11 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         one.wasX = one.nowX = body.x;
         one.wasY = one.nowY = body.y;
         const FigureBody* look = nullptr;
-        if (figures_) {
-            look = body.player ? figures_->body(kHeroFigure)
-                               : figures_->body(tables_.kinds[size_t(body.kind)].figure);
+        if (body.player) {
+            look = heroLook;
+            if (!look && figures_) look = figures_->body(kHeroFigure);
+        } else if (figures_) {
+            look = figures_->body(tables_.kinds[size_t(body.kind)].figure);
         }
         if (look) {
             const float at[3] = {0, 0, 0};

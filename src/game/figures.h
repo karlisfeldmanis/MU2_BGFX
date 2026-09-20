@@ -77,10 +77,18 @@ struct HeldItem {
     bool centred = false;
 };
 
+// Which of the manifest's three lists a body came out of. It is not the rig and not the
+// behaviour -- the Skeleton Warrior is a monster on the player's rig -- it is the row that
+// made it, which is what the viewer's categories are cut along: a list of monsters is what
+// somebody browsing monsters asked for, and the fact that one of them borrows a character's
+// clips is a detail of that monster and not a reason to file it with the characters.
+enum class BodyKind { Character, Monster, Townsfolk };
+
 // One breed or character: the parts, what is in its hands, its rig and its clips.
 struct FigureBody {
     std::string name;
     std::string label;
+    BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
     std::vector<HeldItem> held;
     const content::Mesh* skeletonMesh = nullptr;  // whose bone table the palette is built on
@@ -137,14 +145,39 @@ struct Breed {
     int total = 0;
 };
 
+// What one item IS, out of index.json's own row and carried through the cook: which kind it is
+// and which stance it is held in. Never guessed from a name, and kept after load so a body
+// dressed later slings and stands exactly as one built at load does.
+struct ItemRow {
+    std::string kind;
+    std::string stance;
+};
+
 class Figures {
 public:
     bool open(const std::string& assetDir, const std::string& world,
               content::Textures& textures);
     void shutdown();
 
+    // A body index.json does not describe: `base`'s parts -- which for a new character is the
+    // naked class body, HelmClass02 and its four fellows -- with whatever the game has decided
+    // he is holding. `weapon` and `shield` are cooked mesh names and either may be empty, which
+    // is bare hands and is a state a character really starts in.
+    //
+    // This exists because what a character wears is the GAME's answer and not the cook's. The
+    // cook knows the town's people, each drawn once in one set of armour; a hero changes what
+    // he is holding, and by sprint 7 what he is wearing, and neither is a row anybody can write
+    // down in advance. The body is owned here and lives as long as the rest, so a pointer to it
+    // is as good as a pointer to any other.
+    const FigureBody* dress(const std::string& name, const std::string& base,
+                            const std::string& weapon, const std::string& shield);
+
     bool isOpen() const { return !bodies_.empty(); }
     const FigureBody* body(const std::string& name) const;
+    // Every body of one kind, sorted by the label a reader sees. The bodies themselves live
+    // in a hash map, whose order is neither stable between runs nor anything a person could
+    // walk, so a list to be stepped through by hand is built here rather than there.
+    std::vector<const FigureBody*> bodiesOf(BodyKind kind) const;
     const std::vector<FigurePlacement>& placements() const { return placements_; }
     const std::vector<Breed>& breeds() const { return breeds_; }
     const ClipLibrary* library(const std::string& name) const;
@@ -155,11 +188,16 @@ public:
 private:
     const content::Mesh* mesh(const std::string& name) const;
     void bind(FigureBody& body);
+    // Which clips a finished body stands and walks in: the stance's own row, or the idle
+    // index.json names for this figure when it names one. Called by open() and by dress(), so
+    // that a hero and a guard pick their idle by one rule.
+    void posture(FigureBody& body, const std::string& namedIdle);
 
     std::unordered_map<std::string, size_t> meshIndex_;
     std::vector<std::unique_ptr<content::Mesh>> meshes_;  // stable addresses: a body points here
     std::unordered_map<std::string, std::unique_ptr<ClipLibrary>> libraries_;
     std::unordered_map<std::string, std::string> clipOf_;  // mesh name -> library name
+    std::unordered_map<std::string, ItemRow> items_;       // mesh name -> what it is
     std::unordered_map<std::string, std::unique_ptr<FigureBody>> bodies_;
     std::vector<FigurePlacement> placements_;
     std::vector<Breed> breeds_;
