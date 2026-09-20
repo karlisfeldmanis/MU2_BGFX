@@ -167,3 +167,22 @@ add_executable(sim_test EXCLUDE_FROM_ALL
 target_include_directories(sim_test PRIVATE src)
 target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# ---- checks ---------------------------------------------------------------------------------
+# One target that runs everything which can say "no" without a window: the three tests, the
+# cook's own reader, and the material audit. A check that has to be remembered is a check that
+# is not run, and the material audit in particular exists to stop a list growing -- which it
+# cannot do if nobody calls it. `cmake --build build --target checks`.
+#
+# matcheck is a gate rather than a report: it fails on a material fault that is not in
+# sheets/materials.baseline.json, and on a recorded one that has since been fixed. See
+# docs/materials.md.
+add_custom_target(checks
+  DEPENDS cooked_test placement_test sim_test
+  COMMAND $<TARGET_FILE:cooked_test>
+  COMMAND $<TARGET_FILE:placement_test>
+  COMMAND $<TARGET_FILE:sim_test>
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/matcheck.py
+  COMMENT "running every check that does not need a window"
+  USES_TERMINAL
+)

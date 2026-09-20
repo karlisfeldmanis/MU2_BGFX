@@ -1,0 +1,18 @@
+{
+  "comment": [
+    "The judged half of tools/matcheck.py. A ruling says which material a surface ought to",
+    "wear, where no checker could work that out: the glTF material name is MU's texture sheet",
+    "rather than a library entry, or it names a library entry that is simply the wrong choice.",
+    "",
+    "A ruling either names a library material from index.json, which keeps it traced, or gives",
+    "roughness and metal outright -- which is an invention, and PLAN.md's rule is that an",
+    "invention says why. Once a ruling exists the audit is mechanical again: the slot's baked",
+    "ORM must match its ruling, and drift fails the run.",
+    "",
+    "A ruling is a statement of what ought to be, not a change to what is. Nothing in the",
+    "engine reads this file yet -- see docs/materials.md, 'Applying a ruling'. Until that is",
+    "built, a ruling here makes matcheck fail on the slot until the content is repaired, which",
+    "is the honest state: the wrong material is still on screen."
+  ],
+  "rulings": []
+}

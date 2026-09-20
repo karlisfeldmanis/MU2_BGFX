@@ -53,6 +53,18 @@ chains, flat `.mum` meshes, the town's `.mut`, and the figures' `.muc` clip libr
 frame by frame. It is idempotent — an image whose `.ktx` is already there is not compressed
 again, because the file's name carries the hash of its source bytes and its role.
 
+## Checks
+
+    cmake --build build --target checks          everything that can say no without a window
+
+Runs the three tests, and `tools/matcheck.py` — the material audit. That one asks whether every
+surface wears the material it ought to: a name that resolves to `index.json`'s library, a baked
+ORM that agrees with it, a relief the normal map actually carries, a cutout with holes to cut,
+a cooked texture in its role's format. It is a gate, not a report: the faults known on the day
+it was written are in `sheets/materials.baseline.json`, and it fails on a new one or on a
+recorded one that has since been fixed, so the list can only shrink. `docs/materials.md` has
+what it found and what to do about each kind.
+
 ## Benches
 
     ./run.sh --figure BullFighter01 --clip 2 --frames 300 --shot 100
