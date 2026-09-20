@@ -65,6 +65,12 @@ ORM_TOLERANCE = 0.04
 # the floor and far below anything a relief of 0.3 or more would produce.
 RELIEF_MIN_TILT = 2.0
 
+# Below this declared depth a grain is too faint to insist on -- steel's is 0.01 and would
+# lean a fraction of a degree -- and at 1.0 exactly it is index.py's default for a material
+# that declares no grain at all rather than a depth anybody chose. The deepest real one in
+# the library is cobble's 0.45, so the two cannot be confused. See check 6.
+RELIEF_REAL_MIN = 0.15
+
 # The same question of the land, but wider. A ground ORM's roughness is meant to vary across
 # its sheet -- tiled_maps puts the material at the middle and lets the art set the spread, so
 # the damp dark parts of a grass tile are smoother than the dry pale ones -- and its mean sits
@@ -355,7 +361,37 @@ def nearest_library(slot, library):
     return best, len(close)
 
 
-def check_slot(slot, entry, failures, notes, unruled):
+def apply_overrides(slots, index_entry):
+    """What the asset changed about a library material for itself, applied before any check.
+
+    `material_overrides` is build_maps' own mechanism: an asset may take a library material
+    and move one field of it for its own parts, and the moved number is what gets baked into
+    that asset's ORM. Without reading it, an audit compares a deliberately restored 0.74
+    against the library's 0.62 and reports the restoration as the fault -- which is exactly
+    what it did to the Budge Dragon's wings for an afternoon.
+
+    Merged one level deep, which is how build_maps merges it, and onto a copy, so one asset's
+    override does not follow the material onto the next model. The override's name is kept in
+    the entry's own name so a failure still says which number it was measured against.
+    """
+    tweaks = (index_entry or {}).get("material_overrides") or {}
+    if not tweaks:
+        return
+    for slot in slots:
+        over = tweaks.get(slot.name)
+        if over is None or slot.library is None:
+            continue
+        moved = dict(slot.library)
+        for key, value in over.items():
+            if isinstance(value, dict) and isinstance(moved.get(key), dict):
+                moved[key] = dict(moved[key], **value)
+            else:
+                moved[key] = value
+        moved["name"] = f"{slot.library['name']} (this asset's override)"
+        slot.library = moved
+
+
+def check_slot(slot, failures, notes, unruled):
     """Every mechanical check one slot has to pass."""
     model, name = slot.model, slot.name or f"slot{slot.index}"
     where = f"{model}/{name}"
@@ -425,21 +461,76 @@ def check_slot(slot, entry, failures, notes, unruled):
                  f"alphaMode OPAQUE but {slot.alpha_holes * 100:.0f}% of the albedo's alpha "
                  "is below 0.5; whatever was meant to be cut out is drawn solid")
 
-    # 6. The relief the library asked for, against the relief the normal map carries. This is
-    #    the check the Budge Dragon's wings were found by: chitin asks relief 1.00, the map
-    #    leans 0.3 degrees, and a flat map at roughness 0.62 puts one unbroken highlight
-    #    across a whole two-sided wing, which reads as glossy plastic rather than as a
-    #    membrane. Relief is what breaks a highlight up, and roughness cannot do its job.
-    if want is not None and want.get("relief", 0.0) >= 0.3:
+    # 6. The relief the library asked for, against the relief the normal map carries.
+    #
+    #    `relief` needs reading carefully and this check read it wrong at first. It is not a
+    #    claim that a surface has relief: index.py sets it from the material's `grain.depth`
+    #    and DEFAULTS IT TO 1.0, for a studio panel where 1.0 means "do not attenuate the
+    #    normal map you already have". Seven materials in the library declare no grain at all
+    #    -- chitin, skin, glass, fur, foliage, fruit, lamplight -- and each argues for it in
+    #    its own file: MU's art is painted, a spider's body is a 64-pixel sheet, and a pit
+    #    smaller than a texel would be invented rather than reconstructed. All seven come
+    #    through as relief 1.00 and a flat normal map is exactly right for them.
+    #
+    #    Read as a claim, that default failed 26 slots that were correct, 15 of them `skin`.
+    #    No real grain in the library goes above cobble's 0.45, so 1.0 is the default and
+    #    nothing else, and it is skipped. What is left is a material that declares a real
+    #    grain and got no relief from it, which is a bake that did not happen.
+    relief = want.get("relief", 0.0) if want is not None else 0.0
+    if want is not None and RELIEF_REAL_MIN <= relief < 1.0:
         if "normal" not in slot.maps:
             fail(failures, model, where,
-                 f"{want['name']} carries relief {want['relief']:.2f} and this slot has no "
-                 "normal map at all; the relief was authored and then dropped")
+                 f"{want['name']} declares a grain {relief:.2f} deep and this slot has no "
+                 "normal map at all; the grain was authored and then dropped")
         elif slot.tilt is not None and slot.tilt < RELIEF_MIN_TILT:
             fail(failures, model, where,
-                 f"{want['name']} carries relief {want['relief']:.2f} but its normal map "
-                 f"leans {slot.tilt:.1f}deg under this part; the map is flat and the relief "
-                 "never reached it")
+                 f"{want['name']} declares a grain {relief:.2f} deep but its normal map "
+                 f"leans {slot.tilt:.1f}deg under this part; the bake did not reach it")
+
+
+def check_collapsed_distinctions(slots, notes):
+    """Two slots naming different materials that now shade identically.
+
+    This is the check the Budge Dragon's wings needed and neither of the others could give.
+    Its recipe assigns the body `chitin` and the wings `leather` and says why: "the wings are
+    leather at 0.74 ... thinner and duller than the body ... and the two are a slot apart so
+    the judgement is visible". leather was 0.74 when that was written. It was taken to 0.62 on
+    2026-09-06, for the player's boots, and chitin is 0.62 -- so the slot closed and the
+    membrane came out exactly as glossy as the shell.
+
+    Nothing was wrong with either material or with either assignment. What was lost was the
+    difference between them, and a difference is only visible from a model that declares both.
+    A note rather than a failure: two materials converging is a legitimate thing for a library
+    to do, and only the asset that relied on them differing can say whether it minded.
+
+    Two things decide what it is allowed to compare, and the first draft got both wrong.
+
+    It asks about **library materials, not slot names**. A slot called `tile_ston04` is MU's
+    texture sheet, and the audit's own headline is that 424 of 636 slots cannot be identified
+    from their ORM at all -- so a pair of unruled slots names nothing, and "the recipe drew a
+    distinction between them" is not a claim their names support. Comparing names fired 156
+    times, on tree bark against tree bark, and a check that fires everywhere says nothing.
+
+    And it compares **what the library asks, not what the ORM measured**. Whether two
+    materials have converged is a fact about the library on the day it is read; the measured
+    ORM is that fact plus the bake's own tolerance, which is how the first draft came to
+    report 0.35 against 0.32 as shading the same. If the bake disagrees with the library,
+    check 3 is the one that says so, and it says so about the slot that is wrong rather than
+    about a pair.
+    """
+    known = [(s, s.ruling or s.library) for s in slots if s.triangles > 0]
+    known = [(s, w) for s, w in known if w is not None]
+    for i, (one, asks) in enumerate(known):
+        for other, also in known[i + 1:]:
+            if asks["name"] == also["name"]:
+                continue
+            if (abs(asks["roughness"] - also["roughness"]) <= ORM_TOLERANCE
+                    and abs(asks["metallic"] - also["metallic"]) <= ORM_TOLERANCE):
+                note(notes, one.model, f"{one.model}/{one.name} and {other.name}",
+                     f"{asks['name']} and {also['name']} are named apart on this model and "
+                     f"now shade the same (roughness {asks['roughness']:.2f} against "
+                     f"{also['roughness']:.2f}); whatever distinction the recipe drew "
+                     "between them is gone")
 
 
 def check_metal_list(slots, index_entry, failures):
@@ -680,6 +771,10 @@ def main():
             grounds.append(model)
             continue
         seen = collections.Counter(s.name for s in slots)
+        # Before any check, because an override changes the number every one of them compares
+        # against. A ruling still wins over it: a ruling is this audit's own decision about a
+        # slot it could not otherwise name, and the asset's override is about a slot it can.
+        apply_overrides(slots, entries.get(model))
         for slot in slots:
             slot.ruling = rulings.get((slot.model, slot.name))
             if seen[slot.name] > 1:
@@ -688,10 +783,11 @@ def main():
                      "apart")
             if slot.library is None and slot.ruling is None:
                 slot.nearest = nearest_library(slot, library)
-            check_slot(slot, library.get(slot.name), failures, notes, unruled)
+            check_slot(slot, failures, notes, unruled)
             all_slots.append(slot)
         if model:
             check_metal_list(slots, entries.get(model), failures)
+            check_collapsed_distinctions(slots, notes)
 
     cooked = 0 if args.no_cooked else check_cooked_textures(failures)
     ground_maps = 0 if args.model else check_ground(library, failures, notes)
@@ -785,7 +881,12 @@ def main():
         if single:
             print(f"\n  {len(failures)} failures:")
         else:
-            print(f"\n  {len(failures)} failures, {len(baseline)} of them known:")
+            # How many of THIS RUN's failures the baseline already knows -- not how many
+            # lines the baseline file has, which is what this printed and is a different
+            # number the moment anything is fixed: 53 failures, 90 of them known.
+            known = sum(1 for _, what, why in failures
+                        if failure_key(what, why) in baseline)
+            print(f"\n  {len(failures)} failures, {known} of them known:")
         shown = failures if args.strict else [f for f in failures
                                               if failure_key(f[1], f[2]) in fresh]
         for _, what, why in shown[:40]:
