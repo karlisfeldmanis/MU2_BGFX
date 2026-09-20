@@ -23,6 +23,11 @@ public:
     // the weapon is: inside one a character carries it on his back and stands unarmed.
     void stand(const FigureBody* body, const float position[3], float yaw, float scale,
                bool safe = false);
+    // Moves a figure that is already standing. `stand` restarts it -- it clears the clip and
+    // the clock, which is right when a figure is put down and wrong every frame after: a
+    // walker re-stood each frame holds the first pose of its walk forever. So the sim's view
+    // moves one with this and stands one only once. See game/play.cpp.
+    void place(const float position[3], float yaw, bool safe);
     // `restart` replays a clip that is already running; without it, asking for the clip that
     // is playing is ignored, which is what stops a per-frame request resetting the clock.
     void play(int clip, bool restart = false);

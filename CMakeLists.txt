@@ -87,6 +87,7 @@ add_executable(mu2
   src/game/figures.cpp
   src/game/crowd.cpp
   src/game/headless.cpp
+  src/game/play.cpp
   src/sim/rules.cpp
   src/sim/route.cpp
   src/sim/realm.cpp

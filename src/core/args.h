@@ -71,6 +71,13 @@ struct Args {
     // at level 20 has 95 points in hand and, unspent, he is a level-1 character with more
     // health -- which is a fair thing to be able to measure and a poor hunt to watch.
     std::string spend = "strength";
+    // `--play` raises the realm behind the window: the sim ticks, the figures are where it says
+    // they are, and a click is a request. Without it a world is the still crowd sprint 4 drew.
+    bool play = false;
+    // A review harness and not a feature: every N frames it puts the pointer on a pixel from a
+    // short fixed list and clicks it, through the same unprojection a hand would. It is how a
+    // run with nobody at the mouse can show that a click walks and a click on a monster fights.
+    int demoClicks = 0;
 
     // The monster bench: one figure on the bench ground, by the name index.json gives it,
     // playing one clip. `--clip` is MU's own action number, in the right table of the two --

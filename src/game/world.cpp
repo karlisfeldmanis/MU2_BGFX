@@ -87,7 +87,28 @@ bool World::open(const std::string& assetDir, const std::string& name,
     return true;
 }
 
+bool World::play(const std::string& assetDir, const std::string& name, uint64_t seed, int kin,
+                 int level) {
+    // The character is put down where the camera was told to look, which is the town by
+    // default and `--at` otherwise. The realm moves him to the nearest tile he may stand on.
+    if (!play_.open(assetDir, name, &ground_, &figures_, seed, kin, level, int(focusColumn_),
+                    int(focusRow_))) {
+        return false;
+    }
+    // And the crowd stands down: the same monsters would otherwise be drawn twice, once where
+    // the sim has them and once where the crowd chose to put them.
+    crowd_.shutdown();
+    return true;
+}
+
 void World::update(double seconds, bool still) {
+    // A world being played follows its character rather than the sine walk below: the camera
+    // is MU's, fixed over the man, and where he is standing is the sim's answer and not the
+    // frame's.
+    if (play_.isOpen()) {
+        play_.focus(&focusColumn_, &focusRow_);
+        still = true;
+    }
     // A slow walk across the town when the camera is not held. The point is not the walk:
     // it is that a still camera cannot show a shadow edge crawling, which is the one defect
     // sprint 1's bench was structurally unable to catch.
@@ -117,6 +138,7 @@ void World::update(double seconds, bool still) {
 }
 
 void World::shutdown() {
+    play_.shutdown();
     crowd_.shutdown();
     figures_.shutdown();
     town_.shutdown();

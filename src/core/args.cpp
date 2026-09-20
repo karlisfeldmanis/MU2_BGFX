@@ -47,6 +47,9 @@ void printUsage() {
         "against\n"
         "  --figure NAME             the monster bench: one figure, by index.json's name\n"
         "  --clip N                  which clip it plays, as MU's own action number\n"
+        "  --play                    raise the realm behind the window: click to walk, click "
+        "to fight\n"
+        "  --click-every N           a scripted click every N frames, through the real pick\n"
         "  --headless                run the sim with no window at all\n"
         "  --seed N                  the sim's seed; the same seed is the same run\n"
         "  --ticks N                 how many 20 Hz ticks to run (default 10000)\n"
@@ -86,6 +89,10 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.figure = v;
         } else if (!std::strcmp(s, "--clip")) {
             if (const char* v = next(s)) a.clip = std::atoi(v);
+        } else if (!std::strcmp(s, "--click-every")) {
+            if (const char* v = next(s)) a.demoClicks = std::atoi(v);
+        } else if (!std::strcmp(s, "--play")) {
+            a.play = true;
         } else if (!std::strcmp(s, "--headless")) {
             a.headless = true;
         } else if (!std::strcmp(s, "--seed")) {

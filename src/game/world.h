@@ -7,6 +7,7 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/play.h"
 #include "game/town.h"
 #include "gfx/renderer.h"
 
@@ -21,6 +22,11 @@ public:
     // all -- the baseline the crowd is priced against.
     bool open(const std::string& assetDir, const std::string& name, content::Textures& textures,
               int crowd = 30, bool figures = true);
+    // Raises the realm behind the window: the sim, a figure for every body in it, and the
+    // pointer. The crowd is what stands in a world nobody is playing; this is what stands in
+    // one somebody is. Only one of the two is ever open.
+    bool play(const std::string& assetDir, const std::string& name, uint64_t seed, int kin,
+              int level);
     void shutdown();
 
     // `seconds` moves the focus so the camera is not still: sprint 1 ran --still throughout
@@ -34,6 +40,8 @@ public:
     Crowd& crowd() { return crowd_; }
     const Crowd& crowd() const { return crowd_; }
     const Figures& figures() const { return figures_; }
+    Play& played() { return play_; }
+    const Play& played() const { return play_; }
 
     // Where the camera looks, in tiles. Set from --at, else the map's own middle.
     void setFocusTile(float column, float row);
@@ -46,6 +54,7 @@ private:
     Town town_;
     Figures figures_;
     Crowd crowd_;
+    Play play_;
     gfx::Camera camera_;
     float focusColumn_ = 0.0f;
     float focusRow_ = 0.0f;

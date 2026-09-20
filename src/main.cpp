@@ -15,6 +15,7 @@
 #include "core/log.h"
 #include "game/bench.h"
 #include "game/headless.h"
+#include "sim/realm.h"
 #include "game/world.h"
 #include "gfx/lighting.h"
 #include "gfx/renderer.h"
@@ -92,7 +93,11 @@ int main(int argc, char** argv) {
     const bool inWorld = !args.world.empty();
     if (inWorld) {
         if (args.atSet) world.setFocusTile(args.atColumn, args.atRow);
-        if (!world.open(MU2_ASSET_DIR, args.world, textures, args.crowd, args.figuresOn)) {
+        // No crowd when the realm is going to be raised: the crowd stands monsters where it
+        // chooses and the sim stands them where they are, and raising both means loading, posing
+        // and then throwing away 45 figures a run.
+        if (!world.open(MU2_ASSET_DIR, args.world, textures, args.play ? 0 : args.crowd,
+                        args.figuresOn)) {
             core::logError("the world did not open");
             // The world may have failed half-open -- `--at` off the map is refused after the
             // ground's buffers are already made -- and a failure path that skips the world's
@@ -104,6 +109,10 @@ int main(int argc, char** argv) {
             core::logClose();
             return 1;
         }
+        // And the realm behind it, when there is somebody playing. A world that cannot raise
+        // one -- no cooked tables yet -- says so and is still a world to look at, which is
+        // what every run before this sprint was.
+        if (args.play) world.play(MU2_ASSET_DIR, args.world, args.seed, args.kin, args.level);
     }
 
     game::ModelBench bench;
@@ -209,6 +218,38 @@ int main(int argc, char** argv) {
                     world.town().gatherAll(townDrawables);
                 }
             }
+            // The pointer and what it is over, before the sim is stepped: a click is answered
+            // on the tick after it is made, which is MU's own latency and not ours to shave.
+            if (world.played().isOpen()) {
+                float view[16];
+                float proj[16];
+                renderer.cameraMatrices(world.camera(), view, proj);
+                float pointerX = 0.0f, pointerY = 0.0f;
+                window.pointer(&pointerX, &pointerY);
+                // The scripted pointer, for a run with nobody at the mouse. It goes through
+                // the same unprojection, the same tile, the same request: what it skips is the
+                // hand and nothing else.
+                bool clickNow = false;
+                if (args.demoClicks > 0 && frame % args.demoClicks == 0) {
+                    static const float kSpots[6][2] = {{0.50f, 0.50f}, {0.62f, 0.38f},
+                                                       {0.38f, 0.60f}, {0.70f, 0.55f},
+                                                       {0.44f, 0.34f}, {0.56f, 0.66f}};
+                    const int spot = (frame / args.demoClicks) % 6;
+                    pointerX = kSpots[spot][0] * float(window.width());
+                    pointerY = kSpots[spot][1] * float(window.height());
+                    clickNow = true;
+                }
+                world.played().point(world.camera(), view, proj, pointerX, pointerY,
+                                     window.width(), window.height());
+                if (window.clicked(0) || clickNow) world.played().leftClick();
+                if (window.clicked(1)) world.played().rightClick();
+                world.played().update(deltaSeconds);
+                float viewProj[16];
+                bx::mtxMul(viewProj, view, proj);
+                world.played().gather(renderer, viewProj, townDrawables,
+                                      casters ? &townCasters : nullptr);
+            }
+
             // The crowd goes into the same two lists as the town, and through the same two
             // passes. A figure is not a special case of a drawable: it is a drawable whose
             // mesh carries a skin and whose instance names a palette row.
@@ -282,6 +323,24 @@ int main(int argc, char** argv) {
                            counts.chunksDrawn, counts.chunksDrawn + counts.chunksCulled,
                            counts.instancesDrawn, world.town().instanceCount(),
                            sun.chunksDrawn, sun.instancesDrawn);
+            }
+            if (inWorld && world.played().isOpen()) {
+                const game::Play& play = world.played();
+                const sim::Body& hero = play.realm().hero();
+                const sim::RealmCounts counts = play.realm().counts();
+                core::logf("  play: tick %lld, %.3f ms a tick, hero level %d at %.1f,%.1f with "
+                           "%d of %d health; %u monsters, %u alive, %u awake",
+                           (long long)play.ticks(), play.tickMs(), hero.level, hero.x, hero.y,
+                           hero.health, hero.maxHealth, counts.monsters, counts.alive,
+                           counts.roused);
+                core::logf("  pointer: tile %d,%d%s | %s", play.pointedColumn(),
+                           play.pointedRow(),
+                           play.pointedAt() ? " (on a monster)" : "",
+                           play.lastLine().c_str());
+                if (play.findings().total() > 0) {
+                    core::logError("  play: %llu invariants broken",
+                                   (unsigned long long)play.findings().total());
+                }
             }
             if (inWorld && world.crowd().figureCount() > 0) {
                 const game::Crowd& crowd = world.crowd();

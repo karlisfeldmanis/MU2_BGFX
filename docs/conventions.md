@@ -261,10 +261,9 @@ shaded twice.
 - **Off the map is not open ground**, although MU's word for open ground is 0. Every reader
   does its bounds test before its bit read.
 - The grid is data: no mips, no filtering, and it is cooked into the `.mur` as well as read
-  from the picture, because the sim reads it for decisions and has no PNG decoder. **Owed**:
-  the day the window raises a realm, it compares the two copies at load and complains if they
-  differ -- until then there is no run in which both are read, and a check nothing performs is
-  not a rule.
+  from the picture, because the sim reads it for decisions and has no PNG decoder. The two are
+  compared tile by tile when the window raises a realm -- the only run in which both are in
+  memory -- and a difference is an error in the log, because one of them would then be stale.
 
 ## Time
 

@@ -277,7 +277,56 @@ MU's threshold with MU's wall argument — and `Ground::walkable` is now a call 
 definitions the census found agreed on every tile of both maps but one, which is exactly the
 kind of agreement that ships the wrong one.
 
-**What is not done.** The window half — click to walk, click to attack, the walker drawn — is
-not in this commit. The sim it would be a view onto is finished and proved; what stopped it is
-that `game/crowd.cpp`, `crowd.h`, `figures.cpp` and `figures.h` were being edited by another
-session while this one ran, and a walker is drawn through exactly those four files.
+## The window half, measured
+
+Added after the headless half had landed, and only as a viewer onto a sim already proved
+stable — which is the order this file argued for and is why the day the byte comparison breaks
+there is exactly one new thing in it.
+
+    ./run.sh --world lorencia --play --at 200,160 --level 8
+
+`--play` raises the realm behind the window. The pointer is unprojected through the frame's own
+view and projection and marched against **the land's own height field**, not against a flat
+plane: Lorencia has two metres of relief and a flat-plane pick is a tile or two out wherever
+the ground is not level. A left click on a tile is a walk request; a left click on a body is an
+attack request; a right click stops. What is clicked is decided by where a body *is* and not by
+its drawn mesh, so aiming at a monster's feet and at its head pick the same monster, and the
+sim is asked about the thing the picture showed.
+
+`--click-every N` is the review harness: with nobody at the mouse it puts the pointer on one of
+six fixed screen positions and clicks, through the same unprojection and the same request. A
+600-frame run of it logs `hero walks to 198,159 in 2 steps` and, when the click lands on a
+Budge Dragon, `hero hits Budge Dragon#103 for 2 (roll 5) leaving 58` and the dragon hitting
+back. That is the sentence's second clause, and it is a harness rather than a feature.
+
+**The frame, with 290 bodies alive behind it** (1920x1080, vsync off, Release, after warmup,
+`--frames 2000`):
+
+| run | cpu median | cpu 99th | gpu median | frames over 5.5 ms |
+|---|---|---|---|---|
+| `--play` (290 bodies, 9 awake, 6-10 drawn) | **1.632 ms** | 6.868 | 2.304 | 46 of 1899 |
+| sprint 4's still crowd of 30, no sim | 1.787 ms | 6.389 | 2.500 | 42 of 1899 |
+
+So the sim costs nothing the frame can see — the tick itself measures 0.010 to 0.021 ms in the
+window, which is the same number the headless run gives — and the median is *lower* than the
+crowd's because a range of 32 tiles draws six figures where the crowd stood 45 around the
+camera. The 99th and the frames over budget are the same in both columns: that tail is this
+machine's and was here before this sprint.
+
+Three things the window half needed that the sim did not:
+
+* **`Figure::place`.** `stand` clears the clip and the clock, which is right when a figure is
+  put down and wrong every frame after — a walker re-stood each frame holds the first pose of
+  its walk forever.
+* **A range.** Posing all 290 of Lorencia's bodies every frame would spend the crowd's whole
+  account on figures nobody can see. 32 tiles, which is more than MU's camera shows.
+* **The grid cross-check conventions.md promised.** The cook's copy of the attribute grid and
+  the ground's copy of attributes.png are compared tile by tile when the realm is raised, which
+  is the only run in which both are in memory. They agree.
+
+**What the window half does NOT do**, and each is somebody else's sprint rather than an
+omission: a dead monster simply stops being drawn (the fall and the corpse are the landing
+cue's, sprint 6); there is no health bar, no damage number and no swing animation (sprint 6);
+the drawn figures are not frustum-culled, only ranged (the next thing, and it is worth a
+measurement of its own); and a click cannot pick a body the camera cannot see, which is correct
+but has no feedback to say so until the HUD exists in sprint 7.

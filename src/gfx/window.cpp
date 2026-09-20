@@ -88,6 +88,15 @@ bool Window::pump() {
     glfwPollEvents();
     if (glfwWindowShouldClose(handle_)) return false;
 
+    // Edges, taken here and cleared here: polled state would report one press for every frame
+    // it lasts, which at 500 fps is fifty walk orders for one click.
+    const int buttons[2] = {GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_RIGHT};
+    for (int i = 0; i < 2; ++i) {
+        const bool down = glfwGetMouseButton(handle_, buttons[i]) == GLFW_PRESS;
+        clicked_[i] = down && !held_[i];
+        held_[i] = down;
+    }
+
     int w = 0, h = 0;
     glfwGetFramebufferSize(handle_, &w, &h);
     if (w != width_ || h != height_) {
@@ -99,6 +108,18 @@ bool Window::pump() {
         core::logf("resized to %dx%d", w, h);
     }
     return true;
+}
+
+void Window::pointer(float* x, float* y) const {
+    double px = 0.0, py = 0.0;
+    glfwGetCursorPos(handle_, &px, &py);
+    // Points to pixels, by the ratio the framebuffer actually has. Asking GLFW for the content
+    // scale is the other way to get it and is a different number on a window straddling two
+    // displays; this one is the ratio of the two sizes we already hold.
+    int windowWidth = 0, windowHeight = 0;
+    glfwGetWindowSize(handle_, &windowWidth, &windowHeight);
+    *x = float(px) * (windowWidth > 0 ? float(width_) / float(windowWidth) : 1.0f);
+    *y = float(py) * (windowHeight > 0 ? float(height_) / float(windowHeight) : 1.0f);
 }
 
 bool Window::escapePressed() const {

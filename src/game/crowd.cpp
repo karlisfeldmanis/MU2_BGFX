@@ -78,6 +78,12 @@ void Figure::stand(const FigureBody* body, const float position[3], float yaw, f
     if (body_) play(safe_ ? body_->idleSafeClip : body_->idleClip);
 }
 
+void Figure::place(const float position[3], float yaw, bool safe) {
+    std::memcpy(position_, position, sizeof(position_));
+    yaw_ = yaw;
+    safe_ = safe;
+}
+
 void Figure::play(int clip, bool restart) {
     if (!body_ || !body_->library) return;
     if (clip < 0 || clip >= int(body_->library->clips.clips.size())) return;
