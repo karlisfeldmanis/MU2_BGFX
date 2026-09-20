@@ -14,7 +14,14 @@ that overdraws stops and says so rather than borrowing from spare.
 | ssao | 2, 3 | 0.5 | half resolution, and the depth-aware blur |
 | shade | 4 | 2.3 | the one lit pass: PBR, shadow lookup, sky reflection, AO |
 | present | 5, 6 | 0.5 | ACES and sRGB, the HUD, the debug text |
-| spare | — | 0.5 | unspent on purpose |
+| spare | — | 0.2 | unspent on purpose |
+
+**0.3 ms of the original 0.5 spare is spent on 4x MSAA**, measured on the House01 bench
+(1x 2.88 ms, 2x 3.26, 4x 3.15, 8x 3.29 — the cost is the resolve, which is resolution-bound,
+so 4x and 8x are within noise of each other on this tile-based GPU). It is not an account of
+its own because it does not land in one: it widens the prepass, the shade pass and the
+resolve together. Re-measured on the town in sprint 2, where geometry rather than resolution
+may decide it.
 
 CPU: **3 ms** a frame, of which the sim gets 0.5 and the draw submission the rest.
 

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <unordered_map>
+#include <utility>
 
 #include "core/files.h"
 #include "core/log.h"
@@ -38,7 +39,8 @@ bgfx::ProgramHandle loadProgram(const std::string& dir, const char* vs, const ch
 
 }  // namespace
 
-bool Renderer::init(int width, int height, const std::string& shaderDir) {
+bool Renderer::init(int width, int height, const std::string& shaderDir, int msaa) {
+    msaa_ = msaa;
     if (!loadPrograms(shaderDir)) return false;
 
     uSunDir_ = bgfx::createUniform("u_sunDir", bgfx::UniformType::Vec4);
@@ -103,6 +105,22 @@ bool Renderer::createTargets(int width, int height) {
     const uint64_t rt = BGFX_TEXTURE_RT;
     const uint64_t clamp = BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 
+    // MSAA on the three targets that carry geometry: the prepass, the depth they share, and
+    // the shade target. Not on the shadow map, where more samples buy nothing a wider filter
+    // does not, and not on the half-resolution SSAO, which has no edges of its own.
+    //
+    // The samples are never read individually. bgfx resolves an MSAA render target to a
+    // single sample when it is sampled as a texture, because BGFX_TEXTURE_MSAA_SAMPLE is not
+    // asked for -- so the SSAO reads a resolved prepass and the present reads a resolved
+    // shade target, and on a tile-based GPU both resolves happen in tile memory.
+    uint64_t msaaFlag = 0;
+    switch (msaa_) {
+        case 2: msaaFlag = BGFX_TEXTURE_RT_MSAA_X2; break;
+        case 4: msaaFlag = BGFX_TEXTURE_RT_MSAA_X4; break;
+        case 8: msaaFlag = BGFX_TEXTURE_RT_MSAA_X8; break;
+        default: msaaFlag = 0; break;
+    }
+
     // The shadow map is read twice: through the compare sampler for the filtered result,
     // and as plain depth to find the blocker. docs/conventions.md.
     shadowMap_ = bgfx::createTexture2D(kShadowSize, kShadowSize, false, 1,
@@ -112,8 +130,15 @@ bool Renderer::createTargets(int width, int height) {
     // View normal and view depth in one target. RGBA16F because the depth is in world units
     // and Lorencia is 25 600 of them across: a half float runs out of precision at that
     // range, so what is stored is the distance from the eye, which stays small.
-    prepassColour_ = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, rt | clamp);
-    sceneDepth_ = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D32F, rt | clamp);
+    prepassColour_ =
+        bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, rt | msaaFlag | clamp);
+    // Write only, which is what it is: the depth is an attachment the prepass writes and the
+    // shade pass tests EQUAL against, and nothing ever samples it. bgfx requires the flag
+    // outright once the texture is multisampled -- "a frame buffer depth MSAA texture cannot
+    // be resolved" -- and without it both the prepass and the shade buffer are refused while
+    // every texture in them reports valid.
+    sceneDepth_ = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::D32F,
+                                        rt | msaaFlag | BGFX_TEXTURE_RT_WRITE_ONLY);
     bgfx::TextureHandle prepassAttachments[] = {prepassColour_, sceneDepth_};
     prepassFb_ = bgfx::createFrameBuffer(2, prepassAttachments, false);
 
@@ -124,13 +149,33 @@ bool Renderer::createTargets(int width, int height) {
 
     // The shade pass shares the prepass's depth so it can test EQUAL against it. That
     // sharing is the whole reason nothing is shaded twice.
-    shadeColour_ = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, rt | clamp);
+    shadeColour_ =
+        bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, rt | msaaFlag | clamp);
     bgfx::TextureHandle shadeAttachments[] = {shadeColour_, sceneDepth_};
     shadeFb_ = bgfx::createFrameBuffer(2, shadeAttachments, false);
 
-    const bool ok = bgfx::isValid(shadowFb_) && bgfx::isValid(prepassFb_) &&
-                    bgfx::isValid(ssaoFb_) && bgfx::isValid(blurFb_) && bgfx::isValid(shadeFb_);
-    if (!ok) core::logError("a render target did not survive creation at %dx%d", width, height);
+    // Named one by one, because "a render target did not survive" is not a thing anyone can
+    // act on, and a format this Metal refuses is exactly the kind of thing that lands here.
+    const std::pair<const char*, bool> made[] = {
+        {"shadow map", bgfx::isValid(shadowMap_)},
+        {"shadow buffer", bgfx::isValid(shadowFb_)},
+        {"prepass colour", bgfx::isValid(prepassColour_)},
+        {"scene depth", bgfx::isValid(sceneDepth_)},
+        {"prepass buffer", bgfx::isValid(prepassFb_)},
+        {"ssao buffer", bgfx::isValid(ssaoFb_)},
+        {"blur buffer", bgfx::isValid(blurFb_)},
+        {"shade colour", bgfx::isValid(shadeColour_)},
+        {"shade buffer", bgfx::isValid(shadeFb_)},
+    };
+    bool ok = true;
+    for (const auto& [what, valid] : made) {
+        if (valid) continue;
+        core::logError("the %s did not survive creation at %dx%d with %dx msaa", what, width,
+                       height, msaa_);
+        ok = false;
+    }
+    core::logf("targets %dx%d, %dx msaa, shadow %u, ssao %dx%d", width, height, msaa_,
+               unsigned(kShadowSize), hw, hh);
     return ok;
 }
 
@@ -197,6 +242,13 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             uint64_t drawState = state;
             // MU's figures are single sheets of mixed winding and are drawn two-sided.
             if (!material.twoSided) drawState |= BGFX_STATE_CULL_CW;
+            // A cutout keeps its discard, and with MSAA on it also gets alpha to coverage:
+            // plain MSAA never touches a discarded pixel's edge, so grass and leaves would
+            // stay as hard as they were. Nearly free once the samples are there. Untested on
+            // real cutout content -- House01 has none; the grass arrives in sprint 2.
+            if (material.cutout >= 0.0f && msaa_ > 1) {
+                drawState |= BGFX_STATE_BLEND_ALPHA_TO_COVERAGE;
+            }
 
             bgfx::setVertexBuffer(0, mesh.vertexBuffer());
             bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);

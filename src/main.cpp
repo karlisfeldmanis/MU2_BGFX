@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     textures.createDefaults();
 
     gfx::Renderer renderer;
-    if (!renderer.init(window.width(), window.height(), MU2_SHADER_DIR)) {
+    if (!renderer.init(window.width(), window.height(), MU2_SHADER_DIR, args.msaa)) {
         core::logError("the renderer did not start");
         textures.shutdown();
         window.close();

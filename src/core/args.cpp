@@ -34,7 +34,8 @@ void printUsage() {
         "  --model PATH              a .glb under assets/, or an absolute path\n"
         "  --sheet PATH              the lighting sheet (default sheets/lighting.json)\n"
         "  --dist N                  camera distance in world units\n"
-        "  --still                   hold the camera instead of turning it");
+        "  --still                   hold the camera instead of turning it\n"
+        "  --msaa N                  1, 2, 4 or 8 samples (default 4)");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -97,6 +98,14 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--dist")) {
             if (const char* v = next(s)) a.distance = float(std::atof(v));
+        } else if (!std::strcmp(s, "--msaa")) {
+            if (const char* v = next(s)) {
+                a.msaa = std::atoi(v);
+                if (a.msaa != 1 && a.msaa != 2 && a.msaa != 4 && a.msaa != 8) {
+                    logError("--msaa takes 1, 2, 4 or 8, not %d", a.msaa);
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--still")) {
             a.still = true;
         } else if (!std::strcmp(s, "--help") || !std::strcmp(s, "-h")) {

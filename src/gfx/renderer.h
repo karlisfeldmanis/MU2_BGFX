@@ -29,7 +29,8 @@ struct Drawable {
 
 class Renderer {
 public:
-    bool init(int width, int height, const std::string& shaderDir);
+    // `msaa` is 1, 2, 4 or 8 samples on the prepass, the depth and the shade target.
+    bool init(int width, int height, const std::string& shaderDir, int msaa);
     void shutdown();
     void resize(int width, int height);
 
@@ -56,6 +57,7 @@ private:
 
     int width_ = 0;
     int height_ = 0;
+    int msaa_ = 1;
     uint32_t drawCount_ = 0;
 
     // The shadow map is square and fixed; a split framed on the camera does not want to
