@@ -76,6 +76,7 @@ Three decisions this file makes, and each is a decision rather than a detail:
 """
 
 import argparse
+import array
 import hashlib
 import json
 import math
@@ -84,10 +85,22 @@ import struct
 import subprocess
 import sys
 import time
+import wave
 import zlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "assets")
+
+# What a new character is holding on the day he is made, by index.json's own names. OpenMU's
+# Version075 character-created plug-ins: AddSmallAxeForDarkKnight puts a Small Axe in the
+# knight's hand and AddShortBowForFairyElf a Short Bow in the elf's; the Dark Wizard is created
+# empty-handed and taught Energy Ball instead. MU2's `Cradle.cs` holds the same three rows.
+#
+# They are named here because nothing else reaches them: index.json's characters are the town's
+# people and the armoured Dark Knight, and every one of them is holding something a level-one
+# character has not earned. A hero who starts with nothing on him has nothing to hold unless
+# these two meshes are cooked, and the naked figure with an axe is the game's first minute.
+CRADLE_ARMS = ("Axe01", "Bow01")
 
 
 def read_glb(path):
@@ -940,6 +953,14 @@ def figure_set(world):
         entry["parts"] = [p for p in entry["parts"] if p]
         characters.append(entry)
 
+    # And the cradle's own two weapons, which no character in index.json is drawn holding. They
+    # go into `models` and so into the manifest's `items`, where the engine reads what each one
+    # is and how it is slung; which hand they end up in is the game's business and not the
+    # cook's. See CRADLE_ARMS.
+    for one in index.get("objects", []):
+        if one["name"] in CRADLE_ARMS:
+            reach(one.get("glb"))
+
     monsters = []
     for one in index["monsters"]:
         if not any(s["map"] == number for s in one.get("spawns", [])):
@@ -1227,6 +1248,232 @@ def cook_tables(world, out_dir):
     return 0
 
 
+# What every cooked sound is resampled and downmixed to. See cook_showing for why each of
+# the two numbers is what it is; the short version is that MONO IS NOT AN OPTIMISATION -- a
+# stereo file cannot be panned, and sprint 6 places every emitter by the vector from the hero
+# rotated by the camera's yaw.
+SOUND_RATE = 22050
+SOUND_BITS = 16
+
+
+def read_wav(path):
+    """One wav as mono 16-bit samples at its own rate. Returns (samples, rate).
+
+    MU's sounds are not one format and this is the whole reason this function exists rather
+    than a copy: measured over the 104 files, there are NINE -- 47 of them stereo 44.1 kHz
+    16-bit, 18 mono 22.05 kHz 16-bit, 10 mono 44.1 kHz 8-BIT, and one lone file at 11127 Hz,
+    which is not a rate anybody chooses on purpose. `wave` hands back raw frames and leaves
+    all of that to the caller.
+
+    8-bit wav is UNSIGNED with 128 for silence, and 16-bit is signed. Reading the first as
+    the second is the classic way to turn a footstep into a scream of white noise.
+    """
+    with wave.open(path, "rb") as handle:
+        channels = handle.getnchannels()
+        width = handle.getsampwidth()
+        rate = handle.getframerate()
+        raw = handle.readframes(handle.getnframes())
+
+    if width == 1:
+        wide = array.array("h", (int(b - 128) * 256 for b in raw))
+    elif width == 2:
+        wide = array.array("h")
+        wide.frombytes(raw)
+        if sys.byteorder == "big":
+            wide.byteswap()
+    else:
+        raise ValueError(f"{path}: {width * 8}-bit wav, and this reads 8 and 16")
+
+    if channels > 1:
+        # Averaged rather than taking the left, because several of these are a true stereo
+        # pair and one side of a pair is half the sound. The sum cannot overflow the sample
+        # type because it is done in Python's own integers and divided before it is stored.
+        mixed = array.array("h", (sum(wide[i:i + channels]) // channels
+                                  for i in range(0, len(wide) - channels + 1, channels)))
+        wide = mixed
+    return wide, rate
+
+
+def resample(samples, rate, target):
+    """Linear interpolation to `target` Hz. Returns the samples unchanged when it is a no-op.
+
+    Linear and not a windowed filter on purpose: the material is 1990s game audio, half of
+    it already 8-bit, and the aliasing a proper low-pass would save is below what this
+    content carries. If a sound ever comes out harsh this is the line to revisit, and the
+    cook says which files it touched so there is somewhere to look.
+    """
+    if rate == target or not samples:
+        return samples
+    count = max(1, int(len(samples) * target / rate))
+    step = len(samples) / count
+    out = array.array("h", bytes(2 * count))
+    last = len(samples) - 1
+    for i in range(count):
+        where = i * step
+        low = int(where)
+        if low >= last:
+            out[i] = samples[last]
+            continue
+        frac = where - low
+        out[i] = int(samples[low] + (samples[low + 1] - samples[low]) * frac)
+    return out
+
+
+def write_wav(path, samples, rate):
+    with wave.open(path, "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(rate)
+        if sys.byteorder == "big":
+            samples = array.array("h", samples)
+            samples.byteswap()
+        handle.writeframes(samples.tobytes())
+
+
+def cook_showing(out_dir, texcook, threads):
+    """Sprint 6's content: the effect sheets compressed, and the sounds made one format.
+
+    Neither is per-world and both sit beside the figures rather than under a map, for the
+    figures' own reason: an effect belongs to a blow and a sound to an event, and cooking
+    them per world would write the same blood sheet into Lorencia and into Noria.
+
+    The .mus format ("MU2 showing"), version 1, little-endian:
+
+        'MU2S', u32 version, u32 effects, u32 events, u32 sampleRate, u32 channels
+        effects: u16 len + name ("hit_blood"), u16 len + .ktx path relative to assets/
+        events:  u16 len + name ("melee_hit"), f32 onset seconds, f32 gain dB,
+                 u32 files, then per file u16 len + .wav path relative to assets/
+
+    **The sheets are not cut out.** texcook takes a cutout threshold and rescales alpha down
+    the mip chain so a leaf holds its coverage, and every effect sheet here is passed -1
+    instead. That rule is for alpha TESTING, where a texel is kept or discarded and the
+    average of a chain quietly thins a leaf away. An effect is blended: its alpha is the
+    gradient that makes it a soft-edged sprite, and holding a coverage in it would grade the
+    gradient into a mask. Same file, same format, opposite treatment, and the difference is
+    the blend mode rather than anything about the art.
+
+    **The sounds are made mono 16-bit at one rate, and the mono half is not about size.**
+    An emitter in this game is placed: the census has the listener at the character, the
+    direction taken from the hero and rotated by the camera's yaw alone. A stereo file has
+    its own left and right already baked in and cannot be panned to a place -- so 47 of the
+    104 files, the ones in the dominant format, are the ones that could not have worked.
+    Downmixing is what makes the feature possible.
+
+    The rate is a judgement and it is 22050. One rate means the mixer never resamples a
+    voice at play; nine rates means it always might. 22050 is the rate a third of this
+    corpus already carries, the top of what its 8-bit files can hold anything in, and the
+    era the art is from. The 57 files at 44.1 kHz lose their top octave, and that is the
+    cost, written down here rather than discovered later.
+
+    `gain` stays in decibels because that is what the asset says. Converting it to a linear
+    factor in the cook would put an engine's arithmetic in a table of facts.
+    """
+    with open(os.path.join(ASSETS, "index.json")) as handle:
+        index = json.load(handle)
+
+    effects = index.get("effects") or {}
+    events = index.get("sounds") or {}
+    onsets = index.get("sound_onsets") or {}
+    gains = index.get("sound_gains") or {}
+
+    os.makedirs(os.path.join(out_dir, "textures"), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, "sounds"), exist_ok=True)
+    started = time.time()
+
+    # ------------------------------------------------------------------ the sheets
+    jobs = []
+    rows = []
+    seen = {}
+    missing = []
+    raw_in = 0
+    for name in sorted(effects):
+        source = os.path.join(ASSETS, effects[name])
+        if not os.path.exists(source):
+            missing.append(name)
+            continue
+        with open(source, "rb") as handle:
+            data = handle.read()
+        raw_in += len(data)
+        digest = hashlib.sha1(data).hexdigest()[:16]
+        if digest not in seen:
+            stem = f"effect_{safe(os.path.splitext(os.path.basename(effects[name]))[0])}_{digest}"
+            ktx_path = os.path.join(out_dir, "textures", stem + ".ktx")
+            # -1: blended, not tested. See the note above.
+            jobs.append(("albedo", -1.0, source, ktx_path))
+            seen[digest] = os.path.relpath(ktx_path, ASSETS)
+        rows.append(write_string(name) + write_string(seen[digest]))
+
+    if jobs:
+        job_file = os.path.join(out_dir, "jobs.txt")
+        with open(job_file, "w") as handle:
+            for role, cutout, source, target in jobs:
+                handle.write(f"{role}\t{cutout}\t{source}\t{target}\n")
+        command = [texcook, job_file]
+        if threads:
+            command += ["--threads", str(threads)]
+        result = subprocess.run(command)
+        if result.returncode:
+            return result.returncode
+
+    # ------------------------------------------------------------------ the sounds
+    wav_in = 0
+    wav_out = 0
+    resampled = 0
+    downmixed = 0
+    gone = []
+    cooked = {}
+    rows_sound = []
+    for name in sorted(events):
+        files = []
+        for relative in events[name]:
+            source = os.path.join(ASSETS, relative)
+            if not os.path.exists(source):
+                gone.append(relative)
+                continue
+            if relative not in cooked:
+                wav_in += os.path.getsize(source)
+                samples, rate = read_wav(source)
+                with wave.open(source, "rb") as probe:
+                    if probe.getnchannels() > 1:
+                        downmixed += 1
+                if rate != SOUND_RATE:
+                    resampled += 1
+                    samples = resample(samples, rate, SOUND_RATE)
+                target = os.path.join(out_dir, "sounds",
+                                      safe(os.path.basename(relative)))
+                write_wav(target, samples, SOUND_RATE)
+                wav_out += os.path.getsize(target)
+                cooked[relative] = os.path.relpath(target, ASSETS)
+            files.append(write_string(cooked[relative]))
+        rows_sound.append(write_string(name) +
+                          struct.pack("<ffI", float(onsets.get(name, 0.0)),
+                                      float(gains.get(name, 0.0)), len(files)) +
+                          b"".join(files))
+
+    blob = struct.pack("<4sIIIII", b"MU2S", 1, len(rows), len(rows_sound),
+                       SOUND_RATE, 1)
+    blob += b"".join(rows) + b"".join(rows_sound)
+    path = os.path.join(out_dir, "showing.mus")
+    with open(path, "wb") as handle:
+        handle.write(blob)
+
+    ktx = sum(os.path.getsize(os.path.join(out_dir, "textures", f))
+              for f in os.listdir(os.path.join(out_dir, "textures")))
+    if missing:
+        print(f"cook: {len(missing)} effect sheets named and not on disk: "
+              f"{', '.join(missing[:6])}{'...' if len(missing) > 6 else ''}")
+    if gone:
+        print(f"cook: {len(gone)} sound files named and not on disk: {', '.join(gone[:4])}")
+    print(f"cook: {len(rows)} effect sheets ({len(jobs)} distinct), "
+          f"{raw_in / 1e6:.1f} MB of png -> {ktx / 1e6:.1f} MB of .ktx with mips")
+    print(f"cook: {len(cooked)} sounds over {len(rows_sound)} events, "
+          f"{downmixed} downmixed to mono, {resampled} resampled to {SOUND_RATE} Hz, "
+          f"{wav_in / 1e6:.1f} MB -> {wav_out / 1e6:.1f} MB")
+    print(f"cook: showing -> {os.path.relpath(path, ROOT)} ({len(blob)} bytes), "
+          f"{time.time() - started:.1f} s")
+    return 0
+
+
 def cook_figures(world, out_dir, texcook, threads):
     """Every figure the world reaches: its textures, its meshes, its clips and a manifest."""
     models, characters, monsters, standalone, placements, index = figure_set(world)
@@ -1404,7 +1651,7 @@ def main():
     parser.add_argument("--threads", type=int, default=0)
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
     parser.add_argument("--only", choices=("textures", "meshes", "placements", "figures",
-                                           "tables", "all"), default="all")
+                                           "tables", "showing", "all"), default="all")
     parser.add_argument("--chunk", type=int, default=32,
                         help="a chunk's side in tiles; 32 gives Lorencia an 8x8 grid")
     args = parser.parse_args()
@@ -1417,6 +1664,14 @@ def main():
 
     if args.only == "tables":
         return cook_tables(args.world, os.path.join(args.out, args.world))
+
+    if args.only == "showing":
+        if not os.path.exists(args.texcook):
+            print(f"cook: {args.texcook} is not built. cmake --build build --target texcook",
+                  file=sys.stderr)
+            return 2
+        # Beside the figures and not under a world, for the figures' own reason.
+        return cook_showing(os.path.join(args.out, "showing"), args.texcook, args.threads)
 
     if args.only == "figures":
         if not os.path.exists(args.texcook):
@@ -1473,6 +1728,7 @@ def main():
             return mesh_result
         cook_placements(args.world, out_dir, args.chunk)
         cook_tables(args.world, out_dir)
+        cook_showing(os.path.join(args.out, "showing"), args.texcook, args.threads)
     return result.returncode
 
 
