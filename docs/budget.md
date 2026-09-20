@@ -64,14 +64,21 @@ another in the same run, and it is not a budget.
 
 ## How to measure, and the noise floor that decides what is measurable
 
-**Use `--repeat`, not several launches.** A launch spends about twenty seconds decoding and
-mipping a world's textures to measure a second and a half of frames, so a dozen launches is
-four minutes of loading for eighteen seconds of data. `--frames 600 --repeat 6` measures six
-segments in one process with the world loaded once, and prints each segment's mean and the
-spread across them. Six segments cost about eleven seconds all told.
+**Most of the time, one run.** The usual question is "is this inside 5.5 ms", and the answer
+is rarely close enough to need a second opinion: `--frames 600 --world lorencia` answers it
+in a few seconds and the gate exits non-zero if it does not. Do not repeat a run that already
+said 2.4 against 5.5.
 
-**The spread is the number that says what is measurable at all.** Six segments of the same
-600 frames, same process, same camera, nothing changed between them:
+**`--repeat 3` when two configurations have to be compared**, and never several launches. A
+launch spends about twenty seconds decoding and mipping a world's textures to measure a
+second and a half of frames, so a dozen launches is four minutes of loading for eighteen
+seconds of data. `--repeat` measures that many segments in one process with the world loaded
+once, prints each segment's mean and the spread across them. Three is enough to see whether
+a difference clears the spread; six was measured once, to establish the figure below, and
+there is no reason to pay for it again.
+
+**The spread is the number that says what is measurable at all.** Measured once, six
+segments of the same 600 frames, same process, same camera, nothing changed between them:
 
     segment 1  2.202 ms      segment 4  3.975 ms
     segment 2  2.286 ms      segment 5  2.305 ms
