@@ -1,4 +1,4 @@
-// The frame: six views, in the order docs/conventions.md fixes them. Knows meshes and
+// The frame: eight views, in the order docs/conventions.md fixes them. Knows meshes and
 // materials and nothing about the game — no map, no figure, no rules.
 #pragma once
 
@@ -9,6 +9,7 @@
 
 #include "content/ground.h"
 #include "content/mesh.h"
+#include "gfx/effects.h"
 #include "gfx/lighting.h"
 
 namespace mu::gfx {
@@ -55,6 +56,15 @@ public:
               const std::vector<Drawable>* casters = nullptr);
 
     uint32_t lastDrawCount() const { return drawCount_; }
+
+    // The transparent pass, which the renderer owns because the view it draws into is part
+    // of the frame and not part of any one caller. A caller fills it between begin() and the
+    // next draw(); draw() submits it between the shade and the tonemap and empties it.
+    //
+    // The renderer knows nothing about what a sprite MEANS -- no blow, no monster, no cue.
+    // What lives, for how long, and on which cue belongs to `game`, and none of it is here.
+    Effects& effects() { return effects_; }
+    const Effects& effects() const { return effects_; }
 
     // --- the bone palette -------------------------------------------------------------
     // One texture holds every figure's pose for the frame: a row a figure, three RGBA32F
@@ -206,6 +216,8 @@ private:
 
     bgfx::VertexBufferHandle screenVb_ = BGFX_INVALID_HANDLE;
     bgfx::VertexLayout screenLayout_;
+
+    Effects effects_;
 
     std::vector<Batch> batches_;
     std::vector<Batch> casterBatches_;

@@ -57,11 +57,20 @@ is symlinked, so a run measured here does not change because somebody rebuilt MU
 
     ./tools/cook.py --world lorencia             the land, the town and their textures
     ./tools/cook.py --world lorencia --only figures    the bodies, the armour and the clips
+    ./tools/cook.py --only showing               the effect sheets and the sounds
 
 The cook turns `assets/` into what the engine loads: BC7 and BC5 `.ktx` with their mip
-chains, flat `.mum` meshes, the town's `.mut`, and the figures' `.muc` clip libraries baked
-frame by frame. It is idempotent — an image whose `.ktx` is already there is not compressed
-again, because the file's name carries the hash of its source bytes and its role.
+chains, flat `.mum` meshes, the town's `.mut`, the figures' `.muc` clip libraries baked
+frame by frame, and the showing's `.mus`. It is idempotent — an image whose `.ktx` is already
+there is not compressed again, because the file's name carries the hash of its source bytes
+and its role.
+
+`--only showing` is sprint 6's and is not per-world: an effect belongs to a blow and a sound
+to an event, so both land in `cooked/showing` beside the figures. It compresses the 151
+effect sheets and makes every sound **mono 16-bit at 22050 Hz**. The mono is not about size:
+MU's 104 files are in nine formats and 47 are stereo, and a stereo file has its left and
+right baked in and cannot be panned to a place, so the format most of them are in is the one
+positioned audio could not have used.
 
 ## Checks
 
@@ -88,3 +97,11 @@ two: a monster's 4 is its second swing and a player's 4 is "Stop sword".
 
 `--crowd N` is how many monsters stand in the town, in the map's own spawn mix; `--crowd -1`
 is every one its spawn table names, which for Lorencia is 290.
+
+    ./run.sh --world lorencia --frames 400 --effects 64 --effect-size 2 --effect-sheet blood
+
+`--effects N` puts N sprites through the transparent pass, to price it. It is a probe and
+not a look: the cost of that pass is **fill rate**, so what decides its account is how much
+of the screen the sprites cover rather than how many there are, and `--effect-size` is what
+drives that. 64 sprites half a metre across cost nothing measurable; 64 sprites 60 m across
+cost 1.19 ms. `docs/budget.md` has the table and the rate derived from it.

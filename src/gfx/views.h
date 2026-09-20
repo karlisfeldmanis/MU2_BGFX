@@ -7,15 +7,22 @@
 
 namespace mu::gfx {
 
+// Sprint 6 inserted ViewTransparent at 5 and moved present and hud to 6 and 7. It has to sit
+// between the shade and the tonemap and nowhere else: it draws into the SAME HDR target the
+// shade pass wrote, so an additive flame adds to a linear radiance and is tonemapped with the
+// scene it is in. Drawn after the present instead, it would be LDR sprites laid over an
+// already-tonemapped image, and every additive effect would clip white at a different place
+// than the fire beside it.
 enum View : uint16_t {
     ViewShadow = 0,
     ViewPrepass = 1,
     ViewSsao = 2,
     ViewBlur = 3,
     ViewShade = 4,
-    ViewPresent = 5,
-    ViewHud = 6,
-    ViewCount = 7,
+    ViewTransparent = 5,
+    ViewPresent = 6,
+    ViewHud = 7,
+    ViewCount = 8,
 };
 
 enum Account : uint8_t {
@@ -23,6 +30,7 @@ enum Account : uint8_t {
     AccountPrepass,
     AccountSsao,
     AccountShade,
+    AccountEffects,
     AccountPresent,
     AccountCount,
 };

@@ -578,10 +578,17 @@ def check_cooked_textures(failures):
     for path in sorted(glob.glob(os.path.join(ASSETS, "cooked", "**", "*.ktx"),
                                  recursive=True)):
         name = os.path.basename(path)
-        role = None
-        for candidate in ROLE_FORMAT:
-            if f"_{candidate}_" in name or f"_{candidate}." in name:
-                role = candidate
+        # The role is a token the COOK puts in the name, and it is read from the right --
+        # the cook writes `<what>_<role>_<digest>.ktx`, or `<what>_<role>.ktx` for the land.
+        #
+        # It used to be a substring search over the whole name, and an effect sheet called
+        # `chat_on_normal.png` walked straight into it: its own filename ends in a word that
+        # is also a role, so a BC7 sRGB sprite was read as a normal map and failed for being
+        # exactly what it should be. Anything MU's artists happened to name after a texture
+        # role could do the same. Taking the rightmost token that is a role gets the cook's
+        # own field rather than a word out of the artist's filename.
+        tokens = os.path.splitext(name)[0].split("_")
+        role = next((t for t in reversed(tokens) if t in ROLE_FORMAT), None)
         if role is None:
             continue
         head = open(path, "rb").read(68)

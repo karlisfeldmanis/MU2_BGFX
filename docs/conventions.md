@@ -252,7 +252,7 @@ that is resolved at cook time into these fields.
 
 ## The frame
 
-Six views in this order, and their ids are fixed so the budget accounts line up:
+Eight views in this order, and their ids are fixed so the budget accounts line up:
 
 | id | view | account |
 |---|---|---|
@@ -261,11 +261,33 @@ Six views in this order, and their ids are fixed so the budget accounts line up:
 | 2 | ssao | ssao |
 | 3 | blur | ssao |
 | 4 | shade | shade |
-| 5 | present | present |
-| 6 | hud | present |
+| 5 | effects | effects |
+| 6 | present | present |
+| 7 | hud | present |
 
 Depth is laid by the prepass; the shade pass tests `EQUAL` and writes no depth. Nothing is
 shaded twice.
+
+**View 5 was inserted by sprint 6 and present and hud moved up by one.** The transparent
+pass has to sit between the shade and the tonemap and nowhere else. It draws into the *same*
+HDR multisampled target the shade pass wrote, with the prepass's depth still attached, so:
+
+- an additive flame adds to a linear radiance and is tonemapped with the scene it is in, by
+  the one present pass that does ACES and the sRGB write for everything;
+- it gets antialiased edges out of MSAA that is already being paid for;
+- it tests depth `LESS` against the world and **writes none**, so a wall in front occludes an
+  effect and no effect ever occludes another. The back-to-front sort is therefore not an
+  optimisation — it is the thing that decides the picture.
+
+Drawn after the present instead, it would be LDR sprites laid over an already-tonemapped
+image, and every additive effect would clip white somewhere different from the fire beside it.
+
+**The effect material is not the world's, and that is deliberate.** The closed model above —
+albedo, normal, ORM, emissive, and the three flags cutout, two-sided and skinned — stays
+closed. An effect is a sheet, a blend mode (`alpha` or `additive`, already resolved per part
+in MU2's `index.json`) and a tint; it is not lit, casts nothing, and has no normal or
+roughness. Adding `additive` as a fourth flag over there would make every wall in Lorencia
+pay a shader variant for a thing only smoke does.
 
 ## The grid, and what may stand on it
 

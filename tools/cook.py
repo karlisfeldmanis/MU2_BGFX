@@ -1396,7 +1396,12 @@ def cook_showing(out_dir, texcook, threads):
         raw_in += len(data)
         digest = hashlib.sha1(data).hexdigest()[:16]
         if digest not in seen:
-            stem = f"effect_{safe(os.path.splitext(os.path.basename(effects[name]))[0])}_{digest}"
+            # The role goes in the name, where every other cooked texture carries it and
+            # where the audit reads it from: `<what>_<role>_<digest>`. Without it a sheet
+            # whose own filename ends in a role word -- `chat_on_normal.png` is real -- is
+            # read as that role and failed for being what it is.
+            base = safe(os.path.splitext(os.path.basename(effects[name]))[0])
+            stem = f"effect_{base}_albedo_{digest}"
             ktx_path = os.path.join(out_dir, "textures", stem + ".ktx")
             # -1: blended, not tested. See the note above.
             jobs.append(("albedo", -1.0, source, ktx_path))

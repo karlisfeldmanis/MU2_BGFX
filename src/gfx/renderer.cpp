@@ -98,6 +98,15 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     };
     screenVb_ = bgfx::createVertexBuffer(bgfx::makeRef(tri, sizeof(tri)), screenLayout_);
 
+    // The transparent pass. Built here and not on first use, which is Pool.cs' lesson out of
+    // MU2: the four pools that built themselves on demand hitched on the first blow, the
+    // first number, the first swing and the first level -- the four most conspicuous moments
+    // in a fight. A pass that fails to build is reported and the frame goes on without it,
+    // because a town with no blood is a picture and a town with no frame is not.
+    if (!effects_.init(shaderDir)) {
+        core::logError("the transparent pass did not build; effects will not draw");
+    }
+
     return createTargets(width, height);
 }
 
@@ -254,6 +263,7 @@ void Renderer::resize(int width, int height) {
 
 void Renderer::shutdown() {
     destroyTargets();
+    effects_.shutdown();
     if (bgfx::isValid(palette_)) bgfx::destroy(palette_);
     palette_ = BGFX_INVALID_HANDLE;
     for (bgfx::ProgramHandle* p : {&shadowProgram_, &prepassProgram_, &ssaoProgram_, &blurProgram_,
@@ -741,7 +751,23 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         bgfx::touch(ViewShade);
     }
 
-    // --- view 5: present ------------------------------------------------------------
+    // --- view 5: the transparent pass -------------------------------------------------
+    // Into the SAME target the shade pass wrote, which is the whole reason this view is here
+    // and not after the present: the target is HDR and multisampled, so an additive flame
+    // adds to a linear radiance, gets antialiased edges from the MSAA already being paid
+    // for, and is tonemapped with the scene by the present below. Drawn after the resolve it
+    // would be LDR sprites over an already-tonemapped image.
+    //
+    // It shares the prepass's depth as an attachment, so it can test against the world
+    // without writing to it. The sort inside Effects::draw is what decides the picture.
+    bgfx::setViewFrameBuffer(ViewTransparent, shadeFb_);
+    bgfx::setViewRect(ViewTransparent, 0, 0, uint16_t(width_), uint16_t(height_));
+    // No clear at all: the shade pass's colour and the prepass's depth are both wanted.
+    bgfx::setViewClear(ViewTransparent, 0, 0, 1.0f, 0);
+    effects_.draw(ViewTransparent, view, proj, camera.position);
+    drawCount_ += effects_.lastDrawCount();
+
+    // --- view 6: present ------------------------------------------------------------
     const float params[4] = {lighting.ssaoRadius, lighting.ssaoStrength, lighting.exposure, 0.0f};
     bgfx::setViewFrameBuffer(ViewPresent, BGFX_INVALID_HANDLE);
     bgfx::setViewRect(ViewPresent, 0, 0, uint16_t(width_), uint16_t(height_));
@@ -751,7 +777,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     bgfx::setTexture(8, sColour_, shadeColour_);
     screenPass(ViewPresent, presentProgram_);
 
-    // View 6 is the HUD's, and is submitted empty until sprint 7 fills it. A view bgfx sees
+    // View 7 is the HUD's, and is submitted empty until sprint 7 fills it. A view bgfx sees
     // nothing in is dropped, and an account with no rows reads as free rather than unbuilt.
     bgfx::setViewFrameBuffer(ViewHud, BGFX_INVALID_HANDLE);
     bgfx::setViewRect(ViewHud, 0, 0, uint16_t(width_), uint16_t(height_));

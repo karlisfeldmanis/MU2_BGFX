@@ -12,6 +12,7 @@
 // Exits non-zero on the first thing that is not so.
 
 #include "content/cooked.h"
+#include "content/showing.h"
 #include "core/files.h"
 
 #include <cstdio>
@@ -245,6 +246,72 @@ int main() {
                 check(!mu::content::parseCookedClips(half, ignored, error),
                       "half a .muc is refused");
             }
+        }
+    }
+
+    // --- the showing: sprint 6's effect sheets and sound events -------------------------
+    {
+        const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/showing/showing.mus";
+        std::vector<uint8_t> showingBytes = mu::core::readFile(path);
+        if (showingBytes.empty()) {
+            std::printf("cooked_test: no showing.mus -- run tools/cook.py --only showing\n");
+            ++g_failures;
+        } else {
+            mu::content::Showing showing;
+            std::string error;
+            check(mu::content::parseShowing(showingBytes, showing, error),
+                  "showing.mus parses: " + error);
+
+            // Mono at 22050 is what the cook promises and what a mixer is allowed to assume.
+            // 47 of MU's 104 sound files are stereo and cannot be panned to a place, so this
+            // is a correctness property of the sprint's positioned audio, not a size one.
+            check(showing.sampleRate == 22050 && showing.channels == 1,
+                  "every cooked sound is mono at 22050 Hz");
+            check(!showing.effects.empty(), "the showing carries effect sheets");
+            check(!showing.events.empty(), "the showing carries sound events");
+
+            // Every event names at least one file, or it is an event that can never sound.
+            for (const mu::content::SoundEvent& one : showing.events) {
+                if (one.files.empty()) {
+                    check(false, one.name + " is a sound event with no files");
+                    break;
+                }
+                // A negative onset would mean a cue that fires before its own file.
+                if (!(one.onset >= 0.0f)) {
+                    check(false, one.name + " has a negative onset");
+                    break;
+                }
+            }
+
+            // The onset is only load-bearing for a ONE-SHOT: it is what stops a blow's sound
+            // landing up to a quarter of a second after the blow. This bound was first
+            // written as a second over every event and the ambiences failed it --
+            // world_forest leads by 3.15 s and world_wind by 1.53 s, which is not a fault but
+            // a track that fades in, and an ambience is looped rather than cued anyway. So
+            // the tight bound belongs on the events a cue actually fires.
+            for (const char* name : {"melee_hit", "agon_attack", "beetlemonster_attack"}) {
+                const mu::content::SoundEvent* one = showing.event(name);
+                if (one == nullptr) {
+                    check(false, std::string(name) + " is in the cooked events");
+                    continue;
+                }
+                check(one->onset < 0.3f,
+                      std::string(name) + " is a cued one-shot and leads by under 0.3 s");
+            }
+
+            // The one event the census names by its measurement, so the number is checked
+            // and not merely present: agon_attack's lead is 0.167 s.
+            if (const mu::content::SoundEvent* agon = showing.event("agon_attack")) {
+                check(agon->onset > 0.166f && agon->onset < 0.168f,
+                      "agon_attack keeps its measured 0.167 s lead");
+            } else {
+                check(false, "agon_attack is in the cooked events");
+            }
+
+            mu::content::Showing ignored;
+            std::vector<uint8_t> half(showingBytes.begin(),
+                                      showingBytes.begin() + showingBytes.size() / 2);
+            check(!mu::content::parseShowing(half, ignored, error), "half a .mus is refused");
         }
     }
 

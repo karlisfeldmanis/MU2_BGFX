@@ -49,6 +49,10 @@ void printUsage() {
         "  --browse                  step through every cooked .mum; arrows walk the list\n"
         "  --category WORD           open the browser on world|monsters|people|parts\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
+        "  --effects N               N sprites through the transparent pass, to price it\n"
+        "  --effect-size M           each sprite's half-extent in metres (default 0.5); large "
+        "is the fill-rate worst case\n"
+        "  --effect-sheet NAME       which cooked effect sheet they wear\n"
         "  --figure NAME             the monster bench: one figure, by index.json's name\n"
         "  --clip N                  which clip it plays, as MU's own action number\n"
         "  --play                    raise the realm behind the window: click to walk, click "
@@ -247,6 +251,12 @@ Args parseArgs(int argc, char** argv) {
             a.still = false;
         } else if (!std::strcmp(s, "--browse")) {
             a.browse = true;
+        } else if (!std::strcmp(s, "--effects")) {
+            if (const char* v = next(s)) a.effects = std::atoi(v);
+        } else if (!std::strcmp(s, "--effect-size")) {
+            if (const char* v = next(s)) a.effectSize = float(std::atof(v));
+        } else if (!std::strcmp(s, "--effect-sheet")) {
+            if (const char* v = next(s)) a.effectSheet = v;
         } else if (!std::strcmp(s, "--category")) {
             if (const char* v = next(s)) a.category = v;
         } else if (!std::strcmp(s, "--pick")) {

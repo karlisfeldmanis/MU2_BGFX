@@ -89,6 +89,19 @@ struct Args {
     // The cooked browser: step through every .mum the cook wrote, with the arrow keys. Not
     // the same thing as --model, which reads one glb: this reads what the game loads.
     bool browse = false;
+
+    // The transparent pass's probe: N effect sprites in front of the camera, so that a pass
+    // which has no account yet can be priced against the same scene with it empty.
+    //
+    // It is a probe and not `--bench effect`, and the difference matters. The bench judges
+    // how one effect LOOKS; this measures what the pass COSTS, and the two want opposite
+    // scenes -- the bench wants one sprite on a plain ground and the account is defined over
+    // Lorencia's town. `--effect-size` drives the worst case the sprint file names: the cost
+    // is fill rate, so one sprite filling the view is worse than thirty over a spider, and
+    // ordinary play will not hand that over often enough to show up in a median.
+    int effects = 0;
+    float effectSize = 0.5f;        // half-extent in metres
+    std::string effectSheet;        // an index.json effect name; empty takes the first cooked
     // Which of the browser's categories to open on, by a word out of its label -- "world",
     // "monsters", "people", "parts". Empty opens the first that has anything in it. This is
     // what makes a review run of the viewer possible at all: a run with --frames and --shot

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "content/showing.h"
 #include "content/texture.h"
 #include "core/args.h"
 #include "core/log.h"
@@ -47,8 +48,8 @@ std::string defaultPath(const char* dir, const char* name) {
 // on the model.
 struct ListHit {
     long long hovered = -1;   // the row the pointer is over, or -1
-    float x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
     long long tab = -1;       // the category tab the pointer is over, or -1
+    float x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
     bool over = false;        // the pointer is somewhere on the panel
 };
 
@@ -78,7 +79,6 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     const size_t count = bench.browseCount();
     if (count == 0) return hit;
 
-    const float header = line * 1.6f;
     // The categories, one row each above the names. Vertical rather than a strip across the
     // top: the panel is already as wide as the widest name and no wider, and four labels laid
     // side by side either overflow that or have to be shortened until they stop being the
@@ -88,6 +88,7 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     const size_t tabs = bench.categoryCount() > 8 ? 8 : bench.categoryCount();
     const float tabBlock = float(tabs) * tabLine + kPad;
 
+    const float header = line * 1.6f;
     const float footer = line * 1.6f;
     // As many as fit in the top three quarters, so the list never runs into the frame line
     // the log prints at the bottom of a review shot.
@@ -105,7 +106,6 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
         const float w = gfx::Overlay::measure(kScale, bench.browseName(i));
         if (w > widest) widest = w;
     }
-
     char tabLabels[8][96];
     for (size_t i = 0; i < tabs && i < 8; ++i) {
         std::snprintf(tabLabels[i], sizeof(tabLabels[i]), "%s  %zu",
@@ -113,6 +113,7 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
         const float w = gfx::Overlay::measure(tabScale, tabLabels[i]);
         if (w > widest) widest = w;
     }
+
     hit.x = kPad;
     hit.y = kPad;
     hit.w = widest + kPad * 3.0f;
@@ -121,7 +122,6 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     hit.over = pointerX >= hit.x && pointerX < hit.x + hit.w && pointerY >= hit.y &&
                pointerY < hit.y + hit.h;
 
-    char label[96];
     // The tabs. An empty category is drawn dim and cannot be chosen -- a world cooked with
     // no figures still shows that the monsters are a thing the viewer has, and that there
     // are none of them here, which is a different statement from the tab not existing.
@@ -140,6 +140,7 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     }
     overlay.panel(hit.x + kPad, hit.y + tabBlock - 3.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
 
+    char label[96];
     std::snprintf(label, sizeof(label), "%s  %zu/%zu",
                   bench.category(bench.categoryIndex()).label.c_str(), bench.browseIndex() + 1,
                   count);
@@ -164,9 +165,9 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
 
     const float footTop = top + float(rows) * line;
     overlay.panel(hit.x + kPad, footTop + 2.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
-    overlay.text(hit.x + kPad, footTop + 6.0f, kScale * 0.75f, kDim,
     // What the footer says depends on what is standing there: with a figure the useful thing
     // is which of its clips is running, because that is the one fact a still cannot show.
+    overlay.text(hit.x + kPad, footTop + 6.0f, kScale * 0.75f, kDim,
                  // No brackets in the hint, because there are none in the font: this line
                  // read "TAB CATEGORY   CLIP" for one run, with the two keys it was naming
                  // dropped silently on the floor. See kGlyphs in gfx/overlay.cpp.
@@ -297,12 +298,12 @@ int main(int argc, char** argv) {
         core::logClose();
         return 1;
     }
-    if (!inWorld && !figureBench && !browseBench &&
     // Where the browser opens, for a run with nobody at the keyboard. Neither is fatal: a
     // category or a name that is not there has said so, and the viewer is still a viewer.
     if (browseBench && !args.category.empty()) bench.openCategory(args.category, textures);
     if (browseBench && !args.pick.empty()) bench.pick(args.pick, textures);
     if (browseBench) core::logf("browser: %s", bench.browseLine().c_str());
+    if (!inWorld && !figureBench && !browseBench &&
         !bench.open(MU2_ASSET_DIR, benchWorld, modelPath, textures)) {
         core::logError("the bench did not open");
         renderer.shutdown();
@@ -312,21 +313,45 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // A shot and a measurement do not belong in the same run, and saying so is cheaper than
+    // The transparent pass's probe. The sheet comes out of the cooked showing table rather
     // than off a path, so what is measured is exactly what the game will draw: a BC7 .ktx
     // with its mip chain, not a PNG decoded at load.
     //
+    // A probe that cannot find its sheet draws nothing and says so once. It is never fatal:
+    // this is a measurement aid, and a run that refuses to start because an effect is
+    // missing would be a worse tool than one that says the effects are missing.
+    int probeSprites = args.effects;
+    bgfx::TextureHandle probeSheet = BGFX_INVALID_HANDLE;
+    if (probeSprites > 0) {
+        content::Showing showing;
         std::string error;
+        const std::string showingPath =
+            std::string(MU2_ASSET_DIR) + "/cooked/showing/showing.mus";
+        if (!content::loadShowing(showingPath, showing, error)) {
+            core::logError("the showing table did not open: %s (tools/cook.py --only showing)",
                            error.c_str());
+            probeSprites = 0;
         } else {
+            const content::EffectSheet* chosen =
+                args.effectSheet.empty() ? (showing.effects.empty() ? nullptr
+                                                                    : &showing.effects.front())
+                                         : showing.effect(args.effectSheet);
             if (chosen == nullptr) {
+                core::logError("no cooked effect named '%s'; %zu are in the table",
+                               args.effectSheet.c_str(), showing.effects.size());
+                probeSprites = 0;
             } else {
+                probeSheet = textures.load(std::string(MU2_ASSET_DIR) + "/" + chosen->path,
                                            content::TextureRole::Albedo);
+                core::logf("effects probe: %d sprites of '%s' at %.2f m, %zu sheets and "
                            "%zu sound events cooked",
+                           probeSprites, chosen->name.c_str(), args.effectSize,
+                           showing.effects.size(), showing.events.size());
             }
         }
     }
 
+    // A shot and a measurement do not belong in the same run, and saying so is cheaper than
     // discovering it twice. The stalled frame itself is kept out of the statistics, but the
     // readback's cost does not land wholly inside that one frame: measured over six
     // alternating pairs, a run with --shot still comes out about 0.15 ms of mean dearer, and
@@ -373,6 +398,39 @@ int main(int argc, char** argv) {
         // a row left over from the last one belongs to nobody.
         renderer.resetPalettes();
 
+        // The transparent pass's list starts empty for the same reason, and is filled below
+        // from whatever the probe asks for. Sprint 6 has no effects with lives of their own
+        // yet; when it does, this is where the game's own pool will write into it.
+        renderer.effects().begin();
+        if (probeSprites > 0 && bgfx::isValid(probeSheet)) {
+            const gfx::Camera& shot = inWorld ? world.camera() : bench.camera();
+            // Strung along the line from the camera to what it looks at, so that the sprites
+            // are in front of the subject rather than inside it, and so that the sort has
+            // something to sort: the near one must come out over the far one.
+            for (int i = 0; i < probeSprites; ++i) {
+                const float along = 0.35f + 0.5f * float(i) / float(probeSprites);
+                gfx::Sprite sprite;
+                for (int c = 0; c < 3; ++c) {
+                    sprite.position[c] =
+                        shot.position[c] + (shot.target[c] - shot.position[c]) * along;
+                }
+                sprite.halfWidth = sprite.halfHeight = args.effectSize;
+                // A turn per sprite, which is what MU does so that four blows on one spider
+                // do not stamp the same picture four times.
+                sprite.spin = float(i) * 0.7f;
+                sprite.colour[3] = 0.6f;
+                sprite.sheet = probeSheet;
+                // The far half alpha and the near half additive, rather than alternating
+                // every sprite. Alternating is the batcher's worst case -- the sort puts the
+                // two modes in each other's way and every sprite becomes its own draw -- and
+                // it is not what a fight looks like: a burst of particles shares one sheet
+                // and one mode. Two blocks exercise both modes AND show the runs batching,
+                // which is what the draw count in the log is there to report.
+                sprite.blend = (i * 2 >= probeSprites) ? gfx::Blend::Additive : gfx::Blend::Alpha;
+                renderer.effects().add(sprite);
+            }
+        }
+
         if (inWorld) {
             world.update(elapsed, args.still);
             // The town's drawables are gathered fresh each frame into one vector that keeps
@@ -398,22 +456,6 @@ int main(int argc, char** argv) {
                     world.town().gatherAll(townCasters, true);
                     casters = &townCasters;
                 } else {
-        // The transparent pass's list starts empty for the same reason, and is filled below
-        // yet; when it does, this is where the game's own pool will write into it.
-            const gfx::Camera& shot = inWorld ? world.camera() : bench.camera();
-            // are in front of the subject rather than inside it, and so that the sort has
-            // something to sort: the near one must come out over the far one.
-                for (int c = 0; c < 3; ++c) {
-                        shot.position[c] + (shot.target[c] - shot.position[c]) * along;
-                }
-                // do not stamp the same picture four times.
-                // The far half alpha and the near half additive, rather than alternating
-                // it is not what a fight looks like: a burst of particles shares one sheet
-                // and one mode. Two blocks exercise both modes AND show the runs batching,
-                // which is what the draw count in the log is there to report.
-            }
-        }
-
                     world.town().gatherAll(townDrawables);
                 }
             }
@@ -477,6 +519,18 @@ int main(int argc, char** argv) {
                     bench.step(by, textures);
                     core::logf("browser: %s", bench.browseLine().c_str());
                 }
+                // Tab walks the categories, skipping any that is empty: a world cooked
+                // without figures must not have two tab presses that appear to do nothing.
+                if (window.stepped(gfx::Window::Step::Category)) {
+                    const size_t count = bench.categoryCount();
+                    for (size_t i = 1; i <= count; ++i) {
+                        const size_t next = (bench.categoryIndex() + i) % count;
+                        if (bench.setCategory(next, textures)) break;
+                    }
+                    core::logf("browser: %s", bench.browseLine().c_str());
+                }
+                if (window.stepped(gfx::Window::Step::PreviousClip)) bench.stepClip(-1);
+                if (window.stepped(gfx::Window::Step::NextClip)) bench.stepClip(1);
             }
             bench.update(elapsed, deltaSeconds, !args.still);
             renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
@@ -485,10 +539,21 @@ int main(int argc, char** argv) {
                 window.pointer(&px, &py);
                 const ListHit hit = drawBrowserList(overlay, bench, window.width(),
                                                     window.height(), px, py);
+                // Under the panel rather than in it: which clip is running, where its clock
+                // stands and how long it is. A still cannot show that a clip is playing, and
+                // a monster frozen on frame one looks exactly like one standing still.
+                if (bench.hasFigure()) {
+                    overlay.text(hit.x + 4.0f, hit.y + hit.h + 10.0f, 1.8f, 0xFFc8c8c8u,
+                                 bench.clipLine());
+                }
                 overlay.submit(gfx::ViewHud);
                 // The list eats the pointer while it is over it, so a click on a name does
                 // not also drag the camera and the wheel scrolls the list rather than zooming.
                 if (hit.over) {
+                    if (window.clicked(0) && hit.tab >= 0) {
+                        bench.setCategory(size_t(hit.tab), textures);
+                        core::logf("browser: %s", bench.browseLine().c_str());
+                    }
                     if (window.clicked(0) && hit.hovered >= 0) {
                         bench.step(int(hit.hovered - (long long)bench.browseIndex()), textures);
                         core::logf("browser: %s", bench.browseLine().c_str());
@@ -519,18 +584,6 @@ int main(int argc, char** argv) {
         }
 
         bgfx::frame();
-                // Tab walks the categories, skipping any that is empty: a world cooked
-                // without figures must not have two tab presses that appear to do nothing.
-                if (window.stepped(gfx::Window::Step::Category)) {
-                    const size_t count = bench.categoryCount();
-                    for (size_t i = 1; i <= count; ++i) {
-                        const size_t next = (bench.categoryIndex() + i) % count;
-                        if (bench.setCategory(next, textures)) break;
-                    }
-                    core::logf("browser: %s", bench.browseLine().c_str());
-                }
-                if (window.stepped(gfx::Window::Step::PreviousClip)) bench.stepClip(-1);
-                if (window.stepped(gfx::Window::Step::NextClip)) bench.stepClip(1);
 
         const int64_t now = bx::getHPCounter();
         const double cpuMs = double(now - last) * toMs;
@@ -539,21 +592,10 @@ int main(int argc, char** argv) {
         // A screenshot stalls its frame to about 250 ms, and that quarter-second used to be
         // handed to the clips: every shot after the first showed a pose a quarter-second
         // ahead of where a shotless run stands, and any transient shorter than the stall --
-                // Under the panel rather than in it: which clip is running, where its clock
-                // stands and how long it is. A still cannot show that a clip is playing, and
-                // a monster frozen on frame one looks exactly like one standing still.
-                if (bench.hasFigure()) {
-                    overlay.text(hit.x + 4.0f, hit.y + hit.h + 10.0f, 1.8f, 0xFFc8c8c8u,
-                                 bench.clipLine());
-                }
         // the 0.18 s crossfade first among them -- could not be photographed at all. The
         // statistics already dropped this frame; the animation clock did not. Capped rather
         // than dropped, because a genuinely slow frame should still advance the world.
         constexpr double kLongestStep = 0.05;  // 50 ms, which is one tick of MU's own 20 Hz
-                    if (window.clicked(0) && hit.tab >= 0) {
-                        bench.setCategory(size_t(hit.tab), textures);
-                        core::logf("browser: %s", bench.browseLine().c_str());
-                    }
         if (shotThisFrame || deltaSeconds > kLongestStep) deltaSeconds = kLongestStep;
         elapsed += deltaSeconds;
         // A frame that writes a screenshot is not a frame of the game, and it does not go in
@@ -585,6 +627,19 @@ int main(int argc, char** argv) {
                            counts.chunksDrawn, counts.chunksDrawn + counts.chunksCulled,
                            counts.instancesDrawn, world.town().instanceCount(),
                            sun.chunksDrawn, sun.instancesDrawn);
+            }
+            // The transparent pass's pool, for the same reason the culling counts are here:
+            // "no allocation per frame in the pools" is sprint 6's proving sentence, and a
+            // claim nothing reports is not proved. The high-water mark against the reserve
+            // is the evidence -- it cannot exceed it, because add() refuses instead of
+            // growing -- and a refusal count above zero means the reserve is too small and
+            // the picture is already missing something.
+            if (renderer.effects().highWater() > 0 || renderer.effects().refused() > 0) {
+                core::logf("  effects: %u sprites in %u draws; high water %u of %u reserved, "
+                           "%u refused",
+                           renderer.effects().lastSpriteCount(),
+                           renderer.effects().lastDrawCount(), renderer.effects().highWater(),
+                           renderer.effects().capacity(), renderer.effects().refused());
             }
             if (inWorld && world.played().isOpen()) {
                 const game::Play& play = world.played();
@@ -628,14 +683,6 @@ int main(int argc, char** argv) {
 
         ++frame;
         if (args.frames && frame >= args.frames) {
-            // The transparent pass's pool, for the same reason the culling counts are here:
-            // "no allocation per frame in the pools" is sprint 6's proving sentence, and a
-            // claim nothing reports is not proved. The high-water mark against the reserve
-            // is the evidence -- it cannot exceed it, because add() refuses instead of
-            // growing -- and a refusal count above zero means the reserve is too small and
-            // the picture is already missing something.
-                           "%u refused",
-            }
             // One segment done. With --repeat the world stays loaded and the next segment
             // starts from a fresh warmup: what separates them is then the machine's own
             // drift, which is the thing worth measuring, rather than the twenty seconds of

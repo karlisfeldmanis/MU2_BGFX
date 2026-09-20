@@ -179,8 +179,86 @@ Written before the code, as sprints 2, 3 and 5 did:
 
 ## Measured
 
-Filled in when the sprint lands: the transparent pass's cost in the near case and in an
-ordinary fight, whether it went before or after the resolve and what the other cost, the
-account it was given and what was taken from to pay for it, the pools' high-water mark per
-kind and the allocation count in a frame, what the effects and sounds added to the cook and
-to load time, and the frame with a fight in the town against the town without one.
+### Steps 1, 2, 3 and 4 are done. 5 to 10 are not.
+
+Built and landed: the transparent view, the effect material, the pool, and the cook's
+effects-and-sounds pass. Not built: the landing cue, blood, the fall, the health plate,
+sound through miniaudio, and `--bench effect`. miniaudio is pinned and fetched but nothing
+opens a device yet.
+
+### The cook (step 4)
+
+- **151 effect sheets, 146 distinct**, 3.4 MB of png to **6.1 MB of .ktx with mips** —
+  against 18.0 MB as RGBA8 at the top level alone. They are passed cutout `-1`, so no
+  coverage rescale: that rule is for alpha *testing*, and grading a soft-edged sprite's
+  gradient into a mask is the opposite of what it wants.
+- **104 sounds, 12.9 MB to 5.5 MB**, all mono 16-bit at 22050 Hz. 65 were downmixed and 71
+  resampled. **Mono is not an optimisation**: MU's files are in nine formats and 47 of the
+  104 are stereo, a stereo file has its left and right baked in and cannot be panned to a
+  place, so the dominant format is the one that could not have worked with the positioned
+  audio step 9 specifies.
+- Both land in `cooked/showing`, not under a world. `showing.mus` is 20 435 bytes, reads
+  back byte-exact, and `cooked_test` now checks it with no window.
+
+### The transparent pass (steps 1 to 3)
+
+View 5, between shade and present, drawing into the **same** HDR multisampled target the
+shade pass wrote, with the prepass's depth still attached — depth test `LESS`, no depth
+write, sorted back to front, one draw per run of sprites sharing a sheet and a blend mode.
+`ViewPresent` and `ViewHud` moved to 6 and 7, in `views.h`, `conventions.md` and `budget.md`
+together.
+
+**Before or after the resolve was not measured both ways, and the sprint file said it would
+be.** It was decided on correctness instead, and the reason is worth more than the
+measurement would have been: after the resolve means after the present, and the present is
+where ACES and the sRGB write happen. Effects drawn there would be LDR sprites over an
+already-tonemapped image, and every additive flame would clip white somewhere different from
+the fire beside it. There is no cheaper-but-still-right option to price.
+
+### The account: 0.3 ms, and the cost is fill rate
+
+The full table is in `docs/budget.md`. Median wall frame time over Lorencia's town, 1080p,
+Release, vsync off, 400 frames, three runs each:
+
+| sprites | half-extent | over baseline |
+|---|---|---|
+| 64 | 0.5 m | 0.00 |
+| 128 | 1 m | +0.18 |
+| 32 | 4 m | +0.31 |
+| 128 | 2 m | +0.92 |
+| 8 | 30 m | +0.02 |
+| 64 | 30 m | +1.19 |
+
+**The two things most likely to go wrong, revisited.** The first one was right and this is
+the evidence: eight sprites each far larger than the screen cost 0.02 ms while 128 sprites
+two metres across cost 0.92, because what the expensive rows share is about sixty full
+screens of blended pixels and not a sprite count. The rate is **~0.018 ms per full screen of
+blended overdraw at 1080p**, and it predicts every row. 0.3 ms buys about sixteen screens,
+which MU's fight does not approach — the rows that would overdraw it are not effects but the
+mistake the sprint named, a sprite scaled in metres where it should be scaled in units of
+the target.
+
+It is paid for out of the spare, 0.5 to 0.2, explicitly and with the measurement beside it.
+**This is the one judgement in the sprint the user may want to overturn**, and the
+alternative is taking it out of `shade`, which cannot be justified while the per-view timers
+say what they currently say.
+
+### The per-view GPU timers cannot price a pass this small, and now it is proved
+
+With the transparent pass **drawing nothing at all**, the `effects` account reported a median
+of 2.577 ms. The true answer was zero. The log's own warning line — the view timers summed to
+15.866 ms inside a 3.550 ms frame — has said this all along, but this is the first case where
+the right answer was known in advance. Whatever the view timers measure on this backend, it
+is encoder gaps as much as work. Every number above is wall frame time.
+
+### Still owed
+
+- **No allocation per frame is designed but not proved.** The pool reserves at init, `add()`
+  refuses rather than growing, and the vertex memory is bgfx's own transient ring. The
+  high-water and refusal counters exist on `Effects` and **nothing logs them yet**, so the
+  sprint's proving sentence is not yet satisfied by evidence. That is the next thing.
+- The bench plot does not receive cast shadows (found by another session while reviewing
+  viewer shots: the plot darkens with the sun but takes no shadow, while the town's own
+  ground receives correctly). It is in the ground path, not the caster list or the split. It
+  did not affect anything above — every number here was taken over the town with the play
+  camera — but it is a real defect in territory this sprint touches.

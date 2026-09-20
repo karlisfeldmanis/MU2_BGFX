@@ -75,12 +75,14 @@ add_executable(mu2
   src/content/placement.cpp
   src/content/grid.cpp
   src/content/tables.cpp
+  src/content/showing.cpp
   src/gfx/window.cpp
   src/gfx/views.cpp
   src/gfx/stats.cpp
   src/gfx/callback.cpp
   src/gfx/lighting.cpp
   src/gfx/renderer.cpp
+  src/gfx/effects.cpp
   src/gfx/overlay.cpp
   src/game/bench.cpp
   src/game/world.cpp
@@ -136,6 +138,7 @@ target_compile_options(cookcheck PRIVATE -Wall -Wextra -Wno-unused-parameter)
 add_executable(cooked_test EXCLUDE_FROM_ALL
   tests/cooked_test.cpp
   src/content/cooked.cpp
+  src/content/showing.cpp
   src/core/files.cpp
   src/core/log.cpp
 )
