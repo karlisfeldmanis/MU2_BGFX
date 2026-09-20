@@ -1,5 +1,5 @@
-// Images into bgfx textures, with the one rule that matters: which of them are sRGB.
-// docs/conventions.md has the table.
+// Images into bgfx textures, with the two rules that matter: which of them are sRGB, and
+// which of them are pictures rather than data. docs/conventions.md has the table.
 #pragma once
 
 #include <string>
@@ -9,9 +9,20 @@
 
 namespace mu::content {
 
-enum class ColourSpace {
-    Srgb,    // albedo and emissive: the hardware converts on the sample
-    Linear,  // normal, ORM, and every grid MU stores as a picture
+// What a texture is for. This decides its colour space, whether it carries a mip chain, how
+// that chain is filtered, and how it is sampled. Getting it wrong is quiet every time.
+enum class TextureRole {
+    // The hardware converts on the sample; the mip chain is filtered in linear light.
+    Albedo,
+    Emissive,
+    // Linear, and its mips are renormalised: averaging two unit vectors gives a short one,
+    // and a short normal reads as a flat, shiny patch at distance.
+    Normal,
+    // Occlusion, roughness and metal. Linear, averaged as stored.
+    Data,
+    // height.png, attributes.png, light.png, the tile grid. Linear, point sampled, and
+    // never mipped: a mipped attribute grid averages walkable together with blocked.
+    Grid,
 };
 
 // Keeps one handle per path, so a texture two materials share is loaded once.
@@ -26,17 +37,22 @@ public:
     bgfx::TextureHandle flatNormal() const { return flatNormal_; }
     bgfx::TextureHandle black() const { return black_; }
 
+    // How many texels across the anisotropic filter may reach. 1 turns it off. A sheet
+    // value, set before anything loads.
+    void setAnisotropy(int level) { anisotropy_ = level; }
+
     // Loads from disk, or returns the handle already loaded. Invalid on failure, and the
     // failure is in the log with the path.
-    bgfx::TextureHandle load(const std::string& path, ColourSpace space);
+    bgfx::TextureHandle load(const std::string& path, TextureRole role);
 
     // From bytes already in hand, for a texture embedded in a .glb. `name` is for the log
     // and is what the handle is remembered by.
     bgfx::TextureHandle loadFromMemory(const std::string& name, const void* data, uint32_t size,
-                                       ColourSpace space);
+                                       TextureRole role);
 
     size_t count() const { return byPath_.size(); }
     uint64_t bytes() const { return bytes_; }
+    uint64_t mipBytes() const { return mipBytes_; }
 
 private:
     std::unordered_map<std::string, bgfx::TextureHandle> byPath_;
@@ -44,6 +60,8 @@ private:
     bgfx::TextureHandle flatNormal_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle black_ = BGFX_INVALID_HANDLE;
     uint64_t bytes_ = 0;
+    uint64_t mipBytes_ = 0;
+    int anisotropy_ = 8;
 };
 
 }  // namespace mu::content

@@ -61,6 +61,14 @@ Everything is lit in linear space and written out once.
 `light.png` is MU's baked terrain light, which is already a lit result and not an albedo:
 it multiplies the ground's diffuse and does not go through the sRGB sampler twice.
 
+**A picture has mips; a grid does not.** Albedo, normal, ORM and emissive carry a full mip
+chain and are sampled trilinear with anisotropy — MU's shallow camera minifies hard, and
+without the chain the town shimmers and reads more texels than it shows. `height.png`,
+`attributes.png`, `light.png` and the tile grid are data and are point-sampled with no mips:
+a mipped attribute grid averages walkable together with blocked and nothing complains. A
+cutout's alpha is rescaled per level to hold its coverage, or a leaf thins away with
+distance.
+
 The present pass is the only place tonemapping and the sRGB write happen: ACES, then the
 backbuffer. Nothing else writes sRGB.
 

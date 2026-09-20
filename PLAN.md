@@ -84,6 +84,55 @@ Cheap now, a rewrite later.
 12. **Self-contained and pinned.** No symlinks. `tools/sync.sh` copies what `index.json`
     reaches; `bootstrap.sh` pins bgfx/bx/bimg, glfw, cgltf, stb and miniaudio by commit.
 
+## Mipmaps and antialiasing
+
+Found missing on 2026-09-20, when every texture in the first real run logged `mips 1`.
+
+**Mipmaps are not optional and are the bigger of the two.** MU's camera looks down at a town
+at a shallow angle, which is the worst case for minification: without a mip chain every
+roof, cobble and wall texture aliases into a boil of shimmer the moment anything moves, and
+the GPU reads full-resolution texels for pixels a tenth their size, which is bandwidth spent
+to look worse. Anisotropic filtering needs the chain too, and it is what a shallow angle
+actually wants. The rules:
+
+- **The cook generates them** (sprint 3), into the `.ktx` with the BC7 blocks, because a
+  mip chain built once offline is better and free at load. Until the cook exists they are
+  generated at load, which is slower to start and identical to look at.
+- **Trilinear with anisotropy** on everything the world wears. The anisotropy level is a
+  sheet value and is measured, not assumed.
+- **Not on everything**: `height.png`, `attributes.png`, `light.png` and the tile grid are
+  data, not pictures, and are point-sampled with no mips at all. A mipped attribute grid
+  silently averages walkable with blocked.
+- **A cutout's alpha needs care in its mips.** Averaging alpha down a chain thins a leaf
+  until it vanishes at distance; the cook rescales each level's alpha to hold the coverage
+  the top level had.
+
+**Antialiasing.** Nothing is built yet, and the order matters because the three kinds of
+aliasing here have three different answers:
+
+- **Texture minification** — mipmaps and anisotropy, above. This is the most visible one on
+  MU's camera and MSAA does nothing for it.
+- **Geometry edges** — 4x MSAA on the prepass and the shade pass, which share the depth, and
+  one resolve before the present. It fits this frame: the shade pass already tests depth
+  `EQUAL` and shades once a pixel, so the cost is bandwidth and the resolve rather than
+  shading, and on a tile-based GPU the resolve happens in tile memory. SSAO reads a
+  single-sample resolve of the prepass, since a half-resolution occlusion term has no use
+  for per-sample normals.
+- **Cutout foliage** — MU's grass and leaves are alpha-tested, and a plain MSAA does not
+  touch a discarded pixel's edge. Alpha-to-coverage does, and it is nearly free once MSAA is
+  on. This is what made MU2's grass legible.
+
+The alternative to MSAA is a post-process (FXAA or SMAA at about 0.2 ms, or TAA). TAA is
+**not** chosen: MU's art is painted and full of high-frequency detail, the camera is nearly
+static, and TAA's smearing and its ghosting behind a walking figure would cost more than the
+edges it fixes. MU2 measured its own MSAA plus supersample at about 3 ms in Godot, which is
+more than this budget has; 4x MSAA alone, on a forward pass that shades once a pixel, is a
+different and much smaller number, and it is measured in sprint 2 before it is kept. If it
+does not fit, SMAA at present is the fallback and the `present` account can afford it.
+
+Neither is in the budget above yet. Both get priced in sprint 2, on the ground, where there
+is something to alias.
+
 Reflections, stated now so the wrong thing is not built: the base is a sky in closed form in
 the shade pass, prefiltered by roughness, occluded by AO. Sprint 8 adds one prefiltered
 cubemap per world, baked offline by a bench, and a planar or screen-space pass for water

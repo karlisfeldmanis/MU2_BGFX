@@ -3,6 +3,11 @@
 #include <bimg/decode.h>
 #include <bx/allocator.h>
 
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <vector>
+
 #include "core/files.h"
 #include "core/log.h"
 
@@ -17,10 +22,127 @@ void releaseImage(void*, void* userData) {
     bimg::imageFree(static_cast<bimg::ImageContainer*>(userData));
 }
 
+// bgfx frees a std::vector we handed it through this, for the mip chains we build ourselves.
+void releaseBytes(void*, void* userData) {
+    delete static_cast<std::vector<uint8_t>*>(userData);
+}
+
 bgfx::TextureHandle solid(uint32_t abgr) {
     const bgfx::Memory* mem = bgfx::alloc(4);
     std::memcpy(mem->data, &abgr, 4);
     return bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::RGBA8, 0, mem);
+}
+
+bool isSrgb(TextureRole role) {
+    return role == TextureRole::Albedo || role == TextureRole::Emissive;
+}
+
+bool wantsMips(TextureRole role) { return role != TextureRole::Grid; }
+
+// sRGB to linear and back, the real curve rather than a 2.2 power. Tabulated one way
+// because the decode runs once per texel per level and the table is 1 KB.
+const float* srgbToLinearTable() {
+    static float table[256];
+    static bool ready = false;
+    if (!ready) {
+        for (int i = 0; i < 256; ++i) {
+            const float c = float(i) / 255.0f;
+            table[i] = c <= 0.04045f ? c / 12.92f : std::pow((c + 0.055f) / 1.055f, 2.4f);
+        }
+        ready = true;
+    }
+    return table;
+}
+
+uint8_t linearToSrgbByte(float v) {
+    v = v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
+    const float s = v <= 0.0031308f ? v * 12.92f : 1.055f * std::pow(v, 1.0f / 2.4f) - 0.055f;
+    return uint8_t(s * 255.0f + 0.5f);
+}
+
+// One level down, by a 2x2 box. RGBA8 in, RGBA8 out.
+//
+// The colour space is the whole point. bimg's own imageGenerateMips averages sRGB bytes
+// directly, which is not the average of the light those bytes stand for: the result is
+// darker than the texture it came from, and a town reads as though the sun went in as the
+// camera pulls back. Alpha is always averaged as stored, because alpha is a coverage and
+// not a colour.
+void downsample(const uint8_t* src, uint32_t srcW, uint32_t srcH, uint8_t* dst, uint32_t dstW,
+                uint32_t dstH, TextureRole role) {
+    const float* toLinear = srgbToLinearTable();
+    const bool srgb = isSrgb(role);
+    const bool normal = role == TextureRole::Normal;
+
+    for (uint32_t y = 0; y < dstH; ++y) {
+        // An odd source dimension means the last row or column has no partner; it pairs
+        // with itself rather than reading past the end.
+        const uint32_t y0 = y * 2;
+        const uint32_t y1 = (y0 + 1 < srcH) ? y0 + 1 : y0;
+        for (uint32_t x = 0; x < dstW; ++x) {
+            const uint32_t x0 = x * 2;
+            const uint32_t x1 = (x0 + 1 < srcW) ? x0 + 1 : x0;
+            const uint8_t* p[4] = {
+                src + (size_t(y0) * srcW + x0) * 4,
+                src + (size_t(y0) * srcW + x1) * 4,
+                src + (size_t(y1) * srcW + x0) * 4,
+                src + (size_t(y1) * srcW + x1) * 4,
+            };
+
+            float acc[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+            for (const uint8_t* q : p) {
+                if (srgb) {
+                    acc[0] += toLinear[q[0]];
+                    acc[1] += toLinear[q[1]];
+                    acc[2] += toLinear[q[2]];
+                } else if (normal) {
+                    // Back to a signed vector before averaging, or the average is pulled
+                    // towards the encoding's midpoint rather than towards the mean normal.
+                    acc[0] += float(q[0]) / 127.5f - 1.0f;
+                    acc[1] += float(q[1]) / 127.5f - 1.0f;
+                    acc[2] += float(q[2]) / 127.5f - 1.0f;
+                } else {
+                    acc[0] += float(q[0]);
+                    acc[1] += float(q[1]);
+                    acc[2] += float(q[2]);
+                }
+                acc[3] += float(q[3]);
+            }
+            for (float& v : acc) v *= 0.25f;
+
+            uint8_t* out = dst + (size_t(y) * dstW + x) * 4;
+            if (srgb) {
+                out[0] = linearToSrgbByte(acc[0]);
+                out[1] = linearToSrgbByte(acc[1]);
+                out[2] = linearToSrgbByte(acc[2]);
+            } else if (normal) {
+                // Renormalised: four unit vectors average to a short one, and a short normal
+                // flattens the surface and reads as a shiny patch at distance.
+                const float len = std::sqrt(acc[0] * acc[0] + acc[1] * acc[1] + acc[2] * acc[2]);
+                const float inv = len > 1e-6f ? 1.0f / len : 0.0f;
+                const float nx = len > 1e-6f ? acc[0] * inv : 0.0f;
+                const float ny = len > 1e-6f ? acc[1] * inv : 0.0f;
+                const float nz = len > 1e-6f ? acc[2] * inv : 1.0f;
+                out[0] = uint8_t((nx + 1.0f) * 127.5f + 0.5f);
+                out[1] = uint8_t((ny + 1.0f) * 127.5f + 0.5f);
+                out[2] = uint8_t((nz + 1.0f) * 127.5f + 0.5f);
+            } else {
+                out[0] = uint8_t(acc[0] + 0.5f);
+                out[1] = uint8_t(acc[1] + 0.5f);
+                out[2] = uint8_t(acc[2] + 0.5f);
+            }
+            out[3] = uint8_t(acc[3] + 0.5f);
+        }
+    }
+}
+
+uint8_t mipCount(uint32_t width, uint32_t height) {
+    uint8_t levels = 1;
+    while (width > 1 || height > 1) {
+        width = width > 1 ? width / 2 : 1;
+        height = height > 1 ? height / 2 : 1;
+        ++levels;
+    }
+    return levels;
 }
 
 }  // namespace
@@ -42,10 +164,11 @@ void Textures::shutdown() {
         *h = BGFX_INVALID_HANDLE;
     }
     bytes_ = 0;
+    mipBytes_ = 0;
 }
 
 bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void* data,
-                                             uint32_t size, ColourSpace space) {
+                                             uint32_t size, TextureRole role) {
     auto found = byPath_.find(name);
     if (found != byPath_.end()) return found->second;
 
@@ -59,49 +182,115 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
     uint64_t flags = BGFX_SAMPLER_NONE;
     // sRGB is a flag on the texture, not a conversion in the shader: the hardware does it
     // on the sample and the result is linear, which is what everything downstream assumes.
-    if (space == ColourSpace::Srgb) flags |= BGFX_TEXTURE_SRGB;
+    if (isSrgb(role)) flags |= BGFX_TEXTURE_SRGB;
+    if (role == TextureRole::Grid) {
+        // A grid is data. Point sampled in every direction, and never interpolated between
+        // two tiles that mean different things.
+        flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT |
+                 BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+    } else if (anisotropy_ > 1) {
+        // MU's camera looks down a town at a shallow angle, which is what anisotropy is for:
+        // trilinear alone blurs the ground into the distance instead of resolving it.
+        flags |= BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+    }
 
     // MU2's build is full of three-channel PNGs, and Metal has no three-channel texture at
     // all: RGB8 is refused outright, and RGB8 asked for as sRGB is refused twice over. The
     // texture then comes back invalid and the material silently draws white, which is what
-    // the whole house did. Widened to four channels here; the cook step in sprint 3 is where
+    // a whole house did. Widened to four channels here; the cook step in sprint 3 is where
     // this stops happening at run time.
-    if (!bgfx::isTextureValid(0, false, image->m_numLayers,
-                              bgfx::TextureFormat::Enum(image->m_format), flags)) {
-        const bgfx::TextureFormat::Enum wanted = bgfx::TextureFormat::RGBA8;
-        bimg::ImageContainer* widened =
-            bimg::imageConvert(&g_allocator, bimg::TextureFormat::Enum(wanted), *image, false);
+    const bool needsWidening =
+        !bgfx::isTextureValid(0, false, image->m_numLayers,
+                              bgfx::TextureFormat::Enum(image->m_format), flags);
+    // The mip chain is built on RGBA8, so anything that is to be mipped goes there too.
+    const bool needsRgba8 = image->m_format != bimg::TextureFormat::RGBA8 &&
+                            (needsWidening || (wantsMips(role) && image->m_numMips <= 1));
+
+    if (needsRgba8) {
+        bimg::ImageContainer* widened = bimg::imageConvert(
+            &g_allocator, bimg::TextureFormat::RGBA8, *image, false);
         if (!widened) {
-            core::logError("%s is %d, which this Metal refuses, and it did not convert",
+            core::logError("%s is format %d, which this Metal refuses, and it did not convert",
                            name.c_str(), int(image->m_format));
             bimg::imageFree(image);
             byPath_[name] = BGFX_INVALID_HANDLE;
             return BGFX_INVALID_HANDLE;
         }
-        core::logf("  %s widened from format %d to RGBA8", name.c_str(), int(image->m_format));
         bimg::imageFree(image);
         image = widened;
     }
 
-    const bgfx::Memory* mem = bgfx::makeRef(image->m_data, image->m_size, releaseImage, image);
+    const uint32_t width = image->m_width;
+    const uint32_t height = image->m_height;
+    const char* roleName = isSrgb(role) ? "srgb" : (role == TextureRole::Normal ? "normal"
+                                                  : (role == TextureRole::Grid ? "grid" : "data"));
 
+    // --- the mip chain ---------------------------------------------------------------
+    // Built here rather than by bimg::imageGenerateMips, which averages sRGB bytes as
+    // though they were light and hands back a chain that darkens with distance.
+    if (wantsMips(role) && image->m_numMips <= 1 &&
+        image->m_format == bimg::TextureFormat::RGBA8 && (width > 1 || height > 1)) {
+        const uint8_t levels = mipCount(width, height);
+        size_t total = 0;
+        for (uint8_t level = 0; level < levels; ++level) {
+            const uint32_t lw = std::max(1u, width >> level);
+            const uint32_t lh = std::max(1u, height >> level);
+            total += size_t(lw) * lh * 4;
+        }
+        auto* chain = new std::vector<uint8_t>(total);
+        std::memcpy(chain->data(), image->m_data, size_t(width) * height * 4);
+
+        size_t srcOffset = 0;
+        uint32_t srcW = width, srcH = height;
+        for (uint8_t level = 1; level < levels; ++level) {
+            const uint32_t dstW = srcW > 1 ? srcW / 2 : 1;
+            const uint32_t dstH = srcH > 1 ? srcH / 2 : 1;
+            const size_t dstOffset = srcOffset + size_t(srcW) * srcH * 4;
+            downsample(chain->data() + srcOffset, srcW, srcH, chain->data() + dstOffset, dstW,
+                       dstH, role);
+            srcOffset = dstOffset;
+            srcW = dstW;
+            srcH = dstH;
+        }
+
+        const bgfx::Memory* mem =
+            bgfx::makeRef(chain->data(), uint32_t(chain->size()), releaseBytes, chain);
+        bgfx::TextureHandle handle =
+            bgfx::createTexture2D(uint16_t(width), uint16_t(height), true, 1,
+                                  bgfx::TextureFormat::RGBA8, flags, mem);
+        const size_t topLevel = size_t(width) * height * 4;
+        bimg::imageFree(image);
+        if (!bgfx::isValid(handle)) {
+            core::logError("%s did not become a texture", name.c_str());
+        } else {
+            bytes_ += topLevel;
+            mipBytes_ += total - topLevel;
+            core::logf("texture %s %ux%u %s %u mips %.1f KB (+%.1f KB of mips)", name.c_str(),
+                       width, height, roleName, levels, double(topLevel) / 1024.0,
+                       double(total - topLevel) / 1024.0);
+        }
+        byPath_[name] = handle;
+        return handle;
+    }
+
+    // --- no chain: a grid, or an image that arrived with one --------------------------
+    const bgfx::Memory* mem = bgfx::makeRef(image->m_data, image->m_size, releaseImage, image);
     bgfx::TextureHandle handle = bgfx::createTexture2D(
-        uint16_t(image->m_width), uint16_t(image->m_height), image->m_numMips > 1,
-        image->m_numLayers, bgfx::TextureFormat::Enum(image->m_format), flags, mem);
+        uint16_t(width), uint16_t(height), image->m_numMips > 1, image->m_numLayers,
+        bgfx::TextureFormat::Enum(image->m_format), flags, mem);
 
     if (!bgfx::isValid(handle)) {
         core::logError("%s did not become a texture", name.c_str());
     } else {
         bytes_ += image->m_size;
-        core::logf("texture %s %ux%u %s mips %u %.1f KB", name.c_str(), image->m_width,
-                   image->m_height, space == ColourSpace::Srgb ? "srgb" : "linear",
+        core::logf("texture %s %ux%u %s mips %u %.1f KB", name.c_str(), width, height, roleName,
                    image->m_numMips, double(image->m_size) / 1024.0);
     }
     byPath_[name] = handle;
     return handle;
 }
 
-bgfx::TextureHandle Textures::load(const std::string& path, ColourSpace space) {
+bgfx::TextureHandle Textures::load(const std::string& path, TextureRole role) {
     auto found = byPath_.find(path);
     if (found != byPath_.end()) return found->second;
 
@@ -110,7 +299,7 @@ bgfx::TextureHandle Textures::load(const std::string& path, ColourSpace space) {
         byPath_[path] = BGFX_INVALID_HANDLE;
         return BGFX_INVALID_HANDLE;
     }
-    return loadFromMemory(path, bytes.data(), uint32_t(bytes.size()), space);
+    return loadFromMemory(path, bytes.data(), uint32_t(bytes.size()), role);
 }
 
 }  // namespace mu::content

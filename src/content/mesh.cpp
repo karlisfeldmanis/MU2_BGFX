@@ -32,19 +32,19 @@ void readAccessor(const cgltf_accessor* accessor, float* out, cgltf_size compone
 
 // Where a texture's bytes are: a path beside the .glb, or a slice of the .glb's own buffer.
 bgfx::TextureHandle textureFrom(const cgltf_texture_view& view, const std::string& dir,
-                                Textures& textures, ColourSpace space) {
+                                Textures& textures, TextureRole role) {
     if (!view.texture || !view.texture->image) return BGFX_INVALID_HANDLE;
     const cgltf_image* image = view.texture->image;
     if (image->uri && std::strncmp(image->uri, "data:", 5) != 0) {
         // cgltf leaves percent-escapes in the URI; MU2's build has none, and a name that
         // does would fail to open loudly rather than quietly load the wrong file.
-        return textures.load(core::join(dir, image->uri), space);
+        return textures.load(core::join(dir, image->uri), role);
     }
     if (image->buffer_view && image->buffer_view->buffer && image->buffer_view->buffer->data) {
         const uint8_t* base = static_cast<const uint8_t*>(image->buffer_view->buffer->data);
         const uint8_t* bytes = base + image->buffer_view->offset;
         std::string name = std::string(image->name ? image->name : "embedded") + "@" + dir;
-        return textures.loadFromMemory(name, bytes, uint32_t(image->buffer_view->size), space);
+        return textures.loadFromMemory(name, bytes, uint32_t(image->buffer_view->size), role);
     }
     return BGFX_INVALID_HANDLE;
 }
@@ -101,18 +101,18 @@ bool Mesh::load(const std::string& path, Textures& textures) {
         out.cutout = cutoutFor(&m);
         if (m.has_pbr_metallic_roughness) {
             out.albedo = textureFrom(m.pbr_metallic_roughness.base_color_texture, dir, textures,
-                                     ColourSpace::Srgb);
+                                     TextureRole::Albedo);
             // Occlusion, roughness and metal are one texture in glTF's own layout: G is
             // roughness and B is metal, and MU2's pipeline writes occlusion into R of the
             // same file, which is why the occlusion view is not read separately.
             out.orm = textureFrom(m.pbr_metallic_roughness.metallic_roughness_texture, dir,
-                                  textures, ColourSpace::Linear);
+                                  textures, TextureRole::Data);
         }
         if (!bgfx::isValid(out.orm)) {
-            out.orm = textureFrom(m.occlusion_texture, dir, textures, ColourSpace::Linear);
+            out.orm = textureFrom(m.occlusion_texture, dir, textures, TextureRole::Data);
         }
-        out.normal = textureFrom(m.normal_texture, dir, textures, ColourSpace::Linear);
-        out.emissive = textureFrom(m.emissive_texture, dir, textures, ColourSpace::Srgb);
+        out.normal = textureFrom(m.normal_texture, dir, textures, TextureRole::Normal);
+        out.emissive = textureFrom(m.emissive_texture, dir, textures, TextureRole::Emissive);
 
         if (!bgfx::isValid(out.albedo)) out.albedo = textures.white();
         if (!bgfx::isValid(out.normal)) out.normal = textures.flatNormal();
