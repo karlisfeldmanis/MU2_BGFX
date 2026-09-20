@@ -54,17 +54,38 @@ std::vector<uint8_t> readGrid(const std::string& path, int* width, int* height, 
 
 // One half of a surface out of ground_surfaces.json. Absent is not an error: nine of
 // Lorencia's forty-four surfaces are a base with no overlay at all.
-bool readLayer(const core::Json& node, const std::string& dir, Textures& textures,
-               GroundLayer* out) {
+bool readLayer(const core::Json& node, const std::string& dir, const core::Json& cooked,
+               const std::string& assetsDir, Textures& textures, GroundLayer* out) {
     if (node.isNull()) return false;
     const std::string albedo = node["albedo"].stringOr("");
     if (albedo.empty()) return false;
 
-    out->albedo = textures.load(core::join(dir, albedo), TextureRole::Albedo);
+    // The cooked sheet if the cook has been run, the source .png if it has not. The land's
+    // 27 sheets are 1536 square and are half of everything the cook writes, so reading them
+    // as BC7 with their mip chains already in them is most of what the cook is for. The
+    // manifest is asked rather than the name being rebuilt here: tools/cook.py decides what
+    // a cooked file is called and this should not hold a second opinion.
+    auto sheet = [&](const std::string& name, TextureRole role, const char* roleName) {
+        bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+        if (name.empty()) return handle;
+        if (!cooked.isNull()) {
+            const std::string key = "ground/" + name + ":" + roleName;
+            const std::string relative = cooked[key.c_str()].stringOr("");
+            if (!relative.empty()) {
+                // The manifest's paths are relative to assets/, which is where the town's
+                // own meshes name theirs from too.
+                handle = textures.load(core::join(assetsDir, relative), role);
+                if (bgfx::isValid(handle)) return handle;
+            }
+        }
+        return textures.load(core::join(dir, name), role);
+    };
+
+    out->albedo = sheet(albedo, TextureRole::Albedo, "albedo");
     const std::string normal = node["normal"].stringOr("");
     const std::string orm = node["orm"].stringOr("");
-    if (!normal.empty()) out->normal = textures.load(core::join(dir, normal), TextureRole::Normal);
-    if (!orm.empty()) out->orm = textures.load(core::join(dir, orm), TextureRole::Data);
+    if (!normal.empty()) out->normal = sheet(normal, TextureRole::Normal, "normal");
+    if (!orm.empty()) out->orm = sheet(orm, TextureRole::Data, "orm");
     node.readInto("repeat", &out->repeat);
     node.readInto("relief", &out->relief);
     node.readInto("water", &out->water);
@@ -178,6 +199,16 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     }
 
     // --- the surface table ------------------------------------------------------------
+    // The cook's manifest, if there is one. Absent is not an error: the land reads its own
+    // .png then, which is what every run before sprint 3's cook did.
+    const std::string assetsDir = core::directoryOf(core::directoryOf(worldDir));
+    const std::string cookedDir = core::join(assetsDir, "cooked/" + worldName);
+    const core::Json cookedFile = core::parseJsonFile(core::join(cookedDir, "textures.json"));
+    const core::Json cookedManifest = cookedFile["textures"];
+    core::logf("ground %s: %s", worldName.c_str(),
+               cookedManifest.isNull() ? "no cooked sheets, reading the source png"
+                                       : "reading the cook's own sheets");
+
     const std::string surfacesPath = core::join(worldDir, "ground_surfaces.json");
     core::Json surfaces = core::parseJsonFile(surfacesPath);
     if (surfaces.isNull() || surfaces.size() == 0) {
@@ -329,8 +360,9 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         part.name = materialName;
         part.pairName = expected;
 
-        readLayer(surface["base"], worldDir, textures, &part.base);
-        part.hasOverlay = readLayer(surface["overlay"], worldDir, textures, &part.overlay);
+        readLayer(surface["base"], worldDir, cookedManifest, assetsDir, textures, &part.base);
+        part.hasOverlay = readLayer(surface["overlay"], worldDir, cookedManifest, assetsDir,
+                                    textures, &part.overlay);
         if (!part.hasOverlay) part.overlay = part.base;
         if (part.base.water || part.overlay.water) ++waterParts;
 

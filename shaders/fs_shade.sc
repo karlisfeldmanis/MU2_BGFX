@@ -1,4 +1,4 @@
-$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 
 // The one lit pass. Depth is tested EQUAL against what the prepass laid down and nothing is
 // written back, so no pixel here is shaded twice.
@@ -82,7 +82,10 @@ void main()
 	{
 		if (albedoTex.a < u_material.x) discard;
 	}
-	vec3 albedo = albedoTex.rgb;
+	// Times MU's own baked light at the tile this instance stands on. The land carries the
+	// same thing per vertex in its COLOR_0, so without this the town stands brighter than
+	// the ground it stands on, and MU's painted dusk stops at the foot of every wall.
+	vec3 albedo = albedoTex.rgb * v_light;
 
 	vec3 v = normalize(u_camPos.xyz - v_wpos);
 

@@ -249,6 +249,30 @@ the frame moves by **0.076 ms**, which is below the resolution of the measuremen
   belongs to sprint 4's measurement, not to another culling story.
 - **Ranges per kind are not built** and, on this evidence, are not urgent.
 
+### The cook wired all the way through
+
+Two things were cooked and not read until the sprint was otherwise finished, which is its own
+kind of unfinished:
+
+- **MU's baked terrain light now reaches the town.** It was in the `.mut` from the first cook
+  and nothing read it: `Drawable` carried a mesh and a transform and no colour. The instance
+  buffer is 80 bytes now — a matrix and a colour — and `fs_shade` multiplies the albedo by
+  it, as the land does with its own `COLOR_0`. Without it the town stood brighter than the
+  ground it stands on and MU's painted dusk stopped at the foot of every wall.
+- **The land reads the cook's sheets.** Its 27 textures are 1536² and are 49.5 MB of the
+  cook's 90 — more than the town's 306 put together — and `ground.cpp` was still opening the
+  source `.png`. It asks the manifest first and falls back to the `.png` when the cook has
+  not been run. Its normals are BC5 now, so `fs_ground` rebuilds z exactly as `fs_shade`
+  does.
+
+**World load: 1.07 s → 0.227 s**, and the frame with everything cooked and the light applied
+is **2.262 ms** over six segments, which is inside the 2.382 measured with the source sheets.
+
+One trap for the next shader that shares a vertex program: bgfx's Metal backend links by
+matching the two varying lists, so adding `v_light` to `vs_static` broke `fs_prepass`, which
+shares it and did not name the new varying. The log says only "the frame is missing a
+program"; `fs_prepass` now declares it and says why.
+
 ## What went wrong on the way, because none of it was the thing suspected
 
 The town drew black on the first run and took four wrong diagnoses to find: the BC5 normals

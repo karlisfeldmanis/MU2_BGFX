@@ -26,6 +26,10 @@ struct Camera {
 struct Drawable {
     const content::Mesh* mesh = nullptr;
     float transform[16];
+    // MU's baked terrain light where this instance stands, which multiplies the albedo.
+    // White for anything that has none -- the bench's own models, and any world without a
+    // light map.
+    float light[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 };
 
 class Renderer {

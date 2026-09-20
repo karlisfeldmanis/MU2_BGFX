@@ -112,8 +112,13 @@ void main()
 	vec3 ng = normalize(v_normal);
 	vec3 t = normalize(vec3(1.0, 0.0, 0.0) - ng * ng.x);
 	vec3 b = cross(ng, t);
-	vec3 nmBase = texture2D(s_normal, uvBase).xyz * 2.0 - 1.0;
-	vec3 nmOver = texture2D(s_normal2, uvOver).xyz * 2.0 - 1.0;
+	// Z rebuilt, never read: cooked normals are BC5 and carry two channels, so .z arrives
+	// as zero and every normal would lie flat in the tangent plane. For the three-channel
+	// png the land reads when the cook has not run, this recovers what they stored.
+	vec2 nbXY = texture2D(s_normal, uvBase).xy * 2.0 - 1.0;
+	vec3 nmBase = vec3(nbXY, sqrt(max(0.0, 1.0 - dot(nbXY, nbXY))));
+	vec2 noXY = texture2D(s_normal2, uvOver).xy * 2.0 - 1.0;
+	vec3 nmOver = vec3(noXY, sqrt(max(0.0, 1.0 - dot(noXY, noXY))));
 	// Mixed linearly by the same weight the albedo used, and the relief mixed with it and
 	// applied afterwards -- which is MU2's order (NORMAL_MAP takes the mixed normal and
 	// NORMAL_MAP_DEPTH the mixed relief), not each layer's relief applied before the mix.

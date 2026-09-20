@@ -128,6 +128,11 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
     bx::mtxSRT(drawable.transform, instance.scale, instance.scale, instance.scale,
                -instance.pitch, -instance.yaw, -instance.roll, instance.position[0],
                instance.position[1], instance.position[2]);
+    // The cook stored MU's light as bytes; the shader wants it linear. It is a lit result
+    // and not an albedo, so it does NOT go through the sRGB curve -- the same rule
+    // docs/conventions.md states for light.png on the ground.
+    for (int i = 0; i < 3; ++i) drawable.light[i] = float(instance.light[i]) / 255.0f;
+    drawable.light[3] = 1.0f;
     out.push_back(drawable);
 }
 

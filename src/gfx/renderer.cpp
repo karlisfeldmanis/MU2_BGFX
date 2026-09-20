@@ -98,6 +98,19 @@ bool Renderer::loadPrograms(const std::string& dir) {
     groundShadowProgram_ = loadProgram(dir, "vs_ground_depth", "fs_shadow");
     groundPrepassProgram_ = loadProgram(dir, "vs_ground", "fs_ground_prepass");
     groundShadeProgram_ = loadProgram(dir, "vs_ground", "fs_ground");
+    {
+        const std::pair<const char*, bgfx::ProgramHandle> all[] = {
+            {"shadow", shadowProgram_},   {"prepass", prepassProgram_},
+            {"ssao", ssaoProgram_},       {"ssaoMs", ssaoMsProgram_},
+            {"blur", blurProgram_},       {"blurMs", blurMsProgram_},
+            {"shade", shadeProgram_},     {"present", presentProgram_},
+            {"groundShadow", groundShadowProgram_},
+            {"groundPrepass", groundPrepassProgram_},
+            {"groundShade", groundShadeProgram_}};
+        for (const auto& one : all) {
+            if (!bgfx::isValid(one.second)) core::logError("program %s did not link", one.first);
+        }
+    }
     const bool ok = bgfx::isValid(shadowProgram_) && bgfx::isValid(prepassProgram_) &&
                     bgfx::isValid(ssaoProgram_) && bgfx::isValid(blurProgram_) &&
                     bgfx::isValid(ssaoMsProgram_) && bgfx::isValid(blurMsProgram_) &&
@@ -388,7 +401,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         const bool separateCasters = casters != nullptr;
         if (separateCasters) group(casterList, casterGroups, casterBatches_);
 
-        const uint32_t stride = 64;  // one 4x4 matrix
+        // A 4x4 matrix and the instance's baked light. The depth passes read the matrix
+        // alone and skip the rest, which costs them nothing: the stride is what the buffer
+        // is walked by, not what each shader reads.
+        const uint32_t stride = 80;
         uint32_t total = 0;
         for (const auto& g : groups) total += uint32_t(g.size());
         for (const auto& g : casterGroups) total += uint32_t(g.size());
@@ -416,6 +432,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                         if (written >= total) break;
                         std::memcpy(idb.data + written * stride, d->transform,
                                     sizeof(float) * 16);
+                        std::memcpy(idb.data + written * stride + sizeof(float) * 16, d->light,
+                                    sizeof(float) * 4);
                         ++written;
                         ++count;
                     }

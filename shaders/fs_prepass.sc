@@ -1,4 +1,9 @@
-$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
+// v_light is declared and unused: this pass writes a normal and a depth and has no use for
+// MU's baked light. It is here because bgfx's Metal backend links a program by matching the
+// two varying lists, so a fragment shader sharing vs_static must name everything vs_static
+// writes -- leaving it out fails the link, and the log says only "the frame is missing a
+// program".
 
 // The view normal and the view depth, in one RGBA16F target. SSAO reads this and nothing
 // else: no unpacking, no second sample of the depth buffer.
