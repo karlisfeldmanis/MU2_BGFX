@@ -43,6 +43,18 @@ int attackSlotFor(const std::string& stance) {
     return 38;  // bare hands
 }
 
+// An angle folded into a half turn either side of nothing, so that a body a few degrees the
+// other side of due north turns the short way. The sim has its own copy (realm.cpp's `wrapped`)
+// and this is deliberately not shared with it: the sim must not grow a dependency on the
+// drawing, and an angle is four lines.
+float wrapped(float angle) {
+    constexpr float kTurnabout = 6.28318530718f;
+    angle = std::fmod(angle, kTurnabout);
+    if (angle > 3.14159265359f) angle -= kTurnabout;
+    if (angle < -3.14159265359f) angle += kTurnabout;
+    return angle;
+}
+
 // What the character is drawn as when nobody dressed him: the cook's own armoured Dark Knight,
 // which is what every run before there was a game used. A game hands `heroLook` in instead --
 // the naked class body with the cradle's weapon in its hand -- and sprint 9's character select
@@ -154,6 +166,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         one.id = body.id;
         one.wasX = one.nowX = body.x;
         one.wasY = one.nowY = body.y;
+        one.wasFacing = one.nowFacing = body.facing;
         const FigureBody* look = nullptr;
         if (body.player) {
             look = heroLook;
@@ -201,9 +214,11 @@ void Play::remember() {
     for (Drawn& one : drawn_) {
         one.wasX = one.nowX;
         one.wasY = one.nowY;
+        one.wasFacing = one.nowFacing;
         if (const sim::Body* body = realm_.find(one.id)) {
             one.nowX = body->x;
             one.nowY = body->y;
+            one.nowFacing = body->facing;
         }
     }
 }
@@ -309,8 +324,12 @@ void Play::follow() {
         // direction of travel in the world is (cos facing, -sin facing) and the yaw that
         // points a model down it is atan2 of those two, in that order.
         // docs/conventions.md, "Space" and "Matrices".
-        const float dx = std::cos(body->facing);
-        const float dz = -std::sin(body->facing);
+        // The facing between the same two ticks the position is taken between, the short way
+        // round. Read raw off the sim it snaps up to 45 degrees at a time; see Drawn::wasFacing.
+        const float facing =
+            one.wasFacing + wrapped(one.nowFacing - one.wasFacing) * through_;
+        const float dx = std::cos(facing);
+        const float dz = -std::sin(facing);
         one.yaw = std::atan2(dx, dz);
 
         const float position[3] = {x, ground_->heightAt(x, z), z};

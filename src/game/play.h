@@ -80,6 +80,13 @@ private:
         uint32_t id = 0;
         float wasX = 0.0f, wasY = 0.0f;
         float nowX = 0.0f, nowY = 0.0f;
+        // And which way it was pointing at those same two ticks. The facing is interpolated for
+        // the same reason the position is, and it matters MORE: the sim turns a body up to 45
+        // degrees in one tick (900 degrees a second at 20 Hz), so a facing read raw off the sim
+        // snaps through a quarter turn every 50 ms while the position glides. At 180 fps that
+        // is one jump every nine frames, and it is the stutter the first person to play this
+        // reported.
+        float wasFacing = 0.0f, nowFacing = 0.0f;
         float yaw = 0.0f;
         bool visible = false;
         int attackClip = -1;     // this body's swing, found once at open
