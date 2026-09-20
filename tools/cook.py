@@ -12,7 +12,32 @@ the town's 105 models are 17 790 triangles inside 97.6 MB of .glb, because nearl
 that file is the images now cooked out of it. A flat .mum is about two megabytes the engine
 reads whole, with no glTF parser and no buffer walk at load.
 
-    tools/cook.py --world lorencia [--only textures|meshes|all]
+The third part is the town itself: 2845 placements become one flat list, already in metres,
+already on the right axes, already sorted into the chunks a frame walks. Foundation 7 of
+PLAN.md says chunk bounds and each kind's range are settled once and not per frame, and the
+cook is the once.
+
+    tools/cook.py --world lorencia [--only textures|meshes|placements|all] [--chunk 32]
+
+The .mut format ("MU2 town"), version 1, little-endian:
+
+    'MU2T', u32 version, u32 models, u32 chunks, u32 instances,
+    u32 size (tiles a side), u32 chunkTiles, f32 metresPerTile
+    models:    u16 name length and bytes, u16 mesh path length and bytes,
+               f32 bounds min[3], f32 bounds max[3], u32 instances of it
+    chunks:    f32 bounds min[3], f32 bounds max[3], u32 firstInstance, u32 instanceCount,
+               u16 column, u16 row
+    instances: f32 position[3], f32 yaw, f32 pitch, f32 roll, f32 scale,
+               u16 model, u16 flags, u8 light[3], u8 spare   -- 36 bytes, and 36 is what a
+               C++ struct of those fields is too, with no implicit padding anywhere
+
+`flags` bit 0 says the placement was laid on the terrain rather than used as the map stores
+it; the rest are spare. `light` is MU's own baked terrain light at the placement's tile,
+which is what stops the town standing unlit on lit ground.
+
+Instances are sorted by chunk and then by model, so one chunk that survives a cull is a run
+of instances and each model inside it is a contiguous sub-run: an instanced draw is a range,
+found without a sort and without a map lookup.
 
 The .mum format, version 1, little-endian throughout:
 
@@ -47,11 +72,13 @@ Three decisions this file makes, and each is a decision rather than a detail:
 import argparse
 import hashlib
 import json
+import math
 import os
 import struct
 import subprocess
 import sys
 import time
+import zlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(ROOT, "assets")
@@ -391,17 +418,223 @@ def cook_meshes(world, out_dir):
     return 0
 
 
+def read_png(path):
+    """A PNG as (width, height, channels, bytes). Enough for MU's grids, and no more."""
+    raw = open(path, "rb").read()
+    at = 8
+    data = b""
+    width = height = depth = colour = 0
+    while at < len(raw):
+        length, kind = struct.unpack(">I4s", raw[at:at + 8])
+        chunk = raw[at + 8:at + 8 + length]
+        at += 12 + length
+        if kind == b"IHDR":
+            width, height, depth, colour = struct.unpack(">IIBB", chunk[:10])
+        elif kind == b"IDAT":
+            data += chunk
+        elif kind == b"IEND":
+            break
+    if depth != 8:
+        raise ValueError(f"{path} is {depth} bits a channel, and this reader does 8")
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[colour]
+    stride = width * channels
+    out = bytearray(width * height * channels)
+    previous = bytearray(stride)
+    source = zlib.decompress(data)
+    at = 0
+    for y in range(height):
+        filter_kind = source[at]
+        at += 1
+        line = bytearray(source[at:at + stride])
+        at += stride
+        for i in range(stride):
+            left = line[i - channels] if i >= channels else 0
+            up = previous[i]
+            upleft = previous[i - channels] if i >= channels else 0
+            if filter_kind == 1:
+                line[i] = (line[i] + left) & 255
+            elif filter_kind == 2:
+                line[i] = (line[i] + up) & 255
+            elif filter_kind == 3:
+                line[i] = (line[i] + ((left + up) >> 1)) & 255
+            elif filter_kind == 4:
+                pa, pb, pc = abs(up - upleft), abs(left - upleft), abs(left + up - 2 * upleft)
+                nearest = left if (pa <= pb and pa <= pc) else (up if pb <= pc else upleft)
+                line[i] = (line[i] + nearest) & 255
+        out[y * stride:(y + 1) * stride] = line
+        previous = line
+    return width, height, channels, bytes(out)
+
+
+# MU lays these on the terrain instead of using the height it stores for them. Types 20 to 27
+# are Lorencia's grass and fern block, and this is MU2's own deviation (`World.cs:3672`), not
+# our arithmetic being corrected -- re-measured on this copy of the placement list before it
+# was copied here: of 999 grass placements, 57% carry a stored pitch or roll, and the stored
+# height runs from 6.60 m *below* the terrain to 4.29 m above it, with Grass01's median a
+# clear metre over the ground. Reproduced faithfully that is a town with tufts of grass at
+# head height. Height comes from the terrain, pitch and roll are dropped, yaw is kept: a tuft
+# has a direction it faces and no business leaning.
+GROUNDED_TYPES = range(20, 28)
+
+
+def cook_placements(world, out_dir, chunk_tiles):
+    world_dir = os.path.join(ASSETS, "world", world)
+    with open(os.path.join(world_dir, f"{world}.json")) as handle:
+        map_data = json.load(handle)
+
+    size = int(map_data["size"])
+    per_tile = float(map_data["units_per_tile"])
+    height_factor = float(map_data["height_factor"])
+    metres_per_tile = 1.0                      # docs/conventions.md: one tile is one metre
+    mesh_dir = os.path.join(out_dir, "meshes")
+
+    # The models that have a mesh, and the bounds the cook already wrote into each .mum.
+    models = []
+    index_of = {}
+    for name in sorted({one["model"] for one in map_data["objects"]}):
+        path = os.path.join(mesh_dir, name + ".mum")
+        if not os.path.exists(path):
+            continue
+        with open(path, "rb") as handle:
+            header = handle.read(48)
+        if header[:4] != b"MU2M":
+            raise ValueError(f"{path} is not a .mum")
+        bounds = struct.unpack_from("<6f", header, 24)
+        index_of[name] = len(models)
+        models.append([name, os.path.relpath(path, ASSETS), bounds, 0])
+
+    grid_w, grid_h, _channels, heights = read_png(os.path.join(world_dir, map_data["height"]))
+    light_w, light_h, light_channels, light = read_png(
+        os.path.join(world_dir, map_data["light"]))
+    if grid_w != size or light_w != size:
+        raise ValueError(f"{world}: a grid is {grid_w} wide and the world says {size}")
+
+    def terrain(column, row):
+        x = min(max(int(column), 0), grid_w - 1)
+        y = min(max(int(row), 0), grid_h - 1)
+        return heights[y * grid_w + x] * height_factor / per_tile
+
+    def lit(column, row):
+        x = min(max(int(column), 0), light_w - 1)
+        y = min(max(int(row), 0), light_h - 1)
+        at = (y * light_w + x) * light_channels
+        if light_channels >= 3:
+            return light[at], light[at + 1], light[at + 2]
+        return light[at], light[at], light[at]
+
+    chunks_across = (size + chunk_tiles - 1) // chunk_tiles
+    buckets = {}
+    dropped_hidden = dropped_model = grounded = outside = 0
+
+    for one in map_data["objects"]:
+        if one.get("hidden"):
+            dropped_hidden += 1
+            continue
+        model = index_of.get(one["model"])
+        if model is None:
+            dropped_model += 1
+            continue
+
+        # MU stores z up and y south; ours is y up and row -z. docs/conventions.md.
+        stored_x, stored_y, stored_z = one["at"]
+        column = stored_x / per_tile
+        row = stored_y / per_tile
+        x = column * metres_per_tile
+        z = -row * metres_per_tile
+        y = stored_z / per_tile
+
+        # MU's angles are degrees about its own z-up axes: its z is our yaw, its x our pitch.
+        pitch, _unused, yaw = (math.radians(a) for a in one["angle"])
+        roll = 0.0
+        flags = 0
+        if one["type"] in GROUNDED_TYPES:
+            y = terrain(column, row)
+            pitch = 0.0
+            roll = 0.0
+            flags |= 1
+            grounded += 1
+
+        # Some of MU's placements stand off the edge of its own grid -- a ship moored past
+        # the shore, a tree behind the sea wall. They are drawn where they are and belong to
+        # the nearest chunk, which is a clamp; it is counted and reported rather than passed
+        # over in silence, because a placement that has left the map is also the shape a
+        # units-per-tile mistake would take.
+        def chunk_of(tile):
+            index = int(math.floor(tile)) // chunk_tiles
+            return min(max(index, 0), chunks_across - 1)
+
+        if not (0.0 <= column < size and 0.0 <= row < size):
+            outside += 1
+        chunk = (chunk_of(column), chunk_of(row))
+        buckets.setdefault(chunk, []).append(
+            (model, x, y, z, yaw, pitch, roll, float(one.get("scale", 1.0)),
+             lit(column, row), flags))
+        models[model][3] += 1
+
+    # Sorted once: by chunk, then by model inside it, so a surviving chunk is a run of
+    # instances and each model within it a contiguous sub-run. A frame appends a range.
+    instances = bytearray()
+    chunk_records = []
+    written = 0
+    for (cx, cy) in sorted(buckets):
+        entries = sorted(buckets[(cx, cy)], key=lambda e: e[0])
+        low = [1e30] * 3
+        high = [-1e30] * 3
+        first = written
+        for model, x, y, z, yaw, pitch, roll, scale, colour, flags in entries:
+            instances += struct.pack("<7f2H4B", x, y, z, yaw, pitch, roll, scale, model, flags,
+                                     colour[0], colour[1], colour[2], 0)
+            written += 1
+            # The instance's own box: the model's bounds, scaled, around where it stands.
+            # Rotation is not folded in; the radius of the scaled box is used instead, which
+            # is never smaller than the rotated box and costs a chunk nothing to be generous
+            # about at this count.
+            bounds = models[model][2]
+            reach = scale * max(abs(v) for v in bounds)
+            for axis, centre in enumerate((x, y, z)):
+                low[axis] = min(low[axis], centre - reach)
+                high[axis] = max(high[axis], centre + reach)
+        chunk_records.append((low, high, first, written - first, cx, cy))
+
+    header = struct.pack("<4sIIIIIIf", b"MU2T", 1, len(models), len(chunk_records), written,
+                         size, chunk_tiles, metres_per_tile)
+    body = bytearray()
+    for name, mesh_path, bounds, count in models:
+        body += write_string(name) + write_string(mesh_path)
+        body += struct.pack("<6fI", *bounds, count)
+    for low, high, first, count, cx, cy in chunk_records:
+        body += struct.pack("<6fII2H", *low, *high, first, count, cx, cy)
+    body += bytes(instances)
+
+    out_path = os.path.join(out_dir, f"{world}.mut")
+    with open(out_path, "wb") as handle:
+        handle.write(header + bytes(body))
+
+    print(f"cook: {written} placements in {len(chunk_records)} chunks of {chunk_tiles} tiles, "
+          f"{len(models)} models, {grounded} laid on the terrain, "
+          f"{dropped_hidden} hidden and {dropped_model} without a mesh dropped, "
+          f"{outside} standing off the grid, "
+          f"{(len(header) + len(body)) / 1000:.0f} kB")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--world", default="lorencia")
     parser.add_argument("--out", default=os.path.join(ASSETS, "cooked"))
     parser.add_argument("--threads", type=int, default=0)
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
-    parser.add_argument("--only", choices=("textures", "meshes", "all"), default="all")
+    parser.add_argument("--only", choices=("textures", "meshes", "placements", "all"),
+                        default="all")
+    parser.add_argument("--chunk", type=int, default=32,
+                        help="a chunk's side in tiles; 32 gives Lorencia an 8x8 grid")
     args = parser.parse_args()
 
     if args.only == "meshes":
         return cook_meshes(args.world, os.path.join(args.out, args.world))
+
+    if args.only == "placements":
+        return cook_placements(args.world, os.path.join(args.out, args.world), args.chunk)
 
     if not os.path.exists(args.texcook):
         print(f"cook: {args.texcook} is not built. cmake --build build --target texcook",
@@ -445,6 +678,7 @@ def main():
         mesh_result = cook_meshes(args.world, out_dir)
         if mesh_result:
             return mesh_result
+        cook_placements(args.world, out_dir, args.chunk)
     return result.returncode
 
 

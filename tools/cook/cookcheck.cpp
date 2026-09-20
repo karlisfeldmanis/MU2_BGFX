@@ -341,6 +341,104 @@ int main(int argc, char** argv) {
     std::printf("  %zu meshes, %llu triangles, %.1f MB\n", meshes,
                 (unsigned long long)triangles, double(meshBytes) / 1e6);
 
+    // --- the town ----------------------------------------------------------------------
+    // The .mut's invariants are the ones a frame will rely on without checking: that the
+    // chunks' instance runs are contiguous and cover every instance exactly once, that the
+    // models inside a chunk are sorted so each is one range, that every instance stands
+    // inside the box its chunk claims, and that a model index names a model. A frame that
+    // walks this file does no sorting and no lookups, which is only safe if the cook is
+    // telling the truth.
+    {
+        std::string town;
+        {
+            std::FILE* list = popen(("ls " + dir + "/*.mut 2>/dev/null").c_str(), "r");
+            char path[4096];
+            if (list != nullptr && std::fgets(path, sizeof(path), list) != nullptr) {
+                town = path;
+                while (!town.empty() && (town.back() == '\n' || town.back() == '\r')) {
+                    town.pop_back();
+                }
+            }
+            if (list != nullptr) pclose(list);
+        }
+        std::vector<uint8_t> bytes = town.empty() ? std::vector<uint8_t>() : readFile(town);
+        if (bytes.size() < 32) {
+            std::printf("  no .mut to check\n");
+        } else if (std::memcmp(bytes.data(), "MU2T", 4) != 0) {
+            fail(baseName(town), "is not a .mut");
+        } else {
+            uint32_t head[7];
+            std::memcpy(head, bytes.data() + 4, sizeof(head));
+            const uint32_t models = head[1], chunks = head[2], count = head[3];
+            size_t at = 32;
+            std::vector<float> modelReach(models, 0.0f);
+            for (uint32_t m = 0; m < models && at + 2 <= bytes.size(); ++m) {
+                for (int s = 0; s < 2; ++s) {
+                    uint16_t length;
+                    std::memcpy(&length, bytes.data() + at, 2);
+                    at += 2 + length;
+                }
+                at += 24 + 4;
+            }
+            const size_t chunksAt = at;
+            // A chunk record is 24 bytes of box, two u32 and two u16: 36, not 40.
+            const size_t instancesAt = chunksAt + size_t(chunks) * 36;
+            if (instancesAt + size_t(count) * 36 != bytes.size()) {
+                fail(baseName(town), "its counts do not add up to its size");
+            } else {
+                uint32_t cursor = 0;
+                uint32_t outsideBox = 0, unsorted = 0, badModel = 0;
+                for (uint32_t c = 0; c < chunks; ++c) {
+                    const uint8_t* record = bytes.data() + chunksAt + size_t(c) * 36;
+                    float box[6];
+                    uint32_t first, inChunk;
+                    std::memcpy(box, record, 24);
+                    std::memcpy(&first, record + 24, 4);
+                    std::memcpy(&inChunk, record + 28, 4);
+                    if (first != cursor) {
+                        fail(baseName(town), "chunk " + std::to_string(c) + " starts at " +
+                                                 std::to_string(first) + ", not at " +
+                                                 std::to_string(cursor));
+                    }
+                    cursor += inChunk;
+                    uint16_t previous = 0;
+                    for (uint32_t i = 0; i < inChunk; ++i) {
+                        const uint8_t* instance = bytes.data() + instancesAt + size_t(first + i) * 36;
+                        float position[3];
+                        uint16_t model;
+                        std::memcpy(position, instance, 12);
+                        std::memcpy(&model, instance + 28, 2);
+                        if (model >= models) ++badModel;
+                        if (model < previous) ++unsorted;
+                        previous = model;
+                        for (int axis = 0; axis < 3; ++axis) {
+                            if (position[axis] < box[axis] || position[axis] > box[axis + 3]) {
+                                ++outsideBox;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (cursor != count) {
+                    fail(baseName(town), "its chunks cover " + std::to_string(cursor) +
+                                             " instances of " + std::to_string(count));
+                }
+                if (unsorted) {
+                    fail(baseName(town), std::to_string(unsorted) +
+                                             " instances break the sort by model inside a chunk");
+                }
+                if (outsideBox) {
+                    fail(baseName(town), std::to_string(outsideBox) +
+                                             " instances stand outside their chunk's box");
+                }
+                if (badModel) {
+                    fail(baseName(town), std::to_string(badModel) + " instances name no model");
+                }
+                std::printf("  %u placements in %u chunks, %u models\n", count, chunks, models);
+            }
+        }
+    }
+
     if (!worstName.empty()) {
         std::printf("  %zu cutout albedos; worst coverage drift %.1f%% (%s, level %u: %.3f "
                     "against %.3f at the top)\n",

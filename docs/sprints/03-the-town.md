@@ -186,6 +186,35 @@ parts that cover them exactly once. It found **31 failures in the first cook**, 
 Proved able to fail, as sprint 0's budget gate had to be: a `.mum` with one index bent past
 its vertex count and another with a version nobody wrote are both caught, exit 1.
 
+### The town is cooked too, chunks and all
+
+Foundation 7 says chunk bounds and each kind's range are settled once and not per frame.
+The cook is that once: `lorencia.mut`, **110 kB**, holds the 2753 drawn placements already
+in metres, already on our axes, sorted by chunk and then by model — so a chunk that survives
+a cull is a run of instances and each model inside it a contiguous sub-run. A frame appends
+a range; it does not sort and it does not look anything up.
+
+Measured on the way through, and each is a fact the frame will depend on:
+
+- **64 chunks of 32 tiles, and every one of them holds something** — 9 placements in the
+  emptiest, 37 in the median, 135 in the fullest. A uniformly occupied map is the *worst*
+  case for chunk culling and worth knowing before the culling is written; 16-tile chunks are
+  one flag away when there is a frame to measure them against.
+- **999 placements laid on the terrain**, exactly the eight grass models, by MU2's
+  `Grounded()` rule — re-measured here before it was copied: 57% of them carry a stored
+  pitch, and their stored height runs from 6.60 m below the land to 4.29 m above it.
+- **2702 of 2753 carry MU's baked light** at their tile; the other 51 stand on tiles the
+  light map paints black.
+- **One placement stands off the edge of the grid.** It is clamped to the nearest chunk and
+  counted, because a placement that has left the map is also exactly the shape a
+  units-per-tile mistake takes, and a silent clamp would hide one.
+
+`cookcheck` now reads the `.mut` as well, for the invariants the frame will trust without
+testing: the runs contiguous and covering every instance once, the models sorted inside each
+chunk, every instance inside the box its chunk claims, every model index naming a model.
+Proved able to fail: an instance moved outside its box and one put out of model order are
+both caught, exit 1.
+
 **Two debts the cook creates, both owed inside this sprint.** Cooked normals are BC5 with
 two channels, and `fs_shade.sc:98` and `fs_ground.sc:81-82` both read `.xyz` — they need the
 z rebuilt, or every normal map reads flat-blue. And the mesh cook writes a 48-byte vertex
