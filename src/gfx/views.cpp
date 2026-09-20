@@ -52,6 +52,12 @@ double accountBudgetMs(Account a) {
 }
 
 double spareBudgetMs() { return 0.5; }
+
+double totalGpuBudgetMs() {
+    double sum = spareBudgetMs();
+    for (int a = 0; a < AccountCount; ++a) sum += accountBudgetMs(Account(a));
+    return sum;  // 5.5 ms
+}
 double cpuBudgetMs() { return 3.0; }
 
 }  // namespace mu::gfx

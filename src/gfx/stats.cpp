@@ -96,29 +96,57 @@ bool Stats::finish(bool enforce) {
         for (int a = 0; a < AccountCount; ++a) perAccount[a].push_back(acc[a]);
     }
 
-    core::logf("--- %zu frames measured, %zu warmup dropped ---", n, first);
-    core::logf("%-10s %8s %8s %8s", "account", "median", "p99", "budget");
-    bool overdrawn = false;
+    const double gpuMed = quantile(gpu, 0.5);
+    const double cpuMed = quantile(cpu, 0.5);
+
+    // Whether the per-view timers add up to the frame they are supposed to divide. On Metal
+    // each view is its own render pass encoder and the timestamps are taken at its edges, so
+    // the gaps between encoders -- and the wait for the drawable, which lands on whichever
+    // view presents -- are counted inside the views. Measured on the House01 bench: five
+    // accounts summing to 9.4 ms inside a frame whose whole GPU time was 1.6 ms. So the
+    // accounts are reported and the *frame* is what is enforced.
     double medianSum = 0.0;
+    for (int a = 0; a < AccountCount; ++a) medianSum += quantile(perAccount[a], 0.5);
+    const bool viewsAddUp = medianSum <= gpuMed * 1.25 + 0.05;
+
+    core::logf("--- %zu frames measured, %zu warmup dropped ---", n, first);
+    core::logf("%-10s %8s %8s %8s %8s", "account", "median", "p99", "share", "budget");
     for (int a = 0; a < AccountCount; ++a) {
         const double med = quantile(perAccount[a], 0.5);
         const double p99 = quantile(perAccount[a], 0.99);
         const double budget = allowance(Account(a));
-        medianSum += med;
-        const bool over = med > budget;
-        overdrawn = overdrawn || over;
-        core::logf("%-10s %8.3f %8.3f %8.3f%s", accountName(Account(a)), med, p99, budget,
-                   over ? "  OVERDRAWN" : "");
+        // The share is what this view would cost if the timers' proportions are right and
+        // their total is not. It is the number to read while `viewsAddUp` is false.
+        const double share = medianSum > 0.0 ? med / medianSum * gpuMed : 0.0;
+        const bool over = share > budget;
+        core::logf("%-10s %8.3f %8.3f %8.3f %8.3f%s", accountName(Account(a)), med, p99, share,
+                   budget, over ? "  over" : "");
     }
-    core::logf("%-10s %8.3f %8.3f %8.3f", "gpu total", quantile(gpu, 0.5), quantile(gpu, 0.99),
-               medianSum + spareBudgetMs());
-    const double cpuMed = quantile(cpu, 0.5);
+    if (!viewsAddUp) {
+        core::logf("the view timers sum to %.3f ms inside a %.3f ms frame, so they are "
+                   "encoder gaps as much as work: read the share column, not the median",
+                   medianSum, gpuMed);
+    }
+
+    const double gpuBudget = totalGpuBudgetMs();
+    const bool gpuOver = gpuMed > gpuBudget;
     const bool cpuOver = cpuMed > cpuBudgetMs();
-    overdrawn = overdrawn || cpuOver;
-    core::logf("%-10s %8.3f %8.3f %8.3f%s", "cpu", cpuMed, quantile(cpu, 0.99), cpuBudgetMs(),
-               cpuOver ? "  OVERDRAWN" : "");
+    core::logf("%-10s %8.3f %8.3f %8s %8.3f%s", "gpu frame", gpuMed, quantile(gpu, 0.99), "",
+               gpuBudget, gpuOver ? "  OVERDRAWN" : "");
+    core::logf("%-10s %8.3f %8.3f %8s %8.3f%s", "cpu", cpuMed, quantile(cpu, 0.99), "",
+               cpuBudgetMs(), cpuOver ? "  OVERDRAWN" : "");
     core::logf("%-10s %8.1f %8.1f", "fps", quantile(fps, 0.5), quantile(fps, 0.01));
 
+    // An account can still fail the run, but only on its share, and only where the timers
+    // are coherent enough for the share to mean anything.
+    bool accountOver = false;
+    if (viewsAddUp) {
+        for (int a = 0; a < AccountCount; ++a) {
+            if (quantile(perAccount[a], 0.5) > allowance(Account(a))) accountOver = true;
+        }
+    }
+
+    const bool overdrawn = gpuOver || cpuOver || accountOver;
     if (!enforce) return true;
     if (overdrawn) core::logError("the budget is overdrawn; see docs/budget.md");
     return !overdrawn;

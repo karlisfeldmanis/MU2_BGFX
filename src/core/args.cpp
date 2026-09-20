@@ -30,7 +30,11 @@ void printUsage() {
         "  --log PATH                absolute path for the log\n"
         "  --stats PATH              absolute path for a csv, a row a frame\n"
         "  --budget                  fail the run when an account is overdrawn\n"
-        "  --budget NAME=MS          and replace one account's allowance");
+        "  --budget NAME=MS          and replace one account's allowance\n"
+        "  --model PATH              a .glb under assets/, or an absolute path\n"
+        "  --sheet PATH              the lighting sheet (default sheets/lighting.json)\n"
+        "  --dist N                  camera distance in world units\n"
+        "  --still                   hold the camera instead of turning it");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -82,6 +86,19 @@ Args parseArgs(int argc, char** argv) {
                 o.ms = std::atof(eq + 1);
                 a.budgetOverrides.push_back(o);
             }
+        } else if (!std::strcmp(s, "--model")) {
+            // Not required to be absolute: a bare path is under assets/, which is where
+            // tools/sync.sh puts MU2's content. Nothing is read from MU2 at run time.
+            if (const char* v = next(s)) a.model = v;
+        } else if (!std::strcmp(s, "--sheet")) {
+            if (const char* v = next(s)) {
+                a.sheet = v;
+                wantsAbsolute("--sheet", a.sheet, &a.valid);
+            }
+        } else if (!std::strcmp(s, "--dist")) {
+            if (const char* v = next(s)) a.distance = float(std::atof(v));
+        } else if (!std::strcmp(s, "--still")) {
+            a.still = true;
         } else if (!std::strcmp(s, "--help") || !std::strcmp(s, "-h")) {
             printUsage();
             a.valid = false;

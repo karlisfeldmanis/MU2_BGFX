@@ -1,0 +1,23 @@
+{
+  "note": "Carried from MU2/lighting.json. Every value is in metres and one tile is one metre, which is MU2's own scene scale. The sun's two angles are MU2's exactly and are not to be tuned away: sun_pitch -52 and sun_yaw 90 in Godot is elevation 52 and azimuth 0 here. The energies are NOT MU2's numbers, because Godot's energy unit is not this pass's; they are matched by eye in sprint 8.",
+
+  "azimuth": 0.0,
+  "elevation": 52.0,
+  "sun_colour": [1.0, 0.95, 0.88],
+  "sun_strength": 3.0,
+
+  "sky_colour": [0.385, 0.454, 0.55],
+  "horizon_paleness": 0.7,
+  "ground_colour": [0.2, 0.169, 0.133],
+  "ambient_strength": 0.7,
+
+  "exposure": 1.25,
+
+  "shadow_range": 60.0,
+  "shadow_bias": 0.0015,
+  "shadow_normal_bias": 0.02,
+  "sun_angle_degrees": 4.0,
+
+  "ssao_radius": 0.5,
+  "ssao_strength": 1.0
+}

@@ -7,17 +7,26 @@ and the code together.
 
 ## Space
 
-- **A tile is 100 units.** Not one. `index.json` says `units_per_tile: 100.0` per world and
-  MU2 calls a unit a metre, so its Lorencia is 25.6 km on a side and every light range,
-  camera distance and speed in MU2's numbers is in those units. Read the world's own value;
-  never hard-code 100, and never assume MU4's 1 m per tile, which was its arena's own scale
-  and is why none of MU4's distances transfer.
+- **The world is metres, and one tile is one metre.** This is MU2's own scene scale, kept
+  on purpose so that every number MU2 tuned — light ranges, the shadow's reach, camera
+  distances, speeds — carries over unchanged. Lorencia is 256 m on a side.
+- **The content is not in metres, and is converted on the way in.** MU's own files count
+  100 units to a tile (`units_per_tile: 100.0` on every world in `index.json`), so a loader
+  divides by the world's own value. `World.cs:222` in MU2 is the same division:
+  `MetresPerTile => perTile / 100f`. Read the world's value; never hard-code 100.
+- **MU's axes are not ours.** MU stores a placement with **z up** and **y running south**.
+  A stored `(x, y, z)` becomes `(x, z, -y) / units_per_tile`, which is `World.cs:350` and
+  the three lines like it. Skip the swap and the town lies on its side.
 - **A map is `size` tiles on a side**, 256 for Lorencia, from the same entry.
-- **Column is +x and row is −z.** A tile's centre is
-  `((column + 0.5) * units, y, -(row + 0.5) * units)`, which is `Beast.cs` and `Cradle.cs`
-  in MU2's shared code. Getting the sign wrong mirrors the map about the x axis, which looks
-  like a map.
-- **A height byte is worth `height_factor` units**, 1.5 for Lorencia, from the same entry.
+- **Column is +x and row is −z.** A tile's centre in metres is
+  `(column + 0.5, y, -(row + 0.5))`. The row is negated because MU's world runs south as −z
+  while the attribute grid's rows count south as increasing index — `Terrain.Tile` in MU2's
+  shared code does the same division and the same negation. Getting the sign wrong mirrors
+  the map about the x axis, which still looks like a map.
+- **A height byte is worth `height_factor` units**, 1.5 for Lorencia, and is divided by
+  `units_per_tile` like everything else.
+- MU4's world was also 1 m to a tile, but nothing else of MU4's scale transfers: its arena
+  was its own.
 - **Y is up.** Right-handed, as glTF is. bgfx's homogeneous depth and origin are asked for
   at run time (`bgfx::getCaps()->homogeneousDepth`, `originBottomLeft`) and never assumed;
   measured on this Mac's Metal, both are false.

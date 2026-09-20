@@ -40,6 +40,10 @@ double accountBudgetMs(Account a);
 // What is deliberately unspent, so a sprint cannot quietly borrow it.
 double spareBudgetMs();
 
+// Every account plus the spare: what a whole frame's GPU time is allowed to be. This is the
+// figure the gate enforces, because it is the one bgfx measures directly.
+double totalGpuBudgetMs();
+
 // The CPU allowance for a whole frame.
 double cpuBudgetMs();
 

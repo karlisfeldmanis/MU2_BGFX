@@ -29,6 +29,12 @@ struct Args {
     bool budget = false;
     std::vector<BudgetOverride> budgetOverrides;
 
+    // The bench. A model is a path to a .glb; empty raises the ground alone.
+    std::string model;
+    std::string sheet;       // absolute; sheets/lighting.json by default
+    float distance = 0.0f;   // camera distance in world units; 0 frames on the model
+    bool still = false;      // hold the camera instead of turning it
+
     bool valid = true;
 };
 

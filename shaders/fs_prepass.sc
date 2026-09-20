@@ -1,0 +1,18 @@
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos
+
+// The view normal and the view depth, in one RGBA16F target. SSAO reads this and nothing
+// else: no unpacking, no second sample of the depth buffer.
+#include "common.sh"
+
+void main()
+{
+	if (u_material.x >= 0.0)
+	{
+		if (texture2D(s_albedo, v_texcoord0).a < u_material.x) discard;
+	}
+	// gl_FrontFacing on Metal is the opposite sense from the winding CULL_CW keeps, so the
+	// facing is taken from the view direction instead. docs/conventions.md.
+	vec3 n = normalize(v_vnormal);
+	if (dot(n, normalize(-v_vpos)) < 0.0) n = -n;
+	gl_FragColor = vec4(n, -v_vpos.z);
+}

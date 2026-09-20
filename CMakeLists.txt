@@ -39,6 +39,9 @@ find_package(glfw3 3.3 REQUIRED)
 # Metal only, by decision; see docs/conventions.md.
 set(SHADER_DIR ${CMAKE_SOURCE_DIR}/shaders)
 set(SHADER_OUT ${CMAKE_BINARY_DIR}/shaders)
+# Where shaderc finds bgfx_shader.sh. Without it every shader that includes common.sh fails
+# on the include and not on anything of ours.
+set(BGFX_SHADER_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/src)
 file(GLOB VS_FILES ${SHADER_DIR}/vs_*.sc)
 file(GLOB FS_FILES ${SHADER_DIR}/fs_*.sc)
 if(VS_FILES)
@@ -60,13 +63,21 @@ add_executable(mu2
   src/main.cpp
   src/core/log.cpp
   src/core/args.cpp
+  src/core/files.cpp
+  src/core/json.cpp
+  src/content/texture.cpp
+  src/content/mesh.cpp
   src/gfx/window.cpp
   src/gfx/views.cpp
   src/gfx/stats.cpp
   src/gfx/callback.cpp
+  src/gfx/lighting.cpp
+  src/gfx/renderer.cpp
+  src/game/bench.cpp
 )
 target_include_directories(mu2 PRIVATE src extern)
-target_link_libraries(mu2 PRIVATE bgfx bimg_encode glfw)
+# bimg_decode reads the PNGs, bimg_encode writes the screenshots.
+target_link_libraries(mu2 PRIVATE bgfx bimg_decode bimg_encode glfw)
 target_compile_definitions(mu2 PRIVATE
   MU2_SHADER_DIR="${SHADER_OUT}/metal"
   MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets"

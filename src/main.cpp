@@ -1,14 +1,17 @@
-// MU2 on bgfx. Sprint 0: the review loop and the budget gate, around a window that clears
-// itself. The frame's six views exist from here on; sprints fill them. See PLAN.md.
+// MU2 on bgfx. Sprint 1: the whole six-view frame, with the model bench in front of it.
+// See PLAN.md and docs/sprints/.
 #include <bgfx/bgfx.h>
-#include <bx/math.h>
 #include <bx/timer.h>
 
 #include <cstdio>
 #include <string>
 
+#include "content/texture.h"
 #include "core/args.h"
 #include "core/log.h"
+#include "game/bench.h"
+#include "gfx/lighting.h"
+#include "gfx/renderer.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
 #include "gfx/window.h"
@@ -17,21 +20,8 @@ using namespace mu;
 
 namespace {
 
-// Where a run writes when it is not told. Absolute, from the build.
 std::string defaultPath(const char* dir, const char* name) {
     return std::string(dir) + "/" + name;
-}
-
-// Lays out the frame's views. Sprint 0 has no targets yet, so every one of them is the
-// backbuffer and only the first clears; what this proves is that the view ids, their order
-// and their accounts are wired from end to end.
-void setupViews(int width, int height) {
-    for (uint16_t v = 0; v < gfx::ViewCount; ++v) {
-        bgfx::setViewName(v, gfx::viewName(gfx::View(v)));
-        bgfx::setViewRect(v, 0, 0, uint16_t(width), uint16_t(height));
-        bgfx::setViewClear(v, v == gfx::ViewShadow ? (BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH) : 0,
-                           0x14181eff, 1.0f, 0);
-    }
 }
 
 }  // namespace
@@ -48,7 +38,11 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    const std::string shotDir = args.shotPath.empty() ? defaultPath(MU2_ROOT_DIR, "shots") : args.shotPath;
+    const std::string shotDir =
+        args.shotPath.empty() ? defaultPath(MU2_ROOT_DIR, "shots") : args.shotPath;
+    const std::string sheetPath = args.sheet.empty()
+                                      ? defaultPath(MU2_SHEET_DIR, "lighting.json")
+                                      : args.sheet;
 
     gfx::Window window;
     gfx::WindowDesc desc;
@@ -56,6 +50,36 @@ int main(int argc, char** argv) {
     desc.height = args.height;
     desc.vsync = args.vsync;
     if (!window.open(desc)) {
+        core::logClose();
+        return 1;
+    }
+
+    content::Textures textures;
+    textures.createDefaults();
+
+    gfx::Renderer renderer;
+    if (!renderer.init(window.width(), window.height(), MU2_SHADER_DIR)) {
+        core::logError("the renderer did not start");
+        textures.shutdown();
+        window.close();
+        core::logClose();
+        return 1;
+    }
+
+    gfx::Lighting lighting;
+    lighting.reloadIfChanged(sheetPath);
+
+    game::ModelBench bench;
+    if (args.distance > 0.0f) bench.setDistance(args.distance);
+    const std::string modelPath =
+        (args.model.empty() || args.model[0] == '/')
+            ? args.model
+            : defaultPath(MU2_ASSET_DIR, args.model.c_str());
+    if (!bench.open(modelPath, textures)) {
+        core::logError("the bench did not open");
+        renderer.shutdown();
+        textures.shutdown();
+        window.close();
         core::logClose();
         return 1;
     }
@@ -69,15 +93,23 @@ int main(int argc, char** argv) {
     int frame = 0;
     int64_t last = bx::getHPCounter();
     const double toMs = 1000.0 / double(bx::getHPFrequency());
+    double elapsed = 0.0;
     double sinceLine = 0.0;
+    double sinceSheetCheck = 0.0;
 
     while (window.pump() && !window.escapePressed()) {
-        setupViews(window.width(), window.height());
+        renderer.resize(window.width(), window.height());
 
-        // Every view is submitted, empty or not: a view bgfx sees nothing in is dropped from
-        // the frame and its timer reports nothing, and an account with no rows reads as free
-        // rather than as unbuilt.
-        for (uint16_t v = 0; v < gfx::ViewCount; ++v) bgfx::touch(v);
+        // The sheet is stat'd four times a second rather than every frame: the point is to
+        // tune with the window open, and a syscall a frame for that is a syscall wasted.
+        sinceSheetCheck += 1.0;
+        if (sinceSheetCheck >= 15.0) {
+            sinceSheetCheck = 0.0;
+            lighting.reloadIfChanged(sheetPath);
+        }
+
+        bench.update(elapsed, !args.still);
+        renderer.draw(bench.camera(), lighting, bench.drawables());
 
         const bool lastFrame = args.frames && frame + 1 >= args.frames;
         if (args.shotEvery && (frame % args.shotEvery == 0 || lastFrame)) {
@@ -93,6 +125,7 @@ int main(int argc, char** argv) {
         const int64_t now = bx::getHPCounter();
         const double cpuMs = double(now - last) * toMs;
         last = now;
+        elapsed += cpuMs / 1000.0;
         stats.sample(cpuMs);
 
         sinceLine += cpuMs;
@@ -110,6 +143,10 @@ int main(int argc, char** argv) {
     }
 
     const bool withinBudget = stats.finish(args.budget);
+
+    bench.shutdown();
+    renderer.shutdown();
+    textures.shutdown();
     window.close();
 
     const int errors = core::logErrorCount();
