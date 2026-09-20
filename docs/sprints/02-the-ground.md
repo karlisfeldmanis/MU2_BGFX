@@ -12,7 +12,7 @@ Read before writing anything, and it changes the sprint.
 **`lorencia_ground.glb` is a terrain mesh that is already built.** 14 MB, one mesh, **44
 primitives**, 262 144 vertices and **131 072 triangles** — which is 256 × 256 tiles × 2,
 one quad per tile with its own four unshared vertices. It is already in **metres** and
-already has rows running **−z** (`min [32, 0, −249]`, `max [245, 2.23, −14]`), so the
+already has rows running **−z** — `min [0, 0, −256]`, `max [256, 3.825, 0]` — so the
 conventions page's scale and axis rules are satisfied by the file itself. No heightfield
 needs building from `height.png` to draw the land.
 
@@ -22,13 +22,20 @@ base with no overlay (9 of the 44). The nine slots are in `lorencia.json`'s `til
 
 The vertex attributes carry the rest:
 
-- **`TEXCOORD_0` is in tiles, not in [0,1]** — it runs 32..245 across the map. Each half of
+- **`TEXCOORD_0` is in tiles, not in [0,1]** — it runs 0..256 across the map. Each half of
   a surface multiplies it by its own `repeat` from `ground_surfaces.json` (0.25 or 0.5), so
   one texture covers four tiles or two.
-- **`COLOR_0` is `VEC4` float and is two different things.** `rgb` (0.18..0.53) is MU's
-  baked `TerrainLight` sampled per vertex — already a lit result, so it multiplies the
-  diffuse and does not go through an sRGB sampler. `a` (0..1) is the **blend weight** from
-  base to overlay.
+- **`COLOR_0` is `VEC4` float and is two different things.** `rgb` (0.167..0.527) is MU's
+  baked `TerrainLight` per vertex, and it **multiplies the albedo, before any lighting and
+  with no factor** — which is what glTF says a vertex colour does and what MU2's own
+  `GroundSource` does. `a` (0..1) is the weight MU painted from base to overlay, before the
+  height blend bites into it.
+
+> **The three figures above were wrong in this file until the review.** They were the
+> accessor bounds of *primitive 0 alone* — a 590-triangle scrap — read as the whole mesh's.
+> The error reached the code: `vs_ground_depth.sc` justified the ground's cheapness in the
+> shadow pass with "Lorencia rises only 2.2 m", when it rises 3.825 and its steepest
+> single-tile step is 3.36 m over one metre, a 73-degree face.
 - There is **no `TANGENT`**, and none is needed: the ground's UVs are world-axis-aligned, so
   the tangent frame is analytic in the shader.
 
@@ -79,33 +86,35 @@ before the code:
 
 `./run.sh --frames 600 --world lorencia`, Release, vsync off, 1080p, 4x MSAA, **136 draws**
 (44 surfaces x 3 geometry passes, plus 4 screen passes), 131 072 triangles, 570 frames after
-warmup.
+warmup, at `b34e5bc`. Three runs of each, alternating, **no `--shot`**.
 
 | | still camera | camera moving |
 |---|---|---|
-| **frame (mean wall ms)** | **3.075** | **4.085** |
-| fps | 325 | 245 |
-| gpu frame (reported, counts waiting) | 2.226 | 2.402 |
+| **frame (mean wall ms)** | 2.393, 2.422, 2.363 → **2.39** | 2.430, 2.306, 2.463 → **2.40** |
+| fps | 418 | 417 |
+| gpu frame (reported, counts waiting) | — | 2.30 |
 | budget | kept | kept |
 
-Against a 5.5 ms frame. **This is the finding of the sprint, and it is not a good one: the
-bare land, with nothing standing on it, spends three quarters of the frame's whole
-allowance.** No house, no tree, no grass, no figure, no HUD — and 2845 objects are due in
-sprint 3.
+Against a 5.5 ms frame. **Still and moving are the same number**, 0.01 ms apart inside a
+spread of 0.16.
 
-Where it goes: 131 072 triangles are submitted three times a frame, to the sun's split, to
-the prepass and to the shade pass, with **no culling of any kind**. The camera sees perhaps
-a fiftieth of the map. The shadow split covers 60 m of a 256 m map and is handed all of it.
+> **This table used to say 3.075 ms still and 4.085 moving, and both were wrong.** They were
+> taken with `--shot` on, under a command line written here that says they were not. A
+> screenshot stalls its frame to about 250 ms and `Stats::sample` averaged it in like any
+> other, worth roughly 1.6 ms of mean. The statistics now skip any frame a shot was requested
+> on, which is why the two columns agree: measured after that fix, `--shot 200` costs
+> 2.238 ms against 2.301 without it.
 
-So sprint 3 does not start with the town. It starts with the chunking that foundation 7 of
-`PLAN.md` describes, and the town is placed into a frame that can already refuse to draw
-what nobody is looking at. The alternative — place 2845 objects first and cull afterwards —
-is how the budget gets spent before anyone notices.
+**What that costs is an argument this file used to make and can no longer make.** It closed
+by saying the still/moving gap showed the cost tracking what is *visible* rather than what
+exists, and therefore that sprint 3 should open with chunking rather than with the town.
+There is no gap. The evidence was an artefact of the measurement, and it is withdrawn.
 
-The two numbers that say which chunking is worth building: a still camera costs 3.075 ms and
-a moving one 4.085. The difference is the sun's split re-framing every frame and more
-surfaces entering view, so the cost tracks what is *visible*, not what exists — which is
-exactly the shape frustum culling helps.
+What is still true, and is not evidence for any particular answer: 131 072 triangles are
+submitted three times a frame with **no culling of any kind**, while the camera sees perhaps
+a fiftieth of the map and the sun's split covers 60 m of a 256 m one. The bare land, with
+nothing standing on it, spends 44% of the frame. **Whether sprint 3 opens with the chunking
+or with the town is the senior's call and is not settled here.**
 
 ## What the data proved about the blend
 
@@ -121,9 +130,12 @@ and belongs to sprint 8.
 - **Water is a flat blue texture.** Ten surfaces carry `water: true` and nothing reads the
   flag yet; the moat draws as ordinary ground. It is in the shots and it looks like what it
   is.
-- **The look is not judged.** MU's baked TerrainLight is multiplied in at x2, which is an
-  invention with no source — MU2's Godot shader uses it differently and the two have to be
-  put side by side before either number means anything. The land reads pale.
+- **The look is now MU2's, by derivation rather than by eye.** MU2's own `GroundSource` was
+  read and followed: the baked light multiplies the albedo with no factor, the dry ground
+  takes no specular and no sky reflection (its art has lighting painted in, and MU's
+  48-degree camera makes the whole frame grazing), and the base/overlay blend is height-aware
+  with a 0.35 bite tapered at both ends. What it is *not* is judged side by side against MU2
+  running — that is still sprint 8.
 - **The tiling repeats visibly** from this camera, which is the same problem MU4 solved on
   its arena floor by reading the texture a second time at a third of the scale, turned. Not
   built here.
