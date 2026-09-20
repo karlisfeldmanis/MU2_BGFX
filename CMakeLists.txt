@@ -95,3 +95,13 @@ if(APPLE)
   target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework QuartzCore" "-framework IOKit")
 endif()
 add_dependencies(mu2 mu2_shaders)
+
+# ---- the cook ------------------------------------------------------------------------------
+# Built on demand and never by the game's own build: `cmake --build build --target texcook`,
+# which is what tools/cook.py runs. It links bimg's encoders directly rather than turning
+# BGFX_BUILD_TOOLS_TEXTURE on, because texturec builds its mip chain internally and the one
+# rule this cook exists to keep -- a cutout's coverage held down the chain -- has to be
+# applied between the levels. See the header of tools/cook/texcook.cpp.
+add_executable(texcook EXCLUDE_FROM_ALL tools/cook/texcook.cpp)
+target_link_libraries(texcook PRIVATE bimg_decode bimg_encode bimg bx)
+target_compile_options(texcook PRIVATE -Wall -Wextra -Wno-unused-parameter)

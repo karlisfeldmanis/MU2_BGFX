@@ -8,20 +8,39 @@ from a guess. Sprint 2 is still with QA and the junior; nothing here touches its
 
 ## Where sprint 2 left the frame, and what that forces
 
-The bare land costs **3.075 ms still, 4.085 ms moving**, against a 5.5 ms frame, with
-nothing standing on it and no culling of any kind: 131 072 triangles submitted three times a
-frame while the camera sees about a fiftieth of the map.
+**Rewritten after sprint 2's review, at `e42f246`, and the first draft of this section is
+withdrawn rather than patched.** It said the land cost 3.075 ms still and 4.085 moving, and
+built an argument on the gap between them: that the frame tracks what is *visible* rather
+than what exists, and therefore that this sprint had to open with chunking. Both figures
+were taken with `--shot` on and the screenshot frames averaged into the mean — a shot stalls
+its frame to about 250 ms — and re-measured without them the land costs **2.39 ms still and
+2.40 moving**. There is no gap. There never was one, and there could not have been: the
+ground submits all 44 of its surfaces in both cases, so nothing about the camera could have
+changed the number. The inference was unsound even before the measurement was wrong.
 
-So this sprint does **not** start with the town. It starts with the chunking of foundation 7,
-and the town is placed into a frame that already refuses to draw what nobody is looking at.
-The order is the whole point: place 2845 objects first and the budget is spent before anyone
-measures it.
+What survives is the plain figure. The bare land is **2.39 ms of a 5.5 ms frame — 43% of it
+— with nothing standing on it**, 131 072 triangles submitted three times over, while the
+camera sees about a fiftieth of the map. Still due: 2753 placements here, a player and
+**290 monsters** in sprint 4 (not the 30 the sprint table says — `04-figures.census.md`
+counted the spawn rows), effects, and the HUD.
 
-**The gate, stated before the work so it cannot be negotiated afterwards.** After chunking
-and before one placement is drawn, the bare land from the play camera, moving, must cost
-**at or under 1.5 ms**. If chunking the ground cannot buy that, the town does not go in and
-the sprint says so — because the placements below are worth about the same again, and two
-halves of a 5.5 ms frame do not both fit in it.
+**So the order is decided by a measurement this sprint takes first, and not by the argument
+that was withdrawn.** Three runs, before either chunking or placements are built:
+
+1. the six views with **the ground not submitted at all** — what the frame costs empty;
+2. the ground as it is now — the difference is what the land actually costs;
+3. the ground with only the handful of surfaces the play camera can see, culled by hand —
+   an upper bound on everything chunking could ever buy.
+
+If (3) is close to (2), chunking the ground buys nothing and the town goes in first with the
+culling deferred to where the placements make it pay. If (3) is far below (2), chunking
+comes first. Either way the sprint has evidence rather than a conviction, which is what the
+review took away and what it is owed.
+
+**The budget this sprint is judged against**, stated now so it cannot be negotiated
+afterwards: land **1.5 ms**, town **1.5 ms**, figures **1.5 ms**, HUD and effects and
+present **1.0 ms**. The land is at 2.39 and so is already 0.9 ms over its share; that is the
+debt this sprint either pays or writes down explicitly.
 
 ## What the data turned out to be
 
@@ -111,6 +130,40 @@ Written before the code, as sprint 2's were:
   camera is close enough that the sun's casters mostly *are* off screen. The two logged
   culled counts exist to make this visible: if the shadow pass's culled count tracks the
   camera's, it is wrong.
+
+## Built: the cook, and what it turned out to cost
+
+`tools/cook/texcook.cpp` and `tools/cook.py`, run on Lorencia 2026-09-20. Nothing loads the
+result yet — the loaders are this sprint's own work — but the files exist and the numbers
+are real.
+
+| | before | cooked |
+|---|---|---|
+| model textures | 306 distinct images from 649 uses, embedded in the glb | **40.5 MB** of BC7/BC5 with mips |
+| ground sheets | 27 loose PNG, **1536²** each | **49.5 MB** |
+| all textures in VRAM | 269.9 MB of RGBA8 at the top level alone, ~360 MB once the engine builds its chains at load | **90.0 MB**, chains included |
+| meshes | 17 790 triangles inside **97.6 MB** of glb | **3.5 MB** of `.mum`, 105 files |
+
+Three things worth writing down:
+
+- **The land's 27 sheets cost more than the town's 306.** 49.5 MB against 40.5, because
+  every ground surface is 1536² where a model's is 384². Whether MU's camera can tell is a
+  look question and it is now a cheap experiment: halve them in the cook and put the two
+  shots side by side. Not done here.
+- **The disk does not shrink and that was never the win.** 93.5 MB cooked against 97.6 MB
+  of glb is a wash; what goes away is decoding 333 PNGs and building their mip chains at
+  load, and three quarters of the texture memory.
+- **The cook is slow and it only has to be right.** 54 minutes wall, 6.7 core-hours, almost
+  all of it BC7's mode search. It is incremental by content hash, so a re-run after a
+  changed sheet is seconds.
+
+**Two debts the cook creates, both owed inside this sprint.** Cooked normals are BC5 with
+two channels, and `fs_shade.sc:98` and `fs_ground.sc:81-82` both read `.xyz` — they need the
+z rebuilt, or every normal map reads flat-blue. And the mesh cook writes a 48-byte vertex
+with no joints or weights, so sprint 4's figures need a second layout and a second path
+through it; `04-figures.census.md` also records that `JOINTS_0` is `UNSIGNED_SHORT` on every
+figure, which bgfx has no attribute type for, so that conversion belongs here in the cook
+rather than in the loader.
 
 ## Measured
 
