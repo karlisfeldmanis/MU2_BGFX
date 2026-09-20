@@ -15,6 +15,25 @@
 
 namespace mu::game {
 
+// One thing the viewer can show. Either a cooked mesh on disk -- a world object or a figure's
+// worn part, drawn as it sits -- or a whole body out of the figure tables, which stands with
+// its gear on and plays a clip. The two are one list on purpose: what a person browsing
+// wants is a name, and whether that name is a file or a table row is the viewer's problem.
+struct BrowseEntry {
+    std::string name;                  // what the list shows
+    std::string path;                  // a .mum on disk, for the mesh categories
+    const FigureBody* body = nullptr;  // a body out of the tables, for the figure categories
+};
+
+// A tab of the viewer: the label on it, what is in it, and where the eye was left the last
+// time it was open. The index is per category rather than shared, so coming back to the
+// monsters lands on the monster you were looking at and not on the 300th house.
+struct BrowseCategory {
+    std::string label;
+    std::vector<BrowseEntry> entries;
+    size_t at = 0;
+};
+
 class ModelBench {
 public:
     // `modelPath` may be empty, in which case only the ground is raised. The world is raised
@@ -22,26 +41,45 @@ public:
     bool open(const std::string& assetDir, const std::string& world,
               const std::string& modelPath, content::Textures& textures);
 
-    // The browser: every cooked mesh in the world's own directory and in the figures', in one
-    // sorted list, stepped through with the arrow keys.
+    // The browser: everything the cook wrote, cut into categories -- the world's own objects,
+    // the monsters, the people, and the figures' loose parts -- and stepped through with the
+    // arrow keys, one category at a time.
     //
     // It walks the COOKED files rather than the glb they came from, which is the whole point
     // of it. `--model` reads a glb through cgltf and proves the art; this reads exactly what
     // the game loads -- the .mum the cook wrote, its BC7 and BC5 textures, its mip chains and
     // its material factors -- so a fault introduced by the cook shows here and nowhere else.
+    //
+    // The figure categories go further and load a body the way the game does: its parts on
+    // one rig, its weapon in its hand, standing on the land and playing its own idle. A
+    // monster looked at in bind pose is not the monster the game draws.
     bool openBrowser(const std::string& assetDir, const std::string& world,
                      content::Textures& textures);
-    // Moves `by` places and loads what it lands on, clamped to the list. Returns false only
-    // if that file will not parse, having already said why.
+    // Moves `by` places within the open category and loads what it lands on, clamped to the
+    // list. Returns false only if that entry will not load, having already said why.
     bool step(int by, content::Textures& textures);
-    bool browsing() const { return !browse_.empty(); }
-    // "17/105  House01.mum", for the log line once a second.
+    // Opens another category and loads whatever it was left on. An empty one is refused --
+    // a world with no cooked figures would otherwise offer two tabs with nothing behind them.
+    bool setCategory(size_t category, content::Textures& textures);
+    // The same two by name, for a run with nobody at the keyboard: the category whose label
+    // holds `word`, and then the first entry whose name holds `needle`, both ignoring case.
+    // Each says so in the log when it finds nothing, and leaves the browser where it was.
+    bool openCategory(const std::string& word, content::Textures& textures);
+    bool pick(const std::string& needle, content::Textures& textures);
+    // The next or previous clip of whatever figure is standing, for the figure categories.
+    // Does nothing where there is no figure or no library.
+    bool stepClip(int by);
+    bool browsing() const { return !categories_.empty(); }
+    // "MONSTERS  17/105  Budge Dragon", for the log line once a second.
     std::string browseLine() const;
     // The list itself, for the viewer to put on the screen. Names only -- the directory a
     // model came out of is in the log and is not what anybody reads off a list.
-    size_t browseCount() const { return browse_.size(); }
-    size_t browseIndex() const { return browseAt_; }
+    size_t browseCount() const;
+    size_t browseIndex() const;
     std::string browseName(size_t index) const;
+    size_t categoryCount() const { return categories_.size(); }
+    size_t categoryIndex() const { return category_; }
+    const BrowseCategory& category(size_t index) const { return categories_[index]; }
 
     // The ground the renderer should draw, or null when this bench is standing its model on
     // its own plane instead. See makeGround.
@@ -91,10 +129,18 @@ private:
     // Surface 1 was tried and is grass against sand -- two materials and the bite between
     // them, which is the right plot for judging the GROUND and the wrong one for judging a
     // thing standing on it.
-    static constexpr int kPlotTiles = 24;
+    // 40 and not 24: 24 was wide enough while the subject hung in the air over the middle of
+    // it, and is not wide enough now it stands on it. A house is eight metres across and the
+    // camera pulls back to about eleven to frame it, which put the far edge of the plot --
+    // and the black nothing past it -- in the corner of every shot of a large object.
+    static constexpr int kPlotTiles = 40;
     static constexpr int kPlotSurface = 0;
 
     bool makeGround(content::Textures& textures, float halfSize);
+    // Loads whatever the open category is pointing at: a cooked mesh, or a body stood up on
+    // the land with its clip running.
+    bool loadCurrent(content::Textures& textures);
+    bool standFigure(const FigureBody* body);
     // Lorencia's own land under the bench, which is what a material is finally judged against.
     // Falls back to makeGround's plane and says so when the world will not load.
     bool raiseWorldGround(const std::string& assetDir, const std::string& world,
@@ -103,6 +149,7 @@ private:
     // and by every step of the browser.
     bool place(content::Textures& textures);
     void frameOn(float radius, const content::Bounds& bounds);
+    float framingDistance(float radius) const;
 
     content::Mesh model_;
     content::Mesh ground_;
@@ -114,9 +161,15 @@ private:
     float stand_[3] = {0.0f, 0.0f, 0.0f};
     // How far above the land the subject hangs. See kFloatRadii.
     float lift_ = 0.0f;
-    std::vector<std::string> browse_;   // absolute paths to .mum, sorted
+    std::vector<BrowseCategory> categories_;
+    size_t category_ = 0;
     std::string browseDir_;             // what the paths are relative to, for the textures
-    size_t browseAt_ = 0;
+    // How many of drawables_ were made once and belong to no subject: the fallback plane, and
+    // nothing else. A figure's parts are appended after them every frame and truncated back
+    // to this on the next -- which is why it is a count and not a bool. It was `resize(1)`,
+    // and a figure standing on the world's own land has no plane in the list at all, so that
+    // kept the first of the previous frame's parts and dropped the ground it was standing on.
+    size_t fixed_ = 0;
     bool haveModel_ = false;
     bool haveFigure_ = false;
     Figures figures_;

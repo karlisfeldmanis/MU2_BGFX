@@ -48,6 +48,7 @@ std::string defaultPath(const char* dir, const char* name) {
 struct ListHit {
     long long hovered = -1;   // the row the pointer is over, or -1
     float x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
+    long long tab = -1;       // the category tab the pointer is over, or -1
     bool over = false;        // the pointer is somewhere on the panel
 };
 
@@ -69,15 +70,29 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     constexpr uint32_t kHoverBar = 0x60606060u;
     constexpr uint32_t kRule = 0x40ffffffu;
 
-    const float line = gfx::Overlay::lineHeight(kScale);
+    // A quarter of a line of leading. The font's own cell is one pixel taller than its
+    // glyphs, which is enough to keep two lines from touching and not enough to read a
+    // hundred names down: set solid, the list is a grey block and the eye slides off it.
+    constexpr float kLeading = 1.25f;
+    const float line = gfx::Overlay::lineHeight(kScale) * kLeading;
     const size_t count = bench.browseCount();
     if (count == 0) return hit;
 
     const float header = line * 1.6f;
+    // The categories, one row each above the names. Vertical rather than a strip across the
+    // top: the panel is already as wide as the widest name and no wider, and four labels laid
+    // side by side either overflow that or have to be shortened until they stop being the
+    // words the log uses for the same thing.
+    const float tabScale = kScale * 0.9f;
+    const float tabLine = gfx::Overlay::lineHeight(tabScale) * kLeading * 1.15f;
+    const size_t tabs = bench.categoryCount() > 8 ? 8 : bench.categoryCount();
+    const float tabBlock = float(tabs) * tabLine + kPad;
+
     const float footer = line * 1.6f;
     // As many as fit in the top three quarters, so the list never runs into the frame line
     // the log prints at the bottom of a review shot.
-    size_t rows = size_t((float(height) * 0.75f - kPad * 2.0f - header - footer) / line);
+    size_t rows =
+        size_t((float(height) * 0.75f - kPad * 2.0f - tabBlock - header - footer) / line);
     if (rows < 1) rows = 1;
     if (rows > count) rows = count;
     const size_t half = rows / 2;
@@ -91,23 +106,50 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
         if (w > widest) widest = w;
     }
 
+    char tabLabels[8][96];
+    for (size_t i = 0; i < tabs && i < 8; ++i) {
+        std::snprintf(tabLabels[i], sizeof(tabLabels[i]), "%s  %zu",
+                      bench.category(i).label.c_str(), bench.category(i).entries.size());
+        const float w = gfx::Overlay::measure(tabScale, tabLabels[i]);
+        if (w > widest) widest = w;
+    }
     hit.x = kPad;
     hit.y = kPad;
     hit.w = widest + kPad * 3.0f;
-    hit.h = header + float(rows) * line + footer + kPad;
+    hit.h = tabBlock + header + float(rows) * line + footer + kPad;
     overlay.panel(hit.x, hit.y, hit.w, hit.h, kBack);
     hit.over = pointerX >= hit.x && pointerX < hit.x + hit.w && pointerY >= hit.y &&
                pointerY < hit.y + hit.h;
 
     char label[96];
-    std::snprintf(label, sizeof(label), "COOKED MODELS  %zu/%zu", bench.browseIndex() + 1,
+    // The tabs. An empty category is drawn dim and cannot be chosen -- a world cooked with
+    // no figures still shows that the monsters are a thing the viewer has, and that there
+    // are none of them here, which is a different statement from the tab not existing.
+    for (size_t i = 0; i < tabs && i < 8; ++i) {
+        const float y = hit.y + kPad * 0.3f + float(i) * tabLine;
+        const bool empty = bench.category(i).entries.empty();
+        const bool open = i == bench.categoryIndex();
+        const bool over = !empty && hit.over && pointerY >= y && pointerY < y + tabLine;
+        if (over) hit.tab = (long long)i;
+        if (open || over) {
+            overlay.panel(hit.x + 2.0f, y - 1.0f, hit.w - 4.0f, tabLine,
+                          open ? kChosenBar : kHoverBar);
+        }
+        overlay.text(hit.x + kPad, y, tabScale, empty ? kDim : (open ? kChosen : kInk),
+                     tabLabels[i]);
+    }
+    overlay.panel(hit.x + kPad, hit.y + tabBlock - 3.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
+
+    std::snprintf(label, sizeof(label), "%s  %zu/%zu",
+                  bench.category(bench.categoryIndex()).label.c_str(), bench.browseIndex() + 1,
                   count);
-    overlay.text(hit.x + kPad, hit.y + kPad * 0.6f, kScale, kDim, label);
+    overlay.text(hit.x + kPad, hit.y + tabBlock + kPad * 0.6f, kScale, kDim, label);
     // A rule under the heading and above the footer, which is the whole of the chrome: a
     // panel with a line at each end reads as a list, and costs two quads.
-    overlay.panel(hit.x + kPad, hit.y + header - 3.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
+    overlay.panel(hit.x + kPad, hit.y + tabBlock + header - 3.0f, hit.w - kPad * 2.0f, 1.0f,
+                  kRule);
 
-    const float top = hit.y + header;
+    const float top = hit.y + tabBlock + header;
     for (size_t i = first; i < last; ++i) {
         const float y = top + float(i - first) * line;
         const bool chosen = i == bench.browseIndex();
@@ -123,7 +165,13 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     const float footTop = top + float(rows) * line;
     overlay.panel(hit.x + kPad, footTop + 2.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
     overlay.text(hit.x + kPad, footTop + 6.0f, kScale * 0.75f, kDim,
-                 "CLICK / ARROWS  DRAG TURNS  WHEEL ZOOMS");
+    // What the footer says depends on what is standing there: with a figure the useful thing
+    // is which of its clips is running, because that is the one fact a still cannot show.
+                 // No brackets in the hint, because there are none in the font: this line
+                 // read "TAB CATEGORY   CLIP" for one run, with the two keys it was naming
+                 // dropped silently on the floor. See kGlyphs in gfx/overlay.cpp.
+                 bench.hasFigure() ? "TAB CATEGORY  BRACKETS CLIP  DRAG TURNS  WHEEL ZOOMS"
+                                   : "TAB CATEGORY  ARROWS WALK  DRAG TURNS  WHEEL ZOOMS");
     return hit;
 }
 
@@ -250,6 +298,11 @@ int main(int argc, char** argv) {
         return 1;
     }
     if (!inWorld && !figureBench && !browseBench &&
+    // Where the browser opens, for a run with nobody at the keyboard. Neither is fatal: a
+    // category or a name that is not there has said so, and the viewer is still a viewer.
+    if (browseBench && !args.category.empty()) bench.openCategory(args.category, textures);
+    if (browseBench && !args.pick.empty()) bench.pick(args.pick, textures);
+    if (browseBench) core::logf("browser: %s", bench.browseLine().c_str());
         !bench.open(MU2_ASSET_DIR, benchWorld, modelPath, textures)) {
         core::logError("the bench did not open");
         renderer.shutdown();
@@ -260,6 +313,20 @@ int main(int argc, char** argv) {
     }
 
     // A shot and a measurement do not belong in the same run, and saying so is cheaper than
+    // than off a path, so what is measured is exactly what the game will draw: a BC7 .ktx
+    // with its mip chain, not a PNG decoded at load.
+    //
+        std::string error;
+                           error.c_str());
+        } else {
+            if (chosen == nullptr) {
+            } else {
+                                           content::TextureRole::Albedo);
+                           "%zu sound events cooked",
+            }
+        }
+    }
+
     // discovering it twice. The stalled frame itself is kept out of the statistics, but the
     // readback's cost does not land wholly inside that one frame: measured over six
     // alternating pairs, a run with --shot still comes out about 0.15 ms of mean dearer, and
@@ -331,6 +398,22 @@ int main(int argc, char** argv) {
                     world.town().gatherAll(townCasters, true);
                     casters = &townCasters;
                 } else {
+        // The transparent pass's list starts empty for the same reason, and is filled below
+        // yet; when it does, this is where the game's own pool will write into it.
+            const gfx::Camera& shot = inWorld ? world.camera() : bench.camera();
+            // are in front of the subject rather than inside it, and so that the sort has
+            // something to sort: the near one must come out over the far one.
+                for (int c = 0; c < 3; ++c) {
+                        shot.position[c] + (shot.target[c] - shot.position[c]) * along;
+                }
+                // do not stamp the same picture four times.
+                // The far half alpha and the near half additive, rather than alternating
+                // it is not what a fight looks like: a burst of particles shares one sheet
+                // and one mode. Two blocks exercise both modes AND show the runs batching,
+                // which is what the draw count in the log is there to report.
+            }
+        }
+
                     world.town().gatherAll(townDrawables);
                 }
             }
@@ -436,6 +519,18 @@ int main(int argc, char** argv) {
         }
 
         bgfx::frame();
+                // Tab walks the categories, skipping any that is empty: a world cooked
+                // without figures must not have two tab presses that appear to do nothing.
+                if (window.stepped(gfx::Window::Step::Category)) {
+                    const size_t count = bench.categoryCount();
+                    for (size_t i = 1; i <= count; ++i) {
+                        const size_t next = (bench.categoryIndex() + i) % count;
+                        if (bench.setCategory(next, textures)) break;
+                    }
+                    core::logf("browser: %s", bench.browseLine().c_str());
+                }
+                if (window.stepped(gfx::Window::Step::PreviousClip)) bench.stepClip(-1);
+                if (window.stepped(gfx::Window::Step::NextClip)) bench.stepClip(1);
 
         const int64_t now = bx::getHPCounter();
         const double cpuMs = double(now - last) * toMs;
@@ -444,10 +539,21 @@ int main(int argc, char** argv) {
         // A screenshot stalls its frame to about 250 ms, and that quarter-second used to be
         // handed to the clips: every shot after the first showed a pose a quarter-second
         // ahead of where a shotless run stands, and any transient shorter than the stall --
+                // Under the panel rather than in it: which clip is running, where its clock
+                // stands and how long it is. A still cannot show that a clip is playing, and
+                // a monster frozen on frame one looks exactly like one standing still.
+                if (bench.hasFigure()) {
+                    overlay.text(hit.x + 4.0f, hit.y + hit.h + 10.0f, 1.8f, 0xFFc8c8c8u,
+                                 bench.clipLine());
+                }
         // the 0.18 s crossfade first among them -- could not be photographed at all. The
         // statistics already dropped this frame; the animation clock did not. Capped rather
         // than dropped, because a genuinely slow frame should still advance the world.
         constexpr double kLongestStep = 0.05;  // 50 ms, which is one tick of MU's own 20 Hz
+                    if (window.clicked(0) && hit.tab >= 0) {
+                        bench.setCategory(size_t(hit.tab), textures);
+                        core::logf("browser: %s", bench.browseLine().c_str());
+                    }
         if (shotThisFrame || deltaSeconds > kLongestStep) deltaSeconds = kLongestStep;
         elapsed += deltaSeconds;
         // A frame that writes a screenshot is not a frame of the game, and it does not go in
@@ -522,6 +628,14 @@ int main(int argc, char** argv) {
 
         ++frame;
         if (args.frames && frame >= args.frames) {
+            // The transparent pass's pool, for the same reason the culling counts are here:
+            // "no allocation per frame in the pools" is sprint 6's proving sentence, and a
+            // claim nothing reports is not proved. The high-water mark against the reserve
+            // is the evidence -- it cannot exceed it, because add() refuses instead of
+            // growing -- and a refusal count above zero means the reserve is too small and
+            // the picture is already missing something.
+                           "%u refused",
+            }
             // One segment done. With --repeat the world stays loaded and the next segment
             // starts from a fresh warmup: what separates them is then the machine's own
             // drift, which is the thing worth measuring, rather than the twenty seconds of

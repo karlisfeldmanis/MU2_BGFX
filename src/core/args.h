@@ -89,6 +89,14 @@ struct Args {
     // The cooked browser: step through every .mum the cook wrote, with the arrow keys. Not
     // the same thing as --model, which reads one glb: this reads what the game loads.
     bool browse = false;
+    // Which of the browser's categories to open on, by a word out of its label -- "world",
+    // "monsters", "people", "parts". Empty opens the first that has anything in it. This is
+    // what makes a review run of the viewer possible at all: a run with --frames and --shot
+    // has nobody at the keyboard to press tab.
+    std::string category;
+    // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
+    // the Budge Dragon wherever it sits in the list.
+    std::string pick;
     std::string figure;
     int clip = -1;
     // Stands the bench's figure as a safe zone does: weapon on the back, unarmed idle. It is

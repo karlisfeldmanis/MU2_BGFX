@@ -42,7 +42,13 @@ public:
     // A frame here runs at 400 to 900 fps, so a key held for the shortest press a hand can
     // make is down for several hundred frames. Read as a state, one tap of Right walks the
     // whole model list and lands wherever it ran out.
-    enum class Step { Previous, Next, PreviousTen, NextTen };
+    enum class Step {
+        Previous, Next, PreviousTen, NextTen,
+        // Tab walks the viewer's categories -- world objects, monsters, people -- and the two
+        // bracket keys walk the clips of whatever figure is standing there.
+        Category, PreviousClip, NextClip,
+        Count
+    };
     bool stepped(Step step) const { return stepped_[size_t(step)]; }
 
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.
@@ -62,8 +68,8 @@ private:
     int height_ = 0;
     bool clicked_[2] = {false, false};  // 0 left, 1 right
     bool held_[2] = {false, false};
-    bool stepped_[4] = {false, false, false, false};
-    bool stepHeld_[4] = {false, false, false, false};
+    bool stepped_[size_t(Step::Count)] = {};
+    bool stepHeld_[size_t(Step::Count)] = {};
     float lastX_ = 0.0f, lastY_ = 0.0f;
     float deltaX_ = 0.0f, deltaY_ = 0.0f;
     bool hadPointer_ = false;

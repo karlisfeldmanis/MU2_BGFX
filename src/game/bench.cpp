@@ -3,6 +3,7 @@
 #include <bx/math.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -100,24 +101,35 @@ bool ModelBench::raiseWorldGround(const std::string& assetDir, const std::string
     return true;
 }
 
-// How high above the land the subject floats, as a multiple of its own radius. Held off the
-// ground rather than stood on it: a viewer is for turning a thing over and looking at its
-// underside, and a model sitting on the land hides its own base and takes the ground's bounce
-// on it. The contact -- the shadow where it meets the earth -- is what the town is for.
-constexpr float kFloatRadii = 2.2f;
+// How far back the camera has to sit for a ball of that radius to fit the frame, out of the
+// camera's OWN field of view rather than out of a number that once looked right. It was
+// `radius * 3`, which is what a 37-degree fov would ask for; this camera is 30, and every
+// subject taller than it was wide came out with its feet cut off -- the Dark Knight with his
+// shield stood a head above the top of the shot and half a boot below the bottom of it. The
+// margin is a tenth, so a thing whose bounds are a little optimistic still has air around it.
+float ModelBench::framingDistance(float radius) const {
+    const float halfFov = camera_.fovDegrees * 0.5f * 3.14159265f / 180.0f;
+    return radius / std::sin(halfFov) * 1.1f;
+}
 
+// The subject stands ON the land, and this used to float it clear of it by 2.2 of its own
+// radii. The argument for floating was that a viewer is for turning a thing over and looking
+// at its underside; the argument against it, which is the user's and is the one kept, is that
+// a house hanging in the air over a town is not the object the game draws. What a world
+// object looks like is inseparable from where it meets the earth -- its contact shadow, the
+// occlusion in the gap, the baked light climbing its base -- and all three are absent on a
+// floating one. The wheel and the drag reach the underside of anything worth seeing.
 void ModelBench::frameOn(float radius, const content::Bounds& bounds) {
-    lift_ = radius * kFloatRadii;
-    // The subject's own centre is where the camera looks, and that is exactly stand + lift:
-    // `place` translates the model by minus its bounds' centre, so the centre lands there and
-    // nowhere else. Adding the centre again here -- which this did for one run -- aims the
-    // camera at a point the model is not at, by as much as the model is off its own origin,
-    // and the thing sits low and to one side of every shot for no visible reason.
-    focus_[0] = stand_[0];
-    focus_[1] = stand_[1] + lift_;
-    focus_[2] = stand_[2];
+    lift_ = 0.0f;
     height_ = bounds.max[1] - bounds.min[1];
-    if (distance_ <= 0.0f) distance_ = radius * 3.0f;
+    // The middle of the thing's own height above where its feet are, which is the point a
+    // turn about it keeps still. Its bounds' CENTRE is not used for the height: `place` puts
+    // the model's minimum y on the land, so the centre of the box is half a height up from
+    // there whatever the model's own origin happens to be.
+    focus_[0] = stand_[0];
+    focus_[1] = stand_[1] + height_ * 0.5f;
+    focus_[2] = stand_[2];
+    if (distance_ <= 0.0f) distance_ = framingDistance(radius);
 }
 
 bool ModelBench::open(const std::string& assetDir, const std::string& world,
@@ -140,7 +152,7 @@ bool ModelBench::place(content::Textures& textures) {
         // contact -- the shadow under it and the occlusion where it meets the land.
         frameOn(radius, b);
     } else if (distance_ <= 0.0f) {
-        distance_ = radius * 3.0f;
+        distance_ = framingDistance(radius);
     }
 
     drawables_.clear();
@@ -151,17 +163,18 @@ bool ModelBench::place(content::Textures& textures) {
         bx::mtxIdentity(groundDraw.transform);
         drawables_.push_back(groundDraw);
     }
+    fixed_ = drawables_.size();
 
     if (haveModel_) {
         gfx::Drawable modelDraw;
         modelDraw.mesh = &model_;
-        // Floated clear of the land and centred on its own bounds, so the camera turns about
-        // the middle of the thing and every face of it comes round. Its own centre is
-        // subtracted rather than its minimum y: a model authored about its feet and one
-        // authored about its middle then hang the same way.
+        // Stood on the land: its own minimum y goes to the ground's height here, and its
+        // centre over the spot in x and z. The minimum rather than the centre for the
+        // vertical, so a model authored about its feet and one authored about its middle
+        // both stand rather than one of them sinking half its height into the earth.
         const content::Bounds& b = model_.bounds();
         bx::mtxTranslate(modelDraw.transform, stand_[0] - b.centre[0],
-                         stand_[1] + lift_ - b.centre[1], stand_[2] - b.centre[2]);
+                         stand_[1] + lift_ - b.min[1], stand_[2] - b.centre[2]);
         drawables_.push_back(modelDraw);
     }
 
@@ -171,82 +184,280 @@ bool ModelBench::place(content::Textures& textures) {
     return true;
 }
 
+namespace {
+
+// One directory of cooked meshes, as a category's worth of entries, sorted by the name that
+// will be on the screen. A directory that is not there is not an error here: a world cooked
+// without figures has no figures directory, and the category is then simply empty.
+std::vector<BrowseEntry> meshesIn(const std::string& dir) {
+    std::vector<BrowseEntry> found;
+    std::error_code error;
+    std::filesystem::directory_iterator walk(dir, error);
+    if (error) {
+        core::logf("browser: nothing cooked in %s", dir.c_str());
+        return found;
+    }
+    for (const std::filesystem::directory_entry& entry : walk) {
+        if (entry.path().extension() != ".mum") continue;
+        BrowseEntry one;
+        one.name = entry.path().stem().string();
+        one.path = entry.path().string();
+        found.push_back(one);
+    }
+    std::sort(found.begin(), found.end(), [](const BrowseEntry& a, const BrowseEntry& b) {
+        return a.name < b.name;
+    });
+    return found;
+}
+
+std::vector<BrowseEntry> bodiesIn(const Figures& figures, BodyKind kind) {
+    std::vector<BrowseEntry> found;
+    for (const FigureBody* body : figures.bodiesOf(kind)) {
+        BrowseEntry one;
+        one.name = body->label.empty() ? body->name : body->label;
+        one.body = body;
+        found.push_back(one);
+    }
+    return found;
+}
+
+}  // namespace
+
 bool ModelBench::openBrowser(const std::string& assetDir, const std::string& world,
                              content::Textures& textures) {
-    // Two directories, because the cook writes to two: a world's own models, and the figures',
-    // which are cooked once and reached by every map. Both are walked and the list is sorted
-    // by file name, so stepping through it is alphabetical and repeatable between runs.
+    browseDir_ = assetDir;
     const std::string cooked = core::join(assetDir, "cooked");
-    const std::string dirs[2] = {core::join(core::join(cooked, world), "meshes"),
-                                 core::join(core::join(cooked, "figures"), "meshes")};
-    browse_.clear();
-    for (const std::string& dir : dirs) {
-        std::error_code error;
-        std::filesystem::directory_iterator walk(dir, error);
-        if (error) {
-            core::logf("browser: nothing cooked in %s", dir.c_str());
-            continue;
-        }
-        for (const std::filesystem::directory_entry& entry : walk) {
-            if (entry.path().extension() == ".mum") browse_.push_back(entry.path().string());
-        }
+    // The land first, because everything in every category is going to stand on it.
+    raiseWorldGround(assetDir, world, textures);
+
+    // The figure tables, which are what makes a monster a monster here rather than a mesh in
+    // bind pose. A world cooked without them is not an error: the mesh categories still fill
+    // and the figure ones come out empty.
+    figures_.open(assetDir, world, textures);
+
+    categories_.clear();
+    categories_.push_back({"WORLD OBJECTS", meshesIn(core::join(core::join(cooked, world),
+                                                                "meshes")), 0});
+    categories_.push_back({"MONSTERS", bodiesIn(figures_, BodyKind::Monster), 0});
+    categories_.push_back({"PEOPLE", bodiesIn(figures_, BodyKind::Character), 0});
+    // The townsfolk cooked whole -- a model with its own clips inside it -- go with the
+    // people: they are people, and a fourth tab holding three names is chrome.
+    for (BrowseEntry& one : bodiesIn(figures_, BodyKind::Townsfolk)) {
+        categories_.back().entries.push_back(one);
     }
-    std::sort(browse_.begin(), browse_.end(), [](const std::string& a, const std::string& b) {
-        return std::filesystem::path(a).filename() < std::filesystem::path(b).filename();
-    });
-    if (browse_.empty()) {
-        core::logError("browser: no cooked meshes under %s. Run tools/cook.py first: this "
+    std::sort(categories_.back().entries.begin(), categories_.back().entries.end(),
+              [](const BrowseEntry& a, const BrowseEntry& b) { return a.name < b.name; });
+    // And the figures' loose meshes, which is what this viewer showed before there were
+    // categories: one armour plate, one helmet, one sword, as the cook wrote it. Still worth
+    // a tab -- a part is where a material fault is read -- but not the first one.
+    categories_.push_back({"FIGURE PARTS",
+                           meshesIn(core::join(core::join(cooked, "figures"), "meshes")), 0});
+
+    // An empty category stays in the list so the tabs do not shuffle about between worlds;
+    // it simply cannot be opened.
+    size_t total = 0;
+    for (const BrowseCategory& one : categories_) total += one.entries.size();
+    if (total == 0) {
+        categories_.clear();
+        core::logError("browser: nothing cooked under %s. Run tools/cook.py first: this "
                        "walks what the cook wrote, not the glb it was made from",
                        cooked.c_str());
         return false;
     }
-    browseDir_ = assetDir;
-    browseAt_ = 0;
-    raiseWorldGround(assetDir, world, textures);
-    core::logf("browser: %zu cooked meshes; left and right step one, up and down step ten",
-               browse_.size());
-    return step(0, textures);
+
+    category_ = 0;
+    while (category_ < categories_.size() && categories_[category_].entries.empty()) ++category_;
+    for (const BrowseCategory& one : categories_) {
+        core::logf("browser: %s, %zu entries", one.label.c_str(), one.entries.size());
+    }
+    core::logf("browser: %zu in all; left and right step one, up and down ten, tab changes "
+               "category, [ and ] change the clip", total);
+    return loadCurrent(textures);
+}
+
+size_t ModelBench::browseCount() const {
+    return categories_.empty() ? 0 : categories_[category_].entries.size();
+}
+
+size_t ModelBench::browseIndex() const {
+    return categories_.empty() ? 0 : categories_[category_].at;
+}
+
+bool ModelBench::setCategory(size_t category, content::Textures& textures) {
+    if (category >= categories_.size() || categories_[category].entries.empty()) return false;
+    if (category == category_) return true;
+    category_ = category;
+    return loadCurrent(textures);
+}
+
+namespace {
+
+// Case-insensitive "does the haystack hold the needle". Small enough to write out; the point
+// is that --category monsters and --pick budge are typed by a person and neither the labels
+// nor the model names are in the case they would type.
+bool holds(const std::string& haystack, const std::string& needle) {
+    if (needle.empty()) return false;
+    auto lower = [](unsigned char c) { return char(std::tolower(c)); };
+    std::string a, b;
+    a.reserve(haystack.size());
+    b.reserve(needle.size());
+    for (char c : haystack) a.push_back(lower((unsigned char)c));
+    for (char c : needle) b.push_back(lower((unsigned char)c));
+    return a.find(b) != std::string::npos;
+}
+
+}  // namespace
+
+bool ModelBench::openCategory(const std::string& word, content::Textures& textures) {
+    for (size_t i = 0; i < categories_.size(); ++i) {
+        if (!holds(categories_[i].label, word)) continue;
+        if (categories_[i].entries.empty()) {
+            core::logError("browser: the %s category is empty in this world",
+                           categories_[i].label.c_str());
+            return false;
+        }
+        category_ = i;
+        return loadCurrent(textures);
+    }
+    core::logError("browser: no category called %s; there are world, monsters, people and "
+                   "parts", word.c_str());
+    return false;
+}
+
+bool ModelBench::pick(const std::string& needle, content::Textures& textures) {
+    // The open category first, then every other one: --pick budge alone should find the Budge
+    // Dragon without also being told which tab it is on, but --category monsters --pick bull
+    // must not wander off into the world's objects looking for a bull.
+    for (size_t pass = 0; pass < 2; ++pass) {
+        for (size_t c = 0; c < categories_.size(); ++c) {
+            if ((pass == 0) != (c == category_)) continue;
+            const BrowseCategory& one = categories_[c];
+            for (size_t i = 0; i < one.entries.size(); ++i) {
+                if (!holds(one.entries[i].name, needle)) continue;
+                category_ = c;
+                categories_[c].at = i;
+                return loadCurrent(textures);
+            }
+        }
+    }
+    core::logError("browser: nothing called %s in any category", needle.c_str());
+    return false;
 }
 
 bool ModelBench::step(int by, content::Textures& textures) {
-    if (browse_.empty()) return false;
+    if (categories_.empty()) return false;
+    BrowseCategory& open = categories_[category_];
+    if (open.entries.empty()) return false;
     // Clamped rather than wrapped. A list this long is walked to look for something, and a
     // wrap at the end quietly puts you back at the start with nothing to say it happened.
-    const long long wanted = (long long)browseAt_ + by;
-    const long long last = (long long)browse_.size() - 1;
-    browseAt_ = size_t(wanted < 0 ? 0 : (wanted > last ? last : wanted));
+    const long long wanted = (long long)open.at + by;
+    const long long last = (long long)open.entries.size() - 1;
+    open.at = size_t(wanted < 0 ? 0 : (wanted > last ? last : wanted));
+    return loadCurrent(textures);
+}
 
-    const std::string& path = browse_[browseAt_];
-    const std::vector<uint8_t> bytes = core::readFile(path);
+bool ModelBench::loadCurrent(content::Textures& textures) {
+    if (categories_.empty()) return false;
+    const BrowseCategory& open = categories_[category_];
+    if (open.entries.empty()) return false;
+    const BrowseEntry& entry = open.entries[open.at];
+
+    // The camera is re-framed on every subject, so --dist is honoured once and then the
+    // list's own sizes take over; a cannon and a candle cannot share one distance.
+    if (!wantsFixedDistance_) distance_ = 0.0f;
+
+    if (entry.body) return standFigure(entry.body);
+
+    haveFigure_ = false;
+    const std::vector<uint8_t> bytes = core::readFile(entry.path);
     content::CookedMesh cooked;
     std::string error;
     if (bytes.empty() || !content::parseCookedMesh(bytes, cooked, error)) {
-        core::logError("browser: %s did not parse: %s", path.c_str(),
+        core::logError("browser: %s did not parse: %s", entry.path.c_str(),
                        bytes.empty() ? "unreadable" : error.c_str());
         haveModel_ = false;
         return false;
     }
-    const std::string name = std::filesystem::path(path).filename().string();
-    // The camera is re-framed on every model, so --dist is honoured once and then the list's
-    // own sizes take over; a cannon and a candle cannot share one distance.
-    if (!wantsFixedDistance_) distance_ = 0.0f;
+    const std::string name = std::filesystem::path(entry.path).filename().string();
     haveModel_ = model_.buildFromCooked(cooked, name, browseDir_, textures);
     if (!haveModel_) return false;
     return place(textures);
 }
 
+bool ModelBench::standFigure(const FigureBody* body) {
+    // A figure is stood the way the town stands one: its feet on the land at the bench's own
+    // spot, its parts on one rig, whatever it carries in its hands, and its own idle running.
+    // `safe` is false, so a character has his weapon DRAWN and in his hand rather than on his
+    // back -- which is the pose somebody browsing a sword wants to see.
+    haveModel_ = false;
+    haveFigure_ = true;
+    figure_.stand(body, stand_, 0.0f, body->scale, false);
+    if (body->library && !body->library->clips.clips.empty()) {
+        figure_.play(body->idleClip >= 0 ? body->idleClip : 0, true);
+    } else {
+        core::logf("browser: %s has no clips and stands in bind pose", body->name.c_str());
+    }
+
+    const float radius = body->radius * body->scale;
+    const float height = body->height * body->scale;
+    focus_[0] = stand_[0];
+    focus_[1] = stand_[1] + height * 0.5f;
+    focus_[2] = stand_[2];
+    height_ = height;
+    if (distance_ <= 0.0f) distance_ = framingDistance(radius);
+
+    // The rig's own count, not the palette's: as game/crowd.cpp.
+    scratch_.assign(size_t(gfx::Renderer::kMaxBones) * 12, 0.0f);
+    drawables_.clear();
+    if (!haveWorldGround_) {
+        gfx::Drawable groundDraw;
+        groundDraw.mesh = &ground_;
+        bx::mtxIdentity(groundDraw.transform);
+        drawables_.push_back(groundDraw);
+    }
+    fixed_ = drawables_.size();
+    core::logf("browser: %s, %zu parts, %zu held, %zu bones, radius %.2f m, camera at %.2f m",
+               body->label.c_str(), body->parts.size(), body->held.size(), body->boneCount(),
+               radius, distance_);
+    return true;
+}
+
+bool ModelBench::stepClip(int by) {
+    if (!haveFigure_ || !figure_.body() || !figure_.body()->library) return false;
+    const content::CookedClips& clips = figure_.body()->library->clips;
+    if (clips.clips.empty()) return false;
+    const long long count = (long long)clips.clips.size();
+    // Wrapped, unlike the model list: a clip list is short, it is walked round rather than
+    // searched, and running off the end of eight animations with nothing happening reads as
+    // a broken key.
+    long long wanted = (long long)figure_.clip() + by;
+    wanted = ((wanted % count) + count) % count;
+    figure_.play(int(wanted), true);
+    core::logf("browser: %s", clipLine().c_str());
+    return true;
+}
+
 std::string ModelBench::browseName(size_t index) const {
-    if (index >= browse_.size()) return std::string();
-    return std::filesystem::path(browse_[index]).stem().string();
+    if (categories_.empty()) return std::string();
+    const BrowseCategory& open = categories_[category_];
+    if (index >= open.entries.size()) return std::string();
+    return open.entries[index].name;
 }
 
 std::string ModelBench::browseLine() const {
-    if (browse_.empty()) return std::string();
+    if (categories_.empty()) return std::string();
+    const BrowseCategory& open = categories_[category_];
+    if (open.entries.empty()) return open.label + ": empty";
     char line[512];
-    std::snprintf(line, sizeof(line), "%zu/%zu  %s  (%zu parts, %zu materials)", browseAt_ + 1,
-                  browse_.size(),
-                  std::filesystem::path(browse_[browseAt_]).filename().string().c_str(),
-                  model_.parts().size(), model_.materials().size());
+    if (haveFigure_) {
+        std::snprintf(line, sizeof(line), "%s  %zu/%zu  %s", open.label.c_str(), open.at + 1,
+                      open.entries.size(), clipLine().c_str());
+    } else {
+        std::snprintf(line, sizeof(line), "%s  %zu/%zu  %s  (%zu parts, %zu materials)",
+                      open.label.c_str(), open.at + 1, open.entries.size(),
+                      open.entries[open.at].name.c_str(), model_.parts().size(),
+                      model_.materials().size());
+    }
     return std::string(line);
 }
 
@@ -281,7 +492,7 @@ bool ModelBench::openFigure(const std::string& assetDir, const std::string& worl
     focus_[0] = 0.0f;
     focus_[1] = body->height * body->scale * 0.5f;
     focus_[2] = 0.0f;
-    if (distance_ <= 0.0f) distance_ = radius * 3.0f;
+    if (distance_ <= 0.0f) distance_ = framingDistance(radius);
     if (!makeGround(textures, std::max(radius * 8.0f, 20.0f))) return false;
 
     scratch_.assign(size_t(128) * 12, 0.0f);   // as game/crowd.cpp: the rig's count, not the palette's
@@ -290,6 +501,7 @@ bool ModelBench::openFigure(const std::string& assetDir, const std::string& worl
     groundDraw.mesh = &ground_;
     bx::mtxIdentity(groundDraw.transform);
     drawables_.push_back(groundDraw);
+    fixed_ = drawables_.size();
     core::logf("bench: %s, %zu parts, %zu held, radius %.2f m, camera at %.2f m",
                body->label.c_str(), body->parts.size(), body->held.size(), radius, distance_);
     return true;
@@ -297,8 +509,9 @@ bool ModelBench::openFigure(const std::string& assetDir, const std::string& worl
 
 const std::vector<gfx::Drawable>& ModelBench::gather(gfx::Renderer& renderer) {
     if (!haveFigure_) return drawables_;
-    // The ground is drawables_[0] and was made once; everything after it is this frame's.
-    drawables_.resize(1);
+    // The fallback plane, where there is one, was made once; everything after it is this
+    // frame's. On the world's own land there is no plane and fixed_ is zero.
+    drawables_.resize(fixed_);
     const int bones = figure_.pose(scratch_.data());
     const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
     figure_.gather(row, drawables_);

@@ -47,6 +47,8 @@ void printUsage() {
         "  --no-figures              no figures at all, which is what the crowd is priced "
         "against\n"
         "  --browse                  step through every cooked .mum; arrows walk the list\n"
+        "  --category WORD           open the browser on world|monsters|people|parts\n"
+        "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --figure NAME             the monster bench: one figure, by index.json's name\n"
         "  --clip N                  which clip it plays, as MU's own action number\n"
         "  --play                    raise the realm behind the window: click to walk, click "
@@ -245,6 +247,10 @@ Args parseArgs(int argc, char** argv) {
             a.still = false;
         } else if (!std::strcmp(s, "--browse")) {
             a.browse = true;
+        } else if (!std::strcmp(s, "--category")) {
+            if (const char* v = next(s)) a.category = v;
+        } else if (!std::strcmp(s, "--pick")) {
+            if (const char* v = next(s)) a.pick = v;
         } else if (!std::strcmp(s, "--still")) {
             a.still = true;
         } else if (!std::strcmp(s, "--no-cull")) {

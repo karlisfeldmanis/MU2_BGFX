@@ -108,8 +108,11 @@ bool Window::pump() {
 
     // The step keys, on the same edge rule as the buttons. Left and Right walk one, Down and
     // Up walk ten, which is what makes a list of five hundred models usable by hand.
-    const int stepKeys[4] = {GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_DOWN, GLFW_KEY_UP};
-    for (int i = 0; i < 4; ++i) {
+    const int stepKeys[size_t(Step::Count)] = {GLFW_KEY_LEFT,         GLFW_KEY_RIGHT,
+                                               GLFW_KEY_DOWN,         GLFW_KEY_UP,
+                                               GLFW_KEY_TAB,          GLFW_KEY_LEFT_BRACKET,
+                                               GLFW_KEY_RIGHT_BRACKET};
+    for (size_t i = 0; i < size_t(Step::Count); ++i) {
         const bool down = glfwGetKey(handle_, stepKeys[i]) == GLFW_PRESS;
         stepped_[i] = down && !stepHeld_[i];
         stepHeld_[i] = down;

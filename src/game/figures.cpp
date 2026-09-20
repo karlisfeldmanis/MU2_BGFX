@@ -215,14 +215,30 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     // for a man and (2, 16) for a woman, and every armed row is shared.
     if (!body.library) return;
     const auto [stand, walk] = stanceActions(body.stance, body.female);
-    // A named idle wins: the two guards carry one in index.json, and MU's own town stands a
-    // character in it whatever is in its hands.
     const auto [bare, bareWalk] = stanceActions("", body.female);
-    body.idleClip = namedIdle.empty() ? body.library->find(stand) : body.library->find(namedIdle);
-    // Inside a safe zone the weapon goes on the back and the body stands unarmed -- unless
-    // index.json names this figure's idle, which is MU's own table for that NPC and not a
-    // stance to be picked over.
-    body.idleSafeClip = namedIdle.empty() ? body.library->find(bare) : body.idleClip;
+
+    // **With a weapon drawn, the weapon decides the stance and nothing else does.** This read
+    // "a named idle wins ... whatever is in its hands", and that was wrong in a way that is
+    // only visible with a crossbow. MuMain says it plainly in `ZzzCharacter.cpp`, in the one
+    // chain that sets a standing player's action: no weapon at all OR a safe tile gives
+    // PLAYER_STOP_MALE, and otherwise the weapon's own type picks the action -- sword, spear,
+    // scythe, wand, and `GetEquipedBowType` giving PLAYER_STOP_BOW or PLAYER_STOP_CROSSBOW.
+    // The named idle in index.json is the FIRST branch of that chain, not an override of it.
+    //
+    // What it cost: the Crossbow Guard carries `idle: action1`, which is the unarmed male
+    // stop, and a crossbow held in `knife_gdf` under an unarmed idle hangs down the outside of
+    // his thigh with the prod across his shin. The mesh, the grip and the bone were all right
+    // and were all suspected first. In action9 -- PLAYER_STOP_CROSSBOW -- the same crossbow
+    // comes up level in both hands, which is the pose the asset was authored for.
+    const bool armed = !body.stance.empty();
+    body.idleClip = (armed || namedIdle.empty()) ? body.library->find(stand)
+                                                 : body.library->find(namedIdle);
+    // Inside a safe zone the weapon goes on the back and the body stands unarmed, which is
+    // the same chain's first branch: `c->SafeZone` reaches PLAYER_STOP_MALE whatever is
+    // carried. A figure whose index.json names an idle stands in THAT, because for the
+    // townsfolk and the guards it is the pose MU's own town stands them in.
+    body.idleSafeClip = namedIdle.empty() ? body.library->find(bare)
+                                          : body.library->find(namedIdle);
     body.walkClip = body.library->find(walk);
     if (body.idleClip < 0) body.idleClip = body.library->find(0);
     if (body.idleSafeClip < 0) body.idleSafeClip = body.idleClip;
