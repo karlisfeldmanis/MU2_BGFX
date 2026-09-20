@@ -90,7 +90,7 @@ private:
     bgfx::UniformHandle uMaterial_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowMtx_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowParams_ = BGFX_INVALID_HANDLE;
-    bgfx::UniformHandle uCamInvProj_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uCamRay_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle sAlbedo_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal_ = BGFX_INVALID_HANDLE;

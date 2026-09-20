@@ -50,7 +50,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir) {
     uMaterial_ = bgfx::createUniform("u_material", bgfx::UniformType::Vec4);
     uShadowMtx_ = bgfx::createUniform("u_shadowMtx", bgfx::UniformType::Mat4);
     uShadowParams_ = bgfx::createUniform("u_shadowParams", bgfx::UniformType::Vec4);
-    uCamInvProj_ = bgfx::createUniform("u_camInvProj", bgfx::UniformType::Mat4);
+    uCamRay_ = bgfx::createUniform("u_camRay", bgfx::UniformType::Vec4);
 
     sAlbedo_ = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
     sNormal_ = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
@@ -164,7 +164,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
-          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamInvProj_, &sAlbedo_,
+          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
@@ -220,16 +220,19 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     drawCount_ = 0;
 
     // --- the camera -------------------------------------------------------------------
+    // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and
+    // a left-handed view mirrors the frame left to right and makes view-space z positive in
+    // front of the eye -- which silently turned the whole prepass depth negative and made
+    // the SSAO take its "this is sky" path on every pixel of the screen. docs/conventions.md
+    // says right-handed; this is where that has to be enforced.
     float view[16];
     bx::mtxLookAt(view, bx::Vec3(camera.position[0], camera.position[1], camera.position[2]),
                   bx::Vec3(camera.target[0], camera.target[1], camera.target[2]),
-                  bx::Vec3(camera.up[0], camera.up[1], camera.up[2]));
+                  bx::Vec3(camera.up[0], camera.up[1], camera.up[2]), bx::Handedness::Right);
     float proj[16];
     const bool homogeneous = bgfx::getCaps()->homogeneousDepth;
     bx::mtxProj(proj, camera.fovDegrees, float(width_) / float(height_), camera.nearPlane,
-                camera.farPlane, homogeneous);
-    float invProj[16];
-    bx::mtxInverse(invProj, proj);
+                camera.farPlane, homogeneous, bx::Handedness::Right);
 
     // --- the batches, and one instance buffer the whole frame reads -------------------
     batches_.clear();
@@ -299,7 +302,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const bx::Vec3 up = std::fabs(sunDir[1]) > 0.99f ? bx::Vec3(0.0f, 0.0f, 1.0f)
                                                              : bx::Vec3(0.0f, 1.0f, 0.0f);
             float lightView[16];
-            bx::mtxLookAt(lightView, eye, focus, up);
+            bx::mtxLookAt(lightView, eye, focus, up, bx::Handedness::Right);
 
             // Texel snapping: the focus is quantised in the light's own space, or the split
             // crawls with the camera and every shadow edge shimmers.
@@ -310,7 +313,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             focusInLight[1] = std::floor(f.y / texel) * texel;
             focusInLight[2] = f.z;
             float snap[16];
-            bx::mtxTranslate(snap, f.x - focusInLight[0], f.y - focusInLight[1], 0.0f);
+            // Minus the remainder, not plus it. Adding it moved the focus to f + frac, whose
+            // own fraction is twice the original: the crawl it was meant to remove stayed,
+            // and a full-texel pop was added every time the focus crossed a boundary.
+            bx::mtxTranslate(snap, focusInLight[0] - f.x, focusInLight[1] - f.y, 0.0f);
             float snappedView[16];
             bx::mtxMul(snappedView, lightView, snap);
 
@@ -319,7 +325,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // not doing it: at 79 m the D16 steps were coarse enough that the bias lifted
             // the shadow off the figure's feet.
             bx::mtxOrtho(lightProj, -half, half, -half, half, 0.0f, back * 2.0f, 0.0f,
-                         homogeneous);
+                         homogeneous, bx::Handedness::Right);
 
             float lightViewProj[16];
             bx::mtxMul(lightViewProj, snappedView, lightProj);
@@ -329,8 +335,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setViewClear(ViewShadow, BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
             bgfx::setViewTransform(ViewShadow, snappedView, lightProj);
 
-            // Front faces are culled in the shadow pass, so what is recorded is the back of
-            // the caster and the bias has a whole object's thickness to work with.
+            // No front-face cull here, whatever a previous comment claimed: every material
+            // in MU2's build is double sided, so there is nothing to cull and the bias has
+            // to carry the whole job on its own.
             submitBatches(ViewShadow, shadowProgram_, batches_, idb,
                           BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS, false);
 
@@ -355,12 +362,18 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                            lighting.groundColour[2], 0.0f};
             const float camPos[4] = {camera.position[0], camera.position[1], camera.position[2],
                                      camera.farPlane};
-            const float params[4] = {lighting.ssaoRadius, lighting.ssaoStrength, lighting.exposure,
-                                     texel};
-
-            // --- views 2 and 3: SSAO and its blur, at half resolution ----------------
             const uint16_t hw = uint16_t(std::max(1, width_ / 2));
             const uint16_t hh = uint16_t(std::max(1, height_ / 2));
+            // Pixels per unit at unit depth, in the SSAO target's own pixels: half its height
+            // over the tangent of the half field of view. This is what turns a radius in
+            // metres into a radius on screen, and without it the pass sampled itself.
+            const float projScale =
+                0.5f * float(hh) /
+                std::tan(camera.fovDegrees * 0.5f * 3.14159265f / 180.0f);
+            const float params[4] = {lighting.ssaoRadius, lighting.ssaoStrength,
+                                     lighting.exposure, projScale};
+
+            // --- views 2 and 3: SSAO and its blur, at half resolution ----------------
 
 
             bgfx::setViewFrameBuffer(ViewSsao, ssaoFb_);
@@ -368,7 +381,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setViewClear(ViewSsao, 0, 0, 1.0f, 0);
             bgfx::setViewTransform(ViewSsao, nullptr, nullptr);
             bgfx::setUniform(uParams_, params);
-            bgfx::setUniform(uCamInvProj_, invProj);
+            const float tanHalfY = std::tan(camera.fovDegrees * 0.5f * 3.14159265f / 180.0f);
+            const float camRay[4] = {tanHalfY * float(width_) / float(height_), tanHalfY, 0.0f,
+                                     0.0f};
+            bgfx::setUniform(uCamRay_, camRay);
             bgfx::setTexture(6, sPrepass_, prepassColour_);
             screenPass(ViewSsao, ssaoProgram_);
 
@@ -397,10 +413,23 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             }
             bx::mtxMul(shadowMtx, lightViewProj, bias);
 
-            const float shadowParams[4] = {lighting.shadowBias,
-                                           std::tan(lighting.sunAngleDegrees * 0.5f * 3.14159265f /
-                                                    180.0f),
-                                           1.0f / float(kShadowSize), lighting.shadowNormalBias};
+            // The split's depth runs 0..1 over this many metres, which is what turns a
+            // depth difference back into a distance.
+            const float depthRange = back * 2.0f;
+            // The sun is a directional light and its split is orthographic, so the penumbra
+            // is the blocker's gap times the tangent of its half angle -- a distance, turned
+            // into uv by the split's width. The similar-triangles divide by the blocker's own
+            // depth is the point-light formula and does not belong here: it made the
+            // penumbra depend on where the caster sat in the split rather than on its gap.
+            const float tanHalfAngle =
+                std::tan(lighting.sunAngleDegrees * 0.5f * 3.14159265f / 180.0f);
+            const float penumbraScale = tanHalfAngle * depthRange / lighting.shadowRange;
+            // The bias is a distance too. Held in the sheet in metres and turned into the
+            // split's own 0..1 depth here, because 0.0015 of an NDC over a 120 m range is
+            // 18 cm of peter-panning on a map whose D16 quantum is under 2 mm.
+            const float depthBias = lighting.shadowBiasMetres / depthRange;
+            const float shadowParams[4] = {depthBias, penumbraScale, 1.0f / float(kShadowSize),
+                                           lighting.shadowNormalBias};
 
             bgfx::setViewFrameBuffer(ViewShade, shadeFb_);
             bgfx::setViewRect(ViewShade, 0, 0, uint16_t(width_), uint16_t(height_));
@@ -429,6 +458,15 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                           BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_EQUAL,
                           true);
         }
+    }
+
+    if (drawables.empty()) {
+        // Nothing was drawn, so nothing cleared the shade target and the present below would
+        // hand the screen a texture that has never been written.
+        bgfx::setViewFrameBuffer(ViewShade, shadeFb_);
+        bgfx::setViewRect(ViewShade, 0, 0, uint16_t(width_), uint16_t(height_));
+        bgfx::setViewClear(ViewShade, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
+        bgfx::touch(ViewShade);
     }
 
     // --- view 5: present ------------------------------------------------------------

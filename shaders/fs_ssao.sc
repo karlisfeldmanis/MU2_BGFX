@@ -4,18 +4,16 @@ $input v_texcoord0
 // the disc is turned per pixel by interleaved gradient noise, which the blur then hides.
 #include "common.sh"
 
-uniform mat4 u_camInvProj;
+uniform vec4 u_camRay;  // xy: tan of half the field of view, across and up
 
-// The view position a prepass texel stands for. The prepass already holds view depth, so
-// this is a ray through the pixel scaled to that depth rather than a matrix multiply.
+// The view position a prepass texel stands for. A perspective projection needs no matrix
+// here: ndc.x is x / (-z) over tan(fovX/2), so x is ndc.x * tan * depth. Thirteen inverse
+// projections a pixel was most of this pass's cost.
 vec3 viewPosAt(vec2 uv, float depth)
 {
-	// The ray for this uv, taken from the inverse projection once per sample.
 	vec2 ndc = uv * 2.0 - 1.0;
 	ndc.y = -ndc.y;  // Metal's origin is the top left; docs/conventions.md
-	vec4 h = mul(u_camInvProj, vec4(ndc, 0.0, 1.0));
-	vec3 ray = h.xyz / h.w;
-	return ray * (depth / max(-ray.z, 1e-6));
+	return vec3(ndc * u_camRay.xy * depth, -depth);
 }
 
 void main()
@@ -33,8 +31,12 @@ void main()
 	vec3 p = viewPosAt(v_texcoord0, depth);
 
 	float radius = u_params.x;
-	// The radius in pixels shrinks with distance, as the sphere it stands for does.
-	float pixelRadius = radius / max(depth, 1e-3);
+	// The radius in pixels, which is the projection's job and not a bare divide: a sphere of
+	// `radius` metres at `depth` metres covers `radius * projScale / depth` pixels, where
+	// projScale is half the target's height over tan(fovY/2). Without the scale this was
+	// metres over metres -- 0.042 at the bench's distance -- and every tap landed a
+	// twentieth of a texel from the centre, which is why the pass did nothing at all.
+	float pixelRadius = radius * u_params.w / max(depth, 1e-3);
 
 	float turn = gradientNoise(gl_FragCoord.xy) * 6.2831853;
 	float occlusion = 0.0;

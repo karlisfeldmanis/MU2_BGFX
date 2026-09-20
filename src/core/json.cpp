@@ -177,9 +177,19 @@ struct Parser {
         } else if (literal("null")) {
             v.type = Json::Type::Null;
         } else {
+            // strtod takes no length and must read the byte past the number to know it
+            // ended. The buffer is the file as read, with nothing after it, so a document
+            // whose last byte is a digit -- a sheet saved without a trailing newline --
+            // over-reads the heap, and crashes outright when the allocation ends on a page
+            // boundary. The number is copied out first; no real one comes near this length.
+            char digits[64];
+            const size_t room = size_t(end - p) < sizeof(digits) - 1 ? size_t(end - p)
+                                                                     : sizeof(digits) - 1;
+            std::memcpy(digits, p, room);
+            digits[room] = '\0';
             char* stop = nullptr;
-            double d = std::strtod(p, &stop);
-            if (stop == p) {
+            double d = std::strtod(digits, &stop);
+            if (stop == digits) {
                 fail("not a value");
                 return v;
             }
@@ -191,7 +201,7 @@ struct Parser {
             }
             v.type = Json::Type::Number;
             v.number = d;
-            p = stop;
+            p += size_t(stop - digits);
         }
         return v;
     }

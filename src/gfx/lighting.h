@@ -36,9 +36,11 @@ struct Lighting {
     // The shadow. `range` is how wide the split is, in metres. MU2 frames one split on the
     // camera's ground point at about this reach; see its shadow_reach.
     float shadowRange = 60.0f;
-    // Not MU2's shadow_bias (0.01): Godot multiplies that by the cascade range, the blur and
-    // the filter radius before it reaches the depth test, so the number means nothing here.
-    float shadowBias = 0.0015f;
+    // Both biases are metres, which is the only unit either of them means anything in.
+    // An NDC bias hides its own size: 0.0015 over a 120 m split is 18 cm of peter-panning
+    // on a D16 map whose quantum is under 2 mm. Not MU2's shadow_bias (0.01) either, since
+    // Godot multiplies that by the cascade range, the blur and the filter radius first.
+    float shadowBiasMetres = 0.02f;
     float shadowNormalBias = 0.02f;
     // The sun is four degrees across rather than its real half degree, or the penumbra is a
     // line. Invention, carried from MU4, and the number a bench argues about.

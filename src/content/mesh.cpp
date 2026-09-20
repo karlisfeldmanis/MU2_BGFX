@@ -151,9 +151,13 @@ bool Mesh::load(const std::string& path, Textures& textures) {
                     case cgltf_attribute_type_normal: aNormal = attr.data; break;
                     case cgltf_attribute_type_tangent: aTangent = attr.data; break;
                     case cgltf_attribute_type_texcoord:
-                        // Fab's converter zeroes TEXCOORD_0 and leaves the real layout in
-                        // TEXCOORD_1, and read as written the whole figure samples one texel.
-                        // The set that has coordinates wins, first one first.
+                        // The first set, whatever is in it. MU2's build has one set a
+                        // primitive, so this is right for the town. It is NOT right for a
+                        // Fab-converted figure, whose TEXCOORD_0 is zeroed with the real
+                        // layout left in TEXCOORD_1 -- read as written, the whole figure
+                        // samples one texel, which passes for black leather for a long time.
+                        // That choice needs the data read, and it belongs with the figures
+                        // in sprint 4 rather than as a guess here.
                         if (!aUv) aUv = attr.data;
                         break;
                     default: break;
@@ -223,6 +227,10 @@ bool Mesh::load(const std::string& path, Textures& textures) {
                 // some. Derived per triangle from the UVs and averaged, which is what a
                 // normal map was authored against; a made-up frame turns lighting on its side.
                 std::vector<float> accum(count * 3, 0.0f);
+                // The bitangent is accumulated too, only so that its sign can be recovered.
+                // glTF stores that sign in tangent.w, and MU's sheets mirror UV islands
+                // heavily: assuming +1 lights the relief from the wrong side on half a model.
+                std::vector<float> bitan(count * 3, 0.0f);
                 for (uint32_t i = 0; i + 2 < indexCount; i += 3) {
                     const uint32_t i0 = indices[firstIndex + i + 0];
                     const uint32_t i1 = indices[firstIndex + i + 1];
@@ -244,11 +252,17 @@ bool Mesh::load(const std::string& path, Textures& textures) {
                     const float t[3] = {(e1[0] * dv2 - e2[0] * dv1) * r,
                                         (e1[1] * dv2 - e2[1] * dv1) * r,
                                         (e1[2] * dv2 - e2[2] * dv1) * r};
+                    const float bt[3] = {(e2[0] * du1 - e1[0] * du2) * r,
+                                         (e2[1] * du1 - e1[1] * du2) * r,
+                                         (e2[2] * du1 - e1[2] * du2) * r};
                     for (uint32_t v : {i0, i1, i2}) {
                         const size_t k = (v - baseVertex) * 3;
                         accum[k + 0] += t[0];
                         accum[k + 1] += t[1];
                         accum[k + 2] += t[2];
+                        bitan[k + 0] += bt[0];
+                        bitan[k + 1] += bt[1];
+                        bitan[k + 2] += bt[2];
                     }
                 }
                 for (size_t i = 0; i < count; ++i) {
@@ -277,7 +291,14 @@ bool Mesh::load(const std::string& path, Textures& textures) {
                     v.tangent[0] = t[0] / len;
                     v.tangent[1] = t[1] / len;
                     v.tangent[2] = t[2] / len;
-                    v.tangent[3] = 1.0f;
+                    // glTF's own rule: w is the sign that makes cross(normal, tangent) point
+                    // the way the UVs actually run.
+                    const float cx = v.normal[1] * v.tangent[2] - v.normal[2] * v.tangent[1];
+                    const float cy = v.normal[2] * v.tangent[0] - v.normal[0] * v.tangent[2];
+                    const float cz = v.normal[0] * v.tangent[1] - v.normal[1] * v.tangent[0];
+                    const float handed = cx * bitan[i * 3 + 0] + cy * bitan[i * 3 + 1] +
+                                         cz * bitan[i * 3 + 2];
+                    v.tangent[3] = handed < 0.0f ? -1.0f : 1.0f;
                 }
             }
 

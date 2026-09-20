@@ -32,8 +32,27 @@ about 0 ms on average while the tail was the whole story.
 The first 30 frames are dropped from every summary: they hold the pipeline compiles and the
 first upload of everything.
 
-## Overriding
+## What the gate enforces, and what it only reports
 
-`--budget shade=1.0` replaces one account's allowance for that run. It exists so the gate
-can be proved to fail, and so a sprint can tighten an account on itself before the code is
-there to keep it.
+The per-view timers on this Mac do not divide the frame — they count the gaps between
+encoders and the wait for the drawable, and sum to five times the frame's own GPU time. So:
+
+- **Enforced on every run**: the frame's own `gpuTimeEnd - gpuTimeBegin` against 5.5 ms, and
+  the CPU against 3 ms. Both are measured directly and neither can be argued with.
+- **Reported, not enforced**: the documented per-account allowances. `present` exceeds its
+  share on every run because the drawable wait lands in whichever view presents; failing
+  every run on that would make the gate noise.
+
+## Overriding, which is how the gate is proved to fail
+
+`--budget shade=1.0` is not a relaxation, it is **a claim the caller is making about this
+run**, and it is checked whether the timers are coherent or not — against the account's
+share of the measured frame. `--budget gpu=0.5` and `--budget cpu=1.0` claim the two figures
+that are measured directly. An account name nothing recognises fails the run rather than
+being ignored.
+
+This matters because a gate that cannot fail is not a gate. Sprint 0's proving sentence was
+"`--budget` fails when told a false budget", and for a while after sprint 1 it had quietly
+stopped being true: the account check sat behind a condition that was false on every run, so
+`--budget shade=0.001` passed. Proved again after the fix: an honest run exits 0, a false
+claim on `shade`, on `gpu`, or on an account that does not exist all exit 2.

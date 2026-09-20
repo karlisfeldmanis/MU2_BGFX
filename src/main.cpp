@@ -3,6 +3,8 @@
 #include <bgfx/bgfx.h>
 #include <bx/timer.h>
 
+#include <sys/stat.h>
+
 #include <cstdio>
 #include <string>
 
@@ -40,6 +42,9 @@ int main(int argc, char** argv) {
 
     const std::string shotDir =
         args.shotPath.empty() ? defaultPath(MU2_ROOT_DIR, "shots") : args.shotPath;
+    // Made rather than assumed: a --shot-path that does not exist turned every shot into a
+    // logged failure and the run's exit code into 1, long after the run was worth repeating.
+    if (args.shotEvery) ::mkdir(shotDir.c_str(), 0755);
     const std::string sheetPath = args.sheet.empty()
                                       ? defaultPath(MU2_SHEET_DIR, "lighting.json")
                                       : args.sheet;
@@ -100,10 +105,10 @@ int main(int argc, char** argv) {
     while (window.pump() && !window.escapePressed()) {
         renderer.resize(window.width(), window.height());
 
-        // The sheet is stat'd four times a second rather than every frame: the point is to
-        // tune with the window open, and a syscall a frame for that is a syscall wasted.
-        sinceSheetCheck += 1.0;
-        if (sinceSheetCheck >= 15.0) {
+        // Four times a second, counted in milliseconds rather than frames: the point is to
+        // tune with the window open, and at 470 fps a count of frames was stat'ing the file
+        // a hundred times a second.
+        if (sinceSheetCheck >= 250.0) {
             sinceSheetCheck = 0.0;
             lighting.reloadIfChanged(sheetPath);
         }
@@ -129,6 +134,7 @@ int main(int argc, char** argv) {
         stats.sample(cpuMs);
 
         sinceLine += cpuMs;
+        sinceSheetCheck += cpuMs;
         if (sinceLine >= 1000.0) {
             const bgfx::Stats* s = bgfx::getStats();
             core::logf("frame %d: %.1f fps, cpu %.2f ms, gpu %.2f ms, %u draws", frame,

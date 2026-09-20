@@ -25,10 +25,12 @@ bool ModelBench::makeGround(content::Textures& textures, float halfSize) {
                                               {1.0f, 0.0f, 0.0f, 1.0f},
                                               {us[i], vs[i]}};
     }
-    // Wound counter-clockwise seen from above, which is glTF's front face and so the one
-    // CULL_CW keeps. Every material in MU2's build is double sided, so nothing else here
-    // would have caught this being backwards: the plane simply was not there.
-    std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
+    // Wound so the right-hand rule gives (0, +1, 0), matching the vertex normals above and
+    // glTF's counter-clockwise front face. It was briefly flipped to work around a plane
+    // that would not appear; the plane was fine and the projection was left-handed. Every
+    // material in MU2's build is double sided, so this is the one surface here whose winding
+    // anything checks at all.
+    std::vector<uint32_t> indices = {0, 2, 1, 0, 3, 2};
 
     content::Material material;
     material.name = "bench ground";

@@ -14,7 +14,7 @@
   "exposure": 1.25,
 
   "shadow_range": 60.0,
-  "shadow_bias": 0.0015,
+  "shadow_bias_metres": 0.02,
   "shadow_normal_bias": 0.02,
   "sun_angle_degrees": 4.0,
 

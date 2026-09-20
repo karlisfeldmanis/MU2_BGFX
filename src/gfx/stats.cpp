@@ -114,6 +114,7 @@ bool Stats::finish(bool enforce) {
     for (int a = 0; a < AccountCount; ++a) {
         const double med = quantile(perAccount[a], 0.5);
         const double p99 = quantile(perAccount[a], 0.99);
+        // The documented allowance, or a claim made on the command line for this run.
         const double budget = allowance(Account(a));
         // The share is what this view would cost if the timers' proportions are right and
         // their total is not. It is the number to read while `viewsAddUp` is false.
@@ -137,16 +138,49 @@ bool Stats::finish(bool enforce) {
                cpuBudgetMs(), cpuOver ? "  OVERDRAWN" : "");
     core::logf("%-10s %8.1f %8.1f", "fps", quantile(fps, 0.5), quantile(fps, 0.01));
 
-    // An account can still fail the run, but only on its share, and only where the timers
-    // are coherent enough for the share to mean anything.
-    bool accountOver = false;
-    if (viewsAddUp) {
-        for (int a = 0; a < AccountCount; ++a) {
-            if (quantile(perAccount[a], 0.5) > allowance(Account(a))) accountOver = true;
+    // What the documented per-account allowances can and cannot do here.
+    //
+    // While the view timers do not add up, an account's *documented* allowance cannot fail a
+    // run: `present` would fail every one of them, because the wait for the drawable lands
+    // in whichever view presents. So the documented figures stay advisory and the frame is
+    // what is enforced.
+    //
+    // An allowance given on the command line is different. `--budget shade=1.0` is a claim
+    // the caller is making about this run, and a claim that cannot fail is not a gate — that
+    // was sprint 0's own proving sentence, and it had quietly stopped being true. An
+    // override is checked against the share, coherent timers or not, and `gpu` and `cpu`
+    // can be overridden by name so the gate can be failed on a figure measured directly.
+    bool claimBroken = false;
+    for (const auto& o : overrides_) {
+        double measured = 0.0;
+        bool found = false;
+        if (o.account == "gpu") {
+            measured = gpuMed;
+            found = true;
+        } else if (o.account == "cpu") {
+            measured = cpuMed;
+            found = true;
+        } else {
+            for (int a = 0; a < AccountCount; ++a) {
+                if (o.account != accountName(Account(a))) continue;
+                measured = medianSum > 0.0 ? quantile(perAccount[a], 0.5) / medianSum * gpuMed
+                                           : 0.0;
+                found = true;
+            }
+        }
+        if (!found) {
+            core::logError("--budget names '%s', which is not an account", o.account.c_str());
+            claimBroken = true;
+            continue;
+        }
+        if (measured > o.ms) {
+            core::logf("%s was claimed at %.3f ms and measured %.3f", o.account.c_str(), o.ms,
+                       measured);
+            claimBroken = true;
         }
     }
 
-    const bool overdrawn = gpuOver || cpuOver || accountOver;
+    const bool overdrawn = gpuOver || cpuOver || claimBroken;
     if (!enforce) return true;
     if (overdrawn) core::logError("the budget is overdrawn; see docs/budget.md");
     return !overdrawn;

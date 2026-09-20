@@ -53,7 +53,7 @@ bool Lighting::reloadIfChanged(const std::string& path) {
     doc.readInto("ambient_strength", &ambientStrength);
     doc.readInto("exposure", &exposure);
     doc.readInto("shadow_range", &shadowRange);
-    doc.readInto("shadow_bias", &shadowBias);
+    doc.readInto("shadow_bias_metres", &shadowBiasMetres);
     doc.readInto("shadow_normal_bias", &shadowNormalBias);
     doc.readInto("sun_angle_degrees", &sunAngleDegrees);
     doc.readInto("ssao_radius", &ssaoRadius);
@@ -61,7 +61,7 @@ bool Lighting::reloadIfChanged(const std::string& path) {
 
     static const char* kKnown[] = {
         "azimuth", "elevation", "sun_colour", "sun_strength", "sky_colour", "horizon_paleness",
-        "ground_colour", "ambient_strength", "exposure", "shadow_range", "shadow_bias",
+        "ground_colour", "ambient_strength", "exposure", "shadow_range", "shadow_bias_metres",
         "shadow_normal_bias", "sun_angle_degrees", "ssao_radius", "ssao_strength", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;
@@ -72,7 +72,7 @@ bool Lighting::reloadIfChanged(const std::string& path) {
     float dir[3];
     sunDirection(dir);
     core::logf("lighting sheet read: sun %.0f/%.0f (%.2f %.2f %.2f) x%.2f, exposure %.2f, "
-               "ssao r%.0f x%.2f, shadow %.0f units",
+               "ssao r%.2f x%.2f, shadow %.0f m",
                azimuth, elevation, dir[0], dir[1], dir[2], sunStrength, exposure, ssaoRadius,
                ssaoStrength, shadowRange);
     return true;

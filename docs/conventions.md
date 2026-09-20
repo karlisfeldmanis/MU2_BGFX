@@ -27,9 +27,19 @@ and the code together.
   `units_per_tile` like everything else.
 - MU4's world was also 1 m to a tile, but nothing else of MU4's scale transfers: its arena
   was its own.
-- **Y is up.** Right-handed, as glTF is. bgfx's homogeneous depth and origin are asked for
-  at run time (`bgfx::getCaps()->homogeneousDepth`, `originBottomLeft`) and never assumed;
-  measured on this Mac's Metal, both are false.
+- **Y is up. Right-handed, as glTF is — and bx must be told so every single time.**
+  `bx::mtxLookAt`, `bx::mtxProj` and `bx::mtxOrtho` all default to `Handedness::Left`, so a
+  call that omits the argument silently builds a left-handed frame. Every one of them takes
+  `bx::Handedness::Right` explicitly, with no exceptions.
+  A left-handed view does not look broken, which is what makes it expensive: it mirrors the
+  image left to right, so a map still reads as a map, and it makes view-space z **positive**
+  in front of the eye. That second half turned the prepass's `-v_vpos.z` depth negative on
+  every pixel, which sent the SSAO down its "this is sky" path for the whole screen — a pass
+  that ran, cost time and changed nothing. It also made a correctly wound ground plane
+  invisible, which looked like a winding bug and was not.
+- bgfx's homogeneous depth and origin are asked for at run time
+  (`bgfx::getCaps()->homogeneousDepth`, `originBottomLeft`) and never assumed; measured on
+  this Mac's Metal, both are false.
 - **A model looks down +z.** MU2's build exports them so. A figure's yaw is therefore the
   negative of the direction of travel's angle under `bx::mtxSRT`, which was MU4's trap 4.
 - **The map grid is `[y][x]`**, row-major, and so are `height.png`, `light.png` and
@@ -103,6 +113,12 @@ And this bgfx revision's own API, which is newer than most writing about it (pin
   granularity rather than work: they add up to more than the frame's own total.
 - **`requestScreenShot`'s path is used whole.** bgfx appends no extension; ours ends in
   `.png` or the shot is a file nothing opens.
+- **`bgfx::Init`'s constructor fills the swap chain in; a bare `SwapChain` does not.** Init
+  sets `formatColor` to BGRA8, `formatDepthStencil` to D24S8 and two back buffers, while a
+  default-constructed `SwapChain` leaves the formats as `TextureFormat::Count`. Hand that
+  bare one to `init` or to `reset` and CAMetalLayer throws on `setPixelFormat`. A resize
+  keeps the description from init and changes only the size — passing a fresh one also drops
+  `nwh`, which bgfx documents as a request for a *headless* device.
 
 ## Materials
 

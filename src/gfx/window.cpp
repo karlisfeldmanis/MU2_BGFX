@@ -39,10 +39,18 @@ bool Window::open(const WindowDesc& desc) {
     bgfx::Init init;
     init.type = bgfx::RendererType::Metal;  // this Mac only; see docs/conventions.md
     // The window goes on the swap chain, not on platformData: this bgfx asks for it there,
-    // and it is the swap chain that carries the size, the formats and the latency.
-    init.swapChain.nwh = glfwGetCocoaWindow(handle_);
-    init.swapChain.width = uint32_t(width_);
-    init.swapChain.height = uint32_t(height_);
+    // and it is the swap chain that carries the size, the formats and the latency. Kept in
+    // chain_ so a resize can hand the same description back with only the size changed.
+    //
+    // Taken FROM init, not written over it. A bare SwapChain leaves formatColor as
+    // TextureFormat::Count, while Init's own constructor fills in BGRA8, D24S8 and two back
+    // buffers; handing the bare one to bgfx makes CAMetalLayer throw on setPixelFormat
+    // before the first frame.
+    chain_ = init.swapChain;
+    chain_.nwh = glfwGetCocoaWindow(handle_);
+    chain_.width = uint32_t(width_);
+    chain_.height = uint32_t(height_);
+    init.swapChain = chain_;
     // `profile` is what fills bgfx::Stats::viewStats, which is where every account's time
     // comes from. It stays on: a run that cannot be priced is a run wasted.
     init.profile = true;
@@ -85,10 +93,9 @@ bool Window::pump() {
     if (w != width_ || h != height_) {
         width_ = w;
         height_ = h;
-        bgfx::SwapChain chain;
-        chain.width = uint32_t(w);
-        chain.height = uint32_t(h);
-        bgfx::reset(reset_, &chain);
+        chain_.width = uint32_t(w);
+        chain_.height = uint32_t(h);
+        bgfx::reset(reset_, &chain_);
         core::logf("resized to %dx%d", w, h);
     }
     return true;
