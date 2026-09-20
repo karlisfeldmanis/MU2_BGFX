@@ -85,11 +85,14 @@ void main()
 	// bite of one the join becomes speckle. A third is where stones come through as stones.
 	//
 	// The taper is not a refinement. Added flat, the bite leaves a fragment MU painted empty
-	// still carrying (high - low) * bite of the overlay -- a sixth to a quarter of sand over
-	// every water texel of a blended tile -- while the tile next door, which has no overlay
-	// bound at all, carries none. The two meet on a tile boundary and the shoreline grows an
-	// axis-aligned staircase. The interlock belongs in the middle of a fade, where two
-	// pictures are actually competing; at the ends there is only one.
+	// still carrying (high - low) * bite of the overlay, where the weight says it should carry
+	// none. The interlock belongs in the middle of a fade, where two pictures are actually
+	// competing; at the ends there is only one.
+	//
+	// It does NOT remove the hard edge visible along the moat. That edge is between two
+	// different surface pairs, which are two different draws, and nothing inside one draw can
+	// gradate across it -- shot before and after this blend, the sawtooth is identical. An
+	// earlier commit message credited the taper with fixing it, and that was wrong.
 	float painted = saturate(v_colour.a);
 	float blend = painted;
 	if (u_groundBlend.y > 0.5)
@@ -111,12 +114,14 @@ void main()
 	vec3 b = cross(ng, t);
 	vec3 nmBase = texture2D(s_normal, uvBase).xyz * 2.0 - 1.0;
 	vec3 nmOver = texture2D(s_normal2, uvOver).xyz * 2.0 - 1.0;
-	nmBase.xy *= u_groundRepeat.z;
-	nmOver.xy *= u_groundRepeat.w;
-	// Mixed linearly and by the same weight the albedo used, which is what MU2 does. It does
-	// flatten the relief a little mid-blend, where two differing normals partly cancel; that
-	// is MU2's behaviour and matching it is the point.
+	// Mixed linearly by the same weight the albedo used, and the relief mixed with it and
+	// applied afterwards -- which is MU2's order (NORMAL_MAP takes the mixed normal and
+	// NORMAL_MAP_DEPTH the mixed relief), not each layer's relief applied before the mix.
+	// Every relief in all three shipped worlds is 1.0, so no pixel differs today; the comment
+	// above this claimed parity with MU2 and the code did not have it.
 	vec3 nm = normalize(mix(nmBase, nmOver, blend));
+	nm.xy *= mix(u_groundRepeat.z, u_groundRepeat.w, blend);
+	nm = normalize(nm);
 	vec3 n = normalize(t * nm.x + b * nm.y + ng * nm.z);
 
 	float ao = orm.r;
@@ -134,9 +139,13 @@ void main()
 	albedo *= v_colour.rgb;
 
 	// No view vector and no f0: with no specular and no reflection on dry ground there is
-	// nothing left that depends on where the eye is. Metal still matters, because a metal
-	// surface has no diffuse -- MU2 keeps METALLIC from the ORM's blue for the same reason
-	// while pinning its SPECULAR to zero.
+	// nothing left that depends on where the eye is.
+	//
+	// Metal therefore only subtracts energy here, which is NOT what it does in MU2. Godot's
+	// SPECULAR = 0 scales the dielectric F0 alone, so a metal texel there still returns the
+	// environment tinted by its albedo; with no specular term at all, ours simply goes dark.
+	// Every ORM blue channel in Lorencia's eighteen maps is 0, so nothing differs today. It
+	// becomes a real difference when water arrives with a specular path of its own.
 	vec3 diffuseColour = albedo * (1.0 - metal);
 
 	vec3 l = normalize(u_sunDir.xyz);

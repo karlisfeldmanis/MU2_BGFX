@@ -61,12 +61,23 @@ and the code together.
 
 Everything is lit in linear space and written out once.
 
-| role | file | sampler |
-|---|---|---|
-| albedo, emissive | BC7 sRGB | sRGB flag on, the hardware converts |
-| normal | BC5 two-channel, z rebuilt | linear, never sRGB |
-| ORM (occlusion, roughness, metal) | BC7 linear | linear |
-| height, light, attributes | 8-bit PNG, uncooked | linear, point sampled |
+| role | file, once cooked | today | sampler |
+|---|---|---|---|
+| albedo, emissive | BC7 sRGB | **RGBA8** | sRGB flag on, the hardware converts |
+| normal | BC5 two-channel, z rebuilt | **RGBA8** | linear, never sRGB |
+| ORM (occlusion, roughness, metal) | BC7 linear | **RGBA8** | linear |
+| height, light, attributes | 8-bit PNG, uncooked | as cooked | linear, point sampled |
+
+**The middle column is what runs and the left is what is owed**, and the two are written
+side by side because the left column alone was a rule nothing kept. `content/texture.cpp`
+uploads RGBA8 with a chain it builds itself; nothing in `src/` creates a compressed format.
+Measured on Lorencia's ground alone: 27 textures, **141.8 MB**, of which 47.2 MB is the mip
+chain. Compressed that is roughly a third. The cook step owns closing this, and until it
+does, this table says so rather than describing an engine that does not exist.
+
+A material with no ORM map takes **occlusion 1, roughness 1, metal 0** — not white. White's
+blue is metal 1.0, a metal surface has no diffuse, and a material whose ORM failed to load
+drew black while looking like a loading bug rather than a fallback.
 
 `light.png` is MU's baked terrain light. The ground mesh carries it per vertex in
 `COLOR_0.rgb` rather than sampling the picture, and **it multiplies the albedo, before any
@@ -140,7 +151,16 @@ And this bgfx revision's own API, which is newer than most writing about it (pin
 
 ## Materials
 
-One model, closed. Albedo, normal, ORM, emissive, and three flags: **cutout**, **two-sided**,
+**The land is the one exception, and it is a second shader rather than a fourth flag.**
+It blends *two* full material sets by a per-vertex weight, that blend is height-aware rather
+than linear, and it carries MU's baked light in the same attribute. None of that fits the
+model below, and bending the model to hold it would make every other material pay for the
+ground's shape. So `vs_ground`/`fs_ground` exist beside `vs_static`/`fs_static`, and the rule
+is that there are exactly these two — a third means the model was wrong and gets fixed, not
+extended. See `docs/sprints/02-the-ground.md`.
+
+Everything else is one model, closed. Albedo, normal, ORM, emissive, and three flags:
+**cutout**, **two-sided**,
 **skinned**. The shader variants are those three flags and nothing else. Anything MU2's
 material library says beyond that is resolved at cook time into these fields.
 

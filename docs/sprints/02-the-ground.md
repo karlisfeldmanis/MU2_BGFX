@@ -92,6 +92,7 @@ warmup, at `b34e5bc`. Three runs of each, alternating, **no `--shot`**.
 |---|---|---|
 | **frame (mean wall ms)** | 2.393, 2.422, 2.363 → **2.39** | 2.430, 2.306, 2.463 → **2.40** |
 | fps | 418 | 417 |
+| the same, measured independently by review | **2.161** (n=6) | **2.153** (n=6) |
 | gpu frame (reported, counts waiting) | — | 2.30 |
 | budget | kept | kept |
 
@@ -101,9 +102,20 @@ spread of 0.16.
 > **This table used to say 3.075 ms still and 4.085 moving, and both were wrong.** They were
 > taken with `--shot` on, under a command line written here that says they were not. A
 > screenshot stalls its frame to about 250 ms and `Stats::sample` averaged it in like any
-> other, worth roughly 1.6 ms of mean. The statistics now skip any frame a shot was requested
-> on, which is why the two columns agree: measured after that fix, `--shot 200` costs
-> 2.238 ms against 2.301 without it.
+> other, worth roughly 1.6 ms of mean. The statistics now skip the frame a shot was requested
+> on, which removes that.
+>
+> **A residual remains, and this file got its sign wrong too.** It claimed `--shot 200` cost
+> 2.238 ms against 2.301 without — the shot run *cheaper*. That was one pair, and the spread
+> between runs is larger than the effect. Six alternating pairs: no shot 2.322 mean, with
+> shot 2.474, **dearer in six pairs out of six, +0.15 ms**. The readback's cost does not land
+> wholly inside the frame that is excluded. The run now says so in the log when `--shot` is
+> combined with `--budget` or `--stats`; numbers are taken from runs with no shots.
+
+The review's absolute numbers sit about 0.23 ms below these, consistently, on the same
+commit and the same command. Neither of us can explain it beyond machine state, and it is
+recorded rather than reconciled: **the conclusion is the same in both sets and does not
+depend on whose absolute is right.**
 
 **What that costs is an argument this file used to make and can no longer make.** It closed
 by saying the still/moving gap showed the cost tracking what is *visible* rather than what

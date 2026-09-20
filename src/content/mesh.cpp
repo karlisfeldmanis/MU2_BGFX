@@ -118,7 +118,7 @@ bool Mesh::load(const std::string& path, Textures& textures) {
 
         if (!bgfx::isValid(out.albedo)) out.albedo = textures.white();
         if (!bgfx::isValid(out.normal)) out.normal = textures.flatNormal();
-        if (!bgfx::isValid(out.orm)) out.orm = textures.white();
+        if (!bgfx::isValid(out.orm)) out.orm = textures.neutralOrm();
         if (!bgfx::isValid(out.emissive)) out.emissive = textures.black();
         materials_.push_back(out);
     }
@@ -127,7 +127,7 @@ bool Mesh::load(const std::string& path, Textures& textures) {
     fallback.name = "none";
     fallback.albedo = textures.white();
     fallback.normal = textures.flatNormal();
-    fallback.orm = textures.white();
+    fallback.orm = textures.neutralOrm();
     fallback.emissive = textures.black();
     const uint32_t fallbackIndex = uint32_t(materials_.size());
     materials_.push_back(fallback);

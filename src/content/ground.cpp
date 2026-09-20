@@ -71,7 +71,7 @@ bool readLayer(const core::Json& node, const std::string& dir, Textures& texture
 
     if (!bgfx::isValid(out->albedo)) out->albedo = textures.white();
     if (!bgfx::isValid(out->normal)) out->normal = textures.flatNormal();
-    if (!bgfx::isValid(out->orm)) out->orm = textures.white();
+    if (!bgfx::isValid(out->orm)) out->orm = textures.neutralOrm();
     return true;
 }
 
@@ -265,7 +265,9 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
             }
         }
         if (aUv && aUv->count == count) {
-            // In TILES, not in [0,1]: it runs 32..245 across Lorencia. Each half of the
+            // In TILES, not in [0,1]: it runs 0..256 across Lorencia. (It said 32..245
+            // until a review caught it -- primitive 0's own accessor bounds, read as the
+            // whole mesh's, which is the very error the commit this line survived was about.) Each half of the
             // surface multiplies it by its own repeat, so one sheet covers two tiles or four.
             scratch.assign(count * 2, 0.0f);
             cgltf_accessor_unpack_floats(aUv, scratch.data(), count * 2);

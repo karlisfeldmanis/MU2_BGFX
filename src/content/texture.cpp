@@ -162,6 +162,8 @@ void Textures::createDefaults() {
     // A flat normal is (0.5, 0.5, 1) as bytes, which is 0xffff8080 in ABGR.
     flatNormal_ = solid(0xffff8080);
     black_ = solid(0xff000000);
+    // ABGR: alpha 255, blue 0 (metal), green 255 (rough), red 255 (unoccluded).
+    neutralOrm_ = solid(0xff00ffff);
 }
 
 void Textures::shutdown() {
@@ -169,7 +171,7 @@ void Textures::shutdown() {
         if (bgfx::isValid(handle)) bgfx::destroy(handle);
     }
     byPath_.clear();
-    for (bgfx::TextureHandle* h : {&white_, &flatNormal_, &black_}) {
+    for (bgfx::TextureHandle* h : {&white_, &flatNormal_, &black_, &neutralOrm_}) {
         if (bgfx::isValid(*h)) bgfx::destroy(*h);
         *h = BGFX_INVALID_HANDLE;
     }

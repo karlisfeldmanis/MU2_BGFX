@@ -36,6 +36,11 @@ public:
     bgfx::TextureHandle white() const { return white_; }
     bgfx::TextureHandle flatNormal() const { return flatNormal_; }
     bgfx::TextureHandle black() const { return black_; }
+    // Occlusion 1, roughness 1, metal 0 -- what a surface with no ORM map should be. NOT
+    // white: white's blue is metal 1.0, and a metal surface has no diffuse, so a material
+    // whose ORM failed to load drew black rather than rough and unlit. MU2's own ground
+    // shader defaults the same way, to vec3(1, 1, 0).
+    bgfx::TextureHandle neutralOrm() const { return neutralOrm_; }
 
     // How many texels across the anisotropic filter may reach. 1 turns it off. A sheet
     // value, set before anything loads.
@@ -59,6 +64,7 @@ private:
     bgfx::TextureHandle white_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle flatNormal_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle black_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle neutralOrm_ = BGFX_INVALID_HANDLE;
     uint64_t bytes_ = 0;
     uint64_t mipBytes_ = 0;
     int anisotropy_ = 8;

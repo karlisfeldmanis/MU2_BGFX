@@ -91,7 +91,7 @@ void Stats::sample(double cpuMs) {
     const double toMs = 1000.0 / double(s->gpuTimerFreq);
     f.gpuMs = double(s->gpuTimeEnd - s->gpuTimeBegin) * toMs;
 
-    // Per-view times come from the profiler; they are only populated with BGFX_RESET_PROFILER
+    // Per-view times come from the profiler; they are only populated with bgfx::setDebug(BGFX_DEBUG_PROFILER)
     // on, and a view that submitted nothing is absent rather than zero.
     for (uint32_t i = 0; i < s->numViews; ++i) {
         const bgfx::ViewStats& vs = s->viewStats[i];

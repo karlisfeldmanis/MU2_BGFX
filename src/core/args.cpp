@@ -118,8 +118,20 @@ Args parseArgs(int argc, char** argv) {
                     logError("--at wants column,row, got '%s'", v);
                     a.valid = false;
                 } else {
-                    a.atColumn = float(std::atof(v));
-                    a.atRow = float(std::atof(comma + 1));
+                    // strtod, not atof: atof turns "abc" into 0 and reports nothing, so
+                    // `--at abc,def` ran a full 600 frames looking at tile 0,0 and answered
+                    // a question nobody asked.
+                    char* afterColumn = nullptr;
+                    char* afterRow = nullptr;
+                    const double column = std::strtod(v, &afterColumn);
+                    const double row = std::strtod(comma + 1, &afterRow);
+                    if (afterColumn != comma || afterRow == comma + 1) {
+                        logError("--at wants two numbers as column,row, got '%s'", v);
+                        a.valid = false;
+                    } else {
+                        a.atColumn = float(column);
+                        a.atRow = float(row);
+                    }
                     // A tile off the map is refused rather than framed. There is no tile at
                     // a negative column, and a camera pointed at one used to fall back to the
                     // town without a word -- so the run answered a question nobody asked. The

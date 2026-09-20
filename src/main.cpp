@@ -110,6 +110,18 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // A shot and a measurement do not belong in the same run, and saying so is cheaper than
+    // discovering it twice. The stalled frame itself is kept out of the statistics, but the
+    // readback's cost does not land wholly inside that one frame: measured over six
+    // alternating pairs, a run with --shot still comes out about 0.15 ms of mean dearer, and
+    // it was dearer in six pairs out of six. A single pair is not enough to see it -- the
+    // spread between runs is larger than the effect -- which is exactly how this file came to
+    // publish the difference with the sign reversed.
+    if (args.shotEvery && (args.budget || !args.statsPath.empty())) {
+        core::logf("NOTE: --shot is on, so these timings are about 0.15 ms a frame dearer "
+                   "than the same run without it. Take numbers from a run with no shots.");
+    }
+
     gfx::Stats stats;
     stats.begin(args.statsPath, args.budgetOverrides);
 
