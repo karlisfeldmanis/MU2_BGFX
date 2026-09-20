@@ -78,9 +78,12 @@ Cheap now, a rewrite later.
    views, materials; no game nouns), `content` (index, cooked formats, tables), `sim`
    (rules; includes `core` and `content` tables only), `game` (crowd, world, effects, HUD,
    sound, benches). `gfx` never includes `game` or `sim`; `sim` never includes `gfx`.
-11. **Tables are cooked, not queried.** `cook.py` writes `mu.db`'s rows (monsters, spawns,
-    items, drops, experience) to flat files with a version. No sqlite in the game. The save
-    is one versioned file written whole.
+11. **Tables are cooked, not queried.** `cook.py` writes `mu.db`'s rows (monster kinds,
+    monster and npc spawns, items, gates) to flat files with a version. No sqlite in the
+    game. The save is one versioned file written whole. **Drops and experience are not among
+    them and this line used to say they were**: `mu.db` has no such tables, because MU has an
+    expression per level rather than a list of numbers. Both are code, traced in
+    `docs/sprints/05-rules-i.md`.
 12. **Self-contained and pinned.** No symlinks. `tools/sync.sh` copies what `index.json`
     reaches; `bootstrap.sh` pins bgfx/bx/bimg, glfw, cgltf, stb and miniaudio by commit.
 
