@@ -8,8 +8,12 @@
 //
 // Three rules hold inside a step, and each is a thing that has gone wrong in a sim before:
 //
-//   * **No allocation.** Every vector here is sized when the realm is raised. A step appends
-//     to `happenings` and to the router's scratch and to nothing else.
+//   * **No allocation, once each vector has seen its worst case.** Every vector here is sized
+//     when the realm is raised: the bodies, the router's whole scratch, and a route's worth of
+//     tiles on every body. What is NOT a hard bound is a route longer than any that body has
+//     yet walked, and `happenings` in a tick busier than any before it -- both grow once and
+//     then never again, and neither has been seen to grow after the first few hundred ticks of
+//     a run. The claim used to be "and to nothing else", which was simply untrue.
 //   * **No clock but the tick.** Nothing reads a wall clock, nothing reads a frame's delta, and
 //     every delay was converted to ticks once, in the cook.
 //   * **A fixed order, and it is written down.** The player walks and swings, then monsters are

@@ -35,11 +35,12 @@ window last, and only as a viewer onto a sim that is already right.
   list. Both formulas are code, and they are transcribed in "The numbers this sprint owes"
   below. What the cook writes is `monster_kinds`, `monster_spawns` and `npc_spawns`; `items`
   waits for sprint 7.
-- **Lorencia holds 250 monsters, and the map after it holds a thousand.** Nine spawn groups on
+- **Lorencia holds 290 monsters, and the map after it holds a thousand.** Nine spawn groups on
   map 0: 45 Bull Fighters, 45 Hounds, 60 Budge Dragons over two rectangles, 45 Spiders, 45
-  Elite Bull Fighters, 20 Liches, 15 Giants, 15 Skeleton Warriors. Noria (map 3) has eight
-  groups and **1000**. So the tick's cost is not a rounding error and is designed for now:
-  0.5 ms of sim over 250 monsters is **2.0 µs a monster a tick**, and over Noria's thousand it
+  Elite Bull Fighters, 20 Liches, 15 Giants, 15 Skeleton Warriors -- which is 290, and this
+  paragraph said 250 while listing the nine numbers that sum to 290. Noria (map 3) has eight
+  groups and **1005**. So the tick's cost is not a rounding error and is designed for now:
+  0.5 ms of sim over 290 monsters is **1.7 µs a monster a tick**, and over Noria's thousand it
   is 500 ns. Nothing per-monster in this sprint may allocate, take a lock, or look anything up
   in a map.
 - **Every delay in the rows is in milliseconds and none of them is a multiple of the tick.**
@@ -136,9 +137,14 @@ window last, and only as a viewer onto a sim that is already right.
 Written here so the code is transcription and not invention, and so a review can read the two
 side by side.
 
-**Hit chance** — OpenMU `GetHitChanceTo`. `defenseRate < attackRate && attackRate > 0` gives
-`1 - defenseRate/attackRate`, and otherwise **0.03**. Only ever a miss or a hit; there is no
-glancing blow.
+**Hit chance** — OpenMU `GetHitChanceTo`, `AttackableExtensions.cs:694-716`.
+`defenseRate < attackRate` gives `1 - defenseRate/attackRate`, and otherwise **0.03**. Only ever
+a miss or a hit; there is no glancing blow. **The `&& attackRate > 0` this paragraph used to
+carry is not OpenMU's** — it is MU2's unmarked addition, which the census said and which this
+page then quoted as though it were the trace. It is kept in the code and marked there: OpenMU
+divides without it, which is a division by zero for an attacker with no attack rate at all, and
+nothing in 0.75's data has one. Both rates are **floats** in the original, and are floats here
+for that reason.
 
 **A blow, in order — and the order is the behaviour, not the presentation:**
 
@@ -330,3 +336,67 @@ cue's, sprint 6); there is no health bar, no damage number and no swing animatio
 the drawn figures are not frustum-culled, only ranged (the next thing, and it is worth a
 measurement of its own); and a click cannot pick a body the camera cannot see, which is correct
 but has no feedback to say so until the HUD exists in sprint 7.
+
+
+## Sent back, and what came of it
+
+QA reviewed both halves and returned **SENT BACK** with seven findings. It ran the things this
+file claims rather than reading them: the hunt twice at four seeds, with `--sim-steps`, with
+`--no-hand`, on Noria, at 50 000 ticks, and — the test the author had not run — **a second build
+directory at `-O0`, replaying byte-identical to Release on both maps**, which is the strongest
+statement about determinism anybody here has made. It also re-measured the tick and three
+alternating `--play` pairs and confirmed both cost claims. Every finding is answered below.
+
+**1. The "no blow landed on the dead" invariant was very nearly vacuous.** It looked for a
+`Died` earlier in *the same tick's* happenings, and the happenings are cleared every tick — so
+it could only ever catch a swing at something that died on that same tick, and a sim that hit
+week-old corpses would have passed it. QA broke the rule deliberately and the check reported 1
+of 52. `Findings` now carries who is dead between ticks; broken the same way again, it reports
+**330**. That is the finding that mattered most, because this file says `tests/` replaces
+Instrument, Audit and the bot, and a net with a hole that size in it does not.
+
+**2. Half of the stat-truncation finding was right, and the half that was not is worth the
+lines.** QA said the hero's derived stats were truncated to `int` where OpenMU keeps floats.
+Read at the source, OpenMU truncates in two of the three places and not in the third:
+
+| stat | OpenMU | here, before | now |
+|---|---|---|---|
+| attack rate, defence rate | **float** — `GetHitChanceTo` declares both `float` (`:694-716`), `Overrates` compares floats (`:728-731`) | truncated | **float** |
+| defence | `(int)((attribute + bonus) * decrement)` at `:92` | truncated | truncated, and the line now says why |
+| damage band | `GetBaseDmg(… out int …)` at `:837-849` | truncated | truncated, and marked |
+
+So a knight's 6.667 of defence rate was 6 and his hit chance 0.900 where 0.890 is right; his
+defence of 3.333 was 3, and 3 is what the original gives too. `Fighter` carries two floats and
+three integers now, and the header says which cast of OpenMU's each one is.
+
+**3. The 65-and-over experience term was floored and OpenMU's is not.** `targetLevel` is a float
+attribute at `:621`, so at level 65 the original adds 16.25 and this added 16. Unreachable in
+this content — which is the whole reason this file argued for keeping the branch at all.
+
+**4. This page attributed MU2's `&& attackRate > 0` guard to OpenMU.** The code always marked it
+honestly; the page quoted it as the trace. Fixed above.
+
+**5. The drawn figures were a whole tick further behind than the comment claimed.** `remember()`
+ran *before* `step()`, so `now` held the state at the start of the tick and `was` the start of
+the one before, while the sim had already moved past both — 100 ms of lag at `through_ = 0` on
+top of the interpolation's own. It runs after the step now, and the two ends really are the
+ticks either side of the clock. (`conventions.md` permits a lag; it does not permit a comment
+that misdescribes one.)
+
+**6. "A step appends to `happenings` and to the router's scratch and to nothing else" was
+untrue.** A route is assigned into the body's own vector and grows the first time that body
+walks further than it ever has. Every body now reserves 64 tiles at spawn, and the header says
+what the remaining bound actually is instead of claiming there is none.
+
+**7. "Lorencia holds 250 monsters"** — in a paragraph listing nine numbers that sum to 290.
+
+**Re-measured after the fixes** (the rules changed, so the log's bytes changed with them):
+seed 1, level 4, 10 000 ticks is now 94 466 bytes, fingerprint `dba488f9089a11a4`, identical
+twice; seed 7 at 50 000 ticks identical twice; Noria identical and clean. Step cost 0.0009 ms
+median on Lorencia and 0.0034 on Noria, unchanged. The window still runs at a 2.6 ms median
+frame with 290 bodies behind it.
+
+**What QA raised that belongs to somebody else**: the `present` account reads 2.785 ms against
+its 0.500 budget in every window run, with and without `--play` — the engine lead's, and it
+predates this sprint; and the Dark Knight's held weapon reads as a flat plate at hip height in
+a shot, which is sprint 4's equipment attachment.

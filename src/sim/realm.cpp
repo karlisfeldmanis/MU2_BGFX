@@ -176,6 +176,10 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
             beast.temper = Temper::Asleep;
             // OpenMU's start delay, so a whole nest does not think on one tick forever after.
             beast.thinksAt = dice_.nextInt(0, 100);
+            // A route's worth of tiles, taken now rather than on the tick the animal first
+            // walks. A wander is at most a few tiles and a chase across a nest is tens; 64 is
+            // over the worst either has produced, and a route past it grows once.
+            beast.route.reserve(64);
             bodies_.push_back(std::move(beast));
             ++placed;
         }

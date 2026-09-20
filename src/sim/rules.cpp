@@ -5,8 +5,8 @@
 
 namespace mu::sim {
 
-double hitChance(int attackRate, int defenseRate) {
-    if (defenseRate < attackRate && attackRate > 0) {
+double hitChance(float attackRate, float defenseRate) {
+    if (defenseRate < attackRate && attackRate > 0.0f) {
         return 1.0 - (double(defenseRate) / double(attackRate));
     }
     return 0.03;
@@ -99,12 +99,18 @@ void reckon(Kin kin, int level, const HeroPoints& points, Fighter* out, int* max
     const double agility = double(points.agility);
 
     out->level = level;
-    out->attackRate = int(double(level) * double(row.ratePerLevel) +
-                          agility * double(row.ratePerAgility) +
-                          strength * double(row.ratePerStrength));
-    out->defenseRate = int(agility * double(row.defenseRatePerAgility));
+    // Not truncated: see the note on Fighter. These two are the only stats OpenMU reads as
+    // floats, and they are read as floats in the two places that matter -- the hit chance and
+    // the overrates test.
+    out->attackRate = float(double(level) * double(row.ratePerLevel) +
+                            agility * double(row.ratePerAgility) +
+                            strength * double(row.ratePerStrength));
+    out->defenseRate = float(agility * double(row.defenseRatePerAgility));
     // Armour adds nothing until sprint 7 gives items their rows; the halving is the class
     // initialiser's and applies whatever the armour is.
+    // And this one IS truncated, because AttackableExtensions.cs:92 truncates it:
+    // `defense = (int)((attributes[defenseAttribute] + GreaterDefenseBonus) * DefenseDecrement)`.
+    // A knight's 3.333 is 3 in the original as well.
     out->defense = int((agility * double(row.defensePerAgility) + 0.0) * 0.5);
     // And no weapon, so the damage is the arms alone. A naked level-1 knight doing one point to
     // a Bull Fighter is not a bug: it is what 0.75 says about hitting an armoured animal six
@@ -118,6 +124,10 @@ void reckon(Kin kin, int level, const HeroPoints& points, Fighter* out, int* max
     out->criticalChance = 0.0;  // the luck option is 0.75's only source, and it is sprint 7's
     out->damageTaken = 1.0;
 
+    // Truncated, and it is a departure of the same kind as the two above: OpenMU keeps
+    // MaximumHealth as a float attribute and compares health against it as one. Nothing in
+    // 0.75 grants a fractional health, so every class's total here is a whole number anyway --
+    // 35 + 2 + 75 for a knight -- and this is marked rather than argued.
     *maxHealth = int(double(row.baseHealth) + double(level) * double(row.healthPerLevel) +
                      double(points.vitality) * double(row.healthPerVitality));
 }
@@ -141,7 +151,11 @@ double killExperience(int killedLevel, int killerLevel) {
         worth *= (killed + 10.0) / double(killerLevel);
     }
     if (killedLevel >= 65) {
-        worth += (killed - 64.0) * std::floor(killed / 4.0);
+        // Not floored. `targetLevel` is a float attribute at AttackableExtensions.cs:621 and
+        // the quarter is a float division: at level 65 the original adds 16.25 and a floored
+        // port adds 16. Nothing in this content reaches 65, which is exactly why it would
+        // never have been noticed.
+        worth += (killed - 64.0) * (killed / 4.0);
     }
     return std::max(worth, 0.0) * 1.25;
 }

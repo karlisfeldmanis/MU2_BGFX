@@ -128,8 +128,13 @@ void Play::update(double seconds) {
     int stepped = 0;
     const int64_t started = bx::getHPCounter();
     while (accumulator_ >= kTickSeconds && stepped < kMostTicks) {
-        remember();
         realm_.step();
+        // AFTER the step, not before it. Before, `now` held the state at the START of the tick
+        // and `was` the start of the one before, so the picture trailed the sim by one whole
+        // tick on top of the interpolation's own -- a figure at `through_ = 0` was 100 ms
+        // behind what the sim had already decided. Now the two ends really are the ticks
+        // either side of where the clock stands, which is what the comment below claims.
+        remember();
         sim::audit(realm_, findings_);
         for (const sim::Happening& happening : realm_.happenings()) {
             // Everything but the tile crossings, which are most of the log and none of the

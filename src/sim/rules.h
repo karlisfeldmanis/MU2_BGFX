@@ -21,8 +21,17 @@ constexpr int kPointsPerLevel = 5;
 // Everything a blow reads off either side of it.
 struct Fighter {
     int level = 1;
-    int attackRate = 0;
-    int defenseRate = 0;
+    // The two rates are FLOATS and the three below them are integers, and that is not
+    // carelessness -- it is where OpenMU's own casts fall. `GetHitChanceTo`
+    // (AttackableExtensions.cs:694-716) declares both rates `float` and divides them as
+    // floats, and `Overrates` (:728-731) compares them as floats; a knight's 6.667 of defense
+    // rate truncated to 6 gives a hit chance of 0.900 where the original gives 0.890.
+    // Meanwhile the defence is `(int)((attribute + bonus) * decrement)` at :92 and the damage
+    // band comes out of `GetBaseDmg` already cast (`out int`, :837-849) -- so those three are
+    // truncated in the original too, at exactly these points, and carrying them as floats here
+    // would be as wrong in the other direction.
+    float attackRate = 0.0f;
+    float defenseRate = 0.0f;
     int defense = 0;
     int minimumDamage = 0;
     int maximumDamage = 0;
@@ -54,7 +63,7 @@ struct Blow {
 // left to be found: OpenMU divides without it, which is a division by zero for an attacker
 // with no attack rate at all. Nothing in 0.75's data has one. The guard changes no outcome
 // this content can produce and removes an undefined one it cannot.
-double hitChance(int attackRate, int defenseRate);
+double hitChance(float attackRate, float defenseRate);
 
 // One swing, in OpenMU's own order, and the order is the behaviour rather than the
 // presentation. AttackableExtensions.cs:69-225, physical arm, with every branch 0.75 cannot

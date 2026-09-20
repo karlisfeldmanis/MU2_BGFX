@@ -54,22 +54,32 @@ void audit(const Realm& realm, Findings& findings) {
         }
     }
 
-    // And what this tick's happenings say about each other. A blow on the dead is the one that
-    // cannot be seen from the state afterwards -- the victim is dead either way -- so it is
-    // caught here, by reading the order the happenings came out in.
+    // And what this tick's happenings say about each other, read in the order they came out
+    // in and against who was already dead when the tick began. A blow on the dead cannot be
+    // seen from the state afterwards -- the victim is dead either way -- and it cannot be seen
+    // from one tick's happenings either, because a body that died an hour ago has no Died line
+    // in this tick's list. So the deaths are carried.
+    if (findings.dead.size() < realm.bodies().size() + 2) {
+        findings.dead.assign(realm.bodies().size() + 2, 0);
+        for (const Body& one : realm.bodies()) {
+            if (one.id < findings.dead.size()) findings.dead[one.id] = one.alive() ? 0 : 1;
+        }
+    }
     for (size_t i = 0; i < realm.happenings().size(); ++i) {
         const Happening& happening = realm.happenings()[i];
         if (happening.what == What::Hit || happening.what == What::Missed) {
-            for (size_t j = 0; j < i; ++j) {
-                const Happening& earlier = realm.happenings()[j];
-                if (earlier.what == What::Died && earlier.who == happening.whom) {
-                    ++findings.hitTheDead;
-                    note(findings, "tick %lld: body %u swung at %u, which died this tick",
-                         (long long)realm.tick(), happening.who, happening.whom);
-                    break;
-                }
-                if (earlier.what == What::Rose && earlier.who == happening.whom) break;
+            const uint32_t whom = happening.whom;
+            if (whom < findings.dead.size() && findings.dead[whom]) {
+                ++findings.hitTheDead;
+                note(findings, "tick %lld: body %u swung at %u, which was already dead",
+                     (long long)realm.tick(), happening.who, whom);
             }
+        }
+        if (happening.what == What::Died && happening.who < findings.dead.size()) {
+            findings.dead[happening.who] = 1;
+        }
+        if (happening.what == What::Rose && happening.who < findings.dead.size()) {
+            findings.dead[happening.who] = 0;
         }
         if (happening.what == What::Levelled) {
             const Body* hero = realm.find(happening.who);

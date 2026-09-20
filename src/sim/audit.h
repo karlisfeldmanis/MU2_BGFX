@@ -27,6 +27,11 @@ struct Findings {
     }
     // The first line of each kind, kept whole: the count says how bad and the line says what.
     std::vector<std::string> first;
+    // Who is dead, by id, carried between ticks. Without it "no blow landed on the dead" can
+    // only see a death and a blow inside ONE tick's happenings -- which is the tick the thing
+    // died on and no other -- and a sim that swung at week-old corpses would pass it. QA
+    // broke the rule deliberately and the check reported 1 of 52.
+    std::vector<uint8_t> dead;
 };
 
 // Every check that can be made from one tick's happenings and the state they left behind.
