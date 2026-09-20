@@ -186,6 +186,132 @@ bool Ground::readGrids(const std::string& worldDir, const std::string& heightFil
     return true;
 }
 
+bool Ground::buildPlot(const std::string& worldDir, const std::string& worldName, int tiles,
+                       int surfaceIndex, Textures& textures) {
+    // A bench's land: real terrain, not a real map.
+    //
+    // The bench used to stand its subject on a white untextured plane, which flattered every
+    // material on it -- albedo 1.0 under a sun at x3 is brighter than any ground in the game.
+    // Raising Lorencia instead fixed that and brought its own problem: the whole 256-square
+    // map, its height, attribute and light grids and its 27 sheets, to put one candle on a
+    // paved square. This is the third answer. It is the SAME shader, the same vertex layout
+    // and the same surface pair out of the world's own ground_surfaces.json -- so the ground
+    // under a model is the material the game uses -- over a small synthetic heightfield.
+    //
+    // Synthetic on purpose. A bench wants the same land every time so two shots a week apart
+    // differ by the model and nothing else, and it wants a slope: a flat plane tells you
+    // nothing about how a surface reads as it turns away from the sun, which is most of what
+    // a roughness does.
+    shutdown();
+
+    if (tiles < 4) tiles = 4;
+    size_ = tiles;
+    metresPerTile_ = 1.0f;
+    heightFactor_ = 1.0f;
+
+    const std::string assetsDir = core::directoryOf(core::directoryOf(worldDir));
+    const core::Json cookedFile =
+        core::parseJsonFile(core::join(core::join(assetsDir, "cooked/" + worldName),
+                                       "textures.json"));
+    const core::Json cookedManifest = cookedFile["textures"];
+    const std::string surfacesPath = core::join(worldDir, "ground_surfaces.json");
+    core::Json surfaces = core::parseJsonFile(surfacesPath);
+    if (surfaces.isNull() || surfaces.size() == 0) {
+        core::logError("%s did not parse, or holds no surfaces", surfacesPath.c_str());
+        return false;
+    }
+    if (surfaceIndex < 0 || size_t(surfaceIndex) >= surfaces.size()) surfaceIndex = 0;
+
+    GroundPart part;
+    part.surface = uint32_t(surfaceIndex);
+    part.name = "bench plot";
+    part.pairName = "bench plot";
+    const core::Json& surface = surfaces.at(size_t(surfaceIndex));
+    if (!readLayer(surface["base"], worldDir, cookedManifest, assetsDir, textures, &part.base)) {
+        core::logError("surface %d of %s has no base layer to stand a bench on", surfaceIndex,
+                       surfacesPath.c_str());
+        return false;
+    }
+    part.hasOverlay = readLayer(surface["overlay"], worldDir, cookedManifest, assetsDir,
+                                textures, &part.overlay);
+
+    // The height field, and heightAt reads this same grid, so what a model is stood on and
+    // what is drawn cannot drift apart.
+    const float amplitude = 0.45f;
+    height_.assign(size_t(tiles) * size_t(tiles), 0.0f);
+    auto heightOf = [&](int c, int r) {
+        return amplitude * (std::sin(float(c) * 0.33f) + std::cos(float(r) * 0.27f));
+    };
+    for (int r = 0; r < tiles; ++r) {
+        for (int c = 0; c < tiles; ++c) {
+            height_[size_t(r) * size_t(tiles) + size_t(c)] = heightOf(c, r);
+        }
+    }
+
+    // One quad a tile with its own four unshared vertices, in metres, rows running -z: the
+    // same shape MU2's pipeline exports so the shader sees nothing new.
+    std::vector<GroundVertex> vertices;
+    std::vector<uint32_t> indices;
+    vertices.reserve(size_t(tiles) * size_t(tiles) * 4);
+    indices.reserve(size_t(tiles) * size_t(tiles) * 6);
+    for (int r = 0; r < tiles; ++r) {
+        for (int c = 0; c < tiles; ++c) {
+            const uint32_t base = uint32_t(vertices.size());
+            const int cs[4] = {c, c + 1, c + 1, c};
+            const int rs[4] = {r, r, r + 1, r + 1};
+            for (int i = 0; i < 4; ++i) {
+                GroundVertex v{};
+                const float y = heightOf(cs[i], rs[i]);
+                v.position[0] = float(cs[i]);
+                v.position[1] = y;
+                v.position[2] = -float(rs[i]);
+                // Central differences on the same field, so the shading agrees with the shape.
+                const float dx = heightOf(cs[i] + 1, rs[i]) - heightOf(cs[i] - 1, rs[i]);
+                const float dz = heightOf(cs[i], rs[i] + 1) - heightOf(cs[i], rs[i] - 1);
+                float n[3] = {-dx * 0.5f, 1.0f, dz * 0.5f};
+                const float length = std::sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
+                for (int k = 0; k < 3; ++k) v.normal[k] = n[k] / length;
+                v.uv[0] = float(cs[i]);
+                v.uv[1] = float(rs[i]);
+                // No baked light: there is no map here to have baked one from, and inventing
+                // a gradient would be a second light the bench does not own. White leaves the
+                // albedo alone, which is what a material wants to be judged under.
+                v.colour[0] = v.colour[1] = v.colour[2] = 1.0f;
+                // The blend weight sweeps across the plot, so a surface with an overlay shows
+                // both halves and the bite between them in one shot.
+                v.colour[3] = part.hasOverlay ? float(cs[i]) / float(tiles) : 0.0f;
+                vertices.push_back(v);
+            }
+            // Wound as the land is: counter-clockwise seen from above, which is what the one
+            // single-sided surface in this engine needs to face the sky. Taken the other way
+            // round first, and the plot rendered as nothing at all -- a ground facing the
+            // centre of the earth is culled from every camera above it, and there is no error
+            // to print because every triangle is valid. Worked out rather than guessed at the
+            // second attempt: corner 0 is (c, -r) and corner 3 is (c, -r-1), so
+            // cross(v1 - v0, v3 - v0) is +y and 0-1-3 is the triangle that faces up.
+            const uint32_t quad[6] = {base, base + 1, base + 3, base + 1, base + 2, base + 3};
+            for (uint32_t index : quad) indices.push_back(index);
+        }
+    }
+
+    part.firstIndex = 0;
+    part.indexCount = uint32_t(indices.size());
+    parts_.push_back(part);
+    indexCount_ = uint32_t(indices.size());
+
+    const bgfx::Memory* vmem = bgfx::copy(vertices.data(),
+                                          uint32_t(vertices.size() * sizeof(GroundVertex)));
+    vbh_ = bgfx::createVertexBuffer(vmem, layout());
+    const bgfx::Memory* imem = bgfx::copy(indices.data(),
+                                          uint32_t(indices.size() * sizeof(uint32_t)));
+    ibh_ = bgfx::createIndexBuffer(imem, BGFX_BUFFER_INDEX32);
+
+    core::logf("bench plot: %d x %d tiles of %s surface %d, %u triangles, %s overlay",
+               tiles, tiles, worldName.c_str(), surfaceIndex, indexCount_ / 3,
+               part.hasOverlay ? "with an" : "no");
+    return bgfx::isValid(vbh_) && bgfx::isValid(ibh_);
+}
+
 bool Ground::load(const std::string& worldDir, const std::string& worldName, Textures& textures) {
     // Loaded onto whatever was here before, which was nothing until a second world existed:
     // parts_ was appended to rather than replaced, so a second load() drew the first world's

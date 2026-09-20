@@ -127,8 +127,9 @@ int main(int argc, char** argv) {
     // --figure is the monster bench and --model the model bench: one figure out of the cook
     // with its clips, or one .glb as it sits on disk. Never both, and the figure wins.
     const bool figureBench = !inWorld && !args.figure.empty();
-    if (figureBench && !bench.openFigure(MU2_ASSET_DIR, args.world.empty() ? "lorencia"
-                                                                          : args.world,
+    const bool browseBench = !inWorld && !figureBench && args.browse;
+    const std::string benchWorld = args.world.empty() ? "lorencia" : args.world;
+    if (figureBench && !bench.openFigure(MU2_ASSET_DIR, benchWorld,
                                          args.figure, args.clip, args.safe, textures)) {
         core::logError("the bench did not open");
         renderer.shutdown();
@@ -137,7 +138,16 @@ int main(int argc, char** argv) {
         core::logClose();
         return 1;
     }
-    if (!inWorld && !figureBench && !bench.open(modelPath, textures)) {
+    if (browseBench && !bench.openBrowser(MU2_ASSET_DIR, benchWorld, textures)) {
+        core::logError("the bench did not open");
+        renderer.shutdown();
+        textures.shutdown();
+        window.close();
+        core::logClose();
+        return 1;
+    }
+    if (!inWorld && !figureBench && !browseBench &&
+        !bench.open(MU2_ASSET_DIR, benchWorld, modelPath, textures)) {
         core::logError("the bench did not open");
         renderer.shutdown();
         textures.shutdown();
@@ -268,8 +278,22 @@ int main(int argc, char** argv) {
             }
             renderer.draw(world.camera(), lighting, townDrawables, &world.ground(), casters);
         } else {
+            // The browser's steering, before the frame it steers. Left and right walk one,
+            // down and up walk ten, and the step is an edge rather than a state: at 400 fps a
+            // key read as held walks the whole list on one tap.
+            if (bench.browsing()) {
+                int by = 0;
+                if (window.stepped(gfx::Window::Step::Previous)) by -= 1;
+                if (window.stepped(gfx::Window::Step::Next)) by += 1;
+                if (window.stepped(gfx::Window::Step::PreviousTen)) by -= 10;
+                if (window.stepped(gfx::Window::Step::NextTen)) by += 10;
+                if (by != 0) {
+                    bench.step(by, textures);
+                    core::logf("browser: %s", bench.browseLine().c_str());
+                }
+            }
             bench.update(elapsed, deltaSeconds, !args.still);
-            renderer.draw(bench.camera(), lighting, bench.gather(renderer), nullptr);
+            renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
         }
 
         const bool lastFrame = args.frames && frame + 1 >= args.frames;
@@ -363,6 +387,7 @@ int main(int argc, char** argv) {
             }
             // The bench says where the clock is, not only which clip: position AND length.
             if (bench.hasFigure()) core::logf("  %s", bench.clipLine().c_str());
+            if (bench.browsing()) core::logf("  %s", bench.browseLine().c_str());
             sinceLine = 0.0;
         }
 

@@ -35,6 +35,16 @@ public:
     // because a click is a thing that happens and a frame at 500 fps sees one press as fifty.
     bool clicked(int button) const { return clicked_[button & 1]; }
 
+    // The same edge rule for the few keys the benches steer by. Named rather than given as
+    // GLFW codes so that including this header does not drag GLFW into the game: `gfx` owns
+    // the window and nothing above it should know which library opens one.
+    //
+    // A frame here runs at 400 to 900 fps, so a key held for the shortest press a hand can
+    // make is down for several hundred frames. Read as a state, one tap of Right walks the
+    // whole model list and lands wherever it ran out.
+    enum class Step { Previous, Next, PreviousTen, NextTen };
+    bool stepped(Step step) const { return stepped_[size_t(step)]; }
+
     int width() const { return width_; }
     int height() const { return height_; }
 
@@ -44,6 +54,8 @@ private:
     int height_ = 0;
     bool clicked_[2] = {false, false};  // 0 left, 1 right
     bool held_[2] = {false, false};
+    bool stepped_[4] = {false, false, false, false};
+    bool stepHeld_[4] = {false, false, false, false};
     uint32_t reset_ = 0;
     // Kept whole from init. A resize passes this back with a new size, because a
     // default-constructed SwapChain has a NULL window handle, which bgfx reads as a request

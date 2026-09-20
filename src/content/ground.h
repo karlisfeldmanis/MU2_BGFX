@@ -55,6 +55,13 @@ class Ground {
 public:
     // `worldDir` is the folder holding lorencia.json and the rest.
     bool load(const std::string& worldDir, const std::string& worldName, Textures& textures);
+
+    // A bench's land: the same shader, vertex layout and surface pair out of the world's own
+    // ground_surfaces.json, over a small synthetic heightfield instead of a whole map. Real
+    // terrain to judge a material on, without raising 256 squares of Lorencia to do it. See
+    // the note at its definition for why it is synthetic rather than a corner of the map.
+    bool buildPlot(const std::string& worldDir, const std::string& worldName, int tiles,
+                   int surfaceIndex, Textures& textures);
     void shutdown();
 
     const std::vector<GroundPart>& parts() const { return parts_; }

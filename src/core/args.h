@@ -86,6 +86,9 @@ struct Args {
     // The monster bench: one figure on the bench ground, by the name index.json gives it,
     // playing one clip. `--clip` is MU's own action number, in the right table of the two --
     // a monster's 4 is its second swing and a player's is "Stop sword".
+    // The cooked browser: step through every .mum the cook wrote, with the arrow keys. Not
+    // the same thing as --model, which reads one glb: this reads what the game loads.
+    bool browse = false;
     std::string figure;
     int clip = -1;
     // Stands the bench's figure as a safe zone does: weapon on the back, unarmed idle. It is

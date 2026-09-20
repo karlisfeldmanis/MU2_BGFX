@@ -36,6 +36,7 @@ void printUsage() {
         "  --sheet PATH              the lighting sheet (default sheets/lighting.json)\n"
         "  --dist N                  camera distance in world units\n"
         "  --still                   hold the camera instead of turning it\n"
+        "  --spin                    turn it after all, undoing an earlier --still\n"
         "  --no-cull                 submit every placement, not only the visible chunks\n"
         "  --msaa N                  1, 2, 4 or 8 samples (default 4)\n"
         "  --world NAME              raise a world instead of the model bench\n"
@@ -45,6 +46,7 @@ void printUsage() {
         "that spawn)\n"
         "  --no-figures              no figures at all, which is what the crowd is priced "
         "against\n"
+        "  --browse                  step through every cooked .mum; arrows walk the list\n"
         "  --figure NAME             the monster bench: one figure, by index.json's name\n"
         "  --clip N                  which clip it plays, as MU's own action number\n"
         "  --play                    raise the realm behind the window: click to walk, click "
@@ -235,6 +237,14 @@ Args parseArgs(int argc, char** argv) {
                     a.atSet = true;
                 }
             }
+        } else if (!std::strcmp(s, "--spin")) {
+            // The other way round from --still, so a script can pass --still by default and
+            // the person running it can take it back on the command line. The viewer does
+            // exactly that: a turntable is motion you did not ask for when you are trying to
+            // look at one face of a thing.
+            a.still = false;
+        } else if (!std::strcmp(s, "--browse")) {
+            a.browse = true;
         } else if (!std::strcmp(s, "--still")) {
             a.still = true;
         } else if (!std::strcmp(s, "--no-cull")) {
