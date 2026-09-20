@@ -282,6 +282,26 @@ void Play::update(double seconds) {
                         swinger->swingPace =
                             (between > 0.01f && clip > between) ? clip / between : 1.0f;
                         swinger->swinging = clip / swinger->swingPace;
+                        ++swinger->swingToken;
+
+                        // And the cue, which is the only thing sprint 6 adds here. The blow
+                        // has ALREADY resolved -- the roll, the damage and the death are on
+                        // the tick, above, in the sim -- and this decides when it is SHOWN.
+                        //
+                        // Halfway through the swing as it will actually be drawn, which is
+                        // why the fuse comes off `swinging` and not off the clip's authored
+                        // length: at haste the swing plays faster and the cue has to move
+                        // with it. MU puts the sound and the number on the swing's FIRST key
+                        // because ReceiveAttackDamage does all three in one handler, and on
+                        // the first key the arm has not moved yet.
+                        Cue cue;
+                        cue.attacker = happening.who;
+                        cue.target = happening.whom;
+                        cue.damage = happening.a;
+                        cue.miss = happening.what == sim::What::Missed;
+                        cue.fuse = swinger->swinging * Showing::kLandingPoint;
+                        cue.token = swinger->swingToken;
+                        showing_.schedule(cue);
                     }
                 }
             }
@@ -308,6 +328,44 @@ void Play::update(double seconds) {
         one.figure.update(float(seconds), one.clipRate);
         if (one.swinging > 0.0f) one.swinging -= float(seconds);
     }
+
+    // --- sprint 6: the landing cue ------------------------------------------------------
+    // On the DRAWING's clock and after the swings have been advanced above, so that a cue
+    // and the swing it belongs to are read at the same instant. Everything a blow does, it
+    // does in one frame: MU2 learned that the hard way when Struck, Hurt and Slain each
+    // showed their part the moment the realm called them, and a monster began falling four
+    // tenths of a second before the number that killed it appeared over the corpse.
+    showing_.advance(float(seconds), due_);
+    for (const Cue& cue : due_) {
+        const Drawn* swinger = drawnOf(cue.attacker);
+        // The gate. A cue belongs to one swing, and if the body has moved on -- a step
+        // cancels a swing here -- the cue drops itself. A dropped cue costs a splash and a
+        // number and never a fact: the damage was taken on the tick either way.
+        if (swinger == nullptr || swinger->swingToken != cue.token || swinger->swinging <= 0.0f) {
+            showing_.drop();
+            continue;
+        }
+        const sim::Body* target = realm_.find(cue.target);
+        if (target == nullptr || ground_ == nullptr) {
+            showing_.drop();
+            continue;
+        }
+        // The target where the SIM has it, not where the interpolation has it: this runs
+        // before follow() has placed anything this frame, and half a tile of smoothing is
+        // below the scatter the blood is thrown with anyway.
+        const float metresPerTile = ground_->metresPerTile();
+        const float x = (target->x + 0.5f) * metresPerTile;
+        const float z = -(target->y + 0.5f) * metresPerTile;
+        const float feet[3] = {x, ground_->heightAt(x, z), z};
+        // How tall the thing actually is, which is what every length in the blood is taken
+        // in units of. A figure with no body drawn falls back to a man's height rather than
+        // to zero, because zero would collapse the whole effect to a point.
+        const Drawn* hit = drawnOf(cue.target);
+        const FigureBody* look = hit ? hit->figure.body() : nullptr;
+        const float height = look ? look->height * look->scale : 1.2f;
+        showing_.land(cue, feet, height, swinger->yaw);
+    }
+    showing_.update(float(seconds));
 }
 
 void Play::follow(float seconds) {
@@ -433,11 +491,20 @@ void Play::follow(float seconds) {
         // quantises movement; a gait does not, and the animation follows the gait.
         one.clipRate = 1.0f;
         if (one.figure.clip() == look->walkClip) {
+            const float metresPerTile = ground_->metresPerTile();
+            const float gait = body->speed * metresPerTile / float(kTickSeconds);
+            // The clip's own planted foot decides, and the cook's whole-cycle travel is the
+            // fallback for a body that plants nothing measurable. The two disagree by 4% on
+            // MU's walk, and the stance is the one to believe: `travel` counts the swinging
+            // foot as well, which is in the air going the other way at twice the speed, and
+            // no eye has ever judged a walk by it. tools/stride.py has both numbers and the
+            // slide each leaves.
+            const float plant = look->plantSpeed * look->scale;
             const float travel = one.figure.travel();
             const float duration = one.figure.length();
-            if (travel > 0.001f && duration > 0.0f) {
-                const float metresPerTile = ground_->metresPerTile();
-                const float gait = body->speed * metresPerTile / float(kTickSeconds);
+            if (plant > 0.01f) {
+                one.clipRate = std::min(gait / plant, kFastestClip);
+            } else if (travel > 0.001f && duration > 0.0f) {
                 one.clipRate = std::min(gait * duration / travel, kFastestClip);
             }
         }

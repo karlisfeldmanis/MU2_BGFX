@@ -82,7 +82,11 @@ struct HeldItem {
 // made it, which is what the viewer's categories are cut along: a list of monsters is what
 // somebody browsing monsters asked for, and the fact that one of them borrows a character's
 // clips is a detail of that monster and not a reason to file it with the characters.
-enum class BodyKind { Character, Monster, Townsfolk };
+// Armour and Weapon are not the manifest's lists: they are bodies the WARDROBE makes, a suit
+// worn on the bare body of the class that may wear it and a weapon held by the class that may
+// hold it. A suit of armour has no other way to be looked at -- five pieces on a rig is what
+// it is, and a helmet lying on the grass is not it.
+enum class BodyKind { Character, Monster, Townsfolk, Armour, Weapon };
 
 // One breed or character: the parts, what is in its hands, its rig and its clips.
 struct FigureBody {
@@ -106,6 +110,18 @@ struct FigureBody {
     float scale = 1.0f;
     int idleClip = -1;
     int walkClip = -1;
+    // How fast the ground goes past a foot that is standing on it while the walk clip plays at
+    // its authored speed, in metres a second, at scale 1. It is what the walk should be paced
+    // by: play the clip at `gait / plantSpeed` and the planted foot is still.
+    //
+    // Measured at load from the clip itself (`measurePlant`) rather than taken from the cook's
+    // `travel`, and the difference is not academic. `travel` is the whole cycle's foot
+    // movement, which includes the swinging foot going the other way at twice the speed, and
+    // the swing is not the mirror of the stance: for MU's walk the two disagree by 4%, and the
+    // planted frames measurably slide less at the stance's own rate. See tools/stride.py.
+    // Zero for a body with nothing that plants -- a clip in the air, a rig with no foot -- and
+    // then the cook's travel decides, as it did before this existed.
+    float plantSpeed = 0.0f;
     bool female = false;
     // Which way this figure holds what is in its hands: "sword", "two_hand_sword", "spear",
     // "scythe", "bow", "crossbow", "wand", or empty for bare hands. Read from the weapon's
@@ -171,6 +187,13 @@ public:
     // is as good as a pointer to any other.
     const FigureBody* dress(const std::string& name, const std::string& base,
                             const std::string& weapon, const std::string& shield);
+
+    // The wardrobe: every suit of armour and every weapon index.json carries, worn and held
+    // rather than laid out. It is a SECOND manifest and a second directory on purpose --
+    // `tools/cook.py --only wardrobe` writes it and `--only all` does not -- because these
+    // are ninety item files the game never loads and the viewer shows one at a time. Called
+    // by the viewer only, and after open(), whose bare class bodies it dresses.
+    bool openWardrobe(const std::string& assetDir, content::Textures& textures);
 
     bool isOpen() const { return !bodies_.empty(); }
     const FigureBody* body(const std::string& name) const;

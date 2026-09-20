@@ -138,6 +138,31 @@ class Pose:
         return points
 
 
+def stance(track, cycle):
+    """(metres, seconds) of the phase a foot spends low and travelling backwards.
+
+    The stance is what the eye judges: the foot is on the ground and the world is supposed to
+    be passing it at exactly the speed the body moves. The swing -- the same foot in the air,
+    going the other way at twice the speed -- can be a little wrong without anybody seeing it.
+    So the honest rate is the one that makes THIS phase still, and it is not quite the one the
+    whole cycle's travel asks for.
+    """
+    keys = len(track) - 1
+    interval = cycle / keys
+    low = min(p[1] for p in track) + 0.05     # within 5 cm of the foot's lowest point
+    far = 0.0
+    took = 0.0
+    for i in range(keys):
+        a, b = track[i], track[i + 1]
+        if b[2] - a[2] >= 0.0:                # forward: that is the swing
+            continue
+        if a[1] > low or b[1] > low:          # in the air at either end
+            continue
+        far += a[2] - b[2]
+        took += interval
+    return far, took
+
+
 def slide(points, cycle, gait, rate, frames=2000, hz=180.0):
     """The weight-bearing foot's speed over the ground, sampled as the engine samples."""
     # Per KEY, off one of the tracks. `points` is keyed by bone, so its own length is the
@@ -220,6 +245,18 @@ def main():
     if not tracks:
         return 1
 
+    # What the clip's own stance says the rate should be, against what its whole-cycle travel
+    # says. The two disagree because the swing is not the mirror of the stance.
+    for bone, track in tracks.items():
+        far, took = stance(track, cycle)
+        if took > 0.0:
+            print(f"  {bone}: stance {far:.4f} m over {took:.4f} s = {far / took:.3f} m/s, "
+                  f"so rate {args.gait / (far / took):.3f} plants it")
+    travelled = sum(math.dist(t[i], t[i + 1]) for t in tracks.values()
+                    for i in range(len(t) - 1)) / len(tracks)
+    print(f"  the whole cycle's travel asks for rate "
+          f"{args.gait / (travelled / cycle):.3f}")
+
     smallest = min(min(math.dist(t[i], t[i + 1]) for i in range(len(t) - 1))
                    for t in tracks.values())
     if smallest > 0.05:
@@ -230,13 +267,18 @@ def main():
     print(f"  at {args.gait:.2f} m/s over the ground, the weight-bearing foot slides:")
     print("   rate   a cycle covers   mean    median   best tenth")
     best = None
-    for rate in (0.5, 0.6, 0.7, 0.8, 0.9, 0.961, 1.0, 1.1, 1.2, 1.4, 1.8, 2.4):
+    rates = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.961, 0.98, 1.0, 1.02, 1.05, 1.1, 1.2, 1.4]
+    for rate in rates:
         mean, median, tenth = slide(tracks, cycle, args.gait, rate)
         print(f"  {rate:5.3f}   {args.gait * cycle / rate:6.3f} m      "
               f"{mean:5.2f}   {median:5.2f}    {tenth:5.2f}")
-        if best is None or mean < best[1]:
-            best = (rate, mean)
-    print(f"  least slide at rate {best[0]:.3f}, leaving {best[1]:.2f} m/s")
+        if best is None or tenth < best[1]:
+            best = (rate, tenth)
+    # Ranked on the best tenth and not on the mean, because the mean is mostly the swinging
+    # foot -- which is in the air, is going the other way, and is nobody's idea of a slide.
+    # The tenth is the frames where a foot is genuinely bearing weight.
+    print(f"  the planted frames are stillest at rate {best[0]:.3f}, "
+          f"leaving {best[1]:.2f} m/s")
     return 0
 
 

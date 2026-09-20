@@ -11,6 +11,7 @@
 #include "core/files.h"
 #include "core/json.h"
 #include "core/log.h"
+#include "core/maths.h"  // measurePlant walks the rig itself
 
 namespace mu::game {
 namespace {
@@ -210,6 +211,132 @@ void Figures::bind(FigureBody& body) {
     }
 }
 
+// How fast the ground goes past a planted foot while a clip runs at its authored speed.
+//
+// Forward kinematics on the clip, once at load, for the one clip a body walks with. Per frame
+// every bone's place is worked out, and the SLOWEST of the bones that are near the ground in
+// that frame is taken: that is whatever is bearing weight, whether it is a man's boot, a Bull
+// Fighter's hoof or one of a spider's eight. The median of those over the cycle is the number,
+// because a couple of frames of a two-legged walk have both feet moving and no frame of it
+// should be allowed to decide the pace on its own.
+//
+// It is generic on purpose. A name list ("Bip01 L Foot") would answer for the player rig and
+// for nothing else in the game, and every monster would silently fall back to the cook's
+// travel -- which is the case this exists to improve on.
+float measurePlant(const FigureBody& body, int clip) {
+    if (!body.library || !body.skeletonMesh || clip < 0) return 0.0f;
+    const content::CookedClips& clips = body.library->clips;
+    if (size_t(clip) >= clips.clips.size()) return 0.0f;
+    const content::CookedClip& one = clips.clips[size_t(clip)];
+    if (one.frames < 2 || one.duration <= 0.0f || clips.bones == 0) return 0.0f;
+    const std::vector<content::Bone>& bones = body.skeletonMesh->bones();
+    if (bones.empty()) return 0.0f;
+
+    const size_t count = bones.size();
+    std::vector<float> world(count * 16);
+    // Every bone's place at every frame, kept, because deciding what is a foot needs the whole
+    // cycle: a bone is only a candidate if it MOVES. MU's rigs carry `Bip01 Footsteps`, a
+    // marker pinned to the ground that never goes anywhere, and it is lower than either boot
+    // in every frame of every clip -- so "the slowest thing near the ground" is that marker,
+    // every time, and the answer is a confident zero. That is what the first version of this
+    // measured on all twenty bodies.
+    std::vector<float> track(size_t(one.frames) * count * 3);
+    // Near the ground means within a tenth of the figure's height of the lowest thing in that
+    // frame -- a fraction of the body rather than a fixed distance, so it means the same for a
+    // Dark Knight and for a spider a fifth his size.
+    // Near the ground means within a thirtieth of the figure's height of the lowest MOVING
+    // thing in that frame -- a fraction of the body rather than a fixed distance, so it means
+    // the same for a Dark Knight and for a spider a fifth his size. Tight on purpose: at a
+    // tenth of his height, a knight's band is 17 cm and swallows the push-off, where the heel
+    // is already rising and moving half again as fast as the foot ever does flat. That
+    // answered 2.62 m/s against a stance of 2.51, which is a walk played 4% slow.
+    const float nearGround = std::max(0.01f, body.height / 30.0f);
+    const float step = one.duration / float(one.frames - 1);
+
+    for (uint32_t frame = 0; frame < one.frames; ++frame) {
+        const float* row = &clips.rows[(size_t(one.firstRow) + size_t(frame) * clips.bones) * 7];
+        float* place = &track[size_t(frame) * count * 3];
+        for (size_t i = 0; i < count; ++i) {
+            float local[16];
+            const int32_t from = i < body.clipBoneOf.size() ? body.clipBoneOf[i] : -1;
+            if (from < 0) {
+                static constexpr float kRest[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+                static constexpr float kHere[3] = {0.0f, 0.0f, 0.0f};
+                core::composeMatrix(kRest, kHere, local);
+            } else {
+                const float* q = row + size_t(from) * 7;
+                core::composeMatrix(q, q + 4, local);
+            }
+            const int32_t parent = bones[i].parent;
+            if (parent < 0) {
+                std::memcpy(&world[i * 16], local, sizeof(local));
+            } else {
+                core::mulMatrix(local, &world[size_t(parent) * 16], &world[i * 16]);
+            }
+            place[i * 3 + 0] = world[i * 16 + 12];
+            place[i * 3 + 1] = world[i * 16 + 13];
+            place[i * 3 + 2] = world[i * 16 + 14];
+        }
+    }
+
+    // Which bones are worth asking. A foot swings: over the cycle it covers ground and comes
+    // back. A marker does not move at all, and a hip moves a little; both would answer this
+    // question with a number smaller than any real foot's and win it. So a candidate has to
+    // travel at least a third of the furthest-travelling bone in the clip.
+    std::vector<float> ranged(count, 0.0f);
+    float furthest = 0.0f;
+    for (size_t i = 0; i < count; ++i) {
+        float far = 0.0f;
+        for (uint32_t frame = 1; frame < one.frames; ++frame) {
+            const float* a = &track[(size_t(frame - 1) * count + i) * 3];
+            const float* b = &track[(size_t(frame) * count + i) * 3];
+            far += std::sqrt((b[0] - a[0]) * (b[0] - a[0]) + (b[2] - a[2]) * (b[2] - a[2]));
+        }
+        ranged[i] = far;
+        furthest = std::max(furthest, far);
+    }
+    if (furthest <= 1e-4f) return 0.0f;  // nothing in this clip goes anywhere
+    const float enough = furthest / 3.0f;
+
+    // The stance, and only the stance: the intervals in which a candidate is BOTH near the
+    // ground and travelling backwards, which is a foot with weight on it and the world going
+    // past. Summed as one distance over one time rather than averaged per frame, because the
+    // frames are not equal -- a walk spends more of itself on one foot than in the swap.
+    //
+    // Everything else in the cycle is deliberately excluded and each exclusion earns its
+    // place: the swinging foot goes forward at twice the speed, the wrap interval MU closes
+    // its clips with moves nothing at all, and a frame of double support has two feet sharing
+    // the load. An earlier version took the median of the slowest bone per frame and let all
+    // three in; on MU's walk it answered 2.04 m/s where the stance is 2.51, which is a walk
+    // played 23% too fast and feet that skate forwards instead of back.
+    float far = 0.0f;
+    float took = 0.0f;
+    for (uint32_t frame = 1; frame < one.frames; ++frame) {
+        const float* was = &track[size_t(frame - 1) * count * 3];
+        const float* now = &track[size_t(frame) * count * 3];
+        float lowest = 1e30f;
+        for (size_t i = 0; i < count; ++i) {
+            if (ranged[i] < enough) continue;
+            lowest = std::min(lowest, std::min(now[i * 3 + 1], was[i * 3 + 1]));
+        }
+        if (lowest > 1e29f) continue;
+        for (size_t i = 0; i < count; ++i) {
+            if (ranged[i] < enough) continue;
+            if (now[i * 3 + 1] > lowest + nearGround) continue;
+            if (was[i * 3 + 1] > lowest + nearGround) continue;
+            // A model looks down +z (docs/conventions.md), so ground passing a planted foot
+            // carries it in -z. A foot going the other way is in the air, whatever its height.
+            const float dz = now[i * 3 + 2] - was[i * 3 + 2];
+            if (dz >= 0.0f) continue;
+            const float dx = now[i * 3 + 0] - was[i * 3 + 0];
+            far += std::sqrt(dx * dx + dz * dz);
+            took += step;
+        }
+    }
+    if (took <= 0.0f) return 0.0f;
+    return far / took;
+}
+
 void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     // The stances are a table, and one row asks who is standing in it: empty hands are (1, 15)
     // for a man and (2, 16) for a woman, and every armed row is shared.
@@ -242,6 +369,8 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.walkClip = body.library->find(walk);
     if (body.idleClip < 0) body.idleClip = body.library->find(0);
     if (body.idleSafeClip < 0) body.idleSafeClip = body.idleClip;
+    // And how fast the earth has to pass under that walk for its feet to hold still.
+    body.plantSpeed = measurePlant(body, body.walkClip);
 }
 
 const FigureBody* Figures::dress(const std::string& name, const std::string& base,
@@ -260,12 +389,11 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
     made->parts = wearing->parts;
     made->library = wearing->library;
 
-    // The right hand first, because the weapon in it decides the stance the whole body stands
-    // and walks in -- and an empty right hand is the fist, which is a stance like any other.
+    // The weapon first, because it decides the stance the whole body stands and walks in --
+    // and an empty weapon hand is the fist, which is a stance like any other.
     for (int hand = 0; hand < 2; ++hand) {
         const bool right = hand == 0;
         const std::string& wanted = right ? weapon : shield;
-        const char* grip = right ? kRightGrip : kLeftGrip;
         if (wanted.empty()) continue;
         const content::Mesh* found = mesh(wanted);
         if (!found) {
@@ -277,12 +405,25 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
         }
         HeldItem item;
         item.mesh = found;
-        item.boneName = grip;
         auto row = items_.find(found->name());
         if (row != items_.end()) {
             item.kind = row->second.kind;
             item.stance = row->second.stance;
         }
+        // **A bow is a LEFT-hand item and a crossbow a right-hand one**, and which hand a
+        // weapon goes in is the weapon's business rather than the slot's. MU says it twice:
+        // `GetEquipedBowType` reads a bow out of `Weapon[1]` and a crossbow out of
+        // `Weapon[0]` (MuMain, CharacterManager.cpp), and MU2's own `Crowd.Dress` sends a
+        // missile row that is a bow to `LeftHandBone` and everything else to the right.
+        //
+        // This put every bow in the fist of the right hand, held out level across the body
+        // like a tray, while the left hand drew its empty bowstring beside it -- and the
+        // stance was correct throughout, which is what made it look like the stance's fault.
+        const bool bow = item.stance == "bow";
+        item.boneName = bow ? kLeftGrip : (right ? kRightGrip : kLeftGrip);
+        // The WEAPON decides the stance wherever it is gripped: a bow in the left hand still
+        // stands its owner in PLAYER_STOP_BOW. A shield decides nothing, which is why this
+        // asks the weapon slot rather than the hand.
         if (right) made->stance = item.stance;
         made->held.push_back(item);
     }
@@ -296,6 +437,138 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
     FigureBody* kept = made.get();
     bodies_[name] = std::move(made);
     return kept;
+}
+
+namespace {
+
+// Which bare body wears a thing, out of the classes its index.json row lists. A suit or a
+// weapon that names several takes the knight, who is the one every list that has him has;
+// a bow lists the elf alone and gets her, and a staff the wizard.
+//
+// This is a VIEWER's choice and not a rule of the game: what a Dark Knight may pick up is
+// sprint 7's requirement check, and this only decides who is standing there holding it.
+const char* wearerFor(const core::Json& classes) {
+    bool knight = false, elf = false, wizard = false;
+    for (const core::Json& one : classes.items) {
+        const std::string name = one.stringOr("");
+        knight = knight || name == "knight";
+        elf = elf || name == "elf";
+        wizard = wizard || name == "wizard";
+    }
+    if (knight) return "DarkKnightBare";
+    if (elf) return "FairyElf";
+    if (wizard) return "DarkWizardBare";
+    return "DarkKnightBare";
+}
+
+// The five pieces of a suit, in the order index.json lists a body's parts. A suit that is
+// missing one keeps the bare body's own, which is what MU draws: a character in a helm and
+// nothing else is a bare man in a helm, not a floating helm.
+constexpr const char* kPieces[] = {"Helm", "Armor", "Pant", "Glove", "Boot"};
+
+}  // namespace
+
+bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textures) {
+    const int64_t started = bx::getHPCounter();
+    const std::string path = core::join(assetDir, "cooked/wardrobe/wardrobe.json");
+    core::Json manifest = core::parseJsonFile(path);
+    if (manifest.isNull()) {
+        core::logf("no wardrobe at %s -- the viewer's armour and weapon tabs will be empty. "
+                   "tools/cook.py --only wardrobe writes it, and --only all deliberately "
+                   "does not", path.c_str());
+        return false;
+    }
+
+    // --- the meshes, into the same store the figures use ------------------------------
+    // The same store on purpose: `dress` builds a body out of `mesh(name)`, so a weapon
+    // cooked here has to be findable by the same call that finds a guard's berdysh.
+    size_t added = 0, failed = 0;
+    for (const auto& [name, entry] : manifest["meshes"].members) {
+        if (meshIndex_.count(name)) continue;   // the figures already reach a few of these
+        std::vector<uint8_t> bytes = core::readFile(core::join(assetDir, entry["mesh"].string));
+        content::CookedMesh cooked;
+        std::string error;
+        if (bytes.empty() || !content::parseCookedMesh(bytes, cooked, error)) {
+            core::logError("%s: %s", entry["mesh"].string.c_str(),
+                           bytes.empty() ? "is not there" : error.c_str());
+            ++failed;
+            continue;
+        }
+        auto made = std::make_unique<content::Mesh>();
+        if (!made->buildFromCooked(cooked, name, assetDir, textures)) {
+            ++failed;
+            continue;
+        }
+        // Armour is worn on the player rig and animates out of the library the figures cook
+        // already wrote. A weapon with a rig of its own carries no clip here and draws at
+        // its bind layout, which is the pose MU pins one at.
+        if (made->isSkinned() && made->bones().size() > 16) clipOf_[name] = "player";
+        meshIndex_[name] = meshes_.size();
+        meshes_.push_back(std::move(made));
+        ++added;
+    }
+
+    // --- the suits, each on the bare body of a class that may wear it ------------------
+    size_t suits = 0;
+    for (const core::Json& entry : manifest["sets"].items) {
+        const std::string suffix = entry["name"].string;
+        const FigureBody* bare = body(wearerFor(entry["classes"]));
+        if (!bare) continue;
+        auto made = std::make_unique<FigureBody>();
+        made->name = "Set" + suffix;
+        made->label = entry["label"].stringOr(suffix.c_str());
+        made->kind = BodyKind::Armour;
+        made->female = bare->female;
+        made->scale = bare->scale;
+        made->library = bare->library;
+        made->parts = bare->parts;
+        // Each cooked piece replaces the bare part whose name starts with the same word, so
+        // the pieces stay in the rig's own order however the manifest lists them.
+        size_t worn = 0;
+        for (const core::Json& part : entry["parts"].items) {
+            const content::Mesh* found = mesh(part.string);
+            if (!found) continue;
+            for (size_t i = 0; i < made->parts.size() && i < 5; ++i) {
+                const std::string piece = kPieces[i];
+                if (part.string.compare(0, piece.size(), piece) != 0) continue;
+                made->parts[i] = found;
+                ++worn;
+                break;
+            }
+        }
+        if (worn == 0) continue;
+        bind(*made);
+        posture(*made, "");
+        ++suits;
+        bodies_[made->name] = std::move(made);
+    }
+
+    // --- the arms, held by a class that may hold them ---------------------------------
+    size_t arms = 0;
+    for (const core::Json& entry : manifest["arms"].items) {
+        const std::string name = entry["name"].string;
+        if (!mesh(name)) continue;
+        // What it is and how it is slung, as the figures' own items table carries it: the
+        // stance is what decides the idle the body stands in, and a crossbow that arrives
+        // here without one is a crossbow hanging off a fist. See posture().
+        items_[name] = ItemRow{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
+        const bool shield = entry["kind"].stringOr("") == "shield";
+        const FigureBody* dressed =
+            dress("Arm" + name, wearerFor(entry["classes"]), shield ? "" : name,
+                  shield ? name : "");
+        if (!dressed) continue;
+        // `dress` copies the base's kind and label, which is right for a hero and wrong for
+        // a rack: this body IS the weapon, as far as the viewer is concerned.
+        FigureBody* kept = bodies_[dressed->name].get();
+        kept->kind = BodyKind::Weapon;
+        kept->label = entry["label"].stringOr(name.c_str());
+        ++arms;
+    }
+
+    const double seconds = double(bx::getHPCounter() - started) / double(bx::getHPFrequency());
+    core::logf("wardrobe: %zu meshes added (%zu failed), %zu suits worn, %zu arms held, "
+               "%.2f s", added, failed, suits, arms, seconds);
+    return failed == 0;
 }
 
 bool Figures::open(const std::string& assetDir, const std::string& world,
@@ -405,8 +678,10 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
             }
             HeldItem item;
             item.mesh = found;
-            item.boneName = grip;
             describe(item);
+            // A bow goes in the LEFT hand whichever slot index.json names it in -- MU reads
+            // one out of `Weapon[1]` and a crossbow out of `Weapon[0]` -- as in `dress`.
+            item.boneName = item.stance == "bow" ? kLeftGrip : grip;
             made->held.push_back(item);
         }
         bind(*made);
@@ -457,6 +732,10 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
             // A monster never puts its weapon away: MU's safe-zone rule is the player's, and
             // nothing hostile stands in one.
             made->idleSafeClip = made->idleClip;
+            // Its own walk, measured the same way a man's is -- whatever it plants. A breed
+            // that plants nothing measurably (a thing that hovers, a clip with no contact)
+            // comes back zero and is paced by the cook's travel instead.
+            made->plantSpeed = measurePlant(*made, made->walkClip);
         }
         bodies_[made->name] = std::move(made);
     }
@@ -515,9 +794,16 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     // clips never arrived stands in bind pose, animates nothing, and sends the first hour
     // of the hunt into the skinning.
     for (const auto& [name, one] : bodies_) {
-        core::logf("  %s: %zu parts, %zu held, %zu bones, %zu clips", name.c_str(),
+        // The plant is on this line because it is the number a walk is paced by, and a breed
+        // that measured zero walks at its clip's authored speed and will slide: said here
+        // rather than discovered by watching it.
+        char plant[64] = " walks by its clip's travel";
+        if (one->plantSpeed > 0.01f) {
+            std::snprintf(plant, sizeof(plant), " plants at %.2f m/s", one->plantSpeed);
+        }
+        core::logf("  %s: %zu parts, %zu held, %zu bones, %zu clips,%s", name.c_str(),
                    one->parts.size(), one->held.size(), one->boneCount(),
-                   one->library ? one->library->clips.clips.size() : 0);
+                   one->library ? one->library->clips.clips.size() : 0, plant);
     }
     return failed == 0;
 }
