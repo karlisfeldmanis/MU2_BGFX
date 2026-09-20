@@ -57,7 +57,9 @@ told here.
   our yaw and its x a real pitch on a third of the town.
 - **223 of 224 materials are `doubleSided`**, so two-sided is the rule here and not the
   exception. **39 are `MASK`** (cutout: every `Grass`, seven `Tree`, the signs, the straw)
-  and **11 are `BLEND`** — fire, candle, curtain, the lit window panes of `House01`.
+  and **11 are `BLEND`** — fire, candle, curtain, the lit window panes of `House01`. (QA
+  counted 41 `MASK`; re-counted over the 105 models the town actually places, it is 39, with
+  11 `BLEND` and 173 opaque to 223 materials. The 39 stands.)
 - **The textures are embedded and they are the load time.** 587 images inside 97.6 MB of glb,
   **74.2 Mpx** in total: 275 at 384², 100 at 96², 36 at 768². Uncompressed that is ~297 MB of
   VRAM; BC7 with a full chain is ~99 MB. Decoding 587 PNGs and building their mips at load is
@@ -104,8 +106,17 @@ told here.
 ## What is deliberately deferred
 
 - **The 11 `BLEND` materials.** There is no sorted transparent pass in this frame and one is
-  not worth building for eleven materials. They draw as cutout this sprint and are listed as
-  owing; they belong with the lamps and the fires in sprint 8.
+  not worth building for eleven materials. They belong with the lamps and the fires in
+  sprint 8.
+
+  **This line said they drew as cutout, and for most of the sprint they did not** — QA read
+  the cook and found `alphaMode == "BLEND"` falling through to no cutout at all, so the
+  flame, the candles, the street light's glow and the lit window panes drew as opaque cards:
+  a hard quad edge around every fire, and `Waterspout01`'s fall as solid silver ribbons. The
+  cook now gives them a cutout of 0.5, which is **`invention`** — MU blends them and we do
+  not, and the threshold is ours. What is still owed with them: they go on writing into the
+  shadow map, so a glow still casts, which is this sprint's own plan item 6 and needs a flag
+  a material does not yet carry.
 - **Sway** (20 models, 331 placements) — bind pose here, the bone texture in sprint 4.
 - **Water, the NPCs, the fires and the lamps' light.** Named above; each has its own sprint.
 - **Occlusion culling**, as `PLAN.md` says: considered only if this sprint's measurement says
@@ -229,6 +240,14 @@ MSAA, machine quiet (load average about 4). Six segments a run, mean of means, w
 | the land alone | **2.201 ms** | 0.144 | 136 |
 | the land and the whole town, chunk-culled | **2.382 ms** | 0.350 | 692 |
 | the land and the whole town, every placement | **2.458 ms** | 0.276 | 808 |
+
+**The magnitudes in that table are not supportable and are withdrawn; the conclusions are
+not.** QA re-measured the same three runs and got 2.018, 2.122 and 2.176 — the same order,
+the same draw counts exactly, and a town costing 0.104 ms where this table says 0.181. Both
+differences sit under the 0.1 ms that `docs/budget.md` says six segments can resolve, so
+neither figure is a measurement of anything. What survives is what was inside the resolution
+to say: **the land is a little over 2 ms, the town is too cheap to measure, and the culling
+is too cheap to measure.**
 
 Lorencia stands: **2753 placements of 105 models, 432 248 triangles if all of it is drawn**,
 read from cooked files in **0.11 s** — against the five seconds the sprint was allowed.
