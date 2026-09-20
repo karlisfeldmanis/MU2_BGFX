@@ -1,0 +1,5 @@
+assets/
+extern/
+build/
+shots/
+*.log
