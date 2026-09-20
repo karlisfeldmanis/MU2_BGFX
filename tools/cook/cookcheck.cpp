@@ -138,6 +138,27 @@ Drift coverageDrift(const bimg::ImageContainer& image, float threshold) {
     return drift;
 }
 
+// The mean colour of a decoded level, which is the cheapest thing that notices an encoder
+// writing something entirely unlike its input. Structure checks pass happily on a file full
+// of black.
+void meanColour(const bimg::ImageContainer& image, uint8_t level, double* out) {
+    bimg::ImageMip mip;
+    out[0] = out[1] = out[2] = 0.0;
+    if (!bimg::imageGetRawData(image, 0, level, image.m_data, image.m_size, mip)) return;
+    std::vector<uint8_t> rgba(size_t(mip.m_width) * mip.m_height * 4, 0);
+    if (mip.m_format == bimg::TextureFormat::RGBA8) {
+        std::memcpy(rgba.data(), mip.m_data, rgba.size());
+    } else {
+        bimg::imageDecodeToRgba8(&g_allocator, rgba.data(), mip.m_data, mip.m_width,
+                                 mip.m_height, mip.m_width * 4, mip.m_format);
+    }
+    const size_t texels = size_t(mip.m_width) * mip.m_height;
+    for (size_t i = 0; i < texels; ++i) {
+        for (int c = 0; c < 3; ++c) out[c] += rgba[i * 4 + c];
+    }
+    for (int c = 0; c < 3; ++c) out[c] /= double(texels ? texels : 1);
+}
+
 struct Job {
     std::string role;
     float cutout = -1.0f;
@@ -232,6 +253,39 @@ int main(int argc, char** argv) {
         if (image->m_numMips != expected) {
             fail(name, std::to_string(image->m_numMips) + " levels, a full chain is " +
                            std::to_string(expected));
+        }
+
+        // The colour itself, against the source. A block encoder that writes black, or
+        // writes the wrong channels, passes every structural check ever written.
+        {
+            std::vector<uint8_t> sourceBytes = readFile(job.source);
+            bx::Error sourceError;
+            bimg::ImageContainer* source =
+                sourceBytes.empty()
+                    ? nullptr
+                    : bimg::imageParse(&g_allocator, sourceBytes.data(),
+                                       uint32_t(sourceBytes.size()), bimg::TextureFormat::RGBA8,
+                                       &sourceError);
+            if (source != nullptr) {
+                double was[3], now[3];
+                meanColour(*source, 0, was);
+                meanColour(*image, 0, now);
+                bimg::imageFree(source);
+                // Two channels for a normal map: BC5 keeps x and y and the shader rebuilds
+                // z, so blue is expected to differ and is not compared.
+                const int channels = job.role == "normal" ? 2 : 3;
+                for (int c = 0; c < channels; ++c) {
+                    if (std::fabs(was[c] - now[c]) > 12.0) {
+                        char note[256];
+                        std::snprintf(note, sizeof(note),
+                                      "channel %d averages %.1f cooked against %.1f in its "
+                                      "source",
+                                      c, now[c], was[c]);
+                        fail(name, note);
+                        break;
+                    }
+                }
+            }
         }
 
         if (job.cutout >= 0.0f && job.role == "albedo") {

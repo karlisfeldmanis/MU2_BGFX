@@ -1,12 +1,14 @@
 // MU2 on bgfx. Sprint 1: the whole six-view frame, with the model bench in front of it.
 // See PLAN.md and docs/sprints/.
 #include <bgfx/bgfx.h>
+#include <bx/math.h>
 #include <bx/timer.h>
 
 #include <sys/stat.h>
 
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include "content/texture.h"
 #include "core/args.h"
@@ -135,6 +137,8 @@ int main(int argc, char** argv) {
     double elapsed = 0.0;
     double sinceLine = 0.0;
     double sinceSheetCheck = 0.0;
+    std::vector<gfx::Drawable> townDrawables;
+    std::vector<gfx::Drawable> townCasters;
 
     while (window.pump() && !window.escapePressed()) {
         renderer.resize(window.width(), window.height());
@@ -149,7 +153,33 @@ int main(int argc, char** argv) {
 
         if (inWorld) {
             world.update(elapsed, args.still);
-            renderer.draw(world.camera(), lighting, {}, &world.ground());
+            // The town's drawables are gathered fresh each frame into one vector that keeps
+            // its capacity: a frame appends to a flat array, as foundation 7 says, and
+            // allocates nothing after the first.
+            townDrawables.clear();
+            townCasters.clear();
+            const std::vector<gfx::Drawable>* casters = nullptr;
+            if (world.town().isOpen()) {
+                if (args.cullChunks) {
+                    float view[16];
+                    float proj[16];
+                    renderer.cameraMatrices(world.camera(), view, proj);
+                    float viewProj[16];
+                    bx::mtxMul(viewProj, view, proj);
+                    world.town().gatherVisible(viewProj, townDrawables);
+                    // The sun gets its own list, and for now it is all of them. A chunk
+                    // behind the camera still casts into the frame, so the camera's frustum
+                    // is the wrong test for the split -- foundation 7's named bug. Culling
+                    // the split against its own box is the next step and it is measured
+                    // separately; drawing every caster is the honest baseline to measure it
+                    // against.
+                    world.town().gatherAll(townCasters, true);
+                    casters = &townCasters;
+                } else {
+                    world.town().gatherAll(townDrawables);
+                }
+            }
+            renderer.draw(world.camera(), lighting, townDrawables, &world.ground(), casters);
         } else {
             bench.update(elapsed, !args.still);
             renderer.draw(bench.camera(), lighting, bench.drawables(), nullptr);
@@ -188,6 +218,19 @@ int main(int argc, char** argv) {
                        1000.0 / cpuMs, cpuMs,
                        double(s->gpuTimeEnd - s->gpuTimeBegin) * 1000.0 / double(s->gpuTimerFreq),
                        s->numDraw);
+            // Foundation 7: the drawn and the culled go in the log, for the camera and for
+            // the sun separately, or a culling change cannot be seen to have happened. The
+            // sun's line says "all" while its casters are not culled at all, which is the
+            // honest way to say that half of this is not built yet.
+            if (inWorld && world.town().isOpen()) {
+                const game::TownCounts& counts = world.town().counts();
+                const game::TownCounts& sun = world.town().casterCounts();
+                core::logf("  town: camera %u of %u chunks and %u of %zu placements; "
+                           "sun %u chunks and %u placements, unculled",
+                           counts.chunksDrawn, counts.chunksDrawn + counts.chunksCulled,
+                           counts.instancesDrawn, world.town().instanceCount(),
+                           sun.chunksDrawn, sun.instancesDrawn);
+            }
             sinceLine = 0.0;
         }
 

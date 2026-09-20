@@ -24,23 +24,18 @@ camera sees about a fiftieth of the map. Still due: 2753 placements here, a play
 **290 monsters** in sprint 4 (not the 30 the sprint table says — `04-figures.census.md`
 counted the spawn rows), effects, and the HUD.
 
-**So the order is decided by a measurement this sprint takes first, and not by the argument
-that was withdrawn.** Three runs, before either chunking or placements are built:
+**So the order was to be decided by a measurement rather than by the argument that was
+withdrawn** — and it was, though not by the three runs planned here. The town turned out to
+be cheap enough to place first and measure afterwards: see **Measured, with the town
+standing** below, where the land is 2.201 ms, the whole town adds 0.181, and the chunk
+culling that this section demanded come first cannot be measured at all. The plan's own
+question is answered in the answer's favour and against the order it proposed.
 
-1. the six views with **the ground not submitted at all** — what the frame costs empty;
-2. the ground as it is now — the difference is what the land actually costs;
-3. the ground with only the handful of surfaces the play camera can see, culled by hand —
-   an upper bound on everything chunking could ever buy.
-
-If (3) is close to (2), chunking the ground buys nothing and the town goes in first with the
-culling deferred to where the placements make it pay. If (3) is far below (2), chunking
-comes first. Either way the sprint has evidence rather than a conviction, which is what the
-review took away and what it is owed.
-
-**The budget this sprint is judged against**, stated now so it cannot be negotiated
-afterwards: land **1.5 ms**, town **1.5 ms**, figures **1.5 ms**, HUD and effects and
-present **1.0 ms**. The land is at 2.39 and so is already 0.9 ms over its share; that is the
-debt this sprint either pays or writes down explicitly.
+**The budget this sprint is judged against**, stated before the work: land **1.5 ms**, town
+**1.5 ms**, figures **1.5 ms**, HUD and effects and present **1.0 ms**. The land is at 2.2
+and so is 0.7 ms over its share; the town came in at 0.18 against 1.5. The land's overdraft
+is real, it is not triangles, and it is sprint 4's first measurement rather than a story
+told here.
 
 ## What the data turned out to be
 
@@ -223,8 +218,75 @@ through it; `04-figures.census.md` also records that `JOINTS_0` is `UNSIGNED_SHO
 figure, which bgfx has no attribute type for, so that conversion belongs here in the cook
 rather than in the loader.
 
-## Measured
+## Measured, with the town standing
 
-Filled in when the sprint lands: chunk size chosen and why, draws and culled for both passes,
-load time from cooked files, the frame still and moving, and what the town cost over the bare
-land.
+`./run.sh --frames 600 --repeat 6 --world lorencia --still`, Release, vsync off, 1080p, 4x
+MSAA, machine quiet (load average about 4). Six segments a run, mean of means, which
+`docs/budget.md` puts at about 0.1 ms of resolution.
+
+| | frame (mean of means) | spread | draws |
+|---|---|---|---|
+| the land alone | **2.201 ms** | 0.144 | 136 |
+| the land and the whole town, chunk-culled | **2.382 ms** | 0.350 | 692 |
+| the land and the whole town, every placement | **2.458 ms** | 0.276 | 808 |
+
+Lorencia stands: **2753 placements of 105 models, 432 248 triangles if all of it is drawn**,
+read from cooked files in **0.11 s** — against the five seconds the sprint was allowed.
+
+**The town costs 0.18 ms.** That is the finding, and it is not the one this sprint was
+planned around. The frame was expected to be geometry-bound and it is not: 432 000 triangles
+and 2753 placements cost less than a tenth of the land they stand on.
+
+**And chunk culling cannot be measured, even though it works.** The camera keeps **7 of 64
+chunks and 497 of 2753 placements** — 82% of the town is left out of the camera passes — and
+the frame moves by **0.076 ms**, which is below the resolution of the measurement. So:
+
+- The chunking is **kept**, because it is built, correct and costs nothing, and because
+  sprint 4's 290 monsters and their bone palettes will be read out of the same flat arrays.
+- The argument that it had to come *first* is **withdrawn**. It was written when the land
+  looked like 4.085 ms and geometry looked like the enemy. The land is 2.2 ms, the town is
+  free, and whatever the remaining 2.2 ms is, it is not triangles. Finding out what it is
+  belongs to sprint 4's measurement, not to another culling story.
+- **Ranges per kind are not built** and, on this evidence, are not urgent.
+
+## What went wrong on the way, because none of it was the thing suspected
+
+The town drew black on the first run and took four wrong diagnoses to find: the BC5 normals
+(fixed, and right, but not the cause), the depth test, the ORM, and the shadow split. Each
+was eliminated by a measurement rather than by argument — the albedo drawn alone, the ORM
+drawn alone, the shadow term drawn alone, the casters removed one list at a time.
+
+**The cause was that `bgfx::submit` discards its bindings.** The shadow map and the AO were
+bound once per view, before the view's draws, which reaches the first draw and no other. So
+the land's first surface had a shadow map and an AO and its other forty-three had neither,
+and every placement in the town sampled unbound stages — which read as shadow 0 and AO 0,
+and shade black whatever the albedo, the normals or the ORM say. **This was live in the
+ground since sprint 2 and invisible**, because an unbound compare sampler reads as lit. Every
+draw that shades now binds them itself.
+
+Two smaller ones worth the same honesty:
+
+- **Every placement's rotation was inverted**, found by the user looking at the fountain
+  rather than by any test here: `bx::mtxSRT`'s Euler angles turn the opposite way from a
+  right-handed frame, so MU's angles are passed negated. `docs/conventions.md` now says so
+  beside the identical trap it already recorded for `bx::mtxFromQuaternion`. It is invisible
+  on fences, grass and square planters, which is most of the town.
+- **The culling counts in the log were wrong** while the culling was right: gathering the
+  sun's casters after the camera's list overwrote the camera's tally, so the log said
+  "64 of 64 chunks" — nothing culled — while 82% of the town was in fact being left out. The
+  two tallies are separate now. A counter that reports the wrong thing is worse than none,
+  because foundation 7 says a culling change that is not visible in those numbers did not
+  happen.
+
+## Still owing at the end of sprint 3
+
+- **The sun's split is not culled at all.** Every one of the 2753 placements is submitted to
+  the shadow pass every frame, on purpose: a chunk behind the camera still casts into the
+  frame, and the camera's frustum is the wrong test for it. The right test is the split's own
+  box extruded along the sun, and it is not built. The log says `sun 64 chunks, unculled` so
+  that this cannot be forgotten.
+- **Alpha to coverage on the cutouts**, which `submitBatches` describes and does not do: the
+  prepass and the shade pass must compute the same mask or every leaf grows a black fringe.
+  The grass is here now to test it with.
+- **Water, the 11 blend materials, the ground's 1536² sheets**, all as listed above.
+

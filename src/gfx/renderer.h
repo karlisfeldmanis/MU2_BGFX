@@ -36,10 +36,23 @@ public:
     void resize(int width, int height);
 
     // The whole frame. `drawables` may hold the same mesh many times; `ground` may be null.
+    //
+    // `casters` is what the sun's split draws, and it is a SEPARATE list on purpose. A
+    // chunk behind the camera still casts into the frame, so culling the shadow pass with
+    // the camera's frustum removes the shadow of whatever is just off screen -- the bug
+    // foundation 7 of PLAN.md names. Null means the camera's own list casts, which is right
+    // only when nothing was culled out of it.
     void draw(const Camera& camera, const Lighting& lighting,
-              const std::vector<Drawable>& drawables, const content::Ground* ground);
+              const std::vector<Drawable>& drawables, const content::Ground* ground,
+              const std::vector<Drawable>* casters = nullptr);
 
     uint32_t lastDrawCount() const { return drawCount_; }
+
+    // The view and projection this renderer will use for that camera, so that whoever culls
+    // against the frustum culls against the SAME frustum that is drawn. Handedness and the
+    // depth range are decided in one place only; a second copy of these two calls elsewhere
+    // is how a cull starts disagreeing with the picture.
+    void cameraMatrices(const Camera& camera, float* view, float* proj) const;
 
 private:
     struct Batch {
@@ -54,6 +67,17 @@ private:
     void submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                        const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb,
                        uint64_t state, bool bindMaterial);
+    // The shadow map and the AO, bound for ONE draw.
+    //
+    // bgfx::submit discards its bindings by default, so a texture bound once before a view's
+    // draws reaches the first of them and no other. Set at the view level, as they were,
+    // stages 4, 5 and 7 survived exactly one submit: the land's first surface had a shadow
+    // and an AO, its other forty-three had neither, and every placement in the town sampled
+    // an unbound stage -- which reads as shadow 0 and AO 0, so the whole town shaded black
+    // whatever its albedo, its normals or its ORM said. Every draw that shades binds them
+    // itself.
+    void bindShadeInputs();
+
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets
     // by a per-vertex weight and carries MU's baked light, which the closed material model
@@ -127,6 +151,7 @@ private:
     bgfx::VertexLayout screenLayout_;
 
     std::vector<Batch> batches_;
+    std::vector<Batch> casterBatches_;
 };
 
 }  // namespace mu::gfx

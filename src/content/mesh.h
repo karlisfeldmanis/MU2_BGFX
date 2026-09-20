@@ -7,6 +7,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include "content/cooked.h"
 #include "content/texture.h"
 
 namespace mu::content {
@@ -49,6 +50,11 @@ struct Bounds {
 class Mesh {
 public:
     bool load(const std::string& path, Textures& textures);
+
+    // A mesh the cook already flattened: no glTF parser, no buffer walk, and the textures
+    // named by path rather than embedded. `assetDir` is what those paths are relative to.
+    bool buildFromCooked(const CookedMesh& cooked, const std::string& name,
+                         const std::string& assetDir, Textures& textures);
 
     // A mesh made rather than read: the bench's ground, and later the terrain's chunks.
     // Takes the vectors, works out the bounds, and makes the buffers.

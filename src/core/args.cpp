@@ -36,6 +36,7 @@ void printUsage() {
         "  --sheet PATH              the lighting sheet (default sheets/lighting.json)\n"
         "  --dist N                  camera distance in world units\n"
         "  --still                   hold the camera instead of turning it\n"
+        "  --no-cull                 submit every placement, not only the visible chunks\n"
         "  --msaa N                  1, 2, 4 or 8 samples (default 4)\n"
         "  --world NAME              raise a world instead of the model bench\n"
         "  --at COLUMN,ROW           which tile the world camera looks at; on the map or the "
@@ -161,6 +162,8 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--still")) {
             a.still = true;
+        } else if (!std::strcmp(s, "--no-cull")) {
+            a.cullChunks = false;
         } else if (!std::strcmp(s, "--help") || !std::strcmp(s, "-h")) {
             printUsage();
             a.valid = false;

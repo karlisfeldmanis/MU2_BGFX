@@ -95,8 +95,16 @@ void main()
 	// Tangent frame, then the normal map. The bitangent's sign is glTF's w.
 	vec3 t = normalize(v_tangent.xyz - ng * dot(ng, v_tangent.xyz));
 	vec3 b = cross(ng, t) * v_tangent.w;
-	vec3 nm = texture2D(s_normal, v_texcoord0).xyz * 2.0 - 1.0;
-	vec3 n = normalize(t * nm.x + b * nm.y + ng * nm.z);
+	// Z is REBUILT, never read. The cook writes normals as BC5, which stores two channels
+	// and nothing else, so .z arrives as zero: read straight, every normal is (x, y, 0), a
+	// vector lying flat in the tangent plane with no component along the surface's own
+	// normal at all -- and the whole town shades black. A unit vector's third component is
+	// what is left, and for the three-channel PNGs the bench still loads this recovers the
+	// same number they stored. docs/conventions.md has said BC5 with z rebuilt since before
+	// there was a cook; this is the line that keeps it.
+	vec2 nxy = texture2D(s_normal, v_texcoord0).xy * 2.0 - 1.0;
+	float nz = sqrt(max(0.0, 1.0 - dot(nxy, nxy)));
+	vec3 n = normalize(t * nxy.x + b * nxy.y + ng * nz);
 
 	vec3 orm = texture2D(s_orm, v_texcoord0).rgb;
 	float ao = orm.r;

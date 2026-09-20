@@ -41,6 +41,9 @@ bool World::open(const std::string& assetDir, const std::string& name,
                  content::Textures& textures) {
     const std::string dir = core::join(assetDir, "world/" + name);
     if (!ground_.load(dir, name, textures)) return false;
+    // The town is not required: the land is a world on its own, and a cook that has not been
+    // run yet says so in the log rather than failing the launch.
+    town_.open(assetDir, name, textures);
 
     if (!focusSet_) {
         // Lorencia's safe zone is around tile 142,126 -- the middle of the town rather than
@@ -102,6 +105,9 @@ void World::update(double seconds, bool still) {
     for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * kDistance;
 }
 
-void World::shutdown() { ground_.shutdown(); }
+void World::shutdown() {
+    town_.shutdown();
+    ground_.shutdown();
+}
 
 }  // namespace mu::game

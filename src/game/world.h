@@ -1,11 +1,11 @@
-// A world raised: the land, and MU's own camera looking at it. No town yet; sprint 3 places
-// what stands on it.
+// A world raised: the land, what stands on it, and MU's own camera looking at both.
 #pragma once
 
 #include <string>
 
 #include "content/ground.h"
 #include "content/texture.h"
+#include "game/town.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {
@@ -21,6 +21,8 @@ public:
 
     const gfx::Camera& camera() const { return camera_; }
     const content::Ground& ground() const { return ground_; }
+    Town& town() { return town_; }
+    const Town& town() const { return town_; }
 
     // Where the camera looks, in tiles. Set from --at, else the map's own middle.
     void setFocusTile(float column, float row);
@@ -30,6 +32,7 @@ private:
     void tileToMetres(float column, float row, float* x, float* z) const;
 
     content::Ground ground_;
+    Town town_;
     gfx::Camera camera_;
     float focusColumn_ = 0.0f;
     float focusRow_ = 0.0f;

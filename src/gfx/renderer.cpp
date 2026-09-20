@@ -238,6 +238,14 @@ void Renderer::shutdown() {
     screenVb_ = BGFX_INVALID_HANDLE;
 }
 
+void Renderer::bindShadeInputs() {
+    bgfx::setTexture(4, sShadowCompare_, shadowMap_,
+                     BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+    bgfx::setTexture(5, sShadowDepth_, shadowMap_,
+                     BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+    bgfx::setTexture(7, sAo_, blurTex_);
+}
+
 void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                              const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb,
                              uint64_t state, bool bindMaterial) {
@@ -256,6 +264,7 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 bgfx::setTexture(1, sNormal_, material.normal);
                 bgfx::setTexture(2, sOrm_, material.orm);
                 bgfx::setTexture(3, sEmissive_, material.emissive);
+                bindShadeInputs();
             }
 
             uint64_t drawState = state;
@@ -298,6 +307,7 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             bgfx::setTexture(9, sAlbedo2_, part.overlay.albedo);
             bgfx::setTexture(10, sNormal2_, part.overlay.normal);
             bgfx::setTexture(11, sOrm2_, part.overlay.orm);
+            bindShadeInputs();
         }
         bgfx::setVertexBuffer(0, g.vertexBuffer());
         bgfx::setIndexBuffer(g.indexBuffer(), part.firstIndex, part.indexCount);
@@ -317,8 +327,17 @@ void Renderer::screenPass(bgfx::ViewId view, bgfx::ProgramHandle program) {
     ++drawCount_;
 }
 
+void Renderer::cameraMatrices(const Camera& camera, float* view, float* proj) const {
+    bx::mtxLookAt(view, bx::Vec3(camera.position[0], camera.position[1], camera.position[2]),
+                  bx::Vec3(camera.target[0], camera.target[1], camera.target[2]),
+                  bx::Vec3(camera.up[0], camera.up[1], camera.up[2]), bx::Handedness::Right);
+    bx::mtxProj(proj, camera.fovDegrees, float(width_) / float(height_), camera.nearPlane,
+                camera.farPlane, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
+}
+
 void Renderer::draw(const Camera& camera, const Lighting& lighting,
-                    const std::vector<Drawable>& drawables, const content::Ground* ground) {
+                    const std::vector<Drawable>& drawables, const content::Ground* ground,
+                    const std::vector<Drawable>* casters) {
     drawCount_ = 0;
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
@@ -330,39 +349,49 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // the SSAO take its "this is sky" path on every pixel of the screen. docs/conventions.md
     // says right-handed; this is where that has to be enforced.
     float view[16];
-    bx::mtxLookAt(view, bx::Vec3(camera.position[0], camera.position[1], camera.position[2]),
-                  bx::Vec3(camera.target[0], camera.target[1], camera.target[2]),
-                  bx::Vec3(camera.up[0], camera.up[1], camera.up[2]), bx::Handedness::Right);
     float proj[16];
+    cameraMatrices(camera, view, proj);
     const bool homogeneous = bgfx::getCaps()->homogeneousDepth;
-    bx::mtxProj(proj, camera.fovDegrees, float(width_) / float(height_), camera.nearPlane,
-                camera.farPlane, homogeneous, bx::Handedness::Right);
 
     // --- the batches, and one instance buffer the whole frame reads -------------------
+    // Two lists share it: what the camera draws, and what the sun's split draws. They are
+    // usually the same instances, and they are not the same when the camera's chunks have
+    // been culled -- a chunk behind the camera still casts into the frame.
     batches_.clear();
-    const bool anything = !drawables.empty() || ground != nullptr;
+    casterBatches_.clear();
+    const std::vector<Drawable>& casterList = casters ? *casters : drawables;
+    const bool anything = !drawables.empty() || !casterList.empty() || ground != nullptr;
     if (anything) {
         // Grouped by mesh, keeping the order each mesh was first seen in, so a frame's draw
         // order does not shuffle between runs and a measurement stays comparable.
-        std::unordered_map<const content::Mesh*, size_t> seen;
         std::vector<std::vector<const Drawable*>> groups;
-        groups.reserve(8);
-        for (const Drawable& d : drawables) {
-            if (!d.mesh) continue;
-            auto found = seen.find(d.mesh);
-            if (found == seen.end()) {
-                seen.emplace(d.mesh, groups.size());
-                groups.emplace_back();
-                groups.back().push_back(&d);
-                batches_.push_back(Batch{d.mesh, 0, 0});
-            } else {
-                groups[found->second].push_back(&d);
+        std::vector<std::vector<const Drawable*>> casterGroups;
+        auto group = [](const std::vector<Drawable>& list,
+                        std::vector<std::vector<const Drawable*>>& out,
+                        std::vector<Batch>& batches) {
+            std::unordered_map<const content::Mesh*, size_t> seen;
+            out.reserve(8);
+            for (const Drawable& d : list) {
+                if (!d.mesh) continue;
+                auto found = seen.find(d.mesh);
+                if (found == seen.end()) {
+                    seen.emplace(d.mesh, out.size());
+                    out.emplace_back();
+                    out.back().push_back(&d);
+                    batches.push_back(Batch{d.mesh, 0, 0});
+                } else {
+                    out[found->second].push_back(&d);
+                }
             }
-        }
+        };
+        group(drawables, groups, batches_);
+        const bool separateCasters = casters != nullptr;
+        if (separateCasters) group(casterList, casterGroups, casterBatches_);
 
         const uint32_t stride = 64;  // one 4x4 matrix
         uint32_t total = 0;
         for (const auto& g : groups) total += uint32_t(g.size());
+        for (const auto& g : casterGroups) total += uint32_t(g.size());
 
         // bgfx will hand back fewer than asked for if the transient buffer is full. Asking
         // first and checking is the difference between a short frame and a corrupt one.
@@ -378,20 +407,28 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::InstanceDataBuffer idb = {};
             if (total > 0) bgfx::allocInstanceDataBuffer(&idb, total, stride);
             uint32_t written = 0;
-            for (size_t gi = 0; gi < groups.size() && total > 0; ++gi) {
-                batches_[gi].first = written;
-                uint32_t count = 0;
-                for (const Drawable* d : groups[gi]) {
-                    if (written >= total) break;
-                    std::memcpy(idb.data + written * stride, d->transform, sizeof(float) * 16);
-                    ++written;
-                    ++count;
+            auto fill = [&](std::vector<std::vector<const Drawable*>>& from,
+                            std::vector<Batch>& batches) {
+                for (size_t gi = 0; gi < from.size() && total > 0; ++gi) {
+                    batches[gi].first = written;
+                    uint32_t count = 0;
+                    for (const Drawable* d : from[gi]) {
+                        if (written >= total) break;
+                        std::memcpy(idb.data + written * stride, d->transform,
+                                    sizeof(float) * 16);
+                        ++written;
+                        ++count;
+                    }
+                    batches[gi].count = count;
                 }
-                batches_[gi].count = count;
-            }
-            batches_.erase(std::remove_if(batches_.begin(), batches_.end(),
-                                          [](const Batch& b) { return b.count == 0; }),
-                           batches_.end());
+                batches.erase(std::remove_if(batches.begin(), batches.end(),
+                                             [](const Batch& b) { return b.count == 0; }),
+                              batches.end());
+            };
+            fill(groups, batches_);
+            if (separateCasters) fill(casterGroups, casterBatches_);
+            // Without a list of its own, the sun draws what the camera draws.
+            std::vector<Batch>& shadowBatches = separateCasters ? casterBatches_ : batches_;
 
             // --- view 0: the sun's split ---------------------------------------------
             float sunDir[3];
@@ -448,7 +485,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const uint64_t depthState = BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
             bgfx::setUniform(uMaterial_, noCutout);
             if (ground) submitGround(ViewShadow, groundShadowProgram_, *ground, depthState, false);
-            if (total > 0) submitBatches(ViewShadow, shadowProgram_, batches_, idb, depthState, false);
+            if (!shadowBatches.empty()) {
+                submitBatches(ViewShadow, shadowProgram_, shadowBatches, idb, depthState, false);
+            }
 
             // --- view 1: the prepass -------------------------------------------------
             bgfx::setViewFrameBuffer(ViewPrepass, prepassFb_);

@@ -334,6 +334,52 @@ bool Mesh::load(const std::string& path, Textures& textures) {
                  std::move(parts));
 }
 
+bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
+                           const std::string& assetDir, Textures& textures) {
+    // The cook has already done everything this used to do at load: flattened the nodes,
+    // derived nothing (every primitive in MU2's build carries its own TANGENT), decided
+    // each material's cutout off its alpha_mode, and written the textures out as .ktx with
+    // their chains in them. What is left is to name the files and make the buffers.
+    std::vector<Material> materials;
+    materials.reserve(cooked.materials.size());
+    for (const CookedMaterial& from : cooked.materials) {
+        Material out;
+        out.name = from.name;
+        out.cutout = from.cutout;
+        out.twoSided = from.twoSided;
+        auto texture = [&](const std::string& path, TextureRole role) {
+            bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+            if (!path.empty()) handle = textures.load(core::join(assetDir, path), role);
+            return handle;
+        };
+        out.albedo = texture(from.albedo, TextureRole::Albedo);
+        out.normal = texture(from.normal, TextureRole::Normal);
+        out.orm = texture(from.orm, TextureRole::Data);
+        out.emissive = texture(from.emissive, TextureRole::Emissive);
+        if (!bgfx::isValid(out.albedo)) out.albedo = textures.white();
+        if (!bgfx::isValid(out.normal)) out.normal = textures.flatNormal();
+        if (!bgfx::isValid(out.orm)) out.orm = textures.white();
+        if (!bgfx::isValid(out.emissive)) out.emissive = textures.black();
+        materials.push_back(out);
+    }
+
+    std::vector<Part> parts;
+    parts.reserve(cooked.parts.size());
+    for (const CookedPart& from : cooked.parts) {
+        parts.push_back(Part{from.firstIndex, from.indexCount, from.material});
+    }
+
+    // The layouts are the same 48 bytes in the same order, and cooked.h asserts it, so the
+    // vertices are copied rather than converted.
+    std::vector<Vertex> vertices(cooked.vertices.size());
+    if (!vertices.empty()) {
+        std::memcpy(vertices.data(), cooked.vertices.data(),
+                    vertices.size() * sizeof(Vertex));
+    }
+    return build(name, std::move(vertices), std::vector<uint32_t>(cooked.indices),
+                 std::move(materials), std::move(parts));
+}
+
 bool Mesh::build(const std::string& name, std::vector<Vertex> vertices,
                  std::vector<uint32_t> indices, std::vector<Material> materials,
                  std::vector<Part> parts) {

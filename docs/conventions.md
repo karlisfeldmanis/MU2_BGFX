@@ -54,6 +54,14 @@ and the code together.
 - **`bx::mtxFromQuaternion` writes a column-vector matrix into that layout**, which is the
   inverse rotation. Do not use it. `core/maths` builds its own, and it is the only place a
   quaternion becomes a matrix.
+- **`bx::mtxSRT`'s Euler angles run the other way too, and every angle handed to it is
+  negated.** With yaw alone its rows give `x' = x cos - z sin`, `z' = x sin + z cos`, which
+  turns +x toward **+z**; a right-handed yaw about +y turns +x toward -z. The same holds for
+  its x rotation. So a placement's angles -- MU's own, after the axis swap -- are passed as
+  `-pitch, -yaw, -roll`. This is the quaternion trap above wearing different clothes, and it
+  is invisible on anything symmetric: Lorencia's fences, grass and square planters all look
+  right either way. It was caught on the fountain, whose four corner blocks stood inside the
+  pool with their carved faces turned inward.
 - Bone palettes are the skin matrix already multiplied by the inverse bind, three `vec4`
   rows a bone in an RGBA32F texture.
 

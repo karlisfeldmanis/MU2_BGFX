@@ -39,6 +39,9 @@ struct Args {
 
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;
+    // Chunk culling on the town, on by default. --no-cull is how the two are compared, and
+    // the answer to whether chunking earns its keep is the difference between them.
+    bool cullChunks = true;
     // Which tile the world camera looks at. `atSet` rather than a negative sentinel: a
     // negative column used to mean "not given", so `--at -5,3` was silently the default and
     // the run reported a frame from somewhere the caller never asked for.
