@@ -20,6 +20,7 @@ struct Args {
 
     // The review loop.
     int frames = 0;              // 0 plays until the window closes
+    int repeat = 1;              // measure this many segments of `frames`, loading once
     int shotEvery = 0;           // a PNG every N frames, and one on the last frame
     std::string shotPath;        // absolute; the directory shots land in
     std::string logPath;         // absolute; mu2.log beside the executable by default

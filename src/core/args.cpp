@@ -25,6 +25,7 @@ void printUsage() {
         "  --width N --height N      backbuffer size (default 1920x1080)\n"
         "  --vsync                   cap to the display; off by default so a number is a number\n"
         "  --frames N                quit after N frames\n"
+        "  --repeat N                measure N segments of --frames, loading the world once\n"
         "  --shot N                  write a PNG every N frames, and on the last\n"
         "  --shot-path DIR           absolute directory for the PNGs\n"
         "  --log PATH                absolute path for the log\n"
@@ -62,6 +63,12 @@ Args parseArgs(int argc, char** argv) {
             a.vsync = true;
         } else if (!std::strcmp(s, "--frames")) {
             if (const char* v = next(s)) a.frames = std::atoi(v);
+        } else if (!std::strcmp(s, "--repeat")) {
+            if (const char* v = next(s)) a.repeat = std::atoi(v);
+            if (a.repeat < 1) {
+                logError("--repeat wants at least 1, got %d", a.repeat);
+                a.valid = false;
+            }
         } else if (!std::strcmp(s, "--shot")) {
             if (const char* v = next(s)) a.shotEvery = std::atoi(v);
         } else if (!std::strcmp(s, "--shot-path")) {

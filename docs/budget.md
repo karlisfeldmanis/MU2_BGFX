@@ -62,6 +62,28 @@ the wall time of the frame it sits inside, which is impossible for work alone â€
 waiting, exactly as the per-view timers do. It is useful for comparing one change against
 another in the same run, and it is not a budget.
 
+## How to measure, and the noise floor that decides what is measurable
+
+**Use `--repeat`, not several launches.** A launch spends about twenty seconds decoding and
+mipping a world's textures to measure a second and a half of frames, so a dozen launches is
+four minutes of loading for eighteen seconds of data. `--frames 600 --repeat 6` measures six
+segments in one process with the world loaded once, and prints each segment's mean and the
+spread across them. Six segments cost about eleven seconds all told.
+
+**The spread is the number that says what is measurable at all.** Six segments of the same
+600 frames, same process, same camera, nothing changed between them:
+
+    segment 1  2.202 ms      segment 4  3.975 ms
+    segment 2  2.286 ms      segment 5  2.305 ms
+    segment 3  2.645 ms      segment 6  2.429 ms
+    6 segments: mean of means 2.640 ms, spread 1.773 (2.202 to 3.975)
+
+**1.8 ms of spread between identical segments.** So a claimed difference of a tenth of a
+millisecond between two configurations is not a difference; it is this. Anything below the
+spread needs interleaved paired segments and a consistent sign, and even then the magnitude
+is not worth publishing. This project put a difference in a sprint file with the sign
+reversed twice before this line existed.
+
 ## What the gate enforces, and what it only reports
 
 The per-view timers on this Mac do not divide the frame â€” they count the gaps between

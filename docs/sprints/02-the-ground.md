@@ -105,12 +105,18 @@ spread of 0.16.
 > other, worth roughly 1.6 ms of mean. The statistics now skip the frame a shot was requested
 > on, which removes that.
 >
-> **A residual remains, and this file got its sign wrong too.** It claimed `--shot 200` cost
-> 2.238 ms against 2.301 without — the shot run *cheaper*. That was one pair, and the spread
-> between runs is larger than the effect. Six alternating pairs: no shot 2.322 mean, with
-> shot 2.474, **dearer in six pairs out of six, +0.15 ms**. The readback's cost does not land
-> wholly inside the frame that is excluded. The run now says so in the log when `--shot` is
-> combined with `--budget` or `--stats`; numbers are taken from runs with no shots.
+> **Whether a residual remains is not established, and this file has now had the sign wrong
+> in both directions.** It first claimed `--shot 200` was *cheaper* (2.238 against 2.301),
+> off one pair. Six ordered pairs then said dearer in six of six, +0.15 ms, and that went in
+> here as fact. Both were beneath the noise.
+>
+> `--repeat` settled it by measuring six segments inside one process, world loaded once,
+> nothing changed between them: **spread 1.773 ms, 2.202 to 3.975**. The machine's own
+> variation between identical segments is more than ten times the effect either claim
+> described, and the six pairs were run in a fixed order, so a warming trend alone would
+> produce that sign. **No number for the residual is published here.** The log still warns
+> when `--shot` meets `--budget` or `--stats`, because taking numbers from a run with no
+> shots costs nothing and removes the question.
 
 The review's absolute numbers sit about 0.23 ms below these, consistently, on the same
 commit and the same command. Neither of us can explain it beyond machine state, and it is

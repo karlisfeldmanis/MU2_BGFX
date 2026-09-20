@@ -129,6 +129,7 @@ int main(int argc, char** argv) {
                args.frames ? std::to_string(args.frames).c_str() : "");
 
     int frame = 0;
+    int segment = 0;
     int64_t last = bx::getHPCounter();
     const double toMs = 1000.0 / double(bx::getHPFrequency());
     double elapsed = 0.0;
@@ -191,7 +192,23 @@ int main(int argc, char** argv) {
         }
 
         ++frame;
-        if (args.frames && frame >= args.frames) break;
+        if (args.frames && frame >= args.frames) {
+            // One segment done. With --repeat the world stays loaded and the next segment
+            // starts from a fresh warmup: what separates them is then the machine's own
+            // drift, which is the thing worth measuring, rather than the twenty seconds of
+            // texture decoding a second launch would spend first.
+            if (segment + 1 < args.repeat) {
+                stats.endSegment(segment, args.repeat);
+                ++segment;
+                frame = 0;
+                last = bx::getHPCounter();
+                continue;
+            }
+            // The last segment is NOT ended here: its frames stay in hand so finish() can
+            // still print the per-account table and the two humps. finish() counts it as a
+            // segment itself.
+            break;
+        }
     }
 
     const bool withinBudget = stats.finish(args.budget);
@@ -203,7 +220,7 @@ int main(int argc, char** argv) {
     window.close();
 
     const int errors = core::logErrorCount();
-    core::logf("%d frames, %d errors, budget %s", frame, errors,
+    core::logf("%d frames in %d segment(s), %d errors, budget %s", frame, args.repeat, errors,
                !args.budget ? "not enforced" : (withinBudget ? "kept" : "overdrawn"));
     core::logClose();
 

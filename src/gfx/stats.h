@@ -33,12 +33,24 @@ public:
 
     // Writes the table into the log. Returns false when an account's median is over its
     // allowance, which is what `--budget` turns into an exit code.
+    // Ends one measured segment and reports it, keeping only its mean frame time. Used by
+    // --repeat: the point of several segments in one process is that the assets are loaded
+    // once, so what is left between them is the machine's own drift rather than 20 seconds
+    // of texture decoding each time.
+    void endSegment(int index, int count);
+
     bool finish(bool enforce);
+
+private:
+    void reportSegments();
+
+public:
 
 private:
     double allowance(Account a) const;
 
     std::vector<Frame> frames_;
+    std::vector<double> segmentMeans_;
     std::vector<core::BudgetOverride> overrides_;
     FILE* csv_ = nullptr;
     // The first frames hold the pipeline compiles and the first upload of everything, and

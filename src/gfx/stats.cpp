@@ -113,6 +113,46 @@ double Stats::allowance(Account a) const {
     return accountBudgetMs(a);
 }
 
+void Stats::reportSegments() {
+    if (segmentMeans_.size() < 2) return;
+    double lo = segmentMeans_[0], hi = segmentMeans_[0], sum = 0.0;
+    for (double m : segmentMeans_) {
+        lo = std::min(lo, m);
+        hi = std::max(hi, m);
+        sum += m;
+    }
+    // The spread across segments is what says whether a difference between two configurations
+    // is real, and it is usually larger than people expect: on this machine six segments of
+    // the same 600 frames, in one process with the world already loaded, span half a
+    // millisecond. Any claimed difference smaller than that needs paired segments and a
+    // consistent sign, not one number against another. This project published a difference
+    // with the sign reversed twice for want of exactly this line.
+    core::logf("%zu segments: mean of means %.3f ms, spread %.3f (%.3f to %.3f)",
+               segmentMeans_.size(), sum / double(segmentMeans_.size()), hi - lo, lo, hi);
+}
+
+void Stats::endSegment(int index, int count) {
+    if (frames_.size() <= kWarmup) {
+        core::logf("segment %d of %d: too short to measure", index + 1, count);
+        frames_.clear();
+        return;
+    }
+    double sum = 0.0;
+    size_t n = 0;
+    for (size_t i = kWarmup; i < frames_.size(); ++i) {
+        sum += frames_[i].cpuMs;
+        ++n;
+    }
+    const double m = sum / double(n);
+    segmentMeans_.push_back(m);
+    core::logf("segment %d of %d: %zu frames, mean %.3f ms (%.0f fps)", index + 1, count, n, m,
+               m > 0.0 ? 1000.0 / m : 0.0);
+    // Only the last segment's frames are kept for the full summary; the warmup is re-served
+    // at the head of each, because the first frames after a segment boundary are no more
+    // representative than the first frames after a launch.
+    frames_.clear();
+}
+
 bool Stats::finish(bool enforce) {
     if (csv_) {
         std::fclose(csv_);
@@ -120,6 +160,7 @@ bool Stats::finish(bool enforce) {
     }
     if (frames_.size() <= kWarmup) {
         core::logf("no summary: %zu frames, and the first %zu are warmup", frames_.size(), kWarmup);
+        reportSegments();
         // A run with nothing left after the warmup cannot be judged -- and a gate that
         // cannot judge must not report that it did. `--frames 10 --budget gpu=0.001` used to
         // exit 0 here, which turned "ask for a short run" into a way of switching the gate
@@ -220,6 +261,8 @@ bool Stats::finish(bool enforce) {
                    lowCount, cpu.size(), lowMean, highMean, gapLow, gapHigh);
     }
     core::logf("%-10s %8.1f", "fps", frameMean > 0.0 ? 1000.0 / frameMean : 0.0);
+    segmentMeans_.push_back(frameMean);
+    reportSegments();
 
     // What the documented per-account allowances can and cannot do here.
     //
