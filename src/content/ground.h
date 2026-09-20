@@ -22,7 +22,9 @@ struct GroundVertex {
     float position[3];
     float normal[3];
     float uv[2];      // in TILES, not in [0,1]; each half multiplies by its own repeat
-    float colour[4];  // rgb: MU's baked TerrainLight. a: base-to-overlay blend
+    // rgb: MU's baked TerrainLight, which multiplies the ALBEDO and nothing else.
+    // a: the weight MU painted from base to overlay, before the height blend bites.
+    float colour[4];
 };
 static_assert(sizeof(GroundVertex) == 48, "the ground vertex layout drifted");
 
@@ -44,7 +46,8 @@ struct GroundPart {
     GroundLayer base;
     GroundLayer overlay;
     bool hasOverlay = false;
-    std::string name;
+    std::string name;      // the glTF material's own name
+    std::string pairName;  // the same pair as ground_surfaces.json's entry names it
 };
 
 class Ground {
@@ -64,7 +67,9 @@ public:
     // Off the map returns 0.
     float heightAt(float x, float z) const;
 
-    // MU's own attribute bits for a tile. 0 off the map.
+    // MU's own attribute bits for a tile. 0 off the map -- which is also MU's value for open
+    // walkable ground, so this alone never answers "may something stand here". See the note
+    // on the definition, and ask walkable().
     uint8_t attributesAt(int column, int row) const;
     bool walkable(int column, int row) const;
 

@@ -55,6 +55,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uCamRay_ = bgfx::createUniform("u_camRay", bgfx::UniformType::Vec4);
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
     uGroundRepeat_ = bgfx::createUniform("u_groundRepeat", bgfx::UniformType::Vec4);
+    uGroundBlend_ = bgfx::createUniform("u_groundBlend", bgfx::UniformType::Vec4);
     sAlbedo2_ = bgfx::createUniform("s_albedo2", bgfx::UniformType::Sampler);
     sNormal2_ = bgfx::createUniform("s_normal2", bgfx::UniformType::Sampler);
     sOrm2_ = bgfx::createUniform("s_orm2", bgfx::UniformType::Sampler);
@@ -227,7 +228,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
-          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
@@ -286,6 +287,11 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             const float repeat[4] = {part.base.repeat, part.overlay.repeat, part.base.relief,
                                      part.overlay.relief};
             bgfx::setUniform(uGroundRepeat_, repeat);
+            // The bite is MU2's own 0.35, and the second component says whether this surface
+            // has an overlay at all: nine of Lorencia's forty-four are a base standing alone,
+            // and those must not blend against a texture nothing meaningful is bound to.
+            const float blend[4] = {0.35f, part.hasOverlay ? 1.0f : 0.0f, 0.0f, 0.0f};
+            bgfx::setUniform(uGroundBlend_, blend);
             bgfx::setTexture(0, sAlbedo_, part.base.albedo);
             bgfx::setTexture(1, sNormal_, part.base.normal);
             bgfx::setTexture(2, sOrm_, part.base.orm);

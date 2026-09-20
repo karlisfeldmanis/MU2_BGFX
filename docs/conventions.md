@@ -68,8 +68,19 @@ Everything is lit in linear space and written out once.
 | ORM (occlusion, roughness, metal) | BC7 linear | linear |
 | height, light, attributes | 8-bit PNG, uncooked | linear, point sampled |
 
-`light.png` is MU's baked terrain light, which is already a lit result and not an albedo:
-it multiplies the ground's diffuse and does not go through the sRGB sampler twice.
+`light.png` is MU's baked terrain light. The ground mesh carries it per vertex in
+`COLOR_0.rgb` rather than sampling the picture, and **it multiplies the albedo, before any
+lighting, with no factor** — which is what glTF says a vertex colour does and what MU2's own
+ground shader does (`ALBEDO = albedo * painted.rgb` in its `GroundSource`). It was briefly
+applied over the whole lit result, after the sun, the ambient and the sky reflection, and
+scaled by an invented 2.0; that made it a second light rather than a property of the surface,
+and it double-counted against the sun term the shader computes for itself.
+
+**The dry ground takes no specular and no sky reflection**, which is MU2's measured decision
+and not a saving. MU's ground art has its lighting painted into it, so a sheen on top is a
+second highlight on a surface that already carries one — and a ground plane seen from MU's
+48-degree camera is grazing nearly everywhere, so Fresnel spreads that highlight across most
+of the frame. Water is the exception and is owed.
 
 **A picture has mips; a grid does not.** Albedo, normal, ORM and emissive carry a full mip
 chain and are sampled trilinear with anisotropy — MU's shallow camera minifies hard, and

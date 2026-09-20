@@ -108,6 +108,7 @@ private:
     bgfx::UniformHandle uCamRay_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRepeat_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAlbedo2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sOrm2_ = BGFX_INVALID_HANDLE;
