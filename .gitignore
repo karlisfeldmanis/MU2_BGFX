@@ -1,5 +1,8 @@
 assets/
 extern/
 build/
+build-debug/
+build-trace/
 shots/
 *.log
+*.log.previous

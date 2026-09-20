@@ -30,8 +30,9 @@ Cheap now, a rewrite later.
 3. **A budget with accounts.** 5.5 ms GPU at 1080p over Lorencia's town. Opening split:
    shadow 1.0, prepass 0.7, SSAO and blur 0.5, shade 2.3, HUD and present 0.5, spare 0.5.
    CPU 3 ms, of which the sim 0.5. `--budget` exits non-zero when an account is overdrawn.
-4. **One conventions page**, written before any loader: metres per tile, handedness, which
-   way a model looks (+z in MU2's build), yaw sign, `height.png` as `[y,x]`, matrix layout
+4. **One conventions page**, written before any loader: units per tile (100, not 1, and read
+   from the world), which way a row runs, handedness, which way a model looks (+z in MU2's
+   build), yaw sign, `height.png` as `[y,x]`, matrix layout
    (`bx::mtxFromQuaternion` is the inverse of what it looks like), `uvec4` joints on Metal,
    `gl_FrontFacing`'s sense, sRGB or linear per texture role.
 5. **One material model, closed.** Albedo (sRGB), normal (BC5), ORM, emissive, and three
@@ -82,7 +83,7 @@ One to three sessions each, one batch commit on main, one sentence that proves i
 
 | # | sprint | proved by |
 |---|---|---|
-| 0 | **Foundations.** Layers, CMake, bootstrap, log, shots, stats, budget gate, `conventions.md`, `sync.sh`, a window that clears and times itself | `./run.sh --frames 300 --shot 100 --stats s.csv` leaves a PNG, a log and a csv; `--budget` fails when told a false budget |
+| 0 | **Foundations.** Layers, CMake, bootstrap, log, shots, stats, budget gate, `conventions.md`, `sync.sh`, a window that clears and times itself — **done 2026-09-20** | `./run.sh --frames 300 --shot 100 --stats s.csv` leaves a PNG, a log and a csv; `--budget` fails when told a false budget |
 | 1 | **The frame.** glb loader, the material model, six views: PCSS sun shadow, normal-depth prepass, half-res SSAO and blur, GGX shade with the closed-form sky, ACES present. `--bench model`, `sheets/lighting.json` reloaded live | House01 on a plane, lit, shadowed and occluded at 1080p; a per-view GPU table in the sprint file |
 | 2 | **The ground.** `height.png`, the tile grid, `ground_surfaces.json` blended with normal and ORM, `light.png`, attributes, MU's camera and its framed sun split. `--bench ground` | Lorencia's bare land from the play camera, inside the prepass and shade accounts |
 | 3 | **The town.** Placements, instancing by model, chunk culling for camera and sun, cutouts, grass, leaves. `cook.py`: BC7/BC5 `.ktx`, flat meshes | all of Lorencia standing, loaded in under 5 s from cooked files; draws and frame written down |
