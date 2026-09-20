@@ -59,6 +59,12 @@ public:
     // `delta` the frame's own, which is what a clip is advanced by.
     void update(double seconds, double delta, bool spin);
 
+    // The hand on the camera. A drag turns it and the wheel pulls it in and out; both are
+    // remembered across a step of the browser, so walking the list keeps the angle you chose
+    // instead of snapping back to the default view on every model.
+    void orbit(float dYawPixels, float dPitchPixels);
+    void zoom(float notches);
+
     const gfx::Camera& camera() const { return camera_; }
     // The ground and whatever stands on it. A figure is posed here rather than at open,
     // because its pose is a frame's worth of work and takes a palette row of the renderer.
@@ -119,6 +125,11 @@ private:
     std::vector<gfx::Drawable> drawables_;
     gfx::Camera camera_;
     float distance_ = 0.0f;
+    // Where the hand has put the camera, in radians, on top of the bench's own default.
+    float yawOffset_ = 0.0f;
+    float pitchOffset_ = 0.0f;
+    // What the wheel has done to the framing distance, as a multiplier.
+    float zoom_ = 1.0f;
     // --dist was given, so the browser must not re-frame on each model.
     bool wantsFixedDistance_ = false;
     float height_ = 0.0f;

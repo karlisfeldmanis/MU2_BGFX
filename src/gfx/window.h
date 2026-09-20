@@ -45,6 +45,14 @@ public:
     enum class Step { Previous, Next, PreviousTen, NextTen };
     bool stepped(Step step) const { return stepped_[size_t(step)]; }
 
+    // Held, rather than the edge `clicked` reports: a drag is a thing that continues.
+    bool held(int button) const { return held_[button & 1]; }
+    // How far the pointer moved since the last pump, in framebuffer pixels.
+    void pointerDelta(float* x, float* y) const { *x = deltaX_; *y = deltaY_; }
+    // The wheel since the last pump, in whatever units the OS reports. Positive is towards
+    // the screen, which every viewer in the world means as "closer".
+    float scroll() const { return scroll_; }
+
     int width() const { return width_; }
     int height() const { return height_; }
 
@@ -56,6 +64,10 @@ private:
     bool held_[2] = {false, false};
     bool stepped_[4] = {false, false, false, false};
     bool stepHeld_[4] = {false, false, false, false};
+    float lastX_ = 0.0f, lastY_ = 0.0f;
+    float deltaX_ = 0.0f, deltaY_ = 0.0f;
+    bool hadPointer_ = false;
+    float scroll_ = 0.0f;
     uint32_t reset_ = 0;
     // Kept whole from init. A resize passes this back with a new size, because a
     // default-constructed SwapChain has a NULL window handle, which bgfx reads as a request

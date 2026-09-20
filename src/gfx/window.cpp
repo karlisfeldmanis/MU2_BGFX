@@ -12,6 +12,13 @@
 namespace mu::gfx {
 namespace {
 
+// GLFW reports the wheel through a callback and nothing else, so it is accumulated here and
+// drained by the pump. One window, so one accumulator: a second would need the user pointer
+// and there is not going to be a second.
+double s_scroll = 0.0;
+
+void onScroll(GLFWwindow*, double, double y) { s_scroll += y; }
+
 Callback g_callback;
 
 void onGlfwError(int code, const char* what) { core::logError("glfw %d: %s", code, what); }
@@ -31,6 +38,8 @@ bool Window::open(const WindowDesc& desc) {
         core::logError("no window");
         return false;
     }
+
+    glfwSetScrollCallback(handle_, onScroll);
 
     // The backbuffer is asked for in pixels, not in points: on a Retina display the two
     // differ by two, and a frame measured at the wrong size is not the frame.
@@ -105,6 +114,19 @@ bool Window::pump() {
         stepped_[i] = down && !stepHeld_[i];
         stepHeld_[i] = down;
     }
+
+    // The pointer's movement since the last pump, and the wheel's. The first pump after the
+    // window opens has no previous position to subtract, and using (0,0) as one throws the
+    // camera across the room on the first frame a button is down.
+    float px = 0.0f, py = 0.0f;
+    pointer(&px, &py);
+    deltaX_ = hadPointer_ ? px - lastX_ : 0.0f;
+    deltaY_ = hadPointer_ ? py - lastY_ : 0.0f;
+    lastX_ = px;
+    lastY_ = py;
+    hadPointer_ = true;
+    scroll_ = float(s_scroll);
+    s_scroll = 0.0;
 
     int w = 0, h = 0;
     glfwGetFramebufferSize(handle_, &w, &h);

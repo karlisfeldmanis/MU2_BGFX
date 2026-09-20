@@ -32,56 +32,99 @@ std::string defaultPath(const char* dir, const char* name) {
     return std::string(dir) + "/" + name;
 }
 
-// The viewer's list, down the left. A window onto the list rather than the whole of it: 156
-// names do not fit at a readable size, and a list that scrolls past what is selected is no
-// use for choosing. The selected line is held in the middle of the window wherever it can be,
-// so the eye stays in one place while the names move past it.
-void drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, int width,
-                     int height) {
+// The viewer's list, down the left, and the hit test that goes with it.
+//
+// A window onto the list rather than the whole of it: 156 names do not fit at a size anybody
+// can read, and a list that scrolls past what is selected is no use for choosing. The
+// selection is held in the middle of the window where it can be, so the eye stays in one
+// place while the names move past it.
+//
+// Drawing and picking are one function on purpose. They share the same arithmetic -- where a
+// row starts, how tall it is, which slice of the list is on screen -- and two copies of that
+// drift the moment either changes, which is a list that highlights one name and selects
+// another. `pointer` is where the mouse is; the row under it comes back in `hovered`, and
+// what the panel covers in `bounds`, so the caller can tell a click on the list from a drag
+// on the model.
+struct ListHit {
+    long long hovered = -1;   // the row the pointer is over, or -1
+    float x = 0.0f, y = 0.0f, w = 0.0f, h = 0.0f;
+    bool over = false;        // the pointer is somewhere on the panel
+};
+
+ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, int width,
+                        int height, float pointerX, float pointerY) {
     // Every frame starts empty and hands the overlay the backbuffer's size. Forgetting this
     // is not a small bug: the quads pile up run-long, and the size the vertex shader divides
     // by stays zero, so the whole list is one NaN off the screen and nothing draws at all.
     overlay.begin(width, height);
+    ListHit hit;
+
     constexpr float kScale = 2.0f;
     constexpr float kPad = 10.0f;
-    constexpr uint32_t kBack = 0xC0140d0au;      // abgr: a dark wash, so names read over grass
+    constexpr uint32_t kBack = 0xD8140d0au;    // abgr: a dark wash, so names read over grass
     constexpr uint32_t kInk = 0xFFc8c8c8u;
     constexpr uint32_t kChosen = 0xFFffffffu;
-    constexpr uint32_t kDim = 0xFF6e6e6eu;
+    constexpr uint32_t kDim = 0xFF8a8a8au;
+    constexpr uint32_t kChosenBar = 0xB0705030u;
+    constexpr uint32_t kHoverBar = 0x60606060u;
+    constexpr uint32_t kRule = 0x40ffffffu;
 
     const float line = gfx::Overlay::lineHeight(kScale);
     const size_t count = bench.browseCount();
-    if (count == 0) return;
-    // As many as fit in the top two thirds, so the list never runs into the frame line the
-    // log prints at the bottom of a review shot.
-    const size_t rows = size_t((float(height) * 0.66f - kPad * 4.0f) / line);
+    if (count == 0) return hit;
+
+    const float header = line * 1.6f;
+    const float footer = line * 1.6f;
+    // As many as fit in the top three quarters, so the list never runs into the frame line
+    // the log prints at the bottom of a review shot.
+    size_t rows = size_t((float(height) * 0.75f - kPad * 2.0f - header - footer) / line);
+    if (rows < 1) rows = 1;
+    if (rows > count) rows = count;
     const size_t half = rows / 2;
     size_t first = bench.browseIndex() > half ? bench.browseIndex() - half : 0;
     if (first + rows > count) first = count > rows ? count - rows : 0;
-    const size_t last = first + rows < count ? first + rows : count;
+    const size_t last = first + rows;
 
-    float widest = gfx::Overlay::measure(kScale, "999/999");
+    float widest = gfx::Overlay::measure(kScale, "COOKED MODELS  999/999");
     for (size_t i = first; i < last; ++i) {
         const float w = gfx::Overlay::measure(kScale, bench.browseName(i));
         if (w > widest) widest = w;
     }
-    const float panelW = widest + kPad * 2.0f;
-    const float panelH = float(last - first) * line + kPad * 3.0f + line;
-    overlay.panel(kPad, kPad, panelW, panelH, kBack);
 
-    char header[64];
-    std::snprintf(header, sizeof(header), "%zu/%zu", bench.browseIndex() + 1, count);
-    overlay.text(kPad * 2.0f, kPad * 2.0f, kScale, kDim, header);
+    hit.x = kPad;
+    hit.y = kPad;
+    hit.w = widest + kPad * 3.0f;
+    hit.h = header + float(rows) * line + footer + kPad;
+    overlay.panel(hit.x, hit.y, hit.w, hit.h, kBack);
+    hit.over = pointerX >= hit.x && pointerX < hit.x + hit.w && pointerY >= hit.y &&
+               pointerY < hit.y + hit.h;
 
-    float y = kPad * 2.0f + line * 1.5f;
+    char label[96];
+    std::snprintf(label, sizeof(label), "COOKED MODELS  %zu/%zu", bench.browseIndex() + 1,
+                  count);
+    overlay.text(hit.x + kPad, hit.y + kPad * 0.6f, kScale, kDim, label);
+    // A rule under the heading and above the footer, which is the whole of the chrome: a
+    // panel with a line at each end reads as a list, and costs two quads.
+    overlay.panel(hit.x + kPad, hit.y + header - 3.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
+
+    const float top = hit.y + header;
     for (size_t i = first; i < last; ++i) {
+        const float y = top + float(i - first) * line;
         const bool chosen = i == bench.browseIndex();
-        if (chosen) {
-            overlay.panel(kPad * 1.5f, y - 1.0f, panelW - kPad, line, 0x80505050u);
+        const bool over = hit.over && pointerY >= y && pointerY < y + line;
+        if (over) hit.hovered = (long long)i;
+        if (chosen || over) {
+            overlay.panel(hit.x + 2.0f, y - 1.0f, hit.w - 4.0f, line, chosen ? kChosenBar
+                                                                             : kHoverBar);
         }
-        overlay.text(kPad * 2.0f, y, kScale, chosen ? kChosen : kInk, bench.browseName(i));
-        y += line;
+        overlay.text(hit.x + kPad, y, kScale, chosen ? kChosen : kInk, bench.browseName(i));
     }
+
+    const float footTop = top + float(rows) * line;
+    overlay.panel(hit.x + kPad, footTop + 2.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
+    overlay.text(hit.x + kPad, footTop + 6.0f, kScale * 0.75f, kDim,
+                 "CLICK / ARROWS  DRAG TURNS  WHEEL ZOOMS");
+    return hit;
 }
 
 }  // namespace
@@ -355,8 +398,30 @@ int main(int argc, char** argv) {
             bench.update(elapsed, deltaSeconds, !args.still);
             renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
             if (bench.browsing() && overlay.ready()) {
-                drawBrowserList(overlay, bench, window.width(), window.height());
+                float px = 0.0f, py = 0.0f;
+                window.pointer(&px, &py);
+                const ListHit hit = drawBrowserList(overlay, bench, window.width(),
+                                                    window.height(), px, py);
                 overlay.submit(gfx::ViewHud);
+                // The list eats the pointer while it is over it, so a click on a name does
+                // not also drag the camera and the wheel scrolls the list rather than zooming.
+                if (hit.over) {
+                    if (window.clicked(0) && hit.hovered >= 0) {
+                        bench.step(int(hit.hovered - (long long)bench.browseIndex()), textures);
+                        core::logf("browser: %s", bench.browseLine().c_str());
+                    }
+                    const float wheel = window.scroll();
+                    if (wheel != 0.0f) {
+                        bench.step(wheel > 0.0f ? -1 : 1, textures);
+                    }
+                } else {
+                    if (window.held(0)) {
+                        float dx = 0.0f, dy = 0.0f;
+                        window.pointerDelta(&dx, &dy);
+                        bench.orbit(dx, dy);
+                    }
+                    bench.zoom(window.scroll());
+                }
             }
         }
 

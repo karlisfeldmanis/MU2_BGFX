@@ -20,6 +20,9 @@ constexpr int kGlyphW = 5;
 constexpr int kGlyphH = 7;
 constexpr int kCellW = 6;   // one column of padding, so neighbours do not bleed at a mip
 constexpr int kCellH = 8;
+// What one character advances by, in glyph pixels. Wider than the glyph: at 5 wide and no
+// gap the letters of a name ran into each other and ARMORCLASS01 read as one long word.
+constexpr float kAdvance = 6.5f;
 constexpr int kCols = 16;
 
 struct Glyph {
@@ -190,7 +193,7 @@ void Overlay::panel(float x, float y, float w, float h, uint32_t abgr) {
 }
 
 float Overlay::measure(float scale, const std::string& s) {
-    return float(s.size()) * float(kCellW) * scale;
+    return float(s.size()) * kAdvance * scale;
 }
 
 float Overlay::lineHeight(float scale) { return float(kCellH) * scale; }
@@ -198,19 +201,30 @@ float Overlay::lineHeight(float scale) { return float(kCellH) * scale; }
 float Overlay::text(float x, float y, float scale, uint32_t abgr, const std::string& s) {
     const float atlasW = float(kCols * kCellW);
     const float atlasH = float(kRows * kCellH);
-    float pen = x;
-    for (char c : s) {
-        const int cell = cellFor(c);
-        if (cell >= 0) {
-            const float ox = float((cell % kCols) * kCellW);
-            const float oy = float((cell / kCols) * kCellH);
-            quad(pen, y, float(kGlyphW) * scale, float(kGlyphH) * scale, ox / atlasW,
-                 oy / atlasH, (ox + float(kGlyphW)) / atlasW, (oy + float(kGlyphH)) / atlasH,
-                 abgr);
+    const float w = float(kGlyphW) * scale;
+    const float h = float(kGlyphH) * scale;
+    // The shadow first, so the ink lands on top of it. Both passes walk the string rather
+    // than interleaving per glyph: a glyph's own shadow must not sit over its neighbour's
+    // ink, which is what one pass of (shadow, ink) per character gives at this spacing.
+    const float offset = scale;
+    for (int pass = 0; pass < 2; ++pass) {
+        // abgr: three quarters opaque, and black in all three colour channels.
+        constexpr uint32_t kShadow = 0xC0000000u;
+        const uint32_t colour = pass == 0 ? kShadow : abgr;
+        const float dx = pass == 0 ? offset : 0.0f;
+        float pen = x + dx;
+        for (char c : s) {
+            const int cell = cellFor(c);
+            if (cell >= 0) {
+                const float ox = float((cell % kCols) * kCellW);
+                const float oy = float((cell / kCols) * kCellH);
+                quad(pen, y + dx, w, h, ox / atlasW, oy / atlasH,
+                     (ox + float(kGlyphW)) / atlasW, (oy + float(kGlyphH)) / atlasH, colour);
+            }
+            pen += kAdvance * scale;
         }
-        pen += float(kCellW) * scale;
     }
-    return pen - x;
+    return float(s.size()) * kAdvance * scale;
 }
 
 void Overlay::submit(bgfx::ViewId view) {

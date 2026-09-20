@@ -320,24 +320,50 @@ std::string ModelBench::clipLine() const {
     return line;
 }
 
+void ModelBench::orbit(float dYawPixels, float dPitchPixels) {
+    // A screen's width is about one full turn, which is what a hand expects of a drag.
+    yawOffset_ += dYawPixels * 0.006f;
+    // Clamped just short of the poles. At exactly straight up the camera's forward vector is
+    // the world up it is built against, the cross product is zero, and the view matrix comes
+    // out as NaN -- the picture does not tilt, it disappears.
+    constexpr float kLimit = 1.52f;  // 87 degrees
+    pitchOffset_ += dPitchPixels * 0.006f;
+    if (pitchOffset_ > kLimit) pitchOffset_ = kLimit;
+    if (pitchOffset_ < -kLimit) pitchOffset_ = -kLimit;
+}
+
+void ModelBench::zoom(float notches) {
+    // Multiplicative, so a notch moves the same fraction whether the subject is a candle or
+    // a house; additive steps are unusable across a list whose radii differ by a hundred.
+    zoom_ *= std::pow(0.88f, notches);
+    if (zoom_ < 0.05f) zoom_ = 0.05f;
+    if (zoom_ > 20.0f) zoom_ = 20.0f;
+}
+
 void ModelBench::update(double seconds, double delta, bool spin) {
     if (haveFigure_) figure_.update(float(delta));
     // MU looks down at about 40 degrees; the bench keeps that so what is judged here reads
     // the way the game will. The turn is slow enough that a shot every hundred frames walks
     // round the subject rather than jumping.
-    const float pitch = 38.0f * 3.14159265f / 180.0f;
-    const float yaw = spin ? float(seconds) * 0.35f : 0.9f;
+    float pitch = 38.0f * 3.14159265f / 180.0f + pitchOffset_;
+    constexpr float kLimit = 1.52f;
+    if (pitch > kLimit) pitch = kLimit;
+    if (pitch < -kLimit) pitch = -kLimit;
+    const float yaw = (spin ? float(seconds) * 0.35f : 0.9f) + yawOffset_;
+    const float distance = distance_ * zoom_;
 
     camera_.target[0] = focus_[0];
     camera_.target[1] = focus_[1];
     camera_.target[2] = focus_[2];
-    camera_.position[0] = focus_[0] + std::cos(yaw) * std::cos(pitch) * distance_;
-    camera_.position[1] = focus_[1] + std::sin(pitch) * distance_;
-    camera_.position[2] = focus_[2] + std::sin(yaw) * std::cos(pitch) * distance_;
+    camera_.position[0] = focus_[0] + std::cos(yaw) * std::cos(pitch) * distance;
+    camera_.position[1] = focus_[1] + std::sin(pitch) * distance;
+    camera_.position[2] = focus_[2] + std::sin(yaw) * std::cos(pitch) * distance;
     // The near plane follows the distance: MU2's units put a model 300 away, and a near
-    // plane of 10 there wastes most of the depth buffer's precision.
-    camera_.nearPlane = std::max(distance_ * 0.02f, 1.0f);
-    camera_.farPlane = std::max(distance_ * 20.0f, 2000.0f);
+    // plane of 10 there wastes most of the depth buffer's precision. A floor of 1 metre was
+    // right while the bench framed a house and is wrong now the wheel can bring a candle to
+    // arm's length -- at 0.3 m away a near plane of 1 clips the whole subject away.
+    camera_.nearPlane = std::max(distance * 0.02f, 0.02f);
+    camera_.farPlane = std::max(distance * 20.0f, 2000.0f);
 }
 
 void ModelBench::shutdown() {
