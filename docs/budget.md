@@ -91,6 +91,42 @@ spread needs interleaved paired segments and a consistent sign, and even then th
 is not worth publishing. This project put a difference in a sprint file with the sign
 reversed twice before this line existed.
 
+### The spread is hitches, not variance, and the mean of means is ten times finer
+
+Re-measured immediately afterwards, on the same build and the same camera, with one
+difference: **the machine was quiet.** The 1.773 ms above was taken while the texture cook
+held six to seven cores at 600–750% for the better part of an hour, and the fifteen-minute
+load average over that window was 14.7 against about 5 now.
+
+Four launches, six segments each:
+
+| launch | mean of means | spread inside the launch |
+|---|---|---|
+| 1 | 2.028 | 0.942 |
+| 2 | 2.014 | 2.258 |
+| 3 | 2.106 | 0.368 |
+| 4 | 2.074 | 0.233 |
+
+**The spread moves between 0.23 and 2.26 ms while the mean of means holds inside 0.09 ms.**
+That is the shape of *occasional stalls*, not of noisy frames: one launch logged a single
+frame at 1003 ms of CPU, and one such frame in 570 is worth about 1.7 ms of that segment's
+mean on its own. A hitch lands in some segments and not others, so the spread measures
+whether a hitch happened, and the mean over six segments largely absorbs it.
+
+So, in order of what to trust:
+
+- **Mean of means over six segments resolves about 0.1 ms**, measured across four launches.
+  That is what an A/B comparison uses, and it is ten times finer than the spread suggests.
+- **A spread above about 1 ms means a hitch landed in that launch** — read it as a warning
+  about the machine, not as an error bar. Worth re-running rather than reasoning around.
+- **Nothing is measured while something else is compiling, cooking or indexing**, which
+  includes this project's own cook, another agent's build, and the virus scanner working
+  through whatever the cook just wrote. The load average is part of a measurement's
+  conditions and belongs beside it.
+
+The original 1.8 ms figure is not withdrawn — it was correctly measured and it is what this
+machine does under load. It is simply not the floor when nothing else is running.
+
 ## What the gate enforces, and what it only reports
 
 The per-view timers on this Mac do not divide the frame — they count the gaps between
