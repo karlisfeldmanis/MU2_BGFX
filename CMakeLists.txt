@@ -112,3 +112,18 @@ target_compile_options(texcook PRIVATE -Wall -Wextra -Wno-unused-parameter)
 add_executable(cookcheck EXCLUDE_FROM_ALL tools/cook/cookcheck.cpp)
 target_link_libraries(cookcheck PRIVATE bimg_decode bimg bx)
 target_compile_options(cookcheck PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# ---- tests --------------------------------------------------------------------------------
+# Foundation 9: what can be checked without a window is checked without one. The cooked
+# formats are parsed by the engine's own reader here, which is a different failure from the
+# one cookcheck hunts -- that one reads the files with a second implementation and catches a
+# cook that wrote nonsense; this one catches a reader that disagrees with the cook.
+add_executable(cooked_test EXCLUDE_FROM_ALL
+  tests/cooked_test.cpp
+  src/content/cooked.cpp
+  src/core/files.cpp
+  src/core/log.cpp
+)
+target_include_directories(cooked_test PRIVATE src)
+target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_options(cooked_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
