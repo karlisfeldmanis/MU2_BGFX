@@ -58,6 +58,6 @@ double totalGpuBudgetMs() {
     for (int a = 0; a < AccountCount; ++a) sum += accountBudgetMs(Account(a));
     return sum;  // 5.5 ms
 }
-double cpuBudgetMs() { return 3.0; }
+double frameBudgetMs() { return 5.5; }  // 180 fps
 
 }  // namespace mu::gfx

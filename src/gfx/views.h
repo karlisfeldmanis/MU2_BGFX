@@ -40,11 +40,13 @@ double accountBudgetMs(Account a);
 // What is deliberately unspent, so a sprint cannot quietly borrow it.
 double spareBudgetMs();
 
-// Every account plus the spare: what a whole frame's GPU time is allowed to be. This is the
-// figure the gate enforces, because it is the one bgfx measures directly.
+// Every account plus the spare. Advisory: it is what the accounts add up to, not a figure
+// anything measures directly.
 double totalGpuBudgetMs();
 
-// The CPU allowance for a whole frame.
-double cpuBudgetMs();
+// What one frame of wall clock is allowed to take. THE enforced number, because it is the
+// only one that decides whether 180 fps happens, and the only one measured without a
+// GPU timer that counts waiting.
+double frameBudgetMs();
 
 }  // namespace mu::gfx

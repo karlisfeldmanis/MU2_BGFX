@@ -78,8 +78,12 @@ private:
 
     bgfx::ProgramHandle shadowProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle prepassProgram_ = BGFX_INVALID_HANDLE;
+    // Two variants each, chosen by the sample count: the multisampled twin reads one
+    // sample of the prepass rather than an average of them. See common.sh's prepassAt.
     bgfx::ProgramHandle ssaoProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle ssaoMsProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle blurProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle blurMsProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle shadeProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle presentProgram_ = BGFX_INVALID_HANDLE;
 
@@ -93,6 +97,7 @@ private:
     bgfx::UniformHandle uShadowMtx_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamRay_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle sAlbedo_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal_ = BGFX_INVALID_HANDLE;

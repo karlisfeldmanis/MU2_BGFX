@@ -42,8 +42,11 @@ set(SHADER_OUT ${CMAKE_BINARY_DIR}/shaders)
 # Where shaderc finds bgfx_shader.sh. Without it every shader that includes common.sh fails
 # on the include and not on anything of ours.
 set(BGFX_SHADER_INCLUDE_PATH ${CMAKE_SOURCE_DIR}/extern/bgfx.cmake/bgfx/src)
-file(GLOB VS_FILES ${SHADER_DIR}/vs_*.sc)
-file(GLOB FS_FILES ${SHADER_DIR}/fs_*.sc)
+# CONFIGURE_DEPENDS so that adding a shader is adding a file. Without it the glob is read
+# once at configure time and a new shader builds nothing, links nothing, and is discovered
+# at run time as "cannot read fs_something.sc.bin".
+file(GLOB VS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/vs_*.sc)
+file(GLOB FS_FILES CONFIGURE_DEPENDS ${SHADER_DIR}/fs_*.sc)
 if(VS_FILES)
   bgfx_compile_shaders(TYPE VERTEX SHADERS ${VS_FILES}
     VARYING_DEF ${SHADER_DIR}/varying.def.sc OUTPUT_DIR ${SHADER_OUT}

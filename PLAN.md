@@ -192,11 +192,40 @@ would have to be dug out again.
 
 - A session reads this file, the open sprint file and the code it touches, not surveys of
   MU2's docs. To take a rule from MU2, read the one `shared/` file concerned.
-- **QA is a subagent, and the only one.** A sprint is reviewed before it lands by an agent
-  that did not write it, given the sprint file and the diff: it checks the sentence that
-  proves the sprint against what the code does, reads the log and the shot rather than
-  trusting the summary, and hunts for the failure the author would not look for. The work
-  itself stays in one session; parallel authors are what the token budget cannot afford.
+
+### The team, and who does what
+
+Three roles. The point of the split is that **the person who wrote a thing does not get to
+be the one who says it works**, and that the senior's time goes on the decisions rather than
+on the errands.
+
+- **Senior** (the main session). Owns the architecture, the sprint plan, and anything where
+  the *right answer is not yet known*: what a pass costs and whether it earns it, how the
+  layers divide, which of MU2's numbers carry over and which are Godot's own, and every
+  design call in a QA finding. Writes the code a sprint turns on. Reviews the junior's work
+  before it lands — QA is a second net, not the first. Answers to the frame budget.
+- **QA** (a subagent, always one that did not write the code). Reviews a sprint before it
+  lands, against the one sentence that proves it. Runs the thing, reads the log and the
+  shot, and hunts the failure the author would not look for. Reports; does not fix. Its
+  verdict is DONE or SENT BACK, and the senior does not overrule it by assertion — only by
+  evidence.
+- **Junior** (a subagent). The contained work where the answer *is* known and only the
+  doing remains: a wrong constant, an off-by-one, a comment that contradicts its code, a
+  doc that states a rule nothing keeps, a rename, a unit fix. Given the finding, the file
+  and the acceptance test, one thing at a time. Not given anything whose scope it would
+  have to decide, and not given a defect whose cause is still a theory.
+
+**What goes to the junior and what does not.** A finding is the junior's when a sentence can
+say what the fixed code must do. It is the senior's when the fix needs a judgement about
+cost, correctness or what the engine ought to be — a resolve that corrupts an edge, a
+statistic that is measuring the wrong thing, a pass that has to be redesigned to be worth
+its milliseconds. Sending one of those to the junior gets a plausible patch for the wrong
+problem, which is more expensive than doing it once.
+
+**The senior reports honestly or the whole thing is worthless.** Sprint 1 was sent back
+twice, the second time because a fix was claimed in three places and had never been made.
+A review that has to re-derive whether the author is telling the truth costs more than the
+review is worth.
 - The window may run, always with `--frames`; read the log and the PNG before reporting.
 - Look is judged in the benches here, by shot. Numbers found in a bench go into a sheet,
   and a sheet that settles is folded into the cook or the code.

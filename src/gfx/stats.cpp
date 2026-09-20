@@ -12,6 +12,48 @@ namespace {
 
 // The value at a quantile of a copy of the samples. Not an interpolation: with a few
 // hundred frames the nearest rank is the honest answer.
+double mean(const std::vector<double>& v) {
+    if (v.empty()) return 0.0;
+    double sum = 0.0;
+    for (double x : v) sum += x;
+    return sum / double(v.size());
+}
+
+// The two humps of a bimodal sample, split at the widest gap in the sorted values. Frame
+// times here are not one distribution: they alternate between a frame that submits and one
+// that waits for the drawable, and no single number describes both.
+void twoModes(std::vector<double> v, double* lowMean, double* highMean, size_t* lowCount,
+              double* gapLow, double* gapHigh) {
+    *lowMean = *highMean = *gapLow = *gapHigh = 0.0;
+    *lowCount = 0;
+    if (v.size() < 20) return;
+    std::sort(v.begin(), v.end());
+    // Both humps must hold a tenth of the samples. Without that floor the widest gap in the
+    // sample is a single hitch -- one 22 ms frame among 370 of 2 ms -- and what gets reported
+    // as "two humps" is the outlier against everything else, which is true and useless.
+    const size_t floorCount = v.size() / 10;
+    size_t split = 0;
+    double widest = 0.0;
+    for (size_t i = floorCount; i + floorCount < v.size(); ++i) {
+        const double gap = v[i] - v[i - 1];
+        if (gap > widest) {
+            widest = gap;
+            split = i;
+        }
+    }
+    // And the gap has to be worth calling a gap: a smooth distribution has a widest pair
+    // too, and describing it as bimodal would be an invention.
+    if (split == 0 || widest < (v[v.size() - 1 - floorCount] - v[floorCount]) * 0.25) return;
+    double lowSum = 0.0, highSum = 0.0;
+    for (size_t i = 0; i < split; ++i) lowSum += v[i];
+    for (size_t i = split; i < v.size(); ++i) highSum += v[i];
+    *lowMean = lowSum / double(split);
+    *highMean = highSum / double(v.size() - split);
+    *lowCount = split;
+    *gapLow = v[split - 1];
+    *gapHigh = v[split];
+}
+
 double quantile(std::vector<double> v, double q) {
     if (v.empty()) return 0.0;
     size_t k = size_t(q * double(v.size() - 1) + 0.5);
@@ -109,8 +151,22 @@ bool Stats::finish(bool enforce) {
         for (int a = 0; a < AccountCount; ++a) perAccount[a].push_back(acc[a]);
     }
 
+    // The wall time a frame takes, which is the only figure that decides whether 180 fps
+    // happens. It is reported as a MEAN, on purpose.
+    //
+    // Its median is worse than useless here. The distribution is strictly bimodal -- about
+    // half the frames submit in a fifth of a millisecond and the other half wait four for
+    // the drawable, with nothing at all in between -- so the median falls in the empty gap
+    // and flips between identical runs. Sprint 1 published 1.824 ms and 640 fps from it, and
+    // two back-to-back re-runs measured 2.254 and 1.538, 489 fps and 1486. The mean is
+    // stable across the same runs, and it is what a second of wall clock actually contains.
+    const double frameMean = mean(cpu);
+    double lowMean = 0.0, highMean = 0.0, gapLow = 0.0, gapHigh = 0.0;
+    size_t lowCount = 0;
+    twoModes(cpu, &lowMean, &highMean, &lowCount, &gapLow, &gapHigh);
+
+    const double gpuMean = mean(gpu);
     const double gpuMed = quantile(gpu, 0.5);
-    const double cpuMed = quantile(cpu, 0.5);
 
     // Whether the per-view timers add up to the frame they are supposed to divide. On Metal
     // each view is its own render pass encoder and the timestamps are taken at its edges, so
@@ -142,14 +198,24 @@ bool Stats::finish(bool enforce) {
                    medianSum, gpuMed);
     }
 
-    const double gpuBudget = totalGpuBudgetMs();
-    const bool gpuOver = gpuMed > gpuBudget;
-    const bool cpuOver = cpuMed > cpuBudgetMs();
-    core::logf("%-10s %8.3f %8.3f %8s %8.3f%s", "gpu frame", gpuMed, quantile(gpu, 0.99), "",
-               gpuBudget, gpuOver ? "  OVERDRAWN" : "");
-    core::logf("%-10s %8.3f %8.3f %8s %8.3f%s", "cpu", cpuMed, quantile(cpu, 0.99), "",
-               cpuBudgetMs(), cpuOver ? "  OVERDRAWN" : "");
-    core::logf("%-10s %8.1f %8.1f", "fps", quantile(fps, 0.5), quantile(fps, 0.01));
+    // The GPU figure is reported and NOT enforced. bgfx's gpuTimeEnd - gpuTimeBegin counts
+    // waiting as well as work: measured here it is larger than the wall time of the frame it
+    // sits in, which is impossible for work alone. It is the same complaint docs/budget.md
+    // already makes of the per-view timers, and it applies to the frame too.
+    const double frameBudget = frameBudgetMs();
+    const bool frameOver = frameMean > frameBudget;
+    core::logf("%-10s %8.3f %8.3f %8s %8s%s", "gpu frame", gpuMean, quantile(gpu, 0.99), "", "-",
+               gpuMean > frameMean ? "  (counts waiting: larger than the frame it sits in)"
+                                   : "  (reported, not enforced)");
+    core::logf("%-10s %8.3f %8.3f %8s %8.3f%s", "frame", frameMean, quantile(cpu, 0.99), "",
+               frameBudget, frameOver ? "  OVERDRAWN" : "");
+    if (lowCount > 0) {
+        core::logf("  frame time is two humps: %zu of %zu at %.3f ms and the rest at %.3f, "
+                   "nothing between %.3f and %.3f. The mean is the number; a median of this "
+                   "lands in the gap and flips between runs.",
+                   lowCount, cpu.size(), lowMean, highMean, gapLow, gapHigh);
+    }
+    core::logf("%-10s %8.1f", "fps", frameMean > 0.0 ? 1000.0 / frameMean : 0.0);
 
     // What the documented per-account allowances can and cannot do here.
     //
@@ -168,10 +234,10 @@ bool Stats::finish(bool enforce) {
         double measured = 0.0;
         bool found = false;
         if (o.account == "gpu") {
-            measured = gpuMed;
+            measured = gpuMean;
             found = true;
-        } else if (o.account == "cpu") {
-            measured = cpuMed;
+        } else if (o.account == "frame" || o.account == "cpu") {
+            measured = frameMean;
             found = true;
         } else {
             for (int a = 0; a < AccountCount; ++a) {
@@ -193,7 +259,7 @@ bool Stats::finish(bool enforce) {
         }
     }
 
-    const bool overdrawn = gpuOver || cpuOver || claimBroken;
+    const bool overdrawn = frameOver || claimBroken;
     if (!enforce) return true;
     if (overdrawn) core::logError("the budget is overdrawn; see docs/budget.md");
     return !overdrawn;

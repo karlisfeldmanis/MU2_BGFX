@@ -23,8 +23,33 @@ SAMPLER2D(s_emissive, 3);
 SAMPLER2DSHADOW(s_shadowCompare, 4);
 SAMPLER2D(s_shadowDepth, 5);
 
+// The prepass, read two different ways.
+//
+// When the frame is multisampled this texture IS multisampled, and it must be read one
+// sample at a time rather than resolved. A resolve averages the samples, and the average of
+// two normals across a silhouette is not a normal and the average of two depths is not a
+// depth: a pixel with one of four samples covered comes back at a quarter of the true depth.
+// Measured on one house that was a one-pixel rim on 0.15% of the screen; with grass the
+// silhouettes ARE the screen. So sample 0 is taken, which is a real position on a real
+// surface, and the half-resolution occlusion term never sees an edge that does not exist.
+#ifdef MU2_PREPASS_MS
+SAMPLER2DMS(s_prepass, 6);
+uniform vec4 u_prepassSize;  // xy: the prepass's own size in pixels (it is not this view's)
+#else
 SAMPLER2D(s_prepass, 6);    // rgb: view normal  a: view depth in units
+#endif
 SAMPLER2D(s_ao,      7);
+
+// One prepass texel, whichever way it has to be read. `uv` is in [0,1] over the prepass,
+// which is full resolution while the caller may be at half.
+vec4 prepassAt(vec2 uv)
+{
+#ifdef MU2_PREPASS_MS
+	return texelFetch(s_prepass, ivec2(uv * u_prepassSize.xy), 0);
+#else
+	return texture2D(s_prepass, uv);
+#endif
+}
 SAMPLER2D(s_colour,  8);
 
 // The sky, in closed form, from the same two colours the ambient uses. No cubemap and no

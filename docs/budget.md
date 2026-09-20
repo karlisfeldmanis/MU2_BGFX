@@ -16,14 +16,16 @@ that overdraws stops and says so rather than borrowing from spare.
 | present | 5, 6 | 0.5 | ACES and sRGB, the HUD, the debug text |
 | spare | — | 0.2 | unspent on purpose |
 
-**0.3 ms of the original 0.5 spare is spent on 4x MSAA**, measured on the House01 bench
-(1x 2.88 ms, 2x 3.26, 4x 3.15, 8x 3.29 — the cost is the resolve, which is resolution-bound,
-so 4x and 8x are within noise of each other on this tile-based GPU). It is not an account of
-its own because it does not land in one: it widens the prepass, the shade pass and the
-resolve together. Re-measured on the town in sprint 2, where geometry rather than resolution
-may decide it.
+**4x MSAA's cost is not yet honestly measured.** The figures first published here (1x 2.88 ms,
+2x 3.26, 4x 3.15, 8x 3.29) were GPU medians, and wall frame time was flat at 2.11/2.17/2.15/
+2.19 ms across the same four settings — so throughput does not corroborate them, and the
+ordering 4x < 2x does not survive a longer run. Since then the prepass stopped being resolved
+at all (the SSAO reads one sample itself), which changes the cost again. It is re-measured on
+the town in sprint 2, in wall time, where geometry rather than resolution decides it.
 
-CPU: **3 ms** a frame, of which the sim gets 0.5 and the draw submission the rest.
+The accounts above are a division of GPU work and are **advisory**: they say where the time
+is meant to go, and the share column says where it went. The frame's wall time is what
+actually fails a run. Of that frame, the sim gets 0.5 ms once it exists.
 
 ## How it is measured
 
@@ -39,13 +41,33 @@ about 0 ms on average while the tail was the whole story.
 The first 30 frames are dropped from every summary: they hold the pipeline compiles and the
 first upload of everything.
 
+## The one enforced number is the wall time of a frame
+
+**Mean wall frame time, 5.5 ms, which is 180 fps.** That is the goal stated as the thing that
+delivers it, and it is the only figure here measured without a GPU timer that counts waiting.
+
+Two things follow, and both were learned the hard way.
+
+**It is a mean, never a median.** Frame time on this machine is not one distribution: it is
+two. Measured over 370 frames, 184 of them submit in about 0.24 ms and the other 186 wait
+about 3.9, with *nothing at all* between 1.0 and 2.4 — the frames alternate between one that
+submits and one that waits for the drawable. A median of that lands in the empty gap and
+flips between identical runs: sprint 1 published 1.824 ms and 640 fps, and two back-to-back
+re-runs of the same command measured 2.254 and 1.538 ms, 489 fps and 1486. The mean is stable
+across the same runs to within 2%. The summary names both humps so nobody has to rediscover
+this.
+
+**The GPU figure is reported and not enforced.** `gpuTimeEnd - gpuTimeBegin` is larger than
+the wall time of the frame it sits inside, which is impossible for work alone — it counts
+waiting, exactly as the per-view timers do. It is useful for comparing one change against
+another in the same run, and it is not a budget.
+
 ## What the gate enforces, and what it only reports
 
 The per-view timers on this Mac do not divide the frame — they count the gaps between
 encoders and the wait for the drawable, and sum to five times the frame's own GPU time. So:
 
-- **Enforced on every run**: the frame's own `gpuTimeEnd - gpuTimeBegin` against 5.5 ms, and
-  the CPU against 3 ms. Both are measured directly and neither can be argued with.
+- **Enforced on every run**: the mean wall frame time against 5.5 ms. Nothing else.
 - **Reported, not enforced**: the documented per-account allowances. `present` exceeds its
   share on every run because the drawable wait lands in whichever view presents; failing
   every run on that would make the gate noise.
@@ -54,8 +76,8 @@ encoders and the wait for the drawable, and sum to five times the frame's own GP
 
 `--budget shade=1.0` is not a relaxation, it is **a claim the caller is making about this
 run**, and it is checked whether the timers are coherent or not — against the account's
-share of the measured frame. `--budget gpu=0.5` and `--budget cpu=1.0` claim the two figures
-that are measured directly. An account name nothing recognises fails the run rather than
+share of the measured frame. `--budget frame=2.0` claims the enforced figure and
+`--budget gpu=2.0` the diagnostic one; both read the mean. An account name nothing recognises fails the run rather than
 being ignored.
 
 This matters because a gate that cannot fail is not a gate. Sprint 0's proving sentence was

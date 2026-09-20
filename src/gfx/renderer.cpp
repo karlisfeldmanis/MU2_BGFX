@@ -53,6 +53,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uShadowMtx_ = bgfx::createUniform("u_shadowMtx", bgfx::UniformType::Mat4);
     uShadowParams_ = bgfx::createUniform("u_shadowParams", bgfx::UniformType::Vec4);
     uCamRay_ = bgfx::createUniform("u_camRay", bgfx::UniformType::Vec4);
+    uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
 
     sAlbedo_ = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
     sNormal_ = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
@@ -85,10 +86,13 @@ bool Renderer::loadPrograms(const std::string& dir) {
     prepassProgram_ = loadProgram(dir, "vs_static", "fs_prepass");
     ssaoProgram_ = loadProgram(dir, "vs_screen", "fs_ssao");
     blurProgram_ = loadProgram(dir, "vs_screen", "fs_blur");
+    ssaoMsProgram_ = loadProgram(dir, "vs_screen", "fs_ssao_ms");
+    blurMsProgram_ = loadProgram(dir, "vs_screen", "fs_blur_ms");
     shadeProgram_ = loadProgram(dir, "vs_static", "fs_shade");
     presentProgram_ = loadProgram(dir, "vs_screen", "fs_present");
     const bool ok = bgfx::isValid(shadowProgram_) && bgfx::isValid(prepassProgram_) &&
                     bgfx::isValid(ssaoProgram_) && bgfx::isValid(blurProgram_) &&
+                    bgfx::isValid(ssaoMsProgram_) && bgfx::isValid(blurMsProgram_) &&
                     bgfx::isValid(shadeProgram_) && bgfx::isValid(presentProgram_);
     if (!ok) core::logError("the frame is missing a program; nothing will draw");
     return ok;
@@ -130,8 +134,11 @@ bool Renderer::createTargets(int width, int height) {
     // View normal and view depth in one target. RGBA16F because the depth is in world units
     // and Lorencia is 25 600 of them across: a half float runs out of precision at that
     // range, so what is stored is the distance from the eye, which stays small.
-    prepassColour_ =
-        bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F, rt | msaaFlag | clamp);
+    // MSAA_SAMPLE keeps bgfx from resolving it: the SSAO reads one sample itself, because
+    // an averaged normal across a silhouette is not a normal. Nothing else reads this target.
+    const uint64_t prepassMsaa = msaaFlag ? (msaaFlag | BGFX_TEXTURE_MSAA_SAMPLE) : 0;
+    prepassColour_ = bgfx::createTexture2D(w, h, false, 1, bgfx::TextureFormat::RGBA16F,
+                                           rt | prepassMsaa | clamp);
     // Write only, which is what it is: the depth is an attachment the prepass writes and the
     // shade pass tests EQUAL against, and nothing ever samples it. bgfx requires the flag
     // outright once the texture is multisampled -- "a frame buffer depth MSAA texture cannot
@@ -203,13 +210,14 @@ void Renderer::resize(int width, int height) {
 void Renderer::shutdown() {
     destroyTargets();
     for (bgfx::ProgramHandle* p : {&shadowProgram_, &prepassProgram_, &ssaoProgram_, &blurProgram_,
-                                   &shadeProgram_, &presentProgram_}) {
+                                   &ssaoMsProgram_, &blurMsProgram_, &shadeProgram_,
+                                   &presentProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
-          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &sAlbedo_,
+          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &uPrepassSize_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
@@ -242,13 +250,14 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             uint64_t drawState = state;
             // MU's figures are single sheets of mixed winding and are drawn two-sided.
             if (!material.twoSided) drawState |= BGFX_STATE_CULL_CW;
-            // A cutout keeps its discard, and with MSAA on it also gets alpha to coverage:
-            // plain MSAA never touches a discarded pixel's edge, so grass and leaves would
-            // stay as hard as they were. Nearly free once the samples are there. Untested on
-            // real cutout content -- House01 has none; the grass arrives in sprint 2.
-            if (material.cutout >= 0.0f && msaa_ > 1) {
-                drawState |= BGFX_STATE_BLEND_ALPHA_TO_COVERAGE;
-            }
+            // No alpha to coverage here, deliberately. It was set for a while and did
+            // nothing: coverage comes from gl_FragColor.a and every pass writes 1.0 or a
+            // depth, so the mask was always full. Making it real is not one line -- the
+            // prepass and the shade pass must compute the SAME mask or the shade pass's
+            // DEPTH_TEST_EQUAL leaves the samples it drops unshaded and every leaf grows a
+            // black fringe, and the prepass has no channel free for coverage until its
+            // normal is packed octahedrally. That is sprint 3's work, with the grass that
+            // needs it and can test it. See docs/conventions.md.
 
             bgfx::setVertexBuffer(0, mesh.vertexBuffer());
             bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);
@@ -437,17 +446,21 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const float camRay[4] = {tanHalfY * float(width_) / float(height_), tanHalfY, 0.0f,
                                      0.0f};
             bgfx::setUniform(uCamRay_, camRay);
+            const float prepassSize[4] = {float(width_), float(height_), 1.0f / float(width_),
+                                          1.0f / float(height_)};
+            bgfx::setUniform(uPrepassSize_, prepassSize);
             bgfx::setTexture(6, sPrepass_, prepassColour_);
-            screenPass(ViewSsao, ssaoProgram_);
+            screenPass(ViewSsao, msaa_ > 1 ? ssaoMsProgram_ : ssaoProgram_);
 
             bgfx::setViewFrameBuffer(ViewBlur, blurFb_);
             bgfx::setViewRect(ViewBlur, 0, 0, hw, hh);
             bgfx::setViewClear(ViewBlur, 0, 0, 1.0f, 0);
             bgfx::setViewTransform(ViewBlur, nullptr, nullptr);
             bgfx::setUniform(uParams_, params);
+            bgfx::setUniform(uPrepassSize_, prepassSize);
             bgfx::setTexture(6, sPrepass_, prepassColour_);
             bgfx::setTexture(7, sAo_, ssaoTex_);
-            screenPass(ViewBlur, blurProgram_);
+            screenPass(ViewBlur, msaa_ > 1 ? blurMsProgram_ : blurProgram_);
 
             // --- view 4: the one lit pass --------------------------------------------
             float shadowMtx[16];
