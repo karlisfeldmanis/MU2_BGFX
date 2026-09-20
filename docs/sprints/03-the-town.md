@@ -332,4 +332,22 @@ Two smaller ones worth the same honesty:
   prepass and the shade pass must compute the same mask or every leaf grows a black fringe.
   The grass is here now to test it with.
 - **Water, the 11 blend materials, the ground's 1536² sheets**, all as listed above.
+- **The shadows shimmer when the camera moves**, reported by the user watching the window
+  and not yet isolated. What is established: with `--still` the frame is **bit-stable** --
+  frames 60 and 120 differ in 0 of 2 073 600 pixels -- so whatever it is, it is coupled to
+  camera motion and not to time. Two candidates, and they need separating before either is
+  touched:
+  1. **The PCSS phase is screen-space.** `fs_shade.sc` seeds its Vogel disc with
+     `gradientNoise(gl_FragCoord.xy)`, which is fixed to the screen: as the camera moves,
+     every surface point draws a different dither each frame and the penumbra boils. This
+     costs nothing when still, which matches the stability above exactly.
+  2. **The split's texel snap**, which `02-the-ground.md` flagged as never tested with a
+     moving camera and which is still never tested with one.
+  **Why it is not isolated yet**: a screenshot stalls its frame, so between two shots the
+  camera has advanced far more than one frame and 80% of pixels change from motion alone --
+  the same stall that made sprint 2's timings wrong. Isolating it wants a camera that can be
+  stepped deterministically (a fixed advance per frame rather than one taken from elapsed
+  time), and that lives in `game/world.cpp` and `main.cpp`, which sprint 4 is holding. The
+  discriminating test once it exists: hold the phase constant and see whether the shimmer
+  survives -- if it does, it is the snap; if it goes, it is the noise.
 
