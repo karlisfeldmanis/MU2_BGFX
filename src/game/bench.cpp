@@ -36,7 +36,11 @@ bool ModelBench::makeGround(content::Textures& textures, float halfSize) {
     material.name = "bench ground";
     material.albedo = textures.white();
     material.normal = textures.flatNormal();
-    material.orm = textures.white();
+    // Not white. White's blue is metal 1.0, and with no diffuse a metal surface returns
+    // only what it reflects -- so this plane was a fully rough white *metal*, which looks
+    // plausible enough in a shot to survive three reviews. neutralOrm is occlusion 1,
+    // roughness 1, metal 0.
+    material.orm = textures.neutralOrm();
     material.emissive = textures.black();
 
     content::Part part;

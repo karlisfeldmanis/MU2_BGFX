@@ -132,7 +132,14 @@ Args parseArgs(int argc, char** argv) {
                     char* afterRow = nullptr;
                     const double column = std::strtod(v, &afterColumn);
                     const double row = std::strtod(comma + 1, &afterRow);
-                    if (afterColumn != comma || afterRow == comma + 1) {
+                    // Four ways this can be junk, not two. An empty column leaves
+                    // afterColumn AT the comma, which the first test alone reads as success
+                    // ("--at ,5" ran at tile 0,5); and trailing junk on the row was ignored
+                    // because only its start was checked ("--at 12,5x" ran at 12,5).
+                    const bool columnEmpty = afterColumn == v;
+                    const bool rowEmpty = afterRow == comma + 1;
+                    const bool rowTrailing = afterRow == nullptr || *afterRow != '\0';
+                    if (columnEmpty || rowEmpty || rowTrailing || afterColumn != comma) {
                         logError("--at wants two numbers as column,row, got '%s'", v);
                         a.valid = false;
                     } else {

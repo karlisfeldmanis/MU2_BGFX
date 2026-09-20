@@ -71,9 +71,13 @@ Everything is lit in linear space and written out once.
 **The middle column is what runs and the left is what is owed**, and the two are written
 side by side because the left column alone was a rule nothing kept. `content/texture.cpp`
 uploads RGBA8 with a chain it builds itself; nothing in `src/` creates a compressed format.
-Measured on Lorencia's ground alone: 27 textures, **141.8 MB**, of which 47.2 MB is the mip
-chain. Compressed that is roughly a third. The cook step owns closing this, and until it
-does, this table says so rather than describing an engine that does not exist.
+Measured on Lorencia's ground alone: 27 textures, **189.0 MB resident** — 141.8 MB of top
+levels *plus* a further 47.2 MB of mip chain, which is the third a chain adds. (This page
+said "141.8 MB, of which 47.2 is the chain", understating the total by 47 MB; the loader
+counts the two separately and the log prints the chain as `+X KB of mips`.) BC7 and BC5 are
+both one byte a texel against RGBA8's four, so compressed it is **a quarter**, not a third.
+The cook step owns closing this, and until it does, this table says so rather than describing
+an engine that does not exist.
 
 A material with no ORM map takes **occlusion 1, roughness 1, metal 0** — not white. White's
 blue is metal 1.0, a metal surface has no diffuse, and a material whose ORM failed to load

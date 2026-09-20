@@ -96,8 +96,11 @@ warmup, at `b34e5bc`. Three runs of each, alternating, **no `--shot`**.
 | gpu frame (reported, counts waiting) | — | 2.30 |
 | budget | kept | kept |
 
-Against a 5.5 ms frame. **Still and moving are the same number**, 0.01 ms apart inside a
-spread of 0.16.
+Against a 5.5 ms frame. **Still and moving are not distinguished** — which is not the same
+as equal, and the weaker statement is the true one. Our three runs each land 0.01 ms apart;
+the review's six pairs put moving 0.155 ms above still with three pairs flat and three
+positive. Both sit inside a machine spread that reaches 2 ms between identical segments, so
+neither set separates them.
 
 > **This table used to say 3.075 ms still and 4.085 moving, and both were wrong.** They were
 > taken with `--shot` on, under a command line written here that says they were not. A
@@ -111,7 +114,8 @@ spread of 0.16.
 > here as fact. Both were beneath the noise.
 >
 > `--repeat` settled it by measuring six segments inside one process, world loaded once,
-> nothing changed between them: **spread 1.773 ms, 2.202 to 3.975**. The machine's own
+> nothing changed between them: spread **1.773 ms** on that invocation, and 0.2 to 2.1 ms
+> across six further invocations of the same command. The machine's own
 > variation between identical segments is more than ten times the effect either claim
 > described, and the six pairs were run in a fixed order, so a warming trend alone would
 > produce that sign. **No number for the residual is published here.** The log still warns

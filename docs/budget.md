@@ -85,11 +85,16 @@ segments of the same 600 frames, same process, same camera, nothing changed betw
     segment 3  2.645 ms      segment 6  2.429 ms
     6 segments: mean of means 2.640 ms, spread 1.773 (2.202 to 3.975)
 
-**1.8 ms of spread between identical segments.** So a claimed difference of a tenth of a
-millisecond between two configurations is not a difference; it is this. Anything below the
-spread needs interleaved paired segments and a consistent sign, and even then the magnitude
-is not worth publishing. This project put a difference in a sprint file with the sign
-reversed twice before this line existed.
+**And the spread is itself not one number.** Six further invocations of the same
+`--repeat 6` gave spreads of 0.203, 0.306, 0.350, 0.975, 2.054 and 2.072 ms — an order of
+magnitude apart, the wide ones caused by a single segment landing near 1.4 or 3.5. So the
+floor on this machine is **somewhere between 0.2 and 2.1 ms**, and which one a given
+afternoon hands you is not knowable in advance.
+
+That is the rule: a claimed difference of a tenth of a millisecond is not a difference, it is
+this. Anything below the spread needs interleaved paired segments and a consistent sign, and
+even then the magnitude is not worth publishing. This project put a difference in a sprint
+file with the sign reversed twice before this line existed.
 
 ### The spread is hitches, not variance, and the mean of means is ten times finer
 
