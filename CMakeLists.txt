@@ -72,6 +72,7 @@ add_executable(mu2
   src/content/mesh.cpp
   src/content/ground.cpp
   src/content/cooked.cpp
+  src/content/placement.cpp
   src/gfx/window.cpp
   src/gfx/views.cpp
   src/gfx/stats.cpp
@@ -129,3 +130,12 @@ add_executable(cooked_test EXCLUDE_FROM_ALL
 target_include_directories(cooked_test PRIVATE src)
 target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(cooked_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# The placement transform against MU's own AngleMatrix. It was wrong twice, in the sign and
+# then in the order, and both looked right on most of the map.
+add_executable(placement_test EXCLUDE_FROM_ALL
+  tests/placement_test.cpp
+  src/content/placement.cpp
+)
+target_include_directories(placement_test PRIVATE src)
+target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-parameter)

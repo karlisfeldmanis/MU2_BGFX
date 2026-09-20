@@ -3,6 +3,7 @@
 #include <bx/math.h>
 #include <bx/timer.h>
 
+#include "content/placement.h"
 #include "core/files.h"
 #include "core/log.h"
 
@@ -109,25 +110,12 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
 
     gfx::Drawable drawable;
     drawable.mesh = &mesh;
-    // MU's stored angles are degrees about its own z-up axes and the cook has already put
-    // them in radians: MU's z is our yaw, its x our pitch, its y our roll. Every one of them
-    // is NEGATED here, and that is bx's convention rather than MU's.
-    //
-    // bx::mtxSRT writes its rotations for a row vector in the sense OPPOSITE to the
-    // right-handed one: with yaw alone its rows give x' = x cos - z sin and z' = x sin +
-    // z cos, which turns +x toward +z. Our axis swap -- (x, y, z) becomes (x, z, -y) --
-    // turns MU's rotation the other way, +x toward -z. So the angle handed to bx is the
-    // negative of MU's, on all three axes.
-    //
-    // This is the same trap docs/conventions.md already records for bx::mtxFromQuaternion,
-    // which writes a column-vector matrix into a row-vector layout and so builds the
-    // inverse rotation. It bites mtxSRT identically, and it is invisible on anything
-    // symmetric: fences in a row, grass, a square planter all look right either way. It was
-    // caught on Lorencia's fountain, whose four corner blocks stood inside the pool with
-    // their carved faces turned in.
-    bx::mtxSRT(drawable.transform, instance.scale, instance.scale, instance.scale,
-               -instance.pitch, -instance.yaw, -instance.roll, instance.position[0],
-               instance.position[1], instance.position[2]);
+    // content/placement.cpp, which is MU's own (Z * Y) * X in our axes, with a test
+    // against MuMain's AngleMatrix beside it. Not bx::mtxSRT: that composes the three the
+    // other way round and turns each of them the opposite way.
+    content::placementTransform(instance.pitch, instance.yaw, instance.roll, instance.scale,
+                                instance.position, drawable.transform);
+
     // The cook stored MU's light as bytes; the shader wants it linear. It is a lit result
     // and not an albedo, so it does NOT go through the sRGB curve -- the same rule
     // docs/conventions.md states for light.png on the ground.
