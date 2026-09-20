@@ -73,6 +73,8 @@ add_executable(mu2
   src/content/ground.cpp
   src/content/cooked.cpp
   src/content/placement.cpp
+  src/content/grid.cpp
+  src/content/tables.cpp
   src/gfx/window.cpp
   src/gfx/views.cpp
   src/gfx/stats.cpp
@@ -84,6 +86,11 @@ add_executable(mu2
   src/game/town.cpp
   src/game/figures.cpp
   src/game/crowd.cpp
+  src/game/headless.cpp
+  src/sim/rules.cpp
+  src/sim/route.cpp
+  src/sim/realm.cpp
+  src/sim/audit.cpp
 )
 target_include_directories(mu2 PRIVATE src extern)
 # bimg_decode reads the PNGs, bimg_encode writes the screenshots.
@@ -141,3 +148,21 @@ add_executable(placement_test EXCLUDE_FROM_ALL
 )
 target_include_directories(placement_test PRIVATE src)
 target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# Sprint 5's own: the rules against OpenMU's numbers, the router against the map, and two
+# realms raised on one seed that must walk the same walk. Foundation 9 -- "the sim runs without
+# a window" -- is what this target exists to keep true.
+add_executable(sim_test EXCLUDE_FROM_ALL
+  tests/sim_test.cpp
+  src/sim/rules.cpp
+  src/sim/route.cpp
+  src/sim/realm.cpp
+  src/sim/audit.cpp
+  src/content/grid.cpp
+  src/content/tables.cpp
+  src/core/files.cpp
+  src/core/log.cpp
+)
+target_include_directories(sim_test PRIVATE src)
+target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)

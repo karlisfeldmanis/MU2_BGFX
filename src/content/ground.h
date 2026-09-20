@@ -12,6 +12,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include "content/grid.h"
 #include "content/texture.h"
 
 namespace mu::content {
@@ -67,11 +68,16 @@ public:
     // Off the map returns 0.
     float heightAt(float x, float z) const;
 
-    // MU's own attribute bits for a tile. 0 off the map -- which is also MU's value for open
-    // walkable ground, so this alone never answers "may something stand here". See the note
-    // on the definition, and ask walkable().
-    uint8_t attributesAt(int column, int row) const;
+    // MU's own attribute word for a tile. 0 off the map -- which is also MU's value for open
+    // walkable ground, so this alone never answers "may something stand here". Ask walkable(),
+    // which is Grid::open and is the same function the sim walks by.
+    uint16_t attributesAt(int column, int row) const;
     bool walkable(int column, int row) const;
+
+    // The land's own grid, which is what the sim is handed when the window plays. There is one
+    // of these and one passability test in the engine; see content/grid.h for why that had to
+    // be said out loud.
+    const Grid& grid() const { return grid_; }
 
     uint32_t triangleCount() const { return indexCount_ / 3; }
 
@@ -89,8 +95,8 @@ private:
     int size_ = 0;
     float metresPerTile_ = 1.0f;
     float heightFactor_ = 1.5f;
-    std::vector<float> height_;    // metres, [row * size + column]
-    std::vector<uint8_t> attrs_;   // MU's own bits
+    std::vector<float> height_;  // metres, [row * size + column]
+    Grid grid_;
 };
 
 }  // namespace mu::content

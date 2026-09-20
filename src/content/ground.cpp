@@ -144,12 +144,24 @@ bool Ground::readGrids(const std::string& worldDir, const std::string& heightFil
     const float perByte = heightFactor_ / 100.0f;
     for (size_t i = 0; i < raw.size(); ++i) height_[i] = float(raw[i]) * perByte;
 
-    attrs_ = readGrid(core::join(worldDir, attributesFile), &w, &h, 0);
-    if (attrs_.empty() || w != size_ || h != size_) {
+    // Both channels, because MU's attribute is a 16-bit word -- low byte in red, high byte in
+    // green (Terrain.cs:87) -- and this read the red alone. Measured, the green channel is zero
+    // on all 65 536 tiles of Lorencia and of Noria, so nothing was being lost; it would be lost
+    // silently on the first map that used it, and reading the word is one line.
+    const std::vector<uint8_t> low = readGrid(core::join(worldDir, attributesFile), &w, &h, 0);
+    int highWidth = 0, highHeight = 0;
+    const std::vector<uint8_t> high =
+        readGrid(core::join(worldDir, attributesFile), &highWidth, &highHeight, 1);
+    if (low.empty() || w != size_ || h != size_) {
         core::logError("%s is %dx%d, and the world says %d tiles a side", attributesFile.c_str(), w,
                        h, size_);
         return false;
     }
+    std::vector<uint16_t> words(low.size());
+    for (size_t i = 0; i < low.size(); ++i) {
+        words[i] = uint16_t(low[i]) | uint16_t(i < high.size() ? uint16_t(high[i]) << 8 : 0);
+    }
+    grid_.set(size_, std::move(words));
 
     float lowest = 1e30f, highest = -1e30f;
     for (float v : height_) {
@@ -167,9 +179,10 @@ bool Ground::readGrids(const std::string& worldDir, const std::string& heightFil
             if (!walkable(column, row)) ++blocked;
         }
     }
+    const size_t tiles = size_t(size_) * size_t(size_);
     core::logf("grids %dx%d: height %.2f to %.2f m, %zu of %zu tiles blocked (%.1f%%)", size_,
-               size_, lowest, highest, blocked, attrs_.size(),
-               100.0 * double(blocked) / double(attrs_.size()));
+               size_, lowest, highest, blocked, tiles,
+               100.0 * double(blocked) / double(tiles));
     return true;
 }
 
@@ -420,17 +433,13 @@ float Ground::heightAt(float x, float z) const {
 // ground" for everywhere that is not ground at all. walkable() does not fall into it because
 // it repeats the bounds test itself before looking at any bit, which is also what MU2's
 // Terrain.cs does; anything else added here must do the same.
-uint8_t Ground::attributesAt(int column, int row) const {
-    if (attrs_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return 0;
-    return attrs_[size_t(row) * size_t(size_) + size_t(column)];
-}
+uint16_t Ground::attributesAt(int column, int row) const { return grid_.at(column, row); }
 
-bool Ground::walkable(int column, int row) const {
-    if (attrs_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return false;
-    // MU's own bits: 0x04 is NoMove, 0x08 is NoGround. Either one and nothing walks here.
-    const uint8_t a = attributesAt(column, row);
-    return (a & 0x04) == 0 && (a & 0x08) == 0;
-}
+// MU's own test, and the engine's only one: `(word & ~NonBlocking) < wall`, with the wall at
+// Character. It used to be `(a & 0x04) == 0 && (a & 0x08) == 0` here and the threshold in the
+// sim, which is two definitions of "blocked" that agree on both of this content's maps and on
+// nothing that sets Height over NoMove. See content/grid.h.
+bool Ground::walkable(int column, int row) const { return grid_.open(column, row); }
 
 void Ground::shutdown() {
     if (bgfx::isValid(vbh_)) bgfx::destroy(vbh_);
@@ -440,7 +449,7 @@ void Ground::shutdown() {
     indexCount_ = 0;
     parts_.clear();
     height_.clear();
-    attrs_.clear();
+    grid_.clear();
 }
 
 }  // namespace mu::content

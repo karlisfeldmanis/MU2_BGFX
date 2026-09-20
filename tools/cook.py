@@ -1003,7 +1003,8 @@ def cook_tables(world, out_dir):
 
     The .mur format ("MU2 rules"), version 1, little-endian:
 
-        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 map number, u32 grid size
+        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 map number, u32 grid size,
+                i32 safe gate x1, y1, x2, y2
         kinds:  u16 len + figure name (the cooked figure this breed wears, or empty),
                 u16 len + label ("Bull Fighter"),
                 i32 number, level, health, minimumDamage, maximumDamage, defense,
@@ -1012,6 +1013,11 @@ def cook_tables(world, out_dir):
                 i32 attackRate, defenseRate, attackSkill, f32 scale
         spawns: u32 kind (an index into the kinds above), i32 x1, x2, y1, y2, u32 count
         grid:   u16 a tile, row-major [y][x], MU's own attribute word
+
+    The safe gate is the rectangle a dead character stands up in -- the map's own spawn box,
+    `gates.safe` on the world's json, which for Lorencia is (133, 118)-(151, 135) and is
+    `gates` row 17 in mu.db. All zeroes means the map has none and a death has nowhere to send
+    anybody.
 
     The grid is in here because the sim is the first thing that reads it for a *decision* and
     the sim has no PNG decoder and no window. It is MU's whole 16-bit word -- `red | green << 8`,
@@ -1033,7 +1039,8 @@ def cook_tables(world, out_dir):
     with open(os.path.join(ASSETS, "index.json")) as handle:
         index = json.load(handle)
 
-    number = next(w["number"] for w in index["worlds"] if w["name"] == world)
+    entry = next(w for w in index["worlds"] if w["name"] == world)
+    number = entry["number"]
     # Which cooked figure a breed wears, by MU's own monster number. A breed with no model in
     # this content still gets a row: the rules do not need a mesh, and the sim is what this
     # table is for.
@@ -1085,7 +1092,13 @@ def cook_tables(world, out_dir):
     if high:
         print(f"cook: NOTE {world}'s attribute grid uses its high byte")
 
-    blob = struct.pack("<4sIIIIII", b"MU2R", 1, SIM_HZ, len(kinds), len(spawns), number, size)
+    # The safe gate is on index.json's world entry and NOT on the world's own json beside the
+    # grids -- which is where this looked first, and a missing gate is not an error there, so a
+    # dead character quietly stood up where he fell instead of in town.
+    gate = entry.get("gates", {}).get("safe", {})
+    blob = struct.pack("<4sIIIIII4i", b"MU2R", 1, SIM_HZ, len(kinds), len(spawns), number, size,
+                       int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
+                       int(gate.get("y2", 0)))
     blob += b"".join(kinds) + b"".join(spawns) + bytes(words)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{world}.mur")

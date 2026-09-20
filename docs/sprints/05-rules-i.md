@@ -202,6 +202,82 @@ Written before the code, as sprints 2 and 3 did:
 
 ## Measured
 
-Filled in when the sprint lands: the seeded run's two hashes and the build they came from,
-the tick's cost at 250 monsters and at Noria's 1000, the route's cost and its worst plan, what
-the invariants caught, and the frame with the walker in it against the town without.
+Built 2026-09-20 in one session, headless half first as planned. Apple clang 21.0.0, Release,
+on this Mac. Every number below is from `build/mu2 --headless`, which touches no window, no
+device and no .glb.
+
+**The gate's first half, kept.** The hunt is a level-4 Dark Knight put down in the spider and
+Budge Dragon field, ten thousand ticks, seed 1:
+
+    ./build/mu2 --headless --seed 1 --ticks 10000 --level 4 --at 200,160 --sim-log /tmp/a.log
+    ./build/mu2 --headless --seed 1 --ticks 10000 --level 4 --at 200,160 --sim-log /tmp/b.log
+    cmp /tmp/a.log /tmp/b.log        # identical, 117 307 bytes, fingerprint ee321b11beaaf37f
+
+and with `--sim-steps`, which puts every tile crossing in as well, identical again at 201 364
+bytes. 372 blows landed, 148 missed, 42 deaths, one level won; 2 880 draws from the realm's
+own dice. The scripted hand draws from its own generator and never from the realm's.
+
+**The gate's second half, kept with room to spare.** The account was 0.5 ms a step over
+Lorencia's 290 monsters. Measured:
+
+| map | monsters | median step | 99th | worst | in all |
+|---|---|---|---|---|---|
+| Lorencia | 290 | **0.0010 ms** | 0.0026 | 0.027 | 10.3 ms over 10 000 ticks |
+| Noria | 1005 | **0.0033 ms** | 0.0075 | 0.049 | 34.7 ms over 10 000 ticks |
+
+That is 0.2% of the account on Lorencia and 0.7% on Noria, and it is only that because of one
+thing found by measuring Noria rather than reasoning about Lorencia: **rousing was O(n²)**.
+Every beast scanned every body to find the players, which at 1005 bodies is a million
+comparisons a tick and measured 0.33 ms — the whole account, on a map with nothing happening
+on it. A list of who is a player and a lookup from id to index cured it: Noria went 0.33 → 0.0033
+and Lorencia 0.033 → 0.0010. The seeded log was **byte-identical before and after**, which is
+what says the change was a cost and not a behaviour.
+
+**The router.** 677 searches over the hunt, none failing, 6 828 tiles expanded in all, worst
+single plan 344 tiles. 49 walks were *refused* — no route to the tile asked for — and that is
+in the log now, because it was not: a refusal was a silence for one evening, the scripted hand
+asks again whenever it is not walking, and the run spent nine thousand ticks asking for the
+same impossible tile with nothing written to the log at all, because nothing was happening.
+`Refused` is an event like any other.
+
+**What the invariants caught.** Nothing, on either map, over 10 000 ticks: nothing stood on a
+tile the threshold refuses, no health went below zero, no blow landed on the dead, nothing
+strayed past its grudge, no level was won unpaid. `build/sim_test` is 57 checks over the rules,
+the dice, the router, determinism and those invariants, and it passes.
+
+**Three things this sprint decided that the plan above did not.**
+
+1. **Three classes, not one.** The plan deferred the Dark Wizard and the Fairy Elf to sprint 7
+   on the grounds that the census had only MU2's word for their rates. They are traced now —
+   `ClassDarkWizard.cs` and `ClassFairyElf.cs`, the files the census named — and the trace
+   corrected something MU2's table did not say: **the Fairy Elf's physical damage is not zero.**
+   It is conditional on her attack mode, and her melee rate runs over strength *and agility*
+   together (1/7 and 1/4 of the sum). Archery is a real second branch and waits for a bow.
+2. **A dead character stands up in town.** The plan said nothing about it and the hunt made it
+   necessary: a level-1 knight with no weapon dies to a Budge Dragon, and a hunt whose first
+   1348 ticks are a fight and whose remaining 8652 are a corpse proves very little. It is MU's
+   own rule rather than an addition — three seconds, the map's own spawn box, health restored
+   (`Realm.cs:2013`, `Player.cs:1687`) — and the safe gate is cooked into the tables for it.
+   The gate is on `index.json`'s world entry and **not** on the world json beside the grids,
+   which is where this looked first; a missing gate is not an error there, so he quietly stood
+   up where he fell.
+3. **Spending points is a sim action.** `--level 20` makes a character with 95 points in hand,
+   and unspent he is a level-1 character with more health: his fists do 4 to 7, a Budge Dragon
+   has three of defence, and he loses to it. `Realm::spend` is what sprint 7's stat window will
+   raise; the headless hand puts them all into strength and says so on the line that does it.
+
+**And two the cook decided.** `respawn_seconds` is corrected for the two breeds `mu.db`
+flattened (Bull Fighter and Budge Dragon, 10 → 3, `Lorencia.cs:89` and `:152`), printed on
+every run. And the attribute grid is cooked into the `.mur` as MU's whole 16-bit word, because
+the sim is the first thing that reads it for a decision and has no PNG decoder; the ground
+reads the same word out of the picture now instead of the red channel alone.
+
+**The one definition of blocked.** `content/grid.h` holds it — `(word & ~NonBlocking) < wall`,
+MU's threshold with MU's wall argument — and `Ground::walkable` is now a call to it. The two
+definitions the census found agreed on every tile of both maps but one, which is exactly the
+kind of agreement that ships the wrong one.
+
+**What is not done.** The window half — click to walk, click to attack, the walker drawn — is
+not in this commit. The sim it would be a view onto is finished and proved; what stopped it is
+that `game/crowd.cpp`, `crowd.h`, `figures.cpp` and `figures.h` were being edited by another
+session while this one ran, and a walker is drawn through exactly those four files.

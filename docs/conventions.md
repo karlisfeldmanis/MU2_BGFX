@@ -247,6 +247,25 @@ Six views in this order, and their ids are fixed so the budget accounts line up:
 Depth is laid by the prepass; the shade pass tests `EQUAL` and writes no depth. Nothing is
 shaded twice.
 
+## The grid, and what may stand on it
+
+- **There is one definition of "blocked" and it is `content/grid.h`.** MU's own test is a
+  threshold and not a bit test: `(word & ~(Action|Height|CameraUp)) < wall`, where `wall` is
+  `Character` (2) for a body that may not share a tile and `NoMove` (4) for the relaxed pass.
+  `Ground::walkable` and the sim's router are the same function. The bit test that used to sit
+  in `content/ground.cpp` agreed with it on every tile of Lorencia and Noria but one, and would
+  disagree everywhere on the first map that sets Height over NoMove.
+- **The attribute is a 16-bit word**, low byte in red and high byte in green
+  (`Terrain.cs:87`). Measured, the green channel is zero on all 65 536 tiles of both maps, so
+  nothing was being lost by reading the red alone -- and it would have been lost silently.
+- **Off the map is not open ground**, although MU's word for open ground is 0. Every reader
+  does its bounds test before its bit read.
+- The grid is data: no mips, no filtering, and it is cooked into the `.mur` as well as read
+  from the picture, because the sim reads it for decisions and has no PNG decoder. **Owed**:
+  the day the window raises a realm, it compares the two copies at load and complains if they
+  differ -- until then there is no run in which both are read, and a check nothing performs is
+  not a rule.
+
 ## Time
 
 - The sim ticks at a fixed **20 Hz**, as MU does, on its own accumulator. It never reads the
@@ -255,6 +274,12 @@ shaded twice.
   acceleration two. Getting that wrong reads as slow motion, not as a wrong number.
 - What is drawn may lag what the sim decided, and smoothing between ticks is presentation
   only: aim, reach and hits use the sim's own values.
+- **Every delay is converted to ticks once, in the cook**, at the tick rate written into the
+  file and checked at load. A delay re-derived per tick in floating point is how a seeded run
+  stops reproducing.
+- **A speed is one over a delay in ticks.** A walk of 400 ms is 8 ticks a tile and 0.125 tiles a
+  tick. The diagonal is counted **once**: A*'s 5-straight-7-diagonal is a search cost, and a
+  walk is a line whose length is what takes the time. Taking both makes diagonals 41% slow.
 
 ## Numbers
 

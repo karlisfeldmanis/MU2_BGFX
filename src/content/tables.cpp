@@ -1,0 +1,129 @@
+#include "content/tables.h"
+
+#include <cstring>
+
+#include "content/reader.h"
+#include "core/files.h"
+
+namespace mu::content {
+namespace {
+
+// The rate the cook converted every delay at. A table cooked at one rate and read by a sim
+// running at another is a fight that is quietly the wrong speed, and nothing about it looks
+// wrong -- so it is checked rather than trusted. docs/conventions.md, "Time".
+constexpr uint32_t kSimHz = 20;
+
+}  // namespace
+
+bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& error) {
+    Reader reader(bytes.data(), bytes.size());
+
+    char magic[4] = {};
+    uint32_t version = 0, kinds = 0, nests = 0, size = 0;
+    reader.take(magic, 4);
+    reader.read(version);
+    reader.read(out.hz);
+    reader.read(kinds);
+    reader.read(nests);
+    reader.read(out.map);
+    reader.read(size);
+    reader.take(out.safeGate, sizeof(out.safeGate));
+    if (reader.failed() || std::memcmp(magic, "MU2R", 4) != 0) {
+        error = "not a .mur";
+        return false;
+    }
+    if (version != 1) {
+        error = "a .mur of version " + std::to_string(version) + ", and this reads 1";
+        return false;
+    }
+    if (out.hz != kSimHz) {
+        error = "cooked for " + std::to_string(out.hz) + " Hz and this sim ticks at " +
+                std::to_string(kSimHz);
+        return false;
+    }
+
+    out.kinds.clear();
+    out.kinds.reserve(kinds);
+    for (uint32_t i = 0; i < kinds; ++i) {
+        MonsterKind kind;
+        reader.readString(kind.figure);
+        reader.readString(kind.label);
+        int32_t fields[15] = {};
+        reader.take(fields, sizeof(fields));
+        reader.read(kind.scale);
+        if (reader.failed()) {
+            error = "ran out of file inside breed " + std::to_string(i);
+            return false;
+        }
+        kind.number = fields[0];
+        kind.level = fields[1];
+        kind.health = fields[2];
+        kind.minimumDamage = fields[3];
+        kind.maximumDamage = fields[4];
+        kind.defense = fields[5];
+        kind.moveRange = fields[6];
+        kind.attackRange = fields[7];
+        kind.viewRange = fields[8];
+        kind.moveTicks = fields[9];
+        kind.attackTicks = fields[10];
+        kind.respawnTicks = fields[11];
+        kind.attackRate = fields[12];
+        kind.defenseRate = fields[13];
+        kind.attackSkill = fields[14];
+        out.kinds.push_back(std::move(kind));
+    }
+
+    if (!plausible(reader, nests, 24)) {
+        error = "claims " + std::to_string(nests) + " nests and has no room for them";
+        return false;
+    }
+    out.nests.clear();
+    out.nests.reserve(nests);
+    for (uint32_t i = 0; i < nests; ++i) {
+        MonsterNest nest;
+        reader.read(nest.kind);
+        reader.read(nest.x1);
+        reader.read(nest.x2);
+        reader.read(nest.y1);
+        reader.read(nest.y2);
+        reader.read(nest.count);
+        if (reader.failed()) {
+            error = "ran out of file inside nest " + std::to_string(i);
+            return false;
+        }
+        if (nest.kind >= out.kinds.size()) {
+            error = "nest " + std::to_string(i) + " names breed " + std::to_string(nest.kind) +
+                    " and there are " + std::to_string(out.kinds.size());
+            return false;
+        }
+        out.nests.push_back(nest);
+    }
+
+    if (size == 0 || !plausible(reader, size * size, sizeof(uint16_t))) {
+        error = "claims a grid " + std::to_string(size) + " tiles a side and has no room for it";
+        return false;
+    }
+    std::vector<uint16_t> words(size_t(size) * size_t(size));
+    reader.take(words.data(), words.size() * sizeof(uint16_t));
+    if (reader.failed()) {
+        error = "ran out of file inside the attribute grid";
+        return false;
+    }
+    out.grid.set(int(size), std::move(words));
+    if (out.grid.empty()) {
+        error = "the attribute grid did not take";
+        return false;
+    }
+    return true;
+}
+
+bool loadTables(const std::string& path, Tables& out, std::string& error) {
+    std::vector<uint8_t> bytes = core::readFile(path);
+    if (bytes.empty()) {
+        error = path + " did not read";
+        return false;
+    }
+    return parseTables(bytes, out, error);
+}
+
+}  // namespace mu::content
