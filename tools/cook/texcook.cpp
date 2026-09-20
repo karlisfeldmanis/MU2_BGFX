@@ -246,8 +246,8 @@ Result cook(const Job& job, bx::AllocatorI* allocator) {
         return result;
     }
 
-    const uint32_t width = parsed->m_width;
-    const uint32_t height = parsed->m_height;
+    uint32_t width = parsed->m_width;
+    uint32_t height = parsed->m_height;
     result.width = width;
     result.height = height;
     result.rgbaBytes = uint64_t(width) * height * 4;
@@ -260,6 +260,47 @@ Result cook(const Job& job, bx::AllocatorI* allocator) {
     }
     std::vector<uint8_t> level(top.m_data, top.m_data + size_t(width) * height * 4);
     bimg::imageFree(parsed);
+
+    // A level whose side is not a multiple of four is RESAMPLED to one, not padded.
+    //
+    // Padding was the first answer and it is wrong, found by cookcheck rather than by
+    // thinking: bimg's KTX *reader* rounds a block-compressed image's size up to whole
+    // blocks even when the file records the true size, so a 192x6 sheet comes back as
+    // 192x8. Edge-padded, its six rows of content then live in eight rows of texture and
+    // every v coordinate lands a quarter of the way off. Resampled, the content spans what
+    // the reader will say the texture is, and the only cost is a little softening on the
+    // four sheets in Lorencia that are built this way.
+    if ((width & 3) || (height & 3)) {
+        const uint32_t rw = (width + 3) & ~3u;
+        const uint32_t rh = (height + 3) & ~3u;
+        std::vector<uint8_t> resampled(size_t(rw) * rh * 4);
+        for (uint32_t y = 0; y < rh; ++y) {
+            const float sy = (float(y) + 0.5f) * float(height) / float(rh) - 0.5f;
+            const int y0 = int(std::floor(sy));
+            const float fy = sy - float(y0);
+            for (uint32_t x = 0; x < rw; ++x) {
+                const float sx = (float(x) + 0.5f) * float(width) / float(rw) - 0.5f;
+                const int x0 = int(std::floor(sx));
+                const float fx = sx - float(x0);
+                for (int c = 0; c < 4; ++c) {
+                    float total = 0.0f;
+                    for (int dy = 0; dy < 2; ++dy) {
+                        for (int dx = 0; dx < 2; ++dx) {
+                            const int px = std::min(std::max(x0 + dx, 0), int(width) - 1);
+                            const int py = std::min(std::max(y0 + dy, 0), int(height) - 1);
+                            const float weight = (dx ? fx : 1.0f - fx) * (dy ? fy : 1.0f - fy);
+                            total += weight * float(level[(size_t(py) * width + px) * 4 + c]);
+                        }
+                    }
+                    resampled[(size_t(y) * rw + x) * 4 + c] = uint8_t(total + 0.5f);
+                }
+            }
+        }
+        level.swap(resampled);
+        result.width = width = rw;
+        result.height = height = rh;
+        result.note = "resampled to whole blocks";
+    }
 
     const float wanted = job.cutout >= 0.0f ? coverage(level, job.cutout, 1.0f) : -1.0f;
 
@@ -274,6 +315,17 @@ Result cook(const Job& job, bx::AllocatorI* allocator) {
     uint32_t w = width;
     uint32_t h = height;
 
+    // `level` is the chain as it is filtered, and is NEVER the rescaled one. The rescale is
+    // applied to a copy on its way to the encoder.
+    //
+    // Getting that wrong is the whole trap, and this code had it wrong until cookcheck read
+    // the files back: rescaling in place means the next level is filtered from alpha that
+    // has already been pushed once, and the push compounds. Fourteen of Lorencia's
+    // twenty-four cutout sheets ran away with it -- every tree among them -- some to a
+    // coverage of 1.000 where the leaves fill the sheet, some to 0.000 where they vanish
+    // altogether, which are the two failures this rescale exists to prevent.
+    std::vector<uint8_t> shaped;
+
     for (uint8_t level_i = 0; level_i < mips; ++level_i) {
         if (level_i > 0) {
             const uint32_t nw = w > 1 ? w / 2 : 1;
@@ -283,14 +335,20 @@ Result cook(const Job& job, bx::AllocatorI* allocator) {
             level.swap(next);
             w = nw;
             h = nh;
-            if (wanted > 0.0f) holdCoverage(level, job.cutout, wanted);
+        }
+
+        const std::vector<uint8_t>* encoded = &level;
+        if (wanted > 0.0f && level_i > 0) {
+            shaped = level;
+            holdCoverage(shaped, job.cutout, wanted);
+            encoded = &shaped;
         }
 
         const uint32_t pw = (w + 3) & ~3u;
         const uint32_t ph = (h + 3) & ~3u;
-        const uint8_t* source = level.data();
+        const uint8_t* source = encoded->data();
         if (pw != w || ph != h) {
-            padToBlocks(level, w, h, padded, pw, ph);
+            padToBlocks(*encoded, w, h, padded, pw, ph);
             source = padded.data();
         }
 

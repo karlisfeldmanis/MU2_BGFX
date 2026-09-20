@@ -105,3 +105,10 @@ add_dependencies(mu2 mu2_shaders)
 add_executable(texcook EXCLUDE_FROM_ALL tools/cook/texcook.cpp)
 target_link_libraries(texcook PRIVATE bimg_decode bimg_encode bimg bx)
 target_compile_options(texcook PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
+# Reads the cook's own output back and checks it against what it claims: formats, chains,
+# and the coverage a cutout's mips are supposed to hold. `cmake --build build --target
+# cookcheck`, then `build/cookcheck assets/cooked/lorencia`.
+add_executable(cookcheck EXCLUDE_FROM_ALL tools/cook/cookcheck.cpp)
+target_link_libraries(cookcheck PRIVATE bimg_decode bimg bx)
+target_compile_options(cookcheck PRIVATE -Wall -Wextra -Wno-unused-parameter)

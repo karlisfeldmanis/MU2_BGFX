@@ -157,6 +157,35 @@ Three things worth writing down:
   all of it BC7's mode search. It is incremental by content hash, so a re-run after a
   changed sheet is seconds.
 
+### The cook was wrong twice, and `cookcheck` is why that is known
+
+`tools/cook/cookcheck.cpp` reads the cooked files back: every `.ktx` for its format, its
+full chain and its size; every cutout albedo decoded level by level for the coverage the
+rescale is supposed to hold; every `.mum` for indices that point inside its own vertices and
+parts that cover them exactly once. It found **31 failures in the first cook**, all mine.
+
+- **The rescale compounded.** Each level was rescaled *in place* and the next was filtered
+  from the pushed alpha, so the push accumulated: fourteen of the twenty-four cutout sheets
+  ran away, every tree among them, some to a coverage of 1.000 and some to 0.000 — the two
+  failures the rescale exists to prevent, produced by the code meant to prevent them. The
+  chain is now filtered from unscaled levels and the rescale applied to a copy on its way to
+  the encoder. Worst drift across all 24 sheets after the fix: **5.2%**.
+- **Padding a sheet that is not a whole number of blocks put its content in the wrong
+  place.** bimg's KTX *reader* rounds a block-compressed image up to whole blocks even when
+  the file records the true size — Lorencia's 192×6 glow sheets come back as 192×8 — so
+  edge-padded content sits in eight rows while every v coordinate assumes six. Those sources
+  are now resampled to whole blocks instead, which costs a little softening on four sheets
+  and puts the content where the reader will look for it.
+- **And the checker was wrong once too**, in the same direction: it measured coverage over
+  bimg's block-rounded level size, so a tree's 1×1 level read as 4×4 of padding and scored
+  0.000. The chain was replayed uncompressed in Python to find out which of the two was
+  lying — it held 0.51 within a hundredth down to 6×6 — and the checker now counts only a
+  level's true corner and stops judging below 64 texels, where a coverage cannot be
+  expressed finely enough to mean anything.
+
+Proved able to fail, as sprint 0's budget gate had to be: a `.mum` with one index bent past
+its vertex count and another with a version nobody wrote are both caught, exit 1.
+
 **Two debts the cook creates, both owed inside this sprint.** Cooked normals are BC5 with
 two channels, and `fs_shade.sc:98` and `fs_ground.sc:81-82` both read `.xyz` — they need the
 z rebuilt, or every normal map reads flat-blue. And the mesh cook writes a 48-byte vertex
