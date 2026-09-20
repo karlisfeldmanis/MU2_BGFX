@@ -96,7 +96,8 @@ bool ModelBench::open(const std::string& modelPath, content::Textures& textures)
 }
 
 bool ModelBench::openFigure(const std::string& assetDir, const std::string& world,
-                            const std::string& name, int clip, content::Textures& textures) {
+                            const std::string& name, int clip, bool safe,
+                            content::Textures& textures) {
     if (!figures_.open(assetDir, world, textures)) return false;
     const FigureBody* body = figures_.body(name);
     if (!body) {
@@ -105,7 +106,7 @@ bool ModelBench::openFigure(const std::string& assetDir, const std::string& worl
         return false;
     }
     const float origin[3] = {0.0f, 0.0f, 0.0f};
-    figure_.stand(body, origin, 0.0f, body->scale);
+    figure_.stand(body, origin, 0.0f, body->scale, safe);
     // A clip asked for by MU's action number, out of the breed's OWN table: a monster's 4 is
     // its second swing and a player's 4 is "Stop sword", and both files call it action4.
     if (clip >= 0 && body->library) {

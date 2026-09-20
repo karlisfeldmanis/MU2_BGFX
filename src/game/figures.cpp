@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <memory>
+#include <utility>
 
 #include "core/files.h"
 #include "core/json.h"
@@ -20,6 +22,64 @@ namespace {
 // are written down here instead.
 constexpr const char* kRightGrip = "knife_gdf";
 constexpr const char* kLeftGrip = "hand_bofdgne01";
+// And the bare point between the shoulders that everything slung hangs from.
+constexpr const char* kBackBone = "Bone05";
+
+// MU has no single idle. It has one per way of holding a weapon, and the weapon picks
+// between them: a two-handed axe is not a sword held differently, it is actions 5 and 18
+// where a sword is 4 and 17. Numbered from the client's own PLAYER_ enum and taken from
+// MU2's `Clips.cs:155` (`StanceActions`), which holds the same table.
+//
+// Empty hands is the one row that asks WHO is standing in it -- (1, 15) for a man and
+// (2, 16) for a woman -- because every armed row is shared: a crossbow is held one way
+// whoever is holding it.
+struct Stance {
+    const char* name;
+    int idle;
+    int walk;
+};
+// How a slung thing sits on `Bone05`, in MU's own angles about our axes and MU's own units
+// carried to metres. Every one of these is out of `RenderCharacterBackItem` by way of MU2's
+// `Model.cs`, which did the axis arithmetic and checked it against two constants that were
+// already in the file.
+struct OnBack {
+    float rotation[3];
+    float offset[3];
+    bool centred;
+};
+// A sword reared up over the shoulder, hilt clear of the head.
+constexpr OnBack kWeaponOnBack = {{70.0f, 90.0f, 0.0f}, {-0.20f, 0.40f, -0.05f}, false};
+// A shield laid flat, pushed 14 MU units clear of the back: MU places one by a point inside
+// its mesh and the disc sinks into a plate cuirass until its rim disappears. Centred, so the
+// middle of the disc lands on the spine rather than the model's origin.
+constexpr OnBack kShieldOnBack = {{70.0f, 90.0f, 0.0f}, {0.0f, 0.0f, -0.14f}, true};
+// A crossbow is a third arrangement and not the sword's: given the sword's numbers it lies
+// across the back diagonally with a limb sticking out past each shoulder. MU's own angles
+// turn it upright and flat, which is what makes it read as carried rather than as impaled.
+constexpr OnBack kCrossbowOnBack = {{0.0f, 180.0f, -20.0f}, {-0.10f, 0.40f, -0.08f}, false};
+// A bow, and the quiver of either kind: MU sends everything in the bow group that is not a
+// crossbow to the same translation.
+constexpr OnBack kQuiverOnBack = {{70.0f, 90.0f, 0.0f}, {-0.10f, 0.10f, -0.05f}, false};
+
+const OnBack& onBack(const HeldItem& item, bool leftHand) {
+    if (item.stance == "crossbow") return kCrossbowOnBack;
+    if (item.stance == "bow") return kQuiverOnBack;
+    if (item.kind == "shield" || leftHand) return kShieldOnBack;
+    return kWeaponOnBack;
+}
+
+constexpr Stance kStances[] = {
+    {"sword", 4, 17},  {"two_hand_sword", 5, 18}, {"spear", 6, 19}, {"scythe", 7, 20},
+    {"bow", 8, 21},    {"crossbow", 9, 22},       {"wand", 10, 23},
+};
+
+// The two action numbers a stance stands and walks in.
+std::pair<int, int> stanceActions(const std::string& stance, bool female) {
+    for (const Stance& one : kStances) {
+        if (stance == one.name) return {one.idle, one.walk};
+    }
+    return female ? std::pair<int, int>{2, 16} : std::pair<int, int>{1, 15};
+}
 
 int boneNamed(const content::Mesh& mesh, const std::string& name) {
     if (name.empty()) return -1;
@@ -124,8 +184,13 @@ void Figures::bind(FigureBody& body) {
     body.radius = std::sqrt(extent);
     body.height = body.max[1] - body.min[1];
 
+    body.backBone = boneNamed(*body.skeletonMesh, kBackBone);
     for (HeldItem& item : body.held) {
         item.bone = boneNamed(*body.skeletonMesh, item.boneName);
+        const OnBack& slung = onBack(item, item.boneName == kLeftGrip);
+        std::memcpy(item.backRotation, slung.rotation, sizeof(item.backRotation));
+        std::memcpy(item.backOffset, slung.offset, sizeof(item.backOffset));
+        item.centred = slung.centred;
         if (item.bone < 0 && !item.boneName.empty()) {
             core::logError("%s: no bone named %s to hang %s on", body.name.c_str(),
                            item.boneName.c_str(),
@@ -192,6 +257,23 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     }
     for (const auto& [name, entry] : manifest["clip_of"].members) clipOf_[name] = entry.string;
 
+    // What each item is, from index.json's own rows: a crossbow is slung one way, a bow's
+    // quiver another, a shield a third. Never guessed from a name.
+    struct ItemKind {
+        std::string kind;
+        std::string stance;
+    };
+    std::unordered_map<std::string, ItemKind> items;
+    for (const auto& [name, entry] : manifest["items"].members) {
+        items[name] = ItemKind{entry["kind"].stringOr(""), entry["stance"].stringOr("")};
+    }
+    auto describe = [&](HeldItem& item) {
+        auto found = items.find(item.mesh ? item.mesh->name() : std::string());
+        if (found == items.end()) return;
+        item.kind = found->second.kind;
+        item.stance = found->second.stance;
+    };
+
     auto libraryFor = [&](const std::string& meshName) -> const ClipLibrary* {
         auto found = clipOf_.find(meshName);
         if (found == clipOf_.end()) return nullptr;
@@ -204,6 +286,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         made->name = entry["name"].string;
         made->label = entry["label"].stringOr(made->name.c_str());
         made->female = entry["female"].boolOr(false);
+        made->stance = entry["stance"].stringOr("");
         for (const core::Json& part : entry["parts"].items) {
             if (const content::Mesh* found = mesh(part.string)) {
                 made->parts.push_back(found);
@@ -224,7 +307,11 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
                 made->parts.push_back(found);
                 continue;
             }
-            made->held.push_back(HeldItem{found, -1, grip});
+            HeldItem item;
+            item.mesh = found;
+            item.boneName = grip;
+            describe(item);
+            made->held.push_back(item);
         }
         bind(*made);
 
@@ -234,10 +321,20 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         // because the bench asks for it by name.
         const std::string idle = entry["idle"].stringOr("");
         if (made->library) {
-            made->idleClip = idle.empty() ? made->library->find(made->female ? 2 : 1)
+            const auto [stand, walk] = stanceActions(made->stance, made->female);
+            // A named idle wins: the two guards carry one in index.json, and MU's own town
+            // stands a character in it whatever is in its hands.
+            const auto [bare, bareWalk] = stanceActions("", made->female);
+            made->idleClip = idle.empty() ? made->library->find(stand)
                                           : made->library->find(idle);
-            made->walkClip = made->library->find(made->female ? 16 : 15);
+            // Inside a safe zone the weapon goes on the back and the body stands unarmed --
+            // unless index.json names this figure's idle, which is MU's own table for that
+            // NPC and not a stance to be picked over.
+            made->idleSafeClip = idle.empty() ? made->library->find(bare)
+                                              : made->idleClip;
+            made->walkClip = made->library->find(walk);
             if (made->idleClip < 0) made->idleClip = made->library->find(0);
+            if (made->idleSafeClip < 0) made->idleSafeClip = made->idleClip;
         }
         bodies_[made->name] = std::move(made);
     }
@@ -248,6 +345,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         made->name = entry["name"].string;
         made->label = entry["label"].stringOr(made->name.c_str());
         made->scale = float(entry["scale"].numberOr(1.0));
+        made->stance = entry["stance"].stringOr("");
         const content::Mesh* body = mesh(entry["mesh"].string);
         if (!body) continue;
         made->parts.push_back(body);
@@ -262,13 +360,27 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
             // The Skeleton Warrior names no bone and is on the player rig: it takes the
             // player's own grips, like the characters above.
             if (bone.empty()) bone = std::string(side) == "right_hand" ? kRightGrip : kLeftGrip;
-            made->held.push_back(HeldItem{found, -1, bone});
+            HeldItem item;
+            item.mesh = found;
+            item.boneName = bone;
+            describe(item);
+            made->held.push_back(item);
         }
         bind(*made);
         if (made->library) {
-            // A monster's slots are its own table: 0 idle, 2 walk, 6 die.
-            made->idleClip = made->library->find(0);
-            made->walkClip = made->library->find(2);
+            // A monster's slots are its own table: 0 idle, 2 walk, 6 die. But `Skeleton01`
+            // has no clips of its own and is animated out of the PLAYER library, where slot
+            // 0 is "Set" -- a three-frame character-creation pose -- and slot 2 is "Stop
+            // female". Its index.json row says which stance it stands in, and that is the
+            // table to read: the trap this file's own header names, which the first draft of
+            // these two lines then walked into.
+            const bool playerRig = made->library->name == "player";
+            const auto [stand, walk] = stanceActions(made->stance, false);
+            made->idleClip = made->library->find(playerRig ? stand : 0);
+            made->walkClip = made->library->find(playerRig ? walk : 2);
+            // A monster never puts its weapon away: MU's safe-zone rule is the player's, and
+            // nothing hostile stands in one.
+            made->idleSafeClip = made->idleClip;
         }
         bodies_[made->name] = std::move(made);
     }
@@ -284,6 +396,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         made->library = libraryFor(body->name());
         bind(*made);
         if (made->library && !made->library->clips.clips.empty()) made->idleClip = 0;
+        made->idleSafeClip = made->idleClip;
         bodies_[made->name] = std::move(made);
     }
 

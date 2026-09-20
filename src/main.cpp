@@ -14,6 +14,7 @@
 #include "core/args.h"
 #include "core/log.h"
 #include "game/bench.h"
+#include "game/headless.h"
 #include "game/world.h"
 #include "gfx/lighting.h"
 #include "gfx/renderer.h"
@@ -41,6 +42,14 @@ int main(int argc, char** argv) {
         core::logf("nothing run");
         core::logClose();
         return 1;
+    }
+
+    // The sim with no window, and it returns before anything graphical is touched: no GLFW, no
+    // device, no textures. That is what makes the headless run a measurement of the tick.
+    if (args.headless) {
+        const int code = game::runHeadless(args, MU2_ASSET_DIR);
+        core::logClose();
+        return code;
     }
 
     const std::string shotDir =
@@ -108,7 +117,7 @@ int main(int argc, char** argv) {
     const bool figureBench = !inWorld && !args.figure.empty();
     if (figureBench && !bench.openFigure(MU2_ASSET_DIR, args.world.empty() ? "lorencia"
                                                                           : args.world,
-                                         args.figure, args.clip, textures)) {
+                                         args.figure, args.clip, args.safe, textures)) {
         core::logError("the bench did not open");
         renderer.shutdown();
         textures.shutdown();
@@ -235,6 +244,14 @@ int main(int argc, char** argv) {
         const double cpuMs = double(now - last) * toMs;
         last = now;
         deltaSeconds = cpuMs / 1000.0;
+        // A screenshot stalls its frame to about 250 ms, and that quarter-second used to be
+        // handed to the clips: every shot after the first showed a pose a quarter-second
+        // ahead of where a shotless run stands, and any transient shorter than the stall --
+        // the 0.18 s crossfade first among them -- could not be photographed at all. The
+        // statistics already dropped this frame; the animation clock did not. Capped rather
+        // than dropped, because a genuinely slow frame should still advance the world.
+        constexpr double kLongestStep = 0.05;  // 50 ms, which is one tick of MU's own 20 Hz
+        if (shotThisFrame || deltaSeconds > kLongestStep) deltaSeconds = kLongestStep;
         elapsed += deltaSeconds;
         // A frame that writes a screenshot is not a frame of the game, and it does not go in
         // the statistics. The readback stalls this one frame to about 253 ms, and a mean over
@@ -269,8 +286,18 @@ int main(int argc, char** argv) {
             if (inWorld && world.crowd().figureCount() > 0) {
                 const game::Crowd& crowd = world.crowd();
                 core::logf("  crowd: %u of %zu figures drawn, %u culled, %zu bones, "
-                           "pose %.3f ms", crowd.drawn(), crowd.figureCount(), crowd.culled(),
-                           crowd.boneCount(), crowd.poseMs());
+                           "pose %.3f ms, %d palette rows of %d%s",
+                           crowd.drawn(), crowd.figureCount(), crowd.culled(),
+                           crowd.boneCount(), crowd.poseMs(), renderer.paletteRowsUsed(),
+                           gfx::Renderer::kMaxPaletteRows,
+                           renderer.paletteRowsRefused()
+                               ? " -- FULL, the rest stand in bind pose" : "");
+                if (renderer.paletteRowsRefused()) {
+                    core::logError("%d figures found no palette row this frame and stood in "
+                                   "bind pose; the palette holds %d",
+                                   renderer.paletteRowsRefused(),
+                                   gfx::Renderer::kMaxPaletteRows);
+                }
             }
             // The bench says where the clock is, not only which clip: position AND length.
             if (bench.hasFigure()) core::logf("  %s", bench.clipLine().c_str());

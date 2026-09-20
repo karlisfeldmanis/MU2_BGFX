@@ -526,13 +526,25 @@ def cook_clips(document, binary, out_path, names, travel, holds):
     list, LINEAR throughout, and MU's own rate is `action_speeds x 25` -- never above 25 Hz.
     Resampling the library to a fixed 25 Hz would treble it and add no information.
 
-    The extra key a looping clip carries -- the one holding the first pose again, so the wrap
-    has an interval to happen over -- is KEPT, and playing wraps the clock in [0, duration)
-    rather than stepping frames. That is what makes the wrap an interpolation instead of a
-    repeat: the trap the sprint names (an idle that stutters once a cycle, a death that half
-    stands up) belongs to a bake that counts that key as a frame of its own and then loops
-    the frame list. `holds` is the set of slots that stop on their last frame instead --
-    MU's `monster_holds`, which is the death and nothing else.
+    **A looping clip must close, and 35 of the player's 283 do not.** MU writes most looping
+    clips with one extra key holding the first pose again, so the wrap has an interval to
+    happen over, and that key is KEPT here: playing wraps the clock in [0, duration), which
+    makes the wrap an interpolation rather than a repeat. But the locomotion set -- every
+    Walk, every Run, Fly, Walk swim, Run ride, and every monster's `action2` -- was written
+    WITHOUT it: its last key is a distinct pose and MU's own player wraps from it to the
+    first. Left alone, such a clip snaps once a cycle, and worse, its `duration` is one
+    interval short of the true cycle: six intervals where the walk has seven. `action_travel`
+    is metres per CYCLE, so matching playback to move speed off that duration slides the feet
+    by a sixth, which is the number sprint 5 spends.
+
+    So the cook closes them: a looping clip whose last frame differs from its first gets the
+    first frame appended and its duration extended by one interval. Every looping clip in a
+    `.muc` closes, and the runtime stays as dumb as it was. A `hold` clip is left alone --
+    it stops on its last frame and never wraps, so it has nothing to close.
+
+    `holds` is the set of slots that stop on their last frame: MU's `monster_holds`, which is
+    the death, and for the player library the two deaths `actions` names ("Die 1", "Die 2"),
+    which no monster table covers.
     """
     nodes = document.get("nodes", [])
     joints = document["skins"][0]["joints"]
@@ -551,6 +563,7 @@ def cook_clips(document, binary, out_path, names, travel, holds):
 
     clips = []
     frames_total = 0
+    closed = 0
     body = bytearray()
     for animation in document.get("animations", []):
         name = animation.get("name", "")
@@ -585,16 +598,38 @@ def cook_clips(document, binary, out_path, names, travel, holds):
 
         frames = len(times)
         duration = float(times[-1][0] - times[0][0])
-        # Frame-major: one frame's bones are contiguous, because what reads this walks two
-        # whole frames and blends them.
-        for frame in range(frames):
+        hold = 1 if slot in holds else 0
+
+        def pose_of(frame):
+            out = []
             for bone in range(len(joints)):
                 r = rotation[bone][frame] if bone in rotation else rest[bone][0]
                 t = translation[bone][frame] if bone in translation else rest[bone][1]
-                body += struct.pack("<4f3f", *r[:4], *t[:3])
+                out.append((tuple(r[:4]), tuple(t[:3])))
+            return out
+
+        first = pose_of(0)
+        last = pose_of(frames - 1)
+        gap = 0.0
+        for (ra, ta), (rb, tb) in zip(first, last):
+            gap = max(gap, max(abs(a - b) for a, b in zip(ra, rb)),
+                      max(abs(a - b) for a, b in zip(ta, tb)))
+        # Closed to a ten-thousandth: MU's exporter writes the repeat exactly, so this is a
+        # test of whether the key is there at all rather than a tolerance on how close it is.
+        closes = gap < 1e-4
+        if not hold and not closes and frames > 1:
+            interval = duration / float(frames - 1)
+            duration += interval
+            frames += 1
+            closed += 1
+
+        # Frame-major: one frame's bones are contiguous, because what reads this walks two
+        # whole frames and blends them. The appended frame is the first one again.
+        for frame in range(frames):
+            for bone, (r, t) in enumerate(pose_of(frame if frame < len(times) else 0)):
+                body += struct.pack("<4f3f", *r, *t)
         clips.append((name, names.get(str(slot), names.get(slot, name)), slot, frames, duration,
-                      1 if slot in holds else 0, float(travel.get(str(slot),
-                                                                  travel.get(slot, 0.0)))))
+                      hold, float(travel.get(str(slot), travel.get(slot, 0.0)))))
         frames_total += frames
 
     header = struct.pack("<4sIII", b"MU2C", 1, len(clips), len(joints))
@@ -607,7 +642,7 @@ def cook_clips(document, binary, out_path, names, travel, holds):
 
     with open(out_path, "wb") as handle:
         handle.write(header + bytes(table) + bytes(body))
-    return len(clips), frames_total, len(header) + len(table) + len(body)
+    return len(clips), frames_total, len(header) + len(table) + len(body), closed
 
 
 def read_png(path):
@@ -841,6 +876,16 @@ def figure_set(world):
         models[name] = full
         return name
 
+    # Every weapon row in index.json carries the stance it is held in -- `Sword01` sword,
+    # `Spear08` scythe, `CrossBow04` crossbow, `Axe07` two_hand_sword -- so which idle a
+    # character stands in is read rather than guessed from a name. MU2's `Clips.cs` holds the
+    # same table in the other direction.
+    stance_of = {}
+    for one in index.get("objects", []):
+        glb = one.get("glb", "")
+        if one.get("stance") and glb:
+            stance_of[os.path.splitext(os.path.basename(glb))[0]] = one["stance"]
+
     characters = []
     placed = {one["model"] for one in map_data["objects"] if not one.get("hidden")}
     for one in index["characters"]:
@@ -854,6 +899,11 @@ def figure_set(world):
                  # standing in it: (1, 15) for a man and (2, 16) for a woman, and every
                  # armed row is shared because a crossbow is held one way whoever holds it.
                  "female": bool(one.get("female")),
+                 # The hands decide the stance, and the right hand is the one that holds the
+                 # weapon: a two-handed axe is not a sword held differently, it is actions 5
+                 # and 18 where a sword is 4 and 17.
+                 "stance": stance_of.get(
+                     os.path.splitext(os.path.basename(one.get("right_hand") or ""))[0], ""),
                  "idle": one.get("idle", "")}
         entry["parts"] = [p for p in entry["parts"] if p]
         characters.append(entry)
@@ -880,6 +930,9 @@ def figure_set(world):
             "right_hand_bone": one.get("right_hand_bone", ""),
             "left_hand": reach(one.get("left_hand")),
             "left_hand_bone": one.get("left_hand_bone", ""),
+            # Skeleton01 is a monster on the player rig and its row says which stance it
+            # stands in, because slot 0 of the player library is "Set" and not an idle at all.
+            "stance": one.get("stance", ""),
             "action_keys": one.get("action_keys", {}),
             "action_travel": one.get("action_travel", {}),
             "spawns": [s for s in one.get("spawns", []) if s["map"] == number]})
@@ -913,6 +966,140 @@ def figure_set(world):
                            "yaw": yaw, "pitch": pitch,
                            "scale": float(one.get("scale", 1.0))})
     return models, characters, monsters, standalone, placements, index
+
+
+# The tick the delays below are converted at. It is written into the file and checked at
+# load rather than assumed: every delay in the rows is in milliseconds, and a table cooked
+# at one rate read by a sim running at another is a fight that is quietly the wrong speed.
+# Realm.cs:49, `public const int Hz = 20`.
+SIM_HZ = 20
+
+# mu.db stores respawn_seconds as 10 for all sixteen breeds, and Version075 does not.
+# Lorencia.cs:89 gives the Bull Fighter 3 s and Lorencia.cs:152 the Budge Dragon 3 s; the
+# other six of Lorencia's breeds and all eight of Noria's are 10. The map files across
+# Version075 hold six distinct delays (3, 8, 10, 15, 50, 150), so "10 everywhere" is a
+# flattening in whatever wrote mu.db rather than a 0.75 fact, and it makes the two commonest
+# low nests refill three times slower than MU's. Corrected here, by breed number, and every
+# correction is printed.
+RESPAWN_VERSION075 = {0: 3, 2: 3}
+
+
+def ticks_of(milliseconds, what, name, remainders):
+    """A delay in milliseconds as whole ticks, converted once, here.
+
+    A delay re-derived per tick in floating point is how a seeded run stops reproducing, and
+    a delay that does not divide is a rounding decision somebody has to make on purpose: all
+    sixteen of today's rows divide exactly (400 ms is 8 ticks; 1400-2200 ms are 28-44), so a
+    remainder means a new row has arrived and it is logged rather than swallowed.
+    """
+    whole, left = divmod(int(milliseconds) * SIM_HZ, 1000)
+    if left:
+        remainders.append(f"{name}.{what} {milliseconds} ms is {whole} ticks and {left}/1000 over")
+    return max(1, whole)
+
+
+def cook_tables(world, out_dir):
+    """mu.db's rows, through index.json, as one flat versioned file the game reads whole.
+
+    The .mur format ("MU2 rules"), version 1, little-endian:
+
+        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 map number, u32 grid size
+        kinds:  u16 len + figure name (the cooked figure this breed wears, or empty),
+                u16 len + label ("Bull Fighter"),
+                i32 number, level, health, minimumDamage, maximumDamage, defense,
+                i32 moveRange, attackRange, viewRange,
+                i32 moveTicks, attackTicks, respawnTicks,
+                i32 attackRate, defenseRate, attackSkill, f32 scale
+        spawns: u32 kind (an index into the kinds above), i32 x1, x2, y1, y2, u32 count
+        grid:   u16 a tile, row-major [y][x], MU's own attribute word
+
+    The grid is in here because the sim is the first thing that reads it for a *decision* and
+    the sim has no PNG decoder and no window. It is MU's whole 16-bit word -- `red | green << 8`,
+    as Terrain.cs:87 reads it -- and not the red channel alone: measured, the green channel is
+    zero on all 65 536 tiles of Lorencia and of Noria, so nothing is being lost today and
+    everything would be on the first map that used the high byte. The game reads the same file
+    and checks it against the ground's own copy of attributes.png at load, so the two cannot
+    drift apart unnoticed.
+
+    All sixteen kinds are written whatever map this is -- the breed table is not a map's --
+    and only this map's spawn rectangles. `x` is the attribute grid's column and `y` its row,
+    MU's own tile coordinates, un-negated: the negation into world z belongs to whoever draws
+    them, not to the table (docs/conventions.md, "Space").
+
+    There is no experience table and no drop table here, and PLAN.md foundation 11 used to say
+    there would be. mu.db holds neither, because MU has an expression per level rather than a
+    list of numbers; both are code in src/sim/rules.cpp with their OpenMU lines beside them.
+    """
+    with open(os.path.join(ASSETS, "index.json")) as handle:
+        index = json.load(handle)
+
+    number = next(w["number"] for w in index["worlds"] if w["name"] == world)
+    # Which cooked figure a breed wears, by MU's own monster number. A breed with no model in
+    # this content still gets a row: the rules do not need a mesh, and the sim is what this
+    # table is for.
+    figure_of = {one["number"]: (one["name"], float(one.get("scale", 1.0)))
+                 for one in index["monsters"]}
+
+    remainders = []
+    corrections = []
+    kinds, spawns = [], []
+    for breed in sorted(index["breeds"], key=lambda b: b["number"]):
+        combat = breed["combat"]
+        kind = breed["number"]
+        figure, scale = figure_of.get(kind, ("", 1.0))
+        respawn = RESPAWN_VERSION075.get(kind, combat["respawn_seconds"])
+        if respawn != combat["respawn_seconds"]:
+            corrections.append(f"{combat['name']} respawn {combat['respawn_seconds']}s -> "
+                               f"{respawn}s (Version075/Maps/Lorencia.cs)")
+        kinds.append(write_string(figure) + write_string(combat["name"]) + struct.pack(
+            "<15if", kind, combat["level"], combat["health"], combat["minimum_damage"],
+            combat["maximum_damage"], combat["defense"], combat["move_range"],
+            combat["attack_range"], combat["view_range"],
+            ticks_of(combat["move_delay"], "move_delay", combat["name"], remainders),
+            ticks_of(combat["attack_delay"], "attack_delay", combat["name"], remainders),
+            respawn * SIM_HZ, combat["attack_rate"], combat["defense_rate"],
+            combat.get("attack_skill", 0), scale))
+        for spawn in breed.get("spawns", []):
+            if spawn["map"] != number:
+                continue
+            spawns.append(struct.pack("<I4iI", len(kinds) - 1, spawn["x1"], spawn["x2"],
+                                      spawn["y1"], spawn["y2"], spawn["count"]))
+
+    world_dir = os.path.join(ASSETS, "world", world)
+    with open(os.path.join(world_dir, f"{world}.json")) as handle:
+        map_data = json.load(handle)
+    size = int(map_data["size"])
+    grid_w, grid_h, channels, pixels = read_png(os.path.join(world_dir, map_data["attributes"]))
+    if grid_w != size or grid_h != size:
+        raise ValueError(f"{world}: attributes.png is {grid_w}x{grid_h} and the world says {size}")
+    # MU's word is two bytes and lives in the red and green channels. Both are carried; the
+    # high one is zero everywhere in this content and the day it is not, this line is already
+    # right.
+    words = bytearray(size * size * 2)
+    high = 0
+    for i in range(size * size):
+        low = pixels[i * channels]
+        top = pixels[i * channels + 1] if channels > 1 else 0
+        high |= top
+        struct.pack_into("<H", words, i * 2, low | (top << 8))
+    if high:
+        print(f"cook: NOTE {world}'s attribute grid uses its high byte")
+
+    blob = struct.pack("<4sIIIIII", b"MU2R", 1, SIM_HZ, len(kinds), len(spawns), number, size)
+    blob += b"".join(kinds) + b"".join(spawns) + bytes(words)
+    os.makedirs(out_dir, exist_ok=True)
+    path = os.path.join(out_dir, f"{world}.mur")
+    with open(path, "wb") as handle:
+        handle.write(blob)
+
+    for line in corrections:
+        print(f"cook: corrected {line}")
+    for line in remainders:
+        print(f"cook: WARNING {line}")
+    alive = sum(struct.unpack_from("<I", one, 20)[0] for one in spawns)
+    print(f"cook: {len(kinds)} breeds and {len(spawns)} nests holding {alive} monsters "
+          f"-> {os.path.relpath(path, ROOT)} ({len(blob)} bytes)")
+    return 0
 
 
 def cook_figures(world, out_dir, texcook, threads):
@@ -1022,30 +1209,55 @@ def cook_figures(world, out_dir, texcook, threads):
 
     monster_actions = index.get("monster_actions", {})
     holds = set(index.get("monster_holds", []))
+    # `monster_holds` is [6], and 6 is a MONSTER slot. The player library has deaths of its
+    # own -- `actions` names 232 "Die 1" and 233 "Die 2" -- and no table in index.json covers
+    # them, so they are read off the label. A death that wraps is a corpse half getting up as
+    # it falls, which the sprint listed among the three things most likely to go wrong and
+    # then shipped in the data.
+    player_holds = {int(slot) for slot, label in index.get("actions", {}).items()
+                    if label.startswith("Die")}
     travel_of = {}
     for one in monsters:
         travel_of.setdefault(one["mesh"], one.get("action_travel", {}))
     clip_table = {}
-    clip_count = frame_count = clip_bytes = 0
+    clip_count = frame_count = clip_bytes = closed_total = 0
     for stem, path in sorted(libraries.items()):
         document, binary = read_glb(path)
         embedded = stem in models
         names = monster_actions if embedded else index.get("actions", {})
-        clips, frames, size = cook_clips(
+        clips, frames, size, closed = cook_clips(
             document, binary, os.path.join(out_dir, "clips", stem + ".muc"),
             names if embedded or path.endswith("player.actions.glb") else {},
             travel_of.get(stem, {}) if embedded else index.get("action_travel", {}),
-            holds if embedded else set())
+            holds if embedded else player_holds)
         clip_table[stem] = os.path.relpath(os.path.join(out_dir, "clips", stem + ".muc"),
                                            ASSETS)
         clip_count += clips
         frame_count += frames
         clip_bytes += size
+        closed_total += closed
+
+    # What each item IS, for the engine to place it by: a crossbow is slung one way, a bow's
+    # quiver another, a shield a third, and everything else takes the sword's arrangement.
+    # MU2's `Model.OnBack` switches on exactly these two fields.
+    items = {}
+    for one in index.get("objects", []):
+        glb = one.get("glb", "")
+        if not glb:
+            continue
+        name = os.path.splitext(os.path.basename(glb))[0]
+        if name in models:
+            items[name] = {"kind": one.get("kind", ""), "stance": one.get("stance", "")}
 
     out = {"version": 1, "world": world, "meshes": mesh_table, "clips": clip_table,
            "clip_of": clip_of, "characters": characters, "monsters": monsters,
-           "standalone": standalone, "placements": placements,
-           "monster_actions": monster_actions}
+           "standalone": standalone, "placements": placements, "items": items,
+           "monster_actions": monster_actions,
+           # MU marks a safe zone per tile -- the 0x0001 bit of the attribute grid, 3.9% of
+           # Lorencia -- and the client reads it off the figure's own tile to decide whether
+           # the weapon is in the hand or on the back. The rect the world carries is the
+           # gate's, and is not that bit; the engine reads the grid.
+           "safe_attribute": 1}
     with open(os.path.join(out_dir, "figures.json"), "w") as handle:
         json.dump(out, handle, indent=1, sort_keys=True)
 
@@ -1053,6 +1265,7 @@ def cook_figures(world, out_dir, texcook, threads):
                  for f in os.listdir(os.path.join(out_dir, "textures")))
     print(f"cook: {len(mesh_table)} meshes, {triangles} triangles, {vertices} vertices; "
           f"{len(clip_table)} clip libraries, {clip_count} clips, {frame_count} frames, "
+          f"{closed_total} of them closed with a key MU left off, "
           f"{clip_bytes / 1e6:.2f} MB of .muc; {cooked / 1e6:.1f} MB of .ktx")
     print(f"cook: {len(characters)} characters, {len(monsters)} breeds spawned here, "
           f"{len(standalone)} standalone, {len(placements)} figures placed in the town")
@@ -1066,7 +1279,7 @@ def main():
     parser.add_argument("--threads", type=int, default=0)
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
     parser.add_argument("--only", choices=("textures", "meshes", "placements", "figures",
-                                           "all"), default="all")
+                                           "tables", "all"), default="all")
     parser.add_argument("--chunk", type=int, default=32,
                         help="a chunk's side in tiles; 32 gives Lorencia an 8x8 grid")
     args = parser.parse_args()
@@ -1076,6 +1289,9 @@ def main():
 
     if args.only == "placements":
         return cook_placements(args.world, os.path.join(args.out, args.world), args.chunk)
+
+    if args.only == "tables":
+        return cook_tables(args.world, os.path.join(args.out, args.world))
 
     if args.only == "figures":
         if not os.path.exists(args.texcook):
@@ -1131,6 +1347,7 @@ def main():
         if mesh_result:
             return mesh_result
         cook_placements(args.world, out_dir, args.chunk)
+        cook_tables(args.world, out_dir)
     return result.returncode
 
 

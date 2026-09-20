@@ -57,11 +57,30 @@ struct Args {
     // town's own fourteen.
     bool figuresOn = true;
 
+    // Sprint 5's sim. `--headless` runs the tick with no window at all; the seed and the
+    // tick count are the whole of a reproducible run, and `--sim-log` is where its bytes go.
+    bool headless = false;
+    uint64_t seed = 1;
+    int ticks = 10000;
+    std::string simLog;     // absolute; build/hunt.log by default
+    bool simSteps = false;  // put every tile crossing in the log too, which is most of it
+    bool noHand = false;    // no scripted player: the nests alone, which is the AI's own cost
+    int kin = 2;            // mu.db's enumeration: 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight
+    int level = 1;
+    // Which stat the scripted hand puts a levelled character's points into. A character made
+    // at level 20 has 95 points in hand and, unspent, he is a level-1 character with more
+    // health -- which is a fair thing to be able to measure and a poor hunt to watch.
+    std::string spend = "strength";
+
     // The monster bench: one figure on the bench ground, by the name index.json gives it,
     // playing one clip. `--clip` is MU's own action number, in the right table of the two --
     // a monster's 4 is its second swing and a player's is "Stop sword".
     std::string figure;
     int clip = -1;
+    // Stands the bench's figure as a safe zone does: weapon on the back, unarmed idle. It is
+    // how every figure in Lorencia's town square stands, and the only way to judge the slung
+    // arrangement without walking the camera into the square.
+    bool safe = false;
 
     bool valid = true;
 };

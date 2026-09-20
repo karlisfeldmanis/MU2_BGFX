@@ -290,6 +290,7 @@ void Renderer::resetPalettes() {
     // the upload below sends only the rows this frame wrote: a row written once at start-up
     // would never be uploaded at all.
     paletteWritten_ = 0;
+    paletteRefused_ = 0;
     float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     float rows[12];
     for (int column = 0; column < 3; ++column) {
@@ -302,16 +303,18 @@ void Renderer::resetPalettes() {
 }
 
 int Renderer::addPalette(const float* rows12, int bones) {
-    if (paletteWritten_ >= kMaxPaletteRows) return -1;
+    if (paletteWritten_ >= kMaxPaletteRows) {
+        ++paletteRefused_;
+        return -1;
+    }
     const int row = paletteWritten_++;
     // A rig too big for the palette is clamped rather than refused: the bones past the end
     // stay whatever the row held, which is visible, where a silent return of -1 would put
     // the whole figure in bind pose and look like a missing clip. Nothing in this content
     // has more than 60; the lobby's faces, at 100 to 115, would be the first.
-    if (bones > kMaxBones) {
-        core::logError("a rig of %d bones does not fit the palette's %d", bones, kMaxBones);
-        bones = kMaxBones;
-    }
+    // A caller that hands over more rows than fit is clamped here as well as at the pose,
+    // because this is the one that owns the texture's width.
+    if (bones > kMaxBones) bones = kMaxBones;
     std::memcpy(&paletteCpu_[size_t(row) * kMaxBones * 12], rows12,
                 size_t(bones) * 12 * sizeof(float));
     return row;

@@ -56,6 +56,25 @@ struct HeldItem {
     const content::Mesh* mesh = nullptr;
     int bone = -1;              // into the body's own skeleton
     std::string boneName;
+    std::string kind;    // "weapon", "shield", from index.json's own rows
+    std::string stance;  // "crossbow", "bow", "sword", ... -- the item's own
+
+    // **In the hand there is nothing to correct**: the rig's grip bones sit where a grip
+    // belongs, so a held item hangs off one with an identity transform. That is MU2's own
+    // rule (`Model.cs`, "Identity in the hand, and MU's own numbers on the back"), and it is
+    // what makes the swords, axes and staffs sit right without a table of corrections.
+    //
+    // **On the back there is everything to correct**, because `Bone05` is a bare attachment
+    // point between the shoulders rather than something shaped for a grip. These are MU's
+    // own numbers out of `RenderCharacterBackItem`, already carried into this engine's axes
+    // by MU2's `Model.cs`: a weapon reared over the shoulder, a shield laid flat against the
+    // back, a crossbow turned upright and flat -- given the sword's numbers a crossbow lies
+    // across the back with a limb past each shoulder.
+    float backRotation[3] = {0, 0, 0};  // degrees, MU's own angles about our axes
+    float backOffset[3] = {0, 0, 0};    // metres
+    // A shield is placed by its middle rather than by its origin: MU places one by a point
+    // inside its mesh and the disc then sinks into the armour. MU2 centres it instead.
+    bool centred = false;
 };
 
 // One breed or character: the parts, what is in its hands, its rig and its clips.
@@ -80,6 +99,20 @@ struct FigureBody {
     int idleClip = -1;
     int walkClip = -1;
     bool female = false;
+    // Which way this figure holds what is in its hands: "sword", "two_hand_sword", "spear",
+    // "scythe", "bow", "crossbow", "wand", or empty for bare hands. Read from the weapon's
+    // own index.json row by the cook, never guessed from a name.
+    std::string stance;
+    // Where a slung item hangs: `Bone05`, between the shoulders, a child of Bip01 Spine --
+    // `w->LinkBone = 47` in the old client's RenderCharacterBackItem. -1 on a rig that has
+    // none, which is every monster's.
+    int backBone = -1;
+    // What this figure stands in with its weapon put away. Inside a safe zone MU carries the
+    // weapon on the back and stands in the UNARMED idle, and steps out of the zone with the
+    // weapon drawn: the client's own rule, from RenderCharacterBackItem and the safe-zone
+    // branch of the stance code. An NPC with an idle named in index.json keeps it either way
+    // -- that is MU's own table for that figure and not a stance this engine picks.
+    int idleSafeClip = -1;
 
     size_t boneCount() const { return skeletonMesh ? skeletonMesh->bones().size() : 0; }
 };

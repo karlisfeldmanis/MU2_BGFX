@@ -23,7 +23,8 @@ public:
     // one clip named out of the right table of the two. `clip` is MU's own action number, or
     // -1 for the breed's idle.
     bool openFigure(const std::string& assetDir, const std::string& world,
-                    const std::string& name, int clip, content::Textures& textures);
+                    const std::string& name, int clip, bool safe,
+                    content::Textures& textures);
     void shutdown();
 
     // Turns the camera around the subject. `seconds` is the time since the bench opened and

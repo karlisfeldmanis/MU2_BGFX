@@ -19,7 +19,10 @@ namespace mu::game {
 // One figure standing somewhere, playing one clip and possibly fading out of another.
 class Figure {
 public:
-    void stand(const FigureBody* body, const float position[3], float yaw, float scale);
+    // `safe` is MU's own per-tile safe-zone bit, which decides both the stance and where
+    // the weapon is: inside one a character carries it on his back and stands unarmed.
+    void stand(const FigureBody* body, const float position[3], float yaw, float scale,
+               bool safe = false);
     // `restart` replays a clip that is already running; without it, asking for the clip that
     // is playing is ignored, which is what stops a per-frame request resetting the clock.
     void play(int clip, bool restart = false);
@@ -49,7 +52,10 @@ public:
     float radius() const;
 
 private:
-    void sample(int clip, float time, float* rotations, float* translations) const;
+    // `limit` is how many of the rig's bones the caller has room for: a rig wider than the
+    // palette is posed as far as it fits rather than refused.
+    void sample(int clip, float time, size_t limit, float* rotations,
+                float* translations) const;
 
     // The last pose's bone world matrices, 16 floats a bone. Kept rather than recomputed
     // because a held item needs exactly one of them and the walk that built them has just
@@ -65,6 +71,7 @@ private:
     float time_ = 0.0f;
     float previousTime_ = 0.0f;
     float fade_ = 0.0f;  // seconds left of the crossfade
+    bool safe_ = false;  // standing on a safe tile: weapon on the back, unarmed stance
 };
 
 // Who is standing in the town: the fourteen figures MU's own placement list carries, a

@@ -17,6 +17,15 @@ namespace {
 // long fade would have a figure standing in two stances at once for a quarter of it.
 constexpr float kBlendSeconds = 0.18f;
 
+// MU marks a safe zone per TILE, in the 0x0001 bit of the attribute grid -- 3.9% of
+// Lorencia -- and the client reads it off the figure's own tile to decide whether the weapon
+// is in the hand or on the back. `Terrain.Safe` in MU2's shared code is the same line. The
+// world's `gates.safe` rectangle is the gate's and is NOT this bit.
+constexpr uint8_t kSafeAttribute = 0x01;
+
+constexpr float kOrigin[3] = {0.0f, 0.0f, 0.0f};
+constexpr float kIdentity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
 // A frustum, the same Gribb-Hartmann one game/town.cpp culls chunks with. A figure is not a
 // chunk -- it moves, and chunk bounds are settled at cook time -- so it is tested by its own
 // box. At thirty figures a per-figure test is nothing; at Lorencia's full 290 it is still
@@ -55,8 +64,10 @@ struct Frustum {
 
 }  // namespace
 
-void Figure::stand(const FigureBody* body, const float position[3], float yaw, float scale) {
+void Figure::stand(const FigureBody* body, const float position[3], float yaw, float scale,
+                   bool safe) {
     body_ = body;
+    safe_ = safe;
     std::memcpy(position_, position, sizeof(position_));
     yaw_ = yaw;
     scale_ = scale;
@@ -64,7 +75,7 @@ void Figure::stand(const FigureBody* body, const float position[3], float yaw, f
     previous_ = -1;
     time_ = 0.0f;
     fade_ = 0.0f;
-    if (body_) play(body_->idleClip);
+    if (body_) play(safe_ ? body_->idleSafeClip : body_->idleClip);
 }
 
 void Figure::play(int clip, bool restart) {
@@ -115,7 +126,14 @@ void Figure::update(float seconds) {
         if (previous_ >= 0) {
             const content::CookedClip& before = body_->library->clips.clips[size_t(previous_)];
             previousTime_ += seconds;
-            if (!before.hold && before.duration > 0.0f) {
+            if (before.hold) {
+                // Clamped, exactly as the clip being played is. Without this the clock of a
+                // death being faded OUT of runs past its own end, and `sample` then hands
+                // nlerp a t well above 1 -- extrapolation, which throws a limb somewhere the
+                // clip never goes. The played clip was clamped from the first draft and this
+                // one was not, which is the kind of asymmetry a crossfade hides for months.
+                previousTime_ = std::min(previousTime_, before.duration);
+            } else if (before.duration > 0.0f) {
                 previousTime_ = std::fmod(previousTime_, before.duration);
             }
         }
@@ -126,7 +144,8 @@ void Figure::update(float seconds) {
     }
 }
 
-void Figure::sample(int clip, float time, float* rotations, float* translations) const {
+void Figure::sample(int clip, float time, size_t limit, float* rotations,
+                    float* translations) const {
     const content::CookedClips& clips = body_->library->clips;
     const content::CookedClip& one = clips.clips[size_t(clip)];
     const uint32_t bones = clips.bones;
@@ -137,12 +156,16 @@ void Figure::sample(int clip, float time, float* rotations, float* translations)
     }
     uint32_t frame = uint32_t(where);
     if (frame + 1 >= one.frames) frame = one.frames > 1 ? one.frames - 2 : 0;
-    const float t = one.frames > 1 ? where - float(frame) : 0.0f;
+    // Clamped, and not only for tidiness: `frame` is clamped above, so a clock past the end
+    // would otherwise leave `t` above 1 and every blend below would extrapolate rather than
+    // interpolate.
+    const float t = one.frames > 1 ? std::min(std::max(where - float(frame), 0.0f), 1.0f)
+                                   : 0.0f;
 
     const float* a = &clips.rows[(size_t(one.firstRow) + size_t(frame) * bones) * 7];
     const float* b = one.frames > 1 ? a + size_t(bones) * 7 : a;
 
-    const size_t count = body_->clipBoneOf.size();
+    const size_t count = std::min(limit, body_->clipBoneOf.size());
     for (size_t i = 0; i < count; ++i) {
         const int32_t from = body_->clipBoneOf[i];
         if (from < 0) {
@@ -167,21 +190,29 @@ int Figure::pose(float* rows12) {
     if (count == 0) return 0;
 
     // Stack-sized for the rigs this content has: 60 bones at 7 floats is 1.7 kB, and a pose
-    // that allocates is a pose that allocates thirty-one times a frame.
-    constexpr size_t kMaxBones = 128;
-    if (count > kMaxBones) return 0;
+    // that allocates is a pose that allocates thirty-one times a frame. A rig over the
+    // palette's own width is posed as far as it fits and SAYS SO -- returning 0 here put the
+    // whole figure in bind pose with nothing in the log, which is what a missing clip looks
+    // like, and it made the renderer's own clamp unreachable.
+    constexpr size_t kMaxBones = size_t(gfx::Renderer::kMaxBones);
+    size_t posed = count;
+    if (posed > kMaxBones) {
+        core::logError("%s has %zu bones and the palette holds %zu; the rest stay in bind pose",
+                       body_->name.c_str(), count, kMaxBones);
+        posed = kMaxBones;
+    }
     float rotations[kMaxBones * 4];
     float translations[kMaxBones * 3];
-    sample(clip_, time_, rotations, translations);
+    sample(clip_, time_, posed, rotations, translations);
 
     if (fade_ > 0.0f && previous_ >= 0) {
         float wasRotations[kMaxBones * 4];
         float wasTranslations[kMaxBones * 3];
-        sample(previous_, previousTime_, wasRotations, wasTranslations);
+        sample(previous_, previousTime_, posed, wasRotations, wasTranslations);
         // 0 at the start of the fade and 1 at its end: the new clip arrives rather than
         // starting whole.
         const float t = 1.0f - fade_ / kBlendSeconds;
-        for (size_t i = 0; i < count; ++i) {
+        for (size_t i = 0; i < posed; ++i) {
             float blended[4];
             core::nlerpQuat(&wasRotations[i * 4], &rotations[i * 4], t, blended);
             std::memcpy(&rotations[i * 4], blended, sizeof(blended));
@@ -193,9 +224,9 @@ int Figure::pose(float* rows12) {
 
     // One walk of the hierarchy, parents first -- which the cook guarantees and the reader
     // checks -- then the inverse bind, then the transpose the shader reads.
-    world_.resize(count * 16);
+    world_.resize(posed * 16);
     float* world = world_.data();
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i < posed; ++i) {
         float local[16];
         core::composeMatrix(&rotations[i * 4], &translations[i * 3], local);
         const int32_t parent = bones[i].parent;
@@ -208,7 +239,7 @@ int Figure::pose(float* rows12) {
         core::mulMatrix(bones[i].inverseBind, &world[i * 16], skin);
         core::writePaletteRows(skin, &rows12[i * 12]);
     }
-    return int(count);
+    return int(posed);
 }
 
 void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
@@ -227,21 +258,62 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         out.push_back(drawable);
     }
 
-    // A held item is rigid and rides its bone: the bone's own world matrix -- the pose's,
-    // before the inverse bind, which is where the bone actually IS -- times where the figure
-    // stands. The grip bones sit where a grip belongs rather than at the wrist, so there is
-    // no correction to derive, which is the whole reason MU names a bone.
+    // A held item rides a bone: the bone's own world matrix -- the pose's, before the
+    // inverse bind, which is where the bone actually IS -- times where the figure stands.
+    //
+    // **In the hand there is nothing to correct.** The rig's grip bones sit where a grip
+    // belongs rather than at the wrist, which is the whole reason MU names a bone, and MU2's
+    // Model.cs says it in one line: "Identity in the hand, and MU's own numbers on the back."
+    //
+    // **On the back there is everything to correct**, because Bone05 is a bare point between
+    // the shoulders. Inside a safe zone that is where the weapon goes, and the arrangement is
+    // MU's own, per kind of thing.
     if (world_.empty()) return;
     for (const HeldItem& item : body_->held) {
-        if (!item.mesh || item.bone < 0) continue;
-        if (size_t(item.bone) * 16 + 16 > world_.size()) continue;
+        if (!item.mesh) continue;
+        const bool slung = safe_ && body_->backBone >= 0;
+        const int bone = slung ? body_->backBone : item.bone;
+        if (bone < 0 || size_t(bone) * 16 + 16 > world_.size()) continue;
+
         gfx::Drawable drawable;
         drawable.mesh = item.mesh;
-        // No row: a rigid item needs no palette, and a bow -- which carries a 12-bone rig of
-        // its own -- takes the renderer's bind row and is drawn in its own bind pose. Its
-        // clip is owed with the items.
+        // No row: a rigid item needs no palette, and a bow or a crossbow -- which carry a
+        // 12-bone rig of their own -- take the renderer's bind row, which is their own bind
+        // pose. Their one clip is the string, and it is owed with the items.
         drawable.paletteRow = -1;
-        core::mulMatrix(&world_[size_t(item.bone) * 16], transform, drawable.transform);
+
+        float local[16];
+        if (slung) {
+            float offset[3] = {item.backOffset[0], item.backOffset[1], item.backOffset[2]};
+            if (item.centred) {
+                // Placed by its middle rather than by its origin: MU hangs a shield by a
+                // point inside its mesh and the disc then occupies the same space as the
+                // armour. The centre is taken in the item's own frame and turned by the
+                // rotation already set on it, because the offset it is subtracted from is in
+                // the socket's frame.
+                float turn[16];
+                content::placementTransform(item.backRotation[0] * 3.14159265f / 180.0f,
+                                            item.backRotation[1] * 3.14159265f / 180.0f,
+                                            item.backRotation[2] * 3.14159265f / 180.0f, 1.0f,
+                                            kOrigin, turn);
+                const content::Bounds& box = item.mesh->bounds();
+                for (int axis = 0; axis < 3; ++axis) {
+                    offset[axis] -= box.centre[0] * turn[0 * 4 + axis] +
+                                    box.centre[1] * turn[1 * 4 + axis] +
+                                    box.centre[2] * turn[2 * 4 + axis];
+                }
+            }
+            content::placementTransform(item.backRotation[0] * 3.14159265f / 180.0f,
+                                        item.backRotation[1] * 3.14159265f / 180.0f,
+                                        item.backRotation[2] * 3.14159265f / 180.0f, 1.0f,
+                                        offset, local);
+        } else {
+            std::memcpy(local, kIdentity, sizeof(local));
+        }
+
+        float atBone[16];
+        core::mulMatrix(local, &world_[size_t(bone) * 16], atBone);
+        core::mulMatrix(atBone, transform, drawable.transform);
         out.push_back(drawable);
     }
 }
@@ -253,6 +325,15 @@ void Crowd::open(const Figures& figures, const content::Ground& ground, int mons
     figures_.clear();
     bones_ = 0;
 
+    // Whether the tile a figure stands on is one of MU's safe ones.
+    auto safeAt = [&ground](const float position[3]) {
+        const float per = ground.metresPerTile();
+        const int column = int(position[0] / per);
+        const int row = int(-position[2] / per);
+        return (ground.attributesAt(column, row) & kSafeAttribute) != 0;
+    };
+
+
     // The character the sprint is judged by, standing where the camera looks: five worn
     // parts and two things in his hands, against one palette row. He is not the player yet
     // -- nothing moves him and nothing asks him to -- but he is a dressed figure on the
@@ -263,7 +344,7 @@ void Crowd::open(const Figures& figures, const content::Ground& ground, int mons
         const float z = -(focusRow + 0.5f) * ground.metresPerTile();
         const float position[3] = {x, ground.heightAt(x, z), z};
         Figure figure;
-        figure.stand(body, position, 0.0f, body->scale);
+        figure.stand(body, position, 0.0f, body->scale, safeAt(position));
         figures_.push_back(figure);
         ++players;
     } else if (!player.empty()) {
@@ -276,7 +357,7 @@ void Crowd::open(const Figures& figures, const content::Ground& ground, int mons
         const FigureBody* body = figures.body(one.figure);
         if (!body) continue;
         Figure figure;
-        figure.stand(body, one.position, one.yaw, one.scale);
+        figure.stand(body, one.position, one.yaw, one.scale, safeAt(one.position));
         figures_.push_back(figure);
         ++townsfolk;
     }

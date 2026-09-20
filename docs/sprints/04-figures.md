@@ -214,9 +214,12 @@ Written before the code, as sprint 2's and sprint 3's were.
   at the skinning. The log says how many clips each figure found, on the line that says it
   loaded, so the answer is on screen before the question is asked.
 - **The extra loop key becomes a frame.** It is one key in 3012 and it makes an idle stutter
-  once a cycle and a death half stand up. It is dropped in the cook, by the flag, and the
-  proof is a frame count that matches `action_keys` exactly for all seven of a monster's
-  slots.
+  once a cycle and a death half stand up. **The cook does the opposite of what this paragraph
+  first said**: the key is KEPT and the clock wraps in `[0, duration)`, which makes the wrap
+  an interpolation rather than a repeat -- and a frame count matching `action_keys` is
+  therefore the shape of the *defect*, not the proof. QA found why that matters: 35 of the
+  283 player clips and every monster's `action2` have no closing key at all, and they are
+  exactly the locomotion set. The cook closes those itself now; see the fixes below.
 - **A figure faces the wrong way and still looks right.** A model looks down **+z**, so a
   figure's yaw under `bx::mtxSRT` is the **negative** of the direction of travel's angle —
   MU4's trap 4 — and `bx::mtxFromQuaternion` writes the **inverse** rotation into bx's
@@ -356,6 +359,88 @@ its source bytes and its role.
 one palette row; 30 monsters in Lorencia's mix are another ~16 000 triangles. Of the 45
 figures at the fountain, **29 survive the camera's frustum and 16 are culled**, and every one
 of the 45 is posed, because the sun's pass draws what the camera's does not.
+
+## What QA sent back, and what was done about it
+
+Reviewed at `078adce` by QA, which did not write the code; the findings are in
+`docs/sprints/04-figures.qa.md` and the verdict was **SENT BACK**. Twelve findings, and the
+three that mattered were animation correctness rather than the frame.
+
+1. **Every walk and run clip was missing its closing key while the clock wrapped as if it
+   had one.** MU writes most looping clips with an extra key holding the first pose, so the
+   wrap has an interval to happen over -- and the locomotion set is written without it: 35 of
+   the player's 283 clips (every Walk, every Run, Fly, Walk swim, Run ride) and every
+   monster's `action2`. Left alone the cycle snaps once round, and worse, `duration` was one
+   interval short of the true cycle, so `action_travel` -- metres per cycle, which sprint 5
+   spends -- would have slid the feet by a sixth. **The cook closes them**: a looping clip
+   whose last frame differs from its first gets the first appended and its duration extended
+   by one interval. 41 clips were closed, and `Walk male` is now 8 frames over 0.933 s, which
+   is exactly MU's own 7 keys at `action_speeds 0.3 x 25` = 7.5 fps.
+2. **The Skeleton Warrior idled on the player's "Set"** -- a three-frame character-creation
+   pose -- because the monster branch took slots 0 and 2 out of a library that is the
+   player's. It is the trap `figures.h` documents, walked into two hundred lines below the
+   warning. A monster on the player rig now reads MU's stance table, and `Skeleton01`'s own
+   `index.json` row says which: `stance: sword`, so it stands in `action4`, "Stop sword".
+3. **The crossbow was drawn at the shin**, and the first fix -- putting its own rig root on
+   the grip -- was wrong too and left it floating at the shoulder. The answer was not a
+   correction at all: **MU2's `Model.cs` says "identity in the hand, and MU's own numbers on
+   the back", and a crossbow in the town is on the back**, because the guard stands on a safe
+   tile. See below.
+4. **The player's deaths were never marked `hold`**, because `monster_holds` is a monster
+   table. `actions` names 232 "Die 1" and 233 "Die 2", and the cook reads the hold off that
+   label now. A death that wraps is a corpse half getting up as it falls.
+5. **The crossfade extrapolated out of a hold clip.** `time_` was clamped for a held clip and
+   `previousTime_` was not, so fading out of a death ran its clock past the end and handed
+   `nlerp` a `t` of about 3.5 -- a limb thrown somewhere the clip never goes. Both clocks are
+   clamped now, and `t` itself is clamped in `sample`.
+6. **The wall-time paragraph in Measured** is rewritten above, with QA's numbers.
+7. **The palette's 512-row ceiling was silent**: at `--crowd 600`, 103 figures stood in bind
+   pose with nothing in the log. The frame line carries the rows used and the ceiling now,
+   and a refusal is an error.
+8. **`addPalette`'s clamp was unreachable** and its comment claimed the opposite of what ran.
+   `Figure::pose` clamps and says so rather than refusing.
+9. **The paragraph about dropping the extra key** is corrected above.
+10. **The Dark Knight stood in the empty-hand idle holding a sword.** MU's stance table --
+    sword (4, 17), two-handed (5, 18), spear (6, 19), scythe (7, 20), bow (8, 21), crossbow
+    (9, 22), wand (10, 23), empty hands (1, 15) or (2, 16) for a woman -- is implemented, out
+    of MU2's `Clips.cs:155`, and every weapon's own `index.json` row carries the stance it is
+    held in, so nothing is guessed from a name.
+11. **`EliteBullFighter01` hides a primitive its own row does not name.** It shares
+    `BullFighter01`'s glb, which does name one, and the cook keys the table by mesh. Marked:
+    this is an **invention**, and it is the better picture -- the elite carries a Spear08 and
+    would otherwise wear its built-in axe as well.
+12. **A screenshot's 250 ms stall was being spent on the animation clock**, so every shot
+    after the first showed a pose a quarter-second ahead and no transient shorter than the
+    stall could be photographed at all. The step handed to the clips is capped at 50 ms, one
+    tick of MU's own 20 Hz.
+
+## The safe zone, which is where the crossbow went
+
+Asked for during the review, and it is MU's own rule rather than an addition: **inside a safe
+zone a character carries his weapon on his back and stands in the unarmed idle**, and steps
+out of it with the weapon drawn. MU marks the zone per TILE -- the `0x0001` bit of the
+attribute grid, 3.9% of Lorencia, which `Terrain.Safe` in MU2's shared code reads the same
+way -- and not by the `gates.safe` rectangle the world json carries.
+
+What hangs where is MU's own arrangement out of `RenderCharacterBackItem`, carried into this
+engine's axes by MU2's `Model.cs` and copied with its reasoning:
+
+| | rotation | offset | centred |
+|---|---|---|---|
+| a weapon | 70, 90, 0 | -0.20, 0.40, -0.05 m | no |
+| a shield | 70, 90, 0 | 0, 0, -0.14 m | **yes** |
+| a crossbow | 0, 180, -20 | -0.10, 0.40, -0.08 m | no |
+| a bow or a quiver | 70, 90, 0 | -0.10, 0.10, -0.05 m | no |
+
+A sword is reared over the shoulder with its hilt clear of the head; a crossbow given those
+same numbers lies across the back with a limb past each shoulder, which is why MU tests it
+first and turns it upright and flat instead. Only a shield is hung by its middle rather than
+its origin -- MU places one by a point inside its mesh and the disc then sinks into a plate
+cuirass until the rim disappears. `Bone05` is the bare point between the shoulders that all
+of them hang from, `w->LinkBone = 47` in the old client.
+
+`--figure NAME --safe` stands a bench figure the way a safe tile does, which is the only way
+to judge the slung arrangement without walking the camera into the town square.
 
 ## Still owed out of this sprint
 

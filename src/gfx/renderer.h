@@ -84,6 +84,10 @@ public:
     // caller must treat as "draw this in bind pose" rather than as a reason to stop.
     int addPalette(const float* rows12, int bones);
     int paletteRowsUsed() const { return paletteWritten_; }
+    // How many figures asked for a row this frame and were refused one. They draw in bind
+    // pose, which is a picture, so nothing fails -- but a frame where the crowd quietly
+    // stopped being posed must be visible in a number, as foundation 7 says of culling.
+    int paletteRowsRefused() const { return paletteRefused_; }
 
     // The view and projection this renderer will use for that camera, so that whoever culls
     // against the frustum culls against the SAME frustum that is drawn. Handedness and the
@@ -198,6 +202,7 @@ private:
     bgfx::TextureHandle palette_ = BGFX_INVALID_HANDLE;
     std::vector<float> paletteCpu_;  // kMaxPaletteRows x kMaxBones x 12
     int paletteWritten_ = 0;
+    int paletteRefused_ = 0;
 
     bgfx::VertexBufferHandle screenVb_ = BGFX_INVALID_HANDLE;
     bgfx::VertexLayout screenLayout_;

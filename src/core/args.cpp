@@ -46,7 +46,17 @@ void printUsage() {
         "  --no-figures              no figures at all, which is what the crowd is priced "
         "against\n"
         "  --figure NAME             the monster bench: one figure, by index.json's name\n"
-        "  --clip N                  which clip it plays, as MU's own action number");
+        "  --clip N                  which clip it plays, as MU's own action number\n"
+        "  --headless                run the sim with no window at all\n"
+        "  --seed N                  the sim's seed; the same seed is the same run\n"
+        "  --ticks N                 how many 20 Hz ticks to run (default 10000)\n"
+        "  --sim-log PATH            absolute path for the event log\n"
+        "  --sim-steps               log every tile crossing too\n"
+        "  --no-hand                 no scripted player: the nests on their own\n"
+        "  --class N                 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight\n"
+        "  --level N                 the character's level (default 1)\n"
+        "  --spend STAT              where a levelled character's points go "
+        "(strength by default)");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -68,12 +78,50 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.height = std::atoi(v);
         } else if (!std::strcmp(s, "--no-figures")) {
             a.figuresOn = false;
+        } else if (!std::strcmp(s, "--safe")) {
+            a.safe = true;
         } else if (!std::strcmp(s, "--crowd")) {
             if (const char* v = next(s)) a.crowd = std::atoi(v);
         } else if (!std::strcmp(s, "--figure")) {
             if (const char* v = next(s)) a.figure = v;
         } else if (!std::strcmp(s, "--clip")) {
             if (const char* v = next(s)) a.clip = std::atoi(v);
+        } else if (!std::strcmp(s, "--headless")) {
+            a.headless = true;
+        } else if (!std::strcmp(s, "--seed")) {
+            if (const char* v = next(s)) a.seed = std::strtoull(v, nullptr, 10);
+        } else if (!std::strcmp(s, "--ticks")) {
+            if (const char* v = next(s)) a.ticks = std::atoi(v);
+        } else if (!std::strcmp(s, "--sim-log")) {
+            if (const char* v = next(s)) {
+                a.simLog = v;
+                wantsAbsolute("--sim-log", a.simLog, &a.valid);
+            }
+        } else if (!std::strcmp(s, "--sim-steps")) {
+            a.simSteps = true;
+        } else if (!std::strcmp(s, "--no-hand")) {
+            a.noHand = true;
+        } else if (!std::strcmp(s, "--class")) {
+            if (const char* v = next(s)) {
+                a.kin = std::atoi(v);
+                if (a.kin < 0 || a.kin > 2) {
+                    logError("--class is 0 Dark Wizard, 1 Fairy Elf or 2 Dark Knight, got %d",
+                             a.kin);
+                    a.valid = false;
+                }
+            }
+        } else if (!std::strcmp(s, "--level")) {
+            if (const char* v = next(s)) a.level = std::atoi(v);
+        } else if (!std::strcmp(s, "--spend")) {
+            if (const char* v = next(s)) {
+                a.spend = v;
+                if (a.spend != "strength" && a.spend != "agility" && a.spend != "vitality" &&
+                    a.spend != "energy" && a.spend != "none") {
+                    logError("--spend is strength, agility, vitality, energy or none, got '%s'",
+                             v);
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--vsync")) {
             a.vsync = true;
         } else if (!std::strcmp(s, "--frames")) {
