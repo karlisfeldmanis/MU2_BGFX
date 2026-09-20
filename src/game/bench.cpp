@@ -235,6 +235,11 @@ bool ModelBench::step(int by, content::Textures& textures) {
     return place(textures);
 }
 
+std::string ModelBench::browseName(size_t index) const {
+    if (index >= browse_.size()) return std::string();
+    return std::filesystem::path(browse_[index]).stem().string();
+}
+
 std::string ModelBench::browseLine() const {
     if (browse_.empty()) return std::string();
     char line[512];

@@ -81,6 +81,7 @@ add_executable(mu2
   src/gfx/callback.cpp
   src/gfx/lighting.cpp
   src/gfx/renderer.cpp
+  src/gfx/overlay.cpp
   src/game/bench.cpp
   src/game/world.cpp
   src/game/town.cpp

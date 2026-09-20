@@ -18,6 +18,7 @@
 #include "sim/realm.h"
 #include "game/world.h"
 #include "gfx/lighting.h"
+#include "gfx/overlay.h"
 #include "gfx/renderer.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
@@ -29,6 +30,58 @@ namespace {
 
 std::string defaultPath(const char* dir, const char* name) {
     return std::string(dir) + "/" + name;
+}
+
+// The viewer's list, down the left. A window onto the list rather than the whole of it: 156
+// names do not fit at a readable size, and a list that scrolls past what is selected is no
+// use for choosing. The selected line is held in the middle of the window wherever it can be,
+// so the eye stays in one place while the names move past it.
+void drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, int width,
+                     int height) {
+    // Every frame starts empty and hands the overlay the backbuffer's size. Forgetting this
+    // is not a small bug: the quads pile up run-long, and the size the vertex shader divides
+    // by stays zero, so the whole list is one NaN off the screen and nothing draws at all.
+    overlay.begin(width, height);
+    constexpr float kScale = 2.0f;
+    constexpr float kPad = 10.0f;
+    constexpr uint32_t kBack = 0xC0140d0au;      // abgr: a dark wash, so names read over grass
+    constexpr uint32_t kInk = 0xFFc8c8c8u;
+    constexpr uint32_t kChosen = 0xFFffffffu;
+    constexpr uint32_t kDim = 0xFF6e6e6eu;
+
+    const float line = gfx::Overlay::lineHeight(kScale);
+    const size_t count = bench.browseCount();
+    if (count == 0) return;
+    // As many as fit in the top two thirds, so the list never runs into the frame line the
+    // log prints at the bottom of a review shot.
+    const size_t rows = size_t((float(height) * 0.66f - kPad * 4.0f) / line);
+    const size_t half = rows / 2;
+    size_t first = bench.browseIndex() > half ? bench.browseIndex() - half : 0;
+    if (first + rows > count) first = count > rows ? count - rows : 0;
+    const size_t last = first + rows < count ? first + rows : count;
+
+    float widest = gfx::Overlay::measure(kScale, "999/999");
+    for (size_t i = first; i < last; ++i) {
+        const float w = gfx::Overlay::measure(kScale, bench.browseName(i));
+        if (w > widest) widest = w;
+    }
+    const float panelW = widest + kPad * 2.0f;
+    const float panelH = float(last - first) * line + kPad * 3.0f + line;
+    overlay.panel(kPad, kPad, panelW, panelH, kBack);
+
+    char header[64];
+    std::snprintf(header, sizeof(header), "%zu/%zu", bench.browseIndex() + 1, count);
+    overlay.text(kPad * 2.0f, kPad * 2.0f, kScale, kDim, header);
+
+    float y = kPad * 2.0f + line * 1.5f;
+    for (size_t i = first; i < last; ++i) {
+        const bool chosen = i == bench.browseIndex();
+        if (chosen) {
+            overlay.panel(kPad * 1.5f, y - 1.0f, panelW - kPad, line, 0x80505050u);
+        }
+        overlay.text(kPad * 2.0f, y, kScale, chosen ? kChosen : kInk, bench.browseName(i));
+        y += line;
+    }
 }
 
 }  // namespace
@@ -118,6 +171,10 @@ int main(int argc, char** argv) {
         }
     }
 
+    // The viewer's list. Only the browser has anything to put on it, so it is only built
+    // there: an overlay nobody draws still costs a program and a texture.
+    gfx::Overlay overlay;
+
     game::ModelBench bench;
     if (args.distance > 0.0f) bench.setDistance(args.distance);
     const std::string modelPath =
@@ -137,6 +194,9 @@ int main(int argc, char** argv) {
         window.close();
         core::logClose();
         return 1;
+    }
+    if (browseBench && !overlay.init(MU2_SHADER_DIR)) {
+        core::logError("the viewer opened without its list; the names are in the log");
     }
     if (browseBench && !bench.openBrowser(MU2_ASSET_DIR, benchWorld, textures)) {
         core::logError("the bench did not open");
@@ -294,6 +354,10 @@ int main(int argc, char** argv) {
             }
             bench.update(elapsed, deltaSeconds, !args.still);
             renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
+            if (bench.browsing() && overlay.ready()) {
+                drawBrowserList(overlay, bench, window.width(), window.height());
+                overlay.submit(gfx::ViewHud);
+            }
         }
 
         const bool lastFrame = args.frames && frame + 1 >= args.frames;
@@ -414,6 +478,7 @@ int main(int argc, char** argv) {
     const bool withinBudget = stats.finish(args.budget);
 
     bench.shutdown();
+    overlay.shutdown();
     world.shutdown();
     renderer.shutdown();
     textures.shutdown();

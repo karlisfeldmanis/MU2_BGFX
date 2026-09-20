@@ -37,6 +37,11 @@ public:
     bool browsing() const { return !browse_.empty(); }
     // "17/105  House01.mum", for the log line once a second.
     std::string browseLine() const;
+    // The list itself, for the viewer to put on the screen. Names only -- the directory a
+    // model came out of is in the log and is not what anybody reads off a list.
+    size_t browseCount() const { return browse_.size(); }
+    size_t browseIndex() const { return browseAt_; }
+    std::string browseName(size_t index) const;
 
     // The ground the renderer should draw, or null when this bench is standing its model on
     // its own plane instead. See makeGround.
