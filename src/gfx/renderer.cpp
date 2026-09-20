@@ -332,8 +332,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             const content::Material& material = mesh.materials()[part.material];
 
             // A cutout discards in every pass, this one included, or a leaf casts a card.
+            // z and w are glTF's roughness and metal factors, which the shade pass multiplies
+            // the ORM by: a material with no ORM map carries its whole answer there.
             const float materialParams[4] = {material.cutout, material.twoSided ? 1.0f : 0.0f,
-                                             0.0f, 0.0f};
+                                             material.roughnessFactor, material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
             // The albedo is bound even in the depth passes, because the cutout reads its alpha.
             bgfx::setTexture(0, sAlbedo_, material.albedo);

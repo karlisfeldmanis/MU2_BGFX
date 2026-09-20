@@ -54,6 +54,14 @@ struct Material {
     // is the whole test: a cutout is decided when the model is read, not guessed per pixel.
     float cutout = -1.0f;
     bool twoSided = false;
+    // glTF's own scalars, and the shader multiplies the ORM by them: roughness = orm.g * this,
+    // metal = orm.b * this. A surface whose relief came out of its art has a map and both
+    // factors at 1.0; a surface whose material declares no grain -- MU's foliage, grass and
+    // water -- has no map at all and carries its whole answer here. Ignoring them drew 195 of
+    // this content's material slots at the missing-map fallback, water at roughness 1 among
+    // them.
+    float roughnessFactor = 1.0f;
+    float metalFactor = 1.0f;
     std::string name;
 };
 

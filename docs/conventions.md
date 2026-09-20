@@ -133,9 +133,25 @@ both one byte a texel against RGBA8's four, so compressed it is **a quarter**, n
 The cook step owns closing this, and until it does, this table says so rather than describing
 an engine that does not exist.
 
-A material with no ORM map takes **occlusion 1, roughness 1, metal 0** — not white. White's
-blue is metal 1.0, a metal surface has no diffuse, and a material whose ORM failed to load
-drew black while looking like a loading bug rather than a fallback.
+**Roughness and metal are `factor × map`, which is glTF's own rule and not a detail.** MU2's
+pipeline uses exactly that split: a surface whose relief was read out of its art gets an ORM
+map and states both factors as 1.0, and a surface whose material declares no grain — MU's
+foliage, its grass, its water — gets no map at all and states the real number in the factor.
+195 of this content's 729 material slots are the second kind. A shader that reads only the map
+draws every one of them at the fallback, which is what it did until the factors were bound
+into `u_material.zw`: water at roughness 1 where the library asks 0.08.
+
+So a material with no ORM map binds **all ones**, and the factor does the work. It used to
+bind occlusion 1, roughness 1, metal 0, which was right for exactly as long as nothing
+multiplied — and is wrong now, because a blue of 0 would multiply any metal factor away to
+nothing. `Textures::neutralOrm` stays for the two callers with no factor to offer, the ground
+and the bench, and `Textures::ormOne` is for the materials that have one.
+
+The sprint 4 lesson that put that rule there still holds and is kept where it belongs: white's
+blue is metal 1.0, a metal surface has no diffuse, and a material whose ORM failed to load drew
+black while looking like a loading bug. It cannot recur through the factors, because the cook
+writes metal 0 where a material states neither a map nor a `metallicFactor`, deliberately
+departing from glTF's default of 1.0. See `tools/cook.py`'s `orm_factors`.
 
 `light.png` is MU's baked terrain light. The ground mesh carries it per vertex in
 `COLOR_0.rgb` rather than sampling the picture, and **it multiplies the albedo, before any
@@ -217,10 +233,14 @@ ground's shape. So `vs_ground`/`fs_ground` exist beside `vs_static`/`fs_static`,
 is that there are exactly these two — a third means the model was wrong and gets fixed, not
 extended. See `docs/sprints/02-the-ground.md`.
 
-Everything else is one model, closed. Albedo, normal, ORM, emissive, and three flags:
-**cutout**, **two-sided**,
-**skinned**. The shader variants are those three flags and nothing else. Anything MU2's
-material library says beyond that is resolved at cook time into these fields.
+Everything else is one model, closed. Albedo, normal, ORM, emissive, glTF's two scalar
+factors over the ORM, and three flags: **cutout**, **two-sided**, **skinned**. The shader
+variants are those three flags and nothing else. Anything MU2's material library says beyond
+that is resolved at cook time into these fields.
+
+- **Whether a surface wears the material it ought to is audited**, by `tools/matcheck.py`
+  against `index.json`'s library, and it is a gate rather than a report. See
+  `docs/materials.md`.
 
 - **MU's figures are single sheets with mixed winding** and are drawn two-sided.
 - **Cutout is decided once at load, off glTF's `alpha_mode` and `alpha_cutoff`**, which is

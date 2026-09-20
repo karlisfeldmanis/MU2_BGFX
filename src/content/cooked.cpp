@@ -24,23 +24,27 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         error = "not a .mum";
         return false;
     }
-    if (version != 1 && version != 2) {
-        error = "a .mum of version " + std::to_string(version) + ", and this reads 1 and 2";
+    if (version < 3 || version > 4) {
+        error = "a .mum of version " + std::to_string(version) +
+                ", and this reads 3 and 4. Versions 1 and 2 are the same file without glTF's "
+                "roughness and metal factors, which 195 of this content's material slots "
+                "carry their whole answer in; recook.";
         return false;
     }
-    // Version 2 is a skinned mesh: a bone count here, 56-byte vertices below, and the skin's
-    // own bone table after the materials. Version 1 is the static mesh the town is made of
-    // and is unchanged -- a figure needs a bigger vertex and a skeleton, and the town's 2753
-    // placements have no business paying eight bytes each for joints they do not have.
+    // Version 4 is a skinned mesh: a bone count here, 56-byte vertices below, and the skin's
+    // own bone table after the materials. Version 3 is the static mesh the town is made of
+    // -- a figure needs a bigger vertex and a skeleton, and the town's 2753 placements have
+    // no business paying eight bytes each for joints they do not have.
+    const bool skinned = version == 4;
     uint32_t bones = 0;
-    if (version == 2) reader.read(bones);
-    const size_t vertexSize = version == 2 ? sizeof(CookedSkinnedVertex) : sizeof(CookedVertex);
+    if (skinned) reader.read(bones);
+    const size_t vertexSize = skinned ? sizeof(CookedSkinnedVertex) : sizeof(CookedVertex);
     if (!plausible(reader, vertices, vertexSize) || !plausible(reader, indices, 4)) {
         error = "claims more vertices or indices than it holds";
         return false;
     }
 
-    if (version == 2) {
+    if (skinned) {
         out.skinned.resize(vertices);
         reader.take(out.skinned.data(), size_t(vertices) * sizeof(CookedSkinnedVertex));
     } else {
@@ -72,6 +76,8 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         reader.readString(material.normal);
         reader.readString(material.orm);
         reader.readString(material.emissive);
+        reader.read(material.roughnessFactor);
+        reader.read(material.metalFactor);
         if (reader.failed()) break;
     }
 

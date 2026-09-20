@@ -334,14 +334,27 @@ int main(int argc, char** argv) {
 
             uint32_t header[6];
             std::memcpy(header, bytes.data(), 24);
-            if (std::memcmp(bytes.data(), "MU2M", 4) != 0 || header[1] != 1) {
-                fail(name, "is not a version 1 .mum");
+            // 3 is a static mesh and 4 is a skinned one. The town's own models are all
+            // static, but a few of MU's world objects carry a sway rig and arrive skinned,
+            // so both are accepted here rather than only the one this directory expects.
+            if (std::memcmp(bytes.data(), "MU2M", 4) != 0 ||
+                (header[1] != 3 && header[1] != 4)) {
+                fail(name, "is not a version 3 or 4 .mum");
                 continue;
             }
             const uint32_t vertices = header[2];
             const uint32_t indices = header[3];
             const uint32_t parts = header[4];
             const uint32_t materials = header[5];
+            // A skinned mesh puts its bone count after the bounds and carries 56-byte
+            // vertices instead of 48. Reading one with the static layout does not fail on
+            // the header -- every count is plausible -- it fails eight bytes a vertex later,
+            // as parts that run past the end of indices that are not there. Which is exactly
+            // what this checker reported on 20 of Lorencia's models the moment it began
+            // accepting version 4 at all.
+            const bool skinned = header[1] == 4;
+            const size_t boneCountBytes = skinned ? 4 : 0;
+            const size_t vertexStride = skinned ? 56 : 48;
             float bounds[6];
             std::memcpy(bounds, bytes.data() + 24, sizeof(bounds));
             for (int i = 0; i < 3; ++i) {
@@ -352,9 +365,10 @@ int main(int argc, char** argv) {
                 }
             }
 
-            const size_t vertexBytes = size_t(vertices) * 48;
+            const size_t vertexBytes = size_t(vertices) * vertexStride;
             const size_t indexBytes = size_t(indices) * 4;
-            const size_t partsAt = 48 + vertexBytes + indexBytes;
+            const size_t bodyAt = 48 + boneCountBytes;
+            const size_t partsAt = bodyAt + vertexBytes + indexBytes;
             if (bytes.size() < partsAt + size_t(parts) * 12) {
                 fail(name, "is shorter than its own counts");
                 continue;
@@ -364,7 +378,7 @@ int main(int argc, char** argv) {
             uint32_t worstIndex = 0;
             for (uint32_t i = 0; i < indices; ++i) {
                 uint32_t value;
-                std::memcpy(&value, bytes.data() + 48 + vertexBytes + size_t(i) * 4, 4);
+                std::memcpy(&value, bytes.data() + bodyAt + vertexBytes + size_t(i) * 4, 4);
                 if (value > worstIndex) worstIndex = value;
             }
             if (indices > 0 && worstIndex >= vertices) {

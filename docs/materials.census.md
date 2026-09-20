@@ -9,18 +9,18 @@ it claims, and what its baked ORM actually carries.
 
 | model | slot | triangles | area | ORM rough | ORM metal |
 |---|---|---:|---:|---:|---:|
-| Tree02 | Tree_a | 164 | 172.48 | - | - |
+| Tree02 | Tree_a | 164 | 172.48 | 0.900 | 0.000 |
 | Ship01 | TileGround03 | 284 | 164.19 | 0.730 | 0.000 |
-| Tree01 | tree_a | 144 | 154.12 | - | - |
+| Tree01 | tree_a | 144 | 154.12 | 0.900 | 0.000 |
 | Object50 | gatewall041 | 959 | 147.35 | 0.731 | 0.000 |
 | House05 | tile_wood02 | 228 | 74.01 | 0.818 | 0.000 |
 | House03 | tile_ston04 | 77 | 72.67 | 0.902 | 0.000 |
 | House01 | tile_ston04 | 65 | 62.43 | 0.898 | 0.000 |
 | Object25 | treea00 | 606 | 55.96 | 0.880 | 0.000 |
 | Tree02 | tree | 606 | 55.94 | 0.880 | 0.000 |
-| Straw02 | grass_01 | 352 | 55.63 | - | - |
+| Straw02 | grass_01 | 352 | 55.63 | 0.900 | 0.000 |
 | Object39 | so_bob03 | 30 | 52.08 | 0.726 | 0.000 |
-| Object21 | wood03 | 264 | 47.42 | - | - |
+| Object21 | wood03 | 264 | 47.42 | 1.000 | 0.000 |
 | DoungeonGate01 | copra_gate | 333 | 45.92 | 0.736 | 0.000 |
 | Object31 | wood002 | 230 | 44.40 | 0.883 | 0.000 |
 | HouseEtc02 | tile_ston04 | 46 | 44.05 | 0.896 | 0.000 |
@@ -28,18 +28,18 @@ it claims, and what its baked ORM actually carries.
 | House03 | tile_ston06 | 192 | 42.91 | 0.818 | 0.000 |
 | Ship01 | ship01 | 34 | 40.77 | 0.817 | 0.000 |
 | Object35 | song_bria01 | 52 | 40.72 | 0.731 | 0.000 |
-| Tree11 | tree_06 | 144 | 40.49 | - | - |
+| Tree11 | tree_06 | 144 | 40.49 | 0.900 | 0.000 |
 | Bridge01 | bridge_01 | 194 | 38.77 | 0.726 | 0.000 |
 | Object99 | so_jgwall01 | 22 | 38.68 | 0.733 | 0.000 |
 | StoneGolem01 | ston1 | 460 | 34.94 | 0.862 | 0.000 |
 | Object31 | wood001 | 76 | 32.82 | 0.722 | 0.000 |
 | Ship01 | ship03 | 62 | 31.08 | 0.821 | 0.000 |
 | StoneStatue02 | stone_statue01 | 107 | 31.03 | 0.734 | 0.000 |
-| MerchantAnimal01 | merchant_moster_a01 | 540 | 30.28 | - | - |
+| MerchantAnimal01 | merchant_moster_a01 | 540 | 30.28 | 0.700 | 0.000 |
 | HouseEtc02 | c_wall04 | 25 | 29.68 | 0.731 | 0.000 |
 | StoneMuWall01 | c_wall04 | 56 | 29.22 | 0.726 | 0.000 |
-| Tree13 | tree_05 | 120 | 28.97 | - | - |
-| Tree12 | tree_04 | 120 | 28.97 | - | - |
+| Tree13 | tree_05 | 120 | 28.97 | 0.900 | 0.000 |
+| Tree12 | tree_04 | 120 | 28.97 | 0.900 | 0.000 |
 | House04 | tile_wood01 | 117 | 28.43 | 0.812 | 0.000 |
 | Object40 | htht01 | 803 | 28.24 | 0.722 | 0.000 |
 | StoneWall03 | tile_01 | 50 | 26.93 | 0.730 | 0.000 |
@@ -57,20 +57,20 @@ it claims, and what its baked ORM actually carries.
 | Tree08 | tree_01 | 176 | 21.75 | 0.879 | 0.000 |
 | House01 | tile_ston06 | 104 | 21.16 | 0.816 | 0.000 |
 | House03 | tile_ston07 | 12 | 21.02 | 0.822 | 0.000 |
-| Carriage04 | grass_01 | 132 | 20.86 | - | - |
-| Straw01 | grass_01 | 132 | 20.86 | - | - |
+| Carriage04 | grass_01 | 132 | 20.86 | 0.900 | 0.000 |
+| Straw01 | grass_01 | 132 | 20.86 | 0.900 | 0.000 |
 | StoneMuWall03 | c_wall04 | 38 | 20.58 | 0.727 | 0.000 |
 | StoneMuWall04 | c_wall04 | 38 | 20.58 | 0.727 | 0.000 |
 | Object103 | so_jgwall04 | 176 | 20.11 | 0.725 | 0.000 |
 | Tree01 | tree | 268 | 19.93 | 0.881 | 0.000 |
 | Object35 | so_archb02 | 110 | 19.91 | 0.862 | 0.000 |
-| Object21 | flower6 | 284 | 19.54 | - | - |
+| Object21 | flower6 | 284 | 19.54 | 0.900 | 0.000 |
 | Hanging01 | horse_drawn_01 | 162 | 19.52 | 0.814 | 0.000 |
 | StoneWall01 | tile_01 | 88 | 19.48 | 0.731 | 0.000 |
 | StoneWall02 | tile_01 | 88 | 19.48 | 0.731 | 0.000 |
 | House04 | tile_ston04 | 48 | 19.20 | 0.897 | 0.000 |
 | Stone02 | ston01 | 125 | 18.90 | 0.864 | 0.000 |
-| Tree10 | tree_07 | 480 | 18.09 | - | - |
+| Tree10 | tree_07 | 480 | 18.09 | 0.900 | 0.000 |
 | Storage01 | mu2 | 1512 | 17.94 | 0.780 | 0.000 |
 | Waterspout01 | reagon_waterspout | 417 | 17.41 | 0.729 | 0.000 |
 | Carriage04 | horse_drawn_01 | 258 | 17.00 | 0.811 | 0.000 |
@@ -78,7 +78,7 @@ it claims, and what its baked ORM actually carries.
 | House04 | tile_02 | 100 | 16.59 | 0.821 | 0.000 |
 | Ship01 | ship04 | 58 | 16.38 | 0.722 | 0.000 |
 | HouseWall04 | tile_wood01 | 12 | 16.26 | 0.821 | 0.000 |
-| Object98 | so_jgtree02 | 28 | 16.13 | - | - |
+| Object98 | so_jgtree02 | 28 | 16.13 | 0.900 | 0.000 |
 | House04 | tile_wood03 | 31 | 15.70 | 0.903 | 0.000 |
 | StoneWall06 | tile_01 | 20 | 15.56 | 0.727 | 0.000 |
 | Object29 | treea00 | 411 | 15.44 | 0.881 | 0.000 |
@@ -98,7 +98,7 @@ it claims, and what its baked ORM actually carries.
 | StoneMuWall04 | horse_drawn_01 | 233 | 12.73 | 0.815 | 0.000 |
 | Tent01 | tile_house01 | 26 | 12.64 | 0.827 | 0.000 |
 | Tomb01 | grave_02 | 44 | 11.82 | 0.738 | 0.000 |
-| Tree09 | tree_07 | 240 | 11.75 | - | - |
+| Tree09 | tree_07 | 240 | 11.75 | 0.900 | 0.000 |
 | Object19 | flower7 | 524 | 11.63 | 0.875 | 0.000 |
 | HouseWall05 | tile_wood03 | 4 | 11.51 | 0.899 | 0.000 |
 | HouseEtc02 | tile_wood02 | 2 | 10.87 | 0.835 | 0.000 |
@@ -110,33 +110,33 @@ it claims, and what its baked ORM actually carries.
 | BridgeStone01 | tile_ston06 | 52 | 10.06 | 0.822 | 0.000 |
 | Well02 | well__timber | 67 | 9.94 | 0.808 | 0.000 |
 | Stone03 | ston01 | 80 | 9.94 | 0.858 | 0.000 |
-| Object97 | so_jgtree02 | 20 | 9.90 | - | - |
+| Object97 | so_jgtree02 | 20 | 9.90 | 0.900 | 0.000 |
 | Well02 | well | 56 | 9.77 | 0.837 | 0.000 |
-| Grass02 | tree_08 | 120 | 9.61 | - | - |
-| Grass01 | tree_08 | 120 | 9.61 | - | - |
+| Grass02 | tree_08 | 120 | 9.61 | 0.900 | 0.000 |
+| Grass01 | tree_08 | 120 | 9.61 | 0.900 | 0.000 |
 | StoneWall03 | tile_03 | 10 | 9.39 | 0.727 | 0.000 |
 | Tree12 | tree_01 | 273 | 9.18 | 0.879 | 0.000 |
 | Tree13 | tree_01 | 273 | 9.13 | 0.879 | 0.000 |
-| Grass03 | tree_01 | 96 | 9.03 | - | - |
+| Grass03 | tree_01 | 96 | 9.03 | 0.900 | 0.000 |
 | Tomb02 | grave_01 | 40 | 9.00 | 0.734 | 0.000 |
 | StoneMuWall02 | c_wall04 | 12 | 8.90 | 0.725 | 0.000 |
-| Waterspout01 | ston02 | 90 | 8.89 | - | - |
+| Waterspout01 | ston02 | 90 | 8.89 | 1.000 | 0.000 |
 | Object65 | statuedup72 | 902 | 8.83 | 0.730 | 0.000 |
 | SteelWall02 | steel_barred_a | 8 | 8.80 | 0.722 | 1.000 |
 | Object30 | treea00 | 214 | 8.70 | 0.881 | 0.000 |
-| Object42 | u2u3 | 156 | 8.69 | - | - |
+| Object42 | u2u3 | 156 | 8.69 | 1.000 | 0.000 |
 | House02 | drum | 26 | 8.39 | 0.819 | 0.000 |
 | Object107 | so_jgwall03 | 110 | 8.15 | 0.724 | 0.000 |
 | Object32 | ston001 | 80 | 8.11 | 0.860 | 0.000 |
 | Tent01 | tile_ston06 | 40 | 7.98 | 0.829 | 0.000 |
-| Grass04 | tree_01 | 96 | 7.94 | - | - |
+| Grass04 | tree_01 | 96 | 7.94 | 0.900 | 0.000 |
 | Object30 | so_archb03 | 45 | 7.92 | 0.724 | 0.000 |
 | HouseWall01 | tile_wood01 | 8 | 7.79 | 0.813 | 0.000 |
 | Smith01 | mu2 | 730 | 7.72 | 0.701 | 0.000 |
 | Spider01 | mu2 | 168 | 7.69 | 0.620 | 0.000 |
-| MerchantAnimal02 | merchant_moster_b01 | 484 | 7.35 | - | - |
-| House05 | ston02 | 28 | 7.33 | - | - |
-| Grass03 | tree_02 | 32 | 7.01 | - | - |
+| MerchantAnimal02 | merchant_moster_b01 | 484 | 7.35 | 0.700 | 0.000 |
+| House05 | ston02 | 28 | 7.33 | 1.000 | 0.000 |
+| Grass03 | tree_02 | 32 | 7.01 | 0.900 | 0.000 |
 | HouseWall02 | tile_wood01 | 26 | 7.01 | 0.823 | 0.000 |
 | Tree06 | tree_02 | 89 | 6.81 | 0.883 | 0.000 |
 | StoneWall01 | tile_03 | 20 | 6.80 | 0.725 | 0.000 |
@@ -146,36 +146,36 @@ it claims, and what its baked ORM actually carries.
 | HouseWall02 | tile_wood02 | 20 | 6.40 | 0.814 | 0.000 |
 | HouseWall01 | tile_wood02 | 20 | 6.38 | 0.816 | 0.000 |
 | Cannon01 | horse_drawn_01 | 175 | 6.16 | 0.770 | 0.491 |
-| Grass04 | tree_02 | 32 | 6.15 | - | - |
-| Object28 | treea01 | 160 | 6.10 | - | - |
+| Grass04 | tree_02 | 32 | 6.15 | 0.900 | 0.000 |
+| Object28 | treea01 | 160 | 6.10 | 0.900 | 0.000 |
 | Furniture01 | bookshelf | 32 | 6.09 | 0.722 | 0.000 |
 | Furniture02 | bookshelf | 32 | 6.09 | 0.722 | 0.000 |
-| BeetleMonster01 | bug | 430 | 6.07 | - | - |
+| BeetleMonster01 | bug | 430 | 6.07 | 0.620 | 0.000 |
 | StoneMuWall03 | c_wall06 | 14 | 5.99 | 0.727 | 0.000 |
 | StoneMuWall04 | c_wall06 | 14 | 5.99 | 0.727 | 0.000 |
 | StoneMuWall02 | c_wall06 | 10 | 5.95 | 0.733 | 0.000 |
-| MerchantAnimal01 | merchant_moster_a02 | 88 | 5.89 | - | - |
+| MerchantAnimal01 | merchant_moster_a02 | 88 | 5.89 | 0.700 | 0.000 |
 | TreasureChest01 | treasure_chest | 66 | 5.76 | 0.824 | 0.000 |
-| Object27 | flower05 | 384 | 5.72 | - | - |
+| Object27 | flower05 | 384 | 5.72 | 0.900 | 0.000 |
 | Waterspout01 | ston01 | 60 | 5.70 | 0.864 | 0.000 |
 | HouseWall06 | tile_wood03 | 2 | 5.68 | 0.900 | 0.000 |
 | Ship01 | ship06 | 24 | 5.62 | 0.800 | 0.000 |
-| Grass05 | tree_09 | 112 | 5.52 | - | - |
-| Object18 | flower2 | 107 | 5.49 | - | - |
+| Grass05 | tree_09 | 112 | 5.52 | 0.900 | 0.000 |
+| Object18 | flower2 | 107 | 5.49 | 0.900 | 0.000 |
 | Giant01 | mu2 | 709 | 5.41 | 0.346 | 0.000 |
 | Well04 | jar_01 | 388 | 5.25 | 0.305 | 0.000 |
-| Object23 | flower2 | 162 | 5.15 | - | - |
+| Object23 | flower2 | 162 | 5.15 | 0.900 | 0.000 |
 | Object97 | so_jgtree01 | 308 | 5.14 | 0.879 | 0.000 |
 | Furniture05 | desk_big | 34 | 5.13 | 0.722 | 0.000 |
 | HouseEtc01 | c_wall04 | 8 | 5.11 | 0.724 | 0.000 |
 | Tree11 | tree_03 | 25 | 4.93 | 0.881 | 0.000 |
 | Object30 | so_archb02 | 83 | 4.82 | 0.861 | 0.000 |
 | Cannon02 | horse_drawn_01 | 148 | 4.68 | 0.764 | 0.568 |
-| Object06 | so_grass | 24 | 4.68 | - | - |
+| Object06 | so_grass | 24 | 4.68 | 0.900 | 0.000 |
 | SteelDoor01 | steel_barred_door | 2 | 4.58 | 0.722 | 1.000 |
 | House04 | tile_wood02 | 16 | 4.48 | 0.813 | 0.000 |
 | Wizard01 | mu2 | 495 | 4.46 | 0.780 | 0.000 |
-| Object28 | treea02 | 66 | 4.42 | - | - |
+| Object28 | treea02 | 66 | 4.42 | 0.900 | 0.000 |
 | Object24 | flower7 | 246 | 4.34 | 0.874 | 0.000 |
 | Object23 | flower7 | 246 | 4.34 | 0.874 | 0.000 |
 | Object122 | stair_01 | 12 | 4.06 | 0.723 | 0.000 |
@@ -185,62 +185,62 @@ it claims, and what its baked ORM actually carries.
 | Hunter01 | mu2 | 424 | 4.03 | 0.702 | 0.000 |
 | HouseWall04 | tile_ston04 | 12 | 3.98 | 0.898 | 0.000 |
 | ElfMerchant01 | mu2 | 322 | 3.96 | 0.702 | 0.000 |
-| Object22 | flower6 | 39 | 3.87 | - | - |
+| Object22 | flower6 | 39 | 3.87 | 0.900 | 0.000 |
 | Object99 | so_jgwall03 | 18 | 3.79 | 0.727 | 0.000 |
 | StoneMuWall01 | c_wall06 | 20 | 3.78 | 0.735 | 0.000 |
-| MixNpc01 | ob3 | 425 | 3.72 | - | - |
-| ElfWizard01 | lpwing | 4 | 3.66 | - | - |
+| MixNpc01 | ob3 | 425 | 3.72 | 0.700 | 0.000 |
+| ElfWizard01 | lpwing | 4 | 3.66 | 1.000 | 0.000 |
 | Stair01 | tile_wood01 | 78 | 3.58 | 0.807 | 0.000 |
-| Object04 | flower02 | 64 | 3.56 | - | - |
+| Object04 | flower02 | 64 | 3.56 | 0.900 | 0.000 |
 | Object104 | so_jgwall02 | 164 | 3.50 | 0.728 | 0.000 |
 | Well03 | jar_01 | 194 | 3.43 | 0.305 | 0.000 |
 | HouseEtc02 | tile_ston06 | 30 | 3.40 | 0.812 | 0.000 |
-| Stone02 | ston02 | 34 | 3.39 | - | - |
+| Stone02 | ston02 | 34 | 3.39 | 0.900 | 0.000 |
 | ElfWizard01 | lptgq | 140 | 3.39 | 0.724 | 0.000 |
-| Object50 | gatelight01_r | 96 | 3.18 | - | - |
-| Object19 | filling_up05 | 72 | 3.12 | - | - |
+| Object50 | gatelight01_r | 96 | 3.18 | 1.000 | 0.000 |
+| Object19 | filling_up05 | 72 | 3.12 | 1.000 | 0.000 |
 | TreasureDrum01 | drum | 60 | 3.05 | 0.700 | 0.039 |
 | ManUpper01 | mu2 | 250 | 3.02 | 0.780 | 0.000 |
-| Object24 | flower2 | 162 | 2.97 | - | - |
+| Object24 | flower2 | 162 | 2.97 | 0.900 | 0.000 |
 | House01 | tile_house01 | 5 | 2.96 | 0.804 | 0.000 |
 | StoneMuWall01 | c_wall05 | 32 | 2.96 | 0.732 | 0.000 |
 | HouseEtc02 | tile_house01 | 5 | 2.93 | 0.808 | 0.000 |
 | Furniture04 | desk_big | 38 | 2.84 | 0.722 | 0.000 |
 | SteelDoor01 | steel_barred_b | 56 | 2.83 | 0.722 | 1.000 |
-| Object03 | flower2 | 216 | 2.81 | - | - |
+| Object03 | flower2 | 216 | 2.81 | 0.900 | 0.000 |
 | StoneMuWall02 | c_wall05 | 22 | 2.74 | 0.732 | 0.000 |
 | Object107 | so_jgwall05 | 64 | 2.74 | 0.859 | 0.000 |
-| Object26 | treea03 | 843 | 2.68 | - | - |
+| Object26 | treea03 | 843 | 2.68 | 0.900 | 0.000 |
 | Sign02 | notice | 30 | 2.67 | 0.810 | 0.000 |
 | HouseWall03 | tile_wood02 | 20 | 2.67 | 0.818 | 0.000 |
-| Grass06 | tree_09 | 112 | 2.66 | - | - |
-| Object40 | yellow_jewel | 147 | 2.64 | - | - |
-| Object38 | light01 | 6 | 2.64 | - | - |
+| Grass06 | tree_09 | 112 | 2.66 | 0.900 | 0.000 |
+| Object40 | yellow_jewel | 147 | 2.64 | 1.000 | 0.000 |
+| Object38 | light01 | 6 | 2.64 | 1.000 | 0.000 |
 | Cannon03 | horse_drawn_01 | 66 | 2.62 | 0.779 | 0.424 |
-| Object20 | wd | 120 | 2.59 | - | - |
+| Object20 | wd | 120 | 2.59 | 1.000 | 0.000 |
 | Tree07 | tree_03 | 84 | 2.55 | 0.878 | 0.000 |
-| Object06 | flower03 | 144 | 2.53 | - | - |
+| Object06 | flower03 | 144 | 2.53 | 0.900 | 0.000 |
 | Tomb03 | tombstone | 30 | 2.46 | 0.748 | 0.000 |
-| Stone01 | ston02 | 26 | 2.45 | - | - |
+| Stone01 | ston02 | 26 | 2.45 | 0.900 | 0.000 |
 | ElfWizard01 | hpp | 157 | 2.42 | 0.722 | 1.000 |
-| Object04 | flower2 | 80 | 2.39 | - | - |
+| Object04 | flower2 | 80 | 2.39 | 0.900 | 0.000 |
 | Tree05 | tree_03 | 85 | 2.34 | 0.882 | 0.000 |
 | Bonfire01 | fire_01 | 72 | 2.31 | 0.814 | 0.000 |
-| Object41 | ob3 | 376 | 2.30 | - | - |
+| Object41 | ob3 | 376 | 2.30 | 0.700 | 0.000 |
 | StoneStatue03 | tombstone_big | 20 | 2.28 | 0.727 | 0.000 |
 | House04 | tile_house01 | 2 | 2.25 | 0.807 | 0.000 |
 | SteelWall01 | steel_barred_a | 4 | 2.20 | 0.722 | 1.000 |
 | SteelWall03 | steel_barred_a | 2 | 2.20 | 0.722 | 1.000 |
-| Object05 | flower03 | 192 | 2.20 | - | - |
+| Object05 | flower03 | 192 | 2.20 | 0.900 | 0.000 |
 | Hound01 | hidden | 172 | 2.16 | 0.445 | 1.000 |
-| Object03 | flower02 | 48 | 2.16 | - | - |
-| Object40 | ob3 | 376 | 2.16 | - | - |
+| Object03 | flower02 | 48 | 2.16 | 0.900 | 0.000 |
+| Object40 | ob3 | 376 | 2.16 | 0.700 | 0.000 |
 | Goblin01 | mu2 | 376 | 2.09 | 0.697 | 0.000 |
 | StreetLight01 | streetlight | 48 | 1.92 | 0.838 | 0.000 |
 | ChainScorpion01 | mu2 | 252 | 1.87 | 0.702 | 0.000 |
 | Furniture02 | bottle | 432 | 1.86 | 0.722 | 0.000 |
-| HouseWall02 | light_02 | 6 | 1.81 | - | - |
-| House03 | light_02 | 6 | 1.81 | - | - |
+| HouseWall02 | light_02 | 6 | 1.81 | 1.000 | 0.000 |
+| House03 | light_02 | 6 | 1.81 | 1.000 | 0.000 |
 | Curtain01 | badge_02 | 8 | 1.78 | 0.729 | 0.000 |
 | Object65 | statuedsw052 | 276 | 1.76 | 0.740 | 0.000 |
 | BridgeStone01 | tile_wood02 | 8 | 1.76 | 0.817 | 0.000 |
@@ -249,17 +249,17 @@ it claims, and what its baked ORM actually carries.
 | ArmorMale10 | mu2 | 198 | 1.61 | 0.346 | 1.000 |
 | Fence01 | tile_wood02 | 36 | 1.58 | 0.821 | 0.000 |
 | Shield13 | mu2 | 114 | 1.58 | 0.469 | 1.000 |
-| Object18 | flower9 | 42 | 1.54 | - | - |
+| Object18 | flower9 | 42 | 1.54 | 1.000 | 0.000 |
 | HouseWall01 | tile_ston04 | 8 | 1.53 | 0.894 | 0.000 |
 | HouseWall02 | tile_ston04 | 8 | 1.53 | 0.898 | 0.000 |
-| Object130 | angeflo_r | 12 | 1.50 | - | - |
+| Object130 | angeflo_r | 12 | 1.50 | 1.000 | 0.000 |
 | Object80 | br001 | 12 | 1.50 | 0.722 | 0.000 |
 | Stone05 | ston01 | 120 | 1.47 | 0.879 | 0.000 |
 | SteelWall02 | steel_barred_b | 64 | 1.40 | 0.722 | 1.000 |
 | Furniture06 | bookshelf | 52 | 1.40 | 0.722 | 0.000 |
-| Bonfire01 | fire_02 | 38 | 1.35 | - | - |
+| Bonfire01 | fire_02 | 38 | 1.35 | 1.000 | 0.000 |
 | ArmorMale05 | mu2 | 173 | 1.29 | 0.584 | 0.000 |
-| Object07 | filling_up05 | 16 | 1.27 | - | - |
+| Object07 | filling_up05 | 16 | 1.27 | 0.900 | 0.000 |
 | Fence03 | joint | 10 | 1.27 | 0.801 | 0.000 |
 | PantMale08 | mu2 | 140 | 1.24 | 0.683 | 1.000 |
 | Object34 | ston001 | 20 | 1.20 | 0.867 | 0.000 |
@@ -276,8 +276,8 @@ it claims, and what its baked ORM actually carries.
 | ArmorMale07 | mu2 | 170 | 1.02 | 0.555 | 1.000 |
 | FemaleLower01 | mu2 | 88 | 0.99 | 0.780 | 0.000 |
 | Curtain01 | badge_01 | 60 | 0.98 | 0.726 | 0.000 |
-| ElfWizard01 | lplower | 328 | 0.98 | - | - |
-| Object18 | flower3 | 117 | 0.95 | - | - |
+| ElfWizard01 | lplower | 328 | 0.98 | 0.700 | 0.000 |
+| Object18 | flower3 | 117 | 0.95 | 0.900 | 0.000 |
 | Shield08 | mu2 | 56 | 0.93 | 0.685 | 1.000 |
 | FemaleUpper01 | mu2 | 254 | 0.93 | 0.780 | 0.000 |
 | Shield07 | mu2 | 108 | 0.93 | 0.584 | 0.000 |
@@ -285,27 +285,27 @@ it claims, and what its baked ORM actually carries.
 | BootMale07 | mu2 | 148 | 0.91 | 0.553 | 1.000 |
 | Shield12 | mu2 | 72 | 0.90 | 0.472 | 1.000 |
 | PantClass02 | mu2 | 612 | 0.89 | 0.702 | 0.000 |
-| BeetleMonster01 | bug2 | 4 | 0.88 | - | - |
+| BeetleMonster01 | bug2 | 4 | 0.88 | 1.000 | 0.000 |
 | BootMale03 | mu2 | 132 | 0.87 | 0.446 | 1.000 |
 | ManBoots01 | mu2 | 108 | 0.87 | 0.780 | 0.000 |
 | PantMale06 | mu2 | 122 | 0.86 | 0.753 | 0.000 |
-| Object08 | flower3 | 39 | 0.86 | - | - |
+| Object08 | flower3 | 39 | 0.86 | 0.900 | 0.000 |
 | PantMale07 | mu2 | 110 | 0.83 | 0.554 | 1.000 |
 | PantMale10 | mu2 | 94 | 0.82 | 0.346 | 1.000 |
-| Object01 | flower03 | 80 | 0.81 | - | - |
+| Object01 | flower03 | 80 | 0.81 | 0.900 | 0.000 |
 | Shield03 | mu2 | 24 | 0.80 | 0.735 | 0.000 |
-| Object01 | flower2 | 54 | 0.79 | - | - |
+| Object01 | flower2 | 54 | 0.79 | 0.900 | 0.000 |
 | HouseEtc03 | steel_barred_door | 4 | 0.78 | 0.400 | 0.580 |
 | Shield06 | mu2 | 20 | 0.78 | 0.740 | 0.000 |
 | PantClass03 | mu2 | 110 | 0.78 | 0.780 | 0.000 |
 | BootClass01 | mu2 | 126 | 0.78 | 0.625 | 0.000 |
 | SteelWall01 | steel_barred_b | 48 | 0.78 | 0.722 | 1.000 |
 | BootClass02 | mu2 | 756 | 0.74 | 0.621 | 0.000 |
-| Object35 | flower03 | 40 | 0.73 | - | - |
+| Object35 | flower03 | 40 | 0.73 | 0.900 | 0.000 |
 | StoneMuWall01 | bridge_01 | 128 | 0.73 | 0.725 | 0.000 |
 | StoneWall01 | bridge_01 | 128 | 0.73 | 0.725 | 0.000 |
 | StoneWall02 | bridge_01 | 128 | 0.73 | 0.725 | 0.000 |
-| Carriage01 | horse_drawn_03 | 2 | 0.73 | - | - |
+| Carriage01 | horse_drawn_03 | 2 | 0.73 | 1.000 | 0.000 |
 | Stone04 | ston01 | 45 | 0.72 | 0.879 | 0.000 |
 | Object11 | flower5 | 30 | 0.72 | 0.808 | 0.000 |
 | Shield05 | mu2 | 22 | 0.71 | 0.722 | 1.000 |
@@ -318,11 +318,11 @@ it claims, and what its baked ORM actually carries.
 | BootMale06 | mu2 | 124 | 0.66 | 0.750 | 0.000 |
 | Shield09 | mu2 | 22 | 0.66 | 0.744 | 0.000 |
 | FireLight01 | light | 20 | 0.65 | 0.722 | 1.000 |
-| FireLight01 | light2 | 22 | 0.63 | - | - |
+| FireLight01 | light2 | 22 | 0.63 | 1.000 | 0.000 |
 | ArmorClass02 | mu2 | 120 | 0.62 | 0.702 | 0.000 |
 | Object09 | flower4 | 30 | 0.61 | 0.799 | 0.000 |
 | Beer01 | plate2 | 110 | 0.60 | 0.722 | 0.000 |
-| Object18 | flower03 | 80 | 0.59 | - | - |
+| Object18 | flower03 | 80 | 0.59 | 0.900 | 0.000 |
 | Tree07 | tree_04 | 6 | 0.59 | 0.819 | 0.000 |
 | ManGloves01 | mu2 | 132 | 0.58 | 0.780 | 0.000 |
 | Furniture07 | bookshelf | 42 | 0.58 | 0.722 | 0.000 |
@@ -343,9 +343,9 @@ it claims, and what its baked ORM actually carries.
 | Shield01 | mu2 | 18 | 0.47 | 0.721 | 0.000 |
 | GloveMale07 | mu2 | 172 | 0.47 | 0.554 | 0.999 |
 | GloveMale05 | mu2 | 156 | 0.46 | 0.584 | 0.000 |
-| Grass07 | mushroom | 126 | 0.43 | - | - |
-| Object37 | flower2 | 100 | 0.43 | - | - |
-| Bird01 | bird | 98 | 0.43 | - | - |
+| Grass07 | mushroom | 126 | 0.43 | 0.900 | 0.000 |
+| Object37 | flower2 | 100 | 0.43 | 0.900 | 0.000 |
+| Bird01 | bird | 98 | 0.43 | 0.900 | 0.000 |
 | Spear03 | mu2 | 46 | 0.42 | 0.722 | 1.000 |
 | Cannon01 | horse_drawn_01__wrought_iron | 6 | 0.40 | 0.722 | 1.000 |
 | GloveMale03 | mu2 | 152 | 0.37 | 0.444 | 0.997 |
@@ -353,7 +353,7 @@ it claims, and what its baked ORM actually carries.
 | Beer03 | bottle | 72 | 0.36 | 0.722 | 0.000 |
 | StoneWall06 | badge_01 | 28 | 0.36 | 0.784 | 0.000 |
 | StoneWall04 | badge_01 | 28 | 0.36 | 0.784 | 0.000 |
-| Object12 | flower | 88 | 0.36 | - | - |
+| Object12 | flower | 88 | 0.36 | 0.900 | 0.000 |
 | SteelWall03 | steel_barred_b | 16 | 0.35 | 0.722 | 1.000 |
 | GloveMale06 | mu2 | 148 | 0.34 | 0.748 | 0.000 |
 | Candle01 | candle | 110 | 0.33 | 0.722 | 0.000 |
@@ -364,16 +364,16 @@ it claims, and what its baked ORM actually carries.
 | Object50 | gatewall02 | 120 | 0.31 | 0.730 | 0.000 |
 | Staff02 | mu2 | 50 | 0.31 | 0.663 | 0.000 |
 | GloveClass02 | mu2 | 780 | 0.30 | 0.617 | 0.000 |
-| Object13 | flower | 72 | 0.29 | - | - |
-| Object14 | flower | 72 | 0.29 | - | - |
-| Object17 | flower | 72 | 0.29 | - | - |
+| Object13 | flower | 72 | 0.29 | 0.900 | 0.000 |
+| Object14 | flower | 72 | 0.29 | 0.900 | 0.000 |
+| Object17 | flower | 72 | 0.29 | 0.900 | 0.000 |
 | HelmMale03 | mu2 | 92 | 0.29 | 0.721 | 0.000 |
-| Object10 | wood02 | 80 | 0.29 | - | - |
+| Object10 | wood02 | 80 | 0.29 | 1.000 | 0.000 |
 | GloveClass01 | mu2 | 130 | 0.29 | 0.619 | 0.000 |
 | GloveElf01 | mu2 | 152 | 0.29 | 0.736 | 0.000 |
 | Sign01 | signboard | 2 | 0.29 | 0.722 | 1.000 |
 | Staff03 | mu2 | 68 | 0.28 | 0.722 | 1.000 |
-| Object02 | flower2 | 45 | 0.25 | - | - |
+| Object02 | flower2 | 45 | 0.25 | 0.900 | 0.000 |
 | Beer01 | winecup | 36 | 0.25 | 0.722 | 0.000 |
 | Beer03 | winecup | 36 | 0.25 | 0.722 | 0.000 |
 | Beer02 | winecup | 36 | 0.25 | 0.722 | 0.000 |
@@ -381,58 +381,58 @@ it claims, and what its baked ORM actually carries.
 | FemaleHead01 | mu2 | 104 | 0.25 | 0.780 | 0.000 |
 | ManHead01 | mu2 | 94 | 0.24 | 0.780 | 0.000 |
 | GloveClass03 | mu2 | 130 | 0.23 | 0.780 | 0.000 |
-| Object16 | flower | 56 | 0.23 | - | - |
+| Object16 | flower | 56 | 0.23 | 0.900 | 0.000 |
 | FireLight02 | tile_02 | 24 | 0.22 | 0.815 | 0.000 |
 | Gem05 | mu2 | 48 | 0.22 | 0.722 | 0.000 |
-| Object18 | wood02 | 32 | 0.21 | - | - |
+| Object18 | wood02 | 32 | 0.21 | 1.000 | 0.000 |
 | House04 | bridge_01 | 12 | 0.21 | 0.722 | 0.000 |
 | Carriage01 | horse_drawn_02 | 8 | 0.21 | 0.722 | 0.000 |
-| Object18 | flower02 | 32 | 0.20 | - | - |
+| Object18 | flower02 | 32 | 0.20 | 0.900 | 0.000 |
 | BullFighter01 | hidden | 26 | 0.20 | 0.620 | 0.000 |
 | Beer01 | bottle | 36 | 0.20 | 0.722 | 0.000 |
 | Ale01 | mu2 | 36 | 0.20 | 0.185 | 0.000 |
 | Beer02 | bottle | 36 | 0.20 | 0.722 | 0.000 |
 | Furniture01 | pot | 78 | 0.20 | 0.722 | 0.000 |
-| Object36 | flower10 | 36 | 0.20 | - | - |
+| Object36 | flower10 | 36 | 0.20 | 1.000 | 0.000 |
 | GirlHead01 | mu2 | 92 | 0.19 | 0.780 | 0.000 |
 | HelmElf01 | mu2 | 58 | 0.19 | 0.739 | 0.000 |
-| House04 | tile_space01 | 12 | 0.19 | - | - |
+| House04 | tile_space01 | 12 | 0.19 | 1.000 | 0.000 |
 | Beer02 | apple | 96 | 0.18 | 0.722 | 0.000 |
-| Object35 | flower2 | 9 | 0.17 | - | - |
-| StreetLight01 | streetlight_brightness2 | 36 | 0.17 | - | - |
-| Object07 | flower03 | 20 | 0.17 | - | - |
-| Object15 | flower | 40 | 0.16 | - | - |
-| Object11 | flower03 | 16 | 0.15 | - | - |
+| Object35 | flower2 | 9 | 0.17 | 0.900 | 0.000 |
+| StreetLight01 | streetlight_brightness2 | 36 | 0.17 | 1.000 | 0.000 |
+| Object07 | flower03 | 20 | 0.17 | 0.900 | 0.000 |
+| Object15 | flower | 40 | 0.16 | 0.900 | 0.000 |
+| Object11 | flower03 | 16 | 0.15 | 0.900 | 0.000 |
 | Beer01 | plate | 30 | 0.15 | 0.722 | 0.000 |
-| Object36 | flower2 | 39 | 0.14 | - | - |
-| Grass08 | mushroom | 54 | 0.14 | - | - |
-| MixNpc01 | yellow_jewel | 32 | 0.12 | - | - |
+| Object36 | flower2 | 39 | 0.14 | 0.900 | 0.000 |
+| Grass08 | mushroom | 54 | 0.14 | 0.900 | 0.000 |
+| MixNpc01 | yellow_jewel | 32 | 0.12 | 1.000 | 0.000 |
 | Jewel15 | mu2 | 32 | 0.12 | 0.180 | 0.000 |
-| FireLight02 | fire_light_01 | 8 | 0.12 | - | - |
-| Object65 | statuedeye_r | 69 | 0.12 | - | - |
+| FireLight02 | fire_light_01 | 8 | 0.12 | 1.000 | 0.000 |
+| Object65 | statuedeye_r | 69 | 0.12 | 1.000 | 0.000 |
 | Jewel02 | mu2 | 22 | 0.11 | 0.180 | 0.000 |
 | Potion05 | mu2 | 28 | 0.11 | 0.722 | 0.000 |
 | Potion02 | mu2 | 28 | 0.11 | 0.722 | 0.000 |
-| FireLight01 | light3 | 6 | 0.10 | - | - |
+| FireLight01 | light3 | 6 | 0.10 | 1.000 | 0.000 |
 | Furniture06 | chair2 | 2 | 0.09 | 0.722 | 0.000 |
 | Jewel01 | mu2 | 12 | 0.09 | 0.180 | 0.000 |
 | NewFace02 | mu2 | 1502 | 0.08 | 0.701 | 0.000 |
 | Cannon03 | horse_drawn_01__wrought_iron | 9 | 0.07 | 0.722 | 1.000 |
-| Butterfly01 | Butterfly | 28 | 0.07 | - | - |
+| Butterfly01 | Butterfly | 28 | 0.07 | 0.900 | 0.000 |
 | NewFace01 | mu2 | 1208 | 0.07 | 0.702 | 0.000 |
 | CrossBow04 | nocked | 10 | 0.05 | 0.504 | 1.000 |
 | CrossBow03 | nocked | 10 | 0.05 | 0.507 | 1.000 |
 | Bow02 | nocked | 10 | 0.05 | 0.725 | 0.000 |
 | Gold01 | mu2 | 32 | 0.04 | 0.722 | 1.000 |
-| Candle01 | candle2 | 6 | 0.04 | - | - |
-| Object02 | filling_up02 | 24 | 0.03 | - | - |
+| Candle01 | candle2 | 6 | 0.04 | 1.000 | 0.000 |
+| Object02 | filling_up02 | 24 | 0.03 | 1.000 | 0.000 |
 | Sign01 | doorknob | 4 | 0.03 | 0.722 | 1.000 |
-| Object10 | filling_up02 | 8 | 0.03 | - | - |
+| Object10 | filling_up02 | 8 | 0.03 | 1.000 | 0.000 |
 | NewFace03 | mu2 | 1579 | 0.03 | 0.701 | 0.000 |
 | Cannon02 | horse_drawn_01__wrought_iron | 7 | 0.02 | 0.722 | 1.000 |
 | FireLight02 | copra_gate | 2 | 0.02 | 0.723 | 0.000 |
-| Beer01 | pot3 | 4 | 0.01 | - | - |
-| Beer02 | pot3 | 4 | 0.01 | - | - |
+| Beer01 | pot3 | 4 | 0.01 | 0.900 | 0.000 |
+| Beer02 | pot3 | 4 | 0.01 | 0.900 | 0.000 |
 
 ## Every slot
 
@@ -504,20 +504,20 @@ it claims, and what its baked ORM actually carries.
 | Beer01 | plate | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Beer01 | winecup | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Beer01 | plate2 | **none** | 0.722 | - | 0.000 | - | two-sided |
-| Beer01 | pot3 | **none** | - | - | - | - | cutout 0.25, two-sided |
+| Beer01 | pot3 | **none** | 0.900 | - | 0.000 | - | cutout 0.25, two-sided |
 | Beer01 | bottle | **none** | 0.722 | - | 0.000 | - | two-sided |
-| Beer02 | pot3 | **none** | - | - | - | - | cutout 0.25, two-sided |
+| Beer02 | pot3 | **none** | 0.900 | - | 0.000 | - | cutout 0.25, two-sided |
 | Beer02 | apple | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Beer02 | bottle | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Beer02 | plate | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Beer02 | winecup | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Beer03 | bottle | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Beer03 | winecup | **none** | 0.722 | - | 0.000 | - | two-sided |
-| BeetleMonster01 | bug | **none** | - | - | - | - | two-sided |
-| BeetleMonster01 | bug2 | **none** | - | - | - | - | two-sided |
-| Bird01 | bird | **none** | - | - | - | - | cutout 0.50, two-sided |
+| BeetleMonster01 | bug | **none** | 0.620 | - | 0.000 | - | two-sided |
+| BeetleMonster01 | bug2 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Bird01 | bird | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Bonfire01 | fire_01 | **none** | 0.814 | - | 0.000 | - | two-sided |
-| Bonfire01 | fire_02 | **none** | - | - | - | - | two-sided |
+| Bonfire01 | fire_02 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Book01 | mu2 | **none** | 0.741 | - | 0.000 | - | two-sided |
 | BootClass01 | mu2 | **none** | 0.625 | - | 0.000 | - | two-sided |
 | BootClass02 | mu2 | **none** | 0.621 | - | 0.000 | - | two-sided |
@@ -556,9 +556,9 @@ it claims, and what its baked ORM actually carries.
 | BullFighter01 | fur | fur | 0.778 | 0.78 | 0.000 | 0.00 | cutout 0.50, two-sided |
 | BullFighter01 | hidden | **none** | 0.620 | - | 0.000 | - | cutout 0.50, two-sided |
 | BullFighter01 | leather | leather | 0.615 | 0.62 | 0.000 | 0.00 | cutout 0.50, two-sided |
-| Butterfly01 | Butterfly | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Butterfly01 | Butterfly | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Candle01 | candle | **none** | 0.722 | - | 0.000 | - | two-sided |
-| Candle01 | candle2 | **none** | - | - | - | - | two-sided |
+| Candle01 | candle2 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Cannon01 | horse_drawn_01 | **none** | 0.770 | - | 0.491 | - | two-sided |
 | Cannon01 | horse_drawn_01__wrought_iron | **none** | 0.722 | - | 1.000 | - | two-sided |
 | Cannon02 | horse_drawn_01 | **none** | 0.764 | - | 0.568 | - | two-sided |
@@ -567,10 +567,10 @@ it claims, and what its baked ORM actually carries.
 | Cannon03 | horse_drawn_01__wrought_iron | **none** | 0.722 | - | 1.000 | - | two-sided |
 | Carriage01 | horse_drawn_01 | **none** | 0.807 | - | 0.000 | - | two-sided |
 | Carriage01 | horse_drawn_02 | **none** | 0.722 | - | 0.000 | - | cutout 0.50, two-sided |
-| Carriage01 | horse_drawn_03 | **none** | - | - | - | - | two-sided |
+| Carriage01 | horse_drawn_03 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Carriage02 | horse_drawn_01 | **none** | 0.811 | - | 0.000 | - | two-sided |
 | Carriage04 | horse_drawn_01 | **none** | 0.811 | - | 0.000 | - | two-sided |
-| Carriage04 | grass_01 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Carriage04 | grass_01 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | ChainScorpion01 | mu2 | **none** | 0.702 | - | 0.000 | - | two-sided |
 | CrossBow01 | mu2 | **none** | - | - | - | - | two-sided |
 | CrossBow01 | steel | steel | 0.325 | 0.32 | 1.000 | 1.00 | two-sided |
@@ -590,8 +590,8 @@ it claims, and what its baked ORM actually carries.
 | DoungeonGate01 | copra_gate | **none** | 0.736 | - | 0.000 | - | two-sided |
 | ElfMerchant01 | mu2 | **none** | 0.702 | - | 0.000 | - | two-sided |
 | ElfWizard01 | hpp | **none** | 0.722 | - | 1.000 | - | two-sided |
-| ElfWizard01 | lpwing | **none** | - | - | - | - | two-sided |
-| ElfWizard01 | lplower | **none** | - | - | - | - | two-sided |
+| ElfWizard01 | lpwing | **none** | 1.000 | - | 0.000 | - | two-sided |
+| ElfWizard01 | lplower | **none** | 0.700 | - | 0.000 | - | two-sided |
 | ElfWizard01 | lptgq | **none** | 0.724 | - | 0.000 | - | cutout 0.25, two-sided |
 | FemaleBoots01 | mu2 | **none** | 0.779 | - | 0.000 | - | two-sided |
 | FemaleHead01 | mu2 | **none** | 0.780 | - | 0.000 | - | two-sided |
@@ -602,10 +602,10 @@ it claims, and what its baked ORM actually carries.
 | Fence03 | joint | **none** | 0.801 | - | 0.000 | - | two-sided |
 | Fence04 | joint | **none** | 0.800 | - | 0.000 | - | two-sided |
 | FireLight01 | light | **none** | 0.722 | - | 1.000 | - | cutout 0.50, two-sided |
-| FireLight01 | light2 | **none** | - | - | - | - | two-sided |
-| FireLight01 | light3 | **none** | - | - | - | - | two-sided |
+| FireLight01 | light2 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| FireLight01 | light3 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | FireLight02 | tile_02 | **none** | 0.815 | - | 0.000 | - | two-sided |
-| FireLight02 | fire_light_01 | **none** | - | - | - | - | two-sided |
+| FireLight02 | fire_light_01 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | FireLight02 | copra_gate | **none** | 0.723 | - | 0.000 | - | two-sided |
 | ForestMonster01 | mu2 | **none** | 0.620 | - | 0.000 | - | two-sided |
 | Furniture01 | pot | **none** | 0.722 | - | 0.000 | - | two-sided |
@@ -641,16 +641,16 @@ it claims, and what its baked ORM actually carries.
 | GloveMale10 | mu2 | **none** | 0.348 | - | 0.987 | - | two-sided |
 | Goblin01 | mu2 | **none** | 0.697 | - | 0.000 | - | two-sided |
 | Gold01 | mu2 | **none** | 0.722 | - | 1.000 | - | two-sided |
-| Grass01 | tree_08 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass02 | tree_08 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass03 | tree_01 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass03 | tree_02 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass04 | tree_01 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass04 | tree_02 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass05 | tree_09 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass06 | tree_09 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass07 | mushroom | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Grass08 | mushroom | **none** | - | - | - | - | two-sided |
+| Grass01 | tree_08 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass02 | tree_08 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass03 | tree_01 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass03 | tree_02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass04 | tree_01 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass04 | tree_02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass05 | tree_09 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass06 | tree_09 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass07 | mushroom | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Grass08 | mushroom | **none** | 0.900 | - | 0.000 | - | two-sided |
 | Hanging01 | horse_drawn_01 | **none** | 0.814 | - | 0.000 | - | two-sided |
 | HelmClass01 | mu2 | **none** | - | - | - | - | two-sided |
 | HelmClass01 | hair | hair | 0.866 | 0.85 | 0.000 | 0.00 | two-sided |
@@ -696,7 +696,7 @@ it claims, and what its baked ORM actually carries.
 | House03 | tile_ston04 | **none** | 0.902 | - | 0.000 | - | two-sided |
 | House03 | tile_ston06 | **none** | 0.818 | - | 0.000 | - | two-sided |
 | House03 | tile_ston07 | **none** | 0.822 | - | 0.000 | - | two-sided |
-| House03 | light_02 | **none** | - | - | - | - | two-sided |
+| House03 | light_02 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | House04 | tile_02 | **none** | 0.821 | - | 0.000 | - | two-sided |
 | House04 | tile_wood01 | **none** | 0.812 | - | 0.000 | - | two-sided |
 | House04 | tile_house01 | **none** | 0.807 | - | 0.000 | - | two-sided |
@@ -705,10 +705,10 @@ it claims, and what its baked ORM actually carries.
 | House04 | tile_wood02 | **none** | 0.813 | - | 0.000 | - | two-sided |
 | House04 | tile_windows01 | **none** | 0.831 | - | 0.000 | - | two-sided |
 | House04 | bridge_01 | **none** | 0.722 | - | 0.000 | - | two-sided |
-| House04 | tile_space01 | **none** | - | - | - | - | two-sided |
+| House04 | tile_space01 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | House05 | tile_wood02 | **none** | 0.818 | - | 0.000 | - | two-sided |
 | House05 | tile_wood01 | **none** | 0.818 | - | 0.000 | - | two-sided |
-| House05 | ston02 | **none** | - | - | - | - | two-sided |
+| House05 | ston02 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | HouseEtc01 | c_wall04 | **none** | 0.724 | - | 0.000 | - | two-sided |
 | HouseEtc01 | c_wall06 | **none** | 0.728 | - | 0.000 | - | two-sided |
 | HouseEtc02 | tile_wood02 | **none** | 0.835 | - | 0.000 | - | two-sided |
@@ -728,7 +728,7 @@ it claims, and what its baked ORM actually carries.
 | HouseWall02 | tile_wood01 | **none** | 0.823 | - | 0.000 | - | two-sided |
 | HouseWall02 | tile_wood02 | **none** | 0.814 | - | 0.000 | - | two-sided |
 | HouseWall02 | tile_ston04 | **none** | 0.898 | - | 0.000 | - | two-sided |
-| HouseWall02 | light_02 | **none** | - | - | - | - | two-sided |
+| HouseWall02 | light_02 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | HouseWall03 | tile_wood02 | **none** | 0.818 | - | 0.000 | - | two-sided |
 | HouseWall04 | tile_wood01 | **none** | 0.821 | - | 0.000 | - | two-sided |
 | HouseWall04 | tile_wood02 | **none** | 0.819 | - | 0.000 | - | two-sided |
@@ -756,75 +756,75 @@ it claims, and what its baked ORM actually carries.
 | ManGloves01 | mu2 | **none** | 0.780 | - | 0.000 | - | two-sided |
 | ManHead01 | mu2 | **none** | 0.780 | - | 0.000 | - | two-sided |
 | ManUpper01 | mu2 | **none** | 0.780 | - | 0.000 | - | two-sided |
-| MerchantAnimal01 | merchant_moster_a01 | **none** | - | - | - | - | two-sided |
-| MerchantAnimal01 | merchant_moster_a02 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| MerchantAnimal02 | merchant_moster_b01 | **none** | - | - | - | - | two-sided |
-| MixNpc01 | ob3 | **none** | - | - | - | - | two-sided |
-| MixNpc01 | yellow_jewel | **none** | - | - | - | - | two-sided |
+| MerchantAnimal01 | merchant_moster_a01 | **none** | 0.700 | - | 0.000 | - | two-sided |
+| MerchantAnimal01 | merchant_moster_a02 | **none** | 0.700 | - | 0.000 | - | cutout 0.50, two-sided |
+| MerchantAnimal02 | merchant_moster_b01 | **none** | 0.700 | - | 0.000 | - | two-sided |
+| MixNpc01 | ob3 | **none** | 0.700 | - | 0.000 | - | two-sided |
+| MixNpc01 | yellow_jewel | **none** | 1.000 | - | 0.000 | - | two-sided |
 | NewFace01 | mu2 | **none** | 0.702 | - | 0.000 | - | cutout 0.25, two-sided |
 | NewFace02 | mu2 | **none** | 0.701 | - | 0.000 | - | cutout 0.25, two-sided |
 | NewFace03 | mu2 | **none** | 0.701 | - | 0.000 | - | cutout 0.25, two-sided |
-| Object01 | flower2 | **none** | - | - | - | - | two-sided |
-| Object01 | flower03 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object02 | flower2 | **none** | - | - | - | - | two-sided |
-| Object02 | filling_up02 | **none** | - | - | - | - | two-sided |
-| Object03 | flower02 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object03 | flower2 | **none** | - | - | - | - | two-sided |
-| Object04 | flower2 | **none** | - | - | - | - | two-sided |
-| Object04 | flower02 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object05 | flower03 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object06 | so_grass | **none** | - | - | - | - | cutout 0.25, two-sided |
-| Object06 | flower03 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object07 | filling_up05 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object07 | flower03 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object08 | flower3 | **none** | - | - | - | - | two-sided |
+| Object01 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object01 | flower03 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object02 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object02 | filling_up02 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object03 | flower02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object03 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object04 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object04 | flower02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object05 | flower03 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object06 | so_grass | **none** | 0.900 | - | 0.000 | - | cutout 0.25, two-sided |
+| Object06 | flower03 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object07 | filling_up05 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object07 | flower03 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object08 | flower3 | **none** | 0.900 | - | 0.000 | - | two-sided |
 | Object09 | flower4 | **none** | 0.799 | - | 0.000 | - | two-sided |
 | Object10 | filling_up04 | **none** | 0.722 | - | 1.000 | - | cutout 0.50, two-sided |
 | Object10 | filling_up03 | **none** | 0.826 | - | 0.000 | - | two-sided |
-| Object10 | filling_up02 | **none** | - | - | - | - | two-sided |
-| Object10 | wood02 | **none** | - | - | - | - | two-sided |
+| Object10 | filling_up02 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object10 | wood02 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Object103 | so_jgwall04 | **none** | 0.725 | - | 0.000 | - | two-sided |
 | Object104 | so_jgwall02 | **none** | 0.728 | - | 0.000 | - | two-sided |
 | Object107 | so_jgwall03 | **none** | 0.724 | - | 0.000 | - | two-sided |
 | Object107 | so_jgwall05 | **none** | 0.859 | - | 0.000 | - | two-sided |
 | Object11 | flower5 | **none** | 0.808 | - | 0.000 | - | two-sided |
-| Object11 | flower03 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Object11 | flower03 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Object111 | door_01 | **none** | 0.724 | - | 0.000 | - | two-sided |
 | Object112 | drogon_001 | **none** | 0.731 | - | 0.000 | - | two-sided |
-| Object12 | flower | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Object12 | flower | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Object122 | stair_01 | **none** | 0.723 | - | 0.000 | - | two-sided |
-| Object13 | flower | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object130 | angeflo_r | **none** | - | - | - | - | two-sided |
-| Object14 | flower | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Object13 | flower | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object130 | angeflo_r | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object14 | flower | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Object15 | so_jghwall02 | **none** | 0.732 | - | 0.000 | - | two-sided |
-| Object15 | flower | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object16 | flower | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object17 | flower | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object18 | wood02 | **none** | - | - | - | - | two-sided |
-| Object18 | flower2 | **none** | - | - | - | - | two-sided |
+| Object15 | flower | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object16 | flower | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object17 | flower | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object18 | wood02 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object18 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
 | Object18 | flower7 | **none** | 0.875 | - | 0.000 | - | two-sided |
-| Object18 | flower9 | **none** | - | - | - | - | two-sided |
-| Object18 | flower03 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object18 | flower3 | **none** | - | - | - | - | two-sided |
-| Object18 | flower02 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Object18 | flower9 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object18 | flower03 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object18 | flower3 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object18 | flower02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Object19 | flower7 | **none** | 0.875 | - | 0.000 | - | two-sided |
 | Object19 | wood01 | **none** | 0.724 | - | 0.000 | - | two-sided |
-| Object19 | filling_up05 | **none** | - | - | - | - | two-sided |
+| Object19 | filling_up05 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Object19 | metal01 | **none** | 0.722 | - | 1.000 | - | two-sided |
-| Object20 | wd | **none** | - | - | - | - | two-sided |
-| Object21 | flower6 | **none** | - | - | - | - | two-sided |
-| Object21 | wood03 | **none** | - | - | - | - | two-sided |
-| Object22 | flower6 | **none** | - | - | - | - | two-sided |
+| Object20 | wd | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object21 | flower6 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object21 | wood03 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object22 | flower6 | **none** | 0.900 | - | 0.000 | - | two-sided |
 | Object22 | flower4 | **none** | 0.796 | - | 0.000 | - | two-sided |
 | Object23 | flower7 | **none** | 0.874 | - | 0.000 | - | two-sided |
-| Object23 | flower2 | **none** | - | - | - | - | two-sided |
+| Object23 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
 | Object24 | flower7 | **none** | 0.874 | - | 0.000 | - | two-sided |
-| Object24 | flower2 | **none** | - | - | - | - | two-sided |
+| Object24 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
 | Object25 | treea00 | **none** | 0.880 | - | 0.000 | - | two-sided |
-| Object26 | treea03 | **none** | - | - | - | - | two-sided |
-| Object27 | flower05 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object28 | treea02 | **none** | - | - | - | - | two-sided |
-| Object28 | treea01 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Object26 | treea03 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object27 | flower05 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object28 | treea02 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object28 | treea01 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Object29 | treea00 | **none** | 0.881 | - | 0.000 | - | two-sided |
 | Object30 | so_archb03 | **none** | 0.724 | - | 0.000 | - | two-sided |
 | Object30 | treea00 | **none** | 0.881 | - | 0.000 | - | two-sided |
@@ -835,32 +835,32 @@ it claims, and what its baked ORM actually carries.
 | Object33 | ston001 | **none** | 0.863 | - | 0.000 | - | two-sided |
 | Object34 | ston001 | **none** | 0.867 | - | 0.000 | - | two-sided |
 | Object35 | song_bria01 | **none** | 0.731 | - | 0.000 | - | two-sided |
-| Object35 | flower2 | **none** | - | - | - | - | two-sided |
+| Object35 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
 | Object35 | so_archb02 | **none** | 0.862 | - | 0.000 | - | two-sided |
-| Object35 | flower03 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Object36 | flower2 | **none** | - | - | - | - | two-sided |
-| Object36 | flower10 | **none** | - | - | - | - | two-sided |
-| Object37 | flower2 | **none** | - | - | - | - | two-sided |
-| Object38 | light01 | **none** | - | - | - | - | two-sided |
+| Object35 | flower03 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Object36 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object36 | flower10 | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object37 | flower2 | **none** | 0.900 | - | 0.000 | - | two-sided |
+| Object38 | light01 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Object39 | so_bob03 | **none** | 0.726 | - | 0.000 | - | two-sided |
 | Object40 | htht01 | **none** | 0.722 | - | 0.000 | - | two-sided |
-| Object40 | yellow_jewel | **none** | - | - | - | - | two-sided |
-| Object40 | ob3 | **none** | - | - | - | - | two-sided |
-| Object41 | ob3 | **none** | - | - | - | - | two-sided |
-| Object42 | u2u3 | **none** | - | - | - | - | two-sided |
+| Object40 | yellow_jewel | **none** | 1.000 | - | 0.000 | - | two-sided |
+| Object40 | ob3 | **none** | 0.700 | - | 0.000 | - | two-sided |
+| Object41 | ob3 | **none** | 0.700 | - | 0.000 | - | two-sided |
+| Object42 | u2u3 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Object43 | itp02 | **none** | 0.722 | - | 1.000 | - | cutout 0.25, two-sided |
 | Object50 | gatewall041 | **none** | 0.731 | - | 0.000 | - | two-sided |
 | Object50 | gatewall02 | **none** | 0.730 | - | 0.000 | - | two-sided |
-| Object50 | gatelight01_r | **none** | - | - | - | - | two-sided |
+| Object50 | gatelight01_r | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Object65 | statueddown82 | **none** | 0.728 | - | 0.000 | - | two-sided |
 | Object65 | statuedup72 | **none** | 0.730 | - | 0.000 | - | two-sided |
 | Object65 | statuedsw052 | **none** | 0.740 | - | 0.000 | - | two-sided |
-| Object65 | statuedeye_r | **none** | - | - | - | - | two-sided |
+| Object65 | statuedeye_r | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Object80 | br001 | **none** | 0.722 | - | 0.000 | - | two-sided |
 | Object97 | so_jgtree01 | **none** | 0.879 | - | 0.000 | - | two-sided |
-| Object97 | so_jgtree02 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Object97 | so_jgtree02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Object98 | so_jgtree01 | **none** | 0.879 | - | 0.000 | - | two-sided |
-| Object98 | so_jgtree02 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Object98 | so_jgtree02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Object99 | so_jgwall01 | **none** | 0.733 | - | 0.000 | - | two-sided |
 | Object99 | so_jgwall02 | **none** | 0.728 | - | 0.000 | - | two-sided |
 | Object99 | so_jgwall03 | **none** | 0.727 | - | 0.000 | - | two-sided |
@@ -956,9 +956,9 @@ it claims, and what its baked ORM actually carries.
 | SteelWall03 | steel_barred_a | **none** | 0.722 | - | 1.000 | - | cutout 0.50, two-sided |
 | SteelWall03 | steel_barred_b | **none** | 0.722 | - | 1.000 | - | two-sided |
 | Stone01 | ston01 | **none** | 0.860 | - | 0.000 | - | two-sided |
-| Stone01 | ston02 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Stone01 | ston02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Stone02 | ston01 | **none** | 0.864 | - | 0.000 | - | two-sided |
-| Stone02 | ston02 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Stone02 | ston02 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Stone03 | ston01 | **none** | 0.858 | - | 0.000 | - | two-sided |
 | Stone04 | ston01 | **none** | 0.879 | - | 0.000 | - | two-sided |
 | Stone05 | ston01 | **none** | 0.879 | - | 0.000 | - | two-sided |
@@ -997,10 +997,10 @@ it claims, and what its baked ORM actually carries.
 | StoneWall06 | badge_03 | **none** | 0.800 | - | 0.000 | - | cutout 0.50, two-sided |
 | StoneWall06 | tile_01 | **none** | 0.727 | - | 0.000 | - | two-sided |
 | Storage01 | mu2 | **none** | 0.780 | - | 0.000 | - | cutout 0.50, two-sided |
-| Straw01 | grass_01 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Straw02 | grass_01 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Straw01 | grass_01 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Straw02 | grass_01 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | StreetLight01 | streetlight | **none** | 0.838 | - | 0.000 | - | two-sided |
-| StreetLight01 | streetlight_brightness2 | **none** | - | - | - | - | two-sided |
+| StreetLight01 | streetlight_brightness2 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Sword01 | mu2 | **none** | - | - | - | - | two-sided |
 | Sword01 | brass | brass | 0.440 | 0.44 | 1.000 | 1.00 | two-sided |
 | Sword01 | leather_wrap | leather_wrap | 0.775 | 0.72 | 0.000 | 0.00 | two-sided |
@@ -1047,9 +1047,9 @@ it claims, and what its baked ORM actually carries.
 | TreasureChest01 | treasure_chest | **none** | 0.824 | - | 0.000 | - | two-sided |
 | TreasureDrum01 | drum | **none** | 0.700 | - | 0.039 | - | two-sided |
 | Tree01 | tree | **none** | 0.881 | - | 0.000 | - | two-sided |
-| Tree01 | tree_a | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Tree01 | tree_a | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Tree02 | tree | **none** | 0.880 | - | 0.000 | - | two-sided |
-| Tree02 | Tree_a | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Tree02 | Tree_a | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Tree03 | tree_03 | **none** | 0.880 | - | 0.000 | - | two-sided |
 | Tree04 | tree_03 | **none** | 0.880 | - | 0.000 | - | two-sided |
 | Tree05 | tree_03 | **none** | 0.882 | - | 0.000 | - | two-sided |
@@ -1057,29 +1057,27 @@ it claims, and what its baked ORM actually carries.
 | Tree07 | tree_03 | **none** | 0.878 | - | 0.000 | - | two-sided |
 | Tree07 | tree_04 | **none** | 0.819 | - | 0.000 | - | two-sided |
 | Tree08 | tree_01 | **none** | 0.879 | - | 0.000 | - | two-sided |
-| Tree09 | tree_07 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Tree10 | tree_07 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Tree11 | tree_06 | **none** | - | - | - | - | cutout 0.50, two-sided |
+| Tree09 | tree_07 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Tree10 | tree_07 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Tree11 | tree_06 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
 | Tree11 | tree_03 | **none** | 0.881 | - | 0.000 | - | two-sided |
 | Tree12 | tree_01 | **none** | 0.879 | - | 0.000 | - | two-sided |
-| Tree12 | tree_04 | **none** | - | - | - | - | cutout 0.50, two-sided |
-| Tree13 | tree_05 | **none** | - | - | - | - | cutout 0.25, two-sided |
+| Tree12 | tree_04 | **none** | 0.900 | - | 0.000 | - | cutout 0.50, two-sided |
+| Tree13 | tree_05 | **none** | 0.900 | - | 0.000 | - | cutout 0.25, two-sided |
 | Tree13 | tree_01 | **none** | 0.879 | - | 0.000 | - | two-sided |
 | Waterspout01 | stone_statue02 | **none** | 0.735 | - | 0.000 | - | two-sided |
 | Waterspout01 | reagon_waterspout | **none** | 0.729 | - | 0.000 | - | two-sided |
 | Waterspout01 | ston01 | **none** | 0.864 | - | 0.000 | - | two-sided |
-| Waterspout01 | ston02 | **none** | - | - | - | - | two-sided |
+| Waterspout01 | ston02 | **none** | 1.000 | - | 0.000 | - | two-sided |
 | Well02 | well | **none** | 0.837 | - | 0.000 | - | two-sided |
 | Well02 | well__timber | **none** | 0.808 | - | 0.000 | - | two-sided |
 | Well03 | jar_01 | **none** | 0.305 | - | 0.000 | - | two-sided |
 | Well04 | jar_01 | **none** | 0.305 | - | 0.000 | - | two-sided |
 | Wizard01 | mu2 | **none** | 0.780 | - | 0.000 | - | cutout 0.50, two-sided |
 
-## 190 failures
+## 90 failures
 
 - **Agon01/fur** — fur carries relief 1.00 but its normal map leans 0.3deg under this part; the map is flat and the relief never reached it
-- **BeetleMonster01/bug** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **BeetleMonster01/bug2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
 - **BudgeDragon01/chitin** — alphaMode MASK but the albedo's alpha has no holes under this part; the discard costs four passes and cuts nothing
 - **BudgeDragon01/chitin** — chitin carries relief 1.00 but its normal map leans 0.3deg under this part; the map is flat and the relief never reached it
 - **BullFighter01/chitin** — alphaMode MASK but the albedo's alpha has no holes under this part; the discard costs four passes and cuts nothing
@@ -1089,10 +1087,6 @@ it claims, and what its baked ORM actually carries.
 - **Hound01/painted_steel** — ORM roughness 0.498 but painted_steel asks 0.28
 - **Lich01/cloth** — alphaMode OPAQUE but 12% of the albedo's alpha is below 0.5; whatever was meant to be cut out is drawn solid
 - **Lich01/skin** — skin carries relief 1.00 but its normal map leans 0.3deg under this part; the map is flat and the relief never reached it
-- **ElfWizard01/lpwing** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **ElfWizard01/lplower** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **MixNpc01/ob3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **MixNpc01/yellow_jewel** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
 - **ArmorElf01/leather** — ORM roughness 0.735 but leather asks 0.62
 - **ArmorElf01/skin** — ORM roughness 0.780 but skin asks 0.70
 - **ArmorElf01/skin** — skin carries relief 1.00 but its normal map leans 0.3deg under this part; the map is flat and the relief never reached it
@@ -1170,103 +1164,9 @@ it claims, and what its baked ORM actually carries.
 - **HelmClass03/hair** — ORM roughness 0.722 but hair asks 0.85
 - **HelmClass03/skin** — ORM roughness 0.780 but skin asks 0.70
 - **HelmClass03/skin** — skin carries relief 1.00 but its normal map leans 0.3deg under this part; the map is flat and the relief never reached it
-- **Object06/so_grass** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object130/angeflo_r** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object50/gatelight01_r** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object65/statuedeye_r** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object97/so_jgtree02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object98/so_jgtree02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Beer01/pot3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Beer02/pot3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Bird01/bird** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Bonfire01/fire_02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Butterfly01/Butterfly** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Candle01/candle2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Carriage01/horse_drawn_03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Carriage04/grass_01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **FireLight01/light2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **FireLight01/light3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **FireLight02/fire_light_01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass01/tree_08** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass02/tree_08** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass03/tree_01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass03/tree_02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass04/tree_01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass04/tree_02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass05/tree_09** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass06/tree_09** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass07/mushroom** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Grass08/mushroom** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
 - **House02/steel** — ORM roughness 0.722 but steel asks 0.32
-- **House03/light_02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **House04/tile_space01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **House05/ston02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **HouseWall02/light_02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **MerchantAnimal01/merchant_moster_a01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **MerchantAnimal01/merchant_moster_a02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **MerchantAnimal02/merchant_moster_b01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Stone01/ston02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Stone02/ston02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Straw01/grass_01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Straw02/grass_01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **StreetLight01/streetlight_brightness2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Tree01/tree_a** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Tree02/Tree_a** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Tree09/tree_07** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Tree10/tree_07** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Tree11/tree_06** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Tree12/tree_04** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Tree13/tree_05** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Waterspout01/ston02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object01/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object01/flower03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object02/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object02/filling_up02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object03/flower02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object03/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object04/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object04/flower02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object05/flower03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object06/flower03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object07/filling_up05** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object07/flower03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object08/flower3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object10/filling_up02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object10/wood02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object11/flower03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object12/flower** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object13/flower** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object14/flower** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object15/flower** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object16/flower** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object17/flower** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object18/wood02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object18/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object18/flower9** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object18/flower03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object18/flower3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object18/flower02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object19/filling_up05** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object20/wd** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object21/flower6** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object21/wood03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object22/flower6** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object23/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object24/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object26/treea03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object27/flower05** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object28/treea02** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object28/treea01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object35/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object35/flower03** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object36/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object36/flower10** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object37/flower2** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object38/light01** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object40/yellow_jewel** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object40/ob3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object41/ob3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
-- **Object42/u2u3** — no ORM map at all; the surface falls back to roughness 1 metal 0 and nothing chose that
+- **charscene/cs_tilewater01_x3_tiling_hd_water_orm.png** — mean roughness 0.722 but water asks 0.08
+- **noria/nr_tilewater01_x3_tiling_hd_water_orm.png** — mean roughness 0.722 but water asks 0.08
 
 ## 65 notes
 

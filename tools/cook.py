@@ -39,7 +39,7 @@ Instances are sorted by chunk and then by model, so one chunk that survives a cu
 of instances and each model inside it is a contiguous sub-run: an instanced draw is a range,
 found without a sort and without a map lookup.
 
-The .mum format, version 1, little-endian throughout:
+The .mum format, version 3 (static) and 4 (skinned), little-endian throughout:
 
     'MU2M', u32 version, u32 vertices, u32 indices, u32 parts, u32 materials
     f32 bounds min[3], f32 bounds max[3]        (the centre and radius are derived at load)
@@ -48,7 +48,13 @@ The .mum format, version 1, little-endian throughout:
     parts:     u32 firstIndex, u32 indexCount, u32 material
     materials: f32 cutout (-1 for none), u8 twoSided, then five strings --
                name, albedo, normal, orm, emissive -- each u16 length and its bytes,
-               the four texture strings being paths under assets/ or empty for none
+               the four texture strings being paths under assets/ or empty for none,
+               then f32 roughnessFactor, f32 metalFactor
+
+Versions 1 and 2 were the same file without those last two floats, and are refused rather
+than defaulted: the factor is the whole answer on 195 of this content's material slots, so a
+reader that assumed 1.0 would draw MU's foliage, grass and water as the missing-map fallback
+and look like it had worked. See orm_factors.
 
 Node transforms are baked, which in this content is a check rather than a step: nothing in
 Lorencia's 105 models puts a transform on a mesh node, so the flattening content/mesh.cpp
@@ -312,9 +318,9 @@ def skin_bones(document, binary, skin):
 def cook_mesh(model, path, out_path, textures, hidden=None):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
 
-    A skinned .glb writes version 2: a 56-byte vertex with four joint bytes and four weight
+    A skinned .glb writes version 4: a 56-byte vertex with four joint bytes and four weight
     bytes on the end of the 48, and the skin's own bone table after the materials. An
-    unskinned one writes version 1 exactly as the town's models do.
+    unskinned one writes version 3 exactly as the town's models do.
 
     `hidden` is `index.json`'s `hidden_mesh` -- the primitive MU replaces with the weapon in
     the figure's hand. Drawn, the Bull Fighter carries two axes and the Hound wears a quarter
@@ -440,13 +446,15 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
         materials += write_string(material.get("name", "material"))
         for role in ("albedo", "normal", "orm", "emissive"):
             materials += write_string(maps[role])
+        materials += struct.pack("<2f", *orm_factors(material, maps["orm"]))
     # The fallback a primitive with no material of its own draws with, as content/mesh.cpp
-    # appends it.
+    # appends it. Rough and not metal, for the reason orm_factors gives.
     materials += struct.pack("<fB", -1.0, 0) + write_string("none")
     for _ in range(4):
         materials += write_string("")
+    materials += struct.pack("<2f", 1.0, 0.0)
 
-    header = struct.pack("<4sIIIII", b"MU2M", 2 if bones else 1, vertex_count,
+    header = struct.pack("<4sIIIII", b"MU2M", 4 if bones else 3, vertex_count,
                          len(indices) // 4, len(parts), len(material_list) + 1)
     header += struct.pack("<3f3f", *low, *high)
     if bones:
@@ -461,6 +469,30 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
     with open(out_path, "wb") as handle:
         handle.write(header + body)
     return len(indices) // 12, vertex_count, len(header) + len(body), len(bones)
+
+
+def orm_factors(material, orm_path):
+    """glTF's roughness and metal factors, which multiply the ORM rather than decorate it.
+
+    Every material in this content that carries an ORM texture states both factors as 1.0, and
+    195 that carry no ORM texture at all state the real number there instead -- foliage at
+    0.90, water at 0.08, MU's grass and leaves and every surface whose material declares no
+    grain, because MU2's tiled_maps writes no map for those and puts the answer in the factor.
+    Read only the texture and all 195 arrive at the engine's missing-map fallback.
+
+    One departure from the spec, deliberate. glTF's default for `metallicFactor` is 1.0, so a
+    material with neither a texture nor a stated factor is a mirror by the letter of it. That
+    is the sprint 4 bug back again from the other side -- a metal has no diffuse, so plate
+    armour whose ORM did not load drew black -- and it is not what an unstated metal means in
+    MU's painted content. Absent both, this writes metal 0.
+    """
+    pbr = material.get("pbrMetallicRoughness", {})
+    roughness = float(pbr.get("roughnessFactor", 1.0))
+    if "metallicFactor" in pbr:
+        metal = float(pbr["metallicFactor"])
+    else:
+        metal = 1.0 if orm_path else 0.0
+    return roughness, metal
 
 
 def image_for(document, material, role):
@@ -1003,8 +1035,8 @@ def cook_tables(world, out_dir):
 
     The .mur format ("MU2 rules"), version 1, little-endian:
 
-        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 map number, u32 grid size,
-                i32 safe gate x1, y1, x2, y2
+        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 map number,
+                u32 grid size, i32 safe gate x1, y1, x2, y2
         kinds:  u16 len + figure name (the cooked figure this breed wears, or empty),
                 u16 len + label ("Bull Fighter"),
                 i32 number, level, health, minimumDamage, maximumDamage, defense,
@@ -1012,7 +1044,22 @@ def cook_tables(world, out_dir):
                 i32 moveTicks, attackTicks, respawnTicks,
                 i32 attackRate, defenseRate, attackSkill, f32 scale
         spawns: u32 kind (an index into the kinds above), i32 x1, x2, y1, y2, u32 count
+        arms:   u16 len + name ("Sword01"), u16 len + label ("Kris"),
+                u16 len + stance ("sword", "two_hand_sword", "spear", "scythe", ... , empty),
+                i32 kind (0 a weapon, 1 a shield), i32 minimum damage, i32 maximum damage,
+                i32 attack speed, i32 defense, i32 strength wanted, i32 agility wanted,
+                i32 classes (bit 0 Dark Wizard, bit 1 Fairy Elf, bit 2 Dark Knight -- mu.db's
+                own class enumeration, not MU's packed class byte)
         grid:   u16 a tile, row-major [y][x], MU's own attribute word
+
+    The arms are what a fight needs off an item and nothing else: a damage band, a defence, who
+    may hold it and what it asks of him. They come from `index.json`'s own object rows and NOT
+    from `mu.db`, whose `items` table carries names and drop levels alone -- MU2's pipeline puts
+    an item's combat row on the asset. Everything else about an item -- the bag, the drop, the
+    durability, the level and its options, the excellent arm -- is sprint 7's, and none of it is
+    here. `attack_speed` is carried and is deliberately NOT consumed yet: MU paces a swing by
+    the attack clip's own authored length, and a mapping from this number to a swing delay
+    would be an invention in the one sprint that has none.
 
     The safe gate is the rectangle a dead character stands up in -- the map's own spawn box,
     `gates.safe` on the world's json, which for Lorencia is (133, 118)-(151, 135) and is
@@ -1095,11 +1142,37 @@ def cook_tables(world, out_dir):
     # The safe gate is on index.json's world entry and NOT on the world's own json beside the
     # grids -- which is where this looked first, and a missing gate is not an error there, so a
     # dead character quietly stood up where he fell instead of in town.
+    # Every weapon and shield with a combat row, in name order so the table is stable.
+    kClass = {"wizard": 1, "elf": 2, "knight": 4}
+    arms = []
+    arm_names = []
+    for one in sorted(index["objects"], key=lambda o: o["name"]):
+        if one.get("kind") not in ("weapon", "shield"):
+            continue
+        stats = one.get("stats") or {}
+        if not stats:
+            continue
+        wants = stats.get("requires") or {}
+        classes = 0
+        for name in stats.get("classes") or []:
+            classes |= kClass.get(name, 0)
+        arm_names.append(one["name"])
+        arms.append(write_string(one["name"]) + write_string(one.get("label", one["name"])) +
+                    write_string(one.get("stance", "")) +
+                    struct.pack("<8i", 1 if one["kind"] == "shield" else 0,
+                                int(stats.get("minimum_damage") or 0),
+                                int(stats.get("maximum_damage") or 0),
+                                int(stats.get("attack_speed") or 0),
+                                int(stats.get("defense") or 0),
+                                int(wants.get("strength") or 0),
+                                int(wants.get("agility") or 0), classes))
+
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIII4i", b"MU2R", 1, SIM_HZ, len(kinds), len(spawns), number, size,
+    blob = struct.pack("<4sIIIIIII4i", b"MU2R", 2, SIM_HZ, len(kinds), len(spawns), len(arms),
+                       number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))
-    blob += b"".join(kinds) + b"".join(spawns) + bytes(words)
+    blob += b"".join(kinds) + b"".join(spawns) + b"".join(arms) + bytes(words)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{world}.mur")
     with open(path, "wb") as handle:
@@ -1110,8 +1183,8 @@ def cook_tables(world, out_dir):
     for line in remainders:
         print(f"cook: WARNING {line}")
     alive = sum(struct.unpack_from("<I", one, 20)[0] for one in spawns)
-    print(f"cook: {len(kinds)} breeds and {len(spawns)} nests holding {alive} monsters "
-          f"-> {os.path.relpath(path, ROOT)} ({len(blob)} bytes)")
+    print(f"cook: {len(kinds)} breeds, {len(spawns)} nests holding {alive} monsters and "
+          f"{len(arms)} arms -> {os.path.relpath(path, ROOT)} ({len(blob)} bytes)")
     return 0
 
 

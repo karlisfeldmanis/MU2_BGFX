@@ -131,6 +131,12 @@ bool Mesh::load(const std::string& path, Textures& textures) {
             // same file, which is why the occlusion view is not read separately.
             out.orm = textureFrom(m.pbr_metallic_roughness.metallic_roughness_texture, dir,
                                   textures, TextureRole::Data);
+            // glTF multiplies the map by these, and MU2's pipeline uses that split rather
+            // than ignoring it: a material whose relief was read out of its art has a map and
+            // both factors at 1.0, and one whose material declares no grain has no map and
+            // says everything here. See tools/cook.py's orm_factors.
+            out.roughnessFactor = m.pbr_metallic_roughness.roughness_factor;
+            out.metalFactor = m.pbr_metallic_roughness.metallic_factor;
         }
         if (!bgfx::isValid(out.orm)) {
             out.orm = textureFrom(m.occlusion_texture, dir, textures, TextureRole::Data);
@@ -140,7 +146,18 @@ bool Mesh::load(const std::string& path, Textures& textures) {
 
         if (!bgfx::isValid(out.albedo)) out.albedo = textures.white();
         if (!bgfx::isValid(out.normal)) out.normal = textures.flatNormal();
-        if (!bgfx::isValid(out.orm)) out.orm = textures.neutralOrm();
+        // All ones where there is no map, because the factors are what the material meant and
+        // 1 * factor is the factor.
+        //
+        // A material with no pbr block at all is taken as not metal rather than as glTF's
+        // default of 1.0, which with no map is a mirror -- the sprint 4 bug from the other
+        // side. A material that HAS a pbr block is trusted, because cgltf cannot tell an
+        // absent `metallicFactor` from a stated one and both arrive as 1.0; the cook reads
+        // the raw json and does make that distinction, and this path is the benches' only.
+        if (!bgfx::isValid(out.orm)) {
+            out.orm = textures.ormOne();
+            if (!m.has_pbr_metallic_roughness) out.metalFactor = 0.0f;
+        }
         if (!bgfx::isValid(out.emissive)) out.emissive = textures.black();
         materials_.push_back(out);
     }
@@ -369,6 +386,8 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.name = from.name;
         out.cutout = from.cutout;
         out.twoSided = from.twoSided;
+        out.roughnessFactor = from.roughnessFactor;
+        out.metalFactor = from.metalFactor;
         auto texture = [&](const std::string& path, TextureRole role) {
             bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
             if (!path.empty()) handle = textures.load(core::join(assetDir, path), role);
@@ -380,12 +399,18 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.emissive = texture(from.emissive, TextureRole::Emissive);
         if (!bgfx::isValid(out.albedo)) out.albedo = textures.white();
         if (!bgfx::isValid(out.normal)) out.normal = textures.flatNormal();
-        // Not white, and this line said white until sprint 4 found it on a figure: white's
-        // blue is metal 1.0, and a metal surface has no diffuse at all, so every material
-        // whose ORM the cook did not write came out a mirror in plate armour. neutralOrm is
-        // occlusion 1, roughness 1, metal 0, which is what docs/conventions.md has said all
-        // along and what the glTF path a few lines up has always done.
-        if (!bgfx::isValid(out.orm)) out.orm = textures.neutralOrm();
+        // All ones where the cook wrote no ORM, so the factors carry -- and the factors are
+        // the whole answer on 195 of this content's material slots, because MU2's tiled_maps
+        // writes no map for a material that declares no grain and puts the number in glTF's
+        // factor instead. This line said neutralOrm (occlusion 1, roughness 1, metal 0) while
+        // the factors were being ignored, which drew every one of those at roughness 1: MU's
+        // foliage, its grass, and water at 1.0 where the library asks 0.08.
+        //
+        // neutralOrm was right for as long as nothing multiplied, and sprint 4's note on why
+        // it is not white still holds for the callers that have no factor -- the ground and
+        // the bench. It would be wrong here: its blue is 0 and would multiply any metal
+        // factor away. See Textures::ormOne.
+        if (!bgfx::isValid(out.orm)) out.orm = textures.ormOne();
         if (!bgfx::isValid(out.emissive)) out.emissive = textures.black();
         materials.push_back(out);
     }

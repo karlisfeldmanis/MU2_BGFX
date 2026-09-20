@@ -65,6 +65,14 @@ ORM_TOLERANCE = 0.04
 # the floor and far below anything a relief of 0.3 or more would produce.
 RELIEF_MIN_TILT = 2.0
 
+# The same question of the land, but wider. A ground ORM's roughness is meant to vary across
+# its sheet -- tiled_maps puts the material at the middle and lets the art set the spread, so
+# the damp dark parts of a grass tile are smoother than the dry pale ones -- and its mean sits
+# near the library value rather than on it. Measured across all three worlds, the 27 correct
+# surface maps land within 0.011 of what they claim and the two wrong ones are out by 0.64, so
+# anything between those two numbers separates them.
+GROUND_TOLERANCE = 0.08
+
 # A material name a checker must not silently accept. `mu2` is the exporter's default and the
 # single biggest hole in the mapping; the rest are MU's own sheet names, which say what the
 # texture is and nothing about how it reflects.
@@ -211,8 +219,13 @@ class Slot:
         self.name = name
         self.area = 0.0
         self.triangles = 0
+        # What the shader actually produces: glTF multiplies the map by the factor, and a
+        # material with no map carries its whole answer in the factor. Both are folded here
+        # so every check below asks about the surface rather than about one of its two halves.
         self.roughness = None
         self.metal = None
+        self.hasMap = False
+        self.statesFactor = False
         self.occlusion = None
         self.alpha_mode = "OPAQUE"
         self.cutout = -1.0
@@ -273,13 +286,30 @@ def read_model(path, library):
                 continue
             uv = glb.accessor(attrs["TEXCOORD_0"], 2)
 
+            # glTF's factors, and the reason they are read here rather than ignored: a
+            # material whose relief came out of its art has a map and states both as 1.0, and
+            # one whose material declares no grain has no map at all and states the real
+            # number. Either way the surface is factor x map, and 195 slots in this content
+            # are the second kind.
+            pbr = material.get("pbrMetallicRoughness", {})
+            roughness_factor = float(pbr.get("roughnessFactor", 1.0))
+            metal_factor = float(pbr.get("metallicFactor", 1.0))
+            slot.statesFactor = "roughnessFactor" in pbr or "metallicFactor" in pbr
+
             orm_image = glb.image_for(material, "orm")
             pixels = glb.image(orm_image) if orm_image is not None else None
+            if pixels is None and slot.statesFactor:
+                # No map: the factor is the whole surface, exactly as the shader computes it
+                # against a texture of ones.
+                slot.occlusion = 1.0
+                slot.roughness = roughness_factor
+                slot.metal = metal_factor
             if pixels is not None:
                 x, y = sample_uvs(uv, indices, pixels.shape[1], pixels.shape[0])
+                slot.hasMap = True
                 slot.occlusion = float(pixels[y, x, 0].mean())
-                slot.roughness = float(pixels[y, x, 1].mean())
-                slot.metal = float(pixels[y, x, 2].mean())
+                slot.roughness = float(pixels[y, x, 1].mean()) * roughness_factor
+                slot.metal = float(pixels[y, x, 2].mean()) * metal_factor
 
             albedo_image = glb.image_for(material, "albedo")
             pixels = glb.image(albedo_image) if albedo_image is not None else None
@@ -338,15 +368,18 @@ def check_slot(slot, entry, failures, notes, unruled):
                                   "the material list have drifted apart")
         return
 
-    # 1. An ORM with no ORM, checked before anything about the name, because a surface with no
-    #    ORM map is wrong whatever it is called: the engine's fallback is occlusion 1,
-    #    roughness 1, metal 0, which is a deliberate matte rather than a right answer. This
-    #    check sat below the unruled return until it was noticed that the 102 slots it was
-    #    meant for -- the trees, which are the two largest surfaces in the content -- are all
-    #    unruled and were all returning before they reached it.
+    # 1. A surface that states neither a map nor a factor, checked before anything about the
+    #    name, because it is wrong whatever it is called: nothing chose its reflectance and it
+    #    falls back to the engine's matte.
+    #
+    #    This check used to fire on every slot with no ORM map -- 102 of them, the trees among
+    #    them -- and it was half wrong. glTF says roughness is `factor x map`, MU2's pipeline
+    #    uses exactly that split, and those 102 state the real number in the factor. What was
+    #    broken was the engine reading only the map; now that it multiplies, a slot with a
+    #    factor and no map is correct and only a slot with neither is a fault.
     if slot.roughness is None:
-        fail(failures, model, where, "no ORM map at all; the surface falls back to "
-                                     "roughness 1 metal 0 and nothing chose that")
+        fail(failures, model, where, "states neither an ORM map nor a roughness factor; "
+                                     "nothing chose what this surface is")
 
     # 2. The name has to mean something. A slot named after MU's texture sheet or left at the
     #    exporter's default was never mapped onto the library, so nothing chose its reflectance.
@@ -476,6 +509,80 @@ def check_cooked_textures(failures):
     return checked
 
 
+def check_ground(library, failures, notes):
+    """The land, which has no material slots and is checked through its own record instead.
+
+    It was skipped entirely at first, on the grounds that its shader blends two material sets
+    by a per-vertex weight and its surfaces come from `ground_surfaces.json` rather than from
+    a glTF material. That is a reason not to audit it the same way, not a reason to leave the
+    largest surface in the game unchecked -- and every surface here does name a library
+    material, in the suffix of the maps MU2's tiled_maps wrote for it
+    (`TileGrass01 1_tiling_hd_grass_orm.png` is grass), so the same question can be asked of
+    the same numbers.
+
+    Returns how many distinct surface maps were measured.
+    """
+    checked = 0
+    for world in sorted(os.listdir(os.path.join(ASSETS, "world"))):
+        path = os.path.join(ASSETS, "world", world, "ground_surfaces.json")
+        if not os.path.exists(path):
+            continue
+        surfaces = json.load(open(path))
+        measured = {}
+        for surface in surfaces:
+            for side in ("base", "overlay"):
+                entry = surface.get(side) or {}
+                where = f"{world}/surface {surface.get('surface')}/{side}"
+                if not entry.get("albedo"):
+                    continue
+                for role in ("orm", "normal"):
+                    if not entry.get(role):
+                        fail(failures, world, where,
+                             f"names no {role}; the land is the one surface always on screen")
+                orm = entry.get("orm")
+                if not orm or orm in measured:
+                    continue
+                full = os.path.join(ASSETS, "world", world, orm)
+                if not os.path.exists(full):
+                    fail(failures, world, where, f"names an orm that is not there: {orm}")
+                    continue
+                pixels = np.asarray(Image.open(full).convert("RGB"), dtype=np.float64) / 255.0
+                measured[orm] = (float(pixels[..., 1].mean()), float(pixels[..., 2].mean()))
+                checked += 1
+
+        # One line per map, not per surface that names it: Lorencia's 44 surfaces share nine
+        # sheets between them, so a wrong one would otherwise be reported eleven times.
+        judged = set()
+        for surface in surfaces:
+            for side in ("base", "overlay"):
+                entry = surface.get(side) or {}
+                orm = entry.get("orm")
+                if not orm or orm not in measured or orm in judged:
+                    continue
+                judged.add(orm)
+                # The material is in the map's own name, which is how tiled_maps writes it.
+                material = orm.rsplit("_", 2)[-2] if orm.count("_") >= 2 else None
+                want = library.get(material)
+                where = f"{world}/{orm}"
+                if want is None:
+                    note(notes, world, where,
+                         f"its maps are named for '{material}', which is not a library "
+                         "material; nothing can be checked against")
+                    continue
+                roughness, metal = measured[orm]
+                # Wider than the models' tolerance on purpose: a ground ORM's roughness varies
+                # across the sheet by design -- the material sets the middle and the art sets
+                # the spread -- so its mean sits near the library value rather than on it.
+                if abs(roughness - want["roughness"]) > GROUND_TOLERANCE:
+                    fail(failures, world, where,
+                         f"mean roughness {roughness:.3f} but {material} asks "
+                         f"{want['roughness']:.2f}")
+                if abs(metal - want["metallic"]) > ORM_TOLERANCE:
+                    fail(failures, world, where,
+                         f"mean metal {metal:.3f} but {material} asks {want['metallic']:.2f}")
+    return checked
+
+
 # ---------------------------------------------------------------------------- the sheet
 
 def read_rulings(library):
@@ -587,6 +694,7 @@ def main():
             check_metal_list(slots, entries.get(model), failures)
 
     cooked = 0 if args.no_cooked else check_cooked_textures(failures)
+    ground_maps = 0 if args.model else check_ground(library, failures, notes)
 
     # ------------------------------------------------------------------ the report
     total = len(all_slots)
@@ -597,8 +705,8 @@ def main():
 
     print(f"matcheck: {len(paths)} models, {total} material slots, {cooked} cooked textures")
     if grounds:
-        print(f"  {len(grounds)} ground meshes skipped: the land has its own shader and its "
-              "surfaces come from the world, not from a material slot")
+        print(f"  {len(grounds)} ground meshes have no material slots -- the land's surfaces "
+              f"come from the world; {ground_maps} of its own surface maps checked instead")
     print(f"  library material: {named} slots, plus {ruled} by ruling  "
           f"({100.0 * (named + ruled) / max(total, 1):.0f}% of slots, "
           f"{100.0 * named_area / area:.0f}% of the area)")

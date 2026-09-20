@@ -27,8 +27,16 @@ struct CookedVertex {
 };
 static_assert(sizeof(CookedVertex) == 48, "the cooked vertex layout drifted from the cook's");
 
-// A material as a file can hold one: four texture paths under assets/, and the two flags a
-// path cannot carry. The handles are made later, by whoever has a device.
+// A material as a file can hold one: four texture paths under assets/, the two flags a path
+// cannot carry, and glTF's two scalar factors. The handles are made later, by whoever has a
+// device.
+//
+// The factors are not decoration. glTF defines roughness and metal as `factor * texture`, and
+// MU2's pipeline uses exactly that split: a surface whose relief was derived from its art gets
+// a texture and factors of 1.0, and a surface that declares no grain -- foliage, water, every
+// leaf and blade in Lorencia -- gets no texture at all and carries its whole answer in the
+// factor. 195 of this content's 729 material slots are the second kind, and reading only the
+// texture threw every one of them away.
 struct CookedMaterial {
     std::string name;
     std::string albedo;
@@ -37,6 +45,8 @@ struct CookedMaterial {
     std::string emissive;
     float cutout = -1.0f;
     bool twoSided = false;
+    float roughnessFactor = 1.0f;
+    float metalFactor = 1.0f;
 };
 
 // A skinned vertex is the static one with four joint bytes and four weight bytes on the end,

@@ -109,10 +109,15 @@ void main()
 	float nz = sqrt(max(0.0, 1.0 - dot(nxy, nxy)));
 	vec3 n = normalize(t * nxy.x + b * nxy.y + ng * nz);
 
+	// glTF's own rule: the factors MULTIPLY the map, they do not stand in for it. Every
+	// material here that has an ORM states both factors as 1.0, so this costs those nothing;
+	// the 195 that have no ORM at all bind a texture of ones and carry the real number in
+	// the factor, which is how MU's foliage, its grass and its water say what they are.
+	// Read the map alone and all 195 shade at roughness 1.
 	vec3 orm = texture2D(s_orm, v_texcoord0).rgb;
 	float ao = orm.r;
-	float roughness = clamp(orm.g, 0.04, 1.0);
-	float metal = orm.b;
+	float roughness = clamp(orm.g * u_material.z, 0.04, 1.0);
+	float metal = orm.b * u_material.w;
 
 	// The screen-space AO multiplies the baked one. gl_FragCoord is in pixels; the AO target
 	// is half resolution but is sampled by uv, so the halving needs no arithmetic here.

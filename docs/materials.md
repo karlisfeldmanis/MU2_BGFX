@@ -43,17 +43,25 @@ order that matters instead of being rediscovered every time someone looks at a m
 | baked metal vs the entry's | the loudest mistake available: a metal has no diffuse at all, so a wrong one turns painted art into a mirror |
 | metal between 0.05 and 0.30 | not a material but a blend of two, and the library has no entry in that gap on purpose |
 | a metal against the model's `metal:` list | `index.json` records which metals a monster may wear; anything else is a metal nobody asked for |
-| an ORM map at all | the engine's fallback is occlusion 1, roughness 1, metal 0 — a deliberate matte, not a right answer. A surface reaching it is unpainted |
+| an ORM map **or** a roughness factor | glTF says roughness is `factor × map`, and MU2's pipeline uses exactly that split, so a surface with no map and a real factor is correct. One with neither is unpainted and reaches the engine's matte |
 | relief asked vs the normal map's measured lean | **the one the wings were found by.** See below |
 | `MASK` with no holes in its alpha | a discard paid for in four passes that cuts nothing |
 | `OPAQUE` with holes in its alpha | whatever was meant to be cut out is drawn solid; this is how MU's foliage breaks |
 | cooked `.ktx` format per role | BC7-sRGB albedo, BC5 normal, BC7-linear ORM. An ORM read as sRGB turns roughness 0.62 into about 0.35 and makes the whole town glossy at once |
 | mips in every cooked texture | `PLAN.md`'s mip rule, which is not optional |
 
-The land is excluded, with a reason: it has its own shader, it blends two full material sets by
-a per-vertex weight, and its surfaces come from a world's `ground_surfaces.json` rather than
-from a glTF material slot. Auditing its slots against the library would measure the wrong
-thing. `docs/conventions.md`, Materials.
+**The land is checked through its own record**, not through material slots it does not have.
+It has its own shader, it blends two full material sets by a per-vertex weight, and its
+surfaces come from a world's `ground_surfaces.json` — which was at first taken as a reason to
+skip it, and is only a reason not to audit it the same way. Every surface there does name a
+library material, in the suffix of the maps MU2's `tiled_maps` wrote for it
+(`TileGrass01 1_tiling_hd_grass_orm.png` is `grass`), so the same question is asked of the
+same numbers: 29 surface maps across three worlds, and the tolerance is wider because a
+ground ORM's roughness is *meant* to vary across its sheet.
+
+It was worth doing. 27 of the 29 land within 0.011 of what they claim; noria's and
+charscene's water carry 0.722 where the library asks 0.08, which is a lake rendered as dry
+plaster. Lorencia's water is correct, which is why nothing had noticed.
 
 ## The glossy wings, and what they turned out to be
 
@@ -79,6 +87,14 @@ every bare face, hand and shin in the player's armour sets.
 
 329 models, 636 material slots, 465 cooked textures.
 
+**First fixed, 2026-09-20: the factors.** 102 of the failures below were the engine's fault
+rather than the content's. glTF defines roughness as `factor × map`; MU2's pipeline writes a
+map where the relief came out of the art and puts the whole answer in the factor where the
+material declares no grain, which is MU's foliage, its grass and its water. The engine read
+only the map, so all 195 of those slots shaded at the fallback — water at roughness 1 where
+the library asks 0.08. The factors now travel from the glb through the `.mum` (versions 3 and
+4) into `u_material.zw`, and the shade pass multiplies. 190 failures became 90.
+
 - **147 slots (23%) name a library material.** The other 424 are named after MU's texture
   sheets or left at the exporter's `mu2` default. By area it is worse: 2% of the surface in
   `assets/` is wearing a material anything recorded a decision about. Most of those sheets do
@@ -86,22 +102,31 @@ every bare face, hand and shin in the player's armour sets.
   which one went with the name, and the numbers cannot give it back: six or seven library
   entries fit inside one tolerance between 0.7 and 0.9. Only 5 of the 424 can be identified
   from their ORM alone.
-- **190 failures**, recorded as the baseline:
+- **90 failures**, recorded as the baseline:
 
-  | count | failure |
-  |---:|---|
-  | 102 | no ORM map at all, so the surface falls back to roughness 1 |
-  | 46 | a baked roughness that disagrees with the entry it claims |
-  | 26 | a flat normal map against a relief the library asked for |
-  | 13 | a `MASK` cutout with no holes to cut |
-  | 2 | no normal map at all against a relief of 1.00 |
-  | 1 | an `OPAQUE` material with 12% of its alpha below the threshold |
+  | count | failure | where it is |
+  |---:|---|---|
+  | 46 | a baked roughness that disagrees with the entry it claims | MU2's build, stale |
+  | 26 | a flat normal map against a relief the library asked for | MU2's `build_maps.py` |
+  | 13 | a `MASK` cutout with no holes to cut | MU2's export |
+  | 2 | noria's and charscene's water at 0.722 where water asks 0.08 | MU2's build, stale |
+  | 2 | no normal map at all against a relief of 1.00 | MU2's build |
+  | 1 | an `OPAQUE` material with 12% of its alpha below the threshold | MU2's export |
 
-  The 102 include the two largest surfaces in the content, `Tree02/Tree_a` and
-  `Tree01/tree_a`. Of the 46, `Potion01`, `Potion03`, `Antidote01` and `Axe02` are the
-  clearest: every material on them measures the same 0.722, so one recipe was baked over a
-  model that declares three — `glass` at 0.722 where the library asks 0.12 is a polished orb
-  rendered as dry plaster.
+  **The 46 and the 2 have one cause and it is dated.** MU2's `ROUGHNESS_FLOOR` used to be
+  high enough to flatten the whole library — its own note records ArmorMale10 and Axe01 both
+  running 0.722 to 0.749 across an entire sheet — and it was lowered on 2026-09-05. 103 of
+  the 329 models in `assets/` were baked before that day and still carry it. `Potion01`,
+  `Potion03`, `Antidote01` and `Axe02` are the clearest: every material on them measures the
+  same 0.722, `glass` included, where the library asks 0.12. The repair is a rebuild of those
+  103 in MU2 and a re-sync, not a change here.
+
+  **The 26 have a cause too, and MU2's own library already names it.** `build_maps.py`
+  multiplies the whole height field by the material's grain depth, and a material that
+  declares no grain has depth 0 — so declaring none discards the relief read out of MU's own
+  painting along with the grain that was not wanted. `leather.json`'s `grain_why` records
+  exactly this, found on the Bone set and fixed for leather alone by giving it a `cast` grain.
+  `skin`, `chitin`, `glass` and `fur` still declare none, which is why 15 of the 26 are `skin`.
 - **65 notes**, all of them a material slot no primitive draws with. Nothing renders wrong, so
   they do not fail the run, but every one is a material MU2's exporter wrote and the mesh
   dropped, and it is where the `mu2` default hides.
@@ -111,7 +136,7 @@ every bare face, hand and shin in the player's armour sets.
 
 ## The baseline, and why there is one
 
-Every one of those 190 failures is real and none can be fixed today: most are repairs in MU2's
+Every one of those 90 failures is real and none can be fixed from here: all of them are repairs in MU2's
 pipeline recipes followed by a re-export, and some are judgements nobody has made yet. A gate
 that failed on all of them would be switched off within the week.
 

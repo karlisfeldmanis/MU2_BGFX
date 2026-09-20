@@ -41,6 +41,15 @@ public:
     // whose ORM failed to load drew black rather than rough and unlit. MU2's own ground
     // shader defaults the same way, to vec3(1, 1, 0).
     bgfx::TextureHandle neutralOrm() const { return neutralOrm_; }
+    // All ones, for a material that carries its roughness and metal in glTF's factors rather
+    // than in a map. The shader multiplies, so 1 * factor is the factor, and the surface gets
+    // the number its material actually asked for instead of the fallback above.
+    //
+    // The two are not interchangeable and the difference is the whole point: neutralOrm's
+    // blue is 0, so it would multiply any metal factor away to nothing. It stays for the
+    // callers with no factor to offer -- the ground and the bench -- and this one is for the
+    // materials that have one.
+    bgfx::TextureHandle ormOne() const { return ormOne_; }
 
     // How many texels across the anisotropic filter may reach. 1 turns it off. A sheet
     // value, set before anything loads.
@@ -65,6 +74,7 @@ private:
     bgfx::TextureHandle flatNormal_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle black_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle neutralOrm_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle ormOne_ = BGFX_INVALID_HANDLE;
     uint64_t bytes_ = 0;
     uint64_t mipBytes_ = 0;
     int anisotropy_ = 8;

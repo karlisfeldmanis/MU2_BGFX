@@ -11,7 +11,8 @@ uniform vec4 u_skyColour;   // rgb: the zenith. w: the horizon's paleness
 uniform vec4 u_groundColour;// rgb: the turf that bounces light up. w: unused
 uniform vec4 u_camPos;      // xyz: the eye, world space. w: the far plane
 uniform vec4 u_params;      // x: ssao radius  y: ssao strength  z: exposure  w: pixels per unit at unit depth
-uniform vec4 u_material;    // x: cutout threshold (<0 is no cutout)  y: two-sided  zw: unused
+uniform vec4 u_material;    // x: cutout threshold (<0 is no cutout)  y: two-sided
+                            // z: roughness factor  w: metal factor, both glTF's, both multiply the ORM
 
 SAMPLER2D(s_albedo,   0);
 SAMPLER2D(s_normal,   1);
