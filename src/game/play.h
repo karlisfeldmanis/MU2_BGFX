@@ -92,11 +92,21 @@ private:
         int attackClip = -1;     // this body's swing, found once at open
         float swinging = 0.0f;   // seconds of it left to play before idle or walk take over
         float swingPace = 1.0f;  // how much faster than authored the swing clip must run
+        // The walk. `groundSpeed` is what the last tick actually covered, in metres a second,
+        // and is the numerator of the clip's rate; `still` is how long it has covered nothing,
+        // which is what decides whether a stop is a stop or a stumble; `walkPhase` is where
+        // the cycle was when the walk was last left, so it can be resumed rather than restarted.
+        float groundSpeed = 0.0f;
+        float still = 0.0f;
+        float walkPhase = 0.0f;
+        float clipRate = 1.0f;   // what this figure's clip runs at this frame
     };
 
     Drawn* drawnOf(uint32_t id);
     void remember();  // the tick's positions become "was", the sim's become "now"
-    void follow();    // clips, yaw and where each figure stands, at the smoothed position
+    // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
+    // frame's own, which the coast and the stop are measured in.
+    void follow(float seconds);
 
     content::Tables tables_;
     sim::Realm realm_;

@@ -84,20 +84,37 @@ void Figure::place(const float position[3], float yaw, bool safe) {
     safe_ = safe;
 }
 
-void Figure::play(int clip, bool restart) {
+void Figure::play(int clip, bool restart, float fade) {
     if (!body_ || !body_->library) return;
     if (clip < 0 || clip >= int(body_->library->clips.clips.size())) return;
     if (clip == clip_ && !restart) return;
     previous_ = clip_;
     previousTime_ = time_;
-    fade_ = previous_ >= 0 ? kBlendSeconds : 0.0f;
+    fadeLength_ = fade >= 0.0f ? fade : kBlendSeconds;
+    fade_ = previous_ >= 0 ? fadeLength_ : 0.0f;
     clip_ = clip;
     time_ = 0.0f;
+}
+
+void Figure::setClock(float seconds) {
+    if (!body_ || !body_->library || clip_ < 0) return;
+    const content::CookedClip& clip = body_->library->clips.clips[size_t(clip_)];
+    if (clip.duration <= 0.0f) return;
+    time_ = clip.hold ? std::min(seconds, clip.duration) : std::fmod(seconds, clip.duration);
+    if (time_ < 0.0f) time_ += clip.duration;
 }
 
 float Figure::length() const {
     if (!body_ || !body_->library || clip_ < 0) return 0.0f;
     return body_->library->clips.clips[size_t(clip_)].duration;
+}
+
+float Figure::travel() const {
+    if (!body_ || !body_->library || clip_ < 0) return 0.0f;
+    // Scaled, because a body drawn at 1.2 covers 1.2 times the ground its clip was measured
+    // at. MU2's `Strode` multiplies by `Sized` for the same reason, and a Budge Dragon is the
+    // figure that proves it.
+    return body_->library->clips.clips[size_t(clip_)].travel * scale_;
 }
 
 float Figure::through() const {
@@ -114,10 +131,13 @@ float Figure::radius() const {
     return body_->radius * scale_ * 1.5f;
 }
 
-void Figure::update(float seconds) {
+void Figure::update(float seconds, float clipRate) {
     if (!body_ || !body_->library || clip_ < 0) return;
     const content::CookedClip& clip = body_->library->clips.clips[size_t(clip_)];
-    time_ += seconds;
+    // The clip's own clock runs at the rate the caller asked for; the fade below runs in real
+    // seconds. See the note on this function in crowd.h.
+    const float clipSeconds = seconds * clipRate;
+    time_ += clipSeconds;
     if (clip.hold) {
         time_ = std::min(time_, clip.duration);
     } else if (clip.duration > 0.0f) {
@@ -131,7 +151,11 @@ void Figure::update(float seconds) {
         fade_ -= seconds;
         if (previous_ >= 0) {
             const content::CookedClip& before = body_->library->clips.clips[size_t(previous_)];
-            previousTime_ += seconds;
+            // The clip being faded OUT is on the same clock as the one coming in: when a walk
+            // is fading out into a stop, the ground has stopped moving under both of them, and
+            // a walk that kept running through its own fade would slide the feet for exactly
+            // as long as the fade lasts -- which is the last step, the one that is looked at.
+            previousTime_ += clipSeconds;
             if (before.hold) {
                 // Clamped, exactly as the clip being played is. Without this the clock of a
                 // death being faded OUT of runs past its own end, and `sample` then hands
@@ -216,8 +240,10 @@ int Figure::pose(float* rows12) {
         float wasTranslations[kMaxBones * 3];
         sample(previous_, previousTime_, posed, wasRotations, wasTranslations);
         // 0 at the start of the fade and 1 at its end: the new clip arrives rather than
-        // starting whole.
-        const float t = 1.0f - fade_ / kBlendSeconds;
+        // starting whole. Against THIS fade's own length, not the default one -- a transition
+        // given a shorter fade would otherwise begin part-blended and one given a longer fade
+        // would finish before it ended.
+        const float t = fadeLength_ > 0.0f ? 1.0f - fade_ / fadeLength_ : 1.0f;
         for (size_t i = 0; i < posed; ++i) {
             float blended[4];
             core::nlerpQuat(&wasRotations[i * 4], &rotations[i * 4], t, blended);

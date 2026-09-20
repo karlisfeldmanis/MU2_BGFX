@@ -28,6 +28,19 @@ constexpr int kMostTicks = 5;
 // the one kind this sprint draws.
 constexpr float kDrawRange = 32.0f;
 
+// The three lengths a walk is made of, all three MU2's own (`client/core/Crowd.cs`) and all
+// three marked there as not MU's: MU has no fade and no wait and stands a man up on the frame
+// he arrives.
+//
+// Setting off and stopping are not the same change, which is why they are not the same number.
+constexpr float kGaiting = 0.15f;   // standing into a walk: a weight shift, worth seeing
+constexpr float kHalting = 0.08f;   // a walk into standing: an arrival, already late
+constexpr float kCoasting = 0.1f;   // two ticks of patience before a still body is a stopped one
+// The most a clip may be hurried. MU2 clamps the rate to [0.25, 4]; the floor is not kept here
+// because zero is a rate this engine means -- a body covering no ground has its feet stop, and
+// a quarter-speed walk under a body that is not moving is the slide the floor was hiding.
+constexpr float kFastestClip = 4.0f;
+
 // MU's own action numbers for a swing, by the stance the figure holds its weapon in
 // (index.json's `actions` table: 38 "Attack fist", 39 "Attack sword right 1", 43 "Attack two
 // hand sword 1", 46 "Attack spear 1", 47 "Attack scythe 1"). A monster's numbers are its OWN
@@ -220,6 +233,15 @@ void Play::remember() {
             one.nowY = body->y;
             one.nowFacing = body->facing;
         }
+        // What the tick just gone actually covered, in metres a second. Taken from the two
+        // positions rather than from the body's `speed`, because those two are not the same
+        // number the moment anything interferes: a tick spent turning on the spot covers no
+        // ground, a step refused by the grid covers no ground, and the arrival tick covers
+        // whatever was left of the tile rather than a whole one. The feet follow what happened.
+        const float metresPerTile = ground_ ? ground_->metresPerTile() : 1.0f;
+        const float dx = (one.nowX - one.wasX) * metresPerTile;
+        const float dy = (one.nowY - one.wasY) * metresPerTile;
+        one.groundSpeed = std::sqrt(dx * dx + dy * dy) / float(kTickSeconds);
     }
 }
 
@@ -278,16 +300,17 @@ void Play::update(double seconds) {
         if (accumulator_ >= kTickSeconds * kMostTicks) accumulator_ = 0.0;
     }
     through_ = float(std::min(1.0, accumulator_ / kTickSeconds));
-    follow();
+    follow(float(seconds));
     for (Drawn& one : drawn_) {
-        // A swing runs at its own pace and everything else at the clip's own.
-        const float pace = one.swinging > 0.0f ? one.swingPace : 1.0f;
-        one.figure.update(float(seconds) * pace);
+        // A swing runs at its own pace, a walk at the ground's, everything else at the clip's
+        // own. `follow` decided which of the three this is; the crossfade runs in real seconds
+        // either way, which is why the rate goes in as a rate rather than as a scaled delta.
+        one.figure.update(float(seconds), one.clipRate);
         if (one.swinging > 0.0f) one.swinging -= float(seconds);
     }
 }
 
-void Play::follow() {
+void Play::follow(float seconds) {
     if (!ground_) return;
     const float metresPerTile = ground_->metresPerTile();
     for (Drawn& one : drawn_) {
@@ -339,6 +362,13 @@ void Play::follow() {
         // 0.18 s crossfade in Figure::play is what makes the change a blend rather than a cut.
         const bool safe = tables_.grid.safe(body->column(), body->row());
         one.figure.place(position, one.yaw, safe);
+        // How long it has covered no ground. A walk is not always given up on purpose: a step
+        // refused because something stood in it, a corner arrived at exactly on the boundary,
+        // the gap while a route is replaced, and every tick spent turning on the spot all read
+        // as still. Taken at face value each of them drops into the idle and comes straight
+        // back out, and because the fade is longer than the blip the man goes soft in the knees
+        // at every obstacle. MU2's `Crowd.Coasting` covers them with two ticks of patience.
+        one.still = one.groundSpeed > 0.01f ? 0.0f : one.still + seconds;
         // A swing holds until it has played out, and then walk or idle take it back. `play`
         // ignores a request for the clip already running, so the two below are comparisons
         // rather than restarts, and the blend between them is the crossfade's.
@@ -352,15 +382,65 @@ void Play::follow() {
         // nothing downstream reads a fact off the pose. What is lost is the rest of an
         // animation, which is what an attack cancel loses in any game that has one.
         if (one.swinging > 0.0f && body->walking) one.swinging = 0.0f;
-        if (one.swinging > 0.0f) continue;
+        if (one.swinging > 0.0f) {
+            one.clipRate = one.swingPace;
+            continue;
+        }
         const FigureBody* look = one.figure.body();
         int clip = look->idleClip;
-        if (body->walking) {
+        // Walking is the sim's own answer, held through a blip by the coast above. A body that
+        // the sim says is walking but that covered no ground this tick is still walking -- it
+        // is turning onto its line -- and the rate below is what stops its feet.
+        const bool walking = body->walking || one.still < kCoasting;
+        if (walking) {
             clip = look->walkClip;
         } else if (safe && look->idleSafeClip >= 0) {
             clip = look->idleSafeClip;
         }
-        if (clip >= 0) one.figure.play(clip);
+        if (clip < 0) continue;
+
+        const int was = one.figure.clip();
+        if (clip != was) {
+            if (clip == look->walkClip) {
+                // Setting off: the longest change in the game -- a standing pose to a
+                // mid-stride one, where the legs are further apart than in any other
+                // transition -- and the one MU's own key length serves worst. Resumed where
+                // the cycle left off rather than restarted at one leg fully forward.
+                one.figure.play(clip, false, kGaiting);
+                one.figure.setClock(one.walkPhase);
+            } else {
+                if (was == look->walkClip) one.walkPhase = one.figure.clock();
+                // Coming to a stop is an arrival, and the body is already late for it: the
+                // coast above has held the walk a tenth of a second past the tick that ended
+                // it. So the fade is only long enough not to be a cut.
+                one.figure.play(clip, false, was == look->walkClip ? kHalting : -1.0f);
+            }
+        }
+
+        // And the rate the clip runs at: the gait's own speed over the ground divided by the
+        // speed the clip was authored to travel at. A Dark Knight walks 2.5 m/s and his walk
+        // carries 2.4288 m over a 0.933 s cycle, which is 2.60 m/s, so he runs it at 0.961 and
+        // his feet keep the earth. MU2's `Crowd.Rate`, and the cook's `travel` is what makes it
+        // possible at all.
+        //
+        // The speed is the body's NOMINAL one and not the ground it covered on the last tick,
+        // and that distinction was worth a regression to learn. Measured per tick, the same
+        // walk reports 2.5 m/s for most ticks, 0.74 on the tick it arrives on -- a tile is not
+        // a whole number of ticks, so the last one covers a fraction -- and 0.0 for every tick
+        // spent pivoting. Fed to the clip, those become a step in slow motion at the end of
+        // every walk and feet that stop dead while the man turns, which is precisely what the
+        // first person to see it said: "foot gets freezed, looks slow motion". The tick
+        // quantises movement; a gait does not, and the animation follows the gait.
+        one.clipRate = 1.0f;
+        if (one.figure.clip() == look->walkClip) {
+            const float travel = one.figure.travel();
+            const float duration = one.figure.length();
+            if (travel > 0.001f && duration > 0.0f) {
+                const float metresPerTile = ground_->metresPerTile();
+                const float gait = body->speed * metresPerTile / float(kTickSeconds);
+                one.clipRate = std::min(gait * duration / travel, kFastestClip);
+            }
+        }
     }
 }
 

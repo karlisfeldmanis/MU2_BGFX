@@ -30,8 +30,25 @@ public:
     void place(const float position[3], float yaw, bool safe);
     // `restart` replays a clip that is already running; without it, asking for the clip that
     // is playing is ignored, which is what stops a per-frame request resetting the clock.
-    void play(int clip, bool restart = false);
-    void update(float seconds);
+    //
+    // `fade` is how long the crossfade into it takes, in seconds; negative takes the default.
+    // The two directions of one change are not the same change -- setting off is a weight
+    // shift the eye wants to see take a moment, and stopping is an arrival the body is already
+    // late for -- so the caller says which it is. MU2's `Crowd.Gaiting` and `Crowd.Halting`.
+    void play(int clip, bool restart = false, float fade = -1.0f);
+    // Puts the clock somewhere in the clip. A walk resumes where it left off rather than at
+    // its first key, which is one leg fully forward: taken from legs caught mid-cross, that is
+    // the longest crossfade in the game and the one nobody asked for.
+    void setClock(float seconds);
+
+    // `clipRate` advances the CLIP's clock faster or slower than the world's, while the
+    // crossfade keeps running in real seconds. That split is the whole of walking without
+    // sliding: the rate is the ground the body actually covered divided by the ground the clip
+    // was authored to cover, so the feet are pinned to the earth by arithmetic rather than by
+    // an animator's luck -- and a body covering no ground (turning on the spot, a step refused
+    // by the grid) has its feet stop rather than skate. A fade measured in clip seconds would
+    // stall with it and leave the body blended between two poses indefinitely.
+    void update(float seconds, float clipRate = 1.0f);
 
     // The palette rows this figure's bones occupy: `bones x 12` floats, already transposed
     // the way the shader reads them. Returns how many bones were written, and keeps the
@@ -50,6 +67,12 @@ public:
     // most of what goes wrong with an animation and none of it is visible in a still.
     float clock() const { return time_; }
     float length() const;
+    // How far the clip now playing is meant to carry this body over one cycle, in metres, at
+    // the size this body is drawn. Zero for everything that goes nowhere, which is every clip
+    // but the locomotion set -- so it doubles as "is this a clip whose rate the ground
+    // decides". The cook measured it (`action_travel`) and closed the looping clips so that
+    // `duration` is a true cycle; dividing one by the other is the speed it was authored at.
+    float travel() const;
     // The clip's position as a fraction, which is how index.json expresses an effect's
     // window into a clip, and so what sprint 6 will ask this for.
     float through() const;
@@ -75,7 +98,12 @@ private:
     int previous_ = -1;
     float time_ = 0.0f;
     float previousTime_ = 0.0f;
-    float fade_ = 0.0f;  // seconds left of the crossfade
+    float fade_ = 0.0f;        // seconds left of the crossfade
+    // How long this crossfade was asked to take. Kept because the blend weight is
+    // `1 - fade_ / fadeLength_`, and dividing by a constant instead was right only while every
+    // fade was the same length -- the moment one transition wanted its own, a shorter fade
+    // would have started at a weight above zero and a longer one would have run past the end.
+    float fadeLength_ = 0.0f;
     bool safe_ = false;  // standing on a safe tile: weapon on the back, unarmed stance
 };
 
