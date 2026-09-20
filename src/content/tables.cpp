@@ -13,18 +13,23 @@ namespace {
 // wrong -- so it is checked rather than trusted. docs/conventions.md, "Time".
 constexpr uint32_t kSimHz = 20;
 
+// Version 2 added the arms. There is no version 1 anywhere but in a stale build directory, and
+// the reader says so rather than reading a file whose fields have moved under it.
+constexpr uint32_t kVersion = 2;
+
 }  // namespace
 
 bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& error) {
     Reader reader(bytes.data(), bytes.size());
 
     char magic[4] = {};
-    uint32_t version = 0, kinds = 0, nests = 0, size = 0;
+    uint32_t version = 0, kinds = 0, nests = 0, arms = 0, size = 0;
     reader.take(magic, 4);
     reader.read(version);
     reader.read(out.hz);
     reader.read(kinds);
     reader.read(nests);
+    reader.read(arms);
     reader.read(out.map);
     reader.read(size);
     reader.take(out.safeGate, sizeof(out.safeGate));
@@ -32,8 +37,9 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         error = "not a .mur";
         return false;
     }
-    if (version != 1) {
-        error = "a .mur of version " + std::to_string(version) + ", and this reads 1";
+    if (version != kVersion) {
+        error = "a .mur of version " + std::to_string(version) + ", and this reads " +
+                std::to_string(kVersion) + "; recook (tools/cook.py --only tables)";
         return false;
     }
     if (out.hz != kSimHz) {
@@ -97,6 +103,30 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
             return false;
         }
         out.nests.push_back(nest);
+    }
+
+    out.arms.clear();
+    out.arms.reserve(arms);
+    for (uint32_t i = 0; i < arms; ++i) {
+        Arm arm;
+        reader.readString(arm.name);
+        reader.readString(arm.label);
+        reader.readString(arm.stance);
+        int32_t fields[8] = {};
+        reader.take(fields, sizeof(fields));
+        if (reader.failed()) {
+            error = "ran out of file inside arm " + std::to_string(i);
+            return false;
+        }
+        arm.kind = fields[0];
+        arm.minimumDamage = fields[1];
+        arm.maximumDamage = fields[2];
+        arm.attackSpeed = fields[3];
+        arm.defense = fields[4];
+        arm.wantsStrength = fields[5];
+        arm.wantsAgility = fields[6];
+        arm.classes = fields[7];
+        out.arms.push_back(std::move(arm));
     }
 
     if (size == 0 || !plausible(reader, size * size, sizeof(uint16_t))) {

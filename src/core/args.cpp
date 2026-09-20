@@ -57,6 +57,8 @@ void printUsage() {
         "  --sim-steps               log every tile crossing too\n"
         "  --no-hand                 no scripted player: the nests on their own\n"
         "  --class N                 0 Dark Wizard, 1 Fairy Elf, 2 Dark Knight\n"
+        "  --weapon NAME             what he holds, by index.json's name (Sword01, Axe03...)\n"
+        "  --shield NAME             and in his other hand (Shield10...)\n"
         "  --level N                 the character's level (default 1)\n"
         "  --spend STAT              where a levelled character's points go "
         "(strength by default)");
@@ -91,6 +93,10 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.clip = std::atoi(v);
         } else if (!std::strcmp(s, "--click-every")) {
             if (const char* v = next(s)) a.demoClicks = std::atoi(v);
+        } else if (!std::strcmp(s, "--weapon")) {
+            if (const char* v = next(s)) a.weapon = v;
+        } else if (!std::strcmp(s, "--shield")) {
+            if (const char* v = next(s)) a.shield = v;
         } else if (!std::strcmp(s, "--play")) {
             a.play = true;
         } else if (!std::strcmp(s, "--headless")) {

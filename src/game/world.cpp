@@ -88,11 +88,11 @@ bool World::open(const std::string& assetDir, const std::string& name,
 }
 
 bool World::play(const std::string& assetDir, const std::string& name, uint64_t seed, int kin,
-                 int level) {
+                 int level, const std::string& weapon, const std::string& shield) {
     // The character is put down where the camera was told to look, which is the town by
     // default and `--at` otherwise. The realm moves him to the nearest tile he may stand on.
     if (!play_.open(assetDir, name, &ground_, &figures_, seed, kin, level, int(focusColumn_),
-                    int(focusRow_))) {
+                    int(focusRow_), weapon, shield)) {
         return false;
     }
     // And the crowd stands down: the same monsters would otherwise be drawn twice, once where

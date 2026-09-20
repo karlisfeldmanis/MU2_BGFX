@@ -400,3 +400,89 @@ frame with 290 bodies behind it.
 its 0.500 budget in every window run, with and without `--play` — the engine lead's, and it
 predates this sprint; and the Dark Knight's held weapon reads as a flat plate at hip height in
 a shot, which is sprint 4's equipment attachment.
+
+
+## Asked for after the sprint: arms, turning and the stances
+
+Three things the product owner asked for once sprint 5 had landed, all of them inside what this
+sprint owns rather than borrowed from sprint 6 or 7.
+
+### A weapon in his hands, and a run without one to compare it against
+
+`--weapon Sword01 --shield Shield10`, by `index.json`'s own names, with nothing behind it: no
+bag, no drop, no durability, no item level and no options. Those are sprint 7's whole subject
+and none of them is here.
+
+**The rows come from `index.json` and not from `mu.db`.** The census said `items` carries names
+and drop levels alone, and it does -- but MU2's pipeline puts an item's combat row on the asset,
+and `index.json` has it: `Sword01 "Kris"` is 6 to 11 damage, attack speed 50, wanting 40
+strength and 40 agility, held by all three classes. 45 arms have such a row, 33 weapons and 12
+shields, and the cook writes them all into the `.mur` (version 2).
+
+What the rules do with them:
+
+* A weapon's band **adds** to the arms' own, which is `Beast.cs:2057-2148`'s shape and OpenMU's
+  `MinimumPhysBaseDmg = strength rate + weapon minimum`.
+* A shield's defence goes in **before** the halving, because it adds to `DefenseBase` and
+  `DefenseFinal` is half of that. A Plate Shield's 8 is worth 4.
+* **A character who cannot lift it does not get it.** Class and requirement are both checked and
+  the refusal is a sentence in the log -- `Serpent Sword wants 130 strength and he has 103` --
+  because a run that quietly fought bare-handed under a sword's name would publish the
+  bare-handed numbers as the sword's. The requirement is the item's base one; an item's level
+  raises what it asks and levelled items are sprint 7's.
+* **`attack_speed` is carried and deliberately not consumed.** MU paces a swing by the attack
+  clip's own authored length; a mapping from this number to a swing delay would be an invention,
+  and this sprint has none.
+
+Ten thousand ticks, seed 1, a level-20 knight in the same field, one flag apart:
+
+| in his hands | damage | defence | blows landed | deaths |
+|---|---|---|---|---|
+| nothing | 20-30 | 3 | 323 | 92 |
+| Kris (Sword01) | 23-36 | 6 | 493 | 161 |
+| Double Axe (Axe03) | 34-54 | 3 | 350 | 162 |
+| Serpent Sword (Sword09) | — | — | refused: wants 130 strength | — |
+
+The Kris is the interesting row: it is barely more damage than his fists, but it costs 20 points
+of the strength he was going to spend to meet its 40 agility, and it *doubles* his defence rate
+through that agility. The axe is the straightforward one.
+
+### MU2's turning, ported with its two numbers
+
+A body had been snapping its facing to the direction of travel in one tick, which is the thing
+that reads as cheap. MU2's own rule, out of `Walker.cs`:
+
+* **`TurnDegrees = 900`** — a right angle in a tenth of a second, 45 degrees a tick at 20 Hz, so
+  a full reversal takes four ticks.
+* **`Pivot = 120°`** — further off than that and a body turns **on the spot** before it sets off,
+  because setting off at once means travelling backwards for the length of the turn. Under it,
+  it sets off and finishes coming round as it goes, which is what walking round a corner is.
+* And the turn lives **in the sim**, which is MU2's own reasoning rather than a preference: the
+  movement depends on the turn, so a viewer turning at its own rate would draw a body facing one
+  way while the sim held it still for facing another.
+
+`aim` and `facing` are two fields now. A blow aims; a walk aims at the tile it is walking to;
+and a body that is standing still still comes round, so a fighter between two swings turns onto
+what it is hitting.
+
+### The stances, and the swing
+
+Three blends, all of them through the 0.18 s crossfade sprint 4 already had:
+
+* **Walk to idle and back** — the clip follows `body.walking`, which is the sim's own answer.
+* **Safe stance to combat stance** — inside a safe tile MU carries the weapon on the back and
+  stands in the *unarmed* idle, and steps out of the zone with it drawn. Sprint 4 built both
+  halves (`Figure::place`'s `safe`, and `idleSafeClip`); this is what asks for them, so the
+  change of stance at the edge of town is a blend rather than a cut.
+* **The swing** — a `Hit` or a `Missed` puts the attacker into its attack clip, which holds
+  until it has played out and then blends back. A player's clip is chosen by his stance out of
+  MU's own `actions` table (38 "Attack fist", 39 "Attack sword right 1", 43 two-handed, 46
+  spear, 47 scythe) and a monster's out of `monster_actions` (3 "Attack 1"), which are two
+  different tables and are never read out of one. A swing is a **pose**: the blood, the number,
+  the fall and the health plate that hang off a landing are still sprint 6's and none of them is
+  here.
+
+**Measured after all three**: the seeded hunt is identical twice at seeds 1 and 7 (fingerprints
+`8034a4b0ac677f28` and `7bd56652457b7786` — the rules moved, so the bytes did); the step is
+0.0010 ms on Lorencia and 0.0035 on Noria; the invariants are clean on both; and the window with
+290 bodies, a weapon and the swing clip running is a 2.619 ms median frame.

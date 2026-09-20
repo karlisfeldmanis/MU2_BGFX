@@ -142,16 +142,75 @@ int runHeadless(const core::Args& args, const char* assetDir) {
         return 1;
     }
 
+    // What he is to hold, resolved before his points are spent -- because a weapon asks for
+    // strength and agility, and a hand that had already poured everything into strength could
+    // not pick up a Kris.
+    int32_t weapon = -1, shield = -1;
+    if (!args.weapon.empty()) {
+        weapon = tables.armNamed(args.weapon);
+        if (weapon < 0) {
+            core::logError("no arm called %s", args.weapon.c_str());
+            return 1;
+        }
+    }
+    if (!args.shield.empty()) {
+        shield = tables.armNamed(args.shield);
+        if (shield < 0) {
+            core::logError("no arm called %s", args.shield.c_str());
+            return 1;
+        }
+    }
+
     // The points a levelled character arrived with, spent. Which stat is the hand's choice and
     // not a rule: a knight made at level 20 has 95 of them, and with none of them spent he
     // swings his fists for two against a Budge Dragon's three of defence and loses to it.
+    // What he is about to hold is paid for first, and the rest goes where --spend says.
     if (realm.hero().pointsInHand > 0 && args.spend != "none") {
-        const int points = realm.hero().pointsInHand;
-        realm.spend(args.spend == "strength" ? points : 0, args.spend == "agility" ? points : 0,
-                    args.spend == "vitality" ? points : 0, args.spend == "energy" ? points : 0);
-        core::logf("hand: %d points into %s -- damage %d to %d, %d health", points,
-                   args.spend.c_str(), realm.hero().stats.minimumDamage,
-                   realm.hero().stats.maximumDamage, realm.hero().maxHealth);
+        int points = realm.hero().pointsInHand;
+        const sim::HeroPoints& has = realm.hero().points;
+        int wantsStrength = 0, wantsAgility = 0;
+        for (int32_t index : {weapon, shield}) {
+            if (index < 0) continue;
+            const content::Arm& arm = tables.arms[size_t(index)];
+            wantsStrength = std::max(wantsStrength, arm.wantsStrength);
+            wantsAgility = std::max(wantsAgility, arm.wantsAgility);
+        }
+        int intoStrength = std::max(0, wantsStrength - has.strength);
+        int intoAgility = std::max(0, wantsAgility - has.agility);
+        if (intoStrength + intoAgility > points) {
+            core::logError("%s wants %d strength and %d agility, and a level %d character has "
+                           "only %d points to spend", args.weapon.c_str(), wantsStrength,
+                           wantsAgility, args.level, points);
+            return 1;
+        }
+        points -= intoStrength + intoAgility;
+        const int rest = points;
+        realm.spend(intoStrength + (args.spend == "strength" ? rest : 0),
+                    intoAgility + (args.spend == "agility" ? rest : 0),
+                    args.spend == "vitality" ? rest : 0, args.spend == "energy" ? rest : 0);
+        if (intoStrength + intoAgility > 0) {
+            core::logf("hand: %d points to meet what his arms ask (%d strength, %d agility), "
+                       "%d into %s", intoStrength + intoAgility, intoStrength, intoAgility,
+                       rest, args.spend.c_str());
+        } else {
+            core::logf("hand: %d points into %s", rest, args.spend.c_str());
+        }
+    }
+
+    if ((weapon >= 0 || shield >= 0) && !realm.equip(weapon, shield)) {
+        core::logError("he cannot hold that: %s", realm.refusal().c_str());
+        return 1;
+    }
+    {
+        const sim::Fighter& stats = realm.hero().stats;
+        const sim::HeroPoints& has = realm.hero().points;
+        core::logf("hero: level %d %s%s%s -- str %d agi %d vit %d, damage %d to %d, defence %d, "
+                   "attack rate %.2f, defence rate %.2f, %d health", realm.hero().level,
+                   args.weapon.empty() ? "bare-handed" : args.weapon.c_str(),
+                   args.shield.empty() ? "" : " with ", args.shield.c_str(),
+                   has.strength, has.agility, has.vitality, stats.minimumDamage,
+                   stats.maximumDamage, stats.defense, double(stats.attackRate),
+                   double(stats.defenseRate), realm.hero().maxHealth);
     }
 
     // The whole log is built in memory and written once. A run that wrote as it went would

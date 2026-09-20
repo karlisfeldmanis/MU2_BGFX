@@ -28,6 +28,21 @@ constexpr int kMostTicks = 5;
 // the one kind this sprint draws.
 constexpr float kDrawRange = 32.0f;
 
+// MU's own action numbers for a swing, by the stance the figure holds its weapon in
+// (index.json's `actions` table: 38 "Attack fist", 39 "Attack sword right 1", 43 "Attack two
+// hand sword 1", 46 "Attack spear 1", 47 "Attack scythe 1"). A monster's numbers are its OWN
+// table and not these -- `monster_actions` 3 is "Attack 1" -- which is the trap figures.h
+// names, so the two are looked up separately below and never out of one table.
+int attackSlotFor(const std::string& stance) {
+    if (stance == "sword") return 39;
+    if (stance == "two_hand_sword") return 43;
+    if (stance == "spear") return 46;
+    if (stance == "scythe") return 47;
+    if (stance == "bow") return 50;
+    if (stance == "crossbow") return 51;
+    return 38;  // bare hands
+}
+
 // Which character the window plays. Sprint 9's character select is what replaces this; it is a
 // constant here rather than a switch because there is no save to read it out of yet.
 const char* kHeroFigure = "DarkKnight";
@@ -36,7 +51,8 @@ const char* kHeroFigure = "DarkKnight";
 
 bool Play::open(const std::string& assetDir, const std::string& world,
                 const content::Ground* ground, const Figures* figures, uint64_t seed, int kin,
-                int level, int column, int row) {
+                int level, int column, int row, const std::string& weapon,
+                const std::string& shield) {
     ground_ = ground;
     figures_ = figures;
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
@@ -70,6 +86,50 @@ bool Play::open(const std::string& assetDir, const std::string& world,
 
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
+    // A character made above level 1 arrives with his points in hand and nobody to spend them:
+    // there is no character screen until sprint 9, and unspent he is a level-1 man with more
+    // health who cannot lift the weapon he was asked to carry. So the same courtesy the
+    // headless hand does itself (game/headless.cpp) -- pay for what he is about to hold, the
+    // rest into strength -- and both go when the stat window arrives.
+    if (realm_.hero().pointsInHand > 0) {
+        int points = realm_.hero().pointsInHand;
+        int wantsStrength = 0, wantsAgility = 0;
+        for (const std::string& name : {weapon, shield}) {
+            const int32_t index = name.empty() ? -1 : tables_.armNamed(name);
+            if (index < 0) continue;
+            const content::Arm& arm = tables_.arms[size_t(index)];
+            wantsStrength = std::max(wantsStrength, arm.wantsStrength);
+            wantsAgility = std::max(wantsAgility, arm.wantsAgility);
+        }
+        const int intoStrength =
+            std::min(points, std::max(0, wantsStrength - realm_.hero().points.strength));
+        points -= intoStrength;
+        const int intoAgility =
+            std::min(points, std::max(0, wantsAgility - realm_.hero().points.agility));
+        points -= intoAgility;
+        realm_.spend(intoStrength + points, intoAgility, 0, 0);
+    }
+
+    // What he holds. The character that is DRAWN carries whatever the cook put in his hands --
+    // `figures.json` gives the Dark Knight a Kris and a Plate Shield -- and the sim knows only
+    // what it was told here, so a mismatch is said out loud rather than left to be noticed as
+    // a fight that does not match the picture.
+    if (!weapon.empty() || !shield.empty()) {
+        const int32_t held = weapon.empty() ? -1 : tables_.armNamed(weapon);
+        const int32_t worn = shield.empty() ? -1 : tables_.armNamed(shield);
+        if ((!weapon.empty() && held < 0) || (!shield.empty() && worn < 0)) {
+            core::logError("no arm called %s%s%s", weapon.c_str(), shield.empty() ? "" : " or ",
+                           shield.c_str());
+        } else if (!realm_.equip(held, worn)) {
+            core::logError("he cannot hold that: %s", realm_.refusal().c_str());
+        } else {
+            core::logf("play: holding %s%s%s -- damage %d to %d, defence %d", weapon.c_str(),
+                       shield.empty() ? "" : " and ", shield.c_str(),
+                       realm_.hero().stats.minimumDamage, realm_.hero().stats.maximumDamage,
+                       realm_.hero().stats.defense);
+        }
+    }
+
     // A figure for every body, made once. Bodies are never added or removed after the realm is
     // raised -- a dead monster is a body waiting for its respawn -- so this list is as fixed as
     // the realm's own, and a frame walks it without allocating.
@@ -91,6 +151,17 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             one.figure.stand(look, at, 0.0f, look->scale);
             bones = std::max(bones, look->boneCount());
             ++dressed;
+            // The swing, found once. A player's stance decides which of MU's attack clips it
+            // is; a monster has its own two and takes the first it has.
+            if (look->library) {
+                if (body.player) {
+                    one.attackClip = look->library->find(attackSlotFor(look->stance));
+                    if (one.attackClip < 0) one.attackClip = look->library->find(38);
+                } else {
+                    one.attackClip = look->library->find(3);
+                    if (one.attackClip < 0) one.attackClip = look->library->find(4);
+                }
+            }
         } else {
             ++bare;
         }
@@ -137,6 +208,18 @@ void Play::update(double seconds) {
         remember();
         sim::audit(realm_, findings_);
         for (const sim::Happening& happening : realm_.happenings()) {
+            // A swing is drawn because it is a POSE and not an effect: the blood, the number,
+            // the fall and the health plate that hang off the landing are sprint 6's, and none
+            // of them is here. What a blow does to the picture today is put the attacker into
+            // its attack clip, which then blends back to idle or walk when it ends.
+            if (happening.what == sim::What::Hit || happening.what == sim::What::Missed) {
+                if (Drawn* swinger = drawnOf(happening.who)) {
+                    if (swinger->attackClip >= 0 && swinger->figure.body()) {
+                        swinger->figure.play(swinger->attackClip, true);
+                        swinger->swinging = swinger->figure.length();
+                    }
+                }
+            }
             // Everything but the tile crossings, which are most of the log and none of the
             // news. The line is what the run is read by until sprint 6 draws any of it.
             if (happening.what == sim::What::Stepped) continue;
@@ -153,7 +236,10 @@ void Play::update(double seconds) {
     }
     through_ = float(std::min(1.0, accumulator_ / kTickSeconds));
     follow();
-    for (Drawn& one : drawn_) one.figure.update(float(seconds));
+    for (Drawn& one : drawn_) {
+        one.figure.update(float(seconds));
+        if (one.swinging > 0.0f) one.swinging -= float(seconds);
+    }
 }
 
 void Play::follow() {
@@ -198,13 +284,32 @@ void Play::follow() {
         one.yaw = std::atan2(dx, dz);
 
         const float position[3] = {x, ground_->heightAt(x, z), z};
-        one.figure.place(position, one.yaw, tables_.grid.safe(body->column(), body->row()));
-        // Walk or idle, and nothing else yet: the swing, the fall and the death are the
-        // landing cue's, which is sprint 6. `play` ignores a request for the clip that is
-        // already running, so this is a comparison and not a restart.
-        const int clip = body->walking ? one.figure.body()->walkClip : one.figure.body()->idleClip;
+        // The safe zone is a stance and not only a place: inside one MU carries the weapon on
+        // the back and stands in the unarmed idle, and steps out of it with the weapon drawn.
+        // `place` moves the weapon; the clip below is the other half of the same rule, and the
+        // 0.18 s crossfade in Figure::play is what makes the change a blend rather than a cut.
+        const bool safe = tables_.grid.safe(body->column(), body->row());
+        one.figure.place(position, one.yaw, safe);
+        // A swing holds until it has played out, and then walk or idle take it back. `play`
+        // ignores a request for the clip already running, so the two below are comparisons
+        // rather than restarts, and the blend between them is the crossfade's.
+        if (one.swinging > 0.0f) continue;
+        const FigureBody* look = one.figure.body();
+        int clip = look->idleClip;
+        if (body->walking) {
+            clip = look->walkClip;
+        } else if (safe && look->idleSafeClip >= 0) {
+            clip = look->idleSafeClip;
+        }
         if (clip >= 0) one.figure.play(clip);
     }
+}
+
+Play::Drawn* Play::drawnOf(uint32_t id) {
+    // The bodies are made once and never reordered, and ids are handed out from 1 in that same
+    // order, so this is an index and not a search.
+    const size_t at = size_t(id) - 1;
+    return at < drawn_.size() && drawn_[at].id == id ? &drawn_[at] : nullptr;
 }
 
 void Play::focus(float* column, float* row) const {

@@ -26,7 +26,7 @@ public:
     // pointer. The crowd is what stands in a world nobody is playing; this is what stands in
     // one somebody is. Only one of the two is ever open.
     bool play(const std::string& assetDir, const std::string& name, uint64_t seed, int kin,
-              int level);
+              int level, const std::string& weapon = "", const std::string& shield = "");
     void shutdown();
 
     // `seconds` moves the focus so the camera is not still: sprint 1 ran --still throughout

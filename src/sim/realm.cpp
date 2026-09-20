@@ -27,11 +27,34 @@ constexpr int kHeroSwingTicks = 20;
 // (Lorencia.cs:87); the player's is MU2's derivation from MU's walk clip (Things.cs:583) and is
 // borrowed from the monster row rather than invented separately.
 constexpr int kHeroMoveTicks = 8;
+// How fast a body comes round to where it is going, in degrees a second. A right angle in a
+// tenth of a second, which is where MU2 put it and about where WoW and League both sit: quick
+// enough that the turn is never the thing being waited for, slow enough to be seen happening
+// rather than the facing teleporting. Walker.cs:85 (a bench number, and MU2 marks it as one).
+constexpr float kTurnDegrees = 900.0f;
+// How far off its heading a body may be and still walk, in degrees. Under it, it sets off and
+// finishes coming round as it goes, which is what walking round a corner is. Over it -- a click
+// behind the character, a monster turning onto somebody who hit it from behind -- it turns on
+// the spot first, because setting off at once means travelling backwards for the length of the
+// turn. Walker.cs:98-107.
+constexpr float kPivotDegrees = 120.0f;
+
 // A player reaches one tile. Sprint 7's weapons have their own reach.
 constexpr int kHeroAttackRange = 1;
 // How long a dead character lies there before he stands up in town. MU2's Player.cs:1687, three
 // seconds, which is also when a summon is taken off him.
 constexpr int kRiseTicks = 60;
+
+// An angle folded into a half turn either side of nothing, so that a body facing just west of
+// north turns a few degrees to face just east of it rather than most of the way round the other
+// way. Walker.cs:288-309.
+float wrapped(float angle) {
+    constexpr float kTurnabout = 6.28318530718f;
+    angle = std::fmod(angle, kTurnabout);
+    if (angle > 3.14159265359f) angle -= kTurnabout;
+    if (angle < -3.14159265359f) angle += kTurnabout;
+    return angle;
+}
 
 // MU's own reckoning of distance: the larger of the two axis distances, not a Euclidean
 // length. Things.cs:607.
@@ -49,6 +72,69 @@ int strayed(const Body& beast) {
 }
 
 }  // namespace
+
+// What a body has in its hands, as the arithmetic wants it. A monster always has empty hands
+// here: its damage band is its own row, whatever it is drawn holding.
+Arms Realm::armsOf(const Body& one) const {
+    Arms arms;
+    if (!tables_) return arms;
+    if (one.weapon >= 0 && size_t(one.weapon) < tables_->arms.size()) {
+        const content::Arm& held = tables_->arms[size_t(one.weapon)];
+        arms.weaponMinimumDamage = held.minimumDamage;
+        arms.weaponMaximumDamage = held.maximumDamage;
+        arms.armourDefense += held.defense;
+    }
+    if (one.shield >= 0 && size_t(one.shield) < tables_->arms.size()) {
+        arms.armourDefense += tables_->arms[size_t(one.shield)].defense;
+    }
+    return arms;
+}
+
+bool Realm::equip(int32_t weapon, int32_t shield) {
+    refusal_.clear();
+    if (!tables_) return false;
+    Body& hero = bodies_[0];
+    const auto allowed = [&](int32_t index, bool wantShield) {
+        if (index < 0) return true;
+        if (size_t(index) >= tables_->arms.size()) {
+            refusal_ = "there is no such arm";
+            return false;
+        }
+        const content::Arm& arm = tables_->arms[size_t(index)];
+        if (arm.isShield() != wantShield) {
+            refusal_ = arm.label + " is " + (arm.isShield() ? "a shield" : "a weapon") +
+                       " and was asked for as the other";
+            return false;
+        }
+        // mu.db's enumeration: bit 0 Dark Wizard, bit 1 Fairy Elf, bit 2 Dark Knight.
+        if ((arm.classes & (1 << int(hero.kin))) == 0) {
+            refusal_ = arm.label + " is not for this class";
+            return false;
+        }
+        // The requirement is the item's own, at its base level. An item's level raises what it
+        // asks -- "a row's raw strength is not what the game asks" -- and levelled items are
+        // sprint 7's along with the rest of what an item is.
+        if (hero.points.strength < arm.wantsStrength) {
+            refusal_ = arm.label + " wants " + std::to_string(arm.wantsStrength) +
+                       " strength and he has " + std::to_string(hero.points.strength);
+            return false;
+        }
+        if (hero.points.agility < arm.wantsAgility) {
+            refusal_ = arm.label + " wants " + std::to_string(arm.wantsAgility) +
+                       " agility and he has " + std::to_string(hero.points.agility);
+            return false;
+        }
+        return true;
+    };
+    if (!allowed(weapon, false) || !allowed(shield, true)) return false;
+
+    hero.weapon = weapon;
+    hero.shield = shield;
+    const int was = hero.maxHealth;
+    reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    hero.health = std::min(hero.maxHealth, hero.health + std::max(0, hero.maxHealth - was));
+    return true;
+}
 
 const Body* Realm::find(uint32_t id) const {
     if (id == 0 || id >= indexOfId_.size()) return nullptr;
@@ -115,7 +201,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // exactly what a level-20 knight who has never opened the window is.
     hero.experience = neededExperience(hero.level);
     hero.pointsInHand = (hero.level - 1) * kPointsPerLevel;
-    reckon(hero.kin, hero.level, hero.points, &hero.stats, &hero.maxHealth);
+    reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
     hero.health = hero.maxHealth;
     hero.swingTicks = kHeroSwingTicks;
     hero.speed = 1.0f / float(kHeroMoveTicks);
@@ -214,7 +300,7 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
     hero.points.energy += energy;
     hero.pointsInHand -= asked;
     const int was = hero.maxHealth;
-    reckon(hero.kin, hero.level, hero.points, &hero.stats, &hero.maxHealth);
+    reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
     // Vitality's health arrives full rather than as a bigger empty bar, which is what MU does
     // when a point is spent and is the only part of this that is not pure arithmetic.
     hero.health = std::min(hero.maxHealth, hero.health + std::max(0, hero.maxHealth - was));
@@ -253,8 +339,36 @@ void Realm::halt(Body& one) {
 // 1.414 because that is a SPEED. Taking both makes a diagonal walk 41% slow and taking neither
 // makes it fast. Here a walk is a line and a line has a length, which is MU2's answer
 // (Walker.cs:63-67) and is the one that needs no penalty of either kind.
+// Turns a body toward its aim and says whether it is still swinging round on the spot -- in
+// which case it may not cover ground this tick. Walker.cs:275-286.
+bool Realm::turn(Body& one) {
+    constexpr float kToRadians = 3.14159265359f / 180.0f;
+    const float apart = wrapped(one.aim - one.facing);
+    // One tick's worth, and the tick is the only clock: 900 degrees a second at 20 Hz is 45
+    // degrees a tick, so a full reversal takes four ticks.
+    const float most = kTurnDegrees * kToRadians / 20.0f;
+    one.facing = std::fabs(apart) <= most ? one.aim
+                                          : one.facing + (apart < 0.0f ? -most : most);
+    one.turning = std::fabs(wrapped(one.aim - one.facing)) > kPivotDegrees * kToRadians;
+    return one.turning;
+}
+
 void Realm::advance(Body& one) {
-    if (!one.walking) return;
+    // A body that is standing still still comes round: a fighter between two blows turns onto
+    // what it is hitting, and a walk that has just been given spends its first tick or two
+    // turning before any ground is covered.
+    if (!one.walking) {
+        turn(one);
+        return;
+    }
+    // Aimed at the tile it is walking to, and turned toward it BEFORE any ground is covered.
+    if (one.onStep < one.route.size()) {
+        const Step& target = one.route[one.onStep];
+        const float dx = float(target.column) - one.x;
+        const float dy = float(target.row) - one.y;
+        if (dx * dx + dy * dy > 1e-6f) one.aim = std::atan2(dy, dx);
+    }
+    if (turn(one)) return;  // still coming round: no ground this tick
     float left = one.speed;
     while (left > 0.0f && one.onStep < one.route.size()) {
         const Step& target = one.route[one.onStep];
@@ -265,7 +379,7 @@ void Realm::advance(Body& one) {
             ++one.onStep;
             continue;
         }
-        one.facing = std::atan2(dy, dx);
+        one.aim = std::atan2(dy, dx);
         if (distance <= left) {
             one.x = float(target.column);
             one.y = float(target.row);
@@ -347,7 +461,23 @@ void Realm::engage(Body& one, const Body& target) {
     // is the only other thing that aims, so a fighter stopped in reach between two blows faces
     // wherever it was last walking -- MU2 measured a Skeleton Warrior 105 degrees off the
     // knight it was fighting.
-    one.facing = std::atan2(target.y - one.y, target.x - one.x);
+    one.aim = std::atan2(target.y - one.y, target.x - one.x);
+}
+
+// Whether a chase needs planning again: the chaser has stopped, or its quarry has moved a whole
+// tile from where it was when the line was drawn. Realm.cs:1985-1996, and the tile is MU2's
+// `Drift`: under it the approach tile would not change anyway and re-planning only jitters the
+// line; over it the walker is heading somewhere its quarry has left.
+//
+// This was `quarry.column() != chaseColumn`, which is a WHOLE-tile comparison and fires the
+// moment a monster's rounded position changes -- so a fighter standing next to something that
+// shuffled between two tiles re-planned three times a second and took a step each time. It read
+// as a character walking while he was hitting something, which is what it was: measured over
+// 4 000 ticks, 205 walk orders for 140 blows. With the drift it is 24.
+bool Realm::drifted(const Body& chaser, const Body& target) const {
+    constexpr float kDrift = 1.0f;
+    return !chaser.walking ||
+           std::fabs(target.x - chaser.chaseX) + std::fabs(target.y - chaser.chaseY) > kDrift;
 }
 
 // The nearest tile beside a target that a walker can both stand on and finish its approach
@@ -458,11 +588,9 @@ void Realm::think(Body& beast) {
         // alone is not harmless: the line is pulled tight from wherever the walker is standing,
         // so the same order given three times a second yields a slightly different line each
         // time and the animal picks its way over in a zig-zag.
-        const bool drifted = !beast.walking || quarry.column() != beast.chaseColumn ||
-                             quarry.row() != beast.chaseRow;
-        if (drifted) {
-            beast.chaseColumn = quarry.column();
-            beast.chaseRow = quarry.row();
+        if (drifted(beast, quarry)) {
+            beast.chaseX = quarry.x;
+            beast.chaseY = quarry.y;
             int column = 0, row = 0;
             if (beside(quarry, std::max(1, kind.attackRange), beast, &column, &row) &&
                 send(beast, column, row)) {
@@ -560,7 +688,7 @@ void Realm::gain(Body& hero, int32_t award) {
         hero.pointsInHand += kPointsPerLevel;
         // Re-reckoned and then refilled, in that order: the health a level gives is part of
         // the maximum it is refilled to.
-        reckon(hero.kin, hero.level, hero.points, &hero.stats, &hero.maxHealth);
+        reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
         hero.health = hero.maxHealth;
         say(What::Levelled, hero, hero.level, hero.pointsInHand);
         remaining -= int32_t(gained);
@@ -648,11 +776,9 @@ void Realm::press() {
     // Out of reach: close, on the same re-plan clock a monster's chase uses.
     if (tick_ >= hero.repathsAt) {
         hero.repathsAt = tick_ + kRepath;
-        const bool drifted = !hero.walking || target->column() != hero.chaseColumn ||
-                             target->row() != hero.chaseRow;
-        if (drifted) {
-            hero.chaseColumn = target->column();
-            hero.chaseRow = target->row();
+        if (drifted(hero, *target)) {
+            hero.chaseX = target->x;
+            hero.chaseY = target->y;
             int column = 0, row = 0;
             if (beside(*target, kHeroAttackRange, hero, &column, &row)) send(hero, column, row);
         }

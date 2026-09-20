@@ -93,7 +93,8 @@ const ClassRow& rowOf(Kin kin) { return kRows[int(kin) % 3]; }
 
 HeroPoints startingPoints(Kin kin) { return kStarting[int(kin) % 3]; }
 
-void reckon(Kin kin, int level, const HeroPoints& points, Fighter* out, int* maxHealth) {
+void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
+            int* maxHealth) {
     const ClassRow& row = rowOf(kin);
     const double strength = double(points.strength);
     const double agility = double(points.agility);
@@ -110,17 +111,24 @@ void reckon(Kin kin, int level, const HeroPoints& points, Fighter* out, int* max
     // initialiser's and applies whatever the armour is.
     // And this one IS truncated, because AttackableExtensions.cs:92 truncates it:
     // `defense = (int)((attributes[defenseAttribute] + GreaterDefenseBonus) * DefenseDecrement)`.
-    // A knight's 3.333 is 3 in the original as well.
-    out->defense = int((agility * double(row.defensePerAgility) + 0.0) * 0.5);
-    // And no weapon, so the damage is the arms alone. A naked level-1 knight doing one point to
-    // a Bull Fighter is not a bug: it is what 0.75 says about hitting an armoured animal six
-    // levels up with your fists, and the damage floor is what he has instead of nothing.
+    // A knight's 3.333 is 3 in the original as well. A shield's defence goes in BEFORE the
+    // halving, because it adds to Stats.DefenseBase and DefenseFinal is half of that
+    // (CharacterClasses/CharacterClassInitialization.cs:103) -- a Plate Shield's 8 is worth 4.
+    out->defense = int((agility * double(row.defensePerAgility) + double(arms.armourDefense)) *
+                       0.5);
+    // The arms, and then what is in them. A naked level-1 knight doing one point to a Bull
+    // Fighter is not a bug -- it is what 0.75 says about hitting an armoured animal six levels
+    // up with your fists, and the damage floor is what he has instead of nothing. A weapon adds
+    // its own band on top, which is Beast.cs:2057-2148's shape and OpenMU's
+    // `MinimumPhysBaseDmg = strength rate + weapon minimum`.
     out->minimumDamage = int(strength * double(row.minimumDamagePerStrength) +
                              (strength + agility) *
-                                 double(row.minimumDamagePerStrengthAndAgility));
+                                 double(row.minimumDamagePerStrengthAndAgility)) +
+                         arms.weaponMinimumDamage;
     out->maximumDamage = int(strength * double(row.maximumDamagePerStrength) +
                              (strength + agility) *
-                                 double(row.maximumDamagePerStrengthAndAgility));
+                                 double(row.maximumDamagePerStrengthAndAgility)) +
+                         arms.weaponMaximumDamage;
     out->criticalChance = 0.0;  // the luck option is 0.75's only source, and it is sprint 7's
     out->damageTaken = 1.0;
 

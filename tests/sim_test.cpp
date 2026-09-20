@@ -81,7 +81,7 @@ void testRules() {
     // The three classes at level 1, from their own initialisers.
     sim::Fighter fighter;
     int health = 0;
-    sim::reckon(sim::Kin::DarkKnight, 1, sim::startingPoints(sim::Kin::DarkKnight), &fighter,
+    sim::reckon(sim::Kin::DarkKnight, 1, sim::startingPoints(sim::Kin::DarkKnight), sim::Arms{}, &fighter,
                 &health);
     checkEqual(fighter.attackRate, int(5 + 20 * 1.5 + 28 * 0.25), "the knight's attack rate");
     checkEqual(fighter.defenseRate, 6, "the knight's defense rate is agility/3");
@@ -90,12 +90,12 @@ void testRules() {
     checkEqual(fighter.maximumDamage, 7, "the knight's fists, high");
     checkEqual(health, 35 + 2 + 75, "the knight's health");
 
-    sim::reckon(sim::Kin::DarkWizard, 1, sim::startingPoints(sim::Kin::DarkWizard), &fighter,
+    sim::reckon(sim::Kin::DarkWizard, 1, sim::startingPoints(sim::Kin::DarkWizard), sim::Arms{}, &fighter,
                 &health);
     checkEqual(health, 30 + 1 + 30, "the wizard's health");
     checkEqual(fighter.minimumDamage, 18 / 8, "the wizard's fists, low");
 
-    sim::reckon(sim::Kin::FairyElf, 1, sim::startingPoints(sim::Kin::FairyElf), &fighter,
+    sim::reckon(sim::Kin::FairyElf, 1, sim::startingPoints(sim::Kin::FairyElf), sim::Arms{}, &fighter,
                 &health);
     checkEqual(health, 39 + 1 + 40, "the elf's health");
     // Hers is over strength AND agility together -- ClassFairyElf.cs:79-80 -- which is the one

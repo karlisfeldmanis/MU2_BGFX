@@ -32,7 +32,8 @@ public:
     // nearest standable tile. False when the world has no cooked tables -- which is not fatal
     // to the run, only to playing it.
     bool open(const std::string& assetDir, const std::string& world, const content::Ground* ground,
-              const Figures* figures, uint64_t seed, int kin, int level, int column, int row);
+              const Figures* figures, uint64_t seed, int kin, int level, int column, int row,
+              const std::string& weapon = "", const std::string& shield = "");
     void shutdown();
 
     bool isOpen() const { return realm_.tables() != nullptr; }
@@ -77,8 +78,11 @@ private:
         float nowX = 0.0f, nowY = 0.0f;
         float yaw = 0.0f;
         bool visible = false;
+        int attackClip = -1;     // this body's swing, found once at open
+        float swinging = 0.0f;   // seconds of it left to play before idle or walk take over
     };
 
+    Drawn* drawnOf(uint32_t id);
     void remember();  // the tick's positions become "was", the sim's become "now"
     void follow();    // clips, yaw and where each figure stands, at the smoothed position
 

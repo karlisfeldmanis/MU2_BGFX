@@ -112,7 +112,10 @@ int main(int argc, char** argv) {
         // And the realm behind it, when there is somebody playing. A world that cannot raise
         // one -- no cooked tables yet -- says so and is still a world to look at, which is
         // what every run before this sprint was.
-        if (args.play) world.play(MU2_ASSET_DIR, args.world, args.seed, args.kin, args.level);
+        if (args.play) {
+            world.play(MU2_ASSET_DIR, args.world, args.seed, args.kin, args.level, args.weapon,
+                       args.shield);
+        }
     }
 
     game::ModelBench bench;

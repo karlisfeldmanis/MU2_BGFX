@@ -48,6 +48,31 @@ struct MonsterNest {
     uint32_t count = 0;
 };
 
+// One weapon or shield, with what a fight reads off it and nothing else. The bag, the drop, the
+// durability, an item's level and its options are all sprint 7's; this is the damage band, the
+// defence, who may hold it and what it asks of him.
+//
+// `attackSpeed` is carried and NOT consumed. MU paces a swing by the attack clip's own authored
+// length (MU2's Beast.cs:2124-2137 re-reckons SwingDelay from it), and a mapping from this
+// number to a swing delay would be an invention in the one sprint that has none.
+struct Arm {
+    std::string name;    // "Sword01"
+    std::string label;   // "Kris"
+    std::string stance;  // how it is held: "sword", "two_hand_sword", "spear", "scythe", ...
+    int32_t kind = 0;    // 0 a weapon, 1 a shield
+    int32_t minimumDamage = 0;
+    int32_t maximumDamage = 0;
+    int32_t attackSpeed = 0;
+    int32_t defense = 0;
+    int32_t wantsStrength = 0;
+    int32_t wantsAgility = 0;
+    // Bit 0 Dark Wizard, bit 1 Fairy Elf, bit 2 Dark Knight -- mu.db's own class enumeration
+    // and not MU's packed class byte.
+    int32_t classes = 0;
+
+    bool isShield() const { return kind == 1; }
+};
+
 struct Tables {
     uint32_t hz = 0;   // the tick rate the delays were converted at; checked, never assumed
     uint32_t map = 0;  // MU's own map number
@@ -55,7 +80,16 @@ struct Tables {
     int32_t safeGate[4] = {0, 0, 0, 0};  // x1, y1, x2, y2 in tiles
     std::vector<MonsterKind> kinds;
     std::vector<MonsterNest> nests;
+    std::vector<Arm> arms;
     Grid grid;
+
+    // By name, as the command line and the figure tables spell it. -1 for none.
+    int32_t armNamed(const std::string& name) const {
+        for (size_t i = 0; i < arms.size(); ++i) {
+            if (arms[i].name == name) return int32_t(i);
+        }
+        return -1;
+    }
 
     uint32_t population() const {
         uint32_t total = 0;

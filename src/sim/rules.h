@@ -130,7 +130,17 @@ const ClassRow& rowOf(Kin kin);
 // different rates when a bow is drawn) and is unreachable until there is a bow to draw. Melee
 // is what a class with no items has. A stat with nothing reading it is a field to get wrong
 // twice.
-void reckon(Kin kin, int level, const HeroPoints& points, Fighter* out, int* maxHealth);
+// What a character has in his hands, as the arithmetic reads it. Zeroes are bare hands and no
+// shield, which is a real state and not a missing one: 0.75 says a man with no weapon swings
+// his arms, and the damage floor is what he has instead of nothing.
+struct Arms {
+    int weaponMinimumDamage = 0;
+    int weaponMaximumDamage = 0;
+    int armourDefense = 0;  // a shield's, and later a suit's
+};
+
+void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
+            int* maxHealth);
 
 // GameConfigurationInitializerBase.cs:87-100. The CUMULATIVE experience to BE this level, not
 // the cost of the level itself: read as a per-level cost it makes levelling roughly

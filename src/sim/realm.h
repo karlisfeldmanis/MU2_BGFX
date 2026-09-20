@@ -84,6 +84,10 @@ struct Body {
 
     Kin kin = Kin::DarkKnight;  // the player's class; meaningless on a monster
     HeroPoints points;          // likewise
+    // What is in his hands, as indices into Tables::arms, or -1. A monster's weapon is part of
+    // its row and not an item: `monster_kinds` carries the damage band whole.
+    int32_t weapon = -1;
+    int32_t shield = -1;
     int32_t level = 1;
     int32_t health = 0;
     int32_t maxHealth = 0;
@@ -93,7 +97,14 @@ struct Body {
     // (Things.cs:71-82, `Column => (int)MathF.Round(X)`). The world's metres and the negation
     // of the row belong to whoever draws this, not here.
     float x = 0.0f, y = 0.0f;
-    float facing = 0.0f;  // radians, the direction of travel or of the last blow
+    // Where it is looking and where it wants to look. Two fields and not one, because MU2
+    // found that a body which snaps its facing reads as cheap and a body which turns at the
+    // DRAWING's own rate is worse: the movement depends on the turn -- a thing does not set off
+    // until it has roughly come round -- so the turn belongs down here and the viewer reads it.
+    // Walker.cs:70-97.
+    float facing = 0.0f;  // radians, where it is looking now
+    float aim = 0.0f;     // radians, where it means to look
+    bool turning = false; // too far off its aim to cover ground this tick
 
     // Where it was put down, which is what a leash measures from. Not the nest rectangle:
     // Lorencia's spiders share one 47 by 155 tiles across, and a rectangle leash would let a
@@ -114,7 +125,9 @@ struct Body {
     int64_t repathsAt = 0;
     int64_t risesAt = 0;
     int32_t swingTicks = 20;
-    int32_t chaseColumn = 0, chaseRow = 0;
+    // Where the quarry was when this chase was last planned, in tiles and NOT in whole tiles.
+    // See Realm::drifted.
+    float chaseX = 0.0f, chaseY = 0.0f;
 
     uint64_t experience = 0;
     int32_t pointsInHand = 0;  // won by levelling and not yet spent
@@ -158,6 +171,16 @@ public:
     // is here rather than in raise() because spending a point is a choice and the sim does not
     // make choices. Refused, whole, when it asks for more points than are in hand.
     bool spend(int strength, int agility, int vitality, int energy);
+
+    // Puts a weapon and a shield in the character's hands, by index into the cooked arms, -1
+    // for an empty hand. Refused, whole and with a reason in the log, when his class may not
+    // hold it or his strength and agility do not meet what it asks. There is no bag and no
+    // durability behind this -- both are sprint 7's -- and no swing speed either: MU paces a
+    // swing by the attack clip's authored length, and inventing a mapping from a weapon's
+    // `attack_speed` is the one thing this sprint will not do.
+    bool equip(int32_t weapon, int32_t shield);
+    // Why the last equip was refused, or empty.
+    const std::string& refusal() const { return refusal_; }
     void step();
 
     int64_t tick() const { return tick_; }
@@ -172,7 +195,9 @@ public:
 
 private:
     Body* body(uint32_t id);
+    Arms armsOf(const Body& one) const;
     void advance(Body& one);
+    bool turn(Body& one);
     void rouse(Body& beast);
     void think(Body& beast);
     void press();
@@ -187,6 +212,7 @@ private:
     bool send(Body& one, int column, int row);
     void halt(Body& one);
     bool beside(const Body& target, int radius, const Body& walker, int* column, int* row);
+    bool drifted(const Body& chaser, const Body& target) const;
     bool worth(const Body& beast, const Body& target, int range) const;
     void say(What what, const Body& who, int32_t a = 0, int32_t b = 0, int32_t c = 0,
              uint32_t whom = 0);
@@ -208,6 +234,7 @@ private:
     Request pending_;
     Request order_;  // what the player is doing until told otherwise
     int64_t tick_ = 0;
+    std::string refusal_;
     uint32_t nextId_ = 1;
 };
 

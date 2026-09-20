@@ -71,6 +71,10 @@ struct Args {
     // at level 20 has 95 points in hand and, unspent, he is a level-1 character with more
     // health -- which is a fair thing to be able to measure and a poor hunt to watch.
     std::string spend = "strength";
+    // What the character holds, by index.json's own name: `--weapon Sword01 --shield Shield10`.
+    // Empty is bare hands, which is a state worth running rather than a missing one.
+    std::string weapon;
+    std::string shield;
     // `--play` raises the realm behind the window: the sim ticks, the figures are where it says
     // they are, and a click is a request. Without it a world is the still crowd sprint 4 drew.
     bool play = false;
