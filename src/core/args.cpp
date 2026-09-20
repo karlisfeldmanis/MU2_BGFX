@@ -35,7 +35,9 @@ void printUsage() {
         "  --sheet PATH              the lighting sheet (default sheets/lighting.json)\n"
         "  --dist N                  camera distance in world units\n"
         "  --still                   hold the camera instead of turning it\n"
-        "  --msaa N                  1, 2, 4 or 8 samples (default 4)");
+        "  --msaa N                  1, 2, 4 or 8 samples (default 4)\n"
+        "  --world NAME              raise a world instead of the model bench\n"
+        "  --at COLUMN,ROW           which tile the world camera looks at");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -104,6 +106,19 @@ Args parseArgs(int argc, char** argv) {
                 if (a.msaa != 1 && a.msaa != 2 && a.msaa != 4 && a.msaa != 8) {
                     logError("--msaa takes 1, 2, 4 or 8, not %d", a.msaa);
                     a.valid = false;
+                }
+            }
+        } else if (!std::strcmp(s, "--world")) {
+            if (const char* v = next(s)) a.world = v;
+        } else if (!std::strcmp(s, "--at")) {
+            if (const char* v = next(s)) {
+                const char* comma = std::strchr(v, ',');
+                if (!comma) {
+                    logError("--at wants column,row, got '%s'", v);
+                    a.valid = false;
+                } else {
+                    a.atColumn = float(std::atof(v));
+                    a.atRow = float(std::atof(comma + 1));
                 }
             }
         } else if (!std::strcmp(s, "--still")) {

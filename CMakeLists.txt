@@ -70,6 +70,7 @@ add_executable(mu2
   src/core/json.cpp
   src/content/texture.cpp
   src/content/mesh.cpp
+  src/content/ground.cpp
   src/gfx/window.cpp
   src/gfx/views.cpp
   src/gfx/stats.cpp
@@ -77,6 +78,7 @@ add_executable(mu2
   src/gfx/lighting.cpp
   src/gfx/renderer.cpp
   src/game/bench.cpp
+  src/game/world.cpp
 )
 target_include_directories(mu2 PRIVATE src extern)
 # bimg_decode reads the PNGs, bimg_encode writes the screenshots.

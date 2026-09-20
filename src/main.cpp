@@ -12,6 +12,7 @@
 #include "core/args.h"
 #include "core/log.h"
 #include "game/bench.h"
+#include "game/world.h"
 #include "gfx/lighting.h"
 #include "gfx/renderer.h"
 #include "gfx/stats.h"
@@ -74,13 +75,29 @@ int main(int argc, char** argv) {
     gfx::Lighting lighting;
     lighting.reloadIfChanged(sheetPath);
 
+    // Either a world or the model bench, never both: they are two different things to look
+    // at and the camera belongs to whichever it is.
+    game::World world;
+    const bool inWorld = !args.world.empty();
+    if (inWorld) {
+        if (args.atColumn >= 0.0f) world.setFocusTile(args.atColumn, args.atRow);
+        if (!world.open(MU2_ASSET_DIR, args.world, textures)) {
+            core::logError("the world did not open");
+            renderer.shutdown();
+            textures.shutdown();
+            window.close();
+            core::logClose();
+            return 1;
+        }
+    }
+
     game::ModelBench bench;
     if (args.distance > 0.0f) bench.setDistance(args.distance);
     const std::string modelPath =
         (args.model.empty() || args.model[0] == '/')
             ? args.model
             : defaultPath(MU2_ASSET_DIR, args.model.c_str());
-    if (!bench.open(modelPath, textures)) {
+    if (!inWorld && !bench.open(modelPath, textures)) {
         core::logError("the bench did not open");
         renderer.shutdown();
         textures.shutdown();
@@ -113,8 +130,13 @@ int main(int argc, char** argv) {
             lighting.reloadIfChanged(sheetPath);
         }
 
-        bench.update(elapsed, !args.still);
-        renderer.draw(bench.camera(), lighting, bench.drawables());
+        if (inWorld) {
+            world.update(elapsed, args.still);
+            renderer.draw(world.camera(), lighting, {}, &world.ground());
+        } else {
+            bench.update(elapsed, !args.still);
+            renderer.draw(bench.camera(), lighting, bench.drawables(), nullptr);
+        }
 
         const bool lastFrame = args.frames && frame + 1 >= args.frames;
         if (args.shotEvery && (frame % args.shotEvery == 0 || lastFrame)) {
@@ -151,6 +173,7 @@ int main(int argc, char** argv) {
     const bool withinBudget = stats.finish(args.budget);
 
     bench.shutdown();
+    world.shutdown();
     renderer.shutdown();
     textures.shutdown();
     window.close();

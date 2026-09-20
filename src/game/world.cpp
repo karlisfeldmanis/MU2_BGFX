@@ -1,0 +1,79 @@
+#include "game/world.h"
+
+#include <cmath>
+
+#include "core/files.h"
+#include "core/log.h"
+
+namespace mu::game {
+namespace {
+
+// MU's own camera, measured out of MU2's client/core/Walk.cs rather than chosen. The
+// distance and the field of view set the framing together -- 8 metres back through a
+// 74-degree lens is a far wider picture than 8 metres through a 55 -- so neither number
+// means anything without the other, and both are the old client's.
+constexpr float kFovDegrees = 55.0f;
+constexpr float kPitchDegrees = -48.5f;
+constexpr float kYawDegrees = 45.0f;
+constexpr float kDistance = 8.0f;      // 800 of MU's units
+constexpr float kFocusHeight = 1.5f;   // 150 units up the body
+
+}  // namespace
+
+void World::setFocusTile(float column, float row) {
+    focusColumn_ = column;
+    focusRow_ = row;
+    focusSet_ = true;
+}
+
+bool World::open(const std::string& assetDir, const std::string& name,
+                 content::Textures& textures) {
+    const std::string dir = core::join(assetDir, "world/" + name);
+    if (!ground_.load(dir, name, textures)) return false;
+
+    if (!focusSet_) {
+        // Lorencia's safe zone is around tile 142,126 -- the middle of the town rather than
+        // the middle of the map, which is sea and empty grass.
+        focusColumn_ = 142.0f;
+        focusRow_ = 126.0f;
+    }
+    camera_.fovDegrees = kFovDegrees;
+    camera_.nearPlane = 0.05f;
+    camera_.farPlane = 1200.0f;
+    core::logf("world %s: looking at tile %.0f,%.0f, ground %.2f m up", name.c_str(),
+               focusColumn_, focusRow_, ground_.heightAt(focusColumn_, -focusRow_));
+    return true;
+}
+
+void World::update(double seconds, bool still) {
+    // A slow walk across the town when the camera is not held. The point is not the walk:
+    // it is that a still camera cannot show a shadow edge crawling, which is the one defect
+    // sprint 1's bench was structurally unable to catch.
+    float column = focusColumn_;
+    float row = focusRow_;
+    if (!still) {
+        column += float(std::sin(seconds * 0.15) * 12.0);
+        row += float(std::cos(seconds * 0.11) * 12.0);
+    }
+
+    // Column is +x and row is -z, in metres, one tile to the metre. docs/conventions.md.
+    const float x = column;
+    const float z = -row;
+    const float groundY = ground_.heightAt(x, z);
+
+    const float pitch = kPitchDegrees * 3.14159265f / 180.0f;
+    const float yaw = kYawDegrees * 3.14159265f / 180.0f;
+
+    camera_.target[0] = x;
+    camera_.target[1] = groundY + kFocusHeight;
+    camera_.target[2] = z;
+
+    // Walk.cs's own back vector: sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch).
+    const float back[3] = {std::sin(yaw) * std::cos(pitch), -std::sin(pitch),
+                           std::cos(yaw) * std::cos(pitch)};
+    for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * kDistance;
+}
+
+void World::shutdown() { ground_.shutdown(); }
+
+}  // namespace mu::game

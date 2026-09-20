@@ -54,6 +54,10 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uShadowParams_ = bgfx::createUniform("u_shadowParams", bgfx::UniformType::Vec4);
     uCamRay_ = bgfx::createUniform("u_camRay", bgfx::UniformType::Vec4);
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
+    uGroundRepeat_ = bgfx::createUniform("u_groundRepeat", bgfx::UniformType::Vec4);
+    sAlbedo2_ = bgfx::createUniform("s_albedo2", bgfx::UniformType::Sampler);
+    sNormal2_ = bgfx::createUniform("s_normal2", bgfx::UniformType::Sampler);
+    sOrm2_ = bgfx::createUniform("s_orm2", bgfx::UniformType::Sampler);
 
     sAlbedo_ = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
     sNormal_ = bgfx::createUniform("s_normal", bgfx::UniformType::Sampler);
@@ -90,10 +94,15 @@ bool Renderer::loadPrograms(const std::string& dir) {
     blurMsProgram_ = loadProgram(dir, "vs_screen", "fs_blur_ms");
     shadeProgram_ = loadProgram(dir, "vs_static", "fs_shade");
     presentProgram_ = loadProgram(dir, "vs_screen", "fs_present");
+    groundShadowProgram_ = loadProgram(dir, "vs_ground_depth", "fs_shadow");
+    groundPrepassProgram_ = loadProgram(dir, "vs_ground", "fs_ground_prepass");
+    groundShadeProgram_ = loadProgram(dir, "vs_ground", "fs_ground");
     const bool ok = bgfx::isValid(shadowProgram_) && bgfx::isValid(prepassProgram_) &&
                     bgfx::isValid(ssaoProgram_) && bgfx::isValid(blurProgram_) &&
                     bgfx::isValid(ssaoMsProgram_) && bgfx::isValid(blurMsProgram_) &&
-                    bgfx::isValid(shadeProgram_) && bgfx::isValid(presentProgram_);
+                    bgfx::isValid(shadeProgram_) && bgfx::isValid(presentProgram_) &&
+                    bgfx::isValid(groundShadowProgram_) && bgfx::isValid(groundPrepassProgram_) &&
+                    bgfx::isValid(groundShadeProgram_);
     if (!ok) core::logError("the frame is missing a program; nothing will draw");
     return ok;
 }
@@ -211,13 +220,14 @@ void Renderer::shutdown() {
     destroyTargets();
     for (bgfx::ProgramHandle* p : {&shadowProgram_, &prepassProgram_, &ssaoProgram_, &blurProgram_,
                                    &ssaoMsProgram_, &blurMsProgram_, &shadeProgram_,
-                                   &presentProgram_}) {
+                                   &presentProgram_, &groundShadowProgram_,
+                                   &groundPrepassProgram_, &groundShadeProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
-          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &uPrepassSize_, &sAlbedo_,
+          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
@@ -269,6 +279,31 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
     }
 }
 
+void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
+                            const content::Ground& g, uint64_t state, bool lit) {
+    for (const content::GroundPart& part : g.parts()) {
+        if (lit) {
+            const float repeat[4] = {part.base.repeat, part.overlay.repeat, part.base.relief,
+                                     part.overlay.relief};
+            bgfx::setUniform(uGroundRepeat_, repeat);
+            bgfx::setTexture(0, sAlbedo_, part.base.albedo);
+            bgfx::setTexture(1, sNormal_, part.base.normal);
+            bgfx::setTexture(2, sOrm_, part.base.orm);
+            bgfx::setTexture(9, sAlbedo2_, part.overlay.albedo);
+            bgfx::setTexture(10, sNormal2_, part.overlay.normal);
+            bgfx::setTexture(11, sOrm2_, part.overlay.orm);
+        }
+        bgfx::setVertexBuffer(0, g.vertexBuffer());
+        bgfx::setIndexBuffer(g.indexBuffer(), part.firstIndex, part.indexCount);
+        // The land is the first single-sided surface in the project -- every material in
+        // MU2's build is double sided -- so this is the one place a winding or a handedness
+        // mistake shows as a hole rather than as nothing at all.
+        bgfx::setState(state | BGFX_STATE_CULL_CW);
+        bgfx::submit(view, program);
+        ++drawCount_;
+    }
+}
+
 void Renderer::screenPass(bgfx::ViewId view, bgfx::ProgramHandle program) {
     bgfx::setVertexBuffer(0, screenVb_);
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
@@ -277,8 +312,10 @@ void Renderer::screenPass(bgfx::ViewId view, bgfx::ProgramHandle program) {
 }
 
 void Renderer::draw(const Camera& camera, const Lighting& lighting,
-                    const std::vector<Drawable>& drawables) {
+                    const std::vector<Drawable>& drawables, const content::Ground* ground) {
     drawCount_ = 0;
+    // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
+    const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
 
     // --- the camera -------------------------------------------------------------------
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and
@@ -297,7 +334,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
 
     // --- the batches, and one instance buffer the whole frame reads -------------------
     batches_.clear();
-    if (!drawables.empty()) {
+    const bool anything = !drawables.empty() || ground != nullptr;
+    if (anything) {
         // Grouped by mesh, keeping the order each mesh was first seen in, so a frame's draw
         // order does not shuffle between runs and a measurement stays comparable.
         std::unordered_map<const content::Mesh*, size_t> seen;
@@ -328,11 +366,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                            total);
             total = available;
         }
-        if (total > 0) {
-            bgfx::InstanceDataBuffer idb;
-            bgfx::allocInstanceDataBuffer(&idb, total, stride);
+        if (total > 0 || ground) {
+            // Allocated only when something wants it: the land is in world space already and
+            // has no instances at all.
+            bgfx::InstanceDataBuffer idb = {};
+            if (total > 0) bgfx::allocInstanceDataBuffer(&idb, total, stride);
             uint32_t written = 0;
-            for (size_t gi = 0; gi < groups.size(); ++gi) {
+            for (size_t gi = 0; gi < groups.size() && total > 0; ++gi) {
                 batches_[gi].first = written;
                 uint32_t count = 0;
                 for (const Drawable* d : groups[gi]) {
@@ -399,8 +439,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // No front-face cull here, whatever a previous comment claimed: every material
             // in MU2's build is double sided, so there is nothing to cull and the bias has
             // to carry the whole job on its own.
-            submitBatches(ViewShadow, shadowProgram_, batches_, idb,
-                          BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS, false);
+            const uint64_t depthState = BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
+            bgfx::setUniform(uMaterial_, noCutout);
+            if (ground) submitGround(ViewShadow, groundShadowProgram_, *ground, depthState, false);
+            if (total > 0) submitBatches(ViewShadow, shadowProgram_, batches_, idb, depthState, false);
 
             // --- view 1: the prepass -------------------------------------------------
             bgfx::setViewFrameBuffer(ViewPrepass, prepassFb_);
@@ -408,10 +450,11 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setViewClear(ViewPrepass, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000,
                                1.0f, 0);
             bgfx::setViewTransform(ViewPrepass, view, proj);
-            submitBatches(ViewPrepass, prepassProgram_, batches_, idb,
-                          BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z |
-                              BGFX_STATE_DEPTH_TEST_LESS,
-                          false);
+            const uint64_t prepassState = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                                          BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
+            bgfx::setUniform(uMaterial_, noCutout);
+            if (ground) submitGround(ViewPrepass, groundPrepassProgram_, *ground, prepassState, false);
+            if (total > 0) submitBatches(ViewPrepass, prepassProgram_, batches_, idb, prepassState, false);
 
             // --- view 4's shared uniforms -------------------------------------------
             const float sunDirUniform[4] = {sunDir[0], sunDir[1], sunDir[2], lighting.sunStrength};
@@ -522,13 +565,14 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
 
             // Depth EQUAL against what the prepass laid down, and no depth write: nothing
             // here is shaded twice.
-            submitBatches(ViewShade, shadeProgram_, batches_, idb,
-                          BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_EQUAL,
-                          true);
+            const uint64_t shadeState =
+                BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_EQUAL;
+            if (ground) submitGround(ViewShade, groundShadeProgram_, *ground, shadeState, true);
+            if (total > 0) submitBatches(ViewShade, shadeProgram_, batches_, idb, shadeState, true);
         }
     }
 
-    if (drawables.empty()) {
+    if (!anything) {
         // Nothing was drawn, so nothing cleared the shade target and the present below would
         // hand the screen a texture that has never been written.
         bgfx::setViewFrameBuffer(ViewShade, shadeFb_);

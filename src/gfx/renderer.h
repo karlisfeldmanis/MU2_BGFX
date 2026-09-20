@@ -7,6 +7,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include "content/ground.h"
 #include "content/mesh.h"
 #include "gfx/lighting.h"
 
@@ -34,9 +35,9 @@ public:
     void shutdown();
     void resize(int width, int height);
 
-    // The whole frame. `drawables` may hold the same mesh many times.
+    // The whole frame. `drawables` may hold the same mesh many times; `ground` may be null.
     void draw(const Camera& camera, const Lighting& lighting,
-              const std::vector<Drawable>& drawables);
+              const std::vector<Drawable>& drawables, const content::Ground* ground);
 
     uint32_t lastDrawCount() const { return drawCount_; }
 
@@ -54,6 +55,11 @@ private:
                        const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb,
                        uint64_t state, bool bindMaterial);
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
+    // The land. Its own vertex layout and its own shader: it blends two full material sets
+    // by a per-vertex weight and carries MU's baked light, which the closed material model
+    // has no room for. docs/conventions.md.
+    void submitGround(bgfx::ViewId view, bgfx::ProgramHandle program, const content::Ground& g,
+                      uint64_t state, bool lit);
 
     int width_ = 0;
     int height_ = 0;
@@ -86,6 +92,9 @@ private:
     bgfx::ProgramHandle blurMsProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle shadeProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle presentProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle groundShadowProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle groundPrepassProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle groundShadeProgram_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle uSunDir_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uSunColour_ = BGFX_INVALID_HANDLE;
@@ -98,6 +107,10 @@ private:
     bgfx::UniformHandle uShadowParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamRay_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGroundRepeat_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sAlbedo2_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sNormal2_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sOrm2_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle sAlbedo_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal_ = BGFX_INVALID_HANDLE;

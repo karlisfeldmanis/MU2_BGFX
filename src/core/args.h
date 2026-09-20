@@ -36,6 +36,10 @@ struct Args {
     bool still = false;      // hold the camera instead of turning it
     int msaa = 4;            // samples on the prepass, depth and shade targets
 
+    // The world. A name under assets/world/; empty runs the model bench instead.
+    std::string world;
+    float atColumn = -1.0f, atRow = -1.0f;  // which tile to look at; negative is the town
+
     bool valid = true;
 };
 

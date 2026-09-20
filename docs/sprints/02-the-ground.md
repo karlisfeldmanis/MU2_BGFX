@@ -3,7 +3,7 @@
 **Proved by:** Lorencia's bare land from MU's own play camera at 1080p, inside the prepass
 and shade accounts.
 
-**Open.** Planned 2026-09-20 from the data rather than from a guess.
+**Landed** 2026-09-20, awaiting review. Planned from the data rather than from a guess.
 
 ## What the data turned out to be
 
@@ -77,4 +77,54 @@ before the code:
 
 ## Measured
 
-To be filled when it lands.
+`./run.sh --frames 600 --world lorencia`, Release, vsync off, 1080p, 4x MSAA, **136 draws**
+(44 surfaces x 3 geometry passes, plus 4 screen passes), 131 072 triangles, 570 frames after
+warmup.
+
+| | still camera | camera moving |
+|---|---|---|
+| **frame (mean wall ms)** | **3.075** | **4.085** |
+| fps | 325 | 245 |
+| gpu frame (reported, counts waiting) | 2.226 | 2.402 |
+| budget | kept | kept |
+
+Against a 5.5 ms frame. **This is the finding of the sprint, and it is not a good one: the
+bare land, with nothing standing on it, spends three quarters of the frame's whole
+allowance.** No house, no tree, no grass, no figure, no HUD — and 2845 objects are due in
+sprint 3.
+
+Where it goes: 131 072 triangles are submitted three times a frame, to the sun's split, to
+the prepass and to the shade pass, with **no culling of any kind**. The camera sees perhaps
+a fiftieth of the map. The shadow split covers 60 m of a 256 m map and is handed all of it.
+
+So sprint 3 does not start with the town. It starts with the chunking that foundation 7 of
+`PLAN.md` describes, and the town is placed into a frame that can already refuse to draw
+what nobody is looking at. The alternative — place 2845 objects first and cull afterwards —
+is how the budget gets spent before anyone notices.
+
+The two numbers that say which chunking is worth building: a still camera costs 3.075 ms and
+a moving one 4.085. The difference is the sun's split re-framing every frame and more
+surfaces entering view, so the cost tracks what is *visible*, not what exists — which is
+exactly the shape frustum culling helps.
+
+## What the data proved about the blend
+
+31% of the map's tiles grade across themselves, 67% are pure base and 2% pure overlay. So
+the blend is real and works, and the hard-edged grass patches in the shots are MU's own
+per-tile surface assignment showing through, not a bug: a tile at full overlay beside one at
+full base cannot gradate between them, because they are different surface pairs and so
+different draws. Whether MU2's Godot client makes the same edges is a side-by-side question
+and belongs to sprint 8.
+
+## Still owing
+
+- **Water is a flat blue texture.** Ten surfaces carry `water: true` and nothing reads the
+  flag yet; the moat draws as ordinary ground. It is in the shots and it looks like what it
+  is.
+- **The look is not judged.** MU's baked TerrainLight is multiplied in at x2, which is an
+  invention with no source — MU2's Godot shader uses it differently and the two have to be
+  put side by side before either number means anything. The land reads pale.
+- **The tiling repeats visibly** from this camera, which is the same problem MU4 solved on
+  its arena floor by reading the texture a second time at a third of the scale, turned. Not
+  built here.
+- **No culling**, as above.
