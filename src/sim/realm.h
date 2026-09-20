@@ -124,7 +124,8 @@ struct Body {
     int64_t thinksAt = 0;
     int64_t repathsAt = 0;
     int64_t risesAt = 0;
-    int32_t swingTicks = 20;
+    int32_t swingTicks = 20;  // how often he may swing: the length of the clip he swings with
+    int32_t swingMs = 0;      // the same before it was rounded to ticks, for the log
     // Where the quarry was when this chase was last planned, in tiles and NOT in whole tiles.
     // See Realm::drifted.
     float chaseX = 0.0f, chaseY = 0.0f;
@@ -196,6 +197,7 @@ public:
 private:
     Body* body(uint32_t id);
     Arms armsOf(const Body& one) const;
+    void reswing(Body& hero);
     void advance(Body& one);
     bool turn(Body& one);
     void rouse(Body& beast);

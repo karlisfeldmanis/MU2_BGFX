@@ -205,12 +205,14 @@ int runHeadless(const core::Args& args, const char* assetDir) {
         const sim::Fighter& stats = realm.hero().stats;
         const sim::HeroPoints& has = realm.hero().points;
         core::logf("hero: level %d %s%s%s -- str %d agi %d vit %d, damage %d to %d, defence %d, "
-                   "attack rate %.2f, defence rate %.2f, %d health", realm.hero().level,
+                   "attack rate %.2f, defence rate %.2f, %d health, a swing every %d ms "
+                   "(%d ticks)", realm.hero().level,
                    args.weapon.empty() ? "bare-handed" : args.weapon.c_str(),
                    args.shield.empty() ? "" : " with ", args.shield.c_str(),
                    has.strength, has.agility, has.vitality, stats.minimumDamage,
                    stats.maximumDamage, stats.defense, double(stats.attackRate),
-                   double(stats.defenseRate), realm.hero().maxHealth);
+                   double(stats.defenseRate), realm.hero().maxHealth, realm.hero().swingMs,
+                   realm.hero().swingTicks);
     }
 
     // The whole log is built in memory and written once. A run that wrote as it went would

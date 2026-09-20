@@ -1035,8 +1035,8 @@ def cook_tables(world, out_dir):
 
     The .mur format ("MU2 rules"), version 1, little-endian:
 
-        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 map number,
-                u32 grid size, i32 safe gate x1, y1, x2, y2
+        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 actions,
+                u32 map number, u32 grid size, i32 safe gate x1, y1, x2, y2
         kinds:  u16 len + figure name (the cooked figure this breed wears, or empty),
                 u16 len + label ("Bull Fighter"),
                 i32 number, level, health, minimumDamage, maximumDamage, defense,
@@ -1049,7 +1049,12 @@ def cook_tables(world, out_dir):
                 i32 kind (0 a weapon, 1 a shield), i32 minimum damage, i32 maximum damage,
                 i32 attack speed, i32 defense, i32 strength wanted, i32 agility wanted,
                 i32 classes (bit 0 Dark Wizard, bit 1 Fairy Elf, bit 2 Dark Knight -- mu.db's
-                own class enumeration, not MU's packed class byte)
+                own class enumeration, not MU's packed class byte),
+                i32 group, i32 number (MU's own item group and index, which is what the
+                client's attack ladder tests), i32 flags (bit 0 two-handed, bit 1 a bow,
+                bit 2 a crossbow)
+        actions: i32 action (MU's own number), i32 keys, f32 authored play speed -- the player
+                library's, and only the actions a swing can land on
         grid:   u16 a tile, row-major [y][x], MU's own attribute word
 
     The arms are what a fight needs off an item and nothing else: a damage band, a defence, who
@@ -1060,6 +1065,13 @@ def cook_tables(world, out_dir):
     here. `attack_speed` is carried and is deliberately NOT consumed yet: MU paces a swing by
     the attack clip's own authored length, and a mapping from this number to a swing delay
     would be an invention in the one sprint that has none.
+
+    The actions are here for one reason: **how fast a character swings is the length of the clip
+    he swings with**, and the sim has no clips. MU's own arithmetic is
+    `length = keys / ((speed + attackSpeed * 0.004) * 25)` seconds -- `SetAttackSpeed` at
+    ZzzCharacter.cpp:813 for the 0.004, and 25 is the frame rate MU's play speeds are stated
+    against -- so the two numbers a clip contributes are its key count and its authored speed,
+    and those are what travel. The clips themselves stay where they are.
 
     The safe gate is the rectangle a dead character stands up in -- the map's own spawn box,
     `gates.safe` on the world's json, which for Lorencia is (133, 118)-(151, 135) and is
@@ -1119,6 +1131,17 @@ def cook_tables(world, out_dir):
             spawns.append(struct.pack("<I4iI", len(kinds) - 1, spawn["x1"], spawn["x2"],
                                       spawn["y1"], spawn["y2"], spawn["count"]))
 
+    # Every action a swing can land on, with the two numbers its length is made of. 38 is the
+    # fist, 39-45 the sword ladder, 46-49 spear and scythe, 50 and 51 the bow and the crossbow.
+    keys = index.get("action_keys", {})
+    speeds = index.get("action_speeds", {})
+    actions = []
+    for action in list(range(38, 52)):
+        name = str(action)
+        if name not in keys or name not in speeds:
+            continue
+        actions.append(struct.pack("<iif", action, int(keys[name]), float(speeds[name])))
+
     world_dir = os.path.join(ASSETS, "world", world)
     with open(os.path.join(world_dir, f"{world}.json")) as handle:
         map_data = json.load(handle)
@@ -1144,6 +1167,10 @@ def cook_tables(world, out_dir):
     # dead character quietly stood up where he fell instead of in town.
     # Every weapon and shield with a combat row, in name order so the table is stable.
     kClass = {"wizard": 1, "elf": 2, "knight": 4}
+    # Two-handedness, a bow and a crossbow off the stance the cook already reads from the item's
+    # own row. The client's ladder tests MU's model constants; the stance is what MU2's pipeline
+    # wrote them down as, and it is the same fact by another name.
+    kTwoHanded, kBow, kCrossbow = 1, 2, 4
     arms = []
     arm_names = []
     for one in sorted(index["objects"], key=lambda o: o["name"]):
@@ -1157,22 +1184,33 @@ def cook_tables(world, out_dir):
         for name in stats.get("classes") or []:
             classes |= kClass.get(name, 0)
         arm_names.append(one["name"])
+        stance = one.get("stance", "")
+        flags = 0
+        if stance in ("two_hand_sword", "scythe", "bow", "crossbow"):
+            flags |= kTwoHanded
+        if stance == "bow":
+            flags |= kBow
+        if stance == "crossbow":
+            flags |= kCrossbow
         arms.append(write_string(one["name"]) + write_string(one.get("label", one["name"])) +
-                    write_string(one.get("stance", "")) +
-                    struct.pack("<8i", 1 if one["kind"] == "shield" else 0,
+                    write_string(stance) +
+                    struct.pack("<11i", 1 if one["kind"] == "shield" else 0,
                                 int(stats.get("minimum_damage") or 0),
                                 int(stats.get("maximum_damage") or 0),
                                 int(stats.get("attack_speed") or 0),
                                 int(stats.get("defense") or 0),
                                 int(wants.get("strength") or 0),
-                                int(wants.get("agility") or 0), classes))
+                                int(wants.get("agility") or 0), classes,
+                                int(stats.get("group", -1)), int(stats.get("number", -1)),
+                                flags))
 
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIII4i", b"MU2R", 2, SIM_HZ, len(kinds), len(spawns), len(arms),
-                       number, size,
+    blob = struct.pack("<4sIIIIIIII4i", b"MU2R", 3, SIM_HZ, len(kinds), len(spawns), len(arms),
+                       len(actions), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))
-    blob += b"".join(kinds) + b"".join(spawns) + b"".join(arms) + bytes(words)
+    blob += (b"".join(kinds) + b"".join(spawns) + b"".join(arms) + b"".join(actions) +
+             bytes(words))
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{world}.mur")
     with open(path, "wb") as handle:
@@ -1183,8 +1221,9 @@ def cook_tables(world, out_dir):
     for line in remainders:
         print(f"cook: WARNING {line}")
     alive = sum(struct.unpack_from("<I", one, 20)[0] for one in spawns)
-    print(f"cook: {len(kinds)} breeds, {len(spawns)} nests holding {alive} monsters and "
-          f"{len(arms)} arms -> {os.path.relpath(path, ROOT)} ({len(blob)} bytes)")
+    print(f"cook: {len(kinds)} breeds, {len(spawns)} nests holding {alive} monsters, "
+          f"{len(arms)} arms and {len(actions)} attack actions -> "
+          f"{os.path.relpath(path, ROOT)} ({len(blob)} bytes)")
     return 0
 
 

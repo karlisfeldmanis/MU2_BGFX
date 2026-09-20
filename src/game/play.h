@@ -80,6 +80,7 @@ private:
         bool visible = false;
         int attackClip = -1;     // this body's swing, found once at open
         float swinging = 0.0f;   // seconds of it left to play before idle or walk take over
+        float swingPace = 1.0f;  // how much faster than authored the swing clip must run
     };
 
     Drawn* drawnOf(uint32_t id);

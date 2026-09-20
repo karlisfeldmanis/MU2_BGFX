@@ -13,9 +13,9 @@ namespace {
 // wrong -- so it is checked rather than trusted. docs/conventions.md, "Time".
 constexpr uint32_t kSimHz = 20;
 
-// Version 2 added the arms. There is no version 1 anywhere but in a stale build directory, and
+// Version 2 added the arms and version 3 the attack actions a swing rate is made of. There is no version 1 anywhere but in a stale build directory, and
 // the reader says so rather than reading a file whose fields have moved under it.
-constexpr uint32_t kVersion = 2;
+constexpr uint32_t kVersion = 3;
 
 }  // namespace
 
@@ -23,13 +23,14 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
     Reader reader(bytes.data(), bytes.size());
 
     char magic[4] = {};
-    uint32_t version = 0, kinds = 0, nests = 0, arms = 0, size = 0;
+    uint32_t version = 0, kinds = 0, nests = 0, arms = 0, actions = 0, size = 0;
     reader.take(magic, 4);
     reader.read(version);
     reader.read(out.hz);
     reader.read(kinds);
     reader.read(nests);
     reader.read(arms);
+    reader.read(actions);
     reader.read(out.map);
     reader.read(size);
     reader.take(out.safeGate, sizeof(out.safeGate));
@@ -112,7 +113,7 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         reader.readString(arm.name);
         reader.readString(arm.label);
         reader.readString(arm.stance);
-        int32_t fields[8] = {};
+        int32_t fields[11] = {};
         reader.take(fields, sizeof(fields));
         if (reader.failed()) {
             error = "ran out of file inside arm " + std::to_string(i);
@@ -126,7 +127,26 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         arm.wantsStrength = fields[5];
         arm.wantsAgility = fields[6];
         arm.classes = fields[7];
+        arm.group = fields[8];
+        arm.number = fields[9];
+        arm.flags = fields[10];
         out.arms.push_back(std::move(arm));
+    }
+
+    if (!plausible(reader, actions, 12)) {
+        error = "claims " + std::to_string(actions) + " attack actions and has no room for them";
+        return false;
+    }
+    out.actions.clear();
+    out.actions.resize(actions);
+    for (PlayerAction& one : out.actions) {
+        reader.read(one.action);
+        reader.read(one.keys);
+        reader.read(one.speed);
+    }
+    if (reader.failed()) {
+        error = "ran out of file inside the attack actions";
+        return false;
     }
 
     if (size == 0 || !plausible(reader, size * size, sizeof(uint16_t))) {

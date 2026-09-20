@@ -19,6 +19,7 @@
 #include "sim/realm.h"
 #include "sim/route.h"
 #include "sim/rules.h"
+#include "sim/swings.h"
 
 using namespace mu;
 
@@ -128,6 +129,76 @@ void testRules() {
     blow = sim::Blow{};
     for (int i = 0; i < 10000 && !blow.hit; ++i) blow = sim::strike(attacker, defender, dice);
     checkEqual(blow.damage, 3, "a level 30 attacker floors at level/10");
+}
+
+// ---- the swing ----------------------------------------------------------------------------
+
+// The chain a swing rate is made of, pinned at both ends: the client's ladder picks the clips,
+// and the clips' own keys and authored speed plus the character's attack speed give the
+// interval. If any link is quietly rewritten, these numbers move.
+void testSwings(const content::Tables& tables) {
+    std::printf("swings\n");
+
+    const auto arm = [&tables](const char* name) -> const content::Arm* {
+        const int32_t index = tables.armNamed(name);
+        return index < 0 ? nullptr : &tables.arms[size_t(index)];
+    };
+    const content::Arm* kris = arm("Sword01");        // group 0, one-handed, speed 50
+    const content::Arm* giant = arm("Sword16");       // group 0, two-handed
+    const content::Arm* smallAxe = arm("Axe01");      // group 1 -- and it swings a SWORD
+    const content::Arm* spear = arm("Spear02");       // group 3, number 1: named individually
+    const content::Arm* scythe = arm("Spear09");      // group 3, and not one of the two named
+    const content::Arm* shield = arm("Shield10");
+    check(kris && giant && smallAxe && spear && scythe && shield, "the arms are all in the table");
+    if (!kris || !giant || !smallAxe || !spear || !scythe || !shield) return;
+
+    int32_t actions[4] = {};
+    checkEqual(sim::attackActions(nullptr, nullptr, actions), 1, "empty hands are one action");
+    checkEqual(actions[0], 38, "and it is the fist");
+    checkEqual(sim::attackActions(kris, nullptr, actions), 2, "a one-handed sword has two");
+    checkEqual(actions[0], 39, "right 1");
+    checkEqual(actions[1], 40, "right 2");
+    checkEqual(sim::attackActions(giant, nullptr, actions), 3, "a two-handed sword has three");
+    checkEqual(actions[0], 43, "two hand sword 1");
+    // The ladder's whole point: an axe is caught by the sword test three rungs above the
+    // axe-shaped one anybody would write, because there is no axe action in the rig.
+    sim::attackActions(smallAxe, nullptr, actions);
+    checkEqual(actions[0], 39, "a Small Axe swings a sword");
+    sim::attackActions(spear, nullptr, actions);
+    checkEqual(actions[0], 46, "the Spear is named individually");
+    checkEqual(sim::attackActions(scythe, nullptr, actions), 3, "the Great Scythe is not");
+    checkEqual(actions[0], 47, "and falls to the scythe rung");
+    // A shield alone is the fist again, which is the client's final else.
+    sim::attackActions(nullptr, shield, actions);
+    checkEqual(actions[0], 38, "a shield in the off hand swings nothing");
+
+    // The stat, and then the interval. A Dark Knight buys attack speed at 1/15 an agility.
+    checkNear(sim::attackSpeedStat(sim::Kin::DarkKnight, 30, nullptr, nullptr), 2.0, 1e-5,
+              "agility alone, at the knight's rate");
+    checkNear(sim::attackSpeedStat(sim::Kin::FairyElf, 50, nullptr, nullptr), 1.0, 1e-5,
+              "and the elf's is slower");
+    checkNear(sim::attackSpeedStat(sim::Kin::DarkKnight, 30, kris, nullptr), 52.0, 1e-5,
+              "a weapon's own speed is added whole");
+
+    // The arithmetic, worked by hand from MU's own numbers: the sword clips are 7 keys at an
+    // authored 0.25, the bonus is 52 x 0.004 = 0.208, so the rate is (0.25 + 0.208) x 25 =
+    // 11.45 frames a second and the clip is 7 / 11.45 = 0.611 s.
+    const int withKris = sim::swingMilliseconds(tables, sim::Kin::DarkKnight, 30, kris, nullptr);
+    checkNear(withKris, 611, 3, "a Kris swings about every 611 ms");
+    // Bare hands are the fist clip, 7 keys at 0.6, with almost no bonus: much faster and much
+    // weaker, which is 0.75's own shape.
+    const int bare = sim::swingMilliseconds(tables, sim::Kin::DarkKnight, 30, nullptr, nullptr);
+    check(bare < withKris, "and fists are faster than any weapon");
+    checkNear(bare, 462, 3, "the fist is about 462 ms");
+    // A slow weapon is slower: the Short Sword's 20 against the Kris's 50.
+    const int slow = sim::swingMilliseconds(tables, sim::Kin::DarkKnight, 30, arm("Sword02"),
+                                            nullptr);
+    check(slow > withKris, "a Short Sword is slower than a Kris");
+    // Ticks round UP, because a swing the body has not finished is a swing cut short.
+    checkEqual(sim::swingTicks(611), 13, "611 ms is 13 ticks");
+    checkEqual(sim::swingTicks(600), 12, "600 ms is 12");
+    checkEqual(sim::swingTicks(601), 13, "and 601 is 13");
+    checkEqual(sim::swingTicks(0), 0, "nothing is nothing, so a caller can keep its fallback");
 }
 
 // ---- the dice ----------------------------------------------------------------------------
@@ -305,6 +376,7 @@ int main() {
                 tables.nests.size(), tables.population(), tables.grid.size());
 
     testRules();
+    testSwings(tables);
     testRandom();
     testRouter(tables);
     testDeterminism(tables);

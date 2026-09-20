@@ -1,5 +1,7 @@
 #include "sim/realm.h"
 
+#include "sim/swings.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -19,9 +21,10 @@ constexpr int kLeash = 10;       // invention (MU2's Realm.cs Leash, and it says
 constexpr int kGrudge = 20;      // invention (MU2's Grudge = Leash * 2)
 // How often a chase re-plans, in ticks. Realm.cs:1918.
 constexpr int kRepath = 3;
-// A player's swing, in ticks. Things.cs:249 is 1000 ms, which MU2 re-reckons from the attack
-// clip's authored length once a character has one; there are no clips down here and no weapons
-// until sprint 7, so the default stands and is marked as what it is.
+// A player's swing, in ticks, WHEN THE TABLES CANNOT SAY. Things.cs:249's 1000 ms, and it is
+// now only a fallback: the swing is the length of the clip he swings with, and sim/swings.cpp
+// works it out from what is in his hands. A cooked file with no attack actions in it -- an old
+// one -- keeps this rather than being handed an interval invented out of no data.
 constexpr int kHeroSwingTicks = 20;
 // A player walks a tile in 400 ms, as every Lorencia monster does. The monster's 400 is traced
 // (Lorencia.cs:87); the player's is MU2's derivation from MU's walk clip (Things.cs:583) and is
@@ -90,6 +93,23 @@ Arms Realm::armsOf(const Body& one) const {
     return arms;
 }
 
+// The swing clock, re-worked whenever what he holds or what he is changes. It is the length of
+// the clip he swings with; see sim/swings.h for the chain and its traces.
+void Realm::reswing(Body& hero) {
+    if (!tables_) return;
+    const content::Arm* right = hero.weapon >= 0 && size_t(hero.weapon) < tables_->arms.size()
+                                    ? &tables_->arms[size_t(hero.weapon)]
+                                    : nullptr;
+    const content::Arm* left = hero.shield >= 0 && size_t(hero.shield) < tables_->arms.size()
+                                   ? &tables_->arms[size_t(hero.shield)]
+                                   : nullptr;
+    const int milliseconds =
+        swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left);
+    hero.swingMs = milliseconds;
+    const int32_t ticks = swingTicks(milliseconds);
+    hero.swingTicks = ticks > 0 ? ticks : kHeroSwingTicks;
+}
+
 bool Realm::equip(int32_t weapon, int32_t shield) {
     refusal_.clear();
     if (!tables_) return false;
@@ -132,6 +152,7 @@ bool Realm::equip(int32_t weapon, int32_t shield) {
     hero.shield = shield;
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    reswing(hero);
     hero.health = std::min(hero.maxHealth, hero.health + std::max(0, hero.maxHealth - was));
     return true;
 }
@@ -203,7 +224,6 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     hero.pointsInHand = (hero.level - 1) * kPointsPerLevel;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
     hero.health = hero.maxHealth;
-    hero.swingTicks = kHeroSwingTicks;
     hero.speed = 1.0f / float(kHeroMoveTicks);
     int column = playerColumn, row = playerRow;
     if (!router_.nearestOpen(column, row, content::kWallCharacter, 16, &column, &row)) {
@@ -216,6 +236,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     hero.homeRow = row;
     hero.temper = Temper::Wandering;
     bodies_.push_back(std::move(hero));
+    reswing(bodies_[0]);
 
     // Then every nest, in the table's own order. Placement rejects a tile the threshold
     // refuses and draws again: between 6% and 12% of every Lorencia nest rectangle is
@@ -301,6 +322,8 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
     hero.pointsInHand -= asked;
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    // Agility buys attack speed, so spending a point can change how often he swings.
+    reswing(hero);
     // Vitality's health arrives full rather than as a bigger empty bar, which is what MU does
     // when a point is spent and is the only part of this that is not pure arithmetic.
     hero.health = std::min(hero.maxHealth, hero.health + std::max(0, hero.maxHealth - was));
@@ -689,6 +712,7 @@ void Realm::gain(Body& hero, int32_t award) {
         // Re-reckoned and then refilled, in that order: the health a level gives is part of
         // the maximum it is refilled to.
         reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+        reswing(hero);
         hero.health = hero.maxHealth;
         say(What::Levelled, hero, hero.level, hero.pointsInHand);
         remaining -= int32_t(gained);

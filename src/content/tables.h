@@ -69,8 +69,28 @@ struct Arm {
     // Bit 0 Dark Wizard, bit 1 Fairy Elf, bit 2 Dark Knight -- mu.db's own class enumeration
     // and not MU's packed class byte.
     int32_t classes = 0;
+    // MU's own item group and index, which is what the client's attack ladder tests: groups 0,
+    // 1 and 2 are swords, axes and maces and all three swing a sword; 3 is the polearms, of
+    // which the Spear and the Dragon Lance are named individually; 5 the staves.
+    int32_t group = -1;
+    int32_t number = -1;
+    int32_t flags = 0;  // bit 0 two-handed, bit 1 a bow, bit 2 a crossbow
 
     bool isShield() const { return kind == 1; }
+    bool twoHanded() const { return (flags & 1) != 0; }
+    bool bow() const { return (flags & 2) != 0; }
+    bool crossbow() const { return (flags & 4) != 0; }
+    bool missile() const { return bow() || crossbow(); }
+};
+
+// One of the player library's attack clips, as two numbers: how many keys it has and the play
+// speed it was authored at. That is all a swing rate is made of --
+// `length = keys / ((speed + attackSpeed * 0.004) * 25)` seconds -- and it is here because the
+// sim has no clips and must not grow any.
+struct PlayerAction {
+    int32_t action = 0;  // MU's own number: 38 the fist, 39-45 the swords, 50 the bow
+    int32_t keys = 0;
+    float speed = 0.0f;
 };
 
 struct Tables {
@@ -81,7 +101,15 @@ struct Tables {
     std::vector<MonsterKind> kinds;
     std::vector<MonsterNest> nests;
     std::vector<Arm> arms;
+    std::vector<PlayerAction> actions;
     Grid grid;
+
+    const PlayerAction* action(int32_t number) const {
+        for (const PlayerAction& one : actions) {
+            if (one.action == number) return &one;
+        }
+        return nullptr;
+    }
 
     // By name, as the command line and the figure tables spell it. -1 for none.
     int32_t armNamed(const std::string& name) const {

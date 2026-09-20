@@ -486,3 +486,69 @@ Three blends, all of them through the 0.18 s crossfade sprint 4 already had:
 `8034a4b0ac677f28` and `7bd56652457b7786` — the rules moved, so the bytes did); the step is
 0.0010 ms on Lorencia and 0.0035 on Noria; the invariants are clean on both; and the window with
 290 bodies, a weapon and the swing clip running is a 2.619 ms median frame.
+
+
+## And `attack_speed`, which was carried and unused
+
+Flagged when the arms landed: every weapon row had an `attack_speed` and a Giant Sword swung at
+exactly the rate a Kris did. Closed here, and the reason it was left open the first time is the
+reason it is worth writing down:
+
+**A weapon's `attack_speed` is not a rate and not an interval.** The client spends it as
+`PlaySpeed = authored + AttackSpeed * 0.004` **on the attack animation** — so it makes the clip
+itself run faster, and how often a man may swing falls out of how long the clip then takes.
+Reading the field as "swings per second" or as "milliseconds between blows" would have invented
+a number MU does not have, which is why it was carried unused rather than guessed at.
+
+The chain, each link traced, now in `src/sim/swings.cpp`:
+
+1. **Which clips he cycles through** — `SetPlayerAttack` in MuMain's `ZzzCharacter.cpp`. It is a
+   **ladder and not a table**, and the order is load-bearing: the first test spans MU's groups 0,
+   1 and 2 together, so **swords, axes and maces all swing a sword** and a Small Axe plays
+   *Attack sword right 1* — there is no axe action in the rig. The Spear and the Dragon Lance are
+   named individually two rungs above the polearm group the Berdysh falls to.
+2. **The bonus** — `AttackSpeed1 = AttackSpeed * 0.004f`, `ZzzCharacter.cpp:813`.
+3. **His AttackSpeed** — agility at his class's rate plus the weapon's own speed, halved when
+   there is one in each hand. 1/15 for a knight, 1/20 for a wizard, 1/50 for an elf
+   (`ClassDarkKnight.cs:58`, `ClassDarkWizard.cs:58`, `ClassFairyElf.cs:63`).
+4. **A clip's length** — `keys / ((authored + bonus) × 25)` seconds, 25 being the frame rate MU's
+   play speeds are stated against.
+5. **The interval** — the **mean** over the clips he cycles through. That is the one departure
+   and it is marked: in MU the interval is per swing, because each swing is whichever clip the
+   counter landed on; a body here carries one swing delay, and taking the first clip instead
+   would make a two-handed axe's rate depend on which of its three actions was written down
+   first. Converted with `max(1, ceil(ms / 50))` — rounded **up**, because a swing the body has
+   not finished is a swing cut short.
+
+The cook carries what the sim needs and no clips: each arm's group, number and two-handedness,
+and the fourteen attack actions' key counts and authored speeds (`.mur` version 3).
+
+A level-30 Dark Knight, one flag apart:
+
+| in his hands | damage | a swing every |
+|---|---|---|
+| nothing | 28-43 | **462 ms** |
+| Kris (speed 50) | 31-49 | **607 ms** |
+| Short Sword (speed 20) | 31-50 | 834 ms |
+| Small Axe (speed 20) | 29-49 | 834 ms |
+| Double Axe (speed 20) | 42-67 | 834 ms |
+| Spear (speed 30) | 53-76 | 730 ms |
+| Great Scythe (speed 25) | 94-127 | 770 ms |
+
+Fists are the fastest thing in the game and nearly harmless, which is 0.75's own shape; the Kris
+is the fast weapon it is meant to be; and the heavy weapons trade a third of their rate for two
+or three times the damage.
+
+**And the drawing applies the same scaling**, because MU2's note says what happens otherwise:
+"anything that plays the animation has to apply the same scaling or the man will swing at one
+speed and connect at another". A swing clip is played at `clip length / the interval between
+blows` — only ever **faster**, never slower, so a monster whose row gives it 1.4 s between blows
+plays its half-second swing at its own pace and waits, as MU does, rather than being smeared out
+to fill the gap.
+
+`sim_test` is 81 checks now: the ladder's rungs (including the Small Axe swinging a sword and the
+Spear being named where the Berdysh is not), the stat at three classes' rates, the interval
+worked by hand from MU's own numbers, and the rounding. The seeded hunt is identical twice at
+seeds 1 and 7 (`e48efb8fc4142af8`, `a98c5cc1e736c7ee`), the step is 0.0009 ms on Lorencia and
+0.0037 on Noria, the invariants are clean on both, and the window is a 2.5 ms median frame with
+a weapon, a shield and 290 bodies.

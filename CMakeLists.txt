@@ -89,6 +89,7 @@ add_executable(mu2
   src/game/headless.cpp
   src/game/play.cpp
   src/sim/rules.cpp
+  src/sim/swings.cpp
   src/sim/route.cpp
   src/sim/realm.cpp
   src/sim/audit.cpp
@@ -156,6 +157,7 @@ target_compile_options(placement_test PRIVATE -Wall -Wextra -Wno-unused-paramete
 add_executable(sim_test EXCLUDE_FROM_ALL
   tests/sim_test.cpp
   src/sim/rules.cpp
+  src/sim/swings.cpp
   src/sim/route.cpp
   src/sim/realm.cpp
   src/sim/audit.cpp

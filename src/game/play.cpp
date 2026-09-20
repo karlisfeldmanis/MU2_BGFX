@@ -123,10 +123,11 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         } else if (!realm_.equip(held, worn)) {
             core::logError("he cannot hold that: %s", realm_.refusal().c_str());
         } else {
-            core::logf("play: holding %s%s%s -- damage %d to %d, defence %d", weapon.c_str(),
-                       shield.empty() ? "" : " and ", shield.c_str(),
-                       realm_.hero().stats.minimumDamage, realm_.hero().stats.maximumDamage,
-                       realm_.hero().stats.defense);
+            core::logf("play: holding %s%s%s -- damage %d to %d, defence %d, a swing every "
+                       "%d ms (%d ticks)", weapon.c_str(), shield.empty() ? "" : " and ",
+                       shield.c_str(), realm_.hero().stats.minimumDamage,
+                       realm_.hero().stats.maximumDamage, realm_.hero().stats.defense,
+                       realm_.hero().swingMs, realm_.hero().swingTicks);
         }
     }
 
@@ -216,7 +217,20 @@ void Play::update(double seconds) {
                 if (Drawn* swinger = drawnOf(happening.who)) {
                     if (swinger->attackClip >= 0 && swinger->figure.body()) {
                         swinger->figure.play(swinger->attackClip, true);
-                        swinger->swinging = swinger->figure.length();
+                        // The clip has to fit between two blows, and MU's own reason is that
+                        // the attack speed makes the CLIP run faster -- the swing rate follows
+                        // from that, so anything that plays the animation has to apply the same
+                        // scaling or the man swings at one speed and connects at another
+                        // (Beast.cs:820-826). Only ever faster: a monster whose row gives it
+                        // 1.4 s between blows plays its half-second swing at its own pace and
+                        // waits, as MU does, rather than being smeared out to fill the gap.
+                        const sim::Body* body = realm_.find(happening.who);
+                        const float between =
+                            body ? float(body->swingTicks) * float(kTickSeconds) : 0.0f;
+                        const float clip = swinger->figure.length();
+                        swinger->swingPace =
+                            (between > 0.01f && clip > between) ? clip / between : 1.0f;
+                        swinger->swinging = clip / swinger->swingPace;
                     }
                 }
             }
@@ -237,7 +251,9 @@ void Play::update(double seconds) {
     through_ = float(std::min(1.0, accumulator_ / kTickSeconds));
     follow();
     for (Drawn& one : drawn_) {
-        one.figure.update(float(seconds));
+        // A swing runs at its own pace and everything else at the clip's own.
+        const float pace = one.swinging > 0.0f ? one.swingPace : 1.0f;
+        one.figure.update(float(seconds) * pace);
         if (one.swinging > 0.0f) one.swinging -= float(seconds);
     }
 }
