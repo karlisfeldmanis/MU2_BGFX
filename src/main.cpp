@@ -80,9 +80,13 @@ int main(int argc, char** argv) {
     game::World world;
     const bool inWorld = !args.world.empty();
     if (inWorld) {
-        if (args.atColumn >= 0.0f) world.setFocusTile(args.atColumn, args.atRow);
+        if (args.atSet) world.setFocusTile(args.atColumn, args.atRow);
         if (!world.open(MU2_ASSET_DIR, args.world, textures)) {
             core::logError("the world did not open");
+            // The world may have failed half-open -- `--at` off the map is refused after the
+            // ground's buffers are already made -- and a failure path that skips the world's
+            // own shutdown leaks a vertex and an index buffer past bgfx's own shutdown.
+            world.shutdown();
             renderer.shutdown();
             textures.shutdown();
             window.close();
@@ -139,7 +143,8 @@ int main(int argc, char** argv) {
         }
 
         const bool lastFrame = args.frames && frame + 1 >= args.frames;
-        if (args.shotEvery && (frame % args.shotEvery == 0 || lastFrame)) {
+        const bool shotThisFrame = args.shotEvery && (frame % args.shotEvery == 0 || lastFrame);
+        if (shotThisFrame) {
             char path[1024];
             // The name is ours whole: bgfx hands the path to the callback unchanged and
             // appends nothing, and a shot called 00100 with no suffix is a file nothing opens.
@@ -153,7 +158,14 @@ int main(int argc, char** argv) {
         const double cpuMs = double(now - last) * toMs;
         last = now;
         elapsed += cpuMs / 1000.0;
-        stats.sample(cpuMs);
+        // A frame that writes a screenshot is not a frame of the game, and it does not go in
+        // the statistics. The readback stalls this one frame to about 253 ms, and a mean over
+        // 570 frames carries that as about 1.6 ms of pure measurement apparatus -- which is
+        // how sprint 2 published 3.075 ms still and 4.085 moving under a command line that
+        // said `--frames 600 --world lorencia` and had actually been run with `--shot 200`.
+        // Six runs of the command as written measured 2.16 ms for both. The cost of taking a
+        // picture belongs to the reviewer, not to the frame being reviewed.
+        if (!shotThisFrame) stats.sample(cpuMs);
 
         sinceLine += cpuMs;
         sinceSheetCheck += cpuMs;

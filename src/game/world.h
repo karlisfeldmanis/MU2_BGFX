@@ -26,6 +26,9 @@ public:
     void setFocusTile(float column, float row);
 
 private:
+    // A tile to the centre of that tile in world metres, through the map's own scale.
+    void tileToMetres(float column, float row, float* x, float* z) const;
+
     content::Ground ground_;
     gfx::Camera camera_;
     float focusColumn_ = 0.0f;

@@ -75,6 +75,24 @@ bool readLayer(const core::Json& node, const std::string& dir, Textures& texture
     return true;
 }
 
+// The surface an albedo belongs to, as MU2's pipeline names it: "TileGrass01 1_tiling_hd.png"
+// is TileGrass01. The sheet's own variant and its extension are dropped.
+std::string surfaceStem(const std::string& albedo) {
+    const size_t space = albedo.find(' ');
+    if (space != std::string::npos) return albedo.substr(0, space);
+    const size_t dot = albedo.rfind('.');
+    return dot == std::string::npos ? albedo : albedo.substr(0, dot);
+}
+
+// What the glTF material for this surface must be called: `base__overlay`, or the base alone
+// where there is no overlay. MU2's pipeline writes both sides from the same pair, so the name
+// is the one thing in the glb that says out loud which surface a primitive expects.
+std::string materialNameFor(const core::Json& surface) {
+    const std::string base = surfaceStem(surface["base"]["albedo"].stringOr(""));
+    const std::string overlay = surfaceStem(surface["overlay"]["albedo"].stringOr(""));
+    return overlay.empty() ? base : base + "__" + overlay;
+}
+
 }  // namespace
 
 const bgfx::VertexLayout& Ground::layout() {
@@ -117,9 +135,16 @@ bool Ground::readGrids(const std::string& worldDir, const std::string& heightFil
         lowest = std::min(lowest, v);
         highest = std::max(highest, v);
     }
+    // Counted by asking walkable() rather than by testing a bit here. This line used to test
+    // 0x04 alone while walkable() rejects 0x04 or 0x08, which is two definitions of "blocked"
+    // in one file: they agree on Lorencia only because 0x08 (NoGround) never occurs on it, so
+    // the first map that uses NoGround would have had the log quietly under-report against
+    // the test the sim actually walks by.
     size_t blocked = 0;
-    for (uint8_t a : attrs_) {
-        if (a & 0x04) ++blocked;  // MU's NoMove bit
+    for (int row = 0; row < size_; ++row) {
+        for (int column = 0; column < size_; ++column) {
+            if (!walkable(column, row)) ++blocked;
+        }
     }
     core::logf("grids %dx%d: height %.2f to %.2f m, %zu of %zu tiles blocked (%.1f%%)", size_,
                size_, lowest, highest, blocked, attrs_.size(),
@@ -128,6 +153,11 @@ bool Ground::readGrids(const std::string& worldDir, const std::string& heightFil
 }
 
 bool Ground::load(const std::string& worldDir, const std::string& worldName, Textures& textures) {
+    // Loaded onto whatever was here before, which was nothing until a second world existed:
+    // parts_ was appended to rather than replaced, so a second load() drew the first world's
+    // surfaces again out of a vertex buffer that no longer holds them.
+    shutdown();
+
     const std::string worldJson = core::join(worldDir, worldName + ".json");
     core::Json doc = core::parseJsonFile(worldJson);
     if (doc.isNull()) {
@@ -275,13 +305,33 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         }
 
         const core::Json& surface = surfaces.at(pi);
+
+        // That primitive i wears surface i was assumed, and only the two COUNTS were checked.
+        // A count is not a pairing: reorder two entries in ground_surfaces.json and every
+        // check passed while half the map wore the wrong textures, which reads as MU's own
+        // art and not as a bug. So both sides of the join are checked instead -- the json
+        // states its own index, and the glTF material is named after the pair it was cut for.
+        const cgltf_material* m = prim.material;
+        const std::string materialName = m && m->name ? m->name : "";
+        const std::string expected = materialNameFor(surface);
+        const int stated = int(surface["surface"].numberOr(-1.0));
+        if (stated != int(pi) || materialName != expected) {
+            core::logError("%s primitive %zu wears material '%s', and ground_surfaces.json's "
+                           "entry %zu says surface %d and the pair '%s'. The primitive's place "
+                           "in the mesh IS its surface, so this is not something to draw",
+                           meshPath.c_str(), size_t(pi), materialName.c_str(), size_t(pi),
+                           stated, expected.c_str());
+            cgltf_free(data);
+            return false;
+        }
+        part.name = materialName;
+        part.pairName = expected;
+
         readLayer(surface["base"], worldDir, textures, &part.base);
         part.hasOverlay = readLayer(surface["overlay"], worldDir, textures, &part.overlay);
         if (!part.hasOverlay) part.overlay = part.base;
         if (part.base.water || part.overlay.water) ++waterParts;
 
-        const cgltf_material* m = prim.material;
-        part.name = m && m->name ? m->name : "surface";
         parts_.push_back(part);
     }
 
@@ -304,9 +354,12 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
                worldName.c_str(), parts_.size(), triangleCount(), vertices.size(),
                double(vertices.size() * sizeof(GroundVertex)) / 1e6, waterParts);
     for (const GroundPart& p : parts_) {
-        core::logf("  %2u %-28s %6u tris  repeat %.2f/%.2f%s", p.surface, p.name.c_str(),
-                   p.indexCount / 3, double(p.base.repeat), double(p.overlay.repeat),
-                   p.hasOverlay ? "" : "  (base only)");
+        // Both sides of the join, not just the glb's. p.name is the glTF material's name and
+        // p.pairName is what ground_surfaces.json's entry of the same index asks for, and
+        // this is the one line in the run that would show them disagreeing.
+        core::logf("  %2u %-26s json %-26s %6u tris  repeat %.2f/%.2f%s", p.surface,
+                   p.name.c_str(), p.pairName.c_str(), p.indexCount / 3, double(p.base.repeat),
+                   double(p.overlay.repeat), p.hasOverlay ? "" : "  (base only)");
     }
     return bgfx::isValid(vbh_) && bgfx::isValid(ibh_);
 }
@@ -328,6 +381,11 @@ float Ground::heightAt(float x, float z) const {
     return top * (1.0f - fr) + bottom * fr;
 }
 
+// The trap: off the map this returns 0, and 0 is MU's value for a tile that is walkable and
+// unblocked. So a caller that reads the bits and asks "is anything set?" gets "this is open
+// ground" for everywhere that is not ground at all. walkable() does not fall into it because
+// it repeats the bounds test itself before looking at any bit, which is also what MU2's
+// Terrain.cs does; anything else added here must do the same.
 uint8_t Ground::attributesAt(int column, int row) const {
     if (attrs_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return 0;
     return attrs_[size_t(row) * size_t(size_) + size_t(column)];
@@ -345,6 +403,7 @@ void Ground::shutdown() {
     if (bgfx::isValid(ibh_)) bgfx::destroy(ibh_);
     vbh_ = BGFX_INVALID_HANDLE;
     ibh_ = BGFX_INVALID_HANDLE;
+    indexCount_ = 0;
     parts_.clear();
     height_.clear();
     attrs_.clear();

@@ -20,6 +20,17 @@ constexpr float kFocusHeight = 1.5f;   // 150 units up the body
 
 }  // namespace
 
+void World::tileToMetres(float column, float row, float* x, float* z) const {
+    // A tile's CENTRE, and in the world's own metres per tile. docs/conventions.md states
+    // the centre as (column + 0.5, -(row + 0.5)); this dropped the half and hard-coded one
+    // metre to the tile, so the camera stood on the corner of the tile it named and any map
+    // whose units_per_tile is not 100 would have put it somewhere else entirely -- the very
+    // division Ground::heightAt already reads from the world's json rather than assuming.
+    const float metresPerTile = ground_.metresPerTile();
+    *x = (column + 0.5f) * metresPerTile;
+    *z = -(row + 0.5f) * metresPerTile;
+}
+
 void World::setFocusTile(float column, float row) {
     focusColumn_ = column;
     focusRow_ = row;
@@ -36,12 +47,29 @@ bool World::open(const std::string& assetDir, const std::string& name,
         // the middle of the map, which is sea and empty grass.
         focusColumn_ = 142.0f;
         focusRow_ = 126.0f;
+    } else {
+        // A camera off the map fails the run rather than drawing the empty frame it would
+        // otherwise draw. `--at 9999,9999` exited 0, showed nothing, and reported a *better*
+        // frame time than any real camera can -- a supported way to publish a good number for
+        // a picture of nothing. The map's own size is the thing to say in the message,
+        // because it is what the caller has to know to fix the command.
+        const float size = float(ground_.size());
+        if (focusColumn_ < 0.0f || focusRow_ < 0.0f || focusColumn_ >= size ||
+            focusRow_ >= size) {
+            core::logError("--at %.0f,%.0f is off %s: the map is %d tiles a side, so a column "
+                           "and a row run 0 to %d",
+                           focusColumn_, focusRow_, name.c_str(), ground_.size(),
+                           ground_.size() - 1);
+            return false;
+        }
     }
     camera_.fovDegrees = kFovDegrees;
     camera_.nearPlane = 0.05f;
     camera_.farPlane = 1200.0f;
+    float focusX = 0.0f, focusZ = 0.0f;
+    tileToMetres(focusColumn_, focusRow_, &focusX, &focusZ);
     core::logf("world %s: looking at tile %.0f,%.0f, ground %.2f m up", name.c_str(),
-               focusColumn_, focusRow_, ground_.heightAt(focusColumn_, -focusRow_));
+               focusColumn_, focusRow_, ground_.heightAt(focusX, focusZ));
     return true;
 }
 
@@ -56,9 +84,9 @@ void World::update(double seconds, bool still) {
         row += float(std::cos(seconds * 0.11) * 12.0);
     }
 
-    // Column is +x and row is -z, in metres, one tile to the metre. docs/conventions.md.
-    const float x = column;
-    const float z = -row;
+    // Column is +x and row is -z. docs/conventions.md.
+    float x = 0.0f, z = 0.0f;
+    tileToMetres(column, row, &x, &z);
     const float groundY = ground_.heightAt(x, z);
 
     const float pitch = kPitchDegrees * 3.14159265f / 180.0f;

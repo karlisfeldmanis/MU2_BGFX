@@ -10,8 +10,10 @@
 namespace mu::gfx {
 namespace {
 
-// The value at a quantile of a copy of the samples. Not an interpolation: with a few
-// hundred frames the nearest rank is the honest answer.
+// The plain average of the samples. It is the figure docs/budget.md enforces the frame on,
+// because frame time here is bimodal and a median of it lands in the empty gap -- see the
+// note in `finish`. (This comment used to be `quantile`'s, left behind when the two were
+// written; a function described as something else is a function nobody reads twice.)
 double mean(const std::vector<double>& v) {
     if (v.empty()) return 0.0;
     double sum = 0.0;
@@ -54,6 +56,8 @@ void twoModes(std::vector<double> v, double* lowMean, double* highMean, size_t* 
     *gapHigh = v[split];
 }
 
+// The value at a quantile of a copy of the samples. Not an interpolation: with a few
+// hundred frames the nearest rank is the honest answer.
 double quantile(std::vector<double> v, double q) {
     if (v.empty()) return 0.0;
     size_t k = size_t(q * double(v.size() - 1) + 0.5);

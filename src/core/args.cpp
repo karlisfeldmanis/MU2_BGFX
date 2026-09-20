@@ -37,7 +37,8 @@ void printUsage() {
         "  --still                   hold the camera instead of turning it\n"
         "  --msaa N                  1, 2, 4 or 8 samples (default 4)\n"
         "  --world NAME              raise a world instead of the model bench\n"
-        "  --at COLUMN,ROW           which tile the world camera looks at");
+        "  --at COLUMN,ROW           which tile the world camera looks at; on the map or the "
+        "run fails");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -119,6 +120,17 @@ Args parseArgs(int argc, char** argv) {
                 } else {
                     a.atColumn = float(std::atof(v));
                     a.atRow = float(std::atof(comma + 1));
+                    // A tile off the map is refused rather than framed. There is no tile at
+                    // a negative column, and a camera pointed at one used to fall back to the
+                    // town without a word -- so the run answered a question nobody asked. The
+                    // other end of the map is checked once its size is known, in World::open.
+                    if (a.atColumn < 0.0f || a.atRow < 0.0f) {
+                        logError("--at takes tiles, and there is no tile at %s: both "
+                                 "column and row must be zero or more",
+                                 v);
+                        a.valid = false;
+                    }
+                    a.atSet = true;
                 }
             }
         } else if (!std::strcmp(s, "--still")) {

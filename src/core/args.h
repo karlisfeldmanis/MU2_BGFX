@@ -38,7 +38,11 @@ struct Args {
 
     // The world. A name under assets/world/; empty runs the model bench instead.
     std::string world;
-    float atColumn = -1.0f, atRow = -1.0f;  // which tile to look at; negative is the town
+    // Which tile the world camera looks at. `atSet` rather than a negative sentinel: a
+    // negative column used to mean "not given", so `--at -5,3` was silently the default and
+    // the run reported a frame from somewhere the caller never asked for.
+    bool atSet = false;
+    float atColumn = 0.0f, atRow = 0.0f;
 
     bool valid = true;
 };

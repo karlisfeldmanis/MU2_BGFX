@@ -25,6 +25,10 @@ public:
 
     // Reads bgfx's own counters for the frame just submitted. `cpuMs` is ours: the wall
     // time of the game's own work, measured around the frame.
+    //
+    // The caller does not call this on a frame it asked for a screenshot on: the readback
+    // stalls that one frame to a quarter of a second, and averaging it in is what made
+    // sprint 2's published frame times a measurement of the reviewer's camera. See main.cpp.
     void sample(double cpuMs);
 
     // Writes the table into the log. Returns false when an account's median is over its
