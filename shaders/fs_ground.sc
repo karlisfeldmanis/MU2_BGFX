@@ -133,19 +133,20 @@ void main()
 	// 2.0, which made it a second light rather than a modulation of the surface.
 	albedo *= v_colour.rgb;
 
-	vec3 v = normalize(u_camPos.xyz - v_wpos);
-	vec3 f0 = mix(vec3_splat(0.04), albedo, metal);
+	// No view vector and no f0: with no specular and no reflection on dry ground there is
+	// nothing left that depends on where the eye is. Metal still matters, because a metal
+	// surface has no diffuse -- MU2 keeps METALLIC from the ORM's blue for the same reason
+	// while pinning its SPECULAR to zero.
 	vec3 diffuseColour = albedo * (1.0 - metal);
 
 	vec3 l = normalize(u_sunDir.xyz);
 	float ndotl = saturate(dot(n, l));
-	float ndotv = saturate(dot(n, v)) + 1e-5;
 
 	vec3 colour = vec3_splat(0.0);
 	if (ndotl > 0.0)
 	{
 		float shadow = sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel);
-			// Diffuse only, for the reason below the ambient.
+		// Diffuse only. See the note under the ambient.
 		vec3 kd = diffuseColour / 3.14159265;
 		colour += kd * u_sunColour.rgb * u_sunDir.w * ndotl * shadow;
 	}
