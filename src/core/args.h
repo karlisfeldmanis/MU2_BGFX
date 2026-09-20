@@ -48,6 +48,21 @@ struct Args {
     bool atSet = false;
     float atColumn = 0.0f, atRow = 0.0f;
 
+    // How many monsters stand in the town's crowd. The sprint's sentence is thirty; -1 is
+    // "every breed's whole spawn count", which is Lorencia's real 290 and is what the
+    // crowd's cost is measured against when it is asked for.
+    int crowd = 30;
+    // --no-figures leaves the cooked figures unopened altogether, which is the baseline the
+    // crowd's own cost is measured against: --crowd 0 still stands the Dark Knight and the
+    // town's own fourteen.
+    bool figuresOn = true;
+
+    // The monster bench: one figure on the bench ground, by the name index.json gives it,
+    // playing one clip. `--clip` is MU's own action number, in the right table of the two --
+    // a monster's 4 is its second swing and a player's is "Stop sword".
+    std::string figure;
+    int clip = -1;
+
     bool valid = true;
 };
 

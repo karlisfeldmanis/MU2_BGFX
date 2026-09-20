@@ -20,6 +20,30 @@ struct Vertex {
 };
 static_assert(sizeof(Vertex) == 48, "the vertex layout drifted");
 
+// The same 48 bytes with the skin on the end: four joint bytes and four normalised weight
+// bytes, 56. One byte holds the largest rig in this content twice over, and the joints reach
+// the shader as `uvec4` -- Metal reads an unsigned byte attribute into an unsigned type and
+// refuses the pipeline for an `ivec4`, silently drawing nothing. docs/conventions.md.
+struct SkinnedVertex {
+    float position[3];
+    float normal[3];
+    float tangent[4];
+    float uv[2];
+    uint8_t joints[4];
+    uint8_t weights[4];
+};
+static_assert(sizeof(SkinnedVertex) == 56, "the skinned vertex layout drifted");
+static_assert(sizeof(SkinnedVertex) == sizeof(CookedSkinnedVertex),
+              "the skinned vertex disagrees with the cook's");
+
+// One bone: where it hangs and how it undoes the bind pose. The order is the skin's own, and
+// a parent always precedes its child, so a pose is one walk of the array.
+struct Bone {
+    std::string name;
+    int32_t parent = -1;
+    float inverseBind[16];
+};
+
 // One material, closed: four maps and three flags, and nothing else. docs/conventions.md.
 struct Material {
     bgfx::TextureHandle albedo = BGFX_INVALID_HANDLE;
@@ -62,6 +86,12 @@ public:
                std::vector<uint32_t> indices, std::vector<Material> materials,
                std::vector<Part> parts);
 
+    // The same, with a skin on it. A skinned mesh differs from a static one in exactly two
+    // ways the rest of the engine can see: this layout, and the bone table below.
+    bool buildSkinned(const std::string& name, std::vector<SkinnedVertex> vertices,
+                      std::vector<uint32_t> indices, std::vector<Material> materials,
+                      std::vector<Part> parts, std::vector<Bone> bones);
+
     void shutdown();
 
     const std::vector<Part>& parts() const { return parts_; }
@@ -72,14 +102,22 @@ public:
     uint32_t triangleCount() const { return indexCount_ / 3; }
     uint32_t vertexCount() const { return vertexCount_; }
     const std::string& name() const { return name_; }
+    const std::vector<Bone>& bones() const { return bones_; }
+    bool isSkinned() const { return !bones_.empty(); }
 
     // The layout every static draw uses. Valid after the first Mesh::load in the process.
     static const bgfx::VertexLayout& layout();
+    // And the one every skinned draw uses.
+    static const bgfx::VertexLayout& skinnedLayout();
 
 private:
+    bool finish(const void* vertices, uint32_t count, size_t stride,
+                const bgfx::VertexLayout& layout, std::vector<uint32_t> indices);
+
     std::string name_;
     std::vector<Part> parts_;
     std::vector<Material> materials_;
+    std::vector<Bone> bones_;
     bgfx::VertexBufferHandle vbh_ = BGFX_INVALID_HANDLE;
     bgfx::IndexBufferHandle ibh_ = BGFX_INVALID_HANDLE;
     uint32_t indexCount_ = 0;

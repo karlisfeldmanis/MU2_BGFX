@@ -40,22 +40,26 @@ def walk_strings(node):
             yield from walk_strings(v)
 
 
-def glb_uris(path):
-    """The URIs a .glb's json chunk names. Read without a glTF library: the header is 12
-    bytes, then chunks of (length, type, data), and the first chunk is the json."""
-    out = []
+def glb_json(path):
+    """A .glb's json chunk. Read without a glTF library: the header is 12 bytes, then
+    chunks of (length, type, data), and the first chunk is the json."""
     try:
         with open(path, "rb") as f:
             magic, _version, _length = struct.unpack("<III", f.read(12))
             if magic != 0x46546C67:  # 'glTF'
-                return out
+                return {}
             chunk_len, chunk_type = struct.unpack("<II", f.read(8))
             if chunk_type != 0x4E4F534A:  # 'JSON'
-                return out
-            doc = json.loads(f.read(chunk_len).decode("utf-8"))
+                return {}
+            return json.loads(f.read(chunk_len).decode("utf-8"))
     except (OSError, ValueError, struct.error) as exc:
         print(f"  ! {path}: {exc}", file=sys.stderr)
-        return out
+        return {}
+
+
+def glb_uris(doc):
+    """The URIs a .glb's json names."""
+    out = []
     for image in doc.get("images", []):
         uri = image.get("uri")
         if uri and not uri.startswith("data:"):
@@ -119,12 +123,26 @@ def main():
                 elif "." in s:
                     consider(os.path.join(here, s))   # rule 2: a bare name beside it
         elif rel.endswith(".glb"):
-            for uri in glb_uris(full):                # rule 3
+            doc = glb_json(full)
+            for uri in glb_uris(doc):                 # rule 3
                 consider(os.path.normpath(os.path.join(here, uri)))
-            # and the clip library a model finds by convention
-            stem = rel[: -len(".glb")]
-            for conv in (stem + ".actions.glb", stem + ".actions.res"):
-                consider(conv)
+            # Rule 3b: the clip library, which the model itself names. A player part, every
+            # worn item and every NPC part carries `extras: {"actions": "<path>.actions.res"}`
+            # relative to its OWN directory -- `../../rig/player.actions.res` on a body part,
+            # `../Female01.actions.res` on an NPC part. The .res is Godot's AnimationLibrary
+            # and is of no use to this engine; the .glb beside it is what pipeline's
+            # export_actions.py wrote and what the cook reads, so both are taken and the .glb
+            # is the one that matters.
+            #
+            # This used to be a convention instead -- `<stem>.actions.glb` beside the model --
+            # and it matched nothing at all: the library lives in another directory under
+            # another stem, so every player, every NPC and the Skeleton Warrior arrived here
+            # with no clips and stood in bind pose. `docs/sprints/04-figures.census.md` §0.
+            named = (doc.get("extras") or {}).get("actions")
+            if named:
+                for twin in (named, named[: -len(".res")] + ".glb" if
+                             named.endswith(".res") else named):
+                    consider(os.path.normpath(os.path.join(here, twin)))
 
     copied = skipped = 0
     total = 0

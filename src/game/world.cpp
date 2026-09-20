@@ -38,7 +38,7 @@ void World::setFocusTile(float column, float row) {
 }
 
 bool World::open(const std::string& assetDir, const std::string& name,
-                 content::Textures& textures) {
+                 content::Textures& textures, int crowd, bool figures) {
     const std::string dir = core::join(assetDir, "world/" + name);
     if (!ground_.load(dir, name, textures)) return false;
     // The town is not required: the land is a world on its own, and a cook that has not been
@@ -66,6 +66,17 @@ bool World::open(const std::string& assetDir, const std::string& name,
             return false;
         }
     }
+    // The figures are not required either, for the same reason the town is not: a cook that
+    // has not been run says so in the log rather than failing the launch.
+    if (figures && figures_.open(assetDir, name, textures)) {
+        int monsters = crowd;
+        if (monsters < 0) {
+            monsters = 0;
+            for (const Breed& breed : figures_.breeds()) monsters += breed.total;
+        }
+        crowd_.open(figures_, ground_, monsters, focusColumn_, focusRow_);
+    }
+
     camera_.fovDegrees = kFovDegrees;
     camera_.nearPlane = 0.05f;
     camera_.farPlane = 1200.0f;
@@ -106,6 +117,8 @@ void World::update(double seconds, bool still) {
 }
 
 void World::shutdown() {
+    crowd_.shutdown();
+    figures_.shutdown();
     town_.shutdown();
     ground_.shutdown();
 }

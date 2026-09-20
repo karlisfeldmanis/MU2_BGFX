@@ -78,17 +78,29 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         error = "not a .mum";
         return false;
     }
-    if (version != 1) {
-        error = "a .mum of version " + std::to_string(version) + ", and this reads version 1";
+    if (version != 1 && version != 2) {
+        error = "a .mum of version " + std::to_string(version) + ", and this reads 1 and 2";
         return false;
     }
-    if (!plausible(reader, vertices, sizeof(CookedVertex)) || !plausible(reader, indices, 4)) {
+    // Version 2 is a skinned mesh: a bone count here, 56-byte vertices below, and the skin's
+    // own bone table after the materials. Version 1 is the static mesh the town is made of
+    // and is unchanged -- a figure needs a bigger vertex and a skeleton, and the town's 2753
+    // placements have no business paying eight bytes each for joints they do not have.
+    uint32_t bones = 0;
+    if (version == 2) reader.read(bones);
+    const size_t vertexSize = version == 2 ? sizeof(CookedSkinnedVertex) : sizeof(CookedVertex);
+    if (!plausible(reader, vertices, vertexSize) || !plausible(reader, indices, 4)) {
         error = "claims more vertices or indices than it holds";
         return false;
     }
 
-    out.vertices.resize(vertices);
-    reader.take(out.vertices.data(), size_t(vertices) * sizeof(CookedVertex));
+    if (version == 2) {
+        out.skinned.resize(vertices);
+        reader.take(out.skinned.data(), size_t(vertices) * sizeof(CookedSkinnedVertex));
+    } else {
+        out.vertices.resize(vertices);
+        reader.take(out.vertices.data(), size_t(vertices) * sizeof(CookedVertex));
+    }
     out.indices.resize(indices);
     reader.take(out.indices.data(), size_t(indices) * 4);
 
@@ -116,9 +128,46 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         reader.readString(material.emissive);
         if (reader.failed()) break;
     }
+
+    if (bones > 0) {
+        if (!plausible(reader, bones, 4 + 64)) {
+            error = "claims more bones than it holds";
+            return false;
+        }
+        out.bones.resize(bones);
+        for (CookedBone& bone : out.bones) {
+            reader.readString(bone.name);
+            reader.read(bone.parent);
+            reader.take(bone.inverseBind, sizeof(bone.inverseBind));
+            if (reader.failed()) break;
+        }
+    }
     if (reader.failed()) {
         error = "ends in the middle of itself";
         return false;
+    }
+
+    // A pose is one walk of this array and never a recursion, which is only right if a
+    // parent always precedes its child. The cook orders them so; this is where that is
+    // relied upon, so this is where it is checked.
+    for (size_t i = 0; i < out.bones.size(); ++i) {
+        const int32_t parent = out.bones[i].parent;
+        if (parent >= int32_t(i) || parent < -1) {
+            error = "bone " + std::to_string(i) + " names parent " + std::to_string(parent) +
+                    ", which does not stand before it";
+            return false;
+        }
+    }
+    if (bones > 0) {
+        for (const CookedSkinnedVertex& vertex : out.skinned) {
+            for (uint8_t joint : vertex.joints) {
+                if (joint >= bones) {
+                    error = "a vertex names joint " + std::to_string(joint) + " of " +
+                            std::to_string(bones);
+                    return false;
+                }
+            }
+        }
     }
 
     // The invariants a draw will rely on without testing them again.
@@ -146,6 +195,88 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         error = "its parts cover " + std::to_string(covered) + " indices of " +
                 std::to_string(indices);
         return false;
+    }
+    return true;
+}
+
+bool parseCookedClips(const std::vector<uint8_t>& bytes, CookedClips& out, std::string& error) {
+    Reader reader(bytes.data(), bytes.size());
+
+    char magic[4] = {};
+    uint32_t version = 0, clips = 0, bones = 0;
+    reader.take(magic, 4);
+    reader.read(version);
+    reader.read(clips);
+    reader.read(bones);
+    if (reader.failed() || std::memcmp(magic, "MU2C", 4) != 0) {
+        error = "not a .muc";
+        return false;
+    }
+    if (version != 1) {
+        error = "a .muc of version " + std::to_string(version) + ", and this reads version 1";
+        return false;
+    }
+    if (bones == 0) {
+        error = "says it animates no bones at all";
+        return false;
+    }
+    out.bones = bones;
+
+    out.boneNames.resize(bones);
+    for (std::string& name : out.boneNames) {
+        if (!reader.readString(name)) break;
+    }
+    if (reader.failed()) {
+        error = "ends inside its bone names";
+        return false;
+    }
+
+    out.clips.resize(clips);
+    uint64_t frames = 0;
+    for (CookedClip& clip : out.clips) {
+        reader.readString(clip.name);
+        reader.readString(clip.label);
+        reader.read(clip.slot);
+        reader.read(clip.frames);
+        reader.read(clip.duration);
+        reader.read(clip.travel);
+        uint32_t hold = 0;
+        reader.read(hold);
+        clip.hold = hold != 0;
+        clip.firstRow = uint32_t(frames * bones);
+        frames += clip.frames;
+        if (reader.failed()) break;
+    }
+    if (reader.failed()) {
+        error = "ends inside its clip table";
+        return false;
+    }
+
+    const size_t floats = size_t(frames) * bones * CookedClips::kFloatsPerBone;
+    if (floats * sizeof(float) != reader.left()) {
+        error = "claims " + std::to_string(frames) + " frames of " + std::to_string(bones) +
+                " bones and holds " + std::to_string(reader.left()) + " bytes of pose";
+        return false;
+    }
+    out.rows.resize(floats);
+    reader.take(out.rows.data(), floats * sizeof(float));
+    if (reader.failed()) {
+        error = "ends in the middle of its frames";
+        return false;
+    }
+
+    // A clip of no frames has no pose to read and would be played as a division by zero;
+    // a duration of zero is the same thing wearing a clock.
+    for (const CookedClip& clip : out.clips) {
+        if (clip.frames == 0) {
+            error = "clip " + clip.name + " holds no frames";
+            return false;
+        }
+        if (clip.frames > 1 && !(clip.duration > 0.0f)) {
+            error = "clip " + clip.name + " runs " + std::to_string(clip.frames) +
+                    " frames in no time at all";
+            return false;
+        }
     }
     return true;
 }

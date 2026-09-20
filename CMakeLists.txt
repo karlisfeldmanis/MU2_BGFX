@@ -82,6 +82,8 @@ add_executable(mu2
   src/game/bench.cpp
   src/game/world.cpp
   src/game/town.cpp
+  src/game/figures.cpp
+  src/game/crowd.cpp
 )
 target_include_directories(mu2 PRIVATE src extern)
 # bimg_decode reads the PNGs, bimg_encode writes the screenshots.

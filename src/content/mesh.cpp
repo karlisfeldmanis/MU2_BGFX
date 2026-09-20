@@ -16,6 +16,8 @@ namespace {
 
 bgfx::VertexLayout g_layout;
 bool g_layoutReady = false;
+bgfx::VertexLayout g_skinnedLayout;
+bool g_skinnedLayoutReady = false;
 
 const char* baseName(const std::string& path) {
     size_t slash = path.find_last_of('/');
@@ -75,6 +77,26 @@ const bgfx::VertexLayout& Mesh::layout() {
         g_layoutReady = true;
     }
     return g_layout;
+}
+
+const bgfx::VertexLayout& Mesh::skinnedLayout() {
+    if (!g_skinnedLayoutReady) {
+        g_skinnedLayout.begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Tangent, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            // asInt, so the four bytes arrive as the integers they are and reach the shader's
+            // `uvec4 a_indices`. Normalised instead -- the flag next door -- would divide them
+            // by 255 and skin every vertex to bone 0.
+            .add(bgfx::Attrib::Indices, 4, bgfx::AttribType::Uint8, false, true)
+            // Normalised, which is what these are: the cook made the four sum to 255 so the
+            // shader has nothing to renormalise.
+            .add(bgfx::Attrib::Weight, 4, bgfx::AttribType::Uint8, true)
+            .end();
+        g_skinnedLayoutReady = true;
+    }
+    return g_skinnedLayout;
 }
 
 bool Mesh::load(const std::string& path, Textures& textures) {
@@ -358,7 +380,12 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.emissive = texture(from.emissive, TextureRole::Emissive);
         if (!bgfx::isValid(out.albedo)) out.albedo = textures.white();
         if (!bgfx::isValid(out.normal)) out.normal = textures.flatNormal();
-        if (!bgfx::isValid(out.orm)) out.orm = textures.white();
+        // Not white, and this line said white until sprint 4 found it on a figure: white's
+        // blue is metal 1.0, and a metal surface has no diffuse at all, so every material
+        // whose ORM the cook did not write came out a mirror in plate armour. neutralOrm is
+        // occlusion 1, roughness 1, metal 0, which is what docs/conventions.md has said all
+        // along and what the glTF path a few lines up has always done.
+        if (!bgfx::isValid(out.orm)) out.orm = textures.neutralOrm();
         if (!bgfx::isValid(out.emissive)) out.emissive = textures.black();
         materials.push_back(out);
     }
@@ -367,6 +394,25 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
     parts.reserve(cooked.parts.size());
     for (const CookedPart& from : cooked.parts) {
         parts.push_back(Part{from.firstIndex, from.indexCount, from.material});
+    }
+
+    if (cooked.isSkinned()) {
+        std::vector<SkinnedVertex> vertices(cooked.skinned.size());
+        if (!vertices.empty()) {
+            std::memcpy(vertices.data(), cooked.skinned.data(),
+                        vertices.size() * sizeof(SkinnedVertex));
+        }
+        std::vector<Bone> bones;
+        bones.reserve(cooked.bones.size());
+        for (const CookedBone& from : cooked.bones) {
+            Bone bone;
+            bone.name = from.name;
+            bone.parent = from.parent;
+            std::memcpy(bone.inverseBind, from.inverseBind, sizeof(bone.inverseBind));
+            bones.push_back(std::move(bone));
+        }
+        return buildSkinned(name, std::move(vertices), std::vector<uint32_t>(cooked.indices),
+                            std::move(materials), std::move(parts), std::move(bones));
     }
 
     // The layouts are the same 48 bytes in the same order, and cooked.h asserts it, so the
@@ -386,18 +432,42 @@ bool Mesh::build(const std::string& name, std::vector<Vertex> vertices,
     name_ = name;
     materials_ = std::move(materials);
     parts_ = std::move(parts);
+    bones_.clear();
+    return finish(vertices.data(), uint32_t(vertices.size()), sizeof(Vertex), layout(),
+                  std::move(indices));
+}
 
-    if (vertices.empty() || indices.empty()) {
+bool Mesh::buildSkinned(const std::string& name, std::vector<SkinnedVertex> vertices,
+                        std::vector<uint32_t> indices, std::vector<Material> materials,
+                        std::vector<Part> parts, std::vector<Bone> bones) {
+    name_ = name;
+    materials_ = std::move(materials);
+    parts_ = std::move(parts);
+    bones_ = std::move(bones);
+    return finish(vertices.data(), uint32_t(vertices.size()), sizeof(SkinnedVertex),
+                  skinnedLayout(), std::move(indices));
+}
+
+bool Mesh::finish(const void* vertices, uint32_t count, size_t stride,
+                  const bgfx::VertexLayout& vertexLayout, std::vector<uint32_t> indices) {
+    if (count == 0 || indices.empty()) {
         core::logError("%s holds no triangles", name_.c_str());
         return false;
     }
 
+    // The bounds are the BIND pose's, and for a skinned mesh that is not the box it will
+    // occupy: an arm swings outside it. Culling a figure by this box alone would pop it at
+    // the edge of the frame, which is why game/figure.cpp widens it rather than trusting
+    // what the mesh measured.
     bounds_.min[0] = bounds_.min[1] = bounds_.min[2] = 1e30f;
     bounds_.max[0] = bounds_.max[1] = bounds_.max[2] = -1e30f;
-    for (const Vertex& v : vertices) {
+    const uint8_t* bytes = static_cast<const uint8_t*>(vertices);
+    for (uint32_t v = 0; v < count; ++v) {
+        float position[3];
+        std::memcpy(position, bytes + size_t(v) * stride, sizeof(position));
         for (int i = 0; i < 3; ++i) {
-            bounds_.min[i] = std::min(bounds_.min[i], v.position[i]);
-            bounds_.max[i] = std::max(bounds_.max[i], v.position[i]);
+            bounds_.min[i] = std::min(bounds_.min[i], position[i]);
+            bounds_.max[i] = std::max(bounds_.max[i], position[i]);
         }
     }
     float extent = 0.0f;
@@ -408,18 +478,18 @@ bool Mesh::build(const std::string& name, std::vector<Vertex> vertices,
     }
     bounds_.radius = std::sqrt(extent);
 
-    vertexCount_ = uint32_t(vertices.size());
+    vertexCount_ = count;
     indexCount_ = uint32_t(indices.size());
 
-    const bgfx::Memory* vmem =
-        bgfx::copy(vertices.data(), uint32_t(vertices.size() * sizeof(Vertex)));
-    vbh_ = bgfx::createVertexBuffer(vmem, layout());
+    const bgfx::Memory* vmem = bgfx::copy(vertices, uint32_t(size_t(count) * stride));
+    vbh_ = bgfx::createVertexBuffer(vmem, vertexLayout);
     const bgfx::Memory* imem =
         bgfx::copy(indices.data(), uint32_t(indices.size() * sizeof(uint32_t)));
     ibh_ = bgfx::createIndexBuffer(imem, BGFX_BUFFER_INDEX32);
 
-    core::logf("model %s: %u triangles, %u vertices, %zu parts, %zu materials", name_.c_str(),
-               triangleCount(), vertexCount_, parts_.size(), materials_.size());
+    core::logf("model %s: %u triangles, %u vertices, %zu parts, %zu materials, %zu bones",
+               name_.c_str(), triangleCount(), vertexCount_, parts_.size(), materials_.size(),
+               bones_.size());
     core::logf("  bounds (%.1f %.1f %.1f) to (%.1f %.1f %.1f), radius %.1f", bounds_.min[0],
                bounds_.min[1], bounds_.min[2], bounds_.max[0], bounds_.max[1], bounds_.max[2],
                bounds_.radius);
@@ -433,6 +503,7 @@ void Mesh::shutdown() {
     ibh_ = BGFX_INVALID_HANDLE;
     parts_.clear();
     materials_.clear();
+    bones_.clear();
 }
 
 }  // namespace mu::content

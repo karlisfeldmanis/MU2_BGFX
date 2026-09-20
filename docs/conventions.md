@@ -63,7 +63,53 @@ and the code together.
   right either way. It was caught on the fountain, whose four corner blocks stood inside the
   pool with their carved faces turned inward.
 - Bone palettes are the skin matrix already multiplied by the inverse bind, three `vec4`
-  rows a bone in an RGBA32F texture.
+  rows a bone in an RGBA32F texture. **A row of the texture is a figure**, three texels a
+  bone across it, and which row a figure occupies rides in the instance data beside its
+  model matrix — so the shadow pass, the prepass and the shade pass read one buffer and a
+  skinned draw differs from a static one by its program and an integer. 64 bones a row and
+  512 rows, which is 1.6 MB and holds Lorencia's whole crowd; only the rows written this
+  frame are uploaded.
+- **What is written into those three texels is the TRANSPOSE of bx's row-vector matrix.**
+  Every shader here reads an instance's matrix with `mtxFromCols` and multiplies on the
+  left, which is the column-vector convention; writing the rows straight through transposes
+  the rotation, which is the inverse-rotation trap above wearing a third set of clothes.
+  `core/maths.h` owns that transpose, and the quaternion-to-matrix beside it, and they are
+  the only ones in the project.
+- **A pose is composed in local space.** Two frames of the clip blended per bone, then one
+  walk of the hierarchy, then the inverse bind. Blending two model-space poses skips the
+  walk and slides a limb through the body when the poses differ by much — over a 0.18 s
+  crossfade it mostly hides, which is what makes it the wrong kind of cheap. A parent always
+  precedes its child in a skin's joint order: the cook orders them so and
+  `content/cooked.cpp` refuses a file where it does not hold, because the walk depends on it.
+- **A clip's clock wraps; its frame index does not.** MU writes a looping clip with one
+  extra key holding the first pose again, so the last interval *is* the wrap and
+  interpolating across it is what makes a cycle continuous. Wrapping the frame index instead
+  plays the first pose twice: an idle that stutters once a cycle, and a death that half
+  stands up as it falls. `monster_holds` is `[6]`, the death, and a held clip stops on its
+  last frame.
+
+## The skin
+
+- **A skinned vertex is the 48-byte one with eight bytes on the end**: four joint indices and
+  four normalised weights, 56 bytes, and the cook makes the weights sum to 255 exactly so no
+  shader renormalises. glTF stores joints as `UNSIGNED_SHORT` and **bgfx has no unsigned
+  16-bit vertex attribute at all**; the cook converts, losslessly, because the largest rig in
+  this content is 115 joints. Handing the shorts over as `Uint8` reads the low byte of one
+  index and the high byte of the next, which collapses half the palette onto bone 0 and looks
+  like a broken rig rather than a type error.
+- **A figure is not a model.** A Dark Knight is five worn meshes and two things in his hands
+  drawn against one set of bone rows; wearing armour is swapping which meshes draw. Every
+  part of a set carries the identical joint list in the identical order — checked by name at
+  load, not assumed.
+- **A weapon is not skinned, except when it is.** Swords, axes, maces, spears and shields
+  hang off a named grip bone; bows and crossbows carry a 12-bone rig of their own; staffs are
+  skinned to the full player rig and are *worn*, not held. Sending a rigid weapon down the
+  skinning path binds it to every bone whose name happens to match and draws it stretched
+  across the character.
+- **The grips are `knife_gdf` (right) and `hand_bofdgne01` (left)** on the player rig, from
+  MU2's `Model.cs`. They sit where a grip belongs rather than at the wrist, so there is no
+  correction to derive. Monsters name their own bones in `index.json`, by name and never by
+  index.
 
 ## Colour
 

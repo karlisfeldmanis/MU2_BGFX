@@ -40,7 +40,13 @@ void printUsage() {
         "  --msaa N                  1, 2, 4 or 8 samples (default 4)\n"
         "  --world NAME              raise a world instead of the model bench\n"
         "  --at COLUMN,ROW           which tile the world camera looks at; on the map or the "
-        "run fails");
+        "run fails\n"
+        "  --crowd N                 monsters standing in the town (default 30, -1 for all "
+        "that spawn)\n"
+        "  --no-figures              no figures at all, which is what the crowd is priced "
+        "against\n"
+        "  --figure NAME             the monster bench: one figure, by index.json's name\n"
+        "  --clip N                  which clip it plays, as MU's own action number");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -60,6 +66,14 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.width = std::atoi(v);
         } else if (!std::strcmp(s, "--height")) {
             if (const char* v = next(s)) a.height = std::atoi(v);
+        } else if (!std::strcmp(s, "--no-figures")) {
+            a.figuresOn = false;
+        } else if (!std::strcmp(s, "--crowd")) {
+            if (const char* v = next(s)) a.crowd = std::atoi(v);
+        } else if (!std::strcmp(s, "--figure")) {
+            if (const char* v = next(s)) a.figure = v;
+        } else if (!std::strcmp(s, "--clip")) {
+            if (const char* v = next(s)) a.clip = std::atoi(v);
         } else if (!std::strcmp(s, "--vsync")) {
             a.vsync = true;
         } else if (!std::strcmp(s, "--frames")) {

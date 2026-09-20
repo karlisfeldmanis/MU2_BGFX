@@ -41,5 +41,28 @@ Paths on the command line must be absolute.
     ./tools/sync.sh                              everything index.json reaches
     ./tools/sync.sh --world lorencia --only-world
 
-Copies MU2's `build/` into `assets/` here by MU2's own three rules. Nothing is symlinked,
-so a run measured here does not change because somebody rebuilt MU2.
+Copies MU2's `build/` into `assets/` here by MU2's own three rules — plus the clip library a
+model names in its own glTF `extras`, which is where the 283 player animations live. Nothing
+is symlinked, so a run measured here does not change because somebody rebuilt MU2.
+
+    ./tools/cook.py --world lorencia             the land, the town and their textures
+    ./tools/cook.py --world lorencia --only figures    the bodies, the armour and the clips
+
+The cook turns `assets/` into what the engine loads: BC7 and BC5 `.ktx` with their mip
+chains, flat `.mum` meshes, the town's `.mut`, and the figures' `.muc` clip libraries baked
+frame by frame. It is idempotent — an image whose `.ktx` is already there is not compressed
+again, because the file's name carries the hash of its source bytes and its role.
+
+## Benches
+
+    ./run.sh --figure BullFighter01 --clip 2 --frames 300 --shot 100
+    ./run.sh --world lorencia --crowd 30 --frames 600 --repeat 6 --still
+
+`--figure` puts one figure on the bench ground under the game's own light and prints, every
+second, which clip is running, **where its clock stands and how long the clip is** — a clip
+that froze on its first frame reports the same name as one that is running, and no still
+shows the difference. `--clip` is MU's own action number, read out of the right table of the
+two: a monster's 4 is its second swing and a player's 4 is "Stop sword".
+
+`--crowd N` is how many monsters stand in the town, in the map's own spawn mix; `--crowd -1`
+is every one its spawn table names, which for Lorencia is 290.

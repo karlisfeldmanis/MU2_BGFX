@@ -156,6 +156,98 @@ int main() {
               "a .mut claiming more placements than it holds is refused");
     }
 
+    // --- the figures: skinned meshes and their clips -------------------------------------
+    // Not fatal when they are missing: the figure cook is its own pass, and a tree with no
+    // figures cooked yet still has a town worth checking.
+    {
+        const std::string dir = std::string(MU2_ASSET_DIR) + "/cooked/figures";
+        size_t skinned = 0, rigid = 0, bones = 0;
+        for (const char* name : {"ArmorMale10", "HelmMale10", "BullFighter01", "Skeleton01",
+                                 "Sword01", "Shield10"}) {
+            std::vector<uint8_t> meshBytes =
+                mu::core::readFile(dir + "/meshes/" + name + ".mum");
+            if (meshBytes.empty()) continue;
+            mu::content::CookedMesh mesh;
+            if (!mu::content::parseCookedMesh(meshBytes, mesh, error)) {
+                check(false, std::string(name) + " did not parse: " + error);
+                continue;
+            }
+            if (mesh.isSkinned()) {
+                ++skinned;
+                bones += mesh.bones.size();
+                check(mesh.vertices.empty(), std::string(name) + " is skinned and static at once");
+                // The weights the cook promised: four bytes summing to 255, so no shader has
+                // to renormalise and no vertex is quietly darkened by a dropped remainder.
+                for (const mu::content::CookedSkinnedVertex& vertex : mesh.skinned) {
+                    const int sum = vertex.weights[0] + vertex.weights[1] + vertex.weights[2] +
+                                    vertex.weights[3];
+                    if (sum != 255) {
+                        check(false, std::string(name) + " has a vertex whose weights sum to " +
+                                         std::to_string(sum));
+                        break;
+                    }
+                }
+                // One root at most per rig, and every other bone hanging off one that
+                // precedes it -- which is what makes a pose one walk of a flat array.
+                for (size_t i = 0; i < mesh.bones.size(); ++i) {
+                    check(mesh.bones[i].parent < int32_t(i),
+                          std::string(name) + " has a bone before its own parent");
+                }
+            } else {
+                ++rigid;
+            }
+        }
+        std::printf("  %zu skinned meshes (%zu bones), %zu rigid\n", skinned, bones, rigid);
+
+        std::vector<uint8_t> clipBytes = mu::core::readFile(dir + "/clips/player.muc");
+        if (!clipBytes.empty()) {
+            mu::content::CookedClips clips;
+            if (!mu::content::parseCookedClips(clipBytes, clips, error)) {
+                check(false, "the player clip library did not parse: " + error);
+            } else {
+                std::printf("  player.muc: %zu clips, %u bones, %zu frames\n",
+                            clips.clips.size(), clips.bones,
+                            clips.rows.size() / (clips.bones * 7));
+                check(clips.bones == 60, "the player rig is 60 bones");
+                check(clips.clips.size() == 283, "the player library is 283 clips");
+                // Every clip's frames lie inside the pose array, which is the one thing a
+                // player will index with without asking again.
+                for (const mu::content::CookedClip& clip : clips.clips) {
+                    const size_t last =
+                        (size_t(clip.firstRow) + size_t(clip.frames) * clips.bones) * 7;
+                    if (last > clips.rows.size()) {
+                        check(false, clip.name + " runs past the end of the poses");
+                        break;
+                    }
+                }
+                // MU's own rule, measured in the census: a clip's duration is
+                // (samples - 1) / (action_speeds x 25). Here only the weaker half is
+                // checked -- that every clip has a length and a rotation that is a
+                // rotation -- because the speeds table is not in this file.
+                for (const mu::content::CookedClip& clip : clips.clips) {
+                    if (clip.frames > 1 && !(clip.duration > 0.0f)) {
+                        check(false, clip.name + " has frames and no duration");
+                        break;
+                    }
+                }
+                for (size_t row = 0; row + 7 <= clips.rows.size(); row += 7 * 97) {
+                    const float* q = &clips.rows[row];
+                    const float length = q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
+                    if (length < 0.99f || length > 1.01f) {
+                        check(false, "a baked rotation is not a unit quaternion");
+                        break;
+                    }
+                }
+
+                mu::content::CookedClips ignored;
+                std::vector<uint8_t> half(clipBytes.begin(),
+                                          clipBytes.begin() + clipBytes.size() / 2);
+                check(!mu::content::parseCookedClips(half, ignored, error),
+                      "half a .muc is refused");
+            }
+        }
+    }
+
     std::printf("cooked_test: %d failures\n", g_failures);
     return g_failures == 0 ? 0 : 1;
 }

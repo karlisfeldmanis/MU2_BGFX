@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     const bool inWorld = !args.world.empty();
     if (inWorld) {
         if (args.atSet) world.setFocusTile(args.atColumn, args.atRow);
-        if (!world.open(MU2_ASSET_DIR, args.world, textures)) {
+        if (!world.open(MU2_ASSET_DIR, args.world, textures, args.crowd, args.figuresOn)) {
             core::logError("the world did not open");
             // The world may have failed half-open -- `--at` off the map is refused after the
             // ground's buffers are already made -- and a failure path that skips the world's
@@ -103,7 +103,20 @@ int main(int argc, char** argv) {
         (args.model.empty() || args.model[0] == '/')
             ? args.model
             : defaultPath(MU2_ASSET_DIR, args.model.c_str());
-    if (!inWorld && !bench.open(modelPath, textures)) {
+    // --figure is the monster bench and --model the model bench: one figure out of the cook
+    // with its clips, or one .glb as it sits on disk. Never both, and the figure wins.
+    const bool figureBench = !inWorld && !args.figure.empty();
+    if (figureBench && !bench.openFigure(MU2_ASSET_DIR, args.world.empty() ? "lorencia"
+                                                                          : args.world,
+                                         args.figure, args.clip, textures)) {
+        core::logError("the bench did not open");
+        renderer.shutdown();
+        textures.shutdown();
+        window.close();
+        core::logClose();
+        return 1;
+    }
+    if (!inWorld && !figureBench && !bench.open(modelPath, textures)) {
         core::logError("the bench did not open");
         renderer.shutdown();
         textures.shutdown();
@@ -137,6 +150,10 @@ int main(int argc, char** argv) {
     double elapsed = 0.0;
     double sinceLine = 0.0;
     double sinceSheetCheck = 0.0;
+    // The previous frame's own length, which is what this frame advances a clip by. The
+    // frame's own is not known until it has been drawn, and a clip advanced by a delta
+    // measured after the draw is a clip one frame behind what is on screen.
+    double deltaSeconds = 0.0;
     std::vector<gfx::Drawable> townDrawables;
     std::vector<gfx::Drawable> townCasters;
 
@@ -150,6 +167,10 @@ int main(int argc, char** argv) {
             sinceSheetCheck = 0.0;
             lighting.reloadIfChanged(sheetPath);
         }
+
+        // The frame's poses start empty: a row is taken by whoever is posed this frame, and
+        // a row left over from the last one belongs to nobody.
+        renderer.resetPalettes();
 
         if (inWorld) {
             world.update(elapsed, args.still);
@@ -179,10 +200,23 @@ int main(int argc, char** argv) {
                     world.town().gatherAll(townDrawables);
                 }
             }
+            // The crowd goes into the same two lists as the town, and through the same two
+            // passes. A figure is not a special case of a drawable: it is a drawable whose
+            // mesh carries a skin and whose instance names a palette row.
+            world.crowd().update(float(deltaSeconds));
+            if (world.crowd().figureCount() > 0) {
+                float view[16];
+                float proj[16];
+                renderer.cameraMatrices(world.camera(), view, proj);
+                float viewProj[16];
+                bx::mtxMul(viewProj, view, proj);
+                world.crowd().gather(renderer, args.cullChunks ? viewProj : nullptr,
+                                     townDrawables, casters ? &townCasters : nullptr);
+            }
             renderer.draw(world.camera(), lighting, townDrawables, &world.ground(), casters);
         } else {
-            bench.update(elapsed, !args.still);
-            renderer.draw(bench.camera(), lighting, bench.drawables(), nullptr);
+            bench.update(elapsed, deltaSeconds, !args.still);
+            renderer.draw(bench.camera(), lighting, bench.gather(renderer), nullptr);
         }
 
         const bool lastFrame = args.frames && frame + 1 >= args.frames;
@@ -200,7 +234,8 @@ int main(int argc, char** argv) {
         const int64_t now = bx::getHPCounter();
         const double cpuMs = double(now - last) * toMs;
         last = now;
-        elapsed += cpuMs / 1000.0;
+        deltaSeconds = cpuMs / 1000.0;
+        elapsed += deltaSeconds;
         // A frame that writes a screenshot is not a frame of the game, and it does not go in
         // the statistics. The readback stalls this one frame to about 253 ms, and a mean over
         // 570 frames carries that as about 1.6 ms of pure measurement apparatus -- which is
@@ -231,6 +266,14 @@ int main(int argc, char** argv) {
                            counts.instancesDrawn, world.town().instanceCount(),
                            sun.chunksDrawn, sun.instancesDrawn);
             }
+            if (inWorld && world.crowd().figureCount() > 0) {
+                const game::Crowd& crowd = world.crowd();
+                core::logf("  crowd: %u of %zu figures drawn, %u culled, %zu bones, "
+                           "pose %.3f ms", crowd.drawn(), crowd.figureCount(), crowd.culled(),
+                           crowd.boneCount(), crowd.poseMs());
+            }
+            // The bench says where the clock is, not only which clip: position AND length.
+            if (bench.hasFigure()) core::logf("  %s", bench.clipLine().c_str());
             sinceLine = 0.0;
         }
 

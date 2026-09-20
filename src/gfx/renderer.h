@@ -30,6 +30,10 @@ struct Drawable {
     // White for anything that has none -- the bench's own models, and any world without a
     // light map.
     float light[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    // Which row of the bone palette this instance's pose is in, or -1 for a static mesh.
+    // Five worn parts of one character share a row: wearing is swapping which meshes draw
+    // against one set of bone rows, and the skeleton does not know what it has on.
+    int paletteRow = -1;
 };
 
 class Renderer {
@@ -52,6 +56,35 @@ public:
 
     uint32_t lastDrawCount() const { return drawCount_; }
 
+    // --- the bone palette -------------------------------------------------------------
+    // One texture holds every figure's pose for the frame: a row a figure, three RGBA32F
+    // texels a bone. The game fills a row and remembers its number; the drawables that wear
+    // that pose carry the number. Nothing here knows what a figure is.
+    //
+    // `resetPalettes` is called once at the top of a frame, `addPalette` once per posed
+    // figure, and the upload happens inside draw().
+    //
+    // **Row 0 is the bind row** and is written by resetPalettes: kMaxBones identities. A
+    // skinned mesh whose drawable names no row draws against it, which is its bind pose --
+    // the town's twenty sway models, and a bow whose own clip is not built yet. Without it a
+    // row of -1 reaches the shader as a texelFetch outside the texture, every bone comes back
+    // as zeroes, and the mesh collapses into a point at the origin: which is how the
+    // fountain's spout, the trees, the signs and the curtains disappeared out of Lorencia the
+    // moment the cook started writing them as skinned.
+    static constexpr int kBindRow = 0;
+    // 128 and not 64: Storage01, which stands in the town, has 69 bones, and the lobby's
+    // faces have 100 to 115. A rig that does not fit is clamped and says so, and a figure
+    // with half a palette is a figure with a hand left in the bind pose -- visible, where a
+    // silent refusal would have looked like a missing clip.
+    static constexpr int kMaxBones = 128;
+    static constexpr int kMaxPaletteRows = 512;
+    void resetPalettes();
+    // `rows12` is `bones` lots of twelve floats -- three rows of a 4x3, already transposed by
+    // core::writePaletteRows. Returns the row, or -1 when the palette is full, which the
+    // caller must treat as "draw this in bind pose" rather than as a reason to stop.
+    int addPalette(const float* rows12, int bones);
+    int paletteRowsUsed() const { return paletteWritten_; }
+
     // The view and projection this renderer will use for that camera, so that whoever culls
     // against the frustum culls against the SAME frustum that is drawn. Handedness and the
     // depth range are decided in one place only; a second copy of these two calls elsewhere
@@ -68,9 +101,13 @@ private:
     bool createTargets(int width, int height);
     void destroyTargets();
     bool loadPrograms(const std::string& shaderDir);
+    // `program` draws the static meshes and `skinnedProgram` the skinned ones. They are two
+    // programs rather than one with a branch because the vertex layouts differ, and the
+    // batches are already grouped by mesh, so which to use is decided once a batch and not
+    // once a draw.
     void submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
-                       const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb,
-                       uint64_t state, bool bindMaterial);
+                       bgfx::ProgramHandle skinnedProgram, const std::vector<Batch>& batches,
+                       const bgfx::InstanceDataBuffer& idb, uint64_t state, bool bindMaterial);
     // The shadow map and the AO, bound for ONE draw.
     //
     // bgfx::submit discards its bindings by default, so a texture bound once before a view's
@@ -112,6 +149,12 @@ private:
 
     bgfx::ProgramHandle shadowProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle prepassProgram_ = BGFX_INVALID_HANDLE;
+    // The same three passes again, for meshes that carry a skin. Only the vertex program
+    // differs; the fragment side is shared, and vs_skinned declares the identical varyings
+    // so that it can be.
+    bgfx::ProgramHandle skinnedShadowProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle skinnedPrepassProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle skinnedShadeProgram_ = BGFX_INVALID_HANDLE;
     // Two variants each, chosen by the sample count: the multisampled twin reads one
     // sample of the prepass rather than an average of them. See common.sh's prepassAt.
     bgfx::ProgramHandle ssaoProgram_ = BGFX_INVALID_HANDLE;
@@ -150,6 +193,11 @@ private:
     bgfx::UniformHandle sPrepass_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAo_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sColour_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sBones_ = BGFX_INVALID_HANDLE;
+
+    bgfx::TextureHandle palette_ = BGFX_INVALID_HANDLE;
+    std::vector<float> paletteCpu_;  // kMaxPaletteRows x kMaxBones x 12
+    int paletteWritten_ = 0;
 
     bgfx::VertexBufferHandle screenVb_ = BGFX_INVALID_HANDLE;
     bgfx::VertexLayout screenLayout_;

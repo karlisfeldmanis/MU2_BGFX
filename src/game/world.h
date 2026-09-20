@@ -5,6 +5,8 @@
 
 #include "content/ground.h"
 #include "content/texture.h"
+#include "game/crowd.h"
+#include "game/figures.h"
 #include "game/town.h"
 #include "gfx/renderer.h"
 
@@ -12,7 +14,13 @@ namespace mu::game {
 
 class World {
 public:
-    bool open(const std::string& assetDir, const std::string& name, content::Textures& textures);
+    // `crowd` is how many monsters stand in the town, from --crowd; -1 is every one the
+    // map's spawn table names.
+    // `crowd` is how many monsters stand in the town, from --crowd; -1 is every one the
+    // map's spawn table names, and a negative `crowd` with `figures` false raises none at
+    // all -- the baseline the crowd is priced against.
+    bool open(const std::string& assetDir, const std::string& name, content::Textures& textures,
+              int crowd = 30, bool figures = true);
     void shutdown();
 
     // `seconds` moves the focus so the camera is not still: sprint 1 ran --still throughout
@@ -23,6 +31,9 @@ public:
     const content::Ground& ground() const { return ground_; }
     Town& town() { return town_; }
     const Town& town() const { return town_; }
+    Crowd& crowd() { return crowd_; }
+    const Crowd& crowd() const { return crowd_; }
+    const Figures& figures() const { return figures_; }
 
     // Where the camera looks, in tiles. Set from --at, else the map's own middle.
     void setFocusTile(float column, float row);
@@ -33,6 +44,8 @@ private:
 
     content::Ground ground_;
     Town town_;
+    Figures figures_;
+    Crowd crowd_;
     gfx::Camera camera_;
     float focusColumn_ = 0.0f;
     float focusRow_ = 0.0f;

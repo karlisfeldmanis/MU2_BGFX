@@ -20,3 +20,13 @@ vec3 v_vnormal   : TEXCOORD2 = vec3(0.0, 0.0, 1.0);
 vec3 v_vpos      : TEXCOORD3 = vec3(0.0, 0.0, 0.0);
 vec4 v_colour    : COLOR0    = vec4(1.0, 1.0, 1.0, 0.0);
 vec3 v_light     : TEXCOORD4 = vec3(1.0, 1.0, 1.0);
+
+// The skin: four joint indices and their weights. uvec4 and not ivec4, for the reason
+// common.sh's skinMatrix states.
+uvec4 a_indices  : BLENDINDICES;
+vec4  a_weight   : BLENDWEIGHT;
+
+// A sixth instance vec4, x being the row this figure's bones occupy in the palette texture.
+// Static draws leave it unread; the stride is what the buffer is walked by, not what a
+// shader reads.
+vec4 i_data5 : TEXCOORD26;

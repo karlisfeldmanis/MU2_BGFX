@@ -39,6 +39,29 @@ struct CookedMaterial {
     bool twoSided = false;
 };
 
+// A skinned vertex is the static one with four joint bytes and four weight bytes on the end,
+// 56 bytes. The joints are bytes rather than the shorts glTF stores because bgfx has no
+// unsigned 16-bit vertex attribute at all, and the largest rig in this content is 115 joints;
+// the cook does that conversion and refuses a rig that would not survive it.
+struct CookedSkinnedVertex {
+    float position[3];
+    float normal[3];
+    float tangent[4];
+    float uv[2];
+    uint8_t joints[4];
+    uint8_t weights[4];  // normalised, and the cook made them sum to 255 exactly
+};
+static_assert(sizeof(CookedSkinnedVertex) == 56, "the skinned vertex layout drifted");
+
+// One bone of one skin, in the skin's own joint order. `parent` is an index into that same
+// order, or -1: the cook checks that a parent always precedes its child, so a pose is one
+// walk of a flat array rather than a recursion.
+struct CookedBone {
+    std::string name;
+    int32_t parent = -1;
+    float inverseBind[16];
+};
+
 struct CookedPart {
     uint32_t firstIndex = 0;
     uint32_t indexCount = 0;
@@ -46,12 +69,51 @@ struct CookedPart {
 };
 
 struct CookedMesh {
-    std::vector<CookedVertex> vertices;
+    std::vector<CookedVertex> vertices;         // one of these two is filled and the other
+    std::vector<CookedSkinnedVertex> skinned;   // is empty; `bones` says which
     std::vector<uint32_t> indices;
     std::vector<CookedPart> parts;
     std::vector<CookedMaterial> materials;
+    std::vector<CookedBone> bones;
     float min[3] = {0, 0, 0};
     float max[3] = {0, 0, 0};
+
+    bool isSkinned() const { return !bones.empty(); }
+    size_t vertexCount() const { return isSkinned() ? skinned.size() : vertices.size(); }
+};
+
+// One clip, baked flat: no key times and no samplers, because every channel of every clip in
+// this content shares one key-time list and every sampler is LINEAR. `frames` is the source's
+// own key count at MU's own rate (`action_speeds` x 25 Hz, never above 25), kept rather than
+// resampled -- resampling the player library to a fixed 25 Hz trebles it and adds nothing.
+//
+// A looping clip carries one extra key holding the first pose again, so that the wrap has an
+// interval to happen over. It is kept, and the clock wraps in [0, duration) rather than the
+// frame index wrapping in [0, frames): that is what makes the wrap an interpolation instead
+// of the first pose played twice. `hold` says the clip stops on its last frame instead --
+// MU's `monster_holds`, which is the death and nothing else.
+struct CookedClip {
+    std::string name;   // MU's own, `action15`
+    std::string label;  // what index.json calls that slot: "Walk male"
+    int32_t slot = -1;  // 15, or -1 for a clip whose name is not MU's
+    uint32_t frames = 0;
+    float duration = 0.0f;  // seconds
+    float travel = 0.0f;    // metres the clip is meant to carry the figure over one cycle
+    bool hold = false;
+    uint32_t firstRow = 0;  // into `rows`, counted in bones
+};
+
+// One clip library: the player's 283, an NPC's 2, or a monster's 7. `rows` is frame-major --
+// a frame's bones are contiguous, because what reads this walks two whole frames and blends
+// them -- and each row is a rotation quaternion (x, y, z, w) and a translation, local to the
+// bone's parent. No scale: nothing in this content animates one.
+struct CookedClips {
+    std::vector<std::string> boneNames;
+    std::vector<CookedClip> clips;
+    std::vector<float> rows;  // (frames x bones) x 7 floats
+    uint32_t bones = 0;
+
+    static constexpr uint32_t kFloatsPerBone = 7;
 };
 
 // One model the town places, and where its mesh is.
@@ -101,5 +163,6 @@ struct CookedTown {
 // caller knows which file it asked for and the test wants the reason.
 bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::string& error);
 bool parseCookedTown(const std::vector<uint8_t>& bytes, CookedTown& out, std::string& error);
+bool parseCookedClips(const std::vector<uint8_t>& bytes, CookedClips& out, std::string& error);
 
 }  // namespace mu::content

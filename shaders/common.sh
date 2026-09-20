@@ -117,4 +117,40 @@ float gradientNoise(vec2 pixel)
 	return fract(52.9829189 * fract(dot(pixel, vec2(0.06711056, 0.00583715))));
 }
 
+// ---- the skin ---------------------------------------------------------------------------
+//
+// One palette texture holds every figure's bones for the whole frame: a row is a figure and
+// three RGBA32F texels are a bone, the three rows of its 4x3. A vertex reads its four bones
+// by texelFetch, so thirty figures of the same breed are still one instanced draw and the
+// only thing uploaded per frame is the matrices.
+//
+// Which row a figure occupies rides in the instance data beside its model matrix, so the
+// shadow pass, the prepass and the shade pass all read the one buffer and a skinned draw
+// differs from a static one by this program and an integer.
+SAMPLER2D(s_bones, 12);
+
+mat4 boneMatrix(int bone, int row)
+{
+	int x = bone * 3;
+	vec4 r0 = texelFetch(s_bones, ivec2(x + 0, row), 0);
+	vec4 r1 = texelFetch(s_bones, ivec2(x + 1, row), 0);
+	vec4 r2 = texelFetch(s_bones, ivec2(x + 2, row), 0);
+	// Rows in, and the fourth is the affine one. core/maths.h wrote the TRANSPOSE of its own
+	// row-vector matrix into these three texels, because everything here multiplies on the
+	// left -- the same reason vs_static reads its instance matrix with mtxFromCols.
+	return mtxFromRows(r0, r1, r2, vec4(0.0, 0.0, 0.0, 1.0));
+}
+
+// Joint indices arrive as uvec4: Metal reads an unsigned byte attribute only into an
+// unsigned shader type, and an ivec4 has the pipeline refused at link with no error and no
+// geometry. docs/conventions.md.
+mat4 skinMatrix(uvec4 indices, vec4 weights, int row)
+{
+	mat4 m = boneMatrix(int(indices.x), row) * weights.x;
+	m += boneMatrix(int(indices.y), row) * weights.y;
+	m += boneMatrix(int(indices.z), row) * weights.z;
+	m += boneMatrix(int(indices.w), row) * weights.w;
+	return m;
+}
+
 #endif // MU2_COMMON_SH

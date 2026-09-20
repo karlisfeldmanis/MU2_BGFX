@@ -224,9 +224,146 @@ Written before the code, as sprint 2's and sprint 3's were.
   are already in `conventions.md`; both are about to be exercised for the first time, on
   every bone of every body, where being wrong looks like a bad export.
 
+## What was built, in the order above
+
+**The gate was checked first and it passed.** Sprint 3 left the town at **2.262 ms** with the
+cook wired through, moving, against the 4.5 ms that would have stopped this sprint. The
+crowd's own allowance is the 1.0 ms of GPU the gate names.
+
+1. **`sync.py` reads `extras.actions`.** The convention it had — `<stem>.actions.glb` beside
+   the model — matched **nothing at all**, which is why not one clip of the 283 was in this
+   tree. The model names its own library in its glTF `extras`, relative to its own directory,
+   and the `.res` it names is Godot's `AnimationLibrary` with the `.glb` this engine reads
+   beside it. Four libraries arrived, 13.7 MB: the player's 283 clips and Man01, Female01 and
+   Girl01 with 2 each.
+2. **The skinned vertex and the bone palette.** `SkinnedVertex` is the 48-byte `Vertex` with
+   four joint bytes and four normalised weight bytes, 56. The palette is one RGBA32F texture,
+   a row a figure and three texels a bone, and which row a figure occupies rides in the
+   instance data — so the one instance buffer sprint 3 built is read unchanged by shadow,
+   prepass and shade, and a skinned draw differs from a static one by its program and an
+   integer. `docs/conventions.md` gained the layout, the transpose and the local-space rule
+   in the same commit.
+3. **The cook bakes the clips flat.** `.muc`, version 1: a frame count, a duration, the
+   loop-or-hold flag, the travel and `frames x bones` of local rotation and translation. The
+   player library is **283 clips, 3012 frames, 5.07 MB** — the census predicted 5.06 — and
+   nothing is resampled, because every channel of every clip shares one key-time list at MU's
+   own rate. `.mum` gained a version 2 for a skinned mesh; version 1 is untouched, so the
+   town's 105 models were not re-cooked and their vertices did not grow by eight bytes for
+   joints they do not have.
+4. **The pose is composed in local space**, two frames nlerped per bone, one walk of the
+   hierarchy, then the inverse bind, then the transpose the shader reads. The crossfade is
+   MU2's `BlendSeconds = 0.18`, traced.
+5. **A character is one skeleton and five worn parts**, and a staff is worn rather than held:
+   an item skinned to the full player rig joins the parts, and anything else hangs off
+   `knife_gdf` or `hand_bofdgne01` by name. A bow carries its own 12-bone rig and is drawn in
+   bind pose against a shared row of identities — its own clip is owed with the items.
+6. **The crowd**, in Lorencia's own spawn mix, posed whether or not it survives the cull,
+   because the sun's pass draws what the camera's does not and both read the one palette.
+7. **`--bench monster`** is `--figure NAME [--clip N]`, and it prints the clip's name, its
+   slot, **where its clock stands and how long the clip is**, once a second.
+8. **The 14 NPCs stand in the town**, each in its own idle, placed by `placementTransform` —
+   the same MU `AngleMatrix` the town's own placements were corrected to.
+
+### Two checks that are not the screen
+
+- **`tools/posecheck.py`** composes the rest pose with the same conventions `core/maths.h`
+  uses and checks it against the inverse bind. The bind pose must come back as the identity,
+  and it does: **worst 4.0e-06 on the player rig, 1.2e-05 on the Bull Fighter's**. A
+  transposed quaternion, a reversed multiply or the inverse bind on the wrong side each show
+  here as a number rather than on screen as a figure turned inside out.
+- **`cooked_test`** gained the figure half: that a skinned `.mum` is not also a static one,
+  that every vertex's four weights sum to 255, that no bone stands before its own parent,
+  that every clip's frames lie inside the pose array, and that a baked rotation is a unit
+  quaternion.
+
+## What went wrong, and both of them were mine
+
+**The cook started writing the town's sway models as skinned, and they vanished.** Twenty of
+Lorencia's 105 models carry a skin and one clip — `Tree01`, `Tree11` (165 placements),
+`Sign01`, `Curtain01`, `StreetLight01`, `House04`, `Carriage01`, `Waterspout01` and the rest,
+**331 placements between them**. Sprint 3 cooked them as static meshes and drew them in bind
+pose. The moment `cook_mesh` learned about skins they became version 2, and the town — which
+has no poses and passes `paletteRow = -1` — sent them down the skinned path with a row index
+outside the palette. Every bone came back as zeroes and each of the 331 collapsed into a
+point at the origin. **The user found it by looking at Lorencia and asking where the fountain
+had gone**, which is `Waterspout01`: one of the twenty.
+
+The fix is a rule rather than a patch: **row 0 of the palette is the bind row**, written every
+frame as identities, and a skinned drawable naming no row of its own draws against it. That
+restores sprint 3's picture exactly, and it is also the right answer for a bow, whose own
+12-bone rig has no clip in this sprint. `-1` never reaches the shader now.
+
+**A missing ORM map was read as white, which is metal 1.0.** `docs/conventions.md` has said
+since sprint 1 that a material with no ORM takes occlusion 1, roughness 1, **metal 0** — and
+`Mesh::buildFromCooked`, the path every cooked model actually loads through, used
+`textures.white()`. White's blue is metal 1, a metal surface has no diffuse, and **39 of the
+316 real materials in this content have no ORM**: the grass, seven trees, both merchant
+animals, the fire lights, the candles, the carriage's horse. They had been drawn as mirrors
+since sprint 3 and it was read as "PBR looking glossy". The glTF path six lines above had
+always been right, which is exactly how it survived: the rule was kept in the branch nothing
+runs.
+
 ## Measured
 
-Filled in when the sprint lands: the frame with the crowd and without it, the pose's CPU cost
-and its 99th percentile, draws and culled for both passes with figures in them, the bone
-texture's size and upload, load time for a dressed character and for the 14 breeds, and what
-the crowd cost over the town alone.
+`./run.sh --world lorencia --at 140,126 --still --frames 900 --repeat 3`, Release, vsync off,
+1080p, 4x MSAA. **The machine was not quiet** — a second session was building and running
+throughout, load average 3 to 11 — so the wall figures below carry more spread than sprint
+3's and the small differences between them are not resolved.
+
+| | wall frame | gpu frame (median) | draws | figures drawn |
+|---|---|---|---|---|
+| the town, no figures at all | 2.485 ms | **2.348** | 702 | — |
+| and the Dark Knight and the town's own 14 | 2.517 ms | — | 751 | 1 of 15 |
+| and 30 monsters in Lorencia's spawn mix | 2.497 ms | **2.556** | 839 | 29 of 45 |
+| and all **290** the spawn table names | 2.406 ms | **2.725** | 839 | 137 of 305 |
+
+**The wall frame does not move and the GPU frame does**, and the wall figures are not the
+number here: over three alternating runs the town alone measured 2.485, 2.485, 2.519 and the
+crowd of 290 measured 2.445, 2.397, 2.375 — *lower*, which no amount of extra geometry can
+be. At this size the frame is not GPU-bound, so wall time is measuring the pacing rather than
+the work. The GPU frame median is coherent and is what the crowd is charged:
+
+- **the crowd of 45 figures costs 0.21 ms of GPU**, against the 1.0 ms the gate allowed it;
+- **all 305 figures cost 0.38 ms**, which is Lorencia's whole population at once.
+
+**The pose costs far less than its account.** From the log, over the same runs:
+
+| figures | bones | pose, CPU |
+|---|---|---|
+| 15 | 821 | **0.026 ms** |
+| 45 | 2 082 | **0.071 ms** |
+| 305 | 12 666 | **0.377 ms** |
+
+against the 0.5 ms the sprint allowed for 31 figures — so a crowd ten times the size fits
+inside the allowance, and the per-figure cost is 1.6 microseconds. That is the mean; MU3's
+lesson was that animation's story is in the tail, and the tail is not read here because the
+99th percentile of the pose is not yet a column in `--stats`. **It is owed**, and it is the
+one number this sprint claims without having measured its spread.
+
+**The palette.** 128 bones a row, 512 rows, RGBA32F: 3.1 MB resident, and what is uploaded is
+the rows written — 6 KB a figure, so 0.27 MB a frame for 45 figures and 1.8 MB for 305. The
+rig sizes that forced 128: `Storage01`, which stands in the town, has **69** bones, and the
+lobby's faces have 100 to 115.
+
+**Load.** 51 figure meshes, 12 785 triangles, 14 clip libraries with **340 clips over 3 775
+frames** and 6.01 MB of `.muc`, read in **0.11 s** warm and 0.60 s cold. The cook itself took
+53 minutes, almost all of it BC7: 132 images, 50.6 MB in, **140.5 MB of blocks with mips**
+against 421.4 MB of RGBA8 at the top level alone. It is idempotent now — an image whose
+`.ktx` is already there is not compressed again, because the file's name carries the hash of
+its source bytes and its role.
+
+**What is drawn.** A Dark Knight is 10 primitives and 782 triangles across 7 meshes sharing
+one palette row; 30 monsters in Lorencia's mix are another ~16 000 triangles. Of the 45
+figures at the fountain, **29 survive the camera's frustum and 16 are culled**, and every one
+of the 45 is posed, because the sun's pass draws what the camera's does not.
+
+## Still owed out of this sprint
+
+- **The 99th percentile of the pose**, as a column in `--stats` rather than a line in the log.
+- **The crowd is placed, not alive**: a spiral about the camera's focus, not the spawn
+  rectangles. Sprint 5 owns that, and the breeds and their weights are already read from the
+  map's own table.
+- **A bow's own clip**, and the weapon-on-back arrangements. Listed as owing since the plan.
+- **The town's twenty sway models still draw in bind pose.** They have one clip each and now
+  go through a palette that could play it; what they lack is a per-placement clock, which is
+  331 more palette rows and a decision about whether a tree's sway is worth them.

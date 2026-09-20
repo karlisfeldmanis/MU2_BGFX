@@ -69,6 +69,21 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     sPrepass_ = bgfx::createUniform("s_prepass", bgfx::UniformType::Sampler);
     sAo_ = bgfx::createUniform("s_ao", bgfx::UniformType::Sampler);
     sColour_ = bgfx::createUniform("s_colour", bgfx::UniformType::Sampler);
+    sBones_ = bgfx::createUniform("s_bones", bgfx::UniformType::Sampler);
+
+    // The bone palette: three texels a bone across, one figure a row down. RGBA32F because
+    // a pose is a matrix and a half float loses the translation at Lorencia's scale. 512
+    // rows is 1.6 MB resident and holds Lorencia's whole crowd -- 290 monsters and the
+    // fourteen townsfolk -- with room over; what is uploaded each frame is the rows that
+    // were written, not the texture.
+    palette_ = bgfx::createTexture2D(uint16_t(kMaxBones * 3), uint16_t(kMaxPaletteRows), false,
+                                     1, bgfx::TextureFormat::RGBA32F,
+                                     BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP |
+                                         BGFX_SAMPLER_V_CLAMP);
+    paletteCpu_.assign(size_t(kMaxPaletteRows) * kMaxBones * 12, 0.0f);
+    if (!bgfx::isValid(palette_)) {
+        core::logError("the bone palette did not survive creation; no figure will be posed");
+    }
 
     screenLayout_.begin()
         .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
@@ -94,6 +109,9 @@ bool Renderer::loadPrograms(const std::string& dir) {
     ssaoMsProgram_ = loadProgram(dir, "vs_screen", "fs_ssao_ms");
     blurMsProgram_ = loadProgram(dir, "vs_screen", "fs_blur_ms");
     shadeProgram_ = loadProgram(dir, "vs_static", "fs_shade");
+    skinnedShadowProgram_ = loadProgram(dir, "vs_skinned_depth", "fs_shadow");
+    skinnedPrepassProgram_ = loadProgram(dir, "vs_skinned", "fs_prepass");
+    skinnedShadeProgram_ = loadProgram(dir, "vs_skinned", "fs_shade");
     presentProgram_ = loadProgram(dir, "vs_screen", "fs_present");
     groundShadowProgram_ = loadProgram(dir, "vs_ground_depth", "fs_shadow");
     groundPrepassProgram_ = loadProgram(dir, "vs_ground", "fs_ground_prepass");
@@ -104,6 +122,9 @@ bool Renderer::loadPrograms(const std::string& dir) {
             {"ssao", ssaoProgram_},       {"ssaoMs", ssaoMsProgram_},
             {"blur", blurProgram_},       {"blurMs", blurMsProgram_},
             {"shade", shadeProgram_},     {"present", presentProgram_},
+            {"skinnedShadow", skinnedShadowProgram_},
+            {"skinnedPrepass", skinnedPrepassProgram_},
+            {"skinnedShade", skinnedShadeProgram_},
             {"groundShadow", groundShadowProgram_},
             {"groundPrepass", groundPrepassProgram_},
             {"groundShade", groundShadeProgram_}};
@@ -116,7 +137,8 @@ bool Renderer::loadPrograms(const std::string& dir) {
                     bgfx::isValid(ssaoMsProgram_) && bgfx::isValid(blurMsProgram_) &&
                     bgfx::isValid(shadeProgram_) && bgfx::isValid(presentProgram_) &&
                     bgfx::isValid(groundShadowProgram_) && bgfx::isValid(groundPrepassProgram_) &&
-                    bgfx::isValid(groundShadeProgram_);
+                    bgfx::isValid(groundShadeProgram_) && bgfx::isValid(skinnedShadowProgram_) &&
+                    bgfx::isValid(skinnedPrepassProgram_) && bgfx::isValid(skinnedShadeProgram_);
     if (!ok) core::logError("the frame is missing a program; nothing will draw");
     return ok;
 }
@@ -232,10 +254,14 @@ void Renderer::resize(int width, int height) {
 
 void Renderer::shutdown() {
     destroyTargets();
+    if (bgfx::isValid(palette_)) bgfx::destroy(palette_);
+    palette_ = BGFX_INVALID_HANDLE;
     for (bgfx::ProgramHandle* p : {&shadowProgram_, &prepassProgram_, &ssaoProgram_, &blurProgram_,
                                    &ssaoMsProgram_, &blurMsProgram_, &shadeProgram_,
                                    &presentProgram_, &groundShadowProgram_,
-                                   &groundPrepassProgram_, &groundShadeProgram_}) {
+                                   &groundPrepassProgram_, &groundShadeProgram_,
+                                   &skinnedShadowProgram_, &skinnedPrepassProgram_,
+                                   &skinnedShadeProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }
@@ -243,7 +269,7 @@ void Renderer::shutdown() {
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
           &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
-          &sColour_}) {
+          &sColour_, &sBones_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
     }
@@ -259,11 +285,46 @@ void Renderer::bindShadeInputs() {
     bgfx::setTexture(7, sAo_, blurTex_);
 }
 
+void Renderer::resetPalettes() {
+    // Row 0 is the bind row, and it is written every frame rather than once at init because
+    // the upload below sends only the rows this frame wrote: a row written once at start-up
+    // would never be uploaded at all.
+    paletteWritten_ = 0;
+    float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+    float rows[12];
+    for (int column = 0; column < 3; ++column) {
+        for (int row = 0; row < 4; ++row) rows[column * 4 + row] = identity[row * 4 + column];
+    }
+    for (int bone = 0; bone < kMaxBones; ++bone) {
+        std::memcpy(&paletteCpu_[size_t(bone) * 12], rows, sizeof(rows));
+    }
+    paletteWritten_ = 1;
+}
+
+int Renderer::addPalette(const float* rows12, int bones) {
+    if (paletteWritten_ >= kMaxPaletteRows) return -1;
+    const int row = paletteWritten_++;
+    // A rig too big for the palette is clamped rather than refused: the bones past the end
+    // stay whatever the row held, which is visible, where a silent return of -1 would put
+    // the whole figure in bind pose and look like a missing clip. Nothing in this content
+    // has more than 60; the lobby's faces, at 100 to 115, would be the first.
+    if (bones > kMaxBones) {
+        core::logError("a rig of %d bones does not fit the palette's %d", bones, kMaxBones);
+        bones = kMaxBones;
+    }
+    std::memcpy(&paletteCpu_[size_t(row) * kMaxBones * 12], rows12,
+                size_t(bones) * 12 * sizeof(float));
+    return row;
+}
+
 void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
+                             bgfx::ProgramHandle skinnedProgram,
                              const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb,
                              uint64_t state, bool bindMaterial) {
     for (const Batch& batch : batches) {
         const content::Mesh& mesh = *batch.mesh;
+        const bool skinned = mesh.isSkinned();
+        const bgfx::ProgramHandle batchProgram = skinned ? skinnedProgram : program;
         for (const content::Part& part : mesh.parts()) {
             const content::Material& material = mesh.materials()[part.material];
 
@@ -292,11 +353,17 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // normal is packed octahedrally. That is sprint 3's work, with the grass that
             // needs it and can test it. See docs/conventions.md.
 
+            // Per draw, like the shadow map and the AO above and for the same reason:
+            // bgfx::submit discards its bindings, so a palette bound once a view reaches
+            // the first figure and leaves every other one reading an unbound stage -- which
+            // is a pose of zeroes, and a figure collapsed into a point at the origin.
+            if (skinned) bgfx::setTexture(12, sBones_, palette_);
+
             bgfx::setVertexBuffer(0, mesh.vertexBuffer());
             bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);
             bgfx::setInstanceDataBuffer(&idb, batch.first, batch.count);
             bgfx::setState(drawState);
-            bgfx::submit(view, program);
+            bgfx::submit(view, batchProgram);
             ++drawCount_;
         }
     }
@@ -355,6 +422,16 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
 
+    // The frame's poses go up in one upload, and only the rows the game actually filled:
+    // thirty-one figures at sixty bones is 95 kB, where the whole texture is 1.6 MB. Every
+    // pass that follows reads them, the shadow pass included -- a figure casts the pose it
+    // is in, not the pose it was bound in.
+    if (bgfx::isValid(palette_) && paletteWritten_ > 0) {
+        const uint32_t bytes = uint32_t(paletteWritten_) * kMaxBones * 12 * uint32_t(sizeof(float));
+        bgfx::updateTexture2D(palette_, 0, 0, 0, 0, uint16_t(kMaxBones * 3),
+                              uint16_t(paletteWritten_), bgfx::copy(paletteCpu_.data(), bytes));
+    }
+
     // --- the camera -------------------------------------------------------------------
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and
     // a left-handed view mirrors the frame left to right and makes view-space z positive in
@@ -401,10 +478,11 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         const bool separateCasters = casters != nullptr;
         if (separateCasters) group(casterList, casterGroups, casterBatches_);
 
-        // A 4x4 matrix and the instance's baked light. The depth passes read the matrix
-        // alone and skip the rest, which costs them nothing: the stride is what the buffer
-        // is walked by, not what each shader reads.
-        const uint32_t stride = 80;
+        // A 4x4 matrix, the instance's baked light, and the row its pose occupies in the
+        // bone palette. The depth passes read the matrix and the row and skip the light,
+        // which costs them nothing: the stride is what the buffer is walked by, not what
+        // each shader reads.
+        const uint32_t stride = 96;
         uint32_t total = 0;
         for (const auto& g : groups) total += uint32_t(g.size());
         for (const auto& g : casterGroups) total += uint32_t(g.size());
@@ -434,6 +512,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                     sizeof(float) * 16);
                         std::memcpy(idb.data + written * stride + sizeof(float) * 16, d->light,
                                     sizeof(float) * 4);
+                        // No row of its own means the bind row, which is row 0 and is the
+                        // identity. -1 would be read as a texel outside the palette.
+                        const float skin[4] = {
+                            float(d->paletteRow < 0 ? kBindRow : d->paletteRow), 0.0f, 0.0f,
+                            0.0f};
+                        std::memcpy(idb.data + written * stride + sizeof(float) * 20, skin,
+                                    sizeof(skin));
                         ++written;
                         ++count;
                     }
@@ -504,7 +589,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setUniform(uMaterial_, noCutout);
             if (ground) submitGround(ViewShadow, groundShadowProgram_, *ground, depthState, false);
             if (!shadowBatches.empty()) {
-                submitBatches(ViewShadow, shadowProgram_, shadowBatches, idb, depthState, false);
+                submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, shadowBatches,
+                              idb, depthState, false);
             }
 
             // --- view 1: the prepass -------------------------------------------------
@@ -517,7 +603,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                           BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
             bgfx::setUniform(uMaterial_, noCutout);
             if (ground) submitGround(ViewPrepass, groundPrepassProgram_, *ground, prepassState, false);
-            if (total > 0) submitBatches(ViewPrepass, prepassProgram_, batches_, idb, prepassState, false);
+            if (total > 0) {
+                submitBatches(ViewPrepass, prepassProgram_, skinnedPrepassProgram_, batches_, idb,
+                              prepassState, false);
+            }
 
             // --- view 4's shared uniforms -------------------------------------------
             const float sunDirUniform[4] = {sunDir[0], sunDir[1], sunDir[2], lighting.sunStrength};
@@ -631,7 +720,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const uint64_t shadeState =
                 BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_EQUAL;
             if (ground) submitGround(ViewShade, groundShadeProgram_, *ground, shadeState, true);
-            if (total > 0) submitBatches(ViewShade, shadeProgram_, batches_, idb, shadeState, true);
+            if (total > 0) {
+                submitBatches(ViewShade, shadeProgram_, skinnedShadeProgram_, batches_, idb,
+                              shadeState, true);
+            }
         }
     }
 
