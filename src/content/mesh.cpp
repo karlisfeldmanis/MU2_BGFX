@@ -49,9 +49,11 @@ bgfx::TextureHandle textureFrom(const cgltf_texture_view& view, const std::strin
     return BGFX_INVALID_HANDLE;
 }
 
-// Whether an albedo has any pixel that is neither opaque nor clear. A cutout is decided
-// here, once, and not guessed in the shader; see docs/conventions.md. glTF says so itself
-// through alpha_mode, which is what MU2's pipeline writes, so that is what is read.
+// The cutout threshold a material draws with, or -1 for no cutout. It is read off glTF's
+// own `alpha_mode` and `alpha_cutoff`, which is what MU2's pipeline writes -- no pixel of
+// the albedo is inspected here, and the cook of sprint 3 is where looking at the alpha
+// would belong if the flag ever turns out to disagree with the texture. Decided once at
+// load and not guessed in the shader; see docs/conventions.md.
 float cutoutFor(const cgltf_material* material) {
     if (!material) return -1.0f;
     if (material->alpha_mode == cgltf_alpha_mode_mask) {
@@ -151,13 +153,17 @@ bool Mesh::load(const std::string& path, Textures& textures) {
                     case cgltf_attribute_type_normal: aNormal = attr.data; break;
                     case cgltf_attribute_type_tangent: aTangent = attr.data; break;
                     case cgltf_attribute_type_texcoord:
-                        // The first set, whatever is in it. MU2's build has one set a
-                        // primitive, so this is right for the town. It is NOT right for a
-                        // Fab-converted figure, whose TEXCOORD_0 is zeroed with the real
-                        // layout left in TEXCOORD_1 -- read as written, the whole figure
-                        // samples one texel, which passes for black leather for a long time.
-                        // That choice needs the data read, and it belongs with the figures
-                        // in sprint 4 rather than as a guess here.
+                        // The first set, whatever is in it, and the rest are dropped on the
+                        // floor. MU2's build does NOT have one set a primitive: House01,
+                        // this bench's own model, carries TEXCOORD_0 and TEXCOORD_1 on all
+                        // four of its primitives, and only the first is read. That is right
+                        // here because MU2's materials sample set 0 and set 1 is a lightmap
+                        // or a second layer nothing in this frame asks for yet. It is NOT
+                        // right for a Fab-converted figure, whose TEXCOORD_0 is zeroed with
+                        // the real layout left in TEXCOORD_1 -- read as written, the whole
+                        // figure samples one texel, which passes for black leather for a
+                        // long time. Which set a primitive means is a cook-time decision and
+                        // belongs with the figures in sprint 4, not as a guess here.
                         if (!aUv) aUv = attr.data;
                         break;
                     default: break;

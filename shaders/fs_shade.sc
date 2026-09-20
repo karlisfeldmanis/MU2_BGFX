@@ -53,8 +53,16 @@ float sunShadow(vec3 wpos, vec3 normal, float ndotl, vec2 pixel)
 	}
 
 	float blocker = blockerSum / blockerCount;
-	// How far the blocker is in front, in the light's own depth, widened by the sun's size.
-	float penumbra = (receiver - blocker) / max(blocker, 1e-4) * u_shadowParams.y;
+	// The gap between the blocker and this pixel, times the tangent of the sun's half angle.
+	// No divide by the blocker's own depth: that is the similar-triangles formula for a
+	// *point* light, where the penumbra grows with how near the caster is to the lamp. The
+	// sun's split is orthographic and its depth is linear, so the penumbra is the gap and
+	// nothing else. The divide was here through the first review and was reported fixed
+	// while it was still running: with the blocker at z ~ 0.475 it widened every penumbra by
+	// about 2.1x, drawing a sun some 8.4 degrees across against the sheet's 4.
+	// u_shadowParams.y already carries tan(halfAngle) * depthRange / shadowRange, which is
+	// what turns a gap in the split's 0..1 depth into a radius in the map's uv.
+	float penumbra = (receiver - blocker) * u_shadowParams.y;
 	float radius = clamp(penumbra, u_shadowParams.z, u_shadowParams.z * 24.0);
 
 	const int kFilter = 8;

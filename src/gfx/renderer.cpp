@@ -470,9 +470,12 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const float depthRange = back * 2.0f;
             // The sun is a directional light and its split is orthographic, so the penumbra
             // is the blocker's gap times the tangent of its half angle -- a distance, turned
-            // into uv by the split's width. The similar-triangles divide by the blocker's own
-            // depth is the point-light formula and does not belong here: it made the
-            // penumbra depend on where the caster sat in the split rather than on its gap.
+            // into uv by the split's width. This scale is only half the sum: the shader has
+            // to multiply by it and *not* divide by the blocker's depth, which is the
+            // point-light formula. That divide survived the first review here while a
+            // comment on this line claimed it had gone; it was still in fs_shade.sc, still
+            // widening the penumbra by about 2.1x at the bench's blocker depth, and it came
+            // out on the second review. A comment is not a fix.
             const float tanHalfAngle =
                 std::tan(lighting.sunAngleDegrees * 0.5f * 3.14159265f / 180.0f);
             const float penumbraScale = tanHalfAngle * depthRange / lighting.shadowRange;

@@ -74,6 +74,19 @@ bool Stats::finish(bool enforce) {
     }
     if (frames_.size() <= kWarmup) {
         core::logf("no summary: %zu frames, and the first %zu are warmup", frames_.size(), kWarmup);
+        // A run with nothing left after the warmup cannot be judged -- and a gate that
+        // cannot judge must not report that it did. `--frames 10 --budget gpu=0.001` used to
+        // exit 0 here, which turned "ask for a short run" into a way of switching the gate
+        // off; the shortest runs are exactly the ones a caller reaches for when a number is
+        // inconvenient. Asking for the gate and giving it nothing to measure is now the
+        // caller's error, and it fails the run. Not asking for it is still fine: a bench run
+        // of a handful of frames is a perfectly good thing to do.
+        if (enforce) {
+            core::logError("--budget was asked for on %zu frames, of which %zu are warmup; "
+                           "there is nothing to judge",
+                           frames_.size(), kWarmup);
+            return false;
+        }
         return true;
     }
     const size_t first = kWarmup;

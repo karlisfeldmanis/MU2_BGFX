@@ -60,13 +60,16 @@ uint8_t linearToSrgbByte(float v) {
     return uint8_t(s * 255.0f + 0.5f);
 }
 
-// One level down, by a 2x2 box. RGBA8 in, RGBA8 out.
+// One level down, by a 2x2 box -- three wide at an odd edge, so nothing is dropped. RGBA8
+// in, RGBA8 out.
 //
 // The colour space is the whole point. bimg's own imageGenerateMips averages sRGB bytes
 // directly, which is not the average of the light those bytes stand for: the result is
 // darker than the texture it came from, and a town reads as though the sun went in as the
 // camera pulls back. Alpha is always averaged as stored, because alpha is a coverage and
-// not a colour.
+// not a colour -- a flat average, with no coverage rescale: that rescale is the cook's job
+// in sprint 3 and docs/conventions.md says so. Until then a cutout's leaf would thin with
+// distance, and there is no cutout content in this engine to thin.
 void downsample(const uint8_t* src, uint32_t srcW, uint32_t srcH, uint8_t* dst, uint32_t dstW,
                 uint32_t dstH, TextureRole role) {
     const float* toLinear = srgbToLinearTable();
@@ -74,40 +77,47 @@ void downsample(const uint8_t* src, uint32_t srcW, uint32_t srcH, uint8_t* dst, 
     const bool normal = role == TextureRole::Normal;
 
     for (uint32_t y = 0; y < dstH; ++y) {
-        // An odd source dimension means the last row or column has no partner; it pairs
-        // with itself rather than reading past the end.
+        // A level is half the one above it rounded *down*, because that is the size bgfx and
+        // bimg compute for themselves when they walk a chain, and a level our arithmetic
+        // sizes differently from theirs is a texture read at the wrong offsets.
+        //
+        // Rounding down means an odd source has one row and one column left over, and the
+        // obvious 2x2 box never reads them: at srcH 3 the box covers rows 0 and 1 and row 2
+        // is thrown away, level after level, so the chain walks towards the top left corner
+        // of the picture. Invisible on the 384-square atlases of MU2's build, which halve
+        // evenly to 3 and only then go odd, and not invisible at all on a cooked atlas whose
+        // sides are not powers of two. So the *last* destination pixel takes the orphan in:
+        // three source rows or columns instead of two, averaged flat.
         const uint32_t y0 = y * 2;
-        const uint32_t y1 = (y0 + 1 < srcH) ? y0 + 1 : y0;
+        const uint32_t yEnd = (y + 1 == dstH) ? srcH - 1 : std::min(y0 + 1, srcH - 1);
         for (uint32_t x = 0; x < dstW; ++x) {
             const uint32_t x0 = x * 2;
-            const uint32_t x1 = (x0 + 1 < srcW) ? x0 + 1 : x0;
-            const uint8_t* p[4] = {
-                src + (size_t(y0) * srcW + x0) * 4,
-                src + (size_t(y0) * srcW + x1) * 4,
-                src + (size_t(y1) * srcW + x0) * 4,
-                src + (size_t(y1) * srcW + x1) * 4,
-            };
+            const uint32_t xEnd = (x + 1 == dstW) ? srcW - 1 : std::min(x0 + 1, srcW - 1);
+            const float inv = 1.0f / float((yEnd - y0 + 1) * (xEnd - x0 + 1));
 
             float acc[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-            for (const uint8_t* q : p) {
-                if (srgb) {
-                    acc[0] += toLinear[q[0]];
-                    acc[1] += toLinear[q[1]];
-                    acc[2] += toLinear[q[2]];
-                } else if (normal) {
-                    // Back to a signed vector before averaging, or the average is pulled
-                    // towards the encoding's midpoint rather than towards the mean normal.
-                    acc[0] += float(q[0]) / 127.5f - 1.0f;
-                    acc[1] += float(q[1]) / 127.5f - 1.0f;
-                    acc[2] += float(q[2]) / 127.5f - 1.0f;
-                } else {
-                    acc[0] += float(q[0]);
-                    acc[1] += float(q[1]);
-                    acc[2] += float(q[2]);
+            for (uint32_t sy = y0; sy <= yEnd; ++sy) {
+                for (uint32_t sx = x0; sx <= xEnd; ++sx) {
+                    const uint8_t* q = src + (size_t(sy) * srcW + sx) * 4;
+                    if (srgb) {
+                        acc[0] += toLinear[q[0]];
+                        acc[1] += toLinear[q[1]];
+                        acc[2] += toLinear[q[2]];
+                    } else if (normal) {
+                        // Back to a signed vector before averaging, or the average is pulled
+                        // towards the encoding's midpoint rather than towards the mean normal.
+                        acc[0] += float(q[0]) / 127.5f - 1.0f;
+                        acc[1] += float(q[1]) / 127.5f - 1.0f;
+                        acc[2] += float(q[2]) / 127.5f - 1.0f;
+                    } else {
+                        acc[0] += float(q[0]);
+                        acc[1] += float(q[1]);
+                        acc[2] += float(q[2]);
+                    }
+                    acc[3] += float(q[3]);
                 }
-                acc[3] += float(q[3]);
             }
-            for (float& v : acc) v *= 0.25f;
+            for (float& v : acc) v *= inv;
 
             uint8_t* out = dst + (size_t(y) * dstW + x) * 4;
             if (srgb) {

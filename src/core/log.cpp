@@ -1,5 +1,6 @@
 #include "core/log.h"
 
+#include <chrono>
 #include <cstring>
 #include <ctime>
 #include <string>
@@ -13,9 +14,14 @@ int g_errors = 0;
 // a complaint about them must not be lost.
 std::string g_pending;
 
+// Wall clock, not `clock()`. `clock()` counts this process's own CPU time, and a run that
+// waits -- for the drawable, for a file, for the compositor -- spends wall seconds it never
+// charges. A 400-frame run read 0.28 s in the log against 0.79 s of wall, so every timestamp
+// in it priced the run 2.8x fast, which is exactly the direction a renderer must not lie in.
+// Steady rather than system time, so a clock adjustment mid-run cannot move a stamp backwards.
 double secondsSinceStart() {
-    static const clock_t start = clock();
-    return double(clock() - start) / double(CLOCKS_PER_SEC);
+    static const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
 }
 
 }  // namespace

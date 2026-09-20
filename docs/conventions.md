@@ -75,9 +75,16 @@ it multiplies the ground's diffuse and does not go through the sRGB sampler twic
 chain and are sampled trilinear with anisotropy — MU's shallow camera minifies hard, and
 without the chain the town shimmers and reads more texels than it shows. `height.png`,
 `attributes.png`, `light.png` and the tile grid are data and are point-sampled with no mips:
-a mipped attribute grid averages walkable together with blocked and nothing complains. A
-cutout's alpha is rescaled per level to hold its coverage, or a leaf thins away with
-distance.
+a mipped attribute grid averages walkable together with blocked and nothing complains.
+
+**A cutout's alpha is not rescaled yet, and this page used to say it was.** Averaging alpha
+down a chain thins a leaf until it vanishes at distance, and the answer is to rescale each
+level's alpha so it holds the coverage the top level had. `content/texture.cpp` does not do
+it: it averages alpha flat and says so on the line that does it. That rescale belongs in
+`tools/cook.py` in sprint 3, with the BC7 blocks, because it wants the whole chain in hand
+and it is not worth paying for at load — and until sprint 3 there is no cutout content in
+this engine to thin. A rule nothing keeps is worse than no rule, so it is written here as
+what is owed rather than as what is done.
 
 The present pass is the only place tonemapping and the sRGB write happen: ACES, then the
 backbuffer. Nothing else writes sRGB.
@@ -127,8 +134,10 @@ One model, closed. Albedo, normal, ORM, emissive, and three flags: **cutout**, *
 material library says beyond that is resolved at cook time into these fields.
 
 - **MU's figures are single sheets with mixed winding** and are drawn two-sided.
-- **Cutout is decided at cook time** from the albedo's alpha, not guessed in the shader, and
-  a cutout discards in every pass including the shadow and the prepass. A mobile-renderer
+- **Cutout is decided once at load, off glTF's `alpha_mode` and `alpha_cutoff`**, which is
+  what MU2's pipeline writes — not by inspecting the albedo's pixels, and not guessed in the
+  shader. It moves into the cook in sprint 3. A cutout discards in every pass including the
+  shadow and the prepass. A mobile-renderer
   lesson kept: a shader that writes alpha without the discard goes transparent wherever
   depth write is off, which is what made MU2's grass blink.
 
