@@ -802,7 +802,22 @@ void Realm::press() {
         }
         return;
     }
-    // Out of reach: close, on the same re-plan clock a monster's chase uses.
+    // Out of reach: close, on the same re-plan clock a monster's chase uses -- but not until
+    // the blow he is in the middle of has finished.
+    //
+    // A swing and a step are never both, and the way out of a swing is to cancel it. For the
+    // player that interval IS the swing animation: sim/swings.cpp works `swingTicks` out of the
+    // attack clip's own keys and play speed, so `tick_ < swingsAt` is exactly "the axe is still
+    // coming down". Without this line a quarry that shuffled one tile pulled him out of his own
+    // blow and he walked with the axe still swinging -- which he then did on three quarters of
+    // every swing frame drawn.
+    //
+    // What cancels it is an order, and only an order: a click on the ground, a click on
+    // something else, or a stop, all of which arrive above as `pending_` and replace this one
+    // before this line is reached. So the player is never held still by his own attack -- he
+    // gives it up, which is what an attack cancel is -- and the chase, which is the engine's
+    // decision rather than his, waits its turn.
+    if (tick_ < hero.swingsAt) return;
     if (tick_ >= hero.repathsAt) {
         hero.repathsAt = tick_ + kRepath;
         if (drifted(hero, *target)) {

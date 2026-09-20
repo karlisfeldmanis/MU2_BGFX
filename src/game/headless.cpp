@@ -198,8 +198,20 @@ int runHeadless(const core::Args& args, const char* assetDir) {
     }
 
     if ((weapon >= 0 || shield >= 0) && !realm.equip(weapon, shield)) {
-        core::logError("he cannot hold that: %s", realm.refusal().c_str());
-        return 1;
+        // Refused on the requirement, and then given anyway -- the same courtesy the window
+        // does, and for the same reason: a character is CREATED holding what his class is
+        // given, and a level-one knight is 22 strength short of the Small Axe he is created
+        // with. If the headless run refused it, the one character the game actually starts
+        // could not be hunted with here, which is the character the seeded run most wants.
+        // See Realm::equip. Anything else refused -- a class that may not hold it, a shield
+        // asked for as a weapon -- is still a refusal, because `given` does not waive those.
+        const std::string why = realm.refusal();
+        if (!realm.equip(weapon, shield, true)) {
+            core::logError("he cannot hold that: %s", realm.refusal().c_str());
+            return 1;
+        }
+        core::logf("hand: %s -- given anyway, as a new character is given what his class "
+                   "starts with", why.c_str());
     }
     {
         const sim::Fighter& stats = realm.hero().stats;

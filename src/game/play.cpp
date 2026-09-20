@@ -342,6 +342,16 @@ void Play::follow() {
         // A swing holds until it has played out, and then walk or idle take it back. `play`
         // ignores a request for the clip already running, so the two below are comparisons
         // rather than restarts, and the blend between them is the crossfade's.
+        // A step cancels the swing; the two are never drawn at once. MU has no animation that
+        // is both, and a figure that keeps swinging while it slides along the ground is the
+        // most conspicuous thing in a fight -- measured on the hunt before this line existed,
+        // 921 of 1217 swing-frames were played over a walking body, because a fighter re-paths
+        // toward a quarry that shuffled and the swing clip outlives the halt that fed it.
+        //
+        // Cancelling is the whole of the rule: the blow itself already landed on the tick, and
+        // nothing downstream reads a fact off the pose. What is lost is the rest of an
+        // animation, which is what an attack cancel loses in any game that has one.
+        if (one.swinging > 0.0f && body->walking) one.swinging = 0.0f;
         if (one.swinging > 0.0f) continue;
         const FigureBody* look = one.figure.body();
         int clip = look->idleClip;
