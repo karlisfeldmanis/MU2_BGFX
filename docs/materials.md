@@ -44,7 +44,8 @@ order that matters instead of being rediscovered every time someone looks at a m
 | metal between 0.05 and 0.30 | not a material but a blend of two, and the library has no entry in that gap on purpose |
 | a metal against the model's `metal:` list | `index.json` records which metals a monster may wear; anything else is a metal nobody asked for |
 | an ORM map **or** a roughness factor | glTF says roughness is `factor × map`, and MU2's pipeline uses exactly that split, so a surface with no map and a real factor is correct. One with neither is unpainted and reaches the engine's matte |
-| relief asked vs the normal map's measured lean | **the one the wings were found by.** See below |
+| relief asked vs the normal map's measured lean | a material that declares a *real* grain (0.15 to 0.45 deep) and whose normal map is flat: a bake that did not happen. `relief` of exactly 1.00 is `index.py`'s default for a material with no grain and is skipped — reading it as a claim failed 26 correct slots. See below |
+| two materials on one model that now shade alike | a distinction a recipe drew and a library retune closed. A note, not a failure |
 | `MASK` with no holes in its alpha | a discard paid for in four passes that cuts nothing |
 | `OPAQUE` with holes in its alpha | whatever was meant to be cut out is drawn solid; this is how MU's foliage breaks |
 | cooked `.ktx` format per role | BC7-sRGB albedo, BC5 normal, BC7-linear ORM. An ORM read as sRGB turns roughness 0.62 into about 0.35 and makes the whole town glossy at once |
@@ -65,23 +66,44 @@ plaster. Lorencia's water is correct, which is why nothing had noticed.
 
 ## The glossy wings, and what they turned out to be
 
-The Budge Dragon's wings are 8 triangles wearing `leather`, and the audit says their data is
-faithful: the ORM under them reads roughness 0.612 against the library's 0.62, metal 0.000
-against 0.00. Nothing was mis-assigned and nothing drifted.
+Two wrong answers first, because both were confidently held and the second was written down
+here as fact.
 
-What is wrong is one row over. `chitin` carries **relief 1.00** and `leather` 0.06, and the
-normal map they share leans **0.3° across the body and 2.2° across the wings** — it is flat.
-The relief was authored in the library and never reached the map.
+**Not a mis-assignment.** The wings are 8 triangles wearing `leather` and their ORM is
+faithful to it: roughness 0.612 against the library's 0.62, metal 0.000 against 0.00.
 
-That is what the glossiness is. Relief is what breaks a specular highlight into a surface;
-without it, roughness 0.62 over a flat two-sided quad produces one wide coherent lobe across
-the whole wing, which reads as sheet plastic. Roughness cannot do relief's job — lowering it
-makes the lobe tighter and brighter, raising it makes the wing chalky, and neither of those is
-a membrane. The check is now measured rather than inferred from the map's presence, because a
-normal map full of (0.5, 0.5) is present and does nothing.
+**Not the relief either**, which is what this page said for an afternoon. The normal map the
+wings and the body share leans 0.3° across the body — it is flat — and `chitin` comes through
+`index.json` carrying relief 1.00, which looked like an authored relief that never reached the
+map. It is not: `index.py` sets `relief` from the material's `grain.depth` and defaults it to
+**1.0** where there is no grain at all, for a studio panel in which 1.0 means "do not
+attenuate". `chitin.json` declares no grain and argues for it at length — a spider's whole
+body is a 64-pixel sheet, so a pit is smaller than a texel and any grain would be invented
+rather than reconstructed. A flat map is exactly right there. Read as a claim, that default
+failed 26 slots that were correct, 15 of them `skin`.
 
-It is not one monster. 26 slots fail this check today, and `skin` is fifteen of them — which is
-every bare face, hand and shin in the player's armour sets.
+**What it actually is: a distinction that closed.** `BudgeDragon01.json` assigns the body
+`chitin` and the wings `leather`, and says why — *"the wings are leather at 0.74, which is the
+membrane they are: thinner and duller than the body ... and the two are a slot apart so the
+judgement is visible"*. leather **was** 0.74 when that was written. It went to 0.62 on
+2026-09-06, in the reflections commit, alongside `skin` and `plate_steel` and for the player's
+boots and gloves. `chitin` is 0.62. So the slot between body and wing closed, and the membrane
+came out exactly as glossy as the shell — one unbroken highlight down a flat two-sided card,
+which is what was seen.
+
+Nothing was wrong with either material, either assignment, or the retune. What was lost was
+the *difference between them*, and a library retune is not a statement about every part that
+ever wore the material.
+
+The fix is at the source and is traced rather than invented, because the number is the one
+that file already argued for:
+
+    "material_overrides": {"leather": {"roughness": 0.74}}
+
+And it is now a check. `check_collapsed_distinctions` reports any model that names two
+different library materials which have since converged to the same roughness and metal — a
+note rather than a failure, because materials converging is a legitimate thing for a library
+to do and only the asset that relied on them differing can say whether it minded.
 
 ## What the run says today
 
@@ -102,15 +124,14 @@ the library asks 0.08. The factors now travel from the glb through the `.mum` (v
   which one went with the name, and the numbers cannot give it back: six or seven library
   entries fit inside one tolerance between 0.7 and 0.9. Only 5 of the 424 can be identified
   from their ORM alone.
-- **90 failures**, recorded as the baseline:
+- **62 failures**, recorded as the baseline:
 
   | count | failure | where it is |
   |---:|---|---|
   | 46 | a baked roughness that disagrees with the entry it claims | MU2's build, stale |
-  | 26 | a flat normal map against a relief the library asked for | MU2's `build_maps.py` |
+
   | 13 | a `MASK` cutout with no holes to cut | MU2's export |
   | 2 | noria's and charscene's water at 0.722 where water asks 0.08 | MU2's build, stale |
-  | 2 | no normal map at all against a relief of 1.00 | MU2's build |
   | 1 | an `OPAQUE` material with 12% of its alpha below the threshold | MU2's export |
 
   **The 46 and the 2 have one cause and it is dated.** MU2's `ROUGHNESS_FLOOR` used to be
@@ -121,12 +142,8 @@ the library asks 0.08. The factors now travel from the glb through the `.mum` (v
   same 0.722, `glass` included, where the library asks 0.12. The repair is a rebuild of those
   103 in MU2 and a re-sync, not a change here.
 
-  **The 26 have a cause too, and MU2's own library already names it.** `build_maps.py`
-  multiplies the whole height field by the material's grain depth, and a material that
-  declares no grain has depth 0 — so declaring none discards the relief read out of MU's own
-  painting along with the grain that was not wanted. `leather.json`'s `grain_why` records
-  exactly this, found on the Bone set and fixed for leather alone by giving it a `cast` grain.
-  `skin`, `chitin`, `glass` and `fur` still declare none, which is why 15 of the 26 are `skin`.
+  The 28 relief failures that used to sit in this table were the audit's own fault and are
+  described above. Removing them took the baseline from 90 to 62.
 - **65 notes**, all of them a material slot no primitive draws with. Nothing renders wrong, so
   they do not fail the run, but every one is a material MU2's exporter wrote and the mesh
   dropped, and it is where the `mu2` default hides.
