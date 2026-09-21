@@ -173,7 +173,20 @@ private:
     struct Standing {
         Figure figure;
         int folk = -1;
+        // Whether it takes turns among its clips, MuMain's way: see Play::fidget. A guard does
+        // not -- he wears the player's 283 and MU stands him in one stop action for good.
+        bool cycles = false;
+        float lastClock = 0.0f;
+        uint32_t dice = 1;
     };
+    // Starts a townsperson who cycles: its own dice, a clip by the rule, and a clock put
+    // somewhere in it so that two of a kind are not in step.
+    void settle(Standing& one);
+    // The next clip for one that has just finished its last: three times in four the first,
+    // which is the resting one, and otherwise one of the others. MuMain's
+    // `if (rand() % 16 < 12) SetAction(o, 0); else SetAction(o, rand() % 2 + 1);`, by way of
+    // MU2's Scenery.Next, which generalised it past two alternates.
+    static int fidget(Standing& one);
     std::vector<Standing> folk_;
     int pointedFolk_ = -1;
     uint32_t pointedLying_ = 0;

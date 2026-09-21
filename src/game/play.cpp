@@ -237,6 +237,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         one.folk = int(i);
         one.figure.stand(look, at, yaw, look->scale, true);
         if (look->idleClip >= 0) one.figure.play(look->idleClip);
+        settle(one);
         bones = std::max(bones, look->boneCount());
         folk_.push_back(std::move(one));
     }
@@ -260,13 +261,17 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             one.folk = who;
             one.figure.stand(look, spot.position, spot.yaw, spot.scale, true);
             if (look->idleClip >= 0) one.figure.play(look->idleClip);
+            settle(one);
             bones = std::max(bones, look->boneCount());
             folk_.push_back(std::move(one));
             ++placed;
         }
     }
-    core::logf("play: %zu townsfolk, %zu of them drawn here, %zu of those by the town's placements",
-               tables_.folk.size(), folk_.size(), placed);
+    size_t cycling = 0;
+    for (const Standing& one : folk_) cycling += one.cycles ? 1 : 0;
+    core::logf("play: %zu townsfolk, %zu of them drawn here, %zu of those by the town's "
+               "placements, %zu taking turns among their own clips",
+               tables_.folk.size(), folk_.size(), placed, cycling);
 
     scratch_.assign(std::max<size_t>(128, bones) * 12, 0.0f);
     remember();
@@ -388,7 +393,16 @@ void Play::update(double seconds) {
         one.figure.update(float(seconds), one.clipRate);
         if (one.swinging > 0.0f) one.swinging -= float(seconds);
     }
-    for (Standing& one : folk_) one.figure.update(float(seconds));
+    for (Standing& one : folk_) {
+        one.figure.update(float(seconds));
+        // A clip that has come round is a clip that has finished: the next is rolled then,
+        // so the town's people are never in step with each other or with themselves.
+        if (one.cycles && one.figure.clock() < one.lastClock) {
+            const int next = fidget(one);
+            if (next != one.figure.clip()) one.figure.play(next, true);
+        }
+        one.lastClock = one.figure.clock();
+    }
 
     // --- sprint 6: the landing cue ------------------------------------------------------
     // On the DRAWING's clock and after the swings have been advanced above, so that a cue
@@ -759,6 +773,39 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
     }
+}
+
+void Play::settle(Standing& one) {
+    const FigureBody* look = one.figure.body();
+    if (!look || !look->library) return;
+    // Its own clips only. A townsperson on the player's rig -- the guards -- would roll
+    // among dying, sitting and casting, which is why MU2 named them a single clip.
+    const size_t count = look->library->clips.clips.size();
+    one.cycles = look->library->name != "player" && count > 1;
+    if (!one.cycles) return;
+    // Seeded from where it stands, so a town comes up the same way every time and two
+    // figures of a kind do not share a roll.
+    const float* at = one.figure.position();
+    one.dice = uint32_t(int32_t(at[0] * 37.0f) * 73856093 ^ int32_t(at[2] * 61.0f) * 19349663) | 1u;
+    one.figure.play(fidget(one), true, 0.0f);
+    const float length = one.figure.length();
+    one.dice ^= one.dice << 13;
+    one.dice ^= one.dice >> 17;
+    one.dice ^= one.dice << 5;
+    if (length > 0.0f) one.figure.setClock(float(one.dice % 1000u) / 1000.0f * length);
+    one.lastClock = one.figure.clock();
+}
+
+int Play::fidget(Standing& one) {
+    const size_t count = one.figure.body()->library->clips.clips.size();
+    const auto roll = [&one](uint32_t below) {
+        one.dice ^= one.dice << 13;
+        one.dice ^= one.dice >> 17;
+        one.dice ^= one.dice << 5;
+        return one.dice % below;
+    };
+    if (count < 2 || roll(16) < 12) return 0;
+    return 1 + int(roll(uint32_t(count - 1)));
 }
 
 bool Play::spendPoint(int stat) {
