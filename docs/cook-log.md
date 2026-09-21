@@ -25,3 +25,8 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword09 | arm | 2026-09-21 19:17 | passed | dark scaled blade is MU's paint, silver edge and scales read at steel 0.3; gold grip no longer blows out at brass 0.6. Guard claws render grey where MU paints them gold: only the grip is brass |
 | Axe01 | arm | 2026-09-21 19:26 | passed | head dark forged iron at steel 0.55 (flat side-on face), haft wood reads, end cap wrought iron 0.7 no longer whites out; figures' copy recooked too |
 | Axe02 | arm | 2026-09-21 19:30 | passed | iron head with a highlight on the spike at steel 0.55, grip end wrought iron 0.7 matte; shot with the bonfire at the frame's edge |
+| Axe03 | arm | 2026-09-21 19:39 | passed | studio sheet: haft wrought iron 0.6 no longer whites out; gold grip 0.6; head shines to the fire side, dark to the far side (accepted) |
+| Axe04 | arm | 2026-09-21 19:41 | passed | studio sheet: red haft and banded grip read at every angle, no blowouts; head dark away from the light (accepted) |
+| Mace01 | arm | 2026-09-21 19:43 | passed | studio sheet: spiked head steel from most angles, a sun glint at noon and the fire's at dusk, wooden haft reads |
+| Mace02 | arm | 2026-09-21 19:44 | passed | studio sheet: spiked ball bright steel at every angle, the fire's streak on the collar at dusk 90 deg; no rig in MU's data, rigid |
+| Spear03 | arm | 2026-09-21 19:46 | awaiting |  |

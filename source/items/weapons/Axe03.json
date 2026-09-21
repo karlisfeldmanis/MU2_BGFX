@@ -46,7 +46,7 @@
   "islands": [
     {
       "island": 0,
-      "material": "plate_steel",
+      "material": "wrought_iron",
       "triangles": 12,
       "area": 903.0,
       "along": [
@@ -110,5 +110,14 @@
         0.564
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "wrought_iron": {
+      "roughness": 0.6
+    },
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: the round haft (island 0) was plate steel and whited out into a glowing bar at noon from the fire side; wrought iron at 0.6. The gold grip at brass 0.6, as the Serpent Sword's."
 }
