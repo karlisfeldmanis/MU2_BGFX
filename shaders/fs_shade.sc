@@ -72,7 +72,14 @@ void main()
 	// shading. Read straight, armour returns a twentieth of the town round it and reads as
 	// grey card. The sheet's metal_gain lifts the paint towards what the metal would reflect,
 	// keeping its engraving; invention, judged by eye. docs/sprints/08c-the-metal.md.
-	vec3 f0 = mix(vec3_splat(0.04), min(albedo * u_probe.w, vec3_splat(1.0)), metal);
+	//
+	// The gain stops where the brightest channel reaches one, rather than each channel clipping
+	// on its own. Clipped per channel, pale gold paint put its red and green both at one and
+	// came out white: the treasure chest's brass bands read as chalk, and the shield 8c saw
+	// white out in the low sun was the same clip. Dark iron never reaches the cap and is as
+	// it was.
+	float peak = max(max(albedo.r, albedo.g), max(albedo.b, 1e-4));
+	vec3 f0 = mix(vec3_splat(0.04), albedo * min(u_probe.w, 1.0 / peak), metal);
 	vec3 diffuseColour = albedo * (1.0 - metal);
 
 	vec3 l = normalize(u_sunDir.xyz);

@@ -498,8 +498,11 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
                 flags |= 4
                 translucency = float(max(through))
         maps = {"albedo": "", "normal": "", "orm": "", "emissive": ""}
+        # By the glb's own name: a `~whole` variant is a second cut of the same file, and the
+        # manifest only knows the file. Keyed by the variant, the Elite came out untextured.
+        source = model.split("~", 1)[0]
         for role in maps:
-            maps[role] = textures.get(f"{model}#{image_for(document, material, role)}:{role}", "")
+            maps[role] = textures.get(f"{source}#{image_for(document, material, role)}:{role}", "")
         materials += struct.pack("<fB", cutout, flags)
         materials += write_string(material.get("name", "material"))
         for role in ("albedo", "normal", "orm", "emissive"):
