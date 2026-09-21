@@ -72,13 +72,17 @@ fi
 # closed the window before it opened and looked, from where the player was sitting, exactly like
 # nothing happening. It did that the first time this script was run, over a switch spelled
 # `--kin` that the engine calls `--class`.
-status=0
-# `|| status=$?` rather than reading `$?` after it, because `set -e` at the top of this file
+#
+# `code` and not `status`: this is zsh, where `status` is a read-only special parameter -- zsh's
+# own name for `$?` -- so `status=0` is an error, and under `set -e` it ended the script on this
+# very line, before mu2 was ever launched. The script could not have run as first written.
+code=0
+# `|| code=$?` rather than reading `$?` after it, because `set -e` at the top of this file
 # would otherwise end the script on the failure before the lines that explain it are printed.
 build/mu2 --world lorencia --play --vsync --level 1 --class "$kin" "${cradle[@]}" "$@" ||
-  status=$?
-if [ $status -ne 0 ]; then
-  echo "mu2 stopped with $status. The last of mu2.log:"
+  code=$?
+if [ $code -ne 0 ]; then
+  echo "mu2 stopped with $code. The last of mu2.log:"
   tail -8 mu2.log
 fi
-exit $status
+exit $code
