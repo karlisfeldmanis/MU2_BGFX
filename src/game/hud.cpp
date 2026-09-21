@@ -14,9 +14,9 @@ using gfx::Box;
 
 // ---- the plate, in its own pixels (Hud.cs) ----------------------------------------------------
 
-// Interface units per plate pixel: the one size. At 0.4 the 1224-wide plate is 490 of MU's 640,
-// the share of the screen MuDream's frame takes.
-constexpr float kUnit = 0.4f;
+// Interface units per plate pixel: the one size. At 0.34 the 1224-wide plate is 416 of MU's 640;
+// MuDream's frame takes 490 (0.4), which the user found a little large on 2026-09-21.
+constexpr float kUnit = 0.34f;
 constexpr float kPlateW = 1224.0f, kPlateH = 180.0f;
 
 // The row: six skill boxes 61 wide on a 65 pitch from x 290, y 96 to 157; five item boxes 48
