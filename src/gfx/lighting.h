@@ -92,6 +92,14 @@ struct Lighting {
     // held. Both invention, judged by eye.
     float sharpen = 0.0f;
     float contrast = 0.0f;
+    // The tone curve and the grade after it. `tonemap`: 0 Narkowicz's ACES, 1 Hill's ACES, 2
+    // AgX, 3 AgX punchy, 4 Khronos Neutral. `saturation` 1 is as rendered. `split` 0..1 moves
+    // the shade towards `tintLow` and the light towards `tintHigh`. Invention, judged by eye.
+    float tonemap = 0.0f;
+    float saturation = 1.0f;
+    float split = 0.0f;
+    float tintLow[3] = {0.92f, 0.98f, 1.08f};
+    float tintHigh[3] = {1.08f, 1.0f, 0.9f};
 
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;

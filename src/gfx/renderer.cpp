@@ -78,6 +78,9 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     sBones_ = bgfx::createUniform("s_bones", bgfx::UniformType::Sampler);
     uBloom_ = bgfx::createUniform("u_bloom", bgfx::UniformType::Vec4);
     uPresent_ = bgfx::createUniform("u_present", bgfx::UniformType::Vec4);
+    uGrade_ = bgfx::createUniform("u_grade", bgfx::UniformType::Vec4);
+    uTintLow_ = bgfx::createUniform("u_tintLow", bgfx::UniformType::Vec4);
+    uTintHigh_ = bgfx::createUniform("u_tintHigh", bgfx::UniformType::Vec4);
     uBloomTexel_ = bgfx::createUniform("u_bloomTexel", bgfx::UniformType::Vec4);
     sBloom_ = bgfx::createUniform("s_bloom", bgfx::UniformType::Sampler);
     uLampGrid_ = bgfx::createUniform("u_lampGrid", bgfx::UniformType::Vec4);
@@ -574,7 +577,7 @@ void Renderer::shutdown() {
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uCamPos_, &uParams_,
           &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
-          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uBloomTexel_,
+          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
           &sBloom_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
@@ -1403,6 +1406,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     const float present[4] = {lighting.sharpen, lighting.contrast, 1.0f / float(width_),
                               1.0f / float(height_)};
     bgfx::setUniform(uPresent_, present);
+    const float grade[4] = {lighting.tonemap, lighting.saturation, lighting.split, 0.0f};
+    const float tintLow[4] = {lighting.tintLow[0], lighting.tintLow[1], lighting.tintLow[2], 0.0f};
+    const float tintHigh[4] = {lighting.tintHigh[0], lighting.tintHigh[1], lighting.tintHigh[2],
+                               0.0f};
+    bgfx::setUniform(uGrade_, grade);
+    bgfx::setUniform(uTintLow_, tintLow);
+    bgfx::setUniform(uTintHigh_, tintHigh);
     bgfx::setTexture(9, sBloom_, bloomTex_[0]);
     bgfx::setViewFrameBuffer(ViewPresent, BGFX_INVALID_HANDLE);
     bgfx::setViewRect(ViewPresent, 0, 0, uint16_t(width_), uint16_t(height_));
