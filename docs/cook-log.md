@@ -7,4 +7,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | item | kind | cooked | look | note |
 |---|---|---|---|---|
 | Plate | set | 2026-09-21 16:39 | passed | steel with bright ridges at noon, fire on the plates at dusk and night; the double metal lift is gone |
-| Bronze | set | 2026-09-21 16:53 | awaiting |  |
+| Bronze | set | 2026-09-21 16:57 | awaiting |  |

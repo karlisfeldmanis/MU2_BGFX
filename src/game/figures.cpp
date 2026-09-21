@@ -578,6 +578,13 @@ bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textu
         made->parts = bare->parts;
         // Each cooked piece replaces the bare part whose name starts with the same word, so
         // the pieces stay in the rig's own order however the manifest lists them.
+        //
+        // Except an open helm, which is worn over the bare head rather than in its place:
+        // MuMain's SetCharacterScale sets BODYPART_HEAD to the wearer's own class head for the
+        // few helms it names and to -1 for every other. The Bronze helm is a war mask with no
+        // face inside it, and replacing the head left a hole the grass showed through. The
+        // head stays parts[0] and the helm goes on after it, as MU2's Model.HeadPart does.
+        const bool keepsHead = entry["keeps_head"].boolOr(false);
         size_t worn = 0;
         for (const core::Json& part : entry["parts"].items) {
             const content::Mesh* found = mesh(part.string);
@@ -585,7 +592,11 @@ bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textu
             for (size_t i = 0; i < made->parts.size() && i < 5; ++i) {
                 const std::string piece = kPieces[i];
                 if (part.string.compare(0, piece.size(), piece) != 0) continue;
-                made->parts[i] = found;
+                if (i == 0 && keepsHead) {
+                    made->parts.push_back(found);
+                } else {
+                    made->parts[i] = found;
+                }
                 ++worn;
                 break;
             }

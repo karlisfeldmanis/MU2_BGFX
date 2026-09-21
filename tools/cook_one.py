@@ -93,7 +93,9 @@ def resolve(name, world):
             entry = {"name": suffix, "label": label,
                      "parts": [piece + suffix for piece in PIECES if piece in worn],
                      "classes": stats.get("classes") or [],
-                     "defense": stats.get("defense", 0)}
+                     "defense": stats.get("defense", 0),
+                     "keeps_head": bool(worn["Helm"][1].get("keeps_head"))
+                     if "Helm" in worn else False}
             return "set", "wardrobe", meshes, entry
 
     # A weapon or a shield.

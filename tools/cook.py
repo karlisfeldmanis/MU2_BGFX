@@ -2034,10 +2034,14 @@ def cook_wardrobe(out_dir, texcook, threads):
         if label.endswith(" Armor"):
             label = label[: -len(" Armor")]
         classes = (torso.get("stats") or {}).get("classes") or []
+        # An open helm is worn over the wearer's own head, not in place of it: MuMain's
+        # SetCharacterScale draws the bare class head under the few it names. index.json
+        # carries it as the helm row's `keeps_head`; see HelmMale01's keeps_head_from in MU2.
         sets.append({"name": suffix, "label": label,
                      "parts": [piece + suffix for piece in pieces if piece in worn],
                      "classes": classes,
-                     "defense": (torso.get("stats") or {}).get("defense", 0)})
+                     "defense": (torso.get("stats") or {}).get("defense", 0),
+                     "keeps_head": bool((worn.get("Helm") or {}).get("keeps_head"))})
 
     # --- the arms ----------------------------------------------------------------------
     arms = []
