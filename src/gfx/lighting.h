@@ -37,6 +37,14 @@ struct Lighting {
 
     float exposure = 1.25f;  // MU2's exposure
 
+    // The dust in the air. Between the eye and a surface hangs sunlit dust of this colour,
+    // lit by the same sun and sky as the ground, so it lifts a shadow towards pale sand
+    // rather than greying the frame: the haze adds light, it never takes the sun away.
+    // `dustDensity` is per metre, so MU's camera, some 20 m from the street, sees about
+    // 1 - exp(-20 density) of it. 0 is clear air. Invention: MU has no fog in Lorencia.
+    float dustColour[3] = {0.80f, 0.68f, 0.52f};
+    float dustDensity = 0.0f;
+
     // The shadow. `range` is how wide the split is, in metres. MU2 frames one split on the
     // camera's ground point at about this reach; see its shadow_reach.
     float shadowRange = 60.0f;

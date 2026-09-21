@@ -1,17 +1,20 @@
 {
-  "note": "Carried from MU2/lighting.json. Every value is in metres and one tile is one metre, which is MU2's own scene scale. The sun's two angles are MU2's exactly and are not to be tuned away: sun_pitch -52 and sun_yaw 90 in Godot is elevation 52 and azimuth 0 here. The energies are NOT MU2's numbers, because Godot's energy unit is not this pass's; they are matched by eye in sprint 8.",
+  "note": "Carried from MU2/lighting.json. Every value is in metres and one tile is one metre, which is MU2's own scene scale. The sun's two angles are MU2's exactly and are not to be tuned away: sun_pitch -52 and sun_yaw 90 in Godot is elevation 52 and azimuth 0 here. The energies are NOT MU2's numbers, because Godot's energy unit is not this pass's; they are matched by eye in sprint 8. Since 2026-09-21 Lorencia's default is not noon but a dusty early evening, so that the lamps, fires and glows read without waiting for night: a golden, weaker sun at MU2's own angle, a dusky sky, thin sunlit dust in the air that lifts the shadows, and the emitters and bloom pushed up. Invention on MU2's look, judged by eye at tile 123,124.",
 
   "azimuth": 0.0,
   "elevation": 52.0,
-  "sun_colour": [1.0, 0.95, 0.88],
-  "sun_strength": 3.0,
+  "sun_colour": [1.0, 0.72, 0.46],
+  "sun_strength": 1.9,
 
-  "sky_colour": [0.385, 0.454, 0.55],
+  "sky_colour": [0.33, 0.32, 0.38],
   "horizon_paleness": 0.7,
-  "ground_colour": [0.2, 0.169, 0.133],
-  "ambient_strength": 0.7,
+  "ground_colour": [0.18, 0.14, 0.11],
+  "ambient_strength": 0.55,
 
   "exposure": 1.25,
+
+  "dust_colour": [0.6, 0.46, 0.34],
+  "dust_density": 0.005,
 
   "shadow_range": 60.0,
   "shadow_fit_below": 3.0,
@@ -19,12 +22,12 @@
   "shadow_normal_bias": 0.02,
   "sun_angle_degrees": 4.0,
 
-  "lamp_strength": 3.14159,
-  "glow_strength": 1.0,
+  "lamp_strength": 6.0,
+  "glow_strength": 1.8,
 
-  "bloom_threshold": 1.2,
+  "bloom_threshold": 0.85,
   "bloom_knee": 0.6,
-  "bloom_strength": 0.25,
+  "bloom_strength": 0.4,
   "flame_strength": 6.0,
 
   "metal_gain": 2.5,

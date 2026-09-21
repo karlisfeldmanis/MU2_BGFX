@@ -31,6 +31,8 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readVec3Into("ground_colour", groundColour);
     doc.readInto("ambient_strength", &ambientStrength);
     doc.readInto("exposure", &exposure);
+    doc.readVec3Into("dust_colour", dustColour);
+    doc.readInto("dust_density", &dustDensity);
     doc.readInto("shadow_range", &shadowRange);
     doc.readInto("shadow_fit_below", &shadowFitBelow);
     doc.readInto("shadow_bias_metres", &shadowBiasMetres);
@@ -50,7 +52,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
 
     static const char* kKnown[] = {
         "azimuth", "elevation", "sun_colour", "sun_strength", "sky_colour", "horizon_paleness",
-        "ground_colour", "ambient_strength", "exposure", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
+        "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
         "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;

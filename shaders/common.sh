@@ -9,6 +9,7 @@ uniform vec4 u_sunDir;      // xyz: towards the sun, world space. w: its strengt
 uniform vec4 u_sunColour;   // rgb: linear. w: ambient strength
 uniform vec4 u_skyColour;   // rgb: the zenith. w: the horizon's paleness
 uniform vec4 u_groundColour;// rgb: the turf that bounces light up. w: unused
+uniform vec4 u_dust;        // rgb: the dust's own colour, an albedo. w: its density per metre
 uniform vec4 u_camPos;      // xyz: the eye, world space. w: the far plane
 uniform vec4 u_params;      // x: ssao radius  y: ssao strength  z: exposure  w: pixels per unit at unit depth
 uniform vec4 u_material;    // x: cutout threshold (<0 is no cutout)  y: two-sided
@@ -76,6 +77,21 @@ vec3 skyPrefiltered(vec3 dir, float roughness)
 	vec3 sharp = skyColour(dir);
 	vec3 mean = mix(u_groundColour.rgb, u_skyColour.rgb, 0.5);
 	return mix(sharp, mean, roughness * roughness);
+}
+
+// The dust between the eye and a surface at `wpos`. The dust is lit as a flat patch of sand
+// would be -- the sun on level ground and the sky's mean -- so where it thickens it brings a
+// shadow up towards sunlit sand rather than laying grey over the sun. A lamp lights the
+// surface behind it and not the air, which at night is what should happen: the dust is
+// only as bright as the sky it hangs in.
+vec3 dusty(vec3 colour, vec3 wpos)
+{
+	float dist = length(u_camPos.xyz - wpos);
+	float amount = 1.0 - exp(-u_dust.w * dist);
+	vec3 l = normalize(u_sunDir.xyz);
+	vec3 lit = u_sunColour.rgb * (u_sunDir.w * max(l.y, 0.0) / 3.14159265)
+	         + mix(u_groundColour.rgb, u_skyColour.rgb, 0.5) * u_sunColour.w;
+	return mix(colour, u_dust.rgb * lit, amount);
 }
 
 // Karis' analytic fit to the split-sum BRDF, so there is no lookup texture to carry.

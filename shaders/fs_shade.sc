@@ -179,5 +179,5 @@ void main()
 	}
 	colour += emissive;
 
-	gl_FragColor = vec4(colour, 1.0);
+	gl_FragColor = vec4(dusty(colour, v_wpos), 1.0);
 }

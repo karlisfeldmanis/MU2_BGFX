@@ -220,7 +220,7 @@ private:
     // tools/shimmer.py found it; docs/shadow-probe.md.
     void bindShadeInputs();
     struct ShadeUniforms {
-        float sunDir[4], sunColour[4], skyColour[4], groundColour[4], camPos[4], params[4];
+        float sunDir[4], sunColour[4], skyColour[4], groundColour[4], dust[4], camPos[4], params[4];
         float shadowMtx[16], shadowParams[4], shadowDebug[4], shadowReach[4];
     };
     ShadeUniforms shade_ = {};
@@ -317,6 +317,7 @@ private:
     bgfx::UniformHandle uSunColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uSkyColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundColour_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uDust_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamPos_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uMaterial_ = BGFX_INVALID_HANDLE;

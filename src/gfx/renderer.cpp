@@ -49,6 +49,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uSunColour_ = bgfx::createUniform("u_sunColour", bgfx::UniformType::Vec4);
     uSkyColour_ = bgfx::createUniform("u_skyColour", bgfx::UniformType::Vec4);
     uGroundColour_ = bgfx::createUniform("u_groundColour", bgfx::UniformType::Vec4);
+    uDust_ = bgfx::createUniform("u_dust", bgfx::UniformType::Vec4);
     uCamPos_ = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
     uParams_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
     uMaterial_ = bgfx::createUniform("u_material", bgfx::UniformType::Vec4);
@@ -569,7 +570,7 @@ void Renderer::shutdown() {
         *p = BGFX_INVALID_HANDLE;
     }
     for (bgfx::UniformHandle* u :
-         {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
+         {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uCamPos_, &uParams_,
           &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uBloomTexel_,
@@ -586,6 +587,10 @@ void Renderer::bindShadeInputs() {
     bgfx::setUniform(uSunColour_, shade_.sunColour);
     bgfx::setUniform(uSkyColour_, shade_.skyColour);
     bgfx::setUniform(uGroundColour_, shade_.groundColour);
+    // A probe face sees the town from inside the air too, and its reflection is of the
+    // town as the eye sees it; but the probe stands a few metres from what it holds, so
+    // the dust it draws is the near air's, which is little.
+    bgfx::setUniform(uDust_, shade_.dust);
     if (probePass_) {
         // A probe face is lit for its own eye, not the camera's.
         const float eye[4] = {probeAt_[0], probeAt_[1], probeAt_[2], shade_.camPos[3]};
@@ -1212,6 +1217,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                         lighting.skyColour[2], lighting.horizonPaleness};
             const float groundColour[4] = {lighting.groundColour[0], lighting.groundColour[1],
                                            lighting.groundColour[2], 0.0f};
+            const float dust[4] = {lighting.dustColour[0], lighting.dustColour[1],
+                                   lighting.dustColour[2], lighting.dustDensity};
             const float camPos[4] = {camera.position[0], camera.position[1], camera.position[2],
                                      camera.farPlane};
             const uint16_t hw = uint16_t(std::max(1, width_ / 2));
@@ -1301,6 +1308,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             std::memcpy(shade_.sunColour, sunColour, sizeof(shade_.sunColour));
             std::memcpy(shade_.skyColour, skyColour, sizeof(shade_.skyColour));
             std::memcpy(shade_.groundColour, groundColour, sizeof(shade_.groundColour));
+            std::memcpy(shade_.dust, dust, sizeof(shade_.dust));
             std::memcpy(shade_.camPos, camPos, sizeof(shade_.camPos));
             std::memcpy(shade_.params, params, sizeof(shade_.params));
             std::memcpy(shade_.shadowMtx, shadowMtx, sizeof(shade_.shadowMtx));

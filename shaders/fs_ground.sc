@@ -141,5 +141,5 @@ void main()
 	// everywhere, so Fresnel spreads that highlight across most of the frame. MU2 measured
 	// this and pins its ground SPECULAR to zero; water is the exception and is sprint 8's.
 
-	gl_FragColor = vec4(colour, 1.0);
+	gl_FragColor = vec4(dusty(colour, v_wpos), 1.0);
 }
