@@ -39,3 +39,15 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Staff02 | arm | 2026-09-21 20:10 | passed | studio sheet: pale feather-and-bone staff, feathered head reads at every angle; dielectric, no blowouts |
 | Staff03 | arm | 2026-09-21 20:17 | passed | studio sheet: round gold shaft and hook streaked with bloom under dusk's sun at brass 0.44; brass 0.6 keeps a gold line down the shaft without the flare |
 | Staff04 | arm | 2026-09-21 20:16 | passed | studio sheet: MU's blue glass shaft and fins read at every angle, small brass tips catch the fire without blowing out |
+| Shield01 | arm | 2026-09-21 20:28 | passed | studio sheet: boss spike was plank and glowed chalk-white; it is steel 0.4 now and shades facet by facet. Wood face orange-brown with MU's seams; the back is dark facing away from sun and fire (the camera orbits; accepted) |
+| Shield10 | arm | 2026-09-21 20:26 | passed | studio sheet: dark ornate plate steel as MU paints it (sheet mean 60), border and boss read at noon and dusk; back dark away from the light (accepted) |
+| Shield02 | arm | 2026-09-21 20:34 | passed | studio sheet: the three horns bloomed white as plate_steel cones; steel 0.4 shades them along their length with a small tip glint; face dark steel with MU's pale centre |
+| Shield03 | arm | 2026-09-21 20:32 | passed | studio sheet: red rampant lion on gold reads at every front angle, painted leather, no metal; back dark away from sun and fire (ambient only, measured ~(20,11,6), not a hole) |
+| Shield05 | arm | 2026-09-21 20:36 | passed | studio sheet: hammered plate steel with the skull boss and scalloped rim, a soft rim glint, no blowouts; back ambient-dark (accepted) |
+| Shield06 | arm | 2026-09-21 20:38 | passed | studio sheet: gold dragon on blue reads from the front, the strapped back (its own sheet) reads with a warm rim; dielectric, no blowouts |
+| Shield07 | arm | 2026-09-21 20:40 | passed | studio sheet: pale bone horns and the ribbed skull read from front and back, MU's banded paint; dielectric bone, no blowouts |
+| Shield08 | arm | 2026-09-21 20:44 | passed | studio sheet: the twelve spikes were a column of white bloom as plate_steel cones; steel 0.4 shades them blue-grey with a glint or two; green-mottled face is MU's paint |
+| Shield09 | arm | 2026-09-21 20:45 | passed | studio sheet: MU's blue face with yellow-green knotwork reads at every front angle, painted leather, navy back; no metal, no faults |
+| Shield11 | arm | 2026-09-21 20:47 | passed | studio sheet: ornate plate steel face and raised rim read at noon and dusk, no blowouts; back ambient-dark (accepted) |
+| Shield12 | arm | 2026-09-21 20:51 | passed | studio sheet: the gilt serpent head blew out at 225-315 deg at brass 0.44; at 0.6 it reads orange-gold with its scales; dark carved face and pale hide are MU's paint |
+| Shield13 | arm | 2026-09-21 20:53 | passed | studio sheet: the gilt lion's face blew out at brass 0.44; at 0.6 its features read against MU's verdigris green |

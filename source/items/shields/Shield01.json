@@ -51,7 +51,7 @@
   "islands": [
     {
       "island": 0,
-      "material": "plank",
+      "material": "steel",
       "triangles": 4,
       "area": 425.3,
       "along": [
@@ -69,7 +69,8 @@
         0.003,
         0.994,
         0.997
-      ]
+      ],
+      "note": "the boss spike: four triangles on the diagonal band in the sheet's corner, painted white to black as MU paints a polished point. Seen in the studio 2026-09-21 - the open question's 'strap, rim or scrap' is the cone standing off the face - and as plank it was a chalk-white glowing cone."
     },
     {
       "island": 1,
@@ -93,5 +94,11 @@
         0.922
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.4
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: the spike is steel, and at 0.4 rather than the library's 0.2 so four small facets are not four mirrors, as the flat blades of Sword02 and Sword08."
 }

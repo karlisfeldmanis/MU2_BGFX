@@ -65,7 +65,7 @@
     },
     {
       "island": 1,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -87,7 +87,7 @@
     },
     {
       "island": 2,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -109,7 +109,7 @@
     },
     {
       "island": 3,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -131,7 +131,7 @@
     },
     {
       "island": 4,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -153,7 +153,7 @@
     },
     {
       "island": 5,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -175,7 +175,7 @@
     },
     {
       "island": 6,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -197,7 +197,7 @@
     },
     {
       "island": 7,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -219,7 +219,7 @@
     },
     {
       "island": 8,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -241,7 +241,7 @@
     },
     {
       "island": 9,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -263,7 +263,7 @@
     },
     {
       "island": 10,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -285,7 +285,7 @@
     },
     {
       "island": 11,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -307,7 +307,7 @@
     },
     {
       "island": 12,
-      "material": "plate_steel",
+      "material": "steel",
       "triangles": 3,
       "area": 127.4,
       "along": [
@@ -327,5 +327,11 @@
         0.183
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.4
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: the twelve spikes (islands 1-12) are cones, and as plate_steel they mirrored the sun into a column of white bloom at 0, 270 and 315 deg. Steel at 0.4, as the Horn Shield's horns; the face stays plate_steel."
 }

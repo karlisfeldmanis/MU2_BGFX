@@ -88,5 +88,11 @@
         0.995
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: at brass's 0.44 the serpent's gilt head and band blew out yellow-white with bloom at 225-315 deg. Brass at 0.6 spreads the highlight, as for the Serpent Sword's grip and the staves."
 }

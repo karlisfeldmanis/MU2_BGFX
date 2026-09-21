@@ -108,5 +108,11 @@
         0.39
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: at brass's 0.44 the gilt lion's face at the centre blew out yellow-white at 0 and 315 deg, against MU's verdigris green. Brass at 0.6 spreads the highlight, as for the Serpent Sword's grip and the staves."
 }
