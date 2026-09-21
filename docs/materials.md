@@ -134,13 +134,21 @@ the library asks 0.08. The factors now travel from the glb through the `.mum` (v
   | 2 | noria's and charscene's water at 0.722 where water asks 0.08 | MU2's build, stale |
   | 1 | an `OPAQUE` material with 12% of its alpha below the threshold | MU2's export |
 
-  **The 46 and the 2 have one cause and it is dated.** MU2's `ROUGHNESS_FLOOR` used to be
-  high enough to flatten the whole library — its own note records ArmorMale10 and Axe01 both
-  running 0.722 to 0.749 across an entire sheet — and it was lowered on 2026-09-05. 103 of
-  the 329 models in `assets/` were baked before that day and still carry it. `Potion01`,
-  `Potion03`, `Antidote01` and `Axe02` are the clearest: every material on them measures the
-  same 0.722, `glass` included, where the library asks 0.12. The repair is a rebuild of those
-  103 in MU2 and a re-sync, not a change here.
+  **The 46 and the 2 have one cause, in two places.** MU2's `ROUGHNESS_FLOOR` of 0.72
+  flattened the whole library — its own note records ArmorMale10 and Axe01 both running 0.722
+  to 0.749 across an entire sheet. `build_maps.py`, the baked path, replaced it with a
+  per-texel specular floor on 2026-09-05, and items baked before that day still carry it:
+  `Potion01`, `Potion03`, `Antidote01` and `Axe02` are the clearest, every material at 0.722,
+  `glass` included, where the library asks 0.12. `tiled_maps.py`, the path every world object
+  and ground takes, kept the old floor until 2026-09-21, which is why every metal in Lorencia
+  — railings, gate, sign, lamp, cannon — measured 0.722 where `wrought_iron` asks 0.50, and
+  why Noria's water does. The world audit of that day ported the specular floor and rebuilt
+  Lorencia's 31 affected objects; Noria, charscene and the old items still want a rebuild
+  in MU2 and a re-sync, not a change here.
+- **Most of the metal was invisible to this audit.** A metal slot named after its sheet
+  (`steel_barred_a`) claims no library entry, so nothing compared its 0.722 with the 0.50 its
+  recipe asked for; only House02, whose slot happens to be called `steel`, failed. The world
+  audit of 2026-09-21 read the recipes by hand for that reason.
 
   The 28 relief failures that used to sit in this table were the audit's own fault and are
   described above. Removing them took the baseline from 90 to 62.

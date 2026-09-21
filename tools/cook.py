@@ -342,6 +342,13 @@ def skin_bones(document, binary, skin):
     return bones
 
 
+def primitive_material_name(document, primitive):
+    """The name of the material a primitive draws with, or "" if it has none."""
+    index = primitive.get("material")
+    materials = document.get("materials", [])
+    return materials[index].get("name", "") if index is not None and index < len(materials) else ""
+
+
 def cook_mesh(model, path, out_path, textures, hidden=None):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
 
@@ -349,11 +356,21 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
     bytes on the end of the 48, and the skin's own bone table after the materials. An
     unskinned one writes version 3 exactly as the town's models do.
 
-    `hidden` is `index.json`'s `hidden_mesh` -- the primitive MU replaces with the weapon in
-    the figure's hand. Drawn, the Bull Fighter carries two axes and the Hound wears a quarter
-    of itself twice, so it is dropped here rather than skipped at load.
+    `hidden` is `index.json`'s `hidden_mesh`: MU's `c->Object.HiddenMesh`, the mesh a variant
+    puts away -- the plain Hound's helm, the plain Bull Fighter's crest. It is dropped here
+    rather than skipped at load.
+
+    The number is MU's mesh index in the .bmd and not a glb primitive index. MU2's exporter
+    groups primitives by material and ships the mesh to put away as a part called `hidden`,
+    so that name is what is dropped. Taken as a primitive index until 2026-09-21, it dropped
+    the Hound's bare fur head and drew it in the Hell Hound's brass helm, and cut six
+    triangles of horn off the Bull Fighter while leaving it the Elite's crest. The index is
+    kept only for a glb with no part of that name.
     """
     document, binary = read_glb(path)
+    named_hidden = hidden is not None and any(
+        primitive_material_name(document, primitive) == "hidden"
+        for mesh in document.get("meshes", []) for primitive in mesh.get("primitives", []))
 
     for node in document.get("nodes", []):
         if "mesh" in node and not identity(node):
@@ -383,7 +400,9 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
             if "POSITION" not in attributes:
                 continue
             primitive_index += 1
-            if hidden is not None and primitive_index == hidden:
+            if hidden is not None and (
+                    primitive_material_name(document, primitive) == "hidden" if named_hidden
+                    else primitive_index == hidden):
                 continue
             positions = read_accessor(document, binary, attributes["POSITION"])
             count = len(positions)
@@ -1830,6 +1849,16 @@ def cook_figures(world, out_dir, texcook, threads):
     for one in monsters:
         if one.get("hidden_mesh") is not None:
             hidden_of.setdefault(one["mesh"], one["hidden_mesh"])
+    # And a row on that mesh which keeps the hidden part gets a whole copy of its own. The
+    # Elite keeps the crest the plain Bull Fighter puts away, which is the whole of what tells
+    # them apart, so one .mum cannot serve both. Its clips are the base mesh's: see clip_of.
+    whole_of = {}
+    for one in monsters:
+        if one["mesh"] in hidden_of and one.get("hidden_mesh") is None:
+            variant = one["mesh"] + "~whole"
+            whole_of[variant] = one["mesh"]
+            models[variant] = models[one["mesh"]]
+            one["mesh"] = variant
     mesh_table = {}
     clip_of = {}
     libraries = {}
@@ -1843,6 +1872,8 @@ def cook_figures(world, out_dir, texcook, threads):
         mesh_table[name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,
                             "triangles": tris}
         document, _binary = read_glb(path)
+        if name in whole_of:
+            continue                                  # its clips are its base mesh's
         if document.get("animations"):
             clip_of[name] = name                      # its own, embedded: a monster
             libraries[name] = path
@@ -1862,6 +1893,10 @@ def cook_figures(world, out_dir, texcook, threads):
             stem = os.path.basename(library)[: -len(".actions.glb")]
             libraries[stem] = library
             clip_of[name] = stem
+
+    for variant, base in whole_of.items():
+        if base in clip_of:
+            clip_of[variant] = clip_of[base]
 
     monster_actions = index.get("monster_actions", {})
     holds = set(index.get("monster_holds", []))
