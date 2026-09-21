@@ -54,7 +54,9 @@ Paths on the command line must be absolute.
 MU2's pipeline, carried here on 2026-09-21 so this tree builds its own content without MU2 or
 Godot: `source/` holds the recipes and MU's imported art (MU2's `assets/`, and `mu.db`),
 `pipeline/` the scripts, `workshop/` their output (MU2's `build/`). Needs Blender and
-python3 with numpy, Pillow and torch. See `docs/content.md`.
+python3 with numpy, Pillow and torch. MU's own data is
+[sven-n/MuMain](https://github.com/sven-n/MuMain/tree/main/src/bin/Data), fetched by
+`tools/fetch_mumain.sh`. See `docs/content.md`.
 
     ./tools/sync.sh                              everything index.json reaches
     ./tools/sync.sh --world lorencia --only-world

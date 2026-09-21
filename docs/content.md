@@ -3,6 +3,10 @@
 Carried over from MU2 on 2026-09-21 so this tree can make its own content on any machine,
 without MU2's Godot projects. Four stages; the first is done once per asset and kept in git.
 
+MU's own files come from [sven-n/MuMain](https://github.com/sven-n/MuMain), under
+[`src/bin/Data`](https://github.com/sven-n/MuMain/tree/main/src/bin/Data), at commit
+`c0d74c4ed5edfad527b71899337f72d39bfc49f3` — the one `tools/fetch_mumain.sh` checks out.
+
 | stage | from | to | tool | in git |
 |---|---|---|---|---|
 | import | MU's `Data/` (`tools/fetch_mumain.sh`) | `source/` | MuExtract, `decode_texture.py`, `terrain.py` | `source/` yes |
