@@ -6,6 +6,27 @@
 
 namespace mu::game {
 
+// Whether a row may be bound to a key at all: CanRegisterItemHotKey's list, of which this
+// catalogue has the apple, the six potions and the Town Portal Scroll. Held.Usable.
+static bool usable(const content::Tables& tables, int32_t item) {
+    if (item < 0) return false;
+    const content::ItemRow& row = tables.items[size_t(item)];
+    return sim::heals(row) || sim::restores(row) ||
+           (row.group == sim::kGroupPotions && row.number == 10);
+}
+
+// Whether a carried row may stand in for a bound one: the same group, and either exactly the
+// Town Portal, or the same family at no higher a rank -- the healing family falls to the
+// apple and the mana family to the small mana potion. Quick.Substitutes.
+static bool substitutes(const content::Tables& tables, int32_t carried, int32_t bound) {
+    const content::ItemRow& c = tables.items[size_t(carried)];
+    const content::ItemRow& b = tables.items[size_t(bound)];
+    if (c.group != b.group) return false;
+    if (b.number == 10) return c.number == 10;
+    return c.number <= b.number && (b.number >= 4 ? sim::restores(c) : sim::heals(c));
+}
+
+
 bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
                 content::Textures* textures) {
     if (!interface_.init(shaderDir)) return false;
@@ -93,13 +114,24 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play) {
         // worn slot again.
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
             play.sell(asked.outside);
+        } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
+            // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
+            const int key = hud_.quickAt(asked.outsideX, asked.outsideY);
+            const sim::Held& what = play.realm().satchel()[asked.outside];
+            if (!what.empty() && usable(*play.realm().tables(), what.item)) {
+                quick_[key] = what.item;
+                core::logf("window: slot %d bound to key %d", asked.outside, key + 1);
+            }
         } else if (asked.outside >= 0) {
             core::logf("window: %d let go outside the bag; kept", asked.outside);
         }
         if (asked.close) inventoryOpen_ = false;
     }
 
-    if (play.isOpen()) labelGround(play, window.width(), window.height());
+    if (play.isOpen()) {
+        labelGround(play, window.width(), window.height());
+        quickKeys(window, play);
+    }
 
     takesPointer_ = hud_.covers(pointer.x, pointer.y) ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
@@ -119,6 +151,53 @@ void Desk::script(float x, float y, bool press, bool release, bool right) {
     core::logf("window: scripted %s at (%.0f, %.0f)",
                right ? "right press" : (press ? "press" : (release ? "release" : "drag")),
                double(x), double(y));
+}
+
+void Desk::quickKeys(const gfx::Window& window, Play& play) {
+    const sim::Realm& realm = play.realm();
+    const content::Tables& tables = *realm.tables();
+    const sim::Satchel& bag = realm.satchel();
+    const gfx::Window::Key keys[4] = {gfx::Window::Key::Potion1, gfx::Window::Key::Potion2,
+                                      gfx::Window::Key::Potion3, gfx::Window::Key::Potion4};
+    for (int key = 0; key < 4; ++key) {
+        if (!window.pressed(keys[key]) && scriptedKey_ != key) continue;
+        // Hovering a thing in the open bag and pressing the key binds it, which is MU's own
+        // gesture (CNewUIMyInventory::UpdateKeyEvent); otherwise the key uses what is bound.
+        const int hovered = inventoryOpen_ ? bag_.hovered() : -1;
+        if (hovered >= 0 && usable(tables, bag[hovered].item)) {
+            quick_[key] = bag[hovered].item;
+            core::logf("window: slot %d bound to key %d", hovered, key + 1);
+            continue;
+        }
+        if (quick_[key] < 0) continue;
+        // The strongest of what may stand in for it, which is where MU's descending walk stops
+        // first. Quick.Choose.
+        int best = -1, strongest = -1;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (bag[slot].empty() || !substitutes(tables, bag[slot].item, quick_[key])) continue;
+            const int number = tables.items[size_t(bag[slot].item)].number;
+            if (number > strongest) {
+                strongest = number;
+                best = slot;
+            }
+        }
+        if (best >= 0) play.useItem(best);
+    }
+    scriptedKey_ = -1;
+    // And what each box shows, handed to the frame.
+    for (int key = 0; key < 4; ++key) {
+        Hud::Quick q;
+        q.item = quick_[key];
+        if (q.item >= 0) {
+            q.label = tables.items[size_t(q.item)].label;
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                if (!bag[slot].empty() && substitutes(tables, bag[slot].item, q.item)) {
+                    q.count += std::max<int>(1, bag[slot].durability);
+                }
+            }
+        }
+        hud_.setQuick(key, q);
+    }
 }
 
 // MU2's Drops.Tint, which is BuildGroundItemLabelDescriptor's ladder: the colour IS the

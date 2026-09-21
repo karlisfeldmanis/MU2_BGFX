@@ -142,6 +142,8 @@ struct Args {
         bool right = false;
     };
     std::vector<UiClick> uiClicks;
+    // Scripted potion keys: FRAME:KEY, KEY 1 to 4, pressed on FRAME. Repeatable.
+    std::vector<std::pair<int, int>> uiKeys;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.
     std::string give;
     long long zen = 0;     // Zen in hand at the start

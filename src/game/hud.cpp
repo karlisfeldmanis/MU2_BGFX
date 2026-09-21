@@ -163,7 +163,16 @@ bool Hud::Face::operator==(const Face& o) const {
            maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
            level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
            character == o.character && hovered == o.hovered && tip == o.tip &&
-           (!tip || (pointerX == o.pointerX && pointerY == o.pointerY));
+           (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
+           quick[0] == o.quick[0] && quick[1] == o.quick[1] && quick[2] == o.quick[2] &&
+           quick[3] == o.quick[3];
+}
+
+int Hud::quickAt(float x, float y) const {
+    for (int i = 0; i < 4; ++i) {
+        if (plate(screen_, boxPx(kFirstQuick + i)).has(x, y)) return i;
+    }
+    return -1;
 }
 
 void Hud::open(const gfx::Interface& interface, panel::Arts* arts) {
@@ -271,6 +280,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.tip = tipAt(pointer.x, pointer.y);
         now_.pointerX = pointer.x;
         now_.pointerY = pointer.y;
+        for (int i = 0; i < 4; ++i) now_.quick[i] = quick_[i];
     }
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
@@ -310,6 +320,23 @@ void Hud::rebuild() {
     // skill sprint and the item boxes until the quick bar is built.
     for (int i = 0; i < kSlots; ++i) {
         if (now_.hovered == i) canvas_.image(arts.get("hud_slot_hover"), plate(s, boxPx(i)));
+    }
+
+    // What is bound to the four potion boxes: the thing's name, cut to the box, and how many
+    // of it he carries at the box's foot -- Quick.cs's count, which counts what may stand in
+    // for it too. Dim when he has none left, as MU draws an empty hotkey. The picture is the
+    // stage's, and until the stage lands the name stands in for it.
+    const float quickSize = std::round(11.0f * kUnit * s.scale);
+    for (int i = 0; i < 4; ++i) {
+        const Quick& q = quick_[i];
+        if (q.item < 0) continue;
+        const Box box = plate(s, boxPx(kFirstQuick + i));
+        const uint32_t ink = q.count > 0 ? kInk : kDeadIcon;
+        std::string word = q.label.substr(0, std::min<size_t>(q.label.size(), 5));
+        canvas_.shadowed(box.midX(), box.midY(), quickSize, ink, kInkShadow, 1.0f, word,
+                         gfx::Align::Centre, 0.0f);
+        canvas_.shadowed(box.x, box.bottom() - 3.0f, quickSize, ink, kInkShadow, 1.0f,
+                         std::to_string(q.count), gfx::Align::Right, box.w - 3.0f);
     }
 
     // The keys, relabelled. The painted figure is covered by the rail's own dark and the key

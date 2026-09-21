@@ -60,6 +60,7 @@ void printUsage() {
         "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
+        "  --ui-key F:K              press potion key K (1-4) on frame F\n"
         "  --zen N                   start with N Zen\n"
         "  --loot                    --click-every picks up drops before it fights\n"
         "  --talk NAME               walk to the townsperson whose name holds NAME\n"
@@ -296,6 +297,15 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.zen = std::atoll(v);
         } else if (!std::strcmp(s, "--talk")) {
             if (const char* v = next(s)) a.talk = v;
+        } else if (!std::strcmp(s, "--ui-key")) {
+            int f = 0, k = 0;
+            const char* v = next(s);
+            if (v && std::sscanf(v, "%d:%d", &f, &k) == 2 && k >= 1 && k <= 4) {
+                a.uiKeys.push_back({f, k});
+            } else {
+                logError("--ui-key is FRAME:KEY with KEY 1 to 4");
+                a.valid = false;
+            }
         } else if (!std::strcmp(s, "--give")) {
             if (const char* v = next(s)) a.give = v;
         } else if (!std::strcmp(s, "--windows")) {

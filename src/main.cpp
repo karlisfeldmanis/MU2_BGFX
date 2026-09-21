@@ -610,6 +610,9 @@ int main(int argc, char** argv) {
                     float viewProjNow[16];
                     bx::mtxMul(viewProjNow, view, proj);
                     desk.setView(viewProjNow);
+                    for (const auto& [f, k] : args.uiKeys) {
+                        if (frame == f) desk.scriptKey(k - 1);
+                    }
                     const float w = float(window.width()), h = float(window.height());
                     for (const core::Args::UiClick& c : args.uiClicks) {
                         const bool drag = c.x2 != c.x || c.y2 != c.y;

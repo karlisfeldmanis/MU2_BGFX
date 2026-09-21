@@ -130,9 +130,22 @@ is not a migration.
   --windows inventory` picks up 165 Zen in 5,000 frames; the shot shows the `55 Zen` label.
 - Two seeded headless runs of the spider field are the same bytes.
 
+### The quick bar on 1 to 4 (2026-09-21)
+
+- MU's gesture binds: a potion hovered in the bag with its key pressed
+  (`CNewUIMyInventory::UpdateKeyEvent`), and MU2's drag of one onto a potion box. The key then
+  drinks the strongest carried thing that may stand in for the bound one -- the healing family
+  falls to the apple, the mana family to the small mana potion, the Town Portal only to itself
+  (`Quick.Substitutes`) -- and the box counts all of them.
+- Proved with `--ui-click 50:<bag slot 12>:<first potion box>` and `--ui-key 100:1
+  --ui-key 140:1`: `slot 12 bound to key 1`, `use 12 taken`, and the second press refused
+  inside the half-second cooldown. The box reads `Mediu 4`: two Medium Healing Potions and
+  the two Apples that stand in for them.
+- **The bindings are the interface's** until sprint 9's save writes them.
+
 **Not done yet:** the item pictures (step 5's stage: the bag and the shelf draw a name in
-each box until it lands, which waits on the reflection-probe work in the renderer), and the
-quick bar on 1 to 4.
+each box until it lands, which waits on the reflection-probe work in the renderer), and so
+the potion boxes and the drops on the ground wait with them.
 
 ### Findings
 

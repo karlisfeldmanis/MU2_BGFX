@@ -37,6 +37,8 @@ public:
     // just a place. The run's --ui-click goes through here and then through exactly the
     // windows' own code.
     void script(float x, float y, bool press, bool release, bool right = false);
+    // A scripted potion key for the next update, 0 to 3.
+    void scriptKey(int key) { scriptedKey_ = key; }
     // The camera this frame, for the names over what lies on the ground.
     void setView(const float* viewProj) {
         for (int i = 0; i < 16; ++i) viewProj_[i] = viewProj[i];
@@ -69,6 +71,11 @@ private:
     void labelGround(const Play& play, int width, int height);
     Stage* shelfStage_ = nullptr;
     bool trading_ = false;
+    // The four potion keys' bindings, as MU's item row. The interface's until sprint 9's save
+    // writes them (mu.db's character_hotkeys is where MU2 kept them).
+    int32_t quick_[4] = {-1, -1, -1, -1};
+    int scriptedKey_ = -1;
+    void quickKeys(const gfx::Window& window, Play& play);
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;

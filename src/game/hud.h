@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "game/panel.h"
 #include "gfx/interface.h"
@@ -39,6 +40,23 @@ struct Pointer {
 class Hud {
 public:
     enum class Button { Menu, Chat, Inventory, Character };
+
+    // What one of the four potion boxes shows: the row bound to it (or -1), what it is called
+    // and how many of it and what may stand in for it he carries. Given by the desk, which owns
+    // the binding; the frame draws what it is handed.
+    struct Quick {
+        int32_t item = -1;
+        std::string label;
+        int count = 0;
+        bool operator==(const Quick& o) const {
+            return item == o.item && count == o.count;
+        }
+    };
+    void setQuick(int key, const Quick& quick) {
+        if (key >= 0 && key < 4) quick_[key] = quick;
+    }
+    // Which potion box a point is over, 0 to 3, or -1: where a drag from the bag binds.
+    int quickAt(float x, float y) const;
 
     void open(const gfx::Interface& interface, panel::Arts* arts);
     void follow(const sim::Body* hero);
@@ -69,6 +87,7 @@ private:
         int hovered = -1;  // which button or slot is lit
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;
+        Quick quick[4];
         bool operator==(const Face& o) const;
     };
 
@@ -89,6 +108,7 @@ private:
     float slid_ = 0.0f;
     int drawnLevel_ = 0;
     uint64_t rebuilds_ = 0;
+    Quick quick_[4];
 };
 
 }  // namespace mu::game

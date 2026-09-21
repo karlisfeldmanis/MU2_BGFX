@@ -47,6 +47,8 @@ public:
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
+    // The slot whose thing is under the pointer, or -1: what a quick key binds.
+    int hovered() const { return up_ ? hovered_ : -1; }
     const gfx::Canvas& canvas() const { return canvas_; }
     uint64_t rebuilds() const { return rebuilds_; }
 
