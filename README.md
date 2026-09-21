@@ -105,3 +105,14 @@ not a look: the cost of that pass is **fill rate**, so what decides its account 
 of the screen the sprites cover rather than how many there are, and `--effect-size` is what
 drives that. 64 sprites half a metre across cost nothing measurable; 64 sprites 60 m across
 cost 1.19 ms. `docs/budget.md` has the table and the rate derived from it.
+
+    ./run.sh --world lorencia --still --no-figures --frames 60 --shot 1 --shot-path /abs/slide --shadow-slide 3
+    tools/shimmer.py /abs/slide --heat /abs/heat.png --allow 200
+
+The shadow shimmer test. The camera holds and only the sun's split moves, so any pixel that
+changes between two frames is the shadow's fault. `--shadow-log PATH` writes the split's
+texel phase on a world-fixed grid and the camera's lag behind the character, one row a frame,
+and works on a `--play` walk. `docs/shadow-probe.md` has how to read both, and the three
+faults they found. `tools/pan.py` measures the same with the camera moving, at fixed spots on
+the ground, and `tools/shadowref.py` measures the character's own shadow against a much finer
+map on identical frames (`--fixed-dt`). `--shadow-view` draws the sun's visibility alone.

@@ -35,6 +35,24 @@ struct Args {
     std::string sheet;       // absolute; sheets/lighting.json by default
     float distance = 0.0f;   // camera distance in world units; 0 frames on the model
     bool still = false;      // hold the camera instead of turning it
+    // The shadow probe. `--shadow-log` writes a csv row a frame of where the sun's split
+    // stood against a grid fixed to the world, and how far the camera trails the character;
+    // `--shadow-slide` moves the split alone this many millimetres a frame, so that with the
+    // camera held any pixel that changes is the shadow's. docs/shadow-probe.md.
+    std::string shadowLog;   // absolute
+    float shadowSlideMm = 0.0f;
+    // `--shadow-points` writes, a row a frame, where a fixed grid of ground points lands on
+    // screen, so tools/pan.py can read the picture at the SAME world spots while the camera
+    // moves. `--shadow-view` draws the sun's visibility alone; `--shadow-noise` is where the
+    // penumbra's turn is anchored; `--shadow-size` the map's side in texels.
+    std::string shadowPoints;  // absolute
+    bool shadowView = false;
+    int shadowNoise = -1;      // -1 leaves the renderer's own choice
+    int shadowSize = 4096;
+    // Every frame advances the world by exactly this many milliseconds instead of by the last
+    // frame's wall time, so that two runs draw the same frames and can be compared picture by
+    // picture. 0 is the wall clock.
+    float fixedDtMs = 0.0f;
     int msaa = 4;            // samples on the prepass, depth and shade targets
 
     // The world. A name under assets/world/; empty runs the model bench instead.

@@ -146,6 +146,14 @@ void World::update(double seconds, bool still) {
     for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * kDistance;
 }
 
+bool World::characterAt(float* x, float* z) const {
+    if (!play_.isOpen()) return false;
+    float column = focusColumn_, row = focusRow_;
+    play_.focus(&column, &row);
+    tileToMetres(column, row, x, z);
+    return true;
+}
+
 void World::shutdown() {
     play_.shutdown();
     crowd_.shutdown();

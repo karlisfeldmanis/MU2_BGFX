@@ -37,6 +37,13 @@ void printUsage() {
         "  --dist N                  camera distance in world units\n"
         "  --still                   hold the camera instead of turning it\n"
         "  --spin                    turn it after all, undoing an earlier --still\n"
+        "  --shadow-log PATH         a csv row a frame: the sun's split against a world grid\n"
+        "  --shadow-slide MM         move the split alone MM millimetres a frame\n"
+        "  --shadow-points PATH      a csv row a frame: a ground grid's pixels, for tools/pan.py\n"
+        "  --shadow-view             draw the sun's visibility alone, as grey\n"
+        "  --shadow-noise WHERE      the penumbra's turn: screen, world or none\n"
+        "  --shadow-size N           the sun's map, N texels square (default 4096)\n"
+        "  --fixed-dt MS             advance every frame by MS, so two runs draw the same frames\n"
         "  --no-cull                 submit every placement, not only the visible chunks\n"
         "  --msaa N                  1, 2, 4 or 8 samples (default 4)\n"
         "  --world NAME              raise a world instead of the model bench\n"
@@ -261,6 +268,42 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.category = v;
         } else if (!std::strcmp(s, "--pick")) {
             if (const char* v = next(s)) a.pick = v;
+        } else if (!std::strcmp(s, "--shadow-log")) {
+            if (const char* v = next(s)) {
+                a.shadowLog = v;
+                wantsAbsolute("--shadow-log", a.shadowLog, &a.valid);
+            }
+        } else if (!std::strcmp(s, "--shadow-points")) {
+            if (const char* v = next(s)) {
+                a.shadowPoints = v;
+                wantsAbsolute("--shadow-points", a.shadowPoints, &a.valid);
+            }
+        } else if (!std::strcmp(s, "--shadow-view")) {
+            a.shadowView = true;
+        } else if (!std::strcmp(s, "--shadow-noise")) {
+            if (const char* v = next(s)) {
+                if (!std::strcmp(v, "screen")) a.shadowNoise = 0;
+                else if (!std::strcmp(v, "world")) a.shadowNoise = 1;
+                else if (!std::strcmp(v, "none")) a.shadowNoise = 2;
+                else {
+                    logError("--shadow-noise is screen, world or none, got '%s'", v);
+                    a.valid = false;
+                }
+            }
+        } else if (!std::strcmp(s, "--shadow-size")) {
+            if (const char* v = next(s)) {
+                a.shadowSize = std::atoi(v);
+                if (a.shadowSize < 256 || a.shadowSize > 8192 ||
+                    (a.shadowSize & (a.shadowSize - 1))) {
+                    logError("--shadow-size is a power of two from 256 to 8192, got %d",
+                             a.shadowSize);
+                    a.valid = false;
+                }
+            }
+        } else if (!std::strcmp(s, "--fixed-dt")) {
+            if (const char* v = next(s)) a.fixedDtMs = float(std::atof(v));
+        } else if (!std::strcmp(s, "--shadow-slide")) {
+            if (const char* v = next(s)) a.shadowSlideMm = float(std::atof(v));
         } else if (!std::strcmp(s, "--still")) {
             a.still = true;
         } else if (!std::strcmp(s, "--no-cull")) {

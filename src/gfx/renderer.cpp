@@ -39,8 +39,10 @@ bgfx::ProgramHandle loadProgram(const std::string& dir, const char* vs, const ch
 
 }  // namespace
 
-bool Renderer::init(int width, int height, const std::string& shaderDir, int msaa) {
+bool Renderer::init(int width, int height, const std::string& shaderDir, int msaa,
+                    uint16_t shadowSize) {
     msaa_ = msaa;
+    shadowSize_ = shadowSize;
     if (!loadPrograms(shaderDir)) return false;
 
     uSunDir_ = bgfx::createUniform("u_sunDir", bgfx::UniformType::Vec4);
@@ -52,6 +54,8 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uMaterial_ = bgfx::createUniform("u_material", bgfx::UniformType::Vec4);
     uShadowMtx_ = bgfx::createUniform("u_shadowMtx", bgfx::UniformType::Mat4);
     uShadowParams_ = bgfx::createUniform("u_shadowParams", bgfx::UniformType::Vec4);
+    uShadowDebug_ = bgfx::createUniform("u_shadowDebug", bgfx::UniformType::Vec4);
+    uShadowReach_ = bgfx::createUniform("u_shadowReach", bgfx::UniformType::Vec4);
     uCamRay_ = bgfx::createUniform("u_camRay", bgfx::UniformType::Vec4);
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
     uGroundRepeat_ = bgfx::createUniform("u_groundRepeat", bgfx::UniformType::Vec4);
@@ -181,7 +185,7 @@ bool Renderer::createTargets(int width, int height) {
 
     // The shadow map is read twice: through the compare sampler for the filtered result,
     // and as plain depth to find the blocker. docs/conventions.md.
-    shadowMap_ = bgfx::createTexture2D(kShadowSize, kShadowSize, false, 1,
+    shadowMap_ = bgfx::createTexture2D(shadowSize_, shadowSize_, false, 1,
                                        bgfx::TextureFormat::D16, rt | clamp);
     shadowFb_ = bgfx::createFrameBuffer(1, &shadowMap_, true);
 
@@ -236,7 +240,7 @@ bool Renderer::createTargets(int width, int height) {
         ok = false;
     }
     core::logf("targets %dx%d, %dx msaa, shadow %u, ssao %dx%d", width, height, msaa_,
-               unsigned(kShadowSize), hw, hh);
+               unsigned(shadowSize_), hw, hh);
     return ok;
 }
 
@@ -277,7 +281,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
-          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_, &sBones_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
@@ -288,11 +292,72 @@ void Renderer::shutdown() {
 }
 
 void Renderer::bindShadeInputs() {
+    bgfx::setUniform(uSunDir_, shade_.sunDir);
+    bgfx::setUniform(uSunColour_, shade_.sunColour);
+    bgfx::setUniform(uSkyColour_, shade_.skyColour);
+    bgfx::setUniform(uGroundColour_, shade_.groundColour);
+    bgfx::setUniform(uCamPos_, shade_.camPos);
+    bgfx::setUniform(uParams_, shade_.params);
+    bgfx::setUniform(uShadowMtx_, shade_.shadowMtx);
+    bgfx::setUniform(uShadowParams_, shade_.shadowParams);
+    bgfx::setUniform(uShadowDebug_, shade_.shadowDebug);
+    bgfx::setUniform(uShadowReach_, shade_.shadowReach);
     bgfx::setTexture(4, sShadowCompare_, shadowMap_,
                      BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(5, sShadowDepth_, shadowMap_,
                      BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(7, sAo_, blurTex_);
+}
+
+void Renderer::fitSplit(const Camera& camera, const Lighting& lighting, const float* worldAxes,
+                        float* side, bx::Vec3* offset) {
+    // Relative to the target throughout, so the answer depends on the camera's shape and not
+    // on where in the world it stands.
+    const bx::Vec3 eye(camera.position[0] - camera.target[0],
+                       camera.position[1] - camera.target[1],
+                       camera.position[2] - camera.target[2]);
+    const bx::Vec3 forward = bx::normalize(bx::neg(eye));
+    const bx::Vec3 right =
+        bx::normalize(bx::cross(forward, bx::Vec3(camera.up[0], camera.up[1], camera.up[2])));
+    const bx::Vec3 upward = bx::cross(right, forward);
+    const float tanY = std::tan(camera.fovDegrees * 0.5f * 3.14159265f / 180.0f);
+    const float tanX = tanY * float(width_) / float(std::max(1, height_));
+    const float plane = -lighting.shadowFitBelow;
+
+    float lo[2] = {1e30f, 1e30f}, hi[2] = {-1e30f, -1e30f};
+    auto take = [&](const bx::Vec3& p) {
+        // worldAxes' translation runs along the sun, so x and y are the rotation's alone.
+        const bx::Vec3 l = bx::mul(p, worldAxes);
+        lo[0] = std::min(lo[0], l.x);
+        hi[0] = std::max(hi[0], l.x);
+        lo[1] = std::min(lo[1], l.y);
+        hi[1] = std::max(hi[1], l.y);
+    };
+    take(eye);
+    for (int sx = -1; sx <= 1; sx += 2) {
+        for (int sy = -1; sy <= 1; sy += 2) {
+            const bx::Vec3 ray = bx::add(forward, bx::add(bx::mul(right, float(sx) * tanX),
+                                                          bx::mul(upward, float(sy) * tanY)));
+            // A corner that looks level or up never meets the ground, and there is no hull
+            // to fit: the fixed square it was given stands.
+            if (ray.y > -1e-3f) return;
+            take(bx::add(eye, bx::mul(ray, (plane - eye.y) / ray.y)));
+        }
+    }
+    // A twentieth over, for the filter's reach past the box's own edge.
+    const float wanted = std::max(hi[0] - lo[0], hi[1] - lo[1]) * 1.05f;
+    if (fittedSide_ <= 0.0f || std::fabs(wanted - fittedSide_) > 0.02f * fittedSide_) {
+        fittedSide_ = wanted;
+        core::logf("shadow split fitted to the camera: %.1f m, %.1f mm a texel", fittedSide_,
+                   1000.0f * fittedSide_ / float(shadowSize_));
+    }
+    *side = fittedSide_;
+
+    // The box's centre, back out of the sun's axes into the world.
+    float fromLight[16];
+    bx::mtxInverse(fromLight, worldAxes);
+    const bx::Vec3 centre((lo[0] + hi[0]) * 0.5f, (lo[1] + hi[1]) * 0.5f, 0.0f);
+    *offset = bx::sub(bx::mul(centre, fromLight), bx::mul(bx::Vec3(0.0f, 0.0f, 0.0f), fromLight));
 }
 
 void Renderer::resetPalettes() {
@@ -552,35 +617,73 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             float sunDir[3];
             lighting.sunDirection(sunDir);
 
-            // Framed on the camera's ground point, not on the whole map: one split covering
-            // what is looked at is sharper than two covering what is not.
-            const bx::Vec3 focus(camera.target[0], camera.target[1], camera.target[2]);
-            const float half = lighting.shadowRange * 0.5f;
-            // Far enough back that nothing casting into the frame is clipped out of it.
-            const float back = lighting.shadowRange;
-            const bx::Vec3 eye(focus.x + sunDir[0] * back, focus.y + sunDir[1] * back,
-                               focus.z + sunDir[2] * back);
             // Straight down would make the up vector parallel to the view; +z serves then.
             const bx::Vec3 up = std::fabs(sunDir[1]) > 0.99f ? bx::Vec3(0.0f, 0.0f, 1.0f)
                                                              : bx::Vec3(0.0f, 1.0f, 0.0f);
-            float lightView[16];
-            bx::mtxLookAt(lightView, eye, focus, up, bx::Handedness::Right);
+            // The sun's own axes through the WORLD's origin: the one frame in which a grid of
+            // texels stays nailed to the ground. Its translation runs along the sun, so its x
+            // and y are zero, and the split's own view below is this, moved by whole steps.
+            float worldAxes[16];
+            bx::mtxLookAt(worldAxes, bx::Vec3(sunDir[0], sunDir[1], sunDir[2]),
+                          bx::Vec3(0.0f, 0.0f, 0.0f), up, bx::Handedness::Right);
 
-            // Texel snapping: the focus is quantised in the light's own space, or the split
-            // crawls with the camera and every shadow edge shimmers.
-            const float texel = lighting.shadowRange / float(kShadowSize);
-            float focusInLight[3];
-            bx::Vec3 f = bx::mul(focus, lightView);
-            focusInLight[0] = std::floor(f.x / texel) * texel;
-            focusInLight[1] = std::floor(f.y / texel) * texel;
-            focusInLight[2] = f.z;
+            // How wide the split is and where it sits off the camera's target.
+            float side = lighting.shadowRange;
+            bx::Vec3 offset(0.0f, 0.0f, 0.0f);
+            if (lighting.shadowFitBelow > 0.0f) fitSplit(camera, lighting, worldAxes, &side, &offset);
+
+            const bx::Vec3 focus(camera.target[0] + splitSlide_[0] + offset.x,
+                                 camera.target[1] + splitSlide_[1] + offset.y,
+                                 camera.target[2] + splitSlide_[2] + offset.z);
+            const float half = side * 0.5f;
+            splitSide_ = side;
+            // Far enough back that nothing casting into the frame is clipped out of it. This
+            // is a reach along the sun and has nothing to do with the split's width.
+            const float back = lighting.shadowRange;
+            const bx::Vec3 eye(focus.x + sunDir[0] * back, focus.y + sunDir[1] * back,
+                               focus.z + sunDir[2] * back);
+
+            // Snapping: the sun's axes through the origin, moved by a whole number of steps
+            // -- x and y in texels, z in the D16 map's own quantum -- to where the eye rounds
+            // down to. Built from the whole numbers and not as "the eye plus its remainder",
+            // because that sum rounds differently every frame: frames whose split had not
+            // moved still got a matrix a few bits apart, and a blocker-search tap sitting on
+            // a texel edge flipped between two texels -- a pixel jumping between lit and
+            // shadowed while nothing moved. Now a split that has not stepped is the same bits.
+            //
+            // It snapped the focus in its own light space once, where the focus is always at
+            // the origin: the floor had nothing to remove, the split crawled with the camera,
+            // and float noise either side of zero flipped it a whole texel now and then. Depth
+            // was never snapped, so every stored depth re-rounded each frame: flickering acne
+            // on every wall facing the sun. tools/shimmer.py measured all three;
+            // docs/shadow-probe.md.
+            const float texel = side / float(shadowSize_);
+            const float quantum = back * 2.0f / 65535.0f;
+            const bx::Vec3 e = bx::mul(eye, worldAxes);
+            const float stepsX = std::floor(e.x / texel);
+            const float stepsY = std::floor(e.y / texel);
+            const float stepsZ = std::floor(e.z / quantum);
             float snap[16];
-            // Minus the remainder, not plus it. Adding it moved the focus to f + frac, whose
-            // own fraction is twice the original: the crawl it was meant to remove stayed,
-            // and a full-texel pop was added every time the focus crossed a boundary.
-            bx::mtxTranslate(snap, focusInLight[0] - f.x, focusInLight[1] - f.y, 0.0f);
+            bx::mtxTranslate(snap, -stepsX * texel, -stepsY * texel, -stepsZ * quantum);
             float snappedView[16];
-            bx::mtxMul(snappedView, lightView, snap);
+            bx::mtxMul(snappedView, worldAxes, snap);
+
+            // The probe: the split's centre and eye read back out of the matrix that is
+            // actually drawn with -- not out of the arithmetic above, which is what it tests
+            // -- and put on the world's grid.
+            {
+                float unsnap[16];
+                bx::mtxInverse(unsnap, snappedView);
+                const bx::Vec3 centre =
+                    bx::mul(bx::Vec3(0.0f, 0.0f, bx::mul(focus, snappedView).z), unsnap);
+                const bx::Vec3 c = bx::mul(centre, worldAxes);
+                const bx::Vec3 drawnEye =
+                    bx::mul(bx::mul(bx::Vec3(0.0f, 0.0f, 0.0f), unsnap), worldAxes);
+                split_.texel = texel;
+                split_.texelX = c.x / texel;
+                split_.texelY = c.y / texel;
+                split_.depthQuanta = drawnEye.z / quantum;
+            }
 
             float lightProj[16];
             // The depth range is cut to what the split can hold. MU4 measured the cost of
@@ -593,7 +696,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bx::mtxMul(lightViewProj, snappedView, lightProj);
 
             bgfx::setViewFrameBuffer(ViewShadow, shadowFb_);
-            bgfx::setViewRect(ViewShadow, 0, 0, kShadowSize, kShadowSize);
+            bgfx::setViewRect(ViewShadow, 0, 0, shadowSize_, shadowSize_);
             bgfx::setViewClear(ViewShadow, BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
             bgfx::setViewTransform(ViewShadow, snappedView, lightProj);
 
@@ -701,12 +804,12 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // out on the second review. A comment is not a fix.
             const float tanHalfAngle =
                 std::tan(lighting.sunAngleDegrees * 0.5f * 3.14159265f / 180.0f);
-            const float penumbraScale = tanHalfAngle * depthRange / lighting.shadowRange;
+            const float penumbraScale = tanHalfAngle * depthRange / side;
             // The bias is a distance too. Held in the sheet in metres and turned into the
             // split's own 0..1 depth here, because 0.0015 of an NDC over a 120 m range is
             // 18 cm of peter-panning on a map whose D16 quantum is under 2 mm.
             const float depthBias = lighting.shadowBiasMetres / depthRange;
-            const float shadowParams[4] = {depthBias, penumbraScale, 1.0f / float(kShadowSize),
+            const float shadowParams[4] = {depthBias, penumbraScale, 1.0f / float(shadowSize_),
                                            lighting.shadowNormalBias};
 
             bgfx::setViewFrameBuffer(ViewShade, shadeFb_);
@@ -715,14 +818,32 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::setViewClear(ViewShade, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
             bgfx::setViewTransform(ViewShade, view, proj);
 
-            bgfx::setUniform(uSunDir_, sunDirUniform);
-            bgfx::setUniform(uSunColour_, sunColour);
-            bgfx::setUniform(uSkyColour_, skyColour);
-            bgfx::setUniform(uGroundColour_, groundColour);
-            bgfx::setUniform(uCamPos_, camPos);
-            bgfx::setUniform(uParams_, params);
-            bgfx::setUniform(uShadowMtx_, shadowMtx);
-            bgfx::setUniform(uShadowParams_, shadowParams);
+            // Kept, and set on every shade draw by bindShadeInputs rather than once here.
+            std::memcpy(shade_.sunDir, sunDirUniform, sizeof(shade_.sunDir));
+            std::memcpy(shade_.sunColour, sunColour, sizeof(shade_.sunColour));
+            std::memcpy(shade_.skyColour, skyColour, sizeof(shade_.skyColour));
+            std::memcpy(shade_.groundColour, groundColour, sizeof(shade_.groundColour));
+            std::memcpy(shade_.camPos, camPos, sizeof(shade_.camPos));
+            std::memcpy(shade_.params, params, sizeof(shade_.params));
+            std::memcpy(shade_.shadowMtx, shadowMtx, sizeof(shade_.shadowMtx));
+            std::memcpy(shade_.shadowParams, shadowParams, sizeof(shade_.shadowParams));
+            // The map's corner on the world's texel grid, which the world-anchored disc turn
+            // reads. The centre is a whole number of texels by the snap; the round only drops
+            // the float noise the read-back carries.
+            shade_.shadowDebug[0] = shadowDebug_[0];
+            shade_.shadowDebug[1] = shadowDebug_[1];
+            shade_.shadowDebug[2] = std::round(split_.texelX) - float(shadowSize_) * 0.5f;
+            shade_.shadowDebug[3] = std::round(split_.texelY) + float(shadowSize_) * 0.5f;
+            // The blocker search and the widest penumbra, in metres and then in this split's
+            // uv. They were 6 and 24 texels, which on the 60 m, 2048 split the look was judged
+            // on is 17.6 cm and 70 cm; counted in texels, a finer map drew a smaller shadow --
+            // the search shrank to 5 cm at 4096, the outer penumbra was cut off, and a finer
+            // map looked cheaper because fewer pixels found a blocker at all.
+            constexpr float kSearchMetres = 0.176f;
+            constexpr float kWidestPenumbraMetres = 0.703f;
+            shade_.shadowReach[0] = kSearchMetres / side;
+            shade_.shadowReach[1] = kWidestPenumbraMetres / side;
+            shade_.shadowReach[2] = shade_.shadowReach[3] = 0.0f;
             bgfx::setTexture(4, sShadowCompare_, shadowMap_,
                              BGFX_SAMPLER_COMPARE_LEQUAL | BGFX_SAMPLER_U_CLAMP |
                                  BGFX_SAMPLER_V_CLAMP);

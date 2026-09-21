@@ -36,6 +36,13 @@ struct Lighting {
     // The shadow. `range` is how wide the split is, in metres. MU2 frames one split on the
     // camera's ground point at about this reach; see its shadow_reach.
     float shadowRange = 60.0f;
+    // Fit the split to what the camera can see instead of a fixed square on its target. The
+    // number is how far below the camera's target the lowest visible ground may lie: every
+    // visible surface is between the eye and where the frustum meets that plane, so that
+    // hull, seen from the sun, is all the split has to cover. 0 keeps the fixed square above,
+    // which is centred on the target and spends half its texels behind the camera.
+    // docs/shadow-probe.md measured it. `shadowRange` stays the depth the sun looks back.
+    float shadowFitBelow = 0.0f;
     // Both biases are metres, which is the only unit either of them means anything in.
     // An NDC bias hides its own size: 0.0015 over a 120 m split is 18 cm of peter-panning
     // on a D16 map whose quantum is under 2 mm. Not MU2's shadow_bias (0.01) either, since

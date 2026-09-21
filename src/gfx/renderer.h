@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <bgfx/bgfx.h>
+#include <bx/math.h>
 
 #include "content/ground.h"
 #include "content/mesh.h"
@@ -40,7 +41,9 @@ struct Drawable {
 class Renderer {
 public:
     // `msaa` is 1, 2, 4 or 8 samples on the prepass, the depth and the shade target.
-    bool init(int width, int height, const std::string& shaderDir, int msaa);
+    // `shadowSize` is the sun's map, square, in texels.
+    bool init(int width, int height, const std::string& shaderDir, int msaa,
+              uint16_t shadowSize = 4096);
     void shutdown();
     void resize(int width, int height);
 
@@ -56,6 +59,37 @@ public:
               const std::vector<Drawable>* casters = nullptr);
 
     uint32_t lastDrawCount() const { return drawCount_; }
+
+    // --- the shadow probe -------------------------------------------------------------
+    // Where the sun's split stood this frame, measured against a grid fixed to the WORLD --
+    // the sun's own axes through the origin -- and not against the split's own matrix, which
+    // is the thing under test. A split snapped to its texels keeps the fractional part of
+    // `texelX` and `texelY` the same every frame however the camera moves; one that crawls
+    // shows it here as a phase that wanders, and one that pops as a phase that jumps. The
+    // same for `depthQuanta`, in steps of the D16 map's own quantum: a depth that is not
+    // snapped re-rounds every stored depth each frame, which is acne that flickers.
+    struct SplitRecord {
+        float texel = 0.0f;        // metres a shadow-map texel spans
+        float texelX = 0.0f;       // the split's centre, in texels along the sun's x
+        float texelY = 0.0f;       // and along its y
+        float depthQuanta = 0.0f;  // the split's eye, in D16 steps along the sun
+    };
+    const SplitRecord& lastSplit() const { return split_; }
+    // Moves the split's focus off the camera's by this many metres, and nothing else: the
+    // camera, the figures and the light stay put. With the camera held this is the one test
+    // in which any pixel that changes between two frames is the shadow's fault. tools/shimmer.py.
+    void slideSplit(const float* metres) {
+        for (int i = 0; i < 3; ++i) splitSlide_[i] = metres[i];
+    }
+    // The probe's two switches. `view` 1 draws the sun's visibility alone, as grey. `noise`
+    // is where the penumbra's disc turn is anchored: 0 the screen, 1 the world's texel grid,
+    // 2 nowhere, which is the default; a negative one keeps it. docs/shadow-probe.md.
+    void setShadowDebug(int view, int noise) {
+        shadowDebug_[0] = float(view);
+        if (noise >= 0) shadowDebug_[1] = float(noise);
+    }
+    // The split's width this frame, in metres, which the fit may have chosen.
+    float splitSide() const { return splitSide_; }
 
     // The transparent pass, which the renderer owns because the view it draws into is part
     // of the frame and not part of any one caller. A caller fills it between begin() and the
@@ -131,7 +165,21 @@ private:
     // an unbound stage -- which reads as shadow 0 and AO 0, so the whole town shaded black
     // whatever its albedo, its normals or its ORM said. Every draw that shades binds them
     // itself.
+    //
+    // And the frame's own uniforms with them, for the same reason one level up. A uniform
+    // set once rides on the NEXT submit only, and the shade view sorts its draws by program:
+    // every draw the sort put ahead of the one that carried the update ran on last frame's
+    // values. Most of the time last frame's values are this frame's; on the frame the sun's
+    // split stepped a texel, the town read the new map through the old matrix and every
+    // shadow in it jumped for one frame -- a flicker at every texel the walk crossed. And
+    // u_camPos a frame late is specular a frame late whenever the camera moves.
+    // tools/shimmer.py found it; docs/shadow-probe.md.
     void bindShadeInputs();
+    struct ShadeUniforms {
+        float sunDir[4], sunColour[4], skyColour[4], groundColour[4], camPos[4], params[4];
+        float shadowMtx[16], shadowParams[4], shadowDebug[4], shadowReach[4];
+    };
+    ShadeUniforms shade_ = {};
 
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets
@@ -144,10 +192,21 @@ private:
     int height_ = 0;
     int msaa_ = 1;
     uint32_t drawCount_ = 0;
+    SplitRecord split_;
+    float splitSlide_[3] = {0.0f, 0.0f, 0.0f};
 
-    // The shadow map is square and fixed; a split framed on the camera does not want to
-    // change size with the window.
-    static constexpr uint16_t kShadowSize = 2048;
+    // The shadow map is square; its size is init()'s and fixed for the run.
+    uint16_t shadowSize_ = 4096;
+    // The split fitted to the camera's view: the hull from the eye to where the frustum meets
+    // a plane `shadowFitBelow` under the target, seen from the sun. Its width is kept rather
+    // than recomputed every frame, because a width that wobbles by a float is a texel that
+    // wobbles, and a texel that changes size re-rasterises every edge -- the crawl the snap
+    // exists to stop. It moves only when the fit moves by more than a fiftieth.
+    void fitSplit(const Camera& camera, const Lighting& lighting, const float* worldAxes,
+                  float* side, bx::Vec3* offset);
+    float fittedSide_ = 0.0f;
+    float splitSide_ = 0.0f;
+    float shadowDebug_[2] = {0.0f, 2.0f};  // the still taps; shadow.sh says why
 
     bgfx::FrameBufferHandle shadowFb_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle shadowMap_ = BGFX_INVALID_HANDLE;
@@ -190,6 +249,8 @@ private:
     bgfx::UniformHandle uMaterial_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowMtx_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowParams_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uShadowDebug_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uShadowReach_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamRay_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRepeat_ = BGFX_INVALID_HANDLE;

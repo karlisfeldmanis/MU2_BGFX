@@ -46,6 +46,11 @@ public:
     // Where the camera looks, in tiles. Set from --at, else the map's own middle.
     void setFocusTile(float column, float row);
 
+    // Where the played character is drawn right now, in world metres, or false when no world
+    // is being played. Asked AFTER the play has advanced, it is where the figure stands this
+    // frame; the camera's own target is where it stood when the camera was placed.
+    bool characterAt(float* x, float* z) const;
+
 private:
     // A tile to the centre of that tile in world metres, through the map's own scale.
     void tileToMetres(float column, float row, float* x, float* z) const;

@@ -5,8 +5,8 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos
 // material model in docs/conventions.md, and it is a second shader rather than a fourth flag.
 #include "common.sh"
 
-uniform mat4 u_shadowMtx;
-uniform vec4 u_shadowParams;  // x: depth bias  y: penumbra scale  z: map texel  w: normal bias
+#include "shadow.sh"
+
 uniform vec4 u_groundRepeat;  // x: base repeat  y: overlay repeat  z: base relief  w: overlay relief
 uniform vec4 u_groundBlend;   // x: bite  y: 1 if this surface has an overlay at all  zw: unused
 
@@ -20,54 +20,6 @@ float heightOf(vec3 colour)
 SAMPLER2D(s_albedo2,   9);
 SAMPLER2D(s_normal2,  10);
 SAMPLER2D(s_orm2,     11);
-
-vec2 vogel(int i, int count, float phase)
-{
-	float r = sqrt((float(i) + 0.5) / float(count));
-	float theta = float(i) * 2.39996323 + phase;
-	return vec2(cos(theta), sin(theta)) * r;
-}
-
-float sunShadow(vec3 wpos, vec3 normal, float ndotl, vec2 pixel)
-{
-	vec4 sc = mul(u_shadowMtx, vec4(wpos + normal * u_shadowParams.w, 1.0));
-	sc.xyz /= sc.w;
-	if (sc.x < 0.0 || sc.x > 1.0 || sc.y < 0.0 || sc.y > 1.0 || sc.z > 1.0) return 1.0;
-
-	float slope = sqrt(saturate(1.0 - ndotl * ndotl)) / max(ndotl, 0.15);
-	float bias = u_shadowParams.x * (1.0 + slope);
-	float receiver = sc.z - bias;
-	float phase = gradientNoise(pixel) * 6.2831853;
-
-	const int kSearch = 5;
-	float searchRadius = u_shadowParams.z * 6.0;
-	float blockerSum = 0.0;
-	float blockerCount = 0.0;
-	for (int i = 0; i < kSearch; ++i)
-	{
-		float d = texture2D(s_shadowDepth, sc.xy + vogel(i, kSearch, phase) * searchRadius).r;
-		if (d < receiver)
-		{
-			blockerSum += d;
-			blockerCount += 1.0;
-		}
-	}
-	if (blockerCount < 0.5) return shadow2D(s_shadowCompare, vec3(sc.xy, receiver));
-
-	// Orthographic: the penumbra is the blocker's gap times the sun's half angle, and the
-	// scale that turns the split's 0..1 depth into a uv radius is computed on the CPU.
-	// There is no divide by the blocker's own depth here -- that is the point-light formula.
-	float penumbra = (receiver - blockerSum / blockerCount) * u_shadowParams.y;
-	float radius = clamp(penumbra, u_shadowParams.z, u_shadowParams.z * 24.0);
-
-	const int kFilter = 8;
-	float sum = 0.0;
-	for (int i = 0; i < kFilter; ++i)
-	{
-		sum += shadow2D(s_shadowCompare, vec3(sc.xy + vogel(i, kFilter, phase) * radius, receiver));
-	}
-	return sum / float(kFilter);
-}
 
 void main()
 {
@@ -157,6 +109,12 @@ void main()
 	float ndotl = saturate(dot(n, l));
 
 	vec3 colour = vec3_splat(0.0);
+	// The probe's view, as fs_shade draws it.
+	if (u_shadowDebug.x > 0.5)
+	{
+		gl_FragColor = vec4_splat(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel));
+		return;
+	}
 	if (ndotl > 0.0)
 	{
 		float shadow = sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel);

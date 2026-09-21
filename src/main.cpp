@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -225,7 +226,8 @@ int main(int argc, char** argv) {
     textures.createDefaults();
 
     gfx::Renderer renderer;
-    if (!renderer.init(window.width(), window.height(), MU2_SHADER_DIR, args.msaa)) {
+    if (!renderer.init(window.width(), window.height(), MU2_SHADER_DIR, args.msaa,
+                       uint16_t(args.shadowSize))) {
         core::logError("the renderer did not start");
         textures.shutdown();
         window.close();
@@ -269,6 +271,9 @@ int main(int argc, char** argv) {
             // blood in it is still a fight, and open() has already said why in the log.
             world.played().showing().open(MU2_ASSET_DIR, textures);
         }
+        // Placed once before the first frame: the loop answers the pointer against the camera
+        // already on screen, and on frame zero there has to be one.
+        world.update(0.0, args.still);
     }
 
     // The viewer's list. Only the browser has anything to put on it, so it is only built
@@ -391,6 +396,45 @@ int main(int argc, char** argv) {
     std::vector<gfx::Drawable> townDrawables;
     std::vector<gfx::Drawable> townCasters;
 
+    if (args.shadowView || args.shadowNoise >= 0) {
+        renderer.setShadowDebug(args.shadowView ? 1 : 0, args.shadowNoise);
+    }
+    // The pan test's grid: fixed ground points around where the camera starts, and a csv
+    // row a frame of the pixel each lands on. tools/pan.py samples the shots there.
+    FILE* shadowPoints = nullptr;
+    std::vector<float> pointGrid;  // x, y, z a point
+    if (!args.shadowPoints.empty() && inWorld) {
+        shadowPoints = std::fopen(args.shadowPoints.c_str(), "w");
+        if (!shadowPoints) {
+            core::logError("could not open --shadow-points %s", args.shadowPoints.c_str());
+        } else {
+            constexpr int kSide = 60;
+            constexpr float kStep = 0.3f;
+            const gfx::Camera& cam = world.camera();
+            for (int j = 0; j < kSide; ++j) {
+                for (int i = 0; i < kSide; ++i) {
+                    const float x = cam.target[0] + (float(i) - kSide * 0.5f) * kStep;
+                    const float z = cam.target[2] + (float(j) - kSide * 0.5f) * kStep;
+                    pointGrid.insert(pointGrid.end(), {x, world.ground().heightAt(x, z), z});
+                }
+            }
+            std::fprintf(shadowPoints, "# %zu points; frame then x,y pixel pairs, -1 when off "
+                                       "screen\n", pointGrid.size() / 3);
+        }
+    }
+    // The shadow probe's csv. docs/shadow-probe.md reads it.
+    FILE* shadowLog = nullptr;
+    if (!args.shadowLog.empty()) {
+        shadowLog = std::fopen(args.shadowLog.c_str(), "w");
+        if (shadowLog) {
+            std::fprintf(shadowLog,
+                         "frame,dt_ms,focus_x,focus_z,texel_mm,texel_x,texel_y,phase_x,phase_y,"
+                         "depth_quanta,depth_phase,hero_x,hero_z,camera_lag_mm\n");
+        } else {
+            core::logError("could not open --shadow-log %s", args.shadowLog.c_str());
+        }
+    }
+
     while (window.pump() && !window.escapePressed()) {
         renderer.resize(window.width(), window.height());
 
@@ -440,33 +484,6 @@ int main(int argc, char** argv) {
         }
 
         if (inWorld) {
-            world.update(elapsed, args.still);
-            // The town's drawables are gathered fresh each frame into one vector that keeps
-            // its capacity: a frame appends to a flat array, as foundation 7 says, and
-            // allocates nothing after the first.
-            townDrawables.clear();
-            townCasters.clear();
-            const std::vector<gfx::Drawable>* casters = nullptr;
-            if (world.town().isOpen()) {
-                if (args.cullChunks) {
-                    float view[16];
-                    float proj[16];
-                    renderer.cameraMatrices(world.camera(), view, proj);
-                    float viewProj[16];
-                    bx::mtxMul(viewProj, view, proj);
-                    world.town().gatherVisible(viewProj, townDrawables);
-                    // The sun gets its own list, and for now it is all of them. A chunk
-                    // behind the camera still casts into the frame, so the camera's frustum
-                    // is the wrong test for the split -- foundation 7's named bug. Culling
-                    // the split against its own box is the next step and it is measured
-                    // separately; drawing every caster is the honest baseline to measure it
-                    // against.
-                    world.town().gatherAll(townCasters, true);
-                    casters = &townCasters;
-                } else {
-                    world.town().gatherAll(townDrawables);
-                }
-            }
             // The pointer and what it is over, before the sim is stepped: a click is answered
             // on the tick after it is made, which is MU's own latency and not ours to shave.
             if (world.played().isOpen()) {
@@ -541,6 +558,43 @@ int main(int argc, char** argv) {
                 if (window.clicked(0) || clickNow) world.played().leftClick();
                 if (window.clicked(1)) world.played().rightClick();
                 world.played().update(deltaSeconds);
+            }
+            // And only THEN the camera, onto where the character is drawn this frame. Placed
+            // before the step, it followed where he stood a frame ago: the town and every
+            // shadow in it slid under him by his step length times the frame time, which
+            // changes every frame -- 16 mm median and 79 mm worst over a walk, on a shadow
+            // texel of 29 mm. docs/shadow-probe.md.
+            world.update(elapsed, args.still);
+            // The town's drawables are gathered fresh each frame into one vector that keeps
+            // its capacity: a frame appends to a flat array, as foundation 7 says, and
+            // allocates nothing after the first.
+            townDrawables.clear();
+            townCasters.clear();
+            const std::vector<gfx::Drawable>* casters = nullptr;
+            if (world.town().isOpen()) {
+                if (args.cullChunks) {
+                    float view[16];
+                    float proj[16];
+                    renderer.cameraMatrices(world.camera(), view, proj);
+                    float viewProj[16];
+                    bx::mtxMul(viewProj, view, proj);
+                    world.town().gatherVisible(viewProj, townDrawables);
+                    // The sun gets its own list, and for now it is all of them. A chunk
+                    // behind the camera still casts into the frame, so the camera's frustum
+                    // is the wrong test for the split -- foundation 7's named bug. Culling
+                    // the split against its own box is the next step and it is measured
+                    // separately; drawing every caster is the honest baseline to measure it
+                    // against.
+                    world.town().gatherAll(townCasters, true);
+                    casters = &townCasters;
+                } else {
+                    world.town().gatherAll(townDrawables);
+                }
+            }
+            if (world.played().isOpen()) {
+                float view[16];
+                float proj[16];
+                renderer.cameraMatrices(world.camera(), view, proj);
                 float viewProj[16];
                 bx::mtxMul(viewProj, view, proj);
                 world.played().gather(renderer, viewProj, townDrawables,
@@ -567,7 +621,53 @@ int main(int argc, char** argv) {
                 world.crowd().gather(renderer, args.cullChunks ? viewProj : nullptr,
                                      townDrawables, casters ? &townCasters : nullptr);
             }
+            // Along both of the ground's axes, and not a whole texel's worth of either in one
+            // step, so the split crosses texel boundaries in x and in y at different frames.
+            if (args.shadowSlideMm != 0.0f) {
+                const float metres = float(frame) * args.shadowSlideMm * 0.001f;
+                const float slide[3] = {metres, 0.0f, metres * 0.618f};
+                renderer.slideSplit(slide);
+            }
             renderer.draw(world.camera(), lighting, townDrawables, &world.ground(), casters);
+            if (shadowPoints) {
+                float view[16], proj[16], viewProj[16];
+                renderer.cameraMatrices(world.camera(), view, proj);
+                bx::mtxMul(viewProj, view, proj);
+                const float w = float(window.width()), h = float(window.height());
+                std::fprintf(shadowPoints, "%d", frame);
+                for (size_t p = 0; p < pointGrid.size(); p += 3) {
+                    const float point[4] = {pointGrid[p], pointGrid[p + 1], pointGrid[p + 2], 1.0f};
+                    float clip[4];
+                    bx::vec4MulMtx(clip, point, viewProj);
+                    float px = -1.0f, py = -1.0f;
+                    if (clip[3] > 0.0f) {
+                        const float nx = clip[0] / clip[3], ny = clip[1] / clip[3];
+                        if (nx > -1.0f && nx < 1.0f && ny > -1.0f && ny < 1.0f) {
+                            px = (nx * 0.5f + 0.5f) * w;
+                            py = (0.5f - ny * 0.5f) * h;
+                        }
+                    }
+                    std::fprintf(shadowPoints, ",%.3f,%.3f", px, py);
+                }
+                std::fprintf(shadowPoints, "\n");
+            }
+            if (shadowLog) {
+                const gfx::Renderer::SplitRecord& split = renderer.lastSplit();
+                const gfx::Camera& cam = world.camera();
+                auto phase = [](float v) { return v - std::floor(v); };
+                float heroX = cam.target[0], heroZ = cam.target[2];
+                const bool played = world.characterAt(&heroX, &heroZ);
+                const float lagMm = played ? 1000.0f * std::hypot(heroX - cam.target[0],
+                                                                  heroZ - cam.target[2])
+                                           : 0.0f;
+                std::fprintf(shadowLog,
+                             "%d,%.3f,%.4f,%.4f,%.2f,%.4f,%.4f,%.4f,%.4f,%.3f,%.4f,%.4f,%.4f,"
+                             "%.2f\n",
+                             frame, deltaSeconds * 1000.0, cam.target[0], cam.target[2],
+                             split.texel * 1000.0f, split.texelX, split.texelY,
+                             phase(split.texelX), phase(split.texelY), split.depthQuanta,
+                             phase(split.depthQuanta), heroX, heroZ, lagMm);
+            }
         } else {
             // The browser's steering, before the frame it steers. Left and right walk one,
             // down and up walk ten, and the step is an edge rather than a state: at 400 fps a
@@ -660,6 +760,7 @@ int main(int argc, char** argv) {
         // than dropped, because a genuinely slow frame should still advance the world.
         constexpr double kLongestStep = 0.05;  // 50 ms, which is one tick of MU's own 20 Hz
         if (shotThisFrame || deltaSeconds > kLongestStep) deltaSeconds = kLongestStep;
+        if (args.fixedDtMs > 0.0f) deltaSeconds = args.fixedDtMs * 0.001;
         elapsed += deltaSeconds;
         // A frame that writes a screenshot is not a frame of the game, and it does not go in
         // the statistics. The readback stalls this one frame to about 253 ms, and a mean over
@@ -764,6 +865,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    if (shadowLog) std::fclose(shadowLog);
+    if (shadowPoints) std::fclose(shadowPoints);
     const bool withinBudget = stats.finish(args.budget);
 
     bench.shutdown();

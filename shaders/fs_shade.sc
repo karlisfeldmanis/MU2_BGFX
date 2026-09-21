@@ -4,76 +4,7 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 // written back, so no pixel here is shaded twice.
 #include "common.sh"
 
-uniform mat4 u_shadowMtx;
-uniform vec4 u_shadowParams;  // x: depth bias  y: tan of the sun's half angle  z: map texel  w: normal bias
-
-vec2 vogel(int i, int count, float phase)
-{
-	float r = sqrt((float(i) + 0.5) / float(count));
-	float theta = float(i) * 2.39996323 + phase;
-	return vec2(cos(theta), sin(theta)) * r;
-}
-
-// The shadow hardens on contact. Five taps look for a blocker; where there is none the
-// pixel is lit and done, which is most of the ground. Otherwise the penumbra is as wide as
-// the blocker is far, for a sun four degrees across -- an invention, since the real half
-// degree draws a line.
-float sunShadow(vec3 wpos, vec3 normal, float ndotl, vec2 pixel)
-{
-	vec4 sc = mul(u_shadowMtx, vec4(wpos + normal * u_shadowParams.w, 1.0));
-	sc.xyz /= sc.w;
-	if (sc.x < 0.0 || sc.x > 1.0 || sc.y < 0.0 || sc.y > 1.0 || sc.z > 1.0) return 1.0;
-
-	// The bias grows as the surface turns away from the sun, where one texel spans more depth.
-	float slope = sqrt(saturate(1.0 - ndotl * ndotl)) / max(ndotl, 0.15);
-	float bias = u_shadowParams.x * (1.0 + slope);
-	float receiver = sc.z - bias;
-
-	float phase = gradientNoise(pixel) * 6.2831853;
-
-	const int kSearch = 5;
-	float searchRadius = u_shadowParams.z * 6.0;
-	float blockerSum = 0.0;
-	float blockerCount = 0.0;
-	for (int i = 0; i < kSearch; ++i)
-	{
-		float d = texture2D(s_shadowDepth, sc.xy + vogel(i, kSearch, phase) * searchRadius).r;
-		if (d < receiver)
-		{
-			blockerSum += d;
-			blockerCount += 1.0;
-		}
-	}
-	if (blockerCount < 0.5)
-	{
-		// Not lit outright: five turned taps can miss a grazing blocker, and a hard 1.0
-		// among filtered neighbours was a white speck in the arm's shadow band. One
-		// bilinear compare at the pixel settles it, and it measured free.
-		return shadow2D(s_shadowCompare, vec3(sc.xy, receiver));
-	}
-
-	float blocker = blockerSum / blockerCount;
-	// The gap between the blocker and this pixel, times the tangent of the sun's half angle.
-	// No divide by the blocker's own depth: that is the similar-triangles formula for a
-	// *point* light, where the penumbra grows with how near the caster is to the lamp. The
-	// sun's split is orthographic and its depth is linear, so the penumbra is the gap and
-	// nothing else. The divide was here through the first review and was reported fixed
-	// while it was still running: with the blocker at z ~ 0.475 it widened every penumbra by
-	// about 2.1x, drawing a sun some 8.4 degrees across against the sheet's 4.
-	// u_shadowParams.y already carries tan(halfAngle) * depthRange / shadowRange, which is
-	// what turns a gap in the split's 0..1 depth into a radius in the map's uv.
-	float penumbra = (receiver - blocker) * u_shadowParams.y;
-	float radius = clamp(penumbra, u_shadowParams.z, u_shadowParams.z * 24.0);
-
-	const int kFilter = 8;
-	float sum = 0.0;
-	for (int i = 0; i < kFilter; ++i)
-	{
-		vec2 offset = vogel(i, kFilter, phase) * radius;
-		sum += shadow2D(s_shadowCompare, vec3(sc.xy + offset, receiver));
-	}
-	return sum / float(kFilter);
-}
+#include "shadow.sh"
 
 void main()
 {
@@ -133,6 +64,14 @@ void main()
 	float ndotv = saturate(dot(n, v)) + 1e-5;
 
 	vec3 colour = vec3_splat(0.0);
+
+	// The probe's view: the sun's visibility and nothing else, so that a pixel which changes
+	// between two frames changed because the shadow did. docs/shadow-probe.md.
+	if (u_shadowDebug.x > 0.5)
+	{
+		gl_FragColor = vec4_splat(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel));
+		return;
+	}
 
 	// The sun.
 	if (ndotl > 0.0)
