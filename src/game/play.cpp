@@ -23,6 +23,8 @@ constexpr double kTickSeconds = 1.0 / 20.0;
 constexpr int kMostTicks = 5;
 // The least time between two ticks taken early for a click, in seconds. See Play::update.
 constexpr float kEarlyApart = 0.5f;
+// How long the character takes to dissolve in when the game has loaded. Invention.
+constexpr float kAppearSeconds = 1.1f;
 
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the
@@ -434,6 +436,10 @@ void Play::update(double seconds) {
         ++stepped;
     }
     marker_.update(float(seconds));
+    if (appearing_) {
+        appearAt_ += float(seconds);
+        if (appearAt_ >= kAppearSeconds) appearing_ = false;
+    }
     if (stepped > 0) {
         tickMs_ = double(bx::getHPCounter() - started) * 1000.0 /
                   double(bx::getHPFrequency()) / double(stepped);
@@ -851,10 +857,28 @@ void Play::rightClick() {
 
 void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,
                   std::vector<gfx::Drawable>* casters) {
+    // The character's fade-in, eased at both ends so it neither pops at the start nor lands
+    // with a jolt. Only his: the townsfolk and the monsters were already in the world.
+    float heroFade = 1.0f;
+    if (appearing_) {
+        const float t = std::clamp(appearAt_ / kAppearSeconds, 0.0f, 1.0f);
+        heroFade = t * t * (3.0f - 2.0f * t);
+    }
     for (Drawn& one : drawn_) {
         if (!one.visible || !one.figure.body()) continue;
+        if (&one == &drawn_[0] && heroFade <= 0.0f) continue;
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        if (&one == &drawn_[0] && heroFade < 1.0f) {
+            const size_t outFrom = out.size(), castFrom = casters ? casters->size() : 0;
+            if (casters) one.figure.gather(palette, *casters);
+            one.figure.gather(palette, out);
+            for (size_t i = outFrom; i < out.size(); ++i) out[i].fade = heroFade;
+            if (casters) {
+                for (size_t i = castFrom; i < casters->size(); ++i) (*casters)[i].fade = heroFade;
+            }
+            continue;
+        }
         // The sun's list is every figure, as the town's is: a body behind the camera still
         // casts into the frame, and culling the shadow pass with the camera's frustum is the
         // bug foundation 7 names. The camera's own cull is Crowd's frustum test and is owed

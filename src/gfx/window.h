@@ -25,6 +25,16 @@ public:
     // Pumps the OS. False once the window wants to go.
     bool pump();
 
+    // Vsync off for a while and back to what the window was opened with. The preloader
+    // presents without it: bgfx holds its resource lock for the whole of a frame, the wait for
+    // the display included, and a spinner paced by vsync starved the loading thread of it --
+    // 3.6 s to load what takes 0.35 s. src/main.cpp, "The preloader".
+    void holdVsync(bool off);
+
+    // The display's own refresh, in hertz, or 60 when it cannot be had. The preloader paces
+    // itself by this: it presents unsynced, so it has to know what it is pacing to.
+    int refreshHz() const;
+
     bool escapePressed() const;
 
     // The pointer, in FRAMEBUFFER pixels rather than in the points GLFW reports: on a Retina

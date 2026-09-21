@@ -171,3 +171,29 @@ mat4 skinMatrix(uvec4 indices, vec4 weights, int row)
 }
 
 #endif // MU2_COMMON_SH
+
+// A 4x4 ordered dither, 0 to 15 over 16, by pixel. The shadow pass's answer to a figure that is
+// half there: it has no alpha to blend with -- it writes a depth -- so it drops pixels in this
+// pattern instead, and the soft filter that reads the map turns the holes into a shadow that is
+// partly cast. A dither in the SHADOW is invisible as a pattern; a dither in the picture would
+// not be, which is why the figure itself is blended rather than dithered.
+float ditherAt(vec2 pixel)
+{
+	int x = int(mod(pixel.x, 4.0));
+	int y = int(mod(pixel.y, 4.0));
+	int i = x + y * 4;
+	float m =
+		i ==  0 ?  0.0 : i ==  1 ?  8.0 : i ==  2 ?  2.0 : i ==  3 ? 10.0 :
+		i ==  4 ? 12.0 : i ==  5 ?  4.0 : i ==  6 ? 14.0 : i ==  7 ?  6.0 :
+		i ==  8 ?  3.0 : i ==  9 ? 11.0 : i == 10 ?  1.0 : i == 11 ?  9.0 :
+		i == 12 ? 15.0 : i == 13 ?  7.0 : i == 14 ? 13.0 : 5.0;
+	return m / 16.0;
+}
+
+// Where the fade rides: v_light.w. A static mesh already uses that for a glow's flicker, 0 to 1
+// (fs_glow), so a figure sends 2 + fade and only a w of 2 or more is read as one. Anything
+// under 2 is all there.
+float figureFade(float w)
+{
+	return w >= 2.0 ? w - 2.0 : 1.0;
+}

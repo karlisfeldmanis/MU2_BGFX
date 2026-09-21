@@ -1,6 +1,8 @@
 $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
-// v_light is declared and unused: this pass writes a normal and a depth and has no use for
-// MU's baked light. It is here because bgfx's Metal backend links a program by matching the
+// v_light's colour is unused: this pass writes a normal and a depth and has no use for MU's
+// baked light, and its w carries a figure's fade, which this pass has no use for either: a
+// figure that is only part there is not in this pass at all. The renderer draws it after the
+// shade pass, depth first and then blended, which is what makes its fade an opacity. It is here because bgfx's Metal backend links a program by matching the
 // two varying lists, so a fragment shader sharing vs_static must name everything vs_static
 // writes -- leaving it out fails the link, and the log says only "the frame is missing a
 // program".

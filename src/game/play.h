@@ -115,6 +115,13 @@ public:
     // the fight is otherwise unaffected.
     Showing& showing() { return showing_; }
     const Showing& showing() const { return showing_; }
+    // The character comes in: he is not there for `delay` seconds and then dissolves in, with
+    // a warm edge, over kAppearSeconds. Called once the preloader has faded the frame up;
+    // never called, he is simply there, which is what every review run wants.
+    void appear(float delay) {
+        appearing_ = true;
+        appearAt_ = -delay;
+    }
     // Where a click sent him. Opened by the caller for the same reason as the showing.
     Marker& marker() { return marker_; }
     void gatherMarker(gfx::Effects& effects) const {
@@ -180,6 +187,8 @@ private:
     // A click was made this frame: run the next tick now instead of waiting up to 50 ms for
     // it. See Play::update.
     bool stepNow_ = false;
+    bool appearing_ = false;  // the character's fade-in is running; see appear()
+    float appearAt_ = 0.0f;   // seconds into it, negative while it waits
     float sinceEarly_ = 1.0f;  // seconds since a click last took a tick early
     // The cues that came due this frame. A member and not a local so that it keeps its
     // capacity: a fight must not allocate to show itself.

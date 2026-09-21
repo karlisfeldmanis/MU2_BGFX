@@ -1022,13 +1022,18 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         // order does not shuffle between runs and a measurement stays comparable.
         std::vector<std::vector<const Drawable*>> groups;
         std::vector<std::vector<const Drawable*>> casterGroups;
+        // What is only part there, kept out of the opaque passes and drawn after them. Almost
+        // always empty: it is the character's entrance and nothing else so far.
+        std::vector<std::vector<const Drawable*>> fadeGroups;
+        std::vector<Batch> fadeBatches;
         auto group = [](const std::vector<Drawable>& list,
                         std::vector<std::vector<const Drawable*>>& out,
-                        std::vector<Batch>& batches) {
+                        std::vector<Batch>& batches, bool fading = false) {
             std::unordered_map<const content::Mesh*, size_t> seen;
             out.reserve(8);
             for (const Drawable& d : list) {
                 if (!d.mesh) continue;
+                if ((d.fade < 1.0f) != fading) continue;
                 auto found = seen.find(d.mesh);
                 if (found == seen.end()) {
                     seen.emplace(d.mesh, out.size());
@@ -1042,6 +1047,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             }
         };
         group(drawables, groups, batches_);
+        group(drawables, fadeGroups, fadeBatches, true);
         const bool separateCasters = casters != nullptr;
         if (separateCasters) group(casterList, casterGroups, casterBatches_);
 
@@ -1052,6 +1058,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         const uint32_t stride = 96;
         uint32_t total = 0;
         for (const auto& g : groups) total += uint32_t(g.size());
+        for (const auto& g : fadeGroups) total += uint32_t(g.size());
         for (const auto& g : casterGroups) total += uint32_t(g.size());
 
         // bgfx will hand back fewer than asked for if the transient buffer is full. Asking
@@ -1082,7 +1089,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                         // No row of its own means the bind row, which is row 0 and is the
                         // identity. -1 would be read as a texel outside the palette.
                         const float skin[4] = {
-                            float(d->paletteRow < 0 ? kBindRow : d->paletteRow), 0.0f, 0.0f,
+                            float(d->paletteRow < 0 ? kBindRow : d->paletteRow), d->fade, 0.0f,
                             0.0f};
                         std::memcpy(idb.data + written * stride + sizeof(float) * 20, skin,
                                     sizeof(skin));
@@ -1096,6 +1103,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                               batches.end());
             };
             fill(groups, batches_);
+            fill(fadeGroups, fadeBatches);
             if (separateCasters) fill(casterGroups, casterBatches_);
             // Without a list of its own, the sun draws what the camera draws.
             std::vector<Batch>& shadowBatches = separateCasters ? casterBatches_ : batches_;
@@ -1196,6 +1204,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             if (!shadowBatches.empty()) {
                 submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, shadowBatches,
                               idb, depthState, false);
+            }
+            // A fading figure still casts, dithered by fs_shadow. It is in the casters' own
+            // list already when the camera culls separately; when it does not, that list IS
+            // the camera's, which is the one it was kept out of.
+            if (!separateCasters && !fadeBatches.empty()) {
+                submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, fadeBatches, idb,
+                              depthState, false);
             }
 
             // --- view 1: the prepass -------------------------------------------------
@@ -1349,6 +1364,30 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             if (total > 0) {
                 submitBatches(ViewShade, shadeProgram_, skinnedShadeProgram_, batches_, idb,
                               shadeState, true);
+            }
+
+            // --- view 5, before the glow: whatever is only part there ------------------
+            // Two passes over the same instances, and the order is the whole technique:
+            //
+            //   1. its DEPTH alone, tested and written against the world's, so the nearest
+            //      surface of the figure wins;
+            //   2. the same shade the rest of the frame got, tested EQUAL against that depth
+            //      and blended by the alpha fs_shade now writes -- which is the fade.
+            //
+            // Without the first pass, a figure at half opacity shows its own back through its
+            // chest and the blend doubles wherever it overlaps itself. It is here rather than
+            // in the shade pass because it must be blended over a finished picture, and before
+            // the glow and the sprites because it is solid scene and they are what is added
+            // over it. The view is sequential, so submission order is draw order.
+            if (!fadeBatches.empty() && bgfx::isValid(prepassProgram_)) {
+                bgfx::setViewMode(ViewTransparent, bgfx::ViewMode::Sequential);
+                const uint64_t depthOnly = BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
+                submitBatches(ViewTransparent, prepassProgram_, skinnedPrepassProgram_,
+                              fadeBatches, idb, depthOnly, false);
+                const uint64_t blended = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_EQUAL |
+                                         BGFX_STATE_BLEND_ALPHA;
+                submitBatches(ViewTransparent, shadeProgram_, skinnedShadeProgram_, fadeBatches,
+                              idb, blended, true);
             }
 
             // --- view 5, first half: MU's BlendMeshes --------------------------------

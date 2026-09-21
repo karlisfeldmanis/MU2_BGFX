@@ -23,9 +23,12 @@ set(BGFX_BUILD_TOOLS_BIN2C OFF CACHE BOOL "" FORCE)
 set(BGFX_BUILD_TOOLS_GEOMETRY OFF CACHE BOOL "" FORCE)
 set(BGFX_BUILD_TOOLS_TEXTURE OFF CACHE BOOL "" FORCE)
 set(BGFX_CUSTOM_TARGETS OFF CACHE BOOL "" FORCE)
-# One thread: the game submits and the renderer runs on the same one. That removes the frame
-# of latency bgfx's render thread adds and the copy of every draw into its queue.
-set(BGFX_CONFIG_MULTITHREADED OFF CACHE BOOL "" FORCE)
+# The renderer still runs on the one thread the game submits from -- Window::open calls
+# bgfx::renderFrame() before bgfx::init, which is bgfx's own switch for that -- so there is no
+# render thread and no frame of latency. The build is multithreaded for one thing only: it is
+# what compiles in bgfx's resource lock, so the preloader's worker may create textures and
+# buffers while the main thread keeps presenting the spinner. src/main.cpp, "The preloader".
+set(BGFX_CONFIG_MULTITHREADED ON CACHE BOOL "" FORCE)
 add_subdirectory(extern/bgfx.cmake EXCLUDE_FROM_ALL)
 foreach(t bx bimg bimg_decode bimg_encode bgfx shaderc)
   if(TARGET ${t})

@@ -1,7 +1,9 @@
 #include "core/log.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstring>
+#include <mutex>
 #include <ctime>
 #include <string>
 
@@ -9,7 +11,9 @@ namespace mu::core {
 namespace {
 
 FILE* g_file = nullptr;
-int g_errors = 0;
+std::atomic<int> g_errors{0};
+// The preloader's worker logs while the main thread may too: a line is written whole.
+std::recursive_mutex g_lock;
 // What is logged before logOpen: the arguments are parsed before the log path is known, and
 // a complaint about them must not be lost.
 std::string g_pending;
@@ -27,6 +31,7 @@ double secondsSinceStart() {
 }  // namespace
 
 void logOpen(const char* path) {
+    std::lock_guard<std::recursive_mutex> hold(g_lock);
     if (g_file) return;
     std::string previous = std::string(path) + ".previous";
     std::remove(previous.c_str());
@@ -48,6 +53,7 @@ void logOpen(const char* path) {
 }
 
 void logClose() {
+    std::lock_guard<std::recursive_mutex> hold(g_lock);
     if (g_file) {
         std::fclose(g_file);
         g_file = nullptr;
@@ -66,6 +72,7 @@ void logv(const char* fmt, va_list args) {
     int m = std::snprintf(stamped, sizeof(stamped), "[%7.3f] %s\n", secondsSinceStart(), line);
     if (m < 0) return;
 
+    std::lock_guard<std::recursive_mutex> hold(g_lock);
     std::fwrite(stamped, 1, size_t(m), stdout);
     if (g_file) {
         std::fwrite(stamped, 1, size_t(m), g_file);

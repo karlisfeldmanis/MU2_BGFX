@@ -66,6 +66,10 @@ bool Window::open(const WindowDesc& desc) {
     reset_ = desc.vsync ? BGFX_RESET_VSYNC : BGFX_RESET_NONE;
     init.reset = reset_;
     init.callback = &g_callback;
+    // Before init, and it is what keeps rendering on this thread in a multithreaded build: bgfx
+    // starts no render thread when this has already been called. CMakeLists.txt says why the
+    // build is multithreaded at all.
+    bgfx::renderFrame();
     if (!bgfx::init(init)) {
         core::logError("bgfx did not start");
         return false;
@@ -156,6 +160,16 @@ bool Window::pump() {
         core::logf("resized to %dx%d", w, h);
     }
     return true;
+}
+
+void Window::holdVsync(bool off) {
+    bgfx::reset(off ? (reset_ & ~uint32_t(BGFX_RESET_VSYNC)) : reset_, &chain_);
+}
+
+int Window::refreshHz() const {
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
+    return (mode && mode->refreshRate > 0) ? mode->refreshRate : 60;
 }
 
 void Window::pointer(float* x, float* y) const {

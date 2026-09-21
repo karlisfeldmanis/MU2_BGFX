@@ -20,5 +20,8 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 void main()
 {
 	vec4 sheet = texture2D(s_albedo, v_texcoord0);
-	gl_FragColor = vec4(sheet.rgb * (sheet.a * v_light.w * u_material.z), 1.0);
+	// A figure's w is 2 + its fade (common.sh's figureFade), which was 1.0 here before there
+	// was a fade; so a figure's glow is its fade, and comes in with it.
+	float level = v_light.w >= 2.0 ? v_light.w - 2.0 : v_light.w;
+	gl_FragColor = vec4(sheet.rgb * (sheet.a * level * u_material.z), 1.0);
 }

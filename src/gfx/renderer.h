@@ -37,6 +37,12 @@ struct Drawable {
     // Five worn parts of one character share a row: wearing is swapping which meshes draw
     // against one set of bone rows, and the skeleton does not know what it has on.
     int paletteRow = -1;
+    // How much of this is there, 0 to 1. Below 1 it is not in the opaque passes at all: it is
+    // drawn after them, its own depth first and then shaded and blended at this opacity, which
+    // is what stops a half-there figure showing its own far side through itself. Its shadow is
+    // dithered by the same number (fs_shadow). The character's fade-in when the game has
+    // loaded, and it works on a figure or on the weapon in its hand.
+    float fade = 1.0f;
     // False leaves it out of the reflection probe, as a posed figure always is. The viewer's
     // subject: the cube is taken 1.2 m over the camera's focus, which in the viewer is inside
     // the subject, and a cannon would reflect the inside of its own barrel. In the game the

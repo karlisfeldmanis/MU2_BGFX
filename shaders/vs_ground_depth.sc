@@ -1,5 +1,5 @@
 $input a_position
-$output v_texcoord0
+$output v_texcoord0, v_light
 
 // The land into the sun's split. Position only: the ground has no cutout to honour, and
 // fs_shadow is told so by a negative cutout threshold.
@@ -16,5 +16,6 @@ $output v_texcoord0
 void main()
 {
 	v_texcoord0 = vec2(0.0, 0.0);
+	v_light = vec4_splat(1.0);  // fs_shadow's dither; the land is always all there
 	gl_Position = mul(u_viewProj, vec4(a_position, 1.0));
 }

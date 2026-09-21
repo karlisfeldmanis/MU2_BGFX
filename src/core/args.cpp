@@ -66,6 +66,7 @@ void printUsage() {
         "  --ui-key F:K              press potion key K (1-4) on frame F\n"
         "  --zen N                   start with N Zen\n"
         "  --loot                    --click-every picks up drops before it fights\n"
+        "  --entrance                the game's fade-up and the character's dissolve, in a --frames run\n"
         "  --talk NAME               walk to the townsperson whose name holds NAME\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --effects N               N sprites through the transparent pass, to price it\n"
@@ -306,6 +307,8 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--loot")) {
             a.loot = true;
+        } else if (!std::strcmp(s, "--entrance")) {
+            a.entrance = true;
         } else if (!std::strcmp(s, "--zen")) {
             if (const char* v = next(s)) a.zen = std::atoll(v);
         } else if (!std::strcmp(s, "--talk")) {

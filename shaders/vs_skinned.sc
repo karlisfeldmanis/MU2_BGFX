@@ -18,7 +18,8 @@ void main()
 	vec4 wpos = mul(world, vec4(a_position, 1.0));
 	v_wpos = wpos.xyz;
 	v_texcoord0 = a_texcoord0;
-	v_light = i_data4;
+	// w is 2 + the figure's fade (i_data5.y); common.sh's figureFade says why the 2.
+	v_light = vec4(i_data4.xyz, 2.0 + i_data5.y);
 
 	// The rig has no non-uniform scale -- no clip in this content animates one at all -- so
 	// the world matrix itself carries normals and there is no inverse transpose to build.

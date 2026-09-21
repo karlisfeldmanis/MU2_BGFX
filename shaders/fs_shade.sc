@@ -24,6 +24,9 @@ void main()
 	{
 		if (albedoTex.a < u_material.x) discard;
 	}
+	// How much of this figure is there. It leaves the pass through the alpha, which is 1 for
+	// everything else in the frame and is what the renderer blends the fading figure by.
+	float fade = figureFade(v_light.w);
 	// Times MU's own baked light at the tile this instance stands on. The land carries the
 	// same thing per vertex in its COLOR_0, so without this the town stands brighter than
 	// the ground it stands on, and MU's painted dusk stops at the foot of every wall.
@@ -179,5 +182,5 @@ void main()
 	}
 	colour += emissive;
 
-	gl_FragColor = vec4(dusty(colour, v_wpos), 1.0);
+	gl_FragColor = vec4(dusty(colour, v_wpos), fade);
 }
