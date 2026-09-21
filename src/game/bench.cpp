@@ -16,6 +16,10 @@
 
 namespace mu::game {
 
+// Where the stage's bonfire stands from the subject, x and z in metres; the weapon framing
+// keeps it in the picture.
+constexpr float kFireOffset[2] = {1.6f, -1.6f};
+
 bool ModelBench::makeGround(content::Textures& textures, float halfSize) {
     // The fallback plane, for when the world will not load. It was the bench's only ground
     // and the default until the land was put under it; see raiseWorldGround for why that was
@@ -246,7 +250,7 @@ bool ModelBench::openStage(const std::string& assetDir, const std::string& world
         float dx, dz, yawDegrees, scale;
     };
     static const Spot kSpots[] = {
-        {"Bonfire01", 1.6f, -1.6f, 0.0f, 1.0f},
+        {"Bonfire01", kFireOffset[0], kFireOffset[1], 0.0f, 1.0f},
         {"StreetLight01", -1.8f, 1.2f, 45.0f, 1.0f},
         {"House01", -7.0f, -7.0f, 45.0f, 1.0f},
         {"SteelWall01", 1.2f, -3.6f, 45.0f, 1.0f},
@@ -614,9 +618,31 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
             const gfx::Drawable& held = drawables_[first];
             const float* c = held.mesh->bounds().centre;
             const float* m = held.transform;
+            float at[3];
             for (int axis = 0; axis < 3; ++axis) {
-                focus_[axis] = c[0] * m[0 * 4 + axis] + c[1] * m[1 * 4 + axis] +
-                               c[2] * m[2 * 4 + axis] + m[3 * 4 + axis];
+                at[axis] = c[0] * m[0 * 4 + axis] + c[1] * m[1 * 4 + axis] +
+                           c[2] * m[2 * 4 + axis] + m[3 * 4 + axis];
+                focus_[axis] = at[axis];
+            }
+            // On the stage the bonfire is kept in the picture: the metal is judged by what it
+            // reflects, and a sword framed so close that the fire beside it is out of shot shows
+            // its light on the blade with nothing to say where it came from. The camera aims
+            // from the weapon towards the fire, the weapon left, the fire at the right edge. The user's call (2026-09-21).
+            if (stageTown_.isOpen()) {
+                const float fire[3] = {stand_[0] + kFireOffset[0], stand_[1] + 0.6f,
+                                       stand_[2] + kFireOffset[1]};
+                float apart = 0.0f;
+                for (int axis = 0; axis < 3; ++axis) {
+                    focus_[axis] = at[axis] + (fire[axis] - at[axis]) * 0.35f;
+                    apart += (fire[axis] - at[axis]) * (fire[axis] - at[axis]);
+                }
+                // A third of the way over and close: the weapon is the subject and the fire
+                // is at the edge of the frame. Halfway and wide enough for both, the axe was
+                // a sliver in a picture of a bonfire.
+                if (!wantsFixedDistance_) {
+                    distance_ = framingDistance(0.4f * std::sqrt(apart) +
+                                                0.5f * held.mesh->bounds().radius);
+                }
             }
         }
     }

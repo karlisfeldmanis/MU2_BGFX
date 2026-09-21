@@ -93,7 +93,7 @@
     },
     {
       "island": 2,
-      "material": "steel",
+      "material": "wrought_iron",
       "triangles": 12,
       "area": 623.4,
       "along": [
@@ -113,5 +113,14 @@
         0.594
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.55
+    },
+    "wrought_iron": {
+      "roughness": 0.7
+    }
+  },
+  "material_overrides_note": "As the Small Axe (2026-09-21): the grip end (island 2) is wrought iron at 0.7, not mirror steel -- a haft end faces up and mirrored the noon sun itself -- and the flat head is steel at 0.55 so held side-on it reads as iron rather than black."
 }

@@ -24,3 +24,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Sword08 | arm | 2026-09-21 19:14 | passed | steel 0.4: grey-blue steel with the painted wear visible; no longer black |
 | Sword09 | arm | 2026-09-21 19:17 | passed | dark scaled blade is MU's paint, silver edge and scales read at steel 0.3; gold grip no longer blows out at brass 0.6. Guard claws render grey where MU paints them gold: only the grip is brass |
 | Axe01 | arm | 2026-09-21 19:26 | passed | head dark forged iron at steel 0.55 (flat side-on face), haft wood reads, end cap wrought iron 0.7 no longer whites out; figures' copy recooked too |
+| Axe02 | arm | 2026-09-21 19:30 | passed | iron head with a highlight on the spike at steel 0.55, grip end wrought iron 0.7 matte; shot with the bonfire at the frame's edge |
