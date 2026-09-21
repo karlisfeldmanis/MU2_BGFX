@@ -113,5 +113,11 @@
         0.909
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.4
+    }
+  },
+  "material_overrides_note": "Steel at 0.4 here rather than the library's 0.2. A broad flat blade held side-on mirrors whatever is beside it, which in the hand is the grass, and at 0.2 it rendered near black (2026-09-21). Rougher, the reflection blurs to a grey sheen with a soft highlight. The thin and curved blades keep 0.2 because they turn some face to the sky."
 }
