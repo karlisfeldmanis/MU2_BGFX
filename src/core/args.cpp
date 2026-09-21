@@ -269,6 +269,9 @@ Args parseArgs(int argc, char** argv) {
             a.still = false;
         } else if (!std::strcmp(s, "--browse")) {
             a.browse = true;
+        } else if (!std::strcmp(s, "--stage")) {
+            a.browse = true;
+            a.stage = true;
         } else if (!std::strcmp(s, "--effects")) {
             if (const char* v = next(s)) a.effects = std::atoi(v);
         } else if (!std::strcmp(s, "--effect-size")) {
@@ -314,6 +317,14 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.category = v;
         } else if (!std::strcmp(s, "--pick")) {
             if (const char* v = next(s)) a.pick = v;
+        } else if (!std::strcmp(s, "--time")) {
+            if (const char* v = next(s)) {
+                a.time = v;
+                if (a.time != "noon" && a.time != "dusk" && a.time != "night") {
+                    logError("--time takes noon, dusk or night, not '%s'", v);
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--shadow-log")) {
             if (const char* v = next(s)) {
                 a.shadowLog = v;

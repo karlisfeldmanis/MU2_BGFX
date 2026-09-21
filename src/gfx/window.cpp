@@ -125,7 +125,7 @@ bool Window::pump() {
     const int stepKeys[size_t(Step::Count)] = {GLFW_KEY_LEFT,         GLFW_KEY_RIGHT,
                                                GLFW_KEY_DOWN,         GLFW_KEY_UP,
                                                GLFW_KEY_TAB,          GLFW_KEY_LEFT_BRACKET,
-                                               GLFW_KEY_RIGHT_BRACKET};
+                                               GLFW_KEY_RIGHT_BRACKET, GLFW_KEY_T};
     for (size_t i = 0; i < size_t(Step::Count); ++i) {
         const bool down = glfwGetKey(handle_, stepKeys[i]) == GLFW_PRESS;
         stepped_[i] = down && !stepHeld_[i];

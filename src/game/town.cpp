@@ -1,6 +1,7 @@
 #include "game/town.h"
 
 #include <bx/math.h>
+#include <algorithm>
 #include <bx/timer.h>
 
 #include "content/placement.h"
@@ -51,9 +52,7 @@ struct Frustum {
 
 }  // namespace
 
-bool Town::open(const std::string& assetDir, const std::string& world,
-                content::Textures& textures) {
-    const int64_t started = bx::getHPCounter();
+bool Town::readTable(const std::string& assetDir, const std::string& world) {
     const std::string dir = core::join(assetDir, "cooked/" + world);
     const std::string townPath = core::join(dir, world + ".mut");
 
@@ -68,11 +67,17 @@ bool Town::open(const std::string& assetDir, const std::string& world,
         core::logError("%s: %s", townPath.c_str(), error.c_str());
         return false;
     }
+    return true;
+}
 
+size_t Town::loadMeshes(const std::string& assetDir, const std::vector<bool>& wanted,
+                        content::Textures& textures) {
     glowLevels_.assign(town_.instances.size(), 1.0f);
     meshes_.resize(town_.models.size());
     size_t failed = 0;
+    std::string error;
     for (size_t i = 0; i < town_.models.size(); ++i) {
+        if (!wanted.empty() && !wanted[i]) continue;
         const content::TownModel& model = town_.models[i];
         std::vector<uint8_t> meshBytes = core::readFile(core::join(assetDir, model.mesh));
         content::CookedMesh cooked;
@@ -88,6 +93,14 @@ bool Town::open(const std::string& assetDir, const std::string& world,
         }
         triangles_ += meshes_[i].triangleCount() * model.instances;
     }
+    return failed;
+}
+
+bool Town::open(const std::string& assetDir, const std::string& world,
+                content::Textures& textures) {
+    const int64_t started = bx::getHPCounter();
+    if (!readTable(assetDir, world)) return false;
+    const size_t failed = loadMeshes(assetDir, {}, textures);
 
     loadSeconds_ = double(bx::getHPCounter() - started) / double(bx::getHPFrequency());
     core::logf("town %s: %zu placements of %zu models in %zu chunks of %u tiles, "
@@ -95,6 +108,54 @@ bool Town::open(const std::string& assetDir, const std::string& world,
                world.c_str(), town_.instances.size(), town_.models.size(), town_.chunks.size(),
                town_.chunkTiles, triangles_, failed, loadSeconds_);
     return failed == 0;
+}
+
+bool Town::openStage(const std::string& assetDir, const std::string& world,
+                     const std::vector<StagePlacement>& placements,
+                     content::Textures& textures) {
+    if (!readTable(assetDir, world)) return false;
+    // The map's placements go; its models, emitters and glows stay, because those are what a
+    // placement is resolved through.
+    town_.instances.clear();
+    std::vector<bool> wanted(town_.models.size(), false);
+    content::TownChunk chunk;
+    for (int i = 0; i < 3; ++i) {
+        chunk.min[i] = 1e30f;
+        chunk.max[i] = -1e30f;
+    }
+    for (content::TownModel& model : town_.models) model.instances = 0;
+    for (const StagePlacement& one : placements) {
+        size_t found = town_.models.size();
+        for (size_t i = 0; i < town_.models.size(); ++i) {
+            if (town_.models[i].name == one.model) found = i;
+        }
+        if (found == town_.models.size()) {
+            core::logError("stage: %s has no cooked model named %s", world.c_str(),
+                           one.model.c_str());
+            continue;
+        }
+        content::TownInstance instance{};
+        for (int i = 0; i < 3; ++i) instance.position[i] = one.position[i];
+        instance.yaw = one.yaw;
+        instance.scale = one.scale;
+        instance.model = uint16_t(found);
+        instance.light[0] = instance.light[1] = instance.light[2] = 255;
+        town_.instances.push_back(instance);
+        town_.models[found].instances += 1;
+        wanted[found] = true;
+        // A box generous enough for anything a stage stands up; the stage is one chunk and
+        // is never culled against anything that matters.
+        for (int i = 0; i < 3; ++i) {
+            chunk.min[i] = std::min(chunk.min[i], one.position[i] - 10.0f);
+            chunk.max[i] = std::max(chunk.max[i], one.position[i] + 10.0f);
+        }
+    }
+    chunk.instanceCount = uint32_t(town_.instances.size());
+    town_.chunks.assign(1, chunk);
+    const size_t failed = loadMeshes(assetDir, wanted, textures);
+    core::logf("stage: %zu placements of %s's models, %zu failed", town_.instances.size(),
+               world.c_str(), failed);
+    return !town_.instances.empty() && failed == 0;
 }
 
 void Town::shutdown() {

@@ -37,6 +37,12 @@ struct Drawable {
     // Five worn parts of one character share a row: wearing is swapping which meshes draw
     // against one set of bone rows, and the skeleton does not know what it has on.
     int paletteRow = -1;
+    // False leaves it out of the reflection probe, as a posed figure always is. The viewer's
+    // subject: the cube is taken 1.2 m over the camera's focus, which in the viewer is inside
+    // the subject, and a cannon would reflect the inside of its own barrel. In the game the
+    // cube is at the player, beside a thing and never in it. Per mesh, like `posed`: one
+    // instance left out leaves out every instance of that mesh in the frame.
+    bool inProbe = true;
 };
 
 // One point light, in world metres. The renderer knows nothing of lamps, torches or fires:
@@ -173,9 +179,9 @@ private:
         const content::Mesh* mesh = nullptr;
         uint32_t first = 0;   // into the frame's instance buffer
         uint32_t count = 0;
-        // A figure in a pose of its own. The probe leaves these out: it is taken from the
-        // player's chest, and a cube taken from inside him holds nothing but his armour's
-        // inside, which every piece of it would then reflect.
+        // A figure in a pose of its own, or anything else marked out of the probe. The probe
+        // leaves these out: it is taken from the player's chest, and a cube taken from inside
+        // him holds nothing but his armour's inside, which every piece of it would then reflect.
         bool posed = false;
     };
 

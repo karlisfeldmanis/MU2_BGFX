@@ -19,28 +19,7 @@ void Lighting::sunDirection(float out[3]) const {
     out[2] = -cosEl * std::sin(az);
 }
 
-bool Lighting::reloadIfChanged(const std::string& path) {
-    const int64_t stamp = core::fileModified(path);
-    if (stamp == 0) {
-        // No sheet is not an error: the defaults in the header are a working rig, and this
-        // is what a fresh checkout with no sheets/ does.
-        if (!everRead_) {
-            everRead_ = true;
-            core::logf("no lighting sheet at %s; the engine's own defaults stand", path.c_str());
-            return true;
-        }
-        return false;
-    }
-    if (everRead_ && stamp == modified_) return false;
-    modified_ = stamp;
-    everRead_ = true;
-
-    core::Json doc = core::parseJsonFile(path);
-    if (doc.isNull()) {
-        core::logError("the lighting sheet did not parse; the values in hand still stand");
-        return false;
-    }
-
+void Lighting::apply(const core::Json& doc, const std::string& from) {
     // Each key is optional and overrides one value, so a sheet naming three things is three
     // lines long. A key nobody reads is a key nobody notices, so unknown ones are said.
     doc.readInto("azimuth", &azimuth);
@@ -76,8 +55,33 @@ bool Lighting::reloadIfChanged(const std::string& path) {
     for (const auto& [key, value] : doc.members) {
         bool known = false;
         for (const char* k : kKnown) known = known || key == k;
-        if (!known) core::logError("the lighting sheet names '%s', which nothing reads", key.c_str());
+        if (!known) core::logError("%s names '%s', which nothing reads", from.c_str(), key.c_str());
     }
+}
+
+bool Lighting::reloadIfChanged(const std::string& path) {
+    const int64_t stamp = core::fileModified(path);
+    if (stamp == 0) {
+        // No sheet is not an error: the defaults in the header are a working rig, and this
+        // is what a fresh checkout with no sheets/ does.
+        if (!everRead_) {
+            everRead_ = true;
+            core::logf("no lighting sheet at %s; the engine's own defaults stand", path.c_str());
+            return true;
+        }
+        return false;
+    }
+    if (everRead_ && stamp == modified_) return false;
+    modified_ = stamp;
+    everRead_ = true;
+
+    core::Json doc = core::parseJsonFile(path);
+    if (doc.isNull()) {
+        core::logError("the lighting sheet did not parse; the values in hand still stand");
+        return false;
+    }
+
+    apply(doc, path);
 
     float dir[3];
     sunDirection(dir);
@@ -85,6 +89,18 @@ bool Lighting::reloadIfChanged(const std::string& path) {
                "ssao r%.2f x%.2f, shadow %.0f m",
                azimuth, elevation, dir[0], dir[1], dir[2], sunStrength, exposure, ssaoRadius,
                ssaoStrength, shadowRange);
+    return true;
+}
+
+bool Lighting::readOverlay(const std::string& path) {
+    // Unconditional, unlike the sheet: an overlay is laid on whatever the sheet just gave, so
+    // it has to be laid again every time the sheet is re-read, changed or not.
+    core::Json doc = core::parseJsonFile(path);
+    if (doc.isNull()) {
+        core::logError("%s did not parse; the sheet's values stand", path.c_str());
+        return false;
+    }
+    apply(doc, path);
     return true;
 }
 

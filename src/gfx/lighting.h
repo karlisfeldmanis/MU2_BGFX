@@ -5,6 +5,10 @@
 
 #include <string>
 
+namespace mu::core {
+class Json;
+}
+
 namespace mu::gfx {
 
 // Everything here is in metres, which is MU2's own scene scale: one tile, one metre.
@@ -90,10 +94,17 @@ struct Lighting {
     // caller can log it. The first call always reads.
     bool reloadIfChanged(const std::string& path);
 
+    // Lays a second sheet over the values in hand: the keys it names win and the rest stand.
+    // The viewer's times of day are these -- sheets/time/dusk.json is a dozen keys, not a
+    // second copy of lighting.json that drifts from it. Reads every time it is asked.
+    bool readOverlay(const std::string& path);
+
     // The unit vector towards the sun, from the two angles.
     void sunDirection(float out[3]) const;
 
 private:
+    void apply(const core::Json& doc, const std::string& from);
+
     int64_t modified_ = 0;
     bool everRead_ = false;
 };

@@ -57,5 +57,8 @@ set -e
 cd "$(dirname "$0")"
 [ -x build/mu2 ] || ./build.sh
 mkdir -p shots
-# --still first so a --spin on the command line takes it back.
-exec build/mu2 --browse --still "$@"
+# --still first so a --spin on the command line takes it back. --stage stands the world's own
+# bonfire, street lamp, wall and railing round the subject and runs the world's lamps on them,
+# under MU's own camera; T walks noon, dusk and night (sheets/time/). --browse alone is the
+# subject on its bare plot and nothing else.
+exec build/mu2 --stage --still "$@"

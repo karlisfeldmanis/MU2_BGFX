@@ -11,6 +11,8 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/lamps.h"
+#include "game/town.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {
@@ -55,6 +57,17 @@ public:
     // monster looked at in bind pose is not the monster the game draws.
     bool openBrowser(const std::string& assetDir, const std::string& world,
                      content::Textures& textures);
+    // The viewer's stage: the browser on its plot, with a few of the world's own placements
+    // stood round the subject -- a bonfire on its right, a street lamp on its left, a house
+    // wall and a railing behind it -- and the world's own lamps built from them. So a thing is
+    // judged with a fire's light and flicker on it, with the town's objects in its reflection,
+    // under MU's camera, at noon, dusk or night: every system the game draws a thing with.
+    // `./viewer.sh`, which passes --stage.
+    bool openStage(const std::string& assetDir, const std::string& world,
+                   content::Textures& textures);
+    bool hasStage() const { return stageTown_.isOpen(); }
+    Town& stageTown() { return stageTown_; }
+    Lamps& stageLamps() { return stageLamps_; }
     // Moves `by` places within the open category and loads what it lands on, clamped to the
     // list. Returns false only if that entry will not load, having already said why.
     bool step(int by, content::Textures& textures);
@@ -107,6 +120,8 @@ public:
     // The ground and whatever stands on it. A figure is posed here rather than at open,
     // because its pose is a frame's worth of work and takes a palette row of the renderer.
     const std::vector<gfx::Drawable>& gather(gfx::Renderer& renderer);
+    // The subject alone, without the stage round it.
+    const std::vector<gfx::Drawable>& gatherSubject(gfx::Renderer& renderer);
     bool hasFigure() const { return haveFigure_; }
     const Figure& figure() const { return figure_; }
     // What the bench prints once a second: which clip, where its clock stands, and how long
@@ -137,6 +152,12 @@ private:
     static constexpr int kPlotSurface = 0;
 
     bool makeGround(content::Textures& textures, float halfSize);
+    // The categories, once the ground under them is settled. Shared by both openers.
+    bool fillBrowser(const std::string& assetDir, const std::string& world,
+                     content::Textures& textures);
+    // In a world, the camera is MU's: framed from 1.5 m above the feet at 8 m, pulled back only
+    // for a thing too big to fit. See world.cpp for where those numbers come from.
+    void frameAsGame(float radius);
     // Loads whatever the open category is pointing at: a cooked mesh, or a body stood up on
     // the land with its clip running.
     bool loadCurrent(content::Textures& textures);
@@ -155,6 +176,13 @@ private:
     content::Mesh ground_;
     content::Ground worldGround_;
     bool haveWorldGround_ = false;
+    // The stage round the subject, when there is one, and the list gather() hands back then:
+    // the stage's placements, then the subject kept out of the reflection probe.
+    Town stageTown_;
+    Lamps stageLamps_;
+    std::vector<gfx::Drawable> staged_;
+    // MU's camera rather than the bench's, on the stage.
+    bool gameFrame_ = false;
     // Where on the map the bench stands its subject, in metres. The middle of Lorencia's
     // paved square: flat, lit the way the town is lit, and the place a shot of a model is
     // worth comparing against a shot of the town.

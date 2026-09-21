@@ -27,9 +27,25 @@ struct TownCounts {
     uint32_t instancesCulled = 0;
 };
 
+// One thing a stage stands up, by the cooked model's name. Metres and radians.
+struct StagePlacement {
+    std::string model;
+    float position[3] = {0.0f, 0.0f, 0.0f};
+    float yaw = 0.0f;
+    float scale = 1.0f;
+};
+
 class Town {
 public:
     bool open(const std::string& assetDir, const std::string& world, content::Textures& textures);
+    // A town of a few placements rather than a map's worth: the world's own cooked models,
+    // emitters and glows, standing where `placements` says and nowhere else. The viewer's
+    // stage is this -- a bonfire, a lamp, a wall -- and because it is a Town, the lamps, the
+    // glows, the flicker and the fire are built from it by exactly the code the game uses.
+    // Lit white: the stage's plot has no baked light to give them. Only the models named are
+    // loaded.
+    bool openStage(const std::string& assetDir, const std::string& world,
+                   const std::vector<StagePlacement>& placements, content::Textures& textures);
     void shutdown();
 
     bool isOpen() const { return !meshes_.empty(); }
@@ -70,6 +86,10 @@ public:
     double loadSeconds() const { return loadSeconds_; }
 
 private:
+    bool readTable(const std::string& assetDir, const std::string& world);
+    // Builds the meshes of the models `wanted` marks, or of every model when it is empty.
+    size_t loadMeshes(const std::string& assetDir, const std::vector<bool>& wanted,
+                      content::Textures& textures);
     void append(const content::TownInstance& instance, std::vector<gfx::Drawable>& out);
 
     content::CookedTown town_;

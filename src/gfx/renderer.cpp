@@ -1021,10 +1021,10 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     seen.emplace(d.mesh, out.size());
                     out.emplace_back();
                     out.back().push_back(&d);
-                    batches.push_back(Batch{d.mesh, 0, 0, d.paletteRow >= 0});
+                    batches.push_back(Batch{d.mesh, 0, 0, d.paletteRow >= 0 || !d.inProbe});
                 } else {
                     out[found->second].push_back(&d);
-                    if (d.paletteRow >= 0) batches[found->second].posed = true;
+                    if (d.paletteRow >= 0 || !d.inProbe) batches[found->second].posed = true;
                 }
             }
         };

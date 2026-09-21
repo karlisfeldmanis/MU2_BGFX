@@ -1,0 +1,9 @@
+{
+  "note": "The viewer's dusk, laid over lighting.json (Lighting::readOverlay). Invention, not MU's: the game has no day and night yet. A low orange sun and a dimmed sky, so a fire's light and its reflection in metal can be told from the sun's. Edit live; the viewer re-reads it with the sheet.",
+  "elevation": 9.0,
+  "sun_colour": [1.0, 0.52, 0.28],
+  "sun_strength": 1.8,
+  "sky_colour": [0.30, 0.24, 0.28],
+  "ground_colour": [0.12, 0.09, 0.07],
+  "ambient_strength": 0.35
+}

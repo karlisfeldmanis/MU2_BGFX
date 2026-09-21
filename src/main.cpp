@@ -14,6 +14,7 @@
 
 #include "content/showing.h"
 #include "content/texture.h"
+#include "core/files.h"
 #include "core/args.h"
 #include "core/log.h"
 #include "game/bench.h"
@@ -34,6 +35,16 @@ namespace {
 
 std::string defaultPath(const char* dir, const char* name) {
     return std::string(dir) + "/" + name;
+}
+
+// What the day gives an unlit puff of smoke: the ambient and the sun on a flat surface, over
+// what the default sheet's noon gives it. The transparent pass lights nothing, so the lamps'
+// smoke is lit by this. Shared by the world and the viewer's stage.
+float daylightOf(const gfx::Lighting& lighting) {
+    const float sky = lighting.ambientStrength +
+                      lighting.sunStrength * std::sin(lighting.elevation * 3.14159265f / 180.0f) /
+                          3.14159265f;
+    return std::clamp(sky / 1.45f, 0.08f, 1.0f);
 }
 
 // The viewer's list, down the left, and the hit test that goes with it.
@@ -238,7 +249,27 @@ int main(int argc, char** argv) {
     }
 
     gfx::Lighting lighting;
-    lighting.reloadIfChanged(sheetPath);
+    // The viewer's times of day: the sheet alone at noon, and sheets/time/<name>.json laid
+    // over it otherwise. Rebuilt from the sheet on every change rather than patched, so going
+    // from night back to noon cannot leave a night value behind.
+    static const char* kTimes[] = {"noon", "dusk", "night"};
+    int daytime = args.time == "dusk" ? 1 : (args.time == "night" ? 2 : 0);
+    int64_t overlayStamp = 0;
+    auto overlayPath = [&](int which) {
+        return defaultPath(MU2_SHEET_DIR, (std::string("time/") + kTimes[which] + ".json").c_str());
+    };
+    auto applyTime = [&]() {
+        lighting = gfx::Lighting();
+        lighting.reloadIfChanged(sheetPath);
+        overlayStamp = 0;
+        if (daytime > 0) {
+            const std::string overlay = overlayPath(daytime);
+            overlayStamp = core::fileModified(overlay);
+            lighting.readOverlay(overlay);
+        }
+        if (daytime > 0 || args.browse) core::logf("time of day: %s", kTimes[daytime]);
+    };
+    applyTime();
 
     // Either a world or the model bench, never both: they are two different things to look
     // at and the camera belongs to whichever it is.
@@ -249,8 +280,8 @@ int main(int argc, char** argv) {
         // No crowd when the realm is going to be raised: the crowd stands monsters where it
         // chooses and the sim stands them where they are, and raising both means loading, posing
         // and then throwing away 45 figures a run.
-        if (!world.open(MU2_ASSET_DIR, args.world, textures, args.play ? 0 : args.crowd,
-                        args.figuresOn)) {
+        if (!world.open(MU2_ASSET_DIR, args.world, textures,
+                        args.play ? 0 : args.crowd, args.figuresOn)) {
             core::logError("the world did not open");
             // The world may have failed half-open -- `--at` off the map is refused after the
             // ground's buffers are already made -- and a failure path that skips the world's
@@ -335,7 +366,10 @@ int main(int argc, char** argv) {
     if (browseBench && !overlay.init(MU2_SHADER_DIR)) {
         core::logError("the viewer opened without its list; the names are in the log");
     }
-    if (browseBench && !bench.openBrowser(MU2_ASSET_DIR, benchWorld, textures)) {
+    // The stage is the browser with the world's own lamps, fire and objects stood round the
+    // subject; the bare browser is the subject on its plot and nothing else.
+    if (browseBench && !(args.stage ? bench.openStage(MU2_ASSET_DIR, benchWorld, textures)
+                                    : bench.openBrowser(MU2_ASSET_DIR, benchWorld, textures))) {
         core::logError("the bench did not open");
         renderer.shutdown();
         textures.shutdown();
@@ -348,6 +382,8 @@ int main(int argc, char** argv) {
     if (browseBench && !args.category.empty()) bench.openCategory(args.category, textures);
     if (browseBench && !args.pick.empty()) bench.pick(args.pick, textures);
     if (browseBench) core::logf("browser: %s", bench.browseLine().c_str());
+    // The stage's lamps, once, as a world's are: the renderer lays its light grid here.
+    if (bench.hasStage() && args.lampsOn) bench.stageLamps().light(renderer);
     if (!inWorld && !figureBench && !browseBench &&
         !bench.open(MU2_ASSET_DIR, benchWorld, modelPath, textures)) {
         core::logError("the bench did not open");
@@ -467,6 +503,83 @@ int main(int argc, char** argv) {
         }
     }
 
+    // The browser's keys and its list, shared by the viewer on its plot and the viewer in a
+    // world: the same list, the same keys, whichever ground is under the subject.
+    auto steer = [&]() {
+        // The browser's steering, before the frame it steers. Left and right walk one,
+        // down and up walk ten, and the step is an edge rather than a state: at 400 fps a
+        // key read as held walks the whole list on one tap.
+        if (bench.browsing()) {
+            int by = 0;
+            if (window.stepped(gfx::Window::Step::Previous)) by -= 1;
+            if (window.stepped(gfx::Window::Step::Next)) by += 1;
+            if (window.stepped(gfx::Window::Step::PreviousTen)) by -= 10;
+            if (window.stepped(gfx::Window::Step::NextTen)) by += 10;
+            if (by != 0) {
+                bench.step(by, textures);
+                core::logf("browser: %s", bench.browseLine().c_str());
+            }
+            // Tab walks the categories, skipping any that is empty: a world cooked
+            // without figures must not have two tab presses that appear to do nothing.
+            if (window.stepped(gfx::Window::Step::Category)) {
+                const size_t count = bench.categoryCount();
+                for (size_t i = 1; i <= count; ++i) {
+                    const size_t next = (bench.categoryIndex() + i) % count;
+                    if (bench.setCategory(next, textures)) break;
+                }
+                core::logf("browser: %s", bench.browseLine().c_str());
+            }
+            if (window.stepped(gfx::Window::Step::PreviousClip)) bench.stepClip(-1);
+            if (window.stepped(gfx::Window::Step::NextClip)) bench.stepClip(1);
+        }
+        // T walks the times of day. It is the viewer's key; the game has no day and night yet.
+        if (browseBench && window.stepped(gfx::Window::Step::Time)) {
+            daytime = (daytime + 1) % 3;
+            applyTime();
+        }
+    };
+    auto drawList = [&]() {
+        if (bench.browsing() && overlay.ready()) {
+            float px = 0.0f, py = 0.0f;
+            window.pointer(&px, &py);
+            const ListHit hit = drawBrowserList(overlay, bench, window.width(),
+                                                window.height(), px, py);
+            // Under the panel rather than in it: which clip is running, where its clock
+            // stands and how long it is. A still cannot show that a clip is playing, and
+            // a monster frozen on frame one looks exactly like one standing still.
+            if (bench.hasFigure()) {
+                overlay.text(hit.x + 4.0f, hit.y + hit.h + 10.0f, 2.4f, 0xFFc8c8c8u,
+                             bench.clipLine());
+            }
+            overlay.text(hit.x + 4.0f, hit.y + hit.h + (bench.hasFigure() ? 34.0f : 10.0f), 2.4f,
+                         0xFFc8c8c8u, std::string(kTimes[daytime]) + "    T changes the time of day");
+            overlay.submit(gfx::ViewHud);
+            // The list eats the pointer while it is over it, so a click on a name does
+            // not also drag the camera and the wheel scrolls the list rather than zooming.
+            if (hit.over) {
+                if (window.clicked(0) && hit.tab >= 0) {
+                    bench.setCategory(size_t(hit.tab), textures);
+                    core::logf("browser: %s", bench.browseLine().c_str());
+                }
+                if (window.clicked(0) && hit.hovered >= 0) {
+                    bench.step(int(hit.hovered - (long long)bench.browseIndex()), textures);
+                    core::logf("browser: %s", bench.browseLine().c_str());
+                }
+                const float wheel = window.scroll();
+                if (wheel != 0.0f) {
+                    bench.step(wheel > 0.0f ? -1 : 1, textures);
+                }
+            } else {
+                if (window.held(0)) {
+                    float dx = 0.0f, dy = 0.0f;
+                    window.pointerDelta(&dx, &dy);
+                    bench.orbit(dx, dy);
+                }
+                bench.zoom(window.scroll());
+            }
+        }
+    };
+
     while (window.pump() && !window.escapePressed()) {
         renderer.resize(window.width(), window.height());
 
@@ -475,7 +588,11 @@ int main(int argc, char** argv) {
         // a hundred times a second.
         if (sinceSheetCheck >= 250.0) {
             sinceSheetCheck = 0.0;
-            lighting.reloadIfChanged(sheetPath);
+            // The overlay is watched as well as the sheet, so dusk can be tuned live too.
+            if (lighting.reloadIfChanged(sheetPath) ||
+                (daytime > 0 && core::fileModified(overlayPath(daytime)) != overlayStamp)) {
+                applyTime();
+            }
         }
 
         // The frame's poses start empty: a row is taken by whoever is posed this frame, and
@@ -516,6 +633,7 @@ int main(int argc, char** argv) {
         }
 
         if (inWorld) {
+            const gfx::Camera& eye = world.camera();
             // The pointer and what it is over, before the sim is stepped: a click is answered
             // on the tick after it is made, which is MU's own latency and not ours to shave.
             if (world.played().isOpen()) {
@@ -641,16 +759,10 @@ int main(int argc, char** argv) {
             // The lamps flicker, the fires burn, and the glows' levels go into the town before
             // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
             if (args.lampsOn) {
-                world.lamps().update(float(deltaSeconds), world.town(), renderer,
-                                    world.camera().target);
+                world.lamps().update(float(deltaSeconds), world.town(), renderer, eye.target);
                 // What the day gives an unlit puff of smoke: the ambient and the sun on a flat
                 // surface, over what the default sheet's noon gives it.
-                const float sky = lighting.ambientStrength +
-                                  lighting.sunStrength *
-                                      std::sin(lighting.elevation * 3.14159265f / 180.0f) /
-                                      3.14159265f;
-                const float daylight = std::clamp(sky / 1.45f, 0.08f, 1.0f);
-                world.lamps().gather(renderer.effects(), world.camera().target, daylight);
+                world.lamps().gather(renderer.effects(), eye.target, daylightOf(lighting));
             }
             // The town's drawables are gathered fresh each frame into one vector that keeps
             // its capacity: a frame appends to a flat array, as foundation 7 says, and
@@ -662,7 +774,7 @@ int main(int argc, char** argv) {
                 if (args.cullChunks) {
                     float view[16];
                     float proj[16];
-                    renderer.cameraMatrices(world.camera(), view, proj);
+                    renderer.cameraMatrices(eye, view, proj);
                     float viewProj[16];
                     bx::mtxMul(viewProj, view, proj);
                     world.town().gatherVisible(viewProj, townDrawables);
@@ -715,7 +827,7 @@ int main(int argc, char** argv) {
                 const float slide[3] = {metres, 0.0f, metres * 0.618f};
                 renderer.slideSplit(slide);
             }
-            renderer.draw(world.camera(), lighting, townDrawables, &world.ground(), casters);
+            renderer.draw(eye, lighting, townDrawables, &world.ground(), casters);
             if (desk.ready()) desk.submit(gfx::ViewHud, window.width(), window.height());
             if (shadowPoints) {
                 float view[16], proj[16], viewProj[16];
@@ -757,71 +869,18 @@ int main(int argc, char** argv) {
                              phase(split.depthQuanta), heroX, heroZ, lagMm);
             }
         } else {
-            // The browser's steering, before the frame it steers. Left and right walk one,
-            // down and up walk ten, and the step is an edge rather than a state: at 400 fps a
-            // key read as held walks the whole list on one tap.
-            if (bench.browsing()) {
-                int by = 0;
-                if (window.stepped(gfx::Window::Step::Previous)) by -= 1;
-                if (window.stepped(gfx::Window::Step::Next)) by += 1;
-                if (window.stepped(gfx::Window::Step::PreviousTen)) by -= 10;
-                if (window.stepped(gfx::Window::Step::NextTen)) by += 10;
-                if (by != 0) {
-                    bench.step(by, textures);
-                    core::logf("browser: %s", bench.browseLine().c_str());
-                }
-                // Tab walks the categories, skipping any that is empty: a world cooked
-                // without figures must not have two tab presses that appear to do nothing.
-                if (window.stepped(gfx::Window::Step::Category)) {
-                    const size_t count = bench.categoryCount();
-                    for (size_t i = 1; i <= count; ++i) {
-                        const size_t next = (bench.categoryIndex() + i) % count;
-                        if (bench.setCategory(next, textures)) break;
-                    }
-                    core::logf("browser: %s", bench.browseLine().c_str());
-                }
-                if (window.stepped(gfx::Window::Step::PreviousClip)) bench.stepClip(-1);
-                if (window.stepped(gfx::Window::Step::NextClip)) bench.stepClip(1);
-            }
+            steer();
             bench.update(elapsed, deltaSeconds, !args.still);
-            renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
-            if (bench.browsing() && overlay.ready()) {
-                float px = 0.0f, py = 0.0f;
-                window.pointer(&px, &py);
-                const ListHit hit = drawBrowserList(overlay, bench, window.width(),
-                                                    window.height(), px, py);
-                // Under the panel rather than in it: which clip is running, where its clock
-                // stands and how long it is. A still cannot show that a clip is playing, and
-                // a monster frozen on frame one looks exactly like one standing still.
-                if (bench.hasFigure()) {
-                    overlay.text(hit.x + 4.0f, hit.y + hit.h + 10.0f, 2.4f, 0xFFc8c8c8u,
-                                 bench.clipLine());
-                }
-                overlay.submit(gfx::ViewHud);
-                // The list eats the pointer while it is over it, so a click on a name does
-                // not also drag the camera and the wheel scrolls the list rather than zooming.
-                if (hit.over) {
-                    if (window.clicked(0) && hit.tab >= 0) {
-                        bench.setCategory(size_t(hit.tab), textures);
-                        core::logf("browser: %s", bench.browseLine().c_str());
-                    }
-                    if (window.clicked(0) && hit.hovered >= 0) {
-                        bench.step(int(hit.hovered - (long long)bench.browseIndex()), textures);
-                        core::logf("browser: %s", bench.browseLine().c_str());
-                    }
-                    const float wheel = window.scroll();
-                    if (wheel != 0.0f) {
-                        bench.step(wheel > 0.0f ? -1 : 1, textures);
-                    }
-                } else {
-                    if (window.held(0)) {
-                        float dx = 0.0f, dy = 0.0f;
-                        window.pointerDelta(&dx, &dy);
-                        bench.orbit(dx, dy);
-                    }
-                    bench.zoom(window.scroll());
-                }
+            // The stage's lamps, the way a world's are run: the flicker, the glows written into
+            // its town, and the flames near the camera into the transparent pass.
+            if (bench.hasStage() && args.lampsOn) {
+                bench.stageLamps().update(float(deltaSeconds), bench.stageTown(), renderer,
+                                          bench.camera().target);
+                bench.stageLamps().gather(renderer.effects(), bench.camera().target,
+                                          daylightOf(lighting));
             }
+            renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
+            drawList();
         }
 
         const bool lastFrame = args.frames && frame + 1 >= args.frames;

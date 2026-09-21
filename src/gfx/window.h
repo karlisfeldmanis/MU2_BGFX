@@ -47,6 +47,8 @@ public:
         // Tab walks the viewer's categories -- world objects, monsters, people -- and the two
         // bracket keys walk the clips of whatever figure is standing there.
         Category, PreviousClip, NextClip,
+        // T walks the viewer's times of day: noon, dusk, night. sheets/time/.
+        Time,
         Count
     };
     bool stepped(Step step) const { return stepped_[size_t(step)]; }

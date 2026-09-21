@@ -110,6 +110,9 @@ struct Args {
     // The cooked browser: step through every .mum the cook wrote, with the arrow keys. Not
     // the same thing as --model, which reads one glb: this reads what the game loads.
     bool browse = false;
+    // The browser on its stage: a bonfire, a lamp and a wall of the world's own stood round the
+    // subject, with the world's lamps built from them. viewer.sh passes it.
+    bool stage = false;
 
     // The transparent pass's probe: N effect sprites in front of the camera, so that a pass
     // which has no account yet can be priced against the same scene with it empty.
@@ -152,6 +155,9 @@ struct Args {
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.
     std::string pick;
+    // The viewer's time of day to open on: noon, dusk or night. sheets/time/<name>.json laid
+    // over the lighting sheet; noon is the sheet alone. T walks them with the window open.
+    std::string time = "noon";
     std::string figure;
     int clip = -1;
     // Stands the bench's figure as a safe zone does: weapon on the back, unarmed idle. It is

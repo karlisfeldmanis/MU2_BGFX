@@ -151,6 +151,7 @@ bool ModelBench::place(content::Textures& textures) {
         // Stood on the ground rather than centred above it: what this bench is for is the
         // contact -- the shadow under it and the occlusion where it meets the land.
         frameOn(radius, b);
+        if (gameFrame_) frameAsGame(radius);
     } else if (distance_ <= 0.0f) {
         distance_ = framingDistance(radius);
     }
@@ -225,10 +226,67 @@ std::vector<BrowseEntry> bodiesIn(const Figures& figures, BodyKind kind) {
 
 bool ModelBench::openBrowser(const std::string& assetDir, const std::string& world,
                              content::Textures& textures) {
-    browseDir_ = assetDir;
-    const std::string cooked = core::join(assetDir, "cooked");
     // The land first, because everything in every category is going to stand on it.
     raiseWorldGround(assetDir, world, textures);
+    return fillBrowser(assetDir, world, textures);
+}
+
+bool ModelBench::openStage(const std::string& assetDir, const std::string& world,
+                           content::Textures& textures) {
+    if (!raiseWorldGround(assetDir, world, textures)) return false;
+    gameFrame_ = true;
+    camera_.fovDegrees = 55.0f;  // MU's lens, which the framing is worked out through
+    // Round the subject, in metres from where it stands. MU's camera looks down from +x +z,
+    // so +x -z is the right of the picture and -x +z the left; behind is -x -z. Placed so the
+    // fire is beside the subject and in the frame rather than behind it or under it, and so
+    // the wall is what a turn of the camera finds in the reflection. Lorencia's models, so
+    // their emitters -- the bonfire's fire and light, the lamp's light -- come with them.
+    struct Spot {
+        const char* model;
+        float dx, dz, yawDegrees, scale;
+    };
+    static const Spot kSpots[] = {
+        {"Bonfire01", 1.6f, -1.6f, 0.0f, 1.0f},
+        {"StreetLight01", -1.8f, 1.2f, 45.0f, 1.0f},
+        {"House01", -7.0f, -7.0f, 45.0f, 1.0f},
+        {"SteelWall01", 1.2f, -3.6f, 45.0f, 1.0f},
+        {"SteelWall01", 3.4f, -1.4f, 45.0f, 1.0f},
+    };
+    std::vector<StagePlacement> placements;
+    for (const Spot& spot : kSpots) {
+        StagePlacement one;
+        one.model = spot.model;
+        one.position[0] = stand_[0] + spot.dx;
+        one.position[2] = stand_[2] + spot.dz;
+        one.position[1] = worldGround_.heightAt(one.position[0], one.position[2]);
+        one.yaw = spot.yawDegrees * 3.14159265f / 180.0f;
+        one.scale = spot.scale;
+        placements.push_back(one);
+    }
+    if (!stageTown_.openStage(assetDir, world, placements, textures)) {
+        core::logError("stage: not all of it stood; the viewer runs on its bare plot");
+    }
+    if (stageTown_.isOpen()) {
+        stageLamps_.open(assetDir, stageTown_, worldGround_, textures);
+        core::logf("stage: %u lights, %u fires", stageLamps_.lightCount(),
+                   stageLamps_.fireCount());
+    }
+    return fillBrowser(assetDir, world, textures);
+}
+
+void ModelBench::frameAsGame(float radius) {
+    constexpr float kFocusHeight = 1.5f;  // world.cpp's
+    constexpr float kDistance = 8.0f;     // world.cpp's
+    focus_[0] = stand_[0];
+    focus_[1] = stand_[1] + kFocusHeight;
+    focus_[2] = stand_[2];
+    if (!wantsFixedDistance_) distance_ = std::max(kDistance, framingDistance(radius));
+}
+
+bool ModelBench::fillBrowser(const std::string& assetDir, const std::string& world,
+                             content::Textures& textures) {
+    browseDir_ = assetDir;
+    const std::string cooked = core::join(assetDir, "cooked");
 
     // The figure tables, which are what makes a monster a monster here rather than a mesh in
     // bind pose. A world cooked without them is not an error: the mesh categories still fill
@@ -414,6 +472,7 @@ bool ModelBench::standFigure(const FigureBody* body) {
     focus_[2] = stand_[2];
     height_ = height;
     if (distance_ <= 0.0f) distance_ = framingDistance(radius);
+    if (gameFrame_) frameAsGame(radius);
 
     // The rig's own count, not the palette's: as game/crowd.cpp.
     scratch_.assign(size_t(gfx::Renderer::kMaxBones) * 12, 0.0f);
@@ -517,6 +576,17 @@ bool ModelBench::openFigure(const std::string& assetDir, const std::string& worl
 }
 
 const std::vector<gfx::Drawable>& ModelBench::gather(gfx::Renderer& renderer) {
+    const std::vector<gfx::Drawable>& subject = gatherSubject(renderer);
+    if (!stageTown_.isOpen()) return subject;
+    staged_.clear();
+    stageTown_.gatherAll(staged_);
+    const size_t first = staged_.size();
+    staged_.insert(staged_.end(), subject.begin(), subject.end());
+    for (size_t i = first; i < staged_.size(); ++i) staged_[i].inProbe = false;
+    return staged_;
+}
+
+const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& renderer) {
     if (!haveFigure_) return drawables_;
     // The fallback plane, where there is one, was made once; everything after it is this
     // frame's. On the world's own land there is no plane and fixed_ is zero.
@@ -567,11 +637,14 @@ void ModelBench::update(double seconds, double delta, bool spin) {
     // MU looks down at about 40 degrees; the bench keeps that so what is judged here reads
     // the way the game will. The turn is slow enough that a shot every hundred frames walks
     // round the subject rather than jumping.
-    float pitch = 38.0f * 3.14159265f / 180.0f + pitchOffset_;
+    // In a world the camera is MU's own -- 48.5 degrees down and turned 45, world.cpp's -- so
+    // what is judged there is framed the way the game frames it.
+    float pitch = (gameFrame_ ? 48.5f : 38.0f) * 3.14159265f / 180.0f + pitchOffset_;
     constexpr float kLimit = 1.52f;
     if (pitch > kLimit) pitch = kLimit;
     if (pitch < -kLimit) pitch = -kLimit;
-    const float yaw = (spin ? float(seconds) * 0.35f : 0.9f) + yawOffset_;
+    const float rest = gameFrame_ ? 45.0f * 3.14159265f / 180.0f : 0.9f;
+    const float yaw = (spin ? float(seconds) * 0.35f : rest) + yawOffset_;
     const float distance = distance_ * zoom_;
 
     camera_.target[0] = focus_[0];
@@ -589,6 +662,8 @@ void ModelBench::update(double seconds, double delta, bool spin) {
 }
 
 void ModelBench::shutdown() {
+    stageLamps_.shutdown();
+    stageTown_.shutdown();
     model_.shutdown();
     ground_.shutdown();
     figures_.shutdown();
