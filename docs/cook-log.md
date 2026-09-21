@@ -61,3 +61,8 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Tree11 | world | 2026-09-21 23:21 | passed | plays its own clip at 1.0 (its natural bake); MU's ZzzObject.cpp comments out the scale-dependent case for this object type (10), so it falls to the flat 0.16 default -- but nothing traces what velocity its own bake assumed, so this is the honest default and not a verified rate |
 | Tree12 | world | 2026-09-21 23:21 | passed | same as Tree11: plays its own clip at 1.0, untraced against MU's flat 0.16 |
 | Tree13 | world | 2026-09-21 23:21 | passed | same as Tree11: plays its own clip at 1.0, untraced against MU's flat 0.16 |
+| SteelWall01 | world | 2026-09-22 00:28 | awaiting |  |
+| SteelWall02 | world | 2026-09-22 00:28 | awaiting |  |
+| SteelWall03 | world | 2026-09-22 00:28 | awaiting |  |
+| SteelDoor01 | world | 2026-09-22 00:28 | awaiting |  |
+| HouseEtc03 | world | 2026-09-22 00:20 | awaiting |  |

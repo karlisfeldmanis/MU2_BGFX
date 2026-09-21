@@ -564,6 +564,13 @@ for pair in sys.argv[4:]:
         **({"cutout_at": float(cutout_at[group])} if group in cutout_at else {}),
         "additive": group in additive,
         "skip": group in set(asset.get("skip_sheets", [])),
+        # How much of a metal sheet's painting survives its f0, where the sheet wants other
+        # than its material says. See tiled_maps.calibrated.
+        **({"f0_from_art": float(asset["sheet_f0_from_art"][group])}
+           if group in (asset.get("sheet_f0_from_art") or {}) else {}),
+        # And its reflectance, where one sheet of a metal wants other than the material's.
+        **({"f0": float(asset["sheet_f0"][group])}
+           if group in (asset.get("sheet_f0") or {}) else {}),
     })
 
     # A region becomes a slot of its own, standing beside the one it was cut out of.

@@ -427,6 +427,89 @@ def toned(slot: dict, into: Path) -> None:
     print(f"  {slot['name']:10s} {' and '.join(said)} into the ORM -> {out.name}")
 
 
+#: build_maps.base_colour's two limits, repeated because that module needs Blender to import.
+#: A metal may spend this much of its sheet at white to reach its f0, and below this floor a
+#: JPEG texel's chroma is noise rather than colour. Keep the pair in step with build_maps.
+CEILING_BUDGET = 0.10
+BLACK_FLOOR = 24.0 / 255.0
+
+
+def calibrated(slot: dict, material: dict, definition: Path, into: Path) -> None:
+    """A world metal's sheet pulled onto its f0, as build_maps.base_colour does for an item.
+
+    Without it the shade reads MU's paint as reflectance and lifts it by one global
+    metal_gain, so each sheet's own brightness became its metal: Lorencia's railings are one
+    wrought iron on three sheets, and the rails' painted white streak went to a mirror line
+    while the gate's near-black scrollwork stayed flat black beside it. Pulled onto the
+    stated f0, keeping `f0_from_art` of the sheet's variation, the three are one iron.
+
+    Named `_basecolor`, which is the cook's test for a sheet that is already reflectance: it
+    flags the material calibrated and the shade leaves the gain off. Whole-sheet metals only
+    -- a region slot shares its parent's sheet with whatever else is painted on it.
+    """
+    if float(material.get("metallic", 0.0)) < 0.5 or "f0" not in material:
+        return
+    if slot.get("of") or slot.get("regions") or not Path(slot["sheet"]).exists():
+        return
+
+    # An asset may keep less of one sheet's painting than its material does: the railings'
+    # rail sheet is a white streak down a dark bar, and at the material's 0.4 a rail laid
+    # along the streak came out chrome beside one laid along the dark, brown.
+    keep = float(slot.get("f0_from_art", material.get("f0_from_art", 0.35)))
+    f0 = float(slot.get("f0", material["f0"]))
+    named = (f"_art{keep:.2f}" if "f0_from_art" in slot else "") + (
+        f"_f{f0:.2f}" if "f0" in slot else "")
+    sheet = Path(slot["sheet"])
+    out = into / f"{sheet.stem}_{slot['material']}{named}_basecolor.png"
+    slot["sheet"] = str(out)
+    if fresh(out, sheet, definition, Path(__file__)):
+        return
+
+    source = Image.open(sheet)
+    opaque = "A" not in source.getbands()
+    image = source.convert("RGBA")
+    pixels = np.asarray(image, dtype=np.float32) / 255.0
+    rgb = pixels[..., :3]
+    # The painted texels: under a cut-out the colour is the upscaler's bleed, not the art.
+    painted = (pixels[..., 3] > 0.25) & (rgb.max(axis=2) > 1.0 / 255.0)
+    if not painted.any():
+        return
+
+    # In the file's sRGB encoding, as the item bake's arithmetic and the library's f0 are.
+    weights = np.array([0.2126, 0.7152, 0.0722], np.float32)
+    luma = (rgb * weights).sum(axis=-1, keepdims=True)
+    rgb = luma + (rgb - luma) * np.clip(luma / BLACK_FLOOR, 0.0, 1.0)
+
+    was = float(rgb[painted].mean())
+    pulled = f0 * (rgb / was) ** keep
+    sample = pulled[painted]
+
+    def solve(test) -> float:
+        low, high = 0.0, 64.0
+        for _ in range(40):
+            middle = (low + high) * 0.5
+            if test(middle):
+                low = middle
+            else:
+                high = middle
+        return (low + high) * 0.5
+
+    wanted = solve(lambda g: float(np.clip(sample * g, 0.0, 1.0).mean()) < f0)
+    allowed = solve(lambda g: float((sample * g > 1.0).mean()) < CEILING_BUDGET)
+    rgb = np.clip(pulled * min(wanted, allowed), 0.0, 1.0)
+
+    grey_pull = float(material.get("f0_desaturation", 1.0))
+    if grey_pull < 1.0:
+        grey = (rgb * weights).sum(axis=-1, keepdims=True)
+        rgb = np.clip(grey + (rgb - grey) * grey_pull, 0.0, 1.0)
+
+    pixels[..., :3] = rgb
+    done = Image.fromarray((pixels * 255.0).round().clip(0, 255).astype(np.uint8), "RGBA")
+    (done.convert("RGB") if opaque else done).save(out, "PNG", optimize=True)
+    print(f"  {slot['name']:10s} {slot['material']} f0 {was:.3f} -> "
+          f"{float(rgb[painted].mean()):.3f} (target {f0:.2f}) -> {out.name}")
+
+
 def spread_over(shape: tuple[int, int], base: float, regions: list[dict],
                 key: str) -> np.ndarray:
     """One material constant as a field over the sheet, with regions painted into it.
@@ -687,6 +770,9 @@ def main() -> None:
                     slot[kind] = parent[kind]
 
     for slot in slots:
+        definition = library / f"{slot['material']}.json"
+        if definition.exists():
+            calibrated(slot, json.loads(definition.read_text()), definition, listing.parent)
         toned(slot, listing.parent)
 
     listing.write_text(json.dumps(slots, indent=2))

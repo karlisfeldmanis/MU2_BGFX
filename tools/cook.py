@@ -1051,13 +1051,23 @@ def cook_placements(world, out_dir, chunk_tiles):
         y = min(max(int(row), 0), grid_h - 1)
         return heights[y * grid_w + x] * height_factor / per_tile
 
-    def lit(column, row):
-        x = min(max(int(column), 0), light_w - 1)
-        y = min(max(int(row), 0), light_h - 1)
+    def texel(x, y):
+        x = min(max(x, 0), light_w - 1)
+        y = min(max(y, 0), light_h - 1)
         at = (y * light_w + x) * light_channels
         if light_channels >= 3:
             return light[at], light[at + 1], light[at + 2]
         return light[at], light[at], light[at]
+
+    # The median of the 3x3 tiles round the origin, per channel, rather than the one tile under
+    # it. A placement is one light for its whole length, and MU's map has single near-black
+    # texels where a wall meets the ground: the railing at Lorencia (122,109) stood on
+    # (10,5,1) and its four metres of iron went black beside a neighbour on (102,94,91). A
+    # median ignores one such texel and is the centre wherever the light is smooth.
+    def lit(column, row):
+        x, y = int(column), int(row)
+        around = [texel(x + dx, y + dy) for dy in (-1, 0, 1) for dx in (-1, 0, 1)]
+        return tuple(sorted(one[channel] for one in around)[4] for channel in range(3))
 
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}

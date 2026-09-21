@@ -20,6 +20,14 @@
     "steel_barred_door"
   ],
   "cutout_from": "steel_barred_door.OZT carries a real alpha channel - 85% cut away on the railings, 43% on the gate. A railing is mostly the gaps between its bars.",
+  "sheet_f0_from_art": {
+    "steel_barred_b": 0.1
+  },
+  "sheet_f0_from_art_note": "steel_barred_b keeps a tenth of its painting rather than the material's 0.4. The sheet is a white highlight streak down a dark bar, and the rails lie along it in some runs and beside it in others: at 0.4 a rail on the streak came out chrome white next to a brown one on the dark. The light gives the rail its highlight; the paint does not have to.",
+  "sheet_f0": {
+    "steel_barred_b": 0.12
+  },
+  "sheet_f0_note": "steel_barred_b also takes f0 0.12, not the iron's 0.52. Its rails are boxes whose top faces look at the sky, where the spear bars beside them are cut-out cards turned to the ground: at one reflectance the rails came out as two pale lines across dark bars. 0.12 was matched by eye in the game at Lorencia 123,110, so the railing reads as one iron.",
   "islands": [
     {
       "island": 0,
