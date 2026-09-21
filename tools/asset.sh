@@ -208,6 +208,13 @@ print(actions_library(Path(sys.argv[1]), Path('$assets'), Path('$workshop')))" "
     "$rig" "$intermediate" ${speeds:+"$speeds"} | grep -v '^Blender' || true
 }
 
+# Whether a file was made from what `key` names. A sheet's upscale and enlargement used to be
+# stale whenever the recipe was touched at all, so a roughness tweak re-ran the upscaler (3.5 s
+# of a 15 s build) over a sheet nothing had changed. The key says what each step reads.
+keyed() {
+  [[ -f $1.key && $(<"$1.key") == "$2" ]]
+}
+
 build_asset() {
   if [[ ! -x $blender ]]; then
     echo "error: Blender not found at $blender" >&2
@@ -358,10 +365,12 @@ print('yes' if sys.argv[2] in (d.get('sheet_normal') or {}) or sys.argv[2] in (d
 
     if [[ ${upscale_factor:-0} != 0 && $(echo "${upscale_detail:-0} > 0" | bc) == 1 ]]; then
       local up="$out/${stem}_x${upscale_factor}.png"
-      if [[ -n $forced || ! -f $up || $raw -nt $up || $asset -nt $up ]]; then
+      local up_key="$file $upscale_detail $upscale_factor $sheet_pad $upscale_model $upscale_passes"
+      if [[ -n $forced || ! -f $up || $raw -nt $up ]] || ! keyed "$up" "$up_key"; then
         echo "upscaling $file ${upscale_factor}x at detail $upscale_detail, $sheet_pad context..."
         python3 "$pipeline/upscale.py" "$raw" "$up" "$upscale_detail" "$upscale_factor" \
           "$sheet_pad" "$upscale_model" "$upscale_passes"
+        printf '%s' "$up_key" > "$up.key"
       fi
       raw="$up"
       hd="$out/${stem}_x${upscale_factor}_hd.png"
@@ -377,9 +386,18 @@ print('yes' if sys.argv[2] in (d.get('sheet_normal') or {}) or sys.argv[2] in (d
     # written; the pair to judge is the _x3 against the sheet in assets/textures.
     if [[ ${enlarge:-1} -le 1 ]]; then
       hd="$raw"
-    elif [[ -n $forced || ! -f $hd || $raw -nt $hd || $asset -nt $hd ]]; then
-      echo "enlarging $(basename "$raw")..."
-      python3 "$pipeline/enlarge.py" "$raw" "$asset" "$hd" "$enlarge"
+    else
+      # enlarge.py reads the islands' boxes on MU's sheet and nothing else of the recipe.
+      local hd_key
+      hd_key="$enlarge $(python3 -c "
+import hashlib,json,sys
+d=json.load(open(sys.argv[1]))
+print(hashlib.sha1(json.dumps([i.get('mu_uv') for i in d.get('islands',[])]).encode()).hexdigest())" "$asset")"
+      if [[ -n $forced || ! -f $hd || $raw -nt $hd ]] || ! keyed "$hd" "$hd_key"; then
+        echo "enlarging $(basename "$raw")..."
+        python3 "$pipeline/enlarge.py" "$raw" "$asset" "$hd" "$enlarge"
+        printf '%s' "$hd_key" > "$hd.key"
+      fi
     fi
 
     pairs+=("$group=$hd")
@@ -882,4 +900,4 @@ if [[ -n $forced || ! -f $glb || $obj -nt $glb || $asset -nt $glb \
   build_asset
 fi
 
-[[ -n $build_only ]] && exit 0
+exit 0

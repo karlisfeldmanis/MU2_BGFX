@@ -23,12 +23,13 @@
     "0.35 is where the head reads as steel and the sheet's own variation is still legible on it.",
     "The form matters as much as the number: a power about the mean cannot clip and cannot",
     "flatten, where a gain does the first and a plain power curve does the second - x^0.238 lands",
-    "the same mean and takes the art's contrast from 187x to 3.5x, which is a grey card."
+    "the same mean and takes the art's contrast from 187x to 3.5x, which is a grey card.",
+    "Roughness 0.2, down from 0.32 on 2026-09-21, by the user's call that metal should shine. At 0.32 the Kris held edge-up read as dull grey plastic under noon; at 0.2 it carries the sky and a highlight along the wave. A blade reflects what it faces, and in the hand that is mostly the ground, so the sheen is still modest."
   ],
   "metallic": 1.0,
   "f0": 0.56,
   "f0_from_art": 0.35,
-  "roughness": 0.32,
+  "roughness": 0.2,
   "grain": {
     "kind": "brushed",
     "along": "v",

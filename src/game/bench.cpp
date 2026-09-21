@@ -432,6 +432,7 @@ bool ModelBench::loadCurrent(content::Textures& textures) {
     // The camera is re-framed on every subject, so --dist is honoured once and then the
     // list's own sizes take over; a cannon and a candle cannot share one distance.
     if (!wantsFixedDistance_) distance_ = 0.0f;
+    bearerHidden_ = false;
 
     if (entry.body) return standFigure(entry.body);
 
@@ -473,6 +474,16 @@ bool ModelBench::standFigure(const FigureBody* body) {
     height_ = height;
     if (distance_ <= 0.0f) distance_ = framingDistance(radius);
     if (gameFrame_) frameAsGame(radius);
+
+    // A weapon alone: framed on its own size, and followed each frame in gatherSubject.
+    bearerHidden_ = body->kind == BodyKind::Weapon;
+    if (bearerHidden_ && !wantsFixedDistance_) {
+        float heldRadius = 0.0f;
+        for (const HeldItem& item : body->held) {
+            if (item.mesh) heldRadius = std::max(heldRadius, item.mesh->bounds().radius);
+        }
+        if (heldRadius > 0.0f) distance_ = framingDistance(heldRadius * body->scale);
+    }
 
     // The rig's own count, not the palette's: as game/crowd.cpp.
     scratch_.assign(size_t(gfx::Renderer::kMaxBones) * 12, 0.0f);
@@ -593,7 +604,22 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
     drawables_.resize(fixed_);
     const int bones = figure_.pose(scratch_.data());
     const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+    const size_t first = drawables_.size();
     figure_.gather(row, drawables_);
+    if (bearerHidden_ && figure_.body()) {
+        // gather writes the body's parts first and the held items after them.
+        const size_t parts = std::min(figure_.body()->parts.size(), drawables_.size() - first);
+        drawables_.erase(drawables_.begin() + long(first), drawables_.begin() + long(first + parts));
+        if (drawables_.size() > first) {
+            const gfx::Drawable& held = drawables_[first];
+            const float* c = held.mesh->bounds().centre;
+            const float* m = held.transform;
+            for (int axis = 0; axis < 3; ++axis) {
+                focus_[axis] = c[0] * m[0 * 4 + axis] + c[1] * m[1 * 4 + axis] +
+                               c[2] * m[2 * 4 + axis] + m[3 * 4 + axis];
+            }
+        }
+    }
     return drawables_;
 }
 

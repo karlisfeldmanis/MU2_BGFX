@@ -200,6 +200,10 @@ private:
     size_t fixed_ = 0;
     bool haveModel_ = false;
     bool haveFigure_ = false;
+    // A weapon is shown in the hand that holds it -- the grip and the stance are the pose --
+    // but the body holding it is not drawn, and the camera follows the weapon rather than
+    // the figure: a sword judged past a shoulder is judged against the shoulder.
+    bool bearerHidden_ = false;
     Figures figures_;
     Figure figure_;
     std::vector<float> scratch_;

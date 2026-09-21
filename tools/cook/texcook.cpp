@@ -40,6 +40,7 @@
 #include <bx/error.h>
 #include <bx/file.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <cstdio>
@@ -49,6 +50,12 @@
 #include <vector>
 
 namespace {
+
+// Threads one image's BC7 level is split across: the cores the job pool leaves idle. A full
+// cook has hundreds of images and no core to spare, so each runs whole; cook_one's handful
+// of jobs gives each image most of the machine. Set in main before the pool starts.
+uint32_t g_stripThreads = 1;
+BX_ERROR_RESULT(kStripRefused, BX_MAKEFOURCC('M', 'U', 'S', 'R'));
 
 enum class Role { Albedo, Emissive, Normal, Orm };
 
@@ -364,8 +371,36 @@ Result cook(const Job& job, bx::AllocatorI* allocator) {
             // what decodes them.
             std::vector<float> floats(size_t(pw) * ph * 4);
             for (size_t i = 0; i < floats.size(); ++i) floats[i] = float(source[i]) / 255.0f;
-            bimg::imageEncodeFromRgba32f(allocator, &blocks[at], floats.data(), pw, ph, 1, format,
-                                         bimg::Quality::Default, &encodeError);
+            // In strips of block rows, one thread each. nvtt's BC7 is exhaustive and one
+            // 1024-square ORM took six minutes on one core while nine sat idle. A block is
+            // encoded from its own sixteen texels and nothing else, and a level's blocks are
+            // stored a block row after a block row, so strips encoded apart and laid end to
+            // end are the same bytes as the whole encoded at once.
+            const uint32_t blockRows = ph / 4;
+            const uint32_t rowBytes = (pw / 4) * 16;
+            const uint32_t strips = std::max(1u, std::min(g_stripThreads, blockRows));
+            const uint32_t perStrip = (blockRows + strips - 1) / strips;
+            std::atomic<bool> refused{false};
+            auto strip = [&](uint32_t s, bx::AllocatorI* own) {
+                const uint32_t first = s * perStrip;
+                if (first >= blockRows) return;
+                const uint32_t rows = std::min(perStrip, blockRows - first);
+                bx::Error stripError;
+                bimg::imageEncodeFromRgba32f(own, &blocks[at + size_t(first) * rowBytes],
+                                             &floats[size_t(first) * 4 * pw * 4], pw, rows * 4, 1,
+                                             format, bimg::Quality::Default, &stripError);
+                if (!stripError.isOk()) refused = true;
+            };
+            std::vector<std::thread> helpers;
+            for (uint32_t s = 1; s < strips; ++s) {
+                helpers.emplace_back([&, s] {
+                    bx::DefaultAllocator own;
+                    strip(s, &own);
+                });
+            }
+            strip(0, allocator);
+            for (std::thread& helper : helpers) helper.join();
+            if (refused) encodeError.setError(kStripRefused, "BC7 strip refused");
         } else {
             bimg::imageEncodeFromRgba8(allocator, &blocks[at], source, pw, ph, 1, format,
                                        job.role == Role::Normal ? bimg::Quality::NormalMapDefault
@@ -446,6 +481,10 @@ int main(int argc, char** argv) {
         }
         std::fclose(file);
     }
+
+    // The pool takes one core a job; whatever is left over goes to splitting each BC7 level.
+    const unsigned busy = std::max(1u, std::min(threadCount, unsigned(jobs.size())));
+    g_stripThreads = std::max(1u, threadCount / busy);
 
     std::vector<Result> results(jobs.size());
     std::atomic<size_t> nextJob{0};

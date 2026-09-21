@@ -277,9 +277,9 @@ def shoot(kind, name, extra, world):
         command = [os.path.join(ROOT, "viewer.sh"), "--category", category,
                    "--pick", pick, "--time", time, "--frames", "90", "--shot", "89",
                    "--shot-path", where, "--log", os.path.join(out, f"{time}.log")]
-        # Close enough to read a material on what is worn and held; a world object at MU's
-        # own distance, which is how the town shows it.
-        if kind in ("set", "arm", "figure"):
+        # Close enough to read a material on what is worn; a weapon frames itself, the bench
+        # hiding its bearer; a world object at MU's own distance, which is how the town shows it.
+        if kind in ("set", "figure"):
             command += ["--dist", "3.5"]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         frame = os.path.join(where, "00089.png")
