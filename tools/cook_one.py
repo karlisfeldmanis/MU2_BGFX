@@ -133,7 +133,17 @@ def resolve(name, world):
     # A world object.
     world_glb = os.path.join(ASSETS, "world", world, name, f"{name}.glb")
     if os.path.exists(world_glb):
-        return "world", world, {name: world_glb}, None
+        # The scroll rate off its own row in index.json, the one thing about this model that
+        # is not in its glb: MoveObject's BlendMeshTexCoordV, the waterspout's fall and the
+        # two houses' lit windows sliding behind their panes. See cook.py's cook_meshes.
+        scroll = 0.0
+        for one in index.get("objects", []):
+            if one.get("name") == name:
+                for glow in (one.get("glow") or {}).values():
+                    scroll = float(glow.get("scrolls_per_second", 0.0))
+                    break
+                break
+        return "world", world, {name: world_glb}, {"scroll_per_second": scroll}
     return None, None, None, None
 
 
@@ -213,11 +223,14 @@ def cook_item(kind, area, meshes, extra, texcook):
             if row.get("hidden_mesh") is not None:
                 hidden.setdefault(row["mesh"], row["hidden_mesh"])
 
+    scroll = extra.get("scroll_per_second", 0.0) if kind == "world" else 0.0
+
     cooked = {}
     for mesh_name, path in sorted(meshes.items()):
         out_path = os.path.join(mesh_dir, mesh_name + ".mum")
         tris, _verts, _size, bones = cook_mesh(mesh_name, path, out_path, manifest,
-                                               hidden.get(mesh_name))
+                                               hidden.get(mesh_name),
+                                               scroll_per_second=scroll)
         cooked[mesh_name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,
                              "triangles": tris}
         print(f"cook_one: {mesh_name}: {tris} triangles -> {os.path.relpath(out_path, ROOT)}")

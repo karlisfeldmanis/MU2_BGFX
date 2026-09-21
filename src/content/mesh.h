@@ -80,6 +80,12 @@ struct Material {
     // the scene has, so it goes out at night. 0 on everything that is not foliage, and then
     // the emissive map is a real emission.
     float translucency = 0.0f;
+    // MoveObject's BlendMeshTexCoordV: how many times a second the glow material's one
+    // additive submesh slides down its V axis. 0 on every material that does not scroll --
+    // the fires, the candles, the lit windows that only flicker -- and set on the three that
+    // do: the waterspout's fall, House04's and House05's lit windows. Only glow (above) ever
+    // carries a nonzero one. See fs_glow.sc and Renderer::submitBatches.
+    float scrollPerSecond = 0.0f;
     std::string name;
 };
 

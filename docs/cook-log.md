@@ -51,3 +51,8 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Shield11 | arm | 2026-09-21 20:47 | passed | studio sheet: ornate plate steel face and raised rim read at noon and dusk, no blowouts; back ambient-dark (accepted) |
 | Shield12 | arm | 2026-09-21 20:51 | passed | studio sheet: the gilt serpent head blew out at 225-315 deg at brass 0.44; at 0.6 it reads orange-gold with its scales; dark carved face and pale hide are MU's paint |
 | Shield13 | arm | 2026-09-21 20:53 | passed | studio sheet: the gilt lion's face blew out at brass 0.44; at 0.6 its features read against MU's verdigris green |
+| Waterspout01 | world | 2026-09-21 21:45 | passed | the fall now scrolls: two shots 90 frames apart show the ripple pattern moved down the pool; the engine log confirms ston02 scrolls 1.00/s, traced to MoveObject's BlendMeshTexCoordV |
+| House04 | world | 2026-09-21 21:51 | passed | the round window's glow now scrolls (tile_space01, 1.00/s), same mechanism as the waterspout |
+| House05 | world | 2026-09-21 21:51 | passed | the window's glow now scrolls (ston02, 1.00/s) |
+| Bonfire01 | world | 2026-09-21 21:52 | passed | unaffected control: still just the brightness flicker, fire_02 has no scroll rate and none was added |
+| Candle01 | world | 2026-09-21 21:52 | passed | unaffected control: brass gets its own material now (0.87 metal), candle2's flicker untouched, no scroll rate on this object |

@@ -1,6 +1,7 @@
 #include "gfx/renderer.h"
 
 #include <bx/math.h>
+#include <bx/timer.h>
 
 #include <algorithm>
 #include <cmath>
@@ -43,6 +44,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
                     uint16_t shadowSize) {
     msaa_ = msaa;
     shadowSize_ = shadowSize;
+    startCounter_ = bx::getHPCounter();
     if (!loadPrograms(shaderDir)) return false;
 
     uSunDir_ = bgfx::createUniform("u_sunDir", bgfx::UniformType::Vec4);
@@ -733,14 +735,21 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // A cutout discards in every pass, this one included, or a leaf casts a card.
             // z and w are glTF's roughness and metal factors, which the shade pass multiplies
             // the ORM by: a material with no ORM map carries its whole answer there. A glow
-            // has neither, and its z is the sheet's glow_strength instead.
+            // has neither, and its z is the sheet's glow_strength instead; fs_glow never
+            // reads w as a metal factor, so a glow's w instead carries how far MoveObject's
+            // BlendMeshTexCoordV has slid its one additive submesh -- the world clock times
+            // the material's own scroll rate, wrapped to a fraction the way MU's own
+            // -(WorldTime % 1000) * 0.001 does, negative so the sheet slides down and the
+            // waterspout's water falls rather than climbs. 0 on every glow that does not
+            // scroll, which reads as no offset at all.
             // y carries two flags: 1 two-sided, 2 calibrated (the albedo's metal is already
             // reflectance, so the sheet's metal_gain stays off it). fs_shade unpacks them.
+            const float scrollOffset = -std::fmod(elapsed_ * material.scrollPerSecond, 1.0f);
             const float materialParams[4] = {material.cutout,
                                              (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f),
                                              glowPass ? glowStrength_ : material.roughnessFactor,
-                                             material.metalFactor};
+                                             glowPass ? scrollOffset : material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
             // The albedo is bound even in the depth passes, because the cutout reads its alpha.
             bgfx::setTexture(0, sAlbedo_, material.albedo);
@@ -967,6 +976,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>& drawables, const content::Ground* ground,
                     const std::vector<Drawable>* casters) {
     drawCount_ = 0;
+    elapsed_ = float(double(bx::getHPCounter() - startCounter_) / double(bx::getHPFrequency()));
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
 

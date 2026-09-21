@@ -244,6 +244,12 @@ private:
     float lampParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lampGridUniform_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float glowStrength_ = 1.0f;
+    // MU's world clock, which MoveObject scrolls a glow's additive submesh off: seconds
+    // since the process started, free-running so two glow models at different rates never
+    // fall out of step with each other, the way "every placement of a type moves in step"
+    // requires. Read once a frame in draw(); see content::Material::scrollPerSecond.
+    int64_t startCounter_ = 0;
+    float elapsed_ = 0.0f;
 
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets

@@ -50,6 +50,10 @@ struct CookedMaterial {
     float roughnessFactor = 1.0f;
     float metalFactor = 1.0f;
     float translucency = 0.0f;  // bit 2 of the flags and a float after. See content::Material.
+    // bit 4 and a float after: MoveObject's BlendMeshTexCoordV, how fast the glow material's
+    // one additive submesh slides -- the waterspout's fall, the two houses' lit windows.
+    // Only ever set alongside glow (bit 1); see content::Material.
+    float scrollPerSecond = 0.0f;
 };
 
 // A skinned vertex is the static one with four joint bytes and four weight bytes on the end,

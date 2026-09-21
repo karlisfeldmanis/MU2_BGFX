@@ -69,14 +69,16 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
     for (CookedMaterial& material : out.materials) {
         reader.read(material.cutout);
         // A flags byte that was a bool: bit 0 two-sided, bit 1 a glow, bit 2 translucent,
-        // which adds a float after the factors. Every file cooked before sprint 8a holds 0 or
-        // 1 here, so it reads the same as it always did.
+        // which adds a float after the factors; bit 4 a scroll rate, another float after
+        // that one. Every file cooked before its own sprint holds neither bit, so it reads
+        // the same as it always did.
         uint8_t flags = 0;
         reader.read(flags);
         material.twoSided = (flags & 1) != 0;
         material.glow = (flags & 2) != 0;
         material.calibrated = (flags & 8) != 0;
         const bool translucent = (flags & 4) != 0;
+        const bool scrolls = (flags & 16) != 0;
         reader.readString(material.name);
         reader.readString(material.albedo);
         reader.readString(material.normal);
@@ -85,6 +87,7 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         reader.read(material.roughnessFactor);
         reader.read(material.metalFactor);
         if (translucent) reader.read(material.translucency);
+        if (scrolls) reader.read(material.scrollPerSecond);
         if (reader.failed()) break;
     }
 

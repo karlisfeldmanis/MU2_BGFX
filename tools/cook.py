@@ -349,7 +349,7 @@ def primitive_material_name(document, primitive):
     return materials[index].get("name", "") if index is not None and index < len(materials) else ""
 
 
-def cook_mesh(model, path, out_path, textures, hidden=None):
+def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.0):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
 
     A skinned .glb writes version 4: a 56-byte vertex with four joint bytes and four weight
@@ -359,6 +359,13 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
     `hidden` is `index.json`'s `hidden_mesh`: MU's `c->Object.HiddenMesh`, the mesh a variant
     puts away -- the plain Hound's helm, the plain Bull Fighter's crest. It is dropped here
     rather than skipped at load.
+
+    `scroll_per_second` is the asset's `glow.<sheet>.scrolls_per_second` -- MoveObject's
+    BlendMeshTexCoordV, which slides the one additive submesh's V coordinate off the world
+    clock: the waterspout's fall, and the two houses' lit windows sliding behind their
+    panes. It rides on the model's glow material (flag bit 2, the only BLEND material a
+    world object has ever shipped with two of), and is nothing on every other kind of mesh,
+    which is why it is a parameter here and not read from the glb: a glb has no clock in it.
 
     The number is MU's mesh index in the .bmd and not a glb primitive index. MU2's exporter
     groups primitives by material and ships the mesh to put away as a part called `hidden`,
@@ -506,6 +513,12 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
         if albedo_image is not None and (document["images"][albedo_image].get("name") or ""
                                          ).endswith("_basecolor"):
             flags |= 8
+        # Bit 4: this is the model's one glow material and the asset named a scroll rate for
+        # it -- MoveObject's BlendMeshTexCoordV, the waterspout's fall and the two houses'
+        # lit windows. A model with none writes nothing extra, so every file cooked before
+        # this reads the same as it always did.
+        if flags & 2 and scroll_per_second:
+            flags |= 16
         maps = {"albedo": "", "normal": "", "orm": "", "emissive": ""}
         # By the glb's own name: a `~whole` variant is a second cut of the same file, and the
         # manifest only knows the file. Keyed by the variant, the Elite came out untextured.
@@ -519,6 +532,8 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
         materials += struct.pack("<2f", *orm_factors(material, maps["orm"]))
         if flags & 4:
             materials += struct.pack("<f", translucency)
+        if flags & 16:
+            materials += struct.pack("<f", float(scroll_per_second))
     # The fallback a primitive with no material of its own draws with, as content/mesh.cpp
     # appends it. Rough and not metal, for the reason orm_factors gives.
     materials += struct.pack("<fB", -1.0, 0) + write_string("none")
@@ -591,6 +606,13 @@ def cook_meshes(world, out_dir):
     with open(manifest_path) as handle:
         textures = json.load(handle)["textures"]
 
+    # The one thing about a model this file cannot read off its own glb: which asset it was
+    # built from, and whether that asset named a scroll rate for the model's glow. See
+    # cook_placements just below, which reads the same table for the same reason.
+    with open(os.path.join(ASSETS, "index.json")) as handle:
+        listed = json.load(handle).get("objects", [])
+    carried = {one["name"]: one for one in listed if one.get("world") in (world, None)}
+
     mesh_dir = os.path.join(out_dir, "meshes")
     os.makedirs(mesh_dir, exist_ok=True)
 
@@ -599,8 +621,13 @@ def cook_meshes(world, out_dir):
         path = os.path.join(world_dir, model, f"{model}.glb")
         if not os.path.exists(path):
             continue
+        scroll = 0.0
+        for one in carried.get(model, {}).get("glow", {}).values():
+            scroll = float(one.get("scrolls_per_second", 0.0))
+            break
         tris, verts, size, _bones = cook_mesh(model, path,
-                                              os.path.join(mesh_dir, model + ".mum"), textures)
+                                              os.path.join(mesh_dir, model + ".mum"), textures,
+                                              scroll_per_second=scroll)
         triangles += tris
         vertices += verts
         cooked += size
