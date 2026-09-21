@@ -144,24 +144,14 @@ void main()
 	// sky over it and the fire beside it. It holds radiance already, sun and lamps included,
 	// so nothing multiplies it but the occlusion.
 	vec3 r = reflect(-v, n);
-	// Metal looks up. A mirror seen from MU's camera, above and behind, mostly points down:
-	// the Short Sword's broad blade held side-on reflected the grass beside it and rendered
-	// nearly black, which is what polished steel would do and not what anybody wants of a
-	// sword in a game. So a metal's reflection is bent above the horizon before the lookup --
-	// it shows the sky and the lit town rather than the turf -- by as much as it is metal.
-	// Stylised, the user's call (2026-09-21). The horizon test below keeps the unbent r: it
-	// guards against a normal map bending r into the mesh, which the bend does not change.
-	vec3 rLook = r;
-	rLook.y = mix(r.y, max(r.y, 0.25), metal);
-	rLook = normalize(rLook);
 	vec3 env;
 	if (u_probe.x > 0.5)
 	{
-		env = textureCubeLod(s_probe, rLook, roughness * u_probe.y).rgb;
+		env = textureCubeLod(s_probe, r, roughness * u_probe.y).rgb;
 	}
 	else
 	{
-		env = skyPrefiltered(rLook, roughness) * u_sunColour.w;
+		env = skyPrefiltered(r, roughness) * u_sunColour.w;
 	}
 	// Specular occlusion from the AO (Lagarde and de Rousiers, "Moving Frostbite to PBR"):
 	// a crevice that hides the sky from the diffuse hides most of it from a rough reflection
