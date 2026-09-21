@@ -70,7 +70,11 @@ public:
     // against a 120-unit player, and put on an 80-unit spider it is a grey cloud bigger than
     // the animal, which reads as smoke rather than as a wound. MU knows each model's height
     // (`CreateCharacter` hands out the boxes by hand) and simply does not use it here.
-    void land(const Cue& cue, const float feet[3], float height, float attackerYaw);
+    //
+    // `onHero` is whether the BLOW landed on the hero, not who threw it -- MU2's Points.cs
+    // colours a number by whose health it came off, so the hero reads his own pain in red and
+    // everyone else's in orange, and his own misses in white against everyone else's grey.
+    void land(const Cue& cue, const float feet[3], float height, float attackerYaw, bool onHero);
 
     // Ages everything alive, on the same scaled clock as the fuses.
     void update(float seconds);
@@ -114,6 +118,10 @@ private:
         // which holds at full for a second and then fades over the last third of one.
         float rise = 10.0f;
         float scale = 15.0f;
+        // Points.cs's `Add`: red on the hero, orange on anyone else for a plain hit; white on
+        // the hero, grey on anyone else for a miss. Kept as colour rather than a re-derived
+        // flag because the pool doesn't otherwise remember who a number was for.
+        float colour[3] = {1.0f, 1.0f, 1.0f};
     };
 
     bool open_ = false;

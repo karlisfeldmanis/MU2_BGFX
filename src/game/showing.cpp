@@ -48,6 +48,14 @@ constexpr float kDigitSpacing = 0.7071f;
 // than a plain hit and never grows or shrinks. MU passes -1 rather than a zero.
 constexpr float kMissWidth = 45.0f;
 constexpr float kMissHeight = 20.0f;
+// Points.cs's `Add`: (colour, scale) by `missed` and `onHero`. Only the plain-hit and miss
+// branches are reachable today -- Critical and Excellent wait on a roll this content version
+// never makes, and Poison has no spell to throw it. Those stay unported rather than drawn from
+// a flag nothing ever sets.
+constexpr float kMissOnHero[3] = {1.0f, 1.0f, 1.0f};
+constexpr float kMissOnOther[3] = {0.5f, 0.5f, 0.5f};
+constexpr float kHitOnHero[3] = {1.0f, 0.0f, 0.0f};
+constexpr float kHitOnOther[3] = {1.0f, 0.6f, 0.0f};
 
 // The digit sheet, measured off Data/Interface/FontTest.OZT rather than assumed: 256x32, ten
 // 16-pixel cells along the top, and `Miss` on a second row. Row 18 is blank across the whole
@@ -137,7 +145,8 @@ void Showing::advance(float seconds, std::vector<Cue>& due) {
     }
 }
 
-void Showing::land(const Cue& cue, const float feet[3], float height, float attackerYaw) {
+void Showing::land(const Cue& cue, const float feet[3], float height, float attackerYaw,
+                    bool onHero) {
     // Units of the target. At a man's size this is one and nothing moves; below it the whole
     // effect shrinks onto the body, arc and all.
     const float like = (height > 0.01f) ? (height * kPerMetre) / kPlayerHeight : 1.0f;
@@ -155,6 +164,9 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float atta
         number.value = cue.damage;
         number.miss = cue.miss;
         number.scale = kPlainScale;
+        const float* picked = cue.miss ? (onHero ? kMissOnHero : kMissOnOther)
+                                        : (onHero ? kHitOnHero : kHitOnOther);
+        for (int c = 0; c < 3; ++c) number.colour[c] = picked[c];
         numbers_.push_back(number);
     }
 
@@ -268,6 +280,7 @@ void Showing::gather(gfx::Effects& effects, const float right[3]) const {
             sprite.u1 = kMissU1 / kSheetW;
             sprite.v0 = kDigitBand / kSheetH;
             sprite.v1 = 1.0f;
+            for (int c = 0; c < 3; ++c) sprite.colour[c] = one.colour[c];
             sprite.colour[3] = alpha;
             sprite.blend = gfx::Blend::Alpha;
             effects.add(sprite);
@@ -291,6 +304,7 @@ void Showing::gather(gfx::Effects& effects, const float right[3]) const {
             sprite.u1 = sprite.u0 + kDigitW / kSheetW;
             sprite.v0 = 0.0f;
             sprite.v1 = kDigitBand / kSheetH;
+            for (int c = 0; c < 3; ++c) sprite.colour[c] = one.colour[c];
             sprite.colour[3] = alpha;
             sprite.blend = gfx::Blend::Alpha;
             effects.add(sprite);

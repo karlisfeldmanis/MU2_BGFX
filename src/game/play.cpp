@@ -500,7 +500,8 @@ void Play::update(double seconds) {
         const Drawn* hit = drawnOf(cue.target);
         const FigureBody* look = hit ? hit->figure.body() : nullptr;
         const float height = look ? look->height * look->scale : 1.2f;
-        showing_.land(cue, feet, height, swinger->yaw);
+        const bool onHero = cue.target == realm_.hero().id;
+        showing_.land(cue, feet, height, swinger->yaw, onHero);
     }
     showing_.update(float(seconds));
 }
