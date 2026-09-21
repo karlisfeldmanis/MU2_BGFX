@@ -173,11 +173,15 @@ def cook_textures(meshes, area_dir, texcook):
 
     print(f"cook_one: {len(jobs)} image(s) to compress for {', '.join(sorted(sources))}")
     if jobs:
-        job_file = os.path.join(area_dir, "jobs_one.txt")
+        # Its own file, by process: two cooks at once (two sessions, one on armour and one on
+        # weapons) each wrote jobs_one.txt and each could compress the other's list.
+        job_file = os.path.join(area_dir, f"jobs_one.{os.getpid()}.txt")
         with open(job_file, "w") as handle:
             for role, cutout, source, target in jobs:
                 handle.write(f"{role}\t{cutout}\t{source}\t{target}\n")
-        if subprocess.run([texcook, job_file]).returncode:
+        failed = subprocess.run([texcook, job_file]).returncode
+        os.remove(job_file)
+        if failed:
             print("cook_one: texcook failed; nothing written", file=sys.stderr)
             return None
     write_json(manifest_path, document)

@@ -54,7 +54,7 @@ namespace {
 // Threads one image's BC7 level is split across: the cores the job pool leaves idle. A full
 // cook has hundreds of images and no core to spare, so each runs whole; cook_one's handful
 // of jobs gives each image most of the machine. Set in main before the pool starts.
-uint32_t g_stripThreads = 1;
+uint32_t g_stripThreads = 1;  // set in main: every core
 BX_ERROR_RESULT(kStripRefused, BX_MAKEFOURCC('M', 'U', 'S', 'R'));
 
 enum class Role { Albedo, Emissive, Normal, Orm };
@@ -482,9 +482,11 @@ int main(int argc, char** argv) {
         std::fclose(file);
     }
 
-    // The pool takes one core a job; whatever is left over goes to splitting each BC7 level.
-    const unsigned busy = std::max(1u, std::min(threadCount, unsigned(jobs.size())));
-    g_stripThreads = std::max(1u, threadCount / busy);
+    // Every BC7 level is split across all the cores, whatever the pool is doing: the pool's
+    // threads and the strips' share the machine and the scheduler keeps it full. Dividing the
+    // cores between the jobs left them idle whenever a fast job finished beside a slow one,
+    // and with more jobs than cores the last 1024-square ran alone on one core for minutes.
+    g_stripThreads = threadCount;
 
     std::vector<Result> results(jobs.size());
     std::atomic<size_t> nextJob{0};
