@@ -9,12 +9,12 @@
   "sky_colour": [0.19, 0.19, 0.26],
   "horizon_paleness": 0.7,
   "ground_colour": [0.09, 0.075, 0.06],
-  "ambient_strength": 0.85,
+  "ambient_strength": 0.95,
 
-  "exposure": 1.35,
+  "exposure": 1.5,
 
-  "dust_colour": [0.55, 0.44, 0.32],
-  "dust_density": 0.006,
+  "dust_colour": [0.62, 0.5, 0.36],
+  "dust_density": 0.008,
 
   "shadow_range": 60.0,
   "shadow_fit_below": 3.0,
