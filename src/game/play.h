@@ -168,8 +168,8 @@ private:
     std::vector<Cue> due_;
 
     std::vector<Drawn> drawn_;
-    // The town's people who have a figure to wear and are not already stood by the world's
-    // placements. They stand where the tables say, facing where MU faced them, and idle.
+    // The town's people: those the table names a figure for, where the tables say, facing
+    // where MU faced them, and those it leaves to the town's placements, as those stand them.
     struct Standing {
         Figure figure;
         int folk = -1;

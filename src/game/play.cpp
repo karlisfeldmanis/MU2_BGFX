@@ -240,7 +240,33 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         bones = std::max(bones, look->boneCount());
         folk_.push_back(std::move(one));
     }
-    core::logf("play: %zu townsfolk, %zu of them drawn here", tables_.folk.size(), folk_.size());
+    // And the ones the table leaves to the world: Hanzo is Smith01, Pasi Wizard01 and Baz
+    // Storage01 in the town's own placements, which only the measuring crowd stood, so in play
+    // the square was empty. Matched by tile to the table's blank entries, so each keeps its
+    // person, and stood as the placement stands them.
+    size_t placed = 0;
+    if (figures_) {
+        for (const FigurePlacement& spot : figures_->placements()) {
+            const int column = int(std::floor(spot.position[0] / metresPerTile));
+            const int row = int(std::floor(-spot.position[2] / metresPerTile));
+            int who = -1;
+            for (size_t i = 0; i < tables_.folk.size() && who < 0; ++i) {
+                const content::Townsperson& person = tables_.folk[i];
+                if (person.figure.empty() && person.x == column && person.y == row) who = int(i);
+            }
+            const FigureBody* look = who < 0 ? nullptr : figures_->body(spot.figure);
+            if (!look) continue;
+            Standing one;
+            one.folk = who;
+            one.figure.stand(look, spot.position, spot.yaw, spot.scale, true);
+            if (look->idleClip >= 0) one.figure.play(look->idleClip);
+            bones = std::max(bones, look->boneCount());
+            folk_.push_back(std::move(one));
+            ++placed;
+        }
+    }
+    core::logf("play: %zu townsfolk, %zu of them drawn here, %zu of those by the town's placements",
+               tables_.folk.size(), folk_.size(), placed);
 
     scratch_.assign(std::max<size_t>(128, bones) * 12, 0.0f);
     remember();
