@@ -9,7 +9,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos
 #include "lights.sh"
 
 uniform vec4 u_groundRepeat;  // x: base repeat  y: overlay repeat  z: base relief  w: overlay relief
-uniform vec4 u_groundBlend;   // x: bite  y: 1 if this surface has an overlay at all  zw: unused
+uniform vec4 u_groundBlend;   // x: bite  y: 1 if this surface has an overlay at all  zw: the base's and the overlay's water slide
 
 // A texel's height, taken off its luminance. The proxy MU2's own pipeline uses, and a fair
 // one on art where the raised stones are lit and the mortar between them is not.
@@ -24,8 +24,9 @@ SAMPLER2D(s_orm2,     11);
 
 void main()
 {
-	vec2 uvBase = v_texcoord0 * u_groundRepeat.x;
-	vec2 uvOver = v_texcoord0 * u_groundRepeat.y;
+	// A water layer slides along U, as MU's does; zero on every other. See submitGround.
+	vec2 uvBase = v_texcoord0 * u_groundRepeat.x + vec2(u_groundBlend.z, 0.0);
+	vec2 uvOver = v_texcoord0 * u_groundRepeat.y + vec2(u_groundBlend.w, 0.0);
 
 	// Both halves are always sampled. A branch on the weight would save the read only where
 	// a tile is wholly one surface, and on MU's land the blend runs across most of the map.

@@ -26,6 +26,26 @@ constexpr float kEarlyApart = 0.5f;
 // How long the character takes to dissolve in when the game has loaded. Invention.
 constexpr float kAppearSeconds = 1.1f;
 
+// MONSTER01_DIE: every monster model shares this twelve-slot layout in this one order
+// (source/monsters/actions.json), so slot 6 is the death whether the model is a spider or a
+// giant, and the cook already marks it `hold` -- it plays once and holds its last frame, a
+// corpse pose, rather than looping.
+constexpr int kMonsterDieSlot = 6;
+// How long a corpse holds its pose before fading, and how long the fade itself takes.
+// Invention: MU removes a dead monster from the world the instant OpenMU's own
+// DeathAction handler fires, with nothing standing in for either number. This one held
+// visibly through its own death clip (typically under a second at a monster's authored
+// play speed) plus a beat, then eased out over a fade quick enough that a second monster
+// dying nearby is never waiting on it, and short enough beside any monster's own respawn
+// timer that nothing here needs to race it.
+constexpr float kDeathHold = 1.2f;
+constexpr float kDeathFade = 0.6f;
+constexpr float kDeathTotal = kDeathHold + kDeathFade;
+// A respawn's own fade-in: fast enough to read as "arriving" rather than "loading", and the
+// same smoothstep the hero's own door-opening fade uses (kAppearSeconds), just shorter --
+// invention, the user asked for it not to pop.
+constexpr float kSpawnFadeSeconds = 0.35f;
+
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the
 // crowd's whole account on figures nobody can see. Foundation 7's "ranges per kind", applied to
@@ -211,6 +231,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                 } else {
                     one.attackClip = look->library->find(3);
                     if (one.attackClip < 0) one.attackClip = look->library->find(4);
+                    one.deathClip = look->library->find(kMonsterDieSlot);
                 }
             }
         } else {
@@ -385,6 +406,26 @@ void Play::update(double seconds) {
                     marker_.dismiss();
                 }
             }
+            // A body that falls is not removed from the picture on the tick it does: it plays
+            // its own death clip, holds the corpse pose the cook already marked `hold`, and
+            // fades -- see kDeathHold and kDeathFade. `Rose` is the same body handed back, at
+            // its home tile with a fresh clip, and it fades back in rather than popping into
+            // being.
+            if (happening.what == sim::What::Died) {
+                if (Drawn* dead = drawnOf(happening.who)) {
+                    dead->deadFor = 0.0f;
+                    // Whatever pace a swing or a walk left it at is not this clip's: MU's own
+                    // death plays at its authored speed regardless of what killed him mid-step.
+                    dead->clipRate = 1.0f;
+                    dead->swinging = 0.0f;
+                    if (dead->deathClip >= 0) dead->figure.play(dead->deathClip, true);
+                }
+            } else if (happening.what == sim::What::Rose) {
+                if (Drawn* risen = drawnOf(happening.who)) {
+                    risen->deadFor = -1.0f;
+                    risen->spawnFade = 0.0f;
+                }
+            }
             // A swing is drawn because it is a POSE and not an effect: the blood, the number,
             // the fall and the health plate that hang off the landing are sprint 6's, and none
             // of them is here. What a blow does to the picture today is put the attacker into
@@ -520,12 +561,19 @@ void Play::follow(float seconds) {
             one.visible = false;
             continue;
         }
-        // A dead body is not drawn at all this sprint. The fall, the corpse and how long it
-        // lies there are the landing cue's business and belong to sprint 6; a monster that
-        // vanishes the tick it dies is honest about that, and a monster left standing would
-        // not be.
-        one.visible = body->alive();
-        if (!one.visible) continue;
+        // A dead body holds where it fell rather than following anything below -- it has no
+        // more ticks coming, so there is nothing new to interpolate toward -- and stays
+        // visible only for as long as `deadFor` says its death clip and its fade are still
+        // playing (Died and Rose, in Play::update). Left at rest, not repathed and not
+        // reposed: the position, the clip and the pose it died in are exactly the last ones
+        // `follow` ever wrote for it.
+        if (!body->alive()) {
+            one.visible = one.deadFor >= 0.0f && one.deadFor < kDeathTotal;
+            if (one.deadFor >= 0.0f) one.deadFor += seconds;
+            continue;
+        }
+        one.visible = true;
+        if (one.spawnFade < kSpawnFadeSeconds) one.spawnFade += seconds;
         // Out of range is not drawn and not posed. Measured in the log beside the drawn count,
         // because foundation 7 says a culling change that is not visible in those numbers did
         // not happen.
@@ -583,6 +631,13 @@ void Play::follow(float seconds) {
         // 0.18 s crossfade in Figure::play is what makes the change a blend rather than a cut.
         const bool safe = tables_.grid.safe(body->column(), body->row());
         one.figure.place(position, one.yaw, safe);
+        {
+            const FigureBody* look = one.figure.body();
+            one.crown[0] = position[0];
+            one.crown[1] = position[1] + look->height * look->scale;
+            one.crown[2] = position[2];
+            one.placed = true;
+        }
         // How long it has covered no ground. A walk is not always given up on purpose: a step
         // refused because something stood in it, a corner arrived at exactly on the boundary,
         // the gap while a route is replaced, and every tick spent turning on the spot all read
@@ -786,10 +841,39 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     // over a few hundred and is the same scan the sim does: a body is picked by where it IS and
     // not by its drawn mesh, so aiming at a monster's feet and aiming at its head pick the same
     // monster, and what is clicked is what the sim will be asked to fight.
+    //
+    // And by the ray as well as by where it lands. The ground point alone only ever found the
+    // feet: at this camera's 48.5 degrees a pointer on a head meets the ground 1.6 m behind
+    // it, past the tile of slack, so an NPC could be hovered only by his boots and never got
+    // his ring. So each one is also a standing column, kStature tall, and the ray's nearest
+    // pass to its axis between the ground and the top counts the same as the landing point.
+    constexpr float kStature = 1.9f;
+    const auto reach = [&](float bodyColumn, float bodyRow) {
+        const float byGround =
+            std::max(std::fabs(bodyColumn - column), std::fabs(bodyRow - row));
+        const float x = (bodyColumn + 0.5f) * metresPerTile;
+        const float z = -(bodyRow + 0.5f) * metresPerTile;
+        const float floorY = ground_->heightAt(x, z);
+        // Where the ray is at the column's top and at its foot, then the nearest point of that
+        // stretch to the axis, flat -- the column is upright, so height does not count.
+        const float t0 = (floorY + kStature - nearPoint.y) / direction.y;
+        const float t1 = (floorY - nearPoint.y) / direction.y;
+        const float ax = nearPoint.x + direction.x * t0, az = nearPoint.z + direction.z * t0;
+        const float dx = direction.x * (t1 - t0), dz = direction.z * (t1 - t0);
+        const float along = dx * dx + dz * dz;
+        const float u = along > 1e-8f
+                            ? std::clamp(((x - ax) * dx + (z - az) * dz) / along, 0.0f, 1.0f)
+                            : 0.0f;
+        const float byRay =
+            std::hypot(ax + dx * u - x, az + dz * u - z) / metresPerTile;
+        // Counted double: the column is 0.6 m round where the landing point has 1.2 of slack,
+        // since a body is a slim thing and a pointer beside him is not on him.
+        return std::min(byGround, byRay * 2.0f);
+    };
     float closest = 1.2f;
     for (const sim::Body& body : realm_.bodies()) {
         if (body.player || !body.alive()) continue;
-        const float away = std::max(std::fabs(body.x - column), std::fabs(body.y - row));
+        const float away = reach(body.x, body.y);
         if (away < closest) {
             closest = away;
             pointedAt_ = body.id;
@@ -812,8 +896,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     // is the more urgent thing under the pointer.
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
         const content::Townsperson& one = tables_.folk[i];
-        const float away =
-            std::max(std::fabs(float(one.x) - column), std::fabs(float(one.y) - row));
+        const float away = reach(float(one.x), float(one.y));
         if (away < closest) {
             closest = away;
             pointedAt_ = 0;
@@ -862,26 +945,48 @@ void Play::rightClick() {
 }
 
 void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,
-                  std::vector<gfx::Drawable>* casters) {
-    // The character's fade-in, eased at both ends so it neither pops at the start nor lands
-    // with a jolt. Only his: the townsfolk and the monsters were already in the world.
-    float heroFade = 1.0f;
-    if (appearing_) {
-        const float t = std::clamp(appearAt_ / kAppearSeconds, 0.0f, 1.0f);
-        heroFade = t * t * (3.0f - 2.0f * t);
-    }
+                  std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover) {
+    // One eased fade for every reason a body is not simply "there": the hero's own
+    // door-opening appearance, a corpse going out at the end of its held pose, and a
+    // respawn easing back in. All three are the same smoothstep on a different clock, so
+    // they are one function and not three copies of it.
+    const auto fadeOf = [&](const Drawn& one) -> float {
+        if (&one == &drawn_[0] && appearing_) {
+            const float t = std::clamp(appearAt_ / kAppearSeconds, 0.0f, 1.0f);
+            return t * t * (3.0f - 2.0f * t);
+        }
+        if (one.deadFor >= 0.0f) {
+            if (one.deadFor < kDeathHold) return 1.0f;
+            const float t = std::clamp((one.deadFor - kDeathHold) / kDeathFade, 0.0f, 1.0f);
+            return 1.0f - t * t * (3.0f - 2.0f * t);
+        }
+        if (one.spawnFade < kSpawnFadeSeconds) {
+            const float t = std::clamp(one.spawnFade / kSpawnFadeSeconds, 0.0f, 1.0f);
+            return t * t * (3.0f - 2.0f * t);
+        }
+        return 1.0f;
+    };
     for (Drawn& one : drawn_) {
         if (!one.visible || !one.figure.body()) continue;
-        if (&one == &drawn_[0] && heroFade <= 0.0f) continue;
+        const float fade = fadeOf(one);
+        if (fade <= 0.0f) continue;
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
-        if (&one == &drawn_[0] && heroFade < 1.0f) {
+        // The hover ring's own copy: the SAME pose, just handed to a second list, so the
+        // outline mask draws it again without a second call to Figure::pose. Only the body
+        // pointedAt() names, and only while it is actually drawn -- a monster that faded out
+        // from under the pointer rings nothing, which is what Godot's ObjectDisposedException
+        // guard amounted to. Gated on no townsperson winning the same pick, or a guard closer
+        // than a monster behind him would ring both at once -- leftClick's own ladder, which
+        // this has to agree with since the ring is meant to show what a click would answer.
+        if (hover && pointedFolk_ < 0 && one.id == pointedAt_) one.figure.gather(palette, *hover);
+        if (fade < 1.0f) {
             const size_t outFrom = out.size(), castFrom = casters ? casters->size() : 0;
             if (casters) one.figure.gather(palette, *casters);
             one.figure.gather(palette, out);
-            for (size_t i = outFrom; i < out.size(); ++i) out[i].fade = heroFade;
+            for (size_t i = outFrom; i < out.size(); ++i) out[i].fade = fade;
             if (casters) {
-                for (size_t i = castFrom; i < casters->size(); ++i) (*casters)[i].fade = heroFade;
+                for (size_t i = castFrom; i < casters->size(); ++i) (*casters)[i].fade = fade;
             }
             continue;
         }
@@ -893,9 +998,15 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
     }
-    for (Standing& one : folk_) {
+    for (size_t i = 0; i < folk_.size(); ++i) {
+        Standing& one = folk_[i];
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        // By the table's row, which is what the pick names: folk_ skips the rows with no
+        // figure and appends the placements' four at the end, so its own index is not it.
+        if (hover && pointedFolk_ >= 0 && one.folk == pointedFolk_) {
+            one.figure.gather(palette, *hover);
+        }
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
     }
@@ -1024,6 +1135,30 @@ bool Play::talkTo(const std::string& name) {
     }
     core::logError("--talk: nobody called %s here", name.c_str());
     return false;
+}
+
+bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,
+                   float* y) const {
+    const size_t at = size_t(id) - 1;
+    if (!ground_ || at >= drawn_.size() || drawn_[at].id != id || !drawn_[at].placed) {
+        return false;
+    }
+    const Drawn& one = drawn_[at];
+    // MU2's CrownClearance: a third of a tile between the top of the body and the bar.
+    const float world[4] = {one.crown[0], one.crown[1] + 0.33f * ground_->metresPerTile(),
+                            one.crown[2], 1.0f};
+    float clip[4];
+    bx::vec4MulMtx(clip, world, viewProj);
+    if (clip[3] <= 0.0f) return false;
+    *x = (clip[0] / clip[3] * 0.5f + 0.5f) * float(width);
+    *y = (0.5f - clip[1] / clip[3] * 0.5f) * float(height);
+    return true;
+}
+
+int32_t Play::shownHealth(uint32_t id) const {
+    const sim::Body* body = realm_.find(id);
+    if (!body || !body->alive()) return 0;
+    return std::min(body->maxHealth, body->health + showing_.owed(id));
 }
 
 void Play::dropsOnScreen(const float* viewProj, int width, int height,

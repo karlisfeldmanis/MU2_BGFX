@@ -27,6 +27,7 @@
 #include "gfx/overlay.h"
 #include "game/desk.h"
 #include "game/litter.h"
+#include "game/outline.h"
 #include "gfx/renderer.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
@@ -565,8 +566,8 @@ int main(int argc, char** argv) {
     if (args.windows.find("inventory") != std::string::npos) desk.setInventoryOpen(true);
     if (args.windows.find("character") != std::string::npos) desk.setCharacterOpen(true);
 
-    // The viewer's list. Only the browser has anything to put on it, so it is only built
-    // there: an overlay nobody draws still costs a program and a texture.
+    // The viewer's list, and in play the tile over the character's head. Built only where
+    // one of those is drawn: an overlay nobody draws still costs a program and a texture.
     gfx::Overlay overlay;
 
     game::ModelBench bench;
@@ -591,6 +592,11 @@ int main(int argc, char** argv) {
     }
     if (browseBench && !overlay.init(MU2_SHADER_DIR)) {
         core::logError("the viewer opened without its list; the names are in the log");
+    }
+    // And the played world, for the tile over the character's head: the numbers `--at` takes,
+    // so a screenshot of something to fix says where to go back to.
+    if (inWorld && world.played().isOpen() && !overlay.init(MU2_SHADER_DIR)) {
+        core::logError("the world opened without the tile over the character's head");
     }
     // The studio: the world the game draws, opened as a world is -- town, ground, baked light,
     // lamps and fires -- with nobody in it, and the browser's subject stood beside the map's
@@ -739,6 +745,8 @@ int main(int argc, char** argv) {
     // One store of item models for both: the windows' pictures and what lies on the grass.
     game::ItemModels itemModels;
     game::Litter litter;
+    game::Outline outline;
+    std::vector<gfx::Drawable> hoverDrawables;
 
     if (args.shadowView || args.shadowNoise >= 0) {
         renderer.setShadowDebug(args.shadowView ? 1 : 0, args.shadowNoise);
@@ -924,6 +932,10 @@ int main(int argc, char** argv) {
                 renderer.cameraMatrices(world.camera(), view, proj);
                 float pointerX = 0.0f, pointerY = 0.0f;
                 window.pointer(&pointerX, &pointerY);
+                if (args.pointX >= 0.0f) {
+                    pointerX = args.pointX * float(window.width());
+                    pointerY = args.pointY * float(window.height());
+                }
                 // The scripted pointer, for a run with nobody at the mouse. It goes through
                 // the same unprojection, the same tile, the same request: what it skips is the
                 // hand and nothing else.
@@ -1071,6 +1083,7 @@ int main(int argc, char** argv) {
             // allocates nothing after the first.
             townDrawables.clear();
             townCasters.clear();
+            hoverDrawables.clear();
             const std::vector<gfx::Drawable>* casters = nullptr;
             if (world.town().isOpen()) {
                 if (args.cullChunks) {
@@ -1099,7 +1112,11 @@ int main(int argc, char** argv) {
                 float viewProj[16];
                 bx::mtxMul(viewProj, view, proj);
                 world.played().gather(renderer, viewProj, townDrawables,
-                                      casters ? &townCasters : nullptr);
+                                      casters ? &townCasters : nullptr, &hoverDrawables);
+                if (desk.ready()) {
+                    desk.overhead(float(deltaSeconds), world.played(), viewProj, window.width(),
+                                  window.height());
+                }
                 // And what the blows have thrown, into the transparent pass. The camera's
                 // own horizontal comes out of the view matrix's first column, which is the
                 // same basis the pass billboards on -- a number's digits are laid along it,
@@ -1117,6 +1134,13 @@ int main(int argc, char** argv) {
                 }
                 litter.update(world.played().realm(), deltaSeconds);
                 litter.gather(townDrawables, casters ? &townCasters : nullptr);
+                // The hover ring's own subject, if a drop is what is pointed at rather than a
+                // body or a townsperson -- see Play::gather's `hover` for the other two, and
+                // leftClick's own ladder, which this stays behind: pointedLying() can be set
+                // beside a monster or a townsperson that outranks it.
+                if (world.played().pointedFolk() < 0 && world.played().pointedAt() == 0) {
+                    litter.gatherOne(world.played().pointedLying(), hoverDrawables);
+                }
             }
 
             // The crowd goes into the same two lists as the town, and through the same two
@@ -1140,7 +1164,51 @@ int main(int argc, char** argv) {
                 renderer.slideSplit(slide);
             }
             renderer.draw(eye, lighting, townDrawables, &world.ground(), casters);
+            // The gold ring: over the world the frame above just drew, under the windows the
+            // line below is about to -- so a window drawn over a ringed monster still covers
+            // it, the same order Godot's CanvasLayer(-1) kept the ring in. Shown whenever
+            // Play::point found something, exactly as MU2's own Ringed did: it is not gated
+            // on the pointer being clear of a window, only the click a monster answers to is.
+            if (!hoverDrawables.empty()) {
+                float outlineView[16], outlineProj[16];
+                renderer.cameraMatrices(eye, outlineView, outlineProj);
+                const bool shadow =
+                    world.played().pointedFolk() < 0 && world.played().pointedAt() == 0;
+                outline.show(renderer, eye, outlineView, outlineProj, window.width(),
+                             window.height(), hoverDrawables, shadow);
+            }
             if (desk.ready()) desk.submit(gfx::ViewHud, window.width(), window.height());
+            // The tile the character stands on, over his head: the column and row `--at`
+            // takes, so a screenshot of something to fix carries where it is. Under the
+            // curtain, over the windows' bar -- it is a note on the picture, not a window.
+            if (overlay.ready() && world.played().isOpen()) {
+                float feetX = 0.0f, feetZ = 0.0f;
+                world.characterAt(&feetX, &feetZ);
+                const float headY = world.ground().heightAt(feetX, feetZ) + 2.0f;
+                float view[16], proj[16], viewProj[16];
+                renderer.cameraMatrices(world.camera(), view, proj);
+                bx::mtxMul(viewProj, view, proj);
+                const float clip[4] = {feetX, headY, feetZ, 1.0f};
+                float out[4];
+                bx::vec4MulMtx(out, clip, viewProj);
+                if (out[3] > 0.0f) {
+                    const float w = float(window.width()), h = float(window.height());
+                    const float px = (out[0] / out[3] * 0.5f + 0.5f) * w;
+                    const float py = (0.5f - out[1] / out[3] * 0.5f) * h;
+                    const sim::Body& hero = world.played().realm().hero();
+                    char label[32];
+                    std::snprintf(label, sizeof label, "%d, %d", hero.column(), hero.row());
+                    const float scale = 3.0f * h / 1080.0f;
+                    const float across = overlay.measure(scale, label);
+                    const float tall = gfx::Overlay::lineHeight(scale);
+                    const float pad = 4.0f * scale;
+                    overlay.begin(window.width(), window.height());
+                    overlay.panel(px - across * 0.5f - pad, py - tall - pad * 0.5f,
+                                  across + pad * 2.0f, tall + pad, 0xA0000000u);
+                    overlay.text(px - across * 0.5f, py - tall, scale, 0xFFE8F4FFu, label);
+                    overlay.submit(gfx::ViewHud);
+                }
+            }
             if (entrance && curtain.ready()) {
                 if (frame >= 2) entranceSeconds += float(deltaSeconds);
                 const float t = std::min(1.0f, entranceSeconds / 0.1f);
@@ -1182,8 +1250,9 @@ int main(int argc, char** argv) {
                 auto phase = [](float v) { return v - std::floor(v); };
                 float heroX = cam.target[0], heroZ = cam.target[2];
                 const bool played = world.characterAt(&heroX, &heroZ);
-                const float lagMm = played ? 1000.0f * std::hypot(heroX - cam.target[0],
-                                                                  heroZ - cam.target[2])
+                const float* followed = world.followed();
+                const float lagMm = played ? 1000.0f * std::hypot(heroX - followed[0],
+                                                                  heroZ - followed[2])
                                            : 0.0f;
                 std::fprintf(shadowLog,
                              "%d,%.3f,%.4f,%.4f,%.2f,%.4f,%.4f,%.4f,%.4f,%.3f,%.4f,%.4f,%.4f,"
@@ -1317,9 +1386,14 @@ int main(int argc, char** argv) {
                            (long long)play.ticks(), play.tickMs(), hero.level, hero.x, hero.y,
                            hero.health, hero.maxHealth, counts.monsters, counts.alive,
                            counts.roused);
+                // What the ring is round, as well as what a click would take: the three are
+                // the same question and the ladder Play::leftClick answers it with.
                 core::logf("  pointer: tile %d,%d%s | %s", play.pointedColumn(),
                            play.pointedRow(),
-                           play.pointedAt() ? " (on a monster)" : "",
+                           play.pointedFolk() >= 0      ? " (on a townsperson)"
+                           : play.pointedAt()           ? " (on a monster)"
+                           : play.pointedLying()        ? " (on a drop)"
+                                                        : "",
                            play.lastLine().c_str());
                 if (play.findings().total() > 0) {
                     core::logError("  play: %llu invariants broken",

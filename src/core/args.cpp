@@ -123,6 +123,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.clip = std::atoi(v);
         } else if (!std::strcmp(s, "--click-every")) {
             if (const char* v = next(s)) a.demoClicks = std::atoi(v);
+        } else if (!std::strcmp(s, "--point")) {
+            if (const char* v = next(s)) std::sscanf(v, "%f,%f", &a.pointX, &a.pointY);
         } else if (!std::strcmp(s, "--weapon")) {
             if (const char* v = next(s)) a.weapon = v;
         } else if (!std::strcmp(s, "--shield")) {

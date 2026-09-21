@@ -22,6 +22,9 @@ constexpr float kDistance = 8.0f;      // 800 of MU's units
 constexpr float kPlayDistance = 6.0f;
 constexpr float kNearest = 3.5f;
 constexpr float kFocusHeight = 1.5f;   // 150 units up the body
+// How far above the middle of the frame a played character is drawn, as a fraction of the
+// frame's height. Invention, the ARPG habit rather than MU's: MU centres him.
+constexpr float kLiftFrame = 0.12f;
 
 // The tile texture Lorencia floors its interiors with and uses nowhere outdoors: MuMain's
 // HeroTile == 4, and MU2's World.IndoorTile.
@@ -220,6 +223,29 @@ void World::update(double seconds, bool still) {
         if (std::fabs(distance_ - wantDistance_) < 1e-3f) distance_ = wantDistance_;
     }
     for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * distance_;
+
+    // The ARPG framing: the played character stands above the middle of the frame, with more
+    // ground ahead of him to the bottom of the screen, where the HUD's bar and orbs sit. The
+    // whole camera slides down its own screen-up, so the angle and the lens are untouched and
+    // only the picture moves. The slide is a fraction of the frame's height at the focus, so
+    // it holds at every zoom.
+    if (play_.isOpen()) {
+        const float lift = kLiftFrame * 2.0f * std::tan(kFovDegrees * 0.5f * 3.14159265f / 180.0f) *
+                           distance_;
+        // Screen-up is (right x forward), with forward = -back and right = forward x world-up.
+        const float fwd[3] = {-back[0], -back[1], -back[2]};
+        float right[3] = {-fwd[2], 0.0f, fwd[0]};
+        const float rl = std::hypot(right[0], right[2]);
+        right[0] /= rl;
+        right[2] /= rl;
+        const float upward[3] = {right[1] * fwd[2] - right[2] * fwd[1],
+                                 right[2] * fwd[0] - right[0] * fwd[2],
+                                 right[0] * fwd[1] - right[1] * fwd[0]};
+        for (int i = 0; i < 3; ++i) {
+            camera_.target[i] -= upward[i] * lift;
+            camera_.position[i] -= upward[i] * lift;
+        }
+    }
 }
 
 void World::zoom(float notches) {

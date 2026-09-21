@@ -44,6 +44,10 @@ public:
     // Adds every piece lying or falling, and the same to the sun's list: a dropped axe casts
     // a shadow, which is most of what says it is on the ground rather than over it.
     void gather(std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters) const;
+    // The one drop `id` names, for the hover ring: the same pieces `gather` would have added
+    // for it, and nothing else. A no-op where `id` is not lying (it fell, or was picked up
+    // between the pointer's pick and this call).
+    void gatherOne(uint32_t id, std::vector<gfx::Drawable>& out) const;
 
     size_t count() const { return drops_.size(); }
     size_t pieces() const;

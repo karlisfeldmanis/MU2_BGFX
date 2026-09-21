@@ -103,6 +103,9 @@ struct Args {
     // short fixed list and clicks it, through the same unprojection a hand would. It is how a
     // run with nobody at the mouse can show that a click walks and a click on a monster fights.
     int demoClicks = 0;
+    // `--point X,Y`: the pointer held on one spot, as fractions of the window, and never
+    // clicked -- so a shot can show what hovering there does (the ring, the cursor).
+    float pointX = -1.0f, pointY = -1.0f;
 
     // The monster bench: one figure on the bench ground, by the name index.json gives it,
     // playing one clip. `--clip` is MU's own action number, in the right table of the two --

@@ -14,9 +14,11 @@ that overdraws stops and says so rather than borrowing from spare.
 | ssao | 2, 3 | 0.5 | half resolution, and the depth-aware blur |
 | shade | 4 | 2.3 | the one lit pass: PBR, shadow lookup, sky reflection, AO |
 | effects | 5 | 0.3 | the transparent pass: sprites, blended, sorted back to front |
-| present | 6, 7 | 0.5 | ACES and sRGB, the HUD, the debug text |
-| probe | 17-59 | 0.3 | sprint 8c's reflection probe: a face, its chain and the filter, and the shade pass's cube read |
+| present | 15-18 | 0.5 | ACES and sRGB, the hover ring and its mask, the HUD, the debug text |
+| probe | 19-61 | 0.3 | sprint 8c's reflection probe: a face, its chain and the filter, and the shade pass's cube read |
 | spare | — | 0.2 | unspent on purpose |
+
+The view numbers moved when the hover ring took 16 and 17 (`docs/sprints/09-the-ring.md`); they had also been stale in this table since sprint 6, which is why present read "6, 7" against a present view of 15.
 
 **Those add to 5.8, and that is sprint 8c's doing, said here rather than hidden.** The probe
 measured +0.28 ms of wall frame (below) and the accounts had no room for it: the spare is 0.2.

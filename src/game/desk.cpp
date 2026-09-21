@@ -44,6 +44,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
+    vitals_.open(interface_);
     interface_.adopt(ground_);
     return true;
 }
@@ -276,6 +277,15 @@ void Desk::labelGround(const Play& play, int width, int height) {
     }
 }
 
+void Desk::overhead(float seconds, const Play& play, const float* viewProj, int width,
+                    int height) {
+    if (!play.isOpen()) {
+        vitals_.dismiss();
+        return;
+    }
+    vitals_.update(seconds, play, play.pointedAt(), takesPointer_, viewProj, width, height);
+}
+
 void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     // The pictures are drawn at the scale the windows are drawn at, so nothing is resampled.
     if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
@@ -287,6 +297,8 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
 void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.begin(width, height);
     interface_.add(ground_);
+    // Over the world's labels and under every window: it is a reading lying on the scene.
+    if (vitals_.showing()) interface_.add(vitals_.canvas());
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
@@ -299,10 +311,11 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
 
 std::string Desk::line() const {
     char text[160];
-    std::snprintf(text, sizeof text, "windows: %u draws, %u vertices, rebuilt hud %llu card %llu bag %llu",
+    std::snprintf(text, sizeof text, "windows: %u draws, %u vertices, rebuilt hud %llu card %llu bag %llu vitals %llu",
                   interface_.draws(), interface_.vertices(),
                   (unsigned long long)hud_.rebuilds(), (unsigned long long)card_.rebuilds(),
-                  (unsigned long long)bag_.rebuilds());
+                  (unsigned long long)bag_.rebuilds(),
+                  (unsigned long long)vitals_.rebuilds());
     return text;
 }
 

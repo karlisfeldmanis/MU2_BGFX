@@ -119,9 +119,11 @@ add_executable(mu2
   src/game/shelf.cpp
   src/game/describe.cpp
   src/game/desk.cpp
+  src/game/vitals.cpp
   src/game/items_stage.cpp
   src/game/item_models.cpp
   src/game/litter.cpp
+  src/game/outline.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp

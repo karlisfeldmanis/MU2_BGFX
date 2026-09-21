@@ -226,4 +226,21 @@ void Litter::gather(std::vector<gfx::Drawable>& out,
     }
 }
 
+void Litter::gatherOne(uint32_t id, std::vector<gfx::Drawable>& out) const {
+    if (id == 0) return;
+    for (const Drop& drop : drops_) {
+        if (drop.id != id) continue;
+        for (const Piece& piece : drop.pieces) {
+            if (!piece.mesh) continue;
+            gfx::Drawable drawable;
+            drawable.mesh = piece.mesh;
+            std::memcpy(drawable.transform, piece.rest, sizeof(drawable.transform));
+            drawable.transform[13] += piece.above;
+            drawable.inProbe = false;
+            out.push_back(drawable);
+        }
+        return;
+    }
+}
+
 }  // namespace mu::game

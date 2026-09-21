@@ -37,6 +37,9 @@ public:
     void update(double seconds, bool still);
 
     const gfx::Camera& camera() const { return camera_; }
+    // The point the played camera follows -- the character, eased. Not camera().target, which
+    // a played camera slides off him so that he stands above the middle of the frame.
+    const float* followed() const { return eased_; }
     const content::Ground& ground() const { return ground_; }
     Town& town() { return town_; }
     const Town& town() const { return town_; }

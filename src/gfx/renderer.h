@@ -191,6 +191,42 @@ public:
     // is how a cull starts disagreeing with the picture.
     void cameraMatrices(const Camera& camera, float* view, float* proj) const;
 
+    // --- the hover outline ---------------------------------------------------------------
+    // MU2's Outline.cs: a gold silhouette round whatever the pointer is over. Ported from a
+    // Godot SubViewport mask and a CanvasItem shader to a small offscreen mask and a bgfx
+    // screen pass; see game/outline.cpp for the box that is fitted round the hovered thing
+    // and the priority (a townsperson, then a drop, then a monster) that picks it, both of
+    // which are game rules and not the renderer's.
+    struct OutlineParams {
+        // The hovered thing's own box on the real screen, in backbuffer pixels: both what
+        // the mask is fitted to (up to kOutlineMaskSize) and where the ring composes.
+        int screenX = 0, screenY = 0, screenW = 0, screenH = 0;
+        // A dropped item's soft shadow under the ring. False for a monster or a townsperson,
+        // which already stand on their own cast shadow -- see Outline.Shade in the C# this
+        // was ported from.
+        bool shadow = false;
+    };
+    // How wide the ring is and how far its box must be grown to hold it, in pixels of the
+    // real screen -- shared with game/outline.cpp's own box fit so the two agree on how much
+    // room the ring needs without the literal being written twice.
+    static constexpr float kOutlineWidth = 2.6f;
+    static constexpr float kOutlineReach = 7.0f;  // the drop shadow's own further reach
+    // The mask's own cap, pixels on a side. MU's camera keeps a hovered thing under a few
+    // hundred pixels, so one fixed target never reallocates; unlike Godot's SubViewport,
+    // which resized in 64-pixel steps to the exact box, this is simpler at the cost of a
+    // thing approached close enough to fill more of the screen than this being clipped at
+    // the cap's edge rather than losing precision -- a camera this close to a monster or an
+    // item is not how MU is played.
+    static constexpr int kOutlineMaskSize = 512;
+    // Draws the ring: `hovered`'s own meshes into their own tiny mask (the SAME instances
+    // draw() already posed this frame, submitted a second time -- no re-skinning, matching
+    // Outline.cs's "the same mesh, drawn into both, in the same pose"), then a screen pass
+    // that composes it into `params`'s box of the backbuffer. Call after draw() and before
+    // the HUD submits: MU2's ring sits over the world and under the windows. Does nothing
+    // when `hovered` is empty or `params`'s box is empty.
+    void drawOutline(const float* mainView, const Camera& camera, const OutlineParams& params,
+                     const std::vector<Drawable>& hovered);
+
 private:
     struct Batch {
         const content::Mesh* mesh = nullptr;
@@ -337,6 +373,25 @@ private:
     bgfx::ProgramHandle skinnedGlowProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle stageProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle skinnedStageProgram_ = BGFX_INVALID_HANDLE;
+
+    // --- the hover outline, sprint 9 ----------------------------------------------------
+    // The mask: one fixed kOutlineMaskSize square target, R8 -- coverage is all it holds,
+    // and the shadow pass's own program writes it (fs_shadow honours a cutout and writes
+    // 1.0, which is exactly a silhouette). No depth attachment: nothing here is ever blended,
+    // so a later part of the same thing simply overwrites an earlier one's 1.0 with its own.
+    bool createOutline(const std::string& shaderDir);
+    void destroyOutline();
+    bgfx::TextureHandle outlineMaskTex_ = BGFX_INVALID_HANDLE;
+    bgfx::FrameBufferHandle outlineMaskFb_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle outlineProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uOutlineEdge_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uOutlineParams_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uOutlinePixel_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uOutlineDrift_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uOutlineScale_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sOutlineMask_ = BGFX_INVALID_HANDLE;
+    bool outlineOk_ = false;
+    std::vector<Batch> outlineBatches_;
 
     bgfx::UniformHandle uSunDir_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uSunColour_ = BGFX_INVALID_HANDLE;

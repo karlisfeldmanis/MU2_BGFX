@@ -40,6 +40,8 @@ const char* viewName(View v) {
         case ViewShade: return "shade";
         case ViewTransparent: return "effects";
         case ViewPresent: return "present";
+        case ViewOutlineMask: return "outline_mask";
+        case ViewOutline: return "outline";
         case ViewBloomDown: return "bloom_down1";
         case ViewBloomDown + 1: return "bloom_down2";
         case ViewBloomDown + 2: return "bloom_down3";
@@ -79,6 +81,8 @@ Account viewAccount(View v) {
         case ViewShade: return AccountShade;
         case ViewTransparent: return AccountEffects;
         case ViewPresent:
+        case ViewOutlineMask:
+        case ViewOutline:
         case ViewHud: return AccountPresent;
         default:
             if (v == ViewStageBag || v == ViewStageShelf) return AccountPresent;
@@ -101,6 +105,11 @@ double accountBudgetMs(Account a) {
         // explicitly and in the open, which is the one thing the sprint file allows and
         // quietly taking it is the thing it forbids.
         case AccountEffects: return 0.3;
+        // The outline joined this account unmeasured, the same way effects opened at 0.0
+        // before its own number was taken: it draws only while the pointer is over a
+        // monster, an npc or a drop, into a target a few hundred pixels on a side, so it is
+        // expected to cost nothing most frames and little on the ones it does. Priced before
+        // this line claims a number for it, per the plan's own rule.
         case AccountPresent: return 0.5;
         // Sprint 8c, opened against its measurement: docs/sprints/08c-the-metal.md.
         case AccountProbe: return 0.3;

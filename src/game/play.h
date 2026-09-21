@@ -61,8 +61,11 @@ public:
     void leftClick();   // walk to the tile under the pointer, or fight what is standing on it
     void rightClick();  // stop
 
+    // `hover` collects the SAME drawables -- same transform, same palette row -- for whichever
+    // body is `pointedAt()` or whichever townsperson is `pointedFolk()`, so the outline ring
+    // can draw them a second time without a second pose. Null skips the collecting.
     void gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,
-                std::vector<gfx::Drawable>* casters);
+                std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover = nullptr);
 
     // Where the camera should look, in tiles: the character, smoothed as he is drawn.
     void focus(float* column, float* row) const;
@@ -101,6 +104,15 @@ public:
     int pointedFolk() const { return pointedFolk_; }
     // The thing on the ground under the pointer, by its id, or 0.
     uint32_t pointedLying() const { return pointedLying_; }
+
+    // Where a monster's health bar sits on screen: the pixel a third of a tile over the top
+    // of its body as drawn this frame, MU2's Crowd.Crown. False when the body has never been
+    // placed or the point is behind the camera.
+    bool crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,
+                 float* y) const;
+    // A body's health as the DRAWING has shown it: the realm's, with every blow still waiting
+    // for its landing cue added back, and nought once it is dead. See Showing::owed.
+    int32_t shownHealth(uint32_t id) const;
 
     // Where each thing on the ground is on screen this frame, for its label: the id, and the
     // pixel a little above where it lies. Only those in front of the camera.
@@ -154,8 +166,21 @@ private:
         // Where it was drawn when a click cut a tick short; see Play::update.
         float caughtX = 0.0f, caughtY = 0.0f, caughtFacing = 0.0f;
         float yaw = 0.0f;
+        // The top of the body where follow() last stood it, in world metres, and whether it
+        // has been stood anywhere yet. What the health bar is hung from; a corpse keeps the
+        // last one, since follow() stops placing it.
+        float crown[3] = {0.0f, 0.0f, 0.0f};
+        bool placed = false;
         bool visible = false;
         int attackClip = -1;     // this body's swing, found once at open
+        int deathClip = -1;      // MONSTER01_DIE, found once at open the same way
+        // Negative while alive. Set to 0 the tick `Died` happens and counted up from there, so
+        // the corpse holds its last pose and fades instead of vanishing on the tick it falls --
+        // see kDeathHold and kDeathFade in play.cpp.
+        float deadFor = -1.0f;
+        // Counted up from 0 the tick `Rose` happens, so a respawn eases in rather than popping
+        // into being; left far above kSpawnFadeSeconds otherwise, which reads as "done fading".
+        float spawnFade = 1e9f;
         float swinging = 0.0f;   // seconds of it left to play before idle or walk take over
         float swingPace = 1.0f;  // how much faster than authored the swing clip must run
         // The walk. `groundSpeed` is what the last tick actually covered, in metres a second,

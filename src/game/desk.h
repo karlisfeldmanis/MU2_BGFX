@@ -18,6 +18,7 @@
 #include "game/item_models.h"
 #include "game/items_stage.h"
 #include "game/shelf.h"
+#include "game/vitals.h"
 #include "game/panel.h"
 #include "gfx/interface.h"
 #include "gfx/window.h"
@@ -49,6 +50,11 @@ public:
     void setView(const float* viewProj) {
         for (int i = 0; i < 16; ++i) viewProj_[i] = viewProj[i];
     }
+    // The monster's health bar, once the frame has placed every body and the camera: run after
+    // Play::update and World::update, so the bar is hung on the crown drawn THIS frame. Done in
+    // update() it trailed a walking spider by a frame, which a bar over its head shows.
+    void overhead(float seconds, const Play& play, const float* viewProj, int width, int height);
+
     // Whether the pointer this frame belongs to a window rather than to the ground.
     bool takesPointer() const { return takesPointer_; }
 
@@ -82,6 +88,7 @@ private:
     Bag bag_;
     Shelf shelf_;
     Cursor cursor_;
+    Vitals vitals_;
     ItemModels* models_ = nullptr;
     ItemStage bagStagePicture_, shelfStagePicture_;
     std::string shaderDir_, assetDir_;

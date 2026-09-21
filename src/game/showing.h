@@ -86,6 +86,16 @@ public:
     uint32_t liveParticles() const { return uint32_t(particles_.size()); }
     uint32_t liveNumbers() const { return uint32_t(numbers_.size()); }
     uint32_t pending() const { return uint32_t(cues_.size()); }
+    // The damage already taken off `target` on the tick and not shown yet: the sum of its
+    // cues still burning. What the health bar adds back, so the red does not drop before the
+    // number that took it goes up -- MU2's Crowd.Shown. A few cues at most, so a walk.
+    int32_t owed(uint32_t target) const {
+        int32_t sum = 0;
+        for (const Cue& cue : cues_) {
+            if (cue.target == target && !cue.miss) sum += cue.damage;
+        }
+        return sum;
+    }
     uint32_t dropped() const { return dropped_; }
     void drop() { ++dropped_; }
 
