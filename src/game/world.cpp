@@ -16,6 +16,11 @@ constexpr float kFovDegrees = 55.0f;
 constexpr float kPitchDegrees = -48.5f;
 constexpr float kYawDegrees = 45.0f;
 constexpr float kDistance = 8.0f;      // 800 of MU's units
+// Where a played camera starts, and how near the wheel brings it. Invention: MU2's game had
+// no zoom and stood at MU's 8 m, which on a 1080p frame draws the character 170 pixels tall.
+// The measuring camera (no --play) stays at MU's 8 m, so every frame number keeps its meaning.
+constexpr float kPlayDistance = 6.0f;
+constexpr float kNearest = 3.5f;
 constexpr float kFocusHeight = 1.5f;   // 150 units up the body
 
 // The tile texture Lorencia floors its interiors with and uses nowhere outdoors: MuMain's
@@ -153,7 +158,14 @@ void World::update(double seconds, bool still) {
     // Walk.cs's own back vector: sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch).
     const float back[3] = {std::sin(yaw) * std::cos(pitch), -std::sin(pitch),
                            std::cos(yaw) * std::cos(pitch)};
-    for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * kDistance;
+    if (distance_ <= 0.0f) distance_ = play_.isOpen() ? kPlayDistance : kDistance;
+    for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * distance_;
+}
+
+void World::zoom(float notches) {
+    if (notches == 0.0f || distance_ <= 0.0f) return;
+    const float wanted = distance_ * std::pow(0.92f, notches);
+    distance_ = wanted < kNearest ? kNearest : (wanted > kDistance ? kDistance : wanted);
 }
 
 bool World::characterAt(float* x, float* z) const {

@@ -48,6 +48,9 @@ public:
 
     // Where the camera looks, in tiles. Set from --at, else the map's own middle.
     void setFocusTile(float column, float row);
+    // The wheel, in play: positive notches bring the camera in. Held between kNearest and
+    // MU's own 8 m, so the furthest a player can stand back is what MU showed him.
+    void zoom(float notches);
 
     // Where the played character is drawn right now, in world metres, or false when no world
     // is being played. Asked AFTER the play has advanced, it is where the figure stands this
@@ -70,6 +73,7 @@ private:
     Crowd crowd_;
     Play play_;
     gfx::Camera camera_;
+    float distance_ = 0.0f;  // metres back from the focus; 0 until update() seeds it
     float focusColumn_ = 0.0f;
     float focusRow_ = 0.0f;
     bool focusSet_ = false;

@@ -794,6 +794,7 @@ int main(int argc, char** argv) {
                                      window.width(), window.height());
                 if ((window.clicked(0) && !windowed) || clickNow) world.played().leftClick();
                 if (window.clicked(1) && !windowed) world.played().rightClick();
+                if (!windowed) world.zoom(window.scroll());
                 world.played().update(deltaSeconds);
             }
             // And only THEN the camera, onto where the character is drawn this frame. Placed
