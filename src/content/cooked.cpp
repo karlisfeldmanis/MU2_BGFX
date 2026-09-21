@@ -75,6 +75,7 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         reader.read(flags);
         material.twoSided = (flags & 1) != 0;
         material.glow = (flags & 2) != 0;
+        material.calibrated = (flags & 8) != 0;
         const bool translucent = (flags & 4) != 0;
         reader.readString(material.name);
         reader.readString(material.albedo);

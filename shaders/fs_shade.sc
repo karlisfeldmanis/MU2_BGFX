@@ -35,7 +35,10 @@ void main()
 	// which on Metal has the opposite sense from the winding CULL_CW keeps. MU's figures
 	// are single sheets of mixed winding and are drawn two-sided, so this matters on them.
 	vec3 ng = normalize(v_normal);
-	if (u_material.y > 0.5 && dot(ng, v) < 0.0) ng = -ng;
+	// y is two flags: 1 two-sided, 2 calibrated. See the renderer.
+	float calibrated = step(1.5, u_material.y);
+	float twoSided = u_material.y - 2.0 * calibrated;
+	if (twoSided > 0.5 && dot(ng, v) < 0.0) ng = -ng;
 
 	// Tangent frame, then the normal map. The bitangent's sign is glTF's w.
 	vec3 t = normalize(v_tangent.xyz - ng * dot(ng, v_tangent.xyz));
@@ -78,8 +81,13 @@ void main()
 	// came out white: the treasure chest's brass bands read as chalk, and the shield 8c saw
 	// white out in the low sun was the same clip. Dark iron never reaches the cap and is as
 	// it was.
+	//
+	// Only on paint that is paint. MU2's item bake has already lifted an item's metal onto its
+	// reflectance (its `_basecolor` sheet, flagged calibrated), and the gain on top of that
+	// lifted the armour twice.
 	float peak = max(max(albedo.r, albedo.g), max(albedo.b, 1e-4));
-	vec3 f0 = mix(vec3_splat(0.04), albedo * min(u_probe.w, 1.0 / peak), metal);
+	float gain = mix(u_probe.w, 1.0, calibrated);
+	vec3 f0 = mix(vec3_splat(0.04), albedo * min(gain, 1.0 / peak), metal);
 	vec3 diffuseColour = albedo * (1.0 - metal);
 
 	vec3 l = normalize(u_sunDir.xyz);

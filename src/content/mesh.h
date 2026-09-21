@@ -59,6 +59,13 @@ struct Material {
     // closed model gained in sprint 8a, and it costs the walls nothing: a glow is its own
     // program in its own view, not a variant of fs_shade. docs/sprints/08a-the-lamps.md.
     bool glow = false;
+    // Whether the albedo's metal is already reflectance. MU2's item bake lifts a metal's
+    // painted texels onto the metal's own f0 and writes the result as `<item>_basecolor`
+    // (build_maps.base_colour); the world's tiled path does not, and its iron is the dark
+    // paint MU drew. The shade's metal_gain exists for the second kind, and applied to the
+    // first it lifted the armour twice -- the Plate set's metal reflected 0.6 to 0.9, with
+    // up to half its texels at the cap. True leaves the gain off.
+    bool calibrated = false;
     // glTF's own scalars, and the shader multiplies the ORM by them: roughness = orm.g * this,
     // metal = orm.b * this. A surface whose relief came out of its art has a map and both
     // factors at 1.0; a surface whose material declares no grain -- MU's foliage, grass and

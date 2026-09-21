@@ -497,6 +497,15 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
             if same and max(through) < 1.0:
                 flags |= 4
                 translucency = float(max(through))
+        # Bit 3: the albedo's metal is already reflectance. MU2's item bake lifts a metal's
+        # painted texels onto the metal's own f0 and names the sheet `<item>_basecolor`
+        # (build_maps.base_colour); the world's tiled sheets are MU's dark paint as it is.
+        # The shade's metal_gain is for the second kind only -- applied to the first it lifted
+        # the armour twice. See content::Material::calibrated.
+        albedo_image = image_for(document, material, "albedo")
+        if albedo_image is not None and (document["images"][albedo_image].get("name") or ""
+                                         ).endswith("_basecolor"):
+            flags |= 8
         maps = {"albedo": "", "normal": "", "orm": "", "emissive": ""}
         # By the glb's own name: a `~whole` variant is a second cut of the same file, and the
         # manifest only knows the file. Keyed by the variant, the Elite came out untextured.

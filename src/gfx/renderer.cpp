@@ -725,7 +725,11 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // z and w are glTF's roughness and metal factors, which the shade pass multiplies
             // the ORM by: a material with no ORM map carries its whole answer there. A glow
             // has neither, and its z is the sheet's glow_strength instead.
-            const float materialParams[4] = {material.cutout, material.twoSided ? 1.0f : 0.0f,
+            // y carries two flags: 1 two-sided, 2 calibrated (the albedo's metal is already
+            // reflectance, so the sheet's metal_gain stays off it). fs_shade unpacks them.
+            const float materialParams[4] = {material.cutout,
+                                             (material.twoSided ? 1.0f : 0.0f) +
+                                                 (material.calibrated ? 2.0f : 0.0f),
                                              glowPass ? glowStrength_ : material.roughnessFactor,
                                              material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);

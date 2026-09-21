@@ -128,6 +128,11 @@ bool Mesh::load(const std::string& path, Textures& textures) {
         if (m.has_pbr_metallic_roughness) {
             out.albedo = textureFrom(m.pbr_metallic_roughness.base_color_texture, dir, textures,
                                      TextureRole::Albedo);
+            // The same test the cook makes: see tools/cook.py and Material::calibrated.
+            const cgltf_texture* base = m.pbr_metallic_roughness.base_color_texture.texture;
+            const char* named = base && base->image && base->image->name ? base->image->name : "";
+            const size_t length = std::strlen(named);
+            out.calibrated = length >= 10 && std::strcmp(named + length - 10, "_basecolor") == 0;
             // Occlusion, roughness and metal are one texture in glTF's own layout: G is
             // roughness and B is metal, and MU2's pipeline writes occlusion into R of the
             // same file, which is why the occlusion view is not read separately.
@@ -389,6 +394,7 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.cutout = from.cutout;
         out.twoSided = from.twoSided;
         out.glow = from.glow;
+        out.calibrated = from.calibrated;
         out.roughnessFactor = from.roughnessFactor;
         out.metalFactor = from.metalFactor;
         out.translucency = from.translucency;

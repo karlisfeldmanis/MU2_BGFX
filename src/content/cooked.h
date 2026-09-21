@@ -46,6 +46,7 @@ struct CookedMaterial {
     float cutout = -1.0f;
     bool twoSided = false;
     bool glow = false;  // bit 1 of the flags byte: MU's BlendMesh. See content::Material.
+    bool calibrated = false;  // bit 3: the albedo's metal is already reflectance
     float roughnessFactor = 1.0f;
     float metalFactor = 1.0f;
     float translucency = 0.0f;  // bit 2 of the flags and a float after. See content::Material.
