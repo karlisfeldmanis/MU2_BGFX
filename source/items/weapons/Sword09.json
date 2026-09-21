@@ -88,5 +88,14 @@
         0.901
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    },
+    "steel": {
+      "roughness": 0.3
+    }
+  },
+  "material_overrides_note": "MU paints this blade dark -- purple-black scales with a silver edge -- so dark is right; steel at 0.3 lets the scales read. The gold hilt sits at the reflectance ceiling (9.9% of it capped) and at brass's 0.45 the noon sun blew it into a glowing bar; 0.6 spreads the highlight (2026-09-21)."
 }

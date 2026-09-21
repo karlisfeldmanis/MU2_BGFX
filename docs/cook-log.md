@@ -22,3 +22,5 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Bone | set | 2026-09-21 19:07 | passed | pale grey bone over dark hide, dielectric at 0.58 so the mid-tones carry between MU's painted highlights; skull mask and crest read; rebuilt after the flip fix |
 | Sword06 | arm | 2026-09-21 19:09 | passed | royal blue is MU's own paint (sword07.png); winged guard and green-banded grip read; bright at noon |
 | Sword08 | arm | 2026-09-21 19:14 | passed | steel 0.4: grey-blue steel with the painted wear visible; no longer black |
+| Sword09 | arm | 2026-09-21 19:17 | passed | dark scaled blade is MU's paint, silver edge and scales read at steel 0.3; gold grip no longer blows out at brass 0.6. Guard claws render grey where MU paints them gold: only the grip is brass |
+| Axe01 | arm | 2026-09-21 19:26 | passed | head dark forged iron at steel 0.55 (flat side-on face), haft wood reads, end cap wrought iron 0.7 no longer whites out; figures' copy recooked too |

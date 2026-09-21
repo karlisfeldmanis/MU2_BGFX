@@ -27,6 +27,7 @@ import datetime
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -166,6 +167,16 @@ def cook_textures(meshes, area_dir, texcook):
             manifest[f"{model}#{image}:{role}"] = os.path.relpath(ktx_path, ASSETS)
             if os.path.exists(ktx_path) or any(j[3] == ktx_path for j in jobs):
                 continue
+            # The same bytes in the same role are the same blocks, and the name says both: a
+            # weapon cooked into the wardrobe a moment ago need not be compressed again for
+            # the figures, which is another minute of BC7 for an identical file.
+            twin = next((os.path.join(ASSETS, "cooked", other, "textures", stem + ".ktx")
+                         for other in ("wardrobe", "figures")
+                         if os.path.exists(os.path.join(ASSETS, "cooked", other, "textures",
+                                                        stem + ".ktx"))), None)
+            if twin:
+                shutil.copy2(twin, ktx_path)
+                continue
             raw_path = os.path.join(raw_dir, stem + ".bin")
             with open(raw_path, "wb") as handle:
                 handle.write(data)
@@ -220,6 +231,18 @@ def cook_item(kind, area, meshes, extra, texcook):
         table[key].append(extra)
         table[key].sort(key=lambda one: one["name"])
         write_json(table_path, table)
+        # And the town's copy, where a figure carries this weapon. The viewer and the game
+        # draw a guard's Small Axe out of cooked/figures, so a weapon recooked only here
+        # changed nothing anybody sees: Axe01 was shot three times from the figures' copy,
+        # baked before the flip fix, while the wardrobe's was rebuilt underneath it.
+        figures_path = os.path.join(ASSETS, "cooked", "figures", "figures.json")
+        figures = load_json(figures_path, {})
+        carried = {m: p for m, p in meshes.items() if m in figures.get("meshes", {})}
+        if carried and kind == "arm":
+            print(f"cook_one: {', '.join(sorted(carried))} is carried in the town; "
+                  f"recooking the figures' copy")
+            if cook_item("figure", "figures", carried, figures, texcook) is None:
+                return None
     elif area == "figures":
         table_path = os.path.join(area_dir, "figures.json")
         extra.setdefault("meshes", {}).update(cooked)

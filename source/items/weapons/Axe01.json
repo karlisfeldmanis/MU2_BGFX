@@ -94,7 +94,7 @@
     },
     {
       "island": 2,
-      "material": "steel",
+      "material": "wrought_iron",
       "triangles": 12,
       "area": 502.5,
       "along": [
@@ -115,5 +115,14 @@
       ],
       "note": "a dark grey band, the other face of the head's mount. Grey rather than brown, so metal rather than timber."
     }
-  ]
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.55
+    },
+    "wrought_iron": {
+      "roughness": 0.7
+    }
+  },
+  "material_overrides_note": "Steel at 0.55 rather than the library's 0.2 (2026-09-21): the flat head held side-on mirrored the grass and went black, and at 0.4 was still black. The haft's end cap (island 2, dark grey in MU's art) is wrought iron at 0.7, not steel: faced up at the noon sun it mirrored the sun itself and whited out with bloom round it at any roughness near 0.4."
 }
