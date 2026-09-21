@@ -76,6 +76,18 @@ public:
     void setGlowLevel(uint32_t instance, float level) {
         if (instance < glowLevels_.size()) glowLevels_[instance] = level;
     }
+    // Which row of the bone palette a placement poses against this frame, or -1 for its bind
+    // pose -- the same idea as setGlowLevel, and set the same way: something outside Town
+    // computes it (Sway, for now) and writes it in before the town is gathered. Town knows
+    // nothing about clips or clocks, only that a row was asked for.
+    void setPaletteRow(uint32_t instance, int row) {
+        if (instance < paletteRows_.size()) paletteRows_[instance] = row;
+    }
+    // The mesh a model index owns, for whoever poses a placement against it: Sway reads a
+    // rig's bones off this the same way `append` reads its vertex and index buffers.
+    const content::Mesh* meshAt(size_t model) const {
+        return model < meshes_.size() ? &meshes_[model] : nullptr;
+    }
 
     const TownCounts& counts() const { return counts_; }
     const TownCounts& casterCounts() const { return casterCounts_; }
@@ -99,6 +111,7 @@ private:
     uint32_t triangles_ = 0;
     bool roofsHidden_ = false;
     std::vector<float> glowLevels_;
+    std::vector<int> paletteRows_;
     double loadSeconds_ = 0.0;
 };
 

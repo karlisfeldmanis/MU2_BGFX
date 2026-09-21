@@ -103,6 +103,7 @@ add_executable(mu2
   src/game/world.cpp
   src/game/town.cpp
   src/game/lamps.cpp
+  src/game/sway.cpp
   src/game/figures.cpp
   src/game/crowd.cpp
   src/game/headless.cpp

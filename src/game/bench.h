@@ -12,6 +12,7 @@
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/lamps.h"
+#include "game/sway.h"
 #include "game/town.h"
 #include "gfx/renderer.h"
 
@@ -79,6 +80,7 @@ public:
     bool hasStage() const { return stageTown_.isOpen(); }
     Town& stageTown() { return stageTown_; }
     Lamps& stageLamps() { return stageLamps_; }
+    Sway& stageSway() { return stageSway_; }
     // Moves `by` places within the open category and loads what it lands on, clamped to the
     // list. Returns false only if that entry will not load, having already said why.
     bool step(int by, content::Textures& textures);
@@ -191,6 +193,7 @@ private:
     // the stage's placements, then the subject kept out of the reflection probe.
     Town stageTown_;
     Lamps stageLamps_;
+    Sway stageSway_;
     std::vector<gfx::Drawable> staged_;
     // MU's camera rather than the bench's, on the stage.
     bool gameFrame_ = false;

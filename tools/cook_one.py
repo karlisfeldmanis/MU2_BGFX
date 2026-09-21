@@ -33,7 +33,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cook  # noqa: E402  (the cook's own texture and mesh steps, so the two cannot drift)
-from cook import ASSETS, ROOT, cook_mesh, image_bytes, read_glb, roles_of, safe  # noqa: E402
+from cook import (ASSETS, ROOT, cook_mesh, cook_world_clip, image_bytes, read_glb,  # noqa: E402
+                  roles_of, safe)
 
 LOG = os.path.join(ROOT, "docs", "cook-log.md")
 PIECES = ("Helm", "Armor", "Pant", "Glove", "Boot")
@@ -264,6 +265,19 @@ def cook_item(kind, area, meshes, extra, texcook):
         town = os.path.join(area_dir, f"{area}.mut")
         print(f"cook_one: a world object's mesh is rewritten in place; if it is new to the "
               f"town, `tools/cook.py --only placements` stands it ({os.path.relpath(town, ROOT)})")
+        # Its own embedded animation, if it carries one -- see cook_world_clip.
+        clips_path = os.path.join(area_dir, "clips.json")
+        clips = load_json(clips_path, {"version": 1, "clips": {}})
+        changed = False
+        for mesh_name, path in sorted(meshes.items()):
+            clip_path = os.path.join(area_dir, "clips", mesh_name + ".muc")
+            if cook_world_clip(mesh_name, path, clip_path) is not None:
+                clips["clips"][mesh_name] = os.path.relpath(clip_path, ASSETS)
+                changed = True
+                print(f"cook_one: {mesh_name}: its own clip -> "
+                      f"{os.path.relpath(clip_path, ROOT)}")
+        if changed:
+            write_json(clips_path, clips)
     return cooked
 
 

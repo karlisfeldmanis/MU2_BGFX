@@ -1050,6 +1050,9 @@ int main(int argc, char** argv) {
                 // surface, over what the default sheet's noon gives it.
                 world.lamps().gather(renderer.effects(), eye.target, daylightOf(lighting));
             }
+            // The trees, in the wind: before the town is gathered, since each placement's
+            // pose rides in its own instance the same way a glow's level does.
+            world.sway().update(float(deltaSeconds), renderer, world.town());
             // The town's drawables are gathered fresh each frame into one vector that keeps
             // its capacity: a frame appends to a flat array, as foundation 7 says, and
             // allocates nothing after the first.
@@ -1214,6 +1217,9 @@ int main(int argc, char** argv) {
                                           bench.camera().target);
                 bench.stageLamps().gather(renderer.effects(), bench.camera().target,
                                           daylightOf(lighting));
+            }
+            if (bench.hasStage()) {
+                bench.stageSway().update(float(deltaSeconds), renderer, bench.stageTown());
             }
             renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
             drawList();

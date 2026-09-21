@@ -278,6 +278,7 @@ bool ModelBench::openStage(const std::string& assetDir, const std::string& world
         stageLamps_.open(assetDir, stageTown_, worldGround_, textures);
         core::logf("stage: %u lights, %u fires", stageLamps_.lightCount(),
                    stageLamps_.fireCount());
+        stageSway_.open(assetDir, world, stageTown_);
     }
     return fillBrowser(assetDir, world, textures);
 }
@@ -743,6 +744,7 @@ void ModelBench::update(double seconds, double delta, bool spin) {
 }
 
 void ModelBench::shutdown() {
+    stageSway_.shutdown();
     stageLamps_.shutdown();
     stageTown_.shutdown();
     model_.shutdown();

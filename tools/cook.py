@@ -594,6 +594,30 @@ def image_for(document, material, role):
     return document.get("textures", [])[view["index"]].get("source", -1)
 
 
+def cook_world_clip(model, path, out_path):
+    """A world object's own embedded animation, baked flat into one .muc -- or None.
+
+    Unlike the player's and the monsters', a world object carries its clip in the SAME glb
+    as its mesh: MU2's exporter writes it there because the object owns the clip and nothing
+    else ever plays it. One clip only, in every asset the rig audit found (`actions_available`
+    in the .rig.json notes), so `cook_clips` runs with no name table, no travel and nothing
+    that holds -- it just bakes whatever `animations` the glb carries, closes the loop the
+    same way a player clip's is, and returns.
+
+    Twenty of MU2's world objects carry a rig this way -- trees, the street lamp's arm, the
+    hanging inn sign, curtains, carriages -- MoveObject's per-type `o->Velocity`, traced in
+    ZzzObject.cpp. Cooked for all of them here, generically, so the file exists whichever one
+    a later pass plays; only the trees are wired into the renderer today (docs/sprints, and
+    the render side is deliberately narrower than this).
+    """
+    document, binary = read_glb(path)
+    if not document.get("animations"):
+        return None
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    clips, frames, size, _closed, _spread = cook_clips(document, binary, out_path, {}, {}, set())
+    return clips, frames, size
+
+
 def cook_meshes(world, out_dir):
     """Every model the world places, into .mum beside the manifest the textures wrote."""
     world_dir = os.path.join(ASSETS, "world", world)
@@ -614,8 +638,10 @@ def cook_meshes(world, out_dir):
     carried = {one["name"]: one for one in listed if one.get("world") in (world, None)}
 
     mesh_dir = os.path.join(out_dir, "meshes")
+    clip_dir = os.path.join(out_dir, "clips")
     os.makedirs(mesh_dir, exist_ok=True)
 
+    clips_manifest = {}
     triangles = vertices = cooked = source = models = 0
     for model in sorted({one["model"] for one in map_data["objects"]}):
         path = os.path.join(world_dir, model, f"{model}.glb")
@@ -633,8 +659,14 @@ def cook_meshes(world, out_dir):
         cooked += size
         source += os.path.getsize(path)
         models += 1
+        clip_path = os.path.join(clip_dir, model + ".muc")
+        if cook_world_clip(model, path, clip_path) is not None:
+            clips_manifest[model] = os.path.relpath(clip_path, ASSETS)
+    with open(os.path.join(out_dir, "clips.json"), "w") as handle:
+        json.dump({"version": 1, "clips": clips_manifest}, handle, indent=1, sort_keys=True)
     print(f"cook: {models} meshes, {triangles} triangles, {vertices} vertices, "
-          f"{cooked / 1e6:.1f} MB of .mum out of {source / 1e6:.1f} MB of .glb")
+          f"{cooked / 1e6:.1f} MB of .mum out of {source / 1e6:.1f} MB of .glb, "
+          f"{len(clips_manifest)} with their own clip")
     return 0
 
 

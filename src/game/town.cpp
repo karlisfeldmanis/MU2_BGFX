@@ -73,6 +73,7 @@ bool Town::readTable(const std::string& assetDir, const std::string& world) {
 size_t Town::loadMeshes(const std::string& assetDir, const std::vector<bool>& wanted,
                         content::Textures& textures) {
     glowLevels_.assign(town_.instances.size(), 1.0f);
+    paletteRows_.assign(town_.instances.size(), -1);
     meshes_.resize(town_.models.size());
     size_t failed = 0;
     std::string error;
@@ -163,6 +164,7 @@ void Town::shutdown() {
     meshes_.clear();
     town_ = content::CookedTown();
     glowLevels_.clear();
+    paletteRows_.clear();
     triangles_ = 0;
 }
 
@@ -185,7 +187,12 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
     // and not an albedo, so it does NOT go through the sRGB curve -- the same rule
     // docs/conventions.md states for light.png on the ground.
     for (int i = 0; i < 3; ++i) drawable.light[i] = float(instance.light[i]) / 255.0f;
-    drawable.light[3] = glowLevels_[size_t(&instance - town_.instances.data())];
+    const size_t index = size_t(&instance - town_.instances.data());
+    drawable.light[3] = glowLevels_[index];
+    // -1 (the default) draws the bind pose, which is right for every placement Sway does not
+    // reach -- the town's rigged models that do not sway yet, and everything else, drew this
+    // way from the day the cook started writing them skinned. See Renderer::kBindRow.
+    drawable.paletteRow = paletteRows_[index];
     out.push_back(drawable);
 }
 

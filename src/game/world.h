@@ -9,6 +9,7 @@
 #include "game/figures.h"
 #include "game/lamps.h"
 #include "game/play.h"
+#include "game/sway.h"
 #include "game/town.h"
 #include "gfx/renderer.h"
 
@@ -43,6 +44,8 @@ public:
     const Figures& figures() const { return figures_; }
     Lamps& lamps() { return lamps_; }
     const Lamps& lamps() const { return lamps_; }
+    Sway& sway() { return sway_; }
+    const Sway& sway() const { return sway_; }
     Play& played() { return play_; }
     const Play& played() const { return play_; }
 
@@ -69,6 +72,7 @@ private:
     content::Ground ground_;
     Town town_;
     Lamps lamps_;
+    Sway sway_;
     Figures figures_;
     Crowd crowd_;
     Play play_;

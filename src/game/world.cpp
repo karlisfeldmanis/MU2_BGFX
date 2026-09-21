@@ -81,6 +81,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     town_.open(assetDir, name, textures);
     // And what burns in it. Nothing without a town, since every light hangs on a placement.
     if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures);
+    if (town_.isOpen()) sway_.open(assetDir, name, town_);
 
     if (!focusSet_) {
         // Lorencia's safe zone is around tile 142,126 -- the middle of the town rather than
@@ -249,6 +250,7 @@ void World::shutdown() {
     crowd_.shutdown();
     figures_.shutdown();
     lamps_.shutdown();
+    sway_.shutdown();
     town_.shutdown();
     ground_.shutdown();
 }

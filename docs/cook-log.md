@@ -56,3 +56,8 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | House05 | world | 2026-09-21 21:51 | passed | the window's glow now scrolls (ston02, 1.00/s) |
 | Bonfire01 | world | 2026-09-21 21:52 | passed | unaffected control: still just the brightness flicker, fire_02 has no scroll rate and none was added |
 | Candle01 | world | 2026-09-21 21:52 | passed | unaffected control: brass gets its own material now (0.87 metal), candle2's flicker untouched, no scroll rate on this object |
+| Tree01 | world | 2026-09-21 23:20 | passed | scale-dependent sway now plays in the real town: canopy shape measurably differs between frame 0 and frame 145 with the camera held still (mean abs diff 4.2, max 233 over its crop); rate traced to ZzzObject.cpp's 1/Scale*0.4 |
+| Tree02 | world | 2026-09-21 23:21 | passed | same scale-dependent rule as Tree01, same trace |
+| Tree11 | world | 2026-09-21 23:21 | passed | plays its own clip at 1.0 (its natural bake); MU's ZzzObject.cpp comments out the scale-dependent case for this object type (10), so it falls to the flat 0.16 default -- but nothing traces what velocity its own bake assumed, so this is the honest default and not a verified rate |
+| Tree12 | world | 2026-09-21 23:21 | passed | same as Tree11: plays its own clip at 1.0, untraced against MU's flat 0.16 |
+| Tree13 | world | 2026-09-21 23:21 | passed | same as Tree11: plays its own clip at 1.0, untraced against MU's flat 0.16 |
