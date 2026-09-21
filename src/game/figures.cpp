@@ -367,10 +367,16 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.idleSafeClip = namedIdle.empty() ? body.library->find(bare)
                                           : body.library->find(namedIdle);
     body.walkClip = body.library->find(walk);
+    // The walk with the weapon put away. An unarmed figure's two walks are the same clip.
+    body.walkSafeClip = body.library->find(bareWalk);
     if (body.idleClip < 0) body.idleClip = body.library->find(0);
     if (body.idleSafeClip < 0) body.idleSafeClip = body.idleClip;
-    // And how fast the earth has to pass under that walk for its feet to hold still.
+    if (body.walkSafeClip < 0) body.walkSafeClip = body.walkClip;
+    // And how fast the earth has to pass under each walk for its feet to hold still.
     body.plantSpeed = measurePlant(body, body.walkClip);
+    body.plantSpeedSafe = body.walkSafeClip == body.walkClip
+                              ? body.plantSpeed
+                              : measurePlant(body, body.walkSafeClip);
 }
 
 const FigureBody* Figures::dress(const std::string& name, const std::string& base,
@@ -736,6 +742,8 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
             // that plants nothing measurably (a thing that hovers, a clip with no contact)
             // comes back zero and is paced by the cook's travel instead.
             made->plantSpeed = measurePlant(*made, made->walkClip);
+            made->walkSafeClip = made->walkClip;
+            made->plantSpeedSafe = made->plantSpeed;
         }
         bodies_[made->name] = std::move(made);
     }
@@ -753,6 +761,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         bind(*made);
         if (made->library && !made->library->clips.clips.empty()) made->idleClip = 0;
         made->idleSafeClip = made->idleClip;
+        made->walkSafeClip = made->walkClip;
         bodies_[made->name] = std::move(made);
     }
 

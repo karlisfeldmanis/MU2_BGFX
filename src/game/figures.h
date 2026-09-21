@@ -137,6 +137,13 @@ struct FigureBody {
     // branch of the stance code. An NPC with an idle named in index.json keeps it either way
     // -- that is MU's own table for that figure and not a stance this engine picks.
     int idleSafeClip = -1;
+    // And what it WALKS in there. The same chain, one row over: `c->SafeZone` gives
+    // PLAYER_WALK_MALE (action 15, 16 for a woman) whatever is carried, so a knight crossing the
+    // town square walks empty-handed with the axe on his back rather than in the axe's own
+    // stride. It was computed from the first and never used, which is why he marched through
+    // town in combat stance. Its own plant speed, because it is its own clip with its own feet.
+    int walkSafeClip = -1;
+    float plantSpeedSafe = 0.0f;
 
     size_t boneCount() const { return skeletonMesh ? skeletonMesh->bones().size() : 0; }
 };

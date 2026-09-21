@@ -446,12 +446,23 @@ void Play::follow(float seconds) {
         }
         const FigureBody* look = one.figure.body();
         int clip = look->idleClip;
+        // Which walk this body walks in HERE. Inside a safe zone MU gives PLAYER_WALK_MALE
+        // whatever is carried, the walking half of the rule the idle below already keeps: the
+        // knight crosses the town square empty-handed with the axe on his back, and draws it
+        // as he steps out. Both walks count as "the walk" everywhere below -- stepping over
+        // the zone's edge mid-stride is a change of walk, crossfaded and resumed at the same
+        // phase, and must not read as stopping and setting off again.
+        const int walkHere =
+            (safe && look->walkSafeClip >= 0) ? look->walkSafeClip : look->walkClip;
+        const auto isWalk = [&](int c) {
+            return c >= 0 && (c == look->walkClip || c == look->walkSafeClip);
+        };
         // Walking is the sim's own answer, held through a blip by the coast above. A body that
         // the sim says is walking but that covered no ground this tick is still walking -- it
         // is turning onto its line -- and the rate below is what stops its feet.
         const bool walking = body->walking || one.still < kCoasting;
         if (walking) {
-            clip = look->walkClip;
+            clip = walkHere;
         } else if (safe && look->idleSafeClip >= 0) {
             clip = look->idleSafeClip;
         }
@@ -459,7 +470,7 @@ void Play::follow(float seconds) {
 
         const int was = one.figure.clip();
         if (clip != was) {
-            if (clip == look->walkClip) {
+            if (isWalk(clip)) {
                 // Setting off: the longest change in the game -- a standing pose to a
                 // mid-stride one, where the legs are further apart than in any other
                 // transition -- and the one MU's own key length serves worst. Resumed where
@@ -467,11 +478,11 @@ void Play::follow(float seconds) {
                 one.figure.play(clip, false, kGaiting);
                 one.figure.setClock(one.walkPhase);
             } else {
-                if (was == look->walkClip) one.walkPhase = one.figure.clock();
+                if (isWalk(was)) one.walkPhase = one.figure.clock();
                 // Coming to a stop is an arrival, and the body is already late for it: the
                 // coast above has held the walk a tenth of a second past the tick that ended
                 // it. So the fade is only long enough not to be a cut.
-                one.figure.play(clip, false, was == look->walkClip ? kHalting : -1.0f);
+                one.figure.play(clip, false, isWalk(was) ? kHalting : -1.0f);
             }
         }
 
@@ -490,7 +501,7 @@ void Play::follow(float seconds) {
         // first person to see it said: "foot gets freezed, looks slow motion". The tick
         // quantises movement; a gait does not, and the animation follows the gait.
         one.clipRate = 1.0f;
-        if (one.figure.clip() == look->walkClip) {
+        if (isWalk(one.figure.clip())) {
             const float metresPerTile = ground_->metresPerTile();
             const float gait = body->speed * metresPerTile / float(kTickSeconds);
             // The clip's own planted foot decides, and the cook's whole-cycle travel is the
@@ -499,7 +510,14 @@ void Play::follow(float seconds) {
             // foot as well, which is in the air going the other way at twice the speed, and
             // no eye has ever judged a walk by it. tools/stride.py has both numbers and the
             // slide each leaves.
-            const float plant = look->plantSpeed * look->scale;
+            // The plant speed of the walk actually playing: the two walks are two clips
+            // with two sets of feet, and pacing the unarmed one by the armed one's stride
+            // would slide it.
+            const float plant =
+                (one.figure.clip() == look->walkSafeClip && look->walkSafeClip != look->walkClip
+                     ? look->plantSpeedSafe
+                     : look->plantSpeed) *
+                look->scale;
             const float travel = one.figure.travel();
             const float duration = one.figure.length();
             if (plant > 0.01f) {
