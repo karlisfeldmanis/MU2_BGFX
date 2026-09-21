@@ -559,7 +559,7 @@ def clip_slot(name):
     return -1
 
 
-def cook_clips(document, binary, out_path, names, travel, holds):
+def cook_clips(document, binary, out_path, names, travel, holds, cloth=False):
     """Every animation in a .glb, baked flat, into one .muc. Returns (clips, frames, bytes).
 
     Flat means: per clip, a frame count and a duration, then `frames x bones` of local
@@ -609,6 +609,7 @@ def cook_clips(document, binary, out_path, names, travel, holds):
     clips = []
     frames_total = 0
     closed = 0
+    spread = 0
     body = bytearray()
     for animation in document.get("animations", []):
         name = animation.get("name", "")
@@ -653,16 +654,100 @@ def cook_clips(document, binary, out_path, names, travel, holds):
                 out.append((tuple(r[:4]), tuple(t[:3])))
             return out
 
-        first = pose_of(0)
-        last = pose_of(frames - 1)
-        gap = 0.0
-        for (ra, ta), (rb, tb) in zip(first, last):
-            gap = max(gap, max(abs(a - b) for a, b in zip(ra, rb)),
-                      max(abs(a - b) for a, b in zip(ta, tb)))
+        poses = [pose_of(frame) for frame in range(len(times))]
+        # Every quaternion on the same side as the frame before it, so that a difference taken
+        # across the cycle below is a small rotation rather than a trip the long way round.
+        for bone in range(len(joints)):
+            for frame in range(1, len(poses)):
+                was, now = poses[frame - 1][bone][0], poses[frame][bone][0]
+                if sum(a * b for a, b in zip(was, now)) < 0.0:
+                    poses[frame][bone] = (tuple(-v for v in now), poses[frame][bone][1])
+
+        first, last = poses[0], poses[-1]
+        gaps = [max(max(abs(a - b) for a, b in zip(ra, rb)),
+                    max(abs(a - b) for a, b in zip(ta, tb)))
+                for (ra, ta), (rb, tb) in zip(first, last)]
+        gap = max(gaps) if gaps else 0.0
         # Closed to a ten-thousandth: MU's exporter writes the repeat exactly, so this is a
         # test of whether the key is there at all rather than a tolerance on how close it is.
         closes = gap < 1e-4
-        if not hold and not closes and frames > 1:
+
+        # **Whether the BODY closes, which is not the same question as whether every bone
+        # does.** Asked of the whole rig, the test above failed 26 of the player's clips --
+        # every walk, every run -- on bones that do not carry the figure: the cloth
+        # (`Bone02/03/06/07`, the cape and the skirts), `Bip01 Footsteps` (a marker pinned to
+        # the ground) and, twice, the head by about four degrees. The legs and the spine of
+        # those clips already close: MU wrote the repeat of the first pose as their last key.
+        # So appending ANOTHER copy of the first pose gave every walk a seventh interval from
+        # the first pose to itself -- 133 ms of every 0.93 s cycle in which the legs held still
+        # under a body still gliding forwards. That is what "the legs are a bit slow and the
+        # walk is not right" was, and `tools/stride.py` shows it as a key step of 0.000 m.
+        #
+        # MuMain plays it the same way (BMD::PlayAnimation wraps key 6 into key 0 and blends
+        # across it), so the freeze is MU's own and closing it is OURS: asked for on
+        # 2026-09-21 on the measured seam, under the rule that a visible MU pop may be closed
+        # as a marked departure. See docs/sprints/06-the-showing.md.
+        #
+        # For a clip whose body closes, the little drift left in the secondary bones is spread
+        # across the cycle instead -- each key shifted by its share of the gap -- so the last
+        # key becomes the first exactly, with no interval spent on nothing and no pop at the
+        # wrap. The cape's 0.036 is six-hundredths of a degree a key. A clip that is genuinely
+        # open (its limbs off by up to 1.9, nine of them) still gets the closing key appended,
+        # because it really does need an interval to travel back over.
+        bone_names = [nodes[node].get("name", "") for node in joints]
+        # Only on MU's Bip01 skeleton, where `BoneNN` really is the cloth hung off it. A monster
+        # rig names EVERY bone `BoneNN` -- the Spider's legs are Bone01 upwards -- so the same
+        # rule there counts the whole animal as cloth, finds its body gap to be nothing, and
+        # spreads a genuinely open walk: the first draft of this did exactly that to the
+        # Spider's (0.388) and the Budge Dragon's (0.381), which would have bent their stride
+        # to fit a loop MU never closed. On a rig with no Bip01 every bone is the body.
+        # Said by the CALLER, for the player's library alone, and not guessed from the rig.
+        # Two guesses were tried and both were wrong: a monster names every bone `BoneNN`, so
+        # "BoneNN is cloth" called a whole Spider cloth; and "has a Bip01 skeleton" let in the
+        # Budge Dragon, whose Bip01 legs close and whose BoneNN WINGS are off by 0.381 -- a
+        # real 45-degree swing that spreading would have bent into its wingbeat. On every
+        # other rig all bones are the body, so only noise-level drift is spread there (the
+        # Giant's, Hound's and Lich's walks, off by 0.001 to 0.011, which the appended key had
+        # been freezing too) and anything larger keeps the key.
+        def secondary(name):
+            if not cloth:
+                return False
+            return (name.startswith("Bone") and name[4:].isdigit()) or name == "Bip01 Footsteps"
+
+        body_gap = max((g for g, n in zip(gaps, bone_names) if not secondary(n)), default=0.0)
+        # Anything else that is off by a lot -- a prop swinging through the clip, which is
+        # what `Mesh01` off by 2.4 in action77 is -- is real movement and not drift.
+        prop_gap = max((g for g, n in zip(gaps, bone_names) if n.startswith(("Mesh", "gfh"))),
+                       default=0.0)
+        # And only a modest drift, anywhere. Four player clips close in the body and are off
+        # by 1.8 to 2.0 on a cloth bone, which is not drift -- it is a quaternion the far side
+        # of the sphere or a swing the clip really makes -- and sharing THAT across the keys
+        # would wrench the cloth through every frame. They keep the appended key, as before.
+        #
+        # And only in the player's library, for now. The monsters have the same seam -- the Bull
+        # Fighter's feet close and its walk has the same 0.000 m key step -- but what was asked
+        # for on 2026-09-21 was the character's walk, and a monster's walk is left exactly as it
+        # was validated until it is asked for too. `cloth` is the caller saying which library
+        # this is.
+        spreads = (cloth and not hold and not closes and len(poses) > 1
+                   and body_gap < 0.05 and prop_gap < 0.5 and gap < 0.5)
+
+        if spreads:
+            span = float(len(poses) - 1)
+            for bone in range(len(joints)):
+                (ra, ta), (rb, tb) = first[bone], last[bone]
+                dr = [b - a for a, b in zip(ra, rb)]
+                dt = [b - a for a, b in zip(ta, tb)]
+                for frame in range(1, len(poses)):
+                    share = frame / span
+                    r, t = poses[frame][bone]
+                    r = [v - d * share for v, d in zip(r, dr)]
+                    norm = math.sqrt(sum(v * v for v in r)) or 1.0
+                    r = tuple(v / norm for v in r)
+                    t = tuple(v - d * share for v, d in zip(t, dt))
+                    poses[frame][bone] = (r, t)
+            spread += 1
+        elif not hold and not closes and frames > 1:
             interval = duration / float(frames - 1)
             duration += interval
             frames += 1
@@ -671,7 +756,7 @@ def cook_clips(document, binary, out_path, names, travel, holds):
         # Frame-major: one frame's bones are contiguous, because what reads this walks two
         # whole frames and blends them. The appended frame is the first one again.
         for frame in range(frames):
-            for bone, (r, t) in enumerate(pose_of(frame if frame < len(times) else 0)):
+            for bone, (r, t) in enumerate(poses[frame if frame < len(poses) else 0]):
                 body += struct.pack("<4f3f", *r, *t)
         clips.append((name, names.get(str(slot), names.get(slot, name)), slot, frames, duration,
                       hold, float(travel.get(str(slot), travel.get(slot, 0.0)))))
@@ -687,7 +772,7 @@ def cook_clips(document, binary, out_path, names, travel, holds):
 
     with open(out_path, "wb") as handle:
         handle.write(header + bytes(table) + bytes(body))
-    return len(clips), frames_total, len(header) + len(table) + len(body), closed
+    return len(clips), frames_total, len(header) + len(table) + len(body), closed, spread
 
 
 def read_png(path):
@@ -1597,22 +1682,24 @@ def cook_figures(world, out_dir, texcook, threads):
     for one in monsters:
         travel_of.setdefault(one["mesh"], one.get("action_travel", {}))
     clip_table = {}
-    clip_count = frame_count = clip_bytes = closed_total = 0
+    clip_count = frame_count = clip_bytes = closed_total = spread_total = 0
     for stem, path in sorted(libraries.items()):
         document, binary = read_glb(path)
         embedded = stem in models
         names = monster_actions if embedded else index.get("actions", {})
-        clips, frames, size, closed = cook_clips(
+        clips, frames, size, closed, spread = cook_clips(
             document, binary, os.path.join(out_dir, "clips", stem + ".muc"),
             names if embedded or path.endswith("player.actions.glb") else {},
             travel_of.get(stem, {}) if embedded else index.get("action_travel", {}),
-            holds if embedded else player_holds)
+            holds if embedded else player_holds,
+            cloth=path.endswith("player.actions.glb"))
         clip_table[stem] = os.path.relpath(os.path.join(out_dir, "clips", stem + ".muc"),
                                            ASSETS)
         clip_count += clips
         frame_count += frames
         clip_bytes += size
         closed_total += closed
+        spread_total += spread
 
     # What each item IS, for the engine to place it by: a crossbow is slung one way, a bow's
     # quiver another, a shield a third, and everything else takes the sword's arrangement.
@@ -1643,6 +1730,7 @@ def cook_figures(world, out_dir, texcook, threads):
     print(f"cook: {len(mesh_table)} meshes, {triangles} triangles, {vertices} vertices; "
           f"{len(clip_table)} clip libraries, {clip_count} clips, {frame_count} frames, "
           f"{closed_total} of them closed with a key MU left off, "
+          f"{spread_total} whose body closed and whose cloth drift was spread over the cycle, "
           f"{clip_bytes / 1e6:.2f} MB of .muc; {cooked / 1e6:.1f} MB of .ktx")
     print(f"cook: {len(characters)} characters, {len(monsters)} breeds spawned here, "
           f"{len(standalone)} standalone, {len(placements)} figures placed in the town")

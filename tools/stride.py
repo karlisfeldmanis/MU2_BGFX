@@ -128,13 +128,21 @@ class Pose:
         place = [pt[i] + sum(t[k] * pm[k * 3 + i] for k in range(3)) for i in range(3)]
         return out, place
 
+    # Whether the cook appends a closing key to this clip. It does not, since 2026-09-21, when
+    # the body already closes -- MU wrote the repeat of the first pose as the last key of every
+    # walk and run -- because a second copy was an interval in which the legs held still. See
+    # cook_clips. Set by the caller once the feet have been compared; True reproduces the old
+    # cook, for comparison.
+    append = True
+
     def track(self, bone):
-        """Where a bone is at every key, plus the closing key the cook appends."""
+        """Where a bone is at every key, plus the closing key if the cook appends one."""
         if bone not in self.named:
             return None
         node = self.named[bone]
         points = [self.world(node, key)[1] for key in range(len(self.times))]
-        points.append(points[0])
+        if self.append:
+            points.append(points[0])
         return points
 
 
@@ -201,6 +209,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--glb", default="assets/players/rig/player.actions.glb")
+    parser.add_argument("--old-close", action="store_true",
+                        help="append the closing key as the cook did before 2026-09-21")
     parser.add_argument("--clip", default="action17", help="MU's own action name")
     parser.add_argument("--gait", type=float, default=2.5,
                         help="metres a second over the ground; a Dark Knight's own is 2.5")
@@ -216,9 +226,21 @@ def main():
     # by one interval -- so the cycle is one interval longer than the key times say. A cycle
     # taken as `times[-1]` is a sixth short on a seven-key walk, and every rate derived from it
     # is a sixth wrong.
-    cycle = interval * keys
-    print(f"{args.clip}: {keys} keys, {interval * 1000:.1f} ms apart, "
-          f"cycle {cycle:.4f} s with the cook's closing key")
+    # Does the body already close? Compared on the feet, which is what this whole tool is
+    # about, to the same ten-thousandth the cook uses. If it does, the cook spreads the
+    # remaining cloth drift instead of appending a key, and the cycle is `keys - 1` intervals.
+    pose.append = False
+    closes = all(
+        max(abs(a - b) for a, b in zip(t[0], t[-1])) < 1e-4
+        for t in (pose.track(f) for f in ("Bip01 L Foot", "Bip01 R Foot")) if t)
+    # The cook closes by the clip's own last key only in the player's library (cook_clips'
+    # `cloth`); every monster keeps the appended key, seam and all, until that is asked for.
+    player = os.path.basename(path) == "player.actions.glb"
+    pose.append = args.old_close or not (closes and player)
+    cycle = interval * (keys if pose.append else keys - 1)
+    how = ("with the cook's closing key" if pose.append
+           else "closed by its own last key, as the cook now leaves it")
+    print(f"{args.clip}: {keys} keys, {interval * 1000:.1f} ms apart, cycle {cycle:.4f} s {how}")
 
     for bone in ("Bip01", "Bip01 Root", "Bip01 Pelvis"):
         track = pose.track(bone)

@@ -244,6 +244,37 @@ and put an 80-unit spider under a cloud bigger than itself; and the sheet is dra
 rather than at the client's `0.1` red, which is a light value rather than a pigment and
 multiplies MU's own painted blood down to four percent of itself.
 
+### The walk's frozen legs, closed on 2026-09-21 as a marked departure
+
+Not a showing step; reported during the sprint as "the legs are a little slower and the walk
+is not perfect", and settled here because it is where the measurement happened.
+
+**Cause.** MU's walk is seven keys whose last already repeats the first in the legs; only the
+cloth (`Bone02/03/06/07`), the `Bip01 Footsteps` marker and, twice, the head do not close.
+cook_clips asked whether a clip closes by its worst bone of sixty, so the cape's 0.036 made it
+append ANOTHER copy of the first pose -- an interval from the first pose to itself. MuMain
+plays the same interval (9e confirmed `BMD::PlayAnimation` wraps key 6 into key 0), so for 133
+ms of every 0.93 s cycle the legs hold still under a body still gliding. `tools/stride.py`
+shows it as a key step of 0.000 m.
+
+**Decision.** Asked on the measured seam, under the standing rule that a visible MU pop may be
+closed as a departure; the user chose to close it. In the player's library, a looping clip
+whose body closes has its cloth drift spread across the cycle instead of a key appended: 26
+clips, every walk and run. Measured on action17: cycle 0.933 s to 0.800 s, smallest foot step
+0.000 m to 0.221 m, mean slide at the engine's rate 0.85 m/s to 0.60.
+
+**What it uncovered.** The engine's `measurePlant` counted the toes' push-off -- the last
+stance interval, toe still lowest and rolling back at 4.0 m/s -- and the frozen interval had
+been diluting it to 2.52 m/s, matching stride.py's 2.51 by coincidence. With the freeze gone
+it read 2.99 and would have played the walk at 0.84, legs behind the body. The player's rig is
+now measured on its feet by stride.py's own rule: every human plants at 2.51.
+
+**Not done: the monsters.** The Bull Fighter's walk has the same 0.000 m step and a lopsided
+stance (1.82 against 2.74 m/s) because the dead interval lands in one foot's count; the Lich,
+Giant and Hound are similar. All four are left exactly as they were, because what was asked
+for was the character. The Spider and the Budge Dragon are genuinely open loops (0.39 and a
+45-degree wing swing) and are not the same case.
+
 ### Measured, with a fight in it
 
 Lorencia, 1080p, Release, vsync off, a level 10 hero in the spider field: **2.540 ms** median

@@ -283,6 +283,54 @@ float measurePlant(const FigureBody& body, int clip) {
     // back. A marker does not move at all, and a hip moves a little; both would answer this
     // question with a number smaller than any real foot's and win it. So a candidate has to
     // travel at least a third of the furthest-travelling bone in the clip.
+    // **A biped's stance is measured on its FEET, as tools/stride.py measures it.** The generic
+    // test below asks for any bone near the ground and travelling back, and on MU's man that is
+    // the three toe bones, whose last stance interval is the push-off: the toe still lowest at
+    // both ends and rolling back at 4.0 m/s, half again the body's own speed, as it leaves the
+    // ground. Counted, it put every man's plant at 2.99 m/s against the 2.51 the foot bone
+    // actually plants at. It was always in there. Until 2026-09-21 it was hidden by the
+    // closing key the cook appended to every walk -- an interval from the first pose to itself,
+    // in which a toe crept back a hair over a whole 133 ms and diluted the average to 2.52,
+    // which matched stride.py by coincidence. Closing that seam (cook_clips) took the dilution
+    // away and showed the push-off. Played at 2.5/2.99 the walk ran at 0.84 and the legs fell
+    // behind the body, which is the complaint the seam was closed to answer.
+    //
+    // Not by patching the generic test: excluding the push-off there moved every monster's rate
+    // too (the Spider's 7.40 to 7.94) and still left the man at 2.80, because toes roll where a
+    // foot plants. So the player's rig is measured on its two feet, stride.py's rule exactly --
+    // each foot against its OWN lowest point plus 5 cm, backward travel along the walk only --
+    // and every other rig keeps the generic test it was validated with.
+    {
+        int feet[2] = {-1, -1};
+        for (size_t i = 0; i < count; ++i) {
+            if (bones[i].name == "Bip01 L Foot") feet[0] = int(i);
+            if (bones[i].name == "Bip01 R Foot") feet[1] = int(i);
+        }
+        // The player's own library only, which is the one whose walks the cook now closes by
+        // their own last key. A monster keeps the generic test, and its seam with it, until
+        // that is asked for too: see cook_clips.
+        const bool player = body.library && body.library->name == "player";
+        if (player && feet[0] >= 0 && feet[1] >= 0) {
+            float far = 0.0f, took = 0.0f;
+            for (int foot : feet) {
+                float low = 1e30f;
+                for (uint32_t frame = 0; frame < one.frames; ++frame) {
+                    low = std::min(low, track[(size_t(frame) * count + size_t(foot)) * 3 + 1]);
+                }
+                low += 0.05f;
+                for (uint32_t frame = 1; frame < one.frames; ++frame) {
+                    const float* a = &track[(size_t(frame - 1) * count + size_t(foot)) * 3];
+                    const float* b = &track[(size_t(frame) * count + size_t(foot)) * 3];
+                    if (b[2] - a[2] >= 0.0f) continue;   // forward: the swing
+                    if (a[1] > low || b[1] > low) continue;  // in the air at either end
+                    far += a[2] - b[2];
+                    took += step;
+                }
+            }
+            if (took > 0.0f) return far / took;
+        }
+    }
+
     std::vector<float> ranged(count, 0.0f);
     float furthest = 0.0f;
     for (size_t i = 0; i < count; ++i) {
