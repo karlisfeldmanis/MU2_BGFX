@@ -208,5 +208,11 @@
       ],
       "note": "a butt fitting. Five of these, two triangles each, all off the same few texels - MU's cheapest way to build a collar."
     }
-  ]
+  ],
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: the riveted vamplate is a flat gold disc, and at brass's 0.44 it mirrored the noon sun into a white flare at 0, 45 and 90 deg. Brass at 0.6 spreads the highlight, as for the Serpent Sword's grip and the Battle Axe's."
 }

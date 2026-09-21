@@ -89,5 +89,11 @@
         0.659
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: at brass's 0.45 the crossbar and the horns mirrored dusk's low sun into glowing bars with bloom (225-315 deg). Brass at 0.6 spreads the highlight, as for the Serpent Sword's grip and the Dragon Lance."
 }

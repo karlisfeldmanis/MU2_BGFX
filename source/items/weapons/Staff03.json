@@ -67,5 +67,11 @@
         0.994
       ]
     }
-  ]
+  ],
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: the round gold shaft and the serpent's hook mirrored dusk's low sun into a glowing streak with bloom at 270 and 315 deg at brass's 0.44. Brass at 0.6, as the Skull Staff beside it."
 }

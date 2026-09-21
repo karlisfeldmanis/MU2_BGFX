@@ -29,4 +29,13 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Axe04 | arm | 2026-09-21 19:41 | passed | studio sheet: red haft and banded grip read at every angle, no blowouts; head dark away from the light (accepted) |
 | Mace01 | arm | 2026-09-21 19:43 | passed | studio sheet: spiked head steel from most angles, a sun glint at noon and the fire's at dusk, wooden haft reads |
 | Mace02 | arm | 2026-09-21 19:44 | passed | studio sheet: spiked ball bright steel at every angle, the fire's streak on the collar at dusk 90 deg; no rig in MU's data, rigid |
-| Spear03 | arm | 2026-09-21 19:46 | awaiting |  |
+| Spear03 | arm | 2026-09-21 19:53 | passed | studio sheet: gold vamplate flared white at noon at brass 0.44; brass 0.6 spreads it; shaft reads gold toward the light, dark away (accepted). The 'mu2' in the report is the glb's slot name, the islands are brass |
+| Bow01 | arm | 2026-09-21 19:56 | passed | studio sheet (row 1 is now the moonlit default): red-brown wood limbs, pale fletching and grip band read, no blowouts under dusk's sun; string and arrow in bind pose (held-item clip owed) |
+| Bow02 | arm | 2026-09-21 19:58 | passed | studio sheet: red wood limbs with dark recurve tips, red grip wrap and pale fletching read in the moonlit default and dusk's sun, no blowouts; 'nocked' is export_gltf's arrow part, wood; bind pose (clip owed) |
+| CrossBow01 | arm | 2026-09-21 20:00 | passed | studio sheet: orange-red stock, steel limbs and bolt, iron string frame read; the flat steel butt plate goes pale sky-grey from behind but does not bloom (physical, accepted); bind pose (clip owed) |
+| Arrows01 | arm | 2026-09-21 20:06 | passed | studio sheet: MU's crossed-card case reads as warm wood; the bolts are MU's dark grey (91,90,90) on thin cards and stay dark -- steel 0.45 was tried and changed nothing, reverted |
+| Arrows02 | arm | 2026-09-21 20:07 | passed | studio sheet: red-brown leather quiver, cream fletching and tan shafts at the mouth read in the moonlit default and dusk; no metal, no faults |
+| Staff01 | arm | 2026-09-21 20:13 | passed | studio sheet: crossbar and horns bloomed into glowing bars under dusk's sun at brass 0.45; brass 0.6 keeps the gold and MU's dark mottling, blown pixels 164 -> 0 |
+| Staff02 | arm | 2026-09-21 20:10 | passed | studio sheet: pale feather-and-bone staff, feathered head reads at every angle; dielectric, no blowouts |
+| Staff03 | arm | 2026-09-21 20:17 | passed | studio sheet: round gold shaft and hook streaked with bloom under dusk's sun at brass 0.44; brass 0.6 keeps a gold line down the shaft without the flare |
+| Staff04 | arm | 2026-09-21 20:16 | passed | studio sheet: MU's blue glass shaft and fins read at every angle, small brass tips catch the fire without blowing out |
