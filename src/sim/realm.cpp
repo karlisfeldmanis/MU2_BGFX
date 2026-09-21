@@ -334,8 +334,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
     const int level = dead.level;
     double roll = dice_.nextDouble();
     Lying one;
-    one.column = dead.column();
-    one.row = dead.row();
+    std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
 
     const auto reaches = [level](const content::ItemRow& row) {
@@ -378,6 +377,41 @@ void Realm::leave(const Body& dead, const Body& killer) {
     lying_.push_back(one);
     say(What::Dropped, dead, int32_t(one.id), one.what.empty() ? -1 : one.what.item,
         one.what.empty() ? int32_t(one.zen) : one.what.refinement);
+}
+
+// A tile near a point with nothing already lying on it. MU2's Realm.Clearing: the client
+// takes the position it is handed and drops the item there, so several drops given the same
+// spot would land in the same place in the same pose and read as one item rather than as a
+// pile -- spreading them is the server's job in MU and it is the sim's job here.
+//
+// A ring search rather than a scatter, so the nearest free tile is taken first: a single drop
+// lands exactly where the thing died, and only a crowd spirals outward. It ignores who is
+// standing there and only avoids other drops -- MU lets you stand on loot, and a monster's own
+// corpse tile must stay eligible for its own drop, or a respawn's first kill could never leave
+// anything where it fell.
+std::pair<int, int> Realm::clearing(int column, int row) const {
+    constexpr int kDropRings = 2;  // MU2's Realm.DropRings
+    if (bare(column, row)) return {column, row};
+    for (int ring = 1; ring <= kDropRings; ++ring) {
+        for (int dy = -ring; dy <= ring; ++dy) {
+            for (int dx = -ring; dx <= ring; ++dx) {
+                if (std::abs(dx) != ring && std::abs(dy) != ring) continue;
+                if (bare(column + dx, row + dy)) return {column + dx, row + dy};
+            }
+        }
+    }
+    // Everything nearby is taken. Better a pile than no drop.
+    return {column, row};
+}
+
+// Whether a tile is clear of other drops and is ground a thing may lie on -- the relaxed
+// pass, so a body standing on the spot does not refuse it. MU2's Realm.Bare.
+bool Realm::bare(int column, int row) const {
+    if (!tables_->grid.open(column, row, content::kWallNoMove)) return false;
+    for (const Lying& already : lying_) {
+        if (already.column == column && already.row == row) return false;
+    }
+    return true;
 }
 
 // Takes what lies at an index into the bag or the purse. Refused, and left lying, when the

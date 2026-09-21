@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "content/tables.h"
@@ -296,6 +297,8 @@ private:
     void reviveHero();
     void rearm(Body& hero);
     void leave(const Body& dead, const Body& killer);
+    std::pair<int, int> clearing(int column, int row) const;
+    bool bare(int column, int row) const;
     bool take(size_t index);
     void sip();
     bool send(Body& one, int column, int row);
