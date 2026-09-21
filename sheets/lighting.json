@@ -1,5 +1,5 @@
 {
-  "note": "Carried from MU2/lighting.json. Every value is in metres and one tile is one metre, which is MU2's own scene scale. The sun's two angles are MU2's exactly and are not to be tuned away: sun_pitch -52 and sun_yaw 90 in Godot is elevation 52 and azimuth 0 here. The energies are NOT MU2's numbers, because Godot's energy unit is not this pass's; they are matched by eye in sprint 8. Since 2026-09-21 Lorencia's default is a moonlit night rather than noon, so that the lamps, fires and glows carry the town: a weak moon at MU2's own sun angle, warmed a little towards sepia, a dusky sky that fills the shade so it stays readable rather than black, brown dust thick enough to see over the street -- lit only by the moon and sky, so it is a dim haze and not the milky fog it was by day -- and the emitters and bloom pushed up. Firelight against a faintly sepia, faintly cool shade is the look. Invention on MU2's look, judged by eye at tile 123,124.",
+  "note": "Carried from MU2/lighting.json. Every value is in metres and one tile is one metre, which is MU2's own scene scale. The sun's two angles are MU2's exactly and are not to be tuned away: sun_pitch -52 and sun_yaw 90 in Godot is elevation 52 and azimuth 0 here. The energies are NOT MU2's numbers, because Godot's energy unit is not this pass's; they are matched by eye in sprint 8. Since 2026-09-21 Lorencia's default is a moonlit night rather than noon, so that the lamps, fires and glows carry the town: a weak moon at MU2's own sun angle, warmed a little towards sepia, a dusky sky that fills the shade so it stays readable rather than black, brown dust thick enough to see over the street -- lit only by the moon and sky, so it is a dim haze and not the milky fog it was by day -- and the emitters pushed up. The frame is kept crisp at the present -- a contrast-adaptive sharpen, a little midtone contrast, and a tighter bloom -- so the dust darkens the air without softening the picture. Firelight against a faintly sepia, faintly cool shade is the look. Invention on MU2's look, judged by eye at tile 123,124.",
 
   "azimuth": 0.0,
   "elevation": 52.0,
@@ -25,9 +25,12 @@
   "lamp_strength": 7.0,
   "glow_strength": 2.0,
 
-  "bloom_threshold": 0.85,
+  "bloom_threshold": 1.1,
   "bloom_knee": 0.6,
-  "bloom_strength": 0.4,
+  "bloom_strength": 0.3,
+
+  "sharpen": 0.8,
+  "contrast": 0.3,
   "flame_strength": 6.0,
 
   "metal_gain": 2.5,

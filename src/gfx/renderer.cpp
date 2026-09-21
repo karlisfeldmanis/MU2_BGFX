@@ -77,6 +77,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     sColour_ = bgfx::createUniform("s_colour", bgfx::UniformType::Sampler);
     sBones_ = bgfx::createUniform("s_bones", bgfx::UniformType::Sampler);
     uBloom_ = bgfx::createUniform("u_bloom", bgfx::UniformType::Vec4);
+    uPresent_ = bgfx::createUniform("u_present", bgfx::UniformType::Vec4);
     uBloomTexel_ = bgfx::createUniform("u_bloomTexel", bgfx::UniformType::Vec4);
     sBloom_ = bgfx::createUniform("s_bloom", bgfx::UniformType::Sampler);
     uLampGrid_ = bgfx::createUniform("u_lampGrid", bgfx::UniformType::Vec4);
@@ -573,7 +574,7 @@ void Renderer::shutdown() {
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uCamPos_, &uParams_,
           &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
-          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uBloomTexel_,
+          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uBloomTexel_,
           &sBloom_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
@@ -1399,6 +1400,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     const bool bloomed = bgfx::isValid(bloomDownProgram_) && bgfx::isValid(bloomUpProgram_);
     const float bloomParams[4] = {0.0f, 0.0f, bloomed ? lighting.bloomStrength : 0.0f, 0.0f};
     bgfx::setUniform(uBloom_, bloomParams);
+    const float present[4] = {lighting.sharpen, lighting.contrast, 1.0f / float(width_),
+                              1.0f / float(height_)};
+    bgfx::setUniform(uPresent_, present);
     bgfx::setTexture(9, sBloom_, bloomTex_[0]);
     bgfx::setViewFrameBuffer(ViewPresent, BGFX_INVALID_HANDLE);
     bgfx::setViewRect(ViewPresent, 0, 0, uint16_t(width_), uint16_t(height_));

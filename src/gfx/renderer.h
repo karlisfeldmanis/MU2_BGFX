@@ -345,6 +345,7 @@ private:
     bgfx::UniformHandle sColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sBones_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uBloom_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uPresent_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uBloomTexel_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sBloom_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uLampGrid_ = BGFX_INVALID_HANDLE;

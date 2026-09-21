@@ -44,6 +44,8 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("bloom_knee", &bloomKnee);
     doc.readInto("bloom_strength", &bloomStrength);
     doc.readInto("flame_strength", &flameStrength);
+    doc.readInto("sharpen", &sharpen);
+    doc.readInto("contrast", &contrast);
     doc.readInto("ssao_radius", &ssaoRadius);
     doc.readInto("ssao_strength", &ssaoStrength);
     doc.readInto("probe", &probe);
@@ -53,7 +55,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     static const char* kKnown[] = {
         "azimuth", "elevation", "sun_colour", "sun_strength", "sky_colour", "horizon_paleness",
         "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
-        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "note"};
+        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;
         for (const char* k : kKnown) known = known || key == k;

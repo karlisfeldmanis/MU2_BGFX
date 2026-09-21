@@ -85,6 +85,14 @@ struct Lighting {
     // How bright a flame at full heat is, in HDR, before the exposure: fs_flame's ramp. Invention.
     float flameStrength = 6.0f;
 
+    // The present's own two, sprint 8's grade. `sharpen` 0..1 is a contrast-adaptive sharpen
+    // (AMD's CAS, in its simple form) on the tonemapped frame: it lifts MU's painted detail
+    // where the neighbourhood is flat and backs off at edges that are already hard, so it
+    // does not ring. `contrast` 0..1 bends the midtones along a smoothstep, black and white
+    // held. Both invention, judged by eye.
+    float sharpen = 0.0f;
+    float contrast = 0.0f;
+
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
 
