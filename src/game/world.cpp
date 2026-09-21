@@ -27,6 +27,32 @@ constexpr float kFocusHeight = 1.5f;   // 150 units up the body
 // HeroTile == 4, and MU2's World.IndoorTile.
 constexpr int kIndoorFloor = 4;
 
+// The played camera's follow, all three inventions -- MU's camera is nailed to the character.
+// Nailed, it passes on every hitch in the drawn position, and it rises and falls with every
+// bump in the ground under his feet, which on Lorencia's cobbles is a bob at walking pace. So
+// a critically damped spring: no overshoot, no wobble, and it sets off and stops with the
+// character instead of jerking. The times are how long it takes to close most of the gap --
+// short across the ground, so he never drifts far off the middle of the frame (about 20 cm
+// at a walk), and longer up and down, where there is nothing to catch up with but a bump.
+constexpr float kFollowSeconds = 0.09f;
+constexpr float kRiseSeconds = 0.25f;
+// A jump further than this is a respawn or a gate, and the camera is simply there.
+constexpr float kSnapMetres = 4.0f;
+// The wheel eases to the distance it asked for, in log space so a notch reads the same near
+// or far. About a sixth of a second to arrive.
+constexpr float kZoomSeconds = 0.06f;
+
+// Game Programming Gems 4's SmoothDamp, the closed form of a critically damped spring.
+float smoothDamp(float current, float target, float& velocity, float time, float dt) {
+    const float omega = 2.0f / time;
+    const float x = omega * dt;
+    const float decay = 1.0f / (1.0f + x + 0.48f * x * x + 0.235f * x * x * x);
+    const float change = current - target;
+    const float temp = (velocity + omega * change) * dt;
+    velocity = (velocity - omega * temp) * decay;
+    return target + (change + temp) * decay;
+}
+
 }  // namespace
 
 void World::tileToMetres(float column, float row, float* x, float* z) const {
@@ -142,14 +168,39 @@ void World::update(double seconds, bool still) {
     // Column is +x and row is -z. docs/conventions.md.
     float x = 0.0f, z = 0.0f;
     tileToMetres(column, row, &x, &z);
-    const float groundY = ground_.heightAt(x, z);
+    float groundY = ground_.heightAt(x, z);
+    // The roofs, on the feet the camera is framing -- the character's own, not the eased
+    // point, so a roof lifts the frame he steps under it.
+    const float feetX = x, feetZ = z;
+
+    // The frame's own seconds, which this is not handed: `seconds` is the run's clock.
+    const float dt = lastSeconds_ < 0.0 ? 0.0f
+                                         : float(std::fmin(0.1, std::fmax(0.0, seconds - lastSeconds_)));
+    lastSeconds_ = seconds;
+    if (play_.isOpen()) {
+        const float jump = std::hypot(x - eased_[0], z - eased_[2]);
+        if (!easedSet_ || jump > kSnapMetres || dt <= 0.0f) {
+            eased_[0] = x;
+            eased_[1] = groundY;
+            eased_[2] = z;
+            easing_[0] = easing_[1] = easing_[2] = 0.0f;
+            easedSet_ = true;
+        } else {
+            eased_[0] = smoothDamp(eased_[0], x, easing_[0], kFollowSeconds, dt);
+            eased_[1] = smoothDamp(eased_[1], groundY, easing_[1], kRiseSeconds, dt);
+            eased_[2] = smoothDamp(eased_[2], z, easing_[2], kFollowSeconds, dt);
+        }
+        x = eased_[0];
+        groundY = eased_[1];
+        z = eased_[2];
+    }
 
     const float pitch = kPitchDegrees * 3.14159265f / 180.0f;
     const float yaw = kYawDegrees * 3.14159265f / 180.0f;
 
     // The roofs, on the feet the camera is framing: the character when one is played, the
     // focus when not, so `--at` inside a house shows the room as walking into it would.
-    town_.setRoofsHidden(indoors(x, z));
+    town_.setRoofsHidden(indoors(feetX, feetZ));
 
     camera_.target[0] = x;
     camera_.target[1] = groundY + kFocusHeight;
@@ -158,14 +209,23 @@ void World::update(double seconds, bool still) {
     // Walk.cs's own back vector: sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch).
     const float back[3] = {std::sin(yaw) * std::cos(pitch), -std::sin(pitch),
                            std::cos(yaw) * std::cos(pitch)};
-    if (distance_ <= 0.0f) distance_ = play_.isOpen() ? kPlayDistance : kDistance;
+    if (distance_ <= 0.0f) distance_ = wantDistance_ = play_.isOpen() ? kPlayDistance : kDistance;
+    if (wantDistance_ <= 0.0f) wantDistance_ = distance_;
+    if (dt > 0.0f && distance_ != wantDistance_) {
+        const float blend = 1.0f - std::exp(-dt / kZoomSeconds);
+        distance_ = std::exp(std::log(distance_) + (std::log(wantDistance_) - std::log(distance_)) * blend);
+        if (std::fabs(distance_ - wantDistance_) < 1e-3f) distance_ = wantDistance_;
+    }
     for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * distance_;
 }
 
 void World::zoom(float notches) {
     if (notches == 0.0f || distance_ <= 0.0f) return;
-    const float wanted = distance_ * std::pow(0.92f, notches);
-    distance_ = wanted < kNearest ? kNearest : (wanted > kDistance ? kDistance : wanted);
+    // From where the wheel was last sent, not from where the camera has got to, so a quick
+    // spin of several notches adds up rather than being eaten by the easing.
+    if (wantDistance_ <= 0.0f) wantDistance_ = distance_;
+    const float wanted = wantDistance_ * std::pow(0.92f, notches);
+    wantDistance_ = wanted < kNearest ? kNearest : (wanted > kDistance ? kDistance : wanted);
 }
 
 bool World::characterAt(float* x, float* z) const {

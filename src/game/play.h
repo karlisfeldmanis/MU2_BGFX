@@ -136,6 +136,8 @@ private:
         // is one jump every nine frames, and it is the stutter the first person to play this
         // reported.
         float wasFacing = 0.0f, nowFacing = 0.0f;
+        // Where it was drawn when a click cut a tick short; see Play::update.
+        float caughtX = 0.0f, caughtY = 0.0f, caughtFacing = 0.0f;
         float yaw = 0.0f;
         bool visible = false;
         int attackClip = -1;     // this body's swing, found once at open
@@ -175,6 +177,9 @@ private:
     // takes the order on. One click is one walk: holding the button does not drag the walk
     // after the pointer (the user's call, 2026-09-21), so there is no held re-aim here.
     bool mark_ = false;
+    // A click was made this frame: run the next tick now instead of waiting up to 50 ms for
+    // it. See Play::update.
+    bool stepNow_ = false;
     // The cues that came due this frame. A member and not a local so that it keeps its
     // capacity: a fight must not allocate to show itself.
     std::vector<Cue> due_;

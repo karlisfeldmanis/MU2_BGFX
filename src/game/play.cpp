@@ -315,6 +315,27 @@ void Play::update(double seconds) {
     accumulator_ += seconds;
     int stepped = 0;
     const int64_t started = bx::getHPCounter();
+    // A click is answered on the frame it is made. Waiting for the tick that was due anyway
+    // cost 0 to 50 ms, 25 on average, between the press and the first step -- the one delay
+    // in the walk a hand can feel. So the tick runs now and the tick clock starts again from
+    // here: the sim still ticks twenty times a second, one interval is simply cut short.
+    // Invention; MU answers a click on its next frame, and so did this at 20 Hz.
+    //
+    // The picture must not jump for it. Every body is drawn part way between its last two
+    // ticks, and a tick taken early would move that drawn point on by whatever was left of the
+    // interval -- a few centimetres of pop for everything walking. So each body's drawn
+    // position is caught first and becomes the `was` of the new tick, and the drawing carries
+    // on from exactly where it was.
+    const bool early = stepNow_ && accumulator_ < kTickSeconds;
+    stepNow_ = false;
+    if (early) {
+        for (Drawn& one : drawn_) {
+            one.caughtX = one.wasX + (one.nowX - one.wasX) * through_;
+            one.caughtY = one.wasY + (one.nowY - one.wasY) * through_;
+            one.caughtFacing = one.wasFacing + wrapped(one.nowFacing - one.wasFacing) * through_;
+        }
+        accumulator_ = kTickSeconds;
+    }
     while (accumulator_ >= kTickSeconds && stepped < kMostTicks) {
         realm_.step();
         // AFTER the step, not before it. Before, `now` held the state at the START of the tick
@@ -323,6 +344,13 @@ void Play::update(double seconds) {
         // behind what the sim had already decided. Now the two ends really are the ticks
         // either side of where the clock stands, which is what the comment below claims.
         remember();
+        if (early && stepped == 0) {
+            for (Drawn& one : drawn_) {
+                one.wasX = one.caughtX;
+                one.wasY = one.caughtY;
+                one.wasFacing = one.caughtFacing;
+            }
+        }
         sim::audit(realm_, findings_);
         const uint32_t heroId = realm_.hero().id;
         for (const sim::Happening& happening : realm_.happenings()) {
@@ -792,6 +820,7 @@ void Play::leftClick() {
         return;
     }
     realm_.ask(request);
+    stepNow_ = true;
     // A walk, a pickup or a talk puts the marker where the walk ends; a fight takes it away,
     // as MU2's did -- an attack never shows one.
     mark_ = request.kind != sim::Request::Kind::Attack;
@@ -803,6 +832,7 @@ void Play::rightClick() {
     sim::Request request;
     request.kind = sim::Request::Kind::Stop;
     realm_.ask(request);
+    stepNow_ = true;
     mark_ = false;
     marker_.dismiss();
 }

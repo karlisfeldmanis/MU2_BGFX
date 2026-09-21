@@ -74,6 +74,12 @@ private:
     Play play_;
     gfx::Camera camera_;
     float distance_ = 0.0f;  // metres back from the focus; 0 until update() seeds it
+    float wantDistance_ = 0.0f;  // where the wheel has asked the distance to ease to
+    // The played camera's eased target, in metres, and the spring's velocity on each axis.
+    float eased_[3] = {0.0f, 0.0f, 0.0f};
+    float easing_[3] = {0.0f, 0.0f, 0.0f};
+    bool easedSet_ = false;
+    double lastSeconds_ = -1.0;
     float focusColumn_ = 0.0f;
     float focusRow_ = 0.0f;
     bool focusSet_ = false;
