@@ -366,10 +366,56 @@ int main(int argc, char** argv) {
     if (browseBench && !overlay.init(MU2_SHADER_DIR)) {
         core::logError("the viewer opened without its list; the names are in the log");
     }
+    // The studio: the world the game draws, opened as a world is -- town, ground, baked light,
+    // lamps and fires -- with nobody in it, and the browser's subject stood beside the map's
+    // own bonfire nearest the middle of the town. It is drawn from the bench's camera, so it
+    // is not `inWorld`: the world is scenery here, and the item is what is looked at.
+    const bool studio = browseBench && args.studio;
+    float studioStand[3] = {0.0f, 0.0f, 0.0f};
+    float studioFire[3] = {0.0f, 0.0f, 0.0f};
+    if (studio) {
+        if (!world.open(MU2_ASSET_DIR, benchWorld, textures, 0, false)) {
+            core::logError("the studio's world did not open");
+            world.shutdown();
+            renderer.shutdown();
+            textures.shutdown();
+            window.close();
+            core::logClose();
+            return 1;
+        }
+        if (args.lampsOn) world.lamps().light(renderer);
+        const content::CookedTown& cooked = world.town().cooked();
+        const float middle = float(world.ground().size()) * 0.5f * world.ground().metresPerTile();
+        float best = 1e30f;
+        for (const content::TownInstance& one : cooked.instances) {
+            if (one.model >= cooked.models.size() || cooked.models[one.model].name != "Bonfire01") {
+                continue;
+            }
+            const float dx = one.position[0] - middle, dz = one.position[2] + middle;
+            if (dx * dx + dz * dz < best) {
+                best = dx * dx + dz * dz;
+                for (int i = 0; i < 3; ++i) studioFire[i] = one.position[i];
+            }
+        }
+        if (best == 1e30f) {
+            core::logError("the studio found no Bonfire01 in %s; standing at the middle",
+                           benchWorld.c_str());
+            studioFire[0] = middle + 1.6f;
+            studioFire[2] = -middle - 1.6f;
+        }
+        // The stage's arrangement: the fire 1.6 m to the subject's +x and -z, which is the
+        // right of MU's picture.
+        studioStand[0] = studioFire[0] - 1.6f;
+        studioStand[2] = studioFire[2] + 1.6f;
+        studioStand[1] = world.ground().heightAt(studioStand[0], studioStand[2]);
+        studioFire[1] = world.ground().heightAt(studioFire[0], studioFire[2]) + 0.6f;
+    }
     // The stage is the browser with the world's own lamps, fire and objects stood round the
     // subject; the bare browser is the subject on its plot and nothing else.
-    if (browseBench && !(args.stage ? bench.openStage(MU2_ASSET_DIR, benchWorld, textures)
-                                    : bench.openBrowser(MU2_ASSET_DIR, benchWorld, textures))) {
+    if (browseBench &&
+        !(studio ? bench.openStudio(MU2_ASSET_DIR, benchWorld, studioStand, studioFire, textures)
+          : args.stage ? bench.openStage(MU2_ASSET_DIR, benchWorld, textures)
+                       : bench.openBrowser(MU2_ASSET_DIR, benchWorld, textures))) {
         core::logError("the bench did not open");
         renderer.shutdown();
         textures.shutdown();
@@ -539,7 +585,7 @@ int main(int argc, char** argv) {
         }
     };
     auto drawList = [&]() {
-        if (bench.browsing() && overlay.ready()) {
+        if (bench.browsing() && overlay.ready() && args.list) {
             float px = 0.0f, py = 0.0f;
             window.pointer(&px, &py);
             const ListHit hit = drawBrowserList(overlay, bench, window.width(),
@@ -868,6 +914,33 @@ int main(int argc, char** argv) {
                              phase(split.texelX), phase(split.texelY), split.depthQuanta,
                              phase(split.depthQuanta), heroX, heroZ, lagMm);
             }
+        } else if (studio) {
+            steer();
+            // The sweep: a block of --shot frames an angle, --turns angles a time of day,
+            // noon then dusk then night. The shot at the end of a block is taken at the frame
+            // the next begins on, so a block is counted from the frame after it.
+            if (args.turns > 0 && args.shotEvery > 0) {
+                const int block = frame > 0 ? (frame - 1) / args.shotEvery : 0;
+                bench.setTurn(360.0f * float(block % args.turns) / float(args.turns));
+                const int time = (block / args.turns) % 3;
+                if (time != daytime) {
+                    daytime = time;
+                    applyTime();
+                }
+            }
+            bench.update(elapsed, deltaSeconds, !args.still);
+            if (args.lampsOn) {
+                world.lamps().update(float(deltaSeconds), world.town(), renderer,
+                                     bench.camera().target);
+                world.lamps().gather(renderer.effects(), bench.camera().target,
+                                     daylightOf(lighting));
+            }
+            townDrawables.clear();
+            if (world.town().isOpen()) world.town().gatherAll(townDrawables);
+            const std::vector<gfx::Drawable>& subject = bench.gather(renderer);
+            townDrawables.insert(townDrawables.end(), subject.begin(), subject.end());
+            renderer.draw(bench.camera(), lighting, townDrawables, &world.ground());
+            drawList();
         } else {
             steer();
             bench.update(elapsed, deltaSeconds, !args.still);

@@ -56,6 +56,9 @@ void printUsage() {
         "  --no-figures              no figures at all, which is what the crowd is priced "
         "against\n"
         "  --browse                  step through every cooked .mum; arrows walk the list\n"
+        "  --studio                  the browser in the real world, beside one of its bonfires\n"
+        "  --turns N                 with --studio and --shot E: N angles a time of day\n"
+        "  --no-list                 the browser's list off the screen, for clean shots\n"
         "  --category WORD           world|monsters|people|armour|weapons|parts\n"
         "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
@@ -272,6 +275,13 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--stage")) {
             a.browse = true;
             a.stage = true;
+        } else if (!std::strcmp(s, "--studio")) {
+            a.browse = true;
+            a.studio = true;
+        } else if (!std::strcmp(s, "--no-list")) {
+            a.list = false;
+        } else if (!std::strcmp(s, "--turns")) {
+            if (const char* v = next(s)) a.turns = std::atoi(v);
         } else if (!std::strcmp(s, "--effects")) {
             if (const char* v = next(s)) a.effects = std::atoi(v);
         } else if (!std::strcmp(s, "--effect-size")) {

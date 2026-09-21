@@ -113,6 +113,13 @@ struct Args {
     // The browser on its stage: a bonfire, a lamp and a wall of the world's own stood round the
     // subject, with the world's lamps built from them. viewer.sh passes it.
     bool stage = false;
+    // The studio: the browser in the world the game draws, its subject beside one of the map's
+    // own bonfires. With --turns N and --shot E it sweeps: N angles round the subject,
+    // one a block of E frames, at noon, then dusk, then night. tools/studio.py passes both.
+    bool studio = false;
+    int turns = 0;
+    // The browser's list and its clip line off the screen, for shots of the subject alone.
+    bool list = true;
 
     // The transparent pass's probe: N effect sprites in front of the camera, so that a pass
     // which has no account yet can be priced against the same scene with it empty.

@@ -267,6 +267,10 @@ bool ModelBench::openStage(const std::string& assetDir, const std::string& world
         one.scale = spot.scale;
         placements.push_back(one);
     }
+    haveFire_ = true;
+    fire_[0] = stand_[0] + kFireOffset[0];
+    fire_[2] = stand_[2] + kFireOffset[1];
+    fire_[1] = worldGround_.heightAt(fire_[0], fire_[2]) + 0.6f;
     if (!stageTown_.openStage(assetDir, world, placements, textures)) {
         core::logError("stage: not all of it stood; the viewer runs on its bare plot");
     }
@@ -275,6 +279,25 @@ bool ModelBench::openStage(const std::string& assetDir, const std::string& world
         core::logf("stage: %u lights, %u fires", stageLamps_.lightCount(),
                    stageLamps_.fireCount());
     }
+    return fillBrowser(assetDir, world, textures);
+}
+
+bool ModelBench::openStudio(const std::string& assetDir, const std::string& world,
+                            const float stand[3], const float fire[3],
+                            content::Textures& textures) {
+    // The world is the caller's and so is its ground: nothing here builds a plot or a plane.
+    // What the bench keeps is the list, the subject and the camera round it.
+    studio_ = true;
+    gameFrame_ = true;
+    camera_.fovDegrees = 55.0f;  // MU's lens, as the stage
+    for (int i = 0; i < 3; ++i) {
+        stand_[i] = stand[i];
+        fire_[i] = fire[i];
+    }
+    haveFire_ = true;
+    core::logf("studio: %s, standing at %.1f,%.1f m, %.2f m up, a bonfire %.1f m off",
+               world.c_str(), stand_[0], stand_[2], stand_[1],
+               std::hypot(fire_[0] - stand_[0], fire_[2] - stand_[2]));
     return fillBrowser(assetDir, world, textures);
 }
 
@@ -492,7 +515,7 @@ bool ModelBench::standFigure(const FigureBody* body) {
     // The rig's own count, not the palette's: as game/crowd.cpp.
     scratch_.assign(size_t(gfx::Renderer::kMaxBones) * 12, 0.0f);
     drawables_.clear();
-    if (!haveWorldGround_) {
+    if (!haveWorldGround_ && !studio_) {
         gfx::Drawable groundDraw;
         groundDraw.mesh = &ground_;
         bx::mtxIdentity(groundDraw.transform);
@@ -610,6 +633,10 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
     const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
     const size_t first = drawables_.size();
     figure_.gather(row, drawables_);
+    // Out of the probe, as a posed figure always is in the game.
+    if (studio_) {
+        for (size_t i = first; i < drawables_.size(); ++i) drawables_[i].inProbe = false;
+    }
     if (bearerHidden_ && figure_.body()) {
         // gather writes the body's parts first and the held items after them.
         const size_t parts = std::min(figure_.body()->parts.size(), drawables_.size() - first);
@@ -628,9 +655,11 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
             // reflects, and a sword framed so close that the fire beside it is out of shot shows
             // its light on the blade with nothing to say where it came from. The camera aims
             // from the weapon towards the fire, the weapon left, the fire at the right edge. The user's call (2026-09-21).
-            if (stageTown_.isOpen()) {
-                const float fire[3] = {stand_[0] + kFireOffset[0], stand_[1] + 0.6f,
-                                       stand_[2] + kFireOffset[1]};
+            // Not in the studio, which is for inspecting the thing close: there the weapon
+            // fills the frame and the fire, 2.3 m off, is seen in its light and its
+            // reflection as the turntable goes round.
+            if (haveFire_ && !studio_) {
+                const float* fire = fire_;
                 float apart = 0.0f;
                 for (int axis = 0; axis < 3; ++axis) {
                     focus_[axis] = at[axis] + (fire[axis] - at[axis]) * 0.35f;
@@ -696,7 +725,7 @@ void ModelBench::update(double seconds, double delta, bool spin) {
     if (pitch > kLimit) pitch = kLimit;
     if (pitch < -kLimit) pitch = -kLimit;
     const float rest = gameFrame_ ? 45.0f * 3.14159265f / 180.0f : 0.9f;
-    const float yaw = (spin ? float(seconds) * 0.35f : rest) + yawOffset_;
+    const float yaw = (spin ? float(seconds) * 0.35f : rest) + yawOffset_ + turn_;
     const float distance = distance_ * zoom_;
 
     camera_.target[0] = focus_[0];

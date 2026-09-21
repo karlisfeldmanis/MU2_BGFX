@@ -65,6 +65,17 @@ public:
     // `./viewer.sh`, which passes --stage.
     bool openStage(const std::string& assetDir, const std::string& world,
                    content::Textures& textures);
+    // The studio: the browser standing its subject in the world the game draws -- the town
+    // round it, its ground and baked light, its lamps and fires, the probe taken there as the
+    // game takes it -- beside one of the map's own bonfires, which `fire` names. Nothing is
+    // stood up by the bench itself: the caller owns the world and draws it, and gathers the
+    // subject from here. `./tools/studio.py`, which passes --studio.
+    bool openStudio(const std::string& assetDir, const std::string& world,
+                    const float stand[3], const float fire[3], content::Textures& textures);
+    bool inStudio() const { return studio_; }
+    // The turntable: where the camera stands round the subject, in degrees on top of the
+    // bench's own rest angle. The studio's sweep sets it; a drag still adds to it.
+    void setTurn(float degrees) { turn_ = degrees * 3.14159265f / 180.0f; }
     bool hasStage() const { return stageTown_.isOpen(); }
     Town& stageTown() { return stageTown_; }
     Lamps& stageLamps() { return stageLamps_; }
@@ -204,6 +215,12 @@ private:
     // but the body holding it is not drawn, and the camera follows the weapon rather than
     // the figure: a sword judged past a shoulder is judged against the shoulder.
     bool bearerHidden_ = false;
+    // The studio's, and where a fire stands that a weapon's framing keeps in the picture: the
+    // stage's bonfire, or the map's own in the studio.
+    bool studio_ = false;
+    bool haveFire_ = false;
+    float fire_[3] = {0.0f, 0.0f, 0.0f};
+    float turn_ = 0.0f;
     Figures figures_;
     Figure figure_;
     std::vector<float> scratch_;
