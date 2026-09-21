@@ -5,8 +5,8 @@
 //    every frame through its level.
 // 2. **The glow**, MU's BlendMesh: drawn by the renderer from the town's own instances, and
 //    only its flicker lives here -- a level per placement, written into the town.
-// 3. **The flame**, MU's BITMAP_FIRE, spawned at every fire on MU's own clock and written
-//    into the transparent pass.
+// 3. **The fire**: flames, embers and smoke at every fire near the camera, written into the
+//    transparent pass. MU's flame shapes, our motion and colour; lamps.cpp says why.
 //
 // It is `game`: it knows what a fire is. It is not `sim`, and nothing it rolls reaches the
 // seeded log -- where a flame flickers is not a fact.
@@ -38,16 +38,18 @@ public:
     void light(gfx::Renderer& renderer) const;
 
     // One frame: every flicker eased towards its target, the glows written into the town, the
-    // lights' levels into the renderer, and the flames aged and spawned.
-    void update(float seconds, Town& town, gfx::Renderer& renderer);
+    // lights' levels into the renderer, and the fires near `near` burning.
+    void update(float seconds, Town& town, gfx::Renderer& renderer, const float near[3]);
 
     // The flames within `kFlameMetres` of `near`, into the transparent pass. Every fire burns
     // wherever the camera is; only the near ones are drawn, so none is ever seen lighting.
-    void gather(gfx::Effects& effects, const float near[3]) const;
+    // `daylight` is how much light the scene has, 0 at night to 1 at noon; the smoke is lit
+    // by it, since the transparent pass lights nothing.
+    void gather(gfx::Effects& effects, const float near[3], float daylight) const;
 
     uint32_t lightCount() const { return uint32_t(lights_.size()); }
     uint32_t fireCount() const { return uint32_t(fires_.size()); }
-    uint32_t flameCount() const { return uint32_t(flames_.size()); }
+    uint32_t flameCount() const { return uint32_t(particles_.size()); }
     uint32_t flamesDrawn() const { return drawn_; }
 
     static constexpr float kFlameMetres = 45.0f;
@@ -67,29 +69,33 @@ private:
         uint32_t instance = 0;
         Flicker flicker;
     };
-    // Where a fire burns and which way its flames drift: MU's (0, -v, 0) turned by the
-    // object's angle, a unit vector here, in metres.
+    // Where a fire burns and which way its flames lean: MU's (0, -v, 0) turned by the
+    // object's angle, a unit vector over a hundred, in metres per MU unit.
     struct Fire {
         float at[3] = {0, 0, 0};
         float drift[3] = {0, 0, 0};
-        float spin = 0.0f;   // the object's own pitch, which RenderSprite turns the flame by
-        float clock = 0.0f;  // reference frames since the last chance to spawn
-    };
-    // One BITMAP_FIRE, in MU's own units and per MU's own 25 Hz frame, kept that way so it
-    // reads against ZzzEffectParticle.cpp without arithmetic.
-    struct Flame {
-        float position[3] = {0, 0, 0};  // metres, world
-        float drift[3] = {0, 0, 0};     // MU units a reference frame
-        float scale = 1.0f;
-        float gravity = 0.0f;
-        float life = 24.0f;
         float spin = 0.0f;
-        float colour[3] = {1, 1, 1};
-        uint8_t subType = 0;
+        bool bonfire = false;
+        // What each kind is owed, in particles; a whole one is spawned and taken off.
+        float clock = 0.0f, embers = 0.0f, smoke = 0.0f;
+    };
+    // A flame, an ember or a puff, in metres and seconds. Sprint 8b; lamps.cpp says why none
+    // of it is MU's clock any more.
+    static constexpr uint8_t kFlame = 0, kEmber = 1, kSmoke = 2;
+    struct Particle {
+        float position[3] = {0, 0, 0};
+        float velocity[3] = {0, 0, 0};
+        float age = 0.0f, life = 1.0f;
+        float size = 0.5f;
+        float heat = 1.0f;
+        float spin = 0.0f, spinRate = 0.0f;
+        float phase = 0.0f;
+        uint8_t kind = kFlame;
+        uint8_t cell = 0;
     };
 
     void step(Flicker& one, float seconds);
-    void spawn(const Fire& fire);
+    void spawn(const Fire& fire, uint8_t kind);
     uint32_t next();
     float unit();
 
@@ -98,9 +104,11 @@ private:
     std::vector<float> levels_;
     std::vector<Glow> glows_;
     std::vector<Fire> fires_;
-    std::vector<Flame> flames_;
+    std::vector<Particle> particles_;
     float minX_ = 0.0f, minZ_ = 0.0f, side_ = 0.0f;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
     mutable uint32_t drawn_ = 0;
     uint32_t refused_ = 0;
     // Fixed, so two runs of the same --fixed-dt draw the same flames. Not the sim's dice.

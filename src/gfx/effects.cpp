@@ -37,6 +37,13 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
         return false;
     }
     sSheet_ = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
+    // Fire and smoke, sprint 8b. Not required: without them a fire draws as plain added sprites.
+    flameProgram_ = loadProgramFiles(shaderDir, "vs_effect", "fs_flame");
+    smokeProgram_ = loadProgramFiles(shaderDir, "vs_effect", "fs_smoke");
+    uFlame_ = bgfx::createUniform("u_flame", bgfx::UniformType::Vec4);
+    if (!bgfx::isValid(flameProgram_) || !bgfx::isValid(smokeProgram_)) {
+        core::logError("effects: the flame or smoke program did not link; they draw plain");
+    }
     layout_.begin()
         .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
         .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
@@ -54,6 +61,12 @@ bool Effects::init(const std::string& shaderDir, uint32_t capacity) {
 void Effects::shutdown() {
     if (bgfx::isValid(program_)) bgfx::destroy(program_);
     if (bgfx::isValid(sSheet_)) bgfx::destroy(sSheet_);
+    for (bgfx::ProgramHandle* p : {&flameProgram_, &smokeProgram_}) {
+        if (bgfx::isValid(*p)) bgfx::destroy(*p);
+        *p = BGFX_INVALID_HANDLE;
+    }
+    if (bgfx::isValid(uFlame_)) bgfx::destroy(uFlame_);
+    uFlame_ = BGFX_INVALID_HANDLE;
     program_ = BGFX_INVALID_HANDLE;
     sSheet_ = BGFX_INVALID_HANDLE;
     sprites_.clear();
@@ -202,7 +215,8 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
         // _ADD is (ONE, ONE) and never reads alpha, so with straight alpha an additive sprite
         // could not fade, and the tint's alpha would silently do nothing on half of MU's
         // effects. Premultiplied, the fade lives in the rgb and both modes honour it.
-        const uint64_t blend = first.blend == Blend::Additive
+        const bool added = first.blend == Blend::Additive || first.blend == Blend::Flame;
+        const uint64_t blend = added
                                    ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE,
                                                            BGFX_STATE_BLEND_ONE)
                                    : BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE,
@@ -221,7 +235,11 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
         bgfx::setVertexBuffer(0, &tvb);
         bgfx::setIndexBuffer(&tib, runStart * 6, runQuads * 6);
         bgfx::setTexture(0, sSheet_, first.sheet);
-        bgfx::submit(view, program_);
+        bgfx::ProgramHandle program = program_;
+        if (first.blend == Blend::Flame && bgfx::isValid(flameProgram_)) program = flameProgram_;
+        if (first.blend == Blend::Smoke && bgfx::isValid(smokeProgram_)) program = smokeProgram_;
+        if (first.blend == Blend::Flame) bgfx::setUniform(uFlame_, flame_);
+        bgfx::submit(view, program);
         ++drawCount_;
         runStart = runEnd;
     }

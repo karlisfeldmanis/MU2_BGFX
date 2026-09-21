@@ -4,6 +4,10 @@ $input v_texcoord0
 // docs/conventions.md.
 #include "common.sh"
 
+// The bloom chain's top level, half resolution, added before the tonemap. Sprint 8b.
+SAMPLER2D(s_bloom, 9);
+uniform vec4 u_bloom;  // z: how much of the chain is added
+
 // Narkowicz' fit to the ACES curve. Cheap, and close enough that the difference is not
 // visible on MU's painted art.
 vec3 aces(vec3 x)
@@ -25,6 +29,8 @@ vec3 toSrgb(vec3 linearColour)
 
 void main()
 {
-	vec3 hdr = texture2D(s_colour, v_texcoord0).rgb * u_params.z;
+	vec3 hdr = texture2D(s_colour, v_texcoord0).rgb;
+	hdr += texture2D(s_bloom, v_texcoord0).rgb * u_bloom.z;
+	hdr *= u_params.z;
 	gl_FragColor = vec4(toSrgb(aces(hdr)), 1.0);
 }

@@ -12,6 +12,7 @@
 #include "content/mesh.h"
 #include "gfx/effects.h"
 #include "gfx/lighting.h"
+#include "gfx/views.h"
 
 namespace mu::gfx {
 
@@ -254,6 +255,11 @@ private:
     bgfx::FrameBufferHandle blurFb_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle blurTex_ = BGFX_INVALID_HANDLE;
     bgfx::FrameBufferHandle shadeFb_ = BGFX_INVALID_HANDLE;
+    // The bloom chain, sprint 8b: level 0 is half resolution, level 4 a thirty-second.
+    bgfx::TextureHandle bloomTex_[kBloomLevels] = {};
+    bgfx::FrameBufferHandle bloomFb_[kBloomLevels] = {};
+    uint16_t bloomW_[kBloomLevels] = {}, bloomH_[kBloomLevels] = {};
+    void bloom(const Lighting& lighting);
     bgfx::TextureHandle shadeColour_ = BGFX_INVALID_HANDLE;
 
     bgfx::ProgramHandle shadowProgram_ = BGFX_INVALID_HANDLE;
@@ -276,6 +282,8 @@ private:
     bgfx::ProgramHandle groundPrepassProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle groundShadeProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle glowProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle bloomDownProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle bloomUpProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle skinnedGlowProgram_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle uSunDir_ = BGFX_INVALID_HANDLE;
@@ -307,6 +315,9 @@ private:
     bgfx::UniformHandle sAo_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sBones_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uBloom_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uBloomTexel_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sBloom_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uLampGrid_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uLampParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sLamps_ = BGFX_INVALID_HANDLE;

@@ -22,6 +22,11 @@
   "lamp_strength": 3.14159,
   "glow_strength": 1.0,
 
+  "bloom_threshold": 1.2,
+  "bloom_knee": 0.6,
+  "bloom_strength": 0.25,
+  "flame_strength": 6.0,
+
   "ssao_radius": 0.5,
   "ssao_strength": 1.0
 }

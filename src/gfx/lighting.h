@@ -62,6 +62,17 @@ struct Lighting {
     float lampStrength = 3.14159265f;
     float glowStrength = 1.0f;
 
+    // Bloom, sprint 8b: what in the linear HDR frame spills light into the air round it.
+    // `threshold` is scene radiance before the exposure, and it sits above what the sun makes of
+    // a white wall, so by day it is the flames, the glows and the lamps that bloom and not the
+    // town. `knee` softens the edge of the threshold; `strength` is how much of the chain is
+    // added back. Invention: MU has no bloom. Judged by eye.
+    float bloomThreshold = 1.2f;
+    float bloomKnee = 0.6f;
+    float bloomStrength = 0.25f;
+    // How bright a flame at full heat is, in HDR, before the exposure: fs_flame's ramp. Invention.
+    float flameStrength = 6.0f;
+
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
 

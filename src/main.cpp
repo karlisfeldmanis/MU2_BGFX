@@ -6,6 +6,7 @@
 
 #include <sys/stat.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -570,8 +571,16 @@ int main(int argc, char** argv) {
             // The lamps flicker, the fires burn, and the glows' levels go into the town before
             // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
             if (args.lampsOn) {
-                world.lamps().update(float(deltaSeconds), world.town(), renderer);
-                world.lamps().gather(renderer.effects(), world.camera().target);
+                world.lamps().update(float(deltaSeconds), world.town(), renderer,
+                                    world.camera().target);
+                // What the day gives an unlit puff of smoke: the ambient and the sun on a flat
+                // surface, over what the default sheet's noon gives it.
+                const float sky = lighting.ambientStrength +
+                                  lighting.sunStrength *
+                                      std::sin(lighting.elevation * 3.14159265f / 180.0f) /
+                                      3.14159265f;
+                const float daylight = std::clamp(sky / 1.45f, 0.08f, 1.0f);
+                world.lamps().gather(renderer.effects(), world.camera().target, daylight);
             }
             // The town's drawables are gathered fresh each frame into one vector that keeps
             // its capacity: a frame appends to a flat array, as foundation 7 says, and

@@ -6,8 +6,11 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 // shade pass wrote, depth-tested against it and writing none, so it is tonemapped with the
 // scene it glows in. Not lit and not shadowed: it IS the light.
 //
-// MU draws these with glBlendFunc(GL_ONE, GL_ONE) and ignores the texture's alpha, so black
-// is what makes the card vanish, and this does the same: the colour is the sheet's own.
+// MU draws these with glBlendFunc(GL_ONE, GL_ONE) and ignores the texture's alpha: its JPEG's
+// black is what makes the card vanish. MU2's pipeline did not keep that black -- the bonfire's
+// fire_02 is an orange band running hard up to the texture's top edge -- but it did write a soft
+// alpha round every glow, and without it each card drew its own rectangle. So the colour is
+// the sheet's times its alpha. Ours, not MU's; sprint 8b.
 //
 // v_light.w is the flicker, carried in the instance's fifth vec4 where every other draw has a
 // 1.0 it never reads. u_material.z is the sheet's glow_strength, set per draw by the renderer.
@@ -16,6 +19,6 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 
 void main()
 {
-	vec3 sheet = texture2D(s_albedo, v_texcoord0).rgb;
-	gl_FragColor = vec4(sheet * (v_light.w * u_material.z), 1.0);
+	vec4 sheet = texture2D(s_albedo, v_texcoord0);
+	gl_FragColor = vec4(sheet.rgb * (sheet.a * v_light.w * u_material.z), 1.0);
 }

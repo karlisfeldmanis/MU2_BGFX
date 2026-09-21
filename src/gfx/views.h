@@ -20,10 +20,16 @@ enum View : uint16_t {
     ViewBlur = 3,
     ViewShade = 4,
     ViewTransparent = 5,
-    ViewPresent = 6,
-    ViewHud = 7,
-    ViewCount = 8,
+    // Sprint 8b's bloom: the HDR target halved five times, then added back up the chain.
+    // Between the transparent pass and the tonemap for the same reason the transparent pass is
+    // there: it reads the linear radiance the flames added into.
+    ViewBloomDown = 6,   // 6..10, one per level, full to 1/32
+    ViewBloomUp = 11,    // 11..14, 1/32 back up to 1/2
+    ViewPresent = 15,
+    ViewHud = 16,
+    ViewCount = 17,
 };
+constexpr int kBloomLevels = 5;
 
 enum Account : uint8_t {
     AccountShadow = 0,

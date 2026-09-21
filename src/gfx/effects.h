@@ -20,7 +20,11 @@ namespace mu::gfx {
 //
 // There is deliberately no `Opaque`: an opaque effect is a mesh and belongs in the shade
 // pass with the rest of the world's material model, which docs/conventions.md keeps closed.
-enum class Blend : uint8_t { Alpha, Additive };
+//
+// Sprint 8b added two that are a blend AND a program: `Flame` is added like `Additive` but read
+// through fs_flame's heat ramp, so its colour carries the particle rather than a tint (see that
+// shader); `Smoke` is mixed like `Alpha` with a soft disc cut into the sheet.
+enum class Blend : uint8_t { Alpha, Additive, Flame, Smoke };
 
 // One quad for one frame. Filled by the caller, read once, and not remembered: the pass has
 // no notion of an effect that persists between frames, which is what keeps the lifetime
@@ -78,6 +82,10 @@ public:
     // go in the log every second: "no allocation in the pools" is a claim, and a high-water
     // mark well under the capacity is the evidence for it. A refusal count above zero means
     // the capacity is wrong and the picture is already missing something.
+    // How bright a flame at full heat is, in HDR. fs_flame's u_flame.x; the renderer sets it
+    // from the lighting sheet before each draw.
+    void setFlameStrength(float strength) { flame_[0] = strength; }
+
     uint32_t highWater() const { return highWater_; }
     uint32_t refused() const { return refused_; }
     uint32_t capacity() const { return uint32_t(sprites_.capacity()); }
@@ -94,6 +102,10 @@ private:
     };
 
     bgfx::ProgramHandle program_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle flameProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle smokeProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uFlame_ = BGFX_INVALID_HANDLE;
+    float flame_[4] = {6.0f, 0.0f, 0.0f, 0.0f};
     bgfx::UniformHandle sSheet_ = BGFX_INVALID_HANDLE;
     bgfx::VertexLayout layout_;
 

@@ -11,6 +11,15 @@ const char* viewName(View v) {
         case ViewShade: return "shade";
         case ViewTransparent: return "effects";
         case ViewPresent: return "present";
+        case ViewBloomDown: return "bloom_down1";
+        case ViewBloomDown + 1: return "bloom_down2";
+        case ViewBloomDown + 2: return "bloom_down3";
+        case ViewBloomDown + 3: return "bloom_down4";
+        case ViewBloomDown + 4: return "bloom_down5";
+        case ViewBloomUp: return "bloom_up4";
+        case ViewBloomUp + 1: return "bloom_up3";
+        case ViewBloomUp + 2: return "bloom_up2";
+        case ViewBloomUp + 3: return "bloom_up1";
         case ViewHud: return "hud";
         default: return "?";
     }

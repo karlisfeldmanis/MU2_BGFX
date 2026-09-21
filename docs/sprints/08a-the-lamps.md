@@ -134,3 +134,47 @@ again at 1080p once the backbuffer size is fixed.
   glows, which is also MU's BlendMesh.
 - The night is only a sheet away: a dusk `lighting.json` (`sun_strength` 0.25, `ambient` 0.12,
   `elevation` 20) is how these shots were judged.
+
+## 8b: the fire made good, 2026-09-21
+
+The user's verdict on 8a was that the fire "has to be very nice". Up close it was three faults:
+
+1. **The bonfire drew orange squares.** `fire_02` is an orange band running hard up to the
+   texture's top edge; MU's JPEG had black there, MU2's pipeline kept a soft alpha instead, and
+   the glow ignored it. `fs_glow` now multiplies by the sheet's alpha.
+2. **MU's flame is dim red paint.** Our `fire01.png` is byte-identical to MU's `Fire01.OZJ`
+   (checked). Its linear peak is 0.82, and its last three cells are 9-19x darker than the first
+   (p99 0.631, 0.072, 0.033, 0.033), so every flame faded to nothing in a quarter of its life
+   and nothing ever passed 1.0. MU's motion is also odd: it drifts a metre sideways along the
+   holder's -y and rises 12 cm. No Lorencia fire has a pitch that would turn that upward.
+3. **Nothing glowed**, because the frame had no bloom.
+
+What was built, all invention except where it says MU:
+
+- **Bloom** (`fs_bloom_down`, `fs_bloom_up`, views 6-14). Five levels from half to 1/32, with
+  Jimenez' 13-tap downsample, Karis' weighted average and a soft threshold on the first level,
+  then a tent upsample added back up the chain. The present adds level 0 before ACES. Sheet:
+  `bloom_threshold` 1.2 (over what the sun makes of a white wall, so by day only the fires and
+  glows bloom), `bloom_knee` 0.6, `bloom_strength` 0.25.
+- **`fs_flame`**: MU's flame sheet read as a shape, its red channel times a per-cell gain, and
+  coloured by the particle's heat up a ramp from ember red through orange to a yellow-white far
+  over 1.0. `flame_strength` 6 is full heat.
+- **The flame's motion**: born at the fuel, rising on buoyancy (0.45-0.9 m/s, +1.8 m/s²),
+  swaying on two sines of its own, swelling then tapering, taller than wide, cooling as it goes.
+  Kept from MU: the four painted cells, the lean along the holder's -y (0.12 m/s), the size and
+  every place a fire burns. Two profiles: torch (38 flames/s) and bonfire (60/s, wider, taller,
+  its flames starting at the logs 35 cm under MU's emitter point).
+- **Embers**: `flare01` through the same ramp, twinkling, kicked about by the air. 12/s from a
+  bonfire, 0.7/s from a torch.
+- **Smoke** from bonfires: `fs_smoke` rounds smoke02's square edge into a disc and takes the
+  sheet's brightness rather than its brown. The game lights it by the day (`daylight` from the
+  sheet's ambient and sun) plus a warm underside from the fire while it is young.
+- Fires burn only within 50 m of the camera and are drawn within 45 m, so the whole map never
+  simulates. About 880 sprites at peak over the town, of 2048, none refused.
+
+**The frame**, at the same 3456×1894 Retina backbuffer as 8a (not 1080p), camera walking the
+town, 600 × 3: lamps and fire 10.877 ms against `--no-lamps` 10.523, so +0.35 ms. Bloom runs in
+both. Its own cost reads as about +0.43 ms at this size (`--no-lamps` was 10.094 before bloom),
+but that compares two runs rather than an on/off. At 1080p both should be about a third.
+
+Shots: the bonfire (184,135) and the torch field (110,70) at 4 s, by day and at dusk.

@@ -74,6 +74,9 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     sAo_ = bgfx::createUniform("s_ao", bgfx::UniformType::Sampler);
     sColour_ = bgfx::createUniform("s_colour", bgfx::UniformType::Sampler);
     sBones_ = bgfx::createUniform("s_bones", bgfx::UniformType::Sampler);
+    uBloom_ = bgfx::createUniform("u_bloom", bgfx::UniformType::Vec4);
+    uBloomTexel_ = bgfx::createUniform("u_bloomTexel", bgfx::UniformType::Vec4);
+    sBloom_ = bgfx::createUniform("s_bloom", bgfx::UniformType::Sampler);
     uLampGrid_ = bgfx::createUniform("u_lampGrid", bgfx::UniformType::Vec4);
     uLampParams_ = bgfx::createUniform("u_lampParams", bgfx::UniformType::Vec4);
     sLamps_ = bgfx::createUniform("s_lamps", bgfx::UniformType::Sampler);
@@ -145,6 +148,11 @@ bool Renderer::loadPrograms(const std::string& dir) {
     groundPrepassProgram_ = loadProgram(dir, "vs_ground", "fs_ground_prepass");
     groundShadeProgram_ = loadProgram(dir, "vs_ground", "fs_ground");
     // Not required: a frame without its glows is a picture, and says so.
+    bloomDownProgram_ = loadProgram(dir, "vs_screen", "fs_bloom_down");
+    bloomUpProgram_ = loadProgram(dir, "vs_screen", "fs_bloom_up");
+    if (!bgfx::isValid(bloomDownProgram_) || !bgfx::isValid(bloomUpProgram_)) {
+        core::logError("the bloom programs did not link; the frame goes without it");
+    }
     glowProgram_ = loadProgram(dir, "vs_static", "fs_glow");
     skinnedGlowProgram_ = loadProgram(dir, "vs_skinned", "fs_glow");
     if (!bgfx::isValid(glowProgram_) || !bgfx::isValid(skinnedGlowProgram_)) {
@@ -240,6 +248,17 @@ bool Renderer::createTargets(int width, int height) {
     bgfx::TextureHandle shadeAttachments[] = {shadeColour_, sceneDepth_};
     shadeFb_ = bgfx::createFrameBuffer(2, shadeAttachments, false);
 
+    // The bloom chain: half, quarter ... a thirty-second, linear filtered so each tap of the
+    // shaders is itself a 2x2 average. RGBA16F because what it holds is HDR.
+    for (int i = 0; i < kBloomLevels; ++i) {
+        bloomW_[i] = uint16_t(std::max(1, width >> (i + 1)));
+        bloomH_[i] = uint16_t(std::max(1, height >> (i + 1)));
+        bloomTex_[i] = bgfx::createTexture2D(bloomW_[i], bloomH_[i], false, 1,
+                                             bgfx::TextureFormat::RGBA16F, rt | clamp);
+        bloomFb_[i] = bgfx::createFrameBuffer(1, &bloomTex_[i], true);
+        if (!bgfx::isValid(bloomFb_[i])) core::logError("bloom level %d did not survive", i);
+    }
+
     // Named one by one, because "a render target did not survive" is not a thing anyone can
     // act on, and a format this Metal refuses is exactly the kind of thing that lands here.
     const std::pair<const char*, bool> made[] = {
@@ -269,6 +288,12 @@ void Renderer::destroyTargets() {
     for (bgfx::FrameBufferHandle* fb : {&shadowFb_, &prepassFb_, &ssaoFb_, &blurFb_, &shadeFb_}) {
         if (bgfx::isValid(*fb)) bgfx::destroy(*fb);
         *fb = BGFX_INVALID_HANDLE;
+    }
+    // Each level's buffer owns its texture.
+    for (int i = 0; i < kBloomLevels; ++i) {
+        if (bgfx::isValid(bloomFb_[i])) bgfx::destroy(bloomFb_[i]);
+        bloomFb_[i] = BGFX_INVALID_HANDLE;
+        bloomTex_[i] = BGFX_INVALID_HANDLE;
     }
     // The textures a frame buffer was told to own went with it; these were not.
     for (bgfx::TextureHandle* t : {&prepassColour_, &sceneDepth_, &shadeColour_}) {
@@ -300,7 +325,8 @@ void Renderer::shutdown() {
                                    &presentProgram_, &groundShadowProgram_,
                                    &groundPrepassProgram_, &groundShadeProgram_,
                                    &skinnedShadowProgram_, &skinnedPrepassProgram_,
-                                   &skinnedShadeProgram_, &glowProgram_, &skinnedGlowProgram_}) {
+                                   &skinnedShadeProgram_, &glowProgram_, &skinnedGlowProgram_,
+                                   &bloomDownProgram_, &bloomUpProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }
@@ -308,7 +334,8 @@ void Renderer::shutdown() {
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
           &uMaterial_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
-          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_}) {
+          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uBloomTexel_,
+          &sBloom_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
     }
@@ -481,6 +508,47 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             bgfx::submit(view, batchProgram);
             ++drawCount_;
         }
+    }
+}
+
+void Renderer::bloom(const Lighting& lighting) {
+    if (!bgfx::isValid(bloomDownProgram_) || !bgfx::isValid(bloomUpProgram_)) return;
+    // Down: the shade target into level 0 with the threshold, then each level into the next.
+    for (int i = 0; i < kBloomLevels; ++i) {
+        const bgfx::ViewId view = bgfx::ViewId(ViewBloomDown + i);
+        const uint16_t sourceW = i == 0 ? uint16_t(width_) : bloomW_[i - 1];
+        const uint16_t sourceH = i == 0 ? uint16_t(height_) : bloomH_[i - 1];
+        bgfx::setViewFrameBuffer(view, bloomFb_[i]);
+        bgfx::setViewRect(view, 0, 0, bloomW_[i], bloomH_[i]);
+        bgfx::setViewClear(view, 0, 0, 1.0f, 0);
+        bgfx::setViewTransform(view, nullptr, nullptr);
+        const float params[4] = {lighting.bloomThreshold, std::max(lighting.bloomKnee, 1e-3f),
+                                 i == 0 ? 1.0f : 0.0f, 0.0f};
+        const float texel[4] = {1.0f / float(sourceW), 1.0f / float(sourceH), 0.0f, 0.0f};
+        bgfx::setUniform(uBloom_, params);
+        bgfx::setUniform(uBloomTexel_, texel);
+        bgfx::setTexture(8, sColour_, i == 0 ? shadeColour_ : bloomTex_[i - 1]);
+        screenPass(view, bloomDownProgram_);
+    }
+    // Up: each level read through a tent and ADDED into the one above it, so level 0 ends up
+    // holding every level's share, the widest softest ones included.
+    for (int j = 0; j < kBloomLevels - 1; ++j) {
+        const int target = kBloomLevels - 2 - j;
+        const bgfx::ViewId view = bgfx::ViewId(ViewBloomUp + j);
+        bgfx::setViewFrameBuffer(view, bloomFb_[target]);
+        bgfx::setViewRect(view, 0, 0, bloomW_[target], bloomH_[target]);
+        bgfx::setViewClear(view, 0, 0, 1.0f, 0);
+        bgfx::setViewTransform(view, nullptr, nullptr);
+        const float params[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        const float texel[4] = {1.0f / float(bloomW_[target + 1]),
+                                1.0f / float(bloomH_[target + 1]), 0.0f, 0.0f};
+        bgfx::setUniform(uBloom_, params);
+        bgfx::setUniform(uBloomTexel_, texel);
+        bgfx::setTexture(8, sColour_, bloomTex_[target + 1]);
+        bgfx::setVertexBuffer(0, screenVb_);
+        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_BLEND_ADD);
+        bgfx::submit(view, bloomUpProgram_);
+        ++drawCount_;
     }
 }
 
@@ -1034,11 +1102,18 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     bgfx::setViewRect(ViewTransparent, 0, 0, uint16_t(width_), uint16_t(height_));
     // No clear at all: the shade pass's colour and the prepass's depth are both wanted.
     bgfx::setViewClear(ViewTransparent, 0, 0, 1.0f, 0);
+    effects_.setFlameStrength(lighting.flameStrength);
     effects_.draw(ViewTransparent, view, proj, camera.position);
     drawCount_ += effects_.lastDrawCount();
 
-    // --- view 6: present ------------------------------------------------------------
+    bloom(lighting);
+
+    // --- the present ------------------------------------------------------------------
     const float params[4] = {lighting.ssaoRadius, lighting.ssaoStrength, lighting.exposure, 0.0f};
+    const bool bloomed = bgfx::isValid(bloomDownProgram_) && bgfx::isValid(bloomUpProgram_);
+    const float bloomParams[4] = {0.0f, 0.0f, bloomed ? lighting.bloomStrength : 0.0f, 0.0f};
+    bgfx::setUniform(uBloom_, bloomParams);
+    bgfx::setTexture(9, sBloom_, bloomTex_[0]);
     bgfx::setViewFrameBuffer(ViewPresent, BGFX_INVALID_HANDLE);
     bgfx::setViewRect(ViewPresent, 0, 0, uint16_t(width_), uint16_t(height_));
     bgfx::setViewClear(ViewPresent, BGFX_CLEAR_COLOR, 0x101418ff, 1.0f, 0);
