@@ -8,6 +8,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "content/texture.h"
 #include "game/bag.h"
@@ -17,10 +18,10 @@
 #include "game/panel.h"
 #include "gfx/interface.h"
 #include "gfx/window.h"
+#include "game/play.h"
 
 namespace mu::game {
 
-class Play;
 
 class Desk {
 public:
@@ -36,6 +37,10 @@ public:
     // just a place. The run's --ui-click goes through here and then through exactly the
     // windows' own code.
     void script(float x, float y, bool press, bool release, bool right = false);
+    // The camera this frame, for the names over what lies on the ground.
+    void setView(const float* viewProj) {
+        for (int i = 0; i < 16; ++i) viewProj_[i] = viewProj[i];
+    }
     // Whether the pointer this frame belongs to a window rather than to the ground.
     bool takesPointer() const { return takesPointer_; }
 
@@ -56,6 +61,12 @@ private:
     Bag bag_;
     Shelf shelf_;
     Stage* bagStage_ = nullptr;
+    // The names over the drops, on MU's own black plate. Rebuilt when one moves on screen.
+    gfx::Canvas ground_;
+    std::vector<Play::OnScreen> onScreen_, drawnOnScreen_;
+    float viewProj_[16] = {};
+    uint64_t groundRebuilds_ = 0;
+    void labelGround(const Play& play, int width, int height);
     Stage* shelfStage_ = nullptr;
     bool trading_ = false;
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does

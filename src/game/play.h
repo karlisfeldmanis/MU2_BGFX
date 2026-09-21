@@ -90,6 +90,17 @@ public:
     uint32_t pointedAt() const { return pointedAt_; }
     // The townsperson under the pointer, as an index into the tables' folk, or -1.
     int pointedFolk() const { return pointedFolk_; }
+    // The thing on the ground under the pointer, by its id, or 0.
+    uint32_t pointedLying() const { return pointedLying_; }
+
+    // Where each thing on the ground is on screen this frame, for its label: the id, and the
+    // pixel a little above where it lies. Only those in front of the camera.
+    struct OnScreen {
+        uint32_t id = 0;
+        float x = 0.0f, y = 0.0f;
+    };
+    void dropsOnScreen(const float* viewProj, int width, int height,
+                       std::vector<OnScreen>& out) const;
     int64_t ticks() const { return realm_.tick(); }
     double tickMs() const { return tickMs_; }
     // What the last line of the log said, so the run can be read without a HUD. Sprint 6 draws
@@ -165,6 +176,7 @@ private:
     };
     std::vector<Standing> folk_;
     int pointedFolk_ = -1;
+    uint32_t pointedLying_ = 0;
     std::vector<float> scratch_;
     double accumulator_ = 0.0;
     double tickMs_ = 0.0;

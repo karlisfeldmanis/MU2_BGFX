@@ -3,7 +3,6 @@
 #include <cstdio>
 
 #include "core/log.h"
-#include "game/play.h"
 
 namespace mu::game {
 
@@ -15,6 +14,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
+    interface_.adopt(ground_);
     return true;
 }
 
@@ -99,6 +99,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play) {
         if (asked.close) inventoryOpen_ = false;
     }
 
+    if (play.isOpen()) labelGround(play, window.width(), window.height());
+
     takesPointer_ = hud_.covers(pointer.x, pointer.y) ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
@@ -119,8 +121,60 @@ void Desk::script(float x, float y, bool press, bool release, bool right) {
                double(x), double(y));
 }
 
+// MU2's Drops.Tint, which is BuildGroundItemLabelDescriptor's ladder: the colour IS the
+// refinement, and Zen is gold whatever it is. The skill, luck and option rung is not reachable,
+// since nothing drops with any of them.
+static uint32_t tintOf(const sim::Lying& one) {
+    const uint32_t yellow = gfx::rgba(1.0f, 0.8f, 0.1f);
+    if (one.what.empty() || one.what.refinement >= 7) return yellow;
+    const int plus = one.what.refinement;
+    if (plus == 0) return gfx::rgba(0.7f, 0.7f, 0.7f);
+    if (plus < 3) return gfx::rgba(0.9f, 0.9f, 0.9f);
+    if (plus < 5) return gfx::rgba(1.0f, 0.5f, 0.2f);
+    return gfx::rgba(0.4f, 0.7f, 1.0f);
+}
+
+void Desk::labelGround(const Play& play, int width, int height) {
+    play.dropsOnScreen(viewProj_, width, height, onScreen_);
+    bool same = onScreen_.size() == drawnOnScreen_.size();
+    for (size_t i = 0; same && i < onScreen_.size(); ++i) {
+        same = onScreen_[i].id == drawnOnScreen_[i].id && onScreen_[i].x == drawnOnScreen_[i].x &&
+               onScreen_[i].y == drawnOnScreen_[i].y;
+    }
+    if (same && groundRebuilds_ > 0) return;
+    drawnOnScreen_ = onScreen_;
+    ++groundRebuilds_;
+    ground_.clear();
+    const content::Tables& tables = *play.realm().tables();
+    const gfx::Face& face = ground_.face();
+    // The tooltip's size: MU's labels are its small type, and the two read as one family.
+    const float size = 8.0f * panel::scale();
+    for (const Play::OnScreen& at : onScreen_) {
+        const sim::Lying* one = nullptr;
+        for (const sim::Lying& l : play.realm().lying()) {
+            if (l.id == at.id) one = &l;
+        }
+        if (!one) continue;
+        std::string name;
+        if (one->what.empty()) {
+            name = panel::commas(one->zen) + " Zen";
+        } else {
+            const content::ItemRow& row = tables.items[size_t(one->what.item)];
+            name = one->what.refinement > 0 ? row.label + " +" + std::to_string(one->what.refinement)
+                                            : row.label;
+        }
+        // RenderGroundItemLabelTexture: the plate is the text's own box, opaque black, and no
+        // padding anywhere in it.
+        const float w = face.measure(size, name), h = face.height(size);
+        const gfx::Box plate{at.x - w * 0.5f, at.y - h, w, h};
+        ground_.rect(plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
+        ground_.text(plate.x, plate.y + face.ascent(size), size, tintOf(*one), name);
+    }
+}
+
 void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.begin(width, height);
+    interface_.add(ground_);
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());

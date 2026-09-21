@@ -8,6 +8,7 @@
 //     cmake --build build --target sim_test && build/sim_test
 
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -423,6 +424,109 @@ void testItems(const content::Tables& tables) {
     check(realm.satchel()[potionAt].empty(), "leaves the slot empty");
 }
 
+// Sprint 7's sentence, headless: kill, pick up, equip, sell. A plain hand hunts the field
+// south-east of town (sprint 5's hunting ground), picks up whatever falls before it fights
+// again, then puts on anything it can and sells the rest at Lumen's counter.
+void testLoot(const content::Tables& tables) {
+    std::printf("loot\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 1, 200, 160, sim::Kin::DarkKnight, 8), "a hunt raises");
+    check(realm.equip(tables.armNamed("Axe01"), -1, true), "with the axe in hand");
+    int dropped = 0, picked = 0, kills = 0;
+    for (int tick = 0; tick < 12000; ++tick) {
+        const sim::Body& hero = realm.hero();
+        if (hero.alive() && realm.tick() % 10 == 0) {
+            sim::Request request;
+            float best = 12.0f * 12.0f;
+            for (const sim::Lying& one : realm.lying()) {
+                const float dx = float(one.column) - hero.x, dy = float(one.row) - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    request.kind = sim::Request::Kind::Pick;
+                    request.target = one.id;
+                }
+            }
+            if (request.kind == sim::Request::Kind::None) {
+                for (const sim::Body& body : realm.bodies()) {
+                    if (body.player || !body.alive()) continue;
+                    const float dx = body.x - hero.x, dy = body.y - hero.y;
+                    if (dx * dx + dy * dy < best) {
+                        best = dx * dx + dy * dy;
+                        request.kind = sim::Request::Kind::Attack;
+                        request.target = body.id;
+                    }
+                }
+            }
+            // Nothing in reach -- which is also where he stands up after a death, in town -- and
+            // he walks back to the field, as the headless hand does.
+            if (request.kind == sim::Request::Kind::None && !hero.walking) {
+                request.kind = sim::Request::Kind::WalkTo;
+                request.column = 200;
+                request.row = 160;
+            }
+            if (request.kind != sim::Request::Kind::None) realm.ask(request);
+        }
+        realm.step();
+        if (std::getenv("LOOT_TRACE") && tick % 1000 == 0) {
+            std::printf("    tick %d hero %.1f,%.1f hp %d walking %d\n", tick, hero.x, hero.y,
+                        hero.health, int(hero.walking));
+        }
+        for (const sim::Happening& h : realm.happenings()) {
+            if (std::getenv("LOOT_TRACE") && h.what != sim::What::Stepped) {
+                std::printf("    %s\n", sim::describe(h, realm).c_str());
+            }
+            dropped += h.what == sim::What::Dropped;
+            picked += h.what == sim::What::Picked && h.b >= 0;
+            kills += h.what == sim::What::Died && h.who != realm.hero().id;
+        }
+    }
+    std::printf("  %d kills, %d drops, %d items picked up, %lld Zen\n", kills, dropped, picked,
+                (long long)realm.money());
+    check(kills > 0 && dropped > 0, "the hunt kills and things fall");
+    check(picked > 0, "an item was picked up into the bag");
+    check(realm.money() > 0, "and Zen into the purse");
+
+    // His points, as a player spends them at the character window: into strength, which is
+    // what most of what a knight finds asks for. Then equip whatever fits, straight from the
+    // bag through the same move a drag makes.
+    realm.spend(realm.hero().pointsInHand, 0, 0, 0);
+    int worn = 0;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        const sim::Held& one = realm.satchel()[slot];
+        if (one.empty()) continue;
+        const content::ItemRow& row = tables.items[size_t(one.item)];
+        const int place = sim::placeOf(row);
+        const bool on = place >= 0 && realm.moveItem(slot, place);
+        std::printf("    found %s +%d: %s\n", row.label.c_str(), one.refinement,
+                    on ? "put on" : (place < 0 ? "not worn" : "refused"));
+        if (on) ++worn;
+    }
+    std::printf("  %d pieces put on\n", worn);
+
+    // And sell the rest at Lumen's: walk there, be served, sell every bag slot.
+    int lumen = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 255) lumen = int(i);
+    }
+    check(lumen >= 0, "Lumen is in the town's table");
+    if (lumen < 0) return;
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(lumen);
+    realm.ask(talk);
+    for (int tick = 0; tick < 3000 && realm.trading() < 0; ++tick) realm.step();
+    check(realm.trading() == lumen, "walked back to town and served at the bar");
+    const int64_t before = realm.money();
+    int sold = 0;
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        if (!realm.satchel()[slot].empty() && realm.sellItem(slot) >= 0) ++sold;
+    }
+    std::printf("  %d sold for %lld Zen\n", sold, (long long)(realm.money() - before));
+    check(worn > 0, "something found was put on");
+    check(sold > 0, "and the rest sold");
+    check(realm.sellItem(sim::kWeaponRight) < 0, "and what is worn is never sold");
+}
+
 }  // namespace
 
 int main() {
@@ -445,6 +549,7 @@ int main() {
     testDeterminism(tables);
     testInvariants(tables);
     testItems(tables);
+    testLoot(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

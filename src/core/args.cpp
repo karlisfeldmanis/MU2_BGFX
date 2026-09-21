@@ -61,6 +61,7 @@ void printUsage() {
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
         "  --zen N                   start with N Zen\n"
+        "  --loot                    --click-every picks up drops before it fights\n"
         "  --talk NAME               walk to the townsperson whose name holds NAME\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --effects N               N sprites through the transparent pass, to price it\n"
@@ -289,6 +290,8 @@ Args parseArgs(int argc, char** argv) {
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--loot")) {
+            a.loot = true;
         } else if (!std::strcmp(s, "--zen")) {
             if (const char* v = next(s)) a.zen = std::atoll(v);
         } else if (!std::strcmp(s, "--talk")) {

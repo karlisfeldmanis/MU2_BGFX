@@ -313,6 +313,87 @@ void Realm::sip() {
     sipCount_ = kept;
 }
 
+// What a death leaves: one roll against three groups, rarest first, each taking its own chance
+// out of what is left -- DefaultDropGenerator.SelectRandomGroup, as MU2's Realm.Leave walks
+// it. Loot.cs's numbers: a jewel at 0.001, an item at 0.3 from what the monster's level can
+// afford, Zen at 0.5 worth the kill's experience plus seven; otherwise nothing.
+//
+// Smaller than MU2's: no luck roll and no skill roll on a dropped piece. Its plus is
+// Loot.Refinement, `(monster level - drop level) / 3`, held to the cap of nine.
+void Realm::leave(const Body& dead, const Body& killer) {
+    constexpr double kJewel = 0.001, kItem = 0.3, kMoney = 0.5;
+    constexpr int kGap = 12;           // Loot.Gap: nothing more than twelve levels below it
+    constexpr int kBaseMoney = 7;      // Loot.BaseMoney
+    constexpr int kLingerSeconds = 60; // Loot.Lingers
+    constexpr int kMostRefined = 9;    // Refine.Cap
+    const int level = dead.level;
+    double roll = dice_.nextDouble();
+    Lying one;
+    one.column = dead.column();
+    one.row = dead.row();
+    one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+
+    const auto reaches = [level](const content::ItemRow& row) {
+        return row.dropLevel <= level && (row.maximumDropLevel == 0 || level <= row.maximumDropLevel);
+    };
+    // The pools are counted then drawn from by index, so nothing is allocated for them.
+    const auto draw = [&](auto&& admits) -> int32_t {
+        int count = 0;
+        for (const content::ItemRow& row : tables_->items) count += admits(row) ? 1 : 0;
+        if (count == 0) return -1;
+        int pick = dice_.nextInt(0, count);
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (!admits(tables_->items[i])) continue;
+            if (pick-- == 0) return int32_t(i);
+        }
+        return -1;
+    };
+
+    if (roll <= kJewel) {
+        const int32_t item = draw([&](const content::ItemRow& r) { return r.jewel() && reaches(r); });
+        if (item < 0) return;
+        one.what = Held{item, 0, 1};
+    } else if ((roll -= kJewel) <= kItem) {
+        const int32_t item = draw([&](const content::ItemRow& r) {
+            return r.dropsFromMonsters() && reaches(r) && r.dropLevel > level - kGap;
+        });
+        if (item < 0) return;
+        const content::ItemRow& row = tables_->items[size_t(item)];
+        // Prize.TakesRefinement: the weapon and armour groups, ammunition taken back out.
+        const bool refinable = row.group <= kGroupBoots && !ammunition(row);
+        const int plus = refinable ? std::clamp((level - row.dropLevel) / 3, 0, kMostRefined) : 0;
+        const bool stacks = heals(row) || restores(row);
+        one.what = Held{item, int16_t(plus), int16_t(stacks ? 1 : row.durability)};
+    } else if (roll - kItem <= kMoney) {
+        one.zen = int64_t(killExperience(dead.level, killer.level)) + kBaseMoney;
+    } else {
+        return;
+    }
+    one.id = nextId_++;
+    lying_.push_back(one);
+    say(What::Dropped, dead, int32_t(one.id), one.what.empty() ? -1 : one.what.item,
+        one.what.empty() ? int32_t(one.zen) : one.what.refinement);
+}
+
+// Takes what lies at an index into the bag or the purse. Refused, and left lying, when the
+// bag has no room at its footprint -- MOVEMENT_GET's "the bag is full".
+bool Realm::take(size_t index) {
+    const Lying one = lying_[index];
+    int slot = -1;
+    if (one.what.empty()) {
+        money_ += one.zen;
+    } else {
+        const content::ItemRow& row = tables_->items[size_t(one.what.item)];
+        slot = bag_.free(*tables_, row.width, row.height);
+        if (slot < 0) return false;
+        bag_.put(slot, one.what);
+    }
+    lying_[index] = lying_.back();
+    lying_.pop_back();
+    say(What::Picked, bodies_[0], int32_t(one.id), slot, int32_t(one.zen));
+    return true;
+}
+
 bool Realm::serving(int folk) const {
     if (!tables_ || folk < 0 || size_t(folk) >= tables_->folk.size()) return false;
     const Body& hero = bodies_[0];
@@ -420,6 +501,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     bodies_.clear();
     happenings_.clear();
     happenings_.reserve(4096);
+    // The ground: a minute of drops from a fast hunt is a few dozen; 512 is never reached.
+    lying_.reserve(512);
     scratch_.reserve(512);
     tick_ = 0;
     nextId_ = 1;
@@ -901,6 +984,9 @@ void Realm::kill(Body& dead, Body& killer) {
             one.provoked = false;
         }
     }
+    // What it leaves, before the experience is paid, so the Zen reads the killer's level as
+    // it was when the blow landed.
+    if (killer.player) leave(dead, killer);
     if (killer.player) {
         // (int) of the formula, as OpenMU's CalculateAfterKillAsync truncates it
         // (PlayerExperience.cs:105). No rate: a replica that quietly pays several times over
@@ -1004,6 +1090,10 @@ void Realm::press() {
         } else if (order_.kind == Request::Kind::Stop) {
             halt(hero);
             order_ = Request{};
+        } else if (order_.kind == Request::Kind::Pick) {
+            for (const Lying& one : lying_) {
+                if (one.id == order_.target) send(hero, one.column, one.row);
+            }
         } else if (order_.kind == Request::Kind::Talk) {
             if (order_.target >= tables_->folk.size()) {
                 order_ = Request{};
@@ -1012,6 +1102,28 @@ void Realm::press() {
                 send(hero, one.x, one.y);
             }
         }
+    }
+
+    if (order_.kind == Request::Kind::Pick) {
+        // Taken on arrival: within a tile of it, which is standing on it or beside it -- the
+        // grid may refuse the tile itself when something died against a wall. The reach is
+        // this project's; MU picks up when the walk ends on the item.
+        size_t at = lying_.size();
+        for (size_t i = 0; i < lying_.size(); ++i) {
+            if (lying_[i].id == order_.target) at = i;
+        }
+        if (at == lying_.size()) {
+            order_ = Request{};
+            return;
+        }
+        const Lying& one = lying_[at];
+        if (std::fabs(hero.x - float(one.column)) <= 1.0f &&
+            std::fabs(hero.y - float(one.row)) <= 1.0f) {
+            halt(hero);
+            take(at);
+            order_ = Request{};
+        }
+        return;
     }
 
     if (order_.kind == Request::Kind::Talk) {
@@ -1084,6 +1196,17 @@ void Realm::step() {
     // monotonic counter.
     Body& hero = bodies_[0];
     sip();
+    // What has lain its minute goes, in the order it lies -- a fixed order, since the list is
+    // only ever appended to and swapped out of by the tick's own events.
+    for (size_t i = 0; i < lying_.size();) {
+        if (lying_[i].vanishesAt <= tick_) {
+            say(What::Vanished, hero, int32_t(lying_[i].id));
+            lying_[i] = lying_.back();
+            lying_.pop_back();
+        } else {
+            ++i;
+        }
+    }
     if (hero.alive()) {
         advance(hero);
         press();
@@ -1191,6 +1314,25 @@ std::string describe(const Happening& happening, const Realm& realm) {
             std::snprintf(line, sizeof(line), "%6u %s sells %s for %d from slot %d", happening.tick,
                           who, realm.tables()->items[size_t(happening.a)].label.c_str(),
                           happening.b, happening.c);
+            break;
+        case What::Dropped:
+            if (happening.b < 0) {
+                std::snprintf(line, sizeof(line), "%6u %s leaves %d Zen (#%d) at %.3f,%.3f",
+                              happening.tick, who, happening.c, happening.a, double(happening.x),
+                              double(happening.y));
+            } else {
+                std::snprintf(line, sizeof(line), "%6u %s leaves %s +%d (#%d) at %.3f,%.3f",
+                              happening.tick, who,
+                              realm.tables()->items[size_t(happening.b)].label.c_str(), happening.c,
+                              happening.a, double(happening.x), double(happening.y));
+            }
+            break;
+        case What::Picked:
+            std::snprintf(line, sizeof(line), "%6u %s picks up #%d into slot %d (%d Zen)",
+                          happening.tick, who, happening.a, happening.b, happening.c);
+            break;
+        case What::Vanished:
+            std::snprintf(line, sizeof(line), "%6u #%d vanishes", happening.tick, happening.a);
             break;
         case What::Levelled:
             std::snprintf(line, sizeof(line), "%6u %s reaches level %d with %d points",

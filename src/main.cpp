@@ -561,13 +561,31 @@ int main(int argc, char** argv) {
                             nearest = &body;
                         }
                     }
+                    // With --loot, what lies on the ground comes first: the scripted hand
+                    // picks up before it fights again, which is the half of sprint 7 a run
+                    // with nobody at the mouse can otherwise never show.
+                    float aimX = nearest ? nearest->x : 0.0f, aimY = nearest ? nearest->y : 0.0f;
+                    if (args.loot) {
+                        float closest = 12.0f * 12.0f;
+                        for (const sim::Lying& one : realm.lying()) {
+                            const float dx = float(one.column) - hero.x;
+                            const float dy = float(one.row) - hero.y;
+                            if (dx * dx + dy * dy < closest) {
+                                closest = dx * dx + dy * dy;
+                                aimX = float(one.column);
+                                aimY = float(one.row);
+                                best = closest;
+                                nearest = &hero;  // anything non-null: there is an aim
+                            }
+                        }
+                    }
                     // Only when it is close enough to walk to and fight in a few ticks;
                     // anything further and the run is a march rather than a fight.
                     if (nearest != nullptr && best < 12.0f * 12.0f) {
                         const content::Ground& land = world.ground();
                         const float metresPerTile = land.metresPerTile();
-                        const float wx = (nearest->x + 0.5f) * metresPerTile;
-                        const float wz = -(nearest->y + 0.5f) * metresPerTile;
+                        const float wx = (aimX + 0.5f) * metresPerTile;
+                        const float wz = -(aimY + 0.5f) * metresPerTile;
                         const float wy = land.heightAt(wx, wz);
                         float clip[4] = {0, 0, 0, 0};
                         const float world4[4] = {wx, wy, wz, 1.0f};
@@ -589,6 +607,9 @@ int main(int argc, char** argv) {
                 // world only hears the clicks that land on none. A scripted click is the
                 // world's by construction -- it is aimed at a monster.
                 if (desk.ready()) {
+                    float viewProjNow[16];
+                    bx::mtxMul(viewProjNow, view, proj);
+                    desk.setView(viewProjNow);
                     const float w = float(window.width()), h = float(window.height());
                     for (const core::Args::UiClick& c : args.uiClicks) {
                         const bool drag = c.x2 != c.x || c.y2 != c.y;

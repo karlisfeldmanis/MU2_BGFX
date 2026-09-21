@@ -110,9 +110,29 @@ is not a migration.
   frame with no windows, 4.35 and 4.37 with the HUD, 4.39 with the bag and the character
   window open. Inside 5.5.
 
+### Step 7: the drop and the pickup (2026-09-21)
+
+- **What a death leaves** is MU2's `Realm.Leave` walk, rarest first: a jewel at 0.001, an item
+  at 0.3 from what the monster's level affords (drop level at most its level and within twelve
+  below it), Zen at 0.5 worth the kill's experience plus seven, otherwise nothing -- 80% of
+  kills leave something. The plus is `Loot.Refinement`. **No luck roll and no skill roll**,
+  which is smaller than MU2. It lies for `Loot.Lingers`' sixty seconds.
+- **Picked up on arrival**, within a tile of it: a click on a drop is a Pick order, and the bag
+  refuses what it has no room for at its footprint.
+- **Labelled** on MU's opaque black plate in `BuildGroundItemLabelDescriptor`'s colours, Zen
+  in gold. **No model on the ground yet**; it waits on the stage, as the bag's pictures do.
+- **The sentence, headless** (`sim_test`, `testLoot`): a level-8 knight hunts the field at
+  200,160 for 12,000 ticks with a plain hand -- 57 kills, 41 drops, 11 items and 1,208 Zen
+  picked up; five axes put on (each a swap through `moveItem`), three Short Bows refused as the
+  elf's; then a Talk to Lumen, served at the bar, eleven things sold for 304, and the right
+  hand refused as worn. 127 checks, none failed.
+- **The sentence, in the window**: `--at 200,160 --weapon Axe01 --click-every 20 --loot
+  --windows inventory` picks up 165 Zen in 5,000 frames; the shot shows the `55 Zen` label.
+- Two seeded headless runs of the spider field are the same bytes.
+
 **Not done yet:** the item pictures (step 5's stage: the bag and the shelf draw a name in
-each box until it lands, which waits on the reflection-probe work in the renderer), the quick
-bar on 1 to 4, and step 7, the drop and the pickup.
+each box until it lands, which waits on the reflection-probe work in the renderer), and the
+quick bar on 1 to 4.
 
 ### Findings
 

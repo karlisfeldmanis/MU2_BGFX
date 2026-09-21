@@ -577,6 +577,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     pointedColumn_ = pointedRow_ = -1;
     pointedAt_ = 0;
     pointedFolk_ = -1;
+    pointedLying_ = 0;
     if (!isOpen() || !ground_ || width <= 0 || height <= 0) return;
 
     // The pixel into a direction. bgfx's clip space on this Metal is 0..1 in z and the origin
@@ -650,6 +651,19 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
             pointedAt_ = body.id;
         }
     }
+    // What lies on the ground, only where nothing living is closer: a click on a drop next
+    // to a monster is a click on the monster, as MU's own picking orders it.
+    if (pointedAt_ == 0) {
+        float nearest = 0.8f;
+        for (const sim::Lying& one : realm_.lying()) {
+            const float away =
+                std::max(std::fabs(float(one.column) - column), std::fabs(float(one.row) - row));
+            if (away < nearest) {
+                nearest = away;
+                pointedLying_ = one.id;
+            }
+        }
+    }
     // And the townsfolk, by the same reckoning, a body winning a tie: a monster in the town
     // is the more urgent thing under the pointer.
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
@@ -670,6 +684,9 @@ void Play::leftClick() {
     if (pointedFolk_ >= 0) {
         request.kind = sim::Request::Kind::Talk;
         request.target = uint32_t(pointedFolk_);
+    } else if (pointedAt_ == 0 && pointedLying_ != 0) {
+        request.kind = sim::Request::Kind::Pick;
+        request.target = pointedLying_;
     } else if (pointedAt_ != 0) {
         request.kind = sim::Request::Kind::Attack;
         request.target = pointedAt_;
@@ -775,6 +792,25 @@ bool Play::talkTo(const std::string& name) {
     }
     core::logError("--talk: nobody called %s here", name.c_str());
     return false;
+}
+
+void Play::dropsOnScreen(const float* viewProj, int width, int height,
+                         std::vector<OnScreen>& out) const {
+    out.clear();
+    if (!ground_) return;
+    const float metresPerTile = ground_->metresPerTile();
+    for (const sim::Lying& one : realm_.lying()) {
+        const float x = (float(one.column) + 0.5f) * metresPerTile;
+        const float z = -(float(one.row) + 0.5f) * metresPerTile;
+        // MU2's LabelLift, thirty units over the thing, and the thing a hand's height up.
+        const float world[4] = {x, ground_->heightAt(x, z) + 0.4f, z, 1.0f};
+        float clip[4];
+        bx::vec4MulMtx(clip, world, viewProj);
+        if (clip[3] <= 0.0f) continue;
+        const float nx = clip[0] / clip[3], ny = clip[1] / clip[3];
+        if (nx < -1.1f || nx > 1.1f || ny < -1.1f || ny > 1.1f) continue;
+        out.push_back({one.id, (nx * 0.5f + 0.5f) * float(width), (0.5f - ny * 0.5f) * float(height)});
+    }
 }
 
 }  // namespace mu::game

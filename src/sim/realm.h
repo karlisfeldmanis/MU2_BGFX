@@ -65,6 +65,21 @@ enum class What : uint8_t {
     Served,    // a merchant's counter opened: a: the townsperson's index, b: MU's NPC number
     Bought,    // a: the item row, b: the price, c: the bag slot
     Sold,      // a: the item row, b: what was paid, c: the bag slot it left
+    Dropped,   // something left on the ground: a: its id, b: the item row or -1 for Zen,
+               // c: the Zen or the plus
+    Picked,    // a: its id, b: the bag slot or -1 for Zen, c: the Zen
+    Vanished,  // a: its id: it lay too long
+};
+
+// A thing on the ground: an item or a pile of Zen, where a death left it, until it is picked
+// up or it has lain its minute. MU2's `Lying`: an id the drawing knows it by, a tile, and a
+// tick it vanishes on -- none of which survive being picked up, which is why it is not a Held.
+struct Lying {
+    uint32_t id = 0;
+    Held what;            // empty for Zen
+    int64_t zen = 0;
+    int32_t column = 0, row = 0;
+    int64_t vanishesAt = 0;
 };
 
 // One thing that happened, flat and copyable. The numbers mean what the enum above says they
@@ -160,7 +175,8 @@ struct Body {
 struct Request {
     // Talk: walk to a townsperson (`target` is his index in Tables::folk) and, within the
     // counter's reach, be served. Any other order closes the counter.
-    enum class Kind : uint8_t { None, WalkTo, Attack, Stop, Talk } kind = Kind::None;
+    // Pick: walk to a thing on the ground (`target` is its id) and take it on arrival.
+    enum class Kind : uint8_t { None, WalkTo, Attack, Stop, Talk, Pick } kind = Kind::None;
     int32_t column = 0, row = 0;
     uint32_t target = 0;
 };
@@ -245,6 +261,9 @@ public:
     // Whether he is close enough to be served by this townsperson right now. Asked again on
     // every purchase and sale, not once when the counter opened.
     bool serving(int folk) const;
+
+    // ---- the ground (sprint 7) ------------------------------------------------------------
+    const std::vector<Lying>& lying() const { return lying_; }
     void step();
 
     int64_t tick() const { return tick_; }
@@ -275,6 +294,8 @@ private:
     void raiseBeast(Body& beast);
     void reviveHero();
     void rearm(Body& hero);
+    void leave(const Body& dead, const Body& killer);
+    bool take(size_t index);
     void sip();
     bool send(Body& one, int column, int row);
     void halt(Body& one);
@@ -307,6 +328,7 @@ private:
     Satchel bag_;
     int64_t money_ = 0;
     int trading_ = -1;
+    std::vector<Lying> lying_;
     int64_t potionUntil_ = 0;
     // A potion's worth arrives in three instalments, 20% 60% 20% at 200, 600 and 200 ms
     // (MU2's Realm.Consume, off OpenMU's handler). A fixed ring: a potion every half second
