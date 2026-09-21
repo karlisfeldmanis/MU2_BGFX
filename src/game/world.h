@@ -8,6 +8,7 @@
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/lamps.h"
+#include "game/ornaments.h"
 #include "game/play.h"
 #include "game/sway.h"
 #include "game/town.h"
@@ -46,6 +47,7 @@ public:
     const Lamps& lamps() const { return lamps_; }
     Sway& sway() { return sway_; }
     const Sway& sway() const { return sway_; }
+    Ornaments& ornaments() { return ornaments_; }
     Play& played() { return play_; }
     const Play& played() const { return play_; }
 
@@ -73,6 +75,7 @@ private:
     Town town_;
     Lamps lamps_;
     Sway sway_;
+    Ornaments ornaments_;
     Figures figures_;
     Crowd crowd_;
     Play play_;

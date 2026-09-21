@@ -1062,6 +1062,10 @@ int main(int argc, char** argv) {
                 world.sway().update(float(deltaSeconds), args.cullChunks ? viewProj : nullptr,
                                     renderer, world.town());
             }
+            // What rides those bones, on this frame's pose: the fountain's spray and the
+            // merchant animal's lanterns. See game/ornaments.h.
+            world.ornaments().update(float(deltaSeconds), world.sway());
+            world.ornaments().gather(renderer.effects(), world.sway());
             // The town's drawables are gathered fresh each frame into one vector that keeps
             // its capacity: a frame appends to a flat array, as foundation 7 says, and
             // allocates nothing after the first.

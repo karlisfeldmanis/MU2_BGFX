@@ -65,6 +65,11 @@ public:
     // own place -- rigid, or, for a bow with its own small rig, against the renderer's bind
     // row. A bow's own clip is owed with the items.
     void gather(int row, std::vector<gfx::Drawable>& out) const;
+    // Where `local` -- a point in bone `bone`'s own frame, in metres -- stands in the world on
+    // the last pose: the bone's world matrix, then the placement. False when the bone was not
+    // posed. What MU's `b->TransformPosition(BoneTransform[n], p, Position)` does, for what
+    // rides a bone without being drawn as a mesh: a lantern's glow, a spray's puff.
+    bool pointOn(int bone, const float local[3], float out[3]) const;
 
     const FigureBody* body() const { return body_; }
     int clip() const { return clip_; }

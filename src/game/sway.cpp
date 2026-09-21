@@ -102,6 +102,7 @@ bool Sway::open(const std::string& assetDir, const std::string& world, const Tow
     }
 
     size_t held = 0;
+    slotOf_.assign(town.cooked().instances.size(), -1);
     for (uint32_t i = 0; i < town.cooked().instances.size(); ++i) {
         const content::TownInstance& placement = town.cooked().instances[i];
         if (placement.model >= town.cooked().models.size()) continue;
@@ -133,6 +134,7 @@ bool Sway::open(const std::string& assetDir, const std::string& world, const Tow
         instance.centre[2] = placement.position[2];
         instance.radius = (bounds.radius * kSwingAllowance + offset) * placement.scale *
                           kShadowAllowance;
+        slotOf_[i] = int32_t(instances_.size());
         instances_.push_back(std::move(instance));
     }
 
@@ -146,6 +148,7 @@ bool Sway::open(const std::string& assetDir, const std::string& world, const Tow
 
 void Sway::shutdown() {
     instances_.clear();
+    slotOf_.clear();
     models_.clear();
     scratch_.clear();
     posed_ = 0;
@@ -161,11 +164,13 @@ void Sway::update(float seconds, const float* viewProj, gfx::Renderer& renderer,
         instance.figure.update(seconds, instance.clipRate);
         if (viewProj && !frustum.holds(instance.centre, instance.radius)) {
             town.setPaletteRow(instance.townIndex, -1);
+            instance.posed = false;
             continue;
         }
         const int bones = instance.figure.pose(scratch_.data());
         const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
         town.setPaletteRow(instance.townIndex, row);
+        instance.posed = bones > 0;
         ++posed_;
     }
 }

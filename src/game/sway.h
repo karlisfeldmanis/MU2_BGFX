@@ -46,6 +46,15 @@ public:
     void update(float seconds, const float* viewProj, gfx::Renderer& renderer, Town& town);
 
     size_t swayingCount() const { return instances_.size(); }
+    // The figure standing at town instance `townIndex` if it was posed on the last update --
+    // in sight, so its bones are where they are drawn -- or null. What rides a bone (the
+    // fountain's spray, a lantern's glow: game/ornaments.h) asks here, and is only thrown
+    // where MU would have drawn the object at all.
+    const Figure* posedAt(uint32_t townIndex) const {
+        if (townIndex >= slotOf_.size() || slotOf_[townIndex] < 0) return nullptr;
+        const Instance& instance = instances_[size_t(slotOf_[townIndex])];
+        return instance.posed ? &instance.figure : nullptr;
+    }
     // How many were posed on the last update -- the palette rows this spent.
     size_t posedCount() const { return posed_; }
 
@@ -70,10 +79,12 @@ private:
         // enough for the shadow it throws into the frame from just outside it.
         float centre[3] = {0, 0, 0};
         float radius = 1.0f;
+        bool posed = false;  // on the last update
     };
 
     std::unordered_map<std::string, Model> models_;
     std::vector<Instance> instances_;
+    std::vector<int32_t> slotOf_;  // town instance -> index into instances_, or -1
     std::vector<float> scratch_;  // kMaxBones x 12, reused every pose so nothing allocates
     size_t posed_ = 0;
 };
