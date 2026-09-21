@@ -700,8 +700,10 @@ bool Realm::turn(Body& one) {
     // One tick's worth, and the tick is the only clock: 900 degrees a second at 20 Hz is 45
     // degrees a tick, so a full reversal takes four ticks.
     const float most = kTurnDegrees * kToRadians / 20.0f;
-    one.facing = std::fabs(apart) <= most ? one.aim
-                                          : one.facing + (apart < 0.0f ? -most : most);
+    // Kept within a half turn either side of nothing: a hand that keeps clicking behind him
+    // wound it past 400 degrees, harmless to every reader but a trap for the next one.
+    one.facing = wrapped(std::fabs(apart) <= most ? one.aim
+                                                  : one.facing + (apart < 0.0f ? -most : most));
     one.turning = std::fabs(wrapped(one.aim - one.facing)) > kPivotDegrees * kToRadians;
     return one.turning;
 }

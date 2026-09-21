@@ -21,6 +21,8 @@ constexpr double kTickSeconds = 1.0 / 20.0;
 // debt and repaid it a little at a time; here the debt is simply forgiven, because a single
 // player game has nobody to be out of step with.
 constexpr int kMostTicks = 5;
+// The least time between two ticks taken early for a click, in seconds. See Play::update.
+constexpr float kEarlyApart = 0.5f;
 
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the
@@ -321,13 +323,21 @@ void Play::update(double seconds) {
     // here: the sim still ticks twenty times a second, one interval is simply cut short.
     // Invention; MU answers a click on its next frame, and so did this at 20 Hz.
     //
+    // ONLY for a click that sets him off from a stand, and at most one every kEarlyApart.
+    // Given to every click it was a way to run the sim faster than 20 Hz: a hand spamming
+    // clicks mid-walk cut every interval short, so he walked faster than he walks and so did
+    // everything else, in a stutter. Mid-walk the delay is not felt anyway -- he is already
+    // moving, and the new route takes over on the next tick from where he stands.
+    //
     // The picture must not jump for it. Every body is drawn part way between its last two
     // ticks, and a tick taken early would move that drawn point on by whatever was left of the
     // interval -- a few centimetres of pop for everything walking. So each body's drawn
     // position is caught first and becomes the `was` of the new tick, and the drawing carries
     // on from exactly where it was.
+    sinceEarly_ += float(seconds);
     const bool early = stepNow_ && accumulator_ < kTickSeconds;
     stepNow_ = false;
+    if (early) sinceEarly_ = 0.0f;
     if (early) {
         for (Drawn& one : drawn_) {
             one.caughtX = one.wasX + (one.nowX - one.wasX) * through_;
@@ -820,7 +830,10 @@ void Play::leftClick() {
         return;
     }
     realm_.ask(request);
-    stepNow_ = true;
+    // Only from a stand; see Play::update for why never while walking.
+    stepNow_ = !realm_.hero().walking && sinceEarly_ >= kEarlyApart &&
+               (request.kind != sim::Request::Kind::WalkTo ||
+                request.column != realm_.hero().column() || request.row != realm_.hero().row());
     // A walk, a pickup or a talk puts the marker where the walk ends; a fight takes it away,
     // as MU2's did -- an attack never shows one.
     mark_ = request.kind != sim::Request::Kind::Attack;
@@ -832,7 +845,6 @@ void Play::rightClick() {
     sim::Request request;
     request.kind = sim::Request::Kind::Stop;
     realm_.ask(request);
-    stepNow_ = true;
     mark_ = false;
     marker_.dismiss();
 }

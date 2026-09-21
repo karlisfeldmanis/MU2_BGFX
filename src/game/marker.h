@@ -15,7 +15,8 @@
 //     half of it;
 //   * the pin drops onto the spot and turns, where MU2 stood it still;
 //   * an arrival fades it in a sixth of a second, where MU2 cut it;
-//   * a second click on the same tile puts it down again, where MU2's saw no change.
+//   * a second click on the same tile puts it down again, where MU2's saw no change, and a
+//     click within 0.4 s of the last moves it without replaying it, so spam does not strobe.
 //
 // It is `game`: it knows a ground and a click. The pass it draws through knows neither.
 #pragma once
@@ -73,6 +74,7 @@ private:
     float pulseAcross_ = 1.8f;
     bool pulseOpening_ = false;
     float seconds_ = 0.0f;               // real seconds since show(), for the pin's drop
+    float sinceClick_ = 1.0f;            // real seconds since the last click, replayed or not
 };
 
 }  // namespace mu::game

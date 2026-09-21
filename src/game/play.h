@@ -180,6 +180,7 @@ private:
     // A click was made this frame: run the next tick now instead of waiting up to 50 ms for
     // it. See Play::update.
     bool stepNow_ = false;
+    float sinceEarly_ = 1.0f;  // seconds since a click last took a tick early
     // The cues that came due this frame. A member and not a local so that it keeps its
     // capacity: a fight must not allocate to show itself.
     std::vector<Cue> due_;

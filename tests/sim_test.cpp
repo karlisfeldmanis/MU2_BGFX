@@ -564,6 +564,85 @@ void testLoot(const content::Tables& tables) {
     check(realm.sellItem(sim::kWeaponRight) < 0, "and what is worn is never sold");
 }
 
+// A hand spamming clicks: a new walk somewhere near him on most ticks, for a minute, in the
+// town where nothing fights. The walk must never go faster than his pace, never travel far
+// off where he faces (the moonwalk), never stand on a tile the grid refuses, never hang
+// "walking" without moving for longer than a turn takes after the LAST click (a hand that keeps
+// reversing is answered by turning to each new order, which is right), and when it stops, end
+// exactly on the last tile asked for.
+void testSpamClicks(const content::Tables& tables) {
+    std::printf("spam clicks\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 138, 124), "a realm raises for the clicking");
+    uint32_t seed = 12345;
+    const auto next = [&seed]() {
+        seed ^= seed << 13;
+        seed ^= seed >> 17;
+        seed ^= seed << 5;
+        return seed;
+    };
+    constexpr float kToDegrees = 180.0f / 3.14159265f;
+    float fastest = 0.0f, widest = 0.0f;
+    int longestStall = 0, stall = 0, asked = 0;
+    bool standable = true;
+    int lastColumn = -1, lastRow = -1;
+    for (int tick = 0; tick < 1200; ++tick) {
+        const sim::Body& hero = realm.hero();
+        bool clicked = false;
+        if (tick < 1100 && next() % 3 != 0) {
+            sim::Request walk;
+            walk.kind = sim::Request::Kind::WalkTo;
+            walk.column = hero.column() + int(next() % 13) - 6;
+            walk.row = hero.row() + int(next() % 13) - 6;
+            if (tables.grid.open(walk.column, walk.row, content::kWallCharacter)) {
+                realm.ask(walk);
+                clicked = true;
+                lastColumn = walk.column;
+                lastRow = walk.row;
+                ++asked;
+            }
+        }
+        const float x = hero.x, y = hero.y;
+        realm.step();
+        const float dx = realm.hero().x - x, dy = realm.hero().y - y;
+        const float moved = std::sqrt(dx * dx + dy * dy);
+        fastest = std::max(fastest, moved);
+        if (moved > 1e-4f) {
+            const float off = std::fabs(std::remainder(std::atan2(dy, dx) - realm.hero().facing,
+                                                       6.28318530718f)) * kToDegrees;
+            widest = std::max(widest, off);
+            stall = 0;
+        } else if (realm.hero().walking) {
+            stall = clicked ? 1 : stall + 1;
+            longestStall = std::max(longestStall, stall);
+            if (std::getenv("STALL_TRACE")) {
+                std::printf("    tick %d stall %d at %.3f,%.3f facing %.1f aim %.1f turning %d "
+                            "route %zu onStep %zu next %d,%d\n", tick, stall, realm.hero().x,
+                            realm.hero().y, realm.hero().facing * kToDegrees,
+                            realm.hero().aim * kToDegrees, int(realm.hero().turning),
+                            realm.hero().route.size(), realm.hero().onStep,
+                            realm.hero().route.empty() ? -1 : realm.hero().route[realm.hero().onStep].column,
+                            realm.hero().route.empty() ? -1 : realm.hero().route[realm.hero().onStep].row);
+            }
+        } else {
+            stall = 0;
+        }
+        standable &= tables.grid.open(realm.hero().column(), realm.hero().row(),
+                                      content::kWallCharacter);
+    }
+    std::printf("  %d clicks; fastest %.4f tiles a tick (pace %.4f), widest %.1f degrees off "
+                "his facing, longest stall %d ticks\n",
+                asked, fastest, realm.hero().speed, widest, longestStall);
+    check(asked > 500, "the hand clicked hundreds of times");
+    check(fastest <= realm.hero().speed + 1e-4f, "never faster than his pace");
+    check(widest <= 90.0f, "never walking sideways or backwards");
+    check(longestStall <= 2, "never walking on the spot longer than a turn");
+    check(standable, "never on a tile the grid refuses");
+    check(!realm.hero().walking && realm.hero().x == float(lastColumn) &&
+              realm.hero().y == float(lastRow),
+          "and ends standing exactly on the last tile asked for");
+}
+
 }  // namespace
 
 int main() {
@@ -583,6 +662,7 @@ int main() {
     testSwings(tables);
     testRandom();
     testRouter(tables);
+    testSpamClicks(tables);
     testDeterminism(tables);
     testInvariants(tables);
     testItems(tables);

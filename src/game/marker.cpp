@@ -47,6 +47,10 @@ constexpr float kPinDrop = 0.4f;
 constexpr float kPinDropSeconds = 0.15f;
 constexpr float kPinTurn = 1.5707963f;
 
+// Invention: a click within this many seconds of the last moves the marker without
+// replaying it.
+constexpr float kRespam = 0.4f;
+
 // Invention: on arrival the marker fades in this long, where MU2 cut it on the frame.
 constexpr float kLeaveSeconds = 0.15f;
 
@@ -127,6 +131,17 @@ void Marker::shutdown() {
 }
 
 void Marker::show(float x, float z) {
+    // A click hard on the heels of the last -- a hand spamming -- moves the marker and gives
+    // it its whole life again, but does not replay the drop and the rings: replayed ten times
+    // a second they strobe. Invention.
+    const bool respam = live_ && leaving_ < 0.0f && sinceClick_ < kRespam;
+    sinceClick_ = 0.0f;
+    if (respam) {
+        x_ = x;
+        z_ = z;
+        lived_ = 0.0f;
+        return;
+    }
     live_ = true;
     x_ = x;
     z_ = z;
@@ -149,6 +164,7 @@ void Marker::update(float seconds) {
     const float step = seconds * kReferenceFps;
     lived_ += step;
     seconds_ += seconds;
+    sinceClick_ += seconds;
     if (leaving_ >= 0.0f) {
         leaving_ -= seconds;
         if (leaving_ <= 0.0f) {
