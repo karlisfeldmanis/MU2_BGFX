@@ -1050,9 +1050,18 @@ int main(int argc, char** argv) {
                 // surface, over what the default sheet's noon gives it.
                 world.lamps().gather(renderer.effects(), eye.target, daylightOf(lighting));
             }
-            // The trees, in the wind: before the town is gathered, since each placement's
-            // pose rides in its own instance the same way a glow's level does.
-            world.sway().update(float(deltaSeconds), renderer, world.town());
+            // The town's own animation: before the town is gathered, since each placement's
+            // pose rides in its own instance the same way a glow's level does. Only what the
+            // camera can see is posed -- see Sway::update.
+            {
+                float view[16];
+                float proj[16];
+                float viewProj[16];
+                renderer.cameraMatrices(eye, view, proj);
+                bx::mtxMul(viewProj, view, proj);
+                world.sway().update(float(deltaSeconds), args.cullChunks ? viewProj : nullptr,
+                                    renderer, world.town());
+            }
             // The town's drawables are gathered fresh each frame into one vector that keeps
             // its capacity: a frame appends to a flat array, as foundation 7 says, and
             // allocates nothing after the first.
@@ -1219,7 +1228,7 @@ int main(int argc, char** argv) {
                                           daylightOf(lighting));
             }
             if (bench.hasStage()) {
-                bench.stageSway().update(float(deltaSeconds), renderer, bench.stageTown());
+                bench.stageSway().update(float(deltaSeconds), nullptr, renderer, bench.stageTown());
             }
             renderer.draw(bench.camera(), lighting, bench.gather(renderer), bench.ground());
             drawList();

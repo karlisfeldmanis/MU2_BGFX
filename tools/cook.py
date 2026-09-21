@@ -642,6 +642,10 @@ def cook_meshes(world, out_dir):
     os.makedirs(mesh_dir, exist_ok=True)
 
     clips_manifest = {}
+    # The models whose clip MU never runs -- `o->Velocity = 0.f`, the treasure chest. Their
+    # clip is still cooked, because MU draws them on its first key and not in the bind pose;
+    # the game holds them there. See index.py's `still` and game/sway.cpp.
+    still = []
     triangles = vertices = cooked = source = models = 0
     for model in sorted({one["model"] for one in map_data["objects"]}):
         path = os.path.join(world_dir, model, f"{model}.glb")
@@ -662,8 +666,11 @@ def cook_meshes(world, out_dir):
         clip_path = os.path.join(clip_dir, model + ".muc")
         if cook_world_clip(model, path, clip_path) is not None:
             clips_manifest[model] = os.path.relpath(clip_path, ASSETS)
+            if carried.get(model, {}).get("still"):
+                still.append(model)
     with open(os.path.join(out_dir, "clips.json"), "w") as handle:
-        json.dump({"version": 1, "clips": clips_manifest}, handle, indent=1, sort_keys=True)
+        json.dump({"version": 1, "clips": clips_manifest, "still": sorted(still)}, handle,
+                  indent=1, sort_keys=True)
     print(f"cook: {models} meshes, {triangles} triangles, {vertices} vertices, "
           f"{cooked / 1e6:.1f} MB of .mum out of {source / 1e6:.1f} MB of .glb, "
           f"{len(clips_manifest)} with their own clip")
@@ -675,6 +682,33 @@ def clip_slot(name):
     if name and name.startswith("action") and name[len("action"):].isdigit():
         return int(name[len("action"):])
     return -1
+
+
+def resample_track(keys, values, times, rotation):
+    """One channel's LINEAR track, read at `times` -- slerp for a quaternion, lerp otherwise."""
+    out = []
+    span = 0
+    for (at,) in times:
+        while span + 2 < len(keys) and keys[span + 1][0] <= at:
+            span += 1
+        t0, t1 = keys[span][0], keys[min(span + 1, len(keys) - 1)][0]
+        f = 0.0 if t1 <= t0 else min(max((at - t0) / (t1 - t0), 0.0), 1.0)
+        a, b = values[span], values[min(span + 1, len(values) - 1)]
+        if not rotation:
+            out.append(tuple(x + (y - x) * f for x, y in zip(a, b)))
+            continue
+        dot = sum(x * y for x, y in zip(a, b))
+        if dot < 0.0:
+            b, dot = tuple(-y for y in b), -dot
+        if dot > 0.9995:
+            q = tuple(x + (y - x) * f for x, y in zip(a, b))
+        else:
+            theta = math.acos(min(dot, 1.0))
+            sa, sb = math.sin((1.0 - f) * theta), math.sin(f * theta)
+            q = tuple((x * sa + y * sb) / math.sin(theta) for x, y in zip(a, b))
+        length = math.sqrt(sum(x * x for x in q)) or 1.0
+        out.append(tuple(x / length for x in q))
+    return out
 
 
 def cook_clips(document, binary, out_path, names, travel, holds, cloth=False):
@@ -734,26 +768,35 @@ def cook_clips(document, binary, out_path, names, travel, holds, cloth=False):
         slot = clip_slot(name)
         rotation = {}
         translation = {}
-        times = None
+        # The densest key list is the clip's; a channel on another list is resampled onto it.
+        # Carriage01 is the case: four of its channels (Bone02, Bone06, Bone08) carry 21 keys
+        # over the same 5.25 s the other 24 carry 22 in -- the span agrees, the keys do not.
+        # Linear between the channel's own keys, which is what glTF's LINEAR means, so
+        # nothing is invented. A clip whose channels already agree is baked as it was.
+        lists = [accessor(animation["samplers"][c["sampler"]]["input"])
+                 for c in animation["channels"]]
+        times = max(lists, key=len) if lists else None
         for channel in animation["channels"]:
             sampler = animation["samplers"][channel["sampler"]]
             if sampler.get("interpolation", "LINEAR") != "LINEAR":
                 raise ValueError(f"{name}: {sampler['interpolation']} interpolation, and this "
                                  f"cook bakes LINEAR keys as they stand")
             keys = accessor(sampler["input"])
-            if times is None:
-                times = keys
-            elif len(times) != len(keys) or abs(times[-1][0] - keys[-1][0]) > 1e-6:
-                raise ValueError(f"{name}: its channels do not share one key-time list, so a "
-                                 f"flat bake would have to resample")
+            if abs(times[-1][0] - keys[-1][0]) > 1e-6 or abs(times[0][0] - keys[0][0]) > 1e-6:
+                raise ValueError(f"{name}: its channels do not span one time, so a flat bake "
+                                 f"would have to invent keys past a channel's own end")
             target = channel["target"]
             index = place.get(target["node"])
             if index is None:
                 continue
+            values = accessor(sampler["output"])
+            if len(keys) != len(times) or any(abs(a[0] - b[0]) > 1e-6
+                                               for a, b in zip(keys, times)):
+                values = resample_track(keys, values, times, target["path"] == "rotation")
             if target["path"] == "rotation":
-                rotation[index] = accessor(sampler["output"])
+                rotation[index] = values
             elif target["path"] == "translation":
-                translation[index] = accessor(sampler["output"])
+                translation[index] = values
             else:
                 raise ValueError(f"{name}: a {target['path']} channel, and this content has "
                                  f"only rotation and translation")

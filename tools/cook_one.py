@@ -273,6 +273,16 @@ def cook_item(kind, area, meshes, extra, texcook):
             clip_path = os.path.join(area_dir, "clips", mesh_name + ".muc")
             if cook_world_clip(mesh_name, path, clip_path) is not None:
                 clips["clips"][mesh_name] = os.path.relpath(clip_path, ASSETS)
+                # Held on its first key if MU never runs it -- see cook.py's `still`.
+                listed = {one["name"]: one for one in
+                          load_json(os.path.join(ASSETS, "index.json"), {}).get("objects", [])
+                          if one.get("world") in (area, None)}
+                held = set(clips.get("still", []))
+                if listed.get(mesh_name, {}).get("still"):
+                    held.add(mesh_name)
+                else:
+                    held.discard(mesh_name)
+                clips["still"] = sorted(held)
                 changed = True
                 print(f"cook_one: {mesh_name}: its own clip -> "
                       f"{os.path.relpath(clip_path, ROOT)}")
