@@ -209,12 +209,15 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         }
         drawn_.push_back(std::move(one));
     }
-    // The townsfolk: a figure each where the cook named one. MU2's Look, clockwise from West,
-    // as a direction on the tile grid (rows run south), then the yaw the drawing uses for any
-    // facing -- the same two lines follow() turns a body's facing with.
+    // The townsfolk: a figure each where the cook named one, facing where MU faces them.
+    //
+    // NOT the Look's name read literally. MU2 measured this against a landmark (Folk.cs,
+    // Townsfolk.Looking): Harold stands at 183,137 facing his campfire at 184,134.5, and his
+    // entry says South -- so the table's values are three eighths off their names, and
+    // `(look - 3) x 45 degrees` is the bearing from north (row decreasing) toward east (column
+    // increasing). Read literally, as this first was, every townsperson stood turned away:
+    // Lumen faced the back wall of her bar instead of the room.
     folk_.clear();
-    static const int kLookDx[9] = {0, -1, -1, 0, 1, 1, 1, 0, -1};
-    static const int kLookDy[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
     const float metresPerTile = ground_ ? ground_->metresPerTile() : 1.0f;
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
         const content::Townsperson& person = tables_.folk[i];
@@ -222,7 +225,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             person.figure.empty() || !figures_ ? nullptr : figures_->body(person.figure);
         if (!look) continue;
         const int facing = person.look >= 1 && person.look <= 8 ? person.look : 3;
-        const float angle = std::atan2(float(kLookDy[facing]), float(kLookDx[facing]));
+        const float bearing = float(((facing - 3) % 8 + 8) % 8) * (bx::kPi / 4.0f);
+        // The bearing as a direction on the tile grid, then as the sim's own facing angle,
+        // then the yaw -- the same two lines follow() turns a body's facing with.
+        const float angle = std::atan2(-std::cos(bearing), std::sin(bearing));
         const float yaw = std::atan2(std::cos(angle), -std::sin(angle));
         const float x = (float(person.x) + 0.5f) * metresPerTile;
         const float z = -(float(person.y) + 0.5f) * metresPerTile;
