@@ -26,6 +26,7 @@
 #include "gfx/lighting.h"
 #include "gfx/overlay.h"
 #include "game/desk.h"
+#include "game/litter.h"
 #include "gfx/renderer.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
@@ -734,6 +735,10 @@ int main(int argc, char** argv) {
     double deltaSeconds = 0.0;
     std::vector<gfx::Drawable> townDrawables;
     std::vector<gfx::Drawable> townCasters;
+    // What a death left, on the ground: the models under the names the desk already draws.
+    // One store of item models for both: the windows' pictures and what lies on the grass.
+    game::ItemModels itemModels;
+    game::Litter litter;
 
     if (args.shadowView || args.shadowNoise >= 0) {
         renderer.setShadowDebug(args.shadowView ? 1 : 0, args.shadowNoise);
@@ -1019,6 +1024,9 @@ int main(int argc, char** argv) {
                                     frame == last, c.right);
                     }
                     desk.update(float(deltaSeconds), window, world.played());
+                    // And the pictures for whatever the windows now hold: MU2's Panel.Repaint,
+                    // which redraws a stage only when what stands on it changed or turns.
+                    desk.photograph(renderer, deltaSeconds);
                 }
                 const bool windowed = desk.ready() && desk.takesPointer();
                 world.played().point(world.camera(), view, proj, pointerX, pointerY,
@@ -1084,6 +1092,15 @@ int main(int argc, char** argv) {
                 const float right[3] = {view[0], view[4], view[8]};
                 world.played().showing().gather(renderer.effects(), right);
                 world.played().gatherMarker(renderer.effects());
+                // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
+                // laid down where they land.
+                if (!itemModels.tables()) {
+                    itemModels.open(world.played().realm().tables(), MU2_ASSET_DIR, &textures);
+                    litter.open(&itemModels, &world.ground());
+                    desk.useModels(&itemModels);
+                }
+                litter.update(world.played().realm(), deltaSeconds);
+                litter.gather(townDrawables, casters ? &townCasters : nullptr);
             }
 
             // The crowd goes into the same two lists as the town, and through the same two
@@ -1337,6 +1354,8 @@ int main(int argc, char** argv) {
     const bool withinBudget = stats.finish(args.budget);
 
     bench.shutdown();
+    renderer.closeStages();
+    itemModels.shutdown();
     desk.shutdown();
     overlay.shutdown();
     world.shutdown();

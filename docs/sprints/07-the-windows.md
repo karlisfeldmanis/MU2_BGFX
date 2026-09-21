@@ -143,9 +143,45 @@ is not a migration.
   the two Apples that stand in for them.
 - **The bindings are the interface's** until sprint 9's save writes them.
 
-**Not done yet:** the item pictures (step 5's stage: the bag and the shelf draw a name in
-each box until it lands, which waits on the reflection-probe work in the renderer), and so
-the potion boxes and the drops on the ground wait with them.
+### Step 5's stage, and the models on the ground (2026-09-21)
+
+- **The pictures are the real models.** `game/items_stage` stands what a window holds on a
+  stage its own size and `Renderer::drawStage` (`gfx/stage_pass.cpp`, `shaders/fs_stage.sc`)
+  photographs it into an RGBA8 target at 4x MSAA, which the window draws like any other
+  image. Two stages, a view each: `ViewStageBag` 53 and `ViewStageShelf` 60, both after the
+  HUD, so a restocked window shows its new picture on the next frame and the target keeps the
+  old one meanwhile.
+- **Its own room, and none of the frame's.** MU2's `Panel.Stage` number for number: a key
+  light at 0.7 from up, left and front (Godot rotation -0.7, -0.6, 0), a diffuse fill of
+  (0.65, 0.65, 0.7) at 1.7, and `Panel.Studio`'s softbox -- brightest overhead, dark
+  underneath, near-neutral and a little warm -- for the metals to reflect, since a metal has
+  no diffuse term and on one directional light the Plate set is a black silhouette. No sun,
+  no split, no screen-space AO, no probe: the item is not where the frame's shadow map is.
+  `fs_stage` writes sRGB, because the interface draws after the tonemap.
+- **One store of models for both the windows and the ground** (`game/item_models`): the
+  cooked `.mum` where the wardrobe has one, the row's own glb where it does not -- the
+  potions, jewels, scrolls and Zen, which `tools/cook.py --only wardrobe` does not take. Read
+  on first sight of a kind and kept.
+- **What a death leaves is drawn** (`game/litter`), MU2's `Drops`: tossed 90 units up at 8 a
+  reference frame against a gravity of 6, one bounce at a third of the arrival speed, then
+  laid down by measurement -- longest extent along the ground, shortest up -- at a yaw hashed
+  from the drop's own id. The weapons, shields, armour, trousers and gloves sleep; a helm
+  and a pair of boots stand, as MU's own range leaves them. Zen is a heap of Gold01, coin by
+  coin: `clamp(sqrt(amount) / 2, 3, 80)` of them, each with its own turn, fall and toss.
+  They cast into the sun's list, and they are out of the reflection probe.
+- **Measured**: 4.015 ms median frame over 2,000 frames of the spider field with no windows,
+  4.062 with the bag open and its pictures drawn -- 0.05 ms, inside the present account, and
+  the drops are in both. A stage redraws only when what stands on it changes or something on
+  it turns, as MU2's `Panel.Repaint` does.
+- **Seen**: a Hand Axe and a Crossbow lying labelled on the grass with two Zen heaps beside
+  them, the bag drawing the worn axe and the picked-up pieces, and Lumen's shelf drawing the
+  Ale and the Town Portal Scroll under their prices.
+
+**Not done yet:** the potion boxes on the quick bar still draw a name -- the HUD is a third
+window and wants a stage of its own -- and the sparkle (`CreateShiny`) a drop throws off
+every couple of seconds, which waits on the effects it would use. `Shield01` has no cooked
+mesh in the figures' wardrobe, so a hero told to hold one holds nothing; that is the cook's,
+not the window's.
 
 ### Findings
 

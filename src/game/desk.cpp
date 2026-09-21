@@ -30,7 +30,15 @@ static bool substitutes(const content::Tables& tables, int32_t carried, int32_t 
 bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
                 content::Textures* textures) {
     if (!interface_.init(shaderDir)) return false;
+    shaderDir_ = shaderDir;
+    assetDir_ = assetDir;
+    textures_ = textures;
     arts_.open(assetDir, textures);
+    // A stage each, so the bag and the shelf can hold different things at once, and each is
+    // the window's own size: one pass draws every picture in a window and they line up with
+    // its cells for free.
+    bagStage_ = &bagStagePicture_;
+    shelfStage_ = &shelfStagePicture_;
     hud_.open(interface_, &arts_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
@@ -39,9 +47,15 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     return true;
 }
 
-void Desk::shutdown() { interface_.shutdown(); }
+void Desk::shutdown() {
+    bagStagePicture_.shutdown();
+    shelfStagePicture_.shutdown();
+    interface_.shutdown();
+}
 
 void Desk::update(float seconds, const gfx::Window& window, Play& play) {
+    // The store is handed in from outside, with the item rows already in it; until it is, the
+    // windows draw each thing's name in its cell.
     Pointer pointer;
     window.pointer(&pointer.x, &pointer.y);
     pointer.pressed = window.clicked(0);
@@ -249,6 +263,14 @@ void Desk::labelGround(const Play& play, int width, int height) {
         ground_.rect(plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
         ground_.text(plate.x, plate.y + face.ascent(size), size, tintOf(*one), name);
     }
+}
+
+void Desk::photograph(gfx::Renderer& renderer, double seconds) {
+    // The pictures are drawn at the scale the windows are drawn at, so nothing is resampled.
+    if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
+    const float pixelsPerUnit = panel::scale();
+    if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    if (trading_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
 }
 
 void Desk::submit(bgfx::ViewId view, int width, int height) {

@@ -14,6 +14,8 @@
 #include "game/bag.h"
 #include "game/card.h"
 #include "game/hud.h"
+#include "game/item_models.h"
+#include "game/items_stage.h"
 #include "game/shelf.h"
 #include "game/panel.h"
 #include "gfx/interface.h"
@@ -46,6 +48,19 @@ public:
     // Whether the pointer this frame belongs to a window rather than to the ground.
     bool takesPointer() const { return takesPointer_; }
 
+    // The item pictures, taken after update() has said what stands on each stage and before
+    // the renderer's frame is submitted. Sprint 7 step 5: the bag and the shelf draw the real
+    // models, as MU2's Panel.Stage does and MU's RenderObjectScreen did.
+    void photograph(gfx::Renderer& renderer, double seconds);
+    // The store the pictures are read from. Not owned: the same one draws what lies on the
+    // ground, so a sword in the bag and the same sword on the grass are one mesh, and the
+    // drops do not go away with the windows.
+    void useModels(ItemModels* models) {
+        models_ = models;
+        bagStagePicture_.open(models, gfx::ViewStageBag);
+        shelfStagePicture_.open(models, gfx::ViewStageShelf);
+    }
+
     void submit(bgfx::ViewId view, int width, int height);
     // One line for the log: what the windows cost this second.
     std::string line() const;
@@ -62,6 +77,10 @@ private:
     Card card_;
     Bag bag_;
     Shelf shelf_;
+    ItemModels* models_ = nullptr;
+    ItemStage bagStagePicture_, shelfStagePicture_;
+    std::string shaderDir_, assetDir_;
+    content::Textures* textures_ = nullptr;
     Stage* bagStage_ = nullptr;
     // The names over the drops, on MU's own black plate. Rebuilt when one moves on screen.
     gfx::Canvas ground_;

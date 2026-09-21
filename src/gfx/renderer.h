@@ -158,6 +158,17 @@ public:
     // stopped being posed must be visible in a number, as foundation 7 says of culling.
     int paletteRowsRefused() const { return paletteRefused_; }
 
+    // --- the item stages, sprint 7 ------------------------------------------------------
+    // A window's item pictures: `drawables` photographed into `target` through `view` and
+    // `proj`, lit by the stage's own room (fs_stage.sc) and written as sRGB for the interface.
+    // Nothing of the frame's -- no sun, split, AO or probe -- reaches it. Opened once after
+    // init, closed before shutdown. gfx/stage_pass.cpp.
+    bool openStages(const std::string& shaderDir);
+    void closeStages();
+    void drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, uint16_t width,
+                   uint16_t height, const float* view, const float* proj,
+                   const std::vector<Drawable>& drawables);
+
     // --- the point lights ---------------------------------------------------------------
     // The static set, once, when a world opens: the lights never move, so which of them can
     // reach each 2 m cell of the ground is settled here and not per frame. `minX`, `minZ` and
@@ -318,6 +329,8 @@ private:
     bgfx::ProgramHandle bloomDownProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle bloomUpProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle skinnedGlowProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle stageProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle skinnedStageProgram_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle uSunDir_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uSunColour_ = BGFX_INVALID_HANDLE;

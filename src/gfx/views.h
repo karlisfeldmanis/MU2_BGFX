@@ -34,9 +34,13 @@ enum View : uint16_t {
     // of their own between the shadow and the shade.
     ViewProbeFace = 17,     // 17..22, a face each
     ViewProbeFilter = 23,   // 23..52, mip * 6 + face
-    // 53 is sprint 7's, for the item pictures.
+    // Sprint 7's item pictures: the bag's stage at 53 and the shelf's at 60, each its own
+    // target. After the HUD, so a restocked window shows its new picture a frame late; the
+    // target keeps the old one meanwhile. game/items_stage.h.
+    ViewStageBag = 53,
     ViewProbeChain = 54,    // 54..59, the chain of the face drawn this frame, a level each
-    ViewCount = 60,
+    ViewStageShelf = 60,
+    ViewCount = 61,
 };
 constexpr int kBloomLevels = 5;
 constexpr int kProbeSize = 128;  // the raw cube's edge, texels

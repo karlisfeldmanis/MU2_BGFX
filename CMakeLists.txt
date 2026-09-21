@@ -98,6 +98,7 @@ add_executable(mu2
   src/gfx/face.cpp
   src/gfx/overlay.cpp
   src/gfx/interface.cpp
+  src/gfx/stage_pass.cpp
   src/game/bench.cpp
   src/game/world.cpp
   src/game/town.cpp
@@ -115,6 +116,9 @@ add_executable(mu2
   src/game/shelf.cpp
   src/game/describe.cpp
   src/game/desk.cpp
+  src/game/items_stage.cpp
+  src/game/item_models.cpp
+  src/game/litter.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp
