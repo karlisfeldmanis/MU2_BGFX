@@ -337,6 +337,20 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         return false;
     }
 
+    // Which texture each tile is floored with. Not required: nothing draws from it, and the
+    // one thing that reads it -- whether the hero is indoors -- is simply never true without.
+    floors_.clear();
+    const std::string tilesFile = doc["tiles"].stringOr("");
+    if (!tilesFile.empty()) {
+        int w = 0, h = 0;
+        floors_ = readGrid(core::join(worldDir, tilesFile), &w, &h, 0);
+        if (w != size_ || h != size_) {
+            core::logError("%s is %dx%d, and the world says %d tiles a side -- no indoors",
+                           tilesFile.c_str(), w, h, size_);
+            floors_.clear();
+        }
+    }
+
     // --- the surface table ------------------------------------------------------------
     // The cook's manifest, if there is one. Absent is not an error: the land reads its own
     // .png then, which is what every run before sprint 3's cook did.
@@ -560,6 +574,11 @@ float Ground::heightAt(float x, float z) const {
 // it repeats the bounds test itself before looking at any bit, which is also what MU2's
 // Terrain.cs does; anything else added here must do the same.
 uint16_t Ground::attributesAt(int column, int row) const { return grid_.at(column, row); }
+
+int Ground::floorAt(int column, int row) const {
+    if (floors_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return -1;
+    return floors_[size_t(row) * size_t(size_) + size_t(column)];
+}
 
 // MU's own test, and the engine's only one: `(word & ~NonBlocking) < wall`, with the wall at
 // Character. It used to be `(a & 0x04) == 0 && (a & 0x08) == 0` here and the threshold in the

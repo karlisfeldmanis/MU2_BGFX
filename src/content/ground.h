@@ -86,6 +86,11 @@ public:
     // be said out loud.
     const Grid& grid() const { return grid_; }
 
+    // The tile texture a square is floored with -- tiles.png's red, MU's base layer -- or -1
+    // off the map and on a world whose json names no tile grid. It is what MU's indoor test
+    // reads: see World::indoors.
+    int floorAt(int column, int row) const;
+
     uint32_t triangleCount() const { return indexCount_ / 3; }
 
     static const bgfx::VertexLayout& layout();
@@ -103,6 +108,7 @@ private:
     float metresPerTile_ = 1.0f;
     float heightFactor_ = 1.5f;
     std::vector<float> height_;  // metres, [row * size + column]
+    std::vector<uint8_t> floors_;  // tile texture, [row * size + column]; empty when absent
     Grid grid_;
 };
 

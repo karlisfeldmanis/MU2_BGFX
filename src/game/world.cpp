@@ -18,6 +18,10 @@ constexpr float kYawDegrees = 45.0f;
 constexpr float kDistance = 8.0f;      // 800 of MU's units
 constexpr float kFocusHeight = 1.5f;   // 150 units up the body
 
+// The tile texture Lorencia floors its interiors with and uses nowhere outdoors: MuMain's
+// HeroTile == 4, and MU2's World.IndoorTile.
+constexpr int kIndoorFloor = 4;
+
 }  // namespace
 
 void World::tileToMetres(float column, float row, float* x, float* z) const {
@@ -136,6 +140,10 @@ void World::update(double seconds, bool still) {
     const float pitch = kPitchDegrees * 3.14159265f / 180.0f;
     const float yaw = kYawDegrees * 3.14159265f / 180.0f;
 
+    // The roofs, on the feet the camera is framing: the character when one is played, the
+    // focus when not, so `--at` inside a house shows the room as walking into it would.
+    town_.setRoofsHidden(indoors(x, z));
+
     camera_.target[0] = x;
     camera_.target[1] = groundY + kFocusHeight;
     camera_.target[2] = z;
@@ -152,6 +160,14 @@ bool World::characterAt(float* x, float* z) const {
     play_.focus(&column, &row);
     tileToMetres(column, row, x, z);
     return true;
+}
+
+bool World::indoors(float x, float z) const {
+    // Column is +x and row is -z. docs/conventions.md.
+    const float metresPerTile = ground_.metresPerTile();
+    const int column = int(std::floor(x / metresPerTile));
+    const int row = int(std::floor(-z / metresPerTile));
+    return ground_.floorAt(column, row) == kIndoorFloor;
 }
 
 void World::shutdown() {

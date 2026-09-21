@@ -105,6 +105,8 @@ void Town::shutdown() {
 
 void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawable>& out) {
     if (instance.model >= meshes_.size()) return;
+    // Bit 1 is a roof. tools/cook.py.
+    if (roofsHidden_ && (instance.flags & 2) != 0) return;
     const content::Mesh& mesh = meshes_[instance.model];
     if (!bgfx::isValid(mesh.vertexBuffer())) return;
 

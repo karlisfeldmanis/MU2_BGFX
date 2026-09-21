@@ -32,7 +32,8 @@ The .mut format ("MU2 town"), version 1, little-endian:
                C++ struct of those fields is too, with no implicit padding anywhere
 
 `flags` bit 0 says the placement was laid on the terrain rather than used as the map stores
-it; the rest are spare. `light` is MU's own baked terrain light at the placement's tile,
+it; bit 1 that its model is a roof, one of the pieces index.json marks `roof_fade`, which the
+game hides while the hero stands indoors. The rest are spare. `light` is MU's own baked terrain light at the placement's tile,
 which is what stops the town standing unlit on lit ground.
 
 Instances are sorted by chunk and then by model, so one chunk that survives a cull is a run
@@ -860,6 +861,13 @@ def cook_placements(world, out_dir, chunk_tiles):
         index_of[name] = len(models)
         models.append([name, os.path.relpath(path, ASSETS), bounds, 0])
 
+    # The roofs: the models MU gets out of the way when the hero is indoors. MU keeps a list
+    # of types per world (IndoorFadeTypes); MU2's asset carries it as a flag, and so does the
+    # placement here, so the game needs no table of names.
+    with open(os.path.join(ASSETS, "index.json")) as handle:
+        roofs = {one["name"] for one in json.load(handle).get("objects", [])
+                 if one.get("roof_fade")}
+
     grid_w, grid_h, _channels, heights = read_png(os.path.join(world_dir, map_data["height"]))
     light_w, light_h, light_channels, light = read_png(
         os.path.join(world_dir, map_data["light"]))
@@ -881,7 +889,7 @@ def cook_placements(world, out_dir, chunk_tiles):
 
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}
-    dropped_hidden = dropped_model = grounded = outside = 0
+    dropped_hidden = dropped_model = grounded = outside = roofed = 0
 
     for one in map_data["objects"]:
         if one.get("hidden"):
@@ -914,6 +922,9 @@ def cook_placements(world, out_dir, chunk_tiles):
             roll = 0.0
             flags |= 1
             grounded += 1
+        if one["model"] in roofs:
+            flags |= 2
+            roofed += 1
 
         # Some of MU's placements stand off the edge of its own grid -- a ship moored past
         # the shore, a tree behind the sea wall. They are drawn where they are and belong to
@@ -972,7 +983,7 @@ def cook_placements(world, out_dir, chunk_tiles):
         handle.write(header + bytes(body))
 
     print(f"cook: {written} placements in {len(chunk_records)} chunks of {chunk_tiles} tiles, "
-          f"{len(models)} models, {grounded} laid on the terrain, "
+          f"{len(models)} models, {grounded} laid on the terrain, {roofed} roofs, "
           f"{dropped_hidden} hidden and {dropped_model} without a mesh dropped, "
           f"{outside} standing off the grid, "
           f"{(len(header) + len(body)) / 1000:.0f} kB")

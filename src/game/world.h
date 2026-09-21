@@ -51,6 +51,11 @@ public:
     // frame; the camera's own target is where it stood when the camera was placed.
     bool characterAt(float* x, float* z) const;
 
+    // Whether a point is inside a building, by MU's own test, which is blunter than anybody
+    // expects: the tile texture under it is Lorencia's interior floor. No volume and no idea
+    // which house -- standing on that floor hides every roof in the town at once.
+    bool indoors(float x, float z) const;
+
 private:
     // A tile to the centre of that tile in world metres, through the map's own scale.
     void tileToMetres(float column, float row, float* x, float* z) const;

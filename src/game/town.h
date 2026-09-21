@@ -44,6 +44,14 @@ public:
     // Only the chunks whose box survives the camera's frustum.
     void gatherVisible(const float* viewProj, std::vector<gfx::Drawable>& out);
 
+    // Whether the roofs are drawn: gone or there, never between, and from the sun's list as
+    // well as the camera's, so a hidden roof takes its shadow with it. MU2's World.Step,
+    // which tried a tenth-of-a-second fade first and found a half-transparent roof worse than
+    // none -- the room and the roof both seen through each other, in the very frames the
+    // doorway matters.
+    void setRoofsHidden(bool hidden) { roofsHidden_ = hidden; }
+    bool roofsHidden() const { return roofsHidden_; }
+
     const TownCounts& counts() const { return counts_; }
     const TownCounts& casterCounts() const { return casterCounts_; }
     size_t modelCount() const { return meshes_.size(); }
@@ -60,6 +68,7 @@ private:
     TownCounts counts_;
     TownCounts casterCounts_;
     uint32_t triangles_ = 0;
+    bool roofsHidden_ = false;
     double loadSeconds_ = 0.0;
 };
 
