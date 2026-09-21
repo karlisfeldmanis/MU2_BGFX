@@ -15,11 +15,33 @@ that overdraws stops and says so rather than borrowing from spare.
 | shade | 4 | 2.3 | the one lit pass: PBR, shadow lookup, sky reflection, AO |
 | effects | 5 | 0.3 | the transparent pass: sprites, blended, sorted back to front |
 | present | 6, 7 | 0.5 | ACES and sRGB, the HUD, the debug text |
+| probe | 17-59 | 0.3 | sprint 8c's reflection probe: a face, its chain and the filter, and the shade pass's cube read |
 | spare | — | 0.2 | unspent on purpose |
 
-Those add to 5.5. **They did not before sprint 6**: this table said spare 0.2 while
+**Those add to 5.8, and that is sprint 8c's doing, said here rather than hidden.** The probe
+measured +0.28 ms of wall frame (below) and the accounts had no room for it: the spare is 0.2.
+The frame it was measured in is 4.15 ms, well inside the enforced 5.5, so nothing fails; what is
+owed is a decision on which account gives up 0.3, which is the user's to make. The shade
+account's 2.3 is the likeliest, since the frame has never measured near it at 1080p.
+
+Before sprint 8c they added to 5.5. **They did not before sprint 6**: this table said spare 0.2 while
 `views.cpp` said 0.5, so the table summed to 5.2 against a 5.5 ms frame and the two had
 disagreed since the file was written. The 0.3 the effects account now holds is what closed it.
+
+## The probe account, and the measurement that set it
+
+Sprint 8c, `docs/sprints/08c-the-metal.md`. Lorencia's town, 1920x1080, Release, vsync off,
+the moving camera, 600 frames x 3, `probe` 1 against 0 in the sheet, twice each:
+
+| | mean of means |
+|---|---|
+| probe on | 4.152, 4.148 ms |
+| probe off | 3.877, 3.855 ms |
+
+**+0.28 ms.** Taken apart before the every-other-frame rule, with each part switched off in
+turn: the faces 0.25, the chain nothing measurable, the filter 0.04 (it runs one frame in
+seven), and the shade pass's cube read about 0.22. The per-view timers cannot price any of
+it, for the reason the next section but one gives.
 
 ## The effects account, and the measurement that set it
 

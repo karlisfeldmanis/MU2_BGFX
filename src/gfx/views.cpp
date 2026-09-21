@@ -1,6 +1,33 @@
 #include "gfx/views.h"
 
+#include <string>
+
 namespace mu::gfx {
+namespace {
+
+const char* const* probeViewNames() {
+    static std::string names[ViewCount - ViewProbeFace];
+    static const char* pointers[ViewCount - ViewProbeFace];
+    if (!pointers[0]) {
+        for (int i = 0; i < ViewCount - ViewProbeFace; ++i) {
+            const int v = ViewProbeFace + i;
+            if (v < ViewProbeFilter) {
+                names[i] = "probe_face" + std::to_string(i);
+            } else if (v >= ViewProbeChain) {
+                names[i] = "probe_chain" + std::to_string(v - ViewProbeChain);
+            } else if (v == ViewProbeChain - 1) {
+                names[i] = "stage";
+            } else {
+                const int f = v - ViewProbeFilter;
+                names[i] = "probe_filter" + std::to_string(f / 6) + "_" + std::to_string(f % 6);
+            }
+            pointers[i] = names[i].c_str();
+        }
+    }
+    return pointers;
+}
+
+}  // namespace
 
 const char* viewName(View v) {
     switch (v) {
@@ -21,7 +48,10 @@ const char* viewName(View v) {
         case ViewBloomUp + 2: return "bloom_up2";
         case ViewBloomUp + 3: return "bloom_up1";
         case ViewHud: return "hud";
-        default: return "?";
+        default:
+            // Named one by one, so the stats csv has no two columns alike.
+            if (v >= ViewProbeFace && v < ViewCount) return probeViewNames()[v - ViewProbeFace];
+            return "?";
     }
 }
 
@@ -33,6 +63,7 @@ const char* accountName(Account a) {
         case AccountShade: return "shade";
         case AccountEffects: return "effects";
         case AccountPresent: return "present";
+        case AccountProbe: return "probe";
         default: return "?";
     }
 }
@@ -47,7 +78,9 @@ Account viewAccount(View v) {
         case ViewTransparent: return AccountEffects;
         case ViewPresent:
         case ViewHud: return AccountPresent;
-        default: return AccountPresent;
+        default:
+            if (v >= ViewProbeFace && v < ViewCount && v != ViewProbeChain - 1) return AccountProbe;
+            return AccountPresent;
     }
 }
 
@@ -66,6 +99,8 @@ double accountBudgetMs(Account a) {
         // quietly taking it is the thing it forbids.
         case AccountEffects: return 0.3;
         case AccountPresent: return 0.5;
+        // Sprint 8c, opened against its measurement: docs/sprints/08c-the-metal.md.
+        case AccountProbe: return 0.3;
         default: return 0.0;
     }
 }

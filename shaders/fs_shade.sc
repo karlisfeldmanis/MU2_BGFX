@@ -9,6 +9,14 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 
 uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes through it, or 0
 
+// The reflection probe, sprint 8c. x: 1 when a prefiltered cube is bound, 0 inside the probe's
+// own faces and wherever there is none, which take the closed-form sky  y: its last mip
+// z: above 0 draws the probe itself at mip z - 1, looked up towards each pixel from where
+// it was taken  w: the sheet's metal_gain, which lifts a metal's painted reflectance
+uniform vec4 u_probe;
+uniform vec4 u_probePos;  // xyz: where the cube was taken, world metres
+SAMPLERCUBE(s_probe, 15);
+
 void main()
 {
 	vec4 albedoTex = texture2D(s_albedo, v_texcoord0);
@@ -59,7 +67,12 @@ void main()
 	float ssao = texture2D(s_ao, pixel * u_viewTexel.xy).r;
 	ao *= ssao;
 
-	vec3 f0 = mix(vec3_splat(0.04), albedo, metal);
+	// A metal's reflectance is its albedo, and MU's painted metal is dark: the plate and the
+	// shields sit near 0.05 linear, where iron is 0.55, because the paint carries MU's own
+	// shading. Read straight, armour returns a twentieth of the town round it and reads as
+	// grey card. The sheet's metal_gain lifts the paint towards what the metal would reflect,
+	// keeping its engraving; invention, judged by eye. docs/sprints/08c-the-metal.md.
+	vec3 f0 = mix(vec3_splat(0.04), min(albedo * u_probe.w, vec3_splat(1.0)), metal);
 	vec3 diffuseColour = albedo * (1.0 - metal);
 
 	vec3 l = normalize(u_sunDir.xyz);
@@ -67,6 +80,19 @@ void main()
 	float ndotv = saturate(dot(n, v)) + 1e-5;
 
 	vec3 colour = vec3_splat(0.0);
+
+	// The probe's check: every pixel shows what the cube holds in its direction from where the
+	// cube was taken. Near the player that is the frame itself, give or take parallax; a face
+	// turned or mirrored shows as the town in the wrong place.
+	if (u_probe.z > 0.5)
+	{
+		vec3 held = textureCubeLod(s_probe, normalize(v_wpos - u_probePos.xyz), u_probe.z - 1.0).rgb;
+		// A texel that is not a number shows magenta rather than black, which is what it
+		// would otherwise pass for.
+		if (any(isnan(held))) held = vec3(1.0, 0.0, 1.0);
+		gl_FragColor = vec4(held, 1.0);
+		return;
+	}
 
 	// The probe's view: the sun's visibility and nothing else, so that a pixel which changes
 	// between two frames changed because the shadow did. docs/shadow-probe.md.
@@ -97,9 +123,28 @@ void main()
 	colour += ambient * diffuseColour * ao;
 
 	// What the surface mirrors, out of the same sky.
+	//
+	// From the probe where there is one: the town round the player, lit as it is this frame,
+	// its mips GGX lobes of rising roughness, so plate reflects the street it stands in, the
+	// sky over it and the fire beside it. It holds radiance already, sun and lamps included,
+	// so nothing multiplies it but the occlusion.
 	vec3 r = reflect(-v, n);
-	vec3 env = skyPrefiltered(r, roughness) * u_sunColour.w;
-	colour += env * envBRDFApprox(f0, roughness, ndotv) * ao;
+	vec3 env;
+	if (u_probe.x > 0.5)
+	{
+		env = textureCubeLod(s_probe, r, roughness * u_probe.y).rgb;
+	}
+	else
+	{
+		env = skyPrefiltered(r, roughness) * u_sunColour.w;
+	}
+	// Specular occlusion from the AO (Lagarde and de Rousiers, "Moving Frostbite to PBR"):
+	// a crevice that hides the sky from the diffuse hides most of it from a rough reflection
+	// and less of it from a sharp one seen head on. And the horizon: a normal map can bend r
+	// under the surface it belongs to, where it would reflect the inside of the mesh.
+	float specAo = saturate(pow(ndotv + ao, exp2(-16.0 * roughness - 1.0)) - 1.0 + ao);
+	float horizon = saturate(1.0 + 1.1 * dot(r, ng));
+	colour += env * envBRDFApprox(f0, roughness, ndotv) * specAo * horizon * horizon;
 
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.

@@ -173,6 +173,10 @@ private:
         const content::Mesh* mesh = nullptr;
         uint32_t first = 0;   // into the frame's instance buffer
         uint32_t count = 0;
+        // A figure in a pose of its own. The probe leaves these out: it is taken from the
+        // player's chest, and a cube taken from inside him holds nothing but his armour's
+        // inside, which every piece of it would then reflect.
+        bool posed = false;
     };
 
     bool createTargets(int width, int height);
@@ -260,6 +264,23 @@ private:
     bgfx::FrameBufferHandle bloomFb_[kBloomLevels] = {};
     uint16_t bloomW_[kBloomLevels] = {}, bloomH_[kBloomLevels] = {};
     void bloom(const Lighting& lighting);
+
+    // --- the reflection probe, sprint 8c ---------------------------------------------------
+    // A cube round the player: one face drawn a frame with the shade program, the sky behind
+    // it, and its chain; the frame after all six are new, the prefiltered copy a mip of
+    // roughness at a time. Seven turns a cycle, on every other frame. The
+    // shade pass reads the copy the next frame. docs/sprints/08c-the-metal.md.
+    bool createProbe(const std::string& shaderDir);
+    void destroyProbe();
+    void drawProbe(const Camera& camera, const content::Ground* ground,
+                   const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb);
+    // A face's camera: 90 degrees square from `at`, turned so that the direction under each
+    // of its texels is the one probe.sh's cubeDir names for that texel. Left-handed, because
+    // a cube face is the mirror of what a right-handed camera sees; the probe's draws cull
+    // the other winding to match.
+    void probeFaceView(int face, const float* at, float* view, float* proj) const;
+    void filterProbe();
+    void chainProbeFace(int face);
     bgfx::TextureHandle shadeColour_ = BGFX_INVALID_HANDLE;
 
     bgfx::ProgramHandle shadowProgram_ = BGFX_INVALID_HANDLE;
@@ -346,6 +367,47 @@ private:
 
     std::vector<Batch> batches_;
     std::vector<Batch> casterBatches_;
+
+    // The probe. `probeRaw_` is what the faces draw into, one level; `probeFiltered_` is what
+    // the shade pass reads, its mips written by fs_probe_filter.
+    bgfx::TextureHandle probeRaw_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle probeDepth_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle probeFiltered_ = BGFX_INVALID_HANDLE;
+    bgfx::FrameBufferHandle probeFaceFb_[6] = {
+        BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
+        BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE};
+    bgfx::FrameBufferHandle probeFilterFb_[6 * kProbeMips];
+    // The raw cube's chain, a face at a time, by fs_probe_down. Its own texture, because a
+    // level cannot be drawn while the level above it is read from the same one.
+    bgfx::TextureHandle probeChain_ = BGFX_INVALID_HANDLE;
+    bgfx::FrameBufferHandle probeChainFb_[6 * kProbeChain];
+    bgfx::ProgramHandle probeDownProgram_ = BGFX_INVALID_HANDLE;
+    // What a stage reads where there is no probe: a black cube and an occlusion of one. The
+    // probe's own faces bind these, since a face cannot read the cube it is being drawn into
+    // and has no SSAO of its own.
+    bgfx::TextureHandle blackCube_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle whiteAo_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle probeSkyProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle probeFilterProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uProbe_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uProbePos_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uProbeFace_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sProbe_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sSource_ = BGFX_INVALID_HANDLE;
+    bool probeOk_ = false;       // everything above was made
+    bool probeOn_ = false;       // the sheet wants it this frame
+    float probeView_ = 0.0f;
+    float metalGain_ = 1.0f;     // the sheet's metal_gain, into u_probe.w     // the sheet's check view: 0 off, else the mip shown plus one
+    bool probeReady_ = false;    // a filtered cube exists to read
+    bool probePass_ = false;     // the draws being submitted are a probe face's
+    bool probeFilterDue_ = false;  // six new faces wait for the filter, next frame
+    int probeNextFace_ = 0;
+    uint32_t probeTick_ = 0;     // the probe works on even frames only; see drawProbe
+    int probeFacesDrawn_ = 0;
+    float probeAt_[3] = {0.0f, 0.0f, 0.0f};     // this face's eye
+    float probeTaken_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // the eye when the copy was last filtered
+    // Which winding the lit draws cull: CW for the camera, CCW inside a mirrored cube face.
+    uint64_t cullBit_ = BGFX_STATE_CULL_CW;
 };
 
 }  // namespace mu::gfx

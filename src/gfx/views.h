@@ -27,9 +27,21 @@ enum View : uint16_t {
     ViewBloomUp = 11,    // 11..14, 1/32 back up to 1/2
     ViewPresent = 15,
     ViewHud = 16,
-    ViewCount = 17,
+    // Sprint 8c's reflection probe: six faces of the town round the player, then the
+    // prefiltered copy a mip and a face at a time. AFTER the frame, and read by the next one's
+    // shade pass: the faces are drawn a frame late in any case, since one face is drawn a
+    // frame, and after the frame they read this frame's sun split rather than needing a view
+    // of their own between the shadow and the shade.
+    ViewProbeFace = 17,     // 17..22, a face each
+    ViewProbeFilter = 23,   // 23..52, mip * 6 + face
+    // 53 is sprint 7's, for the item pictures.
+    ViewProbeChain = 54,    // 54..59, the chain of the face drawn this frame, a level each
+    ViewCount = 60,
 };
 constexpr int kBloomLevels = 5;
+constexpr int kProbeSize = 128;  // the raw cube's edge, texels
+constexpr int kProbeMips = 5;    // the prefiltered chain: 128 down to 8, roughness 0 to 1
+constexpr int kProbeChain = 6;   // the raw cube's own chain, 128 down to 4, box filtered
 
 enum Account : uint8_t {
     AccountShadow = 0,
@@ -38,6 +50,7 @@ enum Account : uint8_t {
     AccountShade,
     AccountEffects,
     AccountPresent,
+    AccountProbe,
     AccountCount,
 };
 

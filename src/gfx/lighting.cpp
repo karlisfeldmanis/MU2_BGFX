@@ -65,11 +65,14 @@ bool Lighting::reloadIfChanged(const std::string& path) {
     doc.readInto("flame_strength", &flameStrength);
     doc.readInto("ssao_radius", &ssaoRadius);
     doc.readInto("ssao_strength", &ssaoStrength);
+    doc.readInto("probe", &probe);
+    doc.readInto("probe_view", &probeView);
+    doc.readInto("metal_gain", &metalGain);
 
     static const char* kKnown[] = {
         "azimuth", "elevation", "sun_colour", "sun_strength", "sky_colour", "horizon_paleness",
         "ground_colour", "ambient_strength", "exposure", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
-        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "ssao_radius", "ssao_strength", "note"};
+        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;
         for (const char* k : kKnown) known = known || key == k;

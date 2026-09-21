@@ -76,6 +76,16 @@ struct Lighting {
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
 
+    // The reflection probe, sprint 8c: a cube round the player that metal and water reflect.
+    // `probe` 0 puts the closed-form sky back, which is how its cost is priced. `probeView` N
+    // draws the probe's mip N - 1 itself where the town is, the check that its faces are the right way
+    // round. docs/sprints/08c-the-metal.md.
+    float probe = 1.0f;
+    float probeView = 0.0f;
+    // What a metal's painted albedo is multiplied by to give its reflectance. MU paints metal
+    // dark, with its shading in the paint; 1 is the paint as it is. Invention, judged by eye.
+    float metalGain = 1.0f;
+
     // Re-reads `path` when its timestamp has moved. True when something changed, so the
     // caller can log it. The first call always reads.
     bool reloadIfChanged(const std::string& path);
