@@ -132,12 +132,20 @@ struct Args {
     // any of "inventory", "character", comma separated.
     std::string windows;
     // Scripted presses on the windows, for a run with nobody at the mouse: FRAME:X:Y, X and Y
-    // as fractions of the screen, pressed on FRAME and released on the next. Repeatable.
+    // as fractions of the screen, pressed on FRAME and released on the next -- or
+    // FRAME:X:Y:X2:Y2, a drag, pressed at the first point, carried to the second over two
+    // frames and released there on the third. A right-click is FRAME:X:Y:R. Repeatable.
     struct UiClick {
         int frame = 0;
         float x = 0.0f, y = 0.0f;
+        float x2 = -1.0f, y2 = -1.0f;
+        bool right = false;
     };
     std::vector<UiClick> uiClicks;
+    // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.
+    std::string give;
+    long long zen = 0;     // Zen in hand at the start
+    std::string talk;      // walk to this townsperson (by a piece of his name) at the start
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.
     std::string pick;

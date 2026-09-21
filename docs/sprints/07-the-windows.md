@@ -85,6 +85,35 @@ is not a migration.
   knight: `window: a point into strength spent` twice, points 20 to 18, strength 28 to 30,
   damage 4~7 to 5~7. The shot shows it.
 
+### Steps 4 to 6: the items, the bag, the merchants (2026-09-21)
+
+- **The rows.** `.mur` version 5 carries all 118 of `index.json`'s item rows and the
+  townsfolk (14 in Lorencia, 6 in Noria), the latter transcribed in `tools/cook.py` from MU2's
+  `Folk.cs` because neither the index nor `mu.db` carries them in a readable form.
+- **The rules** (`sim/items`, `sim/market`) and 36 new checks in `sim_test`, 117 in all, none
+  failed: the requirement formula against MU2's own worked numbers (a Small Shield asks 26
+  strength, a +2 asks 38, a Small Axe 21), the refinement tables, the footprint walk, equipping
+  and unequipping as moves, the class gate refusing a knight a Skull Staff through the same
+  `movable` the window colours by, and three potions drunk one per half second.
+- **The satchel is the truth and the hands are read off it.** `Realm::equip` now puts what it
+  is given into the satchel's hands and re-reads them (`rearm`); `armsOf` takes the player's
+  defence from his worn pieces. Two seeded headless runs of 6000 ticks are the same bytes.
+- **A drag through the window.** `--ui-click 60:<shield>:<left hand>` on a level-10 knight:
+  `window: move 13 -> 1 taken`, the Small Shield in his left hand. A right-click on the
+  potions: `use 12 taken`, three to two.
+- **A merchant, end to end.** `--talk Lumen --zen 5000`: the hero walks 19 steps to the bar,
+  `hero is served by Lumen the Barmaid`, her shelf opens in column two with the bag beside it.
+  Two clicks on the Ale: `buy shelf 0 taken`, 5,000 to 4,250 to 3,500 (750 each, `Coin`'s
+  flat price for the Ale). A drag of one back onto her shelf: `sell slot 12 taken (250 paid)`,
+  a third. The shot shows both windows.
+- **At 1080p** (the window opened on a 1080p display for these runs): 4.33 and 4.35 ms median
+  frame with no windows, 4.35 and 4.37 with the HUD, 4.39 with the bag and the character
+  window open. Inside 5.5.
+
+**Not done yet:** the item pictures (step 5's stage: the bag and the shelf draw a name in
+each box until it lands, which waits on the reflection-probe work in the renderer), the quick
+bar on 1 to 4, and step 7, the drop and the pickup.
+
 ### Findings
 
 - **The panels scale with the screen.** MU2 draws them at a fixed twice in viewport pixels.
@@ -102,5 +131,14 @@ is not a migration.
   character's spare points into strength "for want of a stat window". It still pays for what
   he is asked to hold, and the rest now stays in hand for the window. The remainder of that
   courtesy goes in step 4, when requirements are MU's formula.
+- **Worn slots check the way back.** Putting a piece on sends what was worn to where the new
+  one came from, and MU2 never asked whether it fits there: a Small Shield put on over a Kite
+  Shield would lay the Kite's 2x3 across whatever sat under the Small Shield's 2x2. Asked
+  here, refusing the move; a departure from MU2 in the direction of not corrupting the bag.
+- **A drag let go outside the bag keeps the item.** MU throws it on the ground; there is no
+  ground to throw it on until step 7.
+- **No repair button.** Nothing in this sim wears, so it would be a button that does nothing.
+- **Talking walks to the townsperson and serves within three tiles** (MU2's `Counter`, marked
+  there as MU2's: neither MU nor OpenMU checks a distance). Any new order closes the counter.
 - **Mana arrives in the sim** as MU2's per-class rates (`Beast.cs` `Rates.For`), not yet
   traced to OpenMU's lines independently. Nothing spends it.

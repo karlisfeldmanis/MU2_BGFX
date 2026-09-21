@@ -13,9 +13,10 @@ namespace {
 // wrong -- so it is checked rather than trusted. docs/conventions.md, "Time".
 constexpr uint32_t kSimHz = 20;
 
-// Version 2 added the arms and version 3 the attack actions a swing rate is made of. There is no version 1 anywhere but in a stale build directory, and
+// Version 2 added the arms, version 3 the attack actions a swing rate is made of, and version
+// 4 the items and version 5 the townsfolk (sprint 7). There is no version 1 anywhere but in a stale build directory, and
 // the reader says so rather than reading a file whose fields have moved under it.
-constexpr uint32_t kVersion = 3;
+constexpr uint32_t kVersion = 5;
 
 }  // namespace
 
@@ -23,7 +24,8 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
     Reader reader(bytes.data(), bytes.size());
 
     char magic[4] = {};
-    uint32_t version = 0, kinds = 0, nests = 0, arms = 0, actions = 0, size = 0;
+    uint32_t version = 0, kinds = 0, nests = 0, arms = 0, actions = 0, items = 0, folk = 0,
+             size = 0;
     reader.take(magic, 4);
     reader.read(version);
     reader.read(out.hz);
@@ -31,6 +33,8 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
     reader.read(nests);
     reader.read(arms);
     reader.read(actions);
+    reader.read(items);
+    reader.read(folk);
     reader.read(out.map);
     reader.read(size);
     reader.take(out.safeGate, sizeof(out.safeGate));
@@ -146,6 +150,70 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
     }
     if (reader.failed()) {
         error = "ran out of file inside the attack actions";
+        return false;
+    }
+
+    // Three strings and twenty numbers: at least 86 bytes a row.
+    if (!plausible(reader, items, 86)) {
+        error = "claims " + std::to_string(items) + " items and has no room for them";
+        return false;
+    }
+    out.items.clear();
+    out.items.reserve(items);
+    for (uint32_t i = 0; i < items; ++i) {
+        ItemRow row;
+        reader.readString(row.name);
+        reader.readString(row.label);
+        reader.readString(row.glb);
+        int32_t f[20] = {};
+        reader.take(f, sizeof(f));
+        row.group = f[0];
+        row.number = f[1];
+        row.dropLevel = f[2];
+        // Never smaller than a cell: a zero-wide item covers nothing, and a bag full of things
+        // that cover nothing never fills. Prize.Footprint.
+        row.width = f[3] > 0 ? f[3] : 1;
+        row.height = f[4] > 0 ? f[4] : 1;
+        row.minimumDamage = f[5];
+        row.maximumDamage = f[6];
+        row.attackSpeed = f[7];
+        row.defense = f[8];
+        row.magicPower = f[9];
+        row.durability = f[10];
+        row.classes = f[11];
+        row.needLevel = f[12];
+        row.needStrength = f[13];
+        row.needAgility = f[14];
+        row.needEnergy = f[15];
+        row.needVitality = f[16];
+        row.flags = f[17];
+        row.maximumDropLevel = f[18];
+        row.skill = f[19];
+        out.items.push_back(std::move(row));
+    }
+    if (reader.failed()) {
+        error = "ran out of file inside the items";
+        return false;
+    }
+
+    if (!plausible(reader, folk, 20)) {
+        error = "claims " + std::to_string(folk) + " townsfolk and has no room for them";
+        return false;
+    }
+    out.folk.clear();
+    out.folk.resize(folk);
+    for (Townsperson& one : out.folk) {
+        reader.readString(one.name);
+        reader.readString(one.figure);
+        int32_t f[4] = {};
+        reader.take(f, sizeof(f));
+        one.number = f[0];
+        one.x = f[1];
+        one.y = f[2];
+        one.look = f[3];
+    }
+    if (reader.failed()) {
+        error = "ran out of file inside the townsfolk";
         return false;
     }
 

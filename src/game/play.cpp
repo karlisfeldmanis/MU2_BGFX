@@ -209,6 +209,33 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         }
         drawn_.push_back(std::move(one));
     }
+    // The townsfolk: a figure each where the cook named one. MU2's Look, clockwise from West,
+    // as a direction on the tile grid (rows run south), then the yaw the drawing uses for any
+    // facing -- the same two lines follow() turns a body's facing with.
+    folk_.clear();
+    static const int kLookDx[9] = {0, -1, -1, 0, 1, 1, 1, 0, -1};
+    static const int kLookDy[9] = {0, 0, 1, 1, 1, 0, -1, -1, -1};
+    const float metresPerTile = ground_ ? ground_->metresPerTile() : 1.0f;
+    for (size_t i = 0; i < tables_.folk.size(); ++i) {
+        const content::Townsperson& person = tables_.folk[i];
+        const FigureBody* look =
+            person.figure.empty() || !figures_ ? nullptr : figures_->body(person.figure);
+        if (!look) continue;
+        const int facing = person.look >= 1 && person.look <= 8 ? person.look : 3;
+        const float angle = std::atan2(float(kLookDy[facing]), float(kLookDx[facing]));
+        const float yaw = std::atan2(std::cos(angle), -std::sin(angle));
+        const float x = (float(person.x) + 0.5f) * metresPerTile;
+        const float z = -(float(person.y) + 0.5f) * metresPerTile;
+        const float at[3] = {x, ground_ ? ground_->heightAt(x, z) : 0.0f, z};
+        Standing one;
+        one.folk = int(i);
+        one.figure.stand(look, at, yaw, look->scale, true);
+        if (look->idleClip >= 0) one.figure.play(look->idleClip);
+        bones = std::max(bones, look->boneCount());
+        folk_.push_back(std::move(one));
+    }
+    core::logf("play: %zu townsfolk, %zu of them drawn here", tables_.folk.size(), folk_.size());
+
     scratch_.assign(std::max<size_t>(128, bones) * 12, 0.0f);
     remember();
 
@@ -329,6 +356,7 @@ void Play::update(double seconds) {
         one.figure.update(float(seconds), one.clipRate);
         if (one.swinging > 0.0f) one.swinging -= float(seconds);
     }
+    for (Standing& one : folk_) one.figure.update(float(seconds));
 
     // --- sprint 6: the landing cue ------------------------------------------------------
     // On the DRAWING's clock and after the swings have been advanced above, so that a cue
@@ -548,6 +576,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
                  float pixelY, int width, int height) {
     pointedColumn_ = pointedRow_ = -1;
     pointedAt_ = 0;
+    pointedFolk_ = -1;
     if (!isOpen() || !ground_ || width <= 0 || height <= 0) return;
 
     // The pixel into a direction. bgfx's clip space on this Metal is 0..1 in z and the origin
@@ -621,12 +650,27 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
             pointedAt_ = body.id;
         }
     }
+    // And the townsfolk, by the same reckoning, a body winning a tie: a monster in the town
+    // is the more urgent thing under the pointer.
+    for (size_t i = 0; i < tables_.folk.size(); ++i) {
+        const content::Townsperson& one = tables_.folk[i];
+        const float away =
+            std::max(std::fabs(float(one.x) - column), std::fabs(float(one.y) - row));
+        if (away < closest) {
+            closest = away;
+            pointedAt_ = 0;
+            pointedFolk_ = int(i);
+        }
+    }
 }
 
 void Play::leftClick() {
     if (!isOpen()) return;
     sim::Request request;
-    if (pointedAt_ != 0) {
+    if (pointedFolk_ >= 0) {
+        request.kind = sim::Request::Kind::Talk;
+        request.target = uint32_t(pointedFolk_);
+    } else if (pointedAt_ != 0) {
         request.kind = sim::Request::Kind::Attack;
         request.target = pointedAt_;
     } else if (pointedColumn_ >= 0) {
@@ -660,6 +704,12 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
     }
+    for (Standing& one : folk_) {
+        const int bones = one.figure.pose(scratch_.data());
+        const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        if (casters) one.figure.gather(palette, *casters);
+        one.figure.gather(palette, out);
+    }
 }
 
 bool Play::spendPoint(int stat) {
@@ -669,6 +719,62 @@ bool Play::spendPoint(int stat) {
     core::logf("window: a point into %s %s", kStats[stat],
                spent ? "spent" : "refused, none in hand");
     return spent;
+}
+
+bool Play::moveItem(int from, int to) {
+    const bool moved = realm_.moveItem(from, to);
+    core::logf("window: move %d -> %d %s", from, to, moved ? "taken" : "refused");
+    return moved;
+}
+
+bool Play::useItem(int slot) {
+    const bool used = realm_.useItem(slot);
+    core::logf("window: use %d %s", slot, used ? "taken" : "refused");
+    return used;
+}
+
+bool Play::give(const std::string& name, int count) {
+    const int32_t item = tables_.itemNamed(name);
+    if (item < 0) {
+        core::logError("--give: no item named %s", name.c_str());
+        return false;
+    }
+    const content::ItemRow& row = tables_.items[size_t(item)];
+    const bool stacks = sim::heals(row) || sim::restores(row);
+    const int durability = stacks ? std::max(1, count) : row.durability;
+    const int slot = realm_.give(item, -1, 0, durability);
+    core::logf("given %s%s into slot %d", row.label.c_str(),
+               stacks ? (" x" + std::to_string(durability)).c_str() : "", slot);
+    return slot >= 0;
+}
+
+bool Play::buy(int shelfSlot) {
+    const int slot = realm_.buy(shelfSlot);
+    core::logf("window: buy shelf %d %s (slot %d, %lld Zen left)", shelfSlot,
+               slot >= 0 ? "taken" : "refused", slot, (long long)realm_.money());
+    return slot >= 0;
+}
+
+bool Play::sell(int bagSlot) {
+    const int64_t paid = realm_.sellItem(bagSlot);
+    core::logf("window: sell slot %d %s (%lld paid, %lld Zen now)", bagSlot,
+               paid >= 0 ? "taken" : "refused", (long long)paid, (long long)realm_.money());
+    return paid >= 0;
+}
+
+bool Play::talkTo(const std::string& name) {
+    for (size_t i = 0; i < tables_.folk.size(); ++i) {
+        if (tables_.folk[i].name.find(name) == std::string::npos) continue;
+        sim::Request request;
+        request.kind = sim::Request::Kind::Talk;
+        request.target = uint32_t(i);
+        realm_.ask(request);
+        core::logf("talk: walking to %s at (%d, %d)", tables_.folk[i].name.c_str(),
+                   tables_.folk[i].x, tables_.folk[i].y);
+        return true;
+    }
+    core::logError("--talk: nobody called %s here", name.c_str());
+    return false;
 }
 
 }  // namespace mu::game

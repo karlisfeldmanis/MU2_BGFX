@@ -58,7 +58,10 @@ void printUsage() {
         "  --browse                  step through every cooked .mum; arrows walk the list\n"
         "  --category WORD           world|monsters|people|armour|weapons|parts\n"
         "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
-        "  --ui-click F:X:Y          press the windows at screen fraction X,Y on frame F\n"
+        "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
+        "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
+        "  --zen N                   start with N Zen\n"
+        "  --talk NAME               walk to the townsperson whose name holds NAME\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --effects N               N sprites through the transparent pass, to price it\n"
         "  --effect-size M           each sprite's half-extent in metres (default 0.5); large "
@@ -273,13 +276,25 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--ui-click")) {
             if (const char* v = next(s)) {
                 Args::UiClick c;
-                if (std::sscanf(v, "%d:%f:%f", &c.frame, &c.x, &c.y) == 3) {
+                const int got = std::sscanf(v, "%d:%f:%f:%f:%f", &c.frame, &c.x, &c.y, &c.x2, &c.y2);
+                if (got == 3 && std::strchr(v, 'R')) c.right = true;
+                if (got == 3 || got == 5) {
+                    if (got == 3) {
+                        c.x2 = c.x;
+                        c.y2 = c.y;
+                    }
                     a.uiClicks.push_back(c);
                 } else {
                     logError("--ui-click is FRAME:X:Y, got '%s'", v);
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--zen")) {
+            if (const char* v = next(s)) a.zen = std::atoll(v);
+        } else if (!std::strcmp(s, "--talk")) {
+            if (const char* v = next(s)) a.talk = v;
+        } else if (!std::strcmp(s, "--give")) {
+            if (const char* v = next(s)) a.give = v;
         } else if (!std::strcmp(s, "--windows")) {
             if (const char* v = next(s)) a.windows = v;
         } else if (!std::strcmp(s, "--category")) {

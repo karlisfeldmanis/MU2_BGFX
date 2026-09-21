@@ -15,6 +15,7 @@
 
 #include "content/tables.h"
 #include "sim/audit.h"
+#include "sim/items.h"
 #include "sim/random.h"
 #include "sim/realm.h"
 #include "sim/route.h"
@@ -360,6 +361,68 @@ void testInvariants(const content::Tables& tables) {
     for (const std::string& line : findings.first) std::printf("    %s\n", line.c_str());
 }
 
+// Sprint 7: the items. The requirement formula against the worked numbers MU2's Rows.cs gives
+// for it, the footprint walk, and equipping as a move through the same gate a window colours by.
+void testItems(const content::Tables& tables) {
+    std::printf("items\n");
+    checkEqual(long(tables.items.size()), 118, "118 item rows cooked");
+    const int shield = tables.itemAt(6, 0), axe = tables.itemAt(1, 0), staff = tables.itemAt(5, 0);
+    const int small = tables.itemAt(14, 1);
+    check(shield >= 0 && axe >= 0 && staff >= 0 && small >= 0, "the rows the tests use exist");
+    if (shield < 0 || axe < 0 || staff < 0 || small < 0) return;
+    // Rows.cs: "the Small Shield at drop level 3 asks 3 x 3 x 70 / 100 + 20 = 26 strength".
+    checkEqual(sim::asks(tables.items[size_t(shield)], 0).strength, 26,
+               "a Small Shield asks 26 strength, not its raw 70");
+    // And a plus raises the drop level three a step: +2 is drop level 9, 3 x 9 x 70 / 100 + 20.
+    checkEqual(sim::asks(tables.items[size_t(shield)], 2).strength, 38, "and a +2 asks 38");
+    checkEqual(sim::asks(tables.items[size_t(axe)], 0).strength, 21, "a Small Axe asks 21");
+    checkEqual(sim::damageBonus(3), 9, "a +3 weapon adds 9 to both ends");
+    checkEqual(sim::defenseBonus(true, 3), 3, "a +3 shield adds 3");
+    checkEqual(sim::defenseBonus(false, 3), 9, "a +3 helm adds 9");
+    checkEqual(sim::placeOf(tables.items[size_t(shield)]), sim::kWeaponLeft, "a shield is left");
+    checkEqual(sim::placeOf(tables.items[size_t(axe)]), sim::kWeaponRight, "an axe is right");
+    checkEqual(sim::placeOf(tables.items[size_t(small)]), -1, "a potion is not worn");
+
+    // The footprint: a Small Axe is one across and three down, recorded once at its top left.
+    sim::Satchel bag;
+    bag.put(sim::kWorn, sim::Held{axe, 0, 0});
+    checkEqual(bag.holder(tables, sim::kWorn + 8), sim::kWorn, "the axe covers the cell below");
+    checkEqual(bag.holder(tables, sim::kWorn + 16), sim::kWorn, "and the one below that");
+    checkEqual(bag.holder(tables, sim::kWorn + 24), -1, "and not a fourth");
+    checkEqual(bag.free(tables, 1, 3), sim::kWorn + 1, "the next 1x3 goes beside it");
+    check(!bag.room(tables, sim::kWorn + 7, 2, 2), "a 2x2 cannot start in the last column");
+
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 138, 124), "a realm raises for the items");
+    check(realm.equip(tables.armNamed("Axe01"), -1, true), "the cradle's axe goes in his hand");
+    checkEqual(realm.satchel()[sim::kWeaponRight].item, axe, "and it is in the right hand slot");
+    check(realm.hero().weapon >= 0, "which is where his weapon is read from");
+    const int minimumArmed = realm.hero().stats.minimumDamage;
+    check(realm.moveItem(sim::kWeaponRight, sim::kWorn + 3), "taken off into the bag");
+    checkEqual(realm.hero().weapon, -1, "and his hands are empty");
+    check(realm.hero().stats.minimumDamage < minimumArmed, "and he hits for less");
+    check(!realm.moveItem(sim::kWorn + 3, sim::kWeaponLeft), "an axe does not go in the left hand");
+    check(realm.moveItem(sim::kWorn + 3, sim::kWeaponRight), "and back on, since 28 >= 21");
+    checkEqual(realm.hero().stats.minimumDamage, minimumArmed, "and he hits for what he did");
+
+    const int staffAt = realm.give(staff);
+    check(staffAt >= sim::kWorn, "a Skull Staff goes into the bag");
+    check(!sim::movable(tables, realm.wearer(), realm.satchel(), staffAt, sim::kWeaponRight),
+          "and a knight may not hold it: the gate the window colours by");
+    check(!realm.moveItem(staffAt, sim::kWeaponRight), "and the move is refused by the same gate");
+
+    const int potionAt = realm.give(small, -1, 0, 3);
+    check(potionAt >= sim::kWorn, "three small healing potions go into the bag");
+    check(realm.useItem(potionAt), "one is drunk");
+    checkEqual(realm.satchel()[potionAt].durability, 2, "and two are left");
+    check(!realm.useItem(potionAt), "a second inside half a second is not drunk");
+    for (int i = 0; i < 10; ++i) realm.step();
+    check(realm.useItem(potionAt), "after it, it is");
+    for (int i = 0; i < 10; ++i) realm.step();
+    check(realm.useItem(potionAt), "and the last one");
+    check(realm.satchel()[potionAt].empty(), "leaves the slot empty");
+}
+
 }  // namespace
 
 int main() {
@@ -381,6 +444,7 @@ int main() {
     testRouter(tables);
     testDeterminism(tables);
     testInvariants(tables);
+    testItems(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

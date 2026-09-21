@@ -1232,12 +1232,51 @@ def ticks_of(milliseconds, what, name, remainders):
     return max(1, whole)
 
 
+# The town's people, by map: MU's own NPC number, the name, the tile, the facing (MU2's Look:
+# 1 West ... 3 South ... 5 East ... 7 North, clockwise from West), and the cooked figure that
+# stands for them. Transcribed from MU2's shared/Folk.cs `Townsfolk.Spawns`, which is OpenMU's
+# Version075/Maps/Lorencia.cs and Noria.cs NPC spawns. Not in index.json or mu.db's
+# npc_spawns in a form the cook can read today, so it is here, with its source, as the
+# respawn corrections above are.
+#
+# A figure of "" is a townsperson the world's own placements already stand -- Hanzo is
+# Smith01 at 116,141 in lorencia.json, Pasi Wizard01, Baz Storage01 -- so the sim knows them
+# and nothing draws them twice. The wandering merchants' travelling is not carried.
+FOLK_VERSION075 = {
+    0: [  # Lorencia
+        (248, "Wandering Merchant Martin", "WanderingMerchant", 6, 145, 4),
+        (240, "Baz The Vault Keeper", "", 146, 110, 4),
+        (240, "Baz The Vault Keeper", "", 147, 145, 2),
+        (249, "Berdysh Guard", "BerdyshGuard", 131, 88, 2),
+        (249, "Berdysh Guard", "BerdyshGuard", 173, 125, 4),
+        (249, "Berdysh Guard", "BerdyshGuard", 94, 125, 8),
+        (249, "Berdysh Guard", "BerdyshGuard", 94, 130, 8),
+        (249, "Berdysh Guard", "BerdyshGuard", 131, 148, 2),
+        (247, "Crossbow Guard", "CrossbowGuard", 114, 125, 4),
+        (250, "Wandering Merchant Harold", "WanderingMerchant", 183, 137, 3),
+        (251, "Hanzo The Blacksmith", "", 116, 141, 4),
+        (253, "Potion Girl Amy", "PotionGirlAmy", 127, 86, 3),
+        (254, "Pasi The Mage", "", 118, 113, 4),
+        (255, "Lumen the Barmaid", "LumentheBarmaid", 123, 135, 2),
+    ],
+    3: [  # Noria
+        (253, "Potion Girl Amy", "PotionGirlAmy", 169, 109, 4),
+        (253, "Potion Girl Amy", "PotionGirlAmy", 193, 110, 3),
+        (242, "Elf Lala", "", 173, 125, 2),
+        (243, "Eo the Craftsman", "", 195, 124, 3),
+        (240, "Baz The Vault Keeper", "", 172, 96, 4),
+        (238, "Chaos Goblin", "", 180, 103, 2),
+    ],
+}
+
+
 def cook_tables(world, out_dir):
     """mu.db's rows, through index.json, as one flat versioned file the game reads whole.
 
-    The .mur format ("MU2 rules"), version 1, little-endian:
+    The .mur format ("MU2 rules"), version 5, little-endian:
 
-        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 actions,
+        'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 actions, u32 items,
+                u32 folk,
                 u32 map number, u32 grid size, i32 safe gate x1, y1, x2, y2
         kinds:  u16 len + figure name (the cooked figure this breed wears, or empty),
                 u16 len + label ("Bull Fighter"),
@@ -1255,6 +1294,16 @@ def cook_tables(world, out_dir):
                 i32 group, i32 number (MU's own item group and index, which is what the
                 client's attack ladder tests), i32 flags (bit 0 two-handed, bit 1 a bow,
                 bit 2 a crossbow)
+        items:  (version 4, sprint 7) u16 len + name, u16 len + label, u16 len + glb path,
+                i32 group, number, drop level, width, height, minimum damage, maximum
+                damage, attack speed, defense, magic power, durability, classes (as the
+                arms), then the requirement's RAW level, strength, agility, energy,
+                vitality (MU's formula scales them in the sim), flags (bit 0 drops from
+                monsters, bit 1 a jewel, bit 2 two-handed, bit 3 worn armour, bit 4 a
+                shield, bit 5 a weapon), maximum drop level (0 none), skill
+        folk:   (version 5, sprint 7) u16 len + name, u16 len + figure ("" where the world's
+                own placements stand them), i32 MU's NPC number, tile x, tile y, facing (MU2's
+                Look, 1 West clockwise to 8 NorthWest). FOLK_VERSION075 above
         actions: i32 action (MU's own number), i32 keys, f32 authored play speed -- the player
                 library's, and only the actions a swing can land on
         grid:   u16 a tile, row-major [y][x], MU's own attribute word
@@ -1406,13 +1455,61 @@ def cook_tables(world, out_dir):
                                 int(stats.get("group", -1)), int(stats.get("number", -1)),
                                 flags))
 
+    # Every item with a row, for the bag, the shop and the drop (sprint 7): the whole of
+    # index.json's objects[].stats, which is where MU2's pipeline puts an item's row -- the
+    # footprint, the drop level, the requirement's raw numbers, the defence, the classes.
+    # mu.db's `items` table has names and drop levels alone. In name order, like the arms.
+    kItemDrops, kItemJewel, kItemTwoHanded, kItemArmour, kItemShield, kItemWeapon = (
+        1, 2, 4, 8, 16, 32)
+    items = []
+    for one in sorted(index["objects"], key=lambda o: o["name"]):
+        stats = one.get("stats") or {}
+        if not stats or "group" not in stats:
+            continue
+        wants = stats.get("requires") or {}
+        classes = 0
+        for name in stats.get("classes") or []:
+            classes |= kClass.get(name, 0)
+        flags = 0
+        if stats.get("drops_from_monsters", True):
+            flags |= kItemDrops
+        if stats.get("jewel"):
+            flags |= kItemJewel
+        if one.get("stance", "") in ("two_hand_sword", "scythe", "bow", "crossbow"):
+            flags |= kItemTwoHanded
+        if one.get("kind") == "armor":
+            flags |= kItemArmour
+        if one.get("kind") == "shield":
+            flags |= kItemShield
+        if one.get("kind") == "weapon":
+            flags |= kItemWeapon
+        items.append(write_string(one["name"]) + write_string(one.get("label", one["name"])) +
+                     write_string(one.get("glb", "")) +
+                     struct.pack("<20i", int(stats["group"]), int(stats["number"]),
+                                 int(stats.get("drop_level") or 0),
+                                 int(stats.get("width") or 1), int(stats.get("height") or 1),
+                                 int(stats.get("minimum_damage") or 0),
+                                 int(stats.get("maximum_damage") or 0),
+                                 int(stats.get("attack_speed") or 0),
+                                 int(stats.get("defense") or 0),
+                                 int(stats.get("magic_power") or 0),
+                                 int(stats.get("durability") or 0), classes,
+                                 int(wants.get("level") or 0), int(wants.get("strength") or 0),
+                                 int(wants.get("agility") or 0), int(wants.get("energy") or 0),
+                                 int(wants.get("vitality") or 0), flags,
+                                 int(stats.get("maximum_drop_level") or 0),
+                                 int(stats.get("skill") or 0)))
+
+    folk = [write_string(name) + write_string(figure) + struct.pack("<4i", npc, x, y, look)
+            for (npc, name, figure, x, y, look) in FOLK_VERSION075.get(number, [])]
+
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIIII4i", b"MU2R", 3, SIM_HZ, len(kinds), len(spawns), len(arms),
-                       len(actions), number, size,
+    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 5, SIM_HZ, len(kinds), len(spawns), len(arms),
+                       len(actions), len(items), len(folk), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))
     blob += (b"".join(kinds) + b"".join(spawns) + b"".join(arms) + b"".join(actions) +
-             bytes(words))
+             b"".join(items) + b"".join(folk) + bytes(words))
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{world}.mur")
     with open(path, "wb") as handle:
@@ -1424,7 +1521,8 @@ def cook_tables(world, out_dir):
         print(f"cook: WARNING {line}")
     alive = sum(struct.unpack_from("<I", one, 20)[0] for one in spawns)
     print(f"cook: {len(kinds)} breeds, {len(spawns)} nests holding {alive} monsters, "
-          f"{len(arms)} arms and {len(actions)} attack actions -> "
+          f"{len(arms)} arms, {len(actions)} attack actions, {len(items)} items and "
+          f"{len(folk)} townsfolk -> "
           f"{os.path.relpath(path, ROOT)} ({len(blob)} bytes)")
     return 0
 

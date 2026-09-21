@@ -27,6 +27,8 @@
 #include <vector>
 
 #include "content/tables.h"
+#include "sim/items.h"
+#include "sim/market.h"
 #include "sim/random.h"
 #include "sim/route.h"
 #include "sim/rules.h"
@@ -59,6 +61,10 @@ enum class What : uint8_t {
     Died,      // whom killed it
     Gained,    // a: experience, b: the total
     Levelled,  // a: the new level, b: points in hand
+    Drank,     // a potion's whole worth begun: a: the total, b: 1 for mana, 0 for health
+    Served,    // a merchant's counter opened: a: the townsperson's index, b: MU's NPC number
+    Bought,    // a: the item row, b: the price, c: the bag slot
+    Sold,      // a: the item row, b: what was paid, c: the bag slot it left
 };
 
 // One thing that happened, flat and copyable. The numbers mean what the enum above says they
@@ -95,6 +101,10 @@ struct Body {
     int32_t mana = 0;
     int32_t maxMana = 0;
     Fighter stats;
+    // What the player's worn pieces add, off the satchel at the last rearm: the armour and
+    // shield's defence with their plus counted, and the weapon's plus on its damage band.
+    int32_t wornDefense = 0;
+    int32_t weaponBonus = 0;
 
     // Tiles, and a tile's centre is its integer coordinate -- MU2's own reckoning
     // (Things.cs:71-82, `Column => (int)MathF.Round(X)`). The world's metres and the negation
@@ -148,7 +158,9 @@ struct Body {
 // runs on is per-body and already separate from the thinking clock, so a per-skill cooldown
 // goes beside it rather than through it.
 struct Request {
-    enum class Kind : uint8_t { None, WalkTo, Attack, Stop } kind = Kind::None;
+    // Talk: walk to a townsperson (`target` is his index in Tables::folk) and, within the
+    // counter's reach, be served. Any other order closes the counter.
+    enum class Kind : uint8_t { None, WalkTo, Attack, Stop, Talk } kind = Kind::None;
     int32_t column = 0, row = 0;
     uint32_t target = 0;
 };
@@ -193,6 +205,46 @@ public:
     bool equip(int32_t weapon, int32_t shield, bool given = false);
     // Why the last equip was refused, or empty.
     const std::string& refusal() const { return refusal_; }
+
+    // ---- the satchel (sprint 7) -----------------------------------------------------------
+    // What the player carries and wears. The satchel is the truth and his hands are read off
+    // it: every change to a worn slot re-reckons him (Beast.Rearm).
+    const Satchel& satchel() const { return bag_; }
+    int64_t money() const { return money_; }
+    Wearer wearer() const;
+    // A thing put straight into a slot, with no gate but the slot being free: the cradle's
+    // axe, and a purchase into the first place it fits. -1 for anywhere in the bag. The slot
+    // it went to, or -1 when there was nowhere.
+    int give(int32_t item, int slot = -1, int refinement = 0, int durability = 0);
+    // A drag from one slot to another, equipping and unequipping included. Refused, whole,
+    // where `movable` says no -- the same answer the window colours the cell by.
+    bool moveItem(int from, int to);
+    // A right-click on a carried thing: drink it. Only potions this sprint. Refused where it
+    // is nothing drinkable or the half-second cooldown has not run (RecoverConsumeHandler's
+    // CooldownTime); the heal arrives over the next second in three instalments.
+    bool useItem(int slot);
+    // Zen in and out, for the merchants. `pay` refuses, whole, what he cannot afford.
+    void earn(int64_t zen) { money_ += zen; }
+    bool pay(int64_t zen);
+    // Takes a carried thing out of the bag and hands it back: a sale. Worn things are not
+    // sold (Shelf.Offer refuses a source outside the bag, and so does this).
+    Held sell(int slot);
+
+    // ---- the merchants (sprint 7) ---------------------------------------------------------
+    // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a
+    // Talk order arriving within `kCounter` of a merchant, closed by any other order.
+    int trading() const { return trading_; }
+    void closeTrade() { trading_ = -1; }
+    // Buys whatever sits in one of the open shop's slots: priced, the room looked for at its
+    // own footprint BEFORE anything is taken, then paid and placed together. The bag slot, or
+    // -1 refused. Realm.Buy.
+    int buy(int shelfSlot);
+    // Sells a carried thing to the open shop: bag slots only, never what is worn. What was
+    // paid, or -1 refused. Realm.Sell.
+    int64_t sellItem(int slot);
+    // Whether he is close enough to be served by this townsperson right now. Asked again on
+    // every purchase and sale, not once when the counter opened.
+    bool serving(int folk) const;
     void step();
 
     int64_t tick() const { return tick_; }
@@ -222,6 +274,8 @@ private:
     void gain(Body& hero, int32_t award);
     void raiseBeast(Body& beast);
     void reviveHero();
+    void rearm(Body& hero);
+    void sip();
     bool send(Body& one, int column, int row);
     void halt(Body& one);
     bool beside(const Body& target, int radius, const Body& walker, int* column, int* row);
@@ -249,6 +303,21 @@ private:
     int64_t tick_ = 0;
     std::string refusal_;
     uint32_t nextId_ = 1;
+
+    Satchel bag_;
+    int64_t money_ = 0;
+    int trading_ = -1;
+    int64_t potionUntil_ = 0;
+    // A potion's worth arrives in three instalments, 20% 60% 20% at 200, 600 and 200 ms
+    // (MU2's Realm.Consume, off OpenMU's handler). A fixed ring: a potion every half second
+    // and three instalments a potion is at most six in flight.
+    struct Sip {
+        int64_t due = 0;
+        int32_t amount = 0;
+        bool mana = false;
+    };
+    Sip sips_[8];
+    int sipCount_ = 0;
 };
 
 // The one line a happening becomes in the seeded log. Fixed precision throughout: a `%g` of a

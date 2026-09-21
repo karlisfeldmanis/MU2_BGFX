@@ -104,6 +104,13 @@ Arms Realm::armsOf(const Body& one) const {
     if (one.shield >= 0 && size_t(one.shield) < tables_->arms.size()) {
         arms.armourDefense += tables_->arms[size_t(one.shield)].defense;
     }
+    // The player's defence is his worn pieces' since sprint 7 -- the shield among them, with its
+    // plus -- and not the shield's row alone, so it replaces rather than adds to the above.
+    if (one.player) {
+        arms.armourDefense = one.wornDefense;
+        arms.weaponMinimumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
+        arms.weaponMaximumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
+    }
     return arms;
 }
 
@@ -167,14 +174,205 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
     };
     if (!allowed(weapon, false) || !allowed(shield, true)) return false;
 
-    hero.weapon = weapon;
-    hero.shield = shield;
+    // Into the satchel's hands, which is where a hand is read from since sprint 7. Both hands
+    // are this call's to set: what was in them goes back into the bag, or is lost if the bag
+    // has no room -- which it always has, since nothing else puts anything there before this.
+    for (int hand : {kWeaponRight, kWeaponLeft}) {
+        const Held was = bag_.lift(hand);
+        if (!was.empty()) give(was.item, -1, was.refinement, was.durability);
+    }
+    for (int32_t index : {weapon, shield}) {
+        if (index < 0) continue;
+        const int32_t item = tables_->itemNamed(tables_->arms[size_t(index)].name);
+        if (item < 0) {
+            refusal_ = tables_->arms[size_t(index)].label + " has no item row";
+            continue;
+        }
+        const content::ItemRow& row = tables_->items[size_t(item)];
+        const int hand = placeOf(row);
+        if (hand >= 0) bag_.put(hand, Held{item, 0, int16_t(row.durability)});
+    }
+    rearm(hero);
+    return true;
+}
+
+// Reads the hands and the armour off the satchel and re-reckons him. Beast.Rearm: ammunition is
+// not a weapon, the bow is the weapon wherever it is held, and the defence is the sum of the
+// pieces from the left hand to the boots, each with its plus.
+void Realm::rearm(Body& hero) {
+    const auto rowAt = [&](int slot) -> const content::ItemRow* {
+        const Held& h = bag_[slot];
+        return h.empty() ? nullptr : &tables_->items[size_t(h.item)];
+    };
+    const content::ItemRow* right = rowAt(kWeaponRight);
+    const content::ItemRow* left = rowAt(kWeaponLeft);
+    const auto swung = [](const content::ItemRow* r) {
+        return r && r->weapon() && !ammunition(*r);
+    };
+    int weaponSlot = swung(right) ? kWeaponRight : (swung(left) ? kWeaponLeft : -1);
+    hero.weapon = weaponSlot >= 0 ? tables_->armNamed(rowAt(weaponSlot)->name) : -1;
+    hero.weaponBonus = weaponSlot >= 0 ? damageBonus(bag_[weaponSlot].refinement) : 0;
+    hero.shield = left && left->shield() ? tables_->armNamed(left->name) : -1;
+    hero.wornDefense = 0;
+    for (int slot = kWeaponLeft; slot <= kBoots; ++slot) {
+        const content::ItemRow* row = rowAt(slot);
+        if (!row || (!row->shield() && !row->armour())) continue;
+        hero.wornDefense += row->defense + defenseBonus(row->shield(), bag_[slot].refinement);
+    }
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
     restoreMana(hero);
     reswing(hero);
     hero.health = std::min(hero.maxHealth, hero.health + std::max(0, hero.maxHealth - was));
+}
+
+Wearer Realm::wearer() const {
+    const Body& hero = bodies_[0];
+    return Wearer{hero.kin, hero.level, hero.points};
+}
+
+int Realm::give(int32_t item, int slot, int refinement, int durability) {
+    if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return -1;
+    const content::ItemRow& row = tables_->items[size_t(item)];
+    if (slot < 0) slot = bag_.free(*tables_, row.width, row.height);
+    if (slot < 0 || !bag_[slot].empty() ||
+        (baggable(slot) && !bag_.room(*tables_, slot, row.width, row.height))) {
+        return -1;
+    }
+    bag_.put(slot, Held{item, int16_t(refinement), int16_t(durability)});
+    if (wearable(slot)) rearm(bodies_[0]);
+    return slot;
+}
+
+bool Realm::moveItem(int from, int to) {
+    if (!tables_ || !bodies_[0].alive()) return false;
+    if (!move(*tables_, wearer(), bag_, from, to)) return false;
+    if (wearable(from) || wearable(to)) rearm(bodies_[0]);
     return true;
+}
+
+bool Realm::useItem(int slot) {
+    if (!tables_ || !baggable(slot)) return false;
+    Body& hero = bodies_[0];
+    const Held potion = bag_[slot];
+    if (potion.empty() || !hero.alive()) return false;
+    const content::ItemRow& row = tables_->items[size_t(potion.item)];
+    const bool mana = restores(row);
+    if (!mana && !heals(row)) return false;
+    // A yes that has not come round yet, not a no. MU2's Realm.Consume.
+    if (tick_ < potionUntil_) return false;
+
+    // MU2's Realm.Consume, off OpenMU's RecoverConsumeHandlerPlugIn: the rank in its family
+    // (0 the apple, 1 to 3 the potions) buys ten percent of the pool each, the plus one more
+    // each, and a flat (rank + 1) x 50 less the level, never below nothing.
+    const int rank = mana ? row.number - 4 + 1 : row.number;
+    const int pool = mana ? hero.maxMana : hero.maxHealth;
+    const int percent = rank * 10 + potion.refinement;
+    const int flat = std::max(0, (rank + 1) * 50 - hero.level);
+    const int total = int(double(pool) * double(percent) / 100.0 + double(flat));
+    // The three instalments, at 200, 600 and 200 ms after one another: 4, 12 and 4 ticks.
+    const int64_t steps[3] = {4, 12, 4};
+    const int shares[3] = {20, 60, 20};
+    int paid = 0;
+    int64_t due = tick_;
+    for (int i = 0; i < 3 && sipCount_ < 8; ++i) {
+        due += steps[i];
+        const int amount = i == 2 ? total - paid : total * shares[i] / 100;
+        paid += amount;
+        sips_[sipCount_++] = Sip{due, amount, mana};
+    }
+    potionUntil_ = tick_ + 10;  // PotionCooldown, half a second
+    Held left = potion;
+    left.durability = int16_t(potion.durability - 1);
+    if (left.durability <= 0) {
+        bag_.lift(slot);
+    } else {
+        bag_.put(slot, left);
+    }
+    say(What::Drank, hero, total, mana ? 1 : 0);
+    return true;
+}
+
+void Realm::sip() {
+    Body& hero = bodies_[0];
+    int kept = 0;
+    for (int i = 0; i < sipCount_; ++i) {
+        const Sip& one = sips_[i];
+        if (one.due > tick_) {
+            sips_[kept++] = one;
+            continue;
+        }
+        // A dead man drinks nothing: what is still due is spilt.
+        if (!hero.alive()) continue;
+        if (one.mana) {
+            hero.mana = std::min(hero.maxMana, hero.mana + one.amount);
+        } else {
+            hero.health = std::min(hero.maxHealth, hero.health + one.amount);
+        }
+    }
+    sipCount_ = kept;
+}
+
+bool Realm::serving(int folk) const {
+    if (!tables_ || folk < 0 || size_t(folk) >= tables_->folk.size()) return false;
+    const Body& hero = bodies_[0];
+    if (!hero.alive()) return false;
+    const content::Townsperson& one = tables_->folk[size_t(folk)];
+    const float dx = hero.x - float(one.x), dy = hero.y - float(one.y);
+    return dx * dx + dy * dy <= kCounter * kCounter;
+}
+
+int Realm::buy(int shelfSlot) {
+    if (trading_ < 0 || !serving(trading_)) return -1;
+    const int npc = tables_->folk[size_t(trading_)].number;
+    int count = 0;
+    const Offer* stock = stockOf(npc, &count);
+    // Last one wins, which is how a shelf keyed on the slot is built -- Hanzo's slot 73.
+    const Offer* wanted = nullptr;
+    for (int i = 0; i < count; ++i) {
+        if (stock[i].slot == shelfSlot) wanted = &stock[i];
+    }
+    if (!wanted) return -1;
+    const int32_t item = tables_->itemAt(wanted->group, wanted->number);
+    if (item < 0) return -1;
+    const content::ItemRow& row = tables_->items[size_t(item)];
+    const int64_t price = buyingPrice(row, wanted->refinement, wanted->pieces > 0 ? wanted->pieces : 1,
+                                      wanted->skill, row.durability, row.durability);
+    if (money_ < price) return -1;
+    const int slot = bag_.free(*tables_, row.width, row.height);
+    if (slot < 0) return -1;
+    money_ -= price;
+    // A stack for a potion, a full quiver for ammunition, and nothing read for gear.
+    Held bought{item, int16_t(wanted->refinement),
+                int16_t(wanted->pieces > 0 ? wanted->pieces : row.durability), wanted->skill};
+    bag_.put(slot, bought);
+    say(What::Bought, bodies_[0], item, int32_t(price), slot);
+    return slot;
+}
+
+int64_t Realm::sellItem(int slot) {
+    if (trading_ < 0 || !serving(trading_) || !baggable(slot) || bag_[slot].empty()) return -1;
+    const Held thing = bag_[slot];
+    const content::ItemRow& row = tables_->items[size_t(thing.item)];
+    const bool stacks = row.group == kGroupPotions;
+    const int64_t paid = sellingPrice(row, thing.refinement,
+                                      stacks ? std::max<int>(1, thing.durability) : 1, thing.skill,
+                                      thing.durability, row.durability);
+    bag_.lift(slot);
+    money_ += paid;
+    say(What::Sold, bodies_[0], thing.item, int32_t(paid), slot);
+    return paid;
+}
+
+bool Realm::pay(int64_t zen) {
+    if (zen < 0 || zen > money_) return false;
+    money_ -= zen;
+    return true;
+}
+
+Held Realm::sell(int slot) {
+    if (!baggable(slot)) return Held{};
+    return bag_.lift(slot);
 }
 
 const Body* Realm::find(uint32_t id) const {
@@ -799,12 +997,37 @@ void Realm::press() {
     if (pending_.kind != Request::Kind::None) {
         order_ = pending_;
         pending_ = Request{};
+        // Any order is walking away from a counter, including another Talk.
+        trading_ = -1;
         if (order_.kind == Request::Kind::WalkTo) {
             send(hero, order_.column, order_.row);
         } else if (order_.kind == Request::Kind::Stop) {
             halt(hero);
             order_ = Request{};
+        } else if (order_.kind == Request::Kind::Talk) {
+            if (order_.target >= tables_->folk.size()) {
+                order_ = Request{};
+            } else if (!serving(int(order_.target))) {
+                const content::Townsperson& one = tables_->folk[order_.target];
+                send(hero, one.x, one.y);
+            }
         }
+    }
+
+    if (order_.kind == Request::Kind::Talk) {
+        // Served the tick he is within reach, whether he walked there or was already there.
+        // A townsperson who sells nothing -- a guard, the vault keeper -- is walked to and
+        // then nothing happens, which is MU's own answer to talking to a guard.
+        if (serving(int(order_.target))) {
+            const content::Townsperson& one = tables_->folk[order_.target];
+            halt(hero);
+            if (sells(one.number)) {
+                trading_ = int(order_.target);
+                say(What::Served, hero, trading_, one.number);
+            }
+            order_ = Request{};
+        }
+        return;
     }
 
     if (order_.kind != Request::Kind::Attack) return;
@@ -860,6 +1083,7 @@ void Realm::step() {
     // considered for respawn. Nothing here walks a hash container, and every id came from one
     // monotonic counter.
     Body& hero = bodies_[0];
+    sip();
     if (hero.alive()) {
         advance(hero);
         press();
@@ -949,6 +1173,24 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Gained:
             std::snprintf(line, sizeof(line), "%6u %s gains %d experience, %d in all",
                           happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Drank:
+            std::snprintf(line, sizeof(line), "%6u %s drinks for %d %s", happening.tick, who,
+                          happening.a, happening.b ? "mana" : "health");
+            break;
+        case What::Served:
+            std::snprintf(line, sizeof(line), "%6u %s is served by %s", happening.tick, who,
+                          realm.tables()->folk[size_t(happening.a)].name.c_str());
+            break;
+        case What::Bought:
+            std::snprintf(line, sizeof(line), "%6u %s buys %s for %d into slot %d", happening.tick,
+                          who, realm.tables()->items[size_t(happening.a)].label.c_str(),
+                          happening.b, happening.c);
+            break;
+        case What::Sold:
+            std::snprintf(line, sizeof(line), "%6u %s sells %s for %d from slot %d", happening.tick,
+                          who, realm.tables()->items[size_t(happening.a)].label.c_str(),
+                          happening.b, happening.c);
             break;
         case What::Levelled:
             std::snprintf(line, sizeof(line), "%6u %s reaches level %d with %d points",

@@ -287,6 +287,24 @@ int main(int argc, char** argv) {
         !desk.open(MU2_SHADER_DIR, MU2_ASSET_DIR, &textures)) {
         core::logError("the windows did not open; playing without a HUD");
     }
+    if (inWorld && world.played().isOpen() && !args.give.empty()) {
+        size_t from = 0;
+        while (from <= args.give.size()) {
+            const size_t comma = args.give.find(',', from);
+            const std::string one = args.give.substr(from, comma - from);
+            const size_t colon = one.find(':');
+            if (!one.empty()) {
+                world.played().give(one.substr(0, colon),
+                                    colon == std::string::npos ? 1 : std::atoi(one.c_str() + colon + 1));
+            }
+            if (comma == std::string::npos) break;
+            from = comma + 1;
+        }
+    }
+    if (inWorld && world.played().isOpen()) {
+        if (args.zen > 0) world.played().earn(args.zen);
+        if (!args.talk.empty()) world.played().talkTo(args.talk);
+    }
     if (args.windows.find("inventory") != std::string::npos) desk.setInventoryOpen(true);
     if (args.windows.find("character") != std::string::npos) desk.setCharacterOpen(true);
 
@@ -571,11 +589,15 @@ int main(int argc, char** argv) {
                 // world only hears the clicks that land on none. A scripted click is the
                 // world's by construction -- it is aimed at a monster.
                 if (desk.ready()) {
+                    const float w = float(window.width()), h = float(window.height());
                     for (const core::Args::UiClick& c : args.uiClicks) {
-                        if (frame == c.frame || frame == c.frame + 1) {
-                            desk.script(c.x * float(window.width()), c.y * float(window.height()),
-                                        frame == c.frame, frame == c.frame + 1);
-                        }
+                        const bool drag = c.x2 != c.x || c.y2 != c.y;
+                        const int last = c.frame + (drag ? 3 : 1);
+                        if (frame < c.frame || frame > last) continue;
+                        // Pressed at the first point, carried to the second, let go there.
+                        const bool at = frame == c.frame;
+                        desk.script((at ? c.x : c.x2) * w, (at ? c.y : c.y2) * h, at,
+                                    frame == last, c.right);
                     }
                     desk.update(float(deltaSeconds), window, world.played());
                 }

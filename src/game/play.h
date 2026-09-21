@@ -68,10 +68,28 @@ public:
     // One point into strength (0), agility (1), vitality (2) or energy (3), refused where
     // none is in hand -- OpenMU's IncreaseStatsAction, one point a press.
     bool spendPoint(int stat);
+    // A drag from one slot to another, and a right-click on a carried thing. Both the realm's
+    // to refuse; see sim/items.h for the gates.
+    bool moveItem(int from, int to);
+    bool useItem(int slot);
+    // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
+    // `count` is a stack's size for a potion and ignored for anything else.
+    bool give(const std::string& name, int count);
+    // The open counter's requests: a purchase by shelf slot, a sale by bag slot, and walking
+    // away. Each the realm's to refuse.
+    bool buy(int shelfSlot);
+    bool sell(int bagSlot);
+    void closeTrade() { realm_.closeTrade(); }
+    // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
+    // same Talk request a click on him raises.
+    void earn(long long zen) { realm_.earn(zen); }
+    bool talkTo(const std::string& name);
     const sim::Findings& findings() const { return findings_; }
     int pointedColumn() const { return pointedColumn_; }
     int pointedRow() const { return pointedRow_; }
     uint32_t pointedAt() const { return pointedAt_; }
+    // The townsperson under the pointer, as an index into the tables' folk, or -1.
+    int pointedFolk() const { return pointedFolk_; }
     int64_t ticks() const { return realm_.tick(); }
     double tickMs() const { return tickMs_; }
     // What the last line of the log said, so the run can be read without a HUD. Sprint 6 draws
@@ -139,6 +157,14 @@ private:
     std::vector<Cue> due_;
 
     std::vector<Drawn> drawn_;
+    // The town's people who have a figure to wear and are not already stood by the world's
+    // placements. They stand where the tables say, facing where MU faced them, and idle.
+    struct Standing {
+        Figure figure;
+        int folk = -1;
+    };
+    std::vector<Standing> folk_;
+    int pointedFolk_ = -1;
     std::vector<float> scratch_;
     double accumulator_ = 0.0;
     double tickMs_ = 0.0;

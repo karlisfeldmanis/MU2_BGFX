@@ -83,6 +83,50 @@ struct Arm {
     bool missile() const { return bow() || crossbow(); }
 };
 
+// One item, as the bag, the shop, the tooltip and the drop read it: MU2's `Prize` with its
+// `Arm` and `Wear` columns folded in, because here they are one row off one asset
+// (index.json's objects[].stats) and a second and third table would be the same row cut
+// three ways. The fight still reads `Arm` above, which is found from an item by its name.
+//
+// The requirement is carried RAW. What the game asks is MU's formula over it -- `(3 x drop
+// level x raw / 100) + 20`, four for energy -- and that is sim code (sim/items.h), because
+// the plus on a particular piece moves it.
+struct ItemRow {
+    std::string name;   // "Axe01", the asset's
+    std::string label;  // "Small Axe"
+    std::string glb;    // the model, relative to the assets, for the bag's picture
+    int32_t group = 0, number = 0;
+    int32_t dropLevel = 0;
+    int32_t width = 1, height = 1;
+    int32_t minimumDamage = 0, maximumDamage = 0, attackSpeed = 0;
+    int32_t defense = 0;
+    int32_t magicPower = 0;
+    int32_t durability = 0;  // the shots in a quiver; 0 for everything this sprint wears
+    int32_t classes = 0;     // as Arm::classes; 0 is anybody
+    int32_t needLevel = 0, needStrength = 0, needAgility = 0, needEnergy = 0, needVitality = 0;
+    int32_t flags = 0;
+    int32_t maximumDropLevel = 0;
+    int32_t skill = 0;
+
+    bool dropsFromMonsters() const { return (flags & 1) != 0; }
+    bool jewel() const { return (flags & 2) != 0; }
+    bool twoHanded() const { return (flags & 4) != 0; }
+    bool armour() const { return (flags & 8) != 0; }
+    bool shield() const { return (flags & 16) != 0; }
+    bool weapon() const { return (flags & 32) != 0; }
+};
+
+// One of the town's people: who, where, which way, and what draws them. See FOLK_VERSION075
+// in tools/cook.py for the source. `figure` is empty where the world's own placements already
+// stand them.
+struct Townsperson {
+    std::string name;
+    std::string figure;
+    int32_t number = 0;  // MU's own NPC number: 253 Amy, 251 Hanzo, ...
+    int32_t x = 0, y = 0;
+    int32_t look = 0;    // MU2's Look: 1 West, 2 SouthWest, 3 South ... 8 NorthWest
+};
+
 // One of the player library's attack clips, as two numbers: how many keys it has and the play
 // speed it was authored at. That is all a swing rate is made of --
 // `length = keys / ((speed + attackSpeed * 0.004) * 25)` seconds -- and it is here because the
@@ -102,7 +146,23 @@ struct Tables {
     std::vector<MonsterNest> nests;
     std::vector<Arm> arms;
     std::vector<PlayerAction> actions;
+    std::vector<ItemRow> items;
+    std::vector<Townsperson> folk;
     Grid grid;
+
+    // By MU's own group and number, or -1.
+    int32_t itemAt(int32_t group, int32_t number) const {
+        for (size_t i = 0; i < items.size(); ++i) {
+            if (items[i].group == group && items[i].number == number) return int32_t(i);
+        }
+        return -1;
+    }
+    int32_t itemNamed(const std::string& name) const {
+        for (size_t i = 0; i < items.size(); ++i) {
+            if (items[i].name == name) return int32_t(i);
+        }
+        return -1;
+    }
 
     const PlayerAction* action(int32_t number) const {
         for (const PlayerAction& one : actions) {

@@ -10,8 +10,10 @@
 #include <string>
 
 #include "content/texture.h"
+#include "game/bag.h"
 #include "game/card.h"
 #include "game/hud.h"
+#include "game/shelf.h"
 #include "game/panel.h"
 #include "gfx/interface.h"
 #include "gfx/window.h"
@@ -33,7 +35,7 @@ public:
     // A scripted pointer for the next update, replacing the mouse's: a press, a release, or
     // just a place. The run's --ui-click goes through here and then through exactly the
     // windows' own code.
-    void script(float x, float y, bool press, bool release);
+    void script(float x, float y, bool press, bool release, bool right = false);
     // Whether the pointer this frame belongs to a window rather than to the ground.
     bool takesPointer() const { return takesPointer_; }
 
@@ -51,6 +53,12 @@ private:
     panel::Arts arts_;
     Hud hud_;
     Card card_;
+    Bag bag_;
+    Shelf shelf_;
+    Stage* bagStage_ = nullptr;
+    Stage* shelfStage_ = nullptr;
+    bool trading_ = false;
+    bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;
     bool takesPointer_ = false;

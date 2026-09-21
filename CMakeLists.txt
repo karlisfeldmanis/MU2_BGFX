@@ -107,10 +107,15 @@ add_executable(mu2
   src/game/panel.cpp
   src/game/hud.cpp
   src/game/card.cpp
+  src/game/bag.cpp
+  src/game/shelf.cpp
+  src/game/describe.cpp
   src/game/desk.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp
+  src/sim/items.cpp
+  src/sim/market.cpp
   src/sim/realm.cpp
   src/sim/audit.cpp
 )
@@ -180,6 +185,8 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp
+  src/sim/items.cpp
+  src/sim/market.cpp
   src/sim/realm.cpp
   src/sim/audit.cpp
   src/content/grid.cpp
