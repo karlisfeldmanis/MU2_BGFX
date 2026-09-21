@@ -260,6 +260,10 @@ int main(int argc, char** argv) {
         if (args.play) {
             world.play(MU2_ASSET_DIR, args.world, args.seed, args.kin, args.level, args.weapon,
                        args.shield);
+            // What a blow looks like, opened second because the sheets need a device and
+            // Play is handed an asset directory and no Textures. Not fatal: a fight with no
+            // blood in it is still a fight, and open() has already said why in the log.
+            world.played().showing().open(MU2_ASSET_DIR, textures);
         }
     }
 
@@ -479,6 +483,54 @@ int main(int argc, char** argv) {
                     pointerX = kSpots[spot][0] * float(window.width());
                     pointerY = kSpots[spot][1] * float(window.height());
                     clickNow = true;
+
+                    // Aimed at the nearest living monster when there is one, and at the spot
+                    // above when there is not.
+                    //
+                    // The six spots wander: the camera follows the hero, so the middle of the
+                    // screen is roughly his own tile and a scripted click mostly walks a step
+                    // and comes back. That is fine for proving a walk and useless for proving
+                    // a fight -- over 900 frames in a spider field it produced blows landing
+                    // ON the hero and not one landing on a monster, which is the half of
+                    // sprint 6 worth looking at. The click still goes through the same
+                    // unprojection, the same tile and the same request; only where it points
+                    // is chosen.
+                    const sim::Realm& realm = world.played().realm();
+                    const sim::Body& hero = realm.hero();
+                    const sim::Body* nearest = nullptr;
+                    float best = 1e9f;
+                    for (const sim::Body& body : realm.bodies()) {
+                        if (body.player || !body.alive()) continue;
+                        const float dx = body.x - hero.x, dy = body.y - hero.y;
+                        const float away = dx * dx + dy * dy;
+                        if (away < best) {
+                            best = away;
+                            nearest = &body;
+                        }
+                    }
+                    // Only when it is close enough to walk to and fight in a few ticks;
+                    // anything further and the run is a march rather than a fight.
+                    if (nearest != nullptr && best < 12.0f * 12.0f) {
+                        const content::Ground& land = world.ground();
+                        const float metresPerTile = land.metresPerTile();
+                        const float wx = (nearest->x + 0.5f) * metresPerTile;
+                        const float wz = -(nearest->y + 0.5f) * metresPerTile;
+                        const float wy = land.heightAt(wx, wz);
+                        float clip[4] = {0, 0, 0, 0};
+                        const float world4[4] = {wx, wy, wz, 1.0f};
+                        float viewProjNow[16];
+                        bx::mtxMul(viewProjNow, view, proj);
+                        bx::vec4MulMtx(clip, world4, viewProjNow);
+                        if (clip[3] > 0.0f) {
+                            // Clip space to pixels. y is flipped because clip space runs up
+                            // the screen and the pointer runs down it, which is the same
+                            // flip vs_overlay.sc makes for the same reason.
+                            const float ndcX = clip[0] / clip[3];
+                            const float ndcY = clip[1] / clip[3];
+                            pointerX = (ndcX * 0.5f + 0.5f) * float(window.width());
+                            pointerY = (0.5f - ndcY * 0.5f) * float(window.height());
+                        }
+                    }
                 }
                 world.played().point(world.camera(), view, proj, pointerX, pointerY,
                                      window.width(), window.height());
@@ -489,6 +541,13 @@ int main(int argc, char** argv) {
                 bx::mtxMul(viewProj, view, proj);
                 world.played().gather(renderer, viewProj, townDrawables,
                                       casters ? &townCasters : nullptr);
+                // And what the blows have thrown, into the transparent pass. The camera's
+                // own horizontal comes out of the view matrix's first column, which is the
+                // same basis the pass billboards on -- a number's digits are laid along it,
+                // so a second copy of that vector taken from anywhere else would tilt the
+                // number away from the sprites it sits among.
+                const float right[3] = {view[0], view[4], view[8]};
+                world.played().showing().gather(renderer.effects(), right);
             }
 
             // The crowd goes into the same two lists as the town, and through the same two
