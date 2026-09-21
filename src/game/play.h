@@ -36,10 +36,14 @@ public:
     // `heroLook` is the body the character is drawn in -- the naked class body with whatever
     // the game has put in his hands, built by Figures::dress. Null falls back to the cook's
     // own armoured Dark Knight, which is what every run before the game had.
+    // `bare` is the naked class body's own name (Figures::dress's `base`), kept so a later
+    // equip or unequip can dress the hero again in the same body it started in. Left empty,
+    // as it is where nothing calls `open` with one, `redress` has nothing to re-dress with
+    // and does nothing -- the hero keeps whatever he was handed at the door.
     bool open(const std::string& assetDir, const std::string& world, const content::Ground* ground,
-              const Figures* figures, uint64_t seed, int kin, int level, int column, int row,
+              Figures* figures, uint64_t seed, int kin, int level, int column, int row,
               const std::string& weapon = "", const std::string& shield = "",
-              const FigureBody* heroLook = nullptr);
+              const FigureBody* heroLook = nullptr, const std::string& bare = "");
     void shutdown();
 
     bool isOpen() const { return realm_.tables() != nullptr; }
@@ -73,6 +77,10 @@ public:
     // to refuse; see sim/items.h for the gates.
     bool moveItem(int from, int to);
     bool useItem(int slot);
+    // Re-dresses the hero over the realm's own idea of what his hands and his back hold, so
+    // the figure never shows a weapon the bag no longer does. Called after anything that can
+    // change a worn slot; a no-op where `open` was given no `bare` to dress over.
+    void redress();
     // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
     // `count` is a stack's size for a potion and ignored for anything else.
     bool give(const std::string& name, int count);
@@ -175,7 +183,8 @@ private:
     sim::Realm realm_;
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
-    const Figures* figures_ = nullptr;
+    Figures* figures_ = nullptr;
+    std::string bare_;  // the naked class body redress() dresses back over; see open()
 
     Showing showing_;
     Marker marker_;

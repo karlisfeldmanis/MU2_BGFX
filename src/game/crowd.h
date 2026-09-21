@@ -23,6 +23,12 @@ public:
     // the weapon is: inside one a character carries it on his back and stands unarmed.
     void stand(const FigureBody* body, const float position[3], float yaw, float scale,
                bool safe = false);
+    // Swaps what is drawn without restarting it: the clip, its clock and the crossfade all
+    // stay exactly where they were. For a figure re-dressed mid-stride -- an equip or an
+    // unequip -- rather than one just put down; `body`'s rig and clip library must be the
+    // ones this figure is already playing (Figures::dress keeps both, so any two dressings of
+    // the same base are interchangeable here). See Play::redress.
+    void reskin(const FigureBody* body) { if (body) body_ = body; }
     // Moves a figure that is already standing. `stand` restarts it -- it clears the clip and
     // the clock, which is right when a figure is put down and wrong every frame after: a
     // walker re-stood each frame holds the first pose of its walk forever. So the sim's view

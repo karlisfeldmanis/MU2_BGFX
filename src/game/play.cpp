@@ -78,14 +78,19 @@ float wrapped(float angle) {
 // is what decides which one that is.
 const char* kHeroFigure = "DarkKnight";
 
+// Figures::dress's own `name` for the hero, matching World::play's first dress -- `redress`
+// asks for the same key so it replaces that same FigureBody rather than piling up another one.
+const char* kHeroDressName = "Hero";
+
 }  // namespace
 
 bool Play::open(const std::string& assetDir, const std::string& world,
-                const content::Ground* ground, const Figures* figures, uint64_t seed, int kin,
+                const content::Ground* ground, Figures* figures, uint64_t seed, int kin,
                 int level, int column, int row, const std::string& weapon,
-                const std::string& shield, const FigureBody* heroLook) {
+                const std::string& shield, const FigureBody* heroLook, const std::string& bareName) {
     ground_ = ground;
     figures_ = figures;
+    bare_ = bareName;
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
     std::string error;
     if (!content::loadTables(path, tables_, error)) {
@@ -941,6 +946,7 @@ bool Play::spendPoint(int stat) {
 bool Play::moveItem(int from, int to) {
     const bool moved = realm_.moveItem(from, to);
     core::logf("window: move %d -> %d %s", from, to, moved ? "taken" : "refused");
+    if (moved) redress();
     return moved;
 }
 
@@ -948,6 +954,32 @@ bool Play::useItem(int slot) {
     const bool used = realm_.useItem(slot);
     core::logf("window: use %d %s", slot, used ? "taken" : "refused");
     return used;
+}
+
+// The satchel is the truth (docs/sprints/07-the-windows.md) and Realm::rearm already reads
+// `hero.weapon` and `hero.shield` off it on every move that touches a worn slot; this is that
+// same rule kept for the picture. Without it the figure kept whatever `Figures::dress` gave
+// him at the door -- Realm::moveItem, "the satchel is the truth" -- and a weapon dragged out
+// of his hand went on being drawn in it, because nothing had ever told the figure to look
+// again.
+void Play::redress() {
+    if (!figures_ || bare_.empty() || drawn_.empty()) return;
+    const sim::Body& hero = realm_.hero();
+    const std::string weapon =
+        hero.weapon >= 0 ? tables_.arms[size_t(hero.weapon)].name : std::string();
+    const std::string shield =
+        hero.shield >= 0 ? tables_.arms[size_t(hero.shield)].name : std::string();
+    const FigureBody* look = figures_->dress(kHeroDressName, bare_, weapon, shield);
+    if (!look) return;
+    Drawn& drawn = drawn_[0];
+    drawn.figure.reskin(look);
+    // The swing, found again exactly as Play::open finds it the first time: the stance a new
+    // weapon stands him in picks a different attack clip out of the same library.
+    drawn.attackClip = -1;
+    if (look->library) {
+        drawn.attackClip = look->library->find(attackSlotFor(look->stance));
+        if (drawn.attackClip < 0) drawn.attackClip = look->library->find(38);
+    }
 }
 
 bool Play::give(const std::string& name, int count) {
