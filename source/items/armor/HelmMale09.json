@@ -1,0 +1,95 @@
+{
+  "item": "HelmMale09",
+  "mu_name": "Brass Helm",
+  "mu_name_from": "MuMain loads MODEL_HELM + i from HelmMale{i+1} (ZzzOpenData.cpp line 139), so file 09 is index 8, which openmu's 0.75 Armors.cs names the Brass Helm. mu.db agrees: group 7 index 8, Player/HelmMale09.bmd.",
+  "why_this_one": "Martin's and Harold's last +3 line, and the piece that finishes their shelf: with these five the wandering merchants sell all twenty-five of the lines Market.Wandering lists, where they sold ten this morning. See shared/Market.cs.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(8, 2, 2, 2, \"Brass Helm\", 36, 17, 44, 100, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 8,
+    "drop_level": 36,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 17,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 44,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred strength and thirty agility, the highest agility any built armour asks for."
+  },
+  "sheets": [
+    "hide.png",
+    "head_10.png",
+    "skin_barbarian_01.png"
+  ],
+  "sheet_from": "Data/Player/hide.jpg, head_10.OZJ (64x64) and skin_barbarian_01.OZJ (256x256), from MuMain. The .bmd names hide.jpg, head_10.jpg and skin_barbarian_01.jpg, in that order; 6 of the 72 triangles are on hide, 54 on the helm and 12 on the skin.",
+  "sheet_note": "head_10 is a swept gold helm seen from the side: a ridged crown drawn back into a point with a raised brow band and a cheek guard, mean (141, 126, 86) at chroma 56.\n\nTwelve triangles of skin, which is the smallest face patch of any helm built - the Leather and Scale helms carry 27 apiece. It is a patch and not a face: enough to close the gap under the brow, which is why helm index 8 is absent from SetCharacterScale's keeps-head condition and needs nothing drawn under it. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is a bright yellow gold and the sheets are the most saturated armour in the project: chroma 38 on the legs to 100 on the wing ornament, where the Bronze set runs 30 to 70 and the Plate set 3 to 8. Olive-green shading in the hollows, which is MU painting a warm metal's shadow cool.",
+  "material_note": "Two islands. Island 0 is 60 triangles - head_10's 54 and hide's 6, the whole helm - and takes plate_steel. Island 1 is 12 triangles, which is skin_barbarian_01's 12 exactly: the patch of face under the brow, and it takes skin. Twelve is the smallest face any helm here carries, against 27 on the Leather and Scale helms, and it is still enough that this helm needs nothing drawn under it.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 1.0,
+      "roughness": 0.46
+    }
+  },
+  "material_overrides_why": "plate_steel gives up its pull toward grey and a little of its polish, as on the Bronze set and for the same reason. Every sheet in this set says bright yellow gold - the most saturated armour in the project, chroma 38 to 100 - and plate_steel ships f0_desaturation 0.75, which took the gold out: cooked on 2026-09-21 the cuirass's base colour came out at saturation 0.21 from the art's 0.47 and the set read as grey steel with brass quills. Roughness 0.35 -> 0.46 comes with it, because on Bronze full saturation at the library's polish put hot glassy specular on the shoulder and hip. The alloy is still MU's paint; the material is still plate_steel.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 60,
+      "area": 2521.4,
+      "along": [
+        -15.4,
+        21.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.982
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 12,
+      "area": 312.5,
+      "along": [
+        -5.6,
+        7.2
+      ],
+      "mu_uv": [
+        0.6,
+        0.756,
+        0.822,
+        0.764
+      ],
+      "bake_uv": [
+        0.515,
+        0.003,
+        0.628,
+        0.007
+      ]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "item": "Shield10",
+  "mu_name": "Plate Shield",
+  "mu_name_from": "MuProtocol/Items.cs lists shield group index 9 as \"Plate Shield\" against Item/Shield10.bmd, and openmu's Version095d Armors.cs agrees at the same index. So the file name is one ahead of the index, exactly as Sword01.bmd is sword index 0.",
+  "why_this_one": "It is the shield the character already in the viewer would be carrying. The Dark Knight there wears the Plate set - ArmorMale10, HelmMale10, the rest - and this is its shield, so the Objects tab gains a piece that belongs to the set already in it rather than a second unrelated thing to look at.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile names shields in its own summary: \"Swords, axes, staves, shields. Made things, with edges that were drawn sharp.\" A shield is an atlas sheet with a border and a boss, not a tiling surface, which is the argument that profile is built on.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(9, 1, 18, 2, 2, \"Plate Shield\", 25, 8, 25, 38, 120, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 1 is the shield hand and the group is 6. The skill, 18, is the shield's own block skill, which this simulation has no skills for and so does not carry.",
+    "group": 6,
+    "number": 9,
+    "drop_level": 25,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 8,
+    "defense_rate": 25,
+    "defense_rate_note": "The shield's own column, a block chance the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "Eighteen, the shield's block skill in OpenMU's table, on the ten shields that carry one. There are no skills in this simulation, so it is carried for the row to read against the call and nothing more.",
+    "durability": 38,
+    "requires": {
+      "level": 0,
+      "strength": 120,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone.",
+    "shelf_note": "Hanzo's, at +3, in the second row of his shields - see shared/Market.cs. Built first for the guards and priced second, like the Plate set."
+  },
+  "sheets": {
+    "hound_shield1": "hound_shield1.png"
+  },
+  "sheet_from": "Data/Item/hound_shield1.ozt (32x64), from MuMain. The .bmd names hound_shield1.tga; .ozt is the TGA-behind-four-bytes form, and it is the one that carries alpha - this shield is not a rectangle, and the alpha is what cuts its outline.",
+  "sheet_note": "32x64 is the whole of what MU shipped. find_source across 8,472 distinct textures in LEGACY turned up one other copy, remaster_one's at 64x128, and it is exactly 2x - the shape the tool warns about by name. Looked at side by side it is not a second size MU authored: the same forms come back with their noise smoothed into blobs and the boundaries hardened, which is what an upscaler does and not what an artist does. It is the same thing that was done to Data/Player in that tree. MuMain's is the art; the enlargement is ours to do, in the open, where the detail figure can be argued with.",
+  "material_note": "Both islands are plate_steel. Both are plate_steel rather than the weapon profile's default steel. steel is blade steel - 'the mill's grain still running along its length' - and running a directional grain across a hammered shield is the same mistake that was made on the Plate gauntlets and is written up in materials/plate_steel.json. A shield is armour: hammered, curved, and worn where it is hit.\n\nIsland 0 had fallen back to the profile's steel and was found while the Big Round Shield was being built. The note said all of them were plate_steel and the file said otherwise, which is what a re-unwrap costs: islands are matched on triangle count and sheet position, this one stopped matching at some point, and an unmatched island comes through with the profile default rather than with its assignment. The note was right and the file was not.",
+  "material_overrides": {
+    "plate_steel": {
+      "grain": {
+        "depth": 0.025
+      }
+    }
+  },
+  "material_overrides_why": "Half the grain depth plate_steel states, and it is a fact about this shield rather than about steel. The library's figure was settled on the Plate armour, whose sheet is 384 across; this one's is 192, so the same field at the same cell count lands twice as coarse against the painting under it - and what should read as hammering reads as speckle. Found in Blender under the rig read from MU2/lighting.json, swept at 1.0, 0.5 and 0.25 of the normal's strength: at full the ornament is buried in noise, at a quarter the border goes flat, and a half keeps the relief with the speckle gone.",
+  "open_question": "Islands 1 and 2 are drawn a good deal brighter than the rest of the sheet and may be a polished fitting rather than the same plate - forged steel, not hammered. That is a distinction worth about fifty texels of evidence at 32x64, which is not enough to make it. Look at the grip in the engine before splitting them off.",
+  "cutout": false,
+  "cutout_from": "False, declared, and it has to be declared because the sniff cannot get this right.\n\nmu2.sh treats any sheet carrying a real alpha channel as a cut-out, which is correct for almost everything: tree_a is 99.7% either fully clear or fully opaque, a leaf card with holes in it. hound_shield1 is 63.6% — a third of its alpha is partial — because its alpha is not a hole, it is the emblem. Read as a cut-out it takes 15% of the face away in scattered specks, and the Plate Shield has been shipping as a shield you can see through.\n\nNot fixed by making the sniff cleverer, which was tried on paper first: grass_01 is a genuine cut-out and is only 45.5% hard-edged, softer than the shield, because a blade of grass has antialiased edges and a shield emblem does not. There is no threshold that separates them. What separates them is knowing what the alpha is for, which is a thing an asset can say and a histogram cannot.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 443.0,
+      "along": [
+        -13.0,
+        10.5
+      ],
+      "mu_uv": [
+        0.176,
+        0.428,
+        0.83,
+        0.582
+      ],
+      "bake_uv": [
+        0.002,
+        0.865,
+        0.564,
+        0.998
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 4958.5,
+      "along": [
+        -45.6,
+        33.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.861,
+        0.861
+      ],
+      "note": "the shield itself: ornate border, central boss, and the whole of MU's sheet. Fourteen of the twenty triangles."
+    }
+  ]
+}

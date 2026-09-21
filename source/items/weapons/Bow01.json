@@ -1,0 +1,183 @@
+{
+  "item": "Bow01",
+  "mu_name": "Short Bow",
+  "mu_name_from": "ZzzOpenData.cpp loads the group by hand and one behind - `AccessModel(MODEL_BOW + i, L\"Data\\\\Item\\\\\", L\"Bow\", i + 1)` - so item number 0 is the file Bow01.bmd, which OpenMU names the Short Bow. mu.db's items table agrees at code 2048.",
+  "why_this_one": "Because it is the only bow a low monster can afford, and until it existed the drop pool had a hole in it that the rule could not fill. The Short Bow's drop level is 2, which is a Spider's own level, so it is one of exactly three things in the whole catalogue a Spider is rich enough to leave - the Small Axe at 1, the Apple at 1 and this. The Bow already built is the Bow at drop level 8, which nothing on that field will ever drop.",
+  "profile": "weapon",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs line 135. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(4, 0, 1, 24, 2, 3, true, \"Short Bow\", 2, 3, 5, 30, 20, 0, 0, 20, 80, 0, 0, 0, 0, 1)",
+    "group": 4,
+    "number": 0,
+    "drop_level": 2,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above: the bool before the name is dropsFromMonsters and the int after it is the drop level.",
+    "slot": 1,
+    "slot_note": "Slot 1 and not 0, which is the split that decides which hand it goes in. GetEquipedBowType tests IsBowModel against Weapon[1] and IsCrossbowModel against Weapon[0], and OpenMU's rows carry the same answer - every bow is slot 1 and every crossbow slot 0.",
+    "width": 2,
+    "height": 3,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 3,
+    "maximum_damage": 5,
+    "attack_speed": 30,
+    "durability": 20,
+    "requires": {
+      "level": 0,
+      "strength": 20,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_note": "Elf only, as every bow and crossbow in the game is. It is the one requirement points cannot buy, which is why it is carried through the index while the stat requirements are carried only for reading.",
+    "skill": 24,
+    "skill_note": "The skillNumber of the call, and the same twenty-four on every bow and crossbow in 0.75: Triple Shot is the Fairy Elf's, and it is the weapon that grants it rather than anything she learns. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more."
+  },
+  "stance": "bow",
+  "stance_from": "PLAYER_STOP_BOW is 8 and PLAYER_WALK_BOW is 21, out of the client's own enum. The stance is a fact about the weapon and not about the character. See Clips.StanceActions.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs carries a TwoHanded flag per weapon and a bow has it, which is the same answer OpenMU gives from the other side: width 2 in the Bows group. Both hands on it, so there is no hand left for a shield.",
+  "fires": "Arrow01",
+  "fires_from": "ZzzEffectMagicSkill.cpp's CreateArrow switches on the weapon and MODEL_SMALL_BOW is in the first case with MODEL_BOW: both throw MODEL_ARROW, which is Data/Skill/Arrow01.bmd. So this bow's missile is the same ordinary wooden arrow the Bow already fires.",
+  "sheets": {
+    "bow01": "bow01.png",
+    "bow05": "bow05.tga.png"
+  },
+  "sheet_from": "Data/Item/bow01.OZJ at 32x32 and bow05.OZT at 32x32, both out of MuMain. Both sheets were already in the project - the Bow borrows bow01 for ten triangles of fitting and bow05 for its string - and re-decoding them here produced byte-identical files, which is a free check that this extraction is the same one.\n\nbow05 is a stem MU uses twice in Data/Item and the two are different pictures: bow05.OZJ is a 64-square of pale horn with no alpha, and bow05.ozt is a 32-square carrying the string with 77% of it cut away. The .bmd settles it - this model names bow05.tga - and the decoded file carries the extension so the name cannot be written ambiguously. It was `bow05.png` before, which held the right picture and said nothing about which one it was; tests/sheets.py exists for exactly that, and this is the case it was reporting. Ten of the bow group's models name one half or the other and two - Bow05 and Bow06 - name both, so both halves are decoded and kept.",
+  "sheet_note": "Two sheets over two meshes: 55 triangles on bow01 and 3 on bow05. The five islands the build found split those as 32 + 13 + 10 and 1 + 2.\n\nAn earlier draft of this note said the Short Bow is drawn empty, with no nocked arrow. That was wrong and the island listing is what caught it: island 2 is ten triangles at mu_uv [0.941, 0.014, 0.98, 0.51] spanning Z 5.4 to 7.4, and Bow02's island 0 is ten triangles at the same UVs over the same span. It is the same arrow, and the two bows share it - bow01.jpg is this bow's own sheet, and the Bow borrows it for exactly the arrow and nothing else. Islands 3 and 4 are the string and match Bow02's 3 and 4 the same way. What actually differs between the two models is the limbs alone: 32 + 13 spanning -55.5 to 64.7 here against 50 + 13 spanning -63.6 to 75.4 there. The Short Bow is shorter, which is the whole of it.",
+  "cutout": [
+    "bow05"
+  ],
+  "cutout_note": "Declared and not detected, as docs/items-and-armour.md insists. bow05 is the bowstring drawn as a cut-out card and its alpha cuts away 77%; without the declaration the string renders as a grey rectangle across the bow.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "why": "The profile's numbers. 32 square is small enough that the drawn model at full strength turns the limb's painted binding into hard-edged blocks, which is the same failure detail 0.65 was chosen for on the sword guard."
+  },
+  "material_note": "Wood on the bow and the arrow, cloth on the string, which is Bow02's assignment unchanged - and it is not copied on the strength of the two being bows. Islands 2, 3 and 4 here are the same triangle counts at the same UVs over the same spans as Bow02's 0, 3 and 4, so they are the same geometry and there is nothing left to judge. The limb islands are this model's own and are the same surface as the other bow's limbs: a bent, oiled length of timber, which is what wood is written for.",
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, the same as the Bow's, and it is the same key rather than a coincidence: Bone10's track in this rig runs -46.6, -23.4, -8.2, +4.4 through keys 0 to 3 and then -54.5 on key 4, which is the Bow's track to the decimal. Fifty-nine units back in a single key is a loose.\n\nA fraction rather than a key number because what reads it is an AnimationPlayer, which knows the clip in seconds.",
+  "muzzle_bone": "Bone10",
+  "muzzle_axis": "Bone11",
+  "muzzle_offset": [
+    1.0,
+    -10.7,
+    0.3
+  ],
+  "muzzle_from": "All three are the Bow's, and they transfer with evidence rather than by family resemblance. Bone10 and Bone11 are byte-identical between the two rigs - Bone10 at (0, -6.173, -46.594) with no parent, Bone11 at (0, 0.326, 64.829) hanging off it - the arrow they carry is the same ten triangles at the same UVs (see sheet_note), and the one action's Bone10 track is the same seven keys. So the measurement the Bow made off its nocked arrow was a measurement of this arrow, and there is nothing here that could differ. See Bow02.json's muzzle_offset_from for how the number itself was arrived at: the arrow's point is 10.7 units down the shaft from the bone that carries it, and the release is deliberately not folded in.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 32,
+      "area": 2076.2,
+      "along": [
+        -55.5,
+        64.7
+      ],
+      "mu_uv": [
+        0.002,
+        0.017,
+        0.982,
+        0.983
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.851
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wood",
+      "triangles": 13,
+      "area": 459.3,
+      "along": [
+        -52.1,
+        61.1
+      ],
+      "mu_uv": [
+        0.926,
+        0.001,
+        0.999,
+        0.785
+      ],
+      "bake_uv": [
+        0.837,
+        0.007,
+        0.99,
+        0.981
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wood",
+      "triangles": 10,
+      "area": 481.2,
+      "along": [
+        5.4,
+        7.4
+      ],
+      "mu_uv": [
+        0.941,
+        0.014,
+        0.98,
+        0.51
+      ],
+      "bake_uv": [
+        0.007,
+        0.058,
+        0.841,
+        0.661
+      ]
+    },
+    {
+      "island": 3,
+      "material": "wood",
+      "triangles": 1,
+      "area": 41.7,
+      "along": [
+        3.7,
+        8.8
+      ],
+      "mu_uv": [
+        0.569,
+        0.468,
+        0.889,
+        0.698
+      ],
+      "bake_uv": [
+        0.621,
+        0.008,
+        0.806,
+        0.142
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 234.7,
+      "along": [
+        -0.9,
+        13.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.79,
+        0.568,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.703,
+        0.338,
+        0.824
+      ]
+    }
+  ]
+}

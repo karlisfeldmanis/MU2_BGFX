@@ -1,0 +1,27 @@
+{
+  "profile": "armour",
+  "summary": "Worn parts: helm, armour, pants, gloves, boots. Plate, scale, leather and cloth.",
+  "why": [
+    "Same atlas argument as a weapon — a player part's sheet holds several materials side",
+    "default_material is plate_steel, not the blade steel it started as. The Plate gauntlets were built wearing steel and its brushed grain smeared across the fingers - a directional grain is a fact about a ground blade, not about armour. See materials/plate_steel.json.",
+    "by side — so the pad is replicated here too.",
+    "in the engine. It is a placeholder, and stating it as one is the point: the number",
+    "that matters is the one somebody judged, and nobody has judged this one yet.",
+    "Faces are the known hazard. A model that resolves buckles and weave beautifully will",
+    "also invent teeth and eyelashes, and a head is the one part of a character a player",
+    "looks at directly. When a helm's face comes through this, it wants its own profile.",
+    "default_material is what a newly found island is called before anyone has looked at it. steel, because plate and blades are both mostly steel and a part that builds on the first run can be looked at; twenty-two decisions before the first picture is how a pipeline stops being used.",
+    "upscale.detail is still the weapon profile's 0.35 and has NOT been judged on an armour part. The Plate gloves and boots were built at it because a number was needed, not because it was chosen: a gauntlet is 64x64 where a blade sheet is 173x39, so the model is being asked for a different thing here and may want more or less. Sweep it and look before trusting it. This warning was written once, deleted by accident while adding plate_steel, and is back because it is still true.",
+    "maps is no longer here. The bake size is read off the art - twice the square root of the texels the islands actually sample - because a kind of thing does not have a resolution, a particular sheet does. Shield10's 32x64 and ArmorMale10's 128x128 are both weapons-profile items and want very different maps.",
+    "upscale is 3x at detail 0.65, up from 2x at 0.35. The old figures were chosen when the model's output went in whole and in colour; it now averages eight orientations and contributes to brightness only, which removes both ways it used to drift. Swept on Sword01's guard, which is where 0.35 was decided: at 1.0 its rounded ribs still harden into outlined links, at 0.35 they are barely past MU's own, at 0.65 they are resolved and still rounded."
+  ],
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "pad": "edge"
+  },
+  "enlarge": 2,
+  "default_material": "plate_steel",
+  "tiling": false,
+  "tiling_why": "A body sheet lays the head, torso, legs, hands and feet side by side on one page. Nothing on it continues over an edge. Wrapping one to make it tile blends the left edge into the right and the top into the bottom, which on a body drags the arms across whatever the far edge holds. It was reported as the Dark Wizard having tan bands down one arm, and measured: the seam heal changed 9.5% of his sheet, entirely at the borders - 27 levels at the left edge, 25 at the right, and exactly zero in the middle.\n\nIt only ever ran on sheets enlarged outside the pipeline, which is why it appeared the moment the bodies came back from Figma and not before."
+}

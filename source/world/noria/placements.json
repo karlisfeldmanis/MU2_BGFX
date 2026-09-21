@@ -1,0 +1,90 @@
+{
+  "world": "noria",
+  "summary": "What the extraction cannot know, for Noria. Six townspeople, and nothing else yet: the placement list came out clean, its heights agree with the heightmap at a median of nought, and MU's own checkpoint on the attribute grid passes. See tests/worlds.py, and docs/porting-a-world.md.",
+  "spawns": [
+    {
+      "model": "PotionGirlAmy",
+      "who": "Potion Girl Amy",
+      "tile": [
+        169,
+        109
+      ],
+      "facing": 4
+    },
+    {
+      "model": "PotionGirlAmy",
+      "who": "Potion Girl Amy",
+      "tile": [
+        193,
+        110
+      ],
+      "facing": 3
+    },
+    {
+      "model": "ElfWizard01",
+      "who": "Elf Lala",
+      "tile": [
+        173,
+        125
+      ],
+      "facing": 2,
+      "lift": 140,
+      "lift_why": "She hovers. ZzzCharacter.cpp's MONSTER_ELF_LALA arm ends `o->Position[2] = RequestTerrainHeight(o->Position[0], o->Position[1]) + 140.f`, which is a metre and forty above the tile - she is a winged fairy and MU lifts her rather than animating a hover. She is the only character in 0.75 that does this, and a spawn table that carries a tile and a facing has nowhere else to say it."
+    },
+    {
+      "model": "ElfMerchant01",
+      "who": "Eo the Craftsman",
+      "tile": [
+        195,
+        124
+      ],
+      "facing": 3
+    },
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [
+        172,
+        96
+      ],
+      "facing": 4
+    },
+    {
+      "model": "MixNpc01",
+      "who": "Chaos Goblin",
+      "tile": [
+        180,
+        103
+      ],
+      "facing": 2
+    }
+  ],
+  "spawns_from": [
+    "OpenMU's Version075/Maps/Noria.cs, CreateNpcSpawns, which is six lines:",
+    "",
+    "    CreateMonsterSpawn(1, NpcDictionary[253], 169, 109, Direction.SouthEast)",
+    "    CreateMonsterSpawn(2, NpcDictionary[253], 193, 110, Direction.South)",
+    "    CreateMonsterSpawn(3, NpcDictionary[242], 173, 125, Direction.SouthWest)",
+    "    CreateMonsterSpawn(4, NpcDictionary[243], 195, 124, Direction.South)",
+    "    CreateMonsterSpawn(5, NpcDictionary[240], 172,  96, Direction.SouthEast)",
+    "    CreateMonsterSpawn(6, NpcDictionary[238], 180, 103, Direction.SouthWest)",
+    "",
+    "The numbers are the same ones the client switches on, and which model each becomes",
+    "is ZzzCharacter.cpp's own: 253 is MODEL_MERCHANT_GIRL, 242 MODEL_ELF_WIZARD, 243",
+    "MODEL_ELF_MERCHANT, 240 MODEL_STORAGE and 238 MODEL_MIX_NPC. Three of those five had",
+    "no asset in this project before Noria, because three of them stand nowhere else.",
+    "",
+    "Two of Lorencia's nine turn up here as well and are the same people rather than",
+    "copies: Amy keeps a second shop in the elf town and Baz a second vault. Elf Lala and",
+    "Eo the Craftsman are Noria's alone, which is why Folk's note said 0.75 has neither",
+    "*in Lorencia* - they were never missing, they were somewhere nobody could go.",
+    "",
+    "The facing is the same (facing - 3) * 45 the town's is, pinned against Lorencia's",
+    "campfire once and linear in the direction value, so it needs no second landmark.",
+    "",
+    "No guard carries an idle here, where six of Lorencia's do. Noria has no guards: its",
+    "six are all PassiveNpc in OpenMU's own initialisation, and the idle on a Lorencia",
+    "guard is a fact about a player model in or out of a safe zone, which none of these",
+    "is."
+  ]
+}

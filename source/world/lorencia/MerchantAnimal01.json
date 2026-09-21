@@ -1,0 +1,359 @@
+{
+  "item": "MerchantAnimal01",
+  "mu_name": "MerchantAnimal01",
+  "mu_name_from": "Lorencia's object slot 56, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 56,
+  "why_this_one": "2 placements. A pack beast standing beside its merchant. The client animates it; this stands still.",
+  "profile": "world",
+  "sheets": {
+    "merchant_moster_a01": "merchant_moster_a01.png",
+    "merchant_moster_a02": "merchant_moster_a02.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "merchant_moster_a01": "skin",
+    "merchant_moster_a02": "skin"
+  },
+  "material_note": "Skin for a hide, which is the nearest thing in the library and is right for the reason skin exists: no grain. A pore is far smaller than a texel on a sheet one animal wide, so inventing one would be inventing.",
+  "cutout": [
+    "merchant_moster_a02"
+  ],
+  "cutout_from": "Real alpha in merchant_moster_a02.OZT, cutting away 15%.",
+  "open_question": "It does animate, and it has for a while - this note was describing a stale .glb.\n\nThe tiled path carries skin weights now, and a forced rebuild produces one skeleton, 59 bones and action0 at 7.5 seconds. What it had on disk was a file built before that, and nothing in the build could tell: the .glb was newer than its .obj and its .json, so it was never remade, and an animal standing still looks exactly like an animal whose clip has not started.",
+  "play_speed": 0.16,
+  "play_speed_from": "CreateObject in ZzzObject.cpp, which gives every world object o->Velocity = 0.16f and then overrides it for a handful of Lorencia types - 0.3 for a street lamp, a candle and a sign, 0.4/Scale for the two big trees, 0.0 for the treasure chest. Neither merchant animal is in that list, so both keep the default. MoveObject hands that number to PlayAnimation in exactly the argument a character's play speed goes in, which is why it is written here under the same name.",
+  "play_speed_note": "30 keys at 0.16 x 25 = 4 keys a second: a 7.5-second cycle.\n\nThis replaces a hand-tuned slowdown, and the measurement is why. The old note here read that MU 'plays this at one speed and loops it without a pause', that the animal therefore shifted its weight 'every second and a half, forty times a minute', and that this reads as a tic rather than as an animal - so it was slowed. It was animation_speed 0.16-0.26, which slowed a clip exported at a guessed 8 keys a second to somewhere between 14 and 23 seconds a loop.\n\nThe premise was wrong. A second and a half was never MU's figure: the client runs this at four keys a second and has always taken seven and a half seconds to get round, which is already the long slow weight shift the slowdown was reaching for. What produced the tic was the exporter's own 8-keys-a-second guess, and correcting that removes the reason for the correction. So the animal is back on MU's clock and there is nothing left here that is anybody's taste.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 406,
+      "area": 222639.2,
+      "along": [
+        -154.0,
+        268.5
+      ],
+      "mu_uv": [
+        0.002,
+        -0.001,
+        0.99,
+        0.987
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.976,
+        0.969
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 50,
+      "area": 25767.6,
+      "along": [
+        -89.1,
+        -33.3
+      ],
+      "mu_uv": [
+        0.01,
+        0.171,
+        0.363,
+        0.998
+      ],
+      "bake_uv": [
+        0.336,
+        0.663,
+        0.957,
+        0.855
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 12,
+      "area": 19196.6,
+      "along": [
+        28.1,
+        126.5
+      ],
+      "mu_uv": [
+        0.143,
+        0.702,
+        0.995,
+        0.995
+      ],
+      "bake_uv": [
+        0.336,
+        0.664,
+        0.848,
+        0.965
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 12,
+      "area": 19196.7,
+      "along": [
+        28.0,
+        126.4
+      ],
+      "mu_uv": [
+        0.143,
+        0.702,
+        0.995,
+        0.996
+      ],
+      "bake_uv": [
+        0.334,
+        0.663,
+        0.957,
+        0.967
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 7,
+      "area": 3181.5,
+      "along": [
+        8.4,
+        110.7
+      ],
+      "mu_uv": [
+        0.007,
+        0.032,
+        0.273,
+        0.091
+      ],
+      "bake_uv": [
+        0.59,
+        0.924,
+        0.809,
+        0.979
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 7,
+      "area": 3181.5,
+      "along": [
+        -101.4,
+        0.9
+      ],
+      "mu_uv": [
+        0.006,
+        0.031,
+        0.272,
+        0.09
+      ],
+      "bake_uv": [
+        0.363,
+        0.731,
+        0.941,
+        0.924
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 7,
+      "area": 3181.5,
+      "along": [
+        8.4,
+        110.7
+      ],
+      "mu_uv": [
+        0.007,
+        0.032,
+        0.273,
+        0.091
+      ],
+      "bake_uv": [
+        0.363,
+        0.944,
+        0.672,
+        0.98
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 7,
+      "area": 3181.5,
+      "along": [
+        -101.4,
+        0.9
+      ],
+      "mu_uv": [
+        0.006,
+        0.031,
+        0.272,
+        0.09
+      ],
+      "bake_uv": [
+        0.727,
+        0.769,
+        0.941,
+        0.941
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2553.3,
+      "along": [
+        89.0,
+        117.5
+      ],
+      "mu_uv": [
+        0.002,
+        0.195,
+        0.456,
+        0.998
+      ],
+      "bake_uv": [
+        0.01,
+        0.091,
+        0.985,
+        0.963
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2553.3,
+      "along": [
+        -107.3,
+        -78.8
+      ],
+      "mu_uv": [
+        0.002,
+        0.199,
+        0.455,
+        0.999
+      ],
+      "bake_uv": [
+        0.216,
+        0.337,
+        0.985,
+        0.949
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2553.3,
+      "along": [
+        105.4,
+        128.6
+      ],
+      "mu_uv": [
+        0.002,
+        0.195,
+        0.456,
+        0.998
+      ],
+      "bake_uv": [
+        0.913,
+        0.01,
+        0.99,
+        0.641
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2553.3,
+      "along": [
+        -118.3,
+        -95.0
+      ],
+      "mu_uv": [
+        0.002,
+        0.199,
+        0.455,
+        0.999
+      ],
+      "bake_uv": [
+        0.077,
+        0.01,
+        0.99,
+        0.951
+      ]
+    },
+    {
+      "island": 12,
+      "material": "rock",
+      "triangles": 12,
+      "area": 1170.2,
+      "along": [
+        93.8,
+        243.8
+      ],
+      "mu_uv": [
+        0.003,
+        0.011,
+        0.057,
+        0.783
+      ],
+      "bake_uv": [
+        0.763,
+        0.663,
+        0.78,
+        0.903
+      ]
+    },
+    {
+      "island": 13,
+      "material": "rock",
+      "triangles": 12,
+      "area": 1170.8,
+      "along": [
+        93.7,
+        243.8
+      ],
+      "mu_uv": [
+        0.003,
+        0.011,
+        0.057,
+        0.783
+      ],
+      "bake_uv": [
+        0.727,
+        0.663,
+        0.743,
+        0.903
+      ]
+    },
+    {
+      "island": 14,
+      "material": "rock",
+      "triangles": 32,
+      "area": 49680.7,
+      "along": [
+        -103.7,
+        114.2
+      ],
+      "mu_uv": [
+        0.128,
+        0.007,
+        0.994,
+        0.996
+      ],
+      "bake_uv": [
+        0.336,
+        0.01,
+        0.893,
+        0.644
+      ]
+    }
+  ]
+}

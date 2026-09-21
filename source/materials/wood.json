@@ -1,0 +1,36 @@
+{
+  "name": "wood",
+  "summary": "A haft: a turned length of timber, gripped and knocked about, never finished.",
+  "why": [
+    "Metallic 0.0. Wood is the plainest dielectric in this library and the one where getting",
+    "that wrong is most obvious - a metallic haft is a chrome rod with a woodgrain decal on",
+    "it, which is what MU's flat art becomes the moment a light hits it.",
+    "Roughness 0.72, the same as the leather wrap and for the same reason: both are a worn",
+    "surface a hand has been on, and neither has a sharp highlight anywhere along it. It has",
+    "not been swept - MU2/tests/materials.sh cannot sweep it, because the axe is three",
+    "materials and the tool scales a whole item - so it is a reasoned starting figure and is",
+    "flagged as one.",
+    "The grain is brushed and runs along the haft. Wood is the most directional surface here:",
+    "it is fibres laid the length of a branch, so a highlight travelling across one stretches",
+    "into a line the way it does on a rolled blade and unlike anything cast. Reusing the",
+    "brushed kind is not laziness about a fourth kind - it is the same fact about a surface,",
+    "which is that its structure runs one way.",
+    "Depth 0.08, down from a first guess of 0.22. At 0.22 the haft came out corrugated: hard",
+    "dark lines running its length, more like a fluted column than a piece of timber. Wood",
+    "grain is a colour variation far more than it is a relief - the fibres sit flush and only",
+    "the odd raised one catches a light - and MU's art already paints the colour part, so",
+    "what a normal map has left to add here is very little.",
+    "Coarser than steel's, still. Blade steel is 520 cells of mill grain that only shows at a",
+    "graze; timber's is visible from across a room, so this is 180. That and the depth are",
+    "the whole difference between the two brushed materials."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.72,
+  "grain": {
+    "kind": "brushed",
+    "along": "v",
+    "scale": 180,
+    "depth": 0.08,
+    "roughness_range": 0.05
+  }
+}

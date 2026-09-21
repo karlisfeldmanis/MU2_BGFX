@@ -1,0 +1,21 @@
+{
+  "item": "BerdyshGuard",
+  "mu_name": "Berdysh Guard",
+  "kind": "character",
+  "parts": [
+    "HelmMale10",
+    "ArmorMale10",
+    "PantMale10",
+    "GloveMale10",
+    "BootMale10"
+  ],
+  "right_hand": "Spear08",
+  "note": "Five of them stand in Lorencia, and unlike every other townsperson built so far he is not his own model. MU has no Berdysh Guard .bmd: CreateMonster takes MONSTER_BERDYSH_GUARD, calls CreateCharacter with MODEL_PLAYER, dresses it in the five Plate pieces and puts MODEL_BERDYSH in Weapon[0]. He is a player wearing what a player wears, which is why his parts are the Dark Knight's parts to the file.",
+  "parts_from": "ZzzCharacter.cpp, case MONSTER_BERDYSH_GUARD: BODYPART_HELM/ARMOR/PANTS/GLOVES/BOOTS all set to MODEL_PLATE_*, then SetCharacterScale. No item level is set, so the plate is plain.",
+  "right_hand_from": "The same case, c->Weapon[0].Type = MODEL_BERDYSH. Held rather than worn - a rigid model at the knife_gdf bone - which is the distinction the Dark Knight's own note sets out.",
+  "idle": "action7",
+  "idle_from": "SetPlayerStop, ZzzCharacter.cpp. A two-handed weapon in the spear group that is not the Spear or the Dragon Lance falls through to PLAYER_STOP_SCYTHE, which is action 7. Six keys at play speed 0.28 - the scythe stop is one of the ones the client never overrides off the 0.28 the whole stop block gets - so a 0.86-second loop.",
+  "idle_note": "One clip, held, and that is the whole of what he does. A townsperson re-rolls his pose every time his cycle wraps, weighted; a player-model NPC does not. AnimationCharacter sends MODEL_PLAYER down PlayerStopAnimationSetting instead, which calls SetPlayerStop, which sets one stop action and is then satisfied - CurrentAction never changes again, so PlayAnimation loops the same six keys until something happens to him, and in a town nothing does.\n\nThat is why this asset names an idle at all. The plate parts carry 283 clips off player.bmd, and the scenery path picks the next one at random when the current one ends: placed without an idle he would die, sit down and cast Twisting Slash in the street.",
+  "safe_zone_note": "Four of the five stand outside Lorencia's safe zone and take the stance above. The fifth, at 131,148, is inside it, and inside a safe zone SetPlayerStop never reaches the weapon at all - the very first branch is `(no weapon) || (SafeZone && !BloodCastle)` and it lands on PLAYER_STOP_MALE. The spawn list carries that one's idle itself rather than this file pretending the model decides it, because it is the tile that decides it and not the model.\n\nAnd the polearm goes on his back there, not in his fist. RenderCharacterBackItem opens `if (c->SafeZone) bBindBack = true` and does its work inside `if (o->Type == MODEL_PLAYER)`, which he is - so the same tile bit that empties his stance also slings what he is carrying. The two are one rule and were briefly half applied, which put a guard in the bare-handed idle with a two-metre polearm gripped in a hand hanging at his side.",
+  "playable": false
+}

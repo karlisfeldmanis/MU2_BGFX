@@ -1,0 +1,185 @@
+{
+  "item": "Bow02",
+  "mu_name": "Bow",
+  "mu_name_from": "ZzzOpenData.cpp loads the group by hand and one behind: `AccessModel(MODEL_BOW + i, L\"Data\\\\Item\\\\\", L\"Bow\", i + 1)`, so item number i is Bow{i+1}.bmd and number 1 - the plain Bow - is Bow02.bmd. The same offset that makes Arrows01 the Bolt and CrossBow04 the Light Crossbow. OpenMU's 0.75 table names group 4 number 1 the Bow.",
+  "why_this_one": "Because it throws the ordinary arrow. CreateArrow switches on the weapon: MODEL_BOW, MODEL_SMALL_BOW, MODEL_BATTLE_BOW, MODEL_TIGER_BOW and MODEL_SILVER_BOW all throw MODEL_ARROW, while the Elven Bow throws MODEL_ARROW_V and the Chaos Nature Bow MODEL_ARROW_NATURE. So this is the bow whose missile is Arrow01, the wooden arrow with a fire sprite on its tail, which is the one worth building first.\n\nAnd it is slow enough to watch. 9 to 13 damage against a spider's 30 health is three shots where the Light Crossbow's 35 to 44 is one, so a fight with this in it is a fight rather than a demonstration.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, which is what decides the damage, the swing rate and who is allowed to hold it. Copied from OpenMU's 0.75 initialiser rather than restated, so the call it came from is written out beside it and the two can be read against each other in one glance.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs.",
+    "call": "CreateWeapon(4, 1, 1, 24, 2, 3, true, \"Bow\", 8, 9, 13, 30, 24, 0, 0, 30, 90, 0, 0, 0, 0, 1)",
+    "group": 4,
+    "number": 1,
+    "drop_level": 8,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above and were being read past: the bool before the name is dropsFromMonsters and the int after it is the drop level. They are lifted out here because the loot pool is now the built catalogue gated by this number - see shared/Loot.cs. Arrows, bolts and scrolls are shop stock in the original and fall from nothing, which is what the flag says and why a spider cannot leave a quiver.",
+    "slot": 1,
+    "slot_note": "Slot 1, the left hand, which is the whole difference between a bow and a crossbow in the client's eyes: IsBowModel reads Weapon[1] and IsCrossbowModel reads Weapon[0]. It is also why the two are tested on different hands in SetPlayerAttack, and why the bow's quiver - the Arrows, number 15 - takes slot 0.",
+    "width": 2,
+    "height": 3,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 9,
+    "maximum_damage": 13,
+    "attack_speed": 30,
+    "durability": 24,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 90,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_note": "Elf only, as every row in group 4 is. See tests/weapons.py, which prints the shortfall rather than hiding it, and Arena.Begin, which stands the elf up because of it.",
+    "skill": 24,
+    "skill_note": "The skillNumber of the call, and the same twenty-four on every bow and crossbow in 0.75: Triple Shot is the Fairy Elf's, and it is the weapon that grants it rather than anything she learns. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more."
+  },
+  "stance": "bow",
+  "stance_from": "PLAYER_STOP_BOW is 8 and PLAYER_WALK_BOW is 21, out of the client's own enum. Shared by everybody who holds one - the stance is a fact about the weapon and not about the character. See Clips.StanceActions.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs carries a TwoHanded flag per weapon and a bow has it, which is the same answer OpenMU gives from the other side: width 2 in a group that is not below Bows. Both hands on it, so there is no hand left for a shield.",
+  "attack_note": "Action 50, Attack bow, where the crossbow is 51. SetPlayerAttack tests them on different hands for the reason the slot note gives.",
+  "fires": "Arrow01",
+  "fires_from": "ZzzEffectMagicSkill.cpp's CreateArrow: `case MODEL_BOW: CreateEffect(MODEL_ARROW, ...)`. MODEL_ARROW is Data/Skill/Arrow01.bmd - 33 triangles in two meshes, a wooden shaft on arrow.jpg and a nine-triangle sprite on fire01.jpg that `o->BlendMesh = 1` marks as the blended one. Not built yet, which is a shot that lands with nothing drawn rather than a fight that will not start.",
+  "sheets": {
+    "bow02": "bow02.png",
+    "bow01": "bow01.png",
+    "bow05": "bow05.tga.png"
+  },
+  "sheet_from": "Data/Item/bow02.OZJ at 64x64, bow01.OZJ at 32x32 and bow05.OZT at 32x32. Three sheets over seventy-six triangles, which is more sheets than any weapon built so far and is MU reusing the group's art: bow01 is the first bow's sheet, borrowed here for ten triangles of fitting.\n\nbow05 is a stem MU uses twice in Data/Item and the two are different pictures: bow05.OZJ is a 64-square of pale horn with no alpha, and bow05.ozt is a 32-square carrying the string with 77% of it cut away. The .bmd settles it - this model names bow05.tga - and the decoded file carries the extension so the name cannot be written ambiguously. It was `bow05.png` before, which held the right picture and said nothing about which one it was; tests/sheets.py exists for exactly that, and this is the case it was reporting. Ten of the bow group's models name one half or the other and two - Bow05 and Bow06 - name both, so both halves are decoded and kept.",
+  "sheet_note": "bow05 is the odd one and the reason the mesh has three meshes rather than two: it is a .OZT rather than a .OZJ, it carries alpha, and the alpha cuts away 77% of it. Three triangles wearing a mostly-transparent 32x32 sheet is a bowstring.",
+  "material_note": "Three sheets and five islands, and they line up exactly with MU's own three meshes: 10 triangles on bow01 are the arrow, 50 + 13 on bow02 are the bow, and 1 + 2 on bow05 are the string. That is how the islands were told apart - the triangle counts add up to the meshes muextract reported and there is no other reading of them.",
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, as the crossbow's, and Bone10 says it alone: the bow's second root carries the arrow and the string together, and it slides -46.6, -23.4, -8.2, +4.4 through keys 0 to 3 - the draw - and then -54.5 on key 4. Fifty-nine units back in a single key, while the six limb bones straighten out of their bend on the same one. That is a loose.\n\nA fraction rather than a key number because what reads it is an AnimationPlayer, which knows the clip in seconds. Played at whatever rate puts this instant on the frame the arrow leaves.",
+  "muzzle_bone": "Bone10",
+  "muzzle_bone_from": "The end of the arrow that leaves first, which is not the end I picked at first sight. Bone10 is the second root carrying the fourteen vertices of arrow and string; Bone11 hangs 64.8 units up the shaft with no geometry of its own, and a marker at the far end of a nocked arrow looks exactly like a marker at its point.\n\nThe animation says which end is which, and it says it physically. Six limb bones bend progressively through keys 0 to 3 - Bone08 runs 0, 0.103, 0.200, 0.296 - and snap to nothing on key 4. That is a draw followed by a loose, so keys 0 to 3 are the draw; and through those same keys Bone10 travels -46.6, -23.4, -8.2, +4.4, which is +51 units. Drawing a bow pulls the arrow *back*, so +y is back and the head is at -y: the arrow's own vertices run from -0.573 to +0.228 and the head is the -0.573 end.\n\nSo Bone11, at +0.182, is the fletching and the arrow was leaving from its own tail, 65 cm behind the point. Read off the mesh instead: the head sits 10.7 units from Bone10.",
+  "muzzle_axis": "Bone11",
+  "muzzle_axis_from": "The fletching end, 64.8 units behind the head down the shaft. Bone10 minus Bone11 comes out (0, -1, 0.005) - straight down the arrow toward its point - which is the direction a shot leaves along. Two bones give a line; putting the muzzle at the head and the axis at the tail is what makes it a direction.",
+  "muzzle_offset": [
+    1.0,
+    -10.7,
+    0.3
+  ],
+  "muzzle_offset_from": "Bone10 to where the arrow's point actually is on the frame it leaves, in MU units and the model's own axes. The point. The lowest-y vertex of the nocked primitive is at (0.010, -0.573, 0.065) against the bone's (0.0, -0.466, 0.062), so the head is 10.7 units down the shaft from the bone that carries it. Head is -y, which the animation settles rather than the eye: six limb bones bend through keys 0 to 3 and snap straight on key 4, so 0 to 3 are the draw, and Bone10 travels +51 units across them - a draw pulls an arrow back, so +y is back.\n\nThe release is deliberately NOT folded in, and it was tried. The clip moves this bone - the crossbow's carriage 20.2 units forward on key 4, the bow's nock 7.9 - so the missile as drawn is that much further on at the instant it leaves, and adding it looks like the obviously more correct thing.\n\nIt cannot be verified, which is the reason. The check for 'is the spawn point on the weapon' measures against MeshInstance3D.GetAabb, and that returns the mesh's bind-pose box: it does not move with the animation, so it reports a rest-pose muzzle as inside and a release-pose one as 10 to 38 cm outside, which is an artefact of the metric and not a fact about the weapon. Reading the bone's animated pose directly is no better - it disagreed with the rest by 6 to 119 cm across shots, which is more than the clip can account for.\n\nSo what is kept is the number that is measurable: the tip of the missile in the pose the mesh is authored in. The error against the drawn missile is the clip's own travel, 8 cm on the bow and 20 on the crossbow, in the direction of the shot - which puts the spawn point inside the shaft rather than off the end of it. Bounded, known, and the wrong way to be wrong if you have to pick one.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 10,
+      "area": 481.2,
+      "along": [
+        5.4,
+        7.4
+      ],
+      "mu_uv": [
+        0.941,
+        0.014,
+        0.98,
+        0.51
+      ],
+      "bake_uv": [
+        0.008,
+        0.263,
+        0.811,
+        0.853
+      ],
+      "note": "the nocked arrow, and MU's own separate mesh: bow01.jpg carries it, ten triangles of shaft and head lying along the string. Brown at (148, 100, 77), which is the shaft - ten triangles is too few for the head to argue with it, and a wooden arrow is what this bow's missile is.",
+      "nocked": true,
+      "nocked_from": "The missile sitting on the weapon, which MU keeps as a mesh of its own on a sheet of its own bound to a bone of its own - and then never hides, because it never plays the weapon's animation and nothing in the client sets HiddenMesh on a weapon. Drawn always, so every bow in the game is drawn loaded.\\n\\nFlagged here so the exporter gives it a primitive of its own, which is what lets the viewer take it away between the release and the next draw. That is a departure and it is the animation's fault: a bolt that visibly stays on the rail after being shot is only wrong once something has shot it."
+    },
+    {
+      "island": 1,
+      "material": "wood",
+      "triangles": 50,
+      "area": 3240.6,
+      "along": [
+        -63.6,
+        75.4
+      ],
+      "mu_uv": [
+        -0.021,
+        0.003,
+        0.999,
+        1.013
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.959,
+        0.993
+      ],
+      "note": "the two limbs, broad faces, and it is most of the bow: fifty of the seventy-six triangles running the whole length, -63.6 to 75.4. The sheet under it is a dark red-brown band - (116, 72, 57), (105, 59, 44), (114, 50, 29) - on a grey field that is padding. Timber, and the same brown the crossbow beside it calls wood."
+    },
+    {
+      "island": 2,
+      "material": "wood",
+      "triangles": 13,
+      "area": 570.1,
+      "along": [
+        -61.3,
+        73.2
+      ],
+      "mu_uv": [
+        0.91,
+        0.017,
+        0.979,
+        0.817
+      ],
+      "bake_uv": [
+        0.762,
+        0.008,
+        0.853,
+        0.457
+      ],
+      "note": "the limbs again, edge on: thirteen triangles in a strip four pixels wide and fifty-one tall, running the same full length as the broad faces. (148, 83, 56), a shade lighter than the faces because it is the sawn edge of the same stave rather than a different part."
+    },
+    {
+      "island": 3,
+      "material": "wood",
+      "triangles": 1,
+      "area": 41.7,
+      "along": [
+        3.7,
+        8.8
+      ],
+      "mu_uv": [
+        0.569,
+        0.468,
+        0.889,
+        0.698
+      ],
+      "bake_uv": [
+        0.566,
+        0.172,
+        0.745,
+        0.301
+      ],
+      "note": "one triangle on the string's own sheet, brown at (175, 114, 65) where everything around it is cord. The nock, or the binding at it - too small to name with any confidence and plainly not string."
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 234.7,
+      "along": [
+        -0.9,
+        13.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.79,
+        0.568,
+        0.999
+      ],
+      "bake_uv": [
+        0.369,
+        0.729,
+        0.687,
+        0.846
+      ],
+      "note": "the string. Two triangles on bow05.tga, which is the only sheet here with alpha and has 77% of itself cut away - a thin pale line across a transparent square, which is what a bowstring has to be drawn as. (179, 173, 143), the cream of twisted fibre.\n\ncloth is the weakest assignment in this file and is written down as such: a bowstring is laid cord rather than weave, and the library has nothing that is one. The same argument the Arrows' fletching made."
+    }
+  ]
+}

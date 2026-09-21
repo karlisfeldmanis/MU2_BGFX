@@ -1,0 +1,85 @@
+{
+  "item": "EliteBullFighter01",
+  "mu_name": "Elite Bull Fighter",
+  "mu_name_from": "Monster/Monster01.bmd, a second time. The server sends monster type 4 - MONSTER_ELITE_BULL_FIGHTER = 4 in _enum.h - and CreateMonster's default case opens MONSTER_MODEL_BULL_FIGHTER for it, the same file the plain Bull Fighter draws: `case MONSTER_BULL_FIGHTER: case MONSTER_ELITE_BULL_FIGHTER: case MONSTER_POISON_BULL: default: OpenMonsterModel(MONSTER_MODEL_BULL_FIGHTER)`. Three monsters, one model, and the branch below picks the size, the weapon and the level.\n\nThe name in the client is the same one with a rank on the end - the plain bull is a soul-horn warrior and this is its captain.",
+  "world": "lorencia",
+  "object_type": 4,
+  "mesh": "BullFighter01",
+  "mesh_from": "Not a copy of Monster01 under a second name. The client draws both variants out of one loaded model and every difference between them is a field set beside it, so an .obj, a .rig.json and a 1024 atlas of its own would be three identical files pretending to be different art - the same argument the twelve spell scrolls make, which is the field's own reason for existing. See index.py, which points this entry's glb at BullFighter01's, and mu2.sh, which reads the same field to know it has nothing to build.\n\nWhat this buys beyond the disk: one material assignment. The pelt's roughness, the horn's, the loincloth's are settled once on the model rather than twice on two rows that would drift.",
+  "monster": {
+    "model_index": 0,
+    "scale": 1.15
+  },
+  "monster_from": "model_index is the client's model number - 0, the Bull Fighter's, which is why this shares its rig, its clips and its sound. scale is what CreateMonster sets in the MONSTER_ELITE_BULL_FIGHTER branch: `c->Object.Scale = 1.15f`, against the plain bull's 0.8. Half again as large, and that is most of what tells the two apart at fifty metres, before the crest and long before the eyes.",
+  "right_hand": "Spear08",
+  "right_hand_bone": "left_bone",
+  "right_hand_from": "ZzzCharacter.cpp, CreateMonster: `c->Weapon[0].Type = MODEL_BERDYSH`, which is Item/Spear08.bmd - where the plain bull takes MODEL_NIKKEA_AXE and the Poison Bull the Great Scythe. The bone is the model's and not the variant's, out of CreateCharacter's weapon switch: `case MODEL_BULL_FIGHTER: c->Weapon[0].LinkBone = 42`. Bone 42 on this rig is called left_bone and is a child of Bip01 R Hand - the artist's name is the wrong way round and the number is right, so the polearm is in the right fist. See BullFighter01, which carries the same note about the same bone.\n\nThe Berdysh was already built, for the town rather than for this: five Berdysh Guards stand in Lorencia carrying it. See Spear08.",
+  "hidden_mesh_from": "Deliberately absent, and it is the difference the client actually writes. `c->Object.HiddenMesh = 0` is set in the MONSTER_BULL_FIGHTER branch and in no other: the plain bull hides mesh 0 and the Elite, sharing the file, does not. Mesh 0 of Monster01.bmd is helmat_01, and helmat_02 is welded into the same island - the horned crest - so the ordinary animal goes bare-headed and this one keeps the helmet.\n\nThe build already ships it. export_gltf gives that island a part called \"hidden\" and Model.Conceal blanks it for anything whose entry carries hidden_mesh; an entry without the field never asks, and the geometry has been in the atlas all along. Put on the bench before this asset was written - the crest is a dark cap with a long pale spike forward and a horn to each side, and it is a larger share of the silhouette than \"a crest\" suggests: the plain bull has no horns at all.",
+  "profile": "monster",
+  "rig_from": "BullFighter01's, and there is no second file. Seven actions, 45 bones, and four bones that matter beyond drawing: 24 is smok_bone at the muzzle, 42 and 33 are the weapon links, and 22 and 23 - top_bone02 and top_bone01, both children of Bip01 Head - are the eyes this variant lights and the plain one does not. See rig_of in index.py, which resolves an asset's key counts against the model it names rather than against its own name.",
+  "eyes": {
+    "sheet": "eye",
+    "at": [
+      {
+        "bone": "top_bone02",
+        "offset": [
+          5,
+          0,
+          0
+        ]
+      },
+      {
+        "bone": "top_bone01",
+        "offset": [
+          -5,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "eyes_from": "RenderEye(o, 22, 23) out of ZzzCharacter.cpp, called from RenderCharacter's model switch on exactly one condition:\n\n    case MODEL_BULL_FIGHTER:\n    case MODEL_DEATH_COW:\n        if ((o->Type == MODEL_BULL_FIGHTER && c->Level == 1) || (o->Type == MODEL_DEATH_COW))\n            RenderEye(o, 22, 23);\n\nc->Level == 1 is how the server's Elite is marked - CreateMonster sets it in this variant's branch and nowhere else on this model - so the eyes are the flag, not a decoration on it. And RenderEye itself is four lines:\n\n    float Luminosity = sinf(WorldTime * 0.002f) * 0.3f + 0.8f;\n    Vector(Luminosity, Luminosity, Luminosity, Light);\n    Vector(5.f, 0.f, 0.f, p);\n    b->TransformPosition(o->BoneTransform[Left], p, Position, true);\n    CreateSprite(BITMAP_SHINY + 3, Position, fSize, Light, NULL);\n    Vector(-5.f, 0.f, 0.f, p);   // and again on Right\n\nFive units out along each eye bone's own X, in opposite directions, which widens the pair; the sheet is Effect/eye01.jpg at 32x16; the light is grey and pulses between 0.5 and 1.1 on a 3.1-second period off the world clock. Every number here is that call and nothing has been invented.\n\n**Not a tint.** This is the finding, and it is worth writing down because it is the obvious guess and it is wrong: nothing about the Elite is recoloured. Not the body, not the sheets, not the light the model is drawn under. The red is in eye01.jpg - an almond of red on black, chroma 87 against under one in the other two channels - and the model beneath it is the plain Bull Fighter's own art. LEGACY's own note reached the same conclusion and said so: 'a pair of glowing eyes, switched on by c->Level == 1 - not a tint, which is the obvious guess and wrong.'\n\nOffsets are MU's, in the bone's own axes, in MU units - the same convention the snort's [0, -4, 0] uses and the same one the exporter preserves, because a bone's rest rotation crosses into the .glb unchanged. See client/core/Eyes.cs.",
+  "effects": [
+    {
+      "kind": "snort_smoke",
+      "bone": "smok_bone",
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "windows": [
+        {
+          "action": 0,
+          "from_key": 15,
+          "to_key": 20
+        },
+        {
+          "action": 1,
+          "from_key": 20,
+          "to_key": 25
+        },
+        {
+          "action": 2,
+          "from_key": 2,
+          "to_key": 3
+        },
+        {
+          "action": 2,
+          "from_key": 5,
+          "to_key": 6
+        }
+      ]
+    }
+  ],
+  "effects_from": "The same four windows the plain Bull Fighter snorts on, and it is the same code that draws them: MoveCharacterVisual's effect switch tests `o->Type`, which is MODEL_BULL_FIGHTER for both variants, and never looks at c->Level. So an Elite snorts exactly as an ordinary bull does - on keys 15 to 20 of the first idle, 20 to 25 of the second and twice in the seven-key walk - out of bone 24, four units down.\n\nRepeated here rather than inherited from BullFighter01 through the mesh field, which was the tempting alternative. `mesh` shares a model; it does not share a row, and every other field on this asset is a place where the two variants differ. An effects list that silently arrived from somewhere else would be the one thing on the page you could not check against the client by reading it. See BullFighter01's effects_from for the particle's own numbers, which are unchanged.",
+  "tint": {
+    "fur": [
+      0.64,
+      0.6,
+      0.66
+    ]
+  },
+  "tint_from": "Not read off MuMain, and marked as such rather than presented as a client fact. CreateMonster's MONSTER_ELITE_BULL_FIGHTER branch was checked three times against the 0.75 source for a body-colour write - the golden monsters get one, at Models[o->Type].BodyLight, a few hundred lines up the same function - and the Elite Bull Fighter gets none: only Weapon[0].Type, Object.Scale and Level. The Elite's fur is the plain bull's own albedo, unchanged, and the only Level-gated render call for this model is RenderEye.\n\nAdded anyway, on request, for a darker read than the source supports: a flat multiply on the 'fur' material's AlbedoColor, done at runtime rather than in the bake - see Model.Tint - because this asset shares BullFighter01's model entirely and has no bake of its own to carry a material_overrides entry into. 0.64/0.60/0.66 is an eyeballed number with a faint cool cast rather than a straight grey multiply, chosen against the built model in the viewer and not measured against anything; it wants revisiting the way any bench-invented figure does. This is the one place this project's own rule - every visual trait traces to OpenMU or MuMain - is set aside, and this note is what says so.",
+  "open_question": "Whether a dead Elite keeps its eyes. It does in MU - the eye call sits in RenderCharacter with no test on c->Dead, so a corpse glows until it fades - and the puffs beside it stop, because Crowd.Puffing turns every emitter off for a figure that is dead. Both behaviours are faithful to their own call sites and they disagree with each other on the same animal. Left as MU has it and written down here, because it is the sort of difference that reads as a bug in whichever direction it is found."
+}

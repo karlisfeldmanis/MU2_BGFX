@@ -1,0 +1,91 @@
+{
+  "item": "SteelWall03",
+  "mu_name": "SteelWall03",
+  "mu_name_from": "Lorencia's object slot 67, from WorldObjectCatalog.cs. SteelWall runs three from 65 and SteelDoor is one at 68.",
+  "world": "lorencia",
+  "object_type": 67,
+  "why_this_one": "5 placements. A short section, 18 triangles - the piece that closes a run.",
+  "profile": "world",
+  "sheets": {
+    "steel_barred_a": "steel_barred_a.png",
+    "steel_barred_b": "steel_barred_b.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. steel_barred_a and steel_barred_door are .OZT and carry real alpha; steel_barred_b is an opaque .OZJ.",
+  "sheet_materials": {
+    "steel_barred_a": "wrought_iron",
+    "steel_barred_b": "wrought_iron"
+  },
+  "material_note": "One material for both sheets, which is unusual here and is right: the bars and the posts holding them are the same iron, drawn on two sheets only because one of them is a shape cut out of alpha and the other is solid.",
+  "cutout": [
+    "steel_barred_a"
+  ],
+  "cutout_from": "steel_barred_a.OZT carries a real alpha channel - 85% cut away on the railings, 43% on the gate. A railing is mostly the gaps between its bars.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 22006.4,
+      "along": [
+        0.1,
+        0.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.497
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1749.2,
+      "along": [
+        -3.2,
+        3.0
+      ],
+      "mu_uv": [
+        0.083,
+        -0.001,
+        0.455,
+        0.998
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.687,
+        0.997
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1749.2,
+      "along": [
+        -3.0,
+        3.2
+      ],
+      "mu_uv": [
+        0.083,
+        -0.001,
+        0.455,
+        0.998
+      ],
+      "bake_uv": [
+        0.194,
+        0.503,
+        0.687,
+        0.997
+      ]
+    }
+  ]
+}

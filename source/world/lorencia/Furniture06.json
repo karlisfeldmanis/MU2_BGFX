@@ -1,0 +1,184 @@
+{
+  "item": "Furniture06",
+  "mu_name": "Furniture06",
+  "mu_name_from": "Lorencia's object slot 145, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 145,
+  "why_this_one": "18 placements. A chair, and the most-placed interior piece in Lorencia by a factor of three. The interior pieces are worth building now rather than later because the roof fade works: walking into a house shows what is in it, and until now that was an empty floor.",
+  "profile": "world",
+  "sheets": {
+    "bookshelf": "bookshelf.png",
+    "chair2": "chair2.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "bookshelf": "hardwood",
+    "chair2": "hardwood"
+  },
+  "cutout": [
+    "chair2"
+  ],
+  "cutout_from": "Real alpha in the .OZT: pot3 cuts away 69% and is a leaf, chair2 19% and is the gap in a chair back.",
+  "sheet_scale": {
+    "chair2": 5.5
+  },
+  "sheet_tint": {
+    "chair2": "#cdcdcd"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 3495.7,
+      "along": [
+        -28.7,
+        -20.7
+      ],
+      "mu_uv": [
+        0.546,
+        0.101,
+        0.888,
+        0.797
+      ],
+      "bake_uv": [
+        0.474,
+        0.006,
+        0.932,
+        0.912
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 3495.7,
+      "along": [
+        -28.7,
+        -20.7
+      ],
+      "mu_uv": [
+        0.546,
+        0.1,
+        0.889,
+        0.795
+      ],
+      "bake_uv": [
+        0.534,
+        0.006,
+        0.932,
+        0.912
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1273.7,
+      "along": [
+        16.2,
+        24.3
+      ],
+      "mu_uv": [
+        0.143,
+        0.297,
+        0.184,
+        0.671
+      ],
+      "bake_uv": [
+        0.201,
+        0.66,
+        0.422,
+        0.9
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1273.7,
+      "along": [
+        16.2,
+        24.3
+      ],
+      "mu_uv": [
+        0.143,
+        0.297,
+        0.184,
+        0.671
+      ],
+      "bake_uv": [
+        0.162,
+        0.66,
+        0.461,
+        0.9
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 10,
+      "area": 3934.1,
+      "along": [
+        -27.9,
+        25.6
+      ],
+      "mu_uv": [
+        0.234,
+        0.33,
+        0.68,
+        0.876
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.809
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 6,
+      "area": 480.9,
+      "along": [
+        -27.8,
+        -21.8
+      ],
+      "mu_uv": [
+        0.737,
+        0.914,
+        0.985,
+        0.982
+      ],
+      "bake_uv": [
+        0.474,
+        0.66,
+        0.633,
+        0.704
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 2,
+      "area": 938.4,
+      "along": [
+        -25.5,
+        -25.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.647,
+        0.647
+      ]
+    }
+  ]
+}

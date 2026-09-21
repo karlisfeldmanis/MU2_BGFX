@@ -1,0 +1,321 @@
+{
+  "item": "DoungeonGate01",
+  "mu_name": "DoungeonGate01",
+  "mu_name_from": "Lorencia's object slot 55, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 55,
+  "why_this_one": "1 placement. The gate to the dungeon, one sheet and one placement. MU spells it with the n.",
+  "profile": "world",
+  "sheets": {
+    "copra_gate": "copra_gate.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "copra_gate": "flagstone"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 186,
+      "area": 342491.9,
+      "along": [
+        -227.9,
+        233.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.012,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.89,
+        0.892
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 4270.2,
+      "along": [
+        131.6,
+        169.0
+      ],
+      "mu_uv": [
+        0.385,
+        0.536,
+        0.599,
+        0.754
+      ],
+      "bake_uv": [
+        0.678,
+        0.639,
+        0.941,
+        0.956
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 20,
+      "area": 4273.6,
+      "along": [
+        131.6,
+        169.0
+      ],
+      "mu_uv": [
+        0.385,
+        0.536,
+        0.599,
+        0.754
+      ],
+      "bake_uv": [
+        0.147,
+        0.569,
+        0.972,
+        0.894
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 15,
+      "area": 13166.8,
+      "along": [
+        -107.0,
+        3.2
+      ],
+      "mu_uv": [
+        0.677,
+        0.174,
+        0.887,
+        0.4
+      ],
+      "bake_uv": [
+        0.132,
+        0.739,
+        0.393,
+        0.991
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 20,
+      "area": 4175.6,
+      "along": [
+        -164.6,
+        -120.7
+      ],
+      "mu_uv": [
+        0.403,
+        0.549,
+        0.668,
+        0.719
+      ],
+      "bake_uv": [
+        0.276,
+        0.88,
+        0.699,
+        0.968
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 20,
+      "area": 2970.8,
+      "along": [
+        -170.3,
+        -134.3
+      ],
+      "mu_uv": [
+        0.547,
+        0.419,
+        0.712,
+        0.589
+      ],
+      "bake_uv": [
+        0.053,
+        0.284,
+        0.968,
+        0.548
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 3,
+      "area": 198.2,
+      "along": [
+        -175.6,
+        -161.9
+      ],
+      "mu_uv": [
+        0.65,
+        0.562,
+        0.717,
+        0.638
+      ],
+      "bake_uv": [
+        0.465,
+        0.241,
+        0.631,
+        0.335
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 3,
+      "area": 704.0,
+      "along": [
+        -193.7,
+        -167.2
+      ],
+      "mu_uv": [
+        0.485,
+        0.643,
+        0.622,
+        0.777
+      ],
+      "bake_uv": [
+        0.148,
+        0.01,
+        0.964,
+        0.592
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 3,
+      "area": 457.9,
+      "along": [
+        -195.1,
+        -174.0
+      ],
+      "mu_uv": [
+        0.71,
+        0.441,
+        0.813,
+        0.531
+      ],
+      "bake_uv": [
+        0.011,
+        0.336,
+        0.612,
+        0.422
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 3,
+      "area": 457.9,
+      "along": [
+        -26.8,
+        -6.4
+      ],
+      "mu_uv": [
+        0.839,
+        0.127,
+        0.897,
+        0.188
+      ],
+      "bake_uv": [
+        0.01,
+        0.444,
+        0.24,
+        0.592
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 20,
+      "area": 43000.6,
+      "along": [
+        99.3,
+        199.3
+      ],
+      "mu_uv": [
+        0.765,
+        0.6,
+        0.994,
+        0.996
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.875,
+        0.898
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 20,
+      "area": 43000.6,
+      "along": [
+        99.3,
+        199.3
+      ],
+      "mu_uv": [
+        0.765,
+        0.6,
+        0.994,
+        0.996
+      ],
+      "bake_uv": [
+        0.618,
+        0.011,
+        0.956,
+        0.89
+      ]
+    }
+  ],
+  "emitters": [
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        -150,
+        -150,
+        140
+      ]
+    },
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        150,
+        -150,
+        140
+      ]
+    }
+  ],
+  "emitters_from": "MoveObject's case for object 55: two braziers flanking the gate, a hundred and fifty either side of its centre and a hundred and fifty forward of it, burning at head height rather than at the ground.\n\nSame fire as the bridge and as the bonfire. The client has one, and the difference between a brazier and a campfire is where it is put and what it is put in."
+}

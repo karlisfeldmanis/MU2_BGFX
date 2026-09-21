@@ -1,0 +1,68 @@
+{
+  "item": "Shield11",
+  "mu_name": "Big Round Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield11.bmd is shield index 10, which openmu's 0.75 Armors.cs names the Big Round Shield. mu.db agrees: group 6 index 10, Item/Shield11.bmd.",
+  "why_this_one": "Hanzo's, and the blacksmith is the last shop with lines missing - five of his twenty-four were built this morning. He stocks twelve shields and two were here; these five take him to seven of the twelve, in the order his shelf reads. See shared/Market.Blacksmith.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the two built shields use, and its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10, which records the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(10, 1, 18, 2, 2, \"Big Round Shield\", 18, 6, 18, 35, 120, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 10,
+    "drop_level": 18,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 6,
+    "defense_rate": 18,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "Eighteen, the shield's block skill in OpenMU's table, on the ten shields that carry one. There are no skills in this simulation, so it is carried for the row to read against the call and nothing more.",
+    "durability": 35,
+    "requires": {
+      "level": 0,
+      "strength": 120,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": {
+    "hound_shield2": "hound_shield2.png"
+  },
+  "sheet_from": "Data/Item/hound_shield2.OZJ (64x64), from MuMain. The .bmd names hound_shield2.jpg; 34 triangles. The Plate Shield wears hound_shield1, the same pair arrangement du_shield has.",
+  "sheet_note": "hound_shield2 is a broad round shield: a dark steel face ringed with a band of engraved script, a bronze boss at the centre and gold studs around the rim. Mean (108, 103, 94) at chroma 16.",
+  "material_note": "One island of 34, the whole shield: a steel face ringed with engraved script, a bronze boss and gold studs. Per triangle it means (61, 60, 59) at chroma 7 - achromatic, so the boss and the studs are a small part of a plain steel disc and go with it. plate_steel and not the weapon profile's steel, which is the swap Shield10 records: steel is blade steel with a directional grain running along the mill, and running that across a shield face is the fault the Plate gauntlets showed. A shield is armour - hammered, curved, worn where it is hit.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 34,
+      "area": 6786.9,
+      "along": [
+        -33.2,
+        32.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

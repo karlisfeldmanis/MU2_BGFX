@@ -1,0 +1,12 @@
+{
+  "item": "PotionGirlAmy",
+  "mu_name": "Potion Girl Amy",
+  "kind": "character",
+  "parts": [
+    "GirlHead01",
+    "GirlUpper01",
+    "GirlLower01"
+  ],
+  "note": "The potion girl. Three pieces on a 37-bone rig, dressed out of two 128 sheets.",
+  "parts_from": "remaster_one's NpcManager loads Girl01.bmd with these pieces on it. The base carries the skeleton and the idle; the pieces carry the meshes."
+}

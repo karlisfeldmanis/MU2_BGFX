@@ -1,0 +1,166 @@
+{
+  "item": "Sign01",
+  "mu_name": "Sign01",
+  "mu_name_from": "Lorencia's object slot 96, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 96,
+  "why_this_one": "3 placements. A hanging inn sign: a notice board, the ironwork it swings from, and its ring.",
+  "profile": "world",
+  "sheets": {
+    "notice": "notice.png",
+    "signboard": "signboard.png",
+    "doorknob": "doorknob.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "notice": "timber",
+    "signboard": "wrought_iron",
+    "doorknob": "wrought_iron"
+  },
+  "material_note": "Both cut-out sheets are bright metal on black, and the black is the background rather than the subject - which is the test that decides wrought_iron over painted_steel. The metal itself is pale and catches light, so it is allowed a metal's reflectance.",
+  "cutout": [
+    "signboard",
+    "doorknob"
+  ],
+  "cutout_from": "Real alpha in both .OZT files, cutting away 54% and 62%.",
+  "sheet_pad": {
+    "notice": "edge"
+  },
+  "sheet_pad_from": "An atlas rather than a tile - two or more separate surfaces drawn side by side in one square - so its border replicates instead of wrapping.",
+  "play_speed": 0.3,
+  "play_speed_from": "ZzzObject.cpp, CreateObject, case WD_0LORENCIA: `o->Velocity = 0.3f` for MODEL_SIGN01 and MODEL_SIGN01 + 1, against the 0.16 every world object carries in before the switch runs. MoveObject hands Velocity to PlayAnimation where a character's play speed goes, so keys a second is this times MU's reference 25.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 157.9,
+      "along": [
+        -7.9,
+        4.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.425,
+        0.416,
+        0.836
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 157.9,
+      "along": [
+        -7.9,
+        4.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.425,
+        0.005,
+        0.836,
+        0.416
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 5,
+      "area": 1652.2,
+      "along": [
+        -5.3,
+        1.9
+      ],
+      "mu_uv": [
+        0.002,
+        0.004,
+        0.045,
+        0.314
+      ],
+      "bake_uv": [
+        0.846,
+        0.717,
+        0.89,
+        0.844
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 7,
+      "area": 999.5,
+      "along": [
+        -5.1,
+        1.7
+      ],
+      "mu_uv": [
+        0.003,
+        0.004,
+        0.045,
+        0.314
+      ],
+      "bake_uv": [
+        0.878,
+        0.425,
+        0.895,
+        0.69
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 12,
+      "area": 7917.2,
+      "along": [
+        -5.1,
+        2.3
+      ],
+      "mu_uv": [
+        -0.002,
+        0.319,
+        0.999,
+        1.004
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.873,
+        0.995
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 2,
+      "area": 2865.1,
+      "along": [
+        -1.5,
+        -1.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.416,
+        0.416
+      ]
+    }
+  ]
+}

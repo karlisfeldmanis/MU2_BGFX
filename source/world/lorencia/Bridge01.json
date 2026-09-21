@@ -1,0 +1,217 @@
+{
+  "item": "Bridge01",
+  "mu_name": "Bridge01",
+  "mu_name_from": "Lorencia's object slot 80, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 80,
+  "why_this_one": "16 placements. The bridge over Lorencia's river, and the first asset to carry a sheet this pipeline deliberately does not draw.",
+  "profile": "world",
+  "sheets": {
+    "bridge_01": "bridge_01.png",
+    "bridge_shadow01": "bridge_shadow01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "bridge_01": "flagstone",
+    "bridge_shadow01": "flagstone"
+  },
+  "skip_sheets": [
+    "bridge_shadow01"
+  ],
+  "skip_sheets_from": "bridge_shadow01 is two pixels wide and thirty-two tall, stretched under the span: it is the shadow the client paints because it has no shadow map. Drawn here it is a second shadow over a real one, in the wrong place whenever the sun is not where MU assumed - so its geometry is left out of the file rather than given a material.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 40,
+      "area": 223846.8,
+      "along": [
+        -400.3,
+        399.4
+      ],
+      "mu_uv": [
+        -0.003,
+        0.001,
+        0.999,
+        0.808
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.921,
+        0.951
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 6,
+      "area": 109079.2,
+      "along": [
+        -351.6,
+        350.7
+      ],
+      "mu_uv": [
+        0.128,
+        0.683,
+        0.999,
+        0.91
+      ],
+      "bake_uv": [
+        0.008,
+        0.459,
+        0.7,
+        0.923
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 19161.6,
+      "along": [
+        -400.3,
+        -351.6
+      ],
+      "mu_uv": [
+        -0.003,
+        0.21,
+        0.564,
+        0.999
+      ],
+      "bake_uv": [
+        0.171,
+        0.01,
+        0.992,
+        0.864
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 10,
+      "area": 19162.2,
+      "along": [
+        350.8,
+        399.4
+      ],
+      "mu_uv": [
+        -0.001,
+        0.21,
+        0.567,
+        0.999
+      ],
+      "bake_uv": [
+        0.766,
+        0.008,
+        0.992,
+        0.864
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 64,
+      "area": 8202.6,
+      "along": [
+        154.9,
+        251.7
+      ],
+      "mu_uv": [
+        0.007,
+        0.018,
+        0.256,
+        0.311
+      ],
+      "bake_uv": [
+        0.473,
+        0.008,
+        0.585,
+        0.139
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 64,
+      "area": 8202.6,
+      "along": [
+        -252.6,
+        -155.8
+      ],
+      "mu_uv": [
+        0.007,
+        0.018,
+        0.256,
+        0.311
+      ],
+      "bake_uv": [
+        0.585,
+        0.432,
+        0.696,
+        0.564
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 2,
+      "area": 120069.7,
+      "along": [
+        -400.3,
+        399.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.013,
+        0.999,
+        0.983
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.456,
+        0.443
+      ]
+    }
+  ],
+  "emitters": [
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        90,
+        -200,
+        30
+      ]
+    },
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        90,
+        200,
+        30
+      ]
+    }
+  ],
+  "emitters_from": "MoveObject's case for object 80, which calls CreateFire twice on a bridge and at the client's own offsets \u2014 so the two fires sit where the two lion heads are, one at each end of the span, two hundred units apart along it and ninety off the centre line. Thirty up, which is the mouth rather than the deck.\n\nThe numbers are Bonfire01's, because it is the same call: MU has one fire and varies only where it is put. What differs here is the count. Every other fire in Lorencia is one to a placement and this is the first type that carries two, which is the whole reason the emitter list is a list."
+}

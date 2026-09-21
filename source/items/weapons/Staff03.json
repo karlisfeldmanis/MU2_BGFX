@@ -1,0 +1,71 @@
+{
+  "item": "Staff03",
+  "mu_name": "Serpent Staff",
+  "mu_name_from": "MuMain loads MODEL_STAFF + i from Staff{i+1}, so Staff03.bmd is staff index 2, which openmu's 0.75 Weapons.cs names the Serpent Staff. mu.db agrees: group 5 index 2, Item/Staff03.bmd.",
+  "why_this_one": "Pasi's, and the last four lines he sells. The mage stocks all four staves - the Skull at +0, the Angelic at +2, the Serpent and the Thunder at +3 - and none was built, so four of his nineteen lines were dropped by Realm.Shelf. With these he sells all nineteen. See shared/Market.Mage.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(5, 2, 0, 0, 2, 3, true, \"Serpent Staff\", 30, 17, 18, 25, 50, 34, 0, 50, 0, 0, 0, 1, 0, 0)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 5,
+    "number": 2,
+    "drop_level": 30,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "width_note": "Width does not mean two-handed here and cannot: OpenMU's test is `if (group < Bows && width == 2)` and Bows is 4, so nothing in group 5 is ever caught by it. Two-handedness comes from MuWeapons.cs alone, which is the client's own table, and within this group of four it disagrees three times to one.",
+    "height": 3,
+    "minimum_damage": 17,
+    "maximum_damage": 18,
+    "attack_speed": 25,
+    "magic_power": 34,
+    "magic_power_note": "magic_power is the column no weapon built here has carried before. Every sword, axe and bow in the project passes 0 for it and the four staves pass 6, 20, 34 and 46 - it is the wizard's damage, where a blade's is the min and max above. Recorded and unread: shared/Combat.cs rolls physical damage off the weapon row and has no spell in it yet.",
+    "durability": 50,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, on all four."
+  },
+  "stance": "scythe",
+  "stance_from": "MuWeapons.cs: WeaponStance.Scythe, TwoHanded: true. The stance enum says why in its own comments - Sword is 'a one-handed sword, mace, or a one-handed staff' and Scythe is 'a scythe, or any two-handed staff or polearm' - so a staff takes the stance its handedness gives it and there is no staff stance. Actions 7 and 20.",
+  "two_handed": true,
+  "sheets": {
+    "wand04": "wand04.png"
+  },
+  "sheet_from": "Data/Item/wand04.OZJ (64x64), from MuMain. The .bmd names wand04.jpg; 68 triangles, all on it.",
+  "sheet_note": "wand04 is the darkest weapon sheet in the project: mean (50, 39, 28) at lum 39, a dark bronze dome over a fluted collar with a paler shaft below. Chroma 25, so it is a warm brown-bronze rather than the gold of the Skull Staff.",
+  "material_note": "One island of 68, the whole staff, and the darkest weapon sheet in the project: per triangle it means (50, 39, 27) at chroma 25 and lum 39, against the Skull Staff's 90.\n\nbrass, and the darkness is the point to record rather than to correct. A metal's albedo is its reflectance, so an aged bronze dome renders as an aged bronze dome - the Scale set makes the same argument at lum 54 and the Bone set is the case where it was wrong, because bone is not metal. This is: a cast dome with a rivet at each seam and pale silver bands below it, all of it on one shell the unwrapper would not divide.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 68,
+      "area": 2763.0,
+      "along": [
+        -92.8,
+        103.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.99,
+        1.021
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.765,
+        0.994
+      ]
+    }
+  ]
+}

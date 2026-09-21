@@ -1,0 +1,182 @@
+{
+  "item": "BridgeStone01",
+  "mu_name": "BridgeStone01",
+  "mu_name_from": "Lorencia's object slot 85, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 85,
+  "why_this_one": "14 placements. The bridge's stone abutment, with timber and a bush at its foot.",
+  "profile": "world",
+  "sheets": {
+    "bridge_shadow01": "bridge_shadow01.png",
+    "tile_ston06": "tile_ston06.png",
+    "tile_wood02": "tile_wood02.png",
+    "tree_04": "tree_04.jpg.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. MU has three stems that exist twice over, as an .OZJ and an .OZT that are not the same picture: tree_01 is furrowed bark as a JPEG and a leaf clump as a TGA, tree_02 is birch bark or moss, tree_04 is a sawn log end or pink blossom. The .bmd says which by extension and both halves are genuinely in use across Lorencia, so the decoded files carry the extension in their names and neither gets the bare one.",
+  "sheet_materials": {
+    "bridge_shadow01": "flagstone",
+    "tile_ston06": "timber",
+    "tile_wood02": "timber",
+    "tree_04": "timber"
+  },
+  "skip_sheets": [
+    "bridge_shadow01"
+  ],
+  "skip_sheets_from": "bridge_shadow01 is two pixels wide and thirty-two tall, stretched under the span: it is the shadow the client paints because it has no shadow map. Drawn here it is a second shadow over a real one, in the wrong place whenever the sun is not where MU assumed - so its geometry is left out of the file rather than given a material.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 49208.9,
+      "along": [
+        -164.0,
+        163.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.013,
+        0.999,
+        0.983
+      ],
+      "bake_uv": [
+        0.006,
+        0.673,
+        0.327,
+        0.984
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 22,
+      "area": 45761.9,
+      "along": [
+        -200.1,
+        200.0
+      ],
+      "mu_uv": [
+        0.001,
+        -0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.899,
+        0.66
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 18,
+      "area": 34978.6,
+      "along": [
+        -200.1,
+        200.0
+      ],
+      "mu_uv": [
+        0.001,
+        -0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.34,
+        0.968,
+        0.994
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 12,
+      "area": 12698.2,
+      "along": [
+        -177.1,
+        175.0
+      ],
+      "mu_uv": [
+        0.031,
+        -0.001,
+        0.394,
+        0.998
+      ],
+      "bake_uv": [
+        0.673,
+        0.006,
+        0.967,
+        0.66
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 12,
+      "area": 12698.2,
+      "along": [
+        -176.4,
+        175.7
+      ],
+      "mu_uv": [
+        0.031,
+        -0.001,
+        0.394,
+        0.998
+      ],
+      "bake_uv": [
+        0.802,
+        0.006,
+        0.919,
+        0.994
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 4,
+      "area": 8749.3,
+      "along": [
+        145.6,
+        188.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.358,
+        0.999,
+        0.591
+      ],
+      "bake_uv": [
+        0.449,
+        0.673,
+        0.77,
+        0.748
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 4,
+      "area": 8821.6,
+      "along": [
+        -193.0,
+        -149.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.358,
+        0.999,
+        0.591
+      ],
+      "bake_uv": [
+        0.449,
+        0.761,
+        0.77,
+        0.836
+      ]
+    }
+  ]
+}

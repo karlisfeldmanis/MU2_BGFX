@@ -1,0 +1,40 @@
+{
+  "item": "Tomb03",
+  "mu_name": "Tomb03",
+  "mu_name_from": "Lorencia's object slot 46, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 46,
+  "why_this_one": "5 placements. A headstone.",
+  "profile": "world",
+  "sheets": {
+    "tombstone": "tombstone.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "tombstone": "flagstone"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 30,
+      "area": 24577.1,
+      "along": [
+        -9.7,
+        9.9
+      ],
+      "mu_uv": [
+        -0.002,
+        0.003,
+        0.997,
+        0.993
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.945
+      ]
+    }
+  ]
+}

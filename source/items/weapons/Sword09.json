@@ -1,0 +1,92 @@
+{
+  "item": "Sword09",
+  "mu_name": "Serpent Sword",
+  "mu_name_from": "MuMain's ZzzOpenData.cpp loads the group as MODEL_SWORD + i from Sword{i+1}, so Sword09.bmd is index 8, which OpenMU's 0.75 table names the Serpent Sword. MuWeapons.cs agrees from the client's side: `new(\"Serpent Sword\", \"Sword09.bmd\", WeaponStance.Sword, ...)`.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. Slot 74 at +3. A hundred and thirty strength is the highest gate Hanzo sells behind, and at attack speed 20 the slowest swing on the counter - the trade the low table makes for thirty to forty damage.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(0, 8, 0, 21, 1, 3, true, \"Serpent Sword\", 30, 30, 40, 20, 36, 0, 0, 130, 0, 0, 0, 0, 1, 0)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 0,
+    "number": 8,
+    "drop_level": 30,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "width_note": "Width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and one here agrees with MuWeapons.cs's TwoHanded: false. It is also what takes a fifth off the price: shared/Market.Coin reads the footprint's width to tell a one-handed weapon from a two-handed one.",
+    "height": 3,
+    "minimum_damage": 30,
+    "maximum_damage": 40,
+    "attack_speed": 20,
+    "durability": 36,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side.",
+    "skill": 21,
+    "skill_note": "The skillNumber of the call. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. Actions 4 and 17, the family the Kris, the Short Sword and the Hand Axe already walk in. A one-handed blade leaves the shield hand free, which is the whole point of it on a counter that is mostly shields.",
+  "sheets": {
+    "sword09": "sword09.png"
+  },
+  "sheet_from": "Data/Item/sword09.OZJ (128x32), from MuMain. The .bmd names sword09.jpg; 88 triangles, one mesh.",
+  "material_note": "Island 0 is the hilt, ten triangles below Z 8, at (118, 90, 29) and chroma 89. Gold, unambiguously, and cast rather than ground: brass.\n\nIsland 1 is everything else - seventy-eight triangles the length of the item - at (103, 83, 51) chroma 53. Not steel's grey: MU painted this blade as a serpent, a dark scaled spine over a pale ground edge, and the mean is the warm brown of the scales. painted_steel, on the same argument the Blade makes: the sheet is a dark painting with its own highlight in it, and a dark painting declared metal loses every mid-tone between the highlights and comes back as brown chrome.\n\npainted_steel was the first answer on this piece and it is not the one that ships. The argument for it was sound on paper - the sheet is dark, a metal's albedo is its reflectance, and a dark sheet declared metal comes back as black chrome - and it was made without putting the item in the engine, which is step 4 of the doc and the step that decides. Rendered, painted_steel is metallic 0.0 and therefore has almost no specular response at all: the lit shot and the unshaded shot are the same picture. The piece reads as matte black plastic rather than as dark metal, which is a different failure from the one being avoided and no better.\n\nplate_steel instead. It keeps metallic 1.0 so the form comes back under a moving light, and its grain is cast - isotropic pitting with no direction to band a broad face, which is the other half of what painted_steel gets wrong here, its grain being brushed along v. painted_steel's own file names its remaining wearer correctly: a carriage's ironwork, which is bars, where the dark is the subject and the surface is thin enough that a direction cannot disagree with the unwrap.\n\nAnd the blade went back to steel, which is a third pass over the same island and the one that should have been first. The sequence was painted_steel (metallic 0, so the lit render equalled the unshaded one and it read as matte plastic), then plate_steel (metal again, but 0.68 with a cast grain, which is armour: it came back grainy rather than metallic, and on the darker sheets it left almost no specular at all), then steel.\n\nThe two files each warn about the other's case and I read only one of them. plate_steel exists because the Plate gauntlets wore steel and its brushed grain smeared across the fingers; steel exists because a blade is ground along its length and the mill's grain is what stretches its highlight into a line. A blade is not a gauntlet. Rebuilt side by side under the same sun, steel is brighter, catches an edge highlight the cast grain cannot, and clears the cyan patches that plate_steel's pitting was throwing against the roughness floor.",
+  "open_question": "One island over a scaled body and a ground edge, which are two surfaces and one assignment. There is a case for chitin on the spine - it is a shell over a body, which is what that material names - and no way to say it about half an island.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 10,
+      "area": 331.0,
+      "along": [
+        -13.7,
+        7.5
+      ],
+      "mu_uv": [
+        0.819,
+        0.462,
+        0.984,
+        0.636
+      ],
+      "bake_uv": [
+        0.003,
+        0.443,
+        0.413,
+        0.546
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 78,
+      "area": 6026.2,
+      "along": [
+        -13.2,
+        131.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.961,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.901
+      ]
+    }
+  ]
+}

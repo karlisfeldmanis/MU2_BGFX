@@ -1,0 +1,56 @@
+{
+  "item": "TreasureDrum01",
+  "mu_name": "TreasureDrum01",
+  "mu_name_from": "Lorencia's object slot 58, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 58,
+  "why_this_one": "64 placements. A barrel, and the sheet House02 already wears - one 128-square of staves and iron bands.",
+  "profile": "world",
+  "sheets": {
+    "drum": "drum.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "drum": "timber"
+  },
+  "sheet_pad": {
+    "drum": "edge"
+  },
+  "sheet_pad_from": "An atlas rather than a tile - the staves, the ends and the bands are three things in one square - so its border replicates.",
+  "sheet_roughness": {
+    "drum": 0.7
+  },
+  "sheet_metallic": {
+    "drum": 0.04
+  },
+  "sheet_relief": {
+    "drum": 0.65
+  },
+  "sheet_saturation": {
+    "drum": 1.3
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 60,
+      "area": 30500.5,
+      "along": [
+        -41.1,
+        40.2
+      ],
+      "mu_uv": [
+        0.002,
+        0.005,
+        1.002,
+        1.0
+      ],
+      "bake_uv": [
+        0.002,
+        0.005,
+        1.002,
+        1.0
+      ]
+    }
+  ]
+}

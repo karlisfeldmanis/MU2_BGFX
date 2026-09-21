@@ -1,0 +1,90 @@
+{
+  "item": "Object38",
+  "mu_name": "Object38",
+  "mu_name_from": "Noria's object slot 37, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 37,
+  "placements": 91,
+  "profile": "world",
+  "sheets": {
+    "light01": "nr_light01.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "light01": "lamplight"
+  },
+  "material_note": "light01: a teal vertical gradient, drawn additively - a shaft of light.",
+  "additive": [
+    "light01"
+  ],
+  "additive_from": "ZzzObject.cpp, CreateObject, case WD_3NORIA: `o->BlendMesh = 0` for type 37, and the render path draws that submesh with RENDER_BRIGHT. Mesh order is the .bmd's, which is the order the .obj groups are in.",
+  "why_this_one": "One additive card of six triangles, ninety-one times over. It is a light and nothing else - there is no lamp model under it, the way Lorencia's Light01 to Light03 are anchors the client hides.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 11127.5,
+      "along": [
+        -9.2,
+        73.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.497
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 11127.5,
+      "along": [
+        -107.1,
+        -1.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.503,
+        0.497,
+        0.997
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4106.3,
+      "along": [
+        -15.2,
+        23.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.497
+      ]
+    }
+  ]
+}

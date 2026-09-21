@@ -1,0 +1,42 @@
+{
+  "item": "MagicCircle01",
+  "mu_name": "The circle a summoned creature stands up in",
+  "mu_name_from": "ZzzOpenData.cpp:4292: `gLoadData.AccessModel(MODEL_MAGIC_CIRCLE1, L\"Data\\\\Skill\\\\\", L\"MagicCircle\", 1)` - so Data/Skill/MagicCircle01.bmd, with its two sheets opened out of Data/Skill by the OpenTexture loop over MODEL_SKILL_BEGIN..END.",
+  "kind": "summon",
+  "why_this_one": "Half of what a summon's arrival is. ReceiveCreateSummonViewport (WSclient.cpp:3036-3038) answers a newly created summon with AppearMonster, `CreateEffect(MODEL_MAGIC_CIRCLE1, o->Position, o->Angle, o->Light, 0, o)` and one BITMAP_LIGHTNING + 1 particle. See docs/summoning.md.",
+  "mesh": "MagicCircle01.obj",
+  "mesh_from": "muextract export-obj --split-bones on Data/Skill/MagicCircle01.bmd, from MuMain. Two meshes, 52 triangles, and two bones that turn them: Box01 (bone 0) steps 0, 90, 180, -90 degrees about the vertical over its four keys and Box03 (bone 3) 0, -90, 180, 90. So each mesh is written as one group per bone - sou01_b0 and sou01_b3 are the two flat squares at 28 and 46 units up, sou02_b0 and sou02_b3 the two ring walls - and client/core/Summoning.cs spins the _b0 groups one way and the _b3 groups the other, a quarter turn a key, rather than carrying a skeleton for two rigid layers.",
+  "parts": [
+    {
+      "group": "sou01_b0",
+      "sheet": "sou01.png",
+      "blend": "additive",
+      "note": "Data/Skill/sou01.OZJ, 64 square, fully opaque. The lower square, turning with Box01."
+    },
+    {
+      "group": "sou01_b3",
+      "sheet": "sou01.png",
+      "blend": "additive",
+      "note": "The same sheet on the upper square, turning with Box03 the other way."
+    },
+    {
+      "group": "sou02_b0",
+      "sheet": "sou02.png",
+      "blend": "additive",
+      "note": "Data/Skill/sou02.OZJ, 64 by 32, fully opaque. The tall ring wall, 60 to 160 units up, with Box01."
+    },
+    {
+      "group": "sou02_b3",
+      "sheet": "sou02.png",
+      "blend": "additive",
+      "note": "The low, wide ring wall, 53 to 82 units up, with Box03."
+    }
+  ],
+  "blend_from": "`o->BlendMesh = -2` in the MODEL_MAGIC_CIRCLE1 arm of CreateEffect (ZzzEffect.cpp:1477-1497). RenderMesh with a blend mesh index at or under -2 draws every mesh additively and unlit, coloured BodyLight times BlendMeshLight 1.0 (ZzzBMD.cpp:1509-1528) - and BodyLight is the terrain's light at the spot plus the creature's own, which is nought the frame it is created, so the circle is as bright as the ground it stands on.",
+  "scale": 0.7,
+  "scale_from": "`o->Scale = 0.7f` in the same arm, and Move_MODEL_MAGIC_CIRCLE1 adds 0.01 a frame, so it is drawn 0.71 to 1.00 over its life.",
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30` in the same arm: 1.2 seconds, and it pops off at the end with no fade.",
+  "muzzle": [0.0, 0.0, 0.0],
+  "muzzle_from": "Not a missile; nothing leaves this. Present because the record it shares with the arrows carries one."
+}

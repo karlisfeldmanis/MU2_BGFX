@@ -1,0 +1,61 @@
+{
+  "item": "BootClass01",
+  "mu_name": "Dark Wizard feet",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN} and so on, and the numbering runs one over MU's zero-based classes - so Class01 is the Dark Wizard.",
+  "part_note": "The calves and feet. 126 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_barbarian_01": "skin_barbarian_01.png"
+  },
+  "sheet_from": "Data/Player/skin_barbarian_01.OZJ (256x256), from MuMain. All five parts name it.",
+  "sheet_warning": "The sheet name is not the class, and this is the third of three that proves it: the Dark Wizard is painted on skin_barbarian_01, the Dark Knight on skin_wizard_01 and the Fairy Elf on skin_warrior_01. Not one of them matches. Verified by extracting each .bmd and reading the texture it names.",
+  "material_note": "Read off the sheet by cropping each island at its own mu_uv with V flipped. The Dark Wizard is the easiest of the three bodies to call, because almost all of him is one dark robe: the torso's large island is (120, 109, 101), the legs are (28, 28, 27) and (17, 17, 17), and the only flesh on him below the neck is two seven-triangle islands at (183, 153, 132) - the wrists, where the sleeve ends.\n\ncloth for the robe, which is what the library has for hung, woven, never-taut fabric and is exactly what he is wearing. leather_wrap for the gloves at (41, 41, 41) and the boots at (55, 59, 58): darker than the robe, and worn hide rather than cloth. His hair samples (135, 146, 153), a grey-blue, which is the white hair MU gives him and not a lighting artefact.\n\nleather rather than leather_wrap, after the wizard came out striped from the knees down. leather_wrap is the *grip* material - a cord wound round a tang, in bands, at depth 0.55 - and those bands are corduroy on a boot. See assets/materials/leather.json, which is the same hide without the winding.",
+  "unstack": false,
+  "unstack_why": "Refuses the UV un-stacking, as ArmorClass01 does and for the reason found there: the step moved 69 of that part's 150 faces off their twin and the buckled vest vanished from the bake. Every part of this body is mirrored the same way - this one arrives 100% stacked and 63 of its faces get moved - so the same damage is available to all of them, and MU sharing one set of texels between a left and a right half is the arrangement rather than a defect to undo.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 63,
+      "area": 3895.6,
+      "along": [
+        -17.7,
+        21.4
+      ],
+      "mu_uv": [
+        0.652,
+        0.258,
+        0.988,
+        0.707
+      ],
+      "bake_uv": [
+        0.652,
+        0.258,
+        0.988,
+        0.707
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 63,
+      "area": 3903.9,
+      "along": [
+        -17.7,
+        21.4
+      ],
+      "mu_uv": [
+        0.652,
+        0.258,
+        0.988,
+        0.707
+      ],
+      "bake_uv": [
+        0.652,
+        0.258,
+        0.988,
+        0.707
+      ]
+    }
+  ]
+}

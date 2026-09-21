@@ -1,0 +1,40 @@
+{
+  "item": "StoneStatue02",
+  "mu_name": "StoneStatue02",
+  "mu_name_from": "Lorencia's object slot 41, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 41,
+  "why_this_one": "7 placements. Another, on its own 128-square sheet.",
+  "profile": "world",
+  "sheets": {
+    "stone_statue01": "stone_statue01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "stone_statue01": "flagstone"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 107,
+      "area": 310347.6,
+      "along": [
+        -106.1,
+        139.5
+      ],
+      "mu_uv": [
+        -0.237,
+        0.001,
+        0.978,
+        0.999
+      ],
+      "bake_uv": [
+        -0.237,
+        0.001,
+        0.978,
+        0.999
+      ]
+    }
+  ]
+}

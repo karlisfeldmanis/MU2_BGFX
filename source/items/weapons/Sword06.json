@@ -1,0 +1,117 @@
+{
+  "item": "Sword06",
+  "mu_name": "Blade",
+  "mu_name_from": "MuMain's ZzzOpenData.cpp loads the group as MODEL_SWORD + i from Sword{i+1}, so Sword06.bmd is index 5, which OpenMU's 0.75 table names the Blade. MuWeapons.cs agrees from the client's side: `new(\"Blade\", \"Sword06.bmd\", WeaponStance.Sword, ...)`.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. Slot 75 at +3, the last line of his counter and the dearest sword on it: drop level 36 against the Falchion's 24, and the only one of his blades all three classes may hold.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(0, 5, 0, 22, 1, 3, true, \"Blade\", 36, 36, 47, 30, 39, 0, 0, 80, 50, 0, 0, 1, 1, 1)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 0,
+    "number": 5,
+    "drop_level": 36,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "width_note": "Width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and one here agrees with MuWeapons.cs's TwoHanded: false. It is also what takes a fifth off the price: shared/Market.Coin reads the footprint's width to tell a one-handed weapon from a two-handed one.",
+    "height": 3,
+    "minimum_damage": 36,
+    "maximum_damage": 47,
+    "attack_speed": 30,
+    "durability": 39,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side.",
+    "skill": 22,
+    "skill_note": "The skillNumber of the call. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. Actions 4 and 17, the family the Kris, the Short Sword and the Hand Axe already walk in. A one-handed blade leaves the shield hand free, which is the whole point of it on a counter that is mostly shields.",
+  "sheets": {
+    "sword07": "sword07.png",
+    "sword07_2": "sword07_2.png"
+  },
+  "sheet_from": "Data/Item/sword07.OZJ (64x64) and sword07_2.OZJ (32x32), from MuMain. The .bmd names sword07.jpg on 64 triangles and sword07_2.jpg on 39, two meshes - the only sword in this batch built from two sheets.",
+  "material_note": "The only sword here built from two sheets, and the split is clean: sword07 is the hilt and the winged guard, sword07_2 is the blade alone. The triangle counts say which is which without guessing - 64 on the first and 39 on the second - and the islands land 38 and 26 against 39.\n\npainted_steel on the blade and on the guard, and this is the case that material was written for. Island 2 means (30, 31, 82) and island 0 (27, 31, 61): a very dark blue with a white edge painted down it. A metal's base colour is its reflectance and iron's is 0.56 in linear; these are near 0.15. Handed to the renderer as metal the painted highlight goes and what is left is black chrome, which is what happened to House02's blades. At metallic 0 the highlight MU drew survives as albedo, the renderer adds a real one over it, and the thing reads as a polished blue blade - which is what the artist painted.\n\nIsland 1 is the grip at (54, 49, 52) chroma 6 - the black and white banded cylinder along the right of sword07. leather_wrap, for the banding.\n\npainted_steel was the first answer on this piece and it is not the one that ships. The argument for it was sound on paper - the sheet is dark, a metal's albedo is its reflectance, and a dark sheet declared metal comes back as black chrome - and it was made without putting the item in the engine, which is step 4 of the doc and the step that decides. Rendered, painted_steel is metallic 0.0 and therefore has almost no specular response at all: the lit shot and the unshaded shot are the same picture. The piece reads as matte black plastic rather than as dark metal, which is a different failure from the one being avoided and no better.\n\nplate_steel instead. It keeps metallic 1.0 so the form comes back under a moving light, and its grain is cast - isotropic pitting with no direction to band a broad face, which is the other half of what painted_steel gets wrong here, its grain being brushed along v. painted_steel's own file names its remaining wearer correctly: a carriage's ironwork, which is bars, where the dark is the subject and the surface is thin enough that a direction cannot disagree with the unwrap.\n\nAnd the blade went back to steel, which is a third pass over the same island and the one that should have been first. The sequence was painted_steel (metallic 0, so the lit render equalled the unshaded one and it read as matte plastic), then plate_steel (metal again, but 0.68 with a cast grain, which is armour: it came back grainy rather than metallic, and on the darker sheets it left almost no specular at all), then steel.\n\nThe two files each warn about the other's case and I read only one of them. plate_steel exists because the Plate gauntlets wore steel and its brushed grain smeared across the fingers; steel exists because a blade is ground along its length and the mill's grain is what stretches its highlight into a line. A blade is not a gauntlet. Rebuilt side by side under the same sun, steel is brighter, catches an edge highlight the cast grain cannot, and clears the cyan patches that plate_steel's pitting was throwing against the roughness floor.",
+  "open_question": "painted_steel's grain is brushed along V, and a brushed grain across a broad face is the fault the Kite Shield recorded: it drew hard bands the whole height of the shield. A blade is a long thin thing and the grain runs along it, which is the case the grain was written for - but the winged guard on island 0 is broad, and it is the surface to look at first under a grazing sun.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 38,
+      "area": 3446.4,
+      "along": [
+        -9.8,
+        53.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.915,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.86,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather_wrap",
+      "triangles": 26,
+      "area": 762.7,
+      "along": [
+        -15.7,
+        24.6
+      ],
+      "mu_uv": [
+        0.418,
+        0.351,
+        0.999,
+        0.555
+      ],
+      "bake_uv": [
+        0.557,
+        0.007,
+        0.87,
+        0.187
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 39,
+      "area": 3511.3,
+      "along": [
+        17.2,
+        144.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.644,
+        0.644
+      ]
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "item": "StreetLight01",
+  "mu_name": "Street Light",
+  "mu_name_from": "Lorencia's object slot 90, a block of one in WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 90,
+  "why_this_one": "The first object that is a light rather than a thing. It brings in two problems nothing built so far has had: a submesh the client draws additively instead of covering what is behind it, and a light the client registers with the terrain. Those are separate - MU keeps them separate too - and both are here.",
+  "profile": "world",
+  "sheets": {
+    "streetlight": "streetlight.png",
+    "streetlight_brightness2": "streetlight_brightness2.png"
+  },
+  "sheet_from": "Data/Object1/streetlight.OZJ (64x128) and streetlight_brightness2.OZJ (32x32), both from MuMain.",
+  "sheet_materials": {
+    "streetlight": "timber",
+    "streetlight_brightness2": "lamplight"
+  },
+  "material_note": "The post sheet is a sawn timber upright with iron bands and a copper lamp housing at its foot - one material for all of it, because on the tiled path the sheet is the unit and timber is what most of it is. The other sheet is not a surface at all.",
+  "additive": [
+    "streetlight_brightness2"
+  ],
+  "additive_from": "WorldObjectCatalog.cs: LorenciaBlendMeshes[90] = 1, which is the client saying it draws submesh 1 - streetlight_brightness2 - additively rather than opaquely. The sheet is white streaks on black and the black is the part that adds nothing, so it is drawn as a blend keyed off its own brightness instead of covering the post behind it.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        -62,
+        226
+      ],
+      "colour": [
+        1.0,
+        0.8,
+        0.6
+      ],
+      "low": 0.6,
+      "high": 0.7,
+      "range_tiles": 3,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.2
+    }
+  ],
+  "emitters_from": "WorldObjectCatalog.cs's Lamp(). The offset is the part with a reason attached: the client's AddTerrainLight takes the object's own position, the foot of the post, because all it does is write into the terrain's light buffer and ground does not care how high the lamp is. A real light at the foot of a 258-unit post lights the cobbles and leaves the lamp dark, so it goes where the lamp actually burns - measured off this model's own glow submesh, which spans 213 to 238 up the post and hangs 62 out from it.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 16,
+      "area": 16361.9,
+      "along": [
+        -6.8,
+        73.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.992,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1975.3,
+      "along": [
+        5.3,
+        53.2
+      ],
+      "mu_uv": [
+        0.152,
+        0.633,
+        0.974,
+        0.951
+      ],
+      "bake_uv": [
+        0.572,
+        0.609,
+        0.902,
+        0.918
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 60,
+      "area": 2625.2,
+      "along": [
+        51.6,
+        73.0
+      ],
+      "mu_uv": [
+        -0.094,
+        0.001,
+        0.906,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.804,
+        0.818
+      ]
+    }
+  ],
+  "play_speed": 0.3,
+  "play_speed_from": "ZzzObject.cpp, CreateObject, case WD_0LORENCIA: `o->Velocity = 0.3f` for MODEL_STREET_LIGHT, against the 0.16 every world object carries in before the switch runs. MoveObject hands Velocity to PlayAnimation where a character's play speed goes, so keys a second is this times MU's reference 25."
+}

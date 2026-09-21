@@ -1,0 +1,527 @@
+{
+  "item": "GloveMale05",
+  "mu_name": "Bone Gloves",
+  "mu_name_from": "MuMain maps MODEL_HELM + i to HelmMale{i+1}, so file 05 is armour index 4, which openmu names Bone. Not Plate - Plate is index 9, file 10.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(4, \"Bone Gloves\", 14, 5, 0, 30, 20, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so `armor.Group = (byte)(slot + 5)` makes the group 10.",
+    "group": 10,
+    "number": 4,
+    "drop_level": 14,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 5,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "attack_speed": 0,
+    "durability": 30,
+    "requires": {
+      "level": 0,
+      "strength": 20,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone.",
+    "shelf_note": "On Pasi's shelf at +2, the middle column of the mage's stock - see shared/Market.cs."
+  },
+  "sheets": [
+    "gloves_06.png",
+    "hide.png"
+  ],
+  "blocked_was": "This asset carried a `blocked` note saying the pipeline handled one sheet per asset. That was true when it was written and is not now - ArmorMale10 wears upper_11 and hide, GloveMale06 wears gloves_07 and hide, and both are built - so the note is gone and the piece goes down the same path they did.",
+  "material_note": "Bone, and not the profile's plate_steel, which is what this set was built with and is the fault behind 'the bone set seemed dark'. MU paints these five sheets dark - upper_06 means 83 and lower_06 means 57 against the Plate set's 137 - and a dark albedo declared metallic 1.0 has no diffuse term to carry its mid-tones, so the armour kept the drawn highlights and went black between them. Nothing here was forged: it is skull, rib and claw over a dark hide. See materials/bone.json, which argues the number and the case against reusing chitin. Twenty-two islands for 156 triangles, which is the two gauntlets' fingers each an island of one to four triangles. All gloves_06 or hide, all plate.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 2,
+      "area": 14.6,
+      "along": [
+        -47.1,
+        -38.5
+      ],
+      "mu_uv": [
+        0.176,
+        0.029,
+        0.45,
+        0.048
+      ],
+      "bake_uv": [
+        0.037,
+        0.334,
+        0.089,
+        0.344
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bone",
+      "triangles": 39,
+      "area": 1173.6,
+      "along": [
+        -51.0,
+        -23.0
+      ],
+      "mu_uv": [
+        0.023,
+        0.001,
+        0.999,
+        0.986
+      ],
+      "bake_uv": [
+        0.316,
+        0.007,
+        0.699,
+        0.658
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bone",
+      "triangles": 20,
+      "area": 626.3,
+      "along": [
+        -48.2,
+        -23.3
+      ],
+      "mu_uv": [
+        0.641,
+        0.187,
+        0.98,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.762,
+        0.473,
+        0.993
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bone",
+      "triangles": 2,
+      "area": 73.7,
+      "along": [
+        -48.7,
+        -39.2
+      ],
+      "mu_uv": [
+        0.176,
+        0.029,
+        0.406,
+        0.194
+      ],
+      "bake_uv": [
+        0.639,
+        0.065,
+        0.75,
+        0.188
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bone",
+      "triangles": 3,
+      "area": 105.9,
+      "along": [
+        -48.2,
+        -38.5
+      ],
+      "mu_uv": [
+        0.725,
+        0.001,
+        0.917,
+        0.202
+      ],
+      "bake_uv": [
+        0.797,
+        0.587,
+        0.91,
+        0.724
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 2,
+      "area": 24.1,
+      "along": [
+        -43.6,
+        -34.5
+      ],
+      "mu_uv": [
+        0.684,
+        0.195,
+        0.824,
+        0.295
+      ],
+      "bake_uv": [
+        0.192,
+        0.06,
+        0.228,
+        0.139
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bone",
+      "triangles": 2,
+      "area": 11.4,
+      "along": [
+        -36.9,
+        -33.8
+      ],
+      "mu_uv": [
+        0.095,
+        0.201,
+        0.181,
+        0.302
+      ],
+      "bake_uv": [
+        0.245,
+        0.041,
+        0.281,
+        0.103
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 2,
+      "area": 14.6,
+      "along": [
+        28.0,
+        35.8
+      ],
+      "mu_uv": [
+        0.176,
+        0.029,
+        0.45,
+        0.048
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.018,
+        0.06
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bone",
+      "triangles": 39,
+      "area": 1167.0,
+      "along": [
+        4.6,
+        41.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.029,
+        0.526,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.409,
+        0.67
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bone",
+      "triangles": 20,
+      "area": 615.6,
+      "along": [
+        8.7,
+        36.4
+      ],
+      "mu_uv": [
+        0.641,
+        0.187,
+        0.98,
+        0.999
+      ],
+      "bake_uv": [
+        0.501,
+        0.741,
+        0.969,
+        0.974
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bone",
+      "triangles": 2,
+      "area": 73.6,
+      "along": [
+        29.6,
+        39.0
+      ],
+      "mu_uv": [
+        0.176,
+        0.029,
+        0.406,
+        0.194
+      ],
+      "bake_uv": [
+        0.8,
+        0.341,
+        0.913,
+        0.467
+      ]
+    },
+    {
+      "island": 11,
+      "material": "bone",
+      "triangles": 3,
+      "area": 106.7,
+      "along": [
+        28.0,
+        36.9
+      ],
+      "mu_uv": [
+        0.725,
+        0.001,
+        0.917,
+        0.202
+      ],
+      "bake_uv": [
+        0.8,
+        0.203,
+        0.913,
+        0.34
+      ]
+    },
+    {
+      "island": 12,
+      "material": "bone",
+      "triangles": 2,
+      "area": 24.1,
+      "along": [
+        32.8,
+        36.9
+      ],
+      "mu_uv": [
+        0.684,
+        0.195,
+        0.824,
+        0.295
+      ],
+      "bake_uv": [
+        0.139,
+        0.067,
+        0.176,
+        0.145
+      ]
+    },
+    {
+      "island": 13,
+      "material": "bone",
+      "triangles": 2,
+      "area": 11.4,
+      "along": [
+        32.8,
+        36.4
+      ],
+      "mu_uv": [
+        0.095,
+        0.201,
+        0.181,
+        0.302
+      ],
+      "bake_uv": [
+        0.066,
+        0.257,
+        0.102,
+        0.319
+      ]
+    },
+    {
+      "island": 14,
+      "material": "bone",
+      "triangles": 4,
+      "area": 174.2,
+      "along": [
+        -51.0,
+        -38.1
+      ],
+      "mu_uv": [
+        0.167,
+        0.196,
+        0.467,
+        0.369
+      ],
+      "bake_uv": [
+        0.799,
+        0.007,
+        0.897,
+        0.187
+      ]
+    },
+    {
+      "island": 15,
+      "material": "bone",
+      "triangles": 2,
+      "area": 37.7,
+      "along": [
+        -51.0,
+        -40.7
+      ],
+      "mu_uv": [
+        0.181,
+        0.186,
+        0.467,
+        0.197
+      ],
+      "bake_uv": [
+        0.297,
+        0.022,
+        0.314,
+        0.06
+      ]
+    },
+    {
+      "island": 16,
+      "material": "bone",
+      "triangles": 4,
+      "area": 175.0,
+      "along": [
+        29.3,
+        41.2
+      ],
+      "mu_uv": [
+        0.167,
+        0.196,
+        0.467,
+        0.369
+      ],
+      "bake_uv": [
+        0.024,
+        0.371,
+        0.122,
+        0.551
+      ]
+    },
+    {
+      "island": 17,
+      "material": "bone",
+      "triangles": 2,
+      "area": 37.7,
+      "along": [
+        31.7,
+        41.2
+      ],
+      "mu_uv": [
+        0.181,
+        0.193,
+        0.467,
+        0.197
+      ],
+      "bake_uv": [
+        0.031,
+        0.008,
+        0.043,
+        0.035
+      ]
+    },
+    {
+      "island": 18,
+      "material": "bone",
+      "triangles": 1,
+      "area": 86.1,
+      "along": [
+        -39.1,
+        -31.5
+      ],
+      "mu_uv": [
+        0.285,
+        0.527,
+        0.448,
+        0.983
+      ],
+      "bake_uv": [
+        0.008,
+        0.147,
+        0.065,
+        0.38
+      ]
+    },
+    {
+      "island": 19,
+      "material": "bone",
+      "triangles": 1,
+      "area": 54.5,
+      "along": [
+        -39.1,
+        -23.0
+      ],
+      "mu_uv": [
+        0.086,
+        0.527,
+        0.448,
+        0.983
+      ],
+      "bake_uv": [
+        0.089,
+        0.669,
+        0.747,
+        0.747
+      ]
+    },
+    {
+      "island": 20,
+      "material": "bone",
+      "triangles": 1,
+      "area": 86.1,
+      "along": [
+        4.6,
+        22.1
+      ],
+      "mu_uv": [
+        0.285,
+        0.527,
+        0.448,
+        0.983
+      ],
+      "bake_uv": [
+        0.065,
+        0.008,
+        0.297,
+        0.065
+      ]
+    },
+    {
+      "island": 21,
+      "material": "bone",
+      "triangles": 1,
+      "area": 54.5,
+      "along": [
+        4.6,
+        23.9
+      ],
+      "mu_uv": [
+        0.086,
+        0.527,
+        0.448,
+        0.983
+      ],
+      "bake_uv": [
+        0.707,
+        0.008,
+        0.785,
+        0.666
+      ]
+    }
+  ]
+}

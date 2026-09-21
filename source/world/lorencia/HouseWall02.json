@@ -1,0 +1,242 @@
+{
+  "item": "HouseWall02",
+  "mu_name": "HouseWall02",
+  "mu_name_from": "Lorencia's object slot 122, from the client's own table in WorldObjectCatalog.cs. MU names the run rather than the member, so there is no friendlier name than the file's.",
+  "world": "lorencia",
+  "object_type": 122,
+  "why_this_one": "15 placements. The wall with a lit window in it. light_02 is 64 by 2 pixels of gold gradient and the client draws that submesh additively - LorenciaBlendMeshes[122] = 4 - with a flicker on it, a candle behind dirty glass.",
+  "profile": "world",
+  "sheets": {
+    "tile_ston06": "tile_ston06.png",
+    "tile_wood01": "tile_wood01.png",
+    "tile_wood02": "tile_wood02.png",
+    "tile_ston04": "tile_ston04.png",
+    "light_02": "light_02.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. All opaque .OZJ.",
+  "sheet_materials": {
+    "tile_ston06": "timber",
+    "tile_wood01": "timber",
+    "tile_wood02": "timber",
+    "tile_ston04": "plaster",
+    "light_02": "lamplight"
+  },
+  "sheet_pad": {
+    "light_02": "edge"
+  },
+  "sheet_pad_from": "The world profile wraps, because a wall sheet is laid next to itself. These are not wall sheets - they are atlases, with more than one thing painted in one square - so their border replicates instead. Wrapped, tile_ston06's gold ornament is fed into its timber post as context and the model invents gold along a beam the artist drew plain.",
+  "additive": [
+    "light_02"
+  ],
+  "additive_from": "WorldObjectCatalog.cs: LorenciaBlendMeshes[122] = 4, the client drawing that submesh additively rather than opaquely. It also carries a GlowMotion - 0.50 to 0.78 over twelve steps at 8 Hz, eased over a third of a second, which is a candle behind dirty glass rather than a flicker.",
+  "sheet_scale_from": "How many times a sheet crosses the face it is on. MU's UVs put exactly one copy across, which was right for a 128-pixel painting of a whole wall and is wrong for a photograph of two metres of real stone: stretched over a whole wall it reads as a few enormous blotches rather than as masonry.",
+  "glow": {
+    "light_02": {
+      "low": 0.5,
+      "high": 0.78,
+      "steps": 12,
+      "hz": 8,
+      "smooth_seconds": 0.34
+    }
+  },
+  "glow_from": "MoveObject's per-type case for object 122, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap — the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nThe same lit window as House03, on the wall piece.",
+  "emitters_from": "A departure, and a deliberate one: MU does not light from windows. MoveObject has no AddTerrainLight for these types — the client draws the glow submesh and stops there, so a lit window in the original throws exactly nothing onto the wall around it. That reads as a sticker at any distance you would stand at, and it reads worse the darker the town gets: the point of dropping the ambient is that light sources start to matter.\n\nThe position starts from the glow submesh's own bounding box, so the light is where the light is painted, and is then pushed more than a tile *out* of the wall and most of a tile *down*. That offset is the whole lesson of the first attempt. A lamp put at the glow's own centre sits inside the quad it belongs to and lights the wall the quad is seen against — so the pane went invisible, not because it stopped being drawn but because its backdrop came up to meet it. Half a day went into the sheet chasing that: feather, blur, emissive strength, an additive blend, all of it looking for a fault in the glow that was in the light beside it. Taking the emitter away brought the pane straight back.\n\nOut and down, because out alone was not enough: a pool centred on the wall face raises the whole face, and the pane is read against that face. Real window light spills onto the ground in front, so that is where this is aimed — 0.05 to 0.08 over 1.7 tiles, landing on the street rather than on the stone the glow hangs in, which is all the evidence the glow needs in order to read as real. The glow stays the thing you see. It flickers on the same numbers the glow does, so the pool and the pane breathe together.",
+  "emitters": [
+    {
+      "kind": "window",
+      "colour": [
+        1.0,
+        0.78,
+        0.5
+      ],
+      "low": 0.05,
+      "high": 0.08,
+      "range_tiles": 1.7,
+      "flicker_hz": 8,
+      "smooth_seconds": 0.34,
+      "at": [
+        0.1,
+        -150.7,
+        62.4
+      ]
+    }
+  ],
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 6477.7,
+      "along": [
+        -13.7,
+        111.0
+      ],
+      "mu_uv": [
+        0.047,
+        0.144,
+        0.97,
+        0.999
+      ],
+      "bake_uv": [
+        0.561,
+        0.56,
+        0.797,
+        0.778
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4577.7,
+      "along": [
+        -13.7,
+        111.0
+      ],
+      "mu_uv": [
+        0.047,
+        0.144,
+        0.97,
+        0.149
+      ],
+      "bake_uv": [
+        0.717,
+        0.522,
+        0.953,
+        0.523
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 6999.2,
+      "along": [
+        -13.7,
+        111.0
+      ],
+      "mu_uv": [
+        0.047,
+        0.144,
+        0.97,
+        0.999
+      ],
+      "bake_uv": [
+        0.677,
+        0.29,
+        0.913,
+        0.508
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 8,
+      "area": 15333.3,
+      "along": [
+        -3.7,
+        50.9
+      ],
+      "mu_uv": [
+        -1.033,
+        -0.449,
+        3.309,
+        0.573
+      ],
+      "bake_uv": [
+        0.526,
+        0.11,
+        0.955,
+        0.94
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 10,
+      "area": 11328.6,
+      "along": [
+        -13.4,
+        66.4
+      ],
+      "mu_uv": [
+        0.51,
+        0.49,
+        0.992,
+        0.999
+      ],
+      "bake_uv": [
+        0.284,
+        0.519,
+        0.937,
+        0.934
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 26,
+      "area": 70076.1,
+      "along": [
+        -39.4,
+        -13.6
+      ],
+      "mu_uv": [
+        0.171,
+        -0.012,
+        2.841,
+        0.999
+      ],
+      "bake_uv": [
+        0.412,
+        0.008,
+        0.974,
+        0.838
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 10,
+      "area": 45315.9,
+      "along": [
+        -49.5,
+        -3.7
+      ],
+      "mu_uv": [
+        -2.747,
+        -3.418,
+        1.717,
+        0.812
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.543,
+        0.902
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 10,
+      "area": 18641.9,
+      "along": [
+        -42.7,
+        -8.8
+      ],
+      "mu_uv": [
+        -0.002,
+        0.369,
+        1.006,
+        0.557
+      ],
+      "bake_uv": [
+        0.013,
+        0.383,
+        0.819,
+        0.992
+      ]
+    }
+  ]
+}

@@ -48,12 +48,20 @@ Paths on the command line must be absolute.
 
 ## Content
 
+    ./tools/content.sh                           source/ -> workshop/, whatever is stale
+    ./tools/asset.sh Sword01                     one recipe, the same way
+
+MU2's pipeline, carried here on 2026-09-21 so this tree builds its own content without MU2 or
+Godot: `source/` holds the recipes and MU's imported art (MU2's `assets/`, and `mu.db`),
+`pipeline/` the scripts, `workshop/` their output (MU2's `build/`). Needs Blender and
+python3 with numpy, Pillow and torch. See `docs/content.md`.
+
     ./tools/sync.sh                              everything index.json reaches
     ./tools/sync.sh --world lorencia --only-world
 
-Copies MU2's `build/` into `assets/` here by MU2's own three rules — plus the clip library a
-model names in its own glTF `extras`, which is where the 283 player animations live. Nothing
-is symlinked, so a run measured here does not change because somebody rebuilt MU2.
+Copies `workshop/` into `assets/` here by MU2's own three rules — plus the clip library a
+model names in its own glTF `extras`, which is where the 283 player animations live.
+`MU2_BUILD=../MU2/build` copies from MU2's build instead.
 
     ./tools/cook.py --world lorencia             the land, the town and their textures
     ./tools/cook.py --world lorencia --only figures    the bodies, the armour and the clips

@@ -1,0 +1,92 @@
+{
+  "item": "Shield12",
+  "mu_name": "Serpent Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield12.bmd is shield index 11, which OpenMU's 0.75 Armors.cs names the Serpent Shield.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. Slot 36 at +3.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the seven built shields use. Its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10 and Shield11, which record the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(11, 1, 18, 2, 2, \"Serpent Shield\", 45, 12, 45, 48, 130, 0, 0, 1, 1)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 11,
+    "drop_level": 45,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 12,
+    "defense_rate": 45,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "Eighteen, the shield's block skill in OpenMU's table, on the ten shields that carry one. There are no skills in this simulation, so it is carried for the row to read against the call and nothing more.",
+    "durability": 48,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags."
+  },
+  "sheets": {
+    "shield08": "shield08.png",
+    "shield082": "shield082.png"
+  },
+  "sheet_from": "Data/Item/shield08.OZJ (64x128) and shield082.OZJ (2x2), from MuMain. The .bmd names shield08.jpg on 56 triangles and shield082.jpg on 16, two meshes. The second sheet is two pixels square: it is a flat colour and nothing more, and it is what sixteen of the seventy-two triangles sample.",
+  "material_note": "Two sheets and two islands, and the triangle counts pair them without guessing: fifty-six on shield08 and sixteen on shield082.\n\nIsland 0 means (118, 85, 57) at chroma 62 - an amber-gold upper field studded with rivets over white scrollwork below. Island 1 is flat: shield082 is two pixels square and every one of them is (255, 192, 0), so sixteen triangles of the shield wear one gold with no variation in it at all.\n\nbrass on both. It is a cast copper alloy rather than a ground blade or a painted device - the rivets are the giveaway, and cast pitting with no direction is what the surface wants. Not ceramic, which the Kite and Tower shields take: those are paintings of charges on a field, and this is metal that happens to be yellow.",
+  "open_question": "Island 0's fifty-six triangles cover the gold field and the white scrolled lower half together, and the white reads as carved ivory rather than as metal. The gold is the larger part and the studs settle the surface, so the gold wins - the same limit the Battle Axe's head island records.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 56,
+      "area": 8710.3,
+      "along": [
+        -30.4,
+        29.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.011,
+        0.999,
+        1.004
+      ],
+      "bake_uv": [
+        0.505,
+        0.005,
+        0.995,
+        0.902
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 16,
+      "area": 247.7,
+      "along": [
+        -3.3,
+        1.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.495,
+        0.995
+      ]
+    }
+  ]
+}

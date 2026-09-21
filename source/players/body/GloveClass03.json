@@ -1,0 +1,61 @@
+{
+  "item": "GloveClass03",
+  "mu_name": "Fairy Elf hands",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}. The numbering runs one over MU's zero-based classes, so Class01 is the Dark Wizard, Class02 the Dark Knight and Class03 the Fairy Elf.",
+  "part_note": "Both hands, and what a weapon is drawn beside. 130 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_warrior_01": "skin_warrior_01.png"
+  },
+  "sheet_from": "Data/Player/skin_warrior_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
+  "sheet_warning": "The sheet name says nothing about which class wears it, and this pair is the proof: the Fairy Elf's body is painted on skin_warrior_01 and the Dark Knight's on skin_wizard_01. Reading the name as the class picks the wrong sheet for both of them.",
+  "material_note": "Two mirrored islands at (178, 140, 115), the clearest flesh tone on this body. Assigned against the sibling rather than with it: GloveClass02 carries plate_steel on its two islands while its own note says flesh is skin, which is the armour profile's default left standing after a bake layout change. The measurement here says skin and there is no reason an elf's bare hand is plate.\n\nRead off the sheet by cropping each island at its own mu_uv with V flipped, the way the other bodies were. It is a coarse reading - an island's bounding box can take in neighbouring regions - so where it disagreed with the sibling part on Class02 the disagreement is written down rather than settled quietly.",
+  "unstack": false,
+  "unstack_why": "Refuses the UV un-stacking, as the Dark Wizard's parts do. This one arrives 99.9% stacked and 65 of its faces were being moved off their twin. The step was found to destroy art on ArmorClass01 - the buckled vest vanished from the bake - and MU sharing one set of texels between a mirrored pair is the arrangement rather than a defect to undo.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 65,
+      "area": 1166.6,
+      "along": [
+        -4.9,
+        7.2
+      ],
+      "mu_uv": [
+        0.506,
+        0.504,
+        0.622,
+        0.751
+      ],
+      "bake_uv": [
+        0.506,
+        0.504,
+        0.622,
+        0.751
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 65,
+      "area": 1165.4,
+      "along": [
+        -4.9,
+        7.2
+      ],
+      "mu_uv": [
+        0.506,
+        0.504,
+        0.622,
+        0.751
+      ],
+      "bake_uv": [
+        0.506,
+        0.504,
+        0.622,
+        0.751
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "item": "Bone02",
+  "mu_name": "The small bone a skeleton comes apart into",
+  "mu_name_from": "ZzzOpenData.cpp, the same loop as Bone01: MODEL_BONE2 is Data/Skill/Bone02.bmd.",
+  "kind": "debris",
+  "why_this_one": "Ten of these per skeleton - `for (int j = 0; j < 10; j++) CreateEffect(MODEL_BONE2, ...)` in CharacterDie - to one Bone01.",
+  "mesh": "Bone02.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Bone02.bmd, from MuMain. Thirty-two triangles in one mesh on bons_particle.jpg: a single long bone, 60 units end to end.",
+  "parts": [
+    {
+      "group": "bons_particle",
+      "sheet": "bons_particle.png",
+      "blend": "opaque",
+      "note": "The same 64-square as Bone01's, solid and lit."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "As Bone01: 0.8 to 1.1, rolled per bone at the throw.",
+  "lift": 100,
+  "lift_from": "`case MODEL_BONE2: o->Position[2] += 100.f;` - born a metre up, under the large bone's 150.",
+  "frames": 32,
+  "frames_from": "As Bone01: rand() % 16 + 32 reference frames.",
+  "flight_note": "The same ballistic arm as Bone01, whose flight_note has the numbers and the one departure."
+}

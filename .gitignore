@@ -6,3 +6,6 @@ build-trace/
 shots/
 *.log
 *.log.previous
+workshop/
+weights/
+reference/

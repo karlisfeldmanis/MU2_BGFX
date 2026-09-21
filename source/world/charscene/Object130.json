@@ -1,0 +1,45 @@
+{
+  "item": "Object130",
+  "mu_name": "Object130",
+  "mu_name_from": "World 74's object table is a straight run, not Lorencia's named blocks: the map's type is the model index and the client loads index i from Object{i+1}.bmd (MapManager.cpp:1121, LoadData.cpp:28). So the asset keeps the client's own name - there is no friendlier one, and the placement list carries this.",
+  "world": "charscene",
+  "object_type": 129,
+  "why_this_one": "A green glow card on twelve triangles. Like Object80 this is an anchor: CreateObject marks type 129 HiddenMesh -2 and RenderObjectVisual hangs a cloud off it (GMNewTown.cpp:56, GMEmpireGuardian4.cpp:968). Declared, additive, and never drawn.",
+  "profile": "world",
+  "sheets": {
+    "angeflo_r": "angeflo_r.png"
+  },
+  "sheet_from": "Data/Object75/*.OZJ and *.OZT, from MuMain, decoded at MU's own size.",
+  "sheet_materials": {
+    "angeflo_r": "lamplight"
+  },
+  "material_note": "Flagstone, which is what Lorencia's cut stone already takes - StoneWall01, StoneMuWall01 and StoneStatue01 all read as worked block rather than boulder face.",
+  "additive": [
+    "angeflo_r"
+  ],
+  "additive_from": "MU's _R suffix, which marks a sheet the client blends in rather than draws over what is behind it. Both of the map's are white-or-colour on black, and the black is the part that adds nothing.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 15000.0,
+      "along": [
+        -26.0,
+        24.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.663,
+        0.996
+      ]
+    }
+  ]
+}

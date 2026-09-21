@@ -1,0 +1,96 @@
+{
+  "item": "BootMale06",
+  "mu_name": "Leather Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1} (ZzzOpenData.cpp line 143), so file 06 is boot index 5, which openmu's 0.75 Armors.cs names the Leather Boots. mu.db agrees: code 5637, group 11 index 5, Player/BootMale06.bmd.",
+  "why_this_one": "Martin's and Harold's +0 line, and the set the Armour select could offer only a glove of. The wandering merchants stock all five Leather pieces at +0 - the cheapest whole set in the game and the one a Dark Knight actually buys first - so four of their five lines were dropped by Realm.Shelf for want of a row. See shared/Market.Wandering.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. See profiles/soft_armour.json, which exists for these three sets.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(5, 6, 2, 2, \"Leather Boots\", 5, 2, 12, 30, 80, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 5,
+    "drop_level": 5,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 2,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 12,
+    "walk_speed_note": "Twelve, the boots' own column, which nothing here reads: a walk is MU's fixed tile rate. Recorded rather than dropped.",
+    "durability": 30,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": [
+    "boots_07.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/boots_07.OZJ (64x64) and hide.jpg, from MuMain. The .bmd names boots_07.jpg and hide.jpg; 118 of the 124 triangles are on the first and 6 on hide.",
+  "sheet_note": "boots_07 is the greave from two sides, olive hide with a pale hard cap over the shin and a lighter cuff at the top. Mean (113, 110, 92) at chroma 23, the warmest sheet of the five. hide is MU capping the openings, a solid black square, as on ArmorMale10.",
+  "material_note": "Two islands of 62, which is the two boots - boots_07's 118 and hide's 6 split evenly between them. leather on both. The pale cap over each shin is the hide lifted and lit rather than a plate laid on it, so there is nothing here arguing for the brass the Pad Boots take.",
+  "material_overrides": {
+    "leather": {
+      "roughness": 0.75
+    }
+  },
+  "material_overrides_why": "Leather at 0.75 rather than the library's 0.62, and the difference is how much of the model wears it. That 0.62 was settled on the bare Dark Knight's bracers - small trims among skin and cloth, where the note says a modest sheen is what separates oiled leather from bark, and it is right there. A whole suit of it is a different question: over a torso, a skirt and two legs the same sheen compounds into broad wet highlights down the thighs and across the skirt, and the set reads as vinyl. Swept in Blender under the rig from MU2/lighting.json at 0.62, 0.75 and 0.88 - at 0.62 the highlights are wet, at 0.88 the hide goes dead flat, and 0.75 keeps the sheen without the plastic. Scoped to this set rather than moved in the library, so the bracers keep the number that was measured for them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 62,
+      "area": 3271.7,
+      "along": [
+        15.4,
+        62.1
+      ],
+      "mu_uv": [
+        0.005,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.966,
+        0.979
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 62,
+      "area": 3315.9,
+      "along": [
+        -76.0,
+        -22.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.993,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.144,
+        0.994,
+        0.946
+      ]
+    }
+  ]
+}

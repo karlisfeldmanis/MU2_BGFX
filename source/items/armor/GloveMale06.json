@@ -1,0 +1,96 @@
+{
+  "item": "GloveMale06",
+  "mu_name": "Leather Gloves",
+  "mu_name_from": "MuMain loads MODEL_GLOVES + i from GloveMale{i+1} (ZzzOpenData.cpp line 142), so file 06 is glove index 5, which openmu's 0.75 Armors.cs names the Leather Gloves. mu.db agrees: code 5125, group 10 index 5, Player/GloveMale06.bmd.",
+  "why_this_one": "One of the four pieces of armour a Budge Dragon can leave, and the Dark Knight's: the Leather set is his first, as the Pad set is the wizard's. Drop level 4 is the dragon's own level, so this is at the top of its pool with the Hand Axe and the Crossbow and falls plain.\n\nAlso the sheet the soft_armour profile's upscale was judged on. A leather cuff is the case that shows a too-hard detail setting, because a hardened fold on hide reads as tooling rather than as sharpness.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 109. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(5, \"Leather Gloves\", 4, 2, 8, 30, 80, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so `armor.Group = (byte)(slot + 5)` makes the group 10.",
+    "group": 10,
+    "number": 5,
+    "drop_level": 4,
+    "drops_from_monsters": true,
+    "drop_level_note": "Four, the Budge Dragon's own level - the most it can afford, and it leaves it at +0. One level lower on the monster and this is out of the pool. See shared/Loot.Affordable.",
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 2,
+    "attack_speed": 8,
+    "attack_speed_note": "Eight, which OpenMU adds to the character's AttackSpeed as a glove bonus. Nothing here reads a glove's speed yet: shared/Combat.cs takes it off the weapon row alone, so this is recorded and unread.",
+    "defense_note": "Two points of defence, in the row and not read by anything yet - the fight does not see worn armour. Flagged rather than left to look implemented.",
+    "durability": 30,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. Eighty strength is the highest gate in the dragon's whole pool, ten over the Hand Axe and the Small Shield."
+  },
+  "sheets": [
+    "gloves_07.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/gloves_07.OZJ (64x64) and Data/Player/hide.jpg, from MuMain. The .bmd names gloves_07.jpg and hide.jpg; 142 of the 148 triangles are on the first and 6 on the second.",
+  "sheet_note": "An olive-brown leather gauntlet from two sides: a long cuff with a deep diagonal fold across it, a strap over the wrist and the fingers below, all one hide. Mean (108, 105, 89). No metal on it anywhere, which makes it the plainest sheet in the dragon's pool and the one to judge a soft-material upscale on.\n\nhide is MU capping the openings, a 9x9 solid black, as on ArmorMale10.",
+  "material_overrides": {
+    "leather": {
+      "roughness": 0.75
+    }
+  },
+  "material_overrides_why": "Leather at 0.75 rather than the library's 0.62, and the difference is how much of the model wears it. That 0.62 was settled on the bare Dark Knight's bracers - small trims among skin and cloth, where the note says a modest sheen is what separates oiled leather from bark, and it is right there. A whole suit of it is a different question: over a torso, a skirt and two legs the same sheen compounds into broad wet highlights down the thighs and across the skirt, and the set reads as vinyl. Swept in Blender under the rig from MU2/lighting.json at 0.62, 0.75 and 0.88 - at 0.62 the highlights are wet, at 0.88 the hide goes dead flat, and 0.75 keeps the sheen without the plastic. Scoped to this set rather than moved in the library, so the bracers keep the number that was measured for them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 74,
+      "area": 1766.8,
+      "along": [
+        -46.4,
+        -23.5
+      ],
+      "mu_uv": [
+        0.045,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.961,
+        0.649
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 74,
+      "area": 1747.7,
+      "along": [
+        6.4,
+        38.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.949,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.996,
+        0.994
+      ]
+    }
+  ]
+}

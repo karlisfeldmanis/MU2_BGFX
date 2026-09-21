@@ -1,0 +1,96 @@
+{
+  "item": "BootMale08",
+  "mu_name": "Sphinx Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1} (ZzzOpenData.cpp line 143), so file 08 is index 7, which openmu's 0.75 Armors.cs names the Sphinx Boots. mu.db agrees: group 11 index 7, Player/BootMale08.bmd.",
+  "why_this_one": "Pasi's +3 line, and the last armour he sells that was missing. The mage stocks all five Sphinx pieces at +3 and none was built, so five of his nineteen lines were dropped by Realm.Shelf for want of a row. With these he sells fifteen of them and only his four staves are left. See shared/Market.Mage.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(7, 6, 2, 2, \"Sphinx Boots\", 30, 9, 8, 36, 30, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 7,
+    "drop_level": 30,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 9,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 8,
+    "walk_speed_note": "Eight, the boots' own column, which nothing here reads: a walk is MU's fixed tile rate. Recorded rather than dropped.",
+    "durability": 36,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone. No agility on any piece, which is the Bone set's shape and not the Bronze or Brass sets'."
+  },
+  "sheets": [
+    "boots_09.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/boots_09.OZJ (64x64) and hide.jpg, from MuMain. The .bmd names boots_09.jpg and hide.jpg; 114 of the 120 triangles are on the first and 6 on hide.",
+  "sheet_note": "boots_09 is the greave from two sides: a gold cuff studded at the top over a pale silver-white boot, which makes it the lightest sheet in the set at lum 125 - the Sphinx set is dark at the chest and bright at the foot. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is pharaonic and MU drew it that way: banded gold plates riveted over black, a nemes headdress in gold stripes, a serpent glyph on the tabard and a silver death mask for a face. Chroma runs 19 on the bodysuit to 69 on the headdress, so the gold is real paint and not a tint.",
+  "material_note": "Two islands of 60, the two greaves - boots_09's 114 and hide's 6. plate_steel, and the easiest call in the set: at lum 125 this is the brightest sheet the Sphinx pieces carry, a pale silver boot under a studded gold cuff.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 0.88,
+      "roughness": 0.68
+    }
+  },
+  "material_overrides_why": "plate_steel keeps its reflectance and gives up both its polish and most of its pull toward grey. Two changes because the first alone was wrong, and the way it was wrong is the useful part.\n\nThe library's f0_desaturation 0.75 is sound where it was written - a painted sheet's warmth is a picture of light, so on steel it returns as a permanent tint and reads as dirty brass. It assumes the warmth is not the material. Here it is: the set is banded gold riveted over black, gold bars across the mask, a nemes of gold and brown. At 0.75 the plates came back matte brown clay.\n\nTaking it out entirely was the overcorrection. At 1.0 with the library's polish the gold went neon and split the set in two - vivid yellow plates against grey limbs - which is worse than the fault it fixed, because a set is judged whole and not plate by plate. The saturation was never the whole problem: roughness 0.34 is polished mirror, and a riveted band of gold is not polished. Saturation and gloss together are what read as plastic.\n\nSwept in Blender on the assembled figure rather than on a crop - that distinction is what the crop hid - across desaturation 0.75, 0.88 and 1.0 against roughness 0.34, 0.44 and 0.56. At 0.88 the gold is aged rather than neon and the plates, the limbs and the boots read as one artefact. Roughness went to 0.56 first and was still called glossy, so it was swept again at 0.56, 0.66 and 0.75: by 0.75 the metal is dead, and 0.68 is where the hard specular slides off the mask while the plates keep some life. Three passes on one number, and every one of them was judged on the whole figure - the first attempt was judged on a crop of the chest, which is how a change that improved the gold and broke the set could look like progress.\n\nScoped to this set: the Plate set is polished steel and wants both figures as the library states them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 60,
+      "area": 3471.6,
+      "along": [
+        10.6,
+        62.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.875,
+        0.876
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 60,
+      "area": 3488.6,
+      "along": [
+        -76.0,
+        -22.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.007,
+        0.627,
+        0.995
+      ]
+    }
+  ]
+}

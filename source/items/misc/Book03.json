@@ -1,0 +1,31 @@
+{
+  "item": "Book03",
+  "mu_name": "Scroll of Lighting",
+  "mu_name_from": "ZzzOpenData.cpp loads item group ITEM_ETC number i from Book{i+1:02}.bmd, so number 2 is Book03.bmd; OpenMU's 0.75 initialiser names group 15 number 2 the Scroll of Lighting.",
+  "why_this_one": "Pasi's third slot. The item is spelled 'Lighting' and the skill it teaches is spelled 'Lightning' - both in the same 0.75 initialiser, four files apart - and the item's spelling is transcribed as written, because a row that disagrees with the file it was copied from is a row nobody can check. The same rule the blacksmith's overwritten Gladius slot is kept under.",
+  "mesh": "Book01",
+  "mesh_note": "No geometry of its own. Book01.bmd through Book12.bmd are byte-identical in MU - one md5 across the lot, 28 vertices and 16 triangles each, every one naming book.jpg - so there is one model here and twelve rows on it, and building eleven more copies of it would be eleven identical atlases claiming to be different art.\n\nThe field is read in two places and nowhere else: pipeline/index.py points this entry's glb at the named asset's, and mu2.sh builds that asset instead of looking for an .obj beside this file. Everything downstream sees an ordinary entry with a model and a row.",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated. Only the columns a drop and a shelf read are here - a scroll has no damage roll, no stance and no hand, which is why it carries a Prize and no Arm. See shared/Rows.cs.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Scrolls.cs, CreateScroll(2, 3, \"Scroll of Lighting\", 13, 0, 72, 3000).",
+    "group": 15,
+    "number": 2,
+    "drop_level": 13,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll, on all twelve. Read by Prize.ReadBy where the scroll is read; before the orbs it was a Trade test in Realm.Read."
+  },
+  "skill": {
+    "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
+    "number": 3,
+    "name": "Lightning",
+    "level_requirement": 0,
+    "energy_requirement": 72,
+    "value": 3000
+  }
+}

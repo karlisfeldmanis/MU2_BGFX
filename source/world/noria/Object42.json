@@ -1,0 +1,96 @@
+{
+  "item": "Object42",
+  "mu_name": "Object42",
+  "mu_name_from": "Noria's object slot 41, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 41,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "u2u3": "nr_u2u3.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "u2u3": "lamplight"
+  },
+  "material_note": "u2u3: black, with one soft blue streak in its upper half. The black adds nothing; the streak is what runs round the rings.",
+  "why_this_one": "Object40, Object41, Object42 and Object43 are one thing: all four stand at 18100,10450, a few units apart in height, and together they are the Chaos Machine beside the Chaos Goblin. This is the rings over it.",
+  "additive": [
+    "u2u3"
+  ],
+  "additive_from": "ZzzObject.cpp, MoveObject, case WD_3NORIA: `o->BlendMesh = 0` for type 41, every frame. Drawn solid it was three black hoops with a blue line painted on, which is what the black of an additive sheet looks like when nothing adds it.",
+  "glow": {
+    "u2u3": {
+      "scrolls_per_second": -0.5
+    }
+  },
+  "glow_from": "The same case: `o->BlendMeshTexCoordV = (int)WorldTime % 2000 * 0.0005f`, a sawtooth from 0 up to 1 every two seconds. Half a repetition a second, and positive where Lorencia's water is negative - so -0.5 here, because scrolls_per_second counts MU's usual -(WorldTime % period) direction as forward. The blue streak travels round the rings rather than sitting on them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 52,
+      "area": 36329.2,
+      "along": [
+        -118.2,
+        116.6
+      ],
+      "mu_uv": [
+        0.146,
+        0.553,
+        0.964,
+        0.993
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.612,
+        0.331
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 52,
+      "area": 35186.8,
+      "along": [
+        -159.3,
+        92.7
+      ],
+      "mu_uv": [
+        0.146,
+        0.553,
+        0.964,
+        0.993
+      ],
+      "bake_uv": [
+        0.003,
+        0.336,
+        0.612,
+        0.664
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 52,
+      "area": 15374.5,
+      "along": [
+        33.4,
+        82.6
+      ],
+      "mu_uv": [
+        0.146,
+        0.553,
+        0.964,
+        0.993
+      ],
+      "bake_uv": [
+        0.003,
+        0.669,
+        0.612,
+        0.997
+      ]
+    }
+  ]
+}

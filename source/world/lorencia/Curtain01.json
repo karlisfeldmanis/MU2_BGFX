@@ -1,0 +1,90 @@
+{
+  "item": "Curtain01",
+  "mu_name": "Curtain01",
+  "mu_name_from": "Lorencia's object slot 95, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 95,
+  "why_this_one": "6 placements. A hung curtain, cloth's other use.",
+  "profile": "world",
+  "sheets": {
+    "badge_01": "badge_01.png",
+    "badge_02": "badge_02.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "badge_01": "cloth",
+    "badge_02": "cloth"
+  },
+  "cutout": [
+    "badge_02"
+  ],
+  "cutout_from": "Real alpha in the .OZT.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 32,
+      "area": 2911.7,
+      "along": [
+        -5.8,
+        4.9
+      ],
+      "mu_uv": [
+        0.078,
+        0.229,
+        0.999,
+        0.966
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.868,
+        0.961
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 28,
+      "area": 6931.3,
+      "along": [
+        -9.5,
+        16.9
+      ],
+      "mu_uv": [
+        0.389,
+        0.223,
+        0.929,
+        0.98
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.994,
+        0.912
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 17752.0,
+      "along": [
+        -0.3,
+        -0.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.571,
+        0.571
+      ]
+    }
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "item": "NewFace03",
+  "mu_name": "Fairy Elf bust",
+  "mu_name_from": "Data/Logo/NewFace0N.bmd, and the sheets beside it in the same folder. The client loads model MODEL_FACE + class from Logo\\\\NewFace{class + 1}.bmd (ZzzOpenData.cpp:5102), so the file number is the class plus one: 01 is the Dark Wizard, 02 the Dark Knight, 03 the Fairy Elf.",
+  "trade": 2,
+  "why_this_one": "The bust in the character-creation window, which CharMakeWin draws into the top-left 410x335 of its 454x406 through a ten-degree lens (CharMakeWin.cpp:476). It is not a player model and not a portrait: it is a rigged bust of its own with a hundred bones and two actions, one played once on selecting the class and one it settles into.",
+  "profile": "npc",
+  "profile_from": "The npc profile, which is this project's recipe for a rigged .bmd that is nobody's placement: its own skeleton, its own clips, one material a sheet. A bust is that shape exactly.",
+  "playable": false,
+  "sheets": {
+    "elf_face": "elf_face.png",
+    "elf_body": "elf_body.png",
+    "elf_hair": "elf_hair.png",
+    "elf_eye": "elf_eye.png",
+    "elf_t": "elf_t.png"
+  },
+  "sheet_materials": {
+    "elf_face": "skin",
+    "elf_body": "skin",
+    "elf_hair": "hair",
+    "elf_eye": "skin",
+    "elf_t": "cloth"
+  },
+  "sheet_materials_from": "Skin wherever the sheet carries flesh, which on a bust is most of them, and hair where MU cut one out with an alpha channel. cloth declares a weave and goes only where there is cloth - the wizard's robe, the knight's tunic and the elf's trim - because a weave laid along a cheek is the mistake the townspeople already taught this project.",
+  "cutout": [
+    "elf_hair",
+    "elf_t"
+  ],
+  "cutout_from": "Every one of them is an .OZT with a real alpha channel, and every one is hair or a fringe. Declared rather than sniffed, for the reason in tests/cutouts.py.",
+  "cutout_alpha": [
+    "elf_hair",
+    "elf_t"
+  ],
+  "cutout_alpha_from": "Every one of these is an .OZT whose alpha is the mask MU drew, so it is carried rather than keyed off the picture's brightness. Hair is the case that makes the difference visible: it is mid-brown on a bright ground, and read as brightness the mask comes out roughly inverted - the knight wore two pale wedges over his head. See carry_alpha.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 78,
+      "area": 15.1,
+      "along": [
+        -2.2,
+        1.1
+      ],
+      "mu_uv": [
+        0.283,
+        0.033,
+        0.97,
+        0.317
+      ],
+      "bake_uv": [
+        0.012,
+        0.223,
+        0.914,
+        0.918
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 78,
+      "area": 15.3,
+      "along": [
+        -3.5,
+        -1.6
+      ],
+      "mu_uv": [
+        0.283,
+        0.033,
+        0.97,
+        0.317
+      ],
+      "bake_uv": [
+        0.251,
+        0.213,
+        0.942,
+        0.945
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 14,
+      "area": 5.5,
+      "along": [
+        -1.5,
+        2.6
+      ],
+      "mu_uv": [
+        0.236,
+        0.021,
+        0.511,
+        0.197
+      ],
+      "bake_uv": [
+        0.011,
+        0.941,
+        0.076,
+        0.983
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 1086,
+      "area": 190.8,
+      "along": [
+        -3.7,
+        3.2
+      ],
+      "mu_uv": [
+        0.019,
+        0.017,
+        0.988,
+        0.987
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.973,
+        0.961
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 60,
+      "area": 0.8,
+      "along": [
+        0.3,
+        0.7
+      ],
+      "mu_uv": [
+        -0.023,
+        0.001,
+        0.974,
+        0.999
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.246,
+        0.246
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 60,
+      "area": 0.8,
+      "along": [
+        -0.0,
+        0.4
+      ],
+      "mu_uv": [
+        -0.023,
+        0.001,
+        0.974,
+        0.999
+      ],
+      "bake_uv": [
+        0.195,
+        0.195,
+        0.429,
+        0.43
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 9,
+      "area": 0.3,
+      "along": [
+        0.6,
+        1.0
+      ],
+      "mu_uv": [
+        0.417,
+        0.184,
+        0.63,
+        0.683
+      ],
+      "bake_uv": [
+        0.109,
+        0.273,
+        0.16,
+        0.391
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 20,
+      "area": 0.1,
+      "along": [
+        0.6,
+        0.9
+      ],
+      "mu_uv": [
+        0.019,
+        0.692,
+        0.362,
+        0.996
+      ],
+      "bake_uv": [
+        0.866,
+        0.88,
+        0.947,
+        0.952
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 28,
+      "area": 1.9,
+      "along": [
+        0.5,
+        1.0
+      ],
+      "mu_uv": [
+        0.413,
+        0.042,
+        0.637,
+        0.683
+      ],
+      "bake_uv": [
+        0.744,
+        0.61,
+        0.797,
+        0.761
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 20,
+      "area": 6.6,
+      "along": [
+        0.7,
+        2.9
+      ],
+      "mu_uv": [
+        0.691,
+        0.033,
+        0.969,
+        0.737
+      ],
+      "bake_uv": [
+        0.456,
+        0.058,
+        0.955,
+        0.882
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 20,
+      "area": 0.1,
+      "along": [
+        0.2,
+        0.6
+      ],
+      "mu_uv": [
+        0.019,
+        0.692,
+        0.362,
+        0.996
+      ],
+      "bake_uv": [
+        0.738,
+        0.883,
+        0.818,
+        0.955
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 28,
+      "area": 1.9,
+      "along": [
+        0.1,
+        0.9
+      ],
+      "mu_uv": [
+        0.413,
+        0.042,
+        0.637,
+        0.683
+      ],
+      "bake_uv": [
+        0.267,
+        0.012,
+        0.319,
+        0.163
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 20,
+      "area": 6.6,
+      "along": [
+        -4.0,
+        -2.8
+      ],
+      "mu_uv": [
+        0.691,
+        0.033,
+        0.969,
+        0.737
+      ],
+      "bake_uv": [
+        0.809,
+        0.171,
+        0.967,
+        0.48
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 17,
+      "area": 2.0,
+      "along": [
+        0.4,
+        2.5
+      ],
+      "mu_uv": [
+        0.026,
+        0.354,
+        0.947,
+        0.877
+      ],
+      "bake_uv": [
+        0.153,
+        0.023,
+        0.868,
+        0.989
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 17,
+      "area": 1.9,
+      "along": [
+        -1.8,
+        2.0
+      ],
+      "mu_uv": [
+        0.026,
+        0.354,
+        0.947,
+        0.877
+      ],
+      "bake_uv": [
+        0.011,
+        0.105,
+        0.62,
+        0.88
+      ]
+    },
+    {
+      "island": 15,
+      "material": "skin",
+      "triangles": 2,
+      "area": 0.3,
+      "along": [
+        -1.4,
+        -0.5
+      ],
+      "mu_uv": [
+        0.045,
+        0.674,
+        0.536,
+        0.946
+      ],
+      "bake_uv": [
+        0.743,
+        0.096,
+        0.859,
+        0.16
+      ]
+    },
+    {
+      "island": 16,
+      "material": "skin",
+      "triangles": 2,
+      "area": 0.3,
+      "along": [
+        -0.8,
+        0.0
+      ],
+      "mu_uv": [
+        0.045,
+        0.674,
+        0.536,
+        0.946
+      ],
+      "bake_uv": [
+        0.796,
+        0.176,
+        0.911,
+        0.24
+      ]
+    },
+    {
+      "island": 17,
+      "material": "skin",
+      "triangles": 20,
+      "area": 2.3,
+      "along": [
+        -1.9,
+        -0.1
+      ],
+      "mu_uv": [
+        0.015,
+        0.023,
+        0.983,
+        0.27
+      ],
+      "bake_uv": [
+        0.229,
+        0.012,
+        0.677,
+        0.831
+      ]
+    }
+  ]
+}

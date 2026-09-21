@@ -1,0 +1,39 @@
+{
+  "name": "steel",
+  "summary": "Forged blade steel: a mirror at grazing angles, a grey shape head-on, with the mill's grain still running along its length.",
+  "why": [
+    "Metallic is 1.0 and is not a dial. A metal either conducts or it does not; the values",
+    "between are for the texel where two materials meet, not for a judgement about how",
+    "metallic something looks. A blade that reads too shiny is a roughness problem.",
+    "Roughness 0.32 rather than the mirror finish a polished sword suggests. A game blade",
+    "at 0.1 is a moving white streak with no shape in it, because a mirror shows the room",
+    "and MU's rooms are empty. 0.32 keeps a highlight that travels along the edge as it",
+    "turns, which is what reads as sharp.",
+    "Depth 0.010, down from 0.03. On the Kris the old figure was tilting most of the blade away from the light: its albedo is bright steel and it rendered nearly black, with ripple bands running across the wave that swept along it as the arm moved and read as the blade wriggling in the hand. It is not - the held items carry no skinning at all and cannot deform - it was the grain shimmering. A mill grain is a disturbance you notice in the highlight and nowhere else, which is what the constant above it was calibrated to mean, and 0.03 was three times more than a blade this small can carry.",
+    "f0 0.56, because for a metal the base colour is not a colour - it is the reflectance, and",
+    "MU's sheet is not one. Measured on the Small Axe, the steel texels average 0.206 in linear",
+    "light where steel is 0.56, so every blade in the project was reflecting a third of what",
+    "steel reflects and reading as dark plastic with a white smear on it. The sheet is a painted",
+    "picture of an object - median 0.074 against a mean of 0.206, which is a dark shape with",
+    "speculars on it - and handing that to a renderer as F0 is a category error, not a taste one.",
+    "f0_from_art 0.35 is how much of the painting survives the correction, and it was swept",
+    "rather than reasoned: out = f0 * (art / mean) ** k. At k=0 the head is blank chrome and MU's",
+    "art is gone. At k=1 it is a plain gain, which blows 23% of the head to white - the painted",
+    "highlights clip and the shape with them. At 0.6 it slides back toward the murk it came from.",
+    "0.35 is where the head reads as steel and the sheet's own variation is still legible on it.",
+    "The form matters as much as the number: a power about the mean cannot clip and cannot",
+    "flatten, where a gain does the first and a plain power curve does the second - x^0.238 lands",
+    "the same mean and takes the art's contrast from 187x to 3.5x, which is a grey card."
+  ],
+  "metallic": 1.0,
+  "f0": 0.56,
+  "f0_from_art": 0.35,
+  "roughness": 0.32,
+  "grain": {
+    "kind": "brushed",
+    "along": "v",
+    "scale": 520,
+    "depth": 0.01,
+    "roughness_range": 0.1
+  }
+}

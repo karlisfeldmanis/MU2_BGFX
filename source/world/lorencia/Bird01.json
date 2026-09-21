@@ -1,0 +1,155 @@
+{
+  "item": "Bird01",
+  "mu_name": "Bird01",
+  "mu_name_from": "Object1/Bird01.bmd, which is not a placement. Nothing in lorencia.json refers to it: GOBoid.cpp keeps a pool of five in the air around whoever is playing and spawns them within a few tiles of the hero, so the bird exists only where somebody is looking. It is built like any other world model because it *is* one \u2014 a mesh, a sheet and an action \u2014 and the difference is only who decides where it goes. See Boids.",
+  "world": "lorencia",
+  "object_type": -1,
+  "why_this_one": "The town's only wildlife. 98 triangles and one 32x64 sheet, with a six-key wing beat in its own .bmd \u2014 the cheapest possible thing to have moving in an empty sky, and the difference between a town and a diorama of one.",
+  "profile": "world",
+  "sheets": {
+    "bird": "bird.png"
+  },
+  "sheet_from": "Object1/bird.ozt, decoded rather than the Object12 copy of the same name \u2014 the client loads a model's textures out of the directory the model came from, and Bird01 is in Object1.",
+  "sheet_materials": {
+    "bird": "foliage"
+  },
+  "sheet_materials_from": "Foliage, which is not a joke about feathers. What the material has to get right here is that this is a two-sided cut-out lit from both faces: a bird is a handful of alpha-keyed quads seen from underneath as often as from above, which is the same problem a leaf card poses and the reason foliage carries translucency. Skin and cloth are both opaque surfaces with a front and a back, and a bird wearing either goes black on the underside every time it banks.",
+  "cutout": [
+    "bird"
+  ],
+  "cutout_from": "The sheet is 32 by 64 with 37% of it cut away \u2014 the wings are shaped by alpha rather than by geometry, which is how MU draws anything with an outline.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 90,
+      "area": 3271.2,
+      "along": [
+        -14.8,
+        17.1
+      ],
+      "mu_uv": [
+        0.002,
+        0.013,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.958,
+        0.862
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 2,
+      "area": 148.4,
+      "along": [
+        -27.8,
+        -14.2
+      ],
+      "mu_uv": [
+        0.057,
+        0.25,
+        0.308,
+        0.543
+      ],
+      "bake_uv": [
+        0.712,
+        0.382,
+        0.883,
+        0.581
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 1,
+      "area": 62.5,
+      "along": [
+        -9.4,
+        2.4
+      ],
+      "mu_uv": [
+        -0.247,
+        0.283,
+        -0.031,
+        0.35
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.154,
+        0.052
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 2,
+      "area": 363.1,
+      "along": [
+        -14.8,
+        3.1
+      ],
+      "mu_uv": [
+        0.616,
+        0.213,
+        0.916,
+        0.513
+      ],
+      "bake_uv": [
+        0.379,
+        0.642,
+        0.583,
+        0.846
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 1,
+      "area": 62.0,
+      "along": [
+        -9.4,
+        2.4
+      ],
+      "mu_uv": [
+        -0.247,
+        0.435,
+        -0.031,
+        0.502
+      ],
+      "bake_uv": [
+        0.007,
+        0.352,
+        0.154,
+        0.398
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 2,
+      "area": 363.1,
+      "along": [
+        -14.8,
+        3.1
+      ],
+      "mu_uv": [
+        0.616,
+        0.213,
+        0.916,
+        0.513
+      ],
+      "bake_uv": [
+        0.161,
+        0.791,
+        0.365,
+        0.994
+      ]
+    }
+  ]
+}

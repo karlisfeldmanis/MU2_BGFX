@@ -1,0 +1,34 @@
+{
+  "item": "Ice01",
+  "mu_name": "The block of ice a wizard's Ice spell closes around what it hits",
+  "mu_name_from": "ZzzOpenData.cpp OpenSkills(): `gLoadData.AccessModel(MODEL_ICE, L\"Data\\\\Skill\\\\\", L\"Ice\", 1)` - the last argument is the file number, so Data/Skill/Ice01.bmd. The line under it is `AccessModel(MODEL_ICE_SMALL, L\"Data\\\\Skill\\\\\", L\"Ice\", 2)` and is Ice02.bmd. Filed under Skill like the meteor and the stones.",
+  "kind": "ice",
+  "why_this_one": "It is the whole of the client's Ice, in ZzzCharacter.cpp's damage arm:\n\n    case AT_SKILL_ICE:\n        CreateEffect(MODEL_ICE, to->Position, o->Angle, Light);\n        for (int i = 0; i < 5; i++)\n            CreateEffect(MODEL_ICE_SMALL, to->Position, o->Angle, o->Light);\n        if (c->SkillSuccess) g_CharacterRegisterBuff(to, eDeBuff_Freeze);\n        PlayBuffer(SOUND_ICE);\n        break;\n\nOne block, five shards, one wave and a debuff icon. Note the two lights: the block is given the local `Light` the damage arm computed and the shards the caster's own `o->Light`.\n\nNote also whose angle. Both are created with `o->Angle` - the *caster's* facing, not the target's - so the block is oriented to the man who threw it and a monster spun round inside it is spun inside a block that did not turn. That is MU's, and it is the kind of thing that reads as a bug in a screenshot taken from the wrong side.",
+  "mesh": "Ice01_05.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Ice01.bmd with --key=5, from MuMain. Two hundred and fifty-six triangles in one mesh on ice.jpg. The settled pose, which is what `mesh` names on any model that carries poses: the block standing, about 240 x 229 x 320 units, which at the create arm's Scale of 0.8 is roughly 1.9 x 1.8 x 2.6 m.",
+  "poses": [
+    "Ice01_00.obj",
+    "Ice01_01.obj",
+    "Ice01_02.obj",
+    "Ice01_03.obj",
+    "Ice01_04.obj",
+    "Ice01_05.obj"
+  ],
+  "poses_from": "The model's one action, thirteen bones and six keys, baked a mesh a key by `muextract export-obj --key=N`.\n\n*Why this model has poses when no other effect does.* Ice01's action is pure bone translation - the rotations are constant across every key - and what it translates is the shards, inward, from outside the block to their places in it. So the animation is the ice forming, and the skeleton's rest pose is identical to the *first* key: bind-pose geometry of this model is the block unformed and scattered, which is a shape the game never draws. Fire01 is the opposite case and is why the effects folder carries geometry alone by default: its action only makes the flame writhe, so its rest is the meteor as it is seen.\n\n*Why six meshes and not a rig.* `o->Velocity = 1.f` at birth is the play speed, the effect loop advances AnimationFrame by it, and the render arm freezes the animation at `AnimationFrame >= 5.f` - the last key - and never blends, never loops and never plays a second action. What a skinned rig would buy here is the ability to interpolate something that is stepped once and then held. Six poses of 528 vertices is 3168 vertices of static data.",
+  "parts": [
+    {
+      "group": "ice",
+      "sheet": "ice.png",
+      "blend": "additive",
+      "note": "Data/Skill/ice.OZJ, a 128 square, mean (22, 42, 58) and black through its middle - a dark cold blue that is nearly nothing where it is thickest.\n\nAdditive, and that is read off `o->BlendMesh = 0` in the create arm rather than assumed from the sheet. BlendMesh names which mesh of the model is drawn as the blend mesh, and this model has exactly one - so setting it to 0 makes the whole block additive. A sheet painted this dark is only ever meant to be added: drawn opaque it is a black lump.\n\nThat is also why it needs no alpha channel. What is transparent about a block of ice is the part of the sheet that is dark."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "The base the create arm's own multiplies. `o->Scale = 0.8f` outright for sub-type 0, with no roll on it - unlike the meteor's 1.0-to-1.7 and the debris' 0.8-to-1.1, every Ice is the same size.",
+  "lift": 0,
+  "lift_from": "Nothing. `CreateEffect(MODEL_ICE, to->Position, ...)` puts it at the target's own position, which in the client is its place on the ground, and the model is authored to stand up from there - the settled pose runs from 47 units below the origin to 182 above it. What hangs below is hidden by the terrain, which is the arrangement the meteor's blast is already under.",
+  "frames": 50,
+  "frames_from": "`o->LifeTime = 50` in the create arm, two seconds at MU's clock - and it is a backstop rather than the life. What actually ends the block is the render arm: once AnimationFrame reaches 5 it stops the animation and begins `o->Alpha -= 0.05f` a frame, dying at `Alpha < 0`. So the effect is about five frames of forming and twenty of fading, a second in all, and the fifty is never reached.",
+  "smoke_from": "While it fades, `rand_fps_check(2)` - a coin every rendered frame - throws a BITMAP_SMOKE particle at `(rand() % 64 - 32, rand() % 64 - 32, rand() % 128 + 32)` off the block's own position. Vapour coming off the ice, about one every other frame for the twenty frames of the fade.",
+  "light_from": "`Vector(-Luminosity * 0.4f, -Luminosity * 0.3f, -Luminosity * 0.2f, Light); AddTerrainLight(..., Light, 2, PrimaryTerrainLight)` - and the signs are the point. Every other effect in the game adds light to the ground under it and this one *subtracts* it, so the tile under a frozen monster goes dark rather than blue. The commented-out line directly above it in the client is the blue version, `(Luminosity*0.2, Luminosity*0.4, Luminosity)`, which is what somebody wrote first and replaced. Transcribed as shipped, with the discarded line recorded here because it is the obvious thing for a reader to reach for.\n\nThe fall-off is more toward red than blue - 0.4, 0.3, 0.2 - so what it takes out of the ground is warmth, which leaves the tile cold as well as dark."
+}

@@ -1,0 +1,13 @@
+{
+  "item": "LumentheBarmaid",
+  "mu_name": "Lumen the Barmaid",
+  "kind": "character",
+  "parts": [
+    "FemaleHead01",
+    "FemaleUpper01",
+    "FemaleLower01",
+    "FemaleBoots01"
+  ],
+  "note": "The barmaid. Four pieces on a 45-bone rig, dressed out of the magic shop's sheets.",
+  "parts_from": "remaster_one's NpcManager loads Female01.bmd with these pieces on it. The base carries the skeleton and the idle; the pieces carry the meshes."
+}

@@ -1,0 +1,25 @@
+{
+  "name": "ceramic",
+  "summary": "Glazed pottery: a banded jar, a plate, a cup. Fired clay with a glass skin on it.",
+  "why": [
+    "Roughness 0.30, the second smoothest thing in the library after water's 0.08 and below a",
+    "blade's 0.32. A glaze is glass: it is the only surface in a tavern that returns a hard",
+    "highlight, and getting it wrong in the rough direction turns a jar into a lump of chalk.",
+    "Metallic 0.0. Glaze is a dielectric with a strong specular, which is the same thing water",
+    "is and the same trap - reaching for metallic to get the shine gives a pot made of pewter.",
+    "Depth 0.05, nearly flat, and this is the argument that matters. MU's pot sheets are bands",
+    "of painted colour - blue, white, orange - and painted bands are not relief. Read as height",
+    "they would corrugate a jar that is smooth by definition, because the whole point of firing a",
+    "glaze is that it comes out even.",
+    "Range 0.04, low. A glaze is uniform where it is intact, which for a pot on a shelf is",
+    "everywhere."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.3,
+  "grain": {
+    "kind": "cast",
+    "scale": 260,
+    "depth": 0.05,
+    "roughness_range": 0.04
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "item": "Object09",
+  "mu_name": "Object09",
+  "mu_name_from": "Noria's object slot 8, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 8,
+  "placements": 16,
+  "profile": "world",
+  "sheets": {
+    "flower4": "nr_flower4.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "flower4": "timber"
+  },
+  "material_note": "flower4: an atlas: a purple bloom in one corner and a woven straw band across the bottom, which is most of its area and the part that is structure.",
+  "why_this_one": "Type 8, which Noria's CreateObject hands to CreateOperate: a character can walk onto this one and sit on it. Sixteen of them. See Poses.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3188.1,
+      "along": [
+        -13.4,
+        16.8
+      ],
+      "mu_uv": [
+        -0.0,
+        0.008,
+        1.0,
+        0.342
+      ],
+      "bake_uv": [
+        -0.0,
+        0.008,
+        1.0,
+        0.342
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 18,
+      "area": 2865.9,
+      "along": [
+        -27.0,
+        30.4
+      ],
+      "mu_uv": [
+        0.017,
+        0.343,
+        0.663,
+        0.99
+      ],
+      "bake_uv": [
+        0.017,
+        0.343,
+        0.663,
+        0.99
+      ]
+    }
+  ]
+}

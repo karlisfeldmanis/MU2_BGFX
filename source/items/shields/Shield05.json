@@ -1,0 +1,70 @@
+{
+  "item": "Shield05",
+  "mu_name": "Buckler",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield05.bmd is shield index 4, which openmu's 0.75 Armors.cs names the Buckler. mu.db agrees: group 6 index 4, Item/Shield05.bmd.",
+  "why_this_one": "Hanzo's, and the blacksmith is the last shop with lines missing - five of his twenty-four were built this morning. He stocks twelve shields and two were here; these five take him to seven of the twelve, in the order his shelf reads. See shared/Market.Blacksmith.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the two built shields use, and its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10, which records the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(4, 1, 18, 2, 2, \"Buckler\", 6, 2, 6, 24, 80, 0, 1, 1, 1)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 4,
+    "drop_level": 6,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 2,
+    "defense_rate": 6,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "Eighteen, the shield's block skill in OpenMU's table, on the ten shields that carry one. There are no skills in this simulation, so it is carried for the row to read against the call and nothing more.",
+    "durability": 24,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 1, 1, 1 - anybody may carry it. Four of the twelve shields are open to all three classes and the rest are the Dark Knight's alone."
+  },
+  "sheets": {
+    "shield03": "shield03.png"
+  },
+  "sheet_from": "Data/Item/shield03.OZJ (64x64), from MuMain. The .bmd names shield03.jpg; 22 triangles, the fewest of any shield here and the fewest of any item in the project.",
+  "sheet_note": "shield03 is a small round buckler seen face on: a studded rim around a dark boss with a skull's brow and eye sockets worked into it. Mean (99, 101, 99) at chroma 7 - the most achromatic sheet in the set, plain steel with the shading painted.",
+  "material_note": "One island of 22, the whole buckler, and the smallest item in the project. Per triangle it means (30, 33, 33) at chroma 8 - dark, achromatic steel with the boss and the skull's brow painted into it. plate_steel and not the weapon profile's steel, which is the swap Shield10 records: steel is blade steel with a directional grain running along the mill, and running that across a shield face is the fault the Plate gauntlets showed. A shield is armour - hammered, curved, worn where it is hit.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 7107.6,
+      "along": [
+        -33.9,
+        34.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

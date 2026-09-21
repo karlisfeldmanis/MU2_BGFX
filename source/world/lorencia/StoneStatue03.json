@@ -1,0 +1,42 @@
+{
+  "item": "StoneStatue03",
+  "mu_name": "StoneStatue03",
+  "mu_name_from": "Lorencia's object slot 42, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 42,
+  "why_this_one": "4 placements. The angel, and the one statue that shares a sheet with the graves.",
+  "profile": "world",
+  "sheets": {
+    "angel_stone_statue": "angel_stone_statue.png",
+    "tombstone_big": "tombstone_big.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "angel_stone_statue": "flagstone",
+    "tombstone_big": "flagstone"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 248,
+      "area": 63377.0,
+      "along": [
+        -39.9,
+        53.4
+      ],
+      "mu_uv": [
+        0.014,
+        0.001,
+        0.993,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.952
+      ]
+    }
+  ]
+}

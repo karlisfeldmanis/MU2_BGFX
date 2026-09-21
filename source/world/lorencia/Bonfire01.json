@@ -1,0 +1,320 @@
+{
+  "item": "Bonfire01",
+  "mu_name": "Bonfire01",
+  "mu_name_from": "Lorencia's object slot 52, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 52,
+  "why_this_one": "9 placements. The bonfire, and the one fire the client itself marks additive: LorenciaBlendMeshes[52] = 1 is fire_02. It also carries the only real GlowMotion in the town - 0.45 to 0.95 over sixteen steps at 20 Hz, eased over an eighth of a second, which its own notes argue is a flame breathing rather than a strobe.",
+  "profile": "world",
+  "sheets": {
+    "fire_01": "fire_01.png",
+    "fire_02": "fire_02.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "fire_01": "timber",
+    "fire_02": "lamplight"
+  },
+  "additive": [
+    "fire_02"
+  ],
+  "additive_from": "LorenciaBlendMeshes[52] = 1, and only 1. Both sheets were marked additive at first and that was simply wrong: submesh 0 is the log pile and submesh 1 is the flame, so making both blend turned the logs into ghosts criss-crossing each other. The client's data says which is which and there was no need to guess.",
+  "emitters": [
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        0,
+        0,
+        60
+      ]
+    }
+  ],
+  "emitters_from": "WorldObjectCatalog.cs's Fire(): luminance 0.6 to 1.1, weighted (L, 0.6L, 0.4L) for the orange, four tiles of reach. The rate and smoothing are the old port's correction rather than the client's - it redraws the luminance every rendered frame, which on a light rather than a texture is a strobe, so 3 Hz eased over an eighth of a second is the pool of light breathing at the pace a fire moves.",
+  "material_note": "fire_01 is the wood, not the fire - charred logs with the firelight painted on them, so timber and opaque. fire_02 is the flame, additive, and the only sheet in Lorencia the client itself marks that way.",
+  "glow": {
+    "fire_02": {
+      "low": 0.45,
+      "high": 0.95,
+      "steps": 16,
+      "hz": 20,
+      "smooth_seconds": 0.12
+    }
+  },
+  "glow_from": "MoveObject's per-type case for object 52, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap \u2014 the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nQuick, but burning rather than buzzing. Six steps snapped onto at fourteen a second is a strobe \u2014 the eye reads the steps, not the fire. Sixteen steps drawn twenty times a second and eased over an eighth of a second means the brightness is always travelling and never arrives before the next draw, so what shows is a flame breathing at the rate it used to stutter at.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3855.4,
+      "along": [
+        -12.6,
+        36.6
+      ],
+      "mu_uv": [
+        -0.428,
+        -0.085,
+        0.867,
+        1.085
+      ],
+      "bake_uv": [
+        0.378,
+        0.072,
+        0.742,
+        0.737
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3855.4,
+      "along": [
+        -41.4,
+        11.4
+      ],
+      "mu_uv": [
+        -0.067,
+        -0.044,
+        0.946,
+        1.044
+      ],
+      "bake_uv": [
+        0.007,
+        0.09,
+        0.647,
+        0.821
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3855.1,
+      "along": [
+        -52.7,
+        4.6
+      ],
+      "mu_uv": [
+        -0.431,
+        -0.031,
+        0.965,
+        1.031
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.694,
+        0.49
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3854.9,
+      "along": [
+        -30.5,
+        -2.6
+      ],
+      "mu_uv": [
+        -0.204,
+        -0.051,
+        0.945,
+        1.051
+      ],
+      "bake_uv": [
+        0.007,
+        0.009,
+        0.817,
+        0.466
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3855.3,
+      "along": [
+        -11.0,
+        42.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.674,
+        0.351,
+        0.994,
+        0.929
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3855.0,
+      "along": [
+        -7.3,
+        52.9
+      ],
+      "mu_uv": [
+        -0.46,
+        0.016,
+        0.822,
+        0.984
+      ],
+      "bake_uv": [
+        0.147,
+        0.053,
+        0.675,
+        0.532
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 6,
+      "area": 2084.8,
+      "along": [
+        -13.3,
+        37.9
+      ],
+      "mu_uv": [
+        0.077,
+        0.022,
+        0.486,
+        0.983
+      ],
+      "bake_uv": [
+        0.327,
+        0.544,
+        0.43,
+        0.787
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 6,
+      "area": 2084.7,
+      "along": [
+        -43.2,
+        11.7
+      ],
+      "mu_uv": [
+        0.014,
+        0.017,
+        0.398,
+        0.973
+      ],
+      "bake_uv": [
+        0.83,
+        0.131,
+        0.927,
+        0.373
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3044.9,
+      "along": [
+        -55.0,
+        4.6
+      ],
+      "mu_uv": [
+        0.255,
+        0.026,
+        0.573,
+        0.969
+      ],
+      "bake_uv": [
+        0.569,
+        0.751,
+        0.649,
+        0.989
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 6,
+      "area": 2084.8,
+      "along": [
+        -31.9,
+        -2.8
+      ],
+      "mu_uv": [
+        0.513,
+        0.029,
+        0.89,
+        0.983
+      ],
+      "bake_uv": [
+        0.433,
+        0.748,
+        0.528,
+        0.989
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 6,
+      "area": 2084.8,
+      "along": [
+        -11.6,
+        44.1
+      ],
+      "mu_uv": [
+        0.478,
+        0.025,
+        0.906,
+        0.996
+      ],
+      "bake_uv": [
+        0.008,
+        0.192,
+        0.116,
+        0.437
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 6,
+      "area": 2084.7,
+      "along": [
+        -7.8,
+        54.8
+      ],
+      "mu_uv": [
+        0.233,
+        0.01,
+        0.744,
+        0.971
+      ],
+      "bake_uv": [
+        0.341,
+        0.007,
+        0.471,
+        0.25
+      ]
+    }
+  ]
+}

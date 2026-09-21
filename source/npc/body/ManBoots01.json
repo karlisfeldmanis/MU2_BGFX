@@ -1,0 +1,61 @@
+{
+  "item": "ManBoots01",
+  "mu_name": "Wandering Merchant \u2014 ManBoots01",
+  "part_note": "One piece of Wandering Merchant, skinned to Man01's rig and carrying a bind pose only. MU builds a townsperson the way it builds a player: the base .bmd is skeleton and actions with no mesh on it, and the pieces are meshes with nowhere to be until the rig puts them somewhere.",
+  "profile": "npc",
+  "sheets": {
+    "w_merchant_b": "w_merchant_b.png"
+  },
+  "sheet_materials": {
+    "w_merchant_b": "skin"
+  },
+  "sheet_materials_from": "Skin wherever the sheet carries flesh, and that is most of them. MU paints a townsperson's face on the same page as his clothes, so the material chosen for the clothes is also the material on the face \u2014 and cloth declares a weave along u at scale 140, which put fabric grain down Amy's cheek. skin declares no grain, which is the safe way to be wrong: a dress missing a weave nobody could resolve at 128 pixels costs nothing.\n\nWhat is plainly not flesh keeps its own material: the smith's forge is lamplight, his anvil is rock, the vault keeper's plate is steel and his chest is timber.",
+  "animation_rig": "npc/body/Man01.rig.json",
+  "animation_rig_from": "Man01.bmd, which is this figure's player.bmd: skeleton and one action, no meshes. A merchant skinned to her own rig cannot borrow the player's \u2014 the bone counts differ (Man01 against player.bmd's 60) and so do the names.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 54,
+      "area": 3878.0,
+      "along": [
+        -11.0,
+        30.1
+      ],
+      "mu_uv": [
+        0.576,
+        0.311,
+        0.993,
+        0.552
+      ],
+      "bake_uv": [
+        0.157,
+        0.488,
+        0.995,
+        0.997
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 54,
+      "area": 3881.5,
+      "along": [
+        -11.1,
+        30.1
+      ],
+      "mu_uv": [
+        0.566,
+        0.308,
+        0.989,
+        0.552
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.865,
+        0.501
+      ]
+    }
+  ]
+}

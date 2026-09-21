@@ -1,0 +1,85 @@
+{
+  "item": "Object103",
+  "mu_name": "Object103",
+  "mu_name_from": "World 74's object table is a straight run, not Lorencia's named blocks: the map's type is the model index and the client loads index i from Object{i+1}.bmd (MapManager.cpp:1121, LoadData.cpp:28). So the asset keeps the client's own name - there is no friendlier one, and the placement list carries this.",
+  "world": "charscene",
+  "object_type": 102,
+  "why_this_one": "The most-placed thing on the map, twelve of it.",
+  "profile": "world",
+  "sheets": {
+    "so_jgwall04": "so_jgwall04.png"
+  },
+  "sheet_from": "Data/Object75/*.OZJ and *.OZT, from MuMain, decoded at MU's own size.",
+  "sheet_materials": {
+    "so_jgwall04": "flagstone"
+  },
+  "material_note": "Flagstone, which is what Lorencia's cut stone already takes - StoneWall01, StoneMuWall01 and StoneStatue01 all read as worked block rather than boulder face.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 34,
+      "area": 64638.2,
+      "along": [
+        -120.3,
+        90.0
+      ],
+      "mu_uv": [
+        0.36,
+        0.007,
+        0.997,
+        0.998
+      ],
+      "bake_uv": [
+        0.011,
+        0.01,
+        0.623,
+        0.624
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 102,
+      "area": 88166.1,
+      "along": [
+        -179.7,
+        -120.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.002,
+        0.981,
+        0.994
+      ],
+      "bake_uv": [
+        0.011,
+        0.01,
+        0.957,
+        0.99
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 40,
+      "area": 48280.5,
+      "along": [
+        51.6,
+        179.7
+      ],
+      "mu_uv": [
+        0.342,
+        0.016,
+        0.72,
+        0.706
+      ],
+      "bake_uv": [
+        0.011,
+        0.01,
+        0.827,
+        0.966
+      ]
+    }
+  ]
+}

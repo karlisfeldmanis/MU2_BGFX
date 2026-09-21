@@ -1,0 +1,139 @@
+{
+  "item": "GloveMale07",
+  "mu_name": "Scale Gloves",
+  "mu_name_from": "MuMain loads MODEL_GLOVES + i from GloveMale{i+1} (ZzzOpenData.cpp line 142), so file 07 is index 6, which openmu's 0.75 Armors.cs names the Scale Gloves. mu.db agrees: group 10 index 6, Player/GloveMale07.bmd.",
+  "why_this_one": "Martin's and Harold's +3 line, and the third of their four sets. The wandering merchants stock all five Scale pieces at +3, so five of their lines were dropped by Realm.Shelf for want of a row. See shared/Market.Wandering.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(6, \"Scale Gloves\", 22, 7, 10, 40, 110, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so the group is 10.",
+    "group": 10,
+    "number": 6,
+    "drop_level": 22,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 7,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "attack_speed": 10,
+    "attack_speed_note": "Ten, which OpenMU adds to the character's AttackSpeed as a glove bonus and which is the highest any built glove carries. shared/Combat.cs takes speed off the weapon row alone, so this is recorded and unread.",
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 110,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred and ten strength and no agility, where the Bronze set asked for eighty and twenty."
+  },
+  "sheets": [
+    "gloves_08.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/gloves_08.OZJ (64x64) and hide.jpg, from MuMain. The .bmd names gloves_08.jpg and hide.jpg; 166 of the 172 triangles are on the first and 6 on hide.",
+  "sheet_note": "gloves_08 is the pair of gauntlets: a knuckle of raised studs over a smooth banded cuff, drawn from two sides. Mean (74, 92, 88) at chroma 19, the lightest sheet in the set. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is a dark blue-green metal and every sheet agrees: chroma 17 to 19 about means near (50, 65, 55), which is a verdigris cast on a dark plate rather than the grey of the Plate set or the yellow-brown of the Bronze. It is the darkest metal set built so far - lum 54 on the legs against the Plate set's 137 - and that is worth stating because a dark albedo at metallic 1.0 is the shape of the fault the Bone set had. Here it is not a fault: the Bone set was hide and skull declared metal, and this really is plate. See materials/bone.json for the case that was wrong.",
+  "material_note": "Four islands: the two gauntlet shells at 68 and the two knuckle bands at 18, which is gloves_08's 166 and hide's 6. plate_steel, the profile's default, and the sheets do not argue with it: the colour is a verdigris cast at chroma 18 and the surface is banded plate. A metal's albedo is its reflectance, so a dark blue-green sheet at metallic 1.0 renders as dark blue-green metal - which is the same arithmetic the Bronze set records from the warm end.",
+  "material_overrides": {
+    "plate_steel": {
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "plate_steel at 0.55 rather than its own 0.34, because this set is corroded and that figure is for polished plate. The assignment is right and the note above argues it well - a dark blue-green sheet at metallic 1.0 is dark blue-green metal - but the same sheets describe a verdigris cast, and verdigris is corrosion. A patina is the one thing a polished surface is not, and at 0.34 the set came back glassy: broad wet highlights sliding over the cuirass and the greaves with the scrollwork lost under them. Swept in Blender on the assembled set under the rig from MU2/lighting.json at 0.34, 0.48 and 0.60 - by 0.60 the scale pattern and the hip scrollwork read clearly and it looks aged rather than wet, and 0.55 keeps a little more metal in it.\n\nScoped to this set rather than moved in the library: the Plate set is clean steel and wants the polish it has.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 68,
+      "area": 1574.8,
+      "along": [
+        -46.4,
+        -23.5
+      ],
+      "mu_uv": [
+        0.052,
+        0.0,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.922,
+        0.954
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 68,
+      "area": 1556.3,
+      "along": [
+        8.7,
+        38.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.0,
+        0.986,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.943
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 18,
+      "area": 845.5,
+      "along": [
+        -47.0,
+        -24.2
+      ],
+      "mu_uv": [
+        0.004,
+        0.769,
+        0.814,
+        0.998
+      ],
+      "bake_uv": [
+        0.284,
+        0.492,
+        0.806,
+        0.754
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 18,
+      "area": 845.5,
+      "along": [
+        -1.7,
+        21.9
+      ],
+      "mu_uv": [
+        0.004,
+        0.769,
+        0.814,
+        0.998
+      ],
+      "bake_uv": [
+        0.304,
+        0.49,
+        0.896,
+        0.902
+      ]
+    }
+  ]
+}

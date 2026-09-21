@@ -1,0 +1,106 @@
+{
+  "item": "Furniture07",
+  "mu_name": "Furniture07",
+  "mu_name_from": "Lorencia's object slot 146, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 146,
+  "why_this_one": "3 placements. A stool or small cabinet. The interior pieces are worth building now rather than later because the roof fade works: walking into a house shows what is in it, and until now that was an empty floor.",
+  "profile": "world",
+  "sheets": {
+    "bookshelf": "bookshelf.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "bookshelf": "hardwood"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1234.4,
+      "along": [
+        -5.5,
+        4.7
+      ],
+      "mu_uv": [
+        0.744,
+        0.042,
+        0.986,
+        0.995
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.336,
+        0.661
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1234.4,
+      "along": [
+        2.6,
+        20.9
+      ],
+      "mu_uv": [
+        0.744,
+        0.042,
+        0.987,
+        0.992
+      ],
+      "bake_uv": [
+        0.345,
+        0.006,
+        0.692,
+        0.653
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1234.4,
+      "along": [
+        -21.5,
+        -2.2
+      ],
+      "mu_uv": [
+        0.769,
+        0.049,
+        0.974,
+        0.992
+      ],
+      "bake_uv": [
+        0.701,
+        0.005,
+        0.995,
+        0.656
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 18,
+      "area": 2074.7,
+      "along": [
+        -16.9,
+        16.4
+      ],
+      "mu_uv": [
+        0.066,
+        0.347,
+        0.71,
+        0.624
+      ],
+      "bake_uv": [
+        0.006,
+        0.67,
+        0.916,
+        0.919
+      ]
+    }
+  ]
+}

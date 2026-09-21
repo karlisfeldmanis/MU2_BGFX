@@ -1,0 +1,92 @@
+{
+  "item": "Spear02",
+  "mu_name": "Spear",
+  "mu_name_from": "The old client's MuWeapons.cs:188 names spear group index 1 'Spear' against Item/Spear02.bmd, and MuMain's _enum.h agrees: MODEL__SPEAR = MODEL_SPEAR + 1.",
+  "why_this_one": "The Beetle Monster carries it. CreateMonster's MONSTER_BEETLE_MONSTER branch sets `c->Weapon[0].Type = MODEL__SPEAR` - the double underscore is the client's own, to keep the plain Spear apart from the MODEL_SPEAR group base - and a beetle with an empty fist is a beetle holding nothing. It is also the second of the two items MuWeapons.cs gives the spear stance, so the table's narrowest row now has both of its entries.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. See Spear03 for what each argument is.",
+    "call": "CreateWeapon(3, 1, 0, 0, 2, 4, true, \"Spear\", 23, 30, 41, 30, 42, 0, 0, 70, 50, 0, 0, 0, 1, 1)",
+    "group": 3,
+    "number": 1,
+    "drop_level": 23,
+    "drops_from_monsters": true,
+    "drop_level_note": "23 against the Dragon Lance's 15, which reads backwards for the plainer spear and is what the 0.75 row says. Transcribed as written.",
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 30,
+    "maximum_damage": 41,
+    "attack_speed": 30,
+    "durability": 42,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ]
+  },
+  "stance": "spear",
+  "stance_from": "MuWeapons.cs:188, WeaponStance.Spear - one of the two, with the Dragon Lance. See Spear03's stance_from for the client's rule behind it.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs:188, TwoHanded: true.",
+  "sheets": {
+    "Javelins03": "javelins03.png",
+    "sword12": "sword12.png"
+  },
+  "sheet_from": "Data/Item/Javelins03.OZJ (32x32) and Data/Item/sword12.OZJ (32x16), from MuMain; Javelins03 is byte-identical (md5) to LEGACY's old build. The .bmd names Javelins03.jpg on the head's 32 triangles and sword12.jpg on the shaft's 70. sword12 is shared with Sword12.bmd, which is not built.",
+  "material_note": "Two islands and they follow MU's two meshes exactly, so each settles its own. wrought_iron for the pole, steel for the socket that holds the point.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 32,
+      "area": 4757.8,
+      "along": [
+        -133.5,
+        209.8
+      ],
+      "mu_uv": [
+        0.034,
+        0.027,
+        0.946,
+        0.975
+      ],
+      "bake_uv": [
+        0.055,
+        0.007,
+        0.958,
+        0.9
+      ],
+      "note": "the pole and the point, one island of 32 triangles from z -133 to 210. Every triangle samples the dark, near-neutral lower half of Javelins03 - chroma under ten, not the brown MU paints timber in - so the whole length is dark iron."
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 70,
+      "area": 694.0,
+      "along": [
+        79.3,
+        118.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.994,
+        0.976
+      ],
+      "note": "the collar under the head, 70 triangles between z 79 and 119, on sword12's pale blue-grey lattice."
+    }
+  ]
+}

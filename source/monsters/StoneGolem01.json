@@ -1,0 +1,472 @@
+{
+  "item": "StoneGolem01",
+  "mu_name": "Stone Golem",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_STONE_GOLEM = 32 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_STONE_GOLEM), which is 25. OpenMonsterModel loads `AccessModel(Index, L\"Data\\\\Monster\\\\\", L\"Monster\", Type + 1)`, so the file is Monster26.bmd. The client's name is 돌괴물, stone monster; OpenMU's Version075 Noria.cs names number 32 'Stone Golem' at level 18 with 465 health - Noria's strongest, and its last.\n\nThe Golden Stone Golem (an event) opens a model of its own, MONSTER_MODEL_GOLDEN_STONE_GOLEM, and is not this asset.",
+  "world": "noria",
+  "object_type": 32,
+  "monster": {
+    "model_index": 25,
+    "scale": 1.0
+  },
+  "monster_from": "ZzzCharacter.cpp, CreateMonster, case MONSTER_STONE_GOLEM:\n\n    OpenMonsterModel(MONSTER_MODEL_STONE_GOLEM);\n    c = CreateCharacter(Key, MODEL_STONE_GOLEM, PositionX, PositionY);\n\nand the name. No Scale line at all, so it keeps CreateObject's 1.0 - the only Noria monster drawn at its model's own size. No Weapon, no BlendMesh, no HiddenMesh, no Level.",
+  "hands_from": "Empty. CreateMonster sets no Weapon and MODEL_STONE_GOLEM has no case in CreateCharacter's LinkBone switch; the rig has no grip bone to hang one on either.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 20, 20, 7, 6, 6, 6, 6. The walk is the one locked action. 31 bones: a plain Biped with no fingers, and GeoSphere02 and Object01 to Object05 all parented to the pelvis - the loose boulders of the body.\n\nBone 5 is Bip01 Head, which ZzzOpenData records as `Models[MODEL_MONSTER01 + Type].BoneHead = 5`.\n\nThe death clip is in the rig and is never played; see death_from.\n\nPlay speeds: OpenMonsterModel's blanket pass `if (Type == 5 || Type == 25) b->Actions[j].PlaySpeed *= 0.7f` - the Giant's multiplier, and 25 is this model - over every action, and no walk override. So everything it does is seven tenths of the default: a lumber, like the Giant's.",
+  "sheets": {
+    "ston1": "stonegolem_ston1.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/ston1.OZJ, a 64-square with no alpha - byte-identical (md5 9a757391) to Data/Skill/ston1.OZJ, which the big stones wear, and to the copy under LEGACY's old build. The golem and the rock it breaks into are painted on one page. Decoded under a stonegolem_ prefix here and beside the stones in assets/effects/bigstone as ston1.png.",
+  "sheet_materials": {
+    "ston1": "rock"
+  },
+  "sheet_materials_from": "Read off the sheet, magnified: grey stone with a pale pink-grey slab in the upper left cracked into blocks, green moss and lichen through all of it, and a dark crack running down the right edge with a rust-coloured lip. rock, the town's own material for weathered stone.",
+  "tiled": true,
+  "tiled_why": "Because MU tiles the sheet and a bake cannot. The golem's UVs run from -0.51 to 1.38: every boulder face wears most of the 64-square over again, and summed over the 460 triangles the body covers 48.5 sheets - about 199,000 of MU's texels. The baked path unwraps that into one map sized three times the widest sheet, 192 square, and the islands got 29,912 texels of it: a sixth of what MU itself draws, before the upscale. In game each face carried a thumbnail of the whole sheet a few texels wide, which read as a pixelated body of camouflage. Tiled keeps MU's coordinates and the sheet on repeat, so every face gets the full sheet at the upscale's resolution. The profile stays monster, so the play speeds and the upscale are unchanged; only the atlas goes.",
+  "death": "stone_burst",
+  "death_from": "It does not fall over. CharacterDie in ZzzCharacter.cpp, in the monster switch beside the Death Cow's bones:\n\n    case MODEL_STONE_GOLEM:\n    {\n        o->Live = false;\n        for (int j = 0; j < 8; j++)\n        {\n            CreateEffect(MODEL_BIG_STONE1, o->Position, o->Angle, o->Light);\n            CreateEffect(MODEL_BIG_STONE2, o->Position, o->Angle, o->Light);\n        }\n        PlayBuffer(SOUND_BONE2, o);\n    }\n\nThe model is switched off and sixteen big stones are thrown out of the space it stood in - one of each shape on every pass - with the skeleton's own clatter. The shared birth scatters each over (±64, ±64, 0-180) units before the ballistic arm takes it, which no other piece in that arm gets. See client/core/Bones.cs's Crumble and assets/effects/bigstone.",
+  "effects_from": "None on the animation. MODEL_STONE_GOLEM appears in ZzzCharacter.cpp in CreateMonster and in CharacterDie - the burst above - and in no RenderCharacter or MoveCharacterVisual case.",
+  "sounds_from": "Five files loaded, four of them heard. `case MONSTER_MODEL_STONE_GOLEM` loads mGolem1, mGolem2, mGolemAttack1, mGolemAttack2 and mGolemDie and calls SetMonsterSound(MODEL_MONSTER01 + Type, 100, 101, 102, 103, 104) - 310 to 314. Sounds[4], mGolemDie, is played on the death action's first key, and CharacterDie never sets the death action on a golem: it sets Live = false and plays SOUND_BONE2 instead. So stonegolem_die is mBone2.wav, as skeletonwarrior_die is, and mGolemDie is not copied into assets/sounds at all: MU loads it and nothing plays it, and a file nothing plays is not worth shipping.",
+  "islands_from": "20 islands, found by the build - the boulders are unwelded from one another, which is what a body of loose rocks is - and every one of them arrived as skin, the monster profile's default and the trap Spider01 records. All rock: there is one sheet and one material painted on it.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 80,
+      "area": 51286.4,
+      "along": [
+        -60.0,
+        37.1
+      ],
+      "mu_uv": [
+        -0.507,
+        -0.526,
+        1.376,
+        1.018
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.575,
+        0.33
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 15980.3,
+      "along": [
+        -1.4,
+        61.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.324,
+        0.014,
+        0.838,
+        0.941
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 20,
+      "area": 15980.4,
+      "along": [
+        -3.7,
+        65.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.142,
+        0.268,
+        0.613,
+        0.941
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 20,
+      "area": 14547.3,
+      "along": [
+        28.8,
+        99.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.417,
+        0.11,
+        0.838,
+        0.941
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 20,
+      "area": 14547.2,
+      "along": [
+        29.1,
+        104.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.738,
+        0.941
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 20,
+      "area": 22889.9,
+      "along": [
+        -18.7,
+        67.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.101,
+        0.206,
+        0.838,
+        0.941
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 20,
+      "area": 17831.5,
+      "along": [
+        -3.4,
+        83.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.189,
+        0.014,
+        0.901,
+        0.941
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 20,
+      "area": 18803.7,
+      "along": [
+        -76.9,
+        -6.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.11,
+        0.901,
+        0.941
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 20,
+      "area": 22889.9,
+      "along": [
+        -7.5,
+        85.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.318,
+        0.014,
+        0.986,
+        0.769
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 20,
+      "area": 17831.4,
+      "along": [
+        -8.7,
+        82.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.318,
+        0.014,
+        0.986,
+        0.695
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 20,
+      "area": 11078.8,
+      "along": [
+        -52.2,
+        15.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.986,
+        0.856
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 20,
+      "area": 15219.8,
+      "along": [
+        -83.0,
+        15.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.091,
+        0.092,
+        0.986,
+        0.856
+      ]
+    },
+    {
+      "island": 12,
+      "material": "rock",
+      "triangles": 20,
+      "area": 11078.8,
+      "along": [
+        -36.7,
+        36.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.087,
+        0.986,
+        0.695
+      ]
+    },
+    {
+      "island": 13,
+      "material": "rock",
+      "triangles": 20,
+      "area": 15219.8,
+      "along": [
+        -40.3,
+        58.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.113,
+        0.014,
+        0.986,
+        0.756
+      ]
+    },
+    {
+      "island": 14,
+      "material": "rock",
+      "triangles": 20,
+      "area": 16029.4,
+      "along": [
+        -71.7,
+        13.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.168,
+        0.326,
+        0.986,
+        0.856
+      ]
+    },
+    {
+      "island": 15,
+      "material": "rock",
+      "triangles": 20,
+      "area": 13139.0,
+      "along": [
+        -76.5,
+        0.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.405,
+        0.986,
+        0.975
+      ]
+    },
+    {
+      "island": 16,
+      "material": "rock",
+      "triangles": 20,
+      "area": 16029.4,
+      "along": [
+        -67.8,
+        20.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.076,
+        0.101,
+        0.986,
+        0.975
+      ]
+    },
+    {
+      "island": 17,
+      "material": "rock",
+      "triangles": 20,
+      "area": 13139.0,
+      "along": [
+        -33.8,
+        29.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.014,
+        0.188,
+        0.986,
+        0.975
+      ]
+    },
+    {
+      "island": 18,
+      "material": "rock",
+      "triangles": 20,
+      "area": 12505.8,
+      "along": [
+        17.4,
+        71.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.101,
+        0.014,
+        0.986,
+        0.975
+      ]
+    },
+    {
+      "island": 19,
+      "material": "rock",
+      "triangles": 20,
+      "area": 13381.8,
+      "along": [
+        37.3,
+        113.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.189,
+        0.11,
+        0.986,
+        0.975
+      ]
+    }
+  ]
+}

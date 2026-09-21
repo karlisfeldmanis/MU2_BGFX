@@ -1,0 +1,209 @@
+{
+  "item": "Wizard01",
+  "mu_name": "Wizard01",
+  "mu_name_from": "NPC/Wizard01.bmd \u2014 Pasi the Mage, type 254 in remaster_one's table.",
+  "world": "lorencia",
+  "object_type": -1,
+  "why_this_one": "The second of the single-file NPCs: 495 triangles, three sheets, an eleven-key idle. Between them he and the smith prove the path without needing the character assembly the merchants want.",
+  "profile": "npc",
+  "sheets": {
+    "science": "science.png",
+    "science02": "science02.png",
+    "guard_hair": "guard_hair.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model.",
+  "sheet_materials": {
+    "science": "skin",
+    "science02": "skin",
+    "guard_hair": "skin"
+  },
+  "cutout": [
+    "science02",
+    "guard_hair"
+  ],
+  "cutout_from": "Both are .OZT rather than .OZJ, which is MU saying the sheet carries an alpha channel. Hair is a shape made of alpha in every game that has ever drawn it, and science02 is the trim on his robe.",
+  "cutout_at": {
+    "guard_hair": 0.1
+  },
+  "cutout_at_from": "His hair is painted almost entirely in soft alpha \u2014 0.2% of the sheet is fully solid and the mean is 48 out of 255 \u2014 so an alpha test at the usual half throws away all but a speckle, and what renders is confetti scattered round his head rather than hair.\n\nA tenth passes the shape MU painted. The alternative was to draw it blended, which is what the softness suggests, and it is the wrong answer for a thing that hangs on a head: blended, it needs sorting against itself and against the robe behind it, and it is wrong wherever two strands cross. Alpha-tested at a threshold that suits the sheet keeps the shape and keeps it out of the transparency pass.\n\nDeclared per slot rather than measured off the sheet, because a faint sheet might be faint because it is hair or because it is grime on a window, and those want opposite answers.",
+  "sheet_materials_from": "Skin wherever the sheet carries flesh, and that is most of them. MU paints a townsperson's face on the same page as his clothes, so the material chosen for the clothes is also the material on the face \u2014 and cloth declares a weave along u at scale 140, which put fabric grain down Amy's cheek. skin declares no grain, which is the safe way to be wrong: a dress missing a weave nobody could resolve at 128 pixels costs nothing.\n\nWhat is plainly not flesh keeps its own material: the smith's forge is lamplight, his anvil is rock, the vault keeper's plate is steel and his chest is timber.",
+  "islands_from": "Reassigned when the sheets moved from cloth to skin. The islands are what the bake actually reads \u2014 sheet_materials names a material per sheet, and an island is a piece of geometry, so the two are not the same list and the second one wins. Changing only the sheets left every one of these still baking cloth's weave, which is the striping that ran down Amy's face.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 2,
+      "area": 1095.9,
+      "along": [
+        -18.2,
+        7.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.271,
+        0.255,
+        0.517
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 2,
+      "area": 1095.9,
+      "along": [
+        -18.1,
+        7.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.255,
+        0.255
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 414,
+      "area": 36469.6,
+      "along": [
+        -64.3,
+        41.5
+      ],
+      "mu_uv": [
+        0.002,
+        0.001,
+        1.001,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.533,
+        0.72,
+        0.992
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 31,
+      "area": 243.5,
+      "along": [
+        8.9,
+        17.2
+      ],
+      "mu_uv": [
+        0.692,
+        0.798,
+        0.811,
+        0.914
+      ],
+      "bake_uv": [
+        0.137,
+        0.936,
+        0.166,
+        0.965
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 12,
+      "area": 1090.4,
+      "along": [
+        -37.5,
+        -6.8
+      ],
+      "mu_uv": [
+        0.538,
+        0.011,
+        0.807,
+        0.155
+      ],
+      "bake_uv": [
+        0.218,
+        0.791,
+        0.707,
+        0.954
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 10,
+      "area": 570.7,
+      "along": [
+        -9.0,
+        20.5
+      ],
+      "mu_uv": [
+        0.557,
+        0.038,
+        0.994,
+        0.137
+      ],
+      "bake_uv": [
+        0.242,
+        0.568,
+        0.707,
+        0.952
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 12,
+      "area": 2023.4,
+      "along": [
+        -18.1,
+        33.3
+      ],
+      "mu_uv": [
+        0.025,
+        0.018,
+        0.959,
+        0.978
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.968,
+        0.963
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 12,
+      "area": 2028.8,
+      "along": [
+        -41.6,
+        14.6
+      ],
+      "mu_uv": [
+        0.025,
+        0.018,
+        0.951,
+        0.978
+      ],
+      "bake_uv": [
+        0.271,
+        0.008,
+        0.956,
+        0.966
+      ]
+    }
+  ]
+}

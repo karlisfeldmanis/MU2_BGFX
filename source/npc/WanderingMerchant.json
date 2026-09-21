@@ -1,0 +1,13 @@
+{
+  "item": "WanderingMerchant",
+  "mu_name": "Wandering Merchant",
+  "kind": "character",
+  "parts": [
+    "ManHead01",
+    "ManUpper01",
+    "ManGloves01",
+    "ManBoots01"
+  ],
+  "note": "The wandering merchant, who stands at both ends of the town \u2014 Martin outside the west gate and Harold at the campfire east of it. Four pieces on a 43-bone rig, all four on one sheet.",
+  "parts_from": "remaster_one's NpcManager loads Man01.bmd with these pieces on it. The base carries the skeleton and the idle; the pieces carry the meshes."
+}

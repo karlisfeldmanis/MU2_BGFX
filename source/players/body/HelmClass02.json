@@ -1,0 +1,70 @@
+{
+  "item": "HelmClass02",
+  "mu_name": "Dark Knight head",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}, numbered one over MU's zero-based classes. Class01 is the Dark Wizard, Class02 the Dark Knight, Class03 the Elf.",
+  "part_note": "The head, and the one part of a character a player looks at directly. 119 triangles.",
+  "rebind": {
+    "Bip01 Spine1": "Bip01 Head"
+  },
+  "rebind_from": "MU's own binding, and the one thing about this part that is repaired rather than carried. HelmClass02.bmd puts 79 vertices on Bip01 Head and 7 on Bip01 Spine1, and MU binds rigidly - one bone per vertex, no weights - so twelve of the 119 triangles span the two bones. That ring sits at the base of the neck.\n\nThe head turns a long way from the chest in MU's own poses. Composed through the bone chain, Bip01 Head against Bip01 Spine1 is 5.5 degrees in the standing idle, 20 in the sword stance, 26 in the crossbow stance, 43 in action 10 and 56 in action 5. The ring is wrung by that much with nothing to spread it over, so the head sits askew on the neck and turns against it - which is what 'the head rotates the other way' turned out to be.\n\nIt is read as an oversight because the plate helm over the same skull does not do it: HelmMale10 puts every one of its vertices on Bip01 Head and has no seam at all. Same rig, same head, one part bound through and the other left half done - the Plate gauntlet's case again, which is what mirror_binding exists for.\n\nNothing opens up at the collar. The seven vertices sit at Y 1.540 to 1.591 and the bare torso's own top edge is 1.593, so they were inside it before and are inside it after; what changes is only that they now turn with the head they belong to. Declared here rather than detected, because a part split across two bones is usually right: a jaw belongs to the head and a collar to the chest, and only the asset knows which it is looking at.",
+  "profile": "armour",
+  "sheets": {
+    "skin_wizard_01": "skin_wizard_01.png"
+  },
+  "sheet_from": "Data/Player/skin_wizard_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
+  "sheet_warning": "The sheet name says nothing about which class wears it. The Dark Knight's body is painted on skin_wizard_01 and the Dark Wizard's on skin_barbarian_01 - the old client records this explicitly, because loading the wrong set is not a texture fault but the wrong character. There is a skin_warrior_01 already in this tree and it is not this one.",
+  "sheet_note": "find_source found one other copy, remaster_one's Data/Player at 512x512 and exactly 2x. That is the directory that was upscaled in place, so MuMain's is the art.",
+  "material_note": "Flesh is skin, hair is hair, and the second of those is new.\n\nRead off the sheet by cropping each island at its own mu_uv - with V flipped, which is what makes the difference between reading the head island as a face and reading it as a brown smear two thirds of the way down the sheet.\n\nThe hair island had been left on the armour profile's default and came through as plate_steel. That is metallic 1.0 on a person's head: not a highlight that is too strong but a mirror, taking a white streak from the sun and an orange one from the ground. The library had no hair in it because skin.json had recorded that the mesh does not separate hair from face - which is true of the sheet and not of this model. It separates them, and cleanly.",
+  "open_question": "Several islands elsewhere on this body are two to five triangles and land on near-black or on the sheet's empty blue, and at 256x256 across a whole body they cannot be told apart by looking. They default to skin, which is the body's dominant material and the safe way to be wrong: a few dark texels rendered as flesh is invisible, where a bare chest rendered as plate is a chrome statue.\n\nThe head is the warning about how that goes wrong at the other end. Two islands, both large, and the smaller one silently kept the armour profile's default all the way into the town. What caught it was looking at the head in the engine, which is what this note already said to do.",
+  "cull": false,
+  "cull_from": "ZzzOpenglUtil.cpp: the client calls glEnable(GL_CULL_FACE) at the top of every frame and only EnableAlphaTest and EnableAlphaBlend turn it off again, so MU culls opaque geometry and spares its cut-outs. True of the client, and the wrong thing to do to this part - see below.",
+  "cull_note": "Tried, and taken back out. This is the one asset in the tree that ever asked for culling, and it is the one that must not have it.\n\nThe argument for it was a real fault: the head is a closed skull with hair fins standing off it, and drawn two-sided you look at the back of it and see the inside of the face through the gaps between the fins - a pale wedge across the crown with the neck's tan under it. Culling removed that, and introduced something far worse.\n\nMU's hair is flat single-sided fins. A culled fin does not turn away from you, it *vanishes*, so orbiting the head made spikes wink in and out and the silhouette jump between frames. What that looks like is not a shading fault - it reads as the head itself moving. It was reported as the head rotating on its own, rotating the opposite way to the body, rotating vertically when the camera pitched, and following the camera, and every one of those is the same popping silhouette read as motion. It showed only on the naked body because HelmClass02 was the only asset carrying the flag, and only on the head for the same reason.\n\nFound by orbiting the head alone on the Objects tab with MU's face swapped for a checker: the geometry orbits perfectly, so nothing was rotating. The bone was measured at 6 degrees from the chest in the live engine, the mesh sits correctly in that bone's frame, the inverse binds are exact, and part order makes no difference - all of it clean, because the fault was never in the transform.\n\nThe right answer if the crown wedge ever needs fixing is per-material: the skull is a closed solid and can cull, the fins are sheets and cannot. glTF carries doubleSided per material and this part already has two, so it is a change to the exporter rather than to the geometry. Two-sided everywhere is the default the other 137 assets use, and it is what ships here.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 93,
+      "area": 1576.8,
+      "along": [
+        -10.3,
+        12.0
+      ],
+      "mu_uv": [
+        0.503,
+        0.754,
+        0.994,
+        0.998
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.998,
+        0.504
+      ],
+      "note": "the face and the back of the head: ninety-three triangles carrying everything the sheet paints as flesh."
+    },
+    {
+      "island": 1,
+      "material": "hair",
+      "triangles": 26,
+      "area": 561.4,
+      "along": [
+        -10.6,
+        15.7
+      ],
+      "mu_uv": [
+        0.505,
+        0.869,
+        0.663,
+        0.989
+      ],
+      "bake_uv": [
+        0.002,
+        0.501,
+        0.321,
+        0.745
+      ],
+      "note": "the hair, and it was plate_steel. Twenty-six triangles sitting over the crown and down the back, sampling the sheet at u 0.505-0.663, v 0.869-0.989 - which cropped is unmistakably hair: near-black with dark strands drawn through it, no metal anywhere in it. Rendered as armour plate it was a black chrome cap with a white specular streak across the top and the ground reflected off the back of the skull."
+    }
+  ]
+}

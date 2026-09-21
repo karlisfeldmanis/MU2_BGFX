@@ -1,0 +1,93 @@
+{
+  "item": "Staff01",
+  "mu_name": "Skull Staff",
+  "mu_name_from": "MuMain loads MODEL_STAFF + i from Staff{i+1}, so Staff01.bmd is staff index 0, which openmu's 0.75 Weapons.cs names the Skull Staff. mu.db agrees: group 5 index 0, Item/Staff01.bmd.",
+  "why_this_one": "Pasi's, and the last four lines he sells. The mage stocks all four staves - the Skull at +0, the Angelic at +2, the Serpent and the Thunder at +3 - and none was built, so four of his nineteen lines were dropped by Realm.Shelf. With these he sells all nineteen. See shared/Market.Mage.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(5, 0, 0, 0, 1, 3, true, \"Skull Staff\", 6, 3, 4, 20, 20, 6, 0, 40, 0, 0, 0, 1, 0, 0)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 5,
+    "number": 0,
+    "drop_level": 6,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "width_note": "Width does not mean two-handed here and cannot: OpenMU's test is `if (group < Bows && width == 2)` and Bows is 4, so nothing in group 5 is ever caught by it. Two-handedness comes from MuWeapons.cs alone, which is the client's own table, and within this group of four it disagrees three times to one.",
+    "height": 3,
+    "minimum_damage": 3,
+    "maximum_damage": 4,
+    "attack_speed": 20,
+    "magic_power": 6,
+    "magic_power_note": "magic_power is the column no weapon built here has carried before. Every sword, axe and bow in the project passes 0 for it and the four staves pass 6, 20, 34 and 46 - it is the wizard's damage, where a blade's is the min and max above. Recorded and unread: shared/Combat.cs rolls physical damage off the weapon row and has no spell in it yet.",
+    "durability": 20,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, on all four."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. The stance enum says why in its own comments - Sword is 'a one-handed sword, mace, or a one-handed staff' and Scythe is 'a scythe, or any two-handed staff or polearm' - so a staff takes the stance its handedness gives it and there is no staff stance. Actions 4 and 17.\n\nThe odd one of the four: the only one-handed staff in the group and therefore the only one that leaves the shield hand free.",
+  "two_handed": false,
+  "sheets": {
+    "wand02": "wand02.png"
+  },
+  "sheet_from": "Data/Item/wand02.OZJ (64x64), from MuMain, and the only sheet the model names - 150 triangles on one page. The .bmd names wand02.jpg. The staff models wear sheets called wand: MU numbered the art for the wands and the staves share it, which is the file naming and not a mismatch.",
+  "sheet_note": "wand02 is a horned gold skull on a fluted gold shaft, drawn large with two smaller views beside it. Mean (131, 109, 74) at chroma 58 - a warm gold, and the skull is gold too rather than bone: it is cast metal in the shape of a skull, which is what the highlights along the brow say.",
+  "material_note": "Two islands and one answer. Island 1 is 96 triangles, the horned skull, and island 0 is 54, the fluted shaft; sampled per triangle at its own UV centre - the reading the polearms taught - they mean (130, 96, 45) and (117, 89, 48) at chroma 85 and 69. That is gold on both, so both take brass.\n\nbrass rather than plate_steel because of what the thing is: a skull and a fluted pole are poured in a mould, not beaten to fit a chest. That is the whole distinction those two files draw, and it is the reading the Brass set's ornaments got. The skull is gold and not bone - the highlights run along the brow the way they run on metal, and bone.json's own dead-white is nowhere on this sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 54,
+      "area": 1879.4,
+      "along": [
+        -60.1,
+        70.8
+      ],
+      "mu_uv": [
+        0.114,
+        0.001,
+        0.975,
+        0.934
+      ],
+      "bake_uv": [
+        0.027,
+        0.007,
+        0.993,
+        0.874
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 96,
+      "area": 1391.8,
+      "along": [
+        61.0,
+        84.2
+      ],
+      "mu_uv": [
+        -0.012,
+        0.003,
+        0.971,
+        1.004
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.812,
+        0.659
+      ]
+    }
+  ]
+}

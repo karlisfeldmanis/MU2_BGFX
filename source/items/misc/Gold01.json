@@ -1,0 +1,50 @@
+{
+  "item": "Gold01",
+  "mu_name": "Zen",
+  "mu_name_from": "The client's constant is MODEL_ZEN and the file on disk is Gold01.bmd, which is the sort of mismatch that only shows up as an empty patch of grass at the moment somebody kills something. RenderZen in ZzzObject.cpp draws a heap of this one model; there is no item called Zen anywhere in Item.txt, because money is not an item.",
+  "profile": "weapon",
+  "profile_note": "The weapon profile rather than a new one, and it is the right fit by measurement rather than by name: the question a profile answers is how to upscale a small painted sheet of a made object seen close, and a coin is that. Its default material is steel, which is overridden per island below - a coin is cast yellow metal, not forged blade.",
+  "stats": {
+    "note": "Not an item's row. Money has no line in Item.txt and nothing here is transcribed from one; what these three fields are is the address the client and every server since have agreed to file Zen under, so that one message can describe both a dropped sword and a dropped purse.",
+    "group": 14,
+    "number": 15,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "drops_from_monsters_note": "False, and not because a monster does not leave money - it leaves money more often than it leaves anything else. The flag gates the *item pool*, and money is not rolled from it: it is the other branch of the drop, decided before the pool is looked at. See Loot.Zen and Realm.Leave. Without the false here it would be in the pool as well and a spider could leave 'a Zen' as though it were a thing.",
+    "why_it_is_in_the_catalogue_at_all": "So the drawing can find the model by the same group and number every other drop is found by. Drops resolves it once at the start of a fight - see MoneyGroup_Number - rather than carrying a special path for the one drop that has no row."
+  },
+  "sheets": {
+    "gold": "gold.png"
+  },
+  "sheet_from": "Data/Item/gold.OZJ at 16x16, out of MuMain. remaster_one's copy is byte-for-byte the same size, so there is no upscaled hallucination to avoid here - unlike pot3 and bow05, whose remaster_one copies are four times the file and were refused.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "why": "The profile's own numbers, unargued, because a sixteen-pixel coin has nothing in it worth a special case. Sixteen square is the smallest sheet in the project after the Spider's legs; at 3x it is forty-eight, and no setting gets more out of it than is there. What the sheet holds is a struck face in yellow with a darker rim, and detail 0.65 is what keeps that reading as relief rather than as four hard-edged rectangles."
+  },
+  "material_note": "One island, the whole sheet, the whole model: a coin is thirty-two triangles of one surface and there is nothing on it to tell apart. Brass rather than the profile's steel, and by the library's own test - the surface differs, not the object. Brass is 'a soft yellow metal that was poured rather than forged, and never polished since', which is a struck coin exactly; steel's 0.32 roughness is a blade's mirror and would give a heap of little mirrors on the grass. No new material was written for this, because there was nothing about the surface that brass did not already say.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 32,
+      "area": 442.7,
+      "along": [
+        -7.8,
+        7.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.997,
+        0.986
+      ]
+    }
+  ]
+}

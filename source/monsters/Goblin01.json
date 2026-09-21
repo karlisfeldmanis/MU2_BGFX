@@ -1,0 +1,49 @@
+{
+  "item": "Goblin01",
+  "mu_name": "Goblin",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_GOBLIN = 26 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_GOBLIN), which is 19. OpenMonsterModel loads Monster{Type + 1:D2}, so the file is Monster20.bmd. OpenMU's Version075 Noria.cs names number 26 'Goblin' at level 3 with 45 health - the first monster outside Lorencia.\n\nThe model is shared three times over: MONSTER_ELITE_GOBLIN (33, Noria's own, at 1.2 with a Morning Star and a Horn Shield), MONSTER_GOLDEN_GOBLIN (an event) and MONSTER_GOBLIN_GATE all open MONSTER_MODEL_GOBLIN. This asset is the plain one.",
+  "world": "noria",
+  "object_type": 26,
+  "monster": {
+    "model_index": 19,
+    "scale": 0.8
+  },
+  "monster_from": "ZzzCharacter.cpp, CreateMonster, case MONSTER_GOBLIN: `c->Weapon[0].Type = MODEL_AXE; c->Object.Scale = 0.8f;`. No BlendMesh, no HiddenMesh, no Level - so no glowing eyes; RenderEye is gated on c->Level == 1 and that is the Elite Goblin's.",
+  "right_hand": "Axe01",
+  "right_hand_bone": "knife",
+  "right_hand_from": "MODEL_AXE is MODEL_ITEM + ITEM_AXE, index 0 of the axe group, which is Item/Axe01.bmd, the Small Axe - already built. The bone is CreateCharacter's weapon switch: `case MODEL_GOBLIN: c->Weapon[0].LinkBone = 31; c->Weapon[1].LinkBone = 22;`.\n\nBone 31 on this rig is called knife and is a child of Bip01 R Hand; bone 22 is shield, under Bip01 L Hand. Unlike the Bull Fighter and the Hound, the names are the right way round. Nothing hangs off 22 on the plain Goblin - Weapon[1] is the Elite's Horn Shield.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - out of the twelve-slot layout in actions.json; Monster20.bmd stops there, like every Lorencia monster so far. The walk is the one locked action, as it should be. 45 bones; bone 6 is Bip01 Head, which ZzzOpenData records as BoneHead for this model.\n\nPlay speeds are OpenMonsterModel's: the shared defaults, no multiplier (19 is not in the 3, 5, 25, 37, 42 list), and `case MONSTER_MODEL_GOBLIN: b->Actions[MONSTER01_WALK].PlaySpeed = 0.6f` - so a Goblin's legs go nearly twice as fast as a Hound's for the same stride.",
+  "sheets": {
+    "ob2": "goblin_ob2.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/ob2.OZJ, a 128-square with no alpha - byte-identical (md5) to the copy under LEGACY's old build, so MuMain's is the art. Decoded under a goblin_ prefix because ob2 is exactly the kind of name another folder reuses: Noria's Object4 already has an ob3, and so does Data/NPC, which is the Chaos Goblin's hide.\n\nThe Chaos Goblin (MixNpc01) is 376 triangles on ob3 and this is 376 triangles on ob2: the same mesh in a different skin, the purple keeper and the green brute.",
+  "sheet_materials": {
+    "ob2": "skin"
+  },
+  "sheet_materials_from": "Read off the sheet, magnified: a green hide with the muscle painted in, a tan loincloth hanging off the hips, and the head and a clawed hand in the corners. skin, the Chaos Goblin's material for the same mesh; the loincloth is a few texels inside the one island and goes with it.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 376,
+      "area": 20879.4,
+      "along": [
+        -25.8,
+        55.6
+      ],
+      "mu_uv": [
+        0.006,
+        0.004,
+        0.989,
+        1.004
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.769
+      ]
+    }
+  ]
+}

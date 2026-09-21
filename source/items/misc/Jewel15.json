@@ -1,0 +1,72 @@
+{
+  "item": "Jewel15",
+  "mu_name": "Jewel of Chaos",
+  "mu_name_from": "Not part of the Jewel01/02 run - it is loaded on its own line, ZzzOpenData.cpp line 1050: `AccessModel(MODEL_JEWEL_OF_CHAOS, L\"Data\\\\Item\\\\\", L\"Jewel\", 15)`, so Jewel15.bmd. _enum.h puts it in the other group entirely - `MODEL_JEWEL_OF_CHAOS = MODEL_WING + 15` - which agrees with OpenMU's 0.75 Jewels.cs: group 12, number 15. The file is named Jewel and the group is the wings'.",
+  "why_this_one": "The one jewel a character can actually find in Lorencia, and the third the Chaos Machine asks for.\n\nIts drop level is 12, so the Elite Bull Fighter at 12, the Lich at 14, the Giant at 17 and the Skeleton Warrior at 19 can each leave one - and since the other two jewels start at 25 and 30, the Chaos is the *only* member of the pool at those levels, so every jewel roll on those four breeds yields this. One kill in a thousand, from the four things in the town worth fighting. That is the whole of the jewel economy before a second map, and it is the table's shape rather than a choice made here.\n\nIt is also the row that makes Prize.MaximumDropLevel necessary. It is the only row in the entire 0.75 table with a ceiling, and shared/Loot.cs said so while explaining why the column was not carried - 'in 0.75 only the Jewel of Chaos has one, and it does not fall from monsters'. The second half of that turned out to be wrong, so the column is carried now.",
+  "profile": "weapon",
+  "profile_note": "As Jewel01 and Jewel02.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Jewels.cs, CreateJewelOfChaos.",
+    "call": "itemDefinition.Name = \"Jewel of Chaos\"; Number = 15; Group = 12; DropsFromMonsters = false; DropLevel = 12; MaximumDropLevel = 66; Durability = 1; Width = 1; Height = 1; AddItemToJewelItemDrop(itemDefinition)",
+    "call_note": "Two differences from the other two beyond the group and the number, and both are real. It sets MaximumDropLevel, which nothing else in the 0.75 table does. And it sets no Value at all, where the Bless and the Soul each set 150 - so the definition's Value is left at its default and the row is worth nothing at a merchant. Transcribed as it stands rather than filled in.",
+    "group": 12,
+    "number": 15,
+    "drop_level": 12,
+    "maximum_drop_level": 66,
+    "drops_from_monsters": false,
+    "jewel": true,
+    "drop_level_note": "Twelve up to sixty-six. The floor is what lets Lorencia's top four breeds leave one; the ceiling is what takes it back out again once monsters are past 66, leaving the Bless and the Soul as the whole pool from there on. Both halves are CanDropAtMonsterLevel, and neither the gap nor anything else applies - the jewel branch skips the twelve-level window every other drop is bounded by. See Loot.Jewels and Loot.Reaches.\n\nSixty-six is not a round number and is not derived from anything else in the table; it is the value on the definition and it is transcribed.",
+    "flag_note": "As the other two. False keeps it out of the 30% random-item pool - where drop level 12 would otherwise make it common in Lorencia - and says nothing about the 0.1% group, which is where it actually falls. See Prize.Jewel.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "value_note": "Not set by the initialiser and so nought, unlike the Bless and the Soul at 150. Left as the reference leaves it.",
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes_note": "None named, so everybody may hold it."
+  },
+  "refinement_note": "No plus. Group 12 is above Prize.TakesRefinement's ceiling of eleven - the same test that answers for the Orb of Summoning, which shares this group and is the one row where the rule is recorded as an exception. See Gem05.",
+  "stacking_note": "Stacked in MU by counting in durability. Not built here; the Chaos Machine is what will need it, and only one Chaos is spent per mix.",
+  "sheets": {
+    "yellow_jewel": "yellow_jewel.png"
+  },
+  "sheet_from": "Data/Item/yellow_jewel.OZJ, from MuMain's own bin/Data. Jewel15.bmd names yellow_jewel.jpg and all thirty-two of its triangles are on it.",
+  "sheet_note": "Eight pixels square like the other two, and the only one of the three that is a real painting rather than a pinned channel. The Bless and the Soul are one greyscale ramp with blue or red held at the ceiling; this one runs from (1,1,1) in the top-left corner to (244,210,61) at its brightest, with the hue turning from a red-brown through gold - so it has a light direction in it, and the highlight sits up and left of centre rather than radially.\n\nIt is also the most faceted of the three at 32 triangles against 22 and 12, which is the right way round: the Chaos is the one a player sees, since it is the only jewel anything in Lorencia leaves.\n\nEight texels square is still eight texels square. There is nothing here for a model pass to resolve - see Jewel01's note - and what makes it read as a gem is the facets catching the ramp.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ, and the mesh is a closed solid. Nothing to cut.",
+  "flat_shaded": true,
+  "flat_shaded_why": "As Jewel01: all 96 corners at 0.0 degrees from their faces in MU's own .obj, averaged to 37.3 degrees by the weld - the worst of the three, with 16 of its 18 positions coming out fully smoothed. See renormal.",
+  "material_note": "glass, over the weapon profile's default of steel. Metallic 0 and roughness 0.12 with no grain at all, and each of the three clauses is doing work here.\n\nMetallic 0 because a gem is a dielectric: it keeps its own colour under a white highlight, where metallic 1 tints the highlight with the albedo and gives a coloured ball bearing. Steel's f0 pull was also dragging MU's 8x8 ramp toward its own 0.56 reflectance, which is what made all three read as machined rather than cut.\n\nNo grain because that is the whole point of a facet. steel declares a brushed grain at scale 520, and on a 32-triangle solid that is what the horizontal streaking across every face was - a relief map ridging a surface that is optically flat by definition. It also fights the flat_shaded fix directly: there is no sense in restoring a hard edge between facets and then rippling the facets.\n\nglass rather than a new gem material, on glass's own naming argument: it is named for the surface and not the object, and 'a window pane, a bottle and a crystal ball are one surface'. A cut gem is that surface. Roughness 0.12 was settled against the orb, which is the same polished dielectric; if these want it tighter the lever is an override on the asset, not a move in the library.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 32,
+      "area": 1193.7,
+      "along": [
+        -5.6,
+        5.7
+      ],
+      "mu_uv": [
+        0.282,
+        0.018,
+        1.158,
+        0.954
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.988,
+        0.993
+      ]
+    }
+  ],
+  "upright": true,
+  "upright_from": "RenderObjectScreen keeps an angle per model and shows the jewels as authored, point down and point up - a jewel in a cell in MU is a diamond, never a lozenge on its side. Declared with the other two, for the same reason: an octahedron's tallest axis is a margin, not a fact."
+}

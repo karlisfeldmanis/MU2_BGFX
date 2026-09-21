@@ -1,0 +1,34 @@
+{
+  "profile": "npc",
+  "summary": "The people standing in the town: merchants, guards, the blacksmith. Cloth, skin and leather on a figure seen from a few metres.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "pad": "edge"
+  },
+  "enlarge": 2,
+  "default_material": "skin",
+  "why": [
+    "A new profile rather than borrowing one, because an NPC is not quite either of the two",
+    "it sits between.",
+    "It is not world. Scenery is tiling art on large flat faces seen at a distance, upscaled",
+    "with the drawn model at full strength and padded by wrapping; an NPC's sheet is a figure",
+    "laid out on a page, does not tile, and wraps into nonsense at its edges.",
+    "It is not armour either, though it is close and shares its numbers. What differs is the",
+    "default material: an unnamed slot on a worn part is plate steel, because a worn part that",
+    "did not say is almost always armour. An unnamed slot on a townsperson is skin, because",
+    "a townsperson's sheet almost always carries a face - and getting that wrong makes a",
+    "barmaid's cheek a woven fabric.",
+    "The detail at 0.65 is armour's and is the point of the whole profile. These are painted",
+    "figures looked at from a few metres, where the drawn model at full strength turns folds",
+    "in cloth into hard-edged rectangles; the same setting protects a sword hilt for the same",
+    "reason.",
+    "Skin rather than cloth, and the reason is grain. cloth declares a weave along u at scale",
+    "140, which is right for a banner and wrong for a person: MU paints a townsperson's face",
+    "and her dress on one 128-pixel sheet, so a material chosen for the dress is also the",
+    "material on the face. Amy came out with fabric weave running down her cheek.",
+    "skin declares no grain at all, which is the safe way to be wrong here. A dress that has",
+    "lost a weave nobody could resolve at this size costs nothing; a face wearing one is the",
+    "first thing anybody notices."
+  ]
+}

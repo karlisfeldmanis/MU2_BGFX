@@ -1,0 +1,66 @@
+{
+  "item": "Shield03",
+  "mu_name": "Kite Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield03.bmd is shield index 2, which openmu's 0.75 Armors.cs names the Kite Shield. mu.db agrees: group 6 index 2, Item/Shield03.bmd.",
+  "why_this_one": "Hanzo's, and the blacksmith is the last shop with lines missing - five of his twenty-four were built this morning. He stocks twelve shields and two were here; these five take him to seven of the twelve, in the order his shelf reads. See shared/Market.Blacksmith.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the two built shields use, and its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10, which records the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(2, 1, 0, 2, 2, \"Kite Shield\", 12, 4, 12, 32, 110, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 2,
+    "drop_level": 12,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 4,
+    "defense_rate": 12,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "durability": 32,
+    "requires": {
+      "level": 0,
+      "strength": 110,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": {
+    "shield02": "shield02.png"
+  },
+  "sheet_from": "Data/Item/shield02.OZJ (64x64), from MuMain. The .bmd names shield02.jpg; 24 triangles.",
+  "sheet_note": "shield02 is the only heraldic thing in the project: a gold field with a red beast on it, a thin teal border and red studs at the corners. The beast is bilaterally symmetric - a horned head, two arms spread wide, two legs splayed below, a green claw at the end of each limb - which is what rules out the lion rampant it keeps being read as, since a lion rampant is drawn in profile. It was called a cross here until 2026-09-05, and both a person and a vision model misread it as a lion before the zoom settled it; at 48 texels across it is genuinely ambiguous art, and the symmetry is the only part that is not. Chroma 121 at lum 123, which is more saturated than any other item built - the Thunder Staff is 70 and the Brass set's ornament 100 - because it is paint rather than metal.",
+  "material_note": "One island of 24, and it took four tries. Per triangle it means (82, 63, 18) at chroma 74 and the sheet as a whole is chroma 121 - a gold field, a red beast, a teal border. That is paint.\n\nNot metallic, first: a metal's albedo is its reflectance, so a red charge at metallic 1.0 becomes red metal, and no metal is red. That rules out plate_steel, which every other shield here takes.\n\nNot painted_steel, second. That file is right in everything but its grain - dielectric, glossy, written for MU painting a highlight rather than measuring a reflectance - and its grain is brushed along v, which drew hard vertical bands the whole height of the shield. It is the fourth time a directional grain has striped a broad surface; painted_steel keeps it because its other wearer is a carriage's ironwork, which is bars.\n\nNot ceramic, third, and this one shipped before it was caught. The isotropic grain and the dielectric were right and the roughness was not: 0.30 is a glaze, the glossiest surface on any shield here against every other shield's 0.72, and on a curved face a lobe that tight leaves nothing where it does not point. The sides went black. Rendering it unshaded settled where the fault was - MU's paint is bright gold to the very edge, so the darkness was the lighting rather than the art - and scaling the roughness alone brought the border back.\n\nleather, fourth, at 0.74. It keeps what ceramic had right, a dielectric with isotropic pitting, and drops the glaze. It is also what the thing is: a kite shield is a board faced with hide and painted, which is the same claim leather.json makes about a boot.\n\nWhat is left dark is the far edge, and that is this renderer rather than this material. MU lights nothing directionally - every surface is its own albedo times the terrain light - so a face turned from the sun is not dark in MU and is here. See client/core/Studio.cs, which argues that departure at length.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 24,
+      "area": 7979.2,
+      "along": [
+        -27.7,
+        28.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ]
+}

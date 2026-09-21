@@ -1,0 +1,212 @@
+{
+  "item": "Spear03",
+  "mu_name": "Dragon Lance",
+  "mu_name_from": "MuProtocol/Items.cs and the old client's MuWeapons.cs:189 both name spear group index 2 the Dragon Lance against Item/Spear03.bmd.",
+  "why_this_one": "The Battle Axe proved a stance could be the weapon's to choose; this is the weapon that proves the table has more than one row in it. The spear stance is the narrowest in the game - MuWeapons.cs gives WeaponStance.Spear to exactly two items, this and the plain Spear, while every other polearm in the group takes the scythe - so it is the stance that would otherwise never be reached, and the Lance is the Knight's own.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, which is what decides the damage, the swing rate and who is allowed to hold it. Copied from OpenMU's 0.75 initialiser rather than restated, so the call it came from is written out beside it and the two can be read against each other in one glance.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, not Season 6's - the two agree on this row and disagree on others, and 0.75 is the version this server is being built to.",
+    "call": "CreateWeapon(3, 2, 0, 0, 2, 4, true, \"Dragon Lance\", 15, 21, 33, 30, 34, 0, 0, 70, 50, 0, 0, 0, 1, 1)",
+    "group": 3,
+    "number": 2,
+    "drop_level": 15,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above and were being read past: the bool before the name is dropsFromMonsters and the int after it is the drop level. They are lifted out here because the loot pool is now the built catalogue gated by this number - see shared/Loot.cs. Arrows, bolts and scrolls are shop stock in the original and fall from nothing, which is what the flag says and why a spider cannot leave a quiver.",
+    "slot": 0,
+    "width": 2,
+    "width_note": "width is carried because it is where OpenMU keeps two-handedness: `if (group < Bows && width == 2)` sets IsTwoHandedWeaponEquipped. It is not read as the two_handed flag above - that one is the client's, out of MuWeapons.cs - but the two must agree, and a row where they do not is a transcription error caught for free.",
+    "height": 4,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 21,
+    "maximum_damage": 33,
+    "attack_speed": 30,
+    "attack_speed_note": "attack_speed is a stat and not a rate. OpenMU adds it whole to the character's AttackSpeed - `AttackSpeed += 1 * AttackSpeedByWeapon` in CharacterClassInitialization - and the client then spends that as `PlaySpeed = base + AttackSpeed * 0.004` on the attack action. So a weapon makes its own animation run faster, and the swing rate follows from the animation. The Kris at 50 is more than twice the Small Axe at 20 and it is visible in the arm.",
+    "durability": 34,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ]
+  },
+  "stance": "spear",
+  "stance_from": "MuWeapons.cs:189, WeaponStance.Spear. The rule behind it is the client's own, in ZzzCharacter.cpp: the named Spear and Dragon Lance take the spear stance and the rest of that group takes the scythe, which is not something the file name or the group number would tell you. MuStances.For maps it to actions 6 and 19.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs:189, TwoHanded: true. As with the Battle Axe it is a fact recorded beside the stance rather than derived from it.",
+  "sheets": {
+    "Javelins01": "javelins01.png"
+  },
+  "sheet_from": "Data/Item/Javelins01.OZJ (32x32), from MuMain. The .bmd names Javelins01.jpg.",
+  "sheet_note": "remaster_one's copy is 64x64, exactly 2x, which is the upscale signature the Battle Axe's sheet had too. MuMain's is the art.",
+  "material_note": "Brass end to end, which is not a shortcut but what the sheet and the islands together leave. Every triangle on this model samples the amber half of Javelins01 - the tip included - and the steel band along the top of that sheet is touched by nothing, because Javelins01 is shared with the rest of the spear group and this is the gilt one. Verified by sampling the sheet at each triangle's own UV centre rather than by reading island bounding boxes, which is what first suggested a steel point that is not there.",
+  "open_question": "The largest island is the vamplate and the shaft together - twenty-four triangles of riveted disc and six of pole, in one UV island - so even where the shaft could be argued to be varnished timber rather than gilt, there is no way to say so. This is the Battle Axe's open question again and worse: there the island lumped two finishes of the same metal, here it lumps two different things.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 6,
+      "area": 593.2,
+      "along": [
+        11.7,
+        11.7
+      ],
+      "mu_uv": [
+        0.354,
+        -0.007,
+        0.983,
+        0.679
+      ],
+      "bake_uv": [
+        0.511,
+        0.438,
+        0.995,
+        0.997
+      ],
+      "note": "the vamplate's inner face, flat at one height on the shaft: the gold disc with dark rivets round it."
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 30,
+      "area": 3217.9,
+      "along": [
+        11.7,
+        201.9
+      ],
+      "mu_uv": [
+        0.005,
+        -0.007,
+        0.983,
+        0.858
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.594,
+        0.686
+      ],
+      "note": "the vamplate and the shaft, which the unwrap made one island. Twenty-four triangles of riveted disc and six long ones running from the grip to the point, and the disc is what settles the material for both."
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 2,
+      "area": 6.6,
+      "along": [
+        -28.0,
+        -28.0
+      ],
+      "mu_uv": [
+        0.992,
+        0.692,
+        0.992,
+        0.799
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.035,
+        0.035
+      ],
+      "note": "a butt fitting, sampling the darker amber at the right edge of the sheet."
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 2,
+      "area": 102.6,
+      "along": [
+        -28.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.719,
+        0.692,
+        0.992,
+        0.799
+      ],
+      "bake_uv": [
+        0.375,
+        0.005,
+        0.901,
+        0.038
+      ],
+      "note": "a butt fitting."
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 2,
+      "area": 102.6,
+      "along": [
+        -28.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.719,
+        0.692,
+        0.992,
+        0.799
+      ],
+      "bake_uv": [
+        0.004,
+        0.877,
+        0.529,
+        0.91
+      ],
+      "note": "a butt fitting."
+    },
+    {
+      "island": 5,
+      "material": "brass",
+      "triangles": 2,
+      "area": 102.6,
+      "along": [
+        -28.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.719,
+        0.692,
+        0.992,
+        0.797
+      ],
+      "bake_uv": [
+        0.917,
+        0.004,
+        0.951,
+        0.524
+      ],
+      "note": "a butt fitting. Five of these, two triangles each, all off the same few texels - MU's cheapest way to build a collar."
+    },
+    {
+      "island": 6,
+      "material": "brass",
+      "triangles": 2,
+      "area": 102.6,
+      "along": [
+        -28.0,
+        12.0
+      ],
+      "mu_uv": [
+        0.719,
+        0.692,
+        0.992,
+        0.797
+      ],
+      "bake_uv": [
+        0.004,
+        0.917,
+        0.524,
+        0.951
+      ],
+      "note": "a butt fitting. Five of these, two triangles each, all off the same few texels - MU's cheapest way to build a collar."
+    }
+  ]
+}

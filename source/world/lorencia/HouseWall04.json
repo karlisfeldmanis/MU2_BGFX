@@ -1,0 +1,111 @@
+{
+  "item": "HouseWall04",
+  "mu_name": "HouseWall04",
+  "mu_name_from": "Lorencia's object slot 124, from the client's own table in WorldObjectCatalog.cs. MU names the run rather than the member, so there is no friendlier name than the file's.",
+  "world": "lorencia",
+  "object_type": 124,
+  "why_this_one": "8 placements. HouseWall01's parts in another arrangement.",
+  "profile": "world",
+  "sheets": {
+    "tile_wood01": "tile_wood01.png",
+    "tile_wood02": "tile_wood02.png",
+    "tile_ston04": "tile_ston04.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. All opaque .OZJ.",
+  "sheet_materials": {
+    "tile_wood01": "timber",
+    "tile_wood02": "timber",
+    "tile_ston04": "plaster"
+  },
+  "sheet_scale_from": "How many times a sheet crosses the face it is on. MU's UVs put exactly one copy across, which was right for a 128-pixel painting of a whole wall and is wrong for a photograph of two metres of real stone: stretched over a whole wall it reads as a few enormous blotches rather than as masonry.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 39802.3,
+      "along": [
+        -249.6,
+        50.9
+      ],
+      "mu_uv": [
+        -2.215,
+        -0.449,
+        2.033,
+        1.449
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.973,
+        0.954
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 12,
+      "area": 162626.5,
+      "along": [
+        -249.6,
+        -13.5
+      ],
+      "mu_uv": [
+        -2.126,
+        -0.012,
+        1.846,
+        1.003
+      ],
+      "bake_uv": [
+        0.022,
+        0.008,
+        0.954,
+        0.869
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 16,
+      "area": 92618.1,
+      "along": [
+        -249.6,
+        -3.6
+      ],
+      "mu_uv": [
+        -0.274,
+        -0.846,
+        4.019,
+        3.812
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.898,
+        0.935
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 16,
+      "area": 39156.4,
+      "along": [
+        -249.9,
+        -8.8
+      ],
+      "mu_uv": [
+        -2.191,
+        0.369,
+        0.999,
+        1.021
+      ],
+      "bake_uv": [
+        0.009,
+        0.216,
+        0.964,
+        0.992
+      ]
+    }
+  ]
+}

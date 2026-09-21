@@ -1,0 +1,35 @@
+{
+  "name": "hair",
+  "summary": "The hair on a bare head: strands lying in one direction, dark, and not made of anything a smith made.",
+  "why": [
+    "Metallic 0.0, which is the whole reason this file exists. The Dark Knight's bare head",
+    "is two islands - ninety-three triangles of face and twenty-six of hair - and the hair",
+    "was assigned plate_steel. Under the sun that is a black chrome cap: a hard white",
+    "specular streak across the crown and the ground's own orange reflected off the back of",
+    "the skull, which is exactly what it looked like. Nothing on a person is metal.",
+    "Roughness 0.62, and glossier than anything else on a body deliberately. Skin is 0.78 and",
+    "leather 0.72; hair is the one dielectric on a character that really does catch a",
+    "directional sheen, and taking it all the way down to skin's value makes the crown read",
+    "as felt. The number is a long way from a mirror all the same - the previous fault was a",
+    "reflection, not a highlight, and it came from the metallic flag rather than from this.",
+    "The grain is the strands, brushed along v. MU paints the strand shading into the sheet",
+    "already, so the depth is low: this is here to keep the sheen from lying flat across the",
+    "whole crown as one sheet of gloss, not to invent hair the art does not have. The scale",
+    "is finer than timber's and coarser than steel's - a strand is thinner than a plank and",
+    "thicker than a mill line.",
+    "Colour is the sheet's, and the sheet's is nearly black. That is MU's own art and not",
+    "something to correct here: skin_wizard_01 paints the Dark Knight's hair as a very dark",
+    "brown-black with the highlights drawn on, and the whole point of a dielectric is that it",
+    "keeps its own colour rather than tinting a reflection.",
+    "Roughness 0.62 -> 0.85, and the direction is the finding. On the bare Dark Knight the hair is flat single-sided fins of near-black texels, and at 0.62 the bench dome's brightness came back off them as a broad grazing sheen - a pale translucent wedge over the face and another down the chest, chased in Blender through cutout theories and UV theories before killing the specular proved it in one frame. A dark surface's sheen is most of what the eye reads on it, and on a fin card it swallows the silhouette. Near-matte keeps the spikes black; the brushed grain still varies the little that remains."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.85,
+  "grain": {
+    "kind": "brushed",
+    "along": "v",
+    "scale": 260,
+    "depth": 0.12,
+    "roughness_range": 0.07
+  }
+}

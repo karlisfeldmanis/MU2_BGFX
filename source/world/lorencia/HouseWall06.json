@@ -1,0 +1,88 @@
+{
+  "item": "HouseWall06",
+  "mu_name": "HouseWall06",
+  "mu_name_from": "Lorencia's object slot 126, from the client's own table in WorldObjectCatalog.cs. MU names the run rather than the member, so there is no friendlier name than the file's.",
+  "world": "lorencia",
+  "object_type": 126,
+  "why_this_one": "4 placements. The other one that fades.",
+  "profile": "world",
+  "sheets": {
+    "tile_wood02": "tile_wood02.png",
+    "tile_wood03": "tile_wood03.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. All opaque .OZJ.",
+  "sheet_materials": {
+    "tile_wood02": "timber",
+    "tile_wood03": "shingle"
+  },
+  "roof_fade": true,
+  "roof_fade_from": "WorldObjectCatalog.cs: IndoorFadeTypes[Lorencia] = [125, 126], which is this and its sibling. The camera is fixed at a raised three-quarter angle and cannot be moved, so a player who walks into a house would be under its roof with nothing visible. The client's test for indoors is the floor rather than the building - it reads the tile texture under the hero every frame and compares it against 4, and Lorencia's interiors are the only thing floored with that. Whichever house the tile belongs to, every roof of the same model in the world fades together.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 14,
+      "area": 277527.6,
+      "along": [
+        -200.2,
+        259.7
+      ],
+      "mu_uv": [
+        -0.137,
+        -0.676,
+        3.784,
+        2.693
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.788,
+        0.788
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 16021.0,
+      "along": [
+        -200.2,
+        149.9
+      ],
+      "mu_uv": [
+        -1.017,
+        0.105,
+        2.017,
+        0.727
+      ],
+      "bake_uv": [
+        0.005,
+        0.261,
+        0.596,
+        0.962
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 6,
+      "area": 17400.1,
+      "along": [
+        -200.3,
+        -185.4
+      ],
+      "mu_uv": [
+        -1.017,
+        0.105,
+        2.017,
+        0.727
+      ],
+      "bake_uv": [
+        0.006,
+        0.87,
+        0.596,
+        0.995
+      ]
+    }
+  ]
+}

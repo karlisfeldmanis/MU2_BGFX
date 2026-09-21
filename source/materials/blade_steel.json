@@ -1,0 +1,42 @@
+{
+  "name": "blade_steel",
+  "summary": "A sword blade: MU's painted highlight kept, with enough real reflectance that the sun draws a second one on top of it.",
+  "why": [
+    "Half a metal, which needs the argument, and the argument is a measurement.",
+    "painted_steel exists because MU's metal sheets are paintings rather than reflectances -",
+    "steel.jpg averages 0.083 linear, steel_barred_b 0.015, and iron's F0 is 0.56. Handed to a",
+    "renderer as metal those come back as black chrome, so painted_steel sets metallic 0 and",
+    "lets the painted highlight carry the whole look. That reasoning is sound and it is drawn",
+    "from armour and railing sheets.",
+    "A blade sheet is not one of those. sword06 averages 0.306 linear with 79% of its texels",
+    "above 0.3 - four times the sheet painted_steel was written against, and within sight of a",
+    "darker steel's reflectance. The measurement is the whole reason this file exists: it is",
+    "not a different opinion about MU's art, it is a different sheet.",
+    "So metallic 0.35 rather than 0 or 1. At 0 there is almost nothing for a light to do and",
+    "the blade reads as matte white plastic, which is painted_steel's own warning coming true",
+    "on a surface broad enough to see it. At 1 the diffuse goes entirely and the blade has only",
+    "the reflection probe to show, which indoors of an interior probe is the ground: rendered,",
+    "it is black end to end. At 0.35 the painted brightness survives as diffuse and the sun and",
+    "the ground arrive on top of it - a dark spine, a bright flat, and a lit line along the edge.",
+    "Roughness 0.18, tighter than painted_steel's 0.28. A blade is polished and what sells that",
+    "is a narrow highlight; broadened, the same energy spreads into the sheen that made it look",
+    "matte in the first place.",
+    "The brushed grain is painted_steel's, unchanged and for its reason: along v at scale 300,",
+    "it is the mill's mark running the length of the steel. It stripes anything broader than a",
+    "bar, so this belongs on blades and not on a shield's face.",
+    "Worth knowing that every earlier material trial on this blade - plate_steel, then steel,",
+    "then painted_steel - was run while clean_lowpoly's creases were not being marked at all,",
+    "so each was judged on a mesh shaded across its own folds. steel was retried here under",
+    "correct shading and is still black, which is the one of the three that the fix did not",
+    "change. See Sword05's creases_from."
+  ],
+  "metallic": 0.35,
+  "roughness": 0.18,
+  "grain": {
+    "kind": "brushed",
+    "along": "v",
+    "scale": 300,
+    "depth": 0.08,
+    "roughness_range": 0.05
+  }
+}

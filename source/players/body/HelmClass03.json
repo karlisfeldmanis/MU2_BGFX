@@ -1,0 +1,69 @@
+{
+  "item": "HelmClass03",
+  "mu_name": "Fairy Elf head",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}. The numbering runs one over MU's zero-based classes, so Class01 is the Dark Wizard, Class02 the Dark Knight and Class03 the Fairy Elf.",
+  "part_note": "The head, and the only part of this body with bones the Dark Knight's has none of: eight vertices on Bip01 Ponytail1 and five on Bip01 Ponytail11. MU animates an elf's hair, and those two bones are why. 132 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_warrior_01": "skin_warrior_01.png"
+  },
+  "sheet_from": "Data/Player/skin_warrior_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
+  "sheet_warning": "The sheet name says nothing about which class wears it, and this pair is the proof: the Fairy Elf's body is painted on skin_warrior_01 and the Dark Knight's on skin_wizard_01. Reading the name as the class picks the wrong sheet for both of them.",
+  "rebind": {
+    "Bip01 Spine1": "Bip01 Head"
+  },
+  "rebind_from": "The same fault HelmClass02 carries, in the same place: MU binds rigidly, one bone per vertex, and puts most of this head on Bip01 Head and a ring at the base of the neck on Bip01 Spine1 - 57 against 11 here, 79 against 7 on the Dark Knight. The head turns a long way from the chest in MU's own poses, so that ring is wrung by the whole difference with nothing to spread it over and the head sits askew on the neck.\n\nApplied by analogy rather than by its own measurement. The split is identical in shape and the fix is the one already argued out on Class02, but nobody has yet looked at this neck in the viewer - so it is the first thing to check on this body, and the first thing to take back out if the collar opens up.\n\nThe ponytail bones are left alone. Those are not a seam: MU means the hair to swing, and rebinding them to the head would pin it flat.",
+  "cull": false,
+  "cull_from": "As HelmClass02, and for its reason rather than by default: MU's hair is flat single-sided fins, and a culled fin does not turn away from the camera, it vanishes. On a head with a ponytail there is more of it to wink out.",
+  "material_note": "Flesh is skin and hair is hair, and the split is the Dark Knight's exactly: a large island for the face and skull and a small one for the fins. 104 and 28 here against 93 and 26 there. Both sample the same mid-brown because the two boxes overlap most of the same corner of the sheet; the triangle counts are what separate them.\n\nRead off the sheet by cropping each island at its own mu_uv with V flipped, the way the other bodies were. It is a coarse reading - an island's bounding box can take in neighbouring regions - so where it disagreed with the sibling part on Class02 the disagreement is written down rather than settled quietly.",
+  "unstack": false,
+  "unstack_why": "Refuses the UV un-stacking, as the Dark Wizard's parts do. This one arrives 3.4% stacked and 17 of its faces were being moved off their twin. The step was found to destroy art on ArmorClass01 - the buckled vest vanished from the bake - and MU sharing one set of texels between a mirrored pair is the arrangement rather than a defect to undo. and it is why her face and her body disagreed on colour: the head goes through this step and ArmorClass03, at 0.0% stacked, does not. Two parts of one body sampling the same sheet through different treatment.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 104,
+      "area": 2173.4,
+      "along": [
+        -14.9,
+        10.0
+      ],
+      "mu_uv": [
+        0.502,
+        0.779,
+        0.993,
+        1.0
+      ],
+      "bake_uv": [
+        0.502,
+        0.779,
+        0.993,
+        1.0
+      ],
+      "note": "the face and skull"
+    },
+    {
+      "island": 1,
+      "material": "hair",
+      "triangles": 28,
+      "area": 636.7,
+      "along": [
+        -25.9,
+        -1.2
+      ],
+      "mu_uv": [
+        0.654,
+        0.666,
+        0.836,
+        0.698
+      ],
+      "bake_uv": [
+        0.654,
+        0.666,
+        0.836,
+        0.698
+      ],
+      "note": "the fins of hair, and the ponytail among them"
+    }
+  ]
+}

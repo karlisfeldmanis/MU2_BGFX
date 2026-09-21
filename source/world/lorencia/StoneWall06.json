@@ -1,0 +1,97 @@
+{
+  "item": "StoneWall06",
+  "mu_name": "StoneWall06",
+  "mu_name_from": "Lorencia's object slot 74, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 74,
+  "why_this_one": "2 placements. A wall carrying a banner, on the two badge sheets Curtain01 and StoneWall04 wear.",
+  "profile": "world",
+  "sheets": {
+    "badge_01": "badge_01.png",
+    "badge_03": "badge_03.png",
+    "tile_01": "tile_01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "badge_01": "cloth",
+    "badge_03": "cloth",
+    "tile_01": "flagstone"
+  },
+  "cutout": [
+    "badge_03"
+  ],
+  "cutout_from": "Real alpha in badge_03.OZT, as on StoneWall04.",
+  "sheet_scale": {
+    "badge_01": 1.0,
+    "badge_03": 1.0
+  },
+  "sheet_scale_from": "How many times a sheet crosses the face it is on. MU's UVs put exactly one copy across, which was right for a 128-pixel painting of a whole wall and is wrong for a photograph of two metres of real stone: stretched over a whole wall it reads as a few enormous blotches rather than as masonry.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 28,
+      "area": 3619.5,
+      "along": [
+        -14.2,
+        13.5
+      ],
+      "mu_uv": [
+        0.389,
+        0.223,
+        0.929,
+        0.98
+      ],
+      "bake_uv": [
+        0.823,
+        0.411,
+        0.908,
+        0.81
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 4751.4,
+      "along": [
+        -88.9,
+        -0.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.823,
+        0.005,
+        0.995,
+        0.177
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 20,
+      "area": 155584.8,
+      "along": [
+        -50.8,
+        49.7
+      ],
+      "mu_uv": [
+        -2.454,
+        -1.995,
+        1.0,
+        3.428
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.937
+      ]
+    }
+  ]
+}

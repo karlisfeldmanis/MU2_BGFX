@@ -1,0 +1,284 @@
+{
+  "item": "Cannon02",
+  "mu_name": "Cannon02",
+  "mu_name_from": "Lorencia's object slot 92, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 92,
+  "why_this_one": "2 placements. A siege cannon on a timber carriage. The middle one. All three wear only the shared atlas.",
+  "profile": "world",
+  "sheets": {
+    "horse_drawn_01": "horse_drawn_01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "horse_drawn_01": "timber"
+  },
+  "material_note": "horse_drawn_01 is a 256-square atlas and the sheet most of this batch is built from: a cart wheel, sawn planks, crates and a few dark iron fittings, all in one square. One sheet is one material on the tiled path and timber is what most of it is, so the iron is left as the painting it already is.",
+  "sheet_pad": {
+    "horse_drawn_01": "edge"
+  },
+  "sheet_pad_from": "An atlas rather than a tile - separate objects drawn side by side in one square - so its border replicates instead of wrapping. Wrapped, the wheel's iron rim is fed into the planks as context and the model invents a rim along a bare board.",
+  "sheet_regions": {
+    "horse_drawn_01": [
+      {
+        "material": "wrought_iron",
+        "box": [
+          0.5,
+          0.3,
+          0.645,
+          0.44
+        ]
+      },
+      {
+        "material": "wrought_iron",
+        "box": [
+          0.455,
+          0.45,
+          0.645,
+          0.55
+        ]
+      },
+      {
+        "material": "wrought_iron",
+        "box": [
+          0.61,
+          0.83,
+          0.785,
+          0.945
+        ]
+      },
+      {
+        "material": "wrought_iron",
+        "box": [
+          0.835,
+          0.77,
+          1.0,
+          0.96
+        ]
+      }
+    ]
+  },
+  "region_note": "One 256-square holding a cart, two crates, a wheel, a chain and a cannon, which is how MU packed scenery. Declared timber, the barrel was getting a plank's roughness and no reflectance at all; declared iron, the crates would have come out as painted steel. There is no per-sheet answer because the sheet is not made of one thing.\n\nFour boxes, and they were picked off the picture rather than measured out of it. The colour rule that found Well02's boundary — dark and neutral — was tried here first and fails in a way worth recording: it finds the barrel and it also finds the unlit inside of the wooden crates, 19% of the sheet either way. What separates on this atlas is not the colour, it is the place.\n\nChecked against the art once written: the four boxes run 0.19 to 0.34 mean saturation and the crate faces run 0.73, so nothing brown is inside one. Conservative on purpose — the black wedge near the wheel hub and the strip above the barrel are probably iron too and are left out, because a wooden face wrongly given metallic 1.0 is a far louder mistake than an iron face left as timber.\n\nwrought_iron and not steel: 'bar iron drawn out under a hammer and left to weather black' is a cannon barrel, where steel at 0.32 roughness is a blade.\n\n  [0.5, 0.3, 0.645, 0.44]  the black box\n  [0.455, 0.45, 0.645, 0.55]  the muzzle seen end-on, and the plate beside it\n  [0.61, 0.83, 0.785, 0.945]  the tray of shot\n  [0.835, 0.77, 1.0, 0.96]  the barrel and its bands",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 4355.5,
+      "along": [
+        48.1,
+        58.6
+      ],
+      "mu_uv": [
+        0.121,
+        0.208,
+        0.95,
+        0.897
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.793,
+        0.957
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 4355.5,
+      "along": [
+        48.1,
+        58.6
+      ],
+      "mu_uv": [
+        0.121,
+        0.208,
+        0.95,
+        0.897
+      ],
+      "bake_uv": [
+        0.008,
+        0.281,
+        0.959,
+        0.957
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 928.1,
+      "along": [
+        51.3,
+        55.4
+      ],
+      "mu_uv": [
+        0.495,
+        0.401,
+        0.963,
+        0.969
+      ],
+      "bake_uv": [
+        0.008,
+        0.597,
+        0.75,
+        0.992
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 10,
+      "area": 5755.2,
+      "along": [
+        -57.4,
+        52.3
+      ],
+      "mu_uv": [
+        0.263,
+        0.351,
+        0.968,
+        0.937
+      ],
+      "bake_uv": [
+        0.008,
+        0.22,
+        0.878,
+        0.906
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 28,
+      "area": 11328.9,
+      "along": [
+        -28.7,
+        78.3
+      ],
+      "mu_uv": [
+        0.465,
+        0.063,
+        0.997,
+        0.545
+      ],
+      "bake_uv": [
+        0.305,
+        0.449,
+        0.798,
+        0.726
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 7,
+      "area": 215.2,
+      "along": [
+        -1.3,
+        10.3
+      ],
+      "mu_uv": [
+        0.414,
+        0.697,
+        0.428,
+        0.734
+      ],
+      "bake_uv": [
+        0.753,
+        0.069,
+        0.763,
+        0.134
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 26,
+      "area": 18590.3,
+      "along": [
+        -52.4,
+        52.3
+      ],
+      "mu_uv": [
+        0.118,
+        0.004,
+        0.97,
+        0.976
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.834,
+        0.811
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 18,
+      "area": 497.8,
+      "along": [
+        2.7,
+        23.4
+      ],
+      "mu_uv": [
+        0.71,
+        0.101,
+        0.744,
+        0.136
+      ],
+      "bake_uv": [
+        0.68,
+        0.694,
+        0.705,
+        0.72
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 18,
+      "area": 497.8,
+      "along": [
+        -17.4,
+        3.2
+      ],
+      "mu_uv": [
+        0.709,
+        0.101,
+        0.743,
+        0.136
+      ],
+      "bake_uv": [
+        0.721,
+        0.694,
+        0.746,
+        0.72
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 18,
+      "area": 497.8,
+      "along": [
+        -36.9,
+        -16.3
+      ],
+      "mu_uv": [
+        0.71,
+        0.1,
+        0.743,
+        0.135
+      ],
+      "bake_uv": [
+        0.682,
+        0.597,
+        0.707,
+        0.623
+      ]
+    }
+  ]
+}

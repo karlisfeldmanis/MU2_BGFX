@@ -1,0 +1,32 @@
+{
+  "profile": "tiles",
+  "summary": "The ground itself: the sheets a terrain is paved with, and nothing that has geometry.",
+  "why": [
+    "It is a profile because it changes what the pipeline does, not because it changes numbers.",
+    "Every other asset in this project is a model - an .obj comes in, a .glb goes out, and the",
+    "sheets exist to be put on it. A tileset has no model at all. TileGrass01 is not a thing,",
+    "it is what 81% of Lorencia is made of, and what has to come out of the pipeline is a sheet",
+    "and its maps, with the ground mesh built separately from the map data.",
+    "So the run stops after the surface work: decode, upscale, enlarge, and the tiling normal",
+    "and occlusion. No unwrap, no bake, no export - there is nothing to unwrap.",
+    "The pad is wrap and here it is not a preference but a requirement. A world object's sheet",
+    "usually tiles; a ground sheet always does, over a 256-metre map, and a seam introduced at",
+    "its border is repeated sixty-four times across the town in both directions.",
+    "Upscale 3x at detail 0.65, the same figures the other profiles use, and for a stronger",
+    "reason. The client puts a fixed 64 texels of a sheet on every terrain tile, which is 64",
+    "texels to the metre - lower than anything else in the project, and the ground is the",
+    "surface a player is nearest to for the whole of the time they are anywhere."
+  ],
+  "upscale": {
+    "factor": 3,
+    "detail": 1.0,
+    "pad": "wrap",
+    "model": "drawn",
+    "passes": 1
+  },
+  "enlarge": 1,
+  "tiled": true,
+  "geometry": false,
+  "default_material": "sand",
+  "upscale_why": "The ground is the one place in this project that wants the model to speak up. A tile is a metre of stone with a camera a few metres above it, and MU drew it at 128 pixels \u2014 so what is asked here is not restraint, it is recovery.\n\nMeasured on tileground03, through the whole pipeline, against a plain Lanczos resize: the photographic model at 0.65 gives 1.12x, which is twelve percent better than no model at all. The drawn model at 1.0 over one pass gives 2.21x, and the difference is legible rather than statistical: x4plus dissolves the tile's twisted-cord motif into rounded pebbles and Siax draws the cord.\n\nOne pass and not eight. The self-ensemble averages the sheet over all eight ways a square can be laid down so that invention cancels \u2014 a good instinct that on art this small cancels reconstruction with it, 2.21x down to 1.56x.\n\nNone of this transfers to an item. The same model at the same settings turns the ribs on Kris's guard into hard rectangles with dark outlines, which is the chain the upscale note has warned about since it was written. Items keep the photographic model at 0.35 over eight passes."
+}

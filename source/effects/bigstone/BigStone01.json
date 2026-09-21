@@ -1,0 +1,24 @@
+{
+  "item": "BigStone01",
+  "mu_name": "The larger of the two big stones a Stone Golem breaks into",
+  "mu_name_from": "ZzzOpenData.cpp: `for (int i = 0; i < 2; i++) AccessModel(MODEL_BIG_STONE1 + i, L\"Data\\\\Skill\\\\\", L\"BigStone\", i + 1)`, so Data/Skill/BigStone01.bmd and BigStone02.bmd. Filed under Skill, and thrown by the arm the bones and the meteor's stones are.",
+  "kind": "debris",
+  "why_this_one": "The Stone Golem's death: eight of each, `for (int j = 0; j < 8; j++) { CreateEffect(MODEL_BIG_STONE1, ...); CreateEffect(MODEL_BIG_STONE2, ...); }` in CharacterDie. See StoneGolem01.json's death_from.",
+  "mesh": "BigStone01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/BigStone01.bmd, from MuMain. Twenty triangles in one mesh on ston1.jpg, 63 by 76 by 79 units - a boulder most of a metre across, the size of one of the golem's own shoulders.",
+  "parts": [
+    {
+      "group": "ston1",
+      "sheet": "ston1.png",
+      "blend": "opaque",
+      "note": "Data/Skill/ston1.OZJ, byte-identical to the golem's own Data/Monster/ston1.OZJ - mossy grey rock, 64 square, no alpha. The body and its pieces on one page. Solid and lit, on the bones' rule."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "The base the throw multiplies: the default birth rolls (rand() % 4 + 8) * 0.1, 0.8 to 1.1 per stone.",
+  "lift": 0,
+  "lift_from": "Nothing fixed. Unlike MODEL_BONE1's 150 and BONE2's 100, a big stone's height is rolled: 0 to 180 units up, and up to 64 either way on the ground, per stone. That is Bones.Crumble's offset rather than this field.",
+  "frames": 32,
+  "frames_from": "`o->LifeTime = rand() % 16 + 32`: 32 to 47 reference frames.",
+  "flight_note": "The ballistic arm Bone01.json describes, reached by fall-through: `case MODEL_BIG_STONE1: case MODEL_BIG_STONE2:` tests only SubType 5, falls into the stones' cases, which test 5, 11 and 10, and falls again into the arm shared with MODEL_ICE_SMALL and the meteors. There it gets one line nothing else gets - `if (o->Type == MODEL_BIG_STONE1 || o->Type == MODEL_BIG_STONE2) { Vector(rand() % 128 - 64, rand() % 128 - 64, rand() % 180, p1); VectorAddScaled(o->Position, p1, o->Position, ...); }` - and then the default birth: LifeTime rand() % 16 + 32, Scale (rand() % 4 + 8) * 0.1, a flat scatter of rand() % 256 + 64 tenths under a random yaw, Gravity rand() % 16 + 8. The bones' one departure applies here unchanged. See client/core/Bones.cs, Crumble."
+}

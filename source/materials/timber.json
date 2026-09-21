@@ -1,0 +1,30 @@
+{
+  "name": "timber",
+  "summary": "Structural wood left outdoors: a fence rail, a lamp post, a cart. Sawn rather than turned, and weathered grey-brown.",
+  "why": [
+    "Not the same as wood, and the difference is worth a second file rather than a second",
+    "number. wood is a weapon haft: turned on a lathe, gripped daily, oiled by a hand, and",
+    "its note argues its depth down to 0.08 because a haft's grain sits flush. A lamp post is",
+    "sawn, stood in the rain for a decade, and has raised grain you can feel - the same",
+    "material in the sense that both are trees, and not the same surface at all.",
+    "Roughness 0.82 against wood's 0.72. Weathering is the removal of everything that would",
+    "have made it shine.",
+    "Depth 0.22, between wood's 0.08 and bark's 0.35. Raised grain is real relief and less of",
+    "it than a furrow.",
+    "Brushed along v. MU's streetlight sheet draws the post's grain running its length, the",
+    "way sawn timber goes, so the same argument as bark's and the same answer.",
+    "Depth eased from 0.22 to 0.15 alongside plaster's, for a weaker version of the same",
+    "reason: some of what darkens MU's plank sheets is staining rather than the gap between two",
+    "boards, and the normal cannot tell them apart. Less than plaster's correction because a",
+    "board really does have a groove beside it, where a stain has nothing."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.82,
+  "grain": {
+    "kind": "brushed",
+    "along": "v",
+    "scale": 200,
+    "depth": 0.15,
+    "roughness_range": 0.07
+  }
+}

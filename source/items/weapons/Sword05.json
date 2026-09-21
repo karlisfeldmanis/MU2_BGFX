@@ -1,0 +1,115 @@
+{
+  "item": "Sword05",
+  "mu_name": "Sword of Assassin",
+  "mu_name_from": "MuMain's ZzzOpenData.cpp loads the group as MODEL_SWORD + i from Sword{i+1}, so Sword05.bmd is index 4, which OpenMU's 0.75 table names the Sword of Assassin. MuWeapons.cs agrees from the client's side: `new(\"Sword of Assassin\", \"Sword05.bmd\", WeaponStance.Sword, ...)`.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. Slot 53 at +3, and the first of his blades to carry a skill in the original - skillNumber 21 - which is a large part of why the shop price the original charges and the one MU2 charges are not the same number.",
+  "profile": "weapon",
+  "winding_reversed_from": "The .obj beside this file has every face wound the other way from MU's own export, and it is the one asset here where that is true.\n\nMU's blade is an open shell rather than a solid - 93 of its edge slots are boundaries - so there is no inside for a normal to point away from, and clean_lowpoly's normals_make_consistent has nothing to orient against. Which way it lands is arbitrary, and as exported it landed such that 23 of the blade's 27 faces, 81% of its area, turn away from the studio's sun. What that draws is a bright facet wherever one of the remaining four catches the light and a black wedge everywhere else: the pixelated blade this was reported as.\n\nReversed, the same geometry shades smoothly. It is darker overall and it is not patchy, and of the two that is the one to build on.\n\nEverything else was ruled out first and the tests are worth not repeating: removing the normal map entirely leaves the wedges untouched; culling the back faces makes them worse, so they are front faces and not the far side; only six edges exceed the crease angle and all six are at the hilt; the two faces of the blade sit 0.69 units apart on a 2.9-unit blade, so nothing is coincident; the split vertices share their normals, so the smoothing is intact; and rendered unshaded the blade is a clean bright silver, so nothing is wrong with the paint.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(0, 4, 0, 21, 1, 3, true, \"Sword of Assassin\", 12, 12, 18, 30, 24, 0, 0, 60, 40, 0, 0, 0, 1, 0)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 0,
+    "number": 4,
+    "drop_level": 12,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "width_note": "Width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and one here agrees with MuWeapons.cs's TwoHanded: false. It is also what takes a fifth off the price: shared/Market.Coin reads the footprint's width to tell a one-handed weapon from a two-handed one.",
+    "height": 3,
+    "minimum_damage": 12,
+    "maximum_damage": 18,
+    "attack_speed": 30,
+    "durability": 24,
+    "requires": {
+      "level": 0,
+      "strength": 60,
+      "agility": 40,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side.",
+    "skill": 21,
+    "skill_note": "The skillNumber of the call. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. Actions 4 and 17, the family the Kris, the Short Sword and the Hand Axe already walk in. A one-handed blade leaves the shield hand free, which is the whole point of it on a counter that is mostly shields.",
+  "sheets": {
+    "sword06": "sword06.png"
+  },
+  "sheet_from": "Data/Item/sword06.OZJ (128x32), from MuMain. The .bmd names sword06.jpg; 65 triangles, one mesh. A long thin sheet, which is what a sword sheet mostly is: the blade runs the length of it and the hilt is a short block at one end.",
+  "material_note": "Three islands and three materials, and the blade took three tries.\n\nIsland 2 is 28 triangles on the sheet's narrow right-hand column, the guard and pommel: brass, the cast yellow metal, as on the Kris. Island 0 is 10 triangles of the grip: leather_wrap, the cord wound round the tang, which is the one place that material's banded grain is the subject rather than a fault.\n\nIsland 1 is the blade, 27 triangles over most of the sheet. It was plate_steel first, which is armour - cast pitting at depth 0.12 - and on a blade that reads as grain rather than as metal. Then steel, which is the right idea and the wrong result: steel is metallic 1.0, a metal has no diffuse at all, and the studio disables the sky's reflection deliberately, so the only thing left for the blade to reflect is the sun. It came out black with hard facets wherever a polygon missed it.\n\npainted_steel, third, and its own file predicted this exactly: 'MU's metal sheets are nowhere near a metal's reflectance; they are paintings, with the highlight drawn in.' Rendering this blade unshaded shows it - MU's sword06 is a clean bright silver curve, and every bit of that brightness is paint. Handed to a dielectric it survives; handed to a metal it is thrown away and replaced by whatever the scene has to reflect, which here is nothing.\n\nIts brushed grain along the blade is the other half of why it fits. That grain is what stripes anything broad - it has done so on a shield, a bull and a pair of wings - and a blade is the narrow bar it was written for, where the streak running the length of the steel is the mill's own mark.\n\nA fourth try, after the crease fix: blade_steel. painted_steel left the blade matte white - its own file warns that metallic 0 on a broad surface leaves a light nothing to do - and steel, retried under correct shading, is still black end to end. sword06 measures 0.306 linear against the 0.083 painted_steel was written for, so half a metal is what this sheet can carry. See blade_steel.json.",
+  "creases_from": "This blade was reported as pixelated - bright facets with black wedges between them - and the cause was not this asset at all. clean_lowpoly asked shade_smooth_by_angle for its creases, and since Blender 4.1 that operator marks nothing: it hangs a Smooth by Angle node group off the object, which a viewport honours and the bake and the export do not. Of this sword's 41 edges past the crease angle, exactly one was marked.\n\nWhat that does to a thin blade is specific. The two sheets fold back on each other at the rim at about 171 degrees, and averaging a normal across that fold hands the front sheet the back sheet's normal: six of the blade's large faces came out shaded 170 degrees from the way they face. A face the sun reaches at +0.52 shaded at -0.18 and drew black. Marking the creases as edge flags instead, the same 27 triangles shade at +0.46 with none of the visible area turned away, and the blade is silver.\n\nThe rig was ruled out first, and it matters that it was: the blade is dark under midday, overcast, daylight-neutral and the rim-lit studio alike, which is the signature of geometry facing away rather than of a light being too weak. Reversing every face was tried and looked smoother only because it lit nothing uniformly; the .obj here is MU's own winding, unchanged. Also ruled out: the normal map (removing it leaves the wedges), back faces (culling makes them worse), coincidence (0.69 units apart on a 2.9-unit blade) and the paint (unshaded it is clean bright silver).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather_wrap",
+      "triangles": 10,
+      "area": 417.8,
+      "along": [
+        -13.7,
+        12.2
+      ],
+      "mu_uv": [
+        0.807,
+        0.157,
+        0.999,
+        0.312
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.711,
+        0.715
+      ]
+    },
+    {
+      "island": 1,
+      "material": "blade_steel",
+      "triangles": 27,
+      "area": 2744.7,
+      "along": [
+        15.0,
+        127.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.168,
+        0.785,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.996
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 28,
+      "area": 235.0,
+      "along": [
+        12.2,
+        15.3
+      ],
+      "mu_uv": [
+        0.784,
+        0.001,
+        0.807,
+        0.477
+      ],
+      "bake_uv": [
+        0.005,
+        0.171,
+        0.841,
+        0.843
+      ]
+    }
+  ]
+}

@@ -1,0 +1,354 @@
+{
+  "item": "PantElf01",
+  "mu_name": "Vine Pants",
+  "mu_name_from": "MuMain loads pants indexes 10 to 14 from PantElf{i+1} (ZzzOpenData.cpp line 150), so index 10 is PantElf01, which openmu's 0.75 Armors.cs names the Vine Pants. mu.db agrees: code 4618, group 9 index 10, Player/PantElf01.bmd.",
+  "why_this_one": "The Fairy Elf's own first set, and the one set of the three that nobody sells: no shelf in Lorencia carries Vine, so this is a drop and a thing to look at. It is here because the Armour select had a single glove under her name and a set of one piece is a set you cannot see.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. See profiles/soft_armour.json, which exists for these three sets.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(10, 4, 2, 2, \"Vine Pants\", 8, 6, 22, 30, 60, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 10,
+    "drop_level": 8,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 6,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 22,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Sixty agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "lower_04.png",
+    "hide.png",
+    "skin_warrior_01.png",
+    "lower_04b.png"
+  ],
+  "sheet_from": "Data/Player/lower_04.OZJ (64x64), hide.jpg, skin_warrior_01.OZJ and lower_04b.ozt (32x32), from MuMain. The .bmd names lower_04.jpg, hide.jpg, skin_warrior_01.jpg and lower_04b.tga; 28 of the 124 triangles are on the first, 14 on hide, 66 on the skin and 16 on lower_04b.",
+  "sheet_note": "lower_04 is a short hide skirt with the same raised vine as the bodice, mean (77, 52, 35) at chroma 41. lower_04b is the pale blade of a leaf standing off the hip, drawn once on a 32-square whose alpha cuts 75% of it away - a real mask, not a black surround. skin_warrior_01 is the elf's own body sheet, which the piece carries because this set leaves a great deal of her uncovered and MU draws the skin as part of the worn mesh. hide is MU capping the openings, a solid black square, as on ArmorMale10.",
+  "material_note": "Fourteen islands and three answers, and the counts settle all of it. Island 3 is 28 triangles, which is lower_04's 28 exactly: the hide skirt, leather. Islands 0, 1 and 2 are 6, 4 and 4 - 14 together, hide's 14 - and are the black caps, which take leather with the skirt because a cap is a hole and its material is never seen. Islands 12 and 13 are 33 each, 66 together, which is skin_warrior_01's 66: her legs, skin.\n\nThe eight islands of two triangles each are lower_04b's 16, and they are the pale blades standing off the hip on crossed quads. bone rather than leather or a metal: the sheet is a dead-white curved blade with a dark edge, dielectric and hard, and it is the material the Bone set had to have written for it. Eight quads is exactly the size of thing that can carry its own material without the island rule getting in the way.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 6,
+      "area": 352.3,
+      "along": [
+        -8.7,
+        9.5
+      ],
+      "mu_uv": [
+        0.129,
+        0.047,
+        0.871,
+        0.867
+      ],
+      "bake_uv": [
+        0.582,
+        0.58,
+        0.787,
+        0.806
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 4,
+      "area": 393.3,
+      "along": [
+        -11.6,
+        10.5
+      ],
+      "mu_uv": [
+        0.547,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.8,
+        0.58,
+        0.926,
+        0.856
+      ]
+    },
+    {
+      "island": 2,
+      "material": "leather",
+      "triangles": 4,
+      "area": 393.3,
+      "along": [
+        -11.6,
+        10.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.453,
+        0.999
+      ],
+      "bake_uv": [
+        0.868,
+        0.007,
+        0.993,
+        0.283
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 28,
+      "area": 1344.4,
+      "along": [
+        -11.6,
+        10.5
+      ],
+      "mu_uv": [
+        0.026,
+        0.108,
+        0.986,
+        0.989
+      ],
+      "bake_uv": [
+        0.007,
+        0.864,
+        0.536,
+        0.99
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bone",
+      "triangles": 2,
+      "area": 265.8,
+      "along": [
+        6.7,
+        18.4
+      ],
+      "mu_uv": [
+        0.004,
+        0.01,
+        0.993,
+        0.997
+      ],
+      "bake_uv": [
+        0.294,
+        0.293,
+        0.567,
+        0.566
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 2,
+      "area": 265.8,
+      "along": [
+        6.7,
+        18.4
+      ],
+      "mu_uv": [
+        0.003,
+        0.01,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.007,
+        0.293,
+        0.28,
+        0.566
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bone",
+      "triangles": 2,
+      "area": 158.8,
+      "along": [
+        2.0,
+        15.2
+      ],
+      "mu_uv": [
+        0.003,
+        0.012,
+        0.994,
+        0.997
+      ],
+      "bake_uv": [
+        0.007,
+        0.58,
+        0.281,
+        0.852
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 2,
+      "area": 158.9,
+      "along": [
+        2.0,
+        15.2
+      ],
+      "mu_uv": [
+        0.003,
+        0.012,
+        0.993,
+        0.997
+      ],
+      "bake_uv": [
+        0.294,
+        0.007,
+        0.568,
+        0.279
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bone",
+      "triangles": 2,
+      "area": 252.4,
+      "along": [
+        -10.6,
+        2.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.012,
+        0.992,
+        0.994
+      ],
+      "bake_uv": [
+        0.581,
+        0.007,
+        0.855,
+        0.278
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bone",
+      "triangles": 2,
+      "area": 252.5,
+      "along": [
+        -10.6,
+        2.0
+      ],
+      "mu_uv": [
+        0.002,
+        0.008,
+        0.992,
+        0.996
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.28,
+        0.28
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bone",
+      "triangles": 2,
+      "area": 333.0,
+      "along": [
+        -22.1,
+        -6.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.014,
+        0.994,
+        0.995
+      ],
+      "bake_uv": [
+        0.294,
+        0.58,
+        0.569,
+        0.851
+      ]
+    },
+    {
+      "island": 11,
+      "material": "bone",
+      "triangles": 2,
+      "area": 333.0,
+      "along": [
+        -22.1,
+        -6.7
+      ],
+      "mu_uv": [
+        0.004,
+        0.014,
+        0.993,
+        0.996
+      ],
+      "bake_uv": [
+        0.581,
+        0.293,
+        0.854,
+        0.565
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 33,
+      "area": 2566.2,
+      "along": [
+        -11.6,
+        10.9
+      ],
+      "mu_uv": [
+        0.136,
+        0.003,
+        0.495,
+        0.438
+      ],
+      "bake_uv": [
+        0.582,
+        0.446,
+        0.899,
+        0.938
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 33,
+      "area": 2576.0,
+      "along": [
+        -11.6,
+        10.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.003,
+        0.367,
+        0.438
+      ],
+      "bake_uv": [
+        0.625,
+        0.313,
+        0.899,
+        0.938
+      ]
+    }
+  ]
+}

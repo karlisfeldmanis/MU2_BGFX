@@ -1,0 +1,331 @@
+{
+  "item": "Shield08",
+  "mu_name": "Spiked Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield08.bmd is shield index 7, which OpenMU's 0.75 Armors.cs names the Spiked Shield.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. Slot 22 at +3, the end of his second row.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the seven built shields use. Its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10 and Shield11, which record the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(7, 1, 18, 2, 2, \"Spiked Shield\", 30, 9, 30, 40, 130, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 7,
+    "drop_level": 30,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 9,
+    "defense_rate": 30,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "Eighteen, the shield's block skill in OpenMU's table, on the ten shields that carry one. There are no skills in this simulation, so it is carried for the row to read against the call and nothing more.",
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags."
+  },
+  "sheets": {
+    "shield05": "shield05.png"
+  },
+  "sheet_from": "Data/Item/shield05.OZJ (64x64), from MuMain. The .bmd names shield05.jpg; 56 triangles, one mesh. The sheet is numbered one past the model, which is the arrangement most of the shield group uses.",
+  "material_note": "Thirteen islands and one material. Island 0 is the shield itself at twenty triangles; the other twelve are three triangles each and identical to the last decimal - the spikes, one island per point, which is why the listing repeats.\n\nThe face means (21, 45, 42) at chroma 25: a very dark teal-black with an organic relief swirled into it and a pale band of spikes across the foot. Dark and near enough achromatic, which is the Buckler's reading - (30, 33, 33) at chroma 8 - and it takes the Buckler's answer. plate_steel rather than the weapon profile's steel, the swap every shield here records: steel is blade steel with the mill's grain running along it, and a shield is armour - hammered, curved, worn where it is hit.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 20,
+      "area": 7785.9,
+      "along": [
+        -20.7,
+        21.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.121,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.121,
+        0.999,
+        0.999
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -18.3,
+        -10.2
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -18.3,
+        -10.3
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -2.0,
+        4.1
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.626,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.626,
+        0.183
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        12.6,
+        23.5
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        12.6,
+        23.6
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        12.6,
+        23.6
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -2.0,
+        4.2
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -2.0,
+        4.1
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -18.2,
+        -10.2
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.624,
+        0.183
+      ]
+    },
+    {
+      "island": 10,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -18.2,
+        -10.2
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ]
+    },
+    {
+      "island": 11,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        -1.9,
+        4.2
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.626,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.626,
+        0.183
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 127.4,
+      "along": [
+        12.7,
+        23.6
+      ],
+      "mu_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ],
+      "bake_uv": [
+        0.177,
+        0.095,
+        0.625,
+        0.183
+      ]
+    }
+  ]
+}

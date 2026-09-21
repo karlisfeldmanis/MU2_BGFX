@@ -1,0 +1,97 @@
+{
+  "item": "Shield01",
+  "mu_name": "Small Shield",
+  "mu_name_from": "MuProtocol/Items.cs lists shield group index 0 as \"Small Shield\" against Item/Shield01.bmd, and openmu's Version075 Armors.cs agrees at the same index - `CreateShield(0, 1, 0, 2, 2, \"Small Shield\", 3, ...)`. The file name is one ahead of the index, exactly as Sword01.bmd is sword index 0 and Shield10.bmd is shield index 9.",
+  "why_this_one": "It is the only piece of armour in the whole catalogue a Budge Dragon can leave, and the first item outside the weapon groups to carry a drop row at all.\n\nThe dragon is level 4, and of the twelve rows in openmu's 0.75 table at drop level 4 or under, five are weapons, one is the apple, one is the Orb of Summoning, four are gloves and boots, and one is this. When this was written the count was eleven and the four armour pieces - Pad Gloves, Leather Gloves, Vine Gloves and Pad Boots - were called unbuildable, 'player parts wearing a second sheet, and the pipeline handles one'. Both were wrong: the orb had not been counted, and the chain had taken every sheet an asset names through one bake since the Plate Helm's three. They are built now, in items/armor, and the `blocked` field on the 05 set says the same stale thing about itself and has not been re-tried. A shield is still the odd one out for a different reason: it is an item model on its own atlas rather than a part skinned to the player's rig.\n\nThe Plate Shield already built is drop level 25 and carries no drop row at all - nothing in Lorencia is rich enough to leave it - so until now the shield group could be looked at on the Objects tab and could not fall anywhere.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile names shields in its own summary: \"Swords, axes, staves, shields. Made things, with edges that were drawn sharp.\" A shield is an atlas sheet with a face and a boss, not a tiling surface, which is the argument that profile is built on. Shield10 is on the same profile for the same reason.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 36. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(0, 1, 0, 2, 2, \"Small Shield\", 3, 1, 3, 22, 70, 0, 1, 1, 1)",
+    "group": 6,
+    "group_from": "Not in the call, and it is the one number here that has to be derived rather than read. ArmorInitializerBase.CreateArmor ends `armor.Group = (byte)(slot + 5)`, and the shield's slot is the second argument - 1 - so the group is 6. Every other armour group follows from the same line: helms are slot 2 and group 7, gloves slot 5 and group 10, boots slot 6 and group 11.",
+    "number": 0,
+    "drop_level": 3,
+    "drops_from_monsters": true,
+    "drop_level_note": "Three, so a Budge Dragon at level 4 can afford it and a Spider at 2 cannot. dropsFromMonsters is not in this call at all - CreateShield has no such parameter, because armour in the original always falls - so the true here is the absence of a reason for false rather than a copied flag. See Prize.DropsFromMonsters, which is true by default for exactly this reason.",
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "width_note": "Two by two on the inventory grid. The two-handedness test OpenMU runs on width - `if (group < Bows && width == 2)` - does not reach this: group 6 is not below Bows, and a shield is not a weapon to be held in two hands. It goes in the hand a two-handed weapon takes away.",
+    "defense": 1,
+    "defense_rate": 3,
+    "defense_note": "One point of defence and three of defence rate, which are the shield's whole contribution and are not read by anything yet: shared/Combat.cs computes a hit from the attacker's damage roll and the defender's row, and a shield in the off hand is not part of that. Recorded because it is in the row, and flagged as unread rather than left to look implemented.",
+    "durability": 22,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 1, 1, 1 - wizard, knight, elf. Seventy strength with no level requirement, which is the same gate the Hand Axe carries."
+  },
+  "no_arm_note": "There is deliberately no weapon row here, and the code enforces it rather than trusting the asset: Catalogue.Arming returns null for any group above Arm.Staves, so a shield cannot become an Arm however its stats block is written. That is right - a shield has no damage roll and nothing to swing - and it is the case Prize was split from Arm to allow. See the note on Prize in shared/Rows.cs, which argues it from the apple's side.",
+  "refinement_note": "This is the first item to reach Loot.Refinement from outside the weapon groups, and it found the rule short by one group. Catalogue.Winning sets `Refinable = kind <= Arm.Staves`, which is 5, so a shield came back non-refinable - while the comment beside that line says \"the weapon and armour groups run 0 to 6\" and means to include it. A shield takes a plus in MU as much as a sword does.\n\nIt makes no difference to what this monster drops - drop level 3 against level 4 is `(4 - 3) / 3` and rounds to a plain one either way - which is exactly why it was worth fixing on the way in rather than when something big finally drops a shield. Fixed in shared/Rows.cs, which now names the armour groups instead of leaving them to be inferred from the weapon ones.",
+  "sheets": {
+    "du_shield1": "du_shield1.png"
+  },
+  "sheet_from": "Data/Item/du_shield1.OZJ (32x32), from MuMain. The .bmd names du_shield1.jpg.",
+  "sheet_note": "A round wooden face - dark planking, mean (97, 78, 56), with two darker seams across it - and a bright faceted metal boss dead centre, on a pale grey ground that fills the corners of the square.\n\n32 square is the whole of what MU shipped. remaster_one's copy is 64x64 and exactly 2x, the upscale signature, so MuMain's is the art.",
+  "cutout": false,
+  "cutout_from": "False, and here it is false for a different reason than Shield10's. That one has a real alpha channel which must not be read as a cut-out, because its alpha is the emblem rather than a hole. This sheet has no alpha at all - the .OZJ is fully opaque - so there is nothing to sniff and nothing to declare away.\n\nThe reason it does not need one: the disc is geometry. Nine of the twenty-two UVs are a perfect radius-0.5 circle about the sheet's centre plus the centre point itself - an eight-segment fan - so the face samples the inscribed circle exactly and the grey corners are not on it. A shield drawn as a square card with its outline cut by alpha would need the declaration; this one is drawn as a disc.",
+  "open_question": "The boss cannot be separated from the planks. The face is one eight-triangle fan running from the sheet's centre out to a radius-0.5 rim, so the metal boss at the centre and the wood around it are the same island - and the island is the unit, which is the limit the Battle Axe, the Dragon Lance and the Great Scythe all ran into. Majority is wood, so the boss ships as wood-roughness metal-coloured albedo, keeping MU's own painted highlight and losing the specular that would make it catch a light differently from the planks it is fixed to.\n\nA second, smaller one: five of the UVs sit out in the bottom-right corner at u 0.70 to 0.99, sampling a thin diagonal band that runs brown to white to black. On a 32 square that is a handful of texels and it is not enough evidence to say whether it is a strap, a rim in shadow or a scrap the artist left. Look at it in the engine before splitting it off.",
+  "material_note": "plank on both islands, over the profile's steel. Island 1 is the face - the eight-triangle fan, planks with the boss in the middle - and the open question above already settled it as wood by majority. Island 0 is the four triangles in the bottom-right corner, the band the open question could not name; it is on the rim of a wooden disc and rides with the face until the engine says otherwise. Not steel, which would have made the whole shield a mirror because the profile's default was never overridden: the asset arrived with its islands empty and had not been built before today.\n\nplank rather than wood, and it was wood for one build. wood's brushed grain runs along the bake's v axis, which on a haft is the haft's length and on a disc unwrapped flat is an arbitrary line across the face - the shield came out with vertical stripes across MU's planking, reported the first time it was looked at. plank is the same substance with no procedural grain, leaving the relief to what MU painted. See materials/plank.json.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plank",
+      "triangles": 4,
+      "area": 425.3,
+      "along": [
+        -9.4,
+        9.4
+      ],
+      "mu_uv": [
+        0.703,
+        0.01,
+        0.993,
+        0.203
+      ],
+      "bake_uv": [
+        0.602,
+        0.003,
+        0.994,
+        0.997
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plank",
+      "triangles": 14,
+      "area": 4318.7,
+      "along": [
+        -27.0,
+        27.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.922,
+        0.922
+      ]
+    }
+  ]
+}

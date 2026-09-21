@@ -1,0 +1,67 @@
+{
+  "item": "Book01",
+  "mu_name": "Scroll of Poison",
+  "mu_name_from": "ZzzOpenData.cpp: `for (int i = 0; i < 19; i++) gLoadData.AccessModel(MODEL_ETC + i, L\"Data\\\\Item\\\\\", L\"Book\", i + 1)`, so item group ITEM_ETC number i is Book{i+1:02}.bmd - and _enum.h names that group's first four ITEM_SCROLL_OF_POISON, _METEORITE, _LIGHTING, _FIRE_BALL, in the order OpenMU's group 15 numbers them. Number 0 is Book01.bmd and is the Scroll of Poison.",
+  "why_this_one": "It is the model every spell scroll in 0.75 is made of. Book01 through Book12 are the twelve rows of group 15, and the twelve .bmd files are byte-identical - one md5 across all nineteen Books in Data/Item, 28 vertices and 16 triangles apiece, every one of them naming book.jpg. MU ships twelve copies of one object and tells them apart by the row, not by the art.\n\nSo this asset carries the geometry and the sheet, and Book02 through Book12 carry a row each and name this one as their mesh. See mesh_note there, and pipeline/index.py, where the sharing is resolved.\n\nThe scrolls were missing from the catalogue entirely: group 15 had no rows at all, which left a hole in every drop pool from level 5 up - a Bull Fighter at level 6 could not leave the Scroll of Fire Ball - and left Pasi's first seven shelf slots dark.",
+  "profile": "weapon",
+  "profile_note": "Not because a scroll is a weapon but because the profile is about the art: a small painted sheet on a made object seen close, upscaled with the drawn model held back so a band of paint does not become a ridge. The Apple made the same argument, and the Ale and the Town Portal Scroll followed it.",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated. Only the columns a drop and a shelf read are here - a scroll has no damage roll, no stance and no hand, which is why it carries a Prize and no Arm. See shared/Rows.cs.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Scrolls.cs, CreateScroll(0, 1, \"Scroll of Poison\", 30, 0, 140, 17000).",
+    "call": "CreateScroll(byte number, int skillNumber, string name, byte dropLevel, int levelRequirement, int energyRequirement, int money) - and the helper fills the rest: Group = 15; Width = 1; Height = 2; DropsFromMonsters = true; Durability = 1; QualifiedCharacters = { DarkWizard }.",
+    "group": 15,
+    "number": 0,
+    "drop_level": 30,
+    "drops_from_monsters": true,
+    "drops_from_monsters_note": "True, and worth saying because Prize.DropsFromMonsters used to claim the scrolls were the third thing it was false on. `scroll.DropsFromMonsters = true` is written into CreateScroll for every one of the twelve; the two rows it is actually false on are the Arrows and the Bolt.",
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "durability_note": "One. One reading.",
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll, on all twelve. Read by Prize.ReadBy where the scroll is read; before the orbs it was a Trade test in Realm.Read."
+  },
+  "skill": {
+    "note": "What the scroll teaches, and nothing here reads it. Recorded for the same reason magic_power was recorded on the staves before spells existed: so the day skills arrive is not the day this table is transcribed a second time.",
+    "number": 1,
+    "name": "Poison",
+    "level_requirement": 0,
+    "energy_requirement": 140,
+    "requirement_note": "The energy figure is the requirement itself and not a raw value to be scaled. ItemExtensions.GetRequirement returns requirement.MinimumValue unchanged when `!item.IsWearable()`, and a scroll has no item slot - so where a Small Shield's 70 becomes 26 through Needs.Asking, this 140 is 140. CalculateBookEnergyRequirement, which does scale one, is for the Summoner's books in group 5 and not for these.",
+    "value": 17000,
+    "value_note": "OpenMU's `money`, which for group 15 is the price outright: CalculateBuyingPrice returns definition.Value where the group is 15 or 12 and the value is over nought, before the cubic is ever reached. Carried into Coin.Worth's sibling rather than into the index, which is where the potions' values live for the same reason."
+  },
+  "sheets": {
+    "book": "book.png"
+  },
+  "sheet_from": "Data/Item/book.OZJ (64x64) from MuMain, which Book01.bmd names book.jpg. One copy in the tree, and the only sheet any of the nineteen Books names.",
+  "sheet_note": "An atlas of the three faces of a closed book, magnified to read it: the left third is the spine, a gold-brown panel with a dark ornate motif running down it; the right two thirds is the cover, dark maroon with a gold ornament stamped across the middle and gold fittings at the corners; and the pale cream band along the top is the block of page edges. Nothing on it is a rolled parchment, which is what the Town Portal Scroll is - MU's spell scrolls are bound books.",
+  "material_note": "One island for sixteen triangles, so the material is what most of the island is, and most of it is the maroon cover: leather. A bound book is hide over boards - metallic nought, rough, with the hide's own fine pitting - and the alternative considered was cloth, which is flatter and glossier by a hair and is meant for something hung rather than stretched over a board.",
+  "open_question": "The gold ornament, the gold spine panel and the cream page block ship with leather's roughness and their own painted colour. The island is the unit of assignment and this model has one for the whole book, so there is nothing finer to assign to - the same limit the Battle Axe, the Dragon Lance and the Great Scythe are recorded against. On a 64-square seen at inventory size it is not a thing anybody can see; the gilt not catching a highlight is what would be lost if one ever could.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 16,
+      "area": 5288.2,
+      "along": [
+        -18.1,
+        18.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.998
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.672
+      ]
+    }
+  ]
+}

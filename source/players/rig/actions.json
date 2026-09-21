@@ -1,0 +1,1407 @@
+{
+  "note": "MU's own names for the player actions, read from the client's enum (_enum.h, the block starting PLAYER_SET). A .bmd stores actions as a bare array with no names in it at all, so without this a clip can only be called by its number. Index is the action index.",
+  "source": "MuMain/src/source/Core/Globals/_enum.h",
+  "numbering_note": "The enum has one #ifdef in it and this table is built with it off.\n\nYDG_ADD_SKILL_RIDING_ANIMATIONS adds six actions between PLAYER_SKILL_LIGHTNING_SHOCK and PLAYER_DEFENSE1. Counted in, every index from 187 up is six too high, and this file had them counted in: it named clip 193 PLAYER_DEFENSE1 and clip 198 PLAYER_CLAP1, so the Golden Archer's clap and the emote block behind it were labelled as somebody else's.\n\nSettled against the .bmd rather than by guessing at the build's defines, and it settles twice over. Counting the block out puts MAX_PLAYER_ACTION at 285, which is 285 actions numbered 0 to 284; counting it in puts it at 291. player.bmd holds 284. And the key counts line up on the same reading: the .bmd's actions 187 and 188 are 13 keys and 189 through 206 are 12, which is PLAYER_DEFENSE1 and PLAYER_GREETING1 followed by nine male/female emote pairs - exactly the enum's shape with the block out, and nothing like it with the block in.\n\nOne entry over: the enum defines 285 actions and this .bmd carries 284. MuMain is a later client than the art, so the surplus is at the end. Everything up to 206 is confirmed against the file key count by key count.",
+  "play_speed_note": "How fast the client plays each one, where it says. Not in the .bmd - MU assigns play speeds in code, at load, in ZzzOpenData.cpp - so this is read out of that function and is the other half of what a clip needs to be exported at the right length.\n\nThe unit is MU's: keys advanced per frame at a 25 fps reference clock, so seconds = keys / (play_speed * 25). PLAYER_STOP_MALE at 0.28 over six keys is 0.86 s; PLAYER_STOP_BOW at 0.22 over the same six is 1.09 s. 177 of the 285 are assigned explicitly or by one of the ranges; the rest are left out and take the exporter's default. See pipeline/export_gltf.py, DEFAULT_PLAY_SPEED.",
+  "play_speed_from": "Two functions, not one, and the second was missed the first time round.\n\nZzzOpenData.cpp's block of Models[MODEL_PLAYER].Actions[...].PlaySpeed assignments is the load-time half, read in source order so a later line wins over an earlier range the way it does at runtime. It covers the stances, the walks and the runs.\n\nZzzCharacter.cpp's SetAttackSpeed is the other half, and every attack in the game is in it. That is why the attacks had no play speed here at all and were exported at the pipeline's 0.25 default: the fist alone is 0.6, so a bare-handed swing ran at four tenths of MU's speed, which is what the Monsters tab's combat bench showed up.\n\nWhat is recorded here is the base term only. The client adds a speed derived from the character's AttackSpeed stat on top -- `PlaySpeed = 0.6f + AttackSpeed1` for the fist, where AttackSpeed1 is AttackSpeed * 0.004 -- which is a per-character runtime quantity and cannot be baked into a clip that every character shares. A level-2 Dark Knight's agility of 20 buys 0.005 of it, so the base is very nearly the whole answer; a heavily equipped character swings measurably faster than these clips do, and that difference belongs to whatever plays them.",
+  "close_loop_note": "Ours, not MU's. PLAYER_STOP_FEMALE is LockPositions in player.bmd, so the client wraps it at NumAnimationKeys - 1 and its last key is not a copy of its first: Bone07, Bone03 and Bip01 Ponytail11 snap 43, 38 and 37 degrees in one frame at every wrap, which is the elf standing in town with her hair and skirt cutting. close_loop gives it the free action's closing key instead (export_gltf.read_closes), so the cycle is one interval longer and the wrap is a movement rather than a cut. Asked for 2026-09-14 after watching it.",
+  "hold_at_end_note": "Four actions carry hold_at_end: 72 Skill hell begin, 230 Come up, 232 Die 1 and 233 Die 2. They are the four the client marks Loop = true in OpenPlayerModel, and the field is named for the opposite of what it does - PlayAnimation reads Loop == true as 'clamp the frame to NumAnimationKeys - 0.01 and stop' and false as 'wrap with Frame % Key'. So Loop marks the actions that do NOT loop. It is called hold_at_end here so that nobody has to know that twice; the monsters' table says the same thing about the same field.\n\nIt changes what is written, not just how it is played. export_gltf gives a looping action a closing key holding key 0's pose, so the wrap has an interval to happen over - and on a death that key is the corpse spending its last interval rising back toward the pose it was standing in. A body that half gets up as it falls. Playing it once rather than looping does not save it, because the bad interval is inside the clip.",
+  "die_speed_from": "ZzzOpenData.cpp: `for (int i = PLAYER_DIE1; i <= PLAYER_DIE2; i++) PlaySpeed = 0.45f`. Worth stating because the 0.4 three lines below it looks like it overwrites them and does not - that loop runs from PLAYER_SIT1, which is 234, one past the second death. Read as 0.4 the fall takes a ninth longer than MU's.",
+  "actions": {
+    "0": {
+      "enum": "PLAYER_SET",
+      "name": "Set"
+    },
+    "1": {
+      "enum": "PLAYER_STOP_MALE",
+      "name": "Stop male",
+      "play_speed": 0.28
+    },
+    "2": {
+      "enum": "PLAYER_STOP_FEMALE",
+      "name": "Stop female",
+      "play_speed": 0.28,
+      "close_loop": true
+    },
+    "3": {
+      "enum": "PLAYER_STOP_SUMMONER",
+      "name": "Stop summoner",
+      "play_speed": 0.24
+    },
+    "4": {
+      "enum": "PLAYER_STOP_SWORD",
+      "name": "Stop sword",
+      "play_speed": 0.26
+    },
+    "5": {
+      "enum": "PLAYER_STOP_TWO_HAND_SWORD",
+      "name": "Stop two hand sword",
+      "play_speed": 0.24
+    },
+    "6": {
+      "enum": "PLAYER_STOP_SPEAR",
+      "name": "Stop spear",
+      "play_speed": 0.24
+    },
+    "7": {
+      "enum": "PLAYER_STOP_SCYTHE",
+      "name": "Stop scythe",
+      "play_speed": 0.28
+    },
+    "8": {
+      "enum": "PLAYER_STOP_BOW",
+      "name": "Stop bow",
+      "play_speed": 0.22
+    },
+    "9": {
+      "enum": "PLAYER_STOP_CROSSBOW",
+      "name": "Stop crossbow",
+      "play_speed": 0.22
+    },
+    "10": {
+      "enum": "PLAYER_STOP_WAND",
+      "name": "Stop wand",
+      "play_speed": 0.3
+    },
+    "11": {
+      "enum": "PLAYER_STOP_FLY",
+      "name": "Stop fly",
+      "play_speed": 0.28
+    },
+    "12": {
+      "enum": "PLAYER_STOP_FLY_CROSSBOW",
+      "name": "Stop fly crossbow",
+      "play_speed": 0.28
+    },
+    "13": {
+      "enum": "PLAYER_STOP_RIDE",
+      "name": "Stop ride",
+      "play_speed": 0.28
+    },
+    "14": {
+      "enum": "PLAYER_STOP_RIDE_WEAPON",
+      "name": "Stop ride weapon",
+      "play_speed": 0.28
+    },
+    "15": {
+      "enum": "PLAYER_WALK_MALE",
+      "name": "Walk male",
+      "play_speed": 0.3
+    },
+    "16": {
+      "enum": "PLAYER_WALK_FEMALE",
+      "name": "Walk female",
+      "play_speed": 0.3
+    },
+    "17": {
+      "enum": "PLAYER_WALK_SWORD",
+      "name": "Walk sword",
+      "play_speed": 0.3
+    },
+    "18": {
+      "enum": "PLAYER_WALK_TWO_HAND_SWORD",
+      "name": "Walk two hand sword",
+      "play_speed": 0.3
+    },
+    "19": {
+      "enum": "PLAYER_WALK_SPEAR",
+      "name": "Walk spear",
+      "play_speed": 0.3
+    },
+    "20": {
+      "enum": "PLAYER_WALK_SCYTHE",
+      "name": "Walk scythe",
+      "play_speed": 0.3
+    },
+    "21": {
+      "enum": "PLAYER_WALK_BOW",
+      "name": "Walk bow",
+      "play_speed": 0.3
+    },
+    "22": {
+      "enum": "PLAYER_WALK_CROSSBOW",
+      "name": "Walk crossbow",
+      "play_speed": 0.3
+    },
+    "23": {
+      "enum": "PLAYER_WALK_WAND",
+      "name": "Walk wand",
+      "play_speed": 0.44
+    },
+    "24": {
+      "enum": "PLAYER_WALK_SWIM",
+      "name": "Walk swim",
+      "play_speed": 0.35
+    },
+    "25": {
+      "enum": "PLAYER_RUN",
+      "name": "Run",
+      "play_speed": 0.3
+    },
+    "26": {
+      "enum": "PLAYER_RUN_SWORD",
+      "name": "Run sword",
+      "play_speed": 0.3
+    },
+    "27": {
+      "enum": "PLAYER_RUN_TWO_SWORD",
+      "name": "Run two sword",
+      "play_speed": 0.3
+    },
+    "28": {
+      "enum": "PLAYER_RUN_TWO_HAND_SWORD",
+      "name": "Run two hand sword",
+      "play_speed": 0.3
+    },
+    "29": {
+      "enum": "PLAYER_RUN_SPEAR",
+      "name": "Run spear",
+      "play_speed": 0.3
+    },
+    "30": {
+      "enum": "PLAYER_RUN_BOW",
+      "name": "Run bow",
+      "play_speed": 0.3
+    },
+    "31": {
+      "enum": "PLAYER_RUN_CROSSBOW",
+      "name": "Run crossbow",
+      "play_speed": 0.3
+    },
+    "32": {
+      "enum": "PLAYER_RUN_WAND",
+      "name": "Run wand",
+      "play_speed": 0.76
+    },
+    "33": {
+      "enum": "PLAYER_RUN_SWIM",
+      "name": "Run swim",
+      "play_speed": 0.35
+    },
+    "34": {
+      "enum": "PLAYER_FLY",
+      "name": "Fly",
+      "play_speed": 0.3
+    },
+    "35": {
+      "enum": "PLAYER_FLY_CROSSBOW",
+      "name": "Fly crossbow",
+      "play_speed": 0.3
+    },
+    "36": {
+      "enum": "PLAYER_RUN_RIDE",
+      "name": "Run ride",
+      "play_speed": 0.3
+    },
+    "37": {
+      "enum": "PLAYER_RUN_RIDE_WEAPON",
+      "name": "Run ride weapon",
+      "play_speed": 0.3
+    },
+    "38": {
+      "enum": "PLAYER_ATTACK_FIST",
+      "name": "Attack fist",
+      "play_speed": 0.6
+    },
+    "39": {
+      "enum": "PLAYER_ATTACK_SWORD_RIGHT1",
+      "name": "Attack sword right 1",
+      "play_speed": 0.25
+    },
+    "40": {
+      "enum": "PLAYER_ATTACK_SWORD_RIGHT2",
+      "name": "Attack sword right 2",
+      "play_speed": 0.25
+    },
+    "41": {
+      "enum": "PLAYER_ATTACK_SWORD_LEFT1",
+      "name": "Attack sword left 1",
+      "play_speed": 0.25
+    },
+    "42": {
+      "enum": "PLAYER_ATTACK_SWORD_LEFT2",
+      "name": "Attack sword left 2",
+      "play_speed": 0.25
+    },
+    "43": {
+      "enum": "PLAYER_ATTACK_TWO_HAND_SWORD1",
+      "name": "Attack two hand sword 1",
+      "play_speed": 0.25
+    },
+    "44": {
+      "enum": "PLAYER_ATTACK_TWO_HAND_SWORD2",
+      "name": "Attack two hand sword 2",
+      "play_speed": 0.25
+    },
+    "45": {
+      "enum": "PLAYER_ATTACK_TWO_HAND_SWORD3",
+      "name": "Attack two hand sword 3",
+      "play_speed": 0.25
+    },
+    "46": {
+      "enum": "PLAYER_ATTACK_SPEAR1",
+      "name": "Attack spear 1",
+      "play_speed": 0.25
+    },
+    "47": {
+      "enum": "PLAYER_ATTACK_SCYTHE1",
+      "name": "Attack scythe 1",
+      "play_speed": 0.25
+    },
+    "48": {
+      "enum": "PLAYER_ATTACK_SCYTHE2",
+      "name": "Attack scythe 2",
+      "play_speed": 0.25
+    },
+    "49": {
+      "enum": "PLAYER_ATTACK_SCYTHE3",
+      "name": "Attack scythe 3",
+      "play_speed": 0.25
+    },
+    "50": {
+      "enum": "PLAYER_ATTACK_BOW",
+      "name": "Attack bow",
+      "play_speed": 0.3
+    },
+    "51": {
+      "enum": "PLAYER_ATTACK_CROSSBOW",
+      "name": "Attack crossbow",
+      "play_speed": 0.3
+    },
+    "52": {
+      "enum": "PLAYER_ATTACK_FLY_BOW",
+      "name": "Attack fly bow",
+      "play_speed": 0.3
+    },
+    "53": {
+      "enum": "PLAYER_ATTACK_FLY_CROSSBOW",
+      "name": "Attack fly crossbow",
+      "play_speed": 0.3
+    },
+    "54": {
+      "enum": "PLAYER_ATTACK_RIDE_SWORD",
+      "name": "Attack ride sword",
+      "play_speed": 0.25
+    },
+    "55": {
+      "enum": "PLAYER_ATTACK_RIDE_TWO_HAND_SWORD",
+      "name": "Attack ride two hand sword",
+      "play_speed": 0.25
+    },
+    "56": {
+      "enum": "PLAYER_ATTACK_RIDE_SPEAR",
+      "name": "Attack ride spear",
+      "play_speed": 0.25
+    },
+    "57": {
+      "enum": "PLAYER_ATTACK_RIDE_SCYTHE",
+      "name": "Attack ride scythe",
+      "play_speed": 0.25
+    },
+    "58": {
+      "enum": "PLAYER_ATTACK_RIDE_BOW",
+      "name": "Attack ride bow",
+      "play_speed": 0.3
+    },
+    "59": {
+      "enum": "PLAYER_ATTACK_RIDE_CROSSBOW",
+      "name": "Attack ride crossbow",
+      "play_speed": 0.3
+    },
+    "60": {
+      "enum": "PLAYER_ATTACK_SKILL_SWORD1",
+      "name": "Attack skill sword 1",
+      "play_speed": 0.3
+    },
+    "61": {
+      "enum": "PLAYER_ATTACK_SKILL_SWORD2",
+      "name": "Attack skill sword 2",
+      "play_speed": 0.3
+    },
+    "62": {
+      "enum": "PLAYER_ATTACK_SKILL_SWORD3",
+      "name": "Attack skill sword 3",
+      "play_speed": 0.27
+    },
+    "63": {
+      "enum": "PLAYER_ATTACK_SKILL_SWORD4",
+      "name": "Attack skill sword 4",
+      "play_speed": 0.3
+    },
+    "64": {
+      "enum": "PLAYER_ATTACK_SKILL_SWORD5",
+      "name": "Attack skill sword 5",
+      "play_speed": 0.24
+    },
+    "65": {
+      "enum": "PLAYER_ATTACK_SKILL_WHEEL",
+      "name": "Attack skill wheel",
+      "play_speed": 0.24
+    },
+    "66": {
+      "enum": "PLAYER_ATTACK_SKILL_FURY_STRIKE",
+      "name": "Attack skill fury strike"
+    },
+    "67": {
+      "enum": "PLAYER_SKILL_VITALITY",
+      "name": "Skill vitality"
+    },
+    "68": {
+      "enum": "PLAYER_SKILL_RIDER",
+      "name": "Skill rider",
+      "play_speed": 0.3
+    },
+    "69": {
+      "enum": "PLAYER_SKILL_RIDER_FLY",
+      "name": "Skill rider fly",
+      "play_speed": 0.3
+    },
+    "70": {
+      "enum": "PLAYER_ATTACK_SKILL_SPEAR",
+      "name": "Attack skill spear",
+      "play_speed": 0.3
+    },
+    "71": {
+      "enum": "PLAYER_ATTACK_DEATHSTAB",
+      "name": "Attack deathstab",
+      "play_speed": 0.25
+    },
+    "72": {
+      "enum": "PLAYER_SKILL_HELL_BEGIN",
+      "name": "Skill hell begin",
+      "play_speed": 0.5,
+      "hold_at_end": true
+    },
+    "73": {
+      "enum": "PLAYER_SKILL_HELL_START",
+      "name": "Skill hell start"
+    },
+    "74": {
+      "enum": "PLAYER_ATTACK_END",
+      "name": "Attack end"
+    },
+    "75": {
+      "enum": "PLAYER_FLY_RIDE",
+      "name": "Fly ride"
+    },
+    "76": {
+      "enum": "PLAYER_FLY_RIDE_WEAPON",
+      "name": "Fly ride weapon"
+    },
+    "77": {
+      "enum": "PLAYER_DARKLORD_STAND",
+      "name": "Darklord stand",
+      "play_speed": 0.3
+    },
+    "78": {
+      "enum": "PLAYER_DARKLORD_WALK",
+      "name": "Darklord walk",
+      "play_speed": 0.3
+    },
+    "79": {
+      "enum": "PLAYER_STOP_RIDE_HORSE",
+      "name": "Stop ride horse",
+      "play_speed": 0.3
+    },
+    "80": {
+      "enum": "PLAYER_RUN_RIDE_HORSE",
+      "name": "Run ride horse",
+      "play_speed": 0.3
+    },
+    "81": {
+      "enum": "PLAYER_ATTACK_STRIKE",
+      "name": "Attack strike",
+      "play_speed": 0.25
+    },
+    "82": {
+      "enum": "PLAYER_ATTACK_TELEPORT",
+      "name": "Attack teleport",
+      "play_speed": 0.28
+    },
+    "83": {
+      "enum": "PLAYER_ATTACK_RIDE_STRIKE",
+      "name": "Attack ride strike",
+      "play_speed": 0.2
+    },
+    "84": {
+      "enum": "PLAYER_ATTACK_RIDE_TELEPORT",
+      "name": "Attack ride teleport",
+      "play_speed": 0.3
+    },
+    "85": {
+      "enum": "PLAYER_ATTACK_RIDE_HORSE_SWORD",
+      "name": "Attack ride horse sword",
+      "play_speed": 0.25
+    },
+    "86": {
+      "enum": "PLAYER_ATTACK_RIDE_ATTACK_FLASH",
+      "name": "Attack ride attack flash",
+      "play_speed": 0.4
+    },
+    "87": {
+      "enum": "PLAYER_ATTACK_RIDE_ATTACK_MAGIC",
+      "name": "Attack ride attack magic",
+      "play_speed": 0.3
+    },
+    "88": {
+      "enum": "PLAYER_ATTACK_DARKHORSE",
+      "name": "Attack darkhorse",
+      "play_speed": 0.2
+    },
+    "89": {
+      "enum": "PLAYER_IDLE1_DARKHORSE",
+      "name": "Idle 1 darkhorse",
+      "play_speed": 1.0
+    },
+    "90": {
+      "enum": "PLAYER_IDLE2_DARKHORSE",
+      "name": "Idle 2 darkhorse",
+      "play_speed": 1.0
+    },
+    "91": {
+      "enum": "PLAYER_FENRIR_ATTACK",
+      "name": "Fenrir attack",
+      "play_speed": 0.25
+    },
+    "92": {
+      "enum": "PLAYER_FENRIR_ATTACK_DARKLORD_AQUA",
+      "name": "Fenrir attack darklord aqua",
+      "play_speed": 0.45
+    },
+    "93": {
+      "enum": "PLAYER_FENRIR_ATTACK_DARKLORD_STRIKE",
+      "name": "Fenrir attack darklord strike",
+      "play_speed": 0.2
+    },
+    "94": {
+      "enum": "PLAYER_FENRIR_ATTACK_DARKLORD_SWORD",
+      "name": "Fenrir attack darklord sword",
+      "play_speed": 0.25
+    },
+    "95": {
+      "enum": "PLAYER_FENRIR_ATTACK_DARKLORD_TELEPORT",
+      "name": "Fenrir attack darklord teleport",
+      "play_speed": 0.3
+    },
+    "96": {
+      "enum": "PLAYER_FENRIR_ATTACK_DARKLORD_FLASH",
+      "name": "Fenrir attack darklord flash",
+      "play_speed": 0.4
+    },
+    "97": {
+      "enum": "PLAYER_FENRIR_ATTACK_TWO_SWORD",
+      "name": "Fenrir attack two sword",
+      "play_speed": 0.25
+    },
+    "98": {
+      "enum": "PLAYER_FENRIR_ATTACK_MAGIC",
+      "name": "Fenrir attack magic",
+      "play_speed": 0.37
+    },
+    "99": {
+      "enum": "PLAYER_FENRIR_ATTACK_CROSSBOW",
+      "name": "Fenrir attack crossbow",
+      "play_speed": 0.3
+    },
+    "100": {
+      "enum": "PLAYER_FENRIR_ATTACK_SPEAR",
+      "name": "Fenrir attack spear",
+      "play_speed": 0.25
+    },
+    "101": {
+      "enum": "PLAYER_FENRIR_ATTACK_ONE_SWORD",
+      "name": "Fenrir attack one sword",
+      "play_speed": 0.25
+    },
+    "102": {
+      "enum": "PLAYER_FENRIR_ATTACK_BOW",
+      "name": "Fenrir attack bow",
+      "play_speed": 0.3
+    },
+    "103": {
+      "enum": "PLAYER_FENRIR_SKILL",
+      "name": "Fenrir skill",
+      "play_speed": 0.45
+    },
+    "104": {
+      "enum": "PLAYER_FENRIR_SKILL_TWO_SWORD",
+      "name": "Fenrir skill two sword",
+      "play_speed": 0.45
+    },
+    "105": {
+      "enum": "PLAYER_FENRIR_SKILL_ONE_RIGHT",
+      "name": "Fenrir skill one right",
+      "play_speed": 0.45
+    },
+    "106": {
+      "enum": "PLAYER_FENRIR_SKILL_ONE_LEFT",
+      "name": "Fenrir skill one left",
+      "play_speed": 0.45
+    },
+    "107": {
+      "enum": "PLAYER_FENRIR_DAMAGE",
+      "name": "Fenrir damage",
+      "play_speed": 0.45
+    },
+    "108": {
+      "enum": "PLAYER_FENRIR_DAMAGE_TWO_SWORD",
+      "name": "Fenrir damage two sword",
+      "play_speed": 0.45
+    },
+    "109": {
+      "enum": "PLAYER_FENRIR_DAMAGE_ONE_RIGHT",
+      "name": "Fenrir damage one right",
+      "play_speed": 0.45
+    },
+    "110": {
+      "enum": "PLAYER_FENRIR_DAMAGE_ONE_LEFT",
+      "name": "Fenrir damage one left",
+      "play_speed": 0.45
+    },
+    "111": {
+      "enum": "PLAYER_FENRIR_RUN",
+      "name": "Fenrir run",
+      "play_speed": 0.71
+    },
+    "112": {
+      "enum": "PLAYER_FENRIR_RUN_TWO_SWORD",
+      "name": "Fenrir run two sword",
+      "play_speed": 0.71
+    },
+    "113": {
+      "enum": "PLAYER_FENRIR_RUN_ONE_RIGHT",
+      "name": "Fenrir run one right",
+      "play_speed": 0.71
+    },
+    "114": {
+      "enum": "PLAYER_FENRIR_RUN_ONE_LEFT",
+      "name": "Fenrir run one left",
+      "play_speed": 0.71
+    },
+    "115": {
+      "enum": "PLAYER_FENRIR_RUN_MAGOM",
+      "name": "Fenrir run magom",
+      "play_speed": 0.71
+    },
+    "116": {
+      "enum": "PLAYER_FENRIR_RUN_TWO_SWORD_MAGOM",
+      "name": "Fenrir run two sword magom",
+      "play_speed": 0.71
+    },
+    "117": {
+      "enum": "PLAYER_FENRIR_RUN_ONE_RIGHT_MAGOM",
+      "name": "Fenrir run one right magom",
+      "play_speed": 0.71
+    },
+    "118": {
+      "enum": "PLAYER_FENRIR_RUN_ONE_LEFT_MAGOM",
+      "name": "Fenrir run one left magom",
+      "play_speed": 0.71
+    },
+    "119": {
+      "enum": "PLAYER_FENRIR_RUN_ELF",
+      "name": "Fenrir run elf",
+      "play_speed": 0.71
+    },
+    "120": {
+      "enum": "PLAYER_FENRIR_RUN_TWO_SWORD_ELF",
+      "name": "Fenrir run two sword elf",
+      "play_speed": 0.71
+    },
+    "121": {
+      "enum": "PLAYER_FENRIR_RUN_ONE_RIGHT_ELF",
+      "name": "Fenrir run one right elf",
+      "play_speed": 0.71
+    },
+    "122": {
+      "enum": "PLAYER_FENRIR_RUN_ONE_LEFT_ELF",
+      "name": "Fenrir run one left elf",
+      "play_speed": 0.71
+    },
+    "123": {
+      "enum": "PLAYER_FENRIR_STAND",
+      "name": "Fenrir stand",
+      "play_speed": 0.4
+    },
+    "124": {
+      "enum": "PLAYER_FENRIR_STAND_TWO_SWORD",
+      "name": "Fenrir stand two sword",
+      "play_speed": 0.4
+    },
+    "125": {
+      "enum": "PLAYER_FENRIR_STAND_ONE_RIGHT",
+      "name": "Fenrir stand one right",
+      "play_speed": 0.4
+    },
+    "126": {
+      "enum": "PLAYER_FENRIR_STAND_ONE_LEFT",
+      "name": "Fenrir stand one left",
+      "play_speed": 0.4
+    },
+    "127": {
+      "enum": "PLAYER_FENRIR_WALK",
+      "name": "Fenrir walk",
+      "play_speed": 0.45
+    },
+    "128": {
+      "enum": "PLAYER_FENRIR_WALK_TWO_SWORD",
+      "name": "Fenrir walk two sword",
+      "play_speed": 0.45
+    },
+    "129": {
+      "enum": "PLAYER_FENRIR_WALK_ONE_RIGHT",
+      "name": "Fenrir walk one right",
+      "play_speed": 0.45
+    },
+    "130": {
+      "enum": "PLAYER_FENRIR_WALK_ONE_LEFT",
+      "name": "Fenrir walk one left",
+      "play_speed": 0.45
+    },
+    "131": {
+      "enum": "PLAYER_ATTACK_BOW_UP",
+      "name": "Attack bow up"
+    },
+    "132": {
+      "enum": "PLAYER_ATTACK_CROSSBOW_UP",
+      "name": "Attack crossbow up"
+    },
+    "133": {
+      "enum": "PLAYER_ATTACK_FLY_BOW_UP",
+      "name": "Attack fly bow up"
+    },
+    "134": {
+      "enum": "PLAYER_ATTACK_FLY_CROSSBOW_UP",
+      "name": "Attack fly crossbow up"
+    },
+    "135": {
+      "enum": "PLAYER_ATTACK_RIDE_BOW_UP",
+      "name": "Attack ride bow up"
+    },
+    "136": {
+      "enum": "PLAYER_ATTACK_RIDE_CROSSBOW_UP",
+      "name": "Attack ride crossbow up"
+    },
+    "137": {
+      "enum": "PLAYER_ATTACK_ONE_FLASH",
+      "name": "Attack one flash",
+      "play_speed": 0.4
+    },
+    "138": {
+      "enum": "PLAYER_ATTACK_RUSH",
+      "name": "Attack rush",
+      "play_speed": 0.3
+    },
+    "139": {
+      "enum": "PLAYER_ATTACK_DEATH_CANNON",
+      "name": "Attack death cannon",
+      "play_speed": 0.2
+    },
+    "140": {
+      "enum": "PLAYER_ATTACK_REMOVAL",
+      "name": "Attack removal"
+    },
+    "141": {
+      "enum": "PLAYER_ATTACK_STUN",
+      "name": "Attack stun"
+    },
+    "142": {
+      "enum": "PLAYER_HIGH_SHOCK",
+      "name": "High shock",
+      "play_speed": 0.3
+    },
+    "143": {
+      "enum": "PLAYER_STOP_TWO_HAND_SWORD_TWO",
+      "name": "Stop two hand sword two",
+      "play_speed": 0.24
+    },
+    "144": {
+      "enum": "PLAYER_WALK_TWO_HAND_SWORD_TWO",
+      "name": "Walk two hand sword two",
+      "play_speed": 0.3
+    },
+    "145": {
+      "enum": "PLAYER_RUN_TWO_HAND_SWORD_TWO",
+      "name": "Run two hand sword two",
+      "play_speed": 0.3
+    },
+    "146": {
+      "enum": "PLAYER_ATTACK_TWO_HAND_SWORD_TWO",
+      "name": "Attack two hand sword two",
+      "play_speed": 0.25
+    },
+    "147": {
+      "enum": "PLAYER_SKILL_HAND1",
+      "name": "Skill hand 1",
+      "play_speed": 0.29
+    },
+    "148": {
+      "enum": "PLAYER_SKILL_HAND2",
+      "name": "Skill hand 2",
+      "play_speed": 0.29
+    },
+    "149": {
+      "enum": "PLAYER_SKILL_WEAPON1",
+      "name": "Skill weapon 1",
+      "play_speed": 0.29
+    },
+    "150": {
+      "enum": "PLAYER_SKILL_WEAPON2",
+      "name": "Skill weapon 2",
+      "play_speed": 0.29
+    },
+    "151": {
+      "enum": "PLAYER_SKILL_ELF1",
+      "name": "Skill elf 1",
+      "play_speed": 0.25
+    },
+    "152": {
+      "enum": "PLAYER_SKILL_TELEPORT",
+      "name": "Skill teleport",
+      "play_speed": 0.3
+    },
+    "153": {
+      "enum": "PLAYER_SKILL_FLASH",
+      "name": "Skill flash",
+      "play_speed": 0.4
+    },
+    "154": {
+      "enum": "PLAYER_SKILL_INFERNO",
+      "name": "Skill inferno",
+      "play_speed": 0.6
+    },
+    "155": {
+      "enum": "PLAYER_SKILL_HELL",
+      "name": "Skill hell",
+      "play_speed": 0.5
+    },
+    "156": {
+      "enum": "PLAYER_RIDE_SKILL",
+      "name": "Ride skill",
+      "play_speed": 0.3
+    },
+    "157": {
+      "enum": "PLAYER_SKILL_SLEEP",
+      "name": "Skill sleep",
+      "play_speed": 0.3
+    },
+    "158": {
+      "enum": "PLAYER_SKILL_SLEEP_UNI",
+      "name": "Skill sleep uni",
+      "play_speed": 0.3
+    },
+    "159": {
+      "enum": "PLAYER_SKILL_SLEEP_DINO",
+      "name": "Skill sleep dino",
+      "play_speed": 0.3
+    },
+    "160": {
+      "enum": "PLAYER_SKILL_SLEEP_FENRIR",
+      "name": "Skill sleep fenrir",
+      "play_speed": 0.3
+    },
+    "161": {
+      "enum": "PLAYER_SKILL_CHAIN_LIGHTNING",
+      "name": "Skill chain lightning",
+      "play_speed": 0.25
+    },
+    "162": {
+      "enum": "PLAYER_SKILL_CHAIN_LIGHTNING_UNI",
+      "name": "Skill chain lightning uni",
+      "play_speed": 0.15
+    },
+    "163": {
+      "enum": "PLAYER_SKILL_CHAIN_LIGHTNING_DINO",
+      "name": "Skill chain lightning dino",
+      "play_speed": 0.15
+    },
+    "164": {
+      "enum": "PLAYER_SKILL_CHAIN_LIGHTNING_FENRIR",
+      "name": "Skill chain lightning fenrir",
+      "play_speed": 0.15
+    },
+    "165": {
+      "enum": "PLAYER_SKILL_LIGHTNING_ORB",
+      "name": "Skill lightning orb",
+      "play_speed": 0.4
+    },
+    "166": {
+      "enum": "PLAYER_SKILL_LIGHTNING_ORB_UNI",
+      "name": "Skill lightning orb uni",
+      "play_speed": 0.25
+    },
+    "167": {
+      "enum": "PLAYER_SKILL_LIGHTNING_ORB_DINO",
+      "name": "Skill lightning orb dino",
+      "play_speed": 0.25
+    },
+    "168": {
+      "enum": "PLAYER_SKILL_LIGHTNING_ORB_FENRIR",
+      "name": "Skill lightning orb fenrir",
+      "play_speed": 0.25
+    },
+    "169": {
+      "enum": "PLAYER_SKILL_DRAIN_LIFE",
+      "name": "Skill drain life",
+      "play_speed": 0.25
+    },
+    "170": {
+      "enum": "PLAYER_SKILL_DRAIN_LIFE_UNI",
+      "name": "Skill drain life uni",
+      "play_speed": 0.25
+    },
+    "171": {
+      "enum": "PLAYER_SKILL_DRAIN_LIFE_DINO",
+      "name": "Skill drain life dino",
+      "play_speed": 0.25
+    },
+    "172": {
+      "enum": "PLAYER_SKILL_DRAIN_LIFE_FENRIR",
+      "name": "Skill drain life fenrir",
+      "play_speed": 0.25
+    },
+    "173": {
+      "enum": "PLAYER_SKILL_SUMMON",
+      "name": "Skill summon"
+    },
+    "174": {
+      "enum": "PLAYER_SKILL_SUMMON_UNI",
+      "name": "Skill summon uni"
+    },
+    "175": {
+      "enum": "PLAYER_SKILL_SUMMON_DINO",
+      "name": "Skill summon dino"
+    },
+    "176": {
+      "enum": "PLAYER_SKILL_SUMMON_FENRIR",
+      "name": "Skill summon fenrir"
+    },
+    "177": {
+      "enum": "PLAYER_SKILL_BLOW_OF_DESTRUCTION",
+      "name": "Skill blow of destruction"
+    },
+    "178": {
+      "enum": "PLAYER_SKILL_SWELL_OF_MP",
+      "name": "Skill swell of mp"
+    },
+    "179": {
+      "enum": "PLAYER_SKILL_MULTISHOT_BOW_STAND",
+      "name": "Skill multishot bow stand"
+    },
+    "180": {
+      "enum": "PLAYER_SKILL_MULTISHOT_BOW_FLYING",
+      "name": "Skill multishot bow flying"
+    },
+    "181": {
+      "enum": "PLAYER_SKILL_MULTISHOT_CROSSBOW_STAND",
+      "name": "Skill multishot crossbow stand"
+    },
+    "182": {
+      "enum": "PLAYER_SKILL_MULTISHOT_CROSSBOW_FLYING",
+      "name": "Skill multishot crossbow flying"
+    },
+    "183": {
+      "enum": "PLAYER_SKILL_RECOVERY",
+      "name": "Skill recovery"
+    },
+    "184": {
+      "enum": "PLAYER_SKILL_GIGANTICSTORM",
+      "name": "Skill giganticstorm",
+      "play_speed": 0.55
+    },
+    "185": {
+      "enum": "PLAYER_SKILL_FLAMESTRIKE",
+      "name": "Skill flamestrike",
+      "play_speed": 0.69
+    },
+    "186": {
+      "enum": "PLAYER_SKILL_LIGHTNING_SHOCK",
+      "name": "Skill lightning shock",
+      "play_speed": 0.35
+    },
+    "187": {
+      "enum": "PLAYER_DEFENSE1",
+      "name": "Defense 1",
+      "play_speed": 0.32
+    },
+    "188": {
+      "enum": "PLAYER_GREETING1",
+      "name": "Greeting 1",
+      "play_speed": 0.32
+    },
+    "189": {
+      "enum": "PLAYER_GREETING_FEMALE1",
+      "name": "Greeting female 1",
+      "play_speed": 0.32
+    },
+    "190": {
+      "enum": "PLAYER_GOODBYE1",
+      "name": "Goodbye 1",
+      "play_speed": 0.32
+    },
+    "191": {
+      "enum": "PLAYER_GOODBYE_FEMALE1",
+      "name": "Goodbye female 1",
+      "play_speed": 0.32
+    },
+    "192": {
+      "enum": "PLAYER_CLAP1",
+      "name": "Clap 1",
+      "play_speed": 0.32
+    },
+    "193": {
+      "enum": "PLAYER_CLAP_FEMALE1",
+      "name": "Clap female 1",
+      "play_speed": 0.32
+    },
+    "194": {
+      "enum": "PLAYER_CHEER1",
+      "name": "Cheer 1",
+      "play_speed": 0.32
+    },
+    "195": {
+      "enum": "PLAYER_CHEER_FEMALE1",
+      "name": "Cheer female 1",
+      "play_speed": 0.32
+    },
+    "196": {
+      "enum": "PLAYER_DIRECTION1",
+      "name": "Direction 1",
+      "play_speed": 0.32
+    },
+    "197": {
+      "enum": "PLAYER_DIRECTION_FEMALE1",
+      "name": "Direction female 1",
+      "play_speed": 0.32
+    },
+    "198": {
+      "enum": "PLAYER_GESTURE1",
+      "name": "Gesture 1",
+      "play_speed": 0.32
+    },
+    "199": {
+      "enum": "PLAYER_GESTURE_FEMALE1",
+      "name": "Gesture female 1",
+      "play_speed": 0.32
+    },
+    "200": {
+      "enum": "PLAYER_UNKNOWN1",
+      "name": "Unknown 1",
+      "play_speed": 0.32
+    },
+    "201": {
+      "enum": "PLAYER_UNKNOWN_FEMALE1",
+      "name": "Unknown female 1",
+      "play_speed": 0.32
+    },
+    "202": {
+      "enum": "PLAYER_CRY1",
+      "name": "Cry 1",
+      "play_speed": 0.32
+    },
+    "203": {
+      "enum": "PLAYER_CRY_FEMALE1",
+      "name": "Cry female 1",
+      "play_speed": 0.32
+    },
+    "204": {
+      "enum": "PLAYER_AWKWARD1",
+      "name": "Awkward 1",
+      "play_speed": 0.32
+    },
+    "205": {
+      "enum": "PLAYER_AWKWARD_FEMALE1",
+      "name": "Awkward female 1",
+      "play_speed": 0.32
+    },
+    "206": {
+      "enum": "PLAYER_SEE1",
+      "name": "See 1",
+      "play_speed": 0.28
+    },
+    "207": {
+      "enum": "PLAYER_SEE_FEMALE1",
+      "name": "See female 1",
+      "play_speed": 0.28
+    },
+    "208": {
+      "enum": "PLAYER_WIN1",
+      "name": "Win 1",
+      "play_speed": 0.32
+    },
+    "209": {
+      "enum": "PLAYER_WIN_FEMALE1",
+      "name": "Win female 1",
+      "play_speed": 0.32
+    },
+    "210": {
+      "enum": "PLAYER_SMILE1",
+      "name": "Smile 1",
+      "play_speed": 0.32
+    },
+    "211": {
+      "enum": "PLAYER_SMILE_FEMALE1",
+      "name": "Smile female 1",
+      "play_speed": 0.32
+    },
+    "212": {
+      "enum": "PLAYER_SLEEP1",
+      "name": "Sleep 1",
+      "play_speed": 0.32
+    },
+    "213": {
+      "enum": "PLAYER_SLEEP_FEMALE1",
+      "name": "Sleep female 1",
+      "play_speed": 0.32
+    },
+    "214": {
+      "enum": "PLAYER_COLD1",
+      "name": "Cold 1",
+      "play_speed": 0.32
+    },
+    "215": {
+      "enum": "PLAYER_COLD_FEMALE1",
+      "name": "Cold female 1",
+      "play_speed": 0.32
+    },
+    "216": {
+      "enum": "PLAYER_AGAIN1",
+      "name": "Again 1",
+      "play_speed": 0.32
+    },
+    "217": {
+      "enum": "PLAYER_AGAIN_FEMALE1",
+      "name": "Again female 1",
+      "play_speed": 0.32
+    },
+    "218": {
+      "enum": "PLAYER_RESPECT1",
+      "name": "Respect 1",
+      "play_speed": 0.32
+    },
+    "219": {
+      "enum": "PLAYER_SALUTE1",
+      "name": "Salute 1",
+      "play_speed": 0.32
+    },
+    "220": {
+      "enum": "PLAYER_SCISSORS",
+      "name": "Scissors",
+      "play_speed": 0.32
+    },
+    "221": {
+      "enum": "PLAYER_ROCK",
+      "name": "Rock",
+      "play_speed": 0.32
+    },
+    "222": {
+      "enum": "PLAYER_PAPER",
+      "name": "Paper",
+      "play_speed": 0.32
+    },
+    "223": {
+      "enum": "PLAYER_HUSTLE",
+      "name": "Hustle",
+      "play_speed": 0.32
+    },
+    "224": {
+      "enum": "PLAYER_PROVOCATION",
+      "name": "Provocation",
+      "play_speed": 0.32
+    },
+    "225": {
+      "enum": "PLAYER_LOOK_AROUND",
+      "name": "Look around",
+      "play_speed": 0.32
+    },
+    "226": {
+      "enum": "PLAYER_CHEERS",
+      "name": "Cheers",
+      "play_speed": 0.32
+    },
+    "227": {
+      "enum": "PLAYER_KOREA_HANDCLAP",
+      "name": "Korea handclap",
+      "play_speed": 0.32
+    },
+    "228": {
+      "enum": "PLAYER_POINT_DANCE",
+      "name": "Point dance",
+      "play_speed": 0.32
+    },
+    "229": {
+      "enum": "PLAYER_RUSH1",
+      "name": "Rush 1",
+      "play_speed": 0.32
+    },
+    "230": {
+      "enum": "PLAYER_COME_UP",
+      "name": "Come up",
+      "play_speed": 0.32,
+      "hold_at_end": true
+    },
+    "231": {
+      "enum": "PLAYER_SHOCK",
+      "name": "Shock",
+      "play_speed": 0.4
+    },
+    "232": {
+      "enum": "PLAYER_DIE1",
+      "name": "Die 1",
+      "play_speed": 0.45,
+      "hold_at_end": true
+    },
+    "233": {
+      "enum": "PLAYER_DIE2",
+      "name": "Die 2",
+      "play_speed": 0.45,
+      "hold_at_end": true
+    },
+    "234": {
+      "enum": "PLAYER_SIT1",
+      "name": "Sit 1"
+    },
+    "235": {
+      "enum": "PLAYER_SIT2",
+      "name": "Sit 2"
+    },
+    "236": {
+      "enum": "PLAYER_SIT_FEMALE1",
+      "name": "Sit female 1"
+    },
+    "237": {
+      "enum": "PLAYER_SIT_FEMALE2",
+      "name": "Sit female 2"
+    },
+    "238": {
+      "enum": "PLAYER_HEALING1",
+      "name": "Healing 1",
+      "play_speed": 0.2
+    },
+    "239": {
+      "enum": "PLAYER_HEALING_FEMALE1",
+      "name": "Healing female 1",
+      "play_speed": 0.2
+    },
+    "240": {
+      "enum": "PLAYER_POSE1",
+      "name": "Pose 1"
+    },
+    "241": {
+      "enum": "PLAYER_POSE_FEMALE1",
+      "name": "Pose female 1"
+    },
+    "242": {
+      "enum": "PLAYER_JACK_1",
+      "name": "Jack 1",
+      "play_speed": 0.38
+    },
+    "243": {
+      "enum": "PLAYER_JACK_2",
+      "name": "Jack 2",
+      "play_speed": 0.38
+    },
+    "244": {
+      "enum": "PLAYER_SANTA_1",
+      "name": "Santa 1",
+      "play_speed": 0.34
+    },
+    "245": {
+      "enum": "PLAYER_SANTA_2",
+      "name": "Santa 2",
+      "play_speed": 0.3
+    },
+    "246": {
+      "enum": "PLAYER_CHANGE_UP",
+      "name": "Change up"
+    },
+    "247": {
+      "enum": "PLAYER_RECOVER_SKILL",
+      "name": "Recover skill"
+    },
+    "248": {
+      "enum": "PLAYER_SKILL_THRUST",
+      "name": "Skill thrust",
+      "play_speed": 0.4
+    },
+    "249": {
+      "enum": "PLAYER_SKILL_STAMP",
+      "name": "Skill stamp",
+      "play_speed": 0.4
+    },
+    "250": {
+      "enum": "PLAYER_SKILL_GIANTSWING",
+      "name": "Skill giantswing",
+      "play_speed": 0.4
+    },
+    "251": {
+      "enum": "PLAYER_SKILL_DARKSIDE_READY",
+      "name": "Skill darkside ready",
+      "play_speed": 0.3
+    },
+    "252": {
+      "enum": "PLAYER_SKILL_DARKSIDE_ATTACK",
+      "name": "Skill darkside attack",
+      "play_speed": 0.3
+    },
+    "253": {
+      "enum": "PLAYER_SKILL_DRAGONKICK",
+      "name": "Skill dragonkick",
+      "play_speed": 0.4
+    },
+    "254": {
+      "enum": "PLAYER_SKILL_DRAGONLORE",
+      "name": "Skill dragonlore",
+      "play_speed": 0.3
+    },
+    "255": {
+      "enum": "PLAYER_SKILL_PHOENIX_SHOT",
+      "name": "Skill phoenix shot"
+    },
+    "256": {
+      "enum": "PLAYER_SKILL_ATT_UP_OURFORCES",
+      "name": "Skill att up ourforces"
+    },
+    "257": {
+      "enum": "PLAYER_SKILL_HP_UP_OURFORCES",
+      "name": "Skill hp up ourforces"
+    },
+    "258": {
+      "enum": "PLAYER_RAGE_UNI_ATTACK",
+      "name": "Rage uni attack"
+    },
+    "259": {
+      "enum": "PLAYER_RAGE_UNI_ATTACK_ONE_RIGHT",
+      "name": "Rage uni attack one right",
+      "play_speed": 0.2
+    },
+    "260": {
+      "enum": "PLAYER_RAGE_UNI_RUN",
+      "name": "Rage uni run",
+      "play_speed": 0.3
+    },
+    "261": {
+      "enum": "PLAYER_RAGE_UNI_RUN_ONE_RIGHT",
+      "name": "Rage uni run one right"
+    },
+    "262": {
+      "enum": "PLAYER_RAGE_UNI_STOP_ONE_RIGHT",
+      "name": "Rage uni stop one right",
+      "play_speed": 0.18
+    },
+    "263": {
+      "enum": "PLAYER_RAGE_FENRIR",
+      "name": "Rage fenrir",
+      "play_speed": 0.45
+    },
+    "264": {
+      "enum": "PLAYER_RAGE_FENRIR_TWO_SWORD",
+      "name": "Rage fenrir two sword",
+      "play_speed": 0.45
+    },
+    "265": {
+      "enum": "PLAYER_RAGE_FENRIR_ONE_RIGHT",
+      "name": "Rage fenrir one right",
+      "play_speed": 0.45
+    },
+    "266": {
+      "enum": "PLAYER_RAGE_FENRIR_ONE_LEFT",
+      "name": "Rage fenrir one left",
+      "play_speed": 0.45
+    },
+    "267": {
+      "enum": "PLAYER_RAGE_FENRIR_WALK",
+      "name": "Rage fenrir walk",
+      "play_speed": 0.45
+    },
+    "268": {
+      "enum": "PLAYER_RAGE_FENRIR_WALK_ONE_RIGHT",
+      "name": "Rage fenrir walk one right",
+      "play_speed": 0.45
+    },
+    "269": {
+      "enum": "PLAYER_RAGE_FENRIR_WALK_ONE_LEFT",
+      "name": "Rage fenrir walk one left",
+      "play_speed": 0.45
+    },
+    "270": {
+      "enum": "PLAYER_RAGE_FENRIR_WALK_TWO_SWORD",
+      "name": "Rage fenrir walk two sword",
+      "play_speed": 0.45
+    },
+    "271": {
+      "enum": "PLAYER_RAGE_FENRIR_RUN",
+      "name": "Rage fenrir run",
+      "play_speed": 0.355
+    },
+    "272": {
+      "enum": "PLAYER_RAGE_FENRIR_RUN_TWO_SWORD",
+      "name": "Rage fenrir run two sword",
+      "play_speed": 0.355
+    },
+    "273": {
+      "enum": "PLAYER_RAGE_FENRIR_RUN_ONE_RIGHT",
+      "name": "Rage fenrir run one right",
+      "play_speed": 0.355
+    },
+    "274": {
+      "enum": "PLAYER_RAGE_FENRIR_RUN_ONE_LEFT",
+      "name": "Rage fenrir run one left",
+      "play_speed": 0.355
+    },
+    "275": {
+      "enum": "PLAYER_RAGE_FENRIR_STAND",
+      "name": "Rage fenrir stand",
+      "play_speed": 0.21
+    },
+    "276": {
+      "enum": "PLAYER_RAGE_FENRIR_STAND_TWO_SWORD",
+      "name": "Rage fenrir stand two sword",
+      "play_speed": 0.2
+    },
+    "277": {
+      "enum": "PLAYER_RAGE_FENRIR_STAND_ONE_RIGHT",
+      "name": "Rage fenrir stand one right",
+      "play_speed": 0.2
+    },
+    "278": {
+      "enum": "PLAYER_RAGE_FENRIR_STAND_ONE_LEFT",
+      "name": "Rage fenrir stand one left",
+      "play_speed": 0.2
+    },
+    "279": {
+      "enum": "PLAYER_RAGE_FENRIR_DAMAGE",
+      "name": "Rage fenrir damage",
+      "play_speed": 0.45
+    },
+    "280": {
+      "enum": "PLAYER_RAGE_FENRIR_DAMAGE_TWO_SWORD",
+      "name": "Rage fenrir damage two sword",
+      "play_speed": 0.45
+    },
+    "281": {
+      "enum": "PLAYER_RAGE_FENRIR_DAMAGE_ONE_RIGHT",
+      "name": "Rage fenrir damage one right",
+      "play_speed": 0.45
+    },
+    "282": {
+      "enum": "PLAYER_RAGE_FENRIR_DAMAGE_ONE_LEFT",
+      "name": "Rage fenrir damage one left",
+      "play_speed": 0.45
+    },
+    "283": {
+      "enum": "PLAYER_RAGE_FENRIR_ATTACK_RIGHT",
+      "name": "Rage fenrir attack right",
+      "play_speed": 0.25
+    },
+    "284": {
+      "enum": "PLAYER_STOP_RAGEFIGHTER",
+      "name": "Stop ragefighter",
+      "play_speed": 0.16
+    },
+    "285": {
+      "enum": "MAX_PLAYER_ACTION",
+      "name": "Max player action"
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "item": "Jewel02",
+  "mu_name": "Jewel of Soul",
+  "mu_name_from": "ZzzOpenData.cpp line 910, the same run that gives Jewel01 to the Bless: `AccessModel(MODEL_POTION + i + 13, L\"Data\\\\Item\\\\\", L\"Jewel\", i + 1)` puts group 14 number 14 on Jewel02.bmd, and _enum.h names it - `MODEL_JEWEL_OF_SOUL = MODEL_POTION + 14`. OpenMU's 0.75 Jewels.cs puts the Jewel of Soul at group 14, number 14.",
+  "why_this_one": "The second of the three the +10 combination asks for, and the one the Chaos Machine spends in the same quantity as the Bless: one of each at +10, two of each at +11. See docs/chaos-machine.md.\n\nIn the wider game it is the refinement jewel - what a player spends to add a plus outside the machine - but 0.75 has no such action here and OpenMU's 0.75 table gives the row no behaviour at all. So what it is today is a thing that falls, is carried, and is spent at the goblin. Its own use arrives with the machine and not before.",
+  "profile": "weapon",
+  "profile_note": "As Jewel01. The profile is about the art - a small painted sheet on a made object at arm's length - and not about what the item does.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Jewels.cs, CreateJewelOfSoul. The method's own summary says 'Jewel of Bless' - a copy-paste in the reference, harmless and worth noting so nobody re-reads it as a contradiction.",
+    "call": "itemDefinition.Name = \"Jewel of Soul\"; Number = 14; Group = 14; DropsFromMonsters = false; DropLevel = 30; Durability = 1; Width = 1; Height = 1; Value = 150; AddItemToJewelItemDrop(itemDefinition)",
+    "call_note": "Identical to the Bless but for the number and the drop level. The closing AddItemToJewelItemDrop is what puts it in the 0.1% group; see Jewel01 for why that line and not the DropsFromMonsters flag is what decides whether it falls.",
+    "group": 14,
+    "number": 14,
+    "drop_level": 30,
+    "drops_from_monsters": false,
+    "jewel": true,
+    "drop_level_note": "Thirty, five above the Bless, and no ceiling - so it falls from anything level 30 or over for the rest of the game. The five-level gap between the two is the whole of what makes the Soul the rarer of the pair early on, and it disappears entirely once monsters are past thirty: from there both are in the pool and a jewel roll is a coin flip between them, and later a three-way with the Chaos until level 66 takes the Chaos out again.\n\nNothing in Lorencia reaches it - the Skeleton Warrior at 19 is eleven levels short. See Loot.Jewels.",
+    "flag_note": "As Jewel01: false is the true value, it keeps the row out of the 30% random-item pool, and it has nothing to do with the 0.1% group. See Prize.Jewel.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "value": 150,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes_note": "None named, so everybody may hold it."
+  },
+  "refinement_note": "No plus. Group 14 is above Prize.TakesRefinement's ceiling of eleven, and OpenMU leaves MaximumItemLevel at its default. See Jewel01.",
+  "stacking_note": "Stacked in MU by counting in durability, as the Bless is. Not built here; see Jewel01, and the Chaos Machine, which is what will need it.",
+  "sheets": {
+    "red_jewel": "red_jewel.png"
+  },
+  "sheet_from": "Data/Item/red_jewel.OZJ, from MuMain's own bin/Data. Jewel02.bmd names red_jewel.jpg and all twenty-two of its triangles are on it.",
+  "sheet_note": "Eight pixels square, and the same construction as the Bless with a different channel held up: red sits at 252-255 across all 64 texels while green and blue swing from 16 to 255. So the pair are one greyscale ramp used twice, and the difference between a Jewel of Bless and a Jewel of Soul in MU's art is which channel was pinned.\n\nThe mesh is not the same, though, and that is the more interesting half: 22 triangles against the Bless's 12, so the Soul is the more faceted of the two. The colour is a recolour and the shape is not.\n\nAs with the Bless there is nothing here for an upscale to recover - see Jewel01's note.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ, and the mesh is a closed solid. Nothing to cut.",
+  "flat_shaded": true,
+  "flat_shaded_why": "As Jewel01: all 66 corners at 0.0 degrees from their faces in MU's own .obj, averaged to 30.6 degrees by the weld. 13 positions holding 22 triangles. See renormal.",
+  "material_note": "glass, over the weapon profile's default of steel. Metallic 0 and roughness 0.12 with no grain at all, and each of the three clauses is doing work here.\n\nMetallic 0 because a gem is a dielectric: it keeps its own colour under a white highlight, where metallic 1 tints the highlight with the albedo and gives a coloured ball bearing. Steel's f0 pull was also dragging MU's 8x8 ramp toward its own 0.56 reflectance, which is what made all three read as machined rather than cut.\n\nNo grain because that is the whole point of a facet. steel declares a brushed grain at scale 520, and on a 32-triangle solid that is what the horizontal streaking across every face was - a relief map ridging a surface that is optically flat by definition. It also fights the flat_shaded fix directly: there is no sense in restoring a hard edge between facets and then rippling the facets.\n\nglass rather than a new gem material, on glass's own naming argument: it is named for the surface and not the object, and 'a window pane, a bottle and a crystal ball are one surface'. A cut gem is that surface. Roughness 0.12 was settled against the orb, which is the same polished dielectric; if these want it tighter the lever is an override on the asset, not a move in the library.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 22,
+      "area": 1104.0,
+      "along": [
+        -9.6,
+        9.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.994
+      ]
+    }
+  ],
+  "upright": true,
+  "upright_from": "RenderObjectScreen keeps an angle per model and shows the jewels as authored, point down and point up - a jewel in a cell in MU is a diamond, never a lozenge on its side. This is the one that lay on its side: 0.224 across against 0.219 high, so the longest-axis rule in Panel.Fit stood its X up. MU shows every jewel on its point."
+}

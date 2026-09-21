@@ -1,0 +1,114 @@
+{
+  "item": "Sword07",
+  "mu_name": "Gladius",
+  "mu_name_from": "MuMain's ZzzOpenData.cpp loads the group as MODEL_SWORD + i from Sword{i+1}, so Sword07.bmd is index 6, which OpenMU's 0.75 table names the Gladius. MuWeapons.cs agrees from the client's side: `new(\"Gladius\", \"Sword07.bmd\", WeaponStance.Sword, ...)`.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. This one is the exception and it is worth naming: the Gladius and the Falchion are both given slot 73 in OpenMU's own store, so the second wins and the Gladius never reaches the shelf. It is built anyway - it is drop level 20 and drops_from_monsters is true, so it falls in the world whether or not Hanzo stocks it, and shared/Market's remarks explain why the collision is kept rather than tidied.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(0, 6, 0, 20, 1, 3, true, \"Gladius\", 20, 20, 30, 20, 30, 0, 0, 110, 0, 0, 0, 0, 1, 1)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 0,
+    "number": 6,
+    "drop_level": 20,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "width_note": "Width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and one here agrees with MuWeapons.cs's TwoHanded: false. It is also what takes a fifth off the price: shared/Market.Coin reads the footprint's width to tell a one-handed weapon from a two-handed one.",
+    "height": 3,
+    "minimum_damage": 20,
+    "maximum_damage": 30,
+    "attack_speed": 20,
+    "durability": 30,
+    "requires": {
+      "level": 0,
+      "strength": 110,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side.",
+    "skill": 20,
+    "skill_note": "The skillNumber of the call. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. Actions 4 and 17, the family the Kris, the Short Sword and the Hand Axe already walk in. A one-handed blade leaves the shield hand free, which is the whole point of it on a counter that is mostly shields.",
+  "sheets": {
+    "sword08": "sword08.png"
+  },
+  "sheet_from": "Data/Item/sword08.OZJ (128x32), from MuMain. The .bmd names sword08.jpg; 66 triangles, one mesh.",
+  "material_note": "The brightest sheet in the batch and the easiest to read. Island 0 is the blade, twelve triangles from Z 13 to 135, at (212, 206, 183) chroma 29 - a white blade with gold filigree laid along it. Steel: the filigree is a small part of a large bright surface, and it is colour rather than a different surface.\n\nIsland 2 is the crossguard, twenty-eight triangles in four units of Z, at (191, 155, 73) and chroma 118 - the strongest colour reading of any weapon island here. That is gold and nothing else, so brass.\n\nIsland 1 is the grip at (101, 85, 48) chroma 53, dark bands with the gold pommel at the end. leather_wrap.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 12,
+      "area": 3094.3,
+      "along": [
+        12.9,
+        135.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.274,
+        0.815,
+        0.704
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.79,
+        0.797
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather_wrap",
+      "triangles": 26,
+      "area": 442.0,
+      "along": [
+        -14.8,
+        13.9
+      ],
+      "mu_uv": [
+        0.809,
+        0.385,
+        0.999,
+        0.593
+      ],
+      "bake_uv": [
+        0.01,
+        0.004,
+        0.934,
+        0.918
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 28,
+      "area": 598.0,
+      "along": [
+        9.4,
+        13.7
+      ],
+      "mu_uv": [
+        0.809,
+        0.001,
+        0.838,
+        0.999
+      ],
+      "bake_uv": [
+        0.936,
+        0.005,
+        0.996,
+        0.943
+      ]
+    }
+  ]
+}

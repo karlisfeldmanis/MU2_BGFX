@@ -1,0 +1,24 @@
+{
+  "item": "EliteGoblin01",
+  "mu_name": "Elite Goblin",
+  "mu_name_from": "Monster/Monster20.bmd, a second time. The server sends monster type 33 - MONSTER_ELITE_GOBLIN = 33 in _enum.h - and CreateMonster's branch for it opens the Goblin's own model: `OpenMonsterModel(MONSTER_MODEL_GOBLIN); c = CreateCharacter(Key, MODEL_GOBLIN, ...)`. The client's name is 고블린 대장, goblin captain; OpenMU's Version075 Noria.cs calls number 33 'Elite Goblin' at level 8 with 120 health.\n\nNoria's last monster by number and its third by level, between the Chain Scorpion's 5 and the Beetle Monster's 10.",
+  "world": "noria",
+  "object_type": 33,
+  "mesh": "Goblin01",
+  "mesh_from": "The Elite Bull Fighter's argument, and for the same reason: the client draws both goblins out of one loaded model and every difference between them is a field set beside it. See Goblin01, whose mu_name_from said this one was coming, and index.py's rig_of, which resolves the key counts against the shared model.",
+  "monster": {
+    "model_index": 19,
+    "scale": 1.2
+  },
+  "monster_from": "ZzzCharacter.cpp, CreateMonster, case MONSTER_ELITE_GOBLIN:\n\n    c->Weapon[0].Type = MODEL_MORNING_STAR;\n    c->Weapon[1].Type = MODEL_HORN_SHIELD;\n    c->Object.Scale = 1.2f;\n    c->Level = 1;\n\n1.2 against the plain Goblin's 0.8 - half again as large, the Elite Bull Fighter's ratio almost exactly. No BlendMesh, no HiddenMesh, no body light.",
+  "right_hand": "Mace02",
+  "right_hand_bone": "knife",
+  "left_hand": "Shield02",
+  "left_hand_bone": "shield",
+  "hands_from": "MODEL_MORNING_STAR is MODEL_MACE + 1, Item/Mace02.bmd; MODEL_HORN_SHIELD is MODEL_SHIELD + 1, Item/Shield02.bmd. Both already built for Hanzo's and the elf shop's counters.\n\nThe bones are the model's, out of CreateCharacter's weapon switch: `case MODEL_GOBLIN: c->Weapon[0].LinkBone = 31; c->Weapon[1].LinkBone = 22;`. Bone 31 is knife under Bip01 R Hand and bone 22 is shield under Bip01 L Hand - the names the right way round, as on the Goblin. The plain Goblin leaves Weapon[1] empty; this is the only one on the model that fills bone 22.",
+  "profile": "monster",
+  "rig_from": "Goblin01's, and there is no second file: 45 bones, seven actions, BoneHead 6, and the Goblin's walk at 0.6 - OpenMonsterModel sets play speeds against MONSTER_MODEL_GOBLIN, so both goblins share them.",
+  "eyes_from": "Deliberately absent. c->Level = 1 is set, and on the Bull Fighter that is what lights the eyes - but only because RenderCharacter's model switch tests it under `case MODEL_BULL_FIGHTER`. There is no `case MODEL_GOBLIN` in that switch at all (the model appears only in the bounding-box and link-bone switches), so the Level is written and nothing on screen reads it. The captain is told apart by its size, its mace and its shield.",
+  "effects_from": "None. MoveCharacterVisual has no case for MODEL_GOBLIN, as Goblin01 found; the Elite shares the type and so shares the nothing.",
+  "sounds_from": "The Goblin's five, SetMonsterSound(72..76) against MONSTER_MODEL_GOBLIN; see elitegoblin_attack in sounds.json."
+}

@@ -1,0 +1,27 @@
+{
+  "name": "hardwood",
+  "summary": "Interior joinery: a carved bookcase, a tavern table, a chair back. Wood that has been indoors and worked.",
+  "why": [
+    "The third wood in the library and the one with the clearest case for existing. wood is a",
+    "turned weapon haft, oiled by a hand and argued down to 0.08 of depth. timber is a sawn post",
+    "left in the rain at 0.82 roughness. This is neither: it is joinery, planed and carved and",
+    "kept dry, and MU draws it as dark oak with deep scrollwork cut into it.",
+    "Roughness 0.58, by a distance the smoothest wood here. Furniture indoors is waxed and",
+    "handled and never weathered, so it holds a broad soft highlight - which is most of what",
+    "separates a table from a fence post at a glance.",
+    "Depth 0.30, against timber's 0.15. The relief here is real and it is the point: bookshelf",
+    "and desk_big are photographs of carved panels, and the dark in them is a chisel cut rather",
+    "than a stain. This is the opposite case to plaster, where the dark was dirt on a flat wall.",
+    "Brushed along v. Planed board has its grain running the length of the piece and indoor wood",
+    "is the one place that grain is close enough to be seen."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.58,
+  "grain": {
+    "kind": "brushed",
+    "along": "v",
+    "scale": 190,
+    "depth": 0.3,
+    "roughness_range": 0.06
+  }
+}

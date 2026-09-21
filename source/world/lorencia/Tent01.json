@@ -1,0 +1,130 @@
+{
+  "item": "Tent01",
+  "mu_name": "Tent01",
+  "mu_name_from": "Lorencia's object slot 120, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 120,
+  "why_this_one": "2 placements. A market tent: sailcloth over a carved frame, on two sheets the houses already use.",
+  "profile": "world",
+  "sheets": {
+    "tile_house01": "tile_house01.png",
+    "tile_ston06": "tile_ston06.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "tile_house01": "timber",
+    "tile_ston06": "timber"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 26,
+      "area": 126366.0,
+      "along": [
+        -200.3,
+        201.2
+      ],
+      "mu_uv": [
+        -0.014,
+        0.514,
+        0.989,
+        1.0
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.908
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 19149.8,
+      "along": [
+        161.0,
+        176.4
+      ],
+      "mu_uv": [
+        0.001,
+        -0.929,
+        0.297,
+        1.929
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.768,
+        0.767
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 19149.9,
+      "along": [
+        -174.0,
+        -158.5
+      ],
+      "mu_uv": [
+        0.001,
+        -0.929,
+        0.297,
+        1.929
+      ],
+      "bake_uv": [
+        0.096,
+        0.006,
+        0.768,
+        0.767
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 10,
+      "area": 20737.9,
+      "along": [
+        161.0,
+        176.4
+      ],
+      "mu_uv": [
+        0.001,
+        -0.929,
+        0.297,
+        1.929
+      ],
+      "bake_uv": [
+        0.187,
+        0.006,
+        0.768,
+        0.767
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 10,
+      "area": 20738.0,
+      "along": [
+        -174.0,
+        -158.5
+      ],
+      "mu_uv": [
+        0.001,
+        -0.929,
+        0.297,
+        1.929
+      ],
+      "bake_uv": [
+        0.277,
+        0.006,
+        0.768,
+        0.767
+      ]
+    }
+  ]
+}

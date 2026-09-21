@@ -1,0 +1,201 @@
+{
+  "item": "SteelDoor01",
+  "mu_name": "SteelDoor01",
+  "mu_name_from": "Lorencia's object slot 68, from WorldObjectCatalog.cs. SteelWall runs three from 65 and SteelDoor is one at 68.",
+  "world": "lorencia",
+  "object_type": 68,
+  "why_this_one": "8 placements. The gate in the railing, and the one with the ornament on it: its sheet is scrollwork rather than plain bars, cutting away 43% where the railings cut 85%.",
+  "profile": "world",
+  "sheets": {
+    "steel_barred_door": "steel_barred_door.png",
+    "steel_barred_b": "steel_barred_b.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. steel_barred_a and steel_barred_door are .OZT and carry real alpha; steel_barred_b is an opaque .OZJ.",
+  "sheet_materials": {
+    "steel_barred_door": "wrought_iron",
+    "steel_barred_b": "wrought_iron"
+  },
+  "material_note": "One material for both sheets, which is unusual here and is right: the bars and the posts holding them are the same iron, drawn on two sheets only because one of them is a shape cut out of alpha and the other is solid.",
+  "cutout": [
+    "steel_barred_door"
+  ],
+  "cutout_from": "steel_barred_door.OZT carries a real alpha channel - 85% cut away on the railings, 43% on the gate. A railing is mostly the gaps between its bars.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 726.2,
+      "along": [
+        -6.7,
+        6.6
+      ],
+      "mu_uv": [
+        0.656,
+        0.245,
+        0.881,
+        0.974
+      ],
+      "bake_uv": [
+        0.782,
+        0.006,
+        0.992,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3694.9,
+      "along": [
+        -4.5,
+        4.8
+      ],
+      "mu_uv": [
+        0.126,
+        0.005,
+        0.404,
+        0.994
+      ],
+      "bake_uv": [
+        0.412,
+        0.408,
+        0.643,
+        0.797
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3694.9,
+      "along": [
+        -4.1,
+        5.1
+      ],
+      "mu_uv": [
+        0.122,
+        0.005,
+        0.4,
+        0.994
+      ],
+      "bake_uv": [
+        0.128,
+        0.006,
+        0.891,
+        0.801
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 8,
+      "area": 8535.8,
+      "along": [
+        -4.5,
+        4.8
+      ],
+      "mu_uv": [
+        0.118,
+        -0.0,
+        0.4,
+        0.99
+      ],
+      "bake_uv": [
+        0.412,
+        0.006,
+        0.646,
+        0.396
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3694.9,
+      "along": [
+        -4.5,
+        4.8
+      ],
+      "mu_uv": [
+        0.116,
+        0.005,
+        0.394,
+        0.994
+      ],
+      "bake_uv": [
+        0.006,
+        0.412,
+        0.359,
+        0.801
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 8,
+      "area": 7239.4,
+      "along": [
+        -4.5,
+        4.8
+      ],
+      "mu_uv": [
+        0.118,
+        0.002,
+        0.4,
+        0.99
+      ],
+      "bake_uv": [
+        0.658,
+        0.006,
+        0.769,
+        0.796
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 8,
+      "area": 726.2,
+      "along": [
+        -6.7,
+        6.6
+      ],
+      "mu_uv": [
+        0.66,
+        0.257,
+        0.885,
+        0.986
+      ],
+      "bake_uv": [
+        0.782,
+        0.408,
+        0.971,
+        0.695
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 2,
+      "area": 45769.0,
+      "along": [
+        0.4,
+        0.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.399,
+        0.399
+      ]
+    }
+  ]
+}

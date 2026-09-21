@@ -1,0 +1,96 @@
+{
+  "item": "Scroll01",
+  "mu_name": "Town Portal Scroll",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_TOWN_PORTAL_SCROLL, L\"Data\\\\Item\\\\\", L\"Scroll\", 1)`, so it is Scroll01.bmd; OpenMU's 0.75 initialiser names group 14 number 10 the Town Portal Scroll.",
+  "why_this_one": "Amy's last line and Lumen's second. Not a spell scroll - those are group 15 and teach a skill, and Pasi's seven are left off his shelf until skills exist, see Market.Mage - but the town portal, which is a consumable in the potion group and has no skill on it.",
+  "profile": "weapon",
+  "profile_note": "Not because a potion is a weapon but because the profile is about the art: a small painted sheet on a made object seen close, upscaled with the drawn model held back so a band of paint does not become a ridge. The Apple made the same argument. The default material is overridden per island below.",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated. Only the columns a drop and a shelf read are here - a potion has no damage roll, no stance and no hand, which is why it carries a Prize and no Arm. See shared/Rows.cs.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Potions.cs, CreateTownPortalScroll().",
+    "call": "Number = 10; Group = 14; DropsFromMonsters = true; DropLevel = 30; Durability = 1; Value = 30; Width = 1; Height = 2",
+    "call_note": "Written out as fields rather than as a call because that is what the source is: the potions are each built property by property, so the properties are quoted instead. See Potion01, the Apple, which set the shape.",
+    "group": 14,
+    "number": 10,
+    "drop_level": 30,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "durability_note": "One. One trip."
+  },
+  "sheets": {
+    "magictext": "magictext.png"
+  },
+  "sheet_from": "Data/Item/magictext.OZJ (32x32) from MuMain, which Scroll01.bmd names magictext.jpg. One copy in the tree.",
+  "sheet_note": "A rolled parchment: a dark wooden rod down the left edge and cream paper with rows of script to the right. Paper and rod share the one island the model has, so the island takes the paper's material and the rod reads as painted.",
+  "material_note": "Two islands, and the sheet separates them: the island in the sheet's left third, u under 0.35, is the dark wooden rod the parchment is rolled on - wood. The other is the cream paper with its rows of script - cloth, which is the matte fibrous surface in the library and the nearest thing to paper; a paper material was not added because the surface does not differ from cloth at any size this will be seen.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 36,
+      "area": 1016.2,
+      "along": [
+        -2.0,
+        4.1
+      ],
+      "mu_uv": [
+        0.007,
+        0.001,
+        0.34,
+        0.989
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.896
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 1150.6,
+      "along": [
+        -1.7,
+        -1.1
+      ],
+      "mu_uv": [
+        0.352,
+        0.001,
+        0.992,
+        0.994
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.948,
+        0.926
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wood",
+      "triangles": 36,
+      "area": 1016.2,
+      "along": [
+        -2.0,
+        4.1
+      ],
+      "mu_uv": [
+        0.009,
+        0.001,
+        0.341,
+        0.989
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.988
+      ]
+    }
+  ]
+}

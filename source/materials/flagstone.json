@@ -1,0 +1,20 @@
+{
+  "name": "flagstone",
+  "summary": "Cut slabs and worked floors: a paved square, a step, the patterned floor of a house.",
+  "why": [
+    "Not cobble, and the difference is the point of a second file. A sett is a rounded stone",
+    "with a deep joint round it; a flag is a sawn slab butted against its neighbour, so the",
+    "joint is a line rather than a channel. Depth 0.20 against cobble's 0.45.",
+    "Roughness 0.72, the smoothest ground here. Cut stone that is walked on gets polished,",
+    "and Lorencia's interior floor is worked and decorated rather than merely laid.",
+    "Range 0.08. A slab is more uniform than a street and less uniform than sand."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.72,
+  "grain": {
+    "kind": "cast",
+    "scale": 150,
+    "depth": 0.2,
+    "roughness_range": 0.08
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "leather_wrap",
+  "summary": "The grip: a leather cord wound round the tang, in bands, worn where a hand has held it.",
+  "why": [
+    "Metallic 0.0, and this is the one that matters most in the picture. Everything about a",
+    "dielectric is different from a metal: it keeps its own colour, its highlight is white",
+    "rather than tinted, and it has a diffuse term at all. A grip left metallic is a grip",
+    "made of dark chrome, which is what MU's flat art turns into the moment a light hits it.",
+    "Rough, at 0.72. Leather scatters; there is no sharp highlight anywhere on it, and a",
+    "wound grip is rougher still because the bands break up whatever is left.",
+    "The grain is the winding. It runs across the grip rather than along it, at a scale that",
+    "puts a band every few millimetres, which is what a cord wrap is.",
+    "Grip only. Anything flat wants leather instead, and this is worth saying here rather than",
+    "leaving it to be rediscovered: the grain is bands along one axis, which is the subject on a",
+    "cord wound round a tang and corduroy on anything broader. It has now caught a quiver's bag",
+    "and a mace's grip panel in one batch, and leather.json's own record of a weave measured at",
+    "23 to 1 across against along is the same fault from the other end. If the face is flat, the",
+    "material is leather."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.72,
+  "grain": {
+    "kind": "weave",
+    "along": "u",
+    "scale": 90,
+    "depth": 0.55,
+    "roughness_range": 0.08
+  }
+}

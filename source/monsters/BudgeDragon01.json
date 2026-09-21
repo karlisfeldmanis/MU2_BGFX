@@ -1,0 +1,156 @@
+{
+  "item": "BudgeDragon01",
+  "mu_name": "Budge Dragon",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_BUDGE_DRAGON = 2 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_BUDGE_DRAGON), which is also 2. OpenMonsterModel loads Monster{Type + 1:D2}, so the file is Monster03.bmd. mu.db's monster_kinds agrees at number 2, level 4, 60 health. The two numbers happening to match here is a coincidence of this monster and not a rule - the Spider is server type 3 and model index 9.",
+  "world": "lorencia",
+  "object_type": 2,
+  "monster": {
+    "model_index": 2,
+    "scale": 0.5
+  },
+  "monster_from": "model_index is the client's model number and scale is what CreateMonster sets on the object: c->Object.Scale = 0.5f, in the MONSTER_BUDGE_DRAGON case of ZzzCharacter.cpp. Half size, which is what makes it the small one.",
+  "profile": "monster",
+  "rig_from": "Seven actions, the same seven the Spider has: Monster03.bmd carries slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - and stops. The twelve-slot layout in assets/monsters/actions.json is the layout every monster is authored against, not a promise that every model fills it.\n\n39 bones. Bone 7 is the one that matters beyond drawing: MuMain spawns the attack's fire from it. See ZzzCharacter.cpp's MODEL_BUDGE_DRAGON case.",
+  "sheets": {
+    "p_d_jpg": "p_d.png",
+    "p_d_tga": "p_d.tga.png"
+  },
+  "sheet_from": "Both out of Data/Monster beside the model, and both named p_d - the .OZJ is the 128-square body and the .OZT is a 64-square of wings with 52% of it cut away. Two drawings, one name, distinguished only by the extension, which is why the extension is in the slot name: see the note in MuExtract's ObjCommands, which puts it back only where a model's basenames collide.\n\nAll four copies of each under LEGACY are byte-identical in size, so there is no larger version anywhere and MuMain's is the art.",
+  "cutout_from": "Deliberately not declared, and it was declared once and was wrong.\n\n`cutout` does not mean 'this is alpha-tested'. It means 'derive the mask from brightness instead of from the alpha channel' - see carry_alpha in transfer_albedo.py, which wires RGB->BW through a GREATER_THAN at 0.10 for any sheet named here, and wires the texture's own Alpha for every sheet that is not. The Spider records the same trap from the same side and this file repeated it anyway.\n\np_d.tga is the sheet that wants its own alpha. It is a real mask - 35% of the square fully clear, 12% fully solid and 52% partial, which is the soft edge of a membrane - and the wing art is painted dark. Keyed on brightness at 0.10 the mask keeps 89% of the square including the near-black surround the alpha exists to remove, where the alpha itself keeps 48%. So both wings arrived as solid dark cards with the sheet's background still on them, which is what they looked like: two black triangles with the banding showing through in scraps.\n\nLeft off, the sheet's own alpha is used and the export is still alpha-tested - mu2.sh sniffs every sheet for a real alpha channel and sets --cutout on the export by itself. The declaration is for sheets whose alpha cannot be trusted, like the Plate helm's plume that stores zero in every alpha byte, and this one's can.",
+  "sheet_materials": {
+    "p_d_jpg": "chitin",
+    "p_d_tga": "leather"
+  },
+  "sheet_materials_from": "The body is chitin for the reason the Spider's is - a scaled hide is a shell rather than flesh, and the one part of a creature that reads as slightly glossy - at 0.62 rough against skin's 0.78.\n\nThe wings are leather at 0.74, which is the membrane they are: thinner and duller than the body, and not the shell the scales are. Judged rather than measured, and the two are a slot apart so the judgement is visible in the Objects tab.",
+  "material_overrides": {
+    "leather": {
+      "roughness": 0.74
+    }
+  },
+  "material_overrides_from": "Restoring the number the line above states and the library no longer has.\n\nsheet_materials_from says the wings are 'leather at 0.74 ... thinner and duller than the body ... and the two are a slot apart so the judgement is visible'. leather.json was 0.74 when that was written and is 0.62 now: it was taken down on 2026-09-06, in the reflections commit, alongside skin and plate_steel and for the player's boots and gloves rather than for this animal. chitin is 0.62 too, so the slot between body and wing closed and the membrane came out exactly as glossy as the shell. Which is what it looked like: a bat wing with the sun drawing one unbroken highlight down it.\n\nThe override is per asset because that is where the disagreement is. Nothing is wrong with leather at 0.62 on a boot - it was measured there - and nothing was wrong with this judgement either; a library retune is simply not a statement about every part that ever wore the material. 0.74 is not invented here, it is the number this file already argued for.",
+  "islands_from": "Five islands, and the split that matters is three against two. Islands 0, 1 and 2 are the body on p_d.jpg - 312 triangles of it - and 3 and 4 are the eight that wear p_d.tga, which the numbers say on their own: four triangles each, and a Z range of -54.3 to 13.7 that is the wing group's extent to the decimal.\n\nAll five arrived as skin, which is the profile's default for anything new and the trap Wizard01 records. The materials here are the same judgement sheet_materials states, written where the ORM bake reads it: this model bakes to one sheet and one material, so the island is the level that decides how a face is lit, and sheet_materials alone would have been a declaration nothing acted on.",
+  "effects": [
+    {
+      "kind": "breath_fire",
+      "bone": "Bip01 Head",
+      "action": 3,
+      "through_key": 4
+    },
+    {
+      "kind": "ground_dust"
+    }
+  ],
+  "effects_from": "ZzzCharacter.cpp's per-frame effect switch, the MODEL_BUDGE_DRAGON case:\n\n    if (o->CurrentAction == MONSTER01_ATTACK1 && o->AnimationFrame <= 4.f && rand_fps_check(1))\n    {\n        Vector(0.f, (float)(rand() % 32 + 32), 0.f, p);\n        b->TransformPosition(o->BoneTransform[7], p, Position, true);\n        CreateParticle(BITMAP_FIRE, Position, o->Angle, Light, 1);\n    }\n\nFour facts, and only these four are the monster's. Bone 7, which this rig calls Bip01 Head - so the number in the client is the head and is written here as the head, because a bone index is a fact about Monster03.bmd's ordering and the mouth is a fact about the animal. Action 3, which is MONSTER01_ATTACK1. Through key 4, which is where AnimationFrame <= 4 stops. And that the particle is MU's fire.\n\nEverything else about what the fire looks like - that a spark lives 24 frames, is born at six centimetres and grows to near eighty, is thrown a metre a second along the facing and dragged to a stop, and plays the four frames of Fire01 once as it fades - belongs to BITMAP_FIRE subtype 1 rather than to this monster, and is in viewer/Breath.cs where the next thing to breathe fire can share it.\n\nthrough_key is MU's own counter and not a time. The build converts it against this rig's key count for action 3, which is seven, so the window is the first four sevenths of the swing; see monster_effects in index.py for why it travels as a fraction and not as seconds.\n\nThe dust is the second, and it arrives by accident of C: this case has no break, so the monster falls into MODEL_DARK_KNIGHT's, which drops a BITMAP_SMOKE+1 every fourth frame while it is alive. Whether a dragon was meant to have the Dark Knight's dust cannot be answered from the source and does not need to be - the client does it, so a player saw it. It is dust rather than smoke because of what subtype 0 does rather than what it is called: it pins itself to the terrain every frame and opens out from 0.3 m to near 1.9 m, which is a puff kicked up off the floor and not a column rising off the animal. No bone, because MU emits it at the object's own position - its feet - and not off any part of it.\n\nStill not declared: the hover - Position[2] += (-|sin(Timer)| * 70 + 70) in MoveMonsterVisual, which is this monster alone in the whole switch - is motion rather than an effect and belongs wherever the walk does.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 294,
+      "area": 33037.8,
+      "along": [
+        -111.6,
+        74.5
+      ],
+      "mu_uv": [
+        0.015,
+        0.001,
+        0.986,
+        0.992
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "chitin",
+      "triangles": 9,
+      "area": 930.1,
+      "along": [
+        24.1,
+        50.9
+      ],
+      "mu_uv": [
+        0.159,
+        0.771,
+        0.337,
+        0.98
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.419,
+        0.268
+      ]
+    },
+    {
+      "island": 2,
+      "material": "chitin",
+      "triangles": 9,
+      "area": 930.1,
+      "along": [
+        24.1,
+        50.9
+      ],
+      "mu_uv": [
+        0.159,
+        0.771,
+        0.337,
+        0.98
+      ],
+      "bake_uv": [
+        0.097,
+        0.485,
+        0.676,
+        0.786
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 4,
+      "area": 3691.7,
+      "along": [
+        -54.3,
+        13.4
+      ],
+      "mu_uv": [
+        0.023,
+        0.001,
+        0.951,
+        0.978
+      ],
+      "bake_uv": [
+        0.413,
+        0.008,
+        0.867,
+        0.486
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 4,
+      "area": 3680.1,
+      "along": [
+        -54.3,
+        13.7
+      ],
+      "mu_uv": [
+        0.024,
+        0.001,
+        0.952,
+        0.978
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.462,
+        0.486
+      ]
+    }
+  ]
+}

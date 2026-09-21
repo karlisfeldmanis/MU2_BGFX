@@ -1,0 +1,106 @@
+{
+  "item": "Fence01",
+  "mu_name": "Fence01",
+  "mu_name_from": "Lorencia's object slot 81, from the client's own table in WorldObjectCatalog.cs. MU names the run rather than the member, so there is no friendlier name than the file's.",
+  "world": "lorencia",
+  "object_type": 81,
+  "why_this_one": "180 placements. A plank fence, and the most-placed structure in the town after the grass and the trees. One sheet, thirty-six triangles.",
+  "profile": "world",
+  "sheets": {
+    "tile_wood02": "tile_wood02.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. All opaque .OZJ.",
+  "sheet_materials": {
+    "tile_wood02": "timber"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 2779.4,
+      "along": [
+        -5.2,
+        7.0
+      ],
+      "mu_uv": [
+        0.042,
+        0.726,
+        0.95,
+        0.808
+      ],
+      "bake_uv": [
+        0.006,
+        0.47,
+        0.923,
+        0.637
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 5139.2,
+      "along": [
+        -8.4,
+        9.0
+      ],
+      "mu_uv": [
+        0.018,
+        0.352,
+        0.978,
+        0.754
+      ],
+      "bake_uv": [
+        0.005,
+        0.007,
+        0.977,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 2784.3,
+      "along": [
+        -12.0,
+        3.8
+      ],
+      "mu_uv": [
+        0.036,
+        0.628,
+        0.943,
+        0.703
+      ],
+      "bake_uv": [
+        0.006,
+        0.649,
+        0.923,
+        0.81
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 10,
+      "area": 5139.2,
+      "along": [
+        -8.4,
+        9.0
+      ],
+      "mu_uv": [
+        0.018,
+        0.352,
+        0.978,
+        0.754
+      ],
+      "bake_uv": [
+        0.005,
+        0.238,
+        0.977,
+        0.995
+      ]
+    }
+  ]
+}

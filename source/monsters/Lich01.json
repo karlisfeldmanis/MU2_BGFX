@@ -1,0 +1,221 @@
+{
+  "item": "Lich01",
+  "mu_name": "Lich",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_LICH = 6 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_LICH), which is 4. OpenMonsterModel loads Monster{Type + 1:D2}, so the file is Monster05.bmd. mu.db's monster_kinds agrees at number 6, level 14, 255 health, and OpenMU's Version075 Lorencia.cs names it 'Lich' at that number.\n\nHe shares his case and his model with the Thunder Lich - MONSTER_THUNDER_LICH = 9, which is Dungeon's - and the two halves of that case are what tell them apart: the Lich takes the Serpent Staff at scale 0.85, the Thunder Lich the Thunder Staff at 1.1 with Level = 1 for the glowing eyes. Only the first is Lorencia's and only the first is this asset. The Bull Fighter and the Hell Hound have the same arrangement one model each side.\n\nThe wizard_ prefix on all four of his sheets is the client's own name for him and not the server's: ZzzOpenData's sound case loads mWizard1 through mWizardDie for MONSTER_MODEL_LICH. MU calls this model the wizard everywhere below the monster table.",
+  "world": "lorencia",
+  "object_type": 6,
+  "monster": {
+    "model_index": 4,
+    "scale": 0.85
+  },
+  "monster_from": "model_index is the client's model number and scale is what CreateMonster sets on the object: `c->Object.Scale = 0.85f`, in the `if (Type == MONSTER_LICH)` half of the shared MONSTER_LICH / MONSTER_THUNDER_LICH case of ZzzCharacter.cpp.\n\nAnd it is 0.85 with nothing arguing against it, which is worth saying only because the Giant's was not. WSclient.cpp's viewport handler overrides one monster's scale by type after CreateMonster returns - `if (c->MonsterIndex == MONSTER_GIANT) o->Scale = 0.8f` - and MONSTER_LICH is not in it. There is exactly one line in the client about how big a Lich is.\n\nmodel_index 4 is also his place in assets/monsters/actions.json, and he is not in either of its adjustment lists: not in the multipliers, where model 5 is the Giant at 0.7, and not in the walk overrides. Every clip he has plays at the shared default. He is the first Lorencia monster whose speeds are the table's untouched.",
+  "right_hand": "Staff03",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "ZzzCharacter.cpp, CreateMonster: `c->Weapon[0].Type = MODEL_SERPENT_STAFF`, which is MODEL_STAFF + 2 and so Item/Staff03.bmd - already built, for Pasi's counter, and the one weapon in the project a monster and a shopkeeper share.\n\nThe bone is CreateCharacter's weapon switch, where the Lich shares a case with the Cyclops and the Giant: `c->Weapon[0].LinkBone = 41; c->Weapon[1].LinkBone = 32`. Bone 41 on this rig is knife_gdf, a child of Bip01 R Hand; bone 32 is hand_bofdgne01, a child of Bip01 L Hand.\n\nThose are the player rig's own grip names, which no monster in the project has carried before - the Bull Fighter and the Hound name theirs by a side and get it backwards, the Giant names his by what they hold. This model was rigged by whoever rigged the character, and the names come with him. Nothing hangs off bone 32: the Lich sets no Weapon[1].Type, so the left hand is empty and the staff is two-handed anyway.",
+  "hidden_mesh_from": "Not declared, because he hides nothing. c->Object.HiddenMesh is -1 for every object CreateObject makes and this case never assigns it, unlike the plain Bull Fighter's 0 and the plain Hound's 0. All four of Monster05's meshes are drawn on every Lich.",
+  "separate_meshes": true,
+  "separate_meshes_from": "Declared for the Giant's reason. Monster05's four meshes are a worn set - a hood and face, a corselet, a robe and sleeves - and they meet at the neck, the shoulders and the waist on the same bones, so the weld would join them into fewer islands than there are sheets. Nothing is hidden here, so the HiddenMesh switch is not what breaks; what breaks is the material, because an island takes one and a bone collar welded into a robe takes the robe's.",
+  "profile": "monster",
+  "rig_from": "Seven actions, the same seven as every Lorencia monster: Monster05.bmd carries slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - and stops. Keys: 20, 20, 7, 12, 8, 20, 12. 50 bones, six of them dummies.\n\nThree bones matter beyond drawing. 41 and 32 are the weapon links, and 20 is Bip01 Head, which ZzzOpenData records as this model's BoneHead in the same block that loads his sounds - stated outright there rather than reached through the `else` that gives most models 19.\n\nExported with --actions=0,1,2,3,4,5,6, because export-rig's default is action 0 alone.",
+  "sheets": {
+    "wizard_gloves_02": "wizard_gloves_02.png",
+    "wizard_head_02": "wizard_head_02.png",
+    "wizard_lower_02": "wizard_lower_02.png",
+    "wizard_upper_02": "wizard_upper_02.png"
+  },
+  "sheet_from": "Four sheets for four meshes, one each, all out of Data/Monster beside the model and all .OZJ - three 64-squares and one 32 by 64, which is the smallest sheet any monster in the project wears. No .OZT anywhere on him, so nothing he has carries alpha.\n\nThe names are a worn set with a 2 on each, as the Giant's are: gloves, head, lower, upper. The 1 they imply is the Dark Wizard's own monster armour in the same folder and is not this model's. The mesh sizes are not what the names suggest - wizard_gloves_02 is the largest mesh at 224 triangles - so read the islands rather than the name for what each one covers.",
+  "cutout_from": "Not declared, for the Hound's reason: `cutout` means 'derive the mask from brightness instead of from the alpha channel', and all four sheets are .OZJ with no alpha at all, fully opaque as decode_texture reports. mu2.sh's sniff finds no real alpha channel and sets no --cutout, so the Lich is drawn solid.",
+  "sheet_materials": {
+    "wizard_gloves_02": "cloth",
+    "wizard_head_02": "bone",
+    "wizard_lower_02": "cloth",
+    "wizard_upper_02": "cloth"
+  },
+  "sheet_materials_from": "Read off the sheets, magnified, and he is the first monster here that is not wearing armour at all. Three of the four are cloth and the fourth is bone.\n\nwizard_lower_02 is the robe and it is the sheet that says what he is: black cloth at mean (43, 23, 22), two red flame glyphs painted up the front of it, a red-and-gold woven hem across the bottom, and a collar of ivory ribs and horns over the shoulders with a dark gem hung either side.\n\nwizard_gloves_02 is the sleeves at 32 by 64, the same black cloth with one more flame glyph and the same woven band, and a patch of bare forearm below it. The forearm is its own pair of islands and takes skin; see islands_from.\n\nwizard_head_02 is a hood of ivory tracery over black - bone laid in strands, like a skull seen through smoke - with a red sash across it and, in the bottom corner, the face: a strip of warm grey-brown at (88, 71, 61) and a dark mouth. bone for the hood, skin for the face, and they are two islands so both can be had.\n\nwizard_upper_02 is the torso, and it is the one that was got wrong first. Its left half is a pale blue-white panel drawn with a hard highlight straight down the middle and a banded edge across the top, which reads as a corselet at a glance - and this file said painted_steel for it, with an argument about which side of the F0 pull the plate belonged on. It is not a plate. The Lich wears cloth, and what the panel is is a pale garment under the robe, painted with the sheen a bright fabric has. cloth.\n\nWorth keeping the wrong reading written down, because the sheet really does look like armour in isolation and the argument for painted_steel was internally sound: it went wrong one step earlier, at what the picture is of. The two monsters before this one were both in plate and the whole of that reasoning came forward with them. A sheet is evidence about a surface and not about a costume.",
+  "maps": 512,
+  "maps_from": "Overridden, for the Spider's reason. settings.map_size gives 192 - three times the 64 that is his widest sheet - and that rule assumes the islands partition one sheet. They do not: this model wears four sheets and the bake unwraps all 586 triangles into one unique atlas, so the four have to fit side by side rather than on top of each other.\n\nThe arithmetic: three 64-squares and one 32 by 64 is 14,336 texels of art, which at the capped 3x is 129k of content before packing. 192 holds 37k and cannot. 384 holds 147k, which is 129k at 88 per cent occupancy - true on paper and not with the gutters an atlas puts between islands. 512 holds 262k and does it with room.\n\nThe first number in the project where the next size down is arguable rather than impossible, so it is written out: half a map is cheaper than an atlas that packs at 2.6x because it could not quite fit at 3.",
+  "effects_from": "None on the animation, and that is a finding rather than an omission. MODEL_LICH appears in exactly three places in ZzzCharacter.cpp - the weapon link switch, the OpenMonsterModel call and the CreateCharacter call - and in none of the per-frame effect switches that give the Bull Fighter its snort, the Budge Dragon its fire and the Giant its dying dust. He raises nothing while he walks and nothing when he dies.\n\nWhat he throws is not one of these and is deliberately not declared here. `effects` is the animation's list: a kind, a bone and a window of keys, gated on the clip the model is playing. The meteor is raised by the fight rather than by the clip - it belongs to a blow that landed, it is drawn where the target is standing and not where the Lich is, and it exists whether or not anyone is watching him swing. See attack_skill_from, client/core/Meteor.cs and the models under assets/effects/meteor.\n\nThe glowing eyes are close enough to be worth ruling out by name: RenderEye is gated on c->Level == 1, and the plain Lich never sets Level. The Thunder Lich does, in the branch beside this one.",
+  "attack_skill": 2,
+  "attack_skill_from": "OpenMU's Version075 Lorencia.cs: `lich.AttackSkill = Skills.FirstOrDefault(s => s.Number == (short)SkillNumber.Meteorite)`, with AttackRange 4 and AttackDelay 2000 in the same block. He is the only monster in Lorencia's table that carries either - every other one of them has range 1 and no skill at all.\n\nThe number is 2 on both sides already, which is luck rather than design and is worth checking rather than assuming: OpenMU's SkillNumber.Meteorite is 2 and MuMain's AT_SKILL_METEO is 2, so mu.db's attack_skill column needs no translation to reach the client's switch. It is carried on the row rather than on this asset - see mu.db's monster_kinds, which has held it since the table was transcribed - and repeated here only because a reader of this file should not have to open a database to learn that the Lich casts.\n\nThe range is what makes him play differently and it needs no code of its own: Realm.Think already asks `beast.Within(quarry, beast.Breed.AttackRange)`, so a four-tile row is a monster that stops four tiles out and throws. He is the first thing in the project to use it.",
+  "sounds_from": "Five files, and the slots are ZzzOpenData's: `case MONSTER_MODEL_LICH` loads mWizard1, mWizard2, mWizardAttack1, mWizardAttack2 and mWizardDie, then calls SetMonsterSound(MODEL_MONSTER01 + Type, 20, 21, 22, 23, 24). The numbers are offsets from SOUND_MONSTER_BULL1 at 210, so 20 to 24 are 230 to 234, which is exactly the five it just loaded - the Hound's 5 to 9 and the Giant's 25 to 29 the same way.\n\nSo the picks are the ordinary ones: Sounds[rand() % 2] while he moves is a genuine pair, Sounds[2 + rand() % 2] on the swing is another genuine pair, the same pair again on the flinch, and Sounds[4] when he dies. Written into assets/sounds/sounds.json as lich_move, lich_attack, lich_shock and lich_die, which is the name Crowd.Named makes of the breed - not wizard_, though the files are.\n\nThe cast has two more that are not his and belong to the spell: eMeteorite.wav when it is thrown and eExplosion.wav where it lands. See meteorite and explosion in the same file.",
+  "open_question": "The pale panel on wizard_upper_02 shares its island with the black cloth around it - one island for the whole mesh, because the unwrap gives the torso one connected run - so both take cloth's roughness 0.72. What is lost is the difference between a bright fabric and a matte one, which is the limit the Hound's teeth met in fur and the Bull Fighter's horns in hide, at a larger scale here: it is half a sheet rather than a handful of texels. What is kept is the colour, which is the sheet's, and the panel is pale enough to read as its own thing on that alone.",
+  "islands_from": "Eight islands for 586 triangles, and they partition Monster05's four meshes exactly: wizard_gloves_02's 224 come apart into two sleeves of 66 and two hands of 46, wizard_head_02's 86 into the hood at 49 and the face at 37, and the robe's 146 and the torso's 130 stay whole. separate_meshes is what buys the first half of that - see its own note - and the unwrap gives the second.\n\nThe pairs are mirrored and say so: islands 0 and 3 carry the identical mu_uv box, as do 1 and 2 within a texel. That is a left and a right of the same limb sharing one painting, which is how MU builds every symmetrical thing it has.\n\nIslands 0 and 3 are skin and are the reason to read a uv box rather than a mesh name. They sit at v 0 to 0.21 of the gloves sheet, which is the strip below the woven band, and that strip means (179, 139, 111) - a bare hand. A model whose mesh is called gloves has none.\n\nIsland 4 is the face, in the bottom corner of the head sheet at (88, 71, 61), and island 5 is the hood over the whole of it. Splitting those two is what lets the bone take bone and the face take skin instead of one of them wearing the other.\n\nThey arrived as skin, all eight, because islands.py gives anything new the profile's default and the monster profile's default is skin. That is the trap Spider01 records and the Giant recorded again, and on this asset it happened to be right for three of them - which is worse than being wrong for all eight, because a model that is half correct by accident is one nobody re-checks.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 46,
+      "area": 618.5,
+      "along": [
+        38.4,
+        54.6
+      ],
+      "mu_uv": [
+        0.075,
+        0.0,
+        0.573,
+        0.212
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.936,
+        0.714
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 66,
+      "area": 4002.2,
+      "along": [
+        3.0,
+        49.0
+      ],
+      "mu_uv": [
+        0.249,
+        0.018,
+        1.432,
+        0.982
+      ],
+      "bake_uv": [
+        0.223,
+        0.008,
+        0.853,
+        0.993
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 66,
+      "area": 3973.1,
+      "along": [
+        -33.6,
+        1.2
+      ],
+      "mu_uv": [
+        0.044,
+        0.018,
+        1.253,
+        0.998
+      ],
+      "bake_uv": [
+        0.007,
+        0.204,
+        0.956,
+        0.936
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 46,
+      "area": 621.3,
+      "along": [
+        -22.5,
+        -7.9
+      ],
+      "mu_uv": [
+        0.075,
+        0.0,
+        0.573,
+        0.212
+      ],
+      "bake_uv": [
+        0.007,
+        0.022,
+        0.942,
+        0.799
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 37,
+      "area": 371.3,
+      "along": [
+        13.1,
+        24.5
+      ],
+      "mu_uv": [
+        0.637,
+        -0.007,
+        0.992,
+        0.347
+      ],
+      "bake_uv": [
+        0.794,
+        0.7,
+        0.929,
+        0.835
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 49,
+      "area": 3616.5,
+      "along": [
+        -12.2,
+        35.5
+      ],
+      "mu_uv": [
+        0.06,
+        0.011,
+        0.97,
+        0.975
+      ],
+      "bake_uv": [
+        0.059,
+        0.694,
+        0.988,
+        0.986
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 146,
+      "area": 22095.2,
+      "along": [
+        -53.6,
+        46.3
+      ],
+      "mu_uv": [
+        -0.068,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.414,
+        0.387
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 130,
+      "area": 7313.6,
+      "along": [
+        -18.4,
+        25.1
+      ],
+      "mu_uv": [
+        -0.012,
+        -0.001,
+        0.993,
+        0.999
+      ],
+      "bake_uv": [
+        0.401,
+        0.054,
+        0.906,
+        0.696
+      ]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "item": "Object20",
+  "mu_name": "Object20",
+  "mu_name_from": "Noria's object slot 19, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 19,
+  "placements": 79,
+  "profile": "world",
+  "sheets": {
+    "wd": "nr_wd.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "wd": "foliage"
+  },
+  "material_note": "wd: yellow-green fronds, drawn additively - glowing leaves.",
+  "additive": [
+    "wd"
+  ],
+  "additive_from": "ZzzObject.cpp, CreateObject, case WD_3NORIA: `o->BlendMesh = 0` for type 19, and the render path draws that submesh with RENDER_BRIGHT. Mesh order is the .bmd's, which is the order the .obj groups are in.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 120,
+      "area": 25903.9,
+      "along": [
+        -4.9,
+        15.8
+      ],
+      "mu_uv": [
+        0.049,
+        0.002,
+        1.009,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.959,
+        0.996
+      ]
+    }
+  ]
+}

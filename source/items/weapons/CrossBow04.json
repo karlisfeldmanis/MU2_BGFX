@@ -1,0 +1,209 @@
+{
+  "item": "CrossBow04",
+  "mu_name": "Light Crossbow",
+  "mu_name_from": "MuWeapons.cs names bow-group index 11 the Light Crossbow against Item/CrossBow04.bmd. The client's own enum agrees by a longer route: MODEL_LIGHT_CROSSBOW = MODEL_BOW + 11, and the group is loaded in two passes - MODEL_BOW + i loads Bow{i+1} for the first seven and MODEL_BOW + i + 8 loads CrossBow{i+1} for the rest - so number 11 is CrossBow04 and not Bow12.",
+  "why_this_one": "The Crossbow Guard's weapon, and the last thing missing from him. One of him stands by Lorencia's fountain at 114,125, and CreateMonster hands MONSTER_CROSSBOW_GUARD the same five Plate pieces as the Berdysh Guard and differs only in what goes in his hand. Without it he was a guard on duty holding nothing.\n\nIt is also the first segmented weapon here. The four before it are one bone and one mesh on one sheet; this is 12 bones and two meshes across two, which is what a crossbow is - a stock, a bow, and a bridle lashing them together.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, which is what decides the damage, the swing rate and who is allowed to hold it. Copied from OpenMU's 0.75 initialiser rather than restated, so the call it came from is written out beside it and the two can be read against each other in one glance.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, not Season 6's - the two agree on this row and disagree on others, and 0.75 is the version this server is being built to.",
+    "call": "CreateWeapon(4, 11, 0, 24, 2, 3, true, \"Light Crossbow\", 32, 35, 44, 40, 40, 0, 0, 30, 90, 0, 0, 0, 0, 1)",
+    "group": 4,
+    "number": 11,
+    "drop_level": 32,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above and were being read past: the bool before the name is dropsFromMonsters and the int after it is the drop level. They are lifted out here because the loot pool is now the built catalogue gated by this number - see shared/Loot.cs. Arrows, bolts and scrolls are shop stock in the original and fall from nothing, which is what the flag says and why a spider cannot leave a quiver.",
+    "slot": 0,
+    "width": 2,
+    "width_note": "width is carried because it is where OpenMU keeps two-handedness: `if (group < Bows && width == 2)` sets IsTwoHandedWeaponEquipped. It is not read as the two_handed flag above - that one is the client's, out of MuWeapons.cs - but the two must agree, and a row where they do not is a transcription error caught for free.",
+    "height": 3,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 35,
+    "maximum_damage": 44,
+    "attack_speed": 40,
+    "attack_speed_note": "attack_speed is a stat and not a rate. OpenMU adds it whole to the character's AttackSpeed - `AttackSpeed += 1 * AttackSpeedByWeapon` in CharacterClassInitialization - and the client then spends that as `PlaySpeed = base + AttackSpeed * 0.004` on the attack action. So a weapon makes its own animation run faster, and the swing rate follows from the animation. The Kris at 50 is more than twice the Small Axe at 20 and it is visible in the arm.",
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 90,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "skill": 24,
+    "skill_note": "The skillNumber of the call, and the same twenty-four on every bow and crossbow in 0.75: Triple Shot is the Fairy Elf's, and it is the weapon that grants it rather than anything she learns. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more."
+  },
+  "stance": "crossbow",
+  "animation_note": "CrossBow04.bmd is rigged - twelve bones and one action of seven keys - and the action really moves: four bones rotate about 0.22 radians, which is the two limbs flexing as a mirrored pair, and Bone08 travels 21.5 units, which is the slide going back and releasing. Bow01.bmd is the same idea one size up: thirteen bones, seven keys, six bones rotating up to 0.29 and Bone10 travelling 51 units, which is a bowstring drawn and loosed.\n\nMU never plays it. Two lines say so independently. RenderCharacter's weapon block sends everything it does not name individually to a final else that reads `w->CurrentAction = 0; w->PlaySpeed = 0.f; w->AnimationFrame = 0.001f;` - a speed of zero and a frame pinned just past the first key. And RenderLinkObject guards its PlayAnimation call with `if (!Link || (Type < MODEL_BOW || Type >= MODEL_BOW + MAX_ITEM_INDEX) || Type == MODEL_STINGER_BOW)`, so a linked item anywhere in the bow group - bows, crossbows and both quivers - is the one thing whose frame is never advanced. The Stinger Bow is carved out of both, and it is the only bow in the game that animates.\n\nSo a crossbow is drawn frozen at the first key of an animation it carries, which is exactly what this asset is: one rigid mesh at the bind pose, which is that key. Written down because the animation is right there in the file and the obvious reading of finding it is that something is missing.\n\nThis project plays it anyway, which is a deliberate departure and the only one in the missile path. It is played at whatever rate puts key 4 - the release, see release_from - on the frame the bolt leaves, so the limbs flex through the wind-up and snap as the shot goes. Measured at 0.561s against the bolt's 0.560s, which is one millisecond and a frame's rounding.\n\nEvery bow in 0.75 carries the same kind of clip and so do five of the seven crossbows: see docs/combat.md for the survey. The two that do not are the Bluewing and the Aquagold, which have one bone and one key between them.",
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, which is 4/7 of the way through the clip. It is where the shot happens and the keys say so without interpretation: Bone03 and Bone06 - the two limbs, a mirrored pair - hold rotations climbing 0.204, 0.229, 0.273, 0.301 through keys 0 to 3 and then drop to -0.003 at key 4, and Bone08, the string, travels forward from -105.4 to -96.1 across the same four keys and then snaps back to -125.6 on that one. Limbs straightening and a string jumping thirty units in a single key is a release and nothing else.\n\nCarried as a fraction rather than a key number because what reads it is an AnimationPlayer, which knows the clip in seconds and not in keys. What it is for: the animation is played at whatever rate puts this instant on the frame the bolt leaves - see Realm.SecondsToRelease - so the crossbow tenses through the wind-up and snaps as the bolt goes.",
+  "muzzle_bone": "Bone08",
+  "muzzle_bone_from": "Where a bolt actually leaves this crossbow, read off the rig rather than chosen. The twelve bones are two chains: Bone01 carries the body and the two limbs (Bone02-Bone04 and Bone05-Bone07, a mirrored pair), and Bone08 is a second root at z -105.4 - past the front end of the geometry, which stops at -103.5 - carrying Bone09's seven vertices of bolt behind it and a marker, Bone10, sixty units further back again.\n\nBone08 is the carriage, and it is the one bone the animation translates: -105.4 at rest, drifting back to -96.1 through keys 0 to 3 as the thing is drawn, then -125.6 on key 4. Twenty units forward in a single key, at the same instant the limbs snap straight. That is the bolt being pushed off the rail, so its pose on the release frame is exactly where the bolt is when it leaves.\n\nBone10 was the first guess and is the wrong end: it measured 169 to 179 degrees away from the line to the target, which is a vector that is right and pointing backwards. The chain runs from the tip rearwards, not the other way.",
+  "fires": "ArrowLaser01",
+  "fires_from": "ZzzEffectMagicSkill.cpp's CreateArrow, which switches on the weapon in the hand and not on the ammunition: `case MODEL_LIGHT_CROSSBOW: CreateEffect(MODEL_ARROW_LASER, ...)`. The plain Crossbow throws MODEL_ARROW_STEEL and a bow throws MODEL_ARROW, off the same switch, with the same bolt or arrow on the character's back in every case. So this is one row of a table and not a guess at what a bolt looks like.",
+  "stance_from": "MuWeapons.cs, WeaponStance.Crossbow on all seven of the group. Crossbows have a stance of their own rather than sharing the bow's: actions 9 and 22 against the bow's 8 and 21.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs, TwoHanded: true - every crossbow in the group is. Declared apart from the stance because the client keeps them apart, and the bow next to it is the case that proves it: its own stance, and not two-handed.",
+  "hand_note": "Right hand, which is the opposite of what the name suggests and is the client's own doing. ZzzCharacter.cpp tests IsBowModel(Weapon[1]) and IsCrossbowModel(Weapon[0]): a bow is a left-hand item and a crossbow is a right-hand one. See MuWeapons.cs's own note on it.",
+  "sheets": {
+    "crossbow04": "crossbow04.png",
+    "crossbow05": "crossbow05.png"
+  },
+  "sheet_from": "Data/Item/crossbow04.OZJ (64x64) and crossbow05.OZJ (128x64), from MuMain. The .bmd names crossbow04.jpg and crossbow05.jpg.",
+  "sheet_note": "remaster_one's copies are 128x128 and 256x128 - both exactly 2x, the upscale signature again, and the fifth weapon running to carry it. MuMain's are the art.\n\nTwo sheets for two different things, which is why the model has two meshes. crossbow04 is the plain one: a brown timber ground with a dark steel band across the top and two pale bolted straps down the middle. crossbow05 is ornament - gold scrollwork over bone-white, at twice the width and shared with the Serpent Crossbow above it.",
+  "material_note": "Wood, and the fittings are what it argues about.\n\nSampled the way the polearms taught: every triangle at its own UV centre rather than by island bounding box, which on this model is not a refinement but the only reading available - island 0's box is the whole sheet, because a stock and two limbs share one shell and that shell is the item. Per triangle the answer is flat: seventy-two of the ninety-seven triangles sit within a few levels of 110,42,20, which is the timber ground of crossbow04.\n\nSo four of the six islands take wood - the haft material rather than timber, because a stock is a worked, handled, knocked-about piece and not a fence rail left in the rain. The string takes leather_wrap and the bolt takes wrought_iron, and each is one piece doing one job.\n\nNothing here takes steel, which is the surprise. The pale blue-white the straps and the rail are drawn in is real - 140,200,234 at its brightest - but it is fourteen triangles spread across two islands that are wood everywhere else, and there is no way to assign it without assigning the wood under it as well.",
+  "open_question": "The steel is inside the wood and cannot be got out.\n\nTwo islands carry both materials. Island 0 is the stock and limbs, and eleven of its fifty triangles are the two bolted straps across the tiller, sampling 120-160 across the blues where the timber beside them is 110,42,20. Island 3 is the lever, and three of its eight are the same bright metal. The island is the unit here as it was on the Battle Axe and the Great Scythe, so both take the majority reading and the straps ship as roughness-0.72 wood with a metal-coloured albedo.\n\nWhat that costs is small and worth naming: the straps keep MU's own painted colour, which is most of what reads at arm's length, and lose the specular that would make them catch a light differently from the plank they are bolted to. Splitting them would need assignment finer than an island - by triangle, or by a UV threshold within one - and that is a change to the pipeline rather than to this asset.\n\nThe string is the other one. leather_wrap is the library's only cordage and it is a grip wrap: a leather cord wound in bands, with the weave grain running across it. A crossbow string is twisted linen under tension, which is the same fibrous dielectric at the same roughness and a different thing to look at closely. Nobody will look closely at thirteen triangles of it, and a material invented for one bowstring would be a worse answer than a near one reused.",
+  "muzzle_axis": "Bone10",
+  "muzzle_axis_from": "The other end of the same rail, sixty units behind Bone08 down the chain Bone08 - Bone09 - Bone10. Two points are needed because Bone08 is a chain root and has no parent to measure a direction against, and this is the only other bone on that axis. Tip minus tail, so it points the way a bolt leaves rather than into the stock.",
+  "muzzle_offset": [
+    0.3,
+    1.9,
+    15.8
+  ],
+  "muzzle_offset_from": "Bone08 to where the bolt actually is on the frame it leaves, in MU units and the model's own axes. The groove. Bone08 marks the rail along the centreline and the bolt rides on top of it: the seven vertices bound to Bone09 span z 14.5 to 17.0 while the bone sits at 0, and their front tip is at (-3.7, -103.5, 15.8) against the bone's (-3.9, -105.4, 0.0). That is +0.3, +1.9, +15.8.\n\nThe release is deliberately NOT folded in, and it was tried. The clip moves this bone - the crossbow's carriage 20.2 units forward on key 4, the bow's nock 7.9 - so the missile as drawn is that much further on at the instant it leaves, and adding it looks like the obviously more correct thing.\n\nIt cannot be verified, which is the reason. The check for 'is the spawn point on the weapon' measures against MeshInstance3D.GetAabb, and that returns the mesh's bind-pose box: it does not move with the animation, so it reports a rest-pose muzzle as inside and a release-pose one as 10 to 38 cm outside, which is an artefact of the metric and not a fact about the weapon. Reading the bone's animated pose directly is no better - it disagreed with the rest by 6 to 119 cm across shots, which is more than the clip can account for.\n\nSo what is kept is the number that is measurable: the tip of the missile in the pose the mesh is authored in. The error against the drawn missile is the clip's own travel, 8 cm on the bow and 20 on the crossbow, in the direction of the shot - which puts the spawn point inside the shaft rather than off the end of it. Bounded, known, and the wrong way to be wrong if you have to pick one.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 50,
+      "area": 6407.0,
+      "along": [
+        3.5,
+        26.9
+      ],
+      "mu_uv": [
+        0.013,
+        0.019,
+        0.999,
+        0.969
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.873,
+        0.869
+      ],
+      "note": "the stock and both limbs, and it is the whole weapon bar the fittings - fifty of the ninety-seven triangles, running the full width at the bow and the full length back to the butt. Brown timber over most of it: thirty-nine of the fifty triangles sample the sheet's wood at about 110,42,20. The other eleven are the pale straps, and see the open question."
+    },
+    {
+      "island": 1,
+      "material": "wood",
+      "triangles": 10,
+      "area": 248.8,
+      "along": [
+        -9.5,
+        5.6
+      ],
+      "mu_uv": [
+        0.892,
+        0.418,
+        0.946,
+        0.641
+      ],
+      "bake_uv": [
+        0.008,
+        0.154,
+        0.598,
+        0.696
+      ],
+      "note": "the trigger, ten triangles on a small block hanging under the stock at the butt - the one piece of this model below the tiller. Painted the same timber as the stock, all ten triangles within a few levels of it, so it is drawn as part of the woodwork rather than as an iron lever."
+    },
+    {
+      "island": 2,
+      "material": "wood",
+      "triangles": 6,
+      "area": 96.4,
+      "along": [
+        6.3,
+        10.5
+      ],
+      "mu_uv": [
+        0.71,
+        0.407,
+        0.93,
+        0.6
+      ],
+      "bake_uv": [
+        0.656,
+        0.279,
+        0.838,
+        0.749
+      ],
+      "note": "the bracket at the foot of the lever, six triangles of the stock's own colour. Nothing on the sheet distinguishes it from the timber around it."
+    },
+    {
+      "island": 3,
+      "material": "wood",
+      "triangles": 8,
+      "area": 496.9,
+      "along": [
+        3.8,
+        25.6
+      ],
+      "mu_uv": [
+        0.164,
+        0.498,
+        0.681,
+        0.574
+      ],
+      "bake_uv": [
+        0.008,
+        0.884,
+        0.765,
+        0.94
+      ],
+      "note": "the lever standing off the side of the tiller - eight triangles on a thin plate rising from the stock, which in plan is a single line beside it. Five triangles are timber and three are the bright pale metal the straps are drawn in; the majority reading is wood, and this is the second island on the model that carries both."
+    },
+    {
+      "island": 4,
+      "material": "leather_wrap",
+      "triangles": 13,
+      "area": 456.8,
+      "along": [
+        14.4,
+        16.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.574,
+        0.83,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.214,
+        0.556,
+        0.993
+      ],
+      "note": "the string, thirteen triangles running tip to tip across the front of the bow and nothing else on the model reaches. Twelve of the thirteen sample one colour - 255,227,109, the pale straw band along the top of the sheet - which is waxed cord and not metal."
+    },
+    {
+      "island": 5,
+      "material": "wrought_iron",
+      "triangles": 10,
+      "area": 492.3,
+      "along": [
+        14.5,
+        17.0
+      ],
+      "mu_uv": [
+        0.532,
+        0.377,
+        0.898,
+        0.451
+      ],
+      "bake_uv": [
+        0.656,
+        0.009,
+        0.926,
+        0.262
+      ],
+      "note": "the bolt lying in the groove: ten triangles down the centre line, forward past the string to a point, and the only part of the model on the second sheet. Drawn almost black - most triangles under 10 of 255 - which is the case wrought_iron is for, where the darkness in the art is the thing rather than the absence of it.",
+      "nocked": true,
+      "nocked_from": "The missile sitting on the weapon, which MU keeps as a mesh of its own on a sheet of its own bound to a bone of its own - and then never hides, because it never plays the weapon's animation and nothing in the client sets HiddenMesh on a weapon. Drawn always, so every bow in the game is drawn loaded.\\n\\nFlagged here so the exporter gives it a primitive of its own, which is what lets the viewer take it away between the release and the next draw. That is a departure and it is the animation's fault: a bolt that visibly stays on the rail after being shot is only wrong once something has shot it."
+    }
+  ]
+}

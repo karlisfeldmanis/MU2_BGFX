@@ -1,0 +1,20 @@
+{
+  "item": "CrossbowGuard",
+  "mu_name": "Crossbow Guard",
+  "kind": "character",
+  "parts": [
+    "HelmMale10",
+    "ArmorMale10",
+    "PantMale10",
+    "GloveMale10",
+    "BootMale10"
+  ],
+  "right_hand": "CrossBow04",
+  "right_hand_from": "ZzzCharacter.cpp, case MONSTER_CROSSBOW_GUARD: c->Weapon[0].Type = MODEL_LIGHT_CROSSBOW, which is MODEL_BOW + 11 and therefore Item/CrossBow04.bmd. Weapon[0] is the right hand, and for a crossbow that is the client's own arrangement rather than a slip - IsBowModel reads Weapon[1] and IsCrossbowModel reads Weapon[0], so a bow is held left and a crossbow right.",
+  "weapon_note": "Held at knife_gdf out in the fields and slung between the shoulders in town, which for him is always: he stands on 114,125, and that tile carries TW_SAFEZONE. RenderCharacterBackItem's first line is `if (c->SafeZone) bBindBack = true`, and the whole of its body is inside `if (o->Type == MODEL_PLAYER)` - which a guard is, being CreateCharacter(MODEL_PLAYER) in plate. So he wears it exactly as a player wears one, and the same tile bit decides both that and his idle.\n\nA crossbow has its own place on the back and does not take the sword's. See Model.CrossbowOnBack: RenderLinkObject branches on `Type >= MODEL_CROSSBOW && Type < MODEL_ARROWS` before it reaches the general case, and turns the thing upright and flat against the spine instead of rearing it over the shoulder at seventy degrees.\n\nIt is also the first segmented weapon on this path - twelve bones and two meshes where the polearm has one of each. Only its bind pose is used, as for every held weapon, so the segments cost nothing at run time; what they cost was the island pass, and see the weapon's own open question for the two islands that carry timber and steel together.",
+  "note": "One of him, at 114,125, by the fountain. The same construction as the Berdysh Guard and the same five Plate pieces - CreateMonster dresses MONSTER_CROSSBOW_GUARD identically and differs only in what it puts in his hand.",
+  "parts_from": "ZzzCharacter.cpp, case MONSTER_CROSSBOW_GUARD: the five MODEL_PLATE_* body parts, then SetCharacterScale.",
+  "idle": "action1",
+  "idle_from": "SetPlayerStop, and the tile rather than the weapon decides it. He stands on 114,125, which carries TW_SAFEZONE - MU2's own attributes.png reads 0x0001 there, and so does the .att the client reads - and the first branch of SetPlayerStop is `(no weapon) || (SafeZone && !BloodCastle)`, which lands on PLAYER_STOP_MALE. Action 1: six keys at play speed 0.28, a 0.86-second loop. PLAYER_STOP_CROSSBOW at 0.22 is what he would stand in outside the town, and he never is.",
+  "playable": false
+}

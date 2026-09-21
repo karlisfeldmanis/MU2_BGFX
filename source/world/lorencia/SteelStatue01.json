@@ -1,0 +1,106 @@
+{
+  "item": "SteelStatue01",
+  "mu_name": "SteelStatue01",
+  "mu_name_from": "Lorencia's object slot 43, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 43,
+  "why_this_one": "4 placements. Named steel and wearing the tombstone sheet, which is the client's naming rather than the art's.",
+  "profile": "world",
+  "sheets": {
+    "tombstone_big": "tombstone_big.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "tombstone_big": "flagstone"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 43714.9,
+      "along": [
+        -66.8,
+        65.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        1.011,
+        0.992
+      ],
+      "bake_uv": [
+        0.007,
+        0.37,
+        0.929,
+        0.977
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 55253.2,
+      "along": [
+        -52.0,
+        50.3
+      ],
+      "mu_uv": [
+        0.057,
+        0.156,
+        0.953,
+        0.627
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.604,
+        0.719
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 18192.0,
+      "along": [
+        -52.3,
+        50.5
+      ],
+      "mu_uv": [
+        0.056,
+        0.628,
+        0.954,
+        0.975
+      ],
+      "bake_uv": [
+        0.571,
+        0.254,
+        0.903,
+        0.716
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 38,
+      "area": 18855.0,
+      "along": [
+        -40.4,
+        38.6
+      ],
+      "mu_uv": [
+        0.101,
+        0.686,
+        0.908,
+        0.999
+      ],
+      "bake_uv": [
+        0.571,
+        0.007,
+        0.993,
+        0.965
+      ]
+    }
+  ]
+}

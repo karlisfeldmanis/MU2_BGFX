@@ -1,0 +1,17 @@
+{
+  "source": "Staff02.bmd",
+  "bones": 1,
+  "actions_available": 1,
+  "skeleton": [
+    {"index": 0, "name": "Box03", "parent": -1, "source": 0, "dummy": false, "t": [-0.365978,42.45898,-0.827152], "r": [0.653281,-0.270598,0.270598,0.653282]}
+  ],
+  "meshes": [
+    {"texture": "wand03.jpg", "group": "wand03_jpg", "vertices": 33, "vertex_bones": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+    {"texture": "wand03.tga", "group": "wand03_tga", "vertices": 8, "vertex_bones": [0,0,0,0,0,0,0,0]}
+  ],
+  "animations": [
+    {"action": 0, "keys": 1, "locked": false, "tracks": [
+      {"bone": 0, "t": [[-0.365978,42.45898,-0.827152]], "r": [[0.653281,-0.270598,0.270598,0.653282]]}
+    ]}
+  ]
+}

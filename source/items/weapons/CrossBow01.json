@@ -1,0 +1,135 @@
+{
+  "item": "CrossBow01",
+  "mu_name": "Crossbow",
+  "mu_name_from": "The plain one, group 4 number 8, which openmu simply calls \"Crossbow\". The client loads the bow group in two passes - MODEL_BOW + i from Bow{i+1} for the first seven and MODEL_BOW + i + 8 from CrossBow{i+1} for the rest - so number 8 is CrossBow01.bmd and not Bow09. MuWeapons.cs states it directly: `new(\"Crossbow\", \"CrossBow01.bmd\", WeaponStance.Crossbow, PlayerClasses.Elf, TwoHanded: true, ...)`.",
+  "why_this_one": "It is the only missile weapon a Budge Dragon can leave besides the Short Bow, and it is the first crossbow low enough to be dropped at all. Drop level 4 against the dragon's own level of 4, so it lands at +0 and one level lower would put it out of reach. The Light Crossbow already built is drop level 32 - a Skeleton Warrior at 19 cannot afford it, let alone this - so until now the crossbow half of the group existed in the viewer and could not fall anywhere.\n\nIt is also the second segmented weapon here, and it is not the first one's rig with different art on it: the twelve bones carry the same two chains in the opposite order. See animation_note.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs line 143. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(4, 8, 0, 24, 2, 2, true, \"Crossbow\", 4, 5, 8, 40, 22, 0, 0, 20, 90, 0, 0, 0, 0, 1)",
+    "group": 4,
+    "number": 8,
+    "drop_level": 4,
+    "drops_from_monsters": true,
+    "drop_level_note": "Four, the Budge Dragon's own level, so it is at the ceiling of what that monster can afford. Number 8 is the first crossbow rather than a bow - the group holds both, and 7 and 15 are the two kinds of ammunition, which is why Prize.Refinable tests the number and not just the group.",
+    "slot": 0,
+    "slot_note": "Right hand, which is the opposite of what the name suggests and is the client's own doing: ZzzCharacter.cpp tests IsBowModel(Weapon[1]) and IsCrossbowModel(Weapon[0]), so a bow is a left-hand item and a crossbow a right-hand one. OpenMU's rows agree from the other side - the bows carry slot 1 and the crossbows slot 0 - and the Short Bow already built is the case that proves it.",
+    "width": 2,
+    "width_note": "Two, and here it does NOT mean two-handed: OpenMU's test is `if (group < Bows && width == 2)`, and this is group 4, which is Bows. Two-handedness comes from MuWeapons.cs instead, which says TwoHanded: true for every crossbow in the group. The two agree by different routes, which is the check worth having.",
+    "height": 2,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 5,
+    "maximum_damage": 8,
+    "attack_speed": 40,
+    "attack_speed_note": "Forty, against the Short Bow's thirty. OpenMU adds it whole to the character's AttackSpeed and the client spends it as `PlaySpeed = base + AttackSpeed * 0.004`, so the draw runs faster - and because the release is a fraction of the clip rather than a fixed time, a faster draw is a shorter time to the loose. See Realm.SecondsToRelease.",
+    "durability": 22,
+    "requires": {
+      "level": 0,
+      "strength": 20,
+      "agility": 90,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the elf alone - and MuWeapons.cs carries PlayerClasses.Elf for all seven crossbows. Ninety agility against twenty strength is the row saying the same thing in stats.",
+    "skill": 24,
+    "skill_note": "The skillNumber of the call, and the same twenty-four on every bow and crossbow in 0.75: Triple Shot is the Fairy Elf's, and it is the weapon that grants it rather than anything she learns. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more."
+  },
+  "stance": "crossbow",
+  "stance_from": "MuWeapons.cs, WeaponStance.Crossbow on all seven of the group. Crossbows have a stance of their own rather than sharing the bow's: actions 9 and 22 against the bow's 8 and 21.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs, TwoHanded: true. Declared apart from the stance because the client keeps them apart - a bow has its own stance and is not two-handed - so neither implies the other.",
+  "animation_note": "Rigged, and it really moves: twelve bones, one action of seven keys, two limbs that flex and a carriage that slides.\n\nThe roles are NOT the Light Crossbow's roles, which is why they were measured here rather than carried across. CrossBow04 has the body on Bone01 and the bolt rail on a second root at Bone08; this model has them the other way round. Bone01 is a root at (-1.75, 0, -80.05) carrying Bone02 and Bone03 and nothing else, and it is the one bone the action translates - z -80.05, -73.82, -68.77, -67.54 through keys 0 to 3, then -99.77 on key 4. Bone04 is the second root and carries the whole 149-vertex body, with two mirrored limb chains hanging off it: Bone05-Bone06-Bone07 and Bone08-Bone09-Bone10.\n\nThe seven vertices on crossbow05 are the bolt, bound to Bone02, so the bolt rides the sliding chain. That is the same arrangement CrossBow04 has with the numbers permuted, and reading Bone08 as the carriage here - which copying would have done - would have pinned the bolt to a limb.\n\nMU never plays any of it. RenderCharacter's weapon block sends everything it does not name individually to a final else that reads `w->CurrentAction = 0; w->PlaySpeed = 0.f; w->AnimationFrame = 0.001f;`, and RenderLinkObject guards its PlayAnimation call so that nothing in the bow group is animated at all. The clip is in the file, MU declines to run it, and this viewer runs it - see the Light Crossbow's note, which argues that case.",
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, which is 4/7 of the way through the clip, and the keys say so without interpretation. Bone01 - the carriage - travels back 12.5 units through keys 0 to 3 and then 32.2 units forward in the single step to key 4. Every limb yaw collapses on that same key: Bone07 runs 0.622, 0.822, 1.008, 1.058 and then 0.036, and Bone10 runs -0.715, -0.960, -1.180, -1.245 and then -0.042. Four bones straightening and a carriage jumping thirty units in one key is a release and nothing else.\n\nIt is the same key as the Light Crossbow's and the Short Bow's, and that is worth saying is not an assumption: it was read off this rig's own tracks, and the three agreeing is what a shared authoring convention looks like rather than what a copied number looks like.\n\nCarried as a fraction rather than a key number because what reads it is an AnimationPlayer, which knows the clip in seconds. The animation is played at whatever rate puts this instant on the frame the bolt leaves, so the crossbow tenses through the wind-up and snaps as the bolt goes.",
+  "muzzle_bone": "Bone01",
+  "muzzle_bone_from": "The carriage, and the one bone the animation translates - which is what makes its pose on the release frame the place the bolt is when it leaves. It also happens to sit at the bolt's own point: Bone01 is at (-1.75, -80.05, 0.0) in the model's axes and the bolt's apex vertex is at (-2.27, -79.64, 12.66), four tenths of a unit apart along the length.\n\nNot the bone the bolt vertices are bound to, which is Bone02, eleven units behind it down the same chain. Bone02 is where the bolt hangs from; Bone01 is where it points, and it is the one that moves.",
+  "muzzle_axis": "Bone03",
+  "muzzle_axis_from": "The far end of the same chain - Bone01, Bone02, Bone03 - sixty-six units behind Bone01 and on the same line: x within four tenths of a unit across all three and the rail's own axis in y. Two points are needed because Bone01 is a chain root with no parent to measure a direction against, and the long baseline is the stable one.\n\nTip minus tail, so it points the way the bolt leaves. Which way that is is not assumed either: the carriage moves from y -80.05 to -99.77 on the release key, so forward is negative y, and Bone03 at -14.04 is behind Bone01 at -80.05. Neither Bone02 nor Bone03 rotates through the clip - 0.004 and 0.000 radians - so the axis holds still while the thing fires.",
+  "muzzle_offset": [
+    -0.52,
+    0.41,
+    12.66
+  ],
+  "muzzle_offset_from": "Bone01 to the bolt's front tip, in MU units and the model's own axes. The groove: the bone rides the centreline of the rail at z 0 and the bolt sits on top of it, its seven vertices spanning z 11.31 to 13.85 with the apex at 12.66. Along the length the two are all but coincident, which is why the y term is four tenths of a unit rather than the Light Crossbow's 1.9.\n\nThe release is deliberately not folded in, for the reason the Light Crossbow's note gives at length: the check for 'is the spawn point on the weapon' measures against MeshInstance3D.GetAabb, which returns the bind-pose box and does not move with the animation, so an offset that includes the clip's own travel cannot be verified by the one test that exists for it.",
+  "fires": "ArrowSteel01",
+  "fires_from": "ZzzEffectMagicSkill.cpp's CreateArrow, which switches on the weapon in the hand and not on the ammunition: `case MODEL_CROSSBOW: CreateEffect(MODEL_ARROW_STEEL, ...)`. One row of a table, and the row above and below it are different missiles - the Arquebus throws MODEL_ARROW_SAW and the Light Crossbow MODEL_ARROW_LASER - so this is read rather than guessed. MODEL_ARROW_STEEL is Data/Skill/ArrowSteel01.bmd, built here beside it.",
+  "sheets": {
+    "crossbow01": "crossbow01.png",
+    "crossbow05": "crossbow05.png"
+  },
+  "sheet_from": "Data/Item/crossbow01.OZJ (32x32) and crossbow05.OZJ (128x64), both from MuMain. The .bmd names crossbow01.jpg and crossbow05.jpg.",
+  "sheet_note": "Two sheets over two meshes, and the split is 89 triangles to 10 rather than anything like even. crossbow01 is the whole weapon - stock, limbs and fittings - on a 32 square: a brown timber ground with a dark grey steel band across the top and paler tan banding below it. crossbow05 is the ornament sheet the Light Crossbow already uses, and it is here for ten triangles.\n\nThose ten are the bolt, not decoration, which the UVs settle: they sit inside u 0.532 to 0.898 and v 0.377 to 0.451, a 47x5 strip out of the middle of the sheet that is near-black with a scatter of pale blue-green along one edge - a dark shaft with a glint down it. Mean (56, 70, 59). The Light Crossbow's bolt takes the same strip of the same sheet and takes wrought_iron for it.\n\nremaster_one's copies are 64x64 and 256x128, both exactly 2x, which is the upscale signature again. MuMain's are the art. crossbow05.png was already in the project from CrossBow04 and is reused rather than re-decoded, so the two crossbows cannot disagree about the sheet they share.",
+  "material_note": "Read off crossbow01's own layout, with the Light Crossbow's note as the precedent. Island 0 is seventy-six triangles across the whole sheet below v 0.944 - the stock, the limbs and the fittings on the timber ground - and takes wood, the haft material, for the reason CrossBow04 gives: a stock is a worked and handled piece, not a fence rail. Island 1 is the thirteen triangles that sample the strip above v 0.957, which is the dark grey steel band the sheet_note describes across the top, and takes steel. Island 2 is the bolt on crossbow05, the same 47x5 strip the Light Crossbow's bolt samples, and takes wrought_iron as that one does. The asset arrived with its islands empty and had not been built before today, so until now every island was the profile's steel.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 76,
+      "area": 3066.1,
+      "along": [
+        -8.5,
+        12.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.002,
+        0.999,
+        0.944
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.923,
+        0.978
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 13,
+      "area": 303.2,
+      "along": [
+        9.9,
+        11.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.957,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.857,
+        0.722,
+        0.934
+      ]
+    },
+    {
+      "island": 2,
+      "material": "wrought_iron",
+      "triangles": 10,
+      "area": 492.3,
+      "along": [
+        11.3,
+        13.9
+      ],
+      "mu_uv": [
+        0.532,
+        0.377,
+        0.898,
+        0.451
+      ],
+      "bake_uv": [
+        0.008,
+        0.132,
+        0.993,
+        0.804
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "item": "DarkKnight",
+  "mu_name": "Dark Knight, Plate set",
+  "kind": "character",
+  "trade": "knight",
+  "trade_from": "The same class as the bare body under the plate. See DarkKnightBare.json.",
+  "parts": [
+    "HelmMale10",
+    "ArmorMale10",
+    "PantMale10",
+    "GloveMale10",
+    "BootMale10"
+  ],
+  "note": "A character is an assembly, not a mesh. MU has no body model - player.bmd holds meshes=0, only the skeleton and the actions - so what stands here is the five worn parts, each authored already positioned in body space. Nothing is placed by this file; the parts are simply loaded together at the origin.",
+  "rig": "player.bmd, beside this file. Not used yet: these are bind-pose parts.",
+
+  "right_hand": "Sword01",
+  "left_hand": "Shield10",
+  "hands_note": "Held, not worn, and the difference is the whole of how they are attached. A worn part is skinned - its vertices bind to bone names and it bends at the elbow with the arm. A held item is rigid: MU takes one bone's transform and places the whole model at it, and sending a weapon through the skinning path binds its vertices to every bone whose name happens to match and draws it stretched across the character.",
+  "hands_from": "The player rig carries bones made for the purpose - knife_gdf for the right hand and hand_bofdgne01 for the left - and they sit where a grip belongs rather than at the wrist joint. That is why the grip is identity here: no rotation, no offset, because the socket bone and the item's own bone orientation have already decided the placement between them. The old client's MuAttachment.cs records three separate attempts to derive a correction for hanging weapons off Bip01 R Hand instead, each landing somewhere different because each was fitting the same wrong premise.",
+  "hands_why_these": "A shield is the off-hand item: it takes Weapon[1] and goes in the hand a one-handed weapon leaves free. MuShields.cs lists the Plate Shield as Knight-only, and the Kris is a one-handed sword, so this is a loadout a Dark Knight could actually carry. It is also what picks the animation - the weapon decides the stance and the shield has no say in it, so a one-handed sword gives Stop 4 and Walk 17, which is what the viewer was already playing."
+}

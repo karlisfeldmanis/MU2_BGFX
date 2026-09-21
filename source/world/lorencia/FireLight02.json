@@ -1,0 +1,136 @@
+{
+  "item": "FireLight02",
+  "mu_name": "FireLight02",
+  "mu_name_from": "Lorencia's object slot 51, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 51,
+  "why_this_one": "18 placements. A wall bracket: planking, a flame, and a carved stone face - copra_gate is a gargoyle, which is what the fire sits in.",
+  "profile": "world",
+  "sheets": {
+    "tile_02": "tile_02.png",
+    "fire_light_01": "fire_light_01.png",
+    "copra_gate": "copra_gate.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "tile_02": "timber",
+    "fire_light_01": "lamplight",
+    "copra_gate": "flagstone"
+  },
+  "additive": [
+    "fire_light_01"
+  ],
+  "additive_from": "A departure, and a small one. The client marks only the bonfire's flame as a blend mesh, and these sheets are flame painted on black exactly as that one is - drawn opaquely they are black rectangles with an orange smudge. The client gets away with it because its own fire at these placements is a particle effect CreateFire puts there and the mesh is the housing; this has no particles yet, so the painted flame is all there is and it has to read as one.",
+  "emitters": [
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        0,
+        -30,
+        60
+      ]
+    }
+  ],
+  "emitters_from": "WorldObjectCatalog.cs's Fire(): luminance 0.6 to 1.1, weighted (L, 0.6L, 0.4L) for the orange, four tiles of reach. The rate and smoothing are the old port's correction rather than the client's - it redraws the luminance every rendered frame, which on a light rather than a texture is a strobe, so 3 Hz eased over an eighth of a second is the pool of light breathing at the pace a fire moves.",
+  "cutout_note": "fire_light_01 carries a real alpha channel cutting away 65%, and is deliberately not declared a cut-out: it is declared additive instead, and additive supersedes. A glow is blended rather than masked - it has no edge to cut along, and its own brightness is its alpha. Declaring both got a MASK material overwritten by a BLEND one and tripped tests/cutouts.py, which was right to complain about a claim the file did not honour.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 2,
+      "area": 170.3,
+      "along": [
+        16.5,
+        33.2
+      ],
+      "mu_uv": [
+        0.914,
+        0.62,
+        0.978,
+        0.684
+      ],
+      "bake_uv": [
+        0.521,
+        0.812,
+        0.547,
+        0.837
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1174.4,
+      "along": [
+        16.5,
+        43.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.802,
+        0.802
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 643.7,
+      "along": [
+        -0.5,
+        17.6
+      ],
+      "mu_uv": [
+        -0.159,
+        0.603,
+        1.128,
+        0.73
+      ],
+      "bake_uv": [
+        0.005,
+        0.812,
+        0.512,
+        0.922
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 16,
+      "area": 1605.3,
+      "along": [
+        -2.2,
+        33.2
+      ],
+      "mu_uv": [
+        -0.067,
+        0.02,
+        0.399,
+        0.803
+      ],
+      "bake_uv": [
+        0.812,
+        0.005,
+        0.995,
+        0.631
+      ]
+    }
+  ]
+}

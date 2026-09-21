@@ -1,0 +1,137 @@
+{
+  "item": "Staff04",
+  "mu_name": "Thunder Staff",
+  "mu_name_from": "MuMain loads MODEL_STAFF + i from Staff{i+1}, so Staff04.bmd is staff index 3, which openmu's 0.75 Weapons.cs names the Thunder Staff. mu.db agrees: group 5 index 3, Item/Staff04.bmd.",
+  "why_this_one": "Pasi's, and the last four lines he sells. The mage stocks all four staves - the Skull at +0, the Angelic at +2, the Serpent and the Thunder at +3 - and none was built, so four of his nineteen lines were dropped by Realm.Shelf. With these he sells all nineteen. See shared/Market.Mage.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(5, 3, 0, 0, 2, 4, true, \"Thunder Staff\", 42, 23, 25, 25, 60, 46, 0, 40, 10, 0, 0, 1, 0, 0)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 5,
+    "number": 3,
+    "drop_level": 42,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "width_note": "Width does not mean two-handed here and cannot: OpenMU's test is `if (group < Bows && width == 2)` and Bows is 4, so nothing in group 5 is ever caught by it. Two-handedness comes from MuWeapons.cs alone, which is the client's own table, and within this group of four it disagrees three times to one.",
+    "height": 4,
+    "minimum_damage": 23,
+    "maximum_damage": 25,
+    "attack_speed": 25,
+    "magic_power": 46,
+    "magic_power_note": "magic_power is the column no weapon built here has carried before. Every sword, axe and bow in the project passes 0 for it and the four staves pass 6, 20, 34 and 46 - it is the wizard's damage, where a blade's is the min and max above. Recorded and unread: shared/Combat.cs rolls physical damage off the weapon row and has no spell in it yet.",
+    "durability": 60,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 10,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, on all four."
+  },
+  "stance": "scythe",
+  "stance_from": "MuWeapons.cs: WeaponStance.Scythe, TwoHanded: true. The stance enum says why in its own comments - Sword is 'a one-handed sword, mace, or a one-handed staff' and Scythe is 'a scythe, or any two-handed staff or polearm' - so a staff takes the stance its handedness gives it and there is no staff stance. Actions 7 and 20.",
+  "two_handed": true,
+  "sheets": {
+    "wand05": "wand05.png"
+  },
+  "sheet_from": "Data/Item/wand05.OZJ (32x64), from MuMain. The .bmd names wand05.jpg; 100 triangles, all on it.",
+  "sheet_note": "wand05 is blue and gold: a deep blue crystal or gem bound in gold filigree, with a gold-wound shaft beside it. Chroma 70, the most saturated weapon sheet built, and the only blue one - every other weapon here is steel, bronze or hide.",
+  "material_note": "Four islands and two materials, and the split is by colour rather than by shape. Islands 0, 1 and 2 - 92 of the 100 triangles - sample a deep blue at chroma 88 to 100 per triangle, means near (95, 100, 132). That is the crystal, and it takes glass: the material written for the orbs, a polished body with its own light painted into it.\n\nIsland 3 is eight triangles at the top of the sheet meaning (222, 193, 109) at chroma 113 - gold - and takes brass, the cap the crystal is bound into.\n\nIt is the only blue weapon built here. Every other is steel, bronze or hide, and the chroma of 70 across the whole sheet is the highest any weapon carries.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 32,
+      "area": 2873.0,
+      "along": [
+        -139.8,
+        119.9
+      ],
+      "mu_uv": [
+        0.011,
+        0.003,
+        0.581,
+        0.495
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.819,
+        0.766
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 30,
+      "area": 963.8,
+      "along": [
+        49.5,
+        130.2
+      ],
+      "mu_uv": [
+        -0.033,
+        0.02,
+        1.0,
+        1.019
+      ],
+      "bake_uv": [
+        0.17,
+        0.187,
+        0.819,
+        0.82
+      ]
+    },
+    {
+      "island": 2,
+      "material": "glass",
+      "triangles": 30,
+      "area": 963.8,
+      "along": [
+        49.5,
+        130.2
+      ],
+      "mu_uv": [
+        -0.031,
+        0.02,
+        1.003,
+        1.019
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.992,
+        0.994
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 8,
+      "area": 368.5,
+      "along": [
+        120.4,
+        148.3
+      ],
+      "mu_uv": [
+        0.724,
+        0.558,
+        0.995,
+        0.959
+      ],
+      "bake_uv": [
+        0.351,
+        0.069,
+        0.572,
+        0.399
+      ]
+    }
+  ]
+}

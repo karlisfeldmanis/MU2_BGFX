@@ -1,0 +1,21 @@
+{
+  "name": "sand",
+  "summary": "Dry loose ground: a path worn through grass, the bank of a river, the packed dirt of a yard.",
+  "why": [
+    "Roughness 0.88. Drier and very slightly less scattering than grass, because sand is",
+    "mineral and grass is not, and a wet-looking beach is the standard way this goes wrong.",
+    "Depth 0.10, the shallowest ground here. Grains are a fraction of a millimetre and the",
+    "relief that reads at a walking distance is the ripple rather than the grain - MU's sheet",
+    "draws that ripple as colour, and pushing it as height turns a path into gravel.",
+    "Range 0.06, low. Sand is the most uniform ground in the town: it is the same stuff all",
+    "the way through, where a meadow is a mixture."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.88,
+  "grain": {
+    "kind": "cast",
+    "scale": 300,
+    "depth": 0.1,
+    "roughness_range": 0.06
+  }
+}

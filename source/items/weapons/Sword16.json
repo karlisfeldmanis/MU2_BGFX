@@ -1,0 +1,96 @@
+{
+  "item": "Sword16",
+  "mu_name": "Giant Sword",
+  "mu_name_from": "MuMain's ZzzOpenData.cpp loads the group as MODEL_SWORD + i from Sword{i+1}, so Sword16.bmd is sword index 15, which OpenMU's 0.75 table names the Giant Sword. MuWeapons.cs agrees from the client's side: `new(\"Giant Sword\", \"Sword16.bmd\", WeaponStance.TwoHandSword, PlayerClasses.Knight, TwoHanded: true, Level: 0, Strength: 140, ...)`.",
+  "why_this_one": "Slash, the Dark Knight's sixth skill, had no route into the game. In 0.75 a knight does not learn a skill - the item grants it, and skill 23 is carried by exactly three rows: this, the Crystal Sword (2, 5) and the Chaos Dragon Axe (2, 6). The Chaos Dragon Axe is `dropsFromMonsters: false` and cannot fall at all; of the two that can, this has the lower drop level - 52 against the Crystal Sword's 72 - so it is the first Slash anybody meets. Without it the sixth box in the row is a picture nothing can ever fill. See docs/skills.md.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(0, 15, 0, 23, 2, 3, true, \"Giant Sword\", 52, 60, 85, 20, 60, 0, 0, 140, 0, 0, 0, 0, 1, 0)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 0,
+    "number": 15,
+    "drop_level": 52,
+    "drops_from_monsters": true,
+    "drop_level_note": "Fifty-two, which is high for what Lorencia holds: the richest thing on the map is well short of it, so this will not fall here. That is MU's own answer and not a fault in the row - Slash is a late skill in 0.75, and the Giant Sword is the earliest of the three things that carry it.",
+    "slot": 0,
+    "width": 2,
+    "width_note": "Width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and two here agrees with MuWeapons.cs's TwoHanded: true. It is also what adds a fifth to the price: shared/Market.Coin reads the footprint's width to tell a one-handed weapon from a two-handed one.",
+    "height": 3,
+    "minimum_damage": 60,
+    "maximum_damage": 85,
+    "attack_speed": 20,
+    "attack_speed_note": "Twenty, the slowest of any blade in the 0.75 table - the Kris is 50 and the Light Saber 25. A two-handed sword of this size swinging slowest is the one place the table and the silhouette agree without being made to.",
+    "durability": 60,
+    "requires": {
+      "level": 0,
+      "strength": 140,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags - 0, 1, 0, the Dark Knight alone. MuWeapons.cs carries the same from the client's side: PlayerClasses.Knight.",
+    "skill": 23,
+    "skill_note": "The skillNumber of the call, and the reason this asset exists. Twenty-three is Slash, the last of the knight's six, and until this row was built nothing in the project could grant it. There are no skills in this simulation yet, so it is carried for the row to read against the call it came from - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks and docs/skills.md."
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.TwoHandSword, TwoHanded: true. Actions 5 and 18, and the first asset in the project to walk in them - every built blade so far has been the one-handed sword stance at 4 and 17. See docs/items-and-armour.md's stance table.",
+  "two_handed": true,
+  "sheets": {
+    "sword17": "sword17.png"
+  },
+  "sheet_from": "Data/Item/sword17.OZJ (128x16), from MuMain. The .bmd names sword17.jpg - the usual off-by-one, where Sword16.bmd wears sheet 17 - and carries 44 vertices in 24 triangles, one mesh. No alpha, so no cutout is declared.",
+  "sheet_note": "A long thin strip, and almost all of it is blade: a broad dark-grey slab with a hammered mottle beaten into it running from the left point to about x 105, a small dark boss set near its base, then a short brass guard and a dark grip in the last twenty pixels. Mean (93, 99, 99) at chroma 6 over the blade, so it is unpainted grey steel with no warmth in it at all - darker than sword06's bright silver curve, which matters when the material is picked.",
+  "material_note": "Two islands, and the blade is the one that had to be argued.\n\nThe build's default is steel, and steel is wrong here for the reason Sword05 already recorded: metallic 1.0 has no diffuse at all, the studio disables the sky's reflection deliberately, and a blade handed to a full metal has only the sun to show - it renders black with hard facets. That was settled on a brighter sheet than this one.\n\nWhich of the two dielectric steels is the measurement, and blade_steel's own file says so: 'it is not a different opinion about MU's art, it is a different sheet.' blade_steel exists because sword06 averages 0.306 linear with 80% of its texels above 0.3. painted_steel was written against sheets at 0.083.\n\nsword17 is neither. Row by row it is a bright bevel top and bottom - rows 0 to 2 at 0.742, 0.865, 0.560, rows 14 and 15 at 0.382 and 0.445 - and a blade body between them, rows 3 to 13, running 0.029 to 0.097 and averaging about 0.05. That is a sixth of what blade_steel was written for and below even painted_steel's reference, and it is painted_steel's summary almost word for word: a bright highlight painted on, and no reflectance to speak of. MU drew this one's highlight into the edges rather than down the middle, which changes where it is and not what it is.\n\nSo painted_steel at metallic 0. blade_steel's warning about metallic 0 - that a broad surface reads as matte white plastic - is a warning about a *light* sheet having nothing for a light to do. This blade is dark, and what it should read as is dark painted steel with the bevels catching, which is what the sheet already draws.\n\nThe grip is leather_wrap, the material written for a cord wound round a tang, as Sword05's grip is. At eighteen texels by four there is no visible winding to confirm it against; it is the right material for the part rather than a reading of the paint.",
+  "open_question": "The cross-guard has no material of its own. It is the mottled dark strip at x 104 to 110 of the sheet, and it falls inside the blade island - 14 triangles covering the blade and the guard together - so it is painted_steel along with the blade it sits under. There is no way to split it short of finer assignment than an island, which is the limit docs/items-and-armour.md records against the Battle Axe, the Dragon Lance and the Great Scythe. It is six texels of a hundred and ten and the guard is dark metal in any case, so the cost is small; it is written down rather than left to be rediscovered.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 5503.3,
+      "along": [
+        12.2,
+        177.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.86,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather_wrap",
+      "triangles": 10,
+      "area": 473.4,
+      "along": [
+        -17.4,
+        12.1
+      ],
+      "mu_uv": [
+        0.86,
+        0.369,
+        0.999,
+        0.631
+      ],
+      "bake_uv": [
+        0.509,
+        0.004,
+        0.592,
+        0.318
+      ]
+    }
+  ]
+}

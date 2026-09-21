@@ -1,0 +1,139 @@
+{
+  "item": "BootMale01",
+  "mu_name": "Bronze Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1} (ZzzOpenData.cpp line 143), so file 01 is index 0, which openmu's 0.75 Armors.cs names the Bronze Boots. mu.db agrees: group 11 index 0, Player/BootMale01.bmd.",
+  "why_this_one": "Martin's and Harold's +2 line, and the second of their four sets to be built. The wandering merchants stock all five Bronze pieces at +2, so five of their lines were dropped by Realm.Shelf for want of a row. See shared/Market.Wandering.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(0, 6, 2, 2, \"Bronze Boots\", 12, 4, 10, 34, 80, 20, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 0,
+    "drop_level": 12,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 4,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 10,
+    "walk_speed_note": "Ten, the boots' own column, which nothing here reads: a walk is MU's fixed tile rate. Recorded rather than dropped.",
+    "durability": 34,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 20,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. Twenty agility beside eighty strength, and the agility is the first this project has recorded on a piece of armour: the Leather, Bone and Plate sets all ask for none."
+  },
+  "sheets": [
+    "boots_02.png"
+  ],
+  "sheet_from": "Data/Player/boots_02.ozj (64x64), from MuMain, and the only sheet the model names - 170 triangles, no hide - as on the gloves. The .bmd names boots_02.jpg; the file on disk is lower-case .ozj, which decode_texture matches case-insensitively.",
+  "sheet_note": "boots_02 is the greaves from two sides, bronze plate over the shin with a flared cuff at the knee and a plain sole. Mean (136, 116, 78) at chroma 61, the lightest sheet in the set. The set is bronze and the sheets say so without ambiguity: chroma runs 30 on the helm to 70 on the legs about a warm yellow-brown mean, where the Plate set is 3 to 8 about a grey. It is still plate_steel, which is worth stating because the name reads wrong. A material here is a claim about the surface - hammered, curved, worn where it is hit - and not about the alloy; the alloy is MU's paint, and a metal's albedo is its reflectance, so a warm albedo at metallic 1.0 is a warm metal with no second material needed. brass was considered and refused: that file is cast fittings, poured rather than forged and never polished, which is a guard and a pommel cap and not a cuirass.",
+  "material_note": "Four islands and one sheet: boots_02's 170 triangles, the two greaves at 53 and the two cuffs at 32. No hide here either. plate_steel throughout, which is the profile's default and is also the answer. The name reads wrong on a bronze harness and the material is right: it is a claim about the surface - hammered plate, curved, with a cast grain - and the alloy is MU's paint. A metal's albedo is its reflectance, so a sheet at chroma 60 about a yellow-brown mean is a warm metal at metallic 1.0 with nothing else needed.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 3021.0,
+      "along": [
+        14.0,
+        62.1
+      ],
+      "mu_uv": [
+        0.012,
+        0.001,
+        0.978,
+        0.942
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.793,
+        0.518
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 3032.2,
+      "along": [
+        -76.0,
+        -22.9
+      ],
+      "mu_uv": [
+        0.012,
+        0.001,
+        0.978,
+        0.942
+      ],
+      "bake_uv": [
+        0.006,
+        0.091,
+        0.614,
+        0.838
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 2105.4,
+      "along": [
+        6.8,
+        38.2
+      ],
+      "mu_uv": [
+        0.139,
+        0.495,
+        0.988,
+        0.994
+      ],
+      "bake_uv": [
+        0.102,
+        0.451,
+        0.855,
+        0.854
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 2070.4,
+      "along": [
+        -35.8,
+        -4.0
+      ],
+      "mu_uv": [
+        0.139,
+        0.495,
+        0.988,
+        0.994
+      ],
+      "bake_uv": [
+        0.073,
+        0.445,
+        0.994,
+        0.976
+      ]
+    }
+  ],
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 1.0,
+      "roughness": 0.46
+    }
+  },
+  "material_overrides_why": "plate_steel keeps its reflectance and its grain, and gives up its pull toward grey and some of its polish. The set's own note is right that plate_steel is the correct material - it is a claim about the surface, hammered and curved, and the alloy is MU's paint - and it ends on 'a metal's albedo is its reflectance, so a warm sheet at metallic 1.0 is a warm metal with nothing else needed'. That last clause is the part that was not true: plate_steel ships f0_desaturation 0.75, so a quarter of the alloy was being taken out again by the very material the note is defending.\n\nIt costs more here than anywhere. These are the highest-chroma sheets in the project - 46.9 on the helm to 90.2 on the gloves, against the Sphinx gold's 75.8 and the Scale verdigris's 29.8 - so a quarter is twenty levels of bronze. At 0.75 the set reads as pale beige and does not say bronze at all.\n\nRoughness 0.34 -> 0.46 comes with it, because saturation and polish are one question and not two - the lesson the Sphinx set taught by going neon when only the first was moved. Swept on the assembled figure at desaturation 0.75, 0.92 and 1.0 against roughness 0.34 and 0.46: at 1.0 with the library's polish the bronze is right but the shoulder and hip carry hot glassy specular, and 0.46 keeps the warmth and calms them. Still well short of the Scale set's 0.55, which is corroded where this is polished."
+}

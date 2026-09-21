@@ -1,0 +1,207 @@
+{
+  "item": "Arrows02",
+  "mu_name": "Arrows",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_ARROWS, L\"Data\\\\Item\\\\\", L\"Arrows\", 2)`, and MODEL_ARROWS = MODEL_BOW + 15. OpenMU's 0.75 table agrees, calling group 4 number 15 the Arrows.",
+  "naming_trap": "See Arrows01, which is the Bolt. The two are loaded by hand rather than by the group's numbering - Arrows01.bmd is number 7 and Arrows02.bmd is number 15 - so the file names run one behind the item names and nothing in either warns you. This one, the second file, is the first thing anybody would call an arrow quiver, and it is the right one for a bow.",
+  "profile": "weapon",
+  "upended": true,
+  "upended_from": "See Arrows01: RenderObjectScreen gives MODEL_BOLT and MODEL_ARROWS one line, `Vector(0.f, 270.f, 15.f, ObjectSelect.Angle)`, a half turn about X short of a sword's, so the model's +Z goes down the cell where a sword's goes up. The heads are at this model's -Z end and MU shows them at the top.",
+  "stats": {
+    "note": "Ammunition rather than a weapon: no damage, no attack speed, and a durability that is a count of the shots left rather than wear.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs.",
+    "call": "CreateAmmunition(4, 15, 0, 1, 2, false, \"Arrows\", 0, 255, 0, 0, 1)",
+    "group": 4,
+    "number": 15,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above and were being read past: the bool before the name is dropsFromMonsters and the int after it is the drop level. They are lifted out here because the loot pool is now the built catalogue gated by this number - see shared/Loot.cs. Arrows, bolts and scrolls are shop stock in the original and fall from nothing, which is what the flag says and why a spider cannot leave a quiver.",
+    "slot": 0,
+    "width": 1,
+    "height": 2,
+    "height_note": "Height is the fifth argument of the call above - CreateAmmunition takes group, number, slot, width, height - and was not carried when this row was transcribed. A quiver is one across and two down. See the height_note on the weapon rows.",
+    "is_ammunition": true,
+    "durability": 255,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ]
+  },
+  "why_this_one": "The other half of the pair, and a different model rather than the same bag twice. A bow's quiver is its own mesh on its own sheet - seventy-five triangles against the bolt case's forty-two, and bowbox.jpg rather than crossbow_box.jpg - so a bow wearing the crossbow's box would be wearing the wrong thing rather than a resized version of the right one.",
+  "hand": "right",
+  "hand_from": "OpenMU gives it slot 0 and the client agrees from the other direction: GetEquipedBowType_Skill tests `IsEquippedBowItem(left) && right.Type == ITEM_ARROWS`. The mirror of the Bolt, because a bow is itself a left-hand item and its ammunition takes the hand left over.",
+  "worn_note": "Equipped in a hand and drawn on the back, like the Bolt. The slot is where the item goes, not where it is seen; see the note in Arena.Begin.",
+  "sheets": {
+    "bowbox": "bowbox.png"
+  },
+  "sheet_from": "Data/Item/bowbox.OZJ (64x64), from MuMain. The .bmd names bowbox.jpg and this is the file behind it. Twice the crossbow box's 32x32, for a mesh with nearly twice the triangles.",
+  "material_note": "Three materials on seventy-five triangles, and the sheet sorts them into three groups that do not overlap. Cropping each island at its own mu_uv with V flipped gives (91, 51, 47) for the one large island, (208-215, 191-198, 176-182) for the three twelve-triangle pieces and (176, 108, 62) for the three nine-triangle ones: a shell, three fletchings and three shafts. The threes are the arrows standing in it, which is why they repeat.\n\nleather for the shell rather than the wood the Bolt's case takes, and the colours are the argument: the crossbow's box is (101, 80, 60) and this is (91, 51, 47) - darker and distinctly redder, dyed hide rather than bare timber. The two quivers are not the same object in two sizes and should not be painted as though they were.\n\ncloth for the fletching is the weakest of the three. A feather is not woven, and the library has nothing that is one; cloth is what it has for something thin, soft and pale that hangs. Worth revisiting when a material for feathers exists.\n\nThe bag was leather_wrap and it striped, which is the fifth time a directional grain has ruled a broad surface and the second time this particular one has. leather.json was written for exactly this and says so in its first line: leather_wrap's grain is the winding - a weave along u at scale 90 and depth 0.55, a hard band every few millimetres - and on a sword grip that banding is the subject, while on a boot, a robe or the flat face of a quiver it is corduroy. The Dark Wizard came out striped from the knees down for the same reason.\n\nRendering it unshaded settles where the fault is, as it did on the Kite Shield: bowbox is a smooth red-brown hide with two stitched straps, a seam and four rivets on it, and there is no banding anywhere in MU's painting. Every stripe in the picture was the normal map's. leather keeps the substance and the roughness - 0.74 against 0.72, near enough the same hide - and swaps the winding for isotropic pebbling at depth 0.06, which is a tenth of the relief.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 12,
+      "area": 4192.3,
+      "along": [
+        -28.0,
+        56.7
+      ],
+      "mu_uv": [
+        -0.003,
+        0.001,
+        0.81,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.492,
+        0.67
+      ],
+      "note": "the quiver itself, a dark red-brown shell and the only large piece on the sheet"
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 12,
+      "area": 202.0,
+      "along": [
+        -83.1,
+        -65.9
+      ],
+      "mu_uv": [
+        0.827,
+        0.593,
+        0.98,
+        0.987
+      ],
+      "bake_uv": [
+        0.007,
+        0.616,
+        0.8,
+        0.926
+      ],
+      "note": "the fletching of one arrow, a pale cream vane standing above the mouth of the quiver"
+    },
+    {
+      "island": 2,
+      "material": "wood",
+      "triangles": 9,
+      "area": 463.1,
+      "along": [
+        -79.7,
+        -24.7
+      ],
+      "mu_uv": [
+        0.839,
+        0.01,
+        0.979,
+        0.556
+      ],
+      "bake_uv": [
+        0.716,
+        0.007,
+        0.8,
+        0.671
+      ],
+      "note": "the shaft of one arrow, tan against the fletching's cream"
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 12,
+      "area": 202.0,
+      "along": [
+        -87.9,
+        -70.7
+      ],
+      "mu_uv": [
+        0.839,
+        0.594,
+        0.989,
+        0.983
+      ],
+      "bake_uv": [
+        0.505,
+        0.007,
+        0.903,
+        0.896
+      ],
+      "note": "the fletching of one arrow, a pale cream vane standing above the mouth of the quiver"
+    },
+    {
+      "island": 4,
+      "material": "wood",
+      "triangles": 9,
+      "area": 501.7,
+      "along": [
+        -84.5,
+        -24.9
+      ],
+      "mu_uv": [
+        0.829,
+        0.013,
+        0.991,
+        0.542
+      ],
+      "bake_uv": [
+        0.505,
+        0.007,
+        0.601,
+        0.65
+      ],
+      "note": "the shaft of one arrow, tan against the fletching's cream"
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 12,
+      "area": 202.0,
+      "along": [
+        -70.4,
+        -53.2
+      ],
+      "mu_uv": [
+        0.83,
+        0.595,
+        0.979,
+        0.986
+      ],
+      "bake_uv": [
+        0.215,
+        0.616,
+        0.993,
+        0.97
+      ],
+      "note": "the fletching of one arrow, a pale cream vane standing above the mouth of the quiver"
+    },
+    {
+      "island": 6,
+      "material": "wood",
+      "triangles": 9,
+      "area": 360.7,
+      "along": [
+        -67.0,
+        -24.3
+      ],
+      "mu_uv": [
+        0.835,
+        0.005,
+        0.982,
+        0.557
+      ],
+      "bake_uv": [
+        0.615,
+        0.007,
+        0.703,
+        0.678
+      ],
+      "note": "the shaft of one arrow, tan against the fletching's cream"
+    }
+  ]
+}

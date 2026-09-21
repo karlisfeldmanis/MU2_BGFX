@@ -1,0 +1,27 @@
+{
+  "name": "shingle",
+  "summary": "A shake roof: split wooden tiles laid in overlapping courses, mossed on the north side.",
+  "why": [
+    "Not timber, and the difference is the whole point of a separate file. timber is a sawn",
+    "board lying flat - a fence rail, a lamp post - with grain running along it and 0.22 of",
+    "depth. A roof is a hundred small boards each standing a centimetre proud of the one below,",
+    "so what the eye reads is the step between courses rather than the grain on any of them.",
+    "Depth 0.40, second only to cobble's 0.45 and for exactly the same reason: the shadow line",
+    "under each course is real, it is drawn as near-black in the art, and it is the whole of why",
+    "a roof reads as a roof rather than as a green rectangle.",
+    "Roughness 0.90. Split wood that has been rained on for twenty years and has moss in its",
+    "gaps. There is no angle at which a shake roof has a highlight.",
+    "Cast rather than brushed, which is the one surprise here. The boards do have a grain and it",
+    "does run one way, but at a roof's distance the grain is invisible and the courses are not -",
+    "and a brushed normal would run its scratches along the roof rather than across it, which is",
+    "the opposite of the direction that matters."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.9,
+  "grain": {
+    "kind": "cast",
+    "scale": 170,
+    "depth": 0.4,
+    "roughness_range": 0.1
+  }
+}

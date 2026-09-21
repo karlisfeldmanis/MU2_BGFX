@@ -1,0 +1,50 @@
+{
+  "item": "Storm01",
+  "mu_name": "The whirlwind a wizard's Twister sends walking out ahead of him",
+  "mu_name_from": "ZzzOpenData.cpp OpenSkills(): `gLoadData.AccessModel(MODEL_STORM, L\"Data\\\\Skill\\\\\", L\"Storm\", 1)` at line 4167 - the last argument is the file number, so Data/Skill/Storm01.bmd. Filed under Skill with the meteor, the ice and the poison cloud.",
+  "kind": "storm",
+  "why_this_one": "It is the whole of the client's Twister, in the *release* arm of MoveCharacter - the arm Flame is made in, when c->AttackTime reaches g_iLimitAttackTime - at ZzzCharacter.cpp:4495:\n\n    case AT_SKILL_STORM:\n        CreateEffect(MODEL_STORM, o->Position, o->Angle, Light, 0, o, o->PKKey, FindHotKey(AT_SKILL_STORM));\n        PlayBuffer(SOUND_STORM);\n        break;\n\nOne model and one wave. Everything else - the smoke at its foot, the two thin bolts coming down into it, the stones it kicks up, the dark it puts on the ground - is Move_MODEL_STORM's sub-type 0 arm, run every frame of its life.\n\n*Where it starts and which way it goes.* At the caster's own position and angle, not at the tile he aimed at: MU's client sends Twister's request with `c->PositionX, c->PositionY` and his facing (ClassAttack.cpp:1358), where Flame's sends the target tile. The create arm gives it `Direction = (0, -10, 0)` and the shared tail of MoveEffect walks it with `MoveParticle(o, true)` - that direction rotated by the effect's own angle - so the storm crosses ten units a frame straight out along the way he was facing, and its own `o->Position[2] = RequestTerrainHeight(...)` every frame keeps it on the ground as it goes.",
+  "mesh": "Storm01_00.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Storm01.bmd with --key=0, from MuMain. Three hundred and eighty-four triangles in one mesh on typhoon.jpg, seven bones. About 577 x 585 x 577 units at the first key - a funnel nearly six metres tall and six across at its mouth, standing up from its own origin - which at CreateEffect's default Scale of 0.9 is a little over five metres of whirlwind. The wiki's own clip agrees: it runs off the top of the frame.",
+  "poses": [
+    "Storm01_00.obj",
+    "Storm01_01.obj",
+    "Storm01_02.obj",
+    "Storm01_03.obj",
+    "Storm01_04.obj",
+    "Storm01_05.obj",
+    "Storm01_06.obj",
+    "Storm01_07.obj",
+    "Storm01_08.obj",
+    "Storm01_09.obj",
+    "Storm01_10.obj",
+    "Storm01_11.obj",
+    "Storm01_12.obj",
+    "Storm01_13.obj",
+    "Storm01_14.obj",
+    "Storm01_15.obj",
+    "Storm01_16.obj",
+    "Storm01_17.obj",
+    "Storm01_18.obj"
+  ],
+  "poses_from": "The model's one action is thirty keys, baked a mesh a key by `muextract export-obj --action=0 --key=N` - and only the first nineteen of them, because only the first nineteen are ever reached.\n\n*What the animation is.* The root bone, Box06, turns about the vertical: a 180-degree flip whose axis walks round thirty degrees every five keys, which composes to a spin of twelve degrees a key. Boxes 02 to 04 are the funnel's three sections and each sways on its own, up to fifteen degrees off true and back. So the thing spins and snakes at once, and a single pose stands in for neither.\n\n*Why nineteen.* The create arm leaves `o->Velocity` at CreateEffect's default of 0.3, MODEL_STORM (enum 922) sits inside the [MODEL_BIRD01, MODEL_SKILL_END) range that MoveEffect's tail calls PlayAnimation for, and the effect lives fifty-nine frames: three tenths of a key a frame over fifty-nine is 17.7 keys. BMD::Animation blends the prior key against the current one, so key 18 is the furthest either weight reaches. Keys 19 to 29 are a spin nobody is shown.\n\n*Why blend shapes and not a rig.* The poison cloud's reason, which Poison01.json argues in full: MU interpolates exactly two keys by a weight, and that is what a blend shape is. See client/core/Storm.cs.",
+  "parts": [
+    {
+      "group": "typhoon",
+      "sheet": "typhoon.png",
+      "blend": "additive",
+      "note": "Data/Skill/typhoon.OZJ, a 128 square with no alpha, mean (26, 26, 26) - grey streaks on black, and the darkest sheet any effect in this project wears.\n\nAdditive, read off `o->BlendMesh = 0` in the create arm: the model has one mesh and it is named as the blend mesh, so the whole funnel is added. A sheet painted this dark is only ever meant to be added - what reads as a white column in the clip is a hundred and ninety overlapping faces of faint grey summed.\n\nIt scrolls. The mover writes `o->BlendMeshTexCoordU = -(float)o->LifeTime * 0.1f` every frame, and BMD::RenderMesh adds that straight onto every U (ZzzBMD.cpp:1959) - so as the life counts down the streaks run round the funnel a tenth of a sheet a frame, two and a half sheets a second. It is drawn at `o->BlendMeshLight = o->LifeTime * 0.1f`, which is above one for its first forty-nine frames and fades it over its last ten."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "The base the effect's own draw scale multiplies. The create arm sets no Scale for sub-type 0, so the storm is drawn at CreateEffect's default - `if (Scale <= 0.0f) o->Scale = 0.9f` - and every Twister is the same size.",
+  "lift": 0,
+  "lift_from": "Nothing. The create arm snaps it to `RequestTerrainHeight` at birth and the mover does again every frame, and the model is authored standing up from its origin - its lowest vertex is exactly 0.",
+  "frames": 59,
+  "frames_from": "`o->LifeTime = 59` in the create arm. Two and a third seconds at MU's clock, and nothing in Move_MODEL_STORM ends it early outside a Battle Castle no-attack zone, which this project has none of - so the shared tail's decrement is what ends it, and at ten units a frame the storm has walked 5.9 metres by then.",
+  "smoke_from": "Every frame, `CreateParticleFpsChecked(BITMAP_SMOKE, o->Position, o->Angle, o->Light, 3)` at its foot. Sub-type 3 is a short, fast puff: `LifeTime = 10`, `Scale = (rand() % 32 + 80) * 0.01f`, a pitch of -45 to 45 and a random yaw, thrown at `(0, -(rand() % 8 + 40), 0)` along them - and its mover (ZzzEffectParticle.cpp:5328) is `Luminosity = LifeTime / 8`, `Light = (Lum * 0.8, Lum * 0.8, Lum)`, `Velocity *= 0.4` and `Scale += 0.1` a frame. A cold grey burst that spreads and is gone in four tenths of a second, one a frame, so the storm walks on a skirt of dust.",
+  "forks_from": "Two coins every frame, `rand_fps_check(2)` each, and each is a BITMAP_JOINT_THUNDER at sub-type 0 and scale 10 from a point two metres to one side and seven up - `(Position[0] - 200, Position[1], Position[2] + 700)` and the same at +200 - down to the storm, with the storm as its target and an angle of `(90, 0, Angle[2])`. So about one thin bolt a frame comes down into the whirlwind from above it, on the same walk Lightning's thin joint takes, pitched straight down rather than sixty degrees up. The ±200 is on MU's own X, not turned by the storm's facing: the two bolts always fall from east and west of it.",
+  "stones_from": "`rand_fps_check(4)`, `CreateEffectFpsChecked(MODEL_STONE1 + rand() % 2, o->Position, o->Angle, o->Light, 2)`. Sub-type 2 of the stones is a piece that falls (`o->Position[2] -= o->Gravity`, 20 to 29.5 a frame) and on meeting the terrain respawns itself at sub-type 0 - the meteor's own bouncing debris - and dies. Made at the storm's foot, which is already on the ground, so the fall is a frame at most and what is seen is the meteor's stone popping out from under the whirlwind about one frame in four.",
+  "light_from": "`Vector(-Luminosity * 0.4f, -Luminosity * 0.3f, -Luminosity * 0.2f, Light); AddTerrainLight(o->Position[0], o->Position[1], Light, 5, PrimaryTerrainLight)` - the ice's negative light, taken out of the ground rather than put in, over **five** tiles. The widest ground light in this project and the only wide one that darkens: the storm walks under its own shadow, which is what the wiki's clip shows as the grass going black around it.",
+  "attack_from": "`if ((int)o->LifeTime % 15 == 0) if (o->Owner == &Hero->Object) AttackCharacterRange(o->Skill, o->Position, 150.f, o->Weapon, o->PKKey)` - the client asking the server to hit whatever is within a tile and a half of the storm, four times over its life, as it walks. That is MU's own client driving the hits, and it is not available to a server-authoritative one: OpenMU's cone and its 300 ms a tile are what this project's realm does. Recorded because the two readings agree on the shape - things further along the storm's path are hit later - and disagree on the count."
+}

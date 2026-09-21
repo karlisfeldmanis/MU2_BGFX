@@ -1,0 +1,35 @@
+{
+  "item": "Arrow01",
+  "mu_name": "The arrow a bow puts in the air",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_ARROW, L\"Data\\\\Skill\\\\\", L\"Arrow\", 1)`. Filed under Skill and not under Item, like every missile: what a character wears on their back is Arrows02.bmd and what crosses the clearing is this, and nothing turns one into the other.",
+  "kind": "missile",
+  "why_this_one": "It is what a bow throws, off the same switch in CreateArrow that gives the Light Crossbow its laser bolt: MODEL_BOW, MODEL_SMALL_BOW, MODEL_BATTLE_BOW, MODEL_TIGER_BOW and MODEL_SILVER_BOW all reach `CreateEffect(MODEL_ARROW, ...)`. The Elven Bow and the Chaos Nature Bow do not - they throw MODEL_ARROW_V and MODEL_ARROW_NATURE - which is why the bow built first is the plain one.",
+  "mesh": "Arrow01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Arrow01.bmd, from MuMain. Thirty-three triangles in two meshes: twenty-four on arrow.jpg and nine on fire01.jpg. Two meshes is the whole reason this asset has a parts list where the laser bolt has a single sheet.",
+  "parts": [
+    {
+      "group": "arrow",
+      "sheet": "arrow.png",
+      "blend": "opaque",
+      "note": "The shaft, head and fletching - twenty-four triangles wearing a 16x16 sheet with no alpha. Mean (191, 146, 114) and a near-white highlight at (250, 250, 240): pale wood with a bright edge on the head. Drawn solid, because BlendMesh names the other one."
+    },
+    {
+      "group": "fire01",
+      "sheet": "fire01.png",
+      "blend": "additive",
+      "note": "The tail, and it is the reason MODEL_ARROW is not just a stick: nine triangles on Data/Skill/fire01.OZJ, 64x64, mean (72, 35, 12) with its brightest texel at (215, 187, 124) - a dark sheet with a hot core, which is what an additive sprite looks like on disk.\n\nAdditive because the client says which one: `o->BlendMesh = 1` for MODEL_ARROW, where the laser bolt gets 0. The index is the mesh, so it is this second mesh that blends and the shaft ahead of it that does not.\n\nNot the fire01 already in the build. That one is Data/Effect/Fire01.OZJ at 256x64, four frames of brazier flame; this is Data/Skill/fire01.OZJ at 64x64, a different picture with the same name in a different folder, which is a mistake this project has made once already with a tree."
+    }
+  ],
+  "blend_from": "`o->BlendMesh = 1` in the MODEL_ARROW arm of CreateEffect, against `= 0` for the thunder, laser, V and wing arrows and `-2` for the nature one. BlendMesh is an index into the model's meshes, so a model with two meshes and BlendMesh 1 is one solid piece and one blended.",
+  "scale": 0.8,
+  "scale_from": "`o->Scale = 0.8f` in the same branch, shared with every arrow that is not a Wing, a Tanker or a named skill.",
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30`, as the laser bolt. Thirty frames against a REFERENCE_FPS of 25 is 1.2 seconds and is what a missile that reaches nothing gets.",
+  "muzzle": [
+    -10.0,
+    -60.0,
+    135.0
+  ],
+  "muzzle_from": "`Vector(-10.f, -60.f, 135.f, p1)` rotated by the shooter's angle, the same offset every arrow in that branch leaves from. It is MU's fallback here rather than the thing normally used: a bow that names a bone of its own is fired from that instead, and this is what a weapon with nothing to say falls back to.",
+  "trail_note": "Not built: Move_MODEL_ARROW spawns a BITMAP_FIRE particle every frame it lives, which is a trail behind the arrow rather than the sprite on its tail. The sprite is this model's second mesh and is built; the particle stream is a separate system and is not. The laser bolt has neither - Move_MODEL_ARROW_STEEL does nothing at all for it but the range check."
+}

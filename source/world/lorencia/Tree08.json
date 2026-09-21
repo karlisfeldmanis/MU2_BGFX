@@ -1,0 +1,40 @@
+{
+  "item": "Tree08",
+  "mu_name": "Tree08",
+  "mu_name_from": "Lorencia's object slot 7, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 7,
+  "why_this_one": "8 placements. A bare trunk in dark furrowed bark, one 128x64 sheet.",
+  "profile": "world",
+  "sheets": {
+    "tree_01": "tree_01.jpg.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. MU has three stems that exist twice over, as an .OZJ and an .OZT that are not the same picture: tree_01 is furrowed bark as a JPEG and a leaf clump as a TGA, tree_02 is birch bark or moss, tree_04 is a sawn log end or pink blossom. The .bmd says which by extension and both halves are genuinely in use across Lorencia, so the decoded files carry the extension in their names and neither gets the bare one.",
+  "sheet_materials": {
+    "tree_01": "bark"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 176,
+      "area": 217519.7,
+      "along": [
+        -281.9,
+        313.9
+      ],
+      "mu_uv": [
+        -0.155,
+        -1.196,
+        0.998,
+        2.196
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.93,
+        0.997
+      ]
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "item": "Beer03",
+  "mu_name": "Beer03",
+  "mu_name_from": "Lorencia's object slot 153, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 153,
+  "why_this_one": "4 placements. Just the drink. The interior pieces are worth building now rather than later because the roof fade works: walking into a house shows what is in it, and until now that was an empty floor.",
+  "profile": "world",
+  "sheets": {
+    "bottle": "bottle.png",
+    "winecup": "winecup.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "bottle": "ceramic",
+    "winecup": "ceramic"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 36,
+      "area": 2027.9,
+      "along": [
+        -5.0,
+        8.0
+      ],
+      "mu_uv": [
+        -0.25,
+        0.001,
+        0.986,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.922,
+        0.459
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 36,
+      "area": 1598.1,
+      "along": [
+        -16.9,
+        -3.9
+      ],
+      "mu_uv": [
+        -0.25,
+        0.001,
+        0.986,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.428,
+        0.922,
+        0.842
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 18,
+      "area": 282.2,
+      "along": [
+        4.8,
+        9.8
+      ],
+      "mu_uv": [
+        0.168,
+        0.157,
+        0.902,
+        0.891
+      ],
+      "bake_uv": [
+        0.526,
+        0.377,
+        0.831,
+        0.995
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 18,
+      "area": 2234.9,
+      "along": [
+        -5.3,
+        13.7
+      ],
+      "mu_uv": [
+        0.003,
+        0.009,
+        0.993,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.937,
+        0.903
+      ]
+    }
+  ]
+}

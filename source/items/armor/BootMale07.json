@@ -1,0 +1,139 @@
+{
+  "item": "BootMale07",
+  "mu_name": "Scale Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1} (ZzzOpenData.cpp line 143), so file 07 is index 6, which openmu's 0.75 Armors.cs names the Scale Boots. mu.db agrees: group 11 index 6, Player/BootMale07.bmd.",
+  "why_this_one": "Martin's and Harold's +3 line, and the third of their four sets. The wandering merchants stock all five Scale pieces at +3, so five of their lines were dropped by Realm.Shelf for want of a row. See shared/Market.Wandering.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(6, 6, 2, 2, \"Scale Boots\", 22, 8, 8, 40, 110, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 6,
+    "drop_level": 22,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 8,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 8,
+    "walk_speed_note": "Eight, the boots' own column, which nothing here reads: a walk is MU's fixed tile rate. Recorded rather than dropped.",
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 110,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred and ten strength and no agility, where the Bronze set asked for eighty and twenty."
+  },
+  "sheets": [
+    "boots_08.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/boots_08.OZJ (64x64) and hide.jpg, from MuMain. The .bmd names boots_08.jpg and hide.jpg; 142 of the 148 triangles are on the first and 6 on hide.",
+  "sheet_note": "boots_08 is the greaves from two sides, a studded knee over a banded shin with a pale sole line. Mean (48, 65, 57) at chroma 18. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is a dark blue-green metal and every sheet agrees: chroma 17 to 19 about means near (50, 65, 55), which is a verdigris cast on a dark plate rather than the grey of the Plate set or the yellow-brown of the Bronze. It is the darkest metal set built so far - lum 54 on the legs against the Plate set's 137 - and that is worth stating because a dark albedo at metallic 1.0 is the shape of the fault the Bone set had. Here it is not a fault: the Bone set was hide and skull declared metal, and this really is plate. See materials/bone.json for the case that was wrong.",
+  "material_note": "Four islands: the two greaves at 56 and the two knee studs at 18, which is boots_08's 142 and hide's 6. plate_steel, the profile's default, and the sheets do not argue with it: the colour is a verdigris cast at chroma 18 and the surface is banded plate. A metal's albedo is its reflectance, so a dark blue-green sheet at metallic 1.0 renders as dark blue-green metal - which is the same arithmetic the Bronze set records from the warm end.",
+  "material_overrides": {
+    "plate_steel": {
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "plate_steel at 0.55 rather than its own 0.34, because this set is corroded and that figure is for polished plate. The assignment is right and the note above argues it well - a dark blue-green sheet at metallic 1.0 is dark blue-green metal - but the same sheets describe a verdigris cast, and verdigris is corrosion. A patina is the one thing a polished surface is not, and at 0.34 the set came back glassy: broad wet highlights sliding over the cuirass and the greaves with the scrollwork lost under them. Swept in Blender on the assembled set under the rig from MU2/lighting.json at 0.34, 0.48 and 0.60 - by 0.60 the scale pattern and the hip scrollwork read clearly and it looks aged rather than wet, and 0.55 keeps a little more metal in it.\n\nScoped to this set rather than moved in the library: the Plate set is clean steel and wants the polish it has.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 56,
+      "area": 3149.5,
+      "along": [
+        14.0,
+        62.1
+      ],
+      "mu_uv": [
+        0.028,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.994,
+        0.9
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 56,
+      "area": 3161.7,
+      "along": [
+        -76.0,
+        -22.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.988,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.161,
+        0.88,
+        0.989
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 18,
+      "area": 1372.5,
+      "along": [
+        -2.2,
+        32.1
+      ],
+      "mu_uv": [
+        0.033,
+        0.217,
+        0.325,
+        0.919
+      ],
+      "bake_uv": [
+        0.298,
+        0.046,
+        0.441,
+        0.871
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 18,
+      "area": 1372.5,
+      "along": [
+        -44.8,
+        -21.3
+      ],
+      "mu_uv": [
+        0.033,
+        0.217,
+        0.325,
+        0.919
+      ],
+      "bake_uv": [
+        0.008,
+        0.036,
+        0.462,
+        0.397
+      ]
+    }
+  ]
+}

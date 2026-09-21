@@ -1,0 +1,64 @@
+{
+  "item": "PantMale10",
+  "mu_name": "Plate Pants",
+  "mu_name_from": "MuMain maps MODEL_PANTS + i to the file at i+1; file 10 is index 9, which openmu names Plate.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(9, 4, 2, 2, \"Plate Pants\", 45, 22, 50, 130, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 9,
+    "drop_level": 45,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 22,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 50,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone.",
+    "shelf_note": "On Martin's and Harold's shelf at +3 - the last column of the wandering merchants' stock, see shared/Market.cs - and until this row existed the shelf dropped the line, because a model with no row is a thing the realm cannot price. The five Plate pieces were built for the guards' bodies first and the row came second."
+  },
+  "sheets": [
+    "lower_11.png",
+    "hide.png"
+  ],
+  "sheet_from": "MuMain/src/bin/Data/Player - the tree that was not upscaled in place.",
+  "sheet_note": "Two sheets: lower_11 is the art, hide is MU's 9x9 black capping the openings.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 94,
+      "area": 8261.3,
+      "along": [
+        -13.4,
+        10.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.996,
+        0.99
+      ]
+    }
+  ]
+}

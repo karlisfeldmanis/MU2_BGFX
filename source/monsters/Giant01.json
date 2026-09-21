@@ -1,0 +1,526 @@
+{
+  "item": "Giant01",
+  "mu_name": "Giant",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_GIANT = 7 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_GIANT), which is 5. OpenMonsterModel loads Monster{Type + 1:D2}, so the file is Monster06.bmd. mu.db's monster_kinds agrees at number 7, level 17, 400 health, and OpenMU's Version075 Lorencia.cs names it 'Giant' at that number.\n\nThe first Lorencia monster whose server number and client model disagree by more than the Spider's kind of gap: type 7 and model 5, because types 4, 5 and 6 - the Elite Bull Fighter, the Hell Hound and the Lich - reuse models 0, 1 and 4 and the model numbers had moved on without them.",
+  "world": "lorencia",
+  "object_type": 7,
+  "monster": {
+    "model_index": 5,
+    "scale": 1.6
+  },
+  "monster_from": "model_index is the client's model number, which is the key into assets/monsters/actions.json - and that matters more for this animal than for any other in the town, because model 5 is in the multiplier list at 0.7. Every one of his clips but the death plays at seven tenths of the rate the Hound's does, and that is most of what makes him read as heavy. See monster_speeds.py for the order the three passes go in.\n\nscale is CreateMonster's 1.6, and the client contradicts itself about it. ZzzCharacter.cpp, case MONSTER_GIANT: `c->Object.Scale = 1.6f`. Then WSclient.cpp, in the viewport handler that is the only path a monster arrives by, straight after the CreateMonster call: `if (c->MonsterIndex == MONSTER_GIANT) o->Scale = 0.8f;`. The second write is the one that reaches the screen, and this asset shipped at 0.8 for exactly that reason before it was looked at.\n\n0.8 is wrong on the evidence of the model and of the town. The .glb is 1.91 m at MU's own size, so at 0.8 he stands about 1.5 m - shorter than the Hound at its 0.85 and shorter than the character he is fighting, which is not a Giant by any reading of the word. At 1.6 he is a little over three metres and a head and a half above a Dark Knight, which is what the name says and what Monster06's own bones are laid out for. Watched in the Monsters tab against the champion and corrected on that.\n\nSo the rule this project runs on - every visual trait traces to MuMain - is met by both numbers and settled by which line is 0.75's. The halving sits outside CreateMonster in a packet handler, keyed on one monster by its server type, undoing a size the artist authored to; it reads as a later hand, and it is not followed. Recorded here rather than quietly picked, because the opposite choice is one grep away from looking obviously right.",
+  "right_hand": "Axe03",
+  "right_hand_bone": "knife_bone",
+  "left_hand": "Axe03",
+  "left_hand_bone": "hand_bone01",
+  "hands_from": "ZzzCharacter.cpp, CreateMonster, the MONSTER_GIANT case: `c->Weapon[0].Type = MODEL_DOUBLE_AXE; c->Weapon[1].Type = MODEL_DOUBLE_AXE;` - the same axe in each fist, which is the only monster in Lorencia that fills both slots. MODEL_DOUBLE_AXE is MODEL_AXE + 2, so Item/Axe03.bmd, already built as the Double Axe.\n\nThe bones are in CreateCharacter's weapon switch, where the Giant shares a case with the Cyclops and the Lich: `c->Weapon[0].LinkBone = 41; c->Weapon[1].LinkBone = 32`. Bone 41 on this rig is knife_bone, a child of Bip01 R Hand; bone 32 is hand_bone01, a child of Bip01 L Hand. Unlike the Bull Fighter and the Hound, this artist named the grip bones by what they hold rather than by a side, so there is no inversion to explain - the right axe hangs under the right hand.\n\nThe left hand is new to the crowd. Cast carried one item and one bone until this asset, because nothing before it held two; see Crowd.Template, which now hangs both.",
+  "profile": "monster",
+  "rig_from": "Seven actions, the same seven as every Lorencia monster so far: Monster06.bmd carries slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - and stops. Keys: 20, 20, 7, 8, 8, 20, 11. 48 bones. Three matter beyond drawing: 41 and 32 are the weapon links, and 20 is Bip01 Head, which ZzzOpenData records as this model's BoneHead in the block that loads its sounds.\n\nExported with --actions=0,1,2,3,4,5,6, because export-rig's default is action 0 alone.",
+  "sheets": {
+    "armor_up2": "armor_up2.png",
+    "gloves2": "gloves2.png",
+    "armor_lower2": "armor_lower2.png",
+    "boots2": "boots2.png",
+    "helmet2": "helmet2.png"
+  },
+  "sheet_from": "Five sheets for five meshes, one each, all out of Data/Monster beside the model and all .OZJ - three 128-squares for the cuirass, the gauntlets and the skirt, two 64-squares for the boots and the helm. No .OZT on this model, so nothing on him carries alpha.\n\nThe names are the names of a worn set - armor_up, gloves, armor_lower, boots, helmet, with a 2 on each - and the model is built like one: five meshes that are a helm, a breastplate, a skirt of plates, gauntlets and boots, on a monster's own rig. He is a man in armour drawn at giant scale, and the 2 says there was a 1, which is the Dark Knight's monster armour in the same folder and not this one.",
+  "cutout_from": "Not declared, for the Hound's reason: `cutout` means 'derive the mask from brightness instead of from the alpha channel', and all five sheets are .OZJ with no alpha at all, fully opaque as decode_texture reports. mu2.sh's sniff finds no real alpha channel and sets no --cutout, so the Giant is drawn solid, which is what he is.",
+  "separate_meshes": true,
+  "separate_meshes_from": "Declared for the reason the Hound declares it, from the other side. Monster06's five meshes meet at the neck, the wrists, the waist and the ankles on the same bones, and the weld would join them into fewer islands than there are sheets. Nothing is hidden here, so the HiddenMesh switch is not what breaks; what breaks is the material assignment, because an island takes one material and a gauntlet welded into the cuirass takes the cuirass's. Five meshes kept apart are five islands that each take their own sheet's reading.",
+  "sheet_materials": {
+    "armor_up2": "plate_steel",
+    "gloves2": "plate_steel",
+    "armor_lower2": "plate_steel",
+    "boots2": "plate_steel",
+    "helmet2": "plate_steel"
+  },
+  "sheet_materials_from": "Read off the sheets, magnified. All five are the one suit: a dark, warm-tinted steel at means between (49, 44, 32) and (73, 69, 55) with chroma 15 to 23, painted as riveted bands and overlapping plates with the highlights drawn along the ridges. armor_up2 is the pauldrons and the breastplate, armor_lower2 the skirt of plates, gloves2 the gauntlet bands, boots2 the greaves, helmet2 a closed helm. Nothing on him is skin, cloth or hide, so there is no second material to name.\n\nplate_steel for the surface and not painted_steel, and the metal taken off it rather than the material swapped - see material_overrides_why, which is where the whole of that argument is.",
+  "material_overrides": {
+    "plate_steel": {
+      "metallic": 0.0
+    }
+  },
+  "material_overrides_why": "The Hound's finding and the Bull Fighter's, meeting on one asset, and neither library material answers both on its own.\n\nplate_steel is the right *surface*. Its own note says why it was split off from steel: a blade's grain is brushed because a blade is ground along its length, and on armour that direction means nothing - the islands of a gauntlet run every way at once, so a long grain smears one way across the fingers and another across the cuff and reads as motion blur. Plate is hammered instead, isotropic, and it survives being laid out across a limb. Its roughness 0.68 was swept in the engine on ArmorMale10, which is the same kind of thing this is.\n\nBut plate_steel is metallic 1.0, and that is what the Hound recorded from the other side: MU's sheet is a painting of armour with the highlights drawn into it rather than a measurement of reflectance. Fed through the F0 correction the albedo stops being colour and becomes reflectance, the diffuse goes to nothing, and the painted highlight multiplies the specular - this suit's mean went from (58, 53, 35) to (115, 109, 90) and it rendered as a figure in white chrome shards, which is what the Hound's violet plate did before it was moved to a dielectric.\n\npainted_steel is the dielectric and was tried next, and it is the other half of the trap: it is the *blade's* material, brushed along v at scale 300, and on 709 triangles of plate it drew long horizontal streaks across the pauldrons and the skirt - exactly the smear plate_steel exists to avoid, on the exact asset plate_steel was swept on. Raising its roughness to the Hound's 0.48 damped the blowout and left the streaks.\n\nSo the override is one number: plate_steel's surface, dielectric. Judged on three renders of the same idle under the same light rather than argued - metallic 1.0, painted_steel, and this - and this is the one where the plates read as hammered metal in shade instead of as chrome or as brushed steel.\n\nPer asset rather than in the library, on the Hound's own rule: plate_steel dresses the Plate armour set and several other things whose sheets have been looked at and kept at metallic 1.0, and moving the library number would need the same look at each of them. What this probably wants in the end is a library material that is plate's hammered grain at painted_steel's reflectance - the pair of findings has now been made twice - and that is a pass of its own, not a thing to invent while building a monster.",
+  "maps": 1024,
+  "maps_from": "Overridden, for the Spider's reason and at the Bull Fighter's number. settings.map_size gives 384 - three times the widest sheet - and that rule assumes the islands partition one sheet. They do not: this model wears five sheets and the bake unwraps all 709 triangles into one unique atlas, so the five have to fit side by side.\n\nThe arithmetic: three 128-squares and two 64-squares are 57,344 texels of art, which at the capped 3x is 516k of content before packing. 512 holds 262k and cannot; 1024 holds it at exactly 3x apiece and not a texel more.",
+  "effects": [
+    {
+      "kind": "death_dust",
+      "bone": "",
+      "windows": [
+        {
+          "action": 6,
+          "from_key": 8,
+          "to_key": 9
+        }
+      ]
+    }
+  ],
+  "effects_from": "ZzzCharacter.cpp's per-frame effect switch, `case MODEL_GIANT: MonsterDieSandSmoke(o); break;` - and the function, in the same file:\n\n    if (o->CurrentAction == MONSTER01_DIE && o->AnimationFrame >= 8.f && o->AnimationFrame < 9.f)\n    {\n        for (int i = 0; i < 20; i++)\n        {\n            Vector(1.f, 1.f, 1.f, o->Light);\n            Vector(o->Position[0] + (float)(rand() % 64 - 32),\n                o->Position[1] + (float)(rand() % 64 - 32),\n                o->Position[2] + (float)(rand() % 32 - 16), Position);\n            if (rand_fps_check(1))\n                CreateParticle(BITMAP_SMOKE + 1, Position, o->Angle, o->Light, 1);\n        }\n    }\n\nOne thing, once: twenty puffs of smoke02 thrown in a single burst on key 8 of the eleven-key death, scattered over a 64-unit box round his feet, as he hits the ground. That is the whole of what he puts in the air - MODEL_GIANT is in no other effect case, so he raises no dust while he walks and breathes nothing.\n\nSubtype 1 of BITMAP_SMOKE + 1, which is not the Dark Knight's subtype 0: ZzzEffectParticle's birth gives it LifeTime 40 rather than 32, zeroes the velocity the ordinary puff is thrown with, and jitters the height by 8 - then the mover pins every puff of this sheet to the terrain anyway, so what differs is a puff that sits where it was born, opening out for 1.6 s instead of 1.28 and leaning nowhere. Scale is the ordinary 0.32 to 0.64 growing 0.08 a frame, luminosity LifeTime / 32 on every channel and alpha, so it opens at more than full brightness and darkens to nothing. See client/core/Dust.Burst.\n\nThe window is a single key wide - 8.0 to 9.0 of a clip whose death plays at the ordinary 0.55, unslowed, because the multiplier stops before MONSTER01_DIE - and the emitter is a one-shot, so it fires once when the window opens and not once per frame inside it. rand_fps_check(1) is 'every reference frame', which inside a one-key window at 25 fps is once.",
+  "sounds_from": "Five files, and the slots are ZzzOpenData's: `case MONSTER_MODEL_GIANT` loads mGiant1, mGiant2, mGiantAttack1, mGiantAttack2 and mGiantDie, then calls SetMonsterSound(MODEL_MONSTER01 + Type, 25, 26, 27, 28, 29). The numbers are offsets from SOUND_MONSTER_BULL1 at 210, so 25 to 29 are 235 to 239, which is the five it just loaded - the Hound's 5 to 9 the same way, five rows down.\n\nSo the picks are the ordinary ones: Sounds[rand() % 2] while it moves is a genuine pair, Sounds[2 + rand() % 2] on the swing is another genuine pair, the same pair again on the flinch, and Sounds[4] when it dies. Written into assets/sounds/sounds.json as giant_move, giant_attack, giant_shock and giant_die, which is the name Crowd.Named makes of the breed.",
+  "islands_from": "Twenty-one islands for 709 triangles, and every one of them is plate_steel. The count is higher than the five meshes because the pieces of MU's armour are disjoint inside their own sheets - two gauntlets, two boots, two pauldrons, the studs on the skirt - and an island is a connected run of geometry rather than a mesh. What separate_meshes buys here is that no island spans two sheets, which is what the material assignment needs; see separate_meshes_from.\n\nThey arrived as skin, because islands.py gives anything new the profile's default and the monster profile's default is skin. That is the trap Spider01 records and it is worth recording again on the first asset where every island wanted the same non-default material: left alone the whole suit would have baked at skin's roughness 0.78 with plate_steel never once consulted - not a crash, just a giant in armour with the sheen of a forearm.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 52,
+      "area": 4374.7,
+      "along": [
+        -24.6,
+        20.1
+      ],
+      "mu_uv": [
+        0.006,
+        0.03,
+        0.994,
+        0.999
+      ],
+      "bake_uv": [
+        0.012,
+        0.248,
+        0.389,
+        0.769
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 51,
+      "area": 7636.2,
+      "along": [
+        -19.8,
+        21.4
+      ],
+      "mu_uv": [
+        0.054,
+        0.001,
+        0.999,
+        0.669
+      ],
+      "bake_uv": [
+        0.011,
+        0.012,
+        0.844,
+        0.917
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 2714.9,
+      "along": [
+        0.2,
+        29.7
+      ],
+      "mu_uv": [
+        0.302,
+        0.569,
+        0.987,
+        0.976
+      ],
+      "bake_uv": [
+        0.121,
+        0.152,
+        0.935,
+        0.877
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 2714.9,
+      "along": [
+        -27.9,
+        4.3
+      ],
+      "mu_uv": [
+        0.302,
+        0.569,
+        0.993,
+        0.949
+      ],
+      "bake_uv": [
+        0.013,
+        0.211,
+        0.394,
+        0.957
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 64,
+      "area": 6408.1,
+      "along": [
+        -18.5,
+        24.2
+      ],
+      "mu_uv": [
+        0.008,
+        0.0,
+        0.991,
+        0.627
+      ],
+      "bake_uv": [
+        0.011,
+        0.21,
+        0.425,
+        0.658
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 26,
+      "area": 4035.8,
+      "along": [
+        -6.6,
+        33.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.568,
+        0.655,
+        1.0
+      ],
+      "bake_uv": [
+        0.557,
+        0.012,
+        0.888,
+        0.825
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 26,
+      "area": 4035.8,
+      "along": [
+        -19.9,
+        18.6
+      ],
+      "mu_uv": [
+        0.004,
+        0.568,
+        0.655,
+        1.0
+      ],
+      "bake_uv": [
+        0.452,
+        0.775,
+        0.739,
+        0.882
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 56,
+      "area": 5004.7,
+      "along": [
+        -1.3,
+        45.3
+      ],
+      "mu_uv": [
+        0.002,
+        0.004,
+        0.91,
+        0.966
+      ],
+      "bake_uv": [
+        0.179,
+        0.011,
+        0.904,
+        0.553
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 75.5,
+      "along": [
+        15.5,
+        45.3
+      ],
+      "mu_uv": [
+        0.002,
+        0.006,
+        0.432,
+        0.185
+      ],
+      "bake_uv": [
+        0.104,
+        0.884,
+        0.211,
+        0.929
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 983.0,
+      "along": [
+        -14.7,
+        15.6
+      ],
+      "mu_uv": [
+        0.605,
+        0.721,
+        0.995,
+        0.992
+      ],
+      "bake_uv": [
+        0.012,
+        0.786,
+        0.361,
+        0.86
+      ]
+    },
+    {
+      "island": 10,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 327.4,
+      "along": [
+        -2.5,
+        12.6
+      ],
+      "mu_uv": [
+        0.375,
+        0.768,
+        0.599,
+        0.997
+      ],
+      "bake_uv": [
+        0.651,
+        0.727,
+        0.973,
+        0.964
+      ]
+    },
+    {
+      "island": 11,
+      "material": "plate_steel",
+      "triangles": 56,
+      "area": 5010.2,
+      "along": [
+        -30.8,
+        13.1
+      ],
+      "mu_uv": [
+        0.002,
+        0.004,
+        0.91,
+        0.966
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.904,
+        0.825
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 75.5,
+      "along": [
+        -16.6,
+        9.7
+      ],
+      "mu_uv": [
+        0.002,
+        0.006,
+        0.432,
+        0.185
+      ],
+      "bake_uv": [
+        0.012,
+        0.265,
+        0.119,
+        0.31
+      ]
+    },
+    {
+      "island": 13,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 983.0,
+      "along": [
+        -36.7,
+        -9.2
+      ],
+      "mu_uv": [
+        0.605,
+        0.721,
+        0.995,
+        0.992
+      ],
+      "bake_uv": [
+        0.75,
+        0.572,
+        0.92,
+        0.917
+      ]
+    },
+    {
+      "island": 14,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 327.4,
+      "along": [
+        -38.9,
+        -23.2
+      ],
+      "mu_uv": [
+        0.375,
+        0.768,
+        0.599,
+        0.997
+      ],
+      "bake_uv": [
+        0.497,
+        0.397,
+        0.986,
+        0.989
+      ]
+    },
+    {
+      "island": 15,
+      "material": "plate_steel",
+      "triangles": 98,
+      "area": 3180.9,
+      "along": [
+        8.4,
+        56.4
+      ],
+      "mu_uv": [
+        0.022,
+        0.005,
+        0.985,
+        0.999
+      ],
+      "bake_uv": [
+        0.191,
+        0.012,
+        0.781,
+        0.503
+      ]
+    },
+    {
+      "island": 16,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 530.5,
+      "along": [
+        8.1,
+        33.1
+      ],
+      "mu_uv": [
+        0.75,
+        0.703,
+        0.994,
+        0.99
+      ],
+      "bake_uv": [
+        0.903,
+        0.012,
+        0.97,
+        0.562
+      ]
+    },
+    {
+      "island": 17,
+      "material": "plate_steel",
+      "triangles": 98,
+      "area": 3186.3,
+      "along": [
+        -34.1,
+        -4.2
+      ],
+      "mu_uv": [
+        0.022,
+        0.004,
+        0.872,
+        0.999
+      ],
+      "bake_uv": [
+        0.011,
+        0.054,
+        0.765,
+        0.691
+      ]
+    },
+    {
+      "island": 18,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 530.5,
+      "along": [
+        -45.2,
+        -23.7
+      ],
+      "mu_uv": [
+        0.75,
+        0.703,
+        0.994,
+        0.99
+      ],
+      "bake_uv": [
+        0.413,
+        0.892,
+        0.961,
+        0.98
+      ]
+    },
+    {
+      "island": 19,
+      "material": "plate_steel",
+      "triangles": 45,
+      "area": 1606.6,
+      "along": [
+        -2.9,
+        22.6
+      ],
+      "mu_uv": [
+        0.177,
+        0.031,
+        0.8,
+        0.742
+      ],
+      "bake_uv": [
+        0.356,
+        0.011,
+        0.588,
+        0.588
+      ]
+    },
+    {
+      "island": 20,
+      "material": "plate_steel",
+      "triangles": 19,
+      "area": 368.9,
+      "along": [
+        1.2,
+        18.0
+      ],
+      "mu_uv": [
+        0.056,
+        0.696,
+        0.358,
+        0.998
+      ],
+      "bake_uv": [
+        0.227,
+        0.311,
+        0.939,
+        0.948
+      ]
+    }
+  ]
+}

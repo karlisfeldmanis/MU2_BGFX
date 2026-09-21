@@ -1,0 +1,68 @@
+{
+  "item": "StoneWall04",
+  "mu_name": "StoneWall04",
+  "mu_name_from": "Lorencia's object slot 72, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 72,
+  "why_this_one": "12 placements. A wall with a banner hung on it - which is what badge_01 and badge_03 are, and the reason cloth exists.",
+  "profile": "world",
+  "sheets": {
+    "badge_01": "badge_01.png",
+    "badge_03": "badge_03.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "badge_01": "cloth",
+    "badge_03": "cloth"
+  },
+  "cutout": [
+    "badge_03"
+  ],
+  "cutout_from": "Real alpha in the .OZT.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 28,
+      "area": 3619.5,
+      "along": [
+        -13.0,
+        13.4
+      ],
+      "mu_uv": [
+        0.389,
+        0.223,
+        0.929,
+        0.98
+      ],
+      "bake_uv": [
+        0.005,
+        0.043,
+        0.996,
+        0.972
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 4751.4,
+      "along": [
+        -5.5,
+        21.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.646,
+        0.646
+      ]
+    }
+  ]
+}

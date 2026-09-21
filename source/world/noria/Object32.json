@@ -1,0 +1,41 @@
+{
+  "item": "Object32",
+  "mu_name": "Object32",
+  "mu_name_from": "Noria's object slot 31, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 31,
+  "placements": 44,
+  "profile": "world",
+  "sheets": {
+    "ston001": "nr_ston001.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "ston001": "rock"
+  },
+  "material_note": "ston001: grey stone under green lichen.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 80,
+      "area": 81097.2,
+      "along": [
+        -114.2,
+        106.7
+      ],
+      "mu_uv": [
+        -0.162,
+        -0.169,
+        1.147,
+        1.163
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.994,
+        0.995
+      ]
+    }
+  ]
+}

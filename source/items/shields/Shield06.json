@@ -1,0 +1,69 @@
+{
+  "item": "Shield06",
+  "mu_name": "Dragon Slayer Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield06.bmd is shield index 5, which OpenMU's 0.75 Armors.cs names the Dragon Slayer Shield.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. Slot 32 at +3, the first of his third row. It is the only shield in the shop that asks for agility as well as strength - a hundred and forty - and the only one of the twelve whose sheets are named rather than numbered.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the seven built shields use. Its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10 and Shield11, which record the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(5, 1, 18, 2, 2, \"Dragon Slayer Shield\", 35, 10, 36, 44, 100, 40, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 5,
+    "drop_level": 35,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 10,
+    "defense_rate": 36,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "Eighteen, the shield's block skill in OpenMU's table, on the ten shields that carry one. There are no skills in this simulation, so it is carried for the row to read against the call and nothing more.",
+    "durability": 44,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 40,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags."
+  },
+  "sheets": {
+    "shield_a_01": "shield_a_01.png",
+    "shield_a_02": "shield_a_02.png"
+  },
+  "sheet_from": "Data/Item/shield_a_01.OZJ (32x64) and shield_a_02.OZJ (32x64), from MuMain. The .bmd names shield_a_01.jpg on 10 triangles and shield_a_02.jpg on 10, two meshes and twenty triangles in total - the fewest of any item in the project, under the Kite Shield's twenty-two.",
+  "material_note": "One island of twenty triangles - the fewest of any item in the project - and it spans both sheets: ten triangles on shield_a_01, which is the face, and ten on shield_a_02, which is the back. The unwrap joined them, so there is one assignment to make and it has to suit both.\n\nThe face is heraldry: a gold dragon on a deep blue field inside a bright rim, at chroma 46 per triangle and 44 over the whole sheet. That is paint, and paint is what a metallic material cannot be - a gold charge at metallic 1.0 becomes gold metal and the blue field becomes blue metal.\n\nNot painted_steel either, whose grain is brushed along v and draws hard bands the whole height of a broad face. That is the fault the Kite Shield caught first.\n\nceramic was the first answer here and it is not the one that ships. It was chosen on the Kite Shield's precedent, and while this batch was building that precedent was taken back: ceramic's roughness is 0.30, which is a glaze, and on a curved shield face a lobe that tight leaves nothing where it does not point - the sides went black. See Shield03, which records the whole of it. leather keeps what ceramic had right, a dielectric with an isotropic grain, at 0.74 instead, and it is what the thing is: a board faced with hide and painted.",
+  "open_question": "The back is dark leather straps over board and the face is painted metal, and they are one island. ceramic is chosen on the face, which is what anybody sees.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 20,
+      "area": 7826.4,
+      "along": [
+        -27.5,
+        27.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.998,
+        0.996
+      ]
+    }
+  ]
+}

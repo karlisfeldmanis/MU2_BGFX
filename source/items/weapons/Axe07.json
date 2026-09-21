@@ -1,0 +1,115 @@
+{
+  "item": "Axe07",
+  "mu_name": "Nikkea Axe",
+  "mu_name_from": "MuMain ZzzOpenData.cpp maps MODEL_AXE + i to Axe{i+1}, and _enum.h says MODEL_NIKKEA_AXE = MODEL_AXE + 6, so Axe07.bmd is axe index 6 - which openmu's 0.75 Weapons.cs names the Nikkea Axe (two k's, its spelling). MuWeapons.cs agrees from the client's side: `new(\"Nikkea Axe\", \"Axe07.bmd\", WeaponStance.TwoHandSword, ...)`.",
+  "why_this_one": "Not for a shelf and not for a drop, though it is both in the table: it is what the Bull Fighter carries. ZzzCharacter.cpp's CreateMonster, case MONSTER_BULL_FIGHTER: `c->Weapon[0].Type = MODEL_NIKKEA_AXE`, and Weapon[0] hangs off the bone CreateCharacter's weapon switch names for MODEL_BULL_FIGHTER, which is 42. A bull with an empty fist is the first thing anyone notices about a bull, so the axe comes before the bull does. See assets/monsters/BullFighter01.json.\n\nDrop level 34 puts it well out of any Lorencia pool - the Bull Fighter itself is level 6 and Loot.Affordable gates on the monster's level - so nothing here ever leaves one. It is a monster's prop first and a Knight's weapon second.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs line 112. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(1, 6, 0, 19, 2, 3, true, \"Nikkea Axe\", 34, 38, 50, 30, 44, 0, 0, 130, 0, 0, 0, 0, 1, 1)",
+    "group": 1,
+    "number": 6,
+    "drop_level": 34,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "width_note": "Two, and here it means two-handed: OpenMU's test is `if (group < Bows && width == 2)` and this is group 1. MuWeapons.cs says TwoHanded: true and gives it WeaponStance.TwoHandSword, so the two agree - and the Bull Fighter's Weapon[1] is never set, which is the same fact from the monster's side.",
+    "height": 3,
+    "skill": 19,
+    "skill_note": "The fourth argument. 19 is the axe's own skill in OpenMU's table, which this simulation has no skills for; carried so the row reads against the call.",
+    "minimum_damage": 38,
+    "maximum_damage": 50,
+    "attack_speed": 30,
+    "durability": 44,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 1 - the Dark Knight and the Elf. MuWeapons.cs carries PlayerClasses.Knight | PlayerClasses.Elf."
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.TwoHandSword, TwoHanded: true. Actions 5 and 18 on a player. A monster ignores this - the Bull Fighter's swing is its own MONSTER01_ATTACK1 - and the stance is here for the day a Knight picks one up.",
+  "two_handed": true,
+  "sheets": {
+    "Axes08": "axes08.png"
+  },
+  "sheet_from": "Data/Item/Axes08.OZJ (64x64), from MuMain. Axe07.bmd names Axes08.jpg - the axe sheets are numbered one off the models, as the sword sheets are - and there is one copy of it in the tree.",
+  "sheet_note": "A double-bitted head in grey steel with a gold flourish engraved down the cheek, a dark blue-black haft along the top edge, and a wrapped grip at the left. The gold sits inside the head's own island on the sheet, so it will not come out as a material of its own - see the island rule in docs/items-and-armour.md.",
+  "material_note": "Three islands. Island 1 is forty triangles over the whole sheet and is the head - the double bit and the gold flourish in one island, so the flourish takes steel's roughness and its own colour, which is the island rule and the same reading the Short Sword's end cap got. Island 0 is twelve triangles across the middle band of the sheet - v 0.5 to 0.78 in Blender's bottom-up frame, the dark shaft along the sheet's upper half once V is flipped - running z 19 to 98, which is the haft from the grip to the head: wood, the turned oiled haft at 0.08, not timber. Island 2 is twelve triangles in the sheet's left column below the head, z -31 to 19, which is the wrapped grip at the butt: leather_wrap.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 12,
+      "area": 947.6,
+      "along": [
+        19.0,
+        97.6
+      ],
+      "mu_uv": [
+        0.048,
+        0.5,
+        0.993,
+        0.775
+      ],
+      "bake_uv": [
+        0.093,
+        0.136,
+        0.597,
+        0.715
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 40,
+      "area": 2999.3,
+      "along": [
+        41.0,
+        106.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.813
+      ]
+    },
+    {
+      "island": 2,
+      "material": "leather_wrap",
+      "triangles": 12,
+      "area": 1026.3,
+      "along": [
+        -31.2,
+        19.0
+      ],
+      "mu_uv": [
+        0.007,
+        0.436,
+        0.137,
+        0.986
+      ],
+      "bake_uv": [
+        0.005,
+        0.126,
+        0.084,
+        0.805
+      ]
+    }
+  ]
+}

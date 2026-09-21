@@ -1,0 +1,140 @@
+{
+  "item": "ArmorMale01",
+  "mu_name": "Bronze Armor",
+  "mu_name_from": "MuMain loads MODEL_ARMOR + i from ArmorMale{i+1} (ZzzOpenData.cpp line 140), so file 01 is index 0, which openmu's 0.75 Armors.cs names the Bronze Armor. mu.db agrees: group 8 index 0, Player/ArmorMale01.bmd.",
+  "why_this_one": "Martin's and Harold's +2 line, and the second of their four sets to be built. The wandering merchants stock all five Bronze pieces at +2, so five of their lines were dropped by Realm.Shelf for want of a row. See shared/Market.Wandering.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(0, 3, 2, 2, \"Bronze Armor\", 18, 14, 34, 80, 20, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 0,
+    "drop_level": 18,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 14,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 34,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 20,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. Twenty agility beside eighty strength, and the agility is the first this project has recorded on a piece of armour: the Leather, Bone and Plate sets all ask for none."
+  },
+  "sheets": [
+    "hide.png",
+    "upper_02_m.png",
+    "skin_barbarian_01.png",
+    "upper_02b_m.png"
+  ],
+  "sheet_from": "Data/Player/hide.jpg, upper_02_m.OZJ (128x128), skin_barbarian_01.OZJ (256x256) and upper_02b_m.ozt (32x32), from MuMain. The .bmd names hide.jpg, upper_02_m.jpg, skin_barbarian_01.jpg and upper_02b_m.tga, in that order; 12 of the 156 triangles are on hide, 92 on the cuirass, 44 on the skin and 8 on the tassets.",
+  "sheet_note": "upper_02_m is the cuirass front and back, smooth polished bronze with a raised collar, a boss at the sternum and a spray of gold filigree over each shoulder. Mean (134, 122, 103) at chroma 31. upper_02b_m is the pair of tassets hanging from the belt - brown strips whose alpha cuts 35% away, which is the strip's own edge and not a black surround. skin_barbarian_01 is the Dark Knight's own body sheet, which the piece carries because the armour leaves his arms bare and MU draws the skin as part of the worn mesh. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is bronze and the sheets say so without ambiguity: chroma runs 30 on the helm to 70 on the legs about a warm yellow-brown mean, where the Plate set is 3 to 8 about a grey. It is still plate_steel, which is worth stating because the name reads wrong. A material here is a claim about the surface - hammered, curved, worn where it is hit - and not about the alloy; the alloy is MU's paint, and a metal's albedo is its reflectance, so a warm albedo at metallic 1.0 is a warm metal with no second material needed. brass was considered and refused: that file is cast fittings, poured rather than forged and never polished, which is a guard and a pommel cap and not a cuirass.",
+  "material_note": "Four islands and two answers. Islands 0 and 1 are 22 and 90 triangles - the cuirass, the tassets and hide's caps, 112 together - and take plate_steel throughout, which is the profile's default and is also the answer. The name reads wrong on a bronze harness and the material is right: it is a claim about the surface - hammered plate, curved, with a cast grain - and the alloy is MU's paint. A metal's albedo is its reflectance, so a sheet at chroma 60 about a yellow-brown mean is a warm metal at metallic 1.0 with nothing else needed.\n\nThe tassets are inside island 1 rather than beside it. upper_02b_m is 8 triangles of hanging strip on its own .OZT sheet, welded into the cuirass by shared vertices, so it ships at plate's roughness rather than a hide's - the same limit the Leather Armor's tabard records, and the cheapest instance of it in this set.\n\nIslands 2 and 3 are 22 triangles each, 44 together, which is skin_barbarian_01's 44 exactly: the two bare arms. They take skin, and the islands sit in the body sheet's limb column where nothing else does.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 1.0,
+      "roughness": 0.46
+    }
+  },
+  "material_overrides_why": "plate_steel keeps its reflectance and its grain, and gives up its pull toward grey and some of its polish. The set's own note is right that plate_steel is the correct material - it is a claim about the surface, hammered and curved, and the alloy is MU's paint - and it ends on 'a metal's albedo is its reflectance, so a warm sheet at metallic 1.0 is a warm metal with nothing else needed'. That last clause is the part that was not true: plate_steel ships f0_desaturation 0.75, so a quarter of the alloy was being taken out again by the very material the note is defending.\n\nIt costs more here than anywhere. These are the highest-chroma sheets in the project - 46.9 on the helm to 90.2 on the gloves, against the Sphinx gold's 75.8 and the Scale verdigris's 29.8 - so a quarter is twenty levels of bronze. At 0.75 the set reads as pale beige and does not say bronze at all.\n\nRoughness 0.34 -> 0.46 comes with it, because saturation and polish are one question and not two - the lesson the Sphinx set taught by going neon when only the first was moved. Swept on the assembled figure at desaturation 0.75, 0.92 and 1.0 against roughness 0.34 and 0.46: at 1.0 with the library's polish the bronze is right but the shoulder and hip carry hot glassy specular, and 0.46 keeps the warmth and calms them. Still well short of the Scale set's 0.55, which is corroded where this is polished.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 1079.2,
+      "along": [
+        -9.7,
+        10.5
+      ],
+      "mu_uv": [
+        0.239,
+        0.012,
+        0.726,
+        0.984
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.573,
+        0.481
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 90,
+      "area": 6118.1,
+      "along": [
+        -20.4,
+        18.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.977,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1266.7,
+      "along": [
+        -9.3,
+        8.3
+      ],
+      "mu_uv": [
+        0.322,
+        0.518,
+        0.455,
+        0.985
+      ],
+      "bake_uv": [
+        0.319,
+        0.498,
+        0.653,
+        0.748
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1268.5,
+      "along": [
+        -9.3,
+        8.3
+      ],
+      "mu_uv": [
+        0.024,
+        0.518,
+        0.154,
+        0.985
+      ],
+      "bake_uv": [
+        0.006,
+        0.02,
+        0.636,
+        0.561
+      ]
+    }
+  ]
+}

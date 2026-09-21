@@ -1,0 +1,83 @@
+{
+  "item": "ManGloves01",
+  "mu_name": "Wandering Merchant \u2014 ManGloves01",
+  "part_note": "One piece of Wandering Merchant, skinned to Man01's rig and carrying a bind pose only. MU builds a townsperson the way it builds a player: the base .bmd is skeleton and actions with no mesh on it, and the pieces are meshes with nowhere to be until the rig puts them somewhere.",
+  "profile": "npc",
+  "sheets": {
+    "w_merchant_b": "w_merchant_b.png"
+  },
+  "sheet_materials": {
+    "w_merchant_b": "skin"
+  },
+  "sheet_materials_from": "Skin wherever the sheet carries flesh, and that is most of them. MU paints a townsperson's face on the same page as his clothes, so the material chosen for the clothes is also the material on the face \u2014 and cloth declares a weave along u at scale 140, which put fabric grain down Amy's cheek. skin declares no grain, which is the safe way to be wrong: a dress missing a weave nobody could resolve at 128 pixels costs nothing.\n\nWhat is plainly not flesh keeps its own material: the smith's forge is lamplight, his anvil is rock, the vault keeper's plate is steel and his chest is timber.",
+  "animation_rig": "npc/body/Man01.rig.json",
+  "animation_rig_from": "Man01.bmd, which is this figure's player.bmd: skeleton and one action, no meshes. A merchant skinned to her own rig cannot borrow the player's \u2014 the bone counts differ (Man01 against player.bmd's 60) and so do the names.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 58,
+      "area": 2038.4,
+      "along": [
+        -8.6,
+        12.5
+      ],
+      "mu_uv": [
+        0.586,
+        0.009,
+        0.989,
+        0.297
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.938,
+        0.71
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 58,
+      "area": 2038.4,
+      "along": [
+        -8.6,
+        12.5
+      ],
+      "mu_uv": [
+        0.698,
+        0.003,
+        0.994,
+        0.287
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.772,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 16,
+      "area": 1764.4,
+      "along": [
+        -2.5,
+        25.2
+      ],
+      "mu_uv": [
+        0.657,
+        0.743,
+        0.762,
+        0.98
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.552,
+        0.651
+      ]
+    }
+  ]
+}

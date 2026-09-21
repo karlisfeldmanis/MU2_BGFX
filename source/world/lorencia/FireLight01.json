@@ -1,0 +1,249 @@
+{
+  "item": "FireLight01",
+  "mu_name": "FireLight01",
+  "mu_name_from": "Lorencia's object slot 50, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 50,
+  "why_this_one": "26 placements. A standing brazier, and the biggest thing left in the town. Its cage is a cut-out and the two small sheets inside it are the fire.",
+  "profile": "world",
+  "sheets": {
+    "light": "light.png",
+    "light2": "light2.png",
+    "light3": "light3.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "light": "wrought_iron",
+    "light2": "lamplight",
+    "light3": "lamplight"
+  },
+  "cutout": [
+    "light"
+  ],
+  "cutout_from": "Real alpha in the .OZT.",
+  "additive": [
+    "light3"
+  ],
+  "additive_from": "A departure, and a small one. The client marks only the bonfire's flame as a blend mesh, and these sheets are flame painted on black exactly as that one is - drawn opaquely they are black rectangles with an orange smudge. The client gets away with it because its own fire at these placements is a particle effect CreateFire puts there and the mesh is the housing; this has no particles yet, so the painted flame is all there is and it has to read as one.",
+  "emitters": [
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        0,
+        0,
+        200
+      ]
+    }
+  ],
+  "emitters_from": "WorldObjectCatalog.cs's Fire(): luminance 0.6 to 1.1, weighted (L, 0.6L, 0.4L) for the orange, four tiles of reach. The rate and smoothing are the old port's correction rather than the client's - it redraws the luminance every rendered frame, which on a light rather than a texture is a strobe, so 3 Hz eased over an eighth of a second is the pool of light breathing at the pace a fire moves.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 3530.2,
+      "along": [
+        -28.7,
+        28.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.003,
+        0.994,
+        0.282
+      ],
+      "bake_uv": [
+        0.189,
+        0.668,
+        0.517,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 12,
+      "area": 3162.5,
+      "along": [
+        -25.8,
+        25.7
+      ],
+      "mu_uv": [
+        0.003,
+        0.341,
+        0.995,
+        0.994
+      ],
+      "bake_uv": [
+        0.189,
+        0.004,
+        0.764,
+        0.659
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 901.5,
+      "along": [
+        -4.5,
+        0.2
+      ],
+      "mu_uv": [
+        0.5,
+        0.215,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.097,
+        0.004,
+        0.134,
+        0.781
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 2,
+      "area": 901.5,
+      "along": [
+        -4.5,
+        0.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.215,
+        0.5,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.042,
+        0.781
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 2,
+      "area": 901.5,
+      "along": [
+        0.2,
+        4.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.215,
+        0.5,
+        0.999
+      ],
+      "bake_uv": [
+        0.051,
+        0.004,
+        0.088,
+        0.781
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 2,
+      "area": 901.5,
+      "along": [
+        0.2,
+        4.8
+      ],
+      "mu_uv": [
+        0.5,
+        0.215,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.143,
+        0.004,
+        0.18,
+        0.781
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 6,
+      "area": 971.7,
+      "along": [
+        -18.9,
+        18.9
+      ],
+      "mu_uv": [
+        0.04,
+        0.138,
+        0.61,
+        0.708
+      ],
+      "bake_uv": [
+        0.773,
+        0.004,
+        0.917,
+        0.171
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1545.1,
+      "along": [
+        -18.9,
+        18.9
+      ],
+      "mu_uv": [
+        0.04,
+        0.138,
+        0.61,
+        0.708
+      ],
+      "bake_uv": [
+        0.773,
+        0.18,
+        0.917,
+        0.347
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 6,
+      "area": 971.7,
+      "along": [
+        -18.9,
+        18.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.526,
+        0.668,
+        0.779,
+        0.96
+      ]
+    }
+  ]
+}

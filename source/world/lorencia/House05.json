@@ -1,0 +1,427 @@
+{
+  "item": "House05",
+  "mu_name": "House05",
+  "mu_name_from": "Lorencia's object slot 119, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 119,
+  "why_this_one": "1 placement. Planks and boards, with water running down them.",
+  "profile": "world",
+  "sheets": {
+    "tile_wood02": "tile_wood02.png",
+    "tile_wood01": "tile_wood01.png",
+    "ston02": "ston02.jpg.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "tile_wood02": "timber",
+    "tile_wood01": "timber",
+    "ston02": "water"
+  },
+  "additive": [
+    "ston02"
+  ],
+  "additive_from": "WorldObjectCatalog.cs: LorenciaBlendMeshes[119] = 2, and submesh 2 is ston02.jpg - the same dark blue ripples the waterspout pours. Note the .jpg half of the stem; the .tga half is the grass at Stone01's foot. See tests/sheets.py.",
+  "glow": {
+    "ston02": {
+      "scrolls_per_second": 1.0
+    }
+  },
+  "glow_from": "MoveObject's per-type case for object 119, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap — the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nAs House04 — the submesh here is a water sheet.",
+  "emitters": [
+    {
+      "kind": "window",
+      "colour": [
+        1.0,
+        0.78,
+        0.5
+      ],
+      "low": 0.05,
+      "high": 0.08,
+      "range_tiles": 1.7,
+      "flicker_hz": 8,
+      "smooth_seconds": 0.34,
+      "at": [
+        46.7,
+        283.2,
+        36.1
+      ]
+    }
+  ],
+  "emitters_from": "A departure, and a deliberate one: MU does not light from windows. MoveObject has no AddTerrainLight for these types — the client draws the glow submesh and stops there, so a lit window in the original throws exactly nothing onto the wall around it. That reads as a sticker at any distance you would stand at, and it reads worse the darker the town gets: the point of dropping the ambient is that light sources start to matter.\n\nThe position starts from the glow submesh's own bounding box, so the light is where the light is painted, and is then pushed more than a tile *out* of the wall and most of a tile *down*. That offset is the whole lesson of the first attempt. A lamp put at the glow's own centre sits inside the quad it belongs to and lights the wall the quad is seen against — so the pane went invisible, not because it stopped being drawn but because its backdrop came up to meet it. Half a day went into the sheet chasing that: feather, blur, emissive strength, an additive blend, all of it looking for a fault in the glow that was in the light beside it. Taking the emitter away brought the pane straight back.\n\nOut and down, because out alone was not enough: a pool centred on the wall face raises the whole face, and the pane is read against that face. Real window light spills onto the ground in front, so that is where this is aimed — 0.05 to 0.08 over 1.7 tiles, landing on the street rather than on the stone the glow hangs in, which is all the evidence the glow needs in order to read as real. The glow stays the thing you see. It flickers on the same numbers the glow does, so the pool and the pane breathe together.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 28,
+      "area": 73347.6,
+      "along": [
+        -600.0,
+        254.6
+      ],
+      "mu_uv": [
+        0.35,
+        -0.707,
+        0.65,
+        2.132
+      ],
+      "bake_uv": [
+        0.735,
+        0.266,
+        0.776,
+        0.65
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 12,
+      "area": 327578.2,
+      "along": [
+        -200.7,
+        199.6
+      ],
+      "mu_uv": [
+        -0.7,
+        -0.272,
+        1.688,
+        1.148
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.82,
+        0.819
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 235503.1,
+      "along": [
+        -209.0,
+        205.8
+      ],
+      "mu_uv": [
+        -0.737,
+        -0.266,
+        1.737,
+        1.135
+      ],
+      "bake_uv": [
+        0.009,
+        0.266,
+        0.722,
+        0.886
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 14,
+      "area": 208939.4,
+      "along": [
+        -224.4,
+        275.5
+      ],
+      "mu_uv": [
+        0.006,
+        -0.342,
+        2.384,
+        1.435
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.83,
+        0.738
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 24,
+      "area": 137769.7,
+      "along": [
+        -601.9,
+        103.4
+      ],
+      "mu_uv": [
+        -1.789,
+        0.354,
+        1.565,
+        1.968
+      ],
+      "bake_uv": [
+        0.009,
+        0.266,
+        0.932,
+        0.918
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 8,
+      "area": 28414.4,
+      "along": [
+        -379.4,
+        -364.2
+      ],
+      "mu_uv": [
+        -0.842,
+        0.428,
+        1.571,
+        0.587
+      ],
+      "bake_uv": [
+        0.009,
+        0.216,
+        0.916,
+        0.941
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 8,
+      "area": 13865.9,
+      "along": [
+        79.5,
+        96.2
+      ],
+      "mu_uv": [
+        0.058,
+        0.446,
+        1.582,
+        0.573
+      ],
+      "bake_uv": [
+        0.479,
+        0.837,
+        0.945,
+        0.991
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 6,
+      "area": 4404.2,
+      "along": [
+        -3.1,
+        63.3
+      ],
+      "mu_uv": [
+        0.116,
+        0.598,
+        0.428,
+        0.83
+      ],
+      "bake_uv": [
+        0.726,
+        0.738,
+        0.769,
+        0.77
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 8,
+      "area": 27768.4,
+      "along": [
+        -106.3,
+        -91.0
+      ],
+      "mu_uv": [
+        -0.842,
+        0.428,
+        1.571,
+        0.587
+      ],
+      "bake_uv": [
+        0.009,
+        0.935,
+        0.805,
+        0.98
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 6,
+      "area": 3834.0,
+      "along": [
+        18.4,
+        84.9
+      ],
+      "mu_uv": [
+        0.614,
+        0.59,
+        0.926,
+        0.81
+      ],
+      "bake_uv": [
+        0.726,
+        0.691,
+        0.769,
+        0.721
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 6,
+      "area": 4308.2,
+      "along": [
+        143.3,
+        209.8
+      ],
+      "mu_uv": [
+        0.622,
+        0.318,
+        0.933,
+        0.521
+      ],
+      "bake_uv": [
+        0.848,
+        0.323,
+        0.89,
+        0.351
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 10,
+      "area": 15951.9,
+      "along": [
+        69.6,
+        106.2
+      ],
+      "mu_uv": [
+        0.132,
+        0.4,
+        0.868,
+        0.6
+      ],
+      "bake_uv": [
+        0.36,
+        0.455,
+        0.866,
+        0.779
+      ]
+    },
+    {
+      "island": 12,
+      "material": "rock",
+      "triangles": 4,
+      "area": 4578.7,
+      "along": [
+        79.7,
+        96.2
+      ],
+      "mu_uv": [
+        0.006,
+        0.421,
+        1.005,
+        0.573
+      ],
+      "bake_uv": [
+        0.838,
+        0.009,
+        0.973,
+        0.029
+      ]
+    },
+    {
+      "island": 13,
+      "material": "rock",
+      "triangles": 4,
+      "area": 4578.8,
+      "along": [
+        13.0,
+        164.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.427,
+        1.002,
+        0.579
+      ],
+      "bake_uv": [
+        0.838,
+        0.047,
+        0.973,
+        0.067
+      ]
+    },
+    {
+      "island": 14,
+      "material": "rock",
+      "triangles": 4,
+      "area": 4578.8,
+      "along": [
+        -9.5,
+        187.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.438,
+        0.999,
+        0.59
+      ],
+      "bake_uv": [
+        0.822,
+        0.935,
+        0.957,
+        0.956
+      ]
+    },
+    {
+      "island": 15,
+      "material": "rock",
+      "triangles": 4,
+      "area": 4578.8,
+      "along": [
+        12.2,
+        163.3
+      ],
+      "mu_uv": [
+        0.007,
+        0.444,
+        1.006,
+        0.596
+      ],
+      "bake_uv": [
+        0.838,
+        0.085,
+        0.973,
+        0.105
+      ]
+    },
+    {
+      "island": 16,
+      "material": "rock",
+      "triangles": 120,
+      "area": 143511.6,
+      "along": [
+        -50.8,
+        227.7
+      ],
+      "mu_uv": [
+        -0.335,
+        -0.397,
+        1.335,
+        1.274
+      ],
+      "bake_uv": [
+        0.269,
+        0.009,
+        0.936,
+        0.853
+      ]
+    }
+  ]
+}

@@ -1,0 +1,745 @@
+{
+  "note": "MU's own wave files, and the rule that decides which one is played when. The files are copied out of MuMain unchanged - a .wav is not art that can be upscaled, so there is nothing for the pipeline to do to one and nothing to argue about in a profile. What needed working out is the second half: a sound is a fact about an event, and the events are the client's.",
+  "source": "MuMain/src/bin/Data/Sound for the files. MuMain/src/source/Engine/Object/ZzzOpenData.cpp for which file each SOUND_ constant loads and which sounds a monster model carries; ZzzCharacter.cpp for when each is played.",
+  "how_the_client_picks": [
+    "A monster does not name its sounds. It carries five slots - SetMonsterSound(Type, s1..s5) in ZzzOpenData - and the client indexes them by what is happening: Sounds[0] or Sounds[1] at random while it stands and moves, Sounds[2 + rand()%2] when it swings and again when it flinches, Sounds[4] when it dies. Several models fill every slot with one file, so the shape is a table with repeats in it rather than five separate recordings.",
+    "The plays all happen on the same instant: `if (c->Object.AnimationFrame == 0.f)`. The sound is fired on the first key of the action, not when the server resolves the hit, which is why a missed swing is still audible.",
+    "A player is the other branch of the same if. He swings eSwingWeapon1 or 2 at random with a weapon in hand, eSwingLightSword for a Light Saber or a Spear, and a bow or crossbow has its own; he screams pMaleScream1 to 3 when he flinches and pMaleDie when he goes down. Those are the male lines. A female character - the elf - takes the other branch of IsFemale: pFemaleScream1 or 2 when she flinches and pFemaleScream2 when she goes down (player_shock_female, player_die_female). The Dark Lord's lines are the same rule with different files and are not built here.",
+    "The hit is separate from the swing and belongs to the attacker: eMeleeHit1 to 4 at random, played where the damage lands. A swing that misses plays the swing and not the hit, which is the whole reason the two are different events."
+  ],
+  "events": {
+    "bird_1": {
+      "files": [
+        "abird1.wav"
+      ],
+      "from": "SOUND_BIRD01, Data\\Sound\\aBird1.wav, loaded with one voice and with 3D sound enabled - one of only a handful the client asks to be placed. GOBoid.cpp plays it as PlayBuffer(SOUND_BIRD01, o) at the bird, on rand_fps_check(512), while the bird is within 600 units of the hero.",
+      "note": "Its own event rather than one of a pair, because the client rolls the two birds separately and both can sound in the same frame: `if (rand_fps_check(512)) PlayBuffer(SOUND_BIRD01, o); if (rand_fps_check(512)) PlayBuffer(SOUND_BIRD02, o);`. Folding them into one event with a random pick would halve how often anything is heard and make the two mutually exclusive, which they are not."
+    },
+    "bird_2": {
+      "files": [
+        "abird2.wav"
+      ],
+      "from": "SOUND_BIRD02, Data\\Sound\\aBird2.wav. The second of GOBoid's two independent rolls - see bird_1.",
+      "note": "Half a second where aBird1 is a second and a half, and the shorter of the two calls."
+    },
+    "budgedragon_attack": {
+      "files": [
+        "mBudgeAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2], and both of those slots are 11 - so the pair the client picks between is the same file twice."
+    },
+    "budgedragon_die": {
+      "files": [
+        "mBudgeDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_BUDGE_DRAGON."
+    },
+    "budgedragon_move": {
+      "files": [
+        "mBudge1.wav",
+        "mBudgeAttack1.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_BUDGE_DRAGON, which is slots 0 and 1 - so mBudge1 and mBudgeAttack1, a genuine pair rather than the Spider's one file four times.",
+      "note": "The wandering noise, on rand_fps_check(16) rather than on an action's first key."
+    },
+    "budgedragon_shock": {
+      "files": [
+        "mBudgeAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, as it does for every monster."
+    },
+    "bullfighter_attack": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_BULL_FIGHTER: SetMonsterSound gives slots 2 and 3 SOUND_MONSTER_BULLATTACK1 and BULLATTACK2, a genuine pair."
+    },
+    "bullfighter_die": {
+      "files": [
+        "mBullDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_BULL_FIGHTER, SOUND_MONSTER_BULLDIE - Data\\Sound\\mBullDie.wav."
+    },
+    "bullfighter_move": {
+      "files": [
+        "mBull1.wav",
+        "mBull2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_BULL_FIGHTER, slots 0 and 1 - mBull1 and mBull2, two different lows.",
+      "note": "The wandering noise, on rand_fps_check(16) rather than on an action's first key. The Elite Bull Fighter shares the model and the slots, so when it arrives it says the same things."
+    },
+    "bullfighter_shock": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, as it does for every monster."
+    },
+    "elitebullfighter_attack": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "The Bull Fighter's slots 2 and 3, because the Elite has none of its own. A monster's five sounds are set by SetMonsterSound against the *model* - MONSTER_MODEL_BULL_FIGHTER - and both variants open that model, so the Elite is loud in exactly the same voice as the animal it commands.",
+      "note": "The four elitebullfighter_ events are the four bullfighter_ events file for file, and they are written out rather than aliased for the reason every event here is written out: what plays when is looked up by the breed's own name, and a table where one name silently means another is a table nobody can read against the client."
+    },
+    "elitebullfighter_die": {
+      "files": [
+        "mBullDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_BULL_FIGHTER, shared with the plain bull. See elitebullfighter_attack."
+    },
+    "elitebullfighter_move": {
+      "files": [
+        "mBull1.wav",
+        "mBull2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_BULL_FIGHTER, shared with the plain bull. See elitebullfighter_attack, and bullfighter_move, whose note said this would be so before the Elite was built."
+    },
+    "elitebullfighter_shock": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again, the client's own reuse of the attack pair for a flinch."
+    },
+    "hound_attack": {
+      "files": [
+        "mHoundAttack1.wav",
+        "mHoundAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_HOUND. Its SetMonsterSound call is (5, 6, 7, 8, 9) rather than the Bull Fighter's (0, 1, 2, 3, 4) - the numbers are offsets from SOUND_MONSTER_BULL1 at 210, so slots 2 and 3 hold 217 and 218, SOUND_MONSTER_HOUNDATTACK1 and HOUNDATTACK2. A genuine pair."
+    },
+    "hound_die": {
+      "files": [
+        "mHoundDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_HOUND, SOUND_MONSTER_HOUNDDIE - Data\\\\Sound\\\\mHoundDie.wav."
+    },
+    "hound_move": {
+      "files": [
+        "mHound1.wav",
+        "mHound2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_HOUND, slots 0 and 1 - mHound1 and mHound2, two different growls.",
+      "note": "The wandering noise, on rand_fps_check(16) rather than on an action's first key. The Hell Hound shares the model and the slots, so when it arrives it says the same things."
+    },
+    "hound_shock": {
+      "files": [
+        "mHoundAttack1.wav",
+        "mHoundAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, as it does for every monster."
+    },
+    "giant_move": {
+      "files": [
+        "mGiant1.wav",
+        "mGiant2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_GIANT, slots 0 and 1 - mGiant1 and mGiant2. Its SetMonsterSound call is (25, 26, 27, 28, 29): offsets from SOUND_MONSTER_BULL1 at 210, so 235 to 239, which are the five files the same case had just loaded.",
+      "note": "The wandering noise, on rand_fps_check(16) rather than on an action's first key, as every monster's is."
+    },
+    "giant_attack": {
+      "files": [
+        "mGiantAttack1.wav",
+        "mGiantAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_GIANT, slots 2 and 3 - SOUND_MONSTER_GIANTATTACK1 and GIANTATTACK2, a genuine pair."
+    },
+    "giant_shock": {
+      "files": [
+        "mGiantAttack1.wav",
+        "mGiantAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, as it does for every monster."
+    },
+    "giant_die": {
+      "files": [
+        "mGiantDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_GIANT, SOUND_MONSTER_GIANTDIE - Data\\\\Sound\\\\mGiantDie.wav."
+    },
+    "skeletonwarrior_move": {
+      "files": [
+        "mBone1.wav"
+      ],
+      "from": "Not a monster slot. The Skeleton Warrior is MODEL_PLAYER with SubType MODEL_SKELETON1, and MODEL_PLAYER's Sounds[] are empty; the walking branch of ZzzCharacter tests the sub-type instead - `if (SubType >= MODEL_SKELETON1 && SubType <= MODEL_SKELETON3) PlayBuffer(SOUND_BONE1, o)` - on the same rand_fps_check(16) roll a monster's wandering noise uses. SOUND_BONE1 is Data\\\\Sound\\\\mBone1.wav, loaded with the effect sounds and not with any monster's.",
+      "note": "One file where every monster has a pair: the client has one rattle and plays it. And mBone1.wav is one byte longer than its own RIFF header says - 13,945 on disk against a declared 13,944 - so Godot warns 'File size is larger than the expected size' every time it is read and then reads it correctly. It is MU's file as MU shipped it and it stays that way: a .wav is copied out of MuMain unchanged, and trimming a pad byte to quiet a warning would make this the one sound in the tree that is not what the client played."
+    },
+    "skeletonwarrior_attack": {
+      "files": [
+        "eswingweapon1.wav",
+        "eswingweapon2.wav"
+      ],
+      "from": "The attack's first key, same sub-type test: `PlayBuffer(SOUND_BRANDISH_SWORD01 + rand() % 2, o)`. SOUND_BRANDISH_SWORD01 and 02 are eSwingWeapon1.wav and eSwingWeapon2.wav - the pair a player's own sword swings with (see player_swing), because he swings a player's sword with a player's arm.",
+      "note": "The same two files as player_swing, written out rather than aliased for the reason every event here is: what plays when is looked up by the breed's own name."
+    },
+    "skeletonwarrior_shock": {
+      "files": [
+        "mBone1.wav"
+      ],
+      "from": "The shock's first key, same test: SOUND_BONE1 again - a skeleton hit rattles the same as a skeleton walking."
+    },
+    "skeletonwarrior_die": {
+      "files": [
+        "mBone2.wav"
+      ],
+      "from": "CharacterDie's skeleton branch, after the eleven bones are thrown: `PlayBuffer(SOUND_BONE2, o)` - Data\\\\Sound\\\\mBone2.wav, the pile landing. Played with the burst, not with a death clip, because there is none; see SkeletonWarrior.json's death_from."
+    },
+    "lich_move": {
+      "files": [
+        "mWizard1.wav",
+        "mWizard2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_LICH, slots 0 and 1 - mWizard1 and mWizard2. Its SetMonsterSound call is (20, 21, 22, 23, 24): offsets from SOUND_MONSTER_BULL1 at 210, so 230 to 234, which are the five files the same case had just loaded.",
+      "note": "The wandering noise, on rand_fps_check(16) rather than on an action's first key, as every monster's is. The files are named for the wizard because the client calls this model the wizard everywhere below the monster table; the event is named for the breed, which is what Crowd.Named makes of 'Lich'."
+    },
+    "lich_attack": {
+      "files": [
+        "mWizardAttack1.wav",
+        "mWizardAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_LICH, slots 2 and 3 - SOUND_MONSTER_WIZARDATTACK1 and WIZARDATTACK2, a genuine pair.",
+      "note": "His swing is a cast and this is still the sound it makes. ReceiveMagic sends a monster caster through SetPlayerAttack, which is the same function an ordinary monster swing goes through and which plays this pair on the clip's first key. What the spell adds is two more sounds of its own - see meteorite and explosion - and it takes none away."
+    },
+    "lich_shock": {
+      "files": [
+        "mWizardAttack1.wav",
+        "mWizardAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, as it does for every monster."
+    },
+    "lich_die": {
+      "files": [
+        "mWizardDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_LICH, SOUND_MONSTER_WIZARDDIE - Data\\\\Sound\\\\mWizardDie.wav."
+    },
+    "meteorite": {
+      "files": [
+        "eMeteorite.wav"
+      ],
+      "from": "SOUND_METEORITE01, which ZzzOpenData loads from Data\\\\Sound\\\\eMeteorite.wav with two voices. Played by the skill itself, on the same line that creates the falling rock: `case AT_SKILL_METEO: CreateEffect(MODEL_FIRE, ...); PlayBuffer(SOUND_METEORITE01); break;`.",
+      "note": "Played unplaced - PlayBuffer with no object - so it does not fall off with distance, which is what the client does for it and is the same choice it makes for a level-up. It is the throw and not the landing, so it leads the strike by the length of the fall."
+    },
+    "explosion": {
+      "files": [
+        "eExplosion.wav"
+      ],
+      "from": "SOUND_EXPLOTION01, Data\\\\Sound\\\\eExplosion.wav. Nothing on the meteor's path asks for it: CreateParticle's BITMAP_EXPLOTION arm plays it at the particle's birth, so creating the blast is what makes the noise.",
+      "note": "Easy to miss reading the skill alone, which is two lines and mentions one sound. This is the second, and it arrives about a third of a second after it where the rock lands."
+    },
+    "item_drop": {
+      "files": [
+        "pdropitem.wav"
+      ],
+      "from": "SOUND_DROP_ITEM01, which ZzzOpenData loads from Data\\Sound\\pDropItem.wav. CreateItemDrop plays it with the object - PlayBuffer(SOUND_DROP_ITEM01, &ip->Object) - so it is placed where the thing landed and falls off with distance.",
+      "gain_db": 8.0,
+      "note": "Mixed louder than the default, and the reason is in the files rather than in taste. The two drop sounds are not comparable as they ship: pDropMoney.wav is stereo, 44 kHz and peaks at 0.93, while this one is mono, 22 kHz and peaks at 0.44 - half the amplitude before anything is done to it. The original then plays money unplaced at full volume and the item positionally, which puts the item quieter again by a wide margin. Played straight, a sword landing beside you is inaudible while a coin heap is not, and the fault reads as the drop having made no sound at all."
+    },
+    "item_get": {
+      "files": [
+        "pgetitem.wav"
+      ],
+      "from": "SOUND_GET_ITEM01, which ZzzOpenData loads from Data\\\\Sound\\\\pGetItem.wav with one voice. ReceiveGetItem plays it as PlayBuffer(SOUND_GET_ITEM01, &Hero->Object) once the server has confirmed the pickup - so it is the sound of the item arriving in the bag rather than of the click that asked for it.",
+      "gain_db": 10.0,
+      "note": "Placed on the hero, which is also where the listener is, so the position never attenuates it and the only question is the file's own level. It is the quietest of the three item sounds as it ships - mono, 22 kHz, peaking at 0.34 where pDropItem peaks at 0.44 and pLevelUp at 1.00 - so it is lifted by a little more than the drop's own correction to sit with them. The same argument the item_drop entry makes, and the same measurement.",
+      "jewel_note": "The client picks between three sounds by item type: SOUND_JEWEL01 for the jewels, SOUND_JEWEL02 for a gemstone and this for everything else. The first of those is jewel_get below, added with the three jewel rows. SOUND_JEWEL02 is Data/Sound/Jewel_Sound.wav and stays out: a gemstone is a Season 6 row and there is nothing here for it to play on.",
+      "equip_note": "The same file is also the equip sound, because MU has no other one. ReceiveEquipmentItem - opcode 0x24, the reply to every successful item move and the one an equip goes through - ends its success branch with a bare PlayBuffer(SOUND_GET_ITEM01), and its failure branch calls BackupPickedItem and plays nothing. There is no SOUND_EQUIP_* in DSPlaySound.h at all; SOUND_BRANDISH_SWORD01..04 sound like candidates and are the swing sounds, already carried here as player_swing. So putting a sword in the hand and picking one off the floor make the same noise, which is worth writing down because it reads as an oversight and is not."
+    },
+    "jewel_get": {
+      "files": [
+        "egem.wav"
+      ],
+      "from": "SOUND_JEWEL01, which ZzzOpenData.cpp line 4779 loads from Data\\\\Sound\\\\eGem.wav with one voice. ReceiveGetItem picks it instead of SOUND_GET_ITEM01 when the thing picked up is a jewel, and plays it the same way - on the hero, once the server has confirmed the pickup.",
+      "gain_db": 6.0,
+      "gain_note": "The same argument as item_get's lift, with the measurement done: eGem.wav is mono, 22 kHz and peaks at 0.56 where pGetItem peaks at 0.34, so it needs 4.3 dB less than item_get's ten to sit at the same level. Six, rounded. The two are alternatives in one branch of one function, so a jewel arriving in the bag and a sword arriving in the bag have to sit at the same level or the rarer one reads as the quieter one.",
+      "note": "Three plays, one file. ReceiveGetItem for a jewel arriving in the bag; CreateItemDrop for a jewel landing on the ground (ZzzObject.cpp:6046, where every other item plays SOUND_DROP_ITEM01); and ReceiveModifyItemExtended for the reply to a jewel put on an item (WSclient.cpp:6322) - whether the level went up or down, because the client has no failure sound and reads the outcome off the bag. Crowd.Took, Drops and Crowd.Refined are the three callers, and each falls through to item_get or item_drop where this name is not in the index, which is what an absent file should sound like."
+    },
+    "melee_hit": {
+      "files": [
+        "emeleehit1.wav",
+        "emeleehit2.wav",
+        "emeleehit3.wav",
+        "emeleehit4.wav"
+      ],
+      "from": "SOUND_ATTACK_MELEE_HIT1 + rand()%4, played on the attacker when a melee hit lands.",
+      "note": "Four of the five loaded. The fifth, eMeleeHit5, is loaded by the client and not reachable from this line - the bow branch takes +5 and lands past it - so it is left out rather than guessed at."
+    },
+    "money_drop": {
+      "files": [
+        "pdropmoney.wav"
+      ],
+      "from": "SOUND_DROP_GOLD01, from Data\\Sound\\pDropMoney.wav.",
+      "note": "The original's own split, and easy to miss because the two calls sit next to each other: CreateMoneyDrop passes no object at all - PlayBuffer(SOUND_DROP_GOLD01) - where CreateItemDrop passes one. Coins hitting the ground are a reward and are mixed like one; a sword landing is a thing that happened over there. Played placed here all the same, because the Monsters tab is a bench and everything on it is somewhere you are looking."
+    },
+    "npc_blacksmith": {
+      "files": [
+        "nblacksmith.wav"
+      ],
+      "from": "SOUND_NPC_BLACK_SMITH, Data\\Sound\\nBlackSmith.wav. ZzzCharacter.cpp's MODEL_SMITH case plays it on the hammer itself rather than on a timer: `if (o->CurrentAction == 0 && o->AnimationFrame >= 5.f && o->AnimationFrame <= 10.f) PlayBuffer(SOUND_NPC_BLACK_SMITH)`.",
+      "note": "Unplaced in the client - PlayBuffer with no object - which is true of all three NPC sounds and is worth writing down because they are plainly coming from somebody standing somewhere. Placed at the NPC here, which is what a listener standing in the town expects and what the 3D-enabled bird sounds already do."
+    },
+    "npc_harp": {
+      "files": [
+        "nharp.wav"
+      ],
+      "from": "SOUND_NPC_HARP, Data\\Sound\\nHarp.wav. ZzzCharacter.cpp's MODEL_ELF_WIZARD case, on rand_fps_check(256).",
+      "note": "Four and a half seconds of harp, so the roll is over a sound much longer than the gap it is rolled in; the client lets it play out and does not re-trigger while it sounds."
+    },
+    "npc_mix": {
+      "files": [
+        "nmix.wav"
+      ],
+      "from": "SOUND_NPC_MIX, Data\\Sound\\nMix.wav. ZzzCharacter.cpp's MODEL_MIX_NPC case, on rand_fps_check(64) - four times as often as the harp.",
+      "note": "The Chaos Goblin's mixing noise. Carried because it is the third of the client's three NPC sounds and the rule is worth having whole; nothing in Lorencia's placement list is a MIX_NPC today, so it is a sound with no NPC to make it yet."
+    },
+    "player_bow": {
+      "files": [
+        "ebow.wav"
+      ],
+      "from": "SOUND_BOW01, which ZzzOpenData loads from Data\\Sound\\eBow.wav. Played when a character whose left hand holds a bow starts a swing.",
+      "note": "The hand matters and is not a detail. GetEquipedBowType tests IsBowModel against Weapon[1] and IsCrossbowModel against Weapon[0], which is the same split OpenMU's item rows carry - the bows are given slot 1 and the crossbows slot 0."
+    },
+    "player_crossbow": {
+      "files": [
+        "ecrossbow.wav"
+      ],
+      "from": "SOUND_CROSSBOW01, from Data\\Sound\\eCrossbow.wav. The right-hand half of the same test."
+    },
+    "player_die": {
+      "files": [
+        "pmaledie.wav"
+      ],
+      "from": "SOUND_HUMAN_SCREAM04, which loads pMaleDie.wav and is the male death."
+    },
+    "player_die_female": {
+      "files": [
+        "pfemalescream2.wav"
+      ],
+      "from": "SOUND_FEMALE_SCREAM02, which loads pFemaleScream2.wav. ZzzCharacter.cpp plays it on the death's first key when gCharacterManager.IsFemale(c->Class) - the elf, in this version.",
+      "note": "The same file as the second of her flinch screams; MU has no pFemaleDie. Stereo 44 kHz peaking at 0.51 against pMaleDie's 0.81, so lifted by the four decibels between them and she dies as loudly as he does.",
+      "gain_db": 4.0
+    },
+    "player_drink": {
+      "files": [
+        "pdrink.wav"
+      ],
+      "from": "SOUND_DRINK01, which ZzzOpenData loads from Data\\Sound\\pDrink.wav with one voice. CNewUIInventoryActionController::TryConsumeItem plays it on the right-click that sends the use request, for everything in the potion range that is not the apple - the healing and mana potions, the ale.",
+      "note": "Played by the client on the request and not on the reply, unplaced like the level-up, and before the server has said anything about the health. There is no drinking action in the PLAYER_ table at all; the body carries on with what it was doing and the number comes back. Stereo 44 kHz peaking at 0.60, so a little under the apple and lifted to sit with it.",
+      "gain_db": 3.0
+    },
+    "player_eat_apple": {
+      "files": [
+        "peatapple.wav"
+      ],
+      "from": "SOUND_EAT_APPLE01, which ZzzOpenData loads from Data\\Sound\\pEatApple.wav with one voice. The same TryConsumeItem branch as the drink, on `isApple` - ITEM_APPLE is the one thing in the range with its own sound.",
+      "note": "Stereo 44 kHz peaking at 0.87, which is nearly the level-up's level and needs no lift. The hotkey path - Q, in NewUIMainFrameWindow - sends the same request and plays nothing, so a person who eats from the hotbar eats silently in the original; the click is the one that is heard, and it is the one followed here."
+    },
+    "player_level_up": {
+      "files": [
+        "plevelup.wav"
+      ],
+      "from": "SOUND_LEVEL_UP, which ZzzOpenData loads from Data\\Sound\\pLevelUp.wav. WSclient's ReceiveLevelUp plays it with the flare effect when the level-up packet arrives.",
+      "note": "The only sound in this family the client plays with no object: `PlayBuffer(SOUND_LEVEL_UP)` and not `PlayBuffer(..., o)`, so it is not placed in the world and does not fall off with distance. It is a message to the person playing rather than a noise in the clearing, and it is yours whether or not you are looking at your own character.",
+      "voices": "Loaded with one channel rather than the two everything else in this family gets - LoadWaveFile(SOUND_LEVEL_UP, ..., 1). Two level-ups in the same instant are one sound. Sounds.cs uses two for everything today; the difference is inaudible here because a character cannot level twice in one frame from one kill without the second being drowned by the first anyway."
+    },
+    "player_shock": {
+      "files": [
+        "pmalescream1.wav",
+        "pmalescream2.wav",
+        "pmalescream3.wav"
+      ],
+      "from": "SOUND_HUMAN_SCREAM01 + rand()%3, on a male character's flinch."
+    },
+    "player_shock_female": {
+      "files": [
+        "pfemalescream1.wav",
+        "pfemalescream2.wav"
+      ],
+      "from": "SOUND_FEMALE_SCREAM01 + rand()%2, the else branch of the same IsFemale test in ZzzCharacter.cpp, on a female character's flinch.",
+      "note": "Not remixed, because one gain cannot fix what is wrong: pFemaleScream1 peaks at 0.16 and pFemaleScream2 at 0.51, ten decibels apart, and a lift that brought the first up to the male screams' 0.8-0.9 would clip the second. Played as MU ships them."
+    },
+    "player_skill_defense": {
+      "files": [
+        "sKnightDefense.wav"
+      ],
+      "from": "SOUND_SKILL_DEFENSE, which ZzzOpenData loads from Data\\Sound\\sKnightDefense.wav. WSclient answers AT_SKILL_BLOCKING - 0.75's Defense, skill 18 - with SetAction(o, PLAYER_DEFENSE1) and this, and with nothing else whatever: no registered buff, no joints, no particle. The sound and the clip are the entire effect the original gives it. See docs/skills.md.",
+      "note": "Two and a fifth seconds where the four attack waves are half a second, and at half their sample rate. It is the longest sound the knight has, and it outlasts the four-second boon it announces - which is the right way round for a shield going up."
+    },
+    "player_skill_sword1": {
+      "files": [
+        "sKnightSkill1.wav"
+      ],
+      "from": "SOUND_SKILL_SWORD1, Data\\Sound\\sKnightSkill1.wav. WSclient plays it for AT_SKILL_FALLING_SLASH, skill 19."
+    },
+    "player_skill_sword2": {
+      "files": [
+        "sKnightSkill2.wav"
+      ],
+      "from": "SOUND_SKILL_SWORD2, Data\\Sound\\sKnightSkill2.wav. WSclient plays it for AT_SKILL_LUNGE, skill 20."
+    },
+    "player_skill_sword3": {
+      "files": [
+        "sKnightSkill3.wav"
+      ],
+      "from": "SOUND_SKILL_SWORD3, Data\\Sound\\sKnightSkill3.wav. WSclient plays it for AT_SKILL_UPPERCUT, skill 21."
+    },
+    "player_skill_sword4": {
+      "files": [
+        "sKnightSkill4.wav"
+      ],
+      "from": "SOUND_SKILL_SWORD4, Data\\Sound\\sKnightSkill4.wav. WSclient plays it for AT_SKILL_CYCLONE, skill 22, and again for AT_SKILL_SLASH, skill 23.",
+      "note": "Four waves for five attacks, and the pair sharing one is Cyclone and Slash. MU's own reuse and not a transcription slip - both cases end PlayBuffer(SOUND_SKILL_SWORD4) - so Slash is the one knight attack with no voice of its own."
+    },
+    "spell_magic": {
+      "files": [
+        "sMagic.wav"
+      ],
+      "from": "SOUND_MAGIC, Data\\Sound\\sMagic.wav. ZzzCharacter plays it for AT_SKILL_ENERGYBALL - 0.75's Energy Ball, skill 17 - beside the CreateEffect(BITMAP_ENERGY) that throws the bolt, in the damage arm of MoveCharacter. Power Wave plays the same wave from the AT_SKILL_POWERWAVE case a few lines below, which is the wizard's version of Cyclone and Slash sharing SOUND_SKILL_SWORD4.",
+      "note": "Named for the constant rather than for the spell, because two spells share it and neither owns it. Loaded with Enable3DSound and a two-channel budget, unlike the knight's four, which is the client saying it expects to hear more than one at once."
+    },
+    "spell_thunder": {
+      "files": [
+        "eThunder.wav"
+      ],
+      "from": "SOUND_THUNDER01, which ZzzOpenData loads from Data\\Sound\\eThunder.wav with one voice. WSclient plays it for AT_SKILL_LIGHTNING - 0.75's Lightning, skill 3 - in ReceiveMagic, on the cast itself, rather than in the damage arm beside the effect the way sMagic and eMeteorite are played.",
+      "note": "The one wizard wave whose beat is the cast and not the landing, which is why it is heard before the bolt is drawn rather than with it. Meteorite shares eMeteorite.wav with Fire Ball and Poison borrows the heartbeat; this one is Lightning's alone."
+    },
+    "spell_ice": {
+      "files": [
+        "sIce.wav"
+      ],
+      "from": "SOUND_ICE, which ZzzOpenData loads from Data\\\\Sound\\\\sIce.wav with two voices. ZzzCharacter plays it for AT_SKILL_ICE in the damage arm of MoveCharacter, on the line under the five MODEL_ICE_SMALL shards - so the wave, the block and the shards are one event, which is sMagic's and eMeteorite's beat rather than eThunder's.",
+      "note": "Ice's alone. Of the wizard's five built spells the sharing now runs: Energy Ball and Power Wave on sMagic, Fire Ball and Meteorite on eMeteorite, and Lightning and this one each with a wave of their own."
+    },
+    "spell_heart": {
+      "files": [
+        "pHeartBeat.wav"
+      ],
+      "from": "SOUND_HEART, which ZzzOpenData loads from Data\\\\Sound\\\\pHeartBeat.wav with one voice. ZzzCharacter plays it for AT_SKILL_POISON in the damage arm of MoveCharacter, on the line under the debuff register - so the wave, the cloud and the ten puffs are one event, which is sMagic's and eMeteorite's beat rather than eThunder's.",
+      "note": "Borrowed rather than Poison's own, and it is the only wizard wave filed under the player instead of the skill: pHeartBeat.wav is what the frame plays while the hero's own life is under a fifth (NewUIMainFrameWindow.cpp:252), and Poison's arm plays that same heartbeat over the monster it lands on. So the spell that eats three percent of a body a tick sounds like a body running out. The sharing across the wizard's six built spells now runs: Energy Ball with Power Wave on sMagic, Fire Ball with Meteorite on eMeteorite, and Lightning, Ice and this one each with a wave of their own - this one shared with the interface instead."
+    },
+    "spell_flame": {
+      "files": [
+        "sFlame.wav"
+      ],
+      "from": "SOUND_FLAME, which ZzzOpenData loads from Data\\\\Sound\\\\sFlame.wav with two voices. ZzzCharacter plays it in the *release* arm of MoveCharacter - the arm that fires when c->AttackTime reaches the animation's own release frame - on the line under the CreateEffect that starts the fire, and guarded by `if (SceneFlag != LOG_IN_SCENE)`.",
+      "note": "The first wizard wave whose beat is neither the cast nor a landing, because an area spell has no target to land on: the fire is made at the aimed tile when his hand comes down, and the wave goes with the fire. Of the wizard's seven built spells the sharing now runs: Energy Ball with Power Wave on sMagic, Fire Ball with Meteorite on eMeteorite, and Lightning, Ice, Poison's borrowed heartbeat and this one each with a wave of their own."
+    },
+    "spell_storm": {
+      "files": [
+        "sTornado.wav"
+      ],
+      "from": "SOUND_STORM, which ZzzOpenData loads from Data\\\\Sound\\\\sTornado.wav with two voices (ZzzOpenData.cpp:4791). ZzzCharacter plays it for AT_SKILL_STORM in the *release* arm of MoveCharacter, on the line under the CreateEffect that stands the storm up (ZzzCharacter.cpp:4497) - Flame's beat, without Flame's scene guard.",
+      "note": "Four and a half seconds of wind for an effect that walks for two and a third, so the storm is gone well before its wave is. Twister's own, and the sharing across the wizard's eight built spells is unchanged by it: Energy Ball with Power Wave on sMagic, Fire Ball with Meteorite on eMeteorite, and Lightning, Ice, Poison's borrowed heartbeat, Flame and this one each with a wave of their own."
+    },
+    "player_step_grass": {
+      "files": [
+        "pwalk_grass.wav"
+      ],
+      "from": "SOUND_HUMAN_WALK_GRASS, which ZzzOpenData loads from Data\\Sound\\pWalk(Grass).wav with two voices. PlayWalkSound picks it for `WorldActive == WD_0LORENCIA && HeroTile == 0` - the map's own grass texture - and for Noria on the same test.",
+      "note": "Two steps a walk cycle, at AnimationFrame 1.5 and 4.5, each latched by its own c->Foot[n] so a mark several frames wide sounds once. The hero's alone: the whole block is guarded by `o->Type == MODEL_PLAYER && c == Hero`, so nobody else in the world has audible feet - which is worth keeping rather than generalising, since a town with five guards and two merchants stepping would crunch. Unplaced in the client and placed on him here, which is the same thing with the listener standing where he is."
+    },
+    "player_step_soil": {
+      "files": [
+        "pwalk_soil.wav"
+      ],
+      "from": "SOUND_HUMAN_WALK_GROUND, Data\\Sound\\pWalk(Soil).wav, two voices. PlayWalkSound's final else - everything that is not grass, snow or water, which on Lorencia is every tile but 0.",
+      "note": "The other two arms of the client's branch are maps this project does not have: pWalk(Snow).wav for Devias and the ice maps, and pSwim.wav for Atlans and Hellas. Neither is carried, because a sound with no map to play it on is a file waiting for a map."
+    },
+    "player_swing": {
+      "files": [
+        "eswingweapon1.wav",
+        "eswingweapon2.wav"
+      ],
+      "from": "SOUND_BRANDISH_SWORD01 + rand()%2, played when a player with any weapon in hand starts a swing.",
+      "note": "Chosen at random per swing, which is what stops a fight from ticking."
+    },
+    "player_swing_long": {
+      "files": [
+        "eswinglightsword.wav"
+      ],
+      "from": "SOUND_BRANDISH_SWORD03, which the client plays instead for MODEL_LIGHT_SABER and MODEL_SPEAR.",
+      "note": "A separate event rather than a third file in player_swing, because the client is choosing on the weapon rather than at random.",
+      "which_two": "Exactly two items in the game, and neither of them is what the constant's name suggests. MODEL_SPEAR is the spear group's *base* - the Light Spear at group 3 number 0 - and the item called Spear is MODEL__SPEAR with two underscores, one along at (3,1). So the long swing belongs to the Light Saber (0,10) and the Light Spear (3,0), and the Dragon Lance, the Berdysh and the Great Scythe all take the ordinary player_swing. An earlier note here read MODEL_SPEAR as the whole group and said the opposite; the underscore is the whole of the difference and it is worth reading twice."
+    },
+    "spider_attack": {
+      "files": [
+        "mspider1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] of MONSTER_MODEL_SPIDER."
+    },
+    "spider_die": {
+      "files": [
+        "mspider1.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_SPIDER."
+    },
+    "spider_move": {
+      "files": [
+        "mspider1.wav"
+      ],
+      "from": "Sounds[0] and Sounds[1] of MONSTER_MODEL_SPIDER, which are both SOUND_MONSTER_SPIDER1.",
+      "note": "The Spider is the extreme case of the repeated table: SetMonsterSound(..., 13, 13, 13, 13, 13) gives every slot the one file, so it makes the same noise standing, swinging, flinching and dying. Written out as four events all the same file rather than collapsed into one, because the events are what the code fires and the sameness is a fact about this animal that another monster will not share."
+    },
+    "spider_shock": {
+      "files": [
+        "mspider1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again - the client reuses the attack pair for the flinch."
+    },
+    "window_click": {
+      "files": [
+        "ibuttonclick.wav"
+      ],
+      "from": "SOUND_CLICK01, which ZzzOpenData loads from Data\\Sound\\iButtonClick.wav. CNewUIMyInventory plays it on both the open and the close - the I key, the V key and the exit button all land on the same PlayBuffer - so the window has one noise and makes it twice.",
+      "note": "Unplaced in the client, as every interface sound is; played on the character here, where the listener stands, which is the same thing."
+    },
+    "window_refused": {
+      "files": [
+        "ibuttonerror.wav"
+      ],
+      "from": "iButtonError.wav, which the interface plays for a request the server turned down - a move the bag would not take. There is no SOUND_ constant for it in the 0.75 client; it is loaded by name where it is used.",
+      "note": "The refusal's only noise. A drag that cannot land snaps back to its cell and this plays; the cell was painted red the whole way there, so it is a confirmation rather than the first the player hears of it."
+    },
+    "world_wind": {
+      "files": [
+        "awind.wav"
+      ],
+      "from": "SOUND_WIND01, which ZzzOpenData loads from Data\\Sound\\aWind.wav with one voice. PlayWorldAmbientSounds in SceneManager.cpp plays it for WD_0LORENCIA as PlayBuffer(SOUND_WIND01, NULL, true) - no object, so unplaced, and true for looping - and stops it with StopBuffer(SOUND_WIND01, true) while HeroTile == 4.",
+      "loop": true,
+      "gain_db": -8.0,
+      "gain_note": "Cut, where every other correction here is a lift, and for the opposite half of the same argument. The file is not loud - stereo 22 kHz peaking at 0.187, an RMS of -27 dB, well under pDropItem's -19.5 - but it is the only sound in the game that is unplaced and never stops, so it is the one thing a placed sound has to be heard over from across the square. What that sounded like was a wind that sat on top of the footsteps. Measured against the bed rather than against the peak, which is the number that matters for something you hear for an hour.",
+      "note": "The one ambient Lorencia has. Its own switch is the tile texture under the hero, which is the same blunt test the leaves already use and the roofs already fade on - see World.Indoors - so the wind stops exactly when the roof comes off and the two can never disagree. Rain is the other half of the original's branch and there is no rain here yet."
+    },
+    "world_forest": {
+      "files": [
+        "aforest.wav"
+      ],
+      "from": "SOUND_FOREST01, Data\\Sound\\aForest.wav. PlayWorldAmbientSounds in SceneManager.cpp:868 plays it for WD_3NORIA alone, and unlike the wind beside it the call carries no `true`: `PlayBuffer(SOUND_FOREST01)` is a one-shot, fired on rand_fps_check(512) - about once every 512 rendered frames, so roughly every eight seconds at sixty. StopInactiveAmbientSounds stops it on every world that is not Noria.",
+      "loop": false,
+      "gain_db": -10.0,
+      "gain_note": "Cut further than the wind, for the opposite reason to the wind's cut. The wind is a bed and has to sit under everything; this is ten and a half seconds of birdsong arriving over the top of it every eight, and at its own level it reads as a second bed rather than as something happening. Heard as an event, it wants to be quieter than the thing it is heard against is loud.",
+      "note": "Noria's own, and the whole of what makes a wood sound different from a square: the elf town plays Lorencia's wind loop *and* this, where Lorencia plays the wind alone. Two ambients rather than one, and the second occasional rather than looped."
+    },
+    "goblin_move": {
+      "files": [
+        "mGoblin1.wav",
+        "mGoblin2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_GOBLIN. SetMonsterSound(..., 72, 73, 74, 75, 76) - offsets from SOUND_MONSTER_BULL1 at 210, so 282 and 283, SOUND_MONSTER_GOBLIN1 and GOBLIN2: mGoblin1 and mGoblin2, a genuine pair.",
+      "note": "The Elite Goblin shares the model and so the slots; when it arrives it says the same things."
+    },
+    "goblin_attack": {
+      "files": [
+        "mGoblinAttack1.wav",
+        "mGoblinAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_GOBLIN, slots 74 and 75 - 284 and 285, SOUND_MONSTER_GOBLINATTACK1 and ATTACK2."
+    },
+    "goblin_shock": {
+      "files": [
+        "mGoblinAttack1.wav",
+        "mGoblinAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, as it does for every monster."
+    },
+    "goblin_die": {
+      "files": [
+        "mGoblinDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_GOBLIN, slot 76 - 286, SOUND_MONSTER_GOBLINDIE, Data\\\\Sound\\\\mGoblinDie.wav."
+    },
+    "elitegoblin_move": {
+      "files": [
+        "mGoblin1.wav",
+        "mGoblin2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_GOBLIN, shared with the plain Goblin. See elitegoblin_attack, and goblin_move, whose note said this would be so."
+    },
+    "elitegoblin_attack": {
+      "files": [
+        "mGoblinAttack1.wav",
+        "mGoblinAttack2.wav"
+      ],
+      "from": "The Goblin's slots 2 and 3, because the Elite has none of its own: SetMonsterSound runs against MONSTER_MODEL_GOBLIN and MONSTER_ELITE_GOBLIN opens that model.",
+      "note": "Written out rather than aliased, for elitebullfighter_attack's reason: the breed's own name is the lookup."
+    },
+    "elitegoblin_shock": {
+      "files": [
+        "mGoblinAttack1.wav",
+        "mGoblinAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again, the client's own reuse of the attack pair for a flinch."
+    },
+    "elitegoblin_die": {
+      "files": [
+        "mGoblinDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_GOBLIN, shared with the plain Goblin. See elitegoblin_attack."
+    },
+    "beetlemonster_move": {
+      "files": [
+        "mBeetle1.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_BEETLE_MONSTER. SetMonsterSound(..., 82, 82, 83, 83, 84) - offsets from SOUND_MONSTER_BULL1 at 210, so slots 0 and 1 are both 292, SOUND_MONSTER_BEETLE1. One recording in both slots; ZzzOpenData loads no mBeetle2."
+    },
+    "beetlemonster_attack": {
+      "files": [
+        "mBeetleAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_BEETLE_MONSTER, slots 83 and 83 - both 293, SOUND_MONSTER_BEETLEATTACK1."
+    },
+    "beetlemonster_shock": {
+      "files": [
+        "mBeetleAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch, and here the pair is one file."
+    },
+    "beetlemonster_die": {
+      "files": [
+        "mBeetleDie.wav"
+      ],
+      "from": "Sounds[4] of MONSTER_MODEL_BEETLE_MONSTER, slot 84 - 294, SOUND_MONSTER_BEETLEDIE, Data\\\\Sound\\\\mBeetleDie.wav."
+    },
+    "chainscorpion_move": {
+      "files": [
+        "mScorpion1.wav",
+        "mScorpion2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_CHAIN_SCORPION. SetMonsterSound(..., 77, 78, 79, 80, 81), offsets from SOUND_MONSTER_BULL1 at 210: 287 and 288, SOUND_MONSTER_SCORPION1 and SCORPION2."
+    },
+    "chainscorpion_attack": {
+      "files": [
+        "mScorpionAttack1.wav",
+        "mScorpionAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2], slots 79 and 80 - 289 and 290, SOUND_MONSTER_SCORPIONATTACK1 and ATTACK2."
+    },
+    "chainscorpion_shock": {
+      "files": [
+        "mScorpionAttack1.wav",
+        "mScorpionAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the attack pair reused for the flinch, as for every monster."
+    },
+    "chainscorpion_die": {
+      "files": [
+        "mScorpionDie.wav"
+      ],
+      "from": "Sounds[4], slot 81 - 291, SOUND_MONSTER_SCORPIONDIE, Data\\\\Sound\\\\mScorpionDie.wav."
+    },
+    "hunter_move": {
+      "files": [
+        "mHunter1.wav",
+        "mHunter2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_HUNTER. SetMonsterSound(..., 85, 86, 87, 88, 89) - offsets from SOUND_MONSTER_BULL1 at 210, so 295 and 296, SOUND_MONSTER_HUNTER1 and HUNTER2: a genuine pair."
+    },
+    "hunter_attack": {
+      "files": [
+        "mHunterAttack1.wav",
+        "mHunterAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_HUNTER, slots 87 and 88 - 297 and 298, SOUND_MONSTER_HUNTERATTACK1 and ATTACK2.",
+      "note": "On the swing's first key, as every monster's is. The player's crossbow waits for the release (see Crowd.Shot) because eCrossbow.wav is the string going; this is the Hunter's voice, and CreateArrow plays nothing of its own for an Arquebus."
+    },
+    "hunter_shock": {
+      "files": [
+        "mHunterAttack1.wav",
+        "mHunterAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch."
+    },
+    "hunter_die": {
+      "files": [
+        "mHunterDie.wav"
+      ],
+      "from": "Sounds[4], slot 89 - 299, SOUND_MONSTER_HUNTERDIE, Data\\\\Sound\\\\mHunterDie.wav."
+    },
+    "forestmonster_move": {
+      "files": [
+        "mWoodMon1.wav",
+        "mWoodMon2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_FOREST_MONSTER. SetMonsterSound(..., 90, 91, 92, 93, 94) - offsets from SOUND_MONSTER_BULL1 at 210, so 300 and 301, SOUND_MONSTER_WOODMON1 and WOODMON2: a genuine pair."
+    },
+    "forestmonster_attack": {
+      "files": [
+        "mWoodMonAttack1.wav",
+        "mWoodMonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_FOREST_MONSTER, slots 92 and 93 - 302 and 303, SOUND_MONSTER_WOODMONATTACK1 and ATTACK2."
+    },
+    "forestmonster_shock": {
+      "files": [
+        "mWoodMonAttack1.wav",
+        "mWoodMonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch."
+    },
+    "forestmonster_die": {
+      "files": [
+        "mWoodMonDie.wav"
+      ],
+      "from": "Sounds[4], slot 94 - 304, SOUND_MONSTER_WOODMONDIE, Data\\\\Sound\\\\mWoodMonDie.wav."
+    },
+    "agon_move": {
+      "files": [
+        "mArgon1.wav",
+        "mArgon2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_AGON. SetMonsterSound(..., 95, 96, 97, 98, 99) - offsets from SOUND_MONSTER_BULL1 at 210, so 305 and 306, SOUND_MONSTER_ARGON1 and ARGON2: a genuine pair. The files say Argon; the breed is Agon, and the event is named for the breed."
+    },
+    "agon_attack": {
+      "files": [
+        "mArgonAttack1.wav",
+        "mArgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_AGON, slots 97 and 98 - 307 and 308, SOUND_MONSTER_ARGONATTACK1 and ATTACK2."
+    },
+    "agon_shock": {
+      "files": [
+        "mArgonAttack1.wav",
+        "mArgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch."
+    },
+    "agon_die": {
+      "files": [
+        "mArgonDie.wav"
+      ],
+      "from": "Sounds[4], slot 99 - 309, SOUND_MONSTER_ARGONDIE, Data\\\\Sound\\\\mArgonDie.wav."
+    },
+    "stonegolem_move": {
+      "files": [
+        "mGolem1.wav",
+        "mGolem2.wav"
+      ],
+      "from": "Sounds[rand() % 2] of MONSTER_MODEL_STONE_GOLEM. SetMonsterSound(..., 100, 101, 102, 103, 104) - offsets from SOUND_MONSTER_BULL1 at 210, so 310 and 311, SOUND_MONSTER_GOLEM1 and GOLEM2: a genuine pair."
+    },
+    "stonegolem_attack": {
+      "files": [
+        "mGolemAttack1.wav",
+        "mGolemAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] of MONSTER_MODEL_STONE_GOLEM, slots 102 and 103 - 312 and 313, SOUND_MONSTER_GOLEMATTACK1 and ATTACK2."
+    },
+    "stonegolem_shock": {
+      "files": [
+        "mGolemAttack1.wav",
+        "mGolemAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand() % 2] again - the client reuses the attack pair for the flinch."
+    },
+    "stonegolem_die": {
+      "files": [
+        "mBone2.wav"
+      ],
+      "from": "CharacterDie's `case MODEL_STONE_GOLEM`, after the sixteen stones are thrown: `PlayBuffer(SOUND_BONE2, o)` - Data\\\\Sound\\\\mBone2.wav, the skeleton's clatter. Not Sounds[4]: that is mGolemDie, played on the death action's first key, and a golem is switched off before any action is set. The file is loaded and heard by nobody. See StoneGolem01.json's sounds_from."
+    }
+  },
+  "not_built_yet": "The idle sound a monster makes while it wanders on its own clock - PlayMonsterSound in ZzzCharacter - is the one play in this family that is not tied to an action's first key, and it is left out until there is a monster whose Sounds[0] is worth hearing. On the Spider it would be mspider1.wav a fourth time."
+}

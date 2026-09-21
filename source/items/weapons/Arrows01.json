@@ -1,0 +1,139 @@
+{
+  "item": "Arrows01",
+  "mu_name": "Bolt",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_BOLT, L\"Data\\\\Item\\\\\", L\"Arrows\", 1)`, and MODEL_BOLT = MODEL_BOW + 7. OpenMU's 0.75 table agrees, calling group 4 number 7 the Bolt.",
+  "naming_trap": "The file is called Arrows01 and the item is the Bolt. The pair is loaded by hand rather than by the group's own numbering - Arrows01.bmd is MODEL_BOLT at number 7 and Arrows02.bmd is MODEL_ARROWS at number 15 - so the file names run one behind the item names and there is nothing in either to warn you. Read as 'Arrows01 is the Arrows' this becomes the elf's quiver on a crossbowman's back, which is a difference of one model and no error message.",
+  "profile": "weapon",
+  "upended": true,
+  "upended_from": "ZzzInventory.cpp, RenderObjectScreen: `Vector(0.f, 270.f, 15.f, ObjectSelect.Angle)` for MODEL_BOLT and MODEL_ARROWS, against `Vector(180.f, 270.f, 15.f, ...)` for a sword. The same yaw and the same lean, and a half turn about X in front of them that negates the model's Z - so where a sword's +Z tip points up the cell, a quiver's +Z points down. The bolts stand at this model's -Z end (see the steel islands' `along`) and MU draws them heads-up out of the case. The client fits an item by measuring it and stands its longest axis positive-end up, which is a sword's answer; this flag is the one bit MU's table carries that the measuring cannot.",
+  "stats": {
+    "note": "Ammunition rather than a weapon: no damage, no attack speed, and a durability that is a count of the shots left rather than wear. Carried in the same shape as the weapon rows so that one reader can take either.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs.",
+    "call": "CreateAmmunition(4, 7, 1, 1, 2, false, \"Bolt\", 0, 255, 0, 0, 1)",
+    "group": 4,
+    "number": 7,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above and were being read past: the bool before the name is dropsFromMonsters and the int after it is the drop level. They are lifted out here because the loot pool is now the built catalogue gated by this number - see shared/Loot.cs. Arrows, bolts and scrolls are shop stock in the original and fall from nothing, which is what the flag says and why a spider cannot leave a quiver.",
+    "slot": 1,
+    "width": 1,
+    "height": 2,
+    "height_note": "Height is the fifth argument of the call above - CreateAmmunition takes group, number, slot, width, height - and was not carried when this row was transcribed. A quiver is one across and two down. See the height_note on the weapon rows.",
+    "is_ammunition": true,
+    "durability": 255,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_note": "Elf only, as every bow and crossbow in the group is. A Dark Knight cannot carry these on the real server, which is the same wall the crossbow itself runs into - see tests/weapons.py, which prints the shortfall rather than hiding it."
+  },
+  "why_this_one": "It is what puts the quiver on a crossbowman's back. The Light Crossbow is built and the client will not treat a crossbow as loaded without it: GetEquipedBowType_Skill wants the pair, a crossbow in the right hand and a bolt in the left, and the bolt is drawn slung rather than held. Half of an arrangement that reads as a bug until both halves are there.",
+  "hand": "left",
+  "hand_from": "OpenMU gives it slot 1 and the client agrees from the other direction: GetEquipedBowType_Skill tests `IsEquippedCrossbowItem(right) && left.Type == ITEM_BOLT`. The bow's ammunition is the mirror of it - Arrows are slot 0, the right hand, because a bow is itself a left-hand item. So the quiver always sits in the hand the weapon is not in.",
+  "sheets": {
+    "crossbow_box": "crossbow_box.png"
+  },
+  "sheet_from": "Data/Item/crossbow_box.OZJ (32x32), from MuMain. The .bmd names crossbow_box.jpg and this is the file behind it. Shared with nothing else in the group - the crossbows themselves carry crossbow01 to crossbow06.",
+  "sheet_note": "32x32 is the whole of what MU shipped for it, and for a quiver seen over a shoulder that is more than it sounds: the thing is forty-two triangles and is never closer to the camera than a man's back.",
+  "material_note": "Two materials on forty-two triangles, and the sheet splits them without argument. Cropping each island at its own mu_uv with V flipped gives (101, 80, 60) for the two twelve-triangle faces and (91, 90, 90) for the two nine-triangle pieces - a warm brown case and the flat grey of the bolts standing in it. There is no third reading to weigh.\n\nwood rather than leather_wrap for the case, because the crossbow this hangs beside calls MU's brown wood on four of its six islands and keeps leather_wrap for the one wound grip. A quiver that disagreed with the weapon it belongs to about what brown is would be wrong in the only place anybody sees them together.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 12,
+      "area": 2027.9,
+      "along": [
+        -30.2,
+        43.8
+      ],
+      "mu_uv": [
+        0.063,
+        0.005,
+        0.972,
+        0.969
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.792,
+        0.898
+      ],
+      "note": "the case, a warm brown panel - one of the two large faces the box is made of"
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 9,
+      "area": 501.7,
+      "along": [
+        -72.3,
+        -14.1
+      ],
+      "mu_uv": [
+        -0.001,
+        0.264,
+        0.223,
+        0.997
+      ],
+      "bake_uv": [
+        0.726,
+        0.005,
+        0.965,
+        0.378
+      ],
+      "note": "the bolts standing in it, a flat neutral grey against the case's brown"
+    },
+    {
+      "island": 2,
+      "material": "wood",
+      "triangles": 12,
+      "area": 2027.9,
+      "along": [
+        -26.4,
+        37.1
+      ],
+      "mu_uv": [
+        0.063,
+        0.005,
+        0.972,
+        0.969
+      ],
+      "bake_uv": [
+        0.005,
+        0.505,
+        0.868,
+        0.995
+      ],
+      "note": "the case, a warm brown panel - one of the two large faces the box is made of"
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 9,
+      "area": 501.7,
+      "along": [
+        -57.8,
+        -10.4
+      ],
+      "mu_uv": [
+        -0.001,
+        0.264,
+        0.223,
+        0.997
+      ],
+      "bake_uv": [
+        0.726,
+        0.388,
+        0.965,
+        0.761
+      ],
+      "note": "the bolts standing in it, a flat neutral grey against the case's brown"
+    }
+  ]
+}

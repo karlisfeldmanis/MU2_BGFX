@@ -1,0 +1,115 @@
+{
+  "item": "Hound01",
+  "mu_name": "Hound",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_HOUND = 1 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_HOUND), which is also 1. OpenMonsterModel loads Monster{Type + 1:D2}, so the file is Monster02.bmd. mu.db's monster_kinds agrees at number 1, level 9, 140 health, and OpenMU's Version075 Lorencia.cs names it 'Hound' at that number.\n\nThe second of the three types where the server's number and the client's model agree - the Bull Fighter at 0 and this at 1 - and the Spider is where they stop agreeing.",
+  "world": "lorencia",
+  "object_type": 1,
+  "monster": {
+    "model_index": 1,
+    "scale": 0.85
+  },
+  "monster_from": "model_index is the client's model number and scale is what CreateMonster sets on the object: `c->Object.Scale = 0.85f`, in the `if (Type == MONSTER_HOUND)` half of the shared MONSTER_HOUND / MONSTER_HELL_HOUND case of ZzzCharacter.cpp. The other half is the Hell Hound at 1.1 with a Falchion, a Plate Shield and Level = 1 for the glowing eyes; it is monster number 3 of Dungeon and is not this asset.\n\nThe .glb is 2.06 m tall at MU's own size; at 0.85 the Hound stands about 1.75 m, which is a shade taller than the champion and is what a Hound is - the first monster in the game that meets a character eye to eye.",
+  "right_hand": "Sword05",
+  "right_hand_bone": "Bone_left",
+  "right_hand_from": "ZzzCharacter.cpp, CreateMonster: `c->Weapon[0].Type = MODEL_SWORD_OF_ASSASSIN`, which is MODEL_SWORD + 4 and so Item/Sword05.bmd - already built, and the one whose blade is painted steel rather than a metal. And the bone it hangs from is in CreateCharacter's weapon switch: `case MODEL_HOUND: c->Weapon[0].LinkBone = 19; c->Weapon[1].LinkBone = 14`.\n\nBone 19 on this rig is called Bone_left and is a child of Bip01 R Hand; bone 14 is bone_right under Bip01 L Hand. The names are the wrong way round and the numbers are right, which is the Bull Fighter's finding a second time on a different animal: the sword is in the right fist, on the bone the artist called left. Two models in a row means it is the studio's habit and not a slip in one file.\n\nNothing hangs off bone 14. Weapon[1] is the Hell Hound's shield slot and the plain Hound sets no Weapon[1].Type, so the left hand is empty.",
+  "hidden_mesh": 0,
+  "hidden_mesh_from": "The same CreateMonster branch: `c->Object.HiddenMesh = 0` on the plain Hound, where the Hell Hound sets 1. Mesh 0 of Monster02.bmd is hound_head01 and mesh 1 is hound_head02, so the two variants are two heads on one body and the HiddenMesh number is which head is put away.\n\nhound_head01 is a copper-trimmed helm over a dark mail hood - the Hell Hound's - and hound_head02 is the bare head: a snarling muzzle with its teeth showing, a tusk, and the hood thrown back. So the plain Hound is the bare-headed one and the Hell Hound is the helmeted one, which is the opposite way round from the Bull Fighter, where the plain animal is the one that loses its crest. Both are the same rule read off the client rather than a guess at which looks more senior.",
+  "separate_meshes": true,
+  "separate_meshes_from": "The weld is per bone, and on this model it also has to be per mesh. Monster02's three meshes meet at the shoulders and the neck at the same points on the same bones, so the weld merged them into two pieces and then into one island each time: the helm lost 68 of its 172 triangles into the body, which broke the HiddenMesh switch, and the head lost all 160 of its into the body, which would have shaded a snout as a cuirass.\n\nDeclared here rather than made the rule for every asset, because 78 of the models already in the tree have coincident vertices across a mesh boundary and the general rule would relay out their islands and drop material assignments that have already been judged by eye. See clean_lowpoly.weld, which says the same thing from the other side and says that the general pass is still owed.",
+  "profile": "monster",
+  "rig_from": "Seven actions, the same seven as the Spider, the Budge Dragon and the Bull Fighter: Monster02.bmd carries slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - and stops. The twelve-slot layout in assets/monsters/actions.json is the layout every monster is authored against, not a promise that every model fills it.\n\n36 bones, of which four are dummies with no parent. Two matter beyond drawing: 19 and 14 are the weapon links. Bone 5 is Bip01 Head, which ZzzOpenData records as this model's BoneHead in the same block that loads its sounds.\n\nExported with --actions=0,1,2,3,4,5,6, because export-rig's default is action 0 alone.",
+  "sheets": {
+    "hound_head01": "hound_head01.png",
+    "hound_head02": "hound_head02.png",
+    "hound_lower": "hound_lower.png"
+  },
+  "sheet_from": "Three sheets for three meshes, one each, all out of Data/Monster beside the model and all .OZJ - two 64-squares for the heads and a 128-square for the body. No .OZT anywhere on this animal, so there is nothing on it with alpha.\n\nEvery copy under LEGACY is byte-identical in size to MuMain's, so there is no larger version and MuMain's is the art.\n\nThe hound_ prefix is shared with Data/Item's hound_sword1, hound_shield1 and hound_shield2, which are the Sword of Hero, the Plate Shield and the Big Round Shield and are not this model's: MU groups a set of late 0.75 art under the word rather than reserving it for the monster.",
+  "cutout_from": "Not declared, and here there is nothing to decide. `cutout` means 'derive the mask from brightness instead of from the alpha channel', and all three sheets are .OZJ with no alpha at all - fully opaque, as decode_texture reports. mu2.sh's sniff finds no real alpha channel and does not set --cutout either, so the Hound is drawn solid, which is what it is.",
+  "sheet_materials": {
+    "hound_head01": "brass",
+    "hound_head02": "fur",
+    "hound_lower": "painted_steel"
+  },
+  "sheet_materials_from": "Read off the sheets, magnified.\n\nhound_lower is the body and it is armour: a suit of dark violet-blue plate at mean (115, 111, 118) and chroma 7, with gold-brass bands at the hips and knees, polished steel pauldrons and gauntlets down the sides of the sheet, and a strip of pale blade up the middle. plate_steel, because the majority of the sheet by area is a large smooth plate surface and that is the material that says so.\n\nhound_head02 is the bare head - muzzle, teeth and a dark mane over the shoulders at chroma 10. fur, which is what the Bull Fighter's pelt takes: matte, no grain, where hair's brushed grain drew strands across the whole atlas and striped that animal. The teeth and the tusk are a few texels inside the same island and go with it; see open_question.\n\nhound_head01 is the helm, and it is the only warm sheet on the model - chroma 20 at mean (80, 63, 61), copper bands over a dark hood. brass, which is the nearest thing in the library to a struck copper. It is the mesh the plain Hound hides, so this material is declared for the Hell Hound to inherit rather than for anything this asset draws.",
+  "islands_from": "Three islands for 638 triangles, one for each of Monster02's three meshes, and that is the point rather than a coincidence: 172, 160 and 306 are the .bmd's own mesh sizes to the triangle.\n\nIsland 0 is hound_head01, the helm, and takes brass. It carries the hidden flag - see hidden_mesh_from - so the exporter gives it a part of its own that the client blanks on this variant.\n\nIsland 1 is hound_head02, the bare head and the mane, and takes fur.\n\nIsland 2 is hound_lower, the armoured body, and takes painted_steel - see sheet_materials_from for why it is not a metal.\n\nIt did not come out this way the first time, and the first way is worth recording. The weld merged 68 of the helm's triangles into the body through the shoulders, where the two meshes sit at the same points on the same bones, and the eight islands that produced could not express MU's HiddenMesh: 104 of the helm's 172 triangles could be hidden and the other 68 could not. The plain Hound was drawn wearing both heads at once and rendered as a figure in shards. The weld is now per mesh as well as per bone - see clean_lowpoly.weld - and with that the islands are MU's meshes and the switch works.",
+  "maps": 512,
+  "maps_from": "Overridden, for the Spider's reason and one size below the Bull Fighter's. settings.map_size gives 384 - three times the 128-square, which is the widest sheet - and that rule assumes the islands partition one sheet. They do not: this model wears three sheets and the bake unwraps all 638 triangles into one unique atlas, so the three have to fit side by side rather than on top of each other.\n\nThe arithmetic: 64x64 twice and 128x128 once is 24,576 texels of art, which at the capped 3x is 221k of content before packing. 384 square holds 147k and cannot; 512 holds 262k and does, at exactly 3x apiece and not a texel more.\n\nhound_head01 is counted even though the plain Hound hides it, because the exporter still gives it a part and the bake still gives it a place - and the Hell Hound will want it at full size when it arrives.",
+  "sounds_from": "Five files, and the slots are ZzzOpenData's: `case MONSTER_MODEL_HOUND` loads mHound1, mHound2, mHoundAttack1, mHoundAttack2 and mHoundDie, then calls SetMonsterSound(MODEL_MONSTER01 + Type, 5, 6, 7, 8, 9). The numbers are offsets from SOUND_MONSTER_BULL1 at 210, so 5 to 9 are 215 to 219, which is exactly the five it just loaded - the Bull Fighter's 0 to 4 are 210 to 214 the same way.\n\nSo the picks are the ordinary ones: Sounds[rand() % 2] while it moves is a genuine pair, Sounds[2 + rand() % 2] on the swing is another genuine pair, the same pair again on the flinch, and Sounds[4] when it dies. Written into assets/sounds/sounds.json as hound_move, hound_attack, hound_shock and hound_die, which is the name Crowd.Named makes of the breed.",
+  "effects_from": "None, and that is a finding rather than an omission. MODEL_HOUND appears in exactly three places in ZzzCharacter.cpp - the weapon link switch, the OpenMonsterModel call and the CreateCharacter call - and in none of the per-frame effect switches that give the Bull Fighter its snort and the Budge Dragon its fire. It throws nothing, breathes nothing and raises no dust.\n\nThe glowing eyes are close enough to be worth ruling out by name: RenderEye is gated on c->Level == 1, and the plain Hound never sets Level. The Hell Hound does, in the branch beside this one.",
+  "open_question": "The teeth and the tusk on hound_head02 are a handful of texels inside the mane's island and cannot be given keratin's surface without assignment finer than an island - the limit the Bull Fighter's horns and hooves met, at a much smaller scale here. What is lost is a tooth's polish against fur's none; what is kept is the colour, which is the sheet's.",
+  "material_overrides": {
+    "painted_steel": {
+      "roughness": 0.48
+    }
+  },
+  "material_overrides_why": "The body is most of the model by screen area and reads noticeably flatter and more mirror-bright than a sword blade or a shield boss wearing the same material, which is the case painted_steel.json's own warning names on the other side: a broad surface reads differently from a thin one wearing the identical numbers, and its remedy for a broad dark surface is plate_steel. plate_steel was tried first here and is not it - it is metallic and goes through the F0 pull, which targets a grey-black steel and drove this violet paint to white chrome; see the earlier finding in this file's history. Judged live in Blender under the sheet's own rig (see docs/material-tuning.md): roughness 0.28 blows the pauldrons and the collar out to near-white wherever they catch the sky, and stepping it up alone - the only lever a dielectric has in this pipeline, there is no separate specular/IOR knob in the material schema or the exporter - keeps the drawn gold fluting legible while the plate stops reading as wet chrome and starts reading as armour in shade. Declared per asset rather than raised in painted_steel.json itself: that material also dresses several sword blades, three shields, a carriage, a sign and a house, all much smaller or more curved surfaces where 0.28 has been looked at and kept, and moving the library number would need the same look at each of them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 172,
+      "area": 21647.2,
+      "along": [
+        -49.2,
+        111.5
+      ],
+      "mu_uv": [
+        -0.002,
+        0.004,
+        0.998,
+        0.984
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.964,
+        0.966
+      ],
+      "hidden": true
+    },
+    {
+      "island": 1,
+      "material": "fur",
+      "triangles": 160,
+      "area": 30513.9,
+      "along": [
+        -76.7,
+        92.2
+      ],
+      "mu_uv": [
+        0.014,
+        0.003,
+        0.986,
+        0.996
+      ],
+      "bake_uv": [
+        0.012,
+        0.073,
+        0.95,
+        0.962
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 306,
+      "area": 39409.8,
+      "along": [
+        -42.4,
+        72.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.008,
+        0.995,
+        1.007
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.988,
+        0.888
+      ]
+    }
+  ]
+}

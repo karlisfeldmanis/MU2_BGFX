@@ -1,0 +1,24 @@
+{
+  "item": "Bone01",
+  "mu_name": "The large bone a skeleton comes apart into",
+  "mu_name_from": "ZzzOpenData.cpp: `for (int i = 0; i < 2; i++) AccessModel(MODEL_BONE1 + i, L\"Data\\\\Skill\\\\\", L\"Bone\", i + 1)`. Filed under Skill like the missiles, because in MU a thing thrown into the air by a death is an effect and not a monster.",
+  "kind": "debris",
+  "why_this_one": "CharacterDie throws exactly one of these when a skeleton dies - `CreateEffect(MODEL_BONE1, o->Position, o->Angle, o->Light)` - and ten of Bone02. See SkeletonWarrior.json's death_from.",
+  "mesh": "Bone01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Bone01.bmd, from MuMain. Eighty triangles in one mesh on bons_particle.jpg: a skull-and-ribs lump about 40 units long.",
+  "parts": [
+    {
+      "group": "bons_particle",
+      "sheet": "bons_particle.png",
+      "blend": "opaque",
+      "note": "Data/Skill/bons_particle.OZJ, a 64-square of the same aged ivory as the body's bons sheet, no alpha. Drawn solid and lit: a bone on the ground is a thing and not a light, so this is the one folder of effect models that is not additive."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "CreateEffect's default branch for this model: `o->Scale = (float)(rand() % 4 + 8) * 0.1f`, so 0.8 to 1.1 per bone, rolled at the throw. The number here is the base it multiplies; see client/core/Bones.cs.",
+  "lift": 150,
+  "lift_from": "`case MODEL_BONE1: o->Position[2] += 50.f;` with no break, falling into `case MODEL_BONE2: o->Position[2] += 100.f;` - so the large bone is born 150 units up and the small ones 100. Read the case alone and it is 50, and the large bone starts inside the small ones.",
+  "frames": 32,
+  "frames_from": "`o->LifeTime = rand() % 16 + 32` in the same default branch: 32 to 47 reference frames, 1.28 to 1.88 s. The bone tumbles for that long, fades ten frames after it lands, and is gone at the end of whichever comes first.",
+  "flight_note": "The mover (ZzzEffect.cpp, the shared ballistic arm for MODEL_BONE1, BONE2, BIG_STONE and BROKEN_ICE at SubType 0): HeadAngle[2] -= Gravity a frame, Position += HeadAngle, Angle[0] and Angle[1] += 0.5 * LifeTime a frame - a tumble that slows as the bone ages - and on touching the terrain, the horizontal velocity is damped by 0.6 a frame, the vertical is set to 1.0 * LifeTime as a bounce that shrinks with age, and Alpha -= 0.1 a frame. Gravity is `rand() % 16 + 8`, 8 to 23 units a frame a frame.\n\nThe horizontal throw is the one place this departs from the letter of the client, and the departure is recorded rather than hidden. The birth computes a scatter into o->Direction - (0, rand() % 256 + 64, 0) * 0.1 rotated by a random yaw, 6.4 to 31.9 units a frame - but the mover integrates o->HeadAngle, which nothing in that path assigns; in the real client the bones inherit whatever the recycled OBJECT slot last held there, which is stale memory and not a design. The vector the birth plainly intends is what is used. LEGACY's MuBoneBurst made the same reading and this file agrees with it on the numbers after checking them against the source."
+}

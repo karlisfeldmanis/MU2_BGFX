@@ -1,0 +1,83 @@
+{
+  "item": "Potion01",
+  "mu_name": "Apple",
+  "mu_name_from": "mu.db's items table, code 7168 - group 14 index 0 - names Item/Potion01.bmd the Apple, and OpenMU's 0.75 initialiser agrees: CreatePotion(0, \"Apple\", 1, 1, 1, 10). The Potion file numbering is the potion *group's*, not a claim that every row in it is a potion; the group holds the apple, the ale and the town portal scroll as well.",
+  "profile": "weapon",
+  "profile_note": "Not because an apple is a weapon but because the profile is about the art: a small painted sheet on a made object seen close, upscaled with the drawn model held back so a band of paint does not become a ridge. An apple is that problem exactly. The default material is overridden on both islands below.",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated, with the call it came from beside it. Only the columns a drop reads are here - an apple has no damage roll, no stance and no hand, which is why it carries a Prize and no Arm. See shared/Rows.cs.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Potions.cs, CreateApple().",
+    "call": "Number = 0; Group = 14; DropsFromMonsters = true; DropLevel = 1; Durability = 3; Value = 5; Width = 1; Height = 1",
+    "call_note": "Written out as fields rather than as a call because that is what the source is: the weapons go through a CreateWeapon with twenty-two positional arguments, and the potions are each built property by property. There is no line to quote, so the properties are quoted instead.",
+    "group": 14,
+    "number": 0,
+    "drop_level": 1,
+    "drops_from_monsters": true,
+    "drop_level_note": "One, which is what makes this the second thing in the whole catalogue a level 2 Spider can afford - the Small Axe at 1 is the other. It is not refinable: a plus means something on gear and nothing on what you eat, which Prize.Refinable reads off the group rather than off a column here."
+  },
+  "sheets": {
+    "apple": "apple.png",
+    "pot3": "pot3.png"
+  },
+  "sheet_from": "Data/Item/apple.OZJ at 16x16 and pot3.OZT at 32x32, both from MuMain. remaster_one's pot3 is four times the file, which is the upscale signature, and was refused. Both sheets were already in the project for other assets and decoded byte-identically here, which is a free check that the extraction is the same one.",
+  "cutout": [
+    "pot3"
+  ],
+  "cutout_note": "Declared and not detected, as the rule in docs/items-and-armour.md insists. pot3 is the leaf and stem drawn as a cut-out card and its alpha cuts away 69% of the sheet; without the declaration it renders as a dark green rectangle standing out of the fruit.",
+  "wrap": [
+    "apple"
+  ],
+  "wrap_note": "The apple sheet is wrapped round the fruit rather than laid out as an atlas, and the island listing says so outright: island 0's mu_uv starts at u = -0.25. That is the case docs/items-and-armour.md warns the bake assumes never happens - 'the bake assumes each triangle samples its sheet once' - and the bake's default is to clip outside the sheet, so the quarter of the apple below zero sampled nothing and came out as a black gash down its side under every light.\n\nDeclared rather than detected, on the same rule as the cut-out and the stance: a UV-bounds test cannot tell a sheet meant to wrap from an asset with a stray vertex, and this is a claim about what MU's art is. Only the fruit wraps; the leaf card is an ordinary flat sample and is left clipped. See pipeline/transfer_albedo.py.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "why": "The profile's numbers. The apple sheet is sixteen square and already has a white specular painted across its top third - the artist drew the shine - so detail is held at 0.65 for the same reason a sword guard is: at full strength the drawn model turns a soft painted highlight into a hard-edged white patch, which is the one thing on this sheet the eye is guaranteed to be looking at."
+  },
+  "material_note": "Two islands and they line up exactly with MU's own two meshes, which is how they were told apart: muextract reports 48 triangles on apple.jpg and 2 on pot3.tga, and the island listing reports 48 and 2. There is no other reading of that. So island 0 is the fruit and island 1 is the leaf-and-stem card.\n\nThe fruit takes a new material - see assets/materials/fruit.json, which argues for itself against skin and ceramic. The leaf takes foliage unchanged, and that is the whole reason foliage forces its normals up and carries a translucency: it is a crossed card whose true normal points sideways, exactly as a tree's is, and it is two triangles held up to the same sun.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "fruit",
+      "triangles": 48,
+      "area": 776.2,
+      "along": [
+        -8.6,
+        8.3
+      ],
+      "mu_uv": [
+        -0.25,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.004,
+        0.853,
+        0.683
+      ]
+    },
+    {
+      "island": 1,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 57.5,
+      "along": [
+        -7.6,
+        -0.4
+      ],
+      "mu_uv": [
+        0.356,
+        0.174,
+        0.99,
+        0.686
+      ],
+      "bake_uv": [
+        0.133,
+        0.65,
+        0.564,
+        0.998
+      ]
+    }
+  ]
+}

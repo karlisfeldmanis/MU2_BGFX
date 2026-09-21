@@ -1,0 +1,42 @@
+{
+  "item": "Object41",
+  "mu_name": "Object41",
+  "mu_name_from": "Noria's object slot 40, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 40,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "ob3": "nr_ob3.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "ob3": "skin"
+  },
+  "material_note": "ob3: the Chaos Goblin's hide. See Object40.",
+  "why_this_one": "Object40, Object41, Object42 and Object43 are one thing: all four stand at 18100,10450, a few units apart in height, and together they are the Chaos Machine beside the Chaos Goblin. This is the goblin on the far side, animated on the same eight keys as Object40's.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 376,
+      "area": 22963.6,
+      "along": [
+        -121.3,
+        -52.0
+      ],
+      "mu_uv": [
+        0.006,
+        0.004,
+        0.989,
+        1.004
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.769
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "item": "Book04",
+  "mu_name": "Scroll of Fire Ball",
+  "mu_name_from": "ZzzOpenData.cpp loads item group ITEM_ETC number i from Book{i+1:02}.bmd, so number 3 is Book04.bmd; OpenMU's 0.75 initialiser names group 15 number 3 the Scroll of Fire Ball.",
+  "why_this_one": "The reason this whole group was built. At drop level 5 it is the one row a Bull Fighter can leave that the catalogue did not have: a level-6 monster's pool is drop levels 1 to 6, twenty-one rows in the reference, and this was the twenty-first. It is also the cheapest thing in the group by a factor of three and Pasi's first slot, which is the two ends of the same fact - it is the wizard's first spell.",
+  "mesh": "Book01",
+  "mesh_note": "No geometry of its own. Book01.bmd through Book12.bmd are byte-identical in MU - one md5 across the lot, 28 vertices and 16 triangles each, every one naming book.jpg - so there is one model here and twelve rows on it, and building eleven more copies of it would be eleven identical atlases claiming to be different art.\n\nThe field is read in two places and nowhere else: pipeline/index.py points this entry's glb at the named asset's, and mu2.sh builds that asset instead of looking for an .obj beside this file. Everything downstream sees an ordinary entry with a model and a row.",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated. Only the columns a drop and a shelf read are here - a scroll has no damage roll, no stance and no hand, which is why it carries a Prize and no Arm. See shared/Rows.cs.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Scrolls.cs, CreateScroll(3, 4, \"Scroll of Fire Ball\", 5, 0, 40, 300).",
+    "group": 15,
+    "number": 3,
+    "drop_level": 5,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll, on all twelve. Read by Prize.ReadBy where the scroll is read; before the orbs it was a Trade test in Realm.Read."
+  },
+  "skill": {
+    "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
+    "number": 4,
+    "name": "Fire Ball",
+    "level_requirement": 0,
+    "energy_requirement": 40,
+    "value": 300
+  }
+}

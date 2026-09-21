@@ -1,0 +1,117 @@
+{
+  "item": "PantMale09",
+  "mu_name": "Brass Pants",
+  "mu_name_from": "MuMain loads MODEL_PANTS + i from PantMale{i+1} (ZzzOpenData.cpp line 141), so file 09 is index 8, which openmu's 0.75 Armors.cs names the Brass Pants. mu.db agrees: group 9 index 8, Player/PantMale09.bmd.",
+  "why_this_one": "Martin's and Harold's last +3 line, and the piece that finishes their shelf: with these five the wandering merchants sell all twenty-five of the lines Market.Wandering lists, where they sold ten this morning. See shared/Market.cs.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(8, 4, 2, 2, \"Brass Pants\", 35, 18, 44, 100, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 8,
+    "drop_level": 35,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 18,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 44,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred strength and thirty agility, the highest agility any built armour asks for."
+  },
+  "sheets": [
+    "lower_10_m.png",
+    "hide_m.png",
+    "lower_10b.png"
+  ],
+  "sheet_from": "Data/Player/lower_10_m.OZJ (128x128), hide_m.OZJ and lower_10b.ozt (32x32), from MuMain. The .bmd names lower_10_m.jpg, hide_m.jpg and lower_10b.tga; 94 of the 118 triangles are on the first, 12 on hide and 12 on the trim.",
+  "sheet_note": "lower_10_m is both legs, olive-gold with a gilt column down the outside of each thigh and a dark inner face - mean (79, 84, 48) at chroma 38, the least saturated sheet in the set. lower_10b is a 32-square of gold trim cut 53% away by its own alpha, the strip that hangs at the hip. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is a bright yellow gold and the sheets are the most saturated armour in the project: chroma 38 on the legs to 100 on the wing ornament, where the Bronze set runs 30 to 70 and the Plate set 3 to 8. Olive-green shading in the hollows, which is MU painting a warm metal's shadow cool.",
+  "material_note": "Three islands. Island 0 is 106 triangles - both legs and hide's caps, lower_10_m's 94 and hide_m's 12 - and takes plate_steel. Islands 1 and 2 are six each, which is lower_10b's 12: the gold trim hanging at each hip, and they take brass.\n\nThe set is one colour and two materials, which is the thing it teaches. The plates take plate_steel - hammered, curved, roughness 0.68 - and the small ornaments on their own .OZT sheets take brass, which is cast at 0.44 with a coarser grain. Both are gold in MU's paint and the paint is not what decides: a material states how a thing was made, so a shell beaten to fit a chest and a fan of quills poured in a mould are two surfaces however alike their colour. It is the same reading the Pad Boots' fins got, made inside a single set for the first time.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 1.0,
+      "roughness": 0.46
+    }
+  },
+  "material_overrides_why": "plate_steel gives up its pull toward grey and a little of its polish, as on the Bronze set and for the same reason. Every sheet in this set says bright yellow gold - the most saturated armour in the project, chroma 38 to 100 - and plate_steel ships f0_desaturation 0.75, which took the gold out: cooked on 2026-09-21 the cuirass's base colour came out at saturation 0.21 from the art's 0.47 and the set read as grey steel with brass quills. Roughness 0.35 -> 0.46 comes with it, because on Bronze full saturation at the library's polish put hot glassy specular on the shoulder and hip. The alloy is still MU's paint; the material is still plate_steel.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 106,
+      "area": 7945.2,
+      "along": [
+        -30.3,
+        28.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.421,
+        0.005,
+        0.979,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 6,
+      "area": 503.9,
+      "along": [
+        -14.9,
+        11.5
+      ],
+      "mu_uv": [
+        -0.001,
+        0.001,
+        0.992,
+        0.997
+      ],
+      "bake_uv": [
+        0.005,
+        0.418,
+        0.413,
+        0.827
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 6,
+      "area": 583.9,
+      "along": [
+        -28.5,
+        -2.3
+      ],
+      "mu_uv": [
+        -0.001,
+        0.001,
+        0.993,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.412,
+        0.415
+      ]
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "item": "ArmorElf01",
+  "mu_name": "Vine Armor",
+  "mu_name_from": "MuMain loads armour indexes 10 to 14 from ArmorElf{i+1} (ZzzOpenData.cpp line 149), so index 10 is ArmorElf01, which openmu's 0.75 Armors.cs names the Vine Armor. mu.db agrees: code 4106, group 8 index 10, Player/ArmorElf01.bmd.",
+  "why_this_one": "The Fairy Elf's own first set, and the one set of the three that nobody sells: no shelf in Lorencia carries Vine, so this is a drop and a thing to look at. It is here because the Armour select had a single glove under her name and a set of one piece is a set you cannot see.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. See profiles/soft_armour.json, which exists for these three sets.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(10, 3, 2, 2, \"Vine Armor\", 10, 8, 22, 30, 60, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 10,
+    "drop_level": 10,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 8,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 22,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Sixty agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "upper_04.png",
+    "hide.png",
+    "skin_warrior_01.png"
+  ],
+  "sheet_from": "Data/Player/upper_04.OZJ (128x128), hide.jpg and skin_warrior_01.OZJ (256x256), from MuMain. The .bmd names upper_04.jpg, hide.jpg and skin_warrior_01.jpg; 54 of the 154 triangles are on the first, 18 on hide and 82 on the skin - more of this piece is skin than is armour, which is the set.",
+  "sheet_note": "upper_04 is a hide bodice with a scrolled vine raised down the breast and over each shoulder, the raised work in the same brown as the hide under it rather than in a metal. Mean (91, 63, 42) at chroma 48. skin_warrior_01 is the elf's own body sheet, which the piece carries because this set leaves a great deal of her uncovered and MU draws the skin as part of the worn mesh. hide is MU capping the openings, a solid black square, as on ArmorMale10.",
+  "material_note": "Four islands, and more of this piece is skin than is armour. Island 0 is 72 triangles, which is upper_04's 54 and hide's 18: the bodice and its caps, leather. Islands 1, 2 and 3 are 25, 25 and 32 - 82 together, which is skin_warrior_01's 82 exactly - and take skin. The face and the bare arms take skin, not the profile's leather, and the islands split them cleanly because MU draws them on a sheet of their own: the three sit in the body sheet's torso and limb columns while the bodice sits on its own sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 72,
+      "area": 4486.1,
+      "along": [
+        -10.4,
+        16.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.992,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 25,
+      "area": 1163.7,
+      "along": [
+        -7.8,
+        7.0
+      ],
+      "mu_uv": [
+        0.322,
+        0.508,
+        0.469,
+        0.985
+      ],
+      "bake_uv": [
+        0.006,
+        0.639,
+        0.701,
+        0.903
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 25,
+      "area": 1186.6,
+      "along": [
+        -7.8,
+        7.0
+      ],
+      "mu_uv": [
+        -0.001,
+        0.508,
+        0.16,
+        0.985
+      ],
+      "bake_uv": [
+        0.141,
+        0.625,
+        0.796,
+        0.782
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 32,
+      "area": 959.5,
+      "along": [
+        -8.7,
+        10.5
+      ],
+      "mu_uv": [
+        0.147,
+        0.531,
+        0.338,
+        0.825
+      ],
+      "bake_uv": [
+        0.119,
+        0.782,
+        0.818,
+        0.827
+      ]
+    }
+  ]
+}

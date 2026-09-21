@@ -1,0 +1,300 @@
+{
+  "item": "Candle01",
+  "mu_name": "Candle01",
+  "mu_name_from": "Lorencia's object slot 150, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 150,
+  "why_this_one": "6 placements. A candelabra, and the one piece of furniture that gives off light: LorenciaBlendMeshes[150] = 1 is the client drawing candle2 - sixteen pixels of orange flame on black - additively. The interior pieces are worth building now rather than later because the roof fade works: walking into a house shows what is in it, and until now that was an empty floor.",
+  "profile": "world",
+  "sheets": {
+    "candle": "candle.png",
+    "candle2": "candle2.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "candle": "hardwood",
+    "candle2": "lamplight"
+  },
+  "sheet_regions": {
+    "candle": [
+      {
+        "material": "brass",
+        "box": [
+          0.0,
+          0.0,
+          1.0,
+          0.33
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.4,
+          0.33,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.22,
+          0.33,
+          0.4,
+          0.64
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.22,
+          0.81,
+          0.4,
+          1.0
+        ]
+      }
+    ]
+  },
+  "region_note": "The candelabra is brass and the candles are wax, on one 32-square. hardwood stays the sheet's material and answers for the wax; four boxes give the rest to brass: everything but the candle strip down the left edge and the white drip square beside it. Checked against the art once written: 0.65 mean saturation inside against 0.20 outside, and 0.24 luminance against 0.87 — the gold stand and the pale wax, 82% of the sheet boxed.\n\nbrass rather than wrought_iron because MU painted it gold and orange with a highlight down each arm, which is polished metal and not bar iron.",
+  "sheet_pad": {
+    "candle": "edge"
+  },
+  "sheet_pad_from": "These carry more than one thing in one square - a carved panel beside a plain board, candles beside their stand - so their borders replicate rather than wrap.",
+  "additive": [
+    "candle2"
+  ],
+  "additive_from": "WorldObjectCatalog.cs: LorenciaBlendMeshes[150] = 1. It also carries no GlowMotion, so unlike the bonfire it burns steady.",
+  "emitters": [
+    {
+      "kind": "candle",
+      "at": [
+        0,
+        0,
+        76
+      ],
+      "colour": [
+        1.0,
+        0.62,
+        0.28
+      ],
+      "low": 0.35,
+      "high": 0.55,
+      "range_tiles": 1.5,
+      "flicker_hz": 4,
+      "smooth_seconds": 0.15
+    }
+  ],
+  "emitters_from": "WorldObjectCatalog.cs's Candle(): dim, deep orange, three tiles in the client. The offset is the same reasoning its lamp had - the flame sits 66 to 87 above the base, so the light goes at 76 rather than on the floor.",
+  "glow": {
+    "candle2": {
+      "low": 0.38,
+      "high": 1.0,
+      "steps": 14,
+      "hz": 11,
+      "smooth_seconds": 0.16
+    }
+  },
+  "glow_from": "Not from MoveObject, which is the point. The client has no per-type case for object 150: it animates a candle the way it animates a swaying tree, by playing the frames in the .bmd, and this pipeline builds from .obj, which is one frame. So the flame came across painted and perfectly still.\n\nWhat survives the change of medium is the half of that motion which is a number rather than a pose. The flame is already its own additive quad — MU painted it onto the model's own UVs, the asset names the slot — and a candle flame's most legible motion at any distance you would actually see one from is not the shape of its tip but its brightness rising and falling. Writing that costs one material write a frame for every candle in the town.\n\nIts own numbers, not the bonfire's. A bonfire is a body of fire with drafts running through it and it jumps; a candle is one wick in still air and it breathes. So it holds a narrower floor, moves at eleven a second rather than twenty, and eases over a sixth of a second — the flame is always travelling and never arrives before the next draw, which is what separates a flame from a flashing lamp.\n\nThe floor is lower than a candle's own range because of where the flame sits on the way to the screen. Its core is painted at very nearly full brightness and clips there, so the top half of any range is spent above white and shows as nothing at all: measured off a burst, a floor of 0.62 moved the flame's red by three per cent. Dropping to 0.38 puts the swing back where it can be seen — in the fringe, which is the part of a small flame that actually moves.",
+  "play_speed": 0.3,
+  "play_speed_from": "ZzzObject.cpp, CreateObject, case WD_0LORENCIA: `o->Velocity = 0.3f` for MODEL_CANDLE, against the 0.16 every world object carries in before the switch runs. MoveObject hands Velocity to PlayAnimation where a character's play speed goes, so keys a second is this times MU's reference 25.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 58,
+      "area": 1690.4,
+      "along": [
+        -11.2,
+        11.3
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        0.994,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.014,
+        0.958,
+        0.972
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 26,
+      "area": 793.7,
+      "along": [
+        -3.9,
+        3.9
+      ],
+      "mu_uv": [
+        0.008,
+        0.001,
+        0.986,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.09,
+        0.726,
+        0.958
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 26,
+      "area": 793.7,
+      "along": [
+        -3.9,
+        3.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.464,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.103,
+        0.933,
+        0.934
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 1,
+      "area": 64.5,
+      "along": [
+        -0.0,
+        -0.0
+      ],
+      "mu_uv": [
+        0.013,
+        0.184,
+        0.988,
+        0.997
+      ],
+      "bake_uv": [
+        0.443,
+        0.498,
+        0.775,
+        0.775
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 1,
+      "area": 64.5,
+      "along": [
+        -3.8,
+        4.6
+      ],
+      "mu_uv": [
+        0.006,
+        0.138,
+        1.005,
+        1.005
+      ],
+      "bake_uv": [
+        0.219,
+        0.263,
+        0.56,
+        0.559
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 1,
+      "area": 64.5,
+      "along": [
+        -0.0,
+        -0.0
+      ],
+      "mu_uv": [
+        0.014,
+        0.186,
+        0.989,
+        0.999
+      ],
+      "bake_uv": [
+        0.66,
+        0.252,
+        0.992,
+        0.529
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 1,
+      "area": 64.5,
+      "along": [
+        -3.8,
+        4.6
+      ],
+      "mu_uv": [
+        0.006,
+        0.138,
+        1.007,
+        1.004
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.349,
+        0.304
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 1,
+      "area": 64.5,
+      "along": [
+        -0.0,
+        -0.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.184,
+        0.987,
+        0.997
+      ],
+      "bake_uv": [
+        0.009,
+        0.508,
+        0.341,
+        0.785
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 1,
+      "area": 64.5,
+      "along": [
+        -3.8,
+        4.6
+      ],
+      "mu_uv": [
+        0.006,
+        0.138,
+        1.005,
+        1.005
+      ],
+      "bake_uv": [
+        0.442,
+        0.008,
+        0.783,
+        0.304
+      ]
+    }
+  ]
+}

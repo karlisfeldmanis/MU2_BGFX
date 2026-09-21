@@ -1,0 +1,131 @@
+{
+  "item": "Object35",
+  "mu_name": "Object35",
+  "mu_name_from": "World 74's object table is a straight run, not Lorencia's named blocks: the map's type is the model index and the client loads index i from Object{i+1}.bmd (MapManager.cpp:1121, LoadData.cpp:28). So the asset keeps the client's own name - there is no friendlier one, and the placement list carries this.",
+  "world": "charscene",
+  "object_type": 34,
+  "why_this_one": "A second arch on the same lichened rock strip, over a plainer wall sheet.",
+  "profile": "world",
+  "sheets": {
+    "song_bria01": "song_bria01.png",
+    "so_archb02": "so_archb02.png"
+  },
+  "sheet_from": "Data/Object75/*.OZJ and *.OZT, from MuMain, decoded at MU's own size.",
+  "sheet_materials": {
+    "song_bria01": "flagstone",
+    "so_archb02": "rock"
+  },
+  "material_note": "Flagstone, which is what Lorencia's cut stone already takes - StoneWall01, StoneMuWall01 and StoneStatue01 all read as worked block rather than boulder face.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 56,
+      "area": 270526.9,
+      "along": [
+        -149.4,
+        150.8
+      ],
+      "mu_uv": [
+        -3.593,
+        -2.526,
+        0.996,
+        3.109
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.94,
+        0.932
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 16,
+      "area": 40866.0,
+      "along": [
+        62.7,
+        209.5
+      ],
+      "mu_uv": [
+        -0.527,
+        -2.227,
+        1.263,
+        1.252
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.898,
+        0.642
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 18,
+      "area": 13161.4,
+      "along": [
+        170.3,
+        238.8
+      ],
+      "mu_uv": [
+        -0.314,
+        -1.636,
+        3.129,
+        1.544
+      ],
+      "bake_uv": [
+        0.176,
+        0.009,
+        0.962,
+        0.976
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 56,
+      "area": 216703.1,
+      "along": [
+        -135.8,
+        282.0
+      ],
+      "mu_uv": [
+        -3.593,
+        -2.526,
+        0.996,
+        3.109
+      ],
+      "bake_uv": [
+        0.086,
+        0.009,
+        0.759,
+        0.968
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 16,
+      "area": 65005.1,
+      "along": [
+        -73.3,
+        82.0
+      ],
+      "mu_uv": [
+        -1.19,
+        -2.706,
+        1.926,
+        1.252
+      ],
+      "bake_uv": [
+        0.01,
+        0.406,
+        0.968,
+        0.991
+      ]
+    }
+  ]
+}

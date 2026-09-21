@@ -1,0 +1,84 @@
+{
+  "item": "Stone04",
+  "mu_name": "Stone04",
+  "mu_name_from": "Lorencia's object slot 33, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 33,
+  "why_this_one": "67 placements. The most-placed stone in the town.",
+  "profile": "world",
+  "sheets": {
+    "ston01": "ston01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "ston01": "rock"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 15,
+      "area": 3537.9,
+      "along": [
+        25.1,
+        61.9
+      ],
+      "mu_uv": [
+        0.171,
+        0.602,
+        0.485,
+        0.902
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.966,
+        0.957
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 15,
+      "area": 1746.3,
+      "along": [
+        -8.2,
+        25.0
+      ],
+      "mu_uv": [
+        0.171,
+        0.602,
+        0.485,
+        0.902
+      ],
+      "bake_uv": [
+        0.006,
+        0.229,
+        0.966,
+        0.957
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 15,
+      "area": 1887.5,
+      "along": [
+        -40.0,
+        -7.6
+      ],
+      "mu_uv": [
+        0.171,
+        0.602,
+        0.485,
+        0.902
+      ],
+      "bake_uv": [
+        0.432,
+        0.006,
+        0.994,
+        0.991
+      ]
+    }
+  ]
+}

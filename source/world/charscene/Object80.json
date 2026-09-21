@@ -1,0 +1,41 @@
+{
+  "item": "Object80",
+  "mu_name": "Object80",
+  "mu_name_from": "World 74's object table is a straight run, not Lorencia's named blocks: the map's type is the model index and the client loads index i from Object{i+1}.bmd (MapManager.cpp:1121, LoadData.cpp:28). So the asset keeps the client's own name - there is no friendlier one, and the placement list carries this.",
+  "world": "charscene",
+  "object_type": 79,
+  "why_this_one": "A 4x4 flat sheet on twelve triangles, which is a marker rather than a model: GMEmpireGuardian4::MoveObject hides type 79 outright and RenderObjectVisual throws fire off it. Declared so the placement is not a gap in the index, and never drawn.",
+  "profile": "world",
+  "sheets": {
+    "br001": "br001.png"
+  },
+  "sheet_from": "Data/Object75/*.OZJ and *.OZT, from MuMain, decoded at MU's own size.",
+  "sheet_materials": {
+    "br001": "flagstone"
+  },
+  "material_note": "Flagstone, which is what Lorencia's cut stone already takes - StoneWall01, StoneMuWall01 and StoneStatue01 all read as worked block rather than boulder face.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 15000.0,
+      "along": [
+        -26.0,
+        24.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.663,
+        0.996
+      ]
+    }
+  ]
+}

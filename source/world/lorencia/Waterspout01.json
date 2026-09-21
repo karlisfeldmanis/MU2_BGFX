@@ -1,0 +1,167 @@
+{
+  "item": "Waterspout01",
+  "mu_name": "Waterspout01",
+  "mu_name_from": "Lorencia's object slot 105, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 105,
+  "why_this_one": "1 placement. A carved spout pouring into a basin, and the first object in the town whose additive submesh is water rather than fire.",
+  "profile": "world",
+  "sheets": {
+    "stone_statue02": "stone_statue02.png",
+    "reagon_waterspout": "reagon_waterspout.png",
+    "ston01": "ston01.png",
+    "ston02": "ston02.jpg.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "stone_statue02": "flagstone",
+    "reagon_waterspout": "flagstone",
+    "ston01": "rock",
+    "ston02": "water"
+  },
+  "material_note": "Three stones and a fall of water. flagstone for the two carved sheets, because they were cut and dressed; rock for ston01, which is the natural boulder the basin sits in.",
+  "additive": [
+    "ston02"
+  ],
+  "additive_from": "WorldObjectCatalog.cs: LorenciaBlendMeshes[105] = 3, and submesh 3 of Waterspout01.bmd is ston02.jpg - dark blue ripples on near-black, which is the falling water. Note that this is the .jpg half of the ston02 stem; the .tga half is the grass tuft at Stone01's foot. See tests/sheets.py.",
+  "glow": {
+    "ston02": {
+      "scrolls_per_second": 1.0
+    }
+  },
+  "glow_from": "MoveObject's per-type case for object 105, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap — the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nThe fountain's water is a scrolling texture held at full brightness. One repetition a second, and negative: the client's every case is -(WorldTime % 1000) * 0.001, a sawtooth running from 0 down to -1, so the sheet slides *down* the mesh and the water falls rather than climbs.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 106,
+      "area": 233482.3,
+      "along": [
+        -198.6,
+        199.7
+      ],
+      "mu_uv": [
+        0.302,
+        0.0,
+        0.979,
+        0.794
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.989,
+        0.983
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 289,
+      "area": 29617.1,
+      "along": [
+        -159.6,
+        9.0
+      ],
+      "mu_uv": [
+        0.004,
+        0.002,
+        0.963,
+        0.778
+      ],
+      "bake_uv": [
+        0.011,
+        0.094,
+        0.936,
+        0.946
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 94,
+      "area": 47883.8,
+      "along": [
+        -118.5,
+        -19.7
+      ],
+      "mu_uv": [
+        0.02,
+        0.742,
+        0.99,
+        0.995
+      ],
+      "bake_uv": [
+        0.011,
+        0.476,
+        0.806,
+        0.893
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 60,
+      "area": 57039.4,
+      "along": [
+        -128.4,
+        18.1
+      ],
+      "mu_uv": [
+        -0.239,
+        0.224,
+        0.941,
+        0.811
+      ],
+      "bake_uv": [
+        0.012,
+        0.488,
+        0.57,
+        0.777
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 30,
+      "area": 11226.0,
+      "along": [
+        -15.3,
+        129.9
+      ],
+      "mu_uv": [
+        0.001,
+        -0.018,
+        0.999,
+        1.004
+      ],
+      "bake_uv": [
+        0.037,
+        0.483,
+        0.262,
+        0.713
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 60,
+      "area": 77631.7,
+      "along": [
+        -162.3,
+        161.8
+      ],
+      "mu_uv": [
+        -0.091,
+        -0.018,
+        1.146,
+        2.004
+      ],
+      "bake_uv": [
+        0.011,
+        0.012,
+        0.591,
+        0.467
+      ]
+    }
+  ]
+}

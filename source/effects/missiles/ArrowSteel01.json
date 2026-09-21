@@ -1,0 +1,33 @@
+{
+  "item": "ArrowSteel01",
+  "mu_name": "The crossbow's bolt, in the air",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_ARROW_STEEL, L\"Data\\\\Skill\\\\\", L\"ArrowSteel\", 1)`. Filed under Skill and not under Item, like every missile: what a character wears on their back is Arrows01.bmd and what crosses the clearing is this, and nothing turns one into the other.",
+  "kind": "missile",
+  "why_this_one": "It is what the plain Crossbow fires, off the same switch in CreateArrow that gives the Light Crossbow its laser bolt: `case MODEL_CROSSBOW: CreateEffect(MODEL_ARROW_STEEL, ...)`, with MODEL_GOLDEN_CROSSBOW on the row beside it. The two crossbows now built throw different things - CrossBow01 throws this and CrossBow04 throws MODEL_ARROW_LASER - which is one row of a table apart and would have been invisible if the crossbow had simply reused the bolt already here.\n\nIt is built because CrossBow01 is: a weapon that names a missile nothing has drawn fires nothing.",
+  "mesh": "ArrowSteel01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/ArrowSteel01.bmd, from MuMain. Twenty-four triangles in one mesh, forty-nine vertices, 86.5 units long and 8.7 across.\n\nOne mesh and real geometry is the difference from the two missiles already here. The laser bolt is four triangles - two quads crossed through an axis, because a streak of light seen from any angle is two flat pictures - and the wooden arrow is two meshes, twenty-four triangles of shaft with nine of fire sprite on the tail. This is a solid shaft with no sprite and no crossed cards: a bolt is an object, and MU drew it as one.",
+  "sheet_from": "Data/Skill/bow_b.OZJ, 32x32 and fully opaque, from MuMain.",
+  "sheet_note": "A vertical white-to-grey gradient and nothing else. It is achromatic to the byte - every texel has R, G and B equal - running from (47, 47, 47) to (255, 255, 255) with a mean of 157. So the whole of what the sheet says is 'polished metal, lit from one side', which is why the model needs no second mesh to read as steel and why there is nothing here to assign per island.",
+  "blend": "opaque",
+  "blend_from": "`o->BlendMesh = -1`, and it is set by omission rather than by a line. CreateEffect initialises BlendMesh to -1 - no mesh blended - and the arrow branch then overrides it in three named cases: 1 for MODEL_ARROW, -2 for MODEL_ARROW_NATURE, 0 for the thunder, laser, V and wing bolts. MODEL_ARROW_STEEL is in none of them, so it keeps the default and is drawn wholly solid.\n\nThat is the one visible difference between this bolt and the laser one, and it is worth stating as a fact about the source rather than a choice: the laser is additive because a line names it, and this is opaque because no line does.",
+  "scale": 0.8,
+  "scale_from": "The final else of the same branch - `o->Scale = 0.8f; o->Direction[1] = -70.f` - which this reaches along with every arrow that is not a Wing, a Tanker, a Multi Shot or one of the named skills.",
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30`, set at the head of the branch for every missile in the case list. Frames rather than seconds because that is what MU counts in: `o->LifeTime -= FPS_ANIMATION_FACTOR` once per rendered frame against a REFERENCE_FPS of 25, so thirty of them is 1.2 seconds however fast the machine is drawing. What it is really for is the bolt that reaches nothing.",
+  "muzzle": [
+    -10.0,
+    -60.0,
+    135.0
+  ],
+  "muzzle_from": "`Vector(-10.f, -60.f, 135.f, p1)` rotated by the shooter's own angle and added to their position, shared with every missile in the branch. It is MU's fallback rather than the thing normally used here: CrossBow01 names a bone of its own and is fired from that instead, and this is what a weapon with nothing to say falls back to.",
+  "flight_note": "Not aimed and not steered, and its end is not the target either - all of which is the laser bolt's note unchanged, because Move_MODEL_ARROW_STEEL is literally the handler both of them run. The dispatch table maps MODEL_ARROW_STEEL, MODEL_ARROW_THUNDER, MODEL_ARROW_LASER, MODEL_ARROW_V, MODEL_ARROW_SAW, MODEL_ARROW_NATURE, MODEL_ARROW_WING and MODEL_LACEARROW to the one function, so eight missiles fly identically and differ only in what they look like.\n\nWhat ends it is CheckClientArrow asking `CheckCharacterRange(o, 100.f)` - any living, visible body within one tile of where the bolt is now, other than the one that fired it - which sets LifeTime to 1 so the bolt vanishes on that frame.",
+  "trail_note": "There is none, and that is the handler rather than an omission here. Move_MODEL_ARROW spawns a BITMAP_FIRE particle every frame it lives, which is what puts a trail behind the wooden arrow; Move_MODEL_ARROW_STEEL does nothing of the kind for any of the eight it serves. So a steel bolt crosses the clearing as a bare object, and the wooden arrow is the one with something behind it.",
+  "parts": [
+    {
+      "group": "bow_b",
+      "sheet": "bow_b.png",
+      "blend": "opaque",
+      "note": "The whole model. One mesh, and BlendMesh -1 names none of them as blended, so the bolt is drawn solid over whatever is behind it."
+    }
+  ]
+}

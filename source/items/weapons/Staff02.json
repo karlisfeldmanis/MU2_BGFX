@@ -1,0 +1,116 @@
+{
+  "item": "Staff02",
+  "mu_name": "Angelic Staff",
+  "mu_name_from": "MuMain loads MODEL_STAFF + i from Staff{i+1}, so Staff02.bmd is staff index 1, which openmu's 0.75 Weapons.cs names the Angelic Staff. mu.db agrees: group 5 index 1, Item/Staff02.bmd.",
+  "why_this_one": "Pasi's, and the last four lines he sells. The mage stocks all four staves - the Skull at +0, the Angelic at +2, the Serpent and the Thunder at +3 - and none was built, so four of his nineteen lines were dropped by Realm.Shelf. With these he sells all nineteen. See shared/Market.Mage.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(5, 1, 0, 0, 2, 3, true, \"Angelic Staff\", 18, 10, 12, 25, 38, 20, 0, 50, 0, 0, 0, 1, 0, 0)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 5,
+    "number": 1,
+    "drop_level": 18,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "width_note": "Width does not mean two-handed here and cannot: OpenMU's test is `if (group < Bows && width == 2)` and Bows is 4, so nothing in group 5 is ever caught by it. Two-handedness comes from MuWeapons.cs alone, which is the client's own table, and within this group of four it disagrees three times to one.",
+    "height": 3,
+    "minimum_damage": 10,
+    "maximum_damage": 12,
+    "attack_speed": 25,
+    "magic_power": 20,
+    "magic_power_note": "magic_power is the column no weapon built here has carried before. Every sword, axe and bow in the project passes 0 for it and the four staves pass 6, 20, 34 and 46 - it is the wizard's damage, where a blade's is the min and max above. Recorded and unread: shared/Combat.cs rolls physical damage off the weapon row and has no spell in it yet.",
+    "durability": 38,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, on all four."
+  },
+  "stance": "scythe",
+  "stance_from": "MuWeapons.cs: WeaponStance.Scythe, TwoHanded: true. The stance enum says why in its own comments - Sword is 'a one-handed sword, mace, or a one-handed staff' and Scythe is 'a scythe, or any two-handed staff or polearm' - so a staff takes the stance its handedness gives it and there is no staff stance. Actions 7 and 20.",
+  "two_handed": true,
+  "sheets": {
+    "wand03_jpg": "wand03.jpg.png",
+    "wand03_tga": "wand03.tga.png"
+  },
+  "sheet_from": "Data/Item/wand03.OZJ (32x32) and wand03.ozt (16x16), from MuMain, and this model names both halves of one stem: the .bmd asks for wand03.jpg on 46 triangles and wand03.tga on 4. That is the collision tests/sheets.py exists for - two different pictures filed under one name - so both are decoded carrying the extension they stand for and the asset says which it means where. Both slots carry the extension in their names - wand03_jpg and wand03_tga - because that is what MuExtract writes when one model's basenames collide, and a slot name has to match the group in the .obj. Declared as wand03 the first time, which named no slot at all: transfer_albedo bakes an unmatched slot black rather than reaching for somebody else's art, and the staff came out a black silhouette with 30% of its atlas covered.",
+  "sheet_note": "wand03.jpg is a pair of pale feathered wings with a blue-grey binding, mean (208, 180, 160) at lum 183, the brightest sheet on any weapon here. wand03.tga is a single cream feather on a 16-square whose alpha cuts 36% away - four triangles of it, the pinion standing off the head.",
+  "material_note": "Three islands, all of them feather. Island 0 is 46 triangles on wand03.jpg - the wings and the shaft they are bound to - and islands 1 and 2 are two triangles each, which is wand03.tga's 4: the pinion standing off the head on a pair of quads.\n\nfeather on all three. It was hair first, on the argument that both are keratin lying one way, and the wings came out banded: hair's grain is brushed along v and this unwrap runs the other way, so the streaks crossed the vanes instead of following them. materials/feather.json is what that produced - the same matte dielectric with isotropic pitting instead of a direction - and the Plate helm's plume and the Pad Armor's collar moved to it as well.\n\nThe shaft is inside island 0 with the wings and takes their surface, which is the island rule and costs little here: 46 triangles of wings and binding against a pole that is a few of them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "feather",
+      "triangles": 46,
+      "area": 2225.5,
+      "along": [
+        -72.5,
+        102.3
+      ],
+      "mu_uv": [
+        0.012,
+        0.031,
+        0.925,
+        1.0
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.917,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "feather",
+      "triangles": 2,
+      "area": 431.7,
+      "along": [
+        70.4,
+        103.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.475,
+        0.475
+      ]
+    },
+    {
+      "island": 2,
+      "material": "feather",
+      "triangles": 2,
+      "area": 431.7,
+      "along": [
+        70.4,
+        103.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.373,
+        0.006,
+        0.842,
+        0.475
+      ]
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "item": "Grass08",
+  "mu_name": "Grass08",
+  "mu_name_from": "Lorencia's object slot 27, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 27,
+  "why_this_one": "7 placements. The eighth grass, and it wears the mushroom sheet like Grass07 - so it is fungus rather than grass, again.",
+  "profile": "world",
+  "sheets": {
+    "mushroom": "mushroom.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "mushroom": "foliage"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 6,
+      "area": 425.0,
+      "along": [
+        -18.4,
+        -0.4
+      ],
+      "mu_uv": [
+        0.021,
+        0.553,
+        0.47,
+        1.002
+      ],
+      "bake_uv": [
+        0.612,
+        0.004,
+        0.88,
+        0.273
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 12,
+      "area": 397.0,
+      "along": [
+        -16.3,
+        -5.5
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.543
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.603,
+        0.329
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 6,
+      "area": 191.5,
+      "along": [
+        -9.4,
+        2.7
+      ],
+      "mu_uv": [
+        0.021,
+        0.553,
+        0.47,
+        1.002
+      ],
+      "bake_uv": [
+        0.612,
+        0.281,
+        0.88,
+        0.55
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 12,
+      "area": 178.8,
+      "along": [
+        -8.0,
+        -0.8
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.543
+      ],
+      "bake_uv": [
+        0.004,
+        0.338,
+        0.603,
+        0.662
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 6,
+      "area": 125.1,
+      "along": [
+        -1.7,
+        8.2
+      ],
+      "mu_uv": [
+        0.021,
+        0.553,
+        0.47,
+        1.002
+      ],
+      "bake_uv": [
+        0.612,
+        0.558,
+        0.88,
+        0.827
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 12,
+      "area": 116.3,
+      "along": [
+        -0.1,
+        5.8
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.543
+      ],
+      "bake_uv": [
+        0.004,
+        0.671,
+        0.603,
+        0.996
+      ]
+    }
+  ]
+}

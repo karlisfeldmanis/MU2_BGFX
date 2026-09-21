@@ -1,0 +1,119 @@
+{
+  "item": "Sword01",
+  "mu_name": "Kris",
+  "mu_name_from": "MuMain ZzzOpenData.cpp maps MODEL_SWORD + i to Sword{i+1}, so Sword01.bmd is sword index 0, which openmu names Kris. The wavy blade agrees: a kris is a wavy-bladed sword.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, which is what decides the damage, the swing rate and who is allowed to hold it. Copied from OpenMU's 0.75 initialiser rather than restated, so the call it came from is written out beside it and the two can be read against each other in one glance.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, not Season 6's - the two agree on this row and disagree on others, and 0.75 is the version this server is being built to.",
+    "call": "CreateWeapon(0, 0, 0, 0, 1, 2, true, \"Kris\", 6, 6, 11, 50, 20, 0, 0, 40, 40, 0, 0, 1, 1, 1)",
+    "group": 0,
+    "number": 0,
+    "drop_level": 6,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above and were being read past: the bool before the name is dropsFromMonsters and the int after it is the drop level. They are lifted out here because the loot pool is now the built catalogue gated by this number - see shared/Loot.cs. Arrows, bolts and scrolls are shop stock in the original and fall from nothing, which is what the flag says and why a spider cannot leave a quiver.",
+    "slot": 0,
+    "width": 1,
+    "width_note": "width is carried because it is where OpenMU keeps two-handedness: `if (group < Bows && width == 2)` sets IsTwoHandedWeaponEquipped. It is not read as the two_handed flag above - that one is the client's, out of MuWeapons.cs - but the two must agree, and a row where they do not is a transcription error caught for free.",
+    "height": 2,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 6,
+    "maximum_damage": 11,
+    "attack_speed": 50,
+    "attack_speed_note": "attack_speed is a stat and not a rate. OpenMU adds it whole to the character's AttackSpeed - `AttackSpeed += 1 * AttackSpeedByWeapon` in CharacterClassInitialization - and the client then spends that as `PlaySpeed = base + AttackSpeed * 0.004` on the attack action. So a weapon makes its own animation run faster, and the swing rate follows from the animation. The Kris at 50 is more than twice the Small Axe at 20 and it is visible in the arm.",
+    "durability": 20,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 40,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ]
+  },
+  "sheets": {
+    "sword02": "sword02_npc.png"
+  },
+  "sheet_from": "Data/NPC/sword02.OZJ (173x39)",
+  "sheet_note": "Sword01.bmd names sword02.jpg, which is Data/Item/sword02.OZJ at 64x16. Data/NPC holds the same drawing at 173x39 - 6.6x the information, MU's own art, nothing invented. Verified by eye against the Item copy: same blade, same grip, with the gold bands drawn rather than blurred. Found with pipeline/find_source.py.",
+  "upscale": {
+    "factor": 2,
+    "detail": 0.35,
+    "why": "173x39 is the largest sword02 in LEGACY and the atlas is 2048, so the last of the gap is generated. detail 0.35 keeps MU drawing the sword: chosen by looking at the guard in the engine, where 1.0 turns its rounded ribs into rectangular chain links. See pipeline/upscale.py."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, one-handed. Actions 4 and 17.",
+  "material_note": "Three islands, and until now all three carried the weapon profile's default steel with no note to say anybody had looked. That is the state islands.py calls unassigned in everything but name: a blade assigned steel is right, and the grip and the guard beside it were right only by not being asked.\n\nMeasured per triangle against Data/NPC/sword02. Island 1 is the blade, forty-four triangles from Z 13 to 65, at (156, 165, 164) and chroma 9 - achromatic and bright, so steel stands. Island 0 is the grip below the guard, twelve triangles at (53, 42, 41) and chroma 16: dark and near-flat, which is the same reading the Short Sword's grip gives at (55, 48, 57) chroma 10, and the sheet draws it as a banded black wrap. leather_wrap. Island 2 is the guard, twelve triangles in four units of Z at (157, 148, 128) chroma 29 - the beaded gold collar between grip and blade. brass, on the Short Sword's argument: MU painted the fitting a different colour and a material can say it is a different surface, cast at 0.44 against a ground blade's 0.32.\n\nChroma 29 is the weakest colour signal any fitting in the project has been called brass on - the Short Sword's guard is 90 to 118 - and it is called on the drawing rather than the number: the sheet's guard is a row of round beads, which is a cast thing, and the 173x39 sheet is small enough that the beads' highlights pull the mean toward grey.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather_wrap",
+      "triangles": 12,
+      "area": 365.5,
+      "along": [
+        -10.3,
+        8.5
+      ],
+      "mu_uv": [
+        0.748,
+        0.257,
+        0.99,
+        0.696
+      ],
+      "bake_uv": [
+        0.059,
+        0.004,
+        0.717,
+        0.813
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 44,
+      "area": 762.4,
+      "along": [
+        12.7,
+        64.7
+      ],
+      "mu_uv": [
+        0.03,
+        0.097,
+        0.696,
+        0.839
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.956,
+        0.956
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 12,
+      "area": 199.2,
+      "along": [
+        8.3,
+        12.7
+      ],
+      "mu_uv": [
+        0.704,
+        0.089,
+        0.742,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.996,
+        0.995
+      ]
+    }
+  ]
+}

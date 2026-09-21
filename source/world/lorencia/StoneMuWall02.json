@@ -1,0 +1,45 @@
+{
+  "item": "StoneMuWall02",
+  "mu_name": "StoneMuWall02",
+  "mu_name_from": "Lorencia's object slot 76, from the client's own table in WorldObjectCatalog.cs. MU names the run rather than the member, so there is no friendlier name than the file's.",
+  "world": "lorencia",
+  "object_type": 76,
+  "why_this_one": "32 placements. The MU wall: rendered masonry with the carved green face on it.",
+  "profile": "world",
+  "sheets": {
+    "c_wall04": "c_wall04.png",
+    "c_wall05": "c_wall05.png",
+    "c_wall06": "c_wall06.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. All opaque .OZJ.",
+  "sheet_materials": {
+    "c_wall04": "flagstone",
+    "c_wall05": "flagstone",
+    "c_wall06": "flagstone"
+  },
+  "sheet_scale_from": "How many times a sheet crosses the face it is on. MU's UVs put exactly one copy across, which was right for a 128-pixel painting of a whole wall and is wrong for a photograph of two metres of real stone: stretched over a whole wall it reads as a few enormous blotches rather than as masonry.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 44,
+      "area": 175979.1,
+      "along": [
+        -49.9,
+        147.4
+      ],
+      "mu_uv": [
+        -1.339,
+        -0.853,
+        0.999,
+        1.666
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.996,
+        0.914
+      ]
+    }
+  ]
+}

@@ -1,0 +1,222 @@
+{
+  "item": "TreasureChest01",
+  "mu_name": "TreasureChest01",
+  "mu_name_from": "Lorencia's object slot 59, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 59,
+  "why_this_one": "3 placements. A banded chest - dark boards, brass strapping and a keyhole, all in one 128 square.",
+  "still": true,
+  "still_from": "ZzzObject.cpp, WD_0LORENCIA: `case MODEL_TREASURE_CHEST: o->Velocity = 0.f; break;` against the 0.16 CreateObject gives every object. Its seven keys are a lid opening and shutting, and MU never plays them - the case exists to stop them. Nothing in the client opens it: there is no proximity test, no click and no server message that reaches this object. A chest by Harold's campfire that swings its own lid open and shut forever is what the default rate produces, and it is the thing the case is there to prevent.",
+  "profile": "world",
+  "sheets": {
+    "treasure_chest": "treasure_chest.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "treasure_chest": "timber"
+  },
+  "material_note": "Timber for the sheet, brass for its strapping. The bands are a quarter of it, and while a region could only be a whole-sheet material the argument was that metal there would put chrome on the boards between them. Regions are painted texel by texel now, so the bands can be brass without the boards following.",
+  "sheet_regions": {
+    "treasure_chest": [
+      {
+        "material": "brass",
+        "box": [
+          0.0,
+          0.235,
+          0.48,
+          0.285
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.0,
+          0.1,
+          0.06,
+          0.285
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.425,
+          0.1,
+          0.48,
+          0.285
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.13,
+          0.0,
+          0.35,
+          0.045
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.47,
+          0.155,
+          1.0,
+          0.195
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.47,
+          0.595,
+          1.0,
+          0.64
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.47,
+          0.155,
+          0.51,
+          0.64
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.955,
+          0.155,
+          1.0,
+          0.64
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.0,
+          0.64,
+          0.19,
+          0.96
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.19,
+          0.64,
+          1.0,
+          0.68
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.19,
+          0.955,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.19,
+          0.64,
+          0.235,
+          1.0
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.4,
+          0.64,
+          0.47,
+          1.0
+        ]
+      },
+      {
+        "material": "brass",
+        "box": [
+          0.955,
+          0.64,
+          1.0,
+          1.0
+        ]
+      }
+    ]
+  },
+  "region_note": "Fourteen boxes, picked off the picture as the cannon's were: the three straight runs of the lid-end's arch, the rails and stiles framing the upper and lower panels, and the lock plate whole. Checked against the art once written: 0.48 mean saturation and 0.53 luminance inside against 0.36 and 0.16 outside, 30% of the sheet.\n\nThe arch's curved shoulders are left out, on the cannon's rule: a box round a curve takes the dark board inside it, and a board given metallic 1.0 is a louder mistake than a stretch of band left timber.\n\nbrass rather than wrought_iron because the painting is yellow and catches light — brass.json's 0.44 and metallic 1.0.",
+  "sheet_pad": {
+    "treasure_chest": "edge"
+  },
+  "sheet_pad_from": "An atlas: lid, front, side and keyhole laid out side by side.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 32,
+      "area": 21922.9,
+      "along": [
+        -30.0,
+        29.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.375,
+        0.994,
+        1.02
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.716,
+        0.893
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 26,
+      "area": 35091.2,
+      "along": [
+        -30.0,
+        29.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.002,
+        0.996,
+        0.979
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.974
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 536.4,
+      "along": [
+        26.8,
+        34.4
+      ],
+      "mu_uv": [
+        0.004,
+        0.075,
+        0.194,
+        0.357
+      ],
+      "bake_uv": [
+        0.786,
+        0.336,
+        0.913,
+        0.526
+      ]
+    }
+  ]
+}

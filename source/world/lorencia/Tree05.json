@@ -1,0 +1,150 @@
+{
+  "item": "Tree05",
+  "mu_name": "Tree05",
+  "mu_name_from": "Lorencia's object slot 4, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 4,
+  "why_this_one": "20 placements. The same bare tree at a third of the triangles.",
+  "profile": "world",
+  "sheets": {
+    "tree_03": "tree_03.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "tree_03": "bark"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 28,
+      "area": 7295.5,
+      "along": [
+        -14.3,
+        8.7
+      ],
+      "mu_uv": [
+        -0.0,
+        0.006,
+        1.0,
+        6.003
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.653,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 21,
+      "area": 5777.5,
+      "along": [
+        -28.7,
+        6.8
+      ],
+      "mu_uv": [
+        -0.033,
+        0.006,
+        0.967,
+        5.714
+      ],
+      "bake_uv": [
+        0.18,
+        0.005,
+        0.808,
+        0.947
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 9,
+      "area": 3807.1,
+      "along": [
+        -6.1,
+        28.8
+      ],
+      "mu_uv": [
+        -0.116,
+        2.779,
+        0.945,
+        5.513
+      ],
+      "bake_uv": [
+        0.53,
+        0.005,
+        0.705,
+        0.457
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 3,
+      "area": 293.5,
+      "along": [
+        -25.7,
+        -5.7
+      ],
+      "mu_uv": [
+        -0.116,
+        4.265,
+        0.945,
+        5.513
+      ],
+      "bake_uv": [
+        0.663,
+        0.221,
+        0.882,
+        0.673
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 3,
+      "area": 151.9,
+      "along": [
+        -2.0,
+        1.4
+      ],
+      "mu_uv": [
+        -0.116,
+        4.265,
+        0.945,
+        5.513
+      ],
+      "bake_uv": [
+        0.663,
+        0.005,
+        0.825,
+        0.889
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 21,
+      "area": 6047.2,
+      "along": [
+        -6.7,
+        17.7
+      ],
+      "mu_uv": [
+        -0.033,
+        0.006,
+        0.967,
+        5.714
+      ],
+      "bake_uv": [
+        0.355,
+        0.005,
+        0.877,
+        0.947
+      ]
+    }
+  ]
+}

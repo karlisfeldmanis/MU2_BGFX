@@ -1,0 +1,24 @@
+{
+  "item": "Stone01",
+  "mu_name": "The small stone a meteor throws out where it lands",
+  "mu_name_from": "ZzzOpenData.cpp: `for (int i = 0; i < 2; i++) AccessModel(MODEL_STONE1 + i, L\"Data\\\\Skill\\\\\", L\"Stone\", i + 1)`, so Data/Skill/Stone01.bmd and Stone02.bmd. Filed under Skill like the bones a skeleton comes apart into, and thrown by the same ballistic arm.",
+  "kind": "debris",
+  "why_this_one": "A meteor's landing throws six, picked between the two at random: `for (int j = 0; j < 6; j++) CreateEffectFpsChecked(MODEL_STONE1 + rand() % 2, o->Position, o->Angle, o->Light)`. See Fire01.json's impact_from. Both models are built because the client rolls for each of the six and a pile of one shape reads as a pattern.",
+  "mesh": "Stone01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Stone01.bmd, from MuMain. Ten triangles in one mesh, about 13 units across - a chip. Stone02 is the larger of the pair at 38 triangles and 24 units.",
+  "parts": [
+    {
+      "group": "fire02",
+      "sheet": "fire02.png",
+      "blend": "opaque",
+      "note": "Data/Skill/fire02.OZJ, the same 64-square the meteor's own rock wears - dark crust with veins of orange, mean (41, 24, 21), no alpha. That sharing is the point rather than a saving: what lands and what it scatters are pieces of one thing.\n\nDrawn solid and lit, on the rule assets/effects/bones sets out: a stone lying on the ground is a thing and not a light, so this is not additive and it writes depth."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "The base the throw multiplies. The shared birth for MODEL_STONE1 at the default sub-type rolls `o->Scale = (float)(rand() % 4 + 8) * 0.1f`, 0.8 to 1.1 per stone, exactly as a bone's is. See client/core/Meteor.cs.",
+  "lift": 0,
+  "lift_from": "Nothing. The stones are created at `o->Position` - the meteor's, which the landing has just pinned to the terrain height - where a skeleton's bones are lifted 150 and 100 units off the corpse before they are thrown. They start on the floor and are thrown up out of it.",
+  "frames": 32,
+  "frames_from": "`o->LifeTime = rand() % 16 + 32` in the same branch: 32 to 47 reference frames, 1.28 to 1.88 s, which is the bones' number because it is the bones' code.",
+  "flight_note": "The same ballistic arm in ZzzEffect.cpp that throws MODEL_BONE1, MODEL_BONE2, MODEL_BIG_STONE and the broken ice at sub-type 0, and the reason a skeleton coming apart and a meteor striking the ground scatter alike. Gravity is `rand() % 16 + 8` a frame; the tumble is `Angle[0] and Angle[1] += 0.5 * LifeTime` a frame, so it slows as the stone ages; on touching the terrain the horizontal is damped `*= 0.6` a frame, the vertical is set to `1.0 * LifeTime` as a bounce that shrinks with age and is cut to nothing under half a unit, and `Alpha -= 0.1` a frame begins.\n\nThe one departure is the bones' and is recorded there in full: the birth computes its scatter into `o->Direction` and the mover integrates `o->HeadAngle`, which nothing on that path assigns, so the real client throws these on whatever the recycled OBJECT slot last held. The vector the birth plainly intends is what is used. See assets/effects/bones/Bone01.json and client/core/Bones.cs, which this shares outright."
+}

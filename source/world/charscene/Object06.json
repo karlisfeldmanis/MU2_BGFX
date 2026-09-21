@@ -1,0 +1,89 @@
+{
+  "item": "Object06",
+  "mu_name": "Object06",
+  "mu_name_from": "World 74's object table is a straight run, not Lorencia's named blocks: the map's type is the model index and the client loads index i from Object{i+1}.bmd (MapManager.cpp:1121, LoadData.cpp:28). So the asset keeps the client's own name - there is no friendlier one, and the placement list carries this.",
+  "world": "charscene",
+  "object_type": 5,
+  "why_this_one": "A single grass card, 24 triangles of it, and the only cut-out on the map that is not a tree. so_grass.OZT carries a real alpha channel.",
+  "profile": "world",
+  "sheets": {
+    "so_grass": "so_grass.png"
+  },
+  "sheet_from": "Data/Object75/*.OZJ and *.OZT, from MuMain, decoded at MU's own size.",
+  "sheet_materials": {
+    "so_grass": "foliage"
+  },
+  "material_note": "Flagstone, which is what Lorencia's cut stone already takes - StoneWall01, StoneMuWall01 and StoneStatue01 all read as worked block rather than boulder face.",
+  "cutout": [
+    "so_grass"
+  ],
+  "cutout_from": "Declared rather than sniffed, for the reason in tests/cutouts.py: the .OZT carries a real alpha channel.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 22596.2,
+      "along": [
+        46.5,
+        56.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.497,
+        0.497
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 12090.6,
+      "along": [
+        -63.3,
+        36.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.003,
+        0.503,
+        0.497,
+        0.997
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 12090.6,
+      "along": [
+        4.6,
+        40.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.503,
+        0.003,
+        0.997,
+        0.497
+      ]
+    }
+  ]
+}

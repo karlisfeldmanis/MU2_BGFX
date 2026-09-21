@@ -1,0 +1,170 @@
+{
+  "item": "Mace01",
+  "mu_name": "Mace",
+  "mu_name_from": "OpenMU's Weapons.cs: `CreateWeapon(2, 0, 0, 0, 1, 3, true, \"Mace\", 7, 7, 13, 15, 21, 0, 0, 100, 0, 0, 0, 0, 1, 0)` - group 2, index 0, drop level 7. mu.db's items table agrees: group 2, index 0, \"Mace\", Item/Mace01.bmd, drop_level 7. MODEL_SMALLMACE = MODEL_MACE + 0 in _enum.h names the same slot from the client's side, and MuWeapons.cs's own row - `new(\"Mace\", \"Mace01.bmd\", WeaponStance.Sword, PlayerClasses.Knight, TwoHanded: false, ...)` - is where stance and stats.two_handed both come from.",
+  "why_this_one": "The one gap in a level-9 Hound's drop pool. Loot.cs reads everything from drop level 0 to 9 as what a Hound can leave, and every other row in that band was already built; this is the last one.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, which is what decides the damage, the swing rate and who is allowed to hold it. Copied from OpenMU's 0.75 initialiser rather than restated, so the call it came from is written out beside it and the two can be read against each other in one glance.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs.",
+    "call": "CreateWeapon(2, 0, 0, 0, 1, 3, true, \"Mace\", 7, 7, 13, 15, 21, 0, 0, 100, 0, 0, 0, 0, 1, 0)",
+    "group": 2,
+    "number": 0,
+    "drop_level": 7,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 3,
+    "minimum_damage": 13,
+    "maximum_damage": 15,
+    "attack_speed": 21,
+    "durability": 100,
+    "strength_requirement": 100,
+    "agility_requirement": 0,
+    "two_handed": false,
+    "two_handed_from": "MuWeapons.cs's own row states TwoHanded: false, and width 1 (not 2) in the call above agrees - see Axe01.json's width_note for how OpenMU keeps two-handedness in that column and why the two must not disagree."
+  },
+  "sheets": {
+    "mace02": "mace02.png"
+  },
+  "sheet_from": "Data/Item/mace02.OZJ (32x32), from MuMain - the .bmd names mace02.jpg, one mesh, 36 triangles. Every copy under LEGACY is byte-identical to MuMain's, so there is no larger version of MU's own painting anywhere in the tree.\n\nLEGACY/textures-hd carries a 256x64 four-times neural upscale of this same file and it is not the source: upscale.py's own docstring names this exact folder as the failure this pipeline was built against - a model let redraw a sword's guard invented a faceted ridge and studs MU never painted, and what would happen to a 32-square asked to become 256 across is worse, not better. mace02.OZJ at 32x32 is what MU shipped and what this is built from; the project's own upscale runs at the profile's capped 3x from there.",
+  "sheet_note": "One small painting, three colours: a dark blued-steel head across the top third, a thin brass band, and a wood haft below. Mean of the head region is near-black at low chroma; the haft is warm mid-brown; the band is a few gold texels between them.",
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, one-handed. Actions 4 and 17, the same swing the other one-handed blunt-and-edge weapons share.",
+  "islands_from": "Six islands for 36 triangles - the smallest sheet built for a weapon so far and the most islands per triangle of any weapon in the tree, because the head's flanges are each their own UV shell even though all four share one material.\n\nIsland 0 is the head proper, 12 triangles at mu_uv v 0.59-0.999 - the dark blued-steel top third of the sheet. steel.\n\nIsland 1 is the haft, 12 triangles at mu_uv v 0.001-0.415 - the warm wood-brown bottom third. It arrived as steel, which is the profile's default for anything new and the trap Wizard01 records; a mace's shaft is a turned length of timber and plank.json's own note calls that material out by name for exactly this part. wood.\n\nIslands 2 through 5 are three triangles each, 12 together - the flanges around the head, four small facets that came out as four separate UV shells rather than one because they do not share edges with each other or with island 0 in the unwrap MU gave them. All four sample the same steel head region of the sheet (mu_uv v 0.79-0.98) and stay steel.\n\nThe thin brass band between the head and the haft, visible in the sheet at the seam around v 0.59-0.60, is a few texels tall and does not get a UV shell of its own - it is caught inside island 0's boundary and ships as steel, at steel's colour. See open_question.",
+  "open_question": "The brass band at the neck of the head is a handful of texels wide and sits inside the head's own UV island, the same limit the Bull Fighter's horns and the Hound's teeth met at a larger scale. What is lost is the band's own dull polish against steel's; what is kept is the colour, which is the sheet's own paint, carried through steel's grain rather than brass's.\n\nA second finding from the same look, since fixed: a mauve-pink band along the neck of the head that is not in MU's paint. An earlier note here blamed the bake margin; measured, that was wrong - the albedo bake has zero pink texels and the basecolor had thirty-eight, all at texels the sheet paints under 24/255. The cause was the steel F0 pull in build_maps.py, which lifts each channel about one mean and so keeps a texel's channel ratios: a near-black JPEG texel at (19, 10, 10) carries a 2:1 red ratio that is the JPEG's own chroma rounding, invisible at black, and the pull carried it up to mid-grey where it read as pink. Judged in Blender from the angle the band showed, with a candidate map in the bench: fixed by fading a texel's chroma toward grey in proportion to how far it sits under that floor, before the pull (BLACK_FLOOR_LINEAR in build_maps.py). Every metal in the tree now gets the same rule; it only touches texels darker than 24/255 and only their tint.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 12,
+      "area": 1573.4,
+      "along": [
+        17.3,
+        89.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.59,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.512,
+        0.937,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "wood",
+      "triangles": 12,
+      "area": 740.5,
+      "along": [
+        -20.5,
+        17.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.415
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.592,
+        0.502
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 3,
+      "area": 245.0,
+      "along": [
+        65.2,
+        74.0
+      ],
+      "mu_uv": [
+        0.125,
+        0.802,
+        0.303,
+        0.983
+      ],
+      "bake_uv": [
+        0.601,
+        0.005,
+        0.705,
+        0.205
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 3,
+      "area": 245.0,
+      "along": [
+        54.3,
+        63.2
+      ],
+      "mu_uv": [
+        0.01,
+        0.827,
+        0.234,
+        0.902
+      ],
+      "bake_uv": [
+        0.601,
+        0.356,
+        0.732,
+        0.441
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 3,
+      "area": 245.0,
+      "along": [
+        65.2,
+        74.0
+      ],
+      "mu_uv": [
+        0.086,
+        0.821,
+        0.295,
+        0.947
+      ],
+      "bake_uv": [
+        0.601,
+        0.204,
+        0.724,
+        0.354
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 3,
+      "area": 245.0,
+      "along": [
+        54.3,
+        63.2
+      ],
+      "mu_uv": [
+        0.045,
+        0.79,
+        0.139,
+        0.927
+      ],
+      "bake_uv": [
+        0.005,
+        0.511,
+        0.085,
+        0.592
+      ]
+    }
+  ]
+}

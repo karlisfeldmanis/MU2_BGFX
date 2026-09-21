@@ -1,0 +1,91 @@
+{
+  "item": "GloveElf01",
+  "mu_name": "Vine Gloves",
+  "mu_name_from": "MuMain loads glove indexes 10 to 14 from GloveElf{i+1}, not GloveMale (ZzzOpenData.cpp line 151: `AccessModel(MODEL_GLOVES + i + 10, ..., L\"GloveElf\", i + 1)`), so index 10 is GloveElf01, which openmu's 0.75 Armors.cs names the Vine Gloves. mu.db agrees: code 5130, group 10 index 10, Player/GloveElf01.bmd. There is no GloveMale11 on disk, which is how the numbering was noticed.",
+  "why_this_one": "One of the four pieces of armour a Budge Dragon can leave, and the Elf's: the Vine set is hers as Pad is the wizard's and Leather the knight's. Drop level 4, the dragon's own, so it falls plain.\n\nThe first Elf-set part in the tree, and the file naming is the thing worth knowing about it: the Male files run to index 9 and the five elf sets are a second series with their own prefix.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 114. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(10, \"Vine Gloves\", 4, 2, 4, 22, 30, 60, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so `armor.Group = (byte)(slot + 5)` makes the group 10.",
+    "group": 10,
+    "number": 10,
+    "drop_level": 4,
+    "drops_from_monsters": true,
+    "drop_level_note": "Four, the Budge Dragon's own level. In the pool at +0 and out of it for anything smaller. See shared/Loot.Affordable.",
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 2,
+    "attack_speed": 4,
+    "attack_speed_note": "Four, half the Leather Gloves' eight. Recorded and unread: shared/Combat.cs takes attack speed off the weapon row alone.",
+    "defense_note": "Two points of defence, in the row and not read by anything yet. Flagged rather than left to look implemented.",
+    "durability": 22,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Elf alone. The only piece in the dragon's pool with an agility gate, sixty, which is the Elf set's shape throughout."
+  },
+  "sheets": [
+    "gloves_04c.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/gloves_04c.OZJ (64x64) and Data/Player/hide.jpg, from MuMain. The .bmd names gloves_04c.jpg and hide.jpg; 146 of the 152 triangles are on the first and 6 on the second. The `c` is MU's own suffix for the elf recolour of the 04 sheet - the Pad Gloves' gloves_04 is the same layout in violet and gold.",
+  "sheet_note": "A dark brown bracer from two sides, mean (69, 43, 30): tooled bronze-brown scrollwork over darker hide, black straps across the wrist and a fringe of small gilt tassels at the bottom edge, on a dull red-brown ground. Warmer and much darker than the Pad sheet it shares a layout with, and the ornament is raised leather rather than a metal plate - the highlights are the same brown lifted, not a different colour.\n\nhide is MU capping the openings, a 9x9 solid black, as on ArmorMale10.",
+  "material_note": "leather on both islands, which is the profile's default and here it is also the answer. The sheet is dark hide with the scrollwork raised in the same brown - the highlights are the leather lifted, not a metal laid on it - so unlike the Pad Gloves, whose layout this shares, there is no plate to argue for brass. The gilt tassels at the wrist and the black straps are a few texels each on an island that is otherwise all hide; the island is the unit, and majority is not close.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 76,
+      "area": 1440.9,
+      "along": [
+        -11.7,
+        7.2
+      ],
+      "mu_uv": [
+        0.031,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.941,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 76,
+      "area": 1448.4,
+      "along": [
+        -11.7,
+        7.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.964,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.994,
+        0.995
+      ]
+    }
+  ]
+}

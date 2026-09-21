@@ -1,0 +1,36 @@
+{
+  "tileset": "lorencia",
+  "mu_name": "Lorencia ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "tilegrass01.png",
+    "TileGrass02": "tilegrass02.png",
+    "TileGround01": "tileground01.png",
+    "TileGround02": "tileground02.png",
+    "TileGround03": "tileground03.png",
+    "TileWater01": "tilewater01.png",
+    "TileWood01": "tilewood01.png",
+    "TileRock01": "tilerock01.png",
+    "TileRock02": "tilerock02.png"
+  },
+  "sheet_from": "Data/World1/Tile*.OZJ, from MuMain. The slot each one answers to is the client's own table, in TerrainTileSet.cs - nothing in the map file names its textures.",
+  "sheet_materials": {
+    "TileGrass01": "grass",
+    "TileGrass02": "sand",
+    "TileGround01": "cobble",
+    "TileGround02": "flagstone",
+    "TileGround03": "flagstone",
+    "TileWater01": "water",
+    "TileWood01": "timber",
+    "TileRock01": "rock",
+    "TileRock02": "rock",
+    "TileGrass01_over": "grass",
+    "TileGrass02_over": "sand",
+    "TileGround01_over": "sand",
+    "TileGround02_over": "flagstone",
+    "TileRock02_over": "rock"
+  },
+  "material_note": "Read off the art rather than off the names, which do not survive looking at them. TileGrass02 is not grass - it is fine dry dirt, and gets sand. TileGround01 is setts with deep mortar joints and TileGround02 is butted flagstone, which is a real enough difference to be two materials: 0.45 of depth against 0.20. TileGround03 is the ornate floor of Lorencia's houses and is flagstone too, worked rather than laid. The two rocks and the decking take materials that already existed.\n\nTileGround01_over followed its sheet. It was declared grass when it faded the road into wild grass and stayed grass when the sheet under it became trench dirt, which left the one place on the map where the picture and the material disagreed \u2014 and the material is not decoration, it is what the derived relief and roughness are computed from. Grass is 0.18 deep at 0.92 rough; sand is 0.10 at 0.88. Dirt embossed to the depth of a lawn is a specific wrongness, not a rounding. It takes sand now, which is what TileGrass02 and TileGrass02_over already say about the same sheet.",
+  "open_question": "Water does not move. The client scrolls it one repetition every twenty seconds with a wind displacement across it, which is a shader rather than a material, and 12% of Lorencia is water.",
+  "tile_note": "MU's own nine, and that is the decision rather than the absence of one.\n\nSeven of them wore photoscans \u2014 wild grass, stone floor, dark tile, hex, trench dirt and a seamless rock, each chosen on the Ground tab against the town and each defensible on its own. What they were not is Lorencia. The palette MU painted is a single hand's work across all nine tiles and every building standing on them, and a measured surface dropped into it is right about the stone and wrong about the picture.\n\nSo the art is MU's and the work is everything else this pipeline does to it: upscaled threefold at detail 0.65, seam-healed because MU's sheets do not tile \u2014 tileground02's top and bottom rows differ by 65 of 255 where a neighbouring row differs by 8 \u2014 and given a normal and an ORM derived from the painting's own luminance. Which is a guess, and is the guess that works on hand-painted art: what is dark in MU's tiles is dark because it is deep.\n\nNo scales and no tints. A scale here is a repeat count against the sheet's own texel count, and MU's rule of 64 texels to a tile already answers it \u2014 every sheet sits at its natural reach, which is what the client draws."
+}

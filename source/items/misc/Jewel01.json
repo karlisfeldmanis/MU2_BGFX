@@ -1,0 +1,71 @@
+{
+  "item": "Jewel01",
+  "mu_name": "Jewel of Bless",
+  "mu_name_from": "ZzzOpenData.cpp line 910 loads the jewels as a run: `for i in 0..n: AccessModel(MODEL_POTION + i + 13, L\"Data\\\\Item\\\\\", L\"Jewel\", i + 1)`, so group 14 number 13 is Jewel01.bmd and number 14 is Jewel02.bmd. _enum.h agrees by name - `MODEL_JEWEL_OF_BLESS = MODEL_POTION + 13`. OpenMU's 0.75 Jewels.cs puts the Jewel of Bless at group 14, number 13. mu.db carries neither jewel row, so the two sources here are the client and OpenMU and they agree.",
+  "why_this_one": "The first of the three rows that make the Chaos Machine possible, and the reason for building any of them now: `docs/chaos-machine.md` found that the +10 combination - the one recipe MU2's item model can already express, since Held carries a Refinement and Loot.MostRefined is eleven - needs a Jewel of Chaos, a Jewel of Bless and a Jewel of Soul and nothing else this project does not have.\n\nIt is also the row that corrected a mistake in shared/Loot.cs. That file said the jewel drop group 'can never be drawn' because all three rows carry DropsFromMonsters = false. They can: the flag is read only when DefaultDropGenerator builds the 30% random-item pool, and the 0.1% jewel group filters its own PossibleItems list without ever consulting it. Jewels fall in 0.75. See Prize.Jewel.\n\nNothing in Lorencia leaves this one, and that is the table's own answer rather than an omission: drop level 25 against a Skeleton Warrior at 19, the biggest thing in the town. It is here to be made, carried and spent, and it will start falling on the first map with monsters in the twenties.",
+  "profile": "weapon",
+  "profile_note": "Potion01's and Gem05's reasoning, unchanged: the profile is about the art, not about what the thing does. A jewel is a small painted sheet on a made object looked at from arm's length, which is what the weapon profile describes. The default material is overridden once the mesh arrives and its islands can be read.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Jewels.cs, CreateJewelOfBless. The 0.75 table, which is the version this server is being built to.",
+    "call": "itemDefinition.Name = \"Jewel of Bless\"; Number = 13; Group = 14; DropsFromMonsters = false; DropLevel = 25; Durability = 1; Width = 1; Height = 1; Value = 150; AddItemToJewelItemDrop(itemDefinition)",
+    "call_note": "Written out field by field rather than through a Create helper, which the jewels are alone among the 0.75 items in doing. The last line is the one that matters most and is the easiest to miss: AddItemToJewelItemDrop puts the row into the drop group GuidHelper.CreateGuid<DropItemGroup>(4), which GameConfigurationInitializerBase made at Chance = 0.001.",
+    "group": 14,
+    "number": 13,
+    "drop_level": 25,
+    "drops_from_monsters": false,
+    "jewel": true,
+    "drop_level_note": "Twenty-five, and no ceiling. The jewel branch skips the twelve-level gap that bounds every other drop - DefaultDropGenerator.GenerateItemFromGroup short-circuits it on `isJewel` - so this falls from anything level 25 or over, forever, rather than going out of range as a monster outgrows it. That is why a Jewel of Bless is still dropping in the last map of the game and a Small Axe is not.\n\nNothing in Lorencia reaches it. The town's eight breeds top out at the Skeleton Warrior's 19, so until there is a second map this row exists and never falls. See Loot.Jewels.",
+    "flag_note": "DropsFromMonsters is false and that is transcribed rather than corrected, because it is the true value and it does a real job: it keeps the jewel out of the 30% random-item pool, where a drop level of 25 would otherwise put it in front of every mid-level monster in the game at ordinary item rates. The 0.1% group is the only way it falls. The two flags are separate questions and shared/Loot.cs used to treat them as one - see Prize.Jewel for the correction.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "value": 150,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes_note": "No CharacterClasses argument at all, which for a row written field by field means the definition's collection is left empty and everybody may hold it. Right for a jewel: it is not worn, it is spent."
+  },
+  "refinement_note": "No plus, and by the ordinary rule rather than by an exception. Prize.TakesRefinement is `group <= Boots`, which is eleven, and this is group 14 - so Loot.Refinement returns nought without looking at the level. OpenMU says the same thing from the other side by leaving MaximumItemLevel at its default. Nothing to record here beyond the fact that the two agree.",
+  "stacking_note": "MU stacks jewels in one cell by counting them in the item's durability, which is how a stack of ten Jewels of Bless is one 1x1 item and not ten. MU2 has no stacking on Held yet - the two ammunition rows are the only place a count exists, and they carry it as shots in a quiver. Not needed for a drop, which is always one; needed before the Chaos Machine, which asks for two Blesses at +11. Written down here rather than built, because the shape of it belongs with the machine.",
+  "sheets": {
+    "blue_jewel": "blue_jewel.png"
+  },
+  "sheet_from": "Data/Item/blue_jewel.OZJ, from MuMain's own bin/Data. Jewel01.bmd names blue_jewel.jpg and all twelve of its triangles are on it - one sheet, one submesh, which is true of all three jewels.",
+  "sheet_note": "Eight pixels square, which is the smallest sheet in the built catalogue by a wide margin - the pearl is 32, the apple and the gold 16. At that size it is not a picture of anything: it is a radial ramp, bright at the edges and dark in the middle, and MU's jewel reads as a jewel because the mesh is faceted and the ramp catches the facets, not because anything is drawn on it.\n\nThe blue is made by pinning a channel. Blue sits at 252-255 across every one of the 64 texels while red and green swing from 81 to 255, so the sheet is one greyscale ramp with the blue held at the ceiling. red_jewel is the same construction with red pinned instead - see Jewel02 - which is why the Bless and the Soul are the same object in two colours. yellow_jewel is not built that way and is a real gradient; see Jewel15.\n\nWhat that means downstream: there is nothing here for an upscale to recover, and a model pass on 64 texels would be inventing a picture rather than resolving one. The mesh is where this item's shape lives.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ - decode_texture reports 'none (fully opaque)' - and the mesh is a closed solid rather than a card, so there is nothing to cut.",
+  "flat_shaded": true,
+  "flat_shaded_why": "MU authored this mesh with exact per-face normals - all 36 corners sit 0.0 degrees from the face they belong to - because a cut gem is facets and nothing else. The weld in clean_lowpoly averages those across each shared position, and an octahedron is 8 positions holding 12 triangles, so almost every vertex is a facet junction: the built glb came out 34.5 degrees from its faces on average and read as a smooth blob. Clearing the custom normals hands the shading to the crease marks, and since every edge here is far past SHARP's 66 degrees the result is exactly the flat facets MU shipped. Safe for this asset precisely because MU's normals ARE the face normals; see renormal, and Gem05, whose are 27.9 degrees off and must keep them.",
+  "material_note": "glass, over the weapon profile's default of steel. Metallic 0 and roughness 0.12 with no grain at all, and each of the three clauses is doing work here.\n\nMetallic 0 because a gem is a dielectric: it keeps its own colour under a white highlight, where metallic 1 tints the highlight with the albedo and gives a coloured ball bearing. Steel's f0 pull was also dragging MU's 8x8 ramp toward its own 0.56 reflectance, which is what made all three read as machined rather than cut.\n\nNo grain because that is the whole point of a facet. steel declares a brushed grain at scale 520, and on a 32-triangle solid that is what the horizontal streaking across every face was - a relief map ridging a surface that is optically flat by definition. It also fights the flat_shaded fix directly: there is no sense in restoring a hard edge between facets and then rippling the facets.\n\nglass rather than a new gem material, on glass's own naming argument: it is named for the surface and not the object, and 'a window pane, a bottle and a crystal ball are one surface'. A cut gem is that surface. Roughness 0.12 was settled against the orb, which is the same polished dielectric; if these want it tighter the lever is an override on the asset, not a move in the library.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 12,
+      "area": 931.0,
+      "along": [
+        -8.7,
+        8.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.993,
+        0.968
+      ]
+    }
+  ],
+  "upright": true,
+  "upright_from": "RenderObjectScreen keeps an angle per model and shows the jewels as authored, point down and point up - a jewel in a cell in MU is a diamond, never a lozenge on its side. The Bless happened to stand on its point under the longest-axis rule, 0.251 high against 0.201 across, and is declared so it does not depend on that margin."
+}

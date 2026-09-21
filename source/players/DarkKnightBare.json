@@ -1,0 +1,19 @@
+{
+  "item": "DarkKnightBare",
+  "mu_name": "Dark Knight, no armour",
+  "kind": "character",
+  "trade": "knight",
+  "trade_from": "OpenMU's ClassDarkKnight: 28 strength, 20 agility, 25 vitality, 10 energy at level one, and the class the arena has always stood up. See FairyElf.json for what the field is for.",
+  "parts": [
+    "HelmClass02",
+    "ArmorClass02",
+    "PantClass02",
+    "GloveClass02",
+    "BootClass02"
+  ],
+  "note": "The same character as DarkKnight with nothing equipped. MU has no naked body model - what a class wears with no armour is a set of five parts of its own, and they are worn exactly the way plate is: skinned to the same rig, five files, loaded together at the origin.",
+  "parts_from": "MuPlayer.PartsForClass in the old client. The numbering runs one over MU's zero-based classes, so Class01 is the Dark Wizard, Class02 the Dark Knight and Class03 the Elf. The Class2xx and Class3xx sets are the later class changes.",
+  "why_it_is_here": "It is the character underneath the armour, and the one thing in the viewer that has a face on it. Everything built so far has been a made object - plate, a blade, a shield - judged on whether a metal reads as metal. Skin is the first surface here that is not manufactured, and a face is the one part of a character a player looks at directly, so it is the hardest thing this pipeline has been asked to carry and the most useful thing to be able to look at.",
+  "hands": "Empty, deliberately. This entry exists to show the body, and a sword in front of the chest is the one thing guaranteed to be in the way of it. DarkKnight is the armed one.",
+  "rig": "player.bmd, the same rig the plate set is skinned to - which is what lets the two be stepped between and compared."
+}

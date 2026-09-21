@@ -1,0 +1,119 @@
+{
+  "item": "Axe01",
+  "mu_name": "Small Axe",
+  "mu_name_from": "MuProtocol/Items.cs lists axe group index 0 as \"Small Axe\" against Item/Axe01.bmd, and the old client's MuWeapons.cs agrees by name. The numbering runs the same way the swords do - Axe01.bmd is axe index 0 - which is the pattern Sword01 established.",
+  "why_this_one": "It is a weapon the character in the viewer can actually hold at the same time as the shield. MuWeapons.cs records it as one-handed, allowed to the Knight, and of WeaponStance.Sword - so it goes in the right hand beside the Plate Shield and needs no animation the character is not already playing. A two-handed axe would have wanted a different stance and an empty left hand.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, which is what decides the damage, the swing rate and who is allowed to hold it. Copied from OpenMU's 0.75 initialiser rather than restated, so the call it came from is written out beside it and the two can be read against each other in one glance.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, not Season 6's - the two agree on this row and disagree on others, and 0.75 is the version this server is being built to.",
+    "call": "CreateWeapon(1, 0, 0, 0, 1, 3, true, \"Small Axe\", 1, 1, 6, 20, 18, 0, 0, 50, 0, 0, 0, 1, 1, 1)",
+    "group": 1,
+    "number": 0,
+    "drop_level": 1,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above and were being read past: the bool before the name is dropsFromMonsters and the int after it is the drop level. They are lifted out here because the loot pool is now the built catalogue gated by this number - see shared/Loot.cs. Arrows, bolts and scrolls are shop stock in the original and fall from nothing, which is what the flag says and why a spider cannot leave a quiver.",
+    "slot": 0,
+    "width": 1,
+    "width_note": "width is carried because it is where OpenMU keeps two-handedness: `if (group < Bows && width == 2)` sets IsTwoHandedWeaponEquipped. It is not read as the two_handed flag above - that one is the client's, out of MuWeapons.cs - but the two must agree, and a row where they do not is a transcription error caught for free.",
+    "height": 3,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 1,
+    "maximum_damage": 6,
+    "attack_speed": 20,
+    "attack_speed_note": "attack_speed is a stat and not a rate. OpenMU adds it whole to the character's AttackSpeed - `AttackSpeed += 1 * AttackSpeedByWeapon` in CharacterClassInitialization - and the client then spends that as `PlaySpeed = base + AttackSpeed * 0.004` on the attack action. So a weapon makes its own animation run faster, and the swing rate follows from the animation. The Kris at 50 is more than twice the Small Axe at 20 and it is visible in the arm.",
+    "durability": 18,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ]
+  },
+  "sheets": {
+    "Axes02": "axes02.png"
+  },
+  "sheet_from": "Data/Item/Axes02.OZJ (32x32), from MuMain. The .bmd names Axes02.jpg and this is the file behind it.",
+  "sheet_note": "32x32 is the whole of what MU shipped for it. find_source turned up one other copy, remaster_one's at 64x64 and exactly 2x - the shape that tool warns about by name, and the same tree that upscaled Data/Player in place. MuMain's is the art.",
+  "material_note": "Three materials on forty-eight triangles, which is the most varied item built so far. Read off the sheet by cropping each island at its own mu_uv with V flipped - the haft comes out unmistakably brown against a grey head.",
+  "open_question": "wood's roughness is a reasoned figure and not a swept one. tests/materials.sh scales a whole item, so it can only judge a single-material asset, and this one is three. Judging wood on its own needs the sweep to rebuild one material at a time.",
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, one-handed - an axe this small is held the way a sword is, and MU gives it the sword's stance rather than an axe one. Actions 4 and 17.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 10,
+      "area": 703.3,
+      "along": [
+        17.1,
+        83.5
+      ],
+      "mu_uv": [
+        0.002,
+        0.385,
+        0.169,
+        0.989
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.71,
+        0.543
+      ],
+      "note": "the haft, a warm brown grained strip down the left of the sheet. The only wood in the project so far, and the reason assets/materials has a wood in it."
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 26,
+      "area": 1230.8,
+      "along": [
+        56.4,
+        93.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.996,
+        0.996
+      ],
+      "note": "the head. Twenty-six of the forty-eight triangles, sampling the whole sheet, and the one place in this item where blade steel is the right answer rather than plate - an axe edge is ground."
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 12,
+      "area": 502.5,
+      "along": [
+        -13.3,
+        17.1
+      ],
+      "mu_uv": [
+        0.852,
+        0.372,
+        0.993,
+        0.995
+      ],
+      "bake_uv": [
+        0.114,
+        0.005,
+        0.803,
+        0.745
+      ],
+      "note": "a dark grey band, the other face of the head's mount. Grey rather than brown, so metal rather than timber."
+    }
+  ]
+}

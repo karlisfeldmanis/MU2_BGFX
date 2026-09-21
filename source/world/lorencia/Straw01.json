@@ -1,0 +1,156 @@
+{
+  "item": "Straw01",
+  "mu_name": "Straw01",
+  "cover": false,
+  "cover_from": "Cut-out grass on its sheet, and a bale rather than ground cover: it keeps its shadow. See cover in pipeline/index.py.",
+  "mu_name_from": "Lorencia's object slot 102, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 102,
+  "why_this_one": "8 placements. A straw bale or reed bundle, one cut-out sheet.",
+  "profile": "world",
+  "sheets": {
+    "grass_01": "grass_01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "grass_01": "foliage"
+  },
+  "cutout": [
+    "grass_01"
+  ],
+  "cutout_from": "Real alpha in the .OZT.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 24896.1,
+      "along": [
+        -99.6,
+        98.5
+      ],
+      "mu_uv": [
+        0.161,
+        0.018,
+        0.804,
+        0.988
+      ],
+      "bake_uv": [
+        0.006,
+        0.558,
+        0.357,
+        0.814
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 36,
+      "area": 44642.2,
+      "along": [
+        -103.1,
+        100.9
+      ],
+      "mu_uv": [
+        0.012,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.54,
+        0.546
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 24896.1,
+      "along": [
+        -99.6,
+        98.5
+      ],
+      "mu_uv": [
+        0.161,
+        0.018,
+        0.804,
+        0.988
+      ],
+      "bake_uv": [
+        0.369,
+        0.558,
+        0.721,
+        0.814
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 36,
+      "area": 44642.2,
+      "along": [
+        -103.1,
+        100.9
+      ],
+      "mu_uv": [
+        0.012,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.278,
+        0.006,
+        0.813,
+        0.27
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 8,
+      "area": 24896.1,
+      "along": [
+        -101.7,
+        96.4
+      ],
+      "mu_uv": [
+        0.161,
+        0.018,
+        0.804,
+        0.988
+      ],
+      "bake_uv": [
+        0.824,
+        0.006,
+        0.994,
+        0.531
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 36,
+      "area": 44642.2,
+      "along": [
+        -105.2,
+        98.8
+      ],
+      "mu_uv": [
+        0.012,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.282,
+        0.813,
+        0.546
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "item": "StoneStatue01",
+  "mu_name": "StoneStatue01",
+  "mu_name_from": "Lorencia's object slot 40, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 40,
+  "why_this_one": "7 placements. A carved figure on a plinth.",
+  "profile": "world",
+  "sheets": {
+    "stone_statue02": "stone_statue02.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "stone_statue02": "flagstone"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 40,
+      "area": 132769.1,
+      "along": [
+        -56.5,
+        54.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        1.001,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.962
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 52,
+      "area": 14392.1,
+      "along": [
+        6.3,
+        27.2
+      ],
+      "mu_uv": [
+        0.004,
+        0.002,
+        0.93,
+        0.998
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.744,
+        0.768
+      ]
+    }
+  ]
+}

@@ -1,0 +1,746 @@
+{
+  "world": "lorencia",
+  "summary": "Corrections to MU's own placement list, one entry per thing that is wrong in the data.",
+  "why": [
+    "MU2 extracts Lorencia's placements from the client's own files and does not edit them,",
+    "which is the right default and stays the default: the extraction is a measurement, and a",
+    "measurement you correct in place is a measurement you can no longer check. Everything in",
+    "the town is drawn exactly where the map says.",
+    "A handful of places the map is simply wrong, and this is where that is written down. The",
+    "test for an entry is that the data disagrees with itself rather than with taste - a candle",
+    "half a metre above the table it stands on is not a judgement about how Lorencia should",
+    "look, it is a table and a candle that cannot both be right.",
+    "Matched by model and position rather than by index, because an index into a list nobody",
+    "here writes is a number that means nothing and moves the moment the extractor changes.",
+    "Each entry says what it saw and what it did, because the next person to read this will",
+    "reasonably wonder why anybody thought they knew better than the game."
+  ],
+  "fixes": [
+    {
+      "model": "Candle01",
+      "near": [
+        125.31,
+        122.53
+      ],
+      "height": 2.26,
+      "was": 2.7,
+      "why": "Sat 0.44 m above the table it stands on. The table beneath it is Furniture04, placed at 1.40 m and 0.86 m tall, so its top is at 2.26; the candle was placed at 2.70 with its own base at zero, and floated.\n\nChecked against the other five before touching this one, because one candle in the air is a bug in the candle and six is a bug in the maths. The other five sit within 6 cm of whatever is under them — three on Furniture05 at +0.05, one on Furniture04 at -0.01, one on Furniture06 at -0.06 — so the terrain, the units and the model origins all agree. This one placement disagrees with them.\n\nThe same table is itself placed 0.25 m below the terrain, which is the same sloppiness showing from the other side. That is left alone: a table sunk a quarter of a metre into a tavern floor is not visible from any angle anybody stands at, and a correction nobody can see is a correction not worth carrying."
+    }
+  ],
+  "drops": [
+    {
+      "models": "Grass",
+      "only_on": [
+        "TileGrass01",
+        "TileGrass02"
+      ],
+      "why": "Grass standing on paving, on bare rock, and in the river.\n\nChecked against the client before touching it, because the first answer was that MU2 must be placing these wrongly. It is not: OpenObjectsEnc reads a position out of EncTerrain1.obj and hands it straight to CreateObject, there is no grounding pass, and the only mention of MODEL_GRASS01 anywhere in the client is the line that loads the eight models. The client draws these exactly where MU2 draws them, and the real Lorencia has grass on its flagstones too.\n\nWhat makes it a fault rather than a preference is the shape of the numbers. Of 1038 grass placements, 999 stand on one of the two grass textures — 96% — and the 39 that do not are spread thinly across paving, rock and water. Seventeen of them grow in the river. That is not a decision anybody made about how the town should look; it is the spill you get from painting grass over a map by hand and moving the ground underneath it afterwards.\n\nSo the rule is the map's own: grass belongs on the tiles the map calls grass. It is written as a rule rather than as thirty-nine entries because thirty-nine coordinates would say nothing about why any of them is wrong, and because the next map to be extracted will have its own spill in different places."
+    }
+  ],
+  "blocked": [
+    {
+      "model": "Stone01",
+      "near": [
+        191.0,
+        134.5
+      ],
+      "tiles": [
+        [
+          189,
+          133
+        ],
+        [
+          189,
+          134
+        ],
+        [
+          189,
+          135
+        ],
+        [
+          192,
+          133
+        ],
+        [
+          192,
+          134
+        ],
+        [
+          192,
+          135
+        ]
+      ],
+      "why": "A character walks into this boulder and stands inside it, waist deep.\n\nMU's attribute grid marks a 2x3 block under it - 190 to 191 across, 133 to 135 down - and the rock is four tiles wide. Measured off the built mesh below body height and excluding the grass cards it is modelled with, its solid half-extent is 2.06 tiles about a centre at 191.0,134.5, so it covers 188.9 to 193.1 across. The two columns either side of MU's block are inside the stone and open.\n\nSix tiles, written out rather than derived. Deriving them was tried and reverted: a disc of the measured radius also takes tiles whose centres sit exactly on the boundary - 192,132 came out blocked because its distance was 2.060 against a radius of 2.06 - and a character standing at x=193.00 on the edge of one of those had every step refused and could not move at all. A list has no such arithmetic in it.\n\nThe test this passes is the file's own: the data disagrees with itself. The map says you may stand where the map also says a boulder is."
+    }
+  ],
+  "grass_sheets": {
+    "0": 0,
+    "1": 2,
+    "why": [
+      "Which grass billboard grows on which ground, where MU's own pairing is wrong.",
+      "The client picks the sheet by the tile index and nothing else: BITMAP_MAPGRASS +",
+      "TerrainMappingLayer1. Slot 0 gets TileGrass01.tga, slot 1 gets TileGrass02.tga, slot 2",
+      "gets TileGrass03.tga. That is a lookup, not a decision, and in Lorencia it lands wrong",
+      "on the middle one.",
+      "Measured rather than judged. Slot 0's ground averages (78, 68, 16) and its sheet",
+      "(68, 63, 16) - dark green grass on dark green turf, which agrees. Slot 1 is named",
+      "TileGrass02 and its ground averages (172, 148, 112), which is pale sand, and its sheet",
+      "is the same dark green (68, 63, 16). Slot 2's sheet is a dry brown (145, 103, 53) and",
+      "is the one that belongs on sand.",
+      "So slot 1 takes sheet 2. The name TileGrass02 is what misleads here - the ground art",
+      "under that name is beach, and the grass MU hands it is the grass for a lawn."
+    ]
+  },
+  "spawns": [
+    {
+      "model": "WanderingMerchant",
+      "who": "Wandering Merchant Martin",
+      "tile": [
+        6,
+        145
+      ],
+      "facing": 4
+    },
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [
+        146,
+        110
+      ],
+      "facing": 4
+    },
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [
+        147,
+        145
+      ],
+      "facing": 2
+    },
+    {
+      "model": "WanderingMerchant",
+      "who": "Wandering Merchant Harold",
+      "tile": [
+        183,
+        137
+      ],
+      "facing": 3
+    },
+    {
+      "model": "Smith01",
+      "who": "Hanzo The Blacksmith",
+      "tile": [
+        116,
+        141
+      ],
+      "facing": 4
+    },
+    {
+      "model": "PotionGirlAmy",
+      "who": "Potion Girl Amy",
+      "tile": [
+        127,
+        86
+      ],
+      "facing": 3
+    },
+    {
+      "model": "Wizard01",
+      "who": "Pasi The Mage",
+      "tile": [
+        118,
+        113
+      ],
+      "facing": 4
+    },
+    {
+      "model": "LumentheBarmaid",
+      "who": "Lumen the Barmaid",
+      "tile": [
+        123,
+        135
+      ],
+      "facing": 2
+    },
+    {
+      "model": "BerdyshGuard",
+      "who": "Berdysh Guard",
+      "tile": [
+        131,
+        88
+      ],
+      "facing": 2,
+      "idle": "action7",
+      "idle_why": "outside the safe zone"
+    },
+    {
+      "model": "BerdyshGuard",
+      "who": "Berdysh Guard",
+      "tile": [
+        173,
+        125
+      ],
+      "facing": 4,
+      "idle": "action7",
+      "idle_why": "outside the safe zone"
+    },
+    {
+      "model": "BerdyshGuard",
+      "who": "Berdysh Guard",
+      "tile": [
+        94,
+        125
+      ],
+      "facing": 8,
+      "idle": "action7",
+      "idle_why": "outside the safe zone"
+    },
+    {
+      "model": "BerdyshGuard",
+      "who": "Berdysh Guard",
+      "tile": [
+        94,
+        130
+      ],
+      "facing": 8,
+      "idle": "action7",
+      "idle_why": "outside the safe zone"
+    },
+    {
+      "model": "BerdyshGuard",
+      "who": "Berdysh Guard",
+      "tile": [
+        131,
+        148
+      ],
+      "facing": 2,
+      "idle": "action1",
+      "idle_why": "inside the safe zone"
+    },
+    {
+      "model": "CrossbowGuard",
+      "who": "Crossbow Guard",
+      "tile": [
+        114,
+        125
+      ],
+      "facing": 4,
+      "idle": "action1",
+      "idle_why": "inside the safe zone"
+    }
+  ],
+  "spawns_from": [
+    "The townspeople, which are not in the map and never were.",
+    "MU's placement file holds scenery. Its people arrive as server spawn packets, which is",
+    "why the client has no list of them and why LEGACY draws them through MuCrowd. The list",
+    "lives in the server's own store — mu.db, table npc_spawns — with a tile and a facing",
+    "each, and that is what these are.",
+    "The facing is MU's eight named directions turned into an angle by (facing - 3) * 45",
+    "degrees. The client's own arithmetic is (Direction - 1) * 45 and taking it literally puts",
+    "every townsperson a quarter turn from where they belong; the extra two steps were pinned",
+    "against a landmark rather than derived - Wandering Merchant Harold stands at a campfire",
+    "outside the east gate, on tile 183,137 against a fire at (18400, -13450), a bearing of",
+    "9.5 degrees, so the nearest eighth of a turn he can be facing is zero, and his table",
+    "entry has to produce it. One landmark settles all eight because the mapping is linear:",
+    "every direction sits on the same 45-degree grid, so an offset is the only thing free to",
+    "be wrong.",
+    "The six guards carry an idle as well, and it is the one fact about them a model cannot",
+    "hold. Everybody else here re-rolls a pose every time a cycle wraps; a guard is a player",
+    "model, and AnimationCharacter sends those down PlayerStopAnimationSetting, which sets",
+    "one stop action through SetPlayerStop and then never changes it again. Which stop action",
+    "depends on where he is standing, not on what he is: the first branch of SetPlayerStop is",
+    "`(no weapon) || (SafeZone && !BloodCastle)` and it lands on PLAYER_STOP_MALE, so only a",
+    "guard outside the safe zone ever reaches his weapon's stance. Four Berdysh Guards are",
+    "outside it and take PLAYER_STOP_SCYTHE, action 7 - the Berdysh is a two-handed spear-group",
+    "weapon that is not the Spear or the Dragon Lance, which is the fall-through case. The",
+    "fifth, at 131,148, and the Crossbow Guard at 114,125 are inside it and take action 1.",
+    "Read off attributes.png, which is MU's own .att: 0x0001 is TW_SAFEZONE, and the two tiles",
+    "inside carry it where the other four read 0x0000.",
+    "The Crossbow Guard carries the Light Crossbow, CrossBow04, in his right hand - Weapon[0],",
+    "which for a crossbow is the right one and for a bow would be the left. It changes nothing",
+    "about how he stands, because inside a safe zone the weapon has no say in that.",
+    "Both of the two inside wear their weapons rather than hold them. RenderCharacterBackItem",
+    "slings on `c->SafeZone`, for anything whose model is MODEL_PLAYER, and a guard is one -",
+    "so the tile bit that flattens their stance also puts the polearm and the crossbow on",
+    "their backs. The four guards outside keep theirs in hand."
+  ],
+  "solids": {
+    "summary": "Shapes that are solid wherever they stand, for the tiles MU's grid leaves open under them.",
+    "why": [
+      "MU's attribute grid is painted by hand and it under-marks. Where that is one thing in one",
+      "place it is a hand list, which is what `blocked` above is. Where it is one shape in a",
+      "hundred and eighty places it cannot be: Lorencia's railings stand at whatever angle the",
+      "map felt like, and writing out the tiles under each would be six hundred coordinates that",
+      "say nothing about why any of them is blocked.",
+      "So the shape is declared once per model and the placement list says where it stands. Each",
+      "box is measured off the model's own geometry below body height - 120 MU units, about a",
+      "character's waist - in MU units about the model's origin. It is the box the mesh occupies",
+      "and not a padded one.",
+      "WHICH TWO AXES THAT IS, IN THE .OBJ, IS THE THING THIS FILE GOT WRONG ONCE AND MUST NOT",
+      "AGAIN. MuExtract writes the mesh with y up: the footprint is x and z, and y is the height",
+      "that the 120 filters on. Most of these boxes were first measured as x and y, so a model's",
+      "height was declared as its depth and the taller a thing was the deeper it blocked. A 4 m",
+      "statue claimed four tiles of ground and a 2.2 m railing claimed two and a bit. Worst was",
+      "StoneMuWall03: the town wall is 1.6 tiles deep and 2.9 m tall, so it took rows 106 to 109",
+      "where MU marks only 106, and a character standing at 126,110 could not walk north at all -",
+      "the click resolved onto the tile he was on, the route came back one step long, and nothing",
+      "happened. The houses were measured on the right axes from the start, which is the check",
+      "this correction was verified against: re-measured, House01, House03, HouseEtc02 and",
+      "HouseEtc03 come back to the digit.",
+      "The world y a placement is stamped at is minus the .obj z, which is the same swap the",
+      "viewer makes when it stands the model up. See World.Placement.",
+      "A tile is taken when the placed box covers at least `coverage` of it. Not when the box's",
+      "centre is in it, which misses a kerb entirely: 26 units thick against a tile of 100, one",
+      "at 136.77 to 137.00 lies wholly inside tile 136 and nowhere near its centre, and that is",
+      "the fence a character walked through in the screenshot that started this. Not when the box",
+      "merely touches a tile either, which is the rule that was tried and reverted, because a",
+      "shape ending on a tile line took the tile beyond it and a character standing there had",
+      "every step refused.",
+      "A shape thinner than the share is measured by the length it crosses instead of by area,",
+      "because a share cannot see one: the iron railings are 6 units thick, so a railing running",
+      "straight through the middle of a tile covers 6% of it and never reaches a tenth, in any",
+      "tile, however squarely it crosses. Dividing the overlap by the box's own thickness turns",
+      "that area back into the width of the crossing and the same tenth then means something. On",
+      "the old axes this was hidden, because a railing was declared 2.2 tiles deep and so was",
+      "never thin. Nothing else in Lorencia is under a tenth of a tile thick.",
+      "WHAT IS LEFT OUT IS AS MUCH OF THE ARGUMENT AS WHAT IS HERE. A box is a poor description",
+      "of anything with a hole in it, and the test that catches every one of these is the same:",
+      "stamp it, and count the tiles you can still reach on foot.",
+      "  StoneMuWall01 is the town gate, and it is why a model may declare more than one box. A",
+      "  filled 6x6 box over its archway walled the town in - reachable tiles fell from 47538 to",
+      "  745, the square and nothing else. Written as its two piers, the archway stays open.",
+      "  HouseWall01, 02 and 04 are wall panels and are in. HouseWall03 is the panel with the",
+      "  doorway and is out, and it needs no rule: it has no geometry at all between knee and",
+      "  waist, because that is where the door is. Two of them are the tavern's way in.",
+      "  HouseWall05 and 06 are out for the opposite reason. They read like walls and are 90",
+      "  units tall - floor slabs, and stamping them blocks the floor of the room.",
+      "  House01-05, HouseEtc02 and HouseEtc03 are in, each as one measured box.",
+      "  SteelDoor01 is out, and it is the entry that failed the test rather than an axis. It is",
+      "  a gate leaf, hinged at its origin - 0.6 to 150.6 along one axis and nine units thick",
+      "  across the other - and MU draws every one of them standing open. Boxed, the leaf sweeps",
+      "  across the gateway it is swung out of and stamps the doorway shut. It claims 18 tiles and",
+      "  MU leaves 17 of them open: 94%, past the chair and past Stone04, the plainest signature",
+      "  in the list. What it cost is Pasi's garden. The iron railing north of the square has one",
+      "  way in, tiles (121,112) and (121,113), and MU keeps both open; the two leaves hung on",
+      "  that gateway closed both, so the mage's yard - 33 tiles - was not reachable on foot at",
+      "  all, and a click on him walked to the fence and stopped. The gate posts are SteelWall03",
+      "  and the railing is Fence02 and 04; those are in, and they are what a body actually meets.",
+      "  A door is a thing whose solidity is its state, and this list has no state in it.",
+      "  Ship01, the bridges, Stair01 and the dungeon gate are things you walk on or through.",
+      "  Trees, grass, lamps, signs and hanging cloth are not what a body meets at waist height,",
+      "  and MU already marks the trunks it cares about.",
+      "  Furniture06 is a chair, and it is the clearest case of this list being wrong. It is 0.42",
+      "  of a tile by 0.54 and there are eighteen in the tavern; solid, they took 34 tiles and MU",
+      "  leaves 32 of those open. That share is what gives it away. A wall this list is right",
+      "  about is one MU mostly blocks already and under-marks at its edges; a thing it is wrong",
+      "  about is one MU allows everywhere.",
+      "  Stone04 is out on that same test, and it is the one entry the axis correction removed.",
+      "  Re-measured it is 1.15 tiles by 1.00, a rock you step round rather than a boulder, and it",
+      "  claims 170 tiles of which MU leaves 95 open - 56%, the chair's signature. What it cost is",
+      "  larger than the tavern: boxed, the scattered rocks close the western shore, and the 450",
+      "  tiles between x 4-26 and y 109-151 stop being reachable on foot at all. Stone01, 02, 03",
+      "  and 05 are real boulders, stay in, and seal nothing.",
+      "  What the chairs cost was the tavern. MU keeps row 124 open right across the building, an",
+      "  east-west way through its north end, and they closed 121, 122 and 125 of it - which cut",
+      "  the room's north-west off entirely and left the rest reachable only the long way round,",
+      "  so a character sent through the tavern turned and walked around it. Without them the",
+      "  three journeys through that room are 15, 13 and 11 tiles, which is what they are on MU's",
+      "  own grid. You walk past a chair; the bar is the thing you cannot walk through, and MU",
+      "  marks the bar itself.",
+      "What is sealed on purpose: eight pockets, 39 tiles, every one of them the inside of a",
+      "rock cluster or a fenced flower bed. MU marks most of those itself; these are the ones it",
+      "missed. On MU's own grid the town already has 35 such tiles in it, so the whole of this",
+      "list costs 4 more. Lorencia stamps to 46687 walkable tiles and 46616 of them are",
+      "reachable on foot from the square.",
+      "The test is the file's own: the data disagrees with itself. The map says you may stand",
+      "where the map also says a wall is."
+    ],
+    "coverage": 0.1,
+    "models": {
+      "Beer01": [
+        -50.1,
+        41.1,
+        -29.6,
+        28.9
+      ],
+      "Beer02": [
+        -43.8,
+        44.5,
+        -28.4,
+        23.5
+      ],
+      "Beer03": [
+        -24.0,
+        23.7,
+        -13.7,
+        16.9
+      ],
+      "Cannon01": [
+        -64.3,
+        68.0,
+        -58.6,
+        57.4
+      ],
+      "Cannon02": [
+        -67.4,
+        68.0,
+        -58.6,
+        57.4
+      ],
+      "Cannon03": [
+        -36.7,
+        36.0,
+        -58.6,
+        57.4
+      ],
+      "Carriage01": [
+        -114.6,
+        244.6,
+        -94.2,
+        92.7
+      ],
+      "Carriage02": [
+        -90.4,
+        88.7,
+        -218.2,
+        218.9
+      ],
+      "Carriage04": [
+        -90.9,
+        88.2,
+        -216.3,
+        220.8
+      ],
+      "Fence01": [
+        -88.8,
+        88.9,
+        -9.0,
+        12.0
+      ],
+      "Fence02": [
+        -49.7,
+        56.5,
+        -56.0,
+        50.6
+      ],
+      "Fence03": [
+        -100.4,
+        99.7,
+        -6.8,
+        19.7
+      ],
+      "Fence04": [
+        -49.8,
+        50.2,
+        -6.8,
+        19.7
+      ],
+      "Furniture01": [
+        -80.2,
+        80.0,
+        -23.4,
+        23.1
+      ],
+      "Furniture02": [
+        -80.5,
+        79.7,
+        -23.4,
+        23.1
+      ],
+      "Furniture03": [
+        -101.7,
+        101.8,
+        -51.5,
+        51.4
+      ],
+      "Furniture04": [
+        -106.6,
+        97.1,
+        -99.7,
+        -0.4
+      ],
+      "Furniture05": [
+        -101.8,
+        101.7,
+        -34.8,
+        35.2
+      ],
+      "Furniture07": [
+        -25.6,
+        17.7,
+        -20.9,
+        21.5
+      ],
+      "House01": [
+        -200.0,
+        197.9,
+        -301.2,
+        302.3
+      ],
+      "House02": [
+        -114.7,
+        89.4,
+        -64.1,
+        49.1
+      ],
+      "House03": [
+        -298.3,
+        289.3,
+        -428.2,
+        450.9
+      ],
+      "House04": [
+        -245.7,
+        210.2,
+        -240.3,
+        198.0
+      ],
+      "House05": [
+        163.5,
+        272.3,
+        -254.6,
+        379.4
+      ],
+      "HouseEtc01": [
+        -50.2,
+        49.7,
+        -92.8,
+        49.8
+      ],
+      "HouseEtc02": [
+        -302.5,
+        297.9,
+        -299.6,
+        404.5
+      ],
+      "HouseEtc03": [
+        -99.8,
+        100.2,
+        -99.5,
+        100.3
+      ],
+      "HouseWall01": [
+        -100.1,
+        100.0,
+        3.7,
+        49.5
+      ],
+      "HouseWall02": [
+        -99.9,
+        100.1,
+        0.0,
+        49.5
+      ],
+      "HouseWall04": [
+        [
+          -0.6,
+          245.1,
+          3.6,
+          49.6
+        ],
+        [
+          -0.6,
+          49.6,
+          3.6,
+          249.6
+        ]
+      ],
+      "SteelStatue01": [
+        -65.9,
+        65.9,
+        -65.0,
+        66.8
+      ],
+      "SteelWall01": [
+        -50.0,
+        3.0,
+        -50.0,
+        3.4
+      ],
+      "SteelWall02": [
+        -199.7,
+        200.5,
+        -3.2,
+        3.0
+      ],
+      "SteelWall03": [
+        -49.9,
+        50.1,
+        -3.2,
+        3.0
+      ],
+      "Stone01": [
+        -209.2,
+        203.0,
+        -158.5,
+        127.8
+      ],
+      "Stone02": [
+        -149.3,
+        106.0,
+        -148.9,
+        129.0
+      ],
+      "Stone03": [
+        -128.8,
+        102.0,
+        -73.9,
+        103.6
+      ],
+      "Stone05": [
+        -56.0,
+        42.2,
+        -61.9,
+        49.7
+      ],
+      "StoneMuWall01": [
+        [
+          -300.1,
+          -200.0,
+          -110.0,
+          100.7
+        ],
+        [
+          200.0,
+          299.9,
+          -110.0,
+          100.7
+        ]
+      ],
+      "StoneMuWall02": [
+        -50.0,
+        50.0,
+        -147.4,
+        49.9
+      ],
+      "StoneMuWall03": [
+        -149.5,
+        150.5,
+        -110.0,
+        49.9
+      ],
+      "StoneMuWall04": [
+        -149.5,
+        150.5,
+        -110.0,
+        169.4
+      ],
+      "StoneStatue01": [
+        -40.0,
+        40.0,
+        -38.9,
+        41.1
+      ],
+      "StoneStatue02": [
+        -134.3,
+        135.0,
+        -96.5,
+        93.2
+      ],
+      "StoneStatue03": [
+        -41.8,
+        41.7,
+        -39.8,
+        39.9
+      ],
+      "StoneWall01": [
+        -298.0,
+        297.4,
+        -84.1,
+        88.6
+      ],
+      "StoneWall02": [
+        -298.0,
+        297.4,
+        -84.1,
+        88.6
+      ],
+      "StoneWall03": [
+        -199.3,
+        198.8,
+        -43.0,
+        180.5
+      ],
+      "StoneWall04": [
+        -3.8,
+        98.6,
+        -21.6,
+        13.0
+      ],
+      "StoneWall06": [
+        -50.7,
+        49.7,
+        -49.7,
+        50.8
+      ],
+      "Straw01": [
+        -68.9,
+        69.1,
+        -100.9,
+        105.2
+      ],
+      "Straw02": [
+        -115.4,
+        140.0,
+        -210.7,
+        218.2
+      ],
+      "Tent01": [
+        -131.9,
+        139.5,
+        -176.4,
+        174.0
+      ],
+      "Tomb01": [
+        -117.5,
+        62.4,
+        -140.5,
+        121.8
+      ],
+      "Tomb02": [
+        -71.5,
+        69.1,
+        -119.5,
+        123.0
+      ],
+      "Tomb03": [
+        -45.0,
+        44.8,
+        -9.9,
+        9.7
+      ],
+      "TreasureChest01": [
+        -57.7,
+        56.8,
+        -34.4,
+        30.0
+      ],
+      "TreasureDrum01": [
+        -40.6,
+        40.7,
+        -40.2,
+        41.1
+      ],
+      "Well02": [
+        -79.3,
+        78.0,
+        -78.7,
+        78.6
+      ],
+      "Well03": [
+        -51.6,
+        63.5,
+        -48.7,
+        53.4
+      ],
+      "Well04": [
+        -43.6,
+        58.3,
+        -134.6,
+        126.7
+      ]
+    }
+  }
+}

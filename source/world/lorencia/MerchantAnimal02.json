@@ -1,0 +1,247 @@
+{
+  "item": "MerchantAnimal02",
+  "mu_name": "MerchantAnimal02",
+  "mu_name_from": "Lorencia's object slot 57, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 57,
+  "why_this_one": "4 placements. The white pack animal, with its panniers and fruit on the same square.",
+  "profile": "world",
+  "sheets": {
+    "merchant_moster_b01": "merchant_moster_b01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "merchant_moster_b01": "skin"
+  },
+  "material_note": "One sheet carrying the animal, a wooden crate and a basket of fruit. Skin because the animal is most of it; the crate is painted wood either way.",
+  "sheet_pad": {
+    "merchant_moster_b01": "edge"
+  },
+  "sheet_pad_from": "An atlas rather than a tile - separate surfaces drawn side by side in one square - so its border replicates instead of wrapping.",
+  "open_question": "It does animate: one skeleton, 34 bones, action0 at 5 seconds. As MerchantAnimal01, where the same note was left standing over a stale .glb.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 48,
+      "area": 13096.4,
+      "along": [
+        -35.4,
+        28.7
+      ],
+      "mu_uv": [
+        0.03,
+        0.732,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.337,
+        0.765
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 48,
+      "area": 13096.3,
+      "along": [
+        -35.4,
+        28.7
+      ],
+      "mu_uv": [
+        0.031,
+        0.732,
+        0.993,
+        0.998
+      ],
+      "bake_uv": [
+        0.475,
+        0.009,
+        0.906,
+        0.904
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 38,
+      "area": 4121.7,
+      "along": [
+        -17.1,
+        15.9
+      ],
+      "mu_uv": [
+        0.051,
+        0.073,
+        0.4,
+        0.342
+      ],
+      "bake_uv": [
+        0.008,
+        0.01,
+        0.957,
+        0.963
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 332,
+      "area": 41835.0,
+      "along": [
+        -74.4,
+        115.0
+      ],
+      "mu_uv": [
+        0.02,
+        0.005,
+        0.995,
+        0.954
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.936
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 1,
+      "area": 104.2,
+      "along": [
+        -22.7,
+        -7.5
+      ],
+      "mu_uv": [
+        0.661,
+        0.398,
+        0.741,
+        0.479
+      ],
+      "bake_uv": [
+        0.2,
+        0.136,
+        0.251,
+        0.188
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 1,
+      "area": 104.2,
+      "along": [
+        -22.7,
+        -7.5
+      ],
+      "mu_uv": [
+        0.661,
+        0.398,
+        0.741,
+        0.479
+      ],
+      "bake_uv": [
+        0.781,
+        0.444,
+        0.831,
+        0.496
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 4,
+      "area": 235.6,
+      "along": [
+        108.7,
+        115.0
+      ],
+      "mu_uv": [
+        0.02,
+        0.478,
+        0.04,
+        0.592
+      ],
+      "bake_uv": [
+        0.008,
+        0.308,
+        0.387,
+        0.568
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 4,
+      "area": 343.0,
+      "along": [
+        100.0,
+        111.5
+      ],
+      "mu_uv": [
+        0.038,
+        0.477,
+        0.101,
+        0.59
+      ],
+      "bake_uv": [
+        0.02,
+        0.308,
+        0.426,
+        0.566
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 4,
+      "area": 235.6,
+      "along": [
+        108.7,
+        115.0
+      ],
+      "mu_uv": [
+        0.02,
+        0.478,
+        0.04,
+        0.592
+      ],
+      "bake_uv": [
+        0.008,
+        0.308,
+        0.387,
+        0.568
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 4,
+      "area": 343.0,
+      "along": [
+        100.0,
+        111.5
+      ],
+      "mu_uv": [
+        0.038,
+        0.477,
+        0.101,
+        0.59
+      ],
+      "bake_uv": [
+        0.02,
+        0.308,
+        0.426,
+        0.566
+      ]
+    }
+  ],
+  "play_speed": 0.16,
+  "play_speed_from": "CreateObject in ZzzObject.cpp, which gives every world object o->Velocity = 0.16f and then overrides it for a handful of Lorencia types - 0.3 for a street lamp, a candle and a sign, 0.4/Scale for the two big trees, 0.0 for the treasure chest. Neither merchant animal is in that list, so both keep the default. MoveObject hands that number to PlayAnimation in exactly the argument a character's play speed goes in, which is why it is written here under the same name.",
+  "play_speed_note": "20 keys at 4 a second: a 5-second cycle.\n\nThis replaces a hand-tuned slowdown, and the measurement is why. The old note here read that MU 'plays this at one speed and loops it without a pause', that the animal therefore shifted its weight 'every second and a half, forty times a minute', and that this reads as a tic rather than as an animal - so it was slowed. It was animation_speed 0.18-0.30, which put the loop between 8 and 14 seconds against MU's 5.\n\nThe premise was wrong. A second and a half was never MU's figure: the client runs this at four keys a second and has always taken seven and a half seconds to get round, which is already the long slow weight shift the slowdown was reaching for. What produced the tic was the exporter's own 8-keys-a-second guess, and correcting that removes the reason for the correction. So the animal is back on MU's clock and there is nothing left here that is anybody's taste."
+}

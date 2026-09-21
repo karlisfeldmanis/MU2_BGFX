@@ -1,0 +1,1762 @@
+{
+  "item": "Tree13",
+  "mu_name": "Tree13",
+  "mu_name_from": "Lorencia's object slot 12, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 12,
+  "why_this_one": "9 placements. The last of the thirteen: an autumn canopy on a bark trunk.",
+  "profile": "world",
+  "sheets": {
+    "tree_05": "tree_05.png",
+    "tree_01": "tree_01.jpg.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. MU has three stems that exist twice over, as an .OZJ and an .OZT that are not the same picture: tree_01 is furrowed bark as a JPEG and a leaf clump as a TGA, tree_02 is birch bark or moss, tree_04 is a sawn log end or pink blossom. The .bmd says which by extension and both halves are genuinely in use across Lorencia, so the decoded files carry the extension in their names and neither gets the bare one.",
+  "sheet_materials": {
+    "tree_05": "foliage",
+    "tree_01": "bark"
+  },
+  "cutout": [
+    "tree_05"
+  ],
+  "cutout_from": "Real alpha in the .OZT.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 183,
+      "area": 72071.0,
+      "along": [
+        -186.8,
+        203.1
+      ],
+      "mu_uv": [
+        -0.431,
+        -1.201,
+        0.993,
+        2.661
+      ],
+      "bake_uv": [
+        0.014,
+        0.014,
+        0.983,
+        0.987
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 9,
+      "area": 1369.1,
+      "along": [
+        -19.7,
+        9.0
+      ],
+      "mu_uv": [
+        1.125,
+        0.101,
+        2.211,
+        0.292
+      ],
+      "bake_uv": [
+        0.316,
+        0.89,
+        0.51,
+        0.912
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 3,
+      "area": 367.1,
+      "along": [
+        -16.6,
+        18.9
+      ],
+      "mu_uv": [
+        1.528,
+        -0.189,
+        1.585,
+        0.155
+      ],
+      "bake_uv": [
+        0.966,
+        0.091,
+        0.978,
+        0.649
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 3,
+      "area": 308.8,
+      "along": [
+        -54.8,
+        -14.1
+      ],
+      "mu_uv": [
+        1.429,
+        0.175,
+        1.75,
+        0.433
+      ],
+      "bake_uv": [
+        0.26,
+        0.277,
+        0.978,
+        0.983
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 9,
+      "area": 2630.2,
+      "along": [
+        -193.8,
+        -51.2
+      ],
+      "mu_uv": [
+        0.871,
+        0.746,
+        1.181,
+        2.138
+      ],
+      "bake_uv": [
+        0.309,
+        0.015,
+        0.895,
+        0.684
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 3,
+      "area": 563.2,
+      "along": [
+        -146.9,
+        -115.5
+      ],
+      "mu_uv": [
+        1.094,
+        1.262,
+        1.65,
+        1.335
+      ],
+      "bake_uv": [
+        0.104,
+        0.969,
+        0.893,
+        0.978
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 3,
+      "area": 590.7,
+      "along": [
+        -150.4,
+        -97.9
+      ],
+      "mu_uv": [
+        0.644,
+        1.135,
+        1.062,
+        1.547
+      ],
+      "bake_uv": [
+        0.015,
+        0.681,
+        0.983,
+        0.978
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 9,
+      "area": 2652.5,
+      "along": [
+        -92.5,
+        7.7
+      ],
+      "mu_uv": [
+        -0.198,
+        0.596,
+        0.001,
+        2.002
+      ],
+      "bake_uv": [
+        0.922,
+        0.014,
+        0.953,
+        0.717
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 3,
+      "area": 761.2,
+      "along": [
+        -95.3,
+        -52.1
+      ],
+      "mu_uv": [
+        -0.036,
+        1.145,
+        0.488,
+        1.335
+      ],
+      "bake_uv": [
+        0.235,
+        0.015,
+        0.468,
+        0.983
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 3,
+      "area": 533.5,
+      "along": [
+        -40.4,
+        -21.4
+      ],
+      "mu_uv": [
+        -0.545,
+        1.0,
+        -0.031,
+        1.308
+      ],
+      "bake_uv": [
+        0.362,
+        0.956,
+        0.983,
+        0.987
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 9,
+      "area": 938.5,
+      "along": [
+        10.0,
+        51.3
+      ],
+      "mu_uv": [
+        -1.295,
+        0.644,
+        -0.33,
+        0.766
+      ],
+      "bake_uv": [
+        0.325,
+        0.924,
+        0.506,
+        0.941
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 3,
+      "area": 283.0,
+      "along": [
+        -7.3,
+        22.3
+      ],
+      "mu_uv": [
+        -0.772,
+        0.738,
+        -0.695,
+        1.035
+      ],
+      "bake_uv": [
+        0.318,
+        0.532,
+        0.978,
+        0.983
+      ]
+    },
+    {
+      "island": 12,
+      "material": "rock",
+      "triangles": 3,
+      "area": 238.1,
+      "along": [
+        19.2,
+        56.0
+      ],
+      "mu_uv": [
+        -0.863,
+        0.48,
+        -0.603,
+        0.726
+      ],
+      "bake_uv": [
+        0.157,
+        0.409,
+        0.978,
+        0.502
+      ]
+    },
+    {
+      "island": 13,
+      "material": "rock",
+      "triangles": 9,
+      "area": 2697.2,
+      "along": [
+        47.3,
+        172.4
+      ],
+      "mu_uv": [
+        -1.64,
+        -0.532,
+        -0.423,
+        0.396
+      ],
+      "bake_uv": [
+        0.086,
+        0.255,
+        0.217,
+        0.341
+      ]
+    },
+    {
+      "island": 14,
+      "material": "rock",
+      "triangles": 3,
+      "area": 761.2,
+      "along": [
+        94.6,
+        106.9
+      ],
+      "mu_uv": [
+        -1.419,
+        0.054,
+        -0.948,
+        0.35
+      ],
+      "bake_uv": [
+        0.309,
+        0.15,
+        0.614,
+        0.987
+      ]
+    },
+    {
+      "island": 15,
+      "material": "rock",
+      "triangles": 3,
+      "area": 640.3,
+      "along": [
+        88.4,
+        146.0
+      ],
+      "mu_uv": [
+        -0.847,
+        -0.387,
+        -0.795,
+        0.153
+      ],
+      "bake_uv": [
+        0.912,
+        0.014,
+        0.966,
+        0.893
+      ]
+    },
+    {
+      "island": 16,
+      "material": "rock",
+      "triangles": 9,
+      "area": 2590.9,
+      "along": [
+        -1.5,
+        154.7
+      ],
+      "mu_uv": [
+        0.118,
+        -0.871,
+        0.344,
+        0.537
+      ],
+      "bake_uv": [
+        0.92,
+        0.223,
+        0.941,
+        0.545
+      ]
+    },
+    {
+      "island": 17,
+      "material": "rock",
+      "triangles": 3,
+      "area": 649.9,
+      "along": [
+        61.7,
+        127.4
+      ],
+      "mu_uv": [
+        -0.377,
+        -0.108,
+        0.17,
+        0.005
+      ],
+      "bake_uv": [
+        0.644,
+        0.97,
+        0.784,
+        0.978
+      ]
+    },
+    {
+      "island": 18,
+      "material": "rock",
+      "triangles": 3,
+      "area": 640.3,
+      "along": [
+        44.2,
+        66.2
+      ],
+      "mu_uv": [
+        0.192,
+        -0.241,
+        0.645,
+        0.139
+      ],
+      "bake_uv": [
+        0.054,
+        0.925,
+        0.609,
+        0.983
+      ]
+    },
+    {
+      "island": 19,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        4.3,
+        94.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.014,
+        0.327,
+        0.088,
+        0.401
+      ]
+    },
+    {
+      "island": 20,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        12.8,
+        69.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.205,
+        0.352,
+        0.279,
+        0.426
+      ]
+    },
+    {
+      "island": 21,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        2.3,
+        41.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.356,
+        0.357,
+        0.43,
+        0.431
+      ]
+    },
+    {
+      "island": 22,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        118.6,
+        158.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.395,
+        0.014,
+        0.468,
+        0.088
+      ]
+    },
+    {
+      "island": 23,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        68.6,
+        160.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.401,
+        0.248,
+        0.475,
+        0.322
+      ]
+    },
+    {
+      "island": 24,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        58.3,
+        127.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.419,
+        0.144,
+        0.493,
+        0.218
+      ]
+    },
+    {
+      "island": 25,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        99.6,
+        173.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.014,
+        0.43,
+        0.088,
+        0.504
+      ]
+    },
+    {
+      "island": 26,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        150.3,
+        188.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.117,
+        0.455,
+        0.191,
+        0.529
+      ]
+    },
+    {
+      "island": 27,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        97.8,
+        185.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.226,
+        0.455,
+        0.3,
+        0.529
+      ]
+    },
+    {
+      "island": 28,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        10.8,
+        98.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.337,
+        0.459,
+        0.41,
+        0.533
+      ]
+    },
+    {
+      "island": 29,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        41.3,
+        82.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.458,
+        0.459,
+        0.532,
+        0.533
+      ]
+    },
+    {
+      "island": 30,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        12.6,
+        70.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.459,
+        0.351,
+        0.533,
+        0.425
+      ]
+    },
+    {
+      "island": 31,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        68.8,
+        105.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.498,
+        0.014,
+        0.572,
+        0.088
+      ]
+    },
+    {
+      "island": 32,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        34.0,
+        124.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.504,
+        0.246,
+        0.578,
+        0.32
+      ]
+    },
+    {
+      "island": 33,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        23.5,
+        95.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.521,
+        0.117,
+        0.595,
+        0.191
+      ]
+    },
+    {
+      "island": 34,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -163.9,
+        -71.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.014,
+        0.533,
+        0.088,
+        0.607
+      ]
+    },
+    {
+      "island": 35,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -147.7,
+        -106.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.117,
+        0.558,
+        0.191,
+        0.632
+      ]
+    },
+    {
+      "island": 36,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -156.9,
+        -91.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.226,
+        0.558,
+        0.3,
+        0.632
+      ]
+    },
+    {
+      "island": 37,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -73.4,
+        14.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.438,
+        0.56,
+        0.512,
+        0.634
+      ]
+    },
+    {
+      "island": 38,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -74.9,
+        -12.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.559,
+        0.56,
+        0.633,
+        0.634
+      ]
+    },
+    {
+      "island": 39,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -77.7,
+        -46.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.56,
+        0.453,
+        0.634,
+        0.526
+      ]
+    },
+    {
+      "island": 40,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -35.5,
+        29.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.562,
+        0.349,
+        0.636,
+        0.423
+      ]
+    },
+    {
+      "island": 41,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        43.3,
+        70.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.337,
+        0.573,
+        0.41,
+        0.647
+      ]
+    },
+    {
+      "island": 42,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        13.9,
+        91.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.602,
+        0.014,
+        0.676,
+        0.088
+      ]
+    },
+    {
+      "island": 43,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -120.2,
+        -33.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.606,
+        0.219,
+        0.68,
+        0.293
+      ]
+    },
+    {
+      "island": 44,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -59.8,
+        -9.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.625,
+        0.117,
+        0.699,
+        0.191
+      ]
+    },
+    {
+      "island": 45,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -96.1,
+        -11.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.014,
+        0.637,
+        0.088,
+        0.711
+      ]
+    },
+    {
+      "island": 46,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -80.8,
+        5.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.117,
+        0.662,
+        0.191,
+        0.736
+      ]
+    },
+    {
+      "island": 47,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -88.1,
+        -23.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.226,
+        0.662,
+        0.3,
+        0.736
+      ]
+    },
+    {
+      "island": 48,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -86.2,
+        -60.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.54,
+        0.662,
+        0.614,
+        0.736
+      ]
+    },
+    {
+      "island": 49,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -148.8,
+        -68.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.661,
+        0.662,
+        0.735,
+        0.736
+      ]
+    },
+    {
+      "island": 50,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -194.0,
+        -124.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.662,
+        0.554,
+        0.736,
+        0.628
+      ]
+    },
+    {
+      "island": 51,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -186.7,
+        -163.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.664,
+        0.322,
+        0.738,
+        0.396
+      ]
+    },
+    {
+      "island": 52,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -26.2,
+        35.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.664,
+        0.451,
+        0.738,
+        0.524
+      ]
+    },
+    {
+      "island": 53,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -74.3,
+        2.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.438,
+        0.674,
+        0.512,
+        0.748
+      ]
+    },
+    {
+      "island": 54,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -81.0,
+        -10.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.334,
+        0.679,
+        0.408,
+        0.752
+      ]
+    },
+    {
+      "island": 55,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -107.6,
+        -36.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.705,
+        0.014,
+        0.779,
+        0.088
+      ]
+    },
+    {
+      "island": 56,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -88.4,
+        -26.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.71,
+        0.219,
+        0.784,
+        0.293
+      ]
+    },
+    {
+      "island": 57,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -122.4,
+        -50.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.728,
+        0.117,
+        0.802,
+        0.191
+      ]
+    },
+    {
+      "island": 58,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -146.5,
+        -48.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.014,
+        0.741,
+        0.088,
+        0.815
+      ]
+    },
+    {
+      "island": 59,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -182.6,
+        -143.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.641,
+        0.764,
+        0.715,
+        0.837
+      ]
+    },
+    {
+      "island": 60,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -190.1,
+        -151.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.764,
+        0.764,
+        0.837,
+        0.837
+      ]
+    },
+    {
+      "island": 61,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -87.3,
+        -20.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.119,
+        0.768,
+        0.193,
+        0.842
+      ]
+    },
+    {
+      "island": 62,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -132.7,
+        -60.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.225,
+        0.768,
+        0.298,
+        0.842
+      ]
+    },
+    {
+      "island": 63,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -139.3,
+        -68.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.768,
+        0.324,
+        0.842,
+        0.398
+      ]
+    },
+    {
+      "island": 64,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        71.3,
+        122.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.768,
+        0.432,
+        0.842,
+        0.506
+      ]
+    },
+    {
+      "island": 65,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        23.4,
+        107.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.768,
+        0.54,
+        0.842,
+        0.614
+      ]
+    },
+    {
+      "island": 66,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        8.2,
+        92.8
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.768,
+        0.647,
+        0.842,
+        0.721
+      ]
+    },
+    {
+      "island": 67,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        108.8,
+        193.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.54,
+        0.776,
+        0.614,
+        0.85
+      ]
+    },
+    {
+      "island": 68,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        84.9,
+        133.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.33,
+        0.784,
+        0.404,
+        0.858
+      ]
+    },
+    {
+      "island": 69,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        83.9,
+        157.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.434,
+        0.793,
+        0.508,
+        0.866
+      ]
+    },
+    {
+      "island": 70,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        53.9,
+        90.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.809,
+        0.015,
+        0.883,
+        0.089
+      ]
+    },
+    {
+      "island": 71,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        8.3,
+        104.2
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.813,
+        0.22,
+        0.887,
+        0.294
+      ]
+    },
+    {
+      "island": 72,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -5.4,
+        65.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.834,
+        0.119,
+        0.908,
+        0.193
+      ]
+    },
+    {
+      "island": 73,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        8.7,
+        80.4
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.015,
+        0.846,
+        0.089,
+        0.92
+      ]
+    },
+    {
+      "island": 74,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -53.0,
+        41.1
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.643,
+        0.867,
+        0.717,
+        0.941
+      ]
+    },
+    {
+      "island": 75,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        -17.8,
+        35.9
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.751,
+        0.867,
+        0.825,
+        0.941
+      ]
+    },
+    {
+      "island": 76,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        53.0,
+        137.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.859,
+        0.867,
+        0.933,
+        0.941
+      ]
+    },
+    {
+      "island": 77,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        30.7,
+        77.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.867,
+        0.751,
+        0.941,
+        0.825
+      ]
+    },
+    {
+      "island": 78,
+      "material": "rock",
+      "triangles": 2,
+      "area": 4828.0,
+      "along": [
+        29.7,
+        106.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.119,
+        0.871,
+        0.193,
+        0.945
+      ]
+    }
+  ]
+}

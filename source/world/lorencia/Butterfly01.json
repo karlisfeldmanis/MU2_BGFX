@@ -1,0 +1,67 @@
+{
+  "item": "Butterfly01",
+  "mu_name": "Butterfly01",
+  "mu_name_from": "Object1/Bird01.bmd's neighbour, and it is in Lorencia's folder rather than Noria's on purpose: MapManager.cpp's WD_3NORIA arm loads it as `AccessModel(MODEL_BUTTERFLY01, L\"Data\\\\Object1\\\\\", L\"Butterfly\", 1)` with its texture from `Object1\\`. Noria's own Object4 folder does not hold it. An asset a world needs is not necessarily in that world's folder, and this is the clearest case of it in the game.",
+  "world": "lorencia",
+  "object_type": -1,
+  "why_this_one": "Noria's wildlife, which is the same machinery as Lorencia's and not the same animal. GOBoid.cpp keeps one pool of five in the air around whoever is playing and picks what is in it per world: Lorencia gets MODEL_BIRD01, Dungeon and Lost Tower get bats, Blood Castle gets crows, and Noria gets this at a third of a bird's speed with its light turned off.\n\n28 triangles and one 32-pixel sheet with a three-key wing beat. Cheaper than the bird, which is already the cheapest thing in the sky.",
+  "profile": "world",
+  "sheets": {
+    "Butterfly": "butterfly.png"
+  },
+  "sheet_from": "Data/Object1/Butterfly.OZT, from MuMain. An .OZT because it is a cut-out: 38% of its square is alpha, which is the space between the wings.",
+  "sheet_materials": {
+    "Butterfly": "foliage"
+  },
+  "sheet_materials_from": "Foliage, which is what the bird takes and for the same reason: it is a painted card with no grain worth deriving at 32 pixels, and foliage is the material that declares none.",
+  "cutout": [
+    "Butterfly"
+  ],
+  "cutout_from": "A real alpha channel, as decode_texture reports it, cutting away 38% of the square.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 4,
+      "area": 690.2,
+      "along": [
+        -11.4,
+        11.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.94,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.998,
+        0.529
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 24,
+      "area": 20.4,
+      "along": [
+        -4.7,
+        4.2
+      ],
+      "mu_uv": [
+        0.919,
+        0.296,
+        0.999,
+        0.692
+      ],
+      "bake_uv": [
+        0.002,
+        0.534,
+        0.092,
+        0.742
+      ]
+    }
+  ]
+}

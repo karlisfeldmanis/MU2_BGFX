@@ -1,0 +1,91 @@
+{
+  "item": "GloveMale03",
+  "mu_name": "Pad Gloves",
+  "mu_name_from": "MuMain loads MODEL_GLOVES + i from GloveMale{i+1} (ZzzOpenData.cpp line 142), so file 03 is glove index 2, which openmu's 0.75 Armors.cs names the Pad Gloves. mu.db agrees: code 5122, group 10 index 2, Player/GloveMale03.bmd.",
+  "why_this_one": "One of the four pieces of armour a Budge Dragon can leave, and the cheapest: drop level 3 against the Small Shield's 3 and the other three gloves' and boots' 4. The Pad set is the Dark Wizard's first set, which is why the sheet is purple cloth with brass on it and not hide.\n\nThese four were written down as blocked when the shield was built - 'player parts wearing a second sheet, and the pipeline handles one' - and that was already stale then: HelmMale10 wears three sheets and ArmorMale10 two, and both are built. The chain takes every sheet an asset names through the same bake, one material slot each. So nothing was in the way but the declaration.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel and whose sheet judged the upscale was a steel gauntlet. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 106. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(2, \"Pad Gloves\", 3, 2, 0, 28, 20, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). It calls CreateArmor with slot 5, width 2, height 2, and CreateArmor ends `armor.Group = (byte)(slot + 5)`, so the group is 10 and is not written in the call.",
+    "group": 10,
+    "number": 2,
+    "drop_level": 3,
+    "drops_from_monsters": true,
+    "drop_level_note": "Three, so a Budge Dragon at level 4 can afford it and a Spider at 2 cannot. `(4 - 3) / 3` is nought, so it falls plain. CreateGloves has no dropsFromMonsters parameter - armour in the original always falls - so the true here is the absence of a reason for false. See Prize.DropsFromMonsters.",
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 2,
+    "attack_speed_note": "No attack_speed field, on purpose. The call's fifth argument is 0, and CreateGloves only writes the speed onto the item where it is above nought - so the row has none, and writing a 0 here would put a column in the index that OpenMU's own item does not carry. The Leather Gloves carry 8 and the Vine Gloves 4; nothing reads a glove's speed yet in any case, shared/Combat.cs takes it off the weapon row alone.",
+    "defense_note": "Two points of defence, recorded because they are in the row and not read by anything: the fight computes a hit from the attacker's roll and the defender's monster row, and worn armour is not part of it yet. Flagged as unread rather than left to look implemented.",
+    "durability": 28,
+    "requires": {
+      "level": 0,
+      "strength": 20,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone. Twenty strength, which a level one wizard has."
+  },
+  "sheets": [
+    "gloves_04.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/gloves_04.OZJ (64x64) and Data/Player/hide.jpg, from MuMain. The .bmd names gloves_04.jpg and hide.jpg; 142 of the 152 triangles are on the first and 10 on the second.",
+  "sheet_note": "A bracer seen from two sides, laid side by side on the square: a gold-brass plate with a raised knotwork pattern and a fringe of gilt tassels at the wrist over a violet-and-pink cloth sleeve. Mean (121, 103, 94). The brass is the bulk of the painted area; the cloth is the margins the plate does not cover.\n\nhide is MU capping the openings - a 9x9 solid black - and not art, exactly as on ArmorMale10.",
+  "material_note": "brass on both islands, over the profile's leather. The Pad set is the wizard's and there is no hide on it: the sheet is a gilt plate with knotwork and tassels over a violet cloth sleeve, and the plate is most of the painted area. brass is a cast yellow metal at roughness 0.44 with a pitted grain, which is what a poured and chased bracer is; steel's brushed grain would run a blade's streaks across the knotwork.",
+  "open_question": "The cloth cannot be separated from the brass. Each island is one whole glove - 76 triangles running the full width of the sheet - so the violet sleeve at the margins and the gilt plate over it are one island, and the island is the unit. Majority is brass, so the sleeve ships as brass-roughness violet: metallic 1.0 on a dielectric, which is the black-chrome fault the leather material warns about, confined here to the margins of the sheet. Look at it under --lighting=1; if the sleeve reads as coloured metal rather than as cloth, the honest fix is finer assignment than an island and not a different material.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 76,
+      "area": 1922.1,
+      "along": [
+        -46.4,
+        -23.5
+      ],
+      "mu_uv": [
+        0.023,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.956,
+        0.861
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 76,
+      "area": 1899.8,
+      "along": [
+        -2.2,
+        38.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.815,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.885,
+        0.994
+      ]
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "item": "ArmorMale08",
+  "mu_name": "Sphinx Armor",
+  "mu_name_from": "MuMain loads MODEL_ARMOR + i from ArmorMale{i+1} (ZzzOpenData.cpp line 140), so file 08 is index 7, which openmu's 0.75 Armors.cs names the Sphinx Armor. mu.db agrees: group 8 index 7, Player/ArmorMale08.bmd.",
+  "why_this_one": "Pasi's +3 line, and the last armour he sells that was missing. The mage stocks all five Sphinx pieces at +3 and none was built, so five of his nineteen lines were dropped by Realm.Shelf for want of a row. With these he sells fifteen of them and only his four staves are left. See shared/Market.Mage.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(7, 3, 2, 3, \"Sphinx Armor\", 38, 17, 36, 40, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 7,
+    "drop_level": 38,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 3,
+    "defense": 17,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 36,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone. No agility on any piece, which is the Bone set's shape and not the Bronze or Brass sets'."
+  },
+  "sheets": [
+    "upper_09_m.png",
+    "hide_m.png",
+    "upper_09b_m.png"
+  ],
+  "sheet_from": "Data/Player/upper_09_m.OZJ (128x128), hide_m.OZJ and upper_09b_m.ozt (32x32), from MuMain. The .bmd names upper_09_m.jpg, hide_m.jpg and upper_09b_m.tga; 226 of the 240 triangles are on the first, 6 on hide and 8 on the tabard.\n\nTwo hundred and forty triangles is the largest worn piece in the project - the Scale Armor is 170 and the Plate 168 - which is what a bodysuit with separate collar, pauldrons and bracers costs.",
+  "sheet_note": "upper_09_m is a black bodysuit with a gold collar of studs, a gold band at the waist and a pauldron drawn beside it. Mean (69, 59, 50) at chroma 19, the darkest sheet in the set and nearly achromatic - the gold is a small part of its area and most of it is black cloth.\n\nupper_09b_m is the tabard hanging at the front: a dark panel with a gold serpent glyph on it, cut 20% by its own alpha. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is pharaonic and MU drew it that way: banded gold plates riveted over black, a nemes headdress in gold stripes, a serpent glyph on the tabard and a silver death mask for a face. Chroma runs 19 on the bodysuit to 69 on the headdress, so the gold is real paint and not a tint.",
+  "material_note": "Six islands and the set's one real argument. Islands 4 and 5 are 36 triangles each, drawn in the sheet's right-hand column where the pauldron and bracer sit, and they take plate_steel. Everything else - islands 0, 1, 2 and 3, which is 168 of the 240 triangles - is the black bodysuit, and it takes cloth.\n\nIt was built as plate_steel first, which is the profile's default, and that is the Bone set's fault repeating: upper_09_m is 51% darker than lum 60 and only 12% gold, so a metal's reflectance kept the gold collar and turned the suit into black chrome. A suit is not metal however much metal is buckled onto it.\n\nThe gold collar and waist band are inside island 1 and go with it, which is the island rule and the price of it here. So is the tabard: upper_09b_m's 8 triangles are welded into the same shell, and they wanted cloth anyway - it is a dark panel with a glyph on it at lum 23 - so for once the weld costs nothing.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 0.88,
+      "roughness": 0.68
+    }
+  },
+  "material_overrides_why": "plate_steel keeps its reflectance and gives up both its polish and most of its pull toward grey. Two changes because the first alone was wrong, and the way it was wrong is the useful part.\n\nThe library's f0_desaturation 0.75 is sound where it was written - a painted sheet's warmth is a picture of light, so on steel it returns as a permanent tint and reads as dirty brass. It assumes the warmth is not the material. Here it is: the set is banded gold riveted over black, gold bars across the mask, a nemes of gold and brown. At 0.75 the plates came back matte brown clay.\n\nTaking it out entirely was the overcorrection. At 1.0 with the library's polish the gold went neon and split the set in two - vivid yellow plates against grey limbs - which is worse than the fault it fixed, because a set is judged whole and not plate by plate. The saturation was never the whole problem: roughness 0.34 is polished mirror, and a riveted band of gold is not polished. Saturation and gloss together are what read as plastic.\n\nSwept in Blender on the assembled figure rather than on a crop - that distinction is what the crop hid - across desaturation 0.75, 0.88 and 1.0 against roughness 0.34, 0.44 and 0.56. At 0.88 the gold is aged rather than neon and the plates, the limbs and the boots read as one artefact. Roughness went to 0.56 first and was still called glossy, so it was swept again at 0.56, 0.66 and 0.75: by 0.75 the metal is dead, and 0.68 is where the hard specular slides off the mask while the plates keep some life. Three passes on one number, and every one of them was judged on the whole figure - the first attempt was judged on a crop of the chest, which is how a change that improved the gold and broke the set could look like progress.\n\nScoped to this set: the Plate set is polished steel and wants both figures as the library states them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 22,
+      "area": 1079.8,
+      "along": [
+        -15.0,
+        4.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.692,
+        0.991
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 102,
+      "area": 6588.2,
+      "along": [
+        -21.5,
+        22.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.033,
+        0.995,
+        1.058
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.98,
+        0.94
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 22,
+      "area": 1325.8,
+      "along": [
+        -34.3,
+        5.3
+      ],
+      "mu_uv": [
+        0.494,
+        0.003,
+        0.72,
+        0.934
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.382,
+        0.968
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 22,
+      "area": 1334.5,
+      "along": [
+        -6.8,
+        16.7
+      ],
+      "mu_uv": [
+        -0.013,
+        0.003,
+        0.228,
+        0.934
+      ],
+      "bake_uv": [
+        0.419,
+        0.567,
+        0.921,
+        0.944
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 36,
+      "area": 1949.4,
+      "along": [
+        -29.3,
+        -2.7
+      ],
+      "mu_uv": [
+        0.71,
+        0.017,
+        0.974,
+        0.989
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.901,
+        0.917
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 36,
+      "area": 2157.5,
+      "along": [
+        -5.5,
+        20.4
+      ],
+      "mu_uv": [
+        0.71,
+        0.017,
+        0.974,
+        0.989
+      ],
+      "bake_uv": [
+        0.147,
+        0.009,
+        0.94,
+        0.917
+      ]
+    }
+  ]
+}

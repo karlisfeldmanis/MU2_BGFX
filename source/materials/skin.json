@@ -1,0 +1,33 @@
+{
+  "name": "skin",
+  "summary": "Bare flesh: the chest, arms, legs and face a character has when it is wearing nothing.",
+  "why": [
+    "Metallic 0.0, and on a body it is the difference between a person and a statue. Every",
+    "island in this library so far has been metal or leather on a made object; a bare torso",
+    "left at the armour profile's default comes out as polished chrome in the shape of a man,",
+    "which is the single most obvious way this could be got wrong.",
+    "Roughness 0.78, raised from a first guess of 0.55 after looking at it under the sun. At",
+    "0.55 the chest and shoulders caught a broad specular highlight that read as a glow on a",
+    "person - the shine of a mannequin rather than of skin. MU's art already has its shading",
+    "painted into it, so a strong highlight laid on top is a second light the artist never",
+    "drew. Just above leather's 0.72, deliberately: skin scatters more than a worn cord wrap",
+    "does, and at this resolution the honest answer is very little specular at all.",
+    "No grain, and that is a decision rather than an omission. Skin has pores and fine",
+    "wrinkles, and there is a real temptation to give it a noise field for them - but MU's",
+    "sheet is 256x256 across a whole body, so a pore is far smaller than a texel and any",
+    "grain here would be invented rather than resolved. The three kinds this pipeline has -",
+    "brushed, weave, cast - are each a fact about how a surface was made. Nothing about how a",
+    "person is made is visible at this resolution.",
+    "Hair is on this sheet too and is not this material. This used to say that splitting it",
+    "would need the mesh to separate hair from face and that the mesh does not - which was",
+    "wrong, and wrong in a way that cost something: HelmClass02 comes out as exactly two",
+    "islands, ninety-three triangles of face and twenty-six of hair, and while nobody looked",
+    "the hair sat on the armour profile's default and rendered as chrome. It has a material",
+    "of its own now. See hair.json.",
+    "Roughness 0.78 -> 0.63, judged on the assembled bare Dark Knight in Blender under the recreated bench light. At 0.78 the skin read as unlit wax; at 0.63 the shoulders and collarbones carry a live sheen and the face keeps its softness. The same pass that took the hair the other way - each material moved toward what its surface does, not toward a shared gloss.",
+    "0.63 -> 0.70, pulled back after the bare Knight's tunic told on it. The torso is one skin island and the tunic rides on the same number, and at 0.63 a grazing side view stacked the dome's cool sheen onto the tunic's blue-grey side panel - MU's own art, verified in the asset json against the .bmd's texture reference - until it read as a teal defect. Measured: forcing the roughness back up halved the teal-leaning pixels. 0.70 keeps some life on a shoulder and stops dressing the cloth in sky."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.7,
+  "two_sided_why": "Left two-sided, and this was tried the other way twice now - once as a flag on the whole part and once per material, which was supposed to be the safe version of it. It is not: culling skin makes the head transparent from behind. You see straight through the skull to the far side of it.\n\nSo the premise was wrong rather than the granularity. MU's head is not a closed solid with the winding a culled solid needs - it is built the way the rest of MU is, as shells meant to be drawn from both sides - and no amount of choosing *which* material to cull helps when the geometry cannot take culling at all. The crown wedge stays; the answer to it, if there is one, is geometry and not a render flag."
+}

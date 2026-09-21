@@ -1,0 +1,27 @@
+{
+  "name": "plaster",
+  "summary": "Lime render on a wall: the pale, chalky, pitted stuff most of Lorencia's buildings are faced with.",
+  "why": [
+    "Nothing in the library was a rendered wall. rock is a weathered boulder and flagstone is a",
+    "cut slab; plaster is neither - it is a soft coat troweled over masonry, and it fails in a",
+    "way stone does not, by pitting and flaking rather than by cracking along a plane.",
+    "Depth 0.06, down from 0.14 and then looked at again once the occlusion stopped drowning it. What MU paints on a render wall is dirt: dark speckles of staining, a few texels across, scattered over a pale ground. Read as height they become holes, and at 0.14 a house came out looking like pumice rather than plaster - every stain a pock with a shadow in it. This is the one material in the library where the art's luminance is *least* related to its relief, because the thing making it dark is on the surface rather than in it.",
+    "Roughness 0.90, just under grass. Lime render is about the most diffuse surface a town",
+    "has: it is chalk, and even wet it goes darker rather than shinier.",
+    "pitting and staining - millimetres of pock and a lot of colour - and MU's wall sheets have",
+    "a large luminance swing that is mostly dirt rather than relief. Pushed deeper the walls",
+    "came out looking like they had been shelled.",
+    "Range 0.12, high for something this uniform, because the difference between a dry wall and",
+    "the damp foot of one is most of what makes a rendered building look like it has stood",
+    "outside.",
+    "Cast, because render has no direction: it is floated on with a tool that goes every way."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.9,
+  "grain": {
+    "kind": "cast",
+    "scale": 220,
+    "depth": 0.06,
+    "roughness_range": 0.12
+  }
+}

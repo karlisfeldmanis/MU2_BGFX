@@ -1,0 +1,24 @@
+{
+  "name": "grass",
+  "summary": "Meadow: the ground itself, not the clumps standing in it. Blades laid over soil, seen from above and from a long way off.",
+  "why": [
+    "Roughness 0.92, the roughest thing in the library. Grass scatters in every direction and",
+    "has no highlight at any angle a player ever sees it from - the one surface where a",
+    "specular response is purely a mistake.",
+    "Depth 0.18, which is far less than the art might suggest. The luminance swing on",
+    "TileGrass01 is large, but most of it is colour - lighter and darker patches of the same",
+    "flat ground - rather than height. Grass blades are millimetres proud. At 0.4 the meadow",
+    "came out looking like moss on a boulder.",
+    "Roughness range 0.10, which is the damp hollow against the dry tuft. It is the material",
+    "in this library with the most honest claim to varying: a field really is patchily wet.",
+    "Cast grain rather than brushed. A meadow has no direction - it is not mown."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.92,
+  "grain": {
+    "kind": "cast",
+    "scale": 240,
+    "depth": 0.18,
+    "roughness_range": 0.1
+  }
+}

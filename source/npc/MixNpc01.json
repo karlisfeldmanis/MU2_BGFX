@@ -1,0 +1,99 @@
+{
+  "item": "MixNpc01",
+  "mu_name": "Chaos Goblin",
+  "mu_name_from": "NPC/MixNpc01.bmd, loaded as MODEL_MIX_NPC. Type 238, and OpenMU's Version075 gives him NpcWindow.ChaosMachine rather than a store - he is the Chaos Machine's keeper. Standing once in Noria.",
+  "world": "noria",
+  "object_type": -1,
+  "why_this_one": "He wears the two sheets Noria's Object40 and Object41 wear, byte for byte - Data/NPC/ob3.OZJ and Data/Object4/ob3.OZJ have the same md5, and so do the two yellow_jewel.OZJ. Which settles what those two placements are: the machine's own props, standing beside its keeper, sharing his page.\n\n`o->BlendMesh = 1` in his arm of CreateCharacter, which is the gem.",
+  "profile": "npc",
+  "sheets": {
+    "ob3": "npc_ob3.png",
+    "yellow_jewel": "npc_yellow_jewel.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, which is where the client loads them from, decoded under an npc_ prefix. The prefix is the rule the tile sheets follow and these need it more than most: `ob`, `ob3` and `hpp` are the kind of name a second folder is certain to reuse, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "ob3": "skin",
+    "yellow_jewel": "lamplight"
+  },
+  "sheet_materials_from": "ob3 is his body - purple hide with orange runes burned into it - and takes skin. yellow_jewel is eight pixels of gem and is drawn additively.",
+  "additive": [
+    "yellow_jewel"
+  ],
+  "additive_from": "ZzzCharacter.cpp, MONSTER_CHAOS_GOBLIN: `o->BlendMesh = 1`, and mesh order is ob3 then yellow_jewel.",
+  "tiled": true,
+  "tiled_why": "His gem is drawn additively and the baked path has nowhere to say so - one atlas, one material. Same fix and same reason as ElfWizard01, whose note carries the argument: `o->BlendMesh = 1` in his arm of CreateCharacter is yellow_jewel, eight pixels of gem that MU adds to what is behind it rather than drawing over it.\n\nThe profile stays npc, so he keeps skin as his default material and the NPC play speed of 0.25; only the atlas goes.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "pad": "edge"
+  },
+  "upscale_why": "The npc profile's own, restated because `tiled` does not change what kind of art this is: ob3 is a figure sheet with a helm and a face beside him on the page, not a wall that is laid next to itself, so it pads by replication rather than by wrapping.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 376,
+      "area": 35099.3,
+      "along": [
+        -24.7,
+        72.7
+      ],
+      "mu_uv": [
+        0.006,
+        0.004,
+        0.989,
+        1.004
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.991,
+        0.841
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 49,
+      "area": 2118.2,
+      "along": [
+        -4.5,
+        46.6
+      ],
+      "mu_uv": [
+        0.022,
+        0.007,
+        0.305,
+        0.692
+      ],
+      "bake_uv": [
+        0.17,
+        0.331,
+        0.416,
+        0.52
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 32,
+      "area": 1230.4,
+      "along": [
+        48.4,
+        63.4
+      ],
+      "mu_uv": [
+        0.282,
+        0.018,
+        1.158,
+        0.954
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.911,
+        0.911
+      ]
+    }
+  ]
+}

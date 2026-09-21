@@ -1,0 +1,88 @@
+{
+  "item": "Sign02",
+  "mu_name": "Sign02",
+  "mu_name_from": "Lorencia's object slot 97, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 97,
+  "why_this_one": "5 placements. A notice board.",
+  "profile": "world",
+  "sheets": {
+    "notice": "notice.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "notice": "timber"
+  },
+  "sheet_pad": {
+    "notice": "edge"
+  },
+  "sheet_pad_from": "Atlases rather than tiles - a carved figure, a bridge deck beside its parapet - so their borders replicate.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 13817.4,
+      "along": [
+        -0.9,
+        5.9
+      ],
+      "mu_uv": [
+        -0.002,
+        0.319,
+        0.999,
+        1.002
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.881,
+        0.744
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 6453.0,
+      "along": [
+        -9.5,
+        2.3
+      ],
+      "mu_uv": [
+        0.157,
+        0.062,
+        0.991,
+        0.315
+      ],
+      "bake_uv": [
+        0.004,
+        0.753,
+        0.908,
+        0.889
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 6452.8,
+      "along": [
+        -9.5,
+        2.3
+      ],
+      "mu_uv": [
+        0.158,
+        0.061,
+        0.986,
+        0.315
+      ],
+      "bake_uv": [
+        0.551,
+        0.004,
+        0.996,
+        0.285
+      ]
+    }
+  ]
+}

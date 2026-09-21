@@ -1,0 +1,107 @@
+{
+  "item": "ElfMerchant01",
+  "mu_name": "Eo the Craftsman",
+  "mu_name_from": "NPC/ElfMerchant01.bmd. The client names him with the Korean for 'craftsman' in ZzzCharacter.cpp's MONSTER_EO_THE_CRAFTSMAN arm; OpenMU's Version075 calls him Eo the Craftsman and gives him a store. Type 243, standing once in Noria.",
+  "world": "noria",
+  "object_type": -1,
+  "why_this_one": "One mesh and one sheet, which makes him the simplest townsperson in the game - the Storage keeper is fourteen sheets. Everything he is is painted on one 128 square: the robe, the belt, the face, and the row of spare heads beside them that MU leaves in the corner of the page.",
+  "profile": "npc",
+  "sheets": {
+    "ob": "npc_ob.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, which is where the client loads them from, decoded under an npc_ prefix. The prefix is the rule the tile sheets follow and these need it more than most: `ob`, `ob3` and `hpp` are the kind of name a second folder is certain to reuse, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "ob": "skin"
+  },
+  "sheet_materials_from": "One sheet carrying a face and a robe together, so it takes skin rather than cloth for the reason Amy's does: cloth declares a weave along u at scale 140, and a weave that lands on a cheek is worse than a robe with no grain nobody could resolve at 128 pixels anyway.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 24,
+      "area": 2216.6,
+      "along": [
+        29.4,
+        57.7
+      ],
+      "mu_uv": [
+        0.12,
+        0.093,
+        0.265,
+        0.435
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.134,
+        0.2
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 262,
+      "area": 35773.3,
+      "along": [
+        -28.8,
+        48.7
+      ],
+      "mu_uv": [
+        -0.001,
+        -0.004,
+        1.001,
+        1.004
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.983,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 18,
+      "area": 736.6,
+      "along": [
+        -0.0,
+        14.7
+      ],
+      "mu_uv": [
+        0.018,
+        0.179,
+        0.139,
+        0.338
+      ],
+      "bake_uv": [
+        0.095,
+        0.581,
+        0.676,
+        0.672
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 18,
+      "area": 836.6,
+      "along": [
+        25.0,
+        46.1
+      ],
+      "mu_uv": [
+        0.02,
+        0.179,
+        0.141,
+        0.338
+      ],
+      "bake_uv": [
+        0.303,
+        0.006,
+        0.371,
+        0.2
+      ]
+    }
+  ]
+}

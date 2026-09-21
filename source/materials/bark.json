@@ -1,0 +1,26 @@
+{
+  "name": "bark",
+  "summary": "The outside of a living tree: furrowed, fibrous, damp at the bottom and never smooth anywhere.",
+  "why": [
+    "Metallic 0.0, roughness 0.88 - just above rock's 0.86 and the roughest thing in the",
+    "library apart from foliage. Bark is the least reflective surface in Lorencia: it is dry",
+    "dead fibre with air in it, and even wet it does not shine, it darkens.",
+    "Grain is brushed and runs along v, which is up the trunk. This is the one material where",
+    "the direction is not a judgement call - MU's tree sheet is vertical furrows from top to",
+    "bottom, and a cast grain across it would cancel the only structure the art has.",
+    "Depth 0.35, the deepest declared here, above rock's 0.30. On the world profile the depth",
+    "scales a normal read off the art's own luminance rather than a generated pattern, and",
+    "bark is the best case that reading has: those furrows are drawn as near-black lines and",
+    "they really are two centimetres deep. Where rock's cracks are hairlines, a tree's are",
+    "channels."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.88,
+  "grain": {
+    "kind": "brushed",
+    "along": "v",
+    "scale": 160,
+    "depth": 0.35,
+    "roughness_range": 0.08
+  }
+}

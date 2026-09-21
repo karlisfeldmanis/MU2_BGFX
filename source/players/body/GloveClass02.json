@@ -1,0 +1,62 @@
+{
+  "item": "GloveClass02",
+  "mu_name": "Dark Knight hands",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}, numbered one over MU's zero-based classes. Class01 is the Dark Wizard, Class02 the Dark Knight, Class03 the Elf.",
+  "part_note": "Hands and forearm wraps. 130 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_wizard_01": "skin_wizard_01.png"
+  },
+  "sheet_from": "Data/Player/skin_wizard_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
+  "sheet_warning": "The sheet name says nothing about which class wears it. The Dark Knight's body is painted on skin_wizard_01 and the Dark Wizard's on skin_barbarian_01 - the old client records this explicitly, because loading the wrong set is not a texture fault but the wrong character. There is a skin_warrior_01 already in this tree and it is not this one.",
+  "sheet_note": "find_source found one other copy, remaster_one's Data/Player at 512x512 and exactly 2x. That is the directory that was upscaled in place, so MuMain's is the art.",
+  "material_note": "Flesh is skin; the brown-and-orange banded regions are leather_wrap. Read off the sheet by cropping each island at its own mu_uv - with V flipped, which is what makes the difference between reading the head island as a face and reading it as a brown smear two thirds of the way down the sheet.",
+  "open_question": "Several islands are two to five triangles and land on near-black or on the sheet's empty blue, and at 256x256 across a whole body they cannot be told apart by looking. They default to skin, which is the body's dominant material and the safe way to be wrong: a few dark texels rendered as flesh is invisible, where a bare chest rendered as plate is a chrome statue. Look at the character in the engine before splitting them.",
+  "reclass_note": "leather, and it was plate_steel - the armour profile's default, the same slip the material_note above records for the hair island. It sat invisible for as long as plate_steel was dull; the moment that recipe went reflective (f0 0.575, roughness 0.34) the bare Knight's bracers and boots turned chrome, and the f0 correction sweeping the sheet's mottled rind is what minted the teal patches on the shin. A bracer is oiled leather with its studs painted in the sheet, so leather is the truthful class and the metal look leaves with it.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 65,
+      "area": 1504.3,
+      "along": [
+        -46.4,
+        -23.5
+      ],
+      "mu_uv": [
+        0.504,
+        0.505,
+        0.625,
+        0.751
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.977,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 65,
+      "area": 1486.8,
+      "along": [
+        8.7,
+        38.8
+      ],
+      "mu_uv": [
+        0.504,
+        0.505,
+        0.625,
+        0.751
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.742,
+        0.996
+      ]
+    }
+  ]
+}

@@ -1,0 +1,373 @@
+{
+  "item": "Smith01",
+  "mu_name": "Smith01",
+  "mu_name_from": "NPC/Smith01.bmd — Hanzo the Blacksmith, type 251 in remaster_one's table. Not a placement: no map file mentions him, because MU's townspeople come from the server. See the note on where they stand.",
+  "world": "lorencia",
+  "object_type": -1,
+  "why_this_one": "The first NPC, and chosen because he is the simplest kind. One .bmd, 730 triangles, five sheets and his own eleven-key idle — the same shape as a piece of animated scenery, which is a path this project already has. The merchants are assemblies of five files each and the guards are the player skeleton wearing plate; both of those want the character path and can follow.",
+  "profile": "npc",
+  "sheets": {
+    "smith": "smith.png",
+    "tile_02": "tile_02.png",
+    "tile_03": "tile_03.png",
+    "fire_02": "fire_02.png",
+    "fire_03": "fire_03.png"
+  },
+  "sheet_from": "Out of Data/NPC, which is where the client loads a model's textures from — the directory the model came from. tile_02 and tile_03 share their names with world tiles and are not them.",
+  "sheet_materials": {
+    "smith": "skin",
+    "tile_02": "rock",
+    "tile_03": "rock",
+    "fire_02": "lamplight",
+    "fire_03": "lamplight"
+  },
+  "sheet_materials_from": "Skin wherever the sheet carries flesh, and that is most of them. MU paints a townsperson's face on the same page as his clothes, so the material chosen for the clothes is also the material on the face — and cloth declares a weave along u at scale 140, which put fabric grain down Amy's cheek. skin declares no grain, which is the safe way to be wrong: a dress missing a weave nobody could resolve at 128 pixels costs nothing.\n\nWhat is plainly not flesh keeps its own material: the smith's forge is lamplight, his anvil is rock, the vault keeper's plate is steel and his chest is timber.",
+  "additive": [
+    "fire_02",
+    "fire_03"
+  ],
+  "additive_from": "The forge coals, which MU adds to the frame rather than covering it with. Same treatment as every other glow in the town: black adds nothing, the light adds itself. See Glows.",
+  "glow": {
+    "fire_02": {
+      "low": 0.45,
+      "high": 0.95,
+      "steps": 16,
+      "hz": 20,
+      "smooth_seconds": 0.12
+    }
+  },
+  "glow_from": "A bonfire's motion on a forge, which is the nearest thing MU gives either of them. The client has no per-type case for a smith's coals — they sit still — but a forge that does not move is a picture of a forge, and this project already has the machinery to move one for the cost of a material write a frame.",
+  "islands_from": "Reassigned when the sheets moved from cloth to skin. The islands are what the bake actually reads — sheet_materials names a material per sheet, and an island is a piece of geometry, so the two are not the same list and the second one wins. Changing only the sheets left every one of these still baking cloth's weave, which is the striping that ran down Amy's face.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 8,
+      "area": 1066.5,
+      "along": [
+        52.9,
+        91.9
+      ],
+      "mu_uv": [
+        0.277,
+        0.182,
+        0.792,
+        0.992
+      ],
+      "bake_uv": [
+        0.756,
+        0.27,
+        0.884,
+        0.769
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 2,
+      "area": 3266.5,
+      "along": [
+        -29.9,
+        48.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.308,
+        0.594,
+        0.522,
+        0.808
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 2,
+      "area": 3266.5,
+      "along": [
+        -29.9,
+        48.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.541,
+        0.595,
+        0.755,
+        0.81
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 456,
+      "area": 20134.0,
+      "along": [
+        -26.6,
+        43.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.003,
+        0.999,
+        1.0
+      ],
+      "bake_uv": [
+        0.25,
+        0.27,
+        0.982,
+        0.972
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 16,
+      "area": 1454.3,
+      "along": [
+        7.6,
+        39.8
+      ],
+      "mu_uv": [
+        0.055,
+        0.002,
+        0.625,
+        0.433
+      ],
+      "bake_uv": [
+        0.766,
+        0.539,
+        0.928,
+        0.764
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 53,
+      "area": 2921.8,
+      "along": [
+        8.8,
+        40.4
+      ],
+      "mu_uv": [
+        0.786,
+        0.258,
+        0.988,
+        0.665
+      ],
+      "bake_uv": [
+        0.242,
+        0.27,
+        0.957,
+        0.766
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 53,
+      "area": 2944.4,
+      "along": [
+        -29.7,
+        13.9
+      ],
+      "mu_uv": [
+        0.786,
+        0.258,
+        0.988,
+        0.665
+      ],
+      "bake_uv": [
+        0.242,
+        0.475,
+        0.951,
+        0.786
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 10,
+      "area": 488.5,
+      "along": [
+        -6.4,
+        13.9
+      ],
+      "mu_uv": [
+        0.652,
+        0.621,
+        0.828,
+        0.707
+      ],
+      "bake_uv": [
+        0.088,
+        0.787,
+        0.811,
+        0.959
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 10,
+      "area": 605.9,
+      "along": [
+        12.7,
+        35.4
+      ],
+      "mu_uv": [
+        0.652,
+        0.621,
+        0.828,
+        0.707
+      ],
+      "bake_uv": [
+        0.83,
+        0.787,
+        0.924,
+        0.806
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 12,
+      "area": 1163.7,
+      "along": [
+        -18.0,
+        39.6
+      ],
+      "mu_uv": [
+        0.781,
+        0.005,
+        0.838,
+        0.241
+      ],
+      "bake_uv": [
+        0.057,
+        0.27,
+        0.987,
+        0.991
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 12,
+      "area": 894.1,
+      "along": [
+        21.3,
+        40.6
+      ],
+      "mu_uv": [
+        0.85,
+        0.132,
+        0.989,
+        0.216
+      ],
+      "bake_uv": [
+        0.144,
+        0.94,
+        0.488,
+        0.97
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 10,
+      "area": 1754.1,
+      "along": [
+        26.7,
+        88.2
+      ],
+      "mu_uv": [
+        0.648,
+        0.011,
+        0.733,
+        0.289
+      ],
+      "bake_uv": [
+        0.944,
+        0.821,
+        0.963,
+        0.958
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 10,
+      "area": 383.5,
+      "along": [
+        9.5,
+        32.2
+      ],
+      "mu_uv": [
+        0.667,
+        0.288,
+        0.713,
+        0.33
+      ],
+      "bake_uv": [
+        0.507,
+        0.959,
+        0.551,
+        0.969
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 42,
+      "area": 26769.1,
+      "along": [
+        -36.4,
+        55.3
+      ],
+      "mu_uv": [
+        -0.153,
+        0.001,
+        1.153,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.97,
+        0.941
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 34,
+      "area": 10133.6,
+      "along": [
+        51.3,
+        88.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        1.28
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.973,
+        0.97
+      ]
+    }
+  ]
+}

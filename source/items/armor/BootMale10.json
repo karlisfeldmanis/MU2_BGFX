@@ -1,0 +1,217 @@
+{
+  "item": "BootMale10",
+  "mu_name": "Plate Boots",
+  "mu_name_from": "MuMain maps MODEL_HELM + i to HelmMale{i+1}, so file 10 is armour index 9, which openmu names Plate.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(9, 6, 2, 2, \"Plate Boots\", 42, 12, 4, 50, 130, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so `armor.Group = (byte)(slot + 5)` makes the group 11.",
+    "group": 11,
+    "number": 9,
+    "drop_level": 42,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 12,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 4,
+    "walk_speed_note": "Four, the boots' own column, which nothing in this simulation reads: a walk is MU's fixed tile rate. Recorded rather than dropped.",
+    "durability": 50,
+    "requires": {
+      "level": 0,
+      "strength": 130,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone.",
+    "shelf_note": "On Martin's and Harold's shelf at +3 - the last column of the wandering merchants' stock, see shared/Market.cs - and until this row existed the shelf dropped the line, because a model with no row is a thing the realm cannot price. The five Plate pieces were built for the guards' bodies first and the row came second."
+  },
+  "sheet": "boots_11.png",
+  "sheet_from": "MuMain/src/bin/Data/Player - the tree that was not upscaled in place. remaster_one's Player/ holds 2x neural output written over MU's originals; see pipeline/find_source.py.",
+  "sheet_note": "One sheet, which is why this part builds and the chest does not. The Plate gloves and boots are the only pieces of the set MU drew without a second texture on them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 3114.6,
+      "along": [
+        -10.1,
+        21.6
+      ],
+      "mu_uv": [
+        0.015,
+        -0.034,
+        0.951,
+        0.775
+      ],
+      "bake_uv": [
+        0.008,
+        0.132,
+        0.803,
+        0.718
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 1315.1,
+      "along": [
+        -10.5,
+        19.1
+      ],
+      "mu_uv": [
+        0.066,
+        0.616,
+        0.951,
+        0.999
+      ],
+      "bake_uv": [
+        0.044,
+        0.305,
+        0.653,
+        0.787
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 3114.6,
+      "along": [
+        -10.1,
+        21.6
+      ],
+      "mu_uv": [
+        0.015,
+        -0.034,
+        0.951,
+        0.775
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.878,
+        0.361
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 1315.1,
+      "along": [
+        -10.5,
+        19.1
+      ],
+      "mu_uv": [
+        0.066,
+        0.616,
+        0.951,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.059,
+        0.891,
+        0.899
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 983.0,
+      "along": [
+        -23.0,
+        5.7
+      ],
+      "mu_uv": [
+        0.026,
+        0.186,
+        0.247,
+        0.644
+      ],
+      "bake_uv": [
+        0.42,
+        0.008,
+        0.993,
+        0.947
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 327.4,
+      "along": [
+        -15.0,
+        -0.2
+      ],
+      "mu_uv": [
+        0.02,
+        0.18,
+        0.247,
+        0.635
+      ],
+      "bake_uv": [
+        0.008,
+        0.09,
+        0.918,
+        0.728
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 983.0,
+      "along": [
+        -23.0,
+        5.7
+      ],
+      "mu_uv": [
+        0.026,
+        0.186,
+        0.247,
+        0.644
+      ],
+      "bake_uv": [
+        0.881,
+        0.296,
+        0.993,
+        0.993
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 327.4,
+      "along": [
+        -15.0,
+        -0.2
+      ],
+      "mu_uv": [
+        0.02,
+        0.18,
+        0.247,
+        0.635
+      ],
+      "bake_uv": [
+        0.008,
+        0.452,
+        0.393,
+        0.947
+      ]
+    }
+  ]
+}

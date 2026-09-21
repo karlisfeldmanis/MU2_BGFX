@@ -1,0 +1,84 @@
+{
+  "item": "GirlLower01",
+  "mu_name": "Potion Girl Amy \u2014 GirlLower01",
+  "part_note": "One piece of Potion Girl Amy, skinned to Girl01's rig and carrying a bind pose only. MU builds a townsperson the way it builds a player: the base .bmd is skeleton and actions with no mesh on it, and the pieces are meshes with nowhere to be until the rig puts them somewhere.",
+  "profile": "npc",
+  "sheets": {
+    "girl_b": "girl_b.png"
+  },
+  "sheet_materials": {
+    "girl_b": "skin"
+  },
+  "sheet_materials_from": "Skin wherever the sheet carries flesh, and that is most of them. MU paints a townsperson's face on the same page as his clothes, so the material chosen for the clothes is also the material on the face \u2014 and cloth declares a weave along u at scale 140, which put fabric grain down Amy's cheek. skin declares no grain, which is the safe way to be wrong: a dress missing a weave nobody could resolve at 128 pixels costs nothing.\n\nWhat is plainly not flesh keeps its own material: the smith's forge is lamplight, his anvil is rock, the vault keeper's plate is steel and his chest is timber.",
+  "animation_rig": "npc/body/Girl01.rig.json",
+  "animation_rig_from": "Girl01.bmd, which is this figure's player.bmd: skeleton and one action, no meshes. A merchant skinned to her own rig cannot borrow the player's \u2014 the bone counts differ (Girl01 against player.bmd's 60) and so do the names.",
+  "islands_from": "Reassigned when the sheets moved from cloth to skin. The islands are what the bake actually reads \u2014 sheet_materials names a material per sheet, and an island is a piece of geometry, so the two are not the same list and the second one wins. Changing only the sheets left every one of these still baking cloth's weave, which is the striping that ran down Amy's face.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 70,
+      "area": 6366.3,
+      "along": [
+        -18.0,
+        15.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.004,
+        0.715,
+        0.4
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.742,
+        0.416
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 53,
+      "area": 1404.6,
+      "along": [
+        -6.5,
+        16.7
+      ],
+      "mu_uv": [
+        0.748,
+        0.006,
+        0.994,
+        0.366
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.996,
+        0.876
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 53,
+      "area": 1406.4,
+      "along": [
+        -6.5,
+        16.7
+      ],
+      "mu_uv": [
+        0.745,
+        0.011,
+        0.993,
+        0.355
+      ],
+      "bake_uv": [
+        0.005,
+        0.424,
+        0.742,
+        0.847
+      ]
+    }
+  ]
+}

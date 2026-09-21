@@ -1,0 +1,31 @@
+{
+  "name": "fruit",
+  "summary": "The skin of something grown and picked: an apple. Waxy, taut over a curve, and shinier than anything else alive in this library.",
+  "why": [
+    "A new material rather than a reach for an existing one, and the test this library uses is",
+    "whether the surface differs rather than whether the object does. Nothing here is a soft",
+    "waxy organic skin. The two nearest are both wrong in a way that shows: skin at 0.78 is",
+    "flesh, which scatters and barely returns a highlight, and an apple that rough comes out",
+    "as a red potato; ceramic at 0.30 is a fired glaze, which is glass, and an apple that",
+    "smooth comes out as a painted bauble.",
+    "Roughness 0.42, between the two and nearer the glaze. An apple's wax does return a real",
+    "highlight - it is the thing you polish one on a sleeve to get - but it is a soft one",
+    "spread over a curve rather than the hard point a glaze gives. Judged against MU's own",
+    "art, which is the argument that settles it: apple.OZJ already has a white specular",
+    "painted across its top third, so the sheet is telling us the artist saw a shine there.",
+    "The material's job is to agree with that painting under a moving light rather than to",
+    "add a second one beside it.",
+    "Metallic 0.0. It is a dielectric with a strong specular, which is ceramic's trap and",
+    "water's: reaching for metallic to get the shine gives an apple cast in copper.",
+    "No grain, and for the reason skin gives. A real apple has lenticels and a faint dimple",
+    "at the calyx, and the temptation to put a noise field there is real - but the sheet is",
+    "sixteen pixels square across the whole fruit, so a lenticel is far below a texel and any",
+    "grain would be invented rather than resolved. Fifty triangles of geometry already carry",
+    "the only shape there is evidence for.",
+    "It is on the apple's body alone. The leaf and stem are two triangles of cut-out card off",
+    "pot3, and those are foliage - a different surface on the same object, which is exactly",
+    "the split the island assignment exists to make."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.42
+}

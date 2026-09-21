@@ -1,0 +1,393 @@
+{
+  "item": "ElfWizard01",
+  "mu_name": "Elf Lala",
+  "mu_name_from": "NPC/ElfWizard01.bmd. MU's own name for her is the Korean for 'the fairy Lala', written into the character by ZzzCharacter.cpp's MONSTER_ELF_LALA arm; OpenMU's Version075 NpcInitialization calls her Elf Lala and gives her a merchant store. Type 242, standing once in Noria and nowhere else in 0.75.",
+  "world": "noria",
+  "object_type": -1,
+  "why_this_one": "The one townsperson in the game who does not stand on the ground. Her arm of CreateCharacter ends `o->Position[2] = RequestTerrainHeight(...) + 140.f`, which is a metre and forty above the tile - she is a winged fairy and MU hovers her rather than animating a hover. Nothing else in 0.75 does this, and a spawn table that only carries a tile cannot say it, so it is written on her placement.\n\nHer wing is the second thing: `o->BlendMesh = 1` in the same arm, which is mesh 1, which is lpwing - a dark sheet of veins that is nothing at all until it is added to what is behind it.",
+  "profile": "npc",
+  "sheets": {
+    "hpp": "npc_hpp.png",
+    "lpwing": "npc_lpwing.png",
+    "lplower": "npc_lplower.png",
+    "lptgq": "npc_lptgq.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, which is where the client loads them from, decoded under an npc_ prefix. The prefix is the rule the tile sheets follow and these need it more than most: `ob`, `ob3` and `hpp` are the kind of name a second folder is certain to reuse, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "hpp": "brass",
+    "lpwing": "cloth",
+    "lplower": "skin",
+    "lptgq": "cloth"
+  },
+  "sheet_materials_from": "hpp is a gilt harp and the only thing on her that is metal. lplower carries her face and her arms alongside the gown, so it takes skin for the reason every townsperson's sheet does - cloth declares a weave at scale 140 and MU paints a face on the same page as a dress. lptgq is the skirt alone and keeps cloth. lpwing is drawn additively and its material is very nearly moot.",
+  "cutout": [
+    "lptgq"
+  ],
+  "cutout_from": "Declared from the sheet rather than guessed: it arrived with a real alpha channel, which is MU saying the shape is cut rather than modelled.",
+  "additive": [
+    "lpwing"
+  ],
+  "additive_from": "ZzzCharacter.cpp, MONSTER_ELF_LALA: `o->BlendMesh = 1`. Mesh order is the .bmd's - hpp, lpwing, lplower, lptgq - so mesh 1 is the wing.",
+  "tiled": true,
+  "tiled_why": "Her wing is drawn additively and the baked path cannot say so.\n\n`additive` is read where the slot file is written, which is the tiled branch of mu2.sh alone - tiled_maps' `glow` is what turns a sheet into an emissive one and pushes its own brightness into its alpha. The npc profile bakes, so the whole figure came out as one atlas under one material, MASK, with no emission anywhere: the declaration was accepted, written into the asset, and reached nothing.\n\nWhat that looks like is the bug. lpwing is pale veins painted on black, and MU adds it to what is behind - black adds nothing, so a player sees veins and the trees through them. Baked opaque it is a black card with veins on it, which is a fairy with two rectangles behind her. The single MASK material made it worse in the other direction: lptgq's cut-out was being tested against every sheet on her, her skirt included.\n\nTiled is also the more honest path for her in any case. MU ships four sheets and draws each on its own submesh at its own coordinates, which is what tiled does and what baking undoes. The profile stays npc, so she keeps skin as her default material and the NPC play speed of 0.25; only the atlas goes.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "pad": "edge"
+  },
+  "upscale_why": "The npc profile's numbers, restated because `tiled` above does not change what kind of art this is. A world object wraps because a wall sheet is laid next to itself; lplower is a face and a gown side by side on one page, and wrapping it would feed her hair into her hem.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 67,
+      "area": 13477.8,
+      "along": [
+        -19.9,
+        104.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.804,
+        0.943
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 10,
+      "area": 4194.3,
+      "along": [
+        -14.1,
+        70.5
+      ],
+      "mu_uv": [
+        0.148,
+        0.052,
+        0.912,
+        0.673
+      ],
+      "bake_uv": [
+        0.009,
+        0.386,
+        0.366,
+        0.587
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 60,
+      "area": 5895.5,
+      "along": [
+        70.5,
+        92.6
+      ],
+      "mu_uv": [
+        0.094,
+        0.048,
+        0.271,
+        0.999
+      ],
+      "bake_uv": [
+        0.863,
+        0.099,
+        0.93,
+        0.924
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 2,
+      "area": 87.1,
+      "along": [
+        62.7,
+        63.3
+      ],
+      "mu_uv": [
+        0.022,
+        0.395,
+        0.025,
+        0.579
+      ],
+      "bake_uv": [
+        0.433,
+        0.298,
+        0.434,
+        0.365
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 2,
+      "area": 81.3,
+      "along": [
+        58.4,
+        59.0
+      ],
+      "mu_uv": [
+        0.024,
+        0.403,
+        0.026,
+        0.576
+      ],
+      "bake_uv": [
+        0.508,
+        0.049,
+        0.509,
+        0.112
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 2,
+      "area": 75.3,
+      "along": [
+        53.2,
+        53.8
+      ],
+      "mu_uv": [
+        0.023,
+        0.413,
+        0.026,
+        0.572
+      ],
+      "bake_uv": [
+        0.508,
+        0.133,
+        0.509,
+        0.191
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 2,
+      "area": 70.3,
+      "along": [
+        48.3,
+        48.9
+      ],
+      "mu_uv": [
+        0.024,
+        0.421,
+        0.027,
+        0.57
+      ],
+      "bake_uv": [
+        0.357,
+        0.387,
+        0.358,
+        0.441
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 2,
+      "area": 65.8,
+      "along": [
+        43.1,
+        43.7
+      ],
+      "mu_uv": [
+        0.023,
+        0.426,
+        0.026,
+        0.566
+      ],
+      "bake_uv": [
+        0.508,
+        0.214,
+        0.509,
+        0.264
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 2,
+      "area": 59.1,
+      "along": [
+        38.4,
+        39.0
+      ],
+      "mu_uv": [
+        0.023,
+        0.436,
+        0.026,
+        0.561
+      ],
+      "bake_uv": [
+        0.528,
+        0.07,
+        0.528,
+        0.115
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 2,
+      "area": 53.1,
+      "along": [
+        33.3,
+        33.9
+      ],
+      "mu_uv": [
+        0.025,
+        0.443,
+        0.027,
+        0.556
+      ],
+      "bake_uv": [
+        0.388,
+        0.16,
+        0.389,
+        0.201
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 2,
+      "area": 45.2,
+      "along": [
+        29.0,
+        29.6
+      ],
+      "mu_uv": [
+        0.024,
+        0.453,
+        0.027,
+        0.549
+      ],
+      "bake_uv": [
+        0.369,
+        0.494,
+        0.37,
+        0.528
+      ]
+    },
+    {
+      "island": 11,
+      "material": "skin",
+      "triangles": 2,
+      "area": 37.0,
+      "along": [
+        24.2,
+        24.8
+      ],
+      "mu_uv": [
+        0.025,
+        0.462,
+        0.027,
+        0.54
+      ],
+      "bake_uv": [
+        0.528,
+        0.135,
+        0.528,
+        0.164
+      ]
+    },
+    {
+      "island": 12,
+      "material": "skin",
+      "triangles": 2,
+      "area": 30.8,
+      "along": [
+        19.7,
+        20.3
+      ],
+      "mu_uv": [
+        0.025,
+        0.469,
+        0.028,
+        0.534
+      ],
+      "bake_uv": [
+        0.527,
+        0.187,
+        0.528,
+        0.211
+      ]
+    },
+    {
+      "island": 13,
+      "material": "skin",
+      "triangles": 468,
+      "area": 43701.9,
+      "along": [
+        -14.6,
+        153.6
+      ],
+      "mu_uv": [
+        -0.006,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.043,
+        0.992,
+        0.921
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 2,
+      "area": 18291.8,
+      "along": [
+        -50.3,
+        -9.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.37,
+        0.37
+      ]
+    },
+    {
+      "island": 15,
+      "material": "skin",
+      "triangles": 2,
+      "area": 18291.8,
+      "along": [
+        -50.2,
+        -9.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.387,
+        0.387,
+        0.749,
+        0.749
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "brass",
+  "summary": "Cast fittings: the guard and the pommel cap. A soft yellow metal that was poured rather than forged, and never polished since.",
+  "why": [
+    "Metallic 1.0 for the reason steel gives \u2014 it is a metal, and the number is not a dial.",
+    "Rougher than the blade at 0.44, and that difference is most of what tells the two",
+    "apart. MU painted the guard a different colour and nothing else; a modern material",
+    "can say it is a different *surface*, and a cast fitting beside a ground blade is the",
+    "clearest case of that there is.",
+    "The grain is pitting rather than streaks. Casting leaves a surface with small hollows",
+    "in it and no direction at all, which is the opposite of what rolling does to steel.",
+    "f0 0.66, and until now there was none - which meant base_colour skipped brass entirely. It states metallic 1.0, so the renderer reads its base colour as reflectance, and what it was handed was MU's painted sheet: a picture of an object with the artist's own highlights in it. On the Brass set that came back as bright gold hotspots on the pauldrons and gauntlets against olive mottling everywhere else, because the steel islands beside them were being corrected and the brass ones were not. Same model, two different treatments.",
+    "0.66 rather than steel's 0.575 because brass is the brighter metal - published base colours put it near (0.91, 0.72, 0.42), a luminance around 0.74 - and rather than that figure because the correction keeps half the art's variation about the target and MU's sheet is dark enough that the ceiling budget would hold it back anyway. No f0_desaturation: the pull toward grey exists to stop steel reflecting orange, and a brass that is not yellow is not brass. The hue comes from the art, which the single shared mean in base_colour is there to preserve.",
+    "Grain depth 0.14 -> 0.05 and scale 340 -> 256, the same correction bone took and for the same reason: 340 was capped to 256 every build anyway, and pairing the finest field a 1024 map can draw with the deepest depth in the library is noise rather than casting. Measured on the shipped set, brass's normal deviation ran 0.12 to 0.13, the worst of any material here, and it was holding roughness at a flat 0.722 through specular_floor against the 0.44 this file asks for."
+  ],
+  "metallic": 1.0,
+  "roughness": 0.44,
+  "f0": 0.66,
+  "f0_from_art": 0.5,
+  "grain": {
+    "kind": "cast",
+    "scale": 256,
+    "depth": 0.05,
+    "roughness_range": 0.1
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "item": "HelmMale03",
+  "mu_name": "Pad Helm",
+  "mu_name_from": "MuMain loads MODEL_HELM + i from HelmMale{i+1} (ZzzOpenData.cpp line 139), so file 03 is helm index 2, which openmu's 0.75 Armors.cs names the Pad Helm. mu.db agrees: code 3586, group 7 index 2, Player/HelmMale03.bmd.",
+  "why_this_one": "Pasi's +0 line, and the Dark Wizard's first set. The mage stocks all five Pad pieces at +0 and only the gloves and boots were built, so three of his five lines were dropped by Realm.Shelf. See shared/Market.Mage.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. See profiles/soft_armour.json, which exists for these three sets.",
+  "keeps_head": true,
+  "keeps_head_from": "ZzzCharacter.cpp, SetCharacterScale. The client keeps a BODYPART_HEAD beside BODYPART_HELM and normally sets it to -1 - a helm replaces the head. For a short list of helms it sets it to `MODEL_BODY_HELM + c->SkinIndex` instead, which is HelmClass{SkinIndex+1}.bmd, the bare head of the character's own class, and draws it under the helm:\n\n    if (Helm == MODEL_HELM || Helm == MODEL_PAD_HELM || Helm == MODEL_HELM + 63 ||\n        Helm == MODEL_HELM + 68 || Helm == MODEL_HELM + 65 || Helm == MODEL_HELM + 70 ||\n        (Helm >= MODEL_VINE_HELM && Helm <= MODEL_SPIRIT_HELM))\n        c->BodyPart[BODYPART_HEAD].Type = MODEL_BODY_HELM + c->SkinIndex;\n    else\n        c->BodyPart[BODYPART_HEAD].Type = -1;\n\nIn 0.75's numbering that is helm 0 (Bronze), 2 (Pad) and 10 to 13 (Vine, Silk, Wind, Spirit); the four in the sixties are later seasons. The rule is about the mesh rather than about the item: these are the open helms - a circlet, a coif, a band - and they carry no face of their own, where the Leather Helm carries 27 triangles of skin_barbarian_01 inside its own model and needs no head under it. Helm 2 is MODEL_PAD_HELM, named in the condition outright.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(2, 2, 2, 2, \"Pad Helm\", 5, 4, 28, 20, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 2,
+    "drop_level": 5,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 4,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 28,
+    "requires": {
+      "level": 0,
+      "strength": 20,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone."
+  },
+  "sheets": [
+    "head_04.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/head_04.OZJ (64x64) and hide.jpg, from MuMain. The .bmd names head_04.jpg and hide.jpg; 86 of the 92 triangles are on the first and 6 on hide.",
+  "sheet_note": "head_04 is a padded coif in cream and tan with olive shading in the folds and a gilt band across the brow, drawn from two sides. Mean (149, 138, 116) at chroma 33 - the lightest sheet in any of the three sets. hide is MU capping the openings, a solid black square, as on ArmorMale10.",
+  "material_note": "Four islands, all of them the coif - head_04's 86 triangles and hide's 6 - and all of them cloth rather than the profile's leather. This is where the Pad set divides: its gloves and boots are a gilt plate over cloth and took brass, and the helm has no plate on it at all. head_04 is quilted padding in cream and tan with a seam running over the crown and a thin gilt band at the brow, and quilting is stuffed fabric - roughness 0.8, no grain - not hide and not metal. The band is a few texels inside island 0 and goes with it.",
+  "material_note_checked": "Two figures in the note above are the note's own argument rather than what cloth delivers, and both were checked rather than acted on. It asks for roughness 0.8 and no grain; cloth ships 0.72 with a cast grain at depth 0.04, so the coif renders at a measured 0.721 with a normal deviation of 0.033.\n\nNeither gap is worth an override. Swept in Blender on the assembled set at 0.72, 0.80 and 0.88, the three are indistinguishable on this piece: the sheen that reads as gloss on the crown is painted into head_04, a light gradient MU drew, and it does not move with the material. 0.033 of grain is the second least of any part in the three sets and reads as weave rather than as pitting.\n\nRecorded rather than corrected because the reasoning is right - quilting is stuffed fabric, not hide and not metal - and only the two numbers had drifted from it. An override that changes nothing visible is clutter with a story attached.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 44,
+      "area": 1932.5,
+      "along": [
+        -18.3,
+        14.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.829,
+        0.83
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 282.3,
+      "along": [
+        1.6,
+        19.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.023,
+        0.507,
+        0.586
+      ],
+      "bake_uv": [
+        0.417,
+        0.006,
+        0.805,
+        0.293
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 282.3,
+      "along": [
+        1.6,
+        19.6
+      ],
+      "mu_uv": [
+        0.011,
+        0.023,
+        0.507,
+        0.586
+      ],
+      "bake_uv": [
+        0.007,
+        0.262,
+        0.761,
+        0.915
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 18,
+      "area": 426.2,
+      "along": [
+        -28.3,
+        -13.3
+      ],
+      "mu_uv": [
+        0.489,
+        0.007,
+        0.916,
+        0.641
+      ],
+      "bake_uv": [
+        0.773,
+        0.017,
+        0.994,
+        0.676
+      ]
+    }
+  ]
+}

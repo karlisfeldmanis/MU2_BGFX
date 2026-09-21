@@ -1,0 +1,39 @@
+{
+  "profile": "monster",
+  "summary": "The things that attack you: a spider, a hound, a bull fighter. A creature body on its own rig, seen small and close.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "pad": "edge"
+  },
+  "enlarge": 2,
+  "default_material": "skin",
+  "why": [
+    "A profile of its own rather than borrowing npc's, though the numbers come out the same,",
+    "and the reason is that they are the same by measurement rather than by inheritance. An",
+    "NPC and a monster share the situation - a painted figure on a page, seen from a few",
+    "metres, not tiling - so they share the answer. What they do not share is the default",
+    "material, and that is the field a profile exists to hold.",
+    "It is emphatically not world. Scenery is tiling art on large flat faces seen at a",
+    "distance, upscaled with the drawn model at full strength and padded by wrapping. A",
+    "monster's sheet is a body laid out on a page: it does not tile, and wrapped, the pixels",
+    "off one edge are fed back in as context from the other side of the animal.",
+    "Detail at 0.65 is armour's and is most of the point. These sheets are the smallest in the",
+    "project - the Spider's body is 64x64 and its legs are 32x64 - and the drawn model at full",
+    "strength turns a band of leg hair painted across four pixels into hard-edged rectangles",
+    "with dark outlines. The same setting protects a sword hilt from the same failure.",
+    "The 3x cap is the project's and is not negotiated down here even though these sheets are",
+    "tiny enough to tempt it. 32x64 taken to 96x192 is a reconstruction of 2,048 real pixels;",
+    "the same file at 8x would be a reconstruction of the same 2,048 pixels in a larger",
+    "container, which is the thing this pipeline was built to stop doing. See upscale.py.",
+    "Skin as the default rather than a shell or a hide, because a monster is a menagerie and a",
+    "default is what an unnamed slot falls to. What every one of them has in common is that it",
+    "is alive and dielectric, and skin is the version of that with no grain on it - the safe",
+    "way to be wrong, exactly as npc.json argues. What a creature is actually made of is said",
+    "per sheet: the Spider's two are chitin, and a Bull Fighter's axe will be steel.",
+    "The alternative was to file monsters under npc and let the directory decide. That reads",
+    "as a filing convenience until something needs to be true of every monster and of no",
+    "townsperson - which is already the case, because a monster has twelve fixed action slots",
+    "and a merchant has whatever its .bmd happens to hold. See viewer/Monsters.cs."
+  ]
+}

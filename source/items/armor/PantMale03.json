@@ -1,0 +1,134 @@
+{
+  "item": "PantMale03",
+  "mu_name": "Pad Pants",
+  "mu_name_from": "MuMain loads MODEL_PANTS + i from PantMale{i+1} (ZzzOpenData.cpp line 141), so file 03 is pants index 2, which openmu's 0.75 Armors.cs names the Pad Pants. mu.db agrees: code 4610, group 9 index 2, Player/PantMale03.bmd.",
+  "why_this_one": "Pasi's +0 line, and the Dark Wizard's first set. The mage stocks all five Pad pieces at +0 and only the gloves and boots were built, so three of his five lines were dropped by Realm.Shelf. See shared/Market.Mage.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. See profiles/soft_armour.json, which exists for these three sets.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(2, 4, 2, 2, \"Pad Pants\", 8, 5, 28, 30, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 2,
+    "drop_level": 8,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 5,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 28,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone."
+  },
+  "sheets": [
+    "lower_04_m.png",
+    "lower_04b_m.png",
+    "hide.png",
+    "lower_04c.png"
+  ],
+  "sheet_from": "Data/Player/lower_04_m.OZJ (128x128), lower_04b_m.OZT (32x32), hide.jpg and lower_04c.OZT (32x32), from MuMain. The .bmd names lower_04_m.jpg, lower_04b_m.tga, hide.jpg and lower_04c.tga; 94 of the 132 triangles are on the first, 4 on lower_04b_m, 12 on hide and 22 on lower_04c.",
+  "sheet_note": "lower_04_m is the padded skirt and both legs, olive cloth panelled with gilt knotwork and a row of hanging tabs at the hem. Mean (76, 58, 38) at chroma 38. lower_04b_m and lower_04c are two more 32-squares of the same gold knotwork - the belt plate and the hip tabs - and neither cuts anything: both are .OZT with a full alpha channel, which is MU shipping a small ornament in the format that carries one and using none of it. hide is MU capping the openings, a solid black square, as on ArmorMale10.",
+  "material_note": "Four islands, and unlike the jerkin this piece really does carry plate. Island 0 is 106 triangles - the padded skirt, both legs and hide's caps - and takes cloth. Islands 1 and 2 are two triangles each, which is lower_04b_m's 4 exactly: the belt plate, a 32-square of gold knotwork with nothing else on it. Island 3 is 22 triangles, which is lower_04c's 22 exactly: the row of gilt tabs at the hip. Those three take brass, the same cast yellow metal the Pad Gloves and Boots take, and here it is exact rather than a majority reading - each of the three islands is one ornament sheet and no cloth is inside it.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 106,
+      "area": 7853.0,
+      "along": [
+        -30.3,
+        28.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.04,
+        0.005,
+        0.995,
+        0.964
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 2,
+      "area": 280.4,
+      "along": [
+        0.7,
+        24.8
+      ],
+      "mu_uv": [
+        0.5,
+        0.013,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.393,
+        0.19,
+        0.757
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 2,
+      "area": 280.4,
+      "along": [
+        2.5,
+        25.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.013,
+        0.5,
+        0.999
+      ],
+      "bake_uv": [
+        0.625,
+        0.397,
+        0.809,
+        0.762
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 22,
+      "area": 2756.8,
+      "along": [
+        -24.4,
+        -3.3
+      ],
+      "mu_uv": [
+        0.007,
+        -0.029,
+        0.99,
+        0.997
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.733,
+        0.385
+      ]
+    }
+  ]
+}

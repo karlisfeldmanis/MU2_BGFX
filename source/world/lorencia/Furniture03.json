@@ -1,0 +1,128 @@
+{
+  "item": "Furniture03",
+  "mu_name": "Furniture03",
+  "mu_name_from": "Lorencia's object slot 142, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 142,
+  "why_this_one": "5 placements. A table. The interior pieces are worth building now rather than later because the roof fade works: walking into a house shows what is in it, and until now that was an empty floor.",
+  "profile": "world",
+  "sheets": {
+    "desk_big": "desk_big.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "desk_big": "hardwood"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 26336.5,
+      "along": [
+        -51.4,
+        51.5
+      ],
+      "mu_uv": [
+        0.014,
+        0.283,
+        0.565,
+        0.997
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.811,
+        0.805
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3563.0,
+      "along": [
+        3.5,
+        36.1
+      ],
+      "mu_uv": [
+        0.684,
+        0.187,
+        0.784,
+        0.995
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.99,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3563.0,
+      "along": [
+        -35.1,
+        -2.5
+      ],
+      "mu_uv": [
+        0.684,
+        0.186,
+        0.784,
+        0.994
+      ],
+      "bake_uv": [
+        0.583,
+        0.005,
+        0.74,
+        0.592
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3563.0,
+      "along": [
+        3.5,
+        36.1
+      ],
+      "mu_uv": [
+        0.684,
+        0.186,
+        0.784,
+        0.994
+      ],
+      "bake_uv": [
+        0.416,
+        0.005,
+        0.572,
+        0.592
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 8,
+      "area": 3563.0,
+      "along": [
+        -35.1,
+        -2.5
+      ],
+      "mu_uv": [
+        0.684,
+        0.187,
+        0.784,
+        0.995
+      ],
+      "bake_uv": [
+        0.75,
+        0.005,
+        0.906,
+        0.592
+      ]
+    }
+  ]
+}

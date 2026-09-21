@@ -1,0 +1,186 @@
+{
+  "item": "Object10",
+  "mu_name": "Object10",
+  "mu_name_from": "Noria's object slot 9, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 9,
+  "placements": 14,
+  "profile": "world",
+  "sheets": {
+    "filling_up04": "nr_filling_up04.png",
+    "filling_up03": "nr_filling_up03.png",
+    "filling_up02": "nr_filling_up02.png",
+    "wood02": "nr_wood02.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "filling_up04": "brass",
+    "filling_up03": "timber",
+    "filling_up02": "lamplight",
+    "wood02": "lamplight"
+  },
+  "material_note": "filling_up04: a gold starburst ornament, cut out.\nfilling_up03: a woven green and gold band.\nfilling_up02: two pixels of flat grey, drawn additively on Object02 - a uniform glow and not a surface at all.\nwood02: olive with a pale squiggle through it, drawn additively on both models that wear it.",
+  "cutout": [
+    "filling_up04"
+  ],
+  "cutout_from": "Each carries a real alpha channel, as decode_texture reports it. Declared rather than detected - three separate attempts to read a cut-out off the art have been wrong, and the client decides it in code.",
+  "additive": [
+    "wood02"
+  ],
+  "additive_from": "ZzzObject.cpp, CreateObject, case WD_3NORIA: `o->BlendMesh = 3` for type 9, and the render path draws that submesh with RENDER_BRIGHT. Mesh order is the .bmd's, which is the order the .obj groups are in.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        -1,
+        0,
+        178
+      ],
+      "colour": [
+        0.4,
+        0.7,
+        1.0
+      ],
+      "low": 0.45,
+      "high": 0.75,
+      "range_tiles": 3,
+      "flicker_hz": 0.637,
+      "smooth_seconds": 0.4
+    }
+  ],
+  "emitters_from": "ZzzObject.cpp, RenderObject, case WD_3NORIA: a BITMAP_LIGHT sprite at bone(s) 1, drawn at scale 1.5 in Luminosity * (0.4, 0.7, 1.0). The positions are those bones solved out of this model's own skeleton, in MU units, which is what `at` is in.\n\nThe breathing is the client's own and is shared by every glow in the town: g_Luminosity = sin(WorldTime * 0.004) * 0.15 + 0.6 (SceneManager.cpp:1283), so it travels between 0.45 and 0.75 at 0.637 Hz. MU re-rolls it per frame; this smooths it, for the reason Lamps gives - the same number applied to a light rather than to a texture is a strobe on the ground.\n\nThe range is the one invention. MU's is a sprite: it has a size on screen and lights nothing, so there is no reach to copy. It is taken off the sprite's own scale so the small ones stay small, and it is the number to change if the elf town reads too wet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 315.4,
+      "along": [
+        -7.8,
+        5.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.33,
+        0.33,
+        0.646,
+        0.972
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 3259.0,
+      "along": [
+        -4.3,
+        2.9
+      ],
+      "mu_uv": [
+        -0.0,
+        -0.591,
+        1.0,
+        1.591
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.321,
+        0.695
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1504.4,
+      "along": [
+        -21.2,
+        20.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.656,
+        0.33,
+        0.972,
+        0.646
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1833.3,
+      "along": [
+        -22.1,
+        20.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.656,
+        0.656,
+        0.972,
+        0.972
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1925.3,
+      "along": [
+        -25.4,
+        24.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.679,
+        0.005,
+        0.995,
+        0.321
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 80,
+      "area": 2916.3,
+      "along": [
+        -16.5,
+        15.2
+      ],
+      "mu_uv": [
+        -0.074,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.33,
+        0.005,
+        0.67,
+        0.321
+      ]
+    }
+  ]
+}

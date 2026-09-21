@@ -1,0 +1,23 @@
+{
+  "item": "FairyElf",
+  "mu_name": "Fairy Elf, no armour",
+  "kind": "character",
+  "parts": [
+    "HelmClass03",
+    "ArmorClass03",
+    "PantClass03",
+    "GloveClass03",
+    "BootClass03"
+  ],
+  "trade": "elf",
+  "trade_from": "OpenMU's CharacterClassNumber for the Fairy Elf, which is Trade.FairyElf here. It is what the fight reads for the points a level one starts with - 22 strength, 25 agility, 20 vitality, 15 energy in ClassFairyElf - and for the one requirement that cannot be granted: every bow and crossbow in group 4 is elf-only, so a Dark Knight does not shoot one however many points he is given.",
+  "female": true,
+  "female_from": "The client keeps this as a question about the class rather than a flag on the model: CCharacterManager::IsFemale(c->Class) is what every branch tests. It decides two things and only two - which idle and walk she stands in, and which voice she uses - and both are written down under why_she_is_here.",
+  "note": "The Fairy Elf with nothing equipped, built the way DarkKnightBare is: MU has no naked body model, so what a class wears with no armour is a set of five parts of its own, skinned to the same rig and loaded together at the origin.",
+  "parts_from": "MuPlayer.PartsForClass in the old client. The numbering runs one over MU's zero-based classes, so Class01 is the Dark Wizard, Class02 the Dark Knight and Class03 the Fairy Elf.",
+  "why_she_is_here": "Every bow and crossbow in 0.75 is hers alone. CreateWeapon gives the whole group elfClass 1 and nothing else, and so does the ammunition - so a Dark Knight holding the Light Crossbow only manages it because the arena grants requirements it would be refused on a real server. The one character MU allows to shoot did not exist in this project.",
+  "what_is_different": "Less than the class list suggests, and it is worth being exact because 'she has different animations' is half true.\n\nThe attack and the stances that matter to a bow are *shared* player actions: PLAYER_ATTACK_CROSSBOW is 51 for anybody, and the crossbow stance is 9 and 22 whoever stands in it. What is female is the bare idle and walk - PLAYER_STOP_FEMALE at 2 and PLAYER_WALK_FEMALE at 16, against the male 1 and 15 - and the voice, SOUND_FEMALE_SCREAM01 and 02 in place of the male screams and pMaleDie.\n\nSo the body is the large part of this and the animation is a two-line rule. See viewer/Clips.StanceActions and assets/sounds/sounds.json.",
+  "combat_note": "Her arithmetic is already in shared/Beast.cs, in the Rates table, and one column of it is the reason she plays differently rather than looking different: MinimumDamagePerStrength and its maximum are both zero for the elf, where a Dark Knight gets a sixth and a quarter of his strength. Her physical damage comes from the weapon and not from her points at all, which is OpenMU's ArcheryAttackMode and is why the bow's own 35-44 is the whole of what a Light Crossbow does in her hands.\n\nShe is also the one class whose agility is nearly free: AttackSpeedPerAgility is a fiftieth for her against a knight's fifteenth, so the same points buy her much less swing speed - and the Light Crossbow's 90 agility requirement is a large part of what she is built around.",
+  "rig": "player.bmd, the same rig the other bodies are skinned to. Her head carries two bones the Dark Knight's has none of - Bip01 Ponytail1 and Bip01 Ponytail11 - which is MU animating an elf's hair.",
+  "hands": "Empty here, deliberately, as DarkKnightBare is. This entry exists to show the body; what she carries is chosen on the tab."
+}

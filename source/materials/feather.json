@@ -1,0 +1,32 @@
+{
+  "name": "feather",
+  "summary": "A feather: a plume on a helm, a wing on a staff, a fan at a collar. Matte, fibrous, and lying flat.",
+  "why": [
+    "This exists because hair striped the Angelic Staff. A feather was assigned hair on the",
+    "argument that both are keratin lying one way, and hair's grain is brushed along v - so on",
+    "46 triangles of wing whose unwrap runs the other way it drew hard bands across the vanes.",
+    "That is the third time a directional grain has done this: leather's weave measured 23 to 1",
+    "across against along, a brushed grain made for a patch of hair striped an entire bull, and",
+    "now this. The rule those three cases agree on is that a direction is only safe where the",
+    "geometry is small enough that the unwrap cannot disagree with it.",
+    "So the grain is cast - isotropic pitting, the same kind bone and leather carry - at depth",
+    "0.05 and range 0.07. A vane is finely divided and it is divided every way at once when the",
+    "thing is 32 pixels across; what survives at that size is a soft irregular nap, and pitting",
+    "is what that is. Scale 220, between cloth's 200 and leather's 160.",
+    "Roughness 0.66, between hair's 0.62 and skin's 0.78. A feather catches a little sheen along",
+    "its length and far less than a strand of hair does, because a vane scatters where a hair",
+    "reflects. Metallic 0.0, as everything grown.",
+    "Not hair, and the difference is worth stating rather than treating as a shade of it. Hair is",
+    "strands lying in one direction and its grain says so; a feather is a sheet of barbs locked",
+    "together, and MU draws the barbs rather than leaving them to a grain. Three things wanted",
+    "this and were making do: the Plate helm's plume, the Pad Armor's collar and this staff."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.66,
+  "grain": {
+    "kind": "cast",
+    "scale": 220,
+    "depth": 0.05,
+    "roughness_range": 0.07
+  }
+}

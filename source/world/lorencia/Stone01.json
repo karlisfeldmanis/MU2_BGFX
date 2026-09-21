@@ -1,0 +1,489 @@
+{
+  "item": "Stone01",
+  "mu_name": "Stone",
+  "mu_name_from": "Lorencia's object slot 30, from the client's own table. WorldObjectCatalog.cs records world 1 as a set of named runs rather than a flat list - Tree at 0, Grass at 20, Stone at 30 - so Stone01.bmd is object type 30 and there is no friendlier name than what the run is called.",
+  "world": "lorencia",
+  "object_type": 30,
+  "why_this_one": "The first world object, chosen to be the smallest thing that is honestly a world object rather than an item in a field. It has the two properties that separate scenery from everything built so far and no others: more than one sheet on one model, and one of those sheets a cut-out. A fence would have had neither, a house four sheets and five meshes of them.",
+  "profile": "world",
+  "sheets": {
+    "ston01": "ston01.png",
+    "ston02": "ston02.tga.png"
+  },
+  "sheet_from": "Data/Object1/ston01.OZJ (128x128) and ston02.OZT (32x32), both from MuMain. The .bmd names ston01.jpg and ston02.tga, and the extension is the format rather than a different file: OZJ is MU's JPEG and OZT its TGA, so a sheet with an alpha channel is always an .OZT. Object1 holds a ston02.OZJ and a ston02.OZT that are different pictures, so neither may hold the bare name; this one wears the .tga, which is what the .bmd asks for. See tests/sheets.py.",
+  "sheet_note": "remaster_one's copies are 512x512 and 128x128 - 4x both, where every item sheet so far was 2x. A different multiplier, the same tree, and MuMain's is the art.",
+  "cutout": [
+    "ston02"
+  ],
+  "cutout_from": "ston02.OZT carries a real alpha channel that cuts away 55% of its square, which is a grass tuft drawn on a card. Declared rather than detected: the pipeline can also sniff it off the sheet, and the record of the last time that was trusted is in the Plate helm's feather.",
+  "material_note": "Assigned per sheet rather than per island, which is what the tiled path made possible and what scenery wanted all along: ston01 is the rock face and ston02 is a grass tuft, and no island had to be looked at to know either. The island list below is kept as the record - it is also the evidence that the assignment is right, because the thirteen islands whose mu_uv is the whole square total exactly the twenty-six triangles the .bmd reports for ston02.",
+  "tiling_note": "Island 0's UVs run from -0.44 to 1.33, well outside the square. That is not a fault, it is the point: ston01 is a tiling rock face and the boulder wraps it round itself more than once. It is also the evidence the world profile's wrap pad was written for - the texel past the right edge of that sheet really is the texel at the left edge.",
+  "open_question": "The pad is one setting for the whole asset, and tiling is a property of a sheet. ston01 tiles and wants wrap; ston02 is a sprite and does not. It happens not to matter here because ston02's border is entirely cut away, so there is nothing at its edges to feed anywhere - but the next world object with an opaque sprite on it will want the pad to be per-sheet.",
+  "sheet_materials": {
+    "ston01": "rock",
+    "ston02": "foliage"
+  },
+  "was_blocked": "Baked, this came out with the boulder holding 18.2% of the map and its thirteen grass cards taking 58.6%, from two causes: identical islands each got their own region, and island 0 spans 2.37 sheets of UV because ston01 tiles. Neither is a size that can be tuned. It is what the world profile's tiled path was written for; see tiled_materials in export_gltf.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 80,
+      "area": 174893.7,
+      "along": [
+        -98.9,
+        131.6
+      ],
+      "mu_uv": [
+        -0.107,
+        -0.443,
+        1.225,
+        1.333
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.647,
+        0.358
+      ],
+      "note": "the boulder itself - eighty of its hundred and forty triangles, and the island whose UVs run outside the square because ston01 tiles across it."
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 30379.5,
+      "along": [
+        -36.4,
+        88.1
+      ],
+      "mu_uv": [
+        0.107,
+        0.343,
+        0.476,
+        0.712
+      ],
+      "bake_uv": [
+        0.662,
+        0.219,
+        0.822,
+        0.292
+      ],
+      "note": "more of the boulder."
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 20,
+      "area": 12803.4,
+      "along": [
+        50.3,
+        133.3
+      ],
+      "mu_uv": [
+        0.106,
+        0.36,
+        0.471,
+        0.725
+      ],
+      "bake_uv": [
+        0.642,
+        0.796,
+        0.801,
+        0.868
+      ],
+      "note": "more of the boulder."
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 4,
+      "area": 479.9,
+      "along": [
+        56.6,
+        80.2
+      ],
+      "mu_uv": [
+        0.585,
+        0.431,
+        0.623,
+        0.532
+      ],
+      "bake_uv": [
+        0.74,
+        0.306,
+        0.748,
+        0.326
+      ],
+      "note": "more of the boulder."
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 4,
+      "area": 266.0,
+      "along": [
+        141.0,
+        158.5
+      ],
+      "mu_uv": [
+        0.796,
+        0.429,
+        0.824,
+        0.504
+      ],
+      "bake_uv": [
+        0.74,
+        0.341,
+        0.746,
+        0.356
+      ],
+      "note": "more of the boulder."
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 4,
+      "area": 1374.5,
+      "along": [
+        -127.8,
+        -91.0
+      ],
+      "mu_uv": [
+        0.176,
+        0.604,
+        0.25,
+        0.824
+      ],
+      "bake_uv": [
+        0.662,
+        0.306,
+        0.677,
+        0.35
+      ],
+      "note": "more of the boulder."
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1673.3,
+      "along": [
+        85.1,
+        116.2
+      ],
+      "mu_uv": [
+        0.596,
+        0.176,
+        0.646,
+        0.296
+      ],
+      "bake_uv": [
+        0.691,
+        0.306,
+        0.726,
+        0.33
+      ],
+      "note": "more of the boulder."
+    },
+    {
+      "island": 7,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 2258.0,
+      "along": [
+        74.3,
+        74.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.219,
+        0.372,
+        0.416,
+        0.569
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 8,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 2377.6,
+      "along": [
+        81.1,
+        98.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.431,
+        0.372,
+        0.628,
+        0.569
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 9,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 2174.0,
+      "along": [
+        -15.9,
+        11.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.562,
+        0.007,
+        0.759,
+        0.204
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 10,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 1972.9,
+      "along": [
+        -22.3,
+        1.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.372,
+        0.204,
+        0.569
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 11,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 1601.3,
+      "along": [
+        69.6,
+        104.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.584,
+        0.204,
+        0.781
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 12,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 1295.3,
+      "along": [
+        17.8,
+        46.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.219,
+        0.584,
+        0.416,
+        0.781
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 13,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 2258.9,
+      "along": [
+        -51.6,
+        -14.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.431,
+        0.584,
+        0.628,
+        0.781
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 14,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 1601.9,
+      "along": [
+        -29.3,
+        -23.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.642,
+        0.372,
+        0.839,
+        0.569
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 15,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 2259.2,
+      "along": [
+        -114.7,
+        -94.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.642,
+        0.584,
+        0.839,
+        0.781
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 16,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 1601.9,
+      "along": [
+        -108.0,
+        -90.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.774,
+        0.007,
+        0.971,
+        0.204
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 17,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 1314.0,
+      "along": [
+        20.3,
+        44.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.796,
+        0.204,
+        0.993
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 18,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 2237.0,
+      "along": [
+        36.1,
+        72.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.219,
+        0.796,
+        0.416,
+        0.993
+      ],
+      "note": "another of the thirteen grass cards."
+    },
+    {
+      "island": 19,
+      "material": "foliage",
+      "triangles": 2,
+      "area": 1569.7,
+      "along": [
+        43.4,
+        85.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.431,
+        0.796,
+        0.628,
+        0.993
+      ],
+      "note": "another of the thirteen grass cards."
+    }
+  ]
+}

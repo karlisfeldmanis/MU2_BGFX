@@ -1,0 +1,52 @@
+{
+  "item": "Object43",
+  "mu_name": "Object43",
+  "mu_name_from": "Noria's object slot 42, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 42,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "itp02": "nr_itp02.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "itp02": "wrought_iron"
+  },
+  "material_note": "itp02: a chain. Grey links on a strip, the gaps between them cut out of the alpha. Noted as a violet blur when it was declared, and given lamplight on that reading; enlarged it is plainly iron.",
+  "cutout": [
+    "itp02"
+  ],
+  "cutout_from": "Each carries a real alpha channel, as decode_texture reports it. Declared rather than detected - three separate attempts to read a cut-out off the art have been wrong, and the client decides it in code.",
+  "why_this_one": "Object40, Object41, Object42 and Object43 are one thing: all four stand at 18100,10450, a few units apart in height, and together they are the Chaos Machine beside the Chaos Goblin. This is the chain belt.",
+  "glow": {
+    "itp02": {
+      "u_scrolls_per_second": 0.5
+    }
+  },
+  "glow_from": "ZzzObject.cpp, MoveObject, case WD_3NORIA, type 42: `Models[o->Type].StreamMesh = 0` and `o->BlendMeshTexCoordU = -(float)((int)WorldTime % 500) * 0.002f`. StreamMesh is the mesh whose texture coordinates take the offset without being blended, so the chain is drawn solid and slides along U - two repetitions a second in MU, where the drum it wraps turns once in two seconds; half a repetition here, because Object40 gears the drum down to a turn in eight (see geared_from) - the mesh's U runs from -25 to 23, so the links are what move and the strip stays put. Not a glow, but the same one number on one material, and Glows is what writes that.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 30,
+      "area": 6708.8,
+      "along": [
+        -14.5,
+        -4.5
+      ],
+      "mu_uv": [
+        -25.136,
+        0.001,
+        22.565,
+        0.999
+      ],
+      "bake_uv": [
+        -25.136,
+        0.001,
+        22.565,
+        0.999
+      ]
+    }
+  ]
+}

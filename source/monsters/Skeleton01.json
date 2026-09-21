@@ -1,0 +1,310 @@
+{
+  "item": "Skeleton01",
+  "mu_name": "Skeleton body",
+  "mu_name_from": "Data/Skill/Skeleton01.bmd, loaded by ZzzOpenData as `AccessModel(MODEL_SKELETON1 + i, L\"Data\\\\Skill\\\\\", L\"Skeleton\", i + 1)` for i in 0..2. Filed under Skill and not under Monster or Player, because in MU a skeleton is a *transformation*: the Skeleton Transformation Ring puts a player into this body, and the Skeleton Warrior is the same body put on a monster. The other two files are the archer's and the elite's, and are not 0.75 Lorencia spawns.",
+  "why_this_one": "It is the whole of what the Skeleton Warrior is made of. See SkeletonWarrior.json, which is the monster; this file is its one worn part, the way ArmorMale10 is one of the Berdysh Guard's five.",
+  "world": "lorencia",
+  "profile": "monster",
+  "rig_from": "A worn part and not a monster model, and the rig says so before anything else does: 56 bones, one mesh, one action - a bind pose whose tracks hold the same value in every key. The 56 are the player's own by name, Bip01 through knife_gdf, hand_bofdgne01 and Bone01 to Bone08, plus one Box01 and four dummies that the player's rig lacks; the player has Mesh01 to Mesh04 and gfh that this lacks. Exactly the shape of an armour part beside player.bmd, and it goes on the same way - mu2.sh finds no motion in the rig and borrows the player's 283 clips through the shared actions library. See docs/rigging.md.\n\nThat is also what makes the monster it belongs to different from every other in the town. A Skeleton Warrior on the fighting floor is Crowd.Figure on the player's rig, standing in the sword stance and swinging the sword attacks, which is what MU does: CreateMonster builds it with CreateCharacter(Key, MODEL_PLAYER, ...) and sets SubType = MODEL_SKELETON1, and RenderCharacter's `else if (o->Type == MODEL_PLAYER && SubType in SKELETON1..3)` draws this one part with RenderPartObject in place of the five body parts.",
+  "unmatched_bones_from": "The export says `bones 5 of 56 are not on the rig; anything bound to them is anchored to joint 0`, and here nothing is. The five are Box01 and dummy_52 to 55, and the model's vertex_bones use seventeen bones - 2, 3, 4, 5, 10, 11, 12, 18, 20, 26 and up - none of which is one of them. So the warning is about slots the rig has no name for rather than about geometry that lost its bone, and it is written down here because the same line on a different part would mean the opposite. The player's rig likewise has five this one lacks - Mesh01 to Mesh04 and gfh - which is the same kind of difference in the other direction and is what docs/rigging.md means by helper objects above bone 50.",
+  "sheets": {
+    "bons": "bons.png"
+  },
+  "sheet_from": "One sheet for one mesh: Data/Skill/bons.OZJ, a 128-square, no alpha. The same file is in Data/Monster and five Object folders byte for byte - MU copied its bone painting wherever a thing had bones - and Skill's is the one the model's own folder holds, so it is the one used.",
+  "cutout_from": "Not declared: the sheet is a .OZJ with no alpha at all, and the skeleton is drawn solid - the gaps between the ribs are geometry, not a mask.",
+  "sheet_materials": {
+    "bons": "bone"
+  },
+  "sheet_materials_from": "Read off the sheet: a rib cage, a skull twice over, a pelvis and long bones, painted an aged ivory at mean (74, 57, 41) with chroma 33 - the warmest sheet in the monsters folder, because old bone is painted in browns. bone is the library material for exactly this and it is used nowhere else yet.",
+  "maps": 384,
+  "maps_from": "settings.map_size's own answer - three times the one 128-square - and not overridden, because this is the first monster whose islands partition one sheet the way the rule assumes. One sheet, one mesh, one atlas at 3x.",
+  "islands_from": "Thirteen islands for 486 triangles, every one of them bone. The count is more than the one mesh because a skeleton is disjoint geometry by nature - a rib cage, a skull, two arms, two legs, a pelvis - and an island is a connected run rather than a mesh.\n\nThey arrived as skin, which is islands.py giving anything new the monster profile's default. See Spider01's islands_from for the trap in full; it costs nothing here to say it again, because a skeleton baked at skin's roughness is the one case where the wrong answer is nearly plausible.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 62,
+      "area": 4115.5,
+      "along": [
+        -13.9,
+        14.5
+      ],
+      "mu_uv": [
+        -0.002,
+        0.46,
+        0.411,
+        0.997
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.833,
+        0.813
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bone",
+      "triangles": 44,
+      "area": 2340.5,
+      "along": [
+        -16.2,
+        1.9
+      ],
+      "mu_uv": [
+        0.011,
+        0.486,
+        0.398,
+        0.881
+      ],
+      "bake_uv": [
+        0.009,
+        0.309,
+        0.433,
+        0.516
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bone",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -7.9,
+        15.2
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.118,
+        0.095,
+        0.838,
+        0.892
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bone",
+      "triangles": 32,
+      "area": 833.1,
+      "along": [
+        -4.3,
+        23.0
+      ],
+      "mu_uv": [
+        0.734,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.763,
+        0.195,
+        0.921,
+        0.94
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bone",
+      "triangles": 36,
+      "area": 1918.3,
+      "along": [
+        16.5,
+        63.2
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.451,
+        0.009,
+        0.854,
+        0.913
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 32,
+      "area": 723.0,
+      "along": [
+        -30.8,
+        -5.6
+      ],
+      "mu_uv": [
+        0.89,
+        0.475,
+        0.996,
+        1.004
+      ],
+      "bake_uv": [
+        0.118,
+        0.49,
+        0.745,
+        0.811
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bone",
+      "triangles": 42,
+      "area": 790.4,
+      "along": [
+        -45.2,
+        -26.1
+      ],
+      "mu_uv": [
+        0.543,
+        0.005,
+        0.988,
+        0.529
+      ],
+      "bake_uv": [
+        0.009,
+        0.534,
+        0.924,
+        0.936
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 8,
+      "area": 409.5,
+      "along": [
+        -10.8,
+        -2.4
+      ],
+      "mu_uv": [
+        0.477,
+        0.053,
+        0.747,
+        0.183
+      ],
+      "bake_uv": [
+        0.29,
+        0.009,
+        0.857,
+        0.852
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bone",
+      "triangles": 8,
+      "area": 251.1,
+      "along": [
+        -4.9,
+        1.3
+      ],
+      "mu_uv": [
+        0.535,
+        0.069,
+        0.761,
+        0.168
+      ],
+      "bake_uv": [
+        0.29,
+        0.21,
+        0.597,
+        0.921
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bone",
+      "triangles": 32,
+      "area": 833.1,
+      "along": [
+        -25.2,
+        -6.1
+      ],
+      "mu_uv": [
+        0.734,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.451,
+        0.49,
+        0.921,
+        0.943
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bone",
+      "triangles": 36,
+      "area": 1925.0,
+      "along": [
+        -73.8,
+        -20.1
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.375,
+        0.009,
+        0.698,
+        0.913
+      ]
+    },
+    {
+      "island": 11,
+      "material": "bone",
+      "triangles": 32,
+      "area": 722.9,
+      "along": [
+        4.7,
+        15.6
+      ],
+      "mu_uv": [
+        0.89,
+        0.475,
+        0.996,
+        1.004
+      ],
+      "bake_uv": [
+        0.192,
+        0.195,
+        0.779,
+        0.811
+      ]
+    },
+    {
+      "island": 12,
+      "material": "bone",
+      "triangles": 42,
+      "area": 786.7,
+      "along": [
+        10.9,
+        34.9
+      ],
+      "mu_uv": [
+        0.543,
+        0.005,
+        0.988,
+        0.529
+      ],
+      "bake_uv": [
+        0.614,
+        0.195,
+        0.991,
+        0.962
+      ]
+    }
+  ]
+}

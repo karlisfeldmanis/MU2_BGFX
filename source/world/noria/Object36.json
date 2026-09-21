@@ -1,0 +1,86 @@
+{
+  "item": "Object36",
+  "mu_name": "Object36",
+  "mu_name_from": "Noria's object slot 35, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 35,
+  "placements": 228,
+  "profile": "world",
+  "sheets": {
+    "flower2": "nr_flower2.png",
+    "flower10": "nr_flower10.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "flower2": "foliage",
+    "flower10": "lamplight"
+  },
+  "material_note": "flower2: green and gold leaf rosettes round a stem - the giant plants' own body, and the single commonest surface on the map.\nflower10: a painted sunset - blue above, orange horizon, a sun and gold sparks. A light rather than a surface, and the only sheet in Noria that is a picture of a sky.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        -23,
+        0,
+        110
+      ],
+      "colour": [
+        0.4,
+        0.7,
+        1.0
+      ],
+      "low": 0.45,
+      "high": 0.75,
+      "range_tiles": 3,
+      "flicker_hz": 0.637,
+      "smooth_seconds": 0.4
+    }
+  ],
+  "emitters_from": "ZzzObject.cpp, RenderObject, case WD_3NORIA: a BITMAP_LIGHT sprite at bone(s) 3, drawn at scale 1.5 in Luminosity * (0.4, 0.7, 1.0). The positions are those bones solved out of this model's own skeleton, in MU units, which is what `at` is in.\n\nThe breathing is the client's own and is shared by every glow in the town: g_Luminosity = sin(WorldTime * 0.004) * 0.15 + 0.6 (SceneManager.cpp:1283), so it travels between 0.45 and 0.75 at 0.637 Hz. MU re-rolls it per frame; this smooths it, for the reason Lamps gives - the same number applied to a light rather than to a texture is a strobe on the ground.\n\nThe range is the one invention. MU's is a sprite: it has a size on screen and lights nothing, so there is no reach to copy. It is taken off the sprite's own scale so the small ones stay small, and it is the number to change if the elf town reads too wet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 36,
+      "area": 1955.1,
+      "along": [
+        -14.1,
+        13.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.496
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 39,
+      "area": 1443.2,
+      "along": [
+        -2.9,
+        0.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.504,
+        0.996,
+        0.996
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "item": "Tomb02",
+  "mu_name": "Tomb02",
+  "mu_name_from": "Lorencia's object slot 45, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 45,
+  "why_this_one": "4 placements. Another.",
+  "profile": "world",
+  "sheets": {
+    "grave_01": "grave_01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "grave_01": "flagstone"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 51743.7,
+      "along": [
+        -123.0,
+        119.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.003,
+        0.734,
+        1.002
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.759
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 30,
+      "area": 38304.0,
+      "along": [
+        -114.2,
+        110.5
+      ],
+      "mu_uv": [
+        0.045,
+        0.032,
+        0.983,
+        0.966
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.753,
+        0.903
+      ]
+    }
+  ]
+}

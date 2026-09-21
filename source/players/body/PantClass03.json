@@ -1,0 +1,37 @@
+{
+  "item": "PantClass03",
+  "mu_name": "Fairy Elf legs",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}. The numbering runs one over MU's zero-based classes, so Class01 is the Dark Wizard, Class02 the Dark Knight and Class03 the Fairy Elf.",
+  "part_note": "The hips and thighs. 110 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_warrior_01": "skin_warrior_01.png"
+  },
+  "sheet_from": "Data/Player/skin_warrior_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
+  "sheet_warning": "The sheet name says nothing about which class wears it, and this pair is the proof: the Fairy Elf's body is painted on skin_warrior_01 and the Dark Knight's on skin_wizard_01. Reading the name as the class picks the wrong sheet for both of them.",
+  "material_note": "(130, 119, 93) reads olive rather than flesh, which is the one assignment here that is not obvious. Taken as skin on the sibling's precedent - PantClass02 is skin - and on the likelihood that a single bounding box over a leg has caught the sheet's background. Worth a look on the Objects tab before it is trusted.\n\nRead off the sheet by cropping each island at its own mu_uv with V flipped, the way the other bodies were. It is a coarse reading - an island's bounding box can take in neighbouring regions - so where it disagreed with the sibling part on Class02 the disagreement is written down rather than settled quietly.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 110,
+      "area": 7794.1,
+      "along": [
+        -18.6,
+        19.9
+      ],
+      "mu_uv": [
+        -0.0,
+        0.0,
+        0.707,
+        0.501
+      ],
+      "bake_uv": [
+        -0.0,
+        0.0,
+        0.707,
+        0.501
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "plank",
+  "summary": "Sawn boards seen face-on: a shield face, a door, a tabletop. Fine grain running with the boards, the seams in the paint.",
+  "why": [
+    "This exists because wood was used for the Small Shield's face and came out barred. wood is a haft - a turned length of timber - and its brushed grain is 180 cells at depth 0.08, running along the bake's v axis. On a haft the bake's v is the haft's length, near enough. On a disc unwrapped flat the face is one island filling most of the map, so 180 cells became a few dozen hard vertical bars across MU's painted planks, at right angles to the seams. Reported as striped the first time it was looked at.",
+    "It was tried with no grain at all, on leather's argument that MU painted the structure already. That was flat and it was judged worse: a board face does have a figure you can see from arm's length, where a glove does not, and the painted seams alone left the face reading as a printed picture of wood rather than as wood.",
+    "So the grain stays and is made fine. scale 256, which is the most a 1024 map can draw at four texels a cell - build_maps clamps anything higher and says so - against wood's 180. Brushed, because timber fibre runs one way and a streak is what makes a highlight travel along a board rather than sit on it; the streaks are scale/40 cells long, so a sixth of the face, which is a board's figure and not a ruler.",
+    "along u, not wood's v. On the shield the painted seams run across the bake's u, and the bars that looked wrong ran along v - against them. A grain has to run with the boards it claims to be, and the bake's axes are what there is to name it by. If a second plank-faced item unwraps the other way it will want its own along, and that is an asset-level override to add, not a reason to give up the direction.",
+    "Depth 0.03 against wood's 0.08 - wood itself came down from 0.22 for the same reason, that grain is colour far more than relief. A board's fibres sit flush; what catches a light is the odd raised one, and MU already painted the colour part. roughness_range 0.03, low, because a face that has been gripped and knocked is worn uniformly rather than in stripes.",
+    "Roughness 0.72 and metallic 0.0, the same as wood, because it is the same substance handled the same way. Not timber, which is sawn wood weathered grey in the rain at depth 0.15: a shield face is oiled and dark."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.72,
+  "grain": {
+    "kind": "brushed",
+    "along": "u",
+    "scale": 256,
+    "depth": 0.03,
+    "roughness_range": 0.03
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "item": "ArmorClass02",
+  "mu_name": "Dark Knight torso",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}, numbered one over MU's zero-based classes. Class01 is the Dark Wizard, Class02 the Dark Knight, Class03 the Elf.",
+  "part_note": "Bare chest and the strap harness across it. 120 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_wizard_01": "skin_wizard_01.png"
+  },
+  "sheet_from": "Data/Player/skin_wizard_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
+  "sheet_warning": "The sheet name says nothing about which class wears it. The Dark Knight's body is painted on skin_wizard_01 and the Dark Wizard's on skin_barbarian_01 - the old client records this explicitly, because loading the wrong set is not a texture fault but the wrong character. There is a skin_warrior_01 already in this tree and it is not this one.",
+  "sheet_note": "find_source found one other copy, remaster_one's Data/Player at 512x512 and exactly 2x. That is the directory that was upscaled in place, so MuMain's is the art.",
+  "material_note": "Reset to skin by hand after the bake layout changed. islands.py could not match the old assignments to the new islands and fell back to the armour profile's plate_steel, which rendered a bare body as pitted metal. It warns loudly about that now.",
+  "open_question": "Several islands are two to five triangles and land on near-black or on the sheet's empty blue, and at 256x256 across a whole body they cannot be told apart by looking. They default to skin, which is the body's dominant material and the safe way to be wrong: a few dark texels rendered as flesh is invisible, where a bare chest rendered as plate is a chrome statue. Look at the character in the engine before splitting them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 120,
+      "area": 6256.0,
+      "along": [
+        -34.3,
+        16.7
+      ],
+      "mu_uv": [
+        0.016,
+        0.507,
+        0.461,
+        0.995
+      ],
+      "bake_uv": [
+        0.016,
+        0.507,
+        0.461,
+        0.995
+      ],
+      "note": "The whole torso, as one island. It was three when the bake had its own layout and they were all skin, so nothing is lost by their becoming one - a bare chest with a harness drawn onto it is skin whichever way the mesh is cut."
+    }
+  ]
+}

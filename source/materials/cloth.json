@@ -1,0 +1,49 @@
+{
+  "name": "cloth",
+  "summary": "Hung fabric: a banner on a wall, a curtain in a doorway. Woven, dyed, and never taut.",
+  "why": [
+    "Roughness 0.80 with no specular worth the name. Cloth scatters because it is thousands of",
+    "fibre ends pointing every way, and the one thing it must not do is catch a highlight -",
+    "a shiny banner is satin, and MU's are wool.",
+    "Weave grain, which nothing else in the library uses except leather_wrap. It is the correct",
+    "kind for exactly the reason it sounds: a woven surface has structure running two ways at",
+    "once, and a cast pattern would give it the random pitting of stone while a brushed one",
+    "would give it the parallel grain of timber.",
+    "Depth 0.10, shallow. A banner's relief is its fold rather than its thread, and the folds",
+    "are in the geometry - MU models them - so what is left for a normal map is the weave, which",
+    "is a fraction of a millimetre.",
+    "Range 0.06. Fabric is uniform until it is worn through, and a hanging banner is not.",
+    "A cast grain, added when the Sphinx set arrived and for the reason the Bone and Leather",
+    "files record: a material with no grain has depth 0, and build_maps multiplies the whole",
+    "height field by that depth before taking the gradient, so declaring none throws away the",
+    "relief read out of MU's painting as well. The Pad helm and jerkin were shipping no normal",
+    "map at all, and the Sphinx bodysuit would have been the third.",
+    "cast and not weave, although this file's own first line says woven. weave in this library",
+    "is bands along one axis - it was written for a cord wound round a tang - and a band across",
+    "a whole garment is the fault that has now been measured twice: leather's weave came out at",
+    "23 to 1 across against along, and a brushed grain made for a patch of hair striped an entire",
+    "bull. At MU's texel density a weave does not resolve into warp and weft anyway; what it",
+    "looks like is a fine irregular nap, and isotropic pitting is what that is.",
+    "Depth 0.04 and range 0.06, the shallowest in the library. Cloth drapes rather than holding",
+    "an edge, so its relief is a suggestion - half of bone's - and its gloss barely varies at all.",
+    "Scale 200, coarser than leather's 160 in cell count terms and therefore finer on the model,",
+    "because a thread is smaller than a hide's pebble.",
+    "Roughness 0.80 -> 0.72, the smallest move of the bare-DK pass: enough for the tabard's weave to shade across its folds, short of any highlight that would read as silk."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.72,
+  "grain_why": "A record of the weave that was tried and removed, kept because the numbers matter.\n\nIt was a weave, and it striped. MU's body art is painted flat and the folds are already in the sheet - a procedural weave on top of it is relief the game does not have, and on anything larger than a grip it reads as corduroy.\n\nIt was tuned twice before it was removed, and the measurement is why. The Dark Wizard's legs came out with a normal map whose horizontal step was 11.43 against a vertical step of 0.50 - a 23 to 1 ratio, which is not texture, it is stripes. That was after the scale had been taken from 140 to 360 and the depth from 0.1 to 0.05, so the parameter being reached for was not the one doing the damage. The Dark Knight's legs measure 0.10 and 0.08 on the same map, flat, because skin declares no grain and never did.\n\nKept as a field rather than deleted so the numbers that failed are on the record. A grip is the case that wants one - see leather_wrap, where the winding is the subject - and a garment is not.\n\nThe grain above replaces it and is cast, which has no direction to stripe in. See the why list for the fault that brought it back: with no grain at all this material had depth 0, and that discards MU's painted relief along with the invented kind.",
+  "grain_was": {
+    "kind": "weave",
+    "along": "u",
+    "scale": 360,
+    "depth": 0.05,
+    "roughness_range": 0.05
+  },
+  "grain": {
+    "kind": "cast",
+    "scale": 200,
+    "depth": 0.04,
+    "roughness_range": 0.06
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "water",
+  "summary": "Standing water, as MU paints it: an opaque sheet with the light already drawn on.",
+  "why": [
+    "Roughness 0.08, by a distance the lowest here - steel's blade is 0.32. Water is the only",
+    "specular surface in Lorencia and getting it wrong in the rough direction is what makes a",
+    "river look like wet cement.",
+    "Metallic 0.0 all the same. Water is a dielectric with a very strong specular response,",
+    "which is not the same thing as a metal, and the standard mistake is to reach for",
+    "metallic to get the shine.",
+    "Range 0.02, near nothing. Every other material here varies its roughness because real",
+    "surfaces are patchily worn; a body of water is uniformly water.",
+    "Depth 0.12 on a cast grain, which is the ripple. The sheet already draws its own",
+    "caustics as light and dark, so reading relief off that gives ripples that agree with the",
+    "highlights the artist painted - which is the one place this approach is not merely",
+    "cheap but correct.",
+    "What is missing is that it does not move. The client scrolls this sheet one repetition",
+    "every twenty seconds and displaces it with a wind term; that is a shader and the",
+    "material cannot hold it. Twelve percent of Lorencia is water, so it is worth doing."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.08,
+  "grain": {
+    "kind": "cast",
+    "scale": 260,
+    "depth": 0.12,
+    "roughness_range": 0.02
+  }
+}

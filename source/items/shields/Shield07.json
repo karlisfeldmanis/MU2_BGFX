@@ -1,0 +1,115 @@
+{
+  "item": "Shield07",
+  "mu_name": "Skull Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield07.bmd is shield index 6, which openmu's 0.75 Armors.cs names the Skull Shield. mu.db agrees: group 6 index 6, Item/Shield07.bmd.",
+  "why_this_one": "Hanzo's, and the blacksmith is the last shop with lines missing - five of his twenty-four were built this morning. He stocks twelve shields and two were here; these five take him to seven of the twelve, in the order his shelf reads. See shared/Market.Blacksmith.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the two built shields use, and its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10, which records the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(6, 1, 18, 2, 2, \"Skull Shield\", 15, 5, 15, 34, 110, 0, 1, 1, 1)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 6,
+    "drop_level": 15,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 5,
+    "defense_rate": 15,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "skill": 18,
+    "skill_note": "Eighteen, the shield's block skill in OpenMU's table, on the ten shields that carry one. There are no skills in this simulation, so it is carried for the row to read against the call and nothing more.",
+    "durability": 34,
+    "requires": {
+      "level": 0,
+      "strength": 110,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 1, 1, 1 - anybody may carry it. Four of the twelve shields are open to all three classes and the rest are the Dark Knight's alone."
+  },
+  "sheets": {
+    "shield04_jpg": "shield04.jpg.png",
+    "shield04_tga": "shield04.tga.png"
+  },
+  "sheet_from": "Data/Item/shield04.OZJ (32x32) and shield04.ozt (32x64), from MuMain, and this model names both halves of one stem: the .bmd asks for shield04.jpg on 88 triangles and shield04.tga on 20. Both are decoded carrying the extension they stand for, and the slots are called shield04_jpg and shield04_tga because that is what MuExtract writes into the .obj when a model's basenames collide - the Angelic Staff learned this the hard way and baked black.",
+  "sheet_note": "shield04.jpg is a bone-white skull face on a dark red ground, mean (152, 117, 96) at chroma 60. shield04.tga is a rack of pale ribs or spines on a 32x64 whose alpha cuts 17% away - twenty triangles of them, standing off the face.",
+  "material_note": "Three islands and one material. Island 0 is 88 triangles on shield04.jpg - the skull face and the dark red ground it sits on - and islands 1 and 2 are 6 and 14, which is shield04.tga's 20: the rack of ribs standing off the face on cut-out quads.\n\nbone on all three. Per triangle they mean (162, 139, 111), (142, 117, 89) and (156, 133, 105) at chroma 51 - the warm off-white of the skull, which is most of what is painted here, with the red showing between the ribs. The red ground goes with the skull, which is the island rule; it is a minority of a face that is mostly bone.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 88,
+      "area": 3647.3,
+      "along": [
+        -25.7,
+        49.0
+      ],
+      "mu_uv": [
+        0.028,
+        -0.002,
+        0.994,
+        0.997
+      ],
+      "bake_uv": [
+        0.032,
+        0.006,
+        0.974,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bone",
+      "triangles": 6,
+      "area": 482.3,
+      "along": [
+        -12.8,
+        10.6
+      ],
+      "mu_uv": [
+        0.101,
+        0.345,
+        0.899,
+        0.655
+      ],
+      "bake_uv": [
+        0.006,
+        0.534,
+        0.418,
+        0.695
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bone",
+      "triangles": 14,
+      "area": 5138.3,
+      "along": [
+        -33.3,
+        37.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.521,
+        0.521
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "item": "ArrowLaser01",
+  "mu_name": "The Light Crossbow's bolt, in the air",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_ARROW_LASER, L\"Data\\\\Skill\\\\\", L\"ArrowLaser\", 1)`. It is filed under Skill and not under Item because in MU a missile in flight is an effect - the thing on your back is Arrows01.bmd and the thing crossing the clearing is this, and they are not the same model in two states.",
+  "kind": "missile",
+  "why_this_one": "Because it is what a Light Crossbow fires, and that is a table rather than a guess. ZzzEffectMagicSkill.cpp's CreateArrow switches on the weapon in the hand: MODEL_CROSSBOW and MODEL_GOLDEN_CROSSBOW throw MODEL_ARROW_STEEL, MODEL_LIGHT_CROSSBOW throws MODEL_ARROW_LASER, MODEL_SERPENT_CROSSBOW throws MODEL_ARROW_THUNDER, and the plain bows throw MODEL_ARROW. So the ordinary wooden arrow - Arrow01.bmd, 33 triangles with a fire sprite on the tail - is the *bow's* missile and would be the wrong thing here by one row of a switch statement.\n\nThe built crossbow is CrossBow04, group 4 number 11, which is the Light Crossbow. This is its bolt.",
+  "mesh": "ArrowLaser01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/ArrowLaser01.bmd, from MuMain. Two quads crossed at right angles through a common axis - eight vertices, four triangles - 84.6 units long and 15.9 across, with the whole sheet on each quad. That is the whole model: it is a streak of light, and a streak of light seen from every angle at once is two flat pictures crossed rather than a tube.",
+  "sheet_from": "Data/Skill/bow_c.OZJ, 32x16 and fully opaque. A yellow-white core - the brightest texel is (255, 254, 213) - inside a green halo that falls to black at the top and bottom edges.",
+  "blend_from": "ZzzEffect.cpp sets `o->BlendMesh = 0` for MODEL_ARROW_LASER where it sets 1 for MODEL_ARROW: the index is which mesh of the model is blended, and this model has one. So the whole thing is drawn additively, which is also why the sheet has no alpha and does not need any - black is nothing when it is added, and the halo falls off to black on its own.",
+  "scale": 0.8,
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30` in the MODEL_ARROW branch of CreateEffect, which the laser bolt reaches with every other arrow in the case list. Frames rather than seconds because that is what MU counts in: `o->LifeTime -= FPS_ANIMATION_FACTOR` once per rendered frame, and the factor is REFERENCE_FPS / FPS - so thirty of them is 1.2 seconds however fast the machine is drawing. It is twice as long as the longest shot in the game needs, and what it is really for is the bolt that reaches nothing.",
+  "scale_from": "The default arm of the same branch: `o->Scale = 0.8f; o->Direction[1] = -70.f`, which the laser bolt reaches along with every arrow that is not a Wing, a Tanker or one of the named skills.",
+  "speed_note": "70 units a frame against a REFERENCE_FPS of 25 is 1750 units a second, and a tile is 100 of them - 17.5 tiles a second, which puts a crossbow's six tiles at a third of a second. The number lives in Realm.TilesASecondLoosed because it is the simulation that has to decide when the blow lands; it is written here as well because this is where it came from.",
+  "flight_note": "It is not aimed and it does not steer. CreateArrow passes the shooter's own `o->Angle` - the angle the body is drawn at on the frame it fires - and CreateEffect rotates both the muzzle offset and `o->Direction[1] = -70.f` by it. MoveParticle then adds that same rotated direction every frame, so the bolt travels in a straight line whatever the thing it was fired at does next. Nothing in the client aims at a target: the packet that decides the damage has already gone, and what is left is an effect crossing the clearing.\n\nWhat ends it is `CheckClientArrow`, which asks `CheckCharacterRange(o, 100.f)` - is there any living, visible body within one tile of where the bolt is now, other than the one that fired it. Any body, not the one that was shot at: a bolt passing close to the wrong spider dies on that one. It sets LifeTime to 1, which the subtraction at the bottom of the same update takes to zero, so the bolt vanishes on that frame rather than carrying on for one more.",
+  "muzzle": [
+    -10.0,
+    -60.0,
+    135.0
+  ],
+  "muzzle_from": "`Vector(-10.f, -60.f, 135.f, p1)` rotated by the shooter's own angle and added to their position, in the MODEL_ARROW branch of CreateEffect. Ten units left, sixty forward and 135 up: the bolt leaves from in front of the chest at about the height of a raised crossbow, rather than from between the character's feet, which is where the position on its own is.",
+  "parts": [
+    {
+      "group": "bow_c",
+      "sheet": "bow_c.png",
+      "blend": "additive",
+      "note": "The whole model. One mesh, and `o->BlendMesh = 0` names it as the blended one, so the streak is drawn additively over whatever is behind it."
+    }
+  ]
+}

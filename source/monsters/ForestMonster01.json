@@ -1,0 +1,95 @@
+{
+  "item": "ForestMonster01",
+  "mu_name": "Forest Monster",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_FOREST_MONSTER = 30 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_FOREST_MONSTER), which is 23. OpenMonsterModel loads `AccessModel(Index, L\"Data\\\\Monster\\\\\", L\"Monster\", Type + 1)`, so the file is Monster24.bmd. The client's name is 숲의괴물, monster of the forest; OpenMU's Version075 Noria.cs names number 30 'Forest Monster' at level 15 with 295 health.\n\nMODEL_FOREST_MONSTER is opened by this one case and by nothing else in the client.",
+  "world": "noria",
+  "object_type": 30,
+  "monster": {
+    "model_index": 23,
+    "scale": 0.75
+  },
+  "monster_from": "ZzzCharacter.cpp, CreateMonster, case MONSTER_FOREST_MONSTER:\n\n    OpenMonsterModel(MONSTER_MODEL_FOREST_MONSTER);\n    c = CreateCharacter(Key, MODEL_FOREST_MONSTER, PositionX, PositionY);\n    c->Object.Scale = 0.75f;\n\nThat is the whole case. No Weapon, no BlendMesh, no HiddenMesh, no Level - so nothing held, nothing added, nothing hidden and no glowing eyes. 0.75 is the smallest of Noria's monsters, under the Goblin and the Beetle at 0.8.",
+  "hands_from": "Empty, and not only because CreateMonster sets no Weapon: MODEL_FOREST_MONSTER has no case in CreateCharacter's LinkBone switch either, so there is not even a bone named for one. It fights with what it has - Box03 to Box06 hang off both forearms, and they are the claws.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - exported with --actions=0,1,2,3,4,5,6. Keys: 30, 30, 7, 6, 6, 6, 9. The walk is the one locked action. 41 bones; the legs run Thigh, Calf, HorseLink, Foot, which is Biped's digitigrade leg and the first in Noria, and Box01 to Box12 are the horns off the head, the claws off the forearms and two ridges of plates up the spine.\n\nBone 6 is Bip01 Head, which ZzzOpenData records in the model's sound case as `Models[MODEL_MONSTER01 + Type].BoneHead = 6`.\n\nPlay speeds are OpenMonsterModel's shared defaults and nothing else: 23 is not in the multiplier list (3, 5, 25, 37, 42), and there is no `case MONSTER_MODEL_FOREST_MONSTER` in the walk switch.",
+  "sheets": {
+    "pt3": "forestmonster_pt3.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/pt3.OZJ, a 128-square with no alpha - byte-identical (md5 56aa1f80) to the copy under LEGACY's old build, so MuMain's is the art. Decoded under a forestmonster_ prefix because pt is a family: pt2 is the Hunter's (Monster23) and pt the Agon's (Monster25), in the same folder.",
+  "sheet_materials": {
+    "pt3": "chitin"
+  },
+  "sheet_materials_from": "Read off the sheet, magnified, and mapped by bone before it was named. The spine's seventy triangles take the ribbed dark-brown mass at the top right, the head's thirty-nine the orange horned face beside it (mean 127, 64, 32), the forearms the banded strip along the bottom, and the thighs, calves and horse-links the right-hand edge.\n\nWhat is painted there is a shell and not a hide: segmented plates with a hard specular stripe on every ridge, horns and claws in the same glossy brown, and no muscle airbrushed underneath the way the Goblin's and the Hunter's are. chitin, the Beetle Monster's material.\n\nTwo panels on the sheet are not the animal's. A purple faceted strip at the top left and a copper one across the middle are flat-shaded shapes with their edges drawn in, and not one of the 512 triangles has its centre on either - measured, not assumed. Leftover paint on a reused page; nothing draws it.",
+  "open_question": "Whether the brown is shell or glossy skin. The sheet paints ribs and a sheen and no pores, which is chitin's case; the posture - a hunched biped with claws and a horned head - is a beast's. Chitin and skin are both non-metallic and a few hundredths apart in roughness, so the picture barely moves either way.",
+  "effects_from": "None. MODEL_FOREST_MONSTER appears in ZzzCharacter.cpp in CreateMonster and nowhere else - not in RenderCharacter, not in MoveCharacterVisual, not in the death switch. No sprites, no dust, nothing thrown.",
+  "sounds_from": "Five files, and the slots are ZzzOpenData's: `case MONSTER_MODEL_FOREST_MONSTER` loads mWoodMon1, mWoodMon2, mWoodMonAttack1, mWoodMonAttack2 and mWoodMonDie, then calls SetMonsterSound(MODEL_MONSTER01 + Type, 90, 91, 92, 93, 94). Offsets from SOUND_MONSTER_BULL1 at 210, so 300 to 304 - DSPlaySound.h's SOUND_MONSTER_WOODMON1 through WOODMONDIE, the five it just loaded. Written into assets/sounds/sounds.json as forestmonster_, the name Crowd.Named makes of the breed, not woodmon_, though the files are.",
+  "islands_from": "Found by the build: one island of 364 triangles for the head, body, arms and horns, and one of 74 for each leg - the legs are unwelded from the pelvis and from each other, mirrored on the same uv. All three arrived as skin, which is islands.py handing anything new the monster profile's default - the trap Spider01 records - and are set to chitin to match the sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 364,
+      "area": 73974.3,
+      "along": [
+        -42.1,
+        111.7
+      ],
+      "mu_uv": [
+        0.002,
+        0.02,
+        0.984,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.967,
+        0.953
+      ]
+    },
+    {
+      "island": 1,
+      "material": "chitin",
+      "triangles": 74,
+      "area": 14450.5,
+      "along": [
+        -47.7,
+        36.0
+      ],
+      "mu_uv": [
+        0.679,
+        0.196,
+        0.997,
+        0.72
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.974,
+        0.586
+      ]
+    },
+    {
+      "island": 2,
+      "material": "chitin",
+      "triangles": 74,
+      "area": 14642.4,
+      "along": [
+        -41.8,
+        65.4
+      ],
+      "mu_uv": [
+        0.679,
+        0.196,
+        0.997,
+        0.72
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.991,
+        0.993
+      ]
+    }
+  ]
+}

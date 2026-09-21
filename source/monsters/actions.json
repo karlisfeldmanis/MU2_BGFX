@@ -1,0 +1,97 @@
+{
+  "note": "The twelve actions every monster model shares, and how fast each one plays. Unlike the player — whose 284 actions are a sprawl needing a transcribed enum — every monster in the game is authored to this one layout in this one order, so slot 2 is the walk whether the model is a spider or a giant. Index is the action index, which is also the number the clip is called in the built .glb.",
+  "source": "MuMain/src/source/Core/Globals/_enum.h for the names, ZzzOpenData.cpp's OpenMonsterModel for the speeds.",
+  "speed_note": "Three layers, and all three matter. OpenMonsterModel sets a default for every monster, then applies a blanket multiplier to a few model indices, then overrides individual walks outright. Reading only the defaults makes the Giant move at ordinary speed when he should lumber; reading only the overrides misses him entirely, because his adjustment is in the multiplier pass. pipeline/monster_speeds.py is the resolver, and the order there is the order here.\n\nThe layout is not a promise that a model fills it. Monster10 — the Spider — carries slots 0 to 6 and stops: no appear, no run, no third attack. A rig is exported with whatever it actually holds and the names below are what those slots mean when they are there.",
+  "hold_at_end": [
+    6
+  ],
+  "hold_at_end_note": "The death, and only the death. OpenMonsterModel sets Actions[MONSTER01_DIE].Loop = true in the same shared block as the play speeds, so it applies to every monster: a corpse stops on the ground and stays there. Left repeating, a monster dies over and over.\n\nThe client's flag is named for the opposite of what it does, which is the trap. PlayAnimation reads Loop == true as 'clamp the frame to NumAnimationKeys - 0.01 and stop', and false as 'wrap with Frame % Key' — so the field called Loop marks the actions that do NOT loop. Porting it by its name inverts every animation in the game. It is called hold_at_end here so that nobody has to know that twice.",
+  "actions": {
+    "0": {
+      "enum": "MONSTER01_STOP1",
+      "name": "Idle",
+      "play_speed": 0.25
+    },
+    "1": {
+      "enum": "MONSTER01_STOP2",
+      "name": "Idle 2",
+      "play_speed": 0.2
+    },
+    "2": {
+      "enum": "MONSTER01_WALK",
+      "name": "Walk",
+      "play_speed": 0.34
+    },
+    "3": {
+      "enum": "MONSTER01_ATTACK1",
+      "name": "Attack 1",
+      "play_speed": 0.33
+    },
+    "4": {
+      "enum": "MONSTER01_ATTACK2",
+      "name": "Attack 2",
+      "play_speed": 0.33
+    },
+    "5": {
+      "enum": "MONSTER01_SHOCK",
+      "name": "Shock",
+      "play_speed": 0.5
+    },
+    "6": {
+      "enum": "MONSTER01_DIE",
+      "name": "Die",
+      "play_speed": 0.55
+    },
+    "7": {
+      "enum": "MONSTER01_APPEAR",
+      "name": "Appear",
+      "play_speed": 0.25
+    },
+    "8": {
+      "enum": "MONSTER01_ATTACK3",
+      "name": "Attack 3",
+      "play_speed": 0.25
+    },
+    "9": {
+      "enum": "MONSTER01_ATTACK4",
+      "name": "Attack 4",
+      "play_speed": 0.25
+    },
+    "10": {
+      "enum": "MONSTER01_RUN",
+      "name": "Run",
+      "play_speed": 0.25
+    },
+    "11": {
+      "enum": "MONSTER01_ATTACK5",
+      "name": "Attack 5",
+      "play_speed": 0.25
+    }
+  },
+  "defaults_note": "Slots 7 to 11 carry no speed of their own in OpenMonsterModel and fall to the shared 0.25 the function opens with. Written out rather than left absent, because an absent number reads as 'not looked up yet' and this one has been.",
+  "multipliers": {
+    "3": 1.2,
+    "5": 0.7,
+    "25": 0.7,
+    "37": 0.4,
+    "42": 0.4
+  },
+  "multipliers_note": "A blanket scale on a few models, across every action but the death — the loop in the client stops before MONSTER01_DIE, so a slowed monster still dies at the normal rate. Keyed on the MODEL index, not the server's monster type: the two differ, and Lorencia's Spider is type 3 while its model is 9. Model 5 is the Giant at seven tenths, which is most of what makes him read as heavy. Note that model 3 also appears here at 1.2 and is not the Spider — the Spider is model 9 and is adjusted below instead.",
+  "walk_overrides": {
+    "2": 0.7,
+    "6": 0.6,
+    "8": 0.7,
+    "9": 1.2,
+    "10": 0.28,
+    "12": 0.3,
+    "13": 0.28,
+    "17": 0.5,
+    "19": 0.6,
+    "20": 0.4,
+    "21": 0.5,
+    "28": 0.3,
+    "39": 0.22,
+    "41": 0.18
+  },
+  "walk_overrides_note": "Set outright after the multiplier pass, so an override discards whatever the multiplier did rather than compounding with it. Two are Lorencia's: the Budge Dragon flaps slower than the default and the Spider skitters at 1.2 — thirty keys a second, more than three times the Giant's rate, over a five-key cycle. It is as fast as it sounds, and it is what the client does. The table is the whole of OpenMonsterModel's switch, keyed by the MONSTER_MODEL_ enum rather than by name. Until Noria it held Lorencia's two correctly and four others one enum off - Cyclops at 11 for 10, Worm at 14 for 17, Larva at 16 for 6 - and none of those models was built, so nothing had played wrong. Noria's three are the Goblin at 19 (0.6), the Chain Scorpion at 20 (0.4) and the Beetle Monster at 21 (0.5)."
+}

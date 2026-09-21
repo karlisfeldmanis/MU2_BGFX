@@ -1,0 +1,159 @@
+{
+  "item": "Object02",
+  "mu_name": "Object02",
+  "mu_name_from": "Noria's object slot 1, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "noria",
+  "object_type": 1,
+  "placements": 2336,
+  "profile": "world",
+  "sheets": {
+    "flower2": "nr_flower2.png",
+    "filling_up02": "nr_filling_up02.png"
+  },
+  "sheet_from": "Data/Object4/*.OZJ and .OZT, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the reason the ground's is: assets/textures is one flat pool for every world, and yellow_jewel.png was already taken by an item.",
+  "sheet_materials": {
+    "flower2": "foliage",
+    "filling_up02": "lamplight"
+  },
+  "material_note": "flower2: green and gold leaf rosettes round a stem - the giant plants' own body, and the single commonest surface on the map.\nfilling_up02: two pixels of flat grey, drawn additively on Object02 - a uniform glow and not a surface at all.",
+  "additive": [
+    "filling_up02"
+  ],
+  "additive_from": "ZzzObject.cpp, CreateObject, case WD_3NORIA: `o->BlendMesh = 1` for type 1, and the render path draws that submesh with RENDER_BRIGHT. Mesh order is the .bmd's, which is the order the .obj groups are in.",
+  "why_this_one": "Noria's commonest object by a factor of two and a half: 2336 of them, a quarter of everything standing. Its second mesh is two grey pixels drawn additively, which is MU's way of hanging a soft glow on a plant without a light.",
+  "glow_note": "MU hangs three BITMAP_LIGHT sprites on this one and they are not declared as emitters, which is the one place in Noria where this port does not follow the client exactly.\n\nZzzObject.cpp's RenderObject, case WD_3NORIA, case 1: a sprite at bones 2, 4 and 6, at scale 0.5, in Luminosity * (0.4, 0.7, 1.0) - the same cold blue every glow in the town breathes in. Solved out of this model's own skeleton they sit at (-21, -9, 138), (13, -29, 138) and (25, 6, 115) MU units.\n\nThere are 2336 of these on the map, so following the client would mean 7008 of them. A sprite is a billboard and costs a quad; an Emitter here is an OmniLight3D and costs a light, and seven thousand shadowless lights is not a port of a billboard, it is a different thing that would eat the frame. What this model already carries instead is the glow MU also gives it - filling_up02, two grey pixels on its second mesh, drawn additively because CreateObject sets BlendMesh = 1 - so the plant is self-lit either way; what is missing is the three points of light it throws.\n\nThe fix is a bone-anchored additive billboard rather than a bigger light budget, and that is a feature this project does not have yet. Written down here because a silence would read as nobody having looked.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 105.3,
+      "along": [
+        24.4,
+        30.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bake_uv": [
+        0.005,
+        0.066,
+        0.005,
+        0.066
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 105.3,
+      "along": [
+        4.5,
+        10.7
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bake_uv": [
+        0.005,
+        0.074,
+        0.005,
+        0.074
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 105.3,
+      "along": [
+        -10.2,
+        -4.0
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bake_uv": [
+        0.005,
+        0.082,
+        0.005,
+        0.082
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 15,
+      "area": 915.3,
+      "along": [
+        14.9,
+        31.1
+      ],
+      "mu_uv": [
+        0.37,
+        0.348,
+        0.569,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.695,
+        0.697
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 15,
+      "area": 878.8,
+      "along": [
+        3.3,
+        12.7
+      ],
+      "mu_uv": [
+        0.37,
+        0.348,
+        0.569,
+        0.999
+      ],
+      "bake_uv": [
+        0.183,
+        0.004,
+        0.855,
+        0.848
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 15,
+      "area": 751.1,
+      "along": [
+        -7.8,
+        6.5
+      ],
+      "mu_uv": [
+        0.37,
+        0.348,
+        0.569,
+        0.999
+      ],
+      "bake_uv": [
+        0.362,
+        0.004,
+        0.996,
+        0.566
+      ]
+    }
+  ]
+}

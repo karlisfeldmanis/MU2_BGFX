@@ -1,0 +1,177 @@
+{
+  "item": "Well03",
+  "mu_name": "Well03",
+  "mu_name_from": "Lorencia's object slot 108, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 108,
+  "why_this_one": "2 placements. An open well ringed with jars. One sheet, shared with the other of the pair.",
+  "profile": "world",
+  "sheets": {
+    "jar_01": "jar_01.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "jar_01": "ceramic"
+  },
+  "material_note": "Glazed earthenware, ridged where it was thrown. Ceramic rather than rock: the ridges are regular and turned, which is a made surface rather than a broken one.",
+  "sheet_pad": {
+    "jar_01": "edge"
+  },
+  "sheet_pad_from": "An atlas rather than a tile - two or more separate surfaces drawn side by side in one square - so its border replicates instead of wrapping.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 35,
+      "area": 11082.7,
+      "along": [
+        5.4,
+        48.7
+      ],
+      "mu_uv": [
+        -0.034,
+        0.003,
+        0.982,
+        0.245
+      ],
+      "bake_uv": [
+        0.006,
+        0.457,
+        0.864,
+        0.963
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 18,
+      "area": 1153.8,
+      "along": [
+        23.5,
+        31.4
+      ],
+      "mu_uv": [
+        0.365,
+        0.02,
+        0.49,
+        0.118
+      ],
+      "bake_uv": [
+        0.875,
+        0.006,
+        0.981,
+        0.183
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 18,
+      "area": 1153.8,
+      "along": [
+        23.5,
+        31.4
+      ],
+      "mu_uv": [
+        0.365,
+        0.02,
+        0.49,
+        0.118
+      ],
+      "bake_uv": [
+        0.875,
+        0.231,
+        0.981,
+        0.409
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 35,
+      "area": 6410.8,
+      "along": [
+        -53.4,
+        -16.6
+      ],
+      "mu_uv": [
+        -0.034,
+        0.264,
+        0.982,
+        0.518
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.864,
+        0.881
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 35,
+      "area": 7733.6,
+      "along": [
+        -18.3,
+        38.0
+      ],
+      "mu_uv": [
+        -0.034,
+        0.537,
+        0.982,
+        0.791
+      ],
+      "bake_uv": [
+        0.006,
+        0.231,
+        0.864,
+        0.923
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 35,
+      "area": 6040.1,
+      "along": [
+        -39.6,
+        -7.1
+      ],
+      "mu_uv": [
+        -0.034,
+        0.805,
+        0.982,
+        0.993
+      ],
+      "bake_uv": [
+        0.006,
+        0.673,
+        0.864,
+        0.994
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 18,
+      "area": 740.5,
+      "along": [
+        -21.1,
+        -3.4
+      ],
+      "mu_uv": [
+        0.339,
+        0.817,
+        0.482,
+        0.978
+      ],
+      "bake_uv": [
+        0.675,
+        0.843,
+        0.927,
+        0.978
+      ]
+    }
+  ]
+}

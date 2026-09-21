@@ -1,0 +1,137 @@
+{
+  "item": "ArmorMale07",
+  "mu_name": "Scale Armor",
+  "mu_name_from": "MuMain loads MODEL_ARMOR + i from ArmorMale{i+1} (ZzzOpenData.cpp line 140), so file 07 is index 6, which openmu's 0.75 Armors.cs names the Scale Armor. mu.db agrees: group 8 index 6, Player/ArmorMale07.bmd.",
+  "why_this_one": "Martin's and Harold's +3 line, and the third of their four sets. The wandering merchants stock all five Scale pieces at +3, so five of their lines were dropped by Realm.Shelf for want of a row. See shared/Market.Wandering.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(6, 3, 2, 2, \"Scale Armor\", 28, 18, 40, 110, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 6,
+    "drop_level": 28,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 18,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 110,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred and ten strength and no agility, where the Bronze set asked for eighty and twenty."
+  },
+  "sheets": [
+    "upper_08_m.png",
+    "hide_m.png"
+  ],
+  "sheet_from": "Data/Player/upper_08_m.OZJ (128x128) and hide_m.OZJ, from MuMain. The .bmd names upper_08_m.jpg and hide_m.jpg; 154 of the 170 triangles are on the first and 16 on hide.",
+  "sheet_note": "upper_08_m is the cuirass with a demon's face worked into the chest, a banded skirt below it and full plated sleeves down both arms. It names no skin sheet at all, which makes it the first armour here that covers the wearer completely - the Bronze, Pad and Leather cuirasses all carry 44 triangles of bare arm. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is a dark blue-green metal and every sheet agrees: chroma 17 to 19 about means near (50, 65, 55), which is a verdigris cast on a dark plate rather than the grey of the Plate set or the yellow-brown of the Bronze. It is the darkest metal set built so far - lum 54 on the legs against the Plate set's 137 - and that is worth stating because a dark albedo at metallic 1.0 is the shape of the fault the Bone set had. Here it is not a fault: the Bone set was hide and skull declared metal, and this really is plate. See materials/bone.json for the case that was wrong.",
+  "material_note": "Four islands, all of them upper_08_m's 154 triangles and hide_m's 16: the cuirass at 104 and the two sleeves and a shoulder at 22 each. plate_steel, the profile's default, and the sheets do not argue with it: the colour is a verdigris cast at chroma 18 and the surface is banded plate. A metal's albedo is its reflectance, so a dark blue-green sheet at metallic 1.0 renders as dark blue-green metal - which is the same arithmetic the Bronze set records from the warm end. No skin island, because there is no bare skin on this piece - it is the first armour here with full sleeves, where the Bronze, Pad and Leather cuirasses each carry 44 triangles of arm.",
+  "material_overrides": {
+    "plate_steel": {
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "plate_steel at 0.55 rather than its own 0.34, because this set is corroded and that figure is for polished plate. The assignment is right and the note above argues it well - a dark blue-green sheet at metallic 1.0 is dark blue-green metal - but the same sheets describe a verdigris cast, and verdigris is corrosion. A patina is the one thing a polished surface is not, and at 0.34 the set came back glassy: broad wet highlights sliding over the cuirass and the greaves with the scrollwork lost under them. Swept in Blender on the assembled set under the rig from MU2/lighting.json at 0.34, 0.48 and 0.60 - by 0.60 the scale pattern and the hip scrollwork read clearly and it looks aged rather than wet, and 0.55 keeps a little more metal in it.\n\nScoped to this set rather than moved in the library: the Plate set is clean steel and wants the polish it has.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 1078.7,
+      "along": [
+        -15.0,
+        4.7
+      ],
+      "mu_uv": [
+        0.211,
+        0.01,
+        0.709,
+        0.86
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.779,
+        0.972
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 104,
+      "area": 6484.7,
+      "along": [
+        -19.0,
+        14.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        1.007
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.984,
+        0.993
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 1325.8,
+      "along": [
+        -34.3,
+        5.3
+      ],
+      "mu_uv": [
+        0.547,
+        0.001,
+        0.79,
+        0.95
+      ],
+      "bake_uv": [
+        0.249,
+        0.085,
+        0.938,
+        0.895
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 1334.5,
+      "along": [
+        -6.8,
+        16.7
+      ],
+      "mu_uv": [
+        -0.027,
+        0.008,
+        0.234,
+        0.95
+      ],
+      "bake_uv": [
+        0.412,
+        0.368,
+        0.944,
+        0.805
+      ]
+    }
+  ]
+}

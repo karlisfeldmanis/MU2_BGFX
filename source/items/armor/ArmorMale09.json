@@ -1,0 +1,161 @@
+{
+  "item": "ArmorMale09",
+  "mu_name": "Brass Armor",
+  "mu_name_from": "MuMain loads MODEL_ARMOR + i from ArmorMale{i+1} (ZzzOpenData.cpp line 140), so file 09 is index 8, which openmu's 0.75 Armors.cs names the Brass Armor. mu.db agrees: group 8 index 8, Player/ArmorMale09.bmd.",
+  "why_this_one": "Martin's and Harold's last +3 line, and the piece that finishes their shelf: with these five the wandering merchants sell all twenty-five of the lines Market.Wandering lists, where they sold ten this morning. See shared/Market.cs.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(8, 3, 2, 2, \"Brass Armor\", 38, 22, 44, 100, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 8,
+    "drop_level": 38,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 22,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 44,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred strength and thirty agility, the highest agility any built armour asks for."
+  },
+  "sheets": [
+    "upper_10_m.png",
+    "hide_m.png",
+    "boots_10b.png"
+  ],
+  "sheet_from": "Data/Player/upper_10_m.OZJ (128x128), hide_m.OZJ and boots_10b.ozt (32x32), from MuMain. The .bmd names upper_10_m.jpg, hide_m.jpg and boots_10b.tga; 164 of the 180 triangles are on the first, 12 on hide and 4 on the ornament.",
+  "sheet_note": "upper_10_m is the cuirass front and back with a mask worked into the belly, a fan of gold quills standing off each shoulder and full sleeves - no skin sheet, as on the Scale Armor.\n\nboots_10b is the odd one and it is worth naming: a 32-square of gold feathers whose alpha cuts 60% away, and three pieces of this set wear it - the armour, the gloves and the boots, four triangles each. MU shares one ornament sheet across a set rather than drawing it three times, which the Pad and Vine boots do across two different sets. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is a bright yellow gold and the sheets are the most saturated armour in the project: chroma 38 on the legs to 100 on the wing ornament, where the Bronze set runs 30 to 70 and the Plate set 3 to 8. Olive-green shading in the hollows, which is MU painting a warm metal's shadow cool.",
+  "material_note": "Five islands. Islands 2, 3 and 4 are 136, 20 and 20 - the cuirass and the two sleeves, 176 triangles, which is upper_10_m's 164 and hide_m's 12 - and take plate_steel. Islands 0 and 1 are two triangles each, which is boots_10b's 4 exactly: the gold quills standing off each shoulder, and they take brass.\n\nThe set is one colour and two materials, which is the thing it teaches. The plates take plate_steel - hammered, curved, roughness 0.68 - and the small ornaments on their own .OZT sheets take brass, which is cast at 0.44 with a coarser grain. Both are gold in MU's paint and the paint is not what decides: a material states how a thing was made, so a shell beaten to fit a chest and a fan of quills poured in a mould are two surfaces however alike their colour. It is the same reading the Pad Boots' fins got, made inside a single set for the first time.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 1.0,
+      "roughness": 0.46
+    }
+  },
+  "material_overrides_why": "plate_steel gives up its pull toward grey and a little of its polish, as on the Bronze set and for the same reason. Every sheet in this set says bright yellow gold - the most saturated armour in the project, chroma 38 to 100 - and plate_steel ships f0_desaturation 0.75, which took the gold out: cooked on 2026-09-21 the cuirass's base colour came out at saturation 0.21 from the art's 0.47 and the set read as grey steel with brass quills. Roughness 0.35 -> 0.46 comes with it, because on Bronze full saturation at the library's polish put hot glassy specular on the shoulder and hip. The alloy is still MU's paint; the material is still plate_steel.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 2,
+      "area": 336.9,
+      "along": [
+        -31.7,
+        -12.0
+      ],
+      "mu_uv": [
+        0.333,
+        0.001,
+        0.666,
+        0.999
+      ],
+      "bake_uv": [
+        0.653,
+        0.038,
+        0.827,
+        0.561
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 2,
+      "area": 335.3,
+      "along": [
+        -17.4,
+        -0.7
+      ],
+      "mu_uv": [
+        0.333,
+        0.001,
+        0.664,
+        0.999
+      ],
+      "bake_uv": [
+        0.822,
+        0.006,
+        0.995,
+        0.529
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 136,
+      "area": 8740.9,
+      "along": [
+        -34.3,
+        16.7
+      ],
+      "mu_uv": [
+        -0.033,
+        -0.002,
+        0.999,
+        1.015
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.758,
+        0.76
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 20,
+      "area": 1398.4,
+      "along": [
+        -21.7,
+        5.8
+      ],
+      "mu_uv": [
+        0.726,
+        0.404,
+        0.996,
+        0.998
+      ],
+      "bake_uv": [
+        0.006,
+        0.008,
+        0.588,
+        0.714
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 20,
+      "area": 1356.2,
+      "along": [
+        -3.6,
+        16.7
+      ],
+      "mu_uv": [
+        0.745,
+        0.404,
+        0.996,
+        0.998
+      ],
+      "bake_uv": [
+        0.005,
+        0.254,
+        0.638,
+        0.666
+      ]
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "item": "Axe02",
+  "mu_name": "Hand Axe",
+  "mu_name_from": "MuMain loads the group as MODEL_AXE + i from Axe{i+1}, so Axe02.bmd is axe index 1, which openmu names the Hand Axe. MuWeapons.cs agrees: `new(\"Hand Axe\", \"Axe02.bmd\", WeaponStance.Sword, ...)`.",
+  "why_this_one": "It is the top of the Budge Dragon's pool rather than the bottom, which is the half of the drop rule the Small Axe cannot show. Both axes are in reach of a level 4 monster - the Small Axe at drop level 1 and this at 4 - and the refinement rule reads the gap between the two: `(monsterLevel - dropLevel) / 3`, so the same kill gives the Small Axe a +1 and this a plain one.\n\nSo a pool with both axes in it is a pool where the plus visibly means something, and with only the Small Axe in it every axe a dragon left was +1 and the rule looked like a constant. See shared/Loot.Refinement.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs line 107. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(1, 1, 0, 0, 1, 3, true, \"Hand Axe\", 4, 4, 9, 30, 20, 0, 0, 70, 0, 0, 0, 1, 1, 1)",
+    "group": 1,
+    "number": 1,
+    "drop_level": 4,
+    "drops_from_monsters": true,
+    "drop_level_note": "Four, which is the Budge Dragon's own level - so this is the most expensive thing in the whole catalogue it can leave, and it leaves it at +0. One level lower and it would be out of the pool entirely. See shared/Loot.Affordable.",
+    "slot": 0,
+    "width": 1,
+    "width_note": "width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and one here agrees with MuWeapons.cs's TwoHanded: false. The Battle Axe already built is the other case: same group, width 2, both hands.",
+    "height": 3,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 4,
+    "maximum_damage": 9,
+    "attack_speed": 30,
+    "attack_speed_note": "Thirty, ten more than the Small Axe's twenty and ten more than the Short Sword's, which is the one place the low table is not flat. OpenMU adds it whole to the character's AttackSpeed and the client spends it as `PlaySpeed = base + AttackSpeed * 0.004`, so this is a visibly faster swing than the axe it sits above.",
+    "durability": 20,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 1, 1, 1, and MuWeapons.cs carries the same three flags. Seventy strength is the gate and it is the highest in the low pool - ten over the Short Sword's sixty."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword. One-handed axes share the sword's stance rather than having one of their own - actions 4 and 17 - which is the reason docs/items-and-armour.md's table names \"one-handed swords, axes, maces\" on the same row.",
+  "sheets": {
+    "Axes03": "axes03.png"
+  },
+  "sheets_note": "The key is the mesh's group name and it is case-sensitive: Axes03 with the capital the .bmd carries, as the Battle Axe's Axes07 is. It was written axes03, the pairing matched on the key and found no slot, and the axe built with an albedo that was 96x96 of solid black - every step reporting success. The Kris's note describes the same failure through a different spelling. The file on disk stays lower-case because decode_texture writes it so.",
+  "sheet_from": "Data/Item/Axes03.OZJ (32x32), from MuMain. The .bmd names Axes03.jpg, with the capital the file itself carries.",
+  "sheet_note": "32 square is the whole of what MU shipped for this axe. find_source turns up one other copy, remaster_one's at 64x64 and exactly 2x - the upscale signature, the sixth weapon running to carry it - so MuMain's is the art and the enlargement is ours to do in the open.\n\nTwo things on one small square, and they are cleanly separated rather than interleaved: a dark grey axe head with a pale ground edge across the left two thirds, and a strip of orange-brown haft with lighter banding up the right. That is the split the island listing has to reproduce, and it is the reason this asset can take two materials where the Battle Axe's head island could not be split at all.",
+  "material_note": "Island 0 was steel and is wood, which is what this file's own sheet_note already said and what the assignment had stopped agreeing with: 'a strip of orange-brown haft with lighter banding up the right... it is the reason this asset can take two materials'. All three islands had fallen back to the weapon profile's default steel at some re-unwrap, exactly as Shield10's island 0 did, and nothing looked wrong because a grey head assigned steel is right by accident.\n\nMeasured per triangle rather than taken from the note: island 0's twelve triangles run Z 17 to 96 - the length of the haft - and mean (164, 91, 62) at chroma 102, which is the most saturated reading on the item by a factor of six. The head is chroma 7. There is no second opinion to weigh. The Small Axe, which is the same three-island shape on the same kind of sheet, has had wood on island 0 all along.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 12,
+      "area": 865.3,
+      "along": [
+        16.7,
+        96.3
+      ],
+      "mu_uv": [
+        0.73,
+        0.559,
+        0.822,
+        0.992
+      ],
+      "bake_uv": [
+        0.605,
+        0.005,
+        0.723,
+        0.26
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 36,
+      "area": 1938.9,
+      "along": [
+        48.8,
+        91.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.877
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 12,
+      "area": 623.4,
+      "along": [
+        -16.9,
+        16.7
+      ],
+      "mu_uv": [
+        0.858,
+        0.466,
+        0.994,
+        0.993
+      ],
+      "bake_uv": [
+        0.005,
+        0.15,
+        0.175,
+        0.594
+      ]
+    }
+  ]
+}

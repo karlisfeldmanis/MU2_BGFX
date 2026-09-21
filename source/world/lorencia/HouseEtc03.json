@@ -1,0 +1,78 @@
+{
+  "item": "HouseEtc03",
+  "mu_name": "HouseEtc03",
+  "mu_name_from": "Lorencia's object slot 129, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 129,
+  "why_this_one": "8 placements. Railing and gate again, on a house rather than a garden - the same two sheets SteelWall wears.",
+  "profile": "world",
+  "sheets": {
+    "steel_barred_a": "steel_barred_a.png",
+    "steel_barred_door": "steel_barred_door.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "steel_barred_a": "wrought_iron",
+    "steel_barred_door": "wrought_iron"
+  },
+  "cutout": [
+    "steel_barred_a",
+    "steel_barred_door"
+  ],
+  "cutout_from": "Real alpha in the .OZT.",
+  "sheet_relief": {
+    "steel_barred_a": 1.3,
+    "steel_barred_door": 1.3
+  },
+  "sheet_tint": {
+    "steel_barred_a": "#000000",
+    "steel_barred_door": "#000000"
+  },
+  "material_note": "No Fab surface: the railing keeps MU's own painting and wears wrought_iron as the library states it, 0.50 and metallic 1.0, the same as SteelWall01-03 and SteelDoor01, which carry the same two sheets.\n\nIt used to be 0.4 and 0.58, decided on the old Godot bench on 2026-08-29 (f7fa4df) as a painted-then-weathered railing. Settled back on 2026-09-21: 0.58 is a blend of two materials rather than one, the library leaves that gap empty on purpose, and one railing tuned apart from five others wearing the same art is two answers to one question. The darkness the partial metal was reaching for is MU2_BGFX's metal_gain's job now.\n\nThe tint is black, and it is a choice rather than the additive default that reads the same way on the lamps and the waterfall: these materials carry no base colour of their own, so the bench was showing black railings and that is what was kept. It agrees with the argument already in wrought_iron.json — 85% of this sheet is cut away and what the eye reads is the silhouette against the sky, so the darker the bar the more it is a railing. Relief up to 1.3 for the same reason: the little that is left should read as round bar rather than as a flat strip.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 235470.9,
+      "along": [
+        -100.3,
+        99.5
+      ],
+      "mu_uv": [
+        -0.533,
+        0.001,
+        1.533,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.747
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 4,
+      "area": 7830.4,
+      "along": [
+        98.1,
+        98.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.677,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.756,
+        0.496,
+        0.834
+      ]
+    }
+  ]
+}

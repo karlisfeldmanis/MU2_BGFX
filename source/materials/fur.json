@@ -1,0 +1,21 @@
+{
+  "name": "fur",
+  "summary": "A pelt: an animal's coat, matted and dull, with the strands painted into the sheet and nothing added to them.",
+  "why": [
+    "This exists because hair is not fur, and the Bull Fighter proved it. hair.json is a bare",
+    "head: a small patch, brushed along v at scale 260 so the sheen does not lie flat across the",
+    "crown. Put on a whole animal it draws that grain across the entire atlas, and on a body",
+    "whose sheets are stretched ten thousand units across the model the strands come out as",
+    "evenly spaced ridges running the length of the back and the thighs - a striped bull,",
+    "reported three times from screenshots before the material was found under it.",
+    "No grain at all. MU paints the pelt as a mottled brown-black with the strand shading",
+    "already in it - npc_a_01 and 02 carry a dark band of drawn hairs - and at 64 pixels a",
+    "sheet there is nothing a procedural strand could reconstruct that the paint has not drawn.",
+    "The three grain kinds are facts about how a surface was made, and fur was not made.",
+    "Roughness 0.78, skin's, and above hair's 0.62 on purpose: a coat catches no directional",
+    "sheen at the size a monster is seen, and hair's gloss was the other half of the stripes -",
+    "each ridge caught the sun along its length. Metallic 0.0, as everything on a body."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.78
+}

@@ -1,0 +1,118 @@
+{
+  "item": "HelmMale08",
+  "mu_name": "Sphinx Mask",
+  "mu_name_from": "MuMain loads MODEL_HELM + i from HelmMale{i+1} (ZzzOpenData.cpp line 139), so file 08 is index 7, which openmu's 0.75 Armors.cs names the Sphinx Mask. mu.db agrees: group 7 index 7, Player/HelmMale08.bmd.",
+  "why_this_one": "Pasi's +3 line, and the last armour he sells that was missing. The mage stocks all five Sphinx pieces at +3 and none was built, so five of his nineteen lines were dropped by Realm.Shelf for want of a row. With these he sells fifteen of them and only his four staves are left. See shared/Market.Mage.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(7, 2, 2, 2, \"Sphinx Mask\", 32, 13, 36, 30, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 7,
+    "drop_level": 32,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 13,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 36,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone. No agility on any piece, which is the Bone set's shape and not the Bronze or Brass sets'."
+  },
+  "sheets": [
+    "head_09.png",
+    "skin_barbarian_01.png",
+    "hide.png",
+    "head_09b.png"
+  ],
+  "sheet_from": "Data/Player/head_09.OZJ (64x64), skin_barbarian_01.OZJ (256x256), hide.jpg and head_09b.ozt (64x64), from MuMain. The .bmd names head_09.jpg, skin_barbarian_01.jpg, hide.jpg and head_09b.tga; 64 of the 149 triangles are on the first, 41 on the skin, 14 on hide and 30 on the headdress.",
+  "sheet_note": "It is called a Mask by OpenMU and by mu.db both, and the sheet shows why: head_09 is a smooth silver face with gold bars painted across the brow and cheeks, a death mask rather than a helm, drawn beside a strip of the headdress. Mean (124, 112, 103) at chroma 21.\n\nhead_09b is the nemes - the striped headcloth - in gold and brown bands with a rivet at each fold, 30 triangles on a 64-square whose alpha cuts 20% away. It is the largest cut-out piece in any set built here; the Plate helm's plume is four triangles and this is thirty.\n\nForty-one triangles of skin, the most of any helm: the mask covers the face and the neck and jaw beneath it are the wearer's. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is pharaonic and MU drew it that way: banded gold plates riveted over black, a nemes headdress in gold stripes, a serpent glyph on the tabard and a silver death mask for a face. Chroma runs 19 on the bodysuit to 69 on the headdress, so the gold is real paint and not a tint.",
+  "material_note": "Three islands and three things. Island 0 is 78 triangles - head_09's 64 and hide's 14 - and is the death mask itself, plate_steel: a smooth silver face at lum 113, which is bright enough that a metal keeps its mid-tones. Island 1 is 30 triangles, which is head_09b's 30 exactly: the nemes, and it takes plate_steel too. A headcloth is cloth by tradition and MU did not draw cloth - it drew rigid gold bands with a rivet at every fold, 55% of that sheet reading as gold - so the sheet decides and not the word. Island 2 is 41 triangles, skin_barbarian_01's 41: the jaw and neck under the mask, skin.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 0.88,
+      "roughness": 0.68
+    }
+  },
+  "material_overrides_why": "plate_steel keeps its reflectance and gives up both its polish and most of its pull toward grey. Two changes because the first alone was wrong, and the way it was wrong is the useful part.\n\nThe library's f0_desaturation 0.75 is sound where it was written - a painted sheet's warmth is a picture of light, so on steel it returns as a permanent tint and reads as dirty brass. It assumes the warmth is not the material. Here it is: the set is banded gold riveted over black, gold bars across the mask, a nemes of gold and brown. At 0.75 the plates came back matte brown clay.\n\nTaking it out entirely was the overcorrection. At 1.0 with the library's polish the gold went neon and split the set in two - vivid yellow plates against grey limbs - which is worse than the fault it fixed, because a set is judged whole and not plate by plate. The saturation was never the whole problem: roughness 0.34 is polished mirror, and a riveted band of gold is not polished. Saturation and gloss together are what read as plastic.\n\nSwept in Blender on the assembled figure rather than on a crop - that distinction is what the crop hid - across desaturation 0.75, 0.88 and 1.0 against roughness 0.34, 0.44 and 0.56. At 0.88 the gold is aged rather than neon and the plates, the limbs and the boots read as one artefact. Roughness went to 0.56 first and was still called glossy, so it was swept again at 0.56, 0.66 and 0.75: by 0.75 the metal is dead, and 0.68 is where the hard specular slides off the mask while the plates keep some life. Three passes on one number, and every one of them was judged on the whole figure - the first attempt was judged on a crop of the chest, which is how a change that improved the gold and broke the set could look like progress.\n\nScoped to this set: the Plate set is polished steel and wants both figures as the library states them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 78,
+      "area": 1199.6,
+      "along": [
+        6.5,
+        25.0
+      ],
+      "mu_uv": [
+        -0.018,
+        0.001,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.995,
+        0.965
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 30,
+      "area": 1935.0,
+      "along": [
+        -27.5,
+        8.6
+      ],
+      "mu_uv": [
+        -0.005,
+        -0.05,
+        1.009,
+        0.984
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.762,
+        0.851
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 41,
+      "area": 932.1,
+      "along": [
+        -9.5,
+        12.1
+      ],
+      "mu_uv": [
+        0.573,
+        0.753,
+        0.932,
+        0.975
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.188,
+        0.154
+      ]
+    }
+  ]
+}

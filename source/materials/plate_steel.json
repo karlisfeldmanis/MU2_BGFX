@@ -1,0 +1,34 @@
+{
+  "name": "plate_steel",
+  "summary": "Armour plate: hammered, curved, and worn where it is hit. Not a blade.",
+  "why": [
+    "Split off from steel after the Plate gauntlets were looked at in the engine wearing",
+    "it. A blade's grain is brushed and directional because a blade is ground along its",
+    "length, and on a gauntlet that direction means nothing: the UV islands of a hand run",
+    "every way at once, so a grain that is long in V smeared across the fingers in one",
+    "direction and across the cuff in another. It read as motion blur.",
+    "Plate is hammered instead. The surface is isotropic \u2014 dents and planishing marks with",
+    "no direction to them \u2014 which is what `cast` already generates, and it survives being",
+    "laid out across a hand because it looks the same whichever way the island faces.",
+    "armour is not, and a piece that has been worn is duller still. The gap between this",
+    "and the blade's 0.32 is most of what makes a sword read as sharper than the hand",
+    "holding it, which is the correct relationship.",
+    "Roughness 0.68, swept in the engine on ArmorMale10 under the grazing sun and raised from 0.42. See MU2/tests/materials.sh. Across 0.13 to 0.85 the low end is oily - the cast pitting reads as a wet sheen rather than as a surface - and 0.42 sat near enough to it that the chest's bands and the skirt's panels barely showed. At 0.68 the form reads and the edges still catch a bright highlight, which is what keeps it metal. Past 0.8 it goes chalky through the middle of the chest.",
+    "That it wanted raising rather than lowered is the material's own summary being taken seriously: this is armour that has been hit, not a blade that has been ground. A mirror finish on battle plate is the mistake the separate blade steel exists to avoid.",
+    "Roughness 0.52 and depth 0.05, moved together, and the pair is the point. The 0.68 sweep ran while the engine had no environment specular at all - Interior on the probe and the sky off as a reflection source - so 'the low end is oily' was a judgement of a metal with nothing to reflect. With reflections fixed the plate at 0.68 reads flat, and dropping roughness alone turns the cast pitting into per-texel glitter: at depth 0.12 every pit is its own sun glint. Same failure the Kris hit, same medicine - the grain shallower as the surface gets glossier, so the pitting stays a disturbance in the highlight rather than a field of sparks.",
+    "f0 0.50 with f0_from_art 0.5, and this is the balance pass, judged in Blender on a three-way lineup - stock, this, and a 0.35-roughness chrome-leaning trial - beside a chrome ball over a checkered ground. Without the correction the plate hands the renderer MU's painting raw (0.335 mean linear where steel is ~0.56) and reads as plaster whatever the roughness. At the axe's 0.35 art weight the set turns silver and the emblem washes out; at 0.5 the reflectance is steel's and the sheet's bands, straps and chest relief stay legible, which for armour is the identity of the set. f0 a step under the blade's 0.56 because plate is worn, not ground.",
+    "roughness_range 0.12 -> 0.06. The last of the yellow specks on the pauldron were not the probe (a calm probe-only ground changed 154k pixels and left them) and not the sheets (unshaded is clean) - they are the deepest grain pits reaching roughness 0.40, where a grazing Fresnel hands them a concentrated sample of the dome's warm ground colour and the grade saturates it yellow. Halving the range keeps the pitting's variation in the highlight and takes the deep-gloss tail off it.",
+    "f0 0.575, roughness 0.34, f0_desaturation 0.75 - the 'looks like plate steel' pass, found on the assembled five-piece set in Blender under the recreated bench rig (same dome, sun, ambient, turf) and migrated here. The first try was a plain brightness gain and came out porcelain: steel is not bright, it is contrasty, and what sells it is the dome's gradient sweeping a curved plate. So the value gain eased to 1.15 (f0 0.50 -> 0.575), the art pulled a quarter toward grey (a painted sheet's warmth reflects as a permanent tint - steel that reflects orange reads as dirty brass), and the roughness dropped to 0.34 so the reflection has edges. That is knowingly near the blade's 0.32: the set's owner asked for shining plate, and the note above about worn armour yields to that ask - marked as the taste decision it is."
+  ],
+  "metallic": 1.0,
+  "roughness": 0.34,
+  "grain": {
+    "kind": "cast",
+    "scale": 260,
+    "depth": 0.05,
+    "roughness_range": 0.06
+  },
+  "f0": 0.575,
+  "f0_from_art": 0.5,
+  "f0_desaturation": 0.75
+}

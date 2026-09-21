@@ -1,0 +1,114 @@
+{
+  "item": "ArmorClass01",
+  "mu_name": "Dark Wizard torso",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN} and so on, and the numbering runs one over MU's zero-based classes - so Class01 is the Dark Wizard.",
+  "part_note": "The chest and arms, and the largest of the five. 150 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_barbarian_01": "skin_barbarian_01.png"
+  },
+  "sheet_from": "Data/Player/skin_barbarian_01.OZJ (256x256), from MuMain. All five parts name it.",
+  "sheet_warning": "The sheet name is not the class, and this is the third of three that proves it: the Dark Wizard is painted on skin_barbarian_01, the Dark Knight on skin_wizard_01 and the Fairy Elf on skin_warrior_01. Not one of them matches. Verified by extracting each .bmd and reading the texture it names.",
+  "material_note": "Reassigned after unstack was turned off. Switching that changed the island layout from thirteen to three, and islands.py could not carry the old assignments across - all three fell back to the armour profile's plate_steel, which carries a cast grain, and that grain is what a pebbled chest and arms looked like. The same trap ArmorClass02's note records.\n\nNeither material declares a grain any more, so the choice between them is roughness alone: 0.80 for cloth against 0.78 for skin. cloth on the large shell because most of it is robe, skin on the two wrists where the sleeve ends.",
+  "material_note_expired": "The paragraph above stopped being true and nothing said so. 'Neither material declares a grain any more' was the whole reason cloth was safe on a shell that is half bare arm - and cloth.json has since been given one, a cast grain at depth 0.04 with a roughness range of 0.06. So the arms came back under pebbling by a second route, and the reported symptom was word for word the one the note already records: a pebbled chest and arms. The roughness figures aged too; they are 0.72 and 0.70 now, not 0.80 and 0.78.\n\nMeasured before it was changed, because the same complaint has been blamed on the upscaler and on the lighting before: on the shipped maps the skin-painted texels carried a normal deviation of 0.033 against the harness's 0.030 - the same grain, not less of it - and MU's own painting of that arm is smooth at every stage of the chain, hf-rms 0.047 at 256 falling to 0.037 at x3. The grain was entirely this part's normal map.\n\nThe lesson is the one the reassignment note was already circling: an island assignment that is only safe while a material declares no grain is an assignment resting on something no reader of this file can see. The regions below say what the shell is made of instead of relying on what cloth happens to be today.",
+  "uv_overrides": [
+    {
+      "material": "skin",
+      "u": [
+        0.0,
+        0.156
+      ],
+      "v": [
+        0.5,
+        1.0
+      ],
+      "why": "His right arm, the left column of MU's torso panel."
+    },
+    {
+      "material": "skin",
+      "u": [
+        0.318,
+        0.47
+      ],
+      "v": [
+        0.5,
+        1.0
+      ],
+      "why": "His left arm, the right column of the same panel."
+    }
+  ],
+  "uv_overrides_why": "The island is one shell and MU drew two surfaces on it - see island 0's own note, 'the robe and the bare arms in one shell, as MU lays them out'. sheet_overrides cannot split it, because both surfaces are on the same sheet: MU tells them apart by where on it they land, so that is what these say.\n\nThe two rectangles are MU's own layout, read off the sheet rather than guessed. Checked against the painting face by face: every one of the 57 faces whose patch of skin_barbarian_01 is warm and light falls inside them, and ten more come with it - the strap crossings and the shaded inner arm, which sit on the boundary and whose two candidate materials differ by 0.02 of roughness and a grain the arm should not have had anyway.\n\nThe wrists stay their own islands. They are at u 0.657-0.794, outside both rectangles, and were already skin.",
+  "unstack": false,
+  "unstack_why": "Refuses the UV un-stacking, and it is the only asset in the tree that does. With it on, the buckled vest disappears from the bake: 102 of this part's 150 triangles have UV centres on that vest and the island list agrees, yet the atlas held nothing but a bare arm and featureless grey. Off, the vest comes back with its buckles and straps and the part matches the Dark Knight's, which never triggers the step at all - his torso arrives 0% stacked where this one arrives 5.9%, and 69 of its 150 faces get moved off their twin.\n\nFound only after the Figma sheet, the texel density, the UV convention and transfer_albedo had each been cleared by measurement. It is a workaround rather than a fix: the step writes to BAKE_UV and leaves ORIGINAL_UV alone, which is the right shape, so why the moved faces then sample the wrong region of the sheet is still unexplained.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 120,
+      "area": 6113.5,
+      "along": [
+        -12.2,
+        13.1
+      ],
+      "mu_uv": [
+        0.016,
+        0.507,
+        0.461,
+        0.995
+      ],
+      "bake_uv": [
+        0.016,
+        0.507,
+        0.461,
+        0.995
+      ],
+      "note": "the robe and the bare arms in one shell, as MU lays them out"
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 15,
+      "area": 656.2,
+      "along": [
+        -14.4,
+        7.5
+      ],
+      "mu_uv": [
+        0.657,
+        0.603,
+        0.794,
+        0.711
+      ],
+      "bake_uv": [
+        0.657,
+        0.603,
+        0.794,
+        0.711
+      ],
+      "note": "a wrist, where the sleeve ends"
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 15,
+      "area": 656.2,
+      "along": [
+        -14.4,
+        7.5
+      ],
+      "mu_uv": [
+        0.657,
+        0.603,
+        0.794,
+        0.711
+      ],
+      "bake_uv": [
+        0.657,
+        0.603,
+        0.794,
+        0.711
+      ],
+      "note": "a wrist, where the sleeve ends"
+    }
+  ]
+}

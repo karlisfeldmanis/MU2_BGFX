@@ -1,0 +1,61 @@
+{
+  "item": "BootClass03",
+  "mu_name": "Fairy Elf feet",
+  "mu_name_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN}, PantClass{NN}, GloveClass{NN}, BootClass{NN}. The numbering runs one over MU's zero-based classes, so Class01 is the Dark Wizard, Class02 the Dark Knight and Class03 the Fairy Elf.",
+  "part_note": "The calves and feet. 106 triangles.",
+  "profile": "armour",
+  "sheets": {
+    "skin_warrior_01": "skin_warrior_01.png"
+  },
+  "sheet_from": "Data/Player/skin_warrior_01.OZJ (256x256), from MuMain. All five parts name this one sheet.",
+  "sheet_warning": "The sheet name says nothing about which class wears it, and this pair is the proof: the Fairy Elf's body is painted on skin_warrior_01 and the Dark Knight's on skin_wizard_01. Reading the name as the class picks the wrong sheet for both of them.",
+  "material_note": "Two mirrored islands at (80, 79, 67), far darker than anything else on the body and not a flesh tone at all. Boots, and leather_wrap is what the library has for worn hide. BootClass02 carries plate_steel for the same reason its gloves do.\n\nRead off the sheet by cropping each island at its own mu_uv with V flipped, the way the other bodies were. It is a coarse reading - an island's bounding box can take in neighbouring regions - so where it disagreed with the sibling part on Class02 the disagreement is written down rather than settled quietly.\n\nleather rather than leather_wrap, after the wizard came out striped from the knees down. leather_wrap is the *grip* material - a cord wound round a tang, in bands, at depth 0.55 - and those bands are corduroy on a boot. See assets/materials/leather.json, which is the same hide without the winding.",
+  "unstack": false,
+  "unstack_why": "Refuses the UV un-stacking, as the Dark Wizard's parts do. This one arrives 98.5% stacked and 53 of its faces were being moved off their twin. The step was found to destroy art on ArmorClass01 - the buckled vest vanished from the bake - and MU sharing one set of texels between a mirrored pair is the arrangement rather than a defect to undo.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 53,
+      "area": 2789.5,
+      "along": [
+        -8.8,
+        21.2
+      ],
+      "mu_uv": [
+        0.759,
+        0.255,
+        0.998,
+        0.752
+      ],
+      "bake_uv": [
+        0.759,
+        0.255,
+        0.998,
+        0.752
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 53,
+      "area": 2796.8,
+      "along": [
+        -8.8,
+        21.2
+      ],
+      "mu_uv": [
+        0.759,
+        0.255,
+        0.999,
+        0.752
+      ],
+      "bake_uv": [
+        0.759,
+        0.255,
+        0.999,
+        0.752
+      ]
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "item": "ArmorMale03",
+  "mu_name": "Pad Armor",
+  "mu_name_from": "MuMain loads MODEL_ARMOR + i from ArmorMale{i+1} (ZzzOpenData.cpp line 140), so file 03 is armour index 2, which openmu's 0.75 Armors.cs names the Pad Armor. mu.db agrees: code 4098, group 8 index 2, Player/ArmorMale03.bmd.",
+  "why_this_one": "Pasi's +0 line, and the Dark Wizard's first set. The mage stocks all five Pad pieces at +0 and only the gloves and boots were built, so three of his five lines were dropped by Realm.Shelf. See shared/Market.Mage.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. See profiles/soft_armour.json, which exists for these three sets.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(2, 3, 2, 2, \"Pad Armor\", 10, 7, 28, 30, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 2,
+    "drop_level": 10,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 7,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 28,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone."
+  },
+  "sheets": [
+    "upper_04_m.png",
+    "hide_m.png",
+    "skin_barbarian_01.png"
+  ],
+  "sheet_from": "Data/Player/upper_04_m.OZJ (128x128), hide_m.OZJ and skin_barbarian_01.OZJ, from MuMain. The .bmd names upper_04_m.jpg, hide_m.jpg and skin_barbarian_01.jpg; 86 of the 146 triangles are on the first, 16 on hide and 44 on the skin.",
+  "sheet_note": "upper_04_m is a padded jerkin in olive and gold with a fan of pale feathers standing off the collar, gilt knotwork down the breast and bare arms drawn in beside it. Mean (139, 125, 111) at chroma 29. hide is MU capping the openings, a solid black square, as on ArmorMale10. skin_barbarian_01 is the Dark Knight's own body sheet - face, neck and bare arms - which the piece carries because the armour does not cover them and MU draws the skin as part of the worn mesh.",
+  "material_note": "Four islands and three answers. Island 0 is 86 triangles, the padded jerkin with its gilt knotwork - cloth, for the reason the Pad Helm gives: this piece is stuffed fabric with the ornament painted into it rather than a plate over it. Islands 1 and 2 are 22 each, 44 together, which is skin_barbarian_01's 44: the bare arms, which take skin. The face and the bare arms take skin, not the profile's leather, and the islands split them cleanly because MU draws them on a sheet of their own: the two arm islands sit in the body sheet's limb column and the jerkin does not.\n\nIsland 3 is the interesting one: 16 triangles in a strip at the very edge of upper_04_m, which is the fan of pale feathers standing off the collar. It gets an island to itself and takes feather. It shipped as cloth first, then as hair, and the third answer is the right one: the fur.json worry - that a brushed grain draws strands across a painted fan - turned out to be exactly what happened to the Angelic Staff's wings, so materials/feather.json keeps the matte dielectric and drops the direction.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 86,
+      "area": 5705.5,
+      "along": [
+        -14.6,
+        14.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.995,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1291.0,
+      "along": [
+        -9.3,
+        7.7
+      ],
+      "mu_uv": [
+        0.326,
+        0.513,
+        0.461,
+        0.981
+      ],
+      "bake_uv": [
+        0.292,
+        0.288,
+        0.654,
+        0.428
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1292.1,
+      "along": [
+        -9.3,
+        7.7
+      ],
+      "mu_uv": [
+        0.021,
+        0.513,
+        0.147,
+        0.981
+      ],
+      "bake_uv": [
+        0.251,
+        0.005,
+        0.376,
+        0.141
+      ]
+    },
+    {
+      "island": 3,
+      "material": "feather",
+      "triangles": 16,
+      "area": 646.4,
+      "along": [
+        -9.7,
+        10.5
+      ],
+      "mu_uv": [
+        0.228,
+        -0.0,
+        0.562,
+        0.054
+      ],
+      "bake_uv": [
+        0.356,
+        0.313,
+        0.556,
+        0.391
+      ]
+    }
+  ]
+}

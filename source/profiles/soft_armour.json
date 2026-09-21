@@ -1,0 +1,20 @@
+{
+  "profile": "soft_armour",
+  "summary": "Worn parts that are not metal: the pad, leather and vine sets. Cloth, hide and the odd brass fitting.",
+  "why": [
+    "Split from armour because its default is wrong for these. armour's default_material is plate_steel, which is right for the Plate set it was written on and puts a steel skin on a leather gauntlet until every island has been looked at. A part that builds on its first run should be looked at as roughly what it is, and a Leather Glove is not roughly steel.",
+    "The three sets a Budge Dragon can leave - Pad, Leather and Vine - are the first soft armour through the chain. All three sheets are 64x64 and painted flat: folds, seams and straps are in the paint, not in the geometry. That is the leather material's own argument for having no grain, and it is the same fact from the other side here.",
+    "upscale is the armour profile's 3x at 0.65, and it was looked at once on this profile rather than inherited blind. Measured on gloves_07, the Leather Glove: the model's 3x differs from a plain bicubic 3x of MU's sheet by a mean of 2.7 levels, and side by side the cuff's diagonal fold is the same rounded ridge in both - nothing hardened into a line. So at 0.65 the model is a light touch on a 64-square, which is what its own note says it now is (eight orientations averaged, brightness only). Leather is the case that would show the fault, because a hardened fold on hide reads as tooling rather than as sharpness. If a sheet in this profile ever comes back looking tooled where MU painted it soft, this is the knob.",
+    "The _x3_hd.png beside the _x3.png in the build is the same file, and that is by design and not a fault. enlarge exists to keep regions of an atlas apart while it is resampled past the map, and settings.py clamps it to 1 when the 3x already fills the map - 64 x 3 is 192 and the map for this art is 192. So the 'hd' stage passes through, here and on the Plate gloves alike. Anyone diffing the two to judge the model is looking at the wrong pair; the pair is _x3 against a plain resize of the sheet in assets/textures.",
+    "enlarge is 2 for the same reason it is 2 everywhere: it exists to keep one region of the atlas from bleeding into the next while it is resampled, and settings.py clamps it to the map anyway."
+  ],
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "pad": "edge"
+  },
+  "enlarge": 2,
+  "default_material": "leather",
+  "tiling": false,
+  "tiling_why": "Same as armour: a worn part's sheet is an atlas and nothing on it continues over an edge. Wrapping it to make it tile drags one edge of the sheet into the other, which is the Dark Wizard's tan bands."
+}

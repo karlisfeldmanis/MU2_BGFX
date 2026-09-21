@@ -1,0 +1,141 @@
+{
+  "item": "BootMale03",
+  "mu_name": "Pad Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1} (ZzzOpenData.cpp line 143), so file 03 is boot index 2, which openmu's 0.75 Armors.cs names the Pad Boots. mu.db agrees: code 5634, group 11 index 2, Player/BootMale03.bmd.",
+  "why_this_one": "The only pair of boots a Budge Dragon can leave, and the last of the four armour pieces in its pool. Drop level 4, the dragon's own; the Pad Gloves beside it are 3. Together they are the whole of what the Dark Wizard's first set a level 4 monster can give up - the Pad Helm is 5, the Pants 8 and the Armor 10.\n\nThe first worn part in the tree with a cut-out sheet other than the Plate Helm's plume: boots_04b is a 32x32 TGA with real alpha, cutting away 65% of itself, and it carries the gilt fins that stand off the boot.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 123. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(2, 6, 2, 2, \"Pad Boots\", 4, 3, 10, 28, 20, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so `armor.Group = (byte)(slot + 5)` makes the group 11 - the last group a character equips, and the one Prize.TakesRefinement stops at.",
+    "group": 11,
+    "number": 2,
+    "drop_level": 4,
+    "drops_from_monsters": true,
+    "drop_level_note": "Four, the Budge Dragon's own level. In the pool at +0 and out of it for anything smaller. See shared/Loot.Affordable.",
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 3,
+    "walk_speed": 10,
+    "walk_speed_note": "Ten, which is the column boots have and nothing else does, and which OpenMU only writes onto the item where it is above nought. Nothing here reads it: a character's walk is the rig's clip at the client's speed, and a boot does not change it. Recorded because it is in the row.",
+    "defense_note": "Three points of defence, one more than the gloves, in the row and not read by anything yet - the fight does not see worn armour. Flagged rather than left to look implemented.",
+    "durability": 28,
+    "requires": {
+      "level": 0,
+      "strength": 20,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, as the Pad Gloves. Twenty strength."
+  },
+  "sheets": [
+    "boots_04.png",
+    "hide.png",
+    "boots_04b.png"
+  ],
+  "sheet_from": "Data/Player/boots_04.OZJ (64x64), Data/Player/hide.jpg and Data/Player/boots_04b.ozt (32x32), from MuMain. The .bmd names boots_04.jpg, hide.jpg and boots_04b.tga; 122 of the 132 triangles are on the first, 6 on hide and 4 on the fins.",
+  "sheet_note": "boots_04 is the boot from two sides, mean (117, 105, 95): a gold-brass greave with a raised knotwork pattern and a ring of tassels at the top, a plainer brass shin below it, and violet-and-pink cloth in the margins - the same palette as gloves_04, which is the same set. boots_04b is four gilt spikes on black, pointing up and left, lit gold along one edge and dark along the other: fins that stand off the boot on two crossed quads, so the black is the part that is not there.\n\nhide is MU capping the openings, a 9x9 solid black, as on ArmorMale10.",
+  "cutout": [
+    "boots_04b"
+  ],
+  "cutout_from": "Declared, not detected, as docs/items-and-armour.md says. Here the alpha is real - decode_texture reads it as present and cutting 65% - unlike guard_hair, whose alpha is zero everywhere and had to be keyed off brightness. Four triangles on a 32-square: two quads, and each fin is drawn once and cut round.",
+  "material_note": "brass on all four islands, over the profile's leather. Islands 0 and 1 are the two boots, each one island running the whole width of boots_04: a gilt greave with knotwork over violet cloth, brass being most of it, as on the Pad Gloves. Islands 2 and 3 are the fins - two triangles each, sampling the whole of boots_04b - and those are gilt spikes with nothing else on them, so brass is exact there and approximate on the boots.",
+  "open_question": "Same as the Pad Gloves: the cloth margins are on the boot's island and the island is the unit, so they ship as brass-roughness violet. And one of its own: the fins are two quads crossed, cut round by alpha, and brass carries a cast grain at scale 340 - on a 32-square spike that is a few texels of pitting across an edge that MU drew as a clean gold line. If the fins look chewed under --lighting=1, they want a smooth material rather than a cast one, and nothing in the library is a smooth yellow metal yet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 64,
+      "area": 4132.7,
+      "along": [
+        14.0,
+        62.1
+      ],
+      "mu_uv": [
+        0.025,
+        -0.002,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.278,
+        0.006,
+        0.995,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 64,
+      "area": 4126.2,
+      "along": [
+        -76.0,
+        -1.7
+      ],
+      "mu_uv": [
+        0.001,
+        -0.002,
+        0.994,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.024,
+        0.911,
+        0.962
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 2,
+      "area": 201.5,
+      "along": [
+        18.4,
+        38.5
+      ],
+      "mu_uv": [
+        0.001,
+        -0.0,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.354,
+        0.355,
+        0.691,
+        0.692
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 2,
+      "area": 201.8,
+      "along": [
+        -73.8,
+        -62.8
+      ],
+      "mu_uv": [
+        0.001,
+        -0.0,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.343,
+        0.343
+      ]
+    }
+  ]
+}

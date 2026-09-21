@@ -1,0 +1,30 @@
+{
+  "name": "rock",
+  "summary": "Weathered stone in the open: a boulder, a wall, a tomb. Cracked, lichened, never cut smooth.",
+  "why": [
+    "Metallic 0.0. Stone is a dielectric and the mistake to avoid is the one wood had - a",
+    "metallic rock is a lump of pewter with a granite decal on it.",
+    "Roughness 0.86, the highest in the library and higher than skin's 0.78. Nothing on a",
+    "weathered boulder is polished. The one thing that could argue lower is wet stone, which",
+    "Lorencia has by the well and the waterspout, and that is a different material rather",
+    "than a lower figure on this one.",
+    "The grain is cast, not brushed. Rock has no direction: it is broken along whatever",
+    "planes it broke along, and a brushed normal would lay parallel scratches down a boulder",
+    "and make it look turned on a lathe. Cast is the same argument that put it on plate_steel",
+    "and the axe's collar, applied to the surface that most obviously has no grain to it.",
+    "Scale 210 and depth 0.30. Much the deepest normal here - brass is 0.14 and steel 0.010 -",
+    "because on stone the relief is the surface. MU's rock art is already drawing cracks and",
+    "pits as colour, and unlike a woodgrain those really do sit millimetres proud and deep,",
+    "so the normal has something true to add rather than something to invent.",
+    "Roughness range 0.10: a boulder's hollows hold dust and its high points get rained on,",
+    "so it varies, but not the way a worn metal edge does."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.86,
+  "grain": {
+    "kind": "cast",
+    "scale": 210,
+    "depth": 0.3,
+    "roughness_range": 0.1
+  }
+}

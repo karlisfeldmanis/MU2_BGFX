@@ -1,0 +1,24 @@
+{
+  "item": "Stone02",
+  "mu_name": "The larger stone a meteor throws out where it lands",
+  "mu_name_from": "ZzzOpenData.cpp: `for (int i = 0; i < 2; i++) AccessModel(MODEL_STONE1 + i, L\"Data\\\\Skill\\\\\", L\"Stone\", i + 1)`, so this is Data/Skill/Stone02.bmd, MODEL_STONE2.",
+  "kind": "debris",
+  "why_this_one": "The other half of the meteor's debris. The landing rolls `MODEL_STONE1 + rand() % 2` six times, so each of the six is one of these two; see Stone01.json, which carries the whole of the argument and the flight.",
+  "mesh": "Stone02.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Stone02.bmd, from MuMain. Thirty-eight triangles in one mesh, about 24 units across - a lump, against Stone01's 13-unit chip.",
+  "parts": [
+    {
+      "group": "fire02",
+      "sheet": "fire02.png",
+      "blend": "opaque",
+      "note": "Data/Skill/fire02.OZJ, the same sheet the chip and the meteor's own rock wear. Drawn solid and lit, on the bones' rule."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "As Stone01's: the shared birth rolls 0.8 to 1.1 and this is the base it multiplies.",
+  "lift": 0,
+  "lift_from": "As Stone01's: created at the meteor's own landing point, which is already on the terrain.",
+  "frames": 32,
+  "frames_from": "`o->LifeTime = rand() % 16 + 32`, 32 to 47 reference frames.",
+  "flight_note": "The bones' ballistic arm, shared outright. See Stone01.json and assets/effects/bones/Bone01.json."
+}

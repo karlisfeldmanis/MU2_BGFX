@@ -1,0 +1,234 @@
+{
+  "item": "BullFighter01",
+  "mu_name": "Bull Fighter",
+  "mu_name_from": "Monster/Monster01.bmd. The server sends monster type 0 and the client draws model index 0 - MONSTER_BULL_FIGHTER = 0 in _enum.h and CreateMonster's default case opens MONSTER_MODEL_BULL_FIGHTER for it - and Monster{index + 1:D2} is the file. The first of the three types where the server's number and the client's model agree; see Spider01, where they stop agreeing.",
+  "world": "lorencia",
+  "object_type": 0,
+  "monster": {
+    "model_index": 0,
+    "scale": 0.8
+  },
+  "monster_from": "model_index is the client's model number and scale is what CreateMonster sets on the object: `c->Object.Scale = 0.8f`, in the MONSTER_BULL_FIGHTER branch of ZzzCharacter.cpp's default case. The Elite Bull Fighter is the same model at 1.15 with the Berdysh, and the Poison Bull at 1.0 with the Great Scythe; they are monster numbers 4 and beyond and are not this asset.",
+  "right_hand": "Axe07",
+  "right_hand_bone": "left_bone",
+  "right_hand_from": "ZzzCharacter.cpp, CreateMonster, `if (Type == MONSTER_BULL_FIGHTER) c->Weapon[0].Type = MODEL_NIKKEA_AXE`, which is Item/Axe07.bmd. And the bone it hangs from is in CreateCharacter's weapon switch: `case MODEL_BULL_FIGHTER: c->Weapon[0].LinkBone = 42; c->Weapon[1].LinkBone = 33`. Bone 42 on this rig is called left_bone and is a child of Bip01 R Hand; bone 33 is right_bone01 under Bip01 L Hand. The names are the wrong way round and the numbers are right, which is why the asset carries the name the exporter wrote and this note explains it: the axe is in the right fist, on the bone the artist called left.\n\nA monster holding a thing is new here. The town's guards hold theirs through the character path - kind: character, parts, right_hand - and a monster is one rigged body rather than five worn pieces, so it names the bone itself instead of taking the player's knife_gdf. See Crowd.Template.",
+  "hidden_mesh": 0,
+  "hidden_mesh_from": "The same CreateMonster branch: `c->Object.HiddenMesh = 0`, on the plain Bull Fighter and on nobody else who wears this model. Mesh 0 of Monster01.bmd is helmat_01 - the crest - so the ordinary bull goes bare-headed and the Elite keeps the helmet, which is the whole of the visual difference between them besides the glowing eyes RenderEye puts at bones 22 and 23 when c->Level == 1. Left as a mesh index because it is what the client stores; the exporter's mesh order is the .bmd's, so index 0 is the first group in the .obj.",
+  "profile": "monster",
+  "rig_from": "Seven actions, the same seven as the Spider and the Budge Dragon: Monster01.bmd carries slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - and stops. 45 bones. Three matter beyond drawing: 24 is smok_bone, under the head, where the snort comes out; 42 and 33 are the weapon links; 22 and 23 are the eyes the Elite lights.\n\nExported with --actions=0,1,2,3,4,5,6, because export-rig's default is action 0 alone and the first pass of this asset stood in one idle with no walk.",
+  "sheets": {
+    "helmat_01": "helmat_01.png",
+    "helmat_02": "helmat_02.png",
+    "npc_a_01": "npc_a_01.png",
+    "npc_a_02": "npc_a_02.png",
+    "npc_a_03": "npc_a_03.png",
+    "npc_a_04": "npc_a_04.png",
+    "npc_a_05": "npc_a_05.png",
+    "npc_a_06": "npc_a_06.png",
+    "npc_a_07": "npc_a_07.png",
+    "npc_a_08_01": "npc_a_08_01.png",
+    "npc_a_08_02": "npc_a_08_02.png",
+    "npc_a_09_01": "npc_a_09_01.png",
+    "npc_a_09_02": "npc_a_09_02.png",
+    "npc_a_clothes": "npc_a_clothes.png"
+  },
+  "sheet_from": "All fourteen out of Data/Monster beside the model, from MuMain - thirteen .OZJ and one .OZT, npc_a_clothes, which is the one with alpha. Fourteen sheets for fourteen meshes, one each, which is the most any asset here wears: the artists painted this animal a limb at a time. npc_a_08_01 and 08_02 are the same 64-square drawn twice (the means agree to a pixel), as are 09_01 and 09_02 - a left and a right leg from one painting, and the model wants both names.\n\nbulldug.OZJ and bulldughair.OZT are in the same folder and are not this model's: Monster01.bmd names none of them, and they belong to the Bull Fighter's cousin in a later map.",
+  "cutout_from": "Not declared, on the same finding as the Spider and the Budge Dragon: `cutout` means 'derive the mask from brightness', and npc_a_clothes carries a real alpha that cuts 40% of the sheet - the strips of hide hanging off the loincloth. The texture's own channel is what transfer_albedo wires unless told otherwise, and it is right here.",
+  "sheet_materials": {
+    "helmat_01": "chitin",
+    "helmat_02": "chitin",
+    "npc_a_01": "fur",
+    "npc_a_02": "fur",
+    "npc_a_05": "fur",
+    "npc_a_08_01": "fur",
+    "npc_a_08_02": "fur",
+    "npc_a_09_01": "fur",
+    "npc_a_09_02": "fur",
+    "npc_a_03": "chitin",
+    "npc_a_07": "chitin",
+    "npc_a_04": "skin",
+    "npc_a_06": "skin",
+    "npc_a_clothes": "leather"
+  },
+  "sheet_materials_from": "Read off the sheets, magnified. Seven of them - 01, 02, 05, 08 and 09 - are the one brown-black pelt at chroma 23 to 31, painted as matted fur with a lighter band across the belly, and fur is the material - matte, no grain - and not hair, whose brushed grain drew strands across the whole atlas and striped the animal; see materials/fur.json. 03 is a horn, pale keratin from a dark root, and 07 is the hooves and teeth in the same keratin; chitin at 0.62 is the nearest thing to a horn's dull polish. helmat_01 is the crest's dark cap with a pale spike and helmat_02 the spike's own sheet; both are horn and take chitin. 04 is the muzzle - bare skin, nostrils and lip - and 06 is the nose ring on skin, which is skin by area with an iron ring painted in the middle: the ring is one island with the skin around it, so it takes the majority reading. npc_a_clothes is the hide loincloth. Nothing on this animal is metal except the ring, and the ring is too small to be an island of its own.",
+  "wrap": [
+    "npc_a_08_01",
+    "npc_a_08_02",
+    "npc_a_09_01",
+    "npc_a_09_02"
+  ],
+  "wrap_from": "The four leg sheets, and the model says so: their groups sample u from -0.38 to 0.99 while every other sheet on the animal sits inside 0.001 to 1.0. MU's sampler is GL_REPEAT, so a leg is a 64-square wrapped round the limb with the seam at u = 0 and a third of a turn taken from the far side of the sheet. Clipped instead - which is what the bake does unless told - the strip past the edge holds the sheet's last column stretched along the limb, and it came out as evenly spaced dark lines running the length of the back and thighs: the striped bull. The same fault the Apple recorded on a sixteen-pixel sheet, at bull size.",
+  "islands_from": "Six islands for 682 triangles, and the split follows MU's meshes because the crest has to stay separable - see hidden_mesh_from.\n\nIsland 0 is helmat_01's 26 triangles, the crest's cap, chitin and flagged hidden. Islands 1 and 2 are three triangles each at z 72.9 to 112.3, which is helmat_02 - the spike's own sheet - also chitin and NOT hidden.\n\nThat last word is a correction. This asset shipped with one 32-triangle island covering both sheets and the whole of it flagged hidden, because the weld had merged helmat_02 into helmat_01 and an island is the finest thing a flag can name. MU hides mesh 0 and only mesh 0: `c->Object.HiddenMesh = 0` in the Bull Fighter's branch of CreateMonster. So the plain bull was losing six triangles the client keeps. Found from the other end, on the Hound, whose helm and head weld into each other and into its body; clean_lowpoly.weld now keeps the hidden mesh to itself and the two islands came apart on their own.\n\nIsland 3 is 626 triangles: every fur sheet, the muzzle, the horns, the hooves and the nose ring, joined through shared vertices into one piece, so it takes one material and the majority is the pelt - fur. The horns, hooves and muzzle ship with fur's roughness and their own painted colour; see open_question. Its mu_uv opens at u -0.376, which is the four leg sheets wrapping past the edge - see wrap_from.\n\nIslands 4 and 5 are 11 triangles each, 22 together, which is npc_a_clothes to the triangle: the two hanging strips of the loincloth. leather. sheet_materials above is what each sheet is; the islands are what the bake reads, and where the two disagree the island wins because it has to.",
+  "maps": 1024,
+  "maps_from": "Overridden, for the Spider's reason and at the Spider's number. settings.map_size gives 192 - three times the widest sheet - and that rule assumes the islands partition one sheet. This animal wears fourteen sheets, one per mesh, and the bake unwraps all 680 triangles into one unique atlas: at 192 the whole bull shares the pixels one 64-square was given, so a limb painted across a 64x64 sheet lands on a strip a few texels wide and the fur comes out as vertical streaks along the leg. The arithmetic: the sheets hold about 41k texels between them (five 64-squares, one 64x32 and one 32x64, four 32-squares, two 16-squares), which at the capped 3x is 370k of content before packing. 512 holds 262k and cannot; 1024 is the next size and holds it at exactly 3x apiece, which is the cap and not more.",
+  "effects": [
+    {
+      "kind": "snort_smoke",
+      "bone": "smok_bone",
+      "offset": [
+        0,
+        -4,
+        0
+      ],
+      "windows": [
+        {
+          "action": 0,
+          "from_key": 15,
+          "to_key": 20
+        },
+        {
+          "action": 1,
+          "from_key": 20,
+          "to_key": 25
+        },
+        {
+          "action": 2,
+          "from_key": 2,
+          "to_key": 3
+        },
+        {
+          "action": 2,
+          "from_key": 5,
+          "to_key": 6
+        }
+      ]
+    }
+  ],
+  "effects_from": "ZzzCharacter.cpp's per-frame effect switch, the MODEL_BULL_FIGHTER case:\n\n    if (o->CurrentAction == MONSTER01_STOP1 && (o->AnimationFrame >= 15.f && o->AnimationFrame <= 20.f)) Smoke = true;\n    if (o->CurrentAction == MONSTER01_STOP2 && (o->AnimationFrame >= 20.f && o->AnimationFrame <= 25.f)) Smoke = true;\n    if (o->CurrentAction == MONSTER01_WALK && ((o->AnimationFrame >= 2.f && o->AnimationFrame <= 3.f) || (o->AnimationFrame >= 5.f && o->AnimationFrame <= 6.f))) Smoke = true;\n    if (Smoke && rand_fps_check(2))\n    {\n        Vector(0.f, -4.f, 0.f, p);\n        b->TransformPosition(o->BoneTransform[24], p, Position, true);\n        CreateParticle(BITMAP_SMOKE, Position, o->Angle, o->Light);\n    }\n\nBone 24 is smok_bone, a child of the head, and the name says what the artist meant: it is the muzzle, not a hoof. LEGACY's reading called this hoof dust from the frame windows alone and its own rig note corrected it - 'beside the eyes at 22 and 23, so this is the muzzle. It reads as hoof dust from the frame windows alone, and it is a snort.' The windows are keys of the action - 15 to 20 of the 20-key first idle, 20 to 25 of the 30-key second, and two short ones in the seven-key walk - and the index turns them into fractions of the clip, as it does the dragon's through_key. Four units down the bone, which is 4 cm, and every second reference frame while a window is open.\n\nBITMAP_SMOKE with no subtype is smoke01.jpg and subtype 0: 16 frames of life, born at 0.48 to 0.80 of a 64-pixel sheet, growing 0.05 a frame, lifting on an accelerating Gravity of 0.2 a frame, fading on Luminosity = LifeTime / 8 - so it is at full brightness for the first half and gone by the end - and drawn with the ordinary alpha blend, not the additive one the fire uses. A JPEG with no alpha, so the sheet's own black is what cuts it. See client/core/Snort.cs.\n\nNo dust: this case ends in a break, so it does not fall into the Dark Knight's ground dust the way the Budge Dragon does.",
+  "open_question": "The horns, the hooves, the muzzle and the ring are welded into the fur island and cannot be given their own surface without assignment finer than an island. The Battle Axe, the Dragon Lance and the Great Scythe met the same limit on one island each; this is the first asset where it is most of the model. What is lost is a horn's dull polish against fur's none. What is kept is the colour, which is the sheet's.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 26,
+      "area": 2042.1,
+      "along": [
+        53.7,
+        95.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.706,
+        0.5
+      ],
+      "hidden": true
+    },
+    {
+      "island": 1,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 626.7,
+      "along": [
+        72.9,
+        112.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.582,
+        0.277,
+        0.894,
+        0.752
+      ]
+    },
+    {
+      "island": 2,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 623.5,
+      "along": [
+        72.9,
+        112.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.739,
+        0.011,
+        0.918,
+        0.75
+      ]
+    },
+    {
+      "island": 3,
+      "material": "fur",
+      "triangles": 626,
+      "area": 62702.8,
+      "along": [
+        -51.9,
+        95.3
+      ],
+      "mu_uv": [
+        -0.376,
+        -0.014,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.99,
+        0.966
+      ]
+    },
+    {
+      "island": 4,
+      "material": "leather",
+      "triangles": 11,
+      "area": 1803.7,
+      "along": [
+        -43.6,
+        -19.6
+      ],
+      "mu_uv": [
+        0.583,
+        0.001,
+        0.987,
+        0.999
+      ],
+      "bake_uv": [
+        0.901,
+        0.804,
+        0.968,
+        0.971
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather",
+      "triangles": 11,
+      "area": 3357.9,
+      "along": [
+        -3.5,
+        18.2
+      ],
+      "mu_uv": [
+        0.032,
+        0.001,
+        0.568,
+        0.999
+      ],
+      "bake_uv": [
+        0.901,
+        0.17,
+        0.99,
+        0.336
+      ]
+    }
+  ]
+}

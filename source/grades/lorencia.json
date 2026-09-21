@@ -1,0 +1,69 @@
+{
+  "name": "lorencia",
+  "summary": "Lorencia at dusk: MU's palette held, its tonality pushed toward the action-RPG look \u2014 a dark frame with warm light in it rather than a lit frame turned down.",
+  "why": [
+    "A darker, higher-contrast town, asked for by name: the look Diablo 3 and 4 have.",
+    "The thing that makes that look is not a low exposure. It is a large gap between what the",
+    "light reaches and what it does not, with the shade staying readable and the two ends",
+    "disagreeing about colour - warm where the light lands, cold where it does not. A frame",
+    "lit evenly and then turned down is murk, and murk is what this is written to avoid.",
+    "So the work is split between two places and this file is the second of them. The lighting",
+    "rig opens the gap - ambient down hard, key up, bounce holding the shade together - and the",
+    "grade shapes what comes out of it. Doing either alone fails in a recognisable way: grade",
+    "alone gives a flat picture with crushed ends, rig alone gives contrast in the wrong",
+    "colours.",
+    "Exposure sits at zero, near enough. -0.42, -0.20 and -0.08 were tried in turn and each came back too dark:",
+    "the mood was right and the level was not. The colour work below is what carries the look,",
+    "so the exposure can give most of its cut back without giving the vibe back with it.",
+    "Contrast 1.16, up from 0.96. The old value was below one deliberately, to keep MU's flat",
+    "art from being crushed by a renderer that has more range than the client did. That was the",
+    "right call for a daylight town and it is the wrong one here: the whole brief is separation",
+    "between lit and unlit.",
+    "The tints are the half that costs no brightness. Shadows toward blue, highlights toward",
+    "amber - the shade in an outdoor scene is lit by the sky and the light is lit by the sun,",
+    "and half of what makes a picture read as a time of day is that its two sources disagree.",
+    "Shadow saturation at 0.74 is the specific one worth naming. Colour drains out of what the",
+    "eye cannot see well, and a shadow that keeps full saturation reads as a dark version of",
+    "the same thing rather than as darkness. Dropping it there is most of why the shade reads",
+    "as depth rather than as a filter over the picture.",
+    "Lift is a hair of blue in the toe rather than a crush to zero. Black with nothing in it is",
+    "the other way this look goes wrong: the reference has deep shade with detail still in it,",
+    "and a toe that lands slightly above zero and slightly blue is what keeps that detail.",
+    "Shoulder at 0.78: the contrast and the amber tint push the top end up and the cube used to clip it at 1.0 \u2014 after ACES had already rolled it off. 1.5% of the frame sat clipped, all sunlit roof, and it read as over-exposure. The shoulder rolls everything above the knee toward white without arriving; below the knee nothing moves, so the shade and the mids that carry the look are untouched.",
+    "Balance warmed to [1.03, 1.0, 0.95], paired with the engine's exposure easing 1.40 -> 1.30. Asked for as a feel - 'not so exposed, a little warmer and darker' - after the reflection work brightened the metals. The exposure step takes the frame down without touching the lit/unlit gap the rig holds, and the balance puts the warmth in at the front of the grade where a cast belongs, rather than pushing the highlight tint further and re-heating the top end the shoulder just cooled.",
+    "toe_desaturation 0.12, with shadow_saturation restored to its original 0.74. The electric-blue sliver on the bare Knight's boot cuff was chased through the textures, the grade, the ambient, the dome, the sky radiance, the probe and both of the fill's channels - and outlived every one, because the Mobile renderer itself emits it: (0,0,63) of 255 with no grade, a pure hue no light in the scene carried. A pure hue at near-zero luma is what no honest pixel is, so the fix is a ramp that greys the toe alone. Draining shadow_saturation to 0.2 was tried first and dulled the whole shade for one sliver; this touches only what the renderer got wrong.",
+    "Pushed toward the reference again, and this time against a rig rebuilt from the engine's own defaults rather than against the one that grew by accident. The lighting now carries a low raking sun at 32 degrees with heavy contact darkening, which is the half a grade cannot do; what came back was a town that was warm everywhere - lit and shaded alike - because Lorencia's paving is terracotta, MU's baked terrain light is warm, and the sun was warm on top of both. A picture whose light and shade agree about colour reads flat however much contrast it has. So the shadow tint roughly trebles and its saturation drops further: the shade goes cool and loses colour, the highlights keep the amber, and the separation the brief is actually about lands in the one place that can tell a shadow from a highlight.",
+    "And the colour came back up, which is a correction to the pass above rather than a new idea. Draining the shade was right - a shadow that keeps full saturation reads as a dark version of the same thing rather than as darkness - but 0.62 took it past darkness and into grey, and with the overall saturation under one as well the whole town arrived muted. MU's art is poster paint and the brief was never to wash it out; the separation the look needs is between warm and cool, not between colour and none. So saturation goes just over one and the shade keeps three quarters of its own.",
+    "Then back down again, and the pair of entries above is the record of overshooting in both directions rather than an argument that changed its mind twice. 1.04 with the shade at 0.80 read as too much colour on a town whose paving is terracotta under a warm baked light and a warm sun: the saturation lands almost entirely on one hue, so raising it globally buys orange rather than colour. 0.94 and 0.72 keep the warm/cool separation, which is what the look actually rests on, without the frame reading as sepia.",
+    "And the sweet spot is not on the saturation axis at all, which is the thing three passes of moving it up and down were failing to notice. Sepia is one hue everywhere; draining the colour out of a single-hue frame makes it a duller brown rather than a less brown one, and pushing it up makes it orange. What breaks sepia is a second hue - so the saturation lands in the middle at 1.0 and the work moves to the shadow tint, which roughly doubles again. The lit paving stays warm, the shade goes properly blue, and the greens on the roof and in the beds come back as green rather than as olive. Measured, that is the split rising while the mean warmth falls, which is the shape the look wants: colour in the difference between light and shade, not in either one.",
+    "The last of the sepia was in the lit half rather than the shade. With the shadows already blue, what was left forcing one hue was everything warming the light: an amber highlight tint over a warm sun over warm ground-bounce over paving that is terracotta before any of them touch it - four warm multiplies deep, on art that only needed one. The highlight tint roughly halves and the balance takes a hair of blue, so the sun is the thing that makes the light warm and nothing downstream re-states it.",
+    "Saturation back up to 1.10, which is not the fourth reversal it looks like. Every earlier move of this number was made while the frame was still one hue, where raising it bought orange and lowering it bought duller orange; with the warmth now stated once by the sun and re-stated by nothing downstream, the same slider spreads across the greens, the timber and the gold instead of piling onto the paving. The shade keeps 0.80 of its own so that a strong shadow reads as blue rather than as a hole.",
+    "Saturation 1.18 and the shade keeping 0.86 of it. The shade's own figure is the half that matters here: a shadow at full strength with the colour drained out of it is a hole, and the reference has deep shade with both detail and hue still in it. Raising the two together is what lets the shadow stay dark without going black."
+  ],
+  "exposure_stops": 0.02,
+  "balance": [
+    0.99,
+    1.0,
+    1.025
+  ],
+  "contrast": 1.22,
+  "shadow_tint": [
+    -0.075,
+    -0.022,
+    0.095
+  ],
+  "highlight_tint": [
+    0.014,
+    0.006,
+    -0.01
+  ],
+  "saturation": 1.18,
+  "shadow_saturation": 0.86,
+  "lift": [
+    0.0,
+    0.002,
+    0.01
+  ],
+  "shoulder": 0.74,
+  "toe_desaturation": 0.12
+}

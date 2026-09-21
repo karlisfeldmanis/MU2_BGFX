@@ -1,0 +1,114 @@
+{
+  "item": "Axe03",
+  "mu_name": "Double Axe",
+  "mu_name_from": "MuMain's ZzzOpenData.cpp loads the group as MODEL_AXE + i from Axe{i+1}, so Axe03.bmd is index 2, which OpenMU's 0.75 table names the Double Axe. MuWeapons.cs agrees from the client's side: `new(\"Double Axe\", \"Axe03.bmd\", WeaponStance.Sword, ...)`.",
+  "why_this_one": "Hanzo's counter is the last shop in Lorencia with lines that do not resolve, and this is one of them. A shelf drops what it cannot draw - shared/Market builds the row and leaves out anything whose group and number find no asset - so the blacksmith sold ten of his twenty-four lines and the rest of the counter was empty air. Slot 52 at +2, and the third axe in the project after the Small Axe and the Hand Axe. One-handed, so it keeps the sword stance those two use rather than the Battle Axe's.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(1, 2, 0, 19, 1, 3, true, \"Double Axe\", 14, 14, 24, 20, 26, 0, 0, 90, 0, 0, 0, 0, 1, 0)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 1,
+    "number": 2,
+    "drop_level": 14,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "width_note": "Width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and one here agrees with MuWeapons.cs's TwoHanded: false. It is also what takes a fifth off the price: shared/Market.Coin reads the footprint's width to tell a one-handed weapon from a two-handed one.",
+    "height": 3,
+    "minimum_damage": 14,
+    "maximum_damage": 24,
+    "attack_speed": 20,
+    "durability": 26,
+    "requires": {
+      "level": 0,
+      "strength": 90,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags, and MuWeapons.cs carries the same set from the client's side.",
+    "skill": 19,
+    "skill_note": "The skillNumber of the call. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more - and it is the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half. See shared/Market's remarks."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. Actions 4 and 17, the family the Kris, the Short Sword and the Hand Axe already walk in. A one-handed blade leaves the shield hand free, which is the whole point of it on a counter that is mostly shields.",
+  "sheets": {
+    "Axes04": "axes04.png"
+  },
+  "sheet_from": "Data/Item/Axes04.OZJ (64x64), from MuMain. The .bmd names Axes04.jpg, with the capital the file itself carries; 64 triangles, one mesh.",
+  "sheets_note": "The key is the mesh's group name and it is case-sensitive: Axes04 with the capital the .bmd carries. Written lower-case, the pairing matches on the key, finds no slot, and the axe builds with an albedo of solid black while every step reports success - which is what happened to the Hand Axe. The file on disk stays lower-case because decode_texture writes it so.",
+  "material_note": "The head and the shaft are both near-black with a white edge painted into them - island 1 means (28, 44, 26) at chroma 19 and island 0 (19, 32, 23) at chroma 14, both far below any metal's reflectance. painted_steel: at metallic 1 a sheet this dark keeps only the highlights the artist drew and loses everything between them, which is the black-chrome failure that material exists to avoid.\n\nIsland 2 is the grip, twelve triangles below Z 16, at (112, 94, 6) and chroma 108 - gilt, with a chased pattern on it. brass.\n\nThe green across this sheet is filler, as the Berdysh's teal is. Nothing samples it: every triangle centre lands on the axe.\n\npainted_steel was the first answer on this piece and it is not the one that ships. The argument for it was sound on paper - the sheet is dark, a metal's albedo is its reflectance, and a dark sheet declared metal comes back as black chrome - and it was made without putting the item in the engine, which is step 4 of the doc and the step that decides. Rendered, painted_steel is metallic 0.0 and therefore has almost no specular response at all: the lit shot and the unshaded shot are the same picture. The piece reads as matte black plastic rather than as dark metal, which is a different failure from the one being avoided and no better.\n\nplate_steel instead. It keeps metallic 1.0 so the form comes back under a moving light, and its grain is cast - isotropic pitting with no direction to band a broad face, which is the other half of what painted_steel gets wrong here, its grain being brushed along v. painted_steel's own file names its remaining wearer correctly: a carriage's ironwork, which is bars, where the dark is the subject and the surface is thin enough that a direction cannot disagree with the unwrap.\n\nAnd the head went back to steel, which is a third pass over the same island and the one that should have been first. The sequence was painted_steel (metallic 0, so the lit render equalled the unshaded one and it read as matte plastic), then plate_steel (metal again, but 0.68 with a cast grain, which is armour: it came back grainy rather than metallic, and on the darker sheets it left almost no specular at all), then steel.\n\nThe two files each warn about the other's case and I read only one of them. plate_steel exists because the Plate gauntlets wore steel and its brushed grain smeared across the fingers; steel exists because a blade is ground along its length and the mill's grain is what stretches its highlight into a line. An axe head is a ground edge on a cast body, and the Small Axe, the Hand Axe and the Battle Axe have all had steel on that island from the start - this batch was the odd one out. Rebuilt side by side under the same sun, steel is brighter, catches an edge highlight the cast grain cannot, and clears the cyan patches that plate_steel's pitting was throwing against the roughness floor.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 903.0,
+      "along": [
+        15.5,
+        98.3
+      ],
+      "mu_uv": [
+        0.007,
+        0.868,
+        0.375,
+        0.987
+      ],
+      "bake_uv": [
+        0.343,
+        0.006,
+        0.554,
+        0.536
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 40,
+      "area": 2268.3,
+      "along": [
+        48.3,
+        88.8
+      ],
+      "mu_uv": [
+        0.001,
+        -0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.994,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 12,
+      "area": 623.4,
+      "along": [
+        -18.0,
+        15.6
+      ],
+      "mu_uv": [
+        0.848,
+        0.398,
+        0.993,
+        0.979
+      ],
+      "bake_uv": [
+        0.006,
+        0.172,
+        0.171,
+        0.564
+      ]
+    }
+  ]
+}

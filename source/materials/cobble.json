@@ -1,0 +1,23 @@
+{
+  "name": "cobble",
+  "summary": "Setts: rounded stones bedded in mortar, laid by hand and never flat.",
+  "why": [
+    "Depth 0.45, the deepest anything in this project declares, above bark's 0.35. It is",
+    "earned rather than chosen: the joints between setts are real gaps a centimetre or two",
+    "deep, the art draws them as near-black lines, and the whole reason a cobbled street",
+    "reads as cobbles rather than as a photograph of cobbles is that the light falls into",
+    "them. This is the best case the read-relief-from-luminance approach has anywhere.",
+    "Roughness 0.80. Stone worn by feet, not polished by them - a sett is walked on at one",
+    "point and rained on everywhere else.",
+    "Range 0.12, high: the crowns of the stones are burnished and the joints hold grit.",
+    "Cast, because a laid street has no direction the light cares about."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.8,
+  "grain": {
+    "kind": "cast",
+    "scale": 180,
+    "depth": 0.45,
+    "roughness_range": 0.12
+  }
+}

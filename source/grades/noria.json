@@ -1,0 +1,61 @@
+{
+  "name": "noria",
+  "summary": "Noria's own cube, opening as an exact copy of Lorencia's so that adding it moves nothing until somebody looks at it.",
+  "why": [
+    "Until this file existed the elf wood was graded through lorencia.json, and not by a",
+    "decision: index.py hangs a cube on the world whose name it shares, Lorencia was the only",
+    "cube in assets/grades, and the client fell through to `Grades.Values.First()`. So the one",
+    "town with a grade lent it to the other, silently, and the lending was invisible because",
+    "there was nothing to compare it against.",
+    "What was being lent is not neutral. lorencia.json is argued, at length, around one town's",
+    "palette: terracotta paving under a warm baked light, a shadow tint pushed hard toward blue",
+    "to break the single hue that palette kept collapsing into, and a highlight tint halved",
+    "again because the light was already warm four multiplies deep. Every one of those moves is",
+    "a correction to something Lorencia does and Noria does not.",
+    "Noria is the opposite problem on both axes. Its ground is 93.3% one olive turf, its baked",
+    "TerrainLight is neutral where Lorencia's is warm - (167, 167, 168) of 255 against",
+    "(141, 144, 144) - and through ground.py's curve that arrives 22% brighter with 18% less",
+    "spread in it. A grade built to warm the shade and cool the light of a terracotta town is",
+    "being asked to do neither of those things here, over a green frame that is already flatter",
+    "and brighter than the one the numbers were measured on.",
+    "NOTHING IS MOVED IN THIS FILE YET, AND THAT IS THE POINT OF IT. Every value below is",
+    "Lorencia's, to the digit, so the cube this bakes is the cube Noria was already being shown",
+    "through and adding it changes no pixel. What it changes is that the two towns can now",
+    "disagree, and that a change made for one stops arriving in the other.",
+    "The tuning is a pass on screen, not an arithmetic one. The measurement above says which",
+    "knob has the most to give back - the frame is bright and flat, so the contrast and the",
+    "shadow end are where the room is, and the shadow tint is the one number most likely to be",
+    "wrong in kind rather than in degree, since blue shade under a green canopy is a claim",
+    "about a sky the wood mostly hides. But a number chosen off a histogram and never looked at",
+    "is exactly what lorencia.json's own comment history is a record of getting wrong four",
+    "times in a row, and this file is not going to start by repeating it.",
+    "Note that the cube is currently switched off at the sheet - lighting.json has",
+    "\"grade\": false - so this bakes and is loaded and nothing reads it until that flips."
+  ],
+  "exposure_stops": 0.02,
+  "balance": [
+    0.99,
+    1.0,
+    1.025
+  ],
+  "contrast": 1.22,
+  "shadow_tint": [
+    -0.075,
+    -0.022,
+    0.095
+  ],
+  "highlight_tint": [
+    0.014,
+    0.006,
+    -0.01
+  ],
+  "saturation": 1.18,
+  "shadow_saturation": 0.86,
+  "lift": [
+    0.0,
+    0.002,
+    0.01
+  ],
+  "shoulder": 0.74,
+  "toe_desaturation": 0.12
+}

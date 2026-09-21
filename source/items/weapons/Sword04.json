@@ -1,0 +1,169 @@
+{
+  "item": "Sword04",
+  "mu_name": "Katache",
+  "mu_name_from": "MuMain's ZzzOpenData.cpp loads the group as MODEL_SWORD + i from Sword{i+1}, so Sword04.bmd is sword index 3, which OpenMU's 0.75 table names the Katache. MuWeapons.cs agrees from the client's side: `new(\"Katache\", \"Sword04.bmd\", WeaponStance.Sword, PlayerClasses.Knight, TwoHanded: false, Level: 0, Strength: 80, Agility: 40, Energy: 0)`.",
+  "why_this_one": "Lunge is the one Dark Knight skill Lorencia could not hand out. Skill 20 is carried by five rows in 0.75 - this, the Gladius (0, 6), the Sword of Salamander (0, 9), the Legendary Sword (0, 11) and the Serpent Spear (3, 4) - and drop level sorts them 16, 20, 32, 44, 46. Lorencia's richest monster is the Skeleton Warrior at 19, and DefaultDropGenerator's window is `DropLevel <= monsterLevel`, so the Gladius at 20 is one level out of reach and every other carrier is far past it. This row at 16 is the only Lunge that can fall on this map, from the Giant at 17 and the Skeleton Warrior at 19. Built, the knight's six become four reachable here; unbuilt, three. See docs/skills.md.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(0, 3, 0, 20, 1, 3, true, \"Katache\", 16, 16, 26, 35, 27, 0, 0, 80, 40, 0, 0, 0, 1, 0)",
+    "call_note": "CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 0,
+    "number": 3,
+    "drop_level": 16,
+    "drops_from_monsters": true,
+    "drop_level_note": "Sixteen, and unusually this one is in range of the map that is built. The window in Loot.Affordable is `DropLevel <= level && DropLevel > level - 12`, so sixteen falls from the Giant at 17 and the Skeleton Warrior at 19 and from nothing else in Lorencia. Refinement is deterministic - `(monsterLevel - DropLevel) / 3` - so those two give a plain one and nothing better: (17-16)/3 and (19-16)/3 are 0 and 1. The first Katache anybody sees here is a +0 or a +1.",
+    "slot": 0,
+    "width": 1,
+    "width_note": "Width is where OpenMU keeps two-handedness - `if (group < Bows && width == 2)` - and one here agrees with MuWeapons.cs's TwoHanded: false. It is also what takes a fifth off the price: shared/Market.Coin reads the footprint's width to tell a one-handed weapon from a two-handed one.",
+    "height": 3,
+    "minimum_damage": 16,
+    "maximum_damage": 26,
+    "attack_speed": 35,
+    "attack_speed_note": "Thirty-five, the second-fastest blade in the 0.75 table after the Kris at 50 - and ten faster than the Sword of Assassin, which is the sword a knight is likely holding when this one drops. A light curved blade swung quickly, which is what the silhouette is.",
+    "durability": 27,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 40,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "Forty agility, and it is the only sword under drop level 20 that asks for any: the Kris, the Short Sword, the Rapier and the Sword of Assassin are all strength alone. A knight who has put everything into strength cannot hold the thing that grants him Lunge, which is MU making the skill cost something other than luck.",
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags - 0, 1, 0, the Dark Knight alone. MuWeapons.cs carries the same from the client's side: PlayerClasses.Knight.",
+    "skill": 20,
+    "skill_note": "The skillNumber of the call, and the reason this asset exists. Twenty is Lunge, and in 0.75 a knight does not learn a skill - the item grants it while it is held, and loses it when it is put down. See shared/Beast.cs's Player.Skills, which derives the whole list from the two weapon slots, and docs/skills.md. It is also the reason this item is dearer in the original than the price MU2 charges, since OpenMU multiplies a skilled item's price by two and a half; see shared/Market's remarks."
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs: WeaponStance.Sword, TwoHanded: false. Actions 4 and 17, the family the Kris, the Short Sword, the Gladius and the Sword of Assassin already walk in.",
+  "two_handed": false,
+  "sheets": {
+    "sword05_jpg": "sword05.png",
+    "sword05_tga": "sword05.tga.png"
+  },
+  "sheet_from": "Data/Item/sword05.OZJ (64x16) and sword05.ozt (2x2), from MuMain. The .bmd names sword05.jpg on 70 triangles and sword05.tga on 2 - the usual off-by-one, where Sword04.bmd wears sheet 05 - and both slots carry the extension in their names because that is what MuExtract writes when one model's basenames collide, and a slot name has to match the group in the .obj. Staff02 and the two bows record the same collision.",
+  "sheet_note": "sword05.jpg is a bright polished blade running the left three quarters of the strip with a hard dark spine line drawn through it, then a pale tan grip at about x 48 to 52, and a red banner filling the last twelve pixels. Mean (186, 169, 170) at chroma 32 - the chroma is the banner, not the steel - and a linear luminance of 0.483 overall with 80% of texels above 0.3.\n\nsword05.ozt is two pixels square and every one of them is (187, 7, 29), solid crimson, fully opaque. It is not a cut-out: it is a flat colour chip for the two triangles of streamer that stand off the hilt, drawn as a card at x 0.0 to 0.6, y -25.6 to -3.4. No alpha anywhere in this asset, so no cutout is declared.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather_wrap",
+      "note": "the grip, running from the guard at z 17.2 down to z -15.7 on the hilt's own narrow footprint. It samples the red block at the right of the sheet - the same texels the banner uses - so MU's tsuka is wound in red cord, mean (186, 73, 70) with the guard's pale edge caught in the top row.\n\nleather_wrap and not cloth, on that file's own rule: its grain is bands along u at scale 90, which is the winding of a cord round a tang, and it is corduroy on anything broader. A grip is the one shape it was written for. It keeps its colour because it is a dielectric at metallic 0, so the red survives the light rather than turning to dark chrome.",
+      "triangles": 10,
+      "area": 484.7,
+      "along": [
+        -15.7,
+        15.3
+      ],
+      "mu_uv": [
+        0.802,
+        0.253,
+        0.997,
+        0.897
+      ],
+      "bake_uv": [
+        0.723,
+        0.005,
+        0.899,
+        0.976
+      ]
+    },
+    {
+      "island": 1,
+      "material": "blade_steel",
+      "note": "the blade, z 12.4 to 134.5 and the only island with any length to it. Mean (192, 195, 200) at chroma 22 - neutral, no warmth at all - and a linear luminance of 0.599 with 86% of texels above 0.3.\n\nThat measurement is the assignment. blade_steel exists because sword06 came in at 0.306 linear with 79% above 0.3, which is four times what painted_steel was written against; this sheet is twice as bright again and is the brightest blade in the project. painted_steel would be the wrong end of the same argument - it sets metallic 0 for sheets averaging 0.083, where there is no reflectance to spend - and this one has plenty. Metallic 0.35 at roughness 0.18, the polished narrow highlight.\n\nThe hard dark spine drawn through the sheet is painting rather than form, and blade_steel is the material that keeps it: at metallic 1 the diffuse goes and the spine goes with it.",
+      "triangles": 44,
+      "area": 1901.8,
+      "along": [
+        14.5,
+        134.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.113,
+        0.804,
+        0.652
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.714,
+        0.932
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "note": "the guard, twelve triangles in a band at z 11.5 to 17.2 where the blade meets the hilt, sampling the two-texel tan column at x 50 to 52.\n\nbrass, and it is the weakest-measured brass in the project rather than a doubtful one: hue 25 at saturation 0.30, against Sword05's guard at 28/0.44 and Sword01's at 47/0.29. It sits inside the range those two span - lowest hue of the set and lowest saturation - which is a pale, unpolished cast fitting rather than the bright yellow of the Gladius at 44/0.56. Cast metal at roughness 0.44 is most of what tells a guard from the blade it is bolted to, since MU painted only the colour.",
+      "triangles": 12,
+      "area": 171.8,
+      "along": [
+        11.5,
+        17.2
+      ],
+      "mu_uv": [
+        0.789,
+        0.026,
+        0.821,
+        0.944
+      ],
+      "bake_uv": [
+        0.911,
+        0.006,
+        0.995,
+        0.82
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "note": "a banner panel, four triangles standing off the hilt at y -35.6 to -24.8 - well clear of the grip's own footprint, which never leaves y -5.1 to 7.8. Pure red, (206, 29, 19) at chroma 188, the most saturated texels on the sheet.\n\ncloth, which is the file written for hung fabric: roughness 0.72 and no highlight worth the name, because a banner that catches one is satin and MU's are not. The fold is in the geometry rather than the normal map, which is what cloth's shallow 0.04 depth assumes and what this two-sided card actually is.",
+      "triangles": 4,
+      "area": 145.1,
+      "along": [
+        -5.3,
+        1.9
+      ],
+      "mu_uv": [
+        0.953,
+        0.028,
+        0.974,
+        0.201
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.866,
+        0.538
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "note": "the other banner panel, and the whole of the sword05_tga group: two triangles at y -25.6 to -3.4, standing off the hilt beside island 3.\n\nsword05.ozt is two pixels square and all four are (187, 7, 29). It carries no alpha, so this is not a cut-out card - it is a flat colour chip, MU's cheapest possible way to hang a second panel of the same red. cloth for the same reason island 3 is, and the two are one banner split across two sheets.",
+      "triangles": 2,
+      "area": 31.0,
+      "along": [
+        -14.6,
+        -4.7
+      ],
+      "mu_uv": [
+        0.971,
+        0.078,
+        0.994,
+        0.221
+      ],
+      "bake_uv": [
+        0.872,
+        0.007,
+        0.892,
+        0.134
+      ]
+    }
+  ],
+  "material_note": "Five islands and four materials, and the mesh sorts them rather than the sheet: the sheet is a blade, a two-texel tan column and a block of red, while the geometry is a blade, a guard, a grip and a banner - and the grip and the banner sample the same red.\n\nThat overlap is the thing worth writing down. Reading the sheet alone would make islands 0, 3 and 4 one material, because they are all the same red texels. They are not one surface: island 0 is on the hilt's own footprint (y -5.1 to 7.8) running the length of the tang, and islands 3 and 4 stand off it at y -35.6 to -3.4 with nothing behind them. A wound grip and a hanging banner are leather_wrap and cloth respectively, and the crop that would have merged them is the crop docs/items-and-armour.md warns about. The 3D extents settled it.\n\nNo open question on this one. The guard is its own island here, which is the split the Giant Sword could not make - Sword16's cross-guard falls inside its blade island and is painted_steel along with it - so the limit that file records as an open_question does not arise.",
+  "creases_from": "The default. The blade is a long flat with a drawn spine rather than a folded one, and the only real fold in the mesh is where the guard meets it, which is an island boundary and already a seam."
+}

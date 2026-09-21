@@ -1,0 +1,50 @@
+{
+  "item": "Fire01",
+  "mu_name": "The meteor a Meteorite drops",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_FIRE, L\"Data\\\\Skill\\\\\", L\"Fire\", 1)` - so Data/Skill/Fire01.bmd. Filed under Skill like the missiles and the bones, because in MU a rock falling out of the sky is an effect and not a monster.",
+  "kind": "meteor",
+  "why_this_one": "It is the whole of the client's Meteorite. ZzzCharacter.cpp's damage arm, in the switch on the skill the packet carried:\n\n    case AT_SKILL_METEO:\n        CreateEffect(MODEL_FIRE, to->Position, to->Angle, o->Light);\n        PlayBuffer(SOUND_METEORITE01);\n        break;\n\nTwo lines, one model, one sound. Read at a glance that is 'a fire effect on the target' and it is not - see lift_from, which is where the rock actually appears.\n\nMODEL_FIRE is used by eight sub-types across the game and only sub-type 0 is a Meteorite; the numbers on this asset are that branch's and no other's. The Dark Wizard's second skill and the Lich's only one are the same two lines, so building it for the Lich builds it for the wizard.",
+  "mesh": "Fire01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Fire01.bmd, from MuMain. Eighty-eight triangles in two meshes, and they are nothing alike: 48 on fire02.jpg spanning 44 units in every direction - a compact ball, the rock - and 40 on fire01.jpg running from -26.8 to +138.9 on one axis, a 166-unit tapering cone, which is the flame trail.\n\nThat is the fact worth having about this model. The streak behind a meteor is geometry and not particles: one model draws the rock and the whole of its tail, and the rig's one action animates the cone so it writhes as the thing falls. Reading it as 'a rock that emits fire' leads straight to packing a row of billboards tightly enough to look continuous, which lays discrete sprites over a flame that was already smooth.",
+  "parts": [
+    {
+      "group": "fire02",
+      "sheet": "fire02.png",
+      "blend": "opaque",
+      "note": "The rock. Data/Skill/fire02.OZJ, a 64-square with no alpha: mean (41, 24, 21), a dark crust with veins of orange at brightest (194, 144, 55). It is the same sheet the two impact stones wear, which is what makes the debris read as pieces of the thing that landed.\n\nDrawn solid, because BlendMesh names the other one - and drawn unshaded even so, since a burning rock is lit by itself rather than by the field."
+    },
+    {
+      "group": "fire01",
+      "sheet": "fire01.png",
+      "blend": "additive",
+      "note": "The flame cone. Data/Skill/fire01.OZJ, 64-square, mean (72, 36, 13) at chroma 59 with its brightest texel at (215, 187, 124) - a dark sheet with a hot core, which is what an additive sprite looks like on disk.\n\nThe same file the arrow's tail wears, and already in the build once under assets/effects/missiles. Kept a second time here rather than shared, because the two folders are read by two passes and a sheet reached across them is a dependency nothing declares. Not to be confused with Data/Effect/Fire01.OZJ, which is 256x64 of brazier flame under the same name in another folder.\n\nAdditive because the client says which mesh: `o->BlendMesh = 1` is set for every sub-type of MODEL_FIRE at birth, and 1 is this second mesh."
+    }
+  ],
+  "blend_from": "`o->BlendMesh = 1`, the first line of the MODEL_FIRE arm of CreateEffect and outside its sub-type ladder, so it holds for all eight. RenderMesh singles that index out and draws it with EnableAlphaBlend - glBlendFunc(GL_ONE, GL_ONE), additive - tinted BodyLight x BlendMeshLight and with lighting switched off.\n\nSo the rock is a solid mesh inside an additive shell, and the shell's brightness is re-rolled every frame: `o->BlendMeshLight = (float)(rand() % 4 + 4) * 0.1f` in the mover's sub-type 0 arm, which is 0.4 to 0.7. Drawn as an ordinary model it is a dull lump inside its own fire.",
+  "scale": 1.0,
+  "scale_from": "The base the throw multiplies. CreateEffect's sub-type 0 branch rolls `o->Scale = (float)(rand() % 8 + 10) * 0.1f` - 1.0 to 1.7 per meteor - and the number here is what that scales. See client/core/Meteor.cs.",
+  "lift": 400,
+  "lift_from": "`o->Position[2] += 400.f` in the same branch, and it is the line that says what this effect is. CreateEffect is called at the *target's* position, and then the birth puts the rock 400 units above it and 130 to 161 units to one side: `o->Position[0] += 130.f + (float)(rand() % 32)`.\n\nSo what the two lines of the skill name is not where the meteor appears but where it will land. The rock arrives from off the top of the screen and comes down about a third of a second later. Spawning it at the target instead gives a fireball hanging in the air that never falls, which looks close enough in a still to pass and is wrong in every frame that moves.",
+  "sideways": 130,
+  "sideways_spread": 32,
+  "sideways_from": "`o->Position[0] += 130.f + (float)(rand() % 32)` - 130 to 161 units, on MU's X. It is not a miss and the mechanism is worth following, because the spawn on its own looks like one.\n\nDirection is `Vector(0.f, 0.f, -50.f, o->Direction)` - straight down - which against that offset would drop the rock a tile and a half to the side of whatever it was aimed at. The rotation is elsewhere: an effect with no case of its own is moved by `MoveParticle(o, true)` from the default arm of the effect loop, and the `true` means `VectorRotate(o->Direction, AngleMatrix(o->Angle), ...)` - the direction is turned by the object's own angle before it is integrated.\n\nWith `Vector(0.f, 20.f, 0.f, o->Angle)` that is 50*sin(20) = 17.1 units of drift a frame and 50*cos(20) = 47.0 of descent, so 400 units of fall take 8.5 frames and carry it 145.5 sideways - the middle of the 130-to-161 spawn offset. The rock lands on its target, and reading the spawn without the rotation is what makes it look like it does not.",
+  "fall_speed": 50,
+  "entry_degrees": 20,
+  "flight_from": "`Vector(0.f, 0.f, -50.f, o->Direction)` and `Vector(0.f, 20.f, 0.f, o->Angle)`, both in the sub-type 0 branch of the birth. Fifty units a reference frame along a heading twenty degrees off vertical. See sideways_from for why the two are one fact.",
+  "frames": 40,
+  "frames_from": "`o->LifeTime = 40` in the same branch. It normally dies by landing well inside that - 400 units at 47 a frame is under nine - so the bound only bites where there is no ground to hit.",
+  "play_speed": 0.3,
+  "play_speed_from": "`o->Velocity = 0.3f`, which CreateEffect sets for every effect and hands to PlayAnimation as the play speed: 7.5 keys a second. The model is inside the MODEL_BIRD01..MODEL_SKILL_END range the effect loop runs PlayAnimation over, so the flame cone writhes rather than being a still shape flying through the air. Instantiating it without animation is the quiet way to lose that, because the model still draws perfectly well.",
+  "glow": [
+    1.0,
+    0.1,
+    0.0
+  ],
+  "glow_range": 2,
+  "glow_from": "The mover's shared tail, which runs every frame the rock is alive:\n\n    Vector(Luminosity * 1.f, Luminosity * 0.1f, Luminosity * 0.f, Light);\n    AddTerrainLight(o->Position[0], o->Position[1], Light, 2, PrimaryTerrainLight);\n    CreateParticleFpsChecked(BITMAP_FIRE, o->Position, o->Angle, Light, 5);\n\nA deep orange-red at two terrain tiles of radius, and the same vector goes to the ground light and to every ember it lays down behind it. Luminosity is re-rolled by MoveEffect every frame as `(rand() % 4 + 7) * 0.1` - 0.7 to 1.0 - and fades over the last five frames of life, so the whole thing shimmers rather than glowing steadily.\n\nThe colour belongs to the light and the embers and to nothing else. The flame cone is tinted BodyLight x BlendMeshLight, and BodyLight is the vector CreateEffect was handed - the caster's own light, near white in daylight. Multiplying the cone by the orange as well crushes an already dark-red texture toward black, and what survives is its flame pattern read as banding.",
+  "impact_lift": 80,
+  "impact_stones": 6,
+  "impact_from": "The mover's landing, which for sub-type 0 is `Position[2] < RequestTerrainHeight(...)`:\n\n    o->Position[2] = Height;\n    Vector(0.f, 0.f, 0.f, o->Direction);\n    Vector(o->Position[0], o->Position[1], o->Position[2] + 80.f, Position);\n    for (int j = 0; j < 6; j++)\n        CreateEffectFpsChecked(MODEL_STONE1 + rand() % 2, o->Position, o->Angle, o->Light);\n    CreateParticleFpsChecked(BITMAP_EXPLOTION, Position, o->Angle, Light);\n    o->Live = false;\n\nSix stones off the two models, one blast eighty units up, and the rock gone. The stones are thrown from the floor and the blast from above it, which is what puts the fire at the height of whatever was standing there.\n\n`Light` on that last line is a local vec3_t that nothing on this path ever assigns - declared at the top of MoveEffect and left uninitialised - so the blast's colour in the real client is whatever was on the stack. There is no value to port and the sheet is painted orange and yellow already, so it is drawn untinted. Recorded rather than quietly picked, because it is the one number in this file that is not MU's.",
+  "sounds_from": "Two, and they are half a second apart. SOUND_METEORITE01 - Data/Sound/eMeteorite.wav - is played by the skill itself, on the same line that creates the rock, so it leads the strike. SOUND_EXPLOTION01 - eExplosion.wav - is played by the blast: CreateParticle's BITMAP_EXPLOTION arm plays it at birth rather than anything on this path asking for it, which is why it is easy to miss when reading the skill alone.\n\nBoth are in assets/sounds/sounds.json as meteorite and explosion.",
+  "not_built_note": "One rock, not a shower. The multi-meteor forms are other sub-types belonging to later bosses - 6, 7 and 8 throw a green light instead of an orange one and scatter smoke and an Inferno at the landing, and 5 is a rock owned by a caster that never falls at all. The Dark Wizard's skill and the Lich's throw a single stone, and none of the other seven branches is built."
+}

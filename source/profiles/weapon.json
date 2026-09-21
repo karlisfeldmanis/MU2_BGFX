@@ -1,0 +1,24 @@
+{
+  "profile": "weapon",
+  "summary": "Swords, axes, staves, shields. Made things, with edges that were drawn sharp.",
+  "why": [
+    "A weapon sheet is an atlas, not a tiling surface: a blade in one region, a leather",
+    "grip in another. Context must be replicated at the border rather than wrapped, or the",
+    "grip's browns are fed into the blade's edge and the model paints rust along a cutting",
+    "edge the artist drew clean.",
+    "ribs became rectangular chain links. See pipeline/upscale.py.",
+    "is the closest the player ever gets to any surface in this game.",
+    "default_material is what a newly found island is called before anyone has looked at it. steel, because plate and blades are both mostly steel and a part that builds on the first run can be looked at; twenty-two decisions before the first picture is how a pipeline stops being used.",
+    "maps is no longer here. The bake size is read off the art - twice the square root of the texels the islands actually sample - because a kind of thing does not have a resolution, a particular sheet does. Shield10's 32x64 and ArmorMale10's 128x128 are both weapons-profile items and want very different maps.",
+    "upscale is 3x at detail 0.65, up from 2x at 0.35. The old figures were chosen when the model's output went in whole and in colour; it now averages eight orientations and contributes to brightness only, which removes both ways it used to drift. Swept on Sword01's guard, which is where 0.35 was decided: at 1.0 its rounded ribs still harden into outlined links, at 0.35 they are barely past MU's own, at 0.65 they are resolved and still rounded."
+  ],
+  "upscale": {
+    "factor": 3,
+    "detail": 0.65,
+    "pad": "edge"
+  },
+  "enlarge": 2,
+  "default_material": "steel",
+  "tiling": false,
+  "tiling_why": "A weapon sheet is an atlas: a blade in one region, a grip in another. The profile's own note has said so since it was written. Wrapping one to make it tile blends the left edge into the right and the top into the bottom, which on a body drags the arms across whatever the far edge holds. It was reported as the Dark Wizard having tan bands down one arm, and measured: the seam heal changed 9.5% of his sheet, entirely at the borders - 27 levels at the left edge, 25 at the right, and exactly zero in the middle.\n\nIt only ever ran on sheets enlarged outside the pipeline, which is why it appeared the moment the bodies came back from Figma and not before."
+}

@@ -1,0 +1,52 @@
+{
+  "item": "Ale01",
+  "mu_name": "Ale",
+  "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_ALE, L\"Data\\\\Item\\\\\", L\"Beer\", 1)`, so MODEL_ALE is Beer01.bmd; OpenMU's 0.75 initialiser names group 14 number 9 the Ale.",
+  "why_this_one": "Lumen's first line, and the reason her window opened on an empty shelf: Market.Barmaid is two lines and neither was built, so Realm.Shelf served nothing. Drop level 15 with durability one - a single drink.\n\nThe asset is called Ale01 and not Beer01 because the world already has a Beer01: assets/world/lorencia/Beer01.json is the tavern's own barrel, and mu2.sh finds an asset by name across every folder, so a second Beer01 would shadow the first. The item field is the asset's name; the model it is cut from is Beer01.bmd, as sheet_from says.",
+  "profile": "weapon",
+  "profile_note": "Not because a potion is a weapon but because the profile is about the art: a small painted sheet on a made object seen close, upscaled with the drawn model held back so a band of paint does not become a ridge. The Apple made the same argument. The default material is overridden per island below.",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated. Only the columns a drop and a shelf read are here - a potion has no damage roll, no stance and no hand, which is why it carries a Prize and no Arm. See shared/Rows.cs.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Potions.cs, CreateAlcohol().",
+    "call": "Number = 9; Group = 14; DropsFromMonsters = true; DropLevel = 15; Durability = 1; Value = 30; Width = 1; Height = 2",
+    "call_note": "Written out as fields rather than as a call because that is what the source is: the potions are each built property by property, so the properties are quoted instead. See Potion01, the Apple, which set the shape.",
+    "group": 14,
+    "number": 9,
+    "drop_level": 15,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 2,
+    "durability": 1,
+    "durability_note": "One. A single drink, which is what Lumen sells it as."
+  },
+  "sheets": {
+    "bottle": "bottle.png"
+  },
+  "sheet_from": "Data/Item/bottle.ozt (32x32) from MuMain, which Beer01.bmd names bottle.tga. The same file was already in assets/textures for the tavern's Furniture01 and Furniture02 and Beer01 barrel, and decoded byte-identically here, which is a free check that the extraction is the same one.",
+  "sheet_note": "A purple-brown bottle with a pale label. The alpha channel is present and cuts nothing - 0% under half - so it is not declared a cut-out; the sheet is solid glass with a paper label painted on, and the label is in the bottle's own island.",
+  "material_note": "One island, the bottle and its label together, and it is a glass bottle: glass. The paper label ships with glass's roughness and its own paint, which at 32 pixels across is not a thing anybody can see.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 36,
+      "area": 2027.9,
+      "along": [
+        -6.5,
+        6.5
+      ],
+      "mu_uv": [
+        -0.25,
+        0.001,
+        0.986,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.998,
+        0.97
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "item": "HouseEtc01",
+  "mu_name": "HouseEtc01",
+  "mu_name_from": "Lorencia's object slot 127, from the client's own table in WorldObjectCatalog.cs. MU names the run rather than the member, so there is no friendlier name than the file's.",
+  "world": "lorencia",
+  "object_type": 127,
+  "why_this_one": "52 placements. Rendered wall with a carved stone frieze - the most-placed building piece in the town.",
+  "profile": "world",
+  "sheets": {
+    "c_wall04": "c_wall04.png",
+    "c_wall06": "c_wall06.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. All opaque .OZJ.",
+  "sheet_materials": {
+    "c_wall04": "flagstone",
+    "c_wall06": "flagstone"
+  },
+  "sheet_scale_from": "How many times a sheet crosses the face it is on. MU's UVs put exactly one copy across, which was right for a 128-pixel painting of a whole wall and is wrong for a photograph of two metres of real stone: stretched over a whole wall it reads as a few enormous blotches rather than as masonry.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 34,
+      "area": 68691.9,
+      "along": [
+        -49.8,
+        92.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.697,
+        0.997
+      ]
+    }
+  ]
+}

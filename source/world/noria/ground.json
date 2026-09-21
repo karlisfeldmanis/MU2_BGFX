@@ -1,0 +1,40 @@
+{
+  "tileset": "noria",
+  "mu_name": "Noria ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "nr_tilegrass01.png",
+    "TileGround01": "nr_tileground01.png",
+    "TileGround03": "nr_tileground03.png",
+    "TileWater01": "nr_tilewater01.png",
+    "TileWood01": "nr_tilewood01.png",
+    "TileRock01": "nr_tilerock01.png",
+    "TileRock02": "nr_tilerock02.png",
+    "TileRock03": "nr_tilerock03.png",
+    "TileRock04": "nr_tilerock04.png"
+  },
+  "sheet_from": "Data/World4/Tile*.OZJ, from MuMain, decoded under an nr_ prefix. The prefix is load-bearing for the same reason the character scene's cs_ is: assets/textures is one flat pool for every world, Lorencia already owns tilegrass01.png through tilerock02.png, and without it six of these nine would have been silently answered by the town's art. Noria's TileRock02 is a smooth pale floor with carving worn into it where Lorencia's is a boulder face.",
+  "slot_note": "Ten slots are painted in the map and only nine are declared, because World4 ships no TileGrass02.OZJ at all. Slot 1 is 0.0% of the ground - the elf town paints it nowhere - so the missing sheet is the client's own arrangement and not an extraction that lost a file. Slots 6 and 9 are 0.0% too and are declared, because both sheets exist and a slot that is painted nowhere today is one an overlay can still name.",
+  "sheet_materials": {
+    "TileGrass01": "grass",
+    "TileGround01": "grass",
+    "TileGround03": "rock",
+    "TileWater01": "water",
+    "TileWood01": "sand",
+    "TileRock01": "cobble",
+    "TileRock02": "flagstone",
+    "TileRock03": "sand",
+    "TileRock04": "sand",
+    "TileGrass01_over": "grass",
+    "TileGround01_over": "grass",
+    "TileGround03_over": "rock",
+    "TileWater01_over": "water",
+    "TileWood01_over": "sand",
+    "TileRock01_over": "cobble",
+    "TileRock02_over": "flagstone",
+    "TileRock03_over": "sand",
+    "TileRock04_over": "sand"
+  },
+  "material_note": "Read off the art, which in Noria disagrees with the names harder than anywhere yet. Only two of the nine slots are what they are called. TileGround01 is not ground, it is the same olive turf as TileGrass01 with more earth showing through, and takes grass with it - 93.9% of the map is those two between them, which is what makes Noria a forest floor rather than a town. TileWood01 is not planking: it is pale dry dirt flecked dark, which is sand. Of the four rocks only TileRock01 is laid in courses small enough to read as cobble; TileRock02 is a smooth worn floor with lettering carved into it and takes flagstone, and TileRock03 and TileRock04 are grit and fine sand respectively, neither of which is a rock face. TileGround03 is the one slot that reads as stone at all - pale weathered block under lichen - and takes rock.",
+  "tile_note": "Noria is 93.3% TileGrass01 and there is nothing to fix about that. Lorencia is a town with a road system and nine sheets to lay it out in; Noria is the elf wood, a clearing of buildings dropped into forest, and its ground is one turf with water running through it. The work the map does is in the overlay and in the 9399 objects standing on it, not in the base layer.\n\nWater is 3.5% and it is the river round the town rather than Lorencia's lake, so the standing gap - the client scrolls its water one repetition every twenty seconds and this does not - reads differently here: a still river is more obviously still than a still pond."
+}

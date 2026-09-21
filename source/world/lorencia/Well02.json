@@ -1,0 +1,215 @@
+{
+  "item": "Well02",
+  "mu_name": "Well02",
+  "mu_name_from": "Lorencia's object slot 107, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 107,
+  "why_this_one": "1 placement. A covered well: a plank roof over a rubble shaft, both halves of one 128 square.",
+  "profile": "world",
+  "sheets": {
+    "well": "well.png",
+    "well__timber": "well.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "well": "rock",
+    "well__timber": "timber"
+  },
+  "material_note": "Rock rather than timber. The sheet is roughly half planks and half rubble and the planks are the larger half of the picture, but not of the model - the shaft is the well and the roof is a lid on it. One sheet is one material on the tiled path, so the question is which surface carries the object, not which fills the square.",
+  "sheet_pad": {
+    "well": "edge"
+  },
+  "sheet_pad_from": "An atlas rather than a tile - two or more separate surfaces drawn side by side in one square - so its border replicates instead of wrapping.",
+  "sheet_regions": {
+    "well": [
+      {
+        "material": "timber",
+        "box": [
+          0.0,
+          0.0,
+          1.0,
+          0.5
+        ]
+      }
+    ]
+  },
+  "region_note": "One sheet, two materials, and now two parts. The boundary was measured rather than guessed: mean saturation per row of MU's own well.png sits at 0.36 for the top half and 0.55 for the bottom, stepping between them at row 64 of 128 — exactly halfway. Above is the plank roof and the two posts; below is the masonry of the shaft.\n\nBoth halves now wear the same photoscan, the trench-stake wood, at a quarter of a repeat. That is not the split going to waste: what the two parts are for is that the roof is timber and the shaft is rock, and the material is what the derived relief and roughness come from — 0.30 of depth against 0.45, on a roof that is only ever seen from above. One picture, two ways of catching the light.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 54,
+      "area": 92750.2,
+      "along": [
+        -78.6,
+        78.7
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.473
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.533,
+        0.873
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 75874.4,
+      "along": [
+        -93.5,
+        93.5
+      ],
+      "mu_uv": [
+        -0.001,
+        0.489,
+        0.824,
+        0.995
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.889,
+        0.757
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 9769.1,
+      "along": [
+        60.6,
+        75.5
+      ],
+      "mu_uv": [
+        0.829,
+        0.491,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.696,
+        0.551,
+        0.993,
+        0.991
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 8,
+      "area": 9769.1,
+      "along": [
+        -74.6,
+        -59.7
+      ],
+      "mu_uv": [
+        0.829,
+        0.491,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.8,
+        0.27,
+        0.993,
+        0.991
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 15,
+      "area": 3649.2,
+      "along": [
+        16.8,
+        46.4
+      ],
+      "mu_uv": [
+        0.839,
+        0.74,
+        0.985,
+        0.929
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.9,
+        0.975
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1510.8,
+      "along": [
+        -12.8,
+        24.8
+      ],
+      "mu_uv": [
+        0.865,
+        0.499,
+        0.886,
+        0.955
+      ],
+      "bake_uv": [
+        0.555,
+        0.724,
+        0.591,
+        0.964
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1992.4,
+      "along": [
+        31.3,
+        69.9
+      ],
+      "mu_uv": [
+        0.083,
+        0.632,
+        0.254,
+        0.776
+      ],
+      "bake_uv": [
+        0.823,
+        0.121,
+        0.913,
+        0.197
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 6,
+      "area": 1754.1,
+      "along": [
+        -43.0,
+        -10.8
+      ],
+      "mu_uv": [
+        0.633,
+        0.633,
+        0.775,
+        0.783
+      ],
+      "bake_uv": [
+        0.098,
+        0.888,
+        0.173,
+        0.966
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "item": "Hunter01",
+  "mu_name": "Hunter",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_HUNTER = 29 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_HUNTER), which is 22. OpenMonsterModel loads Monster{Type + 1:D2}, so the file is Monster23.bmd. The client's name is 헌터, which is only the English word written in Hangul; OpenMU's Version075 Noria.cs names number 29 'Hunter' at level 13 with 220 health, AttackRange 4 and AttackDelay 1600.\n\nMODEL_HUNTER is opened by this one case and by nothing else in the client. Unlike the Goblin's model it is not shared with an elite, an event or a gate.",
+  "world": "noria",
+  "object_type": 29,
+  "monster": {
+    "model_index": 22,
+    "scale": 0.95
+  },
+  "monster_from": "ZzzCharacter.cpp, CreateMonster, case MONSTER_HUNTER:\n\n    c->Weapon[0].Type = MODEL_ARQUEBUS;\n    c->Object.Scale = 0.95f;\n\nNo BlendMesh, no HiddenMesh, no Level - so nothing added, nothing hidden, and no glowing eyes, since RenderEye is gated on c->Level == 1. WSclient.cpp's viewport handler overrides one monster's scale after CreateMonster returns, and it is the Giant's, not this one's. 0.95 is the only line in the client about how big a Hunter is: larger than the plain Goblin and the Beetle Monster at 0.8, smaller than the Elite Goblin at 1.2.",
+  "right_hand": "CrossBow03",
+  "right_hand_bone": "knife",
+  "right_hand_from": "MODEL_ARQUEBUS is MODEL_BOW + 10. OpenItems loads the bow group's crossbows as `AccessModel(MODEL_BOW + i + 8, L\"Data\\\\Item\\\\\", L\"CrossBow\", i + 1)`, so index 10 is i = 2 and the file is Item/CrossBow03.bmd, the Arquebus. Built alongside this monster, as a separate asset.\n\nThe bone is CreateCharacter's weapon switch: `case MODEL_HUNTER: c->Weapon[0].LinkBone = 25; c->Weapon[1].LinkBone = 16;`. Bone 25 on this rig is knife under Bip01 R Hand and 16 is shield under Bip01 L Hand - the right way round, as the Goblin's are. Nothing hangs off 16: the Hunter sets no Weapon[1].Type, so the left hand is empty.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - exported with --actions=0,1,2,3,4,5,6, because export-rig's default is action 0 alone. Keys: 25, 25, 7, 6, 6, 6, 7. The walk is the one locked action. 37 bones, five of them dummies; Sphere02 under the pelvis and the neck, clavicles, fingers, toes and footsteps carry no vertex.\n\nBone 6 is Bip01 Head, which ZzzOpenData records in the Hunter's sound case as `Models[MODEL_MONSTER01 + Type].BoneHead = 6`.\n\nPlay speeds are OpenMonsterModel's shared defaults and nothing else. 22 is not in the multiplier list (3, 5, 25, 37, 42), and there is no `case MONSTER_MODEL_HUNTER` in the walk switch - it goes Goblin, Chain Scorpion, Beetle Monster, Shadow, with the Hunter not among them - so his walk is the table's 0.34, eight and a half keys a second over a seven-key stride. He is the first Noria monster whose speeds are untouched, as the Lich was Lorencia's.",
+  "sheets": {
+    "pt2": "hunter_pt2.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/pt2.OZJ, 128 by 256 with no alpha - byte-identical (md5 a121a95c) to the copy under LEGACY's old build, so MuMain's is the art. The .bmd's texture field reads `pt2.jpg`, followed in the same 32-byte buffer by a stale `n01.jpg` past the terminator; that is uninitialised name memory and not a second mesh - export-obj finds one mesh of 424 triangles.\n\nDecoded under a hunter_ prefix because pt is a family and not a name. The same folder holds pt.OZJ and pt3.OZJ, and neither is the Hunter's: Monster24.bmd (MONSTER_MODEL_FOREST_MONSTER, 23) wears pt3.jpg and Monster25.bmd (MONSTER_MODEL_AGON, 24) wears pt.jpg - OpenMonsterModel's Type + 1, which this note first read one model off.",
+  "sheet_materials": {
+    "pt2": "skin"
+  },
+  "sheet_materials_from": "Read off the sheet, magnified, and mapped by bone before it was named: the per-bone uv boxes put the torso and upper arms in the top half, the thighs and calves down the middle, the forearms and hands at the edges, and the head - 86 of the 424 triangles - in the two bottom corners.\n\nWhat is painted there is a creature and not a man in a suit. An olive hide mottled with dark blue, the anatomy airbrushed in - pectorals, a belly, biceps, kneecaps, calves - and rows of small bright studs set into the hide along the upper arms, one thigh and the crown. The head is the same studded olive with a single magenta eye in an amber ring and a row of white teeth below it, and the back of it has a crest of amber quills. The hands are dark tapering claws.\n\nThe amber is the other thing on the sheet, and it is about a tenth of it by hue: pauldrons with rivets, bracers on the forearms, a belt across the hips and bands at the top of the boots, mean (145, 93, 43). It reads as bronze and it is the part that is worn.\n\nskin, because the hide is the bulk of the sheet and there is no seam anywhere on it between a body and a garment - the studs are painted into the mottle rather than onto a panel. See open_question for the bronze.",
+  "effects_from": "None on the animation, and that is a finding rather than an omission. MODEL_HUNTER appears in ZzzCharacter.cpp in the weapon link switch, in CreateMonster, and in MoveCharacter's attack block - and in none of the per-frame switches in RenderCharacter or MoveCharacterVisual that give the Bull Fighter its snort and the Giant its dying dust. He raises nothing while he walks and nothing when he dies.\n\nWhat he shoots is not one of these and is deliberately not declared here. MoveCharacter, on the attack: `if (o->Type == MODEL_HUNTER || o->Type == MODEL_VALKYRIE || o->Type == MODEL_SOLDIER) CreateArrows(c, o, to, 0, 0);`, and CreateArrows picks the bolt by what is in the right hand - `case MODEL_ARQUEBUS: CreateEffect(MODEL_ARROW_SAW, ...)` in ZzzEffectMagicSkill.cpp. That is the fight's, not the clip's: it belongs to a blow, it flies to a target, and it is raised in code rather than by a window of keys. `effects` is the animation's list, so the bolt lives with the client's combat code and the Arquebus's arrow asset, as the Lich's meteor does.",
+  "sounds_from": "Five files, and the slots are ZzzOpenData's: `case MONSTER_MODEL_HUNTER` loads mHunter1, mHunter2, mHunterAttack1, mHunterAttack2 and mHunterDie, then calls SetMonsterSound(MODEL_MONSTER01 + Type, 85, 86, 87, 88, 89). The numbers are offsets from SOUND_MONSTER_BULL1 at 210, so 85 to 89 are 295 to 299 - DSPlaySound.h's SOUND_MONSTER_HUNTER1 through SOUND_MONSTER_HUNTERDIE, exactly the five it just loaded. A genuine pair while he moves, a genuine pair on the shot and the flinch, and one death. Wired in assets/sounds, not here.",
+  "open_question": "The bronze shares the one island with the hide - the unwrap gives the whole body one connected run, 424 triangles and a single island - so pauldrons, bracers, belt and boot bands all take skin's metallic 0 and roughness 0.70. A tenth of the sheet that is painted as metal is lit as flesh. The colour is kept, because it is the sheet's, and the painted highlights on the plates carry most of what a metallic term would add; what is lost is a tinted specular on them. The same limit the Lich's pale panel met in cloth. Splitting it would take the geometry to separate plate from body, and it does not.\n\nThe reading itself is the other uncertainty. The studs could be the rivets of a studded hide suit rather than warts on a creature, and that would make it leather. The two sit at 0.74 and 0.70 with no metal in either, so the render barely cares; what decided it was the face, which is not a mask.",
+  "islands_from": "One island for 424 triangles, which is the whole of Monster23's one mesh: the mirrored halves of the body and the head's two corners all weld into one run, so there is nothing for a second material to land on.\n\nIt arrived as skin because islands.py gives anything new the monster profile's default - the trap Spider01 records. Here it was checked against the sheet rather than taken, and it holds; see sheet_materials_from.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 424,
+      "area": 40324.8,
+      "along": [
+        -47.3,
+        47.0
+      ],
+      "mu_uv": [
+        0.002,
+        -0.003,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.79,
+        0.994
+      ]
+    }
+  ]
+}

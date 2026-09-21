@@ -1,0 +1,120 @@
+{
+  "item": "Agon01",
+  "mu_name": "Agon",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_AGON = 31 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_AGON), which is 24. OpenMonsterModel loads `AccessModel(Index, L\"Data\\\\Monster\\\\\", L\"Monster\", Type + 1)`, so the file is Monster25.bmd. The client's name is 아곤; OpenMU's Version075 Noria.cs names number 31 'Agon' at level 16 with 340 health.\n\nThe sound files spell it Argon - mArgon1.wav, SOUND_MONSTER_ARGON1 - and the model and the monster spell it Agon. The server's name is the one used here.",
+  "world": "noria",
+  "object_type": 31,
+  "monster": {
+    "model_index": 24,
+    "scale": 1.3
+  },
+  "monster_from": "ZzzCharacter.cpp, CreateMonster, case MONSTER_AGON:\n\n    c->Object.Scale = 1.3f;\n    c->Weapon[0].Type = MODEL_SERPENT_SWORD;\n    c->Weapon[1].Type = MODEL_SERPENT_SWORD;\n\nNo BlendMesh, no HiddenMesh, no Level, so no glowing eyes. 1.3 is the largest of Noria's monsters, over the Elite Goblin's 1.2.",
+  "right_hand": "Sword09",
+  "right_hand_bone": "knife",
+  "left_hand": "Sword09",
+  "left_hand_bone": "shield",
+  "hands_from": "MODEL_SERPENT_SWORD is MODEL_SWORD + 8, and OpenItems loads the sword group as `AccessModel(MODEL_SWORD + i, L\"Data\\\\Item\\\\\", L\"Sword\", i + 1)`, so it is Item/Sword09.bmd - already built, and the same blade in both fists, as the Giant carries a Double Axe in each.\n\nThe bones are CreateCharacter's weapon switch: `case MODEL_AGON: c->Weapon[0].LinkBone = 39; c->Weapon[1].LinkBone = 30;`. Bone 39 on this rig is knife under Bip01 R Hand and 30 is shield under Bip01 L Hand - the names the right way round, and the second a shield bone holding a sword. RenderLinkObject draws Weapon[1] off its bone exactly as it draws Weapon[0], with nothing mirrored for the left hand.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6 - two idles, the walk, two attacks, the shock and the death - exported with --actions=0,1,2,3,4,5,6. Keys: 20, 20, 7, 7, 7, 6, 13. The walk is the one locked action. 41 bones; Box01 to Box04 are two horns off the head, and okj under the pelvis carries nothing.\n\nBone 16 is Bip01 Head, which ZzzOpenData states outright in the model's sound case: `Models[MODEL_MONSTER01 + Type].BoneHead = 16`.\n\nPlay speeds are OpenMonsterModel's shared defaults: 24 is not in the multiplier list (3, 5, 25, 37, 42 - 25 is the Stone Golem beside it), and there is no `case MONSTER_MODEL_AGON` in the walk switch.",
+  "sheets": {
+    "pt": "agon_pt.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/pt.OZJ, 128 by 256 with no alpha - byte-identical (md5 16187b1b) to the copy under LEGACY's old build, so MuMain's is the art. Decoded under an agon_ prefix: pt2 is the Hunter's and pt3 the Forest Monster's, in the same folder.",
+  "sheet_materials": {
+    "pt": "fur"
+  },
+  "sheet_materials_from": "Read off the sheet, magnified, and mapped by bone. It is laid out as a figure standing on the page - shoulders at the top, the belt across the middle, the legs down to a pair of bronze cuffs at the bottom - and the whole of that figure is shaggy dark-brown hair with the strands painted in, over the muscle. fur, the Bull Fighter's material for the same kind of hide.\n\nOver the fur, painted rather than modelled: a bronze collar with rivets, a chain down the chest, a riveted belt, bronze bands at the wrists and the ankle cuffs. They are in the same triangles as the hair around them and take its material.\n\nThe bottom-left corner is the exception and is used: an ornate orange-bronze plate that 22 triangles of the left upper arm are laid over, and above it a small tile with the nostrils that eight of the head's take. The plate is its own island, so it can be had as metal; see islands_from.",
+  "effects_from": "None. MODEL_AGON appears in ZzzCharacter.cpp in the weapon link switch and in CreateMonster and nowhere else - not in RenderCharacter, not in MoveCharacterVisual, not in the death switch.",
+  "sounds_from": "Five files, and the slots are ZzzOpenData's: `case MONSTER_MODEL_AGON` loads mArgon1, mArgon2, mArgonAttack1, mArgonAttack2 and mArgonDie, then calls SetMonsterSound(MODEL_MONSTER01 + Type, 95, 96, 97, 98, 99). Offsets from SOUND_MONSTER_BULL1 at 210, so 305 to 309 - DSPlaySound.h's SOUND_MONSTER_ARGON1 through ARGONDIE. Written into assets/sounds/sounds.json as agon_, the breed's name, not argon_.",
+  "islands_from": "Four, found by the build, and all four arrived as skin - the monster profile's default, the trap Spider01 records.\n\nIsland 0 is the body, 466 triangles over the whole figure on the page: fur.\n\nIsland 1 is the 22 triangles of the left upper arm laid over the bottom-left corner - an ornate plate in orange-gold, a raised spine down its middle and a row of green studs along each edge. It is unwelded from the arm around it, which is what lets it be brass: the one piece of Agon's bronze that the geometry separates. The collar, belt, bands and cuffs are painted into island 0 and stay fur.\n\nIslands 2 and 3 are the horns, Box01 and Box03, 24 triangles each on the same uv. They are laid over the chest - hair, a link of the chain and the top of the belt - with no horn painted for them, so they take the fur they are drawn in rather than a bone they do not show.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "fur",
+      "triangles": 466,
+      "area": 38193.6,
+      "along": [
+        -27.7,
+        71.3
+      ],
+      "mu_uv": [
+        0.031,
+        0.001,
+        0.961,
+        1.0
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.918
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 22,
+      "area": 2797.1,
+      "along": [
+        -8.1,
+        27.2
+      ],
+      "mu_uv": [
+        0.002,
+        0.008,
+        0.216,
+        0.241
+      ],
+      "bake_uv": [
+        0.24,
+        0.007,
+        0.787,
+        0.377
+      ]
+    },
+    {
+      "island": 2,
+      "material": "fur",
+      "triangles": 24,
+      "area": 409.3,
+      "along": [
+        41.8,
+        47.1
+      ],
+      "mu_uv": [
+        0.58,
+        0.639,
+        0.665,
+        0.852
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.528,
+        0.123
+      ]
+    },
+    {
+      "island": 3,
+      "material": "fur",
+      "triangles": 24,
+      "area": 409.3,
+      "along": [
+        41.8,
+        47.1
+      ],
+      "mu_uv": [
+        0.58,
+        0.639,
+        0.665,
+        0.852
+      ],
+      "bake_uv": [
+        0.068,
+        0.018,
+        0.586,
+        0.167
+      ]
+    }
+  ]
+}

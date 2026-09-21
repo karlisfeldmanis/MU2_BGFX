@@ -1,0 +1,25 @@
+{
+  "item": "MoveTargetPosEffect",
+  "mu_name": "The pin MU drops where you clicked to move",
+  "mu_name_from": "ZzzOpenData.cpp: `gLoadData.AccessModel(MODEL_MOVE_TARGETPOSITION_EFFECT, L\"Data\\\\Effect\\\\\", L\"MoveTargetPosEffect\")`, with its texture opened out of Data/Effect alongside it.",
+  "kind": "marker",
+  "why_this_one": "It is the whole centre of the click-to-move marker and the one part of it that is a model rather than a bitmap. ZzzInterface.cpp creates it on every accepted move order - `CreateEffect(MODEL_MOVE_TARGETPOSITION_EFFECT, vPos, pHeroObj->Angle, vLight, 0, pHeroObj, -1, 0, 0, 0, 0.6f)` - after a DeleteEffect of the last one, so there is never more than one standing. Everything else the marker is made of hangs off this: MoveHandlers.cpp's Move_MODEL_MOVE_TARGETPOSITION_EFFECT is what emits the ground rings and the rising sparks, and it emits them from this object's position for as long as this object lives.",
+  "mesh": "MoveTargetPosEffect.obj",
+  "mesh_from": "muextract export-obj on Data/Effect/MoveTargetPosEffect.bmd, from MuMain. Fifty-one triangles in a single mesh, all of them wearing gra.jpg - so unlike the arrow there is no per-mesh blend to pick between, and the parts list below has one entry because the model has one mesh.",
+  "parts": [
+    {
+      "group": "gra",
+      "sheet": "gra.png",
+      "blend": "additive",
+      "note": "Data/Effect/gra.OZJ. Additive because ZzzObject.cpp renders this model through `RenderMesh(0, RENDER_TEXTURE | RENDER_BRIGHT, ...)` with `BodyLight` forced to (1.0, 0.7, 0.3) on the line above it - RENDER_BRIGHT is MU's additive path, and a body light set in the renderer rather than taken from the effect is how the client keeps the pin the same warm orange wherever it is standing.\n\nThe same sheet the client loads twice more under other names, BITMAP_BLUR + 7 and BITMAP_GRA. It is a gradient, which is what the model is: a soft column of light rather than an object."
+    }
+  ],
+  "blend_from": "`b->RenderMesh(0, RENDER_TEXTURE | RENDER_BRIGHT, o->Alpha, o->BlendMesh, o->BlendMeshLight)` in ZzzObject.cpp, in the `o->Type == MODEL_MOVE_TARGETPOSITION_EFFECT` arm. `o->BlendMesh = 0` is set when the effect is created.",
+  "scale": 0.6,
+  "scale_from": "The last argument of the CreateEffect call in ZzzInterface.cpp, which is Scale: `..., 0, 0, 0, 0.6f)`.",
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30` in the MODEL_MOVE_TARGETPOSITION_EFFECT arm of CreateEffect. Thirty against a REFERENCE_FPS of 25 is 1.2 seconds - so the marker dies on its own whether the walk is over or not, and what makes it look persistent in the game is that holding the button re-issues the move and re-creates it.",
+  "muzzle": [0.0, 0.0, 0.0],
+  "muzzle_from": "Not a missile; nothing leaves this. Present because the record it shares with the arrows carries one.",
+  "not_built_note": "Two of the marker's five parts are still missing and both are art rather than code. BITMAP_TARGET_POSITION_EFFECT2 wants Data/Effect/cursorpin02.jpg, which has never been extracted; and the four MODEL_SPEARSKILL joints thrown at 85 units up want a model that has not either. What is built is this pin, the cursorpin01 ground ring, and the spark stream."
+}

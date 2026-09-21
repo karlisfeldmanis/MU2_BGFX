@@ -1,0 +1,76 @@
+{
+  "item": "Gem05",
+  "mu_name": "Orb of Summoning",
+  "mu_name_from": "MuMain loads the orbs as gems: ZzzOpenData.cpp line 1047, `for i in 0..13: if (i + 7 != 15) AccessModel(MODEL_WING + i + 7, L\"Data\\\\Item\\\\\", L\"Gem\", i + 1)`, so group 12 number n is Gem{n-6}: number 11 is Gem05. openmu's 0.75 Orbs.cs puts the Orb of Summoning at 12, 11 - `CreateOrb(11, SkillNumber.SummonGoblin, ...)`. mu.db carries no group-12 rows at all, so the two sources here are the client and OpenMU and they agree.",
+  "why_this_one": "The one thing in the Budge Dragon's pool that was missed when it was counted. Shield01's note counts eleven rows at drop level 4 or under in the 0.75 table - five weapons, an apple, a shield, four pieces of armour - and the orbs were not looked at. This is the twelfth: drop level 3, and it drops from monsters.\n\nIt is also the only thing a Lorencia monster leaves for the Elf that is not a bow or a crossbow, and the first item from the wing group - which in 0.75 is wings, orbs and jewels together under group 12 - to carry a drop row.",
+  "profile": "weapon",
+  "profile_note": "Not because an orb is a weapon but for the reason Potion01 gives: the profile is about the art, a small painted sheet on a made object seen close, upscaled with the drawn model held back. A 32-square sphere is that. The default material is overridden below.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Orbs.cs line 36. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateOrb(11, SkillNumber.SummonGoblin, 1, \"Orb of Summoning\", 3, 0, 0, 0, 0, 150, CharacterClasses.FairyElf); summonOrb.MaximumItemLevel = 5",
+    "call_note": "CreateOrb(number, skillNumber, height, name, dropLevel, levelRequirement, energyRequirement, strengthRequirement, agilityRequirement, money, characterClasses). It sets Group = 12, Width = 1, DropsFromMonsters = true and Durability = 1 itself, so those are not in the call.",
+    "group": 12,
+    "number": 11,
+    "drop_level": 3,
+    "drops_from_monsters": true,
+    "drop_level_note": "Three, so a Budge Dragon at level 4 can afford it and a Spider at 2 cannot. `(4 - 3) / 3` is nought, so it falls plain. Written on the definition as DropsFromMonsters = true, which is a real flag here rather than an absence - the jewels in the same group say false.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "value": 150,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "CharacterClasses.FairyElf, and no requirement of any kind - the only row in the dragon's pool with nothing to lift. It teaches the Elf Summon Goblin, which is what the durability of one is: it is used once."
+  },
+  "skill": {
+    "note": "What the orb teaches at +0. The plus is the skill, so this block is the base and Prize.Teaching adds the plus: SummoningOrbConsumeHandlerPlugIn teaches `baseSkillNumber + item.Level`, +0 Summon Goblin (30) to +5 Summon Bali (35), and Lala stocks +0 to +4. See docs/summoning.md.",
+    "number": 30,
+    "name": "Summon Goblin",
+    "level_requirement": 0,
+    "energy_requirement": 30,
+    "energy_from": "OpenMU puts no requirement on the orb and checks the skill's energy at every cast (30 for the Goblin, SkillsInitializer.cs:68). MuMain checks it before the orb can be used, and for this item alone replaces the formula with a switch on the plus: 30, 60, 90, 130, 170, 210 (ZzzInfomation.cpp:798-814). This is the +0 value; the others are in Prize.Teaching, because the index carries one energy per row.",
+    "value": 150
+  },
+  "refinement_note": "This row is the one exception to Prize.TakesRefinement so far, and it is recorded rather than coded. The rule says nothing above group 11 wears a plus, which is right for every other orb, jewel and wing - and OpenMU gives this one `MaximumItemLevel = 5`, because the summon orb's level picks what it summons: a Goblin at +0 and a stronger monster at each plus above it. Nothing in Lorencia is big enough to give it a level - the Skeleton Warrior at 19 would make `(19 - 3) / 3` = 5 and cap there, but it drops nothing above its own pool - so the rule holds until something does. When it stops holding, the fix is a per-row maximum on Prize rather than a widening of the group test.\n\nAnd the plus is what it teaches: see the skill block, and Prize.Teaching.",
+  "sheets": {
+    "pearl": "pearl.png"
+  },
+  "sheet_from": "Data/Item/pearl.OZJ (32x32), from MuMain. The .bmd names pearl.jpg, and every one of the 48 triangles is on it - one sheet, one submesh.",
+  "sheet_note": "A deep blue sphere on black, mean (10, 52, 76): a paler swirl curling through the centre with three small white highlights on it, fading to near-black at the corners. It is a painted glass ball, and the highlights are painted on - which is worth knowing before a material adds its own.\n\n32 square is the whole of what MU shipped, and the sheet is shared: every Gem model in the folder is one of a handful of pearls, so an upscale here is an upscale for the other orbs when they come.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ, and the sheet is a sphere's skin rather than a card, so there is nothing to cut.",
+  "material_note": "glass, over the weapon profile's steel. One island, the whole sphere, and it is a painted glass ball: metallic 0, roughness 0.12, no grain. Written for this item - see materials/glass.json for why ceramic, the nearest thing already there, is a glaze over clay and not the same surface. The three highlights MU painted on the sheet stay, and the material adds one real one over them.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 48,
+      "area": 2239.1,
+      "along": [
+        -14.8,
+        13.8
+      ],
+      "mu_uv": [
+        -0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        -0.0,
+        0.0,
+        1.0,
+        1.0
+      ]
+    }
+  ]
+}

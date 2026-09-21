@@ -1,0 +1,33 @@
+{
+  "item": "ArrowSaw01",
+  "mu_name": "The Arquebus's saw blade, in the air",
+  "mu_name_from": "ZzzOpenData.cpp line 4239: `gLoadData.AccessModel(MODEL_ARROW_SAW, L\"Data\\\\Skill\\\\\", L\"ArrowSaw\", 1)`. Filed under Skill and not under Item, like every missile: what a character wears on their back is Arrows01.bmd and what crosses the clearing is this, and nothing turns one into the other.",
+  "kind": "missile",
+  "why_this_one": "It is what the Arquebus fires, off the same switch in CreateArrow that gives the other crossbows their bolts - ZzzEffectMagicSkill.cpp line 225, `case MODEL_ARQUEBUS:CreateEffect(MODEL_ARROW_SAW, ArrowPos, o->Angle, ...)`, between MODEL_GOLDEN_CROSSBOW's MODEL_ARROW_STEEL and MODEL_LIGHT_CROSSBOW's MODEL_ARROW_LASER. The name is literal: this is not a bolt but a toothed wheel, and the Arquebus is the one crossbow in 0.75 that throws something round.\n\nIt is built because CrossBow03 is: a weapon that names a missile nothing has drawn fires nothing. And the Arquebus is the Hunter's, so this is what comes out of Noria's forest at an elf.",
+  "mesh": "ArrowSaw01.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/ArrowSaw01.bmd, from MuMain. One mesh, 182 vertices and 108 triangles, on one bone - Cylinder02, which the bind pose turns a quarter about its axis, and which the export bakes in.\n\nA flat disc 37.7 units across and 1.6 thick, with nine teeth. Each face is eighteen triangles of hub fanned out from the centre at a height of 0.81, and thirty-six more bevel down from that face to the rim at 0.01, in eighteen wedges that alternate: one wedge climbs from a gullet to a tooth tip and the next falls away from it. The tips sit 18.2 to 20.2 units from the model's origin, which is about a unit off the disc's own centre. Both faces are drawn, so it is a solid blade and not a card.\n\nIt lies flat. The disc is thin along the .obj's y, which is MU's z, so in the game's own axes it spans x and y and has no height - it crosses the clearing like a thrown blade held level, edge first, rather than rolling like a wheel. That is the model and not a choice here: CreateEffect gives it the shooter's angle and nothing else.",
+  "sheet_from": "Data/Skill/toothed_whee.OZJ, 32x32 and fully opaque, from MuMain. The .bmd names it toothed_whee.jpg - toothed_wheel with the last letter cut off, which is the name field's length and not a second file - so the decode keeps MU's spelling and the .obj group matches it.",
+  "sheet_note": "Two halves and nothing else. The left sixteen columns are a streaked grey, (50, 53, 59) to (125, 125, 129) with a mean of (94, 94, 100), darkening down the right side of the half; the right sixteen are a saturated cyan-green, (0, 186, 111) to (4, 255, 255) with a mean of (0, 227, 202) and no red in it at all.\n\nThe UVs split the model along the same line. All thirty-six hub triangles and the falling side of every tooth sample the grey; the climbing side of every tooth samples the cyan, so each of the nine teeth has one bright ground face and one grey back - a saw's edge drawn in colour. Seventy-two triangles grey and thirty-six cyan.",
+  "blend": "opaque",
+  "blend_from": "`o->BlendMesh = -1`, and it is set by omission rather than by a line. CreateEffect initialises BlendMesh to -1 at ZzzEffect.cpp line 352 - no mesh blended - and the arrow branch then overrides it in three named cases at lines 1655 to 1660: 1 for MODEL_ARROW, -2 for MODEL_ARROW_NATURE, 0 for the thunder, laser, V and wing bolts. MODEL_ARROW_SAW is in none of them, so it keeps the default and is drawn wholly solid, as the steel bolt is.\n\nSo the cyan is paint and not light. It looks like the laser bolt's glow and is drawn the opposite way: that one is additive because a line names it, and this is opaque because no line does.",
+  "scale": 0.8,
+  "scale_from": "The final else of the same branch, ZzzEffect.cpp lines 1750 to 1754 - `o->Scale = 0.8f; o->Direction[1] = -70.f` - which this reaches along with every arrow that is not a Wing, a Tanker, a Multi Shot, a Dark Scream, a Spark, a Dark Stinger or a Gamble. So the blade is 30.2 units across in flight.",
+  "frames": 30,
+  "frames_from": "`o->LifeTime = 30` at ZzzEffect.cpp line 1663, set at the head of the branch for every missile in the case list, which names MODEL_ARROW_SAW at line 1644. Frames rather than seconds because that is what MU counts in: `o->LifeTime -= FPS_ANIMATION_FACTOR` once per rendered frame against a REFERENCE_FPS of 25, so thirty of them is 1.2 seconds however fast the machine is drawing. What it is really for is the blade that reaches nothing.",
+  "muzzle": [
+    -10.0,
+    -60.0,
+    135.0
+  ],
+  "muzzle_from": "`Vector(-10.f, -60.f, 135.f, p1)` at ZzzEffect.cpp line 1665, rotated by the shooter's own angle and added to their position, shared with every missile in the branch. It is MU's fallback rather than the thing normally used here: CrossBow03 names a bone of its own and is fired from that instead, and this is what a weapon with nothing to say falls back to.",
+  "flight_note": "Not aimed and not steered, and its end is not the target either - all of which is the steel bolt's note unchanged, because Move_MODEL_ARROW_STEEL is literally the handler both of them run. The dispatch table in MoveHandlers.cpp maps `{ MODEL_ARROW_SAW, &Move_MODEL_ARROW_STEEL }` at line 10368, and that function, from line 4540, has branches for MODEL_ARROW_NATURE, MODEL_LACEARROW and MODEL_ARROW_WING and none for the saw.\n\nIt does not spin, which is the thing a reader of the model would expect. Nothing in the handler or in CreateEffect's branch touches o->Angle for this type, the model's one action has one key, and the only other place MODEL_ARROW_SAW is named is CheckTargetRange at ZzzEffect.cpp line 265, where its case is a bare `break`. A saw blade crosses the clearing held still, at the angle it was fired.\n\nWhat ends it is CheckClientArrow asking `CheckCharacterRange(o, 100.f, o->PKKey)` - any living, visible body within one tile of where the blade is now, other than the one that fired it - which sets LifeTime to 1 so the blade vanishes on that frame.",
+  "trail_note": "There is none, and that is the handler rather than an omission here. Move_MODEL_ARROW spawns a BITMAP_FIRE particle every frame it lives, which is what puts a trail behind the wooden arrow; Move_MODEL_ARROW_STEEL does nothing of the kind for the saw. So the blade crosses the clearing as a bare object.",
+  "parts": [
+    {
+      "group": "toothed_whee",
+      "sheet": "toothed_whee.png",
+      "blend": "opaque",
+      "note": "The whole model. One mesh, and BlendMesh -1 names none of them as blended, so the blade is drawn solid over whatever is behind it."
+    }
+  ]
+}

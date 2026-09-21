@@ -1,0 +1,71 @@
+{
+  "item": "PantMale07",
+  "mu_name": "Scale Pants",
+  "mu_name_from": "MuMain loads MODEL_PANTS + i from PantMale{i+1} (ZzzOpenData.cpp line 141), so file 07 is index 6, which openmu's 0.75 Armors.cs names the Scale Pants. mu.db agrees: group 9 index 6, Player/PantMale07.bmd.",
+  "why_this_one": "Martin's and Harold's +3 line, and the third of their four sets. The wandering merchants stock all five Scale pieces at +3, so five of their lines were dropped by Realm.Shelf for want of a row. See shared/Market.Wandering.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(6, 4, 2, 2, \"Scale Pants\", 25, 14, 40, 110, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 6,
+    "drop_level": 25,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 14,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 110,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred and ten strength and no agility, where the Bronze set asked for eighty and twenty."
+  },
+  "sheets": [
+    "lower_08_m.png",
+    "hide_m.png"
+  ],
+  "sheet_from": "Data/Player/lower_08_m.OZJ (128x128) and hide_m.OZJ, from MuMain. The .bmd names lower_08_m.jpg and hide_m.jpg; 98 of the 110 triangles are on the first and 12 on hide.",
+  "sheet_note": "lower_08_m is both legs with a fan of scrollwork across the hips and a row of pale studs down each thigh. Mean (49, 63, 51), the darkest sheet in the set. hide is MU capping the openings, a solid black square, as on ArmorMale10. The set is a dark blue-green metal and every sheet agrees: chroma 17 to 19 about means near (50, 65, 55), which is a verdigris cast on a dark plate rather than the grey of the Plate set or the yellow-brown of the Bronze. It is the darkest metal set built so far - lum 54 on the legs against the Plate set's 137 - and that is worth stating because a dark albedo at metallic 1.0 is the shape of the fault the Bone set had. Here it is not a fault: the Bone set was hide and skull declared metal, and this really is plate. See materials/bone.json for the case that was wrong.",
+  "material_note": "One island of 110, which is lower_08_m's 98 and hide_m's 12 welded together: both legs and the caps. plate_steel, the profile's default, and the sheets do not argue with it: the colour is a verdigris cast at chroma 18 and the surface is banded plate. A metal's albedo is its reflectance, so a dark blue-green sheet at metallic 1.0 renders as dark blue-green metal - which is the same arithmetic the Bronze set records from the warm end. The pale studs down each thigh are paint inside it.",
+  "material_overrides": {
+    "plate_steel": {
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "plate_steel at 0.55 rather than its own 0.34, because this set is corroded and that figure is for polished plate. The assignment is right and the note above argues it well - a dark blue-green sheet at metallic 1.0 is dark blue-green metal - but the same sheets describe a verdigris cast, and verdigris is corrosion. A patina is the one thing a polished surface is not, and at 0.34 the set came back glassy: broad wet highlights sliding over the cuirass and the greaves with the scrollwork lost under them. Swept in Blender on the assembled set under the rig from MU2/lighting.json at 0.34, 0.48 and 0.60 - by 0.60 the scale pattern and the hip scrollwork read clearly and it looks aged rather than wet, and 0.55 keeps a little more metal in it.\n\nScoped to this set rather than moved in the library: the Plate set is clean steel and wants the polish it has.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 110,
+      "area": 8288.7,
+      "along": [
+        -30.3,
+        30.2
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.915,
+        0.995
+      ]
+    }
+  ]
+}

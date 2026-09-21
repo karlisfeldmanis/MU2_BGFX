@@ -1,0 +1,62 @@
+{
+  "item": "Furniture04",
+  "mu_name": "Furniture04",
+  "mu_name_from": "Lorencia's object slot 143, from WorldObjectCatalog.cs.",
+  "world": "lorencia",
+  "object_type": 143,
+  "why_this_one": "3 placements. Another table, 38 triangles. The interior pieces are worth building now rather than later because the roof fade works: walking into a house shows what is in it, and until now that was an empty floor.",
+  "profile": "world",
+  "sheets": {
+    "desk_big": "desk_big.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain.",
+  "sheet_materials": {
+    "desk_big": "hardwood"
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 16,
+      "area": 8117.9,
+      "along": [
+        5.9,
+        45.9
+      ],
+      "mu_uv": [
+        0.802,
+        0.57,
+        0.995,
+        1.002
+      ],
+      "bake_uv": [
+        0.465,
+        0.003,
+        0.629,
+        0.747
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 22,
+      "area": 20240.4,
+      "along": [
+        0.4,
+        99.7
+      ],
+      "mu_uv": [
+        0.004,
+        0.0,
+        0.677,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.004,
+        0.962,
+        0.997
+      ]
+    }
+  ]
+}

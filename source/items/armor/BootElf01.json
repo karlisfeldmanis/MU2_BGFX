@@ -1,0 +1,135 @@
+{
+  "item": "BootElf01",
+  "mu_name": "Vine Boots",
+  "mu_name_from": "MuMain loads boot indexes 10 to 14 from BootElf{i+1} (ZzzOpenData.cpp line 152), so index 10 is BootElf01, which openmu's 0.75 Armors.cs names the Vine Boots. mu.db agrees: code 5642, group 11 index 10, Player/BootElf01.bmd.",
+  "why_this_one": "The Fairy Elf's own first set, and the one set of the three that nobody sells: no shelf in Lorencia carries Vine, so this is a drop and a thing to look at. It is here because the Armour select had a single glove under her name and a set of one piece is a set you cannot see.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. See profiles/soft_armour.json, which exists for these three sets.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(10, 6, 2, 2, \"Vine Boots\", 5, 2, 0, 22, 30, 60, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 10,
+    "drop_level": 5,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 2,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 0,
+    "walk_speed_note": "Nought. The elf's boots carry no walk bonus where the Knight's Leather Boots carry twelve, which is the row's own asymmetry and is recorded rather than smoothed.",
+    "durability": 22,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 60,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Sixty agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "boots_04c.png",
+    "boots_04b.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/boots_04c.OZJ (64x64), boots_04b.ozt (32x32) and hide.jpg, from MuMain. The .bmd names boots_04c.jpg, boots_04b.tga and hide.jpg; 120 of the 128 triangles are on the first, 4 on the fins and 4 on hide.",
+  "sheet_note": "boots_04c is the boot from two sides, dark hide with the vine scroll worked up the shin and a studded cuff. Mean (71, 48, 34) at chroma 38. boots_04b is the pair of gilt fins that stand off the calf on two crossed quads, and it is the same sheet the Pad Boots wear - the two sets share the ornament and nothing else.",
+  "material_note": "Four islands. Islands 2 and 3 are 62 each - boots_04c's 120 and hide's caps, the two boots - and take leather: dark hide with the vine scroll raised in the same brown, as on the bodice and the circlet. Islands 0 and 1 are two triangles each, which is boots_04b's 4: the gilt fins on crossed quads. brass, and the same brass the Pad Boots take, because it is the same sheet - MU shares that one ornament between the wizard's set and the elf's and shares nothing else.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 2,
+      "area": 173.0,
+      "along": [
+        -20.0,
+        -2.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.345,
+        0.335,
+        0.676
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 2,
+      "area": 173.0,
+      "along": [
+        -20.0,
+        -2.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.335,
+        0.335
+      ]
+    },
+    {
+      "island": 2,
+      "material": "leather",
+      "triangles": 62,
+      "area": 3375.1,
+      "along": [
+        -7.9,
+        21.2
+      ],
+      "mu_uv": [
+        0.031,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.345,
+        0.005,
+        0.995,
+        0.967
+      ]
+    },
+    {
+      "island": 3,
+      "material": "leather",
+      "triangles": 62,
+      "area": 3382.1,
+      "along": [
+        -7.9,
+        21.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.996,
+        0.999
+      ],
+      "bake_uv": [
+        0.345,
+        0.005,
+        0.995,
+        0.967
+      ]
+    }
+  ]
+}

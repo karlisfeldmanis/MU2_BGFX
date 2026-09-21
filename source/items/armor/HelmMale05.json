@@ -1,0 +1,92 @@
+{
+  "item": "HelmMale05",
+  "mu_name": "Bone Helm",
+  "mu_name_from": "MuMain maps MODEL_HELM + i to HelmMale{i+1}, so file 05 is armour index 4, which openmu names Bone. Not Plate - Plate is index 9, file 10.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(4, 2, 2, 2, \"Bone Helm\", 18, 9, 30, 30, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 4,
+    "drop_level": 18,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 9,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 30,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone.",
+    "shelf_note": "On Pasi's shelf at +2, the middle column of the mage's stock - see shared/Market.cs."
+  },
+  "sheets": [
+    "head_06.png",
+    "head_a06.png",
+    "hide.png",
+    "skin_warrior_01.png"
+  ],
+  "blocked_was": "This asset carried a `blocked` note saying the pipeline handled one sheet per asset. That was true when it was written and is not now - ArmorMale10 wears upper_11 and hide, GloveMale06 wears gloves_07 and hide, and both are built - so the note is gone and the piece goes down the same path they did.",
+  "sheet_overrides": {
+    "head_a06": "hair"
+  },
+  "sheet_overrides_from": "head_a06 is the Dark Wizard's hair, six triangles of it, and the bake welded them into the helm's own shell - one UV island, one material, so the hair was shipping as pitted bone. It was written up here as the island rule's limit and it is not one any more: a named sheet is lifted into an island of its own before the maps are built, so these six faces take hair and the other sixty-seven stay bone. See build_maps, where the lift is, and HelmMale10, whose plume needed no such thing because the unwrapper had already given it two islands.",
+  "material_note": "Bone, and not the profile's plate_steel, which is what this set was built with and is the fault behind 'the bone set seemed dark'. MU paints these five sheets dark - upper_06 means 83 and lower_06 means 57 against the Plate set's 137 - and a dark albedo declared metallic 1.0 has no diffuse term to carry its mid-tones, so the armour kept the drawn highlights and went black between them. Nothing here was forged: it is skull, rib and claw over a dark hide. See materials/bone.json, which argues the number and the case against reusing chitin. Two islands. Island 0 is 73 triangles of the 112 and is the helmet: head_06's 60 plus the 6 of head_a06, the hair, and hide's 7 caps, which the bake welded into one island through shared verts. The hair no longer ships with the helmet's surface: see sheet_overrides_from, which lifts head_a06's six faces out of the island they share and gives them hair. Island 1 is the 39 triangles of skin_warrior_01, which is the face under the open front, and takes skin.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 73,
+      "area": 3936.7,
+      "along": [
+        -27.0,
+        27.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.991
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 39,
+      "area": 830.8,
+      "along": [
+        -5.6,
+        12.3
+      ],
+      "mu_uv": [
+        0.508,
+        0.756,
+        0.997,
+        0.922
+      ],
+      "bake_uv": [
+        0.056,
+        0.006,
+        0.61,
+        0.094
+      ]
+    }
+  ]
+}

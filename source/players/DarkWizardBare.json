@@ -1,0 +1,18 @@
+{
+  "item": "DarkWizardBare",
+  "mu_name": "Dark Wizard, no armour",
+  "kind": "character",
+  "trade": "wizard",
+  "trade_from": "OpenMU's ClassDarkWizard. Nothing built is a wand yet, so this is the class saying who he is rather than anything the fight currently reads. See FairyElf.json.",
+  "parts": [
+    "HelmClass01",
+    "ArmorClass01",
+    "PantClass01",
+    "GloveClass01",
+    "BootClass01"
+  ],
+  "note": "The Dark Wizard with nothing equipped, built the way the other two bare bodies are: MU has no naked body model, so what a class wears with no armour is a set of five parts of its own, skinned to the same rig and loaded at the origin.",
+  "parts_from": "MuPlayer.PartsForClass in the old client: the body a class wears with no armour equipped is HelmClass{NN}, ArmorClass{NN} and so on, and the numbering runs one over MU's zero-based classes - so Class01 is the Dark Wizard.",
+  "why_he_is_here": "The third and last of the classic classes, and the one the staff group belongs to. His combat numbers are already in shared/Beast.cs - Rates.For(Trade.DarkWizard) - and had no body to stand on.",
+  "rig": "player.bmd, the same rig the other two are skinned to."
+}

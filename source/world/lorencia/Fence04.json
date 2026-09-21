@@ -1,0 +1,41 @@
+{
+  "item": "Fence04",
+  "mu_name": "Fence04",
+  "mu_name_from": "Lorencia's object slot 84, from the client's own table in WorldObjectCatalog.cs. MU names the run rather than the member, so there is no friendlier name than the file's.",
+  "world": "lorencia",
+  "object_type": 84,
+  "why_this_one": "17 placements. The last of the four.",
+  "profile": "world",
+  "sheets": {
+    "joint": "joint.png"
+  },
+  "sheet_from": "Data/Object1/, from MuMain. All opaque .OZJ.",
+  "sheet_materials": {
+    "joint": "cobble"
+  },
+  "material_note": "cobble rather than timber, which is what it was first given on the strength of sitting in a block called Fence. The art is not a plank: it is a smooth stone kerb top over a row of rounded setts, drawn soft because the whole sheet is 32 square. Cobble's deep relief is exactly what that row of stones wants and what timber's shallow lengthwise grain was flattening.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 6725.3,
+      "along": [
+        -19.7,
+        6.8
+      ],
+      "mu_uv": [
+        -1.07,
+        0.007,
+        3.36,
+        1.147
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.847
+      ]
+    }
+  ]
+}

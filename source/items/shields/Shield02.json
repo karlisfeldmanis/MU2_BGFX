@@ -1,0 +1,132 @@
+{
+  "item": "Shield02",
+  "mu_name": "Horn Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1}, so Shield02.bmd is shield index 1, which openmu's 0.75 Armors.cs names the Horn Shield. mu.db agrees: group 6 index 1, Item/Shield02.bmd.",
+  "why_this_one": "Hanzo's, and the blacksmith is the last shop with lines missing - five of his twenty-four were built this morning. He stocks twelve shields and two were here; these five take him to seven of the twelve, in the order his shelf reads. See shared/Market.Blacksmith.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the two built shields use, and its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10, which records the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(1, 1, 0, 2, 2, \"Horn Shield\", 9, 3, 9, 28, 100, 0, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 1,
+    "drop_level": 9,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 3,
+    "defense_rate": 9,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "durability": 28,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": {
+    "du_shield2": "du_shield2.png"
+  },
+  "sheet_from": "Data/Item/du_shield2.OZJ (32x32), from MuMain. The .bmd names du_shield2.jpg; 26 triangles. The sheet is the partner of du_shield1, which the Small Shield wears - MU numbered the pair and the two shields are not otherwise related.",
+  "sheet_note": "du_shield2 is a round shield with three black bosses set in a pale steel face and a brown rim. Mean (90, 86, 92) at chroma 13, so it is steel with a warm edge rather than a coloured shield.",
+  "material_note": "Four islands: island 1 is the face at 14 triangles and islands 0, 2 and 3 are four each, the three bosses. Per triangle the face means (79, 80, 83) and the bosses (148, 149, 150), both at chroma 5 - the same steel lit differently rather than two materials. plate_steel and not the weapon profile's steel, which is the swap Shield10 records: steel is blade steel with a directional grain running along the mill, and running that across a shield face is the fault the Plate gauntlets showed. A shield is armour - hammered, curved, worn where it is hit.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 4,
+      "area": 474.9,
+      "along": [
+        9.8,
+        25.9
+      ],
+      "mu_uv": [
+        0.782,
+        0.007,
+        0.994,
+        0.156
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.797,
+        0.938
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 14,
+      "area": 5500.5,
+      "along": [
+        -29.9,
+        30.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.902,
+        0.902
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 4,
+      "area": 474.9,
+      "along": [
+        -25.7,
+        -9.7
+      ],
+      "mu_uv": [
+        0.782,
+        0.007,
+        0.994,
+        0.156
+      ],
+      "bake_uv": [
+        0.735,
+        0.15,
+        0.976,
+        0.929
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 4,
+      "area": 474.9,
+      "along": [
+        -7.3,
+        7.4
+      ],
+      "mu_uv": [
+        0.783,
+        0.01,
+        0.994,
+        0.153
+      ],
+      "bake_uv": [
+        0.607,
+        0.005,
+        0.996,
+        0.976
+      ]
+    }
+  ]
+}

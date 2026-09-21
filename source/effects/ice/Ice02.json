@@ -1,0 +1,24 @@
+{
+  "item": "Ice02",
+  "mu_name": "The shard an Ice throws out around what it froze",
+  "mu_name_from": "ZzzOpenData.cpp OpenSkills(): `gLoadData.AccessModel(MODEL_ICE_SMALL, L\"Data\\\\Skill\\\\\", L\"Ice\", 2)`, so Data/Skill/Ice02.bmd - the second file of the same pair the block comes from.",
+  "kind": "ice",
+  "why_this_one": "Five of them go with every block: `for (int i = 0; i < 5; i++) CreateEffect(MODEL_ICE_SMALL, to->Position, o->Angle, o->Light)`. See Ice01.json's why_this_one for the whole arm.",
+  "mesh": "Ice02.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Ice02.bmd, from MuMain. Six triangles in one mesh on ice.jpg, about 9 x 48 x 9 units - a splinter, tall and thin, a tenth the size of anything else in this folder. No poses: this model has no forming to do, and what moves it is the mover's own tumble on Angle.",
+  "parts": [
+    {
+      "group": "ice",
+      "sheet": "ice.png",
+      "blend": "additive",
+      "note": "The block's own sheet, and the sharing is the point rather than a saving: the shards are pieces of the same ice. Additive for the same reason and off the same line - `o->BlendMesh = 0` on a single-mesh model - with `o->BlendMeshLight = 0.3f` on top of it, so a shard is drawn at under a third of the block's brightness."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "The base the throw multiplies. `o->Scale = (float)(rand() % 4 + 8) * 0.1f` in the shared birth, 0.8 to 1.1 per shard - the same roll a stone and a bone get, from a different arm of the same function.",
+  "lift": 50,
+  "lift_from": "`o->Position[2] += (50.f) * FPS_ANIMATION_FACTOR` in the create arm - half a metre off the target's feet, so the five leave from around its middle rather than from the ground. The factor is dropped for the reason Meteor.HurlLift argues in full: it is a frame ratio and this is a one-shot offset at birth, so keeping it would put the shards at a different height on every machine.",
+  "frames": 32,
+  "frames_from": "`o->LifeTime = rand() % 16 + 32` - 32 to 47 reference frames, 1.28 to 1.88 s, which is the stones' and the bones' number. A shard outlives the block it came off by nearly a second.",
+  "flight_note": "*Not the ballistic arm the bones and the stones share, and the difference is worth having.* Move_MODEL_ICE_SMALL is its own handler and it differs in four ways:\n\n- **There is drag.** `VectorScale(o->Direction, 0.9f, o->Direction)` every frame, so a shard loses a tenth of its speed a frame and has spent most of it inside half a second. A stone keeps its horizontal until it touches the ground.\n- **Gravity is a velocity here, not an acceleration.** `o->Position[2] += o->Gravity` and then `o->Gravity -= 3.f` a frame, where a bone's arm does `o->HeadAngle[2] -= o->Gravity` and Gravity is the acceleration. Read the two arms as the same field and the shards come out twenty-five times wrong. Born at `rand() % 16 + 8`, so 8 to 23 units a frame upward, losing 3 a frame.\n- **The bounce is half and the life is docked.** On reaching the terrain: `o->Gravity = -o->Gravity * 0.5f`, `o->LifeTime -= 4`, and the tumble takes a kick of `o->Angle[0] -= o->Scale * 128.f` against the `o->Scale * 32.f` a frame it turns at in the air.\n- **It smokes.** `rand_fps_check(10)` - about one frame in ten - throws a BITMAP_SMOKE particle at the shard's own position, so each of the five leaves a thin trail of vapour behind it.\n\nThe scatter itself is the familiar shape: `Vector(0, (rand() % 256 + 64) * 0.1f, 0, p1)` rotated by a random yaw, which is 6.4 to 32 units a frame thrown flat."
+}

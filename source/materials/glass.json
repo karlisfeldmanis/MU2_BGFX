@@ -1,0 +1,13 @@
+{
+  "name": "glass",
+  "summary": "A polished sphere: the orbs. Solid glass, or something painted to look like it, with its own light already on it.",
+  "why": [
+    "This exists because the nearest thing in the library is ceramic, and a glaze is glass over clay - the same specular, but over a fired surface with a cast grain. An orb has no clay under it and no grain at all; it is the glass by itself.",
+    "Roughness 0.12, between water's 0.08 and ceramic's 0.30. A polished sphere returns one hard highlight and nothing else, and the one thing it must not be is soft: at a glaze's 0.30 the orb reads as a painted ball and at 0.12 it reads as a thing you could see into.",
+    "Metallic 0.0, for the reason water and ceramic give. A dielectric keeps its own colour under a white highlight; reaching for metallic to get the shine gives a ball bearing in the orb's blue.",
+    "No grain, and it is the argument that matters most here. MU's pearl sheet already carries three painted highlights and a swirl - the artist put the light on it - and a relief map would ridge a surface that is smooth by definition. The painted highlights stay, as they do on every MU sheet; the material adds a real one on top of them and does not fight them.",
+    "Named glass rather than pearl or orb because the surface is what is being described and not the object. A window pane, a bottle and a crystal ball are one surface, and the sheet MU shipped for the orbs happens to be called pearl."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.12
+}

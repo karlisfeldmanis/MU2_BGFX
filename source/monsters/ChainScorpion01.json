@@ -1,0 +1,407 @@
+{
+  "item": "ChainScorpion01",
+  "mu_name": "Chain Scorpion",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_CHAIN_SCORPION = 27 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_CHAIN_SCORPION), which is 20, so the file is Monster21.bmd. OpenMU's Version075 Noria.cs names number 27 'Chain Scorpion' at level 5 with 80 health. Its Korean ID in CreateMonster is 고리전갈, ring scorpion - the chain is the segmented tail.",
+  "world": "noria",
+  "object_type": 27,
+  "monster": {
+    "model_index": 20,
+    "scale": 1.1
+  },
+  "monster_from": "ZzzCharacter.cpp, CreateMonster, case MONSTER_CHAIN_SCORPION: `c->Object.Scale = 1.1f` and nothing else - no weapon, no BlendMesh, no HiddenMesh, no Level. MODEL_CHAIN_SCORPION is not in CreateCharacter's weapon link switch either, so it holds nothing.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, six keys each but the seven-key death; the walk is the locked one. Nine bones: Box08 the body, Box01 to Box06 the tail's six segments each the child of the last, light_point on the end of them at 7, and Cylinder01 hung off the body at 8. Bone 7 is the one the client reads - see sprites_from.\n\nNo BoneHead set in ZzzOpenData's case for this model, which is the Goblin's line and not this one's.\n\nPlay speeds are OpenMonsterModel's defaults with `case MONSTER_MODEL_CHAIN_SCORPION: b->Actions[MONSTER01_WALK].PlaySpeed = 0.4f`.",
+  "sheets": {
+    "bug3": "scorpion_bug3.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/bug3.OZJ, 32 by 64 and no alpha - byte-identical (md5) to the copy under LEGACY's old build. Decoded under a scorpion_ prefix: bug3 is the third of a numbered family and the other two are some other insect's.",
+  "sheet_materials": {
+    "bug3": "chitin"
+  },
+  "sheet_materials_from": "Read off the sheet, magnified: an amber shell studded with rounded bosses, dark seams between plates and a curl of green at one edge. A shell is chitin, which is what the Spider is dressed in for the same reason.",
+  "effects": [
+    {
+      "kind": "ground_dust"
+    }
+  ],
+  "effects_from": "ZzzCharacter.cpp's per-frame effect switch, where MODEL_CHAIN_SCORPION shares a case with MODEL_DARK_KNIGHT and MODEL_LARVA - and where MODEL_BUDGE_DRAGON's case above it runs on into the same lines, having no break:\n\n    if (c->Dead == 0 && rand_fps_check(4))\n        ... CreateParticle(BITMAP_SMOKE + 1, Position, o->Angle, Light);\n\nwith Position scattered 32 units about its feet and BITMAP_SMOKE rather than SMOKE + 1 in Devias alone. That is exactly the Budge Dragon's ground_dust, so it is declared the same way and drawn by the same Dust; it stops when the animal dies, as the gate says.",
+  "sprites": [
+    {
+      "sheet": "light",
+      "tint": [
+        1.0,
+        0.4,
+        0.2
+      ],
+      "size": 1.0,
+      "flicker": "luminosity",
+      "at": [
+        {
+          "bone": "light_point",
+          "offset": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ],
+  "sprites_from": "The same case, before the dust:\n\n    Vector(0.f, 0.f, 0.f, p);\n    b->TransformPosition(o->BoneTransform[7], p, Position, true);\n    Vector(Luminosity * 1.f, Luminosity * 0.4f, Luminosity * 0.2f, Light);\n    CreateSprite(BITMAP_LIGHT, Position, 1.f, Light, o);\n\nBone 7 is light_point, on the tip of the tail, with no offset. BITMAP_LIGHT is Effect/flare01.jpg, a 64-square white star, at scale 1: 64 units across. The Light is an orange, and Luminosity is the one MoveCharacterVisual rolls once per frame before the switch - `(float)(rand() % 8 + 2) * 0.1f`, one of eight steps from 0.2 to 0.9 - so the sting gutters like a coal rather than pulsing like an eye. Rolled at MU's 25 a second rather than per drawn frame; see Shaders.Glint.",
+  "sounds_from": "Five files off `case MONSTER_MODEL_CHAIN_SCORPION` in ZzzOpenData: mScorpion1, mScorpion2, mScorpionAttack1, mScorpionAttack2 and mScorpionDie, with SetMonsterSound(..., 77, 78, 79, 80, 81) - offsets from SOUND_MONSTER_BULL1 at 210, so 287 to 291, SOUND_MONSTER_SCORPION1 to SCORPIONDIE, exactly the five it loads. Filed as chainscorpion_move, _attack, _shock and _die.",
+  "islands_from": "All sixteen chitin, which is what sheet_materials says and what the shell is. They were skin until 2026-09-21: islands.py gives a new island the monster profile's default, which is skin, and never reads sheet_materials, so the declaration above was made and the bake never saw it - the trap Spider01 records, and the one the Lich and the Giant met again.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "chitin",
+      "triangles": 16,
+      "area": 584.1,
+      "along": [
+        -85.5,
+        -54.2
+      ],
+      "mu_uv": [
+        0.541,
+        0.001,
+        0.993,
+        0.783
+      ],
+      "bake_uv": [
+        0.006,
+        0.521,
+        0.318,
+        0.627
+      ]
+    },
+    {
+      "island": 1,
+      "material": "chitin",
+      "triangles": 16,
+      "area": 581.7,
+      "along": [
+        -85.5,
+        -54.2
+      ],
+      "mu_uv": [
+        0.541,
+        0.001,
+        0.993,
+        0.783
+      ],
+      "bake_uv": [
+        0.332,
+        0.583,
+        0.643,
+        0.671
+      ]
+    },
+    {
+      "island": 2,
+      "material": "chitin",
+      "triangles": 18,
+      "area": 2584.1,
+      "along": [
+        -7.2,
+        34.0
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.99
+      ],
+      "bake_uv": [
+        0.589,
+        0.336,
+        0.807,
+        0.641
+      ]
+    },
+    {
+      "island": 3,
+      "material": "chitin",
+      "triangles": 6,
+      "area": 1161.0,
+      "along": [
+        -3.3,
+        34.0
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.892
+      ],
+      "bake_uv": [
+        0.754,
+        0.771,
+        0.994,
+        0.994
+      ]
+    },
+    {
+      "island": 4,
+      "material": "chitin",
+      "triangles": 18,
+      "area": 1554.2,
+      "along": [
+        -25.2,
+        6.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.99
+      ],
+      "bake_uv": [
+        0.095,
+        0.594,
+        0.37,
+        0.845
+      ]
+    },
+    {
+      "island": 5,
+      "material": "chitin",
+      "triangles": 6,
+      "area": 763.1,
+      "along": [
+        -23.5,
+        6.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.892
+      ],
+      "bake_uv": [
+        0.61,
+        0.006,
+        0.83,
+        0.26
+      ]
+    },
+    {
+      "island": 6,
+      "material": "chitin",
+      "triangles": 24,
+      "area": 1879.5,
+      "along": [
+        -44.8,
+        -13.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.99
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.341,
+        0.463
+      ]
+    },
+    {
+      "island": 7,
+      "material": "chitin",
+      "triangles": 18,
+      "area": 966.1,
+      "along": [
+        -64.3,
+        -30.2
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.99
+      ],
+      "bake_uv": [
+        0.247,
+        0.389,
+        0.583,
+        0.584
+      ]
+    },
+    {
+      "island": 8,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 384.9,
+      "along": [
+        -64.3,
+        -30.2
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.892
+      ],
+      "bake_uv": [
+        0.34,
+        0.787,
+        0.592,
+        0.9
+      ]
+    },
+    {
+      "island": 9,
+      "material": "chitin",
+      "triangles": 3,
+      "area": 375.1,
+      "along": [
+        -64.3,
+        -30.2
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.954,
+        0.892
+      ],
+      "bake_uv": [
+        0.53,
+        0.674,
+        0.785,
+        0.785
+      ]
+    },
+    {
+      "island": 10,
+      "material": "chitin",
+      "triangles": 118,
+      "area": 7526.5,
+      "along": [
+        13.7,
+        78.0
+      ],
+      "mu_uv": [
+        0.005,
+        0.01,
+        0.955,
+        0.99
+      ],
+      "bake_uv": [
+        0.266,
+        0.006,
+        0.621,
+        0.381
+      ]
+    },
+    {
+      "island": 11,
+      "material": "chitin",
+      "triangles": 1,
+      "area": 12.9,
+      "along": [
+        13.7,
+        31.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.78,
+        0.555,
+        0.99
+      ],
+      "bake_uv": [
+        0.007,
+        0.211,
+        0.015,
+        0.409
+      ]
+    },
+    {
+      "island": 12,
+      "material": "chitin",
+      "triangles": 1,
+      "area": 12.9,
+      "along": [
+        13.7,
+        31.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.78,
+        0.554,
+        0.99
+      ],
+      "bake_uv": [
+        0.006,
+        0.47,
+        0.204,
+        0.478
+      ]
+    },
+    {
+      "island": 13,
+      "material": "chitin",
+      "triangles": 2,
+      "area": 246.7,
+      "along": [
+        -82.0,
+        -67.5
+      ],
+      "mu_uv": [
+        0.544,
+        0.205,
+        0.893,
+        0.783
+      ],
+      "bake_uv": [
+        0.359,
+        0.657,
+        0.506,
+        0.732
+      ]
+    },
+    {
+      "island": 14,
+      "material": "chitin",
+      "triangles": 1,
+      "area": 14.7,
+      "along": [
+        -81.8,
+        -78.3
+      ],
+      "mu_uv": [
+        0.544,
+        0.205,
+        0.893,
+        0.254
+      ],
+      "bake_uv": [
+        0.008,
+        0.007,
+        0.017,
+        0.03
+      ]
+    },
+    {
+      "island": 15,
+      "material": "chitin",
+      "triangles": 1,
+      "area": 14.7,
+      "along": [
+        -82.0,
+        -78.3
+      ],
+      "mu_uv": [
+        0.544,
+        0.207,
+        0.889,
+        0.252
+      ],
+      "bake_uv": [
+        0.021,
+        0.007,
+        0.03,
+        0.028
+      ]
+    }
+  ]
+}

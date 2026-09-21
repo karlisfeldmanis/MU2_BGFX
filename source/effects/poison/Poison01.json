@@ -1,0 +1,45 @@
+{
+  "item": "Poison01",
+  "mu_name": "The cloud of poison a wizard's Poison spell leaves standing on what it hits",
+  "mu_name_from": "ZzzOpenData.cpp OpenSkills(): `gLoadData.AccessModel(MODEL_POISON, L\"Data\\\\Skill\\\\\", L\"Poison\", 1)` - the last argument is the file number, so Data/Skill/Poison01.bmd. Filed under Skill with the meteor, the block of ice and the stones.",
+  "kind": "poison",
+  "why_this_one": "It is the whole of the client's Poison, in ZzzCharacter.cpp's damage arm:\n\n    case AT_SKILL_POISON:\n    case AT_SKILL_POISON_STR:\n        if (o->Type == MODEL_PLAYER)\n            CreateEffect(MODEL_POISON, to->Position, o->Angle, o->Light);\n        Vector(0.4f, 0.6f, 1.f, Light);\n\n        for (int i = 0; i < 10; i++)\n            CreateParticle(BITMAP_SMOKE, to->Position, o->Angle, Light, 1);\n\n        if (c->SkillSuccess)\n            g_CharacterRegisterBuff(to, eDeBuff_Poison);\n        PlayBuffer(SOUND_HEART);\n        break;\n\nOne cloud, ten puffs of smoke, one wave and a debuff icon on the target.\n\n*The model is the player's alone.* `if (o->Type == MODEL_PLAYER)` guards the CreateEffect and nothing else in the arm, so a monster that poisons somebody makes the ten puffs and no cloud. That is the one place a spell's picture in MU depends on who threw it, and it is the reverse of Energy Ball, whose thirty lines of monster sit above a `default` that is every player.\n\n*Whose angle it is.* `o->Angle` - the caster's facing, not the target's - which is the same reading Ice01.json argues at length. The cloud is square to the man who threw it.\n\n*And the light that is thrown away.* `Vector(0.4f, 0.6f, 1.f, Light)` is computed for the ten particles and never seen: BITMAP_SMOKE's sub-type 1 mover writes `Vector(Luminosity * 0.5f, Luminosity * 1.f, Luminosity * 0.8f, o->Light)` over it on the particle's very first frame. So the puffs are green whatever the create arm says, and the blue-ish vector above them is dead code that reads like an intention. Transcribed as a finding rather than as a colour.",
+  "mesh": "Poison01_00.obj",
+  "mesh_from": "muextract export-obj on Data/Skill/Poison01.bmd, from MuMain. Three hundred and eighty-four triangles in two meshes - 132 on wall01.jpg and 252 on wall02.jpg - about 89 x 93 units on the ground and 170 tall, which at the create arm's Scale of 1.0 is roughly 0.9 x 0.9 x 1.7 m: a column of vapour standing as tall as the body it is on.\n\nUnlike the ice, `mesh` names the *first* key rather than the settled one, because this model's rest pose is identical to key 0 and key 0 is what the effect is drawn at on the frame it is born. Anything that reads only `mesh` draws the cloud as it appears.",
+  "poses": [
+    "Poison01_00.obj",
+    "Poison01_01.obj",
+    "Poison01_02.obj",
+    "Poison01_03.obj",
+    "Poison01_04.obj",
+    "Poison01_05.obj",
+    "Poison01_06.obj",
+    "Poison01_07.obj",
+    "Poison01_08.obj",
+    "Poison01_09.obj",
+    "Poison01_10.obj"
+  ],
+  "poses_from": "The model's one action, thirty-nine bones and eleven keys, baked a mesh a key by `muextract export-obj --key=N`.\n\n*Why this model carries poses at all, when Fire01 does not.* Poison01's action is pure bone rotation - every translation is constant across all eleven keys - so its rest pose is a shape the game does draw, and that is the test Fire01 passes too. What makes it different is that the animation is *played through*: the effect is born with `o->Velocity = 0.3f`, CreateEffect's own default, and MODEL_POISON sits inside the [MODEL_BIRD01, MODEL_SKILL_END) range that ZzzEffect.cpp:8526 calls PlayAnimation for. Three tenths of a key a frame across eleven keys is thirty-seven frames, and the effect lives forty - so the cloud writhes through its whole action once and then holds, where the meteor's flame never leaves key 0. The swing is 108 degrees at its widest, which is not something a single pose stands in for.\n\n*Why eleven meshes and not a rig, when this one really does interpolate.* Because MU interpolates two keys and no more, and it says so in arithmetic this project can carry: BMD::Animation takes `s1 = AnimationFrame - (int)AnimationFrame` and `s2 = 1 - s1` and blends the prior key's pose with the current one by that pair. Two poses and a weight is what a blend shape is. So the eleven keys are baked, the ten differences from the first are handed to the engine as blend shapes, and the two weights the client computes are written straight onto them - see client/core/Poison.cs, which quotes those two lines beside the code that sets them. A skinned rig would be a second skeleton implementation to disagree with muextract's.",
+  "parts": [
+    {
+      "group": "wall01",
+      "sheet": "wall01.png",
+      "blend": "flat",
+      "note": "Data/Skill/wall01.OZJ, a 64 square, mean (72, 112, 56) - a mottled leaf-green with no black in it anywhere.\n\nFlat, and that is read off `blendMesh = 1` in the registry rather than guessed from the sheet: BlendMesh names *which mesh* of the model is drawn as the blend mesh, and it names the second one. So this mesh is the ordinary textured draw and the one below it is the addition over the top. A sheet this evenly lit is the one to draw opaque - added it would be a green wash with no shape in it.\n\nWhat carries it instead is `o->Alpha`, which the mover pins to `LifeTime * 0.1f` every frame: four at birth, so the cloud is solid for its first thirty frames and thins out over its last ten."
+    },
+    {
+      "group": "wall02",
+      "sheet": "wall02.png",
+      "blend": "additive",
+      "note": "Data/Skill/wall02.OZJ, 32 x 64, mean (11, 42, 40) - dark teal wisps on black, and two thirds of the model's triangles wear it.\n\nAdditive, off the same `blendMesh = 1`, and drawn at `o->BlendMeshLight`, which the mover pins to `LifeTime * 0.1f` beside the alpha. Painted this dark it is only ever meant to be added: the wisps are the part of the cloud that glows through itself."
+    }
+  ],
+  "scale": 1.0,
+  "scale_from": "`.scale = 1.0f` in EffectRegistry.cpp:86's CreateParams for MODEL_POISON, given outright with no roll on it - the ice's arrangement rather than the meteor's 1.0-to-1.7. Every Poison in the game is the same size.",
+  "lift": 0,
+  "lift_from": "Nothing. `CreateEffect(MODEL_POISON, to->Position, ...)` puts it at the target's own position, which in the client is its place on the ground, and the model is authored to stand up from there - its lowest vertex is exactly 0 and its highest 170.",
+  "frames": 40,
+  "frames_from": "`.lifeTime = 40.f` in the same CreateParams. One and three fifths of a second at MU's clock of 25, and unlike the ice's fifty it is the real life: nothing in Move_MODEL_POISON kills the effect early, so what ends it is the shared tail's `o->LifeTime -= FPS_ANIMATION_FACTOR` reaching nought.",
+  "smoke_from": "Ten at once at birth, and none after: `for (int i = 0; i < 10; i++) CreateParticle(BITMAP_SMOKE, to->Position, o->Angle, Light, 1)`. Sub-type 1, which is a heavier and longer-lived particle than the sub-type 0 the ice and the wave throw - `o->LifeTime = 50`, `o->Scale = (rand() % 32 + 80) * 0.01f`, born within 32 units either way on the ground and 32 to 96 up, and thrown outward with `Vector(0, -(rand() % 8 + 40), 0, o->Velocity)` rotated by a random yaw and a pitch of -45 to 45 degrees.\n\nIts mover is sub-type 1's own arm and not sub-type 0's: `Luminosity = LifeTime / 50` - so it fades from full over its whole life rather than saturating for its first half - `Light = (Lum * 0.5, Lum * 1.0, Lum * 0.8)`, green; `VectorScale(o->Velocity, 0.4f, o->Velocity)` every frame, which is drag so heavy that a puff has spent nearly all of its 40-odd units of throw inside three frames; and `o->Scale += 0.05f` a frame, which over fifty frames is two and a half times the size it was born at.",
+  "light_from": "`Vector(Luminosity * 0.3f, Luminosity * 1.f, Luminosity * 0.6f, Light); AddTerrainLight(o->Position[0], o->Position[1], Light, 2, PrimaryTerrainLight)` - green, added, two tiles. Poison puts light into the ground where the ice takes it out.\n\nLuminosity is MoveEffect's own preamble roll, `(rand() % 4 + 7) * 0.1f` re-thrown every frame, and here - unlike on the ice - the second half of that preamble is reached: `if (o->LifeTime < 5) Luminosity -= (5 - o->LifeTime) * 0.2f`. The cloud lives out its whole forty frames, so the ground light dies over its last five while the model itself thins over its last ten."
+}

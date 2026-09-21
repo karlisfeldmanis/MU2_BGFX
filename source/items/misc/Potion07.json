@@ -1,0 +1,97 @@
+{
+  "item": "Potion07",
+  "mu_name": "Large Mana Potion",
+  "mu_name_from": "ZzzOpenData.cpp: `for (int i = 0; i < 7; i++) AccessModel(MODEL_POTION + i, L\"Data\\\\Item\\\\\", L\"Potion\", i + 1)` - so potion number 6 is Potion07.bmd - and OpenMU's 0.75 initialiser names group 14 number 6 the Large Mana Potion.",
+  "why_this_one": "A shelf line on Potion Girl Amy's - stocked twice, as a single and as a three, see Market.PotionGirl - and until it existed the line was dropped by Realm.Shelf. Large mana, number 6: the blue quarter of medicine1.",
+  "profile": "weapon",
+  "profile_note": "Not because a potion is a weapon but because the profile is about the art: a small painted sheet on a made object seen close, upscaled with the drawn model held back so a band of paint does not become a ridge. The Apple made the same argument. The default material is overridden per island below.",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated. Only the columns a drop and a shelf read are here - a potion has no damage roll, no stance and no hand, which is why it carries a Prize and no Arm. See shared/Rows.cs.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Potions.cs, CreateLargeManaPotion().",
+    "call": "Number = 6; Group = 14; DropsFromMonsters = true; DropLevel = 40; Durability = 3; Value = 30; Width = 1; Height = 1",
+    "call_note": "Written out as fields rather than as a call because that is what the source is: the potions are each built property by property, so the properties are quoted instead. See Potion01, the Apple, which set the shape.",
+    "group": 14,
+    "number": 6,
+    "drop_level": 40,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 3,
+    "durability_note": "Three on a potion is the stack it drops as, not wear; the row's Value is what a shop reads. See Coin.Buying."
+  },
+  "sheets": {
+    "medicine1": "medicine1.png",
+    "medicine2": "medicine2.png"
+  },
+  "sheet_from": "Data/Item/medicine1.OZJ (32x32) and medicine2.OZJ (16x16), from MuMain. Every Potion0X.bmd from 02 to 07 and Antidote01.bmd names the same two: the models differ in shape and in which quarter of medicine1 they sample, not in art.",
+  "sheet_note": "medicine1 is four bottles in one sheet - red top-left, green top-right, blue bottom-left, orange bottom-right - each a glass flask with a highlight, and the model picks its liquid by which quarter its UVs sit in. medicine2 is the cork and collar: a gold band over a pale stopper. So the body island wants glass and the cap wants brass, and the colour is the sheet's.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 44,
+      "area": 2210.4,
+      "along": [
+        -8.7,
+        8.3
+      ],
+      "mu_uv": [
+        -0.316,
+        0.02,
+        0.991,
+        0.985
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.548
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 12,
+      "area": 151.0,
+      "along": [
+        -9.7,
+        9.2
+      ],
+      "mu_uv": [
+        -0.006,
+        0.15,
+        0.994,
+        0.528
+      ],
+      "bake_uv": [
+        0.003,
+        0.524,
+        0.666,
+        0.775
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 12,
+      "area": 243.6,
+      "along": [
+        -9.7,
+        9.2
+      ],
+      "mu_uv": [
+        -0.006,
+        0.13,
+        0.994,
+        0.534
+      ],
+      "bake_uv": [
+        0.003,
+        0.251,
+        0.666,
+        0.518
+      ]
+    }
+  ],
+  "material_note": "The flask is glass and the collar is brass, and the islands separate them cleanly because the model does: the body samples one quarter of medicine1 - v above 0.5 in Blender's frame, which is the top row of flasks once V is flipped for the healing potions and the bottom row for the mana potions, the liquid's colour coming out of which quarter - and the cap samples medicine2. So the large island of each is the flask and takes glass, and the small ones are the cork and collar and take brass. glass rather than ceramic for the argument glass.json makes about the orbs: nothing fired under it, just a polished surface with its highlight already painted on."
+}

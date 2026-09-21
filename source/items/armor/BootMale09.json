@@ -1,0 +1,184 @@
+{
+  "item": "BootMale09",
+  "mu_name": "Brass Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1} (ZzzOpenData.cpp line 143), so file 09 is index 8, which openmu's 0.75 Armors.cs names the Brass Boots. mu.db agrees: group 11 index 8, Player/BootMale09.bmd.",
+  "why_this_one": "Martin's and Harold's last +3 line, and the piece that finishes their shelf: with these five the wandering merchants sell all twenty-five of the lines Market.Wandering lists, where they sold ten this morning. See shared/Market.cs.",
+  "profile": "armour",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(8, 6, 2, 2, \"Brass Boots\", 32, 10, 6, 44, 100, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 8,
+    "drop_level": 32,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 10,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 6,
+    "walk_speed_note": "Six, the boots' own column, which nothing here reads: a walk is MU's fixed tile rate. Recorded rather than dropped.",
+    "durability": 44,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone. A hundred strength and thirty agility, the highest agility any built armour asks for."
+  },
+  "sheets": [
+    "boots_10.png",
+    "boots_10b.png"
+  ],
+  "sheet_from": "Data/Player/boots_10.OZJ (64x64) and boots_10b.ozt (32x32), from MuMain, and no hide at all: the .bmd names boots_10.jpg and boots_10b.tga only; 138 of the 142 triangles are on the first and 4 on the ornament. The Bronze gloves and boots were the first worn parts here without a hide cap and this is the third.",
+  "sheet_note": "boots_10 is the greaves from two sides, a gold shin plate with a ribbed cuff over a darker boot, mean (115, 109, 67) at chroma 52. boots_10b is the gold fan that stands off the calf, the sheet this set shares three ways. The set is a bright yellow gold and the sheets are the most saturated armour in the project: chroma 38 on the legs to 100 on the wing ornament, where the Bronze set runs 30 to 70 and the Plate set 3 to 8. Olive-green shading in the hollows, which is MU painting a warm metal's shadow cool.",
+  "material_note": "Six islands. Islands 0 to 3 are 53, 53, 16 and 16 - the two greaves and their two cuffs, boots_10's 138 - and take plate_steel. Islands 4 and 5 are two triangles each, boots_10b's 4: the gold fan standing off each calf, brass. No hide on this piece at all.\n\nThe set is one colour and two materials, which is the thing it teaches. The plates take plate_steel - hammered, curved, roughness 0.68 - and the small ornaments on their own .OZT sheets take brass, which is cast at 0.44 with a coarser grain. Both are gold in MU's paint and the paint is not what decides: a material states how a thing was made, so a shell beaten to fit a chest and a fan of quills poured in a mould are two surfaces however alike their colour. It is the same reading the Pad Boots' fins got, made inside a single set for the first time.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0_desaturation": 1.0,
+      "roughness": 0.46
+    }
+  },
+  "material_overrides_why": "plate_steel gives up its pull toward grey and a little of its polish, as on the Bronze set and for the same reason. Every sheet in this set says bright yellow gold - the most saturated armour in the project, chroma 38 to 100 - and plate_steel ships f0_desaturation 0.75, which took the gold out: cooked on 2026-09-21 the cuirass's base colour came out at saturation 0.21 from the art's 0.47 and the set read as grey steel with brass quills. Roughness 0.35 -> 0.46 comes with it, because on Bronze full saturation at the library's polish put hot glassy specular on the shoulder and hip. The alloy is still MU's paint; the material is still plate_steel.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 3021.0,
+      "along": [
+        14.0,
+        62.1
+      ],
+      "mu_uv": [
+        0.036,
+        0.004,
+        0.992,
+        0.765
+      ],
+      "bake_uv": [
+        0.296,
+        0.007,
+        0.813,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 3032.2,
+      "along": [
+        -76.0,
+        -22.9
+      ],
+      "mu_uv": [
+        0.036,
+        0.004,
+        0.992,
+        0.765
+      ],
+      "bake_uv": [
+        0.416,
+        0.006,
+        0.918,
+        0.918
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 958.5,
+      "along": [
+        11.4,
+        31.9
+      ],
+      "mu_uv": [
+        0.2,
+        0.268,
+        0.7,
+        0.99
+      ],
+      "bake_uv": [
+        0.416,
+        0.007,
+        0.756,
+        0.722
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 958.4,
+      "along": [
+        -40.6,
+        -15.1
+      ],
+      "mu_uv": [
+        0.2,
+        0.268,
+        0.7,
+        0.99
+      ],
+      "bake_uv": [
+        0.006,
+        0.432,
+        0.863,
+        0.798
+      ]
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 2,
+      "area": 515.2,
+      "along": [
+        -14.6,
+        21.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.301,
+        0.403,
+        0.697
+      ]
+    },
+    {
+      "island": 5,
+      "material": "brass",
+      "triangles": 2,
+      "area": 515.2,
+      "along": [
+        -52.7,
+        -27.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.402,
+        0.402
+      ]
+    }
+  ]
+}
