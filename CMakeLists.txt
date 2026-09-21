@@ -104,6 +104,7 @@ add_executable(mu2
   src/game/headless.cpp
   src/game/play.cpp
   src/game/showing.cpp
+  src/game/marker.cpp
   src/game/panel.cpp
   src/game/hud.cpp
   src/game/card.cpp

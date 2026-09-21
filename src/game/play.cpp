@@ -33,9 +33,9 @@ constexpr float kDrawRange = 32.0f;
 // he arrives.
 //
 // Setting off and stopping are not the same change, which is why they are not the same number.
-constexpr float kGaiting = 0.15f;   // standing into a walk: a weight shift, worth seeing
+constexpr float kGaiting = 0.1f;    // standing into a walk: MU2's 0.15 slid for its length
 constexpr float kHalting = 0.08f;   // a walk into standing: an arrival, already late
-constexpr float kCoasting = 0.1f;   // two ticks of patience before a still body is a stopped one
+constexpr float kCoasting = 0.1f;   // a monster's patience before a still body is a stopped one
 // The most a clip may be hurried. MU2 clamps the rate to [0.25, 4]; the floor is not kept here
 // because zero is a rate this engine means -- a body covering no ground has its feet stop, and
 // a quarter-speed walk under a body that is not moving is the slide the floor was hiding.
@@ -324,7 +324,22 @@ void Play::update(double seconds) {
         // either side of where the clock stands, which is what the comment below claims.
         remember();
         sim::audit(realm_, findings_);
+        const uint32_t heroId = realm_.hero().id;
         for (const sim::Happening& happening : realm_.happenings()) {
+            // The marker, off the realm's own word for where the walk ends: `Walked` carries
+            // the goal the route was planned to, after the router moved it out of any wall,
+            // so the marker is where he will stand and not where the pointer was.
+            if (happening.who == heroId && ground_) {
+                const float metresPerTile = ground_->metresPerTile();
+                const float x = (float(happening.a) + 0.5f) * metresPerTile;
+                const float z = -(float(happening.b) + 0.5f) * metresPerTile;
+                if (happening.what == sim::What::Walked && mark_) {
+                    marker_.show(x, z);
+                } else if (happening.what == sim::What::Halted ||
+                           happening.what == sim::What::Died) {
+                    marker_.dismiss();
+                }
+            }
             // A swing is drawn because it is a POSE and not an effect: the blood, the number,
             // the fall and the health plate that hang off the landing are sprint 6's, and none
             // of them is here. What a blow does to the picture today is put the attacker into
@@ -375,9 +390,12 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Stepped) continue;
             lastLine_ = sim::describe(happening, realm_);
         }
+        // The ask was taken on this tick, whatever became of it.
+        mark_ = false;
         accumulator_ -= kTickSeconds;
         ++stepped;
     }
+    marker_.update(float(seconds));
     if (stepped > 0) {
         tickMs_ = double(bx::getHPCounter() - started) * 1000.0 /
                   double(bx::getHPFrequency()) / double(stepped);
@@ -470,8 +488,28 @@ void Play::follow(float seconds) {
         // Between the two ticks either side of where the clock stands. Presentation only:
         // every reach, aim and hit in the sim used the sim's own position, and this one is
         // never read back into it. docs/conventions.md, "Time".
-        const float tileX = one.wasX + (one.nowX - one.wasX) * through_;
-        const float tileY = one.wasY + (one.nowY - one.wasY) * through_;
+        //
+        // Not always evenly, though. The tick a walk ends on covers only what was left of the
+        // last tile -- 0.74 of a step, say -- and spread over the whole 50 ms that is the body
+        // slowing to a quarter of its pace under feet still striding at full, then standing
+        // with the walk still playing: the slide at the end of every walk. So the arrival is
+        // drawn at the body's own pace and finishes early, at `arrived` of the way through,
+        // and the drawn body stands still on the spot for the rest of the tick. A jump of more
+        // than two tiles is a respawn or a gate and is not walked at all.
+        const float covered = one.groundSpeed * float(kTickSeconds) / metresPerTile;
+        const bool jumped = covered > 2.0f;
+        float through = jumped ? 1.0f : through_;
+        float arrived = 1.0f;
+        if (!body->walking && covered > 1e-4f && covered < body->speed * 0.999f) {
+            arrived = covered / body->speed;
+            through = std::min(1.0f, through_ / arrived);
+        }
+        // Whether the DRAWN body is covering ground at this instant. This, and not the sim's
+        // `walking`, is what the walk clip answers to: the sim stops a body on a tick and the
+        // drawing gets there up to a tick later.
+        const bool moving = !jumped && covered > 1e-4f && through_ < arrived;
+        const float tileX = one.wasX + (one.nowX - one.wasX) * through;
+        const float tileY = one.wasY + (one.nowY - one.wasY) * through;
         const float x = (tileX + 0.5f) * metresPerTile;
         const float z = -(tileY + 0.5f) * metresPerTile;
         // A model looks down +z, and placementTransform negates the angle it is given, so +z
@@ -501,7 +539,7 @@ void Play::follow(float seconds) {
         // as still. Taken at face value each of them drops into the idle and comes straight
         // back out, and because the fade is longer than the blip the man goes soft in the knees
         // at every obstacle. MU2's `Crowd.Coasting` covers them with two ticks of patience.
-        one.still = one.groundSpeed > 0.01f ? 0.0f : one.still + seconds;
+        one.still = moving ? 0.0f : one.still + seconds;
         // A swing holds until it has played out, and then walk or idle take it back. `play`
         // ignores a request for the clip already running, so the two below are comparisons
         // rather than restarts, and the blend between them is the crossfade's.
@@ -532,10 +570,20 @@ void Play::follow(float seconds) {
         const auto isWalk = [&](int c) {
             return c >= 0 && (c == look->walkClip || c == look->walkSafeClip);
         };
-        // Walking is the sim's own answer, held through a blip by the coast above. A body that
-        // the sim says is walking but that covered no ground this tick is still walking -- it
-        // is turning onto its line -- and the rate below is what stops its feet.
-        const bool walking = body->walking || one.still < kCoasting;
+        // Walking is what the drawn body is doing, and nothing else sets a walk going: a body
+        // the sim has walking but still turning on the spot stays in its idle until the first
+        // step lands, rather than marching in place through the pivot. Once walking, a turn on
+        // the spot mid-walk keeps the walk -- a reversal is two ticks and dropping to the idle
+        // for them is a stumble.
+        //
+        // And the end of a walk is exactly where the drawn body stops, with no patience after
+        // it. MU2's coast held the walk a tenth of a second past every stop, which was striding
+        // on the spot at every arrival -- "weird walking when he has already stopped". The coast
+        // is kept for monsters only, whose chase halts and re-plans between ticks and would
+        // flicker to idle without it; the character's walk is replaced, never halted, when a
+        // click re-aims it.
+        const bool walking = moving || (body->walking && isWalk(one.figure.clip())) ||
+                             (!body->player && body->walking && one.still < kCoasting);
         if (walking) {
             clip = walkHere;
         } else if (safe && look->idleSafeClip >= 0) {
@@ -554,9 +602,9 @@ void Play::follow(float seconds) {
                 one.figure.setClock(one.walkPhase);
             } else {
                 if (isWalk(was)) one.walkPhase = one.figure.clock();
-                // Coming to a stop is an arrival, and the body is already late for it: the
-                // coast above has held the walk a tenth of a second past the tick that ended
-                // it. So the fade is only long enough not to be a cut.
+                // Coming to a stop is an arrival, drawn on the frame the body stops, and the
+                // fade is only long enough not to be a cut: any longer is feet sliding under a
+                // body that is no longer going anywhere.
                 one.figure.play(clip, false, isWalk(was) ? kHalting : -1.0f);
             }
         }
@@ -744,6 +792,10 @@ void Play::leftClick() {
         return;
     }
     realm_.ask(request);
+    // A walk, a pickup or a talk puts the marker where the walk ends; a fight takes it away,
+    // as MU2's did -- an attack never shows one.
+    mark_ = request.kind != sim::Request::Kind::Attack;
+    if (!mark_) marker_.dismiss();
 }
 
 void Play::rightClick() {
@@ -751,6 +803,8 @@ void Play::rightClick() {
     sim::Request request;
     request.kind = sim::Request::Kind::Stop;
     realm_.ask(request);
+    mark_ = false;
+    marker_.dismiss();
 }
 
 void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,

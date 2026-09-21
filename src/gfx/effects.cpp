@@ -171,11 +171,19 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
         const float us[4] = {s.u0, s.u1, s.u1, s.u0};
         for (int c = 0; c < 4; ++c) {
             Vertex& out = vertices[n * 4 + c];
-            out.x = s.position[0] + ax[0] * corners[c][0] + ay[0] * corners[c][1];
-            out.y = s.position[1] + ax[1] * corners[c][0] + ay[1] * corners[c][1];
-            out.z = s.position[2] + ax[2] * corners[c][0] + ay[2] * corners[c][1];
-            out.u = us[c];
-            out.v = vs[c];
+            if (s.placed) {
+                out.x = s.corner[c][0];
+                out.y = s.corner[c][1];
+                out.z = s.corner[c][2];
+                out.u = s.cornerUv[c][0];
+                out.v = s.cornerUv[c][1];
+            } else {
+                out.x = s.position[0] + ax[0] * corners[c][0] + ay[0] * corners[c][1];
+                out.y = s.position[1] + ax[1] * corners[c][0] + ay[1] * corners[c][1];
+                out.z = s.position[2] + ax[2] * corners[c][0] + ay[2] * corners[c][1];
+                out.u = us[c];
+                out.v = vs[c];
+            }
             out.abgr = abgr;
         }
         const uint16_t base = uint16_t(n * 4);

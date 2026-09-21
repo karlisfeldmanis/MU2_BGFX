@@ -20,6 +20,7 @@
 #include "content/tables.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/marker.h"
 #include "game/showing.h"
 #include "gfx/renderer.h"
 #include "sim/audit.h"
@@ -114,6 +115,11 @@ public:
     // the fight is otherwise unaffected.
     Showing& showing() { return showing_; }
     const Showing& showing() const { return showing_; }
+    // Where a click sent him. Opened by the caller for the same reason as the showing.
+    Marker& marker() { return marker_; }
+    void gatherMarker(gfx::Effects& effects) const {
+        if (ground_) marker_.gather(effects, *ground_);
+    }
 
 private:
     // One body as it is drawn: the figure, and where it was at the last two ticks so a frame
@@ -163,6 +169,12 @@ private:
     const Figures* figures_ = nullptr;
 
     Showing showing_;
+    Marker marker_;
+    // Whether the next Walked the hero says came from a click, and so puts the marker down.
+    // Cleared by the first tick that runs after the ask, since that tick is the one the realm
+    // takes the order on. One click is one walk: holding the button does not drag the walk
+    // after the pointer (the user's call, 2026-09-21), so there is no held re-aim here.
+    bool mark_ = false;
     // The cues that came due this frame. A member and not a local so that it keeps its
     // capacity: a fight must not allocate to show itself.
     std::vector<Cue> due_;

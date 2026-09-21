@@ -51,6 +51,15 @@ struct Sprite {
     // once, where it knows what the sheet is.
     float u0 = 0.0f, v0 = 0.0f, u1 = 1.0f, v1 = 1.0f;
     Blend blend = Blend::Alpha;
+    // A quad that is NOT a billboard: its four corners in world metres and a UV for each,
+    // counter-clockwise as the billboard's are (bottom left, bottom right, top right, top
+    // left). `position` still has to be set, to the quad's centre, because that is what the
+    // depth sort reads. Used for what lies on the ground -- the click marker, cut into a grid
+    // that follows the land -- and for a mesh drawn as triangles, which is a quad whose last
+    // two corners are the same point. The size, spin and UV rectangle above are ignored.
+    bool placed = false;
+    float corner[4][3] = {};
+    float cornerUv[4][2] = {};
 };
 
 class Effects {

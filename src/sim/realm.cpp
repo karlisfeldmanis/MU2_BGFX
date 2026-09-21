@@ -44,17 +44,22 @@ constexpr int kHeroSwingTicks = 20;
 // (Lorencia.cs:87); the player's is MU2's derivation from MU's walk clip (Things.cs:583) and is
 // borrowed from the monster row rather than invented separately.
 constexpr int kHeroMoveTicks = 8;
-// How fast a body comes round to where it is going, in degrees a second. A right angle in a
-// tenth of a second, which is where MU2 put it and about where WoW and League both sit: quick
-// enough that the turn is never the thing being waited for, slow enough to be seen happening
-// rather than the facing teleporting. Walker.cs:85 (a bench number, and MU2 marks it as one).
-constexpr float kTurnDegrees = 900.0f;
+// How fast a body comes round to where it is going, in degrees a second. MU snaps its facing;
+// MU2 turned at 900 (Walker.cs:85, a bench number and marked as one). Invention: 1440, which is
+// 72 degrees a tick, so that a click straight behind costs ONE tick on the spot rather than
+// three -- the pivot is the one wait between a click and the first step, and at 900 it was the
+// thing being waited for. The drawing interpolates the facing between ticks, so 72 degrees a
+// tick still reads as a turn and not a snap.
+constexpr float kTurnDegrees = 1440.0f;
 // How far off its heading a body may be and still walk, in degrees. Under it, it sets off and
 // finishes coming round as it goes, which is what walking round a corner is. Over it -- a click
 // behind the character, a monster turning onto somebody who hit it from behind -- it turns on
-// the spot first, because setting off at once means travelling backwards for the length of the
-// turn. Walker.cs:98-107.
-constexpr float kPivotDegrees = 120.0f;
+// the spot first. Walker.cs:98-107 had 120, and that was the moonwalk: a body 119 degrees off
+// covers ground for the ticks it takes to come round, which is gliding sideways and backwards
+// under a walk clip that faces the other way. Invention: 60, less than one tick's turn, so the
+// most a body ever travels off its facing is 60 degrees for one tick, and the drawn facing has
+// already swung most of that by the time the step is drawn.
+constexpr float kPivotDegrees = 60.0f;
 
 // A player reaches one tile. Sprint 7's weapons have their own reach.
 constexpr int kHeroAttackRange = 1;
@@ -636,6 +641,19 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
 // ---- walking ---------------------------------------------------------------------------
 
 bool Realm::send(Body& one, int column, int row) {
+    // The tile he is standing on, asked for while he is between two tiles: a stop THERE. The
+    // router has no route from a tile to itself, and this used to be a refusal, which left the
+    // old walk running -- a click on his own feet mid-stride carried him on to wherever he was
+    // going before. Half a step back to the centre of the tile is the answer the click meant.
+    if (column == one.column() && row == one.row() &&
+        (std::fabs(one.x - float(column)) > 1e-3f || std::fabs(one.y - float(row)) > 1e-3f)) {
+        one.route.clear();
+        one.route.push_back(Step{int16_t(column), int16_t(row)});
+        one.onStep = 0;
+        one.walking = true;
+        say(What::Walked, one, column, row, 1);
+        return true;
+    }
     if (!router_.plan(one.column(), one.row(), column, row, content::kWallCharacter, scratch_)) {
         // A refusal is an event and not a silence. It was a silence for one evening, and the
         // scripted hand -- which asks again whenever it is not walking -- asked for the same
@@ -647,7 +665,10 @@ bool Realm::send(Body& one, int column, int row) {
     one.route.assign(scratch_.begin(), scratch_.end());
     one.onStep = 0;
     one.walking = true;
-    say(What::Walked, one, column, row, int32_t(one.route.size()));
+    // The goal the route actually ends on, not the one asked for: the router moves a goal in a
+    // wall to the nearest open tile, and the marker is put down from this event.
+    say(What::Walked, one, one.route.back().column, one.route.back().row,
+        int32_t(one.route.size()));
     return true;
 }
 
@@ -1076,7 +1097,11 @@ void Realm::raiseBeast(Body& beast) {
 
 // ---- the player ------------------------------------------------------------------------
 
-void Realm::press() {
+// The order the window raised since the last tick becomes the one he is following. Taken
+// BEFORE he moves this tick, not after: after, a click waited a whole tick in `pending_`, was
+// planned at the end of the next one, and was first walked on the tick after that -- 100 ms
+// of the character ignoring the mouse before the drawing's own interpolation added its 50.
+void Realm::accept() {
     Body& hero = bodies_[0];
     if (!hero.alive()) return;
 
@@ -1103,6 +1128,11 @@ void Realm::press() {
             }
         }
     }
+}
+
+void Realm::press() {
+    Body& hero = bodies_[0];
+    if (!hero.alive()) return;
 
     if (order_.kind == Request::Kind::Pick) {
         // Taken on arrival: within a tile of it, which is standing on it or beside it -- the
@@ -1208,6 +1238,7 @@ void Realm::step() {
         }
     }
     if (hero.alive()) {
+        accept();
         advance(hero);
         press();
     } else if (tick_ >= hero.risesAt) {

@@ -284,7 +284,8 @@ private:
     bool turn(Body& one);
     void rouse(Body& beast);
     void think(Body& beast);
-    void press();
+    void accept();  // the pending order becomes the order, before the hero moves
+    void press();   // and what the order does once he has
     void wander(Body& beast);
     void retreat(Body& beast);
     void engage(Body& one, const Body& target);

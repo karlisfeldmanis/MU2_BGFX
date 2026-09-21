@@ -303,6 +303,7 @@ int main(int argc, char** argv) {
             // Play is handed an asset directory and no Textures. Not fatal: a fight with no
             // blood in it is still a fight, and open() has already said why in the log.
             world.played().showing().open(MU2_ASSET_DIR, textures);
+            world.played().marker().open(MU2_ASSET_DIR, textures);
         }
         // The lamps' static set, once: the renderer lays its light grid over the ground here.
         if (args.lampsOn) world.lamps().light(renderer);
@@ -680,8 +681,8 @@ int main(int argc, char** argv) {
 
         if (inWorld) {
             const gfx::Camera& eye = world.camera();
-            // The pointer and what it is over, before the sim is stepped: a click is answered
-            // on the tick after it is made, which is MU's own latency and not ours to shave.
+            // The pointer and what it is over, before the sim is stepped: a click is taken at
+            // the start of the next tick and walked on that same tick (Realm::accept).
             if (world.played().isOpen()) {
                 float view[16];
                 float proj[16];
@@ -852,6 +853,7 @@ int main(int argc, char** argv) {
                 // number away from the sprites it sits among.
                 const float right[3] = {view[0], view[4], view[8]};
                 world.played().showing().gather(renderer.effects(), right);
+                world.played().gatherMarker(renderer.effects());
             }
 
             // The crowd goes into the same two lists as the town, and through the same two
