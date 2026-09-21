@@ -11,5 +11,6 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Brass | set | 2026-09-21 17:25 | passed | gold again with plate_steel's grey pull off (desaturation 1.0, roughness 0.46, as Bronze); olive in the hollows as MU painted it; rebuilt after the bake flip fix |
 | Scale | set | 2026-09-21 17:36 | passed | teal-green steel, aged not wet at roughness 0.55; scales and the chest face read; helm's green face plate is MU's paint; lighter than the sheet because the lift puts steel at its f0; rebuilt after the flip fix |
 | Sphinx | set | 2026-09-21 17:47 | passed | aged gold over black as the recipe asks: gold stays gold at desaturation 0.88 (hue 37, sat ~0.3), not neon; nemes, collar and limb bands read as one set; rebuilt after the flip fix, which had it worst |
-| Sword01 | arm | 2026-09-21 17:52 | awaiting |  |
+| Sword01 | arm | 2026-09-21 18:12 | awaiting |  |
 | Pad | set | 2026-09-21 17:58 | passed | wizard's own silver head shows under the winged gilt band (keeps_head, 6 parts); olive-and-gold cloth jerkin stays dielectric, brass gloves/boots/pant plates read gilt; flat gold wings are MU's cards; rebuilt after the flip fix |
+| Vine | set | 2026-09-21 18:15 | passed | elf's own blonde head under the vine circlet (keeps_head); dark warm leather with the vine raised in the same brown; skin reads as skin, hip blades as bone; rebuilt after the flip fix |
