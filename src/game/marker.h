@@ -1,9 +1,9 @@
 // Where a click sent him: MU's MoveTargetPosEffect, ported from MU2's `client/core/Marker.cs`.
 //
-// Four parts, all additive, all tinted MU's (1.0, 0.7, 0.3):
+// Three parts, all additive, all tinted MU's (1.0, 0.7, 0.3). MU's fourth, the runic circle
+// (empact01), is left out on purpose: the user wanted it simpler.
 //
 //   * the RINGS, cursorpin01 -- four spikes that close in on the spot, a new one every 0.6 s;
-//   * the DISCS, empact01 -- MU's runic circle twice, turning opposite ways;
 //   * the PULSE, cursorpin02 -- a star of four points that opens and closes;
 //   * the PIN, MoveTargetPosEffect.obj over gra.png -- the three-bladed arrow standing on it.
 //
@@ -56,7 +56,6 @@ private:
              float across, float turn, float alpha) const;
 
     bgfx::TextureHandle rings_ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle discs_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle pulse_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle pinSheet_ = BGFX_INVALID_HANDLE;
     // The pin's triangles, already in metres, three corners and three UVs each.
@@ -71,7 +70,6 @@ private:
     float leaving_ = -1.0f;              // seconds of the arrival fade left, or < 0
     float sinceRing_ = 0.0f;             // reference frames since the last ring was born
     float ring_[3] = {0.0f, 0.0f, 0.0f}; // each ring's width in metres, 0 for a free slot
-    float turned_ = 0.0f;                // the discs' angle, degrees
     float pulseAcross_ = 1.8f;
     bool pulseOpening_ = false;
     float seconds_ = 0.0f;               // real seconds since show(), for the pin's drop

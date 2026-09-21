@@ -28,12 +28,8 @@ constexpr float kRingGone = 0.2f * 0.6f;
 constexpr float kRingShrink = 0.04f * 0.6f;
 constexpr float kRingEvery = 15.0f;
 
-// The discs: 0.8 m and 1.2 times that, turning 2 degrees a frame opposite ways, shown for the
-// first 24 frames. Not scaled by 0.6 in MU2, and not here.
-constexpr float kDiscAcross = 0.8f;
-constexpr float kDiscOuter = 1.2f;
-constexpr float kDiscTurn = 2.0f;
-constexpr float kDiscFrames = 24.0f;
+// MU2's two runic discs (empact01, 0.8 m and 0.96 m, turning opposite ways) are NOT drawn:
+// the user asked for a simpler marker without the ring, 2026-09-21.
 
 // The pulse: 1.8 m closing to 0.8 and opening again at 0.15 a frame, hard at both ends.
 constexpr float kPulseWidest = 1.8f;
@@ -78,7 +74,6 @@ bool Marker::open(const std::string& assetDir, content::Textures& textures) {
         return textures.load(path, content::TextureRole::Albedo);
     };
     rings_ = take("cursorpin01.png");
-    discs_ = take("empact01.png");
     pulse_ = take("cursorpin02.png");
     pinSheet_ = take("gra.png");
 
@@ -118,11 +113,10 @@ bool Marker::open(const std::string& assetDir, content::Textures& textures) {
         }
         line.clear();
     }
-    core::logf("marker: rings %s, discs %s, pulse %s, pin %zu triangles",
+    core::logf("marker: rings %s, pulse %s, pin %zu triangles",
                bgfx::isValid(rings_) ? "in hand" : "MISSING",
-               bgfx::isValid(discs_) ? "in hand" : "MISSING",
                bgfx::isValid(pulse_) ? "in hand" : "MISSING", pin_.size() / 3);
-    return bgfx::isValid(rings_) || bgfx::isValid(discs_) || bgfx::isValid(pulse_) ||
+    return bgfx::isValid(rings_) || bgfx::isValid(pulse_) ||
            !pin_.empty();
 }
 
@@ -142,7 +136,6 @@ void Marker::show(float x, float z) {
     // The first ring is born on the click's own frame (Marker.cs ShowAt: sinceLast = 15).
     sinceRing_ = kRingEvery;
     std::fill(std::begin(ring_), std::end(ring_), 0.0f);
-    turned_ = 0.0f;
     pulseAcross_ = kPulseWidest;
     pulseOpening_ = false;
 }
@@ -167,7 +160,6 @@ void Marker::update(float seconds) {
         live_ = false;
         return;
     }
-    turned_ += kDiscTurn * step;
     pulseAcross_ += (pulseOpening_ ? kPulseStep : -kPulseStep) * step;
     if (pulseAcross_ <= kPulseNarrowest) {
         pulseAcross_ = kPulseNarrowest;
@@ -244,12 +236,7 @@ void Marker::gather(gfx::Effects& effects, const content::Ground& ground) const 
     if (leaving_ >= 0.0f) alpha *= std::max(0.0f, leaving_ / kLeaveSeconds);
     if (alpha <= 0.0f) return;
 
-    constexpr float kToRadians = 3.14159265f / 180.0f;
-    // Under the pin, in MU2's order: the discs and the pulse, then the rings.
-    if (lived_ < kDiscFrames) {
-        lay(effects, ground, discs_, kDiscAcross, -turned_ * kToRadians, alpha);
-        lay(effects, ground, discs_, kDiscAcross * kDiscOuter, turned_ * kToRadians, alpha);
-    }
+    // Under the pin, in MU2's order: the pulse, then the rings.
     lay(effects, ground, pulse_, pulseAcross_, 0.0f, alpha);
     for (float across : ring_) lay(effects, ground, rings_, across, 0.0f, alpha);
 
