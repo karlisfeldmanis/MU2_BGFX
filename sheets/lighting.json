@@ -14,7 +14,7 @@
   "exposure": 1.5,
 
   "dust_colour": [0.62, 0.5, 0.36],
-  "dust_density": 0.007,
+  "dust_density": 0.0055,
 
   "shadow_range": 60.0,
   "shadow_fit_below": 3.0,
