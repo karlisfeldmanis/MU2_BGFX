@@ -110,6 +110,7 @@ add_executable(mu2
   src/game/showing.cpp
   src/game/marker.cpp
   src/game/panel.cpp
+  src/game/cursor.cpp
   src/game/hud.cpp
   src/game/card.cpp
   src/game/bag.cpp

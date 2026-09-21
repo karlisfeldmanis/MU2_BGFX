@@ -13,6 +13,7 @@
 #include "content/texture.h"
 #include "game/bag.h"
 #include "game/card.h"
+#include "game/cursor.h"
 #include "game/hud.h"
 #include "game/item_models.h"
 #include "game/items_stage.h"
@@ -33,8 +34,11 @@ public:
     bool ready() const { return interface_.ready(); }
 
     // A frame of input and redrawing, before the world is given the pointer. `pointerX` and
-    // `pointerY` are the backbuffer pixels the pointer is really at, even on a scripted run.
-    void update(float seconds, const gfx::Window& window, Play& play);
+    // `pointerY` are the backbuffer pixels the pointer is really at, even on a scripted run --
+    // the same ones the world's own raycast is given right after, so a window, the cursor drawn
+    // over it and what lies under it on the ground never disagree about where the pointer is.
+    void update(float seconds, const gfx::Window& window, Play& play, float pointerX,
+                float pointerY);
     // A scripted pointer for the next update, replacing the mouse's: a press, a release, or
     // just a place. The run's --ui-click goes through here and then through exactly the
     // windows' own code.
@@ -77,6 +81,7 @@ private:
     Card card_;
     Bag bag_;
     Shelf shelf_;
+    Cursor cursor_;
     ItemModels* models_ = nullptr;
     ItemStage bagStagePicture_, shelfStagePicture_;
     std::string shaderDir_, assetDir_;

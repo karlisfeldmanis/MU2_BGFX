@@ -43,6 +43,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
+    cursor_.open(interface_, &arts_);
     interface_.adopt(ground_);
     return true;
 }
@@ -53,11 +54,13 @@ void Desk::shutdown() {
     interface_.shutdown();
 }
 
-void Desk::update(float seconds, const gfx::Window& window, Play& play) {
+void Desk::update(float seconds, const gfx::Window& window, Play& play, float pointerX,
+                  float pointerY) {
     // The store is handed in from outside, with the item rows already in it; until it is, the
     // windows draw each thing's name in its cell.
     Pointer pointer;
-    window.pointer(&pointer.x, &pointer.y);
+    pointer.x = pointerX;
+    pointer.y = pointerY;
     pointer.pressed = window.clicked(0);
     pointer.released = window.released(0);
     pointer.held = window.held(0);
@@ -151,6 +154,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play) {
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y));
+
+    // The pointer, drawn last of all: MU2's Pointer.Show and Step in one call. The flags are
+    // last frame's raycast (Play::point runs after this, on the same frame it is drawn), which
+    // never shows -- a claw a frame behind a moving mouse is not a thing anyone can see.
+    const bool onMonster = play.isOpen() && play.pointedAt() != 0;
+    const bool onLoot = play.isOpen() && play.pointedAt() == 0 && play.pointedLying() != 0;
+    const bool onFolk = play.isOpen() && play.pointedFolk() >= 0;
+    cursor_.update(seconds, pointer.x, pointer.y, onMonster, onLoot, onFolk);
 }
 
 void Desk::script(float x, float y, bool press, bool release, bool right) {
@@ -280,6 +291,9 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());
+    // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
+    // whatever it is pointing at, and the panel is something you point at as well.
+    interface_.add(cursor_.canvas());
     interface_.submit(view);
 }
 

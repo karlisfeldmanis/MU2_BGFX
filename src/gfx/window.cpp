@@ -41,6 +41,12 @@ bool Window::open(const WindowDesc& desc) {
 
     glfwSetScrollCallback(handle_, onScroll);
 
+    // MU's own pointer is drawn into the picture (game/cursor.h), and the real one hidden
+    // underneath: two of them a few pixels apart is worse than either. MU2's own remark on
+    // Pointer.cs applies unchanged -- this is what a screenshot shows, so the desktop's own
+    // cursor must not be in it too.
+    glfwSetInputMode(handle_, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
     // The backbuffer is asked for in pixels, not in points: on a Retina display the two
     // differ by two, and a frame measured at the wrong size is not the frame.
     glfwGetFramebufferSize(handle_, &width_, &height_);

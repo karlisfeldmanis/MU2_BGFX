@@ -1023,7 +1023,7 @@ int main(int argc, char** argv) {
                         desk.script((at ? c.x : c.x2) * w, (at ? c.y : c.y2) * h, at,
                                     frame == last, c.right);
                     }
-                    desk.update(float(deltaSeconds), window, world.played());
+                    desk.update(float(deltaSeconds), window, world.played(), pointerX, pointerY);
                     // And the pictures for whatever the windows now hold: MU2's Panel.Repaint,
                     // which redraws a stage only when what stands on it changed or turns.
                     desk.photograph(renderer, deltaSeconds);
