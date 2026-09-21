@@ -38,6 +38,18 @@ struct Drawable {
     int paletteRow = -1;
 };
 
+// One point light, in world metres. The renderer knows nothing of lamps, torches or fires:
+// what burns, and how it flickers, is `game`'s. docs/sprints/08a-the-lamps.md.
+struct PointLight {
+    float position[3] = {0.0f, 0.0f, 0.0f};
+    // Metres on the GROUND: the light is zero this far out, measured flat. lights.sh.
+    float reach = 1.0f;
+    // How far above the ground under it the light hangs. Between the ground and this height
+    // the falloff is flat distance alone, as MU's is; above or below, it falls off further.
+    float height = 0.0f;
+    float colour[3] = {1.0f, 1.0f, 1.0f};     // linear, before the flicker
+};
+
 class Renderer {
 public:
     // `msaa` is 1, 2, 4 or 8 samples on the prepass, the depth and the shade target.
@@ -133,6 +145,22 @@ public:
     // stopped being posed must be visible in a number, as foundation 7 says of culling.
     int paletteRowsRefused() const { return paletteRefused_; }
 
+    // --- the point lights ---------------------------------------------------------------
+    // The static set, once, when a world opens: the lights never move, so which of them can
+    // reach each 2 m cell of the ground is settled here and not per frame. `minX`, `minZ` and
+    // `side` are the square of the world the grid covers, in metres. Null and zero clears it.
+    // At most kMaxPointLights; a cell holds at most kLightsPerCell, the nearest ones, and the
+    // log says when a cell wanted more.
+    static constexpr uint32_t kMaxPointLights = 255;
+    static constexpr int kLightsPerCell = 8;
+    static constexpr float kLightCellMetres = 2.0f;
+    void setPointLights(const PointLight* lights, uint32_t count, float minX, float minZ,
+                        float side);
+    // This frame's brightness of each, multiplying its colour: the flicker. `count` is the
+    // set's own; uploaded inside draw(), 8 kB.
+    void setPointLightLevels(const float* levels, uint32_t count);
+    uint32_t pointLightCount() const { return lightCount_; }
+
     // The view and projection this renderer will use for that camera, so that whoever culls
     // against the frustum culls against the SAME frustum that is drawn. Handedness and the
     // depth range are decided in one place only; a second copy of these two calls elsewhere
@@ -153,9 +181,14 @@ private:
     // programs rather than one with a branch because the vertex layouts differ, and the
     // batches are already grouped by mesh, so which to use is decided once a batch and not
     // once a draw.
+    //
+    // `glowPass` picks which parts: false draws every part but the glows, which is what the
+    // shadow, the prepass and the shade want -- a glow casts nothing, occludes nothing and is
+    // not lit -- and true draws the glows alone, into the transparent view.
     void submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                        bgfx::ProgramHandle skinnedProgram, const std::vector<Batch>& batches,
-                       const bgfx::InstanceDataBuffer& idb, uint64_t state, bool bindMaterial);
+                       const bgfx::InstanceDataBuffer& idb, uint64_t state, bool bindMaterial,
+                       bool glowPass = false);
     // The shadow map and the AO, bound for ONE draw.
     //
     // bgfx::submit discards its bindings by default, so a texture bound once before a view's
@@ -180,6 +213,9 @@ private:
         float shadowMtx[16], shadowParams[4], shadowDebug[4], shadowReach[4];
     };
     ShadeUniforms shade_ = {};
+    float lampParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    float lampGridUniform_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    float glowStrength_ = 1.0f;
 
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets
@@ -239,6 +275,8 @@ private:
     bgfx::ProgramHandle groundShadowProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle groundPrepassProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle groundShadeProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle glowProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle skinnedGlowProgram_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle uSunDir_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uSunColour_ = BGFX_INVALID_HANDLE;
@@ -269,6 +307,20 @@ private:
     bgfx::UniformHandle sAo_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sBones_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uLampGrid_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uLampParams_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sLamps_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sLampGrid_ = BGFX_INVALID_HANDLE;
+
+    // The lights: a column each, row 0 position and reach, row 1 colour times level. And the
+    // grid over the ground, two RGBA8 texels a cell. lights.sh reads both. Row 1's alpha is
+    // the light's height, which the flicker never touches.
+    bgfx::TextureHandle lamps_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle lampGrid_ = BGFX_INVALID_HANDLE;
+    std::vector<float> lampCpu_;     // (kMaxPointLights + 1) x 2 texels x 4 floats
+    std::vector<float> lampColour_;  // the colours before the flicker, three a light
+    uint32_t lightCount_ = 0;
+    bool lampsDirty_ = false;
 
     bgfx::TextureHandle palette_ = BGFX_INVALID_HANDLE;
     std::vector<float> paletteCpu_;  // kMaxPaletteRows x kMaxBones x 12

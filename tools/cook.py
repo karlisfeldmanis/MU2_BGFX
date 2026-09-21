@@ -19,7 +19,7 @@ cook is the once.
 
     tools/cook.py --world lorencia [--only textures|meshes|placements|all] [--chunk 32]
 
-The .mut format ("MU2 town"), version 1, little-endian:
+The .mut format ("MU2 town"), version 2, little-endian:
 
     'MU2T', u32 version, u32 models, u32 chunks, u32 instances,
     u32 size (tiles a side), u32 chunkTiles, f32 metresPerTile
@@ -30,6 +30,17 @@ The .mut format ("MU2 town"), version 1, little-endian:
     instances: f32 position[3], f32 yaw, f32 pitch, f32 roll, f32 scale,
                u16 model, u16 flags, u8 light[3], u8 spare   -- 36 bytes, and 36 is what a
                C++ struct of those fields is too, with no implicit padding anywhere
+    emitters:  u32 count, then 48 bytes each -- u16 model (0xFFFF: a world anchor), u8 kind
+               (0 lamp, 1 fire, 2 candle, 3 window, 4 smoke), u8 spare, f32 at[3], f32
+               colour[3], f32 low, f32 high, f32 reach, f32 flickerHz, f32 smoothSeconds
+    glows:     u32 count, then 20 bytes each -- u16 model, u16 spare, f32 low, f32 high,
+               f32 flickerHz, f32 smoothSeconds
+
+Version 2 added the last two tables (sprint 8a, docs/sprints/08a-the-lamps.md). An emitter's
+`at` is in metres on our axes: in the model's own frame, unscaled -- MU turns the offset by the
+object's angle and never scales it -- or, for an anchor, in the world. `reach` is MU's range in
+tiles, which is metres. A glow is how an object's BlendMesh flickers, one per model, since MU
+keeps one BlendMeshLight an object.
 
 `flags` bit 0 says the placement was laid on the terrain rather than used as the map stores
 it; bit 1 that its model is a roof, one of the pieces index.json marks `roof_fade`, which the
@@ -47,7 +58,8 @@ The .mum format, version 3 (static) and 4 (skinned), little-endian throughout:
     vertices:  position[3] normal[3] tangent[4] uv[2], 48 bytes, content::Vertex exactly
     indices:   u32 each
     parts:     u32 firstIndex, u32 indexCount, u32 material
-    materials: f32 cutout (-1 for none), u8 twoSided, then five strings --
+    materials: f32 cutout (-1 for none), u8 flags (bit 0 two-sided, bit 1 a glow: MU's
+               BlendMesh, drawn added and nowhere else), then five strings --
                name, albedo, normal, orm, emissive -- each u16 length and its bytes,
                the four texture strings being paths under assets/ or empty for none,
                then f32 roughnessFactor, f32 metalFactor
@@ -439,24 +451,22 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
     material_list = document.get("materials", [])
     for index, material in enumerate(material_list):
         cutout = -1.0
+        flags = 1 if material.get("doubleSided") else 0
         mode = material.get("alphaMode")
         if mode == "MASK":
             cutout = float(material.get("alphaCutoff", 0.5))
         elif mode == "BLEND":
-            # A stopgap, and marked as one. There is no sorted transparent pass in this frame
-            # and one is not worth building for Lorencia's eleven blended materials -- the
-            # fires, the candles, the street light's glow and the lit window panes. Left
-            # alone they drew as OPAQUE cards: a flame with a hard quad edge around it and
-            # the waterspout's fall as solid silver ribbons, and all of it printing itself
-            # into the shadow map. Cut out at a half they at least lose the card.
-            #
-            # `invention`: MU blends these and we do not, until sprint 8 puts them with the
-            # lamps and the fires they belong to. The threshold is ours, not MU's.
-            cutout = 0.5
+            # A glow: MU's BlendMesh, the one submesh an object draws ADDED to the frame at
+            # its BlendMeshLight -- the fires, the candles, the street light's smear, the lit
+            # window panes and the waterspout's fall. Bit 1 of the flags, and the renderer
+            # takes these out of the shadow, the prepass and the shade and draws them in the
+            # transparent pass instead. Sprint 8a; they were 0.5 cutouts drawn opaque until
+            # then, and printed themselves into the shadow map.
+            flags |= 2
         maps = {"albedo": "", "normal": "", "orm": "", "emissive": ""}
         for role in maps:
             maps[role] = textures.get(f"{model}#{image_for(document, material, role)}:{role}", "")
-        materials += struct.pack("<fB", cutout, 1 if material.get("doubleSided") else 0)
+        materials += struct.pack("<fB", cutout, flags)
         materials += write_string(material.get("name", "material"))
         for role in ("albedo", "normal", "orm", "emissive"):
             materials += write_string(maps[role])
@@ -834,6 +844,15 @@ def read_png(path):
 # has a direction it faces and no business leaning.
 GROUNDED_TYPES = range(20, 28)
 
+# MU's hidden anchors in Lorencia: MoveObject's WD_0LORENCIA calls CreateFire(0|1|2, o, 0,0,0)
+# on MODEL_LIGHT01..03 and hides the holder (ZzzObject.cpp). Kind 1 is a fire, 4 a smoke.
+ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
+# What each throws: CreateFire(0)'s own (ZzzEffectFireLeave.cpp:61) -- L = rand[0.6, 1.1),
+# colour (L, 0.6L, 0.4L), range 4 -- with index.json's flicker for every other fire. Smoke
+# throws no light. Colour, low, high, reach, hz, smoothing.
+ANCHOR_LIGHT = {1: ((1.0, 0.6, 0.4), 0.6, 1.1, 4.0, 3.0, 0.12),
+                4: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0)}
+
 
 def cook_placements(world, out_dir, chunk_tiles):
     world_dir = os.path.join(ASSETS, "world", world)
@@ -865,8 +884,11 @@ def cook_placements(world, out_dir, chunk_tiles):
     # of types per world (IndoorFadeTypes); MU2's asset carries it as a flag, and so does the
     # placement here, so the game needs no table of names.
     with open(os.path.join(ASSETS, "index.json")) as handle:
-        roofs = {one["name"] for one in json.load(handle).get("objects", [])
-                 if one.get("roof_fade")}
+        listed = json.load(handle).get("objects", [])
+    roofs = {one["name"] for one in listed if one.get("roof_fade")}
+    # The lights and glows each model carries. `world` is checked because index.json has one
+    # Object10 in Noria and could have a same-named model in two maps.
+    carried = {one["name"]: one for one in listed if one.get("world") in (world, None)}
 
     grid_w, grid_h, _channels, heights = read_png(os.path.join(world_dir, map_data["height"]))
     light_w, light_h, light_channels, light = read_png(
@@ -891,8 +913,15 @@ def cook_placements(world, out_dir, chunk_tiles):
     buckets = {}
     dropped_hidden = dropped_model = grounded = outside = roofed = 0
 
+    anchors = []
     for one in map_data["objects"]:
         if one.get("hidden"):
+            # MU's hidden anchors are still something: Light01 is a fire nobody sees the
+            # holder of, Light02 and Light03 are chimney smoke (MoveObject, WD_0LORENCIA).
+            kind = ANCHOR_KINDS.get(one["model"])
+            if kind is not None:
+                sx, sy, sz = one["at"]
+                anchors.append((kind, (sx / per_tile, sz / per_tile, -sy / per_tile)))
             dropped_hidden += 1
             continue
         model = index_of.get(one["model"])
@@ -968,7 +997,7 @@ def cook_placements(world, out_dir, chunk_tiles):
                 high[axis] = max(high[axis], centre + reach)
         chunk_records.append((low, high, first, written - first, cx, cy))
 
-    header = struct.pack("<4sIIIIIIf", b"MU2T", 1, len(models), len(chunk_records), written,
+    header = struct.pack("<4sIIIIIIf", b"MU2T", 2, len(models), len(chunk_records), written,
                          size, chunk_tiles, metres_per_tile)
     body = bytearray()
     for name, mesh_path, bounds, count in models:
@@ -978,6 +1007,43 @@ def cook_placements(world, out_dir, chunk_tiles):
         body += struct.pack("<6fII2H", *low, *high, first, count, cx, cy)
     body += bytes(instances)
 
+    # The lights. Per model in its own frame, and the anchors in the world's.
+    emitters = bytearray()
+    emitter_count = 0
+    kinds = {"lamp": 0, "fire": 1, "candle": 2, "window": 3, "smoke": 4}
+
+    def emitter(model, kind, at, colour, low, high, reach, hz, smooth):
+        return struct.pack("<HBx3f3f5f", model, kind, *at, *colour, low, high, reach, hz, smooth)
+
+    glows = bytearray()
+    glow_count = 0
+    for model_index, (name, _mesh, _bounds, count) in enumerate(models):
+        entry = carried.get(name, {})
+        for one in entry.get("emitters", []):
+            # MU z-up, y south, in units; ours y-up, -z, in metres. docs/conventions.md.
+            mx, my, mz = one.get("at", (0, 0, 0))
+            high = float(one.get("high", 1.0))
+            emitters += emitter(model_index, kinds.get(one.get("kind", "lamp"), 0),
+                                (mx / per_tile, mz / per_tile, -my / per_tile),
+                                one.get("colour", (1, 1, 1)), float(one.get("low", high)), high,
+                                float(one.get("range_tiles", 3)), float(one.get("flicker_hz", 0)),
+                                float(one.get("smooth_seconds", 0)))
+            emitter_count += 1
+        # One flicker per object: MU keeps a single BlendMeshLight. A glow entry that only
+        # scrolls (House04, the waterspout) has no brightness to carry.
+        for one in entry.get("glow", {}).values():
+            if "low" in one and "high" in one:
+                glows += struct.pack("<Hxx4f", model_index, float(one["low"]),
+                                     float(one["high"]), float(one.get("hz", 0)),
+                                     float(one.get("smooth_seconds", 0)))
+                glow_count += 1
+                break
+    for kind, at in anchors:
+        emitters += emitter(0xFFFF, kind, at, *ANCHOR_LIGHT[kind])
+        emitter_count += 1
+    body += struct.pack("<I", emitter_count) + bytes(emitters)
+    body += struct.pack("<I", glow_count) + bytes(glows)
+
     out_path = os.path.join(out_dir, f"{world}.mut")
     with open(out_path, "wb") as handle:
         handle.write(header + bytes(body))
@@ -986,6 +1052,8 @@ def cook_placements(world, out_dir, chunk_tiles):
           f"{len(models)} models, {grounded} laid on the terrain, {roofed} roofs, "
           f"{dropped_hidden} hidden and {dropped_model} without a mesh dropped, "
           f"{outside} standing off the grid, "
+          f"{emitter_count} lights and smokes ({len(anchors)} of them hidden anchors), "
+          f"{glow_count} flickering glows, "
           f"{(len(header) + len(body)) / 1000:.0f} kB")
     return 0
 

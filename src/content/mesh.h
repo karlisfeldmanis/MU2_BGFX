@@ -54,6 +54,11 @@ struct Material {
     // is the whole test: a cutout is decided when the model is read, not guessed per pixel.
     float cutout = -1.0f;
     bool twoSided = false;
+    // MU's BlendMesh: drawn ADDED to the frame in the transparent pass, and nowhere else --
+    // not in the sun's split, not in the prepass, not in the shade. The fourth flag the
+    // closed model gained in sprint 8a, and it costs the walls nothing: a glow is its own
+    // program in its own view, not a variant of fs_shade. docs/sprints/08a-the-lamps.md.
+    bool glow = false;
     // glTF's own scalars, and the shader multiplies the ORM by them: roughness = orm.g * this,
     // metal = orm.b * this. A surface whose relief came out of its art has a map and both
     // factors at 1.0; a surface whose material declares no grain -- MU's foliage, grass and

@@ -51,6 +51,7 @@ void printUsage() {
         "run fails\n"
         "  --crowd N                 monsters standing in the town (default 30, -1 for all "
         "that spawn)\n"
+        "  --no-lamps                no point lights and no flames, to price the lamps\n"
         "  --no-figures              no figures at all, which is what the crowd is priced "
         "against\n"
         "  --browse                  step through every cooked .mum; arrows walk the list\n"
@@ -98,6 +99,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.height = std::atoi(v);
         } else if (!std::strcmp(s, "--no-figures")) {
             a.figuresOn = false;
+        } else if (!std::strcmp(s, "--no-lamps")) {
+            a.lampsOn = false;
         } else if (!std::strcmp(s, "--safe")) {
             a.safe = true;
         } else if (!std::strcmp(s, "--crowd")) {

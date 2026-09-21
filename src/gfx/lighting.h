@@ -53,6 +53,15 @@ struct Lighting {
     // line. Invention, carried from MU4, and the number a bench argues about.
     float sunAngleDegrees = 4.0f;
 
+    // The lamps, sprint 8a. `lampStrength` turns MU's luminance into this pass's radiance.
+    // Pi is MU's own weight: MU adds a lamp's L straight into the light that multiplies the
+    // albedo, and this pass divides the diffuse by pi, so at the middle of a pool a lamp of
+    // L = 1 then adds what MU's arithmetic adds -- the light a flat surface takes from the sun
+    // at sun_strength pi. `glowStrength` multiplies every BlendMesh drawn in the transparent
+    // pass. Both are judged by eye; docs/sprints/08a-the-lamps.md.
+    float lampStrength = 3.14159265f;
+    float glowStrength = 1.0f;
+
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
 

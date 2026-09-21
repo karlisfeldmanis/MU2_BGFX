@@ -5,6 +5,7 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 #include "common.sh"
 
 #include "shadow.sh"
+#include "lights.sh"
 
 void main()
 {
@@ -16,7 +17,7 @@ void main()
 	// Times MU's own baked light at the tile this instance stands on. The land carries the
 	// same thing per vertex in its COLOR_0, so without this the town stands brighter than
 	// the ground it stands on, and MU's painted dusk stops at the foot of every wall.
-	vec3 albedo = albedoTex.rgb * v_light;
+	vec3 albedo = albedoTex.rgb * v_light.rgb;
 
 	vec3 v = normalize(u_camPos.xyz - v_wpos);
 
@@ -97,6 +98,10 @@ void main()
 	vec3 r = reflect(-v, n);
 	vec3 env = skyPrefiltered(r, roughness) * u_sunColour.w;
 	colour += env * envBRDFApprox(f0, roughness, ndotv) * ao;
+
+	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
+	// light: lights.sh says why.
+	colour += lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0);
 
 	colour += texture2D(s_emissive, v_texcoord0).rgb;
 

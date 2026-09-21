@@ -69,6 +69,7 @@ bool Town::open(const std::string& assetDir, const std::string& world,
         return false;
     }
 
+    glowLevels_.assign(town_.instances.size(), 1.0f);
     meshes_.resize(town_.models.size());
     size_t failed = 0;
     for (size_t i = 0; i < town_.models.size(); ++i) {
@@ -100,6 +101,7 @@ void Town::shutdown() {
     for (content::Mesh& mesh : meshes_) mesh.shutdown();
     meshes_.clear();
     town_ = content::CookedTown();
+    glowLevels_.clear();
     triangles_ = 0;
 }
 
@@ -122,7 +124,7 @@ void Town::append(const content::TownInstance& instance, std::vector<gfx::Drawab
     // and not an albedo, so it does NOT go through the sRGB curve -- the same rule
     // docs/conventions.md states for light.png on the ground.
     for (int i = 0; i < 3; ++i) drawable.light[i] = float(instance.light[i]) / 255.0f;
-    drawable.light[3] = 1.0f;
+    drawable.light[3] = glowLevels_[size_t(&instance - town_.instances.data())];
     out.push_back(drawable);
 }
 

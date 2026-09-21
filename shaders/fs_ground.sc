@@ -6,6 +6,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos
 #include "common.sh"
 
 #include "shadow.sh"
+#include "lights.sh"
 
 uniform vec4 u_groundRepeat;  // x: base repeat  y: overlay repeat  z: base relief  w: overlay relief
 uniform vec4 u_groundBlend;   // x: bite  y: 1 if this surface has an overlay at all  zw: unused
@@ -93,6 +94,8 @@ void main()
 	// `ALBEDO = albedo * painted.rgb`, with no factor. It was applied here over the whole lit
 	// result -- after the sun, the ambient AND the sky reflection -- and scaled by an invented
 	// 2.0, which made it a second light rather than a modulation of the surface.
+	// The lamps light the albedo as painted, before this. lights.sh.
+	vec3 ownAlbedo = albedo;
 	albedo *= v_colour.rgb;
 
 	// No view vector and no f0: with no specular and no reflection on dry ground there is
@@ -125,6 +128,12 @@ void main()
 
 	float up = n.y * 0.5 + 0.5;
 	colour += mix(u_groundColour.rgb, u_skyColour.rgb, up) * u_sunColour.w * diffuseColour * ao;
+
+	// The lamps, diffuse only, for the same reason the sun is. The eye is needed for their
+	// falloff's direction and nothing else, since the specular is switched off.
+	vec3 v = normalize(u_camPos.xyz - v_wpos);
+	colour += lampLight(v_wpos, n, v, ownAlbedo * (1.0 - metal), vec3_splat(0.0), roughness,
+	                    saturate(dot(n, v)) + 1e-5, 0.0);
 
 	// No sky reflection and no sun specular on dry ground. MU's ground art has its own
 	// lighting painted into it, so a sheen on top is a second highlight on a surface that

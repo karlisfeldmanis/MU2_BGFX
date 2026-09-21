@@ -45,6 +45,7 @@ struct CookedMaterial {
     std::string emissive;
     float cutout = -1.0f;
     bool twoSided = false;
+    bool glow = false;  // bit 1 of the flags byte: MU's BlendMesh. See content::Material.
     float roughnessFactor = 1.0f;
     float metalFactor = 1.0f;
 };
@@ -160,6 +161,31 @@ struct TownInstance {
 };
 static_assert(sizeof(TownInstance) == 36, "the town instance layout drifted from the cook's");
 
+// One light a model carries, or one the world carries on its own (a hidden anchor). 48 bytes,
+// packed by the cook in exactly this order. docs/sprints/08a-the-lamps.md.
+enum class EmitterKind : uint8_t { Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4 };
+struct TownEmitter {
+    static constexpr uint16_t kWorld = 0xFFFF;
+    uint16_t model;       // the model that carries it, or kWorld
+    EmitterKind kind;
+    uint8_t spare;
+    float at[3];          // metres, our axes: the model's own frame unscaled, or the world's
+    float colour[3];
+    float low, high;      // MU's luminance, the dimmest and brightest it flickers between
+    float reach;          // MU's range: tiles on the ground, which are metres
+    float flickerHz;      // how often it picks a new brightness
+    float smoothSeconds;  // and how long it takes to get there
+};
+static_assert(sizeof(TownEmitter) == 48, "the town emitter layout drifted from the cook's");
+
+// How a model's BlendMesh flickers: one per model, as MU keeps one BlendMeshLight an object.
+struct TownGlow {
+    uint16_t model;
+    uint16_t spare;
+    float low, high, flickerHz, smoothSeconds;
+};
+static_assert(sizeof(TownGlow) == 20, "the town glow layout drifted from the cook's");
+
 struct CookedTown {
     uint32_t size = 0;        // tiles a side
     uint32_t chunkTiles = 0;  // a chunk's side, in tiles
@@ -167,6 +193,8 @@ struct CookedTown {
     std::vector<TownModel> models;
     std::vector<TownChunk> chunks;
     std::vector<TownInstance> instances;
+    std::vector<TownEmitter> emitters;
+    std::vector<TownGlow> glows;
 };
 
 // Both return false and fill `error` with a sentence rather than throwing or logging: the

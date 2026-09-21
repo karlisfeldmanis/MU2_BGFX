@@ -19,6 +19,9 @@
   "shadow_normal_bias": 0.02,
   "sun_angle_degrees": 4.0,
 
+  "lamp_strength": 3.14159,
+  "glow_strength": 1.0,
+
   "ssao_radius": 0.5,
   "ssao_strength": 1.0
 }

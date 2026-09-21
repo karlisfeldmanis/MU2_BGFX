@@ -74,6 +74,9 @@ struct Args {
     // crowd's own cost is measured against: --crowd 0 still stands the Dark Knight and the
     // town's own fourteen.
     bool figuresOn = true;
+    // --no-lamps: no point lights and no flames, the baseline the lamps are priced against.
+    // The glows still draw; they are the town's own meshes.
+    bool lampsOn = true;
 
     // Sprint 5's sim. `--headless` runs the tick with no window at all; the seed and the
     // tick count are the whole of a reproducible run, and `--sim-log` is where its bytes go.

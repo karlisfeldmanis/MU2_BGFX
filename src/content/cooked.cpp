@@ -68,9 +68,12 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
     out.materials.resize(materials);
     for (CookedMaterial& material : out.materials) {
         reader.read(material.cutout);
-        uint8_t twoSided = 0;
-        reader.read(twoSided);
-        material.twoSided = twoSided != 0;
+        // A flags byte that was a bool: bit 0 two-sided, bit 1 a glow. Every file cooked
+        // before sprint 8a holds 0 or 1 here, so it reads the same as it always did.
+        uint8_t flags = 0;
+        reader.read(flags);
+        material.twoSided = (flags & 1) != 0;
+        material.glow = (flags & 2) != 0;
         reader.readString(material.name);
         reader.readString(material.albedo);
         reader.readString(material.normal);
@@ -250,8 +253,10 @@ bool parseCookedTown(const std::vector<uint8_t>& bytes, CookedTown& out, std::st
         error = "not a .mut";
         return false;
     }
-    if (version != 1) {
-        error = "a .mut of version " + std::to_string(version) + ", and this reads version 1";
+    // Version 1 had no lights. Refused rather than read as a dark town, which is what it
+    // would look like: tools/cook.py --world W --only placements writes version 2.
+    if (version != 2) {
+        error = "a .mut of version " + std::to_string(version) + ", and this reads version 2";
         return false;
     }
     if (out.chunkTiles == 0) {
@@ -323,6 +328,40 @@ bool parseCookedTown(const std::vector<uint8_t>& bytes, CookedTown& out, std::st
         if (instance.model >= models) {
             error = "a placement names model " + std::to_string(instance.model) + " of " +
                     std::to_string(models);
+            return false;
+        }
+    }
+
+    uint32_t emitters = 0;
+    reader.read(emitters);
+    if (reader.failed() || !plausible(reader, emitters, sizeof(TownEmitter))) {
+        error = "claims more lights than it holds";
+        return false;
+    }
+    out.emitters.resize(emitters);
+    reader.take(out.emitters.data(), size_t(emitters) * sizeof(TownEmitter));
+    uint32_t glows = 0;
+    reader.read(glows);
+    if (reader.failed() || !plausible(reader, glows, sizeof(TownGlow))) {
+        error = "claims more glows than it holds";
+        return false;
+    }
+    out.glows.resize(glows);
+    reader.take(out.glows.data(), size_t(glows) * sizeof(TownGlow));
+    if (reader.failed()) {
+        error = "ends in the middle of its lights";
+        return false;
+    }
+    for (const TownEmitter& one : out.emitters) {
+        if (one.model != TownEmitter::kWorld && one.model >= models) {
+            error = "a light names model " + std::to_string(one.model) + " of " +
+                    std::to_string(models);
+            return false;
+        }
+    }
+    for (const TownGlow& one : out.glows) {
+        if (one.model >= models) {
+            error = "a glow names model " + std::to_string(one.model);
             return false;
         }
     }

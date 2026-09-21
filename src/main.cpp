@@ -271,6 +271,8 @@ int main(int argc, char** argv) {
             // blood in it is still a fight, and open() has already said why in the log.
             world.played().showing().open(MU2_ASSET_DIR, textures);
         }
+        // The lamps' static set, once: the renderer lays its light grid over the ground here.
+        if (args.lampsOn) world.lamps().light(renderer);
         // Placed once before the first frame: the loop answers the pointer against the camera
         // already on screen, and on frame zero there has to be one.
         world.update(0.0, args.still);
@@ -565,6 +567,12 @@ int main(int argc, char** argv) {
             // changes every frame -- 16 mm median and 79 mm worst over a walk, on a shadow
             // texel of 29 mm. docs/shadow-probe.md.
             world.update(elapsed, args.still);
+            // The lamps flicker, the fires burn, and the glows' levels go into the town before
+            // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
+            if (args.lampsOn) {
+                world.lamps().update(float(deltaSeconds), world.town(), renderer);
+                world.lamps().gather(renderer.effects(), world.camera().target);
+            }
             // The town's drawables are gathered fresh each frame into one vector that keeps
             // its capacity: a frame appends to a flat array, as foundation 7 says, and
             // allocates nothing after the first.

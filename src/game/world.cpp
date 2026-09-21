@@ -48,6 +48,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // The town is not required: the land is a world on its own, and a cook that has not been
     // run yet says so in the log rather than failing the launch.
     town_.open(assetDir, name, textures);
+    // And what burns in it. Nothing without a town, since every light hangs on a placement.
+    if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures);
 
     if (!focusSet_) {
         // Lorencia's safe zone is around tile 142,126 -- the middle of the town rather than
@@ -174,6 +176,7 @@ void World::shutdown() {
     play_.shutdown();
     crowd_.shutdown();
     figures_.shutdown();
+    lamps_.shutdown();
     town_.shutdown();
     ground_.shutdown();
 }

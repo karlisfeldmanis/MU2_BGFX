@@ -74,6 +74,21 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     sAo_ = bgfx::createUniform("s_ao", bgfx::UniformType::Sampler);
     sColour_ = bgfx::createUniform("s_colour", bgfx::UniformType::Sampler);
     sBones_ = bgfx::createUniform("s_bones", bgfx::UniformType::Sampler);
+    uLampGrid_ = bgfx::createUniform("u_lampGrid", bgfx::UniformType::Vec4);
+    uLampParams_ = bgfx::createUniform("u_lampParams", bgfx::UniformType::Vec4);
+    sLamps_ = bgfx::createUniform("s_lamps", bgfx::UniformType::Sampler);
+    sLampGrid_ = bgfx::createUniform("s_lampGrid", bgfx::UniformType::Sampler);
+
+    // The point lights, empty until a world sets them. Both textures exist from the start so
+    // stages 13 and 14 are never unbound: u_lampParams.y is 0 and nothing reads them, but an
+    // unbound stage on Metal is a validation error waiting for the first shader that does.
+    const uint64_t point = BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+    lampCpu_.assign(size_t(kMaxPointLights + 1) * 2 * 4, 0.0f);
+    lamps_ = bgfx::createTexture2D(uint16_t(kMaxPointLights + 1), 2, false, 1,
+                                   bgfx::TextureFormat::RGBA32F, point);
+    const uint8_t none[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    lampGrid_ = bgfx::createTexture2D(2, 1, false, 1, bgfx::TextureFormat::RGBA8, point,
+                                      bgfx::copy(none, sizeof(none)));
 
     // The bone palette: three texels a bone across, one figure a row down. RGBA32F because
     // a pose is a matrix and a half float loses the translation at Lorencia's scale. 512
@@ -129,6 +144,12 @@ bool Renderer::loadPrograms(const std::string& dir) {
     groundShadowProgram_ = loadProgram(dir, "vs_ground_depth", "fs_shadow");
     groundPrepassProgram_ = loadProgram(dir, "vs_ground", "fs_ground_prepass");
     groundShadeProgram_ = loadProgram(dir, "vs_ground", "fs_ground");
+    // Not required: a frame without its glows is a picture, and says so.
+    glowProgram_ = loadProgram(dir, "vs_static", "fs_glow");
+    skinnedGlowProgram_ = loadProgram(dir, "vs_skinned", "fs_glow");
+    if (!bgfx::isValid(glowProgram_) || !bgfx::isValid(skinnedGlowProgram_)) {
+        core::logError("the glow programs did not link; MU's BlendMeshes will not draw");
+    }
     {
         const std::pair<const char*, bgfx::ProgramHandle> all[] = {
             {"shadow", shadowProgram_},   {"prepass", prepassProgram_},
@@ -270,12 +291,16 @@ void Renderer::shutdown() {
     effects_.shutdown();
     if (bgfx::isValid(palette_)) bgfx::destroy(palette_);
     palette_ = BGFX_INVALID_HANDLE;
+    for (bgfx::TextureHandle* t : {&lamps_, &lampGrid_}) {
+        if (bgfx::isValid(*t)) bgfx::destroy(*t);
+        *t = BGFX_INVALID_HANDLE;
+    }
     for (bgfx::ProgramHandle* p : {&shadowProgram_, &prepassProgram_, &ssaoProgram_, &blurProgram_,
                                    &ssaoMsProgram_, &blurMsProgram_, &shadeProgram_,
                                    &presentProgram_, &groundShadowProgram_,
                                    &groundPrepassProgram_, &groundShadeProgram_,
                                    &skinnedShadowProgram_, &skinnedPrepassProgram_,
-                                   &skinnedShadeProgram_}) {
+                                   &skinnedShadeProgram_, &glowProgram_, &skinnedGlowProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }
@@ -283,7 +308,7 @@ void Renderer::shutdown() {
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
           &uMaterial_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
-          &sColour_, &sBones_}) {
+          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
     }
@@ -307,6 +332,10 @@ void Renderer::bindShadeInputs() {
     bgfx::setTexture(5, sShadowDepth_, shadowMap_,
                      BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     bgfx::setTexture(7, sAo_, blurTex_);
+    bgfx::setUniform(uLampGrid_, lampGridUniform_);
+    bgfx::setUniform(uLampParams_, lampParams_);
+    bgfx::setTexture(13, sLamps_, lamps_);
+    bgfx::setTexture(14, sLampGrid_, lampGrid_);
 }
 
 void Renderer::fitSplit(const Camera& camera, const Lighting& lighting, const float* worldAxes,
@@ -398,19 +427,23 @@ int Renderer::addPalette(const float* rows12, int bones) {
 void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                              bgfx::ProgramHandle skinnedProgram,
                              const std::vector<Batch>& batches, const bgfx::InstanceDataBuffer& idb,
-                             uint64_t state, bool bindMaterial) {
+                             uint64_t state, bool bindMaterial, bool glowPass) {
     for (const Batch& batch : batches) {
         const content::Mesh& mesh = *batch.mesh;
         const bool skinned = mesh.isSkinned();
         const bgfx::ProgramHandle batchProgram = skinned ? skinnedProgram : program;
         for (const content::Part& part : mesh.parts()) {
             const content::Material& material = mesh.materials()[part.material];
+            // A glow is drawn in its own pass and in no other. See the header.
+            if (material.glow != glowPass) continue;
 
             // A cutout discards in every pass, this one included, or a leaf casts a card.
             // z and w are glTF's roughness and metal factors, which the shade pass multiplies
-            // the ORM by: a material with no ORM map carries its whole answer there.
+            // the ORM by: a material with no ORM map carries its whole answer there. A glow
+            // has neither, and its z is the sheet's glow_strength instead.
             const float materialParams[4] = {material.cutout, material.twoSided ? 1.0f : 0.0f,
-                                             material.roughnessFactor, material.metalFactor};
+                                             glowPass ? glowStrength_ : material.roughnessFactor,
+                                             material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
             // The albedo is bound even in the depth passes, because the cutout reads its alpha.
             bgfx::setTexture(0, sAlbedo_, material.albedo);
@@ -422,8 +455,10 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             }
 
             uint64_t drawState = state;
-            // MU's figures are single sheets of mixed winding and are drawn two-sided.
-            if (!material.twoSided) drawState |= BGFX_STATE_CULL_CW;
+            // MU's figures are single sheets of mixed winding and are drawn two-sided. A glow
+            // always is: MU draws its BlendMesh with culling off, and a flame card seen from
+            // behind is still a flame.
+            if (!material.twoSided && !glowPass) drawState |= BGFX_STATE_CULL_CW;
             // No alpha to coverage here, deliberately. It was set for a while and did
             // nothing: coverage comes from gl_FragColor.a and every pass writes 1.0 or a
             // depth, so the mask was always full. Making it real is not one line -- the
@@ -447,6 +482,99 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             ++drawCount_;
         }
     }
+}
+
+void Renderer::setPointLights(const PointLight* lights, uint32_t count, float minX, float minZ,
+                               float side) {
+    if (count > kMaxPointLights) {
+        core::logError("%u point lights and the frame holds %u; the rest are dark", count,
+                       kMaxPointLights);
+        count = kMaxPointLights;
+    }
+    lightCount_ = lights ? count : 0;
+    lampColour_.assign(size_t(lightCount_) * 3, 0.0f);
+    std::fill(lampCpu_.begin(), lampCpu_.end(), 0.0f);
+    const size_t row = size_t(kMaxPointLights + 1) * 4;
+    for (uint32_t i = 0; i < lightCount_; ++i) {
+        const PointLight& one = lights[i];
+        float* at = &lampCpu_[size_t(i) * 4];
+        at[0] = one.position[0];
+        at[1] = one.position[1];
+        at[2] = one.position[2];
+        at[3] = one.reach;
+        for (int c = 0; c < 3; ++c) {
+            lampColour_[size_t(i) * 3 + c] = one.colour[c];
+            lampCpu_[row + size_t(i) * 4 + c] = one.colour[c];
+        }
+        lampCpu_[row + size_t(i) * 4 + 3] = one.height;
+    }
+    lampsDirty_ = true;
+
+    // The grid. A light is listed in every cell its sphere's footprint touches: the circle of
+    // its reach on the ground, tested against the cell's square, so a pixel on a wall above a
+    // cell still finds the light that reaches it through that cell's column.
+    const int cells = lightCount_ > 0 ? std::max(1, int(std::ceil(side / kLightCellMetres))) : 0;
+    std::vector<uint8_t> grid(size_t(std::max(cells, 1)) * 2 * 4 * size_t(std::max(cells, 1)), 0);
+    int worst = 0, crowded = 0, lit = 0;
+    std::vector<std::pair<float, int>> wanted;
+    wanted.reserve(64);
+    for (int cz = 0; cz < cells; ++cz) {
+        for (int cx = 0; cx < cells; ++cx) {
+            const float x0 = minX + float(cx) * kLightCellMetres;
+            const float z0 = minZ + float(cz) * kLightCellMetres;
+            wanted.clear();
+            for (uint32_t i = 0; i < lightCount_; ++i) {
+                const PointLight& one = lights[i];
+                const float nx = std::clamp(one.position[0], x0, x0 + kLightCellMetres);
+                const float nz = std::clamp(one.position[2], z0, z0 + kLightCellMetres);
+                const float dx = one.position[0] - nx, dz = one.position[2] - nz;
+                const float d2 = dx * dx + dz * dz;
+                if (d2 < one.reach * one.reach) wanted.emplace_back(d2, int(i));
+            }
+            if (wanted.empty()) continue;
+            ++lit;
+            worst = std::max(worst, int(wanted.size()));
+            if (int(wanted.size()) > kLightsPerCell) {
+                // The nearest are kept. A far light cut from a crowded cell is the dimmest
+                // there, and the cap is logged below so it is a number and not a surprise.
+                ++crowded;
+                std::sort(wanted.begin(), wanted.end());
+            }
+            uint8_t* out = &grid[(size_t(cz) * size_t(cells) * 2 + size_t(cx) * 2) * 4];
+            for (int k = 0; k < std::min(int(wanted.size()), kLightsPerCell); ++k) {
+                out[k] = uint8_t(wanted[size_t(k)].second + 1);
+            }
+        }
+    }
+    if (bgfx::isValid(lampGrid_)) bgfx::destroy(lampGrid_);
+    const int w = std::max(cells, 1) * 2, h = std::max(cells, 1);
+    lampGrid_ = bgfx::createTexture2D(uint16_t(w), uint16_t(h), false, 1,
+                                      bgfx::TextureFormat::RGBA8,
+                                      BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP |
+                                          BGFX_SAMPLER_V_CLAMP,
+                                      bgfx::copy(grid.data(), uint32_t(grid.size())));
+    lampGridUniform_[0] = minX;
+    lampGridUniform_[1] = minZ;
+    lampGridUniform_[2] = 1.0f / kLightCellMetres;
+    lampGridUniform_[3] = float(cells);
+    lampParams_[1] = lightCount_ > 0 ? 1.0f : 0.0f;
+    if (lightCount_ > 0) {
+        core::logf("point lights: %u, on a %dx%d grid of %.0f m cells; %d cells lit, the worst "
+                   "wants %d of the %d a cell holds, %d cells had to drop the farthest",
+                   lightCount_, cells, cells, double(kLightCellMetres), lit, worst,
+                   kLightsPerCell, crowded);
+    }
+}
+
+void Renderer::setPointLightLevels(const float* levels, uint32_t count) {
+    count = std::min(count, lightCount_);
+    const size_t row = size_t(kMaxPointLights + 1) * 4;
+    for (uint32_t i = 0; i < count; ++i) {
+        for (int c = 0; c < 3; ++c) {
+            lampCpu_[row + size_t(i) * 4 + c] = lampColour_[size_t(i) * 3 + c] * levels[i];
+        }
+    }
+    lampsDirty_ = true;
 }
 
 void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
@@ -511,6 +639,15 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         bgfx::updateTexture2D(palette_, 0, 0, 0, 0, uint16_t(kMaxBones * 3),
                               uint16_t(paletteWritten_), bgfx::copy(paletteCpu_.data(), bytes));
     }
+
+    // The lights' flicker, when it moved: two rows of the 256-wide texture, 8 kB.
+    if (lampsDirty_ && bgfx::isValid(lamps_)) {
+        bgfx::updateTexture2D(lamps_, 0, 0, 0, 0, uint16_t(kMaxPointLights + 1), 2,
+                              bgfx::copy(lampCpu_.data(), uint32_t(lampCpu_.size() * sizeof(float))));
+        lampsDirty_ = false;
+    }
+    lampParams_[0] = lighting.lampStrength;
+    glowStrength_ = lighting.glowStrength;
 
     // --- the camera -------------------------------------------------------------------
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and
@@ -859,6 +996,18 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             if (total > 0) {
                 submitBatches(ViewShade, shadeProgram_, skinnedShadeProgram_, batches_, idb,
                               shadeState, true);
+            }
+
+            // --- view 5, first half: MU's BlendMeshes --------------------------------
+            // The glow parts the three passes above skipped, added into the shade target
+            // against the prepass's depth and writing none. Here and not in Effects because
+            // they are meshes that ride the frame's instance buffer, which lives in this
+            // block; the view's target and transform are set below with the sprites'.
+            if (total > 0 && bgfx::isValid(glowProgram_) && bgfx::isValid(skinnedGlowProgram_)) {
+                const uint64_t glowState = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LESS |
+                                           BGFX_STATE_BLEND_ADD;
+                submitBatches(ViewTransparent, glowProgram_, skinnedGlowProgram_, batches_, idb,
+                              glowState, false, true);
             }
         }
     }

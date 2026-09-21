@@ -52,6 +52,15 @@ public:
     void setRoofsHidden(bool hidden) { roofsHidden_ = hidden; }
     bool roofsHidden() const { return roofsHidden_; }
 
+    // The cooked table itself, for what reads the placements without drawing them: the
+    // lamps resolve each light through the placement that carries it.
+    const content::CookedTown& cooked() const { return town_; }
+    // How bright a placement's glow parts draw this frame, MU's BlendMeshLight: 1 unless the
+    // lamps flicker it. Rides in the instance's fifth vec4 .w, which fs_glow reads.
+    void setGlowLevel(uint32_t instance, float level) {
+        if (instance < glowLevels_.size()) glowLevels_[instance] = level;
+    }
+
     const TownCounts& counts() const { return counts_; }
     const TownCounts& casterCounts() const { return casterCounts_; }
     size_t modelCount() const { return meshes_.size(); }
@@ -69,6 +78,7 @@ private:
     TownCounts casterCounts_;
     uint32_t triangles_ = 0;
     bool roofsHidden_ = false;
+    std::vector<float> glowLevels_;
     double loadSeconds_ = 0.0;
 };
 

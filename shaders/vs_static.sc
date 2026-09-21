@@ -13,7 +13,7 @@ void main()
 	v_texcoord0 = a_texcoord0;
 	// MU's baked terrain light where this instance stands, as World.cs's Lit() reads it: a
 	// lit result already, so it multiplies the albedo and is not lit again.
-	v_light = i_data4.rgb;
+	v_light = i_data4;
 
 	// Normals go by the model matrix's rotation. MU2's build has no non-uniform scale on a
 	// placement, so the matrix itself serves and there is no inverse transpose to carry.

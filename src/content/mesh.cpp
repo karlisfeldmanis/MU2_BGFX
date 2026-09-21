@@ -123,6 +123,8 @@ bool Mesh::load(const std::string& path, Textures& textures) {
         out.name = m.name ? m.name : "material";
         out.twoSided = m.double_sided;
         out.cutout = cutoutFor(&m);
+        // The bench's glb path agrees with the cook's: a BLEND material is a glow.
+        out.glow = m.alpha_mode == cgltf_alpha_mode_blend;
         if (m.has_pbr_metallic_roughness) {
             out.albedo = textureFrom(m.pbr_metallic_roughness.base_color_texture, dir, textures,
                                      TextureRole::Albedo);
@@ -386,6 +388,7 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.name = from.name;
         out.cutout = from.cutout;
         out.twoSided = from.twoSided;
+        out.glow = from.glow;
         out.roughnessFactor = from.roughnessFactor;
         out.metalFactor = from.metalFactor;
         auto texture = [&](const std::string& path, TextureRole role) {

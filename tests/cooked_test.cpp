@@ -57,6 +57,27 @@ int main() {
     check(town.metresPerTile == 1.0f, "one tile is one metre, as docs/conventions.md says");
     check(town.size % town.chunkTiles == 0 || town.chunks.size() > 0, "the chunk grid covers the map");
 
+    // The lamps, sprint 8a. Eleven of Lorencia's models carry thirteen lights between them
+    // (Bridge01 and DoungeonGate01 two each, the rest one), and the map hides 25 anchors:
+    // Light01 twice, Light02 eighteen times, Light03 five.
+    {
+        size_t carried = 0, anchors = 0, fires = 0;
+        for (const mu::content::TownEmitter& one : town.emitters) {
+            if (one.model == mu::content::TownEmitter::kWorld) {
+                ++anchors;
+            } else {
+                ++carried;
+            }
+            if (one.kind == mu::content::EmitterKind::Fire) ++fires;
+            check(one.kind == mu::content::EmitterKind::Smoke || one.reach > 0.0f,
+                  "every light reaches somewhere");
+        }
+        std::printf("  %zu lights carried by models, %zu hidden anchors, %zu fires, %zu glows\n",
+                    carried, anchors, fires, town.glows.size());
+        check(carried == 13, "thirteen lights across Lorencia's eleven lit models");
+        check(anchors == 25, "the 25 hidden Light01-03 anchors");
+    }
+
     // Every model's own count agrees with the instances that name it, which is the table a
     // loader will size its buffers from.
     std::vector<uint32_t> counted(town.models.size(), 0);
