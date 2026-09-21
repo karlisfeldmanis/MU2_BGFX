@@ -51,6 +51,18 @@ public:
     bool plan(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall,
               std::vector<Step>& out);
 
+    // Whether a straight line between two points, in tiles, touches only open tiles. Exact: the
+    // grid is walked boundary to boundary as a ray through voxels, and a line through a corner
+    // exactly needs both tiles beside it open, the same rule `corner` keeps. MU2's Route.Sees.
+    bool sees(float fromX, float fromY, float toX, float toY, uint16_t wall) const;
+
+    // The route pulled tight, in place: each leg runs from where the last one ended to the
+    // furthest tile of the route still in a straight clear line, stopping at the first that is
+    // not (carrying on past it would let a later tile that comes back into view cut a corner).
+    // The first leg starts where the body really stands. MU2's Route.Along -- the zig-zag of an
+    // eight-way search on a tile grid, straightened. Allocates nothing.
+    void pull(float fromX, float fromY, uint16_t wall, std::vector<Step>& route) const;
+
     // The nearest tile to (column, row) that something may stand on, searched outward in
     // rings, straight before diagonal within a ring. Answered before the search rather than
     // after, so the plan, the marker and the walk all agree about where the walk ends.

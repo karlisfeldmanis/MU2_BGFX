@@ -260,6 +260,43 @@ void testRouter(const content::Tables& tables) {
               std::memcmp(again.data(), route.data(), route.size() * sizeof(sim::Step)) == 0,
           "the same plan twice gives the same route");
 
+    // Pulled tight. Across open ground a straight walk is one leg; and over a sweep of long
+    // walks through the town, every leg of every pulled route is clear by Router::sees, the
+    // legs are fewer than the tiles, and the route still ends where the plan did.
+    {
+        std::vector<sim::Step> pulled = route;
+        router.pull(173.0f, 100.0f, content::kWallCharacter, pulled);
+        checkEqual((long long)pulled.size(), 1, "a straight walk on open ground is one leg");
+        int walks = 0, fewer = 0;
+        bool clear = true, sameEnd = true;
+        for (int i = 0; i < 40; ++i) {
+            const int fromColumn = 120 + (i * 7) % 60, fromRow = 110 + (i * 11) % 50;
+            const int toColumn = 120 + (i * 13 + 29) % 60, toRow = 110 + (i * 17 + 23) % 50;
+            if (!tables.grid.open(fromColumn, fromRow, content::kWallCharacter)) continue;
+            if (!router.plan(fromColumn, fromRow, toColumn, toRow, content::kWallCharacter,
+                             pulled)) {
+                continue;
+            }
+            const sim::Step end = pulled.back();
+            const size_t tiles = pulled.size();
+            router.pull(float(fromColumn), float(fromRow), content::kWallCharacter, pulled);
+            ++walks;
+            fewer += pulled.size() < tiles;
+            sameEnd &= pulled.back().column == end.column && pulled.back().row == end.row;
+            float atX = float(fromColumn), atY = float(fromRow);
+            for (const sim::Step& leg : pulled) {
+                clear &= router.sees(atX, atY, float(leg.column), float(leg.row),
+                                     content::kWallCharacter);
+                atX = float(leg.column);
+                atY = float(leg.row);
+            }
+        }
+        check(walks > 10, "the sweep found walks to pull");
+        check(clear, "every pulled leg touches only open tiles");
+        check(sameEnd, "and a pulled route ends where the plan did");
+        check(fewer * 2 > walks, "and most walks come out with fewer points than tiles");
+    }
+
     // A goal inside a wall is resolved to the nearest standable tile BEFORE the search, so the
     // plan does not explore the whole map and then fail.
     int blockedColumn = -1, blockedRow = -1;

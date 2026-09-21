@@ -1,6 +1,7 @@
 #include "sim/route.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 
 namespace mu::sim {
@@ -50,6 +51,68 @@ void Router::open(const content::Grid* grid) {
 // through the corner of a building. Route.cs:458-461.
 bool Router::corner(int column, int row, int dx, int dy, uint16_t wall) const {
     return grid_->open(column + dx, row, wall) && grid_->open(column, row + dy, wall);
+}
+
+bool Router::sees(float fromX, float fromY, float toX, float toY, uint16_t wall) const {
+    if (!grid_ || grid_->empty()) return false;
+    // Into a space where a tile is the unit square from its own index, so the boundaries are
+    // whole numbers. Double, because a line exactly through a corner is decided by equality.
+    const double x = double(fromX) + 0.5, y = double(fromY) + 0.5;
+    const double dx = double(toX) - double(fromX), dy = double(toY) - double(fromY);
+    int column = int(std::floor(x)), row = int(std::floor(y));
+    const int lastColumn = int(std::floor(double(toX) + 0.5));
+    const int lastRow = int(std::floor(double(toY) + 0.5));
+    if (!grid_->open(column, row, wall)) return false;
+
+    const int stepX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+    const int stepY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+    constexpr double kNever = 1e300;
+    double farX = stepX == 0 ? kNever : (stepX > 0 ? column + 1 - x : x - column) / std::fabs(dx);
+    double farY = stepY == 0 ? kNever : (stepY > 0 ? row + 1 - y : y - row) / std::fabs(dy);
+    const double perX = stepX == 0 ? kNever : 1.0 / std::fabs(dx);
+    const double perY = stepY == 0 ? kNever : 1.0 / std::fabs(dy);
+
+    const int most = std::abs(lastColumn - column) + std::abs(lastRow - row) + 2;
+    for (int taken = 0; taken < most; ++taken) {
+        if (column == lastColumn && row == lastRow) return true;
+        if (std::fabs(farX - farY) < 1e-9) {
+            // Exactly through the corner: the diagonal squeeze `corner` refuses.
+            if (!grid_->open(column + stepX, row, wall) || !grid_->open(column, row + stepY, wall)) {
+                return false;
+            }
+            column += stepX;
+            row += stepY;
+            farX += perX;
+            farY += perY;
+        } else if (farX < farY) {
+            column += stepX;
+            farX += perX;
+        } else {
+            row += stepY;
+            farY += perY;
+        }
+        if (!grid_->open(column, row, wall)) return false;
+    }
+    return column == lastColumn && row == lastRow;
+}
+
+void Router::pull(float fromX, float fromY, uint16_t wall, std::vector<Step>& route) const {
+    if (route.size() < 2) return;
+    float atX = fromX, atY = fromY;
+    size_t next = 0, kept = 0;
+    while (next < route.size()) {
+        size_t furthest = next;
+        for (size_t test = next + 1; test < route.size(); ++test) {
+            if (!sees(atX, atY, float(route[test].column), float(route[test].row), wall)) break;
+            furthest = test;
+        }
+        // In place: `kept` never passes `furthest`, so nothing is overwritten before it is read.
+        route[kept++] = route[furthest];
+        atX = float(route[furthest].column);
+        atY = float(route[furthest].row);
+        next = furthest + 1;
+    }
+    route.resize(kept);
 }
 
 bool Router::nearestOpen(int column, int row, uint16_t wall, int rings, int* outColumn,

@@ -662,13 +662,19 @@ bool Realm::send(Body& one, int column, int row) {
         say(What::Refused, one, column, row);
         return false;
     }
+    const int32_t tiles = int32_t(scratch_.size());
+    // Pulled tight from where the body really stands, MU2's Route.Along: an eight-way search
+    // on tiles answers any heading that is not straight or diagonal with a staircase, and
+    // walked tile to tile that staircase is a zig-zag. The legs are exactly as clear as the
+    // tiles were -- Router::sees tests every tile a leg touches -- so nothing walks through
+    // anything the plan went round. Invention against MU, which walks the staircase.
+    router_.pull(one.x, one.y, content::kWallCharacter, scratch_);
     one.route.assign(scratch_.begin(), scratch_.end());
     one.onStep = 0;
     one.walking = true;
     // The goal the route actually ends on, not the one asked for: the router moves a goal in a
     // wall to the nearest open tile, and the marker is put down from this event.
-    say(What::Walked, one, one.route.back().column, one.route.back().row,
-        int32_t(one.route.size()));
+    say(What::Walked, one, one.route.back().column, one.route.back().row, tiles);
     return true;
 }
 
@@ -716,6 +722,10 @@ void Realm::advance(Body& one) {
         if (dx * dx + dy * dy > 1e-6f) one.aim = std::atan2(dy, dx);
     }
     if (turn(one)) return;  // still coming round: no ground this tick
+    // A tile crossed is said when the body's own tile changes, not when it reaches a point of
+    // its route: a pulled route's points are the ends of long legs, and the log's Stepped
+    // still means one tile.
+    const int wasColumn = one.column(), wasRow = one.row();
     float left = one.speed;
     while (left > 0.0f && one.onStep < one.route.size()) {
         const Step& target = one.route[one.onStep];
@@ -732,12 +742,14 @@ void Realm::advance(Body& one) {
             one.y = float(target.row);
             left -= distance;
             ++one.onStep;
-            say(What::Stepped, one, target.column, target.row);
         } else {
             one.x += dx / distance * left;
             one.y += dy / distance * left;
             left = 0.0f;
         }
+    }
+    if (one.column() != wasColumn || one.row() != wasRow) {
+        say(What::Stepped, one, one.column(), one.row());
     }
     if (one.onStep >= one.route.size()) {
         one.walking = false;
