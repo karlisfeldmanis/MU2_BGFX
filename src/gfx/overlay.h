@@ -18,6 +18,15 @@
 
 namespace mu::gfx {
 
+// One glyph of the baked face: where it sits in the atlas and where it sits on the line,
+// in the pixels the face was baked at. stb_truetype's own packedchar in this project's own
+// terms, so that no header of ours drags stb into everything that draws a label.
+struct FaceGlyph {
+    float u0 = 0.0f, v0 = 0.0f, u1 = 0.0f, v1 = 0.0f;
+    float x0 = 0.0f, y0 = 0.0f, x1 = 0.0f, y1 = 0.0f;
+    float advance = 0.0f;
+};
+
 class Overlay {
 public:
     bool init(const std::string& shaderDir);
@@ -35,8 +44,16 @@ public:
     // does, and costs one more quad in a draw that is already one draw.
     float text(float x, float y, float scale, uint32_t abgr, const std::string& s);
     // What `text` would measure, without drawing it.
-    static float measure(float scale, const std::string& s);
-    static float lineHeight(float scale);
+    //
+    // A member and no longer static, because the face is proportional: an I and a W are not
+    // the same width in Open Sans, and a list panel sized by `count * oneWidth` is either
+    // too narrow for its longest name or half empty. Every caller that lays a panel out
+    // around a string has to ask the face that will draw it.
+    float measure(float scale, const std::string& s) const;
+    // The line box, and it is deliberately the SAME arithmetic the bitmap face used --
+    // eight pixels a unit of scale. The layout in the viewer is written against it, and a
+    // face is a face rather than a new set of margins.
+    static float lineHeight(float scale) { return 8.0f * scale; }
     void submit(bgfx::ViewId view);
 
     bool ready() const { return bgfx::isValid(program_); }
@@ -50,6 +67,26 @@ private:
         float u, v;
         uint32_t abgr;
     };
+    // The baked face. `first` is the code point glyphs_[0] holds; a character outside the
+    // range is drawn as nothing, which for a viewer's list of ASCII model names is every
+    // character it will ever be handed.
+    bool bakeFace(const std::string& path, uint8_t* pixels, int width, int height);
+    // How much a baked glyph is shrunk to meet `lineHeight(scale)`.
+    float faceScale(float scale) const;
+    static constexpr int kFirstCode = 32;
+    static constexpr int kLastCode = 126;
+    // What the face is rasterised at. One size, scaled down to whatever a caller asks for:
+    // the overlay's own list draws at a 16 px line, so 40 leaves every label a minification
+    // of a well-formed glyph rather than a magnification of a small one.
+    static constexpr float kBakePixels = 40.0f;
+    std::vector<FaceGlyph> glyphs_;
+    float bakedLine_ = 0.0f;    // ascent - descent at kBakePixels, the face's own line box
+    float bakedAscent_ = 0.0f;  // baseline from the top of that box
+    bool haveFace_ = false;
+    // Where the solid texel for a panel sits, in uv. It moves with the face: the bitmap
+    // fallback keeps it in cell 0 and the baked face puts it below the packed rows.
+    float solidU_ = 0.0f, solidV_ = 0.0f;
+
     std::vector<Vertex> vertices_;
     std::vector<uint16_t> indices_;
     bgfx::TextureHandle atlas_ = BGFX_INVALID_HANDLE;

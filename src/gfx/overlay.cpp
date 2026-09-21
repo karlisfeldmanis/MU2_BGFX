@@ -2,12 +2,37 @@
 
 #include <cctype>
 #include <cstring>
+#include <vector>
+
+#define STB_TRUETYPE_IMPLEMENTATION
+#include <stb_truetype.h>
 
 #include "core/files.h"
 #include "core/log.h"
 
 namespace mu::gfx {
 namespace {
+
+// The face the overlay wears, and it is MU2's by inheritance: MU2 sets no theme font in
+// either of its Godot projects, so every label it draws is Godot's fallback, Open Sans
+// SemiBold. bootstrap.sh fetches the same file, pinned.
+//
+// Read from extern/ at run time rather than compiled in. It is 150 kB, it is the one asset
+// gfx reads that is not the game's own, and a header holding it as a byte array is a header
+// nobody can read. The cost is that it can be missing, which is what the bitmap fallback
+// below is for.
+constexpr const char* kFacePath = MU2_ROOT_DIR "/extern/OpenSans-SemiBold.ttf";
+// A 1024 square, which is 1 MB of R8 and holds the ninety-five printable glyphs at the size
+// below with the 2x2 oversampling they are packed with. 512 was tried first and the packing
+// refused it -- an oversampled 40 px glyph occupies an 80 px box, and ninety-five of those
+// do not fit in a quarter of a megapixel. The refusal was visible, in the log and in the
+// picture, only because the bitmap fallback caught it.
+constexpr int kAtlas = 1024;
+// The rows at the bottom kept out of the packing, for the solid texel a panel draws with.
+// A whole band rather than one texel because the face is sampled BILINEAR -- unlike the
+// bitmap, which was point sampled -- and a solid texel with a packed glyph next to it would
+// bleed that glyph's edge into every panel in the list.
+constexpr int kSolidRows = 12;
 
 // A 5x7 font, one byte a row, bit 4 leftmost. Written out rather than loaded, because a file
 // is a thing that can be missing and this has to work on a machine that has just cloned the
@@ -108,36 +133,121 @@ bgfx::ShaderHandle loadShader(const std::string& dir, const char* name) {
 
 }  // namespace
 
-bool Overlay::init(const std::string& shaderDir) {
-    const int width = kCols * kCellW;
-    const int height = kRows * kCellH;
-    const bgfx::Memory* mem = bgfx::alloc(uint32_t(width * height));
-    std::memset(mem->data, 0, size_t(width * height));
-
-    // Cell 0 solid. Only the glyph box of it is filled, not the padding column, so a panel's
-    // quad samples the middle of it and never catches a neighbouring cell's edge.
-    for (int y = 0; y < kGlyphH; ++y) {
-        for (int x = 0; x < kGlyphW; ++x) mem->data[y * width + x] = 0xFF;
+bool Overlay::bakeFace(const std::string& path, uint8_t* pixels, int width, int height) {
+    const std::vector<uint8_t> ttf = core::readFile(path);
+    if (ttf.empty()) {
+        core::logError("no face at %s, so the overlay falls back to its own 5x7 letters. "
+                       "./bootstrap.sh fetches it", path.c_str());
+        return false;
     }
-    for (int g = 0; g < kGlyphCount; ++g) {
-        const int cell = kFirstGlyphCell + g;
-        const int ox = (cell % kCols) * kCellW;
-        const int oy = (cell / kCols) * kCellH;
+    stbtt_fontinfo info;
+    if (!stbtt_InitFont(&info, ttf.data(), stbtt_GetFontOffsetForIndex(ttf.data(), 0))) {
+        core::logError("%s is not a font this can read", path.c_str());
+        return false;
+    }
+
+    stbtt_pack_context pack;
+    // The packing is given everything but the solid band at the bottom, and is told the full
+    // stride, so the glyph coordinates that come back are already in the whole atlas's frame.
+    if (!stbtt_PackBegin(&pack, pixels, width, height - kSolidRows, width, 1, nullptr)) {
+        core::logError("the face would not pack into %dx%d", width, height - kSolidRows);
+        return false;
+    }
+    // Two by two. The overlay draws this face at a fifth of the size it is baked at and
+    // nothing here is pixel-aligned, so the horizontal oversample is what keeps a stem from
+    // thinning to nothing between one label and the next.
+    stbtt_PackSetOversampling(&pack, 2, 2);
+    const int count = kLastCode - kFirstCode + 1;
+    // Resized rather than constructed with a size: `vector<T> packed(size_t(count))` is a
+    // function declaration, and the compiler then says the packing does not take a vector.
+    std::vector<stbtt_packedchar> packed;
+    packed.resize(size_t(count));
+    const int ok = stbtt_PackFontRange(&pack, ttf.data(), 0, kBakePixels, kFirstCode, count,
+                                       packed.data());
+    stbtt_PackEnd(&pack);
+    if (!ok) {
+        core::logError("the face packed short; the atlas is too small for %d glyphs", count);
+        return false;
+    }
+
+    // The face's own line box, which is what `lineHeight` is scaled against. Asked of the
+    // font rather than derived from the glyphs: a line of "aces" and a line of "Qgjy" must
+    // sit on the same baseline and take the same height.
+    int ascent = 0, descent = 0, gap = 0;
+    stbtt_GetFontVMetrics(&info, &ascent, &descent, &gap);
+    const float toPixels = stbtt_ScaleForPixelHeight(&info, kBakePixels);
+    bakedAscent_ = float(ascent) * toPixels;
+    bakedLine_ = float(ascent - descent) * toPixels;
+
+    glyphs_.assign(size_t(count), FaceGlyph{});
+    for (int i = 0; i < count; ++i) {
+        float penX = 0.0f, penY = 0.0f;
+        stbtt_aligned_quad q;
+        // align_to_integer 0: the quad is scaled down by the caller, so rounding it to whole
+        // pixels HERE rounds at the wrong size and the spacing comes out uneven.
+        stbtt_GetPackedQuad(packed.data(), width, height, i, &penX, &penY, &q, 0);
+        FaceGlyph& g = glyphs_[size_t(i)];
+        g.u0 = q.s0; g.v0 = q.t0; g.u1 = q.s1; g.v1 = q.t1;
+        g.x0 = q.x0; g.y0 = q.y0; g.x1 = q.x1; g.y1 = q.y1;
+        g.advance = packed[size_t(i)].xadvance;
+    }
+
+    // The solid band, inset from the packed rows and from the edge so that bilinear sampling
+    // of its middle can only ever find more of itself.
+    for (int y = height - kSolidRows + 3; y < height - 3; ++y) {
+        for (int x = 3; x < 12; ++x) pixels[y * width + x] = 0xFF;
+    }
+    solidU_ = 7.5f / float(width);
+    solidV_ = (float(height) - float(kSolidRows) * 0.5f) / float(height);
+    core::logf("overlay: %s, %d glyphs baked at %.0f px, line %.1f px", path.c_str(), count,
+               double(kBakePixels), double(bakedLine_));
+    return true;
+}
+
+bool Overlay::init(const std::string& shaderDir) {
+    // The face first; the 5x7 letters only if it is not there.
+    std::vector<uint8_t> pixels(size_t(kAtlas) * size_t(kAtlas), 0);
+    haveFace_ = bakeFace(kFacePath, pixels.data(), kAtlas, kAtlas);
+    if (haveFace_) {
+        const bgfx::Memory* face = bgfx::copy(pixels.data(), uint32_t(pixels.size()));
+        // Bilinear, where the bitmap below is point sampled: this is a 64 px face drawn at
+        // 16, and point sampling a minified glyph is what makes small text crawl and break.
+        atlas_ = bgfx::createTexture2D(uint16_t(kAtlas), uint16_t(kAtlas), false, 1,
+                                       bgfx::TextureFormat::R8, BGFX_SAMPLER_UVW_CLAMP, face);
+    } else {
+        const int width = kCols * kCellW;
+        const int height = kRows * kCellH;
+        const bgfx::Memory* mem = bgfx::alloc(uint32_t(width * height));
+        std::memset(mem->data, 0, size_t(width * height));
+
+        // Cell 0 solid. Only the glyph box of it is filled, not the padding column, so a
+        // panel's quad samples the middle of it and never catches a neighbouring cell's edge.
         for (int y = 0; y < kGlyphH; ++y) {
-            const uint8_t row = kGlyphs[g].rows[y];
-            for (int x = 0; x < kGlyphW; ++x) {
-                if (row & (1u << (kGlyphW - 1 - x))) {
-                    mem->data[(oy + y) * width + (ox + x)] = 0xFF;
+            for (int x = 0; x < kGlyphW; ++x) mem->data[y * width + x] = 0xFF;
+        }
+        for (int g = 0; g < kGlyphCount; ++g) {
+            const int cell = kFirstGlyphCell + g;
+            const int ox = (cell % kCols) * kCellW;
+            const int oy = (cell / kCols) * kCellH;
+            for (int y = 0; y < kGlyphH; ++y) {
+                const uint8_t row = kGlyphs[g].rows[y];
+                for (int x = 0; x < kGlyphW; ++x) {
+                    if (row & (1u << (kGlyphW - 1 - x))) {
+                        mem->data[(oy + y) * width + (ox + x)] = 0xFF;
+                    }
                 }
             }
         }
+        solidU_ = 2.5f / float(width);
+        solidV_ = 3.5f / float(height);
+
+        // R8 and point sampled, with no mip chain: this is a mask at one size, and a
+        // filtered 5-pixel letter is a grey smear rather than a letter.
+        atlas_ = bgfx::createTexture2D(uint16_t(width), uint16_t(height), false, 1,
+                                       bgfx::TextureFormat::R8,
+                                       BGFX_SAMPLER_POINT | BGFX_SAMPLER_UVW_CLAMP, mem);
     }
 
-    // R8 and point sampled, with no mip chain: this is a mask at one size, and a filtered
-    // 5-pixel letter is a grey smear rather than a letter.
-    atlas_ = bgfx::createTexture2D(uint16_t(width), uint16_t(height), false, 1,
-                                   bgfx::TextureFormat::R8,
-                                   BGFX_SAMPLER_POINT | BGFX_SAMPLER_UVW_CLAMP, mem);
     sampler_ = bgfx::createUniform("s_albedo", bgfx::UniformType::Sampler);
     bgfx::ShaderHandle vs = loadShader(shaderDir, "vs_overlay");
     bgfx::ShaderHandle fs = loadShader(shaderDir, "fs_overlay");
@@ -185,31 +295,67 @@ void Overlay::quad(float x, float y, float w, float h, float u0, float v0, float
 }
 
 void Overlay::panel(float x, float y, float w, float h, uint32_t abgr) {
-    // The middle of cell 0, which is solid, so the panel needs no second texture and no
-    // branch in the shader.
-    const float u = 2.5f / float(kCols * kCellW);
-    const float v = 3.5f / float(kRows * kCellH);
-    quad(x, y, w, h, u, v, u, v, abgr);
+    // A solid texel out of whichever atlas was built, so a filled rectangle and a letter are
+    // the same quad against the same texture and the whole overlay stays one draw.
+    quad(x, y, w, h, solidU_, solidV_, solidU_, solidV_, abgr);
 }
 
-float Overlay::measure(float scale, const std::string& s) {
-    return float(s.size()) * kAdvance * scale;
+// How much a baked glyph is shrunk for a caller asking for `scale`. The line box is the
+// contract -- `lineHeight` is eight pixels a unit of scale, as the bitmap face was -- so a
+// 64 px face drawn at scale 2 comes down by 16/bakedLine_.
+float Overlay::faceScale(float scale) const {
+    return bakedLine_ > 0.0f ? lineHeight(scale) / bakedLine_ : 0.0f;
 }
 
-float Overlay::lineHeight(float scale) { return float(kCellH) * scale; }
+float Overlay::measure(float scale, const std::string& s) const {
+    if (!haveFace_) return float(s.size()) * kAdvance * scale;
+    const float f = faceScale(scale);
+    float width = 0.0f;
+    for (char c : s) {
+        const int code = int(static_cast<unsigned char>(c));
+        if (code < kFirstCode || code > kLastCode) continue;
+        width += glyphs_[size_t(code - kFirstCode)].advance * f;
+    }
+    return width * 1.0f;
+}
 
 float Overlay::text(float x, float y, float scale, uint32_t abgr, const std::string& s) {
+    // The shadow first, so the ink lands on top of it. Both passes walk the whole string
+    // rather than interleaving per glyph: a glyph's own shadow must not sit over its
+    // neighbour's ink, which is what one pass of (shadow, ink) per character gives.
+    constexpr uint32_t kShadow = 0xC0000000u;  // abgr: three quarters opaque, black
+    if (haveFace_) {
+        const float f = faceScale(scale);
+        // A pixel, whatever the size: the shadow is there to separate the ink from grass,
+        // and a shadow that grows with the text reads as a second, blurred copy of it.
+        const float offset = 1.0f;
+        for (int pass = 0; pass < 2; ++pass) {
+            const uint32_t colour = pass == 0 ? kShadow : abgr;
+            const float d = pass == 0 ? offset : 0.0f;
+            float pen = x + d;
+            // `y` is the top of the line box for every caller of this, as it was with the
+            // bitmap; the face draws from a BASELINE, which is the ascent below that.
+            const float baseline = y + bakedAscent_ * f + d;
+            for (char c : s) {
+                const int code = int(static_cast<unsigned char>(c));
+                if (code < kFirstCode || code > kLastCode) continue;
+                const FaceGlyph& g = glyphs_[size_t(code - kFirstCode)];
+                if (g.x1 > g.x0 && g.y1 > g.y0) {
+                    quad(pen + g.x0 * f, baseline + g.y0 * f, (g.x1 - g.x0) * f,
+                         (g.y1 - g.y0) * f, g.u0, g.v0, g.u1, g.v1, colour);
+                }
+                pen += g.advance * f;
+            }
+        }
+        return measure(scale, s);
+    }
+
     const float atlasW = float(kCols * kCellW);
     const float atlasH = float(kRows * kCellH);
     const float w = float(kGlyphW) * scale;
     const float h = float(kGlyphH) * scale;
-    // The shadow first, so the ink lands on top of it. Both passes walk the string rather
-    // than interleaving per glyph: a glyph's own shadow must not sit over its neighbour's
-    // ink, which is what one pass of (shadow, ink) per character gives at this spacing.
     const float offset = scale;
     for (int pass = 0; pass < 2; ++pass) {
-        // abgr: three quarters opaque, and black in all three colour channels.
-        constexpr uint32_t kShadow = 0xC0000000u;
         const uint32_t colour = pass == 0 ? kShadow : abgr;
         const float dx = pass == 0 ? offset : 0.0f;
         float pen = x + dx;

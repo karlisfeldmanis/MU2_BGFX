@@ -30,7 +30,17 @@ if [ ! -d extern/bgfx.cmake/bgfx ]; then
 fi
 [ -f extern/cgltf.h ] || curl -sSL -o extern/cgltf.h https://raw.githubusercontent.com/jkuhlmann/cgltf/$CGLTF_REV/cgltf.h
 [ -f extern/stb_image.h ] || curl -sSL -o extern/stb_image.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_image.h
+[ -f extern/stb_truetype.h ] || curl -sSL -o extern/stb_truetype.h https://raw.githubusercontent.com/nothings/stb/$STB_REV/stb_truetype.h
 [ -f extern/miniaudio.h ] || curl -sSL -o extern/miniaudio.h https://raw.githubusercontent.com/mackron/miniaudio/$MINIAUDIO_REV/miniaudio.h
+# The overlay's typeface, and it is MU2's by inheritance rather than by choice of ours: MU2
+# sets no theme font in either of its Godot projects, so every label it draws is Godot's own
+# fallback, which is Open Sans SemiBold. Taking the same file here is what makes a viewer
+# shot and a MU2 shot read as one project. Pinned to a tag, as the headers are to commits.
+# The commit that last touched the file, not a tag: the repository's tags do not carry the
+# built ttf at this path, and a pin that 404s writes a 14-byte "Not Found" into extern/ and
+# leaves the viewer drawing its fallback with nothing in the log to say why.
+OPEN_SANS_REV=bd7e37632246368c60fdcbd374dbf9bad11969b6
+[ -f extern/OpenSans-SemiBold.ttf ] || curl -sSL -o extern/OpenSans-SemiBold.ttf https://raw.githubusercontent.com/googlefonts/opensans/$OPEN_SANS_REV/fonts/ttf/OpenSans-SemiBold.ttf
 
 # glfw is the one PLAN.md point 12 names that is NOT pinned here, and saying so is better
 # than the file implying otherwise: it comes from Homebrew, as a built dylib, and pinning it

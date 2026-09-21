@@ -234,12 +234,15 @@ bool ModelBench::openBrowser(const std::string& assetDir, const std::string& wor
     // bind pose. A world cooked without them is not an error: the mesh categories still fill
     // and the figure ones come out empty.
     figures_.open(assetDir, world, textures);
+    // And the wardrobe on top of them, which is where the armour and the weapons come from.
+    // It needs the bare class bodies the line above loaded, so it is second and not first.
+    figures_.openWardrobe(assetDir, textures);
 
     categories_.clear();
-    categories_.push_back({"WORLD OBJECTS", meshesIn(core::join(core::join(cooked, world),
+    categories_.push_back({"World objects", meshesIn(core::join(core::join(cooked, world),
                                                                 "meshes")), 0});
-    categories_.push_back({"MONSTERS", bodiesIn(figures_, BodyKind::Monster), 0});
-    categories_.push_back({"PEOPLE", bodiesIn(figures_, BodyKind::Character), 0});
+    categories_.push_back({"Monsters", bodiesIn(figures_, BodyKind::Monster), 0});
+    categories_.push_back({"People", bodiesIn(figures_, BodyKind::Character), 0});
     // The townsfolk cooked whole -- a model with its own clips inside it -- go with the
     // people: they are people, and a fourth tab holding three names is chrome.
     for (BrowseEntry& one : bodiesIn(figures_, BodyKind::Townsfolk)) {
@@ -247,10 +250,16 @@ bool ModelBench::openBrowser(const std::string& assetDir, const std::string& wor
     }
     std::sort(categories_.back().entries.begin(), categories_.back().entries.end(),
               [](const BrowseEntry& a, const BrowseEntry& b) { return a.name < b.name; });
+    // The wardrobe's two: a suit worn by the class that may wear it, and a weapon held by
+    // one, standing in the stance that weapon puts a body in. Neither is a list of meshes --
+    // five plates laid on the grass is not a suit of armour and a sword on its side is not
+    // how anybody holds one. The loose meshes are still a tab of their own, below.
+    categories_.push_back({"Armour sets", bodiesIn(figures_, BodyKind::Armour), 0});
+    categories_.push_back({"Weapons", bodiesIn(figures_, BodyKind::Weapon), 0});
     // And the figures' loose meshes, which is what this viewer showed before there were
     // categories: one armour plate, one helmet, one sword, as the cook wrote it. Still worth
     // a tab -- a part is where a material fault is read -- but not the first one.
-    categories_.push_back({"FIGURE PARTS",
+    categories_.push_back({"Figure parts",
                            meshesIn(core::join(core::join(cooked, "figures"), "meshes")), 0});
 
     // An empty category stays in the list so the tabs do not shuffle about between worlds;
@@ -319,8 +328,8 @@ bool ModelBench::openCategory(const std::string& word, content::Textures& textur
         category_ = i;
         return loadCurrent(textures);
     }
-    core::logError("browser: no category called %s; there are world, monsters, people and "
-                   "parts", word.c_str());
+    core::logError("browser: no category called %s; there are world, monsters, people, "
+                   "armour, weapons and parts", word.c_str());
     return false;
 }
 

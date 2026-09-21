@@ -47,7 +47,7 @@ void printUsage() {
         "  --no-figures              no figures at all, which is what the crowd is priced "
         "against\n"
         "  --browse                  step through every cooked .mum; arrows walk the list\n"
-        "  --category WORD           open the browser on world|monsters|people|parts\n"
+        "  --category WORD           world|monsters|people|armour|weapons|parts\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --effects N               N sprites through the transparent pass, to price it\n"
         "  --effect-size M           each sprite's half-extent in metres (default 0.5); large "

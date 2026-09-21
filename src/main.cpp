@@ -61,7 +61,11 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     overlay.begin(width, height);
     ListHit hit;
 
-    constexpr float kScale = 2.0f;
+    // The face is Open Sans at a 8*scale line box, so this is the list's text size in the
+    // only units the overlay has. 2.0 was right for the 5x7 bitmap, whose letters filled
+    // their box; a proportional face at the same box reads a size smaller, and this is the
+    // value that puts it back where a name is legible in a 1080p shot.
+    constexpr float kScale = 2.8f;
     constexpr float kPad = 10.0f;
     constexpr uint32_t kBack = 0xD8140d0au;    // abgr: a dark wash, so names read over grass
     constexpr uint32_t kInk = 0xFFc8c8c8u;
@@ -101,16 +105,16 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     if (first + rows > count) first = count > rows ? count - rows : 0;
     const size_t last = first + rows;
 
-    float widest = gfx::Overlay::measure(kScale, "COOKED MODELS  999/999");
+    float widest = overlay.measure(kScale, "COOKED MODELS  999/999");
     for (size_t i = first; i < last; ++i) {
-        const float w = gfx::Overlay::measure(kScale, bench.browseName(i));
+        const float w = overlay.measure(kScale, bench.browseName(i));
         if (w > widest) widest = w;
     }
     char tabLabels[8][96];
     for (size_t i = 0; i < tabs && i < 8; ++i) {
         std::snprintf(tabLabels[i], sizeof(tabLabels[i]), "%s  %zu",
                       bench.category(i).label.c_str(), bench.category(i).entries.size());
-        const float w = gfx::Overlay::measure(tabScale, tabLabels[i]);
+        const float w = overlay.measure(tabScale, tabLabels[i]);
         if (w > widest) widest = w;
     }
 
@@ -168,11 +172,11 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const game::ModelBench& bench, in
     // What the footer says depends on what is standing there: with a figure the useful thing
     // is which of its clips is running, because that is the one fact a still cannot show.
     overlay.text(hit.x + kPad, footTop + 6.0f, kScale * 0.75f, kDim,
-                 // No brackets in the hint, because there are none in the font: this line
-                 // read "TAB CATEGORY   CLIP" for one run, with the two keys it was naming
-                 // dropped silently on the floor. See kGlyphs in gfx/overlay.cpp.
-                 bench.hasFigure() ? "TAB CATEGORY  BRACKETS CLIP  DRAG TURNS  WHEEL ZOOMS"
-                                   : "TAB CATEGORY  ARROWS WALK  DRAG TURNS  WHEEL ZOOMS");
+                 // Brackets are drawn again now the face is a real one. They were spelled
+                 // out as the word for a while, because the 5x7 fallback has no bracket in
+                 // it and dropped the two keys this line exists to name.
+                 bench.hasFigure() ? "Tab: category   [ ]: clip   Drag turns   Wheel zooms"
+                                   : "Tab: category   Arrows walk   Drag turns   Wheel zooms");
     return hit;
 }
 
@@ -602,7 +606,7 @@ int main(int argc, char** argv) {
                 // stands and how long it is. A still cannot show that a clip is playing, and
                 // a monster frozen on frame one looks exactly like one standing still.
                 if (bench.hasFigure()) {
-                    overlay.text(hit.x + 4.0f, hit.y + hit.h + 10.0f, 1.8f, 0xFFc8c8c8u,
+                    overlay.text(hit.x + 4.0f, hit.y + hit.h + 10.0f, 2.4f, 0xFFc8c8c8u,
                                  bench.clipLine());
                 }
                 overlay.submit(gfx::ViewHud);

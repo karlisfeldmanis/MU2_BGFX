@@ -1737,6 +1737,155 @@ def cook_figures(world, out_dir, texcook, threads):
     return 0
 
 
+def cook_wardrobe(out_dir, texcook, threads):
+    """Every suit of armour and every weapon in index.json, for the viewer to walk.
+
+    Separate from `cook_figures` and deliberately so. The figures cook takes what the world
+    REACHES -- sprint 3's rule, and the reason Lorencia loads in five seconds rather than
+    fifty -- and the game loads every mesh in that manifest at startup. The wardrobe is the
+    opposite case: ninety item files nobody is wearing, which exist so that a person can look
+    at them one at a time. Putting them in figures.json would put all ninety into the hands
+    of a game that wants five, so they get their own manifest, their own directory, and a
+    loader the game never calls.
+
+    No clips are cooked here. Armour is worn on the player rig and animates out of
+    `player.muc`, which the figures cook already wrote; a bow and a crossbow carry a rig of
+    their own and MU draws them at its first key, which their vertices already are.
+    """
+    with open(os.path.join(ASSETS, "index.json")) as handle:
+        index = json.load(handle)
+
+    # The pieces of a suit, in the order a figure wears them. MU names them by piece and
+    # suffix -- HelmMale10, ArmorMale10 -- and the suffix is the suit.
+    pieces = ("Helm", "Armor", "Pant", "Glove", "Boot")
+    rows = {}
+    for one in index.get("objects", []):
+        glb = one.get("glb", "")
+        if not glb or one.get("kind") not in ("armor", "weapon", "shield"):
+            continue
+        name = os.path.splitext(os.path.basename(glb))[0]
+        full = os.path.join(ASSETS, glb)
+        if not os.path.exists(full):
+            print(f"cook: {name} is in index.json and not on disk; tools/sync.sh copies it",
+                  file=sys.stderr)
+            continue
+        rows[name] = (one, full)
+
+    models = {name: full for name, (one, full) in rows.items()}
+
+    # --- the suits ---------------------------------------------------------------------
+    suits = {}
+    for name, (one, _full) in rows.items():
+        if one.get("kind") != "armor":
+            continue
+        for piece in pieces:
+            if name.startswith(piece):
+                suits.setdefault(name[len(piece):], {})[piece] = one
+                break
+    sets = []
+    for suffix, worn in sorted(suits.items()):
+        torso = worn.get("Armor")
+        if torso is None:
+            continue
+        # The suit's name off its torso's: MU labels the pieces "Bone Helm", "Bone Armor",
+        # and the word they share is what the suit is called.
+        label = torso.get("label", suffix)
+        if label.endswith(" Armor"):
+            label = label[: -len(" Armor")]
+        classes = (torso.get("stats") or {}).get("classes") or []
+        sets.append({"name": suffix, "label": label,
+                     "parts": [piece + suffix for piece in pieces if piece in worn],
+                     "classes": classes,
+                     "defense": (torso.get("stats") or {}).get("defense", 0)})
+
+    # --- the arms ----------------------------------------------------------------------
+    arms = []
+    for name, (one, _full) in sorted(rows.items()):
+        if one.get("kind") not in ("weapon", "shield"):
+            continue
+        stats = one.get("stats") or {}
+        arms.append({"name": name, "label": one.get("label", name),
+                     "mesh": name, "kind": one["kind"],
+                     "stance": one.get("stance", ""),
+                     "two_handed": bool(one.get("two_handed")),
+                     "classes": stats.get("classes") or []})
+
+    os.makedirs(os.path.join(out_dir, "textures"), exist_ok=True)
+    os.makedirs(os.path.join(out_dir, "meshes"), exist_ok=True)
+    raw_dir = os.path.join(out_dir, "raw")
+    os.makedirs(raw_dir, exist_ok=True)
+
+    # --- the images, deduplicated by their own bytes and their role, as the figures' are --
+    jobs = []
+    manifest = {}
+    seen = {}
+    done = 0
+    for name, path in sorted(models.items()):
+        document, binary = read_glb(path)
+        for image, role, cutout in roles_of(document):
+            data = image_bytes(document, binary, image)
+            if data is None:
+                uri = document["images"][image].get("uri")
+                if uri is None:
+                    continue
+                with open(os.path.join(os.path.dirname(path), uri), "rb") as handle:
+                    data = handle.read()
+            digest = hashlib.sha1(data).hexdigest()[:16]
+            key = f"{digest}-{role}"
+            source_key = f"{name}#{image}:{role}"
+            if key in seen:
+                manifest[source_key] = seen[key]
+                continue
+            label = document["images"][image].get("name") or f"image{image}"
+            stem = f"{safe(name)}_{safe(label)}_{role}_{digest}"
+            ktx_path = os.path.join(out_dir, "textures", stem + ".ktx")
+            relative = os.path.relpath(ktx_path, ASSETS)
+            seen[key] = relative
+            manifest[source_key] = relative
+            if os.path.exists(ktx_path):
+                done += 1
+                continue
+            raw_path = os.path.join(raw_dir, stem + ".bin")
+            with open(raw_path, "wb") as handle:
+                handle.write(data)
+            jobs.append((role, cutout, raw_path, ktx_path))
+
+    job_file = os.path.join(out_dir, "jobs.txt")
+    with open(job_file, "w") as handle:
+        for role, cutout, source, target in jobs:
+            handle.write(f"{role}\t{cutout}\t{source}\t{target}\n")
+    print(f"cook: {len(models)} wardrobe models, {len(jobs)} images to compress, "
+          f"{done} already cooked")
+    if jobs:
+        command = [texcook, job_file] + (["--threads", str(threads)] if threads else [])
+        result = subprocess.run(command)
+        if result.returncode:
+            return result.returncode
+    with open(os.path.join(out_dir, "textures.json"), "w") as handle:
+        json.dump({"version": 1, "world": "wardrobe", "textures": manifest}, handle, indent=1,
+                  sort_keys=True)
+
+    # --- the meshes --------------------------------------------------------------------
+    mesh_table = {}
+    triangles = vertices = 0
+    for name, path in sorted(models.items()):
+        out_path = os.path.join(out_dir, "meshes", name + ".mum")
+        tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest)
+        triangles += tris
+        vertices += verts
+        mesh_table[name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,
+                            "triangles": tris}
+
+    out = {"version": 1, "meshes": mesh_table, "sets": sets, "arms": arms}
+    with open(os.path.join(out_dir, "wardrobe.json"), "w") as handle:
+        json.dump(out, handle, indent=1, sort_keys=True)
+    cooked = sum(os.path.getsize(os.path.join(out_dir, "textures", f))
+                 for f in os.listdir(os.path.join(out_dir, "textures")))
+    print(f"cook: {len(mesh_table)} meshes, {triangles} triangles, {vertices} vertices; "
+          f"{len(sets)} suits, {len(arms)} arms; {cooked / 1e6:.1f} MB of .ktx")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--world", default="lorencia")
@@ -1744,7 +1893,8 @@ def main():
     parser.add_argument("--threads", type=int, default=0)
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
     parser.add_argument("--only", choices=("textures", "meshes", "placements", "figures",
-                                           "tables", "showing", "all"), default="all")
+                                           "tables", "showing", "wardrobe", "all"),
+                        default="all")
     parser.add_argument("--chunk", type=int, default=32,
                         help="a chunk's side in tiles; 32 gives Lorencia an 8x8 grid")
     args = parser.parse_args()
@@ -1765,6 +1915,16 @@ def main():
             return 2
         # Beside the figures and not under a world, for the figures' own reason.
         return cook_showing(os.path.join(args.out, "showing"), args.texcook, args.threads)
+
+    if args.only == "wardrobe":
+        if not os.path.exists(args.texcook):
+            print(f"cook: {args.texcook} is not built. cmake --build build --target texcook",
+                  file=sys.stderr)
+            return 2
+        # Its own directory and NOT part of `all`: this is ninety item files the game never
+        # loads, cooked so the viewer can show them. Run it by hand when the wardrobe
+        # changes, which is when index.json gains an item.
+        return cook_wardrobe(os.path.join(args.out, "wardrobe"), args.texcook, args.threads)
 
     if args.only == "figures":
         if not os.path.exists(args.texcook):
