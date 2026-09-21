@@ -1,6 +1,7 @@
 #include "core/args.h"
 
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
 
 #include "core/log.h"
@@ -56,6 +57,8 @@ void printUsage() {
         "against\n"
         "  --browse                  step through every cooked .mum; arrows walk the list\n"
         "  --category WORD           world|monsters|people|armour|weapons|parts\n"
+        "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
+        "  --ui-click F:X:Y          press the windows at screen fraction X,Y on frame F\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --effects N               N sprites through the transparent pass, to price it\n"
         "  --effect-size M           each sprite's half-extent in metres (default 0.5); large "
@@ -267,6 +270,18 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.effectSize = float(std::atof(v));
         } else if (!std::strcmp(s, "--effect-sheet")) {
             if (const char* v = next(s)) a.effectSheet = v;
+        } else if (!std::strcmp(s, "--ui-click")) {
+            if (const char* v = next(s)) {
+                Args::UiClick c;
+                if (std::sscanf(v, "%d:%f:%f", &c.frame, &c.x, &c.y) == 3) {
+                    a.uiClicks.push_back(c);
+                } else {
+                    logError("--ui-click is FRAME:X:Y, got '%s'", v);
+                    a.valid = false;
+                }
+            }
+        } else if (!std::strcmp(s, "--windows")) {
+            if (const char* v = next(s)) a.windows = v;
         } else if (!std::strcmp(s, "--category")) {
             if (const char* v = next(s)) a.category = v;
         } else if (!std::strcmp(s, "--pick")) {

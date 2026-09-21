@@ -103,7 +103,21 @@ bool Window::pump() {
     for (int i = 0; i < 2; ++i) {
         const bool down = glfwGetMouseButton(handle_, buttons[i]) == GLFW_PRESS;
         clicked_[i] = down && !held_[i];
+        released_[i] = !down && held_[i];
         held_[i] = down;
+    }
+
+    // The game's keys. Two for the bag, because MU binds both I and V to it.
+    const int keys[size_t(Key::Count)][2] = {{GLFW_KEY_I, GLFW_KEY_V}, {GLFW_KEY_C, -1},
+                                             {GLFW_KEY_1, -1},         {GLFW_KEY_2, -1},
+                                             {GLFW_KEY_3, -1},         {GLFW_KEY_4, -1}};
+    for (size_t i = 0; i < size_t(Key::Count); ++i) {
+        bool down = false;
+        for (int k : keys[i]) {
+            if (k >= 0 && glfwGetKey(handle_, k) == GLFW_PRESS) down = true;
+        }
+        keyPressed_[i] = down && !keyHeld_[i];
+        keyHeld_[i] = down;
     }
 
     // The step keys, on the same edge rule as the buttons. Left and Right walk one, Down and

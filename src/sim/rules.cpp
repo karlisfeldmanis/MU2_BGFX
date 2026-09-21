@@ -140,6 +140,14 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                      double(points.vitality) * double(row.healthPerVitality));
 }
 
+int maximumMana(Kin kin, int level, const HeroPoints& points) {
+    // Wizard, elf, knight: mu.db's own class order, as kRows.
+    static const float kMana[3][3] = {{0.0f, 2.0f, 2.0f}, {6.0f, 1.5f, 1.5f}, {10.0f, 0.5f, 1.0f}};
+    const float* m = kMana[int(kin) % 3];
+    // MU2's `(int)(base + level * a + energy * b)`: truncated once, at the end.
+    return int(m[0] + float(level) * m[1] + float(points.energy) * m[2]);
+}
+
 uint64_t neededExperience(int level) {
     if (level <= 0) return 0;
     const uint64_t at = uint64_t(level);

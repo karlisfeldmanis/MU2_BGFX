@@ -92,7 +92,9 @@ add_executable(mu2
   src/gfx/lighting.cpp
   src/gfx/renderer.cpp
   src/gfx/effects.cpp
+  src/gfx/face.cpp
   src/gfx/overlay.cpp
+  src/gfx/interface.cpp
   src/game/bench.cpp
   src/game/world.cpp
   src/game/town.cpp
@@ -102,6 +104,10 @@ add_executable(mu2
   src/game/headless.cpp
   src/game/play.cpp
   src/game/showing.cpp
+  src/game/panel.cpp
+  src/game/hud.cpp
+  src/game/card.cpp
+  src/game/desk.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp

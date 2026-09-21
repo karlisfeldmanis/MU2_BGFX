@@ -23,6 +23,13 @@ enum class TextureRole {
     // height.png, attributes.png, light.png, the tile grid. Linear, point sampled, and
     // never mipped: a mipped attribute grid averages walkable together with blocked.
     Grid,
+    // The windows' art. Drawn after the tonemap into the backbuffer, so it is sampled as the
+    // bytes it was painted in and NOT decoded to linear -- the hardware would decode it and
+    // nothing would encode it again, and every plate would come out dark. Its mips are
+    // still averaged in linear light, because the bytes are sRGB and the average of two sRGB
+    // bytes is darker than the colour they make. Clamped, trilinear, no anisotropy: a window
+    // is drawn face on.
+    Interface,
 };
 
 // Keeps one handle per path, so a texture two materials share is loaded once.
@@ -64,12 +71,18 @@ public:
     bgfx::TextureHandle loadFromMemory(const std::string& name, const void* data, uint32_t size,
                                        TextureRole role);
 
+    // A loaded texture's size in texels, for a caller that cuts regions out of it in the
+    // picture's own pixels -- the windows do, because MU2's tables are written that way.
+    // False for a handle this did not load.
+    bool sizeOf(bgfx::TextureHandle handle, uint32_t* width, uint32_t* height) const;
+
     size_t count() const { return byPath_.size(); }
     uint64_t bytes() const { return bytes_; }
     uint64_t mipBytes() const { return mipBytes_; }
 
 private:
     std::unordered_map<std::string, bgfx::TextureHandle> byPath_;
+    std::unordered_map<uint16_t, std::pair<uint32_t, uint32_t>> sizes_;
     bgfx::TextureHandle white_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle flatNormal_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle black_ = BGFX_INVALID_HANDLE;

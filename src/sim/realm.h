@@ -91,6 +91,9 @@ struct Body {
     int32_t level = 1;
     int32_t health = 0;
     int32_t maxHealth = 0;
+    // The player's mana. Zero on a monster, which casts nothing in 0.75's Lorencia.
+    int32_t mana = 0;
+    int32_t maxMana = 0;
     Fighter stats;
 
     // Tiles, and a tile's centre is its integer coordinate -- MU2's own reckoning

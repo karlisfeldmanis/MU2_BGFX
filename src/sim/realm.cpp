@@ -9,6 +9,20 @@
 #include "core/log.h"
 
 namespace mu::sim {
+
+namespace {
+
+// The mana maximum after anything that moves it, and the pool raised by what the maximum
+// gained -- the rule the health beside it follows, so a point in energy arrives full rather
+// than as a bigger empty gem. A new hero starts at zero of zero and so starts full.
+void restoreMana(Body& hero) {
+    const int was = hero.maxMana;
+    hero.maxMana = maximumMana(hero.kin, hero.level, hero.points);
+    hero.mana = std::min(hero.maxMana, hero.mana + std::max(0, hero.maxMana - was));
+}
+
+}  // namespace
+
 namespace {
 
 // How far past its view range something can be and still keep a monster awake. Realm.cs:63.
@@ -157,6 +171,7 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
     hero.shield = shield;
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    restoreMana(hero);
     reswing(hero);
     hero.health = std::min(hero.maxHealth, hero.health + std::max(0, hero.maxHealth - was));
     return true;
@@ -228,6 +243,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     hero.experience = neededExperience(hero.level);
     hero.pointsInHand = (hero.level - 1) * kPointsPerLevel;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    restoreMana(hero);
     hero.health = hero.maxHealth;
     hero.speed = 1.0f / float(kHeroMoveTicks);
     int column = playerColumn, row = playerRow;
@@ -327,6 +343,7 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
     hero.pointsInHand -= asked;
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    restoreMana(hero);
     // Agility buys attack speed, so spending a point can change how often he swings.
     reswing(hero);
     // Vitality's health arrives full rather than as a bigger empty bar, which is what MU does
@@ -717,8 +734,10 @@ void Realm::gain(Body& hero, int32_t award) {
         // Re-reckoned and then refilled, in that order: the health a level gives is part of
         // the maximum it is refilled to.
         reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+        restoreMana(hero);
         reswing(hero);
         hero.health = hero.maxHealth;
+        hero.mana = hero.maxMana;
         say(What::Levelled, hero, hero.level, hero.pointsInHand);
         remaining -= int32_t(gained);
     }
@@ -744,6 +763,7 @@ void Realm::reviveHero() {
     hero.x = float(column);
     hero.y = float(row);
     hero.health = hero.maxHealth;
+    hero.mana = hero.maxMana;
     hero.temper = Temper::Wandering;
     hero.walking = false;
     hero.route.clear();

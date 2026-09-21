@@ -142,6 +142,19 @@ struct Arms {
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
             int* maxHealth);
 
+// The mana pool: a base, a share of the level and a share of energy, per class. Sprint 7 draws
+// it in the HUD's right-hand gem; nothing spends it yet, because nothing a 0.75 character
+// casts is built here (PLAN.md: skills are their own sprint), so it stands full and a potion
+// that restores it has nothing to restore.
+//
+// The numbers are OpenMU's class files as MU2 transcribed them (Beast.cs `Rates.For`, the
+// mana, /lvl and /ene columns) and are NOT independently traced to a line of OpenMU here --
+// the same standing the other two classes' health rows had until sprint 5 traced them.
+//   Dark Knight  10 + 0.5 x level + 1 x energy
+//   Dark Wizard   0 + 2   x level + 2 x energy
+//   Fairy Elf     6 + 1.5 x level + 1.5 x energy
+int maximumMana(Kin kin, int level, const HeroPoints& points);
+
 // GameConfigurationInitializerBase.cs:87-100. The CUMULATIVE experience to BE this level, not
 // the cost of the level itself: read as a per-level cost it makes levelling roughly
 // quadratically too fast and the curve still looks like a curve.

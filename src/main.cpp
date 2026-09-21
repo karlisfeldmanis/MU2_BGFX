@@ -22,6 +22,7 @@
 #include "game/world.h"
 #include "gfx/lighting.h"
 #include "gfx/overlay.h"
+#include "game/desk.h"
 #include "gfx/renderer.h"
 #include "gfx/stats.h"
 #include "gfx/views.h"
@@ -278,6 +279,16 @@ int main(int argc, char** argv) {
         // already on screen, and on frame zero there has to be one.
         world.update(0.0, args.still);
     }
+
+    // The windows, over a played world and nowhere else: a bench has nobody to show them for.
+    // Not fatal: a game with no HUD is still a game, and the log says why.
+    game::Desk desk;
+    if (inWorld && world.played().isOpen() && args.windows != "off" &&
+        !desk.open(MU2_SHADER_DIR, MU2_ASSET_DIR, &textures)) {
+        core::logError("the windows did not open; playing without a HUD");
+    }
+    if (args.windows.find("inventory") != std::string::npos) desk.setInventoryOpen(true);
+    if (args.windows.find("character") != std::string::npos) desk.setCharacterOpen(true);
 
     // The viewer's list. Only the browser has anything to put on it, so it is only built
     // there: an overlay nobody draws still costs a program and a texture.
@@ -556,10 +567,23 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
+                // The windows first: a click that lands on one is the interface's, and the
+                // world only hears the clicks that land on none. A scripted click is the
+                // world's by construction -- it is aimed at a monster.
+                if (desk.ready()) {
+                    for (const core::Args::UiClick& c : args.uiClicks) {
+                        if (frame == c.frame || frame == c.frame + 1) {
+                            desk.script(c.x * float(window.width()), c.y * float(window.height()),
+                                        frame == c.frame, frame == c.frame + 1);
+                        }
+                    }
+                    desk.update(float(deltaSeconds), window, world.played());
+                }
+                const bool windowed = desk.ready() && desk.takesPointer();
                 world.played().point(world.camera(), view, proj, pointerX, pointerY,
                                      window.width(), window.height());
-                if (window.clicked(0) || clickNow) world.played().leftClick();
-                if (window.clicked(1)) world.played().rightClick();
+                if ((window.clicked(0) && !windowed) || clickNow) world.played().leftClick();
+                if (window.clicked(1) && !windowed) world.played().rightClick();
                 world.played().update(deltaSeconds);
             }
             // And only THEN the camera, onto where the character is drawn this frame. Placed
@@ -646,6 +670,7 @@ int main(int argc, char** argv) {
                 renderer.slideSplit(slide);
             }
             renderer.draw(world.camera(), lighting, townDrawables, &world.ground(), casters);
+            if (desk.ready()) desk.submit(gfx::ViewHud, window.width(), window.height());
             if (shadowPoints) {
                 float view[16], proj[16], viewProj[16];
                 renderer.cameraMatrices(world.camera(), view, proj);
@@ -822,6 +847,7 @@ int main(int argc, char** argv) {
                            renderer.effects().lastDrawCount(), renderer.effects().highWater(),
                            renderer.effects().capacity(), renderer.effects().refused());
             }
+            if (desk.ready()) core::logf("%s", desk.line().c_str());
             if (inWorld && world.played().isOpen()) {
                 const game::Play& play = world.played();
                 const sim::Body& hero = play.realm().hero();
@@ -887,6 +913,7 @@ int main(int argc, char** argv) {
     const bool withinBudget = stats.finish(args.budget);
 
     bench.shutdown();
+    desk.shutdown();
     overlay.shutdown();
     world.shutdown();
     renderer.shutdown();

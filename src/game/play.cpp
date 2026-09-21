@@ -113,11 +113,12 @@ bool Play::open(const std::string& assetDir, const std::string& world,
 
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
-    // A character made above level 1 arrives with his points in hand and nobody to spend them:
-    // there is no character screen until sprint 9, and unspent he is a level-1 man with more
-    // health who cannot lift the weapon he was asked to carry. So the same courtesy the
-    // headless hand does itself (game/headless.cpp) -- pay for what he is about to hold, the
-    // rest into strength -- and both go when the stat window arrives.
+    // A character made above level 1 arrives with his points in hand, and unspent he cannot
+    // lift the weapon he was asked to carry. So the courtesy the headless hand does itself
+    // (game/headless.cpp): pay for what he is about to hold. The REST stays in hand since
+    // sprint 7, because the character window is where it is spent now; this used to pour it
+    // into strength for want of one. What is left of this goes when the items land and the
+    // requirement is MU's formula rather than the raw row (docs/sprints/07-the-windows.md).
     if (realm_.hero().pointsInHand > 0) {
         int points = realm_.hero().pointsInHand;
         int wantsStrength = 0, wantsAgility = 0;
@@ -134,7 +135,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         const int intoAgility =
             std::min(points, std::max(0, wantsAgility - realm_.hero().points.agility));
         points -= intoAgility;
-        realm_.spend(intoStrength + points, intoAgility, 0, 0);
+        if (intoStrength + intoAgility > 0) realm_.spend(intoStrength, intoAgility, 0, 0);
     }
 
     // What he holds. The drawn character is dressed from the same two names (Figures::dress, by
@@ -659,6 +660,15 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
     }
+}
+
+bool Play::spendPoint(int stat) {
+    static const char* const kStats[4] = {"strength", "agility", "vitality", "energy"};
+    if (stat < 0 || stat > 3) return false;
+    const bool spent = realm_.spend(stat == 0, stat == 1, stat == 2, stat == 3);
+    core::logf("window: a point into %s %s", kStats[stat],
+               spent ? "spent" : "refused, none in hand");
+    return spent;
 }
 
 }  // namespace mu::game

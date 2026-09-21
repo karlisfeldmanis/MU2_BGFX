@@ -51,6 +51,19 @@ public:
     };
     bool stepped(Step step) const { return stepped_[size_t(step)]; }
 
+    // The other edge: true once for each let-go. A drag ends here, and a button in a window
+    // fires here, on the release that lands on the box it went down on -- MU's own rule, which
+    // is what lets a press be taken back by sliding off.
+    bool released(int button) const { return released_[button & 1]; }
+
+    // The game's keys, on the same edge rule. Named for what they do rather than which key
+    // they are, so the binding is written down once, here and in window.cpp.
+    //   Inventory  I and V, MU's two
+    //   Character  C
+    //   Potion1-4  1 to 4, the quick slots (sprint 7: skills keep Q W E R, PLAN.md)
+    enum class Key { Inventory, Character, Potion1, Potion2, Potion3, Potion4, Count };
+    bool pressed(Key key) const { return keyPressed_[size_t(key)]; }
+
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.
     bool held(int button) const { return held_[button & 1]; }
     // How far the pointer moved since the last pump, in framebuffer pixels.
@@ -68,6 +81,9 @@ private:
     int height_ = 0;
     bool clicked_[2] = {false, false};  // 0 left, 1 right
     bool held_[2] = {false, false};
+    bool released_[2] = {false, false};
+    bool keyPressed_[size_t(Key::Count)] = {};
+    bool keyHeld_[size_t(Key::Count)] = {};
     bool stepped_[size_t(Step::Count)] = {};
     bool stepHeld_[size_t(Step::Count)] = {};
     float lastX_ = 0.0f, lastY_ = 0.0f;

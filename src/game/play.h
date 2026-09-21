@@ -63,6 +63,11 @@ public:
     void focus(float* column, float* row) const;
 
     const sim::Realm& realm() const { return realm_; }
+    // The windows' requests, which the realm decides. A window never changes what it shows by
+    // itself: it asks here and redraws from the realm afterwards (sprint 7, "a mirror").
+    // One point into strength (0), agility (1), vitality (2) or energy (3), refused where
+    // none is in hand -- OpenMU's IncreaseStatsAction, one point a press.
+    bool spendPoint(int stat);
     const sim::Findings& findings() const { return findings_; }
     int pointedColumn() const { return pointedColumn_; }
     int pointedRow() const { return pointedRow_; }

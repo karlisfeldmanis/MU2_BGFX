@@ -37,6 +37,11 @@ bool isSrgb(TextureRole role) {
     return role == TextureRole::Albedo || role == TextureRole::Emissive;
 }
 
+// Whether the bytes are sRGB, which is what the mip chain is averaged by -- a wider question
+// than whether the sampler decodes them. The windows' art is painted in sRGB and drawn as it
+// stands, so it takes the first and not the second. See TextureRole::Interface.
+bool paintedInSrgb(TextureRole role) { return isSrgb(role) || role == TextureRole::Interface; }
+
 bool wantsMips(TextureRole role) { return role != TextureRole::Grid; }
 
 // sRGB to linear and back, the real curve rather than a 2.2 power. Tabulated one way
@@ -73,7 +78,7 @@ uint8_t linearToSrgbByte(float v) {
 void downsample(const uint8_t* src, uint32_t srcW, uint32_t srcH, uint8_t* dst, uint32_t dstW,
                 uint32_t dstH, TextureRole role) {
     const float* toLinear = srgbToLinearTable();
-    const bool srgb = isSrgb(role);
+    const bool srgb = paintedInSrgb(role);
     const bool normal = role == TextureRole::Normal;
 
     for (uint32_t y = 0; y < dstH; ++y) {
@@ -173,6 +178,7 @@ void Textures::shutdown() {
         if (bgfx::isValid(handle)) bgfx::destroy(handle);
     }
     byPath_.clear();
+    sizes_.clear();
     for (bgfx::TextureHandle* h : {&white_, &flatNormal_, &black_, &neutralOrm_, &ormOne_}) {
         if (bgfx::isValid(*h)) bgfx::destroy(*h);
         *h = BGFX_INVALID_HANDLE;
@@ -202,6 +208,10 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
         // two tiles that mean different things.
         flags |= BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT |
                  BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+    } else if (role == TextureRole::Interface) {
+        // Face on and never tiled: a window's art is clamped, so a plate's edge does not
+        // bleed the other edge into it, and anisotropy has no angle to work at.
+        flags |= BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
     } else if (anisotropy_ > 1) {
         // MU's camera looks down a town at a shallow angle, which is what anisotropy is for:
         // trilinear alone blurs the ground into the distance instead of resolving it.
@@ -237,7 +247,9 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
     const uint32_t width = image->m_width;
     const uint32_t height = image->m_height;
     const char* roleName = isSrgb(role) ? "srgb" : (role == TextureRole::Normal ? "normal"
-                                                  : (role == TextureRole::Grid ? "grid" : "data"));
+                                                  : (role == TextureRole::Grid ? "grid"
+                                                  : (role == TextureRole::Interface ? "interface"
+                                                                                     : "data")));
 
     // --- the mip chain ---------------------------------------------------------------
     // Built here rather than by bimg::imageGenerateMips, which averages sRGB bytes as
@@ -282,6 +294,7 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
             core::logf("texture %s %ux%u %s %u mips %.1f KB (+%.1f KB of mips)", name.c_str(),
                        width, height, roleName, levels, double(topLevel) / 1024.0,
                        double(total - topLevel) / 1024.0);
+            sizes_[handle.idx] = {width, height};
         }
         byPath_[name] = handle;
         return handle;
@@ -299,9 +312,19 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
         bytes_ += image->m_size;
         core::logf("texture %s %ux%u %s mips %u %.1f KB", name.c_str(), width, height, roleName,
                    image->m_numMips, double(image->m_size) / 1024.0);
+        sizes_[handle.idx] = {width, height};
     }
     byPath_[name] = handle;
     return handle;
+}
+
+bool Textures::sizeOf(bgfx::TextureHandle handle, uint32_t* width, uint32_t* height) const {
+    if (!bgfx::isValid(handle)) return false;
+    auto found = sizes_.find(handle.idx);
+    if (found == sizes_.end()) return false;
+    *width = found->second.first;
+    *height = found->second.second;
+    return true;
 }
 
 bgfx::TextureHandle Textures::load(const std::string& path, TextureRole role) {

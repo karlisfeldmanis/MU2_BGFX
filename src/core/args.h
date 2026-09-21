@@ -128,6 +128,16 @@ struct Args {
     // what makes a review run of the viewer possible at all: a run with --frames and --shot
     // has nobody at the keyboard to press tab.
     std::string category;
+    // Windows open from the first frame, for a scripted run that has to photograph them:
+    // any of "inventory", "character", comma separated.
+    std::string windows;
+    // Scripted presses on the windows, for a run with nobody at the mouse: FRAME:X:Y, X and Y
+    // as fractions of the screen, pressed on FRAME and released on the next. Repeatable.
+    struct UiClick {
+        int frame = 0;
+        float x = 0.0f, y = 0.0f;
+    };
+    std::vector<UiClick> uiClicks;
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.
     std::string pick;
