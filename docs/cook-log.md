@@ -6,7 +6,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 
 | item | kind | cooked | look | note |
 |---|---|---|---|---|
-| Plate | set | 2026-09-21 16:39 | passed | steel with bright ridges at noon, fire on the plates at dusk and night; the double metal lift is gone |
+| Plate | set | 2026-09-21 21:02 | passed | rebuilt after the flip fix; steel with bright ridges, feather cut, fire on the plates at dusk and night. Darker at noon than its first pass because the stage's lighting moved since (ambient 0.95 to 0.8, midtone contrast and sharpen at the present), not the armour. First sheet broke mid-run when another session rebuilt the shaders; re-shot |
 | Bronze | set | 2026-09-21 18:44 | passed | all five parts now rebuilt after the flip fix (helm, pants, gloves, boots joined the cuirass); look unchanged from the user's pass |
 | Brass | set | 2026-09-21 17:25 | passed | gold again with plate_steel's grey pull off (desaturation 1.0, roughness 0.46, as Bronze); olive in the hollows as MU painted it; rebuilt after the bake flip fix |
 | Scale | set | 2026-09-21 17:36 | passed | teal-green steel, aged not wet at roughness 0.55; scales and the chest face read; helm's green face plate is MU's paint; lighter than the sheet because the lift puts steel at its f0; rebuilt after the flip fix |
