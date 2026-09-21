@@ -37,10 +37,15 @@ struct Sprite {
     // preamble shimmer works.
     float colour[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     bgfx::TextureHandle sheet = BGFX_INVALID_HANDLE;
-    // Which cell of a strip sheet to draw, and how many cells the strip has. `cells` of 1 is
-    // the whole sheet and is the common case. MU's animated sheets are a horizontal strip.
-    uint8_t cell = 0;
-    uint8_t cells = 1;
+    // Which part of the sheet to draw, as a UV rectangle. The whole sheet by default.
+    //
+    // A rectangle and not a cell index, because MU's sheets are not one shape: blood.tga is
+    // 128x128 read as four 64x64 QUADRANTS, the damage digits are ten 16-pixel cells along
+    // the top of a 256x32 sheet with the word `Miss` on a second row, and most effects are
+    // one picture. An index and a count would serve the strip and need a second scheme for
+    // each of the others; a rectangle serves all three and the caller does the arithmetic
+    // once, where it knows what the sheet is.
+    float u0 = 0.0f, v0 = 0.0f, u1 = 1.0f, v1 = 1.0f;
     Blend blend = Blend::Alpha;
 };
 

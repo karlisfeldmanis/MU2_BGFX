@@ -91,6 +91,7 @@ add_executable(mu2
   src/game/crowd.cpp
   src/game/headless.cpp
   src/game/play.cpp
+  src/game/showing.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp

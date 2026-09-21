@@ -20,6 +20,7 @@
 #include "content/tables.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/showing.h"
 #include "gfx/renderer.h"
 #include "sim/audit.h"
 #include "sim/realm.h"
@@ -72,6 +73,14 @@ public:
     // these; sprint 5 writes them down.
     const std::string& lastLine() const { return lastLine_; }
 
+    // What a blow looks like. Opened by the caller rather than by Play::open, because the
+    // sheets need a device and Play is given an asset directory and no Textures -- and
+    // threading one through world.cpp for two texture loads would be a worse trade than
+    // saying here that it is opened second. A Showing that never opened draws nothing and
+    // the fight is otherwise unaffected.
+    Showing& showing() { return showing_; }
+    const Showing& showing() const { return showing_; }
+
 private:
     // One body as it is drawn: the figure, and where it was at the last two ticks so a frame
     // between them can be interpolated.
@@ -100,6 +109,11 @@ private:
         float still = 0.0f;
         float walkPhase = 0.0f;
         float clipRate = 1.0f;   // what this figure's clip runs at this frame
+        // Counted up every time this body starts a swing. A landing cue carries the token of
+        // the swing it belongs to, and a cue whose token no longer matches drops itself --
+        // which is what "gated on the clip still being the swing" means. A step cancels a
+        // swing here, so a cue really does get dropped in ordinary play.
+        uint32_t swingToken = 0;
     };
 
     Drawn* drawnOf(uint32_t id);
@@ -113,6 +127,11 @@ private:
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
     const Figures* figures_ = nullptr;
+
+    Showing showing_;
+    // The cues that came due this frame. A member and not a local so that it keeps its
+    // capacity: a fight must not allocate to show itself.
+    std::vector<Cue> due_;
 
     std::vector<Drawn> drawn_;
     std::vector<float> scratch_;

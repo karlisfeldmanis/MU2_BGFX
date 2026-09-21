@@ -149,17 +149,13 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
                              (up[1] * cosine - right[1] * sine) * s.halfHeight,
                              (up[2] * cosine - right[2] * sine) * s.halfHeight};
 
-        // A strip sheet's cell. `cells` of 1 is the whole sheet and costs the same arithmetic.
-        const uint8_t cells = s.cells ? s.cells : 1;
-        const float cellWidth = 1.0f / float(cells);
-        const float u0 = float(s.cell % cells) * cellWidth;
-        const float u1 = u0 + cellWidth;
         const uint32_t abgr = packAbgr(s.colour);
 
         const float corners[4][2] = {{-1.0f, -1.0f}, {1.0f, -1.0f}, {1.0f, 1.0f}, {-1.0f, 1.0f}};
-        // v runs down the sheet while the quad's y runs up it, so the bottom corners take v 1.
-        const float vs[4] = {1.0f, 1.0f, 0.0f, 0.0f};
-        const float us[4] = {u0, u1, u1, u0};
+        // v runs down the sheet while the quad's y runs up it, so the BOTTOM corners take the
+        // rectangle's larger v.
+        const float vs[4] = {s.v1, s.v1, s.v0, s.v0};
+        const float us[4] = {s.u0, s.u1, s.u1, s.u0};
         for (int c = 0; c < 4; ++c) {
             Vertex& out = vertices[n * 4 + c];
             out.x = s.position[0] + ax[0] * corners[c][0] + ay[0] * corners[c][1];
@@ -212,7 +208,17 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
                                    : BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE,
                                                            BGFX_STATE_BLEND_INV_SRC_ALPHA);
         bgfx::setState(common | blend);
-        bgfx::setVertexBuffer(0, &tvb, runStart * 4, runQuads * 4);
+        // The WHOLE vertex buffer, and the run selected by the index range alone.
+        //
+        // Not `setVertexBuffer(0, &tvb, runStart * 4, runQuads * 4)`, which is the obvious
+        // thing to write and is wrong: bgfx ADDS the start vertex to every index, and the
+        // indices written above are already absolute. The first run starts at zero so it
+        // draws correctly and every run after it reads vertices runStart*4 too far along --
+        // so a quad takes its corners from other sprites entirely. On the digits that showed
+        // as one glyph stretched across eight, reading "01234567" where the damage was 10,
+        // and on the blood as splashes smeared into one cloud. A single-run frame looked
+        // perfect throughout, which is what kept it hidden.
+        bgfx::setVertexBuffer(0, &tvb);
         bgfx::setIndexBuffer(&tib, runStart * 6, runQuads * 6);
         bgfx::setTexture(0, sSheet_, first.sheet);
         bgfx::submit(view, program_);

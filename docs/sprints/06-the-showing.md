@@ -179,12 +179,77 @@ Written before the code, as sprints 2, 3 and 5 did:
 
 ## Measured
 
-### Steps 1, 2, 3 and 4 are done. 5 to 10 are not.
+### Steps 1 to 6 are done, and the damage number with them. 7 to 10 are not.
 
-Built and landed: the transparent view, the effect material, the pool, and the cook's
-effects-and-sounds pass. Not built: the landing cue, blood, the fall, the health plate,
-sound through miniaudio, and `--bench effect`. miniaudio is pinned and fetched but nothing
-opens a device yet.
+Built and landed: the transparent view, the effect material, the pool, the cook's
+effects-and-sounds pass, the landing cue, the blood, and the damage number. Not built: the
+fall, the health plate, sound through miniaudio, and `--bench effect`. miniaudio is pinned
+and fetched but nothing opens a device yet.
+
+### The landing cue (step 5)
+
+A blow resolves on the tick, in `src/sim`, exactly as sprint 5 built it. The cue decides only
+when it is SHOWN, and it is fired halfway through the swing **as the swing will actually be
+drawn** -- the fuse comes off `Drawn::swinging`, which already carries the attack speed's
+scaling, so at haste the cue moves with the animation instead of falling behind it.
+
+The gate works and is not theoretical: a cue carries the token of the swing it belongs to,
+and a step cancels a swing in this engine, so a cue really is dropped in ordinary play. A
+dropped cue costs a splash and a number and never a fact. Everything a blow does, it does in
+one frame.
+
+### The damage number needed art nobody had extracted
+
+`Data/Interface/FontTest.OZT` -- 256x32, ten 16-pixel digits along the top and the word
+`Miss` on a second row, with row 18 blank between them. MU draws its damage numbers from
+that sheet as textured quads, so sprint 7's text atlas was never a dependency; but nothing in
+this project had ever decoded it. MU2 did not use it either -- `Points.cs` rasterises a
+vector font at 64 px instead -- so the bitmap had no reader anywhere. It is now
+`damage_digits` in MU2's own `EFFECTS` table, decoded by the pipeline's existing OZT reader,
+and the cell layout was MEASURED off the file rather than assumed.
+
+Every rate is MU's own, per frame of its 25 Hz clock: 140 units above the target and flat
+whatever the target is, rising 10 units a frame and slowing by 0.3, alpha the same falling
+number times 0.4 so it holds full for a second and fades over the last third of one, digits
+overlapping by nearly a third, and a miss drawn as its own larger sprite rather than a zero.
+
+### The bug that hid inside a correct-looking pass
+
+`Effects::draw` wrote **absolute** indices and also passed `startVertex = runStart * 4` to
+`setVertexBuffer`. bgfx adds the start vertex to every index, so only the FIRST run of each
+frame drew the right vertices and every run after it read `runStart * 4` too far along --
+taking its corners from other sprites entirely.
+
+It is worth recording how long that survived. A frame with one run in it was perfect, so the
+pass measured correctly, batched correctly, logged correctly and shot correctly all through
+the sprint's first half. It only became visible once a fight put two sheets on screen at
+once: a digit quad stretched across eight cells of the sheet and a two-damage blow read
+`01234567`, and the blood smeared into one cloud instead of ten splashes. Both symptoms
+looked like content faults -- a wrong UV, a sprite scaled in metres -- and the CPU side was
+checked three times before the draw call was. The lesson is the one the budget page already
+learned about view timers: when the thing being measured looks right, check what the
+measurement is actually made of.
+
+### Blood, in units of the target (step 6)
+
+Ten particles for every landed blow of every kind, thrown by the ATTACKER at the target, as
+`MoveCharacter` throws them -- nothing in MU asks the thing being hit to show that it was.
+Every constant traced to `Wounds.cs` and `ZzzCharacter.cpp`: the scatter, the 90-to-154 band,
+twelve reference frames of life, the four quadrants of `blood.tga` stepped one every three
+frames, the throw along the blow and its 0.95 damping.
+
+Two departures, both MU2's and both marked there: every length is taken in units of the
+target rather than absolutely, because MU's own numbers were chosen against a 120-unit player
+and put an 80-unit spider under a cloud bigger than itself; and the sheet is drawn white
+rather than at the client's `0.1` red, which is a light value rather than a pigment and
+multiplies MU's own painted blood down to four percent of itself.
+
+### Measured, with a fight in it
+
+Lorencia, 1080p, Release, vsync off, a level 10 hero in the spider field: **2.540 ms** median
+wall frame against the 5.5 ms budget, 511 draws, effects high water **26 sprites of 2048
+reserved, 0 refused**, 14 sprites coming out as 2 draws. The pools allocate nothing per
+frame and the log says so every second rather than the sprint asserting it.
 
 ### The cook (step 4)
 
