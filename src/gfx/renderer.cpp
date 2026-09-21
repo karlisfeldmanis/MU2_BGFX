@@ -977,6 +977,12 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     glowStrength_ = lighting.glowStrength;
     probeOn_ = lighting.probe > 0.5f;
     probeView_ = lighting.probeView;
+    // Switched off, the cube is forgotten: switched back on, it starts from a whole new one
+    // rather than reading one taken wherever the player stood when it went off.
+    if (!probeOn_) {
+        probeReady_ = probeFilterDue_ = false;
+        probeNextFace_ = 0;
+    }
     metalGain_ = lighting.metalGain;
 
     // --- the camera -------------------------------------------------------------------
@@ -1341,7 +1347,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                               glowState, false, true);
             }
 
-            // --- views 17 to 52: the reflection probe, for the next frame's shade --------
+            // --- views 17 to 59: the reflection probe, for the next frame's shade --------
             // From the casters' list, which is the wider one: the camera's chunks leave out
             // what is behind it, and behind the camera is half of what a cube sees.
             if (probeOk_ && probeOn_) drawProbe(camera, ground, shadowBatches, idb);
