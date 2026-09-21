@@ -29,7 +29,7 @@
   "bloom_knee": 0.6,
   "bloom_strength": 0.3,
 
-  "sharpen": 0.8,
+  "sharpen": 0.4,
   "contrast": 0.3,
   "flame_strength": 6.0,
 
