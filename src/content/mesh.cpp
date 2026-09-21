@@ -391,6 +391,7 @@ bool Mesh::buildFromCooked(const CookedMesh& cooked, const std::string& name,
         out.glow = from.glow;
         out.roughnessFactor = from.roughnessFactor;
         out.metalFactor = from.metalFactor;
+        out.translucency = from.translucency;
         auto texture = [&](const std::string& path, TextureRole role) {
             bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
             if (!path.empty()) handle = textures.load(core::join(assetDir, path), role);

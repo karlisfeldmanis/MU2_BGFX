@@ -52,6 +52,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uCamPos_ = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
     uParams_ = bgfx::createUniform("u_params", bgfx::UniformType::Vec4);
     uMaterial_ = bgfx::createUniform("u_material", bgfx::UniformType::Vec4);
+    uTranslucency_ = bgfx::createUniform("u_translucency", bgfx::UniformType::Vec4);
     uShadowMtx_ = bgfx::createUniform("u_shadowMtx", bgfx::UniformType::Mat4);
     uShadowParams_ = bgfx::createUniform("u_shadowParams", bgfx::UniformType::Vec4);
     uShadowDebug_ = bgfx::createUniform("u_shadowDebug", bgfx::UniformType::Vec4);
@@ -332,7 +333,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uCamPos_, &uParams_,
-          &uMaterial_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uBloomTexel_,
           &sBloom_}) {
@@ -478,6 +479,8 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 bgfx::setTexture(1, sNormal_, material.normal);
                 bgfx::setTexture(2, sOrm_, material.orm);
                 bgfx::setTexture(3, sEmissive_, material.emissive);
+                const float translucency[4] = {material.translucency, 0.0f, 0.0f, 0.0f};
+                bgfx::setUniform(uTranslucency_, translucency);
                 bindShadeInputs();
             }
 

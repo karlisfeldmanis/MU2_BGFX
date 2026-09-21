@@ -67,6 +67,12 @@ struct Material {
     // them.
     float roughnessFactor = 1.0f;
     float metalFactor = 1.0f;
+    // Light that comes through a leaf rather than off it: MU2's pipeline writes the leaf's
+    // own sheet as its emissive, at this fraction, so a canopy's shaded side shows some of
+    // itself instead of black. Not a light source -- the shade scales it by the sun and sky
+    // the scene has, so it goes out at night. 0 on everything that is not foliage, and then
+    // the emissive map is a real emission.
+    float translucency = 0.0f;
     std::string name;
 };
 

@@ -7,6 +7,8 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
 #include "shadow.sh"
 #include "lights.sh"
 
+uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes through it, or 0
+
 void main()
 {
 	vec4 albedoTex = texture2D(s_albedo, v_texcoord0);
@@ -103,7 +105,19 @@ void main()
 	// light: lights.sh says why.
 	colour += lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0);
 
-	colour += texture2D(s_emissive, v_texcoord0).rgb;
+	// The emissive, or on foliage the light through it. MU2's pipeline writes a leaf's own
+	// sheet as its emissive at a fraction, standing in for transmission, and that fraction
+	// is of the light there is: the sun as it falls on flat ground and the sky's mean, times
+	// MU's baked light where the plant stands. Added at 1.0 as a constant, every blade and
+	// flower in Lorencia shone its own colour at night. content::Material says more.
+	vec3 emissive = texture2D(s_emissive, v_texcoord0).rgb;
+	if (u_translucency.x > 0.0)
+	{
+		vec3 sky = u_sunColour.rgb * (u_sunDir.w * max(l.y, 0.0) / 3.14159265)
+		         + mix(u_groundColour.rgb, u_skyColour.rgb, 0.5) * u_sunColour.w;
+		emissive *= v_light.rgb * sky * u_translucency.x;
+	}
+	colour += emissive;
 
 	gl_FragColor = vec4(colour, 1.0);
 }

@@ -293,6 +293,7 @@ private:
     bgfx::UniformHandle uCamPos_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uMaterial_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uTranslucency_ = BGFX_INVALID_HANDLE;  // x: content::Material's
     bgfx::UniformHandle uShadowMtx_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uShadowDebug_ = BGFX_INVALID_HANDLE;

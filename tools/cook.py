@@ -59,10 +59,11 @@ The .mum format, version 3 (static) and 4 (skinned), little-endian throughout:
     indices:   u32 each
     parts:     u32 firstIndex, u32 indexCount, u32 material
     materials: f32 cutout (-1 for none), u8 flags (bit 0 two-sided, bit 1 a glow: MU's
-               BlendMesh, drawn added and nowhere else), then five strings --
-               name, albedo, normal, orm, emissive -- each u16 length and its bytes,
-               the four texture strings being paths under assets/ or empty for none,
-               then f32 roughnessFactor, f32 metalFactor
+               BlendMesh, drawn added and nowhere else, bit 2 translucent), then five
+               strings -- name, albedo, normal, orm, emissive -- each u16 length and its
+               bytes, the four texture strings being paths under assets/ or empty for none,
+               then f32 roughnessFactor, f32 metalFactor, and when bit 2 is set one more
+               f32, the translucency. A file with no bit 2 reads as it always did.
 
 Versions 1 and 2 were the same file without those last two floats, and are refused rather
 than defaulted: the factor is the whole answer on 195 of this content's material slots, so a
@@ -463,6 +464,20 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
             # transparent pass instead. Sprint 8a; they were 0.5 cutouts drawn opaque until
             # then, and printed themselves into the shadow map.
             flags |= 2
+        # Translucency: MU2's pipeline carries light that comes THROUGH a leaf as an
+        # emissive that is the leaf's own sheet at a fraction (0.28 on every grass, flower
+        # and tree here). It is not a light source, and read as one at 1.0 -- which is what
+        # dropping the factor did -- every blade in Lorencia shone its full colour, by day
+        # and at night alike. Bit 2 says so, and the factor follows the metal factor; the
+        # shade scales it by the light the scene has. A glow's emissive is a real one.
+        translucency = 0.0
+        if not flags & 2 and material.get("emissiveTexture") is not None:
+            through = material.get("emissiveFactor", [1.0, 1.0, 1.0])
+            same = (material.get("pbrMetallicRoughness", {}).get("baseColorTexture", {})
+                    .get("index") == material["emissiveTexture"]["index"])
+            if same and max(through) < 1.0:
+                flags |= 4
+                translucency = float(max(through))
         maps = {"albedo": "", "normal": "", "orm": "", "emissive": ""}
         for role in maps:
             maps[role] = textures.get(f"{model}#{image_for(document, material, role)}:{role}", "")
@@ -471,6 +486,8 @@ def cook_mesh(model, path, out_path, textures, hidden=None):
         for role in ("albedo", "normal", "orm", "emissive"):
             materials += write_string(maps[role])
         materials += struct.pack("<2f", *orm_factors(material, maps["orm"]))
+        if flags & 4:
+            materials += struct.pack("<f", translucency)
     # The fallback a primitive with no material of its own draws with, as content/mesh.cpp
     # appends it. Rough and not metal, for the reason orm_factors gives.
     materials += struct.pack("<fB", -1.0, 0) + write_string("none")

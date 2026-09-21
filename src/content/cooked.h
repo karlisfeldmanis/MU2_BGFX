@@ -48,6 +48,7 @@ struct CookedMaterial {
     bool glow = false;  // bit 1 of the flags byte: MU's BlendMesh. See content::Material.
     float roughnessFactor = 1.0f;
     float metalFactor = 1.0f;
+    float translucency = 0.0f;  // bit 2 of the flags and a float after. See content::Material.
 };
 
 // A skinned vertex is the static one with four joint bytes and four weight bytes on the end,
