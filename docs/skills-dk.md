@@ -36,7 +36,9 @@ the Godot client and carried here — with one correction, §1.3.
   `CreateSkill` is called with mana and nothing else to qualify for — the wizard's twelve all carry
   an energy requirement and the knight's carry none.
 - **`movesToTarget` is a gap-closer**: the knight is placed *on the target's tile* before the blow.
-  **`movesTarget` is a knock**: the monster is shoved one tile at random.
+  **`movesTarget` is a knock**: the monster is shoved one tile at random. **We keep the knock and
+  throw the gap-closer away** — see §3.1a, which is a decision of the user's and the reason the
+  `range` column above is only history.
 - **The range check is `Range + 2`**, not `Range` (`TargetedSkillDefaultPlugin`), and mana is taken
   **after** the range test and **before** the moves. That order is behaviour, not presentation.
 - **Defense** is `SkillType.Buff`, `targetRestriction: Self`, and its effect is
@@ -134,8 +136,9 @@ came out of the change and all three are why it is the right base here:
   further**. Blizzard did not let the number reach zero; it hits a wall and the animation becomes
   the limiter. That is how "no cooldown" is delivered in a game that never divides by zero.
 - **Charges.** An ability can hold 2–3 uses with a recharge timer that haste also shortens. This is
-  the tool for *bursty* skills, and it is how you give a gap-closer two hops without making it
-  spammable.
+  the tool for a skill that should come in a burst and then be gone — two Uppercuts back to back and
+  then a wait — without making it spammable. Not in the first pass; the shape is here so the
+  cooldown state is built as a deadline plus a count rather than a deadline alone.
 
 Diablo 3, which `PLAN.md` names as the shape of our bar, stacks cooldown reduction
 **multiplicatively** — `(1−a)(1−b)…` — which also never reaches zero but makes each source worth
@@ -168,6 +171,62 @@ Strength and agility are both already load-bearing (`sim/rules.cpp` reads streng
 band and agility for attack rate, defence and swing speed), so neither formula introduces a stat
 the character sheet does not already explain.
 
+### 3.1a Close combat only: no leaps, and the skill is punctuation in an auto-attack fight
+
+The user's rule, 2026-09-22: *"don't use tile gaps for DK skills, they have to be close combat only —
+only the AOE is different"*, and *"most of the time the DK starts combat with auto attack and then he
+can use skills."* Both are departures from 0.75 and both narrow the design, so they are written out
+before the numbers that depend on them.
+
+**Every skill is cast at the knight's own reach.** `kHeroAttackRange = 1` in `realm_tuning.h:77`,
+measured MU's way (the larger of the two axis distances) — the same test a swing already passes, and
+the same number a weapon's own reach will replace in sprint 7. **`movesToTarget` is not
+implemented at all**: no skill moves the knight, ever. He walks to the monster on his own feet, as he
+already does, and then presses a key. There is no `Close`, no leap, no dash, and nothing to
+desynchronise between the sim and the drawn body.
+
+**One consequence to accept knowingly.** In 0.75 a knight's skills bought him *reach and movement*
+and not force (Falling Slash at three tiles was the pull). Taking the movement away leaves the skills
+with nothing but damage, area and the knock — so **the multipliers in §3.2 are now the whole reason to
+press a key**, rather than a bonus on top of a gap-closer. If the skills feel pointless in play, that
+table is the knob, not the range.
+
+**What each skill is, then:**
+
+| skill | reach | who it hits | knock | why |
+|---|---|---|---|---|
+| Falling Slash 19 | 1 | one | yes | the overhead: the heaviest single blow, and it staggers |
+| Lunge 20 | 1 | one | yes | the cheap jab — shortest cooldown, smallest multiplier |
+| Uppercut 21 | 1 | one | yes | the rising blow, between the two |
+| Cyclone 22 | 1 | **everything within 1 tile** — all eight neighbours and his own | no | he spins; it is the crowd answer |
+| Slash 23 | 1 | **the three tiles in the facing arc** (ahead and the two diagonals beside it) | no | a wide two-handed sweep, heavy and slow |
+| Defense 18 | self | himself | — | the guard |
+
+- **The two area skills are the only thing that is not one target**, which is what "only the AOE is
+  different" means: the *area* is different, the *range* never is. Both are centred on the knight, not
+  thrown at a tile, so neither needs a ground target, a cursor mode or a frustum — Cyclone is a
+  radius-1 ring test and Slash is three named tiles off his facing. That is two lines of geometry and
+  no new aiming.
+- **The knock is dropped on the two area skills** and kept on the three single ones. Shoving a crowd
+  apart is the opposite of what a crowd skill is for: the knight who just gathered four monsters
+  around him would scatter them out of his own reach. This is ours, not MU's — MU had `movesTarget`
+  on all five.
+- **Area damage is per target, rolled per target**, so one Cyclone into four monsters is four
+  `strike()` calls with four hit rolls. Seeded-log order is therefore fixed: nearest first, then
+  clockwise from north, so the same seed gives the same bytes.
+
+**The fight's rhythm: auto-attack is the floor, a skill is the beat.** The knight opens by clicking a
+monster and keeps swinging — that standing order is already in the tree. A skill press does **not**
+cancel it:
+
+- Pressing Q..R while an attack order stands **spends this swing on the skill** and then returns to
+  swinging the same target. The player never has to re-click, and a skill on cooldown simply swings.
+- **A cast pays the swing timer** (`Fighter.swingsAt`), so a skill cannot be squeezed between two
+  swings for free. This is the real global floor under §3.2's cooldowns, and it is MU's own number
+  rather than an invented GCD.
+- **A skill with no target under the order does nothing** if it needs one, and Defense casts on
+  himself regardless — MuMain's split holds: left walks and swings, right and the keys cast.
+
 ### 3.2 The two formulas
 
 **Damage.** For a skill hit, everything runs exactly as `sim::strike` runs it today — the band, the
@@ -178,17 +237,19 @@ M = M₀ + strength/K_dmg + energy/1000        // energy term is 0.75's own, kep
 damage = strike(...) × M
 ```
 
-| skill | M₀ | K_dmg | at 28 str (level 1) | at 500 str | at 1000 str | at 2000 str |
-|---|---|---|---|---|---|---|
-| Lunge 20 | 1.6 | 1400 | 1.62 | 1.96 | 2.31 | 3.03 |
-| Uppercut 21 | 1.8 | 1200 | 1.82 | 2.22 | 2.63 | 3.47 |
-| Falling Slash 19 | 2.0 | 1000 | 2.03 | 2.50 | 3.00 | 4.00 |
-| Cyclone 22 | 2.2 | 1000 | 2.23 | 2.70 | 3.20 | 4.20 |
-| Slash 23 | 2.6 | 800 | 2.64 | 3.23 | 3.85 | 5.10 |
+| skill | hits | M₀ | K_dmg | at 28 str (level 1) | at 500 str | at 1000 str | at 2000 str |
+|---|---|---|---|---|---|---|---|
+| Lunge 20 | one | 1.4 | 1400 | 1.42 | 1.76 | 2.11 | 2.83 |
+| Uppercut 21 | one | 1.7 | 1200 | 1.72 | 2.12 | 2.53 | 3.37 |
+| Falling Slash 19 | one | 2.0 | 1000 | 2.03 | 2.50 | 3.00 | 4.00 |
+| Cyclone 22 | up to 9 | 1.3 | 1400 | 1.32 | 1.66 | 2.01 | 2.73 |
+| Slash 23 | up to 3 | 1.8 | 1000 | 1.83 | 2.30 | 2.80 | 3.80 |
 
-`M₀ = 2.0` on Falling Slash is 0.75's own number, kept as the anchor the other four are spread
-around: the cheap jab hits less than a swing-and-a-half, the two-handed sweep more than two and a
-half. **The damage grows twice over** — the band itself is `strength/6` to `strength/4`
+`M₀ = 2.0` on Falling Slash is 0.75's own number, and it is the anchor the other four are spread
+around — **Falling Slash is the heaviest single blow and the two area skills are paid in coverage
+rather than in force.** Cyclone's 1.3 is per target, so it is the weakest key against one monster and
+by far the strongest against four; that trade is the only thing making the two kinds of skill
+different now that none of them closes a gap. **The damage grows twice over** — the band itself is `strength/6` to `strength/4`
 (`ClassDarkKnight.cs:71-72`) — so a level-400 strength knight is not 4× a level-1 one, he is roughly
 4× the multiplier on top of ~70× the band. That compounding is intended and is the reason the slopes
 are per-mille rather than per-hundred.
@@ -300,9 +361,12 @@ are, the *bar* follows MuMain and is not.
   already says the tick is per-body and separate from the thinking clock, which is the hook.
 - **Requests in, events out**, per `PLAN.md` point 8: a `Cast` request (skill, target) and a `Cast`
   event (who, skill, at whom); the clip, sound, streak and sparks are the game's to pick from the
-  number. `Close` and `Shove` are two `Place`s for `movesToTarget` and `movesTarget`.
-- **Refusal order is 0.75's**: safe zone, learned, cooldown, range (`Range + 2`), mana, then the
-  moves, then the blow. Mana is taken before the moves and a refusal is silent.
+  number. `Shove` is one `Place`, for the knock on the three single-target skills; there is no
+  `Close`, because nothing moves the knight (§3.1a).
+- **Refusal order is 0.75's, with its range test replaced**: safe zone, learned, cooldown, reach
+  (`kHeroAttackRange`, not `Range + 2` — the generosity in the original was for a target that might
+  have drifted out of sync at three tiles, and at one tile a swing's own test is the right one), mana,
+  then the blow, then the knock. Mana is taken before the blow and a refusal is silent.
 - **The boon list** — a general timed-effect list on a figure, not a special case for Defense, since
   ale and the elf's two Greaters are the same shape. It feeds `Fighter.damageTaken`, which is already
   there and already 1.0.
@@ -330,7 +394,10 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
 2. The six orbs in the cook, with the raw-requirement branch in `items.cpp asks()`, and the learned
    mask in the save.
 3. The boon list and Defense, first, while exactly one thing uses it.
-4. `Realm::cast` with the refusals in order, the two `Place`s, and the multiplier on the blow.
+4. `Realm::cast` with the refusals in order, the multiplier on the blow, the knock's one `Place`, and
+   the two area shapes — Cyclone's radius-1 ring and Slash's three-tile arc, both rolled per target in
+   a fixed order so the seeded log stays byte-identical. A skill press keeps the standing attack
+   order (§3.1a) and pays the swing timer.
 5. The bar: icons, QWER, the sweep, the grey, the tooltip with the arithmetic printed.
 6. The showing: clip, sound, white streak, sparks at the far end — all four already exist in this
    tree for swings.
