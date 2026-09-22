@@ -4,6 +4,7 @@
 #include <bx/timer.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 
 #include "core/files.h"
@@ -323,6 +324,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
 }
 
 void Play::shutdown() {
+    // Before the bodies go: a voice may still be following one, and the log is still open.
+    sound_.shutdown();
     drawn_.clear();
     scratch_.clear();
     accumulator_ = 0.0;
@@ -479,6 +482,14 @@ void Play::update(double seconds) {
                             (between > 0.01f && clip > between) ? clip / between : 1.0f;
                         swinger->swinging = clip / swinger->swingPace;
                         ++swinger->swingToken;
+                        // The breed's attack cry, on the swing's first key and on the body, so
+                        // a bull that roars as it lunges takes the roar with it. MU2's
+                        // Crowd.Swinging for a monster; the character's swing sounds are his
+                        // weapon's and not here yet.
+                        if (swinger->cryAttack >= 0 && swinger->placed) {
+                            sound_.playAt(swinger->cryAttack, swinger->crown[0],
+                                          swinger->crown[2], swinger->id);
+                        }
 
                         // And the cue, which is the only thing sprint 6 adds here. The blow
                         // has ALREADY resolved -- the roll, the damage and the death are on
@@ -639,6 +650,50 @@ void Play::fall(Drawn& dead) {
     dead.clipRate = 1.0f;
     dead.swinging = 0.0f;
     if (dead.deathClip >= 0) dead.figure.play(dead.deathClip, true);
+    // With the death clip's first key, as PlayMonsterSound is: a body that waits for its
+    // killing blow to land waits the same to cry out. Where it falls, and not followed --
+    // a corpse goes nowhere.
+    if (dead.cryDie >= 0 && dead.placed) sound_.playAt(dead.cryDie, dead.crown[0], dead.crown[2]);
+}
+
+void Play::openSound(const std::string& assetDir, bool muted) {
+    if (!showing_.isOpen() || !sound_.open(assetDir, showing_.table(), muted)) return;
+    sound_.load("player_level_up", false);
+    int breeds = 0;
+    for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
+        const sim::Body& body = realm_.bodies()[i];
+        if (body.player || body.kind < 0 || size_t(body.kind) >= tables_.kinds.size()) continue;
+        // MU2's Crowd.Named: the breed's label, lowered, with its spaces taken out --
+        // "Bull Fighter" is bullfighter_attack. Spelled here, once a body, and never on a cry.
+        std::string named;
+        for (char c : tables_.kinds[size_t(body.kind)].label) {
+            if (c != ' ') named += char(std::tolower(static_cast<unsigned char>(c)));
+        }
+        Drawn& one = drawn_[i];
+        const int before = one.cryAttack;
+        one.cryAttack = sound_.load(named + "_attack", true, true);
+        one.cryDie = sound_.load(named + "_die", true, true);
+        one.cryMove = sound_.load(named + "_move", true, true);
+        if (before < 0 && one.cryAttack >= 0) ++breeds;
+    }
+    core::logf("sound: cries for %d monster bodies", breeds);
+}
+
+void Play::hear(const gfx::Camera& camera) {
+    if (!sound_.isOpen()) return;
+    const Drawn* hero = drawnOf(realm_.hero().id);
+    if (hero == nullptr || !hero->placed) return;
+    sound_.listen(hero->crown[0], hero->crown[2], camera.target[0] - camera.position[0],
+                  camera.target[2] - camera.position[2]);
+    sound_.follow(
+        [](void* context, uint32_t id, float* x, float* z) {
+            const Drawn* one = static_cast<Play*>(context)->drawnOf(id);
+            if (one == nullptr || !one->placed || !one->visible) return false;
+            *x = one->crown[0];
+            *z = one->crown[2];
+            return true;
+        },
+        this);
 }
 
 void Play::fallWhenLanded() {
@@ -839,6 +894,20 @@ void Play::follow(float seconds) {
         // every walk and feet that stop dead while the man turns, which is precisely what the
         // first person to see it said: "foot gets freezed, looks slow motion". The tick
         // quantises movement; a gait does not, and the animation follows the gait.
+        // The noise of something walking about. PlayMonsterSound from the bottom of
+        // SetPlayerWalk, which the client runs every frame a thing moves: rand_fps_check(16),
+        // one in sixteen per 25 fps reference frame, scaled to the frame actually drawn. Gated
+        // on the walk clip, the witness the clip chooser uses, so a monster whose step was
+        // refused stands silent. MU2's Crowd.Wander.
+        if (!body->player && one.cryMove >= 0 && isWalk(one.figure.clip())) {
+            wanderDice_ ^= wanderDice_ << 13;
+            wanderDice_ ^= wanderDice_ >> 17;
+            wanderDice_ ^= wanderDice_ << 5;
+            const float roll = float(wanderDice_ >> 8) / float(1u << 24);
+            if (roll < seconds * 25.0f / 16.0f) {
+                sound_.playAt(one.cryMove, one.crown[0], one.crown[2], one.id);
+            }
+        }
         one.clipRate = 1.0f;
         if (isWalk(one.figure.clip())) {
             const float metresPerTile = ground_->metresPerTile();

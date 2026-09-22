@@ -363,11 +363,7 @@ int main(int argc, char** argv) {
                 world.played().showing().open(MU2_ASSET_DIR, textures);
                 world.played().marker().open(MU2_ASSET_DIR, textures);
                 world.played().aura().open(MU2_ASSET_DIR, textures);
-                if (world.played().showing().isOpen()) {
-                    static const char* const kSounds[] = {"player_level_up", nullptr};
-                    world.played().sound().open(MU2_ASSET_DIR, world.played().showing().table(),
-                                                kSounds, args.mute);
-                }
+                world.played().openSound(MU2_ASSET_DIR, args.mute);
                 // Not fatal either: a game with no HUD is still a game.
                 if (world.played().isOpen() && args.windows != "off" &&
                     !desk.open(MU2_SHADER_DIR, MU2_ASSET_DIR, &textures)) {
@@ -1119,6 +1115,8 @@ int main(int argc, char** argv) {
             // changes every frame -- 16 mm median and 79 mm worst over a walk, on a shadow
             // texel of 29 mm. docs/shadow-probe.md.
             world.update(elapsed, args.still);
+            // The ears, onto the camera just placed: its heading is what the stereo field turns by.
+            if (world.played().isOpen()) world.played().hear(world.camera());
             // The lamps flicker, the fires burn, and the glows' levels go into the town before
             // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
             if (args.lampsOn) {

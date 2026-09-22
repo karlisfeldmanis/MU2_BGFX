@@ -167,6 +167,14 @@ public:
     // the showing.
     Aura& aura() { return aura_; }
     Sound& sound() { return sound_; }
+    // Opens the sound and loads what this realm can say: the level-up, and every breed's
+    // attack, death and wandering cries, found once per body as its clips are. Opened by the
+    // caller after the showing, whose table the events are read from. Not fatal.
+    void openSound(const std::string& assetDir, bool muted);
+    // Where the ears are this frame: on the ground under the character as he is drawn,
+    // turned by the camera's heading. MU's Update3DPositions, with the voices that follow a
+    // body moved to where it is drawn now.
+    void hear(const gfx::Camera& camera);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
@@ -200,6 +208,10 @@ private:
         bool visible = false;
         int attackClip = -1;     // this body's swing, found once at open
         int deathClip = -1;      // MONSTER01_DIE, found once at open the same way
+        // A monster's own sound events, as Sound handles, found once at openSound: its breed's
+        // `_attack`, `_die` and `_move` by MU2's naming (the label lowered, no spaces). -1 for
+        // the character and for a breed with nothing cooked, which is silence.
+        int cryAttack = -1, cryDie = -1, cryMove = -1;
         // Negative while alive. Set to 0 the tick `Died` happens and counted up from there, so
         // the corpse holds its last pose and fades instead of vanishing on the tick it falls --
         // see kDeathHold and kDeathFade in play.cpp.
@@ -259,6 +271,9 @@ private:
     Marker marker_;
     Aura aura_;
     Sound sound_;
+    // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
+    // sim's seeded stream.
+    uint32_t wanderDice_ = 0x6d2b79f5u;
     // A level the realm has given and the drawing has not shown: it waits, as MU2's did, for
     // the blow that killed `levelOn_` to land, so the flares do not go up half a swing before
     // the monster that earned them is hit. 0 is no one, and shows at once.
