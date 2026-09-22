@@ -27,6 +27,8 @@
 //   * the device's own buffer: what is queued now is heard a period or two from now. The
 //     start point is moved on by that much too, so what reaches the ear at the moment the
 //     picture changes is the part of the sound that belongs to that moment.
+//     The level-up's alone: every other sound here is short and front-loaded, and skipping
+//     the buffer cut off its impact (sound.cpp's start()).
 // Not the cooked `onset`: that is where a HIT lands in its file, a third of the way up this
 // one's swell, and skipping to it would cut off the swell the flares rise with.
 //

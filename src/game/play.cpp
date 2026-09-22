@@ -670,9 +670,10 @@ void Play::update(double seconds) {
         // to zero, because zero would collapse the whole effect to a point.
         const bool onHero = cue.target == realm_.hero().id;
         showing_.land(cue, feet, height, man, swinger->yaw, onHero);
-        // The hit, on the attacker, which is where ZzzCharacter plays it -- for every blow
-        // that lands, whoever swung it. One of MU's four, at random.
-        if (!cue.miss && heard_.hit >= 0 && swinger->placed) {
+        // The hit, on the attacker, which is where MoveCharacter plays it: one of MU's four,
+        // at random, for every ordinary blow with a target -- a MISS as well. The sound sits in
+        // the AttackTime block beside the blood, and only the blood asks `tc->Hit`.
+        if (heard_.hit >= 0 && swinger->placed) {
             emit(heard_.hit, swinger->crown[0], swinger->crown[2], swinger->id);
         }
     }

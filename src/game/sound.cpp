@@ -76,11 +76,14 @@ struct Sound::Impl {
         return dice;
     }
 
-    // Past the silence, and past what the device's buffer will hold it back by: heard a
-    // buffer from now, it is heard at the point it would have reached by then.
-    void start(ma_sound& sound, float lead) {
+    // Past the silence, and -- for the level-up alone -- past what the device's buffer will
+    // hold it back by, so its swell is where the flares are. Not for anything else: MU's own
+    // attack sounds put their impact in the first tens of milliseconds, and skipping a 30 ms
+    // buffer took 31% of eMeleeHit1's energy and 61% of pWalk_Soil's, so one hit in four and
+    // every soil step came out as a click. Heard a buffer late, as DirectSound heard them.
+    void start(ma_sound& sound, float lead, bool buffered = false) {
         ma_sound_stop(&sound);
-        ma_sound_seek_to_second(&sound, lead + latency);
+        ma_sound_seek_to_second(&sound, lead + (buffered ? latency : 0.0f));
         ma_sound_start(&sound);
     }
 };
@@ -234,7 +237,7 @@ void Sound::play(const std::string& name) {
     for (auto& event : impl_->events) {
         if (event->name != name || event->placed) continue;
         Impl::File& file = *event->files.front();
-        impl_->start(file.sound[0], file.lead);
+        impl_->start(file.sound[0], file.lead, true);
         ++event->plays;
         core::logf("sound: %s from %.0f ms (%.0f of silence, %.0f of buffer)", name.c_str(),
                    double(file.lead + impl_->latency) * 1000.0, double(file.lead) * 1000.0,
