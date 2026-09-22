@@ -258,7 +258,7 @@ private:
     // One model's triangles, placed and turned, as quads whose last two corners coincide.
     void submit(gfx::Effects& effects, const std::vector<Corner>& tris,
                 bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3], float lean,
-                float scale, const float colour[3], float alpha) const;
+                float tumble, float scale, const float colour[3], float alpha) const;
 };
 
 }  // namespace mu::game

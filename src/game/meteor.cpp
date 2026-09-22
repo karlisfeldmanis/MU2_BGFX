@@ -340,8 +340,11 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
         if (!s.alive) continue;
         s.left -= refFrames;
         if (s.left <= 0.0f) { s.alive = false; continue; }
-        for (int a = 0; a < 3; ++a) s.position[a] += s.velocity[a] * seconds;
+        // Gravity into the velocity FIRST and the position after it, which is MU's own order
+        // (ZzzEffect.cpp:7335-7339) and not a detail: the other way round every piece flies one
+        // frame of gravity further than it should, every frame.
         s.velocity[1] -= s.gravity * seconds;
+        for (int a = 0; a < 3; ++a) s.position[a] += s.velocity[a] * seconds;
         // `Angle += 0.5 * LifeTime` on two axes, so a stone tumbles fast while it is young and
         // slows as it ages -- which is the life counting DOWN and not an added damping.
         const float tumble = kStoneTumble * s.left * kReferenceFps * kPi / 180.0f * seconds;
@@ -357,7 +360,11 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
             const float drag = std::pow(kStoneBounceDrag, refFrames);
             s.velocity[0] *= drag;
             s.velocity[2] *= drag;
-            const float bounce = s.left * kReferenceFps * kUnit * kReferenceFps;
+            // `HeadAngle[2] += 1.0 * LifeTime` -- a VELOCITY in units a frame, so ONE factor
+            // of 25 and not two. It carried two here, which made a stone leave the ground at
+            // two hundred and fifty metres a second. The pop shrinks each time it lands
+            // because the life it is taken from is smaller each time.
+            const float bounce = s.left * kUnit * kReferenceFps;
             s.velocity[1] = bounce < kStoneRestUnder * kUnit * kReferenceFps ? 0.0f : bounce;
         }
         if (s.landed) s.fade = std::min(1.0f, s.fade + kStoneFade * refFrames);
@@ -391,12 +398,17 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
 
 void Meteor::submit(gfx::Effects& effects, const std::vector<Corner>& tris,
                     bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3], float lean,
-                    float scale, const float colour[3], float alpha) const {
+                    float tumble, float scale, const float colour[3], float alpha) const {
     if (tris.empty() || !bgfx::isValid(sheet)) return;
-    // The lean is about the axis across its travel, which here is Z: MU's `Angle.y` is this
+    // `lean` is about the axis across its travel, which here is Z: MU's `Angle.y` is this
     // engine's Z. Leaned about X instead, the rock tips out of its own plane of travel and the
     // burning end points where the trail does not go.
+    //
+    // `tumble` is the second axis, and debris needs both: MU turns `Angle[0]` AND `Angle[1]`
+    // at the same rate (ZzzEffect.cpp:7342-7343), so a stone rolls as well as spins. On one
+    // axis it reads as a coin.
     const float c = std::cos(lean), s = std::sin(lean);
+    const float cx = std::cos(tumble), sx = std::sin(tumble);
     gfx::Sprite sprite;
     sprite.placed = true;
     sprite.sheet = sheet;
@@ -407,9 +419,10 @@ void Meteor::submit(gfx::Effects& effects, const std::vector<Corner>& tris,
         for (int k = 0; k < 4; ++k) {
             const Corner& p = tris[i + size_t(std::min(k, 2))];
             const float x = p.x * scale, y = p.y * scale, z = p.z * scale;
+            const float ry = x * s + y * c;
             sprite.corner[k][0] = at[0] + x * c - y * s;
-            sprite.corner[k][1] = at[1] + x * s + y * c;
-            sprite.corner[k][2] = at[2] + z;
+            sprite.corner[k][1] = at[1] + ry * cx - z * sx;
+            sprite.corner[k][2] = at[2] + ry * sx + z * cx;
             sprite.cornerUv[k][0] = p.u;
             sprite.cornerUv[k][1] = p.v;
         }
@@ -435,14 +448,14 @@ void Meteor::gather(gfx::Effects& effects) const {
             // its own flame, which is exactly what the first shot of this showed.
             const float white[3] = {1.0f, 1.0f, 1.0f};
             submit(effects, fireGroups_[0].triangles, fireGroups_[0].sheet,
-                   fireGroups_[0].blend, at, lean, m.size, white, 1.0f);
+                   fireGroups_[0].blend, at, lean, 0.0f, m.size, white, 1.0f);
         }
         if (fireGroupCount_ > 1) {
             // Its OWN roll, over the caster's daylight -- never over the trail's orange.
             const float cone[3] = {kDaylight[0] * m.flameLight, kDaylight[1] * m.flameLight,
                                    kDaylight[2] * m.flameLight};
             submit(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
-                   fireGroups_[1].blend, at, lean, m.size, cone, 1.0f);
+                   fireGroups_[1].blend, at, lean, 0.0f, m.size, cone, 1.0f);
         }
     }
 
@@ -450,8 +463,8 @@ void Meteor::gather(gfx::Effects& effects) const {
         if (!s.alive) continue;
         const Group& g = stoneGroups_[s.which];
         const float white[3] = {1.0f, 1.0f, 1.0f};
-        submit(effects, g.triangles, g.sheet, g.blend, s.position, s.lean[0], s.size, white,
-               1.0f - s.fade);
+        submit(effects, g.triangles, g.sheet, g.blend, s.position, s.lean[0], s.lean[1],
+               s.size, white, 1.0f - s.fade);
     }
 
     for (const auto& m : motes_) {
