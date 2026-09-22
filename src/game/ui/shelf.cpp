@@ -207,12 +207,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
         sheet.priceTone = over.price >= 1000000 ? tip::Tone::Blue
                           : over.price >= 100000 ? tip::Tone::Green
                                                  : tip::Tone::Yellow;
-        if (picture.valid()) {
-            const Box units = standing_[size_t(hovered_)].box;
-            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
-            sheet.picture = picture;
-            sheet.from = {units.x * sx, units.y * sy, units.w * sx, units.h * sy};
-        }
+        if (tipStage_) tip::stand(*tipStage_, carried.item, carried.refinement, sheet);
         tip::draw(tip_, sheet, now_.pointerX, now_.pointerY, screenW_, screenH_);
     }
 }

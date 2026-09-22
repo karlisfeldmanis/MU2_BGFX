@@ -36,7 +36,12 @@ struct Fall { float drop, sigma, alpha; };
 constexpr Fall kFalls[3] = {{1.0f, 1.5f, 0.70f}, {8.0f, 7.0f, 0.55f}, {30.0f, 30.0f, 0.55f}};
 constexpr int kShadowColumns = 16, kShadowRows = 14;
 
-constexpr uint32_t kBody = gfx::rgba(0.039f, 0.043f, 0.047f, 0.90f);
+// The card is glass: ONE opacity over the whole container -- its fill, its ring, its marks and
+// every word on it -- rather than a see-through plate with solid text standing on it. The head's
+// tint keeps its gradient; it is faded with everything else. The shadow is not faded, because it
+// is cast on the world rather than part of the card.
+constexpr float kOpacity = 0.88f;
+constexpr uint32_t kBody = gfx::rgba(0.039f, 0.043f, 0.047f, 1.0f);
 constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
 constexpr uint32_t kLift = gfx::rgba(1.0f, 1.0f, 1.0f, 0.055f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
@@ -51,6 +56,13 @@ constexpr uint32_t kBad = gfx::rgba(0.886f, 0.408f, 0.373f);
 constexpr uint32_t kPlateEdge = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
 constexpr uint32_t kPlateBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f);
 constexpr uint32_t kBarBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
+
+// Everything the card draws goes through this: the colour with its alpha taken down by the
+// card's own opacity.
+constexpr uint32_t fade(uint32_t abgr) {
+    const uint32_t a = (abgr >> 24) & 0xFFu;
+    return (abgr & 0x00FFFFFFu) | (uint32_t(float(a) * kOpacity + 0.5f) << 24);
+}
 
 // A rounded rectangle as one convex fan, with a radius a corner: the canvas draws polygons and
 // quads and has no rounded primitive, and a rounded rectangle is convex, so one polygon does it.
@@ -134,6 +146,14 @@ void mark(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, uint3
                  cx - h * 0.1f - t * 1.4f, cy + h * 0.55f - t * 1.4f);
             break;
         }
+        case Mark::Shield: {
+            // A shield: square shoulders down to a point.
+            const float xy[10] = {cx - h, cy - h * 0.85f, cx + h,        cy - h * 0.85f,
+                                  cx + h, cy - h * 0.1f,  cx,            cy + h,
+                                  cx - h, cy - h * 0.1f};
+            canvas.polygon(nullptr, xy, nullptr, 5, colour);
+            break;
+        }
         case Mark::Star: {
             // Four spikes: a diamond pulled out at the points.
             const float in = size * 0.16f;
@@ -185,6 +205,16 @@ uint32_t colourOf(Tone tone) {
         case Tone::White:
         default: return gfx::rgba(1.0f, 1.0f, 1.0f);
     }
+}
+
+void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet) {
+    const std::vector<Standing> one = {
+        Standing{item, {0.0f, 0.0f, kPlateUnits, kPlateUnits}, refinement, false}};
+    stage.stand(one, kPlateUnits, kPlateUnits);
+    const gfx::Art picture = stage.picture();
+    if (!picture.valid()) return;
+    sheet.picture = picture;
+    sheet.from = {0.0f, 0.0f, picture.width, picture.height};
 }
 
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
@@ -280,16 +310,16 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     const float line = std::max(1.0f, u);
     const float all[4] = {radius, radius, radius, radius};
     const float wider[4] = {radius + line, radius + line, radius + line, radius + line};
-    roundedFan(canvas, box.grown(line), wider, kRing);
-    roundedFan(canvas, box, all, kBody);
+    roundedFan(canvas, box.grown(line), wider, fade(kRing));
+    roundedFan(canvas, box, all, fade(kBody));
     // The lit top edge, inset past the corners so it does not stick out of them.
-    canvas.rect({box.x + radius, box.y + line, box.w - radius * 2.0f, line}, kLift);
+    canvas.rect({box.x + radius, box.y + line, box.w - radius * 2.0f, line}, fade(kLift));
 
     // The head, tinted by the name's own colour, fading out downward. Its own top corners are
     // rounded to the card's; it fades before it reaches the bottom two, so those stay square.
     const uint32_t nameColour = colourOf(sheet.nameTone);
-    const uint32_t tintTop = (nameColour & 0x00FFFFFFu) | (uint32_t(0.13f * 255.0f) << 24);
-    const uint32_t tintOut = nameColour & 0x00FFFFFFu;
+    const uint32_t tintTop = fade((nameColour & 0x00FFFFFFu) | (uint32_t(0.13f * 255.0f) << 24));
+    const uint32_t tintOut = nameColour & 0x00FFFFFFu;  // clear at its foot, fade or no fade
     {
         const float tops[4] = {radius, radius, 0.0f, 0.0f};
         roundedFan(canvas, {box.x, box.y, box.w, radius * 2.0f}, tops, tintTop);
@@ -300,42 +330,42 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     float pen = box.y + pad;
     if (plate > 0.0f) {
         const gfx::Box at{box.x + pad, pen, plate, plate};
-        canvas.rect(at, kPlateBack);
-        canvas.region(sheet.picture, at, sheet.from);
-        canvas.outline(at, std::max(1.0f, u), kPlateEdge);
+        canvas.rect(at, fade(kPlateBack));
+        canvas.region(sheet.picture, at, sheet.from, fade(0xFFFFFFFFu));
+        canvas.outline(at, std::max(1.0f, u), fade(kPlateEdge));
     }
     float headPen = pen + (std::max(plate, titleTall + baseTall) - titleTall - baseTall) * 0.5f;
     for (const std::string& line : title) {
-        canvas.text(box.x + headTextX, headPen + face.ascent(nameSize), nameSize, nameColour, line);
+        canvas.text(box.x + headTextX, headPen + face.ascent(nameSize), nameSize, fade(nameColour), line);
         headPen += std::round(nameSize * 1.25f);
     }
     if (!sheet.base.empty()) {
         tracked(canvas, box.x + headTextX, headPen + face.ascent(baseSize), baseSize, kBaseTrack,
-                kQuiet, sheet.base);
+                fade(kQuiet), sheet.base);
     }
     pen = box.y + headTall;
 
     // ---- the sections -----------------------------------------------------------------------
     for (size_t s = 0; s < sheet.sections.size(); ++s) {
         const Section& section = sheet.sections[s];
-        canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, kHair);
+        canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
         float rowPen = pen + railPad;
         const float left = box.x + textX + (section.framed ? pad * 0.5f : 0.0f);
         const float right = box.right() - pad - (section.framed ? pad * 0.5f : 0.0f);
         if (section.framed) {
             canvas.rect({box.x + textX - pad * 0.5f, pen + railPad * 0.5f,
-                         textWide + pad, sectionTall[s] - railPad}, kFramed);
+                         textWide + pad, sectionTall[s] - railPad}, fade(kFramed));
             canvas.outline({box.x + textX - pad * 0.5f, pen + railPad * 0.5f, textWide + pad,
-                            sectionTall[s] - railPad}, std::max(1.0f, u), kFrame);
+                            sectionTall[s] - railPad}, std::max(1.0f, u), fade(kFrame));
             rowPen += railPad * 0.5f;
         }
         if (section.mark != Mark::None) {
             mark(canvas, section.mark, box.x + pad + kMarkColumn * u * 0.5f,
-                 rowPen + rowSize * 0.55f, 11.0f * u, kQuiet);
+                 rowPen + rowSize * 0.55f, 11.0f * u, fade(kQuiet));
         }
         if (!section.kicker.empty()) {
             tracked(canvas, left, rowPen + face.ascent(kickerSize), kickerSize, kKickerTrack,
-                    kQuiet, section.kicker);
+                    fade(kQuiet), section.kicker);
             rowPen += std::round(kickerSize * 1.75f);
         }
         for (size_t r = 0; r < section.rows.size(); ++r) {
@@ -343,7 +373,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             if (!row.free.empty()) {
                 for (const std::string& line : prose[s][r]) {
                     canvas.text(left, rowPen + face.ascent(rowSize), rowSize,
-                                colourOf(row.freeTone), line);
+                                fade(colourOf(row.freeTone)), line);
                     rowPen += rowTall;
                 }
                 continue;
@@ -351,7 +381,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             // The label once, at the top of its values: MU repeats it, and that is the stutter
             // this layout is here to fix.
             if (!row.label.empty()) {
-                canvas.text(left, rowPen + face.ascent(rowSize), rowSize, kLabel, row.label);
+                canvas.text(left, rowPen + face.ascent(rowSize), rowSize, fade(kLabel), row.label);
             }
             float chipPen = right;
             for (size_t v = row.values.size(); v-- > 0;) {
@@ -364,10 +394,10 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                                     pad * 0.8f;
                     const float h = std::round(chipSize * 1.9f);
                     const gfx::Box at{chipPen - w, rowPen + (rowTall - h) * 0.5f, w, h};
-                    canvas.outline(at, std::max(1.0f, u), colourOf(value.tone));
+                    canvas.outline(at, std::max(1.0f, u), fade(colourOf(value.tone)));
                     tracked(canvas, at.x + pad * 0.4f, at.y + (h - chipSize) * 0.5f +
                                                           face.ascent(chipSize),
-                            chipSize, kChipTrack, colourOf(value.tone), value.text);
+                            chipSize, kChipTrack, fade(colourOf(value.tone)), value.text);
                     chipPen -= w + pad * 0.4f;
                     continue;
                 }
@@ -375,12 +405,14 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                 if (!value.delta.empty()) {
                     const float dw = face.measure(footSize, value.delta);
                     canvas.text(end - dw, baseline, footSize,
-                                value.deltaWay > 0 ? kGood : value.deltaWay < 0 ? kBad : kQuiet,
+                                fade(value.deltaWay > 0   ? kGood
+                                     : value.deltaWay < 0 ? kBad
+                                                          : kQuiet),
                                 value.delta);
                     end -= dw + pad * 0.4f;
                 }
                 const float w = face.measure(rowSize, value.text);
-                canvas.text(end - w, baseline, rowSize, colourOf(value.tone), value.text);
+                canvas.text(end - w, baseline, rowSize, fade(colourOf(value.tone)), value.text);
             }
             rowPen += rowTall * float(std::max<size_t>(1, row.values.size()));
         }
@@ -391,22 +423,22 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     if (hasFoot) {
         // The foot carries the card's own bottom corners.
         const float bottoms[4] = {0.0f, 0.0f, radius, radius};
-        roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, kFootBack);
-        canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, kHair);
+        roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, fade(kFootBack));
+        canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
         const float baseline = pen + railPad + face.ascent(footSize);
         if (!sheet.wear.empty()) {
-            const float w = canvas.text(box.x + pad, baseline, footSize, kFoot, sheet.wear);
+            const float w = canvas.text(box.x + pad, baseline, footSize, fade(kFoot), sheet.wear);
             const float barWide = 46.0f * u, barTall = std::max(2.0f, 3.0f * u);
             const gfx::Box bar{box.x + pad + w + pad * 0.5f, baseline - footSize * 0.35f, barWide,
                                barTall};
-            canvas.rect(bar, kBarBack);
+            canvas.rect(bar, fade(kBarBack));
             canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
-                        panel::kLettering);
+                        fade(panel::kLettering));
         }
         if (!sheet.price.empty()) {
             const float w = face.measure(footSize, sheet.price);
-            canvas.text(box.right() - pad - w, baseline, footSize, colourOf(sheet.priceTone),
-                        sheet.price);
+            canvas.text(box.right() - pad - w, baseline, footSize,
+                        fade(colourOf(sheet.priceTone)), sheet.price);
         }
     }
 }

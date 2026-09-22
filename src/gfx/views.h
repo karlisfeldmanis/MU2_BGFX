@@ -47,7 +47,11 @@ enum View : uint16_t {
     ViewProbeChain = 56,    // 56..61, the chain of the face drawn this frame, a level each
     ViewStageShelf = 62,
     ViewStageQuick = 63,    // the potion boxes' pictures on the HUD's own stage
-    ViewCount = 64,
+    // The tooltip's own picture of the one thing under the pointer, at rest: the bag turns
+    // what is hovered, and a turning picture in the tooltip's head is a picture that will not
+    // hold still to be read.
+    ViewStageTip = 64,
+    ViewCount = 65,
 };
 constexpr int kBloomLevels = 5;
 constexpr int kProbeSize = 128;  // the raw cube's edge, texels

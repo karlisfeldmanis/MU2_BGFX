@@ -71,6 +71,7 @@ public:
         bagStagePicture_.open(models, gfx::ViewStageBag);
         shelfStagePicture_.open(models, gfx::ViewStageShelf);
         quickStagePicture_.open(models, gfx::ViewStageQuick);
+        tipStagePicture_.open(models, gfx::ViewStageTip);
     }
 
     void submit(bgfx::ViewId view, int width, int height);
@@ -100,7 +101,7 @@ private:
     Vitals vitals_;
     Arrival arrival_;
     ItemModels* models_ = nullptr;
-    ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_;
+    ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_, tipStagePicture_;
     std::string shaderDir_, assetDir_;
     content::Textures* textures_ = nullptr;
     Stage* bagStage_ = nullptr;

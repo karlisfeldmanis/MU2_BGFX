@@ -98,10 +98,21 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     sheet.base = base;
 
-    // ---- what it does ---------------------------------------------------------------------
+    // ---- what it is worth in a fight --------------------------------------------------------
+    // The heading is the kind's own word rather than one heading for everything: a sword is
+    // read for its Combat block and a breastplate for its Defense, which is how the game talks
+    // about them and how MU's own item tables are grouped.
     Section does;
-    does.kicker = "What it does";
-    does.mark = tip::Mark::Blade;
+    const bool defensive = row.armour() || row.shield();
+    const bool drinkable = sim::heals(row) || sim::restores(row);
+    does.kicker = row.weapon() && !sim::ammunition(row) ? "Combat"
+                  : defensive                          ? "Defense"
+                  : drinkable                          ? "Effect"
+                  : row.jewel()                        ? "Use"
+                                                       : "Base stats";
+    does.mark = defensive ? tip::Mark::Shield
+                : drinkable || row.jewel() ? tip::Mark::Note
+                                           : tip::Mark::Blade;
 
     const bool weapon = row.weapon() && !sim::ammunition(row);
     const int bonus = weapon ? sim::damageBonus(plus) : 0;
@@ -111,16 +122,17 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     const float mine = weapon ? float(row.minimumDamage + row.maximumDamage + 2 * bonus) / 2.0f
                               : 0.0f;
     if (weapon && row.maximumDamage > 0) {
-        does.rows.push_back(stat(row.twoHanded() ? "Two-handed damage" : "One-handed damage",
+        // The head's second line already says which hand it takes, so the row is just Damage.
+        does.rows.push_back(stat("Damage",
                                  std::to_string(row.minimumDamage + bonus) + " ~ " +
                                      std::to_string(row.maximumDamage + bonus),
                                  lifted));
     }
     const bool worn = row.armour() || row.shield();
     const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) : 0;
-    if (worn) does.rows.push_back(stat("Defense", std::to_string(defense), lifted));
+    if (worn) does.rows.push_back(stat("Armor", std::to_string(defense), lifted));
     if (row.defenseRate > 0) {
-        does.rows.push_back(stat("Defense rate", std::to_string(row.defenseRate), Tone::White));
+        does.rows.push_back(stat("Block rate", std::to_string(row.defenseRate), Tone::White));
     }
     // A staff's magic power, the one line MU prints for it, and the percentage it comes to --
     // MU2's addition, marked there as the project's, because it is what a wizard chooses on.
@@ -143,7 +155,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // A stack says how many, as MU's `Number of items` does; a quiver's shots are its wear and
     // go in the foot with everything else that is spent.
     if (!sim::ammunition(row) && what.durability > 1 && !worn && !weapon) {
-        does.rows.push_back(stat("In this stack", std::to_string(what.durability), Tone::Blue));
+        does.rows.push_back(stat("Quantity", std::to_string(what.durability), Tone::Blue));
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
 
@@ -152,7 +164,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // skill flag, and the fight has no skills to fire; every other option (luck, the additional
     // option, the excellent set, harmony, ancient bonuses) lands here as it arrives.
     Section options;
-    options.kicker = "Options";
+    options.kicker = "Item options";
     options.mark = tip::Mark::Star;
     if (what.skill) {
         options.rows.push_back(stat("Skill", "carried, unused for now", Tone::Blue));
@@ -220,8 +232,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.values[0].deltaWay = by > 0.0f ? 1 : by < 0.0f ? -1 : 0;
             }
         };
-        against(row.twoHanded() ? "Two-handed damage" : "One-handed damage", mine, hisDamage, "");
-        against("Defense", float(defense), hisDefense, "");
+        against("Damage", mine, hisDamage, "");
+        against("Armor", float(defense), hisDefense, "");
         against("Wizardry damage", rise, hisRise, "%");
     }
 

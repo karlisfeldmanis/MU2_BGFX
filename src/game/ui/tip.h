@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include "game/ui/stage.h"
 #include "gfx/interface.h"
 
 namespace mu::game::tip {
@@ -52,7 +53,7 @@ struct Row {
 };
 
 // Which mark stands beside a section.
-enum class Mark : uint8_t { None, Blade, Star, Triangle, Diamond, Socket, Note };
+enum class Mark : uint8_t { None, Blade, Shield, Star, Triangle, Diamond, Socket, Note };
 
 struct Section {
     std::string kicker;  // empty draws no heading
@@ -78,6 +79,17 @@ struct Sheet {
 
     bool empty() const { return name.empty(); }
 };
+
+// The picture in the head is rendered on a stage of its own rather than cut out of the window
+// under the pointer: the bag turns what is hovered (MU's own feedback), and the head's picture
+// has to hold still. `kPlateUnits` is that stage's size in the windows' MU units, which is the
+// plate's 56 px at 1080 lines.
+constexpr float kPlateUnits = 28.0f;
+
+// Stands `item` alone on the tooltip's stage and hands back what to draw in the head. The
+// picture is last frame's, as every stage's is; an item that has just been hovered draws its
+// plate empty for one frame.
+void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet);
 
 // Draws the card standing on (x, y) -- centred over the point and above it, as MU's tooltip
 // stands on the item -- and kept on screen.

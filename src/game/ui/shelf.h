@@ -33,6 +33,10 @@ public:
     void update(float width, float height, int column, const sim::Realm& realm,
                 const Pointer& pointer, Stage* stage, int* buy, bool* close);
 
+    // The stage the tooltip's own picture is taken on: one item, at rest, its own size.
+    // Shared with the other windows -- only one tip is up at a time.
+    void useTipStage(Stage* stage) { tipStage_ = stage; }
+
     bool covers(float x, float y) const;
     const gfx::Canvas& canvas() const { return canvas_; }
     // The tooltip, on a canvas of its own so the desk can lay it over every window: a tip is
@@ -53,6 +57,7 @@ private:
 
     gfx::Canvas canvas_;
     gfx::Canvas tip_;
+    Stage* tipStage_ = nullptr;
     panel::Arts* arts_ = nullptr;
     std::vector<Line> lines_;
     std::vector<Standing> standing_;

@@ -41,6 +41,9 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     shelfStage_ = &shelfStagePicture_;
     hud_.open(interface_, &arts_);
     hud_.useStage(&quickStagePicture_);
+    // One stage for whatever the tooltip is describing, shared: only one tip is up at a time.
+    bag_.useTipStage(&tipStagePicture_);
+    shelf_.useTipStage(&tipStagePicture_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
@@ -55,6 +58,7 @@ void Desk::shutdown() {
     bagStagePicture_.shutdown();
     shelfStagePicture_.shutdown();
     quickStagePicture_.shutdown();
+    tipStagePicture_.shutdown();
     arrival_.shutdown();
     interface_.shutdown();
 }
@@ -351,6 +355,8 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (trading_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     // The potion boxes are always on screen, and at rest their stage costs nothing.
     quickStagePicture_.render(renderer, hud_.pixelsPerUnit(), seconds);
+    // The tooltip's picture, at the windows' own scale: nothing stands on it unless a tip is up.
+    tipStagePicture_.render(renderer, panel::scale(), seconds);
 }
 
 void Desk::submit(bgfx::ViewId view, int width, int height) {

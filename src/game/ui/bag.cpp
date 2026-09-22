@@ -305,11 +305,8 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // out of the window's stage at its own footprint -- the same region the drag lifts.
     if (dragging_ < 0 && hovered_ >= 0 && !bag[hovered_].empty()) {
         tip::Sheet sheet = describe(tables, bag[hovered_], realm.wearer(), bag);
-        if (picture.valid()) {
-            const Box units = itemBox(tables, hovered_, bag[hovered_]);
-            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
-            sheet.picture = picture;
-            sheet.from = {units.x * sx, units.y * sy, units.w * sx, units.h * sy};
+        if (tipStage_) {
+            tip::stand(*tipStage_, bag[hovered_].item, bag[hovered_].refinement, sheet);
         }
         tip::draw(tip_, sheet, now_.pointerX, now_.pointerY, screenW_, screenH_);
     }
