@@ -274,7 +274,13 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     const float kickerSize = kKickerSize * u, footSize = kFootSize * u, chipSize = kChipSize * u;
     const float rowTall = std::round(rowSize * kRowTall);
     const float railPad = kRailPad * u;
-    const float textX = pad + kMarkColumn * u + kMarkGap * u;
+    // The mark column is reserved only when something is standing in it. An item card always has
+    // a blade or a shield beside its first section, so the gutter is the alignment; a card with no
+    // marks at all -- a skill's -- was indenting every row past an empty 25 units while its name
+    // sat at the pad, which is the ragged left edge the user saw.
+    bool marked = false;
+    for (const Section& section : sheet.sections) marked |= section.mark != Mark::None;
+    const float textX = marked ? pad + kMarkColumn * u + kMarkGap * u : pad;
     const float drop = std::max(1.0f, u);
     const float textWide = wide - textX - pad;
 
