@@ -188,6 +188,30 @@ called, which is a worse lie than an `if` at the top of `run()`.
 Then add it to the source list in `CMakeLists.txt` — the list is explicit and not a glob, on
 purpose, so that a file nobody meant to add does not quietly enter the build.
 
+## What is checked, and by what
+
+Two gates, split by one question: does it need a window?
+
+| | runs | covers |
+|---|---|---|
+| `cmake --build build --target checks` | milliseconds to seconds, no window | `layercheck.py` (the arrows above), `cooked_test` (the reader against the cook), `placement_test` (MU's own AngleMatrix), `sim_test` (a seeded hunt against a fingerprint), `matcheck.py` (the material library) |
+| `cmake --build build --target shotcheck` | ~20 s, needs a display | three pinned scenes drawn and compared **exactly** to `tests/reference/` |
+
+`shotcheck` is the frame's answer to what `sim_test` has done for the rules since sprint 5.
+Before it, every renderer, shader and pass change was verified by a person opening a PNG and
+looking at it — which catches a black screen and misses a wrong roughness for weeks. It
+demands *exact* equality rather than a tolerance, because a tolerance is a place for a
+regression to hide, and exact is achievable: a pinned scene is identical to the last bit over
+repeated runs. Measured, it fails on a 1% ambient change whose worst pixel moves by 1 of 255
+— which no eye would have caught.
+
+A reference moves only when the change was *meant* to move it: look at both pictures, then
+`tools/shotcheck.py --bless <scene>`, and say so in the commit message. Blessing a reference
+to turn a red check green is the one thing that would make it worthless.
+
+The references are this Mac's Metal. Another GPU will differ, and that is expected: this is a
+check against yesterday's build on one machine, not a conformance suite.
+
 ## What is owed
 
 Written here rather than left implied, because a rule nothing keeps is worse than no rule:

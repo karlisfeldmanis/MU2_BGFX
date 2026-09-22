@@ -256,3 +256,18 @@ add_custom_target(checks
   COMMENT "running every check that does not need a window"
   USES_TERMINAL
 )
+
+# And the one that DOES need a window, which is why it is its own target and not a line in
+# `checks` above. It draws three pinned scenes and demands they come out exactly as the
+# references in tests/reference/ -- the frame's answer to what `sim_test`'s fingerprint has
+# done for the rules since sprint 5. Twenty seconds and a display.
+#
+# `cmake --build build --target shotcheck`, before a commit that touched the renderer, a
+# shader, a pass or the frame loop. See the header of tools/shotcheck.py for what the three
+# scenes cover and for the rule about blessing a reference.
+add_custom_target(shotcheck
+  DEPENDS mu2
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/shotcheck.py
+  COMMENT "drawing the pinned scenes and comparing them to the references"
+  USES_TERMINAL
+)

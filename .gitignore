@@ -7,7 +7,9 @@ assets/
 # Fetched by bootstrap.sh at a pinned revision.
 extern/
 weights/
-reference/
+# Rooted, and it matters: unrooted, this also swallowed tests/reference/, which is
+# shotcheck's committed pictures and the one thing in the tree that MUST be in git.
+/reference/
 
 # The builds. build.sh makes the first three.
 build/

@@ -44,7 +44,6 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
                     uint16_t shadowSize) {
     msaa_ = msaa;
     shadowSize_ = shadowSize;
-    startCounter_ = bx::getHPCounter();
     if (!loadPrograms(shaderDir)) return false;
 
     uSunDir_ = bgfx::createUniform("u_sunDir", bgfx::UniformType::Vec4);
@@ -1204,7 +1203,6 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>& drawables, const content::Ground* ground,
                     const std::vector<Drawable>* casters) {
     drawCount_ = 0;
-    elapsed_ = float(double(bx::getHPCounter() - startCounter_) / double(bx::getHPFrequency()));
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
 

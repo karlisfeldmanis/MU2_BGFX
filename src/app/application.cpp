@@ -205,6 +205,10 @@ int Application::run(int argc, char** argv) {
             time_.reloadIfChanged();
         }
 
+        // The clock the scrolling materials read. Seconds of play, not of process: see
+        // Renderer::setClock for what reading the wall clock there cost.
+        renderer_.setClock(float(at.elapsed));
+
         // The frame's poses start empty: a row is taken by whoever is posed this frame, and
         // a row left over from the last one belongs to nobody.
         renderer_.resetPalettes();

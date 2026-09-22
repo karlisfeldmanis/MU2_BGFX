@@ -72,6 +72,18 @@ public:
     void shutdown();
     void resize(int width, int height);
 
+    // The clock every time-animated material reads: the fountain's water and the other
+    // scrolling submeshes (content::Material::scrollPerSecond), and the cloud shadow's slide.
+    //
+    // Handed in by the Application once a frame rather than read off bx::getHPCounter() here,
+    // which is what this used to do. The wall clock made the PICTURE depend on how long the
+    // process had been alive -- so it swept up the preloader's own duration, which varies with
+    // the disk cache, and it ignored --fixed-dt entirely. Two runs of the same pinned command
+    // therefore drew the fountain differently, by 3.5% of the pixels of a 640x360 frame, and
+    // that is what stopped a run from being reproducible. It is seconds of play now, starting
+    // at 0 on the first frame, so --fixed-dt reaches the water like it reaches everything else.
+    void setClock(float seconds) { elapsed_ = seconds; }
+
     // The whole frame. `drawables` may hold the same mesh many times; `ground` may be null.
     //
     // `casters` is what the sun's split draws, and it is a SEPARATE list on purpose. A
@@ -297,11 +309,10 @@ private:
     float lampParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lampGridUniform_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float glowStrength_ = 1.0f;
-    // MU's world clock, which MoveObject scrolls a glow's additive submesh off: seconds
-    // since the process started, free-running so two glow models at different rates never
-    // fall out of step with each other, the way "every placement of a type moves in step"
-    // requires. Read once a frame in draw(); see content::Material::scrollPerSecond.
-    int64_t startCounter_ = 0;
+    // MU's world clock, which MoveObject scrolls a glow's additive submesh off: seconds of
+    // PLAY, free-running so two glow models at different rates never fall out of step with
+    // each other, the way "every placement of a type moves in step" requires. See
+    // content::Material::scrollPerSecond, and setClock() for why it is not the wall clock.
     float elapsed_ = 0.0f;
 
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
