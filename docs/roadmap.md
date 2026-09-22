@@ -15,7 +15,9 @@ the item models, the hover ring, the save file, the level-up, the whole town's a
 the sound, and the dragon's breath. That stretch is catalogued below as sprint 10 rather
 than pretended into the earlier files. What is **not** in the tree is the frame round the
 game: no character creation, no character select, no second map and no gate to walk through,
-no `.app`, and no skills. That is sprints 9 and 11.
+no `.app`, and no skills — and the fight itself is shown thinly: a monster swings one clip and
+the Lich's spell is a blow out of thin air. That last is sprint 11, which is open; the rest
+are 9, 12 and 13.
 
 ## Done: sprints 0 to 8
 
@@ -93,6 +95,12 @@ The honest gap list, checked against the code rather than remembered:
 - **No `.app` bundle.** The game is `build/mu2` launched by a shell script.
 - **No skills.** The HUD's skill boxes are drawn empty on purpose; `PLAN.md` decided the
   Diablo 3 shape and nothing has been built toward it.
+- **No model effects.** The transparent pass draws sprites only, so `index.json`'s 18
+  `missiles` rows — the meteor, its stones, every arrow — are cooked by MU2's pipeline and read
+  by nothing here. Sprint 11's third step.
+- **A monster swings one clip and casts nothing.** `play.cpp:294` takes Attack 1 and never
+  Attack 2, and `attack_skill` reaches `content::MonsterKind` and is spent nowhere, so the
+  Lich's Meteorite is a blow out of thin air. Sprint 11.
 - **Drawn dim, as MU2 draws them**: the chat, the menu, the chaos machine, the vault.
 - **Not built**: refining with jewels (the tables are transcribed for the tooltips only), luck
   and options on drops, the shield and ability bars, the buff strip, the fan.
@@ -104,20 +112,26 @@ working rules do not change.
 
 | # | sprint | what it is | proved by |
 |---|---|---|---|
+| 11 | **The monsters fight back** — open, `11-the-monsters-fight-back.md` | every breed's second swing and paired cry, the Giant's reach, model effects as an engine capability, and the Lich's Meteorite falling on the hero | a meteor lands on a Dark Knight at the Lich's ground and a Giant reaches him at the Hounds', with the seeded log unchanged |
 | 9 | **The game whole** | character creation and select, the save file finished (bindings, the map a character stands on), the `.app` bundle | a packaged app that makes a character, hunts, quits and resumes |
-| 11 | **Noria and the gate** | Noria cooked as Lorencia is, the gate tables, the walk between maps, the elf starting where an elf starts | a character walks out of Lorencia and stands in Noria, both inside budget |
-| 12 | **The skills** | the Diablo 3 shape `PLAN.md` decided: learned permanently, dragged onto QWER, a real cooldown each, in the sim and on the HUD | four skills on the bar, one running its cooldown down, in a seeded headless log and in the window |
-| 13 | **The debts** | the standing list below, worked as one pass rather than leaked into every sprint | the list is shorter and each line says how |
+| 12 | **Noria and the gate** | Noria cooked as Lorencia is, the gate tables, the walk between maps, the elf starting where an elf starts | a character walks out of Lorencia and stands in Noria, both inside budget |
+| 13 | **The skills** | the Diablo 3 shape `PLAN.md` decided: learned permanently, dragged onto QWER, a real cooldown each, in the sim and on the HUD | four skills on the bar, one running its cooldown down, in a seeded headless log and in the window |
+| 14 | **The debts** | the standing list below, worked as one pass rather than leaked into every sprint | the list is shorter and each line says how |
 
-Sprint 10 is the stretch above and needs no file beyond this one. After 12 the backlog is
+Sprint 10 is the stretch above and needs no file beyond this one. After 13 the backlog is
 `PLAN.md`'s: refining and the chaos machine, summoning, Devias, the single player events worth
 keeping, the vault, luck and options on drops.
 
-**The order, and why.** 9 before 11 because a gate needs a character who persists across a map
-change, and the save is what makes that mean anything. 11 before 12 because Noria is the only
-thing that will show whether the frame holds on a map this one has never drawn, and a skill
-built over a frame that turns out not to hold is a skill rebuilt. 13 last, but any line in it
-that blocks the sprint in hand is done in that sprint and struck off.
+**The order, and why.** 11 first, and before 9, because the fight is what the game is and the
+screen is three days behind the sim on it: the Lich has been hitting the hero from four tiles
+with nothing shown since sprint 5. It is also where the engine gains model effects, which
+every later missile, arrow and skill is drawn with — 13 would otherwise have to build that
+capability inside a sprint already large. Then 9 before 12, because a gate needs a character
+who persists across a map change and the save is what makes that mean anything; 12 before 13,
+because Noria is the only thing that will show whether the frame holds on a map this engine
+has never drawn, and a skill built over a frame that turns out not to hold is a skill rebuilt.
+14 last, but any line in it that blocks the sprint in hand is done in that sprint and struck
+off.
 
 ## Standing debts
 

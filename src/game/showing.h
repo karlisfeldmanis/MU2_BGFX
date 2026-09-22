@@ -26,8 +26,8 @@ namespace mu::game {
 // badly: on the first key the body is still blended most of the way into whatever it was
 // doing, so the sound arrives before the arm does and the number appears while he is still
 // standing. MU2 moved the hit sound and the number to halfway through the swing, and this
-// copies that -- `docs/combat.md`, and it is chosen rather than transcribed, because MU has no
-// impact frame for an ordinary melee attack at all.
+// copies that -- MU2's `docs/combat.md`, not this tree's -- and it is chosen rather than
+// transcribed, because MU has no impact frame for an ordinary melee attack at all.
 struct Cue {
     uint32_t attacker = 0;
     uint32_t target = 0;
@@ -115,6 +115,14 @@ public:
     }
     uint32_t dropped() const { return dropped_; }
     void drop() { ++dropped_; }
+    // Zeroes every cue from `attacker`, so the next advance() sees them due. The meteor's
+    // impact: the blow was scheduled with a long fuse, and this is how it lands on impact
+    // rather than ten seconds later. Does nothing when there are none.
+    void rush(uint32_t attacker) {
+        for (Cue& cue : cues_) {
+            if (cue.attacker == attacker) cue.fuse = 0.0f;
+        }
+    }
 
     // How far into the swing the hit sound and the number go, as a fraction of the clip.
     // MU2's own half, and the nearest thing the client commits to is its melee SKILL effects
