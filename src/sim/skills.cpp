@@ -22,7 +22,8 @@ constexpr SkillRow kRows[kSkills] = {
     // Defense 18: a buff, four seconds of half damage for 30 mana
     // (`DefenseEffectInitializer`). Twelve seconds of cooldown, floored at its own duration and
     // two, so it is never permanent.
-    {skill::kDefense, "Defense", 30, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 80, 0.50f, 187,
+    {skill::kDefense, "Defense", 30, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 80, 0.50f,
+     "A guard raised where he stands: half of every blow that lands, for four seconds.", 187,
      "player_skill_defense", false},
     // The knock is OFF on all six, and the column is kept rather than removed. 0.75 sets
     // `movesTarget` on the knight's five and it puts the monster on a neighbouring tile at once --
@@ -31,14 +32,19 @@ constexpr SkillRow kRows[kSkills] = {
     // over a few ticks instead of moving it; until then `knock` stays false and `Realm::shove` is
     // written and unreached.
     {skill::kFallingSlash, "Falling Slash", 9, 1.0f, 2.0f, 1.0f / 1000.0f, 80, false, Spread::One,
-     0, 1.0f, 60, "player_skill_sword1", true},
-    {skill::kLunge, "Lunge", 9, 1.0f, 1.4f, 1.0f / 1400.0f, 60, false, Spread::One, 0, 1.0f, 61,
+     0, 1.0f, "An overhead blow brought down on one body -- the heaviest single strike he has.",
+     60, "player_skill_sword1", true},
+    {skill::kLunge, "Lunge", 9, 1.0f, 1.4f, 1.0f / 1400.0f, 60, false, Spread::One, 0, 1.0f,
+     "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
      "player_skill_sword2", false},
     {skill::kUppercut, "Uppercut", 8, 1.0f, 1.7f, 1.0f / 1200.0f, 60, false, Spread::One, 0, 1.0f,
+     "A rising blow under the guard, between the jab and the overhead in force and in wait.",
      62, "player_skill_sword3", false},
     {skill::kCyclone, "Cyclone", 9, 1.0f, 1.3f, 1.0f / 1400.0f, 100, false, Spread::Ring, 0, 1.0f,
+     "A spin that catches everything within a tile: weakest against one, strongest in a crowd.",
      63, "player_skill_sword4", false},
-    {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 120, false, Spread::Arc, 0, 1.0f, 64,
+    {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 120, false, Spread::Arc, 0, 1.0f,
+     "A wide sweep across the three tiles he faces. The longest wait of the six.", 64,
      "player_skill_sword4", false},
 };
 

@@ -194,7 +194,13 @@ void Play::update(double seconds) {
             // the fall and the health plate that hang off the landing are sprint 6's, and none
             // of them is here. What a blow does to the picture today is put the attacker into
             // its attack clip, which then blends back to idle or walk when it ends.
-            if (happening.what == sim::What::Hit || happening.what == sim::What::Missed) {
+            // `Swung` is the blow BEGUN and `Hit`/`Missed` is the same blow settling half a
+            // swing later -- the player's two-part swing, added 2026-09-23 so that a click which
+            // cancels an attack cancels the damage with it. A monster sends no `Swung` at all and
+            // takes both halves on one tick, which is how this read before and still reads.
+            if (happening.what == sim::What::Hit || happening.what == sim::What::Missed ||
+                happening.what == sim::What::Swung) {
+                const bool begun = happening.what == sim::What::Swung;
                 int32_t taken = 0;
                 if (happening.what == sim::What::Hit) {
                     if (Drawn* struck = drawnOf(happening.whom)) {
@@ -203,6 +209,21 @@ void Play::update(double seconds) {
                     }
                 }
                 if (Drawn* swinger = drawnOf(happening.who)) {
+                    // The pose is started once, by whichever half comes first: `Swung` for the
+                    // player, the `Hit` itself for a monster.
+                    if (begun) {
+                        swinger->landing = true;
+                        // Which skill it is, for the clip and the wave below; 0 is a swing.
+                        swinger->castSkill = happening.a;
+                        swinger->castClip = -1;
+                        if (const sim::SkillRow* row = sim::skillNumbered(happening.a)) {
+                            if (swinger->figure.body() && swinger->figure.body()->library) {
+                                swinger->castClip =
+                                    swinger->figure.body()->library->find(row->clip);
+                            }
+                        }
+                    }
+                    const bool pose = begun || !swinger->landing;
                     // MU's SwordCount % 3: one in three is Attack 1, the rest Attack 2.
                     // A breed with no Attack 2 keeps attackClip2 == -1 and always swings
                     // Attack 1 -- the counter still counts, harmlessly.
@@ -216,7 +237,7 @@ void Play::update(double seconds) {
                                     ? swinger->attackClip2 : swinger->attackClip;
                         ++swinger->swordCount;
                     }
-                    if (swing >= 0 && swinger->figure.body()) {
+                    if (pose && swing >= 0 && swinger->figure.body()) {
                         // A skill blends in longer than a swing does. An ordinary blow is a jab
                         // out of a stance and 0.18 s hides the join; a skill is a wind-up, and at
                         // the swing's own blend the body arrives in the pose before the arm has
@@ -318,6 +339,21 @@ void Play::update(double seconds) {
                         } else {
                             cue.fuse = swinger->swinging * Showing::kLandingPoint;
                         }
+                        cue.token = swinger->swingToken;
+                        if (!begun) showing_.schedule(cue);
+                    }
+                    // The settling half of a two-part swing: the clip has been running since the
+                    // `Swung`, so the blow is shown the moment it is told rather than half a
+                    // swing later. Everything else about the cue is the same.
+                    if (!begun && swinger->landing) {
+                        swinger->landing = false;
+                        Cue cue;
+                        cue.attacker = happening.who;
+                        cue.target = happening.whom;
+                        cue.damage = happening.a;
+                        cue.miss = happening.what == sim::What::Missed;
+                        cue.taken = taken;
+                        cue.fuse = 0.0f;
                         cue.token = swinger->swingToken;
                         showing_.schedule(cue);
                     }

@@ -378,12 +378,30 @@ are, the *bar* follows MuMain and is not.
   arm has begun to move, which is what "the animation looks instant" means. The step rule is the
   drawing agreeing with the realm: `throwSkill` holds him still for the whole clip, so a walk
   arriving over a skill is interpolation catching up rather than a step he is taking.
+- **The box's card is the item tooltip's card** (`tip::Sheet`), not the gauges' two-line strip:
+  what the skill does in a line, the blow's multiplier with its breakdown (`x2.06 of a swing`,
+  `x2.00 base`, `+0.05 from 50 strength`), the reach, the cooldown with the haste that shortened it
+  (`3.5 s`, `4.0 s base, -11% from 40 agility`) and what is left of it while it runs, the mana
+  against what he has, and -- when the key is dark -- the reason in words.
 - **The tooltip must print the formula's result**, not just the number: `Cooldown 1.4 s (base 6.0,
   −77% from 1000 agility)` and `Damage ×3.85 (base 2.6, +1.25 from 1000 strength)`. This is the
   whole point of stat-driven cooldowns — a player who cannot see agility working will not spend on
   it. `src/game/ui/describe.cpp` already builds exactly this kind of sheet for items.
 - **The icons are already in the tree**: `assets/interface/skills/skill_18.png` … `skill_23.png`, cut
   by `pipeline/skill_icons.py`. Nothing reads them yet.
+
+### 3.4a The blow is begun and then landed
+
+Found by the player on 2026-09-23 and fixed the same day, and it is not a skill bug at all: the
+sim settled a blow on the tick the swing was *decided*, while the drawing has always shown it
+halfway through the clip (`Showing::kLandingPoint`). So a click that cancelled an attack cancelled
+the animation and not the damage — "cancel the attack with a click to move and the damage is still
+done."
+
+A swing is now two halves. `Realm::begin` says `Swung` and puts the blow in the air, half the clip
+ahead; `Realm::land` resolves it when the arm comes down, and an order that is not the same attack
+drops it whole. A cast is the same, over its own clip. **A monster is unchanged** — nothing can
+cancel a monster's swing, and giving it a wind-up would move every seeded log for no gain.
 
 ### 3.5 The sim's shape
 

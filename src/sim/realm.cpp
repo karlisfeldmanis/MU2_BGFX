@@ -251,6 +251,14 @@ void Realm::accept() {
     if (!hero.alive()) return;
 
     if (pending_.kind != Request::Kind::None) {
+        // **A new order drops the blow he had not landed yet.** Walking away from a swing is how
+        // an attack is cancelled -- press() has said so since sprint 5 -- and until 2026-09-23 the
+        // cancel cost him the animation and not the damage, because the damage had been settled at
+        // the top of the swing. Reported by the player: "cancel the attack with a click to move
+        // and the damage is still done". An Attack order on the SAME body is not a cancel.
+        const bool same = pending_.kind == Request::Kind::Attack && order_.kind == pending_.kind &&
+                          pending_.target == order_.target;
+        if (!same) dropBlow(hero);
         order_ = pending_;
         pending_ = Request{};
         // Any order is walking away from a counter, including another Talk.
@@ -362,7 +370,7 @@ void Realm::press() {
         if (tick_ >= hero.castUntil) engage(hero, *target);
         if (tick_ >= hero.swingsAt) {
             hero.swingsAt = tick_ + hero.swingTicks;
-            strikeAt(hero, *body(order_.target));
+            begin(hero, order_.target, 1.0f, skill::kNone, hero.swingTicks);
         }
         return;
     }
@@ -418,6 +426,11 @@ void Realm::step() {
         }
     }
     if (hero.alive()) {
+        // What was begun and not cancelled lands first, before this tick's orders: the arm comes
+        // down at the moment the drawing shows it coming down, and a click that arrives on this
+        // same tick is too late to stop it -- which is the honest boundary and is where the
+        // player's own hand is.
+        if (hero.blowAt != 0 && tick_ >= hero.blowAt) land(hero);
         accept();
         advance(hero);
         press();
@@ -548,6 +561,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Levelled:
             std::snprintf(line, sizeof(line), "%6u %s reaches level %d with %d points",
                           happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Swung:
+            std::snprintf(line, sizeof(line), "%6u %s swings at %s", happening.tick, who,
+                          name(happening.whom).c_str());
             break;
         case What::Cast: {
             const SkillRow* row = skillNumbered(happening.a);

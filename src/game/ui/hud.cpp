@@ -242,8 +242,16 @@ int Hud::hoveredAt(float x, float y) const {
     return -1;
 }
 
+int Hud::skillAt(float x, float y) const {
+    for (int i = 0; i < kSkillKeys; ++i) {
+        if (skill_[i].number != 0 && plate(screen_, boxPx(i)).has(x, y)) return i;
+    }
+    return -1;
+}
+
 bool Hud::tipAt(float x, float y) const {
-    return plate(screen_, kLifeHole).has(x, y) || plate(screen_, kManaHole).has(x, y) ||
+    return skillAt(x, y) >= 0 ||
+           plate(screen_, kLifeHole).has(x, y) || plate(screen_, kManaHole).has(x, y) ||
            (hero_ && hero_->maxSd > 0 && plate(screen_, kShieldBar).has(x, y)) ||
            plate(screen_, kLevelTrack).has(x, y);
 }
@@ -501,6 +509,15 @@ void Hud::rebuild() {
     // Last, because it goes over everything it describes: what the pointer is resting on.
     if (now_.tip) {
         const float px = now_.pointerX, py = now_.pointerY;
+        // A skill box gets the card, anchored on the TOP of the box rather than at the pointer,
+        // which is where `tip::draw` wants the thing being described: the box is never under the
+        // card that explains it.
+        const int overSkill = skillAt(px, py);
+        if (overSkill >= 0 && !sheets_[overSkill].empty()) {
+            const Box box = plate(s, boxPx(overSkill));
+            tip::draw(tip_, sheets_[overSkill], box.midX(), box.y, now_.width, now_.height);
+            return;
+        }
         std::string name, value;
         if (plate(s, kLifeHole).has(px, py)) {
             name = "Life";

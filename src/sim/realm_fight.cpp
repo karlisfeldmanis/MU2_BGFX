@@ -50,6 +50,36 @@ void Realm::strikeAt(Body& attacker, Body& target, float force) {
     if (target.health <= 0) kill(target, attacker);
 }
 
+// A blow begun. The clip starts now and the damage is settled when the arm comes down -- half the
+// swing later, which is exactly where the drawing has always put the number, the blood and the
+// fall (`Showing::kLandingPoint`). Only the player swings this way: a monster's blow still lands
+// on the tick it is decided, because nothing can cancel a monster's swing and giving it a wind-up
+// would change every seeded log for no gain.
+void Realm::begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t overTicks) {
+    // Half the clip that is being played -- the weapon's swing, or the skill's own, which is
+    // longer. `Showing::kLandingPoint` is the same 0.5 on the drawing's side and the two must
+    // not drift apart: this is the number that decides when the damage is real.
+    hero.blowAt = tick_ + std::max<int64_t>(1, overTicks / 2);
+    hero.blowTarget = at;
+    hero.blowForce = force;
+    hero.blowSkill = skill;
+    say(What::Swung, hero, skill, 0, 0, at);
+}
+
+void Realm::land(Body& hero) {
+    const uint32_t at = hero.blowTarget;
+    const float force = hero.blowForce;
+    hero.blowAt = 0;
+    hero.blowTarget = 0;
+    hero.blowSkill = 0;
+    hero.blowForce = 1.0f;
+    Body* target = body(at);
+    // Gone, or dead before the arm came down: the swing is spent and nothing lands. That is the
+    // same answer `strikeAt` gives for a corpse, moved a few ticks earlier.
+    if (!target || !target->alive()) return;
+    strikeAt(hero, *target, force);
+}
+
 void Realm::kill(Body& dead, Body& killer) {
     dead.temper = Temper::Dead;
     dead.walking = false;

@@ -25,6 +25,7 @@
 
 #include "game/ui/panel.h"
 #include "game/ui/stage.h"
+#include "game/ui/tip.h"
 #include "gfx/interface.h"
 #include "sim/realm.h"
 
@@ -91,6 +92,17 @@ public:
     void setSkill(int key, const Skill& skill) {
         if (key >= 0 && key < kSkillKeys) skill_[key] = skill;
     }
+    // The card the box shows when the pointer rests on it, built by the desk off the realm: the
+    // frame draws what it is handed and works nothing out (sprint 7's mirror). It is the ITEM
+    // tooltip's own card -- `tip::Sheet`, the design the user chose on 2026-09-22 -- rather than
+    // the two-line strip the gauges use, because what a skill has to say is a table: what it
+    // does, what it multiplies the blow by and where that came from, what it costs, how long the
+    // wait is and why the key is dark.
+    void setSkillSheet(int key, const tip::Sheet& sheet) {
+        if (key >= 0 && key < kSkillKeys) sheets_[key] = sheet;
+    }
+    // Which skill box the pointer is over, or -1, so the desk builds one card and not four.
+    int skillAt(float x, float y) const;
 
     void open(const gfx::Interface& interface, panel::Arts* arts);
     void follow(const sim::Body* hero);
@@ -158,6 +170,7 @@ private:
     uint64_t rebuilds_ = 0;
     Quick quick_[kQuickKeys];
     Skill skill_[kSkillKeys];
+    tip::Sheet sheets_[kSkillKeys];
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;
 };

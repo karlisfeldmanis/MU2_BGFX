@@ -206,7 +206,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (play.isOpen()) {
         labelGround(play, window.width(), window.height());
         quickKeys(window, play);
-        skillKeys(window, play);
+        skillKeys(window, play, pointer);
     }
 
     takesPointer_ = hud_.covers(pointer.x, pointer.y) ||
@@ -302,7 +302,7 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
 // cooling, in reach, paid for. What this owes the player is the PICTURE of that decision, which is
 // why the box is handed the cooldown as a fraction and in seconds rather than a bool: a skill that
 // says nothing while it cools is a key the player thinks is broken.
-void Desk::skillKeys(const gfx::Window& window, Play& play) {
+void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer) {
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Body& hero = realm.hero();
@@ -338,6 +338,11 @@ void Desk::skillKeys(const gfx::Window& window, Play& play) {
     }
     scriptedSkill_ = -1;
 
+    // The card, for the one box the pointer is resting on. Built here and not in the frame,
+    // because every number on it is the realm's -- and built for one box, because four cards a
+    // frame is four sheets of strings nobody reads.
+    const int over = hud_.skillAt(pointer.x, pointer.y);
+
     for (int key = 0; key < Hud::kSkillKeys; ++key) {
         Hud::Skill box;
         box.number = bound_[key];
@@ -367,9 +372,125 @@ void Desk::skillKeys(const gfx::Window& window, Play& play) {
                                    : weapon != nullptr && !weapon->isShield() &&
                                          !weapon->bow() && !weapon->crossbow();
             box.affordable = (row == nullptr || hero.mana >= row->mana) && armed;
+
+            if (key == over && row != nullptr) {
+                hud_.setSkillSheet(key, skillSheet(*row, realm, armed));
+            }
         }
         hud_.setSkill(key, box);
     }
+}
+
+// What one skill's card says. The order is the order a player asks the questions in: what is
+// this, what does it do, what does it hit for, what does it cost me, and -- if the key is dark --
+// why. Every number is read off the realm and off `sim/skills.h`'s own formulas, so the card and
+// the blow can never disagree: `force()` is what the damage multiplies by and `coolsFor()` is
+// what the cooldown will be set to, the same calls `Realm::throwSkill` makes.
+tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm, bool armed) const {
+    const sim::Body& hero = realm.hero();
+    tip::Sheet sheet;
+    sheet.name = row.name;
+    sheet.nameTone = tip::Tone::Blue;
+    sheet.base = row.onSelf() ? "SKILL - GUARD" : "SKILL - DARK KNIGHT";
+
+    const auto number = [](float value, int places) {
+        char text[32];
+        std::snprintf(text, sizeof(text), places == 1 ? "%.1f" : "%.2f", double(value));
+        return std::string(text);
+    };
+    const auto row_ = [](const std::string& label, const std::string& value, tip::Tone tone) {
+        tip::Row one;
+        one.label = label;
+        one.values.push_back({value, tone, false, "", 0});
+        return one;
+    };
+
+    if (row.tells[0] != '\0') {
+        tip::Section what;
+        tip::Row line;
+        line.free = row.tells;
+        line.freeTone = tip::Tone::Gray;
+        what.rows.push_back(line);
+        sheet.sections.push_back(what);
+    }
+
+    // What it does to the blow, and where that came from. The breakdown is the point of the card:
+    // a player who cannot see strength working will not spend on it.
+    tip::Section does;
+    does.kicker = row.onSelf() ? "Guard" : "Blow";
+    does.mark = row.onSelf() ? tip::Mark::Shield : tip::Mark::Blade;
+    if (row.onSelf()) {
+        does.rows.push_back(row_("Damage taken", "x" + number(row.damageTaken, 2),
+                                 tip::Tone::Green));
+        does.rows.push_back(row_("For", number(float(row.boonTicks) * 0.05f, 1) + " s",
+                                 tip::Tone::White));
+    } else {
+        const float multiplier = sim::force(row, hero.points);
+        does.rows.push_back(row_("Damage", "x" + number(multiplier, 2) + " of a swing",
+                                 tip::Tone::Yellow));
+        tip::Row from;
+        from.label = "From";
+        from.values.push_back({"x" + number(row.force, 2) + " base", tip::Tone::Gray, false, "", 0});
+        from.values.push_back({"+" + number(float(hero.points.strength) * row.forcePerStrength, 2) +
+                                   " from " + std::to_string(hero.points.strength) + " strength",
+                               tip::Tone::Gray, false, "", 0});
+        does.rows.push_back(from);
+        does.rows.push_back(row_("Reach", number(row.reach, 1) + " tiles", tip::Tone::White));
+    }
+    sheet.sections.push_back(does);
+
+    // The cooldown, with the haste that shortened it -- and what is left of it while it runs.
+    tip::Section wait;
+    wait.kicker = "Cooldown";
+    wait.mark = tip::Mark::Diamond;
+    const int32_t whole = realm.coolsFor(row.number);
+    const float seconds = float(whole) * 0.05f;
+    const float base = float(row.coolTicks) * 0.05f;
+    wait.rows.push_back(row_("Ready again in", number(seconds, 1) + " s",
+                             seconds <= base * 0.5f ? tip::Tone::Green : tip::Tone::White));
+    if (base > 0.0f) {
+        const int cut = int((1.0f - seconds / base) * 100.0f + 0.5f);
+        wait.rows.push_back(row_("From", number(base, 1) + " s base, -" + std::to_string(cut) +
+                                              "% from " + std::to_string(hero.points.agility) +
+                                              " agility",
+                                 tip::Tone::Gray));
+    }
+    const int64_t left = realm.cooling(row.number);
+    if (left > 0) {
+        wait.rows.push_back(row_("Cooling", number(float(left) * 0.05f, 1) + " s left",
+                                 tip::Tone::Red));
+    }
+    sheet.sections.push_back(wait);
+
+    // What it costs, which is the question the player asks last and feels first.
+    tip::Section cost;
+    cost.kicker = "Cost";
+    cost.mark = tip::Mark::Star;
+    const bool paid = hero.mana >= row.mana;
+    cost.rows.push_back(row_("Mana", std::to_string(row.mana) + " of " + std::to_string(hero.mana),
+                             paid ? tip::Tone::Blue : tip::Tone::Red));
+    sheet.sections.push_back(cost);
+
+    // And why the key is dark, when it is. Said plainly rather than left to the tint.
+    if (!armed || !paid) {
+        tip::Section why;
+        why.kicker = "Cannot throw it";
+        why.mark = tip::Mark::Note;
+        if (!armed) {
+            tip::Row line;
+            line.free = row.onSelf() ? "A shield on the arm." : "A blade in his hand.";
+            line.freeTone = tip::Tone::Red;
+            why.rows.push_back(line);
+        }
+        if (!paid) {
+            tip::Row line;
+            line.free = "Not enough mana.";
+            line.freeTone = tip::Tone::Red;
+            why.rows.push_back(line);
+        }
+        sheet.sections.push_back(why);
+    }
+    return sheet;
 }
 
 // MU2's Drops.Tint, which is BuildGroundItemLabelDescriptor's ladder: the colour IS the

@@ -68,6 +68,9 @@ struct SkillRow {
     // the skill as MU2's `Rows.Skill` flattens them: 0.75 has no effect two skills share.
     int32_t boonTicks = 0;
     float damageTaken = 1.0f;
+    // One line of what it does, for the tooltip. Written from the row itself -- what it hits,
+    // what it is for -- in the voice `describe.cpp` uses for an item's own line.
+    const char* tells = "";
     // The player library's action, which is both what the figure plays and -- because in MU a
     // swing rate IS the length of the clip it swings with -- where the cooldown's floor comes
     // from. `WSclient.cpp:4280`: SKILL_SWORD1 + (skill - FallingSlash).

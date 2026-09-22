@@ -71,6 +71,7 @@ enum class What : uint8_t {
                // c: the Zen or the plus
     Picked,    // a: its id, b: the bag slot or -1 for Zen, c: the Zen
     Vanished,  // a: its id: it lay too long
+    Swung,     // a blow BEGUN, at the top of the swing: a: the skill's number or 0, whom: at whom
     Cast,      // a skill thrown: a: its number, b: the cooldown it set in ticks, whom: at whom
     Shoved,    // the knock: a: the column it was put on, b: the row
     Learned,   // a: the skill's number
@@ -193,6 +194,15 @@ struct Body {
     // where he was standing and facing when he threw it. The user's rule, 2026-09-22 -- a body
     // that swivels or slides mid-skill reads as a teleport, which is the same objection that took
     // the gap-closers out.
+    // A blow in the air. The swing is DECIDED on one tick and LANDS on another, half a clip
+    // later, which is where the drawing has always shown it (`Showing::kLandingPoint`). Until
+    // 2026-09-23 the sim resolved it at the top of the swing instead, so a click that cancelled
+    // the attack still did its damage -- the player's own report, and it was the two clocks
+    // disagreeing rather than anything about skills.
+    int64_t blowAt = 0;        // 0 for nothing in the air
+    uint32_t blowTarget = 0;
+    float blowForce = 1.0f;    // a skill's multiplier, 1 for a swing
+    int32_t blowSkill = 0;     // which skill it belongs to, 0 for a swing
     int64_t castUntil = 0;
     int64_t boonUntil = 0;
     float boonDamageTaken = 1.0f;
@@ -382,6 +392,11 @@ private:
     // damage after the roll, the defence and the level floor, which is where OpenMU's own
     // `SkillMultiplier` falls (AttackableExtensions.cs:226-247).
     void strikeAt(Body& attacker, Body& target, float force = 1.0f);
+    // The player's blow: begun now, landing half a swing from now, and dropped whole if he is
+    // given another order before it lands. `land` is what the tick calls when it is due.
+    void begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t overTicks);
+    void land(Body& hero);
+    void dropBlow(Body& hero) { hero.blowAt = 0; hero.blowTarget = 0; }
     // A skill thrown, with the refusals in OpenMU's own order. False and silent for each.
     bool throwSkill(Body& hero, const SkillRow& row, uint32_t at);
     // The knock: one tile at random, onto something standable. 0.75's `movesTarget`.

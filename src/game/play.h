@@ -291,6 +291,11 @@ private:
         // the swing and the clip), so a skill cut off by the walk that starts after it is the
         // drawing contradicting the rules. It was also what made a skill read as instant.
         float casting = 0.0f;
+        // A blow of this body's is in the air: its clip was started by a `Swung` and the `Hit`
+        // that follows lands at the moment the arm is already coming down, so the cue's fuse is
+        // nought rather than half a swing. False for a monster, which still resolves its blow on
+        // the tick it decides it and is drawn exactly as it always was.
+        bool landing = false;
         // A monster's own sound events, as Sound handles, found once at openSound: its breed's
         // `_attack`, `_die` and `_move` by MU2's naming (the label lowered, no spaces). -1 for
         // the character and for a breed with nothing cooked, which is silence.

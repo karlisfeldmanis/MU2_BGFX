@@ -183,11 +183,12 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     say(What::Cast, hero, row.number, cool, 0, row.onSelf() ? hero.id : at);
 
     if (!row.onSelf()) {
-        Body* target = body(at);
-        // The multiplier is the whole of what a skill buys now: 0.75's own `SkillMultiplier`
-        // with strength on it (docs/skills-dk.md §3.2).
-        strikeAt(hero, *target, force(row, hero.points));
-        if (row.knock && target->alive()) shove(*target);
+        // Begun rather than landed: the blow settles halfway through the clip, as a swing's does
+        // (Realm::begin), so what is drawn and what is dealt are the same moment. The multiplier
+        // rides with it -- 0.75's own `SkillMultiplier` with strength on it, §3.2 -- and the
+        // knock, when a skill has one, belongs to the landing too and is why `shove` is reached
+        // from there rather than here.
+        begin(hero, at, force(row, hero.points), row.number, clip);
     }
     return true;
 }

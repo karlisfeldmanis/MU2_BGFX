@@ -127,7 +127,8 @@ private:
     // Not saved, which is faithful -- there is no SaveHotKey anywhere in MuMain.
     int32_t bound_[Hud::kSkillKeys] = {0, 0, 0, 0};
     int scriptedSkill_ = -1;
-    void skillKeys(const gfx::Window& window, Play& play);
+    void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
+    tip::Sheet skillSheet(const sim::SkillRow& row, const sim::Realm& realm, bool armed) const;
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;
