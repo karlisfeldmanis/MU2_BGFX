@@ -1,0 +1,337 @@
+# The Dark Knight's skills: 0.75's formulas, and the cooldowns that replace them
+
+Written 2026-09-22, before any code. Nothing here is built. This is the preparation document for
+the skill sprint `PLAN.md` puts after sprint 9, and it answers four questions in the order they
+have to be answered:
+
+1. **What does 0.75 actually say** about the knight's six skills — every number, cited.
+2. **What do WoW and LoL do with cooldowns**, since MU has nothing to copy here.
+3. **What is ours**, marked `invention`: the orb route, the QWER bar, and the two formulas — skill
+   damage off strength, cooldown off agility.
+4. **What is already in this tree**, so the sprint does not rebuild it.
+
+Sources: OpenMU at `LEGACY/reference/openmu` (paths below are relative to `src/`), MuMain at
+`LEGACY/reference/MuMain/src/source`, and `MU2/docs/skills.md`, which is the same research done for
+the Godot client and carried here — with one correction, §1.3.
+
+---
+
+## 1. MU 0.75, traced
+
+### 1.1 The six skills
+
+`Version075/SkillsInitializer.cs:58-63`, argument order from
+`Skills/SkillsInitializerBase.cs:51-71`.
+
+| № | skill | damage | range | mana | AG | moves to target | moves target | clip | play speed |
+|---|---|---|---|---|---|---|---|---|---|
+| 18 | Defense | — | 0 (self) | 30 | 0 | — | — | `PLAYER_DEFENSE1` (187) | 0.32 |
+| 19 | Falling Slash | 0 | 3 | 9 | 0 | yes | yes | `…SKILL_SWORD1` (60) | 0.30 |
+| 20 | Lunge | 0 | 2 | 9 | 0 | yes | yes | `…SKILL_SWORD2` (61) | 0.30 |
+| 21 | Uppercut | 0 | 2 | 8 | 0 | yes | yes | `…SKILL_SWORD3` (62) | 0.27 |
+| 22 | Cyclone | 0 | 2 | 9 | 0 | yes | yes | `…SKILL_SWORD4` (63) | 0.30 |
+| 23 | Slash | 0 | 2 | 10 | 0 | yes | yes | `…SKILL_SWORD5` (64) | 0.24 |
+
+- **No level requirement, no energy requirement, no ability cost, no cooldown, no skill level.**
+  `CreateSkill` is called with mana and nothing else to qualify for — the wizard's twelve all carry
+  an energy requirement and the knight's carry none.
+- **`movesToTarget` is a gap-closer**: the knight is placed *on the target's tile* before the blow.
+  **`movesTarget` is a knock**: the monster is shoved one tile at random.
+- **The range check is `Range + 2`**, not `Range` (`TargetedSkillDefaultPlugin`), and mana is taken
+  **after** the range test and **before** the moves. That order is behaviour, not presentation.
+- **Defense** is `SkillType.Buff`, `targetRestriction: Self`, and its effect is
+  `DamageReceiveDecrement × 0.50 for 4 seconds` (`Skills/DefenseEffectInitializer.cs`). Half damage
+  taken, flat, four seconds, thirty mana. `sim/rules.h:43` already carries `damageTaken` for it.
+- **Sounds** (`ZzzOpenData.cpp:4784-4788`): `sKnightDefense`, `sKnightSkill1..4` — Cyclone and Slash
+  share `SOUND_SKILL_SWORD4`, which is MU's own reuse.
+- **Slash alternates** its clip on an odd swing counter (`WSclient.cpp:4308`).
+- **Every skill swing lays a weapon streak**, whatever the weapon: `CreateWeaponBlur` tests
+  `PLAYER_ATTACK_SKILL_SWORD1..5` before it asks what is in the hand, drawn white off
+  `motion_blur_r.jpg` (mapping 2). An axe that streaks nothing on an ordinary swing streaks on a
+  skill.
+
+### 1.2 How a knight got a skill in 0.75 — and why we are leaving it
+
+**He did not learn one. He picked one up, and had it only while it was in his hand.** The item *is*
+the grant (`Version075/Items/Weapons.cs:278`, `skillNumber` as the fourth argument), there is no
+knight scroll (`Version075/Items/Scrolls.cs` is twelve wizard rows), and there is no knight orb —
+0.75's four orbs are all Fairy Elf (`docs/mu-scrolls-and-orbs.md` §2).
+
+| skill | carried by (lowest drop level first) | first carrier | its drop level |
+|---|---|---|---|
+| Defense 18 | Buckler, Skull, Spiked, Tower, Big Round, Serpent, Bronze, Dragon Slayer, Plate | Buckler | 6 |
+| Uppercut 21 | Sword of Assassin, Falchion, Serpent Sword | Sword of Assassin | 12 |
+| Falling Slash 19 | Morning Star, Double Axe, Tomahawk, Battle Axe, Nikkea Axe | Morning Star | 13 |
+| Lunge 20 | Gladius | Gladius | 20 |
+| Cyclone 22 | Blade, Berdysh, Great Scythe | Blade | 36 |
+| Slash 23 | Giant Sword, Crystal Sword, Chaos Dragon Axe | Giant Sword | 52 |
+
+`Version075/Items/Weapons.cs:93-132`, `Armors.cs:40`. That ladder — 6, 12, 13, 20, 36, 52 — is worth
+keeping even though the route is being replaced: it is MU's own answer to *when* a knight should meet
+each skill, and §3.3 uses it as the orbs' drop levels.
+
+### 1.3 A knight's skill does about **twice** his swing, and `MU2/docs/skills.md` says otherwise
+
+`MU2/docs/skills.md` states "a knight's skill does exactly the damage his swing does. Not more."
+That reading is **wrong** and this document corrects it. `skill.AttackDamage` is indeed 0 on all
+five, so nothing is added to the band — but the multiplier at the end of the calculation is not 1:
+
+```
+// AttackableExtensions.cs:226-247, and it runs for every hit that has a skill
+if (skill != null) {
+    var multiplier = attacker.Attributes[Stats.SkillMultiplier];
+    ...
+    dmg = (int)(dmg * multiplier * damageFactor);
+}
+```
+
+and the Dark Knight's class row sets that attribute outright:
+
+```
+// ClassDarkKnight.cs:74  and  :112
+AttributeRelationship(Stats.SkillMultiplier, 0.001f, Stats.TotalEnergy);
+ConstValueAttribute(2, Stats.SkillMultiplier);
+```
+
+So **`SkillMultiplier = 2 + energy/1000`** for a knight, applied after defence, the level floor and
+`AttackDamageIncrease`. The Dark Wizard's own base is `1` (`ClassDarkWizard.cs:112`) — his spells get
+their force from `MinimumWizBaseDmg = energy/9`, `MaximumWizBaseDmg = energy/4` (`:72-73`) plus the
+skill's own `AttackDamage`, which is where the wizard's "spells scale with energy" comes from.
+
+Checked against the version gate: the per-skill multipliers in
+`Updates/FixSkillMultipliersPlugIn.cs` are `DataInitializationKey => VersionSeasonSix`, so they are
+**not** 0.75. 0.75's knight has one flat multiplier for all five skills.
+
+**This matters for §3, because it means the thing the user asked for already exists in 0.75's own
+shape** — a skill multiplier that grows with a stat. What we change is which stat, and how fast.
+
+---
+
+## 2. How WoW and LoL build cooldowns
+
+MU has no cooldown to transcribe — `cooldownMinutes` is 0 on every 0.75 skill, and the client's
+`SkillAttribute[].Delay` (`GameLogic/Skills/SkillManager.cpp:140-170`) is a Season 6 field that is
+zero for all six of these. So the shape has to be borrowed, and these are the two systems worth
+borrowing from.
+
+**LoL — Ability Haste.** Since the 2021 preseason, a cooldown is
+`base × 100 / (100 + AH)`, equivalently `base / (1 + AH/100)`, and the effective reduction is
+`AH / (AH + 100)`. It replaced a flat "cooldown reduction" percentage that had to be **capped at
+40%**, because a percentage subtracted from 1 reaches zero and has to be fenced. Three properties
+came out of the change and all three are why it is the right base here:
+
+- **No cap is needed.** The function approaches zero and never touches it, so stacking can be left
+  open-ended without a special case at the end.
+- **Every point is worth the same.** 100 haste is +100% casts, 200 is +200%: the stat is linear in
+  *casts per minute*, which is the thing the player feels, rather than in seconds saved. A flat
+  percentage is worth more the closer you are to the cap, which is a balance trap.
+- **It is the same maths as armour**, so it composes with everything else additively in the stat and
+  multiplicatively in the outcome.
+
+**WoW — haste.** Same divisor: `base / (1 + haste)`. Two extra ideas worth taking:
+
+- **A floor, not a zero.** The global cooldown is 1.5 s and haste takes it to **0.75 s and no
+  further**. Blizzard did not let the number reach zero; it hits a wall and the animation becomes
+  the limiter. That is how "no cooldown" is delivered in a game that never divides by zero.
+- **Charges.** An ability can hold 2–3 uses with a recharge timer that haste also shortens. This is
+  the tool for *bursty* skills, and it is how you give a gap-closer two hops without making it
+  spammable.
+
+Diablo 3, which `PLAN.md` names as the shape of our bar, stacks cooldown reduction
+**multiplicatively** — `(1−a)(1−b)…` — which also never reaches zero but makes each source worth
+less than the last and is hard to read off a character sheet. **Not copied**: the divisor is the same
+curve with an explanation the tooltip can print.
+
+**The conclusion for us**: one haste number per character, `cd = base / (1 + haste)`, floored
+per-skill. Not a percentage, not a cap, not multiplicative stacking.
+
+---
+
+## 3. Ours, and marked as ours
+
+Everything in §3 is `invention` on the scale `PLAN.md` reserves for the skill system. It is the one
+place the rules leave 0.75 on purpose.
+
+### 3.1 The spine: strength is force, agility is speed
+
+The user's rule, 2026-09-22: *"like it is for DW spells — they get stronger when the main stat is
+bigger, energy for DW; for DK it is strength. And agility probably reduces the cooldown."* That maps
+onto 0.75's own arithmetic cleanly, because both hooks already exist:
+
+| what | 0.75's own version | ours | why it is the same shape |
+|---|---|---|---|
+| skill damage | `SkillMultiplier = 2 + energy/1000` (`ClassDarkKnight.cs:74`, `:112`) | `M = M₀ + strength/K_dmg` (+ the energy term kept) | the attribute and its place in the calculation are unchanged; the input stat and the slope are ours |
+| cooldown | nothing | `H = agility/K_cd`, `cd = base/(1 + H)` | new, §2's divisor |
+| attack speed | `AttackSpeed += agility/15` (`ClassDarkKnight.cs:58`) | unchanged | agility is *already* the knight's speed stat; the cooldown follows the stat that was always about rate |
+
+Strength and agility are both already load-bearing (`sim/rules.cpp` reads strength for the damage
+band and agility for attack rate, defence and swing speed), so neither formula introduces a stat
+the character sheet does not already explain.
+
+### 3.2 The two formulas
+
+**Damage.** For a skill hit, everything runs exactly as `sim::strike` runs it today — the band, the
+hit roll, defence, the level floor — and then:
+
+```
+M = M₀ + strength/K_dmg + energy/1000        // energy term is 0.75's own, kept
+damage = strike(...) × M
+```
+
+| skill | M₀ | K_dmg | at 28 str (level 1) | at 500 str | at 1000 str | at 2000 str |
+|---|---|---|---|---|---|---|
+| Lunge 20 | 1.6 | 1400 | 1.62 | 1.96 | 2.31 | 3.03 |
+| Uppercut 21 | 1.8 | 1200 | 1.82 | 2.22 | 2.63 | 3.47 |
+| Falling Slash 19 | 2.0 | 1000 | 2.03 | 2.50 | 3.00 | 4.00 |
+| Cyclone 22 | 2.2 | 1000 | 2.23 | 2.70 | 3.20 | 4.20 |
+| Slash 23 | 2.6 | 800 | 2.64 | 3.23 | 3.85 | 5.10 |
+
+`M₀ = 2.0` on Falling Slash is 0.75's own number, kept as the anchor the other four are spread
+around: the cheap jab hits less than a swing-and-a-half, the two-handed sweep more than two and a
+half. **The damage grows twice over** — the band itself is `strength/6` to `strength/4`
+(`ClassDarkKnight.cs:71-72`) — so a level-400 strength knight is not 4× a level-1 one, he is roughly
+4× the multiplier on top of ~70× the band. That compounding is intended and is the reason the slopes
+are per-mille rather than per-hundred.
+
+**Cooldown.**
+
+```
+H  = agility / K_cd                    K_cd = 300
+cd = max(floor, base / (1 + H))
+```
+
+| skill | base cd | floor | at 20 agi | at 300 agi | at 600 agi | at 1000 agi | at 1500 agi |
+|---|---|---|---|---|---|---|---|
+| Lunge 20 | 3.0 s | clip (~0.9 s) | 2.8 | 1.5 | 1.0 | **0.9** | **0.9** |
+| Uppercut 21 | 3.0 s | clip (~0.9 s) | 2.8 | 1.5 | 1.0 | **0.9** | **0.9** |
+| Falling Slash 19 | 4.0 s | clip (~1.0 s) | 3.8 | 2.0 | 1.3 | 1.0 | **1.0** |
+| Cyclone 22 | 5.0 s | clip (~1.0 s) | 4.7 | 2.5 | 1.7 | 1.2 | **1.0** |
+| Slash 23 | 6.0 s | clip (~1.1 s) | 5.6 | 3.0 | 2.0 | 1.4 | 1.1 |
+| Defense 18 | 12.0 s | duration + 2 s | 11.3 | 6.0 | **6.0** | **6.0** | **6.0** |
+
+Defense is floor-bound from about 300 agility onward, and its floor is the only one that moves: it is
+`duration + 2`, so a knight who spends on vitality buys both a longer guard and a longer wait for it
+(6 s at vitality 0, 12 s at the 10 s cap).
+
+A knight gets 5 points a level (`PointsPerLevelUp 5`) on top of 28/20/25/10, so agility 300 is about
+level 60 if he spends half on agility, 1000 is about level 200, and 1500 about level 300 for an
+agility-first build. **The short skills stop having a cooldown somewhere around level 170–200 and the
+heavy ones never quite do** — which is the pacing worth having: the jab becomes free, the big sweep
+always has a beat.
+
+**Where "no cooldown" comes from, and why it is a floor rather than a zero.** Three walls, in the
+order they bite:
+
+1. **The clip.** A skill cannot be fired faster than its own animation
+   (`length = keys / ((speed + attackSpeed × 0.004) × 25)`, `sim/swings.cpp`), and that length itself
+   shrinks with attack speed, which agility also buys. When the cooldown drops under the clip there
+   *is* no cooldown: the button is ready before the knight has finished swinging. This is WoW's GCD
+   floor and it is what the user's "at some point there is no cooldown at all" should mean.
+2. **The swing timer.** `Fighter.swingsAt` already paces blows; a cast is a blow and pays it. So even
+   a floorless skill cannot outrun the weapon.
+3. **A buff's own duration.** Defense must not become permanent 50% damage reduction, so its floor is
+   **its duration + 2 s**, computed rather than constant — and its duration is where vitality goes:
+   `seconds = 4 + vitality/100`, capped at 10 s (`invention`; 0.75's four seconds is the value at
+   vitality 0). At vitality 800 that is 12 s of cooldown for 10 s of half damage, which is a strong
+   button and not an always-on one.
+
+**Mana stays 0.75's** — 8, 9, 9, 9, 10, 30. It stops being the limiter by about level 30, and that is
+fine: the cooldown is the new cost, and this is one fewer number invented. If mana should keep
+mattering, the knob is `mana = base × M` (the skill costs what it hits for) — **not** recommended for
+the first pass, because it re-introduces the potion spam the cooldown exists to replace.
+
+**One tuning knob each.** `K_cd = 300` decides *when* a build runs out of cooldown; `K_dmg` per skill
+decides how much strength is worth. Both belong in a live-reloaded sheet
+(`sheets/skills.json`), like `lighting.json`, so a session can judge the pacing without a rebuild.
+
+### 3.3 The orbs
+
+The user's route: *bought or dropped, right-click to learn, permanent.* 0.75 has no knight orb, so
+six are invented — modelled on 0.95d's `Orb of Twisting Slash` (group 12, number 7), which is MU's
+own precedent for a knight orb. Group 12 in 0.75 is wings (0, 1, 2), the elf's four orbs (8–11) and
+the Jewel of Chaos (15), so 3–7 are free; 20 is free in this tree's Season 6 list too.
+
+| item | № | teaches | req. level | drop level | price | sold by |
+|---|---|---|---|---|---|---|
+| Orb of Defense | 3 | Defense 18 | 6 | 6 | 500 | Hanzo the Blacksmith |
+| Orb of Uppercut | 4 | Uppercut 21 | 12 | 12 | 2,500 | Hanzo |
+| Orb of Falling Slash | 5 | Falling Slash 19 | 13 | 13 | 3,000 | Hanzo |
+| Orb of Lunge | 6 | Lunge 20 | 20 | 20 | 8,000 | — (drop only) |
+| Orb of Cyclone | 7 | Cyclone 22 | 36 | 36 | 25,000 | Hanzo |
+| Orb of Slash | 20 | Slash 23 | 52 | 52 | 60,000 | — (drop only) |
+
+- **The drop levels are §1.2's ladder**, so a knight meets his skills in the order 0.75 gave him
+  them. One line of provenance for six numbers.
+- **The requirements are raw**, not run through `(3 × drop level × raw/100) + 20`:
+  `docs/mu-scrolls-and-orbs.md` §4 establishes that a non-wearable row's requirement is used
+  verbatim, and `sim/items.cpp asks()` currently applies the formula unconditionally — so this is a
+  real branch the sprint must add, not a value to pick.
+- **Level only, no strength or energy gate.** The stats are what make a skill *good* (§3.2); gating
+  them behind the same stats would charge twice.
+- One cell wide, one tall, `dropsFromMonsters: true`, durability 1 — the elf orbs' own shape
+  (`Version075/Items/Orbs.cs:63-67`).
+- Lunge and Slash are drop-only on purpose: 0.75 had exactly this texture (the Gladius was the one
+  skill carrier Hanzo's store dropped), and two of six unbuyable keeps the hunt in it.
+
+**Learning is permanent and saved.** A right-click consumes the orb and sets a bit; `save.cpp` gets a
+version bump and a `learned` mask (six bits now, one word is plenty). 0.75's hotkey bindings are
+**not** saved (`MU2/docs/skills.md` §10, checked against MuMain) — the *learned skills* are ours and
+are, the *bar* follows MuMain and is not.
+
+### 3.4 The bar and the frame
+
+- **Q W E R.** `src/game/ui/hud.h:17` already records the decision of 2026-09-21: potions on 1–4,
+  skills on Q W E R. Four slots, four skills at once, six learned — that is the Diablo 3 shape
+  `PLAN.md` asked for and it needs no fan: a learned-skills list with drag-to-slot is enough, and
+  the right-click cast (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) stays.
+- **The cooldown is drawn on the box**: a dark sweep over the icon and the seconds printed when more
+  than one remains — LoL's and WoW's shared convention, and the reason both read at a glance. Grey
+  the icon when the mana is not there (MuMain dims it too).
+- **The tooltip must print the formula's result**, not just the number: `Cooldown 1.4 s (base 6.0,
+  −77% from 1000 agility)` and `Damage ×3.85 (base 2.6, +1.25 from 1000 strength)`. This is the
+  whole point of stat-driven cooldowns — a player who cannot see agility working will not spend on
+  it. `src/game/ui/describe.cpp` already builds exactly this kind of sheet for items.
+- **The icons are already in the tree**: `assets/interface/skills/skill_18.png` … `skill_23.png`, cut
+  by `pipeline/skill_icons.py`. Nothing reads them yet.
+
+### 3.5 The sim's shape
+
+- **Per-figure cooldowns**: six deadlines in ticks on the fighter, not a map — `realm.h:194-198`
+  already says the tick is per-body and separate from the thinking clock, which is the hook.
+- **Requests in, events out**, per `PLAN.md` point 8: a `Cast` request (skill, target) and a `Cast`
+  event (who, skill, at whom); the clip, sound, streak and sparks are the game's to pick from the
+  number. `Close` and `Shove` are two `Place`s for `movesToTarget` and `movesTarget`.
+- **Refusal order is 0.75's**: safe zone, learned, cooldown, range (`Range + 2`), mana, then the
+  moves, then the blow. Mana is taken before the moves and a refusal is silent.
+- **The boon list** — a general timed-effect list on a figure, not a special case for Defense, since
+  ale and the elf's two Greaters are the same shape. It feeds `Fighter.damageTaken`, which is already
+  there and already 1.0.
+- **Headless tests**: a seeded cast run that logs the same bytes twice; invariants that nothing casts
+  while cooling, nothing casts what it has not learned, and no cooldown is ever below its floor.
+
+---
+
+## 4. The one decision left to the user
+
+**A floor, or a true zero?** §3.2 floors every cooldown at the animation, so "no cooldown" means *the
+button is ready before the swing ends* — WoW's answer, and the reason nothing divides by zero, no
+buff becomes permanent, and no skill can be fired twice inside one clip. A literal `0.0 s` is
+available instead by using `cd = base × (1 − agility/K)` clamped at zero, which reaches zero at a
+stated agility and is what a player counting seconds would call "no cooldown" — at the price of a
+cap, a permanent Defense unless it is special-cased, and a spam rate limited only by the swing timer.
+**Recommended: the floor.** It delivers the same feel and costs nothing later.
+
+---
+
+## 5. Order of work, when the sprint opens
+
+1. `sheets/skills.json` and the skill table in `content` — the six rows, their mana, range, clips,
+   `M₀`, `K_dmg`, base cooldown and floor. Live-reloaded.
+2. The six orbs in the cook, with the raw-requirement branch in `items.cpp asks()`, and the learned
+   mask in the save.
+3. The boon list and Defense, first, while exactly one thing uses it.
+4. `Realm::cast` with the refusals in order, the two `Place`s, and the multiplier on the blow.
+5. The bar: icons, QWER, the sweep, the grey, the tooltip with the arithmetic printed.
+6. The showing: clip, sound, white streak, sparks at the far end — all four already exist in this
+   tree for swings.
+7. The headless run and its invariants; then a tuning pass on `K_cd` with the numbers written down.
