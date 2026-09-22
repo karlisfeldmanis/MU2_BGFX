@@ -134,6 +134,85 @@ a sentence that claims it does is a sentence nobody ran.
 
 Each with a shot at the impact and the log read for the pool counts and the budget table.
 
+## Where it stands, 2026-09-22 evening
+
+Read off the tree rather than off the commit titles. **Four of the five steps are in**, and what
+is left is mostly proving it, which is a different kind of session from the one that built it.
+
+| step | state | where |
+|---|---|---|
+| 1. the swing every breed shows | **done** | `play.cpp:182` — `swordCount % 3`, Attack 2 two swings in three, Attack 1 the third; breeds with no Attack 2 keep counting and always choose the one they have (`play_open.cpp:221`) |
+| 1. the paired attack cry | **done** | `play_open.cpp:388` — `_attack` loaded with the pick-between-files flags, as the doc predicted it would be |
+| 2. reach, seen | **the one thing left** | see below |
+| 3. model effects | **done, by another mechanism** | see the deviation below |
+| 4. the Lich's Meteorite | **done** | `game/fx/meteor.*`: the throw at 400 up and 130–161 aside, the fall, the six stones, the fireball, `AddTerrainLight` as transient lights, the quake |
+| 5. the Shock action | **done, and only there** | `play.cpp:341-346` — everything within `kShockTiles` on the meteor's quake, and nowhere else |
+
+### The deviation in step 3, recorded because the page above promised something else
+
+The sprint said model effects would be "a small mesh submitted in the transparent pass (view 5)".
+They are not. `meteor.h:274` draws **one model's triangles as quads whose last two corners
+coincide**, through the sprite batcher that was already there. So the engine gained the
+capability without gaining a second transparent path, a second vertex layout or a second
+program — the pool, the sort and the refused-count all still belong to `gfx::Effects`.
+
+`game/fx/bones.*` went the other way and draws its eleven pieces as ordinary lit `Drawable`s,
+because a skeleton's bones are lit and cast, and an ember is neither.
+
+Both are right, and the pair of them is the actual answer to "how does this engine draw a model
+effect": **lit and casting → a `Drawable`; additive and unlit → triangles through the sprite
+pass.** That belongs in `docs/conventions.md` beside the closed material model when this sprint
+closes, because the next sprint that wants an arrow will otherwise ask the question again.
+
+### Step 2, and why it may be smaller than it looks
+
+The Lich's four tiles were step 4's problem and step 4 solved them: the meteor is the travel.
+What is left is the Giant's two, and MU itself shows no travel for him — his axes are long and
+the blow simply lands. So this is likely a **reading** task and not a building one: stand a
+Giant at two tiles, take the shot, and decide whether the blow reads as his or as the hero
+being hit by nothing. If it reads, say so here and the step is closed; if it does not, the fix
+is in the cue's placement and not in the sim.
+
+Do not "fix" this by adding a flinch to the target. Step 5 exists to say that MU has no such
+thing (`showing.cpp:177`).
+
+## The next session, in order
+
+**Pre-flight, and both are decisions rather than work:**
+
+1. **The budget has an unallocated 0.3 ms and this sprint's gate depends on it.**
+   `docs/budget.md:24-27` says the reflection probe's 0.3 ms was measured but never given an
+   account, the spare is 0.2, and *"what is owed is a decision on which account gives up 0.3,
+   which is the user's to make"* — the shade account's 2.3 being the likeliest, since the frame
+   has never measured near it at 1080p. `--budget` cannot be an honest gate for this sprint
+   until that is settled. **Settle it first, in one line, or decide explicitly to close this
+   sprint on the wall frame alone and say so.**
+2. **`shotcheck`'s `town` reference is stale** against the v7 item tables and must be either
+   re-blessed or investigated before it can gate anything. A dropped item now appears in a
+   fresh town run that did not before. If that is what v7 was meant to do, bless it; if not, it
+   is a misparse in the new `ItemRow` fields and it is a real bug. See `docs/architecture.md`.
+
+**Then the sprint's own work:**
+
+3. **Step 2, as a reading.** `--arena Giant --at 35,45` (or the arena's own patch) with a shot
+   at the swing. One of two outcomes, both cheap, both written down here.
+4. **The two proof runs.** `--arena` is what commit `d015097` built for exactly this and it is
+   better than the two hand-placed tiles the page above names: one breed, a clear flat non-safe
+   patch, and a log a shot can be aimed by. The Lich run and the Giant/Hound run, each with a
+   shot at the impact.
+5. **The seeded log, byte-identical.** The sharpest check this sprint has, and the reason it is
+   sharp: every step is presentation, so a differing byte means something drew a number out of
+   the sim's dice. The attack-clip counter, the meteor's sideways scatter and the quake all draw
+   from the drawing's own random and must keep doing so.
+6. **`--budget`**, vsync off, 1080p, Release, and fill in **Measured** below.
+7. **Two paragraphs into `docs/conventions.md`**: the model-effect rule from the deviation
+   above, so the next sprint does not re-derive it.
+
+**What would make this sprint bigger than it is, and is therefore not in it:** the other 17
+missile rows, any arrow, any hero skill, any new damage or element. The finding at the top of
+this page is still the shape of the whole sprint — it is a showing, and its whole risk is that
+it is worked as a rules sprint.
+
 ## Measured
 
 <!-- filled when the sprint closes: the frame, the effects account, the pools, the diff -->
