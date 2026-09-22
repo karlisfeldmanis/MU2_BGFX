@@ -10,6 +10,10 @@
 // on 2026-09-22, so the rows carry a label and their values apart, and the drawing puts one
 // on the left and the other on the right. MU's colours are unchanged.
 //
+// What a row DOES, where no column says it -- the Ale, the Antidote, the Town Portal Scroll
+// and the three jewels -- comes off the row as `ItemRow::tells`, and for four of those six the
+// sentence is MU's own (GT 572, 573, 574, 157). See section 2.9 of the catalogue below.
+//
 // Not yet said, because the rules for them do not exist: luck, the additional option, the
 // excellent options, what a skill does (the flag is carried and named, nothing more), wear as
 // a thing that falls, set and socket blocks. Every one of them has a section waiting for it --

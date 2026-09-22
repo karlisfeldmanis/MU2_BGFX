@@ -2486,6 +2486,24 @@ def main() -> None:
                 if teaches.get("tells"):
                     entry["skill"]["tells"] = str(teaches["tells"])
 
+            # And one line of what the ITEM itself does, for the rows whose whole point is a
+            # thing they do and that no column can state: the Ale, the Antidote, the Town
+            # Portal Scroll and the three jewels. A damage band says what a sword is for and a
+            # defence says what a breastplate is for, but a Jewel of Bless is a 1x1 picture
+            # with a drop level and nothing else, and the tooltip had nothing to put under its
+            # name.
+            #
+            # Beside `skill` above and not inside it, because they are different sentences: a
+            # scroll's `tells` is what the SPELL does once the scroll is gone, and this is what
+            # the item does. A row could honestly carry both.
+            #
+            # Where MU ships its own line for a row - GT 572, 573, 574 for the jewels, GT 157
+            # for the scroll - the asset carries MU's English letter for letter rather than a
+            # paraphrase of it, and where MU ships none the asset says so in tells_from. See
+            # docs/mu-tooltip-lines.md section 2.9.
+            if document.get("tells"):
+                entry["tells"] = str(document["tells"])
+
             # Whether this is one of the pieces that gets out of the way when the player is
             # under it. The client keeps a list of types per world rather than a flag per
             # model; the flag is the same fact said where the asset can carry it.

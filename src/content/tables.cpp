@@ -15,9 +15,10 @@ constexpr uint32_t kSimHz = 20;
 
 // Version 2 added the arms, version 3 the attack actions a swing rate is made of, and version
 // 4 the items and version 5 the townsfolk (sprint 7); version 6 gave an item its defence rate,
-// and version 7 what a scroll or an orb teaches. There is no version 1 anywhere but in a stale build directory, and
+// version 7 what a scroll or an orb teaches, and version 8 one line of what the item itself
+// does. There is no version 1 anywhere but in a stale build directory, and
 // the reader says so rather than reading a file whose fields have moved under it.
-constexpr uint32_t kVersion = 7;
+constexpr uint32_t kVersion = 8;
 
 }  // namespace
 
@@ -154,7 +155,7 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         return false;
     }
 
-    // Three strings and twenty-one numbers: at least 90 bytes a row.
+    // Six strings and twenty-four numbers: at least 90 bytes a row.
     if (!plausible(reader, items, 90)) {
         error = "claims " + std::to_string(items) + " items and has no room for them";
         return false;
@@ -168,6 +169,7 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         reader.readString(row.glb);
         reader.readString(row.teachesName);
         reader.readString(row.teachesTells);
+        reader.readString(row.tells);
         int32_t teaches[3] = {};
         reader.take(teaches, sizeof(teaches));
         row.teaches = teaches[0];

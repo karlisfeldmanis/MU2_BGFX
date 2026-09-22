@@ -1416,7 +1416,7 @@ FOLK_VERSION075 = {
 def cook_tables(world, out_dir):
     """mu.db's rows, through index.json, as one flat versioned file the game reads whole.
 
-    The .mur format ("MU2 rules"), version 5, little-endian:
+    The .mur format ("MU2 rules"), version 8, little-endian:
 
         'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 actions, u32 items,
                 u32 folk,
@@ -1438,6 +1438,12 @@ def cook_tables(world, out_dir):
                 client's attack ladder tests), i32 flags (bit 0 two-handed, bit 1 a bow,
                 bit 2 a crossbow)
         items:  (version 4, sprint 7) u16 len + name, u16 len + label, u16 len + glb path,
+                then (version 7) u16 len + the name of the skill it teaches and u16 len + a
+                line of what that skill does, both "" off a scroll or an orb, and (version 8)
+                u16 len + a line of what the ITEM does -- "" on every row a column already
+                states, and see pipeline/index.py for which six carry one -- then
+                (version 7) i32 the skill's number, its level requirement, its energy
+                requirement, and then
                 i32 group, number, drop level, width, height, minimum damage, maximum
                 damage, attack speed, defense, magic power, durability, classes (as the
                 arms), then the requirement's RAW level, strength, agility, energy,
@@ -1528,10 +1534,15 @@ def cook_tables(world, out_dir):
 
     # Every action a swing can land on, with the two numbers its length is made of. 38 is the
     # fist, 39-45 the sword ladder, 46-49 spear and scythe, 50 and 51 the bow and the crossbow.
+    #
+    # And the skill clips, 60 to 64 and Defense's 187, for the same reason rather than a new one:
+    # a skill's cooldown can never be shorter than the animation it plays (docs/skills-dk.md
+    # §3.2), and the animation's length is these same two numbers. The sim asks
+    # `sim::castTicks` for it, which reads this table.
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     actions = []
-    for action in list(range(38, 52)):
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 187]:
         name = str(action)
         if name not in keys or name not in speeds:
             continue
@@ -1635,6 +1646,10 @@ def cook_tables(world, out_dir):
                      write_string(one.get("glb", "")) +
                      write_string(str(teaches.get("name") or "")) +
                      write_string(str(teaches.get("tells") or "")) +
+                     # And (version 8) one line of what the item itself does, for the rows a
+                     # column cannot state: the Ale, the Antidote, the Town Portal Scroll and
+                     # the three jewels. Empty on everything else. See pipeline/index.py.
+                     write_string(str(one.get("tells") or "")) +
                      struct.pack("<3i", int(teaches.get("number") or 0),
                                  int(teaches.get("level_requirement") or 0),
                                  int(teaches.get("energy_requirement") or 0)) +
@@ -1658,7 +1673,7 @@ def cook_tables(world, out_dir):
             for (npc, name, figure, x, y, look) in FOLK_VERSION075.get(number, [])]
 
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 7, SIM_HZ, len(kinds), len(spawns), len(arms),
+    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 8, SIM_HZ, len(kinds), len(spawns), len(arms),
                        len(actions), len(items), len(folk), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))

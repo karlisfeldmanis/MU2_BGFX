@@ -114,6 +114,13 @@ struct ItemRow {
     int32_t teaches = 0;
     int32_t teachesLevel = 0, teachesEnergy = 0;
     std::string teachesName, teachesTells;
+    // One line of what the ITEM does, for the rows whose whole point is a thing no column
+    // states: the Ale, the Antidote, the Town Portal Scroll and the three jewels. Empty on
+    // everything a damage band or a defence already speaks for. Where MU ships its own line
+    // for a row this is MU's English letter for letter; where it does not, the asset says so.
+    // A scroll's `teachesTells` above is a different sentence -- what the SPELL does -- and a
+    // row may honestly carry both.
+    std::string tells;
 
     bool dropsFromMonsters() const { return (flags & 1) != 0; }
     bool jewel() const { return (flags & 2) != 0; }

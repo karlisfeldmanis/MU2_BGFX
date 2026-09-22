@@ -186,6 +186,17 @@ Version: 1st-level wings (`Wings of Elf/Heaven/Satan`) exist in 0.75 (OpenMU `Ve
 `It is used to increase your item level up to 6` GT 572 (Bless), `…up to 7,8,9` GT 573 (Soul), `It is used to combine Chaos items` GT 574 (Chaos), `Increases item option by 1 level` GT 621 (Life), `Used to create fruits that increase stats` GT 619 (Creation), `Create and improve items for siege` GT 1289 (Guardian), `Jewel with impurities` GT 2208 (Gemstone), `Jewel for item reinforcement` GT 2209 (Harmony), `Grant actual power to reinforced item.` GT 2210 (refine stones), `Used to upgrade wings` GT 748 (Loch's feather), `Used when creating a Cloak of Invisibility` GT 816, `Used when entering Blood Castle` GT 814, `It is used to combine items for a Devil Square Invitation` GT 637, `Warp to the corresponding area after 3 seconds` GT 157 (town-portal scroll levels 1-8), `Throw it and you may receive some Zen or items` GT 571 (boxes), `Increases 1~3 stat points` GT 636 + `Possible to decrease stat 1~9 point` GT 1910 + DARKRED `It can be used with item removed.` GT 1908 (fruits), `3 Jewel of Bless is combined` GT 1819 + `Can be used after dismantling` GT 1820 (jewel stacks), Chaos-Castle/Kalima level tables (ZI:4510-4544, World/GameMaps/GMHellas.cpp:204-262; the matching row for your level gets the DARKYELLOW band; `Right click to enter.` GT 1157 in DARKBLUE).
 Version: the jewel lines (572/573/574/636/637/814/816) are 0.75-era; the rest follow their content.
 
+Built, 2026-09-22. Four of these are rows this game has — GT 572, 573 and 574 on the three
+jewels, GT 157 on the Town Portal Scroll — and all four are now printed, MU's English carried
+letter for letter in the asset's own `tells` field (`source/items/misc/*.json` → `index.json` →
+the `.mur` version 8 → `ItemRow::tells` → the card's first section). The two rows MU leaves
+blank here, the **Ale** (group 14 number 9) and the **Antidote** (group 14 number 8), carry a
+line of ours instead: MU prints nothing for either, so the sentences are written
+from what the rule actually is — OpenMU's `AlcoholEffectInitializer` (+20 attack speed for 80
+seconds) and `AntidoteConsumeHandlerPlugIn` (removes magic effect `0x37`, the poison) — and
+each asset's `tells_from` says so. None of the six does anything yet: `Realm::useItem` takes
+only the rows that heal or restore.
+
 ### 2.10 Special / set / socket (end of the tooltip)
 | # | Block | Colour | Where |
 |---|---|---|---|

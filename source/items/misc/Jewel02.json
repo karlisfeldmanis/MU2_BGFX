@@ -4,6 +4,8 @@
   "mu_name_from": "ZzzOpenData.cpp line 910, the same run that gives Jewel01 to the Bless: `AccessModel(MODEL_POTION + i + 13, L\"Data\\\\Item\\\\\", L\"Jewel\", i + 1)` puts group 14 number 14 on Jewel02.bmd, and _enum.h names it - `MODEL_JEWEL_OF_SOUL = MODEL_POTION + 14`. OpenMU's 0.75 Jewels.cs puts the Jewel of Soul at group 14, number 14.",
   "why_this_one": "The second of the three the +10 combination asks for, and the one the Chaos Machine spends in the same quantity as the Bless: one of each at +10, two of each at +11. See docs/chaos-machine.md.\n\nIn the wider game it is the refinement jewel - what a player spends to add a plus outside the machine - but 0.75 has no such action here and OpenMU's 0.75 table gives the row no behaviour at all. So what it is today is a thing that falls, is carried, and is spent at the goblin. Its own use arrives with the machine and not before.",
   "profile": "weapon",
+  "tells": "It is used to increase your item level up to 7,8,9",
+  "tells_from": "MU's own sentence, GT 573, copied letter for letter as the Bless's is: `I18N::Game::ItIsUsedToIncreaseYourItemLevelUpTo789`, Localization/Game.en.resx line 2168, WHITE and unbold on `ip->Type == ITEM_JEWEL_OF_SOUL` with no condition (ZzzInventory.cpp:4218-4569). The comma run with no spaces is MU's; it is not a typo here. See Jewel01's tells_from, which sets the argument for all three.",
   "profile_note": "As Jewel01. The profile is about the art - a small painted sheet on a made object at arm's length - and not about what the item does.",
   "stats": {
     "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",

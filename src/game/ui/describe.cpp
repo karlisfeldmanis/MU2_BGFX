@@ -114,14 +114,17 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     Section does;
     const bool defensive = row.armour() || row.shield();
     const bool drinkable = sim::heals(row) || sim::restores(row);
+    // A jewel is asked before the potion group because it IS in the potion group: the Bless
+    // and the Soul are group 14 numbers 13 and 14, and they are spent, not swallowed.
+    const bool consumable = row.group == sim::kGroupPotions && !row.jewel();
     does.kicker = row.weapon() && !sim::ammunition(row) ? "Combat"
                   : defensive                          ? "Defense"
-                  : drinkable                          ? "Effect"
                   : row.jewel()                        ? "Use"
+                  : drinkable || consumable            ? "Effect"
                                                        : "Base stats";
     does.mark = defensive ? tip::Mark::Shield
-                : drinkable || row.jewel() ? tip::Mark::Note
-                                           : tip::Mark::Blade;
+                : drinkable || consumable || row.jewel() ? tip::Mark::Note
+                                                         : tip::Mark::Blade;
 
     const bool weapon = row.weapon() && !sim::ammunition(row);
     const int bonus = weapon ? sim::damageBonus(plus) : 0;
@@ -153,6 +156,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     if (weapon && row.attackSpeed > 0) {
         does.rows.push_back(stat("Attack speed", std::to_string(row.attackSpeed), Tone::White));
+    }
+    // The row's own line: what the thing does, for the six rows no column speaks for -- the
+    // Ale, the Antidote, the Town Portal Scroll, and the three jewels, whose sentences are
+    // MU's own (GT 572, 573, 574, 157). It leads the section, because on every one of those
+    // rows it is the section. See ItemRow::tells and docs/mu-tooltip-lines.md section 2.9.
+    if (!row.tells.empty()) {
+        Row line;
+        line.free = row.tells;
+        line.freeTone = Tone::White;
+        does.rows.push_back(line);
     }
     if (sim::heals(row) || sim::restores(row)) {
         Row line;

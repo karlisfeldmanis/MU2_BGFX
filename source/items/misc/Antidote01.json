@@ -3,6 +3,8 @@
   "mu_name": "Antidote",
   "mu_name_from": "ZzzOpenData.cpp: `AccessModel(MODEL_ANTIDOTE, L\"Data\\\\Item\\\\\", L\"Antidote\", 1)`, so MODEL_ANTIDOTE is Antidote01.bmd; OpenMU's 0.75 initialiser names group 14 number 8 the Antidote.",
   "why_this_one": "Amy's eighth line, single and three. Number 8 is the one potion row that is not a Potion0X file: ZzzOpenData loads it separately, `AccessModel(MODEL_ANTIDOTE, L\"Data\\\\Item\\\\\", L\"Antidote\", 1)`, after the seven-potion loop.",
+  "tells": "Swallowed against a poisoning: it clears the venom, and does nothing else.",
+  "tells_from": "OpenMU's AntidoteConsumeHandlerPlugIn, which is the whole rule: it looks up magic effect 0x37 - the poison - in the player's active effects and disposes of it. There is no recovery, no buff and no duration, and Version075/Items/Potions.cs gives the row no ConsumeEffect at all, so the plug-in is the only thing that happens when it goes down. The second clause is in the line on purpose: an Antidote beside three healing potions in a shelf looks like a fourth one, and it heals nothing.\n\nThe wording is ours. MU prints no line for it - RenderItemInfo's description block (ZzzInventory.cpp:4218-4569) has no branch on group 14 number 8 - and nothing in this game is poisoned yet, so like the Ale the row is carried and never used. See Ale01's tells_from for the same argument at length.",
   "profile": "weapon",
   "profile_note": "Not because a potion is a weapon but because the profile is about the art: a small painted sheet on a made object seen close, upscaled with the drawn model held back so a band of paint does not become a ridge. The Apple made the same argument. The default material is overridden per island below.",
   "stats": {
