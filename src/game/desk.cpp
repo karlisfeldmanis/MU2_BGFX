@@ -122,18 +122,21 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             play.spendPoint(spend);
             click();
         }
-        if (close) {
-            characterOpen_ = false;
-            click();
-        }
+        // The exit button hides it without a sound: CNewUICharacterInfoWindow's m_BtnExit has
+        // no PlayBuffer. Only Escape clicks, and the C key.
+        if (close) characterOpen_ = false;
     }
 
     // A merchant's counter opens the bag beside it and closes the character window, which is
     // MU's arrangement: the shop in column two and the inventory where it always is. Walking
     // away closes the counter in the realm, and the windows follow.
     const bool trading = play.isOpen() && play.realm().trading() >= 0;
-    // The counter opening and closing click, as any window does.
-    if (trading != trading_) click();
+    // A counter opens on ReceiveTalk's click and SOUND_INTERFACE01 together. Walking away
+    // shuts it silently; the shelf's own X is Escape's stand-in and clicks (below).
+    if (trading && !trading_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+    }
     if (trading && !trading_) {
         characterOpen_ = false;
         bagForShop_ = !inventoryOpen_;
@@ -152,7 +155,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // A purchase that goes through is heard as its coins, off the realm's Bought; one
         // refused is the interface's no.
         if (buy >= 0 && !play.buy(buy)) refused();
-        if (close) play.closeTrade();
+        if (close) {
+            play.closeTrade();
+            click();
+        }
     }
 
     // The bag, in the right-hand column or beside the character window when that is up.
@@ -182,17 +188,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             if (!what.empty() && usable(*play.realm().tables(), what.item)) {
                 quick_[key] = what.item;
                 core::logf("window: slot %d bound to key %d", asked.outside, key + 1);
-                took();
-            } else {
-                refused();
             }
         } else if (asked.outside >= 0) {
             core::logf("window: %d let go outside the bag; kept", asked.outside);
         }
-        if (asked.close) {
-            inventoryOpen_ = false;
-            click();
-        }
+        // Silent, as CNewUIMyInventory's exit button is; the I and V keys click.
+        if (asked.close) inventoryOpen_ = false;
     }
 
     if (play.isOpen()) {
@@ -242,15 +243,12 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
         const int hovered = inventoryOpen_ ? bag_.hovered() : -1;
         if (hovered >= 0 && usable(tables, bag[hovered].item)) {
             quick_[key] = bag[hovered].item;
-            core::logf("window: slot %d bound to key %d", hovered, key + 1);
-            play.ui(Play::Ui::Took);
+            // SetItemHotKey plays nothing, and neither does a thing that cannot be bound.
             continue;
         }
-        // A thing hovered that will not go on the bar: MU2's Quick.Bind refusal.
-        if (hovered >= 0 && !bag[hovered].empty()) {
-            play.ui(Play::Ui::Refused);
-            continue;
-        }
+        // A thing hovered that will not go on the bar is not used through it either: MuMain's
+        // UpdateKeyEvent returns before the use when the pointer is on an item.
+        if (hovered >= 0 && !bag[hovered].empty()) continue;
         if (quick_[key] < 0) continue;
         // The strongest of what may stand in for it, which is where MU's descending walk stops
         // first. Quick.Choose.

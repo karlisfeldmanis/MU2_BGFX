@@ -494,15 +494,22 @@
       "files": [
         "ibuttonclick.wav"
       ],
-      "from": "SOUND_CLICK01, which ZzzOpenData loads from Data\\Sound\\iButtonClick.wav. CNewUIMyInventory plays it on both the open and the close - the I key, the V key and the exit button all land on the same PlayBuffer - so the window has one noise and makes it twice.",
+      "from": "SOUND_CLICK01, which ZzzOpenData loads from Data\\Sound\\iButtonClick.wav. MuMain plays it on the I and V keys and the main frame's bag button, open and close alike; on C and the character button; on the stat plus, without waiting for the reply; on Escape closing the bag, the character window or a shop; and with SOUND_INTERFACE01 when a shop opens (ReceiveTalk). NOT on the bag's or the character window's exit button: CNewUIMyInventory and CNewUICharacterInfoWindow hide the window there with no PlayBuffer. MU2's note said the exit button clicked; MuMain's own code says otherwise.",
       "note": "Unplaced in the client, as every interface sound is; played on the character here, where the listener stands, which is the same thing."
+    },
+    "window_open": {
+      "files": [
+        "icreatewindow.wav"
+      ],
+      "from": "SOUND_INTERFACE01, which ZzzOpenData loads from Data\\Sound\\iCreateWindow.wav. ReceiveTalk ends on PlayBuffer(SOUND_CLICK01) and PlayBuffer(SOUND_INTERFACE01) together, so a merchant's counter opens on both. MuMain also plays it for NPC dialogue, quest and guild windows, none of which Lorencia's 0.75 has.",
+      "note": "Unplaced, as every interface sound is."
     },
     "window_refused": {
       "files": [
         "ibuttonerror.wav"
       ],
-      "from": "iButtonError.wav, which the interface plays for a request the server turned down - a move the bag would not take. There is no SOUND_ constant for it in the 0.75 client; it is loaded by name where it is used.",
-      "note": "The refusal's only noise. A drag that cannot land snaps back to its cell and this plays; the cell was painted red the whole way there, so it is a confirmation rather than the first the player hears of it."
+      "from": "iButtonError.wav, loaded as SOUND_ERROR01 by ZzzOpenData and never played: no PlayBuffer(SOUND_ERROR01) exists anywhere in MuMain. MU2 said the 0.75 client loads it by name where it is used; no 0.75 source is on hand to show it.",
+      "note": "**An invention, marked.** A refused move, use, purchase or sale is silent in MuMain -- the drag snaps back and that is all. Kept from MU2, which chose to say no out loud."
     },
     "world_wind": {
       "files": [

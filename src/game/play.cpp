@@ -849,18 +849,12 @@ void Play::emit(int event, float x, float z, uint32_t following) {
     sound_.playAt(event, x, z, following);
 }
 
-void Play::coins() {
-    // SOUND_MONEY at a counter, both ways round: the noise is the transaction and not the
-    // direction of it. MU2's Crowd.Traded.
-    const Drawn* hero = drawnOf(realm_.hero().id);
-    if (hero && hero->placed) emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
-}
-
 void Play::ui(Ui which) {
     switch (which) {
         case Ui::Click: sound_.play(heard_.click); break;
         case Ui::Refused: sound_.play(heard_.refused); break;
         case Ui::Took: sound_.play(heard_.take); break;
+        case Ui::Opened: sound_.play(heard_.opened); break;
     }
 }
 
@@ -899,6 +893,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.apple = sound_.load("player_eat_apple", false);
     heard_.click = sound_.load("window_click", false);
     heard_.refused = sound_.load("window_refused", false);
+    heard_.opened = sound_.load("window_open", false);
     // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
     // pMaleDie.wav. The elf's pFemaleScream2 is the same rule with another file, for when an
     // elf can be played.
@@ -1584,7 +1579,9 @@ bool Play::buy(int shelfSlot) {
     const int slot = realm_.buy(shelfSlot);
     core::logf("window: buy shelf %d %s (slot %d, %lld Zen left)", shelfSlot,
                slot >= 0 ? "taken" : "refused", slot, (long long)realm_.money());
-    if (slot >= 0) coins();
+    // ReceiveBuy's SOUND_GET_ITEM01: a purchase is a thing arriving in the bag. MU2 rang coins
+    // here, which MuMain does not -- pDropMoney is only ever a heap landing.
+    if (slot >= 0) sound_.play(heard_.take);
     return slot >= 0;
 }
 
@@ -1592,7 +1589,8 @@ bool Play::sell(int bagSlot) {
     const int64_t paid = realm_.sellItem(bagSlot);
     core::logf("window: sell slot %d %s (%lld paid, %lld Zen now)", bagSlot,
                paid >= 0 ? "taken" : "refused", (long long)paid, (long long)realm_.money());
-    if (paid >= 0) coins();
+    // ReceiveSell's, the same SOUND_GET_ITEM01.
+    if (paid >= 0) sound_.play(heard_.take);
     return paid >= 0;
 }
 

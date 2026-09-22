@@ -180,7 +180,8 @@ public:
     // The interface's own noises, raised by the windows: a button acknowledging the finger
     // (SOUND_CLICK01), a request the realm said no to (iButtonError), and a thing going into
     // a slot -- MU has no equip or bind sound of its own and plays SOUND_GET_ITEM01 for both.
-    enum class Ui { Click, Refused, Took };
+    // Opened is SOUND_INTERFACE01, which a merchant's counter opens on beside the click.
+    enum class Ui { Click, Refused, Took, Opened };
     void ui(Ui which);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
@@ -292,7 +293,7 @@ private:
         int itemDrop = -1, moneyDrop = -1, jewel = -1;  // a thing landing; a jewel's own ring
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
         int drink = -1, apple = -1;                     // a potion going down
-        int click = -1, refused = -1;                   // the windows
+        int click = -1, refused = -1, opened = -1;      // the windows
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
@@ -302,8 +303,6 @@ private:
     // A drop coming into view -- its dropper down, or the hero's own discard -- makes its noise
     // where it lies. Called from releaseDrops for each one let go.
     void landed(uint32_t drop);
-    // The coins of a purchase or a sale, at the hero.
-    void coins();
     // Every placed sound goes through here, and is heard only if the camera holds where it is.
     void emit(int event, float x, float z, uint32_t following = 0);
     float shot_[16] = {};
