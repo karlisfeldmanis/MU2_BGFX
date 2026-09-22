@@ -36,11 +36,15 @@ constexpr float kCellGain[kFireFrames] = {1.0f, 8.8f, 19.0f, 19.0f};
 // flat over the life; the cooling is what reads the growing spark as flame catching and going
 // out, rather than a lit ball expanding.
 constexpr float kSparkHeat = 0.9f, kSparkCooling = 0.7f;
+constexpr float kPuffAlpha = 1.0f;
 
 // BITMAP_SMOKE + 1 subtype 0: LifeTime 32, Scale (rand()%32 + 32) * 0.01, Velocity (0, 3, 0)
 // turned by the angle with Velocity *= 0.9, Scale += 0.08 a frame, Light = LifeTime / 32 on
 // every channel, and its height pinned each frame to the terrain plus half its own height.
 constexpr float kPuffLife = 32.0f;
+// How solid a puff is drawn. **Ours**: MU cut the sheet at a quarter alpha and drew what was
+// left whole, which is a hard brown disc; softened (fs_dust), several of them overlap, so each
+// is fainter and the cloud is what is seen rather than the sprite.
 
 }  // namespace
 
@@ -163,7 +167,7 @@ void Breath::gather(gfx::Effects& effects) const {
         sprite.colour[2] = 0.0f;
         sprite.colour[3] = 1.0f;
         sprite.sheet = fire_;
-        sprite.blend = gfx::Blend::Flame;
+        sprite.blend = gfx::Blend::Breath;
         effects.add(sprite);
     }
     for (const Puff& one : puffs_) {
@@ -177,9 +181,16 @@ void Breath::gather(gfx::Effects& effects) const {
         sprite.position[0] = one.position[0];
         sprite.position[1] = floor + half;
         sprite.position[2] = one.position[2];
+        // MU's Light = LifeTime / 32 on every channel, and its own alpha. Faded in over the
+        // first fifth of the life as well -- ours, with the soft edge: a puff that is born at
+        // full and shrinking reads as a stamp, and the whole point of the blur is that a puff
+        // gathers. And drawn at less than half, because a dozen soft clouds overlap where a
+        // dozen cut discs did not.
+        const float t = 1.0f - std::max(0.0f, one.life) / kPuffLife;
         const float light = std::max(0.0f, one.life / kPuffLife);
+        const float risen = std::min(1.0f, t / 0.2f);
         sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = light;
-        sprite.colour[3] = light;
+        sprite.colour[3] = light * risen * kPuffAlpha;
         sprite.sheet = smoke_;
         sprite.blend = gfx::Blend::Dust;
         effects.add(sprite);

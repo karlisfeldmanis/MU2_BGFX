@@ -24,9 +24,10 @@ namespace mu::gfx {
 // Sprint 8b added two that are a blend AND a program: `Flame` is added like `Additive` but read
 // through fs_flame's heat ramp, so its colour carries the particle rather than a tint (see that
 // shader); `Smoke` is mixed like `Alpha` with a soft disc cut into the sheet.
-// `Dust` is mixed like `Alpha` and cut at MU's alpha test of a quarter (fs_dust): the Budge
-// Dragon's smoke02, whose puffs shrink to their middles as they fade rather than blurring.
-enum class Blend : uint8_t { Alpha, Additive, Flame, Smoke, Dust };
+// `Dust` is mixed like `Alpha` through fs_dust: the Budge Dragon's smoke02, drawn as a soft
+// cloud. `Breath` is added through fs_breath, which is fs_flame's heat ramp softened -- the
+// same dragon's fire, which is bigger and further off than the town's candles.
+enum class Blend : uint8_t { Alpha, Additive, Flame, Smoke, Dust, Breath };
 
 // One quad for one frame. Filled by the caller, read once, and not remembered: the pass has
 // no notion of an effect that persists between frames, which is what keeps the lifetime
@@ -118,6 +119,7 @@ private:
     bgfx::ProgramHandle flameProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle smokeProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle dustProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle breathProgram_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uFlame_ = BGFX_INVALID_HANDLE;
     float flame_[4] = {6.0f, 0.0f, 0.0f, 0.0f};
     bgfx::UniformHandle sSheet_ = BGFX_INVALID_HANDLE;
