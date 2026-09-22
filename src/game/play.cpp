@@ -28,6 +28,39 @@ constexpr float kEarlyApart = 0.5f;
 // How long the character takes to dissolve in when the game has loaded. Invention.
 constexpr float kAppearSeconds = 1.1f;
 
+// A breed's name as the command line may spell it: lowered, with everything that is not a
+// letter or a digit dropped, so "Skeleton Warrior", "skeletonwarrior" and "Skeleton_Warrior"
+// are one word. The cook writes two names for a breed -- the figure ("BudgeDragon01") and the
+// label ("Budge Dragon") -- and the log prints the label, so both are accepted.
+std::string plainName(const std::string& name) {
+    std::string out;
+    out.reserve(name.size());
+    for (const char c : name) {
+        if (std::isalnum(static_cast<unsigned char>(c))) {
+            out.push_back(char(std::tolower(static_cast<unsigned char>(c))));
+        }
+    }
+    return out;
+}
+
+// Which breed `name` means, or -1. An exact label or figure wins over a prefix of a figure, so
+// that a figure whose name is another's prefix cannot shadow the exact one; the prefix pass is
+// what lets `--arena BudgeDragon` find `BudgeDragon01`, which is the figure name the cook
+// writes and nobody types.
+int32_t arenaBreed(const content::Tables& tables, const std::string& name) {
+    const std::string want = plainName(name);
+    if (want.empty()) return -1;
+    for (size_t i = 0; i < tables.kinds.size(); ++i) {
+        if (plainName(tables.kinds[i].label) == want) return int32_t(i);
+        if (plainName(tables.kinds[i].figure) == want) return int32_t(i);
+    }
+    for (size_t i = 0; i < tables.kinds.size(); ++i) {
+        const std::string figure = plainName(tables.kinds[i].figure);
+        if (!figure.empty() && figure.compare(0, want.size(), want) == 0) return int32_t(i);
+    }
+    return -1;
+}
+
 // MONSTER01_DIE: every monster model shares this twelve-slot layout in this one order
 // (source/monsters/actions.json), so slot 6 is the death whether the model is a spider or a
 // giant, and the cook already marks it `hold` -- it plays once and holds its last frame, a
@@ -227,6 +260,48 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         }
     }
 
+    // ---- the arena (--arena) --------------------------------------------------------------
+    //
+    // The whole of it: the map's nest table becomes ONE nest, of one breed, in a small box
+    // round where the hero is about to be put down. Everything after this line is the ordinary
+    // played run -- the realm raises the table it is given, places each body with its own
+    // seeded dice, and the rules decide every blow -- which is what makes an arena shot a
+    // picture of the game rather than of a pose.
+    //
+    // It draws from the seeded stream no differently than a normal run does, because it is the
+    // same code drawing: Realm::raise spends two draws an attempt on every nest member and one
+    // on its start delay, whatever the table says. A run with a different table is a different
+    // run and reproduces itself, which is what `--seed` promises; it was never a promise that
+    // two different tables agree.
+    if (!arena_.breed.empty()) {
+        const int32_t breed = arenaBreed(tables_, arena_.breed);
+        if (breed < 0) {
+            std::string had;
+            for (const content::MonsterKind& kind : tables_.kinds) {
+                if (!had.empty()) had += ", ";
+                had += kind.figure.empty() ? kind.label : kind.figure;
+            }
+            core::logError("--arena %s: %s has no such breed. It has: %s", arena_.breed.c_str(),
+                           world.c_str(), had.c_str());
+            return false;
+        }
+        const content::MonsterKind& kind = tables_.kinds[size_t(breed)];
+        const uint32_t population = tables_.population();
+        content::MonsterNest one;
+        one.kind = uint32_t(breed);
+        one.count = uint32_t(std::max(1, arena_.count));
+        one.x1 = column - Arena::kSpread;
+        one.x2 = column + Arena::kSpread;
+        one.y1 = row - Arena::kSpread;
+        one.y2 = row + Arena::kSpread;
+        tables_.nests.clear();
+        tables_.nests.push_back(one);
+        core::logf("arena: %u %s on tiles %d..%d by %d..%d, and nothing else of %s's %u spawns "
+                   "-- under --fixed-dt 16.667 a tick is three frames",
+                   one.count, kind.label.c_str(), one.x1, one.x2, one.y1, one.y2, world.c_str(),
+                   population);
+    }
+
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
     // A character made above level 1 arrives with his points in hand, and unspent he cannot
@@ -283,6 +358,27 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                        realm_.hero().stats.maximumDamage, realm_.hero().stats.defense,
                        realm_.hero().swingMs, realm_.hero().swingTicks);
         }
+    }
+
+    // And the arena hero spends what is left, which nobody else does -- after what he holds,
+    // so the damage this prints is the damage he will do. The reason is that an arena is
+    // watched rather than played: a hero with his points in hand is a level-one knight with
+    // more health, and against Lorencia's own Skeleton Warrior -- 525 health, 66 a blow -- that
+    // is a fight he loses in eight swings without ever taking a quarter of it down, which
+    // photographs a defeat and not a monster (measured, 2026-09-22). Half into strength and
+    // half into vitality is the pair that makes the fight readable from both ends: enough
+    // damage that the breed dies while the run is still going, enough health that it gets to
+    // swing, breathe or throw first. Invention, like the level beside it (core/args.cpp), and
+    // both move together with `--level`.
+    if (!arena_.breed.empty() && realm_.hero().pointsInHand > 0) {
+        const int points = realm_.hero().pointsInHand;
+        const int intoStrength = points / 2;
+        realm_.spend(intoStrength, 0, points - intoStrength, 0);
+        const sim::Body& hero = realm_.hero();
+        core::logf("arena: the hero is level %d, %d points into strength and %d into vitality "
+                   "-- %d to %d damage, %d health", hero.level, intoStrength,
+                   points - intoStrength, hero.stats.minimumDamage, hero.stats.maximumDamage,
+                   hero.maxHealth);
     }
 
     // A figure for every body, made once. Bodies are never added or removed after the realm is
@@ -533,6 +629,10 @@ void Play::update(double seconds) {
         sim::audit(realm_, findings_);
         const uint32_t heroId = realm_.hero().id;
         for (const sim::Happening& happening : realm_.happenings()) {
+            // The arena's own line first, so that what the log says happened on a tick is in
+            // the log before anything the drawing decides to do about it. Nothing in an
+            // ordinary run reaches it.
+            if (!arena_.breed.empty()) announce(happening);
             // The marker, off the realm's own word for where the walk ends: `Walked` carries
             // the goal the route was planned to, after the router moved it out of any wall,
             // so the marker is where he will stand and not where the pointer was.
@@ -1611,6 +1711,84 @@ void Play::leftClick() {
     // as MU2's did -- an attack never shows one.
     mark_ = request.kind != sim::Request::Kind::Attack;
     if (!mark_) marker_.dismiss();
+}
+
+// The arena's hand. It raises the SAME request a click on a body raises and decides nothing
+// itself -- not whether the blow lands, not whether he is close enough, not whether the target
+// is a legal one; the realm refuses all three in press(). What it skips is the pointer.
+//
+// `stepNow_` is deliberately not set, which a click does set: taking a tick early is a
+// presentation trick for the hand at the mouse, and a run whose whole point is that the same
+// seed and the same --fixed-dt draw the same frames must not have its tick boundaries moved by
+// where a monster happened to wander.
+void Play::fight(uint32_t id) {
+    if (!isOpen()) return;
+    const sim::Body* target = realm_.find(id);
+    if (!target || !target->alive() || target->player) return;
+    sim::Request request;
+    request.kind = sim::Request::Kind::Attack;
+    request.target = id;
+    realm_.ask(request);
+    mark_ = false;
+    marker_.dismiss();
+}
+
+std::string Play::nameOf(uint32_t id) const {
+    const sim::Body* one = realm_.find(id);
+    if (!one) return "nobody";
+    if (one->player) return "the hero";
+    if (one->kind < 0 || size_t(one->kind) >= tables_.kinds.size()) return "a monster";
+    return tables_.kinds[size_t(one->kind)].label + "#" + std::to_string(id);
+}
+
+// What an arena run is read by. One line a happening, with the tick on it, for the five that
+// are worth catching a frame of -- a swing that lands, a swing that misses, a death, a
+// respawn and what a death leaves behind. The tick is the point: `--fixed-dt 16.667` makes a
+// frame exactly a third of a tick, so `--shot` is aimed by arithmetic rather than by watching.
+//
+// What is NOT here, on purpose: the Lich's meteor and the skeleton's bones already say their
+// own tick from where the drawing casts them (`meteor: tick N`, `bones: tick N`), and those
+// two lines know things a happening does not -- which tile the meteor was aimed at, how many
+// pieces went up. Repeating them here would be a second, less informed copy.
+void Play::announce(const sim::Happening& happening) {
+    const long long tick = (long long)realm_.tick();
+    switch (happening.what) {
+        case sim::What::Hit: {
+            // `c` is what the defender has left, after the blow; `a` is the damage. The blow is
+            // SHOWN half a swing later (the landing cue), so a shot of the blood is a few
+            // frames after this tick and not on it.
+            core::logf("arena: tick %lld, %s hits %s for %d -- %d left", tick,
+                       nameOf(happening.who).c_str(), nameOf(happening.whom).c_str(),
+                       happening.a, happening.c);
+            break;
+        }
+        case sim::What::Missed:
+            core::logf("arena: tick %lld, %s swings at %s and misses", tick,
+                       nameOf(happening.who).c_str(), nameOf(happening.whom).c_str());
+            break;
+        case sim::What::Died: {
+            // Whether the body comes apart instead of falling is the DRAWING's answer and not
+            // the sim's -- MU keys it on the model (Play::open) -- so it is read off the figure
+            // and said here, because a run that is looking for the bones wants the tick they
+            // start from and the corpse is what it would otherwise search for.
+            const Drawn* dead = drawnOf(happening.who);
+            core::logf("arena: tick %lld, %s dies, killed by %s -- it %s", tick,
+                       nameOf(happening.who).c_str(), nameOf(happening.whom).c_str(),
+                       dead && dead->bursts ? "comes apart into bones, leaving no corpse"
+                                            : "falls where it stood");
+            break;
+        }
+        case sim::What::Dropped:
+            core::logf("arena: tick %lld, %s leaves something at tile %d,%d", tick,
+                       nameOf(happening.who).c_str(), int(happening.x), int(happening.y));
+            break;
+        case sim::What::Rose:
+            core::logf("arena: tick %lld, %s stands up again", tick,
+                       nameOf(happening.who).c_str());
+            break;
+        default:
+            break;
+    }
 }
 
 void Play::rightClick() {

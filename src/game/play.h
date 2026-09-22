@@ -35,6 +35,42 @@ namespace mu::game {
 
 class Play {
 public:
+    // The arena (--arena), set BEFORE open() or not at all. It is not a second kind of realm
+    // and not a bench: all it does is rewrite the map's nest table to one nest of one breed
+    // beside where the hero is being put down, and the realm then raises that table exactly as
+    // it raises the map's own -- same seeded placement, same rules, same events. Suppressing
+    // the map's other spawns is therefore the same mechanism `--crowd N` uses on the still
+    // crowd: fewer of the map's own monsters, chosen before anything is raised, rather than a
+    // second switch that hides them afterwards.
+    struct Arena {
+        std::string breed;  // the figure or the label, as the cook writes them; see core/args.h
+        int count = 1;
+        // Where the fight happens, and why this tile. Lorencia is the only cooked world, and
+        // this is the brightest of the flat, empty, non-safe patches on it -- the grass east of
+        // the town, above the spider field. Chosen by reading four of the map's own files
+        // together rather than by eye, and every one of the four ruled something out:
+        //   * attributes.png -- the whole 13 by 13 patch, tiles 165..177 by 60..72, is the
+        //     word 0. Nothing blocks, and no tile carries MU's SafeZone bit, which is not a
+        //     nicety: Realm::press refuses to strike anything standing on a safe tile, so an
+        //     arena inside the town square is a fight that never starts.
+        //   * height.png -- 15 mm of relief across the whole patch, which is one height byte.
+        //     A figure on a slope reads as leaning and the blood and the numbers sit wrong.
+        //   * lorencia.json's 2845 placements -- the nearest is a Tree10 fourteen and a half
+        //     tiles away, so nothing leans into the frame and nothing casts into it.
+        //   * light.png -- MU's baked terrain light averages 209 of 255 here against 135 on the
+        //     equally flat and empty patch north of the town, which was where this stood first
+        //     and photographed as a fight in a brown twilight. The baked light multiplies the
+        //     ground's albedo before any lighting (docs/conventions.md), so it decides the
+        //     exposure of the whole shot and no lighting sheet will win it back.
+        static constexpr int kColumn = 171;
+        static constexpr int kRow = 66;
+        // Half the side of the box the breed is scattered in, in tiles. Three puts every one
+        // of them within a Budge Dragon's view range of the hero, so they rouse on the first
+        // tick and the fight starts without the camera being walked anywhere.
+        static constexpr int kSpread = 3;
+    };
+    void setArena(const Arena& arena) { arena_ = arena; }
+
     // `column` and `row` are where the character is put down; the realm moves him to the
     // nearest standable tile. False when the world has no cooked tables -- which is not fatal
     // to the run, only to playing it.
@@ -65,6 +101,10 @@ public:
                float pixelY, int width, int height);
     void leftClick();   // walk to the tile under the pointer, or fight what is standing on it
     void rightClick();  // stop
+    // The same Attack request a click on a body raises, by id and with no pointer: the arena's
+    // hand. It goes through `Realm::ask` like every other order and decides nothing itself.
+    // Refused, silently, for a body that is not there or is already dead.
+    void fight(uint32_t id);
 
     // `hover` collects the SAME drawables -- same transform, same palette row -- for whichever
     // body is `pointedAt()` or whichever townsperson is `pointedFolk()`, so the outline ring
@@ -280,6 +320,15 @@ private:
     };
 
     Drawn* drawnOf(uint32_t id);
+    Arena arena_;
+    // One line for one happening, in an arena run only, with the TICK on it -- because a run is
+    // read afterwards and not watched, and under `--fixed-dt 16.667` a tick is exactly three
+    // frames, so the tick is what a shot's frame number is worked out from. The same spirit and
+    // the same shape as the `meteor: tick N` and `bones: tick N` lines beside it; those two stay
+    // where they are, since an effect knows things a happening does not.
+    void announce(const sim::Happening& happening);
+    // The breed's own name for those lines, or "the hero".
+    std::string nameOf(uint32_t id) const;
     void remember();  // the tick's positions become "was", the sim's become "now"
     // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
     // frame's own, which the coast and the stop are measured in.

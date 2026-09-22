@@ -77,12 +77,23 @@ void printUsage() {
         "  --effects N               N sprites through the transparent pass, to price it\n"
         "  --effect-size M           each sprite's half-extent in metres (default 0.5); large "
         "is the fill-rate worst case\n"
-        "  --effect-sheet NAME       which cooked effect sheet they wear\n"
+        "  --effect-sheet NAME       which cooked effect sheet they wear");
+    // Split in two on purpose: core/log.cpp formats a line into 2048 bytes and drops the rest,
+    // so a usage that grows past that silently stops printing halfway down. It did, the day the
+    // arena's own lines were added.
+    logf(
         "  --figure NAME             the monster bench: one figure, by index.json's name\n"
         "  --clip N                  which clip it plays, as MU's own action number\n"
         "  --play                    raise the realm behind the window: click to walk, click "
         "to fight\n"
         "  --click-every N           a scripted click every N frames, through the real pick\n"
+        "  --arena BREED             one breed alone on a clear patch, fighting the hero from\n"
+        "                            the first tick; no other spawn stands on the map. The name\n"
+        "                            is the cook's own -- the figure (SkeletonWarrior, and\n"
+        "                            BudgeDragon for BudgeDragon01) or the label the log prints\n"
+        "                            for a breed (Skeleton Warrior). Implies --play, and\n"
+        "                            --world lorencia when no world is named\n"
+        "  --arena-count N           how many of them (default 1)\n"
         "  --headless                run the sim with no window at all\n"
         "  --seed N                  the sim's seed; the same seed is the same run\n"
         "  --ticks N                 how many 20 Hz ticks to run (default 10000)\n"
@@ -131,7 +142,20 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--point")) {
             if (const char* v = next(s)) std::sscanf(v, "%f,%f", &a.pointX, &a.pointY);
         } else if (!std::strcmp(s, "--weapon")) {
-            if (const char* v = next(s)) a.weapon = v;
+            if (const char* v = next(s)) {
+                a.weapon = v;
+                a.weaponAsked = true;
+            }
+        } else if (!std::strcmp(s, "--arena")) {
+            if (const char* v = next(s)) a.arena = v;
+        } else if (!std::strcmp(s, "--arena-count")) {
+            if (const char* v = next(s)) {
+                a.arenaCount = std::atoi(v);
+                if (a.arenaCount < 1) {
+                    logError("--arena-count wants at least 1, got %d", a.arenaCount);
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--shield")) {
             if (const char* v = next(s)) a.shield = v;
         } else if (!std::strcmp(s, "--play")) {
@@ -165,7 +189,10 @@ Args parseArgs(int argc, char** argv) {
                 }
             }
         } else if (!std::strcmp(s, "--level")) {
-            if (const char* v = next(s)) a.level = std::atoi(v);
+            if (const char* v = next(s)) {
+                a.level = std::atoi(v);
+                a.levelAsked = true;
+            }
         } else if (!std::strcmp(s, "--spend")) {
             if (const char* v = next(s)) {
                 a.spend = v;
@@ -412,6 +439,28 @@ Args parseArgs(int argc, char** argv) {
     // the budget or writes a csv is a run somebody is reading a picture or a number off, and
     // the counter would land in the one and be unaccounted for in the other.
     if (!a.fpsAsked && (a.still || a.budget || !a.statsPath.empty())) a.fps = false;
+    // The arena, likewise decided after the whole line is read, so that `--arena Lich --level 5`
+    // and `--level 5 --arena Lich` both give a level-5 hero. It is a played run by definition --
+    // the fight is the sim's -- so --play is implied rather than asked for a second time, and
+    // Lorencia is implied because it is the only world with a cook (docs/roadmap.md).
+    if (!a.arena.empty()) {
+        a.play = true;
+        if (a.world.empty()) a.world = "lorencia";
+        // The arena hero's level. 80, which is an invention: no MU number says what an arena
+        // hero should be, and what this one has to be is a hero who is still standing when the
+        // breed falls. Lorencia's worst is the Skeleton Warrior at 525 health and 66 a blow,
+        // and at 80 -- with the points spent, which Play::open does for an arena and for
+        // nothing else -- the knight has about five times that blow in health and takes the
+        // skeleton down in single figures. `--level` takes it back, and the points move with
+        // it.
+        constexpr int kArenaLevel = 80;
+        if (!a.levelAsked) a.level = kArenaLevel;
+        // And something in his hand, because a swing is what is being photographed and a bare
+        // fist plays a different clip. Sword01 is MU's Kris, the lowest sword in the game and
+        // the one every class may hold; `--weapon` (with an empty name for bare hands) is how
+        // a different swing is photographed.
+        if (!a.weaponAsked) a.weapon = "Sword01";
+    }
     if (a.width <= 0 || a.height <= 0) {
         logError("a backbuffer of %dx%d is not a backbuffer", a.width, a.height);
         a.valid = false;

@@ -302,9 +302,13 @@ int main(int argc, char** argv) {
     game::Saved saved;
     bool resumed = false;
     if (inWorld && args.play) {
-        savePath = !args.savePath.empty() ? args.savePath
-                   : args.frames == 0     ? game::defaultSavePath()
-                                          : std::string();
+        // An arena has no save of its own and must never touch the player's: it is a level-80
+        // hero standing in a field of one breed, and writing that over the character somebody
+        // is playing would be the worst kind of helpful. A named `--save` is still obeyed,
+        // because then the caller asked for a file by name.
+        savePath = !args.savePath.empty()                     ? args.savePath
+                   : (args.frames == 0 && args.arena.empty()) ? game::defaultSavePath()
+                                                              : std::string();
         if (!savePath.empty() && !args.fresh && game::loadSave(savePath, saved)) {
             if (saved.world == args.world) {
                 resumed = true;
@@ -325,7 +329,13 @@ int main(int argc, char** argv) {
 
     if (inWorld) {
         if (args.atSet) world.setFocusTile(args.atColumn, args.atRow);
-        else if (resumed) world.setFocusTile(float(saved.hero.column), float(saved.hero.row));
+        else if (!args.arena.empty()) {
+            // The arena's own patch, unless the caller named a tile. Why that one is in
+            // Play::Arena beside the constants; the short of it is that it is the flattest,
+            // emptiest, non-safe square on the only cooked world.
+            world.setFocusTile(float(game::Play::Arena::kColumn),
+                               float(game::Play::Arena::kRow));
+        } else if (resumed) world.setFocusTile(float(saved.hero.column), float(saved.hero.row));
 
         // ---- The preloader ------------------------------------------------------------------
         //
@@ -353,9 +363,25 @@ int main(int argc, char** argv) {
             // And the realm behind it, when there is somebody playing. A world that cannot
             // raise one -- no cooked tables yet -- says so and is still a world to look at.
             if (ok && args.play) {
+                // Before the realm is raised, because all the arena is is the nest table the
+                // realm is about to be handed. See Play::Arena.
+                if (!args.arena.empty()) {
+                    game::Play::Arena arena;
+                    arena.breed = args.arena;
+                    arena.count = args.arenaCount;
+                    world.played().setArena(arena);
+                }
                 world.play(MU2_ASSET_DIR, args.world, args.seed, args.kin, args.level,
                            args.weapon, args.shield);
-                if (resumed && world.played().isOpen()) {
+            }
+            // And everything that hangs off a realm, only when there IS one. This used to run
+            // on the answer to `args.play` alone, which is what was ASKED for and not what
+            // happened: a play that opened its tables and then failed -- no cooked realm, or a
+            // breed `--arena` could not find -- left a Play with no bodies in it, and
+            // `openSound` reads `bodies_[0]` for the hero's own death cry. That is a read off
+            // the front of an empty vector, and it is a crash and not a missing sound.
+            if (world.played().isOpen()) {
+                if (resumed) {
                     game::resolveSave(*world.played().realm().tables(), saved);
                     world.played().restore(saved.hero);
                 }
@@ -373,7 +399,7 @@ int main(int argc, char** argv) {
                 }
                 world.played().openSound(MU2_ASSET_DIR, args.mute);
                 // Not fatal either: a game with no HUD is still a game.
-                if (world.played().isOpen() && args.windows != "off" &&
+                if (args.windows != "off" &&
                     !desk.open(MU2_SHADER_DIR, MU2_ASSET_DIR, &textures)) {
                     core::logError("the windows did not open; playing without a HUD");
                 }
@@ -381,7 +407,13 @@ int main(int argc, char** argv) {
                     for (int key = 0; key < 5; ++key) desk.setQuick(key, saved.quick[key]);
                 }
             }
-            loaded.store(ok ? 1 : -1);
+            // An arena whose realm did not rise is a failed run and not a world to look at.
+            // Everywhere else a realm that cannot be raised leaves a still world standing,
+            // which is the right answer for a cook that has not been run; here the realm IS
+            // what was asked for, and `--arena Wyvren` drawing 300 frames of empty grass and
+            // exiting 0 is the same fault `--at 9999,9999` was fixed for.
+            const bool arenaUp = args.arena.empty() || world.played().isOpen();
+            loaded.store(ok && arenaUp ? 1 : -1);
         });
 
         curtain.init(MU2_SHADER_DIR);
@@ -784,6 +816,12 @@ int main(int argc, char** argv) {
 
     int frame = 0;
     int segment = 0;
+    // Who the arena's hand is fighting. Kept here rather than read off the hero, because what
+    // the hero has been ordered to attack is the realm's private `order_` and is deliberately
+    // not published -- a window asks and redraws, it does not read the order back. So the hand
+    // remembers what it asked for, exactly as a person at the mouse remembers what they
+    // clicked, and asks again only when that body is down.
+    uint32_t arenaTarget = 0;
     int64_t last = bx::getHPCounter();
     const double toMs = 1000.0 / double(bx::getHPFrequency());
     double elapsed = 0.0;
@@ -1039,6 +1077,36 @@ int main(int argc, char** argv) {
                 if (args.pointX >= 0.0f) {
                     pointerX = args.pointX * float(window.width());
                     pointerY = args.pointY * float(window.height());
+                }
+                // The arena's hand: fight the nearest of them, and the next one when that one
+                // is down. It raises the same Attack request a click raises (Play::fight) and
+                // decides nothing else -- the walk to it, the reach, the roll and the damage
+                // are all the realm's, which is the whole point of an arena over a bench.
+                //
+                // Only when he has nobody: the request is not re-raised every frame. Re-asking
+                // is not free -- Realm::accept takes the pending order at the top of a tick and
+                // an Attack order re-taken resets the chase's re-plan -- and a hand that only
+                // speaks when the hero is idle is also the one a person would be.
+                if (!args.arena.empty()) {
+                    const sim::Realm& realm = world.played().realm();
+                    const sim::Body& hero = realm.hero();
+                    const sim::Body* held = arenaTarget != 0 ? realm.find(arenaTarget) : nullptr;
+                    if (hero.alive() && (!held || !held->alive())) {
+                        const sim::Body* nearest = nullptr;
+                        float best = 1e9f;
+                        for (const sim::Body& body : realm.bodies()) {
+                            if (body.player || !body.alive()) continue;
+                            const float dx = body.x - hero.x, dy = body.y - hero.y;
+                            if (dx * dx + dy * dy < best) {
+                                best = dx * dx + dy * dy;
+                                nearest = &body;
+                            }
+                        }
+                        if (nearest) {
+                            arenaTarget = nearest->id;
+                            world.played().fight(arenaTarget);
+                        }
+                    }
                 }
                 // The scripted pointer, for a run with nobody at the mouse. It goes through
                 // the same unprojection, the same tile, the same request: what it skips is the

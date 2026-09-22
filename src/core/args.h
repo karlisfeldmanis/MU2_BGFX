@@ -96,9 +96,22 @@ struct Args {
     // Empty is bare hands, which is a state worth running rather than a missing one.
     std::string weapon;
     std::string shield;
+    bool weaponAsked = false;  // --weapon was named, so the arena's own default does not decide
+    bool levelAsked = false;   // likewise for --level
     // `--play` raises the realm behind the window: the sim ticks, the figures are where it says
     // they are, and a click is a request. Without it a world is the still crowd sprint 4 drew.
     bool play = false;
+    // The arena: ONE breed, `arenaCount` of them, on a clear patch of the map with the hero,
+    // fighting from the first tick, and none of the map's own spawns anywhere. It is a played
+    // run and not a bench -- the sim spawns the bodies, the rules decide every blow -- so it
+    // implies --play, and --world lorencia when no world is named.
+    //
+    // The name is the cook's own, and either of the two it writes: the figure
+    // (`SkeletonWarrior`, `BudgeDragon01`, and a prefix of one is enough -- `BudgeDragon`) or
+    // the label (`Skeleton Warrior`), which is what mu2.log prints for a breed. Case and
+    // spaces are ignored. A name that matches nothing lists what the map has and fails the run.
+    std::string arena;
+    int arenaCount = 1;
     // The character's file. Empty means the default (game/save.cpp) for a played run and no
     // file at all for a review run (--frames): a scripted fight must not overwrite the
     // player's hero, nor start from wherever he last stood. `--fresh` ignores what is there
