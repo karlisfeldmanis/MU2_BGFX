@@ -4,6 +4,8 @@ MU2 rebuilt as a **single player** game in C++ on bgfx, Metal on this Mac, for a
 1920x1080 with cast and received shadows, PBR, reflections and SSAO. Begun 2026-09-20.
 
 `PLAN.md` is the map: what was decided, what the foundations are, and the sprints.
+`docs/roadmap.md` is where that map stands — what is done, what is not in the tree yet, and
+what the remaining sprints are.
 `docs/conventions.md` is the page that settles every question with one right answer and a
 silent wrong one — read it before writing a loader. `docs/budget.md` holds the frame's
 accounts, and `docs/sprints/` what each sprint proved and measured.

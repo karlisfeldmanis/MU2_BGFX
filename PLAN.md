@@ -5,6 +5,10 @@ for a frame at 1920x1080 with cast and received shadows, PBR, reflections and SS
 in sprints by one agent in one session at a time. This file is the map; each sprint gets a
 short file under `docs/sprints/` when it starts and its numbers when it ends.
 
+**`docs/roadmap.md` is where this map stands**, written 2026-09-22: which sprints are done,
+the 72-commit stretch after sprint 8c that was worked without one, the gap list checked
+against the code, and sprints 9 to 13. Read it before opening a sprint file.
+
 ## Decided on 2026-09-20
 
 | question | answer | what follows |
