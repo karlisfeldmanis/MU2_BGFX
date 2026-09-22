@@ -25,6 +25,10 @@ constexpr float kRowTall = 1.5f;       // of its own size
 constexpr float kRailPad = 8.0f;
 constexpr float kMarkColumn = 16.0f;
 constexpr float kMarkGap = 9.0f;
+// The corners, and how many segments each quarter turn is cut into. Six is smooth at this
+// radius and keeps the whole card inside one fan of 28 points.
+constexpr float kRadius = 7.0f;
+constexpr int kCorner = 6;
 
 // The shadow: three falloffs of the page's, summed into one field -- a contact hairline under
 // the edge, then wider and fainter. Offsets and sigmas in the same 1080-line pixels.
@@ -32,7 +36,7 @@ struct Fall { float drop, sigma, alpha; };
 constexpr Fall kFalls[3] = {{1.0f, 1.5f, 0.70f}, {8.0f, 7.0f, 0.55f}, {30.0f, 30.0f, 0.55f}};
 constexpr int kShadowColumns = 16, kShadowRows = 14;
 
-constexpr uint32_t kBody = gfx::rgba(0.039f, 0.043f, 0.047f, 0.965f);
+constexpr uint32_t kBody = gfx::rgba(0.039f, 0.043f, 0.047f, 0.90f);
 constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
 constexpr uint32_t kLift = gfx::rgba(1.0f, 1.0f, 1.0f, 0.055f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
@@ -47,6 +51,31 @@ constexpr uint32_t kBad = gfx::rgba(0.886f, 0.408f, 0.373f);
 constexpr uint32_t kPlateEdge = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
 constexpr uint32_t kPlateBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f);
 constexpr uint32_t kBarBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
+
+// A rounded rectangle as one convex fan, with a radius a corner: the canvas draws polygons and
+// quads and has no rounded primitive, and a rounded rectangle is convex, so one polygon does it.
+// Corners run top-left, top-right, bottom-right, bottom-left.
+void roundedFan(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4],
+                uint32_t colour) {
+    float xy[(kCorner + 1) * 4 * 2];
+    int at = 0;
+    const float cx[4] = {box.x, box.right(), box.right(), box.x};
+    const float cy[4] = {box.y, box.y, box.bottom(), box.bottom()};
+    const float sx[4] = {1.0f, -1.0f, -1.0f, 1.0f};
+    const float sy[4] = {1.0f, 1.0f, -1.0f, -1.0f};
+    // Each corner is a quarter turn from the edge before it to the edge after it.
+    const float from[4] = {3.14159265f, 4.71238898f, 0.0f, 1.57079633f};
+    for (int c = 0; c < 4; ++c) {
+        const float rad = std::min({radius[c], box.w * 0.5f, box.h * 0.5f});
+        const float ox = cx[c] + sx[c] * rad, oy = cy[c] + sy[c] * rad;
+        for (int i = 0; i <= kCorner; ++i) {
+            const float a = from[c] + 1.57079633f * float(i) / float(kCorner);
+            xy[at++] = ox + std::cos(a) * rad;
+            xy[at++] = oy + std::sin(a) * rad;
+        }
+    }
+    canvas.polygon(nullptr, xy, nullptr, at / 2, colour);
+}
 
 // A line of text with CSS's letter-spacing: `track` ems after every letter. Drawn a glyph at a
 // time, because the canvas's own text() advances by the face alone.
@@ -245,15 +274,28 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     }
 
     // ---- the card ---------------------------------------------------------------------------
-    canvas.rect(box, kBody);
-    canvas.outline(box, std::max(1.0f, u), kRing);
-    canvas.rect({box.x + u, box.y + u, box.w - u * 2.0f, std::max(1.0f, u)}, kLift);
+    // The ring first and a hair wider, then the body over it: two fans, and the ring is left
+    // showing as the edge. Drawn rounded, and see-through enough that the world moves behind it.
+    const float radius = kRadius * u;
+    const float line = std::max(1.0f, u);
+    const float all[4] = {radius, radius, radius, radius};
+    const float wider[4] = {radius + line, radius + line, radius + line, radius + line};
+    roundedFan(canvas, box.grown(line), wider, kRing);
+    roundedFan(canvas, box, all, kBody);
+    // The lit top edge, inset past the corners so it does not stick out of them.
+    canvas.rect({box.x + radius, box.y + line, box.w - radius * 2.0f, line}, kLift);
 
-    // The head, tinted by the name's own colour, fading out downward.
+    // The head, tinted by the name's own colour, fading out downward. Its own top corners are
+    // rounded to the card's; it fades before it reaches the bottom two, so those stay square.
     const uint32_t nameColour = colourOf(sheet.nameTone);
     const uint32_t tintTop = (nameColour & 0x00FFFFFFu) | (uint32_t(0.13f * 255.0f) << 24);
     const uint32_t tintOut = nameColour & 0x00FFFFFFu;
-    canvas.shade({box.x, box.y, box.w, headTall}, tintTop, tintTop, tintOut, tintOut);
+    {
+        const float tops[4] = {radius, radius, 0.0f, 0.0f};
+        roundedFan(canvas, {box.x, box.y, box.w, radius * 2.0f}, tops, tintTop);
+        canvas.shade({box.x, box.y + radius, box.w, headTall - radius}, tintTop, tintTop, tintOut,
+                     tintOut);
+    }
 
     float pen = box.y + pad;
     if (plate > 0.0f) {
@@ -347,7 +389,9 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
 
     // ---- the foot ---------------------------------------------------------------------------
     if (hasFoot) {
-        canvas.rect({box.x, pen, box.w, footTall}, kFootBack);
+        // The foot carries the card's own bottom corners.
+        const float bottoms[4] = {0.0f, 0.0f, radius, radius};
+        roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, kFootBack);
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, kHair);
         const float baseline = pen + railPad + face.ascent(footSize);
         if (!sheet.wear.empty()) {
