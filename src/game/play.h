@@ -177,6 +177,11 @@ public:
     // `indoors` is whether the character's tile is under a roof (World::indoors), which is
     // what switches the wind off -- the same read that lifts the roofs, so the two agree.
     void hear(const gfx::Camera& camera, bool indoors);
+    // The interface's own noises, raised by the windows: a button acknowledging the finger
+    // (SOUND_CLICK01), a request the realm said no to (iButtonError), and a thing going into
+    // a slot -- MU has no equip or bind sound of its own and plays SOUND_GET_ITEM01 for both.
+    enum class Ui { Click, Refused, Took };
+    void ui(Ui which);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
@@ -284,12 +289,21 @@ private:
         int grass = -1, soil = -1;                               // his footsteps
         int wind = -1;                                           // Lorencia's air
         int hammer = -1;                                         // Hanzo at his anvil
+        int itemDrop = -1, moneyDrop = -1, jewel = -1;  // a thing landing; a jewel's own ring
+        int take = -1;                                  // pGetItem: a pickup, an equip, a bind
+        int drink = -1, apple = -1;                     // a potion going down
+        int click = -1, refused = -1;                   // the windows
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
     // The hero's footsteps and the smith's hammer, after the clips have been advanced this
     // frame, since both are read off where a clip's clock stands.
     void steps();
+    // A drop coming into view -- its dropper down, or the hero's own discard -- makes its noise
+    // where it lies. Called from releaseDrops for each one let go.
+    void landed(uint32_t drop);
+    // The coins of a purchase or a sale, at the hero.
+    void coins();
     void hammer();
     // Whether each of the hero's feet has been heard on the walk cycle now playing, and whether
     // he was walking last frame. MU's c->Foot[0] and [1]; see steps().

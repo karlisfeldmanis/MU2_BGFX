@@ -243,6 +243,18 @@ void Sound::play(const std::string& name) {
     }
 }
 
+void Sound::play(int handle) {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    if (event.placed) return;
+    const int pick = int(impl_->roll() % uint32_t(event.files.size()));
+    Impl::File& file = *event.files[size_t(pick)];
+    // One voice: the previous press is cut off by this one, as a button's is.
+    for (auto& other : event.files) ma_sound_stop(&other->sound[0]);
+    impl_->start(file.sound[0], file.lead);
+    ++event.plays;
+}
+
 void Sound::loop(int handle, bool wanted) {
     if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
     Impl::Event& event = *impl_->events[size_t(handle)];

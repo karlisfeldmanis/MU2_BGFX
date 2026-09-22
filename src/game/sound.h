@@ -63,6 +63,9 @@ public:
     // Starts an unplaced event now, from where its sound begins. Playing it while it is still
     // sounding starts it again, which is MU's own `LoadWaveFile(..., 1)` for the level-up.
     void play(const std::string& event);
+    // The same, by the handle an unplaced load() gave: the interface's noises, which are the
+    // player's own and heard at the ears.
+    void play(int event);
 
     // An ambient: one unplaced sound, looping, on or off -- PlayBuffer(SOUND_WIND01, NULL,
     // true) against StopBuffer. Called every frame with what the world wants and does nothing

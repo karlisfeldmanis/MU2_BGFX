@@ -77,14 +77,37 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const sim::Body* hero = play.isOpen() ? &play.realm().hero() : nullptr;
     hud_.follow(hero);
 
-    if (window.pressed(gfx::Window::Key::Inventory)) inventoryOpen_ = !inventoryOpen_;
-    if (window.pressed(gfx::Window::Key::Character)) characterOpen_ = !characterOpen_;
+    // Every window opened or shut clicks, by key or by button: MU2's Desk.Click on each
+    // Toggle, which is SOUND_CLICK01 off every button in the client.
+    const auto click = [&]() {
+        if (play.isOpen()) play.ui(Play::Ui::Click);
+    };
+    const auto refused = [&]() {
+        if (play.isOpen()) play.ui(Play::Ui::Refused);
+    };
+    const auto took = [&]() {
+        if (play.isOpen()) play.ui(Play::Ui::Took);
+    };
+    if (window.pressed(gfx::Window::Key::Inventory)) {
+        inventoryOpen_ = !inventoryOpen_;
+        click();
+    }
+    if (window.pressed(gfx::Window::Key::Character)) {
+        characterOpen_ = !characterOpen_;
+        click();
+    }
 
     bool toggleInventory = false, toggleCharacter = false;
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
                 characterOpen_, &toggleInventory, &toggleCharacter);
-    if (toggleInventory) inventoryOpen_ = !inventoryOpen_;
-    if (toggleCharacter) characterOpen_ = !characterOpen_;
+    if (toggleInventory) {
+        inventoryOpen_ = !inventoryOpen_;
+        click();
+    }
+    if (toggleCharacter) {
+        characterOpen_ = !characterOpen_;
+        click();
+    }
 
     // The character window, while it is up. What it asks for is answered here, by the realm,
     // and the window sees the answer on its next frame.
@@ -93,14 +116,24 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bool close = false;
         card_.update(float(window.width()), float(window.height()), hero, pointer, &spend,
                      &close);
-        if (spend >= 0) play.spendPoint(spend);
-        if (close) characterOpen_ = false;
+        // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
+        // sends the request and plays SOUND_CLICK01 on the next line without waiting.
+        if (spend >= 0) {
+            play.spendPoint(spend);
+            click();
+        }
+        if (close) {
+            characterOpen_ = false;
+            click();
+        }
     }
 
     // A merchant's counter opens the bag beside it and closes the character window, which is
     // MU's arrangement: the shop in column two and the inventory where it always is. Walking
     // away closes the counter in the realm, and the windows follow.
     const bool trading = play.isOpen() && play.realm().trading() >= 0;
+    // The counter opening and closing click, as any window does.
+    if (trading != trading_) click();
     if (trading && !trading_) {
         characterOpen_ = false;
         bagForShop_ = !inventoryOpen_;
@@ -116,7 +149,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bool close = false;
         shelf_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
                       shelfStage_, &buy, &close);
-        if (buy >= 0) play.buy(buy);
+        // A purchase that goes through is heard as its coins, off the realm's Bought; one
+        // refused is the interface's no.
+        if (buy >= 0 && !play.buy(buy)) refused();
         if (close) play.closeTrade();
     }
 
@@ -125,15 +160,21 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         BagRequests asked;
         bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
                     play.realm(), pointer, bagStage_, &asked);
-        if (asked.moveFrom >= 0) play.moveItem(asked.moveFrom, asked.moveTo);
-        if (asked.use >= 0) play.useItem(asked.use);
+        // A move is ReceiveEquipmentItem, which ends its success branch on SOUND_GET_ITEM01 --
+        // MU's equip sound is the pickup's -- and a use refused is iButtonError. A use that goes
+        // through is heard as the potion going down, off the realm's Drank.
+        if (asked.moveFrom >= 0) {
+            if (play.moveItem(asked.moveFrom, asked.moveTo)) took();
+            else refused();
+        }
+        if (asked.use >= 0 && !play.useItem(asked.use)) refused();
         // Let go outside the window. MU throws it on the ground, and there is no ground to
         // throw it on until step 7 -- so for now it stays in the bag, which is a refusal the
         // window already draws by putting the item back where it was.
         // Over the shelf it is a sale -- SendSellItemToNpcRequest -- and the realm refuses a
         // worn slot again.
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
-            play.sell(asked.outside);
+            if (!play.sell(asked.outside)) refused();
         } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
             // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
             const int key = hud_.quickAt(asked.outsideX, asked.outsideY);
@@ -141,11 +182,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             if (!what.empty() && usable(*play.realm().tables(), what.item)) {
                 quick_[key] = what.item;
                 core::logf("window: slot %d bound to key %d", asked.outside, key + 1);
+                took();
+            } else {
+                refused();
             }
         } else if (asked.outside >= 0) {
             core::logf("window: %d let go outside the bag; kept", asked.outside);
         }
-        if (asked.close) inventoryOpen_ = false;
+        if (asked.close) {
+            inventoryOpen_ = false;
+            click();
+        }
     }
 
     if (play.isOpen()) {
@@ -196,6 +243,12 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
         if (hovered >= 0 && usable(tables, bag[hovered].item)) {
             quick_[key] = bag[hovered].item;
             core::logf("window: slot %d bound to key %d", hovered, key + 1);
+            play.ui(Play::Ui::Took);
+            continue;
+        }
+        // A thing hovered that will not go on the bar: MU2's Quick.Bind refusal.
+        if (hovered >= 0 && !bag[hovered].empty()) {
+            play.ui(Play::Ui::Refused);
             continue;
         }
         if (quick_[key] < 0) continue;

@@ -471,6 +471,29 @@ void Play::update(double seconds) {
             // its landing cue, half a swing from now. Fallen on the tick, the monster went
             // down before the last blow reached it. So the fall is owed, and paid the frame
             // nothing is left to land on it -- fallWhenLanded, after the cues below.
+            // The hero's pickup, heard at his ears: ReceiveGetItem's SOUND_JEWEL01 for a jewel,
+            // SOUND_GET_ITEM01 for everything else -- and for Zen too, which in MU is silent;
+            // MU2 gave it the pickup after the commonest pickup in the game read as having
+            // missed it, and that is kept. A use, a purchase and a sale are heard off their
+            // own answers (useItem, buy, sell): they are asked between ticks, and the next
+            // tick clears what they said before this loop could read it.
+            if (happening.who == heroId) {
+                if (happening.what == sim::What::Picked) {
+                    int sound = heard_.take;
+                    if (happening.b >= 0 && happening.b < sim::kSlots) {
+                        const int32_t item = realm_.satchel()[happening.b].item;
+                        if (item >= 0 && size_t(item) < tables_.items.size() &&
+                            tables_.items[size_t(item)].jewel() && heard_.jewel >= 0) {
+                            sound = -1;
+                            const Drawn* hero = drawnOf(heroId);
+                            if (hero && hero->placed) {
+                                sound_.playAt(heard_.jewel, hero->crown[0], hero->crown[2]);
+                            }
+                        }
+                    }
+                    if (sound >= 0) sound_.play(sound);
+                }
+            }
             if (happening.what == sim::What::Dropped) {
                 // Lying in the realm from this tick; shown once its dropper is down.
                 if (drawnOf(happening.who)) held_.push_back({uint32_t(happening.a), happening.who});
@@ -769,14 +792,54 @@ void Play::releaseDrops() {
     held_.erase(std::remove_if(held_.begin(), held_.end(),
                                [&](const HeldDrop& one) {
                                    const Drawn* dropper = drawnOf(one.dropper);
-                                   if (dropper == nullptr) return true;
-                                   if (dropper->fallOwed) return false;
-                                   if (dropper->deadFor < 0.0f) return true;  // rose again
-                                   return dropper->deadFor >= kDropDelay;
+                                   bool let = true;
+                                   if (dropper == nullptr) let = true;
+                                   else if (dropper->fallOwed) let = false;
+                                   else if (dropper->deadFor < 0.0f) let = true;  // rose again
+                                   else let = dropper->deadFor >= kDropDelay;
+                                   if (let) landed(one.drop);
+                                   return let;
                                }),
                 held_.end());
     heldIds_.clear();
     for (const HeldDrop& one : held_) heldIds_.push_back(one.drop);
+}
+
+void Play::landed(uint32_t drop) {
+    if (ground_ == nullptr) return;
+    for (const sim::Lying& one : realm_.lying()) {
+        if (one.id != drop) continue;
+        // CreateItemDrop's branch: SOUND_JEWEL01 for the jewels, SOUND_DROP_ITEM01 for any
+        // other thing, and CreateMoneyDrop's SOUND_DROP_MONEY01 for Zen. MU plays the coins
+        // unplaced, a reward mixed like one; MU2 placed both, and so does this -- the heap is
+        // always a few steps off, which the carry puts at full volume anyway.
+        int sound = heard_.itemDrop;
+        if (one.what.empty()) {
+            sound = heard_.moneyDrop;
+        } else if (one.what.item >= 0 && size_t(one.what.item) < tables_.items.size() &&
+                   tables_.items[size_t(one.what.item)].jewel() && heard_.jewel >= 0) {
+            sound = heard_.jewel;
+        }
+        const float metresPerTile = ground_->metresPerTile();
+        sound_.playAt(sound, (float(one.column) + 0.5f) * metresPerTile,
+                      -(float(one.row) + 0.5f) * metresPerTile);
+        return;
+    }
+}
+
+void Play::coins() {
+    // SOUND_MONEY at a counter, both ways round: the noise is the transaction and not the
+    // direction of it. MU2's Crowd.Traded.
+    const Drawn* hero = drawnOf(realm_.hero().id);
+    if (hero && hero->placed) sound_.playAt(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+}
+
+void Play::ui(Ui which) {
+    switch (which) {
+        case Ui::Click: sound_.play(heard_.click); break;
+        case Ui::Refused: sound_.play(heard_.refused); break;
+        case Ui::Took: sound_.play(heard_.take); break;
+    }
 }
 
 void Play::fall(Drawn& dead) {
@@ -806,6 +869,14 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.soil = sound_.load("player_step_soil", true);
     heard_.wind = sound_.load("world_wind", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);
+    heard_.itemDrop = sound_.load("item_drop", true);
+    heard_.moneyDrop = sound_.load("money_drop", true);
+    heard_.jewel = sound_.load("jewel_get", true);
+    heard_.take = sound_.load("item_get", false);
+    heard_.drink = sound_.load("player_drink", false);
+    heard_.apple = sound_.load("player_eat_apple", false);
+    heard_.click = sound_.load("window_click", false);
+    heard_.refused = sound_.load("window_refused", false);
     // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
     // pMaleDie.wav. The elf's pFemaleScream2 is the same rule with another file, for when an
     // elf can be played.
@@ -1416,8 +1487,16 @@ bool Play::moveItem(int from, int to) {
 }
 
 bool Play::useItem(int slot) {
+    const int32_t item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
     const bool used = realm_.useItem(slot);
     core::logf("window: use %d %s", slot, used ? "taken" : "refused");
+    // The potion going down, or the apple: TryConsumeItem's own split, by what was used.
+    if (used) {
+        const bool apple = item >= 0 && size_t(item) < tables_.items.size() &&
+                           tables_.items[size_t(item)].group == 14 &&
+                           tables_.items[size_t(item)].number == 0;
+        sound_.play(apple ? heard_.apple : heard_.drink);
+    }
     return used;
 }
 
@@ -1480,6 +1559,7 @@ bool Play::buy(int shelfSlot) {
     const int slot = realm_.buy(shelfSlot);
     core::logf("window: buy shelf %d %s (slot %d, %lld Zen left)", shelfSlot,
                slot >= 0 ? "taken" : "refused", slot, (long long)realm_.money());
+    if (slot >= 0) coins();
     return slot >= 0;
 }
 
@@ -1487,6 +1567,7 @@ bool Play::sell(int bagSlot) {
     const int64_t paid = realm_.sellItem(bagSlot);
     core::logf("window: sell slot %d %s (%lld paid, %lld Zen now)", bagSlot,
                paid >= 0 ? "taken" : "refused", (long long)paid, (long long)realm_.money());
+    if (paid >= 0) coins();
     return paid >= 0;
 }
 
