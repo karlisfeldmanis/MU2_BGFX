@@ -359,6 +359,11 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());
+    // The tips over every window, and under the pointer. Whichever is hovered, it is the one
+    // thing on the panel the player is reading at that moment.
+    interface_.add(hud_.tipCanvas());
+    if (trading_) interface_.add(shelf_.tipCanvas());
+    if (inventoryOpen_) interface_.add(bag_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.
     interface_.add(cursor_.canvas());

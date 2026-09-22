@@ -32,6 +32,7 @@ bool Shelf::Drawn::operator==(const Drawn& o) const {
 
 void Shelf::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
+    interface.adopt(tip_);
     arts_ = arts;
 }
 
@@ -156,6 +157,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
 void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     ++rebuilds_;
     canvas_.clear();
+    tip_.clear();
     if (!arts_ || !up_) return;
     panel::Arts& arts = *arts_;
     const content::Tables& tables = *realm.tables();
@@ -204,7 +206,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
         lines.push_back({"", panel::kDetail});
         lines.push_back({"Purchasing price: " + panel::commas(over.price) + " Zen",
                          moneyColour(over.price)});
-        panel::tooltip(canvas_, now_.pointerX, now_.pointerY, lines, kTipSize * k, screenW_,
+        panel::tooltip(tip_, now_.pointerX, now_.pointerY, lines, kTipSize * k, screenW_,
                        screenH_);
     }
 }

@@ -116,6 +116,7 @@ Box Bag::itemBox(const content::Tables& tables, int slot, const sim::Held& what)
 
 void Bag::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
+    interface.adopt(tip_);
     arts_ = arts;
 }
 
@@ -221,6 +222,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
 void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     ++rebuilds_;
     canvas_.clear();
+    tip_.clear();
     if (!arts_ || !realm.tables()) return;
     panel::Arts& arts = *arts_;
     const content::Tables& tables = *realm.tables();
@@ -301,7 +303,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
 
     // The tip, last, and never during a drag.
     if (dragging_ < 0 && hovered_ >= 0 && !bag[hovered_].empty()) {
-        panel::tooltip(canvas_, now_.pointerX, now_.pointerY,
+        panel::tooltip(tip_, now_.pointerX, now_.pointerY,
                        describe(tables, bag[hovered_], realm.wearer(), bag), kTipSize * k,
                        screenW_, screenH_);
     }

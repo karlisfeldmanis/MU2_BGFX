@@ -185,6 +185,7 @@ int Hud::quickAt(float x, float y) const {
 
 void Hud::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
+    interface.adopt(tip_);
     arts_ = arts;
 }
 
@@ -317,6 +318,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
 void Hud::rebuild() {
     ++rebuilds_;
     canvas_.clear();
+    tip_.clear();
     if (!hero_ || !arts_) return;
     panel::Arts& arts = *arts_;
     const panel::Screen& s = screen_;
@@ -482,7 +484,7 @@ void Hud::rebuild() {
         const std::vector<panel::Line> lines = {{name, kTipNameColour, true},
                                                 {value, kTipColour, false}};
         const Box top = plate(s, {0.0f, 0.0f, kPlateW, kPlateH});
-        panel::tooltip(canvas_, px, top.y, lines, std::round(kTipTall * kUnit * s.scale),
+        panel::tooltip(tip_, px, top.y, lines, std::round(kTipTall * kUnit * s.scale),
                        now_.width, now_.height);
     }
 }

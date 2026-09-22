@@ -84,6 +84,10 @@ public:
     bool covers(float x, float y) const;
 
     const gfx::Canvas& canvas() const { return canvas_; }
+    // The tooltip, on a canvas of its own so the desk can lay it over every window: a tip is
+    // drawn at the pointer and runs past its own window's edge, and in the window's canvas the
+    // one beside it covered it -- the shelf's tip went under the bag. MU2's tooltip layer.
+    const gfx::Canvas& tipCanvas() const { return tip_; }
     // How many times the canvas was rebuilt, for the log's "redraws on change" line.
     uint64_t rebuilds() const { return rebuilds_; }
 
@@ -112,6 +116,7 @@ private:
     bool tipAt(float x, float y) const;
 
     gfx::Canvas canvas_;
+    gfx::Canvas tip_;
     panel::Arts* arts_ = nullptr;
     const sim::Body* hero_ = nullptr;
     panel::Screen screen_;

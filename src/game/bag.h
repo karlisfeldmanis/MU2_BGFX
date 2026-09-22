@@ -50,6 +50,10 @@ public:
     // The slot whose thing is under the pointer, or -1: what a quick key binds.
     int hovered() const { return up_ ? hovered_ : -1; }
     const gfx::Canvas& canvas() const { return canvas_; }
+    // The tooltip, on a canvas of its own so the desk can lay it over every window: a tip is
+    // drawn at the pointer and runs past its own window's edge, and in the window's canvas the
+    // one beside it covered it -- the shelf's tip went under the bag. MU2's tooltip layer.
+    const gfx::Canvas& tipCanvas() const { return tip_; }
     uint64_t rebuilds() const { return rebuilds_; }
 
     // Where a slot sits in the window, in MU's units: the worn slots at their own sizes, a bag
@@ -76,6 +80,7 @@ private:
     gfx::Box itemBox(const content::Tables& tables, int slot, const sim::Held& what) const;
 
     gfx::Canvas canvas_;
+    gfx::Canvas tip_;
     panel::Arts* arts_ = nullptr;
     Contents drawn_, now_;
     float x_ = 0.0f, y_ = 0.0f;
