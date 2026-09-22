@@ -34,7 +34,7 @@ constexpr int kCorner = 6;
 // the edge, then wider and fainter. Offsets and sigmas in the same 1080-line pixels.
 struct Fall { float drop, sigma, alpha; };
 constexpr Fall kFalls[3] = {{1.0f, 1.5f, 0.70f}, {8.0f, 7.0f, 0.55f}, {30.0f, 30.0f, 0.55f}};
-constexpr int kShadowColumns = 16, kShadowRows = 14;
+constexpr int kShadowColumns = 40, kShadowRows = 34;
 
 // Two opacities, because they are two different jobs. `kOpacity` is the card's own glass and
 // goes through every colour it draws -- ring, marks, labels, numbers, chips, foot -- so the
@@ -43,14 +43,13 @@ constexpr int kShadowColumns = 16, kShadowRows = 14;
 // shows through. It is a gradient, lighter at the head and settling toward the foot, which is
 // what keeps it from reading as a flat grey rectangle.
 constexpr float kOpacity = 0.94f;
-constexpr uint32_t kBodyTop = gfx::rgba(0.075f, 0.082f, 0.094f, 0.58f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.023f, 0.027f, 0.72f);
+constexpr uint32_t kBodyTop = gfx::rgba(0.075f, 0.082f, 0.094f, 0.62f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.023f, 0.027f, 0.76f);
 constexpr uint32_t kBody = kBodyTop;  // the corners' own fill; the gradient is drawn over it
 constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
-constexpr uint32_t kLift = gfx::rgba(1.0f, 1.0f, 1.0f, 0.055f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
-constexpr uint32_t kLabel = gfx::rgba(0.655f, 0.643f, 0.588f);
-constexpr uint32_t kQuiet = gfx::rgba(0.435f, 0.451f, 0.412f);
+constexpr uint32_t kLabel = gfx::rgba(0.769f, 0.757f, 0.706f);
+constexpr uint32_t kQuiet = gfx::rgba(0.588f, 0.600f, 0.557f);
 constexpr uint32_t kFoot = gfx::rgba(0.490f, 0.502f, 0.467f);
 constexpr uint32_t kFootBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.40f);
 constexpr uint32_t kFramed = gfx::rgba(1.0f, 1.0f, 1.0f, 0.03f);
@@ -93,16 +92,29 @@ void roundedFan(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4],
     canvas.polygon(nullptr, xy, nullptr, at / 2, colour);
 }
 
+// Every word on the card is printed over its own shadow: a pixel down and right in black, which
+// is MU's own way of putting text over art (`RenderTextByScript`'s drop) and what makes a label
+// readable on glass this thin. The colour is passed through `fade` by the caller; the shadow is
+// its own alpha.
+constexpr uint32_t kDrop = gfx::rgba(0.0f, 0.0f, 0.0f, 0.75f);
+
+float printed(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t colour,
+              const std::string& s, float drop) {
+    canvas.text(x + drop, baseline + drop, size, kDrop, s);
+    return canvas.text(x, baseline, size, colour, s);
+}
+
 // A line of text with CSS's letter-spacing: `track` ems after every letter. Drawn a glyph at a
 // time, because the canvas's own text() advances by the face alone.
 float trackedWidth(const gfx::Face& face, float size, float track, const std::string& s) {
     return face.measure(size, s) + size * track * float(s.size());
 }
 void tracked(gfx::Canvas& canvas, float x, float baseline, float size, float track,
-             uint32_t colour, const std::string& s) {
+             uint32_t colour, const std::string& s, float drop) {
     float pen = x;
     for (char c : s) {
         const std::string one(1, c);
+        canvas.text(pen + drop, baseline + drop, size, kDrop, one);
         canvas.text(pen, baseline, size, colour, one);
         pen += canvas.face().measure(size, one) + size * track;
     }
@@ -232,6 +244,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     const float rowTall = std::round(rowSize * kRowTall);
     const float railPad = kRailPad * u;
     const float textX = pad + kMarkColumn * u + kMarkGap * u;
+    const float drop = std::max(1.0f, u);
     const float textWide = wide - textX - pad;
 
     // ---- measure ----------------------------------------------------------------------------
@@ -284,13 +297,19 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             const float k = 1.0f / (sigma * 1.41421356f);
             return 0.5f * (std::erf((at - low) * k) - std::erf((at - high) * k));
         };
+        // Cut out from under the card. The card is glass now, so a shadow laid down across its
+        // whole footprint is what shows THROUGH it -- the world behind never gets a look in, and
+        // the tooltip reads as solid however thin its background is. `covered` is the card's own
+        // shape with a pixel of softness, and the shadow is what is left outside it.
         const auto alphaAt = [&](float px, float py) {
             float sum = 0.0f;
             for (const Fall& f : kFalls) {
                 sum += f.alpha * edge(px, box.x, box.right(), f.sigma * u) *
                        edge(py, box.y + f.drop * u, box.bottom() + f.drop * u, f.sigma * u);
             }
-            return std::min(0.85f, sum);
+            const float covered = edge(px, box.x, box.right(), u) *
+                                  edge(py, box.y, box.bottom(), u);
+            return std::min(0.85f, sum) * (1.0f - covered);
         };
         const float x0 = box.x - reach, x1 = box.right() + reach;
         const float y0 = box.y - reach, y1 = box.bottom() + reach * 1.4f;
@@ -332,8 +351,6 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         canvas.shade({box.x, box.y + radius, box.w, box.h - radius * 2.0f}, mixed(rTop),
                      mixed(rTop), mixed(rFoot), mixed(rFoot));
     }
-    // The lit top edge, inset past the corners so it does not stick out of them.
-    canvas.rect({box.x + radius, box.y + line, box.w - radius * 2.0f, line}, fade(kLift));
 
     // The head, tinted by the name's own colour, fading out downward. Its own top corners are
     // rounded to the card's; it fades before it reaches the bottom two, so those stay square.
@@ -356,12 +373,13 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     }
     float headPen = pen + (std::max(plate, titleTall + baseTall) - titleTall - baseTall) * 0.5f;
     for (const std::string& line : title) {
-        canvas.text(box.x + headTextX, headPen + face.ascent(nameSize), nameSize, fade(nameColour), line);
+        printed(canvas, box.x + headTextX, headPen + face.ascent(nameSize), nameSize,
+                fade(nameColour), line, drop);
         headPen += std::round(nameSize * 1.25f);
     }
     if (!sheet.base.empty()) {
         tracked(canvas, box.x + headTextX, headPen + face.ascent(baseSize), baseSize, kBaseTrack,
-                fade(kQuiet), sheet.base);
+                fade(kQuiet), sheet.base, drop);
     }
     pen = box.y + headTall;
 
@@ -385,15 +403,15 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         }
         if (!section.kicker.empty()) {
             tracked(canvas, left, rowPen + face.ascent(kickerSize), kickerSize, kKickerTrack,
-                    fade(kQuiet), section.kicker);
+                    fade(kQuiet), section.kicker, drop);
             rowPen += std::round(kickerSize * 1.75f);
         }
         for (size_t r = 0; r < section.rows.size(); ++r) {
             const Row& row = section.rows[r];
             if (!row.free.empty()) {
                 for (const std::string& line : prose[s][r]) {
-                    canvas.text(left, rowPen + face.ascent(rowSize), rowSize,
-                                fade(colourOf(row.freeTone)), line);
+                    printed(canvas, left, rowPen + face.ascent(rowSize), rowSize,
+                            fade(colourOf(row.freeTone)), line, drop);
                     rowPen += rowTall;
                 }
                 continue;
@@ -401,7 +419,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             // The label once, at the top of its values: MU repeats it, and that is the stutter
             // this layout is here to fix.
             if (!row.label.empty()) {
-                canvas.text(left, rowPen + face.ascent(rowSize), rowSize, fade(kLabel), row.label);
+                printed(canvas, left, rowPen + face.ascent(rowSize), rowSize, fade(kLabel), row.label, drop);
             }
             float chipPen = right;
             for (size_t v = row.values.size(); v-- > 0;) {
@@ -417,22 +435,22 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                     canvas.outline(at, std::max(1.0f, u), fade(colourOf(value.tone)));
                     tracked(canvas, at.x + pad * 0.4f, at.y + (h - chipSize) * 0.5f +
                                                           face.ascent(chipSize),
-                            chipSize, kChipTrack, fade(colourOf(value.tone)), value.text);
+                            chipSize, kChipTrack, fade(colourOf(value.tone)), value.text, drop);
                     chipPen -= w + pad * 0.4f;
                     continue;
                 }
                 float end = right;
                 if (!value.delta.empty()) {
                     const float dw = face.measure(footSize, value.delta);
-                    canvas.text(end - dw, baseline, footSize,
+                    printed(canvas, end - dw, baseline, footSize,
                                 fade(value.deltaWay > 0   ? kGood
-                                     : value.deltaWay < 0 ? kBad
-                                                          : kQuiet),
-                                value.delta);
+                                 : value.deltaWay < 0 ? kBad
+                                                      : kQuiet),
+                            value.delta, drop);
                     end -= dw + pad * 0.4f;
                 }
                 const float w = face.measure(rowSize, value.text);
-                canvas.text(end - w, baseline, rowSize, fade(colourOf(value.tone)), value.text);
+                printed(canvas, end - w, baseline, rowSize, fade(colourOf(value.tone)), value.text, drop);
             }
             rowPen += rowTall * float(std::max<size_t>(1, row.values.size()));
         }
@@ -447,7 +465,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
         const float baseline = pen + railPad + face.ascent(footSize);
         if (!sheet.wear.empty()) {
-            const float w = canvas.text(box.x + pad, baseline, footSize, fade(kFoot), sheet.wear);
+            const float w = printed(canvas, box.x + pad, baseline, footSize, fade(kFoot), sheet.wear, drop);
             const float barWide = 46.0f * u, barTall = std::max(2.0f, 3.0f * u);
             const gfx::Box bar{box.x + pad + w + pad * 0.5f, baseline - footSize * 0.35f, barWide,
                                barTall};
@@ -457,8 +475,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         }
         if (!sheet.price.empty()) {
             const float w = face.measure(footSize, sheet.price);
-            canvas.text(box.right() - pad - w, baseline, footSize,
-                        fade(colourOf(sheet.priceTone)), sheet.price);
+            printed(canvas, box.right() - pad - w, baseline, footSize,
+                    fade(colourOf(sheet.priceTone)), sheet.price, drop);
         }
     }
 }
