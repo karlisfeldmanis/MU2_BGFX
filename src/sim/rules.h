@@ -174,4 +174,12 @@ uint64_t neededExperience(int level);
 // gives 0 for every kill more than ten levels down and silently stops all low-level farming.
 double killExperience(int killedLevel, int killerLevel);
 
+// How much of that a kill actually pays. **Ours, and the one rate in the sim**: every number
+// above is OpenMU's, and this is the server multiplier a live MU server has always had, stated
+// once here rather than folded into the formula -- so the replica's arithmetic stays readable
+// and the hunt's pace is a single line to turn. 1.0 is the original's own pace; this is what
+// the hunt was asked for (2026-09-22). It pays the character alone: the Zen a body leaves is
+// the untouched formula, so raising this does not quietly make the town richer too.
+constexpr double kExperienceRate = 2.0;
+
 }  // namespace mu::sim

@@ -357,7 +357,14 @@ void Realm::sip() {
 // Smaller than MU2's: no luck roll and no skill roll on a dropped piece. Its plus is
 // Loot.Refinement, `(monster level - drop level) / 3`, held to the cap of nine.
 void Realm::leave(const Body& dead, const Body& killer) {
-    constexpr double kJewel = 0.001, kItem = 0.3, kMoney = 0.5;
+    // What a kill leaves: a jewel, then an item, then Zen, then nothing.
+    //
+    // **The item chance is ours, not MU2's 0.3.** A nest of spiders dropped a weapon or a piece
+    // of armour on nearly every third kill, and the ground round a hunt was paved with them;
+    // this is the rate the hunt was asked to have (2026-09-22). Zen and the jewel are MU2's
+    // Loot untouched, so the commonest thing a monster leaves is still coins -- the change is
+    // that three kills in four now leave coins or nothing.
+    constexpr double kJewel = 0.001, kItem = 0.1, kMoney = 0.5;
     constexpr int kGap = 12;           // Loot.Gap: nothing more than twelve levels below it
     constexpr int kBaseMoney = 7;      // Loot.BaseMoney
     constexpr int kLingerSeconds = 60; // Loot.Lingers
@@ -1136,9 +1143,10 @@ void Realm::kill(Body& dead, Body& killer) {
     if (killer.player) leave(dead, killer);
     if (killer.player) {
         // (int) of the formula, as OpenMU's CalculateAfterKillAsync truncates it
-        // (PlayerExperience.cs:105). No rate: a replica that quietly pays several times over
-        // is not a replica.
-        gain(killer, int32_t(killExperience(dead.level, killer.level)));
+        // (PlayerExperience.cs:105), then the server's rate -- which this note used to say
+        // there was none of, and the replica's answer is still the formula above: the rate is
+        // one number at one place, stated, the way a live server states one. See kExperienceRate.
+        gain(killer, int32_t(killExperience(dead.level, killer.level) * kExperienceRate));
     }
 }
 
