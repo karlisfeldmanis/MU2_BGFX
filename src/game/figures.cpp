@@ -409,11 +409,20 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.idleClip = (armed || namedIdle.empty()) ? body.library->find(stand)
                                                  : body.library->find(namedIdle);
     // Inside a safe zone the weapon goes on the back and the body stands unarmed, which is
-    // the same chain's first branch: `c->SafeZone` reaches PLAYER_STOP_MALE whatever is
-    // carried. A figure whose index.json names an idle stands in THAT, because for the
-    // townsfolk and the guards it is the pose MU's own town stands them in.
-    body.idleSafeClip = namedIdle.empty() ? body.library->find(bare)
-                                          : body.library->find(namedIdle);
+    // the same chain's first branch: `c->SafeZone` reaches PLAYER_STOP_MALE **whatever is
+    // carried**.
+    //
+    // So an ARMED figure's safe stance is the bare one and never its named idle. This used to
+    // prefer the named idle for everybody, and for an armed guard that idle is itself an
+    // armed stop -- the Berdysh Guard names `action7`, PLAYER_STOP_SCYTHE -- so his safe clip
+    // and his armed clip were the same pose and he had no unarmed stance at all. He stood in
+    // the middle of the square gripping air with the berdysh slung across his back.
+    //
+    // An UNARMED figure keeps its named idle, and that is not the same question: for the
+    // townsfolk it is MU's own table for that figure -- a barmaid's lean is what she is -- and
+    // not a stance this engine picks. See figures.h.
+    body.idleSafeClip = (armed || namedIdle.empty()) ? body.library->find(bare)
+                                                     : body.library->find(namedIdle);
     body.walkClip = body.library->find(walk);
     // The walk with the weapon put away. An unarmed figure's two walks are the same clip.
     body.walkSafeClip = body.library->find(bareWalk);

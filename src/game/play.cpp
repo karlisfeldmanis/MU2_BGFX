@@ -389,8 +389,17 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         Standing one;
         one.folk = int(i);
         one.smith = person.figure == kSmithFigure;
-        one.figure.stand(look, at, yaw, look->scale, true);
-        if (look->idleClip >= 0) one.figure.play(look->idleClip);
+        // **The tile decides, not a literal `true`.** MU recomputes `c->SafeZone` from each
+        // character's own tile every frame (ZzzCharacter.cpp:5607, :11676) and its NPCs are
+        // CHARACTERs like any other, so a guard inside the zone stands unarmed with the
+        // weapon slung (`SetPlayerStop`, :341, and `RenderCharacterBackItem`, :15239) and one
+        // at the gate posts stands armed. Four of Lorencia's six guards are one tile OUTSIDE
+        // the bit, so both halves of that show in the same town.
+        //
+        // And the `play(idleClip)` that used to follow threw away the clip `stand` had just
+        // chosen for exactly this: it is the ARMED idle, so every townsperson stood in the
+        // combat stance with empty hands and the weapon on the back at the same time.
+        one.figure.stand(look, at, yaw, look->scale, tables_.grid.safe(person.x, person.y));
         settle(one);
         bones = std::max(bones, look->boneCount());
         folk_.push_back(std::move(one));
@@ -414,8 +423,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             Standing one;
             one.folk = who;
             one.smith = spot.figure == kSmithFigure;
-            one.figure.stand(look, spot.position, spot.yaw, spot.scale, true);
-            if (look->idleClip >= 0) one.figure.play(look->idleClip);
+            one.figure.stand(look, spot.position, spot.yaw, spot.scale,
+                             tables_.grid.safe(column, row));
             settle(one);
             bones = std::max(bones, look->boneCount());
             folk_.push_back(std::move(one));
