@@ -72,8 +72,9 @@ endforeach()
 add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT})
 
 # ---- the game -----------------------------------------------------------------------------
-# The layers of PLAN.md, and the rule that holds them apart: gfx never includes game or sim,
-# and sim never includes gfx. Nothing enforces that but review.
+# The layers of docs/architecture.md, and the rule that holds them apart: gfx never includes
+# game or sim, and sim never includes gfx. tools/layercheck.py enforces it in the `checks`
+# target below -- it used to say "nothing enforces that but review", and that was true.
 add_executable(mu2
   src/main.cpp
   src/core/log.cpp
@@ -233,8 +234,14 @@ target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # matcheck is a gate rather than a report: it fails on a material fault that is not in
 # sheets/materials.baseline.json, and on a recorded one that has since been fixed. See
 # docs/materials.md.
+#
+# layercheck is the other gate, and it is here because the line above the source list --
+# "gfx never includes game or sim, and sim never includes gfx; nothing enforces that but
+# review" -- was a rule with nobody keeping it. It reads every include in src/ against the
+# arrows in docs/architecture.md and fails on one that is not allowed. It costs milliseconds.
 add_custom_target(checks
   DEPENDS cooked_test placement_test sim_test
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py
   COMMAND $<TARGET_FILE:cooked_test>
   COMMAND $<TARGET_FILE:placement_test>
   COMMAND $<TARGET_FILE:sim_test>

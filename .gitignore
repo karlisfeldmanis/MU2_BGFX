@@ -1,11 +1,28 @@
+# What the cook, the build and a run leave behind. Nothing here is authored: everything is
+# rebuilt from source/, pipeline/ and tools/. See docs/architecture.md for what each is.
+
+# The cook's output. Rebuilt by tools/cook.py from source/.
 assets/
+
+# Fetched by bootstrap.sh at a pinned revision.
 extern/
+weights/
+reference/
+
+# The builds. build.sh makes the first three.
 build/
 build-debug/
 build-trace/
-shots/
+
+# What a run leaves: the log and the pictures.
 *.log
 *.log.previous
+shots/
+screenshots/
+
+# The bench's scratch, and Python's.
 workshop/
-weights/
-reference/
+__pycache__/
+*.pyc
+
+.DS_Store
