@@ -644,7 +644,7 @@ def cook_meshes(world, out_dir):
     clips_manifest = {}
     # The models whose clip MU never runs -- `o->Velocity = 0.f`, the treasure chest. Their
     # clip is still cooked, because MU draws them on its first key and not in the bind pose;
-    # the game holds them there. See index.py's `still` and game/sway.cpp.
+    # the game holds them there. See index.py's `still` and game/world/sway.cpp.
     still = []
     triangles = vertices = cooked = source = models = 0
     for model in sorted({one["model"] for one in map_data["objects"]}):

@@ -195,6 +195,12 @@ Written here rather than left implied, because a rule nothing keeps is worse tha
 - **`assets/assets/`** is 30 MB of orphaned duplicates that nothing in `src/`, `tools/` or
   `pipeline/` references — a sync that once ran with the wrong root. It is inside a gitignored
   folder so it costs nothing but disk and confusion. Not deleted yet.
-- **There is no asset registry.** Every loader is handed an asset directory and a name and
-  opens a path itself, so nothing knows what is resident and a second request for the same
-  mesh loads it twice. `content/texture.cpp` counts its own bytes; nothing counts the rest.
+- **There is no one asset registry, and on inspection that is less wrong than it sounds.**
+  Nothing loads the same thing twice: `content::Textures` keeps one handle per path,
+  `game::Figures` indexes its meshes and clip libraries by name, and `game::ItemModels` keeps
+  a mesh the first time a row asks for it — which is the point of it, so that a sword in the
+  bag and the same sword on the grass are one mesh. What is actually missing is narrower:
+  **nothing counts the total.** `content/texture.cpp` reports its own resident bytes and the
+  meshes, the clips and the cooked tables report nothing, so there is no one number for what a
+  run is holding. That is a page of accounting, not a rewrite, and it is what `docs/budget.md`
+  would want before anyone argues about memory.

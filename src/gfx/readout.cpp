@@ -46,7 +46,7 @@ void Readout::draw(Overlay& overlay, int width, int height) {
     }
     if (text_.empty()) return;
 
-    // Scaled off 1080, as the tile over the character's head is (main.cpp), so the readout is
+    // Scaled off 1080, as the tile over the character's head is (app/modes/play_mode.cpp), so the readout is
     // the same size on screen whatever --height the run asked for. 2.4 is the browser list's
     // own scale, which is a 19 px line at 1080: small enough to ignore, large enough to read.
     const float scale = 2.4f * float(height) / 1080.0f;

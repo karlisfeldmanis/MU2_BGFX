@@ -71,8 +71,9 @@ in x and in y, and the frames between crossings test the sub-texel slide. The ex
    in `bindShadeInputs`, beside the textures that had the same trap. Measured A/B under the
    same load: no cost (2.48 / 2.46 / 2.49 ms median against 2.61 / 2.47 / 2.64 set once).
 
-3. **The camera trailed the character by a frame.** `main.cpp` placed the camera from the
-   character's position before the play advanced. The ground and every static shadow then
+3. **The camera trailed the character by a frame.** The frame loop — now
+   `app/modes/play_mode.cpp` — placed the camera from the character's position
+   before the play advanced. The ground and every static shadow then
    slid under him by his step times the frame time, which changes every frame: up to 2.7
    texels. *Fix:* the pointer is answered and the play stepped first, against the camera
    the player saw, and only then is the camera placed.

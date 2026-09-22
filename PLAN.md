@@ -150,7 +150,8 @@ only. MU2 measured a probe grid at 2.7 ms for a faint sheen on painted art; not 
     MU2_BGFX/
       PLAN.md  README.md  CMakeLists.txt  bootstrap.sh  build.sh  run.sh
       docs/conventions.md  docs/budget.md  docs/sprints/NN-name.md
-      src/core  src/gfx  src/content  src/sim  src/game  src/main.cpp
+      src/core  src/content  src/sim  src/gfx  src/game  src/app  src/main.cpp
+                     (the layers, and the arrows between them: docs/architecture.md)
       shaders/
       sheets/        (lighting.json and the benches' live-reloaded json)
       tools/sync.sh  tools/cook.py

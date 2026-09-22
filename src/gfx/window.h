@@ -28,7 +28,7 @@ public:
     // Vsync off for a while and back to what the window was opened with. The preloader
     // presents without it: bgfx holds its resource lock for the whole of a frame, the wait for
     // the display included, and a spinner paced by vsync starved the loading thread of it --
-    // 3.6 s to load what takes 0.35 s. src/main.cpp, "The preloader".
+    // 3.6 s to load what takes 0.35 s. See app/preloader.h.
     void holdVsync(bool off);
 
     // The display's own refresh, in hertz, or 60 when it cannot be had. The preloader paces

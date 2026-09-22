@@ -34,7 +34,7 @@ This is a **showing** sprint, and its whole risk is that it is worked as a rules
   (`Play::heard_`, 2026-09-22).
 - The landing cue, the blood, the number and the health bar all hang off `Showing`, and a cue
   drops itself when the attacker's swing is no longer the swing it belonged to.
-- The Budge Dragon's fire and dust are built (`game/breath.cpp`) — the one breed-specific
+- The Budge Dragon's fire and dust are built (`game/fx/breath.cpp`) — the one breed-specific
   effect in the tree, and the worked example this sprint's third step follows for pools,
   MU-units-at-the-edge and scaling by the animal.
 
