@@ -23,6 +23,8 @@
     "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
     "number": 8,
     "name": "Twister",
+    "tells": "A cone four tiles long that hits everything standing in it, each blow landing as it travels.",
+    "tells_from": "The line the tooltip prints under the skill's name, and ours: MU never says what a skill does -- its scroll tooltip is the name, the requirement and the class, and the player is expected to know. Written from the skill's own row in OpenMU's Version075/SkillsInitializer.cs (damage, range, mana, element, area) rather than from how it feels to cast.",
     "level_requirement": 0,
     "energy_requirement": 180,
     "value": 25000

@@ -24,6 +24,8 @@
     "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
     "number": 11,
     "name": "Power Wave",
+    "tells": "A wide, cheap push at five mana. The filler of the early levels.",
+    "tells_from": "The line the tooltip prints under the skill's name, and ours: MU never says what a skill does -- its scroll tooltip is the name, the requirement and the class, and the player is expected to know. Written from the skill's own row in OpenMU's Version075/SkillsInitializer.cs (damage, range, mana, element, area) rather than from how it feels to cast.",
     "level_requirement": 0,
     "energy_requirement": 56,
     "value": 1100

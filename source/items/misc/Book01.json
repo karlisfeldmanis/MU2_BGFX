@@ -27,6 +27,8 @@
     "note": "What the scroll teaches, and nothing here reads it. Recorded for the same reason magic_power was recorded on the staves before spells existed: so the day skills arrive is not the day this table is transcribed a second time.",
     "number": 1,
     "name": "Poison",
+    "tells": "A green bolt that sticks: damage as it lands, then poison for twenty seconds.",
+    "tells_from": "The line the tooltip prints under the skill's name, and ours: MU never says what a skill does -- its scroll tooltip is the name, the requirement and the class, and the player is expected to know. Written from the skill's own row in OpenMU's Version075/SkillsInitializer.cs (damage, range, mana, element, area) rather than from how it feels to cast.",
     "level_requirement": 0,
     "energy_requirement": 140,
     "requirement_note": "The energy figure is the requirement itself and not a raw value to be scaled. ItemExtensions.GetRequirement returns requirement.MinimumValue unchanged when `!item.IsWearable()`, and a scroll has no item slot - so where a Small Shield's 70 becomes 26 through Needs.Asking, this 140 is 140. CalculateBookEnergyRequirement, which does scale one, is for the Summoner's books in group 5 and not for these.",

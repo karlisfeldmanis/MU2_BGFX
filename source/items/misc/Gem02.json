@@ -28,6 +28,8 @@
     "note": "What the orb teaches. The energy is MuMain's and not OpenMU's, and the two disagree - see energy_from.",
     "number": 26,
     "name": "Heal",
+    "tells": "Restores health to whoever she aims at: five, and a fifth of her own energy.",
+    "tells_from": "The line the tooltip prints under the skill's name, and ours: MU never says what a skill does -- its scroll tooltip is the name, the requirement and the class, and the player is expected to know. Written from the skill's own row in OpenMU's Version075/SkillsInitializer.cs (damage, range, mana, element, area) rather than from how it feels to cast.",
     "level_requirement": 0,
     "energy_requirement": 52,
     "energy_from": "OpenMU's call says 100, and GetRequirement returns a non-wearable's MinimumValue unscaled, so OpenMU asks an elf for a hundred energy. MuMain does not: ZzzInfomation.cpp:786 scales every group-12 energy as `20 + RequireEnergy * (ItemLevel + Level * 3) * 4 / 100`, which at drop level 8 and +0 is 20 + 100 * 8 * 4 / 100 = 52. Fifty-two is also SkillsInitializer.cs:65's own energyRequirement for Heal, and the same formula gives the other two orbs 72 and 92, which are Greater Defense's and Greater Damage's to the point. So 100 is the table's raw column and 52 is the requirement, and the client is what a player was shown.",

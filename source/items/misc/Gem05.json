@@ -35,6 +35,8 @@
     "note": "What the orb teaches at +0. The plus is the skill, so this block is the base and Prize.Teaching adds the plus: SummoningOrbConsumeHandlerPlugIn teaches `baseSkillNumber + item.Level`, +0 Summon Goblin (30) to +5 Summon Bali (35), and Lala stocks +0 to +4. See docs/summoning.md.",
     "number": 30,
     "name": "Summon Goblin",
+    "tells": "Calls a goblin that fights for her. Every plus on the orb calls something bigger, up to Bali at +5.",
+    "tells_from": "The line the tooltip prints under the skill's name, and ours: MU never says what a skill does -- its scroll tooltip is the name, the requirement and the class, and the player is expected to know. Written from the skill's own row in OpenMU's Version075/SkillsInitializer.cs (damage, range, mana, element, area) rather than from how it feels to cast.",
     "level_requirement": 0,
     "energy_requirement": 30,
     "energy_from": "OpenMU puts no requirement on the orb and checks the skill's energy at every cast (30 for the Goblin, SkillsInitializer.cs:68). MuMain checks it before the orb can be used, and for this item alone replaces the formula with a switch on the plus: 30, 60, 90, 130, 170, 210 (ZzzInfomation.cpp:798-814). This is the +0 value; the others are in Prize.Teaching, because the index carries one energy per row.",
