@@ -55,6 +55,7 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.level = int(doc["level"].numberOr(1));
     hero.experience = uint64_t(doc["experience"].numberOr(0.0));
     hero.pointsInHand = int(doc["points_in_hand"].numberOr(0));
+    saved.zoom = float(doc["zoom"].numberOr(0.0));
     hero.points.strength = int(doc["strength"].numberOr(0));
     hero.points.agility = int(doc["agility"].numberOr(0));
     hero.points.vitality = int(doc["vitality"].numberOr(0));
@@ -132,6 +133,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
                  hero.points.energy);
     std::fprintf(f, "  \"health\": %d,\n  \"mana\": %d,\n  \"zen\": %lld,\n", hero.health,
                  hero.mana, static_cast<long long>(hero.money));
+    if (saved.zoom > 0.0f) std::fprintf(f, "  \"zoom\": %.3f,\n", double(saved.zoom));
     std::fprintf(f, "  \"items\": [");
     bool first = true;
     for (int slot = 0; slot < sim::kSlots; ++slot) {

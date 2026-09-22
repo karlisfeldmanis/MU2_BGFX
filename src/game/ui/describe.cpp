@@ -211,7 +211,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         if (wants <= 0) return;
         Row line;
         line.label = name;
-        Value value{std::to_string(wants), lacking > 0 ? Tone::Red : Tone::White, false, "", 0};
+        // Green when you meet it, red when you do not, the same pair the class chips use: a
+        // requirement is a yes or a no, and a column of white numbers makes you read each one to
+        // find out which. MU prints them white and turns only the failures red.
+        Value value{std::to_string(wants), lacking > 0 ? Tone::Red : Tone::Green, false, "", 0};
         if (lacking > 0) value.text += " (lacking " + std::to_string(lacking) + ")";
         line.values.push_back(value);
         asks.rows.push_back(line);

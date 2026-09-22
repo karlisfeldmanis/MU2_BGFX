@@ -248,6 +248,14 @@ void World::update(double seconds, bool still) {
     }
 }
 
+void World::setZoomDistance(float metres) {
+    if (!(metres > 0.0f)) return;
+    // Held to the same pair of ends the wheel is: a save written by a build with other limits,
+    // or edited by hand, cannot put the camera underground or out past MU's own 8 m.
+    const float held = metres < kNearest ? kNearest : (metres > kDistance ? kDistance : metres);
+    distance_ = wantDistance_ = held;
+}
+
 void World::zoom(float notches) {
     if (notches == 0.0f || distance_ <= 0.0f) return;
     // From where the wheel was last sent, not from where the camera has got to, so a quick

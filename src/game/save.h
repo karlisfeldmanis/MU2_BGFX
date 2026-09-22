@@ -22,6 +22,10 @@ struct Saved {
     std::string world;
     sim::HeroRecord hero;             // hero.slots filled by resolveSave
     int32_t quick[5] = {-1, -1, -1, -1, -1};  // item rows, -1 for none; filled by resolveSave
+    // How far the camera was standing back, in metres. Not the character's, but it is his file
+    // and a second one for a single number would be worse. 0 is "nothing saved" -- an older
+    // save, or a run that never touched the wheel -- and the world keeps its own default.
+    float zoom = 0.0f;
 
     // As read, before the tables are there to turn them into rows. The file is read before
     // the world is -- it decides the class, the level and the tile the world is raised at --

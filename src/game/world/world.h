@@ -59,6 +59,10 @@ public:
     // The wheel, in play: positive notches bring the camera in. Held between kNearest and
     // MU's own 8 m, so the furthest a player can stand back is what MU showed him.
     void zoom(float notches);
+    // Where the wheel has left the camera, in metres, and where to put it back: the save keeps
+    // it, so a run does not open at the default zoom every time. 0 is "not yet seeded".
+    float zoomDistance() const { return wantDistance_ > 0.0f ? wantDistance_ : distance_; }
+    void setZoomDistance(float metres);
 
     // Where the played character is drawn right now, in world metres, or false when no world
     // is being played. Asked AFTER the play has advanced, it is where the figure stands this
