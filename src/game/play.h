@@ -304,6 +304,10 @@ private:
     void landed(uint32_t drop);
     // The coins of a purchase or a sale, at the hero.
     void coins();
+    // Every placed sound goes through here, and is heard only if the camera holds where it is.
+    void emit(int event, float x, float z, uint32_t following = 0);
+    float shot_[16] = {};
+    bool shotKnown_ = false;
     void hammer();
     // Whether each of the hero's feet has been heard on the walk cycle now playing, and whether
     // he was walking last frame. MU's c->Foot[0] and [1]; see steps().

@@ -9,6 +9,7 @@
 
 #include "core/files.h"
 #include "core/log.h"
+#include "game/frustum.h"
 
 namespace mu::game {
 namespace {
@@ -128,6 +129,12 @@ constexpr float kHammerFrom = 5.0f, kHammerTo = 10.0f;
 // Lorencia's grass: the tile texture MU tests for `HeroTile == 0` under a footstep; every
 // other floor on the map is soil.
 constexpr int kGrassFloor = 0;
+
+// What counts as in the shot for a sound: a sphere this far round a point this high over the
+// ground where it was made -- a body's middle, and enough slack that a monster half off the
+// edge of the frame is still heard. MU2's Scenery reach was a tile.
+constexpr float kHeardHeight = 1.0f;
+constexpr float kHeardReach = 1.5f;
 
 // Where a figure's clock stands in its clip's own keys -- MU's AnimationFrame, which is what
 // every one of its sound tests reads. A looping clip is cooked with one closing key, so its
@@ -487,7 +494,7 @@ void Play::update(double seconds) {
                             sound = -1;
                             const Drawn* hero = drawnOf(heroId);
                             if (hero && hero->placed) {
-                                sound_.playAt(heard_.jewel, hero->crown[0], hero->crown[2]);
+                                emit(heard_.jewel, hero->crown[0], hero->crown[2]);
                             }
                         }
                     }
@@ -549,7 +556,7 @@ void Play::update(double seconds) {
                                         : body->player  ? swingSound(*body)
                                                         : swinger->cryAttack;
                         if (cry >= 0 && swinger->placed) {
-                            sound_.playAt(cry, swinger->crown[0], swinger->crown[2],
+                            emit(cry, swinger->crown[0], swinger->crown[2],
                                           swinger->id);
                         }
 
@@ -666,7 +673,7 @@ void Play::update(double seconds) {
         // The hit, on the attacker, which is where ZzzCharacter plays it -- for every blow
         // that lands, whoever swung it. One of MU's four, at random.
         if (!cue.miss && heard_.hit >= 0 && swinger->placed) {
-            sound_.playAt(heard_.hit, swinger->crown[0], swinger->crown[2], swinger->id);
+            emit(heard_.hit, swinger->crown[0], swinger->crown[2], swinger->id);
         }
     }
     // After the cues, so the fall comes in the same frame as the number and the blood of the
@@ -743,7 +750,7 @@ void Play::steps() {
         const int column = int(std::floor(hero->crown[0] / metresPerTile));
         const int row = int(std::floor(-hero->crown[2] / metresPerTile));
         const int sound = ground_->floorAt(column, row) == kGrassFloor ? heard_.grass : heard_.soil;
-        if (sound >= 0) sound_.playAt(sound, hero->crown[0], hero->crown[2], hero->id);
+        if (sound >= 0) emit(sound, hero->crown[0], hero->crown[2], hero->id);
     };
     if (!leftFoot_) {
         leftFoot_ = true;
@@ -771,7 +778,7 @@ void Play::hammer() {
         // Placed at him, where MU plays it unplaced: a smith heard from the far bank is the
         // wrong half of MU's simplification to keep. MU2's call, marked there too.
         const float* at = one.figure.position();
-        sound_.playAt(heard_.hammer, at[0], at[2]);
+        emit(heard_.hammer, at[0], at[2]);
     }
 }
 
@@ -821,17 +828,32 @@ void Play::landed(uint32_t drop) {
             sound = heard_.jewel;
         }
         const float metresPerTile = ground_->metresPerTile();
-        sound_.playAt(sound, (float(one.column) + 0.5f) * metresPerTile,
+        emit(sound, (float(one.column) + 0.5f) * metresPerTile,
                       -(float(one.row) + 0.5f) * metresPerTile);
         return;
     }
+}
+
+void Play::emit(int event, float x, float z, uint32_t following) {
+    // Only what the camera holds is heard. **A departure from MU**, whose falloff mixes every
+    // attached object however far off it is and plays the townspeople's noises unplaced
+    // everywhere: at 1/d past two and a half metres, Hanzo's anvil carried from the square to
+    // Harold's campfire fifty tiles away. MU2 already culled its scenery sounds to the shot;
+    // this is that rule for everything placed. A voice already sounding is not cut off when
+    // its source leaves the frame -- only a new one is refused.
+    if (shotKnown_ && ground_) {
+        const Frustum frustum(shot_);
+        const float centre[3] = {x, ground_->heightAt(x, z) + kHeardHeight, z};
+        if (!frustum.holds(centre, kHeardReach)) return;
+    }
+    sound_.playAt(event, x, z, following);
 }
 
 void Play::coins() {
     // SOUND_MONEY at a counter, both ways round: the noise is the transaction and not the
     // direction of it. MU2's Crowd.Traded.
     const Drawn* hero = drawnOf(realm_.hero().id);
-    if (hero && hero->placed) sound_.playAt(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+    if (hero && hero->placed) emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
 }
 
 void Play::ui(Ui which) {
@@ -853,7 +875,7 @@ void Play::fall(Drawn& dead) {
     // With the death clip's first key, as PlayMonsterSound is: a body that waits for its
     // killing blow to land waits the same to cry out. Where it falls, and not followed --
     // a corpse goes nowhere.
-    if (dead.cryDie >= 0 && dead.placed) sound_.playAt(dead.cryDie, dead.crown[0], dead.crown[2]);
+    if (dead.cryDie >= 0 && dead.placed) emit(dead.cryDie, dead.crown[0], dead.crown[2]);
 }
 
 void Play::openSound(const std::string& assetDir, bool muted) {
@@ -1130,7 +1152,7 @@ void Play::follow(float seconds) {
             wanderDice_ ^= wanderDice_ << 5;
             const float roll = float(wanderDice_ >> 8) / float(1u << 24);
             if (roll < seconds * 25.0f / 16.0f) {
-                sound_.playAt(one.cryMove, one.crown[0], one.crown[2], one.id);
+                emit(one.cryMove, one.crown[0], one.crown[2], one.id);
             }
         }
         one.clipRate = 1.0f;
@@ -1182,6 +1204,9 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     pointedAt_ = 0;
     pointedFolk_ = -1;
     pointedLying_ = 0;
+    // The shot this frame is drawn with, kept for what may be heard: see emit().
+    bx::mtxMul(shot_, view, proj);
+    shotKnown_ = true;
     if (!isOpen() || !ground_ || width <= 0 || height <= 0) return;
 
     // The pixel into a direction. bgfx's clip space on this Metal is 0..1 in z and the origin
