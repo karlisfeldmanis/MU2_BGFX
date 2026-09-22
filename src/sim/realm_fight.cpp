@@ -38,6 +38,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force) {
         wound = blow.damage - onto + std::max(0, over);
     }
     target.health = std::max(0, target.health - wound);
+    // What the blow gives back. A landed SWING pays the knight a twentieth of his mana; a skill's
+    // own blow pays nothing, which is what makes the basic attack the generator and the skill the
+    // spender (kAttackManaShare, and the argument is there). Before the happening, so the log's
+    // line and the frame's gauge agree about the tick.
+    if (attacker.player && force == 1.0f && attacker.mana < attacker.maxMana) {
+        const int back = std::max(1, int(float(attacker.maxMana) * kAttackManaShare));
+        attacker.mana = std::min(attacker.maxMana, attacker.mana + back);
+    }
     say(What::Hit, attacker, blow.damage, blow.rolled, target.health, target.id);
     if (!target.player) {
         // Hit, so it knows who did it however far off he is standing, and it is awake whether

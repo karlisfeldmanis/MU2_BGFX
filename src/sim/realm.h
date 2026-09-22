@@ -126,6 +126,7 @@ struct Body {
     int32_t sd = 0;
     int32_t maxSd = 0;
     float sdCarry = 0.0f;  // the fraction of a point a recovery tick owes and did not give
+    float manaCarry = 0.0f;  // and the same for mana, whose share of a small pool is under one
     Fighter stats;
     // What the player's worn pieces add, off the satchel at the last rearm: the armour and
     // shield's defence with their plus counted, and the weapon's plus on its damage band.

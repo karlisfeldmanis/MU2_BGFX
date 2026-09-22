@@ -229,6 +229,16 @@ bool Realm::useItem(int slot) {
 // seconds, the fraction carried. MU2's Realm.Recover and Rates.ShieldRecoveryInSafeZone, off
 // OpenMU's RegenerateAsync, which skips the shield outside one.
 void Realm::recover(Body& hero) {
+    // Mana first, and it is not the shield's rule: the shield comes back in the town alone, and
+    // mana comes back everywhere -- OpenMU's regeneration runs wherever the character is standing
+    // and only the shield carries the safe-zone test (Player.RegenerateAsync). Three seconds,
+    // 1/27.5 of the pool, carried as a fraction so a small pool still fills.
+    if (hero.alive() && tick_ % kRecoverEveryTicks == 0 && hero.mana < hero.maxMana) {
+        hero.manaCarry += float(hero.maxMana) * kManaRecoveryShare;
+        const int whole = int(hero.manaCarry);
+        hero.manaCarry -= float(whole);
+        if (whole > 0) hero.mana = std::min(hero.maxMana, hero.mana + whole);
+    }
     if (tick_ % kRecoveryTicks != 0 || !hero.alive() || hero.sd >= hero.maxSd) {
         if (hero.sd >= hero.maxSd) hero.sdCarry = 0.0f;
         return;

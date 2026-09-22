@@ -30,7 +30,7 @@ constexpr float kRuleSigma = 3.84f;       // box-shadow 0 0 .4cqw
 constexpr float kMarkSigma = 2.88f;       // drop-shadow 0 0 .3cqw
 constexpr float kCaptionSigma = 4.80f;    // text-shadow 0 0 .5cqw
 // The scrim behind it all: black, peaking at this alpha, a Gaussian this wide and this tall.
-constexpr float kScrimAlpha = 0.75f;
+constexpr float kScrimAlpha = 0.52f;
 constexpr float kScrimSigmaX = 250.0f;
 constexpr float kScrimSigmaY = 50.0f;
 

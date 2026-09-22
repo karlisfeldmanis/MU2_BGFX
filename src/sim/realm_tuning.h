@@ -98,6 +98,28 @@ constexpr int kHeroAttackRange = 1;
 // How long a dead character lies there before he stands up in town. MU2's Player.cs:1687, three
 // seconds, which is also when a summon is taken off him.
 constexpr int kRiseTicks = 60;
+// ---- what comes back on its own -----------------------------------------------------------
+//
+// **The passive is 0.75's own and the attack's return is ours.** OpenMU regenerates on a timer:
+// `GameConfiguration.RecoveryInterval = 3000` ms (GameConfigurationInitializerBase.cs:51) and
+// `current += maximum * multiplier` (Player.RegenerateAsync), with the multiplier `1/27.5` for
+// every class (CharacterClassInitialization.cs:163). That is 3.6% of the pool every three
+// seconds, and it is what a character standing still gets back.
+//
+// It is also nowhere near enough to pay for a skill, which is the fault the player found: a
+// level-30 knight holds 35 mana, Falling Slash costs 9, and the passive alone is one cast every
+// twenty-seven seconds against a cooldown of under four. 0.75's answer was potions, because 0.75
+// had no cooldowns and no reason to press anything but the attack.
+//
+// So the knight takes mana off what he hits. **invention**, and it is Diablo 3's shape, which is
+// what PLAN.md chose for this bar: the basic attack is the generator and the skills are the
+// spenders, so a fight has a rhythm of its own -- swing, swing, spend -- rather than a bar that
+// empties in three presses and then plays like a game with no skills in it. A LANDED swing only,
+// and never a skill's own blow: hitting is what pays, and a skill does not pay for the next one.
+constexpr int32_t kRecoverEveryTicks = 60;       // 3000 ms at 20 Hz
+constexpr float kManaRecoveryShare = 1.0f / 27.5f;
+constexpr float kAttackManaShare = 0.05f;        // invention: a twentieth of the pool a blow
+
 // The shield: its share of a blow and its safe-zone recovery, every three seconds. Rates.cs.
 constexpr float kShieldShare = 0.9f;
 constexpr float kShieldRecovery = 0.02f;

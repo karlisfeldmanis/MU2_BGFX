@@ -18,7 +18,7 @@
 //            up over 22%, the rules draw out from 6% to 24%, the diamond turns in from 12% to
 //            26% and the caption comes in from 18% to 32%
 //
-// One thing is not the page's: a soft black scrim behind the whole stack (75% at its middle, a
+// One thing is not the page's: a soft black scrim behind the whole stack (52% at its middle, a
 // Gaussian 250 by 50 px), which the user asked for once it was seen over Lorencia's bright paving.
 //
 // A browser's blur is a Gaussian of half its radius; the halos here are the same Gaussian,

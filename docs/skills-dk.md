@@ -320,7 +320,17 @@ order they bite:
    vitality 0). At vitality 800 that is 12 s of cooldown for 10 s of half damage, which is a strong
    button and not an always-on one.
 
-**Mana stays 0.75's** — 8, 9, 9, 9, 10, 30. It stops being the limiter by about level 30, and that is
+**Mana stays 0.75's** — 8, 9, 9, 9, 10, 30 — and what comes back changed instead (2026-09-23).
+The passive is the original's, traced: every three seconds, `maximum / 27.5`
+(`GameConfigurationInitializerBase.cs:51`, `CharacterClassInitialization.cs:163`), which alone is
+one cast every twenty-seven seconds against a four-second cooldown. So **a landed swing returns a
+twentieth of the pool** — `invention`, and Diablo 3's shape, which is the one `PLAN.md` chose: the
+basic attack is the generator, the skills are the spenders, and the fight has a rhythm of swing,
+swing, spend. A skill's own blow returns nothing, or it would pay for itself. Measured on the
+hunt: a level-30 knight went from 3 casts in 4 000 ticks to 31 in 6 000, and a level-100 one to 63
+of a possible 80 — mana binds early and the cooldown binds late, which is the right way round.
+
+**Mana stays 0.75's in cost** — It stops being the limiter by about level 30, and that is
 fine: the cooldown is the new cost, and this is one fewer number invented. If mana should keep
 mattering, the knob is `mana = base × M` (the skill costs what it hits for) — **not** recommended for
 the first pass, because it re-introduces the potion spam the cooldown exists to replace.
