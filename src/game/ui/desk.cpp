@@ -391,103 +391,69 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm, b
     tip::Sheet sheet;
     sheet.name = row.name;
     sheet.nameTone = tip::Tone::Blue;
-    sheet.base = row.onSelf() ? "SKILL - GUARD" : "SKILL - DARK KNIGHT";
 
     const auto number = [](float value, int places) {
         char text[32];
         std::snprintf(text, sizeof(text), places == 1 ? "%.1f" : "%.2f", double(value));
         return std::string(text);
     };
-    const auto row_ = [](const std::string& label, const std::string& value, tip::Tone tone) {
+    const auto line = [](const std::string& label, const std::string& value, tip::Tone tone) {
         tip::Row one;
         one.label = label;
         one.values.push_back({value, tone, false, "", 0});
         return one;
     };
 
+    // What it does, in the row's own line.
     if (row.tells[0] != '\0') {
         tip::Section what;
-        tip::Row line;
-        line.free = row.tells;
-        line.freeTone = tip::Tone::Gray;
-        what.rows.push_back(line);
+        tip::Row prose;
+        prose.free = row.tells;
+        prose.freeTone = tip::Tone::Gray;
+        what.rows.push_back(prose);
         sheet.sections.push_back(what);
     }
 
-    // What it does to the blow, and where that came from. The breakdown is the point of the card:
-    // a player who cannot see strength working will not spend on it.
-    tip::Section does;
-    does.kicker = row.onSelf() ? "Guard" : "Blow";
-    does.mark = row.onSelf() ? tip::Mark::Shield : tip::Mark::Blade;
-    if (row.onSelf()) {
-        does.rows.push_back(row_("Damage taken", "x" + number(row.damageTaken, 2),
-                                 tip::Tone::Green));
-        does.rows.push_back(row_("For", number(float(row.boonTicks) * 0.05f, 1) + " s",
-                                 tip::Tone::White));
-    } else {
-        const float multiplier = sim::force(row, hero.points);
-        does.rows.push_back(row_("Damage", "x" + number(multiplier, 2) + " of a swing",
-                                 tip::Tone::Yellow));
-        tip::Row from;
-        from.label = "From";
-        from.values.push_back({"x" + number(row.force, 2) + " base", tip::Tone::Gray, false, "", 0});
-        from.values.push_back({"+" + number(float(hero.points.strength) * row.forcePerStrength, 2) +
-                                   " from " + std::to_string(hero.points.strength) + " strength",
-                               tip::Tone::Gray, false, "", 0});
-        does.rows.push_back(from);
-        does.rows.push_back(row_("Reach", number(row.reach, 1) + " tiles", tip::Tone::White));
-    }
-    sheet.sections.push_back(does);
-
-    // The cooldown, with the haste that shortened it -- and what is left of it while it runs.
-    tip::Section wait;
-    wait.kicker = "Cooldown";
-    wait.mark = tip::Mark::Diamond;
-    const int32_t whole = realm.coolsFor(row.number);
-    const float seconds = float(whole) * 0.05f;
-    const float base = float(row.coolTicks) * 0.05f;
-    wait.rows.push_back(row_("Ready again in", number(seconds, 1) + " s",
-                             seconds <= base * 0.5f ? tip::Tone::Green : tip::Tone::White));
-    if (base > 0.0f) {
-        const int cut = int((1.0f - seconds / base) * 100.0f + 0.5f);
-        wait.rows.push_back(row_("From", number(base, 1) + " s base, -" + std::to_string(cut) +
-                                              "% from " + std::to_string(hero.points.agility) +
-                                              " agility",
-                                 tip::Tone::Gray));
-    }
+    // And three numbers, which is the whole of the card.
+    //
+    // **Only the essentials, on the user's word of 2026-09-23.** What went: the class line, the
+    // reach (always his own), the section headings and their marks, and both derivations -- the
+    // "x2.00 base, +0.08 from strength" and the "4.0 s base, -6% from agility". The derivations
+    // were the teaching bit and they are the first thing to go all the same: what a player acts on
+    // is the multiplier his blow HAS and the wait he actually faces, and both of those already
+    // carry the stat inside them. The formulas live in docs/skills-dk.md, where they are read
+    // once, rather than on a card read fifty times a fight.
+    tip::Section facts;
     const int64_t left = realm.cooling(row.number);
-    if (left > 0) {
-        wait.rows.push_back(row_("Cooling", number(float(left) * 0.05f, 1) + " s left",
-                                 tip::Tone::Red));
+    const float seconds = float(realm.coolsFor(row.number)) * 0.05f;
+    if (row.onSelf()) {
+        facts.rows.push_back(line("Damage taken", "x" + number(row.damageTaken, 2) + " for " +
+                                                      number(float(row.boonTicks) * 0.05f, 1) + " s",
+                                  tip::Tone::Green));
+    } else {
+        facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.points), 2) +
+                                                " of a swing",
+                                  tip::Tone::Yellow));
     }
-    sheet.sections.push_back(wait);
-
-    // What it costs, which is the question the player asks last and feels first.
-    tip::Section cost;
-    cost.kicker = "Cost";
-    cost.mark = tip::Mark::Star;
+    if (left > 0) {
+        facts.rows.push_back(line("Ready in", number(float(left) * 0.05f, 1) + " s",
+                                  tip::Tone::Red));
+    } else {
+        facts.rows.push_back(line("Cooldown", number(seconds, 1) + " s", tip::Tone::White));
+    }
     const bool paid = hero.mana >= row.mana;
-    cost.rows.push_back(row_("Mana", std::to_string(row.mana) + " of " + std::to_string(hero.mana),
-                             paid ? tip::Tone::Blue : tip::Tone::Red));
-    sheet.sections.push_back(cost);
+    facts.rows.push_back(line("Mana", std::to_string(row.mana), paid ? tip::Tone::Blue
+                                                                     : tip::Tone::Red));
+    sheet.sections.push_back(facts);
 
-    // And why the key is dark, when it is. Said plainly rather than left to the tint.
-    if (!armed || !paid) {
+    // The one refusal the numbers do not already show: an empty hand. A mana shortfall is the red
+    // figure above it and needs no sentence.
+    if (!armed) {
         tip::Section why;
-        why.kicker = "Cannot throw it";
-        why.mark = tip::Mark::Note;
-        if (!armed) {
-            tip::Row line;
-            line.free = row.onSelf() ? "A shield on the arm." : "A blade in his hand.";
-            line.freeTone = tip::Tone::Red;
-            why.rows.push_back(line);
-        }
-        if (!paid) {
-            tip::Row line;
-            line.free = "Not enough mana.";
-            line.freeTone = tip::Tone::Red;
-            why.rows.push_back(line);
-        }
+        tip::Row need;
+        need.free = row.onSelf() ? "Needs a shield on his arm." : "Needs a blade in his hand.";
+        need.freeTone = tip::Tone::Red;
+        why.rows.push_back(need);
         sheet.sections.push_back(why);
     }
     return sheet;
