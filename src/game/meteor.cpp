@@ -502,6 +502,30 @@ void Meteor::gather(gfx::Effects& effects) const {
     }
 }
 
+uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
+    if (out == nullptr) return 0;
+    uint32_t count = 0;
+    for (const auto& m : meteors_) {
+        if (!m.alive || count >= max) continue;
+        gfx::PointLight& light = out[count++];
+        light.position[0] = m.x;
+        light.position[1] = m.y;
+        light.position[2] = m.z;
+        // `AddTerrainLight(..., 2, ...)`: two tiles, which is two metres here.
+        light.reach = kGlowTiles;
+        // How far it hangs over the ground under it. The rock is four metres up when it is
+        // thrown and on the floor when it lands, so this is what it has fallen to -- without
+        // it the light would be flat on the ground the whole way down and the pool would not
+        // tighten as the rock came in.
+        light.height = std::max(0.0f, m.y - m.floorY);
+        // The deep orange-red, dimmed by the frame's own body roll. It is the ONE place that
+        // colour belongs besides the embers: over the flame cone it crushes the sheet toward
+        // black.
+        for (int c = 0; c < 3; ++c) light.colour[c] = kGlow[c] * m.bodyLight;
+    }
+    return count;
+}
+
 uint32_t Meteor::liveMeteors() const {
     uint32_t count = 0;
     for (const auto& m : meteors_) if (m.alive) ++count;

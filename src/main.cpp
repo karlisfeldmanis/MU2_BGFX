@@ -1172,6 +1172,15 @@ int main(int argc, char** argv) {
                 // surface, over what the default sheet's noon gives it.
                 world.lamps().gather(renderer.effects(), eye.target, daylightOf(lighting));
             }
+            // And what is burning and MOVING, which the lamps' static grid cannot hold: a
+            // Lich's meteor lights the ground it is falling towards. Handed over every frame,
+            // including the frame it becomes none, which is what clears it.
+            {
+                gfx::PointLight falling[gfx::Renderer::kMaxTransientLights];
+                renderer.setTransientLights(
+                    falling, world.played().meteor().lights(
+                                 falling, gfx::Renderer::kMaxTransientLights));
+            }
             // The town's own animation: before the town is gathered, since each placement's
             // pose rides in its own instance the same way a glow's level does. Only what the
             // camera can see is posed -- see Sway::update.

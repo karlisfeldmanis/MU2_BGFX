@@ -185,6 +185,23 @@ public:
     void setPointLightLevels(const float* levels, uint32_t count);
     uint32_t pointLightCount() const { return lightCount_; }
 
+    // The lights that MOVE, and are gone again: a burning meteor on its way down, and whatever
+    // else an effect wants to light the town with. Set once a frame, before draw(); null or a
+    // count of 0 turns them off, and the shader's loop then does not run.
+    //
+    // They are deliberately NOT in the grid above. That grid is binned once when a world opens
+    // precisely because the lamps never move, and a light that travels would have the whole map
+    // walked again every frame -- 16 384 cells of Lorencia against four lights, to save a loop
+    // of four. So these are a uniform array every lit pixel reads, and 4 is the cap the loop is
+    // affordable at. Above it the extra are dropped, loudly, rather than silently truncated.
+    //
+    // They are packed exactly as a static light is and lit by the same function in lights.sh --
+    // same flat-on-the-ground distance, same `(1 - d^2/R^2)^2` falloff, same lamp_strength --
+    // so a torch and a meteor of equal reach light a wall identically.
+    static constexpr uint32_t kMaxTransientLights = 4;
+    void setTransientLights(const PointLight* lights, uint32_t count);
+    uint32_t transientLightCount() const { return transientCount_; }
+
     // The view and projection this renderer will use for that camera, so that whoever culls
     // against the frustum culls against the SAME frustum that is drawn. Handedness and the
     // depth range are decided in one place only; a second copy of these two calls elsewhere
@@ -445,6 +462,16 @@ private:
     std::vector<float> lampColour_;  // the colours before the flicker, three a light
     uint32_t lightCount_ = 0;
     bool lampsDirty_ = false;
+
+    // The movers: the same two vec4s a static light occupies in the lamp texture's two rows,
+    // position and reach then colour and height, so lights.sh reads one shape either way.
+    // The count rides in u_lampParams.z, which was spare, rather than in a uniform of its own:
+    // one more uniform is one more upload on every shaded draw in the frame.
+    float transientAt_[kMaxTransientLights * 4] = {};
+    float transientColour_[kMaxTransientLights * 4] = {};
+    uint32_t transientCount_ = 0;
+    bgfx::UniformHandle uTransientAt_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uTransientColour_ = BGFX_INVALID_HANDLE;
 
     bgfx::TextureHandle palette_ = BGFX_INVALID_HANDLE;
     std::vector<float> paletteCpu_;  // kMaxPaletteRows x kMaxBones x 12

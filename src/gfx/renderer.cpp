@@ -87,6 +87,12 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     sBloom_ = bgfx::createUniform("s_bloom", bgfx::UniformType::Sampler);
     uLampGrid_ = bgfx::createUniform("u_lampGrid", bgfx::UniformType::Vec4);
     uLampParams_ = bgfx::createUniform("u_lampParams", bgfx::UniformType::Vec4);
+    // An array uniform, and its length has to be the shader's: lights.sh declares [4] and
+    // bgfx refuses a handle whose num disagrees.
+    uTransientAt_ = bgfx::createUniform("u_transientAt", bgfx::UniformType::Vec4,
+                                        kMaxTransientLights);
+    uTransientColour_ = bgfx::createUniform("u_transientColour", bgfx::UniformType::Vec4,
+                                           kMaxTransientLights);
     sLamps_ = bgfx::createUniform("s_lamps", bgfx::UniformType::Sampler);
     sLampGrid_ = bgfx::createUniform("s_lampGrid", bgfx::UniformType::Sampler);
 
@@ -625,7 +631,7 @@ void Renderer::shutdown() {
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uCamPos_, &uParams_,
           &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
-          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
+          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
           &sBloom_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
@@ -672,6 +678,13 @@ void Renderer::bindShadeInputs() {
     }
     bgfx::setUniform(uLampGrid_, lampGridUniform_);
     bgfx::setUniform(uLampParams_, lampParams_);
+    // Only when there are any. This runs on EVERY shaded draw in the frame, so the common
+    // case -- nothing burning -- must not pay two uniform uploads a draw for an array the
+    // shader's loop is about to not read. lampParams_.z is 0 then, and that is what stops it.
+    if (transientCount_ > 0) {
+        bgfx::setUniform(uTransientAt_, transientAt_, kMaxTransientLights);
+        bgfx::setUniform(uTransientColour_, transientColour_, kMaxTransientLights);
+    }
     bgfx::setTexture(13, sLamps_, lamps_);
     bgfx::setTexture(14, sLampGrid_, lampGrid_);
 }
@@ -970,6 +983,36 @@ void Renderer::setPointLightLevels(const float* levels, uint32_t count) {
         }
     }
     lampsDirty_ = true;
+}
+
+void Renderer::setTransientLights(const PointLight* lights, uint32_t count) {
+    if (lights == nullptr) count = 0;
+    if (count > kMaxTransientLights) {
+        core::logError("%u transient lights and the frame holds %u; the rest are dark", count,
+                       kMaxTransientLights);
+        count = kMaxTransientLights;
+    }
+    transientCount_ = count;
+    // Packed as setPointLights packs a static one into the lamp texture's two rows: position
+    // and reach, then colour and height. The difference is that there is no separate level
+    // here -- a static lamp's flicker arrives later, per frame, through setPointLightLevels
+    // and multiplies a colour kept aside in lampColour_, while a mover is set whole every
+    // frame anyway, so whatever is flickering it has already multiplied it in.
+    for (uint32_t i = 0; i < transientCount_; ++i) {
+        const PointLight& one = lights[i];
+        float* at = &transientAt_[size_t(i) * 4];
+        at[0] = one.position[0];
+        at[1] = one.position[1];
+        at[2] = one.position[2];
+        at[3] = one.reach;
+        float* lit = &transientColour_[size_t(i) * 4];
+        lit[0] = one.colour[0];
+        lit[1] = one.colour[1];
+        lit[2] = one.colour[2];
+        lit[3] = one.height;
+    }
+    // What the shader loops to. The rest of u_lampParams is the static path's and is untouched.
+    lampParams_[2] = float(transientCount_);
 }
 
 void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,

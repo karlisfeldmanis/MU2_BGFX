@@ -31,6 +31,7 @@
 #include "content/showing.h"
 #include "content/texture.h"
 #include "gfx/effects.h"
+#include "gfx/renderer.h"
 
 namespace mu::game {
 
@@ -76,6 +77,16 @@ public:
 
     // Writes every live thing into the transparent pass.
     void gather(gfx::Effects& effects) const;
+
+    // The light a burning rock throws on the town, as MU's own `AddTerrainLight(..., 2, ...)`:
+    // a deep orange-red at two tiles, its energy the SAME 0.7-1.0 roll the rock's body takes,
+    // so the pool on the ground flickers with the flame above it rather than beside it. One
+    // light a live rock, up to `max`; returns how many were written.
+    //
+    // It ends with the rock. MU creates no light at the landing -- the blast is a sprite and
+    // the fire on the ground is its picture, not its illumination -- and adding one there
+    // would be an invention this has no reason to make.
+    uint32_t lights(gfx::PointLight* out, uint32_t max) const;
 
     // The camera's jolt, in DEGREES OF PITCH, which is what MU's EarthQuake is: it is added to
     // `m_State.Angle[0]` (DefaultCamera.cpp:700) and decayed by 0.2 a frame
@@ -178,6 +189,9 @@ private:
     // one-a-frame and stays true at any frame rate. The streak itself is NOT these: it is the
     // 166-unit additive cone in the model, and packing billboards tightly enough to look
     // continuous lays discrete sprites over an already smooth flame and fractures both.
+    // What the rock lights, and how far: `AddTerrainLight(..., 2, ...)`, two tiles.
+    static constexpr float kGlowTiles = 2.0f;
+
     static constexpr float kEmberSpacingUnits = 50.0f;
     static constexpr float kEmberFrames = 24.0f;
     static constexpr int kEmberCells = 4;     // a 256x64 strip
