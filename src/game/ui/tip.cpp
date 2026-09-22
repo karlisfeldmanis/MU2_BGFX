@@ -36,12 +36,16 @@ struct Fall { float drop, sigma, alpha; };
 constexpr Fall kFalls[3] = {{1.0f, 1.5f, 0.70f}, {8.0f, 7.0f, 0.55f}, {30.0f, 30.0f, 0.55f}};
 constexpr int kShadowColumns = 16, kShadowRows = 14;
 
-// The card is glass: ONE opacity over the whole container -- its fill, its ring, its marks and
-// every word on it -- rather than a see-through plate with solid text standing on it. The head's
-// tint keeps its gradient; it is faded with everything else. The shadow is not faded, because it
-// is cast on the world rather than part of the card.
-constexpr float kOpacity = 0.88f;
-constexpr uint32_t kBody = gfx::rgba(0.039f, 0.043f, 0.047f, 1.0f);
+// Two opacities, because they are two different jobs. `kOpacity` is the card's own glass and
+// goes through every colour it draws -- ring, marks, labels, numbers, chips, foot -- so the
+// whole container is one sheet. The BACKGROUND is separately much thinner: the world is meant
+// to move behind it, and at one shared alpha a plate dark enough to read on is a plate nothing
+// shows through. It is a gradient, lighter at the head and settling toward the foot, which is
+// what keeps it from reading as a flat grey rectangle.
+constexpr float kOpacity = 0.94f;
+constexpr uint32_t kBodyTop = gfx::rgba(0.075f, 0.082f, 0.094f, 0.58f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.023f, 0.027f, 0.72f);
+constexpr uint32_t kBody = kBodyTop;  // the corners' own fill; the gradient is drawn over it
 constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
 constexpr uint32_t kLift = gfx::rgba(1.0f, 1.0f, 1.0f, 0.055f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
@@ -311,7 +315,23 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     const float all[4] = {radius, radius, radius, radius};
     const float wider[4] = {radius + line, radius + line, radius + line, radius + line};
     roundedFan(canvas, box.grown(line), wider, fade(kRing));
-    roundedFan(canvas, box, all, fade(kBody));
+    roundedFan(canvas, box, all, kBodyTop);
+    // The gradient over it, as a cross: full width between the corner arcs, full height in the
+    // middle. That covers every pixel of a rounded rectangle except the arcs themselves, which
+    // keep the flat top colour -- at this alpha nobody can see the difference, and it costs two
+    // quads rather than a polygon with a colour a vertex.
+    {
+        const float top = float((kBodyTop >> 24) & 0xFFu), foot = float((kBodyFoot >> 24) & 0xFFu);
+        const auto mixed = [&](float at) {  // 0 at the head, 1 at the foot
+            const uint32_t a = uint32_t(top + (foot - top) * at + 0.5f);
+            return (kBodyFoot & 0x00FFFFFFu) | (a << 24);
+        };
+        const float rTop = radius / box.h, rFoot = 1.0f - radius / box.h;
+        canvas.shade({box.x + radius, box.y, box.w - radius * 2.0f, box.h}, mixed(0.0f),
+                     mixed(0.0f), mixed(1.0f), mixed(1.0f));
+        canvas.shade({box.x, box.y + radius, box.w, box.h - radius * 2.0f}, mixed(rTop),
+                     mixed(rTop), mixed(rFoot), mixed(rFoot));
+    }
     // The lit top edge, inset past the corners so it does not stick out of them.
     canvas.rect({box.x + radius, box.y + line, box.w - radius * 2.0f, line}, fade(kLift));
 
