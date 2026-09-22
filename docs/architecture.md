@@ -209,13 +209,20 @@ A reference moves only when the change was *meant* to move it: look at both pict
 `tools/shotcheck.py --bless <scene>`, and say so in the commit message. Blessing a reference
 to turn a red check green is the one thing that would make it worthless.
 
-**One known flake, and it is not a tolerance.** `town` draws a dropped item the reference does
-not have in roughly one run in fifteen — found on 2026-09-22 by the check itself, with ten
-consecutive identical runs either side of the one that differed. The cause is not found; it is
-*not* the renderer's wall clock, which was a separate bug fixed the same day. So a mismatch is
-drawn a second time before it is believed, and only a scene that differs twice fails: a real
-regression is deterministic and fails both draws, while a one-in-fifteen flake survives a
-second draw about once in two hundred. It is in *What is owed* below.
+**A reference is pinned to a cook as well as to code.** These scenes draw what is in `assets/`,
+which is gitignored, mutable and rebuilt by `tools/cook.py`. Re-cook the tables or the art and
+the picture legitimately moves with no source change at all, and the references must be
+blessed again.
+
+That is worth stating because getting it wrong is easy and was got wrong here. On 2026-09-22
+this check went red on `town`, and the difference was written up — in this page and in a
+commit — as a one-in-fifteen nondeterminism in the engine, on the evidence that ten runs
+either side of it came out identical. It was not. Another session had re-cooked the item
+tables that afternoon (their format went from version 6 to 7), so the binary was drawing
+different *data* from one run to the next. Any single build was byte-identical across three
+runs throughout. **"It differs between runs" and "the tree changed between runs" look exactly
+alike from inside the check**, and the second is far likelier on a tree more than one person
+is working in.
 
 The references are this Mac's Metal. Another GPU will differ, and that is expected: this is a
 check against yesterday's build on one machine, not a conformance suite.
@@ -224,11 +231,12 @@ check against yesterday's build on one machine, not a conformance suite.
 
 Written here rather than left implied, because a rule nothing keeps is worse than no rule:
 
-- **A dropped item appears in `town` about one run in fifteen** and the reference does not
-  have it. The sim's fingerprint is identical across those runs, so whatever it is, it is in
-  the drawing and not in the rules — a drop shown that should still be held back, most likely
-  (`Play::heldDrops`, `Litter::update`). `shotcheck` draws twice to ride over it, which is a
-  workaround and not a fix.
+- **`shotcheck` cannot tell a stale reference from a regression**, because it records nothing
+  about the cook it was blessed against. A fingerprint of the cooked files it drew, written
+  beside each reference and compared on a mismatch, would turn "this moved and I do not know
+  why" into "this moved because the tables were re-cooked" — which is the one question a red
+  result actually raises. The `town` reference is stale as of the v7 item tables and has not
+  been re-blessed.
 - **`assets/assets/`** is 30 MB of orphaned duplicates that nothing in `src/`, `tools/` or
   `pipeline/` references — a sync that once ran with the wrong root. It is inside a gitignored
   folder so it costs nothing but disk and confusion. Not deleted yet.

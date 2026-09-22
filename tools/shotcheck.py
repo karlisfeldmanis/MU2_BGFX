@@ -11,10 +11,18 @@ committed references -- not approximately, exactly, byte for byte in pixels. Tha
 bar and not an aspiration: measured over ten runs each, these scenes come out identical to the
 last bit. A tolerance would be a place for a regression to hide, so there isn't one.
 
-There is ONE known flake and it is not a tolerance. `town` draws a dropped item the reference
-does not have in roughly one run in fifteen; the cause is not found. A mismatch is therefore
-drawn a second time before it is believed, and only a scene that differs twice fails. A real
-regression is deterministic and fails both draws.
+**A reference is pinned to a COOK as well as to code, and that is the thing to know before
+reading a red result.** These scenes draw what is in `assets/`, which is gitignored, mutable
+and rebuilt by `tools/cook.py`. Re-cook the tables or the art and the picture legitimately
+moves, with no source change at all, and the references must be blessed again.
+
+That is not hypothetical: on 2026-09-22 this check went red on `town` and the difference was
+read as a one-in-fifteen nondeterminism in the engine, on the evidence that ten runs either
+side of it were identical. It was not. Another session had re-cooked the item tables (their
+format went from version 6 to 7 that afternoon), so the binary was drawing different DATA
+between one run and the next. Three runs of any single build were byte-identical throughout.
+The wrong conclusion survived a commit; the lesson is that "it differs between runs" and "the
+tree changed between runs" look exactly alike from inside this script.
 
 What the three cover between them:
 
@@ -152,24 +160,6 @@ def main():
             print(f"  {name}: identical")
             continue
 
-        # It did not match. Draw it once more before believing that, because ONE of these
-        # scenes is known to be rarely nondeterministic and a gate that cries wolf is a gate
-        # people learn to ignore.
-        #
-        # The flake, measured 2026-09-22: `town` draws a dropped item on the ground that the
-        # reference does not have, in roughly one run in fifteen -- ten consecutive runs came
-        # out identical either side of the one that did not. The cause is not found and it is
-        # in `docs/architecture.md`'s owed list; it is NOT the renderer's wall clock, which was
-        # a different bug fixed the same day.
-        #
-        # A real regression is deterministic and fails both draws. A one-in-fifteen flake
-        # survives a second draw about once in two hundred and twenty. So: two strikes.
-        second = draw(name, kept)
-        if second is not None and np.array_equal(load(second), expected):
-            print(f"  {name}: identical on a second draw -- the first differed in {moved} "
-                  f"pixels. Treated as the known flake, NOT as a pass to rely on; if you see "
-                  f"this often, the flake has got worse and is worth chasing.")
-            continue
         # A mask of what moved, beside the frame that moved it, because "1.2% of pixels
         # differ" does not say whether the shadows went or the sky changed shade.
         mask = os.path.join(os.path.dirname(drawn), f"{name}.diff.png")
@@ -187,6 +177,8 @@ def main():
     if failures:
         print(f"shotcheck: {len(failures)} of {len(names)} scenes moved: {', '.join(failures)}")
         print("  If the change was meant to move them, look at both and then --bless.")
+        print("  If you changed no source, check whether assets/ was re-cooked: a reference is")
+        print("  pinned to a cook as well as to code. See this file's header.")
         return 1
     shutil.rmtree(kept, ignore_errors=True)
     print(f"shotcheck: {len(names)} scenes, every pixel of every one of them identical")
