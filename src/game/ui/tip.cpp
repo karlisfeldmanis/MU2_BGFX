@@ -43,8 +43,8 @@ constexpr int kShadowColumns = 40, kShadowRows = 34;
 // shows through. It is a gradient, lighter at the head and settling toward the foot, which is
 // what keeps it from reading as a flat grey rectangle.
 constexpr float kOpacity = 0.94f;
-constexpr uint32_t kBodyTop = gfx::rgba(0.016f, 0.018f, 0.022f, 0.90f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.004f, 0.005f, 0.007f, 0.66f);
+constexpr uint32_t kBodyTop = gfx::rgba(0.008f, 0.009f, 0.012f, 0.95f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.002f, 0.002f, 0.004f, 0.78f);
 constexpr uint32_t kBody = kBodyTop;  // the corners' own fill; the gradient is drawn over it
 constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
