@@ -19,6 +19,7 @@
 #include "content/ground.h"
 #include "content/tables.h"
 #include "game/aura.h"
+#include "game/breath.h"
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/marker.h"
@@ -167,6 +168,8 @@ public:
     // the showing.
     Aura& aura() { return aura_; }
     Sound& sound() { return sound_; }
+    // What a Budge Dragon gives off, opened by the caller for the same reason as the showing.
+    Breath& breath() { return breath_; }
     // Opens the sound and loads what this realm can say: the level-up, and every breed's
     // attack, death and wandering cries, found once per body as its clips are. Opened by the
     // caller after the showing, whose table the events are read from. Not fatal.
@@ -220,6 +223,11 @@ private:
         // `_attack`, `_die` and `_move` by MU2's naming (the label lowered, no spaces). -1 for
         // the character and for a breed with nothing cooked, which is silence.
         int cryAttack = -1, cryDie = -1, cryMove = -1;
+        // A Budge Dragon: its head bone, which the fire comes out of, and what of a reference
+        // frame's spark and a fourth of one's puff is owed. See Play::exhale.
+        bool breathes = false;
+        int headBone = -1;
+        float fireOwed = 0.0f, dustOwed = 0.0f;
         // Negative while alive. Set to 0 the tick `Died` happens and counted up from there, so
         // the corpse holds its last pose and fades instead of vanishing on the tick it falls --
         // see kDeathHold and kDeathFade in play.cpp.
@@ -279,6 +287,9 @@ private:
     Marker marker_;
     Aura aura_;
     Sound sound_;
+    Breath breath_;
+    // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
+    void exhale(float seconds);
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
     // sim's seeded stream.
     uint32_t wanderDice_ = 0x6d2b79f5u;

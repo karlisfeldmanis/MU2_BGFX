@@ -363,6 +363,10 @@ int main(int argc, char** argv) {
                 world.played().showing().open(MU2_ASSET_DIR, textures);
                 world.played().marker().open(MU2_ASSET_DIR, textures);
                 world.played().aura().open(MU2_ASSET_DIR, textures);
+                if (world.played().showing().isOpen()) {
+                    world.played().breath().open(MU2_ASSET_DIR, textures,
+                                                 world.played().showing().table(), &world.ground());
+                }
                 world.played().openSound(MU2_ASSET_DIR, args.mute);
                 // Not fatal either: a game with no HUD is still a game.
                 if (world.played().isOpen() && args.windows != "off" &&
@@ -1193,6 +1197,7 @@ int main(int argc, char** argv) {
                 world.played().showing().gather(renderer.effects(), right);
                 world.played().gatherMarker(renderer.effects());
                 world.played().gatherAura(renderer.effects(), eye.position);
+                world.played().breath().gather(renderer.effects());
                 // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
                 // laid down where they land.
                 if (!itemModels.tables()) {

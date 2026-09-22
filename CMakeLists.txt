@@ -113,6 +113,7 @@ add_executable(mu2
   src/game/showing.cpp
   src/game/marker.cpp
   src/game/aura.cpp
+  src/game/breath.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp
   src/game/panel.cpp

@@ -117,6 +117,15 @@ const char* kHeroDressName = "Hero";
 // Scenery.Noise; MixNpc01 and ElfWizard01 are the other two and are Noria's.
 const char* kSmithFigure = "Smith01";
 
+// The one breed in Lorencia that breathes fire and raises dust. MU2's BudgeDragon01.json
+// `effects` block, which the cook does not carry; stated here once.
+const char* kBreathingFigure = "BudgeDragon01";
+// MONSTER01_ATTACK1, and the key its fire stops on: `AnimationFrame <= 4.f`.
+constexpr int kBreathSlot = 3;
+constexpr float kBreathThrough = 4.0f;
+// How far out of the head a spark is born: MU's 32 to 64 units.
+constexpr float kBreathNear = 0.32f, kBreathFar = 0.64f;
+
 // Where a foot lands in MU's walk, in the clip's own keys: `AnimationFrame >= 1.5f` and
 // `>= 4.5f` in ZzzCharacter.cpp's PlayWalkSound, each latched by its own c->Foot[n] so a mark
 // several frames wide sounds once. Two a cycle, which is a pair of legs. MU2's Crowd.FirstFoot.
@@ -285,6 +294,15 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                     one.attackClip = look->library->find(3);
                     if (one.attackClip < 0) one.attackClip = look->library->find(4);
                     one.deathClip = look->library->find(kMonsterDieSlot);
+                    // MODEL_BUDGE_DRAGON's own case in the effect switch. Its bone 7 is
+                    // Bip01 Head, found by name so the number is not a coincidence kept.
+                    if (look->name == kBreathingFigure && look->skeletonMesh) {
+                        one.breathes = true;
+                        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                        for (size_t b = 0; b < bones.size(); ++b) {
+                            if (bones[b].name == "Bip01 Head") one.headBone = int(b);
+                        }
+                    }
                 }
             }
         } else {
@@ -624,6 +642,8 @@ void Play::update(double seconds) {
     }
     steps();
     hammer();
+    exhale(float(seconds));
+    breath_.update(float(seconds));
 
     // --- sprint 6: the landing cue ------------------------------------------------------
     // On the DRAWING's clock and after the swings have been advanced above, so that a cue
@@ -760,6 +780,62 @@ void Play::steps() {
     if (!rightFoot_ && key >= kSecondFoot) {
         rightFoot_ = true;
         tread();
+    }
+}
+
+void Play::exhale(float seconds) {
+    if (ground_ == nullptr) return;
+    const float frames = seconds * 25.0f;
+    for (Drawn& one : drawn_) {
+        if (!one.breathes) continue;
+        const sim::Body* body = realm_.find(one.id);
+        const FigureBody* look = one.figure.body();
+        // c->Dead == 0: the moment the death arrives, not when the corpse is gone. A dragon
+        // that kept raising dust while it lay there was gated on being drawn alone.
+        if (!body || !body->alive() || !look || !one.visible || !one.placed) {
+            one.fireOwed = one.dustOwed = 0.0f;
+            continue;
+        }
+        const float scale = look->scale;
+        // o->Angle, which both particles' velocities are turned by: the facing on the ground.
+        // A model looks down +z, which placementTransform turns to (sin yaw, cos yaw).
+        const float along[2] = {std::sin(one.yaw), std::cos(one.yaw)};
+
+        // rand_fps_check(4), one puff every fourth reference frame.
+        one.dustOwed += frames / 4.0f;
+        while (one.dustOwed >= 1.0f) {
+            one.dustOwed -= 1.0f;
+            const float feet[3] = {one.crown[0], ground_->heightAt(one.crown[0], one.crown[2]),
+                                   one.crown[2]};
+            breath_.puff(feet, along, scale);
+        }
+
+        // rand_fps_check(1) inside the bite's first four keys: a spark every reference frame.
+        const bool biting = slotOf(one.figure) == kBreathSlot && keyOf(one.figure) >= 0.0f &&
+                            keyOf(one.figure) <= kBreathThrough;
+        if (!biting || one.headBone < 0) {
+            one.fireOwed = 0.0f;
+            continue;
+        }
+        one.fireOwed += frames;
+        while (one.fireOwed >= 1.0f) {
+            one.fireOwed -= 1.0f;
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float head[3];
+            if (!one.figure.pointOn(one.headBone, origin, head)) break;
+            // Out of the face along the facing rather than along the bone: the client takes the
+            // bone's POSITION and the object's ANGLE, two different things, and a dragon throws
+            // its head through the bite -- along the bone, the jet went where the head went.
+            // MU2's Breath.Aim found this; the facing is already turned onto the quarry.
+            const float out =
+                (kBreathNear + (kBreathFar - kBreathNear) * float(wanderDice_ % 1000) / 1000.0f) *
+                scale;
+            wanderDice_ ^= wanderDice_ << 13;
+            wanderDice_ ^= wanderDice_ >> 17;
+            wanderDice_ ^= wanderDice_ << 5;
+            const float at[3] = {head[0] + along[0] * out, head[1], head[2] + along[1] * out};
+            breath_.spark(at, along, scale);
+        }
     }
 }
 
