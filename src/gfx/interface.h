@@ -75,6 +75,9 @@ public:
     void outline(const Box& box, float thickness, uint32_t abgr);
     // A convex polygon as a fan, with its uvs already normalised. Null art is a solid fill.
     void polygon(const Art* art, const float* xy, const float* uv, int count, uint32_t abgr);
+    // The same, solid, with a colour a vertex: a rounded panel that grades down its own shape,
+    // corners included.
+    void polygon(const float* xy, const uint32_t* abgr, int count);
 
     // A line of text on a baseline, at a Godot font size. `width` is the box a centred or
     // right-aligned line is set in, from `x` -- Godot's DrawString(width:) exactly. Returns

@@ -43,8 +43,8 @@ constexpr int kShadowColumns = 40, kShadowRows = 34;
 // shows through. It is a gradient, lighter at the head and settling toward the foot, which is
 // what keeps it from reading as a flat grey rectangle.
 constexpr float kOpacity = 0.94f;
-constexpr uint32_t kBodyTop = gfx::rgba(0.075f, 0.082f, 0.094f, 0.62f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.023f, 0.027f, 0.76f);
+constexpr uint32_t kBodyTop = gfx::rgba(0.075f, 0.082f, 0.094f, 0.86f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.023f, 0.027f, 0.62f);
 constexpr uint32_t kBody = kBodyTop;  // the corners' own fill; the gradient is drawn over it
 constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
@@ -70,8 +70,8 @@ constexpr uint32_t fade(uint32_t abgr) {
 // A rounded rectangle as one convex fan, with a radius a corner: the canvas draws polygons and
 // quads and has no rounded primitive, and a rounded rectangle is convex, so one polygon does it.
 // Corners run top-left, top-right, bottom-right, bottom-left.
-void roundedFan(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4],
-                uint32_t colour) {
+void roundedFan(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4], uint32_t colour,
+                uint32_t foot = 0u, float fadeFrom = 0.0f, float fadeTo = 1.0f) {
     float xy[(kCorner + 1) * 4 * 2];
     int at = 0;
     const float cx[4] = {box.x, box.right(), box.right(), box.x};
@@ -89,7 +89,27 @@ void roundedFan(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4],
             xy[at++] = oy + std::sin(a) * rad;
         }
     }
-    canvas.polygon(nullptr, xy, nullptr, at / 2, colour);
+    if (foot == 0u) {
+        canvas.polygon(nullptr, xy, nullptr, at / 2, colour);
+        return;
+    }
+    // A colour a vertex, mixed by where the point stands between `fadeFrom` and `fadeTo` of the
+    // box's own height: the corners grade with everything else, which a fan of one colour under
+    // a gradient quad cannot do.
+    uint32_t colours[(kCorner + 1) * 4];
+    const auto channel = [](uint32_t c, int shift) { return float((c >> shift) & 0xFFu); };
+    for (int i = 0; i < at / 2; ++i) {
+        const float down = box.h > 0.0f ? (xy[i * 2 + 1] - box.y) / box.h : 0.0f;
+        const float t = std::clamp((down - fadeFrom) / std::max(0.001f, fadeTo - fadeFrom), 0.0f,
+                                   1.0f);
+        uint32_t mixed = 0;
+        for (int shift = 0; shift < 32; shift += 8) {
+            const float v = channel(colour, shift) + (channel(foot, shift) - channel(colour, shift)) * t;
+            mixed |= uint32_t(v + 0.5f) << shift;
+        }
+        colours[i] = mixed;
+    }
+    canvas.polygon(xy, colours, at / 2);
 }
 
 // Every word on the card is printed over its own shadow: a pixel down and right in black, which
@@ -334,23 +354,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     const float all[4] = {radius, radius, radius, radius};
     const float wider[4] = {radius + line, radius + line, radius + line, radius + line};
     roundedFan(canvas, box.grown(line), wider, fade(kRing));
-    roundedFan(canvas, box, all, kBodyTop);
-    // The gradient over it, as a cross: full width between the corner arcs, full height in the
-    // middle. That covers every pixel of a rounded rectangle except the arcs themselves, which
-    // keep the flat top colour -- at this alpha nobody can see the difference, and it costs two
-    // quads rather than a polygon with a colour a vertex.
-    {
-        const float top = float((kBodyTop >> 24) & 0xFFu), foot = float((kBodyFoot >> 24) & 0xFFu);
-        const auto mixed = [&](float at) {  // 0 at the head, 1 at the foot
-            const uint32_t a = uint32_t(top + (foot - top) * at + 0.5f);
-            return (kBodyFoot & 0x00FFFFFFu) | (a << 24);
-        };
-        const float rTop = radius / box.h, rFoot = 1.0f - radius / box.h;
-        canvas.shade({box.x + radius, box.y, box.w - radius * 2.0f, box.h}, mixed(0.0f),
-                     mixed(0.0f), mixed(1.0f), mixed(1.0f));
-        canvas.shade({box.x, box.y + radius, box.w, box.h - radius * 2.0f}, mixed(rTop),
-                     mixed(rTop), mixed(rFoot), mixed(rFoot));
-    }
+    roundedFan(canvas, box, all, kBodyTop, kBodyFoot);
 
     // The head, tinted by the name's own colour, fading out downward. Its own top corners are
     // rounded to the card's; it fades before it reaches the bottom two, so those stay square.
@@ -359,9 +363,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     const uint32_t tintOut = nameColour & 0x00FFFFFFu;  // clear at its foot, fade or no fade
     {
         const float tops[4] = {radius, radius, 0.0f, 0.0f};
-        roundedFan(canvas, {box.x, box.y, box.w, radius * 2.0f}, tops, tintTop);
-        canvas.shade({box.x, box.y + radius, box.w, headTall - radius}, tintTop, tintTop, tintOut,
-                     tintOut);
+        roundedFan(canvas, {box.x, box.y, box.w, headTall}, tops, tintTop, tintOut);
     }
 
     float pen = box.y + pad;
