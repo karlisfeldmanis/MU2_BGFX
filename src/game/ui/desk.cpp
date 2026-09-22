@@ -217,9 +217,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // The pointer, drawn last of all: MU2's Pointer.Show and Step in one call. The flags are
     // last frame's raycast (Play::point runs after this, on the same frame it is drawn), which
     // never shows -- a claw a frame behind a moving mouse is not a thing anyone can see.
-    const bool onMonster = play.isOpen() && play.pointedAt() != 0;
-    const bool onLoot = play.isOpen() && play.pointedAt() == 0 && play.pointedLying() != 0;
-    const bool onFolk = play.isOpen() && play.pointedFolk() >= 0;
+    //
+    // And the raycast is ignored outright where the pointer belongs to a window. Play::point
+    // runs every frame whatever is open, so what lies BEHIND a window is still pointed at: a
+    // pointer resting on an item in Lumen's shelf, with Lumen herself under the glass, came up
+    // as the talking mouth, and over a monster it was the claw -- a cursor offering a click
+    // that play_mode has already refused, since `windowed` swallows both buttons. The window's
+    // own hand is the plain one, which is what MU draws over its interface.
+    const bool world = play.isOpen() && !takesPointer_;
+    const bool onMonster = world && play.pointedAt() != 0;
+    const bool onLoot = world && play.pointedAt() == 0 && play.pointedLying() != 0;
+    const bool onFolk = world && play.pointedFolk() >= 0;
     cursor_.update(seconds, pointer.x, pointer.y, onMonster, onLoot, onFolk);
 }
 
