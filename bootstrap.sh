@@ -41,6 +41,16 @@ fi
 # leaves the viewer drawing its fallback with nothing in the log to say why.
 OPEN_SANS_REV=bd7e37632246368c60fdcbd374dbf9bad11969b6
 [ -f extern/OpenSans-SemiBold.ttf ] || curl -sSL -o extern/OpenSans-SemiBold.ttf https://raw.githubusercontent.com/googlefonts/opensans/$OPEN_SANS_REV/fonts/ttf/OpenSans-SemiBold.ttf
+# The map name's face, Cinzel Medium (SIL OFL). Upstream ships only Regular, Bold and Black as
+# static files and stb_truetype draws a variable font at its default weight, so this is Google
+# Fonts' own static 500 instance, the one the chosen design page was drawn in. The v26 path is
+# versioned by Google; the checksum is what makes it a pin.
+CINZEL_URL=https://fonts.gstatic.com/s/cinzel/v26/8vIU7ww63mVu7gtR-kwKxNvkNOjw-uTnTYo.ttf
+CINZEL_SHA256=bd933cb739b5125a1fda907d61ea237beadb4ac382ac7a5f9af0a8bbedaf48b7
+if [ ! -f extern/Cinzel-Medium.ttf ]; then
+  curl -sSL -o extern/Cinzel-Medium.ttf $CINZEL_URL
+  echo "$CINZEL_SHA256  extern/Cinzel-Medium.ttf" | shasum -a 256 -c - || { rm -f extern/Cinzel-Medium.ttf; exit 1; }
+fi
 
 # glfw is the one PLAN.md point 12 names that is NOT pinned here, and saying so is better
 # than the file implying otherwise: it comes from Homebrew, as a built dylib, and pinning it

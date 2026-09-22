@@ -3,6 +3,9 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
 
+#include <algorithm>
+#include <cmath>
+
 #include "core/files.h"
 #include "core/log.h"
 
@@ -16,6 +19,9 @@ namespace {
 // reads that is not the game's own, and a header holding it as a byte array is a header nobody
 // can read. The cost is that it can be missing, and every owner has a fallback for that.
 constexpr const char* kFacePath = MU2_ROOT_DIR "/extern/OpenSans-SemiBold.ttf";
+// The arrival's map name: Cinzel Medium, Google Fonts' static instance, which is what the
+// design page the user chose on 2026-09-22 was drawn in. bootstrap.sh fetches it.
+constexpr const char* kTitleFacePath = MU2_ROOT_DIR "/extern/Cinzel-Medium.ttf";
 
 // The rows at the bottom kept out of the packing, for the solid texel a panel draws with. A
 // whole band rather than one texel because the face is sampled bilinear, and a solid texel
@@ -25,8 +31,10 @@ constexpr int kSolidRows = 12;
 }  // namespace
 
 const char* facePath() { return kFacePath; }
+const char* titleFacePath() { return kTitleFacePath; }
 
-bool Face::bake(const std::string& path, float pixels, int size, int padding) {
+bool Face::bake(const std::string& path, float pixels, int size, int padding, int oversample,
+                int margin) {
     const std::vector<uint8_t> ttf = core::readFile(path);
     if (ttf.empty()) {
         core::logError("no face at %s. ./bootstrap.sh fetches it", path.c_str());
@@ -39,25 +47,38 @@ bool Face::bake(const std::string& path, float pixels, int size, int padding) {
     }
 
     size_ = size;
+    oversample_ = oversample;
+    spreadTexels_ = 0;
     pixels_.assign(size_t(size) * size_t(size), 0);
     stbtt_pack_context pack;
-    // Everything but the solid band at the bottom, told the full stride, so the glyph
-    // coordinates that come back are already in the whole atlas's frame.
-    if (!stbtt_PackBegin(&pack, pixels_.data(), size, size - kSolidRows, size, padding,
+    // Everything but the solid band at the bottom and the margin, told the full stride. The
+    // coordinates that come back are the packed area's, and the margin is added to them below.
+    uint8_t* origin = pixels_.data() + size_t(margin) * size_t(size) + size_t(margin);
+    if (!stbtt_PackBegin(&pack, origin, size - margin, size - kSolidRows - margin, size, padding,
                          nullptr)) {
         core::logError("the face would not pack into %dx%d", size, size - kSolidRows);
         return false;
     }
-    // Two by two. Nothing drawn with this face is pixel-aligned, and the horizontal oversample
-    // is what keeps a stem from thinning to nothing between one label and the next.
-    stbtt_PackSetOversampling(&pack, 2, 2);
-    const int count = kLastCode - kFirstCode + 1;
+    // Two by two for the windows. Nothing drawn with this face is pixel-aligned, and the
+    // horizontal oversample is what keeps a stem from thinning to nothing between one label
+    // and the next.
+    stbtt_PackSetOversampling(&pack, unsigned(oversample), unsigned(oversample));
+    const int ascii = kLastCode - kFirstCode + 1;
+    const int count = ascii + 1;  // and the middle dot, last
     // Resized rather than constructed with a size: `vector<T> packed(size_t(count))` is a
     // function declaration, and the compiler then says the packing does not take a vector.
     std::vector<stbtt_packedchar> packed;
     packed.resize(size_t(count));
-    const int ok = stbtt_PackFontRange(&pack, ttf.data(), 0, pixels, kFirstCode, count,
-                                       packed.data());
+    stbtt_pack_range ranges[2] = {};
+    ranges[0].font_size = pixels;
+    ranges[0].first_unicode_codepoint_in_range = kFirstCode;
+    ranges[0].num_chars = ascii;
+    ranges[0].chardata_for_range = packed.data();
+    ranges[1].font_size = pixels;
+    ranges[1].first_unicode_codepoint_in_range = kMiddleDot;
+    ranges[1].num_chars = 1;
+    ranges[1].chardata_for_range = packed.data() + ascii;
+    const int ok = stbtt_PackFontRanges(&pack, ttf.data(), 0, ranges, 2);
     stbtt_PackEnd(&pack);
     if (!ok) {
         core::logError("the face packed short; the atlas is too small for %d glyphs", count);
@@ -83,7 +104,8 @@ bool Face::bake(const std::string& path, float pixels, int size, int padding) {
         // HERE rounds at the wrong size and the spacing comes out uneven.
         stbtt_GetPackedQuad(packed.data(), size, size, i, &penX, &penY, &q, 0);
         FaceGlyph& g = glyphs_[size_t(i)];
-        g.u0 = q.s0; g.v0 = q.t0; g.u1 = q.s1; g.v1 = q.t1;
+        const float shift = float(margin) / float(size);
+        g.u0 = q.s0 + shift; g.v0 = q.t0 + shift; g.u1 = q.s1 + shift; g.v1 = q.t1 + shift;
         g.x0 = q.x0; g.y0 = q.y0; g.x1 = q.x1; g.y1 = q.y1;
         g.advance = packed[size_t(i)].xadvance;
     }
@@ -98,6 +120,44 @@ bool Face::bake(const std::string& path, float pixels, int size, int padding) {
     core::logf("face: %s, %d glyphs baked at %.0f px, line %.1f px, em %.1f px", path.c_str(),
                count, double(pixels), double(bakedLine_), double(bakedEm_));
     return true;
+}
+
+void Face::blur(float sigma) {
+    if (pixels_.empty() || sigma <= 0.0f) return;
+    const float s = sigma * float(oversample_);
+    const int radius = int(std::ceil(s * 3.0f));
+    std::vector<float> kernel(size_t(radius) * 2 + 1);
+    float sum = 0.0f;
+    for (int i = -radius; i <= radius; ++i) {
+        kernel[size_t(i + radius)] = std::exp(-0.5f * float(i * i) / (s * s));
+        sum += kernel[size_t(i + radius)];
+    }
+    for (float& k : kernel) k /= sum;
+    // Separable, in floats, rows then columns. The atlas is at most 512 square for a halo and
+    // this runs once at load.
+    const int n = size_;
+    std::vector<float> a(pixels_.begin(), pixels_.end()), b(a.size());
+    for (int y = 0; y < n; ++y) {
+        for (int x = 0; x < n; ++x) {
+            float v = 0.0f;
+            for (int i = -radius; i <= radius; ++i) {
+                const int at = x + i;
+                if (at >= 0 && at < n) v += a[size_t(y) * n + at] * kernel[size_t(i + radius)];
+            }
+            b[size_t(y) * n + x] = v;
+        }
+    }
+    for (int y = 0; y < n; ++y) {
+        for (int x = 0; x < n; ++x) {
+            float v = 0.0f;
+            for (int i = -radius; i <= radius; ++i) {
+                const int at = y + i;
+                if (at >= 0 && at < n) v += b[size_t(at) * n + x] * kernel[size_t(i + radius)];
+            }
+            pixels_[size_t(y) * n + x] = uint8_t(std::min(255.0f, v + 0.5f));
+        }
+    }
+    spreadTexels_ = radius;
 }
 
 float Face::measure(float fontSize, const std::string& s) const {

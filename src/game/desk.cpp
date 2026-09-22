@@ -46,6 +46,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     shelf_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
+    arrival_.open(interface_);
     interface_.adopt(ground_);
     return true;
 }
@@ -54,6 +55,7 @@ void Desk::shutdown() {
     bagStagePicture_.shutdown();
     shelfStagePicture_.shutdown();
     quickStagePicture_.shutdown();
+    arrival_.shutdown();
     interface_.shutdown();
 }
 
@@ -74,6 +76,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
 
     panel::setScreen(float(window.height()));
+    arrival_.update(seconds, float(window.width()), float(window.height()));
     const sim::Body* hero = play.isOpen() ? &play.realm().hero() : nullptr;
     hud_.follow(hero);
 
@@ -355,6 +358,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(ground_);
     // Over the world's labels and under every window: it is a reading lying on the scene.
     if (vitals_.showing()) interface_.add(vitals_.canvas());
+    // The map's name, a reading on the scene as well, and under every window.
+    if (arrival_.showing()) interface_.add(arrival_.canvas());
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());

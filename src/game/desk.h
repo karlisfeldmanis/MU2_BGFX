@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "content/texture.h"
+#include "game/arrival.h"
 #include "game/bag.h"
 #include "game/card.h"
 #include "game/cursor.h"
@@ -85,6 +86,8 @@ public:
         if (key >= 0 && key < Hud::kQuickKeys) quick_[key] = item;
     }
     void setCharacterOpen(bool open) { characterOpen_ = open; }
+    // The world's name comes up over the scene after `delay` seconds: see game/arrival.h.
+    void arrive(const std::string& world, float delay) { arrival_.announce(world, delay); }
 
 private:
     gfx::Interface interface_;
@@ -95,6 +98,7 @@ private:
     Shelf shelf_;
     Cursor cursor_;
     Vitals vitals_;
+    Arrival arrival_;
     ItemModels* models_ = nullptr;
     ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_;
     std::string shaderDir_, assetDir_;

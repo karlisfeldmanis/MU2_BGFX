@@ -114,6 +114,7 @@ add_executable(mu2
   src/game/play.cpp
   src/game/showing.cpp
   src/game/marker.cpp
+  src/game/arrival.cpp
   src/game/aura.cpp
   src/game/bones.cpp
   src/game/breath.cpp

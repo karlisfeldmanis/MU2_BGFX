@@ -78,6 +78,22 @@ void Canvas::rect(const Box& box, uint32_t abgr) {
     quad(box.x, box.y, box.w, box.h, f.solidU(), f.solidV(), f.solidU(), f.solidV(), abgr);
 }
 
+void Canvas::shade(const Box& box, uint32_t topLeft, uint32_t topRight, uint32_t bottomRight,
+                   uint32_t bottomLeft) {
+    if (box.w <= 0.0f || box.h <= 0.0f) return;
+    const Face& f = face();
+    begin(owner_->faceTexture());
+    const float u = f.solidU(), v = f.solidV();
+    const uint32_t base = uint32_t(vertices_.size());
+    vertices_.push_back({box.x, box.y, u, v, topLeft});
+    vertices_.push_back({box.right(), box.y, u, v, topRight});
+    vertices_.push_back({box.right(), box.bottom(), u, v, bottomRight});
+    vertices_.push_back({box.x, box.bottom(), u, v, bottomLeft});
+    const uint32_t order[6] = {base, base + 1, base + 2, base, base + 2, base + 3};
+    indices_.insert(indices_.end(), order, order + 6);
+    runs_.back().count += 6;
+}
+
 void Canvas::outline(const Box& box, float t, uint32_t abgr) {
     rect({box.x, box.y, box.w, t}, abgr);
     rect({box.x, box.bottom() - t, box.w, t}, abgr);
@@ -125,6 +141,26 @@ float Canvas::text(float x, float baseline, float fontSize, uint32_t abgr, const
     return wide;
 }
 
+float Canvas::lettered(const Face& f, bgfx::TextureHandle texture, float x, float baseline,
+                       float fontSize, float tracking, uint32_t abgr, const std::string& s) {
+    if (!f.ready() || s.empty() || !bgfx::isValid(texture)) return 0.0f;
+    const float k = f.emScale(fontSize);
+    const float grow = f.spread(), growUv = f.spreadUv();
+    begin(texture);
+    float pen = x;
+    for (char c : s) {
+        const FaceGlyph* g = f.glyph(c);
+        if (!g) continue;
+        if (g->x1 > g->x0 && g->y1 > g->y0) {
+            quad(pen + (g->x0 - grow) * k, baseline + (g->y0 - grow) * k,
+                 (g->x1 - g->x0 + grow * 2.0f) * k, (g->y1 - g->y0 + grow * 2.0f) * k,
+                 g->u0 - growUv, g->v0 - growUv, g->u1 + growUv, g->v1 + growUv, abgr);
+        }
+        pen += g->advance * k + tracking;
+    }
+    return pen - x;
+}
+
 float Canvas::shadowed(float x, float baseline, float fontSize, uint32_t abgr, uint32_t shadow,
                        float drop, const std::string& s, Align align, float width) {
     text(x + drop, baseline + drop, fontSize, shadow, s, align, width);
@@ -133,45 +169,54 @@ float Canvas::shadowed(float x, float baseline, float fontSize, uint32_t abgr, u
 
 // ---- the interface ------------------------------------------------------------------------
 
+bgfx::TextureHandle uploadFace(const Face& face, const char* name) {
+    // White everywhere and the coverage in alpha, so the one shader that multiplies the art by
+    // the vertex colour draws a letter too, and a letter and a plate share a draw whenever they
+    // are next to each other in the list.
+    const int size = face.size();
+    if (!face.ready() || size <= 0 || face.pixels().size() != size_t(size) * size_t(size)) {
+        return BGFX_INVALID_HANDLE;
+    }
+    std::vector<uint8_t> levels;
+    uint32_t w = uint32_t(size), h = uint32_t(size);
+    std::vector<uint8_t> alpha = face.pixels();
+    while (true) {
+        const size_t at = levels.size();
+        levels.resize(at + size_t(w) * h * 4);
+        for (size_t i = 0; i < size_t(w) * h; ++i) {
+            uint8_t* p = &levels[at + i * 4];
+            p[0] = p[1] = p[2] = 0xFF;
+            p[3] = alpha[i];
+        }
+        if (w == 1 && h == 1) break;
+        const uint32_t nw = std::max(1u, w / 2), nh = std::max(1u, h / 2);
+        std::vector<uint8_t> next(size_t(nw) * nh);
+        for (uint32_t y = 0; y < nh; ++y) {
+            for (uint32_t x = 0; x < nw; ++x) {
+                const uint32_t x0 = x * 2, y0 = y * 2;
+                const uint32_t x1 = std::min(x0 + 1, w - 1), y1 = std::min(y0 + 1, h - 1);
+                const uint32_t sum = alpha[size_t(y0) * w + x0] + alpha[size_t(y0) * w + x1] +
+                                     alpha[size_t(y1) * w + x0] + alpha[size_t(y1) * w + x1];
+                next[size_t(y) * nw + x] = uint8_t((sum + 2) / 4);
+            }
+        }
+        alpha.swap(next);
+        w = nw;
+        h = nh;
+    }
+    bgfx::TextureHandle handle =
+        bgfx::createTexture2D(uint16_t(size), uint16_t(size), true, 1, bgfx::TextureFormat::RGBA8,
+                              BGFX_SAMPLER_UVW_CLAMP,
+                              bgfx::copy(levels.data(), uint32_t(levels.size())));
+    if (bgfx::isValid(handle)) bgfx::setName(handle, name);
+    return handle;
+}
+
 bool Interface::init(const std::string& shaderDir) {
     if (face_.bake(facePath(), kBakePixels, kAtlas, kPadding)) {
-        // White everywhere and the coverage in alpha, so the one shader that multiplies the
-        // art by the vertex colour draws a letter too, and a letter and a plate share a draw
-        // whenever they are next to each other in the list.
-        std::vector<uint8_t> levels;
-        uint32_t w = uint32_t(kAtlas), h = uint32_t(kAtlas);
-        std::vector<uint8_t> alpha = face_.pixels();
-        uint8_t count = 0;
-        while (true) {
-            const size_t at = levels.size();
-            levels.resize(at + size_t(w) * h * 4);
-            for (size_t i = 0; i < size_t(w) * h; ++i) {
-                uint8_t* p = &levels[at + i * 4];
-                p[0] = p[1] = p[2] = 0xFF;
-                p[3] = alpha[i];
-            }
-            ++count;
-            if (w == 1 && h == 1) break;
-            const uint32_t nw = std::max(1u, w / 2), nh = std::max(1u, h / 2);
-            std::vector<uint8_t> next(size_t(nw) * nh);
-            for (uint32_t y = 0; y < nh; ++y) {
-                for (uint32_t x = 0; x < nw; ++x) {
-                    const uint32_t x0 = x * 2, y0 = y * 2;
-                    const uint32_t x1 = std::min(x0 + 1, w - 1), y1 = std::min(y0 + 1, h - 1);
-                    const uint32_t sum = alpha[size_t(y0) * w + x0] + alpha[size_t(y0) * w + x1] +
-                                         alpha[size_t(y1) * w + x0] + alpha[size_t(y1) * w + x1];
-                    next[size_t(y) * nw + x] = uint8_t((sum + 2) / 4);
-                }
-            }
-            alpha.swap(next);
-            w = nw;
-            h = nh;
-        }
+        faceTexture_ = uploadFace(face_, "interface face");
         face_.dropPixels();
-        faceTexture_ = bgfx::createTexture2D(uint16_t(kAtlas), uint16_t(kAtlas), true, 1,
-                                             bgfx::TextureFormat::RGBA8, BGFX_SAMPLER_UVW_CLAMP,
-                                             bgfx::copy(levels.data(), uint32_t(levels.size())));
-        core::logf("interface: face atlas %dx%d, %u levels", kAtlas, kAtlas, unsigned(count));
+        core::logf("interface: face atlas %dx%d", kAtlas, kAtlas);
     } else {
         core::logError("the interface has no face; the windows will draw without their words");
         const uint32_t white = 0xFFFFFFFFu;

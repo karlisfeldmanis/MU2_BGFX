@@ -593,6 +593,8 @@ int main(int argc, char** argv) {
         // He comes in once the frame has faded most of the way up. Long enough a wait to
         // outlast the first frame, which compiles every pipeline and takes a tenth of a second.
         if (entrance && world.played().isOpen()) world.played().appear(0.3f);
+        // And the map's name with him, MU's ShowMapName on entering a world.
+        if (entrance && world.played().isOpen() && desk.ready()) desk.arrive(args.world, 0.3f);
     }
 
     if (inWorld && world.played().isOpen() && !args.give.empty()) {

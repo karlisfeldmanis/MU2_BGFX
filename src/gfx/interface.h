@@ -67,6 +67,10 @@ public:
     void region(const Art& art, const Box& to, const Box& from, uint32_t abgr = 0xFFFFFFFFu);
     // A filled rectangle.
     void rect(const Box& box, uint32_t abgr);
+    // A filled rectangle with a colour at each corner, top-left round to bottom-left: a hairline
+    // that fades out toward its end, and the shadow either side of it.
+    void shade(const Box& box, uint32_t topLeft, uint32_t topRight, uint32_t bottomRight,
+               uint32_t bottomLeft);
     // A rectangle's outline, `thickness` pixels inside its edge.
     void outline(const Box& box, float thickness, uint32_t abgr);
     // A convex polygon as a fan, with its uvs already normalised. Null art is a solid fill.
@@ -81,6 +85,12 @@ public:
     float shadowed(float x, float baseline, float fontSize, uint32_t abgr, uint32_t shadow,
                    float drop, const std::string& s, Align align = Align::Left,
                    float width = 0.0f);
+
+    // A line in a face of the caller's own on its own texture, `tracking` pixels after every
+    // letter -- CSS's letter-spacing. Each quad grows by the face's blur spread, so a blurred
+    // bake draws its whole halo. Returns the advance, tracking included.
+    float lettered(const Face& face, bgfx::TextureHandle texture, float x, float baseline,
+                   float fontSize, float tracking, uint32_t abgr, const std::string& s);
 
     const Face& face() const;
 
@@ -105,6 +115,10 @@ private:
     std::vector<uint32_t> indices_;
     std::vector<Run> runs_;
 };
+
+// A baked face as a texture: white, its coverage in alpha, and a mip chain. The windows' own
+// face goes up this way, and so does any face a window bakes for itself.
+bgfx::TextureHandle uploadFace(const Face& face, const char* name);
 
 class Interface {
 public:
