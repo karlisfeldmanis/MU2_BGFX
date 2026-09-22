@@ -37,7 +37,11 @@ constexpr int kMonsterDieSlot = 6;
 constexpr int kMonsterShockSlot = 5;
 // How far the quake reaches: MU's `Distance <= 200`, a hundred units to the tile.
 constexpr float kShockTiles = 2.0f;
-// There is no kPlayerShockSlot, and that is a decision rather than an omission. MU's quake
+// PLAYER_SHOCK, for a body on the player rig that is not the hero -- the Skeleton Warrior.
+// 231 is what index.json's own `actions` table calls "Shock"; MuMain's enum numbers it 238,
+// and the two tables are not the same enumeration, which is why this reads ours.
+constexpr int kPlayerShockSlot = 231;
+// The HERO has none, and that is a decision rather than an omission. MU's quake
 // loop excludes the hero outright, so he never flinches for a meteor. MU *does* flinch him on
 // an ordinary blow -- `SetPlayerShock`, ZzzCharacter.cpp:1392, fed by the damage packets --
 // and this engine does not, for anybody: see game/showing.h, where the same question was
@@ -293,13 +297,30 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             one.figure.stand(look, at, 0.0f, look->scale);
             bones = std::max(bones, look->boneCount());
             ++dressed;
-            // The swing, found once. A player's stance decides which of MU's attack clips it
-            // is; a monster has its own two and alternates between them by swordCount.
+            // The swing, found once, and **which TABLE it is looked up in is decided by the
+            // rig and not by whether the body is the player**. MU draws its Skeleton Warrior
+            // as a MODEL_PLAYER with a skeleton sub-type, so `SetPlayerAttack` takes the
+            // player branch for it and picks a clip by the weapon in its hands -- and
+            // `monster_actions` 3, "Attack 1", is simply not a slot its library has. Asked
+            // for one anyway it found nothing and the skeleton fought without ever swinging,
+            // which is what this looked like in play.
+            //
+            // A figure that has a STANCE is a figure on the player rig: the cook writes one
+            // from index.json's row ("stance": "sword" for the Skeleton Warrior) and no
+            // monster on its own rig has one.
+            const bool onPlayerRig = body.player || !look->stance.empty();
             if (look->library) {
-                if (body.player) {
+                if (onPlayerRig) {
                     one.attackClip = look->library->find(attackSlotFor(look->stance));
                     if (one.attackClip < 0) one.attackClip = look->library->find(38);
+                    // And no second swing: the 1-in-3 SwordCount alternation is the MONSTER
+                    // branch's, and the player branch picks one clip by the stance. Left as
+                    // -1, `swordCount` counts on and always chooses this one.
                     one.deathClip = look->library->find(kPlayerDieSlot);
+                    // A body on the player rig that is NOT the hero still flinches in a
+                    // meteor's quake: MU's loop excludes the hero alone and gives everything
+                    // else PLAYER_SHOCK. The hero keeps none, as Play::update says.
+                    if (!body.player) one.shockClip = look->library->find(kPlayerShockSlot);
                 } else {
                     one.attackClip  = look->library->find(3);  // Attack 1
                     one.attackClip2 = look->library->find(4);  // Attack 2
