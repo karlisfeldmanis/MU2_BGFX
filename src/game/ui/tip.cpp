@@ -269,7 +269,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     if (sheet.empty()) return;
     const gfx::Face& face = canvas.face();
     const float u = panel::scale() * 0.5f;
-    const float wide = kWide * u, pad = kPad * u;
+    const float wide = (sheet.wide > 0.0f ? sheet.wide : kWide) * u, pad = kPad * u;
     const float nameSize = kNameSize * u, baseSize = kBaseSize * u, rowSize = kRowSize * u;
     const float kickerSize = kKickerSize * u, footSize = kFootSize * u, chipSize = kChipSize * u;
     const float rowTall = std::round(rowSize * kRowTall);
@@ -309,7 +309,11 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     }
     const bool hasFoot = !sheet.wear.empty() || !sheet.price.empty();
     const float footTall = hasFoot ? std::round(footSize * 1.4f) + railPad * 2.0f : 0.0f;
-    float tall = headTall + footTall;
+    // A card with no foot ends on its last row with one rail's padding under it, which is less
+    // air than the head carries over its name and reads as the text falling out of the bottom.
+    // The difference is made up here rather than in the section, so an item card -- which always
+    // has a foot -- is untouched.
+    float tall = headTall + footTall + (hasFoot ? 0.0f : pad - railPad);
     for (float t : sectionTall) tall += t;
 
     // ---- place ------------------------------------------------------------------------------

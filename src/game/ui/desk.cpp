@@ -391,6 +391,9 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm, b
     tip::Sheet sheet;
     sheet.name = row.name;
     sheet.nameTone = tip::Tone::Blue;
+    // Narrower than an item's card. An item wraps lore and a column of options; a skill has one
+    // sentence and three numbers, and the item's width left most of the card empty.
+    sheet.wide = 232.0f;
 
     const auto number = [](float value, int places) {
         char text[32];
@@ -434,6 +437,18 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm, b
         facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.points), 2) +
                                                 " of a swing",
                                   tip::Tone::Yellow));
+        // And the sum that made it, on one grey line: the row's own base plus strength over the
+        // skill's divisor. Asked for on 2026-09-23 -- the multiplier says what he hits for and
+        // this says WHY, which is the whole argument for spending on strength, and it is one
+        // line rather than the two labelled rows it was before.
+        char sum[64];
+        std::snprintf(sum, sizeof(sum), "%.2f + %d str / %d", double(row.force),
+                      hero.points.strength,
+                      row.forcePerStrength > 0.0f ? int(1.0f / row.forcePerStrength + 0.5f) : 0);
+        tip::Row how;
+        how.free = sum;
+        how.freeTone = tip::Tone::Gray;
+        facts.rows.push_back(how);
     }
     if (left > 0) {
         facts.rows.push_back(line("Ready in", number(float(left) * 0.05f, 1) + " s",

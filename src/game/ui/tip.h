@@ -72,6 +72,10 @@ struct Sheet {
     float worn = 1.0f;  // how much of it is left, 0 to 1
     std::string price;
     Tone priceTone = Tone::Yellow;
+    // How wide the card is drawn, in the windows' own units; 0 takes the item card's 346. A
+    // narrower card for a sheet that has no option list and no lore to wrap -- a skill's four
+    // lines in a 346-wide card is a page of air with a sentence on it.
+    float wide = 0.0f;
     // The item's own picture and where it sits in it: the window's stage, which has already
     // drawn this thing at this size for the bag.
     gfx::Art picture;
