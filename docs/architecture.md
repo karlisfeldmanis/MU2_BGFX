@@ -209,6 +209,14 @@ A reference moves only when the change was *meant* to move it: look at both pict
 `tools/shotcheck.py --bless <scene>`, and say so in the commit message. Blessing a reference
 to turn a red check green is the one thing that would make it worthless.
 
+**One known flake, and it is not a tolerance.** `town` draws a dropped item the reference does
+not have in roughly one run in fifteen — found on 2026-09-22 by the check itself, with ten
+consecutive identical runs either side of the one that differed. The cause is not found; it is
+*not* the renderer's wall clock, which was a separate bug fixed the same day. So a mismatch is
+drawn a second time before it is believed, and only a scene that differs twice fails: a real
+regression is deterministic and fails both draws, while a one-in-fifteen flake survives a
+second draw about once in two hundred. It is in *What is owed* below.
+
 The references are this Mac's Metal. Another GPU will differ, and that is expected: this is a
 check against yesterday's build on one machine, not a conformance suite.
 
@@ -216,6 +224,11 @@ check against yesterday's build on one machine, not a conformance suite.
 
 Written here rather than left implied, because a rule nothing keeps is worse than no rule:
 
+- **A dropped item appears in `town` about one run in fifteen** and the reference does not
+  have it. The sim's fingerprint is identical across those runs, so whatever it is, it is in
+  the drawing and not in the rules — a drop shown that should still be held back, most likely
+  (`Play::heldDrops`, `Litter::update`). `shotcheck` draws twice to ride over it, which is a
+  workaround and not a fix.
 - **`assets/assets/`** is 30 MB of orphaned duplicates that nothing in `src/`, `tools/` or
   `pipeline/` references — a sync that once ran with the wrong root. It is inside a gitignored
   folder so it costs nothing but disk and confusion. Not deleted yet.

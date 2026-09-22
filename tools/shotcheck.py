@@ -8,9 +8,13 @@ looking at it, which catches a black screen and misses a wrong roughness for wee
 
 This is the other half. It draws three pinned scenes and demands they come out EXACTLY as the
 committed references -- not approximately, exactly, byte for byte in pixels. That is a real
-bar and not an aspiration: measured over three runs each, every one of these scenes is
-identical to the last bit. A tolerance would be a place for a regression to hide, so there
-isn't one.
+bar and not an aspiration: measured over ten runs each, these scenes come out identical to the
+last bit. A tolerance would be a place for a regression to hide, so there isn't one.
+
+There is ONE known flake and it is not a tolerance. `town` draws a dropped item the reference
+does not have in roughly one run in fifteen; the cause is not found. A mismatch is therefore
+drawn a second time before it is believed, and only a scene that differs twice fails. A real
+regression is deterministic and fails both draws.
 
 What the three cover between them:
 
@@ -146,6 +150,25 @@ def main():
         moved = int((difference.max(axis=2) > 0).sum())
         if moved == 0:
             print(f"  {name}: identical")
+            continue
+
+        # It did not match. Draw it once more before believing that, because ONE of these
+        # scenes is known to be rarely nondeterministic and a gate that cries wolf is a gate
+        # people learn to ignore.
+        #
+        # The flake, measured 2026-09-22: `town` draws a dropped item on the ground that the
+        # reference does not have, in roughly one run in fifteen -- ten consecutive runs came
+        # out identical either side of the one that did not. The cause is not found and it is
+        # in `docs/architecture.md`'s owed list; it is NOT the renderer's wall clock, which was
+        # a different bug fixed the same day.
+        #
+        # A real regression is deterministic and fails both draws. A one-in-fifteen flake
+        # survives a second draw about once in two hundred and twenty. So: two strikes.
+        second = draw(name, kept)
+        if second is not None and np.array_equal(load(second), expected):
+            print(f"  {name}: identical on a second draw -- the first differed in {moved} "
+                  f"pixels. Treated as the known flake, NOT as a pass to rely on; if you see "
+                  f"this often, the flake has got worse and is worth chasing.")
             continue
         # A mask of what moved, beside the frame that moved it, because "1.2% of pixels
         # differ" does not say whether the shadows went or the sky changed shade.

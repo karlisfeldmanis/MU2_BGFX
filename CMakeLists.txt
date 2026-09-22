@@ -101,6 +101,10 @@ add_executable(mu2
   src/gfx/callback.cpp
   src/gfx/lighting.cpp
   src/gfx/renderer.cpp
+  src/gfx/renderer_setup.cpp
+  src/gfx/renderer_probe.cpp
+  src/gfx/renderer_outline.cpp
+  src/gfx/renderer_lights.cpp
   src/gfx/effects.cpp
   src/gfx/face.cpp
   src/gfx/overlay.cpp
@@ -118,6 +122,11 @@ add_executable(mu2
   src/game/crowd.cpp
   src/game/headless.cpp
   src/game/play.cpp
+  src/game/play_open.cpp
+  src/game/play_sound.cpp
+  src/game/play_show.cpp
+  src/game/play_pointer.cpp
+  src/game/play_requests.cpp
   src/game/fx/showing.cpp
   src/game/fx/marker.cpp
   src/game/ui/arrival.cpp
@@ -148,6 +157,9 @@ add_executable(mu2
   src/sim/items.cpp
   src/sim/market.cpp
   src/sim/realm.cpp
+  src/sim/realm_items.cpp
+  src/sim/realm_move.cpp
+  src/sim/realm_fight.cpp
   src/sim/audit.cpp
 )
 target_include_directories(mu2 PRIVATE src extern)
@@ -222,6 +234,9 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/items.cpp
   src/sim/market.cpp
   src/sim/realm.cpp
+  src/sim/realm_items.cpp
+  src/sim/realm_move.cpp
+  src/sim/realm_fight.cpp
   src/sim/audit.cpp
   src/content/grid.cpp
   src/content/tables.cpp
