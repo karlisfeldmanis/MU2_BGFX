@@ -160,6 +160,8 @@ add_executable(mu2
   src/sim/realm_items.cpp
   src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
+  src/sim/realm_skills.cpp
+  src/sim/skills.cpp
   src/sim/audit.cpp
 )
 target_include_directories(mu2 PRIVATE src extern)
@@ -237,6 +239,8 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/realm_items.cpp
   src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
+  src/sim/realm_skills.cpp
+  src/sim/skills.cpp
   src/sim/audit.cpp
   src/content/grid.cpp
   src/content/tables.cpp

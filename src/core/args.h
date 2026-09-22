@@ -189,6 +189,9 @@ struct Args {
     float hoverX = -1.0f, hoverY = -1.0f;
     // Scripted potion keys: FRAME:KEY, KEY 1 to 4, pressed on FRAME. Repeatable.
     std::vector<std::pair<int, int>> uiKeys;
+    // Frame and skill key, 1 to 4 for Q W E R: what --ui-key is for a potion. The cast path's
+    // review loop -- a shot of a cooldown running needs the key pressed on a known frame.
+    std::vector<std::pair<int, int>> uiSkills;
     // The level-up's flares thrown on the hero on FRAME, for a review run that cannot wait for
     // a real level. Only the drawing: the realm's level is untouched. Repeatable.
     std::vector<int> rises;

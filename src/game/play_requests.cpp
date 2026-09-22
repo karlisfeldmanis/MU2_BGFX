@@ -29,6 +29,18 @@ bool Play::spendPoint(int stat) {
     return spent;
 }
 
+void Play::castSkill(int32_t skill, uint32_t at) {
+    // Aimed at what the window named, else at what he is already fighting -- which the realm
+    // works out for itself, because the standing order is its own. A press on a skill he has not
+    // learned, or one that is cooling, is refused down there and says nothing: the box's sweep is
+    // the answer. See Realm::invoke.
+    realm_.invoke(skill, at);
+    const sim::SkillRow* row = sim::skillNumbered(skill);
+    core::logf("window: %s asked (cooling %lld ticks, %d mana of %d)",
+               row ? row->name : "a skill", (long long)realm_.cooling(skill),
+               row ? row->mana : 0, realm_.hero().mana);
+}
+
 bool Play::moveItem(int from, int to) {
     const bool moved = realm_.moveItem(from, to);
     core::logf("window: move %d -> %d %s", from, to, moved ? "taken" : "refused");

@@ -1,8 +1,8 @@
 # The Dark Knight's skills: 0.75's formulas, and the cooldowns that replace them
 
-Written 2026-09-22, before any code. Nothing here is built. This is the preparation document for
-the skill sprint `PLAN.md` puts after sprint 9, and it answers four questions in the order they
-have to be answered:
+Written 2026-09-22 before any code, and **the first skill is now built** — see §6, written the same
+day, for what is in the tree and what is still owed. This is the design for the skill sprint
+`PLAN.md` puts after sprint 9, and it answers four questions in the order they have to be answered:
 
 1. **What does 0.75 actually say** about the knight's six skills — every number, cited.
 2. **What do WoW and LoL do with cooldowns**, since MU has nothing to copy here.
@@ -195,9 +195,9 @@ table is the knob, not the range.
 
 | skill | reach | who it hits | knock | why |
 |---|---|---|---|---|
-| Falling Slash 19 | 1 | one | yes | the overhead: the heaviest single blow, and it staggers |
-| Lunge 20 | 1 | one | yes | the cheap jab — shortest cooldown, smallest multiplier |
-| Uppercut 21 | 1 | one | yes | the rising blow, between the two |
+| Falling Slash 19 | 1 | one | off | the overhead: the heaviest single blow |
+| Lunge 20 | 1 | one | off | the cheap jab — shortest cooldown, smallest multiplier |
+| Uppercut 21 | 1 | one | off | the rising blow, between the two |
 | Cyclone 22 | 1 | **everything within 1 tile** — all eight neighbours and his own | no | he spins; it is the crowd answer |
 | Slash 23 | 1 | **the three tiles in the facing arc** (ahead and the two diagonals beside it) | no | a wide two-handed sweep, heavy and slow |
 | Defense 18 | self | himself | — | the guard |
@@ -215,12 +215,36 @@ table is the knob, not the range.
   `strike()` calls with four hit rolls. Seeded-log order is therefore fixed: nearest first, then
   clockwise from north, so the same seed gives the same bytes.
 
+**A skill needs the hand it is thrown with.** The user's rule, 2026-09-22, and it is 0.75's own
+arrangement restored rather than a new gate: in the original the weapon *was* the skill, so "no
+weapon, no Falling Slash" was true by construction, and learning a skill permanently is exactly
+what took that away. So:
+
+- **The five attacks need a blade in the right hand** -- not empty, not a shield, not a bow or a
+  crossbow, because all five clips are `PLAYER_ATTACK_SKILL_SWORD1..5` and the streak MU lays on
+  them is a blade's.
+- **Defense needs a shield on the arm**, which is where skill 18 lived: the Buckler and the nine
+  shields after it (`Version075/Items/Armors.cs:40`).
+- The box is drawn **disabled** when the hand is wrong or the mana is short -- cold-tinted and
+  washed, a different state from the cooldown's dark, because those two must not read as each
+  other.
+
 **The fight's rhythm: auto-attack is the floor, a skill is the beat.** The knight opens by clicking a
 monster and keeps swinging — that standing order is already in the tree. A skill press does **not**
 cancel it:
 
-- Pressing Q..R while an attack order stands **spends this swing on the skill** and then returns to
-  swinging the same target. The player never has to re-click, and a skill on cooldown simply swings.
+- Pressing Q..R while an attack order stands **spends this swing on the skill and then stops the
+  auto-attack.** (Revised 2026-09-22 on the user's rule; the first pass kept the order standing and
+  went on swinging.) A skill ends the exchange and going back to hitting the monster is another
+  click. A skill on cooldown changes nothing and the ordinary blow lands.
+- **He does not turn or move while the clip runs.** The blow is thrown where he was standing and
+  facing when he threw it: no re-aim at a quarry that shuffles round him, no re-path, no step. A
+  body that swivels or slides under its own animation reads as a teleport, which is the same
+  objection that took the gap-closers out.
+- **And the knock is off for the same reason.** 0.75's `movesTarget` puts the monster on a
+  neighbouring tile at once, which is a one-tile teleport of somebody else. The column and
+  `Realm::shove` are kept and unreached; they come back the day a body can be pushed over a few
+  ticks rather than moved.
 - **A cast pays the swing timer** (`Fighter.swingsAt`), so a skill cannot be squeezed between two
   swings for free. This is the real global floor under §3.2's cooldowns, and it is MU's own number
   rather than an invented GCD.
@@ -348,6 +372,12 @@ are, the *bar* follows MuMain and is not.
 - **The cooldown is drawn on the box**: a dark sweep over the icon and the seconds printed when more
   than one remains — LoL's and WoW's shared convention, and the reason both read at a glance. Grey
   the icon when the mana is not there (MuMain dims it too).
+- **A skill's clip blends in longer than a swing's** -- 0.28 s against the 0.18 s everything else
+  uses -- and a step does not cancel it. A swing is a jab out of a stance and the short blend hides
+  the join; a skill is a wind-up, and at the swing's blend the body stands in the pose before the
+  arm has begun to move, which is what "the animation looks instant" means. The step rule is the
+  drawing agreeing with the realm: `throwSkill` holds him still for the whole clip, so a walk
+  arriving over a skill is interpolation catching up rather than a step he is taking.
 - **The tooltip must print the formula's result**, not just the number: `Cooldown 1.4 s (base 6.0,
   −77% from 1000 agility)` and `Damage ×3.85 (base 2.6, +1.25 from 1000 strength)`. This is the
   whole point of stat-driven cooldowns — a player who cannot see agility working will not spend on
@@ -402,3 +432,41 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
 6. The showing: clip, sound, white streak, sparks at the far end — all four already exist in this
    tree for swings.
 7. The headless run and its invariants; then a tuning pass on `K_cd` with the numbers written down.
+
+
+---
+
+## 6. What is built, 2026-09-22
+
+**Falling Slash, and the whole cooldown machinery under it.** The other five are rows in the table
+with `built = false`: adding one is a row's behaviour, not a row.
+
+- `src/sim/skills.h/.cpp` — the six rows, `force()`, `castTicks()`, `cooldownTicks()` and
+  `floorTicksFor()`. The two formulas live here and nowhere else.
+- `src/sim/realm_skills.cpp` — `invoke` (the press, held for 30 ticks so a key pressed mid-swing is
+  not lost), `learn`/`knows`/`cooling`/`coolsFor`, `throwSkill` with the refusals in order, and the
+  knock. A cast pays its cooldown **and** the longer of the swing clock and its own clip.
+- `Realm::press` throws the wish before the standing order acts, so a skill spends the next swing
+  and the knight goes on fighting; `Realm::strikeAt` takes the multiplier; `What::Cast`,
+  `What::Shoved` and `What::Learned` are in the log and the save carries `learned`.
+- The bar: `Q W E R` on the window, the icon from `skill_19`, a top-down wipe for the cooldown with
+  the seconds printed over it, and the cold disabled tint. `--ui-skill F:K` presses a key in a
+  scripted run.
+- The clip: action 60 with a 0.28 s blend, the `sKnightSkill1` wave, and a step that no longer cuts
+  it short. The cook now carries actions 60–64 and 187 so the sim can read their lengths.
+
+**Measured on a headless hunt** (`--headless --at 190,110 --level 200`): at 20 agility the cooldown
+is 75 ticks, at 1015 agility it is 18 — the clip's own floor — and a strength build's blow comes out
+at ×3.02 of the swing, which is `2 + 1023/1000` to the digit.
+
+**Three things are owed, and two of them are the user's to decide:**
+
+1. **Mana is now the real limiter, not the cooldown.** A level-30 knight has about 35 mana and the
+   skill costs 9, so he throws three and then swings for the rest of the fight — the cooldown never
+   gets a chance to matter. 0.75's answer is potions, and they exist; the alternatives are a
+   regeneration, a smaller cost, or leaving it as the reason to carry blue potions.
+2. **It one-shots Lorencia's trash.** ×2 of a swing kills a Spider outright at level 20. That may be
+   exactly right for a skill on a four-second cooldown, and it may be too much; the knob is `force`
+   in `sim/skills.cpp` and nothing else reads it.
+3. **The orbs are not cooked**, so `Realm::raise` hands a knight Falling Slash and says so in a
+   marked block. §3.3 is what replaces that line.

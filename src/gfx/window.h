@@ -73,7 +73,14 @@ public:
     //   Inventory  I and V, MU's two
     //   Character  C
     //   Potion1-4  1 to 4, the quick slots (sprint 7: skills keep Q W E R, PLAN.md)
-    enum class Key { Inventory, Character, Potion1, Potion2, Potion3, Potion4, Potion5, Count };
+    // Q W E R are the skill bar, decided on 2026-09-21 and printed on the plate under the four
+    // boxes; 1 to 5 are the potions. MuDream paints the other arrangement and the HUD covers it.
+    enum class Key {
+        Inventory, Character,
+        Potion1, Potion2, Potion3, Potion4, Potion5,
+        Skill1, Skill2, Skill3, Skill4,
+        Count
+    };
     bool pressed(Key key) const { return keyPressed_[size_t(key)]; }
 
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.

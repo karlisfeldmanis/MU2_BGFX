@@ -125,6 +125,12 @@ public:
     // to refuse; see sim/items.h for the gates.
     bool moveItem(int from, int to);
     bool useItem(int slot);
+    // A skill key pressed: throw this skill at whatever the fight is on, or at `at` when the
+    // window knows a target. Not an order and it does not cancel one -- the realm spends the next
+    // swing on it and the knight goes on fighting (docs/skills-dk.md §3.1a). The realm refuses
+    // silently, so this returns nothing: the box's own sweep is what tells the player it is
+    // cooling, and the plate reads that from the realm like everything else.
+    void castSkill(int32_t skill, uint32_t at = 0);
     // Re-dresses the hero over the realm's own idea of what his hands and his back hold, so
     // the figure never shows a weapon the bag no longer does. Called after anything that can
     // change a worn slot; a no-op where `open` was given no `bare` to dress over.
@@ -272,6 +278,19 @@ private:
         // the rest Attack 2 — ZzzCharacter.cpp:1269-1276. The drawing's own counter, not the
         // sim's: it draws from no seeded state.
         uint32_t swordCount = 0;
+        // The skill a Cast said this tick, and the clip it plays: set when the cast arrives and
+        // read by the Hit that follows it on the same tick, so the blow is drawn with the skill's
+        // own animation instead of the weapon's. MU does the same thing the other way round --
+        // `UseSkillWarrior` sets the hero's action before the request even goes out -- and MU2
+        // found that taking the weapon's clip over the top of a cast was what killed its sparks.
+        int32_t castSkill = 0;
+        int castClip = -1;
+        // Seconds of a cast's own animation still owed. A SWING is cancelled by a step -- see
+        // play_show, where that rule and its measurement live -- and a SKILL is not: the realm
+        // holds the character still for the whole clip (Realm::throwSkill takes the longer of
+        // the swing and the clip), so a skill cut off by the walk that starts after it is the
+        // drawing contradicting the rules. It was also what made a skill read as instant.
+        float casting = 0.0f;
         // A monster's own sound events, as Sound handles, found once at openSound: its breed's
         // `_attack`, `_die` and `_move` by MU2's naming (the label lowered, no spaces). -1 for
         // the character and for a breed with nothing cooked, which is silence.
@@ -393,6 +412,9 @@ private:
         int drink = -1, apple = -1;                     // a potion going down
         int click = -1, refused = -1, opened = -1;      // the windows
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
+        // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
+        // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
+        int skill[6] = {-1, -1, -1, -1, -1, -1};
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;

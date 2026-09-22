@@ -15,13 +15,18 @@
 
 namespace mu::sim {
 
-void Realm::strikeAt(Body& attacker, Body& target) {
+void Realm::strikeAt(Body& attacker, Body& target, float force) {
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
-    const Blow blow = strike(attacker.stats, target.stats, dice_);
+    Blow blow = strike(attacker.stats, target.stats, dice_);
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         return;
     }
+    // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
+    // floor, which is where OpenMU spends `Stats.SkillMultiplier`
+    // (AttackableExtensions.cs:226-247). One for an ordinary swing, so nothing changes for one.
+    // No draw is taken, so a seeded log's dice are untouched by the arithmetic.
+    if (force != 1.0f) blow.damage = std::max(1, int(float(blow.damage) * force));
     // The shield takes nine tenths, and what it cannot cover falls through to health: a pool
     // with three points left protects by three and no more. MU2's Realm.Wound, off OpenMU's
     // GetHitInfo shieldRatio and Player.HitAsync's overflow. Monsters have none.

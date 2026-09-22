@@ -162,6 +162,34 @@ void Play::update(double seconds) {
                     risen->spawnFade = 0.0f;
                 }
             }
+            // A cast, said by the realm BEFORE the blow it throws, which is what lets the hit
+            // below be drawn with the skill's own clip instead of the weapon's. Nothing else is
+            // done here: the damage, the death and the cooldown all resolved on the tick.
+            if (happening.what == sim::What::Cast) {
+                if (Drawn* caster = drawnOf(happening.who)) {
+                    const sim::SkillRow* row = sim::skillNumbered(happening.a);
+                    caster->castSkill = happening.a;
+                    caster->castClip = -1;
+                    if (row && caster->figure.body() && caster->figure.body()->library) {
+                        caster->castClip = caster->figure.body()->library->find(row->clip);
+                    }
+                    // A self-cast throws no blow, so there is no Hit coming to play the clip:
+                    // it is played here instead, and the wave with it.
+                    if (row && row->onSelf() && caster->castClip >= 0) {
+                        caster->figure.play(caster->castClip, true, kCastBlend);
+                        caster->casting = caster->figure.length();
+                        caster->swingPace = 1.0f;
+                        caster->swinging = caster->figure.length();
+                        ++caster->swingToken;
+                        const int index = sim::skillIndexOf(happening.a);
+                        if (index >= 0 && heard_.skill[index] >= 0 && caster->placed) {
+                            emit(heard_.skill[index], caster->crown[0], caster->crown[2],
+                                 caster->id);
+                        }
+                        caster->castSkill = 0;
+                    }
+                }
+            }
             // A swing is drawn because it is a POSE and not an effect: the blood, the number,
             // the fall and the health plate that hang off the landing are sprint 6's, and none
             // of them is here. What a blow does to the picture today is put the attacker into
@@ -178,12 +206,24 @@ void Play::update(double seconds) {
                     // MU's SwordCount % 3: one in three is Attack 1, the rest Attack 2.
                     // A breed with no Attack 2 keeps attackClip2 == -1 and always swings
                     // Attack 1 -- the counter still counts, harmlessly.
-                    const int swing =
-                        (swinger->attackClip2 >= 0 && swinger->swordCount % 3 != 0)
-                            ? swinger->attackClip2 : swinger->attackClip;
-                    ++swinger->swordCount;
+                    // The clip a cast already chose wins, and the swing counter is NOT spent on
+                    // it: a skill is not one of the weapon's swings, and MU2 found that burning a
+                    // count here was what broke the alternation a two-handed blade swings on.
+                    const bool cast = swinger->castSkill != 0 && swinger->castClip >= 0;
+                    int swing = swinger->castClip;
+                    if (!cast) {
+                        swing = (swinger->attackClip2 >= 0 && swinger->swordCount % 3 != 0)
+                                    ? swinger->attackClip2 : swinger->attackClip;
+                        ++swinger->swordCount;
+                    }
                     if (swing >= 0 && swinger->figure.body()) {
-                        swinger->figure.play(swing, true);
+                        // A skill blends in longer than a swing does. An ordinary blow is a jab
+                        // out of a stance and 0.18 s hides the join; a skill is a wind-up, and at
+                        // the swing's own blend the body arrives in the pose before the arm has
+                        // begun to move, which reads as the animation snapping on rather than
+                        // starting. **invention**, and the only number in the drawing that a
+                        // skill has of its own.
+                        swinger->figure.play(swing, true, cast ? kCastBlend : -1.0f);
                         // The clip has to fit between two blows, and MU's own reason is that
                         // the attack speed makes the CLIP run faster -- the swing rate follows
                         // from that, so anything that plays the animation has to apply the same
@@ -195,16 +235,24 @@ void Play::update(double seconds) {
                         const float between =
                             body ? float(body->swingTicks) * float(kTickSeconds) : 0.0f;
                         const float clip = swinger->figure.length();
+                        // A cast is never hurried: the realm gave it the longer of the weapon's
+                        // rhythm and this clip's own length (Realm::throwSkill), so the animation
+                        // fits and squeezing it into the weapon's interval would draw a skill
+                        // faster than the realm believes it was thrown.
                         swinger->swingPace =
-                            (between > 0.01f && clip > between) ? clip / between : 1.0f;
+                            (!cast && between > 0.01f && clip > between) ? clip / between : 1.0f;
                         swinger->swinging = clip / swinger->swingPace;
                         ++swinger->swingToken;
                         // The swing's own noise, on its first key and on the body, so a bull
                         // that roars as it lunges takes the roar with it: a breed's attack cry,
                         // or what is in the character's hands. MU2's Crowd.Swinging.
-                        const int cry = body == nullptr ? -1
-                                        : body->player  ? swingSound(*body)
-                                                        : swinger->cryAttack;
+                        int cry = body == nullptr ? -1
+                                  : body->player  ? swingSound(*body)
+                                                  : swinger->cryAttack;
+                        if (cast) {
+                            const int index = sim::skillIndexOf(swinger->castSkill);
+                            if (index >= 0 && heard_.skill[index] >= 0) cry = heard_.skill[index];
+                        }
                         if (cry >= 0 && swinger->placed) {
                             emit(cry, swinger->crown[0], swinger->crown[2],
                                           swinger->id);
@@ -220,6 +268,12 @@ void Play::update(double seconds) {
                         // with it. MU puts the sound and the number on the swing's FIRST key
                         // because ReceiveAttackDamage does all three in one handler, and on
                         // the first key the arm has not moved yet.
+                        // And a skill's clip is protected from the step that may follow it.
+                        if (cast) swinger->casting = swinger->swinging;
+
+                        // Spent: the clip is playing and the next blow is the weapon's again.
+                        swinger->castSkill = 0;
+
                         Cue cue;
                         cue.attacker = happening.who;
                         cue.target = happening.whom;

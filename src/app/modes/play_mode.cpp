@@ -415,6 +415,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             for (const auto& [f, k] : args.uiKeys) {
                 if (at.index == f) desk_.scriptKey(k - 1);
             }
+            for (const auto& [f, k] : args.uiSkills) {
+                if (at.index == f) desk_.scriptSkill(k - 1);
+            }
             const float w = float(ctx.window.width()), h = float(ctx.window.height());
             // A pointer parked where the run asked, pressing nothing: what photographing a
             // tooltip needs, since a click on an item in the bag picks it up instead of

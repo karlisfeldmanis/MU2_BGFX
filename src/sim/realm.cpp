@@ -95,6 +95,16 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     hero.homeColumn = column;
     hero.homeRow = row;
     hero.temper = Temper::Wandering;
+    // The first skill, handed over rather than learned. **Temporary, and marked so it is not
+    // mistaken for the design**: a knight is meant to buy or find an Orb of Falling Slash and
+    // right-click it (docs/skills-dk.md §3.3), and until the orbs are cooked the only way to have
+    // a skill at all is to be given one. Nothing else about the skill is short-cut -- it is
+    // learned in the mask the save writes, so the day the orb exists this line is deleted and
+    // nothing else changes.
+    if (kin == Kin::DarkKnight) {
+        const int slash = skillIndexOf(skill::kFallingSlash);
+        if (slash >= 0) hero.learned |= uint32_t(1) << slash;
+    }
     bodies_.push_back(std::move(hero));
     reswing(bodies_[0]);
 
@@ -184,6 +194,7 @@ HeroRecord Realm::record() const {
     out.health = hero.health;
     out.mana = hero.mana;
     out.money = money_;
+    out.learned = hero.learned;
     for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
     return out;
 }
@@ -194,6 +205,11 @@ void Realm::restore(const HeroRecord& saved) {
     hero.experience = saved.experience;
     hero.pointsInHand = std::max(0, saved.pointsInHand);
     hero.points = saved.points;
+    // ORed rather than assigned, and only while `raise` still hands a knight his first skill: a
+    // save written before the skills existed carries a nought mask, and assigning it would take
+    // back the skill the grant above just gave him. The day the orb is the only way in, this
+    // becomes an assignment.
+    hero.learned |= saved.learned;
     hero.facing = hero.aim = saved.facing;
     money_ = std::max<int64_t>(0, saved.money);
     bag_.clear();
@@ -263,6 +279,38 @@ void Realm::press() {
     Body& hero = bodies_[0];
     if (!hero.alive()) return;
 
+    // The key, before the order, and it does not replace it: a press spends the next swing on a
+    // skill and leaves the knight fighting what he was fighting (docs/skills-dk.md §3.1a). A wish
+    // that cannot be thrown -- cooling, no mana, out of reach, nothing learned -- falls through
+    // and the ordinary blow lands, which is what "auto-attack is the floor" means.
+    //
+    // Thrown only when the weapon is out of its own recovery, and `throwSkill` puts the clock
+    // forward itself, so the order below sees a swing already spent and does not swing twice.
+    if (wants_ != skill::kNone) {
+        if (tick_ > wantsUntil_) {
+            wants_ = skill::kNone;
+        } else if (tick_ >= hero.swingsAt) {
+            if (const SkillRow* row = skillNumbered(wants_)) {
+                // A self-cast reads its target off the caster; an attack takes the id the key
+                // named, or the one he is already fighting when the key named nobody.
+                const uint32_t at = row->onSelf()  ? hero.id
+                                    : wantsAt_ != 0 ? wantsAt_
+                                                    : order_.target;
+                if (throwSkill(hero, *row, at)) wants_ = skill::kNone;
+            }
+        }
+    }
+
+    // And a boon lapsing, which is the other half of a buff: replace rather than stack, off on
+    // the tick it expires, and `Fighter.damageTaken` back to 1 -- the field `sim/rules.h` has
+    // carried since sprint 5 for exactly this.
+    if (hero.boonUntil != 0 && tick_ >= hero.boonUntil) {
+        hero.boonUntil = 0;
+        hero.boonSkill = skill::kNone;
+        hero.boonDamageTaken = 1.0f;
+        hero.stats.damageTaken = 1.0;
+    }
+
     if (order_.kind == Request::Kind::Pick) {
         // Taken on arrival: within a tile of it, which is standing on it or beside it -- the
         // grid may refuse the tile itself when something died against a wall. The reach is
@@ -309,7 +357,9 @@ void Realm::press() {
     }
     if (within(hero, *target, float(kHeroAttackRange)) &&
         !tables_->grid.safe(target->column(), target->row())) {
-        engage(hero, *target);
+        // Not while a skill's clip is running: the blow was thrown at where he was facing, and a
+        // body that turns under its own animation is the sudden movement the user objected to.
+        if (tick_ >= hero.castUntil) engage(hero, *target);
         if (tick_ >= hero.swingsAt) {
             hero.swingsAt = tick_ + hero.swingTicks;
             strikeAt(hero, *body(order_.target));
@@ -499,6 +549,23 @@ std::string describe(const Happening& happening, const Realm& realm) {
             std::snprintf(line, sizeof(line), "%6u %s reaches level %d with %d points",
                           happening.tick, who, happening.a, happening.b);
             break;
+        case What::Cast: {
+            const SkillRow* row = skillNumbered(happening.a);
+            std::snprintf(line, sizeof(line), "%6u %s casts %s at %s, cooling %d ticks",
+                          happening.tick, who, row ? row->name : "?",
+                          name(happening.whom).c_str(), happening.b);
+            break;
+        }
+        case What::Shoved:
+            std::snprintf(line, sizeof(line), "%6u %s is shoved to %d,%d", happening.tick, who,
+                          happening.a, happening.b);
+            break;
+        case What::Learned: {
+            const SkillRow* row = skillNumbered(happening.a);
+            std::snprintf(line, sizeof(line), "%6u %s learns %s", happening.tick, who,
+                          row ? row->name : "?");
+            break;
+        }
     }
     return std::string(line);
 }

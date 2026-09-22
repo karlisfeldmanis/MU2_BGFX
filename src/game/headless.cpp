@@ -11,6 +11,7 @@
 #include "core/log.h"
 #include "sim/audit.h"
 #include "sim/realm.h"
+#include "sim/skills.h"
 
 namespace mu::game {
 namespace {
@@ -51,6 +52,17 @@ public:
                 request.kind = sim::Request::Kind::Attack;
                 request.target = nearest;
                 realm.ask(request);
+            }
+            // And it presses its skill whenever the key would light up, which is what a player
+            // does: the realm refuses it while it cools and the ordinary swing lands instead, so
+            // the hunt is auto-attack with a skill folded into it -- exactly the rhythm
+            // docs/skills-dk.md §3.1a describes, and the reason the cast path is exercised by
+            // every headless run rather than by a test of its own.
+            for (int i = 0; i < sim::skillCount(); ++i) {
+                const sim::SkillRow& row = sim::skillAt(i);
+                if (!realm.knows(row.number) || realm.cooling(row.number) > 0) continue;
+                realm.invoke(row.number, nearest);
+                break;
             }
             return;
         }

@@ -47,6 +47,9 @@ public:
     void script(float x, float y, bool press, bool release, bool right = false);
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
+    // A skill key pressed by a script: 0 is Q. `--press q` in a headless run, so the cast path is
+    // reachable without a window.
+    void scriptSkill(int key) { scriptedSkill_ = key; }
     // The camera this frame, for the names over what lies on the ground.
     void setView(const float* viewProj) {
         for (int i = 0; i < 16; ++i) viewProj_[i] = viewProj[i];
@@ -118,6 +121,13 @@ private:
     int32_t quick_[Hud::kQuickKeys] = {-1, -1, -1, -1, -1};
     int scriptedKey_ = -1;
     void quickKeys(const gfx::Window& window, Play& play);
+    // What is on Q W E R, by MU's skill number. The knight's first is bound to Q the moment he
+    // has learned it, which is a convenience and not the design: dragging a learned skill onto a
+    // key is the gesture (docs/skills-dk.md §3.4) and the list to drag from is the next sprint's.
+    // Not saved, which is faithful -- there is no SaveHotKey anywhere in MuMain.
+    int32_t bound_[Hud::kSkillKeys] = {0, 0, 0, 0};
+    int scriptedSkill_ = -1;
+    void skillKeys(const gfx::Window& window, Play& play);
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;

@@ -372,6 +372,13 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.refused = sound_.load("window_refused", false);
     heard_.opened = sound_.load("window_open", false);
     heard_.meteorite = sound_.load("meteorite", true);
+    // The knight's skills, by the table's own index, so a cast asks for its wave by the same
+    // number its cooldown is kept under. Both `sKnightSkill4` names are the same file: MU plays
+    // SWORD4 for Cyclone and for Slash alike.
+    for (int i = 0; i < sim::skillCount(); ++i) {
+        const sim::SkillRow& row = sim::skillAt(i);
+        if (row.sound[0] != '\0') heard_.skill[i] = sound_.load(row.sound, true);
+    }
     heard_.explosion = sound_.load("explosion", true);
     // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
     // pMaleDie.wav. The elf's pFemaleScream2 is the same rule with another file, for when an

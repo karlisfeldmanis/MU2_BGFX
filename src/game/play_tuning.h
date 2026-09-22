@@ -37,6 +37,13 @@ constexpr float kEarlyApart = 0.5f;
 // How long the character takes to dissolve in when the game has loaded. Invention.
 constexpr float kAppearSeconds = 1.1f;
 
+// How long a skill's clip blends in over, against the 0.18 s every other clip uses
+// (`kBlendSeconds`, crowd.cpp). **invention**: a skill is a wind-up rather than a jab, and at the
+// swing's own blend the body is standing in the pose before the arm has begun to move, which is
+// what "the animation looks instant" means. Long enough to read as a body gathering itself and
+// short enough that the blow still lands in the clip's own second half.
+constexpr float kCastBlend = 0.28f;
+
 // A breed's name as the command line may spell it: lowered, with everything that is not a
 // letter or a digit dropped, so "Skeleton Warrior", "skeletonwarrior" and "Skeleton_Warrior"
 // are one word. The cook writes two names for a breed -- the figure ("BudgeDragon01") and the

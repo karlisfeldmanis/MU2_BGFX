@@ -63,6 +63,8 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.health = int(doc["health"].numberOr(0));
     hero.mana = int(doc["mana"].numberOr(0));
     hero.money = int64_t(doc["zen"].numberOr(0.0));
+    // Absent in a file written before there were skills, which reads as nought and is right.
+    hero.learned = uint32_t(doc["learned"].numberOr(0.0));
 
     const core::Json& items = doc["items"];
     for (size_t i = 0; i < items.size(); ++i) {
@@ -133,6 +135,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
                  hero.points.energy);
     std::fprintf(f, "  \"health\": %d,\n  \"mana\": %d,\n  \"zen\": %lld,\n", hero.health,
                  hero.mana, static_cast<long long>(hero.money));
+    if (hero.learned != 0) std::fprintf(f, "  \"learned\": %u,\n", hero.learned);
     if (saved.zoom > 0.0f) std::fprintf(f, "  \"zoom\": %.3f,\n", double(saved.zoom));
     std::fprintf(f, "  \"items\": [");
     bool first = true;

@@ -33,6 +33,7 @@
 #include "sim/random.h"
 #include "sim/route.h"
 #include "sim/rules.h"
+#include "sim/skills.h"
 
 namespace mu::sim {
 
@@ -70,6 +71,9 @@ enum class What : uint8_t {
                // c: the Zen or the plus
     Picked,    // a: its id, b: the bag slot or -1 for Zen, c: the Zen
     Vanished,  // a: its id: it lay too long
+    Cast,      // a skill thrown: a: its number, b: the cooldown it set in ticks, whom: at whom
+    Shoved,    // the knock: a: the column it was put on, b: the row
+    Learned,   // a: the skill's number
 };
 
 // A thing on the ground: an item or a pile of Zen, where a death left it, until it is picked
@@ -172,6 +176,28 @@ struct Body {
     uint64_t experience = 0;
     int32_t pointsInHand = 0;  // won by levelling and not yet spent
 
+    // ---- skills (docs/skills-dk.md) --------------------------------------------------------
+    // What he has learned, as a bit per row of the skill table and NOT per skill number: the
+    // mask is six wide and the save writes it whole. Learned permanently -- a skill is not a
+    // property of what is in his hands, which is 0.75's shape and is the one the design leaves
+    // on purpose.
+    uint32_t learned = 0;
+    // When each learned skill may be thrown again, by the same index. The cooldown is the one
+    // thing 0.75 has no equivalent of, so it lives beside the swing clock rather than through
+    // it -- a cast pays BOTH, which is what stops haste outrunning the animation.
+    int64_t cools[kSkills] = {};
+    // A boon: what it multiplies incoming damage by and when it lapses. One at a time, because
+    // 0.75 has exactly one skill that grants one and the elf's two are the same shape when they
+    // arrive.
+    // While a skill's own clip is running he does not turn and is not moved: the blow is thrown
+    // where he was standing and facing when he threw it. The user's rule, 2026-09-22 -- a body
+    // that swivels or slides mid-skill reads as a teleport, which is the same objection that took
+    // the gap-closers out.
+    int64_t castUntil = 0;
+    int64_t boonUntil = 0;
+    float boonDamageTaken = 1.0f;
+    int32_t boonSkill = 0;
+
     bool alive() const { return health > 0; }
     int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
     int row() const { return int(y + (y < 0.0f ? -0.5f : 0.5f)); }
@@ -192,6 +218,10 @@ struct HeroRecord {
     HeroPoints points;
     int32_t health = 0, mana = 0;
     int64_t money = 0;
+    // What he has learned, by the skill table's own index. Saved because learning is permanent
+    // in this design and is the one thing about a skill that is his rather than his weapon's.
+    // Cooldowns are NOT saved: a character who quits mid-fight is not owed his four seconds.
+    uint32_t learned = 0;
     Held slots[kSlots];
 };
 
@@ -226,6 +256,29 @@ public:
                Kin kin = Kin::DarkKnight, int level = 1);
 
     void ask(const Request& request) { pending_ = request; }
+
+    // ---- skills (docs/skills-dk.md) --------------------------------------------------------
+    // A key pressed: throw this skill at this body. NOT a Request, and that is the design and
+    // not a shortcut -- a press does not replace the standing attack order, it spends the next
+    // swing on the skill and leaves the order standing, so the knight goes on fighting
+    // afterwards without a second click. MU2's `Realm.Cast` keeps the ask in `Player.Wants` for
+    // the same reason and its remark is worth reading.
+    //
+    // Remembered rather than dropped when it arrives mid-swing: the tick rate is 20 and a key is
+    // pressed on a frame, so refusing an ask that lands inside the swing it is waiting for would
+    // lose most presses. It is held for `kWishTicks` and thrown by the first tick that can.
+    // Every refusal is silent, as `Swing`'s and `Move`'s are: the interface asks, and a no is a
+    // message that does not come back.
+    void invoke(int32_t skill, uint32_t at);
+    // Learning, which in this design is permanent and saved: an orb consumed sets a bit. Nothing
+    // in 0.75 does this -- the knight's skills were carried by the weapon in his hand -- so it
+    // is `invention`, argued in the doc's §3.3.
+    bool learn(int32_t skill);
+    bool knows(int32_t skill) const;
+    // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
+    // frame needs to draw a sweep. Zero and zero when it is ready.
+    int64_t cooling(int32_t skill) const;
+    int32_t coolsFor(int32_t skill) const;
 
     // Points the player has won and not yet spent, put into his four stats. A real action --
     // sprint 7's stat window raises it, and sprint 9's save writes what came of it -- and it
@@ -325,7 +378,16 @@ private:
     void wander(Body& beast);
     void retreat(Body& beast);
     void engage(Body& one, const Body& target);
-    void strikeAt(Body& attacker, Body& target);
+    // `force` is the skill multiplier on the blow, 1 for an ordinary swing. It multiplies the
+    // damage after the roll, the defence and the level floor, which is where OpenMU's own
+    // `SkillMultiplier` falls (AttackableExtensions.cs:226-247).
+    void strikeAt(Body& attacker, Body& target, float force = 1.0f);
+    // A skill thrown, with the refusals in OpenMU's own order. False and silent for each.
+    bool throwSkill(Body& hero, const SkillRow& row, uint32_t at);
+    // The knock: one tile at random, onto something standable. 0.75's `movesTarget`.
+    void shove(Body& target);
+    // How long the clip this skill plays takes, and so what its cooldown cannot go under.
+    int32_t clipTicksOf(const Body& hero, const SkillRow& row) const;
     void kill(Body& beast, Body& killer);
     void gain(Body& hero, int32_t award);
     void raiseBeast(Body& beast);
@@ -361,6 +423,11 @@ private:
     std::vector<Step> scratch_;
     Request pending_;
     Request order_;  // what the player is doing until told otherwise
+    // The skill a key asked for and whom it was aimed at, held for a few ticks so a press inside
+    // the swing it waits for is not lost. Cleared the moment it is thrown or it goes stale.
+    int32_t wants_ = skill::kNone;
+    uint32_t wantsAt_ = 0;
+    int64_t wantsUntil_ = 0;
     int64_t tick_ = 0;
     std::string refusal_;
     uint32_t nextId_ = 1;

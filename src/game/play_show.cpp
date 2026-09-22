@@ -324,7 +324,12 @@ void Play::follow(float seconds) {
         // Cancelling is the whole of the rule: the blow itself already landed on the tick, and
         // nothing downstream reads a fact off the pose. What is lost is the rest of an
         // animation, which is what an attack cancel loses in any game that has one.
-        if (one.swinging > 0.0f && body->walking) one.swinging = 0.0f;
+        // A cast is the exception, and it is the one the rule above was written before there
+        // were any: the realm does not let him walk until the clip is done, so a walk arriving
+        // over a skill is the drawing's own interpolation catching up rather than a step he is
+        // taking, and cutting the skill for it is what made the animation look instant.
+        one.casting = std::max(0.0f, one.casting - seconds);
+        if (one.swinging > 0.0f && body->walking && one.casting <= 0.0f) one.swinging = 0.0f;
         if (one.swinging > 0.0f) {
             one.clipRate = one.swingPace;
             continue;

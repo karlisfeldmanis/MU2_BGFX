@@ -173,7 +173,8 @@ bool Hud::Face::operator==(const Face& o) const {
            level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
            character == o.character && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
-           std::equal(quick, quick + kQuickKeys, o.quick) && picture == o.picture;
+           std::equal(quick, quick + kQuickKeys, o.quick) && picture == o.picture &&
+           std::equal(skill, skill + kSkillKeys, o.skill);
 }
 
 int Hud::quickAt(float x, float y) const {
@@ -293,6 +294,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.pointerX = pointer.x;
         now_.pointerY = pointer.y;
         for (int i = 0; i < kQuickKeys; ++i) now_.quick[i] = quick_[i];
+        for (int i = 0; i < kSkillKeys; ++i) now_.skill[i] = skill_[i];
         // What stands on the potion boxes' stage: each bound row in its box, in MU units from
         // the plate's corner. The same list twice is no redraw (Stage::stand).
         if (stage_) {
@@ -389,6 +391,42 @@ void Hud::rebuild() {
         }
         canvas_.shadowed(box.x, box.bottom() - 3.0f, quickSize, ink, kInkShadow, 1.0f,
                          std::to_string(q.count), gfx::Align::Right, box.w - 3.0f);
+    }
+
+    // The skill boxes: the icon MuDream's own sheet gives the skill, the cooldown wiped down over
+    // it, and what is left of it in seconds.
+    //
+    // A WIPE AND NOT A RADIAL SWEEP. LoL and WoW both turn a hand round the icon; this fills the
+    // box from the top down as the cooldown runs, because a wipe is one rectangle and a sweep is
+    // a triangle fan the canvas has no primitive for. What both conventions have in common -- and
+    // what actually reads at a glance -- is that the dark shrinks as the skill comes back, and
+    // that is kept.
+    const float skillSize = std::round(13.0f * kUnit * s.scale);
+    for (int i = 0; i < kSkillKeys; ++i) {
+        const Skill& one = skill_[i];
+        if (one.number == 0) continue;
+        const Box box = plate(s, boxPx(i));
+        const gfx::Art& icon = arts.get(one.icon);
+        // **Disabled is a state and not a shade of the ready one.** A skill he cannot throw --
+        // the mana is not there, or the hand that the skill needs is empty -- is drawn cold and
+        // dark rather than merely dimmer: the icon goes through a blue-grey tint that takes the
+        // colour out of it, and a wash over the top takes the brightness. MU dims a hotkey it
+        // will not honour; this says the same thing louder, because a cooldown already owns the
+        // "dark for a moment" language and the two must not read as each other.
+        const uint32_t tint = one.affordable ? 0xFFFFFFFFu : gfx::rgba(0.42f, 0.44f, 0.52f, 1.0f);
+        if (icon.valid()) canvas_.image(icon, box, tint);
+        if (!one.affordable) canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.02f, 0.45f));
+        if (one.cooling > 0.0f) {
+            const float tall = box.h * std::min(1.0f, one.cooling);
+            canvas_.rect({box.x, box.y, box.w, tall}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.62f));
+            // The figure only while there is more than a second of it: a box flashing "0.3" is
+            // noise, and both references stop printing tenths under a second for the same reason.
+            if (one.seconds >= 1.0f) {
+                canvas_.shadowed(box.midX(), box.midY() + skillSize * 0.35f, skillSize, kInk,
+                                 kInkShadow, 1.0f, std::to_string(int(one.seconds + 0.5f)),
+                                 gfx::Align::Centre, 0.0f);
+            }
+        }
     }
 
     // The keys, relabelled. The painted figure is covered by the rail's own dark and the key

@@ -206,6 +206,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (play.isOpen()) {
         labelGround(play, window.width(), window.height());
         quickKeys(window, play);
+        skillKeys(window, play);
     }
 
     takesPointer_ = hud_.covers(pointer.x, pointer.y) ||
@@ -284,6 +285,82 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
             }
         }
         hud_.setQuick(key, q);
+    }
+}
+
+// The skill bar: the four keys, and what the four boxes show.
+//
+// The press is the whole of the gesture and the realm decides everything about it -- learned,
+// cooling, in reach, paid for. What this owes the player is the PICTURE of that decision, which is
+// why the box is handed the cooldown as a fraction and in seconds rather than a bool: a skill that
+// says nothing while it cools is a key the player thinks is broken.
+void Desk::skillKeys(const gfx::Window& window, Play& play) {
+    const sim::Realm& realm = play.realm();
+    const content::Tables& tables = *realm.tables();
+    const sim::Body& hero = realm.hero();
+
+    // Bound on the day it is learned, first free key first. A convenience while there is one
+    // skill and no list to drag from; it binds nothing a second time, so a rebinding by hand
+    // would stick.
+    for (int i = 0; i < sim::skillCount(); ++i) {
+        const sim::SkillRow& row = sim::skillAt(i);
+        if (!realm.knows(row.number)) continue;
+        bool already = false;
+        for (int key = 0; key < Hud::kSkillKeys; ++key) already |= bound_[key] == row.number;
+        if (already) continue;
+        for (int key = 0; key < Hud::kSkillKeys; ++key) {
+            if (bound_[key] != 0) continue;
+            bound_[key] = row.number;
+            core::logf("window: %s bound to %s", row.name,
+                       key == 0 ? "Q" : key == 1 ? "W" : key == 2 ? "E" : "R");
+            break;
+        }
+    }
+
+    const gfx::Window::Key keys[Hud::kSkillKeys] = {
+        gfx::Window::Key::Skill1, gfx::Window::Key::Skill2, gfx::Window::Key::Skill3,
+        gfx::Window::Key::Skill4};
+    for (int key = 0; key < Hud::kSkillKeys; ++key) {
+        if (!window.pressed(keys[key]) && scriptedSkill_ != key) continue;
+        if (bound_[key] == 0) continue;
+        // Aimed at what the pointer is over when it is over something, else at nothing -- the
+        // realm falls back to whatever the standing order is fighting, which is the usual case:
+        // the knight is already swinging at it.
+        play.castSkill(bound_[key], play.pointedAt());
+    }
+    scriptedSkill_ = -1;
+
+    for (int key = 0; key < Hud::kSkillKeys; ++key) {
+        Hud::Skill box;
+        box.number = bound_[key];
+        if (box.number != 0) {
+            box.icon = "skill_" + std::to_string(box.number);
+            const int64_t left = realm.cooling(box.number);
+            const int32_t whole = realm.coolsFor(box.number);
+            box.cooling = whole > 0 ? float(left) / float(whole) : 0.0f;
+            box.seconds = float(left) * 0.05f;  // 20 Hz
+            const sim::SkillRow* row = sim::skillNumbered(box.number);
+            // Dimmed for either reason he cannot throw it: the mana is not there, or there is no
+            // blade in his hand (Realm::throwSkill refuses both). MU dims a hotkey it will not
+            // honour and says nothing else, and the plate decides nothing here -- it asks the
+            // same two questions the realm will ask.
+            const content::Arm* weapon =
+                hero.weapon >= 0 && size_t(hero.weapon) < tables.arms.size()
+                    ? &tables.arms[size_t(hero.weapon)]
+                    : nullptr;
+            const content::Arm* shield =
+                hero.shield >= 0 && size_t(hero.shield) < tables.arms.size()
+                    ? &tables.arms[size_t(hero.shield)]
+                    : nullptr;
+            // A blade for an attack, a shield for the guard -- the two hands the realm asks
+            // about, asked here in the same order so the icon dims for the same reason.
+            const bool armed = row != nullptr && row->onSelf()
+                                   ? shield != nullptr && shield->isShield()
+                                   : weapon != nullptr && !weapon->isShield() &&
+                                         !weapon->bow() && !weapon->crossbow();
+            box.affordable = (row == nullptr || hero.mana >= row->mana) && armed;
+        }
+        hud_.setSkill(key, box);
     }
 }
 

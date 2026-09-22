@@ -63,6 +63,35 @@ public:
     // Which potion box a point is over, 0 to 4, or -1: where a drag from the bag binds.
     int quickAt(float x, float y) const;
 
+    // The four skill boxes, Q W E R. The plate paints six -- five numbered and the gold one in
+    // hand -- and the fifth and the gold box stay empty: four keys is the bar PLAN.md decided on
+    // and a knight has six skills to choose between, so a list to drag from is what the fifth box
+    // will become rather than a fifth key.
+    static constexpr int kSkillKeys = 4;
+
+    // What one skill box shows. Given by the desk, off the realm: the skill's number (0 for an
+    // empty box), the art key for its icon, how much of its cooldown is left as a fraction and in
+    // seconds, and whether the mana for it is there. The frame draws what it is handed and asks
+    // nothing (sprint 7's mirror).
+    struct Skill {
+        int32_t number = 0;
+        std::string icon;
+        float cooling = 0.0f;   // 1 just thrown, 0 ready
+        float seconds = 0.0f;   // what is left, for the figure over the icon
+        bool affordable = true;
+        bool operator==(const Skill& o) const {
+            // The cooldown is compared in tenths, which is what stops the plate rebuilding on
+            // every frame of a cooldown: a sweep that steps ten times a second reads as smooth
+            // and costs ten redraws a second instead of five hundred. Nothing else here moves.
+            return number == o.number && affordable == o.affordable &&
+                   int(seconds * 10.0f) == int(o.seconds * 10.0f) &&
+                   int(cooling * 40.0f) == int(o.cooling * 40.0f);
+        }
+    };
+    void setSkill(int key, const Skill& skill) {
+        if (key >= 0 && key < kSkillKeys) skill_[key] = skill;
+    }
+
     void open(const gfx::Interface& interface, panel::Arts* arts);
     void follow(const sim::Body* hero);
     // The stage the potion boxes' pictures are taken on, the plate's own size: the bag's way of
@@ -104,6 +133,7 @@ private:
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;
         Quick quick[kQuickKeys];
+        Skill skill[kSkillKeys];
         uint16_t picture = 0xFFFF;  // the stage's picture, so its first render is a rebuild
         bool operator==(const Face& o) const;
     };
@@ -127,6 +157,7 @@ private:
     int drawnLevel_ = 0;
     uint64_t rebuilds_ = 0;
     Quick quick_[kQuickKeys];
+    Skill skill_[kSkillKeys];
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;
 };
