@@ -88,6 +88,7 @@ add_executable(mu2
   src/content/grid.cpp
   src/content/tables.cpp
   src/content/showing.cpp
+  src/content/missiles.cpp
   src/gfx/window.cpp
   src/gfx/views.cpp
   src/gfx/stats.cpp
@@ -114,6 +115,7 @@ add_executable(mu2
   src/game/showing.cpp
   src/game/marker.cpp
   src/game/aura.cpp
+  src/game/bones.cpp
   src/game/breath.cpp
   src/game/meteor.cpp
   src/game/sound.cpp
@@ -183,6 +185,7 @@ add_executable(cooked_test EXCLUDE_FROM_ALL
   tests/cooked_test.cpp
   src/content/cooked.cpp
   src/content/showing.cpp
+  src/content/missiles.cpp
   src/core/files.cpp
   src/core/log.cpp
 )

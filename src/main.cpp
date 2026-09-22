@@ -369,6 +369,7 @@ int main(int argc, char** argv) {
                                                  world.played().showing().table(), &world.ground());
                     world.played().meteor().open(MU2_ASSET_DIR, textures,
                                                 world.played().showing().table(), &world.ground());
+                    world.played().bones().open(MU2_ASSET_DIR, textures, &world.ground());
                 }
                 world.played().openSound(MU2_ASSET_DIR, args.mute);
                 // Not fatal either: a game with no HUD is still a game.

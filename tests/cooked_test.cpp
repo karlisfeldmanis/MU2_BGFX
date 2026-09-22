@@ -12,6 +12,7 @@
 // Exits non-zero on the first thing that is not so.
 
 #include "content/cooked.h"
+#include "content/missiles.h"
 #include "content/showing.h"
 #include "core/files.h"
 
@@ -333,6 +334,82 @@ int main() {
             std::vector<uint8_t> half(showingBytes.begin(),
                                       showingBytes.begin() + showingBytes.size() / 2);
             check(!mu::content::parseShowing(half, ignored, error), "half a .mus is refused");
+        }
+    }
+
+    // --- the missiles: the thing a blow throws, as an ordinary cooked model --------------
+    //
+    // The point of the pass this checks is that a missile is no longer special: its mesh is
+    // a .mum read by the same parseCookedMesh the town's models and the wardrobe's items go
+    // through, so the only thing between here and a lit gfx::Drawable is
+    // content::Mesh::buildFromCooked, which is the one step that wants a device. Everything
+    // that can say "no" about it can therefore say so here, with no window.
+    {
+        const std::string assets = std::string(MU2_ASSET_DIR);
+        mu::content::Missiles missiles;
+        if (!missiles.read(assets + "/cooked/showing/missiles.mup")) {
+            std::printf("cooked_test: no missiles.mup -- run tools/cook.py --only missiles\n");
+            ++g_failures;
+        } else {
+            check(missiles.rows.size() >= 18, "index.json's eighteen missiles are cooked");
+            check(missiles.find("Bone01") != nullptr, "Bone01 is among them");
+            check(missiles.find("nothing_throws_this") == nullptr,
+                  "a name nothing cooked finds nothing");
+
+            size_t meshes = 0, missileTriangles = 0, additive = 0;
+            for (const mu::content::MissileRow& one : missiles.rows) {
+                check(one.scale > 0.0f, one.name + " is thrown at some size");
+                check(!one.parts.empty(), one.name + " has a part to draw");
+                std::vector<uint8_t> meshBytes = mu::core::readFile(assets + "/" + one.mesh);
+                if (meshBytes.empty()) {
+                    check(false, one.name + " names a .mum that is on disk (" + one.mesh + ")");
+                    continue;
+                }
+                mu::content::CookedMesh mesh;
+                std::string meshError;
+                if (!mu::content::parseCookedMesh(meshBytes, mesh, meshError)) {
+                    check(false, one.name + "'s mesh parses: " + meshError);
+                    continue;
+                }
+                ++meshes;
+                missileTriangles += mesh.indices.size() / 3;
+                check(mesh.parts.size() == one.parts.size(),
+                      one.name + "'s mesh has one part per row part");
+                check(!mesh.isSkinned(), one.name + " is rigid: MU animates these by keys");
+                // Metres, not MU units. The whole conversion happens in the cook, so the
+                // largest thing thrown here is a meteor a metre and a half across and not a
+                // rock 150 m wide -- which is the failure this bound exists to catch.
+                for (int axis = 0; axis < 3; ++axis) {
+                    check(mesh.max[axis] - mesh.min[axis] < 10.0f,
+                          one.name + " is in metres, as docs/conventions.md asks of a mesh");
+                }
+                for (size_t p = 0; p < mesh.parts.size() && p < one.parts.size(); ++p) {
+                    const mu::content::CookedMaterial& material =
+                        mesh.materials[mesh.parts[p].material];
+                    // The blend the table states and the flag the renderer reads are the
+                    // same fact written twice, and they must not drift apart.
+                    check(material.glow == one.parts[p].additive,
+                          one.name + "'s part " + std::to_string(p) +
+                              " agrees about being additive");
+                    check(material.albedo == one.parts[p].sheet,
+                          one.name + "'s part " + std::to_string(p) + " wears the row's sheet");
+                    check(!mu::core::readFile(assets + "/" + material.albedo).empty(),
+                          one.name + "'s sheet is cooked (" + material.albedo + ")");
+                    if (one.parts[p].additive) ++additive;
+                }
+            }
+            std::printf("  %zu missiles, %zu meshes parsed, %zu triangles, %zu additive parts\n",
+                        missiles.rows.size(), meshes, missileTriangles, additive);
+            check(additive > 0, "some part of some missile is drawn added");
+
+            // Bone01, the skeleton's throw: MU lifts it 150 units over the flight, which the
+            // table keeps in MU's units exactly as index.json states it.
+            if (const mu::content::MissileRow* bone = missiles.find("Bone01")) {
+                check(bone->lift > 149.0f && bone->lift < 151.0f,
+                      "Bone01 keeps index.json's lift of 150 MU units");
+                check(bone->parts.size() == 1 && !bone->parts[0].additive,
+                      "a bone lying on the grass is lit and not added");
+            }
         }
     }
 

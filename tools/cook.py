@@ -17,7 +17,7 @@ already on the right axes, already sorted into the chunks a frame walks. Foundat
 PLAN.md says chunk bounds and each kind's range are settled once and not per frame, and the
 cook is the once.
 
-    tools/cook.py --world lorencia [--only textures|meshes|placements|all] [--chunk 32]
+    tools/cook.py --world lorencia [--only textures|meshes|placements|missiles|all] [--chunk 32]
 
 The .mut format ("MU2 town"), version 2, little-endian:
 
@@ -1903,6 +1903,365 @@ def cook_showing(out_dir, texcook, threads):
     return 0
 
 
+def read_obj(path):
+    """One Wavefront .obj as (positions, normals, uvs, groups).
+
+    MuExtract's `export-obj` writes exactly one dialect and this reads exactly that one:
+    `v`/`vn`/`vt`, one `g` per MU mesh named for the sheet that mesh wears, and triangles
+    only, every corner `v/t/n` and one-based. Anything else is refused rather than guessed
+    at -- a quad silently dropped is a hole in a rock nobody can explain later.
+
+    `groups` is a list of (name, [(v, t, n), (v, t, n), (v, t, n)]) in file order, because
+    the group IS the part: it is the only record of which faces sample which sheet, which is
+    what ObjCommands.cs says it wrote the grouping down for.
+    """
+    at, normals, uvs, groups = [], [], [], []
+    with open(path) as handle:
+        for number, line in enumerate(handle, 1):
+            if line.startswith("v "):
+                at.append(tuple(float(x) for x in line.split()[1:4]))
+            elif line.startswith("vn "):
+                normals.append(tuple(float(x) for x in line.split()[1:4]))
+            elif line.startswith("vt "):
+                uvs.append(tuple(float(x) for x in line.split()[1:3]))
+            elif line.startswith("g "):
+                groups.append((line[2:].strip(), []))
+            elif line.startswith("f "):
+                corners = line.split()[1:]
+                if len(corners) != 3:
+                    raise ValueError(f"{path}:{number}: a face of {len(corners)} corners, and "
+                                     f"this reads triangles")
+                if not groups:
+                    raise ValueError(f"{path}:{number}: a face before any `g`, so nothing says "
+                                     f"which sheet it wears")
+                triangle = []
+                for corner in corners:
+                    parts = (corner.split("/") + ["", ""])[:3]
+                    triangle.append(tuple(int(p) if p else 0 for p in parts))
+                groups[-1][1].append(tuple(triangle))
+    return at, normals, uvs, groups
+
+
+def obj_part(at, normals, uvs, triangles, per_tile):
+    """One group's triangles as (vertices, indices), in metres and with tangents.
+
+    **The .obj is already on this engine's axes and is NOT in metres**, which is the one
+    thing about these files that is worth writing down. MuExtract builds every mesh with
+    `ConvertAxes` on (BmdMeshBuilder, AxisConvention.ToEngine), so MU's `(x, y, z)` with z up
+    was turned into `(x, z, -y)` when the .obj was written -- the same swap
+    docs/conventions.md states, done once at import. What is left to do here is the other
+    half of that page: MU counts 100 units to a tile and a tile is a metre, so the whole
+    thing is divided by the worlds' own `units_per_tile` rather than by a 100 written in.
+    A second axis swap here would lay every missile on its side.
+
+    The V coordinate is flipped BACK. ObjCommands.cs writes `1 - v` because OBJ's texture
+    origin is the bottom-left and MU's is the top-left; glTF's is the top-left too, so every
+    cooked mesh in this engine carries MU's own V and a missile must as well.
+
+    Tangents are derived here because an .obj has none and content/mesh.h's vertex has a
+    slot for one: the cook is where that is paid for, once, rather than in a shader that
+    would re-derive it per pixel. Averaged per vertex over the triangles that share it and
+    orthogonalised against the normal, which is glTF's own definition, with w the bitangent's
+    sign. A degenerate UV triangle -- MU's effect cards have a few -- contributes nothing
+    instead of a NaN.
+    """
+    unique = {}
+    vertices = []
+    indices = []
+    tangents = []
+    bitangents = []
+    for triangle in triangles:
+        corner_index = []
+        for v, t, n in triangle:
+            key = (v, t, n)
+            if key not in unique:
+                if v <= 0 or v > len(at):
+                    raise ValueError(f"a face names vertex {v} of {len(at)}")
+                position = [c / per_tile for c in at[v - 1]]
+                normal = list(normals[n - 1]) if 0 < n <= len(normals) else [0.0, 1.0, 0.0]
+                uv = ([uvs[t - 1][0], 1.0 - uvs[t - 1][1]] if 0 < t <= len(uvs) else [0.5, 0.5])
+                unique[key] = len(vertices)
+                vertices.append([position, normal, uv])
+                tangents.append([0.0, 0.0, 0.0])
+                bitangents.append([0.0, 0.0, 0.0])
+            corner_index.append(unique[key])
+        indices += corner_index
+
+        a, b, c = (vertices[i] for i in corner_index)
+        edge1 = [b[0][i] - a[0][i] for i in range(3)]
+        edge2 = [c[0][i] - a[0][i] for i in range(3)]
+        du1, dv1 = b[2][0] - a[2][0], b[2][1] - a[2][1]
+        du2, dv2 = c[2][0] - a[2][0], c[2][1] - a[2][1]
+        area = du1 * dv2 - du2 * dv1
+        if abs(area) < 1e-12:
+            continue
+        r = 1.0 / area
+        tangent = [(edge1[i] * dv2 - edge2[i] * dv1) * r for i in range(3)]
+        bitangent = [(edge2[i] * du1 - edge1[i] * du2) * r for i in range(3)]
+        for i in corner_index:
+            for axis in range(3):
+                tangents[i][axis] += tangent[axis]
+                bitangents[i][axis] += bitangent[axis]
+
+    packed = bytearray()
+    low = [1e30] * 3
+    high = [-1e30] * 3
+    for index, (position, normal, uv) in enumerate(vertices):
+        for axis in range(3):
+            low[axis] = min(low[axis], position[axis])
+            high[axis] = max(high[axis], position[axis])
+        t = tangents[index]
+        dot = sum(t[i] * normal[i] for i in range(3))
+        t = [t[i] - normal[i] * dot for i in range(3)]
+        length = math.sqrt(sum(c * c for c in t))
+        if length < 1e-8:
+            # No usable UV gradient on any triangle that shares this vertex. Any direction
+            # across the normal will do: nothing here carries a normal map, and a zero
+            # tangent would make the shader's basis singular.
+            t = [1.0, 0.0, 0.0] if abs(normal[0]) < 0.9 else [0.0, 0.0, 1.0]
+            dot = sum(t[i] * normal[i] for i in range(3))
+            t = [t[i] - normal[i] * dot for i in range(3)]
+            length = math.sqrt(sum(c * c for c in t)) or 1.0
+        t = [c / length for c in t]
+        cross = [normal[1] * t[2] - normal[2] * t[1],
+                 normal[2] * t[0] - normal[0] * t[2],
+                 normal[0] * t[1] - normal[1] * t[0]]
+        sign = -1.0 if sum(cross[i] * bitangents[index][i] for i in range(3)) < 0.0 else 1.0
+        packed += struct.pack("<3f3f4f2f", *position, *normal, *t, sign, *uv)
+    return packed, len(vertices), indices, low, high
+
+
+# The version of the missile table, and the one the reader checks. Bumped whenever the row
+# below gains or loses a field, because a reader that defaulted one would draw a missile of
+# the wrong size or throw it at the wrong speed and look like it had worked.
+MISSILE_VERSION = 1
+
+
+def cook_missiles(out_dir, texcook, threads):
+    """The things a blow throws: 18 meshes and their sheets, cooked like any other model.
+
+    They sit beside the effect sheets and the sounds in cooked/showing for the reason that
+    directory exists at all: a missile belongs to a blow and not to a map, so cooking it per
+    world would write the same bone into Lorencia and into Noria.
+
+    **The point of this pass is that a missile stops being a special case.** It was two .obj
+    files parsed at run time into raw unlit triangles, which is right for a burning rock and
+    wrong for a bone lying on the grass. What comes out here is a .mum exactly as the town's
+    models and the wardrobe's items are -- version 3, 48-byte vertices, one part per MU mesh,
+    one material each -- so game code loads it with `parseCookedMesh` and draws it as an
+    ordinary lit `gfx::Drawable`, with no parser and no second material model.
+
+    What each part's `blend` becomes is the one decision here. `additive` sets the glow flag
+    (bit 1), which is MU's BlendMesh and already means exactly this to the renderer: out of
+    the shadow, out of the prepass, out of the shade, and added to the frame in the
+    transparent pass. Everything else -- `opaque`, and Poison01's `flat` -- is an ordinary
+    lit material. So Arrow01 is one mesh with a lit shaft and an additive flame on it, drawn
+    in one submission, and no fourth blend flag was invented for it.
+
+    Two departures, both marked, because MU's effect geometry has no entry in the material
+    library and never will:
+
+      * `invention`: roughness 1.0 and metal 0 on every part, stated in the factors as
+        docs/conventions.md requires of a material with no ORM map. A thrown bone is not
+        metal and MU painted no grain for it.
+      * `invention`: every part is two-sided. MU's effect meshes are open shells and single
+        cards -- a flame is four cards through a ball -- and a card seen from its back face
+        would vanish. Figures are drawn two-sided here for the same reason.
+
+    The `poses` some missiles carry (Ice01's six, Poison01's eleven, Storm01's nineteen --
+    keys of an action baked as separate .obj, see ObjCommands.cs) are NOT cooked: nothing
+    reads them yet and cooking them would write 34 meshes the game never asks for. The
+    `mesh` each row names is the one cooked, and this note is what says the rest are owed.
+
+    The .mup format ("MU2 projectiles"; .mum is a mesh and .mus is the showing), version 1,
+    little-endian:
+
+        'MU2P', u32 version, u32 missiles
+        missiles: u16 len + name ("Bone01"), u16 len + .mum path relative to assets/,
+                  f32 scale, f32 frames, f32 lift, f32 muzzle[3], f32 sideways,
+                  f32 sidewaysSpread, u32 parts,
+                  parts: u16 len + .ktx path relative to assets/, u8 additive
+
+    `lift`, `muzzle`, `sideways` and `sidewaysSpread` are left in MU's units exactly as
+    index.json states them, and that is deliberate rather than an omission: they are read
+    together with MU's own per-frame arithmetic -- a lift of 150 a frame at 25 Hz -- and
+    halving the conversion between the file and the flight is how a number gets divided by a
+    hundred twice. The GEOMETRY is in metres because a mesh has no arithmetic left to do.
+    """
+    with open(os.path.join(ASSETS, "index.json")) as handle:
+        index = json.load(handle)
+    missiles = index.get("missiles") or {}
+    worlds = index.get("worlds") or []
+
+    # docs/conventions.md: never hard-code 100. A missile belongs to no world, so the value
+    # is taken from the worlds that do state one and they are required to agree -- the day a
+    # map arrives on another scale, this says so instead of silently halving a rock.
+    scales = sorted({float(one["units_per_tile"]) for one in worlds if "units_per_tile" in one})
+    if len(scales) != 1:
+        print(f"cook: the worlds disagree about units_per_tile ({scales}), and a missile "
+              f"belongs to none of them", file=sys.stderr)
+        return 2
+    per_tile = scales[0]
+
+    os.makedirs(os.path.join(out_dir, "textures"), exist_ok=True)
+    mesh_dir = os.path.join(out_dir, "meshes")
+    os.makedirs(mesh_dir, exist_ok=True)
+    started = time.time()
+
+    # --- the sheets, deduplicated by their own bytes as every other cooked texture is ----
+    # Same `effect_<base>_albedo_<digest>` stem cook_showing uses, on purpose: a sheet that
+    # is both a named effect and a missile's part is then one file cooked once, by the path
+    # its digest gives it.
+    jobs = []
+    sheets = {}
+    missing = []
+    raw_in = 0
+    for name in sorted(missiles):
+        for part in missiles[name]["parts"]:
+            relative = part["sheet"]
+            if relative in sheets:
+                continue
+            source = os.path.join(ASSETS, relative)
+            if not os.path.exists(source):
+                missing.append(relative)
+                continue
+            with open(source, "rb") as handle:
+                data = handle.read()
+            digest = hashlib.sha1(data).hexdigest()[:16]
+            base = safe(os.path.splitext(os.path.basename(relative))[0])
+            ktx_path = os.path.join(out_dir, "textures", f"effect_{base}_albedo_{digest}.ktx")
+            if not any(job[3] == ktx_path for job in jobs):
+                raw_in += len(data)
+                # -1: an effect sheet is blended and not tested, so there is no coverage to
+                # hold down its mip chain. cook_showing's note says why at length.
+                jobs.append(("albedo", -1.0, source, ktx_path))
+            sheets[relative] = os.path.relpath(ktx_path, ASSETS)
+
+    if jobs:
+        job_file = os.path.join(out_dir, "jobs.txt")
+        with open(job_file, "w") as handle:
+            for role, cutout, source, target in jobs:
+                handle.write(f"{role}\t{cutout}\t{source}\t{target}\n")
+        command = [texcook, job_file]
+        if threads:
+            command += ["--threads", str(threads)]
+        result = subprocess.run(command)
+        if result.returncode:
+            return result.returncode
+
+    # --- the meshes, one .mum each ------------------------------------------------------
+    rows = []
+    triangles = 0
+    mesh_bytes = 0
+    gone = []
+    for name in sorted(missiles):
+        row = missiles[name]
+        source = os.path.join(ASSETS, row["mesh"])
+        if not os.path.exists(source):
+            gone.append(row["mesh"])
+            continue
+        at, normals, uvs, groups = read_obj(source)
+        wanted = {part["group"]: part for part in row["parts"]}
+        faces = {}
+        for group, group_faces in groups:
+            faces.setdefault(group, []).extend(group_faces)
+        unknown = sorted(set(faces) - set(wanted))
+        if unknown:
+            print(f"cook: {name}'s mesh carries groups index.json does not name "
+                  f"({', '.join(unknown)}), and a part with no sheet cannot be drawn",
+                  file=sys.stderr)
+            return 2
+
+        vertices = bytearray()
+        indices = bytearray()
+        parts = []
+        materials = bytearray()
+        vertex_count = 0
+        low = [1e30] * 3
+        high = [-1e30] * 3
+        for part in row["parts"]:
+            group = part["group"]
+            if group not in faces:
+                print(f"cook: {name} names a part `{group}` its mesh has no faces for",
+                      file=sys.stderr)
+                return 2
+            packed, count, part_indices, part_low, part_high = obj_part(
+                at, normals, uvs, faces[group], per_tile)
+            first_index = len(indices) // 4
+            for value in part_indices:
+                indices += struct.pack("<I", vertex_count + value)
+            vertices += packed
+            parts.append((first_index, len(indices) // 4 - first_index, len(parts)))
+            vertex_count += count
+            for axis in range(3):
+                low[axis] = min(low[axis], part_low[axis])
+                high[axis] = max(high[axis], part_high[axis])
+
+            additive = part.get("blend") == "additive"
+            # Bit 0 two-sided (invention, see above), bit 1 the glow: MU's BlendMesh, which
+            # is what `additive` already means everywhere else in this engine.
+            flags = 1 | (2 if additive else 0)
+            materials += struct.pack("<fB", -1.0, flags)
+            materials += write_string(group)
+            materials += write_string(sheets.get(part["sheet"], ""))
+            for _ in range(3):      # normal, orm, emissive: MU paints none of the three
+                materials += write_string("")
+            # invention: rough and not metal, stated in the factors because there is no ORM
+            # map to multiply. docs/conventions.md's rule for a material with no map.
+            materials += struct.pack("<2f", 1.0, 0.0)
+
+        header = struct.pack("<4sIIIII", b"MU2M", 3, vertex_count, len(indices) // 4,
+                             len(parts), len(row["parts"]))
+        header += struct.pack("<3f3f", *low, *high)
+        body = bytes(vertices) + bytes(indices)
+        for part in parts:
+            body += struct.pack("<III", *part)
+        body += bytes(materials)
+
+        out_path = os.path.join(mesh_dir, f"{safe(name)}.mum")
+        blob = header + body
+        # Idempotent by what it holds: the same .obj and the same row cook to the same
+        # bytes, so a second run leaves the file's mtime alone and nothing downstream
+        # rebuilds. Same argument as the digest in a texture's name.
+        if not (os.path.exists(out_path) and open(out_path, "rb").read() == blob):
+            with open(out_path, "wb") as handle:
+                handle.write(blob)
+        triangles += len(indices) // 12
+        mesh_bytes += len(blob)
+
+        part_rows = b"".join(write_string(sheets.get(part["sheet"], "")) +
+                             struct.pack("<B", 1 if part.get("blend") == "additive" else 0)
+                             for part in row["parts"])
+        muzzle = [float(v) for v in (row.get("muzzle") or [0.0, 0.0, 0.0])]
+        rows.append(write_string(name) +
+                    write_string(os.path.relpath(out_path, ASSETS)) +
+                    struct.pack("<3f3f2fI", float(row.get("scale", 1.0)),
+                                float(row.get("frames", 0.0)), float(row.get("lift", 0.0)),
+                                *muzzle, float(row.get("sideways", 0.0)),
+                                float(row.get("sideways_spread", 0.0)), len(row["parts"])) +
+                    part_rows)
+
+    blob = struct.pack("<4sII", b"MU2P", MISSILE_VERSION, len(rows)) + b"".join(rows)
+    path = os.path.join(out_dir, "missiles.mup")
+    with open(path, "wb") as handle:
+        handle.write(blob)
+
+    if missing:
+        print(f"cook: {len(missing)} missile sheets named and not on disk: "
+              f"{', '.join(missing[:4])}")
+    if gone:
+        print(f"cook: {len(gone)} missile meshes named and not on disk: {', '.join(gone[:4])}")
+    ktx = sum(os.path.getsize(os.path.join(out_dir, "textures", f))
+              for f in os.listdir(os.path.join(out_dir, "textures")))
+    print(f"cook: {len(rows)} missiles, {triangles} triangles in "
+          f"{mesh_bytes / 1e3:.1f} KB of .mum; {len(jobs)} sheets, "
+          f"{raw_in / 1e6:.1f} MB of png -> {ktx / 1e6:.1f} MB of .ktx with mips in this "
+          f"directory")
+    print(f"cook: missiles -> {os.path.relpath(path, ROOT)} ({len(blob)} bytes), "
+          f"{time.time() - started:.1f} s")
+    return 0
+
+
 def cook_figures(world, out_dir, texcook, threads):
     """Every figure the world reaches: its textures, its meshes, its clips and a manifest."""
     models, characters, monsters, standalone, placements, index = figure_set(world)
@@ -2252,7 +2611,7 @@ def main():
     parser.add_argument("--threads", type=int, default=0)
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
     parser.add_argument("--only", choices=("textures", "meshes", "placements", "figures",
-                                           "tables", "showing", "wardrobe", "all"),
+                                           "tables", "showing", "missiles", "wardrobe", "all"),
                         default="all")
     parser.add_argument("--chunk", type=int, default=32,
                         help="a chunk's side in tiles; 32 gives Lorencia an 8x8 grid")
@@ -2267,13 +2626,22 @@ def main():
     if args.only == "tables":
         return cook_tables(args.world, os.path.join(args.out, args.world))
 
-    if args.only == "showing":
+    if args.only in ("showing", "missiles"):
         if not os.path.exists(args.texcook):
             print(f"cook: {args.texcook} is not built. cmake --build build --target texcook",
                   file=sys.stderr)
             return 2
         # Beside the figures and not under a world, for the figures' own reason.
-        return cook_showing(os.path.join(args.out, "showing"), args.texcook, args.threads)
+        showing_dir = os.path.join(args.out, "showing")
+        if args.only == "missiles":
+            return cook_missiles(showing_dir, args.texcook, args.threads)
+        # The missiles ride with `showing` rather than standing alone in `all`: they write
+        # into the same directory, they share its sheet naming, and a blow whose effect was
+        # recooked without the thing it throws is half a blow. So the two are one answer to
+        # "cook what a blow shows", and `--only missiles` is the narrower cut for a session
+        # that touched only the meshes.
+        result = cook_showing(showing_dir, args.texcook, args.threads)
+        return result or cook_missiles(showing_dir, args.texcook, args.threads)
 
     if args.only == "wardrobe":
         if not os.path.exists(args.texcook):
@@ -2341,6 +2709,7 @@ def main():
         cook_placements(args.world, out_dir, args.chunk)
         cook_tables(args.world, out_dir)
         cook_showing(os.path.join(args.out, "showing"), args.texcook, args.threads)
+        cook_missiles(os.path.join(args.out, "showing"), args.texcook, args.threads)
     return result.returncode
 
 

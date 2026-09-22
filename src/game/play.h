@@ -19,6 +19,7 @@
 #include "content/ground.h"
 #include "content/tables.h"
 #include "game/aura.h"
+#include "game/bones.h"
 #include "game/breath.h"
 #include "game/meteor.h"
 #include "game/crowd.h"
@@ -171,6 +172,9 @@ public:
     Sound& sound() { return sound_; }
     // What a Budge Dragon gives off, opened by the caller for the same reason as the showing.
     Breath& breath() { return breath_; }
+    // What a skeleton leaves, opened by the caller for the same reason as breath.
+    Bones& bones() { return bones_; }
+    void gatherBones(std::vector<gfx::Drawable>& out) const { bones_.gather(out); }
     // The Lich's meteorite: opened by the caller for the same reason as breath.
     Meteor& meteor() { return meteor_; }
     void gatherMeteor(gfx::Effects& effects) const { meteor_.gather(effects); }
@@ -239,6 +243,11 @@ private:
         int shockClip = -1;
         // A Budge Dragon: its head bone, which the fire comes out of, and what of a reference
         // frame's spark and a fourth of one's puff is owed. See Play::exhale.
+        // A body that does not fall but comes apart: MU's SetPlayerDie makes eleven bones of
+        // a skeleton and stops drawing the model on the same instruction. Found once, by the
+        // figure's name, as the dragon's own case is -- MU keys it on the MODEL, not on the
+        // breed, and two of its monsters share this body.
+        bool bursts = false;
         bool breathes = false;
         int headBone = -1;
         float fireOwed = 0.0f, dustOwed = 0.0f;
@@ -302,6 +311,7 @@ private:
     Aura aura_;
     Sound sound_;
     Breath breath_;
+    Bones bones_;
     Meteor meteor_;
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);

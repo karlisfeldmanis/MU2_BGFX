@@ -134,6 +134,18 @@ const char* kSmithFigure = "Smith01";
 // The one breed in Lorencia that breathes fire and raises dust. MU2's BudgeDragon01.json
 // `effects` block, which the cook does not carry; stated here once.
 const char* kBreathingFigure = "BudgeDragon01";
+// And the one that does not fall: MU's SetPlayerDie tests the sub-type of a body on the player
+// rig (MODEL_SKELETON1..3) and makes eleven bones of it instead of playing a death
+// (ZzzCharacter.cpp:1465-1471).
+//
+// MU keys that on the MODEL and this keys it on the cooked BODY, which is not the same thing
+// and is worth saying out loud: the figure's `name` is "SkeletonWarrior" and its `mesh` is
+// "Skeleton01". The dragon's case above gets away with `name` because its two are the same
+// word. What this costs is that another breed sharing this model -- MU's Death Cow takes the
+// identical eleven-bone branch, and the Stone Golem the same shape with big stones -- would
+// need its own row here. Neither stands in Lorencia, and the day one does this becomes a
+// field in the cook rather than a name in a list.
+const char* kBurstingFigure = "SkeletonWarrior";
 // MONSTER01_ATTACK1, and the key its fire stops on: `AnimationFrame <= 4.f`.
 constexpr int kBreathSlot = 3;
 constexpr float kBreathThrough = 4.0f;
@@ -321,6 +333,12 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                     // meteor's quake: MU's loop excludes the hero alone and gives everything
                     // else PLAYER_SHOCK. The hero keeps none, as Play::update says.
                     if (!body.player) one.shockClip = look->library->find(kPlayerShockSlot);
+                    // And the skeleton does not fall at all: it comes apart. Its death clip is
+                    // taken away here rather than left unplayed, so nothing can reach for one.
+                    if (!body.player && look->name == kBurstingFigure) {
+                        one.bursts = true;
+                        one.deathClip = -1;
+                    }
                 } else {
                     one.attackClip  = look->library->find(3);  // Attack 1
                     one.attackClip2 = look->library->find(4);  // Attack 2
@@ -722,6 +740,8 @@ void Play::update(double seconds) {
     hammer();
     exhale(float(seconds));
     breath_.update(float(seconds));
+    // The bones a skeleton left, on the drawing's clock like everything else here.
+    bones_.update(float(seconds));
     // The Lich's meteors: advance every live one, collect impacts.
     meteorImpacts_.clear();
     meteor_.update(float(seconds), meteorImpacts_);
@@ -1051,7 +1071,23 @@ void Play::fall(Drawn& dead) {
     // its authored speed regardless of what killed him mid-step.
     dead.clipRate = 1.0f;
     dead.swinging = 0.0f;
-    if (dead.deathClip >= 0) dead.figure.play(dead.deathClip, true);
+    // **A skeleton has no corpse.** `o->Live = false` on the same instruction that makes the
+    // bones, so the model stops drawing at once and the death clip in its rig is never
+    // reached. `deadFor` is put straight at the end of the whole death, which is what already
+    // takes a body off the screen in Play::follow -- the burst IS the fall for this breed, and
+    // everything that waits on a body going down waits on this.
+    if (dead.bursts && bones_.isOpen() && ground_) {
+        const float scale = dead.figure.body() ? dead.figure.body()->scale : 1.0f;
+        const float x = dead.crown[0], z = dead.crown[2];
+        bones_.burst(x, z, ground_->heightAt(x, z), scale);
+        dead.deadFor = kDeathTotal;
+        // As the meteor's throw does, and for the same reason: a run is read afterwards
+        // rather than watched, and this is what a shot's frame is worked out from.
+        core::logf("bones: tick %lld, #%u comes apart at %.1f,%.1f -- %u pieces in the air",
+                   (long long)realm_.tick(), dead.id, x, z, bones_.live());
+    } else if (dead.deathClip >= 0) {
+        dead.figure.play(dead.deathClip, true);
+    }
     // With the death clip's first key, as PlayMonsterSound is: a body that waits for its
     // killing blow to land waits the same to cry out. Where it falls, and not followed --
     // a corpse goes nowhere.
@@ -1599,6 +1635,10 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         }
         return 1.0f;
     };
+    // What is left of the skeletons: lit, opaque meshes on the grass, gathered with the
+    // bodies and NOT with the casters -- eleven small shadows on the frame a fight is busiest
+    // are not worth the shadow map's time, which is MU2's call and is recorded as one.
+    bones_.gather(out);
     for (Drawn& one : drawn_) {
         if (!one.visible || !one.figure.body()) continue;
         const float fade = fadeOf(one);
