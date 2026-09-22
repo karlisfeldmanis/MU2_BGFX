@@ -1116,7 +1116,11 @@ int main(int argc, char** argv) {
             // texel of 29 mm. docs/shadow-probe.md.
             world.update(elapsed, args.still);
             // The ears, onto the camera just placed: its heading is what the stereo field turns by.
-            if (world.played().isOpen()) world.played().hear(world.camera());
+            if (world.played().isOpen()) {
+                world.played().hear(world.camera(),
+                                    world.indoors(world.camera().target[0],
+                                                  world.camera().target[2]));
+            }
             // The lamps flicker, the fires burn, and the glows' levels go into the town before
             // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
             if (args.lampsOn) {

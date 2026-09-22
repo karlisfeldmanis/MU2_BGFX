@@ -174,7 +174,9 @@ public:
     // Where the ears are this frame: on the ground under the character as he is drawn,
     // turned by the camera's heading. MU's Update3DPositions, with the voices that follow a
     // body moved to where it is drawn now.
-    void hear(const gfx::Camera& camera);
+    // `indoors` is whether the character's tile is under a roof (World::indoors), which is
+    // what switches the wind off -- the same read that lifts the roofs, so the two agree.
+    void hear(const gfx::Camera& camera, bool indoors);
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
@@ -274,6 +276,24 @@ private:
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
     // sim's seeded stream.
     uint32_t wanderDice_ = 0x6d2b79f5u;
+    // The events that are not a breed's, as Sound handles, found once at openSound.
+    struct Heard {
+        int swing = -1, swingLong = -1, bow = -1, crossbow = -1;  // the character's swing
+        int hit = -1;                                            // melee_hit, any landed blow
+        int die = -1;                                            // pMaleDie, the knight's fall
+        int grass = -1, soil = -1;                               // his footsteps
+        int wind = -1;                                           // Lorencia's air
+        int hammer = -1;                                         // Hanzo at his anvil
+    } heard_;
+    // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
+    int swingSound(const sim::Body& body) const;
+    // The hero's footsteps and the smith's hammer, after the clips have been advanced this
+    // frame, since both are read off where a clip's clock stands.
+    void steps();
+    void hammer();
+    // Whether each of the hero's feet has been heard on the walk cycle now playing, and whether
+    // he was walking last frame. MU's c->Foot[0] and [1]; see steps().
+    bool leftFoot_ = false, rightFoot_ = false, striding_ = false;
     // A level the realm has given and the drawing has not shown: it waits, as MU2's did, for
     // the blow that killed `levelOn_` to land, so the flares do not go up half a swing before
     // the monster that earned them is hit. 0 is no one, and shows at once.
@@ -303,6 +323,9 @@ private:
         // Whether it takes turns among its clips, MuMain's way: see Play::fidget. A guard does
         // not -- he wears the player's 283 and MU stands him in one stop action for good.
         bool cycles = false;
+        // Hanzo, whose hammer is heard; and whether this blow has rung yet (see hammer()).
+        bool smith = false;
+        bool rung = false;
         float lastClock = 0.0f;
         uint32_t dice = 1;
     };

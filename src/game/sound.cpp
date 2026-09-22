@@ -28,6 +28,11 @@ constexpr uint32_t kPeriodMs = 10;
 // MU2's Sounds.Carry.
 constexpr float kCarry = 2.5f;
 
+// How long an ambient takes to come in and go out. **An invention:** MU starts and stops the
+// wind dead on the threshold tile, and a buffer stopped mid-wave is a click. A tenth and a half
+// is shorter than the step that crosses a doorway and long enough not to be heard as one.
+constexpr ma_uint64 kLoopFadeMs = 150;
+
 // How many of one event may sound at once: LoadWaveFile's channel count for every sound in the
 // monster family. MU2's Sounds.Voices.
 constexpr int kVoices = 2;
@@ -60,6 +65,7 @@ struct Sound::Impl {
         int sounding[kVoices] = {-1, -1};  // which file each voice last started
         uint32_t following[kVoices] = {0, 0};
         int plays = 0;  // for the log at shutdown: what a run was heard to say
+        bool looping = false;  // an ambient that is on; see loop()
     };
     std::vector<std::unique_ptr<Event>> events;
 
@@ -234,6 +240,27 @@ void Sound::play(const std::string& name) {
                    double(file.lead + impl_->latency) * 1000.0, double(file.lead) * 1000.0,
                    double(impl_->latency) * 1000.0);
         return;
+    }
+}
+
+void Sound::loop(int handle, bool wanted) {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    if (event.placed || wanted == event.looping) return;
+    event.looping = wanted;
+    // An ambient is never one of the one-shots, so marking its sound looping here cannot leave
+    // a swing ringing for ever: the two share the loader and nothing else.
+    ma_sound& sound = event.files.front()->sound[0];
+    if (wanted) {
+        ma_sound_set_looping(&sound, MA_TRUE);
+        // A stop still fading out from the last doorway is called off, or it would end the
+        // wind a moment after it came back.
+        ma_sound_set_stop_time_in_pcm_frames(&sound, ~ma_uint64(0));
+        ma_sound_set_fade_in_milliseconds(&sound, 0.0f, 1.0f, kLoopFadeMs);
+        ma_sound_start(&sound);
+        ++event.plays;
+    } else {
+        ma_sound_stop_with_fade_in_milliseconds(&sound, kLoopFadeMs);
     }
 }
 

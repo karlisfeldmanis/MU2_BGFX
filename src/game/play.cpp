@@ -112,6 +112,41 @@ const char* kHeroFigure = "DarkKnight";
 // asks for the same key so it replaces that same FigureBody rather than piling up another one.
 const char* kHeroDressName = "Hero";
 
+// Hanzo the smith's model: the one townsperson in Lorencia who makes a noise. MU2's
+// Scenery.Noise; MixNpc01 and ElfWizard01 are the other two and are Noria's.
+const char* kSmithFigure = "Smith01";
+
+// Where a foot lands in MU's walk, in the clip's own keys: `AnimationFrame >= 1.5f` and
+// `>= 4.5f` in ZzzCharacter.cpp's PlayWalkSound, each latched by its own c->Foot[n] so a mark
+// several frames wide sounds once. Two a cycle, which is a pair of legs. MU2's Crowd.FirstFoot.
+constexpr float kFirstFoot = 1.5f, kSecondFoot = 4.5f;
+
+// The window of the smith's first action his hammer lands in: `CurrentAction == 0 &&
+// AnimationFrame >= 5.f && <= 10.f`, in keys and not seconds. MU2's Scenery.HammerFrom.
+constexpr float kHammerFrom = 5.0f, kHammerTo = 10.0f;
+
+// Lorencia's grass: the tile texture MU tests for `HeroTile == 0` under a footstep; every
+// other floor on the map is soil.
+constexpr int kGrassFloor = 0;
+
+// Where a figure's clock stands in its clip's own keys -- MU's AnimationFrame, which is what
+// every one of its sound tests reads. A looping clip is cooked with one closing key, so its
+// duration spans frames - 1 intervals and this runs 0 to the key count MU authored.
+float keyOf(const Figure& figure) {
+    const FigureBody* body = figure.body();
+    if (!body || !body->library || figure.clip() < 0) return -1.0f;
+    const content::CookedClip& clip = body->library->clips.clips[size_t(figure.clip())];
+    if (clip.duration <= 0.0f || clip.frames < 2) return -1.0f;
+    return figure.clock() / clip.duration * float(clip.frames - 1);
+}
+
+// The MU action a figure is playing, or -1.
+int slotOf(const Figure& figure) {
+    const FigureBody* body = figure.body();
+    if (!body || !body->library || figure.clip() < 0) return -1;
+    return body->library->clips.clips[size_t(figure.clip())].slot;
+}
+
 }  // namespace
 
 bool Play::open(const std::string& assetDir, const std::string& world,
@@ -276,6 +311,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         const float at[3] = {x, ground_ ? ground_->heightAt(x, z) : 0.0f, z};
         Standing one;
         one.folk = int(i);
+        one.smith = person.figure == kSmithFigure;
         one.figure.stand(look, at, yaw, look->scale, true);
         if (look->idleClip >= 0) one.figure.play(look->idleClip);
         settle(one);
@@ -300,6 +336,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             if (!look) continue;
             Standing one;
             one.folk = who;
+            one.smith = spot.figure == kSmithFigure;
             one.figure.stand(look, spot.position, spot.yaw, spot.scale, true);
             if (look->idleClip >= 0) one.figure.play(look->idleClip);
             settle(one);
@@ -482,13 +519,15 @@ void Play::update(double seconds) {
                             (between > 0.01f && clip > between) ? clip / between : 1.0f;
                         swinger->swinging = clip / swinger->swingPace;
                         ++swinger->swingToken;
-                        // The breed's attack cry, on the swing's first key and on the body, so
-                        // a bull that roars as it lunges takes the roar with it. MU2's
-                        // Crowd.Swinging for a monster; the character's swing sounds are his
-                        // weapon's and not here yet.
-                        if (swinger->cryAttack >= 0 && swinger->placed) {
-                            sound_.playAt(swinger->cryAttack, swinger->crown[0],
-                                          swinger->crown[2], swinger->id);
+                        // The swing's own noise, on its first key and on the body, so a bull
+                        // that roars as it lunges takes the roar with it: a breed's attack cry,
+                        // or what is in the character's hands. MU2's Crowd.Swinging.
+                        const int cry = body == nullptr ? -1
+                                        : body->player  ? swingSound(*body)
+                                                        : swinger->cryAttack;
+                        if (cry >= 0 && swinger->placed) {
+                            sound_.playAt(cry, swinger->crown[0], swinger->crown[2],
+                                          swinger->id);
                         }
 
                         // And the cue, which is the only thing sprint 6 adds here. The blow
@@ -553,6 +592,8 @@ void Play::update(double seconds) {
         }
         one.lastClock = one.figure.clock();
     }
+    steps();
+    hammer();
 
     // --- sprint 6: the landing cue ------------------------------------------------------
     // On the DRAWING's clock and after the swings have been advanced above, so that a cue
@@ -599,6 +640,11 @@ void Play::update(double seconds) {
         // to zero, because zero would collapse the whole effect to a point.
         const bool onHero = cue.target == realm_.hero().id;
         showing_.land(cue, feet, height, man, swinger->yaw, onHero);
+        // The hit, on the attacker, which is where ZzzCharacter plays it -- for every blow
+        // that lands, whoever swung it. One of MU's four, at random.
+        if (!cue.miss && heard_.hit >= 0 && swinger->placed) {
+            sound_.playAt(heard_.hit, swinger->crown[0], swinger->crown[2], swinger->id);
+        }
     }
     // After the cues, so the fall comes in the same frame as the number and the blood of the
     // blow that caused it -- or at once, for a death no blow is still owed on.
@@ -613,6 +659,97 @@ void Play::update(double seconds) {
     releaseDrops();
     showing_.update(float(seconds));
     aura_.update(float(seconds));
+}
+
+int Play::swingSound(const sim::Body& body) const {
+    // The player half of the `AnimationFrame == 0.f` block at the end of SetPlayerAttack, in
+    // the client's own order, and NOT derived from the clip: a Berdysh and a Kris play
+    // different actions and the same sound. MU2's Crowd.Swinging.
+    const auto arm = [&](int32_t i) -> const content::Arm* {
+        return i >= 0 && size_t(i) < tables_.arms.size() ? &tables_.arms[size_t(i)] : nullptr;
+    };
+    const content::Arm* right = arm(body.weapon);
+    const content::Arm* left = arm(body.shield);
+    for (const content::Arm* held : {right, left}) {
+        if (held && held->bow()) return heard_.bow;
+    }
+    for (const content::Arm* held : {right, left}) {
+        if (held && held->crossbow()) return heard_.crossbow;
+    }
+    // MODEL_SWORD+10 and MODEL_SPEAR -- the Light Saber and the Light Spear at (3,0), the
+    // group's first item and not the group, so the Berdysh is not given the long swing.
+    if (right && ((right->group == 0 && right->number == 10) ||
+                  (right->group == 3 && right->number == 0))) {
+        return heard_.swingLong;
+    }
+    // Bare hands make no swing sound; the hit they land is separate.
+    return right || left ? heard_.swing : -1;
+}
+
+void Play::steps() {
+    // PlayWalkSound, and the hero's alone: the client guards it with `c == Hero`, so nobody
+    // else in the world has feet you can hear. MU2's Crowd.Steps.
+    Drawn* hero = drawnOf(realm_.hero().id);
+    const sim::Body& him = realm_.hero();
+    const FigureBody* look = hero ? hero->figure.body() : nullptr;
+    const int clip = hero ? hero->figure.clip() : -1;
+    const bool walking = hero && look && him.alive() && hero->visible && clip >= 0 &&
+                         (clip == look->walkClip || clip == look->walkSafeClip);
+    if (!walking || ground_ == nullptr) {
+        // Not walking, so the next cycle starts fresh: the client clears both latches the
+        // moment the animation is not running.
+        leftFoot_ = rightFoot_ = striding_ = false;
+        return;
+    }
+    const float key = keyOf(hero->figure);
+    // Setting off part way through a cycle -- a walk resumes where it was left -- a foot the
+    // phase has already gone past counts as heard, or a walk picked up at three quarters would
+    // crunch on the frame it starts with no foot landing under it.
+    if (!striding_) {
+        striding_ = true;
+        leftFoot_ = key >= kFirstFoot;
+        rightFoot_ = key >= kSecondFoot;
+    }
+    // The cycle wrapped, which is where MU clears them.
+    if (key < kFirstFoot) {
+        leftFoot_ = rightFoot_ = false;
+        return;
+    }
+    const auto tread = [&]() {
+        const float metresPerTile = ground_->metresPerTile();
+        const int column = int(std::floor(hero->crown[0] / metresPerTile));
+        const int row = int(std::floor(-hero->crown[2] / metresPerTile));
+        const int sound = ground_->floorAt(column, row) == kGrassFloor ? heard_.grass : heard_.soil;
+        if (sound >= 0) sound_.playAt(sound, hero->crown[0], hero->crown[2], hero->id);
+    };
+    if (!leftFoot_) {
+        leftFoot_ = true;
+        tread();
+    }
+    if (!rightFoot_ && key >= kSecondFoot) {
+        rightFoot_ = true;
+        tread();
+    }
+}
+
+void Play::hammer() {
+    if (heard_.hammer < 0) return;
+    for (Standing& one : folk_) {
+        if (!one.smith) continue;
+        // The blow, and not whatever else he does: action0 is the eleven-key swing and his
+        // other clip is a look along a blade that would ring the anvil at its side.
+        const float key = keyOf(one.figure);
+        if (slotOf(one.figure) != 0 || key < kHammerFrom || key > kHammerTo) {
+            one.rung = false;
+            continue;
+        }
+        if (one.rung) continue;
+        one.rung = true;
+        // Placed at him, where MU plays it unplaced: a smith heard from the far bank is the
+        // wrong half of MU's simplification to keep. MU2's call, marked there too.
+        const float* at = one.figure.position();
+        sound_.playAt(heard_.hammer, at[0], at[2]);
+    }
 }
 
 void Play::rise() {
@@ -659,6 +796,20 @@ void Play::fall(Drawn& dead) {
 void Play::openSound(const std::string& assetDir, bool muted) {
     if (!showing_.isOpen() || !sound_.open(assetDir, showing_.table(), muted)) return;
     sound_.load("player_level_up", false);
+    heard_.swing = sound_.load("player_swing", true);
+    heard_.swingLong = sound_.load("player_swing_long", true);
+    heard_.bow = sound_.load("player_bow", true);
+    heard_.crossbow = sound_.load("player_crossbow", true);
+    heard_.hit = sound_.load("melee_hit", true);
+    heard_.die = sound_.load("player_die", true);
+    heard_.grass = sound_.load("player_step_grass", true);
+    heard_.soil = sound_.load("player_step_soil", true);
+    heard_.wind = sound_.load("world_wind", false);
+    heard_.hammer = sound_.load("npc_blacksmith", true);
+    // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
+    // pMaleDie.wav. The elf's pFemaleScream2 is the same rule with another file, for when an
+    // elf can be played.
+    if (Drawn* hero = drawnOf(realm_.hero().id)) hero->cryDie = heard_.die;
     int breeds = 0;
     for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
         const sim::Body& body = realm_.bodies()[i];
@@ -679,8 +830,11 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     core::logf("sound: cries for %d monster bodies", breeds);
 }
 
-void Play::hear(const gfx::Camera& camera) {
+void Play::hear(const gfx::Camera& camera, bool indoors) {
     if (!sound_.isOpen()) return;
+    // The air: on while he is not under a roof, which is the client's own switch -- it stops
+    // SOUND_WIND01 on HeroTile 4. Unplaced: wind is not somewhere, it is everywhere.
+    sound_.loop(heard_.wind, !indoors);
     const Drawn* hero = drawnOf(realm_.hero().id);
     if (hero == nullptr || !hero->placed) return;
     sound_.listen(hero->crown[0], hero->crown[2], camera.target[0] - camera.position[0],

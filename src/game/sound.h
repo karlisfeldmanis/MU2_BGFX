@@ -64,6 +64,12 @@ public:
     // sounding starts it again, which is MU's own `LoadWaveFile(..., 1)` for the level-up.
     void play(const std::string& event);
 
+    // An ambient: one unplaced sound, looping, on or off -- PlayBuffer(SOUND_WIND01, NULL,
+    // true) against StopBuffer. Called every frame with what the world wants and does nothing
+    // when that is already what is playing, the client's own shape. `event` is a handle from
+    // an unplaced load().
+    void loop(int event, bool wanted);
+
     // Starts a placed event at a point on the ground, in world metres. `following` is the body
     // it belongs to, whose position follow() keeps it on, or 0 for a blow that lands at a
     // point and belongs to nothing -- MU's NULL.
