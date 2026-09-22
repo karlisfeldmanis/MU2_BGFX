@@ -15,10 +15,15 @@ namespace {
 // The mana maximum after anything that moves it, and the pool raised by what the maximum
 // gained -- the rule the health beside it follows, so a point in energy arrives full rather
 // than as a bigger empty gem. A new hero starts at zero of zero and so starts full.
+// Mana and the shield, re-reckoned after `reckon` (the shield reads the defence it just set).
+// What a maximum gains arrives full; what it loses is clipped.
 void restoreMana(Body& hero) {
     const int was = hero.maxMana;
     hero.maxMana = maximumMana(hero.kin, hero.level, hero.points);
     hero.mana = std::min(hero.maxMana, hero.mana + std::max(0, hero.maxMana - was));
+    const int wasSd = hero.maxSd;
+    hero.maxSd = maximumShield(hero.level, hero.points, hero.stats.defense);
+    hero.sd = std::min(hero.maxSd, hero.sd + std::max(0, hero.maxSd - wasSd));
 }
 
 }  // namespace
@@ -66,6 +71,10 @@ constexpr int kHeroAttackRange = 1;
 // How long a dead character lies there before he stands up in town. MU2's Player.cs:1687, three
 // seconds, which is also when a summon is taken off him.
 constexpr int kRiseTicks = 60;
+// The shield: its share of a blow and its safe-zone recovery, every three seconds. Rates.cs.
+constexpr float kShieldShare = 0.9f;
+constexpr float kShieldRecovery = 0.02f;
+constexpr int kRecoveryTicks = 60;
 
 // An angle folded into a half turn either side of nothing, so that a body facing just west of
 // north turns a few degrees to face just east of it rather than most of the way round the other
@@ -113,6 +122,7 @@ Arms Realm::armsOf(const Body& one) const {
     // plus -- and not the shield's row alone, so it replaces rather than adds to the above.
     if (one.player) {
         arms.armourDefense = one.wornDefense;
+        arms.shieldDefenseRate = one.wornDefenseRate;
         arms.weaponMinimumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
         arms.weaponMaximumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
     }
@@ -219,10 +229,16 @@ void Realm::rearm(Body& hero) {
     hero.weaponBonus = weaponSlot >= 0 ? damageBonus(bag_[weaponSlot].refinement) : 0;
     hero.shield = left && left->shield() ? tables_->armNamed(left->name) : -1;
     hero.wornDefense = 0;
+    hero.wornDefenseRate = 0;
     for (int slot = kWeaponLeft; slot <= kBoots; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || (!row->shield() && !row->armour())) continue;
         hero.wornDefense += row->defense + defenseBonus(row->shield(), bag_[slot].refinement);
+        // The shield's block column rises on the armour's table: _shieldDefenseRateIncreaseTable
+        // is built from DefenseIncreaseByLevel.
+        if (row->shield()) {
+            hero.wornDefenseRate += row->defenseRate + defenseBonus(false, bag_[slot].refinement);
+        }
     }
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
@@ -296,6 +312,21 @@ bool Realm::useItem(int slot) {
     }
     say(What::Drank, hero, total, mana ? 1 : 0);
     return true;
+}
+
+// The shield comes back in a safe zone and nowhere else: a fiftieth of its maximum every three
+// seconds, the fraction carried. MU2's Realm.Recover and Rates.ShieldRecoveryInSafeZone, off
+// OpenMU's RegenerateAsync, which skips the shield outside one.
+void Realm::recover(Body& hero) {
+    if (tick_ % kRecoveryTicks != 0 || !hero.alive() || hero.sd >= hero.maxSd) {
+        if (hero.sd >= hero.maxSd) hero.sdCarry = 0.0f;
+        return;
+    }
+    if (!tables_->grid.safe(hero.column(), hero.row())) return;
+    hero.sdCarry += float(hero.maxSd) * kShieldRecovery;
+    const int whole = int(hero.sdCarry);
+    hero.sdCarry -= float(whole);
+    hero.sd = std::min(hero.maxSd, hero.sd + whole);
 }
 
 void Realm::sip() {
@@ -649,6 +680,43 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
                "(%d, %d), seed %llu", tables_->map, placed, tables_->kinds.size(),
                tables_->nests.size(), column, row, (unsigned long long)seed);
     return true;
+}
+
+HeroRecord Realm::record() const {
+    HeroRecord out;
+    const Body& hero = bodies_[0];
+    out.kin = hero.kin;
+    out.column = hero.column();
+    out.row = hero.row();
+    out.facing = hero.facing;
+    out.level = hero.level;
+    out.experience = hero.experience;
+    out.pointsInHand = hero.pointsInHand;
+    out.points = hero.points;
+    out.health = hero.health;
+    out.mana = hero.mana;
+    out.money = money_;
+    for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
+    return out;
+}
+
+void Realm::restore(const HeroRecord& saved) {
+    Body& hero = bodies_[0];
+    hero.level = std::max(1, std::min(saved.level, kMaximumLevel));
+    hero.experience = saved.experience;
+    hero.pointsInHand = std::max(0, saved.pointsInHand);
+    hero.points = saved.points;
+    hero.facing = hero.aim = saved.facing;
+    money_ = std::max<int64_t>(0, saved.money);
+    bag_.clear();
+    for (int slot = 0; slot < kSlots; ++slot) {
+        const Held& one = saved.slots[slot];
+        if (one.empty() || size_t(one.item) >= tables_->items.size()) continue;
+        bag_.put(slot, one);
+    }
+    rearm(hero);
+    hero.health = saved.health > 0 ? std::min(saved.health, hero.maxHealth) : hero.maxHealth;
+    hero.mana = std::max(0, std::min(saved.mana, hero.maxMana));
 }
 
 bool Realm::spend(int strength, int agility, int vitality, int energy) {
@@ -1011,7 +1079,17 @@ void Realm::strikeAt(Body& attacker, Body& target) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         return;
     }
-    target.health = std::max(0, target.health - blow.damage);
+    // The shield takes nine tenths, and what it cannot cover falls through to health: a pool
+    // with three points left protects by three and no more. MU2's Realm.Wound, off OpenMU's
+    // GetHitInfo shieldRatio and Player.HitAsync's overflow. Monsters have none.
+    int wound = blow.damage;
+    if (target.sd > 0) {
+        const int onto = int(float(blow.damage) * kShieldShare);
+        const int over = onto - target.sd;
+        target.sd = std::max(0, target.sd - onto);
+        wound = blow.damage - onto + std::max(0, over);
+    }
+    target.health = std::max(0, target.health - wound);
     say(What::Hit, attacker, blow.damage, blow.rolled, target.health, target.id);
     if (!target.player) {
         // Hit, so it knows who did it however far off he is standing, and it is awake whether
@@ -1091,6 +1169,7 @@ void Realm::gain(Body& hero, int32_t award) {
         reswing(hero);
         hero.health = hero.maxHealth;
         hero.mana = hero.maxMana;
+        hero.sd = hero.maxSd;
         say(What::Levelled, hero, hero.level, hero.pointsInHand);
         remaining -= int32_t(gained);
     }
@@ -1117,6 +1196,8 @@ void Realm::reviveHero() {
     hero.y = float(row);
     hero.health = hero.maxHealth;
     hero.mana = hero.maxMana;
+    hero.sd = hero.maxSd;
+    hero.sdCarry = 0.0f;
     hero.temper = Temper::Wandering;
     hero.walking = false;
     hero.route.clear();
@@ -1274,6 +1355,7 @@ void Realm::step() {
     // monotonic counter.
     Body& hero = bodies_[0];
     sip();
+    recover(hero);
     // What has lain its minute goes, in the order it lies -- a fixed order, since the list is
     // only ever appended to and swapped out of by the tick's own events.
     for (size_t i = 0; i < lying_.size();) {

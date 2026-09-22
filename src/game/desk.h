@@ -69,6 +69,7 @@ public:
         models_ = models;
         bagStagePicture_.open(models, gfx::ViewStageBag);
         shelfStagePicture_.open(models, gfx::ViewStageShelf);
+        quickStagePicture_.open(models, gfx::ViewStageQuick);
     }
 
     void submit(bgfx::ViewId view, int width, int height);
@@ -78,6 +79,11 @@ public:
     bool inventoryOpen() const { return inventoryOpen_; }
     bool characterOpen() const { return characterOpen_; }
     void setInventoryOpen(bool open) { inventoryOpen_ = open; }
+    // The four potion keys' bindings, as item rows, -1 for none: what the save keeps.
+    int32_t quick(int key) const { return key >= 0 && key < Hud::kQuickKeys ? quick_[key] : -1; }
+    void setQuick(int key, int32_t item) {
+        if (key >= 0 && key < Hud::kQuickKeys) quick_[key] = item;
+    }
     void setCharacterOpen(bool open) { characterOpen_ = open; }
 
 private:
@@ -90,7 +96,7 @@ private:
     Cursor cursor_;
     Vitals vitals_;
     ItemModels* models_ = nullptr;
-    ItemStage bagStagePicture_, shelfStagePicture_;
+    ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_;
     std::string shaderDir_, assetDir_;
     content::Textures* textures_ = nullptr;
     Stage* bagStage_ = nullptr;
@@ -102,9 +108,9 @@ private:
     void labelGround(const Play& play, int width, int height);
     Stage* shelfStage_ = nullptr;
     bool trading_ = false;
-    // The four potion keys' bindings, as MU's item row. The interface's until sprint 9's save
-    // writes them (mu.db's character_hotkeys is where MU2 kept them).
-    int32_t quick_[4] = {-1, -1, -1, -1};
+    // The four potion keys' bindings, as MU's item row. The interface's; game/save.cpp writes
+    // them (mu.db's character_hotkeys is where MU2 kept them).
+    int32_t quick_[Hud::kQuickKeys] = {-1, -1, -1, -1, -1};
     int scriptedKey_ = -1;
     void quickKeys(const gfx::Window& window, Play& play);
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does

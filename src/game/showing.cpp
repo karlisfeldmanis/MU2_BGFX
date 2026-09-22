@@ -13,14 +13,15 @@ namespace {
 constexpr float kReference = 25.0f;
 // MU's units in a metre. A tile is a hundred of them and a tile is a metre here.
 constexpr float kPerMetre = 100.0f;
-// What `CreateCharacter` hands MODEL_PLAYER by hand. Every absolute length in the client's
-// blood was chosen against this, so it is the divisor that turns them into units of whatever
-// is actually being hit.
-constexpr float kPlayerHeight = 120.0f;
 
 // --- the blood, from Wounds.cs and ZzzCharacter.cpp's MoveCharacter -----------------------
-constexpr int kSpatters = 10;       // ten, for every landed blow of every kind
-constexpr float kScatter = 32.0f;   // rand() % 64 - 32 on both ground axes
+// Six, not MU's ten, and the throw a third of MU's: MU tints its blood (0.1, 0, 0), near
+// black, so ten splashes thrown two metres read as a faint dark smear. Drawn in the sheet's
+// own red, as this does, ten at MU's reach were a red cloud across the tile -- too much, and
+// not on the wound. Invention, judged in play.
+constexpr int kSpatters = 6;
+constexpr float kThrowShare = 0.35f;
+constexpr float kScatter = 20.0f;   // MU's rand() % 64 - 32, drawn in to stay on the body
 constexpr float kLowestSpray = 90.0f;
 constexpr float kHighestSpray = 154.0f;  // rand() % 64 + 90
 constexpr float kBloodLife = 12.0f;      // reference frames
@@ -145,11 +146,12 @@ void Showing::advance(float seconds, std::vector<Cue>& due) {
     }
 }
 
-void Showing::land(const Cue& cue, const float feet[3], float height, float attackerYaw,
-                    bool onHero) {
-    // Units of the target. At a man's size this is one and nothing moves; below it the whole
-    // effect shrinks onto the body, arc and all.
-    const float like = (height > 0.01f) ? (height * kPerMetre) / kPlayerHeight : 1.0f;
+void Showing::land(const Cue& cue, const float feet[3], float height, float man,
+                    float attackerYaw, bool onHero) {
+    // Units of the target against the hero's own drawn height, not MU's 120-unit box: the
+    // figures here stand about 1.8 m, so against 120 a man came out at one and a half and a
+    // Giant at three, and every length in the blood grew with it.
+    const float like = (height > 0.01f && man > 0.01f) ? height / man : 1.0f;
 
     // The number first, because it goes up whether or not the blow landed: a miss is a
     // sprite of its own and not a zero.
@@ -189,8 +191,9 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float atta
         // Vector(0, -(rand() % 16 + 8), rand() % 6 - 3) rotated by the attacker's own angle:
         // at a yaw of zero that -Y is the way he is facing, so the blood goes along the blow
         // and away from the man swinging it.
-        const float along = -(kSlowestThrow + unit() * (kFastestThrow - kSlowestThrow)) * like;
-        const float lift = (unit() * 2.0f - 1.0f) * kThrowLift * like;
+        const float along =
+            -(kSlowestThrow + unit() * (kFastestThrow - kSlowestThrow)) * like * kThrowShare;
+        const float lift = (unit() * 2.0f - 1.0f) * kThrowLift * like * kThrowShare;
         one.velocity[0] = (along * sinYaw) / kPerMetre * kReference;
         one.velocity[1] = lift / kPerMetre * kReference;
         one.velocity[2] = (along * cosYaw) / kPerMetre * kReference;

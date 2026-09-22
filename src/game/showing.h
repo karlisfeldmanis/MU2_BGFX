@@ -31,7 +31,11 @@ namespace mu::game {
 struct Cue {
     uint32_t attacker = 0;
     uint32_t target = 0;
-    int32_t damage = 0;
+    int32_t damage = 0;  // as rolled, which is the number shown
+    // What it took off the target's health: the damage, cut to what was left when it killed.
+    // What the bar adds back -- a 7 on a spider with 3 left takes 3, and adding back 7 had the
+    // bar climb from 3 to 7 before the fall.
+    int32_t taken = 0;
     bool miss = false;
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the
@@ -52,6 +56,8 @@ public:
     bool open(const std::string& assetDir, content::Textures& textures);
     void shutdown();
     bool isOpen() const { return open_; }
+    // The cooked table, which the sound player reads its events from.
+    const content::Showing& table() const { return table_; }
 
     // A blow resolved on the tick. Nothing is shown yet.
     void schedule(const Cue& cue);
@@ -74,7 +80,10 @@ public:
     // `onHero` is whether the BLOW landed on the hero, not who threw it -- MU2's Points.cs
     // colours a number by whose health it came off, so the hero reads his own pain in red and
     // everyone else's in orange, and his own misses in white against everyone else's grey.
-    void land(const Cue& cue, const float feet[3], float height, float attackerYaw, bool onHero);
+    // `man` is the hero's own drawn height in metres: the length MU's blood numbers were
+    // chosen against, so a blow on a man is thrown at MU's size and nothing else is guessed.
+    void land(const Cue& cue, const float feet[3], float height, float man, float attackerYaw,
+              bool onHero);
 
     // Ages everything alive, on the same scaled clock as the fuses.
     void update(float seconds);
@@ -92,9 +101,17 @@ public:
     int32_t owed(uint32_t target) const {
         int32_t sum = 0;
         for (const Cue& cue : cues_) {
-            if (cue.target == target && !cue.miss) sum += cue.damage;
+            if (cue.target == target && !cue.miss) sum += cue.taken;
         }
         return sum;
+    }
+    // Whether any blow on `target` is still waiting to be shown, a miss included. What a death
+    // waits on before the body falls: Play::fallWhenLanded.
+    bool awaits(uint32_t target) const {
+        for (const Cue& cue : cues_) {
+            if (cue.target == target) return true;
+        }
+        return false;
     }
     uint32_t dropped() const { return dropped_; }
     void drop() { ++dropped_; }

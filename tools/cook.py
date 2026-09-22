@@ -1443,7 +1443,8 @@ def cook_tables(world, out_dir):
                 arms), then the requirement's RAW level, strength, agility, energy,
                 vitality (MU's formula scales them in the sim), flags (bit 0 drops from
                 monsters, bit 1 a jewel, bit 2 two-handed, bit 3 worn armour, bit 4 a
-                shield, bit 5 a weapon), maximum drop level (0 none), skill
+                shield, bit 5 a weapon), maximum drop level (0 none), skill, and (version 6)
+                defense rate -- a shield's block column, 0 for everything else
         folk:   (version 5, sprint 7) u16 len + name, u16 len + figure ("" where the world's
                 own placements stand them), i32 MU's NPC number, tile x, tile y, facing (MU2's
                 Look, 1 West clockwise to 8 NorthWest). FOLK_VERSION075 above
@@ -1628,7 +1629,7 @@ def cook_tables(world, out_dir):
             flags |= kItemWeapon
         items.append(write_string(one["name"]) + write_string(one.get("label", one["name"])) +
                      write_string(one.get("glb", "")) +
-                     struct.pack("<20i", int(stats["group"]), int(stats["number"]),
+                     struct.pack("<21i", int(stats["group"]), int(stats["number"]),
                                  int(stats.get("drop_level") or 0),
                                  int(stats.get("width") or 1), int(stats.get("height") or 1),
                                  int(stats.get("minimum_damage") or 0),
@@ -1641,13 +1642,14 @@ def cook_tables(world, out_dir):
                                  int(wants.get("agility") or 0), int(wants.get("energy") or 0),
                                  int(wants.get("vitality") or 0), flags,
                                  int(stats.get("maximum_drop_level") or 0),
-                                 int(stats.get("skill") or 0)))
+                                 int(stats.get("skill") or 0),
+                                 int(stats.get("defense_rate") or 0)))
 
     folk = [write_string(name) + write_string(figure) + struct.pack("<4i", npc, x, y, look)
             for (npc, name, figure, x, y, look) in FOLK_VERSION075.get(number, [])]
 
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 5, SIM_HZ, len(kinds), len(spawns), len(arms),
+    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 6, SIM_HZ, len(kinds), len(spawns), len(arms),
                        len(actions), len(items), len(folk), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))

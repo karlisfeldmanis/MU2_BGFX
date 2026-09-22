@@ -2370,6 +2370,9 @@ def main() -> None:
                         # from. Read by Wear - see shared/Rows.cs - and summed into
                         # Player.ArmourDefense, which until this was fed by nothing.
                         "defense",
+                        # A shield's block column, added whole to the defence rate
+                        # (ArmorInitializerBase.CreateShield). Absent on everything else.
+                        "defense_rate",
                     )
                     if field in stats
                 }

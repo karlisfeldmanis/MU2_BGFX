@@ -427,8 +427,63 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
                               : measurePlant(body, body.walkSafeClip);
 }
 
+namespace {
+// The five pieces of a suit, in the order index.json lists a body's parts. A suit that is
+// missing one keeps the bare body's own, which is what MU draws: a character in a helm and
+// nothing else is a bare man in a helm, not a floating helm.
+constexpr const char* kPieces[] = {"Helm", "Armor", "Pant", "Glove", "Boot"};
+}  // namespace
+
+void Figures::readWardrobe() {
+    if (wardrobeRead_) return;
+    wardrobeRead_ = true;
+    const std::string path = core::join(assetDir_, "cooked/wardrobe/wardrobe.json");
+    const core::Json manifest = core::parseJsonFile(path);
+    if (manifest.isNull()) {
+        core::logError("no wardrobe at %s, so nothing he puts on can be drawn on him "
+                       "(tools/cook.py --only wardrobe)", path.c_str());
+        return;
+    }
+    for (const auto& [name, entry] : manifest["meshes"].members) {
+        wardrobePaths_[name] = entry["mesh"].string;
+    }
+    for (const core::Json& set : manifest["sets"].items) {
+        const bool keeps = set["keeps_head"].boolOr(false);
+        for (const core::Json& part : set["parts"].items) {
+            if (part.string.compare(0, 4, "Helm") == 0) keepsHead_[part.string] = keeps;
+        }
+    }
+}
+
+const content::Mesh* Figures::wearable(const std::string& name) {
+    if (const content::Mesh* found = mesh(name)) return found;
+    if (!textures_) return nullptr;
+    readWardrobe();
+    const auto path = wardrobePaths_.find(name);
+    if (path == wardrobePaths_.end()) {
+        core::logError("%s is not in the wardrobe, so he is drawn without it", name.c_str());
+        return nullptr;
+    }
+    std::vector<uint8_t> bytes = core::readFile(core::join(assetDir_, path->second));
+    content::CookedMesh cooked;
+    std::string error;
+    if (bytes.empty() || !content::parseCookedMesh(bytes, cooked, error)) {
+        core::logError("%s: %s", path->second.c_str(), bytes.empty() ? "is not there" : error.c_str());
+        return nullptr;
+    }
+    auto made = std::make_unique<content::Mesh>();
+    if (!made->buildFromCooked(cooked, name, assetDir_, *textures_)) return nullptr;
+    // Worn on the player rig, animated out of the library the figures already cooked -- the
+    // same rule openWardrobe gives its armour.
+    if (made->isSkinned() && made->bones().size() > 16) clipOf_[name] = "player";
+    meshIndex_[name] = meshes_.size();
+    meshes_.push_back(std::move(made));
+    return meshes_.back().get();
+}
+
 const FigureBody* Figures::dress(const std::string& name, const std::string& base,
-                                 const std::string& weapon, const std::string& shield) {
+                                 const std::string& weapon, const std::string& shield,
+                                 const std::vector<std::string>& worn) {
     const FigureBody* wearing = body(base);
     if (!wearing) {
         core::logError("nothing cooked called %s to dress %s in", base.c_str(), name.c_str());
@@ -442,6 +497,25 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
     made->scale = wearing->scale;
     made->parts = wearing->parts;
     made->library = wearing->library;
+
+    // What he wears, each piece in place of the bare part whose name starts with the same
+    // word -- the suits' own rule below, one piece at a time. An open helm goes on over the
+    // head rather than in its place, as the suits keep it.
+    for (const std::string& piece : worn) {
+        const content::Mesh* found = wearable(piece);
+        if (!found) continue;
+        for (size_t i = 0; i < made->parts.size() && i < 5; ++i) {
+            const std::string word = kPieces[i];
+            if (piece.compare(0, word.size(), word) != 0) continue;
+            const auto keeps = keepsHead_.find(piece);
+            if (i == 0 && keeps != keepsHead_.end() && keeps->second) {
+                made->parts.push_back(found);
+            } else {
+                made->parts[i] = found;
+            }
+            break;
+        }
+    }
 
     // The weapon first, because it decides the stance the whole body stands and walks in --
     // and an empty weapon hand is the fist, which is a stance like any other.
@@ -514,11 +588,6 @@ const char* wearerFor(const core::Json& classes) {
     if (wizard) return "DarkWizardBare";
     return "DarkKnightBare";
 }
-
-// The five pieces of a suit, in the order index.json lists a body's parts. A suit that is
-// missing one keeps the bare body's own, which is what MU draws: a character in a helm and
-// nothing else is a bare man in a helm, not a floating helm.
-constexpr const char* kPieces[] = {"Helm", "Armor", "Pant", "Glove", "Boot"};
 
 }  // namespace
 
@@ -639,6 +708,8 @@ bool Figures::openWardrobe(const std::string& assetDir, content::Textures& textu
 bool Figures::open(const std::string& assetDir, const std::string& world,
                    content::Textures& textures) {
     const int64_t started = bx::getHPCounter();
+    assetDir_ = assetDir;
+    textures_ = &textures;
     const std::string dir = core::join(assetDir, "cooked/figures");
     const std::string path = core::join(dir, "figures.json");
     core::Json manifest = core::parseJsonFile(path);

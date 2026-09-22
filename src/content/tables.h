@@ -100,6 +100,7 @@ struct ItemRow {
     int32_t width = 1, height = 1;
     int32_t minimumDamage = 0, maximumDamage = 0, attackSpeed = 0;
     int32_t defense = 0;
+    int32_t defenseRate = 0;  // a shield's block column; 0 on everything else
     int32_t magicPower = 0;
     int32_t durability = 0;  // the shots in a quiver; 0 for everything this sprint wears
     int32_t classes = 0;     // as Arm::classes; 0 is anybody

@@ -104,6 +104,7 @@ add_executable(mu2
   src/game/town.cpp
   src/game/lamps.cpp
   src/game/sway.cpp
+  src/game/save.cpp
   src/game/ornaments.cpp
   src/game/figures.cpp
   src/game/crowd.cpp
@@ -111,6 +112,9 @@ add_executable(mu2
   src/game/play.cpp
   src/game/showing.cpp
   src/game/marker.cpp
+  src/game/aura.cpp
+  src/game/sound.cpp
+  src/game/miniaudio.cpp
   src/game/panel.cpp
   src/game/cursor.cpp
   src/game/hud.cpp
@@ -142,6 +146,8 @@ target_compile_definitions(mu2 PRIVATE
   MU2_ROOT_DIR="${CMAKE_SOURCE_DIR}"
 )
 target_compile_options(mu2 PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
+# miniaudio is one vendored header of tens of thousands of lines; its warnings are not ours.
+set_source_files_properties(src/game/miniaudio.cpp PROPERTIES COMPILE_OPTIONS "-w")
 if(APPLE)
   target_compile_definitions(mu2 PRIVATE GLFW_EXPOSE_NATIVE_COCOA)
   target_link_libraries(mu2 PRIVATE "-framework Cocoa" "-framework Metal" "-framework QuartzCore" "-framework IOKit")

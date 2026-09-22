@@ -168,10 +168,14 @@ void Litter::build(const sim::Lying& one, Drop& drop) {
     }
 }
 
-void Litter::update(const sim::Realm& realm, double seconds) {
+void Litter::update(const sim::Realm& realm, double seconds,
+                    const std::vector<uint32_t>& held) {
     if (!models_ || !ground_) return;
     for (Drop& drop : drops_) drop.present = false;
     for (const sim::Lying& one : realm.lying()) {
+        // Not yet: its monster is still falling. Built the frame it is let go, so its own
+        // toss out of the corpse starts then.
+        if (std::find(held.begin(), held.end(), one.id) != held.end()) continue;
         auto found = std::find_if(drops_.begin(), drops_.end(),
                                   [&](const Drop& d) { return d.id == one.id; });
         if (found == drops_.end()) {
@@ -188,7 +192,9 @@ void Litter::update(const sim::Realm& realm, double seconds) {
                  drops_.end());
 
     const float dt = float(seconds);
+    settled_.clear();
     for (Drop& drop : drops_) {
+        bool still = true;
         for (Piece& piece : drop.pieces) {
             if (piece.above <= 0.0f && piece.speed == 0.0f) continue;
             piece.speed -= kGravity * dt;
@@ -202,6 +208,13 @@ void Litter::update(const sim::Realm& realm, double seconds) {
                 piece.speed = 0.0f;
             }
         }
+        // Down means its first touch of the grass: the bounces after it are small and quick,
+        // and a label held through them read as late.
+        for (const Piece& piece : drop.pieces) {
+            const bool touched = piece.bounced > 0 || (piece.above <= 0.0f && piece.speed == 0.0f);
+            if (!touched) still = false;
+        }
+        if (still) settled_.push_back(drop.id);
     }
 }
 

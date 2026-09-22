@@ -18,10 +18,12 @@
 
 #include "content/ground.h"
 #include "content/tables.h"
+#include "game/aura.h"
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/marker.h"
 #include "game/showing.h"
+#include "game/sound.h"
 #include "gfx/renderer.h"
 #include "sim/audit.h"
 #include "sim/realm.h"
@@ -113,6 +115,18 @@ public:
     // A body's health as the DRAWING has shown it: the realm's, with every blow still waiting
     // for its landing cue added back, and nought once it is dead. See Showing::owed.
     int32_t shownHealth(uint32_t id) const;
+    // Alive as the DRAWING has it: the realm's alive, or dead on the tick with the fall still
+    // waiting for the killing blow to land. What the health bar reads, so it is not taken
+    // away a swing before the blow that emptied it.
+    bool shownAlive(uint32_t id) const;
+    // The hero as a save keeps him, and laid back on a hero just raised -- see Realm::restore.
+    // restore() also dresses the figure in what the record wears.
+    sim::HeroRecord record() const { return realm_.record(); }
+    void restore(const sim::HeroRecord& saved);
+    // The drops on the ground in the realm that the drawing is still holding back, because
+    // the monster that dropped them has not finished falling. Litter skips them, and so does
+    // the pointer.
+    const std::vector<uint32_t>& heldDrops() const { return heldIds_; }
 
     // Where each thing on the ground is on screen this frame, for its label: the id, and the
     // pixel a little above where it lies. Only those in front of the camera.
@@ -122,6 +136,8 @@ public:
     };
     void dropsOnScreen(const float* viewProj, int width, int height,
                        std::vector<OnScreen>& out) const;
+    // Which drops have landed and lie still, from Litter::settled: only those are labelled.
+    void setSettledDrops(const std::vector<uint32_t>& ids) { settled_.assign(ids.begin(), ids.end()); }
     int64_t ticks() const { return realm_.tick(); }
     double tickMs() const { return tickMs_; }
     // What the last line of the log said, so the run can be read without a HUD. Sprint 6 draws
@@ -147,6 +163,16 @@ public:
     void gatherMarker(gfx::Effects& effects) const {
         if (ground_) marker_.gather(effects, *ground_);
     }
+    // What a level looks like, and sounds like. Opened by the caller for the same reason as
+    // the showing.
+    Aura& aura() { return aura_; }
+    Sound& sound() { return sound_; }
+    void gatherAura(gfx::Effects& effects, const float eye[3]) const {
+        if (ground_) aura_.gather(effects, *ground_, eye);
+    }
+    // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
+    // blow that earned it has landed, and what `--rise` does for a review run.
+    void rise();
 
 private:
     // One body as it is drawn: the figure, and where it was at the last two ticks so a frame
@@ -178,6 +204,10 @@ private:
         // the corpse holds its last pose and fades instead of vanishing on the tick it falls --
         // see kDeathHold and kDeathFade in play.cpp.
         float deadFor = -1.0f;
+        int32_t health = 0;  // the body's health before the blows of the tick being read
+        // Dead on the tick and not yet fallen on screen: the blow that killed it is still
+        // being swung, and the fall waits for that blow's landing cue. See Play::fallWhenLanded.
+        bool fallOwed = false;
         // Counted up from 0 the tick `Rose` happens, so a respawn eases in rather than popping
         // into being; left far above kSpawnFadeSeconds otherwise, which reads as "done fading".
         float spawnFade = 1e9f;
@@ -203,6 +233,20 @@ private:
     // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
     // frame's own, which the coast and the stop are measured in.
     void follow(float seconds);
+    // Starts a body's death clip, its hold and its fade.
+    void fall(Drawn& dead);
+    // Starts every owed fall whose killing blow is no longer waiting to be shown.
+    void fallWhenLanded();
+    // Lets go of every held drop a beat after its dropper's killing blow lands, and rewrites
+    // heldIds_.
+    void releaseDrops();
+    struct HeldDrop {
+        uint32_t drop = 0;
+        uint32_t dropper = 0;
+    };
+    std::vector<HeldDrop> held_;
+    std::vector<uint32_t> heldIds_;
+    std::vector<uint32_t> settled_;
 
     content::Tables tables_;
     sim::Realm realm_;
@@ -213,6 +257,13 @@ private:
 
     Showing showing_;
     Marker marker_;
+    Aura aura_;
+    Sound sound_;
+    // A level the realm has given and the drawing has not shown: it waits, as MU2's did, for
+    // the blow that killed `levelOn_` to land, so the flares do not go up half a swing before
+    // the monster that earned them is hit. 0 is no one, and shows at once.
+    bool levelOwed_ = false;
+    uint32_t levelOn_ = 0;
     // Whether the next Walked the hero says came from a click, and so puts the marker down.
     // Cleared by the first tick that runs after the ask, since that tick is the one the realm
     // takes the order on. One click is one walk: holding the button does not drag the walk

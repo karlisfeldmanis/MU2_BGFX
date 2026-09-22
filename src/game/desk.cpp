@@ -40,6 +40,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     bagStage_ = &bagStagePicture_;
     shelfStage_ = &shelfStagePicture_;
     hud_.open(interface_, &arts_);
+    hud_.useStage(&quickStagePicture_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
@@ -52,6 +53,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
 void Desk::shutdown() {
     bagStagePicture_.shutdown();
     shelfStagePicture_.shutdown();
+    quickStagePicture_.shutdown();
     interface_.shutdown();
 }
 
@@ -183,9 +185,10 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Satchel& bag = realm.satchel();
-    const gfx::Window::Key keys[4] = {gfx::Window::Key::Potion1, gfx::Window::Key::Potion2,
-                                      gfx::Window::Key::Potion3, gfx::Window::Key::Potion4};
-    for (int key = 0; key < 4; ++key) {
+    const gfx::Window::Key keys[Hud::kQuickKeys] = {
+        gfx::Window::Key::Potion1, gfx::Window::Key::Potion2, gfx::Window::Key::Potion3,
+        gfx::Window::Key::Potion4, gfx::Window::Key::Potion5};
+    for (int key = 0; key < Hud::kQuickKeys; ++key) {
         if (!window.pressed(keys[key]) && scriptedKey_ != key) continue;
         // Hovering a thing in the open bag and pressing the key binds it, which is MU's own
         // gesture (CNewUIMyInventory::UpdateKeyEvent); otherwise the key uses what is bound.
@@ -211,7 +214,7 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
     }
     scriptedKey_ = -1;
     // And what each box shows, handed to the frame.
-    for (int key = 0; key < 4; ++key) {
+    for (int key = 0; key < Hud::kQuickKeys; ++key) {
         Hud::Quick q;
         q.item = quick_[key];
         if (q.item >= 0) {
@@ -292,6 +295,8 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     const float pixelsPerUnit = panel::scale();
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
     if (trading_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    // The potion boxes are always on screen, and at rest their stage costs nothing.
+    quickStagePicture_.render(renderer, hud_.pixelsPerUnit(), seconds);
 }
 
 void Desk::submit(bgfx::ViewId view, int width, int height) {

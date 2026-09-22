@@ -33,6 +33,14 @@ constexpr float kQuickW = 48.0f, kQuickH = 49.0f;
 constexpr Box kLifeHole{124.0f, 9.0f, 161.0f, 163.0f};
 constexpr Box kManaHole{939.0f, 8.0f, 162.0f, 164.0f};
 
+// The shield's bar, under the plate on the rail above the boxes. With the ability gauge not
+// drawn (nothing in 0.75 spends AG) it takes the whole rail, to the ability window's right end
+// at 944: the sheet's right-hand 299 of 346 stretched across, the plate's notches and centre
+// ornament cutting it into cells. Hud.cs ShieldBar, ShieldBarFrom, ShieldBarSpan.
+constexpr Box kShieldBar{276.0f, 72.0f, 944.0f - 276.0f, 11.0f};
+constexpr float kShieldFrom = 346.0f - 299.0f, kShieldSpan = 299.0f;
+constexpr float kBarReadingTall = 15.0f, kShieldReadingIn = 34.0f;
+
 // The level's rail, under the plate and wider than it, centred on it.
 constexpr Box kLevelTrack{(kPlateW - 1448.0f) / 2.0f, 180.0f, 1448.0f, 10.0f};
 constexpr Box kLevelFill{(kPlateW - 1408.0f) / 2.0f, 181.0f, 1408.0f, 8.0f};
@@ -72,10 +80,10 @@ constexpr float kTipTall = 15.0f;
 // the box. Measured off hud_base.png for this sprint; (15, 16, 17) is the cell's own dark.
 constexpr float kLabelTop = 164.0f, kLabelTall = 14.0f, kLabelWide = 20.0f;
 constexpr float kLabelBaseline = 176.0f, kLabelSize = 15.0f;
-// What each box's key is now, left to right. Skills on Q W E R, potions on 1 to 4, and the
-// fifth of each and the box in hand print nothing -- the mouse under the gold box stays, since
-// that box IS the button's.
-const char* const kKeys[kSlots] = {"Q", "W", "E", "R", "", nullptr, "1", "2", "3", "4", ""};
+// What each box's key is now, left to right. Skills on Q W E R T, potions on 1 to 5, and the
+// box in hand prints nothing -- the mouse under the gold box stays, since that box IS the
+// button's.
+const char* const kKeys[kSlots] = {"Q", "W", "E", "R", "T", nullptr, "1", "2", "3", "4", "5"};
 
 constexpr uint32_t kSocketBack = gfx::rgba(0.05f, 0.055f, 0.07f, 0.9f);
 constexpr uint32_t kInk = gfx::rgba(1.0f, 250.0f / 255.0f, 240.0f / 255.0f);
@@ -161,15 +169,15 @@ void diamond(gfx::Canvas& canvas, const gfx::Art* sheet, const Box& hole, const 
 bool Hud::Face::operator==(const Face& o) const {
     return width == o.width && height == o.height && health == o.health &&
            maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
+           shield == o.shield && maxShield == o.maxShield &&
            level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
            character == o.character && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
-           quick[0] == o.quick[0] && quick[1] == o.quick[1] && quick[2] == o.quick[2] &&
-           quick[3] == o.quick[3];
+           std::equal(quick, quick + kQuickKeys, o.quick) && picture == o.picture;
 }
 
 int Hud::quickAt(float x, float y) const {
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < kQuickKeys; ++i) {
         if (plate(screen_, boxPx(kFirstQuick + i)).has(x, y)) return i;
     }
     return -1;
@@ -234,6 +242,7 @@ int Hud::hoveredAt(float x, float y) const {
 
 bool Hud::tipAt(float x, float y) const {
     return plate(screen_, kLifeHole).has(x, y) || plate(screen_, kManaHole).has(x, y) ||
+           (hero_ && hero_->maxSd > 0 && plate(screen_, kShieldBar).has(x, y)) ||
            plate(screen_, kLevelTrack).has(x, y);
 }
 
@@ -269,6 +278,8 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.maxHealth = hero_->maxHealth;
         now_.mana = hero_->mana;
         now_.maxMana = hero_->maxMana;
+        now_.shield = hero_->sd;
+        now_.maxShield = hero_->maxSd;
         now_.level = hero_->level;
         // Worked out once a frame and read by both the comparison and the draw, so the two
         // can never disagree about which cell the frame was for. Hud.gem.
@@ -280,7 +291,23 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.tip = tipAt(pointer.x, pointer.y);
         now_.pointerX = pointer.x;
         now_.pointerY = pointer.y;
-        for (int i = 0; i < 4; ++i) now_.quick[i] = quick_[i];
+        for (int i = 0; i < kQuickKeys; ++i) now_.quick[i] = quick_[i];
+        // What stands on the potion boxes' stage: each bound row in its box, in MU units from
+        // the plate's corner. The same list twice is no redraw (Stage::stand).
+        if (stage_) {
+            standing_.clear();
+            for (int i = 0; i < kQuickKeys; ++i) {
+                if (quick_[i].item < 0) continue;
+                const Box px = boxPx(kFirstQuick + i);
+                Standing one;
+                one.item = quick_[i].item;
+                one.box = {px.x * kUnit, px.y * kUnit, px.w * kUnit, px.h * kUnit};
+                standing_.push_back(one);
+            }
+            stage_->stand(standing_, kPlateW * kUnit, kPlateH * kUnit);
+            const gfx::Art picture = stage_->picture();
+            now_.picture = picture.valid() ? picture.handle.idx : 0xFFFF;
+        }
     }
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
@@ -298,6 +325,20 @@ void Hud::rebuild() {
     // would otherwise show the grass through its setting.
     diamond(canvas_, nullptr, plate(s, kLifeHole), {}, 0.0f, 1.0f, kSocketBack);
     diamond(canvas_, nullptr, plate(s, kManaHole), {}, 0.0f, 1.0f, kSocketBack);
+
+    // The bar goes under the plate too: MuDream's rail is painted with notches and an ornament
+    // that show across it, so what the rail carves out of the bar is the plate's own drawing.
+    if (hero_->maxSd > 0) {
+        const Box box = plate(s, kShieldBar);
+        const gfx::Art& empty = arts.get("hud_bar_shield_empty");
+        if (empty.valid()) canvas_.region(empty, box, {kShieldFrom, 0.0f, kShieldSpan, kShieldBar.h});
+        const float full = fraction(hero_->sd, hero_->maxSd);
+        const gfx::Art& bar = arts.get("hud_bar_shield");
+        if (full > 0.0f && bar.valid()) {
+            canvas_.region(bar, {box.x, box.y, box.w * full, box.h},
+                           {kShieldFrom, 0.0f, kShieldSpan * full, kShieldBar.h});
+        }
+    }
 
     // The gems, under the plate: cropped from the waterline down, the frame the clock is on.
     const int tick = now_.gem;
@@ -322,19 +363,28 @@ void Hud::rebuild() {
         if (now_.hovered == i) canvas_.image(arts.get("hud_slot_hover"), plate(s, boxPx(i)));
     }
 
-    // What is bound to the four potion boxes: the thing's name, cut to the box, and how many
+    // What is bound to the potion boxes: the thing's name, cut to the box, and how many
     // of it he carries at the box's foot -- Quick.cs's count, which counts what may stand in
     // for it too. Dim when he has none left, as MU draws an empty hotkey. The picture is the
     // stage's, and until the stage lands the name stands in for it.
     const float quickSize = std::round(11.0f * kUnit * s.scale);
-    for (int i = 0; i < 4; ++i) {
+    const gfx::Art picture = stage_ ? stage_->picture() : gfx::Art{};
+    if (picture.valid() && !standing_.empty()) {
+        canvas_.image(picture, plate(s, {0.0f, 0.0f, kPlateW, kPlateH}));
+    }
+    for (int i = 0; i < kQuickKeys; ++i) {
         const Quick& q = quick_[i];
         if (q.item < 0) continue;
         const Box box = plate(s, boxPx(kFirstQuick + i));
         const uint32_t ink = q.count > 0 ? kInk : kDeadIcon;
-        std::string word = q.label.substr(0, std::min<size_t>(q.label.size(), 5));
-        canvas_.shadowed(box.midX(), box.midY(), quickSize, ink, kInkShadow, 1.0f, word,
-                         gfx::Align::Centre, 0.0f);
+        if (!picture.valid()) {
+            std::string word = q.label.substr(0, std::min<size_t>(q.label.size(), 5));
+            canvas_.shadowed(box.midX(), box.midY(), quickSize, ink, kInkShadow, 1.0f, word,
+                             gfx::Align::Centre, 0.0f);
+        } else if (q.count == 0) {
+            // None left: the picture dimmed, as MU draws a spent hotkey.
+            canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f));
+        }
         canvas_.shadowed(box.x, box.bottom() - 3.0f, quickSize, ink, kInkShadow, 1.0f,
                          std::to_string(q.count), gfx::Align::Right, box.w - 3.0f);
     }
@@ -388,6 +438,15 @@ void Hud::rebuild() {
                        {0.0f, 0.0f, fill.width * slid_, fill.height});
     }
 
+    // The shield's amount, at the bar's left end. Hud.Amount.
+    if (hero_->maxSd > 0) {
+        const Box box = plate(s, kShieldBar);
+        const float tall = std::max(6.0f, std::round(kBarReadingTall * kUnit * s.scale));
+        canvas_.shadowed(box.x + kShieldReadingIn * kUnit * s.scale, box.midY() + tall * 0.36f,
+                         tall, kInk, kInkShadow, std::max(1.0f, tall / 12.0f),
+                         panel::grouped(hero_->sd), gfx::Align::Left, 0.0f);
+    }
+
     // The gems' readings, across the middle of each diamond. Hud.Print: centred, the baseline
     // a third of a size below the middle, shadowed a twelfth of a size down and right.
     const float size = std::max(6.0f, std::round(kReadingTall * kUnit * s.scale));
@@ -409,6 +468,9 @@ void Hud::rebuild() {
         } else if (plate(s, kManaHole).has(px, py)) {
             name = "Mana";
             value = std::to_string(hero_->mana) + " / " + std::to_string(hero_->maxMana);
+        } else if (hero_->maxSd > 0 && plate(s, kShieldBar).has(px, py)) {
+            name = "Shield";
+            value = std::to_string(hero_->sd) + " / " + std::to_string(hero_->maxSd);
         } else {
             name = "Experience";
             const uint64_t at = sim::neededExperience(hero_->level);

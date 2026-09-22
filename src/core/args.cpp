@@ -64,6 +64,8 @@ void printUsage() {
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
         "  --ui-key F:K              press potion key K (1-4) on frame F\n"
+        "  --rise F                  throw the level-up on the hero on frame F; drawing only\n"
+        "  --mute                    every sound plays and is logged, at no volume\n"
         "  --zen N                   start with N Zen\n"
         "  --loot                    --click-every picks up drops before it fights\n"
         "  --entrance                the game's fade-up and the character's dissolve, in a --frames run\n"
@@ -131,6 +133,10 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.shield = v;
         } else if (!std::strcmp(s, "--play")) {
             a.play = true;
+        } else if (!std::strcmp(s, "--save")) {
+            if (const char* v = next(s)) a.savePath = v;
+        } else if (!std::strcmp(s, "--fresh")) {
+            a.fresh = true;
         } else if (!std::strcmp(s, "--headless")) {
             a.headless = true;
         } else if (!std::strcmp(s, "--seed")) {
@@ -315,6 +321,10 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.zen = std::atoll(v);
         } else if (!std::strcmp(s, "--talk")) {
             if (const char* v = next(s)) a.talk = v;
+        } else if (!std::strcmp(s, "--mute")) {
+            a.mute = true;
+        } else if (!std::strcmp(s, "--rise")) {
+            if (const char* v = next(s)) a.rises.push_back(std::atoi(v));
         } else if (!std::strcmp(s, "--ui-key")) {
             int f = 0, k = 0;
             const char* v = next(s);

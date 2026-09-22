@@ -44,6 +44,12 @@
   "sheet_from": "Data/Item/Axes08.OZJ (64x64), from MuMain. Axe07.bmd names Axes08.jpg - the axe sheets are numbered one off the models, as the sword sheets are - and there is one copy of it in the tree.",
   "sheet_note": "A double-bitted head in grey steel with a gold flourish engraved down the cheek, a dark blue-black haft along the top edge, and a wrapped grip at the left. The gold sits inside the head's own island on the sheet, so it will not come out as a material of its own - see the island rule in docs/items-and-armour.md.",
   "material_note": "Three islands. Island 1 is forty triangles over the whole sheet and is the head - the double bit and the gold flourish in one island, so the flourish takes steel's roughness and its own colour, which is the island rule and the same reading the Short Sword's end cap got. Island 0 is twelve triangles across the middle band of the sheet - v 0.5 to 0.78 in Blender's bottom-up frame, the dark shaft along the sheet's upper half once V is flipped - running z 19 to 98, which is the haft from the grip to the head: wood, the turned oiled haft at 0.08, not timber. Island 2 is twelve triangles in the sheet's left column below the head, z -31 to 19, which is the wrapped grip at the butt: leather_wrap.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_note": "Steel at 0.55, as Axe01 and Axe02 took for a forged head. At the library's 0.2 the spike threw a hard white dot at noon, dusk and even night -- a mirror catching the lamp, not a surface. 0.55 is hammered iron, and it spreads the glint into a highlight.",
   "islands": [
     {
       "island": 0,

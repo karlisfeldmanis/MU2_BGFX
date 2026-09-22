@@ -115,6 +115,7 @@ bool Sway::open(const std::string& assetDir, const std::string& world, const Tow
         Instance instance;
         instance.townIndex = i;
         instance.figure.stand(body, placement.position, placement.yaw, placement.scale);
+        instance.figure.tilt(placement.pitch, placement.roll);
         if (still.count(name)) {
             // MU's `o->Velocity = 0.f`: its first key, forever.
             instance.clipRate = 0.0f;

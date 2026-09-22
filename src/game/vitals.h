@@ -13,10 +13,10 @@
 // the health as SHOWN rather than as the realm has it, so the red never drops before the number
 // that took it goes up.
 //
-// What is not: the wait for the fall. MU2's realm killed a monster on the tick and its drawing
-// held the collapse for the landing cue, and the bar waited for the collapse. Here the body
-// goes down on the tick, so the bar goes with it, and there is nothing to wait for. Nor is the
-// elf's summon's green Escort -- there is no summon.
+// And the wait for the fall, as MU2 had it: the realm kills a monster on the tick and the
+// drawing holds the collapse for the killing blow's landing cue, so the bar reads
+// Play::shownAlive and shownHealth, and the pick keeps a body that is still standing
+// (Play::point). Not kept: the elf's summon's green Escort -- there is no summon.
 //
 // Godot drew the rounded pieces with StyleBoxFlat; the canvas has no such thing, so every
 // shape is laid down one pixel row at a time, each row cut to the rounded outline and its two

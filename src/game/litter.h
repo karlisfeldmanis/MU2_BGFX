@@ -40,10 +40,15 @@ public:
 
     // Follows the realm's list and moves what is still in the air. Called once a frame, with
     // the realm already stepped.
-    void update(const sim::Realm& realm, double seconds);
+    // `held` are drops the realm has and the drawing is not showing yet: see Play::heldDrops.
+    void update(const sim::Realm& realm, double seconds, const std::vector<uint32_t>& held);
     // Adds every piece lying or falling, and the same to the sun's list: a dropped axe casts
     // a shadow, which is most of what says it is on the ground rather than over it.
     void gather(std::vector<gfx::Drawable>& out, std::vector<gfx::Drawable>* casters) const;
+    // The drops that are down -- every piece has touched the grass once -- as of the last update.
+    // What gets a label: MU2's name goes up over a thing lying on the grass, not over one
+    // still in the air.
+    const std::vector<uint32_t>& settled() const { return settled_; }
     // The one drop `id` names, for the hover ring: the same pieces `gather` would have added
     // for it, and nothing else. A no-op where `id` is not lying (it fell, or was picked up
     // between the pointer's pick and this call).
@@ -71,6 +76,7 @@ private:
     void buildItem(const sim::Lying& one, Drop& drop);
     void buildHeap(const sim::Lying& one, Drop& drop);
 
+    std::vector<uint32_t> settled_;
     ItemModels* models_ = nullptr;
     const content::Ground* ground_ = nullptr;
     std::vector<Drop> drops_;

@@ -56,13 +56,44 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | House05 | world | 2026-09-21 21:51 | passed | the window's glow now scrolls (ston02, 1.00/s) |
 | Bonfire01 | world | 2026-09-21 21:52 | passed | unaffected control: still just the brightness flicker, fire_02 has no scroll rate and none was added |
 | Candle01 | world | 2026-09-21 21:52 | passed | unaffected control: brass gets its own material now (0.87 metal), candle2's flicker untouched, no scroll rate on this object |
-| Tree01 | world | 2026-09-21 23:20 | passed | scale-dependent sway now plays in the real town: canopy shape measurably differs between frame 0 and frame 145 with the camera held still (mean abs diff 4.2, max 233 over its crop); rate traced to ZzzObject.cpp's 1/Scale*0.4 |
-| Tree02 | world | 2026-09-21 23:21 | passed | same scale-dependent rule as Tree01, same trace |
-| Tree11 | world | 2026-09-21 23:21 | passed | plays its own clip at 1.0 (its natural bake); MU's ZzzObject.cpp comments out the scale-dependent case for this object type (10), so it falls to the flat 0.16 default -- but nothing traces what velocity its own bake assumed, so this is the honest default and not a verified rate |
-| Tree12 | world | 2026-09-21 23:21 | passed | same as Tree11: plays its own clip at 1.0, untraced against MU's flat 0.16 |
-| Tree13 | world | 2026-09-21 23:21 | passed | same as Tree11: plays its own clip at 1.0, untraced against MU's flat 0.16 |
+| Tree01 | world | 2026-09-22 11:09 | passed | rebuilt on today's pipeline (clip recooked with it): canopy renders (70,57,37) against tree_a's own brown-olive (57,51,28), bark with its grain map reads down the trunk; edge-on cards streak as MU's do; above the fire's reach at night it is as dark as the ground round it |
+| Tree02 | world | 2026-09-22 11:11 | passed | rebuilt on today's pipeline (clip recooked): big spreading oak, bark branches read through a ring of Tree_a cards -- the open crown from above is MU's mesh; brown-olive leaves as painted, roots lit by the fire at dusk and night |
+| Tree11 | world | 2026-09-22 11:20 | passed | rebuilt on today's pipeline (clip recooked): dark conifer; MU paints tree_06 near-black (26,22,5) and the canopy renders (40,32,22) at noon -- faithful, not a lighting hole; reads as a silhouette at dusk and against the fire at night |
+| Tree12 | world | 2026-09-22 11:21 | passed | rebuilt on today's pipeline (clip recooked): blossom tree, tree_04 is MU's pale lilac (163,147,164); canopy (133,116,108) at noon, pink at dusk, a faint moonlit violet (13,11,23) at night where the ground is (3,3,1) -- pale paint under the moon's sky, as Tree06's bark; bark trunk reads |
+| Tree13 | world | 2026-09-22 11:22 | passed | rebuilt on today's pipeline (clip recooked): autumn tree, tree_05's orange-brown leaves read at noon and deep rust at dusk; the warm paint takes little of the moon's blue, so at night only the fire-lit trunk shows |
 | SteelWall01 | world | 2026-09-22 00:28 | awaiting |  |
 | SteelWall02 | world | 2026-09-22 00:28 | awaiting |  |
 | SteelWall03 | world | 2026-09-22 00:28 | awaiting |  |
 | SteelDoor01 | world | 2026-09-22 00:28 | awaiting |  |
 | HouseEtc03 | world | 2026-09-22 00:20 | awaiting |  |
+| Hound01 | figure | 2026-09-22 09:04 | passed | rebuilt after the flip fix: blue painted armour plates with MU's pale streaks, fur underside, pale claws and horn; brass head plate is the mesh MU hides, so it cannot blow out; reads at noon, dusk and by the fire at night |
+| BudgeDragon01 | figure | 2026-09-22 09:10 | passed | rebuilt after the flip fix: red scaled hide and dark wing membranes read at noon, dusk and by the fire; no metal, paint as MU drew it |
+| BullFighter01 | figure | 2026-09-22 09:11 | passed | rebuilt after the flip fix: brown fur with pale horns and hooves; the Elite shares this mesh and keeps its crest; no metal, no blowouts |
+| Giant01 | figure | 2026-09-22 09:13 | passed | rebuilt after the flip fix: painted plate armour, metallic 0 by the recipe's own override (MU painted the highlights in); reads at every time of day |
+| Lich01 | figure | 2026-09-22 09:14 | passed | rebuilt after the flip fix: black robe with red trim, pale skull mask and hands; cloth, bone and skin read apart |
+| Spider01 | figure | 2026-09-22 09:15 | passed | rebuilt after the flip fix: dark carapace with MU's pale patch, banded legs read against the grass; no metal |
+| Skeleton01 | figure | 2026-09-22 09:16 | passed | rebuilt after the flip fix: the Skeleton Warrior's body; bones read dark-ivory as MU paints them, at noon, dusk and night |
+| Axe07 | arm | 2026-09-22 09:23 | passed | the Bull Fighter's axe: steel 0.55 as Axe01/02 -- at 0.2 the spike threw a white dot even at night; now the double head shows its engraving, no blowouts |
+| Spear08 | arm | 2026-09-22 09:18 | passed | the Elite Bull Fighter's Berdysh: steel head and plate_steel shaft read grey along their length, no blowouts |
+| Sword07 | arm | 2026-09-22 09:26 | passed | the Skeleton Warrior's gladius: steel 0.55 -- black at 0.2, dark grey at Sword02's 0.4; now grey steel with MU's painted wear, warm at dusk |
+| Grass01 | world | 2026-09-22 10:57 | passed | rebuilt on today's pipeline (last built 2026-08-30): MU's low leafy ground cover, flat as its .bmd; dark teal-green leaves as tree_08 paints them read sage against the yellow turf at noon, warm at dusk, lit by the fire at night; foliage 0.9, no sheen |
+| Grass02 | world | 2026-09-22 10:58 | passed | rebuilt on today's pipeline: same tree_08 ground cover as Grass01 in a sparser spread; dark teal-green leaves read against the turf at noon and dusk, by the fire at night |
+| Grass03 | world | 2026-09-22 10:59 | passed | rebuilt on today's pipeline: four upright tufts on tree_01/tree_02, green blades with pale tips read at noon, keep their shape at dusk and in the fire's light; foliage 0.9, no sheen |
+| Grass04 | world | 2026-09-22 11:00 | passed | rebuilt on today's pipeline: four tufts on tree_01/tree_02 as Grass03 in another spread; blades and pale tips read at noon, dusk and by the fire |
+| Grass05 | world | 2026-09-22 11:03 | passed | rebuilt on today's pipeline: broad-leaf fern on tree_09; leaves render hue 60-90 (81,89,35), MU's olive (sheet hue 82) -- they read teal only beside the orange turf, measured by hue band; reads at noon, dusk and by the fire |
+| Grass06 | world | 2026-09-22 11:04 | passed | rebuilt on today's pipeline: a smaller tree_09 fern as Grass05; olive leaves read at noon and dusk, by the fire at night |
+| Grass07 | world | 2026-09-22 11:05 | passed | rebuilt on today's pipeline: a ring of red-capped mushrooms with pale spots and white stems; reads at noon, dusk, and by the fire at night |
+| Grass08 | world | 2026-09-22 11:06 | passed | rebuilt on today's pipeline: three solid red-capped mushrooms on the mushroom sheet; drawn opaque (no dark-keyed cutout declared, unlike Grass07) and no black border shows -- the mesh covers only caps and stems |
+| Tree03 | world | 2026-09-22 11:13 | passed | rebuilt on today's pipeline: bare dead tree, dark bark with its grain map reads along the limbs at noon and dusk, the trunk by the fire at night; no leaves in MU's mesh |
+| Tree04 | world | 2026-09-22 11:14 | passed | rebuilt on today's pipeline: twisted two-trunk dead tree on tree_03 bark; limbs read at noon and dusk, trunk by the fire at night |
+| Tree05 | world | 2026-09-22 11:15 | passed | rebuilt on today's pipeline: thin dead sapling on tree_03 bark, 3.5 m; reads at noon and dusk, dim beside the fire at night |
+| Tree06 | world | 2026-09-22 11:16 | passed | rebuilt on today's pipeline: tall pale dead trunk with stubs; tree_02.jpg is MU's pale birch bark (176,170,165) and renders (188,172,161) at noon -- paint, not a blowout; stubs catch the dusk sun |
+| Tree07 | world | 2026-09-22 11:17 | passed | rebuilt on today's pipeline: tree stump, tree_03 bark sides and tree_04 timber top with the rings read; lit by the fire at dusk and night |
+| Tree08 | world | 2026-09-22 11:17 | passed | rebuilt on today's pipeline: fallen log on tree_01 bark, grain reads along it at noon and dusk, the fire picks out its length at night |
+| Tree09 | world | 2026-09-22 11:18 | passed | rebuilt on today's pipeline: reed/sapling bundles on tree_07 (pale straw, 104,92,61 on the sheet); pale blades and tan stems read at noon and dusk, by the fire at night |
+| Tree10 | world | 2026-09-22 11:19 | passed | rebuilt on today's pipeline: a wider field of tree_07 bundles as Tree09; straw stems and pale blades read at noon and dusk, by the fire at night |
+| Stone01 | world | 2026-09-22 11:24 | passed | rebuilt on today's pipeline: MU's long boulder, ston01 grey rock warmed by the stage's sun like the stone building behind; its UVs wrap the tiling face 2.4x along the length, so the strata streak plank-like -- MU's mapping, not a wrong sheet; cast rock normal reads, the fire catches its edge at night |
+| Stone02 | world | 2026-09-22 11:26 | passed | rebuilt on today's pipeline: upright boulder on ston01 with ston02 tufts at its foot; cracked grey faces read with the cast rock normal, cool where they face the sky at noon, warm at dusk, the fire's side lit at night |
+| Stone03 | world | 2026-09-22 11:29 | passed | rebuilt on today's pipeline: faceted boulder on ston01, cracked grey rock with the cast normal's relief; reads at noon and dusk, lit on the fire's side at night |
+| Stone04 | world | 2026-09-22 11:30 | passed | rebuilt on today's pipeline: three small stones on ston01, pale grey on the turf at noon and dusk, the fire's light on them at night |
+| Stone05 | world | 2026-09-22 11:31 | passed | rebuilt on today's pipeline: a ring of stones on ston01, pale grey with the rock relief; reads at noon and dusk, fire-lit at night |

@@ -318,7 +318,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
 bool Figure::pointOn(int bone, const float local[3], float out[3]) const {
     if (!body_ || bone < 0 || size_t(bone) * 16 + 16 > world_.size()) return false;
     float transform[16];
-    content::placementTransform(0.0f, yaw_, 0.0f, scale_, position_, transform);
+    content::placementTransform(pitch_, yaw_, roll_, scale_, position_, transform);
     float placed[16];
     core::mulMatrix(&world_[size_t(bone) * 16], transform, placed);
     for (int j = 0; j < 3; ++j) {

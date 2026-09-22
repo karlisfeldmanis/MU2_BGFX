@@ -27,6 +27,7 @@
 #include "gfx/overlay.h"
 #include "game/desk.h"
 #include "game/litter.h"
+#include "game/save.h"
 #include "game/outline.h"
 #include "gfx/renderer.h"
 #include "gfx/stats.h"
@@ -290,8 +291,40 @@ int main(int argc, char** argv) {
     // viewer's list below is a different thing and is only built for the browser.
     gfx::Overlay curtain;
     bool quitEarly = false;
+
+    // The character's file (game/save.h). Read before the world is, because it decides what
+    // the world is raised with: his class, his level and the tile he stood on. The rest -- the
+    // bag, the gear, the experience -- is laid on once the realm exists, below. A save wins
+    // over the launch's own --class, --level and cradle weapon, which are a new character's;
+    // an explicit --at still moves him.
+    std::string savePath;
+    game::Saved saved;
+    bool resumed = false;
+    if (inWorld && args.play) {
+        savePath = !args.savePath.empty() ? args.savePath
+                   : args.frames == 0     ? game::defaultSavePath()
+                                          : std::string();
+        if (!savePath.empty() && !args.fresh && game::loadSave(savePath, saved)) {
+            if (saved.world == args.world) {
+                resumed = true;
+                args.kin = int(saved.hero.kin);
+                args.level = saved.hero.level;
+                args.weapon.clear();
+                args.shield.clear();
+            } else {
+                core::logError("save: the hero is in %s and this run is %s; starting new here",
+                               saved.world.c_str(), args.world.c_str());
+            }
+        }
+        if (!savePath.empty()) {
+            core::logf("save: %s %s", resumed ? "resuming from" : "a new character, saving to",
+                       savePath.c_str());
+        }
+    }
+
     if (inWorld) {
         if (args.atSet) world.setFocusTile(args.atColumn, args.atRow);
+        else if (resumed) world.setFocusTile(float(saved.hero.column), float(saved.hero.row));
 
         // ---- The preloader ------------------------------------------------------------------
         //
@@ -321,14 +354,27 @@ int main(int argc, char** argv) {
             if (ok && args.play) {
                 world.play(MU2_ASSET_DIR, args.world, args.seed, args.kin, args.level,
                            args.weapon, args.shield);
+                if (resumed && world.played().isOpen()) {
+                    game::resolveSave(*world.played().realm().tables(), saved);
+                    world.played().restore(saved.hero);
+                }
                 // What a blow looks like and where a click sent him. Not fatal: open() has
                 // said why in the log.
                 world.played().showing().open(MU2_ASSET_DIR, textures);
                 world.played().marker().open(MU2_ASSET_DIR, textures);
+                world.played().aura().open(MU2_ASSET_DIR, textures);
+                if (world.played().showing().isOpen()) {
+                    static const char* const kSounds[] = {"player_level_up", nullptr};
+                    world.played().sound().open(MU2_ASSET_DIR, world.played().showing().table(),
+                                                kSounds, args.mute);
+                }
                 // Not fatal either: a game with no HUD is still a game.
                 if (world.played().isOpen() && args.windows != "off" &&
                     !desk.open(MU2_SHADER_DIR, MU2_ASSET_DIR, &textures)) {
                     core::logError("the windows did not open; playing without a HUD");
+                }
+                if (resumed) {
+                    for (int key = 0; key < 5; ++key) desk.setQuick(key, saved.quick[key]);
                 }
             }
             loaded.store(ok ? 1 : -1);
@@ -870,7 +916,23 @@ int main(int argc, char** argv) {
     // tenth of a second, which is only enough not to be a cut. The character is what comes in
     // slowly (Play::appear).
     float entranceSeconds = 0.0f;
+    // Writes the hero whole: every fifteen seconds of play, so a crash loses little, and once
+    // more on the way out.
+    const auto keep = [&]() {
+        if (savePath.empty() || !world.played().isOpen()) return;
+        game::Saved now;
+        now.world = args.world;
+        now.hero = world.played().record();
+        for (int key = 0; key < 5; ++key) now.quick[key] = desk.quick(key);
+        game::writeSave(savePath, *world.played().realm().tables(), now);
+    };
+    int64_t keptAt = bx::getHPCounter();
     while (!quitEarly && window.pump() && !window.escapePressed()) {
+        if (!savePath.empty() &&
+            double(bx::getHPCounter() - keptAt) / double(bx::getHPFrequency()) > 15.0) {
+            keep();
+            keptAt = bx::getHPCounter();
+        }
         renderer.resize(window.width(), window.height());
 
         // Four times a second, counted in milliseconds rather than frames: the point is to
@@ -1047,6 +1109,9 @@ int main(int argc, char** argv) {
                 if (window.clicked(1) && !windowed) world.played().rightClick();
                 if (!windowed) world.zoom(window.scroll());
                 world.played().update(deltaSeconds);
+                for (const int f : args.rises) {
+                    if (frame == f) world.played().rise();
+                }
             }
             // And only THEN the camera, onto where the character is drawn this frame. Placed
             // before the step, it followed where he stood a frame ago: the town and every
@@ -1125,6 +1190,7 @@ int main(int argc, char** argv) {
                 const float right[3] = {view[0], view[4], view[8]};
                 world.played().showing().gather(renderer.effects(), right);
                 world.played().gatherMarker(renderer.effects());
+                world.played().gatherAura(renderer.effects(), eye.position);
                 // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
                 // laid down where they land.
                 if (!itemModels.tables()) {
@@ -1132,7 +1198,8 @@ int main(int argc, char** argv) {
                     litter.open(&itemModels, &world.ground());
                     desk.useModels(&itemModels);
                 }
-                litter.update(world.played().realm(), deltaSeconds);
+                litter.update(world.played().realm(), deltaSeconds, world.played().heldDrops());
+                world.played().setSettledDrops(litter.settled());
                 litter.gather(townDrawables, casters ? &townCasters : nullptr);
                 // The hover ring's own subject, if a drop is what is pointed at rather than a
                 // body or a townsperson -- see Play::gather's `hover` for the other two, and
@@ -1442,6 +1509,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    keep();
+    if (!savePath.empty()) core::logf("save: kept in %s", savePath.c_str());
     if (shadowLog) std::fclose(shadowLog);
     if (shadowPoints) std::fclose(shadowPoints);
     const bool withinBudget = stats.finish(args.budget);

@@ -192,8 +192,13 @@ public:
     // he is holding, and by sprint 7 what he is wearing, and neither is a row anybody can write
     // down in advance. The body is owned here and lives as long as the rest, so a pointer to it
     // is as good as a pointer to any other.
+    //
+    // `worn` is armour on him -- a helm, a cuirass, pants, gloves, boots, by their asset names
+    // -- each put in place of the bare part it covers, as a suit's pieces are. A piece nobody
+    // has loaded yet is loaded here, out of the wardrobe (see wearable).
     const FigureBody* dress(const std::string& name, const std::string& base,
-                            const std::string& weapon, const std::string& shield);
+                            const std::string& weapon, const std::string& shield,
+                            const std::vector<std::string>& worn = {});
 
     // The wardrobe: every suit of armour and every weapon index.json carries, worn and held
     // rather than laid out. It is a SECOND manifest and a second directory on purpose --
@@ -217,6 +222,18 @@ public:
 
 private:
     const content::Mesh* mesh(const std::string& name) const;
+    // A mesh by name, loaded out of the wardrobe the first time it is asked for. The game
+    // never opens the whole wardrobe -- ninety item files, one of which a hero wears -- so a
+    // piece he puts on is read then, once, into the same store. Null when the wardrobe has no
+    // such piece or it will not load.
+    const content::Mesh* wearable(const std::string& name);
+    // Reads the wardrobe manifest's mesh paths and which helms keep the head, once.
+    void readWardrobe();
+    std::string assetDir_;
+    content::Textures* textures_ = nullptr;
+    bool wardrobeRead_ = false;
+    std::unordered_map<std::string, std::string> wardrobePaths_;  // mesh name -> cooked file
+    std::unordered_map<std::string, bool> keepsHead_;             // helm name -> worn over the head
     void bind(FigureBody& body);
     // Which clips a finished body stands and walks in: the stance's own row, or the idle
     // index.json names for this figure when it names one. Called by open() and by dress(), so

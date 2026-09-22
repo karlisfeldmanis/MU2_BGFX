@@ -106,7 +106,10 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->attackRate = float(double(level) * double(row.ratePerLevel) +
                             agility * double(row.ratePerAgility) +
                             strength * double(row.ratePerStrength));
-    out->defenseRate = float(agility * double(row.defenseRatePerAgility));
+    // A shield's rate adds to DefenseRatePvm as it stands, where its defence goes through the
+    // halving below: ArmorInitializerBase.CreateShield, AggregateType.AddRaw on each.
+    out->defenseRate = float(agility * double(row.defenseRatePerAgility)) +
+                       float(arms.shieldDefenseRate);
     // Armour adds nothing until sprint 7 gives items their rows; the halving is the class
     // initialiser's and applies whatever the armour is.
     // And this one IS truncated, because AttackableExtensions.cs:92 truncates it:
@@ -146,6 +149,11 @@ int maximumMana(Kin kin, int level, const HeroPoints& points) {
     const float* m = kMana[int(kin) % 3];
     // MU2's `(int)(base + level * a + energy * b)`: truncated once, at the end.
     return int(m[0] + float(level) * m[1] + float(points.energy) * m[2]);
+}
+
+int maximumShield(int level, const HeroPoints& points, int defense) {
+    const int stats = points.strength + points.agility + points.vitality + points.energy;
+    return int(1.2f * float(stats) + float(defense) + float(level) * float(level) / 30.0f);
 }
 
 uint64_t neededExperience(int level) {

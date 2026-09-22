@@ -73,7 +73,7 @@ public:
     //   Inventory  I and V, MU's two
     //   Character  C
     //   Potion1-4  1 to 4, the quick slots (sprint 7: skills keep Q W E R, PLAN.md)
-    enum class Key { Inventory, Character, Potion1, Potion2, Potion3, Potion4, Count };
+    enum class Key { Inventory, Character, Potion1, Potion2, Potion3, Potion4, Potion5, Count };
     bool pressed(Key key) const { return keyPressed_[size_t(key)]; }
 
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.

@@ -116,10 +116,16 @@ struct Body {
     // The player's mana. Zero on a monster, which casts nothing in 0.75's Lorencia.
     int32_t mana = 0;
     int32_t maxMana = 0;
+    // SD, the shield: Season 3's pool in front of health, MU2's Player.Shield. Zero on a
+    // monster, so a blow on one lands whole. 0.75 has none; this is the hybrid MU2 chose.
+    int32_t sd = 0;
+    int32_t maxSd = 0;
+    float sdCarry = 0.0f;  // the fraction of a point a recovery tick owes and did not give
     Fighter stats;
     // What the player's worn pieces add, off the satchel at the last rearm: the armour and
     // shield's defence with their plus counted, and the weapon's plus on its damage band.
     int32_t wornDefense = 0;
+    int32_t wornDefenseRate = 0;
     int32_t weaponBonus = 0;
 
     // Tiles, and a tile's centre is its integer coordinate -- MU2's own reckoning
@@ -167,6 +173,24 @@ struct Body {
     int row() const { return int(y + (y < 0.0f ? -0.5f : 0.5f)); }
 };
 
+// What a save keeps of the hero: everything the player earned and chose, and nothing the sim
+// works out again from it. Health, stats and swing speed are reckoned from level, points and
+// what is worn (Realm::rearm), so they are not here; health and mana ARE, because a hero who
+// quits hurt comes back hurt. Where he stands and his class go to raise(), which already
+// finds a free tile and dresses the class -- this is the rest, laid on top.
+struct HeroRecord {
+    Kin kin = Kin::DarkKnight;
+    int32_t column = 0, row = 0;
+    float facing = 0.0f;
+    int32_t level = 1;
+    uint64_t experience = 0;
+    int32_t pointsInHand = 0;
+    HeroPoints points;
+    int32_t health = 0, mana = 0;
+    int64_t money = 0;
+    Held slots[kSlots];
+};
+
 // What the game asks the sim for. Nothing here is a skill, and that is on purpose: PLAN.md
 // decided the skill system is Diablo 3's shape -- learned permanently, four keys, real
 // cooldowns -- and the one thing this sprint owes it is not baking in MU's assumptions. An
@@ -204,6 +228,13 @@ public:
     // is here rather than in raise() because spending a point is a choice and the sim does not
     // make choices. Refused, whole, when it asks for more points than are in hand.
     bool spend(int strength, int agility, int vitality, int energy);
+
+    // The hero as a save keeps him, and the same laid back on a hero just raised at that
+    // record's tile and class. restore() empties the satchel first, puts back what was carried
+    // and worn, re-reckons him off it, and only then sets health and mana, clamped to what he
+    // can now hold. A record from a hero who died is brought back full, as reviveHero would.
+    HeroRecord record() const;
+    void restore(const HeroRecord& saved);
 
     // Puts a weapon and a shield in the character's hands, by index into the cooked arms, -1
     // for an empty hand. Refused, whole and with a reason in the log, when his class may not
@@ -301,6 +332,7 @@ private:
     bool bare(int column, int row) const;
     bool take(size_t index);
     void sip();
+    void recover(Body& hero);
     bool send(Body& one, int column, int row);
     void halt(Body& one);
     bool beside(const Body& target, int radius, const Body& walker, int* column, int* row);

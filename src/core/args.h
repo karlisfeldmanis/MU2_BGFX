@@ -99,6 +99,12 @@ struct Args {
     // `--play` raises the realm behind the window: the sim ticks, the figures are where it says
     // they are, and a click is a request. Without it a world is the still crowd sprint 4 drew.
     bool play = false;
+    // The character's file. Empty means the default (game/save.cpp) for a played run and no
+    // file at all for a review run (--frames): a scripted fight must not overwrite the
+    // player's hero, nor start from wherever he last stood. `--fresh` ignores what is there
+    // and starts a new character, whose first save then replaces it.
+    std::string savePath;
+    bool fresh = false;
     // A review harness and not a feature: every N frames it puts the pointer on a pixel from a
     // short fixed list and clicks it, through the same unprojection a hand would. It is how a
     // run with nobody at the mouse can show that a click walks and a click on a monster fights.
@@ -157,6 +163,11 @@ struct Args {
     std::vector<UiClick> uiClicks;
     // Scripted potion keys: FRAME:KEY, KEY 1 to 4, pressed on FRAME. Repeatable.
     std::vector<std::pair<int, int>> uiKeys;
+    // The level-up's flares thrown on the hero on FRAME, for a review run that cannot wait for
+    // a real level. Only the drawing: the realm's level is untouched. Repeatable.
+    std::vector<int> rises;
+    // Everything sounds and is logged, at no volume: a review run should not play into the room.
+    bool mute = false;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.
     std::string give;
     long long zen = 0;     // Zen in hand at the start

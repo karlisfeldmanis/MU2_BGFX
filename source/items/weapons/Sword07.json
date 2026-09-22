@@ -43,6 +43,12 @@
   },
   "sheet_from": "Data/Item/sword08.OZJ (128x32), from MuMain. The .bmd names sword08.jpg; 66 triangles, one mesh.",
   "material_note": "The brightest sheet in the batch and the easiest to read. Island 0 is the blade, twelve triangles from Z 13 to 135, at (212, 206, 183) chroma 29 - a white blade with gold filigree laid along it. Steel: the filigree is a small part of a large bright surface, and it is colour rather than a different surface.\n\nIsland 2 is the crossguard, twenty-eight triangles in four units of Z, at (191, 155, 73) and chroma 118 - the strongest colour reading of any weapon island here. That is gold and nothing else, so brass.\n\nIsland 1 is the grip at (101, 85, 48) chroma 53, dark bands with the gold pommel at the end. leather_wrap.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_note": "Steel at 0.55, not the library's 0.2. At 0.2 this broad blade is a mirror held flat, and from the stage's camera it mirrors the dark ground: the cook sheet showed it black at noon, dusk and night. 0.4, Sword02's and Sword08's cure, left it a dark grey; 0.55 spreads enough sky over it to read as steel, and MU's painted wear stays legible.",
   "islands": [
     {
       "island": 0,

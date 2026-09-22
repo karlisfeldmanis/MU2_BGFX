@@ -21,8 +21,10 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "game/panel.h"
+#include "game/stage.h"
 #include "gfx/interface.h"
 #include "sim/realm.h"
 
@@ -41,7 +43,10 @@ class Hud {
 public:
     enum class Button { Menu, Chat, Inventory, Character };
 
-    // What one of the four potion boxes shows: the row bound to it (or -1), what it is called
+    // The potion boxes, keyed 1 to 5.
+    static constexpr int kQuickKeys = 5;
+
+    // What one of the potion boxes shows: the row bound to it (or -1), what it is called
     // and how many of it and what may stand in for it he carries. Given by the desk, which owns
     // the binding; the frame draws what it is handed.
     struct Quick {
@@ -53,13 +58,19 @@ public:
         }
     };
     void setQuick(int key, const Quick& quick) {
-        if (key >= 0 && key < 4) quick_[key] = quick;
+        if (key >= 0 && key < kQuickKeys) quick_[key] = quick;
     }
-    // Which potion box a point is over, 0 to 3, or -1: where a drag from the bag binds.
+    // Which potion box a point is over, 0 to 4, or -1: where a drag from the bag binds.
     int quickAt(float x, float y) const;
 
     void open(const gfx::Interface& interface, panel::Arts* arts);
     void follow(const sim::Body* hero);
+    // The stage the potion boxes' pictures are taken on, the plate's own size: the bag's way of
+    // drawing an item, so a bound apple is an apple in its box and not the word. Until its
+    // first picture the box shows the name, as the bag does.
+    void useStage(Stage* stage) { stage_ = stage; }
+    // Pixels per MU unit the plate is drawn at, which is what the stage renders at.
+    float pixelsPerUnit() const { return screen_.scale; }
 
     // A frame: slides the hairline, answers the pointer, and rebuilds the canvas only if what
     // it draws moved. Returns the button pressed this frame, if any, through `pressed`.
@@ -80,14 +91,16 @@ private:
     // Everything the plate draws that is a number, compared whole to decide a rebuild.
     struct Face {
         float width = 0, height = 0;
-        int health = -1, maxHealth = 0, mana = 0, maxMana = 0, level = 0;
+        int health = -1, maxHealth = 0, mana = 0, maxMana = 0, shield = 0, maxShield = 0,
+            level = 0;
         int gem = 0;
         float slid = 0;
         bool inventory = false, character = false;
         int hovered = -1;  // which button or slot is lit
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;
-        Quick quick[4];
+        Quick quick[kQuickKeys];
+        uint16_t picture = 0xFFFF;  // the stage's picture, so its first render is a rebuild
         bool operator==(const Face& o) const;
     };
 
@@ -108,7 +121,9 @@ private:
     float slid_ = 0.0f;
     int drawnLevel_ = 0;
     uint64_t rebuilds_ = 0;
-    Quick quick_[4];
+    Quick quick_[kQuickKeys];
+    Stage* stage_ = nullptr;
+    std::vector<Standing> standing_;
 };
 
 }  // namespace mu::game

@@ -92,6 +92,9 @@ void testRules() {
     checkEqual(fighter.minimumDamage, 4, "the knight's fists, low");
     checkEqual(fighter.maximumDamage, 7, "the knight's fists, high");
     checkEqual(health, 35 + 2 + 75, "the knight's health");
+    // SD: 1.2 x (28 + 20 + 25 + 10), his final defence 3, and 1/30 of level squared.
+    checkEqual(sim::maximumShield(1, sim::startingPoints(sim::Kin::DarkKnight), fighter.defense),
+               102, "the knight's shield");
 
     sim::reckon(sim::Kin::DarkWizard, 1, sim::startingPoints(sim::Kin::DarkWizard), sim::Arms{}, &fighter,
                 &health);
@@ -432,6 +435,8 @@ void testItems(const content::Tables& tables) {
 
     sim::Realm realm;
     check(realm.raise(&tables, 7, 138, 124), "a realm raises for the items");
+    check(realm.hero().maxSd > 0 && realm.hero().sd == realm.hero().maxSd,
+          "he is raised with his shield full");
     check(realm.equip(tables.armNamed("Axe01"), -1, true), "the cradle's axe goes in his hand");
     checkEqual(realm.satchel()[sim::kWeaponRight].item, axe, "and it is in the right hand slot");
     check(realm.hero().weapon >= 0, "which is where his weapon is read from");
@@ -448,6 +453,17 @@ void testItems(const content::Tables& tables) {
     check(!sim::movable(tables, realm.wearer(), realm.satchel(), staffAt, sim::kWeaponRight),
           "and a knight may not hold it: the gate the window colours by");
     check(!realm.moveItem(staffAt, sim::kWeaponRight), "and the move is refused by the same gate");
+
+    // A shield's block column goes on his defence rate whole, and its defence in halved. The
+    // Small Shield is 1 and 3 (CreateShield(0, ... 3, 1, 3, ...)), and a knight's 28 strength
+    // wears it at +0 but not at +2, which asks 38.
+    checkEqual(tables.items[size_t(shield)].defenseRate, 3, "a Small Shield's rate is cooked");
+    const float rateBare = realm.hero().stats.defenseRate;
+    const int shieldAt = realm.give(shield);
+    check(realm.moveItem(shieldAt, sim::kWeaponLeft), "a Small Shield goes on");
+    checkNear(realm.hero().stats.defenseRate, rateBare + 3, 1e-4, "and adds 3 to his defence rate");
+    check(realm.moveItem(sim::kWeaponLeft, shieldAt), "and comes off");
+    checkNear(realm.hero().stats.defenseRate, rateBare, 1e-4, "and takes it back");
 
     const int potionAt = realm.give(small, -1, 0, 3);
     check(potionAt >= sim::kWorn, "three small healing potions go into the bag");

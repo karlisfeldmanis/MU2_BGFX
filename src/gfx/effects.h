@@ -69,7 +69,9 @@ public:
     // that asks for more than this gets refused and counted rather than served, because a
     // pass that quietly reallocates under a busy fight is a hitch in the one moment the
     // whole sprint exists to make look right.
-    bool init(const std::string& shaderDir, uint32_t capacity = 2048);
+    // 8192 since the level-up: its trails are sampled a quarter tick apart, up to 2280 quads
+    // a burst, and two bursts on top of a lit town's 900 did not fit in the old 2048.
+    bool init(const std::string& shaderDir, uint32_t capacity = 8192);
     void shutdown();
 
     // Empties the list. Called once at the top of a frame, before anything adds.

@@ -120,7 +120,8 @@ bool Window::pump() {
     // The game's keys. Two for the bag, because MU binds both I and V to it.
     const int keys[size_t(Key::Count)][2] = {{GLFW_KEY_I, GLFW_KEY_V}, {GLFW_KEY_C, -1},
                                              {GLFW_KEY_1, -1},         {GLFW_KEY_2, -1},
-                                             {GLFW_KEY_3, -1},         {GLFW_KEY_4, -1}};
+                                             {GLFW_KEY_3, -1},         {GLFW_KEY_4, -1},
+                                             {GLFW_KEY_5, -1}};
     for (size_t i = 0; i < size_t(Key::Count); ++i) {
         bool down = false;
         for (int k : keys[i]) {

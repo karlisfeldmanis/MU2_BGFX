@@ -137,6 +137,7 @@ struct Arms {
     int weaponMinimumDamage = 0;
     int weaponMaximumDamage = 0;
     int armourDefense = 0;  // a shield's, and later a suit's
+    int shieldDefenseRate = 0;  // a worn shield's rate with its plus; never halved
 };
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,
@@ -154,6 +155,9 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
 //   Dark Wizard   0 + 2   x level + 2 x energy
 //   Fairy Elf     6 + 1.5 x level + 1.5 x energy
 int maximumMana(Kin kin, int level, const HeroPoints& points);
+// The shield's maximum, the same for all three classes: 1.2 of every stat, the final defence
+// and level squared over thirty. MU2's Beast.cs, off OpenMU's Season 3 class definitions.
+int maximumShield(int level, const HeroPoints& points, int defense);
 
 // GameConfigurationInitializerBase.cs:87-100. The CUMULATIVE experience to BE this level, not
 // the cost of the level itself: read as a per-level cost it makes levelling roughly

@@ -23,6 +23,13 @@ public:
     // the weapon is: inside one a character carries it on his back and stands unarmed.
     void stand(const FigureBody* body, const float position[3], float yaw, float scale,
                bool safe = false);
+    // The pitch and roll a town placement is drawn at (Town::gather's own transform). A figure
+    // stands upright and never sets it; a swaying lamp or fountain does, so that what rides
+    // one of its bones -- see pointOn -- lands on the mesh the town drew and not beside it.
+    void tilt(float pitch, float roll) {
+        pitch_ = pitch;
+        roll_ = roll;
+    }
     // Swaps what is drawn without restarting it: the clip, its clock and the crossfade all
     // stay exactly where they were. For a figure re-dressed mid-stride -- an equip or an
     // unequip -- rather than one just put down; `body`'s rig and clip library must be the
@@ -104,6 +111,7 @@ private:
     const FigureBody* body_ = nullptr;
     float position_[3] = {0, 0, 0};
     float yaw_ = 0.0f;
+    float pitch_ = 0.0f, roll_ = 0.0f;
     float scale_ = 1.0f;
     int clip_ = -1;
     int previous_ = -1;

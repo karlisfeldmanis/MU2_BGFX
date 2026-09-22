@@ -83,6 +83,11 @@ fi
 source_dir="$(dirname "$asset")"
 category="$(basename "$source_dir")"
 kind="$(basename "$(dirname "$source_dir")")"
+# A recipe one folder down -- source/monsters, source/npc, source/lobby -- has no kind above
+# its category, and the parent's name is `source` itself. MU2 built those under assets/, and
+# index.json still says assets/monsters/Hound01/Hound01.glb, so that is where they go: named
+# `source`, the Hound built into workshop/source/monsters and nothing ever synced it.
+[[ $kind == source ]] && kind=assets
 
 # The asset's own name, which is not always what was typed to find it.
 #

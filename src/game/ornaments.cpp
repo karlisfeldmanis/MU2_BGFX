@@ -50,8 +50,17 @@ constexpr size_t kMostPuffs = 64;
 // each bone, and in RenderObjectVisual `Position` is never set before this case: whatever the
 // stack held. Read here as the bone's own origin, which is the only offset the line can
 // have meant. Ours, and marked as ours.
-constexpr int kLanternBones[2] = {48, 57};
+// MU's own bones for the two lights were 48 and 57, the markers named below.
+// Where the two lamps actually hang, which is not where MU's bones are: 48 and 57 are empty
+// markers at the pole tips, and the lantern boxes swing about 0.75 m out from them on bones
+// 47 (Box05) and 56 (Box11). A glow at the tip floated in the air beside the lamp. So each is
+// put on its lantern's own middle -- the bind-pose centroid of the 66 vertices each of those
+// bones carries, read out of MerchantAnimal01.glb -- and rides the lantern bone. Ours.
+constexpr int kLanternCarriers[2] = {47, 56};
+constexpr float kLanternMiddles[2][3] = {{1.0642f, 3.0403f, 1.0146f},
+                                         {-0.8804f, 2.9950f, -1.0739f}};
 constexpr float kLanternColour[3] = {0.6f, 0.3f, 0.1f};
+constexpr float kLanternGlowShare = 0.25f;
 // `Luminosity = (rand() % 30 + 70) * 0.01f`, rolled every frame MU draws. MU drew at its
 // reference 25; re-rolled per OUR frame it is a strobe at the monitor's rate, so it is
 // re-rolled 25 times a second. The rate is MU's frame, not an invention -- but it is a reading.
@@ -104,13 +113,11 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
             spout.anchor = anchor(i, mesh, kLandingBone, kLanding, kLandingAcross);
             if (spout.anchor.bone >= 0) spouts_.push_back(spout);
         } else if (name == "MerchantAnimal01") {
-            // The bone's own origin, which is zero in its own frame: nothing to carry.
-            for (int bone : kLanternBones) {
-                if (!mesh || size_t(bone) >= mesh->bones().size()) continue;
+            static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+            for (int k = 0; k < 2; ++k) {
                 Lantern lantern;
-                lantern.anchor.townIndex = i;
-                lantern.anchor.bone = bone;
-                lanterns_.push_back(lantern);
+                lantern.anchor = anchor(i, mesh, kLanternCarriers[k], kLanternMiddles[k], kNoAcross);
+                if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
             }
         }
     }
@@ -206,14 +213,18 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
         }
     }
     if (bgfx::isValid(light_)) {
-        const float origin[3] = {0.0f, 0.0f, 0.0f};
         for (const Lantern& lantern : lanterns_) {
             const Figure* figure = sway.posedAt(lantern.anchor.townIndex);
             if (!figure) continue;
             gfx::Sprite sprite;
-            if (!figure->pointOn(lantern.anchor.bone, origin, sprite.position)) continue;
-            // CreateSprite's Scale is `Luminosity * 5` over a 64-texel sheet.
-            sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * luminosity_ * 5.0f;
+            if (!figure->pointOn(lantern.anchor.bone, lantern.anchor.point, sprite.position)) continue;
+            // CreateSprite's Scale is `Luminosity * 5` over a 64-texel sheet -- a quad up to
+            // 3.2 m across, and taken whole it cut through the canopy and the crates beside
+            // the lamp: a hard-edged orange patch on the load and half a disc hanging past the
+            // corner. MU's picture hid that at 25 frames in low range. A quarter of it, the
+            // lamp's own glow; ours, and marked as ours.
+            sprite.halfWidth = sprite.halfHeight =
+                0.5f * kSheetMetres * luminosity_ * 5.0f * kLanternGlowShare;
             for (int k = 0; k < 3; ++k) sprite.colour[k] = kLanternColour[k] * luminosity_;
             sprite.colour[3] = 1.0f;
             sprite.sheet = light_;

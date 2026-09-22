@@ -46,7 +46,8 @@ enum View : uint16_t {
     ViewStageBag = 55,
     ViewProbeChain = 56,    // 56..61, the chain of the face drawn this frame, a level each
     ViewStageShelf = 62,
-    ViewCount = 63,
+    ViewStageQuick = 63,    // the potion boxes' pictures on the HUD's own stage
+    ViewCount = 64,
 };
 constexpr int kBloomLevels = 5;
 constexpr int kProbeSize = 128;  // the raw cube's edge, texels

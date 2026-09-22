@@ -211,7 +211,7 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, bool pane
     // Show: a live monster under the pointer and no window over it. A different monster
     // starts its bar full rather than inheriting the last one's trail.
     const sim::Body* hovered = pointed != 0 ? realm.find(pointed) : nullptr;
-    if (hovered && hovered->alive() && !hovered->player && !paneled) {
+    if (hovered && play.shownAlive(pointed) && !hovered->player && !paneled) {
         if (on_ != pointed) {
             lag_ = was_ = fraction(pointed);
             holding_ = 0.0f;
@@ -225,7 +225,7 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, bool pane
     const sim::Body* beast = on_ != 0 ? realm.find(on_) : nullptr;
     if (on_ != 0 && !beast) dismiss();
     if (on_ != 0) {
-        const bool alive = beast->alive();
+        const bool alive = play.shownAlive(on_);
         // The frame it dies on: the readout stops being read and starts being taken away, and
         // gets the window that job gets.
         if (alive_ && !alive) left_ = kSlain;

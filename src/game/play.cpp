@@ -31,6 +31,10 @@ constexpr float kAppearSeconds = 1.1f;
 // giant, and the cook already marks it `hold` -- it plays once and holds its last frame, a
 // corpse pose, rather than looping.
 constexpr int kMonsterDieSlot = 6;
+// PLAYER_DIE1, which the cook also holds (source/players/rig/actions.json, hold_at_end). The
+// hero plays it and lies there until the realm revives him at the gate -- no fade: MU leaves
+// the player's body on the ground for the whole wait.
+constexpr int kPlayerDieSlot = 232;
 // How long a corpse holds its pose before fading, and how long the fade itself takes.
 // Invention: MU removes a dead monster from the world the instant OpenMU's own
 // DeathAction handler fires, with nothing standing in for either number. This one held
@@ -41,6 +45,11 @@ constexpr int kMonsterDieSlot = 6;
 constexpr float kDeathHold = 1.2f;
 constexpr float kDeathFade = 0.6f;
 constexpr float kDeathTotal = kDeathHold + kDeathFade;
+// How long after the killing blow lands -- the frame the bar reads nought and the fall starts
+// -- what the monster left comes out. The user's call (2026-09-22): the drop belongs to the
+// health reaching nought, not to the end of the death clip. Invention; a beat so it reads as
+// coming out of the blow rather than being there already.
+constexpr float kDropDelay = 0.12f;
 // A respawn's own fade-in: fast enough to read as "arriving" rather than "loading", and the
 // same smoothstep the hero's own door-opening fade uses (kAppearSeconds), just shorter --
 // invention, the user asked for it not to pop.
@@ -228,6 +237,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                 if (body.player) {
                     one.attackClip = look->library->find(attackSlotFor(look->stance));
                     if (one.attackClip < 0) one.attackClip = look->library->find(38);
+                    one.deathClip = look->library->find(kPlayerDieSlot);
                 } else {
                     one.attackClip = look->library->find(3);
                     if (one.attackClip < 0) one.attackClip = look->library->find(4);
@@ -375,6 +385,11 @@ void Play::update(double seconds) {
         accumulator_ = kTickSeconds;
     }
     while (accumulator_ >= kTickSeconds && stepped < kMostTicks) {
+        // Each body's health going into the tick, so a blow's cue can say what it took rather
+        // than what it rolled. Bodies and figures share one order (Play::open).
+        for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
+            drawn_[i].health = realm_.bodies()[i].health;
+        }
         realm_.step();
         // AFTER the step, not before it. Before, `now` held the state at the START of the tick
         // and `was` the start of the one before, so the picture trailed the sim by one whole
@@ -411,17 +426,25 @@ void Play::update(double seconds) {
             // fades -- see kDeathHold and kDeathFade. `Rose` is the same body handed back, at
             // its home tile with a fresh clip, and it fades back in rather than popping into
             // being.
+            //
+            // Not on this tick, though: the blow that killed it resolved here and is SHOWN at
+            // its landing cue, half a swing from now. Fallen on the tick, the monster went
+            // down before the last blow reached it. So the fall is owed, and paid the frame
+            // nothing is left to land on it -- fallWhenLanded, after the cues below.
+            if (happening.what == sim::What::Dropped) {
+                // Lying in the realm from this tick; shown once its dropper is down.
+                if (drawnOf(happening.who)) held_.push_back({uint32_t(happening.a), happening.who});
+            }
             if (happening.what == sim::What::Died) {
-                if (Drawn* dead = drawnOf(happening.who)) {
-                    dead->deadFor = 0.0f;
-                    // Whatever pace a swing or a walk left it at is not this clip's: MU's own
-                    // death plays at its authored speed regardless of what killed him mid-step.
-                    dead->clipRate = 1.0f;
-                    dead->swinging = 0.0f;
-                    if (dead->deathClip >= 0) dead->figure.play(dead->deathClip, true);
-                }
+                if (Drawn* dead = drawnOf(happening.who)) dead->fallOwed = true;
+                // The experience, and so the level, is said after the death on the same tick:
+                // the kill is what the level waits to be shown on.
+                if (happening.whom == heroId) levelOn_ = happening.who;
+            } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
+                levelOwed_ = true;
             } else if (happening.what == sim::What::Rose) {
                 if (Drawn* risen = drawnOf(happening.who)) {
+                    risen->fallOwed = false;
                     risen->deadFor = -1.0f;
                     risen->spawnFade = 0.0f;
                 }
@@ -431,6 +454,13 @@ void Play::update(double seconds) {
             // of them is here. What a blow does to the picture today is put the attacker into
             // its attack clip, which then blends back to idle or walk when it ends.
             if (happening.what == sim::What::Hit || happening.what == sim::What::Missed) {
+                int32_t taken = 0;
+                if (happening.what == sim::What::Hit) {
+                    if (Drawn* struck = drawnOf(happening.whom)) {
+                        taken = std::max(0, struck->health - happening.c);
+                        struck->health = happening.c;
+                    }
+                }
                 if (Drawn* swinger = drawnOf(happening.who)) {
                     if (swinger->attackClip >= 0 && swinger->figure.body()) {
                         swinger->figure.play(swinger->attackClip, true);
@@ -465,6 +495,7 @@ void Play::update(double seconds) {
                         cue.target = happening.whom;
                         cue.damage = happening.a;
                         cue.miss = happening.what == sim::What::Missed;
+                        cue.taken = taken;
                         cue.fuse = swinger->swinging * Showing::kLandingPoint;
                         cue.token = swinger->swingToken;
                         showing_.schedule(cue);
@@ -536,20 +567,94 @@ void Play::update(double seconds) {
         // The target where the SIM has it, not where the interpolation has it: this runs
         // before follow() has placed anything this frame, and half a tile of smoothing is
         // below the scatter the blood is thrown with anyway.
-        const float metresPerTile = ground_->metresPerTile();
-        const float x = (target->x + 0.5f) * metresPerTile;
-        const float z = -(target->y + 0.5f) * metresPerTile;
-        const float feet[3] = {x, ground_->heightAt(x, z), z};
-        // How tall the thing actually is, which is what every length in the blood is taken
-        // in units of. A figure with no body drawn falls back to a man's height rather than
-        // to zero, because zero would collapse the whole effect to a point.
+        // Where the body is DRAWN, which is where the eye sees the blow land: the sim's
+        // position leads a walking body by up to a tile, and blood thrown from there hung in
+        // the air beside it. The crown is the feet raised by the height, placed by follow().
         const Drawn* hit = drawnOf(cue.target);
         const FigureBody* look = hit ? hit->figure.body() : nullptr;
         const float height = look ? look->height * look->scale : 1.2f;
+        const float metresPerTile = ground_->metresPerTile();
+        float x = (target->x + 0.5f) * metresPerTile;
+        float z = -(target->y + 0.5f) * metresPerTile;
+        if (hit && hit->placed) {
+            x = hit->crown[0];
+            z = hit->crown[2];
+        }
+        const float feet[3] = {x, ground_->heightAt(x, z), z};
+        const FigureBody* heroLook = drawn_.empty() ? nullptr : drawn_[0].figure.body();
+        const float man = heroLook ? heroLook->height * heroLook->scale : 1.8f;
+        // How tall the thing actually is, which is what every length in the blood is taken
+        // in units of. A figure with no body drawn falls back to a man's height rather than
+        // to zero, because zero would collapse the whole effect to a point.
         const bool onHero = cue.target == realm_.hero().id;
-        showing_.land(cue, feet, height, swinger->yaw, onHero);
+        showing_.land(cue, feet, height, man, swinger->yaw, onHero);
     }
+    // After the cues, so the fall comes in the same frame as the number and the blood of the
+    // blow that caused it -- or at once, for a death no blow is still owed on.
+    fallWhenLanded();
+    // And the level, in the same frame as the blow that earned it -- MU2's Rose, reached from
+    // the kill's cue. A dropped cue still clears `awaits`, so a level is never lost to one.
+    if (levelOwed_ && (levelOn_ == 0 || !showing_.awaits(levelOn_))) {
+        levelOwed_ = false;
+        levelOn_ = 0;
+        rise();
+    }
+    releaseDrops();
     showing_.update(float(seconds));
+    aura_.update(float(seconds));
+}
+
+void Play::rise() {
+    const Drawn* hero = drawnOf(realm_.hero().id);
+    if (hero == nullptr || !hero->placed || ground_ == nullptr) return;
+    // At his feet where he is drawn, and in the facing he has now; it does not follow him.
+    const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
+                           hero->crown[2]};
+    // The sound in the same call as the flares, so the two start on one frame: MU's
+    // ReceiveLevelUp is one block that throws the joints and plays SOUND_LEVEL_UP together.
+    // Sound::play takes the rest of the sync -- the file's silence and the device's buffer.
+    aura_.rise(feet, hero->yaw, ground_->metresPerTile());
+    sound_.play("player_level_up");
+}
+
+void Play::releaseDrops() {
+    held_.erase(std::remove_if(held_.begin(), held_.end(),
+                               [&](const HeldDrop& one) {
+                                   const Drawn* dropper = drawnOf(one.dropper);
+                                   if (dropper == nullptr) return true;
+                                   if (dropper->fallOwed) return false;
+                                   if (dropper->deadFor < 0.0f) return true;  // rose again
+                                   return dropper->deadFor >= kDropDelay;
+                               }),
+                held_.end());
+    heldIds_.clear();
+    for (const HeldDrop& one : held_) heldIds_.push_back(one.drop);
+}
+
+void Play::fall(Drawn& dead) {
+    dead.fallOwed = false;
+    dead.deadFor = 0.0f;
+    // Whatever pace a swing or a walk left it at is not this clip's: MU's own death plays at
+    // its authored speed regardless of what killed him mid-step.
+    dead.clipRate = 1.0f;
+    dead.swinging = 0.0f;
+    if (dead.deathClip >= 0) dead.figure.play(dead.deathClip, true);
+}
+
+void Play::fallWhenLanded() {
+    for (Drawn& one : drawn_) {
+        if (one.fallOwed && !showing_.awaits(one.id)) fall(one);
+    }
+}
+
+bool Play::shownAlive(uint32_t id) const {
+    const sim::Body* body = realm_.find(id);
+    if (!body) return false;
+    if (body->alive()) return true;
+    for (const Drawn& one : drawn_) {
+        if (one.id == id) return one.fallOwed;
+    }
+    return false;
 }
 
 void Play::follow(float seconds) {
@@ -568,7 +673,13 @@ void Play::follow(float seconds) {
         // reposed: the position, the clip and the pose it died in are exactly the last ones
         // `follow` ever wrote for it.
         if (!body->alive()) {
-            one.visible = one.deadFor >= 0.0f && one.deadFor < kDeathTotal;
+            // Still standing on screen until its killing blow lands: drawn where it last was,
+            // in whatever it was playing.
+            if (one.fallOwed) {
+                one.visible = true;
+                continue;
+            }
+            one.visible = one.deadFor >= 0.0f && (body->player || one.deadFor < kDeathTotal);
             if (one.deadFor >= 0.0f) one.deadFor += seconds;
             continue;
         }
@@ -844,19 +955,32 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     //
     // And by the ray as well as by where it lands. The ground point alone only ever found the
     // feet: at this camera's 48.5 degrees a pointer on a head meets the ground 1.6 m behind
-    // it, past the tile of slack, so an NPC could be hovered only by his boots and never got
-    // his ring. So each one is also a standing column, kStature tall, and the ray's nearest
-    // pass to its axis between the ground and the top counts the same as the landing point.
-    constexpr float kStature = 1.9f;
-    const auto reach = [&](float bodyColumn, float bodyRow) {
+    // it. So each one is also an upright column its own drawn height and footprint, and the
+    // ray's nearest pass to its axis between the ground and its top is what counts. The
+    // landing point keeps a little slack of its own for a click at the feet.
+    //
+    // Sized by the figure and not by a man: a fixed 1.9 m column with 0.6 m round it, beside
+    // the old 1.2 tiles round the landing point, rang a spider from empty ground a metre
+    // behind it -- hovered with the pointer nowhere on it.
+    constexpr float kFeetSlack = 0.6f;  // tiles round the landing point that are "at his feet"
+    const auto reach = [&](float bodyColumn, float bodyRow, const Figure& figure) {
+        const FigureBody* look = figure.body();
+        const float scale = look ? look->scale : 1.0f;
+        const float stature = look ? look->height * scale : 1.8f;
+        const float across = look ? std::max(look->max[0] - look->min[0],
+                                             look->max[2] - look->min[2]) * scale
+                                  : 0.8f;
+        // Most of the half-width: a bind box is the arms out and the tail straight, wider
+        // than the body the eye picks.
+        const float round = std::clamp(across * 0.35f, 0.3f, 1.2f);
         const float byGround =
-            std::max(std::fabs(bodyColumn - column), std::fabs(bodyRow - row));
+            std::max(std::fabs(bodyColumn - column), std::fabs(bodyRow - row)) / kFeetSlack;
         const float x = (bodyColumn + 0.5f) * metresPerTile;
         const float z = -(bodyRow + 0.5f) * metresPerTile;
         const float floorY = ground_->heightAt(x, z);
         // Where the ray is at the column's top and at its foot, then the nearest point of that
         // stretch to the axis, flat -- the column is upright, so height does not count.
-        const float t0 = (floorY + kStature - nearPoint.y) / direction.y;
+        const float t0 = (floorY + stature - nearPoint.y) / direction.y;
         const float t1 = (floorY - nearPoint.y) / direction.y;
         const float ax = nearPoint.x + direction.x * t0, az = nearPoint.z + direction.z * t0;
         const float dx = direction.x * (t1 - t0), dz = direction.z * (t1 - t0);
@@ -864,16 +988,21 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
         const float u = along > 1e-8f
                             ? std::clamp(((x - ax) * dx + (z - az) * dz) / along, 0.0f, 1.0f)
                             : 0.0f;
-        const float byRay =
-            std::hypot(ax + dx * u - x, az + dz * u - z) / metresPerTile;
-        // Counted double: the column is 0.6 m round where the landing point has 1.2 of slack,
-        // since a body is a slim thing and a pointer beside him is not on him.
-        return std::min(byGround, byRay * 2.0f);
+        const float byRay = std::hypot(ax + dx * u - x, az + dz * u - z) / round;
+        // Under one is on it; the smaller wins between two.
+        return std::min(byGround, byRay);
     };
-    float closest = 1.2f;
+    float closest = 1.0f;
     for (const sim::Body& body : realm_.bodies()) {
-        if (body.player || !body.alive()) continue;
-        const float away = reach(body.x, body.y);
+        if (body.player) continue;
+        const Drawn* drawn = drawnOf(body.id);
+        if (drawn == nullptr || !drawn->visible) continue;
+        // Standing on screen, not alive in the realm: a monster killed on this tick is still
+        // up until the blow that killed it lands, half a swing on, and the pointer resting on
+        // it is still on it. Picked by the realm's word, the hover dropped on the tick and its
+        // bar lingered out still showing the health before the blow -- then it fell.
+        if (!body.alive() && !drawn->fallOwed) continue;
+        const float away = reach(body.x, body.y, drawn->figure);
         if (away < closest) {
             closest = away;
             pointedAt_ = body.id;
@@ -884,6 +1013,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     if (pointedAt_ == 0) {
         float nearest = 0.8f;
         for (const sim::Lying& one : realm_.lying()) {
+            if (std::find(heldIds_.begin(), heldIds_.end(), one.id) != heldIds_.end()) continue;
             const float away =
                 std::max(std::fabs(float(one.column) - column), std::fabs(float(one.row) - row));
             if (away < nearest) {
@@ -894,13 +1024,14 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     }
     // And the townsfolk, by the same reckoning, a body winning a tie: a monster in the town
     // is the more urgent thing under the pointer.
-    for (size_t i = 0; i < tables_.folk.size(); ++i) {
-        const content::Townsperson& one = tables_.folk[i];
-        const float away = reach(float(one.x), float(one.y));
+    for (const Standing& standing : folk_) {
+        if (standing.folk < 0) continue;
+        const content::Townsperson& one = tables_.folk[size_t(standing.folk)];
+        const float away = reach(float(one.x), float(one.y), standing.figure);
         if (away < closest) {
             closest = away;
             pointedAt_ = 0;
-            pointedFolk_ = int(i);
+            pointedFolk_ = standing.folk;
         }
     }
 }
@@ -914,7 +1045,7 @@ void Play::leftClick() {
     } else if (pointedAt_ == 0 && pointedLying_ != 0) {
         request.kind = sim::Request::Kind::Pick;
         request.target = pointedLying_;
-    } else if (pointedAt_ != 0) {
+    } else if (pointedAt_ != 0 && realm_.find(pointedAt_) && realm_.find(pointedAt_)->alive()) {
         request.kind = sim::Request::Kind::Attack;
         request.target = pointedAt_;
     } else if (pointedColumn_ >= 0) {
@@ -956,7 +1087,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
             return t * t * (3.0f - 2.0f * t);
         }
         if (one.deadFor >= 0.0f) {
-            if (one.deadFor < kDeathHold) return 1.0f;
+            if (one.deadFor < kDeathHold || &one == &drawn_[0]) return 1.0f;
             const float t = std::clamp((one.deadFor - kDeathHold) / kDeathFade, 0.0f, 1.0f);
             return 1.0f - t * t * (3.0f - 2.0f * t);
         }
@@ -1080,7 +1211,15 @@ void Play::redress() {
         hero.weapon >= 0 ? tables_.arms[size_t(hero.weapon)].name : std::string();
     const std::string shield =
         hero.shield >= 0 ? tables_.arms[size_t(hero.shield)].name : std::string();
-    const FigureBody* look = figures_->dress(kHeroDressName, bare_, weapon, shield);
+    // And what he wears: the five armour slots, by the asset each item row names. Without
+    // these the figure only ever changed its hands, and gloves put on stayed bare hands.
+    std::vector<std::string> worn;
+    for (int slot = sim::kHelm; slot <= sim::kBoots; ++slot) {
+        const sim::Held& held = realm_.satchel()[slot];
+        if (held.empty() || size_t(held.item) >= tables_.items.size()) continue;
+        worn.push_back(tables_.items[size_t(held.item)].name);
+    }
+    const FigureBody* look = figures_->dress(kHeroDressName, bare_, weapon, shield, worn);
     if (!look) return;
     Drawn& drawn = drawn_[0];
     drawn.figure.reskin(look);
@@ -1091,6 +1230,12 @@ void Play::redress() {
         drawn.attackClip = look->library->find(attackSlotFor(look->stance));
         if (drawn.attackClip < 0) drawn.attackClip = look->library->find(38);
     }
+}
+
+void Play::restore(const sim::HeroRecord& saved) {
+    if (!isOpen()) return;
+    realm_.restore(saved);
+    redress();
 }
 
 bool Play::give(const std::string& name, int count) {
@@ -1157,8 +1302,8 @@ bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, fl
 
 int32_t Play::shownHealth(uint32_t id) const {
     const sim::Body* body = realm_.find(id);
-    if (!body || !body->alive()) return 0;
-    return std::min(body->maxHealth, body->health + showing_.owed(id));
+    if (!body || !shownAlive(id)) return 0;
+    return std::min(body->maxHealth, std::max(0, body->health) + showing_.owed(id));
 }
 
 void Play::dropsOnScreen(const float* viewProj, int width, int height,
@@ -1167,6 +1312,9 @@ void Play::dropsOnScreen(const float* viewProj, int width, int height,
     if (!ground_) return;
     const float metresPerTile = ground_->metresPerTile();
     for (const sim::Lying& one : realm_.lying()) {
+        // Not while it is held behind a falling monster or still tossing and bouncing: the
+        // name goes up once the thing lies still.
+        if (std::find(settled_.begin(), settled_.end(), one.id) == settled_.end()) continue;
         const float x = (float(one.column) + 0.5f) * metresPerTile;
         const float z = -(float(one.row) + 0.5f) * metresPerTile;
         // MU2's LabelLift, thirty units over the thing, and the thing a hand's height up.
