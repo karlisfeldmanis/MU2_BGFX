@@ -33,6 +33,16 @@ constexpr float kAppearSeconds = 1.1f;
 // giant, and the cook already marks it `hold` -- it plays once and holds its last frame, a
 // corpse pose, rather than looping.
 constexpr int kMonsterDieSlot = 6;
+// MONSTER01_SHOCK, played on the Lich's meteor quake and nowhere else (sprint 11 step 5).
+constexpr int kMonsterShockSlot = 5;
+// How far the quake reaches: MU's `Distance <= 200`, a hundred units to the tile.
+constexpr float kShockTiles = 2.0f;
+// There is no kPlayerShockSlot, and that is a decision rather than an omission. MU's quake
+// loop excludes the hero outright, so he never flinches for a meteor. MU *does* flinch him on
+// an ordinary blow -- `SetPlayerShock`, ZzzCharacter.cpp:1392, fed by the damage packets --
+// and this engine does not, for anybody: see game/showing.h, where the same question was
+// answered the same way for the blood. That is the fight's feel and belongs to the sprint
+// that owns it, not to a meteor.
 // PLAYER_DIE1, which the cook also holds (source/players/rig/actions.json, hold_at_end). The
 // hero plays it and lies there until the realm revives him at the gate -- no fade: MU leaves
 // the player's body on the ground for the whole wait.
@@ -284,16 +294,19 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             bones = std::max(bones, look->boneCount());
             ++dressed;
             // The swing, found once. A player's stance decides which of MU's attack clips it
-            // is; a monster has its own two and takes the first it has.
+            // is; a monster has its own two and alternates between them by swordCount.
             if (look->library) {
                 if (body.player) {
                     one.attackClip = look->library->find(attackSlotFor(look->stance));
                     if (one.attackClip < 0) one.attackClip = look->library->find(38);
                     one.deathClip = look->library->find(kPlayerDieSlot);
                 } else {
-                    one.attackClip = look->library->find(3);
-                    if (one.attackClip < 0) one.attackClip = look->library->find(4);
+                    one.attackClip  = look->library->find(3);  // Attack 1
+                    one.attackClip2 = look->library->find(4);  // Attack 2
+                    // A breed with no Attack 1 takes Attack 2 as its only swing.
+                    if (one.attackClip < 0) one.attackClip = one.attackClip2;
                     one.deathClip = look->library->find(kMonsterDieSlot);
+                    one.shockClip = look->library->find(kMonsterShockSlot);
                     // MODEL_BUDGE_DRAGON's own case in the effect switch. Its bone 7 is
                     // Bip01 Head, found by name so the number is not a coincidence kept.
                     if (look->name == kBreathingFigure && look->skeletonMesh) {
@@ -550,8 +563,15 @@ void Play::update(double seconds) {
                     }
                 }
                 if (Drawn* swinger = drawnOf(happening.who)) {
-                    if (swinger->attackClip >= 0 && swinger->figure.body()) {
-                        swinger->figure.play(swinger->attackClip, true);
+                    // MU's SwordCount % 3: one in three is Attack 1, the rest Attack 2.
+                    // A breed with no Attack 2 keeps attackClip2 == -1 and always swings
+                    // Attack 1 -- the counter still counts, harmlessly.
+                    const int swing =
+                        (swinger->attackClip2 >= 0 && swinger->swordCount % 3 != 0)
+                            ? swinger->attackClip2 : swinger->attackClip;
+                    ++swinger->swordCount;
+                    if (swing >= 0 && swinger->figure.body()) {
+                        swinger->figure.play(swing, true);
                         // The clip has to fit between two blows, and MU's own reason is that
                         // the attack speed makes the CLIP run faster -- the swing rate follows
                         // from that, so anything that plays the animation has to apply the same
@@ -594,7 +614,44 @@ void Play::update(double seconds) {
                         cue.damage = happening.a;
                         cue.miss = happening.what == sim::What::Missed;
                         cue.taken = taken;
-                        cue.fuse = swinger->swinging * Showing::kLandingPoint;
+                        // A Lich (attackSkill == 2) throws a meteor: the cue's fuse is
+                        // the FALL, not a key in the clip. The meteor is cast here and
+                        // the blow lands when it hits the ground (see meteor update).
+                        const bool isMeteor = body && !body->player && body->kind >= 0 &&
+                            size_t(body->kind) < tables_.kinds.size() &&
+                            tables_.kinds[size_t(body->kind)].attackSkill == 2;
+                        if (isMeteor && ground_) {
+                            // Cast the meteor at the target's tile.
+                            const sim::Body* target = realm_.find(happening.whom);
+                            if (target) {
+                                const float metresPerTile = ground_->metresPerTile();
+                                const float tx = (target->x + 0.5f) * metresPerTile;
+                                const float tz = -(target->y + 0.5f) * metresPerTile;
+                                meteor_.cast(tx, tz, happening.who);
+                                // Placed where it will LAND rather than unplaced, which is
+                                // MU2's own departure and the reason is the fall: the sound
+                                // leads the strike by a third of a second, and a third of a
+                                // second of warning that comes from nowhere is a third of a
+                                // second the player cannot use. MU plays it at full volume in
+                                // the middle of the head.
+                                if (heard_.meteorite >= 0) emit(heard_.meteorite, tx, tz);
+                                // The tick, because a run is read afterwards and not watched:
+                                // it is what a shot's frame is worked out from under
+                                // `--fixed-dt`, where a tick is three frames at sixty.
+                                core::logf("meteor: tick %lld, %s#%u throws at tile %d,%d",
+                                           (long long)realm_.tick(),
+                                           tables_.kinds[size_t(body->kind)].label.c_str(),
+                                           happening.who, target->column(), target->row());
+                            }
+                            // The fall, not a key in the clip: four metres at twelve and a
+                            // half a second is 0.32 s, the same every throw. The impact
+                            // rushes the cue too (Showing::rush), so the two agree; this is
+                            // what lands the blow when the pool was full and there was no
+                            // meteor to rush it.
+                            cue.fuse = Meteor::fallSeconds();
+                        } else {
+                            cue.fuse = swinger->swinging * Showing::kLandingPoint;
+                        }
                         cue.token = swinger->swingToken;
                         showing_.schedule(cue);
                     }
@@ -644,6 +701,37 @@ void Play::update(double seconds) {
     hammer();
     exhale(float(seconds));
     breath_.update(float(seconds));
+    // The Lich's meteors: advance every live one, collect impacts.
+    meteorImpacts_.clear();
+    meteor_.update(float(seconds), meteorImpacts_);
+    // On each impact: explosion sound, shock clip on everything within 2 tiles.
+    for (const auto& impact : meteorImpacts_) {
+        if (heard_.explosion >= 0) emit(heard_.explosion, impact.x, impact.z);
+        // The blow lands with the fire. The fuse says the same thing and would land it on its
+        // own; this is what keeps the two together when the frame rate is not what the fuse
+        // assumed, and what lands it early when the rock was refused by a full pool.
+        showing_.rush(impact.attacker);
+        // The shock, and three things about it are MU's rather than ours
+        // (ZzzEffect.cpp:7752-7773):
+        //   * the HERO IS EXCLUDED -- `tc != Hero`. Your own character takes the camera's
+        //     jolt and nothing else, and the flinch belongs to everybody around you. The
+        //     first version of this shocked him too, which put the knight into a clip in the
+        //     middle of his own fight for a meteor that did not touch him.
+        //   * the dead are excluded, and so is anything not standing in the world yet.
+        //   * 200 units is two tiles, which here is two metres.
+        // No sound: MU plays none on a shock. A monster's cooked `_shock` event turned out to
+        // be its attack pair under another name, and playing it here would have been a voice
+        // MU has never made.
+        for (auto& one : drawn_) {
+            if (one.id == realm_.hero().id) continue;
+            if (!one.placed || !one.figure.body() || one.shockClip < 0) continue;
+            const sim::Body* body = realm_.find(one.id);
+            if (body == nullptr || !body->alive()) continue;
+            const float dx = one.crown[0] - impact.x;
+            const float dz = one.crown[2] - impact.z;
+            if (dx * dx + dz * dz < kShockTiles * kShockTiles) one.figure.play(one.shockClip, true);
+        }
+    }
 
     // --- sprint 6: the landing cue ------------------------------------------------------
     // On the DRAWING's clock and after the swings have been advanced above, so that a cue
@@ -971,6 +1059,8 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.click = sound_.load("window_click", false);
     heard_.refused = sound_.load("window_refused", false);
     heard_.opened = sound_.load("window_open", false);
+    heard_.meteorite = sound_.load("meteorite", true);
+    heard_.explosion = sound_.load("explosion", true);
     // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
     // pMaleDie.wav. The elf's pFemaleScream2 is the same rule with another file, for when an
     // elf can be played.

@@ -130,6 +130,15 @@ struct Args {
     // The browser's list and its clip line off the screen, for shots of the subject alone.
     bool list = true;
 
+    // The frame rate in the top right, while a world is played. On for a game and off for
+    // every run whose picture or whose number is being read: a studio sheet must not carry a
+    // counter baked into the plate, and a measured run must not pay for a draw the budget
+    // knows nothing about. So --still, --budget and --stats turn it off by themselves, and
+    // --fps or --no-fps on the command line beats all three -- the same shape as --still and
+    // --spin, where the script sets a default and the person running it takes it back.
+    bool fps = true;
+    bool fpsAsked = false;  // --fps or --no-fps was named, so the run's own kind does not decide
+
     // The transparent pass's probe: N effect sprites in front of the camera, so that a pass
     // which has no account yet can be priced against the same scene with it empty.
     //

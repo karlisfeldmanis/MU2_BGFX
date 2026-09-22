@@ -447,6 +447,12 @@ void Figures::readWardrobe() {
     for (const auto& [name, entry] : manifest["meshes"].members) {
         wardrobePaths_[name] = entry["mesh"].string;
     }
+    // What each arm is, for one the figures never cooked: a shield out of the bag is still a
+    // shield. The figures' own row wins where both have one.
+    for (const core::Json& entry : manifest["arms"].items) {
+        items_.emplace(entry["name"].string,
+                       ItemRow{entry["kind"].stringOr(""), entry["stance"].stringOr("")});
+    }
     for (const core::Json& set : manifest["sets"].items) {
         const bool keeps = set["keeps_head"].boolOr(false);
         for (const core::Json& part : set["parts"].items) {
@@ -523,12 +529,14 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
         const bool right = hand == 0;
         const std::string& wanted = right ? weapon : shield;
         if (wanted.empty()) continue;
-        const content::Mesh* found = mesh(wanted);
+        // Out of the wardrobe when the figures never cooked it, as the armour is: the bag
+        // holds every arm, the figures only the handful a placement or a rack stands.
+        const content::Mesh* found = wearable(wanted);
         if (!found) {
             // Said rather than shrugged off: a starter weapon nobody cooked is a character who
             // silently punches, and the reason is in the cook and not in the game.
             core::logError("%s has no cooked mesh, so %s holds nothing in that hand "
-                           "(tools/cook.py --only figures)", wanted.c_str(), name.c_str());
+                           "(tools/cook.py --only wardrobe)", wanted.c_str(), name.c_str());
             continue;
         }
         HeldItem item;

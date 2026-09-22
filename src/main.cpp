@@ -25,6 +25,7 @@
 #include "game/world.h"
 #include "gfx/lighting.h"
 #include "gfx/overlay.h"
+#include "gfx/readout.h"
 #include "game/desk.h"
 #include "game/litter.h"
 #include "game/save.h"
@@ -366,6 +367,8 @@ int main(int argc, char** argv) {
                 if (world.played().showing().isOpen()) {
                     world.played().breath().open(MU2_ASSET_DIR, textures,
                                                  world.played().showing().table(), &world.ground());
+                    world.played().meteor().open(MU2_ASSET_DIR, textures,
+                                                world.played().showing().table(), &world.ground());
                 }
                 world.played().openSound(MU2_ASSET_DIR, args.mute);
                 // Not fatal either: a game with no HUD is still a game.
@@ -615,6 +618,8 @@ int main(int argc, char** argv) {
     // The viewer's list, and in play the tile over the character's head. Built only where
     // one of those is drawn: an overlay nobody draws still costs a program and a texture.
     gfx::Overlay overlay;
+    // And the frame rate in its top right corner, through the same overlay. See gfx/readout.h.
+    gfx::Readout readout;
 
     game::ModelBench bench;
     if (args.distance > 0.0f) bench.setDistance(args.distance);
@@ -985,7 +990,41 @@ int main(int argc, char** argv) {
         }
 
         if (inWorld) {
-            const gfx::Camera& eye = world.camera();
+            gfx::Camera eye = world.camera();
+            // The Lich's EarthQuake, and it is a TILT and not a slide: MU adds it to
+            // `m_State.Angle[0]` (DefaultCamera.cpp:700), which is the camera's pitch in
+            // degrees, and decays it by 0.2 a frame (MainScene.cpp:199). Carried here as what
+            // it is -- a rotation of the eye about what it is looking at, which is the same
+            // orbit MU's camera has. Slid instead, as this was first written, the shake was
+            // the quarter of a MU unit it says it is: four millimetres, on a camera six
+            // metres out, which is nothing at all.
+            {
+                const float pitch = world.played().meteor().quakeDegrees();
+                if (pitch != 0.0f) {
+                    float ahead[3], right[3], up[3];
+                    for (int a = 0; a < 3; ++a) ahead[a] = eye.position[a] - eye.target[a];
+                    // The axis to tilt about: across the view, level with the ground.
+                    right[0] = -ahead[2];
+                    right[1] = 0.0f;
+                    right[2] = ahead[0];
+                    const float length =
+                        std::sqrt(right[0] * right[0] + right[2] * right[2]);
+                    if (length > 1e-6f) {
+                        for (int a = 0; a < 3; ++a) right[a] /= length;
+                        const float radians = pitch * 3.14159265f / 180.0f;
+                        const float c = std::cos(radians), s = std::sin(radians);
+                        // Rodrigues about `right`, which is a unit vector in the XZ plane.
+                        const float dot = ahead[0] * right[0] + ahead[2] * right[2];
+                        up[0] = right[1] * ahead[2] - right[2] * ahead[1];
+                        up[1] = right[2] * ahead[0] - right[0] * ahead[2];
+                        up[2] = right[0] * ahead[1] - right[1] * ahead[0];
+                        for (int a = 0; a < 3; ++a) {
+                            eye.position[a] = eye.target[a] + ahead[a] * c + up[a] * s +
+                                              right[a] * dot * (1.0f - c);
+                        }
+                    }
+                }
+            }
             // The pointer and what it is over, before the sim is stepped: a click is taken at
             // the start of the next tick and walked on that same tick (Realm::accept).
             if (world.played().isOpen()) {
@@ -1198,6 +1237,7 @@ int main(int argc, char** argv) {
                 world.played().gatherMarker(renderer.effects());
                 world.played().gatherAura(renderer.effects(), eye.position);
                 world.played().breath().gather(renderer.effects());
+                world.played().gatherMeteor(renderer.effects());
                 // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
                 // laid down where they land.
                 if (!itemModels.tables()) {
@@ -1283,6 +1323,7 @@ int main(int argc, char** argv) {
                     overlay.submit(gfx::ViewHud);
                 }
             }
+            if (args.fps) readout.draw(overlay, window.width(), window.height());
             if (entrance && curtain.ready()) {
                 if (frame >= 2) entranceSeconds += float(deltaSeconds);
                 const float t = std::min(1.0f, entranceSeconds / 0.1f);

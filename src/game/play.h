@@ -20,6 +20,7 @@
 #include "content/tables.h"
 #include "game/aura.h"
 #include "game/breath.h"
+#include "game/meteor.h"
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/marker.h"
@@ -170,6 +171,9 @@ public:
     Sound& sound() { return sound_; }
     // What a Budge Dragon gives off, opened by the caller for the same reason as the showing.
     Breath& breath() { return breath_; }
+    // The Lich's meteorite: opened by the caller for the same reason as breath.
+    Meteor& meteor() { return meteor_; }
+    void gatherMeteor(gfx::Effects& effects) const { meteor_.gather(effects); }
     // Opens the sound and loads what this realm can say: the level-up, and every breed's
     // attack, death and wandering cries, found once per body as its clips are. Opened by the
     // caller after the showing, whose table the events are read from. Not fatal.
@@ -217,12 +221,22 @@ private:
         float crown[3] = {0.0f, 0.0f, 0.0f};
         bool placed = false;
         bool visible = false;
-        int attackClip = -1;     // this body's swing, found once at open
+        int attackClip = -1;     // Attack 1, this body's first swing, found once at open
+        int attackClip2 = -1;    // Attack 2, the second swing; -1 for breeds that have none
         int deathClip = -1;      // MONSTER01_DIE, found once at open the same way
+        // MU's SwordCount, incremented on each swing. `swordCount % 3 == 0` plays Attack 1,
+        // the rest Attack 2 — ZzzCharacter.cpp:1269-1276. The drawing's own counter, not the
+        // sim's: it draws from no seeded state.
+        uint32_t swordCount = 0;
         // A monster's own sound events, as Sound handles, found once at openSound: its breed's
         // `_attack`, `_die` and `_move` by MU2's naming (the label lowered, no spaces). -1 for
         // the character and for a breed with nothing cooked, which is silence.
         int cryAttack = -1, cryDie = -1, cryMove = -1;
+        // MONSTER01_SHOCK (slot 5), played on the meteor's quake only, and SILENTLY: MU has
+        // no shock sound at all -- a model's `Sounds[]` are idle/move, the attack pair and
+        // the death, and the cooked `_shock` event for a breed is its attack pair under a
+        // second name. -1 for breeds that lack the clip.
+        int shockClip = -1;
         // A Budge Dragon: its head bone, which the fire comes out of, and what of a reference
         // frame's spark and a fourth of one's puff is owed. See Play::exhale.
         bool breathes = false;
@@ -288,8 +302,11 @@ private:
     Aura aura_;
     Sound sound_;
     Breath breath_;
+    Meteor meteor_;
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
+    // The Lich's meteors: impacts this frame, and the shock that follows each one.
+    std::vector<Meteor::Impact> meteorImpacts_;
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
     // sim's seeded stream.
     uint32_t wanderDice_ = 0x6d2b79f5u;
@@ -305,6 +322,7 @@ private:
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
         int drink = -1, apple = -1;                     // a potion going down
         int click = -1, refused = -1, opened = -1;      // the windows
+        int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;

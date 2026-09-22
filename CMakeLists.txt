@@ -97,6 +97,7 @@ add_executable(mu2
   src/gfx/effects.cpp
   src/gfx/face.cpp
   src/gfx/overlay.cpp
+  src/gfx/readout.cpp
   src/gfx/interface.cpp
   src/gfx/stage_pass.cpp
   src/game/bench.cpp
@@ -114,6 +115,7 @@ add_executable(mu2
   src/game/marker.cpp
   src/game/aura.cpp
   src/game/breath.cpp
+  src/game/meteor.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp
   src/game/panel.cpp

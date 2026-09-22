@@ -59,6 +59,9 @@ void printUsage() {
         "  --studio                  the browser in the real world, beside one of its bonfires\n"
         "  --turns N                 with --studio and --shot E: N angles a time of day\n"
         "  --no-list                 the browser's list off the screen, for clean shots\n"
+        "  --no-fps                  no frame rate in the corner (already off with --still, "
+        "--budget or --stats)\n"
+        "  --fps                     the frame rate anyway, in a run that would have it off\n"
         "  --category WORD           world|monsters|people|armour|weapons|parts\n"
         "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
@@ -289,6 +292,12 @@ Args parseArgs(int argc, char** argv) {
             a.studio = true;
         } else if (!std::strcmp(s, "--no-list")) {
             a.list = false;
+        } else if (!std::strcmp(s, "--fps")) {
+            a.fps = true;
+            a.fpsAsked = true;
+        } else if (!std::strcmp(s, "--no-fps")) {
+            a.fps = false;
+            a.fpsAsked = true;
         } else if (!std::strcmp(s, "--turns")) {
             if (const char* v = next(s)) a.turns = std::atoi(v);
         } else if (!std::strcmp(s, "--effects")) {
@@ -398,6 +407,11 @@ Args parseArgs(int argc, char** argv) {
             a.valid = false;
         }
     }
+    // Decided after the whole line is read, so the order of the switches does not matter:
+    // `--still --fps` and `--fps --still` both draw it. A run that holds the camera, enforces
+    // the budget or writes a csv is a run somebody is reading a picture or a number off, and
+    // the counter would land in the one and be unaccounted for in the other.
+    if (!a.fpsAsked && (a.still || a.budget || !a.statsPath.empty())) a.fps = false;
     if (a.width <= 0 || a.height <= 0) {
         logError("a backbuffer of %dx%d is not a backbuffer", a.width, a.height);
         a.valid = false;
