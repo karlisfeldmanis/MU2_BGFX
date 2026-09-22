@@ -2477,6 +2477,14 @@ def main() -> None:
                     "level_requirement": int(teaches.get("level_requirement", 0)),
                     "energy_requirement": int(teaches.get("energy_requirement", 0)),
                 }
+                # And its name, and one line of what it does in play. Both are for the
+                # tooltip: a scroll whose row says only "number 8" can be priced and dropped
+                # but not read, and "Scroll of Twister" in the name line is not an answer to
+                # what a Twister does. Written in the asset beside the numbers it belongs to.
+                if teaches.get("name"):
+                    entry["skill"]["name"] = str(teaches["name"])
+                if teaches.get("tells"):
+                    entry["skill"]["tells"] = str(teaches["tells"])
 
             # Whether this is one of the pieces that gets out of the way when the player is
             # under it. The client keeps a list of types per world rather than a flag per

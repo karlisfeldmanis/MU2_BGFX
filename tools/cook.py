@@ -1627,8 +1627,17 @@ def cook_tables(world, out_dir):
             flags |= kItemShield
         if one.get("kind") == "weapon":
             flags |= kItemWeapon
+        # What a scroll or an orb teaches, which rides with the row it belongs to: the skill's
+        # number, what it asks of energy and level, its name, and a line of what it does. Empty
+        # on everything else. See pipeline/index.py, "What a scroll teaches".
+        teaches = one.get("skill") or {}
         items.append(write_string(one["name"]) + write_string(one.get("label", one["name"])) +
                      write_string(one.get("glb", "")) +
+                     write_string(str(teaches.get("name") or "")) +
+                     write_string(str(teaches.get("tells") or "")) +
+                     struct.pack("<3i", int(teaches.get("number") or 0),
+                                 int(teaches.get("level_requirement") or 0),
+                                 int(teaches.get("energy_requirement") or 0)) +
                      struct.pack("<21i", int(stats["group"]), int(stats["number"]),
                                  int(stats.get("drop_level") or 0),
                                  int(stats.get("width") or 1), int(stats.get("height") or 1),
@@ -1649,7 +1658,7 @@ def cook_tables(world, out_dir):
             for (npc, name, figure, x, y, look) in FOLK_VERSION075.get(number, [])]
 
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 6, SIM_HZ, len(kinds), len(spawns), len(arms),
+    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 7, SIM_HZ, len(kinds), len(spawns), len(arms),
                        len(actions), len(items), len(folk), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))

@@ -1,5 +1,6 @@
 #include "game/ui/describe.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <string>
 
@@ -44,6 +45,8 @@ std::string kindOf(const content::ItemRow& row) {
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
     if (row.shield()) return "Shield";
     if (row.jewel()) return "Jewel";
+    if (row.group == 15) return "Scroll";
+    if (row.group == 12) return "Orb";
     switch (row.group) {
         case sim::kGroupHelms: return "Helm";
         case sim::kGroupArmours: return "Armour";
@@ -159,6 +162,27 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
 
+    // ---- what it teaches ----------------------------------------------------------------------
+    // A scroll or an orb is read once and gone, and what it leaves behind is a skill. MU says
+    // none of this -- its scroll tooltip is the name, the requirements and the class, and the
+    // player is expected to know what a Twister does -- so the name of the skill and a line of
+    // what it does are ours, carried in the asset beside the numbers. See content/tables.h.
+    if (row.teaches > 0) {
+        Section teaches;
+        teaches.kicker = "Teaches";
+        teaches.mark = tip::Mark::Star;
+        if (!row.teachesName.empty()) {
+            teaches.rows.push_back(stat("Skill", row.teachesName, Tone::Blue));
+        }
+        if (!row.teachesTells.empty()) {
+            Row line;
+            line.free = row.teachesTells;
+            line.freeTone = Tone::White;
+            teaches.rows.push_back(line);
+        }
+        if (!teaches.rows.empty()) sheet.sections.push_back(teaches);
+    }
+
     // ---- what it carries --------------------------------------------------------------------
     // The options section. The only one of MU's options these rows can carry today is the
     // skill flag, and the fight has no skills to fire; every other option (luck, the additional
@@ -191,6 +215,15 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     require("Agility", asked.agility, owed.agility);
     require("Vitality", asked.vitality, owed.vitality);
     require("Energy", asked.energy, owed.energy);
+    // A scroll's energy is asked by the SKILL, not by the row, and it is not scaled the way a
+    // worn thing's requirement is: ItemExtensions.GetRequirement hands back the minimum
+    // unchanged for anything without a slot.
+    if (row.teaches > 0 && row.teachesEnergy > 0) {
+        require("Energy", row.teachesEnergy, std::max(0, row.teachesEnergy - who.points.energy));
+    }
+    if (row.teaches > 0 && row.teachesLevel > 0) {
+        require("Level", row.teachesLevel, std::max(0, row.teachesLevel - who.level));
+    }
     // One chip per class allowed, and none when they all are: mu.db's order, the wizard, the
     // elf, the knight. A class you are not is red, which is MU's dark-red band made smaller.
     if (named > 0 && named < 3) {

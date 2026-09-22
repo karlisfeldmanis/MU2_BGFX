@@ -108,6 +108,12 @@ struct ItemRow {
     int32_t flags = 0;
     int32_t maximumDropLevel = 0;
     int32_t skill = 0;
+    // What it TEACHES, for a scroll or an orb: the skill's number, what it asks, its name and
+    // one line of what it does. Nought and empty on everything else. A weapon's `skill` above
+    // is a different thing -- a skill it grants while it is held.
+    int32_t teaches = 0;
+    int32_t teachesLevel = 0, teachesEnergy = 0;
+    std::string teachesName, teachesTells;
 
     bool dropsFromMonsters() const { return (flags & 1) != 0; }
     bool jewel() const { return (flags & 2) != 0; }

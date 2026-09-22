@@ -14,9 +14,10 @@ namespace {
 constexpr uint32_t kSimHz = 20;
 
 // Version 2 added the arms, version 3 the attack actions a swing rate is made of, and version
-// 4 the items and version 5 the townsfolk (sprint 7); version 6 gave an item its defence rate. There is no version 1 anywhere but in a stale build directory, and
+// 4 the items and version 5 the townsfolk (sprint 7); version 6 gave an item its defence rate,
+// and version 7 what a scroll or an orb teaches. There is no version 1 anywhere but in a stale build directory, and
 // the reader says so rather than reading a file whose fields have moved under it.
-constexpr uint32_t kVersion = 6;
+constexpr uint32_t kVersion = 7;
 
 }  // namespace
 
@@ -165,6 +166,13 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
         reader.readString(row.name);
         reader.readString(row.label);
         reader.readString(row.glb);
+        reader.readString(row.teachesName);
+        reader.readString(row.teachesTells);
+        int32_t teaches[3] = {};
+        reader.take(teaches, sizeof(teaches));
+        row.teaches = teaches[0];
+        row.teachesLevel = teaches[1];
+        row.teachesEnergy = teaches[2];
         int32_t f[21] = {};
         reader.take(f, sizeof(f));
         row.group = f[0];
