@@ -312,6 +312,9 @@ void Play::update(double seconds) {
     steps();
     hammer();
     exhale(float(seconds));
+    // Before the puffs are aged, so a Giant's sand is thrown on the same frame its clip reached
+    // the key that throws it, exactly as the dragon's dust is.
+    sandOnDeath();
     breath_.update(float(seconds));
     // The bones a skeleton left, on the drawing's clock like everything else here.
     bones_.update(float(seconds));

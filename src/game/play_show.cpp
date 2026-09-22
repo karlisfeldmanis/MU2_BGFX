@@ -21,6 +21,66 @@
 
 namespace mu::game {
 
+void Play::sandOnDeath() {
+    if (ground_ == nullptr) return;
+    for (Drawn& one : drawn_) {
+        if (!one.sands) continue;
+        const sim::Body* body = realm_.find(one.id);
+        // Up again: a respawned Giant may throw sand the next time it goes down.
+        if (body && body->alive()) {
+            one.sanded = false;
+            continue;
+        }
+        if (one.sanded || !one.placed || !one.visible) continue;
+        // MU reads the OBJECT's own action and clock and nothing else -- not `c->Dead`, not the
+        // corpse's age -- so this begins a third of the way into the fall and not when the body
+        // died. A body that never reaches key 8 simply never throws any, which is what MU does.
+        const float key = keyOf(one.figure);
+        if (slotOf(one.figure) != kMonsterDieSlot || key < kSandFrom || key >= kSandTo) continue;
+
+        // **Twenty puffs, ONCE, and not twenty a reference frame.** This is the one place MU's
+        // `rand_fps_check` does not convert the way the dragon's dust does, and reading it as if
+        // it did made the death a sandstorm.
+        //
+        // `rand_fps_check(n)` compensates for the RENDER rate: it passes with probability
+        // REFERENCE_FPS/FPS, so a loop of twenty attempts yields twenty per reference frame
+        // however fast the machine draws. The dragon's dust is thrown for as long as it lives,
+        // so twenty-per-reference-frame is its rate and the conversion is the whole answer.
+        // This is not a rate. MU's window is one key of the death clip wide, and MU advances
+        // `AnimationFrame` by about one key per reference frame, so the window IS one reference
+        // frame and the total is twenty.
+        //
+        // A cooked clip here runs at its own authored duration instead, and Giant01's death is
+        // slower than MU's reference: measured, it reaches key 8 nine tenths of a second after
+        // the body falls, so one key spans about 2.8 reference frames and the integrated form
+        // threw about 56 puffs where MU throws 20. Nearly three times, which is what "very
+        // aggressive" looked like. Latching on the crossing gives MU's number at any clip rate
+        // and any frame rate, which is what the case actually asks for.
+        one.sanded = true;
+        const FigureBody* look = one.figure.body();
+        const float scale = look ? look->scale : 1.0f;
+        // Round the feet and NOT the crown: MU throws from `o->Position`, which is where the
+        // body stands, and Breath::sand pins the height to the land from there.
+        const float feet[3] = {one.crown[0], ground_->heightAt(one.crown[0], one.crown[2]),
+                               one.crown[2]};
+        // Laid evenly round a ring rather than scattered, and the ring turned by the body's own
+        // id so two Giants falling together do not throw the identical figure. No dice: this is
+        // the only effect in the game whose layout is decided rather than rolled, because a
+        // rolled ring of ten clumps as often as it spreads and the whole point of the shape is
+        // that it opens. Invention, with the rest of the dressing -- see Breath::sand.
+        const float phase = float(one.id % 360u) * 3.14159265f / 180.0f;
+        for (int i = 0; i < kSandPuffs; ++i) {
+            const float angle = phase + (float(i) + 0.5f) / float(kSandPuffs) * 6.2831853f;
+            const float out[2] = {std::cos(angle), std::sin(angle)};
+            breath_.sand(feet, out, kSandReach, scale);
+        }
+        // As the bones' burst and the meteor's throw do, and for the same reason: a run is read
+        // afterwards rather than watched, and this is what a shot's frame is worked out from.
+        core::logf("sand: tick %lld, #%u throws up %d puffs as it falls", (long long)realm_.tick(),
+                   one.id, int(kSandPuffs));
+    }
+}
+
 void Play::exhale(float seconds) {
     if (ground_ == nullptr) return;
     const float frames = seconds * 25.0f;

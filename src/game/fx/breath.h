@@ -11,7 +11,18 @@
 //           ... CreateParticle(BITMAP_SMOKE + 1, <within 32 units of it>, o->Angle, Light);
 //
 // So the dust is the Dark Knight's, reached by a missing break; it is what the client does and
-// so what a player saw. Each particle below is ZzzEffectParticle.cpp's own motion for its type,
+// so what a player saw.
+//
+// **`puff` has a second caller and the name of this file no longer covers it.** MODEL_GIANT's
+// own case is `MonsterDieSandSmoke(o)` (ZzzCharacter.cpp:5552, :6178), which throws twenty of
+// the identical `BITMAP_SMOKE + 1` round the body between keys 8 and 9 of its death clip. It is
+// the same particle with the same scatter and the same drift, so it is the same pool: a second
+// one would be a second sheet load and a second reserve for a thing that is not a second thing.
+// Play::sandOnDeath is where its own timing lives. If a third caller arrives, this stops being
+// "what a Budge Dragon gives off" and becomes what it already is -- MU's monster particles --
+// and gets the rename then rather than now.
+//
+// Each particle below is ZzzEffectParticle.cpp's own motion for its type,
 // kept in MU's units per 25 Hz reference frame and converted at the edge, so the numbers read
 // against the source without arithmetic.
 //
@@ -50,6 +61,18 @@ public:
     // One BITMAP_SMOKE + 1 round a body standing at `feet`, drifting along `along`.
     void puff(const float feet[3], const float along[2], float scale);
 
+    // One puff of a Giant's death sand: the same particle and the same sheet, thrown OUTWARD
+    // from the body on `out` rather than drifted along its facing, and dressed for a low cloud
+    // that opens and settles rather than a dust trail that follows something.
+    //
+    // Everything about its dressing is **invention** and none of it is MU's -- the user asked
+    // for the ground smoke to be elegant and not too much (2026-09-22), and MU's own numbers
+    // read as a solid tan blob shoved to one side: twenty puffs born at half a metre across,
+    // all given the same velocity along the body's facing, so they travel as one clump instead
+    // of opening. What is kept of MU is the particle, the sheet, the ground pin, the fade and
+    // the moment it is thrown. What is changed is how many, how big, how bright and which way.
+    void sand(const float feet[3], const float out[2], float reach, float scale);
+
     // Ages everything by the frame's own seconds.
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
@@ -72,6 +95,12 @@ private:
         float scale = 0.5f;
         float life = 32.0f;
         float size = 1.0f;
+        // Over MU's own fade, and 1 for everything MU throws. The Giant's sand is the only
+        // thing that asks for less; see sand().
+        float alpha = 1.0f;
+        // How fast it opens. MU grows every puff by 0.08 of its scale a reference frame; the
+        // sand grows slower so a low cloud spreads outward instead of swelling upward.
+        float growth = 0.08f;
     };
 
     const content::Ground* ground_ = nullptr;

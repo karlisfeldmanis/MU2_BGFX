@@ -115,6 +115,45 @@ void Breath::puff(const float feet[3], const float along[2], float scale) {
     puffs_.push_back(one);
 }
 
+// The Giant's death sand. Every number here is INVENTION and the header says why.
+//
+// Read against MU's puff above, which it deliberately is not:
+//   * thrown OUTWARD on `out` at a third of MU's speed, so ten of them open into a low ring
+//     instead of travelling together as one clump along the body's facing;
+//   * born at a third of MU's size and grown at a third of MU's rate, so it spreads across the
+//     ground rather than swelling into a ball at body height;
+//   * at a bit over a third of MU's alpha, because ten soft clouds overlapping at full read as
+//     one solid tan mass -- which is exactly what "very aggressive" looked like.
+constexpr float kSandSpeed = 1.0f;          // MU's puff: 3
+constexpr float kSandScaleLeast = 0.18f;    // MU's puff: 0.32
+constexpr float kSandScaleMost = 0.32f;     // MU's puff: 0.64
+constexpr float kSandGrowth = 0.028f;       // MU's puff: 0.08
+constexpr float kSandAlpha = 0.50f;         // MU's puff: 1
+
+void Breath::sand(const float feet[3], const float out[2], float reach, float scale) {
+    if (!open_ || !bgfx::isValid(smoke_)) return;
+    if (puffs_.size() >= kPuffs) {
+        ++refused_;
+        return;
+    }
+    Puff one;
+    // Out on the ring the caller chose, and a little further for some than others so the rim
+    // is ragged rather than a drawn circle.
+    const float out_ = reach * (0.72f + 0.28f * float(roll() % 1000) / 1000.0f);
+    one.position[0] = feet[0] + out[0] * out_ * scale;
+    one.position[1] = feet[1];
+    one.position[2] = feet[2] + out[1] * out_ * scale;
+    const float speed = kSandSpeed * kUnit * scale;
+    one.velocity[0] = out[0] * speed;
+    one.velocity[1] = out[1] * speed;
+    one.scale = kSandScaleLeast +
+                (kSandScaleMost - kSandScaleLeast) * float(roll() % 1000) / 1000.0f;
+    one.size = scale;
+    one.alpha = kSandAlpha;
+    one.growth = kSandGrowth;
+    puffs_.push_back(one);
+}
+
 void Breath::update(float seconds) {
     // MU's motion is stated per reference frame; a drawn frame is this many of them.
     const float frames = seconds * kReferenceFps;
@@ -141,7 +180,7 @@ void Breath::update(float seconds) {
         const float drag = std::pow(0.9f, frames);
         one.velocity[0] *= drag;
         one.velocity[1] *= drag;
-        one.scale += 0.08f * frames;
+        one.scale += one.growth * frames;
     }
     puffs_.erase(std::remove_if(puffs_.begin(), puffs_.end(),
                                 [](const Puff& one) { return one.life <= 0.0f; }),
@@ -190,7 +229,7 @@ void Breath::gather(gfx::Effects& effects) const {
         const float light = std::max(0.0f, one.life / kPuffLife);
         const float risen = std::min(1.0f, t / 0.2f);
         sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = light;
-        sprite.colour[3] = light * risen * kPuffAlpha;
+        sprite.colour[3] = light * risen * kPuffAlpha * one.alpha;
         sprite.sheet = smoke_;
         sprite.blend = gfx::Blend::Dust;
         effects.add(sprite);

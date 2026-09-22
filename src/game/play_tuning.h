@@ -188,6 +188,42 @@ inline constexpr const char* kBreathingFigure = "BudgeDragon01";
 // need its own row here. Neither stands in Lorencia, and the day one does this becomes a
 // field in the cook rather than a name in a list.
 inline constexpr const char* kBurstingFigure = "SkeletonWarrior";
+// MODEL_GIANT's own case in the same effect switch, and the whole of it is one call:
+//
+//     case MODEL_GIANT:
+//         MonsterDieSandSmoke(o);
+//         break;                                    -- ZzzCharacter.cpp:6178
+//
+//     void MonsterDieSandSmoke(OBJECT* o) {
+//         if (o->CurrentAction == MONSTER01_DIE &&
+//             o->AnimationFrame >= 8.f && o->AnimationFrame < 9.f)
+//             for (int i = 0; i < 20; i++)
+//                 if (rand_fps_check(1))
+//                     CreateParticle(BITMAP_SMOKE + 1, <within 32 units>, o->Angle, white, 1);
+//     }                                             -- ZzzCharacter.cpp:5552
+//
+// It is a different SHAPE from the skeleton's burst above, and that is the thing to hold on to:
+// the burst happens on the instruction that kills the body, and the sand happens on the death
+// clip's own clock, a third of the way into it. So this is read per frame off `keyOf`, like the
+// dragon's fire and the smith's hammer, and not from `fall`.
+//
+// MU's other three callers -- Bloody Wolf, Tantallos, Golden Wheel -- stand nowhere near
+// Lorencia, so the Giant is the only one of them this tree can draw. Same reasoning as the
+// bursting figure above, and the same answer if that ever stops being true: a field in the cook.
+inline constexpr const char* kSandingFigure = "Giant01";
+constexpr float kSandFrom = 8.0f, kSandTo = 9.0f;
+// ONCE, on the frame the death clip crosses key 8, and not a rate. MU's window is one key wide
+// and MU advances a key a reference frame, so its twenty attempts at `rand_fps_check(1)` come
+// to twenty in total; reading it as the dragon's dust is read -- a rate of twenty a reference
+// frame -- turned the death into a sandstorm. Play::sandOnDeath.
+//
+// TEN rather than MU's twenty, and thrown round a ring of this radius in tiles at the animal's
+// own size. Invention, the user's call (2026-09-22): "elegant and nice", "nothing too much".
+// Twenty at MU's own size and alpha is a solid tan blob; the count, the ring and the dressing
+// in Breath::sand are all part of one answer and are tuned together.
+constexpr int kSandPuffs = 10;
+constexpr float kSandReach = 0.62f;
+
 // MONSTER01_ATTACK1, and the key its fire stops on: `AnimationFrame <= 4.f`.
 constexpr int kBreathSlot = 3;
 constexpr float kBreathThrough = 4.0f;

@@ -239,6 +239,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                     one.shockClip = look->library->find(kMonsterShockSlot);
                     // MODEL_BUDGE_DRAGON's own case in the effect switch. Its bone 7 is
                     // Bip01 Head, found by name so the number is not a coincidence kept.
+                    // MODEL_GIANT's case, which is one call to MonsterDieSandSmoke. No bone and
+                    // no clip to find: the sand comes off the body's own position and the death
+                    // clip it already has.
+                    if (look->name == kSandingFigure) one.sands = true;
                     if (look->name == kBreathingFigure && look->skeletonMesh) {
                         one.breathes = true;
                         const std::vector<content::Bone>& bones = look->skeletonMesh->bones();

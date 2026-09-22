@@ -289,6 +289,14 @@ private:
         // breed, and two of its monsters share this body.
         bool bursts = false;
         bool breathes = false;
+        // A Giant, whose death throws up sand: MU's MonsterDieSandSmoke, keyed on the MODEL as
+        // the two above are. `sandOwed` is what of a reference frame's twenty puffs is left to
+        // throw, and it is reset the moment the death clip leaves the window rather than
+        // carried -- see Play::sandOnDeath.
+        bool sands = false;
+        // Latched the frame its death clip crosses key 8, and cleared if it ever stands again.
+        // MU throws twenty puffs once, not twenty a frame -- see Play::sandOnDeath.
+        bool sanded = false;
         int headBone = -1;
         float fireOwed = 0.0f, dustOwed = 0.0f;
         // Negative while alive. Set to 0 the tick `Died` happens and counted up from there, so
@@ -364,6 +372,9 @@ private:
     Meteor meteor_;
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
+    // The Giant's death sand, thrown between keys 8 and 9 of its death clip. Read per frame off
+    // the clip's own clock, so it starts a third of the way down the fall and stops itself.
+    void sandOnDeath();
     // The Lich's meteors: impacts this frame, and the shock that follows each one.
     std::vector<Meteor::Impact> meteorImpacts_;
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
