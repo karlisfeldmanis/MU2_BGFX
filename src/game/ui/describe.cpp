@@ -6,6 +6,12 @@
 namespace mu::game {
 namespace {
 
+using tip::Row;
+using tip::Section;
+using tip::Sheet;
+using tip::Tone;
+using tip::Value;
+
 // Refined to +7 or beyond turns a name yellow: MU's only rung these rows can reach.
 constexpr int kRefinedFrom = 7;
 
@@ -30,6 +36,33 @@ std::string decimal(float v) {
     return s;
 }
 
+// The line under the name: what the thing is, and whom it is for. MU has no such line -- it
+// says the same in its "Can be equipped by" list and in the damage line's own wording -- and
+// it is here because the head of a card wants a second, quieter line.
+std::string kindOf(const content::ItemRow& row) {
+    if (sim::ammunition(row)) return "Ammunition";
+    if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
+    if (row.shield()) return "Shield";
+    if (row.jewel()) return "Jewel";
+    switch (row.group) {
+        case sim::kGroupHelms: return "Helm";
+        case sim::kGroupArmours: return "Armour";
+        case sim::kGroupPants: return "Pants";
+        case sim::kGroupGloves: return "Gloves";
+        case sim::kGroupBoots: return "Boots";
+        case sim::kGroupPotions: return "Consumable";
+        default: break;
+    }
+    return "Item";
+}
+
+Row stat(const char* name, const std::string& text, Tone tone) {
+    Row row;
+    row.label = name;
+    row.values.push_back({text, tone, false, "", 0});
+    return row;
+}
+
 }  // namespace
 
 uint32_t moneyColour(long long zen) {
@@ -39,114 +72,166 @@ uint32_t moneyColour(long long zen) {
     return gfx::rgba(150.0f / 255.0f, 220.0f / 255.0f, 1.0f);
 }
 
-std::vector<panel::Line> describe(const content::Tables& tables, const sim::Held& what,
-                                  const sim::Wearer& who, const sim::Satchel& bag) {
-    std::vector<panel::Line> lines;
-    if (what.empty() || size_t(what.item) >= tables.items.size()) return lines;
+Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::Wearer& who,
+               const sim::Satchel& bag) {
+    Sheet sheet;
+    if (what.empty() || size_t(what.item) >= tables.items.size()) return sheet;
     const content::ItemRow& row = tables.items[size_t(what.item)];
     const int plus = what.refinement;
-    lines.push_back({label(row, plus), plus >= kRefinedFrom ? panel::kRefined : panel::kOrdinary,
-                     true});
+    sheet.name = label(row, plus);
+    // MU's name ladder, as far as these rows reach it: a jewel is yellow, +7 and above is
+    // yellow, anything carrying an option is blue, everything else white. Excellent, ancient
+    // and socket colours wait for the items that have them.
+    sheet.nameTone = row.jewel() ? Tone::Yellow
+                     : plus >= kRefinedFrom ? Tone::Yellow
+                     : what.skill ? Tone::Blue
+                                  : Tone::White;
 
-    // The damage at its plus, which is how MU quotes it -- `Lookup(40 + TwoHand)`, so the label
-    // says which and there is no separate two-handed line. Yellow where the plus adds to it.
+    static const char* const kNames[3] = {"Dark Wizard", "Fairy Elf", "Dark Knight"};
+    int named = 0;
+    for (int i = 0; i < 3; ++i) named += (row.classes >> i) & 1;
+    std::string base = kindOf(row);
+    if (named == 1) {
+        for (int i = 0; i < 3; ++i) {
+            if ((row.classes >> i) & 1) base += std::string(" \xB7 ") + kNames[i];
+        }
+    }
+    sheet.base = base;
+
+    // ---- what it does ---------------------------------------------------------------------
+    Section does;
+    does.kicker = "What it does";
+    does.mark = tip::Mark::Blade;
+
     const bool weapon = row.weapon() && !sim::ammunition(row);
     const int bonus = weapon ? sim::damageBonus(plus) : 0;
+    const Tone lifted = plus > 0 ? Tone::Yellow : Tone::White;
+    // MU quotes the damage under the hand it takes -- `Lookup(40 + TwoHand)` -- so the label
+    // says which and there is no separate two-handed line.
+    const float mine = weapon ? float(row.minimumDamage + row.maximumDamage + 2 * bonus) / 2.0f
+                              : 0.0f;
     if (weapon && row.maximumDamage > 0) {
-        lines.push_back({std::string(row.twoHanded() ? "Two-handed" : "One-handed") +
-                             " damage : " + std::to_string(row.minimumDamage + bonus) + " ~ " +
-                             std::to_string(row.maximumDamage + bonus),
-                         plus > 0 ? panel::kRefined : panel::kOrdinary});
+        does.rows.push_back(stat(row.twoHanded() ? "Two-handed damage" : "One-handed damage",
+                                 std::to_string(row.minimumDamage + bonus) + " ~ " +
+                                     std::to_string(row.maximumDamage + bonus),
+                                 lifted));
     }
     const bool worn = row.armour() || row.shield();
     const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) : 0;
-    if (worn) {
-        lines.push_back({"Defense : " + std::to_string(defense),
-                         plus > 0 ? panel::kRefined : panel::kOrdinary});
+    if (worn) does.rows.push_back(stat("Defense", std::to_string(defense), lifted));
+    if (row.defenseRate > 0) {
+        does.rows.push_back(stat("Defense rate", std::to_string(row.defenseRate), Tone::White));
     }
     // A staff's magic power, the one line MU prints for it, and the percentage it comes to --
     // MU2's addition, marked there as the project's, because it is what a wizard chooses on.
     float rise = 0.0f;
     if (row.magicPower > 0) {
         rise = staffRise(row.magicPower, plus);
-        lines.push_back({"Magic power : " + std::to_string(row.magicPower), panel::kOrdinary});
-        lines.push_back({"Wizardry damage : +" + decimal(rise) + "%",
-                         plus > 0 ? panel::kRefined : panel::kOrdinary});
+        does.rows.push_back(stat("Magic power", std::to_string(row.magicPower), Tone::White));
+        does.rows.push_back(stat("Wizardry damage", "+" + decimal(rise) + "%", lifted));
     }
     if (weapon && row.attackSpeed > 0) {
-        lines.push_back({"Attack speed : " + std::to_string(row.attackSpeed), panel::kOrdinary});
+        does.rows.push_back(stat("Attack speed", std::to_string(row.attackSpeed), Tone::White));
     }
-    // Ammunition's durability is its shots, and MU draws it the same way.
-    if (sim::ammunition(row) && row.durability > 0) {
-        lines.push_back({"Durability : " + std::to_string(what.durability) + "/" +
-                             std::to_string(row.durability),
-                         panel::kOrdinary});
+    if (sim::heals(row) || sim::restores(row)) {
+        Row line;
+        line.free = sim::heals(row) ? "Restores life when it goes down."
+                                    : "Restores mana when it goes down.";
+        line.freeTone = Tone::White;
+        does.rows.push_back(line);
     }
+    // A stack says how many, as MU's `Number of items` does; a quiver's shots are its wear and
+    // go in the foot with everything else that is spent.
+    if (!sim::ammunition(row) && what.durability > 1 && !worn && !weapon) {
+        does.rows.push_back(stat("In this stack", std::to_string(what.durability), Tone::Blue));
+    }
+    if (!does.rows.empty()) sheet.sections.push_back(does);
 
-    // Each requirement, white where met and red where not, and a red "(Lacking n)" beneath:
-    // the same shortfall the equip is refused by. The client's order.
+    // ---- what it carries --------------------------------------------------------------------
+    // The options section. The only one of MU's options these rows can carry today is the
+    // skill flag, and the fight has no skills to fire; every other option (luck, the additional
+    // option, the excellent set, harmony, ancient bonuses) lands here as it arrives.
+    Section options;
+    options.kicker = "Options";
+    options.mark = tip::Mark::Star;
+    if (what.skill) {
+        options.rows.push_back(stat("Skill", "carried, unused for now", Tone::Blue));
+    }
+    if (!options.rows.empty()) sheet.sections.push_back(options);
+
+    // ---- what it asks -----------------------------------------------------------------------
+    Section asks;
+    asks.kicker = "Requirements";
+    asks.mark = tip::Mark::Triangle;
     const sim::Needs asked = sim::asks(row, plus);
     const sim::Needs owed = sim::shortOf(asked, who.level, who.points);
-    const auto require = [&](const char* name, int asks, int lacking) {
-        if (asks <= 0) return;
-        lines.push_back({std::string(name) + " : " + std::to_string(asks),
-                         lacking > 0 ? panel::kUnmet : panel::kOrdinary});
-        if (lacking > 0) {
-            lines.push_back({"(Lacking " + std::to_string(lacking) + ")", panel::kUnmet});
-        }
+    const auto require = [&](const char* name, int wants, int lacking) {
+        if (wants <= 0) return;
+        Row line;
+        line.label = name;
+        Value value{std::to_string(wants), lacking > 0 ? Tone::Red : Tone::White, false, "", 0};
+        if (lacking > 0) value.text += " (lacking " + std::to_string(lacking) + ")";
+        line.values.push_back(value);
+        asks.rows.push_back(line);
     };
-    require("Required Level", asked.level, owed.level);
-    require("Required Strength", asked.strength, owed.strength);
-    require("Required Agility", asked.agility, owed.agility);
-    require("Required Vitality", asked.vitality, owed.vitality);
-    require("Required Energy", asked.energy, owed.energy);
-
-    // One line per class allowed, and none when they all are: mu.db's order, the wizard, the
-    // elf, the knight.
-    static const char* const kNames[3] = {"Dark Wizard", "Fairy Elf", "Dark Knight"};
-    int named = 0;
-    for (int i = 0; i < 3; ++i) named += (row.classes >> i) & 1;
+    require("Level", asked.level, owed.level);
+    require("Strength", asked.strength, owed.strength);
+    require("Agility", asked.agility, owed.agility);
+    require("Vitality", asked.vitality, owed.vitality);
+    require("Energy", asked.energy, owed.energy);
+    // One chip per class allowed, and none when they all are: mu.db's order, the wizard, the
+    // elf, the knight. A class you are not is red, which is MU's dark-red band made smaller.
     if (named > 0 && named < 3) {
+        Row line;
+        line.label = named > 1 ? "Classes" : "Class";
         for (int i = 0; i < 3; ++i) {
             if (!((row.classes >> i) & 1)) continue;
-            lines.push_back({std::string("Can be equipped by ") + kNames[i],
-                             i == int(who.kin) ? panel::kOrdinary : panel::kUnmet});
+            line.values.push_back(
+                {kNames[i], i == int(who.kin) ? Tone::White : Tone::Red, true, "", 0});
         }
+        asks.rows.push_back(line);
     }
+    if (!asks.rows.empty()) sheet.sections.push_back(asks);
 
-    // And against what he has on in the slot it would go in: MU2's, marked there as the
-    // project's. Nothing is said against an empty slot, or against itself.
+    // ---- against what he has on ---------------------------------------------------------------
+    // MU2's comparison, marked there as the project's: it hangs off the row it belongs to
+    // rather than being a sentence of its own, which is the design page's own change.
     const int slot = sim::placeOf(row);
-    if (slot >= 0 && !bag[slot].empty() && &bag[slot] != &what) {
+    if (slot >= 0 && !bag[slot].empty() && &bag[slot] != &what && !sheet.sections.empty()) {
         const sim::Held& on = bag[slot];
         const content::ItemRow& theirs = tables.items[size_t(on.item)];
-        const auto against = [&](const char* name, float mine, float his, const char* unit) {
-            if (mine <= 0.0f && his <= 0.0f) return;
-            const float by = mine - his;
-            std::string text = by > 0.0f   ? "+" + decimal(by) + unit + " " + name + " over the one worn"
-                               : by < 0.0f ? decimal(by) + unit + " " + name + " against the one worn"
-                                           : std::string("The same ") + name + " as the one worn";
-            lines.push_back({text, by > 0.0f   ? panel::kRefined
-                                   : by < 0.0f ? panel::kUnmet
-                                               : panel::kOrdinary});
-        };
         const bool hisWeapon = theirs.weapon() && !sim::ammunition(theirs);
         const int hisBonus = hisWeapon ? sim::damageBonus(on.refinement) : 0;
-        against("damage",
-                weapon ? float(row.minimumDamage + row.maximumDamage + 2 * bonus) / 2.0f : 0.0f,
-                hisWeapon
-                    ? float(theirs.minimumDamage + theirs.maximumDamage + 2 * hisBonus) / 2.0f
-                    : 0.0f,
-                "");
-        const bool hisWorn = theirs.armour() || theirs.shield();
-        against("defense", float(defense),
-                hisWorn ? float(theirs.defense + sim::defenseBonus(theirs.shield(), on.refinement))
-                        : 0.0f,
-                "");
-        against("wizardry damage", rise,
-                theirs.magicPower > 0 ? staffRise(theirs.magicPower, on.refinement) : 0.0f, "%");
+        const float hisDamage =
+            hisWeapon ? float(theirs.minimumDamage + theirs.maximumDamage + 2 * hisBonus) / 2.0f
+                      : 0.0f;
+        const float hisDefense =
+            (theirs.armour() || theirs.shield())
+                ? float(theirs.defense + sim::defenseBonus(theirs.shield(), on.refinement))
+                : 0.0f;
+        const float hisRise = theirs.magicPower > 0 ? staffRise(theirs.magicPower, on.refinement)
+                                                    : 0.0f;
+        const auto against = [&](const char* name, float ours, float his, const char* unit) {
+            if (ours <= 0.0f && his <= 0.0f) return;
+            for (Row& line : sheet.sections[0].rows) {
+                if (line.label != name || line.values.empty()) continue;
+                const float by = ours - his;
+                line.values[0].delta = (by > 0.0f ? "+" : "") + decimal(by) + unit + " vs worn";
+                line.values[0].deltaWay = by > 0.0f ? 1 : by < 0.0f ? -1 : 0;
+            }
+        };
+        against(row.twoHanded() ? "Two-handed damage" : "One-handed damage", mine, hisDamage, "");
+        against("Defense", float(defense), hisDefense, "");
+        against("Wizardry damage", rise, hisRise, "%");
     }
-    return lines;
+
+    // ---- the foot -----------------------------------------------------------------------------
+    // Ammunition's durability is its shots, and MU draws it the same way.
+    if (sim::ammunition(row) && row.durability > 0) {
+        sheet.wear = std::to_string(what.durability) + " / " + std::to_string(row.durability);
+        sheet.worn = float(what.durability) / float(row.durability);
+    }
+    return sheet;
 }
 
 }  // namespace mu::game

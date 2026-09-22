@@ -301,11 +301,17 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         }
     }
 
-    // The tip, last, and never during a drag.
+    // The tip, last, and never during a drag. The card carries the thing's own picture, cut
+    // out of the window's stage at its own footprint -- the same region the drag lifts.
     if (dragging_ < 0 && hovered_ >= 0 && !bag[hovered_].empty()) {
-        panel::tooltip(tip_, now_.pointerX, now_.pointerY,
-                       describe(tables, bag[hovered_], realm.wearer(), bag), kTipSize * k,
-                       screenW_, screenH_);
+        tip::Sheet sheet = describe(tables, bag[hovered_], realm.wearer(), bag);
+        if (picture.valid()) {
+            const Box units = itemBox(tables, hovered_, bag[hovered_]);
+            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
+            sheet.picture = picture;
+            sheet.from = {units.x * sx, units.y * sy, units.w * sx, units.h * sy};
+        }
+        tip::draw(tip_, sheet, now_.pointerX, now_.pointerY, screenW_, screenH_);
     }
 }
 

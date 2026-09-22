@@ -77,6 +77,11 @@ add_custom_target(mu2_shaders DEPENDS ${VS_OUT} ${FS_OUT})
 # target below -- it used to say "nothing enforces that but review", and that was true.
 add_executable(mu2
   src/main.cpp
+  src/app/application.cpp
+  src/app/context.cpp
+  src/app/preloader.cpp
+  src/app/modes/play_mode.cpp
+  src/app/modes/bench_mode.cpp
   src/core/log.cpp
   src/core/args.cpp
   src/core/files.cpp
@@ -130,8 +135,10 @@ add_executable(mu2
   src/game/ui/shelf.cpp
   src/game/ui/describe.cpp
   src/game/ui/desk.cpp
+  src/game/ui/tip.cpp
   src/game/ui/vitals.cpp
   src/game/ui/items_stage.cpp
+  src/game/ui/browser_list.cpp
   src/game/item_models.cpp
   src/game/fx/litter.cpp
   src/game/ui/outline.cpp

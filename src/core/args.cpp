@@ -67,6 +67,7 @@ void printUsage() {
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
         "  --ui-key F:K              press potion key K (1-4) on frame F\n"
+        "  --ui-hover X:Y            park the pointer at screen fraction X,Y, pressing nothing\n"
         "  --rise F                  throw the level-up on the hero on frame F; drawing only\n"
         "  --mute                    every sound plays and is logged, at no volume\n"
         "  --zen N                   start with N Zen\n"
@@ -361,6 +362,16 @@ Args parseArgs(int argc, char** argv) {
             a.mute = true;
         } else if (!std::strcmp(s, "--rise")) {
             if (const char* v = next(s)) a.rises.push_back(std::atoi(v));
+        } else if (!std::strcmp(s, "--ui-hover")) {
+            float hx = 0.0f, hy = 0.0f;
+            const char* v = next(s);
+            if (v && std::sscanf(v, "%f:%f", &hx, &hy) == 2) {
+                a.hoverX = hx;
+                a.hoverY = hy;
+            } else {
+                logError("--ui-hover is X:Y, each a fraction of the screen");
+                a.valid = false;
+            }
         } else if (!std::strcmp(s, "--ui-key")) {
             int f = 0, k = 0;
             const char* v = next(s);

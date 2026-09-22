@@ -6,21 +6,24 @@
 // short -- and "Can be equipped by" per class where not every class may. One function with
 // three callers in MU (the bag, the ground, the shop), and so one here.
 //
-// Not yet said, and why: luck and options (nothing carries them yet), the skill a piece grants
-// (no skills), what a scroll teaches (no skills to name), durability as wear (nothing wears).
-// The staff's two lines and MU2's comparison with the piece already worn are kept.
+// What comes back is a tip::Sheet rather than a list of lines: the user chose the card layout
+// on 2026-09-22, so the rows carry a label and their values apart, and the drawing puts one
+// on the left and the other on the right. MU's colours are unchanged.
+//
+// Not yet said, because the rules for them do not exist: luck, the additional option, the
+// excellent options, what a skill does (the flag is carried and named, nothing more), wear as
+// a thing that falls, set and socket blocks. Every one of them has a section waiting for it --
+// see docs/reference/mu-tooltip-lines.md for the whole catalogue and where each line goes.
 #pragma once
 
-#include <vector>
-
 #include "content/tables.h"
-#include "game/ui/panel.h"
+#include "game/ui/tip.h"
 #include "sim/items.h"
 
 namespace mu::game {
 
-std::vector<panel::Line> describe(const content::Tables& tables, const sim::Held& what,
-                                  const sim::Wearer& who, const sim::Satchel& bag);
+tip::Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::Wearer& who,
+                    const sim::Satchel& bag);
 
 // The colour a Zen figure is drawn in: getGoldColor, a pale blue that steps through green and
 // blue as the amount grows. Bag.MoneyColour.

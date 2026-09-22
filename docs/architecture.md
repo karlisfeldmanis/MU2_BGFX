@@ -105,7 +105,7 @@ The largest layer, and the one this refactor split into rooms:
 | folder | what it holds | why it is one room |
 |---|---|---|
 | `game/` | play, figures, crowd, save, sound, bench, headless, item_models, frustum | what the other three rooms are all built on |
-| `game/ui/` | hud, panel, bag, shelf, card, desk, describe, vitals, cursor, outline, arrival, stage, items_stage | everything drawn flat over the frame, and the pointer's own feedback |
+| `game/ui/` | hud, panel, bag, shelf, card, desk, describe, vitals, cursor, outline, arrival, stage, items_stage, browser_list | everything drawn flat over the frame, and the pointer's own feedback |
 | `game/fx/` | showing, aura, breath, bones, meteor, marker, litter | what a blow, a death, a level and a drop look like |
 | `game/world/` | world, town, lamps, ornaments, sway | the town standing there: its chunks, its lights, its own animation |
 
@@ -132,21 +132,44 @@ redraws from the realm afterwards. `Play`'s `spendPoint`, `moveItem`, `useItem`,
 
 ### `app/` — the application and its modes
 
-**Not built yet; this section is the design and `layercheck.py` already allows its arrows.**
+`src/main.cpp` was 1663 lines: argument dispatch, a save reader, a preloader with its own
+thread and spinner, a model-browser list widget, three frame loops wearing one `if` ladder,
+and a teardown. It is thirteen lines now, and the rest is here.
 
-`src/main.cpp` is 1663 lines: argument dispatch, the preloader, a model-browser list widget
-and the whole frame loop in one function. `app/` is where that goes, leaving `main.cpp` as
-the entry point and little else.
+| file | what it is |
+|---|---|
+| `application.*` | the window, the device, the loop, the clock, the statistics, the teardown |
+| `context.*` | what every mode is handed: `Paths`, `Context`, `TimeOfDay` |
+| `mode.h` | the lifecycle a mode keeps |
+| `preloader.*` | the worker thread and the spinner in front of it |
+| `modes/play_mode.*` | the game |
+| `modes/bench_mode.*` | the bench, in its four kinds |
 
-A **mode** is one way of running this binary, and there are four. They share a lifecycle and
-nothing else:
+The division of labour, stated once so it is not re-argued per frame: **the Application owns
+the frame and the mode owns the picture.** The resize, the lighting sheet's reload, the
+palette reset, the effects pool, the screenshot, `bgfx::frame()`, the clock and the statistics
+are the Application's and happen either side of `Mode::frame`. A mode never calls
+`bgfx::frame()`, never reads the clock for its own delta and never takes a screenshot — it is
+handed the frame it is drawing and the seconds the last one took.
+
+There are **two** modes, not one per command-line flag:
 
 | mode | what it is | raised by |
 |---|---|---|
-| `PlayMode` | the game: a world, a realm, a character | `--world` with `--play` |
-| `BenchMode` | the model bench, one object turning in front of the frame | the default |
-| `ViewerMode` | the browser: every cooked model, by category | `--browse` |
-| `HeadlessMode` | the sim stepped with no device and no textures | `--headless` |
+| `PlayMode` | the game: a world, a realm behind it, a character in it, the windows over it | `--world` |
+| `BenchMode` | one thing to look at, turning in front of the whole frame | everything else |
+
+`BenchMode` has four **kinds** — `Model` (`--model`), `Figure` (`--figure`), `Browser`
+(`--browse`) and `Studio` (`--browse --studio`). They differ in what is put on the bench and
+in what stands behind it, and not in how a frame is drawn, which is why they are one class and
+not four. Splitting them would have put the same twenty lines in four files.
+
+**The headless run (`--headless`) is deliberately not a mode.** It returns from
+`Application::run` before GLFW, the device and the textures exist at all, and that is exactly
+what makes it a measurement of the tick rather than of a frame with the drawing switched off.
+A `Mode` is a thing the frame loop runs; headless never reaches the loop. Calling it
+`HeadlessMode` would have meant a class with a `camera()` and a `frame()` that must never be
+called, which is a worse lie than an `if` at the top of `run()`.
 
 ## Where does a new file go?
 
@@ -157,7 +180,8 @@ nothing else:
 4. **Is it a window, a plate, a label or a pointer?** → `game/ui/`.
 5. **Is it something a blow, a death or a level looks like?** → `game/fx/`.
 6. **Is it the town standing there or animating itself?** → `game/world/`.
-7. **Is it a way of running the binary?** → `app/modes/`.
+7. **Is it a way of running the binary?** → `app/modes/`, and first ask whether it is a new
+   *kind* of `BenchMode` rather than a new mode.
 8. **Would another game want it unchanged?** → `core/`.
 9. **None of the above** → `game/`, and it is worth a second look at 1–8 first.
 

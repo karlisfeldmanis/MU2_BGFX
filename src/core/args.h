@@ -183,6 +183,10 @@ struct Args {
         bool right = false;
     };
     std::vector<UiClick> uiClicks;
+    // A scripted pointer parked at X,Y (fractions of the screen) on every frame, pressing
+    // nothing: what a review run needs to photograph a tooltip, since a click on an item in
+    // the bag picks it up instead of describing it. Negative is "nobody is pointing".
+    float hoverX = -1.0f, hoverY = -1.0f;
     // Scripted potion keys: FRAME:KEY, KEY 1 to 4, pressed on FRAME. Repeatable.
     std::vector<std::pair<int, int>> uiKeys;
     // The level-up's flares thrown on the hero on FRAME, for a review run that cannot wait for

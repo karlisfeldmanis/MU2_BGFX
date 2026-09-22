@@ -194,20 +194,26 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
         }
     }
 
-    // The bag's own tooltip, because it is the same tooltip, and one line more: the price, in
-    // the colour Zen is drawn in. RenderItemInfo's Sell branch.
+    // The bag's own tooltip, because it is the same tooltip, with the price in the foot:
+    // RenderItemInfo's Sell branch, which prints it above the name instead.
     if (hovered_ >= 0) {
         const Line& over = lines_[size_t(hovered_)];
         const content::ItemRow& row = tables.items[size_t(over.item)];
         const sim::Held carried{over.item, int16_t(over.offer.refinement),
                                 int16_t(over.offer.pieces > 0 ? over.offer.pieces : row.durability),
                                 over.offer.skill};
-        std::vector<panel::Line> lines = describe(tables, carried, realm.wearer(), realm.satchel());
-        lines.push_back({"", panel::kDetail});
-        lines.push_back({"Purchasing price: " + panel::commas(over.price) + " Zen",
-                         moneyColour(over.price)});
-        panel::tooltip(tip_, now_.pointerX, now_.pointerY, lines, kTipSize * k, screenW_,
-                       screenH_);
+        tip::Sheet sheet = describe(tables, carried, realm.wearer(), realm.satchel());
+        sheet.price = panel::commas(over.price) + " Zen";
+        sheet.priceTone = over.price >= 1000000 ? tip::Tone::Blue
+                          : over.price >= 100000 ? tip::Tone::Green
+                                                 : tip::Tone::Yellow;
+        if (picture.valid()) {
+            const Box units = standing_[size_t(hovered_)].box;
+            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
+            sheet.picture = picture;
+            sheet.from = {units.x * sx, units.y * sy, units.w * sx, units.h * sy};
+        }
+        tip::draw(tip_, sheet, now_.pointerX, now_.pointerY, screenW_, screenH_);
     }
 }
 
