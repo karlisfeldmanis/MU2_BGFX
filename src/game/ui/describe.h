@@ -13,7 +13,7 @@
 // Not yet said, because the rules for them do not exist: luck, the additional option, the
 // excellent options, what a skill does (the flag is carried and named, nothing more), wear as
 // a thing that falls, set and socket blocks. Every one of them has a section waiting for it --
-// see docs/reference/mu-tooltip-lines.md for the whole catalogue and where each line goes.
+// see docs/mu-tooltip-lines.md for the whole catalogue and where each line goes.
 #pragma once
 
 #include "content/tables.h"

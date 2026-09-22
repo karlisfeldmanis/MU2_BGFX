@@ -19,7 +19,7 @@
 // what MU can print (luck, skill, the additional option, excellent options, harmony, ancient
 // bonuses, set and socket blocks) has no rules here yet, and a section with nothing in it is
 // simply not drawn. The catalogue of every line MU prints, with its era, is in
-// docs/reference/mu-tooltip-lines.md.
+// docs/mu-tooltip-lines.md.
 #pragma once
 
 #include <string>
