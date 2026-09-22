@@ -159,6 +159,10 @@ struct Body {
     int64_t thinksAt = 0;
     int64_t repathsAt = 0;
     int64_t risesAt = 0;
+    // Until when it stands over what it has just killed instead of turning away. See
+    // Realm::think and kStandOverTicks; it is the one thing in this layer put there for the
+    // sake of what the screen shows.
+    int64_t standsUntil = 0;
     int32_t swingTicks = 20;  // how often he may swing: the length of the clip he swings with
     int32_t swingMs = 0;      // the same before it was rounded to ticks, for the log
     // Where the quarry was when this chase was last planned, in tiles and NOT in whole tiles.

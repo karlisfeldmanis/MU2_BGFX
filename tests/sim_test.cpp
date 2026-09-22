@@ -18,6 +18,7 @@
 #include "sim/audit.h"
 #include "sim/items.h"
 #include "sim/random.h"
+#include "sim/realm_tuning.h"
 #include "sim/realm.h"
 #include "sim/route.h"
 #include "sim/rules.h"
@@ -586,6 +587,57 @@ void testLoot(const content::Tables& tables) {
 // "walking" without moving for longer than a turn takes after the LAST click (a hand that keeps
 // reversing is answered by turning to each new order, which is right), and when it stops, end
 // exactly on the last tile asked for.
+// A beast that kills its quarry stands over the body instead of turning away on the tick.
+//
+// This exists because the seeded hunt CANNOT cover it: that run fights nobody -- "0 blows
+// landed, 0 missed, 0 deaths" -- so its fingerprint is blind to every rule that only fires
+// when something dies. The behaviour was added on 2026-09-22 for a reason that lives in the
+// drawing (a fall waits for its blow to be seen landing, so a killer that turns away on the
+// tick walks off while its victim is still standing), and a rule put there for the screen's
+// sake is exactly the kind that rots quietly.
+void testStandsOverTheKill(const content::Tables& tables) {
+    std::printf("standing over the kill\n");
+    sim::Realm realm;
+    // A level 1 hero put down in the hunting ground with no orders: he never swings, and what
+    // is out there kills him. That is the only way a beast loses a quarry to death.
+    check(realm.raise(&tables, 3, 200, 160, sim::Kin::DarkKnight, 1), "a realm raises for the kill");
+
+    int64_t diedAt = -1;
+    for (int tick = 0; tick < 6000 && diedAt < 0; ++tick) {
+        realm.step();
+        if (!realm.hero().alive()) diedAt = realm.tick();
+    }
+    check(diedAt >= 0, "and what is hunting him kills him");
+    if (diedAt < 0) return;
+
+    // Everything standing close enough to have been the one that did it.
+    const float heroX = realm.hero().x, heroY = realm.hero().y;
+    struct Where {
+        uint32_t id = 0;
+        float x = 0.0f, y = 0.0f;
+    };
+    std::vector<Where> over;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.player || !one.alive()) continue;
+        if (std::max(std::fabs(one.x - heroX), std::fabs(one.y - heroY)) <= 3.0f) {
+            over.push_back({one.id, one.x, one.y});
+        }
+    }
+    check(!over.empty(), "with something standing over him");
+
+    // The hold is shorter than the revive (kRiseTicks), so nothing here races the hero getting
+    // back up.
+    bool held = true;
+    for (int tick = 0; tick + 1 < sim::kStandOverTicks; ++tick) {
+        realm.step();
+        for (const Where& was : over) {
+            const sim::Body* now = realm.find(was.id);
+            if (now != nullptr && (now->x != was.x || now->y != was.y)) held = false;
+        }
+    }
+    check(held, "and not one of them takes a step while the body is going down");
+}
+
 void testSpamClicks(const content::Tables& tables) {
     std::printf("spam clicks\n");
     sim::Realm realm;
@@ -683,6 +735,7 @@ int main() {
     testInvariants(tables);
     testItems(tables);
     testLoot(tables);
+    testStandsOverTheKill(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

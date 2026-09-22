@@ -46,6 +46,26 @@ constexpr int kMargin = 8;
 constexpr int kLeash = 10;       // invention (MU2's Realm.cs Leash, and it says so itself)
 constexpr int kGrudge = 20;      // invention (MU2's Grudge = Leash * 2)
 // How often a chase re-plans, in ticks. Realm.cs:1918.
+// How long a beast stands over what it has just killed before it turns away. **invention**, and
+// the only number in this file put here for the sake of what the SCREEN shows rather than for
+// the rules -- so it is worth saying exactly why it had to be.
+//
+// The sim resolves a death on the tick the blow lands, and `worth` drops a dead quarry at once,
+// so a beast used to turn and wander on the very next tick. The DRAWING does not put the body
+// down then: a fall waits for the killing blow to be seen landing, which is half a swing later
+// (game/fx/showing.h, kLandingPoint). So the killer walked away while its victim was still on
+// its feet, which is what a player reported seeing on 2026-09-22 and is plainly wrong however
+// right each half is on its own.
+//
+// Twelve ticks is six tenths of a second: longer than the half-swing the cue waits, so the body
+// is always down before anything moves, and short enough that it reads as a beast looking at
+// what it did rather than as one that has frozen. It does NOT stop it defending itself -- the
+// hold only applies where nothing else is worth attacking, so a second target still takes it.
+//
+// MU has no such number, because MU has nothing to be out of step with: its client kills a body
+// on the packet (`SetPlayerDie`) with no animation gate at all. The deferral this covers for is
+// MU2's invention and so, therefore, is this.
+constexpr int kStandOverTicks = 12;
 constexpr int kRepath = 3;
 // A player's swing, in ticks, WHEN THE TABLES CANNOT SAY. Things.cs:249's 1000 ms, and it is
 // now only a fallback: the swing is the length of the clip he swings with, and sim/swings.cpp

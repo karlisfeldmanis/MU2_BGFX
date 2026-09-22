@@ -260,6 +260,11 @@ void Realm::think(Body& beast) {
     // The quarry it has, while it is worth having; else the nearest that is. A target learned
     // by being hit is not measured against eyesight at all -- what bounds that chase is the
     // grudge, which is asked first.
+    //
+    // Held before the choosing, so a beast that has just lost a quarry TO DEATH can be told
+    // apart from one that never had a quarry at all. That difference is the whole of the stand
+    // below.
+    const uint32_t had = beast.quarry;
     uint32_t chosen = 0;
     if (strayed(beast) <= (beast.provoked ? kGrudge : kLeash)) {
         if (const Body* held = find(beast.quarry)) {
@@ -287,6 +292,28 @@ void Realm::think(Body& beast) {
         // Lost, so the grudge goes with it: provoked qualifies a quarry and means nothing
         // without one.
         beast.provoked = false;
+
+        // **And if it lost that quarry by killing it, it stands over the body for a beat.**
+        // invention, and the reason is on kStandOverTicks: the drawing does not put a body down
+        // until the blow that killed it has been SEEN landing, so a killer that turns away on
+        // the tick walks off while its victim is still standing.
+        //
+        // Armed once, on the tick the quarry is first found dead -- `had` is 0 on every tick
+        // after that, because the line above has already cleared it -- and asked before the
+        // leash, so a beast lured far from its nest still looks at what it did before it starts
+        // the walk home.
+        if (had != 0) {
+            const Body* was = find(had);
+            if (was != nullptr && !was->alive()) {
+                beast.standsUntil = tick_ + kStandOverTicks;
+                halt(beast);
+            }
+        }
+        if (tick_ < beast.standsUntil) {
+            beast.temper = Temper::Wandering;
+            return;
+        }
+
         if (strayed(beast) > kLeash) {
             beast.temper = Temper::Homing;
             retreat(beast);
