@@ -25,6 +25,11 @@ constexpr float kGlow[3] = {1.0f, 0.1f, 0.0f};
 // the base tint of the rock and of its cone.
 constexpr float kDaylight[3] = {1.0f, 0.95f, 0.9f};
 
+// What the fireball lays on the ground: `(L*0.5, L*0.3, L*0.1)` with `L = LifeTime / 20`. A
+// warm orange rather than the rock's near-pure red, and it is the blast's own doing -- every
+// BITMAP_EXPLOTION in the game feeds the terrain light this way, whatever threw it.
+constexpr float kBlastGlow[3] = {0.5f, 0.3f, 0.1f};
+
 }  // namespace
 
 uint32_t Meteor::roll() {
@@ -505,6 +510,9 @@ void Meteor::gather(gfx::Effects& effects) const {
 uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
     if (out == nullptr) return 0;
     uint32_t count = 0;
+    // The rocks first and the fireballs after them, so that when more is burning than the
+    // frame will carry, what is lost is the light of a blast already on the ground rather
+    // than that of a rock still coming down.
     for (const auto& m : meteors_) {
         if (!m.alive || count >= max) continue;
         gfx::PointLight& light = out[count++];
@@ -522,6 +530,26 @@ uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
         // colour belongs besides the embers: over the flame cone it crushes the sheet toward
         // black.
         for (int c = 0; c < 3; ++c) light.colour[c] = kGlow[c] * m.bodyLight;
+    }
+
+    // And the fireball, which lights the ground it is standing on. This is the particle's own
+    // and not the skill's: `BITMAP_EXPLOTION` feeds the terrain light every frame it lives --
+    // `Luminosity = LifeTime / 20` and
+    // `AddTerrainLight(x, y, (L*0.5, L*0.3, L*0.1), 4)` (ZzzEffectParticle.cpp:4264-4268) --
+    // so it is a WARMER and much WIDER light than the rock's: four tiles against two, orange
+    // rather than red, and falling off linearly to nothing over its four fifths of a second
+    // rather than flickering.
+    //
+    // Read only from the meteor's side this looks like a skill that creates no light when it
+    // lands, and it was written that way first. The blast is where it comes from.
+    for (const auto& m : motes_) {
+        if (!m.alive || m.kind != Mote::Kind::Blast || count >= max) continue;
+        gfx::PointLight& light = out[count++];
+        for (int a = 0; a < 3; ++a) light.position[a] = m.position[a];
+        light.reach = kBlastGlowTiles;
+        light.height = kBlastLift * kUnit;
+        const float luminosity = m.born > 0.0f ? m.left / m.born : 0.0f;
+        for (int c = 0; c < 3; ++c) light.colour[c] = kBlastGlow[c] * luminosity;
     }
     return count;
 }

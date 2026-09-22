@@ -189,8 +189,10 @@ private:
     // one-a-frame and stays true at any frame rate. The streak itself is NOT these: it is the
     // 166-unit additive cone in the model, and packing billboards tightly enough to look
     // continuous lays discrete sprites over an already smooth flame and fractures both.
-    // What the rock lights, and how far: `AddTerrainLight(..., 2, ...)`, two tiles.
+    // What the rock lights, and how far: `AddTerrainLight(..., 2, ...)`, two tiles. The
+    // fireball's own is twice that -- `AddTerrainLight(..., 4)` in the particle.
     static constexpr float kGlowTiles = 2.0f;
+    static constexpr float kBlastGlowTiles = 4.0f;
 
     static constexpr float kEmberSpacingUnits = 50.0f;
     static constexpr float kEmberFrames = 24.0f;
