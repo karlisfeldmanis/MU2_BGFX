@@ -28,6 +28,9 @@ constexpr float kMarkGap = 9.0f;
 // The corners, and how many segments each quarter turn is cut into. Six is smooth at this
 // radius and keeps the whole card inside one fan of 28 points.
 constexpr float kRadius = 7.0f;
+// How far above the item the card floats, so a raised cell edge and the card's own shadow do
+// not touch.
+constexpr float kStandOff = 10.0f;
 constexpr int kCorner = 6;
 
 // The shadow: three falloffs of the page's, summed into one field -- a contact hairline under
@@ -304,7 +307,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     // ---- place ------------------------------------------------------------------------------
     const float margin = 4.0f * u;
     const float ox = std::clamp(x - wide * 0.5f, margin, std::max(margin, screenWidth - margin - wide));
-    const float oy = std::clamp(y - tall, margin, std::max(margin, screenHeight - margin - tall));
+    const float oy = std::clamp(y - tall - kStandOff * u, margin,
+                                std::max(margin, screenHeight - margin - tall));
     const gfx::Box box{ox, oy, wide, tall};
 
     // ---- the shadow -------------------------------------------------------------------------

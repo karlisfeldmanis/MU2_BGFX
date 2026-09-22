@@ -308,7 +308,10 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         if (tipStage_) {
             tip::stand(*tipStage_, bag[hovered_].item, bag[hovered_].refinement, sheet);
         }
-        tip::draw(tip_, sheet, now_.pointerX, now_.pointerY, screenW_, screenH_);
+        // Over the item's own cells rather than over the pointer: a tall thing hovered near its
+        // top had the card lying across the rest of it.
+        const Box cell = panel::scaled(x, y, itemBox(tables, hovered_, bag[hovered_]));
+        tip::draw(tip_, sheet, cell.midX(), cell.y, screenW_, screenH_);
     }
 }
 

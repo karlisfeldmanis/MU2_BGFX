@@ -91,8 +91,10 @@ constexpr float kPlateUnits = 28.0f;
 // plate empty for one frame.
 void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet);
 
-// Draws the card standing on (x, y) -- centred over the point and above it, as MU's tooltip
-// stands on the item -- and kept on screen.
+// Draws the card standing on (x, y) and kept on screen. The point is the TOP of what is being
+// described -- the hovered item's own cell, not the pointer -- and the card is centred over it
+// and lifted clear, so the thing you are reading about is never under the thing describing it.
+// MU anchors the same way (NewUIInventoryCtrl.cpp:1513: the cells' centre and top, then up).
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
           float screenHeight);
 

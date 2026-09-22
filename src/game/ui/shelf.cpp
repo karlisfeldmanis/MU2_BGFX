@@ -208,7 +208,8 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
                           : over.price >= 100000 ? tip::Tone::Green
                                                  : tip::Tone::Yellow;
         if (tipStage_) tip::stand(*tipStage_, carried.item, carried.refinement, sheet);
-        tip::draw(tip_, sheet, now_.pointerX, now_.pointerY, screenW_, screenH_);
+        const Box cell = panel::scaled(x, y, standing_[size_t(hovered_)].box);
+        tip::draw(tip_, sheet, cell.midX(), cell.y, screenW_, screenH_);
     }
 }
 
