@@ -103,38 +103,38 @@ add_executable(mu2
   src/gfx/interface.cpp
   src/gfx/stage_pass.cpp
   src/game/bench.cpp
-  src/game/world.cpp
-  src/game/town.cpp
-  src/game/lamps.cpp
-  src/game/sway.cpp
+  src/game/world/world.cpp
+  src/game/world/town.cpp
+  src/game/world/lamps.cpp
+  src/game/world/sway.cpp
   src/game/save.cpp
-  src/game/ornaments.cpp
+  src/game/world/ornaments.cpp
   src/game/figures.cpp
   src/game/crowd.cpp
   src/game/headless.cpp
   src/game/play.cpp
-  src/game/showing.cpp
-  src/game/marker.cpp
-  src/game/arrival.cpp
-  src/game/aura.cpp
-  src/game/bones.cpp
-  src/game/breath.cpp
-  src/game/meteor.cpp
+  src/game/fx/showing.cpp
+  src/game/fx/marker.cpp
+  src/game/ui/arrival.cpp
+  src/game/fx/aura.cpp
+  src/game/fx/bones.cpp
+  src/game/fx/breath.cpp
+  src/game/fx/meteor.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp
-  src/game/panel.cpp
-  src/game/cursor.cpp
-  src/game/hud.cpp
-  src/game/card.cpp
-  src/game/bag.cpp
-  src/game/shelf.cpp
-  src/game/describe.cpp
-  src/game/desk.cpp
-  src/game/vitals.cpp
-  src/game/items_stage.cpp
+  src/game/ui/panel.cpp
+  src/game/ui/cursor.cpp
+  src/game/ui/hud.cpp
+  src/game/ui/card.cpp
+  src/game/ui/bag.cpp
+  src/game/ui/shelf.cpp
+  src/game/ui/describe.cpp
+  src/game/ui/desk.cpp
+  src/game/ui/vitals.cpp
+  src/game/ui/items_stage.cpp
   src/game/item_models.cpp
-  src/game/litter.cpp
-  src/game/outline.cpp
+  src/game/fx/litter.cpp
+  src/game/ui/outline.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp

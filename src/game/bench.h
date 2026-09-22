@@ -11,9 +11,9 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
-#include "game/lamps.h"
-#include "game/sway.h"
-#include "game/town.h"
+#include "game/world/lamps.h"
+#include "game/world/sway.h"
+#include "game/world/town.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {

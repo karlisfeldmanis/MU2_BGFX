@@ -1,0 +1,388 @@
+#include "game/ui/desk.h"
+
+#include <cstdio>
+
+#include "core/log.h"
+
+namespace mu::game {
+
+// Whether a row may be bound to a key at all: CanRegisterItemHotKey's list, of which this
+// catalogue has the apple, the six potions and the Town Portal Scroll. Held.Usable.
+static bool usable(const content::Tables& tables, int32_t item) {
+    if (item < 0) return false;
+    const content::ItemRow& row = tables.items[size_t(item)];
+    return sim::heals(row) || sim::restores(row) ||
+           (row.group == sim::kGroupPotions && row.number == 10);
+}
+
+// Whether a carried row may stand in for a bound one: the same group, and either exactly the
+// Town Portal, or the same family at no higher a rank -- the healing family falls to the
+// apple and the mana family to the small mana potion. Quick.Substitutes.
+static bool substitutes(const content::Tables& tables, int32_t carried, int32_t bound) {
+    const content::ItemRow& c = tables.items[size_t(carried)];
+    const content::ItemRow& b = tables.items[size_t(bound)];
+    if (c.group != b.group) return false;
+    if (b.number == 10) return c.number == 10;
+    return c.number <= b.number && (b.number >= 4 ? sim::restores(c) : sim::heals(c));
+}
+
+
+bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
+                content::Textures* textures) {
+    if (!interface_.init(shaderDir)) return false;
+    shaderDir_ = shaderDir;
+    assetDir_ = assetDir;
+    textures_ = textures;
+    arts_.open(assetDir, textures);
+    // A stage each, so the bag and the shelf can hold different things at once, and each is
+    // the window's own size: one pass draws every picture in a window and they line up with
+    // its cells for free.
+    bagStage_ = &bagStagePicture_;
+    shelfStage_ = &shelfStagePicture_;
+    hud_.open(interface_, &arts_);
+    hud_.useStage(&quickStagePicture_);
+    card_.open(interface_, &arts_);
+    bag_.open(interface_, &arts_);
+    shelf_.open(interface_, &arts_);
+    cursor_.open(interface_, &arts_);
+    vitals_.open(interface_);
+    arrival_.open(interface_);
+    interface_.adopt(ground_);
+    return true;
+}
+
+void Desk::shutdown() {
+    bagStagePicture_.shutdown();
+    shelfStagePicture_.shutdown();
+    quickStagePicture_.shutdown();
+    arrival_.shutdown();
+    interface_.shutdown();
+}
+
+void Desk::update(float seconds, const gfx::Window& window, Play& play, float pointerX,
+                  float pointerY) {
+    // The store is handed in from outside, with the item rows already in it; until it is, the
+    // windows draw each thing's name in its cell.
+    Pointer pointer;
+    pointer.x = pointerX;
+    pointer.y = pointerY;
+    pointer.pressed = window.clicked(0);
+    pointer.released = window.released(0);
+    pointer.held = window.held(0);
+    pointer.rightPressed = window.clicked(1);
+    if (scripted_) {
+        pointer = script_;
+        scripted_ = false;
+    }
+
+    panel::setScreen(float(window.height()));
+    arrival_.update(seconds, float(window.width()), float(window.height()));
+    const sim::Body* hero = play.isOpen() ? &play.realm().hero() : nullptr;
+    hud_.follow(hero);
+
+    // Every window opened or shut clicks, by key or by button: MU2's Desk.Click on each
+    // Toggle, which is SOUND_CLICK01 off every button in the client.
+    const auto click = [&]() {
+        if (play.isOpen()) play.ui(Play::Ui::Click);
+    };
+    const auto refused = [&]() {
+        if (play.isOpen()) play.ui(Play::Ui::Refused);
+    };
+    const auto took = [&]() {
+        if (play.isOpen()) play.ui(Play::Ui::Took);
+    };
+    if (window.pressed(gfx::Window::Key::Inventory)) {
+        inventoryOpen_ = !inventoryOpen_;
+        click();
+    }
+    if (window.pressed(gfx::Window::Key::Character)) {
+        characterOpen_ = !characterOpen_;
+        click();
+    }
+
+    bool toggleInventory = false, toggleCharacter = false;
+    hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
+                characterOpen_, &toggleInventory, &toggleCharacter);
+    if (toggleInventory) {
+        inventoryOpen_ = !inventoryOpen_;
+        click();
+    }
+    if (toggleCharacter) {
+        characterOpen_ = !characterOpen_;
+        click();
+    }
+
+    // The character window, while it is up. What it asks for is answered here, by the realm,
+    // and the window sees the answer on its next frame.
+    if (characterOpen_) {
+        int spend = -1;
+        bool close = false;
+        card_.update(float(window.width()), float(window.height()), hero, pointer, &spend,
+                     &close);
+        // The stat button clicks whether or not the point lands: CNewUICharacterInfoWindow
+        // sends the request and plays SOUND_CLICK01 on the next line without waiting.
+        if (spend >= 0) {
+            play.spendPoint(spend);
+            click();
+        }
+        // The exit button hides it without a sound: CNewUICharacterInfoWindow's m_BtnExit has
+        // no PlayBuffer. Only Escape clicks, and the C key.
+        if (close) characterOpen_ = false;
+    }
+
+    // A merchant's counter opens the bag beside it and closes the character window, which is
+    // MU's arrangement: the shop in column two and the inventory where it always is. Walking
+    // away closes the counter in the realm, and the windows follow.
+    const bool trading = play.isOpen() && play.realm().trading() >= 0;
+    // A counter opens on ReceiveTalk's click and SOUND_INTERFACE01 together. Walking away
+    // shuts it silently; the shelf's own X is Escape's stand-in and clicks (below).
+    if (trading && !trading_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+    }
+    if (trading && !trading_) {
+        characterOpen_ = false;
+        bagForShop_ = !inventoryOpen_;
+        inventoryOpen_ = true;
+    }
+    if (!trading && trading_ && bagForShop_) {
+        inventoryOpen_ = false;
+        bagForShop_ = false;
+    }
+    trading_ = trading;
+    if (trading_) {
+        int buy = -1;
+        bool close = false;
+        shelf_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
+                      shelfStage_, &buy, &close);
+        // A purchase that goes through is heard as its coins, off the realm's Bought; one
+        // refused is the interface's no.
+        if (buy >= 0 && !play.buy(buy)) refused();
+        if (close) {
+            play.closeTrade();
+            click();
+        }
+    }
+
+    // The bag, in the right-hand column or beside the character window when that is up.
+    if (inventoryOpen_ && play.isOpen()) {
+        BagRequests asked;
+        bag_.update(float(window.width()), float(window.height()), characterOpen_ ? 2 : 1,
+                    play.realm(), pointer, bagStage_, &asked);
+        // A move is ReceiveEquipmentItem, which ends its success branch on SOUND_GET_ITEM01 --
+        // MU's equip sound is the pickup's -- and a use refused is iButtonError. A use that goes
+        // through is heard as the potion going down, off the realm's Drank.
+        if (asked.moveFrom >= 0) {
+            if (play.moveItem(asked.moveFrom, asked.moveTo)) took();
+            else refused();
+        }
+        if (asked.use >= 0 && !play.useItem(asked.use)) refused();
+        // Let go outside the window. MU throws it on the ground, and there is no ground to
+        // throw it on until step 7 -- so for now it stays in the bag, which is a refusal the
+        // window already draws by putting the item back where it was.
+        // Over the shelf it is a sale -- SendSellItemToNpcRequest -- and the realm refuses a
+        // worn slot again.
+        if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
+            if (!play.sell(asked.outside)) refused();
+        } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
+            // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
+            const int key = hud_.quickAt(asked.outsideX, asked.outsideY);
+            const sim::Held& what = play.realm().satchel()[asked.outside];
+            if (!what.empty() && usable(*play.realm().tables(), what.item)) {
+                quick_[key] = what.item;
+                core::logf("window: slot %d bound to key %d", asked.outside, key + 1);
+            }
+        } else if (asked.outside >= 0) {
+            core::logf("window: %d let go outside the bag; kept", asked.outside);
+        }
+        // Silent, as CNewUIMyInventory's exit button is; the I and V keys click.
+        if (asked.close) inventoryOpen_ = false;
+    }
+
+    if (play.isOpen()) {
+        labelGround(play, window.width(), window.height());
+        quickKeys(window, play);
+    }
+
+    takesPointer_ = hud_.covers(pointer.x, pointer.y) ||
+                    (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
+                    (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
+                    (trading_ && shelf_.covers(pointer.x, pointer.y));
+
+    // The pointer, drawn last of all: MU2's Pointer.Show and Step in one call. The flags are
+    // last frame's raycast (Play::point runs after this, on the same frame it is drawn), which
+    // never shows -- a claw a frame behind a moving mouse is not a thing anyone can see.
+    const bool onMonster = play.isOpen() && play.pointedAt() != 0;
+    const bool onLoot = play.isOpen() && play.pointedAt() == 0 && play.pointedLying() != 0;
+    const bool onFolk = play.isOpen() && play.pointedFolk() >= 0;
+    cursor_.update(seconds, pointer.x, pointer.y, onMonster, onLoot, onFolk);
+}
+
+void Desk::script(float x, float y, bool press, bool release, bool right) {
+    scripted_ = true;
+    script_ = Pointer{};
+    script_.x = x;
+    script_.y = y;
+    script_.pressed = press && !right;
+    script_.rightPressed = press && right;
+    script_.released = release && !right;
+    script_.held = !release && !right;
+    core::logf("window: scripted %s at (%.0f, %.0f)",
+               right ? "right press" : (press ? "press" : (release ? "release" : "drag")),
+               double(x), double(y));
+}
+
+void Desk::quickKeys(const gfx::Window& window, Play& play) {
+    const sim::Realm& realm = play.realm();
+    const content::Tables& tables = *realm.tables();
+    const sim::Satchel& bag = realm.satchel();
+    const gfx::Window::Key keys[Hud::kQuickKeys] = {
+        gfx::Window::Key::Potion1, gfx::Window::Key::Potion2, gfx::Window::Key::Potion3,
+        gfx::Window::Key::Potion4, gfx::Window::Key::Potion5};
+    for (int key = 0; key < Hud::kQuickKeys; ++key) {
+        if (!window.pressed(keys[key]) && scriptedKey_ != key) continue;
+        // Hovering a thing in the open bag and pressing the key binds it, which is MU's own
+        // gesture (CNewUIMyInventory::UpdateKeyEvent); otherwise the key uses what is bound.
+        const int hovered = inventoryOpen_ ? bag_.hovered() : -1;
+        if (hovered >= 0 && usable(tables, bag[hovered].item)) {
+            quick_[key] = bag[hovered].item;
+            // SetItemHotKey plays nothing, and neither does a thing that cannot be bound.
+            continue;
+        }
+        // A thing hovered that will not go on the bar is not used through it either: MuMain's
+        // UpdateKeyEvent returns before the use when the pointer is on an item.
+        if (hovered >= 0 && !bag[hovered].empty()) continue;
+        if (quick_[key] < 0) continue;
+        // The strongest of what may stand in for it, which is where MU's descending walk stops
+        // first. Quick.Choose.
+        int best = -1, strongest = -1;
+        for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+            if (bag[slot].empty() || !substitutes(tables, bag[slot].item, quick_[key])) continue;
+            const int number = tables.items[size_t(bag[slot].item)].number;
+            if (number > strongest) {
+                strongest = number;
+                best = slot;
+            }
+        }
+        if (best >= 0) play.useItem(best);
+    }
+    scriptedKey_ = -1;
+    // And what each box shows, handed to the frame.
+    for (int key = 0; key < Hud::kQuickKeys; ++key) {
+        Hud::Quick q;
+        q.item = quick_[key];
+        if (q.item >= 0) {
+            q.label = tables.items[size_t(q.item)].label;
+            for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+                if (!bag[slot].empty() && substitutes(tables, bag[slot].item, q.item)) {
+                    q.count += std::max<int>(1, bag[slot].durability);
+                }
+            }
+        }
+        hud_.setQuick(key, q);
+    }
+}
+
+// MU2's Drops.Tint, which is BuildGroundItemLabelDescriptor's ladder: the colour IS the
+// refinement, and Zen is gold whatever it is. The skill, luck and option rung is not reachable,
+// since nothing drops with any of them.
+static uint32_t tintOf(const sim::Lying& one) {
+    const uint32_t yellow = gfx::rgba(1.0f, 0.8f, 0.1f);
+    if (one.what.empty() || one.what.refinement >= 7) return yellow;
+    const int plus = one.what.refinement;
+    if (plus == 0) return gfx::rgba(0.7f, 0.7f, 0.7f);
+    if (plus < 3) return gfx::rgba(0.9f, 0.9f, 0.9f);
+    if (plus < 5) return gfx::rgba(1.0f, 0.5f, 0.2f);
+    return gfx::rgba(0.4f, 0.7f, 1.0f);
+}
+
+void Desk::labelGround(const Play& play, int width, int height) {
+    play.dropsOnScreen(viewProj_, width, height, onScreen_);
+    bool same = onScreen_.size() == drawnOnScreen_.size();
+    for (size_t i = 0; same && i < onScreen_.size(); ++i) {
+        same = onScreen_[i].id == drawnOnScreen_[i].id && onScreen_[i].x == drawnOnScreen_[i].x &&
+               onScreen_[i].y == drawnOnScreen_[i].y;
+    }
+    if (same && groundRebuilds_ > 0) return;
+    drawnOnScreen_ = onScreen_;
+    ++groundRebuilds_;
+    ground_.clear();
+    const content::Tables& tables = *play.realm().tables();
+    const gfx::Face& face = ground_.face();
+    // The tooltip's size: MU's labels are its small type, and the two read as one family.
+    const float size = 8.0f * panel::scale();
+    for (const Play::OnScreen& at : onScreen_) {
+        const sim::Lying* one = nullptr;
+        for (const sim::Lying& l : play.realm().lying()) {
+            if (l.id == at.id) one = &l;
+        }
+        if (!one) continue;
+        std::string name;
+        if (one->what.empty()) {
+            name = panel::commas(one->zen) + " Zen";
+        } else {
+            const content::ItemRow& row = tables.items[size_t(one->what.item)];
+            name = one->what.refinement > 0 ? row.label + " +" + std::to_string(one->what.refinement)
+                                            : row.label;
+        }
+        // RenderGroundItemLabelTexture: the plate is the text's own box, opaque black, and no
+        // padding anywhere in it.
+        const float w = face.measure(size, name), h = face.height(size);
+        const gfx::Box plate{at.x - w * 0.5f, at.y - h, w, h};
+        ground_.rect(plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
+        ground_.text(plate.x, plate.y + face.ascent(size), size, tintOf(*one), name);
+    }
+}
+
+void Desk::overhead(float seconds, const Play& play, const float* viewProj, int width,
+                    int height) {
+    if (!play.isOpen()) {
+        vitals_.dismiss();
+        return;
+    }
+    vitals_.update(seconds, play, play.pointedAt(), takesPointer_, viewProj, width, height);
+}
+
+void Desk::photograph(gfx::Renderer& renderer, double seconds) {
+    // The pictures are drawn at the scale the windows are drawn at, so nothing is resampled.
+    if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
+    const float pixelsPerUnit = panel::scale();
+    if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    if (trading_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    // The potion boxes are always on screen, and at rest their stage costs nothing.
+    quickStagePicture_.render(renderer, hud_.pixelsPerUnit(), seconds);
+}
+
+void Desk::submit(bgfx::ViewId view, int width, int height) {
+    interface_.begin(width, height);
+    interface_.add(ground_);
+    // Over the world's labels and under every window: it is a reading lying on the scene.
+    if (vitals_.showing()) interface_.add(vitals_.canvas());
+    // The map's name, a reading on the scene as well, and under every window.
+    if (arrival_.showing()) interface_.add(arrival_.canvas());
+    interface_.add(hud_.canvas());
+    if (characterOpen_) interface_.add(card_.canvas());
+    if (trading_) interface_.add(shelf_.canvas());
+    if (inventoryOpen_) interface_.add(bag_.canvas());
+    // The tips over every window, and under the pointer. Whichever is hovered, it is the one
+    // thing on the panel the player is reading at that moment.
+    interface_.add(hud_.tipCanvas());
+    if (trading_) interface_.add(shelf_.tipCanvas());
+    if (inventoryOpen_) interface_.add(bag_.tipCanvas());
+    // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
+    // whatever it is pointing at, and the panel is something you point at as well.
+    interface_.add(cursor_.canvas());
+    interface_.submit(view);
+}
+
+std::string Desk::line() const {
+    char text[160];
+    std::snprintf(text, sizeof text, "windows: %u draws, %u vertices, rebuilt hud %llu card %llu bag %llu vitals %llu",
+                  interface_.draws(), interface_.vertices(),
+                  (unsigned long long)hud_.rebuilds(), (unsigned long long)card_.rebuilds(),
+                  (unsigned long long)bag_.rebuilds(),
+                  (unsigned long long)vitals_.rebuilds());
+    return text;
+}
+
+}  // namespace mu::game
