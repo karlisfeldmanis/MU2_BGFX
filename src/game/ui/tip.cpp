@@ -143,6 +143,14 @@ void tracked(gfx::Canvas& canvas, float x, float baseline, float size, float tra
     }
 }
 
+// Where a line of `size` sits to be centred in a box `tall` high from `top`: the half-leading
+// above it and the same below, which is what `line-height` means on the page the card came from
+// and what panel::centredBaseline does for the windows. Text hung off the top of its own box
+// instead reads a pixel or two high in every row, which is what this was doing.
+float middle(const gfx::Face& face, float top, float tall, float size) {
+    return top + (tall - face.ascent(size) - face.descent(size)) * 0.5f + face.ascent(size);
+}
+
 // The words of `text` broken to `wide`, at least one word a line.
 std::vector<std::string> wrapped(const gfx::Face& face, float size, const std::string& text,
                                  float wide) {
@@ -378,14 +386,15 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         canvas.outline(at, std::max(1.0f, u), fade(kPlateEdge));
     }
     float headPen = pen + (std::max(plate, titleTall + baseTall) - titleTall - baseTall) * 0.5f;
+    const float titleLine = std::round(nameSize * 1.25f);
     for (const std::string& line : title) {
-        printed(canvas, box.x + headTextX, headPen + face.ascent(nameSize), nameSize,
+        printed(canvas, box.x + headTextX, middle(face, headPen, titleLine, nameSize), nameSize,
                 fade(nameColour), line, drop);
-        headPen += std::round(nameSize * 1.25f);
+        headPen += titleLine;
     }
     if (!sheet.base.empty()) {
-        tracked(canvas, box.x + headTextX, headPen + face.ascent(baseSize), baseSize, kBaseTrack,
-                fade(kQuiet), sheet.base, drop);
+        tracked(canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
+                kBaseTrack, fade(kQuiet), sheet.base, drop);
     }
     pen = box.y + headTall;
 
@@ -404,19 +413,22 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             rowPen += railPad * 0.5f;
         }
         if (section.mark != Mark::None) {
+            const float markTall = section.kicker.empty() ? rowTall
+                                                          : std::round(kickerSize * 1.75f);
             mark(canvas, section.mark, box.x + pad + kMarkColumn * u * 0.5f,
-                 rowPen + rowSize * 0.55f, 11.0f * u, fade(kQuiet));
+                 rowPen + markTall * 0.5f, 11.0f * u, fade(kQuiet));
         }
         if (!section.kicker.empty()) {
-            tracked(canvas, left, rowPen + face.ascent(kickerSize), kickerSize, kKickerTrack,
-                    fade(kQuiet), section.kicker, drop);
-            rowPen += std::round(kickerSize * 1.75f);
+            const float kickerTall = std::round(kickerSize * 1.75f);
+            tracked(canvas, left, middle(face, rowPen, kickerTall, kickerSize), kickerSize,
+                    kKickerTrack, fade(kQuiet), section.kicker, drop);
+            rowPen += kickerTall;
         }
         for (size_t r = 0; r < section.rows.size(); ++r) {
             const Row& row = section.rows[r];
             if (!row.free.empty()) {
                 for (const std::string& line : prose[s][r]) {
-                    printed(canvas, left, rowPen + face.ascent(rowSize), rowSize,
+                    printed(canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize,
                             fade(colourOf(row.freeTone)), line, drop);
                     rowPen += rowTall;
                 }
@@ -425,13 +437,14 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             // The label once, at the top of its values: MU repeats it, and that is the stutter
             // this layout is here to fix.
             if (!row.label.empty()) {
-                printed(canvas, left, rowPen + face.ascent(rowSize), rowSize, fade(kLabel), row.label, drop);
+                printed(canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize, fade(kLabel),
+                        row.label, drop);
             }
             float chipPen = right;
             for (size_t v = row.values.size(); v-- > 0;) {
                 const Value& value = row.values[v];
-                const float baseline = rowPen + face.ascent(rowSize) +
-                                       rowTall * float(value.chip ? 0 : v);
+                const float baseline = middle(face, rowPen + rowTall * float(value.chip ? 0 : v),
+                                             rowTall, rowSize);
                 if (value.chip) {
                     // Chips sit side by side on one row, filled from the right.
                     const float w = trackedWidth(face, chipSize, kChipTrack, value.text) +
@@ -439,9 +452,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                     const float h = std::round(chipSize * 1.9f);
                     const gfx::Box at{chipPen - w, rowPen + (rowTall - h) * 0.5f, w, h};
                     canvas.outline(at, std::max(1.0f, u), fade(colourOf(value.tone)));
-                    tracked(canvas, at.x + pad * 0.4f, at.y + (h - chipSize) * 0.5f +
-                                                          face.ascent(chipSize),
-                            chipSize, kChipTrack, fade(colourOf(value.tone)), value.text, drop);
+                    tracked(canvas, at.x + pad * 0.4f, middle(face, at.y, h, chipSize), chipSize,
+                            kChipTrack, fade(colourOf(value.tone)), value.text, drop);
                     chipPen -= w + pad * 0.4f;
                     continue;
                 }
@@ -469,7 +481,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         const float bottoms[4] = {0.0f, 0.0f, radius, radius};
         roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, fade(kFootBack));
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
-        const float baseline = pen + railPad + face.ascent(footSize);
+        const float baseline = middle(face, pen, footTall, footSize);
         if (!sheet.wear.empty()) {
             const float w = printed(canvas, box.x + pad, baseline, footSize, fade(kFoot), sheet.wear, drop);
             const float barWide = 46.0f * u, barTall = std::max(2.0f, 3.0f * u);

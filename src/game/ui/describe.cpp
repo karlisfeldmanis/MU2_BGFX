@@ -1,6 +1,7 @@
 #include "game/ui/describe.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <string>
 
@@ -57,6 +58,11 @@ std::string kindOf(const content::ItemRow& row) {
         default: break;
     }
     return "Item";
+}
+
+std::string shouted(std::string s) {
+    for (char& c : s) c = char(std::toupper(static_cast<unsigned char>(c)));
+    return s;
 }
 
 Row stat(const char* name, const std::string& text, Tone tone) {
@@ -225,14 +231,17 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         require("Level", row.teachesLevel, std::max(0, row.teachesLevel - who.level));
     }
     // One chip per class allowed, and none when they all are: mu.db's order, the wizard, the
-    // elf, the knight. A class you are not is red, which is MU's dark-red band made smaller.
+    // elf, the knight. Shouted, because a chip is a label and not a sentence. Your own class is
+    // GREEN -- this one is yours to use -- and any other is red, which is MU's dark-red band
+    // made smaller. MU has only the red half of that: it prints every line white and bands the
+    // ones you are not.
     if (named > 0 && named < 3) {
         Row line;
         line.label = named > 1 ? "Classes" : "Class";
         for (int i = 0; i < 3; ++i) {
             if (!((row.classes >> i) & 1)) continue;
             line.values.push_back(
-                {kNames[i], i == int(who.kin) ? Tone::White : Tone::Red, true, "", 0});
+                {shouted(kNames[i]), i == int(who.kin) ? Tone::Green : Tone::Red, true, "", 0});
         }
         asks.rows.push_back(line);
     }
