@@ -104,8 +104,8 @@ struct Lighting {
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
 
-    // The grass, docs/grass.md. MU's own painted tufts, cut out and scattered in a disc round
-    // the camera; past it the ground texture takes over. These are the disc's knobs. They live
+    // The grass, docs/grass.md. Painted blades, cut out and scattered over every grass tile the
+    // camera can see; past the reach the ground texture takes over. These are its knobs. They live
     // in the lighting sheet rather than in one of their own because a field of grass is look,
     // and this is the sheet the look is tuned on with the window open -- which is the only way
     // a green ever gets judged.
@@ -114,9 +114,25 @@ struct Lighting {
     // and one without, wall frame against wall frame, since the per-view GPU timers cannot
     // price a pass on Metal. docs/budget.md.
     float grass = 1.0f;
-    float grassRadius = 11.0f;   // how far out cards stand, metres, from the camera's focus
-    float grassFade = 2.5f;      // the last metres of that, where a card shrinks into the turf
-    float grassDensity = 1.0f;   // 0..1 of the 36 cards a square metre a patch may keep
+    // The reach, from the EYE, per card. MU's 8 m camera sees the ground out to 21 m at the
+    // top of the frame and 28.5 m at its far corners; 26 keeps the whole of the played 6 m
+    // frame (22.8 m to a corner) inside the field and puts only the top corners of the 8 m
+    // measuring frame in the fade. Because it is measured from the eye and the eye is rigid
+    // to the player, the edge is a place on the screen and never a ring that moves with him.
+    float grassRadius = 26.0f;   // metres from the eye past which no card stands
+    float grassFade = 4.0f;      // the last metres of that, where a card shrinks into the turf
+    // Past the character: the eye is 8 m from him at MU's distance and the near edge of the
+    // frame is 7.7 m, so 12 leaves the ground round his feet at full count and thins the
+    // half of the frame above him.
+    float grassThin = 12.0f;     // metres from the eye where the thinning with distance begins
+    // A bias on the mip level the sheet is read at; negative is sharper. Sharper is more
+    // painted blade and more crawl, since a crisper edge under 4x MSAA with no TAA moves more
+    // as the camera walks; docs/grass.md has the sweep that set this. -0.4 was tuned against
+    // a sheet that was, by accident, three levels blurrier than this number said (grass.cpp);
+    // with that gone, half a level softer than the filter's own pick keeps the blades and
+    // lets the sward read as a mass.
+    float grassMipBias = 0.5f;
+    float grassDensity = 1.0f;   // 0..1 of the 49 cards a square metre a patch may keep
     // Metres of SWARD, before a card's own draws and the rank ones. Tall on purpose: in MU's
     // own Season 6 the grass stands high enough to half-hide a chicken, and at 0.20 this was a
     // mown lawn. A card's own draw spreads this 0.46 to 1.48, and a rank one doubles it again,
@@ -131,7 +147,7 @@ struct Lighting {
     // its blades really are ten centimetres across, and at MU's original resolution that reads.
     // This is not that picture: it is a scattered field at 1080p, and it wants the blade a real
     // one has. Squashing the painted tuft narrow is what gets it, and it costs nothing.
-    float grassAspect = 0.30f;
+    float grassAspect = 0.36f;
     // How far a still card lies over, as a fraction of its height.
     //
     // Small. Grass stands UP, and a blade that has lain over is the exception rather than the

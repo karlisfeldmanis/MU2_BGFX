@@ -48,6 +48,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uGrassVary_ = bgfx::createUniform("u_grassVary", bgfx::UniformType::Vec4);
     uGrassSheet_ = bgfx::createUniform("u_grassSheet", bgfx::UniformType::Vec4);
     uGrassSize_ = bgfx::createUniform("u_grassSize", bgfx::UniformType::Vec4);
+    uGrassReach_ = bgfx::createUniform("u_grassReach", bgfx::UniformType::Vec4);
     sAlbedo2_ = bgfx::createUniform("s_albedo2", bgfx::UniformType::Sampler);
     sNormal2_ = bgfx::createUniform("s_normal2", bgfx::UniformType::Sampler);
     sOrm2_ = bgfx::createUniform("s_orm2", bgfx::UniformType::Sampler);
@@ -350,7 +351,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uCamPos_, &uParams_,
-          &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
           &sBloom_}) {

@@ -15,7 +15,10 @@
 // together by two clump fields so the field reads as tufts and patches rather than confetti --
 // and the density that thins with distance is a RAMP, so a card grows and shrinks rather than
 // blinking on and off as the player walks. That blink is what a field of them twinkling looks
-// like, and it is the one thing a scattered field must not do.
+// like, and it is the one thing a scattered field must not do. The other is a rim: every
+// distance the field is shaped by is measured from the EYE, not the player, so its far edge
+// and its thinning are places on the screen that stay put as he walks. Measured from the
+// player they were rings that walked with him, with cards standing up along the far one.
 //
 // The short version of why the shape is this small. MU's camera is nailed at -48.5 degrees and
 // 45 of yaw, 3.5 to 8 m back, and it never turns. The whole visible ground is about 470 square
@@ -50,13 +53,15 @@ public:
                content::Textures& textures);
     void shutdown();
 
-    // Fills `field` with the patches the camera can see. `focus` is where the camera is
-    // looking, in world metres, which is what the disc is centred on rather than the eye: the
-    // eye is 6 m back and 5 m up, and a disc round it would spend half its patches behind the
-    // player. Returns false when there is nothing to draw -- no grid, no grass slots, no
+    // Fills `field` with the patches the camera can see. `eye` is where the camera stands and
+    // `focus` where it looks, both in world metres. The field's reach is measured from the
+    // EYE, per card, in the shader: MU's camera is rigid to the player, so a distance from the
+    // eye is a place on the screen, and the far edge and the thinning stay where they are in
+    // the frame as he walks. The frustum is what keeps the patches behind him from being
+    // sent. Returns false when there is nothing to draw -- no grid, no grass slots, no
     // sheets, the sheet's `grass` at 0, or every patch culled.
     bool gather(const content::Ground& ground, const gfx::Lighting& look, const float* viewProj,
-                const float* focus, float seconds, gfx::GrassField& field);
+                const float* eye, const float* focus, float seconds, gfx::GrassField& field);
 
     // What the last gather did, for the readout.
     struct Counts {
@@ -86,7 +91,13 @@ public:
     // at that count they stop being blades and merge into a flat mass -- "plates blended
     // together". Thirty-six cells is about two hundred blades a metre, which is a sward you
     // cannot see the ground through and can still pick a blade out of.
-    static constexpr int kStratification = 6;
+    //
+    // That judgement was made against a sheet read three mip levels blurrier than anyone
+    // knew (see the note at the foot of gather), where every stroke was a fat plate. Read at
+    // the level it was painted for, thirty-six left the turf showing between the roots and
+    // the field read as sparse; forty-nine closes it, and each blade still comes apart from
+    // its neighbour. Seven, which is forty-nine cards a square metre.
+    static constexpr int kStratification = 7;
     static constexpr int kCardsPerPatch = kStratification * kStratification;
     // MU's sheets are four 64-pixel columns of tuft in a 256-wide picture. The shader cuts one
     // column a card; this is how many there are to choose from.

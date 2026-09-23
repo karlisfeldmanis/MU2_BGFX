@@ -600,10 +600,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const float slide[3] = {metres, 0.0f, metres * 0.618f};
         ctx.renderer.slideSplit(slide);
     }
-    // The near field's blades, gathered last because the disc is centred on where the camera
-    // ended up looking this frame and the follow spring has only just decided that. One
-    // instanced draw in the prepass and one in the shade pass; never in the sun's split.
-    // docs/grass.md.
+    // The near field's blades, gathered last because the field is measured from where the
+    // camera ended up standing this frame and the follow spring has only just decided that.
+    // One instanced draw in the shade pass; never in the prepass and never in the sun's
+    // split. docs/grass.md.
     gfx::GrassField grassField;
     bool grassDrawn = false;
     {
@@ -612,8 +612,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         float viewProj[16];
         ctx.renderer.cameraMatrices(eye, view, proj);
         bx::mtxMul(viewProj, view, proj);
-        grassDrawn = world_.grass().gather(world_.ground(), ctx.lighting, viewProj, eye.target,
-                                           float(at.elapsed), grassField);
+        grassDrawn = world_.grass().gather(world_.ground(), ctx.lighting, viewProj, eye.position,
+                                           eye.target, float(at.elapsed), grassField);
     }
     ctx.renderer.draw(eye, ctx.lighting, townDrawables_, &world_.ground(), casters,
                       grassDrawn ? &grassField : nullptr);

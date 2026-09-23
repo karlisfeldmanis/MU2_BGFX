@@ -147,7 +147,7 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
 }
 
 bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, const float* viewProj,
-                   const float* focus, float seconds, gfx::GrassField& field) {
+                   const float* eye, const float* focus, float seconds, gfx::GrassField& field) {
     counts_ = Counts();
     field.batchCount = 0;
     if (!bgfx::isValid(vbh_) || sheets_.empty() || look.grass <= 0.0f) return false;
@@ -157,15 +157,20 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     const float fadeBand = std::max(0.25f, std::min(look.grassFade, radius * 0.9f));
     const float metres = ground.metresPerTile();
 
-    // The disc, walked as the square it is cut out of. Column is +x and row is -z, so the
-    // focus lands at column focus.x and row -focus.z. docs/conventions.md.
-    const float focusColumn = focus[0] / metres;
-    const float focusRow = -focus[2] / metres;
+    // The reach is measured from the EYE, and the shader does the measuring per card. What the
+    // CPU does is coarser: it walks the square of tiles the reach could touch and hands the
+    // frustum every patch whose nearest corner is inside it. The square is centred on where
+    // the eye stands over the ground -- column is +x and row is -z, docs/conventions.md.
+    // The focus is not needed for that; it stays in the call because it is the one point the
+    // camera is defined by, and the next thing to measure from it is the walker's own wake.
+    (void)focus;
+    const float eyeColumn = eye[0] / metres;
+    const float eyeRow = -eye[2] / metres;
     const int reach = int(std::ceil(radius / metres)) + 1;
-    const int firstColumn = std::max(0, int(std::floor(focusColumn)) - reach);
-    const int lastColumn = std::min(ground.size() - 2, int(std::floor(focusColumn)) + reach);
-    const int firstRow = std::max(0, int(std::floor(focusRow)) - reach);
-    const int lastRow = std::min(ground.size() - 2, int(std::floor(focusRow)) + reach);
+    const int firstColumn = std::max(0, int(std::floor(eyeColumn)) - reach);
+    const int lastColumn = std::min(ground.size() - 2, int(std::floor(eyeColumn)) + reach);
+    const int firstRow = std::max(0, int(std::floor(eyeRow)) - reach);
+    const int lastRow = std::min(ground.size() - 2, int(std::floor(eyeRow)) + reach);
 
     const Frustum frustum(viewProj);
     // One bucket a sheet, so what comes out is already sorted into contiguous draws. The
@@ -195,34 +200,22 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             const float centreX = x0 + metres * 0.5f;
             const float centreZ = z0 + metres * 0.5f;
 
-            const float dx = centreX - focus[0];
-            const float dz = centreZ - focus[2];
-            const float distance = std::sqrt(dx * dx + dz * dz);
-            if (distance > radius) continue;
-
-            // A height, never an alpha: a card shrinks into the turf over the last metres of
-            // the disc. There is no TAA in this engine, and a dissolve on a cut-out card
-            // crawls where a card getting shorter simply stops being there.
-            const float fade = std::min(1.0f, (radius - distance) / fadeBand);
-
             // Thinned where MU painted something over the lawn. tiles.png's blue is how far
             // the overlay has been taken across the base, and where that is the paving the
             // grass should give way to it -- which is Turf's own rule in MU2, and the reason
             // MU's grass stops at the edge of the square without anything saying so. An
             // overlay that is itself grass thins nothing.
+            //
+            // The thinning with DISTANCE is not here any more. It is the shader's, per card
+            // and off the eye, so that it is a place on the screen rather than a ring round
+            // the player; a ring moves with him, and the cards on it grow as it passes. The
+            // far edge of the field is the same story, and it is the shader's for the same
+            // reason. grass.sh.
             float density = look.grassDensity;
             if (!ground.grassFloor(ground.overlayAt(column, row))) {
                 density *= 1.0f - ground.blendAt(column, row);
             }
-            // And thinned with distance, which the shader pays back by widening what is left.
-            // The two are one mechanism: coverage held, card count down, and no painted blade
-            // allowed under a pixel wide at the far edge. docs/grass.md.
-            //
-            // The shader takes this as a RAMP and not a step. It must: this number falls as
-            // the camera walks towards a patch, and on a step the cards whose hash sits near
-            // it would blink on and off frame by frame. A field of those twinkles.
-            density *= 1.0f - 0.55f * std::min(1.0f, std::max(0.0f, (distance - 5.0f) / 9.0f));
-            if (density <= 0.01f || fade <= 0.01f) continue;
+            if (density <= 0.01f) continue;
 
             // The four corner heights, in the order the shader bilinears them: the v = 0 edge
             // of the tile is the row+1 grid line, because v runs along +z and z runs -row.
@@ -232,6 +225,16 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             const float h11 = ground.heightAt(x0 + metres, z0 + metres);
             const float lowest = std::min(std::min(h00, h10), std::min(h01, h11));
             const float highest = std::max(std::max(h00, h10), std::max(h01, h11));
+
+            // Past the reach, by the eye's own measure and in three dimensions: the shader
+            // shrinks a card to nothing at `radius`, so a patch whose nearest point is beyond
+            // it draws nothing and is not sent. Generous by half a diagonal, as the bounds
+            // below are, because a patch is a square and not a point.
+            const float dx = centreX - eye[0];
+            const float dy = (lowest + highest) * 0.5f - eye[1];
+            const float dz = centreZ - eye[2];
+            const float nearest = std::sqrt(dx * dx + dy * dy + dz * dz) - 0.7071f * metres;
+            if (nearest > radius) continue;
 
             // The patch's bounds, and the cap on what the shader may do to them. A card stands
             // at most its sward height times its own draw (1.28), its bunch's (1.16), its
@@ -270,7 +273,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             const float instance[kFloatsPerInstance] = {
                 x0, z0, h00, h10,
                 h01, h11, density, 0.0f,
-                light[0], light[1], light[2], fade,
+                light[0], light[1], light[2], 0.0f,
             };
             packed_[bucket].insert(packed_[bucket].end(), instance, instance + kFloatsPerInstance);
         }
@@ -322,6 +325,15 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.card[2] = look.grassLean;
     field.card[3] = look.grassWiden;
 
+    // The reach, from the eye: where the field ends, the band it shrinks away over before
+    // that, and the band the thinning runs over -- from `grass_thin` out to where the fade
+    // begins, so a card at the far edge has been thinned all it will be before it starts to
+    // shrink. gfx::GrassField says why it is the eye and not the focus.
+    field.reach[0] = radius;
+    field.reach[1] = fadeBand;
+    field.reach[2] = std::min(look.grassThin, radius - fadeBand - 1.0f);
+    field.reach[3] = radius - fadeBand;
+
     // The wind turns from +x towards -z, which is the way the sun's azimuth turns and the way
     // a row runs on MU's grid. One convention for every angle in the sheet.
     const float windRadians = look.grassWindDegrees * 3.14159265f / 180.0f;
@@ -342,6 +354,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
 
     field.sheet[0] = float(painted ? kSheetColumns : kSwardColumns);
     field.sheet[1] = look.grassCutout;
+    field.sheet[2] = look.grassMipBias;
     field.sheet[3] = 0.0f;  // the sward, not the meadow
     field.colour = look.grassColour;
 
@@ -367,8 +380,13 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     // order, so a short range IS a smaller plant count -- no degenerate quads rasterised for
     // the ones that were never wanted.
     field.meadowIndices = uint32_t(kMeadowCards * kIndicesPerCard);
-    field.sheet[2] = kDeepestMip;
-    field.sheet[3] = float(kSheetWidth);
+    // Nothing else writes field.sheet after this point. The first field wrote the deepest mip
+    // and the sheet's width into .z and .w here, from a time when grassSheet() took them from
+    // the uniform; it works them out from the sheet's own size now, and the two writes had
+    // outlived that. Left in, they landed AFTER the meadow flag above was cleared: .w came out
+    // 256, so fs_grass took every card of the sward for a flower and skipped the colour grade
+    // and the straw, and .z came out +3, a bias of three whole mip levels of blur on a sheet
+    // that was tuned with a bias of -0.4. That was most of why the blades read as plates.
     return true;
 }
 

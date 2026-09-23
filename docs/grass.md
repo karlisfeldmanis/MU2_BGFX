@@ -537,6 +537,58 @@ hundred of those is four or five hundred blades a square metre and they merge in
 Thirty-six cells is about a hundred and fifty blades a metre: closed, and you can still pick a
 blade out of it.
 
+### The rim, the blur that nobody had asked for, and the gaps
+
+2026-09-23, later. The user's brief was polish: natural, lush, well blended, and no grass
+seen to appear. Three faults answered it, and two of them were bugs rather than taste.
+
+**The far edge was a ring round the player, and nothing faded it.** The field was a disc of
+`grass_radius` 11 m about the camera's FOCUS, and the eye-to-ground arithmetic at the top of
+this page says the frame's far edge is 14 m past the focus and its far corners 24 m. So the
+disc's rim was an arc a third of the way down the frame, it moved with the player, and the
+fade the CPU computed for it was packed into the instance and **never read by the shader** —
+every patch on the rim stood up at full height as the player walked towards it. Both are the
+shader's now, per card, and measured **from the eye**: MU's camera is rigid to the player, so
+a distance from the eye is a place on the screen, and the reach, the fade band and the
+thinning band all sit still in the frame as he walks. `grass_radius` is 26 m from the eye,
+which holds the whole played 6 m frame and puts only the top corners of the 8 m measuring
+frame into a 4 m fade — a height shrink, never an alpha. `grass_thin` 12 m starts the
+thinning just past the character.
+
+**The sward was being read three mip levels blurrier than the number said, and it was not
+graded.** `gather` set the sheet uniform's `.z` and `.w` at its very end to the deepest mip
+(3) and the sheet width (256), left over from a first version where `grassSheet()` read them
+from the uniform. They landed after the meadow flag in `.w` had been cleared and the -0.4
+sharpening bias in `.z` had been set, so `fs_grass` took every sward card for a flower —
+no colour grade, no straw — and biased the mip by +3. **That, and not the sheet, was why
+the blades read as plates.** With the two writes gone the blades are blades, and the grade
+is finally what the field's colour comes from.
+
+**And then the gaps.** Read at the level it was painted for, 36 cards a metre left the turf
+showing between the roots — "we are losing that lush look". Two changes closed it: the
+thinning ramp's top now sits AT the density rather than a sixth above it (a patch at full
+density kept only five sixths of its cards before), and the count is **49 a metre** with the
+card at aspect 0.36. The far thinning takes 0.65 of the count rather than 0.55 to pay for
+the top half of the frame that the field now covers.
+
+| Lorencia's open field, `--at 190,110`, 400 frames, moving camera | mean wall frame |
+|---|---|
+| before (disc of 11 m, +3 blur, 36 cards) | 4.31 ms |
+| reach from the eye, blur fixed, 36 cards | 4.54 ms |
+| **49 cards, aspect 0.36, far thinning 0.65** | **4.64 ms** |
+| the town's cobbles, same change | 4.34 → 4.38 ms |
+
+So the field covers about twice the ground it did, in focus, for **+0.33 ms**; the budget's
+5.5 is not near.
+
+**Crawl**, measured as before (wind off, moving camera) but with `--fixed-dt`, which makes
+the absolute numbers a different scale from the 4.89/7.04 above and only the RATIO
+comparable: **14.5 with the field against 10.2 bare, 1.43×** — the same ratio the blurred
+sheet had (7.04/4.89 = 1.44). A sweep of `grass_mip_bias` (-0.4, 0.3, 0.8, 1.3 → 14.5, 13.9,
+13.5, 13.3) says the level barely moves it: the crawl is the count of edges, not their
+sharpness. The default is 0.5, chosen on the shot rather than the number: the blades stay
+blades and the sward reads as a mass.
+
 ### What this still owes
 
 - **The field is not in the prepass, so SSAO does not see it.** Intended — `fs_grass` never
@@ -547,7 +599,8 @@ blade out of it.
   shimmer as it did before. Every frame number in this engine is a 4x number, so nothing that
   is measured is affected; a player who turns MSAA off gets the old edge.
 - **The card grass is the whole field.** Past `grass_radius` the ground texture takes over with
-  nothing between. There is no far band.
+  nothing between. There is no far band — but the reach now sits past the frame's edge, so
+  on flat ground nothing is ever seen to end.
 - **Nothing interacts with it.** No walker parts it, no wake lies behind him. MU2's Turf had
   both; Ghost of Tsushima's displacement buffer is the shape for it.
 - **The meadow is wired and switched off.** MU2's `wild.png` — seed heads, broadleaf, clover,
@@ -567,7 +620,8 @@ blade out of it.
 ### The knobs
 
 All live-reloaded out of `sheets/lighting.json`, because a green is only ever judged with the
-window open: `grass` (0 prices it), `grass_radius`, `grass_fade`, `grass_density`,
+window open: `grass` (0 prices it), `grass_radius`, `grass_fade`, `grass_thin`,
+`grass_mip_bias`, `grass_density`,
 `grass_height`, `grass_aspect`, `grass_lean`, `grass_rank`, `grass_dry`, `grass_widen`,
 `grass_root_tint`, `grass_tip_tint`, `grass_root_ao`, `grass_roughness`,
 `grass_wind_strength`, `grass_wind_degrees`.

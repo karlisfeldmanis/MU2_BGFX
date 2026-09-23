@@ -31,6 +31,7 @@ uniform vec4 u_grassTip;    // rgb: and at the tip  w: roughness
 uniform vec4 u_grassVary;   // x: cards a patch  y: the stratification's side  z: the rank share  w: how dry a dry tuft goes
 uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: unused
 uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  z: a scale on the patch's density  w: how far the colour grade goes
+uniform vec4 u_grassReach;  // x: metres from the eye past which no card stands  y: the band before it, over which a card shrinks away  z: where the thinning begins  w: where it has taken all it takes
 
 // --- the hash ----------------------------------------------------------------------------
 //
@@ -83,8 +84,8 @@ struct Card
 
 // The patch instance, unpacked:
 //   i_data0 = (x, z of the patch's -x -z corner, height at (col, row+1), height at (col+1, row+1))
-//   i_data1 = (height at (col, row), height at (col+1, row), density 0..1, the patch's seed)
-//   i_data2 = (MU's baked light rgb, the edge fade 0..1)
+//   i_data1 = (height at (col, row), height at (col+1, row), density 0..1, unused)
+//   i_data2 = (MU's baked light rgb, unused)
 //
 // The two height pairs are the v = 0 and v = 1 edges of the tile, where v runs along +z. See
 // docs/conventions.md: column is +x, row is -z, so the tile's corner is (column, -(row + 1)).
@@ -115,20 +116,45 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	float dhdv = mix(d1.x - d0.z, d1.y - d0.w, u);
 	c.ground = normalize(vec3(-dhdu, 1.0, -dhdv));
 
+	// How far this card is from the EYE. Everything that changes with distance below -- the
+	// thinning, the widening that pays it back, and the far edge where the field ends -- is
+	// read off this one number, and off the eye rather than the focus on purpose: MU's camera
+	// is rigid to the player, so a distance from the eye is a place on the SCREEN. A band
+	// measured that way sits still in the frame as the player walks, and nothing ever crosses
+	// it. Measured from the focus (which is what this did first) every band was a ring round
+	// the player that moved with him, and the field's far edge was an arc a third of the way
+	// down the frame with cards standing up out of the turf along it.
+	float distance = length(u_camPos.xyz - c.base);
+
 	// Thinned by shrinking whole cards away, never by fading them: there is no TAA here to
 	// hold a half-transparent card still, and a dissolve on painted grass crawls.
 	//
-	// It is a RAMP and not a step, and that is not a nicety. The density a patch is given
-	// falls with its distance from the camera, and the camera moves; on a step, a card whose
-	// hash sits near the threshold switches on and off between one frame and the next as the
-	// player walks. A field of those twinkles, and that twinkle is what was reported as the
-	// grass shuttering. Over a band the same card grows and shrinks instead, which is nothing
-	// the eye reports.
+	// It is a RAMP and not a step, and that is not a nicety. The density falls with distance
+	// and the camera moves; on a step, a card whose hash sits near the threshold switches on
+	// and off between one frame and the next as the player walks. A field of those twinkles,
+	// and that twinkle is what was reported as the grass shuttering. Over a band the same card
+	// grows and shrinks instead, which is nothing the eye reports. The band is wide -- a sixth
+	// of the density's range -- so that with the thinning spread over fifteen metres a card
+	// takes two or three metres of walking to grow, which at a walk is a second.
 	float keep = grassHash(id + 2.3);
-	// The patch's density, scaled by what this draw asks for: the sward takes all of it,
-	// the meadow a fifth, because a meadow is what stands THROUGH a sward and a field of
-	// flowers is not a field.
-	float alive = saturate((d1.z * u_grassSize.z - keep) * 14.0);
+	// The patch's density is the overlay's doing (paving thins it), scaled by what this draw
+	// asks for: the sward takes all of it, the meadow a fifth, because a meadow is what stands
+	// THROUGH a sward and a field of flowers is not a field. Then thinned with distance, which
+	// the widening below pays back: coverage held, card count down, and no painted blade
+	// allowed under a pixel wide at the far edge.
+	float far = saturate((distance - u_grassReach.z) / max(u_grassReach.w - u_grassReach.z, 0.1));
+	float density = d1.z * u_grassSize.z * (1.0 - 0.65 * far);
+	// The +1 puts the ramp's top AT the density rather than a sixth above it, so a patch at
+	// full density keeps every card; without it the sixth of cards whose hash sits over 0.83
+	// were being shrunk away from a sward that was asked for whole.
+	float alive = saturate((density - keep) * 6.0 + 1.0);
+
+	// And the field's end, as a height and never an alpha. Over the last metres before the
+	// reach a card shrinks into the turf, so the far edge of the field is a sward getting
+	// shorter into the painted grass tile under it rather than a line of cards. At MU's 8 m
+	// the reach sits past the far corners of the frame, so on flat ground the edge is never
+	// in the picture at all; where a bank lifts the far ground into view, it is a fade.
+	alive *= saturate((u_grassReach.x - distance) / max(u_grassReach.y, 0.1));
 
 	// The tufts. Two clump fields at two scales, because a meadow has two: a coarse one that
 	// says how well the grass is doing here -- sun, water, what has walked over it -- and a
@@ -241,9 +267,9 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	// The distance widening, which is the mesh-shader trick out of docs/grass.md: as cards are
 	// thinned with distance the survivors are widened to hold the coverage. On a painted card
 	// it also keeps the painted blades on it over a pixel wide, and a sub-pixel painted blade
-	// under 4x MSAA with no TAA is the one aliasing problem this field really has.
-	float distance = length(u_camPos.xyz - c.base);
-	c.width *= 1.0 + saturate((distance - 4.0) / 8.0) * u_grassCard.w;
+	// under 4x MSAA with no TAA is the one aliasing problem this field really has. It runs over
+	// the same band as the thinning, because it is the other half of the same mechanism.
+	c.width *= 1.0 + far * u_grassCard.w;
 	return c;
 }
 

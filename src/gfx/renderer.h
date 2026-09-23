@@ -102,6 +102,13 @@ struct GrassField {
     // (negative is sharper), and 1 when this draw is the meadow rather than the sward. The
     // sheet's own size rides per batch, above.
     float sheet[4] = {4.0f, 0.28f, -0.4f, 0.0f};
+    // How far the field reaches, measured from the EYE and worked out per card in the vertex
+    // shader: x is the metres past which no card stands, y the band before that over which a
+    // card shrinks into the turf, z where the thinning with distance begins and w where it
+    // has taken all it takes. From the eye, not the focus, because MU's camera is rigid to the
+    // player: a distance from the eye is a place on the SCREEN, so every band this describes
+    // sits still in the frame as the player walks and nothing crosses it. docs/grass.md.
+    float reach[4] = {26.0f, 4.0f, 9.0f, 24.0f};
 
     // --- the meadow -------------------------------------------------------------------
     // What a lawn has that a field has not: a seed head standing over the blades, a broad leaf
@@ -530,6 +537,7 @@ private:
     bgfx::UniformHandle uGrassVary_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGrassSheet_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGrassSize_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassReach_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAlbedo2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sOrm2_ = BGFX_INVALID_HANDLE;
