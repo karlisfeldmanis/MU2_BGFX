@@ -16,6 +16,9 @@ struct BudgetOverride {
 struct Args {
     int width = 1920;
     int height = 1080;
+    // The whole display, at its own mode, and --width/--height ignored. A measurement is
+    // taken windowed at 1080p; this is for playing it.
+    bool fullscreen = false;
     bool vsync = false;  // off for every measurement; see docs/budget.md
 
     // The review loop.

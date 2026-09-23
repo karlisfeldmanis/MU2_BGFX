@@ -24,6 +24,7 @@ bool Application::boot() {
     gfx::WindowDesc desc;
     desc.width = args_.width;
     desc.height = args_.height;
+    desc.fullscreen = args_.fullscreen;
     desc.vsync = args_.vsync;
     if (!window_.open(desc)) return false;
 

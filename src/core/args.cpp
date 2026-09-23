@@ -24,6 +24,8 @@ void printUsage() {
     logf(
         "mu2 [options]\n"
         "  --width N --height N      backbuffer size (default 1920x1080)\n"
+        "  --fullscreen              the whole display at its own mode; --width/--height are "
+        "ignored\n"
         "  --vsync                   cap to the display; off by default so a number is a number\n"
         "  --frames N                quit after N frames\n"
         "  --repeat N                measure N segments of --frames, loading the world once\n"
@@ -128,6 +130,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.width = std::atoi(v);
         } else if (!std::strcmp(s, "--height")) {
             if (const char* v = next(s)) a.height = std::atoi(v);
+        } else if (!std::strcmp(s, "--fullscreen")) {
+            a.fullscreen = true;
         } else if (!std::strcmp(s, "--no-figures")) {
             a.figuresOn = false;
         } else if (!std::strcmp(s, "--no-lamps")) {

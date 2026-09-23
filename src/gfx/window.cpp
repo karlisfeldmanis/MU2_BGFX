@@ -33,7 +33,23 @@ bool Window::open(const WindowDesc& desc) {
     }
     // bgfx makes the Metal layer; GLFW must not make a GL context beside it.
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    handle_ = glfwCreateWindow(desc.width, desc.height, desc.title, nullptr, nullptr);
+    // Fullscreen takes the display at the mode it is already in -- no mode switch, so no black
+    // flash and no display left in another resolution if the run dies. On this Mac that is
+    // 2560x1440. The size asked for on the command line is not used then: the display's.
+    GLFWmonitor* monitor = nullptr;
+    int width = desc.width, height = desc.height;
+    if (desc.fullscreen) {
+        monitor = glfwGetPrimaryMonitor();
+        if (const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr) {
+            width = mode->width;
+            height = mode->height;
+            glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        } else {
+            core::logError("no display to go fullscreen on; staying in a window");
+            monitor = nullptr;
+        }
+    }
+    handle_ = glfwCreateWindow(width, height, desc.title, monitor, nullptr);
     if (!handle_) {
         core::logError("no window");
         return false;

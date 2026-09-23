@@ -13,6 +13,8 @@ namespace mu::gfx {
 struct WindowDesc {
     int width = 1920;
     int height = 1080;
+    // The window takes the display and its current mode, and width/height are not asked for.
+    bool fullscreen = false;
     bool vsync = false;
     const char* title = "MU2";
 };
