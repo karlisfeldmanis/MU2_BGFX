@@ -156,6 +156,19 @@ EFFECTS = {
     "bag_slot_boots": "interface/win_slot_boots.png",
     "bag_slot_amulet": "interface/win_slot_amulet.png",
     "bag_slot_ring": "interface/win_slot_ring.png",
+    # And the same shapes alone, as white masks cut out of those plates by slot_ghosts.py,
+    # which is what the flat skin lays in an empty cell instead of the plate.
+    "bag_ghost_pet": "interface/win_ghost_pet.png",
+    "bag_ghost_helm": "interface/win_ghost_helm.png",
+    "bag_ghost_wings": "interface/win_ghost_wings.png",
+    "bag_ghost_weapon_left": "interface/win_ghost_weapon_left.png",
+    "bag_ghost_weapon_right": "interface/win_ghost_weapon_right.png",
+    "bag_ghost_armour": "interface/win_ghost_armour.png",
+    "bag_ghost_pants": "interface/win_ghost_pants.png",
+    "bag_ghost_gloves": "interface/win_ghost_gloves.png",
+    "bag_ghost_boots": "interface/win_ghost_boots.png",
+    "bag_ghost_amulet": "interface/win_ghost_amulet.png",
+    "bag_ghost_ring": "interface/win_ghost_ring.png",
 
     # MU's system menu, the strip Escape brings up. CNewUIWindowMenu stitches it from three
     # pieces over the same message-box background the panels use: a 112x45 cap, as many

@@ -57,23 +57,37 @@ Box wellOf(const Box& slot, bool worn) {
     return worn ? Box{slot.x, slot.y, slot.w - 1.0f, slot.h - 1.0f} : slot;
 }
 
-// The ghost in an empty worn slot. MU names the art for the side of the SCREEN: the
+// The ghost in an empty worn slot: MU's own silhouette, cut out of its plate by
+// pipeline/slot_ghosts.py as a white mask. MU names the art for the side of the SCREEN: the
 // right-hand slot takes weapon(L). Bag.GhostFor.
 const char* ghostFor(int slot) {
     switch (slot) {
-        case sim::kPet: return "bag_slot_pet";
-        case sim::kHelm: return "bag_slot_helm";
-        case sim::kWings: return "bag_slot_wings";
-        case sim::kWeaponRight: return "bag_slot_weapon_left";
-        case sim::kWeaponLeft: return "bag_slot_weapon_right";
-        case sim::kArmour: return "bag_slot_armour";
-        case sim::kPants: return "bag_slot_pants";
-        case sim::kGloves: return "bag_slot_gloves";
-        case sim::kBoots: return "bag_slot_boots";
-        case sim::kAmulet: return "bag_slot_amulet";
-        default: return "bag_slot_ring";
+        case sim::kPet: return "bag_ghost_pet";
+        case sim::kHelm: return "bag_ghost_helm";
+        case sim::kWings: return "bag_ghost_wings";
+        case sim::kWeaponRight: return "bag_ghost_weapon_left";
+        case sim::kWeaponLeft: return "bag_ghost_weapon_right";
+        case sim::kArmour: return "bag_ghost_armour";
+        case sim::kPants: return "bag_ghost_pants";
+        case sim::kGloves: return "bag_ghost_gloves";
+        case sim::kBoots: return "bag_ghost_boots";
+        case sim::kAmulet: return "bag_ghost_amulet";
+        default: return "bag_ghost_ring";
     }
 }
+
+// Where a ghost stands in its cell: fitted to the cell less five units a side, at its own
+// aspect, centred. Every ghost then has the same air round it whatever its shape, and none
+// touches the cell's hairline.
+Box ghostBox(const Box& cell, const gfx::Art& art) {
+    const Box room = cell.grown(-5.0f);
+    const float s = std::min(room.w / art.width, room.h / art.height);
+    const float w = art.width * s, h = art.height * s;
+    return {room.x + (room.w - w) * 0.5f, room.y + (room.h - h) * 0.5f, w, h};
+}
+// Faint, and the window's own warm lettering rather than white: a ghost says what the slot is
+// for and must lose to any piece standing in the slot beside it.
+constexpr uint32_t kGhostInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.20f);
 
 // The Zen strip is drawn by `panel::zenFoot`, on the panel's shared foot rule.
 constexpr float kTipSize = 8.0f;
@@ -254,15 +268,12 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         if (bag[slot].empty()) {
             const gfx::Art& ghost = arts.get(ghostFor(slot));
             if (ghost.valid()) {
-                // **Tinted dark, not merely faded.** `bag_slot_*` is not a cutout: each one is a
-                // pale plate with the shape painted on it, cut for MU's leather. Drawn white at
-                // any alpha the plate itself survives and every empty slot reads as a light tile
-                // -- which is exactly what the first pass did, and what the wells are supposed to
-                // be the opposite of. The canvas multiplies the vertex colour through the
-                // texture, so a dark warm tint sinks the plate into the well and leaves the
-                // silhouette, which is darker in the art still, as the only thing that reads.
-                canvas_.image(ghost, panel::scaled(x, y, box.grown(-3.0f)),
-                              gfx::rgba(0.50f, 0.45f, 0.34f, 0.46f));
+                // **The shape alone, faint.** `bag_slot_*` was a plate -- leather, a gold rim, and
+                // the shape painted a little lighter on it -- and drawn over the flat skin at any
+                // tint it was a tile filling the cell. `bag_ghost_*` is that shape cut out as a
+                // mask, so the cell stays the cell and the silhouette is the only thing laid on
+                // it. The user, 2026-09-23: *"equipment slots could looks better"*.
+                canvas_.image(ghost, panel::scaled(x, y, ghostBox(box, ghost)), kGhostInk);
             }
         }
     }
