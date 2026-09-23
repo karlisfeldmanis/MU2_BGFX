@@ -10,8 +10,14 @@
 namespace mu::game {
 namespace {
 
-// MU2's Panel.Fit: a model fills 82% of its box along whichever side binds first.
-constexpr float kFill = 0.82f;
+// **The picture's margin inside its cell, in the window's own MU units, per side.**
+//
+// A padding and not a fraction, which is the change of 2026-09-23. MU2's `Panel.Fit` scaled a
+// model to 82% of its box along whichever side bound first, and a fraction of the box is a
+// different margin on every footprint: 1.8 units of air round a one-cell ring and 7.2 round a
+// four-cell staff. So the staff was drawn short of its own slot while the ring filled its own,
+// and a shelf of them never lined up. One number, the same air round everything.
+constexpr float kPadUnits = 1.8f;
 // Panel.Pose: a rest yaw of eight degrees on the vertical, and the hovered one turning at
 // RenderObjectScreen's `WorldTime * 0.45`, 0.45 degrees a millisecond.
 constexpr float kRestYaw = 8.0f * bx::kPi / 180.0f;
@@ -107,9 +113,24 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
             extent[0] = size[order[1]];
             extent[2] = size[order[2]];
         }
-        const float across = extent[0] > 0.001f ? one.box.w / extent[0] : 1e9f;
-        const float upward = extent[1] > 0.001f ? one.box.h / extent[1] : 1e9f;
-        float fit = std::min(across, upward) * kFill;
+        // **Fitted for the turn it is going to make, not for the pose it is in.** The picture
+        // under the pointer spins (`RenderObjectScreen`, and `Standing::spinning`), and a yaw
+        // takes the model's DEPTH across the screen: the widest a body of half-extents a by c
+        // can be at any yaw is `2 * hypot(a, c)`, which is the diagonal of its footprint. Fitting
+        // the resting width instead is what put the Sphinx Mask over both its neighbours the
+        // moment the pointer rested on it -- a helm is nearly as deep as it is wide, so a quarter
+        // turn made it half again as wide as the cell it was measured into.
+        //
+        // Measured for every picture and not only the spinning one, so that nothing changes size
+        // when the pointer arrives. A flat thing loses nothing by it -- a sword's depth is a few
+        // millimetres and its diagonal is its width -- and a deep thing is drawn at the size it
+        // can hold all the way round.
+        const float swept = std::sqrt(extent[0] * extent[0] + extent[2] * extent[2]);
+        const float roomW = std::max(1.0f, one.box.w - kPadUnits * 2.0f);
+        const float roomH = std::max(1.0f, one.box.h - kPadUnits * 2.0f);
+        const float across = swept > 0.001f ? roomW / swept : 1e9f;
+        const float upward = extent[1] > 0.001f ? roomH / extent[1] : 1e9f;
+        float fit = std::min(across, upward);
         if (!std::isfinite(fit) || fit <= 0.0f || fit > 1e8f) fit = 1.0f;
 
         const float yaw = kRestYaw + (one.spinning ? float(clock_) * kSpinPerSecond : 0.0f);
