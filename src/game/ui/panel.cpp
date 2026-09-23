@@ -69,10 +69,16 @@ Screen screenOf(float width, float height) {
 
 namespace {
 float s_scale = 2.0f;
+float s_unit = 2.0f;
 }
 
-void setScreen(float height) { s_scale = 2.0f * std::max(height, 540.0f) / 1080.0f; }
+void setScreen(float height) {
+    const float lines = std::max(height, 540.0f);
+    s_unit = 2.0f * lines / 1080.0f;
+    s_scale = kScreenShare * lines / kHeight;
+}
 float scale() { return s_scale; }
+float unit() { return s_unit; }
 
 float columnX(float screenWidth, int column) {
     const float k = scale();

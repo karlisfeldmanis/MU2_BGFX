@@ -60,15 +60,22 @@ struct Screen {
 };
 Screen screenOf(float width, float height);
 
-// The panels: MU's window at twice its size at 1080 lines, which keeps every number as the
-// original wrote it. MU2 fixes the two in viewport pixels; this scales it with the screen's
-// height instead, because this Mac's backbuffer is 1894 lines and a fixed two there draws the
-// window at 45% of the screen's height where MU2's 1080 drew it at 79%. A finding, recorded in
-// docs/sprints/07-the-windows.md; at 1080 it is MU2's number exactly.
+// The panels: a fixed share of the screen's height, whatever the screen is. MU2 fixed the scale
+// at two viewport pixels per unit, which on this Mac's 1894-line backbuffer drew the window at
+// 45% of the height where MU2's 1080 drew it at 79%; the first fix here scaled the two with the
+// height, so every screen got 79%. That is the size the user called too big on 2026-09-23. The
+// share below is the one number that sets it, and the panel's own 429 units divide into it: a
+// window is kScreenShare of the screen on a laptop and on a 4K panel alike.
+//
+// `unit()` is the OTHER scale, and the one MU2's two was: the interface's pixel, 2 at 1080 lines.
+// The pointer, the tips and the fight's figures are measured in it, so shrinking the windows
+// leaves the cursor and the damage numbers where they were.
 void setScreen(float height);
 float scale();
+float unit();
 constexpr float kWidth = 190.0f;
 constexpr float kHeight = 429.0f;
+constexpr float kScreenShare = 0.62f;
 constexpr float kRightMargin = 24.0f;
 // The air between two open windows. MU butts its columns flush, which worked while every window
 // was a slab of leather with its own carved border; two hairline-edged panels flush against each

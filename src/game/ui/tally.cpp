@@ -15,7 +15,7 @@ namespace mu::game {
 namespace {
 
 // ---- the ramp (design page 2026-09-23, concept B2, in the map name's face) -------------------
-// Sizes in interface units, which panel::scale() turns into pixels -- 2 at 1080 lines, so a
+// Sizes in interface units, which panel::unit() turns into pixels -- 2 at 1080 lines, so a
 // swing is 42 px there and the same fraction of the screen at any other height.
 //
 // A point smaller than the page drew them, because Cinzel is a Roman capital and not a
@@ -374,7 +374,7 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
                     float hudTop) {
     canvas_.clear();
     if (!bgfx::isValid(faceTexture_)) return;
-    const float unit = panel::scale();
+    const float unit = panel::unit();
 
     // A line of figures: the halo first, dropped a pixel, then the face over it.
     const auto writeIn = [&](const gfx::Face& face, bgfx::TextureHandle texture,

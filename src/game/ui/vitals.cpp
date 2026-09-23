@@ -24,7 +24,7 @@ constexpr float kTrack[4] = {66 / 255.0f, 63 / 255.0f, 60 / 255.0f, 1.0f};
 constexpr float kFill[4] = {150 / 255.0f, 34 / 255.0f, 32 / 255.0f, 1.0f};
 constexpr float kChip[4] = {212 / 255.0f, 158 / 255.0f, 146 / 255.0f, 165 / 255.0f};
 
-// ---- geometry, in interface units (panel::scale() pixels each) --------------------------
+// ---- geometry, in interface units (panel::unit() pixels each) --------------------------
 constexpr float kBarWide = 78.0f;
 constexpr float kBarTall = 7.5f;  // set by the figures printed inside it
 constexpr float kEdge = 1.0f;
@@ -247,7 +247,7 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, bool pane
     }
 
     Readout now;
-    now.unit = panel::scale();
+    now.unit = panel::unit();
     float x = 0.0f, y = 0.0f;
     if (on_ != 0 && play.crownOf(on_, viewProj, width, height, &x, &y)) {
         now.on = on_;

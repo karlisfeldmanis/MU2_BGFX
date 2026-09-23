@@ -39,10 +39,10 @@ void Cursor::update(float seconds, float x, float y, bool onMonster, bool onLoot
     if (!art.valid()) return;
     // A departure from MU2, which drew this at the art's own 32 pixels whatever the window's
     // size. This project scales every other piece of interface art with the screen
-    // (panel::scale(), 2 at 1080 lines), and a cursor that stayed fixed while the HUD and the
+    // (panel::unit(), 2 at 1080 lines), and a cursor that stayed fixed while the HUD and the
     // panels grew around it would look wrong on anything else -- so it is scaled the same way,
     // 1 at 1080p and proportional either side of it.
-    const float factor = panel::scale() * 0.5f;
+    const float factor = panel::unit() * 0.5f;
     const float size = kSize * factor;
     const gfx::Box to{x - kTipX * factor, y - kTipY * factor, size, size};
 

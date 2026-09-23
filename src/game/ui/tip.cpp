@@ -157,7 +157,9 @@ float middle(const gfx::Face& face, float top, float tall, float size) {
     return top + (tall - face.ascent(size) - face.descent(size)) * 0.5f + face.ascent(size);
 }
 
-float unit() { return panel::scale() * 0.5f; }
+// The interface's own pixel, not the windows' scale: a tip stands over the world as often
+// as over a window, and it kept its size when the windows were brought in on 2026-09-23.
+float unit() { return panel::unit() * 0.5f; }
 
 namespace {
 

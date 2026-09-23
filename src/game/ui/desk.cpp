@@ -711,7 +711,7 @@ void Desk::labelGround(const Play& play, int width, int height) {
     const content::Tables& tables = *play.realm().tables();
     const gfx::Face& face = ground_.face();
     // The tooltip's size: MU's labels are its small type, and the two read as one family.
-    const float size = 8.0f * panel::scale();
+    const float size = 8.0f * panel::unit();
     for (const Play::OnScreen& at : onScreen_) {
         const sim::Lying* one = nullptr;
         for (const sim::Lying& l : play.realm().lying()) {
@@ -756,8 +756,8 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (trading_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     // The potion boxes are always on screen, and at rest their stage costs nothing.
     quickStagePicture_.render(renderer, hud_.pixelsPerUnit(), seconds);
-    // The tooltip's picture, at the windows' own scale: nothing stands on it unless a tip is up.
-    tipStagePicture_.render(renderer, panel::scale(), seconds);
+    // The tooltip's picture, at the tip's own scale -- the interface pixel, not the windows'.
+    tipStagePicture_.render(renderer, panel::unit(), seconds);
 }
 
 void Desk::submit(bgfx::ViewId view, int width, int height) {
