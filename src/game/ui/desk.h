@@ -95,8 +95,17 @@ public:
     // back on the next frame what he took off before he quit -- see `autoBound_`.
     int32_t bound(int key) const { return key >= 0 && key < Hud::kSkillKeys ? bound_[key] : 0; }
     void restoreBar(const int32_t* numbers, int count) {
-        for (int key = 0; key < Hud::kSkillKeys && key < count; ++key) bound_[key] = numbers[key];
-        barRestored_ = true;
+        bool any = false;
+        for (int key = 0; key < Hud::kSkillKeys && key < count; ++key) {
+            bound_[key] = numbers[key];
+            any |= numbers[key] != 0;
+        }
+        // An EMPTY bar is not an arrangement, it is a file that has none: every save written
+        // before the keys were saved at all reads as four noughts, and taking that for "he
+        // cleared his bar" left those characters with a bar that could never fill itself again.
+        // A player who really did empty all four gets the convenience back on his next login,
+        // which is the harmless half of the two mistakes.
+        barRestored_ = any;
     }
     // The world's name comes up over the scene after `delay` seconds: see game/arrival.h.
     void arrive(const std::string& world, float delay) { arrival_.announce(world, delay); }

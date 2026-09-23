@@ -393,7 +393,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         fan_.push_back(cell);
     }
     const bool fanOpen = !fan_.empty() &&
-                         (fanLatched_ || onGold || hud_.coversFan(pointer.x, pointer.y) ||
+                         (fanLatched_ || onGold || hud_.nearFan(pointer.x, pointer.y) ||
                           carrying_ != 0);
     hud_.setFan(fanOpen, fan_, carrying_);
     // And the card for the entry under the pointer: the same card the keys raise, because it is

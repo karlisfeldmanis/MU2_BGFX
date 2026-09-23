@@ -165,6 +165,13 @@ public:
     int fanAt(float x, float y) const;
     // Whether a point is over the open list, so a click there is the interface's.
     bool coversFan(float x, float y) const;
+    // And whether it is anywhere the list should STAY open for: the list, the gold box it opens
+    // from, and the air between them. They do not touch -- the list floats clear of the plate --
+    // so a pointer on its way from one to the other crosses a strip that is neither, and the
+    // list shut in that strip before it could be reached. The user, 2026-09-23: *"when I hover
+    // the skills list I can't reach them because they hide when I leave the right-click
+    // button."*
+    bool nearFan(float x, float y) const;
 
     void open(const gfx::Interface& interface, panel::Arts* arts);
     void follow(const sim::Body* hero);

@@ -390,6 +390,18 @@ bool Hud::coversFan(float x, float y) const {
     return fanOpen_ && !fan_.empty() && listBox(screen_, fan_.size(), width_).has(x, y);
 }
 
+bool Hud::nearFan(float x, float y) const {
+    if (!fanOpen_ || fan_.empty()) return false;
+    // One box from the top of the list down to the foot of the row it fills, as wide as the
+    // wider of the two. Geometry and not a timer: a grace period would be a second answer to
+    // "is it open" that the drawing and the pointer could disagree about.
+    const Box list = listBox(screen_, fan_.size(), width_);
+    const Box gold = plate(screen_, boxPx(kGoldBox));
+    const float left = std::min(list.x, gold.x);
+    const float right = std::max(list.right(), gold.right());
+    return Box{left, list.y, right - left, gold.bottom() - list.y}.has(x, y);
+}
+
 int Hud::skillSlotAt(float x, float y) const {
     for (int i = 0; i < kSkillKeys; ++i) {
         if (plate(screen_, boxPx(i)).has(x, y)) return i;
