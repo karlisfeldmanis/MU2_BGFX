@@ -152,6 +152,20 @@ public:
     // same Talk request a click on him raises.
     void earn(long long zen) { realm_.earn(zen); }
     bool talkTo(const std::string& name);
+    // ---- what he gained this frame (sprint 12) --------------------------------------------
+    //
+    // Experience, Zen and a potion are HIS and belong to no body on the map, so they are kept
+    // apart from the blows and drawn in their own lane over the HUD -- the design page of
+    // 2026-09-23, concept B. The list holds what this frame's ticks said and is cleared at the
+    // top of every update, so whoever draws it runs after Play and reads it once. Nobody
+    // reading it is a run with no window, which is the headless case and costs nothing.
+    struct Gain {
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana };
+        Kind kind = Kind::Experience;
+        int64_t value = 0;
+    };
+    const std::vector<Gain>& gains() const { return gains_; }
+
     const sim::Findings& findings() const { return findings_; }
     int pointedColumn() const { return pointedColumn_; }
     int pointedRow() const { return pointedRow_; }
@@ -364,6 +378,12 @@ private:
         // which is what "gated on the clip still being the swing" means. A step cancels a
         // swing here, so a cue really does get dropped in ordinary play.
         uint32_t swingToken = 0;
+        // What threw the swing this token belongs to: the `Swung`'s own skill number, or 0 for
+        // the weapon. Kept here because a player's blow is said in two halves -- the swing on
+        // one tick and the damage on another -- and the figure that goes up at the landing has
+        // to know which step of the ramp it is. An area skill says one `Swung` and a `Hit` per
+        // body, so one field answers for all of them.
+        int32_t swingSkill = 0;
     };
 
     Drawn* drawnOf(uint32_t id);
@@ -473,6 +493,8 @@ private:
     // The cues that came due this frame. A member and not a local so that it keeps its
     // capacity: a fight must not allocate to show itself.
     std::vector<Cue> due_;
+    // And what he gained on this frame's ticks -- see gains(). A member for the same reason.
+    std::vector<Gain> gains_;
 
     std::vector<Drawn> drawn_;
     // The town's people: those the table names a figure for, where the tables say, facing

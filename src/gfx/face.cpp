@@ -22,6 +22,10 @@ constexpr const char* kFacePath = MU2_ROOT_DIR "/extern/OpenSans-SemiBold.ttf";
 // The arrival's map name: Cinzel Medium, Google Fonts' static instance, which is what the
 // design page the user chose on 2026-09-22 was drawn in. bootstrap.sh fetches it.
 constexpr const char* kTitleFacePath = MU2_ROOT_DIR "/extern/Cinzel-Medium.ttf";
+// The damage figures: Barlow Semi Condensed Bold, the face the design page of 2026-09-23 was
+// drawn in (concept B2). Chosen for its width and not its style -- a Cyclone puts five figures
+// across one tile and a normal-width face has them touching. bootstrap.sh fetches it.
+constexpr const char* kFigureFacePath = MU2_ROOT_DIR "/extern/BarlowSemiCondensed-Bold.ttf";
 
 // The rows at the bottom kept out of the packing, for the solid texel a panel draws with. A
 // whole band rather than one texel because the face is sampled bilinear, and a solid texel
@@ -32,6 +36,7 @@ constexpr int kSolidRows = 12;
 
 const char* facePath() { return kFacePath; }
 const char* titleFacePath() { return kTitleFacePath; }
+const char* figureFacePath() { return kFigureFacePath; }
 
 bool Face::bake(const std::string& path, float pixels, int size, int padding, int oversample,
                 int margin) {

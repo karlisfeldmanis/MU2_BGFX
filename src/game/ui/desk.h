@@ -19,6 +19,7 @@
 #include "game/item_models.h"
 #include "game/ui/items_stage.h"
 #include "game/ui/shelf.h"
+#include "game/ui/tally.h"
 #include "game/ui/vitals.h"
 #include "game/ui/panel.h"
 #include "gfx/interface.h"
@@ -119,6 +120,7 @@ private:
     Shelf shelf_;
     Cursor cursor_;
     Vitals vitals_;
+    Tally tally_;
     Arrival arrival_;
     ItemModels* models_ = nullptr;
     ItemStage bagStagePicture_, shelfStagePicture_, quickStagePicture_, tipStagePicture_;

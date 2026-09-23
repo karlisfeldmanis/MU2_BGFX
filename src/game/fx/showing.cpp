@@ -33,37 +33,22 @@ constexpr float kDamping = 0.95f;        // per reference frame
 // Spark02.jpg is four pixels square. The splash is the sheet's own quadrant, 64 of 128.
 constexpr float kSplash = 50.0f;         // MU units across, at a man's size
 
-// --- the number, from Points.cs and ZzzEffectPoint.cpp ------------------------------------
-constexpr float kNumberHeight = 140.0f;  // above the thing that was hit, and FLAT: a spider
-                                         // and a giant put their numbers at the same height,
-                                         // because the client adds a constant to the origin
-constexpr float kRiseStart = 10.0f;      // MU units a reference frame
-constexpr float kRiseSlowing = 0.3f;     // a frame, so it dies after 33 1/3 of them
-constexpr float kAlphaOfRise = 0.4f;
-constexpr float kPlainScale = 15.0f;
-// A digit is a square of the scale and the next is placed Scale / 0.7071 / 2 along the
-// camera's horizontal, so digits overlap by nearly a third. MU's own spacing, and it is not
-// a mistake -- it is what makes a three-digit number read as one object.
-constexpr float kDigitSpacing = 0.7071f;
-// The `Miss` sprite is a fixed 45 by 20 with no centring and no scaling, so a miss is LARGER
-// than a plain hit and never grows or shrinks. MU passes -1 rather than a zero.
-constexpr float kMissWidth = 45.0f;
-constexpr float kMissHeight = 20.0f;
-// Points.cs's `Add`: (colour, scale) by `missed` and `onHero`. Only the plain-hit and miss
-// branches are reachable today -- Critical and Excellent wait on a roll this content version
-// never makes, and Poison has no spell to throw it. Those stay unported rather than drawn from
-// a flag nothing ever sets.
-constexpr float kMissOnHero[3] = {1.0f, 1.0f, 1.0f};
-constexpr float kMissOnOther[3] = {0.5f, 0.5f, 0.5f};
-constexpr float kHitOnHero[3] = {1.0f, 0.0f, 0.0f};
-constexpr float kHitOnOther[3] = {1.0f, 0.6f, 0.0f};
-
-// The digit sheet, measured off Data/Interface/FontTest.OZT rather than assumed: 256x32, ten
-// 16-pixel cells along the top, and `Miss` on a second row. Row 18 is blank across the whole
-// sheet, which is what separates the two bands.
-constexpr float kSheetW = 256.0f, kSheetH = 32.0f;
-constexpr float kDigitW = 16.0f, kDigitBand = 18.0f;
-constexpr float kMissU1 = 34.0f;  // the word ends at x 32; 34 clears it
+// --- the figure ---------------------------------------------------------------------------
+// Where it hangs, which is the one thing MU's own arrangement kept: a constant over the
+// target's FEET, so a spider's number and a giant's land at the same height and the eye can
+// follow a fight without reading each body's size. ZzzEffectPoint.cpp's own 140 units.
+//
+// Everything else about a figure -- how big it is, how it moves, how long it lasts -- belongs
+// to the style and lives in game/ui/tally.cpp. Here it is only anchored and aged.
+constexpr float kNumberHeight = 140.0f;
+constexpr float kFigureLife = 0.95f;      // the design page's own, at 1080
+constexpr float kCriticalLife = 1.05f;
+// A figure going up over a body another figure has just gone up over is put in the row above
+// it. Only just: after this long the first has risen clear on its own and the second belongs
+// where the blow was.
+constexpr float kStackWindow = 0.30f;   // seconds
+constexpr float kStackNear = 0.60f;     // metres between the two anchors
+constexpr int kStackHighest = 4;        // a Cyclone in a nest, and no higher
 
 }  // namespace
 
@@ -99,24 +84,23 @@ bool Showing::open(const std::string& assetDir, content::Textures& textures) {
         return textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
     };
     blood_ = take("blood");
-    digits_ = take("damage_digits");
 
     // Reserved once and never grown, which is sprint 6's proving sentence. Ten particles a
     // blow and a fight of thirty monsters cannot approach these.
     cues_.reserve(64);
     particles_.reserve(512);
-    numbers_.reserve(64);
+    figures_.reserve(64);
     open_ = true;
-    core::logf("showing: %zu effect sheets, %zu sound events; blood and digits %s",
+    core::logf("showing: %zu effect sheets, %zu sound events; blood %s",
                table_.effects.size(), table_.events.size(),
-               (bgfx::isValid(blood_) && bgfx::isValid(digits_)) ? "in hand" : "INCOMPLETE");
+               bgfx::isValid(blood_) ? "in hand" : "MISSING");
     return true;
 }
 
 void Showing::shutdown() {
     cues_.clear();
     particles_.clear();
-    numbers_.clear();
+    figures_.clear();
     open_ = false;
 }
 
@@ -153,24 +137,48 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
     // Giant at three, and every length in the blood grew with it.
     const float like = (height > 0.01f && man > 0.01f) ? height / man : 1.0f;
 
-    // The number first, because it goes up whether or not the blow landed: a miss is a
-    // sprite of its own and not a zero.
-    if (numbers_.size() < numbers_.capacity()) {
-        Number number;
-        // FLAT, not scaled by `like`. The client adds a constant to the target's origin and
-        // nothing scales it by the animal, and it is not an oversight -- the number sits at a
-        // readable height above the TILE, so a spider's and a giant's land together.
-        number.position[0] = feet[0];
-        number.position[1] = feet[1] + kNumberHeight / kPerMetre;
-        number.position[2] = feet[2];
-        number.value = cue.damage;
-        number.miss = cue.miss;
-        number.scale = kPlainScale;
-        const float* picked = cue.miss ? (onHero ? kMissOnHero : kMissOnOther)
-                                        : (onHero ? kHitOnHero : kHitOnOther);
-        for (int c = 0; c < 3; ++c) number.colour[c] = picked[c];
-        numbers_.push_back(number);
-    }
+    // The figure first, because it goes up whether or not the blow landed: a miss is a word
+    // and not a zero.
+    //
+    // Which step of the ramp, in the order the design page argues: what landed on HIM is red
+    // whatever threw it -- his own pain is one reading and not four -- and only his own blows
+    // are told apart by what threw them.
+    const auto markOf = [&]() {
+        if (cue.miss) return Mark::Miss;
+        if (onHero) return Mark::Taken;
+        if (cue.critical) return Mark::Critical;
+        return cue.skill != 0 ? Mark::Skill : Mark::Swing;
+    };
+    const auto raise = [&](Mark mark, int32_t value) {
+        if (figures_.size() >= figures_.capacity()) return;
+        Figure figure;
+        // FLAT, not scaled by `like`: see kNumberHeight.
+        figure.world[0] = feet[0];
+        figure.world[1] = feet[1] + kNumberHeight / kPerMetre;
+        figure.world[2] = feet[2];
+        figure.value = value;
+        figure.mark = mark;
+        figure.onHero = onHero;
+        figure.life = mark == Mark::Critical ? kCriticalLife : kFigureLife;
+        // Which row over the body: how many are already standing there, just put up.
+        int stacked = 0;
+        for (const Figure& other : figures_) {
+            if (other.age > kStackWindow) continue;
+            const float dx = other.world[0] - figure.world[0];
+            const float dy = other.world[1] - figure.world[1];
+            const float dz = other.world[2] - figure.world[2];
+            if (dx * dx + dy * dy + dz * dz < kStackNear * kStackNear) ++stacked;
+        }
+        figure.slot = uint8_t(std::min(stacked, kStackHighest));
+        // The lean, so two blows a fifth of a second apart are not one figure drawn twice.
+        // Drawn from the picture's own xorshift and never from the sim's dice.
+        figure.lean = unit() * 2.0f - 1.0f;
+        figures_.push_back(figure);
+    };
+    raise(markOf(), cue.damage);
+    // And what his shield ate of it, small and blue beside the red. Only ever his: nothing
+    // else in 0.75 carries a shield pool.
+    if (!cue.miss && cue.absorbed > 0) raise(Mark::Absorbed, cue.absorbed);
 
     if (cue.miss) return;  // nothing bleeds from a blow that did not land
 
@@ -222,23 +230,21 @@ void Showing::update(float seconds) {
         ++i;
     }
 
-    for (size_t i = 0; i < numbers_.size();) {
-        Number& one = numbers_[i];
-        // A speed takes one factor of the reference rate and an acceleration two. Here the
-        // rise is carried in MU's own units-a-frame, so it is decremented per frame and the
-        // position takes the extra factor.
-        one.position[1] += one.rise * frames / kPerMetre;
-        one.rise -= kRiseSlowing * frames;
-        if (one.rise <= 0.0f) {
-            numbers_[i] = numbers_.back();
-            numbers_.pop_back();
+    // A figure does not move in the world at all: it hangs where the blow landed and does its
+    // rising in screen pixels, which is what keeps it the same size and the same speed whether
+    // the camera is over the body or across the field. Here it only gets older.
+    for (size_t i = 0; i < figures_.size();) {
+        figures_[i].age += seconds;
+        if (figures_[i].age >= figures_[i].life) {
+            figures_[i] = figures_.back();
+            figures_.pop_back();
             continue;
         }
         ++i;
     }
 }
 
-void Showing::gather(gfx::Effects& effects, const float right[3]) const {
+void Showing::gather(gfx::Effects& effects) const {
     if (bgfx::isValid(blood_)) {
         for (const Particle& one : particles_) {
             gfx::Sprite sprite;
@@ -261,54 +267,6 @@ void Showing::gather(gfx::Effects& effects, const float right[3]) const {
             // the light taken off, not a colour put on. See Wounds.cs, which made this
             // departure first and argues it at length.
             sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = sprite.colour[3] = 1.0f;
-            sprite.blend = gfx::Blend::Alpha;
-            effects.add(sprite);
-        }
-    }
-
-    if (!bgfx::isValid(digits_)) return;
-    for (const Number& one : numbers_) {
-        // alpha is the falling rise x 0.4, clamped -- so it holds full opacity for about a
-        // second and fades over the last third of one, rather than fading the whole way.
-        float alpha = one.rise * kAlphaOfRise;
-        if (alpha > 1.0f) alpha = 1.0f;
-
-        if (one.miss) {
-            gfx::Sprite sprite;
-            for (int c = 0; c < 3; ++c) sprite.position[c] = one.position[c];
-            sprite.halfWidth = kMissWidth / kPerMetre * 0.5f;
-            sprite.halfHeight = kMissHeight / kPerMetre * 0.5f;
-            sprite.sheet = digits_;
-            sprite.u0 = 0.0f;
-            sprite.u1 = kMissU1 / kSheetW;
-            sprite.v0 = kDigitBand / kSheetH;
-            sprite.v1 = 1.0f;
-            for (int c = 0; c < 3; ++c) sprite.colour[c] = one.colour[c];
-            sprite.colour[3] = alpha;
-            sprite.blend = gfx::Blend::Alpha;
-            effects.add(sprite);
-            continue;
-        }
-
-        // The digits, most significant first, laid along the camera's own horizontal.
-        char text[16];
-        const int written = std::snprintf(text, sizeof(text), "%d", one.value < 0 ? 0 : one.value);
-        const float half = one.scale / kPerMetre * 0.5f;
-        const float step = one.scale / kDigitSpacing / 2.0f / kPerMetre;
-        for (int d = 0; d < written; ++d) {
-            const char c = text[d];
-            if (c < '0' || c > '9') continue;
-            gfx::Sprite sprite;
-            const float along = (float(d) - float(written - 1) * 0.5f) * step;
-            for (int k = 0; k < 3; ++k) sprite.position[k] = one.position[k] + right[k] * along;
-            sprite.halfWidth = sprite.halfHeight = half;
-            sprite.sheet = digits_;
-            sprite.u0 = float(c - '0') * kDigitW / kSheetW;
-            sprite.u1 = sprite.u0 + kDigitW / kSheetW;
-            sprite.v0 = 0.0f;
-            sprite.v1 = kDigitBand / kSheetH;
-            for (int c = 0; c < 3; ++c) sprite.colour[c] = one.colour[c];
-            sprite.colour[3] = alpha;
             sprite.blend = gfx::Blend::Alpha;
             effects.add(sprite);
         }

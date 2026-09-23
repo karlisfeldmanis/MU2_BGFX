@@ -51,6 +51,16 @@ if [ ! -f extern/Cinzel-Medium.ttf ]; then
   curl -sSL -o extern/Cinzel-Medium.ttf $CINZEL_URL
   echo "$CINZEL_SHA256  extern/Cinzel-Medium.ttf" | shasum -a 256 -c - || { rm -f extern/Cinzel-Medium.ttf; exit 1; }
 fi
+# The fight's figures, Barlow Semi Condensed Bold (SIL OFL): the face the chosen design page was
+# drawn in, and narrow for the reason the page gives -- an area skill puts five numbers across one
+# tile and a normal-width face has them touching. Google Fonts' static 700 instance; the v16 path
+# is versioned by Google and the checksum is what makes it a pin.
+BARLOW_URL=https://fonts.gstatic.com/s/barlowsemicondensed/v16/wlpigxjLBV1hqnzfr-F8sEYMB0Yybp0mudRfw6-PAA.ttf
+BARLOW_SHA256=6098b66ce7d608dcea8c6a2eeacfdeeee5416e0e0c12a2318595d3dd8c5babef
+if [ ! -f extern/BarlowSemiCondensed-Bold.ttf ]; then
+  curl -sSL -o extern/BarlowSemiCondensed-Bold.ttf $BARLOW_URL
+  echo "$BARLOW_SHA256  extern/BarlowSemiCondensed-Bold.ttf" | shasum -a 256 -c - || { rm -f extern/BarlowSemiCondensed-Bold.ttf; exit 1; }
+fi
 
 # glfw is the one PLAN.md point 12 names that is NOT pinned here, and saying so is better
 # than the file implying otherwise: it comes from Homebrew, as a built dylib, and pinning it

@@ -38,6 +38,9 @@ void Play::remember() {
 
 void Play::update(double seconds) {
     if (!isOpen()) return;
+    // This frame's gains, and only this frame's: whoever draws the lane runs after this and
+    // reads them once. See Play::gains.
+    gains_.clear();
     accumulator_ += seconds;
     int stepped = 0;
     const int64_t started = bx::getHPCounter();
@@ -127,6 +130,19 @@ void Play::update(double seconds) {
             // missed it, and that is kept. A use, a purchase and a sale are heard off their
             // own answers (useItem, buy, sell): they are asked between ticks, and the next
             // tick clears what they said before this loop could read it.
+            // What the lane over the HUD says: his experience, his Zen and his potion. A gain
+            // is his and belongs to no body on the map, which is why it is collected apart
+            // from the cues and never put over a monster's head.
+            if (happening.who == heroId) {
+                if (happening.what == sim::What::Gained) {
+                    gains_.push_back({Gain::Kind::Experience, happening.a});
+                } else if (happening.what == sim::What::Picked && happening.b < 0) {
+                    gains_.push_back({Gain::Kind::Zen, happening.c});
+                } else if (happening.what == sim::What::Drank) {
+                    gains_.push_back({happening.b ? Gain::Kind::Mana : Gain::Kind::Health,
+                                      happening.a});
+                }
+            }
             if (happening.who == heroId) {
                 if (happening.what == sim::What::Picked) {
                     int sound = heard_.take;
@@ -207,10 +223,23 @@ void Play::update(double seconds) {
                 happening.what == sim::What::Swung) {
                 const bool begun = happening.what == sim::What::Swung;
                 int32_t taken = 0;
+                // What a shield ate of the blow, which is only ever the hero's: the realm puts
+                // nine tenths of the damage onto the pool and overflows the rest into health
+                // (Realm::strikeAt), so the difference between what was rolled and what came
+                // off health IS the shield's share. Worked out here rather than said by the sim
+                // because here is where the health before the blow is still known.
+                //
+                // Not on a killing blow: health floors at nought there, so the difference is
+                // overkill rather than absorption, and a man dying reads his own red and
+                // nothing else.
+                int32_t absorbed = 0;
                 if (happening.what == sim::What::Hit) {
                     if (Drawn* struck = drawnOf(happening.whom)) {
                         taken = std::max(0, struck->health - happening.c);
                         struck->health = happening.c;
+                        if (happening.whom == realm_.hero().id && happening.c > 0) {
+                            absorbed = std::max(0, happening.a - taken);
+                        }
                     }
                 }
                 if (Drawn* swinger = drawnOf(happening.who)) {
@@ -297,6 +326,9 @@ void Play::update(double seconds) {
                         // And a skill's clip is protected from the step that may follow it.
                         if (cast) swinger->casting = swinger->swinging;
 
+                        // What this swing was thrown with, kept until the blow settles -- for a
+                        // player that is a tick or two later, in the branch below.
+                        swinger->swingSkill = cast ? swinger->castSkill : 0;
                         // Spent: the clip is playing and the next blow is the weapon's again.
                         swinger->castSkill = 0;
 
@@ -306,6 +338,9 @@ void Play::update(double seconds) {
                         cue.damage = happening.a;
                         cue.miss = happening.what == sim::What::Missed;
                         cue.taken = taken;
+                        cue.absorbed = absorbed;
+                        cue.skill = swinger->swingSkill;
+                        cue.critical = happening.critical;
                         // A Lich (attackSkill == 2) throws a meteor: the cue's fuse is
                         // the FALL, not a key in the clip. The meteor is cast here and
                         // the blow lands when it hits the ground (see meteor update).
@@ -364,6 +399,11 @@ void Play::update(double seconds) {
                         cue.damage = happening.a;
                         cue.miss = happening.what == sim::What::Missed;
                         cue.taken = taken;
+                        cue.absorbed = absorbed;
+                        // The swing's own skill, remembered when it began: this is the settling
+                        // half, and the cast that named it was two ticks ago.
+                        cue.skill = swinger->swingSkill;
+                        cue.critical = happening.critical;
                         cue.fuse = 0.0f;
                         cue.token = swinger->swingToken;
                         showing_.schedule(cue);

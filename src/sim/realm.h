@@ -97,6 +97,11 @@ struct Happening {
     uint32_t who = 0;
     uint32_t whom = 0;
     int32_t a = 0, b = 0, c = 0;
+    // A `Hit`'s own bit, and nothing else reads it: the blow was the top of its band.
+    // Unreachable in this content version -- 0.75 grants criticalChance from the luck option
+    // alone and nothing rolls one yet -- and said anyway, so the top step of the drawing's
+    // ramp is wired the day an item does. It takes no draw, so no seeded log moves.
+    bool critical = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;

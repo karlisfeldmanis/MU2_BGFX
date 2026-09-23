@@ -184,6 +184,9 @@ public:
     void useStage(Stage* stage) { stage_ = stage; }
     // Pixels per MU unit the plate is drawn at, which is what the stage renders at.
     float pixelsPerUnit() const { return screen_.scale; }
+    // The top edge of the plate in backbuffer pixels: what the gain lane stacks up from, so it
+    // sits over the HUD at every window size without a second copy of the plate's arithmetic.
+    float plateTop() const;
 
     // A frame: slides the hairline, answers the pointer, and rebuilds the canvas only if what
     // it draws moved. Returns the button pressed this frame, if any, through `pressed`.

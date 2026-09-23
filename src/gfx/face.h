@@ -100,5 +100,8 @@ private:
 const char* facePath();
 // The arrival's title face, Cinzel Medium, from the same place.
 const char* titleFacePath();
+// The fight's figures, Barlow Semi Condensed Bold: narrow, because an area skill puts five
+// numbers across one tile. Also from extern/, also pinned.
+const char* figureFacePath();
 
 }  // namespace mu::gfx

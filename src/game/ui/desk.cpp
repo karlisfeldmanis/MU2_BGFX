@@ -56,6 +56,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     shelf_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
+    tally_.open(interface_);
     arrival_.open(interface_);
     interface_.adopt(ground_);
     return true;
@@ -67,6 +68,7 @@ void Desk::shutdown() {
     quickStagePicture_.shutdown();
     tipStagePicture_.shutdown();
     arrival_.shutdown();
+    tally_.shutdown();
     interface_.shutdown();
 }
 
@@ -730,9 +732,13 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
                     int height) {
     if (!play.isOpen()) {
         vitals_.dismiss();
+        tally_.dismiss();
         return;
     }
     vitals_.update(seconds, play, play.pointedAt(), takesPointer_, viewProj, width, height);
+    // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
+    // on world points and the lane on the HUD's top edge.
+    tally_.update(seconds, play, viewProj, width, height, hud_.plateTop());
 }
 
 void Desk::photograph(gfx::Renderer& renderer, double seconds) {
@@ -752,6 +758,9 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(ground_);
     // Over the world's labels and under every window: it is a reading lying on the scene.
     if (vitals_.showing()) interface_.add(vitals_.canvas());
+    // The blows' figures over the bar, because a number is the thing being read at that
+    // instant and the bar is the state behind it -- and still under every window.
+    if (tally_.showing()) interface_.add(tally_.canvas());
     // The map's name, a reading on the scene as well, and under every window.
     if (arrival_.showing()) interface_.add(arrival_.canvas());
     interface_.add(hud_.canvas());
@@ -771,11 +780,13 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
 
 std::string Desk::line() const {
     char text[160];
-    std::snprintf(text, sizeof text, "windows: %u draws, %u vertices, rebuilt hud %llu card %llu bag %llu vitals %llu",
+    std::snprintf(text, sizeof text, "windows: %u draws, %u vertices, rebuilt hud %llu card %llu bag %llu vitals %llu "
+                  "tally %llu",
                   interface_.draws(), interface_.vertices(),
                   (unsigned long long)hud_.rebuilds(), (unsigned long long)card_.rebuilds(),
                   (unsigned long long)bag_.rebuilds(),
-                  (unsigned long long)vitals_.rebuilds());
+                  (unsigned long long)vitals_.rebuilds(),
+                  (unsigned long long)tally_.rebuilds());
     return text;
 }
 

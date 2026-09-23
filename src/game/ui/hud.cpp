@@ -326,6 +326,8 @@ void Hud::follow(const sim::Body* hero) {
     }
 }
 
+float Hud::plateTop() const { return plate(screen_, {0.0f, 0.0f, kPlateW, kPlateH}).y; }
+
 float Hud::progress() const {
     if (!hero_) return 0.0f;
     const uint64_t at = sim::neededExperience(hero_->level);

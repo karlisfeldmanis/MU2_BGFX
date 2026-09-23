@@ -47,6 +47,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force) {
         attacker.mana = std::min(attacker.maxMana, attacker.mana + back);
     }
     say(What::Hit, attacker, blow.damage, blow.rolled, target.health, target.id);
+    happenings_.back().critical = blow.critical;
     if (!target.player) {
         // Hit, so it knows who did it however far off he is standing, and it is awake whether
         // or not it can see him. Without this half a caster outside its sight kills it without

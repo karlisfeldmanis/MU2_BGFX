@@ -539,13 +539,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             desk_.overhead(float(deltaSeconds), world_.played(), viewProj, ctx.window.width(),
                            ctx.window.height());
         }
-        // And what the blows have thrown, into the transparent pass. The camera's
-        // own horizontal comes out of the view matrix's first column, which is the
-        // same basis the pass billboards on -- a number's digits are laid along it,
-        // so a second copy of that vector taken from anywhere else would tilt the
-        // number away from the sprites it sits among.
-        const float right[3] = {view[0], view[4], view[8]};
-        world_.played().showing().gather(ctx.renderer.effects(), right);
+        // And the blood the blows have thrown, into the transparent pass. The figures
+        // are not here any more: since the design page of 2026-09-23 they are drawn in
+        // a real face by the interface, over the world -- game/ui/tally.cpp, which
+        // Desk::overhead above has just placed on this same camera.
+        world_.played().showing().gather(ctx.renderer.effects());
         world_.played().gatherMarker(ctx.renderer.effects());
         world_.played().gatherAura(ctx.renderer.effects(), eye.position);
         world_.played().breath().gather(ctx.renderer.effects());
