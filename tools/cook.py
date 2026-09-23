@@ -225,14 +225,26 @@ def collect(world, out_dir, raw_dir):
 
             name = document["images"][index].get("name") or f"image{index}"
             stem = f"{safe(model)}_{safe(name)}_{role}_{digest}"
-            raw_path = os.path.join(raw_dir, stem + ".bin")
-            with open(raw_path, "wb") as handle:
-                handle.write(data)
             ktx_path = os.path.join(out_dir, "textures", stem + ".ktx")
-            jobs.append((role, cutout, raw_path, ktx_path))
             relative = os.path.relpath(ktx_path, ASSETS)
             seen[key] = relative
             manifest[source_key] = relative
+            # A .ktx that is there is a .ktx of these bytes in this role, because the stem
+            # carries the sha1 of the source AND the role -- so existence is the up-to-date
+            # test and the file is left alone. This is `cook_figures`' own rule, which the
+            # world's collect did not have: a map where two textures had gone missing
+            # re-compressed all 540 of Lorencia's to make them, twenty minutes of BC7 for two
+            # files (2026-09-23, and the user asked the obvious question about it).
+            #
+            # What it costs: a .ktx that is corrupt rather than absent is never noticed. That
+            # is the same bargain the figures have made since they were cooked, and the answer
+            # to it is the same -- delete the file, or the directory, and cook again.
+            if os.path.exists(ktx_path):
+                continue
+            raw_path = os.path.join(raw_dir, stem + ".bin")
+            with open(raw_path, "wb") as handle:
+                handle.write(data)
+            jobs.append((role, cutout, raw_path, ktx_path))
 
     return jobs, manifest, drawn, missing, len(models)
 

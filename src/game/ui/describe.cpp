@@ -232,7 +232,13 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         line.values.push_back(value);
         asks.rows.push_back(line);
     };
-    require("Level", asked.level, owed.level);
+    // **One level line, whichever of the two says it.** A row can ask for a level twice over: the
+    // item's own column, and -- on a scroll or an orb -- the skill it teaches. On the knight's
+    // orbs both are set, deliberately and to the same number (the recipes say so, and
+    // `Realm::useItem` takes the larger), so printing each in turn read as "Level 13, Level 13"
+    // on every orb in the shop. The card prints the larger, once. The user, 2026-09-23.
+    const int wantsLevel = std::max(asked.level, row.teaches > 0 ? row.teachesLevel : 0);
+    require("Level", wantsLevel, std::max(0, wantsLevel - who.level));
     require("Strength", asked.strength, owed.strength);
     require("Agility", asked.agility, owed.agility);
     require("Vitality", asked.vitality, owed.vitality);
@@ -242,9 +248,6 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // unchanged for anything without a slot.
     if (row.teaches > 0 && row.teachesEnergy > 0) {
         require("Energy", row.teachesEnergy, std::max(0, row.teachesEnergy - who.points.energy));
-    }
-    if (row.teaches > 0 && row.teachesLevel > 0) {
-        require("Level", row.teachesLevel, std::max(0, row.teachesLevel - who.level));
     }
     // One chip per class allowed, and none when they all are: mu.db's order, the wizard, the
     // elf, the knight. Shouted, because a chip is a label and not a sentence. Your own class is
