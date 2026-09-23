@@ -78,6 +78,26 @@ constexpr int kTenths = 10;
 constexpr float kReadingTall = 20.0f;
 constexpr float kTipTall = 15.0f;
 
+// The buff strip: MuDream's own place for it, read off its screen -- a 30-pixel square each,
+// edged and spaced, the row starting over the shield bar's left end and running right. MU2's
+// Hud.BuffsAt, number for number.
+constexpr Box kBuffsAt{292.0f, 28.0f, 30.0f, 30.0f};
+constexpr float kBuffGap = 6.0f;
+constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
+constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
+constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
+
+// Which of MuDream's status cells a skill wears. Defense is the only one this game can put on a
+// character; the elf's two Greaters and the wizard's two debuffs are cut and waiting.
+const char* buffArt(int32_t skill) {
+    switch (skill) {
+        case 18: return "buff_defense";
+        case 27: return "buff_greater_defense";
+        case 28: return "buff_greater_damage";
+        default: return nullptr;
+    }
+}
+
 // The painted key labels: a dark cell on rows 164 to 177 under every box, the figure centred on
 // the box. Measured off hud_base.png for this sprint; (15, 16, 17) is the cell's own dark.
 constexpr float kLabelTop = 164.0f, kLabelTall = 14.0f, kLabelWide = 20.0f;
@@ -263,7 +283,8 @@ bool Hud::Face::operator==(const Face& o) const {
            level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
            character == o.character && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
-           fanOpen == o.fanOpen && fanOver == o.fanOver && carrying == o.carrying &&
+           boon == o.boon && fanOpen == o.fanOpen && fanOver == o.fanOver &&
+           carrying == o.carrying &&
            fan == o.fan &&
            (carrying == 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(quick, quick + kQuickKeys, o.quick) && picture == o.picture &&
@@ -428,6 +449,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         for (int i = 0; i < kSkillKeys; ++i) now_.skill[i] = skill_[i];
         width_ = width;
         height_ = height;
+        now_.boon = boon_;
         now_.fanOpen = fanOpen_;
         now_.fan = fan_;
         now_.carrying = carrying_;
@@ -564,6 +586,22 @@ void Hud::rebuild() {
                                  gfx::Align::Centre, 0.0f);
             }
         }
+    }
+
+    // What is standing on him. One at a time is all the sim grants (`Body::boon*`), so this is
+    // one cell and the row it sits in is laid out for more.
+    if (boon_.skill != 0) {
+        const Box box = plate(s, kBuffsAt);
+        const gfx::Art& icon = arts.get(buffArt(boon_.skill) ? buffArt(boon_.skill)
+                                                             : "buff_defense");
+        canvas_.rect(box, kBuffBack);
+        if (icon.valid()) canvas_.image(icon, box);
+        canvas_.outline(box, std::max(1.0f, s.scale), kBuffEdge);
+        // And how much of it is left, as a hairline across its foot: the strip says WHAT is on
+        // him and this says for how much longer, which is the half a bare icon cannot.
+        const float left = std::clamp(boon_.share, 0.0f, 1.0f);
+        const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
+        canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
     }
 
     // ---- the list, open above the plate ------------------------------------------------------

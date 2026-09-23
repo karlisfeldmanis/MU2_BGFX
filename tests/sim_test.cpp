@@ -694,11 +694,12 @@ void testSkills(const content::Tables& tables) {
     // A blade in his hand, because nothing is thrown bare-handed and `raise` dresses nobody:
     // `given`, so a level-60 knight's strength is not what this is testing.
     check(realm.equip(tables.armNamed("Sword03"), -1, true), "and a blade is put in his hand");
-    check(realm.knows(sim::skill::kCyclone), "a knight is handed every built skill");
-    check(!realm.knows(sim::skill::kDefense), "and nothing that is not built");
-    // Slash is built in the sim and has no key on the bar, so the test learns it by hand: this
-    // is the only place `Spread::Arc` is exercised until a fifth slot exists.
-    check(realm.learn(sim::skill::kSlash), "and Slash can be learned");
+    // Every row is built since 2026-09-23, so a knight is raised holding all six: the bar's
+    // four keys are filled from the list and `built` stopped meaning "and a key is free".
+    bool all = true;
+    for (int i = 0; i < sim::skillCount(); ++i) all &= realm.knows(sim::skillAt(i).number);
+    check(all, "a knight is handed every built skill");
+    check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
 
     int casts[sim::kSkills] = {};
     int caught[sim::kSkills] = {};   // bodies struck by each, over the whole hunt

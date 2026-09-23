@@ -24,7 +24,7 @@ constexpr SkillRow kRows[kSkills] = {
     // two, so it is never permanent.
     {skill::kDefense, "Defense", 30, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 80, 0.50f,
      "A guard raised where he stands: half of every blow that lands, for four seconds.", 187,
-     "player_skill_defense", false},
+     "player_skill_defense", true},
     // The knock is OFF on all six, and the column is kept rather than removed. 0.75 sets
     // `movesTarget` on the knight's five and it puts the monster on a neighbouring tile at once --
     // which is a one-tile teleport, and the user's rule of 2026-09-22 ("no sudden position changes
@@ -43,13 +43,13 @@ constexpr SkillRow kRows[kSkills] = {
     {skill::kCyclone, "Cyclone", 9, 1.0f, 1.3f, 1.0f / 1400.0f, 100, false, Spread::Ring, 0, 1.0f,
      "A spin that catches everything within a tile: weakest against one, strongest in a crowd.",
      63, "player_skill_sword4", true},
-    // Slash's shape IS built -- `Spread::Arc` is written, tested and is the same sweep Cyclone's
-    // ring is cut from -- and the row is `false` for one reason only: the bar holds four keys and
-    // the four above it fill them. It is one word here the day a learned-skills list can drag a
-    // fifth onto Q W E R.
+    // Every row is built now. `built` used to mean "and the bar has a key for it", which is why
+    // Slash sat here false with its arc written and tested; the list of 2026-09-23 holds every
+    // learned skill and the four keys are the player's to fill from it, so the two questions
+    // came apart and this one is the simple one again.
     {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 120, false, Spread::Arc, 0, 1.0f,
      "A wide sweep across the three tiles he faces. The longest wait of the six.", 64,
-     "player_skill_sword4", false},
+     "player_skill_sword4", true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

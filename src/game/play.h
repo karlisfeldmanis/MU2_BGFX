@@ -216,6 +216,9 @@ public:
     // What a level looks like, and sounds like. Opened by the caller for the same reason as
     // the showing.
     Aura& aura() { return aura_; }
+    // The guard: thrown when Defense lands, and kept on the body every frame after.
+    void guardRise(float seconds);
+    void guardStep();
     Sound& sound() { return sound_; }
     // What a Budge Dragon gives off, opened by the caller for the same reason as the showing.
     Breath& breath() { return breath_; }

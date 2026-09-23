@@ -175,6 +175,11 @@ void Play::update(double seconds) {
                     }
                     // A self-cast throws no blow, so there is no Hit coming to play the clip:
                     // it is played here instead, and the wave with it.
+                    // The barrier, thrown with the clip and lasting exactly as long as the
+                    // realm says the boon does -- one number, read off the row both places.
+                    if (row && row->onSelf() && happening.who == heroId) {
+                        guardRise(float(row->boonTicks) * float(kTickSeconds));
+                    }
                     if (row && row->onSelf() && caster->castClip >= 0) {
                         caster->figure.play(caster->castClip, true, kCastBlend);
                         caster->casting = caster->figure.length();
@@ -511,6 +516,8 @@ void Play::update(double seconds) {
     releaseDrops();
     showing_.update(float(seconds));
     aura_.update(float(seconds));
+    // And the guard walks with him, or goes when the realm says it has gone.
+    if (isOpen()) guardStep();
 }
 
 std::string Play::nameOf(uint32_t id) const {

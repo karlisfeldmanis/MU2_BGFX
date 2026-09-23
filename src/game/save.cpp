@@ -78,6 +78,13 @@ bool loadSave(const std::string& path, Saved& out) {
         item.skill = one["skill"].boolOr(false);
         saved.items.push_back(item);
     }
+    // Absent in a file written before the bar could be arranged, which reads as four empty keys
+    // and lets the first-free-key convenience fill them -- the behaviour that file was saved
+    // under. No version bump for that reason.
+    const core::Json& bar = doc["bar"];
+    for (size_t key = 0; key < 4 && key < bar.size(); ++key) {
+        saved.bar[key] = int32_t(bar.at(key).numberOr(0.0));
+    }
     const core::Json& quick = doc["quick"];
     for (size_t key = 0; key < 5 && key < quick.size(); ++key) {
         saved.quickGroup[key] = int(quick.at(key)["group"].numberOr(-1));
@@ -154,6 +161,10 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "%s{", key ? ", " : "");
         if (item >= 0 && size_t(item) < tables.items.size()) writeItem(f, tables, item);
         std::fprintf(f, "}");
+    }
+    std::fprintf(f, "],\n  \"bar\": [");
+    for (int key = 0; key < 4; ++key) {
+        std::fprintf(f, "%s%d", key ? ", " : "", saved.bar[key]);
     }
     std::fprintf(f, "]\n}\n");
     const bool ok = std::fflush(f) == 0;

@@ -307,6 +307,16 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const content::Tables& tables = *realm.tables();
     const sim::Body& hero = realm.hero();
 
+    // A bar that came out of the save is the player's arrangement whole: every skill he already
+    // knew when it was written has had its chance at a key, whether or not it is on one. Only a
+    // skill learned AFTER that still takes a free key by itself.
+    if (barRestored_) {
+        barRestored_ = false;
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            if (realm.knows(sim::skillAt(i).number)) autoBound_ |= uint32_t(1) << i;
+        }
+    }
+
     // Bound on the day it is learned, first free key first -- and ONCE. `autoBound_` is the
     // difference between a convenience and a bar that cannot be changed: without it, a skill the
     // player drags off a key is put back by this loop on the very next frame, which is what it
@@ -445,6 +455,17 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         carrying_ = 0;
         carryFrom_ = -1;
     }
+
+    // What is standing on him, off the realm: the sim owns the boon and the strip draws it.
+    Hud::Boon boon;
+    if (hero.boonSkill != 0 && hero.boonUntil > realm.tick()) {
+        const sim::SkillRow* row = sim::skillNumbered(hero.boonSkill);
+        const float left = float(hero.boonUntil - realm.tick());
+        boon.skill = hero.boonSkill;
+        boon.seconds = left * 0.05f;  // 20 Hz
+        boon.share = row && row->boonTicks > 0 ? left / float(row->boonTicks) : 0.0f;
+    }
+    hud_.setBoon(boon);
 
     const gfx::Window::Key keys[Hud::kSkillKeys] = {
         gfx::Window::Key::Skill1, gfx::Window::Key::Skill2, gfx::Window::Key::Skill3,

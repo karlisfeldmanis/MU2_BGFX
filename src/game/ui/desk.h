@@ -90,6 +90,14 @@ public:
         if (key >= 0 && key < Hud::kQuickKeys) quick_[key] = item;
     }
     void setCharacterOpen(bool open) { characterOpen_ = open; }
+    // The four skill keys, by MU's skill number, 0 for empty: what the save keeps. Restoring
+    // marks the arrangement as the player's, so the first-free-key convenience does not put
+    // back on the next frame what he took off before he quit -- see `autoBound_`.
+    int32_t bound(int key) const { return key >= 0 && key < Hud::kSkillKeys ? bound_[key] : 0; }
+    void restoreBar(const int32_t* numbers, int count) {
+        for (int key = 0; key < Hud::kSkillKeys && key < count; ++key) bound_[key] = numbers[key];
+        barRestored_ = true;
+    }
     // The world's name comes up over the scene after `delay` seconds: see game/arrival.h.
     void arrive(const std::string& world, float delay) { arrival_.announce(world, delay); }
 
@@ -129,6 +137,7 @@ private:
     // Not saved, which is faithful -- there is no SaveHotKey anywhere in MuMain.
     int32_t bound_[Hud::kSkillKeys] = {0, 0, 0, 0};
     uint32_t autoBound_ = 0;  // skills that have had their one free key
+    bool barRestored_ = false;
     // The list above the plate: latched open by a click on the gold box, and open anyway while
     // the pointer rests on that box or on the list itself. The cells are rebuilt every frame off
     // what the realm says he has learned.

@@ -164,6 +164,7 @@ void Realm::gain(Body& hero, int32_t award) {
         // Re-reckoned and then refilled, in that order: the health a level gives is part of
         // the maximum it is refilled to.
         reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+        keepBoon(hero);
         restoreMana(hero);
         reswing(hero);
         hero.health = hero.maxHealth;

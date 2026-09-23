@@ -101,6 +101,23 @@ public:
     void setSkillSheet(int key, const tip::Sheet& sheet) {
         if (key >= 0 && key < kSkillKeys) sheets_[key] = sheet;
     }
+    // ---- the buff strip ----------------------------------------------------------------------
+    // What is standing on him, drawn as a small icon above the shield bar's left end -- where
+    // MuDream keeps its own, a 30-pixel square edged and spaced. **A strip at all is this
+    // bench's**, as it was MU2's: 0.75's client draws no status icons and MuMain gives skill 18
+    // no buff to draw -- `NewUIBuffWindow` is the later thing both borrow from.
+    struct Boon {
+        int32_t skill = 0;    // MU's own number, 0 for nothing standing
+        float seconds = 0.0f; // what is left of it
+        float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
+        bool operator==(const Boon& o) const {
+            // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
+            // of four seconds would be eighty redraws for a number that changes forty times.
+            return skill == o.skill && int(seconds * 10.0f) == int(o.seconds * 10.0f);
+        }
+    };
+    void setBoon(const Boon& boon) { boon_ = boon; }
+
     // Which skill box the pointer is over, or -1, so the desk builds one card and not four.
     // Only a box with something in it: an empty box has no card and nothing to hover.
     int skillAt(float x, float y) const;
@@ -191,6 +208,7 @@ private:
         float pointerX = 0, pointerY = 0;
         Quick quick[kQuickKeys];
         Skill skill[kSkillKeys];
+        Boon boon;
         bool fanOpen = false;
         int fanOver = -1;           // the cell under the pointer
         int32_t carrying = 0;       // what the pointer is holding out of the list
@@ -219,6 +237,7 @@ private:
     uint64_t rebuilds_ = 0;
     Quick quick_[kQuickKeys];
     Skill skill_[kSkillKeys];
+    Boon boon_;
     bool fanOpen_ = false;
     int32_t carrying_ = 0;
     std::vector<FanCell> fan_;

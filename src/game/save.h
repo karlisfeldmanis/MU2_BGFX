@@ -22,6 +22,11 @@ struct Saved {
     std::string world;
     sim::HeroRecord hero;             // hero.slots filled by resolveSave
     int32_t quick[5] = {-1, -1, -1, -1, -1};  // item rows, -1 for none; filled by resolveSave
+    // What is on Q W E R, by MU's own skill number, 0 for an empty key. Saved for the same
+    // reason the potion keys are and against MuMain, which has no SaveHotKey: 0.75's bar could
+    // not be arranged -- a knight's skill was whatever weapon was in his hand -- and this one
+    // can, so an arrangement the player made by hand is his and not the session's.
+    int32_t bar[4] = {0, 0, 0, 0};
     // How far the camera was standing back, in metres. Not the character's, but it is his file
     // and a second one for a single number would be worse. 0 is "nothing saved" -- an older
     // save, or a run that never touched the wheel -- and the world keeps its own default.

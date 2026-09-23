@@ -380,6 +380,10 @@ private:
     Body* body(uint32_t id);
     Arms armsOf(const Body& one) const;
     void reswing(Body& hero);
+    // The boon's own field put back over what `reckon` just wrote: reckon starts a fighter from
+    // his class and his points, so it clears `damageTaken`, and a guard raised before a level-up
+    // or a change of armour would lapse silently in the middle of its four seconds.
+    void keepBoon(Body& hero);
     void advance(Body& one);
     bool turn(Body& one);
     void rouse(Body& beast);

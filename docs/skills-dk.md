@@ -422,9 +422,14 @@ are, the *bar* follows MuMain and is not.
   convenience must not undo the player's own arrangement on the next frame. A cell carries the
   key it is on in a gilt chip, and one he could not throw -- no mana, or the wrong hand -- is
   drawn cold, the same two questions `throwSkill` asks.
-  **Not saved yet**, which is 0.75's own answer (`MU2/docs/skills.md` §10: MuMain has no
-  `SaveHotKey`) and is now the weaker half of it: the potion keys *are* written to the save, so
-  a bar the player arranges by hand and loses on quit is the thing to fix next.
+  **And it is saved** (2026-09-23), which departs from 0.75 on the user's word and for the
+  reason the departure was made in the first place: MuMain has no `SaveHotKey` because MU's bar
+  could not be arranged -- a knight's skill was whatever weapon was in his hand. This one can be
+  arranged, so the arrangement is his. `Saved::bar` holds four of MU's own skill numbers beside
+  the potion keys, absent in an older file and read as four empty keys; a restored bar marks
+  every skill he already knew as having had its free key (`Desk::barRestored_`), so the
+  convenience cannot put back what he took off, while a skill learned afterwards still takes
+  one.
 - **The cooldown is drawn on the box**: a dark sweep over the icon and the seconds printed when more
   than one remains — LoL's and WoW's shared convention, and the reason both read at a glance. Grey
   the icon when the mana is not there (MuMain dims it too).
@@ -566,10 +571,40 @@ Measured on the standing hunt (`--headless --seed 7 --ticks 4000 --level 30 --at
 Axe01`): 27 casts spread 5 / 10 / 9 / 3 over the four, invariants all kept, fingerprint
 `d50b9b6d89895571` twice.
 
-**Still owed:** Defense (§3.1's buff, the boon strip on the HUD, and an effect of its own), the
-orbs (§3.3), and a bar that can hold more than four so Slash has a key.
+### 6.2 Defense, and the last of the six, 2026-09-23
 
-### 6.2 Falling Slash and the machinery, 2026-09-22
+**All six rows are built.** `built` used to carry a second meaning -- *and the bar has a key for
+it* -- which is why Slash sat unbuilt with its arc written and tested; the list holds every
+learned skill and the four keys are filled from it, so the two questions came apart.
+
+- **The guard itself** was already in the sim (the boon fields, the shield gate, the lapse in
+  `press`); what it needed was `Realm::keepBoon`. `reckon` starts a fighter from his class and
+  his points and so writes `damageTaken` back to 1 -- and it runs on every level-up and every
+  change of armour, so a guard raised beforehand lapsed silently in the middle of its four
+  seconds. It is put back after each of the four `reckon` calls.
+- **The barrier**, `fx/aura.cpp`. MU2's `Aura.cs` carried two recipes and this engine carried
+  one, saying so: *"its second recipe, the knight's Defense barrier, was a bench invention on a
+  skill this engine does not have yet."* It has the skill now, so the class takes a `Recipe` and
+  the second one is written: five ribbons evenly round a ring of twenty units, standing at five
+  heights up 150 units of him rather than climbing away -- MU's climb is what makes the
+  level-up's flares *leave* -- one turn of the ring for a tail, in green, under one flash of
+  MU's ground circle, following the body and lapsing with the boon (`Aura::guard`, `follow`,
+  `release`). What it is drawn from is still not traced: MuMain gives skill 18 a clip and a
+  sound and nothing else, and the vocabulary is borrowed from the elf's Greater Defense
+  (`ZzzCharacter.cpp:4925`), MU's one drawn defensive skill.
+- **The buff strip**, `Hud::setBoon`: MuDream's own place for it, a 30-pixel square over the
+  shield bar's left end (MU2's `Hud.BuffsAt`, number for number), in `buff_defense` -- the icon
+  `pipeline/buff_icons.py` cut -- with a hairline across its foot for what is left of it. A
+  strip at all is the bench's, as it was MU2's.
+
+**Measured**: the 4 000-tick hunt is identical across two runs (fingerprint
+`29a7cf30030ffe97`), invariants all kept, 170 checks in `sim_test`. Defense is not thrown on
+that hunt and cannot be -- the hand carries no shield -- which is the refusal working.
+
+**Still owed:** the orbs (§3.3), so a skill is found or bought rather than handed over in
+`Realm::raise`.
+
+### 6.3 Falling Slash and the machinery, 2026-09-22
 
 **Falling Slash, and the whole cooldown machinery under it.** The other five are rows in the table
 with `built = false`: adding one is a row's behaviour, not a row.

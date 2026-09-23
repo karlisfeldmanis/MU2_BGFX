@@ -153,6 +153,7 @@ void Realm::rearm(Body& hero) {
     }
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    keepBoon(hero);
     restoreMana(hero);
     reswing(hero);
     hero.health = std::min(hero.maxHealth, hero.health + std::max(0, hero.maxHealth - was));

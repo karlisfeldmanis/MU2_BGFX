@@ -200,6 +200,35 @@ void Play::rise() {
     sound_.play("player_level_up");
 }
 
+// The knight's guard raised, and then kept on him while it stands.
+//
+// Two calls and not one because the barrier follows the body, which the level-up's flares do
+// not: MU leaves a burst where it was thrown (`TargetPosition` is never assigned), and a guard
+// that stayed behind while he walked out of it would be a guard around nobody.
+void Play::guardRise(float seconds) {
+    const Drawn* hero = drawnOf(realm_.hero().id);
+    if (hero == nullptr || !hero->placed || ground_ == nullptr) return;
+    const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
+                           hero->crown[2]};
+    aura_.guard(feet, hero->yaw, ground_->metresPerTile(), seconds);
+}
+
+void Play::guardStep() {
+    if (ground_ == nullptr) return;
+    const sim::Body& hero = realm_.hero();
+    // The realm decides when it lapses, as it decides everything else; the drawing reads it.
+    // Both halves matter: a boon that ran out and a character who died take the ribbons away.
+    if (!hero.alive() || hero.boonUntil <= realm_.tick()) {
+        aura_.release();
+        return;
+    }
+    const Drawn* drawn = drawnOf(hero.id);
+    if (drawn == nullptr || !drawn->placed) return;
+    const float feet[3] = {drawn->crown[0], ground_->heightAt(drawn->crown[0], drawn->crown[2]),
+                           drawn->crown[2]};
+    aura_.follow(feet);
+}
+
 void Play::releaseDrops() {
     held_.erase(std::remove_if(held_.begin(), held_.end(),
                                [&](const HeldDrop& one) {

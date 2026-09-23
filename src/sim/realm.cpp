@@ -82,6 +82,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     hero.experience = neededExperience(hero.level);
     hero.pointsInHand = (hero.level - 1) * kPointsPerLevel;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    keepBoon(hero);
     restoreMana(hero);
     hero.health = hero.maxHealth;
     hero.speed = 1.0f / float(kHeroMoveTicks);
@@ -239,6 +240,7 @@ bool Realm::spend(int strength, int agility, int vitality, int energy) {
     hero.pointsInHand -= asked;
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    keepBoon(hero);
     restoreMana(hero);
     // Agility buys attack speed, so spending a point can change how often he swings.
     reswing(hero);

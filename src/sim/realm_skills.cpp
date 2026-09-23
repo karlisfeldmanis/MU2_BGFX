@@ -275,6 +275,11 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
     }
 }
 
+void Realm::keepBoon(Body& hero) {
+    hero.stats.damageTaken =
+        hero.boonUntil > tick_ ? double(hero.boonDamageTaken) : 1.0;
+}
+
 void Realm::shove(Body& target) {
     // One tile at random, and only onto something standable: OpenMU's `MoveRandomlyAsync` picks
     // a neighbour and a blocked one is simply not taken, which is what the grid test is. The

@@ -98,14 +98,15 @@ void Aura::at(const Burst& b, const Joint& j, float back, float out[3]) {
     // and has climbed Direction[2] for every tick since it was made. `back` ticks ago LifeTime
     // was that much higher and the climb that much shorter. MU's Y is this world's -z, so its
     // -sin arrives as +sin and the ring turns MU's way.
-    const float count = (j.phase + (kTicks - b.age) + back) / kKey;
-    out[0] = std::cos(count) * kOrbit * b.per;
-    out[1] = j.rise * std::max(0.0f, b.age - back);
-    out[2] = std::sin(count) * kOrbit * b.per;
+    const float count = (j.phase + (b.r.ticks - b.age) + back) / kKey;
+    out[0] = std::cos(count) * b.r.orbit * b.per;
+    out[1] = j.height + j.rise * std::max(0.0f, b.age - back);
+    out[2] = std::sin(count) * b.r.orbit * b.per;
 }
 
-void Aura::rise(const float feet[3], float yaw, float metresPerTile) {
-    if (!bgfx::isValid(flare_) || metresPerTile <= 0.0001f) return;
+Aura::Burst* Aura::throwOne(const Recipe& recipe, const float feet[3], float yaw,
+                            float metresPerTile) {
+    if (!bgfx::isValid(flare_) || metresPerTile <= 0.0001f) return nullptr;
     Burst* slot = nullptr;
     for (Burst& b : bursts_) {
         if (!b.living) {
@@ -113,9 +114,10 @@ void Aura::rise(const float feet[3], float yaw, float metresPerTile) {
             break;
         }
     }
-    if (slot == nullptr) return;  // a third level in two seconds is not drawn
+    if (slot == nullptr) return nullptr;  // a third level in two seconds is not drawn
     Burst& b = *slot;
     b.living = true;
+    b.r = recipe;
     for (int k = 0; k < 3; ++k) b.feet[k] = feet[k];
     // Forward is (sin yaw, cos yaw), so the joint's local X lies at (cos yaw, -sin yaw).
     b.across[0] = std::cos(yaw);
@@ -124,10 +126,51 @@ void Aura::rise(const float feet[3], float yaw, float metresPerTile) {
     b.yaw = yaw;
     b.per = metresPerTile / kPerTile;
     b.age = 0.0f;
-    for (Joint& j : b.joints) {
-        j.phase = unit() * 2.0f * kPhases - kPhases;
-        j.rise = (kSlowestRise + unit() * (kFastestRise - kSlowestRise)) * b.per;
+    for (int k = 0; k < b.r.joints; ++k) {
+        Joint& j = b.joints[k];
+        // Drawn for the level-up, where where a flare starts on its ring is not a fact; laid
+        // evenly for the guard, where five ribbons standing at five even angles IS the shape.
+        // `count` divides the phase by kKey, so an even step round the ring is that much wider.
+        j.phase = b.r.spread ? float(k) * 6.28318530718f * kKey / float(b.r.joints)
+                             : unit() * 2.0f * kPhases - kPhases;
+        j.rise = (b.r.slowRise + (b.r.spread ? 0.0f : unit() * (b.r.fastRise - b.r.slowRise))) *
+                 b.per;
+        // A band's ribbons stand at their own heights up the body instead of climbing: five
+        // rings from his feet to over his head, which is what a guard looks like.
+        j.height = b.r.band > 0.0f && b.r.joints > 1
+                       ? float(k) / float(b.r.joints - 1) * b.r.band * b.per
+                       : 0.0f;
     }
+    return &b;
+}
+
+void Aura::rise(const float feet[3], float yaw, float metresPerTile) {
+    Recipe recipe = kRising;
+    recipe.circle = circle_;  // where the switch has always been
+    throwOne(recipe, feet, yaw, metresPerTile);
+}
+
+void Aura::guard(const float feet[3], float yaw, float metresPerTile, float seconds) {
+    // One at a time: a guard thrown again replaces the one standing, which is what the realm
+    // does with the boon (`throwSkill` overwrites it) and what MU does with its own
+    // `g_isCharacterBuff` test -- the circle flashes again and no second set of ribbons is made.
+    release();
+    Recipe recipe = kGuarding;
+    recipe.ticks = std::max(1.0f, seconds * kReference);
+    // A hundred units over the whole of it, however long that is: the climb is the boon's.
+    recipe.slowRise = recipe.fastRise = 100.0f / recipe.ticks;
+    Burst* b = throwOne(recipe, feet, yaw, metresPerTile);
+    if (b != nullptr) guarding_ = int(b - bursts_);
+}
+
+void Aura::follow(const float feet[3]) {
+    if (guarding_ < 0 || !bursts_[guarding_].living) return;
+    for (int k = 0; k < 3; ++k) bursts_[guarding_].feet[k] = feet[k];
+}
+
+void Aura::release() {
+    if (guarding_ >= 0) bursts_[guarding_].living = false;
+    guarding_ = -1;
 }
 
 void Aura::update(float seconds) {
@@ -137,8 +180,11 @@ void Aura::update(float seconds) {
     for (Burst& b : bursts_) {
         if (!b.living) continue;
         b.age += ticks;
-        const float ends = circle_ ? std::max(kTicks, kRingTicks) : kTicks;
-        if (b.age > ends) b.living = false;
+        const float ends = b.r.circle ? std::max(b.r.ticks, kRingTicks) : b.r.ticks;
+        if (b.age > ends) {
+            b.living = false;
+            if (guarding_ >= 0 && &b == &bursts_[guarding_]) guarding_ = -1;
+        }
     }
 }
 
@@ -146,17 +192,18 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
                   const float eye[3]) const {
     for (const Burst& b : bursts_) {
         if (!b.living) continue;
-        if (circle_) gatherCircle(effects, ground, b);
-        if (b.age > kTicks) continue;
+        if (b.r.circle) gatherCircle(effects, ground, b);
+        if (b.age > b.r.ticks) continue;
 
         // Light *= 1/1.3 a tick while under ten ticks of LifeTime are left, one light for all
         // fifteen: the same curve, read at the burst's age rather than multiplied down.
-        const float light = kStrength * std::pow(kDim, std::max(0.0f, b.age - (kTicks - kDims)));
-        // How long the trail is, in ticks: it grows from nothing to nineteen and holds there.
-        const float length = std::min(b.age, float(kTrailTicks));
+        const float light =
+            kStrength * std::pow(kDim, std::max(0.0f, b.age - (b.r.ticks - kDims)));
+        // How long the trail is, in ticks: it grows from nothing to its own length and holds.
+        const float length = std::min(b.age, b.r.trail);
         if (length <= 0.0f) continue;
         const int steps = std::max(1, int(std::ceil(length * float(kSamples))));
-        const float half = kWide * 0.5f * b.per;
+        const float half = b.r.wide * 0.5f * b.per;
         const float up[3] = {0.0f, 1.0f, 0.0f};
 
         gfx::Sprite sprite;
@@ -195,7 +242,7 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
             const float facing = std::fabs(n[0] * v[0] + n[1] * v[1] + n[2] * v[2]) / (tl * vl);
             const float fade = smoothstep(kEdgeGone, kEdgeFull, facing);
             if (fade <= 0.0f) return;
-            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = light * fade;
+            for (int d = 0; d < 3; ++d) sprite.colour[d] = b.r.light[d] * light * fade;
 
             const float top = flipped ? 1.0f : 0.0f, bottom = 1.0f - top;
             const float side[4] = {-half, half, half, -half};
@@ -214,7 +261,8 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
             effects.add(sprite);
         };
 
-        for (const Joint& j : b.joints) {
+        for (int k = 0; k < b.r.joints; ++k) {
+            const Joint& j = b.joints[k];
             float p0[3], p1[3];
             at(b, j, 0.0f, p0);
             float u0 = 1.0f;
