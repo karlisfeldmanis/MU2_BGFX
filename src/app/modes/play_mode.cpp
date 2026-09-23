@@ -11,6 +11,8 @@
 #include "app/preloader.h"
 #include "core/log.h"
 #include "gfx/views.h"
+#include "sim/items.h"
+#include "sim/market.h"
 
 namespace mu::app {
 
@@ -51,6 +53,42 @@ void PlayMode::keep(Context& ctx) {
     for (int key = 0; key < 5; ++key) now.bar[key] = desk_.bound(key);
     now.zoom = world_.zoomDistance();
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
+}
+
+void PlayMode::openItems(Context& ctx) {
+    if (itemModels_.tables()) return;
+    itemModels_.open(world_.played().realm().tables(), ctx.paths.assets, &ctx.textures);
+    litter_.open(&itemModels_, &world_.ground());
+    desk_.useModels(&itemModels_);
+}
+
+void PlayMode::warmItems() {
+    const content::Tables& tables = *world_.played().realm().tables();
+    // **Why the merchants and not the whole item table.** ItemModels reads a row's mesh the
+    // first time somebody asks for it, which for a drop on the grass is one model in a frame
+    // and unnoticeable. A shelf is not: Hanzo's counter asks for thirty-four in the frame the
+    // window opens, each one a file read, a parse and a texture upload, and that is the hitch.
+    // So every shelf in this world is read here instead, where the spinner is up and a load
+    // costs nothing that shows. The whole table would be the same thing again for the rows
+    // nobody can reach -- a session sees a few dozen kinds of item, and these are the kinds.
+    int warmed = 0;
+    for (const content::Townsperson& person : tables.folk) {
+        int count = 0;
+        const sim::Offer* stock = sim::stockOf(person.number, &count);
+        for (int i = 0; i < count; ++i) {
+            const int32_t item = tables.itemAt(stock[i].group, stock[i].number);
+            if (item >= 0 && itemModels_.of(item)) ++warmed;
+        }
+    }
+    // And what he already carries, because a merchant opens the sheet beside his shelf and
+    // the bag's own pictures are read the same way (game/ui/desk.cpp's `trading_`).
+    const sim::Satchel& bag = world_.played().realm().satchel();
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        if (!bag[slot].empty() && itemModels_.of(bag[slot].item)) ++warmed;
+    }
+    // Zen's own heap, the one row no shelf and no bag lists: the first coin to drop.
+    itemModels_.coin();
+    core::logf("items: %d shelf and bag pictures read ahead of the windows", warmed);
 }
 
 bool PlayMode::open(Context& ctx) {
@@ -134,6 +172,10 @@ bool PlayMode::open(Context& ctx) {
                 for (int key = 0; key < 5; ++key) desk_.setQuick(key, saved_.quick[key]);
                 desk_.restoreBar(saved_.bar, 5);
             }
+            // And the pictures the windows will ask for, last of all: after restore(), so the
+            // bag being warmed is the one he is carrying and not an empty one.
+            openItems(ctx);
+            warmItems();
         }
         // An arena whose realm did not rise is a failed run and not a world to look at.
         // Everywhere else a realm that cannot be raised leaves a still world standing,
@@ -453,9 +495,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // back: a fall should land and a recovery should feel like one. The renderer drains the
         // scene's own pass, so the HUD and the message over it stay in colour -- which is the
         // point, and is why this is a renderer setting and not a grade in the sheet.
+        // Down as the DRAWING has it, not the realm: the realm kills him on the tick, but the
+        // blow lands on screen up to half a swing later, and that landing is what starts his
+        // fall and pushes "You Died" (Play::fall). Read off the realm, the colour went before
+        // the message did. shownAlive flips on the same cue the message is pushed on.
         {
             constexpr float kDrainIn = 0.5f, kDrainBack = 1.0f;
-            const bool down = !world_.played().realm().hero().alive();
+            const game::Play& played = world_.played();
+            const bool down = !played.shownAlive(played.realm().hero().id);
             const float rate = float(deltaSeconds) / (down ? kDrainIn : kDrainBack);
             drain_ = down ? std::min(1.0f, drain_ + rate) : std::max(0.0f, drain_ - rate);
         }
@@ -563,11 +610,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().gatherStreak(ctx.renderer.effects());
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
-        if (!itemModels_.tables()) {
-            itemModels_.open(world_.played().realm().tables(), ctx.paths.assets, &ctx.textures);
-            litter_.open(&itemModels_, &world_.ground());
-            desk_.useModels(&itemModels_);
-        }
+        openItems(ctx);
         litter_.update(world_.played().realm(), deltaSeconds, world_.played().heldDrops());
         world_.played().setSettledDrops(litter_.settled());
         litter_.gather(townDrawables_, casters ? &townCasters_ : nullptr);
