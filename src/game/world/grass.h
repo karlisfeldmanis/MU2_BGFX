@@ -57,12 +57,14 @@ public:
     // world metres. The field's reach is measured from the EYE, per card, in the shader: MU's
     // camera is rigid to the player, so a distance from the eye is a place on the screen, and
     // the far edge and the thinning stay where they are in the frame as he walks. The frustum
-    // is what keeps the patches behind him from being sent. `walker` is where the character's
-    // feet are, or null when nobody is played: the sward is parted round him. Returns false
-    // when there is nothing to draw -- no grid, no grass slots, no sheets, the sheet's `grass`
-    // at 0, or every patch culled.
+    // is what keeps the patches behind him from being sent. `walkers` is `walkerCount` feet
+    // positions, four floats each, of whoever stands in the field -- the hero and the crowd
+    // -- and the sward is parted round each; none when nobody is played. Returns false when
+    // there is nothing to draw -- no grid, no grass slots, no sheets, the sheet's `grass` at
+    // 0, or every patch culled.
     bool gather(const content::Ground& ground, const gfx::Lighting& look, const float* viewProj,
-                const float* eye, const float* walker, float seconds, gfx::GrassField& field);
+                const float* eye, const float* walkers, int walkerCount, float seconds,
+                gfx::GrassField& field);
 
     // What the last gather did, for the readout.
     struct Counts {

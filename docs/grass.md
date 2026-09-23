@@ -634,14 +634,21 @@ count and the second half is the same plants again turned a quarter round — th
 so the same place, size, kind and lean, only the facing differs. A lone card edge-on to MU's
 fixed camera is a line; a cross never is.
 
-**The sward parts round the character.** `u_grassWalker` carries his feet (the world's eased
-follow point, not the camera's target, which a played camera slides off him) and a 0.7 m
-reach. A card inside it is turned away from him by how near it stands, smoothstepped, and
-its top brought down to a fifth of its rise — a rotation like the lean, so the card keeps
-its length and the patch bounds stay true. Only when he is near in height too, so a bridge
-over the sward parts nothing under it. It is Turf's shove without Turf's wake: a wake wants
-what he did a second ago, and nothing in this field remembers anything. Nobody is played on
-a measuring run, so the reach goes as 0 and the branch is skipped.
+**The sward parts round whoever stands in it.** `Play::walkers` lists the feet of every
+body that is placed, in view and alive as drawn — the hero first, then the crowd, eight at
+most — and `u_grassWalkers[8]` carries them with a 0.7 m reach each. A card inside a reach
+is turned away from those feet by how near it stands, smoothstepped, and its top brought
+down to a fifth of its rise — a rotation like the lean, so the card keeps its length and the
+patch bounds stay true. The strongest push wins rather than the sum, so two bodies side by
+side do not fold a card through the ground between them. Only when the walker is near in
+height too, so a bridge over the sward parts nothing under it. A corpse parts nothing: it
+lies on the sward rather than standing in it. It is Turf's shove without Turf's wake: a wake
+wants what they did a second ago, and nothing in this field remembers anything. Nobody is
+played on a measuring run, so every slot goes as 0 and the loop finds nothing.
+
+**Wind** is 0.16 from 0.10. At 0.10 the tip of a 42 cm card swung about 4 cm, which two
+frames of a held camera thirty frames apart could barely tell apart; a field that size
+wants to be seen to move.
 
 ### What this still owes
 

@@ -149,7 +149,8 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
 }
 
 bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, const float* viewProj,
-                   const float* eye, const float* walker, float seconds, gfx::GrassField& field) {
+                   const float* eye, const float* walkers, int walkerCount, float seconds,
+                   gfx::GrassField& field) {
     counts_ = Counts();
     field.batchCount = 0;
     if (!bgfx::isValid(vbh_) || sheets_.empty() || look.grass <= 0.0f) return false;
@@ -346,17 +347,22 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.reach[2] = std::min(look.grassThin, radius - fadeBand - 1.0f);
     field.reach[3] = radius - fadeBand;
 
-    // The walker, when there is one: his feet, and the reach of his shove. Turf pushed the
-    // sward aside round the character and left a wake; this is the shove alone, and it is
-    // the one thing in the field that answers to him. 0.7 m is about what a man walking
-    // through knee-high grass flattens either side of his boots.
-    if (walker) {
-        field.walker[0] = walker[0];
-        field.walker[1] = walker[1];
-        field.walker[2] = walker[2];
-        field.walker[3] = 0.7f;
-    } else {
-        field.walker[3] = 0.0f;
+    // The walkers, when there are any: their feet, and the reach of the shove. Turf pushed
+    // the sward aside round the character and left a wake; this is the shove alone, for
+    // everybody standing in the field, and it is the one thing in the field that answers to
+    // them. 0.7 m is about what a man walking through knee-high grass flattens either side
+    // of his boots; a bull is wider, but a bull is also drawn wider, so one reach serves.
+    const int count = std::min(walkerCount, gfx::GrassField::kMaxWalkers);
+    for (int i = 0; i < gfx::GrassField::kMaxWalkers; ++i) {
+        float* slot = field.walkers + i * 4;
+        if (i < count && walkers) {
+            slot[0] = walkers[i * 4 + 0];
+            slot[1] = walkers[i * 4 + 1];
+            slot[2] = walkers[i * 4 + 2];
+            slot[3] = 0.7f;
+        } else {
+            slot[0] = slot[1] = slot[2] = slot[3] = 0.0f;
+        }
     }
 
     // The wind turns from +x towards -z, which is the way the sun's azimuth turns and the way

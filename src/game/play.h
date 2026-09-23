@@ -190,6 +190,11 @@ public:
     // waiting for the killing blow to land. What the health bar reads, so it is not taken
     // away a swing before the blow that emptied it.
     bool shownAlive(uint32_t id) const;
+    // Everybody standing in the field: the feet of every body that is placed, in view and
+    // alive as drawn, as (x, ground height, z, 0), at most `most` of them, the hero first.
+    // Returns how many were written. For the grass, which parts round whoever walks in it;
+    // a corpse parts nothing, since it lies on the sward rather than standing in it.
+    int walkers(float* out, int most) const;
     // The hero as a save keeps him, and laid back on a hero just raised -- see Realm::restore.
     // restore() also dresses the figure in what the record wears.
     sim::HeroRecord record() const { return realm_.record(); }

@@ -312,6 +312,31 @@ bool Play::shownAlive(uint32_t id) const {
     return false;
 }
 
+int Play::walkers(float* out, int most) const {
+    if (!ground_ || !out || most <= 0) return 0;
+    int written = 0;
+    // Two passes, so the hero is first whatever order drawn_ keeps him in: the field parts
+    // round eight bodies at most, and if a frame draws more than that the ones left out
+    // should be the crowd's, never his.
+    for (int pass = 0; pass < 2 && written < most; ++pass) {
+        for (const Drawn& one : drawn_) {
+            if (written >= most) break;
+            const bool hero = one.id == realm_.hero().id;
+            if ((pass == 0) != hero) continue;
+            if (!one.placed || !one.visible || one.deadFor >= 0.0f) continue;
+            // The crown is the top of the body; the feet are under it on the ground, which is
+            // where the aura and the sand are put too.
+            float* slot = out + written * 4;
+            slot[0] = one.crown[0];
+            slot[1] = ground_->heightAt(one.crown[0], one.crown[2]);
+            slot[2] = one.crown[2];
+            slot[3] = 0.0f;
+            ++written;
+        }
+    }
+    return written;
+}
+
 void Play::follow(float seconds) {
     if (!ground_) return;
     const float metresPerTile = ground_->metresPerTile();

@@ -225,7 +225,7 @@ struct Lighting {
     float grassMeadow = 0.12f;
     float grassMeadowHeight = 0.62f;
 
-    float grassWindStrength = 0.10f;
+    float grassWindStrength = 0.16f;
     float grassWindDegrees = 45.0f;  // which way it blows, turning from +x towards -z
 
     // The reflection probe, sprint 8c: a cube round the player that metal and water reflect.

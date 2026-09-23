@@ -282,7 +282,7 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
         bgfx::setUniform(uGrassVary_, vary);
         bgfx::setUniform(uGrassSheet_, sheet);
         bgfx::setUniform(uGrassReach_, grass.reach);
-        bgfx::setUniform(uGrassWalker_, grass.walker);
+        bgfx::setUniform(uGrassWalkers_, grass.walkers, GrassField::kMaxWalkers);
         // Per batch, because it is per SHEET: Lorencia's two are 256x64, Noria's third is
         // 256x128 and the meadow's is 512x128, and a mip level is worked out per axis.
         const float size[4] = {batch.width, batch.height, density, colour};
