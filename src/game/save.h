@@ -27,10 +27,9 @@ struct Saved {
     // not be arranged -- a knight's skill was whatever weapon was in his hand -- and this one
     // can, so an arrangement the player made by hand is his and not the session's.
     int32_t bar[5] = {0, 0, 0, 0, 0};
-    // How far the camera was standing back, in metres. Not the character's, but it is his file
-    // and a second one for a single number would be worse. 0 is "nothing saved" -- an older
-    // save, or a run that never touched the wheel -- and the world keeps its own default.
-    float zoom = 0.0f;
+    // There was a `zoom` here, the metres the camera stood back, because the wheel could
+    // change it. The camera is fixed at MU's 8 m since 2026-09-24 and there is nothing to
+    // keep; an older file's own `zoom` key is read by nothing and ignored.
 
     // As read, before the tables are there to turn them into rows. The file is read before
     // the world is -- it decides the class, the level and the tile the world is raised at --

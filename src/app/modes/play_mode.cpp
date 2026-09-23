@@ -51,7 +51,6 @@ void PlayMode::keep(Context& ctx) {
     now.hero = world_.played().record();
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 5; ++key) now.bar[key] = desk_.bound(key);
-    now.zoom = world_.zoomDistance();
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
 }
 
@@ -152,10 +151,6 @@ bool PlayMode::open(Context& ctx) {
             if (resumed_) {
                 game::resolveSave(*world_.played().realm().tables(), saved_);
                 world_.played().restore(saved_.hero);
-                // And the camera where the wheel left it last time. A save with no zoom in
-                // it -- an older file, or a run that never touched the wheel -- leaves the
-                // world's own default standing.
-                world_.setZoomDistance(saved_.zoom);
             }
             // What a blow looks like and where a click sent him. Not fatal: open() has
             // said why in the log.
@@ -502,7 +497,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               ctx.window.width(), ctx.window.height());
         if ((ctx.window.clicked(0) && !windowed) || clickNow) world_.played().leftClick();
         if (ctx.window.clicked(1) && !windowed) world_.played().rightClick();
-        if (!windowed) world_.zoom(ctx.window.scroll());
         world_.played().update(deltaSeconds);
         // The colour goes out of the world while he is down. Half a second out and a second
         // back: a fall should land and a recovery should feel like one. The renderer drains the

@@ -79,14 +79,20 @@ fi
 code=0
 # `|| code=$?` rather than reading `$?` after it, because `set -e` at the top of this file
 # would otherwise end the script on the failure before the lines that explain it are printed.
-# `--cap 60` as well as vsync, and the two are not the same thing. Vsync only refuses to
-# present between refreshes; on a 180 Hz display, where a refresh is 5.56 ms and this frame
-# costs 7.6 ms in the middle and 12.3 at the 99th percentile, that means presenting on the
-# second refresh or the third as the cost wanders across 11.1 ms, and the picture steps
-# between 90 and 60 fps several times a second. A period the frame fits inside every time is
-# the same refresh every time. `./main.sh --cap 0` lets it run free again, and `--cap 90` asks
-# for the faster pace on a frame that cannot quite hold it yet.
-build/mu2 --world lorencia --play --vsync --cap 60 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
+# `--cap 180` as well as vsync, and the two are not the same thing. Vsync only refuses to
+# present between refreshes; the cap is a period waited out after the present, which is what
+# makes a pace rather than a ceiling.
+#
+# 180 is this display's own refresh, so the cap is not holding anything back: it is the
+# setting that SHOWS the drops, because every frame that misses 5.56 ms falls to the next
+# refresh and the readout says 90 where it said 180. That is what it is set to while the
+# frame is being worked on.
+#
+# `--cap 60` is the other setting, and the smooth one: the frame is 7.6 ms in the middle and
+# 12.3 at the 99th, so at 180 it steps between 90 and 60 several times a second, while a
+# 16.67 ms period is one it fits inside every time and the same refresh every time. Play on
+# 60; measure and hunt on 180. `--cap 0` lets it run free.
+build/mu2 --world lorencia --play --vsync --cap 180 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
   code=$?
 if [ $code -ne 0 ]; then
   echo "mu2 stopped with $code. The last of mu2.log:"

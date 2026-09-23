@@ -15,12 +15,20 @@ namespace {
 constexpr float kFovDegrees = 55.0f;
 constexpr float kPitchDegrees = -48.5f;
 constexpr float kYawDegrees = 45.0f;
-constexpr float kDistance = 8.0f;      // 800 of MU's units
-// Where a played camera starts, and how near the wheel brings it. Invention: MU2's game had
-// no zoom and stood at MU's 8 m, which on a 1080p frame draws the character 170 pixels tall.
-// The measuring camera (no --play) stays at MU's 8 m, so every frame number keeps its meaning.
-constexpr float kPlayDistance = 6.0f;
-constexpr float kNearest = 3.5f;
+// 800 of MU's units, and now the only distance there is: played or measuring, the camera
+// stands here. There was a wheel zoom between 3.5 and 8 m and a played camera that started
+// at 6; both are gone, on 2026-09-24, and MU's own 8 m is what is left -- which is also the
+// furthest the wheel had ever allowed.
+//
+// It was removed for the frame and not for the look. A distance that moves is a frustum that
+// moves, and with it every cull the frame depends on: which chunks the camera keeps, how many
+// placements the sun's split frames, which band of grass is standing and how tall its cards
+// come out on screen. Each of those was tuned at one framing and each has a worst case, and
+// with the wheel in the player's hand the worst case was whatever he had last scrolled to --
+// so a frame measured at 8 m proved nothing about the frame he was looking at. Fixed, the
+// cull set is the same set every frame, the numbers in docs/budget.md are numbers about the
+// game, and a spike has one fewer thing it can be.
+constexpr float kDistance = 8.0f;
 constexpr float kFocusHeight = 1.5f;   // 150 units up the body
 // How far above the middle of the frame a played character is drawn, as a fraction of the
 // frame's height. Invention, the ARPG habit rather than MU's: MU centres him.
@@ -41,10 +49,6 @@ constexpr float kFollowSeconds = 0.09f;
 constexpr float kRiseSeconds = 0.25f;
 // A jump further than this is a respawn or a gate, and the camera is simply there.
 constexpr float kSnapMetres = 4.0f;
-// The wheel eases to the distance it asked for, in log space so a notch reads the same near
-// or far. About a sixth of a second to arrive.
-constexpr float kZoomSeconds = 0.06f;
-
 // Game Programming Gems 4's SmoothDamp, the closed form of a critically damped spring.
 float smoothDamp(float current, float target, float& velocity, float time, float dt) {
     const float omega = 2.0f / time;
@@ -237,23 +241,15 @@ void World::update(double seconds, bool still) {
     // Walk.cs's own back vector: sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch).
     const float back[3] = {std::sin(yaw) * std::cos(pitch), -std::sin(pitch),
                            std::cos(yaw) * std::cos(pitch)};
-    if (distance_ <= 0.0f) distance_ = wantDistance_ = play_.isOpen() ? kPlayDistance : kDistance;
-    if (wantDistance_ <= 0.0f) wantDistance_ = distance_;
-    if (dt > 0.0f && distance_ != wantDistance_) {
-        const float blend = 1.0f - std::exp(-dt / kZoomSeconds);
-        distance_ = std::exp(std::log(distance_) + (std::log(wantDistance_) - std::log(distance_)) * blend);
-        if (std::fabs(distance_ - wantDistance_) < 1e-3f) distance_ = wantDistance_;
-    }
-    for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * distance_;
+    for (int i = 0; i < 3; ++i) camera_.position[i] = camera_.target[i] + back[i] * kDistance;
 
     // The ARPG framing: the played character stands above the middle of the frame, with more
     // ground ahead of him to the bottom of the screen, where the HUD's bar and orbs sit. The
     // whole camera slides down its own screen-up, so the angle and the lens are untouched and
-    // only the picture moves. The slide is a fraction of the frame's height at the focus, so
-    // it holds at every zoom.
+    // only the picture moves. The slide is a fraction of the frame's height at the focus.
     if (play_.isOpen()) {
         const float lift = kLiftFrame * 2.0f * std::tan(kFovDegrees * 0.5f * 3.14159265f / 180.0f) *
-                           distance_;
+                           kDistance;
         // Screen-up is (right x forward), with forward = -back and right = forward x world-up.
         const float fwd[3] = {-back[0], -back[1], -back[2]};
         float right[3] = {-fwd[2], 0.0f, fwd[0]};
@@ -268,23 +264,6 @@ void World::update(double seconds, bool still) {
             camera_.position[i] -= upward[i] * lift;
         }
     }
-}
-
-void World::setZoomDistance(float metres) {
-    if (!(metres > 0.0f)) return;
-    // Held to the same pair of ends the wheel is: a save written by a build with other limits,
-    // or edited by hand, cannot put the camera underground or out past MU's own 8 m.
-    const float held = metres < kNearest ? kNearest : (metres > kDistance ? kDistance : metres);
-    distance_ = wantDistance_ = held;
-}
-
-void World::zoom(float notches) {
-    if (notches == 0.0f || distance_ <= 0.0f) return;
-    // From where the wheel was last sent, not from where the camera has got to, so a quick
-    // spin of several notches adds up rather than being eaten by the easing.
-    if (wantDistance_ <= 0.0f) wantDistance_ = distance_;
-    const float wanted = wantDistance_ * std::pow(0.92f, notches);
-    wantDistance_ = wanted < kNearest ? kNearest : (wanted > kDistance ? kDistance : wanted);
 }
 
 bool World::characterAt(float* x, float* z) const {
