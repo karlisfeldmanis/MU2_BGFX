@@ -20,6 +20,10 @@ struct Args {
     // taken windowed at 1080p; this is for playing it.
     bool fullscreen = false;
     bool vsync = false;  // off for every measurement; see docs/budget.md
+    // Frames a second to hold the picture to, 0 for as fast as it will go. A pace, not a
+    // limit on the work: it waits after the present and the wait is kept out of the
+    // statistics. Every measurement is taken at 0. See the remark in application.cpp.
+    int cap = 0;
 
     // The review loop.
     int frames = 0;              // 0 plays until the window closes

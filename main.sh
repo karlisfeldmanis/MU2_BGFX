@@ -79,7 +79,14 @@ fi
 code=0
 # `|| code=$?` rather than reading `$?` after it, because `set -e` at the top of this file
 # would otherwise end the script on the failure before the lines that explain it are printed.
-build/mu2 --world lorencia --play --vsync --level 1 --class "$kin" "${cradle[@]}" "$@" ||
+# `--cap 60` as well as vsync, and the two are not the same thing. Vsync only refuses to
+# present between refreshes; on a 180 Hz display, where a refresh is 5.56 ms and this frame
+# costs 7.6 ms in the middle and 12.3 at the 99th percentile, that means presenting on the
+# second refresh or the third as the cost wanders across 11.1 ms, and the picture steps
+# between 90 and 60 fps several times a second. A period the frame fits inside every time is
+# the same refresh every time. `./main.sh --cap 0` lets it run free again, and `--cap 90` asks
+# for the faster pace on a frame that cannot quite hold it yet.
+build/mu2 --world lorencia --play --vsync --cap 60 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
   code=$?
 if [ $code -ne 0 ]; then
   echo "mu2 stopped with $code. The last of mu2.log:"

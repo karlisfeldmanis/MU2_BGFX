@@ -6,9 +6,11 @@
 
 #include <sys/stat.h>
 
+#include <chrono>
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include "app/modes/bench_mode.h"
 #include "app/modes/play_mode.h"
@@ -234,10 +236,41 @@ int Application::run(int argc, char** argv) {
 
         bgfx::frame();
 
+        // The work: from the end of the last frame's wait to the end of this present. The
+        // pacing wait below is deliberately outside it, so `cpu` stays the frame's cost and
+        // a paced run's budget table reads the same as a free one's.
+        const double cpuMs = double(bx::getHPCounter() - last) * toMs;
+
+        // The pace. Vsync alone is not a steady picture on a fast display: this frame costs
+        // 7.6 ms in the middle and 12.3 ms at the 99th, and 180 Hz refreshes every 5.56 ms,
+        // so the present lands on the second refresh or the third as the cost crosses 11.1 ms
+        // and the picture steps between 90 and 60 several times a second. Held to a period
+        // the frame fits inside every time, it lands on the same refresh every time. A steady
+        // 60 reads smoother than an average of 130 that keeps changing its mind.
+        //
+        // Waited out here rather than asked of bgfx, which has vsync on or off and nothing
+        // in between. 0 leaves it free, and every measurement is taken at 0.
+        if (args_.cap > 0) {
+            const double periodMs = 1000.0 / double(args_.cap);
+            for (;;) {
+                const double aheadMs = periodMs - double(bx::getHPCounter() - last) * toMs;
+                if (aheadMs <= 0.0) break;
+                // The last stretch is spun, not slept: the OS wakes when it wakes, and a
+                // millisecond late is a missed refresh, which is the judder this is for.
+                if (aheadMs > 1.5) {
+                    std::this_thread::sleep_for(
+                        std::chrono::microseconds(int64_t((aheadMs - 1.0) * 1000.0)));
+                }
+            }
+        }
+
         const int64_t now = bx::getHPCounter();
-        const double cpuMs = double(now - last) * toMs;
+        // The world's clock is wall time, the wait included, or a paced run would play in
+        // slow motion: the hero would walk 60 frames' worth of ground in a second and the
+        // clips would run at the ratio of the work to the period.
+        const double frameMs = double(now - last) * toMs;
         last = now;
-        at.deltaSeconds = cpuMs / 1000.0;
+        at.deltaSeconds = frameMs / 1000.0;
         // A screenshot stalls its frame to about 250 ms, and that quarter-second used to be
         // handed to the clips: every shot after the first showed a pose a quarter-second
         // ahead of where a shotless run stands, and any transient shorter than the stall --
@@ -257,12 +290,13 @@ int Application::run(int argc, char** argv) {
         // picture belongs to the reviewer, not to the frame being reviewed.
         if (!shotThisFrame) stats.sample(cpuMs);
 
-        sinceLine += cpuMs;
-        sinceSheetCheck += cpuMs;
+        // Wall time, so the line stays a line a second when the run is paced.
+        sinceLine += frameMs;
+        sinceSheetCheck += frameMs;
         if (sinceLine >= 1000.0) {
             const bgfx::Stats* s = bgfx::getStats();
             core::logf("frame %d: %.1f fps, cpu %.2f ms, gpu %.2f ms, %u draws", at.index,
-                       1000.0 / cpuMs, cpuMs,
+                       1000.0 / frameMs, cpuMs,
                        double(s->gpuTimeEnd - s->gpuTimeBegin) * 1000.0 / double(s->gpuTimerFreq),
                        s->numDraw);
             // The transparent pass's pool, for the same reason the culling counts are in the

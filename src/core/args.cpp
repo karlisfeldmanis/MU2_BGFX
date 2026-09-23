@@ -27,6 +27,8 @@ void printUsage() {
         "  --fullscreen              the whole display at its own mode; --width/--height are "
         "ignored\n"
         "  --vsync                   cap to the display; off by default so a number is a number\n"
+        "  --cap N                   hold the picture to N frames a second (0 free, the "
+        "default); with --vsync, a divisor of the refresh\n"
         "  --frames N                quit after N frames\n"
         "  --repeat N                measure N segments of --frames, loading the world once\n"
         "  --shot N                  write a PNG every N frames, and on the last\n"
@@ -130,6 +132,14 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.width = std::atoi(v);
         } else if (!std::strcmp(s, "--height")) {
             if (const char* v = next(s)) a.height = std::atoi(v);
+        } else if (!std::strcmp(s, "--cap")) {
+            if (const char* v = next(s)) {
+                a.cap = std::atoi(v);
+                if (a.cap < 0) {
+                    logError("--cap wants 0 or a frame rate, got %d", a.cap);
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--fullscreen")) {
             a.fullscreen = true;
         } else if (!std::strcmp(s, "--no-figures")) {
