@@ -326,16 +326,18 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         if (!realm.knows(row.number)) continue;
         const uint32_t bit = uint32_t(1) << i;
         if ((autoBound_ & bit) != 0) continue;
+        // Marked as having had its chance HERE, before anything is bound, and whether or not a
+        // key was free for it. A knight knows six skills and the bar holds four, so two of them
+        // never find one -- and while they were left unmarked, clearing a key by hand was
+        // answered on the very next frame by one of those two dropping into it. The convenience
+        // is one offer a skill, not a standing claim on the first key to fall vacant.
+        autoBound_ |= bit;
         bool already = false;
         for (int key = 0; key < Hud::kSkillKeys; ++key) already |= bound_[key] == row.number;
-        if (already) {
-            autoBound_ |= bit;
-            continue;
-        }
+        if (already) continue;
         for (int key = 0; key < Hud::kSkillKeys; ++key) {
             if (bound_[key] != 0) continue;
             bound_[key] = row.number;
-            autoBound_ |= bit;
             core::logf("window: %s bound to %s", row.name,
                        key == 0 ? "Q" : key == 1 ? "W" : key == 2 ? "E" : "R");
             break;
@@ -432,26 +434,35 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             for (int key = 0; key < Hud::kSkillKeys; ++key) {
                 if (key != onto && bound_[key] == carried) other = key;
             }
+            const bool moved = displaced != carried;
             bound_[onto] = carried;
             if (carryFrom_ >= 0 && carryFrom_ != onto) {
                 bound_[carryFrom_] = displaced;
             } else if (other >= 0) {
                 bound_[other] = displaced;
             }
-            core::logf("window: %s on %s", sim::skillNumbered(carried)->name,
-                       onto == 0 ? "Q" : onto == 1 ? "W" : onto == 2 ? "E" : "R");
-            play.ui(Play::Ui::Took);
-            // And the list shuts behind it, as MU2's does: the choice is made.
-            fanLatched_ = false;
-        } else if (carryFrom_ >= 0 && hud_.fanAt(pointer.x, pointer.y) >= 0) {
-            // A key dropped back into the list is a key cleared. Nothing is lost: the skill is
-            // learned, and the list is where every learned skill is.
+            if (moved) {
+                core::logf("window: %s on %s", sim::skillNumbered(carried)->name,
+                           onto == 0 ? "Q" : onto == 1 ? "W" : onto == 2 ? "E" : "R");
+                play.ui(Play::Ui::Took);
+                // And the list shuts behind it, as MU2's does: the choice is made.
+                fanLatched_ = false;
+            }
+        } else if (carryFrom_ >= 0) {
+            // **Dragged off the bar is taken off the bar**, wherever it lands -- the list, the
+            // frame, the grass. The user, 2026-09-23: *"I can't drag a skill out of a
+            // quickslot."* It used to clear the key only when the drop landed back on the
+            // list, which is tidy and is not what a hand expects: every game that lets you
+            // arrange a bar by dragging lets you clear a slot by dragging off it, and nothing
+            // is lost either way, since the skill is learned and the list holds every learned
+            // skill. A plain CLICK on a key is not this: it lands on the key it came from and
+            // falls into the branch above, which leaves the bar as it was.
             bound_[carryFrom_] = 0;
             core::logf("window: %s taken off the bar", sim::skillNumbered(carried)->name);
             play.ui(Play::Ui::Took);
         }
-        // Anywhere else the drag is let go and nothing changes, which is MU2's third landing:
-        // a drag abandoned over the world is a drag abandoned.
+        // A cell dragged out of the LIST and let go on nothing is simply a drag abandoned,
+        // which is MU2's third landing.
         carrying_ = 0;
         carryFrom_ = -1;
     }
