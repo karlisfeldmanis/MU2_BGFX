@@ -422,6 +422,25 @@ bool Realm::take(size_t index) {
     return true;
 }
 
+// Zen underfoot, taken on the tick he arrives on it. The same reach the `Pick` order uses --
+// within a tile, which is the heap's own square or one beside it -- so a heap that fell against
+// a wall is still collected by walking past it, and so that a field of bodies does not need a
+// click a corpse. INVENTION: MU makes you click every heap.
+//
+// Only Zen. An item is left where it fell, because the bag is twelve by eight and a Kris he
+// did not ask for is a slot he did not choose to spend. The list is walked backwards because
+// `take` swaps the back into the hole it leaves.
+void Realm::sweep() {
+    const Body& hero = bodies_[0];
+    for (size_t i = lying_.size(); i-- > 0;) {
+        const Lying& one = lying_[i];
+        if (!one.what.empty()) continue;
+        if (std::fabs(hero.x - float(one.column)) > 1.0f) continue;
+        if (std::fabs(hero.y - float(one.row)) > 1.0f) continue;
+        take(i);
+    }
+}
+
 bool Realm::serving(int folk) const {
     if (!tables_ || folk < 0 || size_t(folk) >= tables_->folk.size()) return false;
     const Body& hero = bodies_[0];

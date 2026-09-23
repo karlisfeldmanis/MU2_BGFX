@@ -147,6 +147,16 @@ void Play::update(double seconds) {
             }
             if (happening.who == heroId) {
                 if (happening.what == sim::What::Picked) {
+                    // Zen rings coins rather than the pickup: it is the one thing picked up
+                    // that is not a thing, and it is now swept up rather than clicked
+                    // (Realm::sweep), so this is the only sound the whole heap ever makes.
+                    if (happening.b < 0) {
+                        const Drawn* hero = drawnOf(heroId);
+                        if (heard_.moneyDrop >= 0 && hero && hero->placed) {
+                            emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+                            continue;
+                        }
+                    }
                     int sound = heard_.take;
                     if (happening.b >= 0 && happening.b < sim::kSlots) {
                         const int32_t item = realm_.satchel()[happening.b].item;

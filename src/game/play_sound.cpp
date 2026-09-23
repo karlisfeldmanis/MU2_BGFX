@@ -115,13 +115,14 @@ void Play::landed(uint32_t drop) {
     for (const sim::Lying& one : realm_.lying()) {
         if (one.id != drop) continue;
         // CreateItemDrop's branch: SOUND_JEWEL01 for the jewels, SOUND_DROP_ITEM01 for any
-        // other thing, and CreateMoneyDrop's SOUND_DROP_MONEY01 for Zen. MU plays the coins
-        // unplaced, a reward mixed like one; MU2 placed both, and so does this -- the heap is
-        // always a few steps off, which the carry puts at full volume anyway.
+        // other thing. MU also rings CreateMoneyDrop's SOUND_DROP_MONEY01 for Zen and this
+        // does NOT -- the user's call, 2026-09-23, and it follows from the sweep: Zen is picked
+        // up the moment he walks onto it, so the coins land and are collected within a second
+        // of each other and the two sounds tread on one another. The coins are kept for the
+        // half that is worth hearing, which is the taking.
+        if (one.what.empty()) return;
         int sound = heard_.itemDrop;
-        if (one.what.empty()) {
-            sound = heard_.moneyDrop;
-        } else if (one.what.item >= 0 && size_t(one.what.item) < tables_.items.size() &&
+        if (one.what.item >= 0 && size_t(one.what.item) < tables_.items.size() &&
                    tables_.items[size_t(one.what.item)].jewel() && heard_.jewel >= 0) {
             sound = heard_.jewel;
         }

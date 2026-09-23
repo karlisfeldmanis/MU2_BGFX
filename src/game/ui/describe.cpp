@@ -212,6 +212,45 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             sheet.note = "Already learned";
             sheet.noteTone = Tone::Red;
         }
+        // **And what the skill hits for, off the skill's own row.** The user asked for the
+        // damage modifiers here on 2026-09-23, and the reason they belong on a scroll and not
+        // only on the skill card is that this card is read BEFORE the decision: on Hanzo's
+        // shelf, beside a price, deciding whether to spend three thousand Zen on it. The skill
+        // card is read afterwards.
+        //
+        // The same three lines the card prints, in the same words and the same colours
+        // (`Desk::skillSheet`), because two cards describing one skill differently is how a
+        // player learns to distrust both. The multiplier is THIS character's -- `sim::force`
+        // folds his strength in -- so an orb read at 30 strength and the same orb at 200 do not
+        // claim the same blow.
+        if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches)) {
+            if (skill->onSelf()) {
+                teaches.rows.push_back(
+                    stat("Damage taken",
+                         "x" + decimal(skill->damageTaken) + " for " +
+                             decimal(float(skill->boonTicks) * 0.05f) + " s",
+                         known ? Tone::Gray : Tone::Green));
+            } else {
+                char sum[64];
+                std::snprintf(sum, sizeof sum, "%.2f of a swing",
+                              double(sim::force(*skill, who.points)));
+                teaches.rows.push_back(
+                    stat("Damage", "x" + std::string(sum), known ? Tone::Gray : Tone::Yellow));
+                // And the sum that made it, grey and on one line, exactly as the skill card
+                // prints it: the row's own base plus his strength over the skill's divisor.
+                // It is what argues for spending a point on strength, and on a shelf it is
+                // what tells one orb's ceiling from another's.
+                std::snprintf(sum, sizeof sum, "%.2f + %d str / %d", double(skill->force),
+                              who.points.strength,
+                              skill->forcePerStrength > 0.0f
+                                  ? int(1.0f / skill->forcePerStrength + 0.5f)
+                                  : 0);
+                Row how;
+                how.free = sum;
+                how.freeTone = Tone::Gray;
+                teaches.rows.push_back(how);
+            }
+        }
         if (!row.teachesTells.empty()) {
             Row line;
             line.free = row.teachesTells;

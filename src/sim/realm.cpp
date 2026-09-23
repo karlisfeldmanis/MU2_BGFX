@@ -432,6 +432,8 @@ void Realm::step() {
         accept();
         advance(hero);
         press();
+        // And whatever Zen he is standing on, after the step that put him there.
+        sweep();
     } else if (tick_ >= hero.risesAt) {
         reviveHero();
     }

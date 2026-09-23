@@ -440,6 +440,11 @@ private:
     std::pair<int, int> clearing(int column, int row) const;
     bool bare(int column, int row) const;
     bool take(size_t index);
+    // Zen he has walked onto, taken without being asked. INVENTION and not MU's: the original
+    // makes you click every heap, and a hunt that drops one a body is then half spent picking
+    // them up. Items are NOT swept -- a sword he did not ask for is a bag slot he did not mean
+    // to spend, and the bag is small.
+    void sweep();
     void sip();
     void recover(Body& hero);
     bool send(Body& one, int column, int row);
