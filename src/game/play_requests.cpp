@@ -154,8 +154,24 @@ bool Play::sell(int bagSlot) {
     const int64_t paid = realm_.sellItem(bagSlot);
     core::logf("window: sell slot %d %s (%lld paid, %lld Zen now)", bagSlot,
                paid >= 0 ? "taken" : "refused", (long long)paid, (long long)realm_.money());
-    // ReceiveSell's, the same SOUND_GET_ITEM01.
-    if (paid >= 0) sound_.play(heard_.take);
+    // Coins, not the pickup: a sale is Zen arriving and the thing sold LEAVING the bag, so
+    // pGetItem was the one sound in the shop that described the wrong half of the trade. MU
+    // plays ReceiveSell's SOUND_GET_ITEM01 here and this deliberately does not -- the user's
+    // call, 2026-09-23. A purchase keeps the pickup, because a purchase really is a thing
+    // arriving in the bag.
+    //
+    // Placed at the hero rather than played flat, because `money_drop` is a placed event
+    // (play_open loads it that way for the heap that lands on the grass) and Sound::play
+    // refuses a placed one in silence. He is standing at the counter and the listener is on
+    // him, so there is nothing for the distance to attenuate.
+    if (paid >= 0) {
+        const Drawn* hero = drawnOf(realm_.hero().id);
+        if (heard_.moneyDrop >= 0 && hero && hero->placed) {
+            emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+        } else {
+            sound_.play(heard_.take);
+        }
+    }
     return paid >= 0;
 }
 
