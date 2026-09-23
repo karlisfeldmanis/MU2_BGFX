@@ -77,11 +77,16 @@ constexpr float kWidth = 190.0f;
 constexpr float kHeight = 429.0f;
 constexpr float kScreenShare = 0.62f;
 constexpr float kRightMargin = 24.0f;
+// And the same air over it. A window used to be centred down the screen, which hung it between
+// two empty bands and put its foot near the HUD's; the user, 2026-09-23: *"windows has to be
+// more on top side not bottom side"*. It sits in the top-right corner now, in the margin the
+// right edge already keeps, so the two sides of the corner match.
+constexpr float kTopMargin = kRightMargin;
 // The air between two open windows. MU butts its columns flush, which worked while every window
 // was a slab of leather with its own carved border; two hairline-edged panels flush against each
 // other read as one panel with a seam, so the skin puts six units between them.
 constexpr float kColumnGap = 6.0f;
-// Where a panel in the n-th column from the right begins, and its top: centred down the screen.
+// Where a panel in the n-th column from the right begins, and its top: under the top margin.
 // MU moves the INVENTORY left to column two when the character window opens, not the other way.
 float columnX(float screenWidth, int column);
 float panelY(float screenHeight);

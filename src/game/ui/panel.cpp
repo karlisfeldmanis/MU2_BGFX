@@ -86,7 +86,10 @@ float columnX(float screenWidth, int column) {
            kColumnGap * k * float(column - 1);
 }
 
-float panelY(float screenHeight) { return (screenHeight - kHeight * scale()) * 0.5f; }
+// Hung from the top, not centred, and never off the bottom of a short window.
+float panelY(float screenHeight) {
+    return std::min(kTopMargin, std::max(0.0f, screenHeight - kHeight * scale()));
+}
 
 // ---- the head's face -------------------------------------------------------------------------
 
