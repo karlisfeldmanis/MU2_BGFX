@@ -52,12 +52,19 @@ bool Play::useItem(int slot) {
     const int32_t item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
     const bool used = realm_.useItem(slot);
     core::logf("window: use %d %s", slot, used ? "taken" : "refused");
-    // The potion going down, or the apple: TryConsumeItem's own split, by what was used.
+    // The potion going down, or the apple: TryConsumeItem's own split, by what was used. And
+    // the third arm, which is this project's and not MuMain's, because MuMain has no orb read
+    // from the bag to answer for: an orb is not swallowed, so the gulp is wrong on it. It rings
+    // -- eGem.wav, `jewel_get`, the bright chime MU keeps for picking a jewel up, which is the
+    // one wave in the whole set that says *something precious was gained* in under a second.
+    // The level-up fanfare is the other candidate and was left alone on purpose: a skill bought
+    // must not sound like a level, and plevelup is three seconds of it.
     if (used) {
-        const bool apple = item >= 0 && size_t(item) < tables_.items.size() &&
-                           tables_.items[size_t(item)].group == 14 &&
-                           tables_.items[size_t(item)].number == 0;
-        sound_.play(apple ? heard_.apple : heard_.drink);
+        const content::ItemRow* row =
+            item >= 0 && size_t(item) < tables_.items.size() ? &tables_.items[size_t(item)] : nullptr;
+        const bool apple = row && row->group == 14 && row->number == 0;
+        const bool orb = row && row->teaches != 0;
+        sound_.play(orb ? heard_.orb : apple ? heard_.apple : heard_.drink);
     }
     return used;
 }

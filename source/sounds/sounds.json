@@ -330,6 +330,15 @@
       "note": "Played by the client on the request and not on the reply, unplaced like the level-up, and before the server has said anything about the health. There is no drinking action in the PLAYER_ table at all; the body carries on with what it was doing and the number comes back. Stereo 44 kHz peaking at 0.60, so a little under the apple and lifted to sit with it.",
       "gain_db": 3.0
     },
+    "player_learn_skill": {
+      "files": [
+        "egem.wav"
+      ],
+      "gain_db": 8.0,
+      "gain_note": "Two above `jewel_get`'s six, and the six is the measurement: the same file, mono 22 kHz peaking at 0.56, needs that much to sit where an item arriving in the bag sits. The extra two are the event and not the wave. A jewel in the bag is a thing that can be sold again; a skill read off an orb is permanent and happens six times in a character's life, so it is allowed to arrive a little above the level everything else in the inventory answers at. It is also unplaced, where the jewel's is placed on the hero -- the same spot as the listener, so that costs the jewel nothing and the two really are comparable.",
+      "from": "This project's, and the one event here that is not MuMain's. 0.75's client never reads an orb out of the bag - skills arrive with the character - so there is no PlayBuffer to copy and no SOUND_ constant to name. The wave is MU's own: SOUND_JEWEL01, eGem.wav, which ReceiveGetItem rings when the thing picked up is a jewel.",
+      "note": "Chosen out of the 104 by what a learn is, not by what an orb is. It is 0.65 s, mono 22 kHz, peaking at 0.56, with a hard attack and a long bright decay - four thousand zero crossings a second against pDrink's twelve hundred - so it reads as a chime and not as a swallow, and it is over before the window has finished redrawing. pDrink was what played before, because an orb went down the consumable branch with the potions, and a permanent skill sounding like a gulp was the complaint. pLevelUp is the other wave that means *something was gained* and is deliberately not used: three seconds of fanfare, and a skill bought at Hanzo's must not sound like a level. Unplaced, so it is heard flat on the player rather than out at the jewel's feet - `jewel_get` loads the same file placed, and the two handles are separate for that reason alone."
+    },
     "player_eat_apple": {
       "files": [
         "peatapple.wav"

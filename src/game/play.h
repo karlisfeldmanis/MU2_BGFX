@@ -428,6 +428,7 @@ private:
         int itemDrop = -1, moneyDrop = -1, jewel = -1;  // a thing landing; a jewel's own ring
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
         int drink = -1, apple = -1;                     // a potion going down
+        int orb = -1;                                   // an orb read, and the skill kept
         int click = -1, refused = -1, opened = -1;      // the windows
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
