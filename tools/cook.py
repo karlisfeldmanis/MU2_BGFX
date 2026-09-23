@@ -1083,10 +1083,24 @@ def cook_placements(world, out_dir, chunk_tiles):
     if grid_w != size or light_w != size:
         raise ValueError(f"{world}: a grid is {grid_w} wide and the world says {size}")
 
+    # Bilinear over the tile's four corners, and it has to be, because that is what the
+    # ground the tuft stands on IS: `Ground::heightAt` interpolates the same four, and the
+    # terrain mesh is drawn from them. Read at the nearest corner -- which is what this did
+    # first -- a placement anywhere but on a grid line is stood at a height the ground does
+    # not have under it, and the steeper the tile the further out it is. Measured over
+    # Lorencia's 999 grounded placements: 107 floated and 97 sank by more than 5 cm, 28 were
+    # over a quarter-metre out, and a `Grass01` on the river bank stood 1.08 m in the air.
+    # The half-tile offset is deliberate and MU's: a placement's (column, row) is measured
+    # from the same grid origin as the heightmap, so tile (c, r)'s corner is sample (c, r).
     def terrain(column, row):
-        x = min(max(int(column), 0), grid_w - 1)
-        y = min(max(int(row), 0), grid_h - 1)
-        return heights[y * grid_w + x] * height_factor / per_tile
+        c0 = min(max(int(column), 0), grid_w - 2)
+        r0 = min(max(int(row), 0), grid_h - 2)
+        fc = min(max(column - c0, 0.0), 1.0)
+        fr = min(max(row - r0, 0.0), 1.0)
+        at = lambda c, r: heights[r * grid_w + c] * height_factor / per_tile
+        top = at(c0, r0) * (1.0 - fc) + at(c0 + 1, r0) * fc
+        bottom = at(c0, r0 + 1) * (1.0 - fc) + at(c0 + 1, r0 + 1) * fc
+        return top * (1.0 - fr) + bottom * fr
 
     def texel(x, y):
         x = min(max(x, 0), light_w - 1)

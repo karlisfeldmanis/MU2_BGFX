@@ -451,7 +451,19 @@ int main(int argc, char** argv) {
             const size_t chunksAt = at;
             // A chunk record is 24 bytes of box, two u32 and two u16: 36, not 40.
             const size_t instancesAt = chunksAt + size_t(chunks) * 36;
-            if (instancesAt + size_t(count) * 36 != bytes.size()) {
+            // Version 2 put two more tables after the instances (sprint 8a): u32 count and 48
+            // bytes an emitter, then u32 count and 20 bytes a glow. This read them as slack
+            // and failed every version-2 town it was given -- it was written when the
+            // instances were the end of the file and never taught otherwise. Walked rather
+            // than assumed, so a short or a padded tail is still caught.
+            size_t tail = instancesAt + size_t(count) * 36;
+            for (const size_t stride : {size_t(48), size_t(20)}) {
+                if (head[0] < 2 || tail + 4 > bytes.size()) break;
+                uint32_t rows;
+                std::memcpy(&rows, bytes.data() + tail, 4);
+                tail += 4 + size_t(rows) * stride;
+            }
+            if (tail != bytes.size()) {
                 fail(baseName(town), "its counts do not add up to its size");
             } else {
                 uint32_t cursor = 0;
