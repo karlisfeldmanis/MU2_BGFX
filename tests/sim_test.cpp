@@ -487,7 +487,10 @@ void testLoot(const content::Tables& tables) {
     sim::Realm realm;
     check(realm.raise(&tables, 1, 200, 160, sim::Kin::DarkKnight, 8), "a hunt raises");
     check(realm.equip(tables.armNamed("Axe01"), -1, true), "with the axe in hand");
-    int dropped = 0, picked = 0, kills = 0;
+    // Eight is under the axe skill's own level, so this hunt is also where a skill is met ON A
+    // LEVEL rather than on a raise: he learns Falling Slash at 13, somewhere in the middle of it.
+    check(!realm.knows(sim::skill::kFallingSlash), "and no skill yet, at level 8");
+    int dropped = 0, picked = 0, kills = 0, learned = 0;
     for (int tick = 0; tick < 12000; ++tick) {
         const sim::Body& hero = realm.hero();
         if (hero.alive() && realm.tick() % 10 == 0) {
@@ -533,6 +536,7 @@ void testLoot(const content::Tables& tables) {
             dropped += h.what == sim::What::Dropped;
             picked += h.what == sim::What::Picked && h.b >= 0;
             kills += h.what == sim::What::Died && h.who != realm.hero().id;
+            learned += h.what == sim::What::Learned;
         }
     }
     std::printf("  %d kills, %d drops, %d items picked up, %lld Zen\n", kills, dropped, picked,
@@ -540,6 +544,11 @@ void testLoot(const content::Tables& tables) {
     check(kills > 0 && dropped > 0, "the hunt kills and things fall");
     check(picked > 0, "an item was picked up into the bag");
     check(realm.money() > 0, "and Zen into the purse");
+    // He wins a level or two off eighty-eight spiders and nothing opens between 8 and 13, so
+    // what this hunt shows is the quiet half of the rule: a level that opens nothing says
+    // nothing. The ladder's own steps are checked in testSkills, on all three doors into it.
+    check(learned == 0 && !realm.knows(sim::skill::kFallingSlash),
+          "no skill was opened by a level that opens none");
 
     // His points, as a player spends them at the character window: into strength, which is
     // what most of what a knight finds asks for. Then equip whatever fits, straight from the
@@ -698,8 +707,102 @@ void testSkills(const content::Tables& tables) {
     // four keys are filled from the list and `built` stopped meaning "and a key is free".
     bool all = true;
     for (int i = 0; i < sim::skillCount(); ++i) all &= realm.knows(sim::skillAt(i).number);
-    check(all, "a knight is handed every built skill");
+    check(all, "a knight of 60 has met every skill");
+
+    // ---- the ladder (docs/skills-dk.md §3.3) -------------------------------------------------
+    //
+    // A skill is met at the level its orb asks for, which is 0.75's own ladder of carriers, so a
+    // young knight has an empty bar and fills it as he levels. Checked at three heights, and the
+    // last one on a level-up rather than on a raise: the two routes must agree.
+    {
+        sim::Realm young;
+        check(young.raise(&tables, 3, 190, 110, sim::Kin::DarkKnight, 1),
+              "a knight of the first level raises");
+        int met = 0;
+        for (int i = 0; i < sim::skillCount(); ++i) met += young.knows(sim::skillAt(i).number);
+        checkEqual(met, 0, "and knows nothing at all");
+
+        sim::Realm middling;
+        check(middling.raise(&tables, 3, 190, 110, sim::Kin::DarkKnight, 20),
+              "a knight of twenty raises");
+        check(middling.knows(sim::skill::kDefense), "and has met the guard at 6");
+        check(middling.knows(sim::skill::kUppercut), "the rising blow at 12");
+        check(middling.knows(sim::skill::kFallingSlash), "the overhead at 13");
+        check(middling.knows(sim::skill::kLunge), "and the jab at 20, the level he is");
+        check(!middling.knows(sim::skill::kCyclone), "but not the spin, which waits for 36");
+        check(!middling.knows(sim::skill::kSlash), "nor the sweep, which waits for 52");
+        check(!middling.knows(sim::skill::kDeathStab), "nor the spear's stab at 60");
+
+        // And the third door: a save is restored onto a realm raised at level 1, so the ladder
+        // has to be walked again when the level arrives -- otherwise a knight of 40 comes back
+        // from disk with a beginner's bar until his next level.
+        sim::Realm loaded;
+        check(loaded.raise(&tables, 3, 190, 110, sim::Kin::DarkKnight, 1), "a realm for a save");
+        sim::HeroRecord saved = loaded.record();
+        saved.level = 40;
+        saved.learned = 0;
+        loaded.restore(saved);
+        check(loaded.knows(sim::skill::kCyclone), "a restored knight of 40 has the spin");
+        check(loaded.knows(sim::skill::kTwistingSlash), "and the whirl he met at 28");
+        check(!loaded.knows(sim::skill::kSlash), "and not the sweep he has not reached");
+    }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
+
+    // ---- the families, before the hunt (docs/skills-dk.md §3.1b) -----------------------------
+    //
+    // The gate itself, asked of the table rather than of a fight: every attack names the hands
+    // that may throw it, no attack is thrown bare-handed or off a bow, and the guard asks for a
+    // shield. This is what keeps a row added later from quietly being throwable with anything.
+    {
+        bool gated = true, everyFamilyHasThree = true;
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            gated &= row.families != 0;
+            gated &= row.onSelf() ? row.families == sim::arms::kShield
+                                  : (row.families & sim::arms::kShield) == 0;
+        }
+        check(gated, "every skill names the hand it is thrown with");
+        // And no family is left with a dead bar, which is the whole reason the three rows past
+        // 0.75 exist: three attacks at least, whatever he is holding.
+        const uint32_t families[] = {sim::arms::kSword1, sim::arms::kSword2, sim::arms::kAxe1,
+                                     sim::arms::kAxe2,   sim::arms::kMace1,  sim::arms::kSpear};
+        for (uint32_t family : families) {
+            int throwable = 0;
+            for (int i = 0; i < sim::skillCount(); ++i) {
+                if (sim::skillAt(i).suits(family)) ++throwable;
+            }
+            everyFamilyHasThree &= throwable >= 3;
+        }
+        check(everyFamilyHasThree, "and every family has at least three keys to press");
+        // The families a weapon reports, off the cooked rows themselves: a Rapier is a
+        // one-handed sword, a Giant Sword is two-handed, a Nikkea Axe is a two-handed axe, a
+        // Berdysh is a spear whatever its width says, and a bow is no family at all.
+        const auto familyNamed = [&](const char* name) {
+            const int32_t at = tables.armNamed(name);
+            return at < 0 ? 0u : sim::familyOf(&tables.arms[size_t(at)]);
+        };
+        checkEqual((long long)familyNamed("Sword03"), (long long)sim::arms::kSword1,
+                   "a Rapier is a one-handed sword");
+        checkEqual((long long)familyNamed("Sword16"), (long long)sim::arms::kSword2,
+                   "a Giant Sword is a two-handed sword");
+        checkEqual((long long)familyNamed("Axe03"), (long long)sim::arms::kAxe1,
+                   "a Double Axe is a one-handed axe");
+        checkEqual((long long)familyNamed("Axe07"), (long long)sim::arms::kAxe2,
+                   "a Nikkea Axe is a two-handed axe");
+        checkEqual((long long)familyNamed("Mace02"), (long long)sim::arms::kMace1,
+                   "a Morning Star is a mace");
+        checkEqual((long long)familyNamed("Spear08"), (long long)sim::arms::kSpear,
+                   "a Berdysh is a spear");
+        checkEqual((long long)familyNamed("Bow01"), 0LL, "and a bow is no family at all");
+        checkEqual((long long)sim::familyOf(nullptr), 0LL, "as is an empty hand");
+        // And the two that matter in play: 0.75's own carriers decide who may throw what.
+        check(!sim::skillNumbered(sim::skill::kFallingSlash)->suits(sim::arms::kSword1),
+              "an axe's Falling Slash cannot be thrown off a sword");
+        check(sim::skillNumbered(sim::skill::kFallingSlash)->suits(sim::arms::kMace1),
+              "but a mace throws it, as the Morning Star did");
+        check(!sim::skillNumbered(sim::skill::kSlash)->suits(sim::arms::kSword1),
+              "and Slash needs both hands on it");
+    }
 
     int casts[sim::kSkills] = {};
     int caught[sim::kSkills] = {};   // bodies struck by each, over the whole hunt
@@ -710,7 +813,12 @@ void testSkills(const content::Tables& tables) {
     sim::Findings findings;
     int32_t casting = 0;      // the skill whose blow is in the air
     float castAim = 0.0f;
-    for (int tick = 0; tick < 6000; ++tick) {
+    // **The hunt is run once a weapon**, because a skill is now thrown with its own family and
+    // one hand can no longer reach both shapes: a one-handed sword throws the spin (Cyclone) and
+    // a two-handed one throws the sweep (Slash). Same keys, same checks, same counters -- only
+    // what is in his hand changes between the two runs.
+    const auto hunt = [&](int ticks) {
+    for (int tick = 0; tick < ticks; ++tick) {
         const sim::Body& hero = realm.hero();
         if (hero.alive()) {
             uint32_t nearest = 0;
@@ -790,6 +898,22 @@ void testSkills(const content::Tables& tables) {
             casting = 0;
         }
     }
+    };
+    hunt(6000);
+    // And again with both hands on the hilt. The Giant Sword is what 0.75 carried Slash on, so
+    // it is what throws it here; `given` again, because a level-60 knight cannot lift it.
+    check(realm.equip(tables.armNamed("Sword16"), -1, true), "the Giant Sword is taken up");
+    fighting = 0;
+    hunt(6000);
+    // And two shorter runs for the two families a sword reaches none of: the axe's overhead
+    // (Falling Slash, which a sword may not throw at all) and the spear's stab (Death Stab,
+    // which nothing else may). Without these the hunt would never press either key.
+    check(realm.equip(tables.armNamed("Axe07"), -1, true), "then the Nikkea Axe");
+    fighting = 0;
+    hunt(3000);
+    check(realm.equip(tables.armNamed("Spear08"), -1, true), "and then the Berdysh");
+    fighting = 0;
+    hunt(3000);
 
     for (int i = 0; i < sim::skillCount(); ++i) {
         const sim::SkillRow& row = sim::skillAt(i);

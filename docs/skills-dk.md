@@ -229,6 +229,10 @@ what took that away. So:
   washed, a different state from the cooldown's dark, because those two must not read as each
   other.
 
+**Superseded on 2026-09-23 by §3.1b, which asks the same question of a narrower hand:** not "is
+there a blade" but "is it *this skill's* kind of weapon". The three bullets above still hold --
+they are what falls out of the new column when a hand belongs to no family at all.
+
 **The fight's rhythm: auto-attack is the floor, a skill is the beat.** The knight opens by clicking a
 monster and keeps swinging — that standing order is already in the tree. A skill press does **not**
 cancel it:
@@ -257,6 +261,90 @@ cancel it:
   ago still spins into the three standing on him; a spin into empty air is the one thing refused,
   because it would spend mana and a cooldown on nothing.
 
+### 3.1b The weapon families: a skill belongs to a kind of weapon
+
+The user's rule, 2026-09-23: *"we need some variations for DK skills, my idea that they are for
+specific weapon types so there is deeper system behind it"* — and, asked which of three shapes,
+they chose the strictest one: **a skill needs its own family and is dark without it.** Not a bonus
+with the right weapon, not a different version per weapon. Either that hand may throw it or it may
+not.
+
+**This is 0.75's own arrangement, written down.** §1.2 is the whole derivation: in the original a
+knight *had* a skill only while he held the weapon that carried it, so Falling Slash was an axe's
+blow and Slash was the two-hander's. Learning a skill permanently — our departure, §1.2 — is what
+quietly threw that away and left one knight with all six off a Kris. The `families` column takes it
+back, and **for the five attacks it is traced rather than chosen**: the families are exactly the
+weapons `Version075/Items/Weapons.cs:93-132` granted each skill on.
+
+MuMain gates its own later skills the same way, which is worth having as precedent for the shape
+rather than for the numbers: `SkillWarrior` (`GameLogic/Combat/SkillCast.cpp:145-170`) refuses
+Impale without a spear and Spiral Slash without a sword, *before* it spends any mana — the same
+order `throwSkill` refuses in.
+
+**Eight families**, MU's own item groups split by the hands they need. One-handed and two-handed
+are told apart by the footprint's width, which is where OpenMU keeps two-handedness
+(`if (group < Bows && width == 2)`): a Double Axe is one cell across and a Battle Axe is two, and
+they are different weapons to swing. Every polearm in MU is two-handed, so the spear has one bit.
+A shield is a family too — it is the hand Defense asks for — so one column answers both questions
+instead of two rules that can drift apart.
+
+| family | group | in Lorencia |
+|---|---|---|
+| one-handed sword | 0, width 1 | Kris, Short Sword, Rapier, Katache, Sword of Assassin, Blade, Gladius, Falchion, Serpent Sword |
+| two-handed sword | 0, width 2 | Giant Sword |
+| one-handed axe | 1, width 1 | Small Axe, Hand Axe, Double Axe, Tomahawk |
+| two-handed axe | 1, width 2 | Battle Axe, Nikkea Axe |
+| mace | 2 | Mace, Morning Star |
+| spear | 3 | Spear, Dragon Lance, Berdysh, Great Scythe |
+| shield | 6 | the twelve |
+
+**Who may throw what**, and the right-hand column is the provenance:
+
+| skill | families | why |
+|---|---|---|
+| Falling Slash 19 | axes and maces, either hand | its carriers: Morning Star, Double Axe, Tomahawk, Battle Axe, Nikkea Axe. MU painted it an **axe** for an icon |
+| Lunge 20 | one-handed sword | its carrier: the Gladius. MU's own line says "used with weapons like Gladius and Katana" |
+| Uppercut 21 | one-handed sword | its carriers: Sword of Assassin, Falchion, Serpent Sword |
+| Cyclone 22 | one-handed sword, spear | its carriers: Blade, Berdysh, Great Scythe |
+| Slash 23 | two-handed sword, two-handed axe | its carriers: Giant Sword, Crystal Sword, Chaos Dragon Axe — which is MU's own description word for word |
+| Defense 18 | shield | `Version075/Items/Armors.cs:40`, the Buckler and the nine after it |
+| Twisting Slash 41 | **any weapon** | MU puts no weapon requirement on it at all; it is the knight's staple |
+| Rageful Blow 42 | axes, maces, two-handed sword | **ours**: what is brought *down* rather than drawn across |
+| Death Stab 43 | spear | **ours**, and MU gates it on the hand too (`SkillCast.cpp:157`) |
+
+**Three rows past 0.75, and why the design needs them.** Gating the five on their own carriers
+leaves a one-handed axe, a mace and a spear with *one key each* — which is the dead bar this
+project would rightly refuse. So three more skills, and they are not invented from nothing: 41, 42
+and 43 are the knight's own later skills, and their numbers and names are the client's
+(`skill_eng.bmd` reads `41 Twisting Slash`, `42 Rageful Blow`, `43 Death Stab`; the decode is
+`docs/mu-scrolls-and-orbs.md` §7). Their icons are MU's own cells off `newui_skill`. **What they do
+is ours**, in §3.2's shape — there is no 0.75 row to follow and inventing one and calling it traced
+would be worse than saying this. Their clips are 0.75's five, reused: the sword-spin for the spin,
+the overhead for the crush, the thrust for the stab.
+
+**What each family can press, which is the number that decides whether this is a system or a
+punishment:**
+
+| in his hand | keys | with a shield |
+|---|---|---|
+| one-handed sword | Lunge, Uppercut, Cyclone, Twisting Slash | + Defense = 5 |
+| two-handed sword | Slash, Twisting Slash, Rageful Blow | 3 |
+| one-handed axe | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
+| two-handed axe | Falling Slash, Slash, Twisting Slash, Rageful Blow | 4 |
+| mace | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
+| spear | Cyclone, Twisting Slash, Death Stab | 3 |
+
+Three at worst, five at best, and the bar holds five — so no weapon leaves a knight with a bar he
+cannot fill, and **every weapon leaves him with a different one**, which is the depth the user
+asked for. A two-hander trades Defense for the heavy arc; a spear is the only hand that throws the
+hardest single blow in the table; the one-handed sword is the widest bar and the lightest hits.
+`tests/sim_test.cpp` checks the "three at worst" as a rule, not as a fact about today's table.
+
+**And the interface says all of it, because a dark key is otherwise a puzzle** (§3.4a): the card's
+first row is `Weapon`, in MU's own requirement colours — white where the hand meets it, red where
+it does not — and the refusal under the numbers names what it wants: *"Needs an axe or a mace in
+his hand."*
+
 ### 3.2 The two formulas
 
 **Damage.** For a skill hit, everything runs exactly as `sim::strike` runs it today — the band, the
@@ -274,6 +362,14 @@ damage = strike(...) × M
 | Falling Slash 19 | one | 2.0 | 1000 | 2.03 | 2.50 | 3.00 | 4.00 |
 | Cyclone 22 | up to 9 | 1.3 | 1400 | 1.32 | 1.66 | 2.01 | 2.73 |
 | Slash 23 | up to 3 | 1.8 | 1000 | 1.83 | 2.30 | 2.80 | 3.80 |
+| Twisting Slash 41 | up to 9 | 1.2 | 1500 | 1.22 | 1.53 | 1.87 | 2.53 |
+| Rageful Blow 42 | up to 3 | 2.1 | 900 | 2.13 | 2.66 | 3.21 | 4.32 |
+| Death Stab 43 | one | 2.3 | 900 | 2.33 | 2.86 | 3.41 | 4.52 |
+
+The last three are §3.1b's, and they sit where the shape says they should: Twisting Slash under
+Cyclone, because it is the key every family has and nothing every family has should be the best
+one; Rageful Blow and Death Stab above Falling Slash, because each is the *only* heavy blow its
+family owns and pays for it in cooldown (8.5 s and 5.5 s against Falling Slash's 4.0).
 
 `M₀ = 2.0` on Falling Slash is 0.75's own number, and it is the anchor the other four are spread
 around — **Falling Slash is the heaviest single blow and the two area skills are paid in coverage
@@ -298,6 +394,9 @@ cd = max(floor, base / (1 + H))
 | Falling Slash 19 | 4.0 s | clip (~1.0 s) | 3.8 | 2.0 | 1.3 | 1.0 | **1.0** |
 | Cyclone 22 | 5.0 s | clip (~1.0 s) | 4.7 | 2.5 | 1.7 | 1.2 | **1.0** |
 | Slash 23 | 6.0 s | clip (~1.1 s) | 5.6 | 3.0 | 2.0 | 1.4 | 1.1 |
+| Twisting Slash 41 | 4.5 s | clip (~1.0 s) | 4.2 | 2.3 | 1.5 | 1.1 | **1.0** |
+| Rageful Blow 42 | 8.5 s | clip (~1.0 s) | 8.0 | 4.3 | 2.8 | 2.0 | 1.6 |
+| Death Stab 43 | 5.5 s | clip (~0.9 s) | 5.2 | 2.8 | 1.8 | 1.3 | 1.0 |
 | Defense 18 | 12.0 s | duration + 2 s | 11.3 | 6.0 | **6.0** | **6.0** | **6.0** |
 
 Defense is floor-bound from about 300 agility onward, and its floor is the only one that moves: it is
@@ -361,8 +460,26 @@ the Jewel of Chaos (15), so 3–7 are free; 20 is free in this tree's Season 6 l
 | Orb of Cyclone | 7 | Cyclone 22 | 36 | 36 | 25,000 | Hanzo |
 | Orb of Slash | 20 | Slash 23 | 52 | 52 | 60,000 | — (drop only) |
 
+And three more for §3.1b's rows, which have no 0.75 carrier to take a level from. They are placed
+*between* the six rather than after them, because each one is the key that keeps a family alive
+and a family should not wait until 60 to have three: Twisting Slash sits between Lunge and
+Cyclone, Rageful Blow between Cyclone and Slash, and Death Stab past Slash — the spear's late
+heavy blow, and the one skill in the table that asks a knight to carry a second weapon for it.
+
+| item | № | teaches | req. level | drop level | price | sold by |
+|---|---|---|---|---|---|---|
+| Orb of Twisting Slash | 7 (0.95d's own) | Twisting Slash 41 | 28 | 28 | 15,000 | Hanzo |
+| Orb of Rageful Blow | 21 | Rageful Blow 42 | 44 | 44 | 40,000 | — (drop only) |
+| Orb of Death Stab | 22 | Death Stab 43 | 60 | 60 | 90,000 | Hanzo |
+
 - **The drop levels are §1.2's ladder**, so a knight meets his skills in the order 0.75 gave him
   them. One line of provenance for six numbers.
+- **And the levels are now enforced, ahead of the orbs** (2026-09-23). The requirement is a column
+  on the skill (`SkillRow::needLevel`), not on the orb, because the orb does not exist yet:
+  `Realm::openSkills` hands a knight what his level has opened, and it is called from all three
+  doors into a character — raised, restored from a save, and levelled mid-hunt. So a knight of 1
+  has an empty bar, one of 20 has four keys, and the bar grows as he does. The day the orbs are
+  cooked they carry the same numbers and check the same column, and `openSkills` goes.
 - **The requirements are raw**, not run through `(3 × drop level × raw/100) + 20`:
   `docs/mu-scrolls-and-orbs.md` §4 establishes that a non-wearable row's requirement is used
   verbatim, and `sim/items.cpp asks()` currently applies the formula unconditionally — so this is a
@@ -375,7 +492,7 @@ the Jewel of Chaos (15), so 3–7 are free; 20 is free in this tree's Season 6 l
   skill carrier Hanzo's store dropped), and two of six unbuyable keeps the hunt in it.
 
 **Learning is permanent and saved.** A right-click consumes the orb and sets a bit; `save.cpp` gets a
-version bump and a `learned` mask (six bits now, one word is plenty). 0.75's hotkey bindings are
+version bump and a `learned` mask (nine bits now, one word is plenty; the mask is by TABLE INDEX, so a new skill is appended to `kRows` and never inserted). 0.75's hotkey bindings are
 **not** saved (`MU2/docs/skills.md` §10, checked against MuMain) — the *learned skills* are ours and
 are, the *bar* follows MuMain and is not.
 
@@ -385,7 +502,7 @@ are, the *bar* follows MuMain and is not.
   1–5, skills on the plate's own five boxes. The fifth was drawn dead for two sprints on a note
   saying the list would take its place; the list took the GOLD box's place instead, so T is a
   key like the other four (the user, 2026-09-23, trying to drag a skill onto it). Five slots,
-  five skills at once, six learned — that is the Diablo 3 shape
+  five skills at once, nine learned — that is the Diablo 3 shape
   `PLAN.md` asked for, and what fills the four is the fan below, the right-click cast
   (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) staying as it is.
 - **And the list is how the four are chosen.** The user's rule, 2026-09-23, in three steps: they
@@ -540,6 +657,34 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
 ---
 
 ## 6. What is built
+
+### 6.0 The weapon families and the ladder, 2026-09-23
+
+**Nine skills, each gated on a kind of weapon, each met at a level.** §3.1b is the argument and
+§3.3's table is the ladder; this is what landed.
+
+- `SkillRow` grew two columns: `families`, a mask of `sim::arms::` bits, and `needLevel`. Both are
+  read by the realm and by the plate through the same calls (`row.suits(familyOf(hand))`), so a
+  key drawn dark and a press that does nothing cannot disagree.
+- `Realm::throwSkill` asks the family instead of "is there a blade"; the old rule survives inside
+  the new one, because an empty hand, a bow, a crossbow and a staff are all no family at all.
+- `Realm::openSkills` hands over what a level has opened, from all three doors — raise, restore,
+  level-up. A level-1 knight now starts with an empty bar.
+- Three rows past 0.75 — Twisting Slash 41, Rageful Blow 42, Death Stab 43 — with MU's own names,
+  numbers and icons and our own behaviour. `pipeline/skill_icons.py --mumain` cut the icons from
+  MuMain's own 256 sheet through a 3× enlargement, because MuDream's sharper sheet sits in an
+  application container macOS will not open from here.
+- The card says all of it: `Weapon` is its first row, in MU's requirement colours, one family a
+  line so nothing overruns the label; `Learned at` is its last. The safe-zone sentence was dropped
+  on the user's word — the keys still go cold in town, and a player standing in the square can see
+  where he is standing.
+- `tests/sim_test.cpp`: the gate, the families a cooked weapon reports, the ladder at three
+  heights and through the restore door, and the hunt is run four times over — one-handed sword,
+  two-handed sword, axe, spear — so every shape in the table is thrown by something.
+
+**Owed.** The orbs themselves (§3.3), which is the route these levels are standing in for; a
+Twisting Slash clip of its own, rather than the sword-spin borrowed for it; and a re-cut of the
+three icons at MuDream's 80×112 the day that container opens.
 
 ### 6.1 The four on the bar, 2026-09-23
 

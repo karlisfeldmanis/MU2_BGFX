@@ -55,6 +55,18 @@ bool Realm::learn(int32_t skill) {
     return true;
 }
 
+void Realm::openSkills(Body& who, bool tell) {
+    if (who.kin != Kin::DarkKnight) return;
+    for (int i = 0; i < skillCount(); ++i) {
+        const SkillRow& row = skillAt(i);
+        if (!row.built || who.level < row.needLevel) continue;
+        const uint32_t bit = uint32_t(1) << i;
+        if ((who.learned & bit) != 0) continue;
+        who.learned |= bit;
+        if (tell) say(What::Learned, who, row.number);
+    }
+}
+
 bool Realm::knows(int32_t skill) const {
     const int index = skillIndexOf(skill);
     if (index < 0) return false;
@@ -102,19 +114,22 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // exactly as the swing timer is: the key does nothing and says nothing.
     if (tick_ < hero.cools[size_t(index)]) return false;
 
-    // **Nothing is thrown bare-handed**, and nothing is thrown off a bow. A knight's five are
-    // sword swings -- the clips are `PLAYER_ATTACK_SKILL_SWORD1..5` and the streak MU lays on
-    // them is a blade's -- so a man with empty hands has no skill to throw, whatever he has
-    // learned. The user's rule, 2026-09-22, and it is ours rather than 0.75's only in where it
-    // is written down: in the original the weapon WAS the skill, so "no weapon, no skill" was
-    // true by construction. Learning made it possible to keep a skill with nothing in hand, and
-    // this is the line that says that is not a knight.
+    // **The hand, and now it is the RIGHT hand rather than any hand.** The user's rule of
+    // 2026-09-22 was "nothing is thrown bare-handed, nothing off a bow"; the rule of 2026-09-23
+    // is narrower and is the reason this project has a `families` column at all -- a skill
+    // belongs to a kind of weapon and is thrown with that kind or not at all (§3.1b). For the
+    // five 0.75 carried this is the original restored rather than a new gate: in 0.75 the weapon
+    // WAS the skill, so an axe's Falling Slash could never be thrown off a sword; learning made
+    // it possible and this line takes it back.
+    //
+    // Empty hands, a bow, a crossbow, a staff and a shield in the right hand are all
+    // `arms::kNone`, so the old rule falls out of the new one rather than sitting beside it.
     if (!row.onSelf()) {
         const content::Arm* weapon = hero.weapon >= 0 &&
                                              size_t(hero.weapon) < tables_->arms.size()
                                          ? &tables_->arms[size_t(hero.weapon)]
                                          : nullptr;
-        if (!weapon || weapon->isShield() || weapon->bow() || weapon->crossbow()) return false;
+        if (!row.suits(familyOf(weapon))) return false;
     }
 
     // `player.IsAtSafezone()` refuses everything, buffs included -- so a knight cannot even
@@ -131,7 +146,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                                              size_t(hero.shield) < tables_->arms.size()
                                          ? &tables_->arms[size_t(hero.shield)]
                                          : nullptr;
-        if (!shield || !shield->isShield()) return false;
+        // Asked through the same column as an attack's, because `arms::kShield` is a family:
+        // one question -- does this hand suit this row -- rather than two rules that can drift.
+        if (!row.suits(familyOf(shield))) return false;
         // A self-cast has no target to be far from and reads its victim off the caster.
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;

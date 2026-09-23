@@ -286,6 +286,11 @@ public:
     // is `invention`, argued in the doc's §3.3.
     bool learn(int32_t skill);
     bool knows(int32_t skill) const;
+    // Every skill his level has opened, learned at once. The level a skill asks for is its orb's
+    // (docs/skills-dk.md §3.3), and this is the stand-in for the orb until one is cooked: called
+    // when a knight is raised and again on every level. `tell` is whether the log hears about it
+    // -- a level-up says "learns Cyclone", a raise does not, because nobody was there.
+    void openSkills(Body& who, bool tell = true);
     // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
     // frame needs to draw a sweep. Zero and zero when it is ready.
     int64_t cooling(int32_t skill) const;

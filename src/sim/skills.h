@@ -32,7 +32,69 @@ constexpr int32_t kLunge = 20;
 constexpr int32_t kUppercut = 21;
 constexpr int32_t kCyclone = 22;
 constexpr int32_t kSlash = 23;
+// The three past 0.75, and their numbers and names are MU's own: `skill_eng.bmd`, the client's
+// string table, reads 41 Twisting Slash, 42 Rageful Blow, 43 Death Stab (the decode is
+// `docs/mu-scrolls-and-orbs.md` §7). 41 is 0.95d's and the other two are Season 6's -- they are
+// here because §3.1b gates a skill on the weapon family and 0.75's five leave three families
+// with one key each. What each one DOES here is ours; only the name, the number and the icon
+// are MU's.
+constexpr int32_t kTwistingSlash = 41;
+constexpr int32_t kRagefulBlow = 42;
+constexpr int32_t kDeathStab = 43;
 }  // namespace skill
+
+// ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
+//
+// **A skill belongs to a kind of weapon, and is thrown with that kind or not at all.** The
+// user's rule, 2026-09-23. It is not an invention so much as 0.75's own arrangement made
+// explicit: in the original a knight had a skill only while he held the weapon that carried it
+// (§1.2), so Falling Slash WAS an axe's blow and Slash WAS the two-hander's. Learning made a
+// skill permanent and quietly threw that away; this column puts it back, and MuMain gates its
+// own later skills exactly this way -- `SkillWarrior` in `GameLogic/Combat/SkillCast.cpp:145`
+// refuses Impale without a spear and Spiral Slash without a sword before it spends any mana.
+//
+// A bit for each hand a weapon can be, and MU's own item groups are what decides which: 0
+// swords, 1 axes, 2 maces, 3 the polearms. One-handed and two-handed are told apart by
+// `Arm::twoHanded()`, which OpenMU keeps as the footprint's width -- a Battle Axe is two cells
+// across and a Double Axe is one, and they are different weapons to swing.
+namespace arms {
+constexpr uint32_t kNone = 0;
+constexpr uint32_t kSword1 = 1u << 0;
+constexpr uint32_t kSword2 = 1u << 1;
+constexpr uint32_t kAxe1 = 1u << 2;
+constexpr uint32_t kAxe2 = 1u << 3;
+constexpr uint32_t kMace1 = 1u << 4;
+constexpr uint32_t kMace2 = 1u << 5;
+// Every polearm in MU is two-handed, so the spear has one bit rather than two: Spear, Dragon
+// Lance, Berdysh and Great Scythe are all two cells across.
+constexpr uint32_t kSpear = 1u << 6;
+// Defense's own hand, and the reason a shield is in this enumeration at all: it is the one
+// "weapon family" a buff asks for, so one column answers both questions instead of two.
+constexpr uint32_t kShield = 1u << 7;
+
+constexpr uint32_t kSwords = kSword1 | kSword2;
+constexpr uint32_t kAxes = kAxe1 | kAxe2;
+constexpr uint32_t kMaces = kMace1 | kMace2;
+constexpr uint32_t kOneHand = kSword1 | kAxe1 | kMace1;
+constexpr uint32_t kTwoHand = kSword2 | kAxe2 | kMace2 | kSpear;
+// Everything a knight can swing a skill with. Bows, crossbows, staves and empty hands are not
+// in it, which is the rule the first pass wrote as "a blade in his hand".
+constexpr uint32_t kEvery = kSwords | kAxes | kMaces | kSpear;
+}  // namespace arms
+
+// Which family a weapon is, or `arms::kNone` for a hand that throws no skill at all -- empty,
+// a bow, a crossbow, a staff, a shield in the right hand. A shield is `kShield` and is found
+// by the same call, because the left hand asks the same question.
+uint32_t familyOf(const content::Arm* weapon);
+
+// What that family is called, for the card and for the refusal: "a one-handed sword", "an axe".
+const char* familyName(uint32_t family);
+
+// Every family a skill may be thrown with, as words -- "Axes", "Maces"; "Two-handed swords",
+// "Two-handed axes"; "Any weapon". Filled into `out` in the table's own order and the count comes
+// back, because the card stacks them one under another rather than running them into a sentence:
+// a value is right-aligned against its label and a long one walks over it.
+int familiesNamed(uint32_t families, const char** out, int room);
 
 // Whom a cast lands on. One target is all that is built; the two area shapes are written down
 // because the cooldown state and the request are the same for them and choosing the shape later
@@ -82,13 +144,36 @@ struct SkillRow {
     // the save's learned mask and the log all have their final shape from the first one, and so
     // that the next session adds a row's behaviour rather than a row.
     bool built = false;
+    // **Which hands may throw it**, as a mask of `arms::` bits -- the column §3.1b is about.
+    // For the five attacks 0.75 carried it is traced rather than chosen: the families are the
+    // weapons that granted that skill in the original (`Version075/Items/Weapons.cs:93-132`,
+    // and §1.2's table), so Falling Slash is the axes' and the maces' because the Morning Star,
+    // the Double Axe, the Tomahawk, the Battle Axe and the Nikkea Axe were what carried it.
+    // Defense is `kShield`, which is `Armors.cs:40`. The three past 0.75 are ours.
+    uint32_t families = arms::kEvery;
+    // **What the orb asks of him before he may read it**, in levels. The user, 2026-09-23:
+    // *"add also lvl requirements to learn skills, this is for orbs I guess"* -- and it is: the
+    // column is §3.3's table, which is 0.75's own ladder. The level a skill is met at is the drop
+    // level of the first weapon that carried it in the original (§1.2), so a knight meets his
+    // skills in the order MU gave them to him: 6, 12, 13, 20, 36, 52.
+    //
+    // It lives on the SKILL and not on the orb because the orb does not exist yet -- nothing is
+    // cooked that teaches one, so `Realm::raise` hands over what he has the level for. The day
+    // the orbs are cooked they carry this same number as their `needLevel` and this column is
+    // what they are checked against, so neither route can ask for something different.
+    int32_t needLevel = 0;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
+    // Whether this hand may throw it. One test, asked by the realm before it spends anything
+    // and by the plate before it draws the key lit -- they must not be able to disagree.
+    bool suits(uint32_t family) const { return family != arms::kNone && (families & family) != 0; }
 };
 
-// How many skills the sim has room for: the knight's six, which is also the width of the save's
-// learned mask and of a body's cooldown array.
-constexpr int kSkills = 6;
+// How many skills the sim has room for: the knight's six of 0.75 and the three that fill out the
+// families past it. Also the width of the save's learned mask and of a body's cooldown array --
+// and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
+// gives a knight somebody else's skill.
+constexpr int kSkills = 9;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

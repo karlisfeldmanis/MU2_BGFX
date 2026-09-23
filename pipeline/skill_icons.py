@@ -22,12 +22,16 @@ panels.
 
 Which skills 0.75 has is OpenMU's Version075/SkillsInitializer.cs: the wizard's 1-12 and Energy
 Ball 17, the knight's Defense 18 and 19-23, the elf's Triple Shot 24, Heal 26, the two Greaters
-27-28 and the six summons 30-35. Flame of Evil 50 is a monster's and has no cell. Twisting
-Slash 41, Cometfall 13, Inferno 14, Ice Arrow 51 and Penetration 52 arrive in 0.95d
-(Version095d/SkillsInitializer.cs), not 0.75, and are not cut. The sheet has them and cutting
-them costs nothing, which is why they were here for a while; they are gone because a catalogue
-that holds a skill this game does not have is a catalogue that will one day hand it out. The
-cell arithmetic below is the whole recipe for getting one back, should the hybrid want it.
+27-28 and the six summons 30-35. Flame of Evil 50 is a monster's and has no cell. Cometfall 13,
+Inferno 14, Ice Arrow 51 and Penetration 52 arrive in 0.95d (Version095d/SkillsInitializer.cs),
+not 0.75, and are not cut: a catalogue that holds a skill this game does not have is a
+catalogue that will one day hand it out.
+
+Three past 0.75 ARE cut, on 2026-09-23, and they are the exception that proves that rule — the
+game now has them. Twisting Slash 41 (0.95d), Rageful Blow 42 and Death Stab 43 (Season 6) are
+the knight's own, and they exist here because his skills are gated on the weapon family
+(docs/skills-dk.md §3.1b): gating 0.75's five leaves a one-handed axe, a mace and a spear with
+one key each. Nothing else on the sheet is cut speculatively.
 """
 
 import argparse
@@ -89,22 +93,93 @@ SKILLS = {
     33: ("Fairy Elf", "Summon Elite Yeti"),
     34: ("Fairy Elf", "Summon Dark Knight"),
     35: ("Fairy Elf", "Summon Bali"),
+    # The three past 0.75, cut on 2026-09-23 because the knight's skills are now gated on the
+    # weapon family (docs/skills-dk.md §3.1b) and gating 0.75's five leaves an axe, a mace and a
+    # spear with one key each. The names and the numbers are the client's own -- `skill_eng.bmd`,
+    # decoded with MU's three-byte XOR, reads 41 Twisting Slash, 42 Rageful Blow, 43 Death Stab
+    # (docs/mu-scrolls-and-orbs.md §7 is the decode) -- so only WHICH HAND each one asks for is
+    # ours. Twisting Slash is 0.95d's; the other two are Season 6's. This is the "should the
+    # hybrid want it" case the docstring above left the arithmetic for.
+    41: ("Dark Knight", "Twisting Slash"),
+    42: ("Dark Knight", "Rageful Blow"),
+    43: ("Dark Knight", "Death Stab"),
 }
 
 
-def cell(number: int) -> tuple[int, int, int, int]:
+#: MuMain's own sheet, and the second way in. MuDream's 1024 repaint is the better picture and
+#: stays the default, but it lives inside another application's container and macOS refuses to
+#: open it from here whatever the shell is allowed (2026-09-23, cutting 41-43: `PermissionError`
+#: on a plain read, with and without the sandbox). MuMain's `newui_skill.OZJ` is in this
+#: repository, is the same grid, and is MU's own painting rather than a repaint of it -- it is
+#: simply four times smaller, 20 by 28 a cell.
+#:
+#: So `--mumain` cuts from that instead, through pipeline/upscale.py at THREE times, which is
+#: the whole sheet enlarged once and then cut: the model gets 256 texels of context rather than
+#: a 20-pixel stamp, and three is the project's cap on an enlargement of MU's art. What comes
+#: out is 60 by 84 against MuDream's 80 by 112, which the plate scales to the same box. The day
+#: the container opens, re-cut these numbers without the flag and they get sharper for free.
+MUMAIN_SHEET = PROJECT / "reference/MuMain/src/bin/Data/Interface/newui_skill.OZJ"
+MUMAIN_SIZE = (256, 256)
+MUMAIN_FACTOR = 3
+
+
+def cell(number: int, size: tuple[int, int] = CELL) -> tuple[int, int, int, int]:
     """The pixel rectangle of skill `number` on the sheet, RenderSkillIcon's arithmetic."""
     index = number - 1
-    x = (index % PER_ROW) * CELL[0]
-    y = (index // PER_ROW) * CELL[1]
-    return (x, y, x + CELL[0], y + CELL[1])
+    x = (index % PER_ROW) * size[0]
+    y = (index // PER_ROW) * size[1]
+    return (x, y, x + size[0], y + size[1])
+
+
+def mumain_sheet(path: Path, out: Path) -> "Image.Image":
+    """MuMain's 256 sheet, enlarged three times. The enlargement is cached beside the icons."""
+    import subprocess
+    import tempfile
+
+    sheet = decode(path)
+    if sheet.size != MUMAIN_SIZE:
+        sys.exit(f"{path.name} is {sheet.size}, expected {MUMAIN_SIZE}; the cell would be wrong")
+    with tempfile.TemporaryDirectory() as folder:
+        small = Path(folder) / "newui_skill.png"
+        big = Path(folder) / "newui_skill_x3.png"
+        sheet.convert("RGB").save(small)
+        # The drawn model and eight passes: an icon is a painted object at arm's length, which
+        # is upscale.py's own argument for the item settings rather than the ground's.
+        subprocess.run(
+            [sys.executable, str(PROJECT / "pipeline/upscale.py"), str(small), str(big),
+             "0.65", str(MUMAIN_FACTOR), "edge", "drawn", "8"],
+            check=True)
+        return Image.open(big).convert("RGB")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--out", type=Path, default=ASSETS)
+    parser.add_argument("--mumain", action="store_true",
+                        help="cut from MuMain's own 256 sheet, enlarged 3x (see MUMAIN_SHEET)")
+    parser.add_argument("--mumain-sheet", type=Path, default=MUMAIN_SHEET,
+                        help="where that sheet is, if tools/fetch_mumain.sh has not been run")
+    parser.add_argument("--only", type=int, nargs="+", default=[],
+                        help="cut only these skill numbers, leaving every other icon alone")
     args = parser.parse_args()
+
+    wanted = {n: SKILLS[n] for n in args.only} if args.only else SKILLS
+    for number in args.only:
+        if number not in SKILLS:
+            sys.exit(f"skill {number} is not in this script's table")
+
+    if args.mumain:
+        args.out.mkdir(parents=True, exist_ok=True)
+        size = (CELL[0] * MUMAIN_FACTOR // 4, CELL[1] * MUMAIN_FACTOR // 4)
+        sheet = mumain_sheet(args.mumain_sheet, args.out)
+        for number, (_, name) in sorted(wanted.items()):
+            icon = sheet.crop(cell(number, size))
+            target = args.out / f"skill_{number}.png"
+            icon.save(target, optimize=True)
+            print(f"  {target.name:<14} {name:<20} {cell(number, size)}")
+        print(f"{len(wanted)} icons at {size[0]}x{size[1]} in {args.out} (MuMain, 3x)")
+        return
 
     path = args.source / SHEET
     if not path.is_file():
@@ -115,12 +190,12 @@ def main() -> None:
     sheet = sheet.convert("RGB")
 
     args.out.mkdir(parents=True, exist_ok=True)
-    for number, (_, name) in sorted(SKILLS.items()):
+    for number, (_, name) in sorted(wanted.items()):
         icon = sheet.crop(cell(number))
         target = args.out / f"skill_{number}.png"
         icon.save(target, optimize=True)
         print(f"  {target.name:<14} {name:<20} {cell(number)}")
-    print(f"{len(SKILLS)} icons at {CELL[0]}x{CELL[1]} in {args.out}")
+    print(f"{len(wanted)} icons at {CELL[0]}x{CELL[1]} in {args.out}")
 
 
 if __name__ == "__main__":

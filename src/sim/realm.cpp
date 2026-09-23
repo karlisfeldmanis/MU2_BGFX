@@ -96,20 +96,19 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     hero.homeColumn = column;
     hero.homeRow = row;
     hero.temper = Temper::Wandering;
-    // The first skill, handed over rather than learned. **Temporary, and marked so it is not
-    // mistaken for the design**: a knight is meant to buy or find an Orb of Falling Slash and
-    // right-click it (docs/skills-dk.md §3.3), and until the orbs are cooked the only way to have
-    // a skill at all is to be given one. Nothing else about the skill is short-cut -- it is
-    // learned in the mask the save writes, so the day the orb exists this line is deleted and
-    // nothing else changes.
-    if (kin == Kin::DarkKnight) {
-        // Every skill that is built, which is four and exactly fills Q W E R. A fifth would have
-        // no key to be bound to until there is a list to drag from, so `built` is both "the sim
-        // does this" and, for now, "the bar can reach it".
-        for (int i = 0; i < skillCount(); ++i) {
-            if (skillAt(i).built) hero.learned |= uint32_t(1) << i;
-        }
-    }
+    // His skills, handed over rather than learned. **Temporary, and marked so it is not mistaken
+    // for the design**: a knight is meant to buy or find an Orb of Falling Slash and right-click
+    // it (docs/skills-dk.md §3.3), and until the orbs are cooked the only way to have a skill at
+    // all is to be given one. Nothing else about the skill is short-cut -- it is learned in the
+    // mask the save writes, so the day the orb exists this line is deleted and nothing else
+    // changes.
+    //
+    // **And only what his level has opened** (2026-09-23): every row carries the level its orb
+    // asks for, which is 0.75's own ladder of carriers -- 6, 12, 13, 20, 36, 52 -- so a knight
+    // raised at level 1 has nothing, one at 20 has three, and the rest arrive as he levels
+    // (`Realm::gainExperience`). Before this, a level-1 knight was handed all six at once, which
+    // made the ladder in §3.3 a table nothing read.
+    if (kin == Kin::DarkKnight) openSkills(hero, false);
     bodies_.push_back(std::move(hero));
     reswing(bodies_[0]);
 
@@ -215,6 +214,11 @@ void Realm::restore(const HeroRecord& saved) {
     // back the skill the grant above just gave him. The day the orb is the only way in, this
     // becomes an assignment.
     hero.learned |= saved.learned;
+    // And whatever the SAVED level opens, which the raise above could not know: a realm is
+    // raised at level 1 and then told who he is, so without this a restored knight of 40 has the
+    // skills of a beginner until his next level. Same call as the raise's and the level-up's --
+    // three doors, one ladder (docs/skills-dk.md §3.3).
+    openSkills(hero, false);
     hero.facing = hero.aim = saved.facing;
     money_ = std::max<int64_t>(0, saved.money);
     bag_.clear();

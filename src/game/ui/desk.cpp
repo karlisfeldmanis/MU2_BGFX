@@ -303,6 +303,42 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
     }
 }
 
+// What a family-gated skill wants in the hand, as the middle of a sentence: "an axe or a mace",
+// "a one-handed sword", "a spear". The card's own `Weapons` row says the same thing as a list
+// (`sim::familiesNamed`); this is the refusal's voice, with the articles and the "or" in it,
+// because "Needs axes and maces in his hand" is not English.
+//
+// Kept here rather than in the sim: the sim owns which families a row has, and how that reads to
+// a person is the interface's business -- the same division that keeps `describe.cpp`'s wording
+// out of `sim/items.h`.
+static const char* wantedHand(uint32_t families) {
+    using namespace mu::sim::arms;
+    if ((families & kEvery) == kEvery) return "any weapon";
+    static char said[96];
+    const char* parts[4] = {};
+    int found = 0;
+    const auto add = [&](const char* word) { if (found < 4) parts[found++] = word; };
+    const uint32_t swords = families & kSwords;
+    if (swords == kSwords) add("a sword");
+    else if (swords == kSword1) add("a one-handed sword");
+    else if (swords == kSword2) add("a two-handed sword");
+    const uint32_t axes = families & kAxes;
+    if (axes == kAxes) add("an axe");
+    else if (axes == kAxe1) add("a one-handed axe");
+    else if (axes == kAxe2) add("a two-handed axe");
+    if ((families & kMaces) != 0) add("a mace");
+    if ((families & kSpear) != 0) add("a spear");
+    said[0] = '\0';
+    size_t at = 0;
+    for (int i = 0; i < found; ++i) {
+        const char* join = i == 0 ? "" : (i == found - 1 ? " or " : ", ");
+        const int wrote = std::snprintf(said + at, sizeof(said) - at, "%s%s", join, parts[i]);
+        if (wrote <= 0 || at + size_t(wrote) >= sizeof(said)) break;
+        at += size_t(wrote);
+    }
+    return said;
+}
+
 // The skill bar: the four keys, and what the four boxes show.
 //
 // The press is the whole of the gesture and the realm decides everything about it -- learned,
@@ -380,10 +416,13 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const content::Arm* shield = hero.shield >= 0 && size_t(hero.shield) < tables.arms.size()
                                      ? &tables.arms[size_t(hero.shield)]
                                      : nullptr;
+    // Which family is in each hand, by the realm's own call: a skill is thrown with its kind of
+    // weapon or not at all (docs/skills-dk.md §3.1b), so the plate asks `row.suits()` exactly as
+    // `Realm::throwSkill` does and cannot hold a different opinion about a dark key.
+    const uint32_t inHand = sim::familyOf(weapon);
+    const uint32_t onArm = sim::familyOf(shield);
     const auto armedFor = [&](const sim::SkillRow& row) {
-        return row.onSelf() ? shield != nullptr && shield->isShield()
-                            : weapon != nullptr && !weapon->isShield() && !weapon->bow() &&
-                                  !weapon->crossbow();
+        return row.suits(row.onSelf() ? onArm : inHand);
     };
     // **Every refusal the realm would make before the key is even pressed**, asked in
     // `throwSkill`'s own order so that a box drawn cold and a press that does nothing can never
@@ -394,15 +433,25 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const auto whyNot = [&](const sim::SkillRow& row) -> const char* {
         if (!hero.alive()) return nullptr;
         if (!armedFor(row)) {
-            return row.onSelf() ? "Needs a shield on his arm." : "Needs a blade in his hand.";
+            if (row.onSelf()) return "Needs a shield on his arm.";
+            // **What it wants, not that it is unhappy.** A skill gated on a family has to name
+            // the family or the dark key is a puzzle: "Needs an axe or a mace in his hand" is
+            // the whole of the rule, said where it is refused. Written into a buffer the desk
+            // owns, because the sentence is built out of the row's own column.
+            std::snprintf(wantsHand_, sizeof(wantsHand_), "Needs %s in his hand.",
+                          wantedHand(row.families));
+            return wantsHand_;
         }
-        // `player.IsAtSafezone()` refuses everything, buffs included -- so a knight cannot even
-        // raise his guard in Lorencia's square, and until now the bar said nothing about it.
-        if (inTown) return "Not in a safe zone.";
-        return nullptr;  // a mana shortfall is the red figure on the card and needs no sentence
+        // **The safe zone is not said**, on the user's word of 2026-09-23: *"don't show text Not
+        // in safe zone, it's obvious"*. It is still a refusal and the keys still go cold in town
+        // -- `ready` below asks it -- but a player standing in Lorencia's square can see where he
+        // is standing, and a card that explains it is a card explaining the obvious. A mana
+        // shortfall is the same argument: it is the red figure above and needs no sentence.
+        return nullptr;
     };
+    const bool holstered = inTown;  // every skill is refused in the square, and quietly
     const auto ready = [&](const sim::SkillRow& row) {
-        return hero.alive() && whyNot(row) == nullptr && hero.mana >= row.mana;
+        return hero.alive() && !holstered && whyNot(row) == nullptr && hero.mana >= row.mana;
     };
 
     fan_.clear();
@@ -595,6 +644,35 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm,
     tip::Section facts;
     const int64_t left = realm.cooling(row.number);
     const float seconds = float(realm.coolsFor(row.number)) * 0.05f;
+
+    // **What it is thrown with, and it is the first row on the card.** Added 2026-09-23 with the
+    // families themselves (docs/skills-dk.md §3.1b): once a skill can only be thrown with its own
+    // kind of weapon, that is the first thing a player needs off the card -- ahead of what it
+    // hits for, because it decides whether he can throw it at all and because it is what a
+    // weapon in the bag is now judged against.
+    //
+    // **In MU's own colours for a requirement**: white where the hand meets it, red where it does
+    // not, which is exactly what `describe.cpp` does with an item's strength and agility. So a
+    // card read with the wrong weapon in hand shows a red line naming the right one, and the
+    // sentence under the numbers says it again in words.
+    const content::Tables* tables = realm.tables();
+    const auto armIn = [&](int32_t at) -> const content::Arm* {
+        return tables && at >= 0 && size_t(at) < tables->arms.size() ? &tables->arms[size_t(at)]
+                                                                    : nullptr;
+    };
+    const uint32_t hand = sim::familyOf(armIn(row.onSelf() ? hero.shield : hero.weapon));
+    // **One family a line, stacked under the label.** A row's values are right-aligned against
+    // the card's edge and nothing wraps them, so "Two-handed swords and axes" as one value walks
+    // straight over the word `Weapon` on the left. The card already has the answer and it is the
+    // rule it was designed around -- *one row a label, the values sit under each other* -- which
+    // is how `describe.cpp` prints a class list. Fixed 2026-09-23 on the user's word.
+    const char* families[4] = {};
+    const int words = sim::familiesNamed(row.families, families, 4);
+    tip::Row weapon;
+    weapon.label = "Weapon";
+    const tip::Tone met = row.suits(hand) ? tip::Tone::White : tip::Tone::Red;
+    for (int i = 0; i < words; ++i) weapon.values.push_back({families[i], met, false, "", 0});
+    facts.rows.push_back(weapon);
     if (row.onSelf()) {
         facts.rows.push_back(line("Damage taken", "x" + number(row.damageTaken, 2) + " for " +
                                                       number(float(row.boonTicks) * 0.05f, 1) + " s",
@@ -625,6 +703,14 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm,
     const bool paid = hero.mana >= row.mana;
     facts.rows.push_back(line("Mana", std::to_string(row.mana), paid ? tip::Tone::Blue
                                                                      : tip::Tone::Red));
+    // And the level it was met at, when there is one. On a card this is history rather than a
+    // requirement -- a skill he can read about is one he has already learned -- but it is the
+    // one line that says why the bar grew a key this level, and it is the number the orb will
+    // ask for when the orbs exist (docs/skills-dk.md §3.3).
+    if (row.needLevel > 0) {
+        facts.rows.push_back(line("Learned at", "level " + std::to_string(row.needLevel),
+                                  tip::Tone::Gray));
+    }
     sheet.sections.push_back(facts);
 
     // The refusals the numbers do not already show -- the wrong hand, the safe zone. A mana

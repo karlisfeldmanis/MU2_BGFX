@@ -155,6 +155,11 @@ private:
     int32_t carrying_ = 0;    // the skill the pointer is holding, 0 for none
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int scriptedSkill_ = -1;
+    // The one sentence a family-gated key is dark for -- "Needs an axe or a mace in his hand."
+    // It is built out of the row's own `families` column, so it is written rather than chosen
+    // from a list, and it lives here because `whyNot` hands back a pointer the card reads at
+    // once. One buffer: the card is built for one box a frame.
+    char wantsHand_[96] = {};
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
     // `why` is the sentence the card prints when the key is dark, or null when it is live:
     // one string rather than a bool, because there is more than one way to be unable to throw
