@@ -383,8 +383,31 @@ are, the *bar* follows MuMain and is not.
 
 - **Q W E R.** `src/game/ui/hud.h:17` already records the decision of 2026-09-21: potions on 1–4,
   skills on Q W E R. Four slots, four skills at once, six learned — that is the Diablo 3 shape
-  `PLAN.md` asked for and it needs no fan: a learned-skills list with drag-to-slot is enough, and
-  the right-click cast (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) stays.
+  `PLAN.md` asked for, and what fills the four is the fan below, the right-click cast
+  (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) staying as it is.
+- **And the list is how the four are chosen** (the user's rule, 2026-09-23, and their own words
+  for it: *"it was a horizontal list above the HUD, when clicked or hovered on the right-click
+  slot"*). That is MU2's `client/core/Fan.cs` — `CNewUISkillList` — and it is ported rather than
+  reinvented: **a fan and not a window.** The cells are laid out from the **gold box**, the one a
+  right-click casts from in MU, outward and alternating right and left, one box-height above the
+  plate, at the skill boxes' own size and pitch, so an icon in the list and the same icon on a
+  key are the same picture at the same size. It opens while the pointer rests on the gold box and
+  a click latches it open; MU2 latches only, and the hover is this bench's, because it makes the
+  gesture one movement instead of two. Drawn by the HUD, since it is the plate's own furniture.
+  Four gestures and no more — `Hud::setFan` and `Desk::skillKeys`:
+  - a cell dragged from the list onto a key **binds** it there; if that skill already sat on
+    another key it **moves** rather than doubling, and the key it lands on gives up what it held
+    to the key it left;
+  - a key's own icon dragged onto another key **swaps** the two, which is what makes a full bar
+    rearrangeable without an empty key to stage through;
+  - a key's icon dragged back **into the open list clears** that key; nothing is lost, because
+    the list is where every learned skill lives;
+  - a drag let go anywhere else changes nothing, as the bag's does.
+  A newly learned skill still takes the first free key, but **once** (`Desk::autoBound_`) — the
+  convenience must not undo the player's own arrangement on the next frame.
+  **Not saved yet**, which is 0.75's own answer (`MU2/docs/skills.md` §10: MuMain has no
+  `SaveHotKey`) and is now the weaker half of it: the potion keys *are* written to the save, so
+  a bar the player arranges by hand and loses on quit is the thing to fix next.
 - **The cooldown is drawn on the box**: a dark sweep over the icon and the seconds printed when more
   than one remains — LoL's and WoW's shared convention, and the reason both read at a glance. Grey
   the icon when the mana is not there (MuMain dims it too).

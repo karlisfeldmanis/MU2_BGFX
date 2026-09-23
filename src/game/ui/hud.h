@@ -102,7 +102,37 @@ public:
         if (key >= 0 && key < kSkillKeys) sheets_[key] = sheet;
     }
     // Which skill box the pointer is over, or -1, so the desk builds one card and not four.
+    // Only a box with something in it: an empty box has no card and nothing to hover.
     int skillAt(float x, float y) const;
+    // And which box a point falls in whether or not anything is on it, which is what a drag
+    // needs: a skill dropped on an empty key is the whole point of the list.
+    int skillSlotAt(float x, float y) const;
+
+    // ---- the fan: the skill list, open above the plate ---------------------------------------
+    //
+    // MU2's `client/core/Fan.cs`, which is `CNewUISkillList` in MuDream's clothes, and the user
+    // asked for it by its shape on 2026-09-23: *"it was a horizontal list above the HUD, when
+    // clicked or hovered on the right-click slot."* The cells are laid out from the GOLD box --
+    // the one a right-click casts from in MU -- outward, alternating right and left, so the list
+    // grows symmetrically around the box it belongs to instead of hanging off one side.
+    //
+    // The list is the HUD's because it is part of the plate's own furniture: the same boxes, the
+    // same pitch, the same sheen under the pointer, and one canvas.
+    static constexpr int kGoldBox = 5;  // the box in hand: what opens the list
+
+    // What the list holds and what the pointer is carrying out of it. Given by the desk, which
+    // owns the four keys; the frame draws it and works nothing out.
+    void setFan(bool open, const std::vector<int32_t>& cells, int32_t carrying) {
+        fanOpen_ = open;
+        fan_ = cells;
+        carrying_ = carrying;
+    }
+    // Which box a point falls in at all, 0 to 10, or -1: the gold box is how the list opens.
+    int boxAt(float x, float y) const;
+    // Which cell of the open list a point falls in, or -1.
+    int fanAt(float x, float y) const;
+    // Whether a point is over the open list, so a click there is the interface's.
+    bool coversFan(float x, float y) const;
 
     void open(const gfx::Interface& interface, panel::Arts* arts);
     void follow(const sim::Body* hero);
@@ -146,6 +176,10 @@ private:
         float pointerX = 0, pointerY = 0;
         Quick quick[kQuickKeys];
         Skill skill[kSkillKeys];
+        bool fanOpen = false;
+        int fanOver = -1;          // the cell under the pointer
+        int32_t carrying = 0;      // what the pointer is holding out of the list
+        std::vector<int32_t> fan;  // the cells, in the order they are laid out
         uint16_t picture = 0xFFFF;  // the stage's picture, so its first render is a rebuild
         bool operator==(const Face& o) const;
     };
@@ -170,6 +204,9 @@ private:
     uint64_t rebuilds_ = 0;
     Quick quick_[kQuickKeys];
     Skill skill_[kSkillKeys];
+    bool fanOpen_ = false;
+    int32_t carrying_ = 0;
+    std::vector<int32_t> fan_;
     tip::Sheet sheets_[kSkillKeys];
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;

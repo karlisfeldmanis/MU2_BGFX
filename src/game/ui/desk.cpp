@@ -209,7 +209,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         skillKeys(window, play, pointer);
     }
 
-    takesPointer_ = hud_.covers(pointer.x, pointer.y) ||
+    takesPointer_ = hud_.covers(pointer.x, pointer.y) || carrying_ != 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y));
@@ -307,22 +307,111 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const content::Tables& tables = *realm.tables();
     const sim::Body& hero = realm.hero();
 
-    // Bound on the day it is learned, first free key first. A convenience while there is one
-    // skill and no list to drag from; it binds nothing a second time, so a rebinding by hand
-    // would stick.
+    // Bound on the day it is learned, first free key first -- and ONCE. `autoBound_` is the
+    // difference between a convenience and a bar that cannot be changed: without it, a skill the
+    // player drags off a key is put back by this loop on the very next frame, which is what it
+    // did until the list existed.
     for (int i = 0; i < sim::skillCount(); ++i) {
         const sim::SkillRow& row = sim::skillAt(i);
         if (!realm.knows(row.number)) continue;
+        const uint32_t bit = uint32_t(1) << i;
+        if ((autoBound_ & bit) != 0) continue;
         bool already = false;
         for (int key = 0; key < Hud::kSkillKeys; ++key) already |= bound_[key] == row.number;
-        if (already) continue;
+        if (already) {
+            autoBound_ |= bit;
+            continue;
+        }
         for (int key = 0; key < Hud::kSkillKeys; ++key) {
             if (bound_[key] != 0) continue;
             bound_[key] = row.number;
+            autoBound_ |= bit;
             core::logf("window: %s bound to %s", row.name,
                        key == 0 ? "Q" : key == 1 ? "W" : key == 2 ? "E" : "R");
             break;
         }
+    }
+
+    // ---- the fan: the list of learned skills, and the drag that fills a key ------------------
+    //
+    // **A horizontal list above the plate, opened from the gold box.** The user's own words,
+    // 2026-09-23 -- *"it was a horizontal list above the HUD, when clicked or hovered on the
+    // right-click slot"* -- which is MU2's `client/core/Fan.cs` and `CNewUISkillList` under it.
+    // The gold box is the one a right-click casts from in MU, so it is the box the list belongs
+    // to; the cells are laid out from it outward, alternating right and left.
+    //
+    // Opened BOTH ways, because the user remembered both: resting on the gold box opens it while
+    // the pointer is there, and a click latches it open so a drag has time to start. MU2 latches
+    // only (`Fan.Toggle` off `Hud.HeldToggled`); the hover is this bench's and it is what makes
+    // the gesture one movement instead of two.
+    const int overBox = hud_.boxAt(pointer.x, pointer.y);
+    const bool onGold = overBox == Hud::kGoldBox;
+    if (pointer.pressed && onGold) {
+        fanLatched_ = !fanLatched_;
+        play.ui(Play::Ui::Click);
+    }
+    // What is in it: everything he has learned, in the table's own order. Asked of the realm
+    // every frame rather than kept -- learning is what puts a skill here, and a list that cached
+    // them would miss the orb the day it exists. MU2's `Fan.Held` keeps the same rule.
+    fan_.clear();
+    for (int i = 0; i < sim::skillCount(); ++i) {
+        const sim::SkillRow& row = sim::skillAt(i);
+        if (realm.knows(row.number)) fan_.push_back(row.number);
+    }
+    const bool fanOpen = !fan_.empty() &&
+                         (fanLatched_ || onGold || hud_.coversFan(pointer.x, pointer.y) ||
+                          carrying_ != 0);
+    hud_.setFan(fanOpen, fan_, carrying_);
+
+    // A press picks something up: off a cell of the list, or off a key that already holds one.
+    // Which it turns out to be is decided on release, exactly as MU2's `Fan.Release` decides it.
+    if (pointer.pressed && carrying_ == 0) {
+        const int cell = hud_.fanAt(pointer.x, pointer.y);
+        const int key = hud_.skillAt(pointer.x, pointer.y);
+        if (cell >= 0 && size_t(cell) < fan_.size()) {
+            carrying_ = fan_[size_t(cell)];
+            carryFrom_ = -1;
+        } else if (key >= 0 && bound_[key] != 0) {
+            carrying_ = bound_[key];
+            carryFrom_ = key;
+        }
+    }
+
+    if (carrying_ != 0 && pointer.released) {
+        const int onto = hud_.skillSlotAt(pointer.x, pointer.y);
+        const int32_t carried = carrying_;
+        if (onto >= 0) {
+            // On a key: bound. A key already holding something is a SWAP and not an overwrite,
+            // which is the one rule that makes a full bar rearrangeable without an empty key to
+            // stage through -- what was there goes back where the drag started, and a skill
+            // dragged out of the list onto a second key MOVES rather than doubling.
+            const int32_t displaced = bound_[onto];
+            int other = -1;
+            for (int key = 0; key < Hud::kSkillKeys; ++key) {
+                if (key != onto && bound_[key] == carried) other = key;
+            }
+            bound_[onto] = carried;
+            if (carryFrom_ >= 0 && carryFrom_ != onto) {
+                bound_[carryFrom_] = displaced;
+            } else if (other >= 0) {
+                bound_[other] = displaced;
+            }
+            core::logf("window: %s on %s", sim::skillNumbered(carried)->name,
+                       onto == 0 ? "Q" : onto == 1 ? "W" : onto == 2 ? "E" : "R");
+            play.ui(Play::Ui::Took);
+            // And the list shuts behind it, as MU2's does: the choice is made.
+            fanLatched_ = false;
+        } else if (carryFrom_ >= 0 && hud_.fanAt(pointer.x, pointer.y) >= 0) {
+            // A key dropped back into the list is a key cleared. Nothing is lost: the skill is
+            // learned, and the list is where every learned skill is.
+            bound_[carryFrom_] = 0;
+            core::logf("window: %s taken off the bar", sim::skillNumbered(carried)->name);
+            play.ui(Play::Ui::Took);
+        }
+        // Anywhere else the drag is let go and nothing changes, which is MU2's third landing:
+        // a drag abandoned over the world is a drag abandoned.
+        carrying_ = 0;
+        carryFrom_ = -1;
     }
 
     const gfx::Window::Key keys[Hud::kSkillKeys] = {

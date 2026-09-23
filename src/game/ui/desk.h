@@ -121,11 +121,21 @@ private:
     int32_t quick_[Hud::kQuickKeys] = {-1, -1, -1, -1, -1};
     int scriptedKey_ = -1;
     void quickKeys(const gfx::Window& window, Play& play);
-    // What is on Q W E R, by MU's skill number. The knight's first is bound to Q the moment he
-    // has learned it, which is a convenience and not the design: dragging a learned skill onto a
-    // key is the gesture (docs/skills-dk.md §3.4) and the list to drag from is the next sprint's.
+    // What is on Q W E R, by MU's skill number. A newly learned skill takes the first free key
+    // ONCE -- `autoBound_` is what stops it coming back the moment the player takes it off -- and
+    // after that the bar is his: right-click a box to open the list, drag a row onto a key, drag
+    // a key's skill onto another to swap the two, drag it back into the list to clear it
+    // (docs/skills-dk.md §3.4, and the user's own gesture, 2026-09-23).
     // Not saved, which is faithful -- there is no SaveHotKey anywhere in MuMain.
     int32_t bound_[Hud::kSkillKeys] = {0, 0, 0, 0};
+    uint32_t autoBound_ = 0;  // skills that have had their one free key
+    // The list above the plate: latched open by a click on the gold box, and open anyway while
+    // the pointer rests on that box or on the list itself. The cells are rebuilt every frame off
+    // what the realm says he has learned.
+    bool fanLatched_ = false;
+    std::vector<int32_t> fan_;
+    int32_t carrying_ = 0;    // the skill the pointer is holding, 0 for none
+    int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int scriptedSkill_ = -1;
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
     tip::Sheet skillSheet(const sim::SkillRow& row, const sim::Realm& realm, bool armed) const;

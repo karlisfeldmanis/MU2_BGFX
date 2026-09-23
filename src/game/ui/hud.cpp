@@ -110,6 +110,25 @@ Box boxPx(int slot) {
                      kQuickH};
 }
 
+// Where the n-th cell of the open skill list goes, in plate pixels.
+//
+// **A fan, and not a window.** `CNewUISkillList::UpdateMouseEvent` lays its cells out from the
+// gold box outward, alternating: an even index goes right by half its own index and an odd one
+// left by half plus one, so the list grows symmetrically around the box it belongs to. MuMain
+// wraps to a second row past fourteen; six skills is the most this game has, so the row is one
+// row and the wrap is not built.
+//
+// Above the plate rather than on it, by a box and a hair: the plate's upper half is the gems,
+// the two rails and the states, and above it there is only the world -- which is where MuMain
+// opens its own list. MU2's Hud.FanPx and FanLift, number for number.
+constexpr float kFanLift = 8.0f;
+constexpr float kFanRim = 6.0f / 32.0f;  // what share of a cell its painted frame takes
+
+Box fanPx(int index) {
+    const float column = float(index % 2 == 0 ? index / 2 : -((index / 2) + 1)) * kSkillPitch;
+    return {kSkillsX + 5.0f * kSkillPitch + column, -(kSkillH + kFanLift), kSkillW, kSkillH};
+}
+
 Box buttonPx(int which) {
     const bool left = kButtons[which].left;
     int rank = 0, pair = 0;
@@ -173,6 +192,9 @@ bool Hud::Face::operator==(const Face& o) const {
            level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
            character == o.character && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
+           fanOpen == o.fanOpen && fanOver == o.fanOver && carrying == o.carrying &&
+           fan == o.fan &&
+           (carrying == 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(quick, quick + kQuickKeys, o.quick) && picture == o.picture &&
            std::equal(skill, skill + kSkillKeys, o.skill);
 }
@@ -249,6 +271,30 @@ int Hud::skillAt(float x, float y) const {
     return -1;
 }
 
+int Hud::boxAt(float x, float y) const {
+    for (int i = 0; i < kSlots; ++i) {
+        if (plate(screen_, boxPx(i)).has(x, y)) return i;
+    }
+    return -1;
+}
+
+int Hud::fanAt(float x, float y) const {
+    if (!fanOpen_) return -1;
+    for (size_t i = 0; i < fan_.size(); ++i) {
+        if (plate(screen_, fanPx(int(i))).has(x, y)) return int(i);
+    }
+    return -1;
+}
+
+bool Hud::coversFan(float x, float y) const { return fanAt(x, y) >= 0; }
+
+int Hud::skillSlotAt(float x, float y) const {
+    for (int i = 0; i < kSkillKeys; ++i) {
+        if (plate(screen_, boxPx(i)).has(x, y)) return i;
+    }
+    return -1;
+}
+
 bool Hud::tipAt(float x, float y) const {
     return skillAt(x, y) >= 0 ||
            plate(screen_, kLifeHole).has(x, y) || plate(screen_, kManaHole).has(x, y) ||
@@ -263,7 +309,9 @@ bool Hud::covers(float x, float y) const {
     for (int i = 0; i < 4; ++i) {
         if (plate(screen_, buttonPx(i)).has(x, y)) return true;
     }
-    return false;
+    // And the open list, which stands off the plate over the world: a click on a cell is the
+    // interface's, or choosing a skill would walk the character to where it was drawn.
+    return fanAt(x, y) >= 0;
 }
 
 void Hud::update(float seconds, float width, float height, const Pointer& pointer,
@@ -303,6 +351,10 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.pointerY = pointer.y;
         for (int i = 0; i < kQuickKeys; ++i) now_.quick[i] = quick_[i];
         for (int i = 0; i < kSkillKeys; ++i) now_.skill[i] = skill_[i];
+        now_.fanOpen = fanOpen_;
+        now_.fan = fan_;
+        now_.carrying = carrying_;
+        now_.fanOver = fanAt(pointer.x, pointer.y);
         // What stands on the potion boxes' stage: each bound row in its box, in MU units from
         // the plate's corner. The same list twice is no redraw (Stage::stand).
         if (stage_) {
@@ -434,6 +486,48 @@ void Hud::rebuild() {
                                  kInkShadow, 1.0f, std::to_string(int(one.seconds + 0.5f)),
                                  gfx::Align::Centre, 0.0f);
             }
+        }
+    }
+
+    // The list, open above the plate, and whatever is being dragged out of it.
+    //
+    // Drawn here rather than in a window of its own because it IS the plate's furniture: the
+    // cells are the skill boxes' own size and pitch, so an icon in the list and the same icon
+    // in a key are the same picture at the same size. MU2's Hud.Fan.
+    if (fanOpen_) {
+        const gfx::Art& cell = arts.get("hud_skill_box");
+        const gfx::Art& sheen = arts.get("hud_slot_hover");
+        for (size_t i = 0; i < fan_.size(); ++i) {
+            const Box box = plate(s, fanPx(int(i)));
+            // A soft dark drop under it, which is ours and not MU's: every other piece of this
+            // frame is drawn on the base plate and carries its own painted shading, and the list
+            // opens over grass -- where a dark box on dark grass at dusk has no edge at all.
+            for (int step = 3; step >= 1; --step) {
+                const float off = float(step) * 2.0f * s.scale;
+                canvas_.rect({box.x + off, box.y + off, box.w, box.h},
+                             gfx::rgba(0.0f, 0.0f, 0.0f, 0.10f));
+            }
+            if (cell.valid()) canvas_.image(cell, box);
+            const gfx::Art& icon = arts.get("skill_" + std::to_string(fan_[i]));
+            // Inside the cell's own painted rim, which is six of the art's thirty-two and not
+            // the row's four: insetting by the row's put the icon over the bevel.
+            const float rim = box.w * kFanRim;
+            if (icon.valid()) {
+                canvas_.image(icon, {box.x + rim, box.y + rim, box.w - rim * 2.0f,
+                                     box.h - rim * 2.0f});
+            }
+            if (now_.fanOver == int(i) && sheen.valid()) canvas_.image(sheen, box);
+        }
+    }
+    if (carrying_ != 0) {
+        // What the pointer is holding, at the pointer: drawn last so it lies over the list it
+        // came out of and over the key it is going to.
+        const gfx::Art& icon = arts.get("skill_" + std::to_string(carrying_));
+        const Box box = plate(s, boxPx(0));
+        const float side = box.w * 0.8f;
+        if (icon.valid()) {
+            canvas_.image(icon, {now_.pointerX - side * 0.5f, now_.pointerY - side * 0.5f, side,
+                                 side}, gfx::rgba(1.0f, 1.0f, 1.0f, 0.85f));
         }
     }
 
