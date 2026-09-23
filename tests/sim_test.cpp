@@ -543,19 +543,30 @@ void testLoot(const content::Tables& tables) {
     // His points, as a player spends them at the character window: into strength, which is
     // what most of what a knight finds asks for. Then equip whatever fits, straight from the
     // bag through the same move a drag makes.
+    // Standing up first. A hunt of twelve thousand ticks can end on the tick he is lying
+    // down, and a dead man moves nothing -- `Realm::moveItem` refuses every drag while
+    // `bodies_[0]` is not alive, so the whole equip loop below would answer no for a reason
+    // that has nothing to do with what dropped. It is waited out rather than left to the seed.
+    for (int tick = 0; tick < 400 && !realm.hero().alive(); ++tick) realm.step();
+    check(realm.hero().alive(), "he is on his feet again before he sorts his bag");
     realm.spend(realm.hero().pointsInHand, 0, 0, 0);
-    int worn = 0;
+    int worn = 0, allowed = 0;
     for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
         const sim::Held& one = realm.satchel()[slot];
         if (one.empty()) continue;
         const content::ItemRow& row = tables.items[size_t(one.item)];
         const int place = sim::placeOf(row);
+        // What the window would let him drag, asked before the drag: a gate that says no and a
+        // move that then says yes (or the other way about) is the bug this pairing catches.
+        const bool may =
+            place >= 0 && sim::movable(tables, realm.wearer(), realm.satchel(), slot, place);
+        allowed += may ? 1 : 0;
         const bool on = place >= 0 && realm.moveItem(slot, place);
         std::printf("    found %s +%d: %s\n", row.label.c_str(), one.refinement,
                     on ? "put on" : (place < 0 ? "not worn" : "refused"));
         if (on) ++worn;
     }
-    std::printf("  %d pieces put on\n", worn);
+    std::printf("  %d pieces put on, %d the gate allowed\n", worn, allowed);
 
     // And sell the rest at Lumen's: walk there, be served, sell every bag slot.
     int lumen = -1;
@@ -576,7 +587,15 @@ void testLoot(const content::Tables& tables) {
         if (!realm.satchel()[slot].empty() && realm.sellItem(slot) >= 0) ++sold;
     }
     std::printf("  %d sold for %lld Zen\n", sold, (long long)(realm.money() - before));
-    check(worn > 0, "something found was put on");
+    // Everything the gate allowed went on, and nothing else did. **Not `worn > 0`**, which is
+    // what this asked until 2026-09-23: what a hunt drops is the dice's business, and a run in
+    // which the only wearable thing was a bow (a knight may not hold one) or a second axe (the
+    // hand it goes in is full) failed a test about the EQUIP PATH for a reason that had nothing
+    // to do with it. Any change to what monsters do reshuffles the drops, so the old form made
+    // every AI change look like an item bug. Putting something on from the bag is covered
+    // without dice in testItems, piece by piece.
+    checkEqual((long long)worn, (long long)allowed,
+               "everything the gate allowed was put on, and nothing it refused");
     check(sold > 0, "and the rest sold");
     check(realm.sellItem(sim::kWeaponRight) < 0, "and what is worn is never sold");
 }
