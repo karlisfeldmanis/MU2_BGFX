@@ -15,25 +15,31 @@ using gfx::Box;
 // -- with the two things B does that A did not: the cells are cut DEEPER (a stronger seat of
 // shadow inside the top edge and a brighter hairline over it), and the head and its mark are
 // gold rather than bone. Every number here is that page's, converted.
-constexpr uint32_t kBodyTop = gfx::rgba(0.027f, 0.027f, 0.035f, 0.95f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.016f, 0.016f, 0.020f, 0.92f);
+// **Lifted on 2026-09-23** -- the user, on the first build of it: *"a little bit too dark"*.
+// Measured on the shot, the body was (8, 7, 6) over Lorencia's paving and its cells (16, 14, 13),
+// which is near enough to black that the whole window read as a hole cut in the screen rather
+// than as a panel lying on it. It is a dark warm GREY now, which is what the reference panels
+// this skin was drawn from actually are, and the warmth is real: a touch more red than blue, so
+// it sits in MU's own light instead of going cold against it.
+constexpr uint32_t kBodyTop = gfx::rgba(0.105f, 0.098f, 0.090f, 0.96f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.072f, 0.067f, 0.062f, 0.95f);
 
 // The edge, and the head's band of light over it.
 constexpr uint32_t kEdgeTop = gfx::rgba(0.957f, 0.886f, 0.690f, 0.60f);
 constexpr uint32_t kEdgeFoot = gfx::rgba(0.588f, 0.510f, 0.353f, 0.07f);
-constexpr uint32_t kBandLit = gfx::rgba(1.0f, 0.941f, 0.804f, 0.075f);
+constexpr uint32_t kBandLit = gfx::rgba(1.0f, 0.941f, 0.804f, 0.090f);
 
 // One hairline, the colour of old bronze, at three strengths: the window's edge, a rule inside
 // it, and a cell's own border.
 constexpr uint32_t kRule = gfx::rgba(0.643f, 0.573f, 0.404f, 0.38f);
 constexpr uint32_t kRuleOut = gfx::rgba(0.643f, 0.573f, 0.404f, 0.0f);
 
-constexpr uint32_t kCellBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.020f);
+constexpr uint32_t kCellBack = gfx::rgba(1.0f, 0.976f, 0.929f, 0.055f);
 // Quieter than the page that was chosen: at 0.26 a grid of sixty-four reads as a
 // lattice of bright lines from across the room, which is the one thing a flat skin
 // must not do. The recess carries the cell and the border only closes it.
-constexpr uint32_t kCellEdge = gfx::rgba(0.643f, 0.573f, 0.404f, 0.20f);
-constexpr uint32_t kCellOver = gfx::rgba(1.0f, 1.0f, 1.0f, 0.085f);
+constexpr uint32_t kCellEdge = gfx::rgba(0.643f, 0.573f, 0.404f, 0.24f);
+constexpr uint32_t kCellOver = gfx::rgba(1.0f, 0.976f, 0.929f, 0.125f);
 constexpr uint32_t kCellOverEdge = gfx::rgba(0.886f, 0.816f, 0.600f, 0.55f);
 constexpr uint32_t kCellHeld = gfx::rgba(0.0f, 0.0f, 0.0f, 0.30f);
 constexpr uint32_t kFitsBack = gfx::rgba(0.267f, 0.545f, 0.937f, 0.24f);
@@ -111,9 +117,9 @@ void cell(gfx::Canvas& canvas, const Box& box, Cell state, float thick) {
     // into the panel rather than a square drawn on it, and still nothing anyone would name.
     canvas.rect(box, back);
     if (quiet) {
-        const uint32_t dark = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);
+        const uint32_t dark = gfx::rgba(0.0f, 0.0f, 0.0f, 0.48f);
         const uint32_t none = gfx::rgba(0.0f, 0.0f, 0.0f, 0.0f);
-        const float deep = std::max(thick * 3.0f, box.h * 0.22f);
+        const float deep = std::max(thick * 3.0f, box.h * 0.18f);
         canvas.shade({box.x, box.y, box.w, deep}, dark, dark, none, none);
         // And the same the other way at the foot, a third as strong: the light that fell into
         // the well has to come out of it somewhere.
