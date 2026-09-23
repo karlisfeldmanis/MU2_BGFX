@@ -78,11 +78,17 @@ constexpr int kTenths = 10;
 constexpr float kReadingTall = 20.0f;
 constexpr float kTipTall = 15.0f;
 
-// The buff strip: MuDream's own place for it, read off its screen -- a 30-pixel square each,
-// edged and spaced, the row starting over the shield bar's left end and running right. MU2's
-// Hud.BuffsAt, number for number.
-constexpr Box kBuffsAt{292.0f, 28.0f, 30.0f, 30.0f};
-constexpr float kBuffGap = 6.0f;
+// The buff strip: MuDream's own place for it, the row starting over the shield bar's left end
+// and running right. MU2 draws a 30-pixel SQUARE there (`Hud.BuffsAt`), and this is bigger than
+// that on two counts, the second of which is why it looked small at MU2's own number:
+//
+//   * the cell is MuDream's own 80 by 112 and not a square. The icons are cut at that shape --
+//     a framed plate, taller than it is wide -- and a square cell squashed each by a third.
+//   * and it is filled to the plate's upper band rather than to thirty: the band between the
+//     plate's top edge and the shield rail is 64 pixels of empty ornament and the strip may
+//     have it. The user, 2026-09-23: the icon is a little too small.
+constexpr Box kBuffsAt{292.0f, 12.0f, 40.0f, 56.0f};
+constexpr float kBuffGap = 8.0f;
 constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
