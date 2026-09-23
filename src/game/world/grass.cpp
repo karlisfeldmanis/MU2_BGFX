@@ -19,11 +19,13 @@ namespace {
 constexpr int kVerticesPerCard = 6;
 constexpr int kIndicesPerCard = 12;
 
-// The instance: three vec4s. Not the engine's usual five -- a patch has no model matrix,
+// The instance: four vec4s. Not the engine's usual five -- a patch has no model matrix,
 // because a card is built in world space out of the patch's own corner. varying.def.sc's
-// i_data0..2 are read and the stride is what the buffer is walked by, not what a shader reads.
-constexpr uint16_t kInstanceStride = 3 * 4 * sizeof(float);
-constexpr size_t kFloatsPerInstance = 12;
+// i_data0..3 are read and the stride is what the buffer is walked by, not what a shader reads.
+// The fourth is the paving at the tile's four corners, in the same order as the heights, so a
+// card can bilinear it exactly as fs_ground bilinears the blend it draws the road with.
+constexpr uint16_t kInstanceStride = 4 * 4 * sizeof(float);
+constexpr size_t kFloatsPerInstance = 16;
 
 bgfx::VertexLayout g_layout;
 bool g_layoutReady = false;
@@ -200,22 +202,34 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             const float centreX = x0 + metres * 0.5f;
             const float centreZ = z0 + metres * 0.5f;
 
-            // Thinned where MU painted something over the lawn. tiles.png's blue is how far
-            // the overlay has been taken across the base, and where that is the paving the
-            // grass should give way to it -- which is Turf's own rule in MU2, and the reason
-            // MU's grass stops at the edge of the square without anything saying so. An
-            // overlay that is itself grass thins nothing.
+            // Where MU painted something over the lawn. tiles.png's blue is how far the overlay
+            // has been taken across the base, per CORNER -- MU's terrain blends its alpha at
+            // the cell's four vertices, and fs_ground draws the road off the same four -- and
+            // where that is the paving the grass gives way to it, which is Turf's own rule in
+            // MU2 and the reason MU's grass stops at the edge of the square without anything
+            // saying so. An overlay that is itself grass paves nothing.
             //
-            // The thinning with DISTANCE is not here any more. It is the shader's, per card
-            // and off the eye, so that it is a place on the screen rather than a ring round
-            // the player; a ring moves with him, and the cards on it grow as it passes. The
-            // far edge of the field is the same story, and it is the shader's for the same
-            // reason. grass.sh.
-            float density = look.grassDensity;
-            if (!ground.grassFloor(ground.overlayAt(column, row))) {
-                density *= 1.0f - ground.blendAt(column, row);
-            }
+            // The four corners go to the shader, which bilinears them at the card's own foot,
+            // so grass stops where the cobbles start and not a tile away. Read at one corner
+            // -- which is what this did first -- a tile whose corner was clear but whose other
+            // three were road grew a full sward across the main road.
+            //
+            // The thinning with DISTANCE is not here either. It is the shader's, per card and
+            // off the eye, so that it is a place on the screen rather than a ring round the
+            // player; a ring moves with him, and the cards on it grow as it passes. The far
+            // edge of the field is the same story, and it is the shader's for the same reason.
+            auto paved = [&](int c, int r) {
+                return ground.grassFloor(ground.overlayAt(c, r)) ? 0.0f : ground.blendAt(c, r);
+            };
+            // Same order as the heights: the v = 0 edge is the row+1 grid line.
+            const float p00 = paved(column, row + 1);
+            const float p10 = paved(column + 1, row + 1);
+            const float p01 = paved(column, row);
+            const float p11 = paved(column + 1, row);
+            const float density = look.grassDensity;
             if (density <= 0.01f) continue;
+            // A tile paved at every corner grows nothing, and is not sent.
+            if (std::min(std::min(p00, p10), std::min(p01, p11)) > 0.85f) continue;
 
             // The four corner heights, in the order the shader bilinears them: the v = 0 edge
             // of the tile is the row+1 grid line, because v runs along +z and z runs -row.
@@ -274,6 +288,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
                 x0, z0, h00, h10,
                 h01, h11, density, 0.0f,
                 light[0], light[1], light[2], 0.0f,
+                p00, p10, p01, p11,
             };
             packed_[bucket].insert(packed_[bucket].end(), instance, instance + kFloatsPerInstance);
         }
@@ -370,6 +385,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.meadowVary[3] = 0.0f;   // and no straw: a daisy does not go over
     field.meadowSheet[0] = float(kMeadowColumns);
     field.meadowSheet[1] = kCutout;  // the meadow keeps the painted threshold
+    field.meadowSheet[2] = look.grassMipBias;
     field.meadowSheet[3] = 1.0f;
     field.meadowCard[0] = look.grassMeadowHeight;
     field.meadowCard[1] = meadowSize_.second > 0.0f

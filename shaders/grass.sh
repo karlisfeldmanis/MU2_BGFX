@@ -78,19 +78,43 @@ struct Card
 	vec3 ground;    // the land's own up where it stands, before the card's own turn
 	float width;    // metres
 	float column;   // which 64-pixel column of the sheet it wears
-	float tint;     // 0..1, its own place between the root and tip tints
-	float dry;      // 0..1, how far this card's tuft has gone to straw
+	float tint;     // 0..1, its own brightness against its neighbours
+	float hue;      // 0..1, which of Turf's four tints it wears (the top quarter wears none)
+	float warm;     // 0..1, its own warmth or coolness, continuous
+	float vigour;   // 0..1, the coarse field: how well the grass is doing here
+	float bunch;    // 0..1, the fine field: how deep in a bunch it stands
 };
+
+// A smooth field over the world, for the drifts: value noise on a lattice `metres` wide,
+// smoothstepped between corners, which is Turf's Patchy. A floor() field -- which is what the
+// clump fields were first -- is a checkerboard of cells with a hard change at every edge, and
+// on a colour that edge is a line across the sward. This has none.
+float grassField(vec2 p, float metres, float salt)
+{
+	vec2 f = p / metres;
+	vec2 i = floor(f);
+	vec2 t = f - i;
+	t = t * t * (3.0 - 2.0 * t);
+	float a = grassHash(vec3(i, salt));
+	float b = grassHash(vec3(i + vec2(1.0, 0.0), salt));
+	float c = grassHash(vec3(i + vec2(0.0, 1.0), salt));
+	float d = grassHash(vec3(i + vec2(1.0, 1.0), salt));
+	return mix(mix(a, b, t.x), mix(c, d, t.x), t.y);
+}
 
 // The patch instance, unpacked:
 //   i_data0 = (x, z of the patch's -x -z corner, height at (col, row+1), height at (col+1, row+1))
 //   i_data1 = (height at (col, row), height at (col+1, row), density 0..1, unused)
 //   i_data2 = (MU's baked light rgb, unused)
+//   i_data3 = the paving at the same four corners as the heights, in the same order
 //
 // The two height pairs are the v = 0 and v = 1 edges of the tile, where v runs along +z. See
 // docs/conventions.md: column is +x, row is -z, so the tile's corner is (column, -(row + 1)).
-Card grassCard(vec4 d0, vec4 d1, float index)
+Card grassCard(vec4 d0, vec4 d1, vec4 d3, float index)
 {
+	// The meadow draw and the sward draw share this function and differ in a few places
+	// below; the flag is the sheet's own, set by the renderer per draw.
+	bool meadow = u_grassSheet.w > 0.5;
 	Card c;
 	// The patch's identity is its own tile, in metres, which d0.xy already is -- small numbers
 	// straight into the hash, rather than a big one the CPU fused. See the note on the hash.
@@ -137,17 +161,48 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	// of the density's range -- so that with the thinning spread over fifteen metres a card
 	// takes two or three metres of walking to grow, which at a walk is a second.
 	float keep = grassHash(id + 2.3);
-	// The patch's density is the overlay's doing (paving thins it), scaled by what this draw
-	// asks for: the sward takes all of it, the meadow a fifth, because a meadow is what stands
-	// THROUGH a sward and a field of flowers is not a field. Then thinned with distance, which
-	// the widening below pays back: coverage held, card count down, and no painted blade
-	// allowed under a pixel wide at the far edge.
+
+	// The tufts. Two clump fields at two scales, because a meadow has two: a coarse one that
+	// says how well the grass is doing here -- sun, water, what has walked over it -- and a
+	// finer one that gathers cards into the bunches grass actually grows in. They are read off
+	// the WORLD and not off the card, so neighbours agree and a tuft does not stop at the
+	// patch's edge. Smooth, so that nothing they drive -- height, colour, the plants -- has an
+	// edge of its own; the bunch field is a hard cell on purpose, because a bunch IS an edge.
+	float vigour = grassField(c.base.xz, 4.5, 7.0);
+	float bunch = grassHash(vec3(floor(c.base.xz * 1.6), 19.0));
+	c.vigour = vigour;
+	c.bunch = bunch;
+
+	// The density this draw asks for. For the sward it is the patch's, thinned with distance,
+	// which the widening below pays back: coverage held, card count down, and no painted blade
+	// allowed under a pixel wide at the far edge. For the meadow it is Turf's: a rate of
+	// plants a tile -- `grass_meadow` in u_grassSize.z is that rate over the cards on offer --
+	// varied by a drift six metres across so the plants come in patches rather than one a tile
+	// everywhere. Not thinned with distance: a seed head is one plant, not a sward, and a
+	// missing one at the top of the frame is a missing plant.
 	float far = saturate((distance - u_grassReach.z) / max(u_grassReach.w - u_grassReach.z, 0.1));
-	float density = d1.z * u_grassSize.z * (1.0 - 0.65 * far);
+	float density = d1.z * u_grassSize.z;
+	if (meadow)
+	{
+		density *= 0.3 + 1.4 * grassField(c.base.xz, 6.0, 41.0);
+	}
+	else
+	{
+		density *= 1.0 - 0.65 * far;
+	}
 	// The +1 puts the ramp's top AT the density rather than a sixth above it, so a patch at
 	// full density keeps every card; without it the sixth of cards whose hash sits over 0.83
-	// were being shrunk away from a sward that was asked for whole.
-	float alive = saturate((density - keep) * 6.0 + 1.0);
+	// were being shrunk away from a sward that was asked for whole. The meadow's ramp is
+	// narrow: its density is a few hundredths, and a sixth on top of that would be five
+	// plants a metre.
+	float alive = saturate((density - keep) * (meadow ? 40.0 : 6.0) + 1.0);
+
+	// The paving. MU's overlay alpha at the tile's four corners, bilineared at the card's own
+	// foot exactly as fs_ground bilinears it to draw the road, so the grass stops where the
+	// cobbles start. A ramp, so the edge of the road is a sward getting shorter and thinner
+	// into it over the fade MU painted, rather than a line of grass along the kerb.
+	float paved = mix(mix(d3.x, d3.y, u), mix(d3.z, d3.w, u), v);
+	alive *= 1.0 - smoothstep(0.12, 0.5, paved);
 
 	// And the field's end, as a height and never an alpha. Over the last metres before the
 	// reach a card shrinks into the turf, so the far edge of the field is a sward getting
@@ -156,23 +211,34 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	// in the picture at all; where a bank lifts the far ground into view, it is a fade.
 	alive *= saturate((u_grassReach.x - distance) / max(u_grassReach.y, 0.1));
 
-	// The tufts. Two clump fields at two scales, because a meadow has two: a coarse one that
-	// says how well the grass is doing here -- sun, water, what has walked over it -- and a
-	// finer one that gathers cards into the bunches grass actually grows in. They are read off
-	// the WORLD and not off the card, so neighbours agree and a tuft does not stop at the
-	// patch's edge.
-	vec2 wide = floor(c.base.xz * 0.22);   // about four and a half metres
-	vec2 tuft = floor(c.base.xz * 1.6);    // about sixty centimetres
-	float vigour = grassHash(vec3(wide, 7.0));
-	float bunch = grassHash(vec3(tuft, 19.0));
-	// Dryness runs on the coarse field, so the straw comes in patches a few metres across --
-	// which is how a lawn goes over in summer, and what stops the whole field being one green.
-	c.dry = saturate(vigour * 1.6 - 0.62) * u_grassVary.w;
-
 	// Which column of the sheet. MU rolls the column by the terrain ROW so the four tufts do
 	// not line up into stripes across the map; a hash per card does the same job without a
 	// table, and does it in two axes rather than one.
-	c.column = floor(grassHash(id + 29.7) * u_grassSheet.x);
+	//
+	// The meadow chooses by Turf's weights for Lorencia -- seed heads and weeds mostly, and
+	// the three flowers (cells 5, 6, 7) only where a drift seven metres across says the
+	// field is in flower, so the flowers come in patches as they do in a meadow.
+	if (meadow)
+	{
+		float blooming = smoothstep(0.35, 0.8, grassField(c.base.xz, 7.0, 53.0)) * 2.0;
+		float w[8];
+		w[0] = 3.0; w[1] = 2.0; w[2] = 3.0; w[3] = 2.0; w[4] = 2.0;
+		w[5] = 0.8 * blooming; w[6] = 0.8 * blooming; w[7] = 0.3 * blooming;
+		float total = w[0] + w[1] + w[2] + w[3] + w[4] + w[5] + w[6] + w[7];
+		float roll = grassHash(id + 29.7) * total;
+		float chosen = 7.0;
+		float sum = 0.0;
+		for (int i = 0; i < 7; ++i)
+		{
+			sum += w[i];
+			if (roll < sum) { chosen = min(chosen, float(i)); }
+		}
+		c.column = chosen;
+	}
+	else
+	{
+		c.column = floor(grassHash(id + 29.7) * u_grassSheet.x);
+	}
 
 	// The height, out of four draws that each do a different job:
 	//   the card's own        a sward is not level; no two tufts beside each other match
@@ -183,13 +249,16 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	// mown lawn: without it the whole sward has one top and looks trimmed.
 	// A WIDE spread, on purpose: this is the random length the field is asked for, and a
 	// narrow one reads as one plant at one size however many of them there are.
-	float own = 0.46 + grassHash(id + 7.7) * 1.02;
+	// A plant's own spread is narrower (Turf's 0.8 to 1.2): a daisy is a daisy's size.
+	float own = meadow ? 0.8 + grassHash(id + 7.7) * 0.4 : 0.46 + grassHash(id + 7.7) * 1.02;
 	float rank = step(1.0 - u_grassVary.z, grassHash(id + 13.9));
 	float scale = own * (0.84 + bunch * 0.32) * (0.84 + vigour * 0.36);
 	scale *= mix(1.0, 1.85, rank);
 	float height = u_grassCard.x * scale * alive;
 
 	c.tint = grassHash(id + 11.3);
+	c.hue = grassHash(id + 37.1);
+	c.warm = grassHash(id + 41.9);
 
 	// How stiff it is. A stiff tuft stands up and barely answers the wind; a floppy one leans
 	// further, arches harder and whips. ONE draw, read by three things below, so the tuft that
@@ -301,7 +370,7 @@ void grassVertex(Card c, float t, float side, out vec3 wpos, out vec2 uv, out ve
 	// hexaquo and 2Retr0 both land here from the other direction, transferring normals off a
 	// cylinder to imply a roundness the geometry has not got. Same trick, fewer steps.
 	vec3 face = normalize(cross(c.across, tangent));
-	normal = normalize(mix(c.ground, face, 0.22));
+	normal = normalize(mix(c.ground, face, 0.30));
 }
 
 // The sheet, read at a level the card is allowed to go to.

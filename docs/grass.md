@@ -589,6 +589,44 @@ sheet had (7.04/4.89 = 1.44). A sweep of `grass_mip_bias` (-0.4, 0.3, 0.8, 1.3 �
 sharpness. The default is 0.5, chosen on the shot rather than the number: the blades stay
 blades and the sward reads as a mass.
 
+### Roads, the meadow, and Turf's greens
+
+2026-09-23, later again. "Don't grow grass on main roads, migrate the flowers MU2's Godot
+client had, some grass colour changes, some shading, realism."
+
+**The road.** The overlay thinning read `blendAt` at ONE corner of the tile, and MU's blend
+is per vertex: a tile whose corner was clear but whose other three were cobbles grew a full
+sward across the main road. The four corners now ride in a fourth instance vec4, in the same
+order as the heights, and the shader bilinears them at the card's own foot — exactly the
+weight `fs_ground` draws the road with — and shrinks the card away over `smoothstep(0.12,
+0.5)` of it. So the grass stops where the cobbles start, over the fade MU painted, and not a
+tile away. A patch paved at all four corners is not sent.
+
+**The meadow is on**, and it is Turf's placement moved into the shader: a rate of plants a
+tile varied by a six-metre drift so they come in patches; Turf's Lorencia weights (seed
+heads and weeds mostly) with the three flower cells scaled by a second, seven-metre drift so
+the flowers come in patches of their own; a plant's own size spread 0.8–1.2 rather than the
+sward's 0.46–1.48; and no thinning with distance, because a missing seed head is a missing
+plant. The ramp that thins the sward is forty times narrower for the meadow, because its
+density is a few hundredths and a sixth on top of that was five plants a metre. Leaves and
+stems take the sward's grade, so a stem is the lawn's green; petals stay as painted. Turf's
+Lorencia rate (0.3 a tile) hid in the sward entirely, so the default is about a plant a tile.
+
+**The greens are Turf's, carried over whole.** Per card one of four tints — dark forest,
+olive, sun-bleached, dry — with the top quarter left at the graded colour; per card a twelfth
+of warmth or coolness either way; and over the coarse field a drift to straw where it is
+poor and a deeper green where it is damp. The coarse field is value noise now (`grassField`,
+Turf's `Patchy`) rather than a `floor()` cell: a cell field is a checkerboard with a hard
+change at every edge, and on a colour that edge is a line across the sward. The bunch field
+stays a hard cell, because a bunch IS an edge.
+
+**Shading.** A card standing in a bunch is shaded by it: MU's baked light is taken down by
+up to 28% at the root by the bunch field, which sits a tuft into its neighbours. And the
+normal leans a little further towards the card's own face (0.30 from 0.22), so a tuft
+catches the sun a little differently from the one beside it.
+
+Open field: 4.59 → 4.66 ms mean, the meadow and the colour together.
+
 ### What this still owes
 
 - **The field is not in the prepass, so SSAO does not see it.** Intended — `fs_grass` never
@@ -603,11 +641,9 @@ blades and the sward reads as a mass.
   on flat ground nothing is ever seen to end.
 - **Nothing interacts with it.** No walker parts it, no wake lies behind him. MU2's Turf had
   both; Ghost of Tsushima's displacement buffer is the shape for it.
-- **The meadow is wired and switched off.** MU2's `wild.png` — seed heads, broadleaf, clover,
-  daisies, buttercups, bellflowers, eight painted cells — now has a draw of its own over the same
-  patches, with its own sheet, size and a short index range, and its paint is exempt from the
-  colour grade because a daisy is white because it was painted white. `grass_meadow` is 0: it is
-  the next piece of work, not this one.
+- **The meadow's plants are one card each.** Turf crossed two cards per plant because a lone
+  card edge-on to the camera is a line; here the camera never turns, and a card's facing is a
+  hash, so a few plants are always edge-on. Two crossed cards is the fix if it shows.
 - **The blades still read a little leafy**, and the reason is structural: a card is minified six
   times against its cell, so a painted stroke cannot be thinner than the mip chain will carry.
   Thinner than this wants either a lower-resolution sheet matched to the card's screen size, or

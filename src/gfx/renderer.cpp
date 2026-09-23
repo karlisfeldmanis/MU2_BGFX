@@ -310,10 +310,11 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
     for (int i = 0; i < grass.batchCount; ++i) {
         draw(grass.batches[i], grass.card, grass.vary, grass.sheet, 1.0f, 0, grass.colour);
     }
-    // And the flowers over the top of it, one more draw across the same patches.
-    // The meadow is never graded: its paint IS its colour. See fs_grass.
+    // And the flowers over the top of it, one more draw across the same patches. The grade
+    // goes with it: fs_grass grades a plant's leaves and stems to the lawn's green and leaves
+    // its petals as painted.
     draw(grass.meadow, grass.meadowCard, grass.meadowVary, grass.meadowSheet,
-         grass.meadowDensity, grass.meadowIndices, 0.0f);
+         grass.meadowDensity, grass.meadowIndices, grass.colour);
 }
 
 void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,

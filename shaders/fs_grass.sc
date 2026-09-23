@@ -68,17 +68,49 @@ void main()
 		float value = dot(albedo, vec3(0.299, 0.587, 0.114));
 		vec3 target = mix(u_grassRoot.rgb, u_grassTip.rgb, up * up);
 		albedo = mix(albedo, value * target, u_grassSize.w);
-		// The dry tufts, which arrive in patches a few metres across off the coarse clump
-		// field. Straw is not green turned down: it is warmer and far less green, so it is a
-		// colour the tuft is carried towards rather than a saturation on this one.
-		albedo = mix(albedo, value * vec3(1.42, 1.12, 0.44), v_colour.a);
+
+		// Then the greens, which are MU2's Turf's, carried over whole because they were judged
+		// there over a summer of shots. Three sizes of variation, and each is a different thing:
+		//
+		// Per card, one of four tints -- dark forest, olive, sun-bleached, dry -- with the top
+		// quarter left at the graded colour. Four, and not a continuous hue, because a sward is
+		// a few kinds of plant and not a gradient; the eye reads four as species.
+		float hue = v_light.z;
+		vec3 kind = vec3_splat(1.0);
+		if (hue < 0.25)      kind = vec3(0.82, 1.15, 0.80);
+		else if (hue < 0.45) kind = vec3(1.08, 1.02, 0.85);
+		else if (hue < 0.60) kind = vec3(1.12, 1.08, 0.75);
+		else if (hue < 0.72) kind = vec3(1.05, 0.90, 0.78);
+		albedo *= kind;
+		// Per card, a slight warmth or coolness of its own, continuous, so two cards of the
+		// same tint side by side are still not the same green. A twelfth either way: texture,
+		// not colour.
+		float toward = (v_light.w - 0.5) * 0.16;
+		albedo.r *= 1.0 + toward;
+		albedo.b *= 1.0 - toward;
+		// And the drift, metres across, off the coarse field: a meadow is not one green. It
+		// goes to straw where the ground is poor or the sun has had it, and to a deeper green
+		// where it is damp, in patches no per-card roll can make. `grass_dry` says how far
+		// the straw goes; the deeper green is always there.
+		float vigour = v_colour.a;
+		float parched = smoothstep(0.45, 0.9, vigour) * saturate(u_grassVary.w * 3.0);
+		albedo *= vec3(1.0 + 0.30 * parched, 1.0 + 0.04 * parched, 1.0 - 0.35 * parched);
+		float lush = smoothstep(0.55, 0.1, vigour);
+		albedo *= vec3(1.0 - 0.12 * lush, 1.0 + 0.08 * lush, 1.0);
 		// And each card a little off its neighbour on top of all that.
 		albedo *= 0.84 + tint * 0.32;
 	}
 	else
 	{
-		// A flower still varies, just not in hue: one stands a little brighter than the next.
-		albedo *= 0.88 + tint * 0.24;
+		// A plant's leaves and stems are brought to the lawn they stand in: the green texels
+		// take the same grade the sward takes, so a seed head's stem is the sward's green and
+		// not the sheet's. The petals are left as painted, a little dimmed -- a daisy is white
+		// because it was painted white -- and one plant stands a little brighter than the next.
+		float value = dot(albedo, vec3(0.299, 0.587, 0.114));
+		bool leaf = albedo.g > albedo.r * 1.05 && albedo.g > albedo.b * 1.2;
+		vec3 target = mix(u_grassRoot.rgb, u_grassTip.rgb, up * up);
+		albedo = leaf ? mix(albedo, value * target, u_grassSize.w) * (0.84 + tint * 0.32)
+		              : albedo * (0.80 + tint * 0.24);
 	}
 
 	// 2. The height ramp of ambient occlusion. One multiply, and the single most effective

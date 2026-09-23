@@ -213,11 +213,17 @@ struct Lighting {
     // further than its own habit ever did, which put the whole field on its side twice a
     // second. It is a sway now, not a flattening.
     // The meadow: MU2's painted seed heads, broadleaf, clover, daisies, buttercups and
-    // bellflowers (`wild.png`, pipeline/meadow.py). Wired and drawable, and **off**: it is the
-    // next piece of work, not this one. `grass_meadow` above 0 is how many of the cards it is
-    // offered become plants.
-    float grassMeadow = 0.0f;
-    float grassMeadowHeight = 0.34f;
+    // bellflowers (`wild.png`, pipeline/meadow.py), placed as MU2's Turf placed them: a rate of
+    // plants a tile, varied by a drift so they come in patches, flowers only where a second
+    // drift says the field is in flower, seed heads and weeds everywhere else. `grass_meadow`
+    // is that rate over the nine cards a patch offers the meadow. Turf's Lorencia was 0.3 of
+    // a plant a tile -- a town's worn grass, with flowers now and then -- which at 0.035 here
+    // hid in the sward entirely; the user asked for the flowers to be SEEN, so it is about a
+    // plant a tile. The height is the sheet's tallest cell in metres; a plant painted to a
+    // third of its cell stands a third of it. Taller than the sward, because a seed head is
+    // what stands OVER a sward.
+    float grassMeadow = 0.12f;
+    float grassMeadowHeight = 0.62f;
 
     float grassWindStrength = 0.10f;
     float grassWindDegrees = 45.0f;  // which way it blows, turning from +x towards -z
