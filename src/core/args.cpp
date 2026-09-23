@@ -26,6 +26,8 @@ void printUsage() {
         "  --width N --height N      backbuffer size (default 1920x1080)\n"
         "  --fullscreen              the whole display at its own mode; --width/--height are "
         "ignored\n"
+        "  --windowed                and back into a window, which is how main.sh's own "
+        "--fullscreen is taken back\n"
         "  --vsync                   cap to the display; off by default so a number is a number\n"
         "  --no-vsync                and off again, which is how main.sh's own --vsync is "
         "taken back\n"
@@ -152,6 +154,8 @@ Args parseArgs(int argc, char** argv) {
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--windowed")) {
+            a.fullscreen = false;
         } else if (!std::strcmp(s, "--fullscreen")) {
             a.fullscreen = true;
         } else if (!std::strcmp(s, "--no-figures")) {

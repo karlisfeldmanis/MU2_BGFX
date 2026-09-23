@@ -2,7 +2,10 @@
 # The game. A new Dark Knight, made the way MU makes one, standing in Lorencia with the axe
 # his class is given and nothing else on him.
 #
-#   ./main.sh                     play, esc to quit
+#   ./main.sh                     play fullscreen on the whole display, esc to quit
+#   ./main.sh --windowed          in a 1920x1080 window instead
+#   ./main.sh --no-vsync          torn rather than paced to the refresh; --cap still holds
+#   ./main.sh --scale 1           every pixel the display has, rather than 85% magnified
 #   ./main.sh --at 185,120        start out in the spider field instead of in town
 #   ./main.sh --class 1           a Fairy Elf, who is given a Short Bow
 #                                 (still in Lorencia: an elf's home is Noria and the map a
@@ -100,7 +103,7 @@ code=0
 # 12.3 at the 99th, so at 180 it steps between 90 and 60 several times a second, while a
 # 16.67 ms period is one it fits inside every time and the same refresh every time. Play on
 # 60; measure and hunt on 180. `--cap 0` lets it run free.
-build/mu2 --world lorencia --play --vsync --cap 180 --scale 0.85 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
+build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.85 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
   code=$?
 if [ $code -ne 0 ]; then
   echo "mu2 stopped with $code. The last of mu2.log:"
