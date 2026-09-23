@@ -11,13 +11,13 @@ namespace {
 
 using gfx::Box;
 
-// Bag.cs's table, in MU's panel units.
-constexpr float kOriginX = 15.0f, kOriginY = 200.0f;  // Create(x + 15, y + 200, ...)
-constexpr float kCell = 20.0f;                        // INVENTORY_SQUARE_WIDTH
-// MU's cell art was 21 across at a pitch of 20 -- the extra unit was a border two neighbours
-// shared. The skin draws a well inside the pitch instead, and the difference is the gutter: at a
-// unit the grid read as a table with lines, at a unit and a half as sixty-four wells.
-constexpr float kGutter = 1.5f;
+// Bag.cs's table, in MU's panel units -- Create(x + 15, y + 200, ...) at INVENTORY_SQUARE_WIDTH
+// 20 -- with the grid moved onto the skin's shared pitch (`panel::kPitch`), so its wells run
+// edge to edge with the worn slots' above it, and down seven units: MU's grid began on the very
+// line the boots' slot ended, and with the leather's border gone the two blocks touched.
+constexpr float kOriginX = panel::kGridX, kOriginY = 207.0f;
+constexpr float kCell = panel::kPitch;
+constexpr float kGutter = panel::kGutter;
 
 // The equipment grid: five columns and three rows, each slot one unit wider than its pitch so
 // neighbours share a border. EquipColumn = Run(11, [41, 25, 41, 25, 41]), EquipRow = Run(44,
@@ -49,6 +49,18 @@ Box wornBox(int slot) {
     }
 }
 
+// **The well a slot is drawn as.** MU's worn slots are each a unit wider than their pitch, so two
+// neighbours share a border -- and drawn as wells they touched, a lattice of twelve where the
+// grid under them was sixty-four separate cells. Inset by half a gutter each way, the air
+// between two worn slots is the grid's own unit and a half, and the block's two edges land on
+// 11.75 and 178.25, which is where the grid's wells end too. A bag cell is the pitch less the
+// gutter, as before. Hit-testing keeps MU's boxes; only the paint moves.
+Box wellOf(const Box& slot, bool worn) {
+    return worn ? Box{slot.x + kGutter * 0.5f, slot.y + kGutter * 0.5f, slot.w - 1.0f - kGutter,
+                      slot.h - 1.0f - kGutter}
+                : Box{slot.x, slot.y, slot.w - kGutter, slot.h - kGutter};
+}
+
 // The ghost in an empty worn slot. MU names the art for the side of the SCREEN: the
 // right-hand slot takes weapon(L). Bag.GhostFor.
 const char* ghostFor(int slot) {
@@ -67,12 +79,7 @@ const char* ghostFor(int slot) {
     }
 }
 
-// The Zen strip: MU's (11, 364, 170, 26) moved to the foot, the coins at its left and the
-// figure set against them at MU's own distance.
-constexpr Box kMoneyStrip{11.0f, 380.0f, 170.0f, 26.0f};
-constexpr Box kMoneyIcon{18.0f, 384.0f, 20.0f, 18.0f};
-constexpr float kMoneyFrom = 18.0f + 20.0f + 6.0f;
-constexpr float kMoneySize = 9.5f;
+// The Zen strip is drawn by `panel::zenFoot`, on the panel's shared foot rule.
 constexpr float kTipSize = 8.0f;
 
 // The drop target is the skin's own two cell states now (`sheet::Cell::Fits` and `Blocked`),
@@ -192,9 +199,9 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         // read as a sticker over the grid. Two units of air inside the well on top of that, so
         // every picture has the same margin whatever its footprint (the stage adds its own).
         if (!sim::wearable(slot)) {
-            box = Box{box.x, box.y, box.w - kGutter, box.h - kGutter}.grown(-2.0f);
+            box = wellOf(box, false).grown(-2.0f);
         } else {
-            box = box.grown(-3.0f);
+            box = wellOf(box, true).grown(-2.5f);
         }
         standing_.push_back({what.item, box, what.refinement,
                              slot == hovered_ && dragging_ < 0});
@@ -249,7 +256,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // full strength on leather, so an empty slot says what it is for without competing with the
     // piece in the slot beside it.
     for (int slot = 0; slot < sim::kWorn; ++slot) {
-        const Box box = wornBox(slot);
+        const Box box = wellOf(wornBox(slot), true);
         panel::cell(canvas_, x, y, box,
                     slot == hovered_ && dragging_ < 0 ? sheet::Cell::Over
                     : slot == dragging_              ? sheet::Cell::Held
@@ -264,7 +271,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 // be the opposite of. The canvas multiplies the vertex colour through the
                 // texture, so a dark warm tint sinks the plate into the well and leaves the
                 // silhouette, which is darker in the art still, as the only thing that reads.
-                canvas_.image(ghost, panel::scaled(x, y, box.grown(-3.0f)),
+                canvas_.image(ghost, panel::scaled(x, y, box.grown(-2.5f)),
                               gfx::rgba(0.50f, 0.45f, 0.34f, 0.46f));
             }
         }
@@ -272,33 +279,17 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // The satchel, one well a cell. MU's shared-border 21-unit frame is gone with the art: the
     // wells are drawn at the pitch less a unit, which is the gutter this skin reads by.
     for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-        const Box box = slotBox(slot);
-        panel::cell(canvas_, x, y, {box.x, box.y, kCell - kGutter, kCell - kGutter},
-                    sheet::Cell::Rest);
+        panel::cell(canvas_, x, y, wellOf(slotBox(slot), false), sheet::Cell::Rest);
     }
     // And the thing under the pointer lit over its whole footprint, not over the one cell it is
     // recorded in: a shield is two cells by two and it is the shield that is hovered.
     if (hovered_ >= 0 && dragging_ < 0 && !bag[hovered_].empty()) {
         const Box over = itemBox(tables, hovered_, bag[hovered_]);
-        panel::cell(canvas_, x, y, {over.x, over.y, over.w - kGutter, over.h - kGutter},
-                    sheet::Cell::Over);
+        panel::cell(canvas_, x, y, wellOf(over, sim::wearable(hovered_)), sheet::Cell::Over);
     }
 
-    // The foot: a band of light coming up out of the window's bottom edge, then a rule, the
-    // coins, and the figure ranged right against the window's own margin.
-    sheet::band(canvas_, panel::scaled(x, y, {0.0f, kMoneyStrip.y - 6.0f, panel::kWidth,
-                                              panel::kHeight - (kMoneyStrip.y - 6.0f)}),
-                false);
-    sheet::rule(canvas_, x + panel::kEdge * k, y + (kMoneyStrip.y - 6.0f) * k,
-                (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
-    canvas_.image(arts.get("bag_zen"), panel::scaled(x, y, kMoneyIcon));
-    const float moneySize = kMoneySize * k;
-    const Box strip = panel::scaled(x, y, kMoneyStrip);
-    sheet::kicker(canvas_, x + kMoneyFrom * k, panel::centredBaseline(face, strip, 8.0f * k),
-                  8.0f * k, "ZEN");
-    sheet::ranged(canvas_, strip.right() - 4.0f * k,
-                  panel::centredBaseline(face, strip, moneySize), moneySize,
-                  moneyColour(realm.money()), panel::commas(realm.money()));
+    // The foot: the panel's own, with the hero's Zen in it.
+    panel::zenFoot(canvas_, arts, x, y, realm.money());
 
     // The cell a dragged thing would land on: blue where the move would be taken and red where
     // not, asked of the realm's own gate. Bag.Target.
@@ -312,10 +303,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             int cells[sim::kSlots];
             const int count = bag.covered(cell, row.width, row.height, cells);
             const auto light = [&](int at, bool ok) {
-                const Box box = slotBox(at);
-                const bool worn = sim::wearable(at);
-                panel::cell(canvas_, x, y,
-                            worn ? box : Box{box.x, box.y, kCell - kGutter, kCell - kGutter},
+                panel::cell(canvas_, x, y, wellOf(slotBox(at), sim::wearable(at)),
                             ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
             };
             if (count == 0) light(cell, false);

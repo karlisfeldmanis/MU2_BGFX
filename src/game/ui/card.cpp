@@ -22,24 +22,30 @@ struct Row {
 // lines, so they are spaced evenly: sixty between each, which leaves fifteen units of air under
 // the two that carry two lines and twenty-seven under the two that carry one -- and the block
 // then reaches down to the foot instead of stopping a third of the way up it.
+// Sixty-four apart since the foot moved to the panel's shared rule at 382: the block starts
+// eighteen under the summary and Energy's line ends twenty-seven over the rule.
 constexpr Row kRows[4] = {
-    {0, 125.0f, "Strength"}, {1, 185.0f, "Agility"}, {2, 245.0f, "Vitality"}, {3, 305.0f, "Energy"}};
+    {0, 128.0f, "Strength"}, {1, 192.0f, "Agility"}, {2, 256.0f, "Vitality"}, {3, 320.0f, "Energy"}};
 
 // The plus beside a row, moved two down and five in from MU's (160, row + 2) so it sits in the
 // well MU2 draws round the row. Card.PlusFor.
-Box plusFor(float rowY) { return {160.0f, rowY + 2.0f, 16.0f, 15.0f}; }
-Box rowField(float rowY) { return {11.0f, rowY, 170.0f, 21.0f}; }
+Box plusFor(float rowY) { return {158.0f, rowY + 2.0f, 16.0f, 15.0f}; }
+// The wells run between the grid's two edges (`panel::kGridX` to `kWellRight`), as the bag's and
+// the shelf's do: MU's 11 to 181 was three units wider on the right than the wells in the window
+// beside it, and side by side the pair showed two right edges.
+constexpr float kWellX = panel::kGridX, kWellW = panel::kWellRight - panel::kGridX;
+Box rowField(float rowY) { return {kWellX, rowY, kWellW, 21.0f}; }
 constexpr Box kSummary{12.0f, 48.0f, 160.0f, 66.0f};
-constexpr Box kSummaryField{11.0f, 45.0f, 170.0f, 65.0f};
+constexpr Box kSummaryField{kWellX, 45.0f, kWellW, 65.0f};
 
 // **The foot.** MU's character window stops at Energy and leaves its bottom fifth empty, which
 // on leather was a texture and on this skin is a hole -- and the window beside it has a foot
 // (the Zen strip), so the pair read as one finished window and one unfinished one. The level's
 // own progress goes here: the figure is already in the summary, and what a player wants at a
 // glance is how far through the level he is, which is the one thing a figure cannot say.
-constexpr float kFootRule = 372.0f;
-constexpr float kFootTop = 380.0f;
-constexpr Box kBar{11.0f, 392.0f, 170.0f, 4.0f};
+constexpr float kFootRule = panel::kFootRule;
+constexpr float kFootTop = panel::kFootTop;
+constexpr Box kBar{panel::kGridX, kFootTop + 12.0f, panel::kWellRight - panel::kGridX, 4.0f};
 
 // **The type, tuned 2026-09-23.** A figure is a size and a half above its own label, which is
 // what makes a stat window scannable: the eye runs down the numbers and reads a word only when
@@ -51,9 +57,14 @@ constexpr float kTextSize = 9.0f, kFigureSize = 11.5f, kSummarySize = 8.5f,
 constexpr float kSummaryLabel = 7.5f;
 // The content's own margins: the wells run 11 to 181, so type sits a further seven in, and every
 // value ranges against the same right edge -- the well's, less the same seven.
-constexpr float kLeft = 18.0f, kMiddle = 100.0f, kGutter = 6.0f;
-constexpr float kRight = 174.0f;          // where a value ends, the wells' own inset
-constexpr float kFigureRight = 152.0f;    // and where a stat's figure ends, clear of the diamond
+// Ten units between LEVEL's value and the POINTS label after it: at six the two ran together
+// and "10 POINTS" read as a phrase.
+constexpr float kLeft = 18.0f, kMiddle = 100.0f, kGutter = 10.0f;
+constexpr float kRight = panel::kValueRight;  // where a value ends, the wells' own inset
+// Where a stat's figure ends: on the same edge as every other value on the card, except while
+// the diamonds are up, when it stands clear of them. With no points to spend the figures
+// stopped twenty-two units short of the lines under them, and the card had two right edges.
+constexpr float kFigureRight = 150.0f;
 constexpr float kDetailTop = 25.0f, kDetailStep = 12.0f;
 
 // The two weights of type, both warm: a label steps down from the heading rather than being a
@@ -221,9 +232,10 @@ void Card::rebuild() {
         const float figureSize = kFigureSize * k;
         const float baseline = panel::centredBaseline(face, well, figureSize);
         canvas_.text(x + kLeft * k, baseline, size, kPlain, row.label);
+        const float figureRight = now_.points > 0 ? kFigureRight : kRight;
         canvas_.text(x + kLeft * k, baseline, figureSize, kHeading,
                      std::to_string(values[row.stat]), gfx::Align::Right,
-                     (kFigureRight - kLeft) * k);
+                     (figureRight - kLeft) * k);
 
         // What the attribute buys, in the gap under its well: MU's own lines and strings. MU2
         // adds "Attack speed" under agility; the sim has no attack speed stat -- MU paces a swing

@@ -8,19 +8,22 @@ namespace {
 
 using gfx::Box;
 
-// Shelf.cs's table, in MU's panel units: CNewUINPCShop::Create's (x + 15, y + 50), eight by
-// fifteen, at the bag's twenty-unit cell and 21-unit frame.
-constexpr float kOriginX = 15.0f, kOriginY = 50.0f;
-constexpr int kColumns = 8, kRows = 15;
-constexpr float kCell = 20.0f;
-constexpr float kTipSize = 8.0f;
-// The price along the foot of an offer: the user's own choice for the vendor, 2026-09-23, and
-// the one thing this window says that the bag does not. Red where he cannot afford it.
-constexpr float kGutter = 1.5f;
-constexpr float kPriceTall = 6.5f;
-constexpr float kPriceSize = 6.5f;
-constexpr uint32_t kPriceBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.62f);
-constexpr uint32_t kDearInk = gfx::rgba(0.886f, 0.408f, 0.373f);
+// Shelf.cs's table, in MU's panel units, redrawn to fill MU's window: CNewUINPCShop::Create's
+// eight by fifteen at (x + 15, y + 50) stopped at 350 and left a fifth of the window bare, which
+// the leather made a texture and this skin made a hole. The user, 2026-09-23: *"vendor height
+// has to be same height as other windows, add additional grid slots to vendor if needed"*. So:
+// the skin's shared pitch, the first row's wells on the line the bag's worn slots start on
+// (44.75), and EIGHTEEN rows, whose last well ends at 421.25 -- seven and three quarters over the
+// foot, against eight and three quarters under the head's rule. MU's stock tables never fill a
+// slot past the fifteenth row, so the three extra rows are empty wells, as most of the fifteen
+// were. Prices are not printed on the shelf: the user, the same day, *"dont show prices on
+// vendor without tooltip"* -- the card under the pointer carries the figure, in full and in the
+// colour that says whether he can pay.
+constexpr float kOriginX = panel::kGridX, kOriginY = 44.0f + panel::kGutter * 0.5f;
+constexpr int kColumns = 8, kRows = 18;
+constexpr float kCell = panel::kPitch;
+constexpr float kGutter = panel::kGutter;
+constexpr float kHeight = panel::kHeight;
 
 Box cellOf(int slot, const content::ItemRow& row) {
     return {kOriginX + float(slot % kColumns) * kCell, kOriginY + float(slot / kColumns) * kCell,
@@ -46,7 +49,7 @@ void Shelf::open(const gfx::Interface& interface, panel::Arts* arts) {
 }
 
 bool Shelf::covers(float x, float y) const {
-    return up_ && Box{x_, y_, panel::kWidth * panel::scale(), panel::kHeight * panel::scale()}
+    return up_ && Box{x_, y_, panel::kWidth * panel::scale(), kHeight * panel::scale()}
                       .has(x, y);
 }
 
@@ -135,13 +138,12 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     standing_.clear();
     for (size_t i = 0; i < lines_.size(); ++i) {
         const content::ItemRow& row = tables.items[size_t(lines_[i].item)];
-        // Fitted to the well and clear of the price strip along its foot, as the bag fits its
-        // own pictures: the pitch is not the well.
+        // Fitted to the well, as the bag fits its own pictures: the pitch is not the well.
         Box box = cellOf(lines_[i].offer.slot, row);
-        box = Box{box.x, box.y, box.w - kGutter, box.h - kGutter - kPriceTall}.grown(-2.0f);
+        box = Box{box.x, box.y, box.w - kGutter, box.h - kGutter}.grown(-2.0f);
         standing_.push_back({lines_[i].item, box, lines_[i].offer.refinement, int(i) == hovered_});
     }
-    if (stage) stage->stand(standing_, panel::kWidth, panel::kHeight);
+    if (stage) stage->stand(standing_, panel::kWidth, kHeight);
 
     const sim::Body& hero = realm.hero();
     now_ = Drawn{};
@@ -201,7 +203,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
 
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
     if (picture.valid()) {
-        canvas_.image(picture, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}));
+        canvas_.image(picture, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, kHeight}));
     } else {
         for (const Standing& one : standing_) {
             const Box box = panel::scaled(x, y, one.box);
@@ -212,24 +214,9 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
         }
     }
 
-    // **The prices last, over the pictures.** The stage's photograph covers the whole window, so
-    // a strip drawn under it was hidden by the very thing it prices -- an ale's bottle reaches
-    // the foot of its own cell and took its 750 with it.
-    for (size_t i = 0; i < lines_.size(); ++i) {
-        const Box box = cellOf(lines_[i].offer.slot, tables.items[size_t(lines_[i].item)]);
-        const Box strip = panel::scaled(
-            x, y, {box.x + 1.0f, box.bottom() - kPriceTall - kGutter, box.w - 2.0f - kGutter,
-                   kPriceTall});
-        canvas_.rect(strip, kPriceBack);
-        const bool afford = realm.money() >= lines_[i].price;
-        const float size = kPriceSize * k;
-        canvas_.text(strip.x, tip::middle(face, strip.y, strip.h, size), size,
-                     afford ? sheet::ink::kGold : kDearInk, sheet::compactZen(lines_[i].price),
-                     gfx::Align::Centre, strip.w);
-    }
-
     // The bag's own tooltip, because it is the same tooltip, with the price in the foot:
-    // RenderItemInfo's Sell branch, which prints it above the name instead.
+    // RenderItemInfo's Sell branch, which prints it above the name instead. It is the only place
+    // the shelf says a price.
     if (hovered_ >= 0) {
         const Line& over = lines_[size_t(hovered_)];
         const content::ItemRow& row = tables.items[size_t(over.item)];
@@ -238,8 +225,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
                                 over.offer.skill};
         tip::Sheet sheet = describe(tables, carried, realm.wearer(), realm.satchel());
         sheet.price = panel::commas(over.price) + " Zen";
-        // The card says whether he can pay, in the same two inks the price badge uses: the badge
-        // is short of room for the whole figure and this is where the whole figure is read.
+        // The card says whether he can pay: yellow where he can, red where he cannot.
         sheet.priceTone = realm.money() >= over.price ? tip::Tone::Yellow : tip::Tone::Red;
         if (tipStage_) tip::stand(*tipStage_, carried.item, carried.refinement, sheet);
         const Box cell = panel::scaled(x, y, standing_[size_t(hovered_)].box);

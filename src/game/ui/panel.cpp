@@ -4,6 +4,7 @@
 #include <cstdio>
 
 #include "core/json.h"
+#include "game/ui/describe.h"
 #include "game/ui/sheet.h"
 #include "core/log.h"
 
@@ -212,6 +213,30 @@ void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& un
 
 void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state) {
     sheet::cell(canvas, scaled(x, y, units), state, std::max(1.0f, scale() * 0.5f));
+}
+
+namespace {
+// MU's (11, 364, 170, 26) Zen strip, moved down to the foot and centred in it; the coins at its
+// left at MU's own distance, and the figure against the value edge every window ranges to.
+constexpr gfx::Box kMoneyStrip{kEdge, kFootTop, kWidth - kEdge * 2.0f, 26.0f};
+constexpr gfx::Box kMoneyIcon{18.0f, kFootTop + 4.0f, 20.0f, 18.0f};
+constexpr float kMoneyFrom = 18.0f + 20.0f + 6.0f;
+constexpr float kMoneySize = 9.5f;
+}  // namespace
+
+void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money) {
+    const float k = scale();
+    const gfx::Face& face = canvas.face();
+    sheet::band(canvas, scaled(x, y, {0.0f, kFootRule, kWidth, kHeight - kFootRule}), false);
+    sheet::rule(canvas, x + kEdge * k, y + kFootRule * k, (kWidth - kEdge * 2.0f) * k,
+                std::max(1.0f, k * 0.5f));
+    canvas.image(arts.get("bag_zen"), scaled(x, y, kMoneyIcon));
+    const gfx::Box strip = scaled(x, y, kMoneyStrip);
+    sheet::kicker(canvas, x + kMoneyFrom * k, centredBaseline(face, strip, 8.0f * k), 8.0f * k,
+                  "ZEN");
+    const float size = kMoneySize * k;
+    sheet::ranged(canvas, x + kValueRight * k, centredBaseline(face, strip, size), size,
+                  moneyColour(money), commas(money));
 }
 
 // ---- words -----------------------------------------------------------------------------------
