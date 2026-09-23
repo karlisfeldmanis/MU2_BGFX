@@ -61,8 +61,20 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     if (!outlineOk_ || hovered.empty() || width_ <= 0 || height_ <= 0) return;
     if (params.screenW <= 0 || params.screenH <= 0) return;
 
-    const int maskW = std::min(params.screenW, kOutlineMaskSize);
-    const int maskH = std::min(params.screenH, kOutlineMaskSize);
+    // The box goes into the mask WHOLE, shrunk to fit when it is larger than the cap, and
+    // both sides by the same factor so the silhouette keeps its shape.
+    //
+    // It used to be `min(screenW, cap)` a side, which is not a fit but a crop: the frustum
+    // below was then narrowed to the first 512 pixels of the box while the compose pass
+    // still stretched that mask across the whole of it. Under 512 the two agreed and
+    // nothing showed; at 2560x1440 a figure near the camera is taller than 512, and the ring
+    // came out enlarged, slid off its own body and cut across the chest -- with no mask at
+    // all past the crop, so the stroke ended in mid-air. A 1080p window hid it because a
+    // box that big is rare there, which is why this only appeared in fullscreen.
+    const int longest = std::max(params.screenW, params.screenH);
+    const float fit = std::min(1.0f, float(kOutlineMaskSize) / float(longest));
+    const int maskW = std::clamp(int(std::lround(params.screenW * fit)), 1, kOutlineMaskSize);
+    const int maskH = std::clamp(int(std::lround(params.screenH * fit)), 1, kOutlineMaskSize);
 
     // --- the mask's own camera: the SAME eye, a frustum narrowed to the thing's own
     // rectangle of the main picture -- Outline.Fit's off-axis trick, done here with bx's
@@ -74,9 +86,9 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     const float halfH = std::tan(bx::toRad(camera.fovDegrees) * 0.5f);
     const float halfW = halfH * (float(width_) / float(height_));
     const float fTop = float(params.screenY) / float(height_);
-    const float fBottom = float(params.screenY + maskH) / float(height_);
+    const float fBottom = float(params.screenY + params.screenH) / float(height_);
     const float fLeft = float(params.screenX) / float(width_);
-    const float fRight = float(params.screenX + maskW) / float(width_);
+    const float fRight = float(params.screenX + params.screenW) / float(width_);
     // bx::mtxProj's asymmetric form wants these as physical coordinates AT the near plane,
     // not bare tangents -- its own width/height come out as 2*near/(rt-lt), which only
     // reduces to the plain tan(fovy/2) form when the tangent is first scaled by near. Passed
@@ -164,14 +176,22 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // Gold, MU2's own: Outline.Width, Outline.Shade and the shader's own drift and spread,
     // carried over unchanged since they were the tuned numbers, not guesses.
     const float edge[4] = {1.0f, 0.78f, 0.28f, 1.0f};
-    const float outlineParams[4] = {kOutlineWidth, 0.9f, params.shadow ? 0.5f : 0.0f, 0.0f};
+    // The width and the shadow's drift are given to the shader in MASK texels, and a shrunk
+    // box has smaller texels than the screen's: unscaled, the ring round a big figure would
+    // come out as wide as the shrink factor made it -- thick round the thing that is nearest
+    // the camera and thin round the thing that is far, which is the opposite of the rule
+    // this ring is written to (one width in screen pixels, a spider at your feet and one
+    // across the square ringed the same). Never under a texel, or the search would land on
+    // one sample and band.
+    const float texels = std::max(1.0f, kOutlineWidth * fit);
+    const float outlineParams[4] = {texels, 0.9f, params.shadow ? 0.5f : 0.0f, 0.0f};
     // One texel of the PHYSICAL mask texture, not of the box: the box fills only its own
     // corner of the fixed kOutlineMaskSize square (see u_outlineScale in fs_outline.sc), and
     // a step sized to the box's own width would search too far or too little depending on
     // how much smaller than the cap the box happened to be.
     const float pixel[4] = {1.0f / float(kOutlineMaskSize), 1.0f / float(kOutlineMaskSize), 0.0f,
                             0.0f};
-    const float drift[4] = {2.0f, 3.0f, 4.0f, 0.0f};
+    const float drift[4] = {2.0f * fit, 3.0f * fit, std::max(1.0f, 4.0f * fit), 0.0f};
     const float scale[4] = {float(maskW) / float(kOutlineMaskSize),
                             float(maskH) / float(kOutlineMaskSize), 0.0f, 0.0f};
     bgfx::setUniform(uOutlineEdge_, edge);

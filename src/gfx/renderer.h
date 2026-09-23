@@ -358,13 +358,16 @@ public:
     // room the ring needs without the literal being written twice.
     static constexpr float kOutlineWidth = 2.6f;
     static constexpr float kOutlineReach = 7.0f;  // the drop shadow's own further reach
-    // The mask's own cap, pixels on a side. MU's camera keeps a hovered thing under a few
-    // hundred pixels, so one fixed target never reallocates; unlike Godot's SubViewport,
-    // which resized in 64-pixel steps to the exact box, this is simpler at the cost of a
-    // thing approached close enough to fill more of the screen than this being clipped at
-    // the cap's edge rather than losing precision -- a camera this close to a monster or an
-    // item is not how MU is played.
-    static constexpr int kOutlineMaskSize = 512;
+    // The mask's own cap, pixels on a side. One fixed target, so it never reallocates;
+    // unlike Godot's SubViewport, which resized in 64-pixel steps to the exact box. A box
+    // bigger than this is not clipped -- it is drawn whole and shrunk to fit, so the ring
+    // only loses a little precision (see drawOutline's `fit`).
+    //
+    // 1024 rather than 512, and the size is a question of the screen and not of the model:
+    // a figure that stands 400 pixels tall in a 1080p window stands 530 in a 1440p one and
+    // over 700 in the fullscreen close-ups MU's wheel allows. At 512 that meant shrinking
+    // the mask on every hovered person. R8, so the whole target is one megabyte.
+    static constexpr int kOutlineMaskSize = 1024;
     // Draws the ring: `hovered`'s own meshes into their own tiny mask (the SAME instances
     // draw() already posed this frame, submitted a second time -- no re-skinning, matching
     // Outline.cs's "the same mesh, drawn into both, in the same pose"), then a screen pass
