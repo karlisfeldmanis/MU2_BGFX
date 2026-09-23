@@ -74,7 +74,7 @@ private:
         float dragX = 0, dragY = 0;
         int hovered = -1;
         float pointerX = 0, pointerY = 0;
-        bool closing = false;
+        bool closing = false, overClose = false;
         int level = 0, strength = 0, agility = 0, vitality = 0, energy = 0;
         float x = 0, y = 0, scale = 0;
         uint16_t picture = 0xFFFF;
@@ -95,6 +95,7 @@ private:
     int hovered_ = -1;
     float pointerX_ = 0.0f, pointerY_ = 0.0f;
     bool closing_ = false;
+    bool overClose_ = false;  // the pointer is on the cross, which lights it
     std::vector<Standing> standing_;
     uint64_t rebuilds_ = 0;
 };

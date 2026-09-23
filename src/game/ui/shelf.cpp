@@ -32,7 +32,8 @@ Box cellOf(int slot, const content::ItemRow& row) {
 bool Shelf::Drawn::operator==(const Drawn& o) const {
     return keeper == o.keeper && hovered == o.hovered &&
            (hovered < 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) && x == o.x &&
-           y == o.y && scale == o.scale && closing == o.closing && level == o.level &&
+           y == o.y && scale == o.scale && closing == o.closing && overClose == o.overClose &&
+           level == o.level &&
            strength == o.strength && agility == o.agility && vitality == o.vitality &&
            energy == o.energy && money == o.money && version == o.version &&
            picture == o.picture;
@@ -117,6 +118,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     hovered_ = inside ? lineAt(tables, ux, uy) : -1;
 
     const Box cross = panel::frameClose();
+    overClose_ = inside && cross.has(ux, uy);
     if (pointer.pressed && inside) {
         if (cross.has(ux, uy)) closing_ = true;
         pressing_ = hovered_ >= 0;
@@ -151,6 +153,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     now_.y = y_;
     now_.scale = k;
     now_.closing = closing_;
+    now_.overClose = overClose_;
     now_.level = hero.level;
     now_.strength = hero.points.strength;
     now_.agility = hero.points.agility;
@@ -194,7 +197,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
                         sheet::Cell::Over);
         }
     }
-    panel::close(canvas_, arts, x, y, now_.closing);
+    panel::close(canvas_, x, y, now_.overClose, now_.closing);
 
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
     if (picture.valid()) {

@@ -40,8 +40,8 @@ private:
         int strength = 0, agility = 0, vitality = 0, energy = 0;
         int minimum = 0, maximum = 0, attackRate = 0, defense = 0, defenseRate = 0;
         int health = 0, maxHealth = 0, mana = 0, maxMana = 0;
-        int pushed = -1;
-        bool closing = false;
+        int pushed = -1, over = -1;
+        bool closing = false, overClose = false;
         bool operator==(const Sheet& o) const;
     };
     void rebuild();
@@ -51,7 +51,9 @@ private:
     Sheet drawn_, now_;
     float x_ = 0.0f, y_ = 0.0f;
     int pushed_ = -1;
+    int over_ = -1;      // the diamond under the pointer
     bool closing_ = false;
+    bool overClose_ = false;
     uint64_t rebuilds_ = 0;
 };
 

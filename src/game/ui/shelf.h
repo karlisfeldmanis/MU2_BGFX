@@ -67,12 +67,13 @@ private:
     bool up_ = false;
     int hovered_ = -1;
     bool closing_ = false;
+    bool overClose_ = false;
     bool pressing_ = false;
     // What the last rebuild drew for, compared whole.
     struct Drawn {
         int keeper = -2, hovered = -2;
         float pointerX = 0, pointerY = 0, x = 0, y = 0, scale = 0;
-        bool closing = false;
+        bool closing = false, overClose = false;
         int level = 0, strength = 0, agility = 0, vitality = 0, energy = 0;
         // What he can pay colours every price on the shelf, so a purse that moves is a redraw.
         long long money = -1;

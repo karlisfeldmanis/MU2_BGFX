@@ -84,7 +84,7 @@ bool Bag::Contents::operator==(const Contents& o) const {
     return version == o.version && money == o.money && dragging == o.dragging &&
            (dragging < 0 || (dragX == o.dragX && dragY == o.dragY)) && hovered == o.hovered &&
            (hovered < 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
-           closing == o.closing && level == o.level && strength == o.strength &&
+           closing == o.closing && overClose == o.overClose && level == o.level && strength == o.strength &&
            agility == o.agility && vitality == o.vitality && energy == o.energy && x == o.x &&
            y == o.y && scale == o.scale && picture == o.picture;
 }
@@ -148,6 +148,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     hovered_ = cell >= 0 ? bag.holder(tables, cell) : -1;
 
     const Box cross = panel::frameClose();
+    overClose_ = inside && cross.has(ux, uy);
     if (pointer.pressed && inside) {
         if (cross.has(ux, uy)) {
             closing_ = true;
@@ -211,6 +212,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     now_.pointerX = pointer.x;
     now_.pointerY = pointer.y;
     now_.closing = closing_;
+    now_.overClose = overClose_;
     // The five stats every requirement is read against: they colour the tooltip and the drop
     // target without appearing anywhere else, and a level-up changes both with nothing in the
     // bag having moved. Bag.Contents.Asked.
@@ -317,7 +319,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         }
     }
 
-    panel::close(canvas_, arts, x, y, now_.closing);
+    panel::close(canvas_, x, y, now_.overClose, now_.closing);
 
     // The item layer: the stage's one picture of the whole window, over the cells. Where there
     // is no stage yet, each thing's name in its box, so the bag can be read without pictures.
@@ -343,7 +345,12 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                      units.h * k};
         if (picture.valid()) {
             const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
-            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy});
+            // A shade under it and the thing itself a little transparent: what the hand is
+            // holding is between the window and the pointer, and at full strength it reads as
+            // something that has already been put down.
+            canvas_.rect(to.grown(2.0f * k), gfx::rgba(0.0f, 0.0f, 0.0f, 0.28f));
+            canvas_.region(picture, to, {units.x * sx, units.y * sy, units.w * sx, units.h * sy},
+                           gfx::rgba(1.0f, 1.0f, 1.0f, 0.92f));
         } else {
             canvas_.rect(to, gfx::rgba(0.68f, 0.60f, 0.40f, 0.5f));
         }

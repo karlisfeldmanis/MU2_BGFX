@@ -3,6 +3,7 @@
 #include <string>
 
 #include "game/ui/sheet.h"
+#include "sim/rules.h"
 
 namespace mu::game {
 namespace {
@@ -25,6 +26,15 @@ Box plusFor(float rowY) { return {160.0f, rowY + 2.0f, 16.0f, 15.0f}; }
 Box rowField(float rowY) { return {11.0f, rowY, 170.0f, 21.0f}; }
 constexpr Box kSummary{12.0f, 48.0f, 160.0f, 66.0f};
 constexpr Box kSummaryField{11.0f, 45.0f, 170.0f, 65.0f};
+
+// **The foot.** MU's character window stops at Energy and leaves its bottom fifth empty, which
+// on leather was a texture and on this skin is a hole -- and the window beside it has a foot
+// (the Zen strip), so the pair read as one finished window and one unfinished one. The level's
+// own progress goes here: the figure is already in the summary, and what a player wants at a
+// glance is how far through the level he is, which is the one thing a figure cannot say.
+constexpr float kFootRule = 372.0f;
+constexpr float kFootTop = 380.0f;
+constexpr Box kBar{11.0f, 392.0f, 170.0f, 4.0f};
 
 // **The type, tuned 2026-09-23.** A figure is a size and a half above its own label, which is
 // what makes a stat window scannable: the eye runs down the numbers and reads a word only when
@@ -62,7 +72,8 @@ bool Card::Sheet::operator==(const Sheet& o) const {
            minimum == o.minimum && maximum == o.maximum && attackRate == o.attackRate &&
            defense == o.defense && defenseRate == o.defenseRate && health == o.health &&
            maxHealth == o.maxHealth && mana == o.mana && maxMana == o.maxMana &&
-           pushed == o.pushed && closing == o.closing;
+           pushed == o.pushed && over == o.over && closing == o.closing &&
+           overClose == o.overClose;
 }
 
 void Card::open(const gfx::Interface& interface, panel::Arts* arts) {
@@ -82,6 +93,17 @@ void Card::update(float width, float height, const sim::Body* hero, const Pointe
     y_ = panel::panelY(height);
     if (hero) {
         const Box cross = panel::scaled(x_, y_, panel::frameClose());
+        overClose_ = cross.has(pointer.x, pointer.y);
+        // Which diamond the pointer is resting on, so it can light: the same walk the press
+        // makes, made every frame and for the drawing rather than for the request.
+        over_ = -1;
+        if (hero->pointsInHand > 0) {
+            for (const Row& row : kRows) {
+                if (panel::scaled(x_, y_, plusFor(row.y)).has(pointer.x, pointer.y)) {
+                    over_ = row.stat;
+                }
+            }
+        }
         if (pointer.pressed) {
             if (cross.has(pointer.x, pointer.y)) closing_ = true;
             if (hero->pointsInHand > 0) {
@@ -127,7 +149,9 @@ void Card::update(float width, float height, const sim::Body* hero, const Pointe
         now_.mana = hero->mana;
         now_.maxMana = hero->maxMana;
         now_.pushed = pushed_;
+        now_.over = over_;
         now_.closing = closing_;
+        now_.overClose = overClose_;
     }
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
@@ -232,11 +256,28 @@ void Card::rebuild() {
         // `bag_plus`'s two-state button is gone with the rest of the art; the skin's own gold
         // diamond with a plus cut out of it stands in its place, at MU's own rectangle.
         if (now_.points <= 0) continue;
-        sheet::diamond(canvas_, panel::scaled(x, y, plusFor(row.y)), false,
+        sheet::diamond(canvas_, panel::scaled(x, y, plusFor(row.y)), now_.over == row.stat,
                        now_.pushed == row.stat);
     }
 
-    panel::close(canvas_, arts, x, y, now_.closing);
+    // The foot: the rule, the kicker, the share of the level he has, and the percent.
+    sheet::rule(canvas_, x + panel::kEdge * k, y + kFootRule * k,
+                (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
+    const uint64_t at = sim::neededExperience(now_.level);
+    const uint64_t next = sim::neededExperience(now_.level + 1);
+    const float share =
+        next > at ? float(double(now_.experience > at ? now_.experience - at : 0) /
+                          double(next - at))
+                  : 1.0f;
+    const float kicker = kDetailSize * k;
+    sheet::kicker(canvas_, x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker,
+                  "EXPERIENCE");
+    canvas_.text(x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker, kDetailInk,
+                 std::to_string(int(share * 100.0f + 0.5f)) + "%", gfx::Align::Right,
+                 (kRight - kLeft) * k);
+    sheet::bar(canvas_, panel::scaled(x, y, kBar), share, kSpendable, std::max(1.0f, k * 0.5f));
+
+    panel::close(canvas_, x, y, now_.overClose, now_.closing);
 }
 
 }  // namespace mu::game

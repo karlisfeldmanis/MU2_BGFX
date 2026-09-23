@@ -215,3 +215,61 @@ not the window's.
   there as MU2's: neither MU nor OpenMU checks a distance). Any new order closes the counter.
 - **Mana arrives in the sim** as MU2's per-class rates (`Beast.cs` `Rates.For`), not yet
   traced to OpenMU's lines independently. Nothing spends it.
+
+## The skin, 2026-09-23
+
+MU's leather came off. The three windows keep every rectangle sprint 7 gave them -- the 5x3
+worn block, the 8x8 satchel at (15, 200), the Zen strip at 380, the character window's four
+wells, the shop's 8x15 -- and are painted in the item card's material instead.
+
+**Chosen from a page of four**, drawn on MU's own window at the size the engine draws it and
+compared side by side: **B, "obsidian, deeper wells"**. The other three were A (the same panel
+with shallower cells and a bone title), C (a cooler, lighter, more see-through panel with a
+hairline grid and no cell fill at all) and D (ink and brass, square, twice the edge). The page
+also carried a reference board -- MU 0.75, Diablo II, Diablo III/IV, Path of Exile at one scale,
+and the decisions each makes -- because the first attempt at this work went straight into the
+engine off three ASCII sketches and produced a layout nobody had looked at.
+
+The kit is `src/game/ui/sheet.{h,cpp}`, in screen pixels, and `panel::frame` is the one place
+all three windows come through:
+
+| | what it is |
+|---|---|
+| body | near-black, two steps: 0.95 to 0.92, flat on purpose |
+| edge | a **gradient stroke**, 0.60 along the head and 0.07 by the foot, drawn inside the corners |
+| shadow | the card's own three falloffs (`tip::shadowUnder`) |
+| head | a band of light, a gold diamond, the name in tracked capitals, a rule that fades at both ends |
+| cell | a well: a seat of shadow inside the top edge, a hairline of light at the foot, a quiet border over both |
+| close | a drawn cross, three lights, lit under the pointer |
+| plus | a gold diamond with a plus cut out of it |
+
+**Six pieces of art are no longer drawn**: `bag_back`, `bag_plate`, `bag_crest`, `bag_cell`,
+`bag_field`, `bag_close`. What stays MU's, on the user's word, is the worn slots' own
+silhouettes (`bag_slot_*`) -- tinted dark rather than only faded, because each one is a pale
+plate with the shape painted on it and the canvas multiplies the vertex colour through the
+texture.
+
+Departures from MU that the skin brought with it, each one small and each one deliberate:
+
+- **Six units of air between two open windows.** MU butts its columns flush, which worked while
+  every window was a slab with its own carved border.
+- **The hovered thing is lit over its whole footprint**, not over the one cell it is recorded in.
+- **The vendor prints every price** along the foot of the thing it prices, red where he cannot
+  pay; the card carries the figure in full.
+- **The character window has a foot**: the level's own progress as a bar. MU stops at Energy and
+  leaves its bottom fifth empty, which on leather was a texture and on this skin was a hole.
+- **A merchant's name is fitted** to the room between the mark and the cross -- shrunk by up to a
+  quarter, then trimmed with two dots.
+
+### Paid for once
+
+The trim above was first written as a loop that popped a letter and put the two dots back inside
+its own condition. For a name of exactly the wrong length -- `Lumen the Barmaid` -- it alternates
+between too long and short enough for ever: the frame never returned and **the game froze the
+moment a merchant's counter opened**. A trim measures the string it is going to draw, and never
+grows.
+
+### Open
+
+`Shield02` (Horn Shield) photographs as a black silhouette on every stage -- in the bag, on the
+shelf and in the tooltip's plate. It is the model or its material, not the skin.

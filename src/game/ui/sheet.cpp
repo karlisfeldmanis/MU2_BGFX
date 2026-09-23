@@ -29,7 +29,10 @@ constexpr uint32_t kRule = gfx::rgba(0.643f, 0.573f, 0.404f, 0.38f);
 constexpr uint32_t kRuleOut = gfx::rgba(0.643f, 0.573f, 0.404f, 0.0f);
 
 constexpr uint32_t kCellBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.020f);
-constexpr uint32_t kCellEdge = gfx::rgba(0.643f, 0.573f, 0.404f, 0.26f);
+// Quieter than the page that was chosen: at 0.26 a grid of sixty-four reads as a
+// lattice of bright lines from across the room, which is the one thing a flat skin
+// must not do. The recess carries the cell and the border only closes it.
+constexpr uint32_t kCellEdge = gfx::rgba(0.643f, 0.573f, 0.404f, 0.20f);
 constexpr uint32_t kCellOver = gfx::rgba(1.0f, 1.0f, 1.0f, 0.085f);
 constexpr uint32_t kCellOverEdge = gfx::rgba(0.886f, 0.816f, 0.600f, 0.55f);
 constexpr uint32_t kCellHeld = gfx::rgba(0.0f, 0.0f, 0.0f, 0.30f);
@@ -122,7 +125,7 @@ void cell(gfx::Canvas& canvas, const Box& box, Cell state, float thick) {
     // And the border as a gradient of its own: lit along the top, quiet at the foot.
     const uint32_t lit = edge;
     const uint32_t dim = (edge & 0x00FFFFFFu) |
-                         (uint32_t(float((edge >> 24) & 0xFFu) * (quiet ? 0.45f : 0.7f)) << 24);
+                         (uint32_t(float((edge >> 24) & 0xFFu) * (quiet ? 0.55f : 0.75f)) << 24);
     canvas.shade({box.x, box.y, box.w, thick}, lit, lit, lit, lit);
     canvas.shade({box.x, box.bottom() - thick, box.w, thick}, dim, dim, dim, dim);
     canvas.shade({box.x, box.y, thick, box.h}, lit, lit, dim, dim);
