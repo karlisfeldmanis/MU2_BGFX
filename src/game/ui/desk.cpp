@@ -27,6 +27,13 @@ static bool substitutes(const content::Tables& tables, int32_t carried, int32_t 
 }
 
 
+// What each key is called, for the log. The plate prints these itself and `Hud::kKeys` has
+// them too; this is the same five, where the desk can reach them.
+static const char* keyName(int key) {
+    static const char* kNames[Hud::kSkillKeys] = {"Q", "W", "E", "R", "T"};
+    return key >= 0 && key < Hud::kSkillKeys ? kNames[key] : "?";
+}
+
 bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
                 content::Textures* textures) {
     if (!interface_.init(shaderDir)) return false;
@@ -338,8 +345,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         for (int key = 0; key < Hud::kSkillKeys; ++key) {
             if (bound_[key] != 0) continue;
             bound_[key] = row.number;
-            core::logf("window: %s bound to %s", row.name,
-                       key == 0 ? "Q" : key == 1 ? "W" : key == 2 ? "E" : "R");
+            core::logf("window: %s bound to %s", row.name, keyName(key));
             break;
         }
     }
@@ -442,8 +448,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
                 bound_[other] = displaced;
             }
             if (moved) {
-                core::logf("window: %s on %s", sim::skillNumbered(carried)->name,
-                           onto == 0 ? "Q" : onto == 1 ? "W" : onto == 2 ? "E" : "R");
+                core::logf("window: %s on %s", sim::skillNumbered(carried)->name, keyName(onto));
                 play.ui(Play::Ui::Took);
                 // And the list shuts behind it, as MU2's does: the choice is made.
                 fanLatched_ = false;
@@ -480,7 +485,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
 
     const gfx::Window::Key keys[Hud::kSkillKeys] = {
         gfx::Window::Key::Skill1, gfx::Window::Key::Skill2, gfx::Window::Key::Skill3,
-        gfx::Window::Key::Skill4};
+        gfx::Window::Key::Skill4, gfx::Window::Key::Skill5};
     for (int key = 0; key < Hud::kSkillKeys; ++key) {
         if (!window.pressed(keys[key]) && scriptedSkill_ != key) continue;
         if (bound_[key] == 0) continue;

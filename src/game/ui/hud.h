@@ -64,11 +64,11 @@ public:
     // Which potion box a point is over, 0 to 4, or -1: where a drag from the bag binds.
     int quickAt(float x, float y) const;
 
-    // The four skill boxes, Q W E R. The plate paints six -- five numbered and the gold one in
-    // hand -- and the fifth and the gold box stay empty: four keys is the bar PLAN.md decided on
-    // and a knight has six skills to choose between, so a list to drag from is what the fifth box
-    // will become rather than a fifth key.
-    static constexpr int kSkillKeys = 4;
+    // The five skill boxes, Q W E R T. The plate paints six -- five keys and the gold one the
+    // list opens from -- and the fifth was drawn dead for two sprints on a note that said the
+    // list would take its place. The list took the GOLD box's place instead, so T is a key like
+    // the other four (the user, 2026-09-23, trying to drag a skill onto it).
+    static constexpr int kSkillKeys = 5;
 
     // What one skill box shows. Given by the desk, off the realm: the skill's number (0 for an
     // empty box), the art key for its icon, how much of its cooldown is left as a fraction and in

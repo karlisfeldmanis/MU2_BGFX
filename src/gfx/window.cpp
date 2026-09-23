@@ -123,7 +123,7 @@ bool Window::pump() {
                                              {GLFW_KEY_3, -1},         {GLFW_KEY_4, -1},
                                              {GLFW_KEY_5, -1},         {GLFW_KEY_Q, -1},
                                              {GLFW_KEY_W, -1},         {GLFW_KEY_E, -1},
-                                             {GLFW_KEY_R, -1}};
+                                             {GLFW_KEY_R, -1},         {GLFW_KEY_T, -1}};
     for (size_t i = 0; i < size_t(Key::Count); ++i) {
         bool down = false;
         for (int k : keys[i]) {

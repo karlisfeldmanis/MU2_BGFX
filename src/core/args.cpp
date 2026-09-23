@@ -67,7 +67,7 @@ void printUsage() {
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
         "  --ui-key F:K              press potion key K (1-4) on frame F\n"
-        "  --ui-skill F:K            press skill key K (1-4: Q W E R) on frame F\n"
+        "  --ui-skill F:K            press skill key K (1-5: Q W E R T) on frame F\n"
         "  --ui-hover X:Y            park the pointer at screen fraction X,Y, pressing nothing\n"
         "  --rise F                  throw the level-up on the hero on frame F; drawing only\n"
         "  --mute                    every sound plays and is logged, at no volume\n"
@@ -376,7 +376,7 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--ui-key")) {
             int f = 0, k = 0;
             const char* v = next(s);
-            if (v && std::sscanf(v, "%d:%d", &f, &k) == 2 && k >= 1 && k <= 4) {
+            if (v && std::sscanf(v, "%d:%d", &f, &k) == 2 && k >= 1 && k <= 5) {
                 a.uiKeys.push_back({f, k});
             } else {
                 logError("--ui-key is FRAME:KEY with KEY 1 to 4");
@@ -385,10 +385,10 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--ui-skill")) {
             int f = 0, k = 0;
             const char* v = next(s);
-            if (v && std::sscanf(v, "%d:%d", &f, &k) == 2 && k >= 1 && k <= 4) {
+            if (v && std::sscanf(v, "%d:%d", &f, &k) == 2 && k >= 1 && k <= 5) {
                 a.uiSkills.push_back({f, k});
             } else {
-                logError("--ui-skill is FRAME:KEY with KEY 1 to 4 (Q W E R)");
+                logError("--ui-skill is FRAME:KEY with KEY 1 to 5 (Q W E R T)");
                 a.valid = false;
             }
         } else if (!std::strcmp(s, "--give")) {

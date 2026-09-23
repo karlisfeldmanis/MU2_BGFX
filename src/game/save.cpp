@@ -82,7 +82,7 @@ bool loadSave(const std::string& path, Saved& out) {
     // and lets the first-free-key convenience fill them -- the behaviour that file was saved
     // under. No version bump for that reason.
     const core::Json& bar = doc["bar"];
-    for (size_t key = 0; key < 4 && key < bar.size(); ++key) {
+    for (size_t key = 0; key < 5 && key < bar.size(); ++key) {
         saved.bar[key] = int32_t(bar.at(key).numberOr(0.0));
     }
     const core::Json& quick = doc["quick"];
@@ -163,7 +163,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "}");
     }
     std::fprintf(f, "],\n  \"bar\": [");
-    for (int key = 0; key < 4; ++key) {
+    for (int key = 0; key < 5; ++key) {
         std::fprintf(f, "%s%d", key ? ", " : "", saved.bar[key]);
     }
     std::fprintf(f, "]\n}\n");

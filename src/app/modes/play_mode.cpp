@@ -47,7 +47,7 @@ void PlayMode::keep(Context& ctx) {
     now.world = ctx.args.world;
     now.hero = world_.played().record();
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
-    for (int key = 0; key < 4; ++key) now.bar[key] = desk_.bound(key);
+    for (int key = 0; key < 5; ++key) now.bar[key] = desk_.bound(key);
     now.zoom = world_.zoomDistance();
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
 }
@@ -131,7 +131,7 @@ bool PlayMode::open(Context& ctx) {
             }
             if (resumed_) {
                 for (int key = 0; key < 5; ++key) desk_.setQuick(key, saved_.quick[key]);
-                desk_.restoreBar(saved_.bar, 4);
+                desk_.restoreBar(saved_.bar, 5);
             }
         }
         // An arena whose realm did not rise is a failed run and not a world to look at.

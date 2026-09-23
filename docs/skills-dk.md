@@ -381,8 +381,11 @@ are, the *bar* follows MuMain and is not.
 
 ### 3.4 The bar and the frame
 
-- **Q W E R.** `src/game/ui/hud.h:17` already records the decision of 2026-09-21: potions on 1–4,
-  skills on Q W E R. Four slots, four skills at once, six learned — that is the Diablo 3 shape
+- **Q W E R T.** `src/game/ui/hud.h:17` already records the decision of 2026-09-21: potions on
+  1–5, skills on the plate's own five boxes. The fifth was drawn dead for two sprints on a note
+  saying the list would take its place; the list took the GOLD box's place instead, so T is a
+  key like the other four (the user, 2026-09-23, trying to drag a skill onto it). Five slots,
+  five skills at once, six learned — that is the Diablo 3 shape
   `PLAN.md` asked for, and what fills the four is the fan below, the right-click cast
   (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) staying as it is.
 - **And the list is how the four are chosen.** The user's rule, 2026-09-23, in three steps: they
@@ -415,13 +418,16 @@ are, the *bar* follows MuMain and is not.
     to the key it left;
   - a key's own icon dragged onto another key **swaps** the two, which is what makes a full bar
     rearrangeable without an empty key to stage through;
-  - a key's icon dragged back **into the open list clears** that key; nothing is lost, because
-    the list is where every learned skill lives;
-  - a drag let go anywhere else changes nothing, as the bag's does.
-  A newly learned skill still takes the first free key, but **once** (`Desk::autoBound_`) -- the
-  convenience must not undo the player's own arrangement on the next frame. A cell carries the
-  key it is on in a gilt chip, and one he could not throw -- no mana, or the wrong hand -- is
-  drawn cold, the same two questions `throwSkill` asks.
+  - a key's icon dragged **off the bar clears** that key, wherever it lands -- the list, the
+    frame, the grass; nothing is lost, because the list is where every learned skill lives. (A
+    plain click on a key lands on the key it came from and changes nothing.)
+  - a cell dragged out of the list and let go on nothing is a drag abandoned.
+  A newly learned skill still takes the first free key, but **once** (`Desk::autoBound_`), and
+  the mark goes on before a key is looked for rather than after one is found: a knight knows six
+  and the bar holds five, so the one that never finds a key would otherwise drop into the first
+  slot the player cleared by hand. A cell carries the key it is on in a gilt chip, and one he
+  could not throw -- no mana, or the wrong hand -- is drawn cold, the same two questions
+  `throwSkill` asks.
   **And it is saved** (2026-09-23), which departs from 0.75 on the user's word and for the
   reason the departure was made in the first place: MuMain has no `SaveHotKey` because MU's bar
   could not be arranged -- a knight's skill was whatever weapon was in his hand. This one can be
