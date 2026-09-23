@@ -196,6 +196,11 @@ void Play::leftClick() {
     } else {
         return;
     }
+    // Not while a skill's clip is running: the realm refuses these three (Realm::accept -- only
+    // the auto-attack is cancelled by a click to move), and a marker planted on ground he is
+    // never going to walk to, plus the early tick under it, would be the drawing promising what
+    // the rules have already said no to. An Attack is let through, as it is there.
+    if (realm_.casting() && request.kind != sim::Request::Kind::Attack) return;
     realm_.ask(request);
     // Only from a stand; see Play::update for why never while walking.
     stepNow_ = !realm_.hero().walking && sinceEarly_ >= kEarlyApart &&

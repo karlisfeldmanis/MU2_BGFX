@@ -248,6 +248,23 @@ void Realm::accept() {
     Body& hero = bodies_[0];
     if (!hero.alive()) return;
 
+    // **A skill cannot be walked out of.** The user's rule, 2026-09-23: only the auto-attack is
+    // cancelled by a click to move; a skill, once thrown, plays to the end of its clip. Every
+    // order that would take a step -- the ground click, a thing on the floor, a townsperson --
+    // is dropped where it stands rather than held, so the click is spent and he does not set off
+    // the moment the clip ends. Attack and Stop are let through: neither moves him while
+    // `castUntil` is running (`press` returns on `tick_ < swingsAt`, which outlasts the clip),
+    // so retargeting mid-cast still works and the blow is thrown the tick he is free.
+    //
+    // This is also where a click stopped costing the skill its damage: the `dropBlow` below
+    // threw away the cast's own unlanded blow, so a click during the clip cancelled the skill
+    // and kept nothing -- the same complaint as the swing's, one rule further on.
+    if (casting() &&
+        (pending_.kind == Request::Kind::WalkTo || pending_.kind == Request::Kind::Pick ||
+         pending_.kind == Request::Kind::Talk)) {
+        pending_ = Request{};
+    }
+
     if (pending_.kind != Request::Kind::None) {
         // **A new order drops the blow he had not landed yet.** Walking away from a swing is how
         // an attack is cancelled -- press() has said so since sprint 5 -- and until 2026-09-23 the
