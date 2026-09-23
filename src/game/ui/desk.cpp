@@ -385,6 +385,25 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
                             : weapon != nullptr && !weapon->isShield() && !weapon->bow() &&
                                   !weapon->crossbow();
     };
+    // **Every refusal the realm would make before the key is even pressed**, asked in
+    // `throwSkill`'s own order so that a box drawn cold and a press that does nothing can never
+    // disagree. The user, 2026-09-23: the slots need their inactive state when he cannot
+    // actually use the skill. The cooldown is NOT one of these -- it has the sweep, and a
+    // cooling key must not read as a broken one.
+    const bool inTown = tables.grid.safe(hero.column(), hero.row());
+    const auto whyNot = [&](const sim::SkillRow& row) -> const char* {
+        if (!hero.alive()) return nullptr;
+        if (!armedFor(row)) {
+            return row.onSelf() ? "Needs a shield on his arm." : "Needs a blade in his hand.";
+        }
+        // `player.IsAtSafezone()` refuses everything, buffs included -- so a knight cannot even
+        // raise his guard in Lorencia's square, and until now the bar said nothing about it.
+        if (inTown) return "Not in a safe zone.";
+        return nullptr;  // a mana shortfall is the red figure on the card and needs no sentence
+    };
+    const auto ready = [&](const sim::SkillRow& row) {
+        return hero.alive() && whyNot(row) == nullptr && hero.mana >= row.mana;
+    };
 
     fan_.clear();
     for (int i = 0; i < sim::skillCount(); ++i) {
@@ -397,7 +416,6 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         for (int key = 0; key < Hud::kSkillKeys; ++key) {
             if (bound_[key] == row.number) cell.key = key;
         }
-        cell.affordable = hero.mana >= row.mana && armedFor(row);
         fan_.push_back(cell);
     }
     const bool fanOpen = !fan_.empty() &&
@@ -409,7 +427,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const int overCell = hud_.fanAt(pointer.x, pointer.y);
     if (overCell >= 0 && size_t(overCell) < fan_.size()) {
         if (const sim::SkillRow* row = sim::skillNumbered(fan_[size_t(overCell)].number)) {
-            hud_.setFanSheet(skillSheet(*row, realm, armedFor(*row)));
+            hud_.setFanSheet(skillSheet(*row, realm, whyNot(*row)));
         }
     }
 
@@ -515,24 +533,13 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             // blade in his hand (Realm::throwSkill refuses both). MU dims a hotkey it will not
             // honour and says nothing else, and the plate decides nothing here -- it asks the
             // same two questions the realm will ask.
-            const content::Arm* weapon =
-                hero.weapon >= 0 && size_t(hero.weapon) < tables.arms.size()
-                    ? &tables.arms[size_t(hero.weapon)]
-                    : nullptr;
-            const content::Arm* shield =
-                hero.shield >= 0 && size_t(hero.shield) < tables.arms.size()
-                    ? &tables.arms[size_t(hero.shield)]
-                    : nullptr;
-            // A blade for an attack, a shield for the guard -- the two hands the realm asks
-            // about, asked here in the same order so the icon dims for the same reason.
-            const bool armed = row != nullptr && row->onSelf()
-                                   ? shield != nullptr && shield->isShield()
-                                   : weapon != nullptr && !weapon->isShield() &&
-                                         !weapon->bow() && !weapon->crossbow();
-            box.affordable = (row == nullptr || hero.mana >= row->mana) && armed;
+            // The same question the list's cells ask, and the realm's own: every refusal it
+            // would make before the key is pressed, so the box's cold state and the press that
+            // does nothing cannot disagree.
+            box.affordable = row == nullptr || ready(*row);
 
             if (key == over && row != nullptr) {
-                hud_.setSkillSheet(key, skillSheet(*row, realm, armed));
+                hud_.setSkillSheet(key, skillSheet(*row, realm, whyNot(*row)));
             }
         }
         hud_.setSkill(key, box);
@@ -544,7 +551,8 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
 // why. Every number is read off the realm and off `sim/skills.h`'s own formulas, so the card and
 // the blow can never disagree: `force()` is what the damage multiplies by and `coolsFor()` is
 // what the cooldown will be set to, the same calls `Realm::throwSkill` makes.
-tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm, bool armed) const {
+tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm,
+                            const char* why) const {
     const sim::Body& hero = realm.hero();
     tip::Sheet sheet;
     sheet.name = row.name;
@@ -619,15 +627,15 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm, b
                                                                      : tip::Tone::Red));
     sheet.sections.push_back(facts);
 
-    // The one refusal the numbers do not already show: an empty hand. A mana shortfall is the red
-    // figure above it and needs no sentence.
-    if (!armed) {
-        tip::Section why;
+    // The refusals the numbers do not already show -- the wrong hand, the safe zone. A mana
+    // shortfall is the red figure above and needs no sentence.
+    if (why != nullptr) {
+        tip::Section section;
         tip::Row need;
-        need.free = row.onSelf() ? "Needs a shield on his arm." : "Needs a blade in his hand.";
+        need.free = why;
         need.freeTone = tip::Tone::Red;
-        why.rows.push_back(need);
-        sheet.sections.push_back(why);
+        section.rows.push_back(need);
+        sheet.sections.push_back(section);
     }
     return sheet;
 }

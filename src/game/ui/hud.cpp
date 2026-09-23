@@ -88,7 +88,6 @@ constexpr float kTipTall = 15.0f;
 //     plate's top edge and the shield rail is 64 pixels of empty ornament and the strip may
 //     have it. The user, 2026-09-23: the icon is a little too small.
 constexpr Box kBuffsAt{292.0f, 12.0f, 40.0f, 56.0f};
-constexpr float kBuffGap = 8.0f;
 constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
@@ -126,14 +125,6 @@ constexpr uint32_t kQuickKey = gfx::rgba(206.0f / 255.0f, 186.0f / 255.0f, 73.0f
 // Where the plate's corner sits in MU's 640x480: centred, its rail on the foot of the screen.
 constexpr float kPlateAtX = (640.0f - kPlateW * kUnit) / 2.0f;
 constexpr float kPlateAtY = 480.0f - (kLevelTrack.y + kLevelTrack.h) * kUnit;
-
-// Caps, because the card sets a name in caps and so does the map message. The face bakes ASCII,
-// so this is the whole of it.
-std::string upperOf(const std::string& in) {
-    std::string out = in;
-    for (char& c : out) c = char(std::toupper(static_cast<unsigned char>(c)));
-    return out;
-}
 
 Box plate(const panel::Screen& s, const Box& px) {
     return s.of({kPlateAtX + px.x * kUnit, kPlateAtY + px.y * kUnit, px.w * kUnit, px.h * kUnit});
@@ -201,7 +192,6 @@ constexpr uint32_t kCellEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.22f);
 constexpr uint32_t kCellEdgeOver = gfx::rgba(0.878f, 0.800f, 0.573f, 0.55f);
 constexpr uint32_t kChipBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);
 constexpr uint32_t kGilt = gfx::rgba(0.761f, 0.706f, 0.561f);
-constexpr uint32_t kCold = gfx::rgba(0.42f, 0.44f, 0.52f, 1.0f);
 
 // How many columns and rows a count of entries is laid out in: up to six across, then wrapped.
 int fanAcross(size_t count) { return int(std::min<size_t>(count, size_t(kAcross))); }
@@ -594,7 +584,11 @@ void Hud::rebuild() {
     // a triangle fan the canvas has no primitive for. What both conventions have in common -- and
     // what actually reads at a glance -- is that the dark shrinks as the skill comes back, and
     // that is kept.
-    const float skillSize = std::round(13.0f * kUnit * s.scale);
+    // The seconds over a cooling box. Twenty-six plate pixels and not thirteen: at thirteen it
+    // was ten pixels of figure at 1080 lines, which is smaller than the key's own letter under
+    // the box and too small for the one number on this frame a player reads mid-fight. The
+    // user, 2026-09-23.
+    const float skillSize = std::round(26.0f * kUnit * s.scale);
     for (int i = 0; i < kSkillKeys; ++i) {
         const Skill& one = skill_[i];
         if (one.number == 0) continue;
@@ -646,7 +640,6 @@ void Hud::rebuild() {
     // see the note on the metrics above, and the user's rule that it be the same style.
     if (fanOpen_ && !fan_.empty()) {
         const float u = tip::unit();
-        const float drop = std::max(1.0f, u);
         const gfx::Face& face = canvas_.face();
         const Box rail = listBox(s, fan_.size(), width_);
         tip::glass(canvas_, rail, u);
@@ -658,12 +651,11 @@ void Hud::rebuild() {
             canvas_.rect(cell, over ? kCellOver : kCellBack);
             canvas_.outline(cell, std::max(1.0f, u), over ? kCellEdgeOver : kCellEdge);
 
+            // Always at full colour: see the note on FanCell. What he can throw right now is
+            // the BAR's question, and the bar answers it a foot below this.
             const gfx::Art& art = arts.get("skill_" + std::to_string(one.number));
             const Box icon = cell.grown(-kCellRim * u);
-            if (art.valid()) {
-                canvas_.image(art, icon, one.affordable ? 0xFFFFFFFFu : kCold);
-                if (!one.affordable) canvas_.rect(icon, gfx::rgba(0.0f, 0.0f, 0.02f, 0.45f));
-            }
+            if (art.valid()) canvas_.image(art, icon);
 
             // The key it is already on, in a chip at the cell's bottom-right -- the one thing
             // the list has to say that the picture cannot.

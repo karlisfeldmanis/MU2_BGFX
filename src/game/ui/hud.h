@@ -137,18 +137,21 @@ public:
     // same pitch, the same sheen under the pointer, and one canvas.
     static constexpr int kGoldBox = 5;  // the box in hand: what opens the list
 
-    // One entry in the list: what it is, what it costs, which key it is already on, and whether
-    // he could throw it. Given by the desk, which owns the four keys and asks the realm; the
-    // frame draws what it is handed and works nothing out.
+    // One entry in the list: what it is, what it costs, and which key it is already on. Given
+    // by the desk, which owns the keys and asks the realm; the frame draws what it is handed.
+    //
+    // **No cold state here**, which the bar's boxes do have: the user, 2026-09-23, *"on the
+    // skill overlay they can be hot."* The list is the catalogue of what he has learned and it
+    // is there to be chosen from and dragged out of, not cast from -- and in a safe zone, where
+    // nothing at all can be thrown, every cell in it went grey at once and the list read as
+    // broken rather than as a list.
     struct FanCell {
         int32_t number = 0;
         std::string name;
         int mana = 0;
-        int key = -1;           // Q W E R, or -1 for none
-        bool affordable = true;
+        int key = -1;           // Q W E R T, or -1 for none
         bool operator==(const FanCell& o) const {
-            return number == o.number && mana == o.mana && key == o.key &&
-                   affordable == o.affordable;
+            return number == o.number && mana == o.mana && key == o.key;
         }
     };
     void setFan(bool open, const std::vector<FanCell>& cells, int32_t carrying) {

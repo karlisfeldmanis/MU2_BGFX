@@ -436,6 +436,13 @@ are, the *bar* follows MuMain and is not.
   every skill he already knew as having had its free key (`Desk::barRestored_`), so the
   convenience cannot put back what he took off, while a skill learned afterwards still takes
   one.
+- **A box is dark for two different reasons and they must not read alike.** The cooldown is a
+  wipe with the seconds over it; **inactive** is a cold tint and a wash, and it now asks every
+  question `throwSkill` asks before the key is even pressed -- the wrong hand, a safe zone
+  (where nothing at all may be thrown, the guard included), the mana, and being down -- so a box
+  that looks live and a press that does nothing can no longer disagree (the user, 2026-09-23).
+  **The list is never dimmed**: it is the catalogue of what he has learned, to be chosen from
+  and dragged out of, and in town every cell in it went grey at once and read as broken.
 - **The cooldown is drawn on the box**: a dark sweep over the icon and the seconds printed when more
   than one remains — LoL's and WoW's shared convention, and the reason both read at a glance. Grey
   the icon when the mana is not there (MuMain dims it too).

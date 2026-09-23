@@ -156,7 +156,11 @@ private:
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int scriptedSkill_ = -1;
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
-    tip::Sheet skillSheet(const sim::SkillRow& row, const sim::Realm& realm, bool armed) const;
+    // `why` is the sentence the card prints when the key is dark, or null when it is live:
+    // one string rather than a bool, because there is more than one way to be unable to throw
+    // a skill and the card has to say WHICH.
+    tip::Sheet skillSheet(const sim::SkillRow& row, const sim::Realm& realm,
+                          const char* why) const;
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;
