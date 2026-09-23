@@ -890,8 +890,33 @@ def cook_clips(document, binary, out_path, names, travel, holds, cloth=False):
         # for on 2026-09-21 was the character's walk, and a monster's walk is left exactly as it
         # was validated until it is asked for too. `cloth` is the caller saying which library
         # this is.
-        spreads = (cloth and not hold and not closes and len(poses) > 1
-                   and body_gap < 0.05 and prop_gap < 0.5 and gap < 0.5)
+        # **And the same seam on every other rig, asked for on 2026-09-23**: "there is still a
+        # little hiccup on monster walks". Measured on the cooked cycle, every biped monster's
+        # walk had a last interval of exactly 0.000 m of foot travel -- 118 ms of a Bull
+        # Fighter's 824 ms stride in which the legs hold still under a body gliding on at 2.5
+        # m/s, once per stride, forever. It is the character's bug of 2026-09-21, unfixed
+        # everywhere the character is not.
+        #
+        # The player's rule cannot simply be turned on for them, and the two paragraphs above
+        # say why: naming the secondary bones takes a table this cook does not have, and both
+        # guesses tried were wrong on some rig. So a monster's clip is asked a different and
+        # more basic question -- **is the last key the animator's duplicate of the first?**
+        # MU's convention is binary and leaves a binary trace: where the animator wrote the
+        # repeat, the bones come back BIT-IDENTICAL. The Bull Fighter's walk closes to 0.0
+        # exactly on 41 of its 45 bones (the neck, the head and two clavicles drift, which is
+        # sloppiness in the source and is what gets spread); the Budge Dragon's closes on every
+        # bone it has but `Bip01 Footsteps`, the marker pinned to the ground. The Spider's
+        # closes on NOTHING -- every one of its eight legs is off by 0.37 to 0.39 -- so its
+        # walk really is open, really does need an interval to travel back over, and keeps the
+        # appended key. That is the line the magnitude thresholds were groping for, and it is
+        # drawn by the data rather than by a number picked to suit six animals.
+        #
+        # The old comment here said the Budge Dragon's BoneNN WINGS were off by 0.381. They are
+        # not: its wings close exactly and the 0.381 is `Bip01 Footsteps`. Measured 2026-09-23.
+        exact = sum(1 for g in gaps if g < 1e-4)
+        repeat = bool(gaps) and exact * 4 >= len(gaps) * 3
+        spreads = (not hold and not closes and len(poses) > 1 and prop_gap < 0.5 and gap < 0.5
+                   and ((cloth and body_gap < 0.05) or (not cloth and repeat)))
 
         if spreads:
             span = float(len(poses) - 1)
