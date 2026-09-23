@@ -27,6 +27,8 @@ void printUsage() {
         "  --fullscreen              the whole display at its own mode; --width/--height are "
         "ignored\n"
         "  --vsync                   cap to the display; off by default so a number is a number\n"
+        "  --no-vsync                and off again, which is how main.sh's own --vsync is "
+        "taken back\n"
         "  --cap N                   hold the picture to N frames a second (0 free, the "
         "default); with --vsync, a divisor of the refresh\n"
         "  --scale F                 draw the world at F of the backbuffer, 0.5 to 1 (the "
@@ -234,6 +236,8 @@ Args parseArgs(int argc, char** argv) {
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--no-vsync")) {
+            a.vsync = false;
         } else if (!std::strcmp(s, "--vsync")) {
             a.vsync = true;
         } else if (!std::strcmp(s, "--frames")) {

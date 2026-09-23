@@ -28,7 +28,13 @@ constexpr float kYawDegrees = 45.0f;
 // so a frame measured at 8 m proved nothing about the frame he was looking at. Fixed, the
 // cull set is the same set every frame, the numbers in docs/budget.md are numbers about the
 // game, and a spike has one fewer thing it can be.
-constexpr float kDistance = 8.0f;
+// INVENTION, 2026-09-24, and the one number on this page that is not MU's: the user asked
+// for a little more ground round the character than MU's 800 units showed. 9.5 m is 950 of
+// them, a fifth further back, which at 2560x1440 draws him about 200 pixels tall where MU's
+// own distance drew 170 on a 1080p frame. MU's 8 m is one line away if it is ever wanted
+// back, and every other framing number here -- the lens, the pitch, the yaw -- is still the
+// old client's.
+constexpr float kDistance = 9.5f;
 constexpr float kFocusHeight = 1.5f;   // 150 units up the body
 // How far above the middle of the frame a played character is drawn, as a fraction of the
 // frame's height. Invention, the ARPG habit rather than MU's: MU centres him.
