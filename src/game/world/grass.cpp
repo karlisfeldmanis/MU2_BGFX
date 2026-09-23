@@ -149,7 +149,7 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
 }
 
 bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, const float* viewProj,
-                   const float* eye, const float* focus, float seconds, gfx::GrassField& field) {
+                   const float* eye, const float* walker, float seconds, gfx::GrassField& field) {
     counts_ = Counts();
     field.batchCount = 0;
     if (!bgfx::isValid(vbh_) || sheets_.empty() || look.grass <= 0.0f) return false;
@@ -163,9 +163,6 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     // CPU does is coarser: it walks the square of tiles the reach could touch and hands the
     // frustum every patch whose nearest corner is inside it. The square is centred on where
     // the eye stands over the ground -- column is +x and row is -z, docs/conventions.md.
-    // The focus is not needed for that; it stays in the call because it is the one point the
-    // camera is defined by, and the next thing to measure from it is the walker's own wake.
-    (void)focus;
     const float eyeColumn = eye[0] / metres;
     const float eyeRow = -eye[2] / metres;
     const int reach = int(std::ceil(radius / metres)) + 1;
@@ -349,6 +346,19 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.reach[2] = std::min(look.grassThin, radius - fadeBand - 1.0f);
     field.reach[3] = radius - fadeBand;
 
+    // The walker, when there is one: his feet, and the reach of his shove. Turf pushed the
+    // sward aside round the character and left a wake; this is the shove alone, and it is
+    // the one thing in the field that answers to him. 0.7 m is about what a man walking
+    // through knee-high grass flattens either side of his boots.
+    if (walker) {
+        field.walker[0] = walker[0];
+        field.walker[1] = walker[1];
+        field.walker[2] = walker[2];
+        field.walker[3] = 0.7f;
+    } else {
+        field.walker[3] = 0.0f;
+    }
+
     // The wind turns from +x towards -z, which is the way the sun's azimuth turns and the way
     // a row runs on MU's grid. One convention for every angle in the sheet.
     const float windRadians = look.grassWindDegrees * 3.14159265f / 180.0f;
@@ -395,7 +405,8 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     // Only the first few cards of each patch. The index buffer holds every card's triangles in
     // order, so a short range IS a smaller plant count -- no degenerate quads rasterised for
     // the ones that were never wanted.
-    field.meadowIndices = uint32_t(kMeadowCards * kIndicesPerCard);
+    // Twice the meadow's cards: the second half is the same plants crossed, grass.sh.
+    field.meadowIndices = uint32_t(2 * kMeadowCards * kIndicesPerCard);
     // Nothing else writes field.sheet after this point. The first field wrote the deepest mip
     // and the sheet's width into .z and .w here, from a time when grassSheet() took them from
     // the uniform; it works them out from the sheet's own size now, and the two writes had

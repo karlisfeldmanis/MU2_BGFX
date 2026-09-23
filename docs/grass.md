@@ -627,6 +627,22 @@ catches the sun a little differently from the one beside it.
 
 Open field: 4.59 → 4.66 ms mean, the meadow and the colour together.
 
+### The walker, and two cards to a plant
+
+**A plant is two cards crossed**, as Turf's were. The meadow's index range is twice its card
+count and the second half is the same plants again turned a quarter round — the same hash,
+so the same place, size, kind and lean, only the facing differs. A lone card edge-on to MU's
+fixed camera is a line; a cross never is.
+
+**The sward parts round the character.** `u_grassWalker` carries his feet (the world's eased
+follow point, not the camera's target, which a played camera slides off him) and a 0.7 m
+reach. A card inside it is turned away from him by how near it stands, smoothstepped, and
+its top brought down to a fifth of its rise — a rotation like the lean, so the card keeps
+its length and the patch bounds stay true. Only when he is near in height too, so a bridge
+over the sward parts nothing under it. It is Turf's shove without Turf's wake: a wake wants
+what he did a second ago, and nothing in this field remembers anything. Nobody is played on
+a measuring run, so the reach goes as 0 and the branch is skipped.
+
 ### What this still owes
 
 - **The field is not in the prepass, so SSAO does not see it.** Intended — `fs_grass` never
@@ -639,11 +655,9 @@ Open field: 4.59 → 4.66 ms mean, the meadow and the colour together.
 - **The card grass is the whole field.** Past `grass_radius` the ground texture takes over with
   nothing between. There is no far band — but the reach now sits past the frame's edge, so
   on flat ground nothing is ever seen to end.
-- **Nothing interacts with it.** No walker parts it, no wake lies behind him. MU2's Turf had
-  both; Ghost of Tsushima's displacement buffer is the shape for it.
-- **The meadow's plants are one card each.** Turf crossed two cards per plant because a lone
-  card edge-on to the camera is a line; here the camera never turns, and a card's facing is a
-  hash, so a few plants are always edge-on. Two crossed cards is the fix if it shows.
+- **The walker parts it, but leaves no wake, and monsters part nothing.** Turf had the wake;
+  Ghost of Tsushima's displacement buffer is the shape for both — a camera-relative texture
+  the crowd and the character stamp into, read per card.
 - **The blades still read a little leafy**, and the reason is structural: a card is minified six
   times against its cell, so a painted stroke cannot be thinner than the mip chain will carry.
   Thinner than this wants either a lower-resolution sheet matched to the card's screen size, or

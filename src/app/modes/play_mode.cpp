@@ -655,8 +655,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         float viewProj[16];
         ctx.renderer.cameraMatrices(eye, view, proj);
         bx::mtxMul(viewProj, view, proj);
+        // The walker is the character's own eased point, not the camera's target, which a
+        // played camera slides off him. Nobody is walking when nobody is played.
+        const float* walker = world_.played().isOpen() ? world_.followed() : nullptr;
         grassDrawn = world_.grass().gather(world_.ground(), ctx.lighting, viewProj, eye.position,
-                                           eye.target, float(at.elapsed), grassField);
+                                           walker, float(at.elapsed), grassField);
     }
     ctx.renderer.draw(eye, ctx.lighting, townDrawables_, &world_.ground(), casters,
                       grassDrawn ? &grassField : nullptr);

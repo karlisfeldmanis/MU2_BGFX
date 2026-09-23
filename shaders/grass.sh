@@ -32,6 +32,7 @@ uniform vec4 u_grassVary;   // x: cards a patch  y: the stratification's side  z
 uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: unused
 uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  z: a scale on the patch's density  w: how far the colour grade goes
 uniform vec4 u_grassReach;  // x: metres from the eye past which no card stands  y: the band before it, over which a card shrinks away  z: where the thinning begins  w: where it has taken all it takes
+uniform vec4 u_grassWalker; // xyz: the character's feet, world space  w: how far round him the sward is parted (0 parts nothing)
 
 // --- the hash ----------------------------------------------------------------------------
 //
@@ -116,6 +117,16 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float index)
 	// below; the flag is the sheet's own, set by the renderer per draw.
 	bool meadow = u_grassSheet.w > 0.5;
 	Card c;
+	// A plant is TWO cards crossed, as Turf's were: a lone card turned edge-on to the camera is
+	// a line, where a blade among fifty is not missed. The meadow's index range is twice its
+	// card count, and the second half is the same plants again turned a quarter round -- the
+	// same hash, so the same place, size, kind and lean, and only the facing differs.
+	float cross = 0.0;
+	if (meadow)
+	{
+		cross = floor(index / u_grassVary.x);
+		index -= cross * u_grassVary.x;
+	}
 	// The patch's identity is its own tile, in metres, which d0.xy already is -- small numbers
 	// straight into the hash, rather than a big one the CPU fused. See the note on the hash.
 	vec3 id = vec3(d0.x, -d0.y, index);
@@ -270,7 +281,7 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float index)
 	// Which way it faces. Mostly its own, pulled towards its bunch's, so a tuft leans together.
 	// Mostly its own. Pulled towards its bunch's, but not far: a tuft that leans together
 	// is a tuft, and a tuft whose cards are all parallel is a fence.
-	float yaw = (grassHash(id + 3.1) * 0.74 + bunch * 0.26) * 6.2831853;
+	float yaw = (grassHash(id + 3.1) * 0.74 + bunch * 0.26) * 6.2831853 + cross * 1.5707963;
 	vec2 facing = vec2(cos(yaw), sin(yaw));
 
 	// The wind, in two bands over one direction: a slow sway the whole field shares and a
@@ -320,6 +331,28 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float index)
 	// A third of it at the middle, so the card BENDS into the gust rather than shearing over
 	// as one rigid piece. A blade bends; a fence panel shears.
 	c.control.xz += sway * 0.34;
+
+	// The walker. Grass he stands in is pushed out from under him and laid nearly flat, and
+	// it springs back as he goes: a card within the radius is turned away from his feet by
+	// how near it stands, the top brought down to a fifth of its rise. Turf's shove, without
+	// the wake -- a wake wants what he did a second ago, and nothing here remembers. The
+	// push is a rotation like the lean, so the card keeps its length and the bounds stay true.
+	if (u_grassWalker.w > 0.0)
+	{
+		vec2 away = c.base.xz - u_grassWalker.xz;
+		float near = length(away);
+		float push = saturate(1.0 - near / u_grassWalker.w);
+		push = push * push * (3.0 - 2.0 * push);
+		// Only when he is near in height too: a bridge over the sward parts nothing under it.
+		push *= saturate(1.5 - abs(c.base.y - u_grassWalker.y));
+		if (push > 0.0)
+		{
+			vec2 dir = near > 1e-4 ? away / near : facing;
+			vec3 flat = vec3(dir.x * height * 0.92, height * 0.22, dir.y * height * 0.92);
+			c.top = mix(c.top, flat, push);
+			c.control = mix(c.control, flat * 0.5 + vec3(0.0, height * 0.12, 0.0), push);
+		}
+	}
 
 	// The width axis: square to the lean, and rolled a little out of horizontal. Without the
 	// roll every card in the field presents its face to the sky at the same angle and the

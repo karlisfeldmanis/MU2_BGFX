@@ -109,6 +109,10 @@ struct GrassField {
     // player: a distance from the eye is a place on the SCREEN, so every band this describes
     // sits still in the frame as the player walks and nothing crosses it. docs/grass.md.
     float reach[4] = {26.0f, 4.0f, 9.0f, 24.0f};
+    // The walker: where the character's feet are, world metres, and how far round him the
+    // sward is pushed aside. w at 0 pushes nothing, which is what a world with nobody in it
+    // sends.
+    float walker[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
     // --- the meadow -------------------------------------------------------------------
     // What a lawn has that a field has not: a seed head standing over the blades, a broad leaf
@@ -538,6 +542,7 @@ private:
     bgfx::UniformHandle uGrassSheet_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGrassSize_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGrassReach_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassWalker_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAlbedo2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sOrm2_ = BGFX_INVALID_HANDLE;
