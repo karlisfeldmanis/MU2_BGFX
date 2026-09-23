@@ -490,12 +490,12 @@ Held Realm::sell(int slot) {
 //
 // A worn slot is thrown too -- MU lets a sword be dragged out of the hand and onto the floor --
 // and `rearm` is what makes his arms, his defence and his swing catch up with an empty hand.
-bool Realm::discard(int slot) {
-    if (!tables_ || slot < 0 || slot >= kSlots) return false;
+uint32_t Realm::discard(int slot) {
+    if (!tables_ || slot < 0 || slot >= kSlots) return 0;
     Body& hero = bodies_[0];
     // A dead man throws nothing away, as a dead man moves nothing: the same gate `moveItem`
     // keeps, so a window left open over a corpse cannot empty the bag.
-    if (!hero.alive() || bag_[slot].empty()) return false;
+    if (!hero.alive() || bag_[slot].empty()) return 0;
 
     Lying one;
     one.what = bag_.lift(slot);
@@ -504,8 +504,10 @@ bool Realm::discard(int slot) {
     one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
     one.id = nextId_++;
     lying_.push_back(one);
+    // Said for the log and for anything reading the realm within the same tick; the showing
+    // does NOT hear it -- see the note on discard() in realm.h.
     say(What::Dropped, hero, int32_t(one.id), one.what.item, one.what.refinement);
-    return true;
+    return one.id;
 }
 
 }  // namespace mu::sim

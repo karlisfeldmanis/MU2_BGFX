@@ -351,7 +351,12 @@ public:
     // (the same `clearing` a kill's drop takes) and lingers as long as a kill's drop does.
     // Worn things may be thrown too, and the hands are re-reckoned when they are. Money is
     // not here, because money is not in a slot.
-    bool discard(int slot);
+    //
+    // The dropped thing's id, or 0 refused -- and the id is the answer rather than a bool
+    // because a discard is asked BETWEEN ticks, like a purchase and a sale, and the next
+    // step clears the What::Dropped it says before the showing could read it. What rings the
+    // thing landing is the caller, off this id (Play::discard).
+    uint32_t discard(int slot);
 
     // ---- the merchants (sprint 7) ---------------------------------------------------------
     // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a

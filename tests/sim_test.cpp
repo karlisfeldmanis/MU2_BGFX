@@ -485,14 +485,17 @@ void testItems(const content::Tables& tables) {
     // same Pick order a kill's drop answers takes it back. The hands are re-reckoned both
     // ways, which is what makes a thrown weapon a real loss and a recovered one a real gain.
     const size_t lyingBefore = realm.lying().size();
-    check(realm.discard(sim::kWeaponRight), "the axe is thrown out of his hand");
+    const uint32_t thrownId = realm.discard(sim::kWeaponRight);
+    check(thrownId != 0, "the axe is thrown out of his hand");
     checkEqual((long long)realm.lying().size(), (long long)lyingBefore + 1, "and lies on the ground");
     check(realm.satchel()[sim::kWeaponRight].empty(), "the hand it came out of is empty");
     checkEqual(realm.hero().weapon, -1, "he is bare-handed again");
     check(realm.hero().stats.minimumDamage < minimumArmed, "and hits for less");
-    check(!realm.discard(sim::kWeaponRight), "an empty slot throws nothing");
-    check(!realm.discard(-1) && !realm.discard(sim::kSlots), "and neither does a slot that is not one");
+    check(realm.discard(sim::kWeaponRight) == 0, "an empty slot throws nothing");
+    check(realm.discard(-1) == 0 && realm.discard(sim::kSlots) == 0,
+          "and neither does a slot that is not one");
     const sim::Lying& thrown = realm.lying().back();
+    checkEqual((long long)thrown.id, (long long)thrownId, "the id it answered is what lies there");
     checkEqual(thrown.what.item, axe, "what lies there is the axe");
     checkEqual((long long)thrown.column, (long long)realm.hero().column(), "at his own tile");
     checkEqual((long long)thrown.row, (long long)realm.hero().row(), "in both directions");

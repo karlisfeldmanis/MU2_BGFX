@@ -62,16 +62,19 @@ bool Play::useItem(int slot) {
     return used;
 }
 
-// The throw is silent here on purpose: the noise belongs to the thing LANDING, not to the
-// hand letting go, and `Play::landed` already makes it where it lies -- the drop is held for a
-// frame like every other and released by releaseDrops, which is what a live dropper's held
-// drop does at once. See the What::Dropped branch in Play::step.
+// The noise belongs to the thing LANDING and is made where it lies, which is `Play::landed` --
+// the same call a kill's drop is heard through. It is rung from HERE and not from the
+// What::Dropped branch in Play::step, because a discard is asked between ticks and the next
+// step clears what it said before that loop could read it; a purchase and a sale are heard off
+// their own answers for the same reason.
 bool Play::discard(int slot) {
     const bool worn = slot >= 0 && sim::wearable(slot);
-    const bool thrown = realm_.discard(slot);
+    const uint32_t thrown = realm_.discard(slot);
     core::logf("window: %d thrown on the ground %s", slot, thrown ? "taken" : "refused");
-    if (thrown && worn) redress();
-    return thrown;
+    if (thrown == 0) return false;
+    if (worn) redress();
+    landed(thrown);
+    return true;
 }
 
 // The satchel is the truth (docs/sprints/07-the-windows.md) and Realm::rearm already reads
