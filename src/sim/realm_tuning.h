@@ -39,6 +39,13 @@ inline void restoreMana(Body& hero) {
 
 // How far past its view range something can be and still keep a monster awake. Realm.cs:63.
 constexpr int kMargin = 8;
+// And how much further again it has to get before the monster goes back to sleep. **invention**,
+// and it is here for the picture: a character standing exactly on the margin crosses it twice a
+// second as he shuffles, and a monster that falls asleep is HALTED where it stands -- so the
+// animal stopped and set off again every time, in the middle of a stride, which is one of the
+// things "monsters get stuck" was. Two tiles of slack is the smallest thing that cannot be
+// crossed by a walk between two ticks (a tile takes eight).
+constexpr int kSleepSlack = 2;
 // How far a monster will be led from where it was put down before it gives up and walks back,
 // and twice that for one that has been hit. Both are MU2's bench inventions and are marked as
 // such where they are defined: OpenMU has no leash at all, and without one nothing that has

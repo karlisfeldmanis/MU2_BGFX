@@ -22,6 +22,7 @@
 #include "game/fx/bones.h"
 #include "game/fx/breath.h"
 #include "game/fx/meteor.h"
+#include "game/fx/streak.h"
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/fx/marker.h"
@@ -224,6 +225,10 @@ public:
     // The Lich's meteorite: opened by the caller for the same reason as breath.
     Meteor& meteor() { return meteor_; }
     void gatherMeteor(gfx::Effects& effects) const { meteor_.gather(effects); }
+    // The blade's ribbon behind a skill swing. Fed in `show`, off the pose the frame has already
+    // computed -- see fx/streak.h, which is MU's own `CreateWeaponBlur` rung for a skill.
+    Streak& streak() { return streak_; }
+    void gatherStreak(gfx::Effects& effects) const { streak_.gather(effects); }
     // Opens the sound and loads what this realm can say: the level-up, and every breed's
     // attack, death and wandering cries, found once per body as its clips are. Opened by the
     // caller after the showing, whose table the events are read from. Not fatal.
@@ -394,6 +399,7 @@ private:
     Breath breath_;
     Bones bones_;
     Meteor meteor_;
+    Streak streak_;
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
     // The Giant's death sand, thrown between keys 8 and 9 of its death clip. Read per frame off

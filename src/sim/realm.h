@@ -417,6 +417,7 @@ private:
     void recover(Body& hero);
     bool send(Body& one, int column, int row);
     void halt(Body& one);
+    void settle(Body& one);
     bool beside(const Body& target, int radius, const Body& walker, int* column, int* row);
     bool drifted(const Body& chaser, const Body& target) const;
     bool worth(const Body& beast, const Body& target, int range) const;

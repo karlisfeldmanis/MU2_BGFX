@@ -120,6 +120,8 @@ bool PlayMode::open(Context& ctx) {
                                               world_.played().showing().table(),
                                               &world_.ground());
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
+                world_.played().streak().open(assets, ctx.textures,
+                                              world_.played().showing().table());
             }
             world_.played().openSound(assets, args.mute);
             // Not fatal either: a game with no HUD is still a game.
@@ -543,6 +545,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().gatherAura(ctx.renderer.effects(), eye.position);
         world_.played().breath().gather(ctx.renderer.effects());
         world_.played().gatherMeteor(ctx.renderer.effects());
+        world_.played().gatherStreak(ctx.renderer.effects());
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         if (!itemModels_.tables()) {

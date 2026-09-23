@@ -84,6 +84,56 @@ void Play::sandOnDeath() {
 void Play::exhale(float seconds) {
     if (ground_ == nullptr) return;
     const float frames = seconds * 25.0f;
+
+    // The blade's ribbon, before the dragons: every body mid-skill lays two more points on its
+    // streak this frame, off the pose the frame has already computed. See fx/streak.h -- this is
+    // MU's `CreateWeaponBlur` rung that tests the skill actions before it asks what is in the
+    // hand, and it is the one effect a knight's skill has of its own.
+    //
+    // Sampled once a rendered frame rather than MU's ten sub-steps an animation frame. The
+    // client re-poses the whole skeleton ten times to lay ten points because it samples at 25
+    // frames a second and needs the arc smooth; at this frame rate the pose is already there and
+    // re-posing a sixty-bone rig to arrive at the same curve would be work for nothing. MU2's
+    // Trails made the same cut and says so.
+    streak_.update(seconds);
+    for (Drawn& one : drawn_) {
+        if (one.casting <= 0.0f || !one.visible || !one.placed) continue;
+        const FigureBody* look = one.figure.body();
+        if (look == nullptr) continue;
+        // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the
+        // swing leaves nothing and the streak appears as the blade comes round.
+        if (keyOf(one.figure) < kStreakWindUp) continue;
+        for (const HeldItem& held : look->held) {
+            if (held.kind != "weapon" || held.mesh == nullptr || held.bone < 0) continue;
+            if (held.stance == "bow" || held.stance == "crossbow") continue;
+            // Where the blade runs, read off the mesh's own box rather than trusted to an axis:
+            // MU2's `Model.Blade` makes the same choice, because the rack is not consistent about
+            // which way a weapon is modelled. The grip is at the origin -- a held item hangs off
+            // its bone with an identity transform -- so the tip is whichever end of the longest
+            // axis is furthest from it.
+            const content::Bounds& box = held.mesh->bounds();
+            int axis = 0;
+            float far = 0.0f;
+            for (int k = 0; k < 3; ++k) {
+                const float reach = std::max(std::fabs(box.min[k]), std::fabs(box.max[k]));
+                if (reach > far) {
+                    far = reach;
+                    axis = k;
+                }
+            }
+            if (far <= 0.001f) continue;
+            const float way = std::fabs(box.max[axis]) >= std::fabs(box.min[axis]) ? 1.0f : -1.0f;
+            float grip[3] = {0.0f, 0.0f, 0.0f}, tip[3] = {0.0f, 0.0f, 0.0f};
+            grip[axis] = way * far * kStreakFrom;
+            tip[axis] = way * far;
+            float from[3], to[3];
+            if (!one.figure.pointOn(held.bone, grip, from)) break;
+            if (!one.figure.pointOn(held.bone, tip, to)) break;
+            streak_.feed(one.id, from, to);
+            break;
+        }
+    }
+
     for (Drawn& one : drawn_) {
         if (!one.breathes) continue;
         const sim::Body* body = realm_.find(one.id);

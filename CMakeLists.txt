@@ -150,6 +150,7 @@ add_executable(mu2
   src/game/ui/browser_list.cpp
   src/game/item_models.cpp
   src/game/fx/litter.cpp
+  src/game/fx/streak.cpp
   src/game/ui/outline.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp

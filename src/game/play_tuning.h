@@ -44,6 +44,12 @@ constexpr float kAppearSeconds = 1.1f;
 // short enough that the blow still lands in the clip's own second half.
 constexpr float kCastBlend = 0.28f;
 
+// The blade's ribbon on a skill swing (fx/streak.h). Three keys of wind-up before it marks, which
+// is the client's own `AnimationFrame >= 3` guard, and a sixth of the blade to the tip, which is
+// MU's 20-to-120 read as fractions of the weapon's own measured length.
+constexpr float kStreakWindUp = 3.0f;
+constexpr float kStreakFrom = 20.0f / 120.0f;
+
 // A breed's name as the command line may spell it: lowered, with everything that is not a
 // letter or a digit dropped, so "Skeleton Warrior", "skeletonwarrior" and "Skeleton_Warrior"
 // are one word. The cook writes two names for a breed -- the figure ("BudgeDragon01") and the

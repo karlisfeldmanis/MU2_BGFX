@@ -56,11 +56,33 @@ bool Realm::send(Body& one, int column, int row) {
     return true;
 }
 
+// A monster has come to a stand, however it got there: the rest before it may wander again is
+// counted from HERE and not from where the walk began.
+//
+// The clock was started by the wander that set the walk going -- `thinksAt = tick + attackTicks`
+// at the moment of the order -- and a leg of three tiles takes 24 ticks where a Bull Fighter's
+// attackTicks is 32, so the rest had all but run out before the animal arrived. It stood for one
+// tick and set off again, for as long as it was awake. Two things came of that: a monster never
+// stands still, which is not what MU looks like, and the drawing crossfades to the idle and back
+// inside 100 ms at every leg -- 143 such blips in 300 seconds, measured by the headless run's
+// clip tally, and what they look like is a walk that catches and stutters.
+//
+// OpenMU has the rest this restores: `BasicMonsterIntelligence` walks ONE tile and waits its
+// move delay before the next, so the wait always falls between two steps and never inside one.
+// This keeps the multi-tile leg (a route is what this engine's walker takes) and puts the whole
+// wait after it.
+void Realm::settle(Body& one) {
+    if (one.player || one.kind < 0) return;
+    const content::MonsterKind& kind = tables_->kinds[size_t(one.kind)];
+    one.thinksAt = std::max(one.thinksAt, tick_ + std::max(1, kind.attackTicks));
+}
+
 void Realm::halt(Body& one) {
     if (!one.walking) return;
     one.walking = false;
     one.route.clear();
     one.onStep = 0;
+    settle(one);
     say(What::Halted, one);
 }
 
@@ -135,6 +157,7 @@ void Realm::advance(Body& one) {
         one.walking = false;
         one.route.clear();
         one.onStep = 0;
+        settle(one);
         say(What::Halted, one);
     }
 }
@@ -156,8 +179,14 @@ void Realm::rouse(Body& beast) {
         // anything worth attacking is a separate question and worth() does check.
         nearest = std::min(nearest, reach(beast, bodies_[who]));
     }
-    const bool roused = nearest <= far || (beast.provoked && beast.quarry != 0);
+    // Hysteresis, and not one distance: waking at `far` and sleeping at `far + slack` means the
+    // two edges are two tiles apart, so a character standing on the boundary cannot toggle a
+    // monster between the two states as he shuffles. Without it, measured over 6 000 ticks, 19
+    // of the 155 wakings undid a sleep less than half a second old -- and a sleep halts the
+    // animal mid-stride, so each one was a visible stop and start.
     const bool was = beast.temper != Temper::Asleep;
+    const float edge = far + (was ? float(kSleepSlack) : 0.0f);
+    const bool roused = nearest <= edge || (beast.provoked && beast.quarry != 0);
     if (roused == was) return;
 
     if (roused) {

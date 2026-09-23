@@ -382,6 +382,17 @@ are, the *bar* follows MuMain and is not.
 - **The cooldown is drawn on the box**: a dark sweep over the icon and the seconds printed when more
   than one remains — LoL's and WoW's shared convention, and the reason both read at a glance. Grey
   the icon when the mana is not there (MuMain dims it too).
+- **The blade leaves a ribbon, and it is the one effect a skill has of its own.**
+  `CreateWeaponBlur` tests `PLAYER_ATTACK_SKILL_SWORD1..5` **before** it asks what is in the hand,
+  so a skill swing streaks whatever the weapon is — and the axes and maces are tested nowhere
+  else, which means an axe that leaves nothing on an ordinary swing streaks on a skill. Ours is
+  `fx/streak.cpp`, off MU2's `Trails.cs`: 29 pairs, 2.9 reference frames of span kept as a
+  duration rather than a count, a sixth of the blade to the tip read as fractions of the weapon's
+  own measured length, three keys of wind-up before it marks, and the `motion_blur_r` sheet
+  (`trail_skill`) added white — the refinement colours belong to mapping 0 and a +9 axe streaks
+  the same as a plain one. Sampled once a rendered frame rather than MU's ten sub-steps, because
+  the pose is already there. The ordinary swing's own streak — mapping 0, refined, swords only —
+  is deliberately not built: it is a different rule and it belongs with the swing.
 - **A skill's clip blends in longer than a swing's** -- 0.28 s against the 0.18 s everything else
   uses -- and a step does not cancel it. A swing is a jab out of a stance and the short blend hides
   the join; a skill is a wind-up, and at the swing's blend the body stands in the pose before the

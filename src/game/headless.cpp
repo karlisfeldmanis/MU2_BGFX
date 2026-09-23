@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -9,6 +10,7 @@
 #include "content/tables.h"
 #include "core/files.h"
 #include "core/log.h"
+#include "game/play_tuning.h"
 #include "sim/audit.h"
 #include "sim/realm.h"
 #include "sim/skills.h"
@@ -259,11 +261,87 @@ int runHeadless(const core::Args& args, const char* assetDir) {
     stepMs.reserve(size_t(args.ticks));
     uint64_t kills = 0, blows = 0, misses = 0;
 
+    // The gait tally. What the drawing has to pace a walk cycle by is the ground a body covers
+    // in a tick, and every tick a body is `walking` and covers none is a tick of feet striding
+    // over earth that does not pass: a slide. They are not a bug on their own -- a turn on the
+    // spot is one -- but their number and their longest run is what says whether the picture
+    // can be right. Read-only, off the sim's own fields, and out of the seeded dice.
+    struct Gait {
+        uint64_t walking = 0, stalled = 0, turning = 0, partial = 0, orders = 0, halts = 0;
+        uint64_t longestStall = 0;
+        // What the drawing would do with all this: the clip chooser of Play::follow, whose
+        // whole input is what is tallied above -- ground covered this tick, `walking`, and the
+        // coast's patience. A change of clip is a crossfade, and a body that changes twice a
+        // second is a body whose legs never finish a stride. This is the only line here that
+        // models the picture rather than the sim, and it is modelled because the picture is
+        // what the complaint is about.
+        uint64_t swaps = 0, inWalk = 0, blips = 0;
+    };
+    Gait heroGait, beastGait;
+    std::vector<float> wasX(realm.bodies().size()), wasY(realm.bodies().size());
+    std::vector<uint32_t> stallRun(realm.bodies().size(), 0);
+    std::vector<uint8_t> inWalk(realm.bodies().size(), 0);
+    std::vector<float> still(realm.bodies().size(), 0.0f);
+    std::vector<int64_t> swappedAt(realm.bodies().size(), -1000);
+
     for (int tick = 0; tick < args.ticks; ++tick) {
         if (!args.noHand) hand.play(realm);
+        for (size_t i = 0; i < realm.bodies().size(); ++i) {
+            wasX[i] = realm.bodies()[i].x;
+            wasY[i] = realm.bodies()[i].y;
+        }
         const auto started = std::chrono::steady_clock::now();
         realm.step();
         stepMs.push_back(milliseconds(started, std::chrono::steady_clock::now()));
+        for (size_t i = 0; i < realm.bodies().size(); ++i) {
+            const sim::Body& one = realm.bodies()[i];
+            Gait& tally = one.player ? heroGait : beastGait;
+            {
+                // The chooser, tick by tick: a walk while the body covers ground, held while
+                // the sim has it walking, and for a monster held a little past that by the
+                // coast. Play::follow, and the tuning is play_tuning.h's kCoasting.
+                const float dx = one.x - wasX[i], dy = one.y - wasY[i];
+                const float covered = std::sqrt(dx * dx + dy * dy);
+                // A jump of more than two tiles is a respawn or a gate, and the drawing does
+                // not walk it (Play::follow's `jumped`).
+                const bool moves = one.alive() && covered > 1e-4f && covered < 2.0f;
+                still[i] = moves ? 0.0f : still[i] + float(kTickSeconds);
+                const bool walk = one.alive() && (moves || (one.walking && inWalk[i] != 0) ||
+                                                  (!one.player && one.walking && still[i] < kCoasting));
+                if (walk != (inWalk[i] != 0)) {
+                    ++tally.swaps;
+                    // A blip: in and out again inside a quarter of a second, which is shorter
+                    // than the two crossfades it costs. This is what reads as a stutter.
+                    if (tick - swappedAt[i] <= 5) ++tally.blips;
+                    swappedAt[i] = tick;
+                    inWalk[i] = walk ? 1 : 0;
+                }
+                if (inWalk[i]) ++tally.inWalk;
+            }
+            if (!one.alive() || !one.walking) {
+                stallRun[i] = 0;
+                continue;
+            }
+            ++tally.walking;
+            if (one.turning) ++tally.turning;
+            const float dx = one.x - wasX[i], dy = one.y - wasY[i];
+            const float covered = std::sqrt(dx * dx + dy * dy);
+            if (covered < one.speed * 0.01f) {
+                ++tally.stalled;
+                ++stallRun[i];
+                tally.longestStall = std::max(tally.longestStall, uint64_t(stallRun[i]));
+            } else {
+                stallRun[i] = 0;
+                if (covered < one.speed * 0.99f) ++tally.partial;
+            }
+        }
+        for (const sim::Happening& happening : realm.happenings()) {
+            const sim::Body* who = realm.find(happening.who);
+            if (who == nullptr) continue;
+            Gait& tally = who->player ? heroGait : beastGait;
+            if (happening.what == sim::What::Walked) ++tally.orders;
+            if (happening.what == sim::What::Halted) ++tally.halts;
+        }
         sim::audit(realm, findings);
         for (const sim::Happening& happening : realm.happenings()) {
             if (happening.what == sim::What::Hit) ++blows;
@@ -308,6 +386,22 @@ int runHeadless(const core::Args& args, const char* assetDir) {
                (unsigned long long)blows, (unsigned long long)misses,
                (unsigned long long)kills, hero.level, (unsigned long long)hero.experience,
                hero.pointsInHand, hero.health, hero.maxHealth);
+    for (int which = 0; which < 2; ++which) {
+        const Gait& tally = which == 0 ? heroGait : beastGait;
+        core::logf("  gait (%s): %llu ticks walking, %llu covering no ground (%.1f%%, longest "
+                   "run %llu), %llu of those turning, %llu part-ticks; %llu walk orders, %llu "
+                   "halts",
+                   which == 0 ? "hero" : "monsters", (unsigned long long)tally.walking,
+                   (unsigned long long)tally.stalled,
+                   tally.walking ? 100.0 * double(tally.stalled) / double(tally.walking) : 0.0,
+                   (unsigned long long)tally.longestStall, (unsigned long long)tally.turning,
+                   (unsigned long long)tally.partial, (unsigned long long)tally.orders,
+                   (unsigned long long)tally.halts);
+        core::logf("  clips (%s): %llu ticks in the walk, %llu changes of clip (%llu of them "
+                   "inside a quarter second of the last)", which == 0 ? "hero" : "monsters",
+                   (unsigned long long)tally.inWalk, (unsigned long long)tally.swaps,
+                   (unsigned long long)tally.blips);
+    }
     core::logf("  log: %zu bytes, fingerprint %016llx -> %s", log.size(),
                (unsigned long long)fingerprint(log), logPath.c_str());
     core::logf("  draws: %llu from the realm's own dice", (unsigned long long)realm.draws());
