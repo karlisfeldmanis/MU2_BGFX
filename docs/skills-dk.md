@@ -385,16 +385,31 @@ are, the *bar* follows MuMain and is not.
   skills on Q W E R. Four slots, four skills at once, six learned — that is the Diablo 3 shape
   `PLAN.md` asked for, and what fills the four is the fan below, the right-click cast
   (`MU2/docs/skills.md` §9: *left walks and swings, right casts*) staying as it is.
-- **And the list is how the four are chosen** (the user's rule, 2026-09-23, and their own words
-  for it: *"it was a horizontal list above the HUD, when clicked or hovered on the right-click
-  slot"*). That is MU2's `client/core/Fan.cs` — `CNewUISkillList` — and it is ported rather than
-  reinvented: **a fan and not a window.** The cells are laid out from the **gold box**, the one a
-  right-click casts from in MU, outward and alternating right and left, one box-height above the
-  plate, at the skill boxes' own size and pitch, so an icon in the list and the same icon on a
-  key are the same picture at the same size. It opens while the pointer rests on the gold box and
-  a click latches it open; MU2 latches only, and the hover is this bench's, because it makes the
-  gesture one movement instead of two. Drawn by the HUD, since it is the plate's own furniture.
-  Four gestures and no more — `Hud::setFan` and `Desk::skillKeys`:
+- **And the list is how the four are chosen.** The user's rule, 2026-09-23, in three steps: they
+  asked for MU2's gesture (*"when clicked or hovered on the right-click slot he opened the skill
+  list where he can use drag and drop"*), rejected a side window and then a rail of named pills
+  (*"if the DK will have a lot of skills there will be issues, the skill icon has to be big
+  enough"*), and chose the shape from a page of four drawn over a real frame at true scale.
+  **The chosen shape is a grid of large icons**, and the page is
+  `https://claude.ai/artifact/JHMNuF39AL7xNeFfeaQdRU`, drawn at twelve skills rather than at
+  today's four because that is the case that decides a layout.
+  - **Anchored to the gold box** -- the one a right-click casts from in MU, which is where
+    `CNewUISkillList` opens its own list and where MU2's `Fan.cs` puts it. It opens while the
+    pointer rests on that box and a click latches it open; MU2 latches only, and the hover is
+    this bench's because it makes the gesture one movement instead of two.
+  - **Six cells across, then it wraps**, so a knight with twelve skills has a list twice as tall
+    and no wider. The cell is 56 px at 1080 lines, a fifth LARGER than the bar's own box: the
+    list is what you are looking at while it is open, and the bar is furniture you glance at.
+  - **Icons only.** A name beside every icon costs 180 px an entry and six of them spanned half
+    the screen, which is the rail the user threw out. What a name is for, the card under the
+    pointer does better -- and it is the same card the keys already raise.
+  - **In the item card's own style**, which was the user's other rule (*"you did a very good job
+    with the map message and the tooltips, it has to be the same style"*): the container is
+    literally `tip::glass` -- the graded near-black body, the warm gold hairline ring, the three
+    falloffs of shadow -- the kicker is the card's tracked caps over the map message's fading
+    hairline, and the inks are `tip::ink`, exported from the card so the two cannot drift. None
+    of it is MuDream's bevelled box art, which is what the first pass used.
+  Four gestures and no more -- `Hud::setFan` and `Desk::skillKeys`:
   - a cell dragged from the list onto a key **binds** it there; if that skill already sat on
     another key it **moves** rather than doubling, and the key it lands on gives up what it held
     to the key it left;
@@ -403,8 +418,10 @@ are, the *bar* follows MuMain and is not.
   - a key's icon dragged back **into the open list clears** that key; nothing is lost, because
     the list is where every learned skill lives;
   - a drag let go anywhere else changes nothing, as the bag's does.
-  A newly learned skill still takes the first free key, but **once** (`Desk::autoBound_`) — the
-  convenience must not undo the player's own arrangement on the next frame.
+  A newly learned skill still takes the first free key, but **once** (`Desk::autoBound_`) -- the
+  convenience must not undo the player's own arrangement on the next frame. A cell carries the
+  key it is on in a gilt chip, and one he could not throw -- no mana, or the wrong hand -- is
+  drawn cold, the same two questions `throwSkill` asks.
   **Not saved yet**, which is 0.75's own answer (`MU2/docs/skills.md` §10: MuMain has no
   `SaveHotKey`) and is now the weaker half of it: the potion keys *are* written to the save, so
   a bar the player arranges by hand and loses on quit is the thing to fix next.

@@ -120,13 +120,28 @@ public:
     // same pitch, the same sheen under the pointer, and one canvas.
     static constexpr int kGoldBox = 5;  // the box in hand: what opens the list
 
-    // What the list holds and what the pointer is carrying out of it. Given by the desk, which
-    // owns the four keys; the frame draws it and works nothing out.
-    void setFan(bool open, const std::vector<int32_t>& cells, int32_t carrying) {
+    // One entry in the list: what it is, what it costs, which key it is already on, and whether
+    // he could throw it. Given by the desk, which owns the four keys and asks the realm; the
+    // frame draws what it is handed and works nothing out.
+    struct FanCell {
+        int32_t number = 0;
+        std::string name;
+        int mana = 0;
+        int key = -1;           // Q W E R, or -1 for none
+        bool affordable = true;
+        bool operator==(const FanCell& o) const {
+            return number == o.number && mana == o.mana && key == o.key &&
+                   affordable == o.affordable;
+        }
+    };
+    void setFan(bool open, const std::vector<FanCell>& cells, int32_t carrying) {
         fanOpen_ = open;
         fan_ = cells;
         carrying_ = carrying;
     }
+    // The card for the entry under the pointer, built by the desk off the realm -- the same card
+    // the keys raise, because it is the same skill.
+    void setFanSheet(const tip::Sheet& sheet) { fanSheet_ = sheet; }
     // Which box a point falls in at all, 0 to 10, or -1: the gold box is how the list opens.
     int boxAt(float x, float y) const;
     // Which cell of the open list a point falls in, or -1.
@@ -177,9 +192,9 @@ private:
         Quick quick[kQuickKeys];
         Skill skill[kSkillKeys];
         bool fanOpen = false;
-        int fanOver = -1;          // the cell under the pointer
-        int32_t carrying = 0;      // what the pointer is holding out of the list
-        std::vector<int32_t> fan;  // the cells, in the order they are laid out
+        int fanOver = -1;           // the cell under the pointer
+        int32_t carrying = 0;       // what the pointer is holding out of the list
+        std::vector<FanCell> fan;   // the entries, in the order they are laid out
         uint16_t picture = 0xFFFF;  // the stage's picture, so its first render is a rebuild
         bool operator==(const Face& o) const;
     };
@@ -206,7 +221,9 @@ private:
     Skill skill_[kSkillKeys];
     bool fanOpen_ = false;
     int32_t carrying_ = 0;
-    std::vector<int32_t> fan_;
+    std::vector<FanCell> fan_;
+    tip::Sheet fanSheet_;
+    float width_ = 0.0f, height_ = 0.0f;
     tip::Sheet sheets_[kSkillKeys];
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;

@@ -1,10 +1,12 @@
 #include "game/ui/hud.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <string>
 #include <vector>
 
+#include "game/ui/tip.h"
 #include "sim/rules.h"
 
 namespace mu::game {
@@ -99,6 +101,14 @@ constexpr uint32_t kQuickKey = gfx::rgba(206.0f / 255.0f, 186.0f / 255.0f, 73.0f
 constexpr float kPlateAtX = (640.0f - kPlateW * kUnit) / 2.0f;
 constexpr float kPlateAtY = 480.0f - (kLevelTrack.y + kLevelTrack.h) * kUnit;
 
+// Caps, because the card sets a name in caps and so does the map message. The face bakes ASCII,
+// so this is the whole of it.
+std::string upperOf(const std::string& in) {
+    std::string out = in;
+    for (char& c : out) c = char(std::toupper(static_cast<unsigned char>(c)));
+    return out;
+}
+
 Box plate(const panel::Screen& s, const Box& px) {
     return s.of({kPlateAtX + px.x * kUnit, kPlateAtY + px.y * kUnit, px.w * kUnit, px.h * kUnit});
 }
@@ -110,23 +120,84 @@ Box boxPx(int slot) {
                      kQuickH};
 }
 
-// Where the n-th cell of the open skill list goes, in plate pixels.
+// ---- the rail: the list of learned skills, above the plate ---------------------------------
 //
-// **A fan, and not a window.** `CNewUISkillList::UpdateMouseEvent` lays its cells out from the
-// gold box outward, alternating: an even index goes right by half its own index and an odd one
-// left by half plus one, so the list grows symmetrically around the box it belongs to. MuMain
-// wraps to a second row past fourteen; six skills is the most this game has, so the row is one
-// row and the wrap is not built.
+// **In the card's own style, on the user's rule of 2026-09-23** -- *"you did a very good job with
+// the map message and the tooltips, it has to be the same style"*. So the container is literally
+// the item card's (`tip::glass`: the graded near-black body, the warm hairline ring, the three
+// falloffs of shadow), the kicker is the card's tracked caps, and the inks are `tip::ink`. None
+// of it is MuDream's bevelled box art, which is what the first pass used and what read as
+// another game's furniture sitting on top of this one.
 //
-// Above the plate rather than on it, by a box and a hair: the plate's upper half is the gems,
-// the two rails and the states, and above it there is only the world -- which is where MuMain
-// opens its own list. MU2's Hud.FanPx and FanLift, number for number.
-constexpr float kFanLift = 8.0f;
-constexpr float kFanRim = 6.0f / 32.0f;  // what share of a cell its painted frame takes
+// **A grid of large icons**, and it is the second shape: the first was a rail of named pills,
+// which the user rejected on sight for the two reasons that decide this layout --
+// *"if the DK will have a lot of skills there will be issues, the skill icon has to be big
+// enough"*. Names beside icons cost 180 pixels an entry and six of them spanned half a 1920
+// screen; icons alone cost 62, wrap into a second row when there are more than six, and leave
+// the picture big enough to recognise without reading. What a name is for, the card under the
+// pointer does better -- and that is the card the keys already raise.
+//
+// The cell is LARGER than the bar's own box (56 against the plate's 46 at 1080 lines), because
+// the list is what you are looking at while it is open and the bar is furniture you glance at.
+// Diablo III's chooser does the same: the list's icons are the biggest thing on the screen.
+//
+// Measured in the card's own 1080-line pixels (`tip::unit`) and PLACED off the plate: centred on
+// the gold box, floating clear of the plate's top edge. That is the same mixture the tooltip
+// makes when it stands over a bag cell.
+constexpr float kListPad = 12.0f;
+constexpr float kListLift = 12.0f;      // clear of the plate's top edge
+constexpr float kKickerSize = 9.5f;
+constexpr float kKickerTrack = 0.16f;
+constexpr float kKickerTall = 17.0f;
+constexpr float kCell = 56.0f;
+// The cell's own rim, so the picture sits inside its edge rather than on it.
+constexpr float kCellRim = 5.0f;
+constexpr float kCellGap = 6.0f;
+constexpr int kAcross = 6;              // before it wraps to a second row
+constexpr float kChipWide = 15.0f;
+constexpr float kChipTall = 15.0f;
+constexpr float kChipSize = 9.5f;
 
-Box fanPx(int index) {
-    const float column = float(index % 2 == 0 ? index / 2 : -((index / 2) + 1)) * kSkillPitch;
-    return {kSkillsX + 5.0f * kSkillPitch + column, -(kSkillH + kFanLift), kSkillW, kSkillH};
+constexpr uint32_t kCellBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.035f);
+constexpr uint32_t kCellOver = gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f);
+constexpr uint32_t kCellEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.22f);
+constexpr uint32_t kCellEdgeOver = gfx::rgba(0.878f, 0.800f, 0.573f, 0.55f);
+constexpr uint32_t kChipBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);
+constexpr uint32_t kGilt = gfx::rgba(0.761f, 0.706f, 0.561f);
+constexpr uint32_t kCold = gfx::rgba(0.42f, 0.44f, 0.52f, 1.0f);
+
+// How many columns and rows a count of entries is laid out in: up to six across, then wrapped.
+int fanAcross(size_t count) { return int(std::min<size_t>(count, size_t(kAcross))); }
+int fanDown(size_t count) {
+    const int across = fanAcross(count);
+    return across <= 0 ? 0 : int((count + size_t(across) - 1) / size_t(across));
+}
+
+// Where the whole list stands, in screen pixels: as wide as its widest row, centred on the gold
+// box, its foot a hair above the plate, and kept on screen.
+Box listBox(const panel::Screen& s, size_t count, float screenWidth) {
+    const float u = tip::unit();
+    const int across = fanAcross(count), down = fanDown(count);
+    const float wide = kListPad * 2.0f * u + float(across) * kCell * u +
+                       float(across > 0 ? across - 1 : 0) * kCellGap * u;
+    const float tall = (kListPad * 2.0f + kKickerTall + 6.0f) * u + float(down) * kCell * u +
+                       float(down > 0 ? down - 1 : 0) * kCellGap * u;
+    const float top = plate(s, {0.0f, 0.0f, kPlateW, kPlateH}).y - kListLift * u - tall;
+    const float margin = 4.0f * u;
+    const float x = std::clamp(plate(s, boxPx(Hud::kGoldBox)).midX() - wide * 0.5f, margin,
+                               std::max(margin, screenWidth - margin - wide));
+    return {x, top, wide, tall};
+}
+
+// And one cell in it, filled left to right and then down, in the order they were learned.
+Box cellBox(const panel::Screen& s, size_t count, float screenWidth, int index) {
+    const float u = tip::unit();
+    const Box rail = listBox(s, count, screenWidth);
+    const int across = std::max(1, fanAcross(count));
+    const int column = index % across, row = index / across;
+    return {rail.x + kListPad * u + float(column) * (kCell + kCellGap) * u,
+            rail.y + (kListPad + kKickerTall + 6.0f) * u + float(row) * (kCell + kCellGap) * u,
+            kCell * u, kCell * u};
 }
 
 Box buttonPx(int which) {
@@ -281,12 +352,16 @@ int Hud::boxAt(float x, float y) const {
 int Hud::fanAt(float x, float y) const {
     if (!fanOpen_) return -1;
     for (size_t i = 0; i < fan_.size(); ++i) {
-        if (plate(screen_, fanPx(int(i))).has(x, y)) return int(i);
+        if (cellBox(screen_, fan_.size(), width_, int(i)).has(x, y)) return int(i);
     }
     return -1;
 }
 
-bool Hud::coversFan(float x, float y) const { return fanAt(x, y) >= 0; }
+// The whole rail and not just its entries: the pointer crossing the padding between two pills is
+// still on the list, and a list that shut there would shut halfway through every drag.
+bool Hud::coversFan(float x, float y) const {
+    return fanOpen_ && !fan_.empty() && listBox(screen_, fan_.size(), width_).has(x, y);
+}
 
 int Hud::skillSlotAt(float x, float y) const {
     for (int i = 0; i < kSkillKeys; ++i) {
@@ -309,9 +384,9 @@ bool Hud::covers(float x, float y) const {
     for (int i = 0; i < 4; ++i) {
         if (plate(screen_, buttonPx(i)).has(x, y)) return true;
     }
-    // And the open list, which stands off the plate over the world: a click on a cell is the
+    // And the open list, which stands off the plate over the world: a click on it is the
     // interface's, or choosing a skill would walk the character to where it was drawn.
-    return fanAt(x, y) >= 0;
+    return coversFan(x, y);
 }
 
 void Hud::update(float seconds, float width, float height, const Pointer& pointer,
@@ -351,6 +426,8 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.pointerY = pointer.y;
         for (int i = 0; i < kQuickKeys; ++i) now_.quick[i] = quick_[i];
         for (int i = 0; i < kSkillKeys; ++i) now_.skill[i] = skill_[i];
+        width_ = width;
+        height_ = height;
         now_.fanOpen = fanOpen_;
         now_.fan = fan_;
         now_.carrying = carrying_;
@@ -489,42 +566,71 @@ void Hud::rebuild() {
         }
     }
 
-    // The list, open above the plate, and whatever is being dragged out of it.
+    // ---- the list, open above the plate ------------------------------------------------------
     //
-    // Drawn here rather than in a window of its own because it IS the plate's furniture: the
-    // cells are the skill boxes' own size and pitch, so an icon in the list and the same icon
-    // in a key are the same picture at the same size. MU2's Hud.Fan.
-    if (fanOpen_) {
-        const gfx::Art& cell = arts.get("hud_skill_box");
-        const gfx::Art& sheen = arts.get("hud_slot_hover");
+    // Drawn by the HUD and not by a window of its own because the list belongs to the bar: it is
+    // centred on the gold box, it is measured off the plate, and what it is FOR is filling the
+    // four keys six inches below it. What it is drawn IN is the item card's own container --
+    // see the note on the metrics above, and the user's rule that it be the same style.
+    if (fanOpen_ && !fan_.empty()) {
+        const float u = tip::unit();
+        const float drop = std::max(1.0f, u);
+        const gfx::Face& face = canvas_.face();
+        const Box rail = listBox(s, fan_.size(), width_);
+        tip::glass(canvas_, rail, u);
+
+        // The kicker, in the card's tracked caps, with the map message's hairline running off it
+        // to the window's right edge: the two pieces of furniture the user named, in one line.
+        {
+            const float size = kKickerSize * u;
+            const Box head{rail.x + kListPad * u, rail.y + kListPad * u,
+                           rail.w - kListPad * 2.0f * u, kKickerTall * u};
+            tip::tracked(canvas_, head.x, tip::middle(face, head.y, head.h, size), size,
+                         kKickerTrack, tip::ink::kQuiet, "SKILLS", drop);
+            const float from = head.x + tip::trackedWidth(face, size, kKickerTrack, "SKILLS") +
+                               8.0f * u;
+            const float line = std::max(1.0f, u);
+            // Clear at its far end, as the map message's rule is: a hairline that stops dead
+            // reads as a scratch.
+            canvas_.shade({from, std::round(head.y + head.h * 0.5f), head.right() - from, line},
+                          tip::ink::kRing, tip::ink::kRing & 0x00FFFFFFu,
+                          tip::ink::kRing & 0x00FFFFFFu, tip::ink::kRing);
+        }
+
         for (size_t i = 0; i < fan_.size(); ++i) {
-            const Box box = plate(s, fanPx(int(i)));
-            // A soft dark drop under it, which is ours and not MU's: every other piece of this
-            // frame is drawn on the base plate and carries its own painted shading, and the list
-            // opens over grass -- where a dark box on dark grass at dusk has no edge at all.
-            for (int step = 3; step >= 1; --step) {
-                const float off = float(step) * 2.0f * s.scale;
-                canvas_.rect({box.x + off, box.y + off, box.w, box.h},
-                             gfx::rgba(0.0f, 0.0f, 0.0f, 0.10f));
+            const FanCell& one = fan_[i];
+            const Box cell = cellBox(s, fan_.size(), width_, int(i));
+            const bool over = now_.fanOver == int(i);
+            canvas_.rect(cell, over ? kCellOver : kCellBack);
+            canvas_.outline(cell, std::max(1.0f, u), over ? kCellEdgeOver : kCellEdge);
+
+            const gfx::Art& art = arts.get("skill_" + std::to_string(one.number));
+            const Box icon = cell.grown(-kCellRim * u);
+            if (art.valid()) {
+                canvas_.image(art, icon, one.affordable ? 0xFFFFFFFFu : kCold);
+                if (!one.affordable) canvas_.rect(icon, gfx::rgba(0.0f, 0.0f, 0.02f, 0.45f));
             }
-            if (cell.valid()) canvas_.image(cell, box);
-            const gfx::Art& icon = arts.get("skill_" + std::to_string(fan_[i]));
-            // Inside the cell's own painted rim, which is six of the art's thirty-two and not
-            // the row's four: insetting by the row's put the icon over the bevel.
-            const float rim = box.w * kFanRim;
-            if (icon.valid()) {
-                canvas_.image(icon, {box.x + rim, box.y + rim, box.w - rim * 2.0f,
-                                     box.h - rim * 2.0f});
+
+            // The key it is already on, in a chip at the cell's bottom-right -- the one thing
+            // the list has to say that the picture cannot.
+            if (one.key >= 0 && one.key < kSkillKeys && kKeys[one.key] != nullptr) {
+                const Box chip{cell.right() - (kChipWide + 2.0f) * u,
+                               cell.bottom() - (kChipTall + 2.0f) * u, kChipWide * u,
+                               kChipTall * u};
+                canvas_.rect(chip, kChipBack);
+                canvas_.outline(chip, std::max(1.0f, u), kCellEdge);
+                const float size = kChipSize * u;
+                canvas_.text(chip.x, tip::middle(face, chip.y, chip.h, size), size, kGilt,
+                             kKeys[one.key], gfx::Align::Centre, chip.w);
             }
-            if (now_.fanOver == int(i) && sheen.valid()) canvas_.image(sheen, box);
         }
     }
+
+    // What the pointer is holding, at the pointer: drawn last so it lies over the list it came
+    // out of and over the key it is going to.
     if (carrying_ != 0) {
-        // What the pointer is holding, at the pointer: drawn last so it lies over the list it
-        // came out of and over the key it is going to.
         const gfx::Art& icon = arts.get("skill_" + std::to_string(carrying_));
-        const Box box = plate(s, boxPx(0));
-        const float side = box.w * 0.8f;
+        const float side = kCell * tip::unit() * 0.9f;
         if (icon.valid()) {
             canvas_.image(icon, {now_.pointerX - side * 0.5f, now_.pointerY - side * 0.5f, side,
                                  side}, gfx::rgba(1.0f, 1.0f, 1.0f, 0.85f));
@@ -601,6 +707,17 @@ void Hud::rebuild() {
     }
 
     // Last, because it goes over everything it describes: what the pointer is resting on.
+    {
+        // An entry of the open rail gets the card first, and over the rail rather than over the
+        // key: the pill is what is being read. Nothing is drawn while a drag is in the air --
+        // a card under the icon you are carrying is a card in the way.
+        const int overCell = fanAt(now_.pointerX, now_.pointerY);
+        if (overCell >= 0 && carrying_ == 0 && !fanSheet_.empty()) {
+            const Box pill = cellBox(s, fan_.size(), width_, overCell);
+            tip::draw(tip_, fanSheet_, pill.midX(), pill.y, now_.width, now_.height);
+            return;
+        }
+    }
     if (now_.tip) {
         const float px = now_.pointerX, py = now_.pointerY;
         // A skill box gets the card, anchored on the TOP of the box rather than at the pointer,

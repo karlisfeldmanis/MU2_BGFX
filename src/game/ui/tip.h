@@ -52,6 +52,47 @@ struct Row {
     Tone freeTone = Tone::White;
 };
 
+// ---- the card's own vocabulary, exported ---------------------------------------------------
+//
+// The container, the inks and the two ways this card sets type, so that anything else drawn in
+// the same style uses these numbers rather than a copy of them that drifts. The skill rail above
+// the plate is the first other thing (`Hud::setFan`), and the user's rule when they chose it was
+// exactly this: *"it has to be the same style"*.
+namespace ink {
+// The body, graded from its head to its foot, and the warm hairline ring that is its edge.
+constexpr uint32_t kBodyTop = gfx::rgba(0.008f, 0.009f, 0.012f, 0.95f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.002f, 0.002f, 0.004f, 0.78f);
+constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
+constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
+constexpr uint32_t kLabel = gfx::rgba(0.769f, 0.757f, 0.706f);
+constexpr uint32_t kQuiet = gfx::rgba(0.588f, 0.600f, 0.557f);
+constexpr uint32_t kFramed = gfx::rgba(1.0f, 1.0f, 1.0f, 0.03f);
+constexpr uint32_t kFrame = gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f);
+constexpr uint32_t kPlateEdge = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
+constexpr uint32_t kPlateBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f);
+// The drop under every letter: type on glass this thin needs its own shadow to hold an edge.
+constexpr uint32_t kDrop = gfx::rgba(0.0f, 0.0f, 0.0f, 0.75f);
+constexpr float kRadius = 7.0f;  // the corner, in the card's own 1080-line pixels
+}  // namespace ink
+
+// The card's unit: one pixel of the design page at 1080 lines.
+float unit();
+
+// The container on its own: the three-falloff shadow, the ring, and the graded body, at `box`.
+// What `draw` lays down before it prints anything, and all a rail needs.
+void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius = ink::kRadius);
+
+// A line of type with its own drop shadow, and the same with CSS's letter-spacing -- `track` ems
+// after every letter, drawn a glyph at a time because the canvas advances by the face alone.
+float printed(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t colour,
+              const std::string& s, float drop);
+float trackedWidth(const gfx::Face& face, float size, float track, const std::string& s);
+void tracked(gfx::Canvas& canvas, float x, float baseline, float size, float track,
+             uint32_t colour, const std::string& s, float drop);
+// Where a line of `size` sits to be centred in a box `tall` high from `top`: the half-leading
+// above it and the same below, which is what `line-height` means.
+float middle(const gfx::Face& face, float top, float tall, float size);
+
 // Which mark stands beside a section.
 enum class Mark : uint8_t { None, Blade, Shield, Star, Triangle, Diamond, Socket, Note };
 

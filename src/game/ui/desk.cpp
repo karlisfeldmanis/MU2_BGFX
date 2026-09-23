@@ -353,15 +353,47 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // What is in it: everything he has learned, in the table's own order. Asked of the realm
     // every frame rather than kept -- learning is what puts a skill here, and a list that cached
     // them would miss the orb the day it exists. MU2's `Fan.Held` keeps the same rule.
+    // A hand for each: the blade an attack needs, the shield the guard needs -- the same two
+    // questions `Realm::throwSkill` asks, asked here so a row the realm would refuse is drawn
+    // cold in the list exactly as it is on the key.
+    const content::Arm* weapon = hero.weapon >= 0 && size_t(hero.weapon) < tables.arms.size()
+                                     ? &tables.arms[size_t(hero.weapon)]
+                                     : nullptr;
+    const content::Arm* shield = hero.shield >= 0 && size_t(hero.shield) < tables.arms.size()
+                                     ? &tables.arms[size_t(hero.shield)]
+                                     : nullptr;
+    const auto armedFor = [&](const sim::SkillRow& row) {
+        return row.onSelf() ? shield != nullptr && shield->isShield()
+                            : weapon != nullptr && !weapon->isShield() && !weapon->bow() &&
+                                  !weapon->crossbow();
+    };
+
     fan_.clear();
     for (int i = 0; i < sim::skillCount(); ++i) {
         const sim::SkillRow& row = sim::skillAt(i);
-        if (realm.knows(row.number)) fan_.push_back(row.number);
+        if (!realm.knows(row.number)) continue;
+        Hud::FanCell cell;
+        cell.number = row.number;
+        cell.name = row.name;
+        cell.mana = row.mana;
+        for (int key = 0; key < Hud::kSkillKeys; ++key) {
+            if (bound_[key] == row.number) cell.key = key;
+        }
+        cell.affordable = hero.mana >= row.mana && armedFor(row);
+        fan_.push_back(cell);
     }
     const bool fanOpen = !fan_.empty() &&
                          (fanLatched_ || onGold || hud_.coversFan(pointer.x, pointer.y) ||
                           carrying_ != 0);
     hud_.setFan(fanOpen, fan_, carrying_);
+    // And the card for the entry under the pointer: the same card the keys raise, because it is
+    // the same skill. Built for one entry and not six, as the bar's is.
+    const int overCell = hud_.fanAt(pointer.x, pointer.y);
+    if (overCell >= 0 && size_t(overCell) < fan_.size()) {
+        if (const sim::SkillRow* row = sim::skillNumbered(fan_[size_t(overCell)].number)) {
+            hud_.setFanSheet(skillSheet(*row, realm, armedFor(*row)));
+        }
+    }
 
     // A press picks something up: off a cell of the list, or off a key that already holds one.
     // Which it turns out to be is decided on release, exactly as MU2's `Fan.Release` decides it.
@@ -369,7 +401,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         const int cell = hud_.fanAt(pointer.x, pointer.y);
         const int key = hud_.skillAt(pointer.x, pointer.y);
         if (cell >= 0 && size_t(cell) < fan_.size()) {
-            carrying_ = fan_[size_t(cell)];
+            carrying_ = fan_[size_t(cell)].number;
             carryFrom_ = -1;
         } else if (key >= 0 && bound_[key] != 0) {
             carrying_ = bound_[key];

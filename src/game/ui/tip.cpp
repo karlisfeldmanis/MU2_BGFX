@@ -27,7 +27,7 @@ constexpr float kMarkColumn = 16.0f;
 constexpr float kMarkGap = 9.0f;
 // The corners, and how many segments each quarter turn is cut into. Six is smooth at this
 // radius and keeps the whole card inside one fan of 28 points.
-constexpr float kRadius = 7.0f;
+constexpr float kRadius = ink::kRadius;
 // How far above the item the card floats, so a raised cell edge and the card's own shadow do
 // not touch.
 constexpr float kStandOff = 10.0f;
@@ -46,21 +46,23 @@ constexpr int kShadowColumns = 40, kShadowRows = 34;
 // shows through. It is a gradient, lighter at the head and settling toward the foot, which is
 // what keeps it from reading as a flat grey rectangle.
 constexpr float kOpacity = 0.94f;
-constexpr uint32_t kBodyTop = gfx::rgba(0.008f, 0.009f, 0.012f, 0.95f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.002f, 0.002f, 0.004f, 0.78f);
+// The inks are `tip::ink` now, so the rail above the plate and this card cannot drift apart;
+// these are the names the rest of this file already used.
+constexpr uint32_t kBodyTop = ink::kBodyTop;
+constexpr uint32_t kBodyFoot = ink::kBodyFoot;
 constexpr uint32_t kBody = kBodyTop;  // the corners' own fill; the gradient is drawn over it
-constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
-constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
-constexpr uint32_t kLabel = gfx::rgba(0.769f, 0.757f, 0.706f);
-constexpr uint32_t kQuiet = gfx::rgba(0.588f, 0.600f, 0.557f);
+constexpr uint32_t kRing = ink::kRing;
+constexpr uint32_t kHair = ink::kHair;
+constexpr uint32_t kLabel = ink::kLabel;
+constexpr uint32_t kQuiet = ink::kQuiet;
 constexpr uint32_t kFoot = gfx::rgba(0.490f, 0.502f, 0.467f);
 constexpr uint32_t kFootBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.40f);
-constexpr uint32_t kFramed = gfx::rgba(1.0f, 1.0f, 1.0f, 0.03f);
-constexpr uint32_t kFrame = gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f);
+constexpr uint32_t kFramed = ink::kFramed;
+constexpr uint32_t kFrame = ink::kFrame;
 constexpr uint32_t kGood = gfx::rgba(0.498f, 0.831f, 0.545f);
 constexpr uint32_t kBad = gfx::rgba(0.886f, 0.408f, 0.373f);
-constexpr uint32_t kPlateEdge = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
-constexpr uint32_t kPlateBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f);
+constexpr uint32_t kPlateEdge = ink::kPlateEdge;
+constexpr uint32_t kPlateBack = ink::kPlateBack;
 constexpr uint32_t kBarBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
 
 // Everything the card draws goes through this: the colour with its alpha taken down by the
@@ -119,8 +121,12 @@ void roundedFan(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4],
 // is MU's own way of putting text over art (`RenderTextByScript`'s drop) and what makes a label
 // readable on glass this thin. The colour is passed through `fade` by the caller; the shadow is
 // its own alpha.
-constexpr uint32_t kDrop = gfx::rgba(0.0f, 0.0f, 0.0f, 0.75f);
+constexpr uint32_t kDrop = ink::kDrop;
 
+}  // namespace
+
+// The four below are declared in the header: the rail above the plate sets type with them, and a
+// second copy of "a line with a drop shadow" is a second thing to keep in step.
 float printed(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t colour,
               const std::string& s, float drop) {
     canvas.text(x + drop, baseline + drop, size, kDrop, s);
@@ -150,6 +156,10 @@ void tracked(gfx::Canvas& canvas, float x, float baseline, float size, float tra
 float middle(const gfx::Face& face, float top, float tall, float size) {
     return top + (tall - face.ascent(size) - face.descent(size)) * 0.5f + face.ascent(size);
 }
+
+float unit() { return panel::scale() * 0.5f; }
+
+namespace {
 
 // The words of `text` broken to `wide`, at least one word a line.
 std::vector<std::string> wrapped(const gfx::Face& face, float size, const std::string& text,
@@ -264,11 +274,65 @@ void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet) {
     sheet.from = {0.0f, 0.0f, picture.width, picture.height};
 }
 
+// The container: the shadow, the ring and the graded body, and nothing printed on it.
+//
+// Lifted out of `draw` on 2026-09-23, when the skill rail above the plate was asked for in this
+// card's style. It is one function rather than two copies for the reason the inks are in the
+// header: a container drawn twice drifts, and the user asked for the same style and not a
+// similar one.
+void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius) {
+    // Three falloffs summed into one field and laid down as a grid of shaded quads, so it has
+    // no edge anywhere. A rectangle blurred by a Gaussian is the product of two error
+    // functions, one each way, which is what `edge` is.
+    {
+        const float reach = kFalls[2].sigma * 3.0f * u + kFalls[2].drop * u;
+        const auto edge = [](float at, float low, float high, float sigma) {
+            const float k = 1.0f / (sigma * 1.41421356f);
+            return 0.5f * (std::erf((at - low) * k) - std::erf((at - high) * k));
+        };
+        // Cut out from under the card. The card is glass, so a shadow laid down across its whole
+        // footprint is what shows THROUGH it -- the world behind never gets a look in, and the
+        // card reads as solid however thin its background is. `covered` is the card's own shape
+        // with a pixel of softness, and the shadow is what is left outside it.
+        const auto alphaAt = [&](float px, float py) {
+            float sum = 0.0f;
+            for (const Fall& f : kFalls) {
+                sum += f.alpha * edge(px, box.x, box.right(), f.sigma * u) *
+                       edge(py, box.y + f.drop * u, box.bottom() + f.drop * u, f.sigma * u);
+            }
+            const float covered = edge(px, box.x, box.right(), u) *
+                                  edge(py, box.y, box.bottom(), u);
+            return std::min(0.85f, sum) * (1.0f - covered);
+        };
+        const float x0 = box.x - reach, x1 = box.right() + reach;
+        const float y0 = box.y - reach, y1 = box.bottom() + reach * 1.4f;
+        const float stepX = (x1 - x0) / kShadowColumns, stepY = (y1 - y0) / kShadowRows;
+        for (int j = 0; j < kShadowRows; ++j) {
+            for (int i = 0; i < kShadowColumns; ++i) {
+                const float px = x0 + stepX * float(i), py = y0 + stepY * float(j);
+                const uint32_t tl = gfx::rgba(0, 0, 0, alphaAt(px, py));
+                const uint32_t tr = gfx::rgba(0, 0, 0, alphaAt(px + stepX, py));
+                const uint32_t br = gfx::rgba(0, 0, 0, alphaAt(px + stepX, py + stepY));
+                const uint32_t bl = gfx::rgba(0, 0, 0, alphaAt(px, py + stepY));
+                canvas.shade({px, py, stepX, stepY}, tl, tr, br, bl);
+            }
+        }
+    }
+    // The ring first and a hair wider, then the body over it: two fans, and the ring is left
+    // showing as the edge. Drawn rounded, and see-through enough that the world moves behind it.
+    const float r = radius * u;
+    const float line = std::max(1.0f, u);
+    const float all[4] = {r, r, r, r};
+    const float wider[4] = {r + line, r + line, r + line, r + line};
+    roundedFan(canvas, box.grown(line), wider, fade(kRing));
+    roundedFan(canvas, box, all, kBodyTop, kBodyFoot);
+}
+
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
           float screenHeight) {
     if (sheet.empty()) return;
     const gfx::Face& face = canvas.face();
-    const float u = panel::scale() * 0.5f;
+    const float u = unit();
     const float wide = (sheet.wide > 0.0f ? sheet.wide : kWide) * u, pad = kPad * u;
     const float nameSize = kNameSize * u, baseSize = kBaseSize * u, rowSize = kRowSize * u;
     const float kickerSize = kKickerSize * u, footSize = kFootSize * u, chipSize = kChipSize * u;
@@ -329,54 +393,9 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                                 std::max(margin, screenHeight - margin - tall));
     const gfx::Box box{ox, oy, wide, tall};
 
-    // ---- the shadow -------------------------------------------------------------------------
-    // Three falloffs summed into one field and laid down as a grid of shaded quads, so it has
-    // no edge anywhere. A rectangle blurred by a Gaussian is the product of two error
-    // functions, one each way, which is what `edge` is.
-    {
-        const float reach = kFalls[2].sigma * 3.0f * u + kFalls[2].drop * u;
-        const auto edge = [](float at, float low, float high, float sigma) {
-            const float k = 1.0f / (sigma * 1.41421356f);
-            return 0.5f * (std::erf((at - low) * k) - std::erf((at - high) * k));
-        };
-        // Cut out from under the card. The card is glass now, so a shadow laid down across its
-        // whole footprint is what shows THROUGH it -- the world behind never gets a look in, and
-        // the tooltip reads as solid however thin its background is. `covered` is the card's own
-        // shape with a pixel of softness, and the shadow is what is left outside it.
-        const auto alphaAt = [&](float px, float py) {
-            float sum = 0.0f;
-            for (const Fall& f : kFalls) {
-                sum += f.alpha * edge(px, box.x, box.right(), f.sigma * u) *
-                       edge(py, box.y + f.drop * u, box.bottom() + f.drop * u, f.sigma * u);
-            }
-            const float covered = edge(px, box.x, box.right(), u) *
-                                  edge(py, box.y, box.bottom(), u);
-            return std::min(0.85f, sum) * (1.0f - covered);
-        };
-        const float x0 = box.x - reach, x1 = box.right() + reach;
-        const float y0 = box.y - reach, y1 = box.bottom() + reach * 1.4f;
-        const float stepX = (x1 - x0) / kShadowColumns, stepY = (y1 - y0) / kShadowRows;
-        for (int j = 0; j < kShadowRows; ++j) {
-            for (int i = 0; i < kShadowColumns; ++i) {
-                const float px = x0 + stepX * float(i), py = y0 + stepY * float(j);
-                const uint32_t tl = gfx::rgba(0, 0, 0, alphaAt(px, py));
-                const uint32_t tr = gfx::rgba(0, 0, 0, alphaAt(px + stepX, py));
-                const uint32_t br = gfx::rgba(0, 0, 0, alphaAt(px + stepX, py + stepY));
-                const uint32_t bl = gfx::rgba(0, 0, 0, alphaAt(px, py + stepY));
-                canvas.shade({px, py, stepX, stepY}, tl, tr, br, bl);
-            }
-        }
-    }
-
-    // ---- the card ---------------------------------------------------------------------------
-    // The ring first and a hair wider, then the body over it: two fans, and the ring is left
-    // showing as the edge. Drawn rounded, and see-through enough that the world moves behind it.
+    glass(canvas, box, u);
     const float radius = kRadius * u;
     const float line = std::max(1.0f, u);
-    const float all[4] = {radius, radius, radius, radius};
-    const float wider[4] = {radius + line, radius + line, radius + line, radius + line};
-    roundedFan(canvas, box.grown(line), wider, fade(kRing));
-    roundedFan(canvas, box, all, kBodyTop, kBodyFoot);
 
     // The head, tinted by the name's own colour, fading out downward. Its own top corners are
     // rounded to the card's; it fades before it reaches the bottom two, so those stay square.

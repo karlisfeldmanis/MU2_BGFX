@@ -133,7 +133,7 @@ private:
     // the pointer rests on that box or on the list itself. The cells are rebuilt every frame off
     // what the realm says he has learned.
     bool fanLatched_ = false;
-    std::vector<int32_t> fan_;
+    std::vector<Hud::FanCell> fan_;
     int32_t carrying_ = 0;    // the skill the pointer is holding, 0 for none
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int scriptedSkill_ = -1;
