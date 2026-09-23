@@ -171,10 +171,21 @@ Box boxPx(int slot) {
 // the gold box, floating clear of the plate's top edge. That is the same mixture the tooltip
 // makes when it stands over a bag cell.
 constexpr float kListPad = 12.0f;
-constexpr float kListLift = 12.0f;      // clear of the plate's top edge
-constexpr float kKickerSize = 9.5f;
-constexpr float kKickerTrack = 0.16f;
-constexpr float kKickerTall = 17.0f;
+// How far it floats clear of the plate, and WHAT it is measured from -- which is the whole of
+// the answer to the user's "it has to be closer to the HUD" (2026-09-23). The plate's box runs
+// up to its own y = 0, but the art up there is transparent in the middle: the painted furniture
+// stops at the shield rail, and everything above it is the two gems' tops and open sky. Hung
+// off the box, the list stood forty pixels clear of anything drawn. So it is hung off the RAIL,
+// which is the top of what the plate actually paints.
+// Thirty, found between two tries the user turned down: four off the plate's box left forty
+// pixels of sky under it, and four off the rail sat the tray ON the experience bar. This is a
+// finger's width of air over the frame -- near enough to belong to it, clear enough to read as
+// a thing standing over it.
+constexpr float kListLift = 30.0f;
+// No kicker over it. It carried the card's tracked "SKILLS" and a hairline, which is the house
+// style and was still the wrong thing here: the user asked on 2026-09-23 whether the title was
+// needed, and it is not -- a tray of skill icons standing on the skill bar says what it is, and
+// a heading costs it a row of height it then has to float further from the frame to keep.
 constexpr float kCell = 56.0f;
 // The cell's own rim, so the picture sits inside its edge rather than on it.
 constexpr float kCellRim = 5.0f;
@@ -199,19 +210,25 @@ int fanDown(size_t count) {
     return across <= 0 ? 0 : int((count + size_t(across) - 1) / size_t(across));
 }
 
-// Where the whole list stands, in screen pixels: as wide as its widest row, centred on the gold
-// box, its foot a hair above the plate, and kept on screen.
+// Where the whole list stands, in screen pixels: as wide as its widest row, centred on the
+// PLATE, its foot a hair above it, and kept on screen.
+//
+// Centred on the plate and not on the gold box, which is the user's rule of 2026-09-23 and a
+// departure from MU. `CNewUISkillList` fans its cells out of the box they belong to, and that
+// box sits right of the plate's middle, so the list stood off-centre over a frame that is
+// itself centred -- which reads as a mistake however traced it is. The gold box is still what
+// opens it.
 Box listBox(const panel::Screen& s, size_t count, float screenWidth) {
     const float u = tip::unit();
     const int across = fanAcross(count), down = fanDown(count);
     const float wide = kListPad * 2.0f * u + float(across) * kCell * u +
                        float(across > 0 ? across - 1 : 0) * kCellGap * u;
-    const float tall = (kListPad * 2.0f + kKickerTall + 6.0f) * u + float(down) * kCell * u +
+    const float tall = kListPad * 2.0f * u + float(down) * kCell * u +
                        float(down > 0 ? down - 1 : 0) * kCellGap * u;
-    const float top = plate(s, {0.0f, 0.0f, kPlateW, kPlateH}).y - kListLift * u - tall;
+    const float top = plate(s, kShieldBar).y - kListLift * u - tall;
     const float margin = 4.0f * u;
-    const float x = std::clamp(plate(s, boxPx(Hud::kGoldBox)).midX() - wide * 0.5f, margin,
-                               std::max(margin, screenWidth - margin - wide));
+    const float x = std::clamp(plate(s, {0.0f, 0.0f, kPlateW, kPlateH}).midX() - wide * 0.5f,
+                               margin, std::max(margin, screenWidth - margin - wide));
     return {x, top, wide, tall};
 }
 
@@ -222,8 +239,7 @@ Box cellBox(const panel::Screen& s, size_t count, float screenWidth, int index) 
     const int across = std::max(1, fanAcross(count));
     const int column = index % across, row = index / across;
     return {rail.x + kListPad * u + float(column) * (kCell + kCellGap) * u,
-            rail.y + (kListPad + kKickerTall + 6.0f) * u + float(row) * (kCell + kCellGap) * u,
-            kCell * u, kCell * u};
+            rail.y + kListPad * u + float(row) * (kCell + kCellGap) * u, kCell * u, kCell * u};
 }
 
 Box buttonPx(int which) {
@@ -634,24 +650,6 @@ void Hud::rebuild() {
         const gfx::Face& face = canvas_.face();
         const Box rail = listBox(s, fan_.size(), width_);
         tip::glass(canvas_, rail, u);
-
-        // The kicker, in the card's tracked caps, with the map message's hairline running off it
-        // to the window's right edge: the two pieces of furniture the user named, in one line.
-        {
-            const float size = kKickerSize * u;
-            const Box head{rail.x + kListPad * u, rail.y + kListPad * u,
-                           rail.w - kListPad * 2.0f * u, kKickerTall * u};
-            tip::tracked(canvas_, head.x, tip::middle(face, head.y, head.h, size), size,
-                         kKickerTrack, tip::ink::kQuiet, "SKILLS", drop);
-            const float from = head.x + tip::trackedWidth(face, size, kKickerTrack, "SKILLS") +
-                               8.0f * u;
-            const float line = std::max(1.0f, u);
-            // Clear at its far end, as the map message's rule is: a hairline that stops dead
-            // reads as a scratch.
-            canvas_.shade({from, std::round(head.y + head.h * 0.5f), head.right() - from, line},
-                          tip::ink::kRing, tip::ink::kRing & 0x00FFFFFFu,
-                          tip::ink::kRing & 0x00FFFFFFu, tip::ink::kRing);
-        }
 
         for (size_t i = 0; i < fan_.size(); ++i) {
             const FanCell& one = fan_[i];

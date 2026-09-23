@@ -16,13 +16,11 @@ constexpr float kReference = 25.0f;
 constexpr float kPerTile = 100.0f;
 
 // --- the joints, ZzzEffectJoint.cpp BITMAP_FLARE subtype 0 with Scale 40 ------------------
-constexpr float kTicks = 50.0f;          // LifeTime
-constexpr float kOrbit = 40.0f;          // Velocity: the ring's radius
-constexpr float kWide = 40.0f;           // Scale: the cross is -/+ half of it
+// LifeTime 50, Velocity 40 (the ring's radius) and Scale 40 (the cross is -/+ half of it) are
+// the level-up's own and now live in `kRising`, the recipe; what is left here is what both
+// recipes share.
 constexpr float kKey = 2.0f;             // PKKey: count = (Direction[1] + LifeTime) / 2
 constexpr float kPhases = 250.0f;        // rand() % 500 - 250
-constexpr float kSlowestRise = 2.00f;    // (rand() % 250 + 200) / 100
-constexpr float kFastestRise = 4.49f;
 constexpr float kDims = 10.0f;           // the last ten ticks...
 constexpr float kDim = 1.0f / 1.3f;      // ...take the light by this each
 
