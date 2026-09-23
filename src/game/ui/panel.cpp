@@ -4,6 +4,7 @@
 #include <cstdio>
 
 #include "core/json.h"
+#include "game/ui/sheet.h"
 #include "core/log.h"
 
 namespace mu::game::panel {
@@ -45,6 +46,16 @@ const gfx::Art& Arts::get(const std::string& key) {
     return loaded_.emplace(key, art).first->second;
 }
 
+int Arts::warm() {
+    int read = 0;
+    for (const auto& [key, path] : paths_) {
+        (void)path;
+        if (get(key).valid()) ++read;
+    }
+    core::logf("interface: %d pieces of art read ahead of the windows", read);
+    return read;
+}
+
 // ---- the two frames ------------------------------------------------------------------------
 
 Screen screenOf(float width, float height) {
@@ -63,7 +74,9 @@ void setScreen(float height) { s_scale = 2.0f * std::max(height, 540.0f) / 1080.
 float scale() { return s_scale; }
 
 float columnX(float screenWidth, int column) {
-    return screenWidth - kWidth * scale() * float(column) - kRightMargin;
+    const float k = scale();
+    return screenWidth - kRightMargin - kWidth * k * float(column) -
+           kColumnGap * k * float(column - 1);
 }
 
 float panelY(float screenHeight) { return (screenHeight - kHeight * scale()) * 0.5f; }
@@ -87,54 +100,78 @@ gfx::Box buttonState(const gfx::Art& art, bool pressed, int states) {
 }
 
 void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title) {
-    // The leather from the plate's top down; the strip above it is the crest's, with the world
-    // behind it. `Panel.Frame`, one texture nine-sliced at cut time.
-    canvas.image(arts.get("bag_back"), scaled(x, y, {0.0f, kPlateTop, kWidth, kHeight - kPlateTop}));
-    canvas.image(arts.get("bag_plate"), scaled(x, y, {0.0f, kPlateTop, kWidth, kPlateHeight}));
-    const gfx::Art& crest = arts.get("bag_crest");
-    if (crest.valid()) {
-        // At its own width and centred, not stretched: it is a carving with a middle.
-        const float wide = crest.width / scale(), tall = crest.height / scale();
-        canvas.image(crest, scaled(x, y, {(kWidth - wide) * 0.5f, 0.0f, wide, tall}));
+    // **No leather, no plate, no crest.** The window is the card's material now: a shadow, a
+    // nearly flat near-black body, and a gradient hairline for its edge -- bright along the head
+    // and fading to almost nothing at the foot, which is what makes a flat panel read as lit.
+    // The user, 2026-09-23: *"the original window, just a really nice skin ... very clean, flat,
+    // modern, Diablo 4 style"*, and then: drop shadows, gradient stroke, clean UI.
+    //
+    // MU's own rectangles are untouched -- the grid still starts at (15, 200) and the Zen strip
+    // still sits at 380 -- because this repaints `Panel`, which is the one place all three
+    // windows come through. `arts` is still taken: the worn slots' ghosts and the Zen coin are
+    // MU's art and stay.
+    (void)arts;
+    const float k = scale();
+    const gfx::Box window = scaled(x, y, {0.0f, 0.0f, kWidth, kHeight});
+    sheet::glass(canvas, window, kRadius * k);
+
+    // The head: a band of light under it, a mark, the name in tracked caps, and a rule.
+    const gfx::Box head = scaled(x, y, {0.0f, 0.0f, kWidth, kHeadBand});
+    sheet::band(canvas, head);
+    const float size = kTitleSize * k;
+    const gfx::Box band = scaled(x, y, {0.0f, kPlateTop, kWidth, kPlateHeight});
+    const float baseline = centredBaseline(canvas.face(), band, size);
+    tip::glyphAt(canvas, tip::Mark::Diamond, x + kMarkX * k, baseline - size * 0.30f, kMark * k,
+                 sheet::ink::kMark);
+    // **The title is fitted to the room between the mark and the cross.** A merchant's own name
+    // is the title of his window and `Lumen the Barmaid` is nineteen tracked capitals, which ran
+    // straight under the cross. It is shrunk by a quarter before anything is cut, and only then
+    // trimmed -- a name shortened by a letter still reads, a name under a button does not.
+    const gfx::Face& face = canvas.face();
+    const float room = (frameClose().x - 5.0f - kTitleX) * k;
+    const std::string whole = sheet::shouted(title);
+    float fitted = size;
+    while (fitted > size * 0.72f &&
+           tip::trackedWidth(face, fitted, sheet::kTitleTrack, whole) > room) {
+        fitted -= 0.5f;
     }
-    // The name, centred across the whole window and down the plate.
-    const float size = kTitleSize * scale();
-    const gfx::Box plate = scaled(x, y, {0.0f, kPlateTop, kWidth, kPlateHeight});
-    canvas.text(x, centredBaseline(canvas.face(), plate, size), size, kLettering, title,
-                gfx::Align::Centre, kWidth * scale());
+    // And only then trimmed, in ONE pass. It was written as a loop that popped a letter and put
+    // the two dots back inside the same condition, which for a name of exactly the wrong length
+    // alternates between too long and short enough for ever: the frame never returned and the
+    // game froze the moment a merchant's counter opened. A trim measures the string it is going
+    // to draw, and never grows.
+    std::string text = whole;
+    while (text.size() > 1 &&
+           tip::trackedWidth(face, fitted, sheet::kTitleTrack, text + "..") > room) {
+        text.pop_back();
+    }
+    if (text.size() != whole.size()) text += "..";
+    sheet::kicker(canvas, x + kTitleX * k, baseline, fitted, text, sheet::ink::kTitle,
+                  sheet::kTitleTrack);
+    sheet::rule(canvas, window.x + kEdge * k, y + kHeadBand * k, (kWidth - kEdge * 2.0f) * k,
+                std::max(1.0f, k * 0.5f));
 }
 
 void close(gfx::Canvas& canvas, Arts& arts, float x, float y, bool pressed) {
-    const gfx::Art& cross = arts.get("bag_close");
-    const gfx::Box box = scaled(x, y, frameClose());
-    if (cross.valid()) {
-        canvas.region(cross, box, buttonState(cross, pressed));
-    } else if (pressed) {
-        canvas.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f));
-    }
+    (void)arts;  // MU's two-state button art is not drawn any more; the cross is.
+    sheet::close(canvas, scaled(x, y, frameClose()), false, pressed);
+}
+
+void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed) {
+    sheet::close(canvas, scaled(x, y, frameClose()), over, pressed);
 }
 
 void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& units,
            const char* key) {
-    const gfx::Art& art = arts.get(key);
-    if (!art.valid()) return;
-    // Nine draws, because a border stretches with the thing it borders: the art is cut at one
-    // size and asked for at several. window_cut.py's 12 is the border's thickness in the art.
-    constexpr float kInset = 12.0f;
-    const gfx::Box target = scaled(x, y, units);
-    const float ix = std::min(kInset, target.w * 0.5f), iy = std::min(kInset, target.h * 0.5f);
-    const float cutX[4] = {0.0f, kInset, art.width - kInset, art.width};
-    const float cutY[4] = {0.0f, kInset, art.height - kInset, art.height};
-    const float putX[4] = {target.x, target.x + ix, target.right() - ix, target.right()};
-    const float putY[4] = {target.y, target.y + iy, target.bottom() - iy, target.bottom()};
-    for (int c = 0; c < 3; ++c) {
-        for (int r = 0; r < 3; ++r) {
-            const gfx::Box into{putX[c], putY[r], putX[c + 1] - putX[c], putY[r + 1] - putY[r]};
-            if (into.w <= 0.0f || into.h <= 0.0f) continue;
-            canvas.region(art, into,
-                          {cutX[c], cutY[r], cutX[c + 1] - cutX[c], cutY[r + 1] - cutY[r]});
-        }
-    }
+    // The leather's nine-sliced well becomes the card's framed block: 3% white under a 10%
+    // hairline, which is what the card itself frames a section with.
+    (void)arts;
+    (void)key;
+    sheet::well(canvas, scaled(x, y, units), std::max(1.0f, scale() * 0.5f));
+}
+
+void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state) {
+    sheet::cell(canvas, scaled(x, y, units), state, std::max(1.0f, scale() * 0.5f));
 }
 
 // ---- words -----------------------------------------------------------------------------------

@@ -74,6 +74,8 @@ private:
         float pointerX = 0, pointerY = 0, x = 0, y = 0, scale = 0;
         bool closing = false;
         int level = 0, strength = 0, agility = 0, vitality = 0, energy = 0;
+        // What he can pay colours every price on the shelf, so a purse that moves is a redraw.
+        long long money = -1;
         uint32_t version = 0;
         uint16_t picture = 0xFFFF;
         bool operator==(const Drawn& o) const;

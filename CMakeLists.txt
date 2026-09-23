@@ -114,6 +114,7 @@ add_executable(mu2
   src/game/bench.cpp
   src/game/world/world.cpp
   src/game/world/town.cpp
+  src/game/world/grass.cpp
   src/game/world/lamps.cpp
   src/game/world/sway.cpp
   src/game/save.cpp
@@ -137,6 +138,7 @@ add_executable(mu2
   src/game/sound.cpp
   src/game/miniaudio.cpp
   src/game/ui/panel.cpp
+  src/game/ui/sheet.cpp
   src/game/ui/cursor.cpp
   src/game/ui/hud.cpp
   src/game/ui/card.cpp

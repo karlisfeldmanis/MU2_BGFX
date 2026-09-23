@@ -4,6 +4,7 @@
 #include <string>
 
 #include "game/ui/describe.h"
+#include "game/ui/sheet.h"
 
 namespace mu::game {
 namespace {
@@ -13,8 +14,8 @@ using gfx::Box;
 // Bag.cs's table, in MU's panel units.
 constexpr float kOriginX = 15.0f, kOriginY = 200.0f;  // Create(x + 15, y + 200, ...)
 constexpr float kCell = 20.0f;                        // INVENTORY_SQUARE_WIDTH
-// A cell's frame is 21 across at a pitch of 20: the extra unit is the border neighbours share.
-constexpr float kCellArt = 21.0f;
+// MU's cell art was 21 across at a pitch of 20 -- the extra unit was a border two neighbours
+// shared. The skin draws a well instead, a unit narrower than the pitch, so the gutter is real.
 
 // The equipment grid: five columns and three rows, each slot one unit wider than its pitch so
 // neighbours share a border. EquipColumn = Run(11, [41, 25, 41, 25, 41]), EquipRow = Run(44,
@@ -72,9 +73,8 @@ constexpr float kMoneyFrom = 18.0f + 20.0f + 6.0f;
 constexpr float kMoneySize = 11.0f;
 constexpr float kTipSize = 8.0f;
 
-// MU's own drop-target colours at its own four tenths.
-constexpr uint32_t kFits = gfx::rgba(0.1f, 0.4f, 0.8f, 0.4f);
-constexpr uint32_t kBlocked = gfx::rgba(1.0f, 0.2f, 0.2f, 0.4f);
+// The drop target is the skin's own two cell states now (`sheet::Cell::Fits` and `Blocked`),
+// which are MU's blue and red at the weight the rest of this window is drawn at.
 
 }  // namespace
 
@@ -232,22 +232,55 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
 
     panel::frame(canvas_, arts, x, y, "Inventory");
 
-    // The cells behind the item layer: the worn slots' ghosts, then the bag's 21-unit frames.
+    // **The worn slots: a deep well, and MU's own silhouette in it.** The art is the game's
+    // (`bag_slot_helm` and its ten fellows) and it stays -- the user, 2026-09-23: *"it could help
+    // if you used MU graphics for equipment"* -- drawn at two fifths over the well rather than at
+    // full strength on leather, so an empty slot says what it is for without competing with the
+    // piece in the slot beside it.
     for (int slot = 0; slot < sim::kWorn; ++slot) {
-        canvas_.image(arts.get(ghostFor(slot)), panel::scaled(x, y, wornBox(slot)));
+        const Box box = wornBox(slot);
+        panel::cell(canvas_, x, y, box,
+                    slot == hovered_ && dragging_ < 0 ? sheet::Cell::Over
+                    : slot == dragging_              ? sheet::Cell::Held
+                                                     : sheet::Cell::Rest);
+        if (bag[slot].empty()) {
+            const gfx::Art& ghost = arts.get(ghostFor(slot));
+            if (ghost.valid()) {
+                // **A fifth, and the reason is what the art is.** `bag_slot_*` is not a
+                // silhouette on nothing -- each one is a lit plate with the shape painted on it,
+                // cut for MU's leather -- so drawn at any strength it lifts the whole well and
+                // the recess this skin cuts is gone. At 0.2 the shape reads and the well stays
+                // the darkest thing in the window, which is what an empty slot should be.
+                canvas_.image(ghost, panel::scaled(x, y, box.grown(-2.0f)),
+                              gfx::rgba(1.0f, 1.0f, 1.0f, 0.20f));
+            }
+        }
     }
-    const gfx::Art& cellArt = arts.get("bag_cell");
+    // The satchel, one well a cell. MU's shared-border 21-unit frame is gone with the art: the
+    // wells are drawn at the pitch less a unit, which is the gutter this skin reads by.
     for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
         const Box box = slotBox(slot);
-        canvas_.image(cellArt, panel::scaled(x, y, {box.x, box.y, kCellArt, kCellArt}));
+        panel::cell(canvas_, x, y, {box.x, box.y, kCell - 1.0f, kCell - 1.0f}, sheet::Cell::Rest);
+    }
+    // And the thing under the pointer lit over its whole footprint, not over the one cell it is
+    // recorded in: a shield is two cells by two and it is the shield that is hovered.
+    if (hovered_ >= 0 && dragging_ < 0 && !bag[hovered_].empty()) {
+        const Box over = itemBox(tables, hovered_, bag[hovered_]);
+        panel::cell(canvas_, x, y, {over.x, over.y, over.w - 1.0f, over.h - 1.0f},
+                    sheet::Cell::Over);
     }
 
-    // The coins, and the figure set against them, centred down the strip.
+    // The foot: a rule, the coins, and the figure ranged right against the window's own margin.
+    sheet::rule(canvas_, x + panel::kEdge * k, y + (kMoneyStrip.y - 6.0f) * k,
+                (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
     canvas_.image(arts.get("bag_zen"), panel::scaled(x, y, kMoneyIcon));
     const float moneySize = kMoneySize * k;
     const Box strip = panel::scaled(x, y, kMoneyStrip);
-    canvas_.text(x + kMoneyFrom * k, panel::centredBaseline(face, strip, moneySize), moneySize,
-                 moneyColour(realm.money()), panel::commas(realm.money()));
+    sheet::kicker(canvas_, x + kMoneyFrom * k, panel::centredBaseline(face, strip, 8.0f * k),
+                  8.0f * k, "ZEN");
+    sheet::ranged(canvas_, strip.right() - 4.0f * k,
+                  panel::centredBaseline(face, strip, moneySize), moneySize,
+                  moneyColour(realm.money()), panel::commas(realm.money()));
 
     // The cell a dragged thing would land on: blue where the move would be taken and red where
     // not, asked of the realm's own gate. Bag.Target.
@@ -260,12 +293,15 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             const content::ItemRow& row = tables.items[size_t(moving.item)];
             int cells[sim::kSlots];
             const int count = bag.covered(cell, row.width, row.height, cells);
-            if (count == 0) {
-                canvas_.rect(panel::scaled(x, y, slotBox(cell)), kBlocked);
-            }
-            for (int i = 0; i < count; ++i) {
-                canvas_.rect(panel::scaled(x, y, slotBox(cells[i])), fits ? kFits : kBlocked);
-            }
+            const auto light = [&](int at, bool ok) {
+                const Box box = slotBox(at);
+                const bool worn = sim::wearable(at);
+                panel::cell(canvas_, x, y,
+                            worn ? box : Box{box.x, box.y, kCell - 1.0f, kCell - 1.0f},
+                            ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
+            };
+            if (count == 0) light(cell, false);
+            for (int i = 0; i < count; ++i) light(cells[i], fits);
         }
     }
 

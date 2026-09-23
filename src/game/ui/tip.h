@@ -78,9 +78,20 @@ constexpr float kRadius = 7.0f;  // the corner, in the card's own 1080-line pixe
 // The card's unit: one pixel of the design page at 1080 lines.
 float unit();
 
+// The shadow on its own, and the graded body on its own: what a window composes when it wants
+// its own edge between them (game/ui/sheet.h draws a gradient stroke there). `radius` is in
+// pixels for `panel` and in the card's units for `glass`.
+void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u);
+void panel(gfx::Canvas& canvas, const gfx::Box& box, float radius, uint32_t top, uint32_t foot);
+
 // The container on its own: the three-falloff shadow, the ring, and the graded body, at `box`.
 // What `draw` lays down before it prints anything, and all a rail needs.
-void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius = ink::kRadius);
+//
+// `top` and `foot` are the body's two ends, and 0 takes the card's own. A window asks for its
+// own pair: the card's are set for a thing read for a second, and a sheet you stand in front of
+// wants a heavier glass at its foot (see game/ui/sheet.h).
+void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius = ink::kRadius,
+           uint32_t top = 0u, uint32_t foot = 0u);
 
 // A line of type with its own drop shadow, and the same with CSS's letter-spacing -- `track` ems
 // after every letter, drawn a glyph at a time because the canvas advances by the face alone.
@@ -95,6 +106,10 @@ float middle(const gfx::Face& face, float top, float tall, float size);
 
 // Which mark stands beside a section.
 enum class Mark : uint8_t { None, Blade, Shield, Star, Triangle, Diamond, Socket, Note };
+
+// One mark drawn at (cx, cy) at `size` across: the same small figures the card sets beside a
+// section, and what the windows' heads carry.
+void glyphAt(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, uint32_t colour);
 
 struct Section {
     std::string kicker;  // empty draws no heading

@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "content/texture.h"
+#include "game/ui/sheet.h"
 #include "gfx/interface.h"
 
 namespace mu::game::panel {
@@ -28,6 +29,12 @@ class Arts {
 public:
     bool open(const std::string& assetDir, content::Textures* textures);
     const gfx::Art& get(const std::string& key);
+    // Every piece in the index, read at once. Called from the preloader (Desk::open), because
+    // "on first ask" for a window that opens mid-play is a first ask of twelve slot pictures in
+    // the frame a merchant's counter opens, and that is a hitch nobody can attribute. The whole
+    // interface is a couple of megabytes and all of it is asked for eventually. Returns how many
+    // it read.
+    int warm();
 
 private:
     std::string assetDir_;
@@ -63,6 +70,10 @@ float scale();
 constexpr float kWidth = 190.0f;
 constexpr float kHeight = 429.0f;
 constexpr float kRightMargin = 24.0f;
+// The air between two open windows. MU butts its columns flush, which worked while every window
+// was a slab of leather with its own carved border; two hairline-edged panels flush against each
+// other read as one panel with a seam, so the skin puts six units between them.
+constexpr float kColumnGap = 6.0f;
 // Where a panel in the n-th column from the right begins, and its top: centred down the screen.
 // MU moves the INVENTORY left to column two when the character window opens, not the other way.
 float columnX(float screenWidth, int column);
@@ -75,26 +86,44 @@ inline gfx::Box scaled(float x, float y, const gfx::Box& units) {
 }
 
 // ---- the frame -------------------------------------------------------------------------------
+//
+// **The skin is `game/ui/sheet.h`**, chosen by the user on 2026-09-23 from a page of four:
+// *"B, obsidian, deeper wells"*. MU's rectangles are untouched -- this is paint, and every
+// number below is where MU already put something. What went with the leather: `bag_back`,
+// `bag_plate`, `bag_crest`, `bag_cell`, `bag_field` and `bag_close`, all six replaced by shapes
+// the canvas draws.
 
-// The body starts eight units down: the crest sits in the strip above it with the world behind.
+// The corner, the head's band of light, the margin a rule keeps, and where the mark and the
+// title stand in the head. MU's own units, like everything else on this page.
+constexpr float kRadius = 2.5f;
+constexpr float kHeadBand = 36.0f;
+constexpr float kEdge = 8.0f;
+constexpr float kMarkX = 15.0f;
+constexpr float kMark = 4.5f;
+constexpr float kTitleX = 24.0f;
+
+// The body starts eight units down: the crest sat in the strip above it with the world behind.
 constexpr float kPlateTop = 8.0f;
 constexpr float kPlateHeight = 28.0f;
 constexpr float kHeadButton = 24.0f;
 constexpr float kHeadInset = 7.0f;
 constexpr float kHeadDrop = 1.0f;
-constexpr float kTitleSize = 11.0f;
+constexpr float kTitleSize = 10.5f;
 
 // The seat for a button in the plate's end cap -- the close, on the right.
 gfx::Box headSocket(bool right);
 inline gfx::Box frameClose() { return headSocket(true); }
 
-// The leather, the plate, the crest and the title. `Panel.Head` over `Panel.Frame`.
+// The glass, its gradient stroke, the head's band, the mark, the title and the rule under it.
 void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title);
-// The X in the plate's right-hand cap, in its two lights.
+// The cross in the head's right-hand end, in its three lights.
 void close(gfx::Canvas& canvas, Arts& arts, float x, float y, bool pressed);
-// A hollow well at any size, nine-sliced with the art's own 12-texel border. `Panel.Field`.
+void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed);
+// A framed block at any size, in the card's own 3% fill under a 10% hairline. `Panel.Field`.
 void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& units,
            const char* key = "bag_field");
+// One well at any size: the deep-cut cell every grid and every worn slot is drawn as.
+void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state);
 // Where a baseline goes to centre a line of a given size in a box: Godot's own arithmetic,
 // half the leftover above the cap-line.
 float centredBaseline(const gfx::Face& face, const gfx::Box& box, float fontSize);

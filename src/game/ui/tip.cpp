@@ -184,9 +184,13 @@ std::vector<std::string> wrapped(const gfx::Face& face, float size, const std::s
     return out;
 }
 
+}  // namespace
+
 // One section's mark, drawn as a small figure rather than a letter: the face bakes ASCII only,
-// and a "+" standing in for a blade would read as a plus.
-void mark(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, uint32_t colour) {
+// and a "+" standing in for a blade would read as a plus. Declared in the header since
+// 2026-09-23: the windows' heads carry the same marks, and a second set of them drawn somewhere
+// else is a second set to keep in step.
+void glyphAt(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, uint32_t colour) {
     const auto quad = [&](float x0, float y0, float x1, float y1, float x2, float y2, float x3,
                           float y3) {
         const float xy[8] = {x0, y0, x1, y1, x2, y2, x3, y3};
@@ -247,8 +251,6 @@ void mark(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, uint3
     }
 }
 
-}  // namespace
-
 uint32_t colourOf(Tone tone) {
     switch (tone) {
         case Tone::Blue: return gfx::rgba(0.5f, 0.7f, 1.0f);
@@ -280,10 +282,11 @@ void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet) {
 // card's style. It is one function rather than two copies for the reason the inks are in the
 // header: a container drawn twice drifts, and the user asked for the same style and not a
 // similar one.
-void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius) {
-    // Three falloffs summed into one field and laid down as a grid of shaded quads, so it has
-    // no edge anywhere. A rectangle blurred by a Gaussian is the product of two error
-    // functions, one each way, which is what `edge` is.
+// The shadow alone, so a window can lay it down and then draw its own edge over its own body:
+// the three falloffs summed into one field and laid down as a grid of shaded quads, so it has no
+// edge anywhere. A rectangle blurred by a Gaussian is the product of two error functions, one
+// each way, which is what `edge` is.
+void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u) {
     {
         const float reach = kFalls[2].sigma * 3.0f * u + kFalls[2].drop * u;
         const auto edge = [](float at, float low, float high, float sigma) {
@@ -318,6 +321,18 @@ void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius) {
             }
         }
     }
+}
+
+// The rounded body on its own, graded from its head to its foot. `radius` is in pixels here, not
+// in the card's units: a window sets its own corner.
+void panel(gfx::Canvas& canvas, const gfx::Box& box, float radius, uint32_t top, uint32_t foot) {
+    const float all[4] = {radius, radius, radius, radius};
+    roundedFan(canvas, box, all, top, foot);
+}
+
+void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius, uint32_t top,
+           uint32_t foot) {
+    shadowUnder(canvas, box, u);
     // The ring first and a hair wider, then the body over it: two fans, and the ring is left
     // showing as the edge. Drawn rounded, and see-through enough that the world moves behind it.
     const float r = radius * u;
@@ -325,7 +340,7 @@ void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius) {
     const float all[4] = {r, r, r, r};
     const float wider[4] = {r + line, r + line, r + line, r + line};
     roundedFan(canvas, box.grown(line), wider, fade(kRing));
-    roundedFan(canvas, box, all, kBodyTop, kBodyFoot);
+    roundedFan(canvas, box, all, top != 0u ? top : kBodyTop, foot != 0u ? foot : kBodyFoot);
 }
 
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
@@ -444,7 +459,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         if (section.mark != Mark::None) {
             const float markTall = section.kicker.empty() ? rowTall
                                                           : std::round(kickerSize * 1.75f);
-            mark(canvas, section.mark, box.x + pad + kMarkColumn * u * 0.5f,
+            glyphAt(canvas, section.mark, box.x + pad + kMarkColumn * u * 0.5f,
                  rowPen + markTall * 0.5f, 11.0f * u, fade(kQuiet));
         }
         if (!section.kicker.empty()) {

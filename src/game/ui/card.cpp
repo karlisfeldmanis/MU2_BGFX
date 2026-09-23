@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "game/ui/sheet.h"
+
 namespace mu::game {
 namespace {
 
@@ -30,10 +32,10 @@ constexpr float kDetailTop = 24.0f, kDetailStep = 13.0f;
 
 // The two weights of type, both warm: a label steps down from the heading rather than being a
 // colour of its own. Godot's Darkened(a) is rgb * (1 - a).
-constexpr uint32_t kHeading = panel::kLettering;
-constexpr uint32_t kPlain = gfx::rgba(0.90f * 0.72f, 0.86f * 0.72f, 0.76f * 0.72f);
-constexpr uint32_t kDetailInk = gfx::rgba(0.90f * 0.58f, 0.86f * 0.58f, 0.76f * 0.58f);
-constexpr uint32_t kSpendable = gfx::rgba(1.0f, 0.8f, 0.1f);
+constexpr uint32_t kHeading = sheet::ink::kFigure;
+constexpr uint32_t kPlain = sheet::ink::kLabel;
+constexpr uint32_t kDetailInk = sheet::ink::kQuiet;
+constexpr uint32_t kSpendable = sheet::ink::kGold;
 
 const char* titled(sim::Kin kin) {
     switch (kin) {
@@ -134,10 +136,10 @@ void Card::rebuild() {
     const float size = kTextSize * k, brief = kSummarySize * k;
 
     panel::frame(canvas_, arts, x, y, "Character");
-    // The wells the type sits in. MU draws none; MuDream's leather needs them, and the sheet
-    // ships the well for exactly this.
-    panel::field(canvas_, arts, x, y, kSummaryField);
-    for (const Row& row : kRows) panel::field(canvas_, arts, x, y, rowField(row.y));
+    // The wells the type sits in. MU draws none; this skin cuts one for every row and one for
+    // the summary, which is what "deeper wells" means on the page the user chose.
+    panel::cell(canvas_, x, y, kSummaryField, sheet::Cell::Rest);
+    for (const Row& row : kRows) panel::cell(canvas_, x, y, rowField(row.y), sheet::Cell::Rest);
 
     // Card.Write: set from a top-left, the ascent below it. Right: the same, ranged right.
     auto write = [&](float ux, float uy, const std::string& text, uint32_t colour, float at) {
@@ -163,7 +165,6 @@ void Card::rebuild() {
           panel::commas((long long)now_.experience), kPlain, brief);
 
     const int values[4] = {now_.strength, now_.agility, now_.vitality, now_.energy};
-    const gfx::Art& plusArt = arts.get("bag_plus");
     for (const Row& row : kRows) {
         // The name against the window's left edge and the figure against the plus, both
         // centred down the well.
@@ -202,14 +203,11 @@ void Card::rebuild() {
         }
 
         // The plus only where there is something to spend: MU hides it rather than greying it.
+        // `bag_plus`'s two-state button is gone with the rest of the art; the skin's own gold
+        // diamond with a plus cut out of it stands in its place, at MU's own rectangle.
         if (now_.points <= 0) continue;
-        const Box plus = panel::scaled(x, y, plusFor(row.y));
-        if (plusArt.valid()) {
-            canvas_.region(plusArt, plus, panel::buttonState(plusArt, now_.pushed == row.stat));
-        } else {
-            canvas_.rect(plus, gfx::rgba(0.16f, 0.14f, 0.10f, 0.9f));
-            canvas_.outline(plus, 1.0f, gfx::rgba(0.80f, 0.70f, 0.45f, 0.95f));
-        }
+        sheet::diamond(canvas_, panel::scaled(x, y, plusFor(row.y)), false,
+                       now_.pushed == row.stat);
     }
 
     panel::close(canvas_, arts, x, y, now_.closing);
