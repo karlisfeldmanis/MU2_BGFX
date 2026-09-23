@@ -29,9 +29,8 @@ which is exactly where the stack is standing on somebody's object. Subtract that
 is gone -- not thresholded away, subtracted -- and what is left is the object, whole, down to
 the dark folds of a boot that no brightness threshold could have kept.
 
-The shape is then closed and written at three times MU's size (the plates are themselves a
-doubling of 46x46 art -- `newui_item_cap.png` and its ten fellows -- and a cell is about 62x72
-pixels at 1080p, more on a taller screen):
+The shape is then closed at three times MU's size -- a threshold on a coarse grid is a staircase
+-- and written at one and a half, which is about what a slot is drawn at (`written`):
 
 - what stands above the noise of the leftover weave, measured on a band round the edge of the
   plate where nothing is ever painted, is the shape;
@@ -39,7 +38,11 @@ pixels at 1080p, more on a taller screen):
   edge does not move;
 - the patches that hold a bright pixel and are at least a sixth of the largest (a pair of boots
   is two patches, the armour's skirt is a third of its chest, a speck of weave is a hundredth);
+- grown out along the shape's own dim paint, a pixel at a time and not far, so a band that turns
+  away from the light -- the ring's -- is followed round instead of broken off;
 - small holes filled, large ones kept: a ring is a ring, and its middle is not a hole;
+- its outline blurred and cut again at a half, which takes off anything thinner than the blur
+  and keeps every bay and spur of MU's own drawing;
 - and written as MU's own shading in RGB with the coverage in alpha, rather than the old flat
   white whose alpha carried the tone. That is the other half of why the ghosts were blobs: a
   shape whose dark parts are transparent has no dark parts, only missing ones. Now the bag
@@ -60,8 +63,14 @@ ASSETS = PROJECT / "source" / "interface"
 
 #: The rim: gold, and a shadow inside it, none of which is the plate.
 RIM = 10
-#: The ghost is written at this multiple of the plate, which is MU's 46x46 already doubled.
+#: The shape is found at this multiple of the plate, which is MU's 46x46 already doubled...
 SCALE = 3
+#: ...and written at this one, which is about the size a worn slot is drawn at. See `written`.
+OUT = 1.5
+#: How far over the leftover weave's own brightest corner the floor stands.
+EDGE = 1.05
+#: Growth follows paint this share of the floor, if it starts on the shape and stays beside it.
+DIM = 0.45
 #: Brighter than this above the folded estimate and the stacked one is standing on an object.
 TAU = 8.0
 #: The floor under the noise estimate: nothing below this share of the brightest paint is shape.
@@ -170,7 +179,7 @@ def cut(path: Path, plate: np.ndarray, leather: np.ndarray) -> Path:
     band = SCALE * 4
     edge = np.concatenate([light[:band].ravel(), light[-band:].ravel(),
                            light[band:-band, :band].ravel(), light[band:-band, -band:].ravel()])
-    floor = max(LOW, 1.7 * float(np.percentile(edge, 98)))
+    floor = max(LOW, EDGE * float(np.percentile(edge, 98)))
 
     standing = light > floor
     seed = morph(morph(standing, OPEN, False), OPEN, True)
@@ -182,7 +191,21 @@ def cut(path: Path, plate: np.ndarray, leather: np.ndarray) -> Path:
     sizes = np.bincount(labels.ravel(), minlength=count + 1)
     kept = [i for i in bright if sizes[i] >= sizes[bright].max() * SHARE]
     # Grown back to the edge the opening took off, but no further than the paint itself goes.
-    body = fill_small_holes(morph(np.isin(labels, kept), OPEN, True) & standing)
+    body = morph(np.isin(labels, kept), OPEN, True) & standing
+    # And then out along the shape's own dim paint, a pixel at a time and not far: the ring's
+    # band turns away from the light on its lower left and falls under any floor high enough to
+    # keep the sunburst out, so it came out a hook. Growth that has to start on the shape and
+    # stay next to it can follow the band round without the leather coming with it.
+    dim = light > floor * DIM
+    for _ in range(SCALE):
+        body |= morph(body, 3, True) & dim
+    body = fill_small_holes(body)
+    # The outline smoothed before it is written: blurred and cut again at a half, which is a
+    # contour that has lost everything thinner than the blur. What that takes off is the fur the
+    # growth leaves behind -- a weave hair a pixel or two wide, standing off the shape -- and
+    # what it keeps is every bay and spur of MU's own drawing.
+    body = np.asarray(Image.fromarray((body * 255).astype(np.uint8)).filter(
+        ImageFilter.GaussianBlur(SCALE * 0.55))) > 127
 
     alpha = np.asarray(Image.fromarray((body * 255).astype(np.uint8)).filter(
         ImageFilter.GaussianBlur(SCALE * 0.35))).astype(float) / 255.0
@@ -198,8 +221,38 @@ def cut(path: Path, plate: np.ndarray, leather: np.ndarray) -> Path:
     out[..., 0] = out[..., 1] = out[..., 2] = (shaded * 255).astype(np.uint8)
     out[..., 3] = (trimmed * 255).astype(np.uint8)
     target = path.with_name(path.name.replace("win_slot_", "win_ghost_"))
-    Image.fromarray(out, "RGBA").save(target)
+    Image.fromarray(written(out), "RGBA").save(target)
     return target
+
+
+def written(image: np.ndarray) -> np.ndarray:
+    """Down to the size it is drawn at, and sharpened there.
+
+    The shape is found at three times the plate because a threshold on a coarse grid gives a
+    staircase, but three times the plate is twice the cell: at 1080p a worn slot is about 62x72
+    pixels and the helm was 144x186. The window samples its art once per pixel with no mip chain,
+    so a picture at twice the size it is drawn is not detail, it is every other texel thrown away
+    -- which is the blur. The user, 2026-09-23: *"they look blurry"*. So the cut is taken at
+    SCALE and written at OUT, by a filter that reads every texel on the way down, and given back
+    the edge the two resamples cost it.
+    """
+    rgba = image.astype(float) / 255.0
+    lit = rgba[..., :3] * rgba[..., 3:4]  # through the resize premultiplied, or the trim's
+    height = max(1, int(round(image.shape[0] * OUT / SCALE)))  # transparent black bleeds in
+    width = max(1, int(round(image.shape[1] * OUT / SCALE)))
+    small = np.stack([
+        np.asarray(Image.fromarray((plane * 255).astype(np.uint8)).resize(
+            (width, height), Image.LANCZOS)).astype(float) / 255.0
+        for plane in (lit[..., 0], rgba[..., 3])
+    ])
+    alpha = np.clip(small[1], 0.0, 1.0)
+    tone = np.where(alpha > 0.004, np.clip(small[0] / np.maximum(alpha, 0.004), 0.0, 1.0), 0.0)
+    sharp = np.asarray(Image.fromarray((tone * 255).astype(np.uint8)).filter(
+        ImageFilter.UnsharpMask(radius=1.2, percent=70, threshold=2))).astype(float) / 255.0
+    out = np.zeros(alpha.shape + (4,), dtype=np.uint8)
+    out[..., 0] = out[..., 1] = out[..., 2] = (sharp * 255).astype(np.uint8)
+    out[..., 3] = (alpha * 255).astype(np.uint8)
+    return out
 
 
 def main() -> None:

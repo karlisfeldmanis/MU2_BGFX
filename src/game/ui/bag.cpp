@@ -76,12 +76,16 @@ const char* ghostFor(int slot) {
     }
 }
 
-// Where a ghost stands in its cell: fitted to the cell less five units a side, at its own
-// aspect, centred. Every ghost then has the same air round it whatever its shape, and none
-// touches the cell's hairline.
+// Where a ghost stands in its cell: fitted to the cell less five units a side and stood down to
+// kGhostFill of that, at its own aspect, centred. Every ghost then has the same air round it
+// whatever its shape, and none touches the cell's hairline. The fill is what it is because a
+// ghost drawn out to the cell's edge is a picture in the cell rather than a mark on it, and it
+// then stood taller than the piece the slot holds -- the user, 2026-09-23: *"icoons to large"*.
+constexpr float kGhostFill = 0.80f;
+
 Box ghostBox(const Box& cell, const gfx::Art& art) {
     const Box room = cell.grown(-5.0f);
-    const float s = std::min(room.w / art.width, room.h / art.height);
+    const float s = std::min(room.w / art.width, room.h / art.height) * kGhostFill;
     const float w = art.width * s, h = art.height * s;
     return {room.x + (room.w - w) * 0.5f, room.y + (room.h - h) * 0.5f, w, h};
 }
