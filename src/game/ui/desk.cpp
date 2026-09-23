@@ -188,11 +188,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             else refused();
         }
         if (asked.use >= 0 && !play.useItem(asked.use)) refused();
-        // Let go outside the window. MU throws it on the ground, and there is no ground to
-        // throw it on until step 7 -- so for now it stays in the bag, which is a refusal the
-        // window already draws by putting the item back where it was.
-        // Over the shelf it is a sale -- SendSellItemToNpcRequest -- and the realm refuses a
-        // worn slot again.
+        // Let go outside the window. Something else may want it before the ground does --
+        // MU2's Bag.Caught, asked first -- and what nothing catches is thrown on the ground
+        // at his feet (SendRequestDropItem). Over the shelf it is a sale instead
+        // (SendSellItemToNpcRequest), and the realm refuses a worn slot again.
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
             if (!play.sell(asked.outside)) refused();
         } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
@@ -204,7 +203,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 core::logf("window: slot %d bound to key %d", asked.outside, key + 1);
             }
         } else if (asked.outside >= 0) {
-            core::logf("window: %d let go outside the bag; kept", asked.outside);
+            // The one gesture in the interface that gives something away, which is why it
+            // takes a deliberate drag out of the window and not a click. A refusal -- a dead
+            // man's drag -- is the interface's no, and the window puts the item back by
+            // redrawing from a satchel that never changed.
+            if (!play.discard(asked.outside)) refused();
         }
         // Silent, as CNewUIMyInventory's exit button is; the I and V keys click.
         if (asked.close) inventoryOpen_ = false;

@@ -204,8 +204,12 @@ not the window's.
   one came from, and MU2 never asked whether it fits there: a Small Shield put on over a Kite
   Shield would lay the Kite's 2x3 across whatever sat under the Small Shield's 2x2. Asked
   here, refusing the move; a departure from MU2 in the direction of not corrupting the bag.
-- **A drag let go outside the bag keeps the item.** MU throws it on the ground; there is no
-  ground to throw it on until step 7.
+- **A drag let go outside the bag throws the item on the ground** (2026-09-23, once there was
+  a ground to throw it on). `Realm::discard`, off MU's `SendRequestDropItem` and MU2's
+  `Realm.Discard`: the thing leaves the slot, lands on his tile or the nearest clear one --
+  the same `clearing` a kill's drop takes -- and lingers the same minute. Worn slots are
+  thrown too, and the hands are re-reckoned. The shelf and a quick box are asked first, as
+  MU2's `Bag.Caught` is; money is not thrown, because money is not in a slot.
 - **No repair button.** Nothing in this sim wears, so it would be a button that does nothing.
 - **Talking walks to the townsperson and serves within three tiles** (MU2's `Counter`, marked
   there as MU2's: neither MU nor OpenMU checks a distance). Any new order closes the counter.

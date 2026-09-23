@@ -126,6 +126,10 @@ public:
     // to refuse; see sim/items.h for the gates.
     bool moveItem(int from, int to);
     bool useItem(int slot);
+    // A drag let go over the world: the thing is thrown on the ground at his feet, where the
+    // same Pick order that takes a kill's drop takes it back. The realm's to refuse, and the
+    // figure is re-dressed when what was thrown came off him.
+    bool discard(int slot);
     // A skill key pressed: throw this skill at whatever the fight is on, or at `at` when the
     // window knows a target. Not an order and it does not cancel one -- the realm spends the next
     // swing on it and the knight goes on fighting (docs/skills-dk.md §3.1a). The realm refuses

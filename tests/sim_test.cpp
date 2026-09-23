@@ -480,6 +480,29 @@ void testItems(const content::Tables& tables) {
     for (int i = 0; i < 10; ++i) realm.step();
     check(realm.useItem(potionAt), "and the last one");
     check(realm.satchel()[potionAt].empty(), "leaves the slot empty");
+
+    // The drag out of the window: the axe leaves his hand and lies on the ground, where the
+    // same Pick order a kill's drop answers takes it back. The hands are re-reckoned both
+    // ways, which is what makes a thrown weapon a real loss and a recovered one a real gain.
+    const size_t lyingBefore = realm.lying().size();
+    check(realm.discard(sim::kWeaponRight), "the axe is thrown out of his hand");
+    checkEqual((long long)realm.lying().size(), (long long)lyingBefore + 1, "and lies on the ground");
+    check(realm.satchel()[sim::kWeaponRight].empty(), "the hand it came out of is empty");
+    checkEqual(realm.hero().weapon, -1, "he is bare-handed again");
+    check(realm.hero().stats.minimumDamage < minimumArmed, "and hits for less");
+    check(!realm.discard(sim::kWeaponRight), "an empty slot throws nothing");
+    check(!realm.discard(-1) && !realm.discard(sim::kSlots), "and neither does a slot that is not one");
+    const sim::Lying& thrown = realm.lying().back();
+    checkEqual(thrown.what.item, axe, "what lies there is the axe");
+    checkEqual((long long)thrown.column, (long long)realm.hero().column(), "at his own tile");
+    checkEqual((long long)thrown.row, (long long)realm.hero().row(), "in both directions");
+    // And picked up again: the Pick order, standing on it.
+    sim::Request pick;
+    pick.kind = sim::Request::Kind::Pick;
+    pick.target = thrown.id;
+    realm.ask(pick);
+    for (int tick = 0; tick < 100 && realm.lying().size() > lyingBefore; ++tick) realm.step();
+    checkEqual((long long)realm.lying().size(), (long long)lyingBefore, "and it is picked up again");
 }
 
 // Sprint 7's sentence, headless: kill, pick up, equip, sell. A plain hand hunts the field

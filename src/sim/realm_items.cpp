@@ -17,6 +17,11 @@
 
 namespace mu::sim {
 
+// How long anything left on the ground lies there, in seconds: Loot.Lingers, and the same for
+// a kill's drop and for a thing the character throws away -- MU gives a discard no shorter
+// life than a kill's, and a shorter one would be a trap on a misdragged sword.
+constexpr int kLingerSeconds = 60;
+
 Arms Realm::armsOf(const Body& one) const {
     Arms arms;
     if (!tables_) return arms;
@@ -314,7 +319,6 @@ void Realm::leave(const Body& dead, const Body& killer) {
     constexpr double kJewel = 0.001, kItem = 0.1, kMoney = 0.5;
     constexpr int kGap = 12;           // Loot.Gap: nothing more than twelve levels below it
     constexpr int kBaseMoney = 7;      // Loot.BaseMoney
-    constexpr int kLingerSeconds = 60; // Loot.Lingers
     constexpr int kMostRefined = 9;    // Refine.Cap
     const int level = dead.level;
     double roll = dice_.nextDouble();
@@ -478,6 +482,30 @@ bool Realm::pay(int64_t zen) {
 Held Realm::sell(int slot) {
     if (!baggable(slot)) return Held{};
     return bag_.lift(slot);
+}
+
+// The drag let go over the world. It is the one gesture in the interface that gives something
+// away, which is why nothing here is clever about it: the thing comes out of the slot and lies
+// where a kill's drop would lie, to be picked up again by the same Pick order.
+//
+// A worn slot is thrown too -- MU lets a sword be dragged out of the hand and onto the floor --
+// and `rearm` is what makes his arms, his defence and his swing catch up with an empty hand.
+bool Realm::discard(int slot) {
+    if (!tables_ || slot < 0 || slot >= kSlots) return false;
+    Body& hero = bodies_[0];
+    // A dead man throws nothing away, as a dead man moves nothing: the same gate `moveItem`
+    // keeps, so a window left open over a corpse cannot empty the bag.
+    if (!hero.alive() || bag_[slot].empty()) return false;
+
+    Lying one;
+    one.what = bag_.lift(slot);
+    if (wearable(slot)) rearm(hero);
+    std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
+    one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+    one.id = nextId_++;
+    lying_.push_back(one);
+    say(What::Dropped, hero, int32_t(one.id), one.what.item, one.what.refinement);
+    return true;
 }
 
 }  // namespace mu::sim

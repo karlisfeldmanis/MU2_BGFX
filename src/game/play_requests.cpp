@@ -62,6 +62,18 @@ bool Play::useItem(int slot) {
     return used;
 }
 
+// The throw is silent here on purpose: the noise belongs to the thing LANDING, not to the
+// hand letting go, and `Play::landed` already makes it where it lies -- the drop is held for a
+// frame like every other and released by releaseDrops, which is what a live dropper's held
+// drop does at once. See the What::Dropped branch in Play::step.
+bool Play::discard(int slot) {
+    const bool worn = slot >= 0 && sim::wearable(slot);
+    const bool thrown = realm_.discard(slot);
+    core::logf("window: %d thrown on the ground %s", slot, thrown ? "taken" : "refused");
+    if (thrown && worn) redress();
+    return thrown;
+}
+
 // The satchel is the truth (docs/sprints/07-the-windows.md) and Realm::rearm already reads
 // `hero.weapon` and `hero.shield` off it on every move that touches a worn slot; this is that
 // same rule kept for the picture. Without it the figure kept whatever `Figures::dress` gave

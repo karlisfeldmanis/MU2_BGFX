@@ -345,6 +345,13 @@ public:
     // Takes a carried thing out of the bag and hands it back: a sale. Worn things are not
     // sold (Shelf.Offer refuses a source outside the bag, and so does this).
     Held sell(int slot);
+    // Throws a carried thing on the ground at his feet: the drag out of the window. MU's
+    // SendRequestDropItem and OpenMU's DropItemAction, as MU2's Realm.Discard wrote them --
+    // the thing leaves the slot, lands on the tile he stands on or the nearest clear one
+    // (the same `clearing` a kill's drop takes) and lingers as long as a kill's drop does.
+    // Worn things may be thrown too, and the hands are re-reckoned when they are. Money is
+    // not here, because money is not in a slot.
+    bool discard(int slot);
 
     // ---- the merchants (sprint 7) ---------------------------------------------------------
     // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a
