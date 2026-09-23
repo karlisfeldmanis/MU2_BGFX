@@ -288,6 +288,13 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
         const float size[4] = {batch.width, batch.height, density, colour};
         bgfx::setUniform(uGrassSize_, size);
         // Clamped, and it matters: a card's uv runs across ONE column of its sheet, and a
+        bgfx::setUniform(uGrassWake_, grass.wake);
+        // Only when there is a wake to read. This runs on every grass draw, and a measuring
+        // run -- where nobody is played and the radius is 0 -- should not pay 24 vec4s of
+        // upload for an array the shader's bound is about to skip.
+        if (grass.wake[2] > 0.0f) {
+            bgfx::setUniform(uGrassSteps_, grass.steps, GrassField::kMaxSteps);
+        }
         // wrapped sampler bleeds the column beside it in along the cut. Not point-sampled --
         // the painted strokes want the filter -- so the bleed would be half a texel of the
         // wrong tuft down every edge of every card in the field.

@@ -365,6 +365,87 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
         }
     }
 
+    // The wake: Turf's footprints, and **the hero's alone**, which is the one place this
+    // departs from parting the sward round everybody.
+    //
+    // It was written for all eight walkers first and measured, and the measurement said no
+    // twice over. The ring is 24 slots: split eight ways that is three footprints each, which
+    // is a metre of trail nobody can read. And the bound the shader skips the loop by is one
+    // circle round every live footprint -- with the crowd scattered over the field it came out
+    // at 31 m, which is the whole picture, so every card in the field ran the 24-iteration
+    // loop for nothing. Both problems are the same problem: a wake belongs to one walker, and
+    // one walker's footprints are the only set that is ever compact.
+    //
+    // So the crowd parts the sward where it stands (the shove above) and leaves no trail, and
+    // the hero gets the whole ring: 24 footprints at a third of a metre is eight metres of
+    // path, against Turf's ten at three and a half. He is who the player is watching.
+    //
+    // A footprint carries the way he came -- read off the nearest laid in the last second, so
+    // a trodden path lies ALONG the walk rather than being shoved out from every footprint
+    // like a ripple, which is Turf's, and the improvement on it. It lets go over `kClosing`
+    // seconds; the shader ages it against the same clock.
+    constexpr float kStride = 0.35f;
+    constexpr float kClosing = 2.2f;
+    for (int w = 0; w < std::min(count, 1) && walkers; ++w) {
+        const float wx = walkers[w * 4 + 0];
+        const float wz = walkers[w * 4 + 2];
+        bool trodden = false;
+        int recent = -1;
+        float recentGap = 1.0f;
+        for (int i = 0; i < gfx::GrassField::kMaxSteps; ++i) {
+            const Step& s = steps_[i];
+            const float age = seconds - s.laid;
+            if (age < 0.0f || age > kClosing) continue;
+            const float gap = std::hypot(wx - s.x, wz - s.z);
+            if (gap < kStride) trodden = true;
+            if (age < 1.0f && gap < recentGap) {
+                recentGap = gap;
+                recent = i;
+            }
+        }
+        if (trodden) continue;
+        Step& laid = steps_[nextStep_];
+        nextStep_ = (nextStep_ + 1) % gfx::GrassField::kMaxSteps;
+        laid.x = wx;
+        laid.z = wz;
+        laid.laid = seconds;
+        if (recent >= 0 && recentGap > 0.05f) {
+            // From the last footprint towards this one; the angle turns from +x towards -z,
+            // which is the convention every other angle in the field keeps.
+            laid.angle = std::atan2(-(wz - steps_[recent].z), wx - steps_[recent].x);
+        } else {
+            laid.angle = -100.0f;  // no way known: the shader pushes out from the footprint
+        }
+    }
+    // What the live footprints sit inside, so a card can skip the whole loop. Measured rather
+    // than assumed: somebody who has just been put down elsewhere -- a gate, a respawn --
+    // leaves footprints a long way from where anybody now stands.
+    float lo[2] = {1e30f, 1e30f}, hi[2] = {-1e30f, -1e30f};
+    int live = 0;
+    for (int i = 0; i < gfx::GrassField::kMaxSteps; ++i) {
+        float* slot = field.steps + i * 4;
+        slot[0] = steps_[i].x;
+        slot[1] = steps_[i].z;
+        slot[2] = steps_[i].laid;
+        slot[3] = steps_[i].angle;
+        const float age = seconds - steps_[i].laid;
+        if (age < 0.0f || age > kClosing) continue;
+        ++live;
+        lo[0] = std::min(lo[0], steps_[i].x);
+        hi[0] = std::max(hi[0], steps_[i].x);
+        lo[1] = std::min(lo[1], steps_[i].z);
+        hi[1] = std::max(hi[1], steps_[i].z);
+    }
+    if (live > 0) {
+        field.wake[0] = (lo[0] + hi[0]) * 0.5f;
+        field.wake[1] = (lo[1] + hi[1]) * 0.5f;
+        // The half-diagonal of the box they sit in, plus a footprint's own span.
+        field.wake[2] = 0.5f * std::hypot(hi[0] - lo[0], hi[1] - lo[1]) + 0.55f;
+    } else {
+        field.wake[0] = field.wake[1] = field.wake[2] = 0.0f;
+    }
+    field.wake[3] = seconds;
+
     // The wind turns from +x towards -z, which is the way the sun's azimuth turns and the way
     // a row runs on MU's grid. One convention for every angle in the sheet.
     const float windRadians = look.grassWindDegrees * 3.14159265f / 180.0f;

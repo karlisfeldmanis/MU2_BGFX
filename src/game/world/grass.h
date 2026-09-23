@@ -150,6 +150,20 @@ private:
     // allocates nothing once the disc has been walked once.
     std::vector<float> packed_[gfx::GrassField::kMaxSheets];
     Counts counts_;
+
+    // The footprints: a ring of where anybody's feet have been, laid one every third of a
+    // metre of walking and let go of over a couple of seconds. Turf's wake, kept for every
+    // walker at once rather than one. Nothing here knows which walker is which from frame to
+    // frame -- the crowd's order is not promised -- so a footprint is laid wherever a walker
+    // stands with no live footprint within a stride of them, and the way they were walking
+    // is read off the nearest footprint just laid. See gather.
+    struct Step {
+        float x = 0.0f, z = 0.0f;
+        float laid = -1000.0f;  // the run's second it was laid; long ago is an empty slot
+        float angle = 0.0f;     // which way they were walking, radians from +x towards -z
+    };
+    Step steps_[gfx::GrassField::kMaxSteps];
+    int nextStep_ = 0;
 };
 
 }  // namespace mu::game

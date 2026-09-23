@@ -33,6 +33,8 @@ uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a b
 uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  z: a scale on the patch's density  w: how far the colour grade goes
 uniform vec4 u_grassReach;  // x: metres from the eye past which no card stands  y: the band before it, over which a card shrinks away  z: where the thinning begins  w: where it has taken all it takes
 uniform vec4 u_grassWalkers[8]; // xyz: somebody's feet, world space  w: how far round them the sward is parted (0 is an empty slot)
+uniform vec4 u_grassSteps[24];  // xy: a footprint, world xz  z: the second it was laid  w: the way they were walking, radians (under -50 is unknown)
+uniform vec4 u_grassWake;       // xy: the centre of every live footprint  z: the radius they all sit inside (0 is no wake)  w: the seconds now
 
 // --- the hash ----------------------------------------------------------------------------
 //
@@ -348,14 +350,56 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float index)
 		if (walker.w <= 0.0) continue;
 		vec2 away = c.base.xz - walker.xz;
 		float near = length(away);
+		// Quadratic, which is remaster_one's and Turf's, and the better shape: the grass
+		// right at their feet lies right down and the field closes almost at once behind
+		// them, instead of a soft dish following them about.
 		float here = saturate(1.0 - near / walker.w);
-		here = here * here * (3.0 - 2.0 * here);
+		here = here * here;
 		// Only when they are near in height too: a bridge over the sward parts nothing under it.
 		here *= saturate(1.5 - abs(c.base.y - walker.y));
 		if (here > push)
 		{
 			push = here;
 			pushDir = near > 1e-4 ? away / near : facing;
+		}
+	}
+
+	// The wake: Turf's. One push source closes the field the instant they have passed, and a
+	// man wading through grass to his knees does not leave it like that -- the wake is the
+	// one thing that says the grass is grass and not a picture he is standing in front of.
+	// Each footprint presses as a walker does, narrower (a footprint is where the feet were,
+	// not where the whole body is), scaled by how much of it is left, and it comes up quickly
+	// at first and then slowly, which is how a bent blade recovers. Turf pushed out from every
+	// footprint like a ripple; this lays the grass ALONG the walk where the footprint knows
+	// which way that was, which is what a trodden path looks like.
+	// Asked only of cards the wake can reach. Without this bound the loop below is twenty-four
+	// iterations on every vertex of every card in the field; with it, it is skipped by all of
+	// them but the few hundred behind somebody's heels, and by every one of them on a run with
+	// nobody in it. Turf measured the same bound for the same reason.
+	bool nearWake = u_grassWake.z > 0.0 &&
+	                length(c.base.xz - u_grassWake.xy) < u_grassWake.z;
+	for (int i = 0; nearWake && i < 24; ++i)
+	{
+		vec4 print = u_grassSteps[i];
+		float left = 1.0 - saturate((u_grassWake.w - print.z) / 2.2);
+		if (left <= 0.0) continue;
+		left *= left;
+		vec2 off = c.base.xz - print.xy;
+		float far = length(off);
+		float span = 0.5;
+		if (far >= span) continue;
+		float press = 1.0 - far / span;
+		press = press * press * left;
+		if (press > push)
+		{
+			push = press;
+			vec2 way = far > 1e-4 ? off / far : facing;
+			if (print.w > -50.0)
+			{
+				vec2 along = vec2(cos(print.w), -sin(print.w));
+				way = normalize(way * 0.5 + along);
+			}
+			pushDir = way;
 		}
 	}
 	if (push > 0.0)

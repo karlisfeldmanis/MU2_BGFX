@@ -646,6 +646,40 @@ lies on the sward rather than standing in it. It is Turf's shove without Turf's 
 wants what they did a second ago, and nothing in this field remembers anything. Nobody is
 played on a measuring run, so every slot goes as 0 and the loop finds nothing.
 
+### The wake, which is Turf's, and the two things measurement changed
+
+Turf carried this and it is the piece worth having: one push source closes the field the
+instant somebody has passed, and a man wading through knee-high grass does not leave it like
+that. Turf kept the walker's last ten footprints at a third of a metre, each carrying the
+moment it was laid, and let each go over 2.2 seconds; the shader pressed the grass down round
+every live one, quadratically, scaled by how much of it was left. All of that is here, with
+the same stride, the same closing time and the same quadratic. The walker's own shove is
+quadratic now too, which is Turf's shape and was a smoothstep before.
+
+**Two things are ours, and both came out of a measurement rather than a preference.**
+
+**The wake is the hero's alone.** It was written for all eight walkers first. The ring is 24
+slots: split eight ways that is three footprints each, which is a metre of trail nobody can
+read. And the bound the shader skips the loop by — one circle round every live footprint,
+which is Turf's own trick — came out at **31 m** with the crowd scattered over the field,
+which is the whole picture, so every card in the field ran a 24-iteration loop for nothing.
+Both faults are one fault: a wake belongs to one walker, and one walker's footprints are the
+only set that is ever compact. So the crowd parts the sward where it stands and leaves no
+trail, the hero gets the whole ring — eight metres of path against Turf's three and a half —
+and the bound measures **1.09 m** standing still. A run with nobody played sends a radius of
+0, and then the 24 vec4s are not even uploaded.
+
+**A footprint knows which way he was going.** Turf pushed the grass straight out from each
+footprint, which is a ripple; this reads the angle off the nearest footprint laid in the last
+second and lays the grass half outward and half along the walk, which is what a trodden path
+looks like.
+
+| | mean wall frame |
+|---|---|
+| played, before the wake | 4.22 ms |
+| played, with it | 4.27 ms |
+| measuring camera, nobody played | 4.74 → 4.78 ms |
+
 **Wind** is 0.16 from 0.10. At 0.10 the tip of a 42 cm card swung about 4 cm, which two
 frames of a held camera thirty frames apart could barely tell apart; a field that size
 wants to be seen to move.
@@ -662,9 +696,10 @@ wants to be seen to move.
 - **The card grass is the whole field.** Past `grass_radius` the ground texture takes over with
   nothing between. There is no far band — but the reach now sits past the frame's edge, so
   on flat ground nothing is ever seen to end.
-- **The walker parts it, but leaves no wake, and monsters part nothing.** Turf had the wake;
-  Ghost of Tsushima's displacement buffer is the shape for both — a camera-relative texture
-  the crowd and the character stamp into, read per card.
+- **The crowd parts the sward but leaves no trail.** Only the hero has a wake, for the reason
+  above. Ghost of Tsushima's displacement buffer is the shape that would give every body one:
+  a camera-relative texture everything stamps into, read once per card, with no per-walker
+  loop and no bound to measure.
 - **The blades still read a little leafy**, and the reason is structural: a card is minified six
   times against its cell, so a painted stroke cannot be thinner than the mip chain will carry.
   Thinner than this wants either a lower-resolution sheet matched to the card's screen size, or

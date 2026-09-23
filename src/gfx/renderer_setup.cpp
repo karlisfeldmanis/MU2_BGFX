@@ -52,6 +52,9 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uGrassWalkers_ = bgfx::createUniform("u_grassWalkers", bgfx::UniformType::Vec4,
                                          GrassField::kMaxWalkers);
     sAlbedo2_ = bgfx::createUniform("s_albedo2", bgfx::UniformType::Sampler);
+    uGrassSteps_ = bgfx::createUniform("u_grassSteps", bgfx::UniformType::Vec4,
+                                       GrassField::kMaxSteps);
+    uGrassWake_ = bgfx::createUniform("u_grassWake", bgfx::UniformType::Vec4);
     sNormal2_ = bgfx::createUniform("s_normal2", bgfx::UniformType::Sampler);
     sOrm2_ = bgfx::createUniform("s_orm2", bgfx::UniformType::Sampler);
 
@@ -355,6 +358,7 @@ void Renderer::shutdown() {
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uCamPos_, &uParams_,
           &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
+          &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
           &sBloom_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);

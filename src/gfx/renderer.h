@@ -115,6 +115,19 @@ struct GrassField {
     // of the crowd; a played frame draws about nine bodies.
     static constexpr int kMaxWalkers = 8;
     float walkers[kMaxWalkers * 4] = {};
+    // And where they have been: the footprints, (x, z, the second it was laid, the angle
+    // they were walking in), so the grass they walked through is still getting up behind
+    // them. A slot whose laid second is far in the past is empty. Turf kept ten for one
+    // walker; this keeps a ring for all of them. The clock they are aged against is
+    // wind.w, the run's seconds.
+    static constexpr int kMaxSteps = 24;
+    float steps[kMaxSteps * 4] = {};
+    // What the whole wake sits inside: (centre x, centre z, radius, the seconds now). A card
+    // further from that centre than the radius skips the footprints altogether, which is every
+    // card in the field but the few hundred behind somebody's heels -- the loop is 24 iterations
+    // on every vertex of every card otherwise. Turf measured the same bound for the same
+    // reason. A radius of 0 is no wake at all, which is what a measuring run sends.
+    float wake[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
     // --- the meadow -------------------------------------------------------------------
     // What a lawn has that a field has not: a seed head standing over the blades, a broad leaf
@@ -547,6 +560,8 @@ private:
     bgfx::UniformHandle uGrassWalkers_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAlbedo2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal2_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassSteps_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassWake_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sOrm2_ = BGFX_INVALID_HANDLE;
 
     bgfx::UniformHandle sAlbedo_ = BGFX_INVALID_HANDLE;
