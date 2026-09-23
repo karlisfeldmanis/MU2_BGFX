@@ -2,11 +2,13 @@
 // the HUD.
 //
 // The user chose this on 2026-09-23 from a design page -- concept **B2**, "weighted by the blow,
-// flat", in Barlow Semi Condensed. The whole of the style is three rules, and they are worth
+// flat" -- and then replaced its typeface on sight of the first build: everything here is set in
+// **Cinzel Bold**, a weight up from the map name's own face, at four sizes. What survives of B2
+// is everything the page argued. The whole of the style is three rules, and they are worth
 // stating here because every number below is one of them made exact:
 //
-//   * **Size is force, hue is kind.** A swing, a skill and a critical are one ramp: 23, 30 and
-//     35 interface units in the same face and the same weight. Nothing else about a figure
+//   * **Size is force, hue is kind.** A swing, a skill and a critical are one ramp: 21, 27 and
+//     32 interface units in the same face and the same weight. Nothing else about a figure
 //     changes -- no second typeface, no outline, no bloom, no tilt, no ring.
 //   * **A critical is a step and not an event.** The user's word, and the reason is arithmetic:
 //     with the luck option rolled a critical lands several times a second, and anything that
@@ -55,15 +57,23 @@ public:
     uint64_t rebuilds() const { return rebuilds_; }
 
 private:
-    // One line in the lane over the HUD.
+    // One line in the lane over the HUD. `Died` is the one that is not a gain and does not
+    // carry a figure: it is said in the same three square inches because that is where the eye
+    // already is when it happens.
     struct Row {
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana };
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died };
         Kind kind = Kind::Experience;
         int64_t value = 0;
         float age = 0.0f;
     };
 
     void collect(const Play& play, float seconds);
+    // The hairline and diamond under the death, drawn as the arrival draws its own: two rules
+    // fading outward from a turned square, each over its Gaussian box-shadow.
+    void rule(float centre, float middle, float unit, float opacity, float drawn, float mark);
+    // The scrim behind the whole death block -- the arrival's own soft cloud, in the death's
+    // red rather than its black, laid as a grid of shaded quads so it has no edge anywhere.
+    void scrim(float centre, float middle, float unit, float opacity);
     void rebuild(const Play& play, const float* viewProj, int width, int height, float hudTop);
 
     gfx::Canvas canvas_;
@@ -73,6 +83,14 @@ private:
     gfx::Face face_, halo_;
     bgfx::TextureHandle faceTexture_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle haloTexture_ = BGFX_INVALID_HANDLE;
+    // The death's second, wider halo: the map name's own soft shadow, so the one line the game
+    // says when he falls is lit exactly as the line it says when he arrives somewhere.
+    gfx::Face soft_;
+    bgfx::TextureHandle softTexture_ = BGFX_INVALID_HANDLE;
+    // And the lane's own face, Cinzel Medium: every row in it -- experience, Zen, a potion --
+    // is one size and one weight, and that weight is not the fight's.
+    gfx::Face quiet_;
+    bgfx::TextureHandle quietTexture_ = BGFX_INVALID_HANDLE;
 
     std::vector<Row> lane_;
     // Zen rolled up: a good hunt pays a pile a second, and a figure for each reads as a slot

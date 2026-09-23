@@ -141,6 +141,8 @@ void Play::update(double seconds) {
                 } else if (happening.what == sim::What::Drank) {
                     gains_.push_back({happening.b ? Gain::Kind::Mana : Gain::Kind::Health,
                                       happening.a});
+                } else if (happening.what == sim::What::Died) {
+                    gains_.push_back({Gain::Kind::Died, 0});
                 }
             }
             if (happening.who == heroId) {

@@ -130,6 +130,12 @@ public:
 
     // The transparent pass, which the renderer owns because the view it draws into is part
     // of the frame and not part of any one caller. A caller fills it between begin() and the
+    // How much the colour is drained out of the WORLD, 0 none and 1 grey. The interface is
+    // drawn in its own pass afterwards and is untouched, which is the whole point: the game
+    // goes grey while he is down and the HUD he is reading does not. It multiplies the sheet's
+    // own saturation rather than replacing it, so a world graded flat stays flat.
+    void setDrain(float drain) { drain_ = drain < 0.0f ? 0.0f : (drain > 1.0f ? 1.0f : drain); }
+
     // next draw(); draw() submits it between the shade and the tonemap and empties it.
     //
     // The renderer knows nothing about what a sprite MEANS -- no blow, no monster, no cue.
@@ -257,6 +263,9 @@ public:
                      const std::vector<Drawable>& hovered);
 
 private:
+    // See setDrain: 0 is the world as the sheet grades it, 1 is grey.
+    float drain_ = 0.0f;
+
     struct Batch {
         const content::Mesh* mesh = nullptr;
         uint32_t first = 0;   // into the frame's instance buffer

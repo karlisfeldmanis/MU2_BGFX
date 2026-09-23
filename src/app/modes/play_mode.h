@@ -41,6 +41,11 @@ private:
     // Writes the hero whole: every fifteen seconds of play, so a crash loses little, and once
     // more on the way out.
     void keep(Context& ctx);
+    // How much colour is out of the world, and where it is going: the game greys while he is
+    // down and comes back as he gets up. The message that says so is the interface's
+    // (game/ui/tally.cpp) and is deliberately NOT drained with it.
+    float drain_ = 0.0f;
+
     // The scripted hands: --give, --zen, --talk, and the windows --windows opens.
     void runScript(Context& ctx);
     // --shadow-points and --shadow-log, both of them measurement apparatus and neither of them

@@ -159,8 +159,11 @@ public:
     // 2026-09-23, concept B. The list holds what this frame's ticks said and is cleared at the
     // top of every update, so whoever draws it runs after Play and reads it once. Nobody
     // reading it is a run with no window, which is the headless case and costs nothing.
+    // `Died` is the one of these that is not a gain: it is here because the LANE is where it
+    // is said, and a second channel from the realm to the same three square inches of screen
+    // would be two things to keep in step for no gain.
     struct Gain {
-        enum class Kind : uint8_t { Experience, Zen, Health, Mana };
+        enum class Kind : uint8_t { Experience, Zen, Health, Mana, Died };
         Kind kind = Kind::Experience;
         int64_t value = 0;
     };

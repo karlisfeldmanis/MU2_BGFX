@@ -4,6 +4,7 @@
 #include <bx/math.h>
 #include <bx/timer.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
@@ -448,6 +449,16 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         if (ctx.window.clicked(1) && !windowed) world_.played().rightClick();
         if (!windowed) world_.zoom(ctx.window.scroll());
         world_.played().update(deltaSeconds);
+        // The colour goes out of the world while he is down. Half a second out and a second
+        // back: a fall should land and a recovery should feel like one. The renderer drains the
+        // scene's own pass, so the HUD and the message over it stay in colour -- which is the
+        // point, and is why this is a renderer setting and not a grade in the sheet.
+        {
+            constexpr float kDrainIn = 0.5f, kDrainBack = 1.0f;
+            const bool down = !world_.played().realm().hero().alive();
+            const float rate = float(deltaSeconds) / (down ? kDrainIn : kDrainBack);
+            drain_ = down ? std::min(1.0f, drain_ + rate) : std::max(0.0f, drain_ - rate);
+        }
         for (const int f : args.rises) {
             if (at.index == f) world_.played().rise();
         }
@@ -533,6 +544,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         ctx.renderer.cameraMatrices(world_.camera(), view, proj);
         float viewProj[16];
         bx::mtxMul(viewProj, view, proj);
+        ctx.renderer.setDrain(drain_);
         world_.played().gather(ctx.renderer, viewProj, townDrawables_,
                                casters ? &townCasters_ : nullptr, &hoverDrawables_);
         if (desk_.ready()) {

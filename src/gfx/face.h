@@ -100,8 +100,11 @@ private:
 const char* facePath();
 // The arrival's title face, Cinzel Medium, from the same place.
 const char* titleFacePath();
-// The fight's figures, Barlow Semi Condensed Bold: narrow, because an area skill puts five
-// numbers across one tile. Also from extern/, also pinned.
+// The fight's figures, Cinzel Bold: the map name's own family, a weight up. Also from extern/,
+// also pinned.
 const char* figureFacePath();
+// What the gain lane and the death are set in -- Cinzel Medium, the map name's exact face, so
+// the quiet things the game says are all one voice.
+const char* quietFacePath();
 
 }  // namespace mu::gfx
