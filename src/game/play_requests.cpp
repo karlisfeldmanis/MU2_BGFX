@@ -54,17 +54,18 @@ bool Play::useItem(int slot) {
     core::logf("window: use %d %s", slot, used ? "taken" : "refused");
     // The potion going down, or the apple: TryConsumeItem's own split, by what was used. And
     // the third arm, which is this project's and not MuMain's, because MuMain has no orb read
-    // from the bag to answer for: an orb is not swallowed, so the gulp is wrong on it. It rings
-    // -- eGem.wav, `jewel_get`, the bright chime MU keeps for picking a jewel up, which is the
-    // one wave in the whole set that says *something precious was gained* in under a second.
-    // The level-up fanfare is the other candidate and was left alone on purpose: a skill bought
-    // must not sound like a level, and plevelup is three seconds of it.
+    // from the bag to answer for: an orb is not swallowed, so the gulp is wrong on it. It is
+    // the one use that is a picture as well as a noise -- `learned` throws the ribbons and the
+    // swoosh together, where a potion is heard and not seen.
     if (used) {
         const content::ItemRow* row =
             item >= 0 && size_t(item) < tables_.items.size() ? &tables_.items[size_t(item)] : nullptr;
         const bool apple = row && row->group == 14 && row->number == 0;
-        const bool orb = row && row->teaches != 0;
-        sound_.play(orb ? heard_.orb : apple ? heard_.apple : heard_.drink);
+        if (row && row->teaches != 0) {
+            learned();
+        } else {
+            sound_.play(apple ? heard_.apple : heard_.drink);
+        }
     }
     return used;
 }

@@ -451,6 +451,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         for (const int f : args.rises) {
             if (at.index == f) world_.played().rise();
         }
+        for (const int f : args.learns) {
+            if (at.index == f) world_.played().learned();
+        }
     }
     // And only THEN the camera, onto where the character is drawn this frame. Placed
     // before the step, it followed where he stood a frame ago: the town and every

@@ -70,6 +70,7 @@ void printUsage() {
         "  --ui-skill F:K            press skill key K (1-5: Q W E R T) on frame F\n"
         "  --ui-hover X:Y            park the pointer at screen fraction X,Y, pressing nothing\n"
         "  --rise F                  throw the level-up on the hero on frame F; drawing only\n"
+        "  --learn F                 throw the orb's aura and its swoosh on frame F; drawing only\n"
         "  --mute                    every sound plays and is logged, at no volume\n"
         "  --zen N                   start with N Zen\n"
         "  --loot                    --click-every picks up drops before it fights\n"
@@ -363,6 +364,8 @@ Args parseArgs(int argc, char** argv) {
             a.mute = true;
         } else if (!std::strcmp(s, "--rise")) {
             if (const char* v = next(s)) a.rises.push_back(std::atoi(v));
+        } else if (!std::strcmp(s, "--learn")) {
+            if (const char* v = next(s)) a.learns.push_back(std::atoi(v));
         } else if (!std::strcmp(s, "--ui-hover")) {
             float hx = 0.0f, hy = 0.0f;
             const char* v = next(s);

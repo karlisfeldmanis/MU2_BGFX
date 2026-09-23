@@ -258,6 +258,9 @@ public:
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
+    // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
+    // read taught something, and by `--learn` for a review run.
+    void learned();
 
 private:
     // One body as it is drawn: the figure, and where it was at the last two ticks so a frame

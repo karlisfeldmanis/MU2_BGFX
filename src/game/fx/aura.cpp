@@ -148,6 +148,13 @@ void Aura::rise(const float feet[3], float yaw, float metresPerTile) {
     throwOne(recipe, feet, yaw, metresPerTile);
 }
 
+void Aura::learn(const float feet[3], float yaw, float metresPerTile) {
+    // The recipe as written and no circle: unlike `rise`, this one does not answer to the
+    // circle switch, because the switch is MU's own line in ReceiveLevelUp and there is no
+    // ReceiveLearn to have one.
+    throwOne(kLearning, feet, yaw, metresPerTile);
+}
+
 void Aura::guard(const float feet[3], float yaw, float metresPerTile, float seconds) {
     // One at a time: a guard thrown again replaces the one standing, which is what the realm
     // does with the boon (`throwSkill` overwrites it) and what MU does with its own

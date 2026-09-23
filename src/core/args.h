@@ -195,6 +195,9 @@ struct Args {
     // The level-up's flares thrown on the hero on FRAME, for a review run that cannot wait for
     // a real level. Only the drawing: the realm's level is untouched. Repeatable.
     std::vector<int> rises;
+    // The same for the orb's aura and its swoosh, and the same warning: only the drawing. The
+    // realm learns nothing, so this shows the picture on a character who cannot afford it.
+    std::vector<int> learns;
     // Everything sounds and is logged, at no volume: a review run should not play into the room.
     bool mute = false;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.

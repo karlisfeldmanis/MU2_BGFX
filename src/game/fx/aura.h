@@ -1,6 +1,6 @@
 // What a level looks like: fifteen flares climbing out of the ground around whoever earned it.
-// Ported from MU2's `client/core/Aura.cs`, the level-up recipe only -- its second recipe, the
-// knight's Defense barrier, was a bench invention on a skill this engine does not have yet.
+// Ported from MU2's `client/core/Aura.cs`, the level-up recipe first and its Defense barrier
+// once the knight had the skill; the orb's is this engine's own. See Recipe for all three.
 //
 // MuMain's `ReceiveLevelUp` is the whole of it:
 //
@@ -34,7 +34,9 @@
 //   * **the flares are dimmer.** At full light, in this engine's HDR, the core of the burst
 //     burned white; see kStrength in aura.cpp, judged on fixed-step shots.
 //
-// The sound is not here: nothing in this engine plays one yet.
+// The sound is not here, and never was: a burst is thrown and a wave is played on the same
+// frame by whoever threw it -- Play::rise for the level and Play::learned for the orb -- which
+// is MU's own shape, where ReceiveLevelUp does both in one block.
 //
 // It stays where it was thrown and does not follow a character who walks away -- MU's, since
 // `TargetPosition` is a point that nothing updates. It is `game`: it knows a ground.
@@ -52,9 +54,10 @@ class Ground;
 
 namespace mu::game {
 
-// What a burst is made of. **Two recipes, as MU2's `Aura.cs` had two**: MU's level-up flares,
-// and the knight's Defense barrier -- which this engine left out in so many words, "a bench
-// invention on a skill this engine does not have yet". It has the skill now.
+// What a burst is made of. **Three recipes, where MU2's `Aura.cs` had two**: MU's level-up
+// flares, the knight's Defense barrier -- which this engine left out in so many words, "a
+// bench invention on a skill this engine does not have yet", and has the skill now -- and the
+// orb's, which is nobody's but this engine's and is cut to a sound rather than to a client.
 //
 // The barrier's numbers are MU2's Defense recipe (`Shape.Barrier, 5, 20, 100, Circle, Follows,
 // Tails 30, Light (0.4, 0.8, 0.2)`), and what they are taken FROM is worth repeating here
@@ -93,6 +96,38 @@ inline constexpr Recipe kRising{};
 // and what is passed here is what is left of it.
 inline constexpr Recipe kGuarding{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f, 150.0f,
                                   true, true,  true,  {0.18f, 1.0f, 0.35f}};
+// And the third, which is wholly this engine's: a skill read off an orb (user, 2026-09-23).
+// Nothing in MU is being copied here -- 0.75's client never reads an orb out of the bag -- so
+// what it is traced to instead is the SOUND, `player_learn_skill`, a 0.60 s swoosh the user
+// supplied. The picture is cut to the wave and every number below comes off it:
+//
+//   * **sixteen ticks.** The fade law is fixed at ten (`kDims`), so a burst holds full light
+//     for `ticks - 10` and then falls by 1/1.3 a tick. The swell arrives at 0.228 s, which is
+//     six ticks; sixteen puts the start of the fall on the swell's peak and the last of the
+//     light 40 ms past the end of the file. The wave's own fall and the flares' are the same
+//     shape, so nothing had to be bent to match -- that is why sixteen and not fifteen.
+//   * **eight ribbons, spread.** Evenly round the ring, as the guard's five are: where a flare
+//     starts is drawn at random for a level, which is right for a burst of celebration and
+//     wrong for this. Even spacing is the difference between a scatter and a figure. Six was
+//     the first try and read as one stray arc at his knee; eight is a sweep.
+//   * **they leave.** 320 units over the sixteen ticks, so from his feet to well over his head
+//     by the end -- MU's climb, which is what makes a level-up's flares LEAVE, and the right
+//     verb here too: the orb is spent and what was in it has gone into him.
+//   * **a ring wider than he is.** 42 against the level-up's 40, with a 34-wide cross against
+//     its 40: it has to stand OUTSIDE his silhouette to read as a thing going round him. At
+//     24, the first try, it was inside his legs and looked like a snagged ribbon.
+//   * **ten ticks of tail.** The ring turns half a radian a tick, so ten is 286 degrees -- a
+//     ribbon with most of a turn in it, which still does not close into a collar.
+//   * **no ground circle**, for the reason play has never drawn one: a three-tile wash of blue
+//     under a character is what MU2's crowd was silenced for.
+//
+// The colour is a cold blue, and it is pushed hard for the reason the guard's green is: the
+// sheet is golden and what is passed here is what is left of it. (0.30, 0.62, 1.00) -- an
+// honest blue-white -- came out through that gold as a yellow-green thread, so blue is carried
+// past one into the HDR at 2.40 and red cut to 0.15. Judged on fixed-step shots at 40 ms a
+// frame with `--learn`, which is what that switch is for.
+inline constexpr Recipe kLearning{8,    42.0f, 34.0f, 16.0f, 20.0f, 20.0f, 10.0f, 0.0f,
+                                  true, false, false, {0.15f, 0.45f, 2.40f}};
 
 class Aura {
 public:
@@ -105,6 +140,10 @@ public:
     // (sin yaw, cos yaw)). Lengths are MU's units at `metresPerTile / 100`, a world length and
     // not the character's: a ring on the ground is a ring on the ground.
     void rise(const float feet[3], float yaw, float metresPerTile);
+
+    // A skill read off an orb: thrown like the level-up and never following, because the moment
+    // is over in two thirds of a second and he cannot walk out of it. See kLearning.
+    void learn(const float feet[3], float yaw, float metresPerTile);
 
     // The knight's guard: thrown like a burst, but it lives for `seconds` -- the boon's own
     // duration, so the picture and the sim lapse together -- and follows the body until then.
