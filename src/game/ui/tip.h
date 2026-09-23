@@ -113,6 +113,14 @@ struct Sheet {
     float worn = 1.0f;  // how much of it is left, 0 to 1
     std::string price;
     Tone priceTone = Tone::Yellow;
+    // And the foot's left, opposite the price: one short standing fact about the thing, which
+    // today is only an orb's "Already learned" (the user, 2026-09-23). It is in the foot and not
+    // in a section because it is not something the orb DOES or ASKS -- it is the card's verdict
+    // on it, which is what a foot is for, and it wants to sit across from the Zen so the two
+    // halves of "should I buy this" are read in one glance. It shares the left with `wear` and
+    // stands after the bar where a row somehow has both.
+    std::string note;
+    Tone noteTone = Tone::Red;
     // How wide the card is drawn, in the windows' own units; 0 takes the item card's 346. A
     // narrower card for a sheet that has no option list and no lore to wrap -- a skill's four
     // lines in a 346-wide card is a page of air with a sentence on it.

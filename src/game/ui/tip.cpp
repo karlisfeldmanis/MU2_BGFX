@@ -377,7 +377,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         if (section.framed) tall += railPad;
         sectionTall[s] = tall;
     }
-    const bool hasFoot = !sheet.wear.empty() || !sheet.price.empty();
+    const bool hasFoot = !sheet.wear.empty() || !sheet.price.empty() || !sheet.note.empty();
     const float footTall = hasFoot ? std::round(footSize * 1.4f) + railPad * 2.0f : 0.0f;
     // A card with no foot ends on its last row with one rail's padding under it, which is less
     // air than the head carries over its name and reads as the text falling out of the bottom.
@@ -511,14 +511,23 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, fade(kFootBack));
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
         const float baseline = middle(face, pen, footTall, footSize);
+        // The left, walked with a pen: the wear and its bar first where there is one, and the
+        // note after whatever went before it. Nothing in the game carries both today -- only
+        // ammunition wears and only an orb is noted -- but a foot that laid one over the other
+        // the day something did would be a bug nobody went looking for.
+        float left = box.x + pad;
         if (!sheet.wear.empty()) {
-            const float w = printed(canvas, box.x + pad, baseline, footSize, fade(kFoot), sheet.wear, drop);
+            const float w = printed(canvas, left, baseline, footSize, fade(kFoot), sheet.wear, drop);
             const float barWide = 46.0f * u, barTall = std::max(2.0f, 3.0f * u);
-            const gfx::Box bar{box.x + pad + w + pad * 0.5f, baseline - footSize * 0.35f, barWide,
-                               barTall};
+            const gfx::Box bar{left + w + pad * 0.5f, baseline - footSize * 0.35f, barWide, barTall};
             canvas.rect(bar, fade(kBarBack));
             canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
                         fade(panel::kLettering));
+            left = bar.right() + pad;
+        }
+        if (!sheet.note.empty()) {
+            printed(canvas, left, baseline, footSize, fade(colourOf(sheet.noteTone)), sheet.note,
+                    drop);
         }
         if (!sheet.price.empty()) {
             const float w = face.measure(footSize, sheet.price);

@@ -205,11 +205,12 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             teaches.rows.push_back(stat("Skill", row.teachesName, known ? Tone::Gray : Tone::Blue));
         }
         if (known) {
-            // Red, and in the same words the Requirements block would use if it could: this is
-            // a no, and it is the only no on the card that no amount of levelling will turn
-            // into a yes. Printed as a stat and not as prose so that it lands in the column the
-            // eye is already running down when it compares two orbs on Hanzo's shelf.
-            teaches.rows.push_back(stat("Known", "already learned", Tone::Red));
+            // The words go in the FOOT, opposite the Zen -- the user, 2026-09-23, moving them
+            // out of this block where they first landed as a "Known" row. The foot is where
+            // they belong: on Hanzo's shelf the price is the other half of the same question,
+            // and "Already learned" across from "3,000 Zen" is one glance instead of two.
+            sheet.note = "Already learned";
+            sheet.noteTone = Tone::Red;
         }
         if (!row.teachesTells.empty()) {
             Row line;
