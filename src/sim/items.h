@@ -136,6 +136,12 @@ struct Wearer {
     Kin kin = Kin::DarkKnight;
     int level = 1;
     HeroPoints points;
+    // What he has read already, as `Body::learned` keeps it -- a bit per row of the skill
+    // table, by INDEX and not by skill number. No gate here asks it: `fits` has nothing to do
+    // with it, and an orb of something he knows is refused by `Realm::useItem` and not by
+    // `movable`, because it can still be carried and sold. It is here because a card is drawn
+    // from this struct and the one thing an orb's card must say is whether he has read it.
+    uint32_t learned = 0;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);

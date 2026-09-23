@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <string>
 
+#include "sim/skills.h"
+
 namespace mu::game {
 namespace {
 
@@ -190,13 +192,31 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         Section teaches;
         teaches.kicker = "Teaches";
         teaches.mark = tip::Mark::Star;
+        // Whether he has read one already, which is the one thing about an orb the card could
+        // not say before (the user, 2026-09-23). `Realm::useItem` calls `learn`, `learn` refuses
+        // a skill already in the mask, and the refusal is silent like every other down there --
+        // so a second orb of Falling Slash was a right-click that did nothing and said nothing.
+        // It is asked by INDEX, as `Body::learned` is keyed: `skillIndexOf` turns MU's number
+        // into the bit, and -1 (a row that teaches something this build has no skill for) reads
+        // as not known, which is the safe way round -- it lets him try.
+        const int index = sim::skillIndexOf(row.teaches);
+        const bool known = index >= 0 && (who.learned & (uint32_t(1) << index)) != 0;
         if (!row.teachesName.empty()) {
-            teaches.rows.push_back(stat("Skill", row.teachesName, Tone::Blue));
+            teaches.rows.push_back(stat("Skill", row.teachesName, known ? Tone::Gray : Tone::Blue));
+        }
+        if (known) {
+            // Red, and in the same words the Requirements block would use if it could: this is
+            // a no, and it is the only no on the card that no amount of levelling will turn
+            // into a yes. Printed as a stat and not as prose so that it lands in the column the
+            // eye is already running down when it compares two orbs on Hanzo's shelf.
+            teaches.rows.push_back(stat("Known", "already learned", Tone::Red));
         }
         if (!row.teachesTells.empty()) {
             Row line;
             line.free = row.teachesTells;
-            line.freeTone = Tone::White;
+            // Dimmed once he knows it: the sentence is still worth having -- it is what the
+            // skill DOES, and he may be checking -- but it is no longer an offer.
+            line.freeTone = known ? Tone::Gray : Tone::White;
             teaches.rows.push_back(line);
         }
         if (!teaches.rows.empty()) sheet.sections.push_back(teaches);
