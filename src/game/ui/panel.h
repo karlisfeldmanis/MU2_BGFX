@@ -75,13 +75,16 @@ float scale();
 float unit();
 constexpr float kWidth = 190.0f;
 constexpr float kHeight = 429.0f;
-constexpr float kScreenShare = 0.62f;
+// Two thirds of the height, near enough. It went 0.79 (centred, and too big) to 0.62 to this:
+// the user, 2026-09-23, *"windows are little bit to small and little bit to hight"*.
+constexpr float kScreenShare = 0.68f;
 constexpr float kRightMargin = 24.0f;
-// And the same air over it. A window used to be centred down the screen, which hung it between
-// two empty bands and put its foot near the HUD's; the user, 2026-09-23: *"windows has to be
-// more on top side not bottom side"*. It sits in the top-right corner now, in the margin the
-// right edge already keeps, so the two sides of the corner match.
-constexpr float kTopMargin = kRightMargin;
+// And the air over it, a share of the height like the window itself rather than a fixed count of
+// pixels -- a 24-pixel gap over a window that is two thirds of a 4K panel is no gap at all. A
+// window used to be centred down the screen, which hung it between two empty bands and put its
+// foot near the HUD's; the user, 2026-09-23: *"windows has to be more on top side not bottom
+// side"*, and then that the top margin had gone too tight. Five hundredths: 54 pixels at 1080.
+constexpr float kTopShare = 0.05f;
 // The air between two open windows. MU butts its columns flush, which worked while every window
 // was a slab of leather with its own carved border; two hairline-edged panels flush against each
 // other read as one panel with a seam, so the skin puts six units between them.
