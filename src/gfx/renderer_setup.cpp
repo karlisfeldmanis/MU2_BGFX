@@ -19,9 +19,13 @@
 namespace mu::gfx {
 
 bool Renderer::init(int width, int height, const std::string& shaderDir, int msaa,
-                    uint16_t shadowSize) {
+                    uint16_t shadowSize, float scale) {
     msaa_ = msaa;
     shadowSize_ = shadowSize;
+    // Held to a half at the bottom: below that the magnification is visible on a figure's
+    // silhouette however good the filter is, and there is nothing to be gained by letting a
+    // command line ask for a picture nobody would keep.
+    scale_ = scale < 0.5f ? 0.5f : (scale > 1.0f ? 1.0f : scale);
     if (!loadPrograms(shaderDir)) return false;
 
     uSunDir_ = bgfx::createUniform("u_sunDir", bgfx::UniformType::Vec4);
@@ -208,8 +212,19 @@ bool Renderer::loadPrograms(const std::string& dir) {
 }
 
 bool Renderer::createTargets(int width, int height) {
-    width_ = width;
-    height_ = height;
+    // What comes in is the backbuffer's size; what the world is drawn at is that times the
+    // scale, rounded to an even pair of numbers so the half-resolution SSAO target is exactly
+    // half of it and the bloom chain halves cleanly rather than losing a column a level.
+    outWidth_ = width;
+    outHeight_ = height;
+    width_ = std::max(2, (int(std::lround(width * scale_)) / 2) * 2);
+    height_ = std::max(2, (int(std::lround(height * scale_)) / 2) * 2);
+    if (scale_ < 1.0f) {
+        core::logf("the world is drawn at %dx%d and presented at %dx%d (scale %.2f)", width_,
+                   height_, outWidth_, outHeight_, double(scale_));
+    }
+    width = width_;
+    height = height_;
     const uint16_t w = uint16_t(width);
     const uint16_t h = uint16_t(height);
     const uint16_t hw = uint16_t(std::max(1, width / 2));
@@ -328,7 +343,7 @@ void Renderer::destroyTargets() {
 }
 
 void Renderer::resize(int width, int height) {
-    if (width == width_ && height == height_) return;
+    if (width == outWidth_ && height == outHeight_) return;
     destroyTargets();
     createTargets(width, height);
 }

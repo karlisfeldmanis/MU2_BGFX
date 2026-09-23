@@ -20,6 +20,12 @@ struct Args {
     // taken windowed at 1080p; this is for playing it.
     bool fullscreen = false;
     bool vsync = false;  // off for every measurement; see docs/budget.md
+    // How much of the backbuffer the WORLD is drawn at, 1 for all of it. The present pass
+    // magnifies it; the hover ring and the HUD are drawn at the screen's own size whatever
+    // this is, so the plate and its text stay as sharp as the display. Held to 0.5 at the
+    // bottom. The frame costs about 1.2 ms plus 1.55 ms a megapixel on this Mac, so 0.9 at
+    // 2560x1440 is worth about 0.6 ms.
+    float scale = 1.0f;
     // Frames a second to hold the picture to, 0 for as fast as it will go. A pace, not a
     // limit on the work: it waits after the present and the wait is kept out of the
     // statistics. Every measurement is taken at 0. See the remark in application.cpp.

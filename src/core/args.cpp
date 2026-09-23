@@ -29,6 +29,8 @@ void printUsage() {
         "  --vsync                   cap to the display; off by default so a number is a number\n"
         "  --cap N                   hold the picture to N frames a second (0 free, the "
         "default); with --vsync, a divisor of the refresh\n"
+        "  --scale F                 draw the world at F of the backbuffer, 0.5 to 1 (the "
+        "ring and the HUD stay at full size)\n"
         "  --frames N                quit after N frames\n"
         "  --repeat N                measure N segments of --frames, loading the world once\n"
         "  --shot N                  write a PNG every N frames, and on the last\n"
@@ -132,6 +134,14 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.width = std::atoi(v);
         } else if (!std::strcmp(s, "--height")) {
             if (const char* v = next(s)) a.height = std::atoi(v);
+        } else if (!std::strcmp(s, "--scale")) {
+            if (const char* v = next(s)) {
+                a.scale = float(std::atof(v));
+                if (!(a.scale >= 0.5f && a.scale <= 1.0f)) {
+                    logError("--scale is a fraction from 0.5 to 1, got %s", v);
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--cap")) {
             if (const char* v = next(s)) {
                 a.cap = std::atoi(v);

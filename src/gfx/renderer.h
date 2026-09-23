@@ -160,10 +160,18 @@ struct PointLight {
 
 class Renderer {
 public:
-    // `msaa` is 1, 2, 4 or 8 samples on the prepass, the depth and the shade target.
-    // `shadowSize` is the sun's map, square, in texels.
+    // `width` and `height` are the BACKBUFFER's, which is what the present pass and the HUD
+    // are drawn at. `msaa` is 1, 2, 4 or 8 samples on the prepass, the depth and the shade
+    // target. `shadowSize` is the sun's map, square, in texels.
+    //
+    // `scale` is how much of the backbuffer the WORLD is drawn at, 1 for all of it. The
+    // shadow, prepass, SSAO, shade, transparent and bloom targets are made at that fraction
+    // and the present pass magnifies them on its way to the screen; the ring and the HUD are
+    // drawn at the backbuffer's own size, so the text and the plate stay as sharp as the
+    // display is. The frame is fill-bound, measured: it costs about 1.2 ms plus 1.55 ms a
+    // megapixel on this Mac, so this is the one knob that moves it in proportion.
     bool init(int width, int height, const std::string& shaderDir, int msaa,
-              uint16_t shadowSize = 4096);
+              uint16_t shadowSize = 4096, float scale = 1.0f);
     void shutdown();
     void resize(int width, int height);
 
@@ -454,8 +462,15 @@ private:
     void submitGround(bgfx::ViewId view, bgfx::ProgramHandle program, const content::Ground& g,
                       uint64_t state, bool lit);
 
+    // The size the WORLD is drawn at: the targets', and what every view but the present, the
+    // ring and the HUD is set to. Equal to the backbuffer's unless `scale` is under 1.
     int width_ = 0;
     int height_ = 0;
+    // The backbuffer's own size, which is what the ring is fitted in and the HUD laid out on,
+    // and what a screen pixel means everywhere outside this class.
+    int outWidth_ = 0;
+    int outHeight_ = 0;
+    float scale_ = 1.0f;
     int msaa_ = 1;
     uint32_t drawCount_ = 0;
     SplitRecord split_;

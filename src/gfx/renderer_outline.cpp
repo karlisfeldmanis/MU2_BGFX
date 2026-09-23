@@ -58,7 +58,7 @@ void Renderer::destroyOutline() {
 
 void Renderer::drawOutline(const float* mainView, const Camera& camera,
                            const OutlineParams& params, const std::vector<Drawable>& hovered) {
-    if (!outlineOk_ || hovered.empty() || width_ <= 0 || height_ <= 0) return;
+    if (!outlineOk_ || hovered.empty() || outWidth_ <= 0 || outHeight_ <= 0) return;
     if (params.screenW <= 0 || params.screenH <= 0) return;
 
     // The box goes into the mask WHOLE, shrunk to fit when it is larger than the cap, and
@@ -84,11 +84,11 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // that no longer matches the real one, and the ring would sit beside the thing rather
     // than round it.
     const float halfH = std::tan(bx::toRad(camera.fovDegrees) * 0.5f);
-    const float halfW = halfH * (float(width_) / float(height_));
-    const float fTop = float(params.screenY) / float(height_);
-    const float fBottom = float(params.screenY + params.screenH) / float(height_);
-    const float fLeft = float(params.screenX) / float(width_);
-    const float fRight = float(params.screenX + params.screenW) / float(width_);
+    const float halfW = halfH * (float(outWidth_) / float(outHeight_));
+    const float fTop = float(params.screenY) / float(outHeight_);
+    const float fBottom = float(params.screenY + params.screenH) / float(outHeight_);
+    const float fLeft = float(params.screenX) / float(outWidth_);
+    const float fRight = float(params.screenX + params.screenW) / float(outWidth_);
     // bx::mtxProj's asymmetric form wants these as physical coordinates AT the near plane,
     // not bare tangents -- its own width/height come out as 2*near/(rt-lt), which only
     // reduces to the plain tan(fovy/2) form when the tangent is first scaled by near. Passed

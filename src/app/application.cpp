@@ -33,7 +33,7 @@ bool Application::boot() {
     textures_.createDefaults();
 
     if (!renderer_.init(window_.width(), window_.height(), paths_.shaders.c_str(), args_.msaa,
-                        uint16_t(args_.shadowSize))) {
+                        uint16_t(args_.shadowSize), args_.scale)) {
         core::logError("the renderer did not start");
         textures_.shutdown();
         window_.close();

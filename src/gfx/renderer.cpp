@@ -376,7 +376,7 @@ void Renderer::cameraMatrices(const Camera& camera, float* view, float* proj) co
     bx::mtxLookAt(view, bx::Vec3(camera.position[0], camera.position[1], camera.position[2]),
                   bx::Vec3(camera.target[0], camera.target[1], camera.target[2]),
                   bx::Vec3(camera.up[0], camera.up[1], camera.up[2]), bx::Handedness::Right);
-    bx::mtxProj(proj, camera.fovDegrees, float(width_) / float(height_), camera.nearPlane,
+    bx::mtxProj(proj, camera.fovDegrees, float(outWidth_) / float(outHeight_), camera.nearPlane,
                 camera.farPlane, bgfx::getCaps()->homogeneousDepth, bx::Handedness::Right);
 }
 
@@ -894,7 +894,11 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     bgfx::setUniform(uTintHigh_, tintHigh);
     bgfx::setTexture(9, sBloom_, bloomTex_[0]);
     bgfx::setViewFrameBuffer(ViewPresent, BGFX_INVALID_HANDLE);
-    bgfx::setViewRect(ViewPresent, 0, 0, uint16_t(width_), uint16_t(height_));
+    // The screen's own size, not the world's: this is the pass that magnifies a scaled world
+    // onto the backbuffer, and its rect is the backbuffer. The sharpen's step above stays one
+    // texel of the SOURCE, which is what it samples; a step of one screen pixel on a scaled
+    // picture reads the same texel twice and sharpens nothing.
+    bgfx::setViewRect(ViewPresent, 0, 0, uint16_t(outWidth_), uint16_t(outHeight_));
     bgfx::setViewClear(ViewPresent, BGFX_CLEAR_COLOR, 0x101418ff, 1.0f, 0);
     bgfx::setViewTransform(ViewPresent, nullptr, nullptr);
     bgfx::setUniform(uParams_, params);
@@ -904,7 +908,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     // View 7 is the HUD's, and is submitted empty until sprint 7 fills it. A view bgfx sees
     // nothing in is dropped, and an account with no rows reads as free rather than unbuilt.
     bgfx::setViewFrameBuffer(ViewHud, BGFX_INVALID_HANDLE);
-    bgfx::setViewRect(ViewHud, 0, 0, uint16_t(width_), uint16_t(height_));
+    bgfx::setViewRect(ViewHud, 0, 0, uint16_t(outWidth_), uint16_t(outHeight_));
     bgfx::touch(ViewHud);
 }
 
