@@ -171,14 +171,6 @@ void Realm::gain(Body& hero, int32_t award) {
         hero.mana = hero.maxMana;
         hero.sd = hero.maxSd;
         say(What::Levelled, hero, hero.level, hero.pointsInHand);
-        // And whatever this level opens. Every skill carries the level its orb asks for
-        // (docs/skills-dk.md §3.3), so a knight meets his skills on 0.75's own ladder --
-        // 6, 12, 13, 20, 36, 52 -- as he levels rather than all at once at the start. Said one
-        // at a time through `learn`, so the log reads "learns Uppercut" on the level it happens.
-        // **Temporary in the same way `raise`'s hand-over is**: the orb is the route and nothing
-        // cooks one yet, so the level alone teaches. The day the orbs exist, this loop goes and
-        // the orb checks the same column.
-        openSkills(hero);
         remaining -= int32_t(gained);
     }
 }

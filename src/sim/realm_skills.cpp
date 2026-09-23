@@ -55,18 +55,6 @@ bool Realm::learn(int32_t skill) {
     return true;
 }
 
-void Realm::openSkills(Body& who, bool tell) {
-    if (who.kin != Kin::DarkKnight) return;
-    for (int i = 0; i < skillCount(); ++i) {
-        const SkillRow& row = skillAt(i);
-        if (!row.built || who.level < row.needLevel) continue;
-        const uint32_t bit = uint32_t(1) << i;
-        if ((who.learned & bit) != 0) continue;
-        who.learned |= bit;
-        if (tell) say(What::Learned, who, row.number);
-    }
-}
-
 bool Realm::knows(int32_t skill) const {
     const int index = skillIndexOf(skill);
     if (index < 0) return false;

@@ -151,16 +151,12 @@ struct SkillRow {
     // the Double Axe, the Tomahawk, the Battle Axe and the Nikkea Axe were what carried it.
     // Defense is `kShield`, which is `Armors.cs:40`. The three past 0.75 are ours.
     uint32_t families = arms::kEvery;
-    // **What the orb asks of him before he may read it**, in levels. The user, 2026-09-23:
-    // *"add also lvl requirements to learn skills, this is for orbs I guess"* -- and it is: the
-    // column is §3.3's table, which is 0.75's own ladder. The level a skill is met at is the drop
-    // level of the first weapon that carried it in the original (§1.2), so a knight meets his
-    // skills in the order MU gave them to him: 6, 12, 13, 20, 36, 52.
-    //
-    // It lives on the SKILL and not on the orb because the orb does not exist yet -- nothing is
-    // cooked that teaches one, so `Realm::raise` hands over what he has the level for. The day
-    // the orbs are cooked they carry this same number as their `needLevel` and this column is
-    // what they are checked against, so neither route can ask for something different.
+    // **What the orb asks of him before he may read it**, in levels, and it is here to be READ
+    // rather than enforced: the requirement that stops a young knight learning Slash is the orb's
+    // own (`ItemRow::needLevel` and `teachesLevel`, checked in `Realm::useItem`), because a
+    // requirement belongs to the thing you pick up. This column carries the same number so the
+    // card can print "Learned at level 52" without going looking for an item, and so the two can
+    // be checked against each other. §3.3's ladder is where both come from.
     int32_t needLevel = 0;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }

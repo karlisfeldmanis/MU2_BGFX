@@ -190,6 +190,31 @@ bool Realm::useItem(int slot) {
     const Held potion = bag_[slot];
     if (potion.empty() || !hero.alive()) return false;
     const content::ItemRow& row = tables_->items[size_t(potion.item)];
+
+    // ---- an orb is read, and what is left is the skill ----------------------------------------
+    //
+    // The route the user asked for on 2026-09-23 and the one docs/skills-dk.md §3.3 always
+    // described: *bought or dropped, right-click to learn, permanent*. Nothing is handed over any
+    // more -- a knight is made with an empty bar and every key on it was bought at Hanzo's or
+    // found. `SkillRow::needLevel` is gone with the grant; the level lives on the ITEM, which is
+    // where a requirement belongs and where the tooltip already prints it in red.
+    //
+    // The refusals, in the order the tooltip reads: who may hold it, what he must be, and
+    // whether he has read it before. Each is silent, as every refusal down here is.
+    if (row.teaches != 0) {
+        // mu.db's class enumeration, as `fits` reads it: bit 0 wizard, 1 elf, 2 knight, and none
+        // named is anybody. OpenMU asks this of an orb at the moment it is read, not worn.
+        if (row.classes != 0 && (row.classes & (1 << int(hero.kin))) == 0) return false;
+        if (hero.level < std::max(row.teachesLevel, asks(row, potion.refinement).level)) {
+            return false;
+        }
+        // A second orb of something he knows is refused rather than eaten: `learn` says no to a
+        // skill already learned, and the orb stays in the bag to be sold.
+        if (!learn(row.teaches)) return false;
+        bag_.lift(slot);
+        return true;
+    }
+
     const bool mana = restores(row);
     if (!mana && !heals(row)) return false;
     // A yes that has not come round yet, not a no. MU2's Realm.Consume.

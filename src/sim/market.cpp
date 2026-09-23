@@ -49,6 +49,21 @@ constexpr Offer kBlacksmith[] = {
     gear(54, kMaces, 1, 3, true),     gear(55, kAxes, 3, 3, true),    gear(72, kSwords, 0, 2),
     gear(73, kSwords, 6, 3, true),    gear(73, kSwords, 7, 3, true),  gear(74, kSwords, 8, 3),
     gear(75, kSwords, 5, 3, true),
+    // **And the knight's nine orbs**, on the two rows below everything else (96 is row 12 of
+    // fifteen; the swords above hang down to row 11). Ours, and not MerchantStores': 0.75 has no
+    // knight orb to sell because in 0.75 the weapon WAS the skill (docs/skills-dk.md §1.2), and
+    // this shelf is the route that replaces it -- bought here, read once, learned for good.
+    //
+    // In the ladder's own order, which is 0.75's: the level each one asks for is the drop level
+    // of the first weapon that carried that skill, so a knight meets his skills in the order MU
+    // gave them to him and the row he can afford is usually the row he can read.
+    //
+    // §3.3 kept Lunge and Slash off the shelf to leave something for the hunt; all nine are sold
+    // here for now, because nothing in the tree drops an orb yet and a skill that can only drop
+    // is a skill that cannot be tested. The day they drop, those two lines come out.
+    gear(96, kOrbs, 3, 0),  gear(97, kOrbs, 4, 0),  gear(98, kOrbs, 5, 0),
+    gear(99, kOrbs, 6, 0),  gear(100, kOrbs, 7, 0), gear(101, kOrbs, 25, 0),
+    gear(102, kOrbs, 12, 0), gear(103, kOrbs, 20, 0), gear(104, kOrbs, 19, 0),
 };
 
 // Pasi: seven scrolls, then the robes and the staves. Market.Mage.

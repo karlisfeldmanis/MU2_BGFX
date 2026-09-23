@@ -408,7 +408,10 @@ void testInvariants(const content::Tables& tables) {
 // for it, the footprint walk, and equipping as a move through the same gate a window colours by.
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
-    checkEqual(long(tables.items.size()), 118, "118 item rows cooked");
+    // 127: the catalogue's 118 and the nine knight orbs added on 2026-09-23. A count rather than
+    // a list, because what it is guarding is the cook -- a recipe that stops being picked up is a
+    // row the shelf silently cannot sell.
+    checkEqual(long(tables.items.size()), 127, "127 item rows cooked");
     const int shield = tables.itemAt(6, 0), axe = tables.itemAt(1, 0), staff = tables.itemAt(5, 0);
     const int small = tables.itemAt(14, 1);
     check(shield >= 0 && axe >= 0 && staff >= 0 && small >= 0, "the rows the tests use exist");
@@ -703,48 +706,113 @@ void testSkills(const content::Tables& tables) {
     // A blade in his hand, because nothing is thrown bare-handed and `raise` dresses nobody:
     // `given`, so a level-60 knight's strength is not what this is testing.
     check(realm.equip(tables.armNamed("Sword03"), -1, true), "and a blade is put in his hand");
-    // Every row is built since 2026-09-23, so a knight is raised holding all six: the bar's
-    // four keys are filled from the list and `built` stopped meaning "and a key is free".
+
+    // ---- and nothing in his head (docs/skills-dk.md §3.3) ------------------------------------
+    //
+    // **A character is raised knowing no skills at all**, which is the whole design as of
+    // 2026-09-23: the orbs are the route, and both stand-ins that came before -- the flat grant
+    // at raise, and the ladder that granted by level -- are gone. So a knight buys his bar.
+    {
+        int met = 0;
+        for (int i = 0; i < sim::skillCount(); ++i) met += realm.knows(sim::skillAt(i).number);
+        checkEqual(met, 0, "a knight is raised knowing nothing");
+    }
+
+    // Hanzo's counter, and the nine orbs on it. This is the route end to end: walk to the
+    // blacksmith, buy the orb, right-click it, and the skill is his -- the same three calls the
+    // windows make (`Talk`, `buy`, `useItem`).
+    int hanzo = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 251) hanzo = int(i);
+    }
+    check(hanzo >= 0, "Hanzo is in the town's table");
+    realm.earn(3000000);  // a purse for nine orbs; the prices are the curve's, not this test's
+    {
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(hanzo);
+        realm.ask(talk);
+    }
+    for (int tick = 0; tick < 4000 && realm.trading() < 0; ++tick) realm.step();
+    check(realm.trading() == hanzo, "walked to the blacksmith and was served");
+
+    int orbs = 0, read = 0;
+    int count = 0;
+    const sim::Offer* stock = sim::stockOf(251, &count);
+    for (int i = 0; i < count; ++i) {
+        if (stock[i].group != 12) continue;
+        ++orbs;
+        const int slot = realm.buy(stock[i].slot);
+        if (slot < 0) continue;
+        // Read where it landed. A second read of the same orb is refused by `learn` and the orb
+        // is left in the bag, which is checked below on the one that is still there.
+        if (realm.useItem(slot)) ++read;
+    }
+    checkEqual(orbs, 9, "the blacksmith stocks all nine orbs");
+    checkEqual(read, 9, "and every one of them was bought and read");
     bool all = true;
     for (int i = 0; i < sim::skillCount(); ++i) all &= realm.knows(sim::skillAt(i).number);
-    check(all, "a knight of 60 has met every skill");
+    check(all, "so the knight now knows every skill in the table");
 
-    // ---- the ladder (docs/skills-dk.md §3.3) -------------------------------------------------
+    // A tenth purchase is refused at the reading rather than at the counter: MU sells a man as
+    // many orbs as he can pay for, and the second one does nothing when he opens it.
+    {
+        int at = -1;
+        for (int i = 0; i < count && at < 0; ++i) {
+            if (stock[i].group == 12) at = realm.buy(stock[i].slot);
+        }
+        check(at >= 0, "a second orb of something he knows is sold to him");
+        check(!realm.useItem(at), "and reading it again is refused");
+        check(!realm.satchel()[at].empty(), "so it is still in his bag to be sold");
+    }
+    check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
+
+    // ---- what the orb asks (docs/skills-dk.md §3.3) -------------------------------------------
     //
-    // A skill is met at the level its orb asks for, which is 0.75's own ladder of carriers, so a
-    // young knight has an empty bar and fills it as he levels. Checked at three heights, and the
-    // last one on a level-up rather than on a raise: the two routes must agree.
+    // The level is the ITEM's, checked when it is read: 0.75's own ladder of carriers, so a
+    // knight meets his skills in the order MU gave them to him. And the class is the item's too.
     {
         sim::Realm young;
-        check(young.raise(&tables, 3, 190, 110, sim::Kin::DarkKnight, 1),
-              "a knight of the first level raises");
-        int met = 0;
-        for (int i = 0; i < sim::skillCount(); ++i) met += young.knows(sim::skillAt(i).number);
-        checkEqual(met, 0, "and knows nothing at all");
+        check(young.raise(&tables, 3, 138, 124, sim::Kin::DarkKnight, 12),
+              "a knight of twelve raises in town");
+        young.earn(3000000);
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(hanzo);
+        young.ask(talk);
+        for (int tick = 0; tick < 4000 && young.trading() < 0; ++tick) young.step();
+        check(young.trading() == hanzo, "and is served");
+        const auto orbOf = [&](int32_t skill) {
+            for (int i = 0; i < count; ++i) {
+                if (stock[i].group != 12) continue;
+                const int32_t at = tables.itemAt(12, stock[i].number);
+                if (at >= 0 && tables.items[size_t(at)].teaches == skill) return stock[i].slot;
+            }
+            return -1;
+        };
+        const int uppercut = young.buy(orbOf(sim::skill::kUppercut));
+        const int slash = young.buy(orbOf(sim::skill::kSlash));
+        check(uppercut >= 0 && slash >= 0, "he buys the orb he is ready for and one he is not");
+        check(young.useItem(uppercut), "twelve is enough for Uppercut, which asks for twelve");
+        check(young.knows(sim::skill::kUppercut), "and he has it");
+        check(!young.useItem(slash), "but Slash asks for fifty-two and he is twelve");
+        check(!young.knows(sim::skill::kSlash), "so he has not learned it");
+        check(!young.satchel()[slash].empty(), "and the orb is unspent, waiting for the level");
 
-        sim::Realm middling;
-        check(middling.raise(&tables, 3, 190, 110, sim::Kin::DarkKnight, 20),
-              "a knight of twenty raises");
-        check(middling.knows(sim::skill::kDefense), "and has met the guard at 6");
-        check(middling.knows(sim::skill::kUppercut), "the rising blow at 12");
-        check(middling.knows(sim::skill::kFallingSlash), "the overhead at 13");
-        check(middling.knows(sim::skill::kLunge), "and the jab at 20, the level he is");
-        check(!middling.knows(sim::skill::kCyclone), "but not the spin, which waits for 36");
-        check(!middling.knows(sim::skill::kSlash), "nor the sweep, which waits for 52");
-        check(!middling.knows(sim::skill::kDeathStab), "nor the spear's stab at 60");
-
-        // And the third door: a save is restored onto a realm raised at level 1, so the ladder
-        // has to be walked again when the level arrives -- otherwise a knight of 40 comes back
-        // from disk with a beginner's bar until his next level.
-        sim::Realm loaded;
-        check(loaded.raise(&tables, 3, 190, 110, sim::Kin::DarkKnight, 1), "a realm for a save");
-        sim::HeroRecord saved = loaded.record();
-        saved.level = 40;
-        saved.learned = 0;
-        loaded.restore(saved);
-        check(loaded.knows(sim::skill::kCyclone), "a restored knight of 40 has the spin");
-        check(loaded.knows(sim::skill::kTwistingSlash), "and the whirl he met at 28");
-        check(!loaded.knows(sim::skill::kSlash), "and not the sweep he has not reached");
+        // And a wizard may not read a knight's orb at any level: the row names its class, and
+        // `useItem` asks that before it asks anything else.
+        sim::Realm wizard;
+        check(wizard.raise(&tables, 3, 138, 124, sim::Kin::DarkWizard, 60), "a wizard raises");
+        wizard.earn(3000000);
+        sim::Request ask;
+        ask.kind = sim::Request::Kind::Talk;
+        ask.target = uint32_t(hanzo);
+        wizard.ask(ask);
+        for (int tick = 0; tick < 4000 && wizard.trading() < 0; ++tick) wizard.step();
+        const int his = wizard.buy(orbOf(sim::skill::kUppercut));
+        check(his >= 0, "and buys the knight's orb, which nothing stops him doing");
+        check(!wizard.useItem(his), "but he cannot read it");
+        check(!wizard.knows(sim::skill::kUppercut), "and has learned nothing");
     }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
 

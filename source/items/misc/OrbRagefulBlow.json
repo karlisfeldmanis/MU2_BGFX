@@ -1,0 +1,43 @@
+{
+  "item": "OrbRagefulBlow",
+  "mu_name": "Orb of Rageful Blow",
+  "mu_name_from": "VersionSeasonSix/Items/Orbs.cs:43 -- MU's own number, our level",
+  "why_this_one": "The route a knight learns a skill by (docs/skills-dk.md SS3.3): bought or found, read once, and the skill is his for good. Until this row existed the skills were handed over at the character's level, which was a stand-in for exactly this item.\n\nIts number in group 12 is MU own.\n\nIts level and drop level are 44, which is VersionSeasonSix/Items/Orbs.cs:43 -- MU's own number, our level.",
+  "mesh": "Gem05",
+  "mesh_note": "No geometry of its own. Gem01.bmd through Gem05.bmd are byte-identical in MuMain's Data/Item -- one md5 across all five -- so every orb in MU is one model told apart by its row, and this names the one the pipeline has built.",
+  "stats": {
+    "note": "An orb has no damage roll and no hand: it is a Prize and nothing else, and the shape of the row is the elf orbs' own (Version075/Items/Orbs.cs:63-67) -- one cell, durability one, dropped by monsters.",
+    "group": 12,
+    "number": 12,
+    "drop_level": 44,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. One reading, as a scroll is.",
+    "value": 40000,
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "CharacterClasses.DarkKnight. Every skill in this orb's family is a knight's; Prize.ReadBy refuses the other two whatever their level.",
+    "requires": {
+      "level": 44,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "What the character must BE to read it. Carried raw: docs/mu-scrolls-and-orbs.md SS4 establishes that a non-wearable row's requirement is used verbatim rather than run through `(3 x drop level x raw / 100) + 20`, and sim/items.cpp's `asks` already takes `need_level` unscaled. The same number is on the skill block below, which is what Realm::useItem checks -- the two must agree, and a row where they do not is a transcription error caught for free."
+  },
+  "skill": {
+    "note": "What the orb teaches. Read once and gone -- the durability of one is what 'used once' means on this row.",
+    "number": 42,
+    "name": "Rageful Blow",
+    "tells": "The weapon driven down into the ground, and what it breaks is the three tiles ahead of him.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things about the same blow. MU never prints a line like this at all; it is ours, as it is on the elf's orbs.",
+    "level_requirement": 44,
+    "energy_requirement": 0,
+    "energy_from": "None. The knight's skills carry no energy requirement in 0.75 -- CreateSkill is called with mana and nothing else for all six (Version075/SkillsInitializer.cs:58-63) -- and gating them behind the stats that make them good would charge twice (docs/skills-dk.md SS3.3).",
+    "value": 40000
+  }
+}

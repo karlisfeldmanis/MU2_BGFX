@@ -451,40 +451,53 @@ decides how much strength is worth. Both belong in a live-reloaded sheet
 
 ### 3.3 The orbs
 
-The user's route: *bought or dropped, right-click to learn, permanent.* 0.75 has no knight orb, so
-six are invented — modelled on 0.95d's `Orb of Twisting Slash` (group 12, number 7), which is MU's
-own precedent for a knight orb. Group 12 in 0.75 is wings (0, 1, 2), the elf's four orbs (8–11) and
-the Jewel of Chaos (15), so 3–7 are free; 20 is free in this tree's Season 6 list too.
+The user's route: *bought or dropped, right-click to learn, permanent* — **built on 2026-09-23**,
+and it is now the only way a knight has a skill at all. Nine orbs, one a skill, and the numbers
+come from three places:
 
-| item | № | teaches | req. level | drop level | price | sold by |
-|---|---|---|---|---|---|---|
-| Orb of Defense | 3 | Defense 18 | 6 | 6 | 500 | Hanzo the Blacksmith |
-| Orb of Uppercut | 4 | Uppercut 21 | 12 | 12 | 2,500 | Hanzo |
-| Orb of Falling Slash | 5 | Falling Slash 19 | 13 | 13 | 3,000 | Hanzo |
-| Orb of Lunge | 6 | Lunge 20 | 20 | 20 | 8,000 | — (drop only) |
-| Orb of Cyclone | 7 | Cyclone 22 | 36 | 36 | 25,000 | Hanzo |
-| Orb of Slash | 20 | Slash 23 | 52 | 52 | 60,000 | — (drop only) |
+- **Three are MU's own rows.** 0.95d wrote the first knight orb, `Orb of Twisting Slash` at group
+  12 number 7 (`Version095d/Items/Orbs.cs:32`), and Season 6 wrote `Orb of Rageful Blow` at 12 and
+  `Orb of Death Stab` at 19 (`…/Orbs.cs:43, :49`). Those three keep MU's numbers.
+- **Six are invented**, because 0.75 has no knight orb to transcribe — its four orbs are the elf's
+  (`docs/mu-scrolls-and-orbs.md` §2). Group 12 in 0.75 is the three wings (0–2), those four orbs
+  (8–11) and the Jewel of Chaos (15), so 3–6, 20 and 25 are free there. (They are wings and Dark
+  Lord scrolls in later versions, which this project does not have and does not plan. Cyclone's
+  orb sat at 7 in the first draft of this table and moved to 25 when Twisting Slash arrived with
+  a real claim on 7.)
+- **Every level is §1.2's ladder**: the drop level of the first weapon that carried that skill in
+  the original, so a knight meets his skills in the order MU gave them to him.
 
-And three more for §3.1b's rows, which have no 0.75 carrier to take a level from. They are placed
-*between* the six rather than after them, because each one is the key that keeps a family alive
-and a family should not wait until 60 to have three: Twisting Slash sits between Lunge and
-Cyclone, Rageful Blow between Cyclone and Slash, and Death Stab past Slash — the spear's late
-heavy blow, and the one skill in the table that asks a knight to carry a second weapon for it.
+| item | № | teaches | req. level | drop level | price |
+|---|---|---|---|---|---|
+| Orb of Defense | 3 | Defense 18 | 6 | 6 | 500 |
+| Orb of Uppercut | 4 | Uppercut 21 | 12 | 12 | 2,500 |
+| Orb of Falling Slash | 5 | Falling Slash 19 | 13 | 13 | 3,000 |
+| Orb of Lunge | 6 | Lunge 20 | 20 | 20 | 8,000 |
+| Orb of Twisting Slash | **7** (0.95d's own) | Twisting Slash 41 | 28 | 28 | 15,000 |
+| Orb of Cyclone | 25 | Cyclone 22 | 36 | 36 | 25,000 |
+| Orb of Rageful Blow | **12** (Season 6's own) | Rageful Blow 42 | 44 | 44 | 40,000 |
+| Orb of Slash | 20 | Slash 23 | 52 | 52 | 60,000 |
+| Orb of Death Stab | **19** (Season 6's own) | Death Stab 43 | 60 | 60 | 90,000 |
 
-| item | № | teaches | req. level | drop level | price | sold by |
-|---|---|---|---|---|---|---|
-| Orb of Twisting Slash | 7 (0.95d's own) | Twisting Slash 41 | 28 | 28 | 15,000 | Hanzo |
-| Orb of Rageful Blow | 21 | Rageful Blow 42 | 44 | 44 | 40,000 | — (drop only) |
-| Orb of Death Stab | 22 | Death Stab 43 | 60 | 60 | 90,000 | Hanzo |
+The three past 0.75 are placed *between* the six rather than after them, because each is a key
+that keeps a family alive and a family should not wait until 60 to have three.
+
+**All nine are on Hanzo the Blacksmith's shelf**, slots 96–104, which is the two rows under his
+swords. §3.3 first kept Lunge and Slash off it to leave something for the hunt; nothing in the
+tree drops an orb yet, and a skill that can only drop is a skill that cannot be tested, so the
+whole ladder is over the counter until the drops exist. The prices above are what the recipes
+record; what the shop actually charges is `Market`'s own cubic over the drop level, as for
+everything else on a shelf.
 
 - **The drop levels are §1.2's ladder**, so a knight meets his skills in the order 0.75 gave him
   them. One line of provenance for six numbers.
-- **And the levels are now enforced, ahead of the orbs** (2026-09-23). The requirement is a column
-  on the skill (`SkillRow::needLevel`), not on the orb, because the orb does not exist yet:
-  `Realm::openSkills` hands a knight what his level has opened, and it is called from all three
-  doors into a character — raised, restored from a save, and levelled mid-hunt. So a knight of 1
-  has an empty bar, one of 20 has four keys, and the bar grows as he does. The day the orbs are
-  cooked they carry the same numbers and check the same column, and `openSkills` goes.
+- **And nothing is handed over any more.** A character is raised knowing no skills at all. Two
+  stand-ins came and went in one day — a flat grant of every built skill at raise, and then a
+  ladder that granted by level — and both are gone now that the orbs exist. `Realm::useItem` is
+  the whole of the route: the class first (a wizard may buy a knight's orb and cannot read it),
+  then the level, then `learn`, then the orb is spent. A second orb of a skill he knows is
+  refused at the reading and stays in the bag to be sold, which is MU's own texture: the shop
+  sells you as many as you can pay for.
 - **The requirements are raw**, not run through `(3 × drop level × raw/100) + 20`:
   `docs/mu-scrolls-and-orbs.md` §4 establishes that a non-wearable row's requirement is used
   verbatim, and `sim/items.cpp asks()` currently applies the formula unconditionally — so this is a
@@ -673,8 +686,9 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
   key drawn dark and a press that does nothing cannot disagree.
 - `Realm::throwSkill` asks the family instead of "is there a blade"; the old rule survives inside
   the new one, because an empty hand, a bow, a crossbow and a staff are all no family at all.
-- `Realm::openSkills` hands over what a level has opened, from all three doors — raise, restore,
-  level-up. A level-1 knight now starts with an empty bar.
+- **The orbs, and they are the only way in.** Nine recipes in `source/items/misc`, all nine on
+  Hanzo's shelf, read with a right-click in the bag (`Realm::useItem`). Nothing is granted at a
+  raise, on a level or out of a save any more — a character is made knowing nothing.
 - Three rows past 0.75 — Twisting Slash 41, Rageful Blow 42, Death Stab 43 — with MU's own names,
   numbers and icons and our own behaviour. `pipeline/skill_icons.py --mumain` cut the icons from
   MuMain's own 256 sheet through a 3× enlargement, because MuDream's sharper sheet sits in an
@@ -687,7 +701,8 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
   heights and through the restore door, and the hunt is run four times over — one-handed sword,
   two-handed sword, axe, spear — so every shape in the table is thrown by something.
 
-**Owed.** The orbs themselves (§3.3), which is the route these levels are standing in for; a
+**Owed.** An orb that DROPS (the rows say `dropsFromMonsters`, and nothing in the loot tables
+reaches group 12 yet), which is what would let §3.3 take Lunge and Slash back off the shelf; a
 Twisting Slash clip of its own, rather than the sword-spin borrowed for it; and a re-cut of the
 three icons at MuDream's 80×112 the day that container opens.
 
