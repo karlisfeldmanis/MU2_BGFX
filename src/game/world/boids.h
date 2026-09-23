@@ -1,4 +1,10 @@
-// The birds over the town, and the two calls they make.
+// The birds over the town: the model, the wings, the light on them and the two calls they make.
+//
+// **The rule itself is not here.** How they fly -- the flocking, the dive, the landing, the
+// retirement and the odds of a call -- is `game/world/flight.h`, which has nothing in it that
+// needs a window and is checked by tests/boids_test.cpp without one. This file is what turns
+// five points into five drawn birds: it loads the cooked mesh and its clip, poses a Figure per
+// bird, hands the rules the real ground and the real camera, and plays what they say sounded.
 //
 // `GOBoid.cpp` keeps a small pool around the player -- five birds -- spawns them within a few
 // tiles of wherever the hero is standing, steers them by a flocking rule, and lets them expire
@@ -41,8 +47,6 @@
 // The fish are not here, for the reason MU2 gave: MU's water is a texture painted on the ground
 // rather than a surface with depth, so a fish either skates on the pond or is buried under it.
 //
-// Every length is MU's own divided by a hundred, because MU works in units where a tile is a
-// hundred and this works in metres where a tile is one.
 #pragma once
 
 #include <cstdint>
@@ -55,6 +59,7 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/world/flight.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {
@@ -110,72 +115,30 @@ public:
 
     bool isOpen() const { return body_ != nullptr; }
     // --birds-now: the sky's FIRST flock arrives on the next frame rather than 20 to 90
-    // seconds in. For a review run, which is a few seconds long.
-    //
-    // One-shot, because the caller has it in the frame loop and cannot easily say "once":
-    // zeroing the wait every frame refills the sky the instant it empties, which is the one
-    // thing deviation 2 exists to prevent -- a review run showed 5 birds, then 1, then 4 a
-    // second later, which is a carousel and not a flock.
-    void hurry() {
-        if (hurried_) return;
-        hurried_ = true;
-        wait_ = 0.0f;
-    }
+    // seconds in. For a review run, which is a few seconds long. One-shot; see Flight::hurry.
+    void hurry() { flight_.hurry(); }
     // How many are in the air right now, for the stats line.
-    uint32_t flying() const { return flying_; }
+    uint32_t flying() const { return flight_.flying(); }
 
 private:
-    // Birds in the air at once. The client breaks its loop at five.
-    static constexpr int kMaxBirds = 5;
-
-    enum class Flight : uint8_t { Fly, Down, Ground, Up };
-
-    struct Bird {
-        Figure figure;
-        float position[3] = {0.0f, 0.0f, 0.0f};
-        // Where it will be three of MU's frames from now, which is the point the others steer
-        // by -- the client's `Direction = Position + 3 * p`, said in time so the flock reads
-        // the same at any frame rate.
-        float heading[2] = {0.0f, 0.0f};
-        float facing = 0.0f;
-        float speed = 0.0f;
-        float climb = 0.0f;
-        Flight state = Flight::Fly;
-        bool live = false;
-        // Told to go, and flying out rather than gone. See deviation 3 in the header.
-        bool leaving = false;
-        int paletteRow = -1;
-        // MU's baked terrain light under it this frame, or the unlit boid's own colour.
-        float light[3] = {1.0f, 1.0f, 1.0f};
-    };
-
-    void arrive(const float hero[3], const content::Ground& ground, const float* viewProj);
-    void move(Bird& bird, const float hero[3], bool walking, float seconds, float factor,
-              const content::Ground& ground, const float* viewProj);
-    void call(const Bird& bird, const float hero[3], float factor);
-    void flock(Bird& bird, float factor);
-    void away(Bird& bird, const float hero[3], float factor);
-    void step(Bird& bird, float speed, float seconds);
-    float wander(float seconds);
-    bool chance(float perFrame, float factor);
-    float random01();
-
+    Flight flight_;
     std::unique_ptr<content::Mesh> mesh_;
     std::unique_ptr<ClipLibrary> library_;
     std::unique_ptr<FigureBody> body_;
-    Bird birds_[kMaxBirds];
+    // One per bird, by the same index Flight keeps them in.
+    Figure figures_[Flight::kMaxBirds];
+    int paletteRows_[Flight::kMaxBirds] = {};
+    // MU's baked terrain light under each this frame, or the unlit boid's own colour.
+    float light_[Flight::kMaxBirds][3] = {};
+    // Whether the figure has been stood on this bird's current life, so a flock that arrives
+    // is put down once and then only moved: `stand` clears the clip and the clock, and a bird
+    // re-stood every frame holds the first key of its flap forever.
+    bool standing_[Flight::kMaxBirds] = {};
     std::vector<float> scratch_;
     Airs airs_;
     Sound* sound_ = nullptr;
     int call1_ = -1;
     int call2_ = -1;
-    // Seconds until the next flock, once the sky is empty, and where MU's 8.192 s dive cycle
-    // has got to.
-    float wait_ = 0.0f;
-    float cycle_ = 0.0f;
-    bool hurried_ = false;
-    uint32_t flying_ = 0;
-    uint32_t seed_ = 0x9E3779B9u;
 };
 
 }  // namespace mu::game

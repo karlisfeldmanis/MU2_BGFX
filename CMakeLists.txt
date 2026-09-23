@@ -117,6 +117,7 @@ add_executable(mu2
   src/game/world/grass.cpp
   src/game/world/lamps.cpp
   src/game/world/sway.cpp
+  src/game/world/flight.cpp
   src/game/world/boids.cpp
   src/game/world/leaves.cpp
   src/game/save.cpp
@@ -222,6 +223,17 @@ target_include_directories(cooked_test PRIVATE src)
 target_compile_definitions(cooked_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(cooked_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# The birds, whose every rule is arithmetic and whose every rule is nearly impossible to review
+# from a picture: a flock arrives from off the frame, crosses in two seconds and then the sky is
+# empty for fifteen to forty-five. `game/world/flight.cpp` is the half with no window in it, so
+# this runs thousands of seconds of sky against a flat field in a millisecond.
+add_executable(boids_test EXCLUDE_FROM_ALL
+  tests/boids_test.cpp
+  src/game/world/flight.cpp
+)
+target_include_directories(boids_test PRIVATE src)
+target_compile_options(boids_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
 # The placement transform against MU's own AngleMatrix. It was wrong twice, in the sign and
 # then in the order, and both looked right on most of the map.
 add_executable(placement_test EXCLUDE_FROM_ALL
@@ -272,11 +284,12 @@ target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # review" -- was a rule with nobody keeping it. It reads every include in src/ against the
 # arrows in docs/architecture.md and fails on one that is not allowed. It costs milliseconds.
 add_custom_target(checks
-  DEPENDS cooked_test placement_test sim_test
+  DEPENDS cooked_test placement_test sim_test boids_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py
   COMMAND $<TARGET_FILE:cooked_test>
   COMMAND $<TARGET_FILE:placement_test>
   COMMAND $<TARGET_FILE:sim_test>
+  COMMAND $<TARGET_FILE:boids_test>
   COMMAND ${CMAKE_SOURCE_DIR}/tools/matcheck.py
   COMMENT "running every check that does not need a window"
   USES_TERMINAL
