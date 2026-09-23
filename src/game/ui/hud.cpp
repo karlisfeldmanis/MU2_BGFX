@@ -122,6 +122,22 @@ constexpr uint32_t kLabelCell = gfx::rgba(15.0f / 255.0f, 16.0f / 255.0f, 17.0f 
 constexpr uint32_t kSkillKey = gfx::rgba(141.0f / 255.0f, 127.0f / 255.0f, 125.0f / 255.0f);
 constexpr uint32_t kQuickKey = gfx::rgba(206.0f / 255.0f, 186.0f / 255.0f, 73.0f / 255.0f);
 
+// The ring a fired potion box wears: the key's own gold, a quarter of a second of it, stepping
+// four plate pixels out of the box's edge as it goes and fading as it steps. The ring is OUTSIDE
+// the box, so the bottle and its count are never covered by the thing that says they changed --
+// the eye sees the edge leave and the contents stay put. Under it, for the first breath only, a
+// thin gold sheen inside the box: the sheen is what carries at the corner of the eye while the
+// player is watching a monster, the ring is what says WHICH key answered. Both die to nothing,
+// because a potion has no cooldown to draw and the box must be back to plain immediately.
+constexpr float kStrike = 0.26f;    // seconds of ring
+constexpr int kStrikeSteps = 12;    // and how many redraws that is
+constexpr float kStrikeOut = 4.0f;  // plate pixels the ring ends up outside the box
+constexpr float kStrikeLine = 2.0f;
+// The sheen's alpha at the moment of the press. A fifth and not a third: at a third the apple
+// went pale under it and the box read as the picture changing rather than as the box answering,
+// which is the one thing this must not do.
+constexpr float kStrikeWash = 0.20f;
+
 // Where the plate's corner sits in MU's 640x480: centred, its rail on the foot of the screen.
 constexpr float kPlateAtX = (640.0f - kPlateW * kUnit) / 2.0f;
 constexpr float kPlateAtY = 480.0f - (kLevelTrack.y + kLevelTrack.h) * kUnit;
@@ -299,8 +315,13 @@ bool Hud::Face::operator==(const Face& o) const {
            carrying == o.carrying &&
            fan == o.fan &&
            (carrying == 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
-           std::equal(quick, quick + kQuickKeys, o.quick) && picture == o.picture &&
+           std::equal(quick, quick + kQuickKeys, o.quick) &&
+           std::equal(struck, struck + kQuickKeys, o.struck) && picture == o.picture &&
            std::equal(skill, skill + kSkillKeys, o.skill);
+}
+
+void Hud::strikeQuick(int key) {
+    if (key >= 0 && key < kQuickKeys) struck_[key] = 0.0f;
 }
 
 int Hud::quickAt(float x, float y) const {
@@ -471,7 +492,12 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.tip = tipAt(pointer.x, pointer.y);
         now_.pointerX = pointer.x;
         now_.pointerY = pointer.y;
-        for (int i = 0; i < kQuickKeys; ++i) now_.quick[i] = quick_[i];
+        for (int i = 0; i < kQuickKeys; ++i) {
+            now_.quick[i] = quick_[i];
+            if (struck_[i] < kStrike) struck_[i] += seconds;
+            now_.struck[i] =
+                struck_[i] >= kStrike ? -1 : int(struck_[i] / kStrike * float(kStrikeSteps));
+        }
         for (int i = 0; i < kSkillKeys; ++i) now_.skill[i] = skill_[i];
         width_ = width;
         height_ = height;
@@ -576,6 +602,27 @@ void Hud::rebuild() {
         }
         canvas_.shadowed(box.x, box.bottom() - 3.0f, quickSize, ink, kInkShadow, 1.0f,
                          std::to_string(q.count), gfx::Align::Right, box.w - 3.0f);
+    }
+
+    // A box that just answered. Drawn after the pictures and the counts so the ring is the last
+    // thing on the box, and read off the live clock rather than off `drawn_`: the rebuild is
+    // gated in twelfths, but what is drawn on the frame it fires is where the ring really is.
+    for (int i = 0; i < kQuickKeys; ++i) {
+        if (struck_[i] >= kStrike) continue;
+        const float t = std::clamp(struck_[i] / kStrike, 0.0f, 1.0f);
+        const Box box = plate(s, boxPx(kFirstQuick + i));
+        // Out fast and slowing, which is the shape of every ring that reads as a strike rather
+        // than as a pulse: the distance eases out, the brightness falls off squared so the tail
+        // is gone well before the ring stops moving.
+        const float ease = 1.0f - (1.0f - t) * (1.0f - t);
+        const float fade = (1.0f - t) * (1.0f - t);
+        const float out = ease * kStrikeOut * kUnit * s.scale;
+        const float line = std::max(1.0f, kStrikeLine * kUnit * s.scale);
+        if (t < 0.5f) {
+            const float sheen = kStrikeWash * (1.0f - t * 2.0f);
+            canvas_.rect(box, gfx::rgba(1.0f, 0.90f, 0.55f, sheen));
+        }
+        canvas_.outline(box.grown(out), line, gfx::rgba(1.0f, 0.87f, 0.45f, fade));
     }
 
     // The skill boxes: the icon MuDream's own sheet gives the skill, the cooldown wiped down over

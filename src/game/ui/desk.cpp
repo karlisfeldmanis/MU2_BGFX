@@ -42,6 +42,9 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     textures_ = textures;
     arts_.open(assetDir, textures);
     panel::openTitleFace(interface_);
+    // All of it, here on the preloader's worker rather than in the frame a window first wants
+    // a piece: see Arts::warm.
+    arts_.warm();
     // A stage each, so the bag and the shelf can hold different things at once, and each is
     // the window's own size: one pass draws every picture in a window and they line up with
     // its cells for free.
@@ -291,7 +294,9 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
                 best = slot;
             }
         }
-        if (best >= 0) play.useItem(best);
+        // The ring is struck on the realm's yes and not on the press: a key hit with nothing
+        // left to drink must look like nothing happened, because nothing did.
+        if (best >= 0 && play.useItem(best)) hud_.strikeQuick(key);
     }
     scriptedKey_ = -1;
     // And what each box shows, handed to the frame.

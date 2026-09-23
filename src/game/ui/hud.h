@@ -64,6 +64,13 @@ public:
     // Which potion box a point is over, 0 to 4, or -1: where a drag from the bag binds.
     int quickAt(float x, float y) const;
 
+    // A box that just fired. The realm answers a potion silently -- the bottle leaves the bag,
+    // the gem fills, and the box itself says nothing -- so a key pressed in a fight and a key
+    // pressed at a thing that was not there looked the same. This is the box's own answer: a
+    // ring struck on its edge that steps outward and fades in a quarter of a second. Struck
+    // only when the realm HONOURED the use, so it is a receipt and not an echo of the key.
+    void strikeQuick(int key);
+
     // The five skill boxes, Q W E R T. The plate paints six -- five keys and the gold one the
     // list opens from -- and the fifth was drawn dead for two sprints on a note that said the
     // list would take its place. The list took the GOLD box's place instead, so T is a key like
@@ -220,6 +227,10 @@ private:
         bool tip = false;  // a tip is up, so the pointer's place is part of the picture
         float pointerX = 0, pointerY = 0;
         Quick quick[kQuickKeys];
+        // Where each box's ring is, in twelfths of its life, or -1 for a box not ringing. In
+        // steps and not in seconds for the cooldown's own reason: twelve redraws for a quarter
+        // of a second reads as continuous and costs twelve, not a hundred and eighty.
+        int struck[kQuickKeys] = {-1, -1, -1, -1, -1};
         Skill skill[kSkillKeys];
         Boon boon;
         bool fanOpen = false;
@@ -249,6 +260,8 @@ private:
     int drawnLevel_ = 0;
     uint64_t rebuilds_ = 0;
     Quick quick_[kQuickKeys];
+    // How long ago each box fired, in seconds, counted up and left parked past the ring's life.
+    float struck_[kQuickKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
     Skill skill_[kSkillKeys];
     Boon boon_;
     bool fanOpen_ = false;
