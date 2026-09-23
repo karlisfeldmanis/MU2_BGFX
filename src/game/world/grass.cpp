@@ -107,6 +107,30 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
         sizes_[size_t(slot)] = {float(sw > 0 ? sw : 256), float(sh > 0 ? sh : 64)};
         ++found;
     }
+    // The blade sheet, shared by every world: its greens are re-hued by the shader's grade, so
+    // one painting serves Lorencia's olive and Noria's lush alike.
+    sward_ = textures.load(core::join(dir, "sward.png"), content::TextureRole::Cutout);
+    if (bgfx::isValid(sward_)) {
+        uint32_t w = 0, h = 0;
+        textures.sizeOf(sward_, &w, &h);
+        swardSize_ = {float(w > 0 ? w : 1024), float(h > 0 ? h : 256)};
+    } else {
+        core::logf("no sward.png under %s -- the field falls back to MU's painted tuft "
+                   "(pipeline/sward.py writes it)", dir.c_str());
+    }
+
+    // The meadow's own sheet, shared by every world: MU2 painted one and dims it per world
+    // rather than painting two. Not required -- a sward with no flowers in it is what this
+    // engine drew until now, and it says so rather than failing the launch.
+    meadow_ = textures.load(core::join(dir, "wild.png"), content::TextureRole::Cutout);
+    if (bgfx::isValid(meadow_)) {
+        uint32_t mw = 0, mh = 0;
+        textures.sizeOf(meadow_, &mw, &mh);
+        meadowSize_ = {float(mw > 0 ? mw : 512), float(mh > 0 ? mh : 128)};
+    } else {
+        core::logf("no wild.png under %s -- the sward grows no flowers", dir.c_str());
+    }
+
     if (found == 0) {
         core::logError("%s names no grass slot with a sheet behind it; no field will grow",
                        world.c_str());
@@ -276,6 +300,20 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
         at += count;
     }
 
+    // One sheet for the whole sward, or MU's one per slot. The blade sheet is not per world --
+    // the colour grade is what makes it Lorencia's or Noria's -- so it collapses the batching
+    // to a single draw, and the buckets above are left as they are: their instance data is the
+    // same either way, and a batch that spans all of it is the same run.
+    const bool painted = look.grassPainted > 0.5f || !bgfx::isValid(sward_);
+    if (!painted) {
+        field.batchCount = 1;
+        field.batches[0].sheet = sward_;
+        field.batches[0].first = 0;
+        field.batches[0].count = counts_.drawn;
+        field.batches[0].width = swardSize_.first;
+        field.batches[0].height = swardSize_.second;
+    }
+
     field.vertices = vbh_;
     field.indices = ibh_;
 
@@ -292,9 +330,9 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.wind[2] = look.grassWindStrength;
     field.wind[3] = seconds;
 
-    for (int i = 0; i < 3; ++i) field.root[i] = look.grassRootTint[i];
+    for (int i = 0; i < 3; ++i) field.root[i] = look.grassRootColour[i];
     field.root[3] = look.grassRootAo;
-    for (int i = 0; i < 3; ++i) field.tip[i] = look.grassTipTint[i];
+    for (int i = 0; i < 3; ++i) field.tip[i] = look.grassTipColour[i];
     field.tip[3] = look.grassRoughness;
 
     field.vary[0] = float(kCardsPerPatch);
@@ -302,8 +340,33 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.vary[2] = look.grassRank;
     field.vary[3] = look.grassDry;
 
-    field.sheet[0] = float(kSheetColumns);
-    field.sheet[1] = kCutout;
+    field.sheet[0] = float(painted ? kSheetColumns : kSwardColumns);
+    field.sheet[1] = look.grassCutout;
+    field.sheet[3] = 0.0f;  // the sward, not the meadow
+    field.colour = look.grassColour;
+
+    // The meadow, over the same patches and the same instance buffer.
+    field.meadow.sheet = meadow_;
+    field.meadow.first = 0;
+    field.meadow.count = bgfx::isValid(meadow_) ? counts_.drawn : 0;
+    field.meadow.width = meadowSize_.first;
+    field.meadow.height = meadowSize_.second;
+    field.meadowVary[0] = float(kMeadowCards);
+    field.meadowVary[1] = float(kMeadowStratification);
+    field.meadowVary[2] = 0.0f;   // no rank plants: the sheet paints its own tall ones
+    field.meadowVary[3] = 0.0f;   // and no straw: a daisy does not go over
+    field.meadowSheet[0] = float(kMeadowColumns);
+    field.meadowSheet[1] = kCutout;  // the meadow keeps the painted threshold
+    field.meadowSheet[3] = 1.0f;
+    field.meadowCard[0] = look.grassMeadowHeight;
+    field.meadowCard[1] = meadowSize_.second > 0.0f
+                              ? (meadowSize_.first / float(kMeadowColumns)) / meadowSize_.second
+                              : 0.5f;
+    field.meadowDensity = look.grassMeadow;
+    // Only the first few cards of each patch. The index buffer holds every card's triangles in
+    // order, so a short range IS a smaller plant count -- no degenerate quads rasterised for
+    // the ones that were never wanted.
+    field.meadowIndices = uint32_t(kMeadowCards * kIndicesPerCard);
     field.sheet[2] = kDeepestMip;
     field.sheet[3] = float(kSheetWidth);
     return true;
@@ -317,6 +380,8 @@ void Grass::shutdown() {
     // The sheets belong to Textures, which owns and frees them; this only forgets them.
     sheets_.clear();
     sizes_.clear();
+    sward_ = BGFX_INVALID_HANDLE;
+    meadow_ = BGFX_INVALID_HANDLE;
     for (std::vector<float>& bucket : packed_) bucket.clear();
     counts_ = Counts();
 }

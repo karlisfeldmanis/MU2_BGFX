@@ -390,7 +390,9 @@ Lorencia, 1920x1080, Release, vsync off, 4x MSAA, 400 frames, moving camera, two
 | in the prepass, hard cutout — field, crowd 30 | 4.10 | 3.85 | −0.25 ms |
 | in the prepass, hard cutout — town, crowd 30 | 4.32 | 4.29 | −0.03 ms |
 | out of the prepass, alpha to coverage, 25 cards/m² — open field | 4.01, 4.04 | 3.90, 3.90 | −0.13 ms |
-| **and at 49 cards/m², the finer sward — open field** | **4.03, 4.04** | **4.10, 4.09** | **+0.06 ms** |
+| and at 49 cards/m², the finer sward — open field | 4.03, 4.04 | 4.10, 4.09 | +0.06 ms |
+| narrow cards, 100/m², grass on grass ground only | 4.02, 4.04 | 4.06, 4.05 | +0.03 ms |
+| **the blade sheet, 36 cards/m² — open field** | **4.02, 4.06** | **4.07, 4.02** | **0.00 ms** |
 
 Leaving the prepass gave back half the saving and no more. It was expected to cost about +0.3 ms
 — the ground under the field is shaded and then covered now, where its own prepass depth used to
@@ -449,6 +451,92 @@ asked for. `docs/budget.md` says so too.
   two had been the same number wearing two hats, which is what made the variation read as one
   axis instead of several.
 
+### Where grass grows, and the rule that was wrong
+
+**A slot's NAME does not say what the ground is, and on Lorencia it lies.** Grass grew wherever
+`tile_slots` named a slot `TileGrass*`, which on Lorencia is slots 0 and 1 — and slot 1 is
+`TileGrass02`, which MU2's pipeline textures with the **sand** recipe
+(`TileGrass02 1_tiling_hd_sand_normal.png`). It is the whole sandy shore round the town's ponds,
+and a full sward was coming up out of the beach.
+
+The rule is the **material recipe** now, read off the base layer's own normal-map name in
+`ground_surfaces.json` — the one place in the content that says what a surface actually is.
+Grass grows where the recipe is `grass`. A world whose surfaces name no normal map falls back to
+the old name test, which is better than growing nothing. The slots that grow grass are printed
+at load, so this is never a silent decision again: on Lorencia it is now slot 0 alone.
+
+### Making it look like MU's own grass
+
+Three numbers are one decision, and getting that wrong is what every wrong-looking pass had in
+common:
+
+| | |
+|---|---|
+| **height** 0.42 m | MU's Season 6 grass stands high enough to half-hide a chicken. At 0.20 this was a mown lawn. |
+| **aspect** 0.30 | A card's width over ten painted blades IS a blade's thickness. At 1.15 on a 42 cm card that is 5 cm — a frond. At 0.30 it is 1.3 cm — grass. MU's own client stands one quad a TILE, so its blades really are 10 cm across, and at MU's original resolution that reads; a scattered field at 1080p is not that picture. |
+| **100 cards/m²** | A narrow card covers a quarter of what a wide one did, so the count goes up by the same four or the turf shows through. |
+
+And the colour is a **grade, not a multiply**. Lorencia's grass is painted `(69, 64, 16)` — an
+olive with more red in it than green — and no multiplier reaches a vivid green from there;
+scaling green up and red down just gives a darker olive. Noria's is `(112, 123, 24)` and is green
+to begin with, which is why MU's own screens of the two look nothing alike. So the sheet's
+**value** is kept, which is where the painted blades and their shading live, and the hue comes
+from `grass_root_colour` and `grass_tip_colour` by `grass_colour`. 0 is MU's paint exactly as
+painted; 1 is its light and shade wearing a new colour.
+
+Two more things that read as "leaning" and were not the lean:
+
+- **The roll sheared the card.** The width axis is what the quad is built along, so any y in it
+  does not turn a card, it shears it — and a sheared card draws every painted blade on it leaning
+  by that much. It was nineteen degrees. Two is plenty: what the eye catches is the coherence of
+  a whole sward flashing together, not the size of the angle.
+- **The lean itself** was 0.42 of a card's height across a wide stiffness spread — a third to a
+  half of every card's length sideways, which is a field that has been walked flat. 0.10 across a
+  narrow spread puts a still card at 8–11%: upright, with enough difference between neighbours to
+  see.
+
+### MU's sheet cannot draw a blade, and that is measured
+
+The card machinery was right and the ART was the limit. A card narrow enough to draw a
+blade-width blade is about 12 cm across, and 12 cm of MU's 64-pixel column is sixteen pixels of
+soft overlapping strokes painted to be read as one tuft. The cutout was swept over it:
+
+| `grass_cutout` | what the field looks like |
+|---|---|
+| 0.28 (Turf's own) | overlapping plates; no blade comes apart from its neighbour |
+| 0.50 | thinner plates |
+| 0.68 | the field very nearly gone |
+
+There is no setting in between where a blade appears. So `pipeline/sward.py` paints one that
+can: eight cells of three to five separate blades, each its own height, lean, arch, width and
+green, at 128×256 a cell. Everything around it is unchanged — the patch system, the hashing, the
+clumping, the cutout, the coverage-held mips, alpha-to-coverage, the colour grade. It is one
+more sheet. MU's tuft stays loaded and is one number away (`grass_painted: 1`).
+
+**Two things had to be learned to paint it:**
+
+- **A stroke must be FAT in texels and thin in metres.** The first sward painted six-to-eleven
+  texel blades, and a card lands about twenty pixels wide against a 128-texel cell — six times
+  minified. A six-texel stroke does not survive that: it box-averages to a smear, and the
+  coverage-preserving mip chain scales that smear back up until it passes the cutout as a fat
+  blob. *That* was "plates blended together", not the card and not the count. Blades are
+  eighteen to thirty texels now, and their thinness in the world comes from the card being
+  narrow, which costs nothing and survives everything.
+- **The alpha must be feathered.** A polygon edge reduced by LANCZOS is very nearly binary, so
+  `fwidth` is huge, the coverage ramp collapses to nothing and alpha-to-coverage has no partial
+  coverage to hand out. Crawl went straight back to **9.15** levels. A Gaussian of 0.8 texels on
+  the alpha brought it to **7.04**. MU's own tuft is soft for exactly this reason.
+
+**7.04 against the bare ground's 4.89 is the honest number**, and it is worse than the 4.68 MU's
+soft sheet gave: a crisper sheet has more edge in it and more edge crawls more. That is the
+trade the blade look costs, and it is not yet paid down.
+
+**And the count is decided by what is painted on a card.** MU's tuft is one clump, so a hundred
+a square metre is a sward. The blade sheet paints three to five separate blades a cell, so a
+hundred of those is four or five hundred blades a square metre and they merge into a mass.
+Thirty-six cells is about a hundred and fifty blades a metre: closed, and you can still pick a
+blade out of it.
+
 ### What this still owes
 
 - **The field is not in the prepass, so SSAO does not see it.** Intended — `fs_grass` never
@@ -462,9 +550,19 @@ asked for. `docs/budget.md` says so too.
   nothing between. There is no far band.
 - **Nothing interacts with it.** No walker parts it, no wake lies behind him. MU2's Turf had
   both; Ghost of Tsushima's displacement buffer is the shape for it.
-- **`wild.png` is unused.** MU2's meadow — seed heads, broadleaf, clover, daisies, buttercups,
-  bellflowers, eight painted cells of them — is in `assets/effects/grass/` and nothing reads it.
-- **The greens are first guesses** and have been judged on two shots, not by the user's eye.
+- **The meadow is wired and switched off.** MU2's `wild.png` — seed heads, broadleaf, clover,
+  daisies, buttercups, bellflowers, eight painted cells — now has a draw of its own over the same
+  patches, with its own sheet, size and a short index range, and its paint is exempt from the
+  colour grade because a daisy is white because it was painted white. `grass_meadow` is 0: it is
+  the next piece of work, not this one.
+- **The blades still read a little leafy**, and the reason is structural: a card is minified six
+  times against its cell, so a painted stroke cannot be thinner than the mip chain will carry.
+  Thinner than this wants either a lower-resolution sheet matched to the card's screen size, or
+  real blade geometry — which was built, measured at +0.79 ms, and is in the first section.
+- **Crawl is 7.04 against the ground's 4.89**, where MU's softer sheet sat at 4.68.
+- **The greens have been judged on shots and by the user's eye across several passes**, against
+  MU's own Season 6 Noria as a reference. Lorencia is olive by design and Noria is not; the
+  grade is what carries one to the other.
 
 ### The knobs
 

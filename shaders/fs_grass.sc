@@ -46,13 +46,40 @@ void main()
 	//    painted one tuft and it is used everywhere; a field of one picture is a field that
 	//    repeats, and the eye finds a repeat long before it finds a wrong green. So the sheet
 	//    is carried towards a dark cool tint at the root and a pale warm one at the top.
-	vec3 albedo = sheet.rgb * mix(u_grassRoot.rgb, u_grassTip.rgb, up * up);
-	// The dry tufts, which arrive in patches a few metres across off the coarse clump field.
-	// Straw is not green turned down: it is warmer and far less green, so it is a colour the
-	// tuft is carried towards rather than a saturation on this one.
-	albedo = mix(albedo, albedo * vec3(1.45, 1.18, 0.52), v_colour.a);
-	// And each card a little off its neighbour on top of all that.
-	albedo *= 0.84 + tint * 0.32;
+	// The meadow is exempt from all of it. A daisy is white because it was painted white, a
+	// buttercup yellow; carrying either towards a green root tint or a straw tip is painting
+	// over the one thing the sheet was painted FOR. It takes the AO ramp and the world's light
+	// and nothing else.
+	vec3 albedo = sheet.rgb;
+	if (u_grassSheet.w < 0.5)
+	{
+		// The root-to-tip gradient, as a GRADE and not a multiply.
+		//
+		// A multiply can only scale what the sheet already has, and Lorencia's grass is painted
+		// (69, 64, 16): an olive with more red in it than green. No multiplier reaches a vivid
+		// green from there -- scaling green by 1.5 and red by 0.6 gives a darker olive, which is
+		// what the first pass of this did. Noria's sheet is (112, 123, 24) and is green to begin
+		// with, which is why MU's own screens of Noria look nothing like MU's own Lorencia.
+		//
+		// So the sheet's VALUE is kept -- that is where the painted blades, their edges and
+		// their shading live, and it is the whole reason to use MU's art at all -- and the hue
+		// is taken from the two colours below. `grass_colour` says how far to go: 0 is the
+		// sheet exactly as MU painted it, 1 is its light and shade wearing a new colour.
+		float value = dot(albedo, vec3(0.299, 0.587, 0.114));
+		vec3 target = mix(u_grassRoot.rgb, u_grassTip.rgb, up * up);
+		albedo = mix(albedo, value * target, u_grassSize.w);
+		// The dry tufts, which arrive in patches a few metres across off the coarse clump
+		// field. Straw is not green turned down: it is warmer and far less green, so it is a
+		// colour the tuft is carried towards rather than a saturation on this one.
+		albedo = mix(albedo, value * vec3(1.42, 1.12, 0.44), v_colour.a);
+		// And each card a little off its neighbour on top of all that.
+		albedo *= 0.84 + tint * 0.32;
+	}
+	else
+	{
+		// A flower still varies, just not in hue: one stands a little brighter than the next.
+		albedo *= 0.88 + tint * 0.24;
+	}
 
 	// 2. The height ramp of ambient occlusion. One multiply, and the single most effective
 	//    depth cue there is on grass -- it is what makes a flat field look like it has a floor

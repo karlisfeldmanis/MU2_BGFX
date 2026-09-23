@@ -91,15 +91,33 @@ struct GrassField {
     Batch batches[kMaxSheets];
     int batchCount = 0;
 
-    float card[4] = {0.20f, 1.15f, 0.12f, 1.3f};  // height m, width over height, lean, widening
+    float card[4] = {0.42f, 0.30f, 0.10f, 1.3f};  // height m, width over height, lean, widening
     float wind[4] = {1.0f, 0.0f, 0.10f, 0.0f};    // direction xz, strength, seconds
-    float root[4] = {0.82f, 0.86f, 0.90f, 0.62f}; // the tint at the root, then the AO there
-    float tip[4] = {1.12f, 1.10f, 0.92f, 0.45f};  // the tint at the top, then the roughness
+    float root[4] = {0.54f, 0.72f, 0.40f, 0.62f}; // the colour at the root, then the AO there
+    float tip[4] = {0.94f, 1.12f, 0.58f, 0.45f};  // the colour at the top, then the roughness
+    float colour = 0.26f;  // how far the sheet is graded towards those two
     // cards a patch, the stratification grid's side, the rank share, how dry a dry tuft goes
-    float vary[4] = {49.0f, 7.0f, 0.085f, 0.40f};
-    // columns in the sheet, the alpha the cutout tests, and a sharpening bias on the mip
-    // level (negative is sharper). The sheet's own size rides per batch, above.
+    float vary[4] = {36.0f, 6.0f, 0.085f, 0.16f};
+    // columns in the sheet, the alpha the cutout tests, a sharpening bias on the mip level
+    // (negative is sharper), and 1 when this draw is the meadow rather than the sward. The
+    // sheet's own size rides per batch, above.
     float sheet[4] = {4.0f, 0.28f, -0.4f, 0.0f};
+
+    // --- the meadow -------------------------------------------------------------------
+    // What a lawn has that a field has not: a seed head standing over the blades, a broad leaf
+    // lying under them, clover, daisies, buttercups, bellflowers. Eight painted cells of them
+    // in `assets/effects/grass/wild.png`, which MU2 invented and painted (pipeline/meadow.py)
+    // and which nothing in this engine read until now.
+    //
+    // It is the SAME patches and the SAME instance buffer -- a flower does not care which grass
+    // sheet its tile wears -- drawn a second time with its own sheet, its own size and a short
+    // index range, so only the first few cards of each patch become plants. One more draw.
+    Batch meadow;
+    float meadowCard[4] = {0.34f, 0.5f, 0.06f, 0.6f};  // height m, width over height, lean, widening
+    float meadowVary[4] = {9.0f, 3.0f, 0.0f, 0.0f};    // cards, stratification side, rank, dry
+    float meadowSheet[4] = {8.0f, 0.28f, -0.4f, 1.0f}; // eight cells; the 1 says "meadow"
+    float meadowDensity = 0.0f;    // of the cards it is offered, how many become plants
+    uint32_t meadowIndices = 0;    // how much of the index buffer the meadow draw covers
 };
 
 // One point light, in world metres. The renderer knows nothing of lamps, torches or fires:

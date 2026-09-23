@@ -39,6 +39,13 @@ fi
 failed=()
 mkdir -p "$workshop/grades"
 
+# The sward's blade sheet. It writes straight into assets/ rather than through workshop/, as
+# MU2's meadow.py does for wild.png -- it is painted from nothing and has no source to cook.
+# assets/ is gitignored, so a fresh checkout has no sheet until this runs and the field falls
+# back to MU's painted tuft, which says so in the log. docs/grass.md.
+echo "=== sward"
+python3 "$pipeline/sward.py" || failed+=("sward")
+
 echo "=== grades"
 for g in "$source_dir"/grades/*.json; do
   python3 "$pipeline/grade.py" "$g" "$workshop/grades" || failed+=("grade $(basename "$g")")

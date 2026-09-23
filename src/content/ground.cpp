@@ -96,6 +96,23 @@ bool readLayer(const core::Json& node, const std::string& dir, const core::Json&
     return true;
 }
 
+// The material recipe a layer wears, out of the name MU2's pipeline gave its normal map:
+// "TileGrass02 1_tiling_hd_sand_normal.png" is sand. The token before "_normal" is the recipe,
+// and it is the only place in the content that says what a surface actually IS -- the SLOT's
+// name does not, and on Lorencia it actively lies: slot 1 is called TileGrass02 and is painted,
+// lit and textured as sand. See Ground::grassFloor.
+std::string recipeOf(const core::Json& layer) {
+    const std::string normal = layer["normal"].stringOr("");
+    const std::string tail = "_normal.png";
+    if (normal.size() <= tail.size() || normal.compare(normal.size() - tail.size(), tail.size(),
+                                                       tail) != 0) {
+        return "";
+    }
+    const std::string stem = normal.substr(0, normal.size() - tail.size());
+    const size_t last = stem.rfind('_');
+    return last == std::string::npos ? "" : stem.substr(last + 1);
+}
+
 // The surface an albedo belongs to, as MU2's pipeline names it: "TileGrass01 1_tiling_hd.png"
 // is TileGrass01. The sheet's own variant and its extension are dropped.
 std::string surfaceStem(const std::string& albedo) {
@@ -371,6 +388,10 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     slotNames_.clear();
     const core::Json slots = doc["tile_slots"];
     if (!slots.isNull()) {
+        // Which surface each slot is floored with, so the slot can be asked what it is MADE of
+        // rather than what it is CALLED. Matched on the base albedo's stem, which is the slot's
+        // own name: "TileGrass02 1_tiling_hd.png" is TileGrass02.
+        core::Json surfaceList = core::parseJsonFile(core::join(worldDir, "ground_surfaces.json"));
         for (int slot = 0; slot < 64; ++slot) {
             const std::string key = std::to_string(slot);
             const std::string name = slots[key.c_str()].stringOr("");
@@ -379,8 +400,24 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
                 grassSlots_.resize(size_t(slot) + 1, false);
                 slotNames_.resize(size_t(slot) + 1);
             }
-            grassSlots_[size_t(slot)] = name.rfind("TileGrass", 0) == 0;
             slotNames_[size_t(slot)] = name;
+
+            std::string recipe;
+            for (size_t i = 0; i < surfaceList.size(); ++i) {
+                const core::Json& base = surfaceList.at(i)["base"];
+                if (surfaceStem(base["albedo"].stringOr("")) != name) continue;
+                recipe = recipeOf(base);
+                break;
+            }
+            // Grass grows where the ground IS grass. The recipe is what says so; the name is
+            // not, and on Lorencia the name lies -- slot 1 is TileGrass02 and wears the sand
+            // recipe, which is the whole sandy shore round the ponds. Grown on the name, a full
+            // sward came up out of the beach.
+            //
+            // No recipe at all (a world whose surfaces name no normal map) falls back to the
+            // name, which is what this did before and is better than growing nothing.
+            grassSlots_[size_t(slot)] =
+                recipe.empty() ? (name.rfind("TileGrass", 0) == 0) : (recipe == "grass");
         }
     }
 
@@ -594,6 +631,15 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         bgfx::copy(indices.data(), uint32_t(indices.size() * sizeof(uint32_t)));
     ibh_ = bgfx::createIndexBuffer(imem, BGFX_BUFFER_INDEX32);
 
+    {
+        std::string grassy;
+        for (size_t slot = 0; slot < grassSlots_.size(); ++slot) {
+            if (!grassSlots_[slot]) continue;
+            if (!grassy.empty()) grassy += ", ";
+            grassy += std::to_string(slot) + " " + slotNames_[slot];
+        }
+        core::logf("grass grows on slot(s) %s", grassy.empty() ? "none" : grassy.c_str());
+    }
     core::logf("ground %s: %zu surfaces, %u triangles, %zu vertices (%.1f MB), %zu of them water",
                worldName.c_str(), parts_.size(), triangleCount(), vertices.size(),
                double(vertices.size() * sizeof(GroundVertex)) / 1e6, waterParts);

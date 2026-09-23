@@ -116,9 +116,22 @@ struct Lighting {
     float grass = 1.0f;
     float grassRadius = 11.0f;   // how far out cards stand, metres, from the camera's focus
     float grassFade = 2.5f;      // the last metres of that, where a card shrinks into the turf
-    float grassDensity = 1.0f;   // 0..1 of the 49 cards a square metre a patch may keep
-    float grassHeight = 0.20f;   // metres of SWARD, before a card's own draws and the rank ones
-    float grassAspect = 1.15f;   // a card's width as a multiple of its height; MU's tufts are wide
+    float grassDensity = 1.0f;   // 0..1 of the 36 cards a square metre a patch may keep
+    // Metres of SWARD, before a card's own draws and the rank ones. Tall on purpose: in MU's
+    // own Season 6 the grass stands high enough to half-hide a chicken, and at 0.20 this was a
+    // mown lawn. A card's own draw spreads this 0.46 to 1.48, and a rank one doubles it again,
+    // so 0.42 puts the sward around knee height on the hero with stalks well over it.
+    float grassHeight = 0.42f;
+    // A card's width as a multiple of its height, and it is the number that decides how THICK
+    // a blade of grass is. MU's sheet is a tuft of about ten painted blades across its column,
+    // so a card's width divided by ten is a blade: at 1.15 on a 42 cm card that is a blade five
+    // centimetres across, which is a frond. At 0.30 it is 1.3 cm, which is grass.
+    //
+    // MU's own client stands ONE quad a tile -- a metre wide and a third of a metre tall -- so
+    // its blades really are ten centimetres across, and at MU's original resolution that reads.
+    // This is not that picture: it is a scattered field at 1080p, and it wants the blade a real
+    // one has. Squashing the painted tuft narrow is what gets it, and it costs nothing.
+    float grassAspect = 0.30f;
     // How far a still card lies over, as a fraction of its height.
     //
     // Small. Grass stands UP, and a blade that has lain over is the exception rather than the
@@ -128,9 +141,9 @@ struct Lighting {
     // quad a TILE standing on the tile's edge and nothing else; a scattered field of leaning
     // cards is not the same picture and does not want the same number.
     //
-    // 0.12, times the stiffness spread (0.74 to 1.30), puts a still card between 9 and 16 per
+    // 0.10, times the stiffness spread (0.82 to 1.10), puts a still card between 8 and 11 per
     // cent of its height sideways: upright, with enough difference between neighbours to see.
-    float grassLean = 0.12f;
+    float grassLean = 0.10f;
     // The share of cards that grow rank: tufts near twice the sward's height and narrower with
     // it. One in twelve. It is a step and not a spread on purpose -- a sward whose tops all
     // land near one height reads as mown however much jitter is on it, and what makes a field
@@ -138,7 +151,9 @@ struct Lighting {
     float grassRank = 0.085f;
     // How far a dry tuft goes towards straw, 0 keeping the whole field one green. The dryness
     // runs on a four-and-a-half-metre clump field, so it arrives in patches, not per card.
-    float grassDry = 0.40f;
+    // Low. MU's grass is green, and the straw patches are seasoning on it -- at 0.40 half the
+    // field had gone over and the whole thing read yellow.
+    float grassDry = 0.16f;
     // How far a card may be widened at the far edge of the disc. The thinning with distance and
     // this widening are one mechanism: coverage is held while the card count falls, and a
     // painted blade is kept over a pixel wide where it would otherwise crawl. docs/grass.md.
@@ -151,13 +166,43 @@ struct Lighting {
     // 0.30, which together with MU's baked light took the root of every tuft to under a fifth
     // of the turf it grows out of -- the field read as black blotches on the grass rather than
     // as grass. A modulation of painted art is a nudge; a colour is not.
-    float grassRootTint[3] = {0.82f, 0.86f, 0.90f};
-    float grassTipTint[3] = {1.12f, 1.10f, 0.92f};
+    // These are COLOURS now, not multipliers, and `grassColour` says how far the sheet is
+    // carried towards them -- 0 leaves MU's paint exactly as it is, 1 keeps only its light and
+    // shade. See fs_grass: Lorencia's grass is painted (69, 64, 16), an olive with more red in
+    // it than green, and no multiplier reaches a vivid green from there.
+    //
+    // Deep green at the root where no light gets in, bright yellow-green at the top. Their
+    // scale is a gain on the sheet's own value, so a tip over 1 is a sward that catches light.
+    float grassRootColour[3] = {0.54f, 0.72f, 0.40f};
+    float grassTipColour[3] = {0.94f, 1.12f, 0.58f};
+    float grassColour = 0.26f;
+    // The alpha a card's cutout keeps. MU painted its tuft with soft edges, so this decides how
+    // much of a painted stroke survives -- low keeps the whole soft skirt of a blade and the
+    // field reads as overlapping plates; high keeps only the cores and the blades come apart.
+    // Turf's own was 0.28, which is the number the sheet was painted to; it is a knob here
+    // because what it costs is shape, and shape is the thing being judged.
+    float grassCutout = 0.28f;
+    // Which sheet the sward is cut out of. 0 is MU2_BGFX's own blade sheet (pipeline/sward.py),
+    // 1 is MU's painted tuft, one per grass slot, as MU2's Turf used.
+    //
+    // It defaults to the blade sheet because MU's cannot draw a blade at this scale and that
+    // was measured, not assumed: at a card narrow enough for blade-width blades, MU's tuft is
+    // sixteen pixels of soft overlapping strokes, and every cutout from 0.28 to 0.68 took the
+    // field from overlapping plates straight to nothing. docs/grass.md has the sweep. MU's
+    // sheet stays loaded and one number away, because it is MU's and this is a remaster.
+    float grassPainted = 0.0f;
     float grassRootAo = 0.62f;      // the height ramp's floor: how dark the root sits
     float grassRoughness = 0.45f;   // at the top; the root is rougher by a fixed 0.35
     // And the wind on top of the lean, not instead of it. At 0.22 a gust moved a card
     // further than its own habit ever did, which put the whole field on its side twice a
     // second. It is a sway now, not a flattening.
+    // The meadow: MU2's painted seed heads, broadleaf, clover, daisies, buttercups and
+    // bellflowers (`wild.png`, pipeline/meadow.py). Wired and drawable, and **off**: it is the
+    // next piece of work, not this one. `grass_meadow` above 0 is how many of the cards it is
+    // offered become plants.
+    float grassMeadow = 0.0f;
+    float grassMeadowHeight = 0.34f;
+
     float grassWindStrength = 0.10f;
     float grassWindDegrees = 45.0f;  // which way it blows, turning from +x towards -z
 

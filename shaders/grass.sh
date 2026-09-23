@@ -30,7 +30,7 @@ uniform vec4 u_grassRoot;   // rgb: what the sheet is tinted towards at the root
 uniform vec4 u_grassTip;    // rgb: and at the tip  w: roughness
 uniform vec4 u_grassVary;   // x: cards a patch  y: the stratification's side  z: the rank share  w: how dry a dry tuft goes
 uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: unused
-uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  zw: unused
+uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  z: a scale on the patch's density  w: how far the colour grade goes
 
 // --- the hash ----------------------------------------------------------------------------
 //
@@ -125,7 +125,10 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	// grass shuttering. Over a band the same card grows and shrinks instead, which is nothing
 	// the eye reports.
 	float keep = grassHash(id + 2.3);
-	float alive = saturate((d1.z - keep) * 14.0);
+	// The patch's density, scaled by what this draw asks for: the sward takes all of it,
+	// the meadow a fifth, because a meadow is what stands THROUGH a sward and a field of
+	// flowers is not a field.
+	float alive = saturate((d1.z * u_grassSize.z - keep) * 14.0);
 
 	// The tufts. Two clump fields at two scales, because a meadow has two: a coarse one that
 	// says how well the grass is doing here -- sun, water, what has walked over it -- and a
@@ -184,21 +187,27 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	float fast = sin(u_grassWind.w * 3.9 - travel * 1.7 + grassHash(id + 5.1) * 6.2831853);
 	float gust = slow * 0.72 + fast * 0.28 * (1.45 - stiff);
 
-	// The lean, as the fraction of the card's height spent going sideways rather than up. Its
-	// own habit first -- a floppy tuft lies over further with no wind at all, and MU's own card
-	// leans hard, half a tile, which is most of why its field reads as grass rather than as a
-	// row of fence pickets -- and the wind on top of that.
-	vec2 pushed = facing * u_grassCard.z * (1.55 - stiff) +
-	              u_grassWind.xy * u_grassWind.z * gust * (1.35 - stiff * 0.6);
-	float reachLength = length(pushed);
-	float reachFraction = min(reachLength, 0.93);
-	vec2 leanDir = reachLength > 1e-5 ? pushed / reachLength : facing;
+	// The lean is the card's OWN, and the wind does not touch it.
+	//
+	// This used to add the wind into the lean vector and then normalise the sum, which turns a
+	// gust into a rotation: the direction a card leans swings round towards the wind and back,
+	// and a field of that is a field of spinning tufts rather than a field swaying. MU does not
+	// do that. MU's own client adds a wind value straight onto the top vertex's position --
+	// `TerrainVertex[0][1] += TerrainGrassWind[..]` -- and MU2's Turf kept it. It is a
+	// displacement along one axis, which is what a sway is.
+	//
+	// So the card leans where its own habit and its own stiffness put it, always, and the wind
+	// is added afterwards as a push on the top.
+	vec2 ownLean = facing * u_grassCard.z * (1.24 - stiff * 0.48);
+	float leanLength = length(ownLean);
+	float reachFraction = min(leanLength, 0.93);
+	vec2 leanDir = leanLength > 1e-5 ? ownLean / leanLength : facing;
 
-	// Rotated, not stretched: the card keeps its height as it bends over, so a gust does not
+	// Rotated, not stretched: the card keeps its height as it leans, so its own habit does not
 	// grow the field. reach^2 + rise^2 = height^2.
 	float reach = height * reachFraction;
 	float rise = height * sqrt(max(0.0, 1.0 - reachFraction * reachFraction));
-	c.top = vec3(leanDir.x * reach, rise, leanDir.y * reach) + c.ground * 0.0;
+	c.top = vec3(leanDir.x * reach, rise, leanDir.y * reach);
 	// The middle control point is what gives a tuft its arch: high and barely out stands and
 	// then turns over at the top; lower and further out curves the whole way. Stiffness picks
 	// between them, so a stalk stands and a floppy tuft bows.
@@ -206,6 +215,16 @@ Card grassCard(vec4 d0, vec4 d1, float index)
 	float controlReach = mix(0.34, 0.10, stiff);
 	c.control = vec3(leanDir.x * reach * controlReach, rise * controlRise,
 	                 leanDir.y * reach * controlReach);
+
+	// The sway: one push along the wind's own direction, on the top, carried down the card by
+	// the arch. It never turns the card and it never changes which way the card faces -- both
+	// of those are the card's own and are settled above. A floppy card swings further than a
+	// stalk, which is the one thing stiffness still says here.
+	vec2 sway = u_grassWind.xy * u_grassWind.z * gust * height * (1.35 - stiff * 0.6);
+	c.top.xz += sway;
+	// A third of it at the middle, so the card BENDS into the gust rather than shearing over
+	// as one rigid piece. A blade bends; a fence panel shears.
+	c.control.xz += sway * 0.34;
 
 	// The width axis: square to the lean, and rolled a little out of horizontal. Without the
 	// roll every card in the field presents its face to the sky at the same angle and the

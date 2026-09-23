@@ -65,9 +65,14 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("grass_lean", &grassLean);
     doc.readInto("grass_rank", &grassRank);
     doc.readInto("grass_dry", &grassDry);
+    doc.readInto("grass_meadow", &grassMeadow);
+    doc.readInto("grass_meadow_height", &grassMeadowHeight);
     doc.readInto("grass_widen", &grassWiden);
-    doc.readVec3Into("grass_root_tint", grassRootTint);
-    doc.readVec3Into("grass_tip_tint", grassTipTint);
+    doc.readVec3Into("grass_root_colour", grassRootColour);
+    doc.readVec3Into("grass_tip_colour", grassTipColour);
+    doc.readInto("grass_colour", &grassColour);
+    doc.readInto("grass_cutout", &grassCutout);
+    doc.readInto("grass_painted", &grassPainted);
     doc.readInto("grass_root_ao", &grassRootAo);
     doc.readInto("grass_roughness", &grassRoughness);
     doc.readInto("grass_wind_strength", &grassWindStrength);
@@ -78,7 +83,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
         "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
         "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain",
         "grass", "grass_radius", "grass_fade", "grass_density", "grass_height", "grass_aspect",
-        "grass_lean", "grass_rank", "grass_dry", "grass_widen", "grass_root_tint", "grass_tip_tint", "grass_root_ao",
+        "grass_lean", "grass_rank", "grass_dry", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao",
         "grass_roughness", "grass_wind_strength", "grass_wind_degrees", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;

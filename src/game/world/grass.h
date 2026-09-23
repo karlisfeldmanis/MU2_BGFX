@@ -78,11 +78,26 @@ public:
     // fat leaves, not grass. Stretching one painted tuft over a big quad is what makes a card
     // field read as foliage rather than as a lawn, and the answer is more cards, each smaller,
     // so a painted blade lands near the width a real one has.
-    static constexpr int kStratification = 7;
+    // Six, which is thirty-six cards a square metre.
+    //
+    // The count and what is PAINTED on a card are one decision. MU's tuft is one clump, so a
+    // hundred of them a square metre is a sward; the blade sheet paints five to nine separate
+    // blades a cell, so a hundred of those is five to nine HUNDRED blades a square metre, and
+    // at that count they stop being blades and merge into a flat mass -- "plates blended
+    // together". Thirty-six cells is about two hundred blades a metre, which is a sward you
+    // cannot see the ground through and can still pick a blade out of.
+    static constexpr int kStratification = 6;
     static constexpr int kCardsPerPatch = kStratification * kStratification;
     // MU's sheets are four 64-pixel columns of tuft in a 256-wide picture. The shader cuts one
     // column a card; this is how many there are to choose from.
     static constexpr int kSheetColumns = 4;
+    // The meadow's sheet is eight cells of 64 by 128 in one 512-wide picture, and only the
+    // first few cards of a patch ever become one: a meadow is what stands THROUGH a sward, and
+    // a field of flowers is not a field.
+    static constexpr int kSwardColumns = 8;
+    static constexpr int kMeadowColumns = 8;
+    static constexpr int kMeadowStratification = 3;
+    static constexpr int kMeadowCards = kMeadowStratification * kMeadowStratification;
     // Turf's own threshold, and the one the meadow sheet was painted to: strokes are kept at
     // least a texel and a half wide so the linear filter never thins one away at the cut.
     static constexpr float kCutout = 0.28f;
@@ -106,6 +121,15 @@ private:
     // Each sheet's size in texels, beside it. The shader works a mip level out per
     // axis and MU's sheets are not square.
     std::vector<std::pair<float, float>> sizes_;
+    // MU2_BGFX's own blade sheet, pipeline/sward.py: eight cells of separate blades, each its
+    // own height, lean, width and green, at a resolution where a blade is six to ten pixels
+    // across. It exists because MU's sheet cannot draw one -- see that file's own note, and
+    // docs/grass.md for the cutout sweep that proved it. MU's tuft is still loaded and is one
+    // knob away (`grass_painted`).
+    bgfx::TextureHandle sward_ = BGFX_INVALID_HANDLE;
+    std::pair<float, float> swardSize_ = {1024.0f, 256.0f};
+    bgfx::TextureHandle meadow_ = BGFX_INVALID_HANDLE;
+    std::pair<float, float> meadowSize_ = {512.0f, 128.0f};
 
     // The patches this frame, packed as the three vec4s vs_grass reads, SORTED by sheet so
     // that each sheet is one contiguous instanced draw. Kept between frames so a gather

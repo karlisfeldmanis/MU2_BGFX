@@ -269,28 +269,33 @@ void Renderer::bloom(const Lighting& lighting) {
 
 void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
                            const GrassField& grass, uint64_t state) {
-    if (!bgfx::isValid(program) || grass.batchCount == 0) return;
-    for (int i = 0; i < grass.batchCount; ++i) {
-        const GrassField::Batch& batch = grass.batches[i];
-        if (batch.count == 0 || !bgfx::isValid(batch.sheet)) continue;
-        bgfx::setUniform(uGrassCard_, grass.card);
+    if (!bgfx::isValid(program)) return;
+
+    // One draw: a run of the instance buffer, a sheet, and the numbers that sheet is read with.
+    auto draw = [&](const GrassField::Batch& batch, const float* card, const float* vary,
+                    const float* sheet, float density, uint32_t indices, float colour) {
+        if (batch.count == 0 || !bgfx::isValid(batch.sheet)) return;
+        bgfx::setUniform(uGrassCard_, card);
         bgfx::setUniform(uGrassWind_, grass.wind);
         bgfx::setUniform(uGrassRoot_, grass.root);
         bgfx::setUniform(uGrassTip_, grass.tip);
-        bgfx::setUniform(uGrassVary_, grass.vary);
-        bgfx::setUniform(uGrassSheet_, grass.sheet);
-        // Per batch, because it is per SHEET: Lorencia's two are 256x64 and Noria's
-        // third is 256x128, and a mip level is worked out per axis.
-        const float size[4] = {batch.width, batch.height, 0.0f, 0.0f};
+        bgfx::setUniform(uGrassVary_, vary);
+        bgfx::setUniform(uGrassSheet_, sheet);
+        // Per batch, because it is per SHEET: Lorencia's two are 256x64, Noria's third is
+        // 256x128 and the meadow's is 512x128, and a mip level is worked out per axis.
+        const float size[4] = {batch.width, batch.height, density, colour};
         bgfx::setUniform(uGrassSize_, size);
-        // Clamped, and it matters: a card's uv runs across ONE 64-pixel column of a 256-wide
-        // sheet, and a wrapped sampler bleeds the column beside it in along the cut. Not
-        // point-sampled -- the painted strokes want the filter -- so the bleed would be half
-        // a texel of the wrong tuft down every edge of every card in the field.
-        bgfx::setTexture(0, sAlbedo_, batch.sheet,
-                         BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+        // Clamped, and it matters: a card's uv runs across ONE column of its sheet, and a
+        // wrapped sampler bleeds the column beside it in along the cut. Not point-sampled --
+        // the painted strokes want the filter -- so the bleed would be half a texel of the
+        // wrong tuft down every edge of every card in the field.
+        bgfx::setTexture(0, sAlbedo_, batch.sheet, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
         bgfx::setVertexBuffer(0, grass.vertices);
-        bgfx::setIndexBuffer(grass.indices);
+        if (indices > 0) {
+            bgfx::setIndexBuffer(grass.indices, 0, indices);
+        } else {
+            bgfx::setIndexBuffer(grass.indices);
+        }
         bgfx::setInstanceDataBuffer(&grass.instances, batch.first, batch.count);
         // Both faces, which is what the state carries no BGFX_STATE_CULL_* for. A card is a
         // surface with no inside, and half a scattered field is turned away at any moment;
@@ -299,7 +304,15 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
         bgfx::setState(state);
         bgfx::submit(view, program);
         ++drawCount_;
+    };
+
+    for (int i = 0; i < grass.batchCount; ++i) {
+        draw(grass.batches[i], grass.card, grass.vary, grass.sheet, 1.0f, 0, grass.colour);
     }
+    // And the flowers over the top of it, one more draw across the same patches.
+    // The meadow is never graded: its paint IS its colour. See fs_grass.
+    draw(grass.meadow, grass.meadowCard, grass.meadowVary, grass.meadowSheet,
+         grass.meadowDensity, grass.meadowIndices, 0.0f);
 }
 
 void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
