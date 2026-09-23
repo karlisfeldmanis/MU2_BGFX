@@ -7,6 +7,7 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/world/grass.h"
 #include "game/world/lamps.h"
 #include "game/world/ornaments.h"
 #include "game/play.h"
@@ -46,6 +47,8 @@ public:
     Crowd& crowd() { return crowd_; }
     const Crowd& crowd() const { return crowd_; }
     const Figures& figures() const { return figures_; }
+    Grass& grass() { return grass_; }
+    const Grass& grass() const { return grass_; }
     Lamps& lamps() { return lamps_; }
     const Lamps& lamps() const { return lamps_; }
     Sway& sway() { return sway_; }
@@ -80,6 +83,7 @@ private:
 
     content::Ground ground_;
     Town town_;
+    Grass grass_;
     Lamps lamps_;
     Sway sway_;
     Ornaments ornaments_;

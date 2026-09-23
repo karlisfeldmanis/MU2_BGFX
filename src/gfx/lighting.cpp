@@ -56,11 +56,30 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("probe", &probe);
     doc.readInto("probe_view", &probeView);
     doc.readInto("metal_gain", &metalGain);
+    doc.readInto("grass", &grass);
+    doc.readInto("grass_radius", &grassRadius);
+    doc.readInto("grass_fade", &grassFade);
+    doc.readInto("grass_density", &grassDensity);
+    doc.readInto("grass_height", &grassHeight);
+    doc.readInto("grass_aspect", &grassAspect);
+    doc.readInto("grass_lean", &grassLean);
+    doc.readInto("grass_rank", &grassRank);
+    doc.readInto("grass_dry", &grassDry);
+    doc.readInto("grass_widen", &grassWiden);
+    doc.readVec3Into("grass_root_tint", grassRootTint);
+    doc.readVec3Into("grass_tip_tint", grassTipTint);
+    doc.readInto("grass_root_ao", &grassRootAo);
+    doc.readInto("grass_roughness", &grassRoughness);
+    doc.readInto("grass_wind_strength", &grassWindStrength);
+    doc.readInto("grass_wind_degrees", &grassWindDegrees);
 
     static const char* kKnown[] = {
         "azimuth", "elevation", "sun_colour", "sun_strength", "sky_colour", "horizon_paleness",
         "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
-        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "note"};
+        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain",
+        "grass", "grass_radius", "grass_fade", "grass_density", "grass_height", "grass_aspect",
+        "grass_lean", "grass_rank", "grass_dry", "grass_widen", "grass_root_tint", "grass_tip_tint", "grass_root_ao",
+        "grass_roughness", "grass_wind_strength", "grass_wind_degrees", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;
         for (const char* k : kKnown) known = known || key == k;

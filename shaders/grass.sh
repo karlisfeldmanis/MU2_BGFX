@@ -1,0 +1,299 @@
+// One card of grass, built from nothing.
+//
+// **MU2's Turf, with the placement rebuilt.** MU does not scatter blades: it cuts cards out of
+// a painted sheet -- four 64-pixel columns of a tuft, `assets/effects/grass/<world>_TileGrassNN.png`
+// -- and stands them on the land. MU2's Godot client did the same and scattered them, and that
+// is the method here, because a painted column is eight or ten blades of grass for the fill of
+// ONE quad. A geometric blade buys one blade for one strip; this was measured both ways in this
+// engine and the card wins on everything the camera can see. docs/grass.md.
+//
+// What is new is everything round the card. MU's client stands one quad on each grass tile's
+// own edge and calls it done; MU2 scattered them at a flat density with a jitter. Here a card's
+// place, size, lean, arch, roll, colour and how it answers the wind are each their own draw
+// with their own reason, and they are pulled together by two clump fields so that a field reads
+// as tufts and patches rather than as confetti. The whole field is a pure function of
+// (patch, card index): nothing is stored, streamed or uploaded.
+//
+// Included by vs_grass.sc and by nothing else. The prepass and the shade pass share that ONE
+// vertex shader on purpose: the shade pass tests depth EQUAL against what the prepass laid
+// down, so the two must agree to the last bit, and the only way to be sure of that is for them
+// to be the same compiled code. Both of them alpha-test against the same sheet at the same
+// threshold, for the same reason.
+#ifndef MU2_GRASS_SH
+#define MU2_GRASS_SH
+
+#include "common.sh"
+
+uniform vec4 u_grassCard;   // x: height m  y: width over height  z: lean  w: how far a card may be widened
+uniform vec4 u_grassWind;   // xy: the wind's direction  z: its strength  w: time in seconds
+uniform vec4 u_grassRoot;   // rgb: what the sheet is tinted towards at the root  w: the AO at the root
+uniform vec4 u_grassTip;    // rgb: and at the tip  w: roughness
+uniform vec4 u_grassVary;   // x: cards a patch  y: the stratification's side  z: the rank share  w: how dry a dry tuft goes
+uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: unused
+uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  zw: unused
+
+// --- the hash ----------------------------------------------------------------------------
+//
+// Dave Hoskins', and the change away from the familiar sin one is not a preference.
+//
+// The first build used `fract(sin(n * 12.9898) * 43758.5453)` off a seed the CPU fused as
+// `column * 37 + row * 131 + index * 17.13`. That is broken twice over at this scale:
+//
+//   * **The seed is enormous.** On a 256-tile map it reaches forty thousand, and forty thousand
+//     times 12.9898 is five hundred thousand -- where consecutive float32 values are further
+//     apart than a twentieth of a radian. sin() is being sampled on a coarse lattice, so the
+//     "hash" returns a handful of banded values instead of a spread. The randomness repeats,
+//     visibly, and it repeats in bands across the map.
+//   * **A seed fused by adding multiples collides.** 37 a column against 17.13 a card means
+//     tile (c+11, r) card 0 lands within half a unit of tile (c, r) card 24 -- and a near-equal
+//     input to a smooth function gives a near-equal answer. Whole cards are copies of cards a
+//     few tiles away, on a lattice.
+//
+// This takes its inputs SMALL and SEPARATE -- the tile, the card index, a salt -- and mixes them
+// with fract and a dot product. Neither failure applies, and there is no sin anywhere. It is
+// still exactly reproducible, which is the one property it must have.
+float grassHash(vec3 p)
+{
+	vec3 q = fract(p * 0.1031);
+	q += dot(q, q.yzx + 33.33);
+	return fract((q.x + q.y) * q.z);
+}
+
+vec2 grassHash2(vec3 p)
+{
+	vec3 q = fract(p * vec3(0.1031, 0.1030, 0.0973));
+	q += dot(q, q.yxz + 33.33);
+	return fract((q.xx + q.yz) * q.zy);
+}
+
+// What a card knows about itself. Filled once and read by the position, the normal and the uv,
+// so the three cannot disagree about which card this is.
+struct Card
+{
+	vec3 base;      // where it stands, world space
+	vec3 top;       // where its top edge ends up, relative to base
+	vec3 control;   // the Bezier's middle point, relative to base
+	vec3 across;    // the width runs along this
+	vec3 ground;    // the land's own up where it stands, before the card's own turn
+	float width;    // metres
+	float column;   // which 64-pixel column of the sheet it wears
+	float tint;     // 0..1, its own place between the root and tip tints
+	float dry;      // 0..1, how far this card's tuft has gone to straw
+};
+
+// The patch instance, unpacked:
+//   i_data0 = (x, z of the patch's -x -z corner, height at (col, row+1), height at (col+1, row+1))
+//   i_data1 = (height at (col, row), height at (col+1, row), density 0..1, the patch's seed)
+//   i_data2 = (MU's baked light rgb, the edge fade 0..1)
+//
+// The two height pairs are the v = 0 and v = 1 edges of the tile, where v runs along +z. See
+// docs/conventions.md: column is +x, row is -z, so the tile's corner is (column, -(row + 1)).
+Card grassCard(vec4 d0, vec4 d1, float index)
+{
+	Card c;
+	// The patch's identity is its own tile, in metres, which d0.xy already is -- small numbers
+	// straight into the hash, rather than a big one the CPU fused. See the note on the hash.
+	vec3 id = vec3(d0.x, -d0.y, index);
+
+	// Where in the square metre it stands. Stratified rather than free: a free hash clumps and
+	// leaves bald patches, and at this count the bald patches are what the eye finds. A
+	// jittered grid has neither the regularity of a grid nor the holes of a hash.
+	float side = u_grassVary.y;
+	float row = floor(index / side);
+	float col = index - row * side;
+	vec2 cell = (vec2(col, row) + grassHash2(id + 1.7)) / side;
+
+	float u = cell.x;
+	float v = cell.y;
+	float y = mix(mix(d0.z, d0.w, u), mix(d1.x, d1.y, u), v);
+	c.base = vec3(d0.x + u, y, d0.y + v);
+
+	// The land's own slope under the card, off the same four heights the position came from.
+	// A card standing on a bank has to lean with the bank, or a hillside grows vertical grass
+	// out of a slope and the field looks pasted on.
+	float dhdu = mix(d0.w - d0.z, d1.y - d1.x, v);
+	float dhdv = mix(d1.x - d0.z, d1.y - d0.w, u);
+	c.ground = normalize(vec3(-dhdu, 1.0, -dhdv));
+
+	// Thinned by shrinking whole cards away, never by fading them: there is no TAA here to
+	// hold a half-transparent card still, and a dissolve on painted grass crawls.
+	//
+	// It is a RAMP and not a step, and that is not a nicety. The density a patch is given
+	// falls with its distance from the camera, and the camera moves; on a step, a card whose
+	// hash sits near the threshold switches on and off between one frame and the next as the
+	// player walks. A field of those twinkles, and that twinkle is what was reported as the
+	// grass shuttering. Over a band the same card grows and shrinks instead, which is nothing
+	// the eye reports.
+	float keep = grassHash(id + 2.3);
+	float alive = saturate((d1.z - keep) * 14.0);
+
+	// The tufts. Two clump fields at two scales, because a meadow has two: a coarse one that
+	// says how well the grass is doing here -- sun, water, what has walked over it -- and a
+	// finer one that gathers cards into the bunches grass actually grows in. They are read off
+	// the WORLD and not off the card, so neighbours agree and a tuft does not stop at the
+	// patch's edge.
+	vec2 wide = floor(c.base.xz * 0.22);   // about four and a half metres
+	vec2 tuft = floor(c.base.xz * 1.6);    // about sixty centimetres
+	float vigour = grassHash(vec3(wide, 7.0));
+	float bunch = grassHash(vec3(tuft, 19.0));
+	// Dryness runs on the coarse field, so the straw comes in patches a few metres across --
+	// which is how a lawn goes over in summer, and what stops the whole field being one green.
+	c.dry = saturate(vigour * 1.6 - 0.62) * u_grassVary.w;
+
+	// Which column of the sheet. MU rolls the column by the terrain ROW so the four tufts do
+	// not line up into stripes across the map; a hash per card does the same job without a
+	// table, and does it in two axes rather than one.
+	c.column = floor(grassHash(id + 29.7) * u_grassSheet.x);
+
+	// The height, out of four draws that each do a different job:
+	//   the card's own        a sward is not level; no two tufts beside each other match
+	//   the bunch's           bunches stand a little over or under their neighbours
+	//   the wide field's      and whole patches are lusher or thinner than the rest
+	//   the rank minority     a few stand well over the sward and seed
+	// Only the last is a step, and it is what makes a field read as a field rather than as a
+	// mown lawn: without it the whole sward has one top and looks trimmed.
+	// A WIDE spread, on purpose: this is the random length the field is asked for, and a
+	// narrow one reads as one plant at one size however many of them there are.
+	float own = 0.46 + grassHash(id + 7.7) * 1.02;
+	float rank = step(1.0 - u_grassVary.z, grassHash(id + 13.9));
+	float scale = own * (0.84 + bunch * 0.32) * (0.84 + vigour * 0.36);
+	scale *= mix(1.0, 1.85, rank);
+	float height = u_grassCard.x * scale * alive;
+
+	c.tint = grassHash(id + 11.3);
+
+	// How stiff it is. A stiff tuft stands up and barely answers the wind; a floppy one leans
+	// further, arches harder and whips. ONE draw, read by three things below, so the tuft that
+	// leans a long way is also the one that arches and the one that moves -- which is what
+	// makes the variation read as one plant rather than three unrelated wobbles.
+	float stiff = 0.30 + grassHash(id + 19.3) * 0.70;
+	stiff = mix(stiff, 0.86, rank);   // a rank tuft is stalks: stiffer, and narrower below
+
+	// Which way it faces. Mostly its own, pulled towards its bunch's, so a tuft leans together.
+	// Mostly its own. Pulled towards its bunch's, but not far: a tuft that leans together
+	// is a tuft, and a tuft whose cards are all parallel is a fence.
+	float yaw = (grassHash(id + 3.1) * 0.74 + bunch * 0.26) * 6.2831853;
+	vec2 facing = vec2(cos(yaw), sin(yaw));
+
+	// The wind, in two bands over one direction: a slow sway the whole field shares and a
+	// faster flutter each card keeps its own phase in. The slow band is advected along the
+	// wind so a gust travels ACROSS the field rather than the field pulsing in place, which is
+	// the difference between wind and a breathing carpet.
+	float travel = dot(c.base.xz, u_grassWind.xy);
+	float slow = sin(u_grassWind.w * 1.1 - travel * 0.45);
+	float fast = sin(u_grassWind.w * 3.9 - travel * 1.7 + grassHash(id + 5.1) * 6.2831853);
+	float gust = slow * 0.72 + fast * 0.28 * (1.45 - stiff);
+
+	// The lean, as the fraction of the card's height spent going sideways rather than up. Its
+	// own habit first -- a floppy tuft lies over further with no wind at all, and MU's own card
+	// leans hard, half a tile, which is most of why its field reads as grass rather than as a
+	// row of fence pickets -- and the wind on top of that.
+	vec2 pushed = facing * u_grassCard.z * (1.55 - stiff) +
+	              u_grassWind.xy * u_grassWind.z * gust * (1.35 - stiff * 0.6);
+	float reachLength = length(pushed);
+	float reachFraction = min(reachLength, 0.93);
+	vec2 leanDir = reachLength > 1e-5 ? pushed / reachLength : facing;
+
+	// Rotated, not stretched: the card keeps its height as it bends over, so a gust does not
+	// grow the field. reach^2 + rise^2 = height^2.
+	float reach = height * reachFraction;
+	float rise = height * sqrt(max(0.0, 1.0 - reachFraction * reachFraction));
+	c.top = vec3(leanDir.x * reach, rise, leanDir.y * reach) + c.ground * 0.0;
+	// The middle control point is what gives a tuft its arch: high and barely out stands and
+	// then turns over at the top; lower and further out curves the whole way. Stiffness picks
+	// between them, so a stalk stands and a floppy tuft bows.
+	float controlRise = mix(0.46, 0.76, stiff);
+	float controlReach = mix(0.34, 0.10, stiff);
+	c.control = vec3(leanDir.x * reach * controlReach, rise * controlRise,
+	                 leanDir.y * reach * controlReach);
+
+	// The width axis: square to the lean, and rolled a little out of horizontal. Without the
+	// roll every card in the field presents its face to the sky at the same angle and the
+	// whole sward flashes together as the sun or the camera moves, which no real grass does.
+	float roll = (grassHash(id + 23.1) - 0.5) * 1.35;
+	c.across = normalize(vec3(-leanDir.y, sin(roll) * 0.55, leanDir.x));
+
+	// The width off its own draw rather than off the tint, so a card's shape and its colour
+	// are not the same number wearing two hats -- which is what made the variation read as
+	// one axis instead of several.
+	c.width = height * u_grassCard.y * (0.66 + grassHash(id + 31.7) * 0.74) *
+	          mix(1.0, 0.72, rank);
+
+	// The distance widening, which is the mesh-shader trick out of docs/grass.md: as cards are
+	// thinned with distance the survivors are widened to hold the coverage. On a painted card
+	// it also keeps the painted blades on it over a pixel wide, and a sub-pixel painted blade
+	// under 4x MSAA with no TAA is the one aliasing problem this field really has.
+	float distance = length(u_camPos.xyz - c.base);
+	c.width *= 1.0 + saturate((distance - 4.0) / 8.0) * u_grassCard.w;
+	return c;
+}
+
+// A point on the card. `t` runs 0 at the root to 1 at the top edge; `side` is -1 or +1.
+// `uv` comes back in the sheet's own space, the card's column already chosen.
+void grassVertex(Card c, float t, float side, out vec3 wpos, out vec2 uv, out vec3 normal)
+{
+	vec3 p0 = vec3_splat(0.0);
+	vec3 a = mix(p0, c.control, t);
+	vec3 b = mix(c.control, c.top, t);
+	vec3 along = mix(a, b, t);
+	vec3 tangent = normalize(b - a + vec3(0.0, 1e-5, 0.0));
+
+	// The card narrows a little towards the top, which is what the painted tuft does: the
+	// blades on it spread from a root. Not to a point -- it is a tuft, not a blade.
+	float width = c.width * (1.0 - t * 0.18);
+	wpos = c.base + along + c.across * (width * 0.5 * side);
+
+	float span = 1.0 / u_grassSheet.x;
+	uv = vec2((c.column + side * 0.5 + 0.5) * span, 1.0 - t);
+
+	// The normal, and this is where a card differs from a blade. MU's sheet has its own
+	// lighting painted into it, and a card's true face normal points wherever the quad happens
+	// to have been turned -- which on a scattered field is every direction at once, so lighting
+	// by it makes the sward a field of randomly bright and dark patches. So the normal is
+	// mostly the LAND's, which is what MU's own grass is lit by, turned a little towards the
+	// card's face so that a tuft still catches the sun differently from the turf beside it.
+	//
+	// hexaquo and 2Retr0 both land here from the other direction, transferring normals off a
+	// cylinder to imply a roundness the geometry has not got. Same trick, fewer steps.
+	vec3 face = normalize(cross(c.across, tangent));
+	normal = normalize(mix(c.ground, face, 0.22));
+}
+
+// The sheet, read at a level the card is allowed to go to.
+//
+// MU's sheet is four 64-pixel tufts side by side in one 256-wide picture, and a card's uv
+// spans ONE of those columns. The hardware clamps at the TEXTURE's edge, not at a column's, so
+// once the chain is blurred past a few texels a card starts averaging in the tufts either side
+// of its own -- four different tufts smear into one grey-green smudge, and which smudge it is
+// changes as the camera moves. So the level is worked out here and capped: past the cap a card
+// keeps the sharpest sheet it is allowed instead of dissolving into its neighbours.
+//
+// The chain it reads is coverage-held (content::TextureRole::Cutout), so what this cap has to
+// deal with is the column bleed alone; the thinning was dealt with at load.
+vec4 grassSheet(vec2 uv)
+{
+	// PER AXIS. MU's sheets are 256 by 64, so a uv step of 1 along v crosses 64 texels and a uv
+	// step of 1 along u crosses 256. Scaling both by the width -- which this did at first --
+	// overstates the v derivative fourfold, and log2 of a fourfold derivative is TWO WHOLE MIP
+	// LEVELS. Every card in the field was being read two levels blurrier than it should be,
+	// which is what made the whole thing look smeared. docs/grass.md.
+	vec2 texel = uv * u_grassSize.xy;
+	vec2 dx = dFdx(texel);
+	vec2 dy = dFdy(texel);
+	float lod = 0.5 * log2(max(dot(dx, dx), dot(dy, dy)) + 1e-8);
+
+	// And a sharpening bias on top, which alpha-to-coverage has earned: the trilinear filter
+	// picks a level that just avoids aliasing, and the edges are being antialiased by the
+	// coverage anyway, so half a level sharper costs nothing the eye can see and buys back
+	// painted detail MU put there.
+	lod += u_grassSheet.z;
+
+	// The cap, worked out rather than passed. A column of the sheet is width/columns texels
+	// wide, and below about eight texels a column the sampler -- which clamps at the PICTURE's
+	// edge, not at a column's -- starts averaging in the tufts either side and a card dissolves
+	// into a smudge that changes as the camera moves.
+	float deepest = log2(max(u_grassSize.x / max(u_grassSheet.x, 1.0) / 8.0, 1.0));
+	return texture2DLod(s_albedo, uv, clamp(lod, 0.0, deepest));
+}
+
+#endif  // MU2_GRASS_SH

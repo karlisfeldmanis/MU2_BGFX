@@ -104,6 +104,63 @@ struct Lighting {
     float ssaoRadius = 0.5f;
     float ssaoStrength = 1.0f;
 
+    // The grass, docs/grass.md. MU's own painted tufts, cut out and scattered in a disc round
+    // the camera; past it the ground texture takes over. These are the disc's knobs. They live
+    // in the lighting sheet rather than in one of their own because a field of grass is look,
+    // and this is the sheet the look is tuned on with the window open -- which is the only way
+    // a green ever gets judged.
+    //
+    // `grass` 0 grows nothing at all, which is how the field's cost is priced: one run with it
+    // and one without, wall frame against wall frame, since the per-view GPU timers cannot
+    // price a pass on Metal. docs/budget.md.
+    float grass = 1.0f;
+    float grassRadius = 11.0f;   // how far out cards stand, metres, from the camera's focus
+    float grassFade = 2.5f;      // the last metres of that, where a card shrinks into the turf
+    float grassDensity = 1.0f;   // 0..1 of the 49 cards a square metre a patch may keep
+    float grassHeight = 0.20f;   // metres of SWARD, before a card's own draws and the rank ones
+    float grassAspect = 1.15f;   // a card's width as a multiple of its height; MU's tufts are wide
+    // How far a still card lies over, as a fraction of its height.
+    //
+    // Small. Grass stands UP, and a blade that has lain over is the exception rather than the
+    // rule -- this was pitched at 0.42, which with the stiffness spread on it put every card
+    // between a third and half of its length sideways, and a field of those reads as a field
+    // that has been walked flat. MU's own client leans its one quad half a tile, but MU has one
+    // quad a TILE standing on the tile's edge and nothing else; a scattered field of leaning
+    // cards is not the same picture and does not want the same number.
+    //
+    // 0.12, times the stiffness spread (0.74 to 1.30), puts a still card between 9 and 16 per
+    // cent of its height sideways: upright, with enough difference between neighbours to see.
+    float grassLean = 0.12f;
+    // The share of cards that grow rank: tufts near twice the sward's height and narrower with
+    // it. One in twelve. It is a step and not a spread on purpose -- a sward whose tops all
+    // land near one height reads as mown however much jitter is on it, and what makes a field
+    // a field is the few that stand through it.
+    float grassRank = 0.085f;
+    // How far a dry tuft goes towards straw, 0 keeping the whole field one green. The dryness
+    // runs on a four-and-a-half-metre clump field, so it arrives in patches, not per card.
+    float grassDry = 0.40f;
+    // How far a card may be widened at the far edge of the disc. The thinning with distance and
+    // this widening are one mechanism: coverage is held while the card count falls, and a
+    // painted blade is kept over a pixel wide where it would otherwise crawl. docs/grass.md.
+    float grassWiden = 1.3f;
+    // What MU's painted sheet is MULTIPLIED by, root and top. Not a colour: the sheet is the
+    // art and carries its own green. This is the gradient laid over it -- cool and dark at the
+    // root where no light reaches, pale and warm at the top -- which is what stops one painted
+    // tuft used ten thousand times from reading as one painted tuft used ten thousand times.
+    // They sit NEAR ONE on purpose. The first pass had the root at 0.55 and an AO floor of
+    // 0.30, which together with MU's baked light took the root of every tuft to under a fifth
+    // of the turf it grows out of -- the field read as black blotches on the grass rather than
+    // as grass. A modulation of painted art is a nudge; a colour is not.
+    float grassRootTint[3] = {0.82f, 0.86f, 0.90f};
+    float grassTipTint[3] = {1.12f, 1.10f, 0.92f};
+    float grassRootAo = 0.62f;      // the height ramp's floor: how dark the root sits
+    float grassRoughness = 0.45f;   // at the top; the root is rougher by a fixed 0.35
+    // And the wind on top of the lean, not instead of it. At 0.22 a gust moved a card
+    // further than its own habit ever did, which put the whole field on its side twice a
+    // second. It is a sway now, not a flattening.
+    float grassWindStrength = 0.10f;
+    float grassWindDegrees = 45.0f;  // which way it blows, turning from +x towards -z
+
     // The reflection probe, sprint 8c: a cube round the player that metal and water reflect.
     // `probe` 0 puts the closed-form sky back, which is how its cost is priced. `probeView` N
     // draws the probe's mip N - 1 itself where the town is, the check that its faces are the right way

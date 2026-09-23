@@ -267,6 +267,41 @@ void Renderer::bloom(const Lighting& lighting) {
     }
 }
 
+void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
+                           const GrassField& grass, uint64_t state) {
+    if (!bgfx::isValid(program) || grass.batchCount == 0) return;
+    for (int i = 0; i < grass.batchCount; ++i) {
+        const GrassField::Batch& batch = grass.batches[i];
+        if (batch.count == 0 || !bgfx::isValid(batch.sheet)) continue;
+        bgfx::setUniform(uGrassCard_, grass.card);
+        bgfx::setUniform(uGrassWind_, grass.wind);
+        bgfx::setUniform(uGrassRoot_, grass.root);
+        bgfx::setUniform(uGrassTip_, grass.tip);
+        bgfx::setUniform(uGrassVary_, grass.vary);
+        bgfx::setUniform(uGrassSheet_, grass.sheet);
+        // Per batch, because it is per SHEET: Lorencia's two are 256x64 and Noria's
+        // third is 256x128, and a mip level is worked out per axis.
+        const float size[4] = {batch.width, batch.height, 0.0f, 0.0f};
+        bgfx::setUniform(uGrassSize_, size);
+        // Clamped, and it matters: a card's uv runs across ONE 64-pixel column of a 256-wide
+        // sheet, and a wrapped sampler bleeds the column beside it in along the cut. Not
+        // point-sampled -- the painted strokes want the filter -- so the bleed would be half
+        // a texel of the wrong tuft down every edge of every card in the field.
+        bgfx::setTexture(0, sAlbedo_, batch.sheet,
+                         BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+        bgfx::setVertexBuffer(0, grass.vertices);
+        bgfx::setIndexBuffer(grass.indices);
+        bgfx::setInstanceDataBuffer(&grass.instances, batch.first, batch.count);
+        // Both faces, which is what the state carries no BGFX_STATE_CULL_* for. A card is a
+        // surface with no inside, and half a scattered field is turned away at any moment;
+        // fs_grass turns the normal to face whoever is looking. Culling would leave holes that
+        // move with the wind.
+        bgfx::setState(state);
+        bgfx::submit(view, program);
+        ++drawCount_;
+    }
+}
+
 void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
                             const content::Ground& g, uint64_t state, bool lit) {
     for (const content::GroundPart& part : g.parts()) {
@@ -323,7 +358,7 @@ void Renderer::cameraMatrices(const Camera& camera, float* view, float* proj) co
 
 void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>& drawables, const content::Ground* ground,
-                    const std::vector<Drawable>* casters) {
+                    const std::vector<Drawable>* casters, const GrassField* grass) {
     drawCount_ = 0;
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
@@ -719,6 +754,28 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const uint64_t shadeState =
                 BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_EQUAL;
             if (ground) submitGround(ViewShade, groundShadeProgram_, *ground, shadeState, true);
+            // The grass, and it is the one thing in this view that does not test EQUAL.
+            //
+            // It is not in the prepass at all. It cannot be: a card is mostly empty, its edge
+            // is antialiased into a sample COVERAGE by fs_grass, and the prepass writes the
+            // view depth in the very alpha channel alpha-to-coverage would read. So the field
+            // lays its own depth here -- tested LESS against what the prepass did write, so a
+            // tuft behind a house is still hidden by the house, and written, so a tuft behind
+            // another tuft is hidden by it.
+            //
+            // What that gives up is measured and written down: out of the prepass, the ground
+            // under the field is shaded and then covered, where before the field's own prepass
+            // depth made the ground fail EQUAL and skip its two blended material sets, its
+            // PCSS lookup and its lamp loop. That saving was worth -0.26 ms -- the field was
+            // FASTER than no field. It was spent on not shimmering. docs/grass.md.
+            //
+            // Alpha to coverage only where there are samples to cover: at --msaa 1 there is
+            // one, and a fractional coverage on one sample is a dither. The hard cut is right
+            // there, and fs_grass's ramp collapses to it on its own.
+            const uint64_t grassState = BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                                        BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
+                                        (msaa_ > 1 ? BGFX_STATE_BLEND_ALPHA_TO_COVERAGE : 0);
+            if (grass) submitGrass(ViewShade, grassShadeProgram_, *grass, grassState);
             if (total > 0) {
                 submitBatches(ViewShade, shadeProgram_, skinnedShadeProgram_, batches_, idb,
                               shadeState, true);

@@ -46,6 +46,23 @@ float discTurn(vec2 uv, vec2 pixel)
 // pixel is lit and done, which is most of the ground. Otherwise the penumbra is as wide as
 // the blocker is far, for a sun four degrees across -- an invention, since the real half
 // degree draws a line.
+// The same split, read once. For a surface too small to show a penumbra: a blade of grass is
+// two pixels wide at the nearest MU's camera goes, and thirteen taps to soften an edge across
+// two pixels buys nothing anybody can see. The ground UNDER the field is still read with the
+// full filter, so the shadow the eye actually reads -- the house's, the tree's, on the turf --
+// keeps its soft edge; this only decides whether a blade is in that shadow or out of it.
+//
+// Measured: it is most of what the field costs. See docs/grass.md.
+float sunShadowHard(vec3 wpos, vec3 normal, float ndotl)
+{
+	vec4 sc = mul(u_shadowMtx, vec4(wpos + normal * u_shadowParams.w, 1.0));
+	sc.xyz /= sc.w;
+	if (sc.x < 0.0 || sc.x > 1.0 || sc.y < 0.0 || sc.y > 1.0 || sc.z > 1.0) return 1.0;
+	float slope = sqrt(saturate(1.0 - ndotl * ndotl)) / max(ndotl, 0.15);
+	float bias = u_shadowParams.x * (1.0 + slope);
+	return shadow2D(s_shadowCompare, vec3(sc.xy, sc.z - bias));
+}
+
 float sunShadow(vec3 wpos, vec3 normal, float ndotl, vec2 pixel)
 {
 	vec4 sc = mul(u_shadowMtx, vec4(wpos + normal * u_shadowParams.w, 1.0));

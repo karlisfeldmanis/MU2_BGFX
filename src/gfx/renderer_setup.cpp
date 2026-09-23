@@ -41,6 +41,13 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
     uGroundRepeat_ = bgfx::createUniform("u_groundRepeat", bgfx::UniformType::Vec4);
     uGroundBlend_ = bgfx::createUniform("u_groundBlend", bgfx::UniformType::Vec4);
+    uGrassCard_ = bgfx::createUniform("u_grassCard", bgfx::UniformType::Vec4);
+    uGrassWind_ = bgfx::createUniform("u_grassWind", bgfx::UniformType::Vec4);
+    uGrassRoot_ = bgfx::createUniform("u_grassRoot", bgfx::UniformType::Vec4);
+    uGrassTip_ = bgfx::createUniform("u_grassTip", bgfx::UniformType::Vec4);
+    uGrassVary_ = bgfx::createUniform("u_grassVary", bgfx::UniformType::Vec4);
+    uGrassSheet_ = bgfx::createUniform("u_grassSheet", bgfx::UniformType::Vec4);
+    uGrassSize_ = bgfx::createUniform("u_grassSize", bgfx::UniformType::Vec4);
     sAlbedo2_ = bgfx::createUniform("s_albedo2", bgfx::UniformType::Sampler);
     sNormal2_ = bgfx::createUniform("s_normal2", bgfx::UniformType::Sampler);
     sOrm2_ = bgfx::createUniform("s_orm2", bgfx::UniformType::Sampler);
@@ -148,6 +155,13 @@ bool Renderer::loadPrograms(const std::string& dir) {
     groundShadowProgram_ = loadProgram(dir, "vs_ground_depth", "fs_shadow");
     groundPrepassProgram_ = loadProgram(dir, "vs_ground", "fs_ground_prepass");
     groundShadeProgram_ = loadProgram(dir, "vs_ground", "fs_ground");
+    // One program, and one pass. The field is drawn in the shade pass alone and lays its own
+    // depth there; see Renderer::draw for why it is not in the prepass. Not required: a town
+    // with no grass in it is the town this engine drew until now, and it says so.
+    grassShadeProgram_ = loadProgram(dir, "vs_grass", "fs_grass");
+    if (!bgfx::isValid(grassShadeProgram_)) {
+        core::logError("the grass program did not link; the land goes without its grass");
+    }
     // Not required: a frame without its glows is a picture, and says so.
     bloomDownProgram_ = loadProgram(dir, "vs_screen", "fs_bloom_down");
     bloomUpProgram_ = loadProgram(dir, "vs_screen", "fs_bloom_up");
@@ -329,13 +343,14 @@ void Renderer::shutdown() {
                                    &groundPrepassProgram_, &groundShadeProgram_,
                                    &skinnedShadowProgram_, &skinnedPrepassProgram_,
                                    &skinnedShadeProgram_, &glowProgram_, &skinnedGlowProgram_,
+                                   &grassShadeProgram_,
                                    &bloomDownProgram_, &bloomUpProgram_}) {
         if (bgfx::isValid(*p)) bgfx::destroy(*p);
         *p = BGFX_INVALID_HANDLE;
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uCamPos_, &uParams_,
-          &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
           &sBloom_}) {

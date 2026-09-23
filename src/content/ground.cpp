@@ -337,17 +337,74 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         return false;
     }
 
-    // Which texture each tile is floored with. Not required: nothing draws from it, and the
-    // one thing that reads it -- whether the hero is indoors -- is simply never true without.
+    // Which texture each tile is floored with, and the two channels beside it. Not required:
+    // without the grid the indoor test is simply never true and no grass grows.
     floors_.clear();
+    overlays_.clear();
+    blends_.clear();
     const std::string tilesFile = doc["tiles"].stringOr("");
     if (!tilesFile.empty()) {
+        const std::string path = core::join(worldDir, tilesFile);
         int w = 0, h = 0;
-        floors_ = readGrid(core::join(worldDir, tilesFile), &w, &h, 0);
+        floors_ = readGrid(path, &w, &h, 0);
         if (w != size_ || h != size_) {
             core::logError("%s is %dx%d, and the world says %d tiles a side -- no indoors",
                            tilesFile.c_str(), w, h, size_);
             floors_.clear();
+        } else {
+            // Decoded twice more rather than once into three vectors, which is the same shape
+            // readGrids already uses for attributes.png's two bytes. A 25 KB png at load.
+            int ow = 0, oh = 0, bw = 0, bh = 0;
+            overlays_ = readGrid(path, &ow, &oh, 1);
+            blends_ = readGrid(path, &bw, &bh, 2);
+            if (ow != size_ || bw != size_) {
+                overlays_.clear();
+                blends_.clear();
+            }
+        }
+    }
+
+    // Which of the world's tile slots are grass. Absent leaves the list empty, and an empty
+    // list grows nothing -- which is the right answer for a world whose json names no slots,
+    // since there is then nothing that says what its numbers mean.
+    grassSlots_.clear();
+    slotNames_.clear();
+    const core::Json slots = doc["tile_slots"];
+    if (!slots.isNull()) {
+        for (int slot = 0; slot < 64; ++slot) {
+            const std::string key = std::to_string(slot);
+            const std::string name = slots[key.c_str()].stringOr("");
+            if (name.empty()) continue;
+            if (size_t(slot) >= grassSlots_.size()) {
+                grassSlots_.resize(size_t(slot) + 1, false);
+                slotNames_.resize(size_t(slot) + 1);
+            }
+            grassSlots_[size_t(slot)] = name.rfind("TileGrass", 0) == 0;
+            slotNames_[size_t(slot)] = name;
+        }
+    }
+
+    // MU's baked terrain light, per tile. The ground mesh already carries it per vertex; this
+    // is the same numbers on the grid, for what stands on the ground rather than being it.
+    light_.clear();
+    const std::string lightFile = doc["light"].stringOr("");
+    if (!lightFile.empty()) {
+        const std::string path = core::join(worldDir, lightFile);
+        int w = 0, h = 0;
+        std::vector<uint8_t> r = readGrid(path, &w, &h, 0);
+        int gw = 0, gh = 0, bw = 0, bh = 0;
+        std::vector<uint8_t> g = readGrid(path, &gw, &gh, 1);
+        std::vector<uint8_t> b = readGrid(path, &bw, &bh, 2);
+        if (w == size_ && h == size_ && gw == size_ && bw == size_) {
+            light_.resize(r.size() * 3);
+            for (size_t i = 0; i < r.size(); ++i) {
+                light_[i * 3 + 0] = r[i];
+                light_[i * 3 + 1] = g[i];
+                light_[i * 3 + 2] = b[i];
+            }
+        } else {
+            core::logError("%s is %dx%d, and the world says %d tiles a side -- no baked light",
+                           lightFile.c_str(), w, h, size_);
         }
     }
 
@@ -580,6 +637,34 @@ int Ground::floorAt(int column, int row) const {
     return floors_[size_t(row) * size_t(size_) + size_t(column)];
 }
 
+int Ground::overlayAt(int column, int row) const {
+    if (overlays_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return -1;
+    return overlays_[size_t(row) * size_t(size_) + size_t(column)];
+}
+
+float Ground::blendAt(int column, int row) const {
+    if (blends_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return 0.0f;
+    return float(blends_[size_t(row) * size_t(size_) + size_t(column)]) / 255.0f;
+}
+
+bool Ground::grassFloor(int slot) const {
+    if (slot < 0 || size_t(slot) >= grassSlots_.size()) return false;
+    return grassSlots_[size_t(slot)];
+}
+
+const std::string& Ground::floorName(int slot) const {
+    static const std::string kNone;
+    if (slot < 0 || size_t(slot) >= slotNames_.size()) return kNone;
+    return slotNames_[size_t(slot)];
+}
+
+void Ground::lightAt(int column, int row, float* rgb) const {
+    rgb[0] = rgb[1] = rgb[2] = 1.0f;
+    if (light_.empty() || column < 0 || row < 0 || column >= size_ || row >= size_) return;
+    const size_t at = (size_t(row) * size_t(size_) + size_t(column)) * 3;
+    for (int i = 0; i < 3; ++i) rgb[i] = float(light_[at + size_t(i)]) / 255.0f;
+}
+
 // MU's own test, and the engine's only one: `(word & ~NonBlocking) < wall`, with the wall at
 // Character. It used to be `(a & 0x04) == 0 && (a & 0x08) == 0` here and the threshold in the
 // sim, which is two definitions of "blocked" that agree on both of this content's maps and on
@@ -594,6 +679,12 @@ void Ground::shutdown() {
     indexCount_ = 0;
     parts_.clear();
     height_.clear();
+    floors_.clear();
+    overlays_.clear();
+    blends_.clear();
+    light_.clear();
+    grassSlots_.clear();
+    slotNames_.clear();
     grid_.clear();
 }
 

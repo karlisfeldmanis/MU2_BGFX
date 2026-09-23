@@ -1,0 +1,324 @@
+#include "game/world/grass.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+#include "core/files.h"
+#include "core/log.h"
+#include "game/frustum.h"
+
+namespace mu::game {
+namespace {
+
+// A card: root pair, middle pair, top pair. Four triangles, twelve indices, six vertices.
+// Two segments is what a card at MU's camera earns -- see docs/grass.md, where a tuft works
+// out at some thirty pixels tall at the nearest the zoom goes. The middle row is not detail,
+// it is what lets the card ARCH: with four vertices a leaning card is a flat parallelogram,
+// and MU's grass leans hard.
+constexpr int kVerticesPerCard = 6;
+constexpr int kIndicesPerCard = 12;
+
+// The instance: three vec4s. Not the engine's usual five -- a patch has no model matrix,
+// because a card is built in world space out of the patch's own corner. varying.def.sc's
+// i_data0..2 are read and the stride is what the buffer is walked by, not what a shader reads.
+constexpr uint16_t kInstanceStride = 3 * 4 * sizeof(float);
+constexpr size_t kFloatsPerInstance = 12;
+
+bgfx::VertexLayout g_layout;
+bool g_layoutReady = false;
+
+const bgfx::VertexLayout& cardLayout() {
+    if (!g_layoutReady) {
+        // Position, and it is not a position: (card index, t, side). It rides in POSITION
+        // because every vertex has one and bgfx asks for no new attribute to say so.
+        g_layout.begin().add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float).end();
+        g_layoutReady = true;
+    }
+    return g_layout;
+}
+
+}  // namespace
+
+bool Grass::build(const std::string& assetDir, const std::string& world,
+                  const content::Ground& ground, content::Textures& textures) {
+    shutdown();
+
+    std::vector<float> vertices;
+    std::vector<uint16_t> indices;
+    vertices.reserve(size_t(kCardsPerPatch) * kVerticesPerCard * 3);
+    indices.reserve(size_t(kCardsPerPatch) * kIndicesPerCard);
+
+    for (int card = 0; card < kCardsPerPatch; ++card) {
+        const uint16_t base = uint16_t(card * kVerticesPerCard);
+        const float t[kVerticesPerCard] = {0.0f, 0.0f, 0.5f, 0.5f, 1.0f, 1.0f};
+        const float side[kVerticesPerCard] = {-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f};
+        for (int v = 0; v < kVerticesPerCard; ++v) {
+            vertices.push_back(float(card));
+            vertices.push_back(t[v]);
+            vertices.push_back(side[v]);
+        }
+        // Winding is not chosen, because nothing culls here: a card is a surface with no
+        // inside and fs_grass turns the normal to face whoever is looking.
+        const uint16_t strip[kIndicesPerCard] = {
+            uint16_t(base + 0), uint16_t(base + 1), uint16_t(base + 2),
+            uint16_t(base + 1), uint16_t(base + 3), uint16_t(base + 2),
+            uint16_t(base + 2), uint16_t(base + 3), uint16_t(base + 4),
+            uint16_t(base + 3), uint16_t(base + 5), uint16_t(base + 4),
+        };
+        for (uint16_t i : strip) indices.push_back(i);
+    }
+
+    vbh_ = bgfx::createVertexBuffer(
+        bgfx::copy(vertices.data(), uint32_t(vertices.size() * sizeof(float))), cardLayout());
+    ibh_ = bgfx::createIndexBuffer(
+        bgfx::copy(indices.data(), uint32_t(indices.size() * sizeof(uint16_t))));
+    if (!bgfx::isValid(vbh_) || !bgfx::isValid(ibh_)) {
+        core::logError("the grass card strip did not survive creation");
+        return false;
+    }
+
+    // MU's painted sheets, one per grass slot the world names, found by that slot's name.
+    // The world's own copy first -- MU repaints its grass per map, and Noria's is not
+    // Lorencia's -- then the shared one, which is what a map with no copy of its own gets.
+    const std::string dir = core::join(assetDir, "effects/grass");
+    size_t found = 0;
+    for (int slot = 0; slot < 32; ++slot) {
+        if (!ground.grassFloor(slot)) continue;
+        const std::string& name = ground.floorName(slot);
+        if (name.empty()) continue;
+        bgfx::TextureHandle sheet =
+            textures.load(core::join(dir, world + "_" + name + ".png"), content::TextureRole::Cutout);
+        if (!bgfx::isValid(sheet)) {
+            sheet = textures.load(core::join(dir, name + ".png"), content::TextureRole::Cutout);
+        }
+        if (!bgfx::isValid(sheet)) {
+            core::logError("no painted grass sheet for slot %d (%s) of %s -- it grows nothing",
+                           slot, name.c_str(), world.c_str());
+            continue;
+        }
+        if (size_t(slot) >= sheets_.size()) {
+            sheets_.resize(size_t(slot) + 1, BGFX_INVALID_HANDLE);
+            sizes_.resize(size_t(slot) + 1, {0.0f, 0.0f});
+        }
+        sheets_[size_t(slot)] = sheet;
+        uint32_t sw = 0, sh = 0;
+        textures.sizeOf(sheet, &sw, &sh);
+        sizes_[size_t(slot)] = {float(sw > 0 ? sw : 256), float(sh > 0 ? sh : 64)};
+        ++found;
+    }
+    if (found == 0) {
+        core::logError("%s names no grass slot with a sheet behind it; no field will grow",
+                       world.c_str());
+        return false;
+    }
+
+    core::logf("grass: %d cards a patch on a %dx%d jitter, %zu vertices and %zu indices "
+               "(%.1f KB, built once), %zu painted sheet(s)",
+               kCardsPerPatch, kStratification, kStratification, vertices.size() / 3,
+               indices.size(),
+               double(vertices.size() * sizeof(float) + indices.size() * sizeof(uint16_t)) / 1024.0,
+               found);
+    return true;
+}
+
+bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, const float* viewProj,
+                   const float* focus, float seconds, gfx::GrassField& field) {
+    counts_ = Counts();
+    field.batchCount = 0;
+    if (!bgfx::isValid(vbh_) || sheets_.empty() || look.grass <= 0.0f) return false;
+    if (ground.size() <= 0 || ground.floorAt(0, 0) < 0) return false;
+
+    const float radius = std::max(1.0f, look.grassRadius);
+    const float fadeBand = std::max(0.25f, std::min(look.grassFade, radius * 0.9f));
+    const float metres = ground.metresPerTile();
+
+    // The disc, walked as the square it is cut out of. Column is +x and row is -z, so the
+    // focus lands at column focus.x and row -focus.z. docs/conventions.md.
+    const float focusColumn = focus[0] / metres;
+    const float focusRow = -focus[2] / metres;
+    const int reach = int(std::ceil(radius / metres)) + 1;
+    const int firstColumn = std::max(0, int(std::floor(focusColumn)) - reach);
+    const int lastColumn = std::min(ground.size() - 2, int(std::floor(focusColumn)) + reach);
+    const int firstRow = std::max(0, int(std::floor(focusRow)) - reach);
+    const int lastRow = std::min(ground.size() - 2, int(std::floor(focusRow)) + reach);
+
+    const Frustum frustum(viewProj);
+    // One bucket a sheet, so what comes out is already sorted into contiguous draws. The
+    // buckets are members and are only cleared, so a gather allocates nothing once the disc
+    // has been walked once.
+    int slotOfBucket[gfx::GrassField::kMaxSheets];
+    int buckets = 0;
+    for (int i = 0; i < gfx::GrassField::kMaxSheets; ++i) {
+        packed_[i].clear();
+        slotOfBucket[i] = -1;
+    }
+
+    for (int row = firstRow; row <= lastRow; ++row) {
+        for (int column = firstColumn; column <= lastColumn; ++column) {
+            ++counts_.considered;
+            // Where grass grows: MU's own rule is the base mapping layer, and the engine asks
+            // it by the slot's NAME rather than by its number. See Ground::grassFloor.
+            const int slot = ground.floorAt(column, row);
+            if (!ground.grassFloor(slot)) continue;
+            if (size_t(slot) >= sheets_.size() || !bgfx::isValid(sheets_[size_t(slot)])) continue;
+            ++counts_.grassy;
+
+            // The tile's own square, in metres. x spans [column, column+1] and z spans
+            // -(row+1) to -row, so the corner the shader grows from is (column, -(row + 1)).
+            const float x0 = float(column) * metres;
+            const float z0 = -float(row + 1) * metres;
+            const float centreX = x0 + metres * 0.5f;
+            const float centreZ = z0 + metres * 0.5f;
+
+            const float dx = centreX - focus[0];
+            const float dz = centreZ - focus[2];
+            const float distance = std::sqrt(dx * dx + dz * dz);
+            if (distance > radius) continue;
+
+            // A height, never an alpha: a card shrinks into the turf over the last metres of
+            // the disc. There is no TAA in this engine, and a dissolve on a cut-out card
+            // crawls where a card getting shorter simply stops being there.
+            const float fade = std::min(1.0f, (radius - distance) / fadeBand);
+
+            // Thinned where MU painted something over the lawn. tiles.png's blue is how far
+            // the overlay has been taken across the base, and where that is the paving the
+            // grass should give way to it -- which is Turf's own rule in MU2, and the reason
+            // MU's grass stops at the edge of the square without anything saying so. An
+            // overlay that is itself grass thins nothing.
+            float density = look.grassDensity;
+            if (!ground.grassFloor(ground.overlayAt(column, row))) {
+                density *= 1.0f - ground.blendAt(column, row);
+            }
+            // And thinned with distance, which the shader pays back by widening what is left.
+            // The two are one mechanism: coverage held, card count down, and no painted blade
+            // allowed under a pixel wide at the far edge. docs/grass.md.
+            //
+            // The shader takes this as a RAMP and not a step. It must: this number falls as
+            // the camera walks towards a patch, and on a step the cards whose hash sits near
+            // it would blink on and off frame by frame. A field of those twinkles.
+            density *= 1.0f - 0.55f * std::min(1.0f, std::max(0.0f, (distance - 5.0f) / 9.0f));
+            if (density <= 0.01f || fade <= 0.01f) continue;
+
+            // The four corner heights, in the order the shader bilinears them: the v = 0 edge
+            // of the tile is the row+1 grid line, because v runs along +z and z runs -row.
+            const float h00 = ground.heightAt(x0, z0);
+            const float h10 = ground.heightAt(x0 + metres, z0);
+            const float h01 = ground.heightAt(x0, z0 + metres);
+            const float h11 = ground.heightAt(x0 + metres, z0 + metres);
+            const float lowest = std::min(std::min(h00, h10), std::min(h01, h11));
+            const float highest = std::max(std::max(h00, h10), std::max(h01, h11));
+
+            // The patch's bounds, and the cap on what the shader may do to them. A card stands
+            // at most its sward height times its own draw (1.28), its bunch's (1.16), its
+            // patch's vigour (1.20) and, if it is one of the rank ones, 1.85 on top of that;
+            // and it is up to that wide as well, widened again at distance. The box has to
+            // hold the worst of all of it, or the bounds are a lie and a tuft bends into frame
+            // out of a patch that was culled. Turf paid for this once in MU2 already.
+            const float tallest = look.grassHeight * 1.28f * 1.16f * 1.20f * 1.85f;
+            const float widest = tallest * look.grassAspect * (1.0f + look.grassWiden);
+            const float centre[3] = {centreX, (lowest + highest) * 0.5f + tallest * 0.5f, centreZ};
+            const float sphere = 0.7071f * metres + tallest + widest * 0.5f;
+            if (!frustum.holds(centre, sphere)) continue;
+
+            // Which bucket this patch's sheet is in, opening a new one if it has not been seen.
+            int bucket = -1;
+            for (int i = 0; i < buckets; ++i) {
+                if (slotOfBucket[i] == slot) bucket = i;
+            }
+            if (bucket < 0) {
+                if (buckets >= gfx::GrassField::kMaxSheets) continue;
+                bucket = buckets++;
+                slotOfBucket[bucket] = slot;
+            }
+
+            ++counts_.drawn;
+            counts_.cards += uint32_t(float(kCardsPerPatch) * density);
+
+            float light[3];
+            ground.lightAt(column, row, light);
+
+            // No seed is sent. The shader hashes the patch's own tile, which it already has in
+            // the corner it grows from -- small numbers straight into a hash that behaves at
+            // small numbers. The seed this used to fuse (column * 37 + row * 131) was both huge
+            // and collision-prone, and grass.sh's note on the hash says what that looked like.
+
+            const float instance[kFloatsPerInstance] = {
+                x0, z0, h00, h10,
+                h01, h11, density, 0.0f,
+                light[0], light[1], light[2], fade,
+            };
+            packed_[bucket].insert(packed_[bucket].end(), instance, instance + kFloatsPerInstance);
+        }
+    }
+
+    if (counts_.drawn == 0) return false;
+    if (bgfx::getAvailInstanceDataBuffer(counts_.drawn, kInstanceStride) < counts_.drawn) {
+        core::logError("grass: bgfx has room for fewer than %u patches this frame", counts_.drawn);
+        return false;
+    }
+    bgfx::allocInstanceDataBuffer(&field.instances, counts_.drawn, kInstanceStride);
+
+    // One contiguous run a sheet, copied in bucket order, so each batch is one draw.
+    uint32_t at = 0;
+    uint8_t* out = field.instances.data;
+    for (int i = 0; i < buckets; ++i) {
+        const uint32_t count = uint32_t(packed_[i].size() / kFloatsPerInstance);
+        if (count == 0) continue;
+        std::memcpy(out, packed_[i].data(), packed_[i].size() * sizeof(float));
+        out += size_t(count) * kInstanceStride;
+        gfx::GrassField::Batch& batch = field.batches[field.batchCount++];
+        batch.sheet = sheets_[size_t(slotOfBucket[i])];
+        batch.width = sizes_[size_t(slotOfBucket[i])].first;
+        batch.height = sizes_[size_t(slotOfBucket[i])].second;
+        batch.first = at;
+        batch.count = count;
+        at += count;
+    }
+
+    field.vertices = vbh_;
+    field.indices = ibh_;
+
+    field.card[0] = look.grassHeight;
+    field.card[1] = look.grassAspect;
+    field.card[2] = look.grassLean;
+    field.card[3] = look.grassWiden;
+
+    // The wind turns from +x towards -z, which is the way the sun's azimuth turns and the way
+    // a row runs on MU's grid. One convention for every angle in the sheet.
+    const float windRadians = look.grassWindDegrees * 3.14159265f / 180.0f;
+    field.wind[0] = std::cos(windRadians);
+    field.wind[1] = -std::sin(windRadians);
+    field.wind[2] = look.grassWindStrength;
+    field.wind[3] = seconds;
+
+    for (int i = 0; i < 3; ++i) field.root[i] = look.grassRootTint[i];
+    field.root[3] = look.grassRootAo;
+    for (int i = 0; i < 3; ++i) field.tip[i] = look.grassTipTint[i];
+    field.tip[3] = look.grassRoughness;
+
+    field.vary[0] = float(kCardsPerPatch);
+    field.vary[1] = float(kStratification);
+    field.vary[2] = look.grassRank;
+    field.vary[3] = look.grassDry;
+
+    field.sheet[0] = float(kSheetColumns);
+    field.sheet[1] = kCutout;
+    field.sheet[2] = kDeepestMip;
+    field.sheet[3] = float(kSheetWidth);
+    return true;
+}
+
+void Grass::shutdown() {
+    if (bgfx::isValid(vbh_)) bgfx::destroy(vbh_);
+    if (bgfx::isValid(ibh_)) bgfx::destroy(ibh_);
+    vbh_ = BGFX_INVALID_HANDLE;
+    ibh_ = BGFX_INVALID_HANDLE;
+    // The sheets belong to Textures, which owns and frees them; this only forgets them.
+    sheets_.clear();
+    sizes_.clear();
+    for (std::vector<float>& bucket : packed_) bucket.clear();
+    counts_ = Counts();
+}
+
+}  // namespace mu::game

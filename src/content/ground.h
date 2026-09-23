@@ -91,6 +91,34 @@ public:
     // reads: see World::indoors.
     int floorAt(int column, int row) const;
 
+    // The other two channels of the same grid, which nothing read until the grass did.
+    // tiles.png is (layer1, layer2, alpha): MU's base slot, its overlay slot, and how far the
+    // overlay has been painted over the base. pipeline/terrain.py writes all three and the
+    // ground mesh bakes the alpha into its vertex colour, which is why the engine never
+    // needed the grid itself before. Grass does: where the paving has been painted over the
+    // lawn there should be less lawn, and only this says so per tile.
+    int overlayAt(int column, int row) const;
+    float blendAt(int column, int row) const;
+
+    // Whether a tile slot is one of MU's grass sheets, out of the world's own `tile_slots`
+    // table. Asked by name rather than by number: Lorencia's grass is slots 0 and 1 and
+    // Noria's is not the same pair, and MU's own rule -- BITMAP_MAPGRASS + layer1, so slots
+    // 0, 1 and 2 -- would grow grass on Lorencia's TileGround01 because it is third in the
+    // table rather than because it is grass.
+    bool grassFloor(int slot) const;
+
+    // What the world's `tile_slots` calls a slot -- "TileGrass01" -- or empty. The grass reads
+    // it to find the painted sheet MU floors that slot with: MU's own rule is
+    // BITMAP_MAPGRASS + layer1, an index, and an index is exactly what goes wrong when a world
+    // orders its slots differently. The name does not.
+    const std::string& floorName(int slot) const;
+
+    // MU's baked TerrainLight at a tile, linear, 0..1 a channel. The same light the ground
+    // mesh carries in its vertex colour, read off the grid instead so that something standing
+    // ON the ground can be given the light of the tile it stands on. NOT sRGB-decoded: it is
+    // a lit result and not an albedo. docs/conventions.md.
+    void lightAt(int column, int row, float* rgb) const;
+
     uint32_t triangleCount() const { return indexCount_ / 3; }
 
     static const bgfx::VertexLayout& layout();
@@ -108,7 +136,12 @@ private:
     float metresPerTile_ = 1.0f;
     float heightFactor_ = 1.5f;
     std::vector<float> height_;  // metres, [row * size + column]
-    std::vector<uint8_t> floors_;  // tile texture, [row * size + column]; empty when absent
+    std::vector<uint8_t> floors_;   // tiles.png red: MU's base slot; empty when absent
+    std::vector<uint8_t> overlays_; // tiles.png green: MU's overlay slot
+    std::vector<uint8_t> blends_;   // tiles.png blue: how far the overlay is painted over it
+    std::vector<uint8_t> light_;    // light.png, three bytes a tile; empty when absent
+    std::vector<bool> grassSlots_;  // which entries of the world's tile_slots are TileGrass*
+    std::vector<std::string> slotNames_;  // and what each of them is called
     Grid grid_;
 };
 

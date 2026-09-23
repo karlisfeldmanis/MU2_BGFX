@@ -34,7 +34,8 @@ bgfx::TextureHandle solid(uint32_t abgr) {
 }
 
 bool isSrgb(TextureRole role) {
-    return role == TextureRole::Albedo || role == TextureRole::Emissive;
+    return role == TextureRole::Albedo || role == TextureRole::Emissive ||
+           role == TextureRole::Cutout;
 }
 
 // Whether the bytes are sRGB, which is what the mip chain is averaged by -- a wider question
@@ -149,6 +150,43 @@ void downsample(const uint8_t* src, uint32_t srcW, uint32_t srcH, uint8_t* dst, 
         }
     }
 }
+
+// Rescales one mip level's alpha so that the share of texels at or over `cutoff` matches
+// what the top level had. The scale is found by bisection rather than solved, because the
+// answer depends on the level's own alpha histogram and sixteen halvings settle it to well
+// inside a byte -- at load, on a 256x64 sheet, which is nothing.
+//
+// This is the standard answer to a cut-out that thins as it minifies (Castano's, and every
+// foliage renderer's since). What it buys here is not mainly that a distant tuft keeps its
+// bulk: it is that the level's alpha is pushed AWAY from the threshold, so far fewer texels
+// sit near enough to cross it when the camera moves half a texel. That crossing is the crawl.
+void holdCoverage(uint8_t* level, size_t texels, float cutoff, float wanted) {
+    if (texels == 0 || wanted <= 0.0f) return;
+    float low = 0.05f, high = 24.0f;
+    for (int step = 0; step < 16; ++step) {
+        const float scale = (low + high) * 0.5f;
+        size_t over = 0;
+        for (size_t i = 0; i < texels; ++i) {
+            if (float(level[i * 4 + 3]) / 255.0f * scale >= cutoff) ++over;
+        }
+        const float got = float(over) / float(texels);
+        if (got < wanted) {
+            low = scale;
+        } else {
+            high = scale;
+        }
+    }
+    const float scale = (low + high) * 0.5f;
+    for (size_t i = 0; i < texels; ++i) {
+        const float a = float(level[i * 4 + 3]) / 255.0f * scale;
+        level[i * 4 + 3] = uint8_t((a < 0.0f ? 0.0f : (a > 1.0f ? 1.0f : a)) * 255.0f + 0.5f);
+    }
+}
+
+// The alpha a cut-out is tested against. One number, here, because the mip chain is built to
+// hold coverage at exactly the threshold the shader will test at, and the two disagreeing is
+// the chain holding the wrong thing. game::Grass::kCutout is the same number and says so.
+constexpr float kCutoutAlpha = 0.28f;
 
 uint8_t mipCount(uint32_t width, uint32_t height) {
     uint8_t levels = 1;
@@ -279,6 +317,23 @@ bgfx::TextureHandle Textures::loadFromMemory(const std::string& name, const void
             srcH = dstH;
         }
 
+        if (role == TextureRole::Cutout) {
+            // What the top level covers, which every level below it is made to match.
+            size_t over = 0;
+            const size_t topTexels = size_t(width) * height;
+            for (size_t i = 0; i < topTexels; ++i) {
+                if (float(chain->at(i * 4 + 3)) / 255.0f >= kCutoutAlpha) ++over;
+            }
+            const float wanted = float(over) / float(topTexels);
+            size_t offset = topTexels * 4;
+            for (uint8_t level = 1; level < levels; ++level) {
+                const uint32_t lw = std::max(1u, width >> level);
+                const uint32_t lh = std::max(1u, height >> level);
+                holdCoverage(chain->data() + offset, size_t(lw) * lh, kCutoutAlpha, wanted);
+                offset += size_t(lw) * lh * 4;
+            }
+        }
+
         const bgfx::Memory* mem =
             bgfx::makeRef(chain->data(), uint32_t(chain->size()), releaseBytes, chain);
         bgfx::TextureHandle handle =
@@ -338,5 +393,6 @@ bgfx::TextureHandle Textures::load(const std::string& path, TextureRole role) {
     }
     return loadFromMemory(path, bytes.data(), uint32_t(bytes.size()), role);
 }
+
 
 }  // namespace mu::content

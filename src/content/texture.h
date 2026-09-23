@@ -30,6 +30,18 @@ enum class TextureRole {
     // bytes is darker than the colour they make. Clamped, trilinear, no anisotropy: a window
     // is drawn face on.
     Interface,
+    // A cut-out: MU's painted grass tufts, and anything else drawn through an alpha test.
+    // sRGB colour like an albedo, and decoded like one -- but its mip chain has every level's
+    // alpha RESCALED so that the fraction of texels above the test's threshold matches the
+    // top level's.
+    //
+    // Without that, a flat alpha average thins a cutout as it minifies, and it does not thin
+    // it steadily: texels drift across the threshold as the camera moves, so painted blades
+    // wink in and out frame by frame. A field of that twinkles, and twinkling is what a
+    // scattered cut-out field must not do -- there is no TAA in this engine to hold it still.
+    // The note in downsample() named this exact failure and said there was no cutout content
+    // to suffer it. The grass is that content. docs/grass.md.
+    Cutout,
 };
 
 // Keeps one handle per path, so a texture two materials share is loaded once.
@@ -77,6 +89,7 @@ public:
     bool sizeOf(bgfx::TextureHandle handle, uint32_t* width, uint32_t* height) const;
 
     size_t count() const { return byPath_.size(); }
+
     uint64_t bytes() const { return bytes_; }
     uint64_t mipBytes() const { return mipBytes_; }
 

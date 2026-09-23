@@ -87,6 +87,11 @@ bool World::open(const std::string& assetDir, const std::string& name,
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
     // And what rides the swaying bones: the fountain's spray, the lanterns.
     if (town_.isOpen()) ornaments_.open(assetDir, town_, textures);
+    // The near field: the card strip, built once, and MU's own painted grass sheets for
+    // whichever tile slots this world calls grass. Which TILES are grassy is not settled here
+    // -- it is asked of the ground every frame, because the disc moves with the camera.
+    // docs/grass.md.
+    grass_.build(assetDir, name, ground_, textures);
 
     if (!focusSet_) {
         // Lorencia's safe zone is around tile 142,126 -- the middle of the town rather than
@@ -288,6 +293,7 @@ void World::shutdown() {
     lamps_.shutdown();
     sway_.shutdown();
     ornaments_.shutdown();
+    grass_.shutdown();
     town_.shutdown();
     ground_.shutdown();
 }

@@ -51,6 +51,57 @@ struct Drawable {
     bool inProbe = true;
 };
 
+// The near field's grass, ready to draw. The renderer knows nothing of maps, tiles or where
+// grass grows: `game`'s Grass walks the land and fills this, and what arrives here is one
+// buffer of blade strips, one instance per square metre, and the look's own numbers.
+//
+// Two draws come out of it, the prepass and the shade pass, off ONE vertex shader. The shade
+// pass tests depth EQUAL against the prepass, so the two passes must place a blade at exactly
+// the same point; two shaders that compute the same thing are not the same thing, and the
+// only way to be certain is for them to be the same compiled code. docs/grass.md.
+//
+// Never the shadow pass. MU's own grass casts nothing, and a field of blades in the sun's
+// split is a shadow map full of noise.
+struct GrassField {
+    // At most this many painted sheets in one field. MU loads three grass sheets for a map
+    // and a world's tile_slots names at most that many TileGrass entries; four is one spare.
+    static constexpr int kMaxSheets = 4;
+
+    // One sheet's worth of the field: a run of the instance buffer, and the picture its cards
+    // are cut out of. Separate draws rather than an atlas because MU's sheets are separate
+    // pictures of different heights, and because at two or three of them a draw each is
+    // cheaper than the uv arithmetic an atlas would put in every vertex.
+    struct Batch {
+        bgfx::TextureHandle sheet = BGFX_INVALID_HANDLE;
+        uint32_t first = 0;
+        uint32_t count = 0;
+        // The sheet's own size in texels. Per axis, and it must be: MU's sheets are 256 by 64
+        // and 256 by 128, and a mip level worked out from the width alone is two whole levels
+        // of blur on the short axis. That was the first version of this and it is what made
+        // the field look smeared. docs/grass.md.
+        float width = 256.0f;
+        float height = 64.0f;
+    };
+
+    bgfx::VertexBufferHandle vertices = BGFX_INVALID_HANDLE;
+    bgfx::IndexBufferHandle indices = BGFX_INVALID_HANDLE;
+    // Allocated out of bgfx's own transient store during the gather, so it is good for this
+    // frame and no longer. One patch each: see game/world/grass.cpp for what is in it.
+    bgfx::InstanceDataBuffer instances{};
+    Batch batches[kMaxSheets];
+    int batchCount = 0;
+
+    float card[4] = {0.20f, 1.15f, 0.12f, 1.3f};  // height m, width over height, lean, widening
+    float wind[4] = {1.0f, 0.0f, 0.10f, 0.0f};    // direction xz, strength, seconds
+    float root[4] = {0.82f, 0.86f, 0.90f, 0.62f}; // the tint at the root, then the AO there
+    float tip[4] = {1.12f, 1.10f, 0.92f, 0.45f};  // the tint at the top, then the roughness
+    // cards a patch, the stratification grid's side, the rank share, how dry a dry tuft goes
+    float vary[4] = {49.0f, 7.0f, 0.085f, 0.40f};
+    // columns in the sheet, the alpha the cutout tests, and a sharpening bias on the mip
+    // level (negative is sharper). The sheet's own size rides per batch, above.
+    float sheet[4] = {4.0f, 0.28f, -0.4f, 0.0f};
+};
+
 // One point light, in world metres. The renderer knows nothing of lamps, torches or fires:
 // what burns, and how it flickers, is `game`'s. docs/sprints/08a-the-lamps.md.
 struct PointLight {
@@ -91,9 +142,11 @@ public:
     // the camera's frustum removes the shadow of whatever is just off screen -- the bug
     // foundation 7 of PLAN.md names. Null means the camera's own list casts, which is right
     // only when nothing was culled out of it.
+    // `grass` may be null, and is null on every bench and every stage: a field of blades is
+    // the town's, not a subject's.
     void draw(const Camera& camera, const Lighting& lighting,
               const std::vector<Drawable>& drawables, const content::Ground* ground,
-              const std::vector<Drawable>* casters = nullptr);
+              const std::vector<Drawable>* casters = nullptr, const GrassField* grass = nullptr);
 
     uint32_t lastDrawCount() const { return drawCount_; }
 
@@ -328,6 +381,10 @@ private:
     // The land. Its own vertex layout and its own shader: it blends two full material sets
     // by a per-vertex weight and carries MU's baked light, which the closed material model
     // has no room for. docs/conventions.md.
+    // One instanced draw per painted sheet, once a frame, in the shade pass. See GrassField.
+    void submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program, const GrassField& grass,
+                     uint64_t state);
+
     void submitGround(bgfx::ViewId view, bgfx::ProgramHandle program, const content::Ground& g,
                       uint64_t state, bool lit);
 
@@ -404,6 +461,7 @@ private:
     bgfx::ProgramHandle groundShadowProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle groundPrepassProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle groundShadeProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle grassShadeProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle glowProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle bloomDownProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle bloomUpProgram_ = BGFX_INVALID_HANDLE;
@@ -447,6 +505,13 @@ private:
     bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRepeat_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassCard_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassWind_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassRoot_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassTip_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassVary_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassSize_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAlbedo2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sNormal2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sOrm2_ = BGFX_INVALID_HANDLE;

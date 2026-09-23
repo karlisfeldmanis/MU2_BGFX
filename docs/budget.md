@@ -20,6 +20,21 @@ that overdraws stops and says so rather than borrowing from spare.
 
 The view numbers moved when the hover ring took 16 and 17 (`docs/sprints/09-the-ring.md`); they had also been stale in this table since sprint 6, which is why present read "6, 7" against a present view of 15.
 
+**The grass owes this page nothing, and that is measured and not assumed** (`docs/grass.md`).
+Lorencia's open field is its worst case, and there it measures **3.90 against 4.02 with the
+field switched off** — two runs each, 400 frames, `--crowd 0 --no-figures`, 2026-09-23. The
+field is FASTER than no field: MU's painted cards cover ground that would otherwise run two
+blended material sets, a thirteen-tap PCSS lookup, an SSAO fetch and a lamp loop, and a card's
+own shader is one texture read and a short list of multiplies. Treyarch measured the same thing
+on Black Ops 4 for the same reason.
+
+So no account gives anything up, and no account gains one either: a saving that depends on how
+much of the frame is lawn is not an allowance anything can spend. `grass: 0` in the lighting
+sheet is how it is switched off to be priced again.
+
+A geometric-blade field was built first and measured at **+0.79 ms**, all of it fill. It was
+replaced by the cards on that number. `docs/grass.md` has both tables.
+
 **Those add to 5.8, and that is sprint 8c's doing, said here rather than hidden.** The probe
 measured +0.28 ms of wall frame (below) and the accounts had no room for it: the spare is 0.2.
 The frame it was measured in is 4.15 ms, well inside the enforced 5.5, so nothing fails; what is
