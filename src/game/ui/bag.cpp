@@ -86,8 +86,19 @@ Box ghostBox(const Box& cell, const gfx::Art& art) {
     return {room.x + (room.w - w) * 0.5f, room.y + (room.h - h) * 0.5f, w, h};
 }
 // Faint, and the window's own warm lettering rather than white: a ghost says what the slot is
-// for and must lose to any piece standing in the slot beside it.
-constexpr uint32_t kGhostInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.20f);
+// for and must lose to any piece standing in the slot beside it. A slot with a piece in it keeps
+// its ghost, fainter, because the piece is drawn over it a shade transparent -- the user,
+// 2026-09-23: *"we want some transparencey so we can little bit see that icoon behind weared
+// item"* -- so the slot goes on saying what it is for with a helm standing in it.
+constexpr uint32_t kGhostInk = gfx::rgba(0.90f, 0.86f, 0.76f, 0.17f);
+constexpr uint32_t kGhostUnder = gfx::rgba(0.90f, 0.86f, 0.76f, 0.22f);
+
+// Where the worn block ends and the satchel begins: below the boots' row (154 + 46) and above
+// the grid (kOriginY). The stage's picture is cut on this line so the worn half can be drawn a
+// shade transparent -- the piece, the slot's ghost under it, the cell under that -- while a
+// thing in the satchel, which has no ghost beneath it and nothing to say, stays solid.
+constexpr float kWornFoot = 203.0f;
+constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 
 // The Zen strip is drawn by `panel::zenFoot`, on the panel's shared foot rule.
 constexpr float kTipSize = 8.0f;
@@ -266,16 +277,18 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                     slot == hovered_ && dragging_ < 0 ? sheet::Cell::Over
                     : slot == dragging_              ? sheet::Cell::Held
                                                      : sheet::Cell::Rest);
-        if (bag[slot].empty()) {
-            const gfx::Art& ghost = arts.get(ghostFor(slot));
-            if (ghost.valid()) {
-                // **The shape alone, faint.** `bag_slot_*` was a plate -- leather, a gold rim, and
-                // the shape painted a little lighter on it -- and drawn over the flat skin at any
-                // tint it was a tile filling the cell. `bag_ghost_*` is that shape cut out as a
-                // mask, so the cell stays the cell and the silhouette is the only thing laid on
-                // it. The user, 2026-09-23: *"equipment slots could looks better"*.
-                canvas_.image(ghost, panel::scaled(x, y, ghostBox(box, ghost)), kGhostInk);
-            }
+        const gfx::Art& ghost = arts.get(ghostFor(slot));
+        if (ghost.valid()) {
+            // **The shape alone, faint.** `bag_slot_*` was a plate -- leather, a gold rim, and
+            // the shape painted a little lighter on it -- and drawn over the flat skin at any
+            // tint it was a tile filling the cell. `bag_ghost_*` is MU's own silhouette cut off
+            // that leather by pipeline/slot_ghosts.py, so the cell stays the cell and the shape
+            // is the only thing laid on it. The user, 2026-09-23: *"equipment slots could looks
+            // better"*. Under a worn piece it is drawn a little stronger, because the piece is
+            // over it: what shows through the armour is that strength times what the picture
+            // lets through, and what shows round the armour is the rest of the cell.
+            canvas_.image(ghost, panel::scaled(x, y, ghostBox(box, ghost)),
+                          bag[slot].empty() ? kGhostInk : kGhostUnder);
         }
     }
     // The satchel: one ruled block, eight by eight, no air between the cells.
@@ -315,9 +328,15 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // The item layer: the stage's one picture of the whole window, over the cells. Where there
     // is no stage yet, each thing's name in its box, so the bag can be read without pictures.
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
-    const Box whole = panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight});
     if (picture.valid()) {
-        canvas_.image(picture, whole);
+        // In two bands on the line the worn block ends: the worn half a shade transparent, so a
+        // slot goes on saying what it is for with a piece standing in it, and the satchel whole.
+        const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
+        const float below = panel::kHeight - kWornFoot;
+        canvas_.region(picture, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, kWornFoot}),
+                       {0.0f, 0.0f, panel::kWidth * sx, kWornFoot * sy}, kWornInk);
+        canvas_.region(picture, panel::scaled(x, y, {0.0f, kWornFoot, panel::kWidth, below}),
+                       {0.0f, kWornFoot * sy, panel::kWidth * sx, below * sy});
     } else {
         for (const Standing& one : standing_) {
             const Box box = panel::scaled(x, y, one.box);
