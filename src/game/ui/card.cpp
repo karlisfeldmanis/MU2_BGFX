@@ -26,9 +26,17 @@ Box rowField(float rowY) { return {11.0f, rowY, 170.0f, 21.0f}; }
 constexpr Box kSummary{12.0f, 48.0f, 160.0f, 66.0f};
 constexpr Box kSummaryField{11.0f, 45.0f, 170.0f, 65.0f};
 
-constexpr float kTextSize = 10.0f, kSummarySize = 9.0f;
-constexpr float kLeft = 18.0f, kMiddle = 100.0f, kFigureRight = 155.0f, kGutter = 6.0f;
-constexpr float kDetailTop = 24.0f, kDetailStep = 13.0f;
+// **The type, tuned 2026-09-23.** A figure is a size and a half above its own label, which is
+// what makes a stat window scannable: the eye runs down the numbers and reads a word only when
+// it stops. The detail lines under a well are a label and a value like everything else on the
+// card, right-ranged against the same edge the figure is, rather than MU's "Dmg: 22~33" run-on.
+constexpr float kTextSize = 9.5f, kFigureSize = 13.0f, kSummarySize = 8.5f, kDetailSize = 8.0f;
+// The content's own margins: the wells run 11 to 181, so type sits a further seven in, and every
+// value ranges against the same right edge -- the well's, less the same seven.
+constexpr float kLeft = 18.0f, kMiddle = 100.0f, kGutter = 6.0f;
+constexpr float kRight = 174.0f;          // where a value ends, the wells' own inset
+constexpr float kFigureRight = 152.0f;    // and where a stat's figure ends, clear of the diamond
+constexpr float kDetailTop = 25.0f, kDetailStep = 12.0f;
 
 // The two weights of type, both warm: a label steps down from the heading rather than being a
 // colour of its own. Godot's Darkened(a) is rgb * (1 - a).
@@ -151,17 +159,20 @@ void Card::rebuild() {
                      gfx::Align::Right, uw * k);
     };
 
-    // The class, across the whole table.
-    write(kLeft, kSummary.y + 6.0f, titled(now_.who->kin), kHeading, size);
+    // The class, across the whole table, in the head's own tracked capitals a size down: it is
+    // a heading and not a value, and it was the only line on the card set like a value.
+    sheet::kicker(canvas_, x + kLeft * k,
+                  y + (kSummary.y + 6.0f) * k + face.ascent(9.0f * k), 9.0f * k,
+                  sheet::shouted(titled(now_.who->kin)), sheet::ink::kTitle, 0.12f);
     // Level and points on one line, experience beneath: MU's stack at its own places.
     const float pairY = kSummary.y + 24.0f;
     write(kLeft, pairY, "Level", kPlain, brief);
     right(kLeft, pairY, kMiddle - kGutter - kLeft, std::to_string(now_.level), kHeading, brief);
     write(kMiddle, pairY, "Points", kPlain, brief);
-    right(kMiddle, pairY, kSummary.right() - 6.0f - kMiddle, std::to_string(now_.points),
+    right(kMiddle, pairY, kRight - kMiddle, std::to_string(now_.points),
           now_.points > 0 ? kSpendable : kPlain, brief);
     write(kLeft, kSummary.y + 44.0f, "Experience", kPlain, brief);
-    right(kLeft, kSummary.y + 44.0f, kSummary.right() - 6.0f - kLeft,
+    right(kLeft, kSummary.y + 44.0f, kRight - kLeft,
           panel::commas((long long)now_.experience), kPlain, brief);
 
     const int values[4] = {now_.strength, now_.agility, now_.vitality, now_.energy};
@@ -169,37 +180,52 @@ void Card::rebuild() {
         // The name against the window's left edge and the figure against the plus, both
         // centred down the well.
         const Box well = panel::scaled(x, y, rowField(row.y));
-        const float baseline = panel::centredBaseline(face, well, size);
+        // The label centred on the FIGURE's line rather than on its own: two sizes on one row
+        // sit on one baseline, which is the difference between a row and two rows overlapping.
+        const float figureSize = kFigureSize * k;
+        const float baseline = panel::centredBaseline(face, well, figureSize);
         canvas_.text(x + kLeft * k, baseline, size, kPlain, row.label);
-        canvas_.text(x + kLeft * k, baseline, size, kHeading, std::to_string(values[row.stat]),
-                     gfx::Align::Right, (kFigureRight - kLeft) * k);
+        canvas_.text(x + kLeft * k, baseline, figureSize, kHeading,
+                     std::to_string(values[row.stat]), gfx::Align::Right,
+                     (kFigureRight - kLeft) * k);
 
         // What the attribute buys, in the gap under its well: MU's own lines and strings. MU2
         // adds "Attack speed" under agility; the sim has no attack speed stat -- MU paces a swing
         // by its clip -- so that line is not printed here.
-        std::string lines[2];
+        std::string labels[2], lines[2];
         int count = 0;
         switch (row.stat) {
             case 0:
-                lines[count++] = "Dmg: " + std::to_string(now_.minimum) + "~" +
+                labels[count] = "Damage";
+                lines[count++] = std::to_string(now_.minimum) + " ~ " +
                                  std::to_string(now_.maximum);
-                lines[count++] = "Attack rate: " + std::to_string(now_.attackRate);
+                labels[count] = "Attack rate";
+                lines[count++] = std::to_string(now_.attackRate);
                 break;
             case 1:
-                lines[count++] = "Defense: " + std::to_string(now_.defense);
-                lines[count++] = "Defense rate: " + std::to_string(now_.defenseRate);
+                labels[count] = "Defence";
+                lines[count++] = std::to_string(now_.defense);
+                labels[count] = "Defence rate";
+                lines[count++] = std::to_string(now_.defenseRate);
                 break;
             case 2:
-                lines[count++] = "HP: " + std::to_string(now_.health) + " / " +
+                labels[count] = "Life";
+                lines[count++] = std::to_string(now_.health) + " / " +
                                  std::to_string(now_.maxHealth);
                 break;
             default:
-                lines[count++] = "Mana: " + std::to_string(now_.mana) + " / " +
+                labels[count] = "Mana";
+                lines[count++] = std::to_string(now_.mana) + " / " +
                                  std::to_string(now_.maxMana);
                 break;
         }
+        const float detail = kDetailSize * k;
         for (int i = 0; i < count; ++i) {
-            write(kLeft, row.y + kDetailTop + float(i) * kDetailStep, lines[i], kDetailInk, brief);
+            const float uy = row.y + kDetailTop + float(i) * kDetailStep;
+            canvas_.text(x + kLeft * k, y + uy * k + face.ascent(detail), detail, kDetailInk,
+                         labels[i]);
+            canvas_.text(x + kLeft * k, y + uy * k + face.ascent(detail), detail, kPlain,
+                         lines[i], gfx::Align::Right, (kRight - kLeft) * k);
         }
 
         // The plus only where there is something to spend: MU hides it rather than greying it.

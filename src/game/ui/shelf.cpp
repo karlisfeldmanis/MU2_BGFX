@@ -16,8 +16,9 @@ constexpr float kCell = 20.0f;
 constexpr float kTipSize = 8.0f;
 // The price along the foot of an offer: the user's own choice for the vendor, 2026-09-23, and
 // the one thing this window says that the bag does not. Red where he cannot afford it.
-constexpr float kPriceTall = 7.0f;
-constexpr float kPriceSize = 7.0f;
+constexpr float kGutter = 1.5f;
+constexpr float kPriceTall = 6.5f;
+constexpr float kPriceSize = 6.5f;
 constexpr uint32_t kPriceBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.62f);
 constexpr uint32_t kDearInk = gfx::rgba(0.886f, 0.408f, 0.373f);
 
@@ -132,8 +133,10 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     standing_.clear();
     for (size_t i = 0; i < lines_.size(); ++i) {
         const content::ItemRow& row = tables.items[size_t(lines_[i].item)];
+        // Fitted to the well and clear of the price strip along its foot, as the bag fits its
+        // own pictures: the pitch is not the well.
         Box box = cellOf(lines_[i].offer.slot, row);
-        box = {box.x + 1.0f, box.y + 1.0f, box.w - 1.0f, box.h - 1.0f};
+        box = Box{box.x, box.y, box.w - kGutter, box.h - kGutter - kPriceTall}.grown(-2.0f);
         standing_.push_back({lines_[i].item, box, lines_[i].offer.refinement, int(i) == hovered_});
     }
     if (stage) stage->stand(standing_, panel::kWidth, panel::kHeight);
@@ -177,8 +180,8 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     for (int r = 0; r < kRows; ++r) {
         for (int c = 0; c < kColumns; ++c) {
             panel::cell(canvas_, x, y,
-                        {kOriginX + float(c) * kCell, kOriginY + float(r) * kCell, kCell - 1.0f,
-                         kCell - 1.0f},
+                        {kOriginX + float(c) * kCell, kOriginY + float(r) * kCell,
+                         kCell - kGutter, kCell - kGutter},
                         sheet::Cell::Rest);
         }
     }
@@ -187,7 +190,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     for (size_t i = 0; i < lines_.size(); ++i) {
         const Box box = cellOf(lines_[i].offer.slot, tables.items[size_t(lines_[i].item)]);
         if (int(i) == hovered_) {
-            panel::cell(canvas_, x, y, {box.x, box.y, box.w - 1.0f, box.h - 1.0f},
+            panel::cell(canvas_, x, y, {box.x, box.y, box.w - kGutter, box.h - kGutter},
                         sheet::Cell::Over);
         }
     }
@@ -212,7 +215,8 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     for (size_t i = 0; i < lines_.size(); ++i) {
         const Box box = cellOf(lines_[i].offer.slot, tables.items[size_t(lines_[i].item)]);
         const Box strip = panel::scaled(
-            x, y, {box.x + 1.0f, box.bottom() - kPriceTall - 1.0f, box.w - 3.0f, kPriceTall});
+            x, y, {box.x + 1.0f, box.bottom() - kPriceTall - kGutter, box.w - 2.0f - kGutter,
+                   kPriceTall});
         canvas_.rect(strip, kPriceBack);
         const bool afford = realm.money() >= lines_[i].price;
         const float size = kPriceSize * k;

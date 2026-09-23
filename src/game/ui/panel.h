@@ -97,7 +97,7 @@ inline gfx::Box scaled(float x, float y, const gfx::Box& units) {
 // title stand in the head. MU's own units, like everything else on this page.
 constexpr float kRadius = 2.5f;
 constexpr float kHeadBand = 36.0f;
-constexpr float kEdge = 8.0f;
+constexpr float kEdge = 11.0f;  // the wells' own margin, which every rule is cut to
 constexpr float kMarkX = 15.0f;
 constexpr float kMark = 4.5f;
 constexpr float kTitleX = 24.0f;
