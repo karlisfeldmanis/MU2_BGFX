@@ -22,12 +22,12 @@ using gfx::Box;
 // this skin was drawn from actually are, and the warmth is real: a touch more red than blue, so
 // it sits in MU's own light instead of going cold against it.
 constexpr uint32_t kBodyTop = gfx::rgba(0.105f, 0.098f, 0.090f, 0.96f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.072f, 0.067f, 0.062f, 0.95f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.058f, 0.054f, 0.050f, 0.95f);
 
 // The edge, and the head's band of light over it.
 constexpr uint32_t kEdgeTop = gfx::rgba(0.957f, 0.886f, 0.690f, 0.60f);
 constexpr uint32_t kEdgeFoot = gfx::rgba(0.588f, 0.510f, 0.353f, 0.07f);
-constexpr uint32_t kBandLit = gfx::rgba(1.0f, 0.941f, 0.804f, 0.090f);
+constexpr uint32_t kBandLit = gfx::rgba(1.0f, 0.941f, 0.804f, 0.115f);
 
 // One hairline, the colour of old bronze, at three strengths: the window's edge, a rule inside
 // it, and a cell's own border.
@@ -115,7 +115,18 @@ void cell(gfx::Canvas& canvas, const Box& box, Cell state, float thick) {
     // The well: a flat fill, a seat of shadow inside its top edge, a hairline of light on that
     // edge, and the border over both. The seat is what B is: deep enough to read as a recess cut
     // into the panel rather than a square drawn on it, and still nothing anyone would name.
-    canvas.rect(box, back);
+    // **The fill grades**, as the body does: a well lit from the same place the window is, which
+    // is what keeps sixty-four of them from reading as sixty-four flat squares. A tenth of its
+    // own alpha each way -- any more and a cell looks like a button.
+    {
+        const auto lift = [&](float by) {
+            const float a = float((back >> 24) & 0xFFu) / 255.0f;
+            return (back & 0x00FFFFFFu) |
+                   (uint32_t(std::clamp(a * by, 0.0f, 1.0f) * 255.0f + 0.5f) << 24);
+        };
+        const uint32_t high = lift(1.35f), low = lift(0.65f);
+        canvas.shade(box, high, high, low, low);
+    }
     if (quiet) {
         const uint32_t dark = gfx::rgba(0.0f, 0.0f, 0.0f, 0.48f);
         const uint32_t none = gfx::rgba(0.0f, 0.0f, 0.0f, 0.0f);

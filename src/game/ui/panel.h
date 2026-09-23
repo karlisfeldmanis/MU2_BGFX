@@ -98,9 +98,8 @@ inline gfx::Box scaled(float x, float y, const gfx::Box& units) {
 constexpr float kRadius = 2.5f;
 constexpr float kHeadBand = 36.0f;
 constexpr float kEdge = 11.0f;  // the wells' own margin, which every rule is cut to
-constexpr float kMarkX = 15.0f;
-constexpr float kMark = 4.5f;
-constexpr float kTitleX = 24.0f;
+// The title stands on the wells' own margin: there is no mark in front of it any more.
+constexpr float kTitleX = kEdge;
 
 // The body starts eight units down: the crest sat in the strip above it with the world behind.
 constexpr float kPlateTop = 8.0f;

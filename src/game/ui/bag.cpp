@@ -265,7 +265,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 // texture, so a dark warm tint sinks the plate into the well and leaves the
                 // silhouette, which is darker in the art still, as the only thing that reads.
                 canvas_.image(ghost, panel::scaled(x, y, box.grown(-3.0f)),
-                              gfx::rgba(0.50f, 0.45f, 0.34f, 0.55f));
+                              gfx::rgba(0.50f, 0.45f, 0.34f, 0.46f));
             }
         }
     }
@@ -284,7 +284,11 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                     sheet::Cell::Over);
     }
 
-    // The foot: a rule, the coins, and the figure ranged right against the window's own margin.
+    // The foot: a band of light coming up out of the window's bottom edge, then a rule, the
+    // coins, and the figure ranged right against the window's own margin.
+    sheet::band(canvas_, panel::scaled(x, y, {0.0f, kMoneyStrip.y - 6.0f, panel::kWidth,
+                                              panel::kHeight - (kMoneyStrip.y - 6.0f)}),
+                false);
     sheet::rule(canvas_, x + panel::kEdge * k, y + (kMoneyStrip.y - 6.0f) * k,
                 (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
     canvas_.image(arts.get("bag_zen"), panel::scaled(x, y, kMoneyIcon));

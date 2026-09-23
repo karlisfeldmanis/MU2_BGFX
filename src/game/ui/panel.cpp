@@ -119,10 +119,11 @@ void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string&
     const gfx::Box head = scaled(x, y, {0.0f, 0.0f, kWidth, kHeadBand});
     sheet::band(canvas, head);
     const float size = kTitleSize * k;
-    const gfx::Box band = scaled(x, y, {0.0f, kPlateTop, kWidth, kPlateHeight});
+    // Centred in the WHOLE head, not in MU's plate. The plate was a painted strip from 8 to 36
+    // with a carving above it; with the carving gone the eight units above are the head's own
+    // air, and a title centred in the strip alone sits visibly low in the band it is drawn on.
+    const gfx::Box band = scaled(x, y, {0.0f, 0.0f, kWidth, kHeadBand});
     const float baseline = centredBaseline(canvas.face(), band, size);
-    tip::glyphAt(canvas, tip::Mark::Diamond, x + kMarkX * k, baseline - size * 0.30f, kMark * k,
-                 sheet::ink::kMark);
     // **The title is fitted to the room between the mark and the cross.** A merchant's own name
     // is the title of his window and `Lumen the Barmaid` is nineteen tracked capitals, which ran
     // straight under the cross. It is shrunk by a quarter before anything is cut, and only then

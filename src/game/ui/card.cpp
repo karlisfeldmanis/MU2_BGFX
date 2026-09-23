@@ -17,8 +17,13 @@ struct Row {
     float y;
     const char* label;
 };
+// **One rhythm.** MU's rows are at 120, 175, 240 and 295 -- gaps of 55, 65 and 55, because its
+// own window had a carved divider to hide under the wide one. Every group here is a well and its
+// lines, so they are spaced evenly: sixty between each, which leaves fifteen units of air under
+// the two that carry two lines and twenty-seven under the two that carry one -- and the block
+// then reaches down to the foot instead of stopping a third of the way up it.
 constexpr Row kRows[4] = {
-    {0, 120.0f, "Strength"}, {1, 175.0f, "Agility"}, {2, 240.0f, "Vitality"}, {3, 295.0f, "Energy"}};
+    {0, 125.0f, "Strength"}, {1, 185.0f, "Agility"}, {2, 245.0f, "Vitality"}, {3, 305.0f, "Energy"}};
 
 // The plus beside a row, moved two down and five in from MU's (160, row + 2) so it sits in the
 // well MU2 draws round the row. Card.PlusFor.
@@ -40,7 +45,10 @@ constexpr Box kBar{11.0f, 392.0f, 170.0f, 4.0f};
 // what makes a stat window scannable: the eye runs down the numbers and reads a word only when
 // it stops. The detail lines under a well are a label and a value like everything else on the
 // card, right-ranged against the same edge the figure is, rather than MU's "Dmg: 22~33" run-on.
-constexpr float kTextSize = 9.5f, kFigureSize = 13.0f, kSummarySize = 8.5f, kDetailSize = 8.0f;
+constexpr float kTextSize = 9.5f, kFigureSize = 12.5f, kSummarySize = 9.0f,
+              kDetailSize = 8.5f;
+// The summary's own labels, set as the head sets its title: small, tracked capitals.
+constexpr float kSummaryLabel = 7.5f;
 // The content's own margins: the wells run 11 to 181, so type sits a further seven in, and every
 // value ranges against the same right edge -- the well's, less the same seven.
 constexpr float kLeft = 18.0f, kMiddle = 100.0f, kGutter = 6.0f;
@@ -190,12 +198,16 @@ void Card::rebuild() {
                   sheet::shouted(titled(now_.who->kin)), sheet::ink::kTitle, 0.12f);
     // Level and points on one line, experience beneath: MU's stack at its own places.
     const float pairY = kSummary.y + 24.0f;
-    write(kLeft, pairY, "Level", kPlain, brief);
+    sheet::kicker(canvas_, x + kLeft * k, y + pairY * k + face.ascent(kSummaryLabel * k),
+                  kSummaryLabel * k, "LEVEL");
     right(kLeft, pairY, kMiddle - kGutter - kLeft, std::to_string(now_.level), kHeading, brief);
-    write(kMiddle, pairY, "Points", kPlain, brief);
+    sheet::kicker(canvas_, x + kMiddle * k, y + pairY * k + face.ascent(kSummaryLabel * k),
+                  kSummaryLabel * k, "POINTS");
     right(kMiddle, pairY, kRight - kMiddle, std::to_string(now_.points),
           now_.points > 0 ? kSpendable : kPlain, brief);
-    write(kLeft, kSummary.y + 44.0f, "Experience", kPlain, brief);
+    sheet::kicker(canvas_, x + kLeft * k,
+                  y + (kSummary.y + 44.0f) * k + face.ascent(kSummaryLabel * k),
+                  kSummaryLabel * k, "EXPERIENCE");
     right(kLeft, kSummary.y + 44.0f, kRight - kLeft,
           panel::commas((long long)now_.experience), kPlain, brief);
 
@@ -260,7 +272,11 @@ void Card::rebuild() {
                        now_.pushed == row.stat);
     }
 
-    // The foot: the rule, the kicker, the share of the level he has, and the percent.
+    // The foot: a band of light out of the bottom edge, the rule, the kicker, the share of the
+    // level he has, and the percent -- the same foot the bag carries its Zen in.
+    sheet::band(canvas_, panel::scaled(x, y, {0.0f, kFootRule, panel::kWidth,
+                                              panel::kHeight - kFootRule}),
+                false);
     sheet::rule(canvas_, x + panel::kEdge * k, y + kFootRule * k,
                 (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
     const uint64_t at = sim::neededExperience(now_.level);
