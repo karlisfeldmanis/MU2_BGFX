@@ -45,8 +45,8 @@ constexpr Box kBar{11.0f, 392.0f, 170.0f, 4.0f};
 // what makes a stat window scannable: the eye runs down the numbers and reads a word only when
 // it stops. The detail lines under a well are a label and a value like everything else on the
 // card, right-ranged against the same edge the figure is, rather than MU's "Dmg: 22~33" run-on.
-constexpr float kTextSize = 9.5f, kFigureSize = 12.5f, kSummarySize = 9.0f,
-              kDetailSize = 8.5f;
+constexpr float kTextSize = 9.0f, kFigureSize = 11.5f, kSummarySize = 8.5f,
+              kDetailSize = 8.0f;
 // The summary's own labels, set as the head sets its title: small, tracked capitals.
 constexpr float kSummaryLabel = 7.5f;
 // The content's own margins: the wells run 11 to 181, so type sits a further seven in, and every

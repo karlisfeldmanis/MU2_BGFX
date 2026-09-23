@@ -21,8 +21,8 @@ using gfx::Box;
 // than as a panel lying on it. It is a dark warm GREY now, which is what the reference panels
 // this skin was drawn from actually are, and the warmth is real: a touch more red than blue, so
 // it sits in MU's own light instead of going cold against it.
-constexpr uint32_t kBodyTop = gfx::rgba(0.105f, 0.098f, 0.090f, 0.96f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.058f, 0.054f, 0.050f, 0.95f);
+constexpr uint32_t kBodyTop = gfx::rgba(0.072f, 0.068f, 0.062f, 0.985f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.040f, 0.037f, 0.034f, 0.978f);
 
 // The edge, and the head's band of light over it.
 constexpr uint32_t kEdgeTop = gfx::rgba(0.957f, 0.886f, 0.690f, 0.60f);
@@ -34,7 +34,7 @@ constexpr uint32_t kBandLit = gfx::rgba(1.0f, 0.941f, 0.804f, 0.115f);
 constexpr uint32_t kRule = gfx::rgba(0.643f, 0.573f, 0.404f, 0.38f);
 constexpr uint32_t kRuleOut = gfx::rgba(0.643f, 0.573f, 0.404f, 0.0f);
 
-constexpr uint32_t kCellBack = gfx::rgba(1.0f, 0.976f, 0.929f, 0.055f);
+constexpr uint32_t kCellBack = gfx::rgba(1.0f, 0.976f, 0.929f, 0.046f);
 // Quieter than the page that was chosen: at 0.26 a grid of sixty-four reads as a
 // lattice of bright lines from across the room, which is the one thing a flat skin
 // must not do. The recess carries the cell and the border only closes it.
@@ -80,7 +80,11 @@ void glass(gfx::Canvas& canvas, const Box& window, float radius) {
 }
 
 void band(gfx::Canvas& canvas, const Box& box, bool downward) {
-    const uint32_t lit = kBandLit;
+    // A foot is half a head: the light in this window falls from above, so a band coming up out
+    // of the bottom edge is a reflection and not a source. At the head's own strength it read as
+    // a second header at the wrong end -- sampled, it lifted the foot to (30, 28, 25) against a
+    // body of (15, 13, 12), which is a brighter step than the head makes.
+    const uint32_t lit = downward ? kBandLit : gfx::rgba(1.0f, 0.941f, 0.804f, 0.055f);
     const uint32_t out = gfx::rgba(1.0f, 0.941f, 0.804f, 0.0f);
     if (downward) {
         canvas.shade(box, lit, lit, out, out);

@@ -107,7 +107,7 @@ constexpr float kPlateHeight = 28.0f;
 constexpr float kHeadButton = 24.0f;
 constexpr float kHeadInset = 7.0f;
 constexpr float kHeadDrop = 1.0f;
-constexpr float kTitleSize = 10.5f;
+constexpr float kTitleSize = 9.5f;  // Cinzel reads a size larger than the body face does
 
 // The seat for a button in the plate's end cap -- the close, on the right.
 gfx::Box headSocket(bool right);
@@ -115,6 +115,13 @@ inline gfx::Box frameClose() { return headSocket(true); }
 
 // The glass, its gradient stroke, the head's band, the mark, the title and the rule under it.
 void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title);
+// **The head's own face: Cinzel Medium**, the map name's and the fight's figures' family, baked
+// once for every window. The user, 2026-09-23: *"maybe use that gothic font somehow"* -- it is
+// the one voice this game already says its own name in, and a window's title is the same kind of
+// thing. Baked by the desk at start-up; without it a title falls back to the interface's own
+// face, which is what every window drew before.
+bool openTitleFace(const gfx::Interface& interface);
+void closeTitleFace();
 // The cross in the head's right-hand end, in its three lights.
 void close(gfx::Canvas& canvas, Arts& arts, float x, float y, bool pressed);
 void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed);

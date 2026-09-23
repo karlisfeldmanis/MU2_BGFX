@@ -81,6 +81,33 @@ float columnX(float screenWidth, int column) {
 
 float panelY(float screenHeight) { return (screenHeight - kHeight * scale()) * 0.5f; }
 
+// ---- the head's face -------------------------------------------------------------------------
+
+namespace {
+gfx::Face s_title;
+bgfx::TextureHandle s_titleTexture = BGFX_INVALID_HANDLE;
+// Baked at twice the size it is drawn at 1080 lines, as the arrival bakes its own: a title
+// minified from a larger bake holds its edge on a retina backbuffer, and one magnified does not.
+constexpr float kTitleBake = 48.0f;
+}  // namespace
+
+bool openTitleFace(const gfx::Interface& interface) {
+    (void)interface;
+    if (!s_title.bake(gfx::titleFacePath(), kTitleBake, 512, 4, 1, 0)) {
+        core::logError("interface: the title face did not bake; the windows keep the body face");
+        return false;
+    }
+    s_titleTexture = gfx::uploadFace(s_title, "window titles");
+    s_title.dropPixels();
+    return bgfx::isValid(s_titleTexture);
+}
+
+void closeTitleFace() {
+    if (bgfx::isValid(s_titleTexture)) bgfx::destroy(s_titleTexture);
+    s_titleTexture = BGFX_INVALID_HANDLE;
+    s_title = gfx::Face{};
+}
+
 // ---- the frame -------------------------------------------------------------------------------
 
 gfx::Box headSocket(bool right) {
@@ -128,7 +155,9 @@ void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string&
     // is the title of his window and `Lumen the Barmaid` is nineteen tracked capitals, which ran
     // straight under the cross. It is shrunk by a quarter before anything is cut, and only then
     // trimmed -- a name shortened by a letter still reads, a name under a button does not.
-    const gfx::Face& face = canvas.face();
+    // Cinzel where it baked, the interface's own face where it did not.
+    const bool gothic = s_title.ready() && bgfx::isValid(s_titleTexture);
+    const gfx::Face& face = gothic ? s_title : canvas.face();
     const float room = (frameClose().x - 5.0f - kTitleX) * k;
     const std::string whole = sheet::shouted(title);
     float fitted = size;
@@ -147,8 +176,18 @@ void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string&
         text.pop_back();
     }
     if (text.size() != whole.size()) text += "..";
-    sheet::kicker(canvas, x + kTitleX * k, baseline, fitted, text, sheet::ink::kTitle,
-                  sheet::kTitleTrack);
+    if (gothic) {
+        // `lettered` takes the tracking in pixels, not in ems, and draws its own drop first so
+        // the title holds an edge over whatever the window is lying on.
+        const float tracking = fitted * sheet::kTitleTrack;
+        canvas.lettered(s_title, s_titleTexture, x + kTitleX * k + 1.0f, baseline + 1.0f, fitted,
+                        tracking, tip::ink::kDrop, text);
+        canvas.lettered(s_title, s_titleTexture, x + kTitleX * k, baseline, fitted, tracking,
+                        sheet::ink::kTitle, text);
+    } else {
+        sheet::kicker(canvas, x + kTitleX * k, baseline, fitted, text, sheet::ink::kTitle,
+                      sheet::kTitleTrack);
+    }
     sheet::rule(canvas, window.x + kEdge * k, y + kHeadBand * k, (kWidth - kEdge * 2.0f) * k,
                 std::max(1.0f, k * 0.5f));
 }

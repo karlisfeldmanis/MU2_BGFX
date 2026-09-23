@@ -41,6 +41,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     assetDir_ = assetDir;
     textures_ = textures;
     arts_.open(assetDir, textures);
+    panel::openTitleFace(interface_);
     // A stage each, so the bag and the shelf can hold different things at once, and each is
     // the window's own size: one pass draws every picture in a window and they line up with
     // its cells for free.
@@ -63,6 +64,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
 }
 
 void Desk::shutdown() {
+    panel::closeTitleFace();
     bagStagePicture_.shutdown();
     shelfStagePicture_.shutdown();
     quickStagePicture_.shutdown();

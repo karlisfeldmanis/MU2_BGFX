@@ -72,7 +72,7 @@ const char* ghostFor(int slot) {
 constexpr Box kMoneyStrip{11.0f, 380.0f, 170.0f, 26.0f};
 constexpr Box kMoneyIcon{18.0f, 384.0f, 20.0f, 18.0f};
 constexpr float kMoneyFrom = 18.0f + 20.0f + 6.0f;
-constexpr float kMoneySize = 10.0f;
+constexpr float kMoneySize = 9.5f;
 constexpr float kTipSize = 8.0f;
 
 // The drop target is the skin's own two cell states now (`sheet::Cell::Fits` and `Blocked`),
