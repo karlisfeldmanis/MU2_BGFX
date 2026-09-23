@@ -112,9 +112,10 @@ void closeTitleFace() {
 // ---- the frame -------------------------------------------------------------------------------
 
 gfx::Box headSocket(bool right) {
+    // Centred in the WHOLE head, as the title is: MU's socket sat in its painted plate, from 11
+    // to 35, five units below the title's own centre line, and the cross read as hanging low.
     return {right ? kWidth - kHeadInset - kHeadButton : kHeadInset,
-            kPlateTop + (kPlateHeight - kHeadButton) * 0.5f + kHeadDrop, kHeadButton,
-            kHeadButton};
+            (kHeadBand - kHeadButton) * 0.5f, kHeadButton, kHeadButton};
 }
 
 float centredBaseline(const gfx::Face& face, const gfx::Box& box, float fontSize) {
@@ -145,7 +146,7 @@ void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string&
 
     // The head: a band of light under it, a mark, the name in tracked caps, and a rule.
     const gfx::Box head = scaled(x, y, {0.0f, 0.0f, kWidth, kHeadBand});
-    sheet::band(canvas, head);
+    sheet::band(canvas, head, true, kRadius * k);
     const float size = kTitleSize * k;
     // Centred in the WHOLE head, not in MU's plate. The plate was a painted strip from 8 to 36
     // with a carving above it; with the carving gone the eight units above are the head's own
@@ -215,6 +216,12 @@ void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::C
     sheet::cell(canvas, scaled(x, y, units), state, std::max(1.0f, scale() * 0.5f));
 }
 
+void grid(gfx::Canvas& canvas, float x, float y, float ux, float uy, int columns, int rows) {
+    sheet::grid(canvas,
+                scaled(x, y, {ux, uy, kPitch * float(columns), kPitch * float(rows)}), columns,
+                rows, std::max(1.0f, scale() * 0.5f));
+}
+
 namespace {
 // MU's (11, 364, 170, 26) Zen strip, moved down to the foot and centred in it; the coins at its
 // left at MU's own distance, and the figure against the value edge every window ranges to.
@@ -227,7 +234,8 @@ constexpr float kMoneySize = 9.5f;
 void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money) {
     const float k = scale();
     const gfx::Face& face = canvas.face();
-    sheet::band(canvas, scaled(x, y, {0.0f, kFootRule, kWidth, kHeight - kFootRule}), false);
+    sheet::band(canvas, scaled(x, y, {0.0f, kFootRule, kWidth, kHeight - kFootRule}), false,
+                kRadius * k);
     sheet::rule(canvas, x + kEdge * k, y + kFootRule * k, (kWidth - kEdge * 2.0f) * k,
                 std::max(1.0f, k * 0.5f));
     canvas.image(arts.get("bag_zen"), scaled(x, y, kMoneyIcon));

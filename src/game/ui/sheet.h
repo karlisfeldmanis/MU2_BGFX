@@ -39,7 +39,8 @@ void glass(gfx::Canvas& canvas, const gfx::Box& window, float radius);
 
 // A band of light laid under a head or over a foot: white at a few thousandths, fading to
 // nothing across `tall`. What separates the title from the body without a second rule.
-void band(gfx::Canvas& canvas, const gfx::Box& box, bool downward = true);
+// `radius` is the window's corner in pixels, which the band's outer two corners are cut to.
+void band(gfx::Canvas& canvas, const gfx::Box& box, bool downward = true, float radius = 0.0f);
 
 // A hairline across `wide` from (x, y), fading out at both ends as the card's rails do.
 void rule(gfx::Canvas& canvas, float x, float y, float wide, float thick);
@@ -54,6 +55,9 @@ void well(gfx::Canvas& canvas, const gfx::Box& box, float thick);
 // same gate the realm refuses by, so a red cell and a refusal cannot disagree.
 enum class Cell : uint8_t { Rest, Over, Held, Fits, Blocked };
 void cell(gfx::Canvas& canvas, const gfx::Box& box, Cell state, float thick);
+// A whole grid of resting cells as one ruled block: `columns` by `rows` across `box`, with a
+// single hairline between neighbours and no air. What the bag and the shelf are drawn as.
+void grid(gfx::Canvas& canvas, const gfx::Box& box, int columns, int rows, float thick);
 
 // The cross that closes a window, in its three lights.
 void close(gfx::Canvas& canvas, const gfx::Box& box, bool over, bool pressed);

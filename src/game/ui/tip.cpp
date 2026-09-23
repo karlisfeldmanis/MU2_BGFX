@@ -330,6 +330,11 @@ void panel(gfx::Canvas& canvas, const gfx::Box& box, float radius, uint32_t top,
     roundedFan(canvas, box, all, top, foot);
 }
 
+void rounded(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4], uint32_t top,
+             uint32_t foot) {
+    roundedFan(canvas, box, radius, top, foot);
+}
+
 void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius, uint32_t top,
            uint32_t foot) {
     shadowUnder(canvas, box, u);

@@ -12,17 +12,16 @@ using gfx::Box;
 // eight by fifteen at (x + 15, y + 50) stopped at 350 and left a fifth of the window bare, which
 // the leather made a texture and this skin made a hole. The user, 2026-09-23: *"vendor height
 // has to be same height as other windows, add additional grid slots to vendor if needed"*. So:
-// the skin's shared pitch, the first row's wells on the line the bag's worn slots start on
-// (44.75), and EIGHTEEN rows, whose last well ends at 421.25 -- seven and three quarters over the
-// foot, against eight and three quarters under the head's rule. MU's stock tables never fill a
+// the skin's shared pitch, the first row on the line the bag's worn slots start on (44), and
+// EIGHTEEN rows, whose last ends at 422 -- seven over the foot, eight under the head's rule, as
+// one ruled block with no air between the cells. MU's stock tables never fill a
 // slot past the fifteenth row, so the three extra rows are empty wells, as most of the fifteen
 // were. Prices are not printed on the shelf: the user, the same day, *"dont show prices on
 // vendor without tooltip"* -- the card under the pointer carries the figure, in full and in the
 // colour that says whether he can pay.
-constexpr float kOriginX = panel::kGridX, kOriginY = 44.0f + panel::kGutter * 0.5f;
+constexpr float kOriginX = panel::kGridX, kOriginY = 44.0f;
 constexpr int kColumns = 8, kRows = 18;
 constexpr float kCell = panel::kPitch;
-constexpr float kGutter = panel::kGutter;
 constexpr float kHeight = panel::kHeight;
 
 Box cellOf(int slot, const content::ItemRow& row) {
@@ -138,9 +137,8 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     standing_.clear();
     for (size_t i = 0; i < lines_.size(); ++i) {
         const content::ItemRow& row = tables.items[size_t(lines_[i].item)];
-        // Fitted to the well, as the bag fits its own pictures: the pitch is not the well.
-        Box box = cellOf(lines_[i].offer.slot, row);
-        box = Box{box.x, box.y, box.w - kGutter, box.h - kGutter}.grown(-2.0f);
+        // Three units inside its cell's hairline, as the bag fits its own pictures.
+        const Box box = cellOf(lines_[i].offer.slot, row).grown(-3.0f);
         standing_.push_back({lines_[i].item, box, lines_[i].offer.refinement, int(i) == hovered_});
     }
     if (stage) stage->stand(standing_, panel::kWidth, kHeight);
@@ -181,23 +179,13 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     const gfx::Face& face = canvas_.face();
 
     panel::frame(canvas_, arts, x, y, merchant_);
-    // The empty cells, so a half-stocked shelf reads as a shelf and not as a hole.
-    for (int r = 0; r < kRows; ++r) {
-        for (int c = 0; c < kColumns; ++c) {
-            panel::cell(canvas_, x, y,
-                        {kOriginX + float(c) * kCell, kOriginY + float(r) * kCell,
-                         kCell - kGutter, kCell - kGutter},
-                        sheet::Cell::Rest);
-        }
-    }
-    // What is on the shelf: its own footprint lit where the pointer is on it, and every offer's
-    // price along the foot of the thing itself.
-    for (size_t i = 0; i < lines_.size(); ++i) {
-        const Box box = cellOf(lines_[i].offer.slot, tables.items[size_t(lines_[i].item)]);
-        if (int(i) == hovered_) {
-            panel::cell(canvas_, x, y, {box.x, box.y, box.w - kGutter, box.h - kGutter},
-                        sheet::Cell::Over);
-        }
+    // The shelf as one ruled block, so a half-stocked shelf reads as a shelf and not as a hole,
+    // and the offer under the pointer lit over its whole footprint.
+    panel::grid(canvas_, x, y, kOriginX, kOriginY, kColumns, kRows);
+    if (hovered_ >= 0) {
+        const Line& over = lines_[size_t(hovered_)];
+        panel::cell(canvas_, x, y, cellOf(over.offer.slot, tables.items[size_t(over.item)]),
+                    sheet::Cell::Over);
     }
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
 

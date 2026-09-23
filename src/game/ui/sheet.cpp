@@ -52,45 +52,30 @@ constexpr uint32_t kDrop = tip::ink::kDrop;
 
 }  // namespace
 
-namespace {
-
-// The edge, as a gradient rather than a ring: four hairlines whose alpha runs from `top` at the
-// window's head to `foot` at its bottom. Drawn INSIDE the body so the corners' own fan keeps the
-// shape, and each horizontal run is held back by the radius so a square line never crosses a
-// rounded corner.
-void stroke(gfx::Canvas& canvas, const Box& box, float radius, float thick, uint32_t top,
-            uint32_t foot) {
-    const float r = std::min(radius, std::min(box.w, box.h) * 0.5f);
-    const uint32_t middle = gfx::rgba(0.886f, 0.816f, 0.600f,
-                                      float((top >> 24) & 0xFFu) / 255.0f * 0.55f);
-    canvas.shade({box.x + r, box.y, box.w - r * 2.0f, thick}, top, top, top, top);
-    canvas.shade({box.x + r, box.bottom() - thick, box.w - r * 2.0f, thick}, foot, foot, foot,
-                 foot);
-    canvas.shade({box.x, box.y + r, thick, box.h - r * 2.0f}, middle, middle, foot, foot);
-    canvas.shade({box.right() - thick, box.y + r, thick, box.h - r * 2.0f}, middle, middle, foot,
-                 foot);
-}
-
-}  // namespace
-
 void glass(gfx::Canvas& canvas, const Box& window, float radius) {
     tip::shadowUnder(canvas, window, std::max(1.0f, radius / tip::ink::kRadius));
+    // The edge as the card draws its own: a graded fan a hairline wider than the body, and the
+    // body over it, so the line follows the corner round. It was four straight hairlines held
+    // back by the radius, which at a corner of two and a half units left nothing to see and at
+    // one of six -- the user, 2026-09-23: *"round on border-radiuses for windows"* -- left a
+    // gap at every corner.
+    const float line = std::max(1.0f, radius * 0.08f);
+    tip::panel(canvas, window.grown(line), radius + line, kEdgeTop, kEdgeFoot);
     tip::panel(canvas, window, radius, kBodyTop, kBodyFoot);
-    stroke(canvas, window, radius, std::max(1.0f, radius * 0.20f), kEdgeTop, kEdgeFoot);
 }
 
-void band(gfx::Canvas& canvas, const Box& box, bool downward) {
+void band(gfx::Canvas& canvas, const Box& box, bool downward, float radius) {
     // A foot is half a head: the light in this window falls from above, so a band coming up out
     // of the bottom edge is a reflection and not a source. At the head's own strength it read as
     // a second header at the wrong end -- sampled, it lifted the foot to (30, 28, 25) against a
     // body of (15, 13, 12), which is a brighter step than the head makes.
+    // Cut round at the window's own two corners, so the band's corners do not show square past
+    // the body's round ones.
     const uint32_t lit = downward ? kBandLit : gfx::rgba(1.0f, 0.941f, 0.804f, 0.055f);
     const uint32_t out = gfx::rgba(1.0f, 0.941f, 0.804f, 0.0f);
-    if (downward) {
-        canvas.shade(box, lit, lit, out, out);
-    } else {
-        canvas.shade(box, out, out, lit, lit);
-    }
+    const float corners[4] = {downward ? radius : 0.0f, downward ? radius : 0.0f,
+                              downward ? 0.0f : radius, downward ? 0.0f : radius};
+    tip::rounded(canvas, box, corners, downward ? lit : out, downward ? out : lit);
 }
 
 void rule(gfx::Canvas& canvas, float x, float y, float wide, float thick) {
@@ -108,61 +93,93 @@ void well(gfx::Canvas& canvas, const Box& box, float thick) {
 
 void cell(gfx::Canvas& canvas, const Box& box, Cell state, float thick) {
     uint32_t back = kCellBack, edge = kCellEdge;
-    bool quiet = true;
     switch (state) {
-        case Cell::Over: back = kCellOver; edge = kCellOverEdge; quiet = false; break;
+        case Cell::Over: back = kCellOver; edge = kCellOverEdge; break;
         case Cell::Held: back = kCellHeld; break;
-        case Cell::Fits: back = kFitsBack; edge = kFitsEdge; quiet = false; break;
-        case Cell::Blocked: back = kBlockedBack; edge = kBlockedEdge; quiet = false; break;
+        case Cell::Fits: back = kFitsBack; edge = kFitsEdge; break;
+        case Cell::Blocked: back = kBlockedBack; edge = kBlockedEdge; break;
         case Cell::Rest: break;
     }
-    // The well: a flat fill, a seat of shadow inside its top edge, a hairline of light on that
-    // edge, and the border over both. The seat is what B is: deep enough to read as a recess cut
-    // into the panel rather than a square drawn on it, and still nothing anyone would name.
-    // **The fill grades**, as the body does: a well lit from the same place the window is, which
-    // is what keeps sixty-four of them from reading as sixty-four flat squares. A tenth of its
-    // own alpha each way -- any more and a cell looks like a button.
-    {
-        const auto lift = [&](float by) {
-            const float a = float((back >> 24) & 0xFFu) / 255.0f;
-            return (back & 0x00FFFFFFu) |
-                   (uint32_t(std::clamp(a * by, 0.0f, 1.0f) * 255.0f + 0.5f) << 24);
-        };
-        const uint32_t high = lift(1.35f), low = lift(0.65f);
-        canvas.shade(box, high, high, low, low);
-    }
-    if (quiet) {
-        const uint32_t dark = gfx::rgba(0.0f, 0.0f, 0.0f, 0.48f);
-        const uint32_t none = gfx::rgba(0.0f, 0.0f, 0.0f, 0.0f);
-        const float deep = std::max(thick * 3.0f, box.h * 0.18f);
-        canvas.shade({box.x, box.y, box.w, deep}, dark, dark, none, none);
-        // And the same the other way at the foot, a third as strong: the light that fell into
-        // the well has to come out of it somewhere.
-        const uint32_t lift = gfx::rgba(1.0f, 0.976f, 0.910f, 0.055f);
-        canvas.shade({box.x, box.bottom() - thick * 2.0f, box.w, thick * 2.0f},
-                     gfx::rgba(1.0f, 0.976f, 0.910f, 0.0f), gfx::rgba(1.0f, 0.976f, 0.910f, 0.0f),
-                     lift, lift);
-    }
-    // And the border as a gradient of its own: lit along the top, quiet at the foot.
-    const uint32_t lit = edge;
-    const uint32_t dim = (edge & 0x00FFFFFFu) |
-                         (uint32_t(float((edge >> 24) & 0xFFu) * (quiet ? 0.55f : 0.75f)) << 24);
-    canvas.shade({box.x, box.y, box.w, thick}, lit, lit, lit, lit);
-    canvas.shade({box.x, box.bottom() - thick, box.w, thick}, dim, dim, dim, dim);
-    canvas.shade({box.x, box.y, thick, box.h}, lit, lit, dim, dim);
-    canvas.shade({box.right() - thick, box.y, thick, box.h}, lit, lit, dim, dim);
+    // **Flat.** A fill and a hairline, nothing else. The first cut of this skin gave every cell a
+    // graded fill, a seat of shadow inside its top edge and a border lit along the top -- a well
+    // -- and sixty-four wells with air between them read as sixty-four things. The user,
+    // 2026-09-23: *"we need flat, organized look"*. So a cell is a square of one tone with one
+    // line round it, and a grid of them (`grid`) is one block ruled into squares.
+    canvas.rect(box, back);
+    canvas.outline(box, thick, edge);
 }
 
+void grid(gfx::Canvas& canvas, const Box& box, int columns, int rows, float thick) {
+    // One block, ruled: the fill once across the whole grid, a hairline between every two
+    // columns and every two rows, and the border round it all -- so the lines between cells are
+    // single lines and not two neighbours' borders side by side. Each rule is placed on a whole
+    // pixel so a 1-pixel line does not land across two and go grey.
+    canvas.rect(box, kCellBack);
+    const float pw = box.w / float(columns), ph = box.h / float(rows);
+    for (int c = 1; c < columns; ++c) {
+        const float at = std::floor(box.x + pw * float(c) - thick * 0.5f + 0.5f);
+        canvas.rect({at, box.y, thick, box.h}, kCellEdge);
+    }
+    for (int r = 1; r < rows; ++r) {
+        const float at = std::floor(box.y + ph * float(r) - thick * 0.5f + 0.5f);
+        canvas.rect({box.x, at, box.w, thick}, kCellEdge);
+    }
+    canvas.outline(box, thick, kCellEdge);
+}
+
+namespace {
+
+// A disc and a ring, as fans of quads: the canvas has neither.
+constexpr int kRoundSteps = 40;
+
+void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t ink) {
+    float xy[kRoundSteps * 2];
+    for (int i = 0; i < kRoundSteps; ++i) {
+        const float a = 6.28318531f * float(i) / float(kRoundSteps);
+        xy[i * 2] = cx + std::cos(a) * r;
+        xy[i * 2 + 1] = cy + std::sin(a) * r;
+    }
+    canvas.polygon(nullptr, xy, nullptr, kRoundSteps, ink);
+}
+
+void ring(gfx::Canvas& canvas, float cx, float cy, float r, float thick, uint32_t ink) {
+    const float in = r - thick;
+    for (int i = 0; i < kRoundSteps; ++i) {
+        const float a = 6.28318531f * float(i) / float(kRoundSteps);
+        const float b = 6.28318531f * float(i + 1) / float(kRoundSteps);
+        const float xy[8] = {cx + std::cos(a) * r,  cy + std::sin(a) * r,
+                             cx + std::cos(b) * r,  cy + std::sin(b) * r,
+                             cx + std::cos(b) * in, cy + std::sin(b) * in,
+                             cx + std::cos(a) * in, cy + std::sin(a) * in};
+        canvas.polygon(nullptr, xy, nullptr, 4, ink);
+    }
+}
+
+}  // namespace
+
 void close(gfx::Canvas& canvas, const Box& box, bool over, bool pressed) {
+    // **A ring with a cross in it.** The user, 2026-09-23: *"more polished circle type close
+    // buttons"*. The disc is the button: a faint fill of the window's lettering at rest, lifted
+    // under the pointer and lit when pressed; a hairline ring closes it; the cross stands inside
+    // at a third of the radius. Two thirds of the socket across, so the ring has air on every
+    // side of MU's 24-unit button box and does not touch the head's rule.
     const uint32_t ink = pressed  ? gfx::rgba(1.0f, 1.0f, 1.0f, 0.95f)
-                         : over   ? gfx::rgba(0.886f, 0.816f, 0.600f, 0.95f)
-                                  : gfx::rgba(0.588f, 0.600f, 0.557f, 0.55f);
-    if (over || pressed) canvas.rect(box, gfx::rgba(1.0f, 1.0f, 1.0f, pressed ? 0.10f : 0.06f));
-    // Two bars on the diagonal, drawn as quads because the canvas has no line.
-    // Small and quiet: a cross that shouts is the loudest thing in a dark window.
-    const float arm = std::min(box.w, box.h) * 0.19f;
-    const float t = std::max(1.0f, arm * 0.19f);
+                         : over   ? gfx::rgba(0.941f, 0.847f, 0.604f, 0.95f)
+                                  : gfx::rgba(0.769f, 0.757f, 0.706f, 0.70f);
+    const uint32_t fill = pressed ? gfx::rgba(1.0f, 0.941f, 0.804f, 0.16f)
+                          : over  ? gfx::rgba(1.0f, 0.941f, 0.804f, 0.09f)
+                                  : gfx::rgba(1.0f, 0.941f, 0.804f, 0.04f);
+    const uint32_t rim = pressed  ? gfx::rgba(1.0f, 1.0f, 1.0f, 0.70f)
+                         : over   ? gfx::rgba(0.941f, 0.847f, 0.604f, 0.75f)
+                                  : gfx::rgba(0.643f, 0.573f, 0.404f, 0.45f);
     const float cx = box.midX(), cy = box.midY();
+    const float r = std::min(box.w, box.h) * 0.34f;
+    const float line = std::max(1.0f, r * 0.09f);
+    disc(canvas, cx, cy, r, fill);
+    ring(canvas, cx, cy, r, line, rim);
+    // Two bars on the diagonal, drawn as quads because the canvas has no line.
+    const float arm = r * 0.36f;
+    const float t = std::max(1.0f, arm * 0.22f);
     const float one[8] = {cx - arm - t, cy - arm + t, cx - arm + t, cy - arm - t,
                           cx + arm + t, cy + arm - t, cx + arm - t, cy + arm + t};
     const float two[8] = {cx + arm - t, cy - arm - t, cx + arm + t, cy - arm + t,

@@ -95,7 +95,9 @@ inline gfx::Box scaled(float x, float y, const gfx::Box& units) {
 
 // The corner, the head's band of light, the margin a rule keeps, and where the mark and the
 // title stand in the head. MU's own units, like everything else on this page.
-constexpr float kRadius = 2.5f;
+// Six units of corner, from two and a half -- the user, 2026-09-23: *"round on border-radiuses
+// for windows"*. Twelve pixels at 1080 lines.
+constexpr float kRadius = 6.0f;
 constexpr float kHeadBand = 36.0f;
 constexpr float kEdge = 11.0f;  // the wells' own margin, which every rule is cut to
 // The title stands on the wells' own margin: there is no mark in front of it any more.
@@ -104,13 +106,12 @@ constexpr float kTitleX = kEdge;
 // **The grid, shared by the bag and the shelf.** MU's cells are twenty at a pitch of twenty from
 // x = 15, which is 160 across in a window whose wells run 11 to 181: the grid stood four units
 // in from the worn slots' left edge and six from their right, and its two edges lined up with
-// nothing. A pitch of twenty-one puts eight cells across 168, and a well drawn a gutter narrower
-// at each end lands on 11.75 and 178.25 -- the same two edges the worn slots' own wells are
-// drawn to. The gutter is the skin's: at a unit the grid read as a table with lines, at a unit
-// and a half as separate wells.
+// nothing. A pitch of twenty-one puts eight cells across 168, from 11 to 179 -- the worn block's
+// own two edges. **No gutter**: the cells butt, with one hairline between two neighbours, as one
+// ruled block. The user, 2026-09-23: *"we doont need gaps in inventory grids, we need flat,
+// organized look"*.
 constexpr float kPitch = 21.0f;
-constexpr float kGutter = 1.5f;
-constexpr float kGridX = kEdge + kGutter * 0.5f;
+constexpr float kGridX = kEdge;
 // **The foot, shared by the bag and the character window.** One rule at 382, so the two side by
 // side end on the same line: the bag had its rule at 374 and the character window at 372, and
 // the pair read as two heights. The strip under it is where the bag prints the hero's Zen.
@@ -118,9 +119,9 @@ constexpr float kFootRule = 382.0f;
 constexpr float kFootTop = 390.0f;
 // The wells of the character window, and every strip, run to the grid's own two edges, so two
 // windows side by side show one left edge and one right edge of content. A well's far edge is
-// where a value ranges to, less the same six and a quarter its label stands in from the near.
-constexpr float kWellRight = kWidth - kGridX;
-constexpr float kValueRight = kWellRight - 6.25f;
+// where a value ranges to, less the same seven its label stands in from the near.
+constexpr float kWellRight = kGridX + kPitch * 8.0f;
+constexpr float kValueRight = kWellRight - 7.0f;
 
 // The body starts eight units down: the crest sat in the strip above it with the world behind.
 constexpr float kPlateTop = 8.0f;
@@ -151,6 +152,8 @@ void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& un
            const char* key = "bag_field");
 // One well at any size: the deep-cut cell every grid and every worn slot is drawn as.
 void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state);
+// A grid of resting cells as one ruled block, `columns` by `rows` at kPitch from (ux, uy).
+void grid(gfx::Canvas& canvas, float x, float y, float ux, float uy, int columns, int rows);
 // The bag's foot: the band coming up out of the bottom edge, the rule at kFootRule, MU's coins,
 // the ZEN kicker, and the figure ranged against kValueRight in the colour the hero's purse
 // earns. The shelf drew it too for an hour on 2026-09-23 and the user asked why; only the bag

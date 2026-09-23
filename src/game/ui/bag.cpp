@@ -17,7 +17,6 @@ using gfx::Box;
 // line the boots' slot ended, and with the leather's border gone the two blocks touched.
 constexpr float kOriginX = panel::kGridX, kOriginY = 207.0f;
 constexpr float kCell = panel::kPitch;
-constexpr float kGutter = panel::kGutter;
 
 // The equipment grid: five columns and three rows, each slot one unit wider than its pitch so
 // neighbours share a border. EquipColumn = Run(11, [41, 25, 41, 25, 41]), EquipRow = Run(44,
@@ -49,16 +48,13 @@ Box wornBox(int slot) {
     }
 }
 
-// **The well a slot is drawn as.** MU's worn slots are each a unit wider than their pitch, so two
-// neighbours share a border -- and drawn as wells they touched, a lattice of twelve where the
-// grid under them was sixty-four separate cells. Inset by half a gutter each way, the air
-// between two worn slots is the grid's own unit and a half, and the block's two edges land on
-// 11.75 and 178.25, which is where the grid's wells end too. A bag cell is the pitch less the
-// gutter, as before. Hit-testing keeps MU's boxes; only the paint moves.
+// **The cell a slot is drawn as.** MU's worn slots are each a unit wider than their pitch, so
+// two neighbours share a border; drawn a unit narrower, two neighbours butt exactly and their
+// hairlines fall on the same line -- one rule between two flat cells, as in the grid below,
+// whose cells are the whole pitch with no gutter. Hit-testing keeps MU's boxes; only the paint
+// is cut.
 Box wellOf(const Box& slot, bool worn) {
-    return worn ? Box{slot.x + kGutter * 0.5f, slot.y + kGutter * 0.5f, slot.w - 1.0f - kGutter,
-                      slot.h - 1.0f - kGutter}
-                : Box{slot.x, slot.y, slot.w - kGutter, slot.h - kGutter};
+    return worn ? Box{slot.x, slot.y, slot.w - 1.0f, slot.h - 1.0f} : slot;
 }
 
 // The ghost in an empty worn slot. MU names the art for the side of the SCREEN: the
@@ -193,16 +189,10 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         const sim::Held& what = bag[slot];
         if (what.empty()) continue;
         Box box = itemBox(tables, slot, what);
-        // **The picture is fitted to the WELL, not to the pitch.** A footprint is whole cells
-        // and the well inside it is a gutter narrower, so a picture measured against the pitch
-        // stands on its own border: an armour drawn two cells by two touched all four edges and
-        // read as a sticker over the grid. Two units of air inside the well on top of that, so
-        // every picture has the same margin whatever its footprint (the stage adds its own).
-        if (!sim::wearable(slot)) {
-            box = wellOf(box, false).grown(-2.0f);
-        } else {
-            box = wellOf(box, true).grown(-2.5f);
-        }
+        // **The picture stands inside its cell's hairline**, three units in whatever its
+        // footprint, so every picture has the same margin and none touches a rule (the stage adds
+        // its own air on top).
+        box = wellOf(box, sim::wearable(slot)).grown(-3.0f);
         standing_.push_back({what.item, box, what.refinement,
                              slot == hovered_ && dragging_ < 0});
     }
@@ -271,16 +261,13 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 // be the opposite of. The canvas multiplies the vertex colour through the
                 // texture, so a dark warm tint sinks the plate into the well and leaves the
                 // silhouette, which is darker in the art still, as the only thing that reads.
-                canvas_.image(ghost, panel::scaled(x, y, box.grown(-2.5f)),
+                canvas_.image(ghost, panel::scaled(x, y, box.grown(-3.0f)),
                               gfx::rgba(0.50f, 0.45f, 0.34f, 0.46f));
             }
         }
     }
-    // The satchel, one well a cell. MU's shared-border 21-unit frame is gone with the art: the
-    // wells are drawn at the pitch less a unit, which is the gutter this skin reads by.
-    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-        panel::cell(canvas_, x, y, wellOf(slotBox(slot), false), sheet::Cell::Rest);
-    }
+    // The satchel: one ruled block, eight by eight, no air between the cells.
+    panel::grid(canvas_, x, y, kOriginX, kOriginY, sim::kBagColumns, sim::kBagRows);
     // And the thing under the pointer lit over its whole footprint, not over the one cell it is
     // recorded in: a shield is two cells by two and it is the shield that is hovered.
     if (hovered_ >= 0 && dragging_ < 0 && !bag[hovered_].empty()) {

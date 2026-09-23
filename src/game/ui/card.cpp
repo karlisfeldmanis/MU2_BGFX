@@ -288,7 +288,7 @@ void Card::rebuild() {
     // level he has, and the percent -- the same foot the bag carries its Zen in.
     sheet::band(canvas_, panel::scaled(x, y, {0.0f, kFootRule, panel::kWidth,
                                               panel::kHeight - kFootRule}),
-                false);
+                false, panel::kRadius * k);
     sheet::rule(canvas_, x + panel::kEdge * k, y + kFootRule * k,
                 (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
     const uint64_t at = sim::neededExperience(now_.level);

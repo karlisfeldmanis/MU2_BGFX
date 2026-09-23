@@ -83,6 +83,11 @@ float unit();
 // pixels for `panel` and in the card's units for `glass`.
 void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u);
 void panel(gfx::Canvas& canvas, const gfx::Box& box, float radius, uint32_t top, uint32_t foot);
+// The same with a radius a corner (top-left, top-right, bottom-right, bottom-left, in pixels):
+// what a band laid under a rounded window's head is cut with, so its square corners do not
+// stand out past the round ones. `foot` 0 is a fan of one colour.
+void rounded(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4], uint32_t top,
+             uint32_t foot = 0u);
 
 // The container on its own: the three-falloff shadow, the ring, and the graded body, at `box`.
 // What `draw` lays down before it prints anything, and all a rail needs.
