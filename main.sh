@@ -91,19 +91,23 @@ code=0
 # refresh and the readout says 90 where it said 180. That is what it is set to while the
 # frame is being worked on.
 #
-# `--scale 0.85` is here for the same reason and is the play setting, not a measuring one:
+# `--scale 0.99` is here for the same reason and is the play setting, not a measuring one:
 # the world is drawn at 85% of the screen and magnified by the present pass, while the ring
 # and the HUD are drawn at the screen's own size, so the plate and its text stay sharp. The
 # 2K frame is fill-bound and has no hot pass to cut -- pixels are the only knob of the right
-# size -- and at 2560x1273 it measured 6.25 ms at 1.0, 5.41 at 0.9, 5.01 at 0.85 and 4.60 at
-# 0.8, against the 5.56 ms a 180 Hz refresh allows. `--scale 1` plays at every pixel the
-# display has, and every number in docs/budget.md is still taken there.
+# size -- and at 2560x1440 it measured 6.32 ms at 1.0, 6.24 at 0.99, 5.87 at 0.95, 5.41 at
+# 0.9, 5.01 at 0.85 and 4.60 at 0.8, against the 5.56 ms a 180 Hz refresh allows.
+#
+# 0.99 is the user's choice, made on 2026-09-24, and it is a sharpness setting rather than a
+# frame one: it buys 0.08 ms, which is inside the spread between two runs of the same thing.
+# `--scale 1` is the one that costs nothing at all and resamples nothing, and every number in
+# docs/budget.md is taken there. `--scale 0.9` is where the saving starts to be worth having.
 #
 # `--cap 60` is the other setting, and the smooth one: the frame is 7.6 ms in the middle and
 # 12.3 at the 99th, so at 180 it steps between 90 and 60 several times a second, while a
 # 16.67 ms period is one it fits inside every time and the same refresh every time. Play on
 # 60; measure and hunt on 180. `--cap 0` lets it run free.
-build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.85 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
+build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.99 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
   code=$?
 if [ $code -ne 0 ]; then
   echo "mu2 stopped with $code. The last of mu2.log:"
