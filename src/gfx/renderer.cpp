@@ -24,6 +24,7 @@ void Renderer::bindShadeInputs() {
     // town as the eye sees it; but the probe stands a few metres from what it holds, so
     // the dust it draws is the near air's, which is little.
     bgfx::setUniform(uDust_, shade_.dust);
+    bgfx::setUniform(uEdge_, edge_);
     if (probePass_) {
         // A probe face is lit for its own eye, not the camera's.
         const float eye[4] = {probeAt_[0], probeAt_[1], probeAt_[2], shade_.camPos[3]};

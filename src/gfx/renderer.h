@@ -179,6 +179,21 @@ public:
     // at 0 on the first frame, so --fixed-dt reaches the water like it reaches everything else.
     void setClock(float seconds) { elapsed_ = seconds; }
 
+    // The map's border, and how many metres of dark stand at it. MU's land is a square of
+    // tiles with nothing drawn beyond, and its own attribute maps let the player walk to
+    // within three tiles of the last one, so the border showed as a hard line of lit ground
+    // against the cleared frame. The last metres of the world are taken down into the black
+    // the frame is cleared with, which is the one thing at the border the player does not
+    // need to see. `extentX` and `extentZ` are the map's far corner in metres -- columns run
+    // +x from 0 and rows run -z from 0 -- and `band` 0 turns it off, which is what a bench
+    // leaves it at: a model on a plinth has no map to run out of. See dusty() in common.sh.
+    void setMapEdge(float extentX, float extentZ, float band) {
+        edge_[0] = extentX;
+        edge_[1] = extentZ;
+        edge_[2] = band;
+        edge_[3] = 0.0f;
+    }
+
     // The whole frame. `drawables` may hold the same mesh many times; `ground` may be null.
     //
     // `casters` is what the sun's split draws, and it is a SEPARATE list on purpose. A
@@ -412,6 +427,10 @@ private:
         float shadowMtx[16], shadowParams[4], shadowDebug[4], shadowReach[4];
     };
     ShadeUniforms shade_ = {};
+    // The map's far corner and the width of the dark at its border; setMapEdge. Not in
+    // ShadeUniforms because it is the WORLD's and not the sheet's: it is set once when a map
+    // is raised, and nothing in the lighting can move it.
+    float edge_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lampParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lampGridUniform_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float glowStrength_ = 1.0f;
@@ -537,6 +556,7 @@ private:
     bgfx::UniformHandle uSkyColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uDust_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uEdge_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamPos_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uMaterial_ = BGFX_INVALID_HANDLE;

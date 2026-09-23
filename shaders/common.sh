@@ -10,6 +10,9 @@ uniform vec4 u_sunColour;   // rgb: linear. w: ambient strength
 uniform vec4 u_skyColour;   // rgb: the zenith. w: the horizon's paleness
 uniform vec4 u_groundColour;// rgb: the turf that bounces light up. w: unused
 uniform vec4 u_dust;        // rgb: the dust's own colour, an albedo. w: its density per metre
+uniform vec4 u_edge;        // xy: the map's far corner in metres (+x and -z). z: how many
+                            // metres of dark stand at its border. 0 is a world with no border
+                            // to keep, which is every bench. See dusty().
 uniform vec4 u_camPos;      // xyz: the eye, world space. w: the far plane
 uniform vec4 u_params;      // x: ssao radius  y: ssao strength  z: exposure  w: pixels per unit at unit depth
 uniform vec4 u_material;    // x: cutout threshold (<0 is no cutout)  y: two-sided
@@ -84,6 +87,16 @@ vec3 skyPrefiltered(vec3 dir, float roughness)
 // shadow up towards sunlit sand rather than laying grey over the sun. A lamp lights the
 // surface behind it and not the air, which at night is what should happen: the dust is
 // only as bright as the sky it hangs in.
+//
+// It also carries the dark at the map's border, which is a different thing and is here only
+// because this is the one call every surface of the world already makes. MU's land is a
+// square of tiles and nothing is drawn past it -- MuMain clamps its tile loop to the map
+// (`RenderTerrainFrustrum`) -- while its own attribute maps let the player walk to within
+// three tiles of that border, Lorencia's included. So the last tile met the cleared frame at
+// a hard line, lit grass against black. The last metres of land go into the dark instead, and
+// since the frame is cleared to black the land and the nothing beyond it now meet at no edge
+// at all. It is NOT the air: it is only ever within a few metres of the border, it is a
+// darkening and not the dust's colour, and no sheet value moves.
 vec3 dusty(vec3 colour, vec3 wpos)
 {
 	float dist = length(u_camPos.xyz - wpos);
@@ -91,7 +104,15 @@ vec3 dusty(vec3 colour, vec3 wpos)
 	vec3 l = normalize(u_sunDir.xyz);
 	vec3 lit = u_sunColour.rgb * (u_sunDir.w * max(l.y, 0.0) / 3.14159265)
 	         + mix(u_groundColour.rgb, u_skyColour.rgb, 0.5) * u_sunColour.w;
-	return mix(colour, u_dust.rgb * lit, amount);
+	vec3 air = mix(colour, u_dust.rgb * lit, amount);
+	if (u_edge.z <= 0.0) return air;
+	// How far this point is from the nearest of the map's four sides. Columns run +x and rows
+	// run -z (docs/conventions.md), so the map is the box (0,0) to (u_edge.x, -u_edge.y).
+	float toEdge = min(min(wpos.x, u_edge.x - wpos.x), min(-wpos.z, u_edge.y + wpos.z));
+	// Smooth, so the band has no edge of its own to be seen: a straight ramp would put a line
+	// where the darkening begins, which is the same fault a few metres further in. Nothing at
+	// the border, whole at u_edge.z inside it, and anything off the map is clamped to black.
+	return air * smoothstep(0.0, u_edge.z, toEdge);
 }
 
 // Karis' analytic fit to the split-sum BRDF, so there is no lookup texture to carry.
