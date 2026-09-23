@@ -137,8 +137,8 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     standing_.clear();
     for (size_t i = 0; i < lines_.size(); ++i) {
         const content::ItemRow& row = tables.items[size_t(lines_[i].item)];
-        // Three units inside its cell's hairline, as the bag fits its own pictures.
-        const Box box = cellOf(lines_[i].offer.slot, row).grown(-3.0f);
+        // Two units inside its cell's hairline, as the bag fits its own pictures.
+        const Box box = cellOf(lines_[i].offer.slot, row).grown(-2.0f);
         standing_.push_back({lines_[i].item, box, lines_[i].offer.refinement, int(i) == hovered_});
     }
     if (stage) stage->stand(standing_, panel::kWidth, kHeight);

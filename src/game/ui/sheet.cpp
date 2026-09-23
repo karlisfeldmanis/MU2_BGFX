@@ -192,17 +192,23 @@ void close(gfx::Canvas& canvas, const Box& box, bool over, bool pressed) {
 }
 
 void diamond(gfx::Canvas& canvas, const Box& box, bool over, bool pressed) {
+    // **A ring with a plus in it**, the close button's own shape in gold: the two buttons a
+    // window has are then one kind of thing. The disc fills gold under the pointer and lights
+    // when pressed; at rest it is a gold hairline ring with a faint fill, and the plus is gold.
     const float cx = box.midX(), cy = box.midY();
-    const float h = std::min(box.w, box.h) * (pressed ? 0.40f : 0.46f);
-    const uint32_t ink = pressed ? gfx::rgba(1.0f, 0.902f, 0.451f, 1.0f)
-                         : over  ? gfx::rgba(1.0f, 0.855f, 0.302f, 1.0f)
-                                 : gfx::rgba(0.878f, 0.741f, 0.365f, 0.80f);
-    const float outer[8] = {cx, cy - h, cx + h, cy, cx, cy + h, cx - h, cy};
-    canvas.polygon(nullptr, outer, nullptr, 4, ink);
-    // The plus inside it, cut in the window's own body, so the diamond reads as a button.
-    const float t = std::max(1.0f, h * 0.16f), arm = h * 0.44f;
-    canvas.rect({cx - arm, cy - t, arm * 2.0f, t * 2.0f}, kBodyTop);
-    canvas.rect({cx - t, cy - arm, t * 2.0f, arm * 2.0f}, kBodyTop);
+    const float r = std::min(box.w, box.h) * 0.42f;
+    const float line = std::max(1.0f, r * 0.11f);
+    const uint32_t gold = gfx::rgba(0.878f, 0.741f, 0.365f, 0.90f);
+    const uint32_t bright = gfx::rgba(1.0f, 0.855f, 0.302f, 1.0f);
+    const uint32_t lit = gfx::rgba(1.0f, 0.902f, 0.451f, 1.0f);
+    const uint32_t fill = pressed ? lit : over ? bright : gfx::rgba(0.878f, 0.741f, 0.365f, 0.10f);
+    const uint32_t rim = pressed ? lit : over ? bright : gold;
+    const uint32_t ink = (pressed || over) ? kBodyTop : gold;
+    disc(canvas, cx, cy, r, fill);
+    ring(canvas, cx, cy, r, line, rim);
+    const float t = std::max(1.0f, r * 0.13f), arm = r * 0.48f;
+    canvas.rect({cx - arm, cy - t, arm * 2.0f, t * 2.0f}, ink);
+    canvas.rect({cx - t, cy - arm, t * 2.0f, arm * 2.0f}, ink);
 }
 
 void bar(gfx::Canvas& canvas, const Box& box, float share, uint32_t ink, float thick) {

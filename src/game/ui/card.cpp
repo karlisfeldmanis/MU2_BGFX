@@ -278,7 +278,7 @@ void Card::rebuild() {
 
         // The plus only where there is something to spend: MU hides it rather than greying it.
         // `bag_plus`'s two-state button is gone with the rest of the art; the skin's own gold
-        // diamond with a plus cut out of it stands in its place, at MU's own rectangle.
+        // ring with a plus in it stands in its place, at MU's own rectangle.
         if (now_.points <= 0) continue;
         sheet::diamond(canvas_, panel::scaled(x, y, plusFor(row.y)), now_.over == row.stat,
                        now_.pushed == row.stat);

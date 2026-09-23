@@ -62,7 +62,8 @@ void grid(gfx::Canvas& canvas, const gfx::Box& box, int columns, int rows, float
 // The cross that closes a window, in its three lights.
 void close(gfx::Canvas& canvas, const gfx::Box& box, bool over, bool pressed);
 
-// The diamond that spends a point: MU's `+` button without MU's button art.
+// The button that spends a point: a gold ring with a plus, the close button's shape. MU's
+// `+` without MU's button art; the name is from when it was a diamond.
 void diamond(gfx::Canvas& canvas, const gfx::Box& box, bool over, bool pressed);
 
 // A bar the card's own way: a dark well with a lit fill, for the experience.

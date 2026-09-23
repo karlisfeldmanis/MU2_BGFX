@@ -203,10 +203,11 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         const sim::Held& what = bag[slot];
         if (what.empty()) continue;
         Box box = itemBox(tables, slot, what);
-        // **The picture stands inside its cell's hairline**, three units in whatever its
-        // footprint, so every picture has the same margin and none touches a rule (the stage adds
-        // its own air on top).
-        box = wellOf(box, sim::wearable(slot)).grown(-3.0f);
+        // **The picture stands inside its cell's hairline**: two units in for a bag cell, whose
+        // twenty-one are mostly picture, three for a worn slot, which has room to spare. Every
+        // picture then has the same margin as its neighbours and none touches a rule (the stage
+        // adds its own air on top).
+        box = wellOf(box, sim::wearable(slot)).grown(sim::wearable(slot) ? -3.0f : -2.0f);
         standing_.push_back({what.item, box, what.refinement,
                              slot == hovered_ && dragging_ < 0});
     }
