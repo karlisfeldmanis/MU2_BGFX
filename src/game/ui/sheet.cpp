@@ -21,8 +21,11 @@ using gfx::Box;
 // than as a panel lying on it. It is a dark warm GREY now, which is what the reference panels
 // this skin was drawn from actually are, and the warmth is real: a touch more red than blue, so
 // it sits in MU's own light instead of going cold against it.
-constexpr uint32_t kBodyTop = gfx::rgba(0.072f, 0.068f, 0.062f, 0.985f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.040f, 0.037f, 0.034f, 0.978f);
+// **And brought down a step on the same day**, once the grids were flat -- the user: *"make
+// windows little bit darker, we are getting there"*. About a fifth off each end; still warm,
+// still a grey and not a hole.
+constexpr uint32_t kBodyTop = gfx::rgba(0.056f, 0.052f, 0.048f, 0.988f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.030f, 0.028f, 0.026f, 0.982f);
 
 // The edge, and the head's band of light over it.
 constexpr uint32_t kEdgeTop = gfx::rgba(0.957f, 0.886f, 0.690f, 0.60f);
