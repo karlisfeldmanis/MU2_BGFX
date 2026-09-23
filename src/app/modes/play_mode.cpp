@@ -118,6 +118,16 @@ bool PlayMode::open(Context& ctx) {
         // loading, posing and then throwing away 45 figures a run.
         const bool ok = world_.open(assets, args.world, ctx.textures,
                                     args.play ? 0 : args.crowd, args.figuresOn);
+        // Where this map stops, so the last metres of it can go dark instead of ending at a
+        // line. MU draws nothing past the last tile and lets the player walk to within three
+        // of it, so the border was lit ground against the cleared frame; eight metres is wide
+        // enough to read as dark rather than as a wall, and the nearest tile anyone may stand
+        // on is far enough inside it that the ground he is standing on is untouched.
+        if (ok) {
+            constexpr float kEdgeBand = 8.0f;
+            const float reach = float(world_.ground().size()) * world_.ground().metresPerTile();
+            ctx.renderer.setMapEdge(reach, reach, kEdgeBand);
+        }
         // And the realm behind it, when there is somebody playing. A world that cannot
         // raise one -- no cooked tables yet -- says so and is still a world to look at.
         if (ok && args.play) {
@@ -164,6 +174,9 @@ bool PlayMode::open(Context& ctx) {
                                               world_.played().showing().table());
             }
             world_.played().openSound(assets, args.mute);
+            // And only now the air: the birds' calls come off the sound above and the leaves'
+            // sheet off the showing's table. See World::raiseAirs.
+            if (args.airOn) world_.raiseAirs(assets, args.world);
             // Not fatal either: a game with no HUD is still a game.
             if (args.windows != "off" && !desk_.open(ctx.paths.shaders, assets, &ctx.textures)) {
                 core::logError("the windows did not open; playing without a HUD");
@@ -558,6 +571,29 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // merchant animal's lanterns. See game/world/ornaments.h.
     world_.ornaments().update(float(deltaSeconds), world_.sway());
     world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
+    // What flies over the town and what blows through it. Both follow the character, both
+    // stop where he is under a roof, and the birds read the frame twice -- a flock arrives
+    // from off it and a bird is taken off only once it has left it -- so both are given this
+    // frame's view-projection, the same one the town is about to be culled against. See
+    // game/world/boids.h and leaves.h.
+    if ((world_.boids().isOpen() || world_.leaves().isOpen()) && world_.played().isOpen()) {
+        float feetX = 0.0f, feetZ = 0.0f;
+        world_.characterAt(&feetX, &feetZ);
+        const float hero[3] = {feetX, world_.ground().heightAt(feetX, feetZ), feetZ};
+        const bool inside = world_.indoors(feetX, feetZ);
+        float view[16], proj[16], viewProj[16];
+        ctx.renderer.cameraMatrices(eye, view, proj);
+        bx::mtxMul(viewProj, view, proj);
+        // Whether he is moving, which is what startles a perched bird off the ground -- the
+        // realm's own answer, not the figure's clip, because a man turning on the spot plays a
+        // walk and has not gone anywhere.
+        if (args.birdsNow) world_.boids().hurry();
+        const bool walking = world_.played().realm().hero().walking;
+        world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),
+                              viewProj, ctx.renderer);
+        world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground());
+        world_.leaves().gather(ctx.renderer.effects());
+    }
     // The town's drawables are gathered fresh each frame into one vector that keeps
     // its capacity: a frame appends to a flat array, as foundation 7 says, and
     // allocates nothing after the first.
@@ -585,6 +621,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.town().gatherAll(townDrawables_);
         }
     }
+    // The birds ride with the town rather than with the casters: a bird is up to six metres
+    // over the square and its shadow would be a speck a long way from anything it is over,
+    // which is a fleck of dirt on the paving. MU casts none either -- a boid is drawn by
+    // RenderBoids, outside the object pass the shadow map is built from.
+    world_.boids().gather(townDrawables_);
     if (world_.played().isOpen()) {
         float view[16];
         float proj[16];
@@ -781,6 +822,13 @@ void PlayMode::report(Context& ctx) {
                    counts.chunksDrawn, counts.chunksDrawn + counts.chunksCulled,
                    counts.instancesDrawn, world_.town().instanceCount(), sun.chunksDrawn,
                    sun.instancesDrawn);
+    }
+    // The air, which is two numbers and is the only way to tell an empty sky from a broken
+    // one: a flock is a pass and the sky is meant to be empty between them, so "0 flying" on
+    // its own says nothing. Logged whenever either pool is up. See game/world/boids.h.
+    if (world_.boids().isOpen() || world_.leaves().isOpen()) {
+        core::logf("  air: %u bird(s) flying, %u leaf/leaves on the wind",
+                   world_.boids().flying(), world_.leaves().blowing());
     }
     if (desk_.ready()) core::logf("%s", desk_.line().c_str());
     if (world_.played().isOpen()) {

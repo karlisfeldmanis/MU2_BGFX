@@ -117,6 +117,8 @@ add_executable(mu2
   src/game/world/grass.cpp
   src/game/world/lamps.cpp
   src/game/world/sway.cpp
+  src/game/world/boids.cpp
+  src/game/world/leaves.cpp
   src/game/save.cpp
   src/game/world/ornaments.cpp
   src/game/figures.cpp

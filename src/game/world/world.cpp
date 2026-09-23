@@ -78,6 +78,7 @@ void World::setFocusTile(float column, float row) {
 bool World::open(const std::string& assetDir, const std::string& name,
                  content::Textures& textures, int crowd, bool figures) {
     const std::string dir = core::join(assetDir, "world/" + name);
+    textures_ = &textures;
     if (!ground_.load(dir, name, textures)) return false;
     // The town is not required: the land is a world on its own, and a cook that has not been
     // run yet says so in the log rather than failing the launch.
@@ -156,6 +157,22 @@ bool World::play(const std::string& assetDir, const std::string& name, uint64_t 
     // the sim has them and once where the crowd chose to put them.
     crowd_.shutdown();
     return true;
+}
+
+void World::raiseAirs(const std::string& assetDir, const std::string& name) {
+    // What flies over the character and what blows past him. Both pools are centred on HIM and
+    // exist nowhere else -- MU spawns them around the player and never anywhere on the map --
+    // so a world standing with nobody in it raises neither.
+    //
+    // **Called after the play's showing and its sound are open, and not from play() itself.**
+    // The bird takes its two calls off that sound and the leaf its sheet off that table, and
+    // both of those open several lines LATER than play() does: raised from play(), the birds
+    // came up "silent" and the leaves said there was no cooked effect named 'leaf' when there
+    // plainly was one. Neither failure was fatal and neither was a lie -- at the moment they
+    // asked, the table was empty and the device was shut.
+    if (name.empty() || textures_ == nullptr || !play_.isOpen()) return;
+    boids_.open(assetDir, name, boidOf(name), *textures_, airsOf(name), &play_.sound());
+    leaves_.open(assetDir, *textures_, play_.showing().table());
 }
 
 void World::update(double seconds, bool still) {
@@ -293,6 +310,8 @@ void World::shutdown() {
     lamps_.shutdown();
     sway_.shutdown();
     ornaments_.shutdown();
+    boids_.shutdown();
+    leaves_.shutdown();
     grass_.shutdown();
     town_.shutdown();
     ground_.shutdown();

@@ -77,6 +77,14 @@ struct Args {
     // --no-lamps: no point lights and no flames, the baseline the lamps are priced against.
     // The glows still draw; they are the town's own meshes.
     bool lampsOn = true;
+    // --birds-now: the first flock arrives at once instead of 20 to 90 seconds in. A review
+    // run is a few seconds long and would otherwise never see one; nothing about how they fly
+    // changes, only how long the sky stays empty before the first pass. See boids.h.
+    bool birdsNow = false;
+    // --no-air: no birds and no leaves, the baseline they are reviewed and priced against.
+    // A leaf is three pixels and a bird is half a metre, so "is it drawn?" is answered by
+    // differencing two runs rather than by looking.
+    bool airOn = true;
 
     // Sprint 5's sim. `--headless` runs the tick with no window at all; the seed and the
     // tick count are the whole of a reproducible run, and `--sim-log` is where its bytes go.

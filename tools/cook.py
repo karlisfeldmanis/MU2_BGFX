@@ -188,13 +188,37 @@ def safe(name):
     return "".join(c if c.isalnum() or c in "._-" else "_" for c in name)
 
 
+# What flies over a world, by the model name index.json knows it by. MU chooses it with
+# `switch (gMapManager.WorldActive)` in GOBoid.cpp -- Lorencia gets MODEL_BIRD01, the Dungeon
+# and Lost Tower get bats, Blood Castle crows, Noria a butterfly -- and none of them is PLACED:
+# the pool is spawned around the player and exists nowhere on the map. So the model reaches
+# nothing the town cook walks, and has to be named here or it is never cooked at all.
+#
+# It is a world's fact and not a boid's, which is why it is a table and not a constant: the
+# velocity, whether the terrain's light falls on it and whether it calls are the same kind of
+# fact and live beside it in the engine (game/world/boids.h), as MU2's `Airs.cs` gathered them.
+AIRS = {"lorencia": "Bird01"}
+
+
+def flying(world):
+    """The boid model this world flies, if its glb is there, else nothing."""
+    name = AIRS.get(world)
+    if name is None:
+        return None
+    if not os.path.exists(os.path.join(ASSETS, "world", world, name, f"{name}.glb")):
+        return None
+    return name
+
+
 def collect(world, out_dir, raw_dir):
     """Every image the world's models reach for, written out ready to compress."""
     world_dir = os.path.join(ASSETS, "world", world)
     with open(os.path.join(world_dir, f"{world}.json")) as handle:
         map_data = json.load(handle)
 
-    models = sorted({one["model"] for one in map_data["objects"]})
+    # The boid's sheet comes with the town's, not with the effects': it is a MODEL's albedo,
+    # cooked by the same rules and looked up through the same textures.json the .mum names.
+    models = sorted({one["model"] for one in map_data["objects"]} | set(filter(None, [flying(world)])))
     jobs = []
     manifest = {}
     seen = {}
@@ -277,10 +301,20 @@ def ground_jobs(world, out_dir, manifest):
                     continue
                 stem = f"ground_{safe(os.path.splitext(name)[0])}_{role}"
                 ktx_path = os.path.join(out_dir, "textures", stem + ".ktx")
-                jobs.append((role, -1.0, source, ktx_path))
                 relative = os.path.relpath(ktx_path, ASSETS)
                 seen[key] = relative
                 manifest[f"ground/{name}:{role}"] = relative
+                # Left alone where it is already newer than the .png it was made from.
+                # `collect` skips a model's sheet on EXISTENCE, because that stem carries the
+                # sha1 of the source; these stems carry only the name, so the file has to be
+                # dated instead. Without this the 28 land sheets -- the biggest images in the
+                # world, and the whole of the time -- were re-compressed on every texture
+                # cook, however little had changed. Cooking Bird01, one 64-pixel bird, queued
+                # 29 jobs of which 28 were Lorencia's ground (2026-09-23).
+                if (os.path.exists(ktx_path)
+                        and os.path.getmtime(ktx_path) >= os.path.getmtime(source)):
+                    continue
+                jobs.append((role, -1.0, source, ktx_path))
     return jobs
 
 
@@ -659,7 +693,11 @@ def cook_meshes(world, out_dir):
     # the game holds them there. See index.py's `still` and game/world/sway.cpp.
     still = []
     triangles = vertices = cooked = source = models = 0
-    for model in sorted({one["model"] for one in map_data["objects"]}):
+    # The boid among them, though nothing places it: its .mum and its .muc land beside the
+    # town's and the engine opens them by name. It is NOT in the .mut -- Sway walks the town's
+    # placements and finds none of it, which is what leaves the pool to game/world/boids.cpp.
+    for model in sorted({one["model"] for one in map_data["objects"]} |
+                        set(filter(None, [flying(world)]))):
         path = os.path.join(world_dir, model, f"{model}.glb")
         if not os.path.exists(path):
             continue

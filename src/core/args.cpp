@@ -132,6 +132,10 @@ Args parseArgs(int argc, char** argv) {
             a.figuresOn = false;
         } else if (!std::strcmp(s, "--no-lamps")) {
             a.lampsOn = false;
+        } else if (!std::strcmp(s, "--birds-now")) {
+            a.birdsNow = true;
+        } else if (!std::strcmp(s, "--no-air")) {
+            a.airOn = false;
         } else if (!std::strcmp(s, "--safe")) {
             a.safe = true;
         } else if (!std::strcmp(s, "--crowd")) {

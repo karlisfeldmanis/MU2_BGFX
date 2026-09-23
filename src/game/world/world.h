@@ -7,8 +7,10 @@
 #include "content/texture.h"
 #include "game/crowd.h"
 #include "game/figures.h"
+#include "game/world/boids.h"
 #include "game/world/grass.h"
 #include "game/world/lamps.h"
+#include "game/world/leaves.h"
 #include "game/world/ornaments.h"
 #include "game/play.h"
 #include "game/world/sway.h"
@@ -31,6 +33,9 @@ public:
     // one somebody is. Only one of the two is ever open.
     bool play(const std::string& assetDir, const std::string& name, uint64_t seed, int kin,
               int level, const std::string& weapon = "", const std::string& shield = "");
+    // The birds and the leaves, raised once the play's showing and sound are open. Separate
+    // from play() on purpose; the reason is on the definition.
+    void raiseAirs(const std::string& assetDir, const std::string& name);
     void shutdown();
 
     // `seconds` moves the focus so the camera is not still: sprint 1 ran --still throughout
@@ -54,6 +59,10 @@ public:
     Sway& sway() { return sway_; }
     const Sway& sway() const { return sway_; }
     Ornaments& ornaments() { return ornaments_; }
+    Boids& boids() { return boids_; }
+    const Boids& boids() const { return boids_; }
+    Leaves& leaves() { return leaves_; }
+    const Leaves& leaves() const { return leaves_; }
     Play& played() { return play_; }
     const Play& played() const { return play_; }
 
@@ -87,6 +96,13 @@ private:
     Lamps lamps_;
     Sway sway_;
     Ornaments ornaments_;
+    Boids boids_;
+    Leaves leaves_;
+    // Held from open() so play() can load the boid's mesh and the leaf's sheet. Those two
+    // pools follow the PLAYER -- they are spawned around him and exist nowhere else, which is
+    // MU's own arrangement -- so they are raised when somebody is played and not when the
+    // world is merely standing, and by then the textures are long out of scope.
+    content::Textures* textures_ = nullptr;
     Figures figures_;
     Crowd crowd_;
     Play play_;
