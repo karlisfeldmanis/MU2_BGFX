@@ -60,10 +60,17 @@ public:
             // the hunt is auto-attack with a skill folded into it -- exactly the rhythm
             // docs/skills-dk.md §3.1a describes, and the reason the cast path is exercised by
             // every headless run rather than by a test of its own.
-            for (int i = 0; i < sim::skillCount(); ++i) {
+            // In turn, and not always the first one ready: mana is the real limiter at low level,
+            // so a hand that scanned from the top of the table every time threw Falling Slash
+            // twenty-five times and Cyclone never -- and a skill the hunt never presses is a skill
+            // the seeded log never covers. Starting after the last one pressed costs nothing and
+            // spreads the casts over the four.
+            for (int n = 1; n <= sim::skillCount(); ++n) {
+                const int i = (pressed_ + n) % sim::skillCount();
                 const sim::SkillRow& row = sim::skillAt(i);
                 if (!realm.knows(row.number) || realm.cooling(row.number) > 0) continue;
                 realm.invoke(row.number, nearest);
+                pressed_ = i;
                 break;
             }
             return;
@@ -111,6 +118,7 @@ private:
     int groundColumn_ = 0, groundRow_ = 0;  // where the hand came to hunt
     int refused_ = 0;
     uint32_t fighting_ = 0;
+    int pressed_ = 0;  // the last skill it threw, by the table's index: the next scan starts after it
 };
 
 // FNV-1a over the whole log. Not a cryptographic anything: it is a short thing to put in the
@@ -276,6 +284,12 @@ int runHeadless(const core::Args& args, const char* assetDir) {
         // models the picture rather than the sim, and it is modelled because the picture is
         // what the complaint is about.
         uint64_t swaps = 0, inWalk = 0, blips = 0;
+        // A dead tick taken MID-STRIDE: the body was covering ground, and this tick it covered
+        // none while the sim still has it walking. That is the one the eye catches, because the
+        // walk clip is already running and goes on running over a body that has stopped dead for
+        // 50 ms. A dead tick before the body has set off is not one: the drawing holds the idle
+        // until the first step lands.
+        uint64_t hitches = 0;
     };
     Gait heroGait, beastGait;
     std::vector<float> wasX(realm.bodies().size()), wasY(realm.bodies().size());
@@ -283,6 +297,7 @@ int runHeadless(const core::Args& args, const char* assetDir) {
     std::vector<uint8_t> inWalk(realm.bodies().size(), 0);
     std::vector<float> still(realm.bodies().size(), 0.0f);
     std::vector<int64_t> swappedAt(realm.bodies().size(), -1000);
+    std::vector<uint8_t> underway(realm.bodies().size(), 0);
 
     for (int tick = 0; tick < args.ticks; ++tick) {
         if (!args.noHand) hand.play(realm);
@@ -320,6 +335,7 @@ int runHeadless(const core::Args& args, const char* assetDir) {
             }
             if (!one.alive() || !one.walking) {
                 stallRun[i] = 0;
+                underway[i] = 0;
                 continue;
             }
             ++tally.walking;
@@ -328,10 +344,12 @@ int runHeadless(const core::Args& args, const char* assetDir) {
             const float covered = std::sqrt(dx * dx + dy * dy);
             if (covered < one.speed * 0.01f) {
                 ++tally.stalled;
+                if (underway[i]) ++tally.hitches;
                 ++stallRun[i];
                 tally.longestStall = std::max(tally.longestStall, uint64_t(stallRun[i]));
             } else {
                 stallRun[i] = 0;
+                underway[i] = 1;
                 if (covered < one.speed * 0.99f) ++tally.partial;
             }
         }
@@ -398,9 +416,10 @@ int runHeadless(const core::Args& args, const char* assetDir) {
                    (unsigned long long)tally.partial, (unsigned long long)tally.orders,
                    (unsigned long long)tally.halts);
         core::logf("  clips (%s): %llu ticks in the walk, %llu changes of clip (%llu of them "
-                   "inside a quarter second of the last)", which == 0 ? "hero" : "monsters",
-                   (unsigned long long)tally.inWalk, (unsigned long long)tally.swaps,
-                   (unsigned long long)tally.blips);
+                   "inside a quarter second of the last), %llu hitches mid-stride",
+                   which == 0 ? "hero" : "monsters", (unsigned long long)tally.inWalk,
+                   (unsigned long long)tally.swaps, (unsigned long long)tally.blips,
+                   (unsigned long long)tally.hitches);
     }
     core::logf("  log: %zu bytes, fingerprint %016llx -> %s", log.size(),
                (unsigned long long)fingerprint(log), logPath.c_str());
@@ -411,12 +430,16 @@ int runHeadless(const core::Args& args, const char* assetDir) {
         return 0;
     }
     core::logError("  invariants: %llu on a blocked tile, %llu below zero health, %llu blows on "
-                   "the dead, %llu past the leash, %llu unpaid levels",
+                   "the dead, %llu past the leash, %llu unpaid levels, %llu skills unlearned, "
+                   "%llu cast early, %llu guards that never lapse",
                    (unsigned long long)findings.onBlocked,
                    (unsigned long long)findings.belowZero,
                    (unsigned long long)findings.hitTheDead,
                    (unsigned long long)findings.pastTheLeash,
-                   (unsigned long long)findings.unpaidLevel);
+                   (unsigned long long)findings.unpaidLevel,
+                   (unsigned long long)findings.castUnlearned,
+                   (unsigned long long)findings.castEarly,
+                   (unsigned long long)findings.castForever);
     for (const std::string& line : findings.first) core::logError("    %s", line.c_str());
     return 1;
 }

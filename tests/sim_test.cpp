@@ -22,6 +22,7 @@
 #include "sim/realm.h"
 #include "sim/route.h"
 #include "sim/rules.h"
+#include "sim/skills.h"
 #include "sim/swings.h"
 
 using namespace mu;
@@ -657,6 +658,162 @@ void testStandsOverTheKill(const content::Tables& tables) {
     check(held, "and not one of them takes a step while the body is going down");
 }
 
+// The two area shapes, and the cooldown's own arithmetic under them.
+//
+// A spin and a sweep cannot be posed by hand -- there is no way to put four monsters round the
+// knight -- so this is a hunt with a hand that presses its keys in turn, and what is checked is
+// what the happenings say: who was caught, in what order, and never anything outside the shape.
+// The single-target skills are covered by the same run for free.
+void testSkills(const content::Tables& tables) {
+    std::printf("skills\n");
+
+    // The formulas first, which need no realm at all. Monotone in agility, never under the
+    // floor, and the floor is the wall: docs/skills-dk.md §3.2's "a floor and not a zero".
+    const sim::SkillRow& cyclone = *sim::skillNumbered(sim::skill::kCyclone);
+    const sim::SkillRow& guard = *sim::skillNumbered(sim::skill::kDefense);
+    int32_t last = sim::cooldownTicks(cyclone, 0, 20);
+    bool falls = true, floored = true;
+    for (int agility = 0; agility <= 3000; agility += 10) {
+        const int32_t cool = sim::cooldownTicks(cyclone, agility, 20);
+        falls &= cool <= last;
+        floored &= cool >= 20;
+        last = cool;
+    }
+    check(falls, "more agility is never a longer cooldown");
+    check(floored, "and no cooldown falls under the clip that floors it");
+    checkEqual(sim::cooldownTicks(cyclone, 300, 1), cyclone.coolTicks / 2,
+               "300 agility halves a cooldown");
+    check(sim::cooldownTicks(guard, 100000, sim::floorTicksFor(guard, 0)) > guard.boonTicks,
+          "and a guard's cooldown always outlasts the guard");
+    check(sim::force(cyclone, sim::HeroPoints{2000, 0, 0, 0}) >
+              sim::force(cyclone, sim::HeroPoints{28, 0, 0, 0}),
+          "strength is force");
+
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 60), "a realm raises for the keys");
+    // A blade in his hand, because nothing is thrown bare-handed and `raise` dresses nobody:
+    // `given`, so a level-60 knight's strength is not what this is testing.
+    check(realm.equip(tables.armNamed("Sword03"), -1, true), "and a blade is put in his hand");
+    check(realm.knows(sim::skill::kCyclone), "a knight is handed every built skill");
+    check(!realm.knows(sim::skill::kDefense), "and nothing that is not built");
+    // Slash is built in the sim and has no key on the bar, so the test learns it by hand: this
+    // is the only place `Spread::Arc` is exercised until a fifth slot exists.
+    check(realm.learn(sim::skill::kSlash), "and Slash can be learned");
+
+    int casts[sim::kSkills] = {};
+    int caught[sim::kSkills] = {};   // bodies struck by each, over the whole hunt
+    int widest[sim::kSkills] = {};   // and the most any one throw caught
+    bool inShape = true, inOrder = true, ringOnly = true;
+    int pressed = 0;
+    uint32_t fighting = 0;
+    sim::Findings findings;
+    int32_t casting = 0;      // the skill whose blow is in the air
+    float castAim = 0.0f;
+    for (int tick = 0; tick < 6000; ++tick) {
+        const sim::Body& hero = realm.hero();
+        if (hero.alive()) {
+            uint32_t nearest = 0;
+            float closest = 1e30f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (one.player || !one.alive()) continue;
+                const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
+                if (off <= 12.0f && off < closest) {
+                    closest = off;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0) {
+                if (nearest != fighting) {
+                    fighting = nearest;
+                    sim::Request request;
+                    request.kind = sim::Request::Kind::Attack;
+                    request.target = nearest;
+                    realm.ask(request);
+                }
+                for (int n = 1; n <= sim::skillCount(); ++n) {
+                    const int i = (pressed + n) % sim::skillCount();
+                    const sim::SkillRow& row = sim::skillAt(i);
+                    if (!realm.knows(row.number) || realm.cooling(row.number) > 0) continue;
+                    realm.invoke(row.number, nearest);
+                    pressed = i;
+                    break;
+                }
+            } else if (!hero.walking) {
+                sim::Request request;
+                request.kind = sim::Request::Kind::WalkTo;
+                request.column = 190;
+                request.row = 110;
+                realm.ask(request);
+            }
+        }
+        realm.step();
+        sim::audit(realm, findings);
+
+        const sim::Body& hero2 = realm.hero();
+        int hits = 0;
+        float lastOff = -1.0f;
+        for (const sim::Happening& happening : realm.happenings()) {
+            if (happening.what == sim::What::Cast && happening.who == hero2.id) {
+                const int index = sim::skillIndexOf(happening.a);
+                if (index >= 0) ++casts[index];
+                casting = happening.a;
+                castAim = hero2.aim;
+            }
+            if ((happening.what != sim::What::Hit && happening.what != sim::What::Missed) ||
+                happening.who != hero2.id) {
+                continue;
+            }
+            const sim::SkillRow* row = sim::skillNumbered(casting);
+            if (!row || row->spread == sim::Spread::One) continue;
+            const sim::Body* victim = realm.find(happening.whom);
+            if (!victim) continue;
+            // Measured after the tick, so a monster has had its own step since the blow: the
+            // slack is one of those steps and no more.
+            const float off = std::max(std::fabs(victim->x - hero2.x),
+                                       std::fabs(victim->y - hero2.y));
+            inShape &= off <= row->reach + 0.3f;
+            if (row->spread == sim::Spread::Arc) {
+                const float toward = std::atan2(victim->y - hero2.y, victim->x - hero2.x);
+                ringOnly &= std::fabs(sim::wrapped(toward - castAim)) <= sim::kArcHalfAngle + 0.2f;
+            }
+            // Nearest first: a landing's victims come out in the order they were struck.
+            inOrder &= off >= lastOff - 0.3f;
+            lastOff = off;
+            ++hits;
+            const int index = sim::skillIndexOf(casting);
+            if (index >= 0) ++caught[index];
+        }
+        if (hits > 0) {
+            const int index = sim::skillIndexOf(casting);
+            if (index >= 0) widest[index] = std::max(widest[index], hits);
+            casting = 0;
+        }
+    }
+
+    for (int i = 0; i < sim::skillCount(); ++i) {
+        const sim::SkillRow& row = sim::skillAt(i);
+        if (casts[i] == 0) continue;
+        std::printf("  %s: %d thrown", row.name, casts[i]);
+        if (row.spread != sim::Spread::One) {
+            std::printf(", %d bodies caught, %d at once at the widest", caught[i], widest[i]);
+        }
+        std::printf("\n");
+    }
+    const int ring = sim::skillIndexOf(sim::skill::kCyclone);
+    const int arc = sim::skillIndexOf(sim::skill::kSlash);
+    check(casts[ring] > 0, "the spin was thrown");
+    check(casts[arc] > 0, "and the sweep");
+    check(caught[ring] >= casts[ring], "a spin catches at least what it was aimed at");
+    check(widest[ring] >= 2, "and catches a crowd when there is one");
+    check(inShape, "nothing outside the shape was ever struck");
+    check(ringOnly, "and nothing behind him by a sweep");
+    check(inOrder, "and the nearest was struck first");
+
+    checkEqual((long long)findings.castUnlearned, 0, "nothing cast what it had not learned");
+    checkEqual((long long)findings.castEarly, 0, "and nothing cast while it was cooling");
+    checkEqual((long long)findings.castForever, 0, "and no guard outlasts its own cooldown");
+}
+
 void testSpamClicks(const content::Tables& tables) {
     std::printf("spam clicks\n");
     sim::Realm realm;
@@ -755,6 +912,7 @@ int main() {
     testItems(tables);
     testLoot(tables);
     testStandsOverTheKill(tables);
+    testSkills(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

@@ -233,10 +233,12 @@ what took that away. So:
 monster and keeps swinging — that standing order is already in the tree. A skill press does **not**
 cancel it:
 
-- Pressing Q..R while an attack order stands **spends this swing on the skill and then stops the
-  auto-attack.** (Revised 2026-09-22 on the user's rule; the first pass kept the order standing and
-  went on swinging.) A skill ends the exchange and going back to hitting the monster is another
-  click. A skill on cooldown changes nothing and the ordinary blow lands.
+- Pressing Q..R while an attack order stands **spends this swing on the skill and then goes on
+  swinging.** (Revised 2026-09-22 to stop the auto-attack, and revised back 2026-09-23 on the
+  user's word — *"DK char has to continue auto attack after skill used"*. The order is left
+  standing, which is what the first pass did and what `throwSkill` does again: it never touches
+  `order_`.) A skill is the punctuation inside the exchange, not the end of it, and it costs no
+  second click. A skill on cooldown changes nothing and the ordinary blow lands.
 - **He does not turn or move while the clip runs.** The blow is thrown where he was standing and
   facing when he threw it: no re-aim at a quarry that shuffles round him, no re-path, no step. A
   body that swivels or slides under its own animation reads as a teleport, which is the same
@@ -250,6 +252,10 @@ cancel it:
   rather than an invented GCD.
 - **A skill with no target under the order does nothing** if it needs one, and Defense casts on
   himself regardless — MuMain's split holds: left walks and swings, right and the keys cast.
+  **An area skill does not need one** (2026-09-23): it is thrown *around* him rather than *at*
+  somebody, so what it asks for is a body inside the shape. A knight whose quarry died a moment
+  ago still spins into the three standing on him; a spin into empty air is the one thing refused,
+  because it would spend mana and a cooldown on nothing.
 
 ### 3.2 The two formulas
 
@@ -475,7 +481,55 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
 
 ---
 
-## 6. What is built, 2026-09-22
+## 6. What is built
+
+### 6.1 The four on the bar, 2026-09-23
+
+**Falling Slash, Lunge, Uppercut and Cyclone — which is Q W E R full.** The two area shapes are
+written, and Slash's Arc with them; only Defense is unbuilt.
+
+- **`Spread::Ring` and `Spread::Arc`** (`Realm::gather`, `Realm::strikeAround`). Both are centred
+  on the knight and measured with his own reach, so neither needs a ground target, a cursor mode
+  or a frustum: Ring is everything within a tile, Arc is the same ring cut to 67.5° either side of
+  where he is facing — the facing eighth and the two beside it, written as an angle rather than as
+  three named tiles because a body stands at a fractional position and a tile test drops a monster
+  straddling the line. **One `strike()` and one hit roll a target**, nearest first, then clockwise
+  from north, then by id; two runs of one seed draw the same dice in the same order and the log
+  stays byte-identical (checked: the 4 000-tick hunt is `cmp`-identical across runs).
+- **An area skill resolves at the landing, not at the throw** — `Realm::land` measures the shape
+  when the arm comes down, so a monster that walked into the spin is caught and one that walked
+  out is not. He cannot have moved or turned himself in between; `castUntil` holds him.
+- **Lunge and Uppercut cost a `built = true` each**, as expected: they are Falling Slash with
+  other numbers.
+- **`Realm::raise` now hands a knight every built skill**, still in the marked temporary block:
+  four skills and four keys. Slash's row is `built = false` for that reason alone — the sim does
+  it, the bar has nowhere to put it, and it is one word the day a learned-skills list can drag a
+  fifth onto Q W E R.
+- **The auto-attack goes on after a cast** (the user's word, 2026-09-23): the `order_ = Request{}`
+  that stood in `throwSkill` for a day is gone. §3.1a is rewritten to match.
+- **The drawing latches `Drawn::landing`** instead of clearing it on the first `Hit`. A spin says
+  one `Swung` and then a `Hit` per target on the same tick, and clearing the flag made the second
+  of them look like a monster's one-part blow — replaying the clip, the wave and the swing counter
+  for every body caught.
+- **Three invariants** in `sim/audit.h`, read off the log rather than off the formula that made
+  it: nothing casts what it has not learned, nothing casts again inside the cooldown its last
+  throw declared, and no boon is ever longer than the cooldown that gates it.
+- **`tests/sim_test.cpp` grew a `skills` section**: the cooldown is monotone in agility and never
+  under its floor, 300 agility halves it, and a 6 000-tick hunt shows the shapes catching only
+  what is inside them, nearest first. Cyclone caught two at once; Slash, learned by hand because
+  it has no key, caught one a throw.
+- **The headless hand presses its keys in turn** rather than always the first one ready — mana is
+  the limiter at level 30, and a hand that scanned from the top threw Falling Slash twenty-five
+  times and Cyclone never.
+
+Measured on the standing hunt (`--headless --seed 7 --ticks 4000 --level 30 --at 190,110 --weapon
+Axe01`): 27 casts spread 5 / 10 / 9 / 3 over the four, invariants all kept, fingerprint
+`d50b9b6d89895571` twice.
+
+**Still owed:** Defense (§3.1's buff, the boon strip on the HUD, and an effect of its own), the
+orbs (§3.3), and a bar that can hold more than four so Slash has a key.
+
+### 6.2 Falling Slash and the machinery, 2026-09-22
 
 **Falling Slash, and the whole cooldown machinery under it.** The other five are rows in the table
 with `built = false`: adding one is a row's behaviour, not a row.

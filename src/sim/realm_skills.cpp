@@ -141,15 +141,31 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.stats.damageTaken = double(row.damageTaken);
     } else {
         Body* target = body(at);
-        if (!target || !target->alive() || target->player) return false;
         // The reach, and it is the knight's own. 0.75 gave each skill a range and then added two
         // tiles of slack because three of the five were thrown from a step or two out and closed
         // the gap themselves; nothing closes a gap here (docs/skills-dk.md §3.1a), so the test
         // is the swing's.
-        if (!within(hero, *target, row.reach)) return false;
-        // Nothing may be thrown at something sheltered either, which is the check the far end of
-        // `ApplySkillAsync` makes and `press` already makes for a swing.
-        if (tables_->grid.safe(target->column(), target->row())) return false;
+        const bool aimed = target && target->alive() && !target->player &&
+                           within(hero, *target, row.reach);
+        // Aimed before the shape is measured, because Arc is measured off where he is looking.
+        // Only the aim is set and not the facing: he turns to it at the body's own rate, as he
+        // does for a swing (`engage`), and the blow lands half a clip later by which time he has
+        // come round. Set even on a refusal below -- a knight turns toward what he tried to hit.
+        if (aimed) hero.aim = std::atan2(target->y - hero.y, target->x - hero.x);
+        if (row.spread == Spread::One) {
+            if (!aimed) return false;
+            // Nothing may be thrown at something sheltered either, which is the check the far end
+            // of `ApplySkillAsync` makes and `press` already makes for a swing.
+            if (tables_->grid.safe(target->column(), target->row())) return false;
+        } else {
+            // An area skill is not thrown AT a body, it is thrown AROUND him, so what it needs is
+            // somebody inside the shape rather than a named target: a knight whose quarry has
+            // just died still spins into the three others standing on him. What it will not do is
+            // spend mana and a cooldown on empty air, which is what 0.75's "no target, no skill"
+            // is really refusing.
+            uint32_t victims[kVictims];
+            if (gather(hero, row, victims, kVictims) == 0) return false;
+        }
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
     }
@@ -169,13 +185,12 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     hero.walking = false;
     hero.route.clear();
     hero.onStep = 0;
-    // **And the auto-attack stops.** The user's rule, 2026-09-22, and it reverses what the first
-    // pass did: a cast used to leave the standing order alone so the knight went on swinging
-    // afterwards. He does not -- a skill ends the exchange, and going back to hitting the monster
-    // is another click. MU2's `Realm.Cast` does the same to its wizard (`player.Fighting = 0`) and
-    // argued the opposite for the knight; this is the user's call and it is one line either way.
-    // `pending_` is left alone: a click the player has already made this tick is his, not ours.
-    order_ = Request{};
+    // **And the auto-attack goes on.** The user's rule, 2026-09-23, which puts back what the
+    // first pass did and takes out the `order_ = Request{}` that stood here for a day: a skill is
+    // a beat inside the exchange and not the end of it, so the knight spends this swing on the
+    // skill and keeps hitting what he was hitting without a second click. That is the fight
+    // §3.1a describes -- auto-attack is the floor, the key is the punctuation -- and it is one
+    // line either way. MU2's `Realm.Cast` clears its wizard's `Fighting` and is not followed here.
 
     // Said BEFORE the blow, so the drawing has the skill in hand when the hit arrives and can
     // play the skill's clip instead of the weapon's. MU2 moved its own herald above the blow for
@@ -191,6 +206,73 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         begin(hero, at, force(row, hero.points), row.number, clip);
     }
     return true;
+}
+
+// ---- the two area shapes (docs/skills-dk.md §3.1a) ------------------------------------------
+//
+// **Only the area differs, never the range.** Both shapes are centred on the knight and measured
+// with his own reach, so neither needs a ground target, a cursor mode or a frustum: Ring is
+// everything within a tile of him and Arc is the same ring narrowed to the eighth he faces and
+// the two beside it. That is the whole of the geometry, and it is why these are cheap.
+//
+// **The order is the contract.** Nearest first, then clockwise from north, then by id -- one
+// `strike()` and one hit roll a target, in that order, so two runs of the same seed draw the same
+// dice in the same sequence and the log stays byte-identical. Walking `bodies_` in index order
+// would be deterministic too, but it would put the blow on the monster that spawned first rather
+// than the one under his feet, and the log is read by people as well as by diff.
+int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int room) const {
+    // What the sort is on, kept beside the id so the comparison never touches a body again.
+    float off[kVictims] = {};
+    float turnOf[kVictims] = {};
+    int found = 0;
+    for (const Body& one : bodies_) {
+        if (one.player || !one.alive()) continue;
+        if (!within(hero, one, row.reach)) continue;
+        // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        const float dx = one.x - hero.x, dy = one.y - hero.y;
+        // Clockwise from north, where north is the row decreasing -- the drawing's own negation
+        // of the row, borrowed here only to give the sort a stated zero.
+        float turn = std::atan2(dx, -dy);
+        if (turn < 0.0f) turn += 6.28318530718f;
+        if (row.spread == Spread::Arc) {
+            // The facing eighth and the two beside it. `aim` and not `facing`, because the throw
+            // aims him at what the key named and the body turns to it over the clip; the blow
+            // belongs where he threw it.
+            const float toward = std::atan2(dy, dx);
+            if (std::fabs(wrapped(toward - hero.aim)) > kArcHalfAngle) continue;
+        }
+        if (found >= room) continue;
+        // Insertion, because the list is at most a handful long and an insertion sort of a
+        // handful is both the fastest thing and the one with no allocation in it.
+        const float gap = reach(hero, one);
+        int at = found;
+        while (at > 0 && (off[at - 1] > gap ||
+                          (off[at - 1] == gap &&
+                           (turnOf[at - 1] > turn ||
+                            (turnOf[at - 1] == turn && victims[at - 1] > one.id))))) {
+            off[at] = off[at - 1];
+            turnOf[at] = turnOf[at - 1];
+            victims[at] = victims[at - 1];
+            --at;
+        }
+        off[at] = gap;
+        turnOf[at] = turn;
+        victims[at] = one.id;
+        ++found;
+    }
+    return found;
+}
+
+void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
+    uint32_t victims[kVictims];
+    const int found = gather(hero, row, victims, kVictims);
+    for (int i = 0; i < found; ++i) {
+        // Looked up again rather than held: a body killed earlier in this same sweep may have
+        // been left where it fell, and `strikeAt` refuses the dead itself. The vector cannot
+        // grow inside the loop -- nothing here spawns -- but ids are what survive one that does.
+        if (Body* victim = body(victims[i])) strikeAt(hero, *victim, force);
+    }
 }
 
 void Realm::shove(Body& target) {

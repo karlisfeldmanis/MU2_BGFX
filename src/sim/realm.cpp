@@ -102,8 +102,12 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // learned in the mask the save writes, so the day the orb exists this line is deleted and
     // nothing else changes.
     if (kin == Kin::DarkKnight) {
-        const int slash = skillIndexOf(skill::kFallingSlash);
-        if (slash >= 0) hero.learned |= uint32_t(1) << slash;
+        // Every skill that is built, which is four and exactly fills Q W E R. A fifth would have
+        // no key to be bound to until there is a list to drag from, so `built` is both "the sim
+        // does this" and, for now, "the bar can reach it".
+        for (int i = 0; i < skillCount(); ++i) {
+            if (skillAt(i).built) hero.learned |= uint32_t(1) << i;
+        }
     }
     bodies_.push_back(std::move(hero));
     reswing(bodies_[0]);

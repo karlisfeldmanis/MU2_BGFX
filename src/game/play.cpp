@@ -346,7 +346,13 @@ void Play::update(double seconds) {
                     // `Swung`, so the blow is shown the moment it is told rather than half a
                     // swing later. Everything else about the cue is the same.
                     if (!begun && swinger->landing) {
-                        swinger->landing = false;
+                        // NOT cleared here, and that is what lets a spin settle on four monsters
+                        // at once: an area skill says one `Swung` and then a `Hit` per target on
+                        // the same tick, and clearing the flag on the first of them would make the
+                        // second look like a monster's one-part blow -- replaying the clip, the
+                        // wave and the swing counter for every body it caught. Only a `Swung` sets
+                        // it, only the player sends one, and every blow he throws has one in front
+                        // of it, so a latch is the whole of the rule.
                         Cue cue;
                         cue.attacker = happening.who;
                         cue.target = happening.whom;

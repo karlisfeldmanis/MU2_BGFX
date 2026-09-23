@@ -400,6 +400,12 @@ private:
     void dropBlow(Body& hero) { hero.blowAt = 0; hero.blowTarget = 0; }
     // A skill thrown, with the refusals in OpenMU's own order. False and silent for each.
     bool throwSkill(Body& hero, const SkillRow& row, uint32_t at);
+    // Whom an area skill catches, in the order it strikes them: nearest first, then clockwise
+    // from north, then by id. Written into `victims` and the count returned, never more than
+    // `room` -- a fixed array on the caller's stack, because this runs inside a tick.
+    int gather(const Body& hero, const SkillRow& row, uint32_t* victims, int room) const;
+    // And the blow itself, once the arm comes down: one roll a target, in that order.
+    void strikeAround(Body& hero, const SkillRow& row, float force);
     // The knock: one tile at random, onto something standable. 0.75's `movesTarget`.
     void shove(Body& target);
     // How long the clip this skill plays takes, and so what its cooldown cannot go under.

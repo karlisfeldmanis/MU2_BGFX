@@ -81,6 +81,39 @@ void audit(const Realm& realm, Findings& findings) {
         if (happening.what == What::Rose && happening.who < findings.dead.size()) {
             findings.dead[happening.who] = 0;
         }
+        // A cast, checked against what it is allowed to be. All three are read off the log and
+        // the caster's own mask rather than off the formula that produced them, so a `throwSkill`
+        // that set the wrong number is caught rather than confirmed.
+        if (happening.what == What::Cast) {
+            const int index = skillIndexOf(happening.a);
+            const Body* caster = realm.find(happening.who);
+            if (index >= 0) {
+                if (caster && (caster->learned & (uint32_t(1) << index)) == 0) {
+                    ++findings.castUnlearned;
+                    note(findings, "tick %lld: body %u cast skill %d without learning it",
+                         (long long)realm.tick(), happening.who, happening.a);
+                }
+                const int64_t ready = findings.castAt[index] + findings.castFor[index];
+                if (findings.castFor[index] > 0 && realm.tick() < ready) {
+                    ++findings.castEarly;
+                    note(findings,
+                         "tick %lld: skill %d thrown again %lld ticks into a %d tick cooldown",
+                         (long long)realm.tick(), happening.a,
+                         (long long)(realm.tick() - findings.castAt[index]),
+                         findings.castFor[index]);
+                }
+                // A guard that comes back before it has lapsed is permanent half damage, which
+                // is the one thing the floor in `floorTicksFor` exists to make impossible.
+                const SkillRow* row = skillNumbered(happening.a);
+                if (row && row->boonTicks > 0 && happening.b <= row->boonTicks) {
+                    ++findings.castForever;
+                    note(findings, "tick %lld: skill %d guards for %d ticks and cools for %d",
+                         (long long)realm.tick(), happening.a, row->boonTicks, happening.b);
+                }
+                findings.castAt[index] = realm.tick();
+                findings.castFor[index] = happening.b;
+            }
+        }
         if (happening.what == What::Levelled) {
             const Body* hero = realm.find(happening.who);
             // Every level-up is preceded by the experience that pays for it: the total standing

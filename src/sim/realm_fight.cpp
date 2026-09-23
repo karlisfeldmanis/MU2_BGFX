@@ -77,10 +77,22 @@ void Realm::begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t o
 void Realm::land(Body& hero) {
     const uint32_t at = hero.blowTarget;
     const float force = hero.blowForce;
+    const int32_t skill = hero.blowSkill;
     hero.blowAt = 0;
     hero.blowTarget = 0;
     hero.blowSkill = 0;
     hero.blowForce = 1.0f;
+    // An area skill has no one victim and is resolved where he stands rather than against the
+    // body the key named: the shape is measured NOW, at the bottom of the swing, so a monster
+    // that walked into the spin while the clip ran is caught by it and one that walked out is
+    // not. He cannot have moved or turned himself in between -- `castUntil` holds him -- so the
+    // centre and the facing are the ones he threw it with.
+    if (const SkillRow* row = skillNumbered(skill)) {
+        if (row->spread != Spread::One) {
+            strikeAround(hero, *row, force);
+            return;
+        }
+    }
     Body* target = body(at);
     // Gone, or dead before the arm came down: the swing is spent and nothing lands. That is the
     // same answer `strikeAt` gives for a corpse, moved a few ticks earlier.

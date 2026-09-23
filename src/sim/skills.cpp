@@ -36,13 +36,17 @@ constexpr SkillRow kRows[kSkills] = {
      60, "player_skill_sword1", true},
     {skill::kLunge, "Lunge", 9, 1.0f, 1.4f, 1.0f / 1400.0f, 60, false, Spread::One, 0, 1.0f,
      "A thrust straight ahead: the cheapest key and the one that comes back soonest.", 61,
-     "player_skill_sword2", false},
+     "player_skill_sword2", true},
     {skill::kUppercut, "Uppercut", 8, 1.0f, 1.7f, 1.0f / 1200.0f, 60, false, Spread::One, 0, 1.0f,
      "A rising blow under the guard, between the jab and the overhead in force and in wait.",
-     62, "player_skill_sword3", false},
+     62, "player_skill_sword3", true},
     {skill::kCyclone, "Cyclone", 9, 1.0f, 1.3f, 1.0f / 1400.0f, 100, false, Spread::Ring, 0, 1.0f,
      "A spin that catches everything within a tile: weakest against one, strongest in a crowd.",
-     63, "player_skill_sword4", false},
+     63, "player_skill_sword4", true},
+    // Slash's shape IS built -- `Spread::Arc` is written, tested and is the same sweep Cyclone's
+    // ring is cut from -- and the row is `false` for one reason only: the bar holds four keys and
+    // the four above it fill them. It is one word here the day a learned-skills list can drag a
+    // fifth onto Q W E R.
     {skill::kSlash, "Slash", 10, 1.0f, 1.8f, 1.0f / 1000.0f, 120, false, Spread::Arc, 0, 1.0f,
      "A wide sweep across the three tiles he faces. The longest wait of the six.", 64,
      "player_skill_sword4", false},

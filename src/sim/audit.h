@@ -22,8 +22,13 @@ struct Findings {
     uint64_t hitTheDead = 0;   // a blow landed on something already dead
     uint64_t pastTheLeash = 0; // a monster further from its nest than a grudge allows
     uint64_t unpaidLevel = 0;  // a level-up not preceded by the experience that buys it
+    // The three a skill can break, and each is a thing the cooldown exists to prevent:
+    uint64_t castUnlearned = 0;  // a skill thrown that its caster has never learned
+    uint64_t castEarly = 0;      // thrown again before the cooldown the last throw declared
+    uint64_t castForever = 0;    // a buff whose cooldown is no longer than the boon it grants
     uint64_t total() const {
-        return onBlocked + belowZero + hitTheDead + pastTheLeash + unpaidLevel;
+        return onBlocked + belowZero + hitTheDead + pastTheLeash + unpaidLevel + castUnlearned +
+               castEarly + castForever;
     }
     // The first line of each kind, kept whole: the count says how bad and the line says what.
     std::vector<std::string> first;
@@ -32,6 +37,12 @@ struct Findings {
     // died on and no other -- and a sim that swung at week-old corpses would pass it. QA
     // broke the rule deliberately and the check reported 1 of 52.
     std::vector<uint8_t> dead;
+    // When each skill was last thrown and how long it said it would be cooling for, by the
+    // table's own index. Carried between ticks for the same reason the deaths are: a cast that
+    // came back too soon is two happenings a hundred ticks apart, and neither tick can see it
+    // on its own.
+    int64_t castAt[kSkills] = {};
+    int32_t castFor[kSkills] = {};
 };
 
 // Every check that can be made from one tick's happenings and the state they left behind.
