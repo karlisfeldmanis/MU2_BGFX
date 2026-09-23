@@ -653,6 +653,131 @@ void testLoot(const content::Tables& tables) {
 // drawing (a fall waits for its blow to be seen landing, so a killer that turns away on the
 // tick walks off while its victim is still standing), and a rule put there for the screen's
 // sake is exactly the kind that rots quietly.
+// A skill is not walked out of, and only the swing is (2026-09-23, the user's rule). While a
+// cast's clip runs the knight is locked where he stands, so the three orders that would take a
+// step -- the ground click, a thing on the floor, a townsperson -- are DROPPED rather than held:
+// the click is spent and he does not set off the moment the clip ends. Attack and Stop go
+// through, since neither moves him while `castUntil` runs.
+//
+// Two halves, because the rule has two: the self-cast half is run with nothing to fight, so
+// nothing but the click can move him and "he did not move" means exactly that; the fighting half
+// checks what the click used to cost him, which was the skill's own unlanded blow.
+void testCastLock(const content::Tables& tables) {
+    std::printf("a skill is not walked out of\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 60), "a realm raises for the lock");
+    // A blade and a shield: Defense is a shield's skill, and it is thrown at himself, so this
+    // half needs no monster at all.
+    check(realm.equip(tables.armNamed("Sword03"), tables.armNamed("Shield01"), true),
+          "a blade in one hand and a shield on the other");
+    check(realm.learn(sim::skill::kDefense), "and the guard in his head");
+    check(!tables.grid.safe(realm.hero().column(), realm.hero().row()),
+          "he stands outside the safe zone, where a skill may be thrown");
+
+    // The press, and the tick it is thrown on.
+    bool thrown = false;
+    realm.invoke(sim::skill::kDefense, realm.hero().id);
+    for (int tick = 0; tick < 60 && !thrown; ++tick) {
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            thrown |= one.what == sim::What::Cast && one.who == realm.hero().id;
+        }
+    }
+    check(thrown, "the guard is thrown");
+    check(realm.casting(), "and its clip is still running the tick after");
+
+    // The click, mid-clip, at a tile ten away.
+    const int stoodColumn = realm.hero().column(), stoodRow = realm.hero().row();
+    sim::Request walk;
+    walk.kind = sim::Request::Kind::WalkTo;
+    walk.column = stoodColumn + 10;
+    walk.row = stoodRow;
+    realm.ask(walk);
+    bool stillStanding = true;
+    int clipTicks = 0;
+    for (int tick = 0; tick < 200 && realm.casting(); ++tick) {
+        realm.step();
+        ++clipTicks;
+        stillStanding &= !realm.hero().walking && realm.hero().column() == stoodColumn &&
+                         realm.hero().row() == stoodRow;
+    }
+    check(clipTicks > 1, "the clip is long enough to be walked out of, if it could be");
+    check(stillStanding, "and he does not take a step of it");
+
+    // And the click was SPENT, not held: nothing is standing to send him anywhere afterwards.
+    bool stayedPut = true;
+    for (int tick = 0; tick < 60; ++tick) {
+        realm.step();
+        stayedPut &= !realm.hero().walking && realm.hero().column() == stoodColumn &&
+                     realm.hero().row() == stoodRow;
+    }
+    check(stayedPut, "and the click does not set him off once the clip ends");
+
+    // The same click, with no clip running, still walks him -- the gate closes on the cast and
+    // on nothing else.
+    realm.ask(walk);
+    bool walked = false;
+    for (int tick = 0; tick < 60 && !walked; ++tick) {
+        realm.step();
+        walked = realm.hero().walking;
+    }
+    check(walked, "the same click walks him when no skill is running");
+
+    // ---- and the blow the click used to throw away ------------------------------------------
+    //
+    // `accept` drops the unlanded blow of whatever order it replaces -- that is how an attack is
+    // cancelled -- and until this rule the skill's blow went the same way, so a click during the
+    // clip cancelled the skill and kept nothing. Cyclone is thrown at a monster and settles half
+    // a clip in, which is after the click below.
+    sim::Realm fight;
+    check(fight.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 60), "a realm raises for the fight");
+    check(fight.equip(tables.armNamed("Sword03"), -1, true), "with a one-handed sword, Cyclone's");
+    check(fight.learn(sim::skill::kCyclone), "and the spin in his head");
+    bool cast = false, landed = false;
+    uint32_t fighting = 0;
+    for (int tick = 0; tick < 6000 && !landed; ++tick) {
+        const sim::Body& hero = fight.hero();
+        if (hero.alive() && !cast) {
+            uint32_t nearest = 0;
+            float closest = 1e30f;
+            for (const sim::Body& one : fight.bodies()) {
+                if (one.player || !one.alive()) continue;
+                const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
+                if (off <= 12.0f && off < closest) {
+                    closest = off;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                fight.ask(request);
+            }
+            if (nearest != 0 && fight.cooling(sim::skill::kCyclone) == 0) {
+                fight.invoke(sim::skill::kCyclone, nearest);
+            }
+        }
+        fight.step();
+        for (const sim::Happening& one : fight.happenings()) {
+            if (one.what == sim::What::Cast && one.who == fight.hero().id && !cast) {
+                cast = true;
+                // The click, on the tick the spin is thrown and before its blow settles.
+                sim::Request away;
+                away.kind = sim::Request::Kind::WalkTo;
+                away.column = fight.hero().column() + 8;
+                away.row = fight.hero().row();
+                fight.ask(away);
+            } else if (cast && one.what == sim::What::Hit && one.who == fight.hero().id) {
+                landed = true;
+            }
+        }
+    }
+    check(cast, "the spin is thrown at something");
+    check(landed, "and its blow lands, though a click to move came in over the top of it");
+}
+
 void testStandsOverTheKill(const content::Tables& tables) {
     std::printf("standing over the kill\n");
     sim::Realm realm;
@@ -1132,6 +1257,7 @@ int main() {
     testLoot(tables);
     testStandsOverTheKill(tables);
     testSkills(tables);
+    testCastLock(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
