@@ -155,17 +155,10 @@ private:
     int32_t carrying_ = 0;    // the skill the pointer is holding, 0 for none
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
     int scriptedSkill_ = -1;
-    // The one sentence a family-gated key is dark for -- "Needs an axe or a mace in his hand."
-    // It is built out of the row's own `families` column, so it is written rather than chosen
-    // from a list, and it lives here because `whyNot` hands back a pointer the card reads at
-    // once. One buffer: the card is built for one box a frame.
-    char wantsHand_[96] = {};
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
-    // `why` is the sentence the card prints when the key is dark, or null when it is live:
-    // one string rather than a bool, because there is more than one way to be unable to throw
-    // a skill and the card has to say WHICH.
-    tip::Sheet skillSheet(const sim::SkillRow& row, const sim::Realm& realm,
-                          const char* why) const;
+    // No `why` any more: the card carries every refusal as one of its own rows (2026-09-23), so
+    // there is nothing left for a sentence to add.
+    tip::Sheet skillSheet(const sim::SkillRow& row, const sim::Realm& realm) const;
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;

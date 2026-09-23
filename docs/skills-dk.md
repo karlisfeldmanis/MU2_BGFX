@@ -309,7 +309,7 @@ instead of two rules that can drift apart.
 | Slash 23 | two-handed sword, two-handed axe | its carriers: Giant Sword, Crystal Sword, Chaos Dragon Axe — which is MU's own description word for word |
 | Defense 18 | shield | `Version075/Items/Armors.cs:40`, the Buckler and the nine after it |
 | Twisting Slash 41 | **any weapon** | MU puts no weapon requirement on it at all; it is the knight's staple |
-| Rageful Blow 42 | axes, maces, two-handed sword | **ours**: what is brought *down* rather than drawn across |
+| Rageful Blow 42 | **any weapon** | **ours**, and MU puts no weapon requirement on it either |
 | Death Stab 43 | spear | **ours**, and MU gates it on the hand too (`SkillCast.cpp:157`) |
 
 **Three rows past 0.75, and why the design needs them.** Gating the five on their own carriers
@@ -327,23 +327,28 @@ punishment:**
 
 | in his hand | keys | with a shield |
 |---|---|---|
-| one-handed sword | Lunge, Uppercut, Cyclone, Twisting Slash | + Defense = 5 |
+| one-handed sword | Lunge, Uppercut, Cyclone, Twisting Slash, Rageful Blow | + Defense = 6 |
 | two-handed sword | Slash, Twisting Slash, Rageful Blow | 3 |
 | one-handed axe | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
 | two-handed axe | Falling Slash, Slash, Twisting Slash, Rageful Blow | 4 |
 | mace | Falling Slash, Twisting Slash, Rageful Blow | + Defense = 4 |
-| spear | Cyclone, Twisting Slash, Death Stab | 3 |
+| spear | Cyclone, Twisting Slash, Death Stab, Rageful Blow | 4 |
 
-Three at worst, five at best, and the bar holds five — so no weapon leaves a knight with a bar he
+**Twisting Slash and Rageful Blow are the two every hand has** — the wide answer and the heavy one
+— which is the user's rule of 2026-09-23 and is also what MU does: neither carries a weapon
+requirement anywhere. Everything else is its family's own.
+
+Three at worst, six at best against a bar of five — so no weapon leaves a knight with a bar he
 cannot fill, and **every weapon leaves him with a different one**, which is the depth the user
 asked for. A two-hander trades Defense for the heavy arc; a spear is the only hand that throws the
 hardest single blow in the table; the one-handed sword is the widest bar and the lightest hits.
 `tests/sim_test.cpp` checks the "three at worst" as a rule, not as a fact about today's table.
 
-**And the interface says all of it, because a dark key is otherwise a puzzle** (§3.4a): the card's
-first row is `Weapon`, in MU's own requirement colours — white where the hand meets it, red where
-it does not — and the refusal under the numbers names what it wants: *"Needs an axe or a mace in
-his hand."*
+**And the interface says it once.** The card's first row is `Weapon`, in MU's own requirement
+colours — white where the hand meets it, red where it does not — one family a line so nothing
+overruns the label. There is no sentence under the numbers: the user's rule of 2026-09-23 is that
+the card must not print the same fact twice, and a red row over a cold key is the fact. The safe
+zone is unsaid for the same reason and one more — a player can see where he is standing.
 
 ### 3.2 The two formulas
 
@@ -674,10 +679,10 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
   numbers and icons and our own behaviour. `pipeline/skill_icons.py --mumain` cut the icons from
   MuMain's own 256 sheet through a 3× enlargement, because MuDream's sharper sheet sits in an
   application container macOS will not open from here.
-- The card says all of it: `Weapon` is its first row, in MU's requirement colours, one family a
-  line so nothing overruns the label; `Learned at` is its last. The safe-zone sentence was dropped
-  on the user's word — the keys still go cold in town, and a player standing in the square can see
-  where he is standing.
+- The card says it once: `Weapon` is its first row, in MU's requirement colours, one family a line
+  so nothing overruns the label; `Learned at` is its last. Both sentences under the numbers were
+  dropped on the user's word — the safe zone because it is obvious, the weapon because the red row
+  above already said it. The keys still go cold for both.
 - `tests/sim_test.cpp`: the gate, the families a cooked weapon reports, the ladder at three
   heights and through the restore door, and the hunt is run four times over — one-handed sword,
   two-handed sword, axe, spear — so every shape in the table is thrown by something.

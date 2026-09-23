@@ -303,42 +303,6 @@ void Desk::quickKeys(const gfx::Window& window, Play& play) {
     }
 }
 
-// What a family-gated skill wants in the hand, as the middle of a sentence: "an axe or a mace",
-// "a one-handed sword", "a spear". The card's own `Weapons` row says the same thing as a list
-// (`sim::familiesNamed`); this is the refusal's voice, with the articles and the "or" in it,
-// because "Needs axes and maces in his hand" is not English.
-//
-// Kept here rather than in the sim: the sim owns which families a row has, and how that reads to
-// a person is the interface's business -- the same division that keeps `describe.cpp`'s wording
-// out of `sim/items.h`.
-static const char* wantedHand(uint32_t families) {
-    using namespace mu::sim::arms;
-    if ((families & kEvery) == kEvery) return "any weapon";
-    static char said[96];
-    const char* parts[4] = {};
-    int found = 0;
-    const auto add = [&](const char* word) { if (found < 4) parts[found++] = word; };
-    const uint32_t swords = families & kSwords;
-    if (swords == kSwords) add("a sword");
-    else if (swords == kSword1) add("a one-handed sword");
-    else if (swords == kSword2) add("a two-handed sword");
-    const uint32_t axes = families & kAxes;
-    if (axes == kAxes) add("an axe");
-    else if (axes == kAxe1) add("a one-handed axe");
-    else if (axes == kAxe2) add("a two-handed axe");
-    if ((families & kMaces) != 0) add("a mace");
-    if ((families & kSpear) != 0) add("a spear");
-    said[0] = '\0';
-    size_t at = 0;
-    for (int i = 0; i < found; ++i) {
-        const char* join = i == 0 ? "" : (i == found - 1 ? " or " : ", ");
-        const int wrote = std::snprintf(said + at, sizeof(said) - at, "%s%s", join, parts[i]);
-        if (wrote <= 0 || at + size_t(wrote) >= sizeof(said)) break;
-        at += size_t(wrote);
-    }
-    return said;
-}
-
 // The skill bar: the four keys, and what the four boxes show.
 //
 // The press is the whole of the gesture and the realm decides everything about it -- learned,
@@ -429,29 +393,19 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // disagree. The user, 2026-09-23: the slots need their inactive state when he cannot
     // actually use the skill. The cooldown is NOT one of these -- it has the sweep, and a
     // cooling key must not read as a broken one.
+    //
+    // **And the card says none of it in words**, on the user's two rules of 2026-09-23. The
+    // sentence under the numbers is gone, both halves of it:
+    //   * the safe zone, because *"it's obvious"* -- a player standing in Lorencia's square can
+    //     see where he is standing.
+    //   * the weapon, because the card already carries it. `Weapon` is the first row and it goes
+    //     red when the hand is wrong, so a sentence saying the same thing at the foot was the
+    //     same fact printed twice.
+    // The refusals themselves are unchanged: the keys still go cold for both, which is `ready`
+    // below, and a cold key with a red row above it needs no third telling.
     const bool inTown = tables.grid.safe(hero.column(), hero.row());
-    const auto whyNot = [&](const sim::SkillRow& row) -> const char* {
-        if (!hero.alive()) return nullptr;
-        if (!armedFor(row)) {
-            if (row.onSelf()) return "Needs a shield on his arm.";
-            // **What it wants, not that it is unhappy.** A skill gated on a family has to name
-            // the family or the dark key is a puzzle: "Needs an axe or a mace in his hand" is
-            // the whole of the rule, said where it is refused. Written into a buffer the desk
-            // owns, because the sentence is built out of the row's own column.
-            std::snprintf(wantsHand_, sizeof(wantsHand_), "Needs %s in his hand.",
-                          wantedHand(row.families));
-            return wantsHand_;
-        }
-        // **The safe zone is not said**, on the user's word of 2026-09-23: *"don't show text Not
-        // in safe zone, it's obvious"*. It is still a refusal and the keys still go cold in town
-        // -- `ready` below asks it -- but a player standing in Lorencia's square can see where he
-        // is standing, and a card that explains it is a card explaining the obvious. A mana
-        // shortfall is the same argument: it is the red figure above and needs no sentence.
-        return nullptr;
-    };
-    const bool holstered = inTown;  // every skill is refused in the square, and quietly
     const auto ready = [&](const sim::SkillRow& row) {
-        return hero.alive() && !holstered && whyNot(row) == nullptr && hero.mana >= row.mana;
+        return hero.alive() && !inTown && armedFor(row) && hero.mana >= row.mana;
     };
 
     fan_.clear();
@@ -476,7 +430,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     const int overCell = hud_.fanAt(pointer.x, pointer.y);
     if (overCell >= 0 && size_t(overCell) < fan_.size()) {
         if (const sim::SkillRow* row = sim::skillNumbered(fan_[size_t(overCell)].number)) {
-            hud_.setFanSheet(skillSheet(*row, realm, whyNot(*row)));
+            hud_.setFanSheet(skillSheet(*row, realm));
         }
     }
 
@@ -588,7 +542,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             box.affordable = row == nullptr || ready(*row);
 
             if (key == over && row != nullptr) {
-                hud_.setSkillSheet(key, skillSheet(*row, realm, whyNot(*row)));
+                hud_.setSkillSheet(key, skillSheet(*row, realm));
             }
         }
         hud_.setSkill(key, box);
@@ -600,8 +554,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
 // why. Every number is read off the realm and off `sim/skills.h`'s own formulas, so the card and
 // the blow can never disagree: `force()` is what the damage multiplies by and `coolsFor()` is
 // what the cooldown will be set to, the same calls `Realm::throwSkill` makes.
-tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm,
-                            const char* why) const {
+tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) const {
     const sim::Body& hero = realm.hero();
     tip::Sheet sheet;
     sheet.name = row.name;
@@ -713,16 +666,9 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm,
     }
     sheet.sections.push_back(facts);
 
-    // The refusals the numbers do not already show -- the wrong hand, the safe zone. A mana
-    // shortfall is the red figure above and needs no sentence.
-    if (why != nullptr) {
-        tip::Section section;
-        tip::Row need;
-        need.free = why;
-        need.freeTone = tip::Tone::Red;
-        section.rows.push_back(need);
-        sheet.sections.push_back(section);
-    }
+    // **And nothing under the numbers.** Every refusal the card used to spell out is already on
+    // it: the wrong hand is the red `Weapon` row, the mana is the red figure, the cooldown is the
+    // `Ready in` line and the safe zone is the square he is standing in. See `ready` above.
     return sheet;
 }
 

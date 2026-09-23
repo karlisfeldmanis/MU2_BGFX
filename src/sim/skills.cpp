@@ -99,18 +99,18 @@ constexpr SkillRow kRows[kSkills] = {
      "A whirl of whatever he is holding, into everything within a tile. Every weapon can throw "
      "it; none throws it hard.",
      63, "player_skill_sword4", true, arms::kEvery, 28},
-    // Rageful Blow: the heavy hands. MU's description is a "colossal area attack that unleashes
-    // shockwaves ... to crush multiple opponents", which is something brought DOWN rather than
-    // drawn across -- an axe, a mace, or a two-handed sword swung like one. The two-handed sword
-    // is in there for a second reason, and it is worth being honest about which: without it that
-    // family has Slash and Twisting Slash and nothing else, and two keys is the dead bar this
-    // whole set of rows exists to prevent. An invented row is the right place to pay that, since
-    // widening a traced gate would be inventing 0.75 instead.
+    // Rageful Blow: **any weapon**, on the user's word of 2026-09-23. It was written for the
+    // heavy hands -- MU's description is a "colossal area attack that unleashes shockwaves ... to
+    // crush multiple opponents", which reads as something brought DOWN rather than drawn across --
+    // and it is opened to all six families for the same reason Twisting Slash is: MU puts no
+    // weapon requirement on either, and a knight of any hand should have a heavy answer as well as
+    // a wide one. So the two skills past 0.75 that every family shares are the pair, spin and
+    // crush, and every gate in the table below them is traced to a carrier.
     {skill::kRagefulBlow, "Rageful Blow", 25, 1.0f, 2.1f, 1.0f / 900.0f, 170, false, Spread::Arc,
      0, 1.0f,
      "The weapon driven down into the ground, and what it breaks is the three tiles ahead of "
      "him.",
-     60, "player_skill_sword1", true, arms::kAxes | arms::kMaces | arms::kSword2, 44},
+     60, "player_skill_sword1", true, arms::kEvery, 44},
     // Death Stab: the spear's, and MU gates it on the hand too -- `SkillWarrior` refuses it with
     // a staff in the right hand (SkillCast.cpp:157) and the skill has been a spear's in every
     // version that hands it out. The hardest single blow in the table, and the point of carrying
