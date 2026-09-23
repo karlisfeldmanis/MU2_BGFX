@@ -77,10 +77,15 @@ constexpr float kLaneGapAboveHud = 14.0f;  // clear of the plate's top edge
 constexpr float kLaneRowGap = 3.0f;
 constexpr float kLaneWordGap = 7.0f;
 constexpr float kRowLife = 2.1f;
-// The death holds longer and is set larger, in the fight's own weight rather than the lane's:
-// it is the one line there that is not income. Still no banner across the middle of the screen
-// -- the user asked for it where the experience and the Zen are said.
-constexpr float kDiedLife = 4.5f;
+// The death is set larger and in the fight's own weight rather than the lane's: it is the one
+// line there that is not income.
+//
+// Its whole life has to fit INSIDE the death, though. The realm stands him up three seconds
+// after the tick he died on (sim::kRiseTicks, 60 at 20 Hz), and it starts from his fall, which
+// is up to half a swing after that tick -- so about 2.6 seconds are left, and a 4.5-second
+// message was still lit while he was walking around town. Two seconds, with the last of them
+// the fade (kDiedOut below): gone, and gone gradually, before he is up.
+constexpr float kDiedLife = 2.0f;
 // Bigger than the lane ever was, because it is no longer in the lane: at the middle of the
 // screen it is the same size the map name is (35.5 px at 1080, which is 17.75 units) and a
 // third again, since a death is the one thing the game says that stops the hunt.
@@ -125,6 +130,10 @@ constexpr uint32_t silver(float a) {
 }
 constexpr uint32_t black(float a) { return gfx::rgba(0.0f, 0.0f, 0.0f, a); }
 constexpr float kRowIn = 0.10f, kRowOut = 0.72f;  // of the life
+// The death's own out, earlier in a shorter life than the lane's: half of two seconds is a
+// full second of fade, which is long enough that it reads as the message letting go of the
+// screen rather than being switched off a moment before he stands up.
+constexpr float kDiedOut = 0.50f;
 constexpr float kRowLift = 8.0f;                  // it comes up into place, in units
 // Zen is summed for this long and posted once. A hunt pays a pile a body and a good one is a
 // pile a second; a figure for each is a slot machine, and one figure a second is income.
@@ -443,11 +452,13 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
     const float centre = float(width) * 0.5f;
     for (size_t i = lane_.size(); i-- > 0;) {
         const Row& row = lane_[i];
-        const float life = row.kind == Row::Kind::Died ? kDiedLife : kRowLife;
+        const bool died = row.kind == Row::Kind::Died;
+        const float life = died ? kDiedLife : kRowLife;
+        const float out = died ? kDiedOut : kRowOut;
         const float u = std::clamp(row.age / life, 0.0f, 1.0f);
         float alpha = 1.0f;
         if (u < kRowIn) alpha = u / kRowIn;
-        else if (u > kRowOut) alpha = std::clamp(1.0f - (u - kRowOut) / (1.0f - kRowOut), 0.0f, 1.0f);
+        else if (u > out) alpha = std::clamp(1.0f - (u - out) / (1.0f - out), 0.0f, 1.0f);
         const float lift = u < kRowIn ? (1.0f - u / kRowIn) * kRowLift * unit : 0.0f;
 
         if (row.kind == Row::Kind::Died) {

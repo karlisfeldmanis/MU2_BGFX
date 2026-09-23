@@ -289,6 +289,11 @@ void Play::fall(Drawn& dead) {
     // killing blow to land waits the same to cry out. Where it falls, and not followed --
     // a corpse goes nowhere.
     if (dead.cryDie >= 0 && dead.placed) emit(dead.cryDie, dead.crown[0], dead.crown[2]);
+    // And "You Died" with the same key, for the same reason: the realm resolved his death on
+    // the tick, but the blow that did it lands on screen up to half a swing later, and the
+    // message read as arriving before the fall. See the note in Play::update where the other
+    // gains are collected.
+    if (dead.id == realm_.hero().id) gains_.push_back({Gain::Kind::Died, 0});
 }
 
 void Play::fallWhenLanded() {
