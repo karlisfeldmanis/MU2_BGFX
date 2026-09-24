@@ -62,11 +62,10 @@ int levelOf(int group, int number, int plus) {
     if (group == 14 && (number == 13 || number == 14)) return 8;  // JEWEL_OF_BLESS, _SOUL
     if (group == 12 && number == 15) return 8;                    // JEWEL_OF_CHAOS
     if (group == 12 && number == 11) return 0;                    // ORB_OF_SUMMONING
-    if (group == 12 && number >= 0 && number <= 6) return 0;      // the wings and capes
-    if (group == 12 && (number == 7 || (number >= 12 && number <= 14) ||
-                        (number >= 16 && number <= 19))) {
-        return 9;                                                 // the later orbs
-    }
+    if (group == 12 && number >= 0 && number <= 2) return 0;      // the wings
+    // MuMain's later orbs at +9 are left out: a knight orb here sits on 7, 12 or 19 by
+    // borrowing that number, or on a free one, and drew the chrome by which it happened to
+    // be. One family, one look; 0.75's own orbs (8-10) draw at their plus.
     // MODEL_BOLT and MODEL_ARROWS: a quiver's plus is drawn doubled and one more.
     if (group == 4 && (number == 7 || number == 15)) return plus >= 1 ? plus * 2 + 1 : 0;
     return plus;

@@ -112,8 +112,10 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
     Wind 2 (blue), Spirit 4 (0, 0.8, 0.4), Guardian 5 -- and orange (1, 0.5, 0) for the rest.
   * **Level**, `RenderPartObjectEffect`'s overrides cut the same way: every jewel (Bless,
     Soul, Chaos) draws at +8, so a jewel always carries the chrome; the orb of summoning and
-    the wings at +0; the later orbs at +9; bolts and arrows at `plus * 2 + 1`. Group 12 is
-    numbered alike in OpenMU and MuMain (`docs/mu-scrolls-and-orbs.md`).
+    the wings at +0; bolts and arrows at `plus * 2 + 1`. Group 12 is
+    numbered alike in OpenMU and MuMain (`docs/mu-scrolls-and-orbs.md`). MuMain's later
+    orbs at +9 were dropped on 2026-09-24: the knight orbs borrow 7, 12 and 19 or take free
+    numbers, so three of nine on a vendor's shelf wore an orange chrome streak and six did not.
   The colour rides the instance's last free float at hundredths (`gfx::packRefineColour`),
   taken apart in the vertex shaders, so `v_refine` is now `(plus, r, g, b)`. The body keeps a
   `ShineLook` per part and per hand; drops and stages make theirs from the row. A +9 Plate
