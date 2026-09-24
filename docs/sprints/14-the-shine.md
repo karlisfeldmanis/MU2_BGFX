@@ -148,3 +148,5 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
   * The band does not slide as the studio turns. MuMain's UVs are off the WORLD normal, so
     the bands are fixed to the world and move only with the wave; a turning camera sees the
     same band on the same plate. That is MU's, and it is why MU2 used the view normal.
+  **Picked by the user: `refine_strength` 0.25** -- blue armour with the plate readable by
+  day, a clear glow at night. `refine_tint` stays at MuMain's 1.

@@ -34,6 +34,7 @@
   "flame_strength": 6.0,
 
   "metal_gain": 2.5,
+  "refine_strength": 0.25,
 
   "ssao_radius": 0.5,
   "ssao_strength": 1.0
