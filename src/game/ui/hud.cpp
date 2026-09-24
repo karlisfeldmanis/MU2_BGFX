@@ -137,6 +137,14 @@ constexpr float kStrikeLine = 2.0f;
 // went pale under it and the box read as the picture changing rather than as the box answering,
 // which is the one thing this must not do.
 constexpr float kStrikeWash = 0.20f;
+// A skill come back: the throw's ring run backwards and a little slower, closing from six plate
+// pixels out onto the box's edge, and a white breath over the icon that is brightest at the
+// start. Longer than the strike because it is news the player was not waiting on a key for --
+// it has to catch an eye that is on a monster, not on the bar.
+constexpr float kBack = 0.40f;
+constexpr int kBackSteps = 16;
+constexpr float kBackIn = 6.0f;
+constexpr float kBackWash = 0.35f;
 
 // Where the plate's corner sits in MU's 640x480: centred, its rail on the foot of the screen.
 constexpr float kPlateAtX = (640.0f - kPlateW * kUnit) / 2.0f;
@@ -316,12 +324,22 @@ bool Hud::Face::operator==(const Face& o) const {
            fan == o.fan &&
            (carrying == 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(quick, quick + kQuickKeys, o.quick) &&
-           std::equal(struck, struck + kQuickKeys, o.struck) && picture == o.picture &&
+           std::equal(struck, struck + kQuickKeys, o.struck) &&
+           std::equal(skillStruck, skillStruck + kSkillKeys, o.skillStruck) &&
+           std::equal(skillBack, skillBack + kSkillKeys, o.skillBack) && picture == o.picture &&
            std::equal(skill, skill + kSkillKeys, o.skill);
 }
 
 void Hud::strikeQuick(int key) {
     if (key >= 0 && key < kQuickKeys) struck_[key] = 0.0f;
+}
+
+void Hud::strikeSkill(int key) {
+    if (key >= 0 && key < kSkillKeys) skillStruck_[key] = 0.0f;
+}
+
+void Hud::readySkill(int key) {
+    if (key >= 0 && key < kSkillKeys) skillBack_[key] = 0.0f;
 }
 
 int Hud::quickAt(float x, float y) const {
@@ -498,7 +516,16 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
             now_.struck[i] =
                 struck_[i] >= kStrike ? -1 : int(struck_[i] / kStrike * float(kStrikeSteps));
         }
-        for (int i = 0; i < kSkillKeys; ++i) now_.skill[i] = skill_[i];
+        for (int i = 0; i < kSkillKeys; ++i) {
+            now_.skill[i] = skill_[i];
+            if (skillStruck_[i] < kStrike) skillStruck_[i] += seconds;
+            now_.skillStruck[i] = skillStruck_[i] >= kStrike
+                                      ? -1
+                                      : int(skillStruck_[i] / kStrike * float(kStrikeSteps));
+            if (skillBack_[i] < kBack) skillBack_[i] += seconds;
+            now_.skillBack[i] =
+                skillBack_[i] >= kBack ? -1 : int(skillBack_[i] / kBack * float(kBackSteps));
+        }
         width_ = width;
         height_ = height;
         now_.boon = boon_;
@@ -607,10 +634,9 @@ void Hud::rebuild() {
     // A box that just answered. Drawn after the pictures and the counts so the ring is the last
     // thing on the box, and read off the live clock rather than off `drawn_`: the rebuild is
     // gated in twelfths, but what is drawn on the frame it fires is where the ring really is.
-    for (int i = 0; i < kQuickKeys; ++i) {
-        if (struck_[i] >= kStrike) continue;
-        const float t = std::clamp(struck_[i] / kStrike, 0.0f, 1.0f);
-        const Box box = plate(s, boxPx(kFirstQuick + i));
+    const auto ring = [&](const Box& box, float struck) {
+        if (struck >= kStrike) return;
+        const float t = std::clamp(struck / kStrike, 0.0f, 1.0f);
         // Out fast and slowing, which is the shape of every ring that reads as a strike rather
         // than as a pulse: the distance eases out, the brightness falls off squared so the tail
         // is gone well before the ring stops moving.
@@ -623,7 +649,8 @@ void Hud::rebuild() {
             canvas_.rect(box, gfx::rgba(1.0f, 0.90f, 0.55f, sheen));
         }
         canvas_.outline(box.grown(out), line, gfx::rgba(1.0f, 0.87f, 0.45f, fade));
-    }
+    };
+    for (int i = 0; i < kQuickKeys; ++i) ring(plate(s, boxPx(kFirstQuick + i)), struck_[i]);
 
     // The skill boxes: the icon MuDream's own sheet gives the skill, the cooldown wiped down over
     // it, and what is left of it in seconds.
@@ -662,6 +689,17 @@ void Hud::rebuild() {
                                  kInkShadow, 1.0f, std::to_string(int(one.seconds + 0.5f)),
                                  gfx::Align::Centre, 0.0f);
             }
+        }
+        // Over the wipe, which starts on the same frame: the sheen lights the dark for a breath
+        // and the ring leaves the edge, so the throw reads before the wait does.
+        ring(box, skillStruck_[i]);
+        if (skillBack_[i] < kBack) {
+            const float t = std::clamp(skillBack_[i] / kBack, 0.0f, 1.0f);
+            const float ease = 1.0f - (1.0f - t) * (1.0f - t);
+            const float in = (1.0f - ease) * kBackIn * kUnit * s.scale;
+            const float line = std::max(1.0f, kStrikeLine * kUnit * s.scale);
+            canvas_.rect(box, gfx::rgba(1.0f, 1.0f, 0.95f, kBackWash * (1.0f - t) * (1.0f - t)));
+            canvas_.outline(box.grown(in), line, gfx::rgba(1.0f, 0.96f, 0.80f, 1.0f - t));
         }
     }
 

@@ -70,6 +70,13 @@ public:
     // ring struck on its edge that steps outward and fades in a quarter of a second. Struck
     // only when the realm HONOURED the use, so it is a receipt and not an echo of the key.
     void strikeQuick(int key);
+    // The same ring on a skill box, struck when the realm THREW the skill -- not on the key, which
+    // the realm holds until he is in reach and refuses while the skill cools.
+    void strikeSkill(int key);
+    // And the other way round, when a skill comes back: off its cooldown AND with the mana for
+    // it. The throw's ring leaves the edge; this one closes onto it from outside, with a bright
+    // breath over the icon, so "gone" and "back" never read as each other.
+    void readySkill(int key);
 
     // The five skill boxes, Q W E R T. The plate paints six -- five keys and the gold one the
     // list opens from -- and the fifth was drawn dead for two sprints on a note that said the
@@ -231,6 +238,8 @@ private:
         // steps and not in seconds for the cooldown's own reason: twelve redraws for a quarter
         // of a second reads as continuous and costs twelve, not a hundred and eighty.
         int struck[kQuickKeys] = {-1, -1, -1, -1, -1};
+        int skillStruck[kSkillKeys] = {-1, -1, -1, -1, -1};
+        int skillBack[kSkillKeys] = {-1, -1, -1, -1, -1};
         Skill skill[kSkillKeys];
         Boon boon;
         bool fanOpen = false;
@@ -262,6 +271,8 @@ private:
     Quick quick_[kQuickKeys];
     // How long ago each box fired, in seconds, counted up and left parked past the ring's life.
     float struck_[kQuickKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
+    float skillStruck_[kSkillKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
+    float skillBack_[kSkillKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
     Skill skill_[kSkillKeys];
     Boon boon_;
     bool fanOpen_ = false;

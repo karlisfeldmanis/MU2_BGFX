@@ -147,6 +147,11 @@ private:
     // (docs/skills-dk.md §3.4, and the user's own gesture, 2026-09-23).
     // Not saved, which is faithful -- there is no SaveHotKey anywhere in MuMain.
     int32_t bound_[Hud::kSkillKeys] = {0, 0, 0, 0, 0};
+    // What each key was bound to and whether it could be thrown, last frame: a key that goes
+    // from cooling or short of mana to throwable is told so (Hud::readySkill). By the number,
+    // so a skill dropped onto a key is not announced as having come back.
+    int32_t readyFor_[Hud::kSkillKeys] = {0, 0, 0, 0, 0};
+    bool wasReady_[Hud::kSkillKeys] = {false, false, false, false, false};
     uint32_t autoBound_ = 0;  // skills that have had their one free key
     bool barRestored_ = false;
     // The list above the plate: latched open by a click on the gold box, and open anyway while

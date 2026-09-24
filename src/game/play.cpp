@@ -41,6 +41,7 @@ void Play::update(double seconds) {
     // This frame's gains, and only this frame's: whoever draws the lane runs after this and
     // reads them once. See Play::gains.
     gains_.clear();
+    heroCast_ = 0;
     // A potion drunk since the last frame: asked between frames, and said here so the clear
     // above does not take it. See Play::useItem.
     if (drankHealth_ > 0) gains_.push_back({Gain::Kind::Health, drankHealth_});
@@ -210,6 +211,7 @@ void Play::update(double seconds) {
             // below be drawn with the skill's own clip instead of the weapon's. Nothing else is
             // done here: the damage, the death and the cooldown all resolved on the tick.
             if (happening.what == sim::What::Cast) {
+                if (happening.who == heroId) heroCast_ = happening.a;
                 if (Drawn* caster = drawnOf(happening.who)) {
                     const sim::SkillRow* row = sim::skillNumbered(happening.a);
                     caster->castSkill = happening.a;

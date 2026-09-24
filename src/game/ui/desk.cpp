@@ -533,6 +533,15 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         play.castSkill(bound_[key], play.pointedAt());
     }
     scriptedSkill_ = -1;
+    // The box rings on the realm's throw, not on the key: a press held until he is in reach
+    // rings when he swings, and one refused rings never.
+    if (const int32_t cast = play.heroCast()) {
+        for (int key = 0; key < Hud::kSkillKeys; ++key) {
+            if (bound_[key] != cast) continue;
+            hud_.strikeSkill(key);
+            core::logf("window: %s thrown off %s", sim::skillNumbered(cast)->name, keyName(key));
+        }
+    }
 
     // The card, for the one box the pointer is resting on. Built here and not in the frame,
     // because every number on it is the realm's -- and built for one box, because four cards a
@@ -562,6 +571,17 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
                 hud_.setSkillSheet(key, skillSheet(*row, realm));
             }
         }
+        // Back: off its cooldown with the mana for it, on a key it was already on. The second
+        // half matters as much as the first -- a skill that cooled while he was dry comes back
+        // when the potion does, and that is the moment he can throw it.
+        const bool throwable = box.number != 0 && box.cooling <= 0.0f && box.affordable;
+        if (throwable && !wasReady_[key] && readyFor_[key] == box.number) {
+            hud_.readySkill(key);
+            core::logf("window: %s back on %s", sim::skillNumbered(box.number)->name,
+                       keyName(key));
+        }
+        readyFor_[key] = box.number;
+        wasReady_[key] = throwable;
         hud_.setSkill(key, box);
     }
 }

@@ -169,6 +169,10 @@ public:
         int64_t value = 0;
     };
     const std::vector<Gain>& gains() const { return gains_; }
+    // The skill the hero threw on this frame's ticks, by its number, or 0: the realm's yes to a
+    // key, which a press alone is not -- the press is held until he is in reach, and refused
+    // while the skill cools. What the skill box rings on.
+    int32_t heroCast() const { return heroCast_; }
 
     const sim::Findings& findings() const { return findings_; }
     int pointedColumn() const { return pointedColumn_; }
@@ -514,6 +518,7 @@ private:
     std::vector<Gain> gains_;
     // A potion's worth, drunk between frames and handed to the next frame's gains.
     int32_t drankHealth_ = 0, drankMana_ = 0;
+    int32_t heroCast_ = 0;  // see heroCast()
 
     std::vector<Drawn> drawn_;
     // The town's people: those the table names a figure for, where the tables say, facing
