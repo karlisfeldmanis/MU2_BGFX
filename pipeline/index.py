@@ -274,6 +274,12 @@ EFFECTS = {
     # black with no alpha, and it is what a Bull Fighter snorts. See Snort.
     "smoke01": "effects/fire/smoke01.png",
 
+    # The shade under a bridge. Not an effect in MU at all: it is Bridge01's and
+    # BridgeStone01's second mesh, one quad hanging under the deck, black fading to nothing,
+    # which the recipes skip out of the model because the opaque pass has no blend. It is
+    # drawn from here instead, through the transparent pass. See game/world/shades.h.
+    "bridge_shadow": "effects/bridge/bridge_shadow01.png",
+
     # What a meteor leaves where it lands. See Meteor.
     #
     # BITMAP_EXPLOTION, which ZzzOpenData loads from Effect/Explotion01.jpg: a 256 square

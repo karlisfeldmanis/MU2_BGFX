@@ -12,6 +12,7 @@
 #include "game/world/lamps.h"
 #include "game/world/leaves.h"
 #include "game/world/ornaments.h"
+#include "game/world/shades.h"
 #include "game/play.h"
 #include "game/world/sway.h"
 #include "game/world/town.h"
@@ -59,6 +60,7 @@ public:
     Sway& sway() { return sway_; }
     const Sway& sway() const { return sway_; }
     Ornaments& ornaments() { return ornaments_; }
+    const Shades& shades() const { return shades_; }
     Boids& boids() { return boids_; }
     const Boids& boids() const { return boids_; }
     Leaves& leaves() { return leaves_; }
@@ -88,6 +90,7 @@ private:
     Lamps lamps_;
     Sway sway_;
     Ornaments ornaments_;
+    Shades shades_;
     Boids boids_;
     Leaves leaves_;
     // Held from open() so play() can load the boid's mesh and the leaf's sheet. Those two

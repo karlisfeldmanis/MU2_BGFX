@@ -1,4 +1,4 @@
-$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
 
 // The one lit pass. Depth is tested EQUAL against what the prepass laid down and nothing is
 // written back, so no pixel here is shaded twice.

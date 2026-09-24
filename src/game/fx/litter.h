@@ -69,6 +69,7 @@ private:
     struct Drop {
         uint32_t id = 0;
         bool present = false;
+        int refine = 0;  // the item's plus, for the shine; a heap of Zen has none
         std::vector<Piece> pieces;
     };
 

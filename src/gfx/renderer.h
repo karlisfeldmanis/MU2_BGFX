@@ -44,6 +44,11 @@ struct Drawable {
     // dithered by the same number (fs_shadow). The character's fade-in when the game has
     // loaded, and it works on a figure or on the weapon in its hand.
     float fade = 1.0f;
+    // The item's plus, 0 to 15, which the shade and stage passes turn into MU's refinement
+    // ladder: the pulsing tint at +3 and +5, the chrome at +7, the chrome and the star at +9.
+    // Per instance, so one mesh's instances can each carry their own. 0 for everything that
+    // is not an item. docs/sprints/14-the-shine.md.
+    int refine = 0;
     // False leaves it out of the reflection probe, as a posed figure always is. The viewer's
     // subject: the cube is taken 1.2 m over the camera's focus, which in the viewer is inside
     // the subject, and a cannon would reflect the inside of its own barrel. In the game the

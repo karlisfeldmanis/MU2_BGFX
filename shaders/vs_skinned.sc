@@ -1,5 +1,5 @@
 $input a_position, a_normal, a_tangent, a_texcoord0, a_indices, a_weight, i_data0, i_data1, i_data2, i_data3, i_data4, i_data5
-$output v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
+$output v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
 
 // vs_static with a skin on it, and deliberately nothing else: it declares the same varyings
 // in the same order so that it can be paired with fs_prepass and fs_shade exactly as
@@ -20,6 +20,7 @@ void main()
 	v_texcoord0 = a_texcoord0;
 	// w is 2 + the figure's fade (i_data5.y); common.sh's figureFade says why the 2.
 	v_light = vec4(i_data4.xyz, 2.0 + i_data5.y);
+	v_refine = i_data5.z;
 
 	// The rig has no non-uniform scale -- no clip in this content animates one at all -- so
 	// the world matrix itself carries normals and there is no inverse transpose to build.

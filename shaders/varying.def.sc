@@ -23,6 +23,8 @@ vec4 v_colour    : COLOR0    = vec4(1.0, 1.0, 1.0, 0.0);
 vec4 v_light     : TEXCOORD4 = vec4(1.0, 1.0, 1.0, 1.0);
 // The land's three layer weights at the fragment. vs_ground.
 vec4 v_weight    : TEXCOORD5 = vec4(1.0, 0.0, 0.0, 0.0);
+// An item's plus, the same at every vertex of an instance (i_data5.z). vs_static, vs_skinned.
+float v_refine   : TEXCOORD6 = 0.0;
 
 // The skin: four joint indices and their weights. uvec4 and not ivec4, for the reason
 // common.sh's skinMatrix states.

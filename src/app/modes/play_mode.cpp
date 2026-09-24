@@ -566,6 +566,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // merchant animal's lanterns. See game/world/ornaments.h.
     world_.ornaments().update(float(deltaSeconds), world_.sway());
     world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
+    // The shade under the bridges, which MU draws as a blended mesh. See game/world/shades.h.
+    world_.shades().gather(ctx.renderer.effects(), eye.target);
     // What flies over the town and what blows through it. Both follow the character, both
     // stop where he is under a roof, and the birds read the frame twice -- a flock arrives
     // from off it and a bird is taken off only once it has left it -- so both are given this

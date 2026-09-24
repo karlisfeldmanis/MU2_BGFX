@@ -1,4 +1,4 @@
-$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
 // v_light's colour is unused: this pass writes a normal and a depth and has no use for MU's
 // baked light, and its w carries a figure's fade, which this pass has no use for either: a
 // figure that is only part there is not in this pass at all. The renderer draws it after the

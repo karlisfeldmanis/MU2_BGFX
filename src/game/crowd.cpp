@@ -247,11 +247,13 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
     // stands upright whatever the ground does, which is MU's own behaviour.
     content::placementTransform(0.0f, yaw_, 0.0f, scale_, position_, transform);
 
-    for (const content::Mesh* part : body_->parts) {
+    for (size_t i = 0; i < body_->parts.size(); ++i) {
+        const content::Mesh* part = body_->parts[i];
         gfx::Drawable drawable;
         drawable.mesh = part;
         std::memcpy(drawable.transform, transform, sizeof(transform));
         drawable.paletteRow = part->isSkinned() ? row : -1;
+        drawable.refine = i < body_->partRefine.size() ? body_->partRefine[i] : 0;
         out.push_back(drawable);
     }
 
@@ -274,6 +276,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
 
         gfx::Drawable drawable;
         drawable.mesh = item.mesh;
+        drawable.refine = item.refine;
         // No row: a rigid item needs no palette, and a bow or a crossbow -- which carry a
         // 12-bone rig of their own -- take the renderer's bind row, which is their own bind
         // pose. Their one clip is the string, and it is owed with the items.

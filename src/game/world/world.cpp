@@ -98,6 +98,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
     // And what rides the swaying bones: the fountain's spray, the lanterns.
     if (town_.isOpen()) ornaments_.open(assetDir, town_, textures);
+    // And the shade MU hangs under each bridge. See game/world/shades.h.
+    if (town_.isOpen()) shades_.open(assetDir, town_, textures);
     // The near field: the card strip, built once, and MU's own painted grass sheets for
     // whichever tile slots this world calls grass. Which TILES are grassy is not settled here
     // -- it is asked of the ground every frame, because the disc moves with the camera.
@@ -295,6 +297,7 @@ void World::shutdown() {
     lamps_.shutdown();
     sway_.shutdown();
     ornaments_.shutdown();
+    shades_.shutdown();
     boids_.shutdown();
     leaves_.shutdown();
     grass_.shutdown();

@@ -75,6 +75,8 @@ struct HeldItem {
     // A shield is placed by its middle rather than by its origin: MU places one by a point
     // inside its mesh and the disc then sinks into the armour. MU2 centres it instead.
     bool centred = false;
+    // Its plus, for the shine. Only a body Figures::dress made carries one.
+    int refine = 0;
 };
 
 // Which of the manifest's three lists a body came out of. It is not the rig and not the
@@ -94,6 +96,9 @@ struct FigureBody {
     std::string label;
     BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
+    // Each part's plus, for the shine, beside `parts`; empty, or shorter, is +0. Only a body
+    // Figures::dress made has any.
+    std::vector<int> partRefine;
     std::vector<HeldItem> held;
     const content::Mesh* skeletonMesh = nullptr;  // whose bone table the palette is built on
     const ClipLibrary* library = nullptr;
@@ -196,9 +201,15 @@ public:
     // `worn` is armour on him -- a helm, a cuirass, pants, gloves, boots, by their asset names
     // -- each put in place of the bare part it covers, as a suit's pieces are. A piece nobody
     // has loaded yet is loaded here, out of the wardrobe (see wearable).
+    //
+    // `wornPlus` is each worn piece's plus, in `worn`'s order, and the two after it the hands':
+    // the body carries them to the shine (FigureBody::partRefine, HeldItem::refine). Short or
+    // empty is +0.
     const FigureBody* dress(const std::string& name, const std::string& base,
                             const std::string& weapon, const std::string& shield,
-                            const std::vector<std::string>& worn = {});
+                            const std::vector<std::string>& worn = {},
+                            const std::vector<int>& wornPlus = {}, int weaponPlus = 0,
+                            int shieldPlus = 0);
 
     // The wardrobe: every suit of armour and every weapon index.json carries, worn and held
     // rather than laid out. It is a SECOND manifest and a second directory on purpose --

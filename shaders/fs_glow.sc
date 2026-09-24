@@ -1,4 +1,4 @@
-$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
 
 // MU's BlendMesh: the one submesh an object draws ADDED to the frame at its BlendMeshLight --
 // the street light's smear, the torch's flame card, the bonfire's fire, the candle's wick,

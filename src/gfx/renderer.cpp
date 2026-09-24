@@ -520,10 +520,11 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                         std::memcpy(idb.data + written * stride + sizeof(float) * 16, d->light,
                                     sizeof(float) * 4);
                         // No row of its own means the bind row, which is row 0 and is the
-                        // identity. -1 would be read as a texel outside the palette.
+                        // identity. -1 would be read as a texel outside the palette. z is the
+                        // item's plus, for the shine.
                         const float skin[4] = {
-                            float(d->paletteRow < 0 ? kBindRow : d->paletteRow), d->fade, 0.0f,
-                            0.0f};
+                            float(d->paletteRow < 0 ? kBindRow : d->paletteRow), d->fade,
+                            float(d->refine), 0.0f};
                         std::memcpy(idb.data + written * stride + sizeof(float) * 20, skin,
                                     sizeof(skin));
                         ++written;

@@ -1,4 +1,4 @@
-$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light
+$input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_refine
 
 // The item pictures: a model photographed flat for a window's cell. MU2's Panel.Stage, which
 // is a little world of its own -- its own key light, its own fill and its own room for the
