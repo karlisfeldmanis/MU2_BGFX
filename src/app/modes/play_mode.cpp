@@ -615,10 +615,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.town().gatherAll(townDrawables_);
         }
     }
-    // The birds ride with the town rather than with the casters: a bird is up to six metres
-    // over the square and its shadow would be a speck a long way from anything it is over,
-    // which is a fleck of dirt on the paving. MU casts none either -- a boid is drawn by
-    // RenderBoids, outside the object pass the shadow map is built from.
+    // The birds cast as well. MU gives every boid outside Heaven a shadow of its own:
+    // RenderBoids ends each bird with RenderBodyShadow, laid on the terrain under it at a
+    // fifth black (GOBoid.cpp). Here the sun's split carries it like any other caster.
     world_.boids().gather(townDrawables_);
     if (world_.played().isOpen()) {
         float view[16];
@@ -635,6 +634,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         // And the blood the blows have thrown, into the transparent pass. The figures
         // are not here any more: since the design page of 2026-09-23 they are drawn in
+    if (casters) world_.boids().gather(townCasters_);
         // a real face by the interface, over the world -- game/ui/tally.cpp, which
         // Desk::overhead above has just placed on this same camera.
         world_.played().showing().gather(ctx.renderer.effects());
