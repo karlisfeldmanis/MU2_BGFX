@@ -3,8 +3,9 @@
 // tile is.
 //
 // The ground does not fit the closed material model in docs/conventions.md, and is the one
-// thing allowed not to: it blends two full material sets by a per-vertex weight and carries
-// MU's own baked light in the same attribute. That is a second shader, not a fourth flag.
+// thing allowed not to: it blends up to three full material sets by weights shared across
+// every tile on a corner, and carries MU's own baked light in its vertex colour. That is a
+// second shader, not a fourth flag.
 #pragma once
 
 #include <string>
@@ -24,10 +25,13 @@ struct GroundVertex {
     float normal[3];
     float uv[2];      // in TILES, not in [0,1]; each half multiplies by its own repeat
     // rgb: MU's baked TerrainLight, which multiplies the ALBEDO and nothing else.
-    // a: the weight MU painted from base to overlay, before the height blend bites.
+    // a: the weight MU painted from base to overlay, as the glb carried it. Not drawn by.
     float colour[4];
+    // How much of each of its part's three layers this corner is, before the height blend
+    // bites. Summing to one. See Ground::splat for why a corner is shared by every tile on it.
+    float weight[4];
 };
-static_assert(sizeof(GroundVertex) == 48, "the ground vertex layout drifted");
+static_assert(sizeof(GroundVertex) == 64, "the ground vertex layout drifted");
 
 // One half of a surface: a full material set and how often it repeats.
 struct GroundLayer {
@@ -39,15 +43,20 @@ struct GroundLayer {
     bool water = false;
 };
 
-// One drawn part of the land: every tile wearing the same pair.
+// One drawn part of the land: every tile wearing the same set of up to three materials.
 struct GroundPart {
+    static constexpr int kLayers = 3;
     uint32_t firstIndex = 0;
     uint32_t indexCount = 0;
     uint32_t surface = 0;
-    GroundLayer base;
-    GroundLayer overlay;
-    bool hasOverlay = false;
-    std::string name;      // the glTF material's own name
+    // layers[0] is always real; the rest repeat it where the part has fewer, so every
+    // sampler is bound to something, and `layerCount` says how many the vertices weigh.
+    GroundLayer layers[kLayers];
+    int layerCount = 1;
+    // Each layer's slot in Ground::weights(), or -1 where the part is drawn by the vertex
+    // weights instead (a bench plot, or a world with no tile grid).
+    int slots[kLayers] = {-1, -1, -1};
+    std::string name;      // the glTF material's own name, or the set of slots it wears
     std::string pairName;  // the same pair as ground_surfaces.json's entry names it
 };
 
@@ -121,16 +130,28 @@ public:
 
     uint32_t triangleCount() const { return indexCount_ / 3; }
 
+    // Every tile slot's weight at every grid corner, four slots to an RGBA8 band, or invalid
+    // where the land is drawn by pair. weightSize() is (width, height, rows a band) in texels.
+    static constexpr int kWeightPad = 2;
+    bgfx::TextureHandle weights() const { return weights_; }
+    const float* weightSize() const { return weightSize_; }
+
     static const bgfx::VertexLayout& layout();
 
 private:
     bool readGrids(const std::string& worldDir, const std::string& heightFile,
                    const std::string& attributesFile);
+    // Re-cuts the land by material rather than by pair. False, and nothing touched, when
+    // the tile grid or the slot table is missing or the mesh is not one quad a tile.
+    bool splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& indices,
+               const std::vector<GroundLayer>& slotLayers);
 
     std::vector<GroundPart> parts_;
     bgfx::VertexBufferHandle vbh_ = BGFX_INVALID_HANDLE;
     bgfx::IndexBufferHandle ibh_ = BGFX_INVALID_HANDLE;
     uint32_t indexCount_ = 0;
+    bgfx::TextureHandle weights_ = BGFX_INVALID_HANDLE;
+    float weightSize_[3] = {1.0f, 1.0f, 1.0f};
 
     int size_ = 0;
     float metresPerTile_ = 1.0f;

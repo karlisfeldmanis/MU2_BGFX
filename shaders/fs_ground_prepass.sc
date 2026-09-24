@@ -1,4 +1,4 @@
-$input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos
+$input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 
 // The land's view normal and view depth. The blended normal map is not read here: the
 // prepass feeds SSAO, which wants the shape of the ground and not its grain, and reading

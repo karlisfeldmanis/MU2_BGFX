@@ -1,5 +1,5 @@
-$input a_position, a_normal, a_texcoord0, a_color0
-$output v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos
+$input a_position, a_normal, a_texcoord0, a_color0, a_texcoord1
+$output v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 
 // The land. No instancing and no model matrix: MU2's pipeline already built the terrain in
 // world space, in metres, with rows running -z.
@@ -13,6 +13,8 @@ void main()
 	v_normal = normalize(a_normal);
 	// rgb is MU's baked TerrainLight, a is the weight from base to overlay.
 	v_colour = a_color0;
+	// How much of each of the part's three layers this corner is. Ground::splat.
+	v_weight = a_texcoord1;
 
 	vec4 vpos = mul(u_view, vec4(a_position, 1.0));
 	v_vpos = vpos.xyz;

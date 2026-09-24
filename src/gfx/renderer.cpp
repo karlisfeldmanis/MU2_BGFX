@@ -330,28 +330,42 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
                             const content::Ground& g, uint64_t state, bool lit) {
     for (const content::GroundPart& part : g.parts()) {
         if (lit) {
-            const float repeat[4] = {part.base.repeat, part.overlay.repeat, part.base.relief,
-                                     part.overlay.relief};
+            const content::GroundLayer* l = part.layers;
+            // The bite is MU2's own 0.35, in w.
+            const float repeat[4] = {l[0].repeat, l[1].repeat, l[2].repeat, 0.35f};
             bgfx::setUniform(uGroundRepeat_, repeat);
-            // The bite is MU2's own 0.35, and the second component says whether this surface
-            // has an overlay at all: nine of Lorencia's forty-four are a base standing alone,
-            // and those must not blend against a texture nothing meaningful is bound to.
-            //
-            // z and w are each layer's water slide, in widths of its own sheet: MuMain's
+            const float relief[4] = {l[0].relief, l[1].relief, l[2].relief, 0.0f};
+            bgfx::setUniform(uGroundRelief_, relief);
+            // xyz are each layer's water slide, in widths of its own sheet: MuMain's
             // WaterMove, `(WorldTime % 20000) * 0.00005` (ZzzLodTerrain.cpp), added to U on
             // every tile that wears TileWater01 -- one sheet width every twenty seconds, along
-            // the columns, the same on every water tile so the river moves as one.
+            // the columns, the same on every water tile so the river moves as one. w is how
+            // many layers the part weighs: most of the land is one, and reads one set.
             const float slide = std::fmod(elapsed_, 20.0f) * 0.05f;
-            const float blend[4] = {0.35f, part.hasOverlay ? 1.0f : 0.0f,
-                                    part.base.water ? slide : 0.0f,
-                                    part.overlay.water ? slide : 0.0f};
+            const float blend[4] = {l[0].water ? slide : 0.0f, l[1].water ? slide : 0.0f,
+                                    l[2].water ? slide : 0.0f, float(part.layerCount)};
             bgfx::setUniform(uGroundBlend_, blend);
-            bgfx::setTexture(0, sAlbedo_, part.base.albedo);
-            bgfx::setTexture(1, sNormal_, part.base.normal);
-            bgfx::setTexture(2, sOrm_, part.base.orm);
-            bgfx::setTexture(9, sAlbedo2_, part.overlay.albedo);
-            bgfx::setTexture(10, sNormal2_, part.overlay.normal);
-            bgfx::setTexture(11, sOrm2_, part.overlay.orm);
+            bgfx::setTexture(0, sAlbedo_, l[0].albedo);
+            bgfx::setTexture(1, sNormal_, l[0].normal);
+            bgfx::setTexture(2, sOrm_, l[0].orm);
+            bgfx::setTexture(9, sAlbedo2_, l[1].albedo);
+            bgfx::setTexture(10, sNormal2_, l[1].normal);
+            bgfx::setTexture(11, sOrm2_, l[1].orm);
+            bgfx::setTexture(3, sAlbedo3_, l[2].albedo);
+            bgfx::setTexture(8, sNormal3_, l[2].normal);
+            bgfx::setTexture(12, sOrm3_, l[2].orm);
+            // The shared corner weights, read through a B-spline; the vertex weights where
+            // the land has none (a bench plot). content::Ground::splat.
+            const bool splat = bgfx::isValid(g.weights()) && part.slots[0] >= 0;
+            const float slots[4] = {float(part.slots[0]), float(part.slots[1]),
+                                    float(part.slots[2]), splat ? 1.0f : 0.0f};
+            bgfx::setUniform(uGroundSlots_, slots);
+            const float* size = g.weightSize();
+            const float weights[4] = {size[0], size[1], size[2],
+                                      float(content::Ground::kWeightPad)};
+            bgfx::setUniform(uGroundWeights_, weights);
+            bgfx::setTexture(6, sGroundWeights_, splat ? g.weights() : l[0].albedo,
+                             BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
             bindShadeInputs();
         }
         bgfx::setVertexBuffer(0, g.vertexBuffer());

@@ -3,6 +3,7 @@ vec3 a_normal    : NORMAL;
 vec4 a_tangent   : TANGENT;
 vec2 a_texcoord0 : TEXCOORD0;
 vec4 a_color0    : COLOR0;
+vec4 a_texcoord1 : TEXCOORD1;
 
 // One instance is a 4x4 model matrix and a colour, five vec4s. Every pass reads the same
 // buffer; the depth passes read the first four and leave the fifth alone.
@@ -20,6 +21,8 @@ vec3 v_vnormal   : TEXCOORD2 = vec3(0.0, 0.0, 1.0);
 vec3 v_vpos      : TEXCOORD3 = vec3(0.0, 0.0, 0.0);
 vec4 v_colour    : COLOR0    = vec4(1.0, 1.0, 1.0, 0.0);
 vec4 v_light     : TEXCOORD4 = vec4(1.0, 1.0, 1.0, 1.0);
+// The land's three layer weights at the fragment. vs_ground.
+vec4 v_weight    : TEXCOORD5 = vec4(1.0, 0.0, 0.0, 0.0);
 
 // The skin: four joint indices and their weights. uvec4 and not ivec4, for the reason
 // common.sh's skinMatrix states.

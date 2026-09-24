@@ -596,6 +596,13 @@ private:
     bgfx::UniformHandle uPrepassSize_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRepeat_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGroundRelief_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGroundSlots_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGroundWeights_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sGroundWeights_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sAlbedo3_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sNormal3_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sOrm3_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGrassCard_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGrassWind_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGrassRoot_ = BGFX_INVALID_HANDLE;

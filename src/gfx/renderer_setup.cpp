@@ -46,6 +46,13 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uPrepassSize_ = bgfx::createUniform("u_prepassSize", bgfx::UniformType::Vec4);
     uGroundRepeat_ = bgfx::createUniform("u_groundRepeat", bgfx::UniformType::Vec4);
     uGroundBlend_ = bgfx::createUniform("u_groundBlend", bgfx::UniformType::Vec4);
+    uGroundRelief_ = bgfx::createUniform("u_groundRelief", bgfx::UniformType::Vec4);
+    uGroundSlots_ = bgfx::createUniform("u_groundSlots", bgfx::UniformType::Vec4);
+    uGroundWeights_ = bgfx::createUniform("u_groundWeights", bgfx::UniformType::Vec4);
+    sGroundWeights_ = bgfx::createUniform("s_groundWeights", bgfx::UniformType::Sampler);
+    sAlbedo3_ = bgfx::createUniform("s_albedo3", bgfx::UniformType::Sampler);
+    sNormal3_ = bgfx::createUniform("s_normal3", bgfx::UniformType::Sampler);
+    sOrm3_ = bgfx::createUniform("s_orm3", bgfx::UniformType::Sampler);
     uGrassCard_ = bgfx::createUniform("u_grassCard", bgfx::UniformType::Vec4);
     uGrassWind_ = bgfx::createUniform("u_grassWind", bgfx::UniformType::Vec4);
     uGrassRoot_ = bgfx::createUniform("u_grassRoot", bgfx::UniformType::Vec4);
@@ -372,7 +379,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uCamPos_, &uParams_,
-          &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uTranslucency_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,

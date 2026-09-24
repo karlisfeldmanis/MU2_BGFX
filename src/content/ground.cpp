@@ -5,6 +5,7 @@
 #include <bimg/decode.h>
 #include <bx/allocator.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 
@@ -140,6 +141,7 @@ const bgfx::VertexLayout& Ground::layout() {
             .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
             .end();
         g_layoutReady = true;
     }
@@ -244,13 +246,17 @@ bool Ground::buildPlot(const std::string& worldDir, const std::string& worldName
     part.name = "bench plot";
     part.pairName = "bench plot";
     const core::Json& surface = surfaces.at(size_t(surfaceIndex));
-    if (!readLayer(surface["base"], worldDir, cookedManifest, assetsDir, textures, &part.base)) {
+    if (!readLayer(surface["base"], worldDir, cookedManifest, assetsDir, textures,
+                   &part.layers[0])) {
         core::logError("surface %d of %s has no base layer to stand a bench on", surfaceIndex,
                        surfacesPath.c_str());
         return false;
     }
-    part.hasOverlay = readLayer(surface["overlay"], worldDir, cookedManifest, assetsDir,
-                                textures, &part.overlay);
+    const bool hasOverlay = readLayer(surface["overlay"], worldDir, cookedManifest, assetsDir,
+                                      textures, &part.layers[1]);
+    part.layerCount = hasOverlay ? 2 : 1;
+    if (!hasOverlay) part.layers[1] = part.layers[0];
+    part.layers[2] = part.layers[0];
 
     // The height field, and heightAt reads this same grid, so what a model is stood on and
     // what is drawn cannot drift apart.
@@ -296,7 +302,9 @@ bool Ground::buildPlot(const std::string& worldDir, const std::string& worldName
                 v.colour[0] = v.colour[1] = v.colour[2] = 1.0f;
                 // The blend weight sweeps across the plot, so a surface with an overlay shows
                 // both halves and the bite between them in one shot.
-                v.colour[3] = part.hasOverlay ? float(cs[i]) / float(tiles) : 0.0f;
+                v.colour[3] = hasOverlay ? float(cs[i]) / float(tiles) : 0.0f;
+                v.weight[0] = 1.0f - v.colour[3];
+                v.weight[1] = v.colour[3];
                 vertices.push_back(v);
             }
             // Wound as the land is: counter-clockwise seen from above, which is what the one
@@ -325,7 +333,7 @@ bool Ground::buildPlot(const std::string& worldDir, const std::string& worldName
 
     core::logf("bench plot: %d x %d tiles of %s surface %d, %u triangles, %s overlay",
                tiles, tiles, worldName.c_str(), surfaceIndex, indexCount_ / 3,
-               part.hasOverlay ? "with an" : "no");
+               hasOverlay ? "with an" : "no");
     return bgfx::isValid(vbh_) && bgfx::isValid(ibh_);
 }
 
@@ -560,13 +568,20 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
             scratch.assign(count * 4, 0.0f);
             cgltf_accessor_unpack_floats(aColour, scratch.data(), count * 4);
             for (size_t i = 0; i < count; ++i) {
-                std::memcpy(vertices[baseVertex + i].colour, &scratch[i * 4], sizeof(float) * 4);
+                GroundVertex& v = vertices[baseVertex + i];
+                std::memcpy(v.colour, &scratch[i * 4], sizeof(float) * 4);
+                // The pair's own weight, which is what draws if the splat below cannot run.
+                v.weight[0] = 1.0f - v.colour[3];
+                v.weight[1] = v.colour[3];
+                v.weight[2] = v.weight[3] = 0.0f;
             }
         } else {
             for (size_t i = 0; i < count; ++i) {
                 GroundVertex& v = vertices[baseVertex + i];
                 v.colour[0] = v.colour[1] = v.colour[2] = 1.0f;
                 v.colour[3] = 0.0f;
+                v.weight[0] = 1.0f;
+                v.weight[1] = v.weight[2] = v.weight[3] = 0.0f;
             }
         }
 
@@ -607,16 +622,52 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         part.name = materialName;
         part.pairName = expected;
 
-        readLayer(surface["base"], worldDir, cookedManifest, assetsDir, textures, &part.base);
-        part.hasOverlay = readLayer(surface["overlay"], worldDir, cookedManifest, assetsDir,
-                                    textures, &part.overlay);
-        if (!part.hasOverlay) part.overlay = part.base;
-        if (part.base.water || part.overlay.water) ++waterParts;
+        readLayer(surface["base"], worldDir, cookedManifest, assetsDir, textures, &part.layers[0]);
+        const bool hasOverlay = readLayer(surface["overlay"], worldDir, cookedManifest, assetsDir,
+                                          textures, &part.layers[1]);
+        part.layerCount = hasOverlay ? 2 : 1;
+        if (!hasOverlay) part.layers[1] = part.layers[0];
+        part.layers[2] = part.layers[0];
+        if (part.layers[0].water || part.layers[1].water) ++waterParts;
 
         parts_.push_back(part);
     }
 
     cgltf_free(data);
+
+    // One material per tile slot, for the splat: the sheet a slot's name floors, off the first
+    // surface that wears it as a base, or as an overlay where none does.
+    {
+        std::vector<GroundLayer> slotLayers(slotNames_.size());
+        for (size_t slot = 0; slot < slotNames_.size(); ++slot) {
+            const std::string& name = slotNames_[slot];
+            if (name.empty()) continue;
+            bool found = false;
+            for (const char* side : {"base", "overlay"}) {
+                for (size_t i = 0; i < surfaces.size() && !found; ++i) {
+                    const core::Json& layer = surfaces.at(i)[side];
+                    if (layer.isNull() || surfaceStem(layer["albedo"].stringOr("")) != name) continue;
+                    found = readLayer(layer, worldDir, cookedManifest, assetsDir, textures,
+                                      &slotLayers[slot]);
+                }
+                if (found) break;
+            }
+        }
+        if (splat(vertices, indices, slotLayers)) {
+            waterParts = 0;
+            for (const GroundPart& p : parts_) {
+                for (int k = 0; k < p.layerCount; ++k) {
+                    if (p.layers[k].water) {
+                        ++waterParts;
+                        break;
+                    }
+                }
+            }
+        } else {
+            core::logf("ground %s: drawn by pair, with no splat -- the tile grid or its slots "
+                       "are missing", worldName.c_str());
+        }
+    }
 
     if (vertices.empty() || indices.empty()) {
         core::logError("%s holds no triangles", meshPath.c_str());
@@ -647,11 +698,260 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         // Both sides of the join, not just the glb's. p.name is the glTF material's name and
         // p.pairName is what ground_surfaces.json's entry of the same index asks for, and
         // this is the one line in the run that would show them disagreeing.
-        core::logf("  %2u %-26s json %-26s %6u tris  repeat %.2f/%.2f%s", p.surface,
-                   p.name.c_str(), p.pairName.c_str(), p.indexCount / 3, double(p.base.repeat),
-                   double(p.overlay.repeat), p.hasOverlay ? "" : "  (base only)");
+        core::logf("  %2u %-40s json %-26s %6u tris  %d layer(s)", p.surface, p.name.c_str(),
+                   p.pairName.c_str(), p.indexCount / 3, p.layerCount);
     }
     return bgfx::isValid(vbh_) && bgfx::isValid(ibh_);
+}
+
+// The land by material, not by pair.
+//
+// MU gives a tile a base and an overlay of its own, and a weight at each grid position that
+// every tile touching it reads. The weight is shared; what it weighs is not. Where a water
+// tile (water under sand) meets a lawn tile (grass under sand) at a corner painted 0, the
+// water tile says that corner is water and the lawn tile says it is grass, and the land
+// changes picture along the tile edge between them -- the sawtooth along every shore, which
+// no blend inside one pair's draw could reach, because the two sides are two draws.
+//
+// So a corner is made to say one thing. Each grid position's mixture of materials is the
+// mean of what each tile touching it says is there, and a tile is drawn with the (at most
+// three) materials its corners hold, weighted by those shared mixtures. Where the four tiles
+// round a corner agree, which is almost everywhere, this is exactly MU's picture. Where they
+// disagree the change now happens across a tile instead of on its edge, and the height blend
+// interlocks it the way it does any fade.
+//
+// Measured on Lorencia: 43 567 tiles hold one material, 20 187 two, 1628 three, and 154 four
+// or five. Those 154 keep their strongest three, and only there can an edge still show.
+bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& indices,
+                   const std::vector<GroundLayer>& slotLayers) {
+    const int n = size_;
+    const int slots = int(slotLayers.size());
+    if (n <= 0 || slots == 0 || floors_.size() != size_t(n) * size_t(n) ||
+        overlays_.size() != floors_.size() || blends_.size() != floors_.size()) {
+        return false;
+    }
+    if (vertices.size() % 4 != 0 || indices.size() != vertices.size() / 4 * 6) return false;
+    auto known = [&](int slot) {
+        return slot >= 0 && slot < slots && bgfx::isValid(slotLayers[size_t(slot)].albedo);
+    };
+
+    // Each tile's own mixture at each corner, summed onto the corner. The weight at a grid
+    // position wraps at the far edges, as pipeline/ground.py's at_the_vertex reads it.
+    const int side = n + 1;
+    std::vector<float> mix(size_t(side) * size_t(side) * size_t(slots), 0.0f);
+    std::vector<float> touching(size_t(side) * size_t(side), 0.0f);
+    auto alphaAt = [&](int vc, int vr) {
+        return float(blends_[size_t(vr % n) * size_t(n) + size_t(vc % n)]) / 255.0f;
+    };
+    for (int r = 0; r < n; ++r) {
+        for (int c = 0; c < n; ++c) {
+            const int base = floors_[size_t(r) * size_t(n) + size_t(c)];
+            if (!known(base)) return false;
+            int over = overlays_[size_t(r) * size_t(n) + size_t(c)];
+            // 255 is "never painted" and draws as the base, as ground.py decides it.
+            if (!known(over)) over = base;
+            for (int dr = 0; dr < 2; ++dr) {
+                for (int dc = 0; dc < 2; ++dc) {
+                    const size_t v = size_t(r + dr) * size_t(side) + size_t(c + dc);
+                    const float a = alphaAt(c + dc, r + dr);
+                    mix[v * size_t(slots) + size_t(base)] += 1.0f - a;
+                    mix[v * size_t(slots) + size_t(over)] += a;
+                    touching[v] += 1.0f;
+                }
+            }
+        }
+    }
+    for (size_t v = 0; v < touching.size(); ++v) {
+        if (touching[v] <= 0.0f) continue;
+        for (int s = 0; s < slots; ++s) mix[v * size_t(slots) + size_t(s)] /= touching[v];
+    }
+
+    // Which corner of the grid each vertex of a quad is, off its own position rather than
+    // off the order ground.py happens to write them in.
+    const size_t quadCount = vertices.size() / 4;
+    std::vector<int> quadCorner(vertices.size());
+    std::vector<int> quadTile(quadCount);
+    for (size_t q = 0; q < quadCount; ++q) {
+        int minC = 1 << 30, minR = 1 << 30;
+        for (int k = 0; k < 4; ++k) {
+            const GroundVertex& v = vertices[q * 4 + size_t(k)];
+            const int vc = int(std::lround(v.position[0] / metresPerTile_));
+            const int vr = int(std::lround(-v.position[2] / metresPerTile_));
+            if (vc < 0 || vr < 0 || vc > n || vr > n) return false;
+            quadCorner[q * 4 + size_t(k)] = vr * side + vc;
+            minC = std::min(minC, vc);
+            minR = std::min(minR, vr);
+        }
+        if (minC >= n || minR >= n) return false;
+        for (int k = 0; k < 4; ++k) {
+            const int corner = quadCorner[q * 4 + size_t(k)];
+            if (corner % side - minC > 1 || corner / side - minR > 1) return false;
+        }
+        for (int k = 0; k < 6; ++k) {
+            const uint32_t index = indices[q * 6 + size_t(k)];
+            if (index < q * 4 || index >= q * 4 + 4) return false;
+        }
+        quadTile[q] = minR * n + minC;
+    }
+
+    // A tile's materials: the strongest three the shader will read for it, in slot order so
+    // that a set names one draw however its tiles came by it. Read over the sixteen corners
+    // from one before the tile to two after, not its own four: the shader draws the weights
+    // through a cubic B-spline (fs_ground), and that reaches a corner further each way.
+    struct Group {
+        std::vector<int> slots;
+        std::vector<size_t> quads;
+    };
+    std::vector<Group> groups;
+    std::vector<int> groupOfSet(size_t(1) << std::min(slots, 20), -1);
+    std::vector<int> groupOf(quadCount, -1);
+    size_t trimmed = 0;
+    for (size_t q = 0; q < quadCount; ++q) {
+        std::vector<std::pair<float, int>> held;
+        const int tc = quadTile[q] % n, tr = quadTile[q] / n;
+        for (int s = 0; s < slots; ++s) {
+            float sum = 0.0f;
+            for (int vr = std::max(tr - 1, 0); vr <= std::min(tr + 2, n); ++vr) {
+                for (int vc = std::max(tc - 1, 0); vc <= std::min(tc + 2, n); ++vc) {
+                    sum += mix[(size_t(vr) * size_t(side) + size_t(vc)) * size_t(slots) + size_t(s)];
+                }
+            }
+            if (sum > 1e-4f) held.push_back({sum, s});
+        }
+        if (held.empty()) held.push_back({1.0f, floors_[size_t(quadTile[q])]});
+        std::sort(held.begin(), held.end(), [](const auto& a, const auto& b) {
+            return a.first != b.first ? a.first > b.first : a.second < b.second;
+        });
+        if (held.size() > size_t(GroundPart::kLayers)) {
+            held.resize(size_t(GroundPart::kLayers));
+            ++trimmed;
+        }
+        uint32_t set = 0;
+        for (const auto& h : held) set |= 1u << uint32_t(h.second);
+        if (set >= groupOfSet.size()) return false;
+        if (groupOfSet[set] < 0) {
+            Group g;
+            for (int s = 0; s < slots; ++s) {
+                if (set & (1u << uint32_t(s))) g.slots.push_back(s);
+            }
+            groupOfSet[set] = int(groups.size());
+            groups.push_back(std::move(g));
+        }
+        groupOf[q] = groupOfSet[set];
+        groups[size_t(groupOf[q])].quads.push_back(q);
+    }
+
+    // Fewer draws, but only for scraps: a set of a few dozen tiles joins the narrowest larger
+    // set that holds it, whose tiles weigh the extra material at nought, so the picture is
+    // the same. Not the large sets. A set joined up pays for every layer it joined on every
+    // fragment, and tried unbounded, the whole of Lorencia's lawn -- 54 000 tiles of one
+    // material -- went into a three-layer draw to save a handful of submits.
+    const size_t scrap = 64;
+    auto maskOf = [](const Group& g) {
+        uint32_t m = 0;
+        for (int s : g.slots) m |= 1u << uint32_t(s);
+        return m;
+    };
+    for (Group& small : groups) {
+        if (small.slots.size() >= size_t(GroundPart::kLayers) || small.quads.empty() ||
+            small.quads.size() > scrap) {
+            continue;
+        }
+        const uint32_t want = maskOf(small);
+        Group* into = nullptr;
+        for (Group& big : groups) {
+            if (&big == &small || big.slots.size() <= small.slots.size()) continue;
+            if (big.quads.size() <= small.quads.size() || (maskOf(big) & want) != want) continue;
+            if (!into || big.slots.size() < into->slots.size() ||
+                (big.slots.size() == into->slots.size() && big.quads.size() > into->quads.size())) {
+                into = &big;
+            }
+        }
+        if (!into) continue;
+        into->quads.insert(into->quads.end(), small.quads.begin(), small.quads.end());
+        small.quads.clear();
+    }
+
+    std::vector<uint32_t> cut;
+    cut.reserve(indices.size());
+    std::vector<GroundPart> parts;
+    for (const Group& g : groups) {
+        if (g.quads.empty()) continue;
+        GroundPart part;
+        part.surface = uint32_t(parts.size());
+        part.firstIndex = uint32_t(cut.size());
+        part.layerCount = int(g.slots.size());
+        for (int k = 0; k < GroundPart::kLayers; ++k) {
+            const int slot = g.slots[size_t(k < part.layerCount ? k : 0)];
+            part.layers[k] = slotLayers[size_t(slot)];
+            part.slots[k] = slot;
+        }
+        for (size_t k = 0; k < g.slots.size(); ++k) {
+            if (k) part.name += "+";
+            part.name += slotNames_[size_t(g.slots[k])];
+        }
+        part.pairName = "splat";
+
+        for (size_t q : g.quads) {
+            for (int k = 0; k < 4; ++k) {
+                GroundVertex& v = vertices[q * 4 + size_t(k)];
+                const size_t at = size_t(quadCorner[q * 4 + size_t(k)]) * size_t(slots);
+                float w[GroundPart::kLayers] = {0.0f, 0.0f, 0.0f};
+                float sum = 0.0f;
+                for (size_t j = 0; j < g.slots.size(); ++j) {
+                    w[j] = mix[at + size_t(g.slots[j])];
+                    sum += w[j];
+                }
+                // A corner holding only what this tile had to drop: the strongest it kept.
+                if (sum <= 0.0f) {
+                    w[0] = 1.0f;
+                    sum = 1.0f;
+                }
+                for (int j = 0; j < GroundPart::kLayers; ++j) v.weight[j] = w[j] / sum;
+                v.weight[3] = 0.0f;
+            }
+            for (int k = 0; k < 6; ++k) cut.push_back(indices[q * 6 + size_t(k)]);
+        }
+        part.indexCount = uint32_t(cut.size()) - part.firstIndex;
+        parts.push_back(std::move(part));
+    }
+
+    // The shared mixtures as a picture, four slots a band, for the shader to read through a
+    // B-spline: vertex (c, r) is texel (c, band * bandRows + kWeightPad + r). Each band is
+    // padded with its own edge rows, so a tap at the map's edge does not read the next band.
+    const int bands = (slots + 3) / 4;
+    const int bandRows = side + 2 * kWeightPad;
+    std::vector<uint8_t> texels(size_t(side) * size_t(bandRows) * size_t(bands) * 4, 0);
+    for (int band = 0; band < bands; ++band) {
+        for (int y = 0; y < bandRows; ++y) {
+            const int vr = std::clamp(y - kWeightPad, 0, n);
+            for (int vc = 0; vc < side; ++vc) {
+                uint8_t* out = &texels[((size_t(band) * size_t(bandRows) + size_t(y)) * size_t(side) +
+                                        size_t(vc)) * 4];
+                for (int ch = 0; ch < 4; ++ch) {
+                    const int s = band * 4 + ch;
+                    if (s >= slots) continue;
+                    const float m = mix[(size_t(vr) * size_t(side) + size_t(vc)) * size_t(slots) +
+                                        size_t(s)];
+                    out[ch] = uint8_t(std::lround(std::clamp(m, 0.0f, 1.0f) * 255.0f));
+                }
+            }
+        }
+    }
+    if (bgfx::isValid(weights_)) bgfx::destroy(weights_);
+    weights_ = bgfx::createTexture2D(
+        uint16_t(side), uint16_t(bandRows * bands), false, 1, bgfx::TextureFormat::RGBA8,
+        BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+        bgfx::copy(texels.data(), uint32_t(texels.size())));
+    weightSize_[0] = float(side);
+    weightSize_[1] = float(bandRows * bands);
+    weightSize_[2] = float(bandRows);
+
+    indices.swap(cut);
+    parts_.swap(parts);
+    core::logf("ground splat: %zu draws by material, %zu tile(s) holding more than %d kept "
+               "their strongest", parts_.size(), trimmed, GroundPart::kLayers);
+    return true;
 }
 
 float Ground::heightAt(float x, float z) const {
@@ -732,6 +1032,8 @@ void Ground::shutdown() {
     grassSlots_.clear();
     slotNames_.clear();
     grid_.clear();
+    if (bgfx::isValid(weights_)) bgfx::destroy(weights_);
+    weights_ = BGFX_INVALID_HANDLE;
 }
 
 }  // namespace mu::content
