@@ -872,6 +872,43 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         small.quads.clear();
     }
 
+    // How much of fs_ground's lead water takes at each corner, into the vertex's fourth
+    // weight. The lead is for a shore: the corner a water tile shares with the land beside
+    // it, down at the water's own level, where half and half reads as land and the bank stood
+    // back from the river. A bridge's deck shares its edge corners with the water tiles under
+    // it too, but a metre and a half up, where the water tile is the ramp and not the land;
+    // led there, the river painted the deck's edge teal (2026-09-24). So the lead is full
+    // within a hand of the lowest all-water corner beside it, and gone by a metre above.
+    std::vector<float> cornerHeight(size_t(side) * size_t(side), 0.0f);
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        cornerHeight[size_t(quadCorner[i])] = vertices[i].position[1];
+    }
+    std::vector<float> wet(size_t(side) * size_t(side), 0.0f);
+    for (size_t v = 0; v < wet.size(); ++v) {
+        for (int s = 0; s < slots; ++s) {
+            if (slotLayers[size_t(s)].water) wet[v] += mix[v * size_t(slots) + size_t(s)];
+        }
+    }
+    std::vector<float> lead(size_t(side) * size_t(side), 1.0f);
+    for (int r = 0; r < side; ++r) {
+        for (int c = 0; c < side; ++c) {
+            const size_t v = size_t(r) * size_t(side) + size_t(c);
+            if (wet[v] <= 0.0f) continue;
+            float level = 1e9f;
+            for (int dr = -1; dr <= 1; ++dr) {
+                for (int dc = -1; dc <= 1; ++dc) {
+                    const int rr = r + dr, cc = c + dc;
+                    if (rr < 0 || cc < 0 || rr >= side || cc >= side) continue;
+                    const size_t u = size_t(rr) * size_t(side) + size_t(cc);
+                    if (wet[u] >= 0.99f) level = std::min(level, cornerHeight[u]);
+                }
+            }
+            if (level > 1e8f) continue;
+            const float t = std::clamp((cornerHeight[v] - level - 0.35f) / 0.65f, 0.0f, 1.0f);
+            lead[v] = 1.0f - t * t * (3.0f - 2.0f * t);
+        }
+    }
+
     std::vector<uint32_t> cut;
     cut.reserve(indices.size());
     std::vector<GroundPart> parts;
@@ -908,7 +945,7 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
                     sum = 1.0f;
                 }
                 for (int j = 0; j < GroundPart::kLayers; ++j) v.weight[j] = w[j] / sum;
-                v.weight[3] = 0.0f;
+                v.weight[3] = lead[size_t(quadCorner[q * 4 + size_t(k)])];
             }
             for (int k = 0; k < 6; ++k) cut.push_back(indices[q * 6 + size_t(k)]);
         }
