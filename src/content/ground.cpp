@@ -896,10 +896,14 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
     for (int r = 0; r < side; ++r) {
         for (int c = 0; c < side; ++c) {
             const size_t v = size_t(r) * size_t(side) + size_t(c);
-            if (wet[v] <= 0.0f || wet[v] >= 0.99f) continue;
+            // Every corner within the spline's reach of the water, not only those touching
+            // it: fs_ground's weights are a B-spline over the corners two out, so a corner
+            // with no water of its own still carries the river's tail, and led, the deck's
+            // second row of corners painted it back on.
+            if (wet[v] >= 0.99f) continue;
             float level = 1e9f;
-            for (int dr = -1; dr <= 1; ++dr) {
-                for (int dc = -1; dc <= 1; ++dc) {
+            for (int dr = -2; dr <= 2; ++dr) {
+                for (int dc = -2; dc <= 2; ++dc) {
                     const int rr = r + dr, cc = c + dc;
                     if (rr < 0 || cc < 0 || rr >= side || cc >= side) continue;
                     const size_t u = size_t(rr) * size_t(side) + size_t(cc);
