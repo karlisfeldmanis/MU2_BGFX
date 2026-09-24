@@ -1,6 +1,21 @@
 #include "game/shine.h"
 
+#include "core/log.h"
+
 namespace mu::game {
+
+void lendShine(const content::Showing& table, const std::string& assetDir,
+               content::Textures& textures, gfx::Renderer& renderer) {
+    const content::EffectSheet* chrome = table.effect("chrome");
+    const content::EffectSheet* shiny = table.effect("shiny");
+    if (!chrome || !shiny) {
+        core::logError("the showing has no chrome or shiny sheet; refined items take their "
+                       "tint and nothing more");
+        return;
+    }
+    renderer.setShine(textures.load(assetDir + "/" + chrome->path, content::TextureRole::Albedo),
+                      textures.load(assetDir + "/" + shiny->path, content::TextureRole::Albedo));
+}
 
 namespace {
 

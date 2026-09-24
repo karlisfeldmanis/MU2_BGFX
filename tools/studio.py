@@ -4,6 +4,7 @@
     tools/studio.py Kris                       a weapon, by its label or file name
     tools/studio.py Plate --category armour    an armour set on its body
     tools/studio.py Kris --turns 12            more angles
+    tools/studio.py Plate --category armour --plus 9    the set refined, as the game shines it
 
 The studio is the viewer standing its subject in the world the game draws -- Lorencia's
 town, ground and baked light, its lamps and fires, the reflection probe taken there -- beside
@@ -34,9 +35,16 @@ def main():
     parser.add_argument("--turns", type=int, default=8)
     parser.add_argument("--settle", type=int, default=20,
                         help="frames an angle is held before its shot")
+    parser.add_argument("--plus", type=int, default=0,
+                        help="the subject's items at +N: the refinement shine")
+    parser.add_argument("--sheet", help="a lighting sheet of its own, an absolute path")
+    parser.add_argument("--dist", type=float,
+                        help="the camera this many metres off; an armour set is framed at 8")
     args = parser.parse_args()
 
     safe = "".join(c if c.isalnum() else "_" for c in args.name)
+    if args.plus:
+        safe += f"_plus{args.plus}"
     out = os.path.join(ROOT, "shots", "studio", safe)
     frames_dir = os.path.join(out, "frames")
     os.makedirs(frames_dir, exist_ok=True)
@@ -50,6 +58,12 @@ def main():
                "--turns", str(args.turns), "--shot", str(args.settle),
                "--frames", str(frames), "--shot-path", frames_dir,
                "--log", os.path.join(out, "studio.log")]
+    if args.plus:
+        command += ["--plus", str(args.plus)]
+    if args.sheet:
+        command += ["--sheet", args.sheet]
+    if args.dist:
+        command += ["--dist", str(args.dist)]
     if subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
         print(f"studio: the viewer failed; see {os.path.relpath(out, ROOT)}/studio.log",
               file=sys.stderr)
@@ -75,7 +89,8 @@ def main():
         tile = image.crop((left, top, left + crop_w, top + crop_h)).resize((tile_w, tile_h))
         turn, time = block % args.turns, block // args.turns
         ImageDraw.Draw(tile).text(
-            (8, 8), f"{args.name}  {TIMES[time]}  {360 * turn // args.turns} deg",
+            (8, 8), f"{args.name}{f' +{args.plus}' if args.plus else ''}  {TIMES[time]}  "
+                    f"{360 * turn // args.turns} deg",
             fill=(255, 255, 0))
         sheet.paste(tile, (turn * tile_w, time * tile_h))
     path = os.path.join(out, "sheet.png")

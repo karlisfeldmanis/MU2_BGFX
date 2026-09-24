@@ -10,6 +10,7 @@
 
 #include "app/preloader.h"
 #include "core/log.h"
+#include "game/shine.h"
 #include "gfx/views.h"
 #include "sim/items.h"
 #include "sim/market.h"
@@ -171,17 +172,8 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table(),
                                              &world_.ground());
                 // The refinement shine's two sheets: Chrome01 for +7, Shiny01 for +9.
-                const content::Showing& table = world_.played().showing().table();
-                const content::EffectSheet* chrome = table.effect("chrome");
-                const content::EffectSheet* shiny = table.effect("shiny");
-                if (chrome && shiny) {
-                    ctx.renderer.setShine(
-                        ctx.textures.load(assets + "/" + chrome->path, content::TextureRole::Albedo),
-                        ctx.textures.load(assets + "/" + shiny->path, content::TextureRole::Albedo));
-                } else {
-                    core::logError("the showing has no chrome or shiny sheet; refined items "
-                                   "take their tint and nothing more");
-                }
+                game::lendShine(world_.played().showing().table(), assets, ctx.textures,
+                                ctx.renderer);
             }
             // Hanzo's coals, into the lamps' static set before it goes to the renderer below.
             if (args.lampsOn) world_.played().lightForges(world_.lamps());

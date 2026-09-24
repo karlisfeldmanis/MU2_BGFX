@@ -1,6 +1,9 @@
 #include "app/modes/bench_mode.h"
 
+#include "content/showing.h"
+#include "content/tables.h"
 #include "core/log.h"
+#include "game/shine.h"
 #include "game/ui/browser_list.h"
 
 namespace mu::app {
@@ -89,6 +92,25 @@ bool BenchMode::open(Context& ctx) {
         if (!args.category.empty()) bench_.openCategory(args.category, ctx.textures);
         if (!args.pick.empty()) bench_.pick(args.pick, ctx.textures);
         core::logf("browser: %s", bench_.browseLine().c_str());
+        // The refinement shine, on the subject's items: their rows out of the world's tables
+        // and the two sheets out of the showing. Only when asked, since neither is otherwise
+        // the viewer's business. Not fatal: the subject is still shown, at +0.
+        if (args.plus > 0) {
+            content::Tables tables;
+            content::Showing showing;
+            std::string error;
+            const std::string world = benchWorld.empty() ? std::string("lorencia") : benchWorld;
+            if (!content::loadTables(ctx.paths.assets + "/cooked/" + world + "/" + world + ".mur",
+                                     tables, error)) {
+                core::logError("--plus: no item rows for %s: %s", world.c_str(), error.c_str());
+            } else if (!content::loadShowing(ctx.paths.assets + "/cooked/showing/showing.mus",
+                                             showing, error)) {
+                core::logError("--plus: the showing did not open: %s", error.c_str());
+            } else {
+                bench_.setPlus(args.plus, tables.items);
+                game::lendShine(showing, ctx.paths.assets, ctx.textures, ctx.renderer);
+            }
+        }
     }
     // The stage's lamps, once, as a world's are: the renderer lays its light grid here.
     if (bench_.hasStage() && args.lampsOn) bench_.stageLamps().light(ctx.renderer);

@@ -132,3 +132,19 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
   Plate was strongly blue too; here they are added in linear light and then lifted by
   exposure 1.5 and the bloom. No value is written to the sheet yet: it is a look, judged on
   the bench (step 6) where an item is larger than the 40 pixels a hero is in the town.
+- 2026-09-24, step 6: the studio shows a plus. `--plus N` puts every item on the viewer's
+  subject at +N (`ModelBench::setPlus`, by mesh name against the world's item rows; the bare
+  body's parts are not items and stay as they are) and hands the renderer the two sheets
+  (`game::lendShine`, shared with the play mode). `tools/studio.py` passes `--plus`, `--sheet`
+  and `--dist` through and names its sheet `<name>_plus<N>`.
+  The Plate set at 3.5 m, +0/+3/+5/+7/+9 against strength 1, 0.5, 0.25 and 0.12, at noon and
+  at night (shots/studio/shine/plate_noon.png, plate_night.png):
+  * +3 and +5 read as MU's at the literal tint: warm red, cold blue, the steel under both.
+  * +7 and +9 at 1 and 0.5 are solid cyan: the plate is gone. At 0.25 it reads as blue
+    armour with the plate in it; at 0.12 as steel with a blue sheen.
+  * At night the chrome glows in the dark at every strength, because it is added unlit, as
+    MuMain adds it.
+  * +9 is hardly told from +7: the star is lost in the chrome at this size.
+  * The band does not slide as the studio turns. MuMain's UVs are off the WORLD normal, so
+    the bands are fixed to the world and move only with the wave; a turning camera sees the
+    same band on the same plate. That is MU's, and it is why MU2 used the view normal.

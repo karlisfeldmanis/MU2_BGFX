@@ -625,6 +625,13 @@ const std::vector<gfx::Drawable>& ModelBench::gather(gfx::Renderer& renderer) {
     return staged_;
 }
 
+void ModelBench::setPlus(int plus, const std::vector<content::ItemRow>& items) {
+    shineByMesh_.clear();
+    if (plus <= 0) return;
+    for (const content::ItemRow& row : items) shineByMesh_[row.name] = shineOf(row, plus);
+    core::logf("bench: every item at +%d, %zu rows", plus, shineByMesh_.size());
+}
+
 const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& renderer) {
     if (!haveFigure_) return drawables_;
     // The fallback plane, where there is one, was made once; everything after it is this
@@ -634,6 +641,12 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
     const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
     const size_t first = drawables_.size();
     figure_.gather(row, drawables_);
+    if (!shineByMesh_.empty()) {
+        for (size_t i = first; i < drawables_.size(); ++i) {
+            const auto found = shineByMesh_.find(drawables_[i].mesh->name());
+            if (found != shineByMesh_.end()) wear(found->second, drawables_[i]);
+        }
+    }
     // Out of the probe, as a posed figure always is in the game.
     if (studio_) {
         for (size_t i = first; i < drawables_.size(); ++i) drawables_[i].inProbe = false;

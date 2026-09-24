@@ -75,6 +75,7 @@ void printUsage() {
         "--budget or --stats)\n"
         "  --fps                     the frame rate anyway, in a run that would have it off\n"
         "  --category WORD           world|monsters|people|armour|weapons|parts\n"
+        "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
         "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
@@ -445,6 +446,12 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.category = v;
         } else if (!std::strcmp(s, "--pick")) {
             if (const char* v = next(s)) a.pick = v;
+        } else if (!std::strcmp(s, "--plus")) {
+            if (const char* v = next(s)) a.plus = std::atoi(v);
+            if (a.plus < 0 || a.plus > 15) {
+                logError("--plus takes 0 to 15, not %d", a.plus);
+                a.valid = false;
+            }
         } else if (!std::strcmp(s, "--time")) {
             if (const char* v = next(s)) {
                 a.time = v;

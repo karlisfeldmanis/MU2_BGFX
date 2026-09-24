@@ -10,10 +10,19 @@
 // docs/sprints/14-the-shine.md.
 #pragma once
 
+#include <string>
+
+#include "content/showing.h"
 #include "content/tables.h"
+#include "content/texture.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {
+
+// Hands the renderer the two sheets out of the showing table: Chrome01 for +7, Shiny01 for
+// +9. Without them a refined item takes its tint and nothing more, which is said once.
+void lendShine(const content::Showing& table, const std::string& assetDir,
+               content::Textures& textures, gfx::Renderer& renderer);
 
 struct ShineLook {
     int level = 0;

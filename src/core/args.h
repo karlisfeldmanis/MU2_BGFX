@@ -239,6 +239,9 @@ struct Args {
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.
     std::string pick;
+    // The plus every item on the viewer's subject is shown at, 0 to 15: the refinement shine,
+    // judged on the bench (docs/sprints/14-the-shine.md). 0 is the item as it is.
+    int plus = 0;
     // The viewer's time of day to open on: noon, dusk or night. sheets/time/<name>.json laid
     // over the lighting sheet; noon is the sheet alone. T walks them with the window open.
     std::string time = "noon";

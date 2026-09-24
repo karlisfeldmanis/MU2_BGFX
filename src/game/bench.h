@@ -4,6 +4,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "content/ground.h"
@@ -77,6 +78,10 @@ public:
     // The turntable: where the camera stands round the subject, in degrees on top of the
     // bench's own rest angle. The studio's sweep sets it; a drag still adds to it.
     void setTurn(float degrees) { turn_ = degrees * 3.14159265f / 180.0f; }
+    // Every item on the subject at +`plus`, as the game would draw it (game::shineOf), found
+    // in `items` by the mesh's own name. The bare body's parts are not items and stay as they
+    // are. --plus; docs/sprints/14-the-shine.md.
+    void setPlus(int plus, const std::vector<content::ItemRow>& items);
     bool hasStage() const { return stageTown_.isOpen(); }
     Town& stageTown() { return stageTown_; }
     Lamps& stageLamps() { return stageLamps_; }
@@ -224,6 +229,8 @@ private:
     bool haveFire_ = false;
     float fire_[3] = {0.0f, 0.0f, 0.0f};
     float turn_ = 0.0f;
+    // setPlus: each item mesh's look at the asked plus, by mesh name. Empty draws +0.
+    std::unordered_map<std::string, ShineLook> shineByMesh_;
     Figures figures_;
     Figure figure_;
     std::vector<float> scratch_;
