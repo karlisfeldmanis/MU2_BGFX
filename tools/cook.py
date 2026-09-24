@@ -1069,6 +1069,18 @@ def read_png(path):
 # has a direction it faces and no business leaning.
 GROUNDED_TYPES = range(20, 28)
 
+# OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
+# data. The heightmap is MuMain's TerrainHeight.OZB byte for byte, heights are bytes x 1.5 in
+# both, and MuMain places an object at its stored z with no terrain snap (OpenObjectsEnc) --
+# so MU floats them too, most likely a riverbed lowered after the rocks were placed. Each is
+# lowered, angle kept, until its lowest vertex under MU's (Z * Y) * X rotation sits 15 cm
+# into the ground, which is shallower than the metre its grounded neighbours are sunk.
+# Measured 2026-09-24: lowest vertex 1.38 m, 1.40 m and 0.67 m over the bed. Keyed by
+# model and MU's stored (x, y); metres to lower by.
+LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
+           ("Stone03", 2708.711, 13432.253): 1.55,
+           ("Stone01", 2430.678, 13666.117): 0.82}
+
 # MU's hidden anchors in Lorencia: MoveObject's WD_0LORENCIA calls CreateFire(0|1|2, o, 0,0,0)
 # on MODEL_LIGHT01..03 and hides the holder (ZzzObject.cpp). Kind 1 is a fire, 4 a smoke.
 ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
@@ -1160,7 +1172,7 @@ def cook_placements(world, out_dir, chunk_tiles):
 
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}
-    dropped_hidden = dropped_model = grounded = outside = roofed = 0
+    dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = 0
 
     anchors = []
     for one in map_data["objects"]:
@@ -1200,6 +1212,10 @@ def cook_placements(world, out_dir, chunk_tiles):
             roll = 0.0
             flags |= 1
             grounded += 1
+        lowered = LOWERED.get((one["model"], round(stored_x, 3), round(stored_y, 3)))
+        if lowered is not None:
+            y -= lowered
+            lowered_count += 1
         if one["model"] in roofs:
             flags |= 2
             roofed += 1
@@ -1298,7 +1314,8 @@ def cook_placements(world, out_dir, chunk_tiles):
         handle.write(header + bytes(body))
 
     print(f"cook: {written} placements in {len(chunk_records)} chunks of {chunk_tiles} tiles, "
-          f"{len(models)} models, {grounded} laid on the terrain, {roofed} roofs, "
+          f"{len(models)} models, {grounded} laid on the terrain, {lowered_count} of {len(LOWERED)} "
+          f"floating rocks lowered, {roofed} roofs, "
           f"{dropped_hidden} hidden and {dropped_model} without a mesh dropped, "
           f"{outside} standing off the grid, "
           f"{emitter_count} lights and smokes ({len(anchors)} of them hidden anchors), "
