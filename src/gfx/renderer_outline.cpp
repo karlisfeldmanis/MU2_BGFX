@@ -215,8 +215,8 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // In LINEAR light, since the ward is added into the scene before the tonemap: the guard's
     // green at a strength that reads as a glow at the exposure and not as paint.
     // White and not the guard's green, on the user's word (2026-09-25): a pale light round the
-    // shield, at the brightness the soft green had.
-    const float white[4] = {0.062f, 0.062f, 0.062f, 0.8f * std::clamp(params.glow, 0.0f, 1.0f)};
+    // shield, a third under the brightness the soft green had.
+    const float white[4] = {0.042f, 0.042f, 0.042f, 0.8f * std::clamp(params.glow, 0.0f, 1.0f)};
     const float* edge = params.ward ? white : gold;
     // The width and the shadow's drift are given to the shader in MASK texels, and a shrunk
     // box has smaller texels than the screen's: unscaled, the ring round a big figure would
