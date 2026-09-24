@@ -96,7 +96,7 @@ void Aura::at(const Burst& b, const Joint& j, float back, float out[3]) {
     // and has climbed Direction[2] for every tick since it was made. `back` ticks ago LifeTime
     // was that much higher and the climb that much shorter. MU's Y is this world's -z, so its
     // -sin arrives as +sin and the ring turns MU's way.
-    const float count = (j.phase + (b.r.ticks - b.age) + back) / kKey;
+    const float count = (j.phase + (b.r.ticks - b.age) + back) / (kKey * b.r.pace);
     out[0] = std::cos(count) * b.r.orbit * b.per;
     out[1] = j.height + j.rise * std::max(0.0f, b.age - back);
     out[2] = std::sin(count) * b.r.orbit * b.per;
