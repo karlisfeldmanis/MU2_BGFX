@@ -59,4 +59,27 @@ vec3 shineAdded(float plus, vec3 n, vec3 colour)
 	return added * colour * u_refine.z;
 }
 
+// **Invention.** What the lamps and fires light refined steel with. A fire 2 m off lights a
+// plate's near side past white, and a colour added to white is still white: a +9 Plate suit's
+// blue went out on the pauldron turned to the bonfire, where the +0 suit's measured 255 in every
+// channel. MuMain's fire never lit metal that hot, so its glow was never swamped. So on +7 and
+// up the lamps' share -- and only theirs -- is compressed smoothly and coloured by the chrome's
+// hue, and the fire-lit face turns blue as a whole, its streaks kept as brightness.
+//
+// Three tries on the whole lit colour, kept here so they are not tried again: scaling it (it is
+// several times past the clip, so any fraction still clips); pulling it to the hue under a
+// chrome band only (a flat pauldron has one normal, so one Chrome01 texel covers the face, and
+// it was a dark one); and pulling above a brightness threshold (the streaks crossed the
+// threshold unevenly and the face came out in blue flecks on pale steel).
+vec3 shineLamps(float plus, vec3 colour, vec3 lamps)
+{
+	if (plus < 7.0) return lamps;
+	float peak = max(max(lamps.r, lamps.g), lamps.b);
+	// Reinhard: 0.35 at 1, 0.52 at 5, 0.58 at 20. Under the clip after exposure 1.5, in order.
+	vec3 kept = lamps * (0.6 / (0.7 + peak));
+	vec3 hue = colour / max(max(max(colour.r, colour.g), colour.b), 1e-3);
+	// Most of the way to the hue: half-way read grey, the tonemap pulling a bright tint to white.
+	return kept * mix(vec3_splat(1.0), hue, 0.85);
+}
+
 #endif

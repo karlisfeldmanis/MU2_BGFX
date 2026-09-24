@@ -167,11 +167,13 @@ void main()
 
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.
-	colour += lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0);
+	// On refined steel the lamps' share is coloured by the chrome first: shine.sh's shineLamps.
+	float plus = shinePlus(v_refine.x);
+	vec3 lamps = lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0);
+	colour += shineLamps(plus, v_refine.yzw, lamps);
 
 	// The refinement ladder: MuMain tints the light an item is drawn in, so the tint takes
 	// everything lit above, and adds its chrome unlit, so that goes on after. shine.sh.
-	float plus = shinePlus(v_refine.x);
 	colour *= shineTint(plus);
 	colour += shineAdded(plus, normalize(v_normal), v_refine.yzw);
 

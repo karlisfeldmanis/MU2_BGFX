@@ -150,3 +150,14 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
     same band on the same plate. That is MU's, and it is why MU2 used the view normal.
   **Picked by the user: `refine_strength` 0.25** -- blue armour with the plate readable by
   day, a clear glow at night. `refine_tint` stays at MuMain's 1.
+- 2026-09-24, the fire side (the user's report: "near fire blue shine disappears on
+  shoulder"). The pauldron turned to the studio's bonfire measured 255 in every channel on the
+  +0 suit already, so the chrome was being added to white and could not show. MuMain's fire
+  never lit metal that hot. **Invention**, `shineLamps` in shine.sh: on +7 and up the lamps'
+  share alone is compressed (Reinhard, under the clip after exposure) and coloured 85% of the
+  way to the chrome's hue. The fire-side pauldron went from (253, 251, 247) to (120, 178, 188)
+  at noon and (100, 171, 184) at night; the sun, the sky, every +0 item and the town by day are
+  as they were. Three tries on the whole lit colour failed first and are named in the shader so
+  they are not tried again: scaling it, pulling it to the hue under a band only (a flat face has
+  one Chrome01 texel, and it was a dark one), and pulling it above a brightness threshold (blue
+  flecks on pale steel -- what the user saw as "something weird with the shoulder").
