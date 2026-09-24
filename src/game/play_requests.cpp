@@ -66,6 +66,12 @@ bool Play::useItem(int slot) {
         } else {
             sound_.play(apple ? heard_.apple : heard_.drink);
         }
+        // And what it is worth, for the lane over the HUD, off the realm's own Drank: the last
+        // thing it said, and gone at the next step, so it is held for the next frame's gains.
+        const std::vector<sim::Happening>& said = realm_.happenings();
+        if (!said.empty() && said.back().what == sim::What::Drank) {
+            (said.back().b ? drankMana_ : drankHealth_) += said.back().a;
+        }
     }
     return used;
 }

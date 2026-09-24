@@ -41,6 +41,11 @@ void Play::update(double seconds) {
     // This frame's gains, and only this frame's: whoever draws the lane runs after this and
     // reads them once. See Play::gains.
     gains_.clear();
+    // A potion drunk since the last frame: asked between frames, and said here so the clear
+    // above does not take it. See Play::useItem.
+    if (drankHealth_ > 0) gains_.push_back({Gain::Kind::Health, drankHealth_});
+    if (drankMana_ > 0) gains_.push_back({Gain::Kind::Mana, drankMana_});
+    drankHealth_ = drankMana_ = 0;
     accumulator_ += seconds;
     int stepped = 0;
     const int64_t started = bx::getHPCounter();
@@ -138,10 +143,9 @@ void Play::update(double seconds) {
                     gains_.push_back({Gain::Kind::Experience, happening.a});
                 } else if (happening.what == sim::What::Picked && happening.b < 0) {
                     gains_.push_back({Gain::Kind::Zen, happening.c});
-                } else if (happening.what == sim::What::Drank) {
-                    gains_.push_back({happening.b ? Gain::Kind::Mana : Gain::Kind::Health,
-                                      happening.a});
                 }
+                // A potion is not here: it is drunk between ticks, and the next step clears
+                // what it said before this loop could read it. Play::useItem says it.
                 // His death is NOT said here. The tick it resolves on is half a swing before
                 // the blow that caused it is drawn landing, so a message raised now stands
                 // over a man still on his feet. It is raised in Play::fall, with the first key

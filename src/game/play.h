@@ -508,6 +508,8 @@ private:
     std::vector<Cue> due_;
     // And what he gained on this frame's ticks -- see gains(). A member for the same reason.
     std::vector<Gain> gains_;
+    // A potion's worth, drunk between frames and handed to the next frame's gains.
+    int32_t drankHealth_ = 0, drankMana_ = 0;
 
     std::vector<Drawn> drawn_;
     // The town's people: those the table names a figure for, where the tables say, facing
