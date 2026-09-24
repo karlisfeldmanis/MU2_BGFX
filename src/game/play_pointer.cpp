@@ -183,12 +183,16 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     // since what is clicked there is a box nobody can see. Half a tile across where MU's is 0.8
     // (Poses.PickRadius, MU2's own narrowing: at MU's width the pointer turned into a seat a step
     // and a half before the seat). The nearest entry wins; MU takes the first in memory order.
+    // **Only the perches MU's gate lets through** (content::usable). MU picks all of them and
+    // shows the sit pointer over a log it will then refuse -- a pointer promising what the rules
+    // have said no to. Invention: an unusable one is skipped and the click walks instead.
     if (pointedAt_ == 0 && pointedFolk_ < 0 && pointedLying_ == 0) {
         constexpr float kHalf = 0.25f;  // tiles; MU2's PickRadius, 25 units
         const std::vector<content::Perch>& perches = tables_.perches;
         float nearest = 1e9f;
         for (size_t i = 0; i < perches.size(); ++i) {
             const content::Perch& one = perches[i];
+            if (!content::usable(tables_.grid, one)) continue;
             const float x = (one.x + 0.5f) * metresPerTile;
             const float z = -(one.y + 0.5f) * metresPerTile;
             const float floorY = ground_->heightAt(x, z);

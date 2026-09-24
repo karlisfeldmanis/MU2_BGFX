@@ -164,6 +164,15 @@ struct Perch {
     float aim = 0.0f;             // the facing it seats you at, in the sim's radians
 };
 
+// MU's gate on a perch, asked of the placement's own TILE before any route is planned:
+// `wall == TW_HEIGHT || wall < TW_CHARACTER` (ZzzInterface.cpp:3224). Eight of Lorencia's 110
+// stand on NoMove -- one lean box, one tavern bench and six logs -- and are not usable. The
+// sim refuses the order on it and the pointer does not offer it; one test, so they agree.
+inline bool usable(const Grid& grid, const Perch& one) {
+    const uint16_t wall = grid.at(one.column, one.row);
+    return wall == kHeight || wall < kCharacter;
+}
+
 struct Tables {
     uint32_t hz = 0;   // the tick rate the delays were converted at; checked, never assumed
     uint32_t map = 0;  // MU's own map number

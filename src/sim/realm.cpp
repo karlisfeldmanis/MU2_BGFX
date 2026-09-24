@@ -306,8 +306,7 @@ void Realm::accept() {
             // alone, or exactly Height. Eight of Lorencia's 110 stand on NoMove -- one lean box,
             // one tavern bench and six logs, counted off this attribute grid on 2026-09-24 (MU2's
             // Crowd.Pose says 31, and reads the same attributes.png) -- and are not usable.
-            const uint16_t wall = tables_->grid.at(one.column, one.row);
-            if (wall != content::kHeight && wall >= content::kCharacter) {
+            if (!content::usable(tables_->grid, one)) {
                 order_ = Request{};
                 return;
             }
