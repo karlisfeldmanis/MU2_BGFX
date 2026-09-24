@@ -151,6 +151,19 @@ struct PlayerAction {
     float speed = 0.0f;
 };
 
+// Something in the town a character can sit on, lean against or hang off: MU's
+// MOVEMENT_OPERATE, transcribed by map and object type in tools/cook.py's PERCHES (MU2's
+// Poses.cs). `pose` is OpenMU's CharacterPose number -- 2 sitting, 3 leaning, 4 hanging.
+struct Perch {
+    uint8_t pose = 0;
+    bool turns = false;  // the placement's angle becomes the character's; a lean box must
+    bool leans = false;  // the lean pointer rather than the sit one: RenderCursor's own list
+    bool tall = false;   // the 160-unit pick box rather than 80
+    int32_t column = 0, row = 0;  // the placement's own tile, which is what is walked to
+    float x = 0.0f, y = 0.0f;     // its origin in tiles, where the pick box stands
+    float aim = 0.0f;             // the facing it seats you at, in the sim's radians
+};
+
 struct Tables {
     uint32_t hz = 0;   // the tick rate the delays were converted at; checked, never assumed
     uint32_t map = 0;  // MU's own map number
@@ -162,6 +175,7 @@ struct Tables {
     std::vector<PlayerAction> actions;
     std::vector<ItemRow> items;
     std::vector<Townsperson> folk;
+    std::vector<Perch> perches;
     Grid grid;
 
     // By MU's own group and number, or -1.

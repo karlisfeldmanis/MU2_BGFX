@@ -177,6 +177,11 @@ public:
     int pointedFolk() const { return pointedFolk_; }
     // The thing on the ground under the pointer, by its id, or 0.
     uint32_t pointedLying() const { return pointedLying_; }
+    // Something to sit on or lean against under the pointer, as an index into the tables'
+    // perches, or -1. Tested last, after bodies, drops and townsfolk.
+    int pointedPerch() const { return pointedPerch_; }
+    // The same Perch request a click on one raises, by index and with no pointer: `--perch`.
+    bool perch(int index);
 
     // Where a monster's health bar sits on screen: the pixel a third of a tile over the top
     // of its body as drawn this frame, MU2's Crowd.Crown. False when the body has never been
@@ -530,6 +535,7 @@ private:
     std::vector<Standing> folk_;
     int pointedFolk_ = -1;
     uint32_t pointedLying_ = 0;
+    int pointedPerch_ = -1;
     std::vector<float> scratch_;
     double accumulator_ = 0.0;
     double tickMs_ = 0.0;

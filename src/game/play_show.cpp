@@ -485,8 +485,23 @@ void Play::follow(float seconds) {
         // click re-aims it.
         const bool walking = moving || (body->walking && isWalk(one.figure.clip())) ||
                              (!body->player && body->walking && one.still < kCoasting);
+        // A pose stands in for the idle and for nothing else, so the walk above still outranks
+        // it: the realm takes the pose off as the walk starts, and this is the same rule for the
+        // frames in between. MU's PLAYER_SIT1 234 / female 236, PLAYER_HEALING1 238 / 239,
+        // PLAYER_POSE1 240 / 241, IsFemale deciding -- MU2's Poses.Clip. They loop, and that is
+        // the whole of why a pose lasts.
+        int posed = -1;
+        if (body->player && body->pose != sim::Pose::Standing && look->library) {
+            const bool female = look->female;
+            const int action = body->pose == sim::Pose::Sitting   ? (female ? 236 : 234)
+                               : body->pose == sim::Pose::Hanging ? (female ? 239 : 238)
+                                                                  : (female ? 241 : 240);
+            posed = look->library->find(action);
+        }
         if (walking) {
             clip = walkHere;
+        } else if (posed >= 0) {
+            clip = posed;
         } else if (safe && look->idleSafeClip >= 0) {
             clip = look->idleSafeClip;
         }

@@ -1233,6 +1233,50 @@ void testSpamClicks(const content::Tables& tables) {
 
 }  // namespace
 
+// MOVEMENT_OPERATE: a click on a lean box walks him to its tile and leans him back at the box's own
+// angle once the walk is over, a walk takes the pose off, and a box on a NoMove tile is refused
+// before any route is planned. Perch 22 is a lean box by the wall at (122, 110); perch 39 the one
+// at (113, 121), whose tile is NoMove.
+void testPerches(const content::Tables& tables) {
+    std::printf("a lean box is walked to and leant on\n");
+    checkEqual(int64_t(tables.perches.size()), 110, "Lorencia has MU2's 110 perches");
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 125, 112), "a realm raises in the town");
+    const content::Perch& box = tables.perches[22];
+    check(box.pose == uint8_t(sim::Pose::Leaning) && box.turns, "perch 22 is a lean that turns");
+
+    sim::Request lean;
+    lean.kind = sim::Request::Kind::Perch;
+    lean.target = 22;
+    realm.ask(lean);
+    bool leantEarly = false;
+    for (int tick = 0; tick < 100 && realm.hero().pose == sim::Pose::Standing; ++tick) {
+        realm.step();
+        leantEarly |= realm.hero().pose != sim::Pose::Standing && realm.hero().walking;
+    }
+    check(realm.hero().pose == sim::Pose::Leaning, "he leans");
+    check(!leantEarly, "and not before the walk is over");
+    check(realm.hero().column() == box.column && realm.hero().row() == box.row,
+          "on the box's own tile");
+    checkNear(realm.hero().facing, box.aim, 1e-4, "facing the way the box does");
+
+    sim::Request walk;
+    walk.kind = sim::Request::Kind::WalkTo;
+    walk.column = 126;
+    walk.row = 112;
+    realm.ask(walk);
+    realm.step();
+    check(realm.hero().pose == sim::Pose::Standing && realm.hero().walking,
+          "a walk stands him up on its first tick");
+    for (int tick = 0; tick < 100 && realm.hero().walking; ++tick) realm.step();
+
+    lean.target = 39;
+    realm.ask(lean);
+    for (int tick = 0; tick < 40; ++tick) realm.step();
+    check(realm.hero().pose == sim::Pose::Standing && realm.hero().column() == 126,
+          "a box on a NoMove tile is refused where he stands");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -1258,6 +1302,7 @@ int main() {
     testStandsOverTheKill(tables);
     testSkills(tables);
     testCastLock(tables);
+    testPerches(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

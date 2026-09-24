@@ -16,9 +16,10 @@ constexpr uint32_t kSimHz = 20;
 // Version 2 added the arms, version 3 the attack actions a swing rate is made of, and version
 // 4 the items and version 5 the townsfolk (sprint 7); version 6 gave an item its defence rate,
 // version 7 what a scroll or an orb teaches, and version 8 one line of what the item itself
-// does. There is no version 1 anywhere but in a stale build directory, and
-// the reader says so rather than reading a file whose fields have moved under it.
-constexpr uint32_t kVersion = 8;
+// does, and version 9 the perches -- what can be sat on or leant against. There is no version 1
+// anywhere but in a stale build directory, and the reader says so rather than reading a file
+// whose fields have moved under it.
+constexpr uint32_t kVersion = 9;
 
 }  // namespace
 
@@ -241,6 +242,32 @@ bool parseTables(const std::vector<uint8_t>& bytes, Tables& out, std::string& er
     out.grid.set(int(size), std::move(words));
     if (out.grid.empty()) {
         error = "the attribute grid did not take";
+        return false;
+    }
+
+    uint32_t perches = 0;
+    reader.read(perches);
+    if (reader.failed() || !plausible(reader, perches, 24)) {
+        error = "claims " + std::to_string(perches) + " perches and has no room for them";
+        return false;
+    }
+    out.perches.clear();
+    out.perches.resize(perches);
+    for (Perch& one : out.perches) {
+        uint8_t flags[4] = {};
+        reader.take(flags, sizeof(flags));
+        one.pose = flags[0];
+        one.turns = flags[1] != 0;
+        one.leans = flags[2] != 0;
+        one.tall = flags[3] != 0;
+        reader.read(one.column);
+        reader.read(one.row);
+        reader.read(one.x);
+        reader.read(one.y);
+        reader.read(one.aim);
+    }
+    if (reader.failed()) {
+        error = "ran out of file inside the perches";
         return false;
     }
     return true;

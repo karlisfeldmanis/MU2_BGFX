@@ -245,7 +245,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const bool onMonster = world && play.pointedAt() != 0;
     const bool onLoot = world && play.pointedAt() == 0 && play.pointedLying() != 0;
     const bool onFolk = world && play.pointedFolk() >= 0;
-    cursor_.update(seconds, pointer.x, pointer.y, onMonster, onLoot, onFolk);
+    Cursor::Perch perch = Cursor::Perch::None;
+    if (world && play.pointedPerch() >= 0) {
+        const bool leans = play.realm().tables()->perches[size_t(play.pointedPerch())].leans;
+        perch = leans ? Cursor::Perch::Lean : Cursor::Perch::Sit;
+    }
+    cursor_.update(seconds, pointer.x, pointer.y, onMonster, onLoot, onFolk, perch);
 }
 
 void Desk::script(float x, float y, bool press, bool release, bool right) {

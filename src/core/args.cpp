@@ -88,6 +88,7 @@ void printUsage() {
         "  --loot                    --click-every picks up drops before it fights\n"
         "  --entrance                the game's fade-up and the character's dissolve, in a --frames run\n"
         "  --talk NAME               walk to the townsperson whose name holds NAME\n"
+        "  --perch N                 walk to perch N (sit, lean) and take its pose\n"
         "  --pick NAME               and on the first entry whose name holds NAME\n"
         "  --effects N               N sprites through the transparent pass, to price it\n"
         "  --effect-size M           each sprite's half-extent in metres (default 0.5); large "
@@ -400,6 +401,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.zen = std::atoll(v);
         } else if (!std::strcmp(s, "--talk")) {
             if (const char* v = next(s)) a.talk = v;
+        } else if (!std::strcmp(s, "--perch")) {
+            if (const char* v = next(s)) a.perch = std::atoi(v);
         } else if (!std::strcmp(s, "--mute")) {
             a.mute = true;
         } else if (!std::strcmp(s, "--rise")) {

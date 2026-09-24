@@ -148,6 +148,16 @@ void Play::update(double seconds) {
                 // of his own death clip.
             }
             if (happening.who == heroId) {
+                // Sitting down or leaning back lands with a thud: MuMain's operate arm ends on
+                // `PlayBuffer(SOUND_DROP_ITEM01, &Hero->Object)` after the sit and the pose, and
+                // not in the Healing branch -- so Noria's hang is silent. Getting up is silent.
+                if (happening.what == sim::What::Posed && heard_.itemDrop >= 0 &&
+                    (happening.a == int32_t(sim::Pose::Sitting) ||
+                     happening.a == int32_t(sim::Pose::Leaning))) {
+                    const float metresPerTile = ground_->metresPerTile();
+                    emit(heard_.itemDrop, (happening.x + 0.5f) * metresPerTile,
+                         -(happening.y + 0.5f) * metresPerTile);
+                }
                 if (happening.what == sim::What::Picked) {
                     // Zen rings coins rather than the pickup: it is the one thing picked up
                     // that is not a thing, and it is now swept up rather than clicked

@@ -26,6 +26,7 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     pointedAt_ = 0;
     pointedFolk_ = -1;
     pointedLying_ = 0;
+    pointedPerch_ = -1;
     // The shot this frame is drawn with, kept for what may be heard: see emit().
     bx::mtxMul(shot_, view, proj);
     shotKnown_ = true;
@@ -175,6 +176,49 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
             pointedFolk_ = standing.folk;
         }
     }
+    // And something to sit on or lean against, only where nothing above is under the pointer --
+    // MU's Action() tests SelectedOperate after the character and the NPC. MU2's World.Operate:
+    // the ray against MU's own pick box, a square post on the placement's origin, axis-aligned,
+    // with the model's rotation and scale nowhere in it -- 80 units tall, or 160 for a lean box,
+    // since what is clicked there is a box nobody can see. Half a tile across where MU's is 0.8
+    // (Poses.PickRadius, MU2's own narrowing: at MU's width the pointer turned into a seat a step
+    // and a half before the seat). The nearest entry wins; MU takes the first in memory order.
+    if (pointedAt_ == 0 && pointedFolk_ < 0 && pointedLying_ == 0) {
+        constexpr float kHalf = 0.25f;  // tiles; MU2's PickRadius, 25 units
+        const std::vector<content::Perch>& perches = tables_.perches;
+        float nearest = 1e9f;
+        for (size_t i = 0; i < perches.size(); ++i) {
+            const content::Perch& one = perches[i];
+            const float x = (one.x + 0.5f) * metresPerTile;
+            const float z = -(one.y + 0.5f) * metresPerTile;
+            const float floorY = ground_->heightAt(x, z);
+            const float low[3] = {x - kHalf * metresPerTile, floorY, z - kHalf * metresPerTile};
+            const float high[3] = {x + kHalf * metresPerTile,
+                                   floorY + (one.tall ? 1.6f : 0.8f) * metresPerTile,
+                                   z + kHalf * metresPerTile};
+            const float from[3] = {nearPoint.x, nearPoint.y, nearPoint.z};
+            const float along[3] = {direction.x, direction.y, direction.z};
+            // The slab test: where the ray enters and leaves each axis's pair of planes.
+            float enter = 0.0f, leave = 1e9f;
+            bool missed = false;
+            for (int axis = 0; axis < 3 && !missed; ++axis) {
+                if (std::fabs(along[axis]) < 1e-6f) {
+                    missed = from[axis] < low[axis] || from[axis] > high[axis];
+                    continue;
+                }
+                float t0 = (low[axis] - from[axis]) / along[axis];
+                float t1 = (high[axis] - from[axis]) / along[axis];
+                if (t0 > t1) std::swap(t0, t1);
+                enter = std::max(enter, t0);
+                leave = std::min(leave, t1);
+                missed = enter > leave;
+            }
+            if (!missed && enter < nearest) {
+                nearest = enter;
+                pointedPerch_ = int(i);
+            }
+        }
+    }
 }
 
 void Play::leftClick() {
@@ -189,6 +233,9 @@ void Play::leftClick() {
     } else if (pointedAt_ != 0 && realm_.find(pointedAt_) && realm_.find(pointedAt_)->alive()) {
         request.kind = sim::Request::Kind::Attack;
         request.target = pointedAt_;
+    } else if (pointedPerch_ >= 0) {
+        request.kind = sim::Request::Kind::Perch;
+        request.target = uint32_t(pointedPerch_);
     } else if (pointedColumn_ >= 0) {
         request.kind = sim::Request::Kind::WalkTo;
         request.column = pointedColumn_;
@@ -230,6 +277,16 @@ void Play::fight(uint32_t id) {
     realm_.ask(request);
     mark_ = false;
     marker_.dismiss();
+}
+
+bool Play::perch(int index) {
+    if (!isOpen() || index < 0 || size_t(index) >= tables_.perches.size()) return false;
+    sim::Request request;
+    request.kind = sim::Request::Kind::Perch;
+    request.target = uint32_t(index);
+    realm_.ask(request);
+    mark_ = true;
+    return true;
 }
 
 void Play::rightClick() {

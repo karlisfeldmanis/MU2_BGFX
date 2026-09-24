@@ -1657,10 +1657,31 @@ FOLK_VERSION075 = {
 }
 
 
+# What a click on a placement does, by map and MU object type: (pose, turns, leans, tall).
+# MU2's client/core/Poses.cs `Poses.Of`, which is ZzzInterface.cpp's MOVEMENT_OPERATE switch --
+# none of it is in the map file, so it cannot be derived and is transcribed whole. The pose is
+# OpenMU's CharacterPose number: 2 sitting, 3 leaning, 4 hanging. `turns` is the arms that carry
+# `Hero->Object.Angle[2] = TargetAngle`; `leans` is RenderCursor's own list for the lean pointer,
+# which disagrees with the pose on Noria's 38; `tall` is the three with the 160-unit pick box.
+# Poses.cs keeps the other worlds' rows as comments; they join this table when their map opens.
+PERCHES = {
+    0: {  # Lorencia: 53 hidden pose boxes along the walls, the river's logs, the tavern benches
+        133: (3, True, True, True),     # PoseBox01, invisible
+        6: (2, False, False, False),    # Tree07, the fallen log
+        145: (2, True, False, False),   # Furniture06
+        146: (2, False, False, False),  # Furniture07
+    },
+    3: {  # Noria
+        38: (4, True, True, False),     # the hanging tree, invisible
+        8: (2, False, False, False),    # the stump
+    },
+}
+
+
 def cook_tables(world, out_dir):
     """mu.db's rows, through index.json, as one flat versioned file the game reads whole.
 
-    The .mur format ("MU2 rules"), version 8, little-endian:
+    The .mur format ("MU2 rules"), version 9, little-endian:
 
         'MU2R', u32 version, u32 hz, u32 kinds, u32 spawns, u32 arms, u32 actions, u32 items,
                 u32 folk,
@@ -1701,6 +1722,9 @@ def cook_tables(world, out_dir):
         actions: i32 action (MU's own number), i32 keys, f32 authored play speed -- the player
                 library's, and only the actions a swing can land on
         grid:   u16 a tile, row-major [y][x], MU's own attribute word
+        perches: (version 9) u32 count, then per perch u8 pose (2 sit, 3 lean, 4 hang), u8
+                turns, u8 leans, u8 tall, i32 column, row (the tile walked to), f32 x, y (the
+                placement's origin in the sim's tiles), f32 aim (the sim's facing). PERCHES
 
     The arms are what a fight needs off an item and nothing else: a damage band, a defence, who
     may hold it and what it asks of him. They come from `index.json`'s own object rows and NOT
@@ -1812,6 +1836,28 @@ def cook_tables(world, out_dir):
     if high:
         print(f"cook: NOTE {world}'s attribute grid uses its high byte")
 
+    # The things to sit on or lean against (version 9), hidden ones included -- in Lorencia the
+    # commonest of them IS hidden. The sim walks to `column, row`, the placement's own tile,
+    # MU's `Owner->Position / TERRAIN_SCALE`; `x, y` are the placement's exact origin in the
+    # sim's tiles (a tile's centre is its integer), which is where the pick box stands. The aim
+    # is MU's Angle[2] turned into the sim's facing: MU faces (sin a, -cos a) in (column, row)
+    # and the sim faces (cos f, sin f), so f = a - 90 degrees.
+    perches = []
+    per_tile = float(map_data["units_per_tile"])
+    for one in map_data["objects"]:
+        rule = PERCHES.get(number, {}).get(one["type"])
+        if rule is None:
+            continue
+        pose, turns, leans, tall = rule
+        stored_x, stored_y, _ = one["at"]
+        aim = math.radians(float(one.get("angle", (0, 0, 0))[2]) - 90.0)
+        aim = math.atan2(math.sin(aim), math.cos(aim))
+        column = int(math.floor(stored_x / per_tile)) & (size - 1)
+        row = int(math.floor(stored_y / per_tile)) & (size - 1)
+        perches.append(struct.pack("<4B2i3f", pose, int(turns), int(leans), int(tall), column,
+                                   row, stored_x / per_tile - 0.5, stored_y / per_tile - 0.5,
+                                   aim))
+
     # The safe gate is on index.json's world entry and NOT on the world's own json beside the
     # grids -- which is where this looked first, and a missing gate is not an error there, so a
     # dead character quietly stood up where he fell instead of in town.
@@ -1917,12 +1963,13 @@ def cook_tables(world, out_dir):
             for (npc, name, figure, x, y, look) in FOLK_VERSION075.get(number, [])]
 
     gate = entry.get("gates", {}).get("safe", {})
-    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 8, SIM_HZ, len(kinds), len(spawns), len(arms),
+    blob = struct.pack("<4sIIIIIIIIII4i", b"MU2R", 9, SIM_HZ, len(kinds), len(spawns), len(arms),
                        len(actions), len(items), len(folk), number, size,
                        int(gate.get("x1", 0)), int(gate.get("y1", 0)), int(gate.get("x2", 0)),
                        int(gate.get("y2", 0)))
     blob += (b"".join(kinds) + b"".join(spawns) + b"".join(arms) + b"".join(actions) +
              b"".join(items) + b"".join(folk) + bytes(words))
+    blob += struct.pack("<I", len(perches)) + b"".join(perches)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{world}.mur")
     with open(path, "wb") as handle:
@@ -1935,7 +1982,7 @@ def cook_tables(world, out_dir):
     alive = sum(struct.unpack_from("<I", one, 20)[0] for one in spawns)
     print(f"cook: {len(kinds)} breeds, {len(spawns)} nests holding {alive} monsters, "
           f"{len(arms)} arms, {len(actions)} attack actions, {len(items)} items and "
-          f"{len(folk)} townsfolk -> "
+          f"{len(folk)} townsfolk and {len(perches)} perches -> "
           f"{os.path.relpath(path, ROOT)} ({len(blob)} bytes)")
     return 0
 

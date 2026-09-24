@@ -75,7 +75,14 @@ enum class What : uint8_t {
     Cast,      // a skill thrown: a: its number, b: the cooldown it set in ticks, whom: at whom
     Shoved,    // the knock: a: the column it was put on, b: the row
     Learned,   // a: the skill's number
+    Posed,     // a: the Pose now held (Standing when he gets up), b: the perch's index or -1
 };
+
+// What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
+// numbers included. These persist -- MU's StopAnimationSetting re-picks the idle only up to
+// PLAYER_SHOCK and the sit block sits above it -- so a pose lasts until a walk, a swing, a cast
+// or a death takes it away (MU2's Realm.Rise). Nothing else in the rules reads it.
+enum class Pose : uint8_t { Standing = 0, Sitting = 2, Leaning = 3, Hanging = 4 };
 
 // A thing on the ground: an item or a pile of Zen, where a death left it, until it is picked
 // up or it has lain its minute. MU2's `Lying`: an id the drawing knows it by, a tile, and a
@@ -213,6 +220,10 @@ struct Body {
     int64_t boonUntil = 0;
     float boonDamageTaken = 1.0f;
     int32_t boonSkill = 0;
+    // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
+    // none). The player's only; a monster never poses.
+    Pose pose = Pose::Standing;
+    int32_t perch = -1;
 
     bool alive() const { return health > 0; }
     int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
@@ -251,7 +262,9 @@ struct Request {
     // Talk: walk to a townsperson (`target` is his index in Tables::folk) and, within the
     // counter's reach, be served. Any other order closes the counter.
     // Pick: walk to a thing on the ground (`target` is its id) and take it on arrival.
-    enum class Kind : uint8_t { None, WalkTo, Attack, Stop, Talk, Pick } kind = Kind::None;
+    // Perch: walk to something to sit on or lean against (`target` is its index in
+    // Tables::perches) and take the pose once the walk is over. MU's MOVEMENT_OPERATE.
+    enum class Kind : uint8_t { None, WalkTo, Attack, Stop, Talk, Pick, Perch } kind = Kind::None;
     int32_t column = 0, row = 0;
     uint32_t target = 0;
 };
@@ -453,6 +466,9 @@ private:
     void recover(Body& hero);
     bool send(Body& one, int column, int row);
     void halt(Body& one);
+    // The Perch order's arrival, and the four things that end a pose. See Pose.
+    void perch(Body& hero);
+    void rise(Body& one);
     void settle(Body& one);
     bool beside(const Body& target, int radius, const Body& walker, int* column, int* row);
     bool drifted(const Body& chaser, const Body& target) const;

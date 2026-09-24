@@ -235,6 +235,7 @@ struct Args {
     bool loot = false;     // --click-every aims at what lies on the ground before a monster
     bool entrance = false; // --entrance: the fade-up and the character's dissolve in a --frames run
     std::string talk;      // walk to this townsperson (by a piece of his name) at the start
+    int perch = -1;        // walk to this perch (an index into the tables' perches) and take it
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.
     std::string pick;

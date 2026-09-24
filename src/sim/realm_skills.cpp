@@ -200,6 +200,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // Said BEFORE the blow, so the drawing has the skill in hand when the hit arrives and can
     // play the skill's clip instead of the weapon's. MU2 moved its own herald above the blow for
     // this reason and marked the departure; the sparks could not otherwise know a cast happened.
+    // On his feet first: nothing is thrown sitting down, a self-cast included.
+    rise(hero);
     say(What::Cast, hero, row.number, cool, 0, row.onSelf() ? hero.id : at);
 
     if (!row.onSelf()) {

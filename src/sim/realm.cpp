@@ -261,7 +261,7 @@ void Realm::accept() {
     // and kept nothing -- the same complaint as the swing's, one rule further on.
     if (casting() &&
         (pending_.kind == Request::Kind::WalkTo || pending_.kind == Request::Kind::Pick ||
-         pending_.kind == Request::Kind::Talk)) {
+         pending_.kind == Request::Kind::Talk || pending_.kind == Request::Kind::Perch)) {
         pending_ = Request{};
     }
 
@@ -294,8 +294,66 @@ void Realm::accept() {
                 const content::Townsperson& one = tables_->folk[order_.target];
                 send(hero, one.x, one.y);
             }
+        } else if (order_.kind == Request::Kind::Perch) {
+            if (order_.target >= tables_->perches.size()) {
+                order_ = Request{};
+                return;
+            }
+            const content::Perch& one = tables_->perches[order_.target];
+            // **Some of them are furniture nobody can use, and that is MU's own answer.** The
+            // click is gated on the placement's TILE before any route is planned:
+            // `wall == TW_HEIGHT || wall < TW_CHARACTER`, so the word must be nothing, SafeZone
+            // alone, or exactly Height. Eight of Lorencia's 110 stand on NoMove -- one lean box,
+            // one tavern bench and six logs, counted off this attribute grid on 2026-09-24 (MU2's
+            // Crowd.Pose says 31, and reads the same attributes.png) -- and are not usable.
+            const uint16_t wall = tables_->grid.at(one.column, one.row);
+            if (wall != content::kHeight && wall >= content::kCharacter) {
+                order_ = Request{};
+                return;
+            }
+            // Walked to the placement's own tile, and the pose taken once the walk is over (see
+            // press). MU's `if (PathFinding2(...)) SendMove(c, o); else Action(c, o, true)`: no
+            // walk to make -- already there, or no way there -- and the arm's own one-tile test
+            // decides at once. A refused plan stops the old walk, so that test is asked now and
+            // not wherever the last click was taking him.
+            const bool there = hero.column() == one.column && hero.row() == one.row &&
+                               std::fabs(hero.x - float(one.column)) <= 1e-3f &&
+                               std::fabs(hero.y - float(one.row)) <= 1e-3f;
+            if (!there && !send(hero, one.column, one.row)) halt(hero);
         }
     }
+}
+
+// The Perch order's end: MU's operate arm, asked ONCE, standing still, at the end of the walk --
+// `Action()` is reached from `if (MovePath(c))`, true on the tick the route runs out. Asked every
+// tick of the walk instead, it passes a tile early and he sits down in the road beside the bench
+// he was walking to (MU2 did that, and says so in Crowd.Perch). The one-tile slack is for the
+// bench whose own tile he cannot stand on: he sits from beside it rather than not at all.
+void Realm::perch(Body& hero) {
+    const int32_t index = int32_t(order_.target);
+    order_ = Request{};
+    const content::Perch& one = tables_->perches[size_t(index)];
+    if (std::max(std::abs(hero.column() - one.column), std::abs(hero.row() - one.row)) > 1) {
+        return;  // stopped short -- held against a fence, or no route; the arm does not run
+    }
+    halt(hero);
+    // The angle is the placement's where MU copies it (`Hero->Object.Angle[2] = TargetAngle`),
+    // and otherwise the way he walked up. A lean box needs it: leaning without it is lying back
+    // through the wall. Exact, not snapped to MU's eight -- MU2's Realm.Pose says why.
+    if (one.turns) {
+        hero.facing = hero.aim = one.aim;
+        hero.turning = false;
+    }
+    hero.pose = Pose(one.pose);
+    hero.perch = index;
+    say(What::Posed, hero, int32_t(hero.pose), index);
+}
+
+void Realm::rise(Body& one) {
+    if (!one.player || one.pose == Pose::Standing) return;
+    one.pose = Pose::Standing;
+    one.perch = -1;
+    say(What::Posed, one, int32_t(Pose::Standing), -1);
 }
 
 void Realm::press() {
@@ -332,6 +390,11 @@ void Realm::press() {
         hero.boonSkill = skill::kNone;
         hero.boonDamageTaken = 1.0f;
         hero.stats.damageTaken = 1.0;
+    }
+
+    if (order_.kind == Request::Kind::Perch) {
+        if (!hero.walking) perch(hero);
+        return;
     }
 
     if (order_.kind == Request::Kind::Pick) {
@@ -598,6 +661,14 @@ std::string describe(const Happening& happening, const Realm& realm) {
             const SkillRow* row = skillNumbered(happening.a);
             std::snprintf(line, sizeof(line), "%6u %s learns %s", happening.tick, who,
                           row ? row->name : "?");
+            break;
+        }
+        case What::Posed: {
+            static const char* const kPoses[] = {"stands up", "?", "sits", "leans", "hangs"};
+            const int pose = (happening.a >= 0 && happening.a <= 4) ? happening.a : 1;
+            std::snprintf(line, sizeof(line), "%6u %s %s at %.3f,%.3f (perch %d)", happening.tick,
+                          who, kPoses[pose], double(happening.x), double(happening.y),
+                          happening.b);
             break;
         }
     }

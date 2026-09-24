@@ -72,6 +72,7 @@ void Realm::begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t o
     hero.blowTarget = at;
     hero.blowForce = force;
     hero.blowSkill = skill;
+    rise(hero);  // nobody swings sitting down
     say(What::Swung, hero, skill, 0, 0, at);
 }
 
@@ -102,6 +103,9 @@ void Realm::land(Body& hero) {
 }
 
 void Realm::kill(Body& dead, Body& killer) {
+    // Out of the pose before the death, so a body that was sitting falls rather than going on
+    // sitting through it.
+    rise(dead);
     dead.temper = Temper::Dead;
     dead.walking = false;
     dead.route.clear();

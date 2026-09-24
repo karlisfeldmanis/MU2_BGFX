@@ -25,16 +25,22 @@ void Cursor::open(const gfx::Interface& interface, panel::Arts* arts) {
     interface.adopt(canvas_);
 }
 
-void Cursor::update(float seconds, float x, float y, bool onMonster, bool onLoot, bool onFolk) {
+void Cursor::update(float seconds, float x, float y, bool onMonster, bool onLoot, bool onFolk,
+                    Perch perch) {
     elapsed_ += seconds;
     canvas_.clear();
     if (!arts_ || x < 0.0f || y < 0.0f) return;
 
     // RenderCursor's own ladder: an item on the ground is tested above a townsperson and a
     // townsperson above a monster, so a drop lying under a monster shows the hand that picks it
-    // up and not the sword. See Pointer.Show.
-    const char* key = onLoot ? "cursor_get" : onFolk ? "cursor_talk" : onMonster ? "cursor_attack"
-                                                                                  : "cursor";
+    // up and not the sword. See Pointer.Show. Something to sit on is below the townsperson and
+    // above the monster -- but the pointer only finds one where no body is under it at all.
+    const char* key = onLoot                ? "cursor_get"
+                      : onFolk              ? "cursor_talk"
+                      : perch == Perch::Lean ? "cursor_lean"
+                      : perch == Perch::Sit  ? "cursor_sit"
+                      : onMonster           ? "cursor_attack"
+                                            : "cursor";
     const gfx::Art& art = arts_->get(key);
     if (!art.valid()) return;
     // A departure from MU2, which drew this at the art's own 32 pixels whatever the window's

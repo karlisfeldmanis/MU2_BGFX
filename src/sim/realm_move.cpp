@@ -29,6 +29,7 @@ bool Realm::send(Body& one, int column, int row) {
         one.route.push_back(Step{int16_t(column), int16_t(row)});
         one.onStep = 0;
         one.walking = true;
+        rise(one);
         say(What::Walked, one, column, row, 1);
         return true;
     }
@@ -50,6 +51,9 @@ bool Realm::send(Body& one, int column, int row) {
     one.route.assign(scratch_.begin(), scratch_.end());
     one.onStep = 0;
     one.walking = true;
+    // On his feet before the first step, and said in that order: a drawing told of the walk
+    // first would start the walk clip and then be told to stand up out of it. MU2's Realm.Move.
+    rise(one);
     // The goal the route actually ends on, not the one asked for: the router moves a goal in a
     // wall to the nearest open tile, and the marker is put down from this event.
     say(What::Walked, one, one.route.back().column, one.route.back().row, tiles);

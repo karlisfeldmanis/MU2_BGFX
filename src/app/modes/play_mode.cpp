@@ -248,6 +248,7 @@ void PlayMode::runScript(Context& ctx) {
     if (world_.played().isOpen()) {
         if (args.zen > 0) world_.played().earn(args.zen);
         if (!args.talk.empty()) world_.played().talkTo(args.talk);
+        if (args.perch >= 0) world_.played().perch(args.perch);
     }
     if (args.windows.find("inventory") != std::string::npos) desk_.setInventoryOpen(true);
     if (args.windows.find("character") != std::string::npos) desk_.setCharacterOpen(true);
@@ -839,6 +840,7 @@ void PlayMode::report(Context& ctx) {
                    play.pointedFolk() >= 0 ? " (on a townsperson)"
                    : play.pointedAt()      ? " (on a monster)"
                    : play.pointedLying()   ? " (on a drop)"
+                   : play.pointedPerch() >= 0 ? " (on a perch)"
                                            : "",
                    play.lastLine().c_str());
         if (play.findings().total() > 0) {
