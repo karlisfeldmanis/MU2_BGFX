@@ -109,6 +109,19 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
             if (det < 0.0f) {
                 for (int r = 0; r < 3; ++r) basis[r * 4 + 2] = -basis[r * 4 + 2];
             }
+            // Except that a shield's viewer-side is seen. Every one is modelled the same way,
+            // which is why MU turns them all by one angle (`Vector(270, 270, 0)` in
+            // RenderObjectScreen): that angle puts local +x, the painted face and the boss, to
+            // its camera. Left to the mirror rule above, the side shown hung on whichever of the
+            // two long sides happened to be longer, and ten of the twelve showed their backs. So
+            // +x is put to the viewer, and where that makes a mirror the across axis is flipped
+            // with it -- a half turn about the vertical, which a shield's outline hardly shows.
+            if (row.shield() && order[2] == 0 && basis[2] < 0.0f) {
+                for (int r = 0; r < 3; ++r) {
+                    basis[r * 4 + 2] = -basis[r * 4 + 2];
+                    basis[r * 4 + 0] = -basis[r * 4 + 0];
+                }
+            }
             extent[1] = size[order[0]];
             extent[0] = size[order[1]];
             extent[2] = size[order[2]];
