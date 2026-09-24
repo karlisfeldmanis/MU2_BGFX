@@ -64,6 +64,14 @@ struct Bench {
         out.resize(size_t(got) * 2);
         return out;
     }
+    // Into a room, and long enough for its ease to finish and the last room's tail to die.
+    void settle(mu::game::Sound::Room room) {
+        sound.room(room);
+        for (int i = 0; i < 40; ++i) {
+            frame();
+            pull(0.05f);
+        }
+    }
     // Until nothing placed sounds, so one measurement does not hear the last.
     void hush() {
         for (int i = 0; i < 200 && sound.tally().sounding > 0; ++i) pull(0.05f);
@@ -158,6 +166,9 @@ int main(int argc, char** argv) {
     }
 
     b.look(0.1f);  // the frame is ten metres each way
+    // Dry for the pan: a reverb's tail is in both ears alike and outlasts the voice, and
+    // either would blur what is measured. The room has its own checks below.
+    b.settle(mu::game::Sound::Room::Dry);
 
     // A. The pan is the screen.
     const Ears centre = playAndHear(b, blast, 0.0f, 0.0f);
@@ -219,6 +230,60 @@ int main(int argc, char** argv) {
     check(std::fabs(two.both() / one.both() - std::sqrt(2.0)) < 0.05,
           "and is the square root of two louder", two.both() / one.both());
 
+    // C. The duck: the hero's moment leans the world back to 0.6, in 50 ms.
+    const Ears plain = playAndHear(b, blast, 0.0f, 0.0f);
+    b.hush();
+    b.sound.duck();
+    const Ears ducked = playAndHear(b, blast, 0.0f, 0.0f);
+    check(ducked.both() / plain.both() > 0.55 && ducked.both() / plain.both() < 0.7,
+          "a duck leans the world back", ducked.both() / plain.both());
+    b.settle(mu::game::Sound::Room::Dry);  // and it comes back
+    const Ears back = playAndHear(b, blast, 0.0f, 0.0f);
+    check(std::fabs(back.both() / plain.both() - 1.0) < 0.02, "and lets it go again",
+          back.both() / plain.both());
+
+    // F. A wall: half as loud and muffled, from its first sample.
+    struct Walled {
+        static bool never(void*, const float*, const float*) { return false; }
+    };
+    b.sound.walls(Walled::never, nullptr);
+    b.hush();
+    b.frame();
+    b.sound.playAt(blast, 3.0f, 0.0f, 0.0f);
+    b.frame();
+    b.sound.follow(nullptr, nullptr);
+    const std::vector<float> behind = b.pull(0.4f);
+    b.sound.walls(nullptr, nullptr);
+    b.hush();
+    b.frame();
+    b.sound.playAt(blast, 3.0f, 0.0f, 0.0f);
+    b.frame();
+    b.sound.follow(nullptr, nullptr);
+    const std::vector<float> open = b.pull(0.4f);
+    check(std::fabs(rms(behind).both() / rms(open).both() - 0.45) < 0.12,
+          "behind a wall it is about half as loud", rms(behind).both() / rms(open).both());
+    check(brightness(behind) < brightness(open) * 0.6, "and muffled",
+          brightness(behind) / brightness(open));
+
+    // E. The room: what is left once the voice has stopped. The open town rings a little and
+    // a roof rings more.
+    const auto tail = [&](mu::game::Sound::Room room) {
+        b.settle(room);
+        b.frame();
+        b.sound.playAt(blast, 0.0f, 0.0f, 0.0f);
+        b.frame();
+        b.sound.follow(nullptr, nullptr);
+        b.hush();
+        return rms(b.pull(0.15f)).both();
+    };
+    const double dryTail = tail(mu::game::Sound::Room::Dry);
+    const double openTail = tail(mu::game::Sound::Room::Open);
+    const double roofTail = tail(mu::game::Sound::Room::Roofed);
+    check(dryTail < 1e-6, "dry leaves nothing behind", dryTail);
+    check(openTail > 1e-5, "the open town rings", openTail);
+    check(roofTail > openTail * 2.0, "and under a roof it rings more", roofTail / openTail);
+    b.settle(mu::game::Sound::Room::Dry);
+
     // B. The budget. Every event, placed, played round a ring six metres off -- all crowd, all
     // at one level -- with no mix pulled, so nothing finishes between plays.
     std::vector<int> all;
@@ -246,7 +311,9 @@ int main(int argc, char** argv) {
     check(b.sound.tally().stolen == full.stolen + 1 && b.sound.tally().sounding == 24,
           "the hero's own blast takes a crowd voice", double(b.sound.tally().stolen - full.stolen));
 
-    // For the ear: one step every quarter second, walking the screen left to right.
+    // For the ear: one step every quarter second, walking the screen left to right, in the
+    // open town as the game hears it.
+    b.settle(mu::game::Sound::Room::Open);
     b.hush();
     std::vector<float> walk;
     struct Walker {

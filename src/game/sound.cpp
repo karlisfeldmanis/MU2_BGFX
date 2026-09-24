@@ -82,7 +82,99 @@ constexpr ma_uint64 kDuckOutMs = 400;
 // How often the budget says what it did, in engine milliseconds, when it did anything.
 constexpr ma_uint64 kTallyEveryMs = 10000;
 
+// Behind a wall: -6 dB and the filter down to a muffle, eased in and out over a tenth of a
+// second so a corner is heard being turned rather than switched. Only the line on the tile
+// grid is asked, so a fence muffles as a house does; at -6 dB that is a lean, not a loss.
+constexpr float kWalledGain = 0.5f;
+constexpr float kMuffled = 1200.0f;
+constexpr float kWallEaseMs = 100.0f;
+
+// The rooms, as the reverb's send level and Freeverb's own two knobs. The open town is a slap
+// off its walls, mostly dry; under a roof is a small room. Eased over the wind's own 150 ms.
+struct Preset {
+    float wet;   // the send's return, linear
+    float room;  // Freeverb's room size, 0..1
+    float damp;  // and its damping, 0..1
+};
+constexpr Preset kDry = {0.0f, 0.5f, 0.5f};
+constexpr Preset kOpenAir = {0.126f, 0.35f, 0.6f};  // -18 dB
+constexpr Preset kRoofed = {0.32f, 0.7f, 0.35f};    // -10 dB
+constexpr float kRoomEaseMs = 150.0f;
+
 enum Importance { kCrowd = 0, kNearHero = 1, kHero = 2 };
+
+// Freeverb (Jezar at Dreampoint, 2000, public domain): eight damped combs in parallel and four
+// allpasses in series, a channel each, the right's lines 23 samples longer so the two ears
+// differ. Tuned at 44.1 kHz and scaled to the device's rate. A miniaudio node with one stereo
+// input and one stereo output, fed by the world's bus through a splitter; what it returns is
+// the wet alone, and the splitter's other branch is the dry.
+//
+// The two knobs are written by the game's thread and read by the audio thread once a block;
+// a float is written whole on every target this builds for, and a block read with the last
+// value or the new one is the same to the ear.
+struct Reverb {
+    ma_node_base base;  // first, so a Reverb* is a ma_node*
+    static constexpr int kCombs = 8, kPasses = 4;
+    struct Line {
+        std::vector<float> buffer;
+        size_t at = 0;
+        float store = 0.0f;
+    };
+    Line comb[2][kCombs];
+    Line pass[2][kPasses];
+    volatile float room = 0.5f;
+    volatile float damp = 0.5f;
+
+    void size(ma_uint32 rate) {
+        static constexpr int kComb[kCombs] = {1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617};
+        static constexpr int kPass[kPasses] = {556, 441, 341, 225};
+        const float scale = float(rate) / 44100.0f;
+        for (int side = 0; side < 2; ++side) {
+            const int spread = side == 0 ? 0 : 23;
+            for (int i = 0; i < kCombs; ++i) {
+                comb[side][i] = Line{};
+                comb[side][i].buffer.assign(size_t(float(kComb[i] + spread) * scale), 0.0f);
+            }
+            for (int i = 0; i < kPasses; ++i) {
+                pass[side][i] = Line{};
+                pass[side][i].buffer.assign(size_t(float(kPass[i] + spread) * scale), 0.0f);
+            }
+        }
+    }
+
+    static void process(ma_node* node, const float** in, ma_uint32* inCount, float** out,
+                        ma_uint32* outCount) {
+        Reverb& r = *static_cast<Reverb*>(static_cast<void*>(node));
+        const float feedback = r.room * 0.28f + 0.7f;
+        const float damp = r.damp * 0.4f;
+        const ma_uint32 frames = std::min(*inCount, *outCount);
+        const float* src = in[0];
+        float* dst = out[0];
+        for (ma_uint32 f = 0; f < frames; ++f) {
+            const float input = (src[f * 2] + src[f * 2 + 1]) * 0.015f;
+            for (int side = 0; side < 2; ++side) {
+                float sum = 0.0f;
+                for (Line& c : r.comb[side]) {
+                    const float held = c.buffer[c.at];
+                    c.store = held * (1.0f - damp) + c.store * damp;
+                    c.buffer[c.at] = input + c.store * feedback;
+                    if (++c.at == c.buffer.size()) c.at = 0;
+                    sum += held;
+                }
+                for (Line& p : r.pass[side]) {
+                    const float held = p.buffer[p.at];
+                    p.buffer[p.at] = sum + held * 0.5f;
+                    if (++p.at == p.buffer.size()) p.at = 0;
+                    sum = held - sum;
+                }
+                dst[f * 2 + side] = sum;
+            }
+        }
+        *outCount = frames;
+    }
+};
+
+ma_node_vtable kReverbTable = {Reverb::process, nullptr, 1, 1, 0};
 
 }  // namespace
 
@@ -99,6 +191,18 @@ struct Sound::Impl {
     // through its own low-pass into `world`.
     ma_sound_group ui{}, world{}, ambience{};
     bool groups = false;
+
+    // The room: the world's bus split into the dry and the reverb's send.
+    ma_splitter_node split{};
+    Reverb reverb{};
+    bool roomed = false;
+    Preset roomNow = kOpenAir, roomWanted = kOpenAir;
+    ma_uint64 roomAt = 0;  // engine ms the ease last stepped
+
+    // The walls, as the caller answers them.
+    Sound::Clear clear = nullptr;
+    void* clearContext = nullptr;
+    ma_uint64 mixedAt = 0;  // engine ms follow() last eased the walls
 
     // The ears, as listen() last said.
     uint32_t hero = 0;
@@ -141,6 +245,7 @@ struct Sound::Impl {
         int merged[kVoices] = {1, 1};           // plays it stands for
         int importance[kVoices] = {kCrowd, kCrowd};
         float gain[kVoices] = {0.0f, 0.0f};     // what mix() last set, before the trim
+        float walled[kVoices] = {0.0f, 0.0f};   // 0 clear to 1 behind a wall, eased
         int plays = 0;  // for the log at shutdown: what a run was heard to say
         bool looping = false;  // an ambient that is on; see loop()
     };
@@ -212,20 +317,31 @@ struct Sound::Impl {
         return w;
     }
 
+    // Whether a point is behind a wall from the ears: 1 or 0, or 0 when nobody answers.
+    float walledAt(const float at[3]) const {
+        if (clear == nullptr) return 0.0f;
+        return clear(clearContext, ear, at) ? 0.0f : 1.0f;
+    }
+
     // Sets one voice's pan, level and filter from where it is now.
     void mix(Event& event, int v) {
         if (event.sounding[v] < 0) return;
         File& file = *event.files[size_t(event.sounding[v])];
         const Weight w = weigh(event.at[v], event.following[v]);
-        event.gain[v] = w.gain;
+        const float walled = event.walled[v];
+        event.gain[v] = w.gain * (1.0f + (kWalledGain - 1.0f) * walled);
         event.importance[v] = w.importance;
         ma_sound& sound = file.sound[v];
         ma_sound_set_pan(&sound, w.pan);
         ma_sound_set_volume(&sound,
-                            event.volume * std::sqrt(float(event.merged[v])) * w.gain);
+                            event.volume * std::sqrt(float(event.merged[v])) * event.gain[v]);
         if (v < file.filtered) {
             const float rate = float(ma_engine_get_sample_rate(&engine));
-            const float cutoff = std::min(w.cutoff, rate * 0.45f);
+            // Behind a wall the filter closes toward the muffle, in the log of the frequency.
+            const float open = std::min(w.cutoff, rate * 0.45f);
+            const float cutoff =
+                std::exp(std::log(open) +
+                         (std::log(std::min(kMuffled, open)) - std::log(open)) * walled);
             if (std::fabs(std::log(cutoff / file.cutoff[v])) > kCutoffStep) {
                 const ma_lpf_config config =
                     ma_lpf_config_init(ma_format_f32, file.channels, ma_uint32(rate), cutoff, 2);
@@ -233,6 +349,21 @@ struct Sound::Impl {
                 file.cutoff[v] = cutoff;
             }
         }
+    }
+
+    void duck() {
+        if (!groups) return;
+        ma_sound_group_set_fade_in_milliseconds(&world, -1.0f, kDuck, kDuckInMs);
+        ma_sound_group_set_fade_in_milliseconds(&ambience, -1.0f, kDuck, kDuckInMs);
+        duckEnds = ma_engine_get_time_in_milliseconds(&engine) + kDuckHoldMs;
+    }
+
+    void setRoom(const Preset& p) {
+        roomNow = p;
+        if (!roomed) return;
+        reverb.room = p.room;
+        reverb.damp = p.damp;
+        ma_node_set_output_bus_volume(&reverb, 0, p.wet);
     }
 
     int sounding() {
@@ -280,6 +411,38 @@ bool Sound::open(const std::string& assetDir, const content::Showing& table, boo
         ma_sound_group_init(&impl_->engine, 0, nullptr, &impl_->world) == MA_SUCCESS &&
         ma_sound_group_init(&impl_->engine, 0, nullptr, &impl_->ambience) == MA_SUCCESS;
     if (!impl_->groups) core::logError("sound: no buses; everything mixes straight to the end");
+
+    // The room: world -> splitter, whose first branch is the dry and whose second is the
+    // reverb, returning the wet alone at the preset's level.
+    impl_->roomed = false;
+    if (impl_->groups) {
+        ma_node_graph* graph = ma_engine_get_node_graph(&impl_->engine);
+        ma_node* end = ma_engine_get_endpoint(&impl_->engine);
+        const ma_uint32 channels = ma_engine_get_channels(&impl_->engine);
+        const ma_splitter_node_config split = ma_splitter_node_config_init(channels);
+        ma_node_config node = ma_node_config_init();
+        node.vtable = &kReverbTable;
+        const ma_uint32 stereo[1] = {2};
+        node.pInputChannels = stereo;
+        node.pOutputChannels = stereo;
+        impl_->reverb.size(ma_engine_get_sample_rate(&impl_->engine));
+        if (channels == 2 &&
+            ma_splitter_node_init(graph, &split, nullptr, &impl_->split) == MA_SUCCESS) {
+            if (ma_node_init(graph, &node, nullptr, &impl_->reverb) == MA_SUCCESS) {
+                ma_node_attach_output_bus(&impl_->world, 0, &impl_->split, 0);
+                ma_node_attach_output_bus(&impl_->split, 0, end, 0);
+                ma_node_attach_output_bus(&impl_->split, 1, &impl_->reverb, 0);
+                ma_node_attach_output_bus(&impl_->reverb, 0, end, 0);
+                impl_->roomed = true;
+            } else {
+                ma_splitter_node_uninit(&impl_->split, nullptr);
+            }
+        }
+        if (!impl_->roomed) core::logError("sound: no reverb; the world is dry");
+    }
+    impl_->roomWanted = kOpenAir;
+    impl_->setRoom(kOpenAir);
+    impl_->roomAt = impl_->mixedAt = 0;
 
     // What the device actually took, which is not always what was asked: the buffer is its
     // period times its periods, and that is how long a sample queued now waits to be heard.
@@ -402,7 +565,8 @@ void Sound::shutdown() {
     const Tally& t = impl_->counted;
     core::logf("sound: the budget refused %d, merged %d and stole %d; %d of %d at the most",
                t.refused, t.merged, t.stolen, impl_->peak, kVoicesTotal);
-    // Sounds before the filters they feed, filters before the buses, buses before the engine.
+    // Sounds before the filters they feed, filters before the buses, buses before the room,
+    // the room before the engine.
     for (auto& event : impl_->events) {
         for (auto& file : event->files) {
             for (int v = 0; v < file->ready; ++v) ma_sound_uninit(&file->sound[v]);
@@ -416,6 +580,13 @@ void Sound::shutdown() {
         ma_sound_group_uninit(&impl_->ambience);
         impl_->groups = false;
     }
+    if (impl_->roomed) {
+        ma_splitter_node_uninit(&impl_->split, nullptr);
+        ma_node_uninit(&impl_->reverb, nullptr);
+        impl_->roomed = false;
+    }
+    impl_->clear = nullptr;
+    impl_->clearContext = nullptr;
     ma_engine_uninit(&impl_->engine);
     impl_->open = false;
     impl_->table = nullptr;
@@ -429,11 +600,7 @@ void Sound::play(const std::string& name) {
         impl_->start(file.sound[0], file.lead, true);
         ++event->plays;
         // The duck: the world leans back under the level-up and comes in again after it.
-        if (impl_->groups) {
-            ma_sound_group_set_fade_in_milliseconds(&impl_->world, -1.0f, kDuck, kDuckInMs);
-            ma_sound_group_set_fade_in_milliseconds(&impl_->ambience, -1.0f, kDuck, kDuckInMs);
-            impl_->duckEnds = ma_engine_get_time_in_milliseconds(&impl_->engine) + kDuckHoldMs;
-        }
+        impl_->duck();
         core::logf("sound: %s from %.0f ms (%.0f of silence, %.0f of buffer)", name.c_str(),
                    double(file.lead + impl_->latency) * 1000.0, double(file.lead) * 1000.0,
                    double(impl_->latency) * 1000.0);
@@ -550,6 +717,8 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     event.at[voice][2] = z;
     event.startedOn[voice] = im.frame;
     event.merged[voice] = 1;
+    // Behind a wall from its first sample, not eased into one.
+    event.walled[voice] = im.walledAt(at);
     // Levelled, panned and filtered before it starts, so no voice is ever briefly heard as
     // the last one was.
     im.mix(event, voice);
@@ -568,6 +737,16 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
     ++im.frame;
 
     const ma_uint64 now = ma_engine_get_time_in_milliseconds(&im.engine);
+    // The room eases toward the one wanted.
+    if (im.roomAt == 0) im.roomAt = now;
+    {
+        const float step = std::min(1.0f, float(now - im.roomAt) / kRoomEaseMs);
+        im.roomAt = now;
+        const Preset& to = im.roomWanted;
+        const Preset& was = im.roomNow;
+        im.setRoom({was.wet + (to.wet - was.wet) * step, was.room + (to.room - was.room) * step,
+                    was.damp + (to.damp - was.damp) * step});
+    }
     if (im.duckEnds != 0 && now >= im.duckEnds) {
         ma_sound_group_set_fade_in_milliseconds(&im.world, -1.0f, 1.0f, kDuckOutMs);
         ma_sound_group_set_fade_in_milliseconds(&im.ambience, -1.0f, 1.0f, kDuckOutMs);
@@ -591,6 +770,11 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
 
 void Sound::follow(Where where, void* context) {
     if (!impl_->open) return;
+    const ma_uint64 now = ma_engine_get_time_in_milliseconds(&impl_->engine);
+    const float ease = impl_->mixedAt == 0
+                           ? 1.0f
+                           : std::min(1.0f, float(now - impl_->mixedAt) / kWallEaseMs);
+    impl_->mixedAt = now;
     for (auto& event : impl_->events) {
         if (!event->placed) continue;
         for (int v = 0; v < kVoices; ++v) {
@@ -606,9 +790,24 @@ void Sound::follow(Where where, void* context) {
                     event->at[v][2] = z;
                 }
             }
+            const float walled = impl_->walledAt(event->at[v]);
+            event->walled[v] += (walled - event->walled[v]) * ease;
             impl_->mix(*event, v);
         }
     }
+}
+
+void Sound::duck() {
+    if (impl_->open) impl_->duck();
+}
+
+void Sound::room(Room which) {
+    impl_->roomWanted = which == Room::Dry ? kDry : which == Room::Roofed ? kRoofed : kOpenAir;
+}
+
+void Sound::walls(Clear clear, void* context) {
+    impl_->clear = clear;
+    impl_->clearContext = context;
 }
 
 uint64_t Sound::render(float* out, uint64_t frames) {

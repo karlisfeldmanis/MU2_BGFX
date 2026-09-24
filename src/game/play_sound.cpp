@@ -149,6 +149,12 @@ void Play::emit(int event, float x, float z, uint32_t following) {
         if (!frustum.holds(centre, kHeardReach)) return;
     }
     sound_.playAt(event, x, y, z, following);
+    // The hero's big moments lean the world back (docs/spatial-sound.md, C): his fall, and a
+    // skill he casts. Not a landed blow, which is every second of a fight.
+    const uint32_t him = realm_.hero().id;
+    bool big = event == heard_.die;
+    for (int skill : heard_.skill) big = big || (skill >= 0 && event == skill && following == him);
+    if (big) sound_.duck();
 }
 
 void Play::ui(Ui which) {
@@ -165,6 +171,27 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     // The air: on while he is not under a roof, which is the client's own switch -- it stops
     // SOUND_WIND01 on HeroTile 4. Unplaced: wind is not somewhere, it is everywhere.
     sound_.loop(heard_.wind, !indoors);
+    // And the same switch is the room: a slap off the town's walls in the open, a small room
+    // under a roof (docs/spatial-sound.md, E).
+    sound_.room(indoors ? Sound::Room::Roofed : Sound::Room::Open);
+    // The walls are the rules' own line of sight on the tile grid (F). The far end is pulled a
+    // tile back toward the ears first: a smith at his anvil or a thing lying against a house
+    // stands on or beside a closed tile, and is not behind it. Within two tiles nothing is.
+    sound_.walls(
+        [](void* context, const float from[3], const float to[3]) {
+            const Play& play = *static_cast<const Play*>(context);
+            if (play.ground_ == nullptr) return true;
+            const float perTile = std::max(play.ground_->metresPerTile(), 0.001f);
+            const float ax = from[0] / perTile - 0.5f, ay = -from[2] / perTile - 0.5f;
+            float bx = to[0] / perTile - 0.5f, by = -to[2] / perTile - 0.5f;
+            const float dx = ax - bx, dy = ay - by;
+            const float tiles = std::sqrt(dx * dx + dy * dy);
+            if (tiles <= 2.0f) return true;
+            bx += dx / tiles;
+            by += dy / tiles;
+            return play.realm_.router().sees(ax, ay, bx, by, content::kWallNoMove);
+        },
+        this);
     const Drawn* hero = drawnOf(realm_.hero().id);
     if (hero == nullptr || !hero->placed) return;
     // The ears at the character, the pan from the shot point() kept this frame.

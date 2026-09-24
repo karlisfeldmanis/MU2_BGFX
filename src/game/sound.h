@@ -28,8 +28,15 @@
 //     budget is full a new sound takes the least important, quietest voice or is refused.
 //     The same event twice on one frame at one place is one voice a little louder -- six
 //     spiders biting on a tick -- rather than two plays stealing from each other.
-//   * **Buses.** The interface, the world and the ambience are mixed apart, and the level-up
-//     ducks the world and the ambience under itself for a moment.
+//   * **Buses.** The interface, the world and the ambience are mixed apart, and the hero's
+//     big moments -- the level-up, a skill, his death -- duck the world and the ambience under
+//     themselves for a moment.
+//   * **A room.** The world's bus is sent to one reverb, a Freeverb written here: short and
+//     mostly dry in the open, a small room's worth under a roof, eased between the two as the
+//     wind is. Step E.
+//   * **Walls.** A voice whose straight line to the character crosses a wall on the tile grid
+//     is quieter and duller, eased so a monster stepping round a corner opens up rather than
+//     clicks. The rules' own line of sight answers it, through walls(). Step F.
 //
 // A voice may FOLLOW a body: PlayBuffer keeps the OBJECT* and Update3DPositions re-reads its
 // position every frame while the voice sounds, so a bull that roars and charges takes the
@@ -109,6 +116,21 @@ public:
     // death cry outliving the monster that made it.
     using Where = bool (*)(void* context, uint32_t id, float* x, float* y, float* z);
     void follow(Where where, void* context);
+
+    // The hero's big moment: the world and the ambience lean back and come in again after.
+    // play(name) does it itself; a caller does it for what only it knows is big.
+    void duck();
+
+    // The room the character is in, eased into over a moment. Dry is no reverb at all, which
+    // nothing in the game asks for; it is how the test hears the pan unmixed.
+    enum class Room { Dry, Open, Roofed };
+    void room(Room which);
+
+    // Whether the straight line between two points in world metres is clear of walls. Set
+    // once and kept; `context` must outlive the Sound or be replaced. Null hears through
+    // everything.
+    using Clear = bool (*)(void* context, const float from[3], const float to[3]);
+    void walls(Clear clear, void* context);
 
     // The mix, pulled rather than heard: `frames` stereo frames of float into `out`. Offline
     // only; answers how many were written.

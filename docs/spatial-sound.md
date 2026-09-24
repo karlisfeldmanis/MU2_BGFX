@@ -6,17 +6,30 @@ the order, and this goes where the user puts it.
 
 ## State
 
-**A to D landed 2026-09-24**, in `src/game/sound.{h,cpp}` and `play_sound.cpp`, and are
-proved by `build/sound_test`, which is in `checks`. Left out of what landed:
+**A to F landed 2026-09-24**, in `src/game/sound.{h,cpp}` and `play_sound.cpp`, and are
+proved by `build/sound_test` (23 checks), which is in `checks`. Notes on what landed:
 
-- **A's "effects follow".** Missiles and the meteor still sound at one point. `follow()`
-  takes any id through its callback, so this is `Play`'s side: a `Where` that knows effect
-  ids as well as bodies.
-- **C ducks for the level-up alone.** A heavy hit or the hero's death does not duck yet.
+- **A's "effects follow" was closed with nothing to build.** Nothing in Lorencia carries a
+  sound across the screen. The meteor falls for 0.34 s over about 1.5 m sideways, so its
+  landing point is where it is heard. MU's arrows have no flight sound, only the release at
+  the hero. `follow()` takes any id through its callback, for when something does travel.
+- **C ducks for the level-up, the hero's fall and a skill he casts.** It does not duck for a
+  landed blow, which happens every second of a fight, and there is no "heavy hit" signal at
+  `emit` to key on.
+- **E is a Freeverb written in `sound.cpp`**, not verblib: about 60 lines, and no new
+  dependency to pin. Open air sends at −18 dB and a roof at −10 dB with a larger room,
+  switched by the `indoors` flag that switches the wind.
+- **F uses `Router::sees` with `kWallNoMove`.** The source end is pulled a tile back toward
+  the ears, and within two tiles nothing is walled. A fence muffles as a house does. At −6 dB
+  that is a lean, but if it reads wrong in play, the fix is a grid walk that counts closed
+  tiles.
 - **Birds calling off the frame are now refused**, as every placed sound is. Before this they
   reached `playAt` without passing `emit` and were heard at 1/d from anywhere.
+- **Unmeasured:** the per-frame cost of the mix and the wall walk (at most 24 voices, a grid
+  walk each). A muted six-spider arena ran with 0 errors.
 
-E to H are not started.
+**G waits for assets.** The cook has `world_wind`, `world_forest` (Noria's) and the two bird
+calls, and no fire, water or night recordings. **H is not started**, on purpose (see below).
 
 ## Where we stand
 
@@ -213,7 +226,7 @@ Sound cannot be looked at, and window runs are expensive (`qa-runs-sparingly`), 
 
 ## Suggested order
 
-A and B first, as one sprint (done, with C and D): together they are the "ARPG sound" and are pure code on
+A and B first, as one sprint (done, with C to F): together they are the "ARPG sound" and are pure code on
 existing assets. C and D are a day and ride along. E comes next. F waits for a dungeon, and G
 waits for its assets. H comes last or never.
 
