@@ -23,6 +23,7 @@ bool Renderer::createOutline(const std::string& shaderDir) {
     uOutlinePixel_ = bgfx::createUniform("u_outlinePixel", bgfx::UniformType::Vec4);
     uOutlineDrift_ = bgfx::createUniform("u_outlineDrift", bgfx::UniformType::Vec4);
     uOutlineScale_ = bgfx::createUniform("u_outlineScale", bgfx::UniformType::Vec4);
+    uOutlineDepth_ = bgfx::createUniform("u_outlineDepth", bgfx::UniformType::Vec4);
     sOutlineMask_ = bgfx::createUniform("s_mask", bgfx::UniformType::Sampler);
 
     // R8: coverage is all this holds. Clamped, so a tap that strays past the mask's own edge
@@ -55,7 +56,8 @@ void Renderer::destroyOutline() {
     if (bgfx::isValid(outlineProgram_)) bgfx::destroy(outlineProgram_);
     outlineProgram_ = BGFX_INVALID_HANDLE;
     for (bgfx::UniformHandle* u : {&uOutlineEdge_, &uOutlineParams_, &uOutlinePixel_,
-                                   &uOutlineDrift_, &uOutlineScale_, &sOutlineMask_}) {
+                                   &uOutlineDrift_, &uOutlineScale_, &uOutlineDepth_,
+                                   &sOutlineMask_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
     }
@@ -179,10 +181,27 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
                  BGFX_STATE_WRITE_RGB, false);
 
     // --- the ring: one screen pass, its view rect the thing's own box of the backbuffer ---
-    bgfx::setViewFrameBuffer(ringView, BGFX_INVALID_HANDLE);
-    bgfx::setViewRect(ringView, uint16_t(std::max(0, params.screenX)),
-                      uint16_t(std::max(0, params.screenY)), uint16_t(params.screenW),
-                      uint16_t(params.screenH));
+    // The ward's goes into the SCENE instead -- the HDR target the shade pass wrote, with its
+    // depth -- whose pixels are the render's and not the window's, so its box is scaled
+    // across from the backbuffer's.
+    if (params.ward) {
+        const float sx = float(width_) / float(outWidth_), sy = float(height_) / float(outHeight_);
+        const int x0 = std::clamp(int(std::floor(float(params.screenX) * sx)), 0, width_);
+        const int y0 = std::clamp(int(std::floor(float(params.screenY) * sy)), 0, height_);
+        const int x1 = std::clamp(int(std::ceil(float(params.screenX + params.screenW) * sx)), 0,
+                                  width_);
+        const int y1 = std::clamp(int(std::ceil(float(params.screenY + params.screenH) * sy)), 0,
+                                  height_);
+        if (x1 <= x0 || y1 <= y0) return;
+        bgfx::setViewFrameBuffer(ringView, shadeFb_);
+        bgfx::setViewRect(ringView, uint16_t(x0), uint16_t(y0), uint16_t(x1 - x0),
+                          uint16_t(y1 - y0));
+    } else {
+        bgfx::setViewFrameBuffer(ringView, BGFX_INVALID_HANDLE);
+        bgfx::setViewRect(ringView, uint16_t(std::max(0, params.screenX)),
+                          uint16_t(std::max(0, params.screenY)), uint16_t(params.screenW),
+                          uint16_t(params.screenH));
+    }
     bgfx::setViewClear(ringView, 0, 0, 1.0f, 0);
     bgfx::setViewTransform(ringView, nullptr, nullptr);
 
@@ -193,7 +212,9 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // its width feathered, so it falls from the shield's edge to nothing -- a glow and not a
     // stroke. Display colour, as the gold is.
     const float gold[4] = {1.0f, 0.78f, 0.28f, 1.0f};
-    const float green[4] = {0.40f, 1.0f, 0.50f, 0.85f * std::clamp(params.glow, 0.0f, 1.0f)};
+    // In LINEAR light, since the ward is added into the scene before the tonemap: the guard's
+    // green at a strength that reads as a glow at the exposure and not as paint.
+    const float green[4] = {0.030f, 0.075f, 0.045f, 0.8f * std::clamp(params.glow, 0.0f, 1.0f)};
     const float* edge = params.ward ? green : gold;
     // The width and the shadow's drift are given to the shader in MASK texels, and a shrunk
     // box has smaller texels than the screen's: unscaled, the ring round a big figure would
@@ -219,13 +240,17 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     bgfx::setUniform(uOutlinePixel_, pixel);
     bgfx::setUniform(uOutlineDrift_, drift);
     bgfx::setUniform(uOutlineScale_, scale);
+    const float depth[4] = {params.depth, params.ward ? 1.0f : 0.0f, 0.0f, 0.0f};
+    bgfx::setUniform(uOutlineDepth_, depth);
     bgfx::setTexture(0, sOutlineMask_, maskTex);
     bgfx::setVertexBuffer(0, screenVb_);
     // Added for the ward, so it brightens what is round the shield as light does; laid over
     // for the gold, which is a line drawn on the picture.
+    // And the ward tests the scene's depth at the shield's own and writes none.
     bgfx::setState(BGFX_STATE_WRITE_RGB |
-                   (params.ward ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
-                                                        BGFX_STATE_BLEND_ONE)
+                   (params.ward ? BGFX_STATE_DEPTH_TEST_LESS |
+                                      BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
+                                                            BGFX_STATE_BLEND_ONE)
                                 : BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
                                                         BGFX_STATE_BLEND_INV_SRC_ALPHA)));
     bgfx::submit(ringView, outlineProgram_);

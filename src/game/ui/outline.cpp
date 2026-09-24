@@ -24,7 +24,7 @@ void transformPoint(const float* p, const float* m, float* out) {
 // point back in front of it and hand back a pixel nowhere near the truth -- Godot's
 // Camera3D.IsPositionBehind, which Outline.Bounds guards against for the same reason.
 bool toPixel(const float* world, const float* viewProj, int width, int height, float* px,
-            float* py) {
+            float* py, float* pz) {
     float clip[4];
     for (int j = 0; j < 4; ++j) {
         clip[j] = world[0] * viewProj[0 * 4 + j] + world[1] * viewProj[1 * 4 + j] +
@@ -35,6 +35,7 @@ bool toPixel(const float* world, const float* viewProj, int width, int height, f
     const float ndcY = clip[1] / clip[3];
     *px = (ndcX * 0.5f + 0.5f) * float(width);
     *py = (0.5f - ndcY * 0.5f) * float(height);
+    *pz = clip[2] / clip[3];
     return true;
 }
 
@@ -58,6 +59,7 @@ void Outline::show(gfx::Renderer& renderer, const gfx::Camera& camera, const flo
     float least[2] = {std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()};
     float most[2] = {-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()};
     bool found = false;
+    float nearest = std::numeric_limits<float>::infinity();
     for (const gfx::Drawable& d : hovered) {
         if (!d.mesh) continue;
         const content::Bounds& b = d.mesh->bounds();
@@ -69,8 +71,8 @@ void Outline::show(gfx::Renderer& renderer, const gfx::Camera& camera, const flo
             };
             float world[3];
             transformPoint(local, d.transform, world);
-            float px, py;
-            if (!toPixel(world, viewProj, width, height, &px, &py)) {
+            float px, py, pz;
+            if (!toPixel(world, viewProj, width, height, &px, &py, &pz)) {
                 found = false;
                 goto done;
             }
@@ -78,6 +80,7 @@ void Outline::show(gfx::Renderer& renderer, const gfx::Camera& camera, const flo
             least[1] = std::min(least[1], py);
             most[0] = std::max(most[0], px);
             most[1] = std::max(most[1], py);
+            nearest = std::min(nearest, pz);
             found = true;
         }
     }
@@ -105,6 +108,9 @@ done:
     params.shadow = shadow;
     params.ward = ward;
     params.glow = glow;
+    // The nearest corner of its box: the ward is drawn at the shield's front, so whatever
+    // stands closer than the shield hides its glow and whatever stands behind it does not.
+    params.depth = std::clamp(nearest, 0.0f, 1.0f);
     renderer.drawOutline(view, camera, params, hovered);
 }
 

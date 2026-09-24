@@ -406,13 +406,16 @@ public:
         // its strength, 0 to 1, which the game breathes. Ours, 2026-09-25.
         bool ward = false;
         float glow = 1.0f;
+        // The shield's nearest depth in the scene target's [0,1], which the ward's glow is
+        // drawn at and tested with, so what stands in front of the shield hides it.
+        float depth = 0.0f;
     };
     // How wide the ring is and how far its box must be grown to hold it, in pixels of the
     // real screen -- shared with game/outline.cpp's own box fit so the two agree on how much
     // room the ring needs without the literal being written twice.
     static constexpr float kOutlineWidth = 2.6f;
     static constexpr float kOutlineReach = 7.0f;  // the drop shadow's own further reach
-    static constexpr float kWardWidth = 9.0f;     // the ward's glow, all of it feathered
+    static constexpr float kWardWidth = 22.0f;    // the ward's glow, all of it feathered
     // The mask's own cap, pixels on a side. One fixed target, so it never reallocates;
     // unlike Godot's SubViewport, which resized in 64-pixel steps to the exact box. A box
     // bigger than this is not clipped -- it is drawn whole and shrunk to fit, so the ring
@@ -645,6 +648,7 @@ private:
     bgfx::UniformHandle uOutlinePixel_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineDrift_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineScale_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uOutlineDepth_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sOutlineMask_ = BGFX_INVALID_HANDLE;
     bool outlineOk_ = false;
     std::vector<Batch> outlineBatches_;

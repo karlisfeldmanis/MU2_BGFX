@@ -20,23 +20,24 @@ enum View : uint16_t {
     ViewBlur = 3,
     ViewShade = 4,
     ViewTransparent = 5,
+    // Defense's ward: the green glow round the shield, the hover ring's silhouette machinery in
+    // a mask of its own. Here, between the effects and the bloom, and not over the finished
+    // picture with the ring: it is drawn INTO the scene's HDR target and tested against its
+    // depth at the shield's own, so an arm or a monster in front of the shield hides the glow
+    // as it hides the shield, and the glow blooms and is tonemapped with the light round it
+    // (the user, 2026-09-25: "integrated with the actual shield, its z").
+    ViewWardMask = 6,       // the shield alone, into the ward's own tiny target
+    ViewWard = 7,           // the glow, added into the scene round the shield, depth-tested
     // Sprint 8b's bloom: the HDR target halved five times, then added back up the chain.
     // Between the transparent pass and the tonemap for the same reason the transparent pass is
     // there: it reads the linear radiance the flames added into.
-    ViewBloomDown = 6,   // 6..10, one per level, full to 1/32
-    ViewBloomUp = 11,    // 11..14, 1/32 back up to 1/2
-    ViewPresent = 15,
+    ViewBloomDown = 8,   // 8..12, one per level, full to 1/32
+    ViewBloomUp = 13,    // 13..16, 1/32 back up to 1/2
+    ViewPresent = 17,
     // The gold ring's own two views, inserted here so it sits where it has to: AFTER the
     // present pass's tonemap, so its colour is a display colour and not a linear one added
     // into HDR, and BEFORE the HUD, so a window drawn over a ringed monster still covers it.
     // game/outline.cpp.
-    //
-    // The ward first, then the hover ring over it: Defense's green glow round the shield is the
-    // same silhouette machinery in a mask of its own (2026-09-25), and a monster hovered in
-    // front of the shield should ring over it rather than under it. Everything from the HUD
-    // on moved up by two to make room.
-    ViewWardMask = 16,      // the shield alone, into the ward's own tiny target
-    ViewWard = 17,          // the glow, composed into the shield's box of the backbuffer
     ViewOutlineMask = 18,   // the hovered thing's own meshes, into their own tiny target
     ViewOutline = 19,       // the ring, composed into its box of the backbuffer
     ViewHud = 20,
