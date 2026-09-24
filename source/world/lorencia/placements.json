@@ -36,12 +36,122 @@
       ],
       "keep": [
         {
+          "model": "Grass05",
           "near": [141.0, 128.0],
-          "within": 2.0,
-          "why": "The fountain's own planting, which is not spill. The Waterspout01 stands on paving over 139-143 by 126-130, and MuMain's EncTerrain1.obj puts four grass models on that footprint: Grass05 dead centre and Grass04 half a tile east, both at the square's 1.65 m -- 9 cm under the basin floor, so they grow up out of the bowl -- Grass06 at 1.90 m, exactly on a fountain surface sampled at 1.90, and a Grass01 at 3.25 m leaning -35 degrees off the east edge. Measured 2026-09-24 against the decrypted file: the rule above took all four. They are kept as MuMain stores them, height and lean, which is what `as_stored` tells the cook. The two upside-down Grass01 hovering 20 cm over the paving outside the footprint are the spill the rule describes and stay dropped."
+          "why": "The fountain's ivy. MuMain's EncTerrain1.obj stands it dead centre on the Waterspout01 at the square's 1.65 m, 9 cm under the basin floor, so it grows up out of the bowl and drapes over the rim: a median of 0.11 m between a leaf and the stone or paving under it. The rule above took it because the fountain stands on paving. Kept as MuMain stores it, height and lean, which is what `as_stored` tells the cook."
+        },
+        {
+          "model": "Grass04",
+          "near": [141.5, 128.0],
+          "why": "The flowering plant in the fountain's bowl, half a tile east of the ivy at 1.65 m, rooted under the basin floor like it; a median of 0.13 m over what is under it. Kept as MuMain stores it."
+        },
+        {
+          "model": "Grass06",
+          "near": [142.625, 127.828],
+          "why": "The spray on the fountain's east rim: MuMain stores it at 1.90 m, exactly on a fountain surface sampled at 1.90, leaning -55 degrees; a median of 0.29 m over what is under it. Kept as MuMain stores it.\n\nNot kept, from the same footprint: the Grass01 MuMain stores at (142.82, 127.47) and 3.25 m. Its lowest leaf is 0.42 m over anything and its median 1.56 m -- it hangs in the air in MuMain's own data, and in the game it read as floating (2026-09-24)."
+        },
+        {
+          "model": "Grass01",
+          "near": [122.50, 147.50],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy pitched -75 degrees up the wall behind the cart by the smithy; half of it is in the stone it climbs, the rest on its face."
+        },
+        {
+          "model": "Grass01",
+          "near": [123.00, 108.50],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy lying flat on the paving at the foot of the west wall, 0.09 m median over it."
+        },
+        {
+          "model": "Grass01",
+          "near": [124.00, 108.00],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: the same ivy's neighbour at the foot of the west wall."
+        },
+        {
+          "model": "Grass01",
+          "near": [138.49, 130.49],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy turned over (-175 degrees) and lying flat on the paving north-west of the fountain, 0.08 m median over it; one of a pair either side of the fountain."
+        },
+        {
+          "model": "Grass01",
+          "near": [142.20, 125.41],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: the other of the pair, south-east of the fountain, the same way."
+        },
+        {
+          "model": "Grass01",
+          "near": [144.00, 140.50],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy spreading on the paving at the foot of the railing beside the north flower bed."
+        },
+        {
+          "model": "Grass01",
+          "near": [145.78, 117.91],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy turned over and lying at the foot of the well, 0.18 m median over the paving."
+        },
+        {
+          "model": "Grass01",
+          "near": [153.15, 146.24],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy stored 2.75 m up, which is the House01 roof it grows over: 0.29 m median over the roof, not floating."
+        },
+        {
+          "model": "Grass01",
+          "near": [176.79, 172.97],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy round the rock by the north-east bridge, on the rock tile of the bank."
+        },
+        {
+          "model": "Grass05",
+          "near": [13.09, 5.32],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: a small fern at the foot of the rock in the map's south-west corner, rooted (lowest leaf 0.02 m over the bank)."
+        },
+        {
+          "model": "Grass02",
+          "near": [27.39, 132.35],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy stored 4.8 m up, over the boulder by the mill, beside an identical Grass02 the rule never touched."
+        },
+        {
+          "model": "Grass05",
+          "near": [65.50, 31.50],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: a fern growing out of the water between two rocks, rooted on the bed."
+        },
+        {
+          "model": "Grass02",
+          "near": [169.74, 123.35],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy at the water's edge beside the east bridge, rooted on the bank."
+        },
+        {
+          "model": "Grass02",
+          "near": [170.28, 122.55],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: the same bank planting beside the east bridge."
+        },
+        {
+          "model": "Grass05",
+          "near": [170.79, 122.71],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: a fern in the same bank planting beside the east bridge."
+        },
+        {
+          "model": "Grass01",
+          "near": [181.58, 172.06],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy draped round the north-east bridge's support by the rock and the tree."
+        },
+        {
+          "model": "Grass01",
+          "near": [210.00, 212.07],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy lying over the stream under the far bridge, like leaves on the water."
+        },
+        {
+          "model": "Grass01",
+          "near": [210.00, 217.50],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy on the stream bed beside the far bridge, 0.07 m median over it."
+        },
+        {
+          "model": "Grass01",
+          "near": [226.22, 236.75],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy stored 2 m up and pitched -30, hanging down the cliff face under the bank; one of a pair."
+        },
+        {
+          "model": "Grass01",
+          "near": [227.27, 237.25],
+          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: the other of the pair down the cliff face."
         }
       ],
-      "why": "Grass standing on paving, on bare rock, and in the river.\n\nChecked against the client before touching it, because the first answer was that MU2 must be placing these wrongly. It is not: OpenObjectsEnc reads a position out of EncTerrain1.obj and hands it straight to CreateObject, there is no grounding pass, and the only mention of MODEL_GRASS01 anywhere in the client is the line that loads the eight models. The client draws these exactly where MU2 draws them, and the real Lorencia has grass on its flagstones too.\n\nWhat makes it a fault rather than a preference is the shape of the numbers. Of 1038 grass placements, 999 stand on one of the two grass textures — 96% — and the 39 that do not are spread thinly across paving, rock and water. Seventeen of them grow in the river. That is not a decision anybody made about how the town should look; it is the spill you get from painting grass over a map by hand and moving the ground underneath it afterwards.\n\nSo the rule is the map's own: grass belongs on the tiles the map calls grass. It is written as a rule rather than as thirty-nine entries because thirty-nine coordinates would say nothing about why any of them is wrong, and because the next map to be extracted will have its own spill in different places."
+      "why": "Grass standing on paving, on bare rock, and in the river.\n\nChecked against the client before touching it, because the first answer was that MU2 must be placing these wrongly. It is not: OpenObjectsEnc reads a position out of EncTerrain1.obj and hands it straight to CreateObject, there is no grounding pass, and the only mention of MODEL_GRASS01 anywhere in the client is the line that loads the eight models. The client draws these exactly where MU2 draws them, and the real Lorencia has grass on its flagstones too.\n\nWhat makes it a fault rather than a preference is the shape of the numbers. Of 1038 grass placements, 999 stand on one of the two grass textures — 96% — and the 39 that do not are spread thinly across paving, rock and water. Seventeen of them grow in the river. That is not a decision anybody made about how the town should look; it is the spill you get from painting grass over a map by hand and moving the ground underneath it afterwards.\n\nSo the rule is the map's own: grass belongs on the tiles the map calls grass. It is written as a rule rather than as thirty-nine entries because thirty-nine coordinates would say nothing about why any of them is wrong, and because the next map to be extracted will have its own spill in different places.\n\nThen checked one by one (2026-09-24), because the fountain showed the rule was too broad: each of the 39 was stood as MuMain stores it, measured against the terrain and every object under it, and looked at in the game. 23 are kept by name in `keep` below -- ivy climbing walls, lying at their feet, over a roof, down a cliff, ferns rooted in the water. The 16 still dropped: the Grass01 hanging 1.6 m in the air off the fountain; six more that hover (a median leaf 0.58 to 1.43 m over anything); one that floats outright (26.03, 131.55); five buried up to 2 m, half of them under the east bridge; and three more under that bridge the camera cannot see, one of them half buried."
     }
   ],
   "blocked": [

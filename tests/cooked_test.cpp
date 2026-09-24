@@ -19,6 +19,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -123,9 +124,9 @@ int main() {
     // MuMain stands every map object where EncTerrain1.obj puts it -- OpenObjectsEnc hands the
     // stored position and angle to CreateObject untouched -- and it plants four grass models on
     // the Waterspout01's own footprint: two growing up out of the bowl, one on the rim, one
-    // leaning off the east edge. Each must be here, at MU's stored height and lean, and not laid
-    // on the terrain (placements.json's `keep`, the cook's `as_stored`). The two upside-down
-    // tufts hovering over the paving outside it are the drop rule's spill and stay dropped.
+    // hanging in the air off the east edge. The first three must be here, at MU's stored height
+    // and lean, and not laid on the terrain (placements.json's `keep`, the cook's `as_stored`).
+    // The one in the air read as floating in the game and stays dropped.
     // Found by model and by where it stands, in metres on our axes: x is MU's x, z its -y.
     {
         auto find = [&](const char* name, float x, float z) -> const mu::content::TownInstance* {
@@ -143,10 +144,35 @@ int main() {
             {"Grass05", 141.00f, -128.00f, 1.65f, 0.0f},
             {"Grass04", 141.50f, -128.00f, 1.65f, 0.0f},
             {"Grass06", 142.62497f, -127.82847f, 1.90f, -55.0f},
-            {"Grass01", 142.82416f, -127.46561f, 3.25f, -35.0f},
         };
-        for (const Planted& one : fountain) {
-            const std::string what = std::string("the fountain's ") + one.name + " at (" +
+        // And the rest of the rule's spill, checked one by one: ivy up walls, at their feet, over
+        // a roof and down a cliff, ferns rooted in the water. placements.json says what each is.
+        const Planted checked[] = {
+            {"Grass05", 13.08736f, -5.31686f, 0.6765f, 0.0f},
+            {"Grass02", 27.39272f, -132.34586f, 4.7990f, 20.0f},
+            {"Grass05", 65.50000f, -31.50000f, 0.2250f, -380.0f},
+            {"Grass01", 122.50000f, -147.50000f, 1.6500f, -75.0f},
+            {"Grass01", 123.00000f, -108.50000f, 1.6500f, 0.0f},
+            {"Grass01", 124.00000f, -108.00000f, 1.6500f, 0.0f},
+            {"Grass01", 138.48896f, -130.48519f, 1.8500f, -175.0f},
+            {"Grass01", 142.20423f, -125.40773f, 1.8500f, -175.0f},
+            {"Grass01", 144.00000f, -140.50000f, 1.6500f, 5.0f},
+            {"Grass01", 145.78297f, -117.91423f, 1.9500f, -175.0f},
+            {"Grass01", 153.15206f, -146.23691f, 4.4000f, 0.0f},
+            {"Grass02", 169.74027f, -123.35218f, 0.2250f, 5.0f},
+            {"Grass02", 170.27775f, -122.54788f, 0.2250f, 5.0f},
+            {"Grass05", 170.78521f, -122.71168f, 0.2250f, 5.0f},
+            {"Grass01", 176.79318f, -172.96551f, 1.0706f, 30.0f},
+            {"Grass01", 181.58227f, -172.05645f, 2.3500f, 30.0f},
+            {"Grass01", 209.99852f, -212.06555f, 1.4750f, 30.0f},
+            {"Grass01", 210.00000f, -217.50000f, 0.2250f, 0.0f},
+            {"Grass01", 226.21969f, -236.74945f, 2.2283f, -30.0f},
+            {"Grass01", 227.26646f, -237.25318f, 2.2400f, -30.0f},
+        };
+        std::vector<Planted> kept(std::begin(fountain), std::end(fountain));
+        kept.insert(kept.end(), std::begin(checked), std::end(checked));
+        for (const Planted& one : kept) {
+            const std::string what = std::string("the kept ") + one.name + " at (" +
                                      std::to_string(one.x) + ", " + std::to_string(-one.z) + ")";
             const mu::content::TownInstance* grass = find(one.name, one.x, one.z);
             check(grass != nullptr, what + " is placed");
@@ -158,9 +184,12 @@ int main() {
                   what + " keeps MU's " + std::to_string(int(one.pitch)) + " degree lean");
             check((grass->flags & 1) == 0, what + " is placed as MU stores it, not laid on the terrain");
         }
-        check(find("Grass01", 142.20423f, -125.40773f) == nullptr &&
-                  find("Grass01", 138.48896f, -130.48519f) == nullptr,
-              "the two upside-down Grass01 over the paving by the fountain stay dropped");
+        check(find("Grass01", 142.82416f, -127.46561f) == nullptr,
+              "the Grass01 MuMain hangs 1.6 m in the air off the fountain's east edge stays dropped");
+        check(find("Grass02", 156.88980f, -122.01350f) == nullptr &&
+                  find("Grass02", 157.38680f, -124.05859f) == nullptr &&
+                  find("Grass02", 158.36264f, -123.63898f) == nullptr,
+              "the three Grass02 under the east bridge, out of the camera's sight, stay dropped");
 
         // And a tuft the data floats 4.3 m over a slope west of the town is still laid on it.
         const mu::content::TownInstance* floating = find("Grass01", 6.30871f, -38.57134f);

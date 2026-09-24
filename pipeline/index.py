@@ -866,11 +866,12 @@ def fixed(declared: dict, corrections: Path) -> dict:
         size = declared.get("size", 256)
         kept = []
         removed = 0
-        # Places the rule does not reach, each with its own reason: a square of `within` tiles
-        # either side of `near`. What survives there is marked `as_stored`, and the cook stands
-        # it exactly as the map does rather than laying it on the terrain.
-        spared = [(k["near"], float(k.get("within", 0.5))) for k in rule.get("keep") or []
-                  if k.get("near")]
+        # Placements the rule does not reach, each named with its own reason: a model within
+        # `within` tiles of `near` (0.05, one placement, unless it says otherwise). What
+        # survives is marked `as_stored`, and the cook stands it exactly as the map does rather
+        # than laying it on the terrain.
+        spared = [(k.get("model"), k["near"], float(k.get("within", 0.05)))
+                  for k in rule.get("keep") or [] if k.get("near")]
         exempt = 0
 
         for one in placed:
@@ -879,7 +880,9 @@ def fixed(declared: dict, corrections: Path) -> dict:
                 continue
 
             x, y = one["at"][0] / 100.0, one["at"][1] / 100.0
-            if any(max(abs(x - near[0]), abs(y - near[1])) <= within for near, within in spared):
+            if any((model is None or one.get("model") == model) and
+                   max(abs(x - near[0]), abs(y - near[1])) <= within
+                   for model, near, within in spared):
                 one["as_stored"] = True
                 kept.append(one)
                 exempt += 1
