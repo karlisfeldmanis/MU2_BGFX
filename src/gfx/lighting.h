@@ -237,6 +237,13 @@ struct Lighting {
     // What a metal's painted albedo is multiplied by to give its reflectance. MU paints metal
     // dark, with its shading in the paint; 1 is the paint as it is. Invention, judged by eye.
     float metalGain = 1.0f;
+    // The refinement shine (docs/sprints/14-the-shine.md). `refineStrength` multiplies the
+    // chrome and the star MuMain adds from +7 and +9; 1 is MuMain's own Bright, which it added
+    // to an 8-bit frame that clipped, where this frame is HDR under exposure and bloom.
+    // `refineTint` is how much of MuMain's tint the lit colour takes, 1 its own. Inventions,
+    // judged by eye on the bench.
+    float refineStrength = 1.0f;
+    float refineTint = 1.0f;
 
     // Re-reads `path` when its timestamp has moved. True when something changed, so the
     // caller can log it. The first call always reads.

@@ -122,3 +122,13 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
   tints, chrome at +7, chrome and metal at +9 -- and a colour table equal to MuMain's for
   every entry this table uses (colours 0-6, sets up to 14). So the look is traced to 0.97k,
   not to 0.75, which nothing attests either way.
+- 2026-09-24, step 5: the two knobs, `refine_strength` and `refine_tint` in the lighting sheet
+  (`gfx::Lighting`, live like the rest), both 1 by default, which is MuMain's own. Marked
+  invention. Swept on a +9 Plate suit in the town through private `--sheet` copies, so the
+  shared sheet stayed as it was: the plate's brightest blue pixels read (36, 202, 230) at 1,
+  (36, 159, 199) at 0.5 and (36, 115, 157) at 0.25 -- linear in the knob, so it works and the
+  chrome is that bright. The same suit at +7 is nearly as blue, so the chrome, not the +9
+  star, is what fills the plate. MuMain added the same bands onto an 8-bit frame and its +7
+  Plate was strongly blue too; here they are added in linear light and then lifted by
+  exposure 1.5 and the bloom. No value is written to the sheet yet: it is a look, judged on
+  the bench (step 6) where an item is larger than the 40 pixels a hero is in the town.

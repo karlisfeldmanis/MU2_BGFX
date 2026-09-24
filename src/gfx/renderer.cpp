@@ -446,6 +446,8 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         probeNextFace_ = 0;
     }
     metalGain_ = lighting.metalGain;
+    shineStrength_ = lighting.refineStrength;
+    shineTint_ = lighting.refineTint;
 
     // --- the camera -------------------------------------------------------------------
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and
