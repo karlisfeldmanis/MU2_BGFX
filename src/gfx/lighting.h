@@ -131,9 +131,11 @@ struct Lighting {
     // with that gone, half a level softer than the filter's own pick keeps the blades and
     // lets the sward read as a mass.
     float grassMipBias = 0.5f;
-    // 0.85 since the thinning with distance went: the whole field at one count read a touch
-    // too thick, and a uniform cut makes nothing grow as the player walks.
-    float grassDensity = 0.85f;  // 0..1 of the 49 cards a square metre a patch may keep
+    // Since the thinning with distance went, the whole field at one count read a touch too
+    // thick, and a uniform cut makes nothing grow as the player walks. It is a run length now:
+    // 0.9 draws 44 of the 49 cards and never touches the other five. (0.85 on the old
+    // shrinking ramp left about 46 cards' worth standing.)
+    float grassDensity = 0.9f;   // 0..1 of the 49 cards a square metre a patch draws
     // Metres of SWARD, before a card's own draws and the rank ones. Tall on purpose: in MU's
     // own Season 6 the grass stands high enough to half-hide a chicken, and at 0.20 this was a
     // mown lawn. A card's own draw spreads this 0.46 to 1.48, and a rank one doubles it again,

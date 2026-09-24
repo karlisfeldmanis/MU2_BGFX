@@ -197,7 +197,11 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	// were being shrunk away from a sward that was asked for whole. The meadow's ramp is
 	// narrow: its density is a few hundredths, and a sixth on top of that would be five
 	// plants a metre.
-	float alive = saturate((density - keep) * (meadow ? 40.0 : 6.0) + 1.0);
+	//
+	// The sward is not thinned here at all: the draw reads only the first cards of an order
+	// that spreads evenly (game/world/grass.cpp), so every card that arrives is wanted, and
+	// the ones that are not never cost a vertex.
+	float alive = meadow ? saturate((density - keep) * 40.0 + 1.0) : 1.0;
 
 	// The paving. MU's overlay alpha at the tile's four corners, bilineared at the card's own
 	// foot exactly as fs_ground bilinears it to draw the road, so the grass stops where the

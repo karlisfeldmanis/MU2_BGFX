@@ -164,6 +164,11 @@ struct GrassField {
     float meadowSheet[4] = {8.0f, 0.28f, -0.4f, 1.0f}; // eight cells; the 1 says "meadow"
     float meadowDensity = 0.0f;    // of the cards it is offered, how many become plants
     uint32_t meadowIndices = 0;    // how much of the index buffer the meadow draw covers
+    // The sward's run of the same index buffer: its cards in an order any first N of which
+    // cover the patch evenly, so the density is a shorter run and not cards shrunk to nothing
+    // in the shader, which still cost their vertices. game/world/grass.cpp.
+    uint32_t swardFirst = 0;
+    uint32_t swardIndices = 0;
 };
 
 // One point light, in world metres. The renderer knows nothing of lamps, torches or fires:

@@ -296,7 +296,8 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
 
     // One draw: a run of the instance buffer, a sheet, and the numbers that sheet is read with.
     auto draw = [&](const GrassField::Batch& batch, const float* card, const float* vary,
-                    const float* sheet, float density, uint32_t indices, float colour) {
+                    const float* sheet, float density, uint32_t first, uint32_t indices,
+                    float colour) {
         if (batch.count == 0 || !bgfx::isValid(batch.sheet)) return;
         bgfx::setUniform(uGrassCard_, card);
         bgfx::setUniform(uGrassWind_, grass.wind);
@@ -324,7 +325,7 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
         bgfx::setTexture(0, sAlbedo_, batch.sheet, BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
         bgfx::setVertexBuffer(0, grass.vertices);
         if (indices > 0) {
-            bgfx::setIndexBuffer(grass.indices, 0, indices);
+            bgfx::setIndexBuffer(grass.indices, first, indices);
         } else {
             bgfx::setIndexBuffer(grass.indices);
         }
@@ -339,13 +340,14 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
     };
 
     for (int i = 0; i < grass.batchCount; ++i) {
-        draw(grass.batches[i], grass.card, grass.vary, grass.sheet, 1.0f, 0, grass.colour);
+        draw(grass.batches[i], grass.card, grass.vary, grass.sheet, 1.0f, grass.swardFirst,
+             grass.swardIndices, grass.colour);
     }
     // And the flowers over the top of it, one more draw across the same patches. The grade
     // goes with it: fs_grass grades a plant's leaves and stems to the lawn's green and leaves
     // its petals as painted.
     draw(grass.meadow, grass.meadowCard, grass.meadowVary, grass.meadowSheet,
-         grass.meadowDensity, grass.meadowIndices, grass.colour);
+         grass.meadowDensity, 0, grass.meadowIndices, grass.colour);
 }
 
 void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,

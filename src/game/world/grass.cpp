@@ -49,7 +49,7 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
     std::vector<float> vertices;
     std::vector<uint16_t> indices;
     vertices.reserve(size_t(kCardsPerPatch) * kVerticesPerCard * 3);
-    indices.reserve(size_t(kCardsPerPatch) * kIndicesPerCard);
+    indices.reserve(size_t(kCardsPerPatch) * kIndicesPerCard * 2);
 
     for (int card = 0; card < kCardsPerPatch; ++card) {
         const uint16_t base = uint16_t(card * kVerticesPerCard);
@@ -69,6 +69,40 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
             uint16_t(base + 3), uint16_t(base + 5), uint16_t(base + 4),
         };
         for (uint16_t i : strip) indices.push_back(i);
+    }
+
+    // The same cards again, in the sward's order: each next cell the one farthest from every
+    // cell already taken, on the torus the patches tile into, so any first N of them is an
+    // even spread. The density is then how far into this run the draw reads, and a card the
+    // density does not want is never drawn at all -- shrinking it to nothing in the shader,
+    // which is what this did first, still paid its vertices. The meadow keeps the plain order
+    // above, because grass.sh reads its first cards as a 3x3 grid.
+    {
+        std::vector<int> order;
+        std::vector<bool> taken(size_t(kCardsPerPatch), false);
+        std::vector<float> nearest(size_t(kCardsPerPatch), 1e9f);
+        int next = kCardsPerPatch / 2;
+        for (int n = 0; n < kCardsPerPatch; ++n) {
+            order.push_back(next);
+            taken[size_t(next)] = true;
+            const int nc = next % kStratification, nr = next / kStratification;
+            int best = -1;
+            for (int cell = 0; cell < kCardsPerPatch; ++cell) {
+                if (taken[size_t(cell)]) continue;
+                int dc = std::abs(cell % kStratification - nc);
+                int dr = std::abs(cell / kStratification - nr);
+                dc = std::min(dc, kStratification - dc);
+                dr = std::min(dr, kStratification - dr);
+                nearest[size_t(cell)] = std::min(nearest[size_t(cell)], float(dc * dc + dr * dr));
+                if (best < 0 || nearest[size_t(cell)] > nearest[size_t(best)]) best = cell;
+            }
+            next = best;
+        }
+        for (int card : order) {
+            for (int i = 0; i < kIndicesPerCard; ++i) {
+                indices.push_back(indices[size_t(card * kIndicesPerCard + i)]);
+            }
+        }
     }
 
     vbh_ = bgfx::createVertexBuffer(
@@ -186,6 +220,9 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     const float radius = std::max(1.0f, look.grassRadius);
     const float fadeBand = std::max(0.25f, std::min(look.grassFade, radius * 0.9f));
     const float metres = ground.metresPerTile();
+    // How many of the sward's ordered cards a patch draws: the density, as a run length.
+    const int swardCards = std::clamp(int(std::lround(look.grassDensity * kCardsPerPatch)), 1,
+                                      kCardsPerPatch);
 
     // The reach is measured from the EYE, and the shader does the measuring per card. What the
     // CPU does is coarser: it walks the square of tiles the reach could touch and hands the
@@ -299,7 +336,7 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             }
 
             ++counts_.drawn;
-            counts_.cards += uint32_t(float(kCardsPerPatch) * density);
+            counts_.cards += uint32_t(swardCards);
 
             float light[3];
             ground.lightAt(column, row, light);
@@ -368,6 +405,8 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
 
     field.vertices = vbh_;
     field.indices = ibh_;
+    field.swardFirst = uint32_t(kCardsPerPatch * kIndicesPerCard);
+    field.swardIndices = uint32_t(swardCards * kIndicesPerCard);
 
     field.card[0] = look.grassHeight;
     field.card[1] = look.grassAspect;
