@@ -495,7 +495,11 @@ private:
     bgfx::UniformHandle sShiny_ = BGFX_INVALID_HANDLE;
     float shineStrength_ = 1.0f;
     float shineTint_ = 1.0f;
-    void bindShine();
+    // The item stages' own strength: their picture is clamped 8-bit with no exposure and no
+    // bloom, as MuMain's whole frame was, so MuMain's 1 is theirs. The sheet's
+    // refine_stage_strength.
+    float shineStageStrength_ = 1.0f;
+    void bindShine(bool stage = false);
 
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets

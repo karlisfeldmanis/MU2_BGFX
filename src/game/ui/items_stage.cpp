@@ -44,6 +44,14 @@ void ItemStage::stand(const std::vector<Standing>& items, float unitsW, float un
     unitsW_ = unitsW;
     unitsH_ = unitsH;
     dirty_ = true;
+    // Whether anything here shines: drawn at +3 or more, a jewel's fixed +8 included. Its
+    // pulse and its chrome move with the clock, so such a stage is taken every frame.
+    shining_ = false;
+    const content::Tables* tables = models_ ? models_->tables() : nullptr;
+    for (const Standing& one : standing_) {
+        if (!tables || one.item < 0 || size_t(one.item) >= tables->items.size()) continue;
+        if (shineOf(tables->items[size_t(one.item)], one.refinement).level >= 3) shining_ = true;
+    }
 }
 
 void ItemStage::resize(int width, int height) {
@@ -74,8 +82,9 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
     resize(int(std::lround(unitsW_ * pixelsPerUnit)), int(std::lround(unitsH_ * pixelsPerUnit)));
     bool spinning = false;
     for (const Standing& one : standing_) spinning |= one.spinning;
-    // A stage at rest is a picture already taken: nothing on it moved and nothing turns.
-    if (!dirty_ && !spinning) return;
+    // A stage at rest is a picture already taken: nothing on it moved, nothing turns and
+    // nothing shines.
+    if (!dirty_ && !spinning && !shining_) return;
     dirty_ = false;
     ++renders_;
 

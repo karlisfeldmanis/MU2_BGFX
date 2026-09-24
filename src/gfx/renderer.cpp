@@ -19,10 +19,11 @@ namespace mu::gfx {
 // and the chrome's wave (ZzzBMD.cpp:1314). Missing sheets add nothing: the strength goes to 0
 // and a texture that exists stands in, so no stage is left unbound. Only for the mesh draws:
 // stages 9 and 10 are the land's second layer in fs_ground.
-void Renderer::bindShine() {
+void Renderer::bindShine(bool stage) {
     const bool sheets = bgfx::isValid(shineChrome_) && bgfx::isValid(shineShiny_);
+    const float strength = stage ? shineStageStrength_ : shineStrength_;
     const float refine[4] = {std::sin(elapsed_ * 4.0f) * 0.15f + 0.6f,
-                             std::fmod(elapsed_, 10.0f) * 0.1f, sheets ? shineStrength_ : 0.0f,
+                             std::fmod(elapsed_, 10.0f) * 0.1f, sheets ? strength : 0.0f,
                              shineTint_};
     bgfx::setUniform(uRefine_, refine);
     bgfx::setTexture(9, sChrome_, sheets ? shineChrome_ : whiteAo_, 0);
@@ -448,6 +449,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     metalGain_ = lighting.metalGain;
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;
+    shineStageStrength_ = lighting.refineStageStrength;
 
     // --- the camera -------------------------------------------------------------------
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and

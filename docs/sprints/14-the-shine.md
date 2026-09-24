@@ -161,3 +161,16 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
   they are not tried again: scaling it, pulling it to the hue under a band only (a flat face has
   one Chrome01 texel, and it was a dark one), and pulling it above a brightness threshold (blue
   flecks on pale steel -- what the user saw as "something weird with the shoulder").
+- 2026-09-24, step 7: the windows. An item stage is taken on change only, so a +3 in the bag
+  never pulsed and a +7's chrome never scrolled. `ItemStage::stand` now notes whether anything
+  standing is drawn at +3 or more (`shineOf`, so a jewel's fixed +8 counts) and such a stage is
+  taken every frame. Priced with the inventory open on a +9 suit, +7 axe and +5 shield against
+  the same save at +0, 900 frames each at 1080p: the bag stage drew on 837 of 837 measured
+  frames against none; the frame's own numbers moved by noise -- GPU median 6.40 ms against
+  6.54, CPU 4.99 against 4.86, 39 more draws. (The stage's view timer read 4.5 ms, but the
+  same run's view timers summed to 63 ms inside a 6.5 ms frame: waiting, not work.)
+  The strength in the bag was 0.25 like the world's and the shine hardly showed. The stage's
+  picture is clamped 8-bit with no exposure and no bloom, as MuMain's whole frame was, so it
+  takes MuMain's own 1 through a knob of its own, `refine_stage_strength`. The +7 axe's head
+  shines orange there and the +9 Plate pieces carry blue bands on their edges and ridges; a
+  flat face seen face on takes one Chrome01 texel, as MuMain's does.

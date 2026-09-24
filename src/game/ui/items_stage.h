@@ -54,6 +54,7 @@ private:
     std::vector<gfx::Drawable> drawables_;
     float unitsW_ = 0.0f, unitsH_ = 0.0f;
     bool dirty_ = true;
+    bool shining_ = false;  // something stands here at +3 or more; see stand()
     bgfx::FrameBufferHandle target_ = BGFX_INVALID_HANDLE;
     int width_ = 0, height_ = 0;
     gfx::Art picture_;
