@@ -400,12 +400,19 @@ public:
         // which already stand on their own cast shadow -- see Outline.Shade in the C# this
         // was ported from.
         bool shadow = false;
+        // Defense's ward instead of the hover ring: the same silhouette in a mask of its own
+        // (ViewWardMask, ViewWard), green, wider and feathered over its whole width so it is a
+        // glow and not a line, and ADDED to the picture rather than laid over it. `glow` is
+        // its strength, 0 to 1, which the game breathes. Ours, 2026-09-25.
+        bool ward = false;
+        float glow = 1.0f;
     };
     // How wide the ring is and how far its box must be grown to hold it, in pixels of the
     // real screen -- shared with game/outline.cpp's own box fit so the two agree on how much
     // room the ring needs without the literal being written twice.
     static constexpr float kOutlineWidth = 2.6f;
     static constexpr float kOutlineReach = 7.0f;  // the drop shadow's own further reach
+    static constexpr float kWardWidth = 9.0f;     // the ward's glow, all of it feathered
     // The mask's own cap, pixels on a side. One fixed target, so it never reallocates;
     // unlike Godot's SubViewport, which resized in 64-pixel steps to the exact box. A box
     // bigger than this is not clipped -- it is drawn whole and shrunk to fit, so the ring
@@ -628,6 +635,10 @@ private:
     void destroyOutline();
     bgfx::TextureHandle outlineMaskTex_ = BGFX_INVALID_HANDLE;
     bgfx::FrameBufferHandle outlineMaskFb_ = BGFX_INVALID_HANDLE;
+    // And the ward's, the same size and kind: both are drawn in one frame, and a mask holds
+    // one silhouette until its ring has read it.
+    bgfx::TextureHandle wardMaskTex_ = BGFX_INVALID_HANDLE;
+    bgfx::FrameBufferHandle wardMaskFb_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle outlineProgram_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineEdge_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineParams_ = BGFX_INVALID_HANDLE;

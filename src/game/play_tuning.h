@@ -36,6 +36,9 @@ constexpr int kMostTicks = 5;
 constexpr float kEarlyApart = 0.5f;
 // How long the character takes to dissolve in when the game has loaded. Invention.
 constexpr float kAppearSeconds = 1.1f;
+// How long Defense's ribbons play at the cast, before the shield's ward takes over for the
+// rest of the guard. Invention, 2026-09-25: the aura once, then the shield.
+constexpr float kGuardShowSeconds = 2.0f;
 
 // How long a skill's clip blends in over, against the 0.18 s every other clip uses
 // (`kBlendSeconds`, crowd.cpp). **invention**: a skill is a wind-up rather than a jab, and at the

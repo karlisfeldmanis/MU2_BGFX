@@ -113,6 +113,10 @@ public:
     // can draw them a second time without a second pose. Null skips the collecting.
     void gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,
                 std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover = nullptr);
+    // The shield in the hero's hand while Defense's guard stands, as the last gather drew it:
+    // what the green ward is drawn round (game/ui/outline, Renderer::OutlineParams::ward).
+    // Empty when there is no guard, no shield, or it is slung.
+    const std::vector<gfx::Drawable>& ward() const { return ward_; }
 
     // Where the camera should look, in tiles: the character, smoothed as he is drawn.
     void focus(float* column, float* row) const;
@@ -548,6 +552,7 @@ private:
     uint32_t pointedLying_ = 0;
     int pointedPerch_ = -1;
     std::vector<float> scratch_;
+    std::vector<gfx::Drawable> ward_;  // see ward()
     double accumulator_ = 0.0;
     double tickMs_ = 0.0;
     float through_ = 0.0f;  // how far between the last tick and the next, 0 to 1

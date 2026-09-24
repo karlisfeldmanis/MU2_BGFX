@@ -25,9 +25,11 @@ public:
     // `view` and `proj` must be the SAME matrices the frame was drawn with -- the mask's own
     // camera is built from them, not recomputed, so the two pictures agree on where
     // everything is. Does nothing when `hovered` is empty or lands entirely off screen.
+    // `ward` draws Defense's green glow round the shield instead of the gold ring, at `glow`
+    // of its strength (Renderer::OutlineParams::ward).
     void show(gfx::Renderer& renderer, const gfx::Camera& camera, const float* view,
               const float* proj, int width, int height, const std::vector<gfx::Drawable>& hovered,
-              bool shadow);
+              bool shadow, bool ward = false, float glow = 1.0f);
 };
 
 }  // namespace mu::game

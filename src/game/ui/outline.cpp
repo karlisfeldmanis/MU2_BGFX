@@ -42,7 +42,8 @@ bool toPixel(const float* world, const float* viewProj, int width, int height, f
 
 void Outline::show(gfx::Renderer& renderer, const gfx::Camera& camera, const float* view,
                    const float* proj, int width, int height,
-                   const std::vector<gfx::Drawable>& hovered, bool shadow) {
+                   const std::vector<gfx::Drawable>& hovered, bool shadow, bool ward,
+                   float glow) {
     if (hovered.empty() || width <= 0 || height <= 0) return;
     gfx::Renderer::OutlineParams params;
 
@@ -87,8 +88,9 @@ done:
     // Outline.Bounds' own margin, one pixel over so the stroke is never clipped by the box
     // that is meant to hold it.
     const float margin =
-        (shadow ? std::max(gfx::Renderer::kOutlineWidth, gfx::Renderer::kOutlineReach)
-                : gfx::Renderer::kOutlineWidth) +
+        (ward     ? gfx::Renderer::kWardWidth
+         : shadow ? std::max(gfx::Renderer::kOutlineWidth, gfx::Renderer::kOutlineReach)
+                  : gfx::Renderer::kOutlineWidth) +
         2.0f;
     const int x0 = std::clamp(int(std::floor(least[0] - margin)), 0, width);
     const int y0 = std::clamp(int(std::floor(least[1] - margin)), 0, height);
@@ -101,6 +103,8 @@ done:
     params.screenW = x1 - x0;
     params.screenH = y1 - y0;
     params.shadow = shadow;
+    params.ward = ward;
+    params.glow = glow;
     renderer.drawOutline(view, camera, params, hovered);
 }
 
