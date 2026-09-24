@@ -17,6 +17,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "content/tables.h"
 #include "sim/rules.h"
@@ -216,5 +217,12 @@ int32_t cooldownTicks(const SkillRow& row, int agility, int32_t floorTicks);
 // What the floor is for this row: the clip's length for an attack, the boon's duration and two
 // seconds for a buff.
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks);
+
+// A buff's words, for every card that describes one, so the skill key, the orb and the strip
+// cannot say it three ways. `absorbed` is the share of a blow it takes away, "50%" -- off
+// `damageTaken`, which multiplies what gets past armour and the floor (`rules.cpp`). `spoken`
+// is a length of time as a player reads one: "5:00" from a minute up, "4 s" under it.
+std::string absorbed(const SkillRow& row);
+std::string spoken(float seconds);
 
 }  // namespace mu::sim

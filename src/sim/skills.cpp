@@ -25,11 +25,12 @@ namespace {
 //     two-handed sweep.
 //   * `coolTicks` is at 20 Hz: 60 is three seconds.
 constexpr SkillRow kRows[kSkills] = {
-    // Defense 18: a buff, four seconds of half damage for 30 mana
-    // (`DefenseEffectInitializer`). Twelve seconds of cooldown, floored at its own duration and
-    // two, so it is never permanent.
-    {skill::kDefense, "Defense", 30, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 80, 0.50f,
-     "A guard raised behind the shield: half of every blow that lands, for four seconds.", 187,
+    // Defense 18: a buff, half damage for 30 mana (`DefenseEffectInitializer`). Five minutes of
+    // it, where 0.75 gives four seconds: the user's call of 2026-09-25, ours and not MU's. The
+    // twelve seconds of cooldown are floored at its own duration and two, so it is never
+    // permanent: a guard that lapses is down for two seconds before it can be raised again.
+    {skill::kDefense, "Defense", 30, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000, 0.50f,
+     "A guard raised behind the shield: half of every blow that lands, for five minutes.", 187,
      "player_skill_defense", true, arms::kShield, 6},
     // The knock is OFF on all six, and the column is kept rather than removed. 0.75 sets
     // `movesTarget` on the knight's five and it puts the monster on a neighbouring tile at once --
@@ -236,6 +237,21 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {
     if (row.boonTicks > 0) return row.boonTicks + kBoonGapTicks;
     return std::max<int32_t>(1, clipTicks);
+}
+
+std::string absorbed(const SkillRow& row) {
+    return std::to_string(int(std::lround((1.0 - double(row.damageTaken)) * 100.0))) + "%";
+}
+
+std::string spoken(float seconds) {
+    const int whole = int(std::ceil(std::max(0.0f, seconds)));
+    char out[24];
+    if (whole >= 60) {
+        std::snprintf(out, sizeof out, "%d:%02d", whole / 60, whole % 60);
+    } else {
+        std::snprintf(out, sizeof out, "%d s", whole);
+    }
+    return out;
 }
 
 int32_t cooldownTicks(const SkillRow& row, int agility, int32_t floorTicks) {

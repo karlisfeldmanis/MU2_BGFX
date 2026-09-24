@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
 #include <string>
 #include <vector>
 
 #include "game/ui/tip.h"
 #include "sim/rules.h"
+#include "sim/skills.h"
 
 namespace mu::game {
 namespace {
@@ -457,7 +459,7 @@ int Hud::skillSlotAt(float x, float y) const {
 }
 
 bool Hud::tipAt(float x, float y) const {
-    return skillAt(x, y) >= 0 ||
+    return skillAt(x, y) >= 0 || (boon_.skill != 0 && plate(screen_, kBuffsAt).has(x, y)) ||
            plate(screen_, kLifeHole).has(x, y) || plate(screen_, kManaHole).has(x, y) ||
            (hero_ && hero_->maxSd > 0 && plate(screen_, kShieldBar).has(x, y)) ||
            plate(screen_, kLevelTrack).has(x, y);
@@ -684,10 +686,17 @@ void Hud::rebuild() {
             canvas_.rect({box.x, box.y, box.w, tall}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.62f));
             // The figure only while there is more than a second of it: a box flashing "0.3" is
             // noise, and both references stop printing tenths under a second for the same reason.
+            // From a minute up it is minutes, "4:59": Defense's five-minute wait read as "300".
             if (one.seconds >= 1.0f) {
+                const int whole = int(one.seconds + 0.5f);
+                char figure[16];
+                if (whole >= 60) {
+                    std::snprintf(figure, sizeof figure, "%d:%02d", whole / 60, whole % 60);
+                } else {
+                    std::snprintf(figure, sizeof figure, "%d", whole);
+                }
                 canvas_.shadowed(box.midX(), box.midY() + skillSize * 0.35f, skillSize, kInk,
-                                 kInkShadow, 1.0f, std::to_string(int(one.seconds + 0.5f)),
-                                 gfx::Align::Centre, 0.0f);
+                                 kInkShadow, 1.0f, figure, gfx::Align::Centre, 0.0f);
             }
         }
         // Over the wipe, which starts on the same frame: the sheen lights the dark for a breath
@@ -861,6 +870,20 @@ void Hud::rebuild() {
             const Box box = plate(s, boxPx(overSkill));
             tip::draw(tip_, sheets_[overSkill], box.midX(), box.y, now_.width, now_.height);
             return;
+        }
+        // The buff: what is on him, what it does and for how much longer. The hairline under the
+        // icon says the last as a share; this says it in minutes, in the skill card's own words.
+        if (boon_.skill != 0 && plate(s, kBuffsAt).has(px, py)) {
+            if (const sim::SkillRow* row = sim::skillNumbered(boon_.skill)) {
+                const std::vector<panel::Line> lines = {
+                    {row->name, kTipNameColour, true},
+                    {"Absorbs " + sim::absorbed(*row) + " of every blow", kTipColour, false},
+                    {sim::spoken(boon_.seconds) + " left", kTipColour, false}};
+                const Box cell = plate(s, kBuffsAt);
+                panel::tooltip(tip_, cell.midX(), cell.y, lines,
+                               std::round(kTipTall * kUnit * s.scale), now_.width, now_.height);
+                return;
+            }
         }
         std::string name, value;
         if (plate(s, kLifeHole).has(px, py)) {

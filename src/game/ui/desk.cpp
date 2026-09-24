@@ -664,9 +664,12 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     for (int i = 0; i < words; ++i) weapon.values.push_back({families[i], met, false, "", 0});
     facts.rows.push_back(weapon);
     if (row.onSelf()) {
-        facts.rows.push_back(line("Damage taken", "x" + number(row.damageTaken, 2) + " for " +
-                                                      number(float(row.boonTicks) * 0.05f, 1) + " s",
+        // What it takes off a blow, as a share, and for how long -- the two questions a guard
+        // is asked. It was "x0.50 for 4.0 s", which left the player to do the sum.
+        facts.rows.push_back(line("Absorbs", sim::absorbed(row) + " of every blow",
                                   tip::Tone::Green));
+        facts.rows.push_back(line("Lasts", sim::spoken(float(row.boonTicks) * 0.05f),
+                                  tip::Tone::White));
     } else {
         facts.rows.push_back(line("Damage", "x" + number(sim::force(row, hero.points), 2) +
                                                 " of a swing",
@@ -684,11 +687,15 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         how.freeTone = tip::Tone::Gray;
         facts.rows.push_back(how);
     }
+    // Tenths under a minute, where a tenth is worth reading; minutes over it, where "300.1 s"
+    // was Defense's five-minute wait.
+    const auto wait = [&](float s) {
+        return s >= 60.0f ? sim::spoken(s) : number(s, 1) + " s";
+    };
     if (left > 0) {
-        facts.rows.push_back(line("Ready in", number(float(left) * 0.05f, 1) + " s",
-                                  tip::Tone::Red));
+        facts.rows.push_back(line("Ready in", wait(float(left) * 0.05f), tip::Tone::Red));
     } else {
-        facts.rows.push_back(line("Cooldown", number(seconds, 1) + " s", tip::Tone::White));
+        facts.rows.push_back(line("Cooldown", wait(seconds), tip::Tone::White));
     }
     const bool paid = hero.mana >= row.mana;
     facts.rows.push_back(line("Mana", std::to_string(row.mana), paid ? tip::Tone::Blue
