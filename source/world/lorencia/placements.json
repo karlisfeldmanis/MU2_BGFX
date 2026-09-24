@@ -46,34 +46,6 @@
       "height": 1.75,
       "was": 1.95,
       "why": "OURS: the turned-over ivy mat at the foot of the well, stored 0.30 m over the paving: its median leaf 0.20 m clear, worse than the fountain's pair. Lowered by that median, 0.20 m, to the same 1.75 m."
-    },
-    {
-      "model": "Tree01",
-      "near": [72.97, 106.86],
-      "height": 1.65,
-      "was": -3.85,
-      "why": "OURS, a judgement and not a disagreement in the data: one of four Tree01 south-west of the carriage camp that MU buries 5.5-6.6 m in flat 1.65 m meadow, so only the top of an 8.25 m tree shows. MuMain draws scenery at its stored z (OpenObjectsEnc), so this was MU's way of making a thicket out of crowns, and under flat 1990s light it read as bushes. Under ours the ground cuts the leaf cards and the canopy sits in its own shadow: a dark smear with a trunk fork poking out (2026-09-24). Stood on the ground as a whole tree, by the user's choice. The two Grass02 buried beside them at -4.95 are left as stored."
-    },
-    {
-      "model": "Tree01",
-      "near": [68.89, 100.61],
-      "height": 1.65,
-      "was": -3.85,
-      "why": "OURS: the second of the four buried Tree01 of the carriage-camp thicket, stood on the ground for the same reason."
-    },
-    {
-      "model": "Tree01",
-      "near": [76.33, 106.14],
-      "height": 1.65,
-      "was": -4.95,
-      "why": "OURS: the third of the four buried Tree01 of the carriage-camp thicket, stood on the ground for the same reason."
-    },
-    {
-      "model": "Tree01",
-      "near": [68.93, 96.38],
-      "height": 1.65,
-      "was": -4.85,
-      "why": "OURS: the fourth of the four buried Tree01 of the carriage-camp thicket, stood on the ground for the same reason."
     }
   ],
   "drops": [
