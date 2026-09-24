@@ -113,7 +113,22 @@ void main()
 	}
 	w = max(w, vec3_splat(0.0));
 	w /= max(w.x + w.y + w.z, 1e-5);
-	vec3 h = vec3(heightOf(albedo0), heightOf(albedo1), heightOf(albedo2));
+	// Sharpened, where the spline has made a fade: cubed and renormalised, which leaves the
+	// halfway line where MU put it and narrows the band either side of it. Without this the
+	// spline's fade was two tiles wide on every shore, and water under seventy percent
+	// already reads as the sand over it -- the rivers looked a tile narrower on each bank.
+	if (u_groundSlots.w > 0.5)
+	{
+		w = w * w * w;
+		w /= max(w.x + w.y + w.z, 1e-5);
+	}
+	// Each layer's relief measured from its own mean, which is its last mip. Measured from
+	// nought, a dark sheet is low everywhere and loses every fade it is in: water is the
+	// darkest sheet on the map and was eaten along its whole shore. MU2 got away with it
+	// because its water tiles were pure water and only a thin strip ever blended.
+	vec3 h = vec3(heightOf(albedo0) - heightOf(texture2DLod(s_albedo, uv0, 16.0).rgb),
+	              heightOf(albedo1) - heightOf(texture2DLod(s_albedo2, uv1, 16.0).rgb),
+	              heightOf(albedo2) - heightOf(texture2DLod(s_albedo3, uv2, 16.0).rgb));
 	float mean = dot(w, h);
 	w = max(w + 4.0 * u_groundRepeat.w * w * (h - mean), vec3_splat(0.0));
 	w /= max(w.x + w.y + w.z, 1e-5);
