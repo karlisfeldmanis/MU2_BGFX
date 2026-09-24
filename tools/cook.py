@@ -1256,6 +1256,13 @@ def cook_placements(world, out_dir, chunk_tiles):
     with open(os.path.join(ASSETS, "index.json")) as handle:
         listed = json.load(handle).get("objects", [])
     roofs = {one["name"] for one in listed if one.get("roof_fade")}
+    # The models that sway, which the mesh cook wrote down just before this runs: only
+    # those can be held still for being buried. See `flags |= 4` below.
+    try:
+        with open(os.path.join(out_dir, "clips.json")) as handle:
+            swaying = set(json.load(handle).get("clips", {}))
+    except (OSError, ValueError):
+        swaying = set()
     # The lights and glows each model carries. `world` is checked because index.json has one
     # Object10 in Noria and could have a same-named model in two maps.
     carried = {one["name"]: one for one in listed if one.get("world") in (world, None)}
@@ -1305,7 +1312,7 @@ def cook_placements(world, out_dir, chunk_tiles):
 
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}
-    dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = 0
+    dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = buried = 0
 
     anchors = []
     for one in map_data["objects"]:
@@ -1354,6 +1361,19 @@ def cook_placements(world, out_dir, chunk_tiles):
         if one["model"] in roofs:
             flags |= 2
             roofed += 1
+        # OURS, not MU's: a placement buried past 60% of its height is not the model any
+        # more but the part that shows. MU makes a thicket out of four Tree01 crowns sunk
+        # 5.5-6.6 m into the meadow south-west of the carriage camp (73,107), and a crown
+        # at ground height swaying as a whole tree does reads as a bush on a spring. MU
+        # plays their clip (MoveObject has no such test); here Sway holds them on their
+        # first key, as it does the treasure chest. Nothing else that sways in Lorencia is
+        # past half: two street lights come nearest, at 43% and 50%.
+        bottom, top = models[model][2][1], models[model][2][4]
+        if one["model"] in swaying and not flags & 1 and top > bottom and \
+                terrain(column, row) - (y + bottom * float(one.get("scale", 1.0))) > \
+                0.6 * (top - bottom) * float(one.get("scale", 1.0)):
+            flags |= 4
+            buried += 1
 
         # Some of MU's placements stand off the edge of its own grid -- a ship moored past
         # the shore, a tree behind the sea wall. They are drawn where they are and belong to
@@ -1453,7 +1473,7 @@ def cook_placements(world, out_dir, chunk_tiles):
 
     print(f"cook: {written} placements in {len(chunk_records)} chunks of {chunk_tiles} tiles, "
           f"{len(models)} models, {grounded} laid on the terrain, {lowered_count} of {len(LOWERED)} "
-          f"floating rocks lowered, {roofed} roofs, "
+          f"floating rocks lowered, {roofed} roofs, {buried} buried and held still, "
           f"{dropped_hidden} hidden and {dropped_model} without a mesh dropped, "
           f"{outside} standing off the grid, "
           f"{emitter_count} lights and smokes ({len(anchors)} of them hidden anchors), "

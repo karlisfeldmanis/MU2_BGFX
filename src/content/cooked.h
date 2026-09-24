@@ -161,7 +161,8 @@ struct TownInstance {
     float roll;
     float scale;
     uint16_t model;
-    uint16_t flags;    // bit 0: laid on the terrain rather than placed as the map stores it
+    uint16_t flags;    // bit 0: laid on the terrain rather than placed as the map stores it;
+                       // bit 1: a roof; bit 2: buried, its clip held (tools/cook.py)
     uint8_t light[3];  // MU's baked terrain light at this tile
     uint8_t spare;
 };
