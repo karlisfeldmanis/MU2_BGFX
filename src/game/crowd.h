@@ -110,6 +110,9 @@ private:
 
     const FigureBody* body_ = nullptr;
     float position_[3] = {0, 0, 0};
+    // Whether what it holds is on its back this frame rather than in its hands: standing on a
+    // safe tile, on a rig with somewhere to sling it.
+    bool slung() const { return safe_ && body_ && body_->backBone >= 0; }
     float yaw_ = 0.0f;
     float pitch_ = 0.0f, roll_ = 0.0f;
     float scale_ = 1.0f;

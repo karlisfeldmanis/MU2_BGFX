@@ -197,6 +197,8 @@ void Figures::bind(FigureBody& body) {
     body.height = body.max[1] - body.min[1];
 
     body.backBone = boneNamed(*body.skeletonMesh, kBackBone);
+    body.pelvisBone = boneNamed(*body.skeletonMesh, "Bip01 Pelvis");
+    body.neckBone = boneNamed(*body.skeletonMesh, "Bip01 Neck");
     for (HeldItem& item : body.held) {
         item.bone = boneNamed(*body.skeletonMesh, item.boneName);
         const OnBack& slung = onBack(item, item.boneName == kLeftGrip);

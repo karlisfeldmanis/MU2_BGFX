@@ -99,6 +99,8 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
                                         kMaxTransientLights);
     uTransientColour_ = bgfx::createUniform("u_transientColour", bgfx::UniformType::Vec4,
                                            kMaxTransientLights);
+    uTransientTo_ = bgfx::createUniform("u_transientTo", bgfx::UniformType::Vec4,
+                                        kMaxTransientLights);
     sLamps_ = bgfx::createUniform("s_lamps", bgfx::UniformType::Sampler);
     sLampGrid_ = bgfx::createUniform("s_lampGrid", bgfx::UniformType::Sampler);
 
@@ -386,7 +388,7 @@ void Renderer::shutdown() {
           &uMaterial_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
-          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
+          &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,
           &sBloom_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;

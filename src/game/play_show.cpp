@@ -135,6 +135,63 @@ void Play::exhale(float seconds) {
     }
 
     for (Drawn& one : drawn_) {
+    // The hero's refined gear as a light source: fx/gleam.h. drawn_[0] is the hero.
+    gleam_.update(seconds);
+    if (!drawn_.empty() && drawn_[0].visible && drawn_[0].placed && drawn_[0].figure.body()) {
+        Drawn& one = drawn_[0];
+        const FigureBody* look = one.figure.body();
+        {
+            // The suit: the most refined piece, lighting from the body's own line, pelvis to neck.
+            ShineLook suit;
+            for (const ShineLook& part : look->partShine) {
+                if (part.level > suit.level) suit = part;
+            }
+            const float origin[3] = {0.0f, 0.0f, 0.0f};
+            float low[3], high[3];
+            if (suit.level >= 7 && look->pelvisBone >= 0 && look->neckBone >= 0 &&
+                one.figure.pointOn(look->pelvisBone, origin, low) &&
+                one.figure.pointOn(look->neckBone, origin, high)) {
+                gleam_.feedLight(low, high, suit);
+            }
+            // The weapon or shield: the most refined thing held, lighting from its own line --
+            // grip to tip along its longest axis -- in the hand, or from where it hangs when it
+            // is slung.
+            const HeldItem* brightest = nullptr;
+            for (const HeldItem& held : look->held) {
+                if (held.mesh && held.bone >= 0 &&
+                    (!brightest || held.shine.level > brightest->shine.level)) {
+                    brightest = &held;
+                }
+            }
+            if (brightest && brightest->shine.level >= 7) {
+                const content::Bounds& box = brightest->mesh->bounds();
+                int axis = 0;
+                float far = 0.0f;
+                for (int k = 0; k < 3; ++k) {
+                    const float reach = std::max(std::fabs(box.min[k]), std::fabs(box.max[k]));
+                    if (reach > far) {
+                        far = reach;
+                        axis = k;
+                    }
+                }
+                const float way =
+                    std::fabs(box.max[axis]) >= std::fabs(box.min[axis]) ? 1.0f : -1.0f;
+                float tipLocal[3] = {0.0f, 0.0f, 0.0f};
+                tipLocal[axis] = way * far;
+                float grip[3], tip[3];
+                if (one.figure.slung()) {
+                    // On the back: a short line at the socket it hangs from.
+                    if (one.figure.pointOn(look->backBone, origin, grip)) {
+                        gleam_.feedLight(grip, grip, brightest->shine);
+                    }
+                } else if (one.figure.pointOn(brightest->bone, origin, grip) &&
+                           one.figure.pointOn(brightest->bone, tipLocal, tip)) {
+                    gleam_.feedLight(grip, tip, brightest->shine);
+                }
+            }
+        }
+    }
+
         if (!one.breathes) continue;
         const sim::Body* body = realm_.find(one.id);
         const FigureBody* look = one.figure.body();

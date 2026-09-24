@@ -176,6 +176,11 @@ struct PointLight {
     // the falloff is flat distance alone, as MU's is; above or below, it falls off further.
     float height = 0.0f;
     float colour[3] = {1.0f, 1.0f, 1.0f};     // linear, before the flicker
+    // A moving light only: when `line`, the light runs from `position` to `to` and lights from
+    // its nearest point, which is how a glowing blade or suit is a light source along its whole
+    // shape rather than a point beside it (game/fx/gleam.h).
+    bool line = false;
+    float to[3] = {0.0f, 0.0f, 0.0f};
 };
 
 class Renderer {
@@ -218,6 +223,9 @@ public:
     // tiles with nothing drawn beyond, and its own attribute maps let the player walk to
     // within three tiles of the last one, so the border showed as a hard line of lit ground
     // against the cleared frame. The last metres of the world are taken down into the black
+    // How strongly a +7 or +9 item's own surface glows this frame, 0 for none: the game's
+    // night (game/fx/gleam.h). Set once a frame before draw().
+    void setShineGlow(float glow) { shineGlow_ = glow; }
     // the frame is cleared with, which is the one thing at the border the player does not
     // need to see. `extentX` and `extentZ` are the map's far corner in metres -- columns run
     // +x from 0 and rows run -z from 0 -- and `band` 0 turns it off, which is what a bench
@@ -504,6 +512,9 @@ private:
     float shineStageStrength_ = 1.0f;
     void bindShine(bool stage = false);
 
+    // How strongly a refined item's own surface glows this frame (setShineGlow); u_refineStar.y
+    // in the world, 0 on the item stages.
+    float shineGlow_ = 0.0f;
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets
     // by a per-vertex weight and carries MU's baked light, which the closed material model
@@ -712,9 +723,12 @@ private:
     bgfx::VertexBufferHandle screenVb_ = BGFX_INVALID_HANDLE;
     bgfx::VertexLayout screenLayout_;
 
+    // A line light's other end, and w 1 when it is one (PointLight::line).
+    float transientTo_[kMaxTransientLights * 4] = {};
     Effects effects_;
 
     std::vector<Batch> batches_;
+    bgfx::UniformHandle uTransientTo_ = BGFX_INVALID_HANDLE;
     std::vector<Batch> casterBatches_;
     std::vector<Batch> fadeBatches_;
 

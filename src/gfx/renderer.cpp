@@ -26,7 +26,7 @@ void Renderer::bindShine(bool stage) {
                              std::fmod(elapsed_, 10.0f) * 0.1f, sheets ? strength : 0.0f,
                              shineTint_};
     bgfx::setUniform(uRefine_, refine);
-    const float star[4] = {shineStar_, 0.0f, 0.0f, 0.0f};
+    const float star[4] = {shineStar_, stage ? 0.0f : shineGlow_, 0.0f, 0.0f};
     bgfx::setUniform(uRefineStar_, star);
     bgfx::setTexture(9, sChrome_, sheets ? shineChrome_ : whiteAo_, 0);
     bgfx::setTexture(10, sShiny_, sheets ? shineShiny_ : whiteAo_,
@@ -78,6 +78,7 @@ void Renderer::bindShadeInputs() {
     if (transientCount_ > 0) {
         bgfx::setUniform(uTransientAt_, transientAt_, kMaxTransientLights);
         bgfx::setUniform(uTransientColour_, transientColour_, kMaxTransientLights);
+        bgfx::setUniform(uTransientTo_, transientTo_, kMaxTransientLights);
     }
     bgfx::setTexture(13, sLamps_, lamps_);
     bgfx::setTexture(14, sLampGrid_, lampGrid_);

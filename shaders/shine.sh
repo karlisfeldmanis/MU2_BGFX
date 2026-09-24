@@ -15,6 +15,8 @@
 // w: how much of the +3/+5/+7/+9 tint the lit colour takes, 1 being MuMain's own
 uniform vec4 u_refine;
 // x: the +9 star's gain on top of the strength, the sheet's refine_star; 1 is MuMain's
+// y: how much brighter the chrome and the star are this frame, 0 by day and in the windows
+//    (game/fx/gleam.h, Renderer::setShineGlow; ours, not MU's)
 uniform vec4 u_refineStar;
 SAMPLER2D(s_chrome, 9);
 SAMPLER2D(s_shiny, 10);
@@ -58,7 +60,11 @@ vec3 shineAdded(float plus, vec3 n, vec3 colour)
 		vec2 metalUv = vec2(n.y * 0.5 + 0.2, -n.z * 0.5 + 0.5);
 		added += texture2DLod(s_shiny, metalUv, 0.0).rgb * u_refineStar.x;
 	}
-	return added * colour * u_refine.z;
+	// At night the +7/+9 effect itself is what glows (u_refineStar.y, ours): the bands and the
+	// star brighten, and the item's line light (game/fx/gleam.h) carries it onto what is near.
+	// A flat glow of the chrome's colour over the whole surface was tried and turned down: it
+	// ate the bands and the star it was meant to show off.
+	return added * colour * u_refine.z * (1.0 + u_refineStar.y);
 }
 
 // **Invention.** What the lamps and fires light refined steel with. A fire 2 m off lights a

@@ -140,3 +140,8 @@ void Renderer::setTransientLights(const PointLight* lights, uint32_t count) {
 }
 
 }  // namespace mu::gfx
+        float* to = &transientTo_[size_t(i) * 4];
+        to[0] = one.to[0];
+        to[1] = one.to[1];
+        to[2] = one.to[2];
+        to[3] = one.line ? 1.0f : 0.0f;

@@ -31,6 +31,7 @@ SAMPLER2D(s_lampGrid, 14);
 // array length at createUniform.
 uniform vec4 u_transientAt[4];      // xyz: world position  w: reach on the ground, metres
 uniform vec4 u_transientColour[4];  // rgb: linear colour, already times this frame's level
+uniform vec4 u_transientTo[4];      // xyz: a line light's other end  w: 1 for a line, 0 a point
                                     // w: how far above the ground it hangs
 
 // One light's contribution: the same GGX the sun takes, times a falloff that reaches exactly
@@ -103,7 +104,17 @@ vec3 transientLight(vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0, floa
 	for (int i = 0; i < 4; ++i)
 	{
 		if (i >= count) break;
-		sum += lampAt(u_transientAt[i], u_transientColour[i], wpos, n, v, diffuseColour, f0,
+		// A line light (u_transientTo.w 1): the light is the nearest point of a segment, so a
+		// glowing blade or a glowing body lights what is beside it along its whole length and
+		// has no hot point. The same lampAt, so the same falloff as every other light.
+		vec4 at = u_transientAt[i];
+		if (u_transientTo[i].w > 0.5)
+		{
+			vec3 run = u_transientTo[i].xyz - at.xyz;
+			float t = saturate(dot(wpos - at.xyz, run) / max(dot(run, run), 1e-6));
+			at.xyz += run * t;
+		}
+		sum += lampAt(at, u_transientColour[i], wpos, n, v, diffuseColour, f0,
 		              roughness, ndotv, specular);
 	}
 	return sum;

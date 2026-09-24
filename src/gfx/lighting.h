@@ -251,6 +251,10 @@ struct Lighting {
     // is MuMain's own; at the world's 0.25 the star was lost in the chrome and a +9 read as a
     // +7. Invention, judged on the studio grid.
     float refineStar = 1.0f;
+    // How much brighter a +7/+9 item's chrome and star are at midnight, 0.5 being half as bright
+    // again: the item's own effect is what glows when it is a light source (game/fx/gleam.h).
+    // Ours, not MU's; judged on night shots.
+    float refineGlow = 0.5f;
 
     // Re-reads `path` when its timestamp has moved. True when something changed, so the
     // caller can log it. The first call always reads.

@@ -23,6 +23,7 @@
 #include "game/fx/breath.h"
 #include "game/fx/meteor.h"
 #include "game/fx/streak.h"
+#include "game/fx/gleam.h"
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/fx/marker.h"
@@ -282,6 +283,8 @@ public:
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
+    // A refined hero's gear as a light source: fx/gleam.h. Fed in `show`.
+    Gleam& gleam() { return gleam_; }
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
@@ -473,6 +476,7 @@ private:
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
+    Gleam gleam_;
     // The hero's footsteps and the smith's hammer, after the clips have been advanced this
     // frame, since both are read off where a clip's clock stands.
     void steps();

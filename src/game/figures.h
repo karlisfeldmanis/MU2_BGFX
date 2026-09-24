@@ -137,6 +137,10 @@ struct FigureBody {
     // `w->LinkBone = 47` in the old client's RenderCharacterBackItem. -1 on a rig that has
     // none, which is every monster's.
     int backBone = -1;
+    // `Bip01 Pelvis` and `Bip01 Neck`: the two ends of the line a refined suit lights from, so
+    // the body is the light (fx/gleam.h). -1 on a rig without them.
+    int pelvisBone = -1;
+    int neckBone = -1;
     // What this figure stands in with its weapon put away. Inside a safe zone MU carries the
     // weapon on the back and stands in the UNARMED idle, and steps out of the zone with the
     // weapon drawn: the client's own rule, from RenderCharacterBackItem and the safe-zone

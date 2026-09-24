@@ -104,6 +104,14 @@ and moved nothing past noise at 1080p (docs/sprints/14-the-shine.md, step 7). Th
 above the table's 6.345 because it is another spot on another day's town; only the difference
 is the price.
 
+**The gleam's lights are not free.** A +7 or +9 hero's gear is a light source at night (fx/
+gleam.h, ours): up to two of the four moving lights, each a line along the suit or the blade,
+and the chrome brightened. With a +9 suit and a +9 Blade on the field east of town, at night
+**+0.29 ms at 2560x1273** (7.113 and 7.115 against 6.820 and 6.829, spreads 0.015 or less) and
+**+0.18 ms at 1920x1080** (5.044 against 4.864, inside the 5.5 budget with 0.46 to spare); at
+noon nothing, the lights being off. Every lit pixel runs the moving-light loop once there is
+one. `kMaxLights` in gleam.h is the knob if the frame needs it back.
+
 **bgfx runs single-threaded here** (`bgfx::renderFrame()` before init, for the preloader's
 worker), so its `waitRender` counter is always 0 and cannot split the frame into CPU work and
 GPU wait. Tried and taken out the same day. Letting bgfx run its own render thread measured

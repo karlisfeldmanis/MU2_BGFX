@@ -206,6 +206,28 @@ inside budget. What is left, named and not done:
   in a window (`RenderPartObject(..., true, true, true)`, ZzzObject.cpp:6510), where it leaves
   skin and hair out of every pass; worn (`:2751`, false) the chrome pass covers every mesh,
   hair included. MU2's skipping of materials named skin and hair was its own.
+* **The gleam, 2026-09-24** (`game/fx/gleam`): refined gear as a light source, the user's
+  asking. **Ours**: MuMain lights nothing with a refined item. What was kept:
+  - **The item's own +7/+9 effect glows at night.** The chrome bands and the star brighten by
+    `refine_glow` (0.5: half as bright again at midnight, nothing by day), so what shines is
+    the effect itself.
+  - **It lights what is near it as its own shape.** The suit is a line light from `Bip01
+    Pelvis` to `Bip01 Neck` in its chrome colour, a +7/+9 weapon or shield a line from grip to
+    tip in its colour (a short one at the back socket when slung): `PointLight::line`, lit in
+    lights.sh from the segment's nearest point through the same `lampAt` as every light, so
+    one falloff still serves all. 2.5 m of reach, 0.18 at +7 and 0.3 at +9, breathing on
+    g_Luminosity's period, gone by day.
+  - **Turned down on the way, and named in gleam.h so none is built again**: one light at chest
+    height with a chest-high column of flat distance (a floor disc round the feet); a point on
+    each piece (lamps beside the gear, "light has to come from actual gear"); a flat glow of
+    the chrome's colour over the surface (it ate the bands and the star, "the light effect is
+    eating the +7,+9 effect"); lights at 0.35 and 0.6 ("too aggressive"); and MuMain's flare01
+    sprite at ten swords' tips (RenderCharacter, ZzzCharacter.cpp:10174-10475), which the user
+    did not want on the weapon.
+  - **Priced**, the +9 Plate suit and +9 Blade against the same save at +0, on the field east
+    of town, `--repeat 3`: at night **+0.29 ms at 2560x1273** (7.113 and 7.115 against 6.820
+    and 6.829, two interleaved pairs, spreads 0.015 or less) and **+0.18 ms at 1920x1080**
+    (5.044 against 4.864, inside the 5.5 budget); at noon nothing (6.809 against 6.810).
 * **The chrome is fixed to the world, not the view** (MuMain's world normal): a turning camera
   sees the same band on the same plate, and a flat face takes one texel, which may be a dark
   one for a few seconds of the wave.

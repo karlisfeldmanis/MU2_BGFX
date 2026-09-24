@@ -555,9 +555,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // including the frame it becomes none, which is what clears it.
     {
         gfx::PointLight falling[gfx::Renderer::kMaxTransientLights];
-        ctx.renderer.setTransientLights(
-            falling, world_.played().meteor().lights(falling,
-                                                     gfx::Renderer::kMaxTransientLights));
+        uint32_t count =
+            world_.played().meteor().lights(falling, gfx::Renderer::kMaxTransientLights);
+        count += world_.played().gleam().lights(falling + count,
+                                                gfx::Renderer::kMaxTransientLights - count,
+                                                daylightOf(ctx.lighting));
+        ctx.renderer.setTransientLights(falling, count);
+        // And the refined gear's own glow, the other half of it being a light source.
+        ctx.renderer.setShineGlow(game::Gleam::nightOf(daylightOf(ctx.lighting)) *
+                                  ctx.lighting.refineGlow);
     }
     // The town's own animation: before the town is gathered, since each placement's
     // pose rides in its own instance the same way a glow's level does. Only what the
@@ -567,6 +573,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         float proj[16];
         float viewProj[16];
         ctx.renderer.cameraMatrices(eye, view, proj);
+    // And after them, in what slots are left, the light a +7 or +9 hero carries at night
+    // (fx/gleam.h; ours, not MU's).
         bx::mtxMul(viewProj, view, proj);
         world_.sway().update(float(deltaSeconds), args.cullChunks ? viewProj : nullptr,
                              ctx.renderer, world_.town());

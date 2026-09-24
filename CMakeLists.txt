@@ -163,6 +163,7 @@ add_executable(mu2
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp
+  src/game/fx/gleam.cpp
   src/sim/items.cpp
   src/sim/market.cpp
   src/sim/realm.cpp
