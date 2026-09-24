@@ -499,8 +499,8 @@ const content::Mesh* Figures::wearable(const std::string& name) {
 const FigureBody* Figures::dress(const std::string& name, const std::string& base,
                                  const std::string& weapon, const std::string& shield,
                                  const std::vector<std::string>& worn,
-                                 const std::vector<int>& wornPlus, int weaponPlus,
-                                 int shieldPlus) {
+                                 const std::vector<ShineLook>& wornShine,
+                                 const ShineLook& weaponShine, const ShineLook& shieldShine) {
     const FigureBody* wearing = body(base);
     if (!wearing) {
         core::logError("nothing cooked called %s to dress %s in", base.c_str(), name.c_str());
@@ -519,22 +519,22 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
     // word -- the suits' own rule below, one piece at a time. An open helm goes on over the
     // head rather than in its place, as the suits keep it.
     // Each part's plus rides beside it, so the bare parts left uncovered stay +0.
-    made->partRefine.assign(made->parts.size(), 0);
+    made->partShine.assign(made->parts.size(), ShineLook{});
     for (size_t w = 0; w < worn.size(); ++w) {
         const std::string& piece = worn[w];
         const content::Mesh* found = wearable(piece);
         if (!found) continue;
-        const int plus = w < wornPlus.size() ? wornPlus[w] : 0;
+        const ShineLook shine = w < wornShine.size() ? wornShine[w] : ShineLook{};
         for (size_t i = 0; i < made->parts.size() && i < 5; ++i) {
             const std::string word = kPieces[i];
             if (piece.compare(0, word.size(), word) != 0) continue;
             const auto keeps = keepsHead_.find(piece);
             if (i == 0 && keeps != keepsHead_.end() && keeps->second) {
                 made->parts.push_back(found);
-                made->partRefine.push_back(plus);
+                made->partShine.push_back(shine);
             } else {
                 made->parts[i] = found;
-                made->partRefine[i] = plus;
+                made->partShine[i] = shine;
             }
             break;
         }
@@ -558,7 +558,7 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
         }
         HeldItem item;
         item.mesh = found;
-        item.refine = right ? weaponPlus : shieldPlus;
+        item.shine = right ? weaponShine : shieldShine;
         auto row = items_.find(found->name());
         if (row != items_.end()) {
             item.kind = row->second.kind;

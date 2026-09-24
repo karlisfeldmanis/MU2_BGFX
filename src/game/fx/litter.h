@@ -25,6 +25,7 @@
 
 #include "content/ground.h"
 #include "game/item_models.h"
+#include "game/shine.h"
 #include "gfx/renderer.h"
 #include "sim/items.h"
 #include "sim/realm.h"
@@ -69,7 +70,7 @@ private:
     struct Drop {
         uint32_t id = 0;
         bool present = false;
-        int refine = 0;  // the item's plus, for the shine; a heap of Zen has none
+        ShineLook shine;  // how the item's plus shows; a heap of Zen has none
         std::vector<Piece> pieces;
     };
 

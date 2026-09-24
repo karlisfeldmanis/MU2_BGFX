@@ -16,8 +16,14 @@ void main()
 	// w is MU's glow flicker, unless this instance is fading -- a weapon in a fading figure's
 	// hand -- in which case it is 2 + the fade. common.sh's figureFade separates the two.
 	v_light = vec4(i_data4.xyz, i_data5.y < 1.0 ? 2.0 + i_data5.y : i_data4.w);
-	// The item's plus, for the shine: the same at all three corners, so it arrives whole.
-	v_refine = i_data5.z;
+	// The item's plus and its chrome's colour, for the shine: the same at all three corners,
+	// so they arrive whole. The colour is packed at hundredths (gfx::packRefineColour).
+	float packed = i_data5.w;
+	// The half keeps an exact quotient from landing a hair under its integer.
+	float red = floor((packed + 0.5) / 10201.0);
+	float green = floor((packed - red * 10201.0 + 0.5) / 101.0);
+	float blue = packed - red * 10201.0 - green * 101.0;
+	v_refine = vec4(i_data5.z, red * 0.01, green * 0.01, blue * 0.01);
 
 	// Normals go by the model matrix's rotation. MU2's build has no non-uniform scale on a
 	// placement, so the matrix itself serves and there is no inverse transpose to carry.

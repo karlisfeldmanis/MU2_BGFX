@@ -89,6 +89,7 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     const content::Mesh* mesh = models_->of(one.what.item);
     if (!mesh) return;
     const content::ItemRow& row = models_->tables()->items[size_t(one.what.item)];
+    drop.shine = shineOf(row, one.what.refinement);
     const content::Bounds& b = mesh->bounds();
     const float centre[3] = {(b.max[0] + b.min[0]) * 0.5f, (b.max[1] + b.min[1]) * 0.5f,
                              (b.max[2] + b.min[2]) * 0.5f};
@@ -161,7 +162,6 @@ void Litter::buildHeap(const sim::Lying& one, Drop& drop) {
 
 void Litter::build(const sim::Lying& one, Drop& drop) {
     drop.id = one.id;
-    drop.refine = one.what.empty() ? 0 : one.what.refinement;
     if (one.what.empty()) {
         buildHeap(one, drop);
     } else {
@@ -230,7 +230,7 @@ void Litter::gather(std::vector<gfx::Drawable>& out,
             // Row-vector matrices: the translation is the last row, so the fall is added to it
             // rather than composed as another matrix.
             drawable.transform[13] += piece.above;
-            drawable.refine = drop.refine;
+            wear(drop.shine, drawable);
             // A thing that is not the town is not in the probe: a cube taken at the player's
             // chest holds the street, and a sword at his feet would be reflected out of it
             // twice the size it is.
@@ -251,7 +251,7 @@ void Litter::gatherOne(uint32_t id, std::vector<gfx::Drawable>& out) const {
             drawable.mesh = piece.mesh;
             std::memcpy(drawable.transform, piece.rest, sizeof(drawable.transform));
             drawable.transform[13] += piece.above;
-            drawable.refine = drop.refine;
+            wear(drop.shine, drawable);
             drawable.inProbe = false;
             out.push_back(drawable);
         }

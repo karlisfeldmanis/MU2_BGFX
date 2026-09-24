@@ -42,7 +42,7 @@ vec3 shineTint(float plus)
 // (x, z, -y) (docs/conventions.md), so MU's n.z is our n.y and MU's n.y is our -n.z:
 //   CHROME  u = n.z * 0.5 + wave     v = n.y * 0.5 + wave * 2   (ZzzBMD.cpp, Chrome01, repeat)
 //   METAL   u = n.z * 0.5 + 0.2      v = n.y * 0.5 + 0.5        (Shiny01, clamped)
-// `colour` is PartObjectColor's: orange (1, 0.5, 0) until the table is cooked.
+// `colour` is PartObjectColor's, per item (game::shineOf), carried in v_refine.yzw.
 vec3 shineAdded(float plus, vec3 n, vec3 colour)
 {
 	vec3 added = vec3_splat(0.0);
@@ -58,7 +58,5 @@ vec3 shineAdded(float plus, vec3 n, vec3 colour)
 	}
 	return added * colour * u_refine.z;
 }
-
-#define SHINE_COLOUR vec3(1.0, 0.5, 0.0)
 
 #endif

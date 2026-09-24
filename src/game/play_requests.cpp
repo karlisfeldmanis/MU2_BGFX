@@ -101,28 +101,29 @@ void Play::redress() {
     // And what he wears: the five armour slots, by the asset each item row names. Without
     // these the figure only ever changed its hands, and gloves put on stayed bare hands.
     std::vector<std::string> worn;
-    std::vector<int> wornPlus;
+    std::vector<ShineLook> wornShine;
     for (int slot = sim::kHelm; slot <= sim::kBoots; ++slot) {
         const sim::Held& held = realm_.satchel()[slot];
         if (held.empty() || size_t(held.item) >= tables_.items.size()) continue;
-        worn.push_back(tables_.items[size_t(held.item)].name);
-        wornPlus.push_back(held.refinement);
+        const content::ItemRow& row = tables_.items[size_t(held.item)];
+        worn.push_back(row.name);
+        wornShine.push_back(shineOf(row, held.refinement));
     }
-    // Each hand's plus, for the shine: the hand slot holding the item of that name. The realm
-    // says which arm swings, not which slot it came out of.
-    const auto handPlus = [&](const std::string& name) {
-        if (name.empty()) return 0;
+    // How each hand's plus shows: the hand slot holding the item of that name. The realm says
+    // which arm swings, not which slot it came out of.
+    const auto handShine = [&](const std::string& name) {
+        if (name.empty()) return ShineLook{};
         for (int slot : {sim::kWeaponRight, sim::kWeaponLeft}) {
             const sim::Held& held = realm_.satchel()[slot];
             if (!held.empty() && size_t(held.item) < tables_.items.size() &&
                 tables_.items[size_t(held.item)].name == name) {
-                return int(held.refinement);
+                return shineOf(tables_.items[size_t(held.item)], held.refinement);
             }
         }
-        return 0;
+        return ShineLook{};
     };
     const FigureBody* look = figures_->dress(kHeroDressName, bare_, weapon, shield, worn,
-                                             wornPlus, handPlus(weapon), handPlus(shield));
+                                             wornShine, handShine(weapon), handShine(shield));
     if (!look) return;
     Drawn& drawn = drawn_[0];
     drawn.figure.reskin(look);

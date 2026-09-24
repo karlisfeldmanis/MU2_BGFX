@@ -542,7 +542,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                         // item's plus, for the shine.
                         const float skin[4] = {
                             float(d->paletteRow < 0 ? kBindRow : d->paletteRow), d->fade,
-                            float(d->refine), 0.0f};
+                            float(d->refine), packRefineColour(d->refineColour)};
                         std::memcpy(idb.data + written * stride + sizeof(float) * 20, skin,
                                     sizeof(skin));
                         ++written;

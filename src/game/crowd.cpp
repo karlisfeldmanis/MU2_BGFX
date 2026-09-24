@@ -253,7 +253,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         drawable.mesh = part;
         std::memcpy(drawable.transform, transform, sizeof(transform));
         drawable.paletteRow = part->isSkinned() ? row : -1;
-        drawable.refine = i < body_->partRefine.size() ? body_->partRefine[i] : 0;
+        if (i < body_->partShine.size()) wear(body_->partShine[i], drawable);
         out.push_back(drawable);
     }
 
@@ -276,7 +276,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
 
         gfx::Drawable drawable;
         drawable.mesh = item.mesh;
-        drawable.refine = item.refine;
+        wear(item.shine, drawable);
         // No row: a rigid item needs no palette, and a bow or a crossbow -- which carry a
         // 12-bone rig of their own -- take the renderer's bind row, which is their own bind
         // pose. Their one clip is the string, and it is owed with the items.

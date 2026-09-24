@@ -2,6 +2,7 @@
 // materials and nothing about the game — no map, no figure, no rules.
 #pragma once
 
+#include <cmath>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -49,6 +50,9 @@ struct Drawable {
     // Per instance, so one mesh's instances can each carry their own. 0 for everything that
     // is not an item. docs/sprints/14-the-shine.md.
     int refine = 0;
+    // The colour its chrome is added in, MuMain's PartObjectColor; game::shineOf says which.
+    // Packed into one float of the instance at hundredths (packRefineColour).
+    float refineColour[3] = {1.0f, 0.5f, 0.0f};
     // False leaves it out of the reflection probe, as a posed figure always is. The viewer's
     // subject: the cube is taken 1.2 m over the camera's focus, which in the viewer is inside
     // the subject, and a cannon would reflect the inside of its own barrel. In the game the
@@ -56,6 +60,16 @@ struct Drawable {
     // instance left out leaves out every instance of that mesh in the frame.
     bool inProbe = true;
 };
+
+// A chrome colour in one float: each channel at hundredths, 0 to 100, as r * 10201 + g * 101 + b.
+// At most 1030300, well inside a float's exact integers; the vertex shaders take it apart
+// again (vs_static, vs_skinned). Instance data is not interpolated, so it arrives whole.
+inline float packRefineColour(const float c[3]) {
+    const auto hundredths = [](float v) {
+        return float(int(std::fmin(std::fmax(v, 0.0f), 1.0f) * 100.0f + 0.5f));
+    };
+    return hundredths(c[0]) * 10201.0f + hundredths(c[1]) * 101.0f + hundredths(c[2]);
+}
 
 // The near field's grass, ready to draw. The renderer knows nothing of maps, tiles or where
 // grass grows: `game`'s Grass walks the land and fills this, and what arrives here is one

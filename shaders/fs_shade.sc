@@ -171,9 +171,9 @@ void main()
 
 	// The refinement ladder: MuMain tints the light an item is drawn in, so the tint takes
 	// everything lit above, and adds its chrome unlit, so that goes on after. shine.sh.
-	float plus = shinePlus(v_refine);
+	float plus = shinePlus(v_refine.x);
 	colour *= shineTint(plus);
-	colour += shineAdded(plus, normalize(v_normal), SHINE_COLOUR);
+	colour += shineAdded(plus, normalize(v_normal), v_refine.yzw);
 
 	// The emissive, or on foliage the light through it. MU2's pipeline writes a leaf's own
 	// sheet as its emissive at a fraction, standing in for transmission, and that fraction

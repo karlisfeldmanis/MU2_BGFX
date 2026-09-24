@@ -121,6 +121,7 @@ add_executable(mu2
   src/game/world/boids.cpp
   src/game/world/leaves.cpp
   src/game/save.cpp
+  src/game/shine.cpp
   src/game/world/ornaments.cpp
   src/game/world/shades.cpp
   src/game/figures.cpp

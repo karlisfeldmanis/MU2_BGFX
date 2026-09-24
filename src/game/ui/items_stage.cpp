@@ -6,6 +6,7 @@
 #include <bx/math.h>
 
 #include "core/log.h"
+#include "game/shine.h"
 
 namespace mu::game {
 namespace {
@@ -162,7 +163,7 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         // A worn piece at its bind pose, which is the skin as it was modelled: a drawable with
         // no row of its own draws against the palette's bind row.
         drawable.paletteRow = -1;
-        drawable.refine = one.refinement;
+        wear(shineOf(row, one.refinement), drawable);
         drawables_.push_back(drawable);
     }
 

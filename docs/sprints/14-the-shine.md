@@ -100,3 +100,25 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
   A copy of the save with the suit at +9, the axe +7 and the shield +5: the plate shows the
   chrome bands, orange as `PartObjectColor` 0 makes them, and at strength 1 they saturate to
   yellow under exposure 1.5 and the bloom -- step 5's knob, judged on the bench (step 6).
+- 2026-09-24, step 4: the colour and the level are MuMain's, per item. Code, not a cook:
+  both are functions of MU's own group and number, which `ItemRow` carries, like the damage
+  tables in `sim/items`. `game/shine.cpp`'s `shineOf(row, plus)`:
+  * **Colour**, `PartObjectColor` cut to our rows: Bill of Balrog 1 (1, 0.2, 0); Silver Bow
+    and Bluewing Crossbow 5 (white); Lighting Sword and Legendary Staff 2 (0, 0.5, 1); the
+    armour by set -- Dragon 1, Legendary 3 (blue), Bone 5, Scale 6 (0.6, 0.8, 0.4), Plate and
+    Wind 2 (blue), Spirit 4 (0, 0.8, 0.4), Guardian 5 -- and orange (1, 0.5, 0) for the rest.
+  * **Level**, `RenderPartObjectEffect`'s overrides cut the same way: every jewel (Bless,
+    Soul, Chaos) draws at +8, so a jewel always carries the chrome; the orb of summoning and
+    the wings at +0; the later orbs at +9; bolts and arrows at `plus * 2 + 1`. Group 12 is
+    numbered alike in OpenMU and MuMain (`docs/mu-scrolls-and-orbs.md`).
+  The colour rides the instance's last free float at hundredths (`gfx::packRefineColour`),
+  taken apart in the vertex shaders, so `v_refine` is now `(plus, r, g, b)`. The body keeps a
+  `ShineLook` per part and per hand; drops and stages make theirs from the row. A +9 Plate
+  suit on the save's copy shines blue where the Leather one shone orange.
+  **The version check.** No 0.75, 0.97d or Season 1-3 client source exists to read. The
+  oldest is a decompiled 0.97k main (~2005, github.com/aldomigge/Mu-97k-Client-Source:
+  `PartObjectColor` at 0x00503CF0, `RenderPartObjectEffect` at 0x00504B50, the addresses
+  confirmed by MuEmu-0.97k-kayito's `Offsets.h`). It has the same ladder -- the red and blue
+  tints, chrome at +7, chrome and metal at +9 -- and a colour table equal to MuMain's for
+  every entry this table uses (colours 0-6, sets up to 14). So the look is traced to 0.97k,
+  not to 0.75, which nothing attests either way.

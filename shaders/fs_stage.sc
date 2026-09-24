@@ -99,9 +99,9 @@ void main()
 
 	// The refinement ladder, as fs_shade draws it. MuMain's bag draws the same passes, unlit
 	// and white-lit, so the stage's own light is what the tint multiplies.
-	float plus = shinePlus(v_refine);
+	float plus = shinePlus(v_refine.x);
 	colour *= shineTint(plus);
-	colour += shineAdded(plus, normalize(v_normal), SHINE_COLOUR);
+	colour += shineAdded(plus, normalize(v_normal), v_refine.yzw);
 
 	gl_FragColor = vec4(toSrgb(colour), 1.0);
 }

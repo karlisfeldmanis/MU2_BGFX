@@ -20,7 +20,12 @@ void main()
 	v_texcoord0 = a_texcoord0;
 	// w is 2 + the figure's fade (i_data5.y); common.sh's figureFade says why the 2.
 	v_light = vec4(i_data4.xyz, 2.0 + i_data5.y);
-	v_refine = i_data5.z;
+	// As vs_static takes it apart.
+	float packed = i_data5.w;
+	float red = floor((packed + 0.5) / 10201.0);
+	float green = floor((packed - red * 10201.0 + 0.5) / 101.0);
+	float blue = packed - red * 10201.0 - green * 101.0;
+	v_refine = vec4(i_data5.z, red * 0.01, green * 0.01, blue * 0.01);
 
 	// The rig has no non-uniform scale -- no clip in this content animates one at all -- so
 	// the world matrix itself carries normals and there is no inverse transpose to build.

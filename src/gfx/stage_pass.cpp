@@ -57,7 +57,7 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
         std::memcpy(idb.data + i * stride, d.transform, sizeof(float) * 16);
         std::memcpy(idb.data + i * stride + sizeof(float) * 16, d.light, sizeof(float) * 4);
         const float skin[4] = {float(d.paletteRow < 0 ? kBindRow : d.paletteRow), 1.0f,
-                               float(d.refine), 0.0f};
+                               float(d.refine), packRefineColour(d.refineColour)};
         std::memcpy(idb.data + i * stride + sizeof(float) * 20, skin, sizeof(skin));
     }
 
