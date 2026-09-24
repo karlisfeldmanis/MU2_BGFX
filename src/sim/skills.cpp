@@ -25,12 +25,15 @@ namespace {
 //     two-handed sweep.
 //   * `coolTicks` is at 20 Hz: 60 is three seconds.
 constexpr SkillRow kRows[kSkills] = {
-    // Defense 18: a buff, half damage for 30 mana (`DefenseEffectInitializer`). Five minutes of
-    // it, where 0.75 gives four seconds: the user's call of 2026-09-25, ours and not MU's. The
+    // Defense 18: a buff for 30 mana (`DefenseEffectInitializer`). Five minutes of it, where
+    // 0.75 gives four seconds: the user's call of 2026-09-25, ours and not MU's. What it takes
+    // off a blow is no longer this row's flat 0.50 but `guardShare`, off the shield and the
+    // four stats; the column keeps 0.75's half as the record of what was replaced. The
     // twelve seconds of cooldown are floored at its own duration and two, so it is never
     // permanent: a guard that lapses is down for two seconds before it can be raised again.
     {skill::kDefense, "Defense", 30, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000, 0.50f,
-     "A guard raised behind the shield: half of every blow that lands, for five minutes.", 187,
+     "A guard raised behind the shield for five minutes. The better the shield and the "
+     "stronger, quicker and keener the knight, the more of every blow it takes.", 187,
      "player_skill_defense", true, arms::kShield, 6},
     // The knock is OFF on all six, and the column is kept rather than removed. 0.75 sets
     // `movesTarget` on the knight's five and it puts the monster on a neighbouring tile at once --
@@ -239,8 +242,18 @@ int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {
     return std::max<int32_t>(1, clipTicks);
 }
 
-std::string absorbed(const SkillRow& row) {
-    return std::to_string(int(std::lround((1.0 - double(row.damageTaken)) * 100.0))) + "%";
+float guardPoints(const HeroPoints& points, int shieldDefense) {
+    return 5.0f * float(std::max(0, shieldDefense)) + 0.4f * float(points.strength) +
+           1.0f * float(points.agility) + 1.2f * float(points.energy);
+}
+
+float guardShare(const HeroPoints& points, int shieldDefense) {
+    const float p = std::max(0.0f, guardPoints(points, shieldDefense));
+    return kGuardCap * p / (p + 150.0f);
+}
+
+std::string absorbed(float share) {
+    return std::to_string(int(std::lround(double(share) * 100.0))) + "%";
 }
 
 std::string spoken(float seconds) {

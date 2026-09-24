@@ -146,6 +146,7 @@ void Realm::rearm(Body& hero) {
     hero.shield = left && left->shield() ? tables_->armNamed(left->name) : -1;
     hero.wornDefense = 0;
     hero.wornDefenseRate = 0;
+    hero.shieldDefense = 0;
     for (int slot = kWeaponLeft; slot <= kBoots; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || (!row->shield() && !row->armour())) continue;
@@ -153,6 +154,7 @@ void Realm::rearm(Body& hero) {
         // The shield's block column rises on the armour's table: _shieldDefenseRateIncreaseTable
         // is built from DefenseIncreaseByLevel.
         if (row->shield()) {
+            hero.shieldDefense = row->defense + defenseBonus(true, bag_[slot].refinement);
             hero.wornDefenseRate += row->defenseRate + defenseBonus(false, bag_[slot].refinement);
         }
     }
@@ -166,7 +168,7 @@ void Realm::rearm(Body& hero) {
 
 Wearer Realm::wearer() const {
     const Body& hero = bodies_[0];
-    return Wearer{hero.kin, hero.level, hero.points, hero.learned};
+    return Wearer{hero.kin, hero.level, hero.points, hero.learned, hero.shieldDefense};
 }
 
 int Realm::give(int32_t item, int slot, int refinement, int durability) {

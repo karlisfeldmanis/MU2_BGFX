@@ -848,6 +848,17 @@ void testSkills(const content::Tables& tables) {
                "300 agility halves a cooldown");
     check(sim::cooldownTicks(guard, 100000, sim::floorTicksFor(guard, 0)) > guard.boonTicks,
           "and a guard's cooldown always outlasts the guard");
+    // Defense's share: each of the four stats and the shield raises it, and none reaches the cap.
+    const sim::HeroPoints fresh{28, 20, 25, 10};
+    const float start = sim::guardShare(fresh, 3);
+    check(start > 0.10f && start < 0.25f, "a new knight's guard takes a modest share");
+    check(sim::guardShare(fresh, 20) > start &&
+              sim::guardShare({128, 20, 25, 10}, 3) > start &&
+              sim::guardShare({28, 120, 25, 10}, 3) > start &&
+              sim::guardShare({28, 20, 25, 110}, 3) > start,
+          "the shield, strength, agility and energy each raise the guard");
+    check(sim::guardShare({30000, 30000, 0, 30000}, 5000) < sim::kGuardCap,
+          "and no build reaches the guard's cap");
     check(sim::force(cyclone, sim::HeroPoints{2000, 0, 0, 0}) >
               sim::force(cyclone, sim::HeroPoints{28, 0, 0, 0}),
           "strength is force");

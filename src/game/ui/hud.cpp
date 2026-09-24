@@ -877,7 +877,9 @@ void Hud::rebuild() {
             if (const sim::SkillRow* row = sim::skillNumbered(boon_.skill)) {
                 const std::vector<panel::Line> lines = {
                     {row->name, kTipNameColour, true},
-                    {"Absorbs " + sim::absorbed(*row) + " of every blow", kTipColour, false},
+                    {"Absorbs " + sim::absorbed(1.0f - hero_->boonDamageTaken) +
+                         " of every blow",
+                     kTipColour, false},
                     {sim::spoken(boon_.seconds) + " left", kTipColour, false}};
                 const Box cell = plate(s, kBuffsAt);
                 panel::tooltip(tip_, cell.midX(), cell.y, lines,

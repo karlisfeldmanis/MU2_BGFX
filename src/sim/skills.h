@@ -218,11 +218,23 @@ int32_t cooldownTicks(const SkillRow& row, int agility, int32_t floorTicks);
 // seconds for a buff.
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks);
 
+// How much of every blow Defense takes away, 0 to kGuardCap, off the shield he holds and all
+// four of his stats. INVENTION, the user's call of 2026-09-25 ("a better formula, something
+// with shield defense and agility and strength and energy"); 0.75 gives a flat half. Guard
+// points are 5 a point of the shield's defence (its plus and its wear counted), 0.4 a point of
+// strength, 1 of agility and 1.2 of energy; the share is kGuardCap * points / (points + 150),
+// so it climbs fast early and flattens, and never reaches the cap. A new knight's is about
+// 17%, a level-23 knight's about 30%, a strong late build's about 49%. Read at the cast and
+// held for the guard's whole length (`Body::boonDamageTaken`), which multiplies what gets
+// past armour and the floor (`rules.cpp`).
+constexpr float kGuardCap = 0.60f;
+float guardPoints(const HeroPoints& points, int shieldDefense);
+float guardShare(const HeroPoints& points, int shieldDefense);
+
 // A buff's words, for every card that describes one, so the skill key, the orb and the strip
-// cannot say it three ways. `absorbed` is the share of a blow it takes away, "50%" -- off
-// `damageTaken`, which multiplies what gets past armour and the floor (`rules.cpp`). `spoken`
-// is a length of time as a player reads one: "5:00" from a minute up, "4 s" under it.
-std::string absorbed(const SkillRow& row);
+// cannot say it three ways. `absorbed` is a share of a blow as a player reads it, "30%".
+// `spoken` is a length of time: "5:00" from a minute up, "4 s" under it.
+std::string absorbed(float share);
 std::string spoken(float seconds);
 
 }  // namespace mu::sim

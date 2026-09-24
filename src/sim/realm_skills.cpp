@@ -141,9 +141,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
         hero.boonSkill = row.number;
-        hero.boonDamageTaken = row.damageTaken;
+        // The guard's share off his shield and stats as they stand at the cast, held for its
+        // whole length: `guardShare` in sim/skills.h, where the numbers are argued.
+        hero.boonDamageTaken = 1.0f - guardShare(hero.points, hero.shieldDefense);
         hero.boonUntil = tick_ + row.boonTicks;
-        hero.stats.damageTaken = double(row.damageTaken);
+        hero.stats.damageTaken = double(hero.boonDamageTaken);
     } else {
         Body* target = body(at);
         // The reach, and it is the knight's own. 0.75 gave each skill a range and then added two

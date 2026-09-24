@@ -144,6 +144,8 @@ struct Body {
     // shield's defence with their plus counted, and the weapon's plus on its damage band.
     int32_t wornDefense = 0;
     int32_t wornDefenseRate = 0;
+    // And the shield's own share of `wornDefense`, which is what Defense's guard is raised on.
+    int32_t shieldDefense = 0;
     int32_t weaponBonus = 0;
 
     // Tiles, and a tile's centre is its integer coordinate -- MU2's own reckoning

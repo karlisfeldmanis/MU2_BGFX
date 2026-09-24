@@ -666,8 +666,20 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     if (row.onSelf()) {
         // What it takes off a blow, as a share, and for how long -- the two questions a guard
         // is asked. It was "x0.50 for 4.0 s", which left the player to do the sum.
-        facts.rows.push_back(line("Absorbs", sim::absorbed(row) + " of every blow",
-                                  tip::Tone::Green));
+        facts.rows.push_back(
+            line("Absorbs",
+                 sim::absorbed(sim::guardShare(hero.points, hero.shieldDefense)) + " of every blow",
+                 tip::Tone::Green));
+        // And what it is made of, grey and on one line as an attack's sum is: the guard points
+        // off the shield and the four stats, and the cap they climb towards.
+        char sum[96];
+        std::snprintf(sum, sizeof(sum), "%d shield, %d str, %d agi, %d ene (max %d%%)",
+                      hero.shieldDefense, hero.points.strength, hero.points.agility,
+                      hero.points.energy, int(sim::kGuardCap * 100.0f + 0.5f));
+        tip::Row how;
+        how.free = sum;
+        how.freeTone = tip::Tone::Gray;
+        facts.rows.push_back(how);
         facts.rows.push_back(line("Lasts", sim::spoken(float(row.boonTicks) * 0.05f),
                                   tip::Tone::White));
     } else {

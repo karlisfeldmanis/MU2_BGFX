@@ -225,8 +225,11 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         // claim the same blow.
         if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches)) {
             if (skill->onSelf()) {
-                teaches.rows.push_back(stat("Absorbs", sim::absorbed(*skill) + " of every blow",
-                                            known ? Tone::Gray : Tone::Green));
+                teaches.rows.push_back(
+                    stat("Absorbs",
+                         sim::absorbed(sim::guardShare(who.points, who.shieldDefense)) +
+                             " of every blow",
+                         known ? Tone::Gray : Tone::Green));
                 teaches.rows.push_back(stat("Lasts",
                                             sim::spoken(float(skill->boonTicks) * 0.05f),
                                             known ? Tone::Gray : Tone::White));
