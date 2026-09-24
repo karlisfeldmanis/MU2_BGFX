@@ -194,6 +194,18 @@ inside budget. What is left, named and not done:
   chest ridge and the boots with the plate still read; at 8 the helm is a neon blob at night.
   **The user picked 4.** In the bag, at the stages' own strength of 1, the +9 pieces take
   brighter cyan edges and nothing blows out.
+* **Every cooked set checked, 2026-09-24** (the user's asking): all nine sets the studio's
+  wardrobe holds at +0 and +9, noon and night, 3.5 m (shots/studio/shine/sets_noon.png,
+  sets_night.png). Each takes `PartObjectColor`'s colour: Bronze, Brass, Leather, Pad, Sphinx
+  and Vine orange, which after the tonemap reads as gold; Bone white, a brighter silver; Scale
+  (0.6, 0.8, 0.4), a pale green; Plate blue. Night shows it plainest. Dragon, Legendary, Silk,
+  Wind, Spirit and Guardian are not cooked for Lorencia and could not be shot; their colours
+  come from the same table and the same code.
+  The Vine elf's hair takes the chrome at +9, because the hair is part of the helm's mesh and
+  one baked material. That is MuMain's: `HideSkin` is on only for a dropped item and a picture
+  in a window (`RenderPartObject(..., true, true, true)`, ZzzObject.cpp:6510), where it leaves
+  skin and hair out of every pass; worn (`:2751`, false) the chrome pass covers every mesh,
+  hair included. MU2's skipping of materials named skin and hair was its own.
 * **The chrome is fixed to the world, not the view** (MuMain's world normal): a turning camera
   sees the same band on the same plate, and a flat face takes one texel, which may be a dark
   one for a few seconds of the wave.
