@@ -33,6 +33,7 @@ are 9, 12 and 13.
 | 7 | Rules II and the windows — items, drops, bag, equipment, potions, shop, HUD | `07-the-windows.md` | done |
 | 8 | Light and look — lamps and fires (8a/8b), the reflection probe and metal (8c) | `08a-the-lamps.md`, `08c-the-metal.md` | done |
 | — | The ring — MU2's hover outline migrated off Godot | `09-the-ring.md` | done (misnumbered: it is not sprint 9) |
+| — | The shine — MuMain's +3/+5/+7/+9 look on the body, the ground and the bag | `14-the-shine.md` | done 2026-09-24 (misnumbered: sprint 14 is the debts) |
 
 `09-the-ring.md` carries a sprint number that `PLAN.md` promises to something else. It keeps
 its filename and is read as part of sprint 10 below; `PLAN.md`'s sprint 9 is still ahead.

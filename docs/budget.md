@@ -95,6 +95,15 @@ dither in fs_shadow was never reached), and `Renderer::draw` grouped the frame's
 thousand drawables into vectors built fresh each frame, against foundation 7's "no
 allocation"; they live on the renderer now.
 
+**The shine (`14-the-shine.md`) costs nothing measurable.** The hero at 148,142 in a +9 Plate suit
+with a +7 axe and a +5 shield, against the same save with every plus at 0, 2560x1273, timers
+off, `--repeat 3` of 600: 6.658 ms against 6.654, spreads 0.010 and 0.026. The ladder is a
+branch on a per-instance number in the shade pass and two small samples on +7 pixels, with no
+draw added. The bag's picture taken every frame while something in it shines added 39 draws
+and moved nothing past noise at 1080p (docs/sprints/14-the-shine.md, step 7). The baseline is
+above the table's 6.345 because it is another spot on another day's town; only the difference
+is the price.
+
 **bgfx runs single-threaded here** (`bgfx::renderFrame()` before init, for the preloader's
 worker), so its `waitRender` counter is always 0 and cannot split the frame into CPU work and
 GPU wait. Tried and taken out the same day. Letting bgfx run its own render thread measured

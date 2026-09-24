@@ -1,4 +1,7 @@
-# Sprint 14: the shine
+# The shine
+
+Misnumbered, as `09-the-ring.md` is: `docs/roadmap.md` gives sprint 14 to the debts. The file
+keeps its name because the code cites it.
 
 Opened 2026-09-24 on the user's asking how +3, +7 and +9 should look. The plus is carried
 everywhere already (`sim::Held::refinement`, `ui::Standing::refinement`) and read by nothing
@@ -174,3 +177,22 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
   takes MuMain's own 1 through a knob of its own, `refine_stage_strength`. The +7 axe's head
   shines orange there and the +9 Plate pieces carry blue bands on their edges and ridges; a
   flat face seen face on takes one Chrome01 texel, as MuMain's does.
+- 2026-09-24, step 8: the price. `docs/budget.md`'s method -- 2560x1273, timers off,
+  `--repeat 3` of 600, mean of means -- on the hero at 148,142 in the +9 Plate suit, +7 axe and
+  +5 shield against the same save at +0: **6.658 ms against 6.654**, spreads 0.010 and 0.026.
+  Nothing measurable. (The test saves' durability was raised to the top first: made +9 by hand
+  at their +0 durability they sat at half of the +9 maximum and lit the worn-gear column.)
+
+## Closed
+
+2026-09-24. Proved as the top of this file asks: in bench shots, in town and in the bag, and
+inside budget. What is left, named and not done:
+* **+9 is hardly told from +7.** The Shiny01 star is lost in the chrome at 0.25 on armour; it
+  shows only where the chrome is dark.
+* **The chrome is fixed to the world, not the view** (MuMain's world normal): a turning camera
+  sees the same band on the same plate, and a flat face takes one texel, which may be a dark
+  one for a few seconds of the wave.
+* **Other players' levels** are MuMain's 3-bit `LevelConvert` (+8 drawn as +7); there are no
+  other players here, so nothing to do until there are.
+* The drop sparkle (`CreateShiny`, every drop), the ordinary swing's refined streak, +11 and
+  over, excellent and ancient: out of scope, as written above.
