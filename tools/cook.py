@@ -1059,14 +1059,15 @@ def read_png(path):
     return width, height, channels, bytes(out)
 
 
-# MU lays these on the terrain instead of using the height it stores for them. Types 20 to 27
-# are Lorencia's grass and fern block, and this is MU2's own deviation (`World.cs:3672`), not
-# our arithmetic being corrected -- re-measured on this copy of the placement list before it
-# was copied here: of 999 grass placements, 57% carry a stored pitch or roll, and the stored
-# height runs from 6.60 m *below* the terrain to 4.29 m above it, with Grass01's median a
-# clear metre over the ground. Reproduced faithfully that is a town with tufts of grass at
-# head height. Height comes from the terrain, pitch and roll are dropped, yaw is kept: a tuft
-# has a direction it faces and no business leaning.
+# Laid on the terrain instead of at the height MU stores for them -- MuMain itself never does
+# this (OpenObjectsEnc). Types 20 to 27 are Lorencia's grass and fern block, and this is MU2's
+# own deviation (`World.cs:3672`), not our arithmetic being corrected -- re-measured on this
+# copy of the placement list before it was copied here: of 999 grass placements, 57% carry a
+# stored pitch or roll, and the stored height runs from 6.60 m *below* the terrain to 4.29 m
+# above it, with Grass01's median a clear metre over the ground. Reproduced faithfully that
+# is a town with tufts of grass at head height. Height comes from the terrain, pitch and roll
+# are dropped, yaw is kept: a tuft has a direction it faces and no business leaning. A
+# placement placements.json marks `as_stored` is the exception, and stands as MU stores it.
 GROUNDED_TYPES = range(20, 28)
 
 # OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
@@ -1338,7 +1339,9 @@ def cook_placements(world, out_dir, chunk_tiles):
         pitch, muRoll, yaw = (math.radians(a) for a in one["angle"])
         roll = -muRoll
         flags = 0
-        if one["type"] in GROUNDED_TYPES:
+        # Unless placements.json names it as MU's own, to be stood where the map stores it:
+        # the fountain's planting is on the stone and in the bowl, not on the terrain.
+        if one["type"] in GROUNDED_TYPES and not one.get("as_stored"):
             y = terrain(column, row)
             pitch = 0.0
             roll = 0.0

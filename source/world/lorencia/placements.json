@@ -34,6 +34,13 @@
         "TileGrass01",
         "TileGrass02"
       ],
+      "keep": [
+        {
+          "near": [141.0, 128.0],
+          "within": 2.0,
+          "why": "The fountain's own planting, which is not spill. The Waterspout01 stands on paving over 139-143 by 126-130, and MuMain's EncTerrain1.obj puts four grass models on that footprint: Grass05 dead centre and Grass04 half a tile east, both at the square's 1.65 m -- 9 cm under the basin floor, so they grow up out of the bowl -- Grass06 at 1.90 m, exactly on a fountain surface sampled at 1.90, and a Grass01 at 3.25 m leaning -35 degrees off the east edge. Measured 2026-09-24 against the decrypted file: the rule above took all four. They are kept as MuMain stores them, height and lean, which is what `as_stored` tells the cook. The two upside-down Grass01 hovering 20 cm over the paving outside the footprint are the spill the rule describes and stay dropped."
+        }
+      ],
       "why": "Grass standing on paving, on bare rock, and in the river.\n\nChecked against the client before touching it, because the first answer was that MU2 must be placing these wrongly. It is not: OpenObjectsEnc reads a position out of EncTerrain1.obj and hands it straight to CreateObject, there is no grounding pass, and the only mention of MODEL_GRASS01 anywhere in the client is the line that loads the eight models. The client draws these exactly where MU2 draws them, and the real Lorencia has grass on its flagstones too.\n\nWhat makes it a fault rather than a preference is the shape of the numbers. Of 1038 grass placements, 999 stand on one of the two grass textures — 96% — and the 39 that do not are spread thinly across paving, rock and water. Seventeen of them grow in the river. That is not a decision anybody made about how the town should look; it is the spill you get from painting grass over a map by hand and moving the ground underneath it afterwards.\n\nSo the rule is the map's own: grass belongs on the tiles the map calls grass. It is written as a rule rather than as thirty-nine entries because thirty-nine coordinates would say nothing about why any of them is wrong, and because the next map to be extracted will have its own spill in different places."
     }
   ],
