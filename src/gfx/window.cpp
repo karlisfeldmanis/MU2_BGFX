@@ -91,6 +91,11 @@ bool Window::open(const WindowDesc& desc) {
     // Before init, and it is what keeps rendering on this thread in a multithreaded build: bgfx
     // starts no render thread when this has already been called. CMakeLists.txt says why the
     // build is multithreaded at all.
+    //
+    // Priced on 2026-09-24 with the call taken out, so bgfx ran its own render thread: the
+    // same at 2560x1273 (6.34 and 6.31 ms against 6.31 and 6.93, interleaved) and 0.08 ms
+    // faster at half scale. The frame is the GPU's, not the encoder's, and a render thread
+    // costs a frame of latency, so it stays on this thread. docs/budget.md.
     bgfx::renderFrame();
     if (!bgfx::init(init)) {
         core::logError("bgfx did not start");
@@ -100,7 +105,15 @@ bool Window::open(const WindowDesc& desc) {
     // Per-view GPU times are what the budget accounts are made of, and on Metal bgfx only
     // takes them when this debug flag is set — `Init::profile` alone leaves viewStats empty
     // and every account reads 0.000, which looks like a frame that costs nothing.
-    bgfx::setDebug(BGFX_DEBUG_PROFILER);
+    //
+    // Only when asked for. With the flag set, bgfx's Metal backend ends the render pass at
+    // EVERY view (renderer_mtl.cpp, `|| profileViews`) so that it can time each one, where it
+    // otherwise keeps one pass per target: views 4 and 5 share the shade target, and split,
+    // the 4x MSAA colour and the depth are stored after the shade and loaded again for the
+    // sprites. Found in a Metal System Trace, where the transparent pass was 774 us of a
+    // 6.3 ms frame; switched off, the frame measured 0.77 ms faster at 2560x1273 and drew the
+    // same picture. core::Args::views.
+    if (desc.profileViews) bgfx::setDebug(BGFX_DEBUG_PROFILER);
 
     const bgfx::Caps* caps = bgfx::getCaps();
     core::logf("%s, %dx%d, vsync %s", bgfx::getRendererName(caps->rendererType), width_, height_,

@@ -224,8 +224,15 @@ bool Stats::finish(bool enforce) {
     const bool viewsAddUp = medianSum <= gpuMed * 1.25 + 0.05;
 
     core::logf("--- %zu frames measured, %zu warmup dropped ---", n, first);
-    core::logf("%-10s %8s %8s %8s %8s", "account", "median", "p99", "share", "budget");
-    for (int a = 0; a < AccountCount; ++a) {
+    // Nothing timed any view: the timers are off, which is the default since they cost the
+    // frame 0.8 ms at 2K (core::Args::views). A table of zeroes would read as a free frame.
+    if (medianSum <= 0.0) {
+        core::logf("the per-view timers are off, so there is no account table; --views turns "
+                   "them on, at 0.8 ms of frame at 2K");
+    } else {
+        core::logf("%-10s %8s %8s %8s %8s", "account", "median", "p99", "share", "budget");
+    }
+    for (int a = 0; a < AccountCount && medianSum > 0.0; ++a) {
         const double med = quantile(perAccount[a], 0.5);
         const double p99 = quantile(perAccount[a], 0.99);
         // The documented allowance, or a claim made on the command line for this run.
@@ -237,7 +244,7 @@ bool Stats::finish(bool enforce) {
         core::logf("%-10s %8.3f %8.3f %8.3f %8.3f%s", accountName(Account(a)), med, p99, share,
                    budget, over ? "  over" : "");
     }
-    if (!viewsAddUp) {
+    if (!viewsAddUp && medianSum > 0.0) {
         core::logf("the view timers sum to %.3f ms inside a %.3f ms frame, so they are "
                    "encoder gaps as much as work: read the share column, not the median",
                    medianSum, gpuMed);

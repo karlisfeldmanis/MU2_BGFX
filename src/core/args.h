@@ -42,6 +42,14 @@ struct Args {
     // The gate. Empty means every account is checked at its documented allowance.
     bool budget = false;
     std::vector<BudgetOverride> budgetOverrides;
+    // bgfx's per-view GPU timers. OFF unless asked for, because on Metal they are not free:
+    // with them on, bgfx opens a render pass for EVERY view rather than one per target, so
+    // the transparent pass reloads the 4x MSAA colour and depth the shade pass just stored,
+    // and every small pass pays a pass of its own. Measured 2026-09-24 at 2560x1273: 6.32 ms
+    // with them, 5.50 and 5.59 without, and not a pixel different. --views turns them on, and
+    // so do --stats (its csv has a column a view) and a named --budget claim (it is checked
+    // against an account's share). A bare --budget enforces the wall frame and needs none.
+    bool views = false;
 
     // The bench. A model is a path to a .glb; empty raises the ground alone.
     std::string model;

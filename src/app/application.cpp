@@ -28,6 +28,8 @@ bool Application::boot() {
     desc.height = args_.height;
     desc.fullscreen = args_.fullscreen;
     desc.vsync = args_.vsync;
+    desc.profileViews =
+        args_.views || !args_.statsPath.empty() || !args_.budgetOverrides.empty();
     if (!window_.open(desc)) return false;
 
     textures_.createDefaults();

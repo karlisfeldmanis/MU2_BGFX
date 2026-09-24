@@ -97,7 +97,37 @@ allocation"; they live on the renderer now.
 
 **bgfx runs single-threaded here** (`bgfx::renderFrame()` before init, for the preloader's
 worker), so its `waitRender` counter is always 0 and cannot split the frame into CPU work and
-GPU wait. Tried and taken out the same day.
+GPU wait. Tried and taken out the same day. Letting bgfx run its own render thread measured
+the same at 2K (6.34 and 6.31 ms against 6.31 and 6.93) and 0.08 ms faster at half scale:
+the frame is the GPU's, and a render thread costs a frame of latency, so it stays off.
+
+### The view timers were 0.77 ms of every frame, and are off by default now
+
+Found the same afternoon in a Metal System Trace (attached to a running game with
+`xctrace record --attach`; launched by xctrace, the game cannot read under Documents). The
+transparent pass was an encoder of its own at 774 us, with the 4x MSAA colour and the depth
+stored by the shade pass and loaded straight back. The cause is bgfx's Metal backend: with
+`BGFX_DEBUG_PROFILER` set it ends the render pass at every view so it can time each one
+(`renderer_mtl.cpp`, `|| profileViews`), where otherwise it keeps one pass per target. The
+window set that flag on every run, the game included.
+
+| 2560x1273, `--repeat 3` | timers on | timers off |
+|---|---|---|
+| first pair | 6.322 | 5.592 |
+| second pair | 6.315 | 5.498 |
+| after the switch landed | 6.388, 6.385 | 5.642, 5.650 |
+
+The two pictures differ only in the frame-rate counter's digits. The timers are now on only
+with `--views`, `--stats` (its csv has a column a view) or a named `--budget NAME=MS` claim;
+a bare `--budget` enforces the wall frame and runs without them. **Every number on this page
+before this section was taken with the timers on**, so each is about 0.75 ms high at 2K and
+proportionally less at 1080p; the differences between rows stand, except where a row adds or
+removes whole passes (the bloom row's 0.34 is partly per-pass overhead the timers caused).
+
+The trace's own division of the frame, for the next hunt: shade and sprites 3.0 ms of
+fragment work, shadow 0.59 fragment and 0.63 vertex, the present 0.54, SSAO 0.33 and its blur
+0.21, the prepass 0.24 fragment and 0.46 vertex, the first bloom level 0.20, a probe face
+0.15 and 0.23, and every other pass under 0.06.
 
 ## The probe account, and the measurement that set it
 

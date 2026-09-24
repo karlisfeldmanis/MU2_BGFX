@@ -16,6 +16,8 @@ struct WindowDesc {
     // The window takes the display and its current mode, and width/height are not asked for.
     bool fullscreen = false;
     bool vsync = false;
+    // bgfx's per-view GPU timers. core::Args::views says what they cost and who asks.
+    bool profileViews = false;
     const char* title = "MU2";
 };
 

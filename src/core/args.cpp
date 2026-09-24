@@ -43,6 +43,8 @@ void printUsage() {
         "  --stats PATH              absolute path for a csv, a row a frame\n"
         "  --budget                  fail the run when an account is overdrawn\n"
         "  --budget NAME=MS          and replace one account's allowance\n"
+        "  --views                   bgfx's per-view GPU timers, which cost 0.8 ms a frame at\n"
+        "                            2K; on by themselves with --stats or --budget NAME=MS\n"
         "  --model PATH              a .glb under assets/, or an absolute path\n"
         "  --sheet PATH              the lighting sheet (default sheets/lighting.json)\n"
         "  --dist N                  camera distance in world units\n"
@@ -269,6 +271,8 @@ Args parseArgs(int argc, char** argv) {
                 a.statsPath = v;
                 wantsAbsolute("--stats", a.statsPath, &a.valid);
             }
+        } else if (!std::strcmp(s, "--views")) {
+            a.views = true;
         } else if (!std::strcmp(s, "--budget")) {
             a.budget = true;
             // An optional NAME=MS follows. A bare --budget is the documented allowances.
