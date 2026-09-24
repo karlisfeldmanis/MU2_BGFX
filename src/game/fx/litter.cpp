@@ -56,7 +56,7 @@ bool sleeps(const content::ItemRow& row) {
 
 // Drops.Sleeping: the longest local extent along the ground's x, the middle along its z, the
 // shortest pointing up. Rows of a row-vector matrix are where the local axes go.
-void sleeping(const content::Bounds& b, float* basis) {
+void sleeping(const content::Bounds& b, bool shield, float* basis) {
     const float size[3] = {b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]};
     int order[3] = {0, 1, 2};
     std::sort(order, order + 3, [&](int a, int c) { return size[a] > size[c]; });
@@ -74,6 +74,15 @@ void sleeping(const content::Bounds& b, float* basis) {
                       basis[2] * (basis[4] * basis[9] - basis[5] * basis[8]);
     if (det < 0.0f) {
         for (int r = 0; r < 3; ++r) basis[r * 4 + 1] = -basis[r * 4 + 1];
+    }
+    // Except for a shield, whose up side is seen: its painted face and boss are local +x, as in
+    // the bag (ItemStage::render). +x is put to the sky, and where that makes a mirror the
+    // ground's x is flipped with it -- a half turn about the vertical, hidden by the yaw.
+    if (shield && order[2] == 0 && basis[1] < 0.0f) {
+        for (int r = 0; r < 3; ++r) {
+            basis[r * 4 + 1] = -basis[r * 4 + 1];
+            basis[r * 4 + 0] = -basis[r * 4 + 0];
+        }
     }
 }
 
@@ -97,7 +106,7 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     bx::mtxIdentity(basis);
     float standing = b.max[1] - b.min[1];
     if (sleeps(row)) {
-        sleeping(b, basis);
+        sleeping(b, row.shield(), basis);
         // Laid down, what points up is the shortest extent.
         const float size[3] = {b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]};
         standing = std::min(size[0], std::min(size[1], size[2]));
