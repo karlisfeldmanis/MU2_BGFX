@@ -237,6 +237,25 @@ add_executable(boids_test EXCLUDE_FROM_ALL
 target_include_directories(boids_test PRIVATE src)
 target_compile_options(boids_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# The mix, which cannot be looked at: the game's own Sound opened with no device over the
+# cooked showing, played at, and measured -- pan, the frame's edge, the air, the merge and the
+# budget. docs/spatial-sound.md. Writes sound_test.wav beside itself for the ear.
+add_executable(sound_test EXCLUDE_FROM_ALL
+  tests/sound_test.cpp
+  src/game/sound.cpp
+  src/game/miniaudio.cpp
+  src/content/showing.cpp
+  src/core/files.cpp
+  src/core/log.cpp
+)
+target_include_directories(sound_test PRIVATE src extern)
+target_compile_definitions(sound_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_options(sound_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
+if(APPLE)
+  target_link_libraries(sound_test PRIVATE "-framework CoreAudio" "-framework AudioToolbox"
+    "-framework CoreFoundation")
+endif()
+
 # The placement transform against MU's own AngleMatrix. It was wrong twice, in the sign and
 # then in the order, and both looked right on most of the map.
 add_executable(placement_test EXCLUDE_FROM_ALL
@@ -287,12 +306,13 @@ target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 # review" -- was a rule with nobody keeping it. It reads every include in src/ against the
 # arrows in docs/architecture.md and fails on one that is not allowed. It costs milliseconds.
 add_custom_target(checks
-  DEPENDS cooked_test placement_test sim_test boids_test
+  DEPENDS cooked_test placement_test sim_test boids_test sound_test
   COMMAND ${CMAKE_SOURCE_DIR}/tools/layercheck.py
   COMMAND $<TARGET_FILE:cooked_test>
   COMMAND $<TARGET_FILE:placement_test>
   COMMAND $<TARGET_FILE:sim_test>
   COMMAND $<TARGET_FILE:boids_test>
+  COMMAND $<TARGET_FILE:sound_test>
   COMMAND ${CMAKE_SOURCE_DIR}/tools/matcheck.py
   COMMENT "running every check that does not need a window"
   USES_TERMINAL

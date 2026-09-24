@@ -167,11 +167,14 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
     flight_.update(seconds, hero, walking, indoors, sky, calls, &called);
 
     // What sounded. Placed at the bird, which is one of the few sounds the client loads with 3D
-    // enabled; the heights are dropped, as MU's own SetPosition does.
+    // enabled. The height is kept: MU's SetPosition dropped it, and here it only moves the pan
+    // to where the bird is drawn, since loudness is along the ground (Sound's weigh()).
     if (sound_ != nullptr && airs_.calls) {
         for (int i = 0; i < called; ++i) {
             const int event = calls[i].which == 0 ? call1_ : call2_;
-            if (event >= 0) sound_->playAt(event, calls[i].at[0], calls[i].at[2]);
+            if (event >= 0) {
+                sound_->playAt(event, calls[i].at[0], calls[i].at[1], calls[i].at[2]);
+            }
         }
     }
 

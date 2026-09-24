@@ -1,20 +1,35 @@
 // What the game sounds like: the cooked showing's sound events, played through miniaudio.
-// The level-up is at the ears; everything a monster says is placed in the world and heard from
-// the character, on MU2's own model (client/core/Sounds.cs), which is MU's DSPlaySound.cpp:
+// The level-up is at the ears; everything a monster says is placed in the world. MU's own
+// model (client/core/Sounds.cs in MU2, DSPlaySound.cpp in the client) is where this began:
 //   * **A sound is an event, not a file.** One of an event's files is chosen at random per
 //     play -- two bull roars, a budge dragon's grumble and bite -- which is what stops a fight
 //     from ticking.
 //   * **Two voices an event, and a new play steals the older.** LoadWaveFile's channel count
 //     is two for every sound in the monster family and PlayBuffer walks them round-robin, so
 //     six spiders biting at once are two spiders' worth of noise.
-//   * **The ears are the character's, turned by the camera's yaw.** Update3DPositions takes
-//     the vector from the hero to the emitter and turns it by the camera's heading: what is
-//     heard is what the character can hear, panned to match what the screen shows. Done here
-//     by moving and turning miniaudio's one listener -- the same arithmetic, said once.
-//   * **It is flat.** Heights are dropped: MU hands SetPosition a zero for them.
-// And the distance: MU scales the offset by 0.004 before DirectSound, whose minimum distance
-// is 1.0, so a sound is at full volume within 250 units -- two and a half metres -- and falls
-// as 1/d beyond, with no cull, no low-pass and no doppler. kCarry in sound.cpp.
+//   * **Loud by distance from the character**, 1/d past 2.5 m: MU scales the offset by 0.004
+//     before DirectSound, whose minimum distance is 1.0. kCarry in sound.cpp.
+//
+// What an ARPG does over that, and MU does not -- **every one of these is an invention**, from
+// docs/spatial-sound.md, steps A to D:
+//   * **Left and right come from the screen.** A placed voice is not spatialised by miniaudio:
+//     its pan is where the frame shows it, projected through the shot, narrowed so nothing
+//     sits in one ear alone. MU turned the offset by the camera's yaw, which approximates the
+//     same thing from the ground; this is the screen itself, so a thing high on a wall pans
+//     where it is drawn.
+//   * **The frame's edge is a fade, not a wall.** A voice goes to silence as it leaves the
+//     picture rather than at 1/d for ever, and a new one is refused off the frame
+//     (Play::emit). Before this a monster one step inside the frame was at its full 1/d and
+//     one step out was nothing.
+//   * **Far is duller as well as quieter.** Each placed voice runs through its own low-pass
+//     that closes with distance: air absorption, the cheapest depth cue there is.
+//   * **A budget and an importance.** At most kVoicesTotal placed voices sound at once. The
+//     hero's own sounds outrank what is near him, which outranks the crowd, and when the
+//     budget is full a new sound takes the least important, quietest voice or is refused.
+//     The same event twice on one frame at one place is one voice a little louder -- six
+//     spiders biting on a tick -- rather than two plays stealing from each other.
+//   * **Buses.** The interface, the world and the ambience are mixed apart, and the level-up
+//     ducks the world and the ambience under itself for a moment.
 //
 // A voice may FOLLOW a body: PlayBuffer keeps the OBJECT* and Update3DPositions re-reads its
 // position every frame while the voice sounds, so a bull that roars and charges takes the
@@ -52,8 +67,10 @@ public:
 
     // Opens the device. `muted` keeps everything working and logged at zero volume, for
     // review runs. False when there is no device, which is not fatal: the game is silent.
-    // `table` must outlive this; it is the showing's own.
-    bool open(const std::string& assetDir, const content::Showing& table, bool muted);
+    // `table` must outlive this; it is the showing's own. `offline` opens no device at all:
+    // the mix is pulled by render(), which is how tests/sound_test.cpp hears it.
+    bool open(const std::string& assetDir, const content::Showing& table, bool muted,
+              bool offline = false);
     void shutdown();
 
     // Preloads an event, decoded whole, and answers its handle, or -1 for one nothing cooked
@@ -64,6 +81,7 @@ public:
 
     // Starts an unplaced event now, from where its sound begins. Playing it while it is still
     // sounding starts it again, which is MU's own `LoadWaveFile(..., 1)` for the level-up.
+    // It also ducks the world under itself: this is the level-up's call and nothing else's.
     void play(const std::string& event);
     // The same, by the handle an unplaced load() gave: the interface's noises, which are the
     // player's own and heard at the ears.
@@ -75,20 +93,36 @@ public:
     // an unplaced load().
     void loop(int event, bool wanted);
 
-    // Starts a placed event at a point on the ground, in world metres. `following` is the body
-    // it belongs to, whose position follow() keeps it on, or 0 for a blow that lands at a
-    // point and belongs to nothing -- MU's NULL.
-    void playAt(int event, float x, float z, uint32_t following = 0);
+    // Starts a placed event at a point, in world metres. `following` is the body it belongs
+    // to, whose position follow() keeps it on, or 0 for a blow that lands at a point and
+    // belongs to nothing -- MU's NULL.
+    void playAt(int event, float x, float y, float z, uint32_t following = 0);
 
-    // Where the ears are: on the ground under the character, looking along `forward` (the
-    // camera's heading, flattened). Once a frame, before or after the plays.
-    void listen(float x, float z, float forwardX, float forwardZ);
+    // Where the ears are and what the screen is: `hero` is the character's body, whose own
+    // sounds come first; `at` is where he stands; `shot` is the frame's view times projection
+    // in bx's row-vector order, which is what pans. Once a frame, before the plays.
+    void listen(uint32_t hero, const float at[3], const float shot[16]);
 
     // Moves every voice that is still sounding and follows something to where `where` says
-    // that body is now. A body `where` does not know keeps the voice where it last was, which
-    // is the death cry outliving the monster that made it.
-    using Where = bool (*)(void* context, uint32_t id, float* x, float* z);
+    // that body is now, then sets every sounding voice's pan, level and filter for this
+    // frame. A body `where` does not know keeps the voice where it last was, which is the
+    // death cry outliving the monster that made it.
+    using Where = bool (*)(void* context, uint32_t id, float* x, float* y, float* z);
     void follow(Where where, void* context);
+
+    // The mix, pulled rather than heard: `frames` stereo frames of float into `out`. Offline
+    // only; answers how many were written.
+    uint64_t render(float* out, uint64_t frames);
+
+    // What the budget has done since open(): voices sounding now, and plays refused, merged
+    // into one already sounding, and stolen from a less important voice.
+    struct Tally {
+        int sounding = 0;
+        int refused = 0;
+        int merged = 0;
+        int stolen = 0;
+    };
+    Tally tally() const;
 
     bool isOpen() const;
 

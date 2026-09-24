@@ -140,12 +140,15 @@ void Play::emit(int event, float x, float z, uint32_t following) {
     // Harold's campfire fifty tiles away. MU2 already culled its scenery sounds to the shot;
     // this is that rule for everything placed. A voice already sounding is not cut off when
     // its source leaves the frame -- only a new one is refused.
+    // Past the frame's edge the voice would be silent anyway (Sound's kEdgeSilent); this is the
+    // early out, and the fade is the rule.
+    const float y = ground_ ? ground_->heightAt(x, z) + kHeardHeight : 0.0f;
     if (shotKnown_ && ground_) {
         const Frustum frustum(shot_);
-        const float centre[3] = {x, ground_->heightAt(x, z) + kHeardHeight, z};
+        const float centre[3] = {x, y, z};
         if (!frustum.holds(centre, kHeardReach)) return;
     }
-    sound_.playAt(event, x, z, following);
+    sound_.playAt(event, x, y, z, following);
 }
 
 void Play::ui(Ui which) {
@@ -164,13 +167,16 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     sound_.loop(heard_.wind, !indoors);
     const Drawn* hero = drawnOf(realm_.hero().id);
     if (hero == nullptr || !hero->placed) return;
-    sound_.listen(hero->crown[0], hero->crown[2], camera.target[0] - camera.position[0],
-                  camera.target[2] - camera.position[2]);
+    // The ears at the character, the pan from the shot point() kept this frame.
+    if (!shotKnown_) return;
+    (void)camera;
+    sound_.listen(hero->id, hero->crown, shot_);
     sound_.follow(
-        [](void* context, uint32_t id, float* x, float* z) {
+        [](void* context, uint32_t id, float* x, float* y, float* z) {
             const Drawn* one = static_cast<Play*>(context)->drawnOf(id);
             if (one == nullptr || !one->placed || !one->visible) return false;
             *x = one->crown[0];
+            *y = one->crown[1];
             *z = one->crown[2];
             return true;
         },
