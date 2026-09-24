@@ -8,6 +8,7 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_r
 // Written after the tonemap: the interface draws the picture as bytes, so this writes sRGB.
 // MU2's stage ran Godot's linear tonemap, which is a clamp, and this does the same.
 #include "common.sh"
+#include "shine.sh"
 
 // Panel.Stage's DirectionalLight3D, Rotation (-0.7, -0.6, 0) in Godot's YXZ order, turned
 // into the direction towards it: up, to the left and toward the viewer.
@@ -95,6 +96,12 @@ void main()
 	vec3 r = reflect(-v, n);
 	colour += studio(r, roughness) * envBRDFApprox(f0, roughness, ndotv) * ao;
 	colour += texture2D(s_emissive, v_texcoord0).rgb;
+
+	// The refinement ladder, as fs_shade draws it. MuMain's bag draws the same passes, unlit
+	// and white-lit, so the stage's own light is what the tint multiplies.
+	float plus = shinePlus(v_refine);
+	colour *= shineTint(plus);
+	colour += shineAdded(plus, normalize(v_normal), SHINE_COLOUR);
 
 	gl_FragColor = vec4(toSrgb(colour), 1.0);
 }

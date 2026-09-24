@@ -83,6 +83,7 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
             bgfx::setTexture(2, sOrm_, material.orm);
             bgfx::setTexture(3, sEmissive_, material.emissive);
             if (skinned) bgfx::setTexture(12, sBones_, palette_);
+            bindShine();
             uint64_t state = base;
             if (!material.twoSided) state |= cullBit_;
             bgfx::setVertexBuffer(0, mesh.vertexBuffer());

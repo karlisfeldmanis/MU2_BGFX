@@ -192,6 +192,13 @@ public:
     // that is what stopped a run from being reproducible. It is seconds of play now, starting
     // at 0 on the first frame, so --fixed-dt reaches the water like it reaches everything else.
     void setClock(float seconds) { elapsed_ = seconds; }
+    // The refinement shine's two sheets, Chrome01 and Shiny01, out of the showing table
+    // (docs/sprints/14-the-shine.md). Without them a refined item still takes its tint and adds
+    // nothing on top.
+    void setShine(bgfx::TextureHandle chrome, bgfx::TextureHandle shiny) {
+        shineChrome_ = chrome;
+        shineShiny_ = shiny;
+    }
 
     // The map's border, and how many metres of dark stand at it. MU's land is a square of
     // tiles with nothing drawn beyond, and its own attribute maps let the player walk to
@@ -464,6 +471,17 @@ private:
     // each other, the way "every placement of a type moves in step" requires. See
     // content::Material::scrollPerSecond, and setClock() for why it is not the wall clock.
     float elapsed_ = 0.0f;
+    // The shine (setShine): its sheets, and u_refine, bound for each draw by bindShine() off
+    // the same play clock. `shineStrength_` is how strongly the chrome is added, and
+    // `shineTint_` how much of MuMain's tint the lit colour takes; 1 is MuMain's own for both.
+    bgfx::TextureHandle shineChrome_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle shineShiny_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uRefine_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sChrome_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sShiny_ = BGFX_INVALID_HANDLE;
+    float shineStrength_ = 1.0f;
+    float shineTint_ = 1.0f;
+    void bindShine();
 
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets

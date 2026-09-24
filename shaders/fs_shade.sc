@@ -6,6 +6,7 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_r
 
 #include "shadow.sh"
 #include "lights.sh"
+#include "shine.sh"
 
 uniform vec4 u_translucency;  // x: the fraction of a leaf's light that comes through it, or 0
 
@@ -167,6 +168,12 @@ void main()
 	// The lamps, on the texture's own albedo rather than on the albedo times MU's baked
 	// light: lights.sh says why.
 	colour += lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0);
+
+	// The refinement ladder: MuMain tints the light an item is drawn in, so the tint takes
+	// everything lit above, and adds its chrome unlit, so that goes on after. shine.sh.
+	float plus = shinePlus(v_refine);
+	colour *= shineTint(plus);
+	colour += shineAdded(plus, normalize(v_normal), SHINE_COLOUR);
 
 	// The emissive, or on foliage the light through it. MU2's pipeline writes a leaf's own
 	// sheet as its emissive at a fraction, standing in for transmission, and that fraction

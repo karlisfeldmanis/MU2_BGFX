@@ -15,6 +15,21 @@
 
 namespace mu::gfx {
 
+// MuMain's two clocks off WorldTime, which is milliseconds: g_Luminosity (SceneManager.cpp:1283)
+// and the chrome's wave (ZzzBMD.cpp:1314). Missing sheets add nothing: the strength goes to 0
+// and a texture that exists stands in, so no stage is left unbound. Only for the mesh draws:
+// stages 9 and 10 are the land's second layer in fs_ground.
+void Renderer::bindShine() {
+    const bool sheets = bgfx::isValid(shineChrome_) && bgfx::isValid(shineShiny_);
+    const float refine[4] = {std::sin(elapsed_ * 4.0f) * 0.15f + 0.6f,
+                             std::fmod(elapsed_, 10.0f) * 0.1f, sheets ? shineStrength_ : 0.0f,
+                             shineTint_};
+    bgfx::setUniform(uRefine_, refine);
+    bgfx::setTexture(9, sChrome_, sheets ? shineChrome_ : whiteAo_, 0);
+    bgfx::setTexture(10, sShiny_, sheets ? shineShiny_ : whiteAo_,
+                     BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+}
+
 void Renderer::bindShadeInputs() {
     bgfx::setUniform(uSunDir_, shade_.sunDir);
     bgfx::setUniform(uSunColour_, shade_.sunColour);
@@ -195,6 +210,9 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                 const float translucency[4] = {material.translucency, 0.0f, 0.0f, 0.0f};
                 bgfx::setUniform(uTranslucency_, translucency);
                 bindShadeInputs();
+                // Here and not in bindShadeInputs: the land binds its second layer on stages 9
+                // to 11 and then calls that, and the chrome went down over the town's ground.
+                bindShine();
             }
 
             uint64_t drawState = state;

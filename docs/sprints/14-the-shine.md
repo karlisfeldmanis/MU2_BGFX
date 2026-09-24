@@ -86,3 +86,17 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
   beside the parts (`FigureBody::partRefine`, `HeldItem::refine`); `Play::redress` reads them
   off the satchel. `Litter` keeps each drop's, the stages read `Standing::refinement`. Nothing
   reads `v_refine` yet: a 600-frame Lorencia run links every program and looks as before.
+  Landed inside `4997b117` ("the shade under the bridges is back"): staged in the shared
+  index as another session committed, and not split out afterwards while that session works
+  on top of it.
+- 2026-09-24, step 3: the ladder draws. `shaders/shine.sh` holds it, included by `fs_shade`
+  and `fs_stage`: the tint multiplies everything lit, the chrome and the star are added after,
+  with MuMain's UVs off the vertex normal in MU's axes. `u_refine` is (g_Luminosity, wave,
+  strength, tint amount), off the play clock; Chrome01 on stage 9 (repeat), Shiny01 on 10
+  (clamp), handed over from the showing table by the play mode (`Renderer::setShine`).
+  **Trap, found in the first shot:** stages 9 to 11 are the land's second layer in
+  `fs_ground`, which binds them and then calls `bindShadeInputs`, so binding the shine there
+  laid Chrome01 over the whole town's ground. `bindShine` runs in the mesh path only.
+  A copy of the save with the suit at +9, the axe +7 and the shield +5: the plate shows the
+  chrome bands, orange as `PartObjectColor` 0 makes them, and at strength 1 they saturate to
+  yellow under exposure 1.5 and the bloom -- step 5's knob, judged on the bench (step 6).

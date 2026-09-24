@@ -167,7 +167,24 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
                 world_.played().streak().open(assets, ctx.textures,
                                               world_.played().showing().table());
+                world_.played().forge().open(assets, ctx.textures,
+                                             world_.played().showing().table(),
+                                             &world_.ground());
+                // The refinement shine's two sheets: Chrome01 for +7, Shiny01 for +9.
+                const content::Showing& table = world_.played().showing().table();
+                const content::EffectSheet* chrome = table.effect("chrome");
+                const content::EffectSheet* shiny = table.effect("shiny");
+                if (chrome && shiny) {
+                    ctx.renderer.setShine(
+                        ctx.textures.load(assets + "/" + chrome->path, content::TextureRole::Albedo),
+                        ctx.textures.load(assets + "/" + shiny->path, content::TextureRole::Albedo));
+                } else {
+                    core::logError("the showing has no chrome or shiny sheet; refined items "
+                                   "take their tint and nothing more");
+                }
             }
+            // Hanzo's coals, into the lamps' static set before it goes to the renderer below.
+            if (args.lampsOn) world_.played().lightForges(world_.lamps());
             world_.played().openSound(assets, args.mute);
             // And only now the air: the birds' calls come off the sound above and the leaves'
             // sheet off the showing's table. See World::raiseAirs.
