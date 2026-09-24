@@ -45,6 +45,60 @@ Before sprint 8c they added to 5.5. **They did not before sprint 6**: this table
 `views.cpp` said 0.5, so the table summed to 5.2 against a 5.5 ms frame and the two had
 disagreed since the file was written. The 0.3 the effects account now holds is what closed it.
 
+## The 2K prices, 2026-09-24
+
+Lorencia's square, the play camera still, 2560x1273 (a window on the 2560x1440 display),
+Release, vsync off, `--repeat 3` of 600 frames, mean of means; the spread inside a launch was
+0.006 to 0.06 ms on every row but the two marked. Each row is one thing switched off or
+changed against the same 6.345 ms baseline, so a row is what that thing COSTS, not what
+it is worth.
+
+| change | ms | saved | picture |
+|---|---|---|---|
+| baseline | 6.345 | — | |
+| `--shadow-noise screen` (5+8 turned taps for 9+16 still) | 5.437 | 0.91 | changes |
+| `--msaa 1` | 5.720 | 0.62 | changes |
+| `--shadow-size 2048` | 5.974 | 0.37 | changes; the cost is the 4096 map's cache misses in the PCSS taps, not its fill — at half scale 1024 measured the same as 4096 |
+| bloom passes skipped (nine encoders) | 6.001 | 0.34 | changes; spread 0.14 |
+| `sharpen` 0 (the present's four extra taps) | 6.024 | 0.32 | changes |
+| `--no-lamps` | 6.097 | 0.25 | changes |
+| `discard` compiled out of the prepass and the shade | 6.107 | 0.24 | breaks foliage; see below |
+| `probe` 0 | 6.123 | 0.23 | changes |
+| `grass` 0 | 6.205 | 0.14 | changes |
+| `--no-figures --crowd 0` | 6.290 | 0.05 | changes |
+| sun's split drawing the camera's 497 placements instead of all 2753 | 6.302 | 0.04 | none |
+| `--no-air` | 6.329 | 0.02 | changes |
+| probe faces drawing the camera's list instead of all 2753 | 6.482 vs 6.424 | none | none; spread 0.2 |
+| `--scale 0.5` | 3.178 | 3.17 | changes |
+
+**What that says.** About 2.1 ms of the frame does not scale with pixels (the half-scale row)
+and the rest is fill: PCSS taps, MSAA, lamps, the sharpen's taps, the probe read. The
+geometry is not the cost: the sun drawing five times as many placements as it needs is
+0.04 ms, and the plan's foundation-7 caster cull is worth that and no more on this GPU.
+Nothing on the list is both free of the picture and worth a tenth of a millisecond, so at
+2560x1440 native, 4x MSAA and the still shadow taps, 180 fps is a choice among the rows
+marked "changes" -- `--scale` being the one already taken -- and not something a
+quality-neutral change reaches. Fullscreen is 2560x1440, 13% more pixels than the window
+these were taken in.
+
+**The discard row is not a saving.** A fragment program that can `discard` is denied its
+early depth resolve on this GPU, and twin programs without the discard were built for
+every material that never cuts. They measured no different (13.0 vs 13.0 ms on the
+3456x1894 panel the display had become by then, twice each, interleaved). The 0.24 was the
+discards that actually run on the foliage cards -- 18% of the draws and 43% of the instances
+-- and the picture needs those. The twins were taken out again; `Renderer::submitBatches`
+says so.
+
+**Two things found on the way and fixed**, neither of them frame time: a fading figure cast
+no shadow at all in play (the sun's list dropped every instance with a fade under 1, so the
+dither in fs_shadow was never reached), and `Renderer::draw` grouped the frame's three
+thousand drawables into vectors built fresh each frame, against foundation 7's "no
+allocation"; they live on the renderer now.
+
+**bgfx runs single-threaded here** (`bgfx::renderFrame()` before init, for the preloader's
+worker), so its `waitRender` counter is always 0 and cannot split the frame into CPU work and
+GPU wait. Tried and taken out the same day.
+
 ## The probe account, and the measurement that set it
 
 Sprint 8c, `docs/sprints/08c-the-metal.md`. Lorencia's town, 1920x1080, Release, vsync off,

@@ -3,6 +3,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <bgfx/bgfx.h>
@@ -407,6 +408,14 @@ private:
     // batches are already grouped by mesh, so which to use is decided once a batch and not
     // once a draw.
     //
+    // There is deliberately NO cutout twin of a program. It was built and measured on
+    // 2026-09-24: a fragment program that can discard is denied its early depth resolve on
+    // this GPU, and compiling the discard out of the prepass and the shade pass saved 0.24 ms
+    // of a 6.3 ms frame at 2560x1273 -- but the saving was the discards that actually run,
+    // on the foliage cards (18% of the draws and 43% of the instances), and a solid material
+    // drawn with a program that cannot discard measured no different from one drawn with the
+    // branch. The picture needs those discards; the twins bought nothing. docs/budget.md.
+    //
     // `glowPass` picks which parts: false draws every part but the glows, which is what the
     // shadow, the prepass and the shade want -- a glow casts nothing, occludes nothing and is
     // not lit -- and true draws the glows alone, into the transparent view.
@@ -656,6 +665,35 @@ private:
 
     std::vector<Batch> batches_;
     std::vector<Batch> casterBatches_;
+    std::vector<Batch> fadeBatches_;
+
+    // A frame's drawables grouped by mesh, in the order each mesh was first seen. Kept on the
+    // renderer rather than built on the stack in draw() so the vectors keep their capacity:
+    // built fresh, three thousand drawables a frame were a few hundred allocations a frame,
+    // against foundation 7's "no allocation per frame". The map's nodes are the one
+    // allocation left, and there are as many of those as meshes seen, not as drawables.
+    struct Groups {
+        std::vector<std::vector<const Drawable*>> lists;
+        size_t used = 0;
+        std::unordered_map<const content::Mesh*, size_t> seen;
+        void clear() {
+            for (size_t i = 0; i < used; ++i) lists[i].clear();
+            used = 0;
+            seen.clear();
+        }
+        std::vector<const Drawable*>& add() {
+            if (used == lists.size()) lists.emplace_back();
+            return lists[used++];
+        }
+        uint32_t count() const {
+            uint32_t n = 0;
+            for (size_t i = 0; i < used; ++i) n += uint32_t(lists[i].size());
+            return n;
+        }
+    };
+    Groups groups_;
+    Groups fadeGroups_;
+    Groups casterGroups_;
 
     // The probe. `probeRaw_` is what the faces draw into, one level; `probeFiltered_` is what
     // the shade pass reads, its mips written by fs_probe_filter.

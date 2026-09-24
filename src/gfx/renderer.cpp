@@ -436,47 +436,50 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     const bool anything = !drawables.empty() || !casterList.empty() || ground != nullptr;
     if (anything) {
         // Grouped by mesh, keeping the order each mesh was first seen in, so a frame's draw
-        // order does not shuffle between runs and a measurement stays comparable.
-        std::vector<std::vector<const Drawable*>> groups;
-        std::vector<std::vector<const Drawable*>> casterGroups;
-        // What is only part there, kept out of the opaque passes and drawn after them. Almost
-        // always empty: it is the character's entrance and nothing else so far.
-        std::vector<std::vector<const Drawable*>> fadeGroups;
-        std::vector<Batch> fadeBatches;
-        auto group = [](const std::vector<Drawable>& list,
-                        std::vector<std::vector<const Drawable*>>& out,
-                        std::vector<Batch>& batches, bool fading = false) {
-            std::unordered_map<const content::Mesh*, size_t> seen;
-            out.reserve(8);
+        // order does not shuffle between runs and a measurement stays comparable. The groups
+        // live on the renderer and keep their capacity between frames; see Groups.
+        groups_.clear();
+        fadeGroups_.clear();
+        casterGroups_.clear();
+        fadeBatches_.clear();
+        // Which drawables a list takes. The camera's list is split in two: what is only part
+        // there is kept out of the opaque passes and drawn after them (almost always nothing
+        // -- the character's entrance, a corpse going out). The sun's own list is taken WHOLE,
+        // fading instances included: fs_shadow dithers each by its own fade. It used to take
+        // the solid ones alone, which left a fading figure with no shadow at all whenever the
+        // camera culled separately -- and in play it always does, so the dither in fs_shadow
+        // was never reached and the character came in through the door casting nothing.
+        enum class Take { Solid, Fading, All };
+        auto group = [](const std::vector<Drawable>& list, Groups& out,
+                        std::vector<Batch>& batches, Take take) {
             for (const Drawable& d : list) {
                 if (!d.mesh) continue;
-                if ((d.fade < 1.0f) != fading) continue;
-                auto found = seen.find(d.mesh);
-                if (found == seen.end()) {
-                    seen.emplace(d.mesh, out.size());
-                    out.emplace_back();
-                    out.back().push_back(&d);
-                    batches.push_back(Batch{d.mesh, 0, 0, d.paletteRow >= 0 || !d.inProbe});
+                const bool fading = d.fade < 1.0f;
+                if (take == Take::Solid && fading) continue;
+                if (take == Take::Fading && !fading) continue;
+                const bool posed = d.paletteRow >= 0 || !d.inProbe;
+                auto found = out.seen.find(d.mesh);
+                if (found == out.seen.end()) {
+                    out.seen.emplace(d.mesh, out.used);
+                    out.add().push_back(&d);
+                    batches.push_back(Batch{d.mesh, 0, 0, posed});
                 } else {
-                    out[found->second].push_back(&d);
-                    if (d.paletteRow >= 0 || !d.inProbe) batches[found->second].posed = true;
+                    out.lists[found->second].push_back(&d);
+                    if (posed) batches[found->second].posed = true;
                 }
             }
         };
-        group(drawables, groups, batches_);
-        group(drawables, fadeGroups, fadeBatches, true);
+        group(drawables, groups_, batches_, Take::Solid);
+        group(drawables, fadeGroups_, fadeBatches_, Take::Fading);
         const bool separateCasters = casters != nullptr;
-        if (separateCasters) group(casterList, casterGroups, casterBatches_);
+        if (separateCasters) group(casterList, casterGroups_, casterBatches_, Take::All);
 
         // A 4x4 matrix, the instance's baked light, and the row its pose occupies in the
         // bone palette. The depth passes read the matrix and the row and skip the light,
         // which costs them nothing: the stride is what the buffer is walked by, not what
         // each shader reads.
         const uint32_t stride = 96;
-        uint32_t total = 0;
-        for (const auto& g : groups) total += uint32_t(g.size());
-        for (const auto& g : fadeGroups) total += uint32_t(g.size());
-        for (const auto& g : casterGroups) total += uint32_t(g.size());
+        uint32_t total = groups_.count() + fadeGroups_.count() + casterGroups_.count();
 
         // bgfx will hand back fewer than asked for if the transient buffer is full. Asking
         // first and checking is the difference between a short frame and a corrupt one.
@@ -492,12 +495,11 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             bgfx::InstanceDataBuffer idb = {};
             if (total > 0) bgfx::allocInstanceDataBuffer(&idb, total, stride);
             uint32_t written = 0;
-            auto fill = [&](std::vector<std::vector<const Drawable*>>& from,
-                            std::vector<Batch>& batches) {
-                for (size_t gi = 0; gi < from.size() && total > 0; ++gi) {
+            auto fill = [&](const Groups& from, std::vector<Batch>& batches) {
+                for (size_t gi = 0; gi < from.used && total > 0; ++gi) {
                     batches[gi].first = written;
                     uint32_t count = 0;
-                    for (const Drawable* d : from[gi]) {
+                    for (const Drawable* d : from.lists[gi]) {
                         if (written >= total) break;
                         std::memcpy(idb.data + written * stride, d->transform,
                                     sizeof(float) * 16);
@@ -519,9 +521,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                                              [](const Batch& b) { return b.count == 0; }),
                               batches.end());
             };
-            fill(groups, batches_);
-            fill(fadeGroups, fadeBatches);
-            if (separateCasters) fill(casterGroups, casterBatches_);
+            fill(groups_, batches_);
+            fill(fadeGroups_, fadeBatches_);
+            if (separateCasters) fill(casterGroups_, casterBatches_);
             // Without a list of its own, the sun draws what the camera draws.
             std::vector<Batch>& shadowBatches = separateCasters ? casterBatches_ : batches_;
 
@@ -623,11 +625,11 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                               idb, depthState, false);
             }
             // A fading figure still casts, dithered by fs_shadow. It is in the casters' own
-            // list already when the camera culls separately; when it does not, that list IS
-            // the camera's, which is the one it was kept out of.
-            if (!separateCasters && !fadeBatches.empty()) {
-                submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, fadeBatches, idb,
-                              depthState, false);
+            // list already when the camera culls separately (group() takes that list whole);
+            // when it does not, that list IS the camera's, which is the one it was kept out of.
+            if (!separateCasters && !fadeBatches_.empty()) {
+                submitBatches(ViewShadow, shadowProgram_, skinnedShadowProgram_, fadeBatches_,
+                              idb, depthState, false);
             }
 
             // --- view 1: the prepass -------------------------------------------------
@@ -818,14 +820,14 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             // in the shade pass because it must be blended over a finished picture, and before
             // the glow and the sprites because it is solid scene and they are what is added
             // over it. The view is sequential, so submission order is draw order.
-            if (!fadeBatches.empty() && bgfx::isValid(prepassProgram_)) {
+            if (!fadeBatches_.empty() && bgfx::isValid(prepassProgram_)) {
                 bgfx::setViewMode(ViewTransparent, bgfx::ViewMode::Sequential);
                 const uint64_t depthOnly = BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS;
                 submitBatches(ViewTransparent, prepassProgram_, skinnedPrepassProgram_,
-                              fadeBatches, idb, depthOnly, false);
+                              fadeBatches_, idb, depthOnly, false);
                 const uint64_t blended = BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_EQUAL |
                                          BGFX_STATE_BLEND_ALPHA;
-                submitBatches(ViewTransparent, shadeProgram_, skinnedShadeProgram_, fadeBatches,
+                submitBatches(ViewTransparent, shadeProgram_, skinnedShadeProgram_, fadeBatches_,
                               idb, blended, true);
             }
 
