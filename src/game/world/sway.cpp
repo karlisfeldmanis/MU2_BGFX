@@ -33,6 +33,24 @@ float phaseOf(const float position[3], float length) {
     return wrapped < 0.0f ? wrapped + length : wrapped;
 }
 
+// OURS, not MU's: the pace of a tree's sway. MU runs every placement's clip at one flat rate
+// (Tree01 at 0.4 keys a frame, a 3.1 s loop), and eighty trees on the same metronome read as
+// machinery. Here a wind crosses the town instead: two long waves, ~140 m and ~80 m, rolling
+// through at 5-8 m/s from different quarters, and where their crests meet is a gust. In the
+// calm a tree sways at kCalm of MU's rate; as a gust passes it rises to MU's own and settles
+// again, and its neighbours do the same a moment before or after it. Squared, so the calm
+// is most of the time and a gust is an event. The swing itself is MU's clip, untouched.
+constexpr float kCalm = 0.4f;
+
+float windAt(float x, float z, float t) {
+    const float a = std::sin((x * 0.8f + z * 0.6f) * 0.045f - t * 0.35f);
+    const float b = std::sin((x * 0.3f - z * 0.95f) * 0.08f - t * 0.40f);
+    const float gust = 0.5f + 0.25f * a + 0.25f * b;
+    return kCalm + (1.0f - kCalm) * gust * gust;
+}
+
+bool windy(const std::string& model) { return model.rfind("Tree", 0) == 0; }
+
 // A skinned mesh leaves its bind box the moment it moves -- a branch swings out of it --
 // hence Figure::radius's half again. Doubled on top of that for the shadow: at the sun's
 // 52 degrees a tree throws its shadow about 0.8 of its height away, so a tree just outside
@@ -126,6 +144,7 @@ bool Sway::open(const std::string& assetDir, const std::string& world, const Tow
             instance.clipRate = scaleDependent(name)
                                     ? 1.0f / std::max(placement.scale, 0.01f) : 1.0f;
             instance.figure.setClock(phaseOf(placement.position, instance.figure.length()));
+            instance.windy = windy(name);
         }
         // The box's own centre off the pivot, horizontally, is folded into the radius
         // rather than turned by the placement's yaw: a looser sphere, and nothing to get
@@ -161,10 +180,13 @@ void Sway::update(float seconds, const float* viewProj, gfx::Renderer& renderer,
     static const float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
     const Frustum frustum(viewProj ? viewProj : identity);
     posed_ = 0;
+    wind_ = std::fmod(wind_ + seconds, 3600.0f);  // wrapped so sin keeps its precision
     for (Instance& instance : instances_) {
         // The clock runs whether or not it is seen, so a tree turned back to is where its
         // own time has taken it and not where it was left.
-        instance.figure.update(seconds, instance.clipRate);
+        const float wind = instance.windy
+                               ? windAt(instance.centre[0], instance.centre[2], wind_) : 1.0f;
+        instance.figure.update(seconds, instance.clipRate * wind);
         if (viewProj && !frustum.holds(instance.centre, instance.radius)) {
             town.setPaletteRow(instance.townIndex, -1);
             instance.posed = false;

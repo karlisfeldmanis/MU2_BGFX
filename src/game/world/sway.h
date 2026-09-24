@@ -75,6 +75,8 @@ private:
         // The clip seconds a real second is worth: 1/scale for Tree01 and Tree02, 0 for a
         // still model, 1 for everything else. Decided once at open().
         float clipRate = 1.0f;
+        // A tree: its clock is paced by the wind (windAt in sway.cpp) rather than run flat.
+        bool windy = false;
         // What the frustum is asked about: the bind box's centre, placed, and a radius wide
         // enough for the shadow it throws into the frame from just outside it.
         float centre[3] = {0, 0, 0};
@@ -87,6 +89,7 @@ private:
     std::vector<int32_t> slotOf_;  // town instance -> index into instances_, or -1
     std::vector<float> scratch_;  // kMaxBones x 12, reused every pose so nothing allocates
     size_t posed_ = 0;
+    float wind_ = 0.0f;  // seconds the wind has blown, which moves its gust fronts
 };
 
 }  // namespace mu::game
