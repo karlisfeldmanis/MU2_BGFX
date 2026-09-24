@@ -25,6 +25,27 @@
       "height": 2.26,
       "was": 2.7,
       "why": "Sat 0.44 m above the table it stands on. The table beneath it is Furniture04, placed at 1.40 m and 0.86 m tall, so its top is at 2.26; the candle was placed at 2.70 with its own base at zero, and floated.\n\nChecked against the other five before touching this one, because one candle in the air is a bug in the candle and six is a bug in the maths. The other five sit within 6 cm of whatever is under them — three on Furniture05 at +0.05, one on Furniture04 at -0.01, one on Furniture06 at -0.06 — so the terrain, the units and the model origins all agree. This one placement disagrees with them.\n\nThe same table is itself placed 0.25 m below the terrain, which is the same sloppiness showing from the other side. That is left alone: a table sunk a quarter of a metre into a tavern floor is not visible from any angle anybody stands at, and a correction nobody can see is a correction not worth carrying."
+    },
+    {
+      "model": "Grass01",
+      "near": [142.20, 125.41],
+      "height": 1.75,
+      "was": 1.85,
+      "why": "OURS: an ivy mat turned over (-175 degrees) on the paving south-east of the fountain, which MuMain stores 0.20 m over the 1.65 m square. Turned over, the ivy is a dome 0.55 m deep, and at that height half its leaves stood 0.10 to 0.34 m clear of the paving: in the game it read as floating (2026-09-24). Lowered by the median leaf, 0.10 m, so the leaves lie on the paving and the dome's lower half is under it."
+    },
+    {
+      "model": "Grass01",
+      "near": [138.49, 130.49],
+      "height": 1.75,
+      "was": 1.85,
+      "why": "OURS: the other ivy mat of the fountain's pair, north-west of it, stored and turned the same way and lowered by the same 0.10 m for the same reason."
+    },
+    {
+      "model": "Grass01",
+      "near": [145.78, 117.91],
+      "height": 1.75,
+      "was": 1.95,
+      "why": "OURS: the turned-over ivy mat at the foot of the well, stored 0.30 m over the paving: its median leaf 0.20 m clear, worse than the fountain's pair. Lowered by that median, 0.20 m, to the same 1.75 m."
     }
   ],
   "drops": [

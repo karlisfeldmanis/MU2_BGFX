@@ -154,10 +154,10 @@ int main() {
             {"Grass01", 122.50000f, -147.50000f, 1.6500f, -75.0f},
             {"Grass01", 123.00000f, -108.50000f, 1.6500f, 0.0f},
             {"Grass01", 124.00000f, -108.00000f, 1.6500f, 0.0f},
-            {"Grass01", 138.48896f, -130.48519f, 1.8500f, -175.0f},
-            {"Grass01", 142.20423f, -125.40773f, 1.8500f, -175.0f},
+            {"Grass01", 138.48896f, -130.48519f, 1.7500f, -175.0f},  // lowered 0.10, placements.json
+            {"Grass01", 142.20423f, -125.40773f, 1.7500f, -175.0f},  // lowered 0.10
             {"Grass01", 144.00000f, -140.50000f, 1.6500f, 5.0f},
-            {"Grass01", 145.78297f, -117.91423f, 1.9500f, -175.0f},
+            {"Grass01", 145.78297f, -117.91423f, 1.7500f, -175.0f},  // lowered 0.20
             {"Grass01", 153.15206f, -146.23691f, 4.4000f, 0.0f},
             {"Grass02", 169.74027f, -123.35218f, 0.2250f, 5.0f},
             {"Grass02", 170.27775f, -122.54788f, 0.2250f, 5.0f},
@@ -178,7 +178,7 @@ int main() {
             check(grass != nullptr, what + " is placed");
             if (!grass) continue;
             check(std::fabs(grass->position[1] - one.height) < 0.001f,
-                  what + " stands at MU's " + std::to_string(one.height) + " m (cooked " +
+                  what + " stands at " + std::to_string(one.height) + " m (cooked " +
                       std::to_string(grass->position[1]) + ")");
             check(std::fabs(grass->pitch - one.pitch * degrees) < 0.001f,
                   what + " keeps MU's " + std::to_string(int(one.pitch)) + " degree lean");
