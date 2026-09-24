@@ -877,8 +877,11 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
     // it, down at the water's own level, where half and half reads as land and the bank stood
     // back from the river. A bridge's deck shares its edge corners with the water tiles under
     // it too, but a metre and a half up, where the water tile is the ramp and not the land;
-    // led there, the river painted the deck's edge teal (2026-09-24). So the lead is full
-    // within a hand of the lowest all-water corner beside it, and gone by a metre above.
+    // led there, the river painted the deck's edge teal (2026-09-24), and even at its plain
+    // half share it left a teal fringe. So the lead is full within a hand of the lowest
+    // all-water corner beside it, and by a metre above it is not only gone but the water
+    // with it: fs_ground weighs water by three times this. A corner that is all water keeps
+    // it whatever its height, or a river running downhill would lose its upper reaches.
     std::vector<float> cornerHeight(size_t(side) * size_t(side), 0.0f);
     for (size_t i = 0; i < vertices.size(); ++i) {
         cornerHeight[size_t(quadCorner[i])] = vertices[i].position[1];
@@ -893,7 +896,7 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
     for (int r = 0; r < side; ++r) {
         for (int c = 0; c < side; ++c) {
             const size_t v = size_t(r) * size_t(side) + size_t(c);
-            if (wet[v] <= 0.0f) continue;
+            if (wet[v] <= 0.0f || wet[v] >= 0.99f) continue;
             float level = 1e9f;
             for (int dr = -1; dr <= 1; ++dr) {
                 for (int dc = -1; dc <= 1; ++dc) {

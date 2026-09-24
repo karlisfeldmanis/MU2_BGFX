@@ -126,10 +126,10 @@ void main()
 		// half and half, and water's dark sheet at half reads as the land over it -- the
 		// banks stood back from the river by a third of a tile. Tripled, the edge corner is
 		// three quarters water, which is where it reads as water. Only down at the water's
-		// level: v_weight.w is how much lead a corner takes, none up on a bridge's deck. See
-		// Ground::splat.
+		// level: v_weight.w is how much lead a corner takes, and up on a bridge's deck it is
+		// nought, which takes the water out of the corner altogether. See Ground::splat.
 		vec3 isWater = mod(floor(vec3_splat(u_groundRelief.w) / vec3(1.0, 2.0, 4.0)), 2.0);
-		w *= vec3_splat(1.0) + 2.0 * isWater * v_weight.w;
+		w *= vec3_splat(1.0) + isWater * (3.0 * v_weight.w - 1.0);
 		w /= max(w.x + w.y + w.z, 1e-5);
 	}
 	// Each layer's relief measured from its own mean, which is its last mip. Measured from
