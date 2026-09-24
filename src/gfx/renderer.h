@@ -491,6 +491,9 @@ private:
     bgfx::TextureHandle shineChrome_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle shineShiny_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uRefine_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uRefineStar_ = BGFX_INVALID_HANDLE;
+    // The +9 star's gain over the chrome's strength, the sheet's refine_star.
+    float shineStar_ = 1.0f;
     bgfx::UniformHandle sChrome_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sShiny_ = BGFX_INVALID_HANDLE;
     float shineStrength_ = 1.0f;

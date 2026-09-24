@@ -247,6 +247,10 @@ struct Lighting {
     // The same strength for the item pictures in the windows, which are clamped 8-bit with no
     // exposure and no bloom, as MuMain's frame was: 1 is MuMain's own and is kept there.
     float refineStageStrength = 1.0f;
+    // The +9 star (Shiny01) over the chrome's strength, in the world and the windows alike. 1
+    // is MuMain's own; at the world's 0.25 the star was lost in the chrome and a +9 read as a
+    // +7. Invention, judged on the studio grid.
+    float refineStar = 1.0f;
 
     // Re-reads `path` when its timestamp has moved. True when something changed, so the
     // caller can log it. The first call always reads.

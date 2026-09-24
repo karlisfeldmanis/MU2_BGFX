@@ -14,6 +14,8 @@
 // z: how strongly the chrome and the star are added; 0 when their sheets are missing
 // w: how much of the +3/+5/+7/+9 tint the lit colour takes, 1 being MuMain's own
 uniform vec4 u_refine;
+// x: the +9 star's gain on top of the strength, the sheet's refine_star; 1 is MuMain's
+uniform vec4 u_refineStar;
 SAMPLER2D(s_chrome, 9);
 SAMPLER2D(s_shiny, 10);
 
@@ -54,7 +56,7 @@ vec3 shineAdded(float plus, vec3 n, vec3 colour)
 	if (plus >= 9.0)
 	{
 		vec2 metalUv = vec2(n.y * 0.5 + 0.2, -n.z * 0.5 + 0.5);
-		added += texture2DLod(s_shiny, metalUv, 0.0).rgb;
+		added += texture2DLod(s_shiny, metalUv, 0.0).rgb * u_refineStar.x;
 	}
 	return added * colour * u_refine.z;
 }

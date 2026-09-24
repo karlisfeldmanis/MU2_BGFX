@@ -187,8 +187,13 @@ sparkle, the ordinary swing's refined streak (`fx/streak.h`).
 
 2026-09-24. Proved as the top of this file asks: in bench shots, in town and in the bag, and
 inside budget. What is left, named and not done:
-* **+9 is hardly told from +7.** The Shiny01 star is lost in the chrome at 0.25 on armour; it
-  shows only where the chrome is dark.
+* ~~**+9 is hardly told from +7.**~~ Done the same day: the star has its own gain over the
+  chrome's strength, `refine_star` (u_refineStar.x), invention. The Plate set at +7 and +9,
+  noon and night, against gains 1, 2, 4 and 8 (shots/studio/shine/plate_star.png): at 1 a +9
+  is a +7 with a brighter helm crown; at 4 it carries bright cyan highlights on the crown, the
+  chest ridge and the boots with the plate still read; at 8 the helm is a neon blob at night.
+  **The user picked 4.** In the bag, at the stages' own strength of 1, the +9 pieces take
+  brighter cyan edges and nothing blows out.
 * **The chrome is fixed to the world, not the view** (MuMain's world normal): a turning camera
   sees the same band on the same plate, and a flat face takes one texel, which may be a dark
   one for a few seconds of the wave.

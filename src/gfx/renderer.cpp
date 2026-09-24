@@ -26,6 +26,8 @@ void Renderer::bindShine(bool stage) {
                              std::fmod(elapsed_, 10.0f) * 0.1f, sheets ? strength : 0.0f,
                              shineTint_};
     bgfx::setUniform(uRefine_, refine);
+    const float star[4] = {shineStar_, 0.0f, 0.0f, 0.0f};
+    bgfx::setUniform(uRefineStar_, star);
     bgfx::setTexture(9, sChrome_, sheets ? shineChrome_ : whiteAo_, 0);
     bgfx::setTexture(10, sShiny_, sheets ? shineShiny_ : whiteAo_,
                      BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
@@ -450,6 +452,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     shineStrength_ = lighting.refineStrength;
     shineTint_ = lighting.refineTint;
     shineStageStrength_ = lighting.refineStageStrength;
+    shineStar_ = lighting.refineStar;
 
     // --- the camera -------------------------------------------------------------------
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and
