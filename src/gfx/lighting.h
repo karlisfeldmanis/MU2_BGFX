@@ -115,16 +115,15 @@ struct Lighting {
     // price a pass on Metal. docs/budget.md.
     float grass = 1.0f;
     // The reach, from the EYE, per card. MU's 8 m camera sees the ground out to 21 m at the
-    // top of the frame and 28.5 m at its far corners; 26 keeps the whole of the played 6 m
-    // frame (22.8 m to a corner) inside the field and puts only the top corners of the 8 m
-    // measuring frame in the fade. Because it is measured from the eye and the eye is rigid
-    // to the player, the edge is a place on the screen and never a ring that moves with him.
-    float grassRadius = 26.0f;   // metres from the eye past which no card stands
-    float grassFade = 4.0f;      // the last metres of that, where a card shrinks into the turf
-    // Past the character: the eye is 8 m from him at MU's distance and the near edge of the
-    // frame is 7.7 m, so 12 leaves the ground round his feet at full count and thins the
-    // half of the frame above him.
-    float grassThin = 12.0f;     // metres from the eye where the thinning with distance begins
+    // top of the frame and 28.5 m at its far corners; 30 with a 1.5 m fade keeps the whole of
+    // even the 8 m frame at full height, so no card is ever seen growing or shrinking at the
+    // edge. Because it is measured from the eye and the eye is rigid to the player, the edge
+    // is a place on the screen and never a ring that moves with him.
+    float grassRadius = 30.0f;   // metres from the eye past which no card stands
+    float grassFade = 1.5f;      // the last metres of that, where a card shrinks into the turf
+    // Where the far widening begins. It named the start of a thinning with distance once; the
+    // count is no longer thinned, because a thinned card grows as the player nears it.
+    float grassThin = 12.0f;     // metres from the eye where the widening with distance begins
     // A bias on the mip level the sheet is read at; negative is sharper. Sharper is more
     // painted blade and more crawl, since a crisper edge under 4x MSAA with no TAA moves more
     // as the camera walks; docs/grass.md has the sweep that set this. -0.4 was tuned against

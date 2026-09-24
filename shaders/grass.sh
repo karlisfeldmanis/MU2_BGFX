@@ -164,15 +164,9 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	float distance = length(u_camPos.xyz - c.base);
 
 	// Thinned by shrinking whole cards away, never by fading them: there is no TAA here to
-	// hold a half-transparent card still, and a dissolve on painted grass crawls.
-	//
-	// It is a RAMP and not a step, and that is not a nicety. The density falls with distance
-	// and the camera moves; on a step, a card whose hash sits near the threshold switches on
-	// and off between one frame and the next as the player walks. A field of those twinkles,
-	// and that twinkle is what was reported as the grass shuttering. Over a band the same card
-	// grows and shrinks instead, which is nothing the eye reports. The band is wide -- a sixth
-	// of the density's range -- so that with the thinning spread over fifteen metres a card
-	// takes two or three metres of walking to grow, which at a walk is a second.
+	// hold a half-transparent card still, and a dissolve on painted grass crawls. The density
+	// is the patch's own and does not move with the camera, so a card is either there or not
+	// before the player ever sees it; the ramp only softens what a patch's density cuts.
 	float keep = grassHash(id + 2.3);
 
 	// The tufts. Two clump fields at two scales, because a meadow has two: a coarse one that
@@ -186,22 +180,17 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	c.vigour = vigour;
 	c.bunch = bunch;
 
-	// The density this draw asks for. For the sward it is the patch's, thinned with distance,
-	// which the widening below pays back: coverage held, card count down, and no painted blade
-	// allowed under a pixel wide at the far edge. For the meadow it is Turf's: a rate of
-	// plants a tile -- `grass_meadow` in u_grassSize.z is that rate over the cards on offer --
-	// varied by a drift six metres across so the plants come in patches rather than one a tile
-	// everywhere. Not thinned with distance: a seed head is one plant, not a sward, and a
-	// missing one at the top of the frame is a missing plant.
+	// The density this draw asks for. For the sward it is the patch's, and it is NOT thinned
+	// with distance: a thinned field is one whose cards grow as the player walks towards them,
+	// and the grass should already be there when he arrives, never seen coming up. For the
+	// meadow it is Turf's: a rate of plants a tile -- `grass_meadow` in u_grassSize.z is that
+	// rate over the cards on offer -- varied by a drift six metres across so the plants come
+	// in patches rather than one a tile everywhere.
 	float far = saturate((distance - u_grassReach.z) / max(u_grassReach.w - u_grassReach.z, 0.1));
 	float density = d1.z * u_grassSize.z;
 	if (meadow)
 	{
 		density *= 0.3 + 1.4 * grassField(c.base.xz, 6.0, 41.0);
-	}
-	else
-	{
-		density *= 1.0 - 0.65 * far;
 	}
 	// The +1 puts the ramp's top AT the density rather than a sixth above it, so a patch at
 	// full density keeps every card; without it the sixth of cards whose hash sits over 0.83
@@ -234,7 +223,8 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	// reach a card shrinks into the turf, so the far edge of the field is a sward getting
 	// shorter into the painted grass tile under it rather than a line of cards. At MU's 8 m
 	// the reach sits past the far corners of the frame, so on flat ground the edge is never
-	// in the picture at all; where a bank lifts the far ground into view, it is a fade.
+	// in the picture at all; where a bank lifts the far ground into view, it is a fade. The
+	// band is kept past MU's farthest corner (28.5 m) so no card is ever seen shrinking in it.
 	alive *= saturate((u_grassReach.x - distance) / max(u_grassReach.y, 0.1));
 
 	// Which column of the sheet. MU rolls the column by the terrain ROW so the four tufts do
@@ -434,11 +424,10 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	c.width = height * u_grassCard.y * (0.66 + grassHash(id + 31.7) * 0.74) *
 	          mix(1.0, 0.72, rank);
 
-	// The distance widening, which is the mesh-shader trick out of docs/grass.md: as cards are
-	// thinned with distance the survivors are widened to hold the coverage. On a painted card
-	// it also keeps the painted blades on it over a pixel wide, and a sub-pixel painted blade
-	// under 4x MSAA with no TAA is the one aliasing problem this field really has. It runs over
-	// the same band as the thinning, because it is the other half of the same mechanism.
+	// The distance widening, out of docs/grass.md. It was the other half of a thinning that is
+	// gone (a thinned card grew as the player neared it); what it still does is keep the
+	// painted blades on a far card over a pixel wide, and a sub-pixel painted blade under 4x
+	// MSAA with no TAA is the one aliasing problem this field really has.
 	c.width *= 1.0 + far * u_grassCard.w;
 	return c;
 }
