@@ -356,7 +356,10 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             // The bite is MU2's own 0.35, in w.
             const float repeat[4] = {l[0].repeat, l[1].repeat, l[2].repeat, 0.35f};
             bgfx::setUniform(uGroundRepeat_, repeat);
-            const float relief[4] = {l[0].relief, l[1].relief, l[2].relief, 0.0f};
+            // w: which layers are water, one bit each, for the lead fs_ground gives it.
+            const float relief[4] = {l[0].relief, l[1].relief, l[2].relief,
+                                     float((l[0].water ? 1 : 0) | (l[1].water ? 2 : 0) |
+                                           (l[2].water ? 4 : 0))};
             bgfx::setUniform(uGroundRelief_, relief);
             // xyz are each layer's water slide, in widths of its own sheet: MuMain's
             // WaterMove, `(WorldTime % 20000) * 0.00005` (ZzzLodTerrain.cpp), added to U on

@@ -10,7 +10,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 
 uniform vec4 u_groundRepeat;  // xyz: each layer's repeat  w: the bite
 uniform vec4 u_groundBlend;   // xyz: each layer's water slide  w: how many layers this part weighs
-uniform vec4 u_groundRelief;  // xyz: each layer's relief
+uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are water, a bit each
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
 
@@ -120,6 +120,14 @@ void main()
 	if (u_groundSlots.w > 0.5)
 	{
 		w = w * w * w;
+		w /= max(w.x + w.y + w.z, 1e-5);
+		// And water leads at its own shore. MU draws a water tile as water right to its edge
+		// and the land tile beside it as land; the shared corner on that edge averages to
+		// half and half, and water's dark sheet at half reads as the land over it -- the
+		// banks stood back from the river by a third of a tile. Tripled, the edge corner is
+		// three quarters water, which is where it reads as water.
+		vec3 isWater = mod(floor(vec3_splat(u_groundRelief.w) / vec3(1.0, 2.0, 4.0)), 2.0);
+		w *= vec3_splat(1.0) + 2.0 * isWater;
 		w /= max(w.x + w.y + w.z, 1e-5);
 	}
 	// Each layer's relief measured from its own mean, which is its last mip. Measured from
