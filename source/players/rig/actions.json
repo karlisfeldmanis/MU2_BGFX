@@ -1159,19 +1159,23 @@
     },
     "234": {
       "enum": "PLAYER_SIT1",
-      "name": "Sit 1"
+      "name": "Sit 1",
+      "play_speed": 0.4
     },
     "235": {
       "enum": "PLAYER_SIT2",
-      "name": "Sit 2"
+      "name": "Sit 2",
+      "play_speed": 0.4
     },
     "236": {
       "enum": "PLAYER_SIT_FEMALE1",
-      "name": "Sit female 1"
+      "name": "Sit female 1",
+      "play_speed": 0.4
     },
     "237": {
       "enum": "PLAYER_SIT_FEMALE2",
-      "name": "Sit female 2"
+      "name": "Sit female 2",
+      "play_speed": 0.4
     },
     "238": {
       "enum": "PLAYER_HEALING1",
@@ -1185,11 +1189,13 @@
     },
     "240": {
       "enum": "PLAYER_POSE1",
-      "name": "Pose 1"
+      "name": "Pose 1",
+      "play_speed": 0.4
     },
     "241": {
       "enum": "PLAYER_POSE_FEMALE1",
-      "name": "Pose female 1"
+      "name": "Pose female 1",
+      "play_speed": 0.4
     },
     "242": {
       "enum": "PLAYER_JACK_1",
