@@ -11,7 +11,7 @@ $output v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_light
 
 void main()
 {
-	Card card = grassCard(i_data0, i_data1, i_data3, a_position.x);
+	Card card = grassCard(i_data0, i_data1, i_data3, i_data2.w, a_position.x);
 
 	vec3 wpos;
 	vec2 uv;

@@ -107,13 +107,13 @@ float grassField(vec2 p, float metres, float salt)
 
 // The patch instance, unpacked:
 //   i_data0 = (x, z of the patch's -x -z corner, height at (col, row+1), height at (col+1, row+1))
-//   i_data1 = (height at (col, row), height at (col+1, row), density 0..1, unused)
-//   i_data2 = (MU's baked light rgb, unused)
+//   i_data1 = (height at (col, row), height at (col+1, row), density 0..1, walls' first 18 bits)
+//   i_data2 = (MU's baked light rgb, walls' other 18 bits)
 //   i_data3 = the paving at the same four corners as the heights, in the same order
 //
 // The two height pairs are the v = 0 and v = 1 edges of the tile, where v runs along +z. See
 // docs/conventions.md: column is +x, row is -z, so the tile's corner is (column, -(row + 1)).
-Card grassCard(vec4 d0, vec4 d1, vec4 d3, float index)
+Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 {
 	// The meadow draw and the sward draw share this function and differ in a few places
 	// below; the flag is the sheet's own, set by the renderer per draw.
@@ -216,6 +216,19 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float index)
 	// into it over the fade MU painted, rather than a line of grass along the kerb.
 	float paved = mix(mix(d3.x, d3.y, u), mix(d3.z, d3.w, u), v);
 	alive *= 1.0 - smoothstep(0.12, 0.5, paved);
+
+	// The town's stone. The cook cut the tile into six by six squares and set a bit for each
+	// one an object's own surface crosses at the ground -- the rim of a flower bed, the foot of
+	// a wall -- and a card standing in one is not grown. A step and not a ramp, because what it
+	// answers to is still: nothing here moves with the camera, so there is nothing to twinkle.
+	// Bit v * 6 + u, the first eighteen in d1.w and the rest in wallsHigh, each a whole number
+	// a float holds exactly; halving by a power of two is exact too, so the test is.
+	float wallU = min(floor(u * 6.0), 5.0);
+	float wallV = min(floor(v * 6.0), 5.0);
+	float wallBit = wallV * 6.0 + wallU;
+	float wallWord = wallBit < 18.0 ? d1.w : wallsHigh;
+	float wallShift = wallBit < 18.0 ? wallBit : wallBit - 18.0;
+	alive *= 1.0 - mod(floor(wallWord / exp2(wallShift)), 2.0);
 
 	// And the field's end, as a height and never an alpha. Over the last metres before the
 	// reach a card shrinks into the turf, so the far edge of the field is a sward getting

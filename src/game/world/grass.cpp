@@ -139,6 +139,33 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
         return false;
     }
 
+    // The walls, which the cook works out from the placed meshes. See tools/cook.py.
+    const std::string wallsPath = core::join(assetDir, "cooked/" + world + "/" + world + ".walls");
+    const std::vector<uint8_t> walls = core::readFile(wallsPath);
+    uint32_t header[5] = {};
+    if (walls.size() >= sizeof(header)) std::memcpy(header, walls.data(), sizeof(header));
+    const size_t tiles = header[4];
+    if (walls.empty()) {
+        core::logf("no %s -- the grass grows through the town's walls (tools/cook.py "
+                   "--only placements writes it)", wallsPath.c_str());
+    } else if (std::memcmp(walls.data(), "MU2W", 4) != 0 || header[1] != 1 ||
+               header[3] != uint32_t(kWallCells) || int(header[2]) != ground.size() ||
+               walls.size() != sizeof(header) + tiles * 12) {
+        core::logError("%s is not a version 1 .walls of %d cells for a %d-tile map; ignored",
+                       wallsPath.c_str(), kWallCells, ground.size());
+    } else {
+        wallsSize_ = int(header[2]);
+        walls_.assign(size_t(wallsSize_) * size_t(wallsSize_) * 2, 0u);
+        for (size_t i = 0; i < tiles; ++i) {
+            const uint8_t* at = walls.data() + sizeof(header) + i * 12;
+            uint16_t column = 0, row = 0;
+            std::memcpy(&column, at, 2);
+            std::memcpy(&row, at + 2, 2);
+            if (column >= wallsSize_ || row >= wallsSize_) continue;
+            std::memcpy(&walls_[(size_t(row) * size_t(wallsSize_) + column) * 2], at + 4, 8);
+        }
+    }
+
     core::logf("grass: %d cards a patch on a %dx%d jitter, %zu vertices and %zu indices "
                "(%.1f KB, built once), %zu painted sheet(s)",
                kCardsPerPatch, kStratification, kStratification, vertices.size() / 3,
@@ -282,10 +309,19 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             // small numbers. The seed this used to fuse (column * 37 + row * 131) was both huge
             // and collision-prone, and grass.sh's note on the hash says what that looked like.
 
+            // The walls, as the two whole numbers the cook split them into: 18 bits each, which
+            // a float holds exactly, riding in the two floats the instance had spare.
+            float wallsLow = 0.0f, wallsHigh = 0.0f;
+            if (column < wallsSize_ && row < wallsSize_) {
+                const size_t at = (size_t(row) * size_t(wallsSize_) + size_t(column)) * 2;
+                wallsLow = float(walls_[at]);
+                wallsHigh = float(walls_[at + 1]);
+            }
+
             const float instance[kFloatsPerInstance] = {
                 x0, z0, h00, h10,
-                h01, h11, density, 0.0f,
-                light[0], light[1], light[2], 0.0f,
+                h01, h11, density, wallsLow,
+                light[0], light[1], light[2], wallsHigh,
                 p00, p10, p01, p11,
             };
             packed_[bucket].insert(packed_[bucket].end(), instance, instance + kFloatsPerInstance);
@@ -516,6 +552,8 @@ void Grass::shutdown() {
     meadow_ = BGFX_INVALID_HANDLE;
     for (std::vector<float>& bucket : packed_) bucket.clear();
     counts_ = Counts();
+    walls_.clear();
+    wallsSize_ = 0;
 }
 
 }  // namespace mu::game

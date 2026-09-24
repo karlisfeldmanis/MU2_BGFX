@@ -1091,6 +1091,138 @@ ANCHOR_LIGHT = {1: ((1.0, 0.6, 0.4), 0.6, 1.1, 4.0, 3.0, 0.12),
                 4: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0)}
 
 
+# Where the town's own stone stands in the lawn, for the grass to stay out of. The .walls
+# format, little-endian:
+#
+#     'MU2W', u32 version (1), u32 size (tiles a side), u32 cells (a side, per tile), u32 tiles
+#     tiles: u16 column, u16 row, u32 low, u32 high
+#
+# A tile is cut into WALL_CELLS by WALL_CELLS squares, and a set bit is a square some object's
+# own surface passes through within the grass's height of the ground. Bit `v * cells + u`,
+# where u runs along +x and v along +z from the tile's -z edge -- the same (u, v) grass.sh
+# stands a card at -- with the first 18 bits in `low` and the rest in `high`. 18 because
+# that is what a float carries exactly, and the two ride to the shader in the two floats the
+# grass instance had spare. Only tiles with a bit set are written.
+#
+# From the meshes and not from the solids. The solids are one box a model and say where a
+# character may not walk: Fence02, the corner of the flower beds, is a whole square metre of
+# it, and a bed built of four is walled right across. Its own triangles are a rim 26 cm thick
+# round an open middle, which is the shape the grass has to leave.
+WALL_CELLS = 6
+# The band an object has to cross to take the lawn from under it, in metres off the ground at
+# that point. The bottom is a little under the ground, where MU sinks a wall's foot; the top
+# is below the shortest card, so a branch overhead takes nothing and a wall that meets the
+# ground takes what it stands on.
+WALL_BAND = (-0.05, 0.35)
+# MU's own grass models are what a lawn grows round, not through.
+WALL_SKIPPED = ("Grass",)
+
+
+def cook_walls(out_dir, world, models, buckets, heights, channels, grid_w, grid_h, lift):
+    import numpy as np
+
+    cells = WALL_CELLS
+    size = grid_w
+    grid = np.frombuffer(bytes(heights), np.uint8)[::channels].astype(np.float32)
+    grid = grid.reshape(grid_h, grid_w) * lift
+
+    # The land under a point, bilinear over the tile's corners as cook_placements' terrain()
+    # and Ground::heightAt have it.
+    def ground(x, z):
+        column = np.clip(x, 0.0, grid_w - 1.001)
+        row = np.clip(-z, 0.0, grid_h - 1.001)
+        c0 = column.astype(np.int64)
+        r0 = row.astype(np.int64)
+        fc = column - c0
+        fr = row - r0
+        top = grid[r0, c0] * (1 - fc) + grid[r0, c0 + 1] * fc
+        bottom = grid[r0 + 1, c0] * (1 - fc) + grid[r0 + 1, c0 + 1] * fc
+        return top * (1 - fr) + bottom * fr
+
+    # content/placement.cpp's transform, for a row vector: pitch, then roll, then yaw.
+    def turned(pitch, yaw, roll):
+        s, c = math.sin(pitch), math.cos(pitch)
+        about_x = np.array([[1, 0, 0], [0, c, s], [0, -s, c]])
+        s, c = math.sin(roll), math.cos(roll)
+        about_z = np.array([[c, s, 0], [-s, c, 0], [0, 0, 1]])
+        s, c = math.sin(yaw), math.cos(yaw)
+        about_y = np.array([[c, 0, -s], [0, 1, 0], [s, 0, c]])
+        return about_x @ about_z @ about_y
+
+    meshes = {}
+
+    def mesh(path):
+        if path not in meshes:
+            with open(os.path.join(ASSETS, path), "rb") as handle:
+                raw = handle.read()
+            _magic, version, vertices, indices, _parts, _materials = struct.unpack_from(
+                "<4s5I", raw, 0)
+            stride, start = (48, 48) if version == 3 else (56, 52)
+            rows = np.frombuffer(raw, np.uint8, vertices * stride, start).reshape(vertices, stride)
+            points = rows[:, :12].copy().view(np.float32).reshape(vertices, 3)
+            triangles = np.frombuffer(raw, np.uint32, indices, start + vertices * stride)
+            meshes[path] = (points.astype(np.float64), triangles.reshape(-1, 3))
+        return meshes[path]
+
+    low, high = WALL_BAND
+    walled = np.zeros((size, size, cells * cells), bool)
+    crossing = 0
+    for entries in buckets.values():
+        for model, x, y, z, yaw, pitch, roll, scale, _colour, _flags in entries:
+            name, mesh_path = models[model][0], models[model][1]
+            if name.startswith(WALL_SKIPPED):
+                continue
+            points, triangles = mesh(mesh_path)
+            placed = (points @ turned(pitch, yaw, roll)) * scale + (x, y, z)
+            corners = placed[triangles]
+            above = corners[:, :, 1] - ground(corners[:, :, 0], corners[:, :, 2])
+            keep = (above.min(1) < high) & (above.max(1) > low)
+            corners, above = corners[keep], above[keep]
+            if not len(corners):
+                continue
+            crossing += len(corners)
+
+            # Each triangle is walked on a barycentric lattice fine enough that no cell can be
+            # stepped over -- half a cell at the longest edge -- and every lattice point inside
+            # the band marks the cell it falls in. Grouped by lattice size so a model is a few
+            # array operations rather than a loop over its triangles.
+            longest = np.max(np.linalg.norm(corners - np.roll(corners, 1, axis=1), axis=2), axis=1)
+            steps = np.clip(np.ceil(longest * cells * 2.0), 1, 400).astype(np.int64)
+            for step in np.unique(steps):
+                chosen = steps == step
+                i, j = np.meshgrid(np.arange(step + 1), np.arange(step + 1))
+                inside = (i + j) <= step
+                a = (i[inside] / step)[None, :]
+                b = (j[inside] / step)[None, :]
+                one = corners[chosen]
+                lifted = above[chosen]
+                point = (one[:, None, 0] * (1 - a - b)[..., None] + one[:, None, 1] * a[..., None]
+                         + one[:, None, 2] * b[..., None])
+                off = lifted[:, None, 0] * (1 - a - b) + lifted[:, None, 1] * a + lifted[:, None, 2] * b
+                point = point[(off > low) & (off < high)]
+                column = np.floor(point[:, 0]).astype(np.int64)
+                row = np.floor(-point[:, 2]).astype(np.int64)
+                u = np.clip(np.floor((point[:, 0] - column) * cells), 0, cells - 1).astype(np.int64)
+                v = np.clip(np.floor((row + 1 + point[:, 2]) * cells), 0, cells - 1).astype(np.int64)
+                on = (column >= 0) & (column < size) & (row >= 0) & (row < size)
+                walled[row[on], column[on], (v * cells + u)[on]] = True
+
+    split = 18
+    weights = (1 << np.arange(cells * cells, dtype=np.uint64)).astype(np.uint64)
+    tiles = np.argwhere(walled.any(axis=2))
+    body = bytearray()
+    for row, column in tiles:
+        bits = int((walled[row, column].astype(np.uint64) * weights).sum())
+        body += struct.pack("<2H2I", column, row, bits & ((1 << split) - 1), bits >> split)
+    header = struct.pack("<4s4I", b"MU2W", 1, size, cells, len(tiles))
+    out_path = os.path.join(out_dir, f"{world}.walls")
+    with open(out_path, "wb") as handle:
+        handle.write(header + bytes(body))
+    print(f"cook: {len(tiles)} tiles walled against the grass, {int(walled.sum())} cells of "
+          f"{cells}x{cells}, from {crossing} triangles crossing the ground, "
+          f"{(len(header) + len(body)) / 1000:.0f} kB")
+
+
 def cook_placements(world, out_dir, chunk_tiles):
     world_dir = os.path.join(ASSETS, "world", world)
     with open(os.path.join(world_dir, f"{world}.json")) as handle:
@@ -1312,6 +1444,9 @@ def cook_placements(world, out_dir, chunk_tiles):
     out_path = os.path.join(out_dir, f"{world}.mut")
     with open(out_path, "wb") as handle:
         handle.write(header + bytes(body))
+
+    cook_walls(out_dir, world, models, buckets, heights, _channels, grid_w, grid_h,
+               height_factor / per_tile)
 
     print(f"cook: {written} placements in {len(chunk_records)} chunks of {chunk_tiles} tiles, "
           f"{len(models)} models, {grounded} laid on the terrain, {lowered_count} of {len(LOWERED)} "

@@ -122,6 +122,9 @@ public:
     // eight texels a column -- still a tuft. Below that it is a smudge, and which smudge it
     // is changes as the camera moves. grass.sh caps it.
     static constexpr int kSheetWidth = 256;
+    // The walls' squares a tile side, which the cook's WALL_CELLS and grass.sh's walled() must
+    // both be: six by six is 36 bits, two floats' worth of exact integers.
+    static constexpr int kWallCells = 6;
     static constexpr float kDeepestMip = 3.0f;
 
 private:
@@ -150,6 +153,14 @@ private:
     // allocates nothing once the disc has been walked once.
     std::vector<float> packed_[gfx::GrassField::kMaxSheets];
     Counts counts_;
+
+    // Where the town's stone stands in the lawn: two words a tile, row-major, read from the
+    // cook's `<world>.walls` (tools/cook.py, cook_walls). A tile is six by six squares and a
+    // set bit is one some object's surface crosses at the ground -- the rim of a flower bed,
+    // a wall's foot -- which grass.sh keeps every card out of. Empty when the world was
+    // cooked before the file existed, and then nothing is walled.
+    std::vector<uint32_t> walls_;
+    int wallsSize_ = 0;
 
     // The footprints: a ring of where anybody's feet have been, laid one every third of a
     // metre of walking and let go of over a couple of seconds. Turf's wake, kept for every
