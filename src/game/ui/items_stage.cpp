@@ -107,6 +107,7 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         float basis[16];
         bx::mtxIdentity(basis);
         float extent[3] = {size[0], size[1], size[2]};
+        int up = 1;
         if (!row.armour()) {
             int order[3] = {0, 1, 2};
             std::sort(order, order + 3, [&](int a, int c) { return size[a] > size[c]; });
@@ -136,6 +137,7 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
                     basis[r * 4 + 0] = -basis[r * 4 + 0];
                 }
             }
+            up = order[0];
             extent[1] = size[order[0]];
             extent[0] = size[order[1]];
             extent[2] = size[order[2]];
@@ -152,7 +154,11 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         // when the pointer arrives. A flat thing loses nothing by it -- a sword's depth is a few
         // millimetres and its diagonal is its width -- and a deep thing is drawn at the size it
         // can hold all the way round.
-        const float swept = std::sqrt(extent[0] * extent[0] + extent[2] * extent[2]);
+        //
+        // Measured from the vertices and not from the box: the box's diagonal is right for a
+        // square footprint and half again too wide for a round one, which drew a mace -- whose
+        // head is as deep as it is wide -- at half the height its cell had room for.
+        const float swept = 2.0f * b.reach[up];
         const float roomW = std::max(1.0f, one.box.w - kPadUnits * 2.0f);
         const float endPad = row.weapon() && !row.shield() ? kWeaponEndUnits : kPadUnits;
         const float roomH = std::max(1.0f, one.box.h - endPad * 2.0f);
@@ -160,7 +166,6 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         const float upward = extent[1] > 0.001f ? roomH / extent[1] : 1e9f;
         float fit = std::min(across, upward);
         if (!std::isfinite(fit) || fit <= 0.0f || fit > 1e8f) fit = 1.0f;
-
         const float yaw = kRestYaw + (one.spinning ? float(clock_) * kSpinPerSecond : 0.0f);
         float toCentre[16], turn[16], scale[16], place[16], a[16], c[16], d[16];
         translation(toCentre, -centre[0], -centre[1], -centre[2]);

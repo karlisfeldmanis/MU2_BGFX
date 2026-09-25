@@ -101,6 +101,10 @@ struct Bounds {
     float max[3] = {0, 0, 0};
     float centre[3] = {0, 0, 0};
     float radius = 0.0f;
+    // How far the farthest vertex stands from the line through the centre along each axis:
+    // twice this is the widest the mesh can be turned about that axis, which the bounds'
+    // diagonal overstates for anything round -- a mace's head is a disc, not a square.
+    float reach[3] = {0, 0, 0};
 };
 
 class Mesh {

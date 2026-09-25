@@ -513,6 +513,17 @@ bool Mesh::finish(const void* vertices, uint32_t count, size_t stride,
         extent += half * half;
     }
     bounds_.radius = std::sqrt(extent);
+    float reach[3] = {0, 0, 0};
+    for (uint32_t v = 0; v < count; ++v) {
+        float p[3];
+        std::memcpy(p, bytes + size_t(v) * stride, sizeof(p));
+        for (int i = 0; i < 3; ++i) p[i] -= bounds_.centre[i];
+        for (int i = 0; i < 3; ++i) {
+            const float a = p[(i + 1) % 3], b = p[(i + 2) % 3];
+            reach[i] = std::max(reach[i], a * a + b * b);
+        }
+    }
+    for (int i = 0; i < 3; ++i) bounds_.reach[i] = std::sqrt(reach[i]);
 
     vertexCount_ = count;
     indexCount_ = uint32_t(indices.size());
