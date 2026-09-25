@@ -231,7 +231,12 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     // are `PLAYER_ATTACK_SKILL_SWORD*` and fall on `SetAttackSpeed`'s attack branch, where a
     // wizard's four cast clips read MagicSpeed instead. MU2 got this wrong the other way round
     // once and a staff threw spells a fifth too fast.
-    const float bonus = attackSpeedStat(kin, agility, right, left) * 0.004f;
+    //
+    // Except on a self-cast, which the drawing plays at the clip's own pace (`swingPace` 1 in
+    // game/play.cpp): there is no blow in it to hurry. Timed with the bonus, the lock that
+    // holds him still ran out while the guard was still being raised, and a click walked him
+    // out of the middle of it.
+    const float bonus = row.onSelf() ? 0.0f : attackSpeedStat(kin, agility, right, left) * 0.004f;
     const float rate = (clip->speed + bonus) * 25.0f;
     if (rate <= 0.0f) return 0;
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));
