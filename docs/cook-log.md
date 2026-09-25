@@ -61,11 +61,11 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Tree11 | world | 2026-09-22 11:20 | passed | rebuilt on today's pipeline (clip recooked): dark conifer; MU paints tree_06 near-black (26,22,5) and the canopy renders (40,32,22) at noon -- faithful, not a lighting hole; reads as a silhouette at dusk and against the fire at night |
 | Tree12 | world | 2026-09-22 11:21 | passed | rebuilt on today's pipeline (clip recooked): blossom tree, tree_04 is MU's pale lilac (163,147,164); canopy (133,116,108) at noon, pink at dusk, a faint moonlit violet (13,11,23) at night where the ground is (3,3,1) -- pale paint under the moon's sky, as Tree06's bark; bark trunk reads |
 | Tree13 | world | 2026-09-22 11:22 | passed | rebuilt on today's pipeline (clip recooked): autumn tree, tree_05's orange-brown leaves read at noon and deep rust at dusk; the warm paint takes little of the moon's blue, so at night only the fire-lit trunk shows |
-| SteelWall01 | world | 2026-09-22 00:28 | awaiting |  |
-| SteelWall02 | world | 2026-09-22 00:28 | awaiting |  |
-| SteelWall03 | world | 2026-09-22 00:28 | awaiting |  |
-| SteelDoor01 | world | 2026-09-22 00:28 | awaiting |  |
-| HouseEtc03 | world | 2026-09-22 00:20 | awaiting |  |
+| SteelWall01 | world | 2026-09-25 11:53 | passed | one dark iron: black posts and bars, only the spear tips catch the sun at noon and the fire at night; no chrome rail (the f0 0.12 note holds); rebuilt and synced, no texture changed |
+| SteelWall02 | world | 2026-09-25 11:53 | passed | the flower-bed run: black iron bars with pale tips, reads as one iron with SteelWall01 at noon, dusk and by the fire |
+| SteelWall03 | world | 2026-09-25 11:53 | passed | the closing section: same black iron and pale tips as 01 and 02, no faults |
+| SteelDoor01 | world | 2026-09-25 11:53 | passed | failed first: the scrollwork came out cream-white at noon and dusk though MU paints it dark brown (mean 28,21,13). steel_barred_door now takes the rails' f0 0.12 and a tenth of its paint; the gate reads as one black wrought-iron silhouette with the posts. Needed sync_one before the cook saw the rebuild |
+| HouseEtc03 | world | 2026-09-25 11:58 | passed | failed first: the cage's cut-out bars came out pale grey-tan and the gate arch cream beside the black SteelWall runs. Both sheets now take f0 0.12 and a tenth of their paint; black iron at noon and dusk, the fire-side tip lit at night |
 | Hound01 | figure | 2026-09-22 09:04 | passed | rebuilt after the flip fix: blue painted armour plates with MU's pale streaks, fur underside, pale claws and horn; brass head plate is the mesh MU hides, so it cannot blow out; reads at noon, dusk and by the fire at night |
 | BudgeDragon01 | figure | 2026-09-22 09:10 | passed | rebuilt after the flip fix: red scaled hide and dark wing membranes read at noon, dusk and by the fire; no metal, paint as MU drew it |
 | BullFighter01 | figure | 2026-09-22 09:11 | passed | rebuilt after the flip fix: brown fur with pale horns and hooves; the Elite shares this mesh and keeps its crest; no metal, no blowouts |
@@ -97,3 +97,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Stone03 | world | 2026-09-22 11:29 | passed | rebuilt on today's pipeline: faceted boulder on ston01, cracked grey rock with the cast normal's relief; reads at noon and dusk, lit on the fire's side at night |
 | Stone04 | world | 2026-09-22 11:30 | passed | rebuilt on today's pipeline: three small stones on ston01, pale grey on the turf at noon and dusk, the fire's light on them at night |
 | Stone05 | world | 2026-09-22 11:31 | passed | rebuilt on today's pipeline: a ring of stones on ston01, pale grey with the rock relief; reads at noon and dusk, fire-lit at night |
+| Straw01 | world | 2026-09-25 11:42 | passed | tan straw bundles with their bindings read at noon, warm on the fire side at dusk, dark away from it at night; the softened comb does not crawl on the sheet. Judged on the uncommitted cutout_soften + uv_heal recipe |

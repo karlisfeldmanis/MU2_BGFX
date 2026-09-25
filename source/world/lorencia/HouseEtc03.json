@@ -28,7 +28,7 @@
     "steel_barred_a": "#000000",
     "steel_barred_door": "#000000"
   },
-  "material_note": "No Fab surface: the railing keeps MU's own painting and wears wrought_iron as the library states it, 0.50 and metallic 1.0, the same as SteelWall01-03 and SteelDoor01, which carry the same two sheets.\n\nIt used to be 0.4 and 0.58, decided on the old Godot bench on 2026-08-29 (f7fa4df) as a painted-then-weathered railing. Settled back on 2026-09-21: 0.58 is a blend of two materials rather than one, the library leaves that gap empty on purpose, and one railing tuned apart from five others wearing the same art is two answers to one question. The darkness the partial metal was reaching for is MU2_BGFX's metal_gain's job now.\n\nThe tint is black, and it is a choice rather than the additive default that reads the same way on the lamps and the waterfall: these materials carry no base colour of their own, so the bench was showing black railings and that is what was kept. It agrees with the argument already in wrought_iron.json — 85% of this sheet is cut away and what the eye reads is the silhouette against the sky, so the darker the bar the more it is a railing. Relief up to 1.3 for the same reason: the little that is left should read as round bar rather than as a flat strip.",
+  "material_note": "No Fab surface: the railing keeps MU's own painting and wears wrought_iron as the library states it, 0.50 and metallic 1.0, the same as SteelWall01-03 and SteelDoor01, which carry the same two sheets.\n\nIt used to be 0.4 and 0.58, decided on the old Godot bench on 2026-08-29 (f7fa4df) as a painted-then-weathered railing. Settled back on 2026-09-21: 0.58 is a blend of two materials rather than one, the library leaves that gap empty on purpose, and one railing tuned apart from five others wearing the same art is two answers to one question. The darkness the partial metal was reaching for is MU2_BGFX's metal_gain's job now.\n\nThe tint is black, and it is a choice rather than the additive default that reads the same way on the lamps and the waterfall: these materials carry no base colour of their own, so the bench was showing black railings and that is what was kept. It agrees with the argument already in wrought_iron.json \u2014 85% of this sheet is cut away and what the eye reads is the silhouette against the sky, so the darker the bar the more it is a railing. Relief up to 1.3 for the same reason: the little that is left should read as round bar rather than as a flat strip.",
   "islands": [
     {
       "island": 0,
@@ -74,5 +74,14 @@
         0.834
       ]
     }
-  ]
+  ],
+  "sheet_f0_from_art": {
+    "steel_barred_a": 0.1,
+    "steel_barred_door": 0.1
+  },
+  "sheet_f0": {
+    "steel_barred_a": 0.12,
+    "steel_barred_door": 0.12
+  },
+  "sheet_f0_note": "Both sheets take the railings' f0 0.12 and a tenth of their paint, as steel_barred_b does on SteelWall01-03 and the gate sheet on SteelDoor01. The cage's bars are cut-out cards, and the top run lies flat to the sky: at the iron's own reflectance they came out pale grey-tan and the gate's arch cream, beside the black SteelWall runs. Judged on the cook_one sheet 2026-09-25."
 }
