@@ -19,6 +19,10 @@ namespace {
 // four-cell staff. So the staff was drawn short of its own slot while the ring filled its own,
 // and a shelf of them never lined up. One number, the same air round everything.
 constexpr float kPadUnits = 1.8f;
+// Except at the two ends of a weapon, which stands on its longest axis and so is bound by its
+// height: 1.8 units there left a sword's point and a mace's pommel touching the cell's edges.
+// A quarter of a 21-unit cell at each end, whatever the footprint, so a shelf still lines up.
+constexpr float kWeaponEndUnits = 5.0f;
 // Panel.Pose: a rest yaw of eight degrees on the vertical, and the hovered one turning at
 // RenderObjectScreen's `WorldTime * 0.45`, 0.45 degrees a millisecond.
 constexpr float kRestYaw = 8.0f * bx::kPi / 180.0f;
@@ -150,7 +154,8 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         // can hold all the way round.
         const float swept = std::sqrt(extent[0] * extent[0] + extent[2] * extent[2]);
         const float roomW = std::max(1.0f, one.box.w - kPadUnits * 2.0f);
-        const float roomH = std::max(1.0f, one.box.h - kPadUnits * 2.0f);
+        const float endPad = row.weapon() && !row.shield() ? kWeaponEndUnits : kPadUnits;
+        const float roomH = std::max(1.0f, one.box.h - endPad * 2.0f);
         const float across = swept > 0.001f ? roomW / swept : 1e9f;
         const float upward = extent[1] > 0.001f ? roomH / extent[1] : 1e9f;
         float fit = std::min(across, upward);
