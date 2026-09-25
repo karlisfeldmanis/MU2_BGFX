@@ -137,6 +137,15 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
                     basis[r * 4 + 0] = -basis[r * 4 + 0];
                 }
             }
+            // And a quiver stood on its points: which end of the longest axis goes up is the
+            // modeller's, and the bolts (4/7) and arrows (4/15) were modelled head-down. Half a
+            // turn about the viewer, up and across both flipped, so nothing is mirrored.
+            if (row.group == 4 && (row.number == 7 || row.number == 15)) {
+                for (int r = 0; r < 3; ++r) {
+                    basis[r * 4 + 0] = -basis[r * 4 + 0];
+                    basis[r * 4 + 1] = -basis[r * 4 + 1];
+                }
+            }
             up = order[0];
             extent[1] = size[order[0]];
             extent[0] = size[order[1]];
