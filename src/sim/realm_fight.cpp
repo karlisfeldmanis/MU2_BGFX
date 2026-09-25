@@ -119,6 +119,13 @@ void Realm::kill(Body& dead, Body& killer) {
         // restored -- MU's answer to where is a property of the map and not of the death, and
         // reviving him where he fell puts him back inside whatever killed him. Realm.cs:2013.
         dead.risesAt = tick_ + kRiseTicks;
+        // And he rises with nothing standing on him: every buff ends with the death, as MU's
+        // own do, rather than walking back out of town under a guard he raised in the field.
+        // The cooldown is left running, so a death is not a way to raise it again sooner.
+        dead.boonUntil = 0;
+        dead.boonSkill = skill::kNone;
+        dead.boonDamageTaken = 1.0f;
+        dead.stats.damageTaken = 1.0;
         order_ = Request{};
         pending_ = Request{};
         return;
