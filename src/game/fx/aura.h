@@ -80,6 +80,7 @@ struct Recipe {
     bool circle = false;      // MU's ground circle thrown with it
     float light[3] = {1.0f, 1.0f, 1.0f};
     float pace = 1.0f;        // how many times slower than MU the ring turns
+    bool white = false;       // drawn with the white flare sheet instead of MU's gold one
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is
@@ -100,11 +101,13 @@ inline constexpr Recipe kRising{};
 // and too fast, subtle and slower"). The ring turns at a quarter of MU's pace, a turn every two
 // seconds where it was two a second, and the trail is doubled to 24 ticks so each ribbon is
 // still an arc and not a dash; the light is half of what it was; and three ribbons, not five
-// ("too many flares"). And white rather than green, like the shield's ward: the sheet is gold,
-// roughly (1, 0.75, 0.3), so the light passed is its inverse, blue carried and red held back,
-// at about the strength the green had. Ours, not MU's.
-inline constexpr Recipe kGuarding{3,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 24.0f, 150.0f,
-                                  true, true,  true,  {0.17f, 0.22f, 0.55f}, 4.0f};
+// ("too many flares"). And white rather than green, like the shield's ward: drawn with the
+// white flare sheet (effects/light/flare01), since no tint of MU's gold one came out white --
+// its tails carry almost no blue to lift. Since the ribbons play only the two seconds of the
+// cast, they are out on a ring of 45; at 20 they ran inside his body and were not seen. Ours,
+// not MU's.
+inline constexpr Recipe kGuarding{3,    45.0f, 20.0f, 100.0f, 0.0f, 0.0f, 24.0f, 150.0f,
+                                  true, true,  true,  {0.55f, 0.55f, 0.60f}, 4.0f, true};
 // And the third, which is wholly this engine's: a skill read off an orb (user, 2026-09-23).
 // Nothing in MU is being copied here -- 0.75's client never reads an orb out of the bag -- so
 // what it is traced to instead is the SOUND, `player_learn_skill`, a 0.60 s swoosh the user
@@ -204,6 +207,7 @@ private:
 
     bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle ground_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle whiteFlare_ = BGFX_INVALID_HANDLE;  // a recipe's `white` sheet
     bool circle_ = false;
     int guarding_ = -1;  // which burst is the standing guard, or -1
     Burst bursts_[kBursts];

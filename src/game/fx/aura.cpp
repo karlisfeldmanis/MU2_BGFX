@@ -74,6 +74,14 @@ bool Aura::open(const std::string& assetDir, content::Textures& textures) {
     };
     flare_ = take("flare.png");
     ground_ = take("magic_ground.png");
+    // The guard's white ribbons, off the light's own white flare; the gold one stands in when
+    // it is missing.
+    {
+        const std::string white = assetDir + "/effects/light/flare01.png";
+        if (core::fileExists(white)) {
+            whiteFlare_ = textures.load(white, content::TextureRole::Albedo);
+        }
+    }
     core::logf("aura: flare %s, circle %s", bgfx::isValid(flare_) ? "in hand" : "MISSING",
                bgfx::isValid(ground_) ? "in hand" : "MISSING");
     return bgfx::isValid(flare_);
@@ -213,7 +221,7 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
 
         gfx::Sprite sprite;
         sprite.placed = true;
-        sprite.sheet = flare_;
+        sprite.sheet = b.r.white && bgfx::isValid(whiteFlare_) ? whiteFlare_ : flare_;
         sprite.blend = gfx::Blend::Additive;
         sprite.colour[3] = 1.0f;
 
