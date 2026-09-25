@@ -74,14 +74,6 @@ bool Aura::open(const std::string& assetDir, content::Textures& textures) {
     };
     flare_ = take("flare.png");
     ground_ = take("magic_ground.png");
-    // The guard's white ribbons, off the light's own white flare; the gold one stands in when
-    // it is missing.
-    {
-        const std::string white = assetDir + "/effects/light/flare01.png";
-        if (core::fileExists(white)) {
-            whiteFlare_ = textures.load(white, content::TextureRole::Albedo);
-        }
-    }
     core::logf("aura: flare %s, circle %s", bgfx::isValid(flare_) ? "in hand" : "MISSING",
                bgfx::isValid(ground_) ? "in hand" : "MISSING");
     return bgfx::isValid(flare_);
@@ -104,7 +96,7 @@ void Aura::at(const Burst& b, const Joint& j, float back, float out[3]) {
     // and has climbed Direction[2] for every tick since it was made. `back` ticks ago LifeTime
     // was that much higher and the climb that much shorter. MU's Y is this world's -z, so its
     // -sin arrives as +sin and the ring turns MU's way.
-    const float count = (j.phase + (b.r.ticks - b.age) + back) / (kKey * b.r.pace);
+    const float count = (j.phase + (b.r.ticks - b.age) + back) / kKey;
     out[0] = std::cos(count) * b.r.orbit * b.per;
     out[1] = j.height + j.rise * std::max(0.0f, b.age - back);
     out[2] = std::sin(count) * b.r.orbit * b.per;
@@ -221,7 +213,7 @@ void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
 
         gfx::Sprite sprite;
         sprite.placed = true;
-        sprite.sheet = b.r.white && bgfx::isValid(whiteFlare_) ? whiteFlare_ : flare_;
+        sprite.sheet = flare_;
         sprite.blend = gfx::Blend::Additive;
         sprite.colour[3] = 1.0f;
 

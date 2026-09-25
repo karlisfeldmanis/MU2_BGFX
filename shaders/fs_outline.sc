@@ -36,17 +36,12 @@ uniform vec4 u_outlineDrift;
 // pixel box in a 512 texture sampled a strength-one texture read three quarters of it from
 // the cleared margin outside the silhouette entirely, which is the bug this uniform fixes.
 uniform vec4 u_outlineScale;
-// x: the depth the ward's glow is drawn at -- the shield's own nearest, in the scene target's
-// [0,1] -- so the depth test against the scene hides it wherever something stands in front
-// of the shield. y: 1 for the ward, 0 for the hover ring, which draws over the finished
-// picture with no depth to test.
-uniform vec4 u_outlineDepth;
 
-// Sixteen taps over each of ten widening rings: fine enough that the distance found does not
+// Sixteen taps over each of six widening rings: fine enough that the distance found does not
 // band at the feather's own width, and cheap enough that it runs only over the few thousand
 // pixels the fitted view rect now is.
 const int STEPS = 16;
-const int RINGS = 10;
+const int RINGS = 6;
 
 // One tap, held inside the corner of the texture this frame actually drew into.
 //
@@ -99,17 +94,8 @@ void main()
 				break;
 			}
 		}
-		// Solid to within a feather of the full width, then out. The ward's is a glow: it
-		// falls from the shield's edge on a cube, soft all the way, and is gone at its width.
-		if (u_outlineDepth.y > 0.5)
-		{
-			float left = max(0.0, 1.0 - far / width);
-			strength = left * left * left;
-		}
-		else
-		{
-			strength = 1.0 - smoothstep(width - feather, width, far);
-		}
+		// Solid to within a feather of the full width, then out.
+		strength = 1.0 - smoothstep(width - feather, width, far);
 	}
 
 	// The shadow under a dropped item: the same mask, shifted, blurred, painted black. Two
@@ -141,5 +127,4 @@ void main()
 	if (alpha <= 0.0) discard;
 
 	gl_FragColor = vec4(u_outlineEdge.rgb * (ring / alpha), alpha);
-	gl_FragDepth = u_outlineDepth.y > 0.5 ? u_outlineDepth.x : gl_FragCoord.z;
 }

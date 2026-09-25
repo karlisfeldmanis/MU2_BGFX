@@ -721,17 +721,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     }
     ctx.renderer.draw(eye, ctx.lighting, townDrawables_, &world_.ground(), casters,
                       grassDrawn ? &grassField : nullptr);
-    // Defense's ward: the green glow round the shield while the guard stands, drawn by the
-    // ring's own machinery before the ring, so a monster hovered in front of him is ringed
-    // over it. It breathes, slowly -- a breath every three seconds, 75% to 100%.
-    if (world_.played().isOpen() && !world_.played().ward().empty()) {
-        float wardView[16], wardProj[16];
-        ctx.renderer.cameraMatrices(eye, wardView, wardProj);
-        const float breath =
-            0.875f + 0.125f * float(std::sin(at.elapsed * (2.0 * 3.14159265358979 / 3.0)));
-        wardOutline_.show(ctx.renderer, eye, wardView, wardProj, ctx.window.width(),
-                          ctx.window.height(), world_.played().ward(), false, true, breath);
-    }
     // The gold ring: over the world the frame above just drew, under the windows the
     // line below is about to -- so a window drawn over a ringed monster still covers
     // it, the same order Godot's CanvasLayer(-1) kept the ring in. Shown whenever

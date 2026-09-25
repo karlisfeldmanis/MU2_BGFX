@@ -20,46 +20,38 @@ enum View : uint16_t {
     ViewBlur = 3,
     ViewShade = 4,
     ViewTransparent = 5,
-    // Defense's ward: the green glow round the shield, the hover ring's silhouette machinery in
-    // a mask of its own. Here, between the effects and the bloom, and not over the finished
-    // picture with the ring: it is drawn INTO the scene's HDR target and tested against its
-    // depth at the shield's own, so an arm or a monster in front of the shield hides the glow
-    // as it hides the shield, and the glow blooms and is tonemapped with the light round it
-    // (the user, 2026-09-25: "integrated with the actual shield, its z").
-    ViewWardMask = 6,       // the shield alone, into the ward's own tiny target
-    ViewWard = 7,           // the glow, added into the scene round the shield, depth-tested
     // Sprint 8b's bloom: the HDR target halved five times, then added back up the chain.
     // Between the transparent pass and the tonemap for the same reason the transparent pass is
     // there: it reads the linear radiance the flames added into.
-    ViewBloomDown = 8,   // 8..12, one per level, full to 1/32
-    ViewBloomUp = 13,    // 13..16, 1/32 back up to 1/2
-    ViewPresent = 17,
+    ViewBloomDown = 6,   // 6..10, one per level, full to 1/32
+    ViewBloomUp = 11,    // 11..14, 1/32 back up to 1/2
+    ViewPresent = 15,
     // The gold ring's own two views, inserted here so it sits where it has to: AFTER the
     // present pass's tonemap, so its colour is a display colour and not a linear one added
     // into HDR, and BEFORE the HUD, so a window drawn over a ringed monster still covers it.
     // game/outline.cpp.
-    ViewOutlineMask = 18,   // the hovered thing's own meshes, into their own tiny target
-    ViewOutline = 19,       // the ring, composed into its box of the backbuffer
-    ViewHud = 20,
+    ViewOutlineMask = 16,   // the hovered thing's own meshes, into their own tiny target
+    ViewOutline = 17,       // the ring, composed into its box of the backbuffer
+    ViewHud = 18,
     // Sprint 8c's reflection probe: six faces of the town round the player, then the
     // prefiltered copy a mip and a face at a time. AFTER the frame, and read by the next one's
     // shade pass: the faces are drawn a frame late in any case, since one face is drawn a
     // frame, and after the frame they read this frame's sun split rather than needing a view
     // of their own between the shadow and the shade.
-    ViewProbeFace = 21,     // 21..26, a face each
-    ViewProbeFilter = 27,   // 27..56, mip * 6 + face
-    // Sprint 7's item pictures: the bag's stage at 57 and the shelf's at 64, each its own
+    ViewProbeFace = 19,     // 19..24, a face each
+    ViewProbeFilter = 25,   // 25..54, mip * 6 + face
+    // Sprint 7's item pictures: the bag's stage at 55 and the shelf's at 62, each its own
     // target. After the HUD, so a restocked window shows its new picture a frame late; the
     // target keeps the old one meanwhile. game/items_stage.h.
-    ViewStageBag = 57,
-    ViewProbeChain = 58,    // 58..63, the chain of the face drawn this frame, a level each
-    ViewStageShelf = 64,
-    ViewStageQuick = 65,    // the potion boxes' pictures on the HUD's own stage
+    ViewStageBag = 55,
+    ViewProbeChain = 56,    // 56..61, the chain of the face drawn this frame, a level each
+    ViewStageShelf = 62,
+    ViewStageQuick = 63,    // the potion boxes' pictures on the HUD's own stage
     // The tooltip's own picture of the one thing under the pointer, at rest: the bag turns
     // what is hovered, and a turning picture in the tooltip's head is a picture that will not
     // hold still to be read.
-    ViewStageTip = 66,
-    ViewCount = 67,
+    ViewStageTip = 64,
+    ViewCount = 65,
 };
 constexpr int kBloomLevels = 5;
 constexpr int kProbeSize = 128;  // the raw cube's edge, texels

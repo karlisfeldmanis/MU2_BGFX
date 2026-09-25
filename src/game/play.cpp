@@ -221,10 +221,9 @@ void Play::update(double seconds) {
                     }
                     // A self-cast throws no blow, so there is no Hit coming to play the clip:
                     // it is played here instead, and the wave with it.
-                    // The barrier, thrown with the clip and played once: two seconds of it at
-                    // the cast, and after that the shield's ward carries the guard for as long
-                    // as the realm says it stands (Play::ward). The user's, 2026-09-25; it used
-                    // to last the boon's whole length.
+                    // The barrier, thrown with the clip and played once: MU's own ribbons for
+                    // two seconds at the cast, not for the guard's whole five minutes. The
+                    // user's, 2026-09-25.
                     if (row && row->onSelf() && happening.who == heroId) {
                         guardRise(kGuardShowSeconds);
                     }

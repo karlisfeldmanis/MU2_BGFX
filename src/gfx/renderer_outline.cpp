@@ -23,7 +23,6 @@ bool Renderer::createOutline(const std::string& shaderDir) {
     uOutlinePixel_ = bgfx::createUniform("u_outlinePixel", bgfx::UniformType::Vec4);
     uOutlineDrift_ = bgfx::createUniform("u_outlineDrift", bgfx::UniformType::Vec4);
     uOutlineScale_ = bgfx::createUniform("u_outlineScale", bgfx::UniformType::Vec4);
-    uOutlineDepth_ = bgfx::createUniform("u_outlineDepth", bgfx::UniformType::Vec4);
     sOutlineMask_ = bgfx::createUniform("s_mask", bgfx::UniformType::Sampler);
 
     // R8: coverage is all this holds. Clamped, so a tap that strays past the mask's own edge
@@ -33,12 +32,9 @@ bool Renderer::createOutline(const std::string& shaderDir) {
     outlineMaskTex_ = bgfx::createTexture2D(uint16_t(kOutlineMaskSize), uint16_t(kOutlineMaskSize),
                                             false, 1, bgfx::TextureFormat::R8, clamp);
     outlineMaskFb_ = bgfx::createFrameBuffer(1, &outlineMaskTex_, true);
-    wardMaskTex_ = bgfx::createTexture2D(uint16_t(kOutlineMaskSize), uint16_t(kOutlineMaskSize),
-                                         false, 1, bgfx::TextureFormat::R8, clamp);
-    wardMaskFb_ = bgfx::createFrameBuffer(1, &wardMaskTex_, true);
 
     const bool ok = bgfx::isValid(outlineProgram_) && bgfx::isValid(outlineMaskTex_) &&
-                    bgfx::isValid(outlineMaskFb_) && bgfx::isValid(wardMaskFb_);
+                    bgfx::isValid(outlineMaskFb_);
     if (!ok) {
         core::logError("outline: program %d mask %d buffer %d", bgfx::isValid(outlineProgram_),
                        bgfx::isValid(outlineMaskTex_), bgfx::isValid(outlineMaskFb_));
@@ -50,14 +46,10 @@ void Renderer::destroyOutline() {
     if (bgfx::isValid(outlineMaskFb_)) bgfx::destroy(outlineMaskFb_);
     outlineMaskFb_ = BGFX_INVALID_HANDLE;
     outlineMaskTex_ = BGFX_INVALID_HANDLE;  // the frame buffer owned it
-    if (bgfx::isValid(wardMaskFb_)) bgfx::destroy(wardMaskFb_);
-    wardMaskFb_ = BGFX_INVALID_HANDLE;
-    wardMaskTex_ = BGFX_INVALID_HANDLE;
     if (bgfx::isValid(outlineProgram_)) bgfx::destroy(outlineProgram_);
     outlineProgram_ = BGFX_INVALID_HANDLE;
     for (bgfx::UniformHandle* u : {&uOutlineEdge_, &uOutlineParams_, &uOutlinePixel_,
-                                   &uOutlineDrift_, &uOutlineScale_, &uOutlineDepth_,
-                                   &sOutlineMask_}) {
+                                   &uOutlineDrift_, &uOutlineScale_, &sOutlineMask_}) {
         if (bgfx::isValid(*u)) bgfx::destroy(*u);
         *u = BGFX_INVALID_HANDLE;
     }
@@ -165,59 +157,25 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
         outlineBatches_[gi].count = count;
     }
 
-    // The ward is the same two passes into a mask and a pair of views of its own, so the
-    // shield's glow and a hovered monster's ring can both stand in one frame.
-    const bgfx::ViewId maskView = params.ward ? ViewWardMask : ViewOutlineMask;
-    const bgfx::ViewId ringView = params.ward ? ViewWard : ViewOutline;
-    const bgfx::FrameBufferHandle maskFb = params.ward ? wardMaskFb_ : outlineMaskFb_;
-    const bgfx::TextureHandle maskTex = params.ward ? wardMaskTex_ : outlineMaskTex_;
-
     // --- the mask: the hovered thing's meshes, and nothing else, over nothing -------------
-    bgfx::setViewFrameBuffer(maskView, maskFb);
-    bgfx::setViewRect(maskView, 0, 0, uint16_t(maskW), uint16_t(maskH));
-    bgfx::setViewClear(maskView, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
-    bgfx::setViewTransform(maskView, mainView, maskProj);
-    submitBatches(maskView, shadowProgram_, skinnedShadowProgram_, outlineBatches_, idb,
+    bgfx::setViewFrameBuffer(ViewOutlineMask, outlineMaskFb_);
+    bgfx::setViewRect(ViewOutlineMask, 0, 0, uint16_t(maskW), uint16_t(maskH));
+    bgfx::setViewClear(ViewOutlineMask, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
+    bgfx::setViewTransform(ViewOutlineMask, mainView, maskProj);
+    submitBatches(ViewOutlineMask, shadowProgram_, skinnedShadowProgram_, outlineBatches_, idb,
                  BGFX_STATE_WRITE_RGB, false);
 
     // --- the ring: one screen pass, its view rect the thing's own box of the backbuffer ---
-    // The ward's goes into the SCENE instead -- the HDR target the shade pass wrote, with its
-    // depth -- whose pixels are the render's and not the window's, so its box is scaled
-    // across from the backbuffer's.
-    if (params.ward) {
-        const float sx = float(width_) / float(outWidth_), sy = float(height_) / float(outHeight_);
-        const int x0 = std::clamp(int(std::floor(float(params.screenX) * sx)), 0, width_);
-        const int y0 = std::clamp(int(std::floor(float(params.screenY) * sy)), 0, height_);
-        const int x1 = std::clamp(int(std::ceil(float(params.screenX + params.screenW) * sx)), 0,
-                                  width_);
-        const int y1 = std::clamp(int(std::ceil(float(params.screenY + params.screenH) * sy)), 0,
-                                  height_);
-        if (x1 <= x0 || y1 <= y0) return;
-        bgfx::setViewFrameBuffer(ringView, shadeFb_);
-        bgfx::setViewRect(ringView, uint16_t(x0), uint16_t(y0), uint16_t(x1 - x0),
-                          uint16_t(y1 - y0));
-    } else {
-        bgfx::setViewFrameBuffer(ringView, BGFX_INVALID_HANDLE);
-        bgfx::setViewRect(ringView, uint16_t(std::max(0, params.screenX)),
-                          uint16_t(std::max(0, params.screenY)), uint16_t(params.screenW),
-                          uint16_t(params.screenH));
-    }
-    bgfx::setViewClear(ringView, 0, 0, 1.0f, 0);
-    bgfx::setViewTransform(ringView, nullptr, nullptr);
+    bgfx::setViewFrameBuffer(ViewOutline, BGFX_INVALID_HANDLE);
+    bgfx::setViewRect(ViewOutline, uint16_t(std::max(0, params.screenX)),
+                      uint16_t(std::max(0, params.screenY)), uint16_t(params.screenW),
+                      uint16_t(params.screenH));
+    bgfx::setViewClear(ViewOutline, 0, 0, 1.0f, 0);
+    bgfx::setViewTransform(ViewOutline, nullptr, nullptr);
 
     // Gold, MU2's own: Outline.Width, Outline.Shade and the shader's own drift and spread,
     // carried over unchanged since they were the tuned numbers, not guesses.
-    //
-    // The ward: the guard's green, at the strength the game breathes it at, and the whole of
-    // its width feathered, so it falls from the shield's edge to nothing -- a glow and not a
-    // stroke. Display colour, as the gold is.
-    const float gold[4] = {1.0f, 0.78f, 0.28f, 1.0f};
-    // In LINEAR light, since the ward is added into the scene before the tonemap: the guard's
-    // green at a strength that reads as a glow at the exposure and not as paint.
-    // White and not the guard's green, on the user's word (2026-09-25): a pale light round the
-    // shield, a third under the brightness the soft green had.
-    const float white[4] = {0.042f, 0.042f, 0.042f, 0.8f * std::clamp(params.glow, 0.0f, 1.0f)};
-    const float* edge = params.ward ? white : gold;
+    const float edge[4] = {1.0f, 0.78f, 0.28f, 1.0f};
     // The width and the shadow's drift are given to the shader in MASK texels, and a shrunk
     // box has smaller texels than the screen's: unscaled, the ring round a big figure would
     // come out as wide as the shrink factor made it -- thick round the thing that is nearest
@@ -225,9 +183,8 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // this ring is written to (one width in screen pixels, a spider at your feet and one
     // across the square ringed the same). Never under a texel, or the search would land on
     // one sample and band.
-    const float texels = std::max(1.0f, (params.ward ? kWardWidth : kOutlineWidth) * fit);
-    const float outlineParams[4] = {texels, params.ward ? texels : 0.9f,
-                                    params.shadow ? 0.5f : 0.0f, 0.0f};
+    const float texels = std::max(1.0f, kOutlineWidth * fit);
+    const float outlineParams[4] = {texels, 0.9f, params.shadow ? 0.5f : 0.0f, 0.0f};
     // One texel of the PHYSICAL mask texture, not of the box: the box fills only its own
     // corner of the fixed kOutlineMaskSize square (see u_outlineScale in fs_outline.sc), and
     // a step sized to the box's own width would search too far or too little depending on
@@ -242,20 +199,11 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     bgfx::setUniform(uOutlinePixel_, pixel);
     bgfx::setUniform(uOutlineDrift_, drift);
     bgfx::setUniform(uOutlineScale_, scale);
-    const float depth[4] = {params.depth, params.ward ? 1.0f : 0.0f, 0.0f, 0.0f};
-    bgfx::setUniform(uOutlineDepth_, depth);
-    bgfx::setTexture(0, sOutlineMask_, maskTex);
+    bgfx::setTexture(0, sOutlineMask_, outlineMaskTex_);
     bgfx::setVertexBuffer(0, screenVb_);
-    // Added for the ward, so it brightens what is round the shield as light does; laid over
-    // for the gold, which is a line drawn on the picture.
-    // And the ward tests the scene's depth at the shield's own and writes none.
     bgfx::setState(BGFX_STATE_WRITE_RGB |
-                   (params.ward ? BGFX_STATE_DEPTH_TEST_LESS |
-                                      BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
-                                                            BGFX_STATE_BLEND_ONE)
-                                : BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
-                                                        BGFX_STATE_BLEND_INV_SRC_ALPHA)));
-    bgfx::submit(ringView, outlineProgram_);
+                   BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA));
+    bgfx::submit(ViewOutline, outlineProgram_);
     ++drawCount_;
 }
 

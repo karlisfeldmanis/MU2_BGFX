@@ -42,8 +42,6 @@ const char* viewName(View v) {
         case ViewShade: return "shade";
         case ViewTransparent: return "effects";
         case ViewPresent: return "present";
-        case ViewWardMask: return "ward_mask";
-        case ViewWard: return "ward";
         case ViewOutlineMask: return "outline_mask";
         case ViewOutline: return "outline";
         case ViewBloomDown: return "bloom_down1";
@@ -85,8 +83,6 @@ Account viewAccount(View v) {
         case ViewShade: return AccountShade;
         case ViewTransparent: return AccountEffects;
         case ViewPresent:
-        case ViewWardMask:
-        case ViewWard:
         case ViewOutlineMask:
         case ViewOutline:
         case ViewHud: return AccountPresent;

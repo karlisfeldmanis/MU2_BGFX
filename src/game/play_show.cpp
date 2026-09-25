@@ -679,32 +679,12 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     // bodies and NOT with the casters -- eleven small shadows on the frame a fight is busiest
     // are not worth the shadow map's time, which is MU2's call and is recorded as one.
     bones_.gather(out);
-    ward_.clear();
     for (Drawn& one : drawn_) {
         if (!one.visible || !one.figure.body()) continue;
         const float fade = fadeOf(one);
         if (fade <= 0.0f) continue;
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
-        // Defense's ward: the shield in the hero's hand, the same instance in the same pose,
-        // for the green glow round it while the guard stands (ward()). Not while it is slung
-        // on his back in a safe zone, where there is no guard to hold it up.
-        if (&one == &drawn_[0] && one.id == realm_.hero().id && realm_.hero().alive() &&
-            realm_.hero().boonUntil > realm_.tick() && !one.figure.slung()) {
-            const content::Mesh* shield = nullptr;
-            for (const HeldItem& held : one.figure.body()->held) {
-                if (held.mesh && held.kind == "shield") shield = held.mesh;
-            }
-            if (shield != nullptr) {
-                const size_t from = ward_.size();
-                one.figure.gather(palette, ward_);
-                size_t kept = from;
-                for (size_t i = from; i < ward_.size(); ++i) {
-                    if (ward_[i].mesh == shield) ward_[kept++] = ward_[i];
-                }
-                ward_.resize(kept);
-            }
-        }
         // The hover ring's own copy: the SAME pose, just handed to a second list, so the
         // outline mask draws it again without a second call to Figure::pose. Only the body
         // pointedAt() names, and only while it is actually drawn -- a monster that faded out

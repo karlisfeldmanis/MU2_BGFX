@@ -65,7 +65,6 @@ private:
     game::ItemModels itemModels_;
     game::Litter litter_;
     game::Outline outline_;
-    game::Outline wardOutline_;  // Defense's green glow round the shield
 
     // Gathered fresh each frame into vectors that keep their capacity: a frame appends to a
     // flat array, as foundation 7 says, and allocates nothing after the first.
