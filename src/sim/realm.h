@@ -251,6 +251,12 @@ struct HeroRecord {
     // in this design and is the one thing about a skill that is his rather than his weapon's.
     // Cooldowns are NOT saved: a character who quits mid-fight is not owed his four seconds.
     uint32_t learned = 0;
+    // The buff standing on him when he was saved: which skill, the damage factor it was cast
+    // at, and how many ticks of it were left. Saved so a guard raised before a restart is still
+    // up after it (the user, 2026-09-25); the time away is not counted against it. 0 for none.
+    int32_t boonSkill = 0;
+    float boonDamageTaken = 1.0f;
+    int64_t boonTicksLeft = 0;
     Held slots[kSlots];
 };
 

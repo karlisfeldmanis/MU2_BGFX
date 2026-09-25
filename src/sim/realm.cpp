@@ -192,6 +192,11 @@ HeroRecord Realm::record() const {
     out.mana = hero.mana;
     out.money = money_;
     out.learned = hero.learned;
+    if (hero.boonSkill != 0 && hero.boonUntil > tick_) {
+        out.boonSkill = hero.boonSkill;
+        out.boonDamageTaken = hero.boonDamageTaken;
+        out.boonTicksLeft = hero.boonUntil - tick_;
+    }
     for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
     return out;
 }
@@ -214,6 +219,15 @@ void Realm::restore(const HeroRecord& saved) {
         const Held& one = saved.slots[slot];
         if (one.empty() || size_t(one.item) >= tables_->items.size()) continue;
         bag_.put(slot, one);
+    }
+    // The buff he was saved with, for the ticks it had left and at the factor it was cast at --
+    // a skill he knows, lasting no longer than the skill's own length, so an edited file cannot
+    // stand him behind a permanent guard.
+    if (const SkillRow* row = skillNumbered(saved.boonSkill);
+        row != nullptr && row->boonTicks > 0 && saved.boonTicksLeft > 0) {
+        hero.boonSkill = row->number;
+        hero.boonDamageTaken = std::clamp(saved.boonDamageTaken, 1.0f - kGuardCap, 1.0f);
+        hero.boonUntil = tick_ + std::min<int64_t>(saved.boonTicksLeft, row->boonTicks);
     }
     rearm(hero);
     hero.health = saved.health > 0 ? std::min(saved.health, hero.maxHealth) : hero.maxHealth;

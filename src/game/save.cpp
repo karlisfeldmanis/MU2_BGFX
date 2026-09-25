@@ -64,6 +64,12 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.money = int64_t(doc["zen"].numberOr(0.0));
     // Absent in a file written before there were skills, which reads as nought and is right.
     hero.learned = uint32_t(doc["learned"].numberOr(0.0));
+    // The buff standing on him, absent when none was: skill, damage factor and ticks left.
+    // The realm checks all three on the way back in (Realm::restore).
+    const core::Json& boon = doc["boon"];
+    hero.boonSkill = int32_t(boon["skill"].numberOr(0.0));
+    hero.boonDamageTaken = float(boon["damage_taken"].numberOr(1.0));
+    hero.boonTicksLeft = int64_t(boon["ticks_left"].numberOr(0.0));
 
     const core::Json& items = doc["items"];
     for (size_t i = 0; i < items.size(); ++i) {
@@ -142,6 +148,12 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     std::fprintf(f, "  \"health\": %d,\n  \"mana\": %d,\n  \"zen\": %lld,\n", hero.health,
                  hero.mana, static_cast<long long>(hero.money));
     if (hero.learned != 0) std::fprintf(f, "  \"learned\": %u,\n", hero.learned);
+    if (hero.boonSkill != 0 && hero.boonTicksLeft > 0) {
+        std::fprintf(f,
+                     "  \"boon\": {\"skill\": %d, \"damage_taken\": %.4f, \"ticks_left\": %lld},\n",
+                     hero.boonSkill, double(hero.boonDamageTaken),
+                     static_cast<long long>(hero.boonTicksLeft));
+    }
     std::fprintf(f, "  \"items\": [");
     bool first = true;
     for (int slot = 0; slot < sim::kSlots; ++slot) {
