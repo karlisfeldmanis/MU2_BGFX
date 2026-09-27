@@ -55,8 +55,9 @@ constexpr uint32_t kDrop = tip::ink::kDrop;
 
 }  // namespace
 
-void glass(gfx::Canvas& canvas, const Box& window, float radius) {
-    tip::shadowUnder(canvas, window, std::max(1.0f, radius / tip::ink::kRadius));
+void glass(gfx::Canvas& canvas, const Box& window, float radius, float shadow) {
+    tip::shadowUnder(canvas, window,
+                     shadow > 0.0f ? shadow : std::max(1.0f, radius / tip::ink::kRadius));
     // The edge as the card draws its own: a graded fan a hairline wider than the body, and the
     // body over it, so the line follows the corner round. It was four straight hairlines held
     // back by the radius, which at a corner of two and a half units left nothing to see and at

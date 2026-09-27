@@ -355,7 +355,9 @@ void Menu::rebuild() {
     // The sheet: the windows' own glass and head band, rounder.
     const float tall = tallOf(page_);
     const Box sheetBox = at(x_, y_, {0.0f, 0.0f, kWide, tall});
-    sheet::glass(canvas_, sheetBox, kRadius * u);
+    // The shadow at a window's scale, not the corner's: the user, 2026-09-27, *"menu shadow is
+    // to strong"* -- scaled off the 20-unit corner it reached 2.9 times as far.
+    sheet::glass(canvas_, sheetBox, kRadius * u, u);
     sheet::band(canvas_, at(x_, y_, {0.0f, 0.0f, kWide, 110.0f}), true, kRadius * u);
 
     // The title, in the windows' face and ink.

@@ -34,8 +34,9 @@ namespace mu::game::sheet {
 // GRADIENT STROKE for its edge -- bright along the top, fading down the sides to almost nothing
 // at the foot, which is the one thing that makes a flat panel read as lit rather than as a
 // rectangle. The user's list, 2026-09-23: drop shadows, gradient stroke, clean UI.
-// `radius` is in screen pixels.
-void glass(gfx::Canvas& canvas, const gfx::Box& window, float radius);
+// `radius` is in screen pixels. `shadow` is the shadow's scale, in the card's units; left at 0 it
+// follows the corner, which on a round sheet throws it three times as far as a window's.
+void glass(gfx::Canvas& canvas, const gfx::Box& window, float radius, float shadow = 0.0f);
 
 // A band of light laid under a head or over a foot: white at a few thousandths, fading to
 // nothing across `tall`. What separates the title from the body without a second rule.
