@@ -118,6 +118,11 @@ void closeTitleFace() {
     s_title = gfx::Face{};
 }
 
+const gfx::Face* titleFace() {
+    return s_title.ready() && bgfx::isValid(s_titleTexture) ? &s_title : nullptr;
+}
+bgfx::TextureHandle titleTexture() { return s_titleTexture; }
+
 // ---- the frame -------------------------------------------------------------------------------
 
 gfx::Box headSocket(bool right) {

@@ -44,12 +44,46 @@ struct Value {
     int deltaWay = 0;  // +1 better, -1 worse, 0 the same
 };
 
+// Which mark stands beside a section, or beside a row.
+enum class Mark : uint8_t { None, Blade, Shield, Star, Triangle, Diamond, Socket, Note };
+
 // A row: a label and its values, or a free line of prose that runs the width.
 struct Row {
     std::string label;
     std::vector<Value> values;
     std::string free;
     Tone freeTone = Tone::White;
+    // The affix grammar the item card took from the Diablo IV concept on 2026-09-27: the thing
+    // named first and its value last. `keyword` is printed white before the prose ("Luck"),
+    // `tail` after it in a brighter, heavier ink of the same tone ("+5%"), and `mark` stands in
+    // the gutter beside the row's first line in `markTone` -- the mark says what KIND of line
+    // it is (a rolled option, an excellent one), so the text can keep MU's own blue.
+    std::string keyword;
+    std::string tail;
+    Mark mark = Mark::None;
+    Tone markTone = Tone::Gray;
+};
+
+// The item card's headline: the one number a thing is compared by, large, and the sum that made
+// it hung under it on a rail -- "37 - 47 Damage", then "16 - 26 base", "+21 refined to +7".
+// MU has no damage per second; what it has is a band built of parts, and the rail says which.
+struct Hero {
+    std::string value;
+    Tone tone = Tone::White;
+    std::string word;
+    // Against the one worn, as `Value::delta`.
+    std::string delta;
+    int deltaWay = 0;
+    // A rail row is its figure first (`values[0]`, in its tone) and then its words (`label`).
+    std::vector<Row> rail;
+    bool empty() const { return value.empty(); }
+};
+
+// One line of the item card's foot: in its tone, or in the foot's own quiet ink.
+struct FootLine {
+    std::string text;
+    Tone tone = Tone::White;
+    bool quiet = false;
 };
 
 // ---- the card's own vocabulary, exported ---------------------------------------------------
@@ -109,9 +143,6 @@ void tracked(gfx::Canvas& canvas, float x, float baseline, float size, float tra
 // above it and the same below, which is what `line-height` means.
 float middle(const gfx::Face& face, float top, float tall, float size);
 
-// Which mark stands beside a section.
-enum class Mark : uint8_t { None, Blade, Shield, Star, Triangle, Diamond, Socket, Note };
-
 // One mark drawn at (cx, cy) at `size` across: the same small figures the card sets beside a
 // section, and what the windows' heads carry.
 void glyphAt(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, uint32_t colour);
@@ -152,14 +183,33 @@ struct Sheet {
     gfx::Art picture;
     gfx::Box from;
 
+    // **The item card**, concept B of the design page of 2026-09-27 (the Diablo IV tooltip read
+    // in MU's inks). Set by `describe`, and nothing else sets it, so a skill's card, the vault's
+    // and the wear column's keep the look above. What it changes:
+    //   * the head: the name in the window titles' Cinzel, capitals, with the item's own picture
+    //     large at the right instead of in a plate; `base` under it in the name's tone;
+    //   * `hero` under the head, before any section;
+    //   * no kicker is printed -- the marks on the rows say what kind of line each is;
+    //   * the foot is two columns: `who` on the left (the class and the requirements), and on
+    //     the right the wear, the note, `keep` and the price, one a line.
+    bool item = false;
+    // How much of the head's picture square the thing is drawn at. The stage fits every model
+    // to its square, so a one-cell jewel came out as tall as a three-cell sword -- "the jewel is
+    // too huge", the user on first sight. `describe` sets it from the row's cells.
+    float artScale = 1.0f;
+    Hero hero;
+    std::vector<FootLine> who;
+    std::vector<FootLine> keep;
+
     bool empty() const { return name.empty(); }
 };
 
 // The picture in the head is rendered on a stage of its own rather than cut out of the window
 // under the pointer: the bag turns what is hovered (MU's own feedback), and the head's picture
-// has to hold still. `kPlateUnits` is that stage's size in the windows' MU units, which is the
-// plate's 56 px at 1080 lines.
-constexpr float kPlateUnits = 28.0f;
+// has to hold still. `kPlateUnits` is that stage's size in the windows' MU units: 56, twice the
+// old plate's, since 2026-09-27, because the item card draws it at 104 px and a 56 px render
+// magnified that far is a smear.
+constexpr float kPlateUnits = 56.0f;
 
 // Stands `item` alone on the tooltip's stage and hands back what to draw in the head. The
 // picture is last frame's, as every stage's is; an item that has just been hovered draws its

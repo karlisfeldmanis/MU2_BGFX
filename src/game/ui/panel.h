@@ -159,6 +159,11 @@ void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string&
 // face, which is what every window drew before.
 bool openTitleFace(const gfx::Interface& interface);
 void closeTitleFace();
+// The same face for anything else set in it -- the item card's name since 2026-09-27. Null, and
+// an invalid texture, before it is baked or when the bake failed; the caller falls back to the
+// canvas's own face.
+const gfx::Face* titleFace();
+bgfx::TextureHandle titleTexture();
 // The cross in the head's right-hand end, in its three lights.
 void close(gfx::Canvas& canvas, Arts& arts, float x, float y, bool pressed);
 void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed);

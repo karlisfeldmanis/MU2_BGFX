@@ -7,8 +7,10 @@
 // three callers in MU (the bag, the ground, the shop), and so one here.
 //
 // What comes back is a tip::Sheet rather than a list of lines: the user chose the card layout
-// on 2026-09-22, so the rows carry a label and their values apart, and the drawing puts one
-// on the left and the other on the right. MU's colours are unchanged.
+// on 2026-09-22, and on 2026-09-27 concept B of the Diablo IV study (`Sheet::item`) -- the fight
+// figure as a headline with the sum that made it on a rail, options named first with their value
+// last and a mark for their kind, and whom it is for and what it asks in the foot's left column.
+// MU's colours are unchanged.
 //
 // What a row DOES, where no column says it -- the Ale, the Antidote, the Town Portal Scroll
 // and the three jewels -- comes off the row as `ItemRow::tells`, and for four of those six the

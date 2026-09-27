@@ -163,9 +163,9 @@ float unit() { return panel::unit() * 0.5f; }
 
 namespace {
 
-// The words of `text` broken to `wide`, at least one word a line.
-std::vector<std::string> wrapped(const gfx::Face& face, float size, const std::string& text,
-                                 float wide) {
+// The words of `text` broken to `wide` by `measure`, at least one word a line.
+template <typename Measure>
+std::vector<std::string> wrappedBy(const std::string& text, float wide, Measure measure) {
     std::vector<std::string> out;
     std::string line;
     size_t at = 0;
@@ -173,7 +173,7 @@ std::vector<std::string> wrapped(const gfx::Face& face, float size, const std::s
         const size_t space = text.find(' ', at);
         const std::string word = text.substr(at, space - at);
         const std::string tried = line.empty() ? word : line + " " + word;
-        if (!line.empty() && face.measure(size, tried) > wide) {
+        if (!line.empty() && measure(tried) > wide) {
             out.push_back(line);
             line = word;
         } else {
@@ -350,47 +350,164 @@ void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius, uint
     roundedFan(canvas, box, all, top != 0u ? top : kBodyTop, foot != 0u ? foot : kBodyFoot);
 }
 
+namespace {
+
+// The item card's own sizes (`Sheet::item`), in the same 1080-line pixels.
+constexpr float kArt = 96.0f;            // the picture, square, at the head's right
+constexpr float kItemNameSize = 17.0f;
+constexpr float kItemNameTrack = 0.06f;  // em
+constexpr float kTypeSize = 13.0f;
+constexpr float kHeroSize = 21.0f;
+constexpr float kHeroWordSize = 13.5f;
+constexpr float kRailSize = 12.0f;
+constexpr float kRailIndent = 13.0f;     // the rail's text, past its line
+constexpr float kMarkSize = 8.0f;        // a row's mark, smaller than a section's
+constexpr float kFootLine = 1.5f;        // a foot line, of the foot's size
+constexpr uint32_t kRailInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.18f);
+
+std::string capitals(std::string s) {
+    for (char& c : s) {
+        if (c >= 'a' && c <= 'z') c = char(c - 'a' + 'A');
+    }
+    return s;
+}
+
+// A value's ink: its tone taken a third of the way to white, so "+5%" stands out of the blue
+// line it ends without leaving the blue.
+uint32_t brighter(uint32_t abgr) {
+    uint32_t out = abgr & 0xFF000000u;
+    for (int shift = 0; shift < 24; shift += 8) {
+        const float v = float((abgr >> shift) & 0xFFu);
+        out |= uint32_t(v + (255.0f - v) * 0.35f + 0.5f) << shift;
+    }
+    return out;
+}
+
+// A heavier weight than the face has: the line struck twice, half a pixel apart. The one body
+// face is Open Sans SemiBold, and a Bold is another bake and another texture for the handful of
+// characters a value is; at twelve pixels the doubled stroke reads as bold. Returns the width.
+float heavy(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t colour,
+            const std::string& s, float drop, float u) {
+    const float thicken = std::max(0.5f, 0.45f * u);
+    canvas.text(x + drop, baseline + drop, size, kDrop, s);
+    canvas.text(x + thicken + drop, baseline + drop, size, kDrop, s);
+    canvas.text(x, baseline, size, colour, s);
+    return canvas.text(x + thicken, baseline, size, colour, s) + thicken;
+}
+
+// A free row as one string: the keyword, the prose and the value, which wrap together.
+std::string composed(const Row& row) {
+    std::string s;
+    if (!row.keyword.empty()) s = row.keyword + " \xB7 ";
+    s += row.free;
+    if (!row.tail.empty()) s += (s.empty() ? "" : " ") + row.tail;
+    return s;
+}
+bool prosaic(const Row& row) { return !row.free.empty() || !row.tail.empty(); }
+
+// Where each wrapped line of `text` starts in it and how long it is, so a line can be coloured by
+// what part of the row it holds.
+struct Span {
+    size_t at = 0, length = 0;
+};
+std::vector<Span> spansOf(const gfx::Face& face, float size, const std::string& text, float wide) {
+    std::vector<Span> out;
+    size_t start = 0, end = 0, at = 0;
+    while (at <= text.size()) {
+        const size_t space = text.find(' ', at);
+        const size_t wordEnd = space == std::string::npos ? text.size() : space;
+        if (end > start && face.measure(size, text.substr(start, wordEnd - start)) > wide) {
+            out.push_back({start, end - start});
+            start = at;
+        }
+        end = wordEnd;
+        if (space == std::string::npos) break;
+        at = space + 1;
+    }
+    if (end > start) out.push_back({start, end - start});
+    return out;
+}
+
+}  // namespace
+
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
           float screenHeight) {
     if (sheet.empty()) return;
     const gfx::Face& face = canvas.face();
     const float u = unit();
+    const bool item = sheet.item;
     const float wide = (sheet.wide > 0.0f ? sheet.wide : kWide) * u, pad = kPad * u;
-    const float nameSize = kNameSize * u, baseSize = kBaseSize * u, rowSize = kRowSize * u;
+    const float rowSize = kRowSize * u;
     const float kickerSize = kKickerSize * u, footSize = kFootSize * u, chipSize = kChipSize * u;
     const float rowTall = std::round(rowSize * kRowTall);
     const float railPad = kRailPad * u;
     // The mark column is reserved only when something is standing in it. An item card always has
-    // a blade or a shield beside its first section, so the gutter is the alignment; a card with no
-    // marks at all -- a skill's -- was indenting every row past an empty 25 units while its name
-    // sat at the pad, which is the ragged left edge the user saw.
+    // a mark beside its options, so the gutter is the alignment; a card with no marks at all --
+    // a skill's -- was indenting every row past an empty 25 units while its name sat at the pad,
+    // which is the ragged left edge the user saw. The item card marks rows, not sections.
     bool marked = false;
-    for (const Section& section : sheet.sections) marked |= section.mark != Mark::None;
+    for (const Section& section : sheet.sections) {
+        marked |= !item && section.mark != Mark::None;
+        for (const Row& row : section.rows) marked |= row.mark != Mark::None;
+    }
     const float textX = marked ? pad + kMarkColumn * u + kMarkGap * u : pad;
     const float drop = std::max(1.0f, u);
     const float textWide = wide - textX - pad;
 
     // ---- measure ----------------------------------------------------------------------------
-    const float plate = sheet.picture.valid() ? kPlate * u : 0.0f;
+    // The head. The item card's name is set in capitals in the window titles' Cinzel, where it is
+    // baked; the picture stands large at its right rather than in a plate at its left.
+    const gfx::Face* gothic = item ? panel::titleFace() : nullptr;
+    const gfx::Face& nameFace = gothic ? *gothic : face;
+    const float nameSize = (item ? kItemNameSize : kNameSize) * u;
+    const float nameTrack = gothic ? kItemNameTrack * nameSize : 0.0f;
+    const std::string name = item ? capitals(sheet.name) : sheet.name;
+    const float art =
+        item && sheet.picture.valid() ? kArt * u * std::clamp(sheet.artScale, 0.2f, 1.0f) : 0.0f;
+    const float plate = !item && sheet.picture.valid() ? kPlate * u : 0.0f;
     const float headTextX = pad + (plate > 0.0f ? plate + kPad * u : 0.0f);
-    const std::vector<std::string> title =
-        wrapped(face, nameSize, sheet.name, wide - headTextX - pad);
-    const float titleTall = float(title.size()) * std::round(nameSize * 1.25f);
-    const float baseTall = sheet.base.empty() ? 0.0f : std::round(baseSize * 1.5f);
+    // The name keeps out of the picture's middle; the model stands in the centre of its square,
+    // and its sides are mostly air.
+    const float nameWide = wide - headTextX - pad - art * 0.6f;
+    const std::vector<std::string> title = wrappedBy(name, nameWide, [&](const std::string& s) {
+        return nameFace.measure(nameSize, s) + nameTrack * float(s.size());
+    });
+    const float titleLine = std::round(nameSize * 1.25f);
+    const float titleTall = float(title.size()) * titleLine;
+    const float baseSize = (item ? kTypeSize : kBaseSize) * u;
+    const float baseTall =
+        sheet.base.empty() ? 0.0f : std::round(baseSize * (item ? 1.6f : 1.5f));
     const float headTall = std::max(plate, titleTall + baseTall) + pad * 2.0f;
 
+    // The headline and its rail, under the name with no rule between: the number is the second
+    // thing read, after what the thing is called.
+    const Hero& hero = sheet.hero;
+    const float heroSize = kHeroSize * u, heroWordSize = kHeroWordSize * u,
+                railSize = kRailSize * u;
+    const float heroLine = std::round(heroSize * 1.3f);
+    const float railLine = std::round(railSize * 1.55f);
+    const float heroTall = item && !hero.empty()
+                               ? heroLine + float(hero.rail.size()) * railLine + railPad * 1.5f
+                               : 0.0f;
+    // The sections start under the hero, and under the picture where the picture reaches
+    // further down: it may stand beside the hero's short lines but not behind an option's long one.
+    const float artTop = pad * 0.5f;
+    const float bodyTop =
+        std::max(headTall + heroTall, art > 0.0f ? artTop + art + railPad * 0.5f : 0.0f);
+
     // Free rows wrap, so each section is measured by its rows rather than counted.
-    std::vector<std::vector<std::vector<std::string>>> prose(sheet.sections.size());
+    std::vector<std::vector<std::vector<Span>>> prose(sheet.sections.size());
     std::vector<float> sectionTall(sheet.sections.size(), 0.0f);
     for (size_t s = 0; s < sheet.sections.size(); ++s) {
         const Section& section = sheet.sections[s];
         float tall = railPad * 2.0f;
-        if (!section.kicker.empty()) tall += std::round(kickerSize * 1.75f);
+        if (!item && !section.kicker.empty()) tall += std::round(kickerSize * 1.75f);
         prose[s].resize(section.rows.size());
         for (size_t r = 0; r < section.rows.size(); ++r) {
             const Row& row = section.rows[r];
-            if (!row.free.empty()) {
-                prose[s][r] = wrapped(face, rowSize, row.free, textWide - (section.framed ? pad : 0.0f));
+            if (prosaic(row)) {
+                prose[s][r] = spansOf(face, rowSize, composed(row),
+                                      textWide - (section.framed ? pad : 0.0f));
                 tall += float(prose[s][r].size()) * rowTall;
             } else {
                 tall += std::max<size_t>(1, row.values.size()) * rowTall;
@@ -399,13 +516,28 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         if (section.framed) tall += railPad;
         sectionTall[s] = tall;
     }
-    const bool hasFoot = !sheet.wear.empty() || !sheet.price.empty() || !sheet.note.empty();
-    const float footTall = hasFoot ? std::round(footSize * 1.4f) + railPad * 2.0f : 0.0f;
+
+    // The foot. The item card's is two columns, one line each: who it is for on the left, and on
+    // the right the wear, the note, what it keeps, and the price.
+    std::vector<FootLine> right;
+    if (item) {
+        if (!sheet.wear.empty()) right.push_back({sheet.wear, sheet.wearTone, true});
+        if (!sheet.note.empty()) right.push_back({sheet.note, sheet.noteTone, false});
+        for (const FootLine& line : sheet.keep) right.push_back(line);
+        if (!sheet.price.empty()) right.push_back({sheet.price, sheet.priceTone, false});
+    }
+    const float footLine = std::round(footSize * kFootLine);
+    const size_t footLines = std::max(sheet.who.size(), right.size());
+    const bool hasFoot = item ? footLines > 0
+                              : !sheet.wear.empty() || !sheet.price.empty() || !sheet.note.empty();
+    const float footTall = !hasFoot ? 0.0f
+                           : item   ? float(footLines) * footLine + railPad * 2.0f
+                                    : std::round(footSize * 1.4f) + railPad * 2.0f;
     // A card with no foot ends on its last row with one rail's padding under it, which is less
     // air than the head carries over its name and reads as the text falling out of the bottom.
     // The difference is made up here rather than in the section, so an item card -- which always
     // has a foot -- is untouched.
-    float tall = headTall + footTall + (hasFoot ? 0.0f : pad - railPad);
+    float tall = bodyTop + footTall + (hasFoot ? 0.0f : pad - railPad);
     for (float t : sectionTall) tall += t;
 
     // ---- place ------------------------------------------------------------------------------
@@ -436,18 +568,71 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         canvas.region(sheet.picture, at, sheet.from, fade(0xFFFFFFFFu));
         canvas.outline(at, std::max(1.0f, u), fade(kPlateEdge));
     }
+    if (art > 0.0f) {
+        canvas.region(sheet.picture, {box.right() - pad * 0.5f - art, box.y + artTop, art, art},
+                      sheet.from, fade(0xFFFFFFFFu));
+    }
     float headPen = pen + (std::max(plate, titleTall + baseTall) - titleTall - baseTall) * 0.5f;
-    const float titleLine = std::round(nameSize * 1.25f);
-    for (const std::string& line : title) {
-        printed(canvas, box.x + headTextX, middle(face, headPen, titleLine, nameSize), nameSize,
-                fade(nameColour), line, drop);
+    for (const std::string& words : title) {
+        const float baseline = middle(nameFace, headPen, titleLine, nameSize);
+        if (gothic) {
+            const bgfx::TextureHandle texture = panel::titleTexture();
+            canvas.lettered(*gothic, texture, box.x + headTextX + drop, baseline + drop, nameSize,
+                            nameTrack, kDrop, words);
+            canvas.lettered(*gothic, texture, box.x + headTextX, baseline, nameSize, nameTrack,
+                            fade(nameColour), words);
+        } else {
+            printed(canvas, box.x + headTextX, baseline, nameSize, fade(nameColour), words, drop);
+        }
         headPen += titleLine;
     }
     if (!sheet.base.empty()) {
-        tracked(canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
-                kBaseTrack, fade(kQuiet), sheet.base, drop);
+        // The item card's type line is the name's own tone, as Diablo's "Legendary Bow" is the
+        // legendary's: it is where "Excellent" stands.
+        if (item) {
+            printed(canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
+                    fade(nameColour), sheet.base, drop);
+        } else {
+            tracked(canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
+                    kBaseTrack, fade(kQuiet), sheet.base, drop);
+        }
     }
     pen = box.y + headTall;
+
+    // ---- the headline -----------------------------------------------------------------------
+    if (heroTall > 0.0f) {
+        const float left = box.x + pad;
+        float at = left;
+        const float baseline = middle(face, pen, heroLine, heroSize);
+        at += heavy(canvas, at, baseline, heroSize, fade(colourOf(hero.tone)), hero.value, drop, u);
+        at += heroSize * 0.35f;
+        at += printed(canvas, at, baseline, heroWordSize, fade(kLabel), hero.word, drop);
+        if (!hero.delta.empty()) {
+            at += heroSize * 0.45f;
+            printed(canvas, at, baseline, footSize,
+                    fade(hero.deltaWay > 0 ? kGood : hero.deltaWay < 0 ? kBad : kQuiet), hero.delta,
+                    drop);
+        }
+        float railPen = pen + heroLine;
+        if (!hero.rail.empty()) {
+            canvas.rect({left + 3.0f * u, railPen + railLine * 0.15f, line,
+                         railLine * float(hero.rail.size()) - railLine * 0.3f},
+                        fade(kRailInk));
+        }
+        for (const Row& row : hero.rail) {
+            float rx = left + kRailIndent * u;
+            const float rb = middle(face, railPen, railLine, railSize);
+            if (!row.values.empty()) {
+                const Value& v = row.values[0];
+                rx += heavy(canvas, rx, rb, railSize,
+                            fade(v.tone == Tone::White ? kLabel : colourOf(v.tone)), v.text, drop, u);
+                rx += railSize * 0.35f;
+            }
+            printed(canvas, rx, rb, railSize, fade(kQuiet), row.label, drop);
+            railPen += railLine;
+        }
+    }
+    pen = box.y + bodyTop;
 
     // ---- the sections -----------------------------------------------------------------------
     for (size_t s = 0; s < sheet.sections.size(); ++s) {
@@ -463,13 +648,13 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                             sectionTall[s] - railPad}, std::max(1.0f, u), fade(kFrame));
             rowPen += railPad * 0.5f;
         }
-        if (section.mark != Mark::None) {
-            const float markTall = section.kicker.empty() ? rowTall
-                                                          : std::round(kickerSize * 1.75f);
+        const bool kicked = !item && !section.kicker.empty();
+        if (!item && section.mark != Mark::None) {
+            const float markTall = kicked ? std::round(kickerSize * 1.75f) : rowTall;
             glyphAt(canvas, section.mark, box.x + pad + kMarkColumn * u * 0.5f,
                  rowPen + markTall * 0.5f, 11.0f * u, fade(kQuiet));
         }
-        if (!section.kicker.empty()) {
+        if (kicked) {
             const float kickerTall = std::round(kickerSize * 1.75f);
             tracked(canvas, left, middle(face, rowPen, kickerTall, kickerSize), kickerSize,
                     kKickerTrack, fade(kQuiet), section.kicker, drop);
@@ -477,10 +662,36 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         }
         for (size_t r = 0; r < section.rows.size(); ++r) {
             const Row& row = section.rows[r];
-            if (!row.free.empty()) {
-                for (const std::string& line : prose[s][r]) {
-                    printed(canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize,
-                            fade(colourOf(row.freeTone)), line, drop);
+            if (row.mark != Mark::None) {
+                glyphAt(canvas, row.mark, box.x + pad + kMarkColumn * u * 0.5f,
+                        rowPen + rowTall * 0.5f, kMarkSize * u, fade(colourOf(row.markTone)));
+            }
+            if (prosaic(row)) {
+                // Coloured by what part of the row each piece is: the keyword white, the prose in
+                // its tone, the value brighter and heavier. A line break may fall in any of them.
+                const std::string full = composed(row);
+                const size_t keyEnd = row.keyword.size();
+                const size_t tailAt = full.size() - row.tail.size();
+                const uint32_t tone = colourOf(row.freeTone);
+                for (const Span& span : prose[s][r]) {
+                    const float baseline = middle(face, rowPen, rowTall, rowSize);
+                    float px = left;
+                    size_t at = span.at;
+                    const size_t end = span.at + span.length;
+                    while (at < end) {
+                        const bool key = at < keyEnd;
+                        const bool value = !key && at >= tailAt;
+                        const size_t stop = key ? std::min(end, keyEnd)
+                                            : value ? end
+                                                    : std::min(end, tailAt);
+                        const std::string piece = full.substr(at, stop - at);
+                        px += value ? heavy(canvas, px, baseline, rowSize, fade(brighter(tone)),
+                                            piece, drop, u)
+                                    : printed(canvas, px, baseline, rowSize,
+                                              fade(key ? colourOf(Tone::White) : tone), piece,
+                                              drop);
+                        at = stop;
+                    }
                     rowPen += rowTall;
                 }
                 continue;
@@ -532,6 +743,39 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         const float bottoms[4] = {0.0f, 0.0f, radius, radius};
         roundedFan(canvas, {box.x, pen, box.w, footTall}, bottoms, fade(kFootBack));
         canvas.rect({box.x, pen, box.w, std::max(1.0f, u)}, fade(kHair));
+        const float barWide = 46.0f * u, barTall = std::max(2.0f, 3.0f * u);
+        if (item) {
+            const auto ink = [&](const FootLine& l) {
+                return fade(l.quiet ? kFoot : colourOf(l.tone));
+            };
+            float at = pen + railPad;
+            for (const FootLine& l : sheet.who) {
+                printed(canvas, box.x + pad, middle(face, at, footLine, footSize), footSize, ink(l),
+                        l.text, drop);
+                at += footLine;
+            }
+            at = pen + railPad;
+            const float edge = box.right() - pad;
+            for (size_t i = 0; i < right.size(); ++i) {
+                const FootLine& l = right[i];
+                const float baseline = middle(face, at, footLine, footSize);
+                const float w = face.measure(footSize, l.text);
+                // The wear's bar stands to the left of its words, in its band's colour.
+                if (i == 0 && !sheet.wear.empty()) {
+                    printed(canvas, edge - w, baseline, footSize, fade(kFoot), l.text, drop);
+                    const gfx::Box bar{edge - w - pad * 0.5f - barWide,
+                                       baseline - footSize * 0.35f, barWide, barTall};
+                    canvas.rect(bar, fade(kBarBack));
+                    canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
+                                fade(sheet.wearTone == Tone::White ? panel::kLettering
+                                                                   : colourOf(sheet.wearTone)));
+                } else {
+                    printed(canvas, edge - w, baseline, footSize, ink(l), l.text, drop);
+                }
+                at += footLine;
+            }
+            return;
+        }
         const float baseline = middle(face, pen, footTall, footSize);
         // The left, walked with a pen: the wear and its bar first where there is one, and the
         // note after whatever went before it. Nothing in the game carries both today -- only
@@ -540,7 +784,6 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         float left = box.x + pad;
         if (!sheet.wear.empty()) {
             const float w = printed(canvas, left, baseline, footSize, fade(kFoot), sheet.wear, drop);
-            const float barWide = 46.0f * u, barTall = std::max(2.0f, 3.0f * u);
             const gfx::Box bar{left + w + pad * 0.5f, baseline - footSize * 0.35f, barWide, barTall};
             canvas.rect(bar, fade(kBarBack));
             canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
