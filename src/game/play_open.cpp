@@ -378,6 +378,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.jewel = sound_.load("jewel_get", true);
     heard_.take = sound_.load("item_get", false);
     heard_.drink = sound_.load("player_drink", false);
+    heard_.warp = sound_.load("spell_magic", false);
     heard_.apple = sound_.load("player_eat_apple", false);
     // eGem.wav a second time under its own event name, and not `jewel_get`'s handle: `load`
     // hands back the event it already has, so asking for `jewel_get` unplaced would have

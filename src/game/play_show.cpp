@@ -367,6 +367,11 @@ void Play::learned() {
 // uses, so the figure is not seen at the tile he left in the frames before that tick.
 void Play::warped() {
     warpOwed_ = true;
+    // INVENTION: MuMain lands a Town Portal in silence -- TryConsumeItem's scroll branch and
+    // ReceiveTeleport's warp branch play nothing. What is borrowed is SOUND_MAGIC, sMagic.wav,
+    // which CreateTeleportEnd plays as a wizard's Teleport puts him down (ZzzEffectMagicSkill.cpp:
+    // 171): MU's own sound for arriving somewhere by magic. The user's, 2026-09-27.
+    sound_.play(heard_.warp);
     const sim::Body& body = realm_.hero();
     if (Drawn* hero = drawnOf(body.id)) {
         hero->spawnFade = 0.0f;

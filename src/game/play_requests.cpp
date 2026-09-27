@@ -71,9 +71,9 @@ bool Play::useItem(int slot) {
         if (row && row->teaches != 0) {
             learned();
         } else if (row && sim::portal(*row)) {
-            // Read in silence: TryConsumeItem's scroll branch sends the use and plays nothing,
-            // and ReceiveTeleport has no sound either. What it has is the arrival -- the hero
-            // put down at nought alpha and the warp's walls and circle under him.
+            // Read in silence: TryConsumeItem's scroll branch sends the use and plays nothing.
+            // What it has is the arrival -- the hero put down at nought alpha, the warp's walls
+            // and circle under him, and sMagic, which is ours (see Play::warped).
             warped();
         } else {
             // The Ale is a potion to TryConsumeItem (`ITEM_APPLE <= Type <= ITEM_ALE`), so it
