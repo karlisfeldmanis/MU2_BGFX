@@ -120,6 +120,20 @@ public:
     int width() const { return width_; }
     int height() const { return height_; }
 
+    // **What the game menu's Options changes while the game runs.** Fullscreen is the display
+    // at its own mode, as open() takes it -- no mode switch -- and leaving it puts the window
+    // back where and how big it was. The window's size is in screen points, which is what a
+    // player picks; the backbuffer follows on the next pump, as any resize does. V-sync is the
+    // reset flag, handed to bgfx at once.
+    bool fullscreen() const;
+    void setFullscreen(bool on);
+    void windowSize(int* width, int* height) const;
+    void setWindowSize(int width, int height);
+    // The primary display's own mode, in screen points: the largest a window can be.
+    void displaySize(int* width, int* height) const;
+    bool vsync() const { return (reset_ & BGFX_RESET_VSYNC) != 0; }
+    void setVsync(bool on);
+
 private:
     GLFWwindow* handle_ = nullptr;
     int width_ = 0;
@@ -142,6 +156,8 @@ private:
     bool typing_ = false;
     bool escapeSwallowed_ = false;
     bool escapeHeld_ = false;
+    // Where the window was, and how big, before it went fullscreen.
+    int windowedX_ = 80, windowedY_ = 80, windowedW_ = 1920, windowedH_ = 1080;
     uint32_t reset_ = 0;
     // Kept whole from init. A resize passes this back with a new size, because a
     // default-constructed SwapChain has a NULL window handle, which bgfx reads as a request

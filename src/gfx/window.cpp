@@ -243,6 +243,58 @@ bool Window::pump() {
     return true;
 }
 
+bool Window::fullscreen() const { return handle_ && glfwGetWindowMonitor(handle_) != nullptr; }
+
+void Window::setFullscreen(bool on) {
+    if (!handle_ || on == fullscreen()) return;
+    if (on) {
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
+        if (!mode) {
+            core::logError("no display to go fullscreen on; staying in a window");
+            return;
+        }
+        glfwGetWindowPos(handle_, &windowedX_, &windowedY_);
+        glfwGetWindowSize(handle_, &windowedW_, &windowedH_);
+        glfwSetWindowMonitor(handle_, monitor, 0, 0, mode->width, mode->height,
+                             mode->refreshRate);
+    } else {
+        glfwSetWindowMonitor(handle_, nullptr, windowedX_, windowedY_, windowedW_, windowedH_,
+                             GLFW_DONT_CARE);
+    }
+    core::logf("window: %s", on ? "fullscreen" : "windowed");
+}
+
+void Window::windowSize(int* width, int* height) const {
+    *width = *height = 0;
+    if (handle_) glfwGetWindowSize(handle_, width, height);
+}
+
+void Window::setWindowSize(int width, int height) {
+    if (!handle_ || width <= 0 || height <= 0) return;
+    if (fullscreen()) {
+        // Taken as the size to come back to: fullscreen keeps the display's own.
+        windowedW_ = width;
+        windowedH_ = height;
+        return;
+    }
+    glfwSetWindowSize(handle_, width, height);
+    core::logf("window: sized to %dx%d points", width, height);
+}
+
+void Window::displaySize(int* width, int* height) const {
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
+    *width = mode ? mode->width : 0;
+    *height = mode ? mode->height : 0;
+}
+
+void Window::setVsync(bool on) {
+    reset_ = on ? (reset_ | BGFX_RESET_VSYNC) : (reset_ & ~uint32_t(BGFX_RESET_VSYNC));
+    bgfx::reset(reset_, &chain_);
+    core::logf("window: vsync %s", on ? "on" : "off");
+}
+
 void Window::holdVsync(bool off) {
     bgfx::reset(off ? (reset_ & ~uint32_t(BGFX_RESET_VSYNC)) : reset_, &chain_);
 }

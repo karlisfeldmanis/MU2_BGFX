@@ -132,13 +132,9 @@ public:
     bool quitAsked() const { return quitAsked_; }
     // Whether Escape is the game's: in a played world it opens the menu rather than quitting.
     void holdEscape(bool held) { holdEscape_ = held; }
-    // What Options edits, set once from the run and read back when `settingsChanged` says so.
-    void setSettings(int volume, bool fps) {
-        menu_.setVolume(volume);
-        menu_.setFps(fps);
-    }
-    int volume() const { return menu_.volume(); }
-    bool showFps() const { return menu_.fps(); }
+    // What Options edits: filled by PlayMode from the window and the run, and applied back when
+    // `settingsChanged` says so.
+    Menu::Settings& settings() { return menu_.settings(); }
     bool settingsChanged() {
         const bool changed = settingsChanged_;
         settingsChanged_ = false;

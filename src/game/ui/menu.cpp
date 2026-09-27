@@ -42,14 +42,24 @@ float unit() { return tip::unit() * kScale; }
 constexpr float kCentreShare = 0.46f;
 
 enum Target : int {
-    kOptions = 0, kSwitch = 1, kExit = 2, kLeave = 3, kBack = 4,
-    kVolumeDown = 5, kVolumeUp = 6, kFpsDown = 7, kFpsUp = 8, kClose = 9,
+    kOptions = 0, kSwitch = 1, kExit = 2, kLeave = 3, kBack = 4, kClose = 9,
+    // Each Options row's two arrows: row r steps down at kRowArrows + 2r and up one past it.
+    kRowArrows = 10,
 };
+
+// The Options rows, top to bottom.
+enum Row : int { kDisplay = 0, kSize = 1, kVsync = 2, kVolume = 3, kCounter = 4, kRows = 5 };
+constexpr const char* kRowNames[kRows] = {"Display", "Resolution", "V-sync", "Volume",
+                                          "Frame rate counter"};
 
 // Each page's own rules and foot, top to bottom.
 constexpr float kMainSecondRule = 240.0f, kMainFoot = 338.0f, kMainTall = 374.0f;
 constexpr float kConfirmLine = 64.0f, kConfirmRule = 94.0f, kConfirmTall = 258.0f;
-constexpr float kOptionsRule = 210.0f, kOptionsTall = 298.0f;
+constexpr float kRowsTop = 84.0f;
+constexpr float kOptionsRule = kRowsTop + kRows * (kRow + kGap) + 4.0f;
+constexpr float kOptionsTall = kOptionsRule + 14.0f + kQuiet + 26.0f;
+
+float rowTop(int row) { return kRowsTop + float(row) * (kRow + kGap); }
 
 float tallOf(Menu::Page page) {
     switch (page) {
@@ -79,12 +89,12 @@ Box boxOf(Menu::Page page, int target) {
         case Menu::Page::Options: {
             // The two arrows sit at either end of a row's value, which is its right 150.
             const float right = kWide - kPadX - 12.0f;
-            const float row0 = 84.0f, row1 = 84.0f + kRow + kGap;
             const float arrow = 28.0f;
-            if (target == kVolumeDown) return {right - 150.0f, row0 + 11.0f, arrow, arrow};
-            if (target == kVolumeUp) return {right - arrow, row0 + 11.0f, arrow, arrow};
-            if (target == kFpsDown) return {right - 150.0f, row1 + 11.0f, arrow, arrow};
-            if (target == kFpsUp) return {right - arrow, row1 + 11.0f, arrow, arrow};
+            if (target >= kRowArrows && target < kRowArrows + kRows * 2) {
+                const int row = (target - kRowArrows) / 2;
+                const bool up = (target - kRowArrows) % 2 == 1;
+                return {up ? right - arrow : right - 150.0f, rowTop(row) + 11.0f, arrow, arrow};
+            }
             if (target == kBack) return {x, kOptionsRule + 14.0f, kInner, kQuiet};
             if (target == kClose) return close;
             break;
@@ -224,6 +234,10 @@ int Menu::hitAt(float x, float y) const {
     for (int target = 0; target < kTargets; ++target) {
         const Box design = boxOf(page_, target);
         if (design.w <= 0.0f || target == kSwitch) continue;
+        // The window's size does not step while the display is the whole screen.
+        if (settings_.fullscreen && (target - kRowArrows) / 2 == kSize && target >= kRowArrows) {
+            continue;
+        }
         if (at(x_, y_, design).has(x, y)) return target;
     }
     return -1;
@@ -281,17 +295,26 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
                         turn(Page::Main);
                     }
                     break;
-                case kVolumeDown:
-                case kVolumeUp:
-                    volume_ = std::clamp(volume_ + (fired == kVolumeUp ? 10 : -10), 0, 100);
-                    result.settings = result.clicked = true;
+                default:
+                    if (fired >= kRowArrows && fired < kRowArrows + kRows * 2) {
+                        const int row = (fired - kRowArrows) / 2;
+                        const int by = (fired - kRowArrows) % 2 == 1 ? 1 : -1;
+                        Settings& set = settings_;
+                        switch (row) {
+                            case kDisplay: set.fullscreen = !set.fullscreen; break;
+                            case kSize:
+                                if (!set.sizes.empty()) {
+                                    set.size = std::clamp(set.size + by, 0, int(set.sizes.size()) - 1);
+                                }
+                                break;
+                            case kVsync: set.vsync = !set.vsync; break;
+                            case kVolume: set.volume = std::clamp(set.volume + by * 10, 0, 100); break;
+                            case kCounter: set.fps = !set.fps; break;
+                            default: break;
+                        }
+                        result.settings = result.clicked = true;
+                    }
                     break;
-                case kFpsDown:
-                case kFpsUp:
-                    fps_ = !fps_;
-                    result.settings = result.clicked = true;
-                    break;
-                default: break;
             }
         }
         // A page turned this frame is laid out from its own height on the next.
@@ -303,8 +326,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
     now_.up = up_;
     if (up_) {
         now_.page = page_;
-        now_.volume = volume_;
-        now_.fps = fps_;
+        now_.settings = settings_;
         now_.place = place_;
         now_.width = width_;
         now_.height = height_;
@@ -417,14 +439,24 @@ void Menu::rebuild() {
         quiet(kBack, "Back");
     } else {
         rule(kFirstRule);
-        // Two rows, each a rounded well: the setting's name, and its value between two arrows.
-        const char* names[2] = {"Volume", "Frame rate counter"};
-        char volume[16];
-        std::snprintf(volume, sizeof volume, "%d%%", volume_);
-        const std::string values[2] = {volume, fps_ ? "On" : "Off"};
-        const int downs[2] = {kVolumeDown, kFpsDown}, ups[2] = {kVolumeUp, kFpsUp};
-        for (int i = 0; i < 2; ++i) {
-            const Box row = at(x_, y_, {kPadX, 84.0f + float(i) * (kRow + kGap), kInner, kRow});
+        // One rounded well a setting: its name, and its value between two arrows. The window's
+        // size is drawn quiet, with no arrows, while the display is the whole screen: fullscreen
+        // is the display's own mode and names it.
+        const Settings& set = settings_;
+        const auto size = [](std::pair<int, int> wh) {
+            return std::to_string(wh.first) + " x " + std::to_string(wh.second);
+        };
+        std::string values[kRows];
+        values[kDisplay] = set.fullscreen ? "Fullscreen" : "Windowed";
+        values[kSize] = set.fullscreen ? size(set.display)
+                        : set.sizes.empty() ? std::string("-")
+                                            : size(set.sizes[size_t(std::clamp(
+                                                  set.size, 0, int(set.sizes.size()) - 1))]);
+        values[kVsync] = set.vsync ? "On" : "Off";
+        values[kVolume] = std::to_string(set.volume) + "%";
+        values[kCounter] = set.fps ? "On" : "Off";
+        for (int i = 0; i < kRows; ++i) {
+            const Box row = at(x_, y_, {kPadX, rowTop(i), kInner, kRow});
             tip::panel(canvas_, row, kRowRadius * u, kBronze.times(0.20f).packed(),
                        kBronze.times(0.12f).packed());
             tip::panel(canvas_, row.grown(-line), kRowRadius * u - line,
@@ -432,14 +464,20 @@ void Menu::rebuild() {
                        gfx::rgba(0.058f, 0.054f, 0.050f, 1.0f));
             const float px = 15.0f * u;
             const float baseline = tip::middle(face, row.y, row.h, px);
-            sheet::printed(canvas_, row.x + 16.0f * u, baseline, px, sheet::ink::kFigure, names[i]);
-            const Box down = at(x_, y_, boxOf(page_, downs[i]));
-            const Box up = at(x_, y_, boxOf(page_, ups[i]));
-            arrow(canvas_, down, false, eased(downs[i]));
-            arrow(canvas_, up, true, eased(ups[i]));
+            sheet::printed(canvas_, row.x + 16.0f * u, baseline, px, sheet::ink::kFigure,
+                           kRowNames[i]);
+            const int downTarget = kRowArrows + i * 2, upTarget = downTarget + 1;
+            const Box down = at(x_, y_, boxOf(page_, downTarget));
+            const Box up = at(x_, y_, boxOf(page_, upTarget));
+            const bool steps = !(i == kSize && set.fullscreen);
+            if (steps) {
+                arrow(canvas_, down, false, eased(downTarget));
+                arrow(canvas_, up, true, eased(upTarget));
+            }
             const float mid = (down.right() + up.x) * 0.5f;
             sheet::printed(canvas_, std::round(mid - face.measure(px, values[i]) * 0.5f),
-                           baseline, px, sheet::ink::kTitle, values[i]);
+                           baseline, px, steps ? sheet::ink::kTitle : sheet::ink::kQuiet,
+                           values[i]);
         }
         rule(kOptionsRule);
         quiet(kBack, "Back");

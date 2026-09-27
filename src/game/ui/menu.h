@@ -9,7 +9,8 @@
 // rule and lit red.
 //
 // Three pages in one sheet: the menu; Exit's one question; and Options, which offers only what
-// can change while the game runs -- the volume and the frame-rate counter. Switch Character is
+// can change while the game runs -- the display (a window or the whole screen), the window's
+// size, v-sync, the volume and the frame-rate counter. Switch Character is
 // drawn and does nothing: there is no character select until sprint 9, and the user asked for
 // the button to stand there inactive until there is.
 //
@@ -19,6 +20,8 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "game/ui/hud.h"
 #include "gfx/interface.h"
@@ -32,7 +35,25 @@ public:
         bool closed = false;    // Resume: the menu went down this frame
         bool quit = false;      // Exit to Desktop
         bool clicked = false;   // a button answered, for the interface's click
-        bool settings = false;  // the volume or the counter changed
+        bool settings = false;  // something on the Options page changed
+    };
+
+    // What Options edits. The caller fills it from the window and the run, and applies it back
+    // when `Result::settings` says so. Not saved: a new run starts from its own arguments.
+    struct Settings {
+        bool fullscreen = false;
+        // The window's size, as an index into `sizes`, which are in screen points. Fullscreen
+        // is the display's own mode, so the row shows `display` then and does not step.
+        std::vector<std::pair<int, int>> sizes;
+        int size = 0;
+        std::pair<int, int> display{0, 0};
+        bool vsync = false;
+        int volume = 100;  // percent
+        bool fps = true;
+        bool operator==(const Settings& o) const {
+            return fullscreen == o.fullscreen && sizes == o.sizes && size == o.size &&
+                   display == o.display && vsync == o.vsync && volume == o.volume && fps == o.fps;
+        }
     };
 
     void open(const gfx::Interface& interface);
@@ -41,11 +62,8 @@ public:
     void hide() { up_ = false; }
     bool up() const { return up_; }
 
-    // The settings Options edits. Set once from the run; read back when `settings` says so.
-    void setVolume(int percent) { volume_ = percent; }
-    int volume() const { return volume_; }
-    void setFps(bool on) { fps_ = on; }
-    bool fps() const { return fps_; }
+    Settings& settings() { return settings_; }
+    const Settings& settings() const { return settings_; }
 
     // `escape` backs out a page, and off the menu shuts it. `place` is the foot's right-hand
     // line: where he is standing.
@@ -62,25 +80,23 @@ private:
     gfx::Canvas canvas_;
     bool up_ = false;
     Page page_ = Page::Main;
-    int volume_ = 100;
-    bool fps_ = true;
+    Settings settings_;
     std::string place_;
     float width_ = 0.0f, height_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;  // the sheet's corner, in pixels
     int over_ = -1, pressing_ = -1;
-    static constexpr int kTargets = 10;
+    static constexpr int kTargets = 20;
     float lift_[kTargets] = {};
     struct Drawn {
         bool up = false;
         Page page = Page::Main;
-        int volume = 0;
-        bool fps = false;
+        Settings settings;
         std::string place;
         float width = 0, height = 0;
         int over = -1, pressing = -1;
         float lift[kTargets] = {};
         bool operator==(const Drawn& o) const {
-            if (up != o.up || page != o.page || volume != o.volume || fps != o.fps ||
+            if (up != o.up || page != o.page || !(settings == o.settings) ||
                 place != o.place || width != o.width || height != o.height || over != o.over ||
                 pressing != o.pressing) {
                 return false;
