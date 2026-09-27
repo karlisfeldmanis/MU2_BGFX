@@ -266,6 +266,12 @@ void Realm::reviveHero() {
     hero.sd = hero.maxSd;
     hero.sdCarry = 0.0f;
     setDown(hero, column, row);
+    // Nothing the window raised while he lay dead carries over: `accept` does not run for a
+    // corpse, so a click on the ground or on his killer waited in `pending_` through the three
+    // seconds and walked him straight back out of town the tick he stood up.
+    order_ = Request{};
+    pending_ = Request{};
+    wants_ = skill::kNone;
     say(What::Rose, hero, hero.level, hero.health);
 }
 
