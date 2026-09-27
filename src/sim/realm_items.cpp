@@ -719,9 +719,9 @@ int Realm::buy(int shelfSlot) {
     return slot;
 }
 
-int64_t Realm::sellItem(int slot) {
-    if (trading_ < 0 || !serving(trading_) || !baggable(slot) || bag_[slot].empty()) return -1;
-    const Held thing = bag_[slot];
+int64_t Realm::sellValue(int slot) const {
+    if (!baggable(slot) || bag_[slot].empty()) return -1;
+    const Held& thing = bag_[slot];
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
     const bool stacks = row.group == kGroupPotions;
     int64_t paid = sellingPrice(row, thing.refinement,
@@ -732,6 +732,13 @@ int64_t Realm::sellItem(int slot) {
     if (wears(row)) {
         paid = wornSellingPrice(paid, thing.durability, maximumDurability(row, thing));
     }
+    return paid > 0 ? paid : -1;
+}
+
+int64_t Realm::sellItem(int slot) {
+    if (trading_ < 0 || !serving(trading_) || !baggable(slot) || bag_[slot].empty()) return -1;
+    const Held thing = bag_[slot];
+    const int64_t paid = std::max<int64_t>(0, sellValue(slot));
     bag_.lift(slot);
     money_ += paid;
     say(What::Sold, bodies_[0], thing.item, int32_t(paid), slot);

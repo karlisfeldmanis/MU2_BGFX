@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 
+#include "game/ui/controls.h"
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
 
@@ -24,8 +25,6 @@ constexpr float kButtonTop = panel::kFootTop + 1.0f;
 constexpr float kButtonRight = panel::kWellRight;
 constexpr Box kStrip{panel::kEdge, panel::kFootTop, panel::kWidth - panel::kEdge * 2.0f, 26.0f};
 constexpr Box kCoins{18.0f, panel::kFootTop + 4.0f, 20.0f, 18.0f};
-constexpr float kMoneySize = 9.5f;
-constexpr const char* kButtonArt[2] = {"vault_deposit", "vault_withdraw"};
 constexpr const char* kButtonTip[2] = {"Deposit Zen", "Withdraw Zen"};
 
 Box buttonBox(int which) {
@@ -227,34 +226,26 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
         }
     }
 
-    // The foot: the bag's band and rule, the coins, the vault's own Zen, and the two buttons.
-    sheet::band(canvas_,
-                panel::scaled(x, y, {0.0f, panel::kFootRule, panel::kWidth,
-                                     panel::kHeight - panel::kFootRule}),
-                false, panel::kRadius * k);
-    sheet::rule(canvas_, x + panel::kEdge * k, y + panel::kFootRule * k,
-                (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
+    // The foot: the windows' own foot and rule, the coins, the vault's own Zen, and the two
+    // buttons -- MU's newui_Bt_money sprites drawn as Sanctuary icon squares, a coin with an
+    // arrow into it and one out of it, on MU's own rectangles.
+    const float u = tip::unit();
+    controls::foot(canvas_, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}),
+                   y + panel::kFootRule * k, u);
     canvas_.image(arts.get("bag_zen"), panel::scaled(x, y, kCoins));
     const Box strip = panel::scaled(x, y, kStrip);
-    const float size = kMoneySize * k;
-    sheet::ranged(canvas_, x + (buttonBox(0).x - 6.0f) * k,
-                  panel::centredBaseline(face, strip, size), size, moneyColour(vault.zen()),
-                  panel::commas(vault.zen()));
+    const float size = 16.0f * u;
+    controls::ranged(canvas_, x + (buttonBox(0).x - 6.0f) * k,
+                     controls::middle(strip.y, strip.h, size), size, moneyColour(vault.zen()),
+                     panel::commas(vault.zen()));
     for (int which = 0; which < 2; ++which) {
         const Box to = panel::scaled(x, y, buttonBox(which));
-        const gfx::Art& art = arts.get(kButtonArt[which]);
-        const bool pressed = pressing_ == which && button_ == which;
-        if (art.valid()) {
-            // The sheet's lower state is MU's dimmed one, drawn while it is held down; under the
-            // pointer the resting state is lifted a little, as the skin lights a cell.
-            canvas_.region(art, to, panel::buttonState(art, pressed),
-                           button_ == which && !pressed ? gfx::rgba(1.0f, 1.0f, 1.0f, 1.0f)
-                                                        : gfx::rgba(0.86f, 0.86f, 0.86f, 1.0f));
-        } else {
-            canvas_.outline(to, 1.0f, gfx::rgba(0.68f, 0.60f, 0.40f, 0.9f));
-            canvas_.text(to.x + 3.0f, to.y + face.ascent(7.0f * k) + 3.0f, 7.0f * k,
-                         panel::kLettering, which == 0 ? "In" : "Out");
-        }
+        const float side = std::round(std::min(to.w, to.h));
+        controls::State state;
+        state.lift = button_ == which ? 1.0f : 0.0f;
+        state.held = pressing_ == which && button_ == which;
+        controls::square(canvas_, {std::round(to.midX() - side * 0.5f), std::round(to.midY() - side * 0.5f), side, side},
+                         which == 0 ? controls::Glyph::CoinIn : controls::Glyph::CoinOut, state, u);
     }
 
     panel::close(canvas_, x, y, now_.overClose, now_.closing);

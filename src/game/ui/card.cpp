@@ -2,7 +2,9 @@
 
 #include <string>
 
+#include "game/ui/controls.h"
 #include "game/ui/sheet.h"
+#include "game/ui/style.h"
 #include "sim/rules.h"
 
 namespace mu::game {
@@ -69,10 +71,11 @@ constexpr float kDetailTop = 25.0f, kDetailStep = 12.0f;
 
 // The two weights of type, both warm: a label steps down from the heading rather than being a
 // colour of its own. Godot's Darkened(a) is rgb * (1 - a).
-constexpr uint32_t kHeading = sheet::ink::kFigure;
-constexpr uint32_t kPlain = sheet::ink::kLabel;
-constexpr uint32_t kDetailInk = sheet::ink::kQuiet;
-constexpr uint32_t kSpendable = sheet::ink::kGold;
+constexpr uint32_t kHeading = style::kBoneHi;
+constexpr uint32_t kPlain = style::kBone2;
+constexpr uint32_t kDetailInk = style::kAshInk;
+// Points to spend are the one thing on the card that asks for a click: the accent.
+constexpr uint32_t kSpendable = style::kBloodHi;
 
 const char* titled(sim::Kin kin) {
     switch (kin) {
@@ -193,32 +196,28 @@ void Card::rebuild() {
     for (const Row& row : kRows) panel::cell(canvas_, x, y, rowField(row.y), sheet::Cell::Rest);
 
     // Card.Write: set from a top-left, the ascent below it. Right: the same, ranged right.
-    auto write = [&](float ux, float uy, const std::string& text, uint32_t colour, float at) {
-        canvas_.text(x + ux * k, y + uy * k + face.ascent(at), at, colour, text);
-    };
+    // The card's words in the Sanctuary label face, sized in the panel's units as before.
     auto right = [&](float ux, float uy, float uw, const std::string& text, uint32_t colour,
                      float at) {
-        canvas_.text(x + ux * k, y + uy * k + face.ascent(at), at, colour, text,
-                     gfx::Align::Right, uw * k);
+        controls::ranged(canvas_, x + (ux + uw) * k, y + uy * k + face.ascent(at), at, colour, text);
     };
 
     // The class, across the whole table, in the head's own tracked capitals a size down: it is
     // a heading and not a value, and it was the only line on the card set like a value.
-    sheet::kicker(canvas_, x + kLeft * k,
-                  y + (kSummary.y + 6.0f) * k + face.ascent(9.0f * k), 9.0f * k,
-                  sheet::shouted(titled(now_.who->kin)), sheet::ink::kTitle, 0.12f);
+    controls::caps(canvas_, x + kLeft * k, y + (kSummary.y + 6.0f) * k + face.ascent(9.0f * k),
+                   9.0f * k, kHeading, titled(now_.who->kin), 0.08f);
     // Level and points on one line, experience beneath: MU's stack at its own places.
     const float pairY = kSummary.y + 24.0f;
-    sheet::kicker(canvas_, x + kLeft * k, y + pairY * k + face.ascent(kSummaryLabel * k),
-                  kSummaryLabel * k, "LEVEL");
+    controls::caps(canvas_, x + kLeft * k, y + pairY * k + face.ascent(kSummaryLabel * k),
+                   kSummaryLabel * k, kDetailInk, "Level");
     right(kLeft, pairY, kMiddle - kGutter - kLeft, std::to_string(now_.level), kHeading, brief);
-    sheet::kicker(canvas_, x + kMiddle * k, y + pairY * k + face.ascent(kSummaryLabel * k),
-                  kSummaryLabel * k, "POINTS");
+    controls::caps(canvas_, x + kMiddle * k, y + pairY * k + face.ascent(kSummaryLabel * k),
+                   kSummaryLabel * k, kDetailInk, "Points");
     right(kMiddle, pairY, kRight - kMiddle, std::to_string(now_.points),
           now_.points > 0 ? kSpendable : kPlain, brief);
-    sheet::kicker(canvas_, x + kLeft * k,
-                  y + (kSummary.y + 44.0f) * k + face.ascent(kSummaryLabel * k),
-                  kSummaryLabel * k, "EXPERIENCE");
+    controls::caps(canvas_, x + kLeft * k,
+                   y + (kSummary.y + 44.0f) * k + face.ascent(kSummaryLabel * k),
+                   kSummaryLabel * k, kDetailInk, "Experience");
     right(kLeft, kSummary.y + 44.0f, kRight - kLeft,
           panel::commas((long long)now_.experience), kPlain, brief);
 
@@ -231,11 +230,10 @@ void Card::rebuild() {
         // sit on one baseline, which is the difference between a row and two rows overlapping.
         const float figureSize = kFigureSize * k;
         const float baseline = panel::centredBaseline(face, well, figureSize);
-        canvas_.text(x + kLeft * k, baseline, size, kPlain, row.label);
+        controls::label(canvas_, x + kLeft * k, baseline, size * 1.1f, kPlain, row.label);
         const float figureRight = now_.points > 0 ? kFigureRight : kRight;
-        canvas_.text(x + kLeft * k, baseline, figureSize, kHeading,
-                     std::to_string(values[row.stat]), gfx::Align::Right,
-                     (figureRight - kLeft) * k);
+        controls::ranged(canvas_, x + figureRight * k, baseline, figureSize * 1.1f, kHeading,
+                         std::to_string(values[row.stat]));
 
         // What the attribute buys, in the gap under its well: MU's own lines and strings. MU2
         // adds "Attack speed" under agility; the sim has no attack speed stat -- MU paces a swing
@@ -270,27 +268,32 @@ void Card::rebuild() {
         const float detail = kDetailSize * k;
         for (int i = 0; i < count; ++i) {
             const float uy = row.y + kDetailTop + float(i) * kDetailStep;
-            canvas_.text(x + kLeft * k, y + uy * k + face.ascent(detail), detail, kDetailInk,
-                         labels[i]);
-            canvas_.text(x + kLeft * k, y + uy * k + face.ascent(detail), detail, kPlain,
-                         lines[i], gfx::Align::Right, (kRight - kLeft) * k);
+            controls::label(canvas_, x + kLeft * k, y + uy * k + face.ascent(detail), detail * 1.1f,
+                            kDetailInk, labels[i]);
+            controls::ranged(canvas_, x + kRight * k, y + uy * k + face.ascent(detail),
+                             detail * 1.1f, kPlain, lines[i]);
         }
 
         // The plus only where there is something to spend: MU hides it rather than greying it.
         // `bag_plus`'s two-state button is gone with the rest of the art; the skin's own gold
         // ring with a plus in it stands in its place, at MU's own rectangle.
         if (now_.points <= 0) continue;
-        sheet::diamond(canvas_, panel::scaled(x, y, plusFor(row.y)), now_.over == row.stat,
-                       now_.pushed == row.stat);
+        // A red square with a plus in it: the spend, in the accent, since it is the one thing
+        // on the card that asks to be pressed.
+        const Box plus = panel::scaled(x, y, plusFor(row.y));
+        const float side = std::round(std::min(plus.w, plus.h));
+        controls::State state;
+        state.lift = now_.over == row.stat ? 1.0f : 0.0f;
+        state.held = now_.pushed == row.stat;
+        controls::square(canvas_,
+                         {std::round(plus.midX() - side * 0.5f), std::round(plus.midY() - side * 0.5f), side, side},
+                         controls::Glyph::Plus, state, tip::unit(), true);
     }
 
     // The foot: a band of light out of the bottom edge, the rule, the kicker, the share of the
     // level he has, and the percent -- the same foot the bag carries its Zen in.
-    sheet::band(canvas_, panel::scaled(x, y, {0.0f, kFootRule, panel::kWidth,
-                                              panel::kHeight - kFootRule}),
-                false, panel::kRadius * k);
-    sheet::rule(canvas_, x + panel::kEdge * k, y + kFootRule * k,
-                (panel::kWidth - panel::kEdge * 2.0f) * k, std::max(1.0f, k * 0.5f));
+    controls::foot(canvas_, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, panel::kHeight}),
+                   y + kFootRule * k, tip::unit());
     const uint64_t at = sim::neededExperience(now_.level);
     const uint64_t next = sim::neededExperience(now_.level + 1);
     const float share =
@@ -298,12 +301,12 @@ void Card::rebuild() {
                           double(next - at))
                   : 1.0f;
     const float kicker = kDetailSize * k;
-    sheet::kicker(canvas_, x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker,
-                  "EXPERIENCE");
-    canvas_.text(x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker, kDetailInk,
-                 std::to_string(int(share * 100.0f + 0.5f)) + "%", gfx::Align::Right,
-                 (kRight - kLeft) * k);
-    sheet::bar(canvas_, panel::scaled(x, y, kBar), share, kSpendable, std::max(1.0f, k * 0.5f));
+    controls::caps(canvas_, x + kLeft * k, y + kFootTop * k + face.ascent(kicker), kicker,
+                   kDetailInk, "Experience");
+    controls::ranged(canvas_, x + kRight * k, y + kFootTop * k + face.ascent(kicker), kicker * 1.1f,
+                     kPlain, std::to_string(int(share * 100.0f + 0.5f)) + "%");
+    controls::meter(canvas_, panel::scaled(x, y, kBar), share, gfx::rgba(0.910f, 0.863f, 0.773f),
+                    style::kIron, tip::unit());
 
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
 }

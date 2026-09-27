@@ -16,19 +16,23 @@ namespace {
 // guarantees contrast on two of a glyph's four sides), a dark rim rather than a pale frame, a
 // shadow that holds the bar off the world instead of a third edge, a dead grey track, a deep
 // unsaturated crimson, and a pale trail that reads as an absence being uncovered.
-constexpr float kInk[4] = {240 / 255.0f, 238 / 255.0f, 232 / 255.0f, 1.0f};
+//
+// **Sanctuary** since 2026-09-28 (game/ui/style.h): the name in bone, the rim black, the track a
+// pit of the windows' own void rather than a grey, the fill the palette's life red, and the
+// trail a warm bone at two thirds. The same five jobs, in the interface's one palette.
+constexpr float kInk[4] = {243 / 255.0f, 232 / 255.0f, 212 / 255.0f, 1.0f};
 constexpr float kHalo[4] = {0.0f, 0.0f, 0.0f, 0.85f};
-constexpr float kFrame[4] = {0.0f, 0.0f, 0.0f, 0.78f};
+constexpr float kFrame[4] = {0.0f, 0.0f, 0.0f, 0.85f};
 constexpr float kCast = 0.38f;  // MU2's 0.55, lightened: a lift, not a halo
-constexpr float kTrack[4] = {66 / 255.0f, 63 / 255.0f, 60 / 255.0f, 1.0f};
-constexpr float kFill[4] = {150 / 255.0f, 34 / 255.0f, 32 / 255.0f, 1.0f};
-constexpr float kChip[4] = {212 / 255.0f, 158 / 255.0f, 146 / 255.0f, 165 / 255.0f};
+constexpr float kTrack[4] = {13 / 255.0f, 10 / 255.0f, 8 / 255.0f, 1.0f};
+constexpr float kFill[4] = {179 / 255.0f, 38 / 255.0f, 30 / 255.0f, 1.0f};
+constexpr float kChip[4] = {232 / 255.0f, 220 / 255.0f, 197 / 255.0f, 170 / 255.0f};
 
 // ---- geometry, in interface units (panel::unit() pixels each) --------------------------
 constexpr float kBarWide = 78.0f;
 constexpr float kBarTall = 7.5f;  // set by the figures printed inside it
 constexpr float kEdge = 1.0f;
-constexpr float kRadius = 2.5f;   // a third of the height: not a pill, not square
+constexpr float kRadius = 1.0f;   // Sanctuary's small corner, 2 pixels at 1080 lines
 // MU2's 1.5 and 2.5, tightened: the user wanted the shadow elegant and minimal (2026-09-22),
 // and at 2.5 units it read as a dark smudge round the bar rather than as the bar lying over
 // the ground.

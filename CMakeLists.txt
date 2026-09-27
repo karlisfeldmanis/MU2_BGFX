@@ -162,6 +162,8 @@ add_executable(mu2
   src/game/ui/tip.cpp
   src/game/ui/tally.cpp
   src/game/ui/vitals.cpp
+  src/game/ui/controls.cpp
+  src/game/ui/specimen.cpp
   src/game/ui/items_stage.cpp
   src/game/ui/browser_list.cpp
   src/game/item_models.cpp

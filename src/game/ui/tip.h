@@ -93,10 +93,11 @@ struct FootLine {
 // the plate is the first other thing (`Hud::setFan`), and the user's rule when they chose it was
 // exactly this: *"it has to be the same style"*.
 namespace ink {
-// The body, graded from its head to its foot, and the warm hairline ring that is its edge.
-constexpr uint32_t kBodyTop = gfx::rgba(0.008f, 0.009f, 0.012f, 0.95f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.002f, 0.002f, 0.004f, 0.78f);
-constexpr uint32_t kRing = gfx::rgba(0.627f, 0.549f, 0.373f, 0.32f);
+// The body, graded from its head to its foot, and the iron that is its edge: Sanctuary's ash
+// and iron (game/ui/style.h) since 2026-09-28, where it was a cool black under a warm hairline.
+constexpr uint32_t kBodyTop = gfx::rgba(0.051f, 0.039f, 0.031f, 0.97f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.012f, 0.012f, 0.93f);
+constexpr uint32_t kRing = gfx::rgba(0.420f, 0.337f, 0.271f, 1.0f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
 constexpr uint32_t kLabel = gfx::rgba(0.769f, 0.757f, 0.706f);
 constexpr uint32_t kQuiet = gfx::rgba(0.588f, 0.600f, 0.557f);
@@ -106,7 +107,7 @@ constexpr uint32_t kPlateEdge = gfx::rgba(1.0f, 1.0f, 1.0f, 0.12f);
 constexpr uint32_t kPlateBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f);
 // The drop under every letter: type on glass this thin needs its own shadow to hold an edge.
 constexpr uint32_t kDrop = gfx::rgba(0.0f, 0.0f, 0.0f, 0.75f);
-constexpr float kRadius = 7.0f;  // the corner, in the card's own 1080-line pixels
+constexpr float kRadius = 4.0f;  // the corner, in the card's own 1080-line pixels
 }  // namespace ink
 
 // The card's unit: one pixel of the design page at 1080 lines.
@@ -114,8 +115,9 @@ float unit();
 
 // The shadow on its own, and the graded body on its own: what a window composes when it wants
 // its own edge between them (game/ui/sheet.h draws a gradient stroke there). `radius` is in
-// pixels for `panel` and in the card's units for `glass`.
-void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u);
+// pixels for `panel` and in the card's units for `glass`. `shadowUnder`'s is the card's corner in
+// pixels, so the cut-out under the glass follows it round.
+void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius = 0.0f);
 void panel(gfx::Canvas& canvas, const gfx::Box& box, float radius, uint32_t top, uint32_t foot);
 // The same with a radius a corner (top-left, top-right, bottom-right, bottom-left, in pixels):
 // what a band laid under a rounded window's head is cut with, so its square corners do not
@@ -166,6 +168,11 @@ struct Sheet {
     Tone wearTone = Tone::White;
     std::string price;
     Tone priceTone = Tone::Yellow;
+    // What it fetches over any counter, as a figure, and MU's Zen coin to set beside it: a strip
+    // of its own under the foot, "Sells for" on the left and the coin and the figure on the
+    // right, where Diablo IV prints a thing's sell value. Empty for what cannot be sold.
+    std::string sell;
+    gfx::Art coin;
     // And the foot's left, opposite the price: one short standing fact about the thing, which
     // today is only an orb's "Already learned" (the user, 2026-09-23). It is in the foot and not
     // in a section because it is not something the orb DOES or ASKS -- it is the card's verdict

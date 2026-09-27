@@ -3,6 +3,7 @@
 #include <cstdio>
 
 #include "core/log.h"
+#include "game/ui/controls.h"
 
 namespace mu::game {
 
@@ -66,11 +67,16 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     vitals_.open(interface_);
     tally_.open(interface_);
     arrival_.open(interface_);
+    // The Sanctuary controls' faces and stone, which every window's frame is drawn with.
+    controls::open();
+    specimen_.open(interface_);
     interface_.adopt(ground_);
     return true;
 }
 
 void Desk::shutdown() {
+    specimen_.close();
+    controls::close();
     panel::closeTitleFace();
     bagStagePicture_.shutdown();
     shelfStagePicture_.shutdown();
@@ -433,8 +439,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
 
+    // The bench takes the pointer over its sheets, so pressing a switch on it does not walk him.
+    if (specimenOpen_) {
+        specimen_.update(seconds, float(window.width()), float(window.height()), pointer);
+    }
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
-                    carrying_ != 0 ||
+                    (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
@@ -1069,6 +1079,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (amount_.up()) interface_.add(amount_.canvas());
     // The menu over everything but the pointer: it dims the whole screen, windows and HUD too.
     if (menu_.up()) interface_.add(menu_.canvas());
+    if (specimenOpen_) interface_.add(specimen_.canvas());
     interface_.add(cursor_.canvas());
     interface_.submit(view);
 }

@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
+#include "game/ui/controls.h"
 #include "game/ui/panel.h"
 
 namespace mu::game::tip {
@@ -37,7 +39,8 @@ constexpr int kCorner = 6;
 // the edge, then wider and fainter. Offsets and sigmas in the same 1080-line pixels.
 struct Fall { float drop, sigma, alpha; };
 constexpr Fall kFalls[3] = {{1.0f, 1.5f, 0.70f}, {8.0f, 7.0f, 0.55f}, {30.0f, 30.0f, 0.55f}};
-constexpr int kShadowColumns = 40, kShadowRows = 34;
+// The shadow's grid a side: cells out to its reach, round each corner, and across the card.
+constexpr int kShadowOutside = 10, kShadowCorner = 5, kShadowAcross = 6;
 
 // Two opacities, because they are two different jobs. `kOpacity` is the card's own glass and
 // goes through every colour it draws -- ring, marks, labels, numbers, chips, foot -- so the
@@ -232,12 +235,13 @@ void glyphAt(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, ui
         }
         case Mark::Diamond:
         case Mark::Socket: {
-            const float xy[8] = {cx, cy - h, cx + h, cy, cx, cy + h, cx - h, cy};
-            canvas.polygon(nullptr, xy, nullptr, 4, colour);
+            // An upright square, a little smaller than the turned one it replaces: the user
+            // refused every diamond on the Sanctuary page (2026-09-27).
+            const float s = h * 0.62f;
+            canvas.rect({cx - s, cy - s, s * 2.0f, s * 2.0f}, colour);
             if (which == Mark::Socket) {  // hollow: a socket is a hole
-                const float i = h * 0.45f;
-                const float in[8] = {cx, cy - i, cx + i, cy, cx, cy + i, cx - i, cy};
-                canvas.polygon(nullptr, in, nullptr, 4, kBody);
+                const float i = s * 0.5f;
+                canvas.rect({cx - i, cy - i, i * 2.0f, i * 2.0f}, kBody);
             }
             break;
         }
@@ -288,7 +292,7 @@ void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet) {
 // the three falloffs summed into one field and laid down as a grid of shaded quads, so it has no
 // edge anywhere. A rectangle blurred by a Gaussian is the product of two error functions, one
 // each way, which is what `edge` is.
-void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u) {
+void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius) {
     {
         const float reach = kFalls[2].sigma * 3.0f * u + kFalls[2].drop * u;
         const auto edge = [](float at, float low, float high, float sigma) {
@@ -297,29 +301,55 @@ void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u) {
         };
         // Cut out from under the card. The card is glass, so a shadow laid down across its whole
         // footprint is what shows THROUGH it -- the world behind never gets a look in, and the
-        // card reads as solid however thin its background is. `covered` is the card's own shape
-        // with a pixel of softness, and the shadow is what is left outside it.
+        // card reads as solid however thin its background is. `covered` is the card's own
+        // rounded shape, and the shadow is what is left outside it: full strength right up to
+        // the edge, which the card's own ring then draws over.
+        const float r = std::clamp(radius, 0.0f, std::min(box.w, box.h) * 0.5f);
+        const auto covered = [&](float px, float py) {
+            const float qx = std::abs(px - box.midX()) - (box.w * 0.5f - r);
+            const float qy = std::abs(py - (box.y + box.h * 0.5f)) - (box.h * 0.5f - r);
+            const float out = std::hypot(std::max(qx, 0.0f), std::max(qy, 0.0f));
+            const float inside = std::min(std::max(qx, qy), 0.0f);
+            return std::clamp(-(out + inside - r), 0.0f, 1.0f);
+        };
         const auto alphaAt = [&](float px, float py) {
             float sum = 0.0f;
             for (const Fall& f : kFalls) {
                 sum += f.alpha * edge(px, box.x, box.right(), f.sigma * u) *
                        edge(py, box.y + f.drop * u, box.bottom() + f.drop * u, f.sigma * u);
             }
-            const float covered = edge(px, box.x, box.right(), u) *
-                                  edge(py, box.y, box.bottom(), u);
-            return std::min(0.85f, sum) * (1.0f - covered);
+            return std::min(0.85f, sum) * (1.0f - covered(px, py));
         };
-        const float x0 = box.x - reach, x1 = box.right() + reach;
-        const float y0 = box.y - reach, y1 = box.bottom() + reach * 1.4f;
-        const float stepX = (x1 - x0) / kShadowColumns, stepY = (y1 - y0) / kShadowRows;
-        for (int j = 0; j < kShadowRows; ++j) {
-            for (int i = 0; i < kShadowColumns; ++i) {
-                const float px = x0 + stepX * float(i), py = y0 + stepY * float(j);
-                const uint32_t tl = gfx::rgba(0, 0, 0, alphaAt(px, py));
-                const uint32_t tr = gfx::rgba(0, 0, 0, alphaAt(px + stepX, py));
-                const uint32_t br = gfx::rgba(0, 0, 0, alphaAt(px + stepX, py + stepY));
-                const uint32_t bl = gfx::rgba(0, 0, 0, alphaAt(px, py + stepY));
-                canvas.shade({px, py, stepX, stepY}, tl, tr, br, bl);
+        // The grid's lines fall on the card's edges and round its corners, finer there. On an
+        // even grid the cut landed inside a cell and was smeared across it: at the menu's size
+        // a cell was 30 to 40 pixels, so the shadow faded in that far below the foot, and the
+        // square cut left the round corners pale.
+        const auto lines = [&](float lo, float from, float to, float hi, float tail) {
+            std::vector<float> at;
+            const auto run = [&](float a, float b, int n) {
+                for (int i = 0; i < n; ++i) at.push_back(a + (b - a) * float(i) / float(n));
+            };
+            const float round = std::min(r, (to - from) * 0.5f);
+            run(lo, from, kShadowOutside);
+            run(from, from + round, round > 0.0f ? kShadowCorner : 0);
+            run(from + round, to - round, kShadowAcross);
+            run(to - round, to, round > 0.0f ? kShadowCorner : 0);
+            run(to, hi, int(std::round(float(kShadowOutside) * tail)));
+            at.push_back(hi);
+            return at;
+        };
+        const std::vector<float> xs = lines(box.x - reach, box.x, box.right(), box.right() + reach, 1.0f);
+        const std::vector<float> ys =
+            lines(box.y - reach, box.y, box.bottom(), box.bottom() + reach * 1.4f, 1.4f);
+        for (size_t j = 0; j + 1 < ys.size(); ++j) {
+            for (size_t i = 0; i + 1 < xs.size(); ++i) {
+                const float ax = xs[i], bx = xs[i + 1], ay = ys[j], by = ys[j + 1];
+                // Wholly under the card, clear of its corners: nothing to lay down.
+                if (ax >= box.x + r && bx <= box.right() - r && ay >= box.y && by <= box.bottom()) continue;
+                if (ay >= box.y + r && by <= box.bottom() - r && ax >= box.x && bx <= box.right()) continue;
+                canvas.shade({ax, ay, bx - ax, by - ay}, gfx::rgba(0, 0, 0, alphaAt(ax, ay)),
+                             gfx::rgba(0, 0, 0, alphaAt(bx, ay)), gfx::rgba(0, 0, 0, alphaAt(bx, by)),
+                             gfx::rgba(0, 0, 0, alphaAt(ax, by)));
             }
         }
     }
@@ -339,15 +369,19 @@ void rounded(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4], ui
 
 void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius, uint32_t top,
            uint32_t foot) {
-    shadowUnder(canvas, box, u);
+    shadowUnder(canvas, box, u, radius * u);
     // The ring first and a hair wider, then the body over it: two fans, and the ring is left
     // showing as the edge. Drawn rounded, and see-through enough that the world moves behind it.
     const float r = radius * u;
     const float line = std::max(1.0f, u);
     const float all[4] = {r, r, r, r};
     const float wider[4] = {r + line, r + line, r + line, r + line};
-    roundedFan(canvas, box.grown(line), wider, fade(kRing));
+    const float widest[4] = {r + line * 2.0f, r + line * 2.0f, r + line * 2.0f, r + line * 2.0f};
+    // Sanctuary's edge: a seam of black outside a lit iron ring, then the body on stone.
+    roundedFan(canvas, box.grown(line * 2.0f), widest, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
+    roundedFan(canvas, box.grown(line), wider, fade(kRing), fade(gfx::rgba(0.165f, 0.125f, 0.098f)));
     roundedFan(canvas, box, all, top != 0u ? top : kBodyTop, foot != 0u ? foot : kBodyFoot);
+    controls::grain(canvas, box.grown(-line));
 }
 
 namespace {
@@ -539,6 +573,9 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     // has a foot -- is untouched.
     float tall = bodyTop + footTall + (hasFoot ? 0.0f : pad - railPad);
     for (float t : sectionTall) tall += t;
+    // The sell strip, under everything, one foot line and its padding tall.
+    const float sellTall = sheet.sell.empty() ? 0.0f : std::round(footSize * 1.5f) + railPad * 2.0f;
+    tall += sellTall;
 
     // ---- place ------------------------------------------------------------------------------
     const float margin = 4.0f * u;
@@ -559,6 +596,36 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     {
         const float tops[4] = {radius, radius, 0.0f, 0.0f};
         roundedFan(canvas, {box.x, box.y, box.w, headTall}, tops, tintTop, tintOut);
+        // And the name's colour as a lit line along the top edge, fading at both ends: the one
+        // place the card says at a glance what the thing is -- yellow +7, green excellent.
+        const float half = (box.w - radius * 2.0f) * 0.5f, edge = line * 2.0f;
+        const uint32_t lit = fade((nameColour & 0x00FFFFFFu) | (uint32_t(0.85f * 255.0f) << 24));
+        canvas.shade({box.x + radius, box.y - line, half, edge}, tintOut, lit, lit, tintOut);
+        canvas.shade({box.x + radius + half, box.y - line, half, edge}, lit, tintOut, tintOut, lit);
+    }
+    // **The sell strip**: laid first so the foot above it draws as it always has. A darker band
+    // across the card's bottom under an iron rule; "Sells for" in the foot's quiet capitals on
+    // the left; MU's coin and the figure in Zen yellow ranged right, which is where the eye ends
+    // a card and where Diablo IV prints what a thing is worth.
+    if (sellTall > 0.0f) {
+        const gfx::Box strip{box.x, box.bottom() - sellTall, box.w, sellTall};
+        const float bottoms[4] = {0.0f, 0.0f, radius, radius};
+        roundedFan(canvas, strip, bottoms, fade(gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f)));
+        canvas.rect({strip.x, strip.y, strip.w, line}, fade(gfx::rgba(0.420f, 0.337f, 0.271f, 0.9f)));
+        const float baseline = middle(face, strip.y, strip.h, footSize);
+        tracked(canvas, strip.x + pad, baseline, footSize * 0.92f, 0.12f, fade(kFoot), "SELLS FOR",
+                drop);
+        const float figure = footSize * 1.12f;
+        const float w = face.measure(figure, sheet.sell);
+        const float right = strip.right() - pad;
+        heavy(canvas, right - w, baseline, figure, fade(colourOf(Tone::Yellow)), sheet.sell, drop, u);
+        if (sheet.coin.valid()) {
+            const float side = std::round(figure * 1.25f);
+            const float cw = side * sheet.coin.width / std::max(1.0f, sheet.coin.height);
+            canvas.image(sheet.coin, {std::round(right - w - pad * 0.45f - cw),
+                                      std::round(strip.midY() - side * 0.5f), cw, side},
+                         fade(0xFFFFFFFFu));
+        }
     }
 
     float pen = box.y + pad;

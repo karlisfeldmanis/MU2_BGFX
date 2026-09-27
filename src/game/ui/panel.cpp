@@ -4,8 +4,10 @@
 #include <cstdio>
 
 #include "core/json.h"
+#include "game/ui/controls.h"
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
+#include "game/ui/style.h"
 #include "core/log.h"
 
 namespace mu::game::panel {
@@ -143,97 +145,61 @@ gfx::Box buttonState(const gfx::Art& art, bool pressed, int states) {
 }
 
 void frame(gfx::Canvas& canvas, Arts& arts, float x, float y, const std::string& title) {
-    // **No leather, no plate, no crest.** The window is the card's material now: a shadow, a
-    // nearly flat near-black body, and a gradient hairline for its edge -- bright along the head
-    // and fading to almost nothing at the foot, which is what makes a flat panel read as lit.
-    // The user, 2026-09-23: *"the original window, just a really nice skin ... very clean, flat,
-    // modern, Diablo 4 style"*, and then: drop shadows, gradient stroke, clean UI.
-    //
-    // MU's own rectangles are untouched -- the grid still starts at (15, 200) and the Zen strip
-    // still sits at 380 -- because this repaints `Panel`, which is the one place all three
-    // windows come through. `arts` is still taken: the worn slots' ghosts and the Zen coin are
-    // MU's art and stay.
+    // **Sanctuary** (game/ui/style.h), chosen by the user on 2026-09-27 over skin B: iron rings
+    // round a stone body, the title centred in Cinzel over a quiet iron rule, clean corners. The
+    // frame is game/ui/controls.h's, cut to MU's own head band so every rectangle below it --
+    // the grid at (11, 200), the foot at 382 -- stays exactly where MU put it.
     (void)arts;
     const float k = scale();
-    const gfx::Box window = scaled(x, y, {0.0f, 0.0f, kWidth, kHeight});
-    sheet::glass(canvas, window, kRadius * k);
-
-    // The head: a band of light under it, a mark, the name in tracked caps, and a rule.
-    const gfx::Box head = scaled(x, y, {0.0f, 0.0f, kWidth, kHeadBand});
-    sheet::band(canvas, head, true, kRadius * k);
-    const float size = kTitleSize * k;
-    // Centred in the WHOLE head, not in MU's plate. The plate was a painted strip from 8 to 36
-    // with a carving above it; with the carving gone the eight units above are the head's own
-    // air, and a title centred in the strip alone sits visibly low in the band it is drawn on.
-    const gfx::Box band = scaled(x, y, {0.0f, 0.0f, kWidth, kHeadBand});
-    const float baseline = centredBaseline(canvas.face(), band, size);
-    // **The title is fitted to the room between the mark and the cross.** A merchant's own name
-    // is the title of his window and `Lumen the Barmaid` is nineteen tracked capitals, which ran
-    // straight under the cross. It is shrunk by a quarter before anything is cut, and only then
-    // trimmed -- a name shortened by a letter still reads, a name under a button does not.
-    // Cinzel where it baked, the interface's own face where it did not.
-    const bool gothic = s_title.ready() && bgfx::isValid(s_titleTexture);
-    const gfx::Face& face = gothic ? s_title : canvas.face();
-    const float room = (frameClose().x - 5.0f - kTitleX) * k;
-    const std::string whole = sheet::shouted(title);
-    float fitted = size;
-    while (fitted > size * 0.72f &&
-           tip::trackedWidth(face, fitted, sheet::kTitleTrack, whole) > room) {
-        fitted -= 0.5f;
-    }
-    // And only then trimmed, in ONE pass. It was written as a loop that popped a letter and put
-    // the two dots back inside the same condition, which for a name of exactly the wrong length
-    // alternates between too long and short enough for ever: the frame never returned and the
-    // game froze the moment a merchant's counter opened. A trim measures the string it is going
-    // to draw, and never grows.
-    std::string text = whole;
-    while (text.size() > 1 &&
-           tip::trackedWidth(face, fitted, sheet::kTitleTrack, text + "..") > room) {
-        text.pop_back();
-    }
-    if (text.size() != whole.size()) text += "..";
-    if (gothic) {
-        // `lettered` takes the tracking in pixels, not in ems, and draws its own drop first so
-        // the title holds an edge over whatever the window is lying on.
-        const float tracking = fitted * sheet::kTitleTrack;
-        canvas.lettered(s_title, s_titleTexture, x + kTitleX * k + 1.0f, baseline + 1.0f, fitted,
-                        tracking, tip::ink::kDrop, text);
-        canvas.lettered(s_title, s_titleTexture, x + kTitleX * k, baseline, fitted, tracking,
-                        sheet::ink::kTitle, text);
-    } else {
-        sheet::kicker(canvas, x + kTitleX * k, baseline, fitted, text, sheet::ink::kTitle,
-                      sheet::kTitleTrack);
-    }
-    sheet::rule(canvas, window.x + kEdge * k, y + kHeadBand * k, (kWidth - kEdge * 2.0f) * k,
-                std::max(1.0f, k * 0.5f));
+    controls::frame(canvas, scaled(x, y, {0.0f, 0.0f, kWidth, kHeight}), tip::unit(), title,
+                    nullptr, kHeadBand * k);
 }
 
+namespace {
+// The close button in the head's right-hand socket, at the controls' own size: MU's 24-unit box
+// is 41 pixels at 1080 lines, and the small square is 28.
+gfx::Box closeIn(float x, float y) {
+    const gfx::Box socket = scaled(x, y, frameClose());
+    const float s = std::round(std::min(style::kSmallSquare * tip::unit(), socket.h));
+    return {std::round(socket.right() - s), std::round(socket.midY() - s * 0.5f), s, s};
+}
+}  // namespace
+
 void close(gfx::Canvas& canvas, Arts& arts, float x, float y, bool pressed) {
-    (void)arts;  // MU's two-state button art is not drawn any more; the cross is.
-    sheet::close(canvas, scaled(x, y, frameClose()), false, pressed);
+    (void)arts;
+    close(canvas, x, y, false, pressed);
 }
 
 void close(gfx::Canvas& canvas, float x, float y, bool over, bool pressed) {
-    sheet::close(canvas, scaled(x, y, frameClose()), over, pressed);
+    controls::State state;
+    state.lift = over ? 1.0f : 0.0f;
+    state.held = pressed;
+    controls::square(canvas, closeIn(x, y), controls::Glyph::Close, state, tip::unit());
 }
 
 void field(gfx::Canvas& canvas, Arts& arts, float x, float y, const gfx::Box& units,
            const char* key) {
-    // The leather's nine-sliced well becomes the card's framed block: 3% white under a 10%
-    // hairline, which is what the card itself frames a section with.
     (void)arts;
     (void)key;
-    sheet::well(canvas, scaled(x, y, units), std::max(1.0f, scale() * 0.5f));
+    controls::well(canvas, scaled(x, y, units), tip::unit());
 }
 
 void cell(gfx::Canvas& canvas, float x, float y, const gfx::Box& units, sheet::Cell state) {
-    sheet::cell(canvas, scaled(x, y, units), state, std::max(1.0f, scale() * 0.5f));
+    controls::Cell to = controls::Cell::Rest;
+    switch (state) {
+        case sheet::Cell::Rest: to = controls::Cell::Rest; break;
+        case sheet::Cell::Over: to = controls::Cell::Over; break;
+        case sheet::Cell::Held: to = controls::Cell::Held; break;
+        case sheet::Cell::Fits: to = controls::Cell::Fits; break;
+        case sheet::Cell::Blocked: to = controls::Cell::Blocked; break;
+    }
+    controls::cell(canvas, scaled(x, y, units), to, tip::unit());
 }
 
 void grid(gfx::Canvas& canvas, float x, float y, float ux, float uy, int columns, int rows) {
-    sheet::grid(canvas,
-                scaled(x, y, {ux, uy, kPitch * float(columns), kPitch * float(rows)}), columns,
-                rows, std::max(1.0f, scale() * 0.5f));
+    controls::grid(canvas,
+                   scaled(x, y, {ux, uy, kPitch * float(columns), kPitch * float(rows)}), columns,
+                   rows, tip::unit());
 }
 
 namespace {
@@ -242,24 +208,19 @@ namespace {
 constexpr gfx::Box kMoneyStrip{kEdge, kFootTop, kWidth - kEdge * 2.0f, 26.0f};
 constexpr gfx::Box kMoneyIcon{18.0f, kFootTop + 4.0f, 20.0f, 18.0f};
 constexpr float kMoneyFrom = 18.0f + 20.0f + 6.0f;
-constexpr float kMoneySize = 9.5f;
 }  // namespace
 
 void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money,
              float valueRight) {
-    const float k = scale();
-    const gfx::Face& face = canvas.face();
-    sheet::band(canvas, scaled(x, y, {0.0f, kFootRule, kWidth, kHeight - kFootRule}), false,
-                kRadius * k);
-    sheet::rule(canvas, x + kEdge * k, y + kFootRule * k, (kWidth - kEdge * 2.0f) * k,
-                std::max(1.0f, k * 0.5f));
+    const float k = scale(), u = tip::unit();
+    controls::foot(canvas, scaled(x, y, {0.0f, 0.0f, kWidth, kHeight}), y + kFootRule * k, u);
     canvas.image(arts.get("bag_zen"), scaled(x, y, kMoneyIcon));
     const gfx::Box strip = scaled(x, y, kMoneyStrip);
-    sheet::kicker(canvas, x + kMoneyFrom * k, centredBaseline(face, strip, 8.0f * k), 8.0f * k,
-                  "ZEN");
-    const float size = kMoneySize * k;
-    sheet::ranged(canvas, x + valueRight * k, centredBaseline(face, strip, size), size,
-                  moneyColour(money), commas(money));
+    controls::caps(canvas, x + kMoneyFrom * k, controls::middle(strip.y, strip.h, 12.0f * u),
+                   12.0f * u, style::kAshInk, "ZEN");
+    const float size = 16.0f * u;
+    controls::ranged(canvas, x + valueRight * k, controls::middle(strip.y, strip.h, size), size,
+                     moneyColour(money), commas(money));
 }
 
 // ---- words -----------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ constexpr uint32_t kDrop = tip::ink::kDrop;
 
 void glass(gfx::Canvas& canvas, const Box& window, float radius, float shadow) {
     tip::shadowUnder(canvas, window,
-                     shadow > 0.0f ? shadow : std::max(1.0f, radius / tip::ink::kRadius));
+                     shadow > 0.0f ? shadow : std::max(1.0f, radius / tip::ink::kRadius), radius);
     // The edge as the card draws its own: a graded fan a hairline wider than the body, and the
     // body over it, so the line follows the corner round. It was four straight hairlines held
     // back by the radius, which at a corner of two and a half units left nothing to see and at
@@ -266,7 +266,7 @@ void button(gfx::Canvas& canvas, const Box& box, const std::string& word, bool p
 
     if (!pressed) {
         tip::shadowUnder(canvas, body,
-                         std::max(1.0f, radius / tip::ink::kRadius) * (0.55f + 0.25f * lift));
+                         std::max(1.0f, radius / tip::ink::kRadius) * (0.55f + 0.25f * lift), radius);
     }
     // The answer Return gives: a thin gold ring a step outside the rim, over the shadow, so the
     // box says which button the key presses without a word about it. Stronger while lifted.

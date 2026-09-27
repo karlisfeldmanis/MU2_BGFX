@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <string>
 
+#include "game/ui/controls.h"
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
 #include "sim/wear.h"
@@ -362,20 +363,18 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     // The foot: the panel's own, with the hero's Zen in it.
     panel::zenFoot(canvas_, arts, x, y, realm.money(), kHammer.x - 6.0f);
     {
-        // The hammer: the same painted hammer as Hanzo's Repair. Held down while repair mode is
-        // on and ringed in gilt, as the shelf's is; drawn dark below kSelfRepairLevel, where it
-        // does nothing away from a blacksmith.
+        // The hammer: a Sanctuary icon square in the foot's strip. Held down with a red rim
+        // while repair mode is on -- the user turned down the gilt ring it had -- and inactive
+        // below kSelfRepairLevel, where it does nothing away from a blacksmith.
         const Box to = panel::scaled(x, y, kHammer);
-        const gfx::Art& art = arts.get("shop_repair");
-        const bool down = pressingHammer_ || (mending_ && now_.canMend);
-        const uint32_t ink = !now_.canMend      ? gfx::rgba(0.40f, 0.40f, 0.42f, 0.85f)
-                             : overHammer_ && !down ? gfx::rgba(1.0f, 1.0f, 1.0f, 1.0f)
-                                                    : gfx::rgba(0.86f, 0.86f, 0.86f, 1.0f);
-        if (art.valid()) canvas_.region(art, to, panel::buttonState(art, down), ink);
-        if (mending_ && now_.canMend) {
-            canvas_.outline(to.grown(1.5f * k), std::max(1.0f, 1.5f * k),
-                            tip::colourOf(tip::Tone::Yellow));
-        }
+        const float side = std::round(std::min(to.w, to.h));
+        controls::State state;
+        state.lift = overHammer_ ? 1.0f : 0.0f;
+        state.held = pressingHammer_;
+        state.off = !now_.canMend;
+        controls::square(canvas_, {std::round(to.right() - side), std::round(to.midY() - side * 0.5f), side, side},
+                         controls::Glyph::Hammer, state, tip::unit(), false,
+                         mending_ && now_.canMend);
     }
 
     // The cell a dragged thing would land on: blue where the move would be taken and red where
@@ -513,6 +512,12 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 sheet.price = "Cannot Repair";  // GT 926
                 sheet.priceTone = tip::Tone::Red;
             }
+        }
+        // What it fetches over a counter, anywhere and not only at one: the realm's own sum, so
+        // the card and the sale cannot disagree. Nothing on what is worn, which cannot be sold.
+        if (const int64_t fetches = realm.sellValue(hovered_); fetches > 0) {
+            sheet.sell = panel::commas(fetches);
+            sheet.coin = arts.get("bag_zen");
         }
         if (tipStage_) {
             tip::stand(*tipStage_, bag[hovered_].item, bag[hovered_].refinement, sheet);

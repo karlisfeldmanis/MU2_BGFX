@@ -323,6 +323,7 @@ void PlayMode::runScript(Context& ctx) {
     }
     if (args.windows.find("inventory") != std::string::npos) desk_.setInventoryOpen(true);
     if (args.windows.find("character") != std::string::npos) desk_.setCharacterOpen(true);
+    if (args.windows.find("sanctuary") != std::string::npos) desk_.setSpecimenOpen(true);
 }
 
 void PlayMode::openProbes(Context& ctx) {
@@ -861,7 +862,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // Not while a box has the keyboard: the note sits over the middle of the screen, where the
     // box does.
     if (ctx.overlay.ready() && world_.played().isOpen() && !desk_.typing() &&
-        !desk_.menuUp()) {
+        !desk_.menuUp() && !desk_.specimenOpen()) {
         float feetX = 0.0f, feetZ = 0.0f;
         world_.characterAt(&feetX, &feetZ);
         const float headY = world_.ground().heightAt(feetX, feetZ) + 2.0f;

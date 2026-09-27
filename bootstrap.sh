@@ -62,6 +62,22 @@ if [ ! -f extern/Cinzel-Bold.ttf ]; then
   curl -sSL -o extern/Cinzel-Bold.ttf $CINZEL_BOLD_URL
   echo "$CINZEL_BOLD_SHA256  extern/Cinzel-Bold.ttf" | shasum -a 256 -c - || { rm -f extern/Cinzel-Bold.ttf; exit 1; }
 fi
+# The Sanctuary interface's two sans faces (SIL OFL), chosen by the user on 2026-09-27 with the
+# rest of game/ui/style.h: Alegreya Sans SC Bold for every button's word, set with no tracking,
+# and Alegreya Sans Medium for a control's label. Google Fonts' static instances, versioned by
+# the path and pinned by the checksum, as the two Cinzels above are.
+ALEGREYA_SC_URL=https://fonts.gstatic.com/s/alegreyasanssc/v26/mtGm4-RGJqfMvt7P8FUr0Q1j-Hf1DvJA0iQ.ttf
+ALEGREYA_SC_SHA256=05e00176d329d31cf01488316dd8c73d3e33a27cf6a60591cb0b2f10036da841
+if [ ! -f extern/AlegreyaSansSC-Bold.ttf ]; then
+  curl -sSL -o extern/AlegreyaSansSC-Bold.ttf $ALEGREYA_SC_URL
+  echo "$ALEGREYA_SC_SHA256  extern/AlegreyaSansSC-Bold.ttf" | shasum -a 256 -c - || { rm -f extern/AlegreyaSansSC-Bold.ttf; exit 1; }
+fi
+ALEGREYA_URL=https://fonts.gstatic.com/s/alegreyasans/v28/5aUu9_-1phKLFgshYDvh6Vwt5alOmE0.ttf
+ALEGREYA_SHA256=9062eb42daabd93e6071ba60f76162b9c52402cef71b305e352956241ade1dd9
+if [ ! -f extern/AlegreyaSans-Medium.ttf ]; then
+  curl -sSL -o extern/AlegreyaSans-Medium.ttf $ALEGREYA_URL
+  echo "$ALEGREYA_SHA256  extern/AlegreyaSans-Medium.ttf" | shasum -a 256 -c - || { rm -f extern/AlegreyaSans-Medium.ttf; exit 1; }
+fi
 
 # glfw is the one PLAN.md point 12 names that is NOT pinned here, and saying so is better
 # than the file implying otherwise: it comes from Homebrew, as a built dylib, and pinning it

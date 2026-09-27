@@ -2,8 +2,10 @@
 
 #include <algorithm>
 
+#include "game/ui/controls.h"
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
+#include "game/ui/style.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -216,48 +218,37 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     if (mends_) {
         // The strip: MU's `Repair All` and the sum, in gilt on a well, the figure red when the
         // purse cannot cover it (getGoldColor's job there).
-        panel::cell(canvas_, x, y, kStrip, sheet::Cell::Rest);
-        const float size = 8.0f * k;
+        const float u = tip::unit();
+        panel::field(canvas_, arts, x, y, kStrip);
+        const float size = 14.0f * u;
         const Box strip = panel::scaled(x, y, kStrip);
-        const float baseline = panel::centredBaseline(face, strip, size);
-        canvas_.text(strip.x + 6.0f * k, baseline, size, panel::kLettering, "Repair All");
+        const float baseline = controls::middle(strip.y, strip.h, size);
+        controls::label(canvas_, strip.x + 6.0f * k, baseline, size, style::kBone2, "Repair All");
         const std::string sum = panel::commas(now_.mendAll) + " Zen";
         const bool affords = realm.money() >= now_.mendAll;
-        canvas_.text(strip.right() - 6.0f * k - face.measure(size, sum), baseline, size,
-                     affords ? tip::colourOf(tip::Tone::Yellow) : tip::colourOf(tip::Tone::Red),
-                     sum);
-        // The hammers: two states a sheet, the lit one resting and the dimmed one held
-        // down -- and the Repair hammer held down for as long as repair mode is on, which is how
-        // MU says the mode is on at all.
+        controls::ranged(canvas_, strip.right() - 6.0f * k, baseline, size,
+                         affords ? tip::colourOf(tip::Tone::Yellow) : tip::colourOf(tip::Tone::Red),
+                         sum);
+        // The hammers: Sanctuary icon squares on MU's two rectangles. Repair is held down with a
+        // red rim for as long as repair mode is on, which is how MU says the mode is on at all;
+        // the user turned down the gilt ring that said it before.
         for (int i = 0; i < 2; ++i) {
-            // A picture each, where MU draws one hammer twice: see interface/CREDITS.md.
-            const gfx::Art& hammer = arts.get(i == 0 ? "shop_repair" : "shop_repair_all");
             const Box to = panel::scaled(x, y, kHammers[i]);
-            const bool down = pressedHammer_ == i || (i == 0 && now_.mendingOn);
-            if (hammer.valid()) {
-                const float half = hammer.height * 0.5f;
-                canvas_.region(hammer, to, {0.0f, down ? half : 0.0f, hammer.width, half});
-            }
-            if (overHammer_ == i) canvas_.rect(to, gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f));
-            // The grey half alone reads as "disabled" at this size, so the mode's hammer is
-            // also ringed in gilt while it is on.
-            if (i == 0 && now_.mendingOn) {
-                canvas_.outline(to.grown(1.5f * k), std::max(1.0f, 1.5f * k),
-                                tip::colourOf(tip::Tone::Yellow));
-            }
+            const float side = std::round(std::min(to.w, to.h));
+            controls::State state;
+            state.lift = overHammer_ == i ? 1.0f : 0.0f;
+            state.held = pressedHammer_ == i;
+            controls::square(canvas_,
+                             {std::round(to.midX() - side * 0.5f), std::round(to.midY() - side * 0.5f), side, side},
+                             i == 0 ? controls::Glyph::Hammer : controls::Glyph::Hammers, state, u,
+                             false, i == 0 && now_.mendingOn);
         }
         // And what each one is, over it while the pointer is on it: MU's own tooltips,
         // `Repair (L)` and `Repair All (Shift+L)`.
         if (overHammer_ >= 0) {
-            const char* what = overHammer_ == 0 ? "Repair (L)" : "Repair All (Shift+L)";
-            const float tipSize = 7.0f * k;
-            const float wide = face.measure(tipSize, what) + 8.0f * k;
             const Box over = panel::scaled(x, y, kHammers[overHammer_]);
-            const Box back{over.midX() - wide * 0.5f, over.y - tipSize - 8.0f * k, wide,
-                           tipSize + 6.0f * k};
-            canvas_.rect(back, gfx::rgba(0.0f, 0.0f, 0.0f, 0.75f));
-            canvas_.text(back.x + 4.0f * k, panel::centredBaseline(face, back, tipSize), tipSize,
-                         panel::kLettering, what);
+            controls::hint(canvas_, over.midX(), over.y - 6.0f * u,
+                           overHammer_ == 0 ? "Repair (L)" : "Repair All (Shift+L)", u);
         }
     }
     if (hovered_ >= 0) {

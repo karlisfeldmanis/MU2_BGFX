@@ -23,6 +23,7 @@
 #include "game/ui/items_stage.h"
 #include "game/ui/menu.h"
 #include "game/ui/shelf.h"
+#include "game/ui/specimen.h"
 #include "game/ui/tally.h"
 #include "game/ui/vitals.h"
 #include "game/ui/panel.h"
@@ -104,6 +105,9 @@ public:
         if (key >= 0 && key < Hud::kQuickKeys) quick_[key] = item;
     }
     void setCharacterOpen(bool open) { characterOpen_ = open; }
+    // The Sanctuary bench (game/ui/specimen.h), from `--windows sanctuary`.
+    void setSpecimenOpen(bool open) { specimenOpen_ = open; }
+    bool specimenOpen() const { return specimenOpen_; }
     // The four skill keys, by MU's skill number, 0 for empty: what the save keeps. Restoring
     // marks the arrangement as the player's, so the first-free-key convenience does not put
     // back on the next frame what he took off before he quit -- see `autoBound_`.
@@ -217,6 +221,8 @@ private:
     bool bagForShop_ = false;  // the bag was opened by the counter, and goes when it does
     bool inventoryOpen_ = false;
     bool characterOpen_ = false;
+    Specimen specimen_;
+    bool specimenOpen_ = false;
     bool takesPointer_ = false;
     bool scripted_ = false;
     Pointer script_;

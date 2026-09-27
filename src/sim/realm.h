@@ -435,6 +435,9 @@ public:
     // Sells a carried thing to the open shop: bag slots only, never what is worn. What was
     // paid, or -1 refused. Realm.Sell.
     int64_t sellItem(int slot);
+    // What `sellItem` would pay for the thing in this slot at any counter, or -1 when it cannot
+    // be sold at all: a worn slot, an empty one, or a thing worth nothing. The item card's.
+    int64_t sellValue(int slot) const;
     // Whether he is close enough to be served by this townsperson right now. Asked again on
     // every purchase and sale, not once when the counter opened.
     bool serving(int folk) const;
