@@ -126,9 +126,9 @@ public:
     // The map's name, for the menu's foot: where he is standing.
     void setWorld(const std::string& world) { worldName_ = world; }
 
-    // The game menu (game/ui/menu.h). Up, the realm is held: PlayMode steps it by nothing.
-    bool paused() const { return menu_.up(); }
-    // Exit to Desktop was answered: the run ends after this frame, and shutdown saves.
+    // The game menu (game/ui/menu.h) is up. The world goes on behind it.
+    bool menuUp() const { return menu_.up(); }
+    // Exit Game was pressed: the run ends after this frame, and shutdown saves.
     bool quitAsked() const { return quitAsked_; }
     // Whether Escape is the game's: in a played world it opens the menu rather than quitting.
     void holdEscape(bool held) { holdEscape_ = held; }

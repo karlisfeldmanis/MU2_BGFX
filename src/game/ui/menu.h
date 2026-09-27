@@ -8,14 +8,15 @@
 // inner line, a warm light rising under the one the pointer is on, and Exit set apart below a
 // rule and lit red.
 //
-// Three pages in one sheet: the menu; Exit's one question; and Options, which offers only what
+// Two pages in one sheet: the menu, and Options, which offers only what
 // can change while the game runs -- the display (a window or the whole screen), the window's
 // size, v-sync, the volume and the frame-rate counter. Switch Character is
 // drawn and does nothing: there is no character select until sprint 9, and the user asked for
 // the button to stand there inactive until there is.
 //
-// Modal, as the number box is: while it is up the desk gives it the pointer and every key, and
-// the realm is held (PlayMode steps it by nothing).
+// Modal, as the number box is: while it is up the desk gives it the pointer and every key. The
+// world is NOT held -- the user, 2026-09-27: *"dont freeze character when open menu"* -- so a
+// fight goes on behind it, as it does behind Diablo's.
 #pragma once
 
 #include <cstdint>
@@ -30,10 +31,10 @@ namespace mu::game {
 
 class Menu {
 public:
-    enum class Page : uint8_t { Main, Confirm, Options };
+    enum class Page : uint8_t { Main, Options };
     struct Result {
         bool closed = false;    // Resume: the menu went down this frame
-        bool quit = false;      // Exit to Desktop
+        bool quit = false;      // Exit Game, which is instant: the user, 2026-09-27
         bool clicked = false;   // a button answered, for the interface's click
         bool settings = false;  // something on the Options page changed
     };

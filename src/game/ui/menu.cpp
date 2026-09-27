@@ -42,7 +42,7 @@ float unit() { return tip::unit() * kScale; }
 constexpr float kCentreShare = 0.46f;
 
 enum Target : int {
-    kOptions = 0, kSwitch = 1, kExit = 2, kLeave = 3, kBack = 4, kClose = 9,
+    kOptions = 0, kSwitch = 1, kExit = 2, kBack = 4, kClose = 9,
     // Each Options row's two arrows: row r steps down at kRowArrows + 2r and up one past it.
     kRowArrows = 10,
 };
@@ -54,7 +54,6 @@ constexpr const char* kRowNames[kRows] = {"Display", "Resolution", "V-sync", "Vo
 
 // Each page's own rules and foot, top to bottom.
 constexpr float kMainSecondRule = 240.0f, kMainFoot = 338.0f, kMainTall = 374.0f;
-constexpr float kConfirmLine = 64.0f, kConfirmRule = 94.0f, kConfirmTall = 258.0f;
 constexpr float kRowsTop = 84.0f;
 constexpr float kOptionsRule = kRowsTop + kRows * (kRow + kGap) + 4.0f;
 constexpr float kOptionsTall = kOptionsRule + 14.0f + kQuiet + 26.0f;
@@ -64,7 +63,6 @@ float rowTop(int row) { return kRowsTop + float(row) * (kRow + kGap); }
 float tallOf(Menu::Page page) {
     switch (page) {
         case Menu::Page::Main: return kMainTall;
-        case Menu::Page::Confirm: return kConfirmTall;
         case Menu::Page::Options: return kOptionsTall;
     }
     return kMainTall;
@@ -81,10 +79,6 @@ Box boxOf(Menu::Page page, int target) {
             if (target == kSwitch) return {x, 84.0f + kBig + kGap, kInner, kBig};
             if (target == kExit) return {x, kMainSecondRule + 14.0f, kInner, kBig};
             if (target == kClose) return close;
-            break;
-        case Menu::Page::Confirm:
-            if (target == kLeave) return {x, kConfirmRule + 14.0f, kInner, kBig};
-            if (target == kBack) return {x, kConfirmRule + 14.0f + kBig + kGap, kInner, kQuiet};
             break;
         case Menu::Page::Options: {
             // The two arrows sit at either end of a row's value, which is its right 150.
@@ -282,9 +276,8 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
         } else if (fired >= 0) {
             switch (fired) {
                 case kOptions: turn(Page::Options); break;
-                case kExit: turn(Page::Confirm); break;
                 case kBack: turn(Page::Main); break;
-                case kLeave:
+                case kExit:
                     result.quit = result.clicked = true;
                     break;
                 case kClose:
@@ -397,14 +390,8 @@ void Menu::rebuild() {
         slab(canvas_, at(x_, y_, boxOf(page_, target)), kQuietRadius * u, word, 15.0f,
              Kind::Plain, eased(target), pressing_ == target && over_ == target);
     };
-    const auto centred = [&](const std::string& text, float y, float size, uint32_t ink) {
-        const float px = size * u;
-        const Box band = at(x_, y_, {0.0f, y, kWide, 18.0f});
-        const float x = std::round(band.midX() - face.measure(px, text) * 0.5f);
-        sheet::printed(canvas_, x, tip::middle(face, band.y, band.h, px), px, ink, text);
-    };
 
-    if (page_ != Page::Confirm) {
+    {
         const Box close = at(x_, y_, boxOf(page_, kClose));
         sheet::close(canvas_, close, over_ == kClose, pressing_ == kClose && over_ == kClose);
     }
@@ -432,11 +419,6 @@ void Menu::rebuild() {
         const std::string where = sheet::shouted(place_);
         tip::tracked(canvas_, foot.right() - tip::trackedWidth(face, px, 0.12f, where), baseline,
                      px, 0.12f, sheet::ink::kQuiet, where, 1.0f);
-    } else if (page_ == Page::Confirm) {
-        centred("Your progress is saved.", kConfirmLine, 14.0f, sheet::ink::kQuiet);
-        rule(kConfirmRule);
-        big(kLeave, "Exit to Desktop", Kind::Danger);
-        quiet(kBack, "Back");
     } else {
         rule(kFirstRule);
         // One rounded well a setting: its name, and its value between two arrows. The window's

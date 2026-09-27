@@ -602,9 +602,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               ctx.window.width(), ctx.window.height());
         if ((ctx.window.clicked(0) && !windowed) || clickNow) world_.played().leftClick();
         if (ctx.window.clicked(1) && !windowed) world_.played().rightClick();
-        // Held while the menu is up: stepped by nothing, the realm, every clip and every
-        // effect stand where they are, and take up again from there.
-        world_.played().update(desk_.ready() && desk_.paused() ? 0.0 : deltaSeconds);
+        world_.played().update(deltaSeconds);
         // The colour goes out of the world while he is down. Half a second out and a second
         // back: a fall should land and a recovery should feel like one. The renderer drains the
         // scene's own pass, so the HUD and the message over it stay in colour -- which is the
@@ -843,7 +841,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // Not while a box has the keyboard: the note sits over the middle of the screen, where the
     // box does.
     if (ctx.overlay.ready() && world_.played().isOpen() && !desk_.typing() &&
-        !desk_.paused()) {
+        !desk_.menuUp()) {
         float feetX = 0.0f, feetZ = 0.0f;
         world_.characterAt(&feetX, &feetZ);
         const float headY = world_.ground().heightAt(feetX, feetZ) + 2.0f;
