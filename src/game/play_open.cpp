@@ -250,6 +250,17 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                             if (bones[b].name == "Bip01 Head") one.headBone = int(b);
                         }
                     }
+                    // MODEL_BULL_FIGHTER's: smok_bone is MU's 24, and the Elite's eyes are
+                    // 22 and 23, top_bone02 and top_bone01, in RenderEye's left-right order.
+                    const bool elite = look->name == kEliteBullFigure;
+                    if ((elite || look->name == kSnortingFigure) && look->skeletonMesh) {
+                        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                        for (size_t b = 0; b < bones.size(); ++b) {
+                            if (bones[b].name == "smok_bone") one.snortBone = int(b);
+                            if (elite && bones[b].name == "top_bone02") one.eyeBones[0] = int(b);
+                            if (elite && bones[b].name == "top_bone01") one.eyeBones[1] = int(b);
+                        }
+                    }
                 }
             }
         } else {

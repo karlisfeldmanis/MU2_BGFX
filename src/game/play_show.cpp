@@ -245,6 +245,49 @@ void Play::exhale(float seconds) {
     }
 }
 
+// The Bull Fighters: a puff off the muzzle every second reference frame while the clip is in
+// one of its four windows, and on the Elite two eyes drawn every frame it is. fx/snort.h and
+// fx/eyes.h have the client's code.
+void Play::snort(float seconds) {
+    snort_.update(seconds);
+    eyes_.update(seconds);
+    const float frames = seconds * 25.0f;
+    for (Drawn& one : drawn_) {
+        if (one.snortBone < 0 && one.eyeBones[0] < 0) continue;
+        if (!one.visible || !one.placed) {
+            one.snortOwed = 0.0f;
+            continue;
+        }
+        // RenderEye sits in the render switch, so it lasts as long as the body is drawn,
+        // through the fall and the fade.
+        if (one.eyeBones[0] >= 0 && one.eyeBones[1] >= 0) {
+            for (int e = 0; e < 2; ++e) {
+                float at[3];
+                if (one.figure.pointOn(one.eyeBones[e], kEyeAt[e], at)) eyes_.feed(at);
+            }
+        }
+        if (one.snortBone < 0) continue;
+        const int slot = slotOf(one.figure);
+        const float key = keyOf(one.figure);
+        bool open = false;
+        for (const SnortWindow& w : kSnortWindows) {
+            if (slot == w.slot && key >= w.from && key <= w.to) open = true;
+        }
+        if (!open) {
+            one.snortOwed = 0.0f;
+            continue;
+        }
+        // rand_fps_check(2): one every second reference frame.
+        one.snortOwed += frames / 2.0f;
+        while (one.snortOwed >= 1.0f) {
+            one.snortOwed -= 1.0f;
+            float at[3];
+            if (!one.figure.pointOn(one.snortBone, kSnortAt, at)) break;
+            snort_.puff(at);
+        }
+    }
+}
+
 // Hanzo at his anvil: MU's sparks off the hammer's head while the blow is between keys 5 and
 // 6, and the hearth's smoke and embers while he stands there, which are ours. fx/forge.h.
 void Play::smithy(float seconds) {

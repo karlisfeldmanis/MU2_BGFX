@@ -171,6 +171,10 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().breath().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
+                world_.played().snorts().open(assets, ctx.textures,
+                                              world_.played().showing().table());
+                world_.played().eyes().open(assets, ctx.textures,
+                                            world_.played().showing().table());
                 world_.played().meteor().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
@@ -691,6 +695,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().gatherMarker(ctx.renderer.effects());
         world_.played().gatherAura(ctx.renderer.effects(), eye.position);
         world_.played().breath().gather(ctx.renderer.effects());
+        world_.played().snorts().gather(ctx.renderer.effects());
+        world_.played().eyes().gather(ctx.renderer.effects());
         world_.played().gatherMeteor(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,

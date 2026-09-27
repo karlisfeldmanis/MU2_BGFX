@@ -240,6 +240,24 @@ constexpr float kSandFrom = 8.0f, kSandTo = 9.0f;
 constexpr int kSandPuffs = 10;
 constexpr float kSandReach = 0.62f;
 
+// MODEL_BULL_FIGHTER's case in the same switch, which both of Lorencia's bull rows open: the
+// plain bull and the Elite share the model, so both snort. Keyed on the cooked row's name, as
+// the dragon's is, so each variant needs its own line here.
+inline constexpr const char* kSnortingFigure = "BullFighter01";
+// And the one of them MU gives Level 1 to, which is what lights RenderEye (fx/eyes.h).
+inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
+// Where on the muzzle: `Vector(0.f, -4.f, 0.f, p)` in bone 24's frame, metres here.
+constexpr float kSnortAt[3] = {0.0f, -0.04f, 0.0f};
+// The four windows, in the clip's own keys: STOP1 15-20, STOP2 20-25, WALK 2-3 and 5-6.
+struct SnortWindow {
+    int slot;
+    float from, to;
+};
+constexpr SnortWindow kSnortWindows[] = {{0, 15.0f, 20.0f}, {1, 20.0f, 25.0f},
+                                         {2, 2.0f, 3.0f},   {2, 5.0f, 6.0f}};
+// RenderEye's `Vector(±5.f, 0.f, 0.f, p)`: out along the left bone and back along the right.
+constexpr float kEyeAt[2][3] = {{0.05f, 0.0f, 0.0f}, {-0.05f, 0.0f, 0.0f}};
+
 // MONSTER01_ATTACK1, and the key its fire stops on: `AnimationFrame <= 4.f`.
 constexpr int kBreathSlot = 3;
 constexpr float kBreathThrough = 4.0f;

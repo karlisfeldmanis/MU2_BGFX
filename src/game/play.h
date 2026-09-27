@@ -21,6 +21,8 @@
 #include "game/fx/aura.h"
 #include "game/fx/bones.h"
 #include "game/fx/breath.h"
+#include "game/fx/eyes.h"
+#include "game/fx/snort.h"
 #include "game/fx/forge.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
@@ -298,6 +300,10 @@ public:
     // Hanzo's forge: the sparks off his anvil and his hearth's smoke. Opened by the caller for
     // the same reason as breath; fed in `smithy`.
     Forge& forge() { return forge_; }
+    // A Bull Fighter's snort and an Elite's eyes: opened by the caller for the same reason as
+    // breath; fed in `snort`.
+    Snort& snorts() { return snort_; }
+    Eyes& eyes() { return eyes_; }
     void gatherForge(gfx::Effects& effects, const float eye[3], const float near[3],
                      float daylight) const {
         forge_.gather(effects, eye, near, daylight);
@@ -408,6 +414,12 @@ private:
         bool sanded = false;
         int headBone = -1;
         float fireOwed = 0.0f, dustOwed = 0.0f;
+        // A Bull Fighter, either variant: smok_bone, which it snorts out of, and what of half
+        // a reference frame's puff is owed. The Elite also has its two eye bones, MU's 22 and
+        // 23; -1 on everything else. See Play::snort.
+        int snortBone = -1;
+        int eyeBones[2] = {-1, -1};
+        float snortOwed = 0.0f;
         // Negative while alive. Set to 0 the tick `Died` happens and counted up from there, so
         // the corpse holds its last pose and fades instead of vanishing on the tick it falls --
         // see kDeathHold and kDeathFade in play.cpp.
@@ -488,8 +500,12 @@ private:
     Streak streak_;
     Gleam gleam_;
     Forge forge_;
+    Snort snort_;
+    Eyes eyes_;
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
+    // The Bull Fighters' snorts and the Elite's eyes, off the same posed frame.
+    void snort(float seconds);
     // Hanzo's sparks and his hearth's smoke, read off his clip as hammer() reads its ring.
     void smithy(float seconds);
     // The Giant's death sand, thrown between keys 8 and 9 of its death clip. Read per frame off
