@@ -51,8 +51,14 @@ bool Play::moveItem(int from, int to) {
 
 bool Play::useItem(int slot) {
     const int32_t item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
+    // The swing before and after, so a use that moves it -- the Ale -- shows by how much.
+    const int swingMs = realm_.hero().swingMs, swingTicks = realm_.hero().swingTicks;
     const bool used = realm_.useItem(slot);
     core::logf("window: use %d %s", slot, used ? "taken" : "refused");
+    if (used && realm_.hero().swingMs != swingMs) {
+        core::logf("window: the swing went from %d ms (%d ticks) to %d ms (%d ticks)", swingMs,
+                   swingTicks, realm_.hero().swingMs, realm_.hero().swingTicks);
+    }
     // The potion going down, or the apple: TryConsumeItem's own split, by what was used. And
     // the third arm, which is this project's and not MuMain's, because MuMain has no orb read
     // from the bag to answer for: an orb is not swallowed, so the gulp is wrong on it. It is
