@@ -200,6 +200,72 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
         }
     }
 
+    // The river. MU paints some tiles of a river bed and its lower bank with a grass base, and
+    // fs_ground draws them as water anyway: a corner's material is shared with the water tiles
+    // round it, and led down at the water's level (Ground::splat). The sward read the base
+    // alone and stood a lawn in the river beside Lorencia's east bridge (180,175). So a corner
+    // counts as paved by the same rule the ground leads water by: all of it where the corner
+    // is itself all water, fading out from a hand above the lowest all-water corner within two
+    // to a metre above it -- the top of the bank keeps its grass.
+    const int n = ground.size();
+    wetSide_ = n > 0 ? n + 1 : 0;
+    wet_.assign(size_t(wetSide_) * size_t(wetSide_), 0);
+    if (n > 0 && ground.floorAt(0, 0) >= 0) {
+        auto water = [&](int slot) {
+            return ground.floorName(slot).find("Water") != std::string::npos;
+        };
+        const float metres = ground.metresPerTile();
+        std::vector<float> mix(wet_.size(), 0.0f), height(wet_.size(), 0.0f);
+        for (int r = 0; r < wetSide_; ++r) {
+            for (int c = 0; c < wetSide_; ++c) {
+                const size_t v = size_t(r) * size_t(wetSide_) + size_t(c);
+                height[v] = ground.heightAt(float(c) * metres, -float(r) * metres);
+                // The mean of what each tile touching the corner says is there, as splat has it.
+                const float a = ground.blendAt(c % n, r % n);
+                float sum = 0.0f, touching = 0.0f;
+                for (int dr = -1; dr <= 0; ++dr) {
+                    for (int dc = -1; dc <= 0; ++dc) {
+                        const int tc = c + dc, tr = r + dr;
+                        if (tc < 0 || tr < 0 || tc >= n || tr >= n) continue;
+                        const int base = ground.floorAt(tc, tr);
+                        int over = ground.overlayAt(tc, tr);
+                        if (over == 255 || over < 0) over = base;
+                        sum += (water(base) ? 1.0f - a : 0.0f) + (water(over) ? a : 0.0f);
+                        touching += 1.0f;
+                    }
+                }
+                mix[v] = touching > 0.0f ? sum / touching : 0.0f;
+            }
+        }
+        size_t wetCorners = 0;
+        for (int r = 0; r < wetSide_; ++r) {
+            for (int c = 0; c < wetSide_; ++c) {
+                const size_t v = size_t(r) * size_t(wetSide_) + size_t(c);
+                float amount = 0.0f;
+                if (mix[v] >= 0.99f) {
+                    amount = 1.0f;
+                } else {
+                    float level = 1e9f;
+                    for (int dr = -2; dr <= 2; ++dr) {
+                        for (int dc = -2; dc <= 2; ++dc) {
+                            const int rr = r + dr, cc = c + dc;
+                            if (rr < 0 || cc < 0 || rr >= wetSide_ || cc >= wetSide_) continue;
+                            const size_t u = size_t(rr) * size_t(wetSide_) + size_t(cc);
+                            if (mix[u] >= 0.99f) level = std::min(level, height[u]);
+                        }
+                    }
+                    if (level < 1e8f) {
+                        const float t = std::clamp((height[v] - level - 0.35f) / 0.65f, 0.0f, 1.0f);
+                        amount = 1.0f - t * t * (3.0f - 2.0f * t);
+                    }
+                }
+                wet_[v] = uint8_t(std::lround(amount * 255.0f));
+                if (amount > 0.5f) ++wetCorners;
+            }
+        }
+        core::logf("grass: %zu corners are river and grow nothing", wetCorners);
+    }
+
     core::logf("grass: %d cards a patch on a %dx%d jitter, %zu vertices and %zu indices "
                "(%.1f KB, built once), %zu painted sheet(s)",
                kCardsPerPatch, kStratification, kStratification, vertices.size() / 3,
@@ -281,7 +347,12 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             // player; a ring moves with him, and the cards on it grow as it passes. The far
             // edge of the field is the same story, and it is the shader's for the same reason.
             auto paved = [&](int c, int r) {
-                return ground.grassFloor(ground.overlayAt(c, r)) ? 0.0f : ground.blendAt(c, r);
+                const float road =
+                    ground.grassFloor(ground.overlayAt(c, r)) ? 0.0f : ground.blendAt(c, r);
+                const float river = c < wetSide_ && r < wetSide_
+                                        ? float(wet_[size_t(r) * size_t(wetSide_) + size_t(c)]) / 255.0f
+                                        : 0.0f;
+                return std::max(road, river);
             };
             // Same order as the heights: the v = 0 edge is the row+1 grid line.
             const float p00 = paved(column, row + 1);
@@ -593,6 +664,8 @@ void Grass::shutdown() {
     counts_ = Counts();
     walls_.clear();
     wallsSize_ = 0;
+    wet_.clear();
+    wetSide_ = 0;
 }
 
 }  // namespace mu::game

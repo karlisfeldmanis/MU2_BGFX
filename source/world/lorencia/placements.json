@@ -46,6 +46,18 @@
       "height": 1.75,
       "was": 1.95,
       "why": "OURS: the turned-over ivy mat at the foot of the well, stored 0.30 m over the paving: its median leaf 0.20 m clear, worse than the fountain's pair. Lowered by that median, 0.20 m, to the same 1.75 m."
+    },
+    {
+      "model": "Grass01",
+      "near": [181.20, 171.50],
+      "drop": true,
+      "why": "OURS: ivy on the lip of the north-east bridge's bank. Laid on the terrain like every tuft, it spreads out over the river and read as floating on the water from the bridge (2026-09-28, the user, with its two kept neighbours)."
+    },
+    {
+      "model": "Grass01",
+      "near": [173.71, 169.44],
+      "drop": true,
+      "why": "OURS: ivy on a grass-based tile in the river bed west of the north-east bridge. The only_on rule reads the base, which says grass; fs_ground paints the corner water, so laid on the terrain it stood in the river (2026-09-28)."
     }
   ],
   "drops": [
@@ -54,6 +66,9 @@
       "only_on": [
         "TileGrass01",
         "TileGrass02"
+      ],
+      "not_kept": [
+        "Grass01 at (176.79, 172.97) and (181.58, 172.06), the ivy either side of the north-east bridge. Kept as stored on 2026-09-24, and on 2026-09-28 the user saw both floating over the river from the bridge at (180,175): MuMain stores them at 1.07 m and 2.35 m over a bed at 0.23 m that fs_ground paints as water, so their leaves hang over open water. Off the keep list, so the rule drops them: one stands on a rock tile, the other on a water tile."
       ],
       "keep": [
         {
@@ -112,11 +127,6 @@
           "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy stored 2.75 m up, which is the House01 roof it grows over: 0.29 m median over the roof, not floating."
         },
         {
-          "model": "Grass01",
-          "near": [176.79, 172.97],
-          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy round the rock by the north-east bridge, on the rock tile of the bank."
-        },
-        {
           "model": "Grass05",
           "near": [13.09, 5.32],
           "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: a small fern at the foot of the rock in the map's south-west corner, rooted (lowest leaf 0.02 m over the bank)."
@@ -145,11 +155,6 @@
           "model": "Grass05",
           "near": [170.79, 122.71],
           "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: a fern in the same bank planting beside the east bridge."
-        },
-        {
-          "model": "Grass01",
-          "near": [181.58, 172.06],
-          "why": "Measured 2026-09-24 against MuMain's EncTerrain1.obj, stood as stored, and looked at in the game: ivy draped round the north-east bridge's support by the rock and the tree."
         },
         {
           "model": "Grass01",

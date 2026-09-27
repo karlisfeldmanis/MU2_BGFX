@@ -972,7 +972,12 @@ def fixed(declared: dict, corrections: Path) -> dict:
                   f"{near[0]}, {near[1]} — the correction is stale")
             continue
 
-        if "height" in fix:
+        # One placement taken out by name, for what no rule reaches: a tuft the grounding
+        # stands in the river, on a tile whose base still says grass.
+        if fix.get("drop"):
+            placed.remove(closest)
+            applied += 1
+        elif "height" in fix:
             closest["at"][2] = float(fix["height"]) * 100.0
             applied += 1
 

@@ -162,6 +162,11 @@ private:
     std::vector<uint32_t> walls_;
     int wallsSize_ = 0;
 
+    // How far each grid corner is river, 0..255, (size + 1) squared and row-major: counted as
+    // paving, so the sward stops at the water fs_ground paints. See Grass::build.
+    std::vector<uint8_t> wet_;
+    int wetSide_ = 0;
+
     // The footprints: a ring of where anybody's feet have been, laid one every third of a
     // metre of walking and let go of over a couple of seconds. Turf's wake, kept for every
     // walker at once rather than one. Nothing here knows which walker is which from frame to
