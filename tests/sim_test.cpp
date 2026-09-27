@@ -482,6 +482,26 @@ void testItems(const content::Tables& tables) {
     check(realm.useItem(potionAt), "and the last one");
     check(realm.satchel()[potionAt].empty(), "leaves the slot empty");
 
+    // Stacks, twenty a cell: a count pours onto its kind before it takes a cell.
+    const int first = realm.give(small, -1, 0, 3);
+    checkEqual(realm.give(small, -1, 0, 25), first, "twenty-five more top the three up first");
+    checkEqual(realm.satchel()[first].durability, sim::kStackMost, "to twenty");
+    int rest = -1;
+    for (int s = sim::kWorn; s < sim::kSlots; ++s) {
+        if (s != first && realm.satchel()[s].item == small) rest = s;
+    }
+    check(rest >= 0 && realm.satchel()[rest].durability == 8, "and the eight left take a cell");
+    check(realm.moveItem(rest, first) && realm.satchel()[first].durability == 8 &&
+              realm.satchel()[rest].durability == 20,
+          "a stack on a full stack swaps with it");
+    const int plusOne = realm.give(small, -1, 1, 2);
+    check(plusOne != first && plusOne != rest, "a +1 is not poured into a +0");
+    check(realm.moveItem(rest, first) && realm.satchel()[first].durability == 20 &&
+              realm.satchel()[rest].durability == 8,
+          "one let go on another tops it up and leaves the rest behind");
+    check(realm.moveItem(rest, plusOne) && realm.satchel()[plusOne].refinement == 0,
+          "and a stack on another plus swaps");
+
     // The drag out of the window: the axe leaves his hand and lies on the ground, where the
     // same Pick order a kill's drop answers takes it back. The hands are re-reckoned both
     // ways, which is what makes a thrown weapon a real loss and a recovered one a real gain.
@@ -1750,6 +1770,19 @@ void testVault(const content::Tables& tables) {
     check(!realm.withdrawZen(501), "more than is kept is refused");
     check(realm.withdrawZen(200) && realm.money() == 200 && realm.vault().zen() == 300,
           "and part of it comes out");
+
+    // Stacks cross the counter as they do the bag: onto their kind first, the rest behind.
+    const int32_t potion = tables.itemAt(14, 1);
+    const int five = realm.give(potion, -1, 0, 5);
+    const int stored = realm.deposit(five);
+    check(stored >= 0 && realm.satchel()[five].empty(), "five potions go into the vault");
+    check(realm.deposit(realm.give(potion, -1, 0, 18)) == stored &&
+              realm.vault()[stored].durability == sim::kStackMost,
+          "eighteen more fill that stack to twenty");
+    const int spill = realm.give(potion, -1, 0, 7);
+    check(realm.withdraw(stored, spill) == spill && realm.satchel()[spill].durability == 20 &&
+              realm.vault()[stored].durability == 7,
+          "and a stack let go on a bag stack tops it up and leaves the rest");
 
     sim::Request walk;
     walk.kind = sim::Request::Kind::WalkTo;

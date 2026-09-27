@@ -214,7 +214,11 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
         const sim::Held& moving = vault[dragging_];
         if (cell >= 0 && cell != dragging_ && !moving.empty()) {
             const content::ItemRow& row = tables.items[size_t(moving.item)];
-            const bool fits = vault.room(tables, cell, row.width, row.height, dragging_);
+            // Or a stack of its kind with room, which Realm::rearrange pours into.
+            const int under = vault.holder(tables, cell);
+            const bool fits = vault.room(tables, cell, row.width, row.height, dragging_) ||
+                              (under >= 0 && under != dragging_ &&
+                               sim::tops(tables, vault[under], moving));
             const int column = cell % sim::kVaultColumns, line = cell / sim::kVaultColumns;
             const int w = std::min<int>(row.width, sim::kVaultColumns - column);
             const int h = std::min<int>(row.height, sim::kVaultRows - line);

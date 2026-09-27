@@ -188,6 +188,14 @@ bool restores(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number >= 4 && row.number <= 6;
 }
 
+bool stacks(const content::ItemRow& row) { return heals(row) || restores(row); }
+
+bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
+    if (onto.empty() || onto.item != what.item || onto.refinement != what.refinement) return false;
+    if (size_t(onto.item) >= tables.items.size()) return false;
+    return stacks(tables.items[size_t(onto.item)]) && onto.durability < kStackMost;
+}
+
 // ---- the satchel ------------------------------------------------------------------------------
 
 const Held& Satchel::operator[](int slot) const {
@@ -332,6 +340,21 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
 
 bool move(const content::Tables& tables, const Wearer& who, Satchel& bag, int from, int to) {
     if (!movable(tables, who, bag, from, to)) return false;
+    // A stack let go on a stack of its kind pours into it, and what does not fit stays behind
+    // (kStackMost). A full one swaps, as anything else does.
+    if (baggable(from) && baggable(to)) {
+        const int onto = bag.holder(tables, to);
+        if (onto >= 0 && onto != from) {
+            const int went = topUp(tables, bag, onto, bag[from]);
+            if (went > 0) {
+                Held left = bag[from];
+                left.durability = int16_t(left.durability - went);
+                if (left.durability <= 0) bag.lift(from);
+                else bag.put(from, left);
+                return true;
+            }
+        }
+    }
     // Whatever is in the way, which with a footprint is not always what is recorded at the
     // destination cell: a sword dropped on a breastplate's lower half displaces the
     // breastplate, whose own slot is two cells up.

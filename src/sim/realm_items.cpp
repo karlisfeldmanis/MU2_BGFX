@@ -242,6 +242,11 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
                 uint8_t excellent) {
     if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return -1;
     const content::ItemRow& row = tables_->items[size_t(item)];
+    // A stack asked for anywhere pours into what he carries, twenty a cell.
+    if (slot < 0 && stacks(row)) {
+        return pour(*tables_, bag_, kWorn, kSlots,
+                    Held{item, int16_t(refinement), int16_t(std::max(1, durability))});
+    }
     if (slot < 0) slot = bag_.free(*tables_, row.width, row.height);
     if (slot < 0 || !bag_[slot].empty() ||
         (baggable(slot) && !bag_.room(*tables_, slot, row.width, row.height))) {
@@ -594,10 +599,9 @@ bool Realm::take(size_t index) {
         // An excellent armour's Zen, at the picking up (MoneyDistribution, MoneyAmountRate).
         money_ += int64_t(double(one.zen) * bodies_[0].excel.zenRate);
     } else {
-        const content::ItemRow& row = tables_->items[size_t(one.what.item)];
-        slot = bag_.free(*tables_, row.width, row.height);
+        // Onto a stack of its kind first, then a free cell (kStackMost).
+        slot = pour(*tables_, bag_, kWorn, kSlots, one.what);
         if (slot < 0) return false;
-        bag_.put(slot, one.what);
     }
     lying_[index] = lying_.back();
     lying_.pop_back();
@@ -650,15 +654,15 @@ int Realm::buy(int shelfSlot) {
     const int64_t price = buyingPrice(row, wanted->refinement, wanted->pieces > 0 ? wanted->pieces : 1,
                                       wanted->skill, row.durability, row.durability);
     if (money_ < price) return -1;
-    const int slot = bag_.free(*tables_, row.width, row.height);
-    if (slot < 0) return -1;
-    money_ -= price;
     // A stack for a potion, a full quiver for ammunition, and gear whole at its plus.
     Held bought{item, int16_t(wanted->refinement),
                 int16_t(wanted->pieces > 0 ? wanted->pieces
                                            : fullDurability(row, wanted->refinement)),
                 wanted->skill};
-    bag_.put(slot, bought);
+    // Placed whole or not at all before the Zen goes, a potion onto its stacks first.
+    const int slot = pour(*tables_, bag_, kWorn, kSlots, bought);
+    if (slot < 0) return -1;
+    money_ -= price;
     say(What::Bought, bodies_[0], item, int32_t(price), slot);
     return slot;
 }
@@ -820,12 +824,37 @@ int Realm::repairAll() {
 // Each move looks for the room at its own footprint BEFORE anything leaves where it was, so a
 // refusal changes nothing: the realm's own rule for a purchase. Nothing re-reckons the hero,
 // because nothing worn is ever moved here.
+//
+// A stack let go on a stack of its kind pours into it and leaves behind what does not fit, and
+// one sent to no cell in particular tops up the stacks there first (kStackMost).
+
+namespace {
+
+// Takes `went` pieces off the stack at `at`, and the cell with them when that was all of it.
+template <class Grid>
+void unstack(Grid& grid, int at, int went) {
+    Held left = grid[at];
+    left.durability = int16_t(left.durability - went);
+    if (left.durability <= 0) grid.lift(at);
+    else grid.put(at, left);
+}
+
+}  // namespace
 
 int Realm::deposit(int bagSlot, int cell) {
     if (!banked() || !baggable(bagSlot) || bag_[bagSlot].empty()) return -1;
     const content::ItemRow& row = tables_->items[size_t(bag_[bagSlot].item)];
-    if (cell < 0) cell = vault_.free(*tables_, row.width, row.height);
-    if (cell < 0 || !vault_.room(*tables_, cell, row.width, row.height)) return -1;
+    if (cell < 0) {
+        cell = pour(*tables_, vault_, 0, kVaultCells, bag_[bagSlot]);
+        if (cell >= 0) bag_.lift(bagSlot);
+        return cell;
+    }
+    const int onto = vault_.holder(*tables_, cell);
+    if (const int went = onto >= 0 ? topUp(*tables_, vault_, onto, bag_[bagSlot]) : 0) {
+        unstack(bag_, bagSlot, went);
+        return onto;
+    }
+    if (!vault_.room(*tables_, cell, row.width, row.height)) return -1;
     vault_.put(cell, bag_.lift(bagSlot));
     return cell;
 }
@@ -833,7 +862,16 @@ int Realm::deposit(int bagSlot, int cell) {
 int Realm::withdraw(int cell, int bagSlot) {
     if (!banked() || vault_[cell].empty()) return -1;
     const content::ItemRow& row = tables_->items[size_t(vault_[cell].item)];
-    if (bagSlot < 0) bagSlot = bag_.free(*tables_, row.width, row.height);
+    if (bagSlot < 0) {
+        bagSlot = pour(*tables_, bag_, kWorn, kSlots, vault_[cell]);
+        if (bagSlot >= 0) vault_.lift(cell);
+        return bagSlot;
+    }
+    const int onto = baggable(bagSlot) ? bag_.holder(*tables_, bagSlot) : -1;
+    if (const int went = onto >= 0 ? topUp(*tables_, bag_, onto, vault_[cell]) : 0) {
+        unstack(vault_, cell, went);
+        return onto;
+    }
     if (!baggable(bagSlot) || !bag_.room(*tables_, bagSlot, row.width, row.height)) return -1;
     bag_.put(bagSlot, vault_.lift(cell));
     return bagSlot;
@@ -841,6 +879,13 @@ int Realm::withdraw(int cell, int bagSlot) {
 
 bool Realm::rearrange(int from, int to) {
     if (!banked() || from == to || vault_[from].empty()) return false;
+    const int onto = vault_.holder(*tables_, to);
+    if (onto >= 0 && onto != from) {
+        if (const int went = topUp(*tables_, vault_, onto, vault_[from])) {
+            unstack(vault_, from, went);
+            return true;
+        }
+    }
     const content::ItemRow& row = tables_->items[size_t(vault_[from].item)];
     if (!vault_.room(*tables_, to, row.width, row.height, from)) return false;
     vault_.put(to, vault_.lift(from));

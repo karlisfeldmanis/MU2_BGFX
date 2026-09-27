@@ -16,6 +16,7 @@
 // character instead (MU2's Held remark).
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 
@@ -111,6 +112,17 @@ bool ammunition(const content::ItemRow& row);
 bool heals(const content::ItemRow& row);
 bool restores(const content::ItemRow& row);
 
+// ---- stacks ---------------------------------------------------------------------------------
+//
+// The user's, 2026-09-27, as WoW keeps its potions: pieces of one kind pour into one cell,
+// counted in `Held::durability`, up to twenty a cell. INVENTION: 0.75 caps nothing and merges
+// nothing -- a bought three is its own cell for good and a dropped potion takes a fresh one.
+constexpr int kStackMost = 20;
+// Whether a row's pieces stack: the drinkable potions.
+bool stacks(const content::ItemRow& row);
+// Whether `what` may pour into `onto`: the same stacking row at the same plus, and room left.
+bool tops(const content::Tables& tables, const Held& onto, const Held& what);
+
 class Satchel {
 public:
     const Held& operator[](int slot) const;
@@ -171,6 +183,52 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
 // The move itself, after `movable` said yes: what is in the way comes back to where this one
 // was. Beast.Move.
 bool move(const content::Tables& tables, const Wearer& who, Satchel& bag, int from, int to);
+
+// Pours as much of `what` as fits into the stack at `at`, and says how many went. Nothing
+// where `tops` says no. The satchel or the vault: both keep a thing at its top-left.
+template <class Grid>
+int topUp(const content::Tables& tables, Grid& grid, int at, const Held& what) {
+    if (!tops(tables, grid[at], what)) return 0;
+    Held onto = grid[at];
+    const int went = std::min<int>(what.durability, kStackMost - onto.durability);
+    onto.durability = int16_t(onto.durability + went);
+    grid.put(at, onto);
+    return went;
+}
+
+// Puts a thing away as WoW does: a stacking thing tops up the stacks of its kind in `[first,
+// last)` in cell order, and what is left takes free cells a full stack at a time; anything else
+// takes the first free cell. All of it or none of it -- the cell the first piece went to, or -1
+// with the grid as it was.
+template <class Grid>
+int pour(const content::Tables& tables, Grid& grid, int first, int last, Held what) {
+    if (what.item < 0 || size_t(what.item) >= tables.items.size()) return -1;
+    const content::ItemRow& row = tables.items[size_t(what.item)];
+    if (!stacks(row)) {
+        const int at = grid.free(tables, row.width, row.height);
+        if (at >= 0) grid.put(at, what);
+        return at;
+    }
+    Grid after = grid;
+    int landed = -1;
+    what.durability = int16_t(std::max<int>(1, what.durability));
+    for (int at = first; at < last && what.durability > 0; ++at) {
+        const int went = topUp(tables, after, at, what);
+        if (went > 0 && landed < 0) landed = at;
+        what.durability = int16_t(what.durability - went);
+    }
+    while (what.durability > 0) {
+        const int at = after.free(tables, row.width, row.height);
+        if (at < 0) return -1;
+        Held stack = what;
+        stack.durability = int16_t(std::min<int>(what.durability, kStackMost));
+        after.put(at, stack);
+        what.durability = int16_t(what.durability - stack.durability);
+        if (landed < 0) landed = at;
+    }
+    grid = after;
+    return landed;
+}
 
 // ---- refining with jewels (docs/refining.md) ----------------------------------------------
 //

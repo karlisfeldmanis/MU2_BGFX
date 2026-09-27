@@ -200,10 +200,10 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
         return false;
     }
     const content::ItemRow& row = tables_.items[size_t(item)];
-    const bool stacks = sim::heals(row) || sim::restores(row);
+    const bool stacks = sim::stacks(row);
     const int durability = stacks ? std::max(1, count) : sim::fullDurability(row, 0);
-    // A potion's count is one stack; anything else is that many pieces, a cell each -- three
-    // jewels are three jewels, as nothing merges them yet.
+    // A potion's count is poured in whole, onto his stacks and twenty a cell; anything else is
+    // that many pieces, a cell each -- three jewels are three jewels, as only potions stack.
     const int pieces = stacks ? 1 : std::max(1, count);
     int slot = -1;
     for (int i = 0; i < pieces; ++i) {
