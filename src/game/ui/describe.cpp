@@ -63,6 +63,26 @@ std::string kindOf(const content::ItemRow& row) {
     return "Item";
 }
 
+// What the fight reckons a piece at, for the comparison: `Realm::redress`'s sums, unworn. A
+// weapon's band, as its middle, is the plus's rise, the additional option on both ends (not a
+// staff's: that is wizardry damage, which nothing reckons yet) and the excellent bonus. A piece
+// of armour's defence is the plus, the option (not a shield's: that goes to its block rate) and
+// the excellent bonus.
+float swingOf(const content::ItemRow& row, const sim::Held& held) {
+    if (!row.weapon() || sim::ammunition(row) || row.maximumDamage <= 0) return 0.0f;
+    int bonus = sim::damageBonus(held.refinement);
+    if (row.magicPower == 0) bonus += sim::optionValue(row, held.option);
+    if (held.excellent != 0) bonus += sim::excellentDamage(row);
+    return float(row.minimumDamage + row.maximumDamage + 2 * bonus) / 2.0f;
+}
+
+int armourOf(const content::ItemRow& row, const sim::Held& held) {
+    if (!row.armour() && !row.shield()) return 0;
+    return row.defense + sim::defenseBonus(row.shield(), held.refinement) +
+           (row.shield() ? 0 : sim::optionValue(row, held.option)) +
+           (held.excellent != 0 ? sim::excellentDefense(row) : 0);
+}
+
 Row stat(const char* name, const std::string& text, Tone tone) {
     Row row;
     row.label = name;
@@ -127,10 +147,6 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                              : 0;
     // The damage and defence lines are blue on an excellent thing (ZI:3972-4064).
     const Tone lifted = plus > 0 ? Tone::Yellow : what.excellent != 0 ? Tone::Blue : Tone::White;
-    // MU quotes the damage under the hand it takes -- `Lookup(40 + TwoHand)` -- so the label
-    // says which and there is no separate two-handed line.
-    const float mine = weapon ? float(row.minimumDamage + row.maximumDamage + 2 * bonus) / 2.0f
-                              : 0.0f;
     // A rail row: its figure first, in its tone, and then its words.
     const auto rail = [&](const std::string& figure, Tone tone, const std::string& words) {
         Row line;
@@ -400,19 +416,18 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // ---- against what he has on ---------------------------------------------------------------
     // MU2's comparison, marked there as the project's: it hangs off the figure it belongs to --
     // the headline, or a staff's wizardry row -- rather than being a sentence of its own.
+    //
+    // **Both sides are what the fight reckons them at**, `Realm::redress`'s own sums: the plus,
+    // the additional option and being excellent, on this one and on the one worn alike. It
+    // compared the printed band and the bare plus until 2026-09-27, so a +Option or an excellent
+    // piece worn read as worse than it is -- the user's report. The headline itself stays MU's
+    // printed figure, the option on its own line under it, as MuMain prints them.
     const int slot = sim::placeOf(row);
     if (slot >= 0 && !bag[slot].empty() && &bag[slot] != &what) {
         const sim::Held& on = bag[slot];
         const content::ItemRow& theirs = tables.items[size_t(on.item)];
-        const bool hisWeapon = theirs.weapon() && !sim::ammunition(theirs);
-        const int hisBonus = hisWeapon ? sim::damageBonus(on.refinement) : 0;
-        const float hisDamage =
-            hisWeapon ? float(theirs.minimumDamage + theirs.maximumDamage + 2 * hisBonus) / 2.0f
-                      : 0.0f;
-        const float hisDefense =
-            (theirs.armour() || theirs.shield())
-                ? float(theirs.defense + sim::defenseBonus(theirs.shield(), on.refinement))
-                : 0.0f;
+        const float mine = swingOf(row, what), hisDamage = swingOf(theirs, on);
+        const float ours = float(armourOf(row, what)), hisDefense = float(armourOf(theirs, on));
         const float hisRise = theirs.magicPower > 0 ? staffRise(theirs.magicPower, on.refinement)
                                                     : 0.0f;
         const auto by = [](float ours, float his, const char* unit, std::string& delta, int& way) {
@@ -422,8 +437,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         };
         if (sheet.hero.word == "Damage" && (mine > 0.0f || hisDamage > 0.0f)) {
             by(mine, hisDamage, "", sheet.hero.delta, sheet.hero.deltaWay);
-        } else if (sheet.hero.word == "Armor" && (defense > 0 || hisDefense > 0.0f)) {
-            by(float(defense), hisDefense, "", sheet.hero.delta, sheet.hero.deltaWay);
+        } else if (sheet.hero.word == "Armor" && (ours > 0.0f || hisDefense > 0.0f)) {
+            by(ours, hisDefense, "", sheet.hero.delta, sheet.hero.deltaWay);
         }
         if (rise > 0.0f || hisRise > 0.0f) {
             for (Section& section : sheet.sections) {
