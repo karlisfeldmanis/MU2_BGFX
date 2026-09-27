@@ -271,6 +271,16 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
                          panel::kLettering, name.substr(0, std::min<size_t>(name.size(), 6)));
         }
     }
+    // A stack's count at its cell's foot -- the bag's.
+    for (int at = 0; at < sim::kVaultCells; ++at) {
+        const sim::Held& held = vault[at];
+        if (held.empty() || held.durability <= 1 || at == dragging_) continue;
+        if (!sim::stacks(tables.items[size_t(held.item)])) continue;
+        const Box box = panel::scaled(x, y, itemBox(tables, at, held));
+        canvas_.shadowed(box.x, box.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
+                         gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),
+                         std::to_string(held.durability), gfx::Align::Right, box.w - 2.0f * k);
+    }
 
     // What rides the pointer, cut out of the stage at its own footprint -- the bag's drag.
     if (dragging_ >= 0 && !vault[dragging_].empty()) {

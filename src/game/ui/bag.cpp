@@ -430,6 +430,17 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                          panel::kLettering, name.substr(0, std::min<size_t>(name.size(), 6)));
         }
     }
+    // A stack's count at its cell's foot, right-aligned, as WoW prints it; a single piece
+    // says nothing. Not on the one riding the pointer.
+    for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
+        const sim::Held& held = bag[slot];
+        if (held.empty() || held.durability <= 1 || slot == dragging_) continue;
+        if (!sim::stacks(tables.items[size_t(held.item)])) continue;
+        const Box box = panel::scaled(x, y, itemBox(tables, slot, held));
+        canvas_.shadowed(box.x, box.bottom() - 2.0f * k, 8.0f * k, panel::kLettering,
+                         gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, 0.5f * k),
+                         std::to_string(held.durability), gfx::Align::Right, box.w - 2.0f * k);
+    }
 
     // What rides the pointer while it is dragged: its own picture, cut out of the stage at its
     // own footprint, so lifting a sword out of the bag does not resize it.
