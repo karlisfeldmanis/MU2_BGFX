@@ -55,9 +55,13 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     // One stage for whatever the tooltip is describing, shared: only one tip is up at a time.
     bag_.useTipStage(&tipStagePicture_);
     shelf_.useTipStage(&tipStagePicture_);
+    chest_.useTipStage(&tipStagePicture_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
+    chest_.open(interface_, &arts_);
+    amount_.open(interface_, &arts_);
+    endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
     tally_.open(interface_);
@@ -109,11 +113,46 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     const auto took = [&]() {
         if (play.isOpen()) play.ui(Play::Ui::Took);
     };
-    if (window.pressed(gfx::Window::Key::Inventory)) {
+    // **The number box, before anything else, and it takes everything.** It is modal, as MU's
+    // message boxes are: the pointer's presses and the keys are its own while it is up, so the
+    // windows under it do not hear a click on its OK and a 1 typed into it is not the first
+    // potion drunk. `typing` is taken before the box answers, so the frame Return closes it on
+    // does not hand the same keys on either. The cursor is still drawn where the pointer is.
+    const bool typing = amount_.up();
+    const Pointer real = pointer;
+    {
+        Amount::Result result;
+        const std::string typed = window.typed() + scriptTyped_;
+        amount_.update(seconds, float(window.width()), float(window.height()), pointer, typed,
+                       window.backspaces(), window.entered() || scriptEnter_,
+                       window.escaped() || scriptEscape_, &result);
+        scriptTyped_.clear();
+        scriptEnter_ = scriptEscape_ = false;
+        if (result.cancel) {
+            amount_.hide();
+            click();
+        } else if (result.amount > 0) {
+            // CZenReceiptMsgBoxLayout::ProcessOk: sent, clicked and shut -- or, short, said so.
+            const bool deposit = amount_.purpose() == Amount::Purpose::Deposit;
+            if (deposit ? play.depositZen(result.amount) : play.withdrawZen(result.amount)) {
+                amount_.hide();
+                click();
+            } else {
+                amount_.refuse();
+                refused();
+            }
+        }
+    }
+    if (typing) {
+        pointer.pressed = pointer.released = pointer.rightPressed = pointer.held = false;
+        pointer.x = pointer.y = -1.0f;
+    }
+
+    if (!typing && window.pressed(gfx::Window::Key::Inventory)) {
         inventoryOpen_ = !inventoryOpen_;
         click();
     }
-    if (window.pressed(gfx::Window::Key::Character)) {
+    if (!typing && window.pressed(gfx::Window::Key::Character)) {
         characterOpen_ = !characterOpen_;
         click();
     }
@@ -168,16 +207,86 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         bagForShop_ = false;
     }
     trading_ = trading;
+    // Repair mode lives as long as something can mend: a counter that mends (CNewUINPCShop's
+    // ClosingProcess puts the shop back to buy-and-sell), or the bag open on a character of
+    // kSelfRepairLevel or more (CNewUIMyInventory's own repair, `m_bRepairEnableLevel`).
+    const bool mends = trading_ && play.realm().mending();
+    const bool canMend = mends || (inventoryOpen_ && play.isOpen() && play.realm().selfMending());
+    if (!canMend) mending_ = false;
+    // L turns it on and off, Shift+L mends everything at a counter (CNewUINPCShop::
+    // UpdateKeyEvent) -- not while a box is taking letters. L below level 50 with no counter is
+    // the interface's no, as the dark hammer is.
+    if (inventoryOpen_ && window.pressed(gfx::Window::Key::Repair) && !window.typing()) {
+        if (mends && window.shift()) {
+            if (!play.repairAll()) refused();
+        } else if (canMend) {
+            mending_ = !mending_;
+            click();
+        } else {
+            refused();
+        }
+    }
     if (trading_) {
         int buy = -1;
         bool close = false;
+        ShelfMending mend;
+        shelf_.setMending(mending_);
         shelf_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
-                      shelfStage_, &buy, &close);
+                      shelfStage_, &buy, &close, &mend);
         // A purchase that goes through is heard as its coins, off the realm's Bought; one
         // refused is the interface's no.
         if (buy >= 0 && !play.buy(buy)) refused();
+        if (mend.toggle) {
+            mending_ = !mending_;
+            click();
+        }
+        if (mend.all && !play.repairAll()) refused();
         if (close) {
             play.closeTrade();
+            click();
+        }
+    }
+    bag_.setMending(mending_);
+
+    // The vault, as a counter is: it opens the bag beside it and closes the character window,
+    // and walking away closes it in the realm with the windows following.
+    const bool banking = play.isOpen() && play.realm().banking() >= 0;
+    if (banking && !banking_) {
+        click();
+        if (play.isOpen()) play.ui(Play::Ui::Opened);
+        characterOpen_ = false;
+        bagForVault_ = !inventoryOpen_;
+        inventoryOpen_ = true;
+    }
+    if (!banking) amount_.hide();
+    if (!banking && banking_ && bagForVault_) {
+        inventoryOpen_ = false;
+        bagForVault_ = false;
+    }
+    banking_ = banking;
+    if (banking_) {
+        ChestRequests asked;
+        chest_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
+                      shelfStage_, &asked);
+        if (asked.moveFrom >= 0) {
+            if (play.rearrange(asked.moveFrom, asked.moveTo)) took();
+            else refused();
+        }
+        // Let go outside: into the bag cell under the pointer, and nowhere else -- a thing in
+        // the vault is not thrown on the ground from it, which MU refuses too.
+        if (asked.outside >= 0) {
+            const int slot = inventoryOpen_ ? bag_.slotUnder(asked.outsideX, asked.outsideY) : -1;
+            if (slot >= 0 && play.withdraw(asked.outside, slot)) took();
+            else refused();
+        }
+        // MU's own answer to either coin: the box to type the sum in (CZenReceiptMsgBoxLayout,
+        // CZenPaymentMsgBoxLayout), which does the moving on its OK.
+        if (asked.depositZen || asked.withdrawZen) {
+            amount_.show(asked.depositZen ? Amount::Purpose::Deposit : Amount::Purpose::Withdraw);
+            click();
+        }
+        if (asked.close) {
+            play.closeVault();
             click();
         }
     }
@@ -194,13 +303,39 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             if (play.moveItem(asked.moveFrom, asked.moveTo)) took();
             else refused();
         }
+        // A jewel on a thing: Play rings both of its sounds, so a yes needs nothing here.
+        if (asked.refineJewel >= 0 && !play.refine(asked.refineJewel, asked.refineTarget)) {
+            refused();
+        }
         if (asked.use >= 0 && !play.useItem(asked.use)) refused();
+        // A click in repair mode: mended where it lies, heard as SOUND_REPAIR by Play, and a
+        // refusal -- whole already, not repairable, not the Zen -- is the interface's no.
+        if (asked.repair >= 0 && !play.repair(asked.repair)) refused();
+        // The foot's hammer is self repair: on or off from level 50, and the interface's no below
+        // it -- at a counter too, whose own hammers are on the shelf.
+        if (asked.toggleMending) {
+            if (play.realm().selfMending()) {
+                mending_ = !mending_;
+                click();
+            } else {
+                refused();
+            }
+        }
         // Let go outside the window. Something else may want it before the ground does --
         // MU2's Bag.Caught, asked first -- and what nothing catches is thrown on the ground
         // at his feet (SendRequestDropItem). Over the shelf it is a sale instead
         // (SendSellItemToNpcRequest), and the realm refuses a worn slot again.
         if (asked.outside >= 0 && trading_ && shelf_.covers(asked.outsideX, asked.outsideY)) {
             if (!play.sell(asked.outside)) refused();
+        } else if (asked.outside >= 0 && banking_ &&
+                   chest_.covers(asked.outsideX, asked.outsideY)) {
+            // Into the vault cell under the pointer; over the foot or the head, the first cell
+            // it fits in.
+            if (play.deposit(asked.outside, chest_.cellUnder(asked.outsideX, asked.outsideY))) {
+                took();
+            } else {
+                refused();
+            }
         } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
             // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
             const int key = hud_.quickAt(asked.outsideX, asked.outsideY);
@@ -220,16 +355,31 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         if (asked.close) inventoryOpen_ = false;
     }
 
+    // The worn-gear warning, hung left of whatever stands against the right edge: MuMain moves it
+    // with `SetPos(iScreenWidth)`, the width the open windows leave.
     if (play.isOpen()) {
-        labelGround(play, window.width(), window.height());
-        quickKeys(window, play);
-        skillKeys(window, play, pointer);
+        int columns = 0;
+        if (characterOpen_) columns = 1;
+        if (inventoryOpen_) columns = characterOpen_ ? 2 : std::max(columns, 1);
+        if (trading_ || banking_) columns = std::max(columns, 2);
+        const float width = float(window.width());
+        const float right = columns > 0 ? panel::columnX(width, columns) : width;
+        endurance_.update(width, float(window.height()), right, play.realm(), pointer);
     }
 
-    takesPointer_ = hud_.covers(pointer.x, pointer.y) || carrying_ != 0 ||
+    if (play.isOpen()) {
+        labelGround(play, window.width(), window.height());
+        if (!typing) {
+            quickKeys(window, play);
+            skillKeys(window, play, pointer);
+        }
+    }
+
+    takesPointer_ = typing || amount_.up() || hud_.covers(pointer.x, pointer.y) || carrying_ != 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
-                    (trading_ && shelf_.covers(pointer.x, pointer.y));
+                    (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
+                    (banking_ && (chest_.covers(pointer.x, pointer.y) || chest_.dragging()));
 
     // The pointer, drawn last of all: MU2's Pointer.Show and Step in one call. The flags are
     // last frame's raycast (Play::point runs after this, on the same frame it is drawn), which
@@ -250,7 +400,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         const bool leans = play.realm().tables()->perches[size_t(play.pointedPerch())].leans;
         perch = leans ? Cursor::Perch::Lean : Cursor::Perch::Sit;
     }
-    cursor_.update(seconds, pointer.x, pointer.y, onMonster, onLoot, onFolk, perch);
+    cursor_.update(seconds, real.x, real.y, onMonster, onLoot, onFolk, perch);
 }
 
 void Desk::script(float x, float y, bool press, bool release, bool right) {
@@ -728,12 +878,23 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     return sheet;
 }
 
+// Whether a label is set bold: the jewels, BuildGroundItemLabelDescriptor's `boldTextItems`
+// (ZzzInventory.cpp:6077), of which the Bless, the Soul and the Chaos are the 0.75 rows.
+static bool boldOf(const content::Tables& tables, const sim::Lying& one) {
+    return !one.what.empty() && tables.items[size_t(one.what.item)].jewel();
+}
+
 // MU2's Drops.Tint, which is BuildGroundItemLabelDescriptor's ladder: the colour IS the
-// refinement, and Zen is gold whatever it is. The skill, luck and option rung is not reachable,
-// since nothing drops with any of them.
-static uint32_t tintOf(const sim::Lying& one) {
+// refinement, and Zen is gold whatever it is. Luck or an option is the blue rung, tested after
+// the +7 yellow and before the level ladder (`HasSkill || HasLuck || OptionLevel > 0`). And the
+// jewels are gold whatever they are too: they are
+// in its `yellowTextItems` beside Zen (ZzzInventory.cpp:6101), which the ladder skips.
+static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one) {
     const uint32_t yellow = gfx::rgba(1.0f, 0.8f, 0.1f);
-    if (one.what.empty() || one.what.refinement >= 7) return yellow;
+    // Excellent is green, above the +7 yellow: `(ItemOption & 63) > 0` is tested first.
+    if (!one.what.empty() && one.what.excellent != 0) return gfx::rgba(0.1f, 1.0f, 0.5f);
+    if (one.what.empty() || one.what.refinement >= 7 || boldOf(tables, one)) return yellow;
+    if (one.what.luck || one.what.option > 0) return gfx::rgba(0.4f, 0.7f, 1.0f);
     const int plus = one.what.refinement;
     if (plus == 0) return gfx::rgba(0.7f, 0.7f, 0.7f);
     if (plus < 3) return gfx::rgba(0.9f, 0.9f, 0.9f);
@@ -769,13 +930,18 @@ void Desk::labelGround(const Play& play, int width, int height) {
             const content::ItemRow& row = tables.items[size_t(one->what.item)];
             name = one->what.refinement > 0 ? row.label + " +" + std::to_string(one->what.refinement)
                                             : row.label;
+            // BuildGroundItemLabelDescriptor's tail: the option, then the luck, after the plus.
+            if (one->what.option > 0) name += " +Option";
+            if (one->what.luck) name += " +Luck";
         }
         // RenderGroundItemLabelTexture: the plate is the text's own box, opaque black, and no
         // padding anywhere in it.
-        const float w = face.measure(size, name), h = face.height(size);
+        // g_hFontBold for a jewel, which is a point up here, as a tip's bold line is.
+        const float set = boldOf(tables, *one) ? size + panel::unit() : size;
+        const float w = face.measure(set, name), h = face.height(set);
         const gfx::Box plate{at.x - w * 0.5f, at.y - h, w, h};
         ground_.rect(plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
-        ground_.text(plate.x, plate.y + face.ascent(size), size, tintOf(*one), name);
+        ground_.text(plate.x, plate.y + face.ascent(set), set, tintOf(tables, *one), name);
     }
 }
 
@@ -786,7 +952,8 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
         tally_.dismiss();
         return;
     }
-    vitals_.update(seconds, play, play.pointedAt(), takesPointer_, viewProj, width, height);
+    vitals_.update(seconds, play, play.pointedAt(), play.pointedFolk(), takesPointer_, viewProj,
+                   width, height);
     // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
     // on world points and the lane on the HUD's top edge.
     tally_.update(seconds, play, viewProj, width, height, hud_.plateTop());
@@ -797,7 +964,7 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (!models_ || !models_->tables() || !renderer.openStages(shaderDir_)) return;
     const float pixelsPerUnit = panel::scale();
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
-    if (trading_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
+    if (trading_ || banking_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     // The potion boxes are always on screen, and at rest their stage costs nothing.
     quickStagePicture_.render(renderer, hud_.pixelsPerUnit(), seconds);
     // The tooltip's picture, at the tip's own scale -- the interface pixel, not the windows'.
@@ -817,14 +984,21 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
+    if (banking_) interface_.add(chest_.canvas());
     if (inventoryOpen_) interface_.add(bag_.canvas());
+    // The worn-gear warning hangs left of the windows and so never lies under one; over them,
+    // because its hover line is the one part of it that can reach one.
+    if (endurance_.showing()) interface_.add(endurance_.canvas());
     // The tips over every window, and under the pointer. Whichever is hovered, it is the one
     // thing on the panel the player is reading at that moment.
     interface_.add(hud_.tipCanvas());
     if (trading_) interface_.add(shelf_.tipCanvas());
+    if (banking_) interface_.add(chest_.tipCanvas());
     if (inventoryOpen_) interface_.add(bag_.tipCanvas());
+    if (endurance_.showing()) interface_.add(endurance_.tipCanvas());
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.
+    if (amount_.up()) interface_.add(amount_.canvas());
     interface_.add(cursor_.canvas());
     interface_.submit(view);
 }

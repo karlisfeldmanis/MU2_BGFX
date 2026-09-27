@@ -13,8 +13,14 @@ void lendShine(const content::Showing& table, const std::string& assetDir,
                        "tint and nothing more");
         return;
     }
+    // Chrome02 for an excellent thing, said once when the showing was cooked without it.
+    const content::EffectSheet* chrome2 = table.effect("chrome2");
+    if (!chrome2) core::logError("the showing has no chrome2 sheet; excellent items do not glow");
     renderer.setShine(textures.load(assetDir + "/" + chrome->path, content::TextureRole::Albedo),
-                      textures.load(assetDir + "/" + shiny->path, content::TextureRole::Albedo));
+                      textures.load(assetDir + "/" + shiny->path, content::TextureRole::Albedo),
+                      chrome2 ? textures.load(assetDir + "/" + chrome2->path,
+                                              content::TextureRole::Albedo)
+                              : bgfx::TextureHandle BGFX_INVALID_HANDLE);
 }
 
 namespace {
@@ -73,8 +79,9 @@ int levelOf(int group, int number, int plus) {
 
 }  // namespace
 
-ShineLook shineOf(const content::ItemRow& row, int plus) {
+ShineLook shineOf(const content::ItemRow& row, int plus, bool excellent) {
     ShineLook look;
+    look.excellent = excellent;
     look.level = levelOf(row.group, row.number, plus);
     const Rgb& c = kColours[colourOf(row.group, row.number)];
     look.colour[0] = c.r;

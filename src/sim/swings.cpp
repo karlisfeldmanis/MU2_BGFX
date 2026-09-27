@@ -126,10 +126,11 @@ float attackSpeedStat(Kin kin, int agility, const content::Arm* right, const con
 }
 
 int swingMilliseconds(const content::Tables& tables, Kin kin, int agility,
-                      const content::Arm* right, const content::Arm* left) {
+                      const content::Arm* right, const content::Arm* left, int extraSpeed) {
     int32_t actions[4] = {};
     const int count = attackActions(right, left, actions);
-    const float bonus = attackSpeedStat(kin, agility, right, left) * kSpeedToPlaySpeed;
+    const float bonus =
+        float(attackSpeedStat(kin, agility, right, left) + extraSpeed) * kSpeedToPlaySpeed;
 
     float total = 0.0f;
     int counted = 0;

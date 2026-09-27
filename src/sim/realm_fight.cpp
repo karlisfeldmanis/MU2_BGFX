@@ -38,6 +38,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force) {
         wound = blow.damage - onto + std::max(0, over);
     }
     target.health = std::max(0, target.health - wound);
+    // And what it cost the gear, on the health it took and nothing else: a blow the shield
+    // soaked whole wears nothing, as a miss wears nothing (OpenMU reads HitInfo.HealthDamage).
+    if (wound > 0) {
+        if (target.player) wearOnTaken(wound);
+        if (attacker.player) wearOnLanded();
+    }
     // What the blow gives back. A landed SWING pays the knight a twentieth of his mana; a skill's
     // own blow pays nothing, which is what makes the basic attack the generator and the skill the
     // spender (kAttackManaShare, and the argument is there). Before the happening, so the log's
@@ -48,6 +54,19 @@ void Realm::strikeAt(Body& attacker, Body& target, float force) {
     }
     say(What::Hit, attacker, blow.damage, blow.rolled, target.health, target.id);
     happenings_.back().critical = blow.critical;
+    happenings_.back().excellent = blow.excellent;
+    // An excellent armour's reflect: what reached him, health and shield, times the share, sent
+    // back at whoever struck (Player.HitAsync's ReflectDamage). It takes no draw.
+    if (target.player && target.alive() && !attacker.player && attacker.alive() &&
+        target.excel.reflect > 0.0) {
+        const int back = int(double(blow.damage) * target.excel.reflect);
+        if (back > 0) {
+            attacker.health = std::max(0, attacker.health - back);
+            say(What::Hit, target, back, back, attacker.health, attacker.id);
+            happenings_.back().reflected = true;
+            if (attacker.health <= 0) kill(attacker, target);
+        }
+    }
     if (!target.player) {
         // Hit, so it knows who did it however far off he is standing, and it is awake whether
         // or not it can see him. Without this half a caster outside its sight kills it without
@@ -144,6 +163,18 @@ void Realm::kill(Body& dead, Body& killer) {
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
     // it was when the blow landed.
     if (killer.player) leave(dead, killer);
+    // An excellent weapon's first two: an eighth of each pool back after a kill (OpenMU's
+    // Regeneration after monster kill, off the pool's maximum).
+    if (killer.player && killer.alive()) {
+        if (killer.excel.killLife > 0.0) {
+            killer.health = std::min(killer.maxHealth,
+                                     killer.health + int(double(killer.maxHealth) * killer.excel.killLife));
+        }
+        if (killer.excel.killMana > 0.0) {
+            killer.mana = std::min(killer.maxMana,
+                                   killer.mana + int(double(killer.maxMana) * killer.excel.killMana));
+        }
+    }
     if (killer.player) {
         // (int) of the formula, as OpenMU's CalculateAfterKillAsync truncates it
         // (PlayerExperience.cs:105), then the server's rate -- which this note used to say

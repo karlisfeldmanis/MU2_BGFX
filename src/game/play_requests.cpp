@@ -17,6 +17,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 
@@ -76,6 +77,29 @@ bool Play::useItem(int slot) {
     return used;
 }
 
+// Two sounds, as MuMain makes them. The asking is ApplyJewels' own `SendRequestUse(...);
+// PlayBuffer(SOUND_GET_ITEM01)`, and the answer is ReceiveModifyItemExtended's SOUND_JEWEL01
+// (WSclient.cpp:6322) -- whether the plus went up or down, because the client has no failure
+// sound. The answer is rung here and not off What::Refined in the step for the reason a
+// purchase is: asked between ticks, and the next step clears what it said. The ring is the
+// placed `jewel_get`, which a drop already lands with, heard where the hero stands.
+bool Play::refine(int jewelSlot, int targetSlot) {
+    const sim::Held thing =
+        targetSlot >= 0 && targetSlot < sim::kSlots ? realm_.satchel()[targetSlot] : sim::Held{};
+    const bool refined = realm_.refine(jewelSlot, targetSlot);
+    const int now = refined ? realm_.satchel()[targetSlot].refinement : thing.refinement;
+    core::logf("window: jewel %d on %d %s (+%d -> +%d)", jewelSlot, targetSlot,
+               refined ? "taken" : "refused", int(thing.refinement), now);
+    if (!refined) return false;
+    sound_.play(heard_.take);
+    if (const Drawn* hero = drawnOf(realm_.hero().id)) {
+        emit(heard_.jewel, hero->crown[0], hero->crown[2], hero->id);
+    }
+    // A worn thing changed rung, so the figure is dressed again at its new shine.
+    if (sim::wearable(targetSlot)) redress();
+    return true;
+}
+
 // The noise belongs to the thing LANDING and is made where it lies, which is `Play::landed` --
 // the same call a kill's drop is heard through. It is rung from HERE and not from the
 // What::Dropped branch in Play::step, because a discard is asked between ticks and the next
@@ -113,7 +137,7 @@ void Play::redress() {
         if (held.empty() || size_t(held.item) >= tables_.items.size()) continue;
         const content::ItemRow& row = tables_.items[size_t(held.item)];
         worn.push_back(row.name);
-        wornShine.push_back(shineOf(row, held.refinement));
+        wornShine.push_back(shineOf(row, held.refinement, held.excellent != 0));
     }
     // How each hand's plus shows: the hand slot holding the item of that name. The realm says
     // which arm swings, not which slot it came out of.
@@ -123,7 +147,8 @@ void Play::redress() {
             const sim::Held& held = realm_.satchel()[slot];
             if (!held.empty() && size_t(held.item) < tables_.items.size() &&
                 tables_.items[size_t(held.item)].name == name) {
-                return shineOf(tables_.items[size_t(held.item)], held.refinement);
+                return shineOf(tables_.items[size_t(held.item)], held.refinement,
+                               held.excellent != 0);
             }
         }
         return ShineLook{};
@@ -148,7 +173,27 @@ void Play::restore(const sim::HeroRecord& saved) {
     redress();
 }
 
-bool Play::give(const std::string& name, int count) {
+// --give's and --lay's `+3LO2E16`: a plus, luck, an option level, and excellent options by
+// OpenMU's numbers 1 to 6 (E16 is Zen and HP on armour, mana-after-kill and the excellent
+// damage rate on a weapon), and `W` to put it on him rather than in the bag -- the bench's, like
+// --weapon, and asked of no requirement. Anything else is ignored.
+static void readExtras(const std::string& extras, int* plus, bool* luck, int* option,
+                       uint8_t* excellent, bool* worn = nullptr) {
+    for (size_t i = 0; i < extras.size(); ++i) {
+        const char c = extras[i];
+        if ((c == 'W' || c == 'w') && worn) *worn = true;
+        if (c == '+') *plus = std::atoi(extras.c_str() + i + 1);
+        if (c == 'L' || c == 'l') *luck = true;
+        if ((c == 'O' || c == 'o') && i + 1 < extras.size()) *option = extras[i + 1] - '0';
+        if (c == 'E' || c == 'e') {
+            for (size_t j = i + 1; j < extras.size() && extras[j] >= '1' && extras[j] <= '6'; ++j) {
+                *excellent |= uint8_t(1u << (extras[j] - '1'));
+            }
+        }
+    }
+}
+
+bool Play::give(const std::string& name, int count, const std::string& extras) {
     const int32_t item = tables_.itemNamed(name);
     if (item < 0) {
         core::logError("--give: no item named %s", name.c_str());
@@ -156,11 +201,54 @@ bool Play::give(const std::string& name, int count) {
     }
     const content::ItemRow& row = tables_.items[size_t(item)];
     const bool stacks = sim::heals(row) || sim::restores(row);
-    const int durability = stacks ? std::max(1, count) : row.durability;
-    const int slot = realm_.give(item, -1, 0, durability);
-    core::logf("given %s%s into slot %d", row.label.c_str(),
-               stacks ? (" x" + std::to_string(durability)).c_str() : "", slot);
+    const int durability = stacks ? std::max(1, count) : sim::fullDurability(row, 0);
+    // A potion's count is one stack; anything else is that many pieces, a cell each -- three
+    // jewels are three jewels, as nothing merges them yet.
+    const int pieces = stacks ? 1 : std::max(1, count);
+    int slot = -1;
+    for (int i = 0; i < pieces; ++i) {
+        int plus = 0, option = 0;
+        bool luck = false;
+        uint8_t excellent = 0;
+        bool worn = false;
+        readExtras(extras, &plus, &luck, &option, &excellent, &worn);
+        const int into = worn ? sim::placeOf(row) : -1;
+        // Whatever he wears there already goes into the bag first -- the arena's own sword.
+        if (into >= 0 && !realm_.satchel()[into].empty()) {
+            const sim::Held& on = realm_.satchel()[into];
+            const content::ItemRow& onRow = tables_.items[size_t(on.item)];
+            const int spare = realm_.satchel().free(tables_, onRow.width, onRow.height);
+            if (spare >= 0) realm_.moveItem(into, spare);
+        }
+        slot = realm_.give(item, into, plus, stacks ? durability : sim::fullDurability(row, plus),
+                           luck, option, excellent);
+        if (worn && slot >= 0) redress();
+        core::logf("given %s%s into slot %d", row.label.c_str(),
+                   stacks ? (" x" + std::to_string(durability)).c_str() : "", slot);
+        if (slot < 0) break;
+    }
     return slot >= 0;
+}
+
+bool Play::lay(const std::string& asked) {
+    const size_t colon = asked.find(':');
+    const std::string name = asked.substr(0, colon);
+    int plus = 0, option = 0;
+    bool luck = false;
+    uint8_t excellent = 0;
+    if (colon != std::string::npos) {
+        readExtras(asked.substr(colon + 1), &plus, &luck, &option, &excellent);
+    }
+    const int32_t item = tables_.itemNamed(name);
+    if (item < 0) {
+        core::logError("--lay: no item named %s", name.c_str());
+        return false;
+    }
+    const uint32_t id = realm_.lay(item, plus, luck, option, excellent);
+    core::logf("laid %s on the ground (drop %u)", tables_.items[size_t(item)].label.c_str(), id);
+    if (id == 0) return false;
+    landed(id);
+    return true;
 }
 
 bool Play::buy(int shelfSlot) {
@@ -196,6 +284,77 @@ bool Play::sell(int bagSlot) {
         }
     }
     return paid >= 0;
+}
+
+// The mending counter's two. ReceiveRepair plays SOUND_REPAIR on the reply that carries the new
+// Zen, and only then, so a repair refused is the desk's no and not this sound.
+bool Play::repair(int slot) {
+    const int64_t cost = realm_.repairCost(slot);
+    const bool done = realm_.repair(slot);
+    core::logf("window: repair slot %d %s (%lld Zen, %lld now)", slot,
+               done ? "taken" : "refused", (long long)cost, (long long)realm_.money());
+    if (done) sound_.play(heard_.repair);
+    return done;
+}
+
+bool Play::repairAll() {
+    const int64_t before = realm_.money();
+    const int mended = realm_.repairAll();
+    core::logf("window: repair all, %d mended for %lld Zen", mended,
+               (long long)(before - realm_.money()));
+    if (mended > 0) sound_.play(heard_.repair);
+    return mended > 0;
+}
+
+// The vault's moves. The item ones are heard by the desk, as the bag's are (the pickup for a
+// move taken, the refusal for one refused); the Zen is heard here as the coins of a sale,
+// placed at the hero for the same reason.
+bool Play::deposit(int bagSlot, int cell) {
+    const int at = realm_.deposit(bagSlot, cell);
+    core::logf("window: vault deposit slot %d -> cell %d %s", bagSlot, at,
+               at >= 0 ? "taken" : "refused");
+    return at >= 0;
+}
+
+bool Play::withdraw(int cell, int bagSlot) {
+    const int at = realm_.withdraw(cell, bagSlot);
+    core::logf("window: vault withdraw cell %d -> slot %d %s", cell, at,
+               at >= 0 ? "taken" : "refused");
+    return at >= 0;
+}
+
+bool Play::rearrange(int from, int to) {
+    const bool moved = realm_.rearrange(from, to);
+    core::logf("window: vault move %d -> %d %s", from, to, moved ? "taken" : "refused");
+    return moved;
+}
+
+bool Play::depositZen(int64_t zen) {
+    const bool moved = realm_.depositZen(zen);
+    core::logf("window: vault takes %lld Zen %s (%lld carried, %lld kept)", (long long)zen,
+               moved ? "taken" : "refused", (long long)realm_.money(),
+               (long long)realm_.vault().zen());
+    if (moved) {
+        const Drawn* hero = drawnOf(realm_.hero().id);
+        if (heard_.moneyDrop >= 0 && hero && hero->placed) {
+            emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+        }
+    }
+    return moved;
+}
+
+bool Play::withdrawZen(int64_t zen) {
+    const bool moved = realm_.withdrawZen(zen);
+    core::logf("window: vault gives %lld Zen %s (%lld carried, %lld kept)", (long long)zen,
+               moved ? "taken" : "refused", (long long)realm_.money(),
+               (long long)realm_.vault().zen());
+    if (moved) {
+        const Drawn* hero = drawnOf(realm_.hero().id);
+        if (heard_.moneyDrop >= 0 && hero && hero->placed) {
+            emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+        }
+    }
+    return moved;
 }
 
 bool Play::talkTo(const std::string& name) {

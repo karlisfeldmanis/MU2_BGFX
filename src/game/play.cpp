@@ -273,7 +273,22 @@ void Play::update(double seconds) {
                         }
                     }
                 }
-                if (Drawn* swinger = drawnOf(happening.who)) {
+                if (happening.what == sim::What::Hit && happening.reflected) {
+                    // His armour's reflect: the number and the wound on what struck him, now,
+                    // and no swing -- he threw nothing. Stamped with the swing he is in, so it
+                    // is not dropped as a stale one.
+                    if (const Drawn* hero = drawnOf(happening.who)) {
+                        Cue cue;
+                        cue.attacker = happening.who;
+                        cue.target = happening.whom;
+                        cue.damage = happening.a;
+                        cue.taken = taken;
+                        cue.reflected = true;
+                        cue.fuse = 0.0f;
+                        cue.token = hero->swingToken;
+                        showing_.schedule(cue);
+                    }
+                } else if (Drawn* swinger = drawnOf(happening.who)) {
                     // The pose is started once, by whichever half comes first: `Swung` for the
                     // player, the `Hit` itself for a monster.
                     if (begun) {
@@ -372,6 +387,7 @@ void Play::update(double seconds) {
                         cue.absorbed = absorbed;
                         cue.skill = swinger->swingSkill;
                         cue.critical = happening.critical;
+                        cue.excellent = happening.excellent;
                         // A Lich (attackSkill == 2) throws a meteor: the cue's fuse is
                         // the FALL, not a key in the clip. The meteor is cast here and
                         // the blow lands when it hits the ground (see meteor update).
@@ -435,6 +451,7 @@ void Play::update(double seconds) {
                         // half, and the cast that named it was two ticks ago.
                         cue.skill = swinger->swingSkill;
                         cue.critical = happening.critical;
+                        cue.excellent = happening.excellent;
                         cue.fuse = 0.0f;
                         cue.token = swinger->swingToken;
                         showing_.schedule(cue);
@@ -483,6 +500,7 @@ void Play::update(double seconds) {
     }
     steps();
     hammer();
+    smithy(float(seconds));
     exhale(float(seconds));
     // Before the puffs are aged, so a Giant's sand is thrown on the same frame its clip reached
     // the key that throws it, exactly as the dragon's dust is.

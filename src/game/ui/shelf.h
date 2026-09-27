@@ -25,13 +25,25 @@
 
 namespace mu::game {
 
+// What a mending counter's foot asked for this frame: MU's two hammers, Repair (repair mode on
+// or off) and Repair All.
+struct ShelfMending {
+    bool toggle = false;
+    bool all = false;
+};
+
 class Shelf {
 public:
     void open(const gfx::Interface& interface, panel::Arts* arts);
 
-    // `buy` comes back as the shelf slot a click was released on, or -1; `close` as the X.
+    // `buy` comes back as the shelf slot a click was released on, or -1; `close` as the X; and
+    // at a counter that mends, `mend` as the two hammers under the shelf.
     void update(float width, float height, int column, const sim::Realm& realm,
-                const Pointer& pointer, Stage* stage, int* buy, bool* close);
+                const Pointer& pointer, Stage* stage, int* buy, bool* close,
+                ShelfMending* mend = nullptr);
+    // Whether repair mode is on, which the Repair hammer is drawn held down for. The desk owns
+    // the mode, because the bag reads it too.
+    void setMending(bool on) { mendingOn_ = on; }
 
     // The stage the tooltip's own picture is taken on: one item, at rest, its own size.
     // Shared with the other windows -- only one tip is up at a time.
@@ -69,9 +81,18 @@ private:
     bool closing_ = false;
     bool overClose_ = false;
     bool pressing_ = false;
+    // The mending foot: whether this counter has one, the repair mode, and which hammer the
+    // pointer is on (0 Repair, 1 Repair All, -1 neither) and which one it went down on.
+    bool mends_ = false;
+    bool mendingOn_ = false;
+    int overHammer_ = -1;
+    int pressedHammer_ = -1;
     // What the last rebuild drew for, compared whole.
     struct Drawn {
         int keeper = -2, hovered = -2;
+        bool mendingOn = false;
+        int overHammer = -1, pressedHammer = -1;
+        long long mendAll = -1;
         float pointerX = 0, pointerY = 0, x = 0, y = 0, scale = 0;
         bool closing = false, overClose = false;
         int level = 0, strength = 0, agility = 0, vitality = 0, energy = 0;

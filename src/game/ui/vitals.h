@@ -39,12 +39,15 @@ public:
     // was -- what is on screen after the pointer leaves is the last monster's bar living out its
     // linger. `paneled` is whether a window has the pointer, which hides a new reading but lets
     // one already up run out. Rebuilds the canvas only when what it draws moved.
-    void update(float seconds, const Play& play, uint32_t pointed, bool paneled,
+    // `folk` is the townsperson under the pointer or -1: his name alone, with no bar, on the
+    // same fade and linger. MU names an NPC over his head (CNewUINameWindow's NPC branch) and
+    // has nothing to say about his health.
+    void update(float seconds, const Play& play, uint32_t pointed, int folk, bool paneled,
                 const float* viewProj, int width, int height);
     // Takes it down now, without the linger or the fade: leaving the world, not the monster.
     void dismiss();
 
-    bool showing() const { return on_ != 0 && shown_ > 0.0f; }
+    bool showing() const { return (on_ != 0 && shown_ > 0.0f) || (folk_ >= 0 && folkShown_ > 0.0f); }
     const gfx::Canvas& canvas() const { return canvas_; }
     uint64_t rebuilds() const { return rebuilds_; }
 
@@ -56,10 +59,13 @@ private:
         float shown = 0, lag = 0, health = 0;
         int reading = 0, maximum = 0;
         float unit = 0;
+        int folk = -1;
+        float folkX = 0, folkY = 0, folkShown = 0;
         bool operator==(const Readout& o) const {
             return on == o.on && x == o.x && y == o.y && shown == o.shown && lag == o.lag &&
                    health == o.health && reading == o.reading && maximum == o.maximum &&
-                   unit == o.unit;
+                   unit == o.unit && folk == o.folk && folkX == o.folkX && folkY == o.folkY &&
+                   folkShown == o.folkShown;
         }
     };
 
@@ -74,6 +80,8 @@ private:
     float lag_ = 0.0f;     // the trail's edge, as a fraction of the bar
     float was_ = 0.0f;     // the fraction last frame, so a drop can be noticed
     float holding_ = 0.0f; // seconds before the trail starts closing
+    int folk_ = -1;        // the townsperson named, by the tables' folk index
+    float folkLeft_ = 0.0f, folkShown_ = 0.0f;
     Readout drawn_;
     uint64_t rebuilds_ = 0;
 };

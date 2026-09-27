@@ -134,6 +134,8 @@ bool Sway::open(const std::string& assetDir, const std::string& world, const Tow
         instance.townIndex = i;
         instance.figure.stand(body, placement.position, placement.yaw, placement.scale);
         instance.figure.tilt(placement.pitch, placement.roll);
+        // On a curve through MU's keys, so a lamp swings rather than shudders. Figure says why.
+        instance.figure.smoothKeys(true);
         // MU's `o->Velocity = 0.f`: its first key, forever. And, OURS, a placement the cook
         // found buried past 60% of its height (bit 2): MU's thicket of sunk Tree01 crowns,
         // which swaying as whole trees read as bushes on springs. tools/cook.py says more.

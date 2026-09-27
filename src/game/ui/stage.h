@@ -25,9 +25,12 @@ struct Standing {
     gfx::Box box;
     int refinement = 0;
     bool spinning = false;
+    // Drawn with MuMain's excellent pass over whatever its plus gives it.
+    bool excellent = false;
     bool operator==(const Standing& o) const {
         return item == o.item && box.x == o.box.x && box.y == o.box.y && box.w == o.box.w &&
-               box.h == o.box.h && refinement == o.refinement && spinning == o.spinning;
+               box.h == o.box.h && refinement == o.refinement && spinning == o.spinning &&
+               excellent == o.excellent;
     }
 };
 

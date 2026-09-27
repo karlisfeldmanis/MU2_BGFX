@@ -78,6 +78,7 @@ void printUsage() {
         "  --plus N                  the viewer's items at +N, 0 to 15: the refinement shine\n"
         "  --windows LIST            open these from the first frame: inventory,character; off: no HUD\n"
         "  --ui-click F:X:Y[:X2:Y2]  press the windows at screen fraction X,Y on frame F\n"
+        "  --ui-type F:TEXT          type TEXT into the open box on frame F (enter, escape)\n"
         "  --give LIST               put NAME[:COUNT],... in the bag at the start\n"
         "  --ui-key F:K              press potion key K (1-4) on frame F\n"
         "  --ui-skill F:K            press skill key K (1-5: Q W E R T) on frame F\n"
@@ -104,6 +105,7 @@ void printUsage() {
         "  --play                    raise the realm behind the window: click to walk, click "
         "to fight\n"
         "  --click-every N           a scripted click every N frames, through the real pick\n"
+        "  --lay F:LIST              on frame F lay NAME,... on the ground beside him (bench)\n"
         "  --arena BREED             one breed alone on a clear patch, fighting the hero from\n"
         "                            the first tick; no other spawn stands on the map. The name\n"
         "                            is the cook's own -- the figure (SkeletonWarrior, and\n"
@@ -378,6 +380,15 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.effectSize = float(std::atof(v));
         } else if (!std::strcmp(s, "--effect-sheet")) {
             if (const char* v = next(s)) a.effectSheet = v;
+        } else if (!std::strcmp(s, "--ui-type")) {
+            const char* v = next(s);
+            const char* colon = v ? std::strchr(v, ':') : nullptr;
+            if (colon) {
+                a.uiTyped.emplace_back(std::atoi(v), std::string(colon + 1));
+            } else {
+                logError("--ui-type is FRAME:TEXT, got '%s'", v ? v : "");
+                a.valid = false;
+            }
         } else if (!std::strcmp(s, "--ui-click")) {
             if (const char* v = next(s)) {
                 Args::UiClick c;
@@ -440,6 +451,17 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--give")) {
             if (const char* v = next(s)) a.give = v;
+        } else if (!std::strcmp(s, "--lay")) {
+            if (const char* v = next(s)) {
+                const char* colon = std::strchr(v, ':');
+                if (colon) {
+                    a.layFrame = std::atoi(v);
+                    a.lay = colon + 1;
+                } else {
+                    logError("--lay is FRAME:NAME,...");
+                    a.valid = false;
+                }
+            }
         } else if (!std::strcmp(s, "--windows")) {
             if (const char* v = next(s)) a.windows = v;
         } else if (!std::strcmp(s, "--category")) {

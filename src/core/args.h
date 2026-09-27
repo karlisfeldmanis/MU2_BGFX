@@ -212,6 +212,9 @@ struct Args {
         bool right = false;
     };
     std::vector<UiClick> uiClicks;
+    // Scripted typing: FRAME:TEXT, the text typed into whatever box is open on FRAME -- digits,
+    // or the words enter and escape for those keys. Repeatable.
+    std::vector<std::pair<int, std::string>> uiTyped;
     // A scripted pointer parked at X,Y (fractions of the screen) on every frame, pressing
     // nothing: what a review run needs to photograph a tooltip, since a click on an item in
     // the bag picks it up instead of describing it. Negative is "nobody is pointing".
@@ -231,6 +234,11 @@ struct Args {
     bool mute = false;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.
     std::string give;
+    // The bench's, not a rule: on frame `layFrame`, lay NAME,... on the ground beside him as a
+    // kill's drop lies -- the fall, the landing sound and the label -- for looking at a drop
+    // nothing in Lorencia leaves (the Bless and the Soul). FRAME:LIST.
+    int layFrame = -1;
+    std::string lay;
     long long zen = 0;     // Zen in hand at the start
     bool loot = false;     // --click-every aims at what lies on the ground before a monster
     bool entrance = false; // --entrance: the fade-up and the character's dissolve in a --frames run

@@ -98,7 +98,7 @@ void Litter::buildItem(const sim::Lying& one, Drop& drop) {
     const content::Mesh* mesh = models_->of(one.what.item);
     if (!mesh) return;
     const content::ItemRow& row = models_->tables()->items[size_t(one.what.item)];
-    drop.shine = shineOf(row, one.what.refinement);
+    drop.shine = shineOf(row, one.what.refinement, one.what.excellent != 0);
     const content::Bounds& b = mesh->bounds();
     const float centre[3] = {(b.max[0] + b.min[0]) * 0.5f, (b.max[1] + b.min[1]) * 0.5f,
                              (b.max[2] + b.min[2]) * 0.5f};

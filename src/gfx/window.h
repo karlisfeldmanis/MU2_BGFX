@@ -39,7 +39,22 @@ public:
     // itself by this: it presents unsynced, so it has to know what it is pacing to.
     int refreshHz() const;
 
+    // Escape as the application quits on: held down, and not while something is typing --
+    // an Escape that cancels a number box must not also end the game. Once swallowed it stays
+    // swallowed until the key comes up, so the frame after the box closes does not quit either.
     bool escapePressed() const;
+
+    // **Typing**, for the few boxes that take a number or a word. What was typed since the last
+    // pump, as UTF-8 off GLFW's character callback (which is the layout's own character, not a
+    // key code), and three edges beside it: Backspace (counted, so the OS's key repeat deletes a
+    // run), Enter and Escape. Read every frame whether anything types or not; `setTyping` says
+    // whether the game has a box open, which is what takes Escape away from quitting.
+    const std::string& typed() const { return typed_; }
+    int backspaces() const { return backspaces_; }
+    bool entered() const { return entered_; }
+    bool escaped() const { return escaped_; }
+    void setTyping(bool typing) { typing_ = typing; }
+    bool typing() const { return typing_; }
 
     // The pointer, in FRAMEBUFFER pixels rather than in the points GLFW reports: on a Retina
     // display the two differ by two, and a pick that unprojects points against a 1920-wide
@@ -85,9 +100,11 @@ public:
         Inventory, Character,
         Potion1, Potion2, Potion3, Potion4, Potion5,
         Skill1, Skill2, Skill3, Skill4, Skill5,
+        Repair,  // L: a mending counter's repair mode, and Shift+L its repair-all (CNewUINPCShop)
         Count
     };
     bool pressed(Key key) const { return keyPressed_[size_t(key)]; }
+    bool shift() const { return shift_; }
 
     // Held, rather than the edge `clicked` reports: a drag is a thing that continues.
     bool held(int button) const { return held_[button & 1]; }
@@ -109,12 +126,18 @@ private:
     bool released_[2] = {false, false};
     bool keyPressed_[size_t(Key::Count)] = {};
     bool keyHeld_[size_t(Key::Count)] = {};
+    bool shift_ = false;
     bool stepped_[size_t(Step::Count)] = {};
     bool stepHeld_[size_t(Step::Count)] = {};
     float lastX_ = 0.0f, lastY_ = 0.0f;
     float deltaX_ = 0.0f, deltaY_ = 0.0f;
     bool hadPointer_ = false;
     float scroll_ = 0.0f;
+    std::string typed_;
+    int backspaces_ = 0;
+    bool entered_ = false, escaped_ = false;
+    bool typing_ = false;
+    bool escapeSwallowed_ = false;
     uint32_t reset_ = 0;
     // Kept whole from init. A resize passes this back with a new size, because a
     // default-constructed SwapChain has a NULL window handle, which bgfx reads as a request

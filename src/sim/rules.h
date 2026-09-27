@@ -19,6 +19,26 @@ constexpr int kMaximumLevel = 400;
 constexpr int kPointsPerLevel = 5;
 
 // Everything a blow reads off either side of it.
+// What the excellent options he wears come to (ExcellentOptions.cs), summed off his worn slots
+// by Realm::rearm: the multiplying ones multiply per piece and the adding ones add, as their
+// AggregateType says. Neutral for a monster and for anybody wearing nothing excellent.
+struct Excellence {
+    // On a weapon.
+    double killMana = 0.0;        // 1: an eighth of max mana back after a kill
+    double killLife = 0.0;        // 2: an eighth of max life
+    int speed = 0;                // 3: attack speed +7
+    double damageRate = 1.0;      // 4: x1.02 on the damage (PhysicalBaseDmgIncrease)
+    int levelPieces = 0;          // 5: + level / 20 on the damage, each
+    double excellentChance = 0.0; // 6: 0.1, a blow at 1.2 x the top of the band
+    // On armour and the shield.
+    double zenRate = 1.0;         // 1: x1.4 on Zen picked up (MoneyAmountRate)
+    double defenseRateRate = 1.0; // 2: x1.1 on the defence rate
+    double reflect = 0.0;         // 3: 0.05 of what reaches him sent back
+    double damageDecrease = 0.0;  // 4: 0.04 off what reaches him (ArmorDamageDecrease)
+    double manaRate = 1.0;        // 5: x1.04 on max mana
+    double healthRate = 1.0;      // 6: x1.04 on max life
+};
+
 struct Fighter {
     int level = 1;
     // The two rates are FLOATS and the three below them are integers, and that is not
@@ -42,6 +62,10 @@ struct Fighter {
     // Stats.DamageReceiveDecrement. 0.75 grants it from exactly one thing, the knight's
     // Defense skill at 0.50 for four seconds. 1 is "nothing is reducing this".
     double damageTaken = 1.0;
+    // The excellent options' two that live in a blow: the chance of an excellent hit, and the
+    // share taken off one received (Excellence).
+    double excellentChance = 0.0;
+    double damageDecrease = 0.0;
 };
 
 // The workings, not just the number. A log line that says `14` cannot be checked against
@@ -49,6 +73,7 @@ struct Fighter {
 struct Blow {
     bool hit = false;
     bool critical = false;
+    bool excellent = false;  // 1.2 x the top of the band
     int rolled = 0;         // before defence
     int afterDefense = 0;
     bool overrated = false; // the x0.3 arm
@@ -138,6 +163,8 @@ struct Arms {
     int weaponMaximumDamage = 0;
     int armourDefense = 0;  // a shield's, and later a suit's
     int shieldDefenseRate = 0;  // a worn shield's rate with its plus; never halved
+    double criticalChance = 0.0;  // luck, 0.05 a lucky thing worn
+    Excellence excel;              // what his excellent pieces come to
 };
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,

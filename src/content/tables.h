@@ -102,7 +102,9 @@ struct ItemRow {
     int32_t defense = 0;
     int32_t defenseRate = 0;  // a shield's block column; 0 on everything else
     int32_t magicPower = 0;
-    int32_t durability = 0;  // the shots in a quiver; 0 for everything this sprint wears
+    // A quiver's shots, and on gear the wear it has at +0 (sim/wear.h adds the plus); 0 on
+    // everything that neither shoots nor wears.
+    int32_t durability = 0;
     int32_t classes = 0;     // as Arm::classes; 0 is anybody
     int32_t needLevel = 0, needStrength = 0, needAgility = 0, needEnergy = 0, needVitality = 0;
     int32_t flags = 0;

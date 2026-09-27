@@ -544,7 +544,8 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             const gfx::Box bar{left + w + pad * 0.5f, baseline - footSize * 0.35f, barWide, barTall};
             canvas.rect(bar, fade(kBarBack));
             canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
-                        fade(panel::kLettering));
+                        fade(sheet.wearTone == Tone::White ? panel::kLettering
+                                                           : colourOf(sheet.wearTone)));
             left = bar.right() + pad;
         }
         if (!sheet.note.empty()) {

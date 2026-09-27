@@ -6,6 +6,7 @@
 #include "content/placement.h"
 #include "content/showing.h"
 #include "core/log.h"
+#include "game/world/sway.h"
 #include "game/world/town.h"
 
 namespace mu::game {
@@ -59,6 +60,55 @@ constexpr int kCells = 4;
 // it comes into view.
 constexpr size_t kMostParticles = 3072;
 
+// The bone a model's light hangs from, where the model sways. Read off the rig: the street
+// lamp's lantern and its glow (streetlight.jpg's lamp end, streetlight_brightness2.jpg whole)
+// are weighted to Bone02 alone, and the light is MU's lamp offset, on that lantern. The candle
+// is not here: its flames hang off three bones and its one light is at none of them.
+// How far off its holder's middle a fire or a window's light must sit to be given a side:
+// a quarter-metre, so a bonfire's or a brazier's flame, which stands on its holder, lights all
+// round and a torch on a wall does not.
+constexpr float kSidedFrom = 0.25f;
+
+// The side of its holder a torch or a window's light lights, into `away`: flat, unit length,
+// in the world. A torch on a wall or a rail, and a window, lights its own side of the thing
+// that carries it and not through it (lights.sh). Lamps and candles hang free and light all
+// round, and so does a fire standing on its holder's middle -- a bonfire, a brazier.
+//
+// The side is the face of the holder's box the light is NEAREST, and not the way out from the
+// holder's middle: a bridge's torches stand 0.9 m out to its side and 2 m along it, so "away
+// from the middle" pointed along the bridge and cut the light off over half the river. The
+// nearest face is the rail they hang on.
+bool sideOf(const content::TownEmitter& one, const content::TownModel& holder,
+            const float turn[16], float away[3]) {
+    if (one.kind != content::EmitterKind::Fire && one.kind != content::EmitterKind::Window) {
+        return false;
+    }
+    float nearest = 1e9f;
+    int axis = -1;
+    float sign = 0.0f;
+    for (int k : {0, 2}) {
+        if (std::fabs(one.at[k]) <= kSidedFrom) continue;
+        const float toMax = std::fabs(holder.max[k] - one.at[k]);
+        const float toMin = std::fabs(one.at[k] - holder.min[k]);
+        if (toMax < nearest) { nearest = toMax; axis = k; sign = 1.0f; }
+        if (toMin < nearest) { nearest = toMin; axis = k; sign = -1.0f; }
+    }
+    if (axis < 0) return false;
+    // That face's outward axis, turned into the world by the placement's own rotation.
+    float x = sign * turn[axis * 4 + 0], z = sign * turn[axis * 4 + 2];
+    const float length = std::sqrt(x * x + z * z);
+    if (length < 1e-4f) return false;
+    away[0] = x / length;
+    away[1] = 0.0f;
+    away[2] = z / length;
+    return true;
+}
+
+const char* riddenBone(const std::string& model) {
+    if (model == "StreetLight01") return "Bone02";
+    return nullptr;
+}
+
 float mix(float a, float b, float t) { return a + (b - a) * t; }
 float smooth(float a, float b, float x) {
     const float t = std::clamp((x - a) / (b - a), 0.0f, 1.0f);
@@ -92,11 +142,14 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         }
     }
     std::vector<const content::TownGlow*> glowOf(cooked.models.size(), nullptr);
+    size_t sided = 0;
     for (const content::TownGlow& one : cooked.glows) glowOf[one.model] = &one;
 
     // One emitter, at a world point, turned the way its holder is turned.
+    // `away` is the side of its holder it lights, flat and unit length in the world, or null
+    // for a light that lights all round. See sideOf.
     auto place = [&](const content::TownEmitter& one, const float at[3], const float drift[3],
-                     float spin, bool bonfire) {
+                     float spin, bool bonfire, const float* away) {
         if (one.kind != content::EmitterKind::Smoke && one.reach > 0.0f) {
             gfx::PointLight light;
             for (int i = 0; i < 3; ++i) {
@@ -108,6 +161,11 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
             // in which height stays ignored. lights.sh.
             light.reach = one.reach;
             light.height = std::max(0.0f, at[1] - ground.heightAt(at[0], at[2]));
+            if (away != nullptr) {
+                light.away[0] = away[0];
+                light.away[2] = away[2];
+                ++sided;
+            }
             set_.push_back(light);
             Light state;
             state.flicker.low = one.low;
@@ -141,6 +199,10 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
             glow.flicker.high = g.high;
             glow.flicker.hz = g.flickerHz;
             glow.flicker.smooth = g.smoothSeconds;
+            // Started at its own top, as a light is. step() leaves a flicker whose range is
+            // empty where it stands, and from the default 1.0 a steady glow -- low == high --
+            // drew at full brightness whatever level it named.
+            glow.flicker.current = glow.flicker.target = g.high;
             glows_.push_back(glow);
         }
         if (carried[instance.model].empty()) continue;
@@ -152,20 +214,37 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         // MU's drift is (0, -v, 0) in its own axes, which is (0, 0, +v) in ours.
         float drift[3];
         for (int j = 0; j < 3; ++j) drift[j] = turn[2 * 4 + j] / kPerMetre;
+        const std::string& model = cooked.models[instance.model].name;
+        const char* rides = riddenBone(model);
         for (const content::TownEmitter* one : carried[instance.model]) {
             float at[3];
             for (int j = 0; j < 3; ++j) {
                 at[j] = one->at[0] * turn[0 * 4 + j] + one->at[1] * turn[1 * 4 + j] +
                         one->at[2] * turn[2 * 4 + j] + turn[3 * 4 + j];
             }
-            place(*one, at, drift, instance.pitch,
-                  cooked.models[instance.model].name == "Bonfire01");
+            const size_t before = set_.size();
+            float away[3];
+            const bool sided = sideOf(*one, cooked.models[instance.model], turn, away);
+            place(*one, at, drift, instance.pitch, model == "Bonfire01", sided ? away : nullptr);
+            if (rides != nullptr && set_.size() > before) {
+                Rider rider;
+                rider.light = uint32_t(before);
+                rider.instance = index;
+                rider.boneName = rides;
+                // The offset is laid unscaled (CreateFire's rule, above), and the pose scales
+                // what it carries, so it goes in divided by the scale: at rest the two agree.
+                const float scale = std::max(instance.scale, 0.01f);
+                for (int j = 0; j < 3; ++j) rider.model[j] = one->at[j] / scale;
+                riders_.push_back(rider);
+            }
         }
     }
     // The hidden anchors carry no angle in the cook, so their flames stand rather than drift.
     // Two in Lorencia. A gap, marked.
     const float still[3] = {0.0f, 0.0f, 0.0f};
-    for (const content::TownEmitter* one : anchors) place(*one, one->at, still, 0.0f, false);
+    for (const content::TownEmitter* one : anchors) {
+        place(*one, one->at, still, 0.0f, false, nullptr);
+    }
 
     levels_.assign(lights_.size(), 1.0f);
     for (size_t i = 0; i < lights_.size(); ++i) levels_[i] = lights_[i].flicker.current;
@@ -192,14 +271,16 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         core::logError("no cooked 'fire' sheet: %zu fires will burn with no flame drawn "
                        "(tools/cook.py --only showing)", fires_.size());
     }
-    core::logf("lamps: %zu lights, %zu fires, %zu flickering glows; sheets: fire %s, ember %s, "
-               "smoke %s", lights_.size(), fires_.size(), glows_.size(),
+    core::logf("lamps: %zu lights (%zu lighting only their own side of their holder), %zu fires, "
+               "%zu flickering glows; sheets: fire %s, ember %s, smoke %s", lights_.size(), sided,
+               fires_.size(), glows_.size(),
                bgfx::isValid(sheet_) ? "yes" : "NO", bgfx::isValid(spark_) ? "yes" : "NO",
                bgfx::isValid(smoke_) ? "yes" : "NO");
     return true;
 }
 
 void Lamps::shutdown() {
+    riders_.clear();
     set_.clear();
     lights_.clear();
     levels_.clear();
@@ -209,8 +290,45 @@ void Lamps::shutdown() {
     sheet_ = spark_ = smoke_ = BGFX_INVALID_HANDLE;
 }
 
+void Lamps::add(const gfx::PointLight& light, float low, float high, float hz, float smooth) {
+    set_.push_back(light);
+    Light state;
+    state.flicker.low = low;
+    state.flicker.high = high;
+    state.flicker.hz = hz;
+    state.flicker.smooth = smooth;
+    state.flicker.current = state.flicker.target = high;
+    lights_.push_back(state);
+    levels_.push_back(high);
+}
+
 void Lamps::light(gfx::Renderer& renderer) const {
     renderer.setPointLights(set_.data(), uint32_t(set_.size()), minX_, minZ_, side_);
+}
+
+void Lamps::follow(const Sway& sway, gfx::Renderer& renderer) {
+    for (Rider& rider : riders_) {
+        const Figure* figure = sway.posedAt(rider.instance);
+        if (figure == nullptr) continue;
+        if (rider.bone == -2) {
+            rider.bone = -1;
+            const FigureBody* body = figure->body();
+            if (body && body->skeletonMesh) {
+                const auto& bones = body->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == rider.boneName) rider.bone = int(b);
+                }
+            }
+            if (rider.bone < 0) {
+                core::logError("lamps: no bone '%s' to hang a light from; it stays put",
+                               rider.boneName);
+            }
+        }
+        float at[3];
+        if (rider.bone >= 0 && figure->pointOnBind(rider.bone, rider.model, at)) {
+            renderer.setPointLightPosition(rider.light, at);
+        }
+    }
 }
 
 void Lamps::step(Flicker& one, float seconds) {

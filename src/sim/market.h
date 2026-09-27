@@ -37,10 +37,15 @@ inline bool sells(int npc) {
 
 // What a merchant charges for one, and pays for one (a third, with its own rounding).
 // `shots` / `full` are a quiver's; ignored for anything else.
+// `luck` and `option` are a Held's (ItemPriceCalculator: a quarter more for luck, and 60% for
+// an option at +4, 0.7 x 2^(level-1) above it); nothing on a shelf carries either.
+// `excellent` is how many excellent options it has: 25 drop levels more, then double for each.
 int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
-                    int shots = 1, int full = 1);
+                    int shots = 1, int full = 1, bool luck = false, int option = 0,
+                    int excellent = 0);
 int64_t sellingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
-                     int shots = 1, int full = 1);
+                     int shots = 1, int full = 1, bool luck = false, int option = 0,
+                     int excellent = 0);
 
 // How close a character has to stand to be served, in tiles. MU2's `Counter`: neither MU nor
 // OpenMU's TalkNpcAction checks any distance, and three is the smallest figure that lets a

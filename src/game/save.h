@@ -37,9 +37,21 @@ struct Saved {
     struct Item {
         int slot = -1, group = -1, number = -1, plus = 0, durability = 0;
         bool skill = false;
+        // Luck and the additional option's level; absent in a file from before drops rolled them.
+        bool luck = false;
+        int option = 0;
+        int excellent = 0;  // its excellent options, a bit each
+        // Whether the file recorded wear. A file written before gear had durability says 0 for
+        // every sword, and that 0 is not "broken" -- it is "never counted", read back as full.
+        bool worn = false;
     };
     std::vector<Item> items;
     int quickGroup[5] = {-1, -1, -1, -1, -1}, quickNumber[5] = {-1, -1, -1, -1, -1};
+
+    // The vault, read from its own file (see vaultPathBeside). Its items as read, `slot` a vault
+    // cell; turned into a sim::Vault by resolveVault once the tables are there.
+    int64_t vaultZen = 0;
+    std::vector<Item> vaultItems;
 };
 
 // Where the save lives when --save does not say: ~/Library/Application Support/MU2/hero.json,
@@ -51,5 +63,14 @@ bool loadSave(const std::string& path, Saved& out);
 // Turns what loadSave read into item rows, into hero.slots and quick.
 void resolveSave(const content::Tables& tables, Saved& saved);
 bool writeSave(const std::string& path, const content::Tables& tables, const Saved& saved);
+
+// **The vault is the account's, not the character's**, as MU's is (OpenMU keeps it on
+// `Account.Vault`), so it is its own file beside the character's -- vault.json in the save's
+// folder -- and a new character finds what the last one left. Read into `saved.vaultZen` and
+// `saved.vaultItems`; false when there is none, which is an empty vault and not an error.
+std::string vaultPathBeside(const std::string& savePath);
+bool loadVault(const std::string& path, Saved& saved);
+sim::Vault resolveVault(const content::Tables& tables, const Saved& saved);
+bool writeVault(const std::string& path, const content::Tables& tables, const sim::Vault& vault);
 
 }  // namespace mu::game

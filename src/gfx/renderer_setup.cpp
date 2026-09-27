@@ -42,6 +42,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uRefineStar_ = bgfx::createUniform("u_refineStar", bgfx::UniformType::Vec4);
     sChrome_ = bgfx::createUniform("s_chrome", bgfx::UniformType::Sampler);
     sShiny_ = bgfx::createUniform("s_shiny", bgfx::UniformType::Sampler);
+    sChrome2_ = bgfx::createUniform("s_chrome2", bgfx::UniformType::Sampler);
     uShadowMtx_ = bgfx::createUniform("u_shadowMtx", bgfx::UniformType::Mat4);
     uShadowParams_ = bgfx::createUniform("u_shadowParams", bgfx::UniformType::Vec4);
     uShadowDebug_ = bgfx::createUniform("u_shadowDebug", bgfx::UniformType::Vec4);
@@ -108,8 +109,8 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     // stages 13 and 14 are never unbound: u_lampParams.y is 0 and nothing reads them, but an
     // unbound stage on Metal is a validation error waiting for the first shader that does.
     const uint64_t point = BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
-    lampCpu_.assign(size_t(kMaxPointLights + 1) * 2 * 4, 0.0f);
-    lamps_ = bgfx::createTexture2D(uint16_t(kMaxPointLights + 1), 2, false, 1,
+    lampCpu_.assign(size_t(kMaxPointLights + 1) * kLampRows * 4, 0.0f);
+    lamps_ = bgfx::createTexture2D(uint16_t(kMaxPointLights + 1), kLampRows, false, 1,
                                    bgfx::TextureFormat::RGBA32F, point);
     const uint8_t none[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     lampGrid_ = bgfx::createTexture2D(2, 1, false, 1, bgfx::TextureFormat::RGBA8, point,
@@ -385,7 +386,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uCamPos_, &uParams_,
-          &uMaterial_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,

@@ -254,6 +254,11 @@ struct Lighting {
     // is MuMain's own; at the world's 0.25 the star was lost in the chrome and a +9 read as a
     // +7. Invention, judged on the studio grid.
     float refineStar = 1.0f;
+    // How strongly an excellent thing's pass is added (shaders/shine.sh, shineExcellentAdded), in
+    // the world and the windows alike. 1 is MuMain's own, which drew it over a bright unlit day;
+    // at night over physical light it covered the steel whole and read green in its warm half.
+    // The user asked for it calmer (2026-09-27). Ours.
+    float excellentStrength = 0.35f;
     // How much brighter a +7/+9 item's chrome and star are at midnight, 0.5 being half as bright
     // again: the item's own effect is what glows when it is a light source (game/fx/gleam.h).
     // Ours, not MU's; judged on night shots.

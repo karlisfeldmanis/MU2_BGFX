@@ -956,6 +956,99 @@ def coverage(mesh, layer_name: str) -> tuple[float, float]:
     return covered, overlapped
 
 
+def gradient(points, values):
+    """The world-space gradient of a value given at a triangle's three corners."""
+    e1, e2 = points[1] - points[0], points[2] - points[0]
+    d1, d2 = values[1] - values[0], values[2] - values[0]
+    n = e1.cross(e2)
+    if n.length_squared < 1e-12:
+        return None
+    # g lies in the plane: g = a*e1 + b*e2 with g.e1 = d1 and g.e2 = d2.
+    g11, g12, g22 = e1.dot(e1), e1.dot(e2), e2.dot(e2)
+    det = g11 * g22 - g12 * g12
+    a = (d1 * g22 - d2 * g12) / det
+    b = (d2 * g11 - d1 * g12) / det
+    return e1 * a + e2 * b
+
+
+def heal_collapsed(obj) -> int:
+    """Gives MU's faces whose UVs have no area a real stretch of their sheet.
+
+    Straw01 is why. Six faces a bundle, one side of each, carry MU's UVs on a line: u 0.972
+    to 1.0 while v runs the bundle's length. That side is painted by one smeared column of
+    the sheet, and where the column crosses the cut-out's comb its holes are dragged across
+    the whole face -- a field of dots under the pixel that shimmered as the hero walked past
+    and his shadow crossed it (2026-09-24). MU's own mesh; MU's bale has the same side.
+
+    v is kept, because it does run along the face as it does on the faces beside it. u is
+    laid across, perpendicular to v on the face, at the median u-per-metre of the faces that
+    are whole, starting a quarter in so the span stays on the sheet. Ours, not MU's.
+    """
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    uv = bm.loops.layers.uv.get(ORIGINAL_UV)
+    if uv is None:
+        bm.free()
+        return 0
+
+    def uv_area(face):
+        a, b, c = (loop[uv].uv for loop in face.loops[:3])
+        return abs((b - a).cross(c - a)) * 0.5
+
+    collapsed = [f for f in bm.faces if f.calc_area() > 1e-8 and uv_area(f) < 1e-7]
+    if not collapsed:
+        bm.free()
+        return 0
+
+    rates = []
+    for face in bm.faces:
+        if face in collapsed or len(face.loops) != 3:
+            continue
+        g = gradient([l.vert.co for l in face.loops], [l[uv].uv.x for l in face.loops])
+        if g is not None and g.length > 0.0:
+            rates.append(g.length)
+    rates.sort()
+    rate = rates[len(rates) // 2]
+
+    # Groups joined by a shared vertex, so a quad's two triangles are laid out as one.
+    left = set(collapsed)
+    groups = []
+    while left:
+        seed = left.pop()
+        group, stack = [seed], [seed]
+        while stack:
+            face = stack.pop()
+            for vert in face.verts:
+                for other in vert.link_faces:
+                    if other in left:
+                        left.discard(other)
+                        group.append(other)
+                        stack.append(other)
+        groups.append(group)
+
+    for group in groups:
+        across = None
+        for face in group:
+            g = gradient([l.vert.co for l in face.loops], [l[uv].uv.y for l in face.loops])
+            if g is None or g.length == 0.0:
+                continue
+            a = face.normal.cross(g).normalized()
+            if across is not None and a.dot(across) < 0.0:
+                a = -a
+            across = a if across is None else across + a
+        if across is None:
+            continue
+        across.normalize()
+        low = min(l.vert.co.dot(across) for f in group for l in f.loops)
+        for face in group:
+            for loop in face.loops:
+                loop[uv].uv.x = 0.25 + (loop.vert.co.dot(across) - low) * rate
+
+    bm.to_mesh(obj.data)
+    bm.free()
+    return len(collapsed)
+
+
 def main() -> None:
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     if len(argv) < 2:
@@ -1008,6 +1101,10 @@ def main() -> None:
         flat = bool(json.loads(asset.read_text()).get("flat_shaded", False))
 
     renormal(obj, flat)
+
+    # Faces MU mapped onto a line of their sheet, given a stretch of it. See heal_collapsed.
+    if asset is not None and asset.exists() and json.loads(asset.read_text()).get("uv_heal"):
+        print(f"  uv healed   {heal_collapsed(obj)} faces MU mapped to a line")
 
     bm = bmesh.new()
     bm.from_mesh(obj.data)

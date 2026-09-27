@@ -146,6 +146,8 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
     const auto markOf = [&]() {
         if (cue.miss) return Mark::Miss;
         if (onHero) return Mark::Taken;
+        if (cue.reflected) return Mark::Reflected;
+        if (cue.excellent) return Mark::Excellent;
         if (cue.critical) return Mark::Critical;
         return cue.skill != 0 ? Mark::Skill : Mark::Swing;
     };

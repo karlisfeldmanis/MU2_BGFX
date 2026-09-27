@@ -66,6 +66,14 @@ void close(gfx::Canvas& canvas, const gfx::Box& box, bool over, bool pressed);
 // `+` without MU's button art; the name is from when it was a diamond.
 void diamond(gfx::Canvas& canvas, const gfx::Box& box, bool over, bool pressed);
 
+// A worded button in the skin: a rounded slab under a graded hairline, its word in tracked
+// capitals. `primary` is the answer a box expects -- gold, as the title and the spend ring are --
+// and the other is quiet parchment. Both lift under the pointer and sink when held.
+// `lift` is how far the pointer's hover has come in, 0 to 1, so the caller can ease it;
+// `expected` rings the button Return presses.
+void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, bool primary,
+            float lift, bool pressed, bool expected = false);
+
 // A bar the card's own way: a dark well with a lit fill, for the experience.
 void bar(gfx::Canvas& canvas, const gfx::Box& box, float share, uint32_t ink, float thick);
 

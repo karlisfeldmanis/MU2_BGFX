@@ -181,6 +181,11 @@ struct PointLight {
     // the falloff is flat distance alone, as MU's is; above or below, it falls off further.
     float height = 0.0f;
     float colour[3] = {1.0f, 1.0f, 1.0f};     // linear, before the flicker
+    // The side it lights, flat on the ground, unit length; zero lights all round. A torch on a
+    // wall or a bridge's rail is given the way out from its holder, and lights.sh stops it a
+    // little behind itself, so what is on the far side of the stone it hangs on stays dark: a
+    // light casts no shadow here, and without this a bridge torch lit the deck through its rail.
+    float away[3] = {0.0f, 0.0f, 0.0f};
     // A moving light only: when `line`, the light runs from `position` to `to` and lights from
     // its nearest point, which is how a glowing blade or suit is a light source along its whole
     // shape rather than a point beside it (game/fx/gleam.h).
@@ -219,18 +224,21 @@ public:
     // The refinement shine's two sheets, Chrome01 and Shiny01, out of the showing table
     // (docs/sprints/14-the-shine.md). Without them a refined item still takes its tint and adds
     // nothing on top.
-    void setShine(bgfx::TextureHandle chrome, bgfx::TextureHandle shiny) {
+    // `chrome2` is Chrome02, the excellent pass's; without it an excellent thing adds nothing.
+    void setShine(bgfx::TextureHandle chrome, bgfx::TextureHandle shiny,
+                  bgfx::TextureHandle chrome2 = BGFX_INVALID_HANDLE) {
         shineChrome_ = chrome;
         shineShiny_ = shiny;
+        shineChrome2_ = chrome2;
     }
+    // How strongly a +7 or +9 item's own surface glows this frame, 0 for none: the game's
+    // night (game/fx/gleam.h). Set once a frame before draw().
+    void setShineGlow(float glow) { shineGlow_ = glow; }
 
     // The map's border, and how many metres of dark stand at it. MU's land is a square of
     // tiles with nothing drawn beyond, and its own attribute maps let the player walk to
     // within three tiles of the last one, so the border showed as a hard line of lit ground
     // against the cleared frame. The last metres of the world are taken down into the black
-    // How strongly a +7 or +9 item's own surface glows this frame, 0 for none: the game's
-    // night (game/fx/gleam.h). Set once a frame before draw().
-    void setShineGlow(float glow) { shineGlow_ = glow; }
     // the frame is cleared with, which is the one thing at the border the player does not
     // need to see. `extentX` and `extentZ` are the map's far corner in metres -- columns run
     // +x from 0 and rows run -z from 0 -- and `band` 0 turns it off, which is what a bench
@@ -361,6 +369,11 @@ public:
     // This frame's brightness of each, multiplying its colour: the flicker. `count` is the
     // set's own; uploaded inside draw(), 8 kB.
     void setPointLightLevels(const float* levels, uint32_t count);
+    // Moves static light `index` to `position` this frame, WITHOUT binning it again: for a
+    // light that rides something swaying a hand's width about where it was laid -- a street
+    // lamp's lantern. The grid still lists it in the cells its reach touched from where it was
+    // laid, so this is only right for a move that is small beside its reach.
+    void setPointLightPosition(uint32_t index, const float position[3]);
     uint32_t pointLightCount() const { return lightCount_; }
 
     // The lights that MOVE, and are gone again: a burning meteor on its way down, and whatever
@@ -503,12 +516,18 @@ private:
     // `shineTint_` how much of MuMain's tint the lit colour takes; 1 is MuMain's own for both.
     bgfx::TextureHandle shineChrome_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle shineShiny_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle shineChrome2_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uRefine_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uRefineStar_ = BGFX_INVALID_HANDLE;
     // The +9 star's gain over the chrome's strength, the sheet's refine_star.
     float shineStar_ = 1.0f;
+    float shineExcellent_ = 0.35f;  // the excellent pass's strength, the sheet's excellent_strength
+    // How strongly a refined item's own surface glows this frame (setShineGlow); u_refineStar.y
+    // in the world, 0 on the item stages.
+    float shineGlow_ = 0.0f;
     bgfx::UniformHandle sChrome_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sShiny_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sChrome2_ = BGFX_INVALID_HANDLE;
     float shineStrength_ = 1.0f;
     float shineTint_ = 1.0f;
     // The item stages' own strength: their picture is clamped 8-bit with no exposure and no
@@ -517,9 +536,6 @@ private:
     float shineStageStrength_ = 1.0f;
     void bindShine(bool stage = false);
 
-    // How strongly a refined item's own surface glows this frame (setShineGlow); u_refineStar.y
-    // in the world, 0 on the item stages.
-    float shineGlow_ = 0.0f;
     void screenPass(bgfx::ViewId view, bgfx::ProgramHandle program);
     // The land. Its own vertex layout and its own shader: it blends two full material sets
     // by a per-vertex weight and carries MU's baked light, which the closed material model
@@ -702,10 +718,12 @@ private:
 
     // The lights: a column each, row 0 position and reach, row 1 colour times level. And the
     // grid over the ground, two RGBA8 texels a cell. lights.sh reads both. Row 1's alpha is
-    // the light's height, which the flicker never touches.
+    // the light's height, which the flicker never touches; row 2 is the side it lights
+    // (PointLight::away).
+    static constexpr uint16_t kLampRows = 3;
     bgfx::TextureHandle lamps_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle lampGrid_ = BGFX_INVALID_HANDLE;
-    std::vector<float> lampCpu_;     // (kMaxPointLights + 1) x 2 texels x 4 floats
+    std::vector<float> lampCpu_;     // (kMaxPointLights + 1) x kLampRows texels x 4 floats
     std::vector<float> lampColour_;  // the colours before the flicker, three a light
     uint32_t lightCount_ = 0;
     bool lampsDirty_ = false;
@@ -716,9 +734,12 @@ private:
     // one more uniform is one more upload on every shaded draw in the frame.
     float transientAt_[kMaxTransientLights * 4] = {};
     float transientColour_[kMaxTransientLights * 4] = {};
+    // A line light's other end, and w 1 when it is one (PointLight::line).
+    float transientTo_[kMaxTransientLights * 4] = {};
     uint32_t transientCount_ = 0;
     bgfx::UniformHandle uTransientAt_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uTransientColour_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uTransientTo_ = BGFX_INVALID_HANDLE;
 
     bgfx::TextureHandle palette_ = BGFX_INVALID_HANDLE;
     std::vector<float> paletteCpu_;  // kMaxPaletteRows x kMaxBones x 12
@@ -728,12 +749,9 @@ private:
     bgfx::VertexBufferHandle screenVb_ = BGFX_INVALID_HANDLE;
     bgfx::VertexLayout screenLayout_;
 
-    // A line light's other end, and w 1 when it is one (PointLight::line).
-    float transientTo_[kMaxTransientLights * 4] = {};
     Effects effects_;
 
     std::vector<Batch> batches_;
-    bgfx::UniformHandle uTransientTo_ = BGFX_INVALID_HANDLE;
     std::vector<Batch> casterBatches_;
     std::vector<Batch> fadeBatches_;
 

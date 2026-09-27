@@ -84,6 +84,12 @@ potion bar, the level-up that rises and sounds, the monster's health bar and the
 head, the hover ring, the Budge Dragon's breath and dust, experience paying double and a
 monster leaving fewer things.
 
+**And the vault**, 2026-09-24: Baz's eight by fifteen and the Zen beside it (`sim/vault.h`,
+`game/ui/chest.cpp`), opened by walking to him as a counter is, dragged both ways, and kept for
+the account in `vault.json` beside the character's save. The coin buttons open MU's box to
+type the sum in (`game/ui/amount.cpp`, the window's first text entry), and the lock and the fee
+are left out. A townsperson under the pointer is named over his head.
+
 ## What is not in the tree
 
 The honest gap list, checked against the code rather than remembered:
@@ -102,7 +108,7 @@ The honest gap list, checked against the code rather than remembered:
 - **A monster swings one clip and casts nothing.** `play.cpp:294` takes Attack 1 and never
   Attack 2, and `attack_skill` reaches `content::MonsterKind` and is spent nowhere, so the
   Lich's Meteorite is a blow out of thin air. Sprint 11.
-- **Drawn dim, as MU2 draws them**: the chat, the menu, the chaos machine, the vault.
+- **Drawn dim, as MU2 draws them**: the chat, the menu, the chaos machine.
 - **Not built**: refining with jewels (the tables are transcribed for the tooltips only), luck
   and options on drops, the shield and ability bars, the buff strip, the fan.
 
@@ -121,7 +127,7 @@ working rules do not change.
 
 Sprint 10 is the stretch above and needs no file beyond this one. After 13 the backlog is
 `PLAN.md`'s: refining and the chaos machine, summoning, Devias, the single player events worth
-keeping, the vault, luck and options on drops.
+keeping, luck and options on drops.
 
 **The order, and why.** 11 first, and before 9, because the fight is what the game is and the
 screen is three days behind the sim on it: the Lich has been hitting the hero from four tiles

@@ -240,7 +240,8 @@ constexpr float kMoneyFrom = 18.0f + 20.0f + 6.0f;
 constexpr float kMoneySize = 9.5f;
 }  // namespace
 
-void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money) {
+void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money,
+             float valueRight) {
     const float k = scale();
     const gfx::Face& face = canvas.face();
     sheet::band(canvas, scaled(x, y, {0.0f, kFootRule, kWidth, kHeight - kFootRule}), false,
@@ -252,7 +253,7 @@ void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money)
     sheet::kicker(canvas, x + kMoneyFrom * k, centredBaseline(face, strip, 8.0f * k), 8.0f * k,
                   "ZEN");
     const float size = kMoneySize * k;
-    sheet::ranged(canvas, x + kValueRight * k, centredBaseline(face, strip, size), size,
+    sheet::ranged(canvas, x + valueRight * k, centredBaseline(face, strip, size), size,
                   moneyColour(money), commas(money));
 }
 

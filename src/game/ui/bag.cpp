@@ -5,6 +5,7 @@
 
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 namespace {
@@ -102,6 +103,10 @@ constexpr uint32_t kGhostUnder = gfx::rgba(0.90f, 0.86f, 0.76f, 0.22f);
 // shade transparent -- the piece, the slot's ghost under it, the cell under that -- while a
 // thing in the satchel, which has no ghost beneath it and nothing to say, stays solid.
 constexpr float kWornFoot = 203.0f;
+// The foot's hammer: MU's inventory repair button (CNewUIMyInventory, `IMAGE_INVENTORY_REPAIR_BTN`),
+// cut to the foot's strip as the vault's coin buttons are and set against the wells' right edge,
+// with the Zen figure ranged against it.
+constexpr Box kHammer{panel::kWellRight - 30.0f, panel::kFootTop + 1.0f, 30.0f, 24.0f};
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 
 // The Zen strip is drawn by `panel::zenFoot`, on the panel's shared foot rule.
@@ -112,13 +117,16 @@ constexpr float kTipSize = 8.0f;
 
 }  // namespace
 
+const char* ghostArt(int slot) { return ghostFor(slot); }
+
 bool Bag::Contents::operator==(const Contents& o) const {
     return version == o.version && money == o.money && dragging == o.dragging &&
            (dragging < 0 || (dragX == o.dragX && dragY == o.dragY)) && hovered == o.hovered &&
            (hovered < 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            closing == o.closing && overClose == o.overClose && level == o.level && strength == o.strength &&
            agility == o.agility && vitality == o.vitality && energy == o.energy && x == o.x &&
-           y == o.y && scale == o.scale && picture == o.picture;
+           y == o.y && scale == o.scale && picture == o.picture && mending == o.mending &&
+           canMend == o.canMend && overHammer == o.overHammer && pressingHammer == o.pressingHammer;
 }
 
 Box Bag::slotBox(int slot) {
@@ -181,9 +189,16 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
 
     const Box cross = panel::frameClose();
     overClose_ = inside && cross.has(ux, uy);
+    overHammer_ = inside && kHammer.has(ux, uy);
     if (pointer.pressed && inside) {
         if (cross.has(ux, uy)) {
             closing_ = true;
+        } else if (overHammer_) {
+            pressingHammer_ = true;
+        } else if (hovered_ >= 0 && mending_) {
+            // Repair mode: the click mends it where it lies and lifts nothing
+            // (CNewUIMyInventory's REPAIR_MODE_ON branch, SendRepairItemRequest).
+            if (out) out->repair = hovered_;
         } else if (hovered_ >= 0) {
             // The item covering the cell: a click on the blade picks up the sword.
             dragging_ = hovered_;
@@ -195,6 +210,10 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     if (pointer.released) {
         if (closing_ && inside && cross.has(ux, uy) && out) out->close = true;
         closing_ = false;
+        // On release, as every button in this interface: the realm and the desk decide whether
+        // the mode may turn on, and a refusal is heard there.
+        if (pressingHammer_ && overHammer_ && out) out->toggleMending = true;
+        pressingHammer_ = false;
         if (dragging_ >= 0 && out) {
             const int from = dragging_;
             if (!inside) {
@@ -202,8 +221,16 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                 out->outsideX = pointer.x;
                 out->outsideY = pointer.y;
             } else if (cell >= 0 && cell != from) {
-                out->moveFrom = from;
-                out->moveTo = cell;
+                // ApplyJewels first, as HandlePickedItemPlacement asks it: over a thing the
+                // jewel goes on, the drop is that and never a swap.
+                const int under = bag.holder(tables, cell);
+                if (under >= 0 && under != from && sim::refinable(tables, bag[from], bag[under])) {
+                    out->refineJewel = from;
+                    out->refineTarget = under;
+                } else {
+                    out->moveFrom = from;
+                    out->moveTo = cell;
+                }
             }
         }
         dragging_ = -1;
@@ -224,7 +251,7 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         // adds its own air on top).
         box = wellOf(box, sim::wearable(slot)).grown(sim::wearable(slot) ? -3.0f : -2.0f);
         standing_.push_back({what.item, box, what.refinement,
-                             slot == hovered_ && dragging_ < 0});
+                             slot == hovered_ && dragging_ < 0, what.excellent != 0});
     }
     if (stage) stage->stand(standing_, panel::kWidth, panel::kHeight);
 
@@ -252,6 +279,12 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
     now_.y = y_;
     now_.scale = k;
     now_.picture = stage && stage->picture().valid() ? stage->picture().handle.idx : 0xFFFF;
+    now_.mending = mending_;
+    // The foot's hammer is the SELF repair button: lit from level 50 only, even at a counter,
+    // where the shelf has hammers of its own (the user, 2026-09-24).
+    now_.canMend = realm.selfMending();
+    now_.overHammer = overHammer_;
+    now_.pressingHammer = pressingHammer_;
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild(realm, stage);
@@ -297,6 +330,28 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     }
     // The satchel: one ruled block, eight by eight, no air between the cells.
     panel::grid(canvas_, x, y, kOriginX, kOriginY, sim::kBagColumns, sim::kBagRows);
+    // **Wear, as a wash under the piece.** NewUIMyInventory.cpp:1313-1322 lays the band's colour
+    // over a worn slot at a quarter strength -- yellow at half, orange at three tenths,
+    // red-orange at a fifth, red broken -- and CNewUIInventoryCtrl colours a bag item by the same
+    // four (ITEM_COLOR_DURABILITY_*). Both here are the cell's wash, under the picture.
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        const sim::Held& held = bag[slot];
+        if (held.empty()) continue;
+        const content::ItemRow& row = tables.items[size_t(held.item)];
+        if (!sim::wears(row)) continue;
+        const sim::Worn band =
+            sim::wornBand(held.durability, sim::maximumDurability(row, held));
+        if (band == sim::Worn::Fine) continue;
+        // Two tables, as MuMain has two: the worn slot's at a quarter (0.15 and 0.5 for the
+        // middle bands), the bag cell's at 0.4 (0.33 and 0.66) -- NewUIInventoryCtrl.cpp:983-998.
+        const bool worn = sim::wearable(slot);
+        const float g = band == sim::Worn::Broken  ? 0.0f
+                        : band == sim::Worn::Fifth ? (worn ? 0.15f : 0.33f)
+                        : band == sim::Worn::Third ? (worn ? 0.5f : 0.66f)
+                                                   : 1.0f;
+        const Box cell = wellOf(itemBox(tables, slot, held), worn);
+        canvas_.rect(panel::scaled(x, y, cell), gfx::rgba(1.0f, g, 0.0f, worn ? 0.25f : 0.4f));
+    }
     // And the thing under the pointer lit over its whole footprint, not over the one cell it is
     // recorded in: a shield is two cells by two and it is the shield that is hovered.
     if (hovered_ >= 0 && dragging_ < 0 && !bag[hovered_].empty()) {
@@ -305,7 +360,23 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     }
 
     // The foot: the panel's own, with the hero's Zen in it.
-    panel::zenFoot(canvas_, arts, x, y, realm.money());
+    panel::zenFoot(canvas_, arts, x, y, realm.money(), kHammer.x - 6.0f);
+    {
+        // The hammer: the same painted hammer as Hanzo's Repair. Held down while repair mode is
+        // on and ringed in gilt, as the shelf's is; drawn dark below kSelfRepairLevel, where it
+        // does nothing away from a blacksmith.
+        const Box to = panel::scaled(x, y, kHammer);
+        const gfx::Art& art = arts.get("shop_repair");
+        const bool down = pressingHammer_ || (mending_ && now_.canMend);
+        const uint32_t ink = !now_.canMend      ? gfx::rgba(0.40f, 0.40f, 0.42f, 0.85f)
+                             : overHammer_ && !down ? gfx::rgba(1.0f, 1.0f, 1.0f, 1.0f)
+                                                    : gfx::rgba(0.86f, 0.86f, 0.86f, 1.0f);
+        if (art.valid()) canvas_.region(art, to, panel::buttonState(art, down), ink);
+        if (mending_ && now_.canMend) {
+            canvas_.outline(to.grown(1.5f * k), std::max(1.0f, 1.5f * k),
+                            tip::colourOf(tip::Tone::Yellow));
+        }
+    }
 
     // The cell a dragged thing would land on: blue where the move would be taken and red where
     // not, asked of the realm's own gate. Bag.Target.
@@ -322,8 +393,17 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
                 panel::cell(canvas_, x, y, wellOf(slotBox(at), sim::wearable(at)),
                             ok ? sheet::Cell::Fits : sheet::Cell::Blocked);
             };
-            if (count == 0) light(cell, false);
-            for (int i = 0; i < count; ++i) light(cells[i], fits);
+            // A jewel over a thing it goes on lights the thing, all of its cells, and not the
+            // jewel's own footprint: MuMain's CanUpgradeItem colour, MU2's Bag.Target.
+            const int under = bag.holder(tables, cell);
+            if (under >= 0 && under != dragging_ && sim::refinable(tables, moving, bag[under])) {
+                const content::ItemRow& target = tables.items[size_t(bag[under].item)];
+                const int covering = bag.covered(under, target.width, target.height, cells);
+                for (int i = 0; i < covering; ++i) light(cells[i], true);
+            } else {
+                if (count == 0) light(cell, false);
+                for (int i = 0; i < count; ++i) light(cells[i], fits);
+            }
         }
     }
 
@@ -370,10 +450,59 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         }
     }
 
+    // The hammer's card, kept short (the user, 2026-09-24: the first one said too much). Locked:
+    // when it opens and where to go until then. Open: the price rule and what his worn gear
+    // would cost him now.
+    if (overHammer_ && dragging_ < 0) {
+        const bool open = now_.canMend;
+        tip::Sheet card;
+        card.name = open ? "Self repair (L)" : "Self repair";
+        card.nameTone = open ? tip::Tone::White : tip::Tone::Gray;
+        card.base = open ? "2.5X THE BLACKSMITH'S PRICE" : "UNLOCKS AT LEVEL 50";
+        card.wide = 220.0f;
+        if (open) {
+            int64_t own = 0;
+            for (int slot = 0; slot < sim::kSlots; ++slot) {
+                const sim::Held& h = bag[slot];
+                if (h.empty()) continue;
+                own += sim::repairPrice(tables.items[size_t(h.item)], h.refinement, h.skill,
+                                        h.durability, false);
+            }
+            tip::Section cost;
+            cost.rows.push_back(own > 0
+                ? tip::Row{"Your gear", {tip::Value{panel::commas(own) + " Zen",
+                                                    realm.money() >= own ? tip::Tone::Yellow
+                                                                         : tip::Tone::Red}},
+                           "", tip::Tone::White}
+                : tip::Row{"", {}, "Nothing needs repair", tip::Tone::Gray});
+            card.sections.push_back(cost);
+        } else {
+            card.note = "Until then, repair at Hanzo";
+            card.noteTone = tip::Tone::Gray;
+        }
+        const Box over = panel::scaled(x, y, kHammer);
+        tip::draw(tip_, card, over.midX(), over.y, screenW_, screenH_);
+    }
+
     // The tip, last, and never during a drag. The card carries the thing's own picture, cut
     // out of the window's stage at its own footprint -- the same region the drag lifts.
     if (dragging_ < 0 && hovered_ >= 0 && !bag[hovered_].empty()) {
         tip::Sheet sheet = describe(tables, bag[hovered_], realm.wearer(), bag);
+        // In repair mode the foot says what mending it costs: RenderRepairInfo's `Repairing
+        // cost: %s` (GT 238), in the colour that says whether he can pay.
+        if (mending_) {
+            const int64_t cost = realm.repairCost(hovered_);
+            if (cost > 0) {
+                sheet.price = "Repair " + panel::commas(cost) + " Zen";
+                sheet.priceTone = realm.money() >= cost ? tip::Tone::Yellow : tip::Tone::Red;
+            } else if (sim::wears(tables.items[size_t(bag[hovered_].item)])) {
+                sheet.price = "Whole";
+                sheet.priceTone = tip::Tone::Gray;
+            } else {
+                sheet.price = "Cannot Repair";  // GT 926
+                sheet.priceTone = tip::Tone::Red;
+            }
+        }
         if (tipStage_) {
             tip::stand(*tipStage_, bag[hovered_].item, bag[hovered_].refinement, sheet);
         }

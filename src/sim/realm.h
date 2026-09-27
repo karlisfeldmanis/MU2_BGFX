@@ -34,6 +34,7 @@
 #include "sim/route.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
+#include "sim/vault.h"
 
 namespace mu::sim {
 
@@ -64,7 +65,8 @@ enum class What : uint8_t {
     Gained,    // a: experience, b: the total
     Levelled,  // a: the new level, b: points in hand
     Drank,     // a potion's whole worth begun: a: the total, b: 1 for mana, 0 for health
-    Served,    // a merchant's counter opened: a: the townsperson's index, b: MU's NPC number
+    Served,    // a merchant's counter or the vault opened: a: the townsperson's index, b: MU's
+               // NPC number
     Bought,    // a: the item row, b: the price, c: the bag slot
     Sold,      // a: the item row, b: what was paid, c: the bag slot it left
     Dropped,   // something left on the ground: a: its id, b: the item row or -1 for Zen,
@@ -76,6 +78,9 @@ enum class What : uint8_t {
     Shoved,    // the knock: a: the column it was put on, b: the row
     Learned,   // a: the skill's number
     Posed,     // a: the Pose now held (Standing when he gets up), b: the perch's index or -1
+    Worn,      // a worn piece lost a whole point: a: its slot, b: what is left, c: its maximum
+    Repaired,  // a: the slot, or -1 for all of them, b: the Zen paid, c: pieces put right
+    Refined,   // a jewel spent on a thing: a: its slot, b: the plus it had, c: the plus it has
 };
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
@@ -109,6 +114,10 @@ struct Happening {
     // alone and nothing rolls one yet -- and said anyway, so the top step of the drawing's
     // ramp is wired the day an item does. It takes no draw, so no seeded log moves.
     bool critical = false;
+    // And an excellent hit's: 1.2 x the top of the band, off an excellent weapon's sixth option.
+    bool excellent = false;
+    // A `Hit` that is his armour's reflect, not a blow he threw: no swing, no clip.
+    bool reflected = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;
@@ -147,6 +156,13 @@ struct Body {
     // And the shield's own share of `wornDefense`, which is what Defense's guard is raised on.
     int32_t shieldDefense = 0;
     int32_t weaponBonus = 0;
+    // How many lucky things he wears, each 5% of critical chance (sim::kLuckCritical).
+    int32_t luckyWorn = 0;
+    // And what his excellent pieces come to (sim::Excellence), summed in rearm.
+    Excellence excel;
+    // The share of the weapon's band its wear takes, 0 to 0.5, and 1 broken (sim/wear.h). The
+    // defence's cut is taken piece by piece inside `wornDefense`.
+    float weaponCut = 0.0f;
 
     // Tiles, and a tile's centre is its integer coordinate -- MU2's own reckoning
     // (Things.cs:71-82, `Column => (int)MathF.Round(X)`). The world's metres and the negation
@@ -356,8 +372,9 @@ public:
     Wearer wearer() const;
     // A thing put straight into a slot, with no gate but the slot being free: the cradle's
     // axe, and a purchase into the first place it fits. -1 for anywhere in the bag. The slot
-    // it went to, or -1 when there was nowhere.
-    int give(int32_t item, int slot = -1, int refinement = 0, int durability = 0);
+    // it went to, or -1 when there was nowhere. A durability of -1 is whole at its plus.
+    int give(int32_t item, int slot = -1, int refinement = 0, int durability = -1,
+             bool luck = false, int option = 0, uint8_t excellent = 0);
     // A drag from one slot to another, equipping and unequipping included. Refused, whole,
     // where `movable` says no -- the same answer the window colours the cell by.
     bool moveItem(int from, int to);
@@ -365,6 +382,11 @@ public:
     // is nothing drinkable or the half-second cooldown has not run (RecoverConsumeHandler's
     // CooldownTime); the heal arrives over the next second in three instalments.
     bool useItem(int slot);
+    // A jewel let go over a thing: the Bless or the Soul, from a bag slot, onto a thing carried
+    // or worn. Refused, whole and silent, where `refinable` says no. Otherwise the jewel is
+    // spent whatever the roll gives, and the thing comes back at its new plus: OpenMU's
+    // UpgradeItemLevelJewelConsumeHandlerPlugIn. Says What::Refined.
+    bool refine(int jewelSlot, int targetSlot);
     // Zen in and out, for the merchants. `pay` refuses, whole, what he cannot afford.
     void earn(int64_t zen) { money_ += zen; }
     bool pay(int64_t zen);
@@ -383,6 +405,10 @@ public:
     // step clears the What::Dropped it says before the showing could read it. What rings the
     // thing landing is the caller, off this id (Play::discard).
     uint32_t discard(int slot);
+    // The bench's, and no rule of MU's: a thing laid on the ground beside him as a kill's drop
+    // lies, from nobody's bag, for looking at a drop Lorencia never leaves. Its id, or 0.
+    uint32_t lay(int32_t item, int refinement = 0, bool luck = false, int option = 0,
+                 uint8_t excellent = 0);
 
     // ---- the merchants (sprint 7) ---------------------------------------------------------
     // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a
@@ -399,6 +425,56 @@ public:
     // Whether he is close enough to be served by this townsperson right now. Asked again on
     // every purchase and sale, not once when the counter opened.
     bool serving(int folk) const;
+
+    // ---- wear and the repair (sim/wear.h) -------------------------------------------------
+    // Whether the open counter mends: Hanzo's or Eo's, and he is still in reach of it.
+    bool mending() const;
+    // Whether he may mend his own gear where he stands: alive and at kSelfRepairLevel or above.
+    bool selfMending() const;
+    // What putting one carried or worn thing back to full costs, or 0 for a thing that wears
+    // not or is whole: the counter's price at a counter that mends, else his own, two and a half
+    // times it. What `repair` would take, to the Zen.
+    int64_t repairCost(int slot) const;
+    // And every piece at once, worn and in the bag: the strip under Hanzo's shelf. MuMain's
+    // RepairAllGold sums both, and so does this, so the figure drawn is the figure paid --
+    // OpenMU mends the worn ones only and says the client is wrong to show the bag's; the
+    // user's rule is that the window is a mirror, so the two cannot disagree here.
+    int64_t repairAllCost() const;
+    // Put one back to full: at a counter that mends for its price, anywhere else by his own hand
+    // from kSelfRepairLevel (MuMain's inventory repair). Refused, whole and silent, with neither,
+    // nothing to mend or not the Zen for it.
+    bool repair(int slot);
+    // Every piece, in slot order -- worn, then the bag -- as RepairAllItems walks, stopping at
+    // the first he cannot pay for. How many were put right. At a counter only: the inventory's
+    // repair in MuMain is one piece a click.
+    int repairAll();
+    // The fraction of a point a worn slot has lost and not yet shown: what the rate is proved
+    // by, since a whole point is two thousand health away.
+    double wearOwed(int slot) const { return slot >= 0 && slot < kWorn ? wearCarry_[slot] : 0.0; }
+
+    // ---- the vault ------------------------------------------------------------------------
+    // Baz's, opened by a Talk order arriving within `kCounter` of a vault keeper (NPC 240) and
+    // closed by any other order, as a counter is. The townsperson's index, or -1.
+    //
+    // The moves are asked between ticks, as a purchase is, and each is refused whole while the
+    // vault is shut, he has walked out of reach or he is dead. No swaps: a thing lands on a clear
+    // rectangle or not at all, which is what a drop between two windows in MU does too
+    // (CNewUIInventoryCtrl refuses a target that is not free).
+    int banking() const { return banking_; }
+    void closeVault() { banking_ = -1; }
+    const Vault& vault() const { return vault_; }
+    // Laid on the realm from the save, or emptied. Never refused: it is the account's.
+    void restoreVault(const Vault& saved) { vault_ = saved; }
+    // Bag to vault: a bag slot (never a worn one, as a sale is never a worn one) to a vault
+    // cell, or -1 for the first cell it fits. The cell, or -1 refused.
+    int deposit(int bagSlot, int cell = -1);
+    // Vault to bag: a cell to a bag slot, or -1 for the first slot it fits. The slot, or -1.
+    int withdraw(int cell, int bagSlot = -1);
+    // Inside the vault: from one cell to another, onto a clear rectangle.
+    bool rearrange(int from, int to);
+    // Zen across the counter, refused whole where there is not that much to move.
+    bool depositZen(int64_t zen);
+    bool withdrawZen(int64_t zen);
 
     // ---- the ground (sprint 7) ------------------------------------------------------------
     const std::vector<Lying>& lying() const { return lying_; }
@@ -461,6 +537,14 @@ private:
     void raiseBeast(Body& beast);
     void reviveHero();
     void rearm(Body& hero);
+    // A blow's wear on the player's gear: `took` the health a blow took off him, which wears one
+    // defending piece; `landed` a blow of his that did harm, which wears the weapon.
+    // Player.DecreaseItemDurabilityAfterHitAsync and DecreaseWeaponDurabilityAfterHitAsync.
+    void wearOnTaken(int took);
+    void wearOnLanded();
+    // Takes `amount` off one worn slot, the fraction kept in `wearCarry_`, and re-reckons him
+    // when a whole point goes.
+    void wearDown(int slot, double amount);
     void leave(const Body& dead, const Body& killer);
     std::pair<int, int> clearing(int column, int row) const;
     bool bare(int column, int row) const;
@@ -510,8 +594,19 @@ private:
     uint32_t nextId_ = 1;
 
     Satchel bag_;
+    // Wear's own dice, off the realm's seed: which piece a blow wears is a draw, and taking it
+    // from `dice_` would move every roll after it, so a seeded fight would change for a rule
+    // that decides nothing in it.
+    Random wearDice_{0};
+    // The fraction of a point each worn slot has lost and not yet shown, beside the item it
+    // was lost by: a piece moved out and back starts its fraction again, which is under a point.
+    double wearCarry_[kWorn] = {};
+    int32_t wearItem_[kWorn] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     int64_t money_ = 0;
     int trading_ = -1;
+    int banking_ = -1;
+    Vault vault_;
+    bool banked() const { return banking_ >= 0 && serving(banking_); }
     std::vector<Lying> lying_;
     int64_t potionUntil_ = 0;
     // A potion's worth arrives in three instalments, 20% 60% 20% at 200, 600 and 200 ms

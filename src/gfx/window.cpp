@@ -19,6 +19,33 @@ double s_scroll = 0.0;
 
 void onScroll(GLFWwindow*, double, double y) { s_scroll += y; }
 
+// And the typing, the same way: the characters and the three editing keys, drained by the pump.
+std::string s_typed;
+int s_backspaces = 0;
+bool s_entered = false, s_escaped = false;
+
+void onChar(GLFWwindow*, unsigned int code) {
+    // As UTF-8, so a box that takes a word later has nothing to change here.
+    if (code < 0x80) {
+        s_typed += char(code);
+    } else if (code < 0x800) {
+        s_typed += char(0xC0 | (code >> 6));
+        s_typed += char(0x80 | (code & 0x3F));
+    } else if (code < 0x10000) {
+        s_typed += char(0xE0 | (code >> 12));
+        s_typed += char(0x80 | ((code >> 6) & 0x3F));
+        s_typed += char(0x80 | (code & 0x3F));
+    }
+}
+
+void onKey(GLFWwindow*, int key, int, int action, int) {
+    if (action == GLFW_RELEASE) return;
+    if (key == GLFW_KEY_BACKSPACE) ++s_backspaces;  // press and repeat
+    if (action != GLFW_PRESS) return;
+    if (key == GLFW_KEY_ENTER || key == GLFW_KEY_KP_ENTER) s_entered = true;
+    if (key == GLFW_KEY_ESCAPE) s_escaped = true;
+}
+
 Callback g_callback;
 
 void onGlfwError(int code, const char* what) { core::logError("glfw %d: %s", code, what); }
@@ -56,6 +83,8 @@ bool Window::open(const WindowDesc& desc) {
     }
 
     glfwSetScrollCallback(handle_, onScroll);
+    glfwSetCharCallback(handle_, onChar);
+    glfwSetKeyCallback(handle_, onKey);
 
     // MU's own pointer is drawn into the picture (game/cursor.h), and the real one hidden
     // underneath: two of them a few pixels apart is worse than either. MU2's own remark on
@@ -152,7 +181,10 @@ bool Window::pump() {
                                              {GLFW_KEY_3, -1},         {GLFW_KEY_4, -1},
                                              {GLFW_KEY_5, -1},         {GLFW_KEY_Q, -1},
                                              {GLFW_KEY_W, -1},         {GLFW_KEY_E, -1},
-                                             {GLFW_KEY_R, -1},         {GLFW_KEY_T, -1}};
+                                             {GLFW_KEY_R, -1},         {GLFW_KEY_T, -1},
+                                             {GLFW_KEY_L, -1}};
+    shift_ = glfwGetKey(handle_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+             glfwGetKey(handle_, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
     for (size_t i = 0; i < size_t(Key::Count); ++i) {
         bool down = false;
         for (int k : keys[i]) {
@@ -186,6 +218,17 @@ bool Window::pump() {
     hadPointer_ = true;
     scroll_ = float(s_scroll);
     s_scroll = 0.0;
+    typed_.swap(s_typed);
+    s_typed.clear();
+    backspaces_ = s_backspaces;
+    s_backspaces = 0;
+    entered_ = s_entered;
+    escaped_ = s_escaped;
+    s_entered = s_escaped = false;
+    // An Escape that lands while a box is open belongs to the box, until the key is let go.
+    const bool escapeDown = glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+    if (typing_ && (escaped_ || escapeDown)) escapeSwallowed_ = true;
+    if (!escapeDown) escapeSwallowed_ = false;
 
     int w = 0, h = 0;
     glfwGetFramebufferSize(handle_, &w, &h);
@@ -223,7 +266,7 @@ void Window::pointer(float* x, float* y) const {
 }
 
 bool Window::escapePressed() const {
-    return glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+    return !typing_ && !escapeSwallowed_ && glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
 }
 
 }  // namespace mu::gfx

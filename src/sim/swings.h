@@ -47,8 +47,9 @@ float attackSpeedStat(Kin kin, int agility, const content::Arm* right, const con
 // Milliseconds between two blows, or 0 when the tables cannot say -- in which case the caller
 // keeps whatever placeholder it had rather than being handed an interval invented out of no
 // data.
+// `extraSpeed` is attack speed from elsewhere: an excellent weapon's +7 (Stats.AttackSpeedAny).
 int swingMilliseconds(const content::Tables& tables, Kin kin, int agility,
-                      const content::Arm* right, const content::Arm* left);
+                      const content::Arm* right, const content::Arm* left, int extraSpeed = 0);
 
 // And that in ticks, as MU2's realm converts every delay: `max(1, ceil(ms / 50))`. Rounding UP
 // rather than to nearest, because a swing the body has not finished is a swing cut short --

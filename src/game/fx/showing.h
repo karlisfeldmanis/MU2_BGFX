@@ -26,7 +26,9 @@ namespace mu::game {
 enum class Mark : uint8_t {
     Swing,     // his own weapon, bone
     Skill,     // a skill's blow, amber -- heavier, and 2-5 of them from an area skill
-    Critical,  // the top of the band, gold. Unreachable until an item rolls luck
+    Critical,  // the top of the band, gold
+    Excellent, // an excellent hit, MuMain's DT_EXCELLENT green (0, 1, 0.6), at a critical's size
+    Reflected, // what his armour sent back, MuMain's DT_MIRROR magenta (1, 0, 1)
     Taken,     // a blow on him, MU's red
     Absorbed,  // what his shield ate of it, blue and small, beside the red
     Miss,      // the word
@@ -58,6 +60,10 @@ struct Cue {
     // what threw it. And the critical, which `Blow::critical` decides and no content reaches.
     int32_t skill = 0;
     bool critical = false;
+    // An excellent hit, and a blow his excellent armour sent back: MuMain's DT_EXCELLENT and
+    // DT_MIRROR, each its own colour (WSclient.cpp:3317-3347).
+    bool excellent = false;
+    bool reflected = false;
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the
     // fuses were not. See Showing::advance.

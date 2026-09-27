@@ -42,6 +42,9 @@ void PlayMode::readSave(Context& ctx) {
     if (!savePath_.empty()) {
         core::logf("save: %s %s", resumed_ ? "resuming from" : "a new character, saving to",
                    savePath_.c_str());
+        // The account's, so a new character opens it too -- and `--fresh` as well, which is a
+        // new character and not a new account.
+        game::loadVault(game::vaultPathBeside(savePath_), saved_);
     }
 }
 
@@ -53,6 +56,8 @@ void PlayMode::keep(Context& ctx) {
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 5; ++key) now.bar[key] = desk_.bound(key);
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
+    game::writeVault(game::vaultPathBeside(savePath_), *world_.played().realm().tables(),
+                     world_.played().realm().vault());
 }
 
 void PlayMode::openItems(Context& ctx) {
@@ -153,6 +158,10 @@ bool PlayMode::open(Context& ctx) {
                 game::resolveSave(*world_.played().realm().tables(), saved_);
                 world_.played().restore(saved_.hero);
             }
+            if (!savePath_.empty()) {
+                world_.played().restoreVault(
+                    game::resolveVault(*world_.played().realm().tables(), saved_));
+            }
             // What a blow looks like and where a click sent him. Not fatal: open() has
             // said why in the log.
             world_.played().showing().open(assets, ctx.textures);
@@ -245,10 +254,13 @@ void PlayMode::runScript(Context& ctx) {
             const std::string one = args.give.substr(from, comma - from);
             const size_t colon = one.find(':');
             if (!one.empty()) {
+                const size_t second =
+                    colon == std::string::npos ? std::string::npos : one.find(':', colon + 1);
                 world_.played().give(one.substr(0, colon),
                                      colon == std::string::npos
                                          ? 1
-                                         : std::atoi(one.c_str() + colon + 1));
+                                         : std::atoi(one.c_str() + colon + 1),
+                                     second == std::string::npos ? "" : one.substr(second + 1));
             }
             if (comma == std::string::npos) break;
             from = comma + 1;
@@ -488,6 +500,17 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // tooltip needs, since a click on an item in the bag picks it up instead of
             // describing it. A scripted click this frame replaces it, script() keeping the last.
             if (args.hoverX >= 0.0f) desk_.script(args.hoverX * w, args.hoverY * h, false, false);
+            // --lay: the bench's drops, on their frame, one after another as a kill's pile lands.
+            if (at.index == args.layFrame && world_.played().isOpen()) {
+                size_t from = 0;
+                while (from <= args.lay.size()) {
+                    const size_t comma = args.lay.find(',', from);
+                    const std::string one = args.lay.substr(from, comma - from);
+                    if (!one.empty()) world_.played().lay(one);
+                    if (comma == std::string::npos) break;
+                    from = comma + 1;
+                }
+            }
             for (const core::Args::UiClick& c : args.uiClicks) {
                 const bool drag = c.x2 != c.x || c.y2 != c.y;
                 const int last = c.frame + (drag ? 3 : 1);
@@ -497,7 +520,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 desk_.script((here ? c.x : c.x2) * w, (here ? c.y : c.y2) * h, here,
                              at.index == last, c.right);
             }
+            for (const auto& [frame, text] : args.uiTyped) {
+                if (at.index == frame) desk_.scriptType(text);
+            }
             desk_.update(float(deltaSeconds), ctx.window, world_.played(), pointerX, pointerY);
+            // A box that has the keyboard has Escape too, which otherwise quits.
+            ctx.window.setTyping(desk_.typing());
             // And the pictures for whatever the windows now hold: MU2's Panel.Repaint,
             // which redraws a stage only when what stands on it changed or turns.
             desk_.photograph(ctx.renderer, deltaSeconds);
@@ -553,6 +581,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // And what is burning and MOVING, which the lamps' static grid cannot hold: a
     // Lich's meteor lights the ground it is falling towards. Handed over every frame,
     // including the frame it becomes none, which is what clears it.
+    // And after them, in what slots are left, the light a +7 or +9 hero carries at night
+    // (fx/gleam.h; ours, not MU's).
     {
         gfx::PointLight falling[gfx::Renderer::kMaxTransientLights];
         uint32_t count =
@@ -573,11 +603,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         float proj[16];
         float viewProj[16];
         ctx.renderer.cameraMatrices(eye, view, proj);
-    // And after them, in what slots are left, the light a +7 or +9 hero carries at night
-    // (fx/gleam.h; ours, not MU's).
         bx::mtxMul(viewProj, view, proj);
         world_.sway().update(float(deltaSeconds), args.cullChunks ? viewProj : nullptr,
                              ctx.renderer, world_.town());
+        // The street lamps' lights, carried with their lanterns on the pose just taken.
+        if (args.lampsOn) world_.lamps().follow(world_.sway(), ctx.renderer);
     }
     // What rides those bones, on this frame's pose: the fountain's spray and the
     // merchant animal's lanterns. See game/world/ornaments.h.
@@ -639,6 +669,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // RenderBoids ends each bird with RenderBodyShadow, laid on the terrain under it at a
     // fifth black (GOBoid.cpp). Here the sun's split carries it like any other caster.
     world_.boids().gather(townDrawables_);
+    if (casters) world_.boids().gather(townCasters_);
     if (world_.played().isOpen()) {
         float view[16];
         float proj[16];
@@ -654,7 +685,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
         // And the blood the blows have thrown, into the transparent pass. The figures
         // are not here any more: since the design page of 2026-09-23 they are drawn in
-    if (casters) world_.boids().gather(townCasters_);
         // a real face by the interface, over the world -- game/ui/tally.cpp, which
         // Desk::overhead above has just placed on this same camera.
         world_.played().showing().gather(ctx.renderer.effects());
@@ -663,6 +693,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().breath().gather(ctx.renderer.effects());
         world_.played().gatherMeteor(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
+        world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
+                                    daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         openItems(ctx);
@@ -737,7 +769,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // The tile the character stands on, over his head: the column and row `--at`
     // takes, so a screenshot of something to fix carries where it is. Under the
     // curtain, over the windows' bar -- it is a note on the picture, not a window.
-    if (ctx.overlay.ready() && world_.played().isOpen()) {
+    // Not while a box has the keyboard: the note sits over the middle of the screen, where the
+    // box does.
+    if (ctx.overlay.ready() && world_.played().isOpen() && !desk_.typing()) {
         float feetX = 0.0f, feetZ = 0.0f;
         world_.characterAt(&feetX, &feetZ);
         const float headY = world_.ground().heightAt(feetX, feetZ) + 2.0f;

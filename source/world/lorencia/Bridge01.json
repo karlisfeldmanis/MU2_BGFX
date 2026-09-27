@@ -211,7 +211,43 @@
         200,
         30
       ]
+    },
+    {
+      "kind": "lamp",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.3,
+      "high": 0.55,
+      "range_tiles": 3,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        30,
+        -200,
+        140
+      ]
+    },
+    {
+      "kind": "lamp",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.3,
+      "high": 0.55,
+      "range_tiles": 3,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        30,
+        200,
+        140
+      ]
     }
   ],
-  "emitters_from": "MoveObject's case for object 80, which calls CreateFire twice on a bridge and at the client's own offsets \u2014 so the two fires sit where the two lion heads are, one at each end of the span, two hundred units apart along it and ninety off the centre line. Thirty up, which is the mouth rather than the deck.\n\nThe numbers are Bonfire01's, because it is the same call: MU has one fire and varies only where it is put. What differs here is the count. Every other fire in Lorencia is one to a placement and this is the first type that carries two, which is the whole reason the emitter list is a list."
+  "emitters_from": "MoveObject's case for object 80, which calls CreateFire twice on a bridge and at the client's own offsets \u2014 so the two fires sit where the two lion heads are, one at each end of the span, two hundred units apart along it and ninety off the centre line. Thirty up, which is the mouth rather than the deck.\n\nThe numbers are Bonfire01's, because it is the same call: MU has one fire and varies only where it is put. What differs here is the count. Every other fire in Lorencia is one to a placement and this is the first type that carries two, which is the whole reason the emitter list is a list.\n\nThe other two are ours (2026-09-24, the user's call): a softer glow for each fire over the deck on its own side, 1.4 m up and 30 units off the centre line. The fires sit on the outer brackets 30 units up, below the 99-unit rail, so the deck cannot see them -- and since torches stopped lighting through what carries them (lights.sh), the deck took nothing from them at all, where MU's bridge warmed because MU lights its objects from the terrain's light under them, fires included. Hung over the deck and above the rail, the glow comes down from above with no hard edge at the rail's foot. Half the fire's brightness, three tiles."
 }

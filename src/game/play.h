@@ -21,9 +21,10 @@
 #include "game/fx/aura.h"
 #include "game/fx/bones.h"
 #include "game/fx/breath.h"
+#include "game/fx/forge.h"
 #include "game/fx/meteor.h"
-#include "game/fx/streak.h"
 #include "game/fx/gleam.h"
+#include "game/fx/streak.h"
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/fx/marker.h"
@@ -34,6 +35,8 @@
 #include "sim/realm.h"
 
 namespace mu::game {
+
+class Lamps;
 
 class Play {
 public:
@@ -127,6 +130,9 @@ public:
     // to refuse; see sim/items.h for the gates.
     bool moveItem(int from, int to);
     bool useItem(int slot);
+    // A jewel let go over a thing it goes on (sim::refinable). The realm rolls and spends it;
+    // this is heard and re-dressed. See Realm::refine.
+    bool refine(int jewelSlot, int targetSlot);
     // A drag let go over the world: the thing is thrown on the ground at his feet, where the
     // same Pick order that takes a kill's drop takes it back. The realm's to refuse, and the
     // figure is re-dressed when what was thrown came off him.
@@ -143,12 +149,28 @@ public:
     void redress();
     // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
     // `count` is a stack's size for a potion and ignored for anything else.
-    bool give(const std::string& name, int count);
+    // `extras` is `+N` for a plus, `L` for luck and `O` then a digit for the option: +3LO2.
+    bool give(const std::string& name, int count, const std::string& extras = "");
+    // --lay's: a thing laid on the ground beside him, heard landing. See Realm::lay.
+    bool lay(const std::string& name);
     // The open counter's requests: a purchase by shelf slot, a sale by bag slot, and walking
     // away. Each the realm's to refuse.
     bool buy(int shelfSlot);
     bool sell(int bagSlot);
+    // A mending counter's two: one thing by its slot, worn or in the bag, and everything.
+    // Heard as MU's SOUND_REPAIR when the realm takes the Zen.
+    bool repair(int slot);
+    bool repairAll();
     void closeTrade() { realm_.closeTrade(); }
+    // The vault, as the realm keeps it: each a request answered yes or no, logged and heard
+    // as the bag's own moves are.
+    bool deposit(int bagSlot, int cell);
+    bool withdraw(int cell, int bagSlot);
+    bool rearrange(int from, int to);
+    bool depositZen(int64_t zen);
+    bool withdrawZen(int64_t zen);
+    void closeVault() { realm_.closeVault(); }
+    void restoreVault(const sim::Vault& saved) { realm_.restoreVault(saved); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
     void earn(long long zen) { realm_.earn(zen); }
@@ -193,6 +215,9 @@ public:
     // placed or the point is behind the camera.
     bool crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,
                  float* y) const;
+    // And the same over a townsperson, by the tables' folk index: where the name goes.
+    bool folkCrownOf(int folk, const float* viewProj, int width, int height, float* x,
+                     float* y) const;
     // A body's health as the DRAWING has shown it: the realm's, with every blow still waiting
     // for its landing cue added back, and nought once it is dead. See Showing::owed.
     int32_t shownHealth(uint32_t id) const;
@@ -268,6 +293,19 @@ public:
     // computed -- see fx/streak.h, which is MU's own `CreateWeaponBlur` rung for a skill.
     Streak& streak() { return streak_; }
     void gatherStreak(gfx::Effects& effects) const { streak_.gather(effects); }
+    // A refined hero's gear as a light source: fx/gleam.h. Fed in `show`.
+    Gleam& gleam() { return gleam_; }
+    // Hanzo's forge: the sparks off his anvil and his hearth's smoke. Opened by the caller for
+    // the same reason as breath; fed in `smithy`.
+    Forge& forge() { return forge_; }
+    void gatherForge(gfx::Effects& effects, const float eye[3], const float near[3],
+                     float daylight) const {
+        forge_.gather(effects, eye, near, daylight);
+    }
+    // And the light off each smith's coals, into the lamps' static set: he never moves, so it
+    // belongs in the grid with the braziers rather than among the lights that travel. Called
+    // once, after the lamps open and before they are handed to the renderer.
+    void lightForges(Lamps& lamps) const;
     // Opens the sound and loads what this realm can say: the level-up, and every breed's
     // attack, death and wandering cries, found once per body as its clips are. Opened by the
     // caller after the showing, whose table the events are read from. Not fatal.
@@ -287,8 +325,6 @@ public:
     void gatherAura(gfx::Effects& effects, const float eye[3]) const {
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
-    // A refined hero's gear as a light source: fx/gleam.h. Fed in `show`.
-    Gleam& gleam() { return gleam_; }
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
@@ -450,8 +486,12 @@ private:
     Bones bones_;
     Meteor meteor_;
     Streak streak_;
+    Gleam gleam_;
+    Forge forge_;
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
+    // Hanzo's sparks and his hearth's smoke, read off his clip as hammer() reads its ring.
+    void smithy(float seconds);
     // The Giant's death sand, thrown between keys 8 and 9 of its death clip. Read per frame off
     // the clip's own clock, so it starts a third of the way down the fall and stops itself.
     void sandOnDeath();
@@ -473,6 +513,7 @@ private:
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept
         int click = -1, refused = -1, opened = -1;      // the windows
+        int repair = -1;                                // SOUND_REPAIR: a counter mended
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
@@ -480,7 +521,6 @@ private:
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
-    Gleam gleam_;
     // The hero's footsteps and the smith's hammer, after the clips have been advanced this
     // frame, since both are read off where a clip's clock stands.
     void steps();
@@ -532,6 +572,11 @@ private:
         // Hanzo, whose hammer is heard; and whether this blow has rung yet (see hammer()).
         bool smith = false;
         bool rung = false;
+        // What his forge is owed: sparks in reference frames of the blow, and the hearth's
+        // smoke and embers; and whether the blow is in its spark key. See smithy().
+        bool striking = false;
+        float sparksOwed = 0.0f;
+        float hearthOwed[2] = {0.0f, 0.0f};
         float lastClock = 0.0f;
         uint32_t dice = 1;
     };

@@ -25,6 +25,7 @@
 namespace mu::game {
 
 class Town;
+class Sway;
 
 class Lamps {
 public:
@@ -34,8 +35,16 @@ public:
               content::Textures& textures);
     void shutdown();
 
+    // One more light that never moves and is not the town's: Hanzo's forge, which stands with
+    // the townsfolk and not in the placements. Flickers between `low` and `high` like any lamp.
+    // Before light(), which is when the set goes to the renderer; after it, it is not lit.
+    void add(const gfx::PointLight& light, float low, float high, float hz, float smooth);
     // Hands the static set to the renderer, once a world is open. The grid is built there.
     void light(gfx::Renderer& renderer) const;
+    // The lights that hang off something swaying -- a street lamp's lantern -- carried along
+    // on this frame's pose. After Sway::update, which is what posed it; a lamp out of sight is
+    // left where it last was, since nothing it lights is on screen.
+    void follow(const Sway& sway, gfx::Renderer& renderer);
 
     // One frame: every flicker eased towards its target, the glows written into the town, the
     // lights' levels into the renderer, and the fires near `near` burning.
@@ -98,6 +107,17 @@ private:
     void spawn(const Fire& fire, uint8_t kind);
     uint32_t next();
     float unit();
+
+    // A light that rides a bone: which one in `set_`, which town instance carries it, the bone
+    // by name (found on the first pose), and the light's point in the model's bind space.
+    struct Rider {
+        uint32_t light = 0;
+        uint32_t instance = 0;
+        const char* boneName = "";
+        int bone = -2;  // -2 not looked for yet, -1 not on this rig
+        float model[3] = {0, 0, 0};
+    };
+    std::vector<Rider> riders_;
 
     std::vector<gfx::PointLight> set_;
     std::vector<Light> lights_;

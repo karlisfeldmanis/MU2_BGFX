@@ -77,6 +77,21 @@ public:
     // posed. What MU's `b->TransformPosition(BoneTransform[n], p, Position)` does, for what
     // rides a bone without being drawn as a mesh: a lantern's glow, a spray's puff.
     bool pointOn(int bone, const float local[3], float out[3]) const;
+    // Where `model` -- a point in the figure's own bind space, in metres -- stands in the
+    // world: the placement alone, with no bone. For what is part of the model and never moves
+    // with its clip, such as the coals in Hanzo's forge.
+    void pointInModel(const float model[3], float out[3]) const;
+    // Where `model`, a point in the figure's bind space in metres, has been carried by bone
+    // `bone`'s pose: what a vertex weighted wholly to that bone does. False when the bone was
+    // not posed. The street lamp's light rides its lantern this way (Lamps::follow).
+    bool pointOnBind(int bone, const float model[3], float out[3]) const;
+    // Plays its looping clip on a curve through the keys (Catmull-Rom) rather than on straight
+    // lines between them. **Ours, and for the town's swaying objects alone**: MU interpolates
+    // linearly, and on a lamp's 22 keys of pendulum the speed then jumps at every key, which
+    // reads as a shudder rather than a swing. The keys themselves are MU's and still passed
+    // through exactly; a figure's own clips are left linear, where a curve would round a
+    // blow's snap.
+    void smoothKeys(bool on) { smooth_ = on; }
 
     const FigureBody* body() const { return body_; }
     int clip() const { return clip_; }
@@ -95,6 +110,10 @@ public:
     // window into a clip, and so what sprint 6 will ask this for.
     float through() const;
     const float* position() const { return position_; }
+    // Whether what it holds is on its back this frame rather than in its hands: standing on a
+    // safe tile, on a rig with somewhere to sling it.
+    bool slung() const { return safe_ && body_ && body_->backBone >= 0; }
+    float scale() const { return scale_; }
     float radius() const;
 
 private:
@@ -110,9 +129,6 @@ private:
 
     const FigureBody* body_ = nullptr;
     float position_[3] = {0, 0, 0};
-    // Whether what it holds is on its back this frame rather than in its hands: standing on a
-    // safe tile, on a rig with somewhere to sling it.
-    bool slung() const { return safe_ && body_ && body_->backBone >= 0; }
     float yaw_ = 0.0f;
     float pitch_ = 0.0f, roll_ = 0.0f;
     float scale_ = 1.0f;
@@ -127,6 +143,7 @@ private:
     // would have started at a weight above zero and a longer one would have run past the end.
     float fadeLength_ = 0.0f;
     bool safe_ = false;  // standing on a safe tile: weapon on the back, unarmed stance
+    bool smooth_ = false;  // curved between keys; see smoothKeys
 };
 
 // Who is standing in the town: the fourteen figures MU's own placement list carries, a

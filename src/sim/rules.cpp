@@ -21,7 +21,17 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     // 2. A critical is the maximum exactly -- every bonus term that widens it belongs to a
     // later season. The draw happens only when there is a chance to draw against; hoisting it
     // out of that condition consumes a number and shifts every later draw in the run.
-    if (attacker.criticalChance > 0.0 && dice.nextBool(attacker.criticalChance)) {
+    // And the excellent hit after it, in OpenMU's order: both are drawn, the excellent wins
+    // (AttackableExtensions.cs:82-113), `baseMaxDamage * 1.2`. Drawn only when there is a chance,
+    // for the same reason.
+    const bool critical =
+        attacker.criticalChance > 0.0 && dice.nextBool(attacker.criticalChance);
+    const bool excellent =
+        attacker.excellentChance > 0.0 && dice.nextBool(attacker.excellentChance);
+    if (excellent) {
+        blow.excellent = true;
+        blow.rolled = int(double(attacker.maximumDamage) * 1.2);
+    } else if (critical) {
         blow.critical = true;
         blow.rolled = attacker.maximumDamage;
     } else {
@@ -39,6 +49,10 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
         blow.overrated = true;
         damage = int(double(damage) * 0.3);
     }
+
+    // 5b. What his excellent armour takes off, after the overrate and before the floor
+    // (AttackableExtensions.cs:210).
+    if (defender.damageDecrease > 0.0) damage -= int(double(damage) * defender.damageDecrease);
 
     // 6. The level floor, AFTER the subtraction. This is what stops a high-level monster being
     // harmless to a tank, and it would be invisible if it came first.
@@ -132,7 +146,20 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                              (strength + agility) *
                                  double(row.maximumDamagePerStrengthAndAgility)) +
                          arms.weaponMaximumDamage;
-    out->criticalChance = 0.0;  // the luck option is 0.75's only source, and it is sprint 7's
+    // The luck option is 0.75's only source: a twentieth for each lucky thing worn.
+    out->criticalChance = arms.criticalChance;
+    // The excellent options: damage + level / 20 a piece, then x1.02 a piece (the order is ours;
+    // OpenMU folds both into the same base attribute), the defence rate x1.1 a piece, and the
+    // two that live in a blow.
+    const Excellence& excel = arms.excel;
+    if (excel.levelPieces > 0 || excel.damageRate != 1.0) {
+        const int byLevel = excel.levelPieces * (level / 20);
+        out->minimumDamage = int(double(out->minimumDamage + byLevel) * excel.damageRate);
+        out->maximumDamage = int(double(out->maximumDamage + byLevel) * excel.damageRate);
+    }
+    out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
+    out->excellentChance = excel.excellentChance;
+    out->damageDecrease = excel.damageDecrease;
     out->damageTaken = 1.0;
 
     // Truncated, and it is a departure of the same kind as the two above: OpenMU keeps
@@ -141,6 +168,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // 35 + 2 + 75 for a knight -- and this is marked rather than argued.
     *maxHealth = int(double(row.baseHealth) + double(level) * double(row.healthPerLevel) +
                      double(points.vitality) * double(row.healthPerVitality));
+    // And the excellent armour's +4% a piece on top.
+    if (excel.healthRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.healthRate);
 }
 
 int maximumMana(Kin kin, int level, const HeroPoints& points) {

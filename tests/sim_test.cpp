@@ -24,6 +24,7 @@
 #include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/swings.h"
+#include "sim/wear.h"
 
 using namespace mu;
 
@@ -1288,6 +1289,478 @@ void testPerches(const content::Tables& tables) {
           "a box on a NoMove tile is refused where he stands");
 }
 
+// Baz's vault: opened by walking to him, shut by walking off; an item across and back, the Zen
+// across and back, and every refusal leaving both sides as they were.
+// Wear and the repair (sim/wear.h): the tables against MuMain's and OpenMU's own, the prices
+// worked by hand from the formula, a worn shield's cut on his block, the wear a real fight
+// leaves, and Hanzo putting it right.
+// The jewels on a thing: OpenMU's two handlers and MuMain's CanUpgradeItem ranges.
+void testRefine(const content::Tables& tables) {
+    std::printf("refine\n");
+    const int bless = tables.itemAt(14, 13), soul = tables.itemAt(14, 14);
+    const int chaos = tables.itemAt(12, 15), kris = tables.itemAt(0, 0);
+    const int arrows = tables.itemAt(4, 15), potion = tables.itemAt(14, 1);
+    check(bless >= 0 && soul >= 0 && chaos >= 0 && kris >= 0 && arrows >= 0 && potion >= 0,
+          "the rows the refining tests use exist");
+    if (bless < 0 || soul < 0 || chaos < 0 || kris < 0 || arrows < 0 || potion < 0) return;
+    const content::ItemRow& krisRow = tables.items[size_t(kris)];
+
+    const auto held = [](int item, int plus) { return sim::Held{int32_t(item), int16_t(plus), 1}; };
+    check(sim::refinable(tables, held(bless, 0), held(kris, 5)), "a Bless goes on a +5");
+    check(!sim::refinable(tables, held(bless, 0), held(kris, 6)), "and not on a +6");
+    check(sim::refinable(tables, held(soul, 0), held(kris, 8)), "a Soul goes on a +8");
+    check(!sim::refinable(tables, held(soul, 0), held(kris, 9)), "and not on a +9");
+    check(!sim::refinable(tables, held(chaos, 0), held(kris, 0)), "the Chaos goes on nothing");
+    check(!sim::refinable(tables, held(bless, 0), held(arrows, 0)), "nor a Bless on arrows");
+    check(!sim::refinable(tables, held(bless, 0), held(potion, 0)), "nor on a potion");
+    check(!sim::refinable(tables, held(bless, 0), held(soul, 0)), "nor on another jewel");
+    check(!sim::refinable(tables, held(kris, 0), held(kris, 0)), "and a Kris is no jewel");
+
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 138, 124), "a realm raises for the jewels");
+    // A Bless: always, and the thing comes back whole at its new plus.
+    const int blade = realm.give(kris, -1, 4, 3);
+    const int jewel = realm.give(bless);
+    check(blade >= 0 && jewel >= 0, "a worn-down +4 Kris and a Bless in the bag");
+    check(realm.refine(jewel, blade), "the Bless is taken");
+    checkEqual(realm.satchel()[blade].refinement, 5, "and the Kris is a +5");
+    checkEqual(realm.satchel()[blade].durability, sim::maximumDurability(krisRow, 5),
+               "and whole again at +5");
+    check(realm.satchel()[jewel].empty(), "and the jewel is spent");
+    const std::vector<sim::Happening>& said = realm.happenings();
+    check(!said.empty() && said.back().what == sim::What::Refined && said.back().b == 4 &&
+              said.back().c == 5,
+          "and the realm says it went from +4 to +5");
+    const int second = realm.give(bless);
+    check(realm.refine(second, blade), "a second Bless on the +5");
+    const int third = realm.give(bless);
+    check(!realm.refine(third, blade), "and a third refused on the +6");
+    check(!realm.satchel()[third].empty(), "which keeps its jewel");
+    check(!realm.refine(blade, third), "and a Kris cannot be put on a jewel");
+
+    // A Soul: half the time, and a miss below +7 takes one off. From +2 and +5, so that what
+    // comes back is never a +7 the realm would refuse to throw away again (sim::expensive).
+    int tries = 0, rose = 0, fellOne = 0, others = 0;
+    for (int i = 0; i < 2000; ++i) {
+        const int start = i % 2 == 0 ? 2 : 5;
+        const int at = realm.give(kris, -1, start);
+        const int gem = realm.give(soul);
+        if (at < 0 || gem < 0 || !realm.refine(gem, at)) break;
+        ++tries;
+        const int now = realm.satchel()[at].refinement;
+        if (now == start + 1) ++rose;
+        else if (now == start - 1) ++fellOne;
+        else ++others;
+        realm.discard(at);
+    }
+    checkEqual(tries, 2000, "two thousand Souls, each spent");
+    checkEqual(others, 0, "each one +1 or -1");
+    checkNear(double(rose) / tries, 0.5, 0.05, "and half of them rose");
+    check(fellOne > 0, "and a miss was seen");
+    // And from +7 a miss is a +0: a fresh realm a try, until one misses.
+    int reset = -1;
+    for (uint32_t seed = 100; seed < 164 && reset < 0; ++seed) {
+        sim::Realm once;
+        if (!once.raise(&tables, seed, 138, 124)) break;
+        const int at = once.give(kris, -1, 7);
+        if (!once.refine(once.give(soul), at)) break;
+        const int now = once.satchel()[at].refinement;
+        if (now != 8) reset = now;
+    }
+    checkEqual(reset, 0, "a Soul that misses on a +7 leaves a +0");
+
+    // Worn: taken where it is, and the hand is reckoned again.
+    sim::Realm armed;
+    check(armed.raise(&tables, 12, 138, 124), "a realm raises for a worn refinement");
+    check(armed.equip(tables.armNamed("Axe01"), -1, true), "an axe in his hand");
+    const int bonusBefore = armed.hero().weaponBonus;
+    const int gem = armed.give(bless);
+    check(armed.refine(gem, sim::kWeaponRight), "a Bless goes on the axe in his hand");
+    checkEqual(armed.satchel()[sim::kWeaponRight].refinement, 1, "which is a +1 now");
+    checkEqual(armed.hero().weaponBonus, sim::damageBonus(1), "and he hits for it");
+    check(armed.hero().weaponBonus > bonusBefore, "harder than before");
+    check(!armed.refine(sim::kWeaponRight, sim::kWorn + 20), "a worn slot is never the jewel");
+
+    // IsHighValueItem: a jewel and a +7 stay in the bag; a +6 and a potion may be thrown.
+    check(sim::expensive(tables, held(bless, 0)) && sim::expensive(tables, held(chaos, 0)),
+          "a jewel is too dear to throw away");
+    check(sim::expensive(tables, held(kris, 7)), "and so is a +7");
+    check(!sim::expensive(tables, held(kris, 6)), "but not a +6");
+    check(!sim::expensive(tables, held(potion, 0)), "nor a potion");
+    const int kept = armed.give(soul);
+    checkEqual(long(armed.discard(kept)), 0, "the realm refuses to throw a Soul on the ground");
+    check(!armed.satchel()[kept].empty(), "and it is still in the bag");
+    const int cheap = armed.give(kris, -1, 6);
+    check(armed.discard(cheap) != 0, "a +6 Kris is thrown down");
+}
+
+// Luck and the additional option: what they give worn, what they sell for, and the Soul.
+void testOptions(const content::Tables& tables) {
+    std::printf("options\n");
+    const int soul = tables.itemAt(14, 14), kris = tables.itemAt(0, 0);
+    const int shield = tables.itemAt(6, 0), arrows = tables.itemAt(4, 15);
+    const int leather = tables.itemNamed("ArmorMale01");
+    check(soul >= 0 && kris >= 0 && shield >= 0 && arrows >= 0 && leather >= 0,
+          "the rows the option tests use exist");
+    if (soul < 0 || kris < 0 || shield < 0 || arrows < 0 || leather < 0) return;
+    const content::ItemRow& krisRow = tables.items[size_t(kris)];
+    check(sim::takesOptions(krisRow) && !sim::takesOptions(tables.items[size_t(arrows)]),
+          "a Kris takes options and arrows do not");
+    checkEqual(sim::optionValue(krisRow, 3), 12, "a weapon's option at level 3 is +12");
+    checkEqual(sim::optionValue(tables.items[size_t(shield)], 3), 15, "a shield's is +15");
+
+    // The option on the axe in his hand: both ends of the band, four a level.
+    sim::Realm plain, optioned;
+    check(plain.raise(&tables, 21, 138, 124) && optioned.raise(&tables, 21, 138, 124),
+          "two realms raise for the options");
+    const int axe = tables.itemAt(1, 0);
+    plain.give(axe, sim::kWeaponRight);
+    optioned.give(axe, sim::kWeaponRight, 0, -1, false, 2);
+    checkEqual(optioned.hero().stats.minimumDamage - plain.hero().stats.minimumDamage, 8,
+               "an axe +Option at level 2 hits 8 harder at the bottom");
+    checkEqual(optioned.hero().stats.maximumDamage - plain.hero().stats.maximumDamage, 8,
+               "and at the top");
+    // On armour it is defence, which the class halves; on a shield it is the rate.
+    plain.give(leather, sim::kArmour);
+    optioned.give(leather, sim::kArmour, 0, -1, false, 2);
+    checkEqual(optioned.hero().wornDefense - plain.hero().wornDefense, 8,
+               "leather +Option at level 2 is 8 more defence worn");
+    plain.give(shield, sim::kWeaponLeft);
+    optioned.give(shield, sim::kWeaponLeft, 0, -1, false, 1);
+    checkEqual(optioned.hero().wornDefenseRate - plain.hero().wornDefenseRate, 5,
+               "a shield +Option at level 1 is 5 more defence rate");
+
+    // Luck: a twentieth of critical chance each, and none without it.
+    check(plain.hero().stats.criticalChance == 0.0, "nothing lucky, no critical chance");
+    sim::Realm lucky;
+    check(lucky.raise(&tables, 22, 138, 124), "a realm raises for the luck");
+    lucky.give(axe, sim::kWeaponRight, 0, -1, true);
+    lucky.give(leather, sim::kArmour, 0, -1, true);
+    checkNear(lucky.hero().stats.criticalChance, 0.10, 1e-9, "two lucky things worn are 10%");
+    lucky.give(kris, -1, 0, -1, true);
+    checkNear(lucky.hero().stats.criticalChance, 0.10, 1e-9, "and a lucky thing carried is not");
+
+    // ItemPriceCalculator: a quarter for luck, 60% for an option at +4, 0.7 x 2 at +8.
+    const int64_t base = sim::buyingPrice(krisRow, 0, 1, false);
+    // Compared as ratios: the price is rounded after the options, so the sums are a few Zen out.
+    checkNear(double(sim::buyingPrice(krisRow, 0, 1, false, 1, 1, true, 0)) / double(base), 1.25,
+              0.03, "luck is a quarter on the price");
+    checkNear(double(sim::buyingPrice(krisRow, 0, 1, false, 1, 1, false, 1)) / double(base), 1.6,
+              0.03, "an option at +4 is 60% on it");
+    checkNear(double(sim::buyingPrice(krisRow, 0, 1, false, 1, 1, false, 2)) / double(base), 2.4,
+              0.03, "and at +8, 0.7 x 2 more");
+
+    // The Soul on a lucky thing: three in four.
+    int rose = 0, tries = 0;
+    for (int i = 0; i < 2000; ++i) {
+        const int at = lucky.give(kris, -1, 2, -1, true);
+        const int gem = lucky.give(soul);
+        if (at < 0 || gem < 0 || !lucky.refine(gem, at)) break;
+        ++tries;
+        if (lucky.satchel()[at].refinement == 3) ++rose;
+        check(lucky.satchel()[at].luck, "the thing keeps its luck through a refinement");
+        lucky.discard(at);
+    }
+    checkEqual(tries, 2000, "two thousand Souls on lucky things");
+    checkNear(double(rose) / tries, 0.75, 0.05, "and three in four of them rose");
+
+    // Excellent: its lines, its price, and that it will not be thrown away.
+    check(sim::excellentLine(tables.items[size_t(leather)], 0).find("Zen") != std::string::npos,
+          "armour's first excellent option is the Zen");
+    check(sim::excellentLine(krisRow, 5).find("Excellent Damage") != std::string::npos,
+          "a weapon's sixth is the excellent damage rate");
+    check(sim::excellentLine(tables.items[size_t(soul)], 0).empty(), "a jewel has none");
+    const int64_t one = sim::buyingPrice(krisRow, 0, 1, false, 1, 1, false, 0, 1);
+    const int64_t two = sim::buyingPrice(krisRow, 0, 1, false, 1, 1, false, 0, 2);
+    check(one > base * 2, "an excellent Kris is priced 25 levels deeper and doubled");
+    checkNear(double(two) / double(one), 2.0, 0.03, "and a second option doubles it again");
+    sim::Held fine{int32_t(kris), 0, 20};
+    fine.excellent = 1;
+    check(sim::expensive(tables, fine), "an excellent thing is too dear to throw away");
+    check(sim::excellentCount(0x21) == 2, "two bits are two options");
+}
+
+// Being excellent, and each of its options, where the realm reckons them.
+void testExcellent(const content::Tables& tables) {
+    std::printf("excellent\n");
+    const int axe = tables.itemAt(1, 0), leather = tables.itemNamed("ArmorMale01");
+    const int shield = tables.itemAt(6, 0);
+    check(axe >= 0 && leather >= 0 && shield >= 0, "the rows the excellent tests use exist");
+    if (axe < 0 || leather < 0 || shield < 0) return;
+    const content::ItemRow& axeRow = tables.items[size_t(axe)];
+    const content::ItemRow& leatherRow = tables.items[size_t(leather)];
+    const content::ItemRow& shieldRow = tables.items[size_t(shield)];
+    checkEqual(sim::excellentDamage(axeRow),
+               axeRow.minimumDamage * 25 / std::max(1, axeRow.dropLevel) + 5,
+               "an excellent weapon's band rises by min x 25 / drop level + 5");
+    check(sim::excellentDefense(leatherRow) > 0 && sim::excellentDefense(shieldRow) == 0,
+          "armour's defence rises and a shield's does not");
+    check(sim::excellentBlock(shieldRow) > 0, "a shield's block rate rises instead");
+
+    // A fresh realm for each piece worn, against a plain one.
+    const auto wearing = [&](uint32_t seed, int item, int slot, uint8_t bits, sim::Realm& realm) {
+        check(realm.raise(&tables, seed, 138, 124), "a realm raises");
+        return realm.give(item, slot, 0, -1, false, 0, bits) == slot;
+    };
+    {
+        sim::Realm plain, fine;
+        wearing(31, axe, sim::kWeaponRight, 0, plain);
+        wearing(31, axe, sim::kWeaponRight, 1, fine);
+        checkEqual(fine.hero().stats.minimumDamage - plain.hero().stats.minimumDamage,
+                   sim::excellentDamage(axeRow), "his blow rises by exactly that at the bottom");
+        checkEqual(fine.hero().stats.maximumDamage - plain.hero().stats.maximumDamage,
+                   sim::excellentDamage(axeRow), "and at the top");
+        check(fine.satchel()[sim::kWeaponRight].durability ==
+                  plain.satchel()[sim::kWeaponRight].durability + 15,
+              "an excellent axe holds fifteen more durability");
+        check(sim::asks(axeRow, 0, true).strength > sim::asks(axeRow, 0).strength,
+              "and asks more strength, 25 drop levels deeper");
+    }
+    {
+        sim::Realm plain, fine;
+        wearing(32, leather, sim::kArmour, 0, plain);
+        wearing(32, leather, sim::kArmour, 1 << 5, fine);  // Max HP +4%
+        checkEqual(fine.hero().wornDefense - plain.hero().wornDefense,
+                   sim::excellentDefense(leatherRow), "excellent leather is worth its defence");
+        checkEqual(fine.hero().maxHealth, int(double(plain.hero().maxHealth) * 1.04),
+                   "and its sixth option is 4% more life");
+    }
+    {
+        sim::Realm plain, fine;
+        wearing(33, leather, sim::kArmour, 0, plain);
+        wearing(33, leather, sim::kArmour, (1 << 4) | (1 << 1), fine);  // mana +4%, rate x1.1
+        checkEqual(fine.hero().maxMana, int(double(plain.hero().maxMana) * 1.04),
+                   "its fifth is 4% more mana");
+        checkNear(fine.hero().stats.defenseRate, plain.hero().stats.defenseRate * 1.1f, 0.01,
+                  "and its second a tenth more defence rate");
+    }
+    {
+        sim::Realm fine;
+        wearing(34, leather, sim::kArmour, (1 << 0) | (1 << 2) | (1 << 3), fine);
+        checkNear(fine.hero().excel.zenRate, 1.4, 1e-9, "the first is 40% more Zen");
+        checkNear(fine.hero().excel.reflect, 0.05, 1e-9, "the third reflects a twentieth");
+        checkNear(fine.hero().stats.damageDecrease, 0.04, 1e-9, "the fourth takes 4% off");
+    }
+    {
+        sim::Realm plain, fine;
+        wearing(35, axe, sim::kWeaponRight, 0, plain);
+        wearing(35, axe, sim::kWeaponRight, (1 << 2) | (1 << 5), fine);  // speed, excellent hit
+        check(fine.hero().swingMs < plain.hero().swingMs, "a weapon's third swings faster");
+        checkNear(fine.hero().stats.excellentChance, 0.1, 1e-9,
+                  "and its sixth is a tenth of excellent hits");
+    }
+
+    // The excellent hit: 1.2 x the top of the band, over a critical.
+    sim::Fighter attacker, defender;
+    attacker.level = 10;
+    attacker.attackRate = 1000.0f;
+    attacker.minimumDamage = 10;
+    attacker.maximumDamage = 20;
+    attacker.criticalChance = 1.0;
+    attacker.excellentChance = 1.0;
+    sim::Random dice(7);
+    const sim::Blow blow = sim::strike(attacker, defender, dice);
+    check(blow.hit && blow.excellent && !blow.critical, "an excellent hit wins over a critical");
+    checkEqual(blow.rolled, 24, "and is 1.2 x the top of the band");
+    // And the damage decrease, after the overrate and before the floor.
+    attacker.excellentChance = 0.0;
+    attacker.criticalChance = 1.0;
+    defender.damageDecrease = 0.5;
+    const sim::Blow halved = sim::strike(attacker, defender, dice);
+    checkEqual(halved.damage, 10, "armour that takes half off leaves half of a 20");
+}
+
+void testWear(const content::Tables& tables) {
+    std::printf("wear\n");
+    const int shield = tables.itemAt(6, 0), leather = tables.itemNamed("ArmorMale01");
+    check(shield >= 0 && leather >= 0, "the Small Shield and the Leather Armour are cooked");
+    if (shield < 0 || leather < 0) return;
+    const content::ItemRow& small = tables.items[size_t(shield)];
+    const content::ItemRow& armour = tables.items[size_t(leather)];
+    checkEqual(small.durability, 22, "the Small Shield's row carries its 22");
+    check(sim::wears(small) && sim::wears(armour), "and both wear");
+    const int potion = tables.itemAt(14, 1);
+    check(potion >= 0 && !sim::wears(tables.items[size_t(potion)]), "a potion does not");
+
+    // AdditionalDurabilityPerLevel: +1 a level to +4, +2 to +9.
+    checkEqual(sim::maximumDurability(small, 0), 22, "+0 is the row's own");
+    checkEqual(sim::maximumDurability(small, 4), 26, "+4 adds four");
+    checkEqual(sim::maximumDurability(small, 5), 28, "+5 adds six");
+    checkEqual(sim::maximumDurability(small, 9), 36, "+9 adds fourteen");
+
+    // CalcDurabilityPercent: counted on what is GONE, and strictly past each line.
+    checkNear(sim::wearCut(11, 22), 0.0, 1e-9, "half gone costs nothing");
+    checkNear(sim::wearCut(10, 22), 0.2, 1e-6, "past half gone costs a fifth");
+    checkNear(sim::wearCut(6, 22), 0.3, 1e-6, "past seven tenths, three tenths");
+    checkNear(sim::wearCut(4, 22), 0.5, 1e-6, "past eight tenths, a half");
+    checkNear(sim::wearCut(0, 22), 1.0, 1e-9, "and broken, all of it");
+    // The tint bands, counted on what is LEFT, at or under each line.
+    check(sim::wornBand(12, 22) == sim::Worn::Fine, "12 of 22 is not tinted");
+    check(sim::wornBand(11, 22) == sim::Worn::Half, "11 of 22 is yellow");
+    check(sim::wornBand(6, 22) == sim::Worn::Third, "6 of 22 is orange");
+    check(sim::wornBand(4, 22) == sim::Worn::Fifth, "4 of 22 is red-orange");
+    check(sim::wornBand(0, 22) == sim::Worn::Broken, "and 0 is red");
+
+    // The price, by hand. The Small Shield buys at 110 (drop level 3, a fifth off a shield), so
+    // the base is 36, its root 6 and the root of that 2.449: 3 x 6 x 2.449 = 44.09 for the
+    // whole of it, plus one.
+    checkEqual(sim::repairPrice(small, 0, false, 22, true), 0, "a whole shield costs nothing");
+    checkEqual(sim::repairPrice(small, 0, false, 11, true), 23, "half of it: 22.05 + 1 = 23");
+    checkEqual(sim::repairPrice(small, 0, false, 0, true), 63, "broken: 45.09 x 1.4 = 63");
+    checkEqual(sim::repairPrice(small, 0, false, 11, false), 57, "and by his own hand, 2.5 times");
+    // Leather Armour buys at 2400, a base of 800: 3 x 28.28 x 5.318 x 0.5 + 1 = 226.6, to 220.
+    checkEqual(sim::repairPrice(armour, 0, false, 17, true), 220, "half a Leather Armour, 220");
+    // Selling: 0.6 of the share gone comes off.
+    checkEqual(sim::wornSellingPrice(1000, 50, 100), 700, "half worn sells for seven tenths");
+    checkEqual(sim::wornSellingPrice(1000, 100, 100), 1000, "and whole for the whole");
+
+    // On his arm: a shield worn past eight tenths blocks with half its rate.
+    sim::Realm realm;
+    check(realm.raise(&tables, 3, 200, 160, sim::Kin::DarkKnight, 1), "a realm raises for the wear");
+    const float bare = realm.hero().stats.defenseRate;
+    const int whole = realm.give(shield);
+    check(realm.moveItem(whole, sim::kWeaponLeft), "a whole Small Shield goes on");
+    const float withWhole = realm.hero().stats.defenseRate;
+    sim::Realm worn;
+    worn.raise(&tables, 3, 200, 160, sim::Kin::DarkKnight, 1);
+    check(worn.moveItem(worn.give(shield, -1, 0, 4), sim::kWeaponLeft), "a worn one goes on");
+    checkNear(withWhole - bare, 3.0, 1e-4, "the whole one adds its 3");
+    checkNear(worn.hero().stats.defenseRate - bare, 2.0, 1e-4, "the worn one 3 - (int)1.5 = 2");
+    sim::Realm broken;
+    broken.raise(&tables, 3, 200, 160, sim::Kin::DarkKnight, 1);
+    check(broken.moveItem(broken.give(shield, -1, 0, 0), sim::kWeaponLeft), "a broken one goes on");
+    checkNear(broken.hero().stats.defenseRate - bare, 0.0, 1e-4, "and adds nothing");
+
+    // A real fight: a level 5 wizard with his points in strength, in Pad Boots and Pad Gloves
+    // (22 strength asked; a new one has 18), left in the hunting ground until it kills him.
+    // Every point of health it took is owed on one of the two, at 2000 a point.
+    sim::Realm fight;
+    check(fight.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 5), "a realm raises for the fight");
+    fight.spend(fight.hero().pointsInHand, 0, 0, 0);
+    const int boots = tables.itemNamed("BootMale03"), gloves = tables.itemNamed("GloveMale03");
+    check(boots >= 0 && fight.moveItem(fight.give(boots), sim::kBoots), "the Pad Boots go on");
+    check(gloves >= 0 && fight.moveItem(fight.give(gloves), sim::kGloves), "the Pad Gloves go on");
+    long long lost = 0;
+    int before = fight.hero().health, hardest = 0;
+    for (int tick = 0; tick < 6000 && fight.hero().alive(); ++tick) {
+        fight.step();
+        if (fight.hero().health < before) lost += before - fight.hero().health;
+        before = fight.hero().health;
+        for (const sim::Happening& one : fight.happenings()) {
+            if (one.what == sim::What::Hit && one.whom == fight.hero().id) {
+                hardest = std::max(hardest, one.a);
+            }
+        }
+    }
+    check(!fight.hero().alive() && lost > 0, "he took a beating");
+    // The wound is charged whole, as OpenMU charges HealthDamage, so the killing blow's overkill
+    // is owed too: at least what he lost, and less than one blow more.
+    const double owed =
+        (fight.wearOwed(sim::kBoots) + fight.wearOwed(sim::kGloves)) * sim::kDamagePerDurability;
+    check(owed + 1e-6 >= double(lost) && owed < double(lost + hardest),
+          "and the two pieces owe his lost health over 2000, the last blow's overkill with it");
+    check(fight.wearOwed(sim::kBoots) > 0.0 && fight.wearOwed(sim::kGloves) > 0.0,
+          "shared between them by the draw");
+
+    // Hanzo: one piece, then everything, and nothing without his counter.
+    sim::Realm shop;
+    check(shop.raise(&tables, 5, 138, 124), "a realm raises in town");
+    const int bagged = shop.give(shield, -1, 0, 11);
+    const int alsoBagged = shop.give(leather, -1, 0, 17);
+    shop.earn(1000);
+    check(!shop.repair(bagged), "nothing is mended without a counter");
+    int hanzo = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 251) hanzo = int(i);
+    }
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(hanzo);
+    shop.ask(talk);
+    for (int tick = 0; tick < 4000 && shop.trading() < 0; ++tick) shop.step();
+    check(shop.trading() == hanzo && shop.mending(), "Hanzo's counter mends");
+    checkEqual(shop.repairAllCost(), 23 + 220, "the strip sums the bag: 23 and 220");
+    check(shop.repair(bagged), "the shield is mended");
+    checkEqual(shop.satchel()[bagged].durability, 22, "back to 22");
+    checkEqual(shop.money(), 1000 - 23, "for 23 Zen");
+    check(!shop.repair(bagged), "and a whole one is not mended twice");
+    checkEqual(shop.repairAll(), 1, "repair all takes the armour");
+    checkEqual(shop.satchel()[alsoBagged].durability, 34, "back to 34");
+    checkEqual(shop.money(), 1000 - 23 - 220, "for 220 more");
+
+    // By his own hand, away from any counter: from level 50 only, and at two and a half times.
+    sim::Realm young, grown;
+    young.raise(&tables, 5, 138, 124, sim::Kin::DarkKnight, 49);
+    grown.raise(&tables, 5, 138, 124, sim::Kin::DarkKnight, 50);
+    const int youngSlot = young.give(shield, -1, 0, 11);
+    const int grownSlot = grown.give(shield, -1, 0, 11);
+    young.earn(1000);
+    grown.earn(1000);
+    check(!young.selfMending() && !young.repair(youngSlot), "at 49 he cannot mend it himself");
+    check(grown.selfMending(), "at 50 he can");
+    checkEqual(grown.repairCost(grownSlot), 57, "and it costs him 57, not Hanzo's 23");
+    check(grown.repair(grownSlot), "the shield is mended in the field");
+    checkEqual(grown.money(), 1000 - 57, "for 57 Zen");
+    checkEqual(grown.repairAll(), 0, "and there is no repair-all away from a counter");
+}
+
+void testVault(const content::Tables& tables) {
+    std::printf("vault\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 144, 112), "the realm raises by the vault");
+    int baz = -1;
+    for (size_t i = 0; i < tables.folk.size() && baz < 0; ++i) {
+        if (tables.folk[i].number == sim::kVaultKeeper) baz = int(i);
+    }
+    check(baz >= 0, "Baz is in the town's table");
+    if (baz < 0) return;
+    const int32_t sword = tables.itemNamed("Sword01");
+    check(sword >= 0, "the row the test uses exists");
+    if (sword < 0) return;
+    const int slot = realm.give(sword);
+    const int tall = tables.items[size_t(sword)].height;
+    realm.earn(500);
+    check(realm.deposit(slot) < 0 && !realm.depositZen(100), "nothing crosses a shut vault");
+
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(baz);
+    realm.ask(talk);
+    for (int tick = 0; tick < 2000 && realm.banking() < 0; ++tick) realm.step();
+    check(realm.banking() == baz, "walked to Baz and the vault opened");
+    check(realm.trading() < 0, "and no counter with it");
+
+    check(realm.deposit(sim::kWeaponRight) < 0, "what is worn does not go in");
+    const int cell = realm.deposit(slot, (sim::kVaultRows - tall + 1) * sim::kVaultColumns);
+    check(cell < 0 && !realm.satchel()[slot].empty(), "a sword does not start where it runs off the foot");
+    const int kept = realm.deposit(slot, 10);
+    checkEqual(kept, 10, "it goes in where it was let go");
+    check(realm.satchel()[slot].empty() && realm.vault()[kept].item == sword,
+          "and leaves the bag for the vault");
+    check(!realm.rearrange(kept, (sim::kVaultRows - tall + 1) * sim::kVaultColumns),
+          "a move that would run off the vault's foot is refused");
+    check(realm.rearrange(kept, 0), "a move inside the vault is taken");
+    const int back = realm.withdraw(0);
+    check(back >= sim::kWorn && realm.satchel()[back].item == sword && realm.vault()[0].empty(),
+          "and it comes back to the bag");
+
+    check(!realm.depositZen(501), "more Zen than he carries is refused");
+    check(realm.depositZen(500) && realm.money() == 0 && realm.vault().zen() == 500,
+          "what he carries goes in");
+    check(!realm.withdrawZen(501), "more than is kept is refused");
+    check(realm.withdrawZen(200) && realm.money() == 200 && realm.vault().zen() == 300,
+          "and part of it comes out");
+
+    sim::Request walk;
+    walk.kind = sim::Request::Kind::WalkTo;
+    walk.column = 140;
+    walk.row = 120;
+    realm.ask(walk);
+    realm.step();
+    check(realm.banking() < 0, "walking off shuts it");
+    check(!realm.withdrawZen(100) && realm.vault().zen() == 300, "and what is kept stays kept");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -1314,6 +1787,11 @@ int main() {
     testSkills(tables);
     testCastLock(tables);
     testPerches(tables);
+    testVault(tables);
+    testRefine(tables);
+    testOptions(tables);
+    testExcellent(tables);
+    testWear(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

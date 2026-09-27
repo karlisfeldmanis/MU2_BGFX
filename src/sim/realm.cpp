@@ -55,6 +55,12 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     tables_ = tables;
     if (!tables_ || tables_->grid.empty()) return false;
     dice_.seed(seed);
+    // A stream of its own, off the same seed: see `wearDice_`.
+    wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
+    for (int slot = 0; slot < kWorn; ++slot) {
+        wearCarry_[slot] = 0.0;
+        wearItem_[slot] = -1;
+    }
     router_.open(&tables_->grid);
     bodies_.clear();
     happenings_.clear();
@@ -290,8 +296,9 @@ void Realm::accept() {
         if (!same) dropBlow(hero);
         order_ = pending_;
         pending_ = Request{};
-        // Any order is walking away from a counter, including another Talk.
+        // Any order is walking away from a counter, including another Talk -- and from the vault.
         trading_ = -1;
+        banking_ = -1;
         if (order_.kind == Request::Kind::WalkTo) {
             send(hero, order_.column, order_.row);
         } else if (order_.kind == Request::Kind::Stop) {
@@ -434,7 +441,7 @@ void Realm::press() {
 
     if (order_.kind == Request::Kind::Talk) {
         // Served the tick he is within reach, whether he walked there or was already there.
-        // A townsperson who sells nothing -- a guard, the vault keeper -- is walked to and
+        // A townsperson who sells nothing and keeps nothing -- a guard -- is walked to and
         // then nothing happens, which is MU's own answer to talking to a guard.
         if (serving(int(order_.target))) {
             const content::Townsperson& one = tables_->folk[order_.target];
@@ -442,6 +449,9 @@ void Realm::press() {
             if (sells(one.number)) {
                 trading_ = int(order_.target);
                 say(What::Served, hero, trading_, one.number);
+            } else if (one.number == kVaultKeeper) {
+                banking_ = int(order_.target);
+                say(What::Served, hero, banking_, one.number);
             }
             order_ = Request{};
         }
@@ -684,6 +694,19 @@ std::string describe(const Happening& happening, const Realm& realm) {
                           happening.b);
             break;
         }
+        case What::Worn:
+            std::snprintf(line, sizeof(line), "%6u %s wore slot %d to %d/%d", happening.tick, who,
+                          happening.a, happening.b, happening.c);
+            break;
+        case What::Repaired:
+            std::snprintf(line, sizeof(line), "%6u %s repaired %s%d piece(s) for %d Zen",
+                          happening.tick, who, happening.a < 0 ? "all: " : "", happening.c,
+                          happening.b);
+            break;
+        case What::Refined:
+            std::snprintf(line, sizeof(line), "%6u %s refined slot %d from +%d to +%d",
+                          happening.tick, who, happening.a, happening.b, happening.c);
+            break;
     }
     return std::string(line);
 }

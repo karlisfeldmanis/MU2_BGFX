@@ -42,7 +42,25 @@ void main()
 	// y is two flags: 1 two-sided, 2 calibrated. See the renderer.
 	float calibrated = step(1.5, u_material.y);
 	float twoSided = u_material.y - 2.0 * calibrated;
-	if (twoSided > 0.5 && dot(ng, v) < 0.0) ng = -ng;
+	// Which side is facing the eye is decided by the TRIANGLE, not by the smoothed normal. 62 of
+	// Lorencia's 74 placed models carry their normals inverted (MU's winding, through the
+	// export) and smoothed across their edges, so on a flat roof they lean 20 to 50 degrees
+	// off the face; tested per pixel against the view, part of a triangle turned and part did
+	// not, and the part that did not was shaded as an underside -- no sun, the ground's
+	// bounce only. Crisp black wedges along the triangles that changed shape as the camera
+	// moved: the "shadow acne" on House03's roof (2026-09-24). The face's own normal from the
+	// screen derivatives is the same for every pixel of it.
+	if (twoSided > 0.5)
+	{
+		vec3 face = normalize(cross(dFdx(v_wpos), dFdy(v_wpos)));
+		if (dot(face, v) < 0.0) face = -face;
+		// And where the smoothed normal lies nearly flat against the face, the face's own: a
+		// sign taken there lands either way from one 2x2 block to the next, which was a field
+		// of black dots on the straw bales' flared ends as the hero walked past (2026-09-24).
+		float along = dot(ng, face);
+		if (along < 0.0) ng = -ng;
+		ng = normalize(mix(face, ng, smoothstep(0.1, 0.35, abs(along))));
+	}
 
 	// Tangent frame, then the normal map. The bitangent's sign is glTF's w.
 	vec3 t = normalize(v_tangent.xyz - ng * dot(ng, v_tangent.xyz));
@@ -176,6 +194,7 @@ void main()
 	// everything lit above, and adds its chrome unlit, so that goes on after. shine.sh.
 	colour *= shineTint(plus);
 	colour += shineAdded(plus, normalize(v_normal), v_refine.yzw);
+	colour += shineExcellentAdded(shineExcellent(v_refine.x), normalize(v_normal));
 
 	// The emissive, or on foliage the light through it. MU2's pipeline writes a leaf's own
 	// sheet as its emissive at a fraction, standing in for transmission, and that fraction

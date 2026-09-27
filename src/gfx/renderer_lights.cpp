@@ -39,6 +39,7 @@ void Renderer::setPointLights(const PointLight* lights, uint32_t count, float mi
             lampCpu_[row + size_t(i) * 4 + c] = one.colour[c];
         }
         lampCpu_[row + size_t(i) * 4 + 3] = one.height;
+        for (int c = 0; c < 3; ++c) lampCpu_[2 * row + size_t(i) * 4 + c] = one.away[c];
     }
     lampsDirty_ = true;
 
@@ -109,6 +110,15 @@ void Renderer::setPointLightLevels(const float* levels, uint32_t count) {
     lampsDirty_ = true;
 }
 
+void Renderer::setPointLightPosition(uint32_t index, const float position[3]) {
+    if (index >= lightCount_) return;
+    float* at = &lampCpu_[size_t(index) * 4];
+    at[0] = position[0];
+    at[1] = position[1];
+    at[2] = position[2];
+    lampsDirty_ = true;
+}
+
 void Renderer::setTransientLights(const PointLight* lights, uint32_t count) {
     if (lights == nullptr) count = 0;
     if (count > kMaxTransientLights) {
@@ -134,14 +144,14 @@ void Renderer::setTransientLights(const PointLight* lights, uint32_t count) {
         lit[1] = one.colour[1];
         lit[2] = one.colour[2];
         lit[3] = one.height;
+        float* to = &transientTo_[size_t(i) * 4];
+        to[0] = one.to[0];
+        to[1] = one.to[1];
+        to[2] = one.to[2];
+        to[3] = one.line ? 1.0f : 0.0f;
     }
     // What the shader loops to. The rest of u_lampParams is the static path's and is untouched.
     lampParams_[2] = float(transientCount_);
 }
 
 }  // namespace mu::gfx
-        float* to = &transientTo_[size_t(i) * 4];
-        to[0] = one.to[0];
-        to[1] = one.to[1];
-        to[2] = one.to[2];
-        to[3] = one.line ? 1.0f : 0.0f;

@@ -131,6 +131,8 @@ struct Sheet {
     // The foot. `wear` is drawn with a bar; either may be empty.
     std::string wear;
     float worn = 1.0f;  // how much of it is left, 0 to 1
+    // The bar's ink: White is the lettering, as a quiver's; gear takes its wear band's colour.
+    Tone wearTone = Tone::White;
     std::string price;
     Tone priceTone = Tone::Yellow;
     // And the foot's left, opposite the price: one short standing fact about the thing, which

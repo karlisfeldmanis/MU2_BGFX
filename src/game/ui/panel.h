@@ -173,7 +173,9 @@ void grid(gfx::Canvas& canvas, float x, float y, float ux, float uy, int columns
 // the ZEN kicker, and the figure ranged against kValueRight in the colour the hero's purse
 // earns. The shelf drew it too for an hour on 2026-09-23 and the user asked why; only the bag
 // draws it.
-void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money);
+// `valueRight` moves the figure's right edge in, for a foot that carries a button there.
+void zenFoot(gfx::Canvas& canvas, Arts& arts, float x, float y, long long money,
+             float valueRight = kValueRight);
 // Where a baseline goes to centre a line of a given size in a box: Godot's own arithmetic,
 // half the leftover above the cap-line.
 float centredBaseline(const gfx::Face& face, const gfx::Box& box, float fontSize);

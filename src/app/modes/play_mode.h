@@ -46,6 +46,15 @@ private:
     // (game/ui/tally.cpp) and is deliberately NOT drained with it.
     float drain_ = 0.0f;
 
+    // The one store of item models, wired to everything that draws one. Called from the
+    // preloader, and again from the frame for a run whose realm rose some other way; the
+    // second call finds it open and does nothing.
+    void openItems(Context& ctx);
+    // Every model a window can ask for in a single frame, read while the spinner is still up:
+    // the shelves of every merchant standing in this world, and what the character already
+    // carries. See the note at the call.
+    void warmItems();
+
     // The scripted hands: --give, --zen, --talk, and the windows --windows opens.
     void runScript(Context& ctx);
     // --shadow-points and --shadow-log, both of them measurement apparatus and neither of them

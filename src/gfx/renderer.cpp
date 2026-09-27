@@ -26,11 +26,17 @@ void Renderer::bindShine(bool stage) {
                              std::fmod(elapsed_, 10.0f) * 0.1f, sheets ? strength : 0.0f,
                              shineTint_};
     bgfx::setUniform(uRefine_, refine);
-    const float star[4] = {shineStar_, stage ? 0.0f : shineGlow_, 0.0f, 0.0f};
+    // The excellent pass's L: WorldTime is milliseconds, so sin(WorldTime * 0.002) is two
+    // radians a second.
+    const bool excellent = bgfx::isValid(shineChrome2_);
+    const float star[4] = {shineStar_, stage ? 0.0f : shineGlow_,
+                           std::sin(elapsed_ * 2.0f) * 0.5f + 0.5f,
+                           excellent ? shineExcellent_ : 0.0f};
     bgfx::setUniform(uRefineStar_, star);
     bgfx::setTexture(9, sChrome_, sheets ? shineChrome_ : whiteAo_, 0);
     bgfx::setTexture(10, sShiny_, sheets ? shineShiny_ : whiteAo_,
                      BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
+    bgfx::setTexture(11, sChrome2_, excellent ? shineChrome2_ : whiteAo_, 0);
 }
 
 void Renderer::bindShadeInputs() {
@@ -438,9 +444,9 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                               uint16_t(paletteWritten_), bgfx::copy(paletteCpu_.data(), bytes));
     }
 
-    // The lights' flicker, when it moved: two rows of the 256-wide texture, 8 kB.
+    // The lights' flicker, when it moved: the three rows of the 256-wide texture, 12 kB.
     if (lampsDirty_ && bgfx::isValid(lamps_)) {
-        bgfx::updateTexture2D(lamps_, 0, 0, 0, 0, uint16_t(kMaxPointLights + 1), 2,
+        bgfx::updateTexture2D(lamps_, 0, 0, 0, 0, uint16_t(kMaxPointLights + 1), kLampRows,
                               bgfx::copy(lampCpu_.data(), uint32_t(lampCpu_.size() * sizeof(float))));
         lampsDirty_ = false;
     }
@@ -459,6 +465,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     shineTint_ = lighting.refineTint;
     shineStageStrength_ = lighting.refineStageStrength;
     shineStar_ = lighting.refineStar;
+    shineExcellent_ = lighting.excellentStrength;
 
     // --- the camera -------------------------------------------------------------------
     // Right-handed, said out loud. bx defaults every one of these to Handedness::Left, and

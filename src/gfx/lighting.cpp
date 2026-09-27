@@ -60,6 +60,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("refine_tint", &refineTint);
     doc.readInto("refine_stage_strength", &refineStageStrength);
     doc.readInto("refine_star", &refineStar);
+    doc.readInto("excellent_strength", &excellentStrength);
     doc.readInto("refine_glow", &refineGlow);
     doc.readInto("grass", &grass);
     doc.readInto("grass_radius", &grassRadius);
@@ -88,7 +89,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     static const char* kKnown[] = {
         "azimuth", "elevation", "sun_colour", "sun_strength", "sky_colour", "horizon_paleness",
         "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
-        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "refine_strength", "refine_tint", "refine_stage_strength", "refine_star", "refine_glow",
+        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "refine_strength", "refine_tint", "refine_stage_strength", "refine_star", "excellent_strength", "refine_glow",
         "grass", "grass_radius", "grass_fade", "grass_thin", "grass_mip_bias", "grass_density", "grass_height", "grass_aspect",
         "grass_lean", "grass_rank", "grass_dry", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao",
         "grass_roughness", "grass_wind_strength", "grass_wind_degrees", "note"};

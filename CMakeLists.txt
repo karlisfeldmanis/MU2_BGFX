@@ -139,6 +139,7 @@ add_executable(mu2
   src/game/fx/aura.cpp
   src/game/fx/bones.cpp
   src/game/fx/breath.cpp
+  src/game/fx/forge.cpp
   src/game/fx/meteor.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp
@@ -149,6 +150,9 @@ add_executable(mu2
   src/game/ui/card.cpp
   src/game/ui/bag.cpp
   src/game/ui/shelf.cpp
+  src/game/ui/chest.cpp
+  src/game/ui/amount.cpp
+  src/game/ui/endurance.cpp
   src/game/ui/describe.cpp
   src/game/ui/desk.cpp
   src/game/ui/tip.cpp
@@ -159,13 +163,15 @@ add_executable(mu2
   src/game/item_models.cpp
   src/game/fx/litter.cpp
   src/game/fx/streak.cpp
+  src/game/fx/gleam.cpp
   src/game/ui/outline.cpp
   src/sim/rules.cpp
   src/sim/swings.cpp
   src/sim/route.cpp
-  src/game/fx/gleam.cpp
   src/sim/items.cpp
   src/sim/market.cpp
+  src/sim/wear.cpp
+  src/sim/vault.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_move.cpp
@@ -275,6 +281,8 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/route.cpp
   src/sim/items.cpp
   src/sim/market.cpp
+  src/sim/wear.cpp
+  src/sim/vault.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_move.cpp

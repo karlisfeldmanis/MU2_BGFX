@@ -54,7 +54,10 @@ void ItemStage::stand(const std::vector<Standing>& items, float unitsW, float un
     const content::Tables* tables = models_ ? models_->tables() : nullptr;
     for (const Standing& one : standing_) {
         if (!tables || one.item < 0 || size_t(one.item) >= tables->items.size()) continue;
-        if (shineOf(tables->items[size_t(one.item)], one.refinement).level >= 3) shining_ = true;
+        // An excellent thing breathes whatever its plus, so it keeps the stage drawing too.
+        if (shineOf(tables->items[size_t(one.item)], one.refinement).level >= 3 || one.excellent) {
+            shining_ = true;
+        }
     }
 }
 
@@ -195,7 +198,7 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         // A worn piece at its bind pose, which is the skin as it was modelled: a drawable with
         // no row of its own draws against the palette's bind row.
         drawable.paletteRow = -1;
-        wear(shineOf(row, one.refinement), drawable);
+        wear(shineOf(row, one.refinement, one.excellent), drawable);
         drawables_.push_back(drawable);
     }
 

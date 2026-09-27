@@ -6,6 +6,7 @@
 #include <string>
 
 #include "sim/skills.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 namespace {
@@ -90,12 +91,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     const content::ItemRow& row = tables.items[size_t(what.item)];
     const int plus = what.refinement;
     sheet.name = label(row, plus);
+    // GetItemName's `Excellent ` before the name (ZZ:2645-2671).
+    if (what.excellent != 0) sheet.name = "Excellent " + sheet.name;
     // MU's name ladder, as far as these rows reach it: a jewel is yellow, +7 and above is
     // yellow, anything carrying an option is blue, everything else white. Excellent, ancient
     // and socket colours wait for the items that have them.
+    // Excellent is green whatever its plus: MU's rule 5, above the +7 yellow.
     sheet.nameTone = row.jewel() ? Tone::Yellow
+                     : what.excellent != 0 ? Tone::Green
                      : plus >= kRefinedFrom ? Tone::Yellow
-                     : what.skill ? Tone::Blue
+                     : what.skill || what.luck || what.option > 0 ? Tone::Blue
                                   : Tone::White;
 
     static const char* const kNames[3] = {"Dark Wizard", "Fairy Elf", "Dark Knight"};
@@ -129,8 +134,13 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                                                          : tip::Mark::Blade;
 
     const bool weapon = row.weapon() && !sim::ammunition(row);
-    const int bonus = weapon ? sim::damageBonus(plus) : 0;
-    const Tone lifted = plus > 0 ? Tone::Yellow : Tone::White;
+    // The plus's rise, and being excellent on top (sim::excellentDamage) -- MU prints the band
+    // with both in, in blue on an excellent thing.
+    const int bonus = weapon ? sim::damageBonus(plus) +
+                                   (what.excellent != 0 ? sim::excellentDamage(row) : 0)
+                             : 0;
+    // The damage and defence lines are blue on an excellent thing (ZI:3972-4064).
+    const Tone lifted = plus > 0 ? Tone::Yellow : what.excellent != 0 ? Tone::Blue : Tone::White;
     // MU quotes the damage under the hand it takes -- `Lookup(40 + TwoHand)` -- so the label
     // says which and there is no separate two-handed line.
     const float mine = weapon ? float(row.minimumDamage + row.maximumDamage + 2 * bonus) / 2.0f
@@ -143,10 +153,15 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                                  lifted));
     }
     const bool worn = row.armour() || row.shield();
-    const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) : 0;
+    const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) +
+                                   (what.excellent != 0 ? sim::excellentDefense(row) : 0)
+                             : 0;
     if (worn) does.rows.push_back(stat("Armor", std::to_string(defense), lifted));
     if (row.defenseRate > 0) {
-        does.rows.push_back(stat("Block rate", std::to_string(row.defenseRate), Tone::White));
+        const int block =
+            row.defenseRate + (what.excellent != 0 ? sim::excellentBlock(row) : 0);
+        does.rows.push_back(stat("Block rate", std::to_string(block),
+                                 what.excellent != 0 ? Tone::Blue : Tone::White));
     }
     // A staff's magic power, the one line MU prints for it, and the percentage it comes to --
     // MU2's addition, marked there as the project's, because it is what a wizard chooses on.
@@ -182,6 +197,38 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         does.rows.push_back(stat("Quantity", std::to_string(what.durability), Tone::Blue));
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
+
+    // ---- its options ----------------------------------------------------------------------------
+    // GetSpecialOptionText's lines in SetItemAttributes' order -- luck, then the additional
+    // option -- every one TEXT_COLOR_BLUE, and luck's two lines as ZzzInventory.cpp:5162-5172
+    // prints them. MU's own English (GT 87, 94, 88-91), docs/mu-tooltip-lines.md section 3(d).
+    if (sim::takesOptions(row) && (what.luck || what.option > 0 || what.excellent != 0)) {
+        Section options;
+        options.kicker = "Options";
+        options.mark = tip::Mark::Star;
+        const auto blue = [&](const std::string& text) {
+            Row line;
+            line.free = text;
+            line.freeTone = Tone::Blue;
+            options.rows.push_back(line);
+        };
+        if (what.luck) {
+            blue("Luck (success rate of Jewel of Soul +25%)");
+            blue("Luck (critical damage rate +5%)");
+        }
+        if (what.option > 0) {
+            const std::string value = std::to_string(sim::optionValue(row, what.option));
+            if (row.shield()) blue("Additional defense rate +" + value);
+            else if (row.armour()) blue("Additional defense +" + value);
+            else if (row.magicPower > 0) blue("Additional Wizardry Dmg +" + value);
+            else blue("Additional Dmg +" + value);
+        }
+        // And the excellent ones last, in their bit order, as SetItemAttributes adds them.
+        for (int bit = 0; bit < sim::kExcellentOptions; ++bit) {
+            if (what.excellent & (1u << bit)) blue(sim::excellentLine(row, bit));
+        }
+        sheet.sections.push_back(options);
+    }
 
     // ---- what it teaches ----------------------------------------------------------------------
     // A scroll or an orb is read once and gone, and what it leaves behind is a skill. MU says
@@ -281,7 +328,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     Section asks;
     asks.kicker = "Requirements";
     asks.mark = tip::Mark::Triangle;
-    const sim::Needs asked = sim::asks(row, plus);
+    const sim::Needs asked = sim::asks(row, plus, what.excellent != 0);
     const sim::Needs owed = sim::shortOf(asked, who.level, who.points);
     const auto require = [&](const char* name, int wants, int lacking) {
         if (wants <= 0) return;
@@ -366,6 +413,23 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (sim::ammunition(row) && row.durability > 0) {
         sheet.wear = std::to_string(what.durability) + " / " + std::to_string(row.durability);
         sheet.worn = float(what.durability) / float(row.durability);
+    }
+    // And gear's is its wear: MU's `Durability: [51/66]` (GT 71, ZI:4756) against the maximum at
+    // its plus, the bar in the band's colour once it is at half or under -- the same four the
+    // warning icons and the slot's wash use.
+    if (sim::wears(row)) {
+        const int maximum = sim::maximumDurability(row, what);
+        sheet.wear = "Durability " + std::to_string(what.durability) + " / " +
+                     std::to_string(maximum);
+        sheet.worn = maximum > 0 ? float(what.durability) / float(maximum) : 0.0f;
+        switch (sim::wornBand(what.durability, maximum)) {
+            case sim::Worn::Broken:
+            case sim::Worn::Fifth: sheet.wearTone = tip::Tone::Red; break;
+            case sim::Worn::Third: sheet.wearTone = tip::Tone::Orange; break;
+            case sim::Worn::Half: sheet.wearTone = tip::Tone::Yellow; break;
+            default: break;
+        }
+        if (what.durability <= 0) sheet.note = "Broken";
     }
     return sheet;
 }

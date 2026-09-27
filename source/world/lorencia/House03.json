@@ -35,14 +35,14 @@
   },
   "glow": {
     "light_02": {
-      "low": 0.5,
-      "high": 0.78,
+      "low": 0.0,
+      "high": 0.0,
       "steps": 12,
       "hz": 8,
       "smooth_seconds": 0.34
     }
   },
-  "glow_from": "MoveObject's per-type case for object 117, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap \u2014 the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nA candle behind dirty glass, which neither jumps nor sits still. Both numbers do opposite jobs. Eight draws a second rather than three and a half keeps the glow always on its way somewhere; at the slower rate it arrived, waited visibly, then set off again, which is what read as a flicker. A third of a second to travel rather than a fifth means it never arrives before the next draw. Twelve steps rather than four, because four quantises the range into levels you can count.",
+  "glow_from": "MoveObject's per-type case for object 117, by way of the old port's own table. The client animates the self-luminous submesh alone and not through the model's skeleton: BlendMeshLight scales its brightness and BlendMeshTexCoordV slides its texture, both off the world clock, so every placement of a type moves in step.\n\nThat 'in step' is what makes it cheap \u2014 the glow of a type is one material shared by every placement, so it costs one material write a frame however many stand in the town.\n\nA candle behind dirty glass, which neither jumps nor sits still. Both numbers do opposite jobs. Eight draws a second rather than three and a half keeps the glow always on its way somewhere; at the slower rate it arrived, waited visibly, then set off again, which is what read as a flicker. A third of a second to travel rather than a fifth means it never arrives before the next draw. Twelve steps rather than four, because four quantises the range into levels you can count. Put out on 2026-09-24, the user's call. light_02 here is not a window but three light shafts slanting out of the side window down to the ground by the smithy, and from there a slice of one shows through the gap under the carved panel, clipped hard by the blocks in front of it: a crisp yellow blade that changed shape as he walked and read as a shadow fault. Halved to MU's own brightness it was still a blade, so it is at 0, and the submesh draws nothing. MU draws it (0.50 to 0.78); this is a departure.",
   "emitters": [
     {
       "kind": "window",

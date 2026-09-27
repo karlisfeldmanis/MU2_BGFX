@@ -153,6 +153,9 @@ uint32_t withAlpha(uint32_t abgr, float alpha) {
 const uint32_t kSwingInk = byteColour(240, 231, 214);
 const uint32_t kSkillInk = byteColour(255, 195, 77);
 const uint32_t kCriticalInk = byteColour(255, 224, 138);
+// MuMain's own two, as the user asked for them (2026-09-27): DT_EXCELLENT and DT_MIRROR.
+const uint32_t kExcellentInk = byteColour(0, 255, 153);
+const uint32_t kReflectedInk = byteColour(255, 0, 255);
 const uint32_t kTakenInk = byteColour(239, 74, 60);
 const uint32_t kAbsorbedInk = byteColour(111, 182, 255);
 const uint32_t kMissInk = byteColour(207, 199, 184);
@@ -176,6 +179,8 @@ float sizeOf(Mark mark) {
     switch (mark) {
         case Mark::Skill: return kSkillSize;
         case Mark::Critical: return kCriticalSize;
+        case Mark::Excellent: return kCriticalSize;
+        case Mark::Reflected: break;
         case Mark::Miss: return kMissSize;
         case Mark::Absorbed: return kSmallSize;
         case Mark::Swing:
@@ -188,6 +193,8 @@ uint32_t inkOf(const Showing::Figure& figure) {
     switch (figure.mark) {
         case Mark::Skill: return kSkillInk;
         case Mark::Critical: return kCriticalInk;
+        case Mark::Excellent: return kExcellentInk;
+        case Mark::Reflected: return kReflectedInk;
         case Mark::Taken: return kTakenInk;
         case Mark::Absorbed: return kAbsorbedInk;
         case Mark::Miss: return figure.onHero ? kMissOnHeroInk : kMissInk;

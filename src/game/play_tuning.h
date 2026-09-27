@@ -255,6 +255,26 @@ constexpr float kFirstFoot = 1.5f, kSecondFoot = 4.5f;
 // AnimationFrame >= 5.f && <= 10.f`, in keys and not seconds. MU2's Scenery.HammerFrom.
 constexpr float kHammerFrom = 5.0f, kHammerTo = 10.0f;
 
+// And the part of it the sparks fly in: `AnimationFrame >= 5.f && <= 6.f`, one key, the blow
+// itself (ZzzCharacter.cpp:6100). A burst every reference frame of it, so how many a blow
+// throws is how long his clip takes over that key. fx/forge.h has the rest.
+constexpr float kSparksFrom = 5.0f, kSparksTo = 6.0f;
+// `BoneTransform[17]`: Box03, the hammer's head, under Box01 in his left hand.
+constexpr int kSparkBone = 17;
+// Where his hearth's coals burn, in his own model's metres: the middle of `fire_03`, the
+// strip of coals along the top of the forge (Smith01.obj, 62 to 103 across, 66 to 70 up).
+// Where the smoke and embers leave from, which are ours (fx/forge.h), and where the light
+// goes, which is MU's: `AddTerrainLight(o->Position, (L, 0.4L, 0), 3)` with
+// `L = (rand() % 6 + 2) * 0.1`, re-rolled every frame. MU lights the ground under his feet
+// and this lights it from the coals, the street lamps' reasoning (StreetLight01.json): a
+// light at a man's feet lights the man's feet. Eased at the fires' 3 Hz rather than re-rolled
+// a frame, for the reason the fires are (FireLight02.json): a light re-rolled a frame strobes.
+constexpr float kHearth[3] = {0.83f, 0.68f, 0.09f};
+constexpr float kForgeColour[3] = {1.0f, 0.4f, 0.0f};
+constexpr float kForgeLow = 0.2f, kForgeHigh = 0.7f;
+constexpr float kForgeReach = 3.0f;
+constexpr float kForgeHz = 3.0f, kForgeSmooth = 0.12f;
+
 // Lorencia's grass: the tile texture MU tests for `HeroTile == 0` under a footstep; every
 // other floor on the map is soil.
 constexpr int kGrassFloor = 0;

@@ -52,10 +52,24 @@ uniform vec4 u_transientTo[4];      // xyz: a line light's other end  w: 1 for a
 // surface through THIS function and not through a copy of it: two copies of a falloff are two
 // falloffs the moment one is touched, and a meteor that lit a wall differently from a torch of
 // the same reach would be exactly that bug.
-vec3 lampAt(vec4 at, vec4 lit, vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0,
-            float roughness, float ndotv, float specular)
+//
+// `side` is the lamp texture's third row: the way out from the light's holder, flat on the
+// ground, or zero for a light that lights all round. A light casts no shadow here, so a torch
+// on a bridge's rail lit the deck on the far side of the rail straight through the stone, in a
+// hard strip along its foot. With a side, the light stops a little behind itself -- far enough
+// back that the face of the rail or wall it hangs on is still lit -- and fades over a hand's
+// width, so what is beyond its holder stays dark. Ours, marked: MU's lights touch the terrain
+// only and never met the problem. Game::Lamps decides which lights get one.
+#define LAMP_BEHIND 0.3
+#define LAMP_BEHIND_FADE 0.2
+vec3 lampAt(vec4 at, vec4 lit, vec4 side, vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour,
+            vec3 f0, float roughness, float ndotv, float specular)
 {
 	vec3 d = at.xyz - wpos;
+	// How far in front of the light, along its side; a light with none is always in front.
+	float ahead = dot(-d, side.xyz) + LAMP_BEHIND + LAMP_BEHIND_FADE;
+	float facing = dot(side.xyz, side.xyz) > 0.5 ? saturate(ahead / LAMP_BEHIND_FADE) : 1.0;
+	if (facing <= 0.0) return vec3_splat(0.0);
 	// d.y > 0: the pixel is below the light. Free down to the ground under it, then counted.
 	float over = max(-d.y, 0.0) + max(d.y - lit.w, 0.0);
 	float dist2 = d.x * d.x + d.z * d.z + over * over;
@@ -79,7 +93,7 @@ vec3 lampAt(vec4 at, vec4 lit, vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, ve
 	vec3 spec = f * dd * g / max(4.0 * ndotv * ndotl, 1e-5);
 	vec3 kd = (vec3_splat(1.0) - f) * diffuseColour / 3.14159265;
 
-	return (kd + spec) * lit.rgb * (u_lampParams.x * ndotl * fall);
+	return (kd + spec) * lit.rgb * (u_lampParams.x * ndotl * fall * facing);
 }
 
 // One of the map's own lights, read out of its column of the lamp texture.
@@ -88,6 +102,7 @@ vec3 lampOne(int index, vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0, 
 {
 	return lampAt(texelFetch(s_lamps, ivec2(index, 0), 0),
 	              texelFetch(s_lamps, ivec2(index, 1), 0),
+	              texelFetch(s_lamps, ivec2(index, 2), 0),
 	              wpos, n, v, diffuseColour, f0, roughness, ndotv, specular);
 }
 
@@ -114,7 +129,8 @@ vec3 transientLight(vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0, floa
 			float t = saturate(dot(wpos - at.xyz, run) / max(dot(run, run), 1e-6));
 			at.xyz += run * t;
 		}
-		sum += lampAt(at, u_transientColour[i], wpos, n, v, diffuseColour, f0,
+		sum += lampAt(at, u_transientColour[i], vec4_splat(0.0), wpos, n, v,
+		              diffuseColour, f0,
 		              roughness, ndotv, specular);
 	}
 	return sum;

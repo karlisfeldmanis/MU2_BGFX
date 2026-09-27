@@ -143,6 +143,13 @@ EFFECTS = {
     "bag_close": "interface/win_close.png",
     "bag_plus": "interface/win_plus.png",
 
+    # The vault's two coin buttons: MU's newui_Bt_money01/02 frame, doubled as the rest of the
+    # window art is, with game-icons.net's hand dropping coins (put Zen in) and hand catching
+    # them (take it out) in gold where MU had a coin pile and an arrow -- CC BY 3.0, see
+    # interface/CREDITS.md. Two states stacked, resting on top. Chest.cpp.
+    "vault_deposit": "interface/vault_deposit.png",
+    "vault_withdraw": "interface/vault_withdraw.png",
+
     # The ghosts drawn in empty worn slots - the boot outline in the boot slot - which are
     # most of what makes the equipment panel readable. m_EquipmentSlots[i].dwBgImage.
     "bag_slot_pet": "interface/win_slot_pet.png",
@@ -169,6 +176,12 @@ EFFECTS = {
     "bag_ghost_boots": "interface/win_ghost_boots.png",
     "bag_ghost_amulet": "interface/win_ghost_amulet.png",
     "bag_ghost_ring": "interface/win_ghost_ring.png",
+
+    # The merchant's two hammers, Repair and Repair All (CNewUINPCShop::SetButtonInfo). MU draws
+    # newui_repair_00 for both; these are its stone frame with Ravenmore's painted hammer and
+    # tools in it, CC BY 3.0 -- see interface/CREDITS.md. Two states stacked, resting on top.
+    "shop_repair": "interface/shop_repair.png",
+    "shop_repair_all": "interface/shop_repair_all.png",
 
     # MU's system menu, the strip Escape brings up. CNewUIWindowMenu stitches it from three
     # pieces over the same message-box background the panels use: a 112x45 cap, as many
@@ -344,6 +357,14 @@ EFFECTS = {
     "spark": "effects/hit/spark02.png",
     "spark_flash": "effects/hit/spark03.png",
 
+    # What flies off Hanzo's anvil beside the motes above. See Forge.
+    #
+    # BITMAP_JOINT_SPARK, which ZzzOpenData loads from Effect/Spark01.jpg: eight by four
+    # pixels of orange, hotter along the middle row. It is a joint's sheet and not a
+    # sprite's, so it is stretched along the streak a spark draws between two frames rather
+    # than stood up facing the camera -- which is why it is longer than it is wide.
+    "joint_spark": "effects/hit/spark01.png",
+
     # The glint a thing lying on the ground throws off. See Drops.
     #
     # BITMAP_SHINY, which ZzzOpenData loads from Effect/Shiny01.jpg, and it is the sheet the
@@ -369,6 +390,12 @@ EFFECTS = {
     # metal as the wave scrolls the UVs. The +9 metal pass samples the shiny above, clamped,
     # off the same normals; MU binds BITMAP_SHINY for RENDER_METAL and nothing else.
     "chrome": "effects/refine/chrome01.png",
+
+    # What an excellent item is drawn with. BITMAP_CHROME2, Effect/Chrome02.jpg: a 64 square
+    # cyan glow on black, which RenderPartObjectEffect adds over any excellent piece with
+    # RENDER_CHROME3 -- u = N.L, v = 1 - N.L off a fixed light -- tinted (L, 0.3L, 1 - L) as L
+    # breathes (ZzzObject.cpp:10492, ZzzBMD.cpp:1643). See Shine.
+    "chrome2": "effects/refine/chrome02.png",
 
     # The bolt a Dark Wizard's Energy Ball throws. See Bolt.
     #
@@ -2445,10 +2472,14 @@ def main() -> None:
 
                 # And two columns that are only meaningful on some rows.
                 #
-                # Durability is wear on a sword and nothing reads it; on the two ammunition
-                # rows it is the count of shots in the quiver, which the fight spends one at
-                # a time. Carried only where it is that - see Arm.Durability.
-                if stats.get("is_ammunition") and stats.get("durability"):
+                # Durability: on the two ammunition rows the count of shots in the quiver, which
+                # the fight spends one at a time; on everything worn the wear it starts with,
+                # which the fight takes off and a merchant puts back (sim/wear.h). A stacking
+                # row's is its count and comes from the purchase, so it is not carried there.
+                # Worn is groups 0 to 11: the weapons, the shields and the five armour groups.
+                if stats.get("durability") and (
+                    stats.get("is_ammunition") or 0 <= stats.get("group", -1) <= 11
+                ):
                     entry["stats"]["durability"] = stats["durability"]
 
                 # And the wizard's damage, on the four rows that have one.

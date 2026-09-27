@@ -375,6 +375,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.click = sound_.load("window_click", false);
     heard_.refused = sound_.load("window_refused", false);
     heard_.opened = sound_.load("window_open", false);
+    heard_.repair = sound_.load("window_repair", false);
     heard_.meteorite = sound_.load("meteorite", true);
     // The knight's skills, by the table's own index, so a cast asks for its wave by the same
     // number its cooldown is kept under. Both `sKnightSkill4` names are the same file: MU plays

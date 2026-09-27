@@ -507,6 +507,13 @@
       "from": "SOUND_CLICK01, which ZzzOpenData loads from Data\\Sound\\iButtonClick.wav. MuMain plays it on the I and V keys and the main frame's bag button, open and close alike; on C and the character button; on the stat plus, without waiting for the reply; on Escape closing the bag, the character window or a shop; and with SOUND_INTERFACE01 when a shop opens (ReceiveTalk). NOT on the bag's or the character window's exit button: CNewUIMyInventory and CNewUICharacterInfoWindow hide the window there with no PlayBuffer. MU2's note said the exit button clicked; MuMain's own code says otherwise.",
       "note": "Unplaced in the client, as every interface sound is; played on the character here, where the listener stands, which is the same thing."
     },
+    "window_repair": {
+      "files": [
+        "irepair.wav"
+      ],
+      "from": "SOUND_REPAIR, which ZzzOpenData loads from Data\\Sound\\iRepair.wav. ReceiveRepair (WSclient.cpp:6787) plays it when the server answers a repair with the new Zen, once for one piece and once for a repair-all.",
+      "note": "Unplaced, as every interface sound is."
+    },
     "window_open": {
       "files": [
         "icreatewindow.wav"

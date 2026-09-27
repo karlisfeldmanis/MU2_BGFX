@@ -14,6 +14,7 @@
 
 #include "core/log.h"
 #include "sim/realm_tuning.h"
+#include "sim/wear.h"
 
 namespace mu::sim {
 
@@ -41,6 +42,12 @@ Arms Realm::armsOf(const Body& one) const {
         arms.shieldDefenseRate = one.wornDefenseRate;
         arms.weaponMinimumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
         arms.weaponMaximumDamage += one.weapon >= 0 ? one.weaponBonus : 0;
+        // Wear, on the band and its plus together, truncated as MuMain's CalculateDamage takes
+        // `DamageMin - (WORD)(DamageMin * percent)`. A broken weapon adds nothing.
+        arms.weaponMinimumDamage -= int(float(arms.weaponMinimumDamage) * one.weaponCut);
+        arms.weaponMaximumDamage -= int(float(arms.weaponMaximumDamage) * one.weaponCut);
+        arms.criticalChance = double(one.luckyWorn) * kLuckCritical;
+        arms.excel = one.excel;
     }
     return arms;
 }
@@ -56,7 +63,7 @@ void Realm::reswing(Body& hero) {
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
     const int milliseconds =
-        swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left);
+        swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left, hero.excel.speed);
     hero.swingMs = milliseconds;
     const int32_t ticks = swingTicks(milliseconds);
     hero.swingTicks = ticks > 0 ? ticks : kHeroSwingTicks;
@@ -121,7 +128,7 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
         }
         const content::ItemRow& row = tables_->items[size_t(item)];
         const int hand = placeOf(row);
-        if (hand >= 0) bag_.put(hand, Held{item, 0, int16_t(row.durability)});
+        if (hand >= 0) bag_.put(hand, Held{item, 0, int16_t(fullDurability(row, 0))});
     }
     rearm(hero);
     return true;
@@ -143,6 +150,54 @@ void Realm::rearm(Body& hero) {
     int weaponSlot = swung(right) ? kWeaponRight : (swung(left) ? kWeaponLeft : -1);
     hero.weapon = weaponSlot >= 0 ? tables_->armNamed(rowAt(weaponSlot)->name) : -1;
     hero.weaponBonus = weaponSlot >= 0 ? damageBonus(bag_[weaponSlot].refinement) : 0;
+    // The additional option on the weapon adds to both ends of the band, as Stats.PhysicalBaseDmg
+    // does, and wears with it. A staff's is wizardry damage, which nothing here reckons yet.
+    if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower == 0) {
+        hero.weaponBonus += optionValue(*rowAt(weaponSlot), bag_[weaponSlot].option);
+    }
+    // Being excellent: the weapon's band + min x 25 / drop level + 5 (sim::excellentDamage).
+    if (weaponSlot >= 0 && bag_[weaponSlot].excellent != 0) {
+        hero.weaponBonus += excellentDamage(*rowAt(weaponSlot));
+    }
+    // What the excellent options come to: a weapon's from the hands, the defence family's from
+    // the shield and the five armour slots. ExcellentOptions.cs, bit n being option n + 1.
+    hero.excel = Excellence{};
+    for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
+        const content::ItemRow* row = rowAt(slot);
+        const uint8_t bits = bag_[slot].excellent;
+        if (!row || bits == 0) continue;
+        const auto has = [bits](int n) { return (bits >> n) & 1; };
+        Excellence& e = hero.excel;
+        if (row->armour() || row->shield()) {
+            if (has(0)) e.zenRate *= 1.4;
+            if (has(1)) e.defenseRateRate *= 1.1;
+            if (has(2)) e.reflect += 0.05;
+            if (has(3)) e.damageDecrease += 0.04;
+            if (has(4)) e.manaRate *= 1.04;
+            if (has(5)) e.healthRate *= 1.04;
+        } else if (row->weapon() && !ammunition(*row)) {
+            if (has(0)) e.killMana += 1.0 / 8.0;
+            if (has(1)) e.killLife += 1.0 / 8.0;
+            if (has(2)) e.speed += 7;
+            // A staff's 4 and 5 are wizardry damage, which nothing here reckons yet.
+            if (has(3) && row->magicPower == 0) e.damageRate *= 1.02;
+            if (has(4) && row->magicPower == 0) ++e.levelPieces;
+            if (has(5)) e.excellentChance += 0.1;
+        }
+    }
+    // Luck on anything worn, from the hands to the boots.
+    hero.luckyWorn = 0;
+    for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
+        const content::ItemRow* row = rowAt(slot);
+        if (row && takesOptions(*row) && bag_[slot].luck) ++hero.luckyWorn;
+    }
+    // What each piece's wear takes off it (sim/wear.h), read off the slot it is worn in.
+    const auto cutAt = [&](int slot) {
+        const Held& h = bag_[slot];
+        const content::ItemRow& r = tables_->items[size_t(h.item)];
+        return wearCut(h.durability, maximumDurability(r, h));
+    };
+    hero.weaponCut = weaponSlot >= 0 ? cutAt(weaponSlot) : 0.0f;
     hero.shield = left && left->shield() ? tables_->armNamed(left->name) : -1;
     hero.wornDefense = 0;
     hero.wornDefenseRate = 0;
@@ -150,12 +205,24 @@ void Realm::rearm(Body& hero) {
     for (int slot = kWeaponLeft; slot <= kBoots; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || (!row->shield() && !row->armour())) continue;
-        hero.wornDefense += row->defense + defenseBonus(row->shield(), bag_[slot].refinement);
+        // CalculateDefense's `defense -= (WORD)(defense * percent)`, piece by piece, and a
+        // piece worn to nothing is skipped whole (`Durability != 0`).
+        const float cut = cutAt(slot);
+        // Armour's additional option is Stats.DefenseBase, added with the piece's own; a
+        // shield's is its defence rate instead (below).
+        const int option = row->shield() ? 0 : optionValue(*row, bag_[slot].option);
+        const int excellent = bag_[slot].excellent != 0 ? excellentDefense(*row) : 0;
+        const int defense = row->defense + defenseBonus(row->shield(), bag_[slot].refinement) +
+                            option + excellent;
+        hero.wornDefense += defense - int(float(defense) * cut);
         // The shield's block column rises on the armour's table: _shieldDefenseRateIncreaseTable
-        // is built from DefenseIncreaseByLevel.
+        // is built from DefenseIncreaseByLevel. Worn down the same way (CalculateSuccessfulBlocking).
         if (row->shield()) {
-            hero.shieldDefense = row->defense + defenseBonus(true, bag_[slot].refinement);
-            hero.wornDefenseRate += row->defenseRate + defenseBonus(false, bag_[slot].refinement);
+            hero.shieldDefense = defense - int(float(defense) * cut);
+            const int rate = row->defenseRate + defenseBonus(false, bag_[slot].refinement) +
+                             optionValue(*row, bag_[slot].option) +
+                             (bag_[slot].excellent != 0 ? excellentBlock(*row) : 0);
+            hero.wornDefenseRate += rate - int(float(rate) * cut);
         }
     }
     const int was = hero.maxHealth;
@@ -171,7 +238,8 @@ Wearer Realm::wearer() const {
     return Wearer{hero.kin, hero.level, hero.points, hero.learned, hero.shieldDefense};
 }
 
-int Realm::give(int32_t item, int slot, int refinement, int durability) {
+int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,
+                uint8_t excellent) {
     if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return -1;
     const content::ItemRow& row = tables_->items[size_t(item)];
     if (slot < 0) slot = bag_.free(*tables_, row.width, row.height);
@@ -179,7 +247,18 @@ int Realm::give(int32_t item, int slot, int refinement, int durability) {
         (baggable(slot) && !bag_.room(*tables_, slot, row.width, row.height))) {
         return -1;
     }
-    bag_.put(slot, Held{item, int16_t(refinement), int16_t(durability)});
+    if (durability < 0) durability = fullDurability(row, refinement);
+    Held put{item, int16_t(refinement), int16_t(durability)};
+    if (takesOptions(row)) {
+        put.luck = luck;
+        put.option = int8_t(std::clamp(option, 0, kMostOption));
+        put.excellent = uint8_t(excellent & 63);
+        // Whole means whole with its fifteen, when it was asked for whole.
+        if (put.excellent && durability == fullDurability(row, refinement) && wears(row)) {
+            put.durability = int16_t(maximumDurability(row, put));
+        }
+    }
+    bag_.put(slot, put);
     if (wearable(slot)) rearm(bodies_[0]);
     return slot;
 }
@@ -258,6 +337,60 @@ bool Realm::useItem(int slot) {
     return true;
 }
 
+// OpenMU's UpgradeItemLevelJewelConsumeHandlerPlugIn.ModifyItem, with the two configurations
+// its Bless and Soul handlers give it: the Bless at 100 percent, the Soul at 50 and 25 more on
+// a lucky thing, a Soul that misses taking one off and everything from +7. The jewel is spent
+// either way -- "true doesn't mean that it was successful, just that the consumption
+// happened". A success makes the thing whole at its new plus (GetMaximumDurabilityOfOnePiece);
+// a miss leaves the wear where it was, held under the lower plus's maximum.
+//
+// On a worn thing too. OpenMU refuses one (ItemModifyConsumeHandlerPlugIn) and says the
+// original server allowed it; the original is what this is, as MU2's Realm.Refine decided.
+//
+// Luck is `Held::luck`, rolled on a drop. And the Bless draws nothing from the dice: at 100 the
+// roll cannot matter, and a seeded log without a Soul in it stays the log it was.
+bool Realm::refine(int jewelSlot, int targetSlot) {
+    constexpr int kSoulChance = 50;    // SoulJewelConsumeHandlerPlugIn.SuccessRatePercentage
+    constexpr int kSoulResetFrom = 7;  // ResetToLevel0WhenFailMinLevel
+    if (!tables_ || !baggable(jewelSlot) || targetSlot < 0 || targetSlot >= kSlots ||
+        jewelSlot == targetSlot) {
+        return false;
+    }
+    Body& hero = bodies_[0];
+    if (!hero.alive()) return false;
+    const Held jewel = bag_[jewelSlot];
+    Held thing = bag_[targetSlot];
+    if (!refinable(*tables_, jewel, thing)) return false;
+    const content::ItemRow& row = tables_->items[size_t(thing.item)];
+    const bool soul = jewelOf(tables_->items[size_t(jewel.item)]) == Jewel::Soul;
+
+    const int was = thing.refinement;
+    constexpr int kSoulLuck = 25;      // SuccessRateBonusWithLuckPercentage
+    const int chance = kSoulChance + (thing.luck ? kSoulLuck : 0);
+    const bool took = !soul || dice_.nextInt(0, 100) < chance;  // NextRandomBool(percent)
+    if (took) {
+        thing.refinement = int16_t(was + 1);
+        thing.durability = int16_t(maximumDurability(row, thing));
+    } else {
+        thing.refinement = int16_t(was >= kSoulResetFrom ? 0 : std::max(0, was - 1));
+        const int most = maximumDurability(row, thing);
+        if (most > 0) thing.durability = int16_t(std::min<int>(thing.durability, most));
+    }
+    // The jewel first, then the thing, so a window redrawing between the two sees a hole and
+    // never a refined thing beside the jewel that refined it. MU2's order.
+    if (jewel.durability > 1) {
+        Held left = jewel;
+        left.durability = int16_t(jewel.durability - 1);
+        bag_.put(jewelSlot, left);
+    } else {
+        bag_.lift(jewelSlot);
+    }
+    bag_.put(targetSlot, thing);
+    if (wearable(targetSlot)) rearm(hero);
+    say(What::Refined, hero, targetSlot, was, thing.refinement);
+    return true;
+}
+
 // The shield comes back in a safe zone and nowhere else: a fiftieth of its maximum every three
 // seconds, the fraction carried. MU2's Realm.Recover and Rates.ShieldRecoveryInSafeZone, off
 // OpenMU's RegenerateAsync, which skips the shield outside one.
@@ -321,7 +454,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
     constexpr double kJewel = 0.001, kItem = 0.1, kMoney = 0.5;
     constexpr int kGap = 12;           // Loot.Gap: nothing more than twelve levels below it
     constexpr int kBaseMoney = 7;      // Loot.BaseMoney
-    constexpr int kMostRefined = 9;    // Refine.Cap
+    constexpr int kMostRefined = kRefineCap;
     const int level = dead.level;
     double roll = dice_.nextDouble();
     Lying one;
@@ -344,11 +477,48 @@ void Realm::leave(const Body& dead, const Body& killer) {
         return -1;
     };
 
+    // The jewels group is not only the jewels: `AddItemToJewelItemDrop` puts the Ale (drop level
+    // 15) and the Town Portal Scroll (30) in it too, and the three pets, which have no rows
+    // here. Drawn by the monster's level alone, with no twelve-level gap (GenerateItemFromGroup's
+    // `isJewel`). In Lorencia that is the Chaos from level 12 and the Ale from 15; the Bless (25)
+    // and the Soul (30) are never left by anything in the town.
+    const auto jewelGroup = [](const content::ItemRow& r) {
+        return r.jewel() || (r.group == kGroupPotions && (r.number == 9 || r.number == 10));
+    };
     if (roll <= kJewel) {
-        const int32_t item = draw([&](const content::ItemRow& r) { return r.jewel() && reaches(r); });
+        const int32_t item = draw([&](const content::ItemRow& r) { return jewelGroup(r) && reaches(r); });
         if (item < 0) return;
         one.what = Held{item, 0, 1};
-    } else if ((roll -= kJewel) <= kItem) {
+    } else if ((roll -= kJewel) <= kExcellentChance) {
+        // GenerateRandomExcellentItem: nothing from a monster under 25, and otherwise what a
+        // monster 25 levels lower would drop, at +0, with luck and the option rolled as on any
+        // drop, then one excellent option and a rare second. OpenMU's list admits a row with no
+        // excellent options at all -- a potion comes out "excellent" with nothing on it -- and
+        // that quirk is left out here: only a row that can carry them is drawn.
+        const int lower = level - kExcellentLevelDelta;
+        if (lower < 0) return;
+        const int32_t item = draw([&](const content::ItemRow& r) {
+            return r.dropsFromMonsters() && excellentable(r) && r.dropLevel <= lower &&
+                   (r.maximumDropLevel == 0 || lower <= r.maximumDropLevel) &&
+                   r.dropLevel > lower - kGap;
+        });
+        if (item < 0) return;
+        const content::ItemRow& row = tables_->items[size_t(item)];
+        one.what = Held{item, 0, int16_t(fullDurability(row, 0))};
+        one.what.luck = dice_.nextBool(kLuckChance);
+        if (dice_.nextBool(kOptionChance)) {
+            one.what.option = int8_t(dice_.nextInt(1, kMostOptionDropped + 1));
+        }
+        const int first = dice_.nextInt(0, kExcellentOptions);
+        one.what.excellent = uint8_t(1u << first);
+        one.what.durability = int16_t(maximumDurability(row, one.what));
+        if (dice_.nextBool(kSecondExcellentChance)) {
+            // AddRandomExcOptions draws again until it is not the first.
+            int second = dice_.nextInt(0, kExcellentOptions - 1);
+            if (second >= first) ++second;
+            one.what.excellent |= uint8_t(1u << second);
+        }
+    } else if ((roll -= kExcellentChance) <= kItem) {
         const int32_t item = draw([&](const content::ItemRow& r) {
             return r.dropsFromMonsters() && reaches(r) && r.dropLevel > level - kGap;
         });
@@ -358,7 +528,17 @@ void Realm::leave(const Body& dead, const Body& killer) {
         const bool refinable = row.group <= kGroupBoots && !ammunition(row);
         const int plus = refinable ? std::clamp((level - row.dropLevel) / 3, 0, kMostRefined) : 0;
         const bool stacks = heals(row) || restores(row);
-        one.what = Held{item, int16_t(plus), int16_t(stacks ? 1 : row.durability)};
+        // Whole at its plus, as DefaultDropGenerator sets `GetMaximumDurabilityOfOnePiece`.
+        one.what = Held{item, int16_t(plus), int16_t(stacks ? 1 : fullDurability(row, plus))};
+        // ApplyRandomOptions: its PossibleItemOptions in the order the initialisers add them,
+        // luck first and the additional option after, each at a quarter; the option's level from
+        // the levels up to MaximumItemOptionLevelDrop. No skill: skills are orbs here.
+        if (takesOptions(row)) {
+            one.what.luck = dice_.nextBool(kLuckChance);
+            if (dice_.nextBool(kOptionChance)) {
+                one.what.option = int8_t(dice_.nextInt(1, kMostOptionDropped + 1));
+            }
+        }
     } else if (roll - kItem <= kMoney) {
         one.zen = int64_t(killExperience(dead.level, killer.level)) + kBaseMoney;
     } else {
@@ -411,7 +591,8 @@ bool Realm::take(size_t index) {
     const Lying one = lying_[index];
     int slot = -1;
     if (one.what.empty()) {
-        money_ += one.zen;
+        // An excellent armour's Zen, at the picking up (MoneyDistribution, MoneyAmountRate).
+        money_ += int64_t(double(one.zen) * bodies_[0].excel.zenRate);
     } else {
         const content::ItemRow& row = tables_->items[size_t(one.what.item)];
         slot = bag_.free(*tables_, row.width, row.height);
@@ -472,9 +653,11 @@ int Realm::buy(int shelfSlot) {
     const int slot = bag_.free(*tables_, row.width, row.height);
     if (slot < 0) return -1;
     money_ -= price;
-    // A stack for a potion, a full quiver for ammunition, and nothing read for gear.
+    // A stack for a potion, a full quiver for ammunition, and gear whole at its plus.
     Held bought{item, int16_t(wanted->refinement),
-                int16_t(wanted->pieces > 0 ? wanted->pieces : row.durability), wanted->skill};
+                int16_t(wanted->pieces > 0 ? wanted->pieces
+                                           : fullDurability(row, wanted->refinement)),
+                wanted->skill};
     bag_.put(slot, bought);
     say(What::Bought, bodies_[0], item, int32_t(price), slot);
     return slot;
@@ -485,13 +668,197 @@ int64_t Realm::sellItem(int slot) {
     const Held thing = bag_[slot];
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
     const bool stacks = row.group == kGroupPotions;
-    const int64_t paid = sellingPrice(row, thing.refinement,
-                                      stacks ? std::max<int>(1, thing.durability) : 1, thing.skill,
-                                      thing.durability, row.durability);
+    int64_t paid = sellingPrice(row, thing.refinement,
+                                stacks ? std::max<int>(1, thing.durability) : 1, thing.skill,
+                                thing.durability, row.durability, thing.luck, thing.option,
+                                excellentCount(thing.excellent));
+    // Worn gear fetches less: 0.6 of the share gone comes off (CalculateSellingPrice).
+    if (wears(row)) {
+        paid = wornSellingPrice(paid, thing.durability, maximumDurability(row, thing));
+    }
     bag_.lift(slot);
     money_ += paid;
     say(What::Sold, bodies_[0], thing.item, int32_t(paid), slot);
     return paid;
+}
+
+// ---- wear -----------------------------------------------------------------------------------
+//
+// OpenMU's Player.cs:1968-2045, for the one player there is. Which piece is a draw from
+// `wearDice_`, so the fight's own dice see none of it.
+
+void Realm::wearOnTaken(int took) {
+    // One of the equipped defending pieces, at random: the helm to the boots and a shield in
+    // the left hand (IsDefensiveItem; wings and rings are defensive there too, and are not worn
+    // in this world). A broken one is still a candidate and takes nothing more, as there.
+    int candidates[kWorn];
+    int count = 0;
+    for (int slot = kWeaponLeft; slot <= kBoots; ++slot) {
+        const Held& h = bag_[slot];
+        if (h.empty()) continue;
+        const content::ItemRow& row = tables_->items[size_t(h.item)];
+        if ((row.shield() || row.armour()) && wears(row)) candidates[count++] = slot;
+    }
+    if (count == 0) return;
+    const int slot = candidates[wearDice_.nextInt(0, count)];
+    wearDown(slot, double(took) / kDamagePerDurability);
+}
+
+void Realm::wearOnLanded() {
+    // GetRandomOffensiveItem: the two hands and the pendant, less a shield and ammunition, one
+    // of them by `Rand.NextInt(3, 6) % 3` and the first there is when that one is empty.
+    const auto offensive = [&](int slot) {
+        const Held& h = bag_[slot];
+        if (h.empty()) return false;
+        const content::ItemRow& row = tables_->items[size_t(h.item)];
+        return !row.shield() && !ammunition(row) && wears(row);
+    };
+    const int order[3] = {kWeaponRight, kWeaponLeft, kAmulet};
+    int result = -1;
+    for (int slot : order) {
+        if (result < 0 && offensive(slot)) result = slot;
+    }
+    if (result < 0) return;
+    const int pick = order[wearDice_.nextInt(3, 6) % 3];
+    if (offensive(pick)) result = pick;
+    // A weapon at nought is spared, as DecreaseWeaponDurabilityAfterHitAsync returns on it.
+    if (bag_[result].durability <= 0) return;
+    wearDown(result, 1.0 / kHitsPerDurability);
+}
+
+void Realm::wearDown(int slot, double amount) {
+    Held h = bag_[slot];
+    if (h.empty() || h.durability <= 0) return;
+    if (wearItem_[slot] != h.item) {
+        wearItem_[slot] = h.item;
+        wearCarry_[slot] = 0.0;
+    }
+    wearCarry_[slot] += amount;
+    if (wearCarry_[slot] < 1.0) return;
+    const int whole = int(wearCarry_[slot]);
+    wearCarry_[slot] -= double(whole);
+    const content::ItemRow& row = tables_->items[size_t(h.item)];
+    const int maximum = maximumDurability(row, h);
+    const float before = wearCut(h.durability, maximum);
+    h.durability = int16_t(std::max(0, int(h.durability) - whole));
+    // Put back only when a whole point went, so the windows mirroring the bag redraw on what
+    // they can show and not on every blow (IItemDurabilityChangedPlugIn fires on the same edge).
+    bag_.put(slot, h);
+    Body& hero = bodies_[0];
+    say(What::Worn, hero, slot, h.durability, maximum);
+    if (wearCut(h.durability, maximum) != before) rearm(hero);
+}
+
+// ---- the repair -----------------------------------------------------------------------------
+
+bool Realm::mending() const {
+    return tables_ && trading_ >= 0 && serving(trading_) &&
+           repairsAt(tables_->folk[size_t(trading_)].number);
+}
+
+bool Realm::selfMending() const {
+    const Body& hero = bodies_[0];
+    return hero.alive() && hero.level >= kSelfRepairLevel;
+}
+
+int64_t Realm::repairCost(int slot) const {
+    if (!tables_ || slot < 0 || slot >= kSlots) return 0;
+    const Held& h = bag_[slot];
+    if (h.empty()) return 0;
+    // CalcRepairCost's SelfRepair: the counter's price at a counter that mends, else his own.
+    return repairPrice(tables_->items[size_t(h.item)], h.refinement, h.skill, h.durability,
+                       mending());
+}
+
+int64_t Realm::repairAllCost() const {
+    int64_t total = 0;
+    for (int slot = 0; slot < kSlots; ++slot) total += repairCost(slot);
+    return total;
+}
+
+bool Realm::repair(int slot) {
+    if ((!mending() && !selfMending()) || slot < 0 || slot >= kSlots) return false;
+    const int64_t cost = repairCost(slot);
+    if (cost <= 0 || !pay(cost)) return false;
+    Held h = bag_[slot];
+    h.durability = int16_t(maximumDurability(tables_->items[size_t(h.item)], h));
+    bag_.put(slot, h);
+    if (wearable(slot)) {
+        wearCarry_[slot] = 0.0;
+        rearm(bodies_[0]);
+    }
+    say(What::Repaired, bodies_[0], slot, int32_t(cost), 1);
+    return true;
+}
+
+int Realm::repairAll() {
+    if (!mending()) return 0;
+    int mended = 0;
+    int64_t paid = 0;
+    bool worn = false;
+    for (int slot = 0; slot < kSlots; ++slot) {
+        const int64_t cost = repairCost(slot);
+        if (cost <= 0) continue;
+        if (!pay(cost)) break;  // RepairAllItemsAsync: NotEnoughMoneyToRepair, and it stops
+        Held h = bag_[slot];
+        h.durability = int16_t(maximumDurability(tables_->items[size_t(h.item)], h));
+        bag_.put(slot, h);
+        if (wearable(slot)) {
+            wearCarry_[slot] = 0.0;
+            worn = true;
+        }
+        paid += cost;
+        ++mended;
+    }
+    if (worn) rearm(bodies_[0]);
+    if (mended > 0) say(What::Repaired, bodies_[0], -1, int32_t(paid), mended);
+    return mended;
+}
+
+// ---- the vault ------------------------------------------------------------------------------
+//
+// Each move looks for the room at its own footprint BEFORE anything leaves where it was, so a
+// refusal changes nothing: the realm's own rule for a purchase. Nothing re-reckons the hero,
+// because nothing worn is ever moved here.
+
+int Realm::deposit(int bagSlot, int cell) {
+    if (!banked() || !baggable(bagSlot) || bag_[bagSlot].empty()) return -1;
+    const content::ItemRow& row = tables_->items[size_t(bag_[bagSlot].item)];
+    if (cell < 0) cell = vault_.free(*tables_, row.width, row.height);
+    if (cell < 0 || !vault_.room(*tables_, cell, row.width, row.height)) return -1;
+    vault_.put(cell, bag_.lift(bagSlot));
+    return cell;
+}
+
+int Realm::withdraw(int cell, int bagSlot) {
+    if (!banked() || vault_[cell].empty()) return -1;
+    const content::ItemRow& row = tables_->items[size_t(vault_[cell].item)];
+    if (bagSlot < 0) bagSlot = bag_.free(*tables_, row.width, row.height);
+    if (!baggable(bagSlot) || !bag_.room(*tables_, bagSlot, row.width, row.height)) return -1;
+    bag_.put(bagSlot, vault_.lift(cell));
+    return bagSlot;
+}
+
+bool Realm::rearrange(int from, int to) {
+    if (!banked() || from == to || vault_[from].empty()) return false;
+    const content::ItemRow& row = tables_->items[size_t(vault_[from].item)];
+    if (!vault_.room(*tables_, to, row.width, row.height, from)) return false;
+    vault_.put(to, vault_.lift(from));
+    return true;
+}
+
+bool Realm::depositZen(int64_t zen) {
+    if (!banked() || zen <= 0 || zen > money_) return false;
+    money_ -= zen;
+    vault_.setZen(vault_.zen() + zen);
+    return true;
+}
+
+bool Realm::withdrawZen(int64_t zen) {
+    if (!banked() || zen <= 0 || zen > vault_.zen()) return false;
+    vault_.setZen(vault_.zen() - zen);
+    money_ += zen;
+    return true;
 }
 
 bool Realm::pay(int64_t zen) {
@@ -517,6 +884,8 @@ uint32_t Realm::discard(int slot) {
     // A dead man throws nothing away, as a dead man moves nothing: the same gate `moveItem`
     // keeps, so a window left open over a corpse cannot empty the bag.
     if (!hero.alive() || bag_[slot].empty()) return 0;
+    // Nor a jewel or a +7, which MuMain will not let go of (sim::expensive).
+    if (expensive(*tables_, bag_[slot])) return 0;
 
     Lying one;
     one.what = bag_.lift(slot);
@@ -527,6 +896,28 @@ uint32_t Realm::discard(int slot) {
     lying_.push_back(one);
     // Said for the log and for anything reading the realm within the same tick; the showing
     // does NOT hear it -- see the note on discard() in realm.h.
+    say(What::Dropped, hero, int32_t(one.id), one.what.item, one.what.refinement);
+    return one.id;
+}
+
+uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t excellent) {
+    if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return 0;
+    const Body& hero = bodies_[0];
+    const content::ItemRow& row = tables_->items[size_t(item)];
+    Lying one;
+    // Whole, as `leave` makes what a kill leaves.
+    one.what = Held{item, int16_t(std::clamp(refinement, 0, kRefineCap)),
+                    int16_t(std::max(1, fullDurability(row, refinement)))};
+    if (takesOptions(row)) {
+        one.what.luck = luck;
+        one.what.option = int8_t(std::clamp(option, 0, kMostOption));
+        one.what.excellent = uint8_t(excellent & 63);
+        if (one.what.excellent && wears(row)) one.what.durability = int16_t(maximumDurability(row, one.what));
+    }
+    std::tie(one.column, one.row) = clearing(hero.column(), hero.row());
+    one.vanishesAt = tick_ + int64_t(kLingerSeconds) * 20;
+    one.id = nextId_++;
+    lying_.push_back(one);
     say(What::Dropped, hero, int32_t(one.id), one.what.item, one.what.refinement);
     return one.id;
 }

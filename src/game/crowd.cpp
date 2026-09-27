@@ -161,6 +161,62 @@ void Figure::sample(int clip, float time, size_t limit, float* rotations,
     const float* b = one.frames > 1 ? a + size_t(bones) * 7 : a;
 
     const size_t count = std::min(limit, body_->clipBoneOf.size());
+    if (smooth_ && one.frames >= 4 && !one.hold) {
+        // A looping clip's last key is its first again (CookedClip), so the cycle is
+        // frames - 1 keys long and the neighbours either side of a key wrap round it.
+        const int period = int(one.frames) - 1;
+        const auto key = [&](int k) {
+            k = ((k % period) + period) % period;
+            return &clips.rows[(size_t(one.firstRow) + size_t(k) * bones) * 7];
+        };
+        const float* p0 = key(int(frame) - 1);
+        const float* p3 = key(int(frame) + 2);
+        const float t2 = t * t, t3 = t2 * t;
+        // Catmull-Rom's weights on the four keys: through the middle two, and with the slope
+        // at each taken from its neighbours, so the speed is continuous across a key.
+        const float w0 = 0.5f * (-t3 + 2.0f * t2 - t);
+        const float w1 = 0.5f * (3.0f * t3 - 5.0f * t2 + 2.0f);
+        const float w2 = 0.5f * (-3.0f * t3 + 4.0f * t2 + t);
+        const float w3 = 0.5f * (t3 - t2);
+        for (size_t i = 0; i < count; ++i) {
+            const int32_t from = body_->clipBoneOf[i];
+            if (from < 0) {
+                rotations[i * 4 + 0] = rotations[i * 4 + 1] = rotations[i * 4 + 2] = 0.0f;
+                rotations[i * 4 + 3] = 1.0f;
+                translations[i * 3 + 0] = translations[i * 3 + 1] = translations[i * 3 + 2] = 0.0f;
+                continue;
+            }
+            const float* q[4] = {p0 + size_t(from) * 7, a + size_t(from) * 7,
+                                 b + size_t(from) * 7, p3 + size_t(from) * 7};
+            // Each quaternion on the same side of the sphere as its neighbour, or the curve
+            // runs the long way round.
+            float sign[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+            for (int k : {0, 2, 3}) {
+                const float* near = q[k == 3 ? 2 : 1];
+                float dot = 0.0f;
+                for (int c = 0; c < 4; ++c) dot += q[k][c] * near[c];
+                sign[k] = (dot < 0.0f ? -1.0f : 1.0f) * (k == 3 ? sign[2] : 1.0f);
+            }
+            float* out = &rotations[i * 4];
+            float length = 0.0f;
+            for (int c = 0; c < 4; ++c) {
+                out[c] = w0 * sign[0] * q[0][c] + w1 * q[1][c] + w2 * sign[2] * q[2][c] +
+                         w3 * sign[3] * q[3][c];
+                length += out[c] * out[c];
+            }
+            length = std::sqrt(length);
+            if (length < 1e-8f) {
+                core::nlerpQuat(q[1], q[2], t, out);
+            } else {
+                for (int c = 0; c < 4; ++c) out[c] /= length;
+            }
+            for (int c = 0; c < 3; ++c) {
+                translations[i * 3 + c] = w0 * q[0][4 + c] + w1 * q[1][4 + c] +
+                                          w2 * q[2][4 + c] + w3 * q[3][4 + c];
+            }
+        }
+        return;
+    }
     for (size_t i = 0; i < count; ++i) {
         const int32_t from = body_->clipBoneOf[i];
         if (from < 0) {
@@ -329,6 +385,30 @@ bool Figure::pointOn(int bone, const float local[3], float out[3]) const {
                  local[2] * placed[2 * 4 + j] + placed[3 * 4 + j];
     }
     return true;
+}
+
+bool Figure::pointOnBind(int bone, const float model[3], float out[3]) const {
+    if (!body_ || !body_->skeletonMesh || bone < 0 ||
+        size_t(bone) >= body_->skeletonMesh->bones().size()) {
+        return false;
+    }
+    // Into the bone's own frame through its inverse bind, then out along its pose.
+    const float* inverse = body_->skeletonMesh->bones()[size_t(bone)].inverseBind;
+    float local[3];
+    for (int j = 0; j < 3; ++j) {
+        local[j] = model[0] * inverse[0 * 4 + j] + model[1] * inverse[1 * 4 + j] +
+                   model[2] * inverse[2 * 4 + j] + inverse[3 * 4 + j];
+    }
+    return pointOn(bone, local, out);
+}
+
+void Figure::pointInModel(const float model[3], float out[3]) const {
+    float transform[16];
+    content::placementTransform(pitch_, yaw_, roll_, scale_, position_, transform);
+    for (int j = 0; j < 3; ++j) {
+        out[j] = model[0] * transform[0 * 4 + j] + model[1] * transform[1 * 4 + j] +
+                 model[2] * transform[2 * 4 + j] + transform[3 * 4 + j];
+    }
 }
 
 // ---- the crowd ------------------------------------------------------------------------

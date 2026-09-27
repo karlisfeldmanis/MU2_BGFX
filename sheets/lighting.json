@@ -36,6 +36,7 @@
   "metal_gain": 2.5,
   "refine_strength": 0.25,
   "refine_star": 4.0,
+  "excellent_strength": 0.15,
 
   "ssao_radius": 0.5,
   "ssao_strength": 1.0

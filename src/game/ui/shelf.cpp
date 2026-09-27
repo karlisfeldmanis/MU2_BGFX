@@ -1,7 +1,10 @@
 #include "game/ui/shelf.h"
 
+#include <algorithm>
+
 #include "game/ui/describe.h"
 #include "game/ui/sheet.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 namespace {
@@ -24,6 +27,14 @@ constexpr int kColumns = 8, kRows = 18;
 constexpr float kCell = panel::kPitch;
 constexpr float kHeight = panel::kHeight;
 
+// A counter that mends gives the three spare rows back to MU's own foot: fifteen rows, which is
+// every row a stock table fills (44 + 15 x 21 = 359), then the Repair All strip and the two
+// hammers (CNewUINPCShop::RenderRepairMoney at y + 355, SetButtonInfo's 36x29 at x + 54 and
+// x + 98, y + 390), each moved down a few units onto this skin's taller grid.
+constexpr int kMendingRows = 15;
+constexpr Box kStrip{12.0f, 363.0f, 166.0f, 20.0f};
+constexpr Box kHammers[2] = {{54.0f, 390.0f, 36.0f, 29.0f}, {98.0f, 390.0f, 36.0f, 29.0f}};
+
 Box cellOf(int slot, const content::ItemRow& row) {
     return {kOriginX + float(slot % kColumns) * kCell, kOriginY + float(slot / kColumns) * kCell,
             float(row.width) * kCell, float(row.height) * kCell};
@@ -38,7 +49,8 @@ bool Shelf::Drawn::operator==(const Drawn& o) const {
            level == o.level &&
            strength == o.strength && agility == o.agility && vitality == o.vitality &&
            energy == o.energy && money == o.money && version == o.version &&
-           picture == o.picture;
+           picture == o.picture && mendingOn == o.mendingOn && overHammer == o.overHammer &&
+           pressedHammer == o.pressedHammer && mendAll == o.mendAll;
 }
 
 void Shelf::open(const gfx::Interface& interface, panel::Arts* arts) {
@@ -86,7 +98,8 @@ void Shelf::restock(const sim::Realm& realm, int folk) {
 
 int Shelf::lineAt(const content::Tables& tables, float ux, float uy) const {
     const float cx = (ux - kOriginX) / kCell, cy = (uy - kOriginY) / kCell;
-    if (cx < 0.0f || cy < 0.0f || cx >= float(kColumns) || cy >= float(kRows)) return -1;
+    const int rows = mends_ ? kMendingRows : kRows;
+    if (cx < 0.0f || cy < 0.0f || cx >= float(kColumns) || cy >= float(rows)) return -1;
     const int column = int(cx), row = int(cy);
     // Recorded at its top-left, so the cell under the pointer may be covered by something that
     // starts above or to the left of it -- the bag's own walk.
@@ -101,7 +114,8 @@ int Shelf::lineAt(const content::Tables& tables, float ux, float uy) const {
 }
 
 void Shelf::update(float width, float height, int column, const sim::Realm& realm,
-                   const Pointer& pointer, Stage* stage, int* buy, bool* close) {
+                   const Pointer& pointer, Stage* stage, int* buy, bool* close,
+                   ShelfMending* mend) {
     const int trading = realm.trading();
     up_ = trading >= 0 && realm.tables();
     if (!up_) {
@@ -110,6 +124,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     }
     const content::Tables& tables = *realm.tables();
     if (trading != keeper_) restock(realm, trading);
+    mends_ = sim::repairsAt(tables.folk[size_t(trading)].number);
     screenW_ = width;
     screenH_ = height;
     x_ = panel::columnX(width, column);
@@ -121,17 +136,27 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
 
     const Box cross = panel::frameClose();
     overClose_ = inside && cross.has(ux, uy);
+    overHammer_ = -1;
+    for (int i = 0; mends_ && inside && i < 2; ++i) {
+        if (kHammers[i].has(ux, uy)) overHammer_ = i;
+    }
     if (pointer.pressed && inside) {
         if (cross.has(ux, uy)) closing_ = true;
         pressing_ = hovered_ >= 0;
+        pressedHammer_ = overHammer_;
     }
     // Bought on release, not on press -- CNewUINPCShop tests IsRelease(VK_LBUTTON) before it
-    // sends, so sliding off an item you did not mean to buy costs nothing.
+    // sends, so sliding off an item you did not mean to buy costs nothing. The hammers the same.
     if (pointer.released) {
         if (closing_ && inside && cross.has(ux, uy) && close) *close = true;
         if (pressing_ && hovered_ >= 0 && buy) *buy = lines_[size_t(hovered_)].offer.slot;
+        if (mend && pressedHammer_ >= 0 && pressedHammer_ == overHammer_) {
+            if (pressedHammer_ == 0) mend->toggle = true;
+            else mend->all = true;
+        }
         closing_ = false;
         pressing_ = false;
+        pressedHammer_ = -1;
     }
 
     standing_.clear();
@@ -163,6 +188,12 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     // The tip compares with what he wears, which the bag's version moves.
     now_.version = realm.satchel().version();
     now_.picture = stage && stage->picture().valid() ? stage->picture().handle.idx : 0xFFFF;
+    now_.mendingOn = mends_ && mendingOn_;
+    now_.overHammer = overHammer_;
+    now_.pressedHammer = pressedHammer_;
+    // RepairAllGold, re-reckoned every frame as CNewUINPCShop::Update does: it moves with the
+    // purse's colour and with every point a fight takes off the gear.
+    now_.mendAll = mends_ ? realm.repairAllCost() : -1;
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild(realm, stage);
@@ -181,7 +212,54 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     panel::frame(canvas_, arts, x, y, merchant_);
     // The shelf as one ruled block, so a half-stocked shelf reads as a shelf and not as a hole,
     // and the offer under the pointer lit over its whole footprint.
-    panel::grid(canvas_, x, y, kOriginX, kOriginY, kColumns, kRows);
+    panel::grid(canvas_, x, y, kOriginX, kOriginY, kColumns, mends_ ? kMendingRows : kRows);
+    if (mends_) {
+        // The strip: MU's `Repair All` and the sum, in gilt on a well, the figure red when the
+        // purse cannot cover it (getGoldColor's job there).
+        panel::cell(canvas_, x, y, kStrip, sheet::Cell::Rest);
+        const float size = 8.0f * k;
+        const Box strip = panel::scaled(x, y, kStrip);
+        const float baseline = panel::centredBaseline(face, strip, size);
+        canvas_.text(strip.x + 6.0f * k, baseline, size, panel::kLettering, "Repair All");
+        const std::string sum = panel::commas(now_.mendAll) + " Zen";
+        const bool affords = realm.money() >= now_.mendAll;
+        canvas_.text(strip.right() - 6.0f * k - face.measure(size, sum), baseline, size,
+                     affords ? tip::colourOf(tip::Tone::Yellow) : tip::colourOf(tip::Tone::Red),
+                     sum);
+        // The hammers: two states a sheet, the lit one resting and the dimmed one held
+        // down -- and the Repair hammer held down for as long as repair mode is on, which is how
+        // MU says the mode is on at all.
+        for (int i = 0; i < 2; ++i) {
+            // A picture each, where MU draws one hammer twice: see interface/CREDITS.md.
+            const gfx::Art& hammer = arts.get(i == 0 ? "shop_repair" : "shop_repair_all");
+            const Box to = panel::scaled(x, y, kHammers[i]);
+            const bool down = pressedHammer_ == i || (i == 0 && now_.mendingOn);
+            if (hammer.valid()) {
+                const float half = hammer.height * 0.5f;
+                canvas_.region(hammer, to, {0.0f, down ? half : 0.0f, hammer.width, half});
+            }
+            if (overHammer_ == i) canvas_.rect(to, gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f));
+            // The grey half alone reads as "disabled" at this size, so the mode's hammer is
+            // also ringed in gilt while it is on.
+            if (i == 0 && now_.mendingOn) {
+                canvas_.outline(to.grown(1.5f * k), std::max(1.0f, 1.5f * k),
+                                tip::colourOf(tip::Tone::Yellow));
+            }
+        }
+        // And what each one is, over it while the pointer is on it: MU's own tooltips,
+        // `Repair (L)` and `Repair All (Shift+L)`.
+        if (overHammer_ >= 0) {
+            const char* what = overHammer_ == 0 ? "Repair (L)" : "Repair All (Shift+L)";
+            const float tipSize = 7.0f * k;
+            const float wide = face.measure(tipSize, what) + 8.0f * k;
+            const Box over = panel::scaled(x, y, kHammers[overHammer_]);
+            const Box back{over.midX() - wide * 0.5f, over.y - tipSize - 8.0f * k, wide,
+                           tipSize + 6.0f * k};
+            canvas_.rect(back, gfx::rgba(0.0f, 0.0f, 0.0f, 0.75f));
+            canvas_.text(back.x + 4.0f * k, panel::centredBaseline(face, back, tipSize), tipSize,
+                         panel::kLettering, what);
+        }
+    }
     if (hovered_ >= 0) {
         const Line& over = lines_[size_t(hovered_)];
         panel::cell(canvas_, x, y, cellOf(over.offer.slot, tables.items[size_t(over.item)]),

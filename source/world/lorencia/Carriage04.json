@@ -20,6 +20,15 @@
     "grass_01"
   ],
   "cutout_from": "Real alpha in grass_01.OZT, as on Straw01.",
+  "cutout_soften": {
+    "grass_01": [
+      2.5,
+      0.8
+    ]
+  },
+  "cutout_soften_from": "The straw's comb of tips is finer than a pixel from the game's camera and crawled as it moved; blurred across the strands so they merge. Ours, not MU's. See pipeline/soften_alpha.py.",
+  "uv_heal": true,
+  "uv_heal_from": "MU maps one side of each bundle onto a line of its sheet (u 0.972 to 1.0), so that side is one smeared column with the comb's holes dragged across it, which shimmered as the hero walked past. u laid across those faces at the mesh's own density; v kept. Ours, not MU's. See clean_lowpoly.heal_collapsed.",
   "sheet_pad": {
     "horse_drawn_01": "edge"
   },

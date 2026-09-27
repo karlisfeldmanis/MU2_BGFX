@@ -11,9 +11,12 @@
 #include <vector>
 
 #include "content/texture.h"
+#include "game/ui/amount.h"
 #include "game/ui/arrival.h"
 #include "game/ui/bag.h"
 #include "game/ui/card.h"
+#include "game/ui/chest.h"
+#include "game/ui/endurance.h"
 #include "game/ui/cursor.h"
 #include "game/ui/hud.h"
 #include "game/item_models.h"
@@ -46,6 +49,15 @@ public:
     // just a place. The run's --ui-click goes through here and then through exactly the
     // windows' own code.
     void script(float x, float y, bool press, bool release, bool right = false);
+    // Typing for the next update, as a script gives it: digits, or "enter" or "escape".
+    void scriptType(const std::string& text) {
+        if (text == "enter") scriptEnter_ = true;
+        else if (text == "escape") scriptEscape_ = true;
+        else scriptTyped_ += text;
+    }
+    // Whether a box has the keyboard, which the window is told so Escape cancels the box
+    // rather than quitting the game.
+    bool typing() const { return amount_.up(); }
     // A scripted potion key for the next update, 0 to 3.
     void scriptKey(int key) { scriptedKey_ = key; }
     // A skill key pressed by a script: 0 is Q. `--press q` in a headless run, so the cast path is
@@ -118,6 +130,12 @@ private:
     Card card_;
     Bag bag_;
     Shelf shelf_;
+    Chest chest_;
+    // The number box the vault's coin buttons open. Modal: see Desk::update.
+    Amount amount_;
+    std::string scriptTyped_;
+    bool scriptEnter_ = false, scriptEscape_ = false;
+    Endurance endurance_;
     Cursor cursor_;
     Vitals vitals_;
     Tally tally_;
@@ -135,6 +153,13 @@ private:
     void labelGround(const Play& play, int width, int height);
     Stage* shelfStage_ = nullptr;
     bool trading_ = false;
+    // A mending counter's repair mode: a bag click mends instead of lifting. The desk's, as the
+    // shelf draws it and the bag obeys it.
+    bool mending_ = false;
+    // The vault, which borrows the shelf's stage: a counter and the vault are never open
+    // together, since each is closed by any order and opened by one.
+    bool banking_ = false;
+    bool bagForVault_ = false;
     // The four potion keys' bindings, as MU's item row. The interface's; game/save.cpp writes
     // them (mu.db's character_hotkeys is where MU2 kept them).
     int32_t quick_[Hud::kQuickKeys] = {-1, -1, -1, -1, -1};

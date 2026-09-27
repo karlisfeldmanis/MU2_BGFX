@@ -28,7 +28,8 @@ namespace mu::sim {
 // What a maximum gains arrives full; what it loses is clipped.
 inline void restoreMana(Body& hero) {
     const int was = hero.maxMana;
-    hero.maxMana = maximumMana(hero.kin, hero.level, hero.points);
+    // And the excellent armour's +4% a piece (Excellence::manaRate).
+    hero.maxMana = int(double(maximumMana(hero.kin, hero.level, hero.points)) * hero.excel.manaRate);
     hero.mana = std::min(hero.maxMana, hero.mana + std::max(0, hero.maxMana - was));
     const int wasSd = hero.maxSd;
     hero.maxSd = maximumShield(hero.level, hero.points, hero.stats.defense);

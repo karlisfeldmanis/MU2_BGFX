@@ -211,6 +211,107 @@ void diamond(gfx::Canvas& canvas, const Box& box, bool over, bool pressed) {
     canvas.rect({cx - t, cy - arm, t * 2.0f, arm * 2.0f}, ink);
 }
 
+namespace {
+// A colour as four floats, so two states can be mixed by how far the pointer's lift has come.
+struct Tone {
+    float r, g, b, a;
+    Tone mix(const Tone& o, float t) const {
+        return {r + (o.r - r) * t, g + (o.g - g) * t, b + (o.b - b) * t, a + (o.a - a) * t};
+    }
+    uint32_t packed() const { return gfx::rgba(r, g, b, a); }
+};
+
+// Each button's three looks: at rest, lifted under the pointer, and held down. The rim is graded
+// top to foot like the windows' own edge; the slab likewise, lit from above.
+struct Look {
+    Tone rimTop, rimFoot, top, foot, ink;
+};
+constexpr Look kPrimaryRest{{0.957f, 0.839f, 0.541f, 0.80f}, {0.573f, 0.455f, 0.235f, 0.55f},
+                            {0.300f, 0.235f, 0.110f, 0.96f}, {0.130f, 0.100f, 0.046f, 0.96f},
+                            {0.941f, 0.847f, 0.604f, 1.0f}};
+constexpr Look kPrimaryOver{{1.000f, 0.918f, 0.667f, 1.00f}, {0.749f, 0.604f, 0.314f, 0.80f},
+                            {0.420f, 0.333f, 0.157f, 0.97f}, {0.200f, 0.157f, 0.071f, 0.97f},
+                            {1.000f, 0.945f, 0.784f, 1.0f}};
+constexpr Look kPrimaryHeld{{0.886f, 0.769f, 0.478f, 0.95f}, {0.643f, 0.525f, 0.275f, 0.75f},
+                            {0.180f, 0.141f, 0.063f, 0.97f}, {0.290f, 0.227f, 0.102f, 0.97f},
+                            {0.941f, 0.847f, 0.604f, 1.0f}};
+constexpr Look kQuietRest{{0.886f, 0.816f, 0.620f, 0.34f}, {0.643f, 0.573f, 0.404f, 0.10f},
+                          {0.180f, 0.165f, 0.137f, 0.92f}, {0.090f, 0.082f, 0.071f, 0.92f},
+                          {0.800f, 0.776f, 0.718f, 1.0f}};
+constexpr Look kQuietOver{{0.941f, 0.878f, 0.702f, 0.62f}, {0.706f, 0.635f, 0.463f, 0.24f},
+                          {0.255f, 0.235f, 0.196f, 0.94f}, {0.125f, 0.114f, 0.098f, 0.94f},
+                          {0.980f, 0.961f, 0.910f, 1.0f}};
+constexpr Look kQuietHeld{{0.886f, 0.816f, 0.620f, 0.50f}, {0.643f, 0.573f, 0.404f, 0.20f},
+                          {0.078f, 0.071f, 0.063f, 0.94f}, {0.150f, 0.137f, 0.118f, 0.94f},
+                          {0.886f, 0.863f, 0.800f, 1.0f}};
+
+Look mixed(const Look& a, const Look& b, float t) {
+    return {a.rimTop.mix(b.rimTop, t), a.rimFoot.mix(b.rimFoot, t), a.top.mix(b.top, t),
+            a.foot.mix(b.foot, t), a.ink.mix(b.ink, t)};
+}
+}  // namespace
+
+void button(gfx::Canvas& canvas, const Box& box, const std::string& word, bool primary,
+            float lift, bool pressed, bool expected) {
+    lift = std::clamp(lift, 0.0f, 1.0f);
+    const float radius = std::round(box.h * 0.26f);
+    const float line = std::max(1.0f, std::round(box.h * 0.05f));
+    // Held, the slab sinks by its hairline and its light turns over -- lit from below, as a thing
+    // pressed into its bed is. The only movement, and enough to feel.
+    const Box body = pressed ? Box{box.x, box.y + line, box.w, box.h} : box;
+    const Look look = pressed ? (primary ? kPrimaryHeld : kQuietHeld)
+                              : mixed(primary ? kPrimaryRest : kQuietRest,
+                                      primary ? kPrimaryOver : kQuietOver, lift);
+
+    if (!pressed) {
+        tip::shadowUnder(canvas, body,
+                         std::max(1.0f, radius / tip::ink::kRadius) * (0.55f + 0.25f * lift));
+    }
+    // The answer Return gives: a thin gold ring a step outside the rim, over the shadow, so the
+    // box says which button the key presses without a word about it. Stronger while lifted.
+    if (expected && !pressed) {
+        const float gap = std::max(2.0f, std::round(box.h * 0.12f));
+        const float ring = std::max(1.0f, line);
+        const float a = 0.30f + 0.20f * lift;
+        tip::panel(canvas, body.grown(line + gap + ring), radius + line + gap + ring,
+                   gfx::rgba(0.957f, 0.839f, 0.541f, a), gfx::rgba(0.957f, 0.839f, 0.541f, a * 0.4f));
+        // Cut back to the window's own glass inside the ring, so it is a ring and not a plate.
+        tip::panel(canvas, body.grown(line + gap), radius + line + gap,
+                   gfx::rgba(0.047f, 0.044f, 0.040f, 1.0f), gfx::rgba(0.034f, 0.032f, 0.029f, 1.0f));
+    }
+    tip::panel(canvas, body.grown(line), radius + line, look.rimTop.packed(), look.rimFoot.packed());
+    tip::panel(canvas, body, radius, look.top.packed(), look.foot.packed());
+    // Held: a shadow cast down from the rim's top edge inside it, which is what reads as pushed in.
+    if (pressed) {
+        const float deep = std::max(2.0f, std::round(body.h * 0.22f));
+        canvas.shade({body.x + line, body.y, body.w - line * 2.0f, deep},
+                     gfx::rgba(0, 0, 0, 0.45f), gfx::rgba(0, 0, 0, 0.45f), gfx::rgba(0, 0, 0, 0),
+                     gfx::rgba(0, 0, 0, 0));
+    }
+    // A breath of light along the top inside the rim, fading at both ends as the rules do: what
+    // makes it a slab and not a hole. Gone when held, whose light is underneath.
+    if (!pressed) {
+        const float along = body.w - radius * 2.0f;
+        const float gloss = (primary ? 0.16f : 0.08f) + 0.06f * lift;
+        const Box sheen{body.x + radius, body.y + line, along, line};
+        canvas.shade({sheen.x, sheen.y, along * 0.5f, sheen.h}, gfx::rgba(1, 1, 1, 0),
+                     gfx::rgba(1, 1, 1, gloss), gfx::rgba(1, 1, 1, gloss), gfx::rgba(1, 1, 1, 0));
+        canvas.shade({sheen.x + along * 0.5f, sheen.y, along * 0.5f, sheen.h},
+                     gfx::rgba(1, 1, 1, gloss), gfx::rgba(1, 1, 1, 0), gfx::rgba(1, 1, 1, 0),
+                     gfx::rgba(1, 1, 1, gloss));
+    }
+
+    const std::string caps = shouted(word);
+    const float size = std::round(box.h * 0.40f);
+    const gfx::Face& face = canvas.face();
+    const float wide = tip::trackedWidth(face, size, kKickerTrack, caps);
+    // Centred on the capitals' own height, not the line's: a word in capitals has no descender,
+    // and centring the line leaves it riding high.
+    const float baseline = body.y + (body.h + face.ascent(size) * 0.72f) * 0.5f;
+    tip::tracked(canvas, std::round(body.midX() - wide * 0.5f), std::round(baseline), size,
+                 kKickerTrack, look.ink.packed(), caps, 1.0f);
+}
+
 void bar(gfx::Canvas& canvas, const Box& box, float share, uint32_t ink, float thick) {
     canvas.rect(box, kBarBack);
     const float filled = std::clamp(share, 0.0f, 1.0f) * box.w;

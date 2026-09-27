@@ -1,5 +1,6 @@
 #include "game/save.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -7,6 +8,7 @@
 #include "core/files.h"
 #include "core/json.h"
 #include "core/log.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 namespace {
@@ -23,6 +25,74 @@ void writeItem(std::FILE* f, const content::Tables& tables, int32_t item) {
 int32_t rowOf(const content::Tables& tables, int group, int number) {
     if (group < 0 || number < 0) return -1;
     return tables.itemAt(group, number);
+}
+
+// What a saved thing has left: the file's own count, except on gear saved before wear was
+// recorded, which comes back whole (Saved::Item::worn).
+int16_t durabilityOf(const content::Tables& tables, int32_t row, const Saved::Item& item) {
+    const content::ItemRow& r = tables.items[size_t(row)];
+    if (!item.worn && sim::wears(r)) {
+        sim::Held held{row, int16_t(item.plus), 0};
+        held.excellent = uint8_t(item.excellent);
+        return int16_t(sim::maximumDurability(r, held));
+    }
+    return int16_t(item.durability);
+}
+
+Saved::Item readItem(const core::Json& one) {
+    Saved::Item item;
+    item.slot = int(one["slot"].numberOr(-1));
+    item.group = int(one["group"].numberOr(-1));
+    item.number = int(one["number"].numberOr(-1));
+    item.plus = int(one["plus"].numberOr(0));
+    item.durability = int(one["durability"].numberOr(0));
+    item.skill = one["skill"].boolOr(false);
+    item.luck = one["luck"].boolOr(false);
+    item.option = std::clamp(int(one["option"].numberOr(0)), 0, sim::kMostOption);
+    item.excellent = int(one["excellent"].numberOr(0)) & 63;
+    item.worn = one["wear"].boolOr(false);
+    return item;
+}
+
+// One carried or kept thing, as the items arrays write it. `first` says whether a comma goes in
+// front, and is cleared.
+void writeHeld(std::FILE* f, const content::Tables& tables, int slot, const sim::Held& held,
+               bool* first) {
+    std::fprintf(f, "%s\n    {\"slot\": %d, ", *first ? "" : ",", slot);
+    writeItem(f, tables, held.item);
+    std::fprintf(f,
+                 ", \"plus\": %d, \"durability\": %d, \"wear\": true, \"skill\": %s, "
+                 "\"luck\": %s, \"option\": %d, \"excellent\": %d}",
+                 int(held.refinement), int(held.durability), held.skill ? "true" : "false",
+                 held.luck ? "true" : "false", int(held.option), int(held.excellent));
+    *first = false;
+}
+
+std::FILE* begin(const std::string& path, std::string* temporary) {
+    std::error_code error;
+    std::filesystem::create_directories(std::filesystem::path(path).parent_path(), error);
+    *temporary = path + ".writing";
+    std::FILE* f = std::fopen(temporary->c_str(), "wb");
+    if (!f) core::logError("save: cannot write %s", temporary->c_str());
+    return f;
+}
+
+// Flushed, closed and renamed over the last good file: a crash mid-write keeps that one.
+bool finish(std::FILE* f, const std::string& temporary, const std::string& path) {
+    const bool ok = std::fflush(f) == 0;
+    std::fclose(f);
+    if (!ok) {
+        core::logError("save: writing %s failed", temporary.c_str());
+        return false;
+    }
+    std::error_code error;
+    std::filesystem::rename(temporary, path, error);
+    if (error) {
+        core::logError("save: cannot move %s into place: %s", temporary.c_str(),
+                       error.message().c_str());
+        return false;
+    }
+    return true;
 }
 
 }  // namespace
@@ -72,17 +142,7 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.boonTicksLeft = int64_t(boon["ticks_left"].numberOr(0.0));
 
     const core::Json& items = doc["items"];
-    for (size_t i = 0; i < items.size(); ++i) {
-        const core::Json& one = items.at(i);
-        Saved::Item item;
-        item.slot = int(one["slot"].numberOr(-1));
-        item.group = int(one["group"].numberOr(-1));
-        item.number = int(one["number"].numberOr(-1));
-        item.plus = int(one["plus"].numberOr(0));
-        item.durability = int(one["durability"].numberOr(0));
-        item.skill = one["skill"].boolOr(false);
-        saved.items.push_back(item);
-    }
+    for (size_t i = 0; i < items.size(); ++i) saved.items.push_back(readItem(items.at(i)));
     // Absent in a file written before the bar could be arranged, which reads as four empty keys
     // and lets the first-free-key convenience fill them -- the behaviour that file was saved
     // under. No version bump for that reason.
@@ -98,7 +158,10 @@ bool loadSave(const std::string& path, Saved& out) {
     core::logf("save: loaded %s -- level %d, %llu experience, at %d,%d in %s", path.c_str(),
                hero.level, static_cast<unsigned long long>(hero.experience), hero.column,
                hero.row, saved.world.c_str());
-    out = saved;
+    // The vault is read on its own and is not the character's, so what is already there stays.
+    saved.vaultZen = out.vaultZen;
+    saved.vaultItems = std::move(out.vaultItems);
+    out = std::move(saved);
     return true;
 }
 
@@ -113,8 +176,11 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         sim::Held& held = saved.hero.slots[item.slot];
         held.item = row;
         held.refinement = int16_t(item.plus);
-        held.durability = int16_t(item.durability);
+        held.durability = durabilityOf(tables, row, item);
         held.skill = item.skill;
+        held.luck = item.luck;
+        held.option = int8_t(item.option);
+        held.excellent = uint8_t(item.excellent);
     }
     for (int key = 0; key < 5; ++key) {
         saved.quick[key] = rowOf(tables, saved.quickGroup[key], saved.quickNumber[key]);
@@ -125,14 +191,9 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
 }
 
 bool writeSave(const std::string& path, const content::Tables& tables, const Saved& saved) {
-    std::error_code error;
-    std::filesystem::create_directories(std::filesystem::path(path).parent_path(), error);
-    const std::string temporary = path + ".writing";
-    std::FILE* f = std::fopen(temporary.c_str(), "wb");
-    if (!f) {
-        core::logError("save: cannot write %s", temporary.c_str());
-        return false;
-    }
+    std::string temporary;
+    std::FILE* f = begin(path, &temporary);
+    if (!f) return false;
     const sim::HeroRecord& hero = saved.hero;
     std::fprintf(f, "{\n  \"version\": %d,\n  \"world\": \"%s\",\n", kVersion,
                  saved.world.c_str());
@@ -159,11 +220,7 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     for (int slot = 0; slot < sim::kSlots; ++slot) {
         const sim::Held& held = hero.slots[slot];
         if (held.empty() || size_t(held.item) >= tables.items.size()) continue;
-        std::fprintf(f, "%s\n    {\"slot\": %d, ", first ? "" : ",", slot);
-        writeItem(f, tables, held.item);
-        std::fprintf(f, ", \"plus\": %d, \"durability\": %d, \"skill\": %s}",
-                     int(held.refinement), int(held.durability), held.skill ? "true" : "false");
-        first = false;
+        writeHeld(f, tables, slot, held, &first);
     }
     std::fprintf(f, "%s],\n  \"quick\": [", first ? "" : "\n  ");
     for (int key = 0; key < 5; ++key) {
@@ -177,19 +234,65 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "%s%d", key ? ", " : "", saved.bar[key]);
     }
     std::fprintf(f, "]\n}\n");
-    const bool ok = std::fflush(f) == 0;
-    std::fclose(f);
-    if (!ok) {
-        core::logError("save: writing %s failed", temporary.c_str());
+    return finish(f, temporary, path);
+}
+
+std::string vaultPathBeside(const std::string& savePath) {
+    return (std::filesystem::path(savePath).parent_path() / "vault.json").string();
+}
+
+bool loadVault(const std::string& path, Saved& saved) {
+    saved.vaultZen = 0;
+    saved.vaultItems.clear();
+    if (!core::fileExists(path)) return false;
+    const core::Json doc = core::parseJsonFile(path);
+    if (doc.isNull() || int(doc["version"].numberOr(0)) != kVersion) {
+        core::logError("save: %s is not a vault this reads; the vault starts empty", path.c_str());
         return false;
     }
-    std::filesystem::rename(temporary, path, error);
-    if (error) {
-        core::logError("save: cannot move %s into place: %s", temporary.c_str(),
-                       error.message().c_str());
-        return false;
-    }
+    saved.vaultZen = int64_t(doc["zen"].numberOr(0.0));
+    const core::Json& items = doc["items"];
+    for (size_t i = 0; i < items.size(); ++i) saved.vaultItems.push_back(readItem(items.at(i)));
+    core::logf("save: vault %s -- %zu item(s), %lld Zen", path.c_str(), saved.vaultItems.size(),
+               static_cast<long long>(saved.vaultZen));
     return true;
+}
+
+sim::Vault resolveVault(const content::Tables& tables, const Saved& saved) {
+    sim::Vault vault;
+    vault.setZen(std::max<int64_t>(0, saved.vaultZen));
+    int lost = 0;
+    for (const Saved::Item& item : saved.vaultItems) {
+        const int32_t row = rowOf(tables, item.group, item.number);
+        const content::ItemRow* r = row >= 0 ? &tables.items[size_t(row)] : nullptr;
+        // Put back only where it still fits: a file edited by hand, or a row whose size changed
+        // in a recook, must not lay one thing across another.
+        if (!r || !vault.room(tables, item.slot, r->width, r->height)) {
+            ++lost;
+            continue;
+        }
+        vault.put(item.slot, sim::Held{row, int16_t(item.plus), durabilityOf(tables, row, item),
+                                       item.skill, item.luck, int8_t(item.option),
+                                       uint8_t(item.excellent)});
+    }
+    if (lost > 0) core::logError("save: %d vault item(s) could not be put back", lost);
+    return vault;
+}
+
+bool writeVault(const std::string& path, const content::Tables& tables, const sim::Vault& vault) {
+    std::string temporary;
+    std::FILE* f = begin(path, &temporary);
+    if (!f) return false;
+    std::fprintf(f, "{\n  \"version\": %d,\n  \"zen\": %lld,\n  \"items\": [", kVersion,
+                 static_cast<long long>(vault.zen()));
+    bool first = true;
+    for (int cell = 0; cell < sim::kVaultCells; ++cell) {
+        const sim::Held& held = vault[cell];
+        if (held.empty() || size_t(held.item) >= tables.items.size()) continue;
+        writeHeld(f, tables, cell, held, &first);
+    }
+    std::fprintf(f, "%s]\n}\n", first ? "" : "\n  ");
+    return finish(f, temporary, path);
 }
 
 }  // namespace mu::game

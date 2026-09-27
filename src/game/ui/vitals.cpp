@@ -199,7 +199,7 @@ void Vitals::trail(float now, float seconds) {
     lag_ = std::max(now, lag_ - kChipDrain * seconds);
 }
 
-void Vitals::update(float seconds, const Play& play, uint32_t pointed, bool paneled,
+void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk, bool paneled,
                     const float* viewProj, int width, int height) {
     const sim::Realm& realm = play.realm();
     const auto fraction = [&](uint32_t id) {
@@ -246,8 +246,32 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, bool pane
         }
     }
 
+    // The townsperson's name: the monster's show, linger and fade, without the kill.
+    if (folk >= 0 && !paneled) {
+        if (folk_ != folk) folkShown_ = 0.0f;
+        folk_ = folk;
+        folkLeft_ = kLinger;
+    }
+    if (folk_ >= 0) {
+        folkLeft_ -= seconds;
+        if (folkLeft_ <= 0.0f) {
+            folk_ = -1;
+            folkShown_ = 0.0f;
+        } else {
+            folkShown_ = folkLeft_ > kLinger - kFadeIn ? std::min(1.0f, folkShown_ + seconds / kFadeIn)
+                                                       : std::min(1.0f, folkLeft_ / kFadeOut);
+        }
+    }
+
     Readout now;
     now.unit = panel::unit();
+    float fx = 0.0f, fy = 0.0f;
+    if (folk_ >= 0 && play.folkCrownOf(folk_, viewProj, width, height, &fx, &fy)) {
+        now.folk = folk_;
+        now.folkX = std::round(fx);
+        now.folkY = std::round(fy);
+        now.folkShown = folkShown_;
+    }
     float x = 0.0f, y = 0.0f;
     if (on_ != 0 && play.crownOf(on_, viewProj, width, height, &x, &y)) {
         now.on = on_;
@@ -269,6 +293,14 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, bool pane
 
 void Vitals::rebuild(const Play& play, const Readout& r) {
     canvas_.clear();
+    if (r.folk >= 0 && r.folkShown > 0.0f) {
+        const std::string& name = play.realm().tables()->folk[size_t(r.folk)].name;
+        const gfx::Face& face = canvas_.face();
+        const float size = points(kNameTall * r.unit);
+        // Where the monster's name stands over its bar, with no bar under it.
+        type(canvas_, std::round(r.folkX - face.measure(size, name) * 0.5f),
+             std::round(r.folkY - kGap * r.unit), size, r.folkShown, name);
+    }
     if (r.on == 0 || r.shown <= 0.0f) return;
     const sim::Body* beast = play.realm().find(r.on);
     if (!beast || beast->kind < 0) return;

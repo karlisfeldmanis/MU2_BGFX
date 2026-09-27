@@ -17,15 +17,41 @@ uniform vec4 u_refine;
 // x: the +9 star's gain on top of the strength, the sheet's refine_star; 1 is MuMain's
 // y: how much brighter the chrome and the star are this frame, 0 by day and in the windows
 //    (game/fx/gleam.h, Renderer::setShineGlow; ours, not MU's)
+// z: the excellent pass's L, sin(WorldTime * 0.002) * 0.5 + 0.5 (ZzzObject.cpp:10497)
+// w: how strongly the excellent pass is added; 0 when Chrome02 is missing
 uniform vec4 u_refineStar;
 SAMPLER2D(s_chrome, 9);
 SAMPLER2D(s_shiny, 10);
+SAMPLER2D(s_chrome2, 11);
+
+// An excellent thing rides on the plus: game::wear hands the renderer plus + 20, so the plus
+// itself is never more than fifteen and the flag costs no instance data of its own.
+float shineExcellent(float refine)
+{
+	return floor(refine + 0.5) >= 20.0 ? 1.0 : 0.0;
+}
 
 // The plus, whole. It is the same at every corner of an instance, so this only rounds away
 // what interpolation might add.
 float shinePlus(float refine)
 {
-	return floor(refine + 0.5);
+	float whole = floor(refine + 0.5);
+	return whole >= 20.0 ? whole - 20.0 : whole;
+}
+
+// What an excellent thing adds over everything else: RenderPartObjectBodyColor2 with
+// RENDER_CHROME3 | RENDER_BRIGHT (ZzzObject.cpp:10492-10531). Chrome02, added, at
+// u = N.L and v = 1 - N.L against ZzzBMD's fixed LightVector (0, -0.1, -0.8) -- in this
+// tree's axes (0, -0.8, 0.1), unnormalised as MU's is -- and tinted (L, 0.3L, 1 - L) as L
+// breathes, so the whole piece swings blue to violet to red-orange. It is not lit and it does
+// not follow the camera: MU's light vector is the world's.
+vec3 shineExcellentAdded(float excellent, vec3 n)
+{
+	if (excellent < 0.5) return vec3_splat(0.0);
+	float d = dot(n, vec3(0.0, -0.8, 0.1));
+	vec3 sheet = texture2DLod(s_chrome2, vec2(d, 1.0 - d), 0.0).rgb;
+	float l = u_refineStar.z;
+	return sheet * vec3(l, 0.3 * l, 1.0 - l) * u_refineStar.w;
 }
 
 // What multiplies the item's lit colour. MuMain multiplies the light it hands the base pass:

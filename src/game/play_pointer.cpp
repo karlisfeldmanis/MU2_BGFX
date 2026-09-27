@@ -320,6 +320,24 @@ bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, fl
     return true;
 }
 
+bool Play::folkCrownOf(int folk, const float* viewProj, int width, int height, float* x,
+                       float* y) const {
+    if (!ground_ || folk < 0) return false;
+    for (const Standing& one : folk_) {
+        if (one.folk != folk || !one.figure.body()) continue;
+        const float* at = one.figure.position();
+        const float top = at[1] + one.figure.body()->height * one.figure.scale();
+        const float world[4] = {at[0], top + 0.33f * ground_->metresPerTile(), at[2], 1.0f};
+        float clip[4];
+        bx::vec4MulMtx(clip, world, viewProj);
+        if (clip[3] <= 0.0f) return false;
+        *x = (clip[0] / clip[3] * 0.5f + 0.5f) * float(width);
+        *y = (0.5f - clip[1] / clip[3] * 0.5f) * float(height);
+        return true;
+    }
+    return false;
+}
+
 void Play::dropsOnScreen(const float* viewProj, int width, int height,
                          std::vector<OnScreen>& out) const {
     out.clear();

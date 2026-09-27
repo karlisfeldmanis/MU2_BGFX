@@ -50,8 +50,8 @@ const content::ItemRow* rowOf(const content::Tables& tables, const Held& what) {
 
 }  // namespace
 
-Needs asks(const content::ItemRow& row, int refinement) {
-    const int scaled = row.dropLevel + 3 * refinement;
+Needs asks(const content::ItemRow& row, int refinement, bool excellent) {
+    const int scaled = row.dropLevel + 3 * refinement + (excellent ? kExcellentLevelDelta : 0);
     const auto ask = [scaled](int raw, int multiplier) {
         return raw <= 0 ? 0 : multiplier * scaled * raw / 100 + 20;
     };
@@ -81,6 +81,94 @@ int defenseBonus(bool shield, int refinement) {
 
 bool ammunition(const content::ItemRow& row) {
     return row.group == kGroupBows && (row.number == 7 || row.number == 15);
+}
+
+Jewel jewelOf(const content::ItemRow& row) {
+    if (row.group != kGroupPotions) return Jewel::None;
+    return row.number == 13 ? Jewel::Bless : row.number == 14 ? Jewel::Soul : Jewel::None;
+}
+
+bool expensive(const content::Tables& tables, const Held& what) {
+    if (what.empty() || size_t(what.item) >= tables.items.size()) return false;
+    const content::ItemRow& row = tables.items[size_t(what.item)];
+    // `(iLevel > 6 && pItem->Type < ITEM_WING)`: every group before the wings' twelve.
+    constexpr int kGroupWings = 12;
+    return row.jewel() || (what.refinement > 6 && row.group < kGroupWings) || what.excellent != 0;
+}
+
+bool takesOptions(const content::ItemRow& row) {
+    return row.group <= kGroupBoots && !ammunition(row);
+}
+
+bool excellentable(const content::ItemRow& row) { return takesOptions(row); }
+
+int excellentDamage(const content::ItemRow& row) {
+    if (!excellentable(row) || row.minimumDamage <= 0) return 0;
+    return row.minimumDamage * 25 / std::max(1, row.dropLevel) + 5;
+}
+
+int excellentDefense(const content::ItemRow& row) {
+    if (!row.armour() || row.shield()) return 0;
+    const int drop = std::max(1, row.dropLevel);
+    return row.defense * 12 / drop + drop / 5 + 4;
+}
+
+int excellentBlock(const content::ItemRow& row) {
+    if (!row.shield() || row.defenseRate <= 0) return 0;
+    return row.defenseRate * 25 / std::max(1, row.dropLevel) + 5;
+}
+
+std::string excellentLine(const content::ItemRow& row, int bit) {
+    if (!excellentable(row) || bit < 0 || bit >= kExcellentOptions) return std::string();
+    // ExcellentOptions.CreateDefenseOptions, number 1 to 6. The Zen line is written with
+    // OpenMU's 40 (MoneyAmountRate 1.4) where MuMain's GT 627 reads +30%: the line says what
+    // the rule does, and the rule is the server's.
+    static const char* const kDefense[kExcellentOptions] = {
+        "Increases acquisition rate of Zen after hunting monsters +40%",
+        "Defense success rate +10%",
+        "Reflect Damage +5%",
+        "Damage Decrease +4%",
+        "Increase Max Mana +4%",
+        "Increase Max HP +4%",
+    };
+    // CreatePhysicalAttackOptions and CreateWizardryAttackOptions, number 1 to 6.
+    static const char* const kAttack[kExcellentOptions] = {
+        "Increases acquisition rate of Mana after hunting monsters +Mana/8",
+        "Increases acquisition rate of Life after hunting monsters +life/8",
+        "Increase Attacking(Wizardry)speed +7",
+        "Increase Damage +2%",
+        "Increase Damage +level/20",
+        "Excellent Damage rate +10%",
+    };
+    static const char* const kWizardry[kExcellentOptions] = {
+        "Increases acquisition rate of Mana after hunting monsters +Mana/8",
+        "Increases acquisition rate of Life after hunting monsters +life/8",
+        "Increase Attacking(Wizardry)speed +7",
+        "Increase Wizardry Dmg +2%",
+        "Increase Wizardry Dmg +level/20",
+        "Excellent Damage rate +10%",
+    };
+    if (row.armour() || row.shield()) return kDefense[bit];
+    return row.magicPower > 0 ? kWizardry[bit] : kAttack[bit];
+}
+
+int optionValue(const content::ItemRow& row, int level) {
+    if (level <= 0) return 0;
+    return level * (row.shield() ? 5 : 4);
+}
+
+bool refinable(const content::Tables& tables, const Held& jewel, const Held& target) {
+    const auto known = [&](const Held& h) {
+        return !h.empty() && size_t(h.item) < tables.items.size();
+    };
+    if (!known(jewel) || !known(target)) return false;
+    const Jewel kind = jewelOf(tables.items[size_t(jewel.item)]);
+    if (kind == Jewel::None) return false;
+    const content::ItemRow& row = tables.items[size_t(target.item)];
+    if (row.group > kGroupBoots || ammunition(row)) return false;
+    // BlessJewelConsumeHandlerPlugIn's MaximumLevel 5, SoulJewelConsumeHandlerPlugIn's 8.
+    const int highest = kind == Jewel::Bless ? 5 : 8;
+    return target.refinement <= highest && target.refinement < kRefineCap;
 }
 
 int placeOf(const content::ItemRow& row) {
@@ -185,7 +273,7 @@ bool fits(const content::Tables& tables, const Wearer& who, const Held& what) {
     if (!row || placeOf(*row) < 0) return false;
     // mu.db's class enumeration, bit 0 wizard, bit 1 elf, bit 2 knight; none named is anybody.
     if (row->classes != 0 && (row->classes & (1 << int(who.kin))) == 0) return false;
-    return shortOf(asks(*row, what.refinement), who.level, who.points).none();
+    return shortOf(asks(*row, what.refinement, what.excellent != 0), who.level, who.points).none();
 }
 
 bool handful(const content::Tables& tables, const Satchel& bag, const Held& what, int hand) {

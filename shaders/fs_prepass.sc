@@ -19,7 +19,15 @@ void main()
 	}
 	// gl_FrontFacing on Metal is the opposite sense from the winding CULL_CW keeps, so the
 	// facing is taken from the view direction instead. docs/conventions.md.
+	// Turned to the side of the TRIANGLE that faces the eye, not tested per pixel against the
+	// view: most of the town's normals are inverted and smoothed, and the per-pixel test split
+	// a triangle into turned and unturned halves. fs_shade says more.
 	vec3 n = normalize(v_vnormal);
-	if (dot(n, normalize(-v_vpos)) < 0.0) n = -n;
+	vec3 face = normalize(cross(dFdx(v_vpos), dFdy(v_vpos)));
+	if (dot(face, -v_vpos) < 0.0) face = -face;
+	// Nearly flat against the face, the face's own normal; fs_shade says why.
+	float along = dot(n, face);
+	if (along < 0.0) n = -n;
+	n = normalize(mix(face, n, smoothstep(0.1, 0.35, abs(along))));
 	gl_FragColor = vec4(n, -v_vpos.z);
 }

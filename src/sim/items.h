@@ -10,13 +10,14 @@
 // Smaller than MU2's, on purpose:
 //   * No luck and no options roll on anything yet: a piece is its row, its plus, and for a
 //     stack its count. The fields are here so the save and the tooltip do not change shape.
-//   * No refining, no chaos machine, no vault, no trade.
+//   * No refining, no chaos machine, no trade. The vault is its own grid: sim/vault.h.
 // Zen is not a slot. MU carries it as item 14/15 with the amount in the level field, which
 // makes every reader of a slot learn that one code is not an item; it is a number on the
 // character instead (MU2's Held remark).
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include "content/tables.h"
 #include "sim/rules.h"
@@ -70,6 +71,16 @@ struct Held {
     // charges for. Nothing reads it for a fight yet -- there are no skills -- and it is carried
     // so a sale is priced as the purchase was. OpenMU's Item.HasSkill.
     bool skill = false;
+    // The two options 0.75 rolls on a dropped weapon, piece of armour or shield (OpenMU's
+    // `ApplyRandomOptions` over `CreateLuckOptionDefinition` and `CreateOptionDefinition`):
+    // luck, and the additional option's level, 0 for none, 1 to 4 for +4 to +16 (+5 to +20 on a
+    // shield's defence rate). See `takesOptions`, `optionValue` and docs/refining.md.
+    bool luck = false;
+    int8_t option = 0;
+    // Its excellent options, a bit each, MuMain's `ExcellentFlags & 63`: bit 0 is option 1 of
+    // its family (sim::excellentLine), up to bit 5. None on anything a drop did not make
+    // excellent. See docs/refining.md, "Excellent".
+    uint8_t excellent = 0;
     bool empty() const { return item < 0; }
 };
 
@@ -81,7 +92,8 @@ struct Needs {
     int level = 0, strength = 0, agility = 0, energy = 0, vitality = 0;
     bool none() const { return !level && !strength && !agility && !energy && !vitality; }
 };
-Needs asks(const content::ItemRow& row, int refinement);
+// An excellent thing asks as if it dropped 25 levels deeper (ItemExtensions.CalculateDropLevel).
+Needs asks(const content::ItemRow& row, int refinement, bool excellent = false);
 Needs shortOf(const Needs& asked, int level, const HeroPoints& points);
 
 // The refinement tables, Version075's own (Weapons.DamageIncreaseByLevel and the two armour
@@ -159,5 +171,81 @@ bool movable(const content::Tables& tables, const Wearer& who, const Satchel& ba
 // The move itself, after `movable` said yes: what is in the way comes back to where this one
 // was. Beast.Move.
 bool move(const content::Tables& tables, const Wearer& who, Satchel& bag, int from, int to);
+
+// ---- refining with jewels (docs/refining.md) ----------------------------------------------
+//
+// The highest plus anything is carried at until the Chaos Machine exists: the Soul stops at +9
+// on its own, and a drop must not hand out what nothing can make. MU2's Refine.Cap; eleven,
+// Version075's MaximumItemLevel, once the machine's +10 and +11 are built.
+constexpr int kRefineCap = 9;
+
+// Which of the two refining jewels a row is: the Bless (14, 13) or the Soul (14, 14). The
+// Chaos (12, 15) is a jewel too and goes on nothing -- it is the machine's.
+enum class Jewel : uint8_t { None, Bless, Soul };
+Jewel jewelOf(const content::ItemRow& row);
+
+// Whether a jewel would go on a thing, asked by the realm's refusal and by the bag's drop
+// colour. OpenMU's `CanLevelBeUpgraded` and the two handlers' ranges, which MuMain's
+// `CanUpgradeItem` paints by to the level: the weapon and armour groups up to the boots, less
+// the arrows and the bolts, a Bless on +0 to +5 and a Soul on +0 to +8.
+bool refinable(const content::Tables& tables, const Held& jewel, const Held& target);
+
+// Whether it is too dear to throw on the ground: MuMain's `IsHighValueItem`
+// (ZzzInventory.cpp:7407), which both of its drop paths refuse with "You are not allowed to drop
+// this expensive item". Of its list the rows this tree has are the three jewels, anything
+// below the wings at +7 or more, and anything excellent; the wings, pets and ancient are not.
+// A client rule -- OpenMU's DropItemAction takes anything -- kept in the realm so the window
+// cannot disagree with it.
+bool expensive(const content::Tables& tables, const Held& what);
+
+// ---- luck and the additional option -------------------------------------------------------
+//
+// Who may carry them: every weapon, armour piece and shield (Weapons.cs:305-313,
+// ArmorInitializerBase.cs:185, 401-406), which is the refinable set -- the arrows and bolts
+// have neither. A drop draws luck at a quarter, then the option at a quarter and its level
+// evenly from 1 to 3 (`MaximumItemOptionLevelDrop = 3`).
+constexpr double kLuckChance = 0.25;    // CreateLuckOptionDefinition's AddChance
+constexpr double kOptionChance = 0.25;  // CreateOptionDefinition's AddChance
+constexpr int kMostOptionDropped = 3;   // GameConfiguration.MaximumItemOptionLevelDrop
+constexpr int kMostOption = 4;          // Version075 Constants.MaximumOptionLevel
+constexpr double kLuckCritical = 0.05;  // Stats.CriticalDamageChance, a lucky thing worn
+bool takesOptions(const content::ItemRow& row);
+// What the option adds at its level: four a level on a weapon's damage, a staff's wizardry
+// damage and a piece of armour's defence, five a level on a shield's defence rate
+// (`CreateOptionDefinition(Stats.DefenseRatePvm, ..., 5)`).
+int optionValue(const content::ItemRow& row, int level);
+
+// ---- excellent ----------------------------------------------------------------------------
+//
+// Not 0.75: OpenMU adds excellent options in 0.95d (GameConfigurationInitializer.cs:33-35),
+// and this game takes them on the user's word (2026-09-27). OpenMU's rules, ExcellentOptions.cs
+// and DefaultDropGenerator: a group of its own at 0.0001 a drop slot, from a monster 25 levels
+// or more above what it drops (ExcellentItemDropLevelDelta), always at +0; one option always
+// and a second at 0.001, never the same one twice.
+constexpr double kExcellentChance = 0.0001;       // the excellent DropItemGroup's Chance
+constexpr int kExcellentLevelDelta = 25;          // GameConfiguration.ExcellentItemDropLevelDelta
+constexpr double kSecondExcellentChance = 0.001;  // the option definitions' AddChance
+constexpr int kExcellentOptions = 6;
+// Which six a row draws from: the defence family for armour and shields, the attack family
+// for weapons -- a staff's reading wizardry for damage -- and none for anything else.
+bool excellentable(const content::ItemRow& row);
+// The option at `bit` (0 to 5, OpenMU's option number less one) in MuMain's own English
+// (GT 622-635, docs/mu-tooltip-lines.md section 3(d)), or empty.
+std::string excellentLine(const content::ItemRow& row, int bit);
+// What being excellent adds to the thing itself, whatever its options:
+// ItemPowerUpFactory.CreateExcellentAndAncientBasePowerUpWrappers, which MuMain's CalcDamageMin,
+// CalcDefense and CalcSuccessfulBlocking agree with. All off the row's drop level.
+//   weapon   both ends of the band + min x 25 / drop level + 5 (OpenMU takes the minimum for
+//            both; MuMain the maximum for the top -- the server's is the one that hits)
+//   armour   defence + defence x 12 / drop level + drop level / 5 + 4 (not a shield)
+//   shield   defence rate + rate x 25 / drop level + 5
+int excellentDamage(const content::ItemRow& row);
+int excellentDefense(const content::ItemRow& row);
+int excellentBlock(const content::ItemRow& row);
+inline int excellentCount(uint8_t mask) {
+    int n = 0;
+    for (int bit = 0; bit < kExcellentOptions; ++bit) n += (mask >> bit) & 1;
+    return n;
+}
 
 }  // namespace mu::sim

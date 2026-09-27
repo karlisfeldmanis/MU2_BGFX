@@ -18,6 +18,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "game/world/lamps.h"
 
 namespace mu::game {
 
@@ -134,7 +135,6 @@ void Play::exhale(float seconds) {
         }
     }
 
-    for (Drawn& one : drawn_) {
     // The hero's refined gear as a light source: fx/gleam.h. drawn_[0] is the hero.
     gleam_.update(seconds);
     if (!drawn_.empty() && drawn_[0].visible && drawn_[0].placed && drawn_[0].figure.body()) {
@@ -192,6 +192,7 @@ void Play::exhale(float seconds) {
         }
     }
 
+    for (Drawn& one : drawn_) {
         if (!one.breathes) continue;
         const sim::Body* body = realm_.find(one.id);
         const FigureBody* look = one.figure.body();
@@ -241,6 +242,52 @@ void Play::exhale(float seconds) {
             const float at[3] = {head[0] + along[0] * out, head[1], head[2] + along[1] * out};
             breath_.spark(at, along, scale);
         }
+    }
+}
+
+// Hanzo at his anvil: MU's sparks off the hammer's head while the blow is between keys 5 and
+// 6, and the hearth's smoke and embers while he stands there, which are ours. fx/forge.h.
+void Play::smithy(float seconds) {
+    forge_.update(seconds);
+    const float frames = seconds * 25.0f;
+    for (Standing& one : folk_) {
+        if (!one.smith) continue;
+        float hearth[3];
+        one.figure.pointInModel(kHearth, hearth);
+        forge_.smoulder(hearth, seconds, one.hearthOwed);
+        // rand_fps_check(1) inside the window: a burst every reference frame of it. Read off
+        // his own clip, as the hammer's ring is, and only on the blow -- action 0.
+        const float key = keyOf(one.figure);
+        if (slotOf(one.figure) != 0 || key < kSparksFrom || key > kSparksTo) {
+            one.striking = false;
+            continue;
+        }
+        // The first frame inside pays one burst at once, so a blow that crosses the key in a
+        // single long frame still throws; every frame after owes its own share.
+        one.sparksOwed = one.striking ? one.sparksOwed + frames : 1.0f;
+        one.striking = true;
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        float head[3];
+        if (!one.figure.pointOn(kSparkBone, origin, head)) continue;
+        while (one.sparksOwed >= 1.0f) {
+            one.sparksOwed -= 1.0f;
+            forge_.strike(head);
+        }
+    }
+}
+
+void Play::lightForges(Lamps& lamps) const {
+    for (const Standing& one : folk_) {
+        if (!one.smith) continue;
+        gfx::PointLight light;
+        one.figure.pointInModel(kHearth, light.position);
+        for (int i = 0; i < 3; ++i) light.colour[i] = kForgeColour[i];
+        light.reach = kForgeReach;
+        light.height = ground_ ? std::max(0.0f, light.position[1] -
+                                                    ground_->heightAt(light.position[0],
+                                                                      light.position[2]))
+                               : 0.0f;
+        lamps.add(light, kForgeLow, kForgeHigh, kForgeHz, kForgeSmooth);
     }
 }
 

@@ -10,8 +10,9 @@
 // colour is asked of the same gate the realm refuses by (`sim::movable`), so a red cell and a
 // refusal cannot disagree.
 //
-// Not here, and why: MU2's repair button (nothing in this sim wears out, so it would be a
-// button that does nothing), and applying a jewel (refining is later).
+// A jewel let go over a thing it goes on is a refinement and not a move, asked of the same
+// `sim::refinable` the realm refuses by -- MuMain's HandlePickedItemPlacement tries ApplyJewels
+// before the move.
 #pragma once
 
 #include <cstdint>
@@ -28,9 +29,18 @@
 namespace mu::game {
 
 // What a frame of the bag asks the realm for. All requests; the desk answers them.
+// The art key of a worn slot's silhouette -- `bag_ghost_helm` and its fellows -- as the bag draws
+// it in an empty slot. Shared so anything else that names a slot draws the same shape (the
+// worn-gear warning, game/ui/endurance.h).
+const char* ghostArt(int slot);
+
 struct BagRequests {
     int moveFrom = -1, moveTo = -1;  // a drag let go over a slot
-    int use = -1;                    // a right-click on a carried thing
+    // A jewel let go over a thing it goes on: asked instead of the move, never as well.
+    int refineJewel = -1, refineTarget = -1;
+    int use = -1;                   // a right-click on a carried thing
+    int repair = -1;                 // a click on one while the counter's repair is on
+    bool toggleMending = false;      // the foot's hammer: repair mode on or off
     int outside = -1;                // a drag let go outside the window: the desk decides where
     float outsideX = 0.0f, outsideY = 0.0f;
     bool close = false;
@@ -44,6 +54,9 @@ public:
     // arrangement: the character window keeps the right-hand column and the bag moves left.
     void update(float width, float height, int column, const sim::Realm& realm,
                 const Pointer& pointer, Stage* stage, BagRequests* out);
+    // The repair mode a mending counter turns on (CNewUIMyInventory::SetRepairMode): a click
+    // mends the thing under it instead of lifting it, and its card leads with the cost.
+    void setMending(bool on) { mending_ = on; }
 
     // The stage the tooltip's own picture is taken on: one item, at rest, its own size.
     // Shared with the other windows -- only one tip is up at a time.
@@ -51,6 +64,11 @@ public:
 
     bool covers(float x, float y) const;
     bool dragging() const { return dragging_ >= 0; }
+    // The slot under a point on screen, or -1: where a thing dragged out of the vault lands.
+    int slotUnder(float x, float y) const {
+        if (!covers(x, y)) return -1;
+        return slotAt((x - x_) / panel::scale(), (y - y_) / panel::scale());
+    }
     // The slot whose thing is under the pointer, or -1: what a quick key binds.
     int hovered() const { return up_ ? hovered_ : -1; }
     const gfx::Canvas& canvas() const { return canvas_; }
@@ -78,6 +96,9 @@ private:
         int level = 0, strength = 0, agility = 0, vitality = 0, energy = 0;
         float x = 0, y = 0, scale = 0;
         uint16_t picture = 0xFFFF;
+        bool mending = false;
+        bool canMend = false;
+        bool overHammer = false, pressingHammer = false;
         bool operator==(const Contents& o) const;
     };
     void rebuild(const sim::Realm& realm, Stage* stage);
@@ -96,6 +117,10 @@ private:
     float pointerX_ = 0.0f, pointerY_ = 0.0f;
     bool closing_ = false;
     bool overClose_ = false;  // the pointer is on the cross, which lights it
+    bool mending_ = false;
+    // The foot's hammer: under the pointer, and held down on.
+    bool overHammer_ = false;
+    bool pressingHammer_ = false;
     std::vector<Standing> standing_;
     uint64_t rebuilds_ = 0;
 };

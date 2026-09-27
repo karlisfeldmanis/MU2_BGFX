@@ -405,6 +405,26 @@ print(hashlib.sha1(json.dumps([i.get('mu_uv') for i in d.get('islands',[])]).enc
       fi
     fi
 
+    # A cut-out whose comb of tips is finer than a pixel from the game's camera has its mask
+    # blurred across them, so they merge into fewer and wider. Declared per sheet as
+    # "cutout_soften": {"grass_01": [across, along]}, in texels of the sheet as it is here.
+    # See pipeline/soften_alpha.py; the straw bales are why.
+    local soften
+    soften="$(python3 -c "
+import json,sys
+d=json.load(open(sys.argv[1]))
+s=d.get('cutout_soften', {}).get(sys.argv[2])
+print(' '.join(str(x) for x in s) if s else '')" "$asset" "$group" 2>/dev/null || true)"
+    if [[ -n $soften ]]; then
+      local soft="${hd%.png}_soft.png"
+      if [[ -n $forced || ! -f $soft || $hd -nt $soft ]] || ! keyed "$soft" "$soften"; then
+        echo "softening $(basename "$hd")'s cut-out, $soften..."
+        python3 "$pipeline/soften_alpha.py" "$hd" "$soft" $soften
+        printf '%s' "$soften" > "$soft.key"
+      fi
+      hd="$soft"
+    fi
+
     pairs+=("$group=$hd")
     [[ -z $newest_sheet || $hd -nt $newest_sheet ]] && newest_sheet="$hd"
   done

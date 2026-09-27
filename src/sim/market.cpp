@@ -164,7 +164,7 @@ const Offer* stockOf(int npc, int* count) {
 }
 
 int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
-                    int shots, int full) {
+                    int shots, int full, bool luck, int option, int excellent) {
     if (row.group == kBows && quiver(row.number) > 0) {
         return round(full <= 0 ? 0 : int64_t(quiver(row.number)) * shots / full);
     }
@@ -178,19 +178,26 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
         if (refinement > 0) price *= int64_t(std::pow(2.0, refinement));
         return round(price / 10 * 10 * (pieces > 1 ? pieces : 1));
     }
-    const int64_t dropLevel = row.dropLevel + refinement * 3 + steeper(refinement);
+    // An excellent thing is priced as if it dropped 25 levels deeper (ItemPriceCalculator).
+    const int64_t dropLevel =
+        row.dropLevel + refinement * 3 + steeper(refinement) + (excellent > 0 ? 25 : 0);
     int64_t reckoned = (dropLevel + 40) * dropLevel * dropLevel / 8 + 100;
     // A fifth off a one-handed weapon or a shield: width is where OpenMU keeps two-handedness.
     if ((row.group < kShields && row.width < 2) || row.group == kShields) {
         reckoned = reckoned * 80 / 100;
     }
     if (skill) reckoned += int64_t(double(reckoned) * 1.5);
+    if (luck) reckoned += reckoned * 25 / 100;
+    if (option == 1) reckoned += int64_t(double(reckoned) * 0.6);
+    if (option > 1) reckoned += int64_t(double(reckoned) * 0.7 * std::pow(2.0, option - 1));
+    for (int i = 0; i < excellent; ++i) reckoned += reckoned;
     return round(reckoned);
 }
 
 int64_t sellingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
-                     int shots, int full) {
-    const int64_t price = buyingPrice(row, refinement, pieces, skill, shots, full) / 3;
+                     int shots, int full, bool luck, int option, int excellent) {
+    const int64_t price =
+        buyingPrice(row, refinement, pieces, skill, shots, full, luck, option, excellent) / 3;
     return row.group == kPotions && row.number <= 8 ? price / 10 * 10 : round(price);
 }
 

@@ -19,6 +19,15 @@
     "grass_01"
   ],
   "cutout_from": "Real alpha in the .OZT.",
+  "cutout_soften": {
+    "grass_01": [
+      2.5,
+      0.8
+    ]
+  },
+  "cutout_soften_from": "The straw's comb of tips is finer than a pixel from the game's camera and crawled as it moved; blurred across the strands so they merge. Ours, not MU's. See pipeline/soften_alpha.py.",
+  "uv_heal": true,
+  "uv_heal_from": "MU maps one side of each bundle onto a line of its sheet (u 0.972 to 1.0), so that side is one smeared column with the comb's holes dragged across it, which shimmered as the hero walked past. u laid across those faces at the mesh's own density; v kept. Ours, not MU's. See clean_lowpoly.heal_collapsed.",
   "islands": [
     {
       "island": 0,
@@ -37,9 +46,9 @@
       ],
       "bake_uv": [
         0.006,
-        0.558,
-        0.357,
-        0.814
+        0.527,
+        0.338,
+        0.768
       ]
     },
     {
@@ -60,8 +69,8 @@
       "bake_uv": [
         0.006,
         0.006,
-        0.54,
-        0.546
+        0.88,
+        0.507
       ]
     },
     {
@@ -80,10 +89,10 @@
         0.988
       ],
       "bake_uv": [
-        0.369,
-        0.558,
-        0.721,
-        0.814
+        0.35,
+        0.527,
+        0.682,
+        0.768
       ]
     },
     {
@@ -102,10 +111,10 @@
         0.999
       ],
       "bake_uv": [
-        0.278,
         0.006,
-        0.813,
-        0.27
+        0.267,
+        0.968,
+        0.775
       ]
     },
     {
@@ -124,10 +133,10 @@
         0.988
       ],
       "bake_uv": [
-        0.824,
+        0.694,
         0.006,
-        0.994,
-        0.531
+        0.938,
+        0.768
       ]
     },
     {
@@ -146,10 +155,10 @@
         0.999
       ],
       "bake_uv": [
+        0.521,
         0.006,
-        0.282,
-        0.813,
-        0.546
+        0.994,
+        0.515
       ]
     }
   ]
