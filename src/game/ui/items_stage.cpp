@@ -108,7 +108,11 @@ void ItemStage::render(gfx::Renderer& renderer, float pixelsPerUnit, double seco
         bx::mtxIdentity(basis);
         float extent[3] = {size[0], size[1], size[2]};
         int up = 1;
-        if (!row.armour()) {
+        // A jewel is shown as it was modelled, as a worn piece is. It is an octahedron a hair
+        // wider than it is tall -- the Soul 0.224 across and 0.219 high -- so the longest-axis
+        // rule below laid the Soul on its side and stood the Bless on its point, on a margin
+        // that is not a fact about the item. MU2's `upright`, docs/refining.md there.
+        if (!row.armour() && !row.jewel()) {
             int order[3] = {0, 1, 2};
             std::sort(order, order + 3, [&](int a, int c) { return size[a] > size[c]; });
             const float world[3][3] = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
