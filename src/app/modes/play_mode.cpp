@@ -484,40 +484,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         keptAt_ = bx::getHPCounter();
     }
 
-    gfx::Camera eye = world_.camera();
-    // The Lich's EarthQuake, and it is a TILT and not a slide: MU adds it to
-    // `m_State.Angle[0]` (DefaultCamera.cpp:700), which is the camera's pitch in
-    // degrees, and decays it by 0.2 a frame (MainScene.cpp:199). Carried here as what
-    // it is -- a rotation of the eye about what it is looking at, which is the same
-    // orbit MU's camera has. Slid instead, as this was first written, the shake was
-    // the quarter of a MU unit it says it is: four millimetres, on a camera six
-    // metres out, which is nothing at all.
-    {
-        const float pitch = world_.played().meteor().quakeDegrees();
-        if (pitch != 0.0f) {
-            float ahead[3], right[3], up[3];
-            for (int a = 0; a < 3; ++a) ahead[a] = eye.position[a] - eye.target[a];
-            // The axis to tilt about: across the view, level with the ground.
-            right[0] = -ahead[2];
-            right[1] = 0.0f;
-            right[2] = ahead[0];
-            const float length = std::sqrt(right[0] * right[0] + right[2] * right[2]);
-            if (length > 1e-6f) {
-                for (int a = 0; a < 3; ++a) right[a] /= length;
-                const float radians = pitch * 3.14159265f / 180.0f;
-                const float c = std::cos(radians), s = std::sin(radians);
-                // Rodrigues about `right`, which is a unit vector in the XZ plane.
-                const float dot = ahead[0] * right[0] + ahead[2] * right[2];
-                up[0] = right[1] * ahead[2] - right[2] * ahead[1];
-                up[1] = right[2] * ahead[0] - right[0] * ahead[2];
-                up[2] = right[0] * ahead[1] - right[1] * ahead[0];
-                for (int a = 0; a < 3; ++a) {
-                    eye.position[a] =
-                        eye.target[a] + ahead[a] * c + up[a] * s + right[a] * dot * (1.0f - c);
-                }
-            }
-        }
-    }
     // The pointer and what it is over, before the sim is stepped: a click is taken at
     // the start of the next tick and walked on that same tick (Realm::accept).
     if (world_.played().isOpen()) {
@@ -618,6 +584,19 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             const bool down = !played.shownAlive(played.realm().hero().id);
             const float rate = float(deltaSeconds) / (down ? kDrainIn : kDrainBack);
             drain_ = down ? std::min(1.0f, drain_ + rate) : std::max(0.0f, drain_ - rate);
+            // And the revive is a cut made in the dark. The realm moves him from his corpse to
+            // the gate in one tick; seen, that is the body vanishing and the whole map jumping
+            // under the camera. So the world goes down to black over the last moments he lies
+            // there -- black a frame or two BEFORE the tick is due, since a frame is not a tick
+            // -- and comes back up with him fading in at the gate. Invention; MU hard-cuts.
+            constexpr float kDipOut = 0.45f, kDipEarly = 0.08f, kDipBack = 0.7f;
+            const float left = played.heroRisesIn();
+            if (down && left >= 0.0f) {
+                const float t = std::clamp((kDipOut + kDipEarly - left) / kDipOut, 0.0f, 1.0f);
+                dim_ = std::max(dim_, t * t * (3.0f - 2.0f * t));
+            } else if (!down) {
+                dim_ = std::max(0.0f, dim_ - float(deltaSeconds) / kDipBack);
+            }
         }
         for (const int f : args.rises) {
             if (at.index == f) world_.played().rise();
@@ -632,6 +611,44 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // changes every frame -- 16 mm median and 79 mm worst over a walk, on a shadow
     // texel of 29 mm. docs/shadow-probe.md.
     world_.update(at.elapsed, args.still);
+    // What the frame is drawn from, taken off the camera just placed. It was taken at the top of
+    // the frame, which drew every frame with the one before's camera -- the lag the note above
+    // was written against, back again -- and a Town Portal's first frame at the gate showed the
+    // field he had left, with nobody in it.
+    gfx::Camera eye = world_.camera();
+    // The Lich's EarthQuake, and it is a TILT and not a slide: MU adds it to
+    // `m_State.Angle[0]` (DefaultCamera.cpp:700), which is the camera's pitch in
+    // degrees, and decays it by 0.2 a frame (MainScene.cpp:199). Carried here as what
+    // it is -- a rotation of the eye about what it is looking at, which is the same
+    // orbit MU's camera has. Slid instead, as this was first written, the shake was
+    // the quarter of a MU unit it says it is: four millimetres, on a camera six
+    // metres out, which is nothing at all.
+    {
+        const float pitch = world_.played().meteor().quakeDegrees();
+        if (pitch != 0.0f) {
+            float ahead[3], right[3], up[3];
+            for (int a = 0; a < 3; ++a) ahead[a] = eye.position[a] - eye.target[a];
+            // The axis to tilt about: across the view, level with the ground.
+            right[0] = -ahead[2];
+            right[1] = 0.0f;
+            right[2] = ahead[0];
+            const float length = std::sqrt(right[0] * right[0] + right[2] * right[2]);
+            if (length > 1e-6f) {
+                for (int a = 0; a < 3; ++a) right[a] /= length;
+                const float radians = pitch * 3.14159265f / 180.0f;
+                const float c = std::cos(radians), s = std::sin(radians);
+                // Rodrigues about `right`, which is a unit vector in the XZ plane.
+                const float dot = ahead[0] * right[0] + ahead[2] * right[2];
+                up[0] = right[1] * ahead[2] - right[2] * ahead[1];
+                up[1] = right[2] * ahead[0] - right[0] * ahead[2];
+                up[2] = right[0] * ahead[1] - right[1] * ahead[0];
+                for (int a = 0; a < 3; ++a) {
+                    eye.position[a] =
+                        eye.target[a] + ahead[a] * c + up[a] * s + right[a] * dot * (1.0f - c);
+                }
+            }
+        }
+    }
     // The ears, onto the camera just placed: its heading is what the stereo field turns by.
     if (world_.played().isOpen()) {
         world_.played().hear(world_.camera(),
@@ -745,6 +762,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         float viewProj[16];
         bx::mtxMul(viewProj, view, proj);
         ctx.renderer.setDrain(drain_);
+        ctx.renderer.setDim(dim_);
         world_.played().gather(ctx.renderer, viewProj, townDrawables_,
                                casters ? &townCasters_ : nullptr, &hoverDrawables_);
         if (desk_.ready()) {
@@ -996,6 +1014,10 @@ void PlayMode::shutdown(Context& ctx) {
     if (shadowLog_) std::fclose(shadowLog_);
     if (shadowPoints_) std::fclose(shadowPoints_);
     shadowLog_ = shadowPoints_ = nullptr;
+    // The renderer outlives the mode, and a character switched out while he lay dead would
+    // take the lobby's world grey and dark with him.
+    ctx.renderer.setDrain(0.0f);
+    ctx.renderer.setDim(0.0f);
     // This order is the one main() kept and it is not arbitrary: the stages go back to the
     // renderer before the models they photographed are let go.
     ctx.renderer.closeStages();

@@ -362,9 +362,8 @@ void Play::learned() {
     sound_.play(heard_.orb);
 }
 
-// Where the realm put him, not where he is drawn: the drawing catches up on the next tick, and
-// by then the walls should already be standing. `o->Alpha = 0.f` is the spawn fade a revive
-// uses, so the figure is not seen at the tile he left in the frames before that tick.
+// Where the realm put him, and drawn there from this frame on. `o->Alpha = 0.f` is the spawn
+// fade a revive uses.
 void Play::warped() {
     warpOwed_ = true;
     // INVENTION: MuMain lands a Town Portal in silence -- TryConsumeItem's scroll branch and
@@ -374,10 +373,16 @@ void Play::warped() {
     sound_.play(heard_.warp);
     const sim::Body& body = realm_.hero();
     if (Drawn* hero = drawnOf(body.id)) {
-        hero->spawnFade = 0.0f;
-        hero->swinging = 0.0f;
-        hero->casting = 0.0f;
+        // At the gate from THIS frame, not the next tick's: the realm moved him between ticks,
+        // and until a step ran the drawing (and the camera on it) stayed where he read the
+        // scroll, then jumped. Stood as a revive is -- idle cut in, nothing of the swing left.
+        hero->nowX = body.x;
+        hero->nowY = body.y;
+        hero->nowFacing = body.facing;
+        stand(*hero);
     }
+    // And the ring where his last click was sending him, which he is not going to now.
+    marker_.dismiss();
     if (ground_ == nullptr) return;
     const float metres = ground_->metresPerTile();
     const float x = (body.x + 0.5f) * metres;
@@ -482,6 +487,13 @@ bool Play::shownAlive(uint32_t id) const {
         if (one.id == id) return one.fallOwed;
     }
     return false;
+}
+
+float Play::heroRisesIn() const {
+    const sim::Body& hero = realm_.hero();
+    if (hero.alive()) return -1.0f;
+    const double left = double(hero.risesAt - realm_.tick()) * kTickSeconds - accumulator_;
+    return float(std::max(0.0, left));
 }
 
 int Play::walkers(float* out, int most) const {

@@ -228,6 +228,10 @@ public:
     // waiting for the killing blow to land. What the health bar reads, so it is not taken
     // away a swing before the blow that emptied it.
     bool shownAlive(uint32_t id) const;
+    // Seconds until the realm raises him at the gate, off the tick clock as it stands this frame;
+    // negative while he is alive. The step that raises him is the one whose tick reaches
+    // `risesAt`, and the next step is `kTickSeconds - accumulator_` away.
+    float heroRisesIn() const;
     // Everybody standing in the field: the feet of every body that is placed, in view and
     // alive as drawn, as (x, ground height, z, 0), at most `most` of them, the hero first.
     // Returns how many were written. For the grass, which parts round whoever walks in it;
@@ -486,6 +490,8 @@ private:
     void follow(float seconds);
     // Starts a body's death clip, its hold and its fade.
     void fall(Drawn& dead);
+    // Stands a body the realm has just raised: at its tile at once, in its idle at once.
+    void stand(Drawn& risen);
     // Starts every owed fall whose killing blow is no longer waiting to be shown.
     void fallWhenLanded();
     // Lets go of every held drop a beat after its dropper's killing blow lands, and rewrites

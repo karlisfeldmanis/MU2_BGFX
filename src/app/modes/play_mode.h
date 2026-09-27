@@ -46,6 +46,8 @@ private:
     // down and comes back as he gets up. The message that says so is the interface's
     // (game/ui/tally.cpp) and is deliberately NOT drained with it.
     float drain_ = 0.0f;
+    // And how far it is down to black: only ever for the revive's cut to the gate.
+    float dim_ = 0.0f;
 
     // The one store of item models, wired to everything that draws one. Called from the
     // preloader, and again from the frame for a run whose realm rose some other way; the

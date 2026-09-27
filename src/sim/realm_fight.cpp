@@ -155,6 +155,10 @@ void Realm::kill(Body& dead, Body& killer) {
         }
         order_ = Request{};
         pending_ = Request{};
+        // And the blow he had in the air goes with him. Left, it waited out the three seconds
+        // and landed the tick he stood up -- on the monster that killed him, thirty tiles away,
+        // from the middle of town.
+        dropBlow(dead);
         return;
     }
 

@@ -33,7 +33,45 @@ void Play::remember() {
         const float dx = (one.nowX - one.wasX) * metresPerTile;
         const float dy = (one.nowY - one.wasY) * metresPerTile;
         one.groundSpeed = std::sqrt(dx * dx + dy * dy) / float(kTickSeconds);
+        // A jump of more than two tiles in one tick is a respawn or a warp, never a step, and it
+        // is not drawn part way: interpolated, the tick after a revive put the camera (which
+        // follows the drawn hero) at every point on the line from his corpse to the gate, three
+        // frames sweeping across the map before it arrived. The body is where it landed from
+        // the first frame, and so is everything framed on it.
+        if (std::max(std::fabs(one.nowX - one.wasX), std::fabs(one.nowY - one.wasY)) > 2.0f) {
+            one.wasX = one.nowX;
+            one.wasY = one.nowY;
+            one.wasFacing = one.nowFacing;
+            one.groundSpeed = 0.0f;
+        }
     }
+}
+
+// A body the realm has just handed back, made to stand where it rose. Everything the drawing
+// kept from its death goes: it is at the new tile from the first frame, even a monster raised a
+// tile from its own corpse (under the two tiles `remember` snaps at), and its clip is CUT to the
+// idle. Left to `follow`, the idle blended in over the held death pose, and every respawn got up
+// off the floor in a fifth of a second while it faded in.
+void Play::stand(Drawn& risen) {
+    risen.fallOwed = false;
+    risen.deadFor = -1.0f;
+    risen.spawnFade = 0.0f;
+    risen.wasX = risen.nowX;
+    risen.wasY = risen.nowY;
+    risen.wasFacing = risen.nowFacing;
+    risen.groundSpeed = 0.0f;
+    risen.swinging = 0.0f;
+    risen.casting = 0.0f;
+    risen.landing = false;
+    risen.castSkill = 0;
+    risen.still = 0.0f;
+    risen.clipRate = 1.0f;
+    const FigureBody* look = risen.figure.body();
+    const sim::Body* body = realm_.find(risen.id);
+    if (look == nullptr || body == nullptr) return;
+    const bool safe = tables_.grid.safe(body->column(), body->row());
+    const int idle = (safe && look->idleSafeClip >= 0) ? look->idleSafeClip : look->idleClip;
+    if (idle >= 0) risen.figure.play(idle, true, 0.0f);
 }
 
 void Play::update(double seconds) {
@@ -201,11 +239,7 @@ void Play::update(double seconds) {
             } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
                 levelOwed_ = true;
             } else if (happening.what == sim::What::Rose) {
-                if (Drawn* risen = drawnOf(happening.who)) {
-                    risen->fallOwed = false;
-                    risen->deadFor = -1.0f;
-                    risen->spawnFade = 0.0f;
-                }
+                if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
             }
             // A cast, said by the realm BEFORE the blow it throws, which is what lets the hit
             // below be drawn with the skill's own clip instead of the weapon's. Nothing else is

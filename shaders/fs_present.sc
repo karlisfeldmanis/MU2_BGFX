@@ -9,7 +9,7 @@ $input v_texcoord0
 SAMPLER2D(s_bloom, 9);
 uniform vec4 u_bloom;  // z: how much of the chain is added
 uniform vec4 u_present;  // x: sharpen 0..1  y: contrast 0..1  zw: one pixel in uv
-uniform vec4 u_grade;    // x: which curve (see tonemap)  y: saturation  z: split-tone amount
+uniform vec4 u_grade;    // x: which curve (see tonemap)  y: saturation  z: split-tone amount  w: dim to black
 uniform vec4 u_tintLow;  // rgb: what the shade is multiplied towards
 uniform vec4 u_tintHigh; // rgb: what the light is multiplied towards
 
@@ -142,6 +142,8 @@ void main()
 	c = max(vec3_splat(luma) + (c - luma) * u_grade.y, vec3_splat(0.0));
 	vec3 tint = mix(u_tintLow.rgb, u_tintHigh.rgb, smoothstep(0.02, 0.5, luma));
 	c = saturate(c * mix(vec3_splat(1.0), tint, u_grade.z));
+	// Taken down to black for a cut the eye should not see: a revive's jump to the gate.
+	c *= 1.0 - u_grade.w;
 
 	vec3 srgb = toSrgb(c);
 	// Midtone contrast along a smoothstep, in the space the eye reads, black and white held.

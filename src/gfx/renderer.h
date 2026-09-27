@@ -303,6 +303,9 @@ public:
     // goes grey while he is down and the HUD he is reading does not. It multiplies the sheet's
     // own saturation rather than replacing it, so a world graded flat stays flat.
     void setDrain(float drain) { drain_ = drain < 0.0f ? 0.0f : (drain > 1.0f ? 1.0f : drain); }
+    // And how far the WORLD is taken down to black, 0 not at all and 1 black, the interface
+    // untouched as it is by the drain. A revive's cut from the corpse to the gate is made under it.
+    void setDim(float dim) { dim_ = dim < 0.0f ? 0.0f : (dim > 1.0f ? 1.0f : dim); }
 
     // next draw(); draw() submits it between the shade and the tonemap and empties it.
     //
@@ -441,6 +444,7 @@ public:
 private:
     // See setDrain: 0 is the world as the sheet grades it, 1 is grey.
     float drain_ = 0.0f;
+    float dim_ = 0.0f;
 
     struct Batch {
         const content::Mesh* mesh = nullptr;

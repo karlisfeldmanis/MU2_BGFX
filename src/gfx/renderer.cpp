@@ -940,7 +940,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                               1.0f / float(height_)};
     bgfx::setUniform(uPresent_, present);
     const float grade[4] = {lighting.tonemap, lighting.saturation * (1.0f - drain_),
-                            lighting.split, 0.0f};
+                            lighting.split, dim_};
     const float tintLow[4] = {lighting.tintLow[0], lighting.tintLow[1], lighting.tintLow[2], 0.0f};
     const float tintHigh[4] = {lighting.tintHigh[0], lighting.tintHigh[1], lighting.tintHigh[2],
                                0.0f};
