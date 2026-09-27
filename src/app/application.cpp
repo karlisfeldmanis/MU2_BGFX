@@ -199,7 +199,7 @@ int Application::run(int argc, char** argv) {
     double sinceSheetCheck = 0.0;
 
     const bool quitEarly = mode->quitEarly();
-    while (!quitEarly && window_.pump() && !window_.escapePressed()) {
+    while (!quitEarly && !mode->quitting() && window_.pump() && !window_.escapePressed()) {
         renderer_.resize(window_.width(), window_.height());
 
         // Four times a second, counted in milliseconds rather than frames: the point is to

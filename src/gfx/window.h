@@ -43,6 +43,9 @@ public:
     // an Escape that cancels a number box must not also end the game. Once swallowed it stays
     // swallowed until the key comes up, so the frame after the box closes does not quit either.
     bool escapePressed() const;
+    // Escape as the game's own key: in a played world it raises the menu, and quitting is the
+    // menu's Exit. Held, escapePressed() never answers; the edge `escaped()` still does.
+    void holdEscape(bool held) { escapeHeld_ = held; }
 
     // **Typing**, for the few boxes that take a number or a word. What was typed since the last
     // pump, as UTF-8 off GLFW's character callback (which is the layout's own character, not a
@@ -138,6 +141,7 @@ private:
     bool entered_ = false, escaped_ = false;
     bool typing_ = false;
     bool escapeSwallowed_ = false;
+    bool escapeHeld_ = false;
     uint32_t reset_ = 0;
     // Kept whole from init. A resize passes this back with a new size, because a
     // default-constructed SwapChain has a NULL window handle, which bgfx reads as a request

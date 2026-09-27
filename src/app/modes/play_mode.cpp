@@ -238,6 +238,17 @@ bool PlayMode::open(Context& ctx) {
 
     runScript(ctx);
 
+    // The game menu (game/ui/menu.h). In a world somebody is playing, Escape is the game's: it
+    // shuts the open windows and then raises the menu, and quitting is the menu's Exit. A run
+    // with --frames keeps Escape as the quit it always was, so a review can be stopped.
+    if (desk_.ready() && world_.played().isOpen()) {
+        desk_.setWorld(args.world);
+        desk_.setSettings(100, args.fps);
+        const bool held = args.frames == 0;
+        desk_.holdEscape(held);
+        ctx.window.holdEscape(held);
+    }
+
     // And the played world, for the tile over the character's head: the numbers `--at` takes,
     // so a screenshot of something to fix says where to go back to.
     if (world_.played().isOpen() && !ctx.overlay.init(ctx.paths.shaders)) {
@@ -530,6 +541,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             desk_.update(float(deltaSeconds), ctx.window, world_.played(), pointerX, pointerY);
             // A box that has the keyboard has Escape too, which otherwise quits.
             ctx.window.setTyping(desk_.typing());
+            // What the menu's Options changed: the counter in the corner and the volume. Not
+            // saved; a new run starts from its own arguments.
+            if (desk_.settingsChanged()) {
+                args.fps = desk_.showFps();
+                world_.played().sound().setVolume(float(desk_.volume()) / 100.0f);
+            }
             // And the pictures for whatever the windows now hold: MU2's Panel.Repaint,
             // which redraws a stage only when what stands on it changed or turns.
             desk_.photograph(ctx.renderer, deltaSeconds);
@@ -539,7 +556,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               ctx.window.width(), ctx.window.height());
         if ((ctx.window.clicked(0) && !windowed) || clickNow) world_.played().leftClick();
         if (ctx.window.clicked(1) && !windowed) world_.played().rightClick();
-        world_.played().update(deltaSeconds);
+        // Held while the menu is up: stepped by nothing, the realm, every clip and every
+        // effect stand where they are, and take up again from there.
+        world_.played().update(desk_.ready() && desk_.paused() ? 0.0 : deltaSeconds);
         // The colour goes out of the world while he is down. Half a second out and a second
         // back: a fall should land and a recovery should feel like one. The renderer drains the
         // scene's own pass, so the HUD and the message over it stay in colour -- which is the
@@ -777,7 +796,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // curtain, over the windows' bar -- it is a note on the picture, not a window.
     // Not while a box has the keyboard: the note sits over the middle of the screen, where the
     // box does.
-    if (ctx.overlay.ready() && world_.played().isOpen() && !desk_.typing()) {
+    if (ctx.overlay.ready() && world_.played().isOpen() && !desk_.typing() &&
+        !desk_.paused()) {
         float feetX = 0.0f, feetZ = 0.0f;
         world_.characterAt(&feetX, &feetZ);
         const float headY = world_.ground().heightAt(feetX, feetZ) + 2.0f;

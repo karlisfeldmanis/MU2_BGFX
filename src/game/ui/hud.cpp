@@ -59,9 +59,10 @@ struct ButtonRow {
     bool live;
 };
 // Menu and chat left of the life gem, inventory and character right of the mana gem. The menu
-// is MU2's live one and is drawn dim here: there is no menu window in this sprint.
+// is live since 2026-09-27 and raises the game menu (game/ui/menu.h), as Escape does; the chat
+// is drawn dim, there being no chat in a game for one.
 constexpr ButtonRow kButtons[4] = {
-    {"hud_button_menu", true, false},
+    {"hud_button_menu", true, true},
     {"hud_button_chat", true, false},
     {"hud_button_inventory", false, true},
     {"hud_button_character", false, true},
@@ -479,7 +480,7 @@ bool Hud::covers(float x, float y) const {
 
 void Hud::update(float seconds, float width, float height, const Pointer& pointer,
                  bool inventoryOpen, bool characterOpen, bool* toggleInventory,
-                 bool* toggleCharacter) {
+                 bool* toggleCharacter, bool* toggleMenu) {
     clock_ += double(seconds);
     screen_ = panel::screenOf(width, height);
     slide(seconds);
@@ -487,6 +488,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
     if (hero_ && pointer.pressed) {
         // On the press, as Hud.Hit answers: a button here is a toggle and not a commitment.
         const int over = hoveredAt(pointer.x, pointer.y);
+        if (over == 100 && toggleMenu) *toggleMenu = true;
         if (over == 102 && toggleInventory) *toggleInventory = true;
         if (over == 103 && toggleCharacter) *toggleCharacter = true;
     }

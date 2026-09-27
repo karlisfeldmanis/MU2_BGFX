@@ -266,7 +266,7 @@ void Window::pointer(float* x, float* y) const {
 }
 
 bool Window::escapePressed() const {
-    return !typing_ && !escapeSwallowed_ && glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+    return !escapeHeld_ && !typing_ && !escapeSwallowed_ && glfwGetKey(handle_, GLFW_KEY_ESCAPE) == GLFW_PRESS;
 }
 
 }  // namespace mu::gfx

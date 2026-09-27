@@ -154,6 +154,7 @@ add_executable(mu2
   src/game/ui/shelf.cpp
   src/game/ui/chest.cpp
   src/game/ui/amount.cpp
+  src/game/ui/menu.cpp
   src/game/ui/endurance.cpp
   src/game/ui/describe.cpp
   src/game/ui/desk.cpp

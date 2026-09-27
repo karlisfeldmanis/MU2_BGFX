@@ -182,6 +182,7 @@ struct Sound::Impl {
     ma_engine engine{};
     bool open = false;
     bool offline = false;
+    bool muted = false;
     std::string assetDir;
     const content::Showing* table = nullptr;
     float latency = 0.0f;  // seconds between queuing a sample and hearing it
@@ -404,6 +405,7 @@ bool Sound::open(const std::string& assetDir, const content::Showing& table, boo
     impl_->saidAt = 0;
     impl_->duckEnds = 0;
     impl_->shotKnown = false;
+    impl_->muted = muted;
     if (muted) ma_engine_set_volume(&impl_->engine, 0.0f);
 
     impl_->groups =
@@ -552,6 +554,11 @@ int Sound::load(const std::string& name, bool placed, bool quietly) {
                double(cooked->gainDb), placed ? ", placed" : "");
     impl_->events.push_back(std::move(event));
     return int(impl_->events.size() - 1);
+}
+
+void Sound::setVolume(float level) {
+    if (!impl_ || !impl_->open || impl_->muted) return;
+    ma_engine_set_volume(&impl_->engine, std::clamp(level, 0.0f, 1.0f));
 }
 
 void Sound::shutdown() {

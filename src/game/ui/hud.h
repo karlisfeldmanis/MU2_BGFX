@@ -206,7 +206,7 @@ public:
     // it draws moved. Returns the button pressed this frame, if any, through `pressed`.
     void update(float seconds, float width, float height, const Pointer& pointer,
                 bool inventoryOpen, bool characterOpen, bool* toggleInventory,
-                bool* toggleCharacter);
+                bool* toggleCharacter, bool* toggleMenu = nullptr);
 
     // Whether a point is over the frame -- plate, rail or a side button -- so a click there
     // is the frame's and not the ground's. The plate's transparent corners count: a click in

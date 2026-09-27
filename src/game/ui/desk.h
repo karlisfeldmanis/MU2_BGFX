@@ -21,6 +21,7 @@
 #include "game/ui/hud.h"
 #include "game/item_models.h"
 #include "game/ui/items_stage.h"
+#include "game/ui/menu.h"
 #include "game/ui/shelf.h"
 #include "game/ui/tally.h"
 #include "game/ui/vitals.h"
@@ -122,6 +123,27 @@ public:
     }
     // The world's name comes up over the scene after `delay` seconds: see game/arrival.h.
     void arrive(const std::string& world, float delay) { arrival_.announce(world, delay); }
+    // The map's name, for the menu's foot: where he is standing.
+    void setWorld(const std::string& world) { worldName_ = world; }
+
+    // The game menu (game/ui/menu.h). Up, the realm is held: PlayMode steps it by nothing.
+    bool paused() const { return menu_.up(); }
+    // Exit to Desktop was answered: the run ends after this frame, and shutdown saves.
+    bool quitAsked() const { return quitAsked_; }
+    // Whether Escape is the game's: in a played world it opens the menu rather than quitting.
+    void holdEscape(bool held) { holdEscape_ = held; }
+    // What Options edits, set once from the run and read back when `settingsChanged` says so.
+    void setSettings(int volume, bool fps) {
+        menu_.setVolume(volume);
+        menu_.setFps(fps);
+    }
+    int volume() const { return menu_.volume(); }
+    bool showFps() const { return menu_.fps(); }
+    bool settingsChanged() {
+        const bool changed = settingsChanged_;
+        settingsChanged_ = false;
+        return changed;
+    }
 
 private:
     gfx::Interface interface_;
@@ -133,6 +155,11 @@ private:
     Chest chest_;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
     Amount amount_;
+    Menu menu_;
+    std::string worldName_;
+    bool quitAsked_ = false;
+    bool holdEscape_ = false;
+    bool settingsChanged_ = false;
     std::string scriptTyped_;
     bool scriptEnter_ = false, scriptEscape_ = false;
     Endurance endurance_;

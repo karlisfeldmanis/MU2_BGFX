@@ -38,6 +38,10 @@ public:
     // a failure, so the Application leaves without running a frame and without an error.
     virtual bool quitEarly() const { return false; }
 
+    // True once the mode has asked to end the run -- the game menu's Exit to Desktop. The loop
+    // finishes the frame it was asked on and leaves; shutdown() still runs, so a save is kept.
+    virtual bool quitting() const { return false; }
+
     // One frame of this mode's own work: its input, its update, its gather and its draw.
     virtual void frame(Context& ctx, const Frame& at) = 0;
 

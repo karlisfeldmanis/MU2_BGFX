@@ -121,6 +121,9 @@ public:
     // play(name) does it itself; a caller does it for what only it knows is big.
     void duck();
 
+    // The whole mix's level, 0 to 1: the game menu's volume. A muted run stays silent.
+    void setVolume(float level);
+
     // The room the character is in, eased into over a moment. Dry is no reverb at all, which
     // nothing in the game asks for; it is how the test hears the pan unmixed.
     enum class Room { Dry, Open, Roofed };

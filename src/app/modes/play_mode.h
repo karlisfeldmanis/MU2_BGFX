@@ -28,6 +28,7 @@ class PlayMode : public Mode {
 public:
     bool open(Context& ctx) override;
     bool quitEarly() const override { return quitEarly_; }
+    bool quitting() const override { return desk_.ready() && desk_.quitAsked(); }
     void frame(Context& ctx, const Frame& at) override;
     const gfx::Camera& camera() const override { return world_.camera(); }
     void report(Context& ctx) override;

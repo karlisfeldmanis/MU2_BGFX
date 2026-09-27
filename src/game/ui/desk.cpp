@@ -61,6 +61,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     shelf_.open(interface_, &arts_);
     chest_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
+    menu_.open(interface_);
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
@@ -120,6 +121,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // does not hand the same keys on either. The cursor is still drawn where the pointer is.
     const bool typing = amount_.up();
     const Pointer real = pointer;
+    // Escape this frame, taken before the box below spends the script's: the box has it first
+    // while it is up, and only otherwise is it the menu's. A scripted one always is, so a review
+    // run can open the menu; a real one only when the game holds Escape (PlayMode::open).
+    const bool escape = !typing && (scriptEscape_ || (holdEscape_ && window.escaped()));
     {
         Amount::Result result;
         const std::string typed = window.typed() + scriptTyped_;
@@ -143,23 +148,67 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             }
         }
     }
-    if (typing) {
+    // **Escape, in MU's order and then the menu.** A box takes it first (above). With any window
+    // open it shuts them all, as CNewUIManager's Escape closes the open windows before anything
+    // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
+    // or down.
+    const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_;
+    {
+        std::string place = worldName_;
+        if (hero) {
+            place += (place.empty() ? "" : "  \xC2\xB7  ") + std::to_string(hero->column()) +
+                     ", " + std::to_string(hero->row());
+        }
+        const bool wasUp = menu_.up();
+        if (!wasUp && escape) {
+            if (windowsOpen) {
+                inventoryOpen_ = characterOpen_ = false;
+                if (trading_) play.closeTrade();
+                if (banking_) play.closeVault();
+                fanLatched_ = false;
+            } else {
+                menu_.show();
+                core::logf("window: menu up");
+            }
+            click();
+        }
+        Menu::Result asked;
+        menu_.update(seconds, float(window.width()), float(window.height()),
+                     wasUp ? pointer : Pointer{-1.0f, -1.0f}, wasUp && escape, place, &asked);
+        if (asked.clicked) click();
+        if (asked.closed) core::logf("window: menu down");
+        if (asked.settings) settingsChanged_ = true;
+        if (asked.quit) {
+            quitAsked_ = true;
+            core::logf("window: exit asked from the menu");
+        }
+    }
+    // Modal, as the box is: the menu has the pointer and the keys while it is up, and the frame
+    // it went down on hands neither on, so the click that shut it does not walk him.
+    const bool menuHeld = menu_.up() || escape;
+    if (typing || menuHeld) {
         pointer.pressed = pointer.released = pointer.rightPressed = pointer.held = false;
         pointer.x = pointer.y = -1.0f;
     }
+    const bool keysHeld = typing || menuHeld;
 
-    if (!typing && window.pressed(gfx::Window::Key::Inventory)) {
+    if (!keysHeld && window.pressed(gfx::Window::Key::Inventory)) {
         inventoryOpen_ = !inventoryOpen_;
         click();
     }
-    if (!typing && window.pressed(gfx::Window::Key::Character)) {
+    if (!keysHeld && window.pressed(gfx::Window::Key::Character)) {
         characterOpen_ = !characterOpen_;
         click();
     }
 
-    bool toggleInventory = false, toggleCharacter = false;
+    bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
-                characterOpen_, &toggleInventory, &toggleCharacter);
+                characterOpen_, &toggleInventory, &toggleCharacter, &toggleMenu);
+    if (toggleMenu) {
+        menu_.show();
+        core::logf("window: menu up");
+        click();
+    }
     if (toggleInventory) {
         inventoryOpen_ = !inventoryOpen_;
         click();
@@ -216,7 +265,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // L turns it on and off, Shift+L mends everything at a counter (CNewUINPCShop::
     // UpdateKeyEvent) -- not while a box is taking letters. L below level 50 with no counter is
     // the interface's no, as the dark hammer is.
-    if (inventoryOpen_ && window.pressed(gfx::Window::Key::Repair) && !window.typing()) {
+    if (inventoryOpen_ && window.pressed(gfx::Window::Key::Repair) && !window.typing() &&
+        !keysHeld) {
         if (mends && window.shift()) {
             if (!play.repairAll()) refused();
         } else if (canMend) {
@@ -369,13 +419,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
 
     if (play.isOpen()) {
         labelGround(play, window.width(), window.height());
-        if (!typing) {
+        if (!keysHeld) {
             quickKeys(window, play);
             skillKeys(window, play, pointer);
         }
     }
 
-    takesPointer_ = typing || amount_.up() || hud_.covers(pointer.x, pointer.y) || carrying_ != 0 ||
+    takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
+                    carrying_ != 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
@@ -999,6 +1050,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.
     if (amount_.up()) interface_.add(amount_.canvas());
+    // The menu over everything but the pointer: it dims the whole screen, windows and HUD too.
+    if (menu_.up()) interface_.add(menu_.canvas());
     interface_.add(cursor_.canvas());
     interface_.submit(view);
 }
