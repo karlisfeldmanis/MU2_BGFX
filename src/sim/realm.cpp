@@ -203,6 +203,7 @@ HeroRecord Realm::record() const {
         out.boonDamageTaken = hero.boonDamageTaken;
         out.boonTicksLeft = hero.boonUntil - tick_;
     }
+    out.aleTicksLeft = aleLeft();
     for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
     return out;
 }
@@ -235,6 +236,8 @@ void Realm::restore(const HeroRecord& saved) {
         hero.boonDamageTaken = std::clamp(saved.boonDamageTaken, 1.0f - kGuardCap, 1.0f);
         hero.boonUntil = tick_ + std::min<int64_t>(saved.boonTicksLeft, row->boonTicks);
     }
+    // And an Ale, no longer than one lasts, before rearm so the swing is reckoned with it.
+    if (saved.aleTicksLeft > 0) hero.aleUntil = tick_ + std::min(saved.aleTicksLeft, kAleTicks);
     rearm(hero);
     hero.health = saved.health > 0 ? std::min(saved.health, hero.maxHealth) : hero.maxHealth;
     hero.mana = std::max(0, std::min(saved.mana, hero.maxMana));
@@ -410,6 +413,12 @@ void Realm::press() {
         hero.boonSkill = skill::kNone;
         hero.boonDamageTaken = 1.0f;
         hero.stats.damageTaken = 1.0;
+    }
+    // And the Ale, off on its tick, with the swing re-reckoned without its twenty. MuMain's
+    // HeroAttributeCalc clears ABILITY_FAST_ATTACK_SPEED the frame AbilityTime[0] runs out.
+    if (hero.aleUntil != 0 && tick_ >= hero.aleUntil) {
+        hero.aleUntil = 0;
+        reswing(hero);
     }
 
     if (order_.kind == Request::Kind::Perch) {
@@ -627,6 +636,14 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Drank:
             std::snprintf(line, sizeof(line), "%6u %s drinks for %d %s", happening.tick, who,
                           happening.a, happening.b ? "mana" : "health");
+            break;
+        case What::Soused:
+            std::snprintf(line, sizeof(line), "%6u %s drinks an ale for %d ticks, swinging every %d",
+                          happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Warped:
+            std::snprintf(line, sizeof(line), "%6u %s reads a town portal to %d,%d",
+                          happening.tick, who, happening.a, happening.b);
             break;
         case What::Served:
             std::snprintf(line, sizeof(line), "%6u %s is served by %s", happening.tick, who,

@@ -64,7 +64,14 @@ bool Play::useItem(int slot) {
         const bool apple = row && row->group == 14 && row->number == 0;
         if (row && row->teaches != 0) {
             learned();
+        } else if (row && sim::portal(*row)) {
+            // Read in silence: TryConsumeItem's scroll branch sends the use and plays nothing,
+            // and ReceiveTeleport has no sound either. What it has is the arrival -- the hero
+            // put down at nought alpha and the warp's walls and circle under him.
+            warped();
         } else {
+            // The Ale is a potion to TryConsumeItem (`ITEM_APPLE <= Type <= ITEM_ALE`), so it
+            // goes down with SOUND_DRINK01 like the rest.
             sound_.play(apple ? heard_.apple : heard_.drink);
         }
         // And what it is worth, for the lane over the HUD, off the realm's own Drank: the last

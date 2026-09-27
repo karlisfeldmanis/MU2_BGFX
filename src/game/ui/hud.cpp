@@ -95,8 +95,16 @@ constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
 
+// The gap between two cells of the row, in plate pixels: MuDream's own strip spaces its 80-wide
+// cells by a fifth of one, and this is that at the cell's 40.
+constexpr float kBuffGap = 8.0f;
+Box buffPx(int i) {
+    return {kBuffsAt.x + float(i) * (kBuffsAt.w + kBuffGap), kBuffsAt.y, kBuffsAt.w, kBuffsAt.h};
+}
+
 // Which of MuDream's status cells a skill wears. Defense is the only one this game can put on a
-// character; the elf's two Greaters and the wizard's two debuffs are cut and waiting.
+// character; the elf's two Greaters and the wizard's two debuffs are cut and waiting. The Ale
+// is not a skill and wears `buff_ale` (pipeline/buff_icons.py says which cell it borrows).
 const char* buffArt(int32_t skill) {
     switch (skill) {
         case 18: return "buff_defense";
@@ -322,7 +330,8 @@ bool Hud::Face::operator==(const Face& o) const {
            level == o.level && gem == o.gem && slid == o.slid && inventory == o.inventory &&
            character == o.character && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
-           boon == o.boon && fanOpen == o.fanOpen && fanOver == o.fanOver &&
+           std::equal(boons, boons + kBoons, o.boons) && fanOpen == o.fanOpen &&
+           fanOver == o.fanOver &&
            carrying == o.carrying &&
            fan == o.fan &&
            (carrying == 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
@@ -459,8 +468,15 @@ int Hud::skillSlotAt(float x, float y) const {
     return -1;
 }
 
+int Hud::boonAt(float x, float y) const {
+    for (int i = 0; i < kBoons; ++i) {
+        if (!boons_[i].empty() && plate(screen_, buffPx(i)).has(x, y)) return i;
+    }
+    return -1;
+}
+
 bool Hud::tipAt(float x, float y) const {
-    return skillAt(x, y) >= 0 || (boon_.skill != 0 && plate(screen_, kBuffsAt).has(x, y)) ||
+    return skillAt(x, y) >= 0 || boonAt(x, y) >= 0 ||
            plate(screen_, kLifeHole).has(x, y) || plate(screen_, kManaHole).has(x, y) ||
            (hero_ && hero_->maxSd > 0 && plate(screen_, kShieldBar).has(x, y)) ||
            plate(screen_, kLevelTrack).has(x, y);
@@ -532,7 +548,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         }
         width_ = width;
         height_ = height;
-        now_.boon = boon_;
+        std::copy(boons_, boons_ + kBoons, now_.boons);
         now_.fanOpen = fanOpen_;
         now_.fan = fan_;
         now_.carrying = carrying_;
@@ -714,18 +730,21 @@ void Hud::rebuild() {
         }
     }
 
-    // What is standing on him. One at a time is all the sim grants (`Body::boon*`), so this is
-    // one cell and the row it sits in is laid out for more.
-    if (boon_.skill != 0) {
-        const Box box = plate(s, kBuffsAt);
-        const gfx::Art& icon = arts.get(buffArt(boon_.skill) ? buffArt(boon_.skill)
-                                                             : "buff_defense");
+    // What is standing on him: the skill's boon and the Ale, a cell each, packed from the left.
+    for (int i = 0; i < kBoons; ++i) {
+        const Boon& one = boons_[i];
+        if (one.empty()) continue;
+        const Box box = plate(s, buffPx(i));
+        const char* art = one.ale ? "buff_ale"
+                          : buffArt(one.skill) ? buffArt(one.skill)
+                                               : "buff_defense";
+        const gfx::Art& icon = arts.get(art);
         canvas_.rect(box, kBuffBack);
         if (icon.valid()) canvas_.image(icon, box);
         canvas_.outline(box, std::max(1.0f, s.scale), kBuffEdge);
         // And how much of it is left, as a hairline across its foot: the strip says WHAT is on
         // him and this says for how much longer, which is the half a bare icon cannot.
-        const float left = std::clamp(boon_.share, 0.0f, 1.0f);
+        const float left = std::clamp(one.share, 0.0f, 1.0f);
         const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
         canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
     }
@@ -875,15 +894,24 @@ void Hud::rebuild() {
         }
         // The buff: what is on him, what it does and for how much longer. The hairline under the
         // icon says the last as a share; this says it in minutes, in the skill card's own words.
-        if (boon_.skill != 0 && plate(s, kBuffsAt).has(px, py)) {
-            if (const sim::SkillRow* row = sim::skillNumbered(boon_.skill)) {
-                const std::vector<panel::Line> lines = {
-                    {row->name, kTipNameColour, true},
-                    {"Absorbs " + sim::absorbed(1.0f - hero_->boonDamageTaken) +
-                         " of every blow",
-                     kTipColour, false},
-                    {sim::spoken(boon_.seconds) + " left", kTipColour, false}};
-                const Box cell = plate(s, kBuffsAt);
+        if (const int over = boonAt(px, py); over >= 0) {
+            const Boon& one = boons_[over];
+            const Box cell = plate(s, buffPx(over));
+            std::vector<panel::Line> lines;
+            // The Ale's three lines say what OpenMU's effect is: the twenty on AttackSpeedAny,
+            // and what is left of the eighty seconds.
+            if (one.ale) {
+                lines = {{"Ale", kTipNameColour, true},
+                         {"Attack speed +" + std::to_string(sim::kAleSpeed), kTipColour, false},
+                         {sim::spoken(one.seconds) + " left", kTipColour, false}};
+            } else if (const sim::SkillRow* row = sim::skillNumbered(one.skill)) {
+                lines = {{row->name, kTipNameColour, true},
+                         {"Absorbs " + sim::absorbed(1.0f - hero_->boonDamageTaken) +
+                              " of every blow",
+                          kTipColour, false},
+                         {sim::spoken(one.seconds) + " left", kTipColour, false}};
+            }
+            if (!lines.empty()) {
                 panel::tooltip(tip_, cell.midX(), cell.y, lines,
                                std::round(kTipTall * kUnit * s.scale), now_.width, now_.height);
                 return;

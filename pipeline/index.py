@@ -463,6 +463,12 @@ EFFECTS = {
     "flare": "effects/levelup/flare.png",
     "magic_ground": "effects/levelup/magic_ground.png",
 
+    # A warp's walls: Magic_Circle1.OZJ, BITMAP_MAGIC + 2, which ReceiveTeleport throws under a
+    # hero who warped - the Town Portal Scroll's arrival. A 128 by 32 strip of red streaks that
+    # RenderCircle wraps once round twelve quads, a JPEG over black and so additive. The circle
+    # under the walls is magic_ground above, in orange. See src/game/fx/warp.h.
+    "magic_circle": "effects/warp/magic_circle.png",
+
     # The elf's summon, which borrows magic_ground above for its ground decal - BITMAP_MAGIC + 1
     # at sub-type 3, tinted orange - and adds three sheets of its own. JointEnergy01.OZJ is
     # BITMAP_JOINT_HEALING, the streaks that home in on her, and is 8 by 4: a gradient and not

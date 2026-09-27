@@ -194,8 +194,13 @@ blank here, the **Ale** (group 14 number 9) and the **Antidote** (group 14 numbe
 line of ours instead: MU prints nothing for either, so the sentences are written
 from what the rule actually is — OpenMU's `AlcoholEffectInitializer` (+20 attack speed for 80
 seconds) and `AntidoteConsumeHandlerPlugIn` (removes magic effect `0x37`, the poison) — and
-each asset's `tells_from` says so. None of the six does anything yet: `Realm::useItem` takes
-only the rows that heal or restore.
+each asset's `tells_from` says so.
+
+2026-09-27: the Ale and the Town Portal Scroll are used now (`Realm::useItem`), and the scroll's
+GT 157 came off. MU gates that line on the scroll's level 1 to 8, the levelled scrolls with a
+destination, and prints nothing for the plain one; the plain one warps at once. It carries a
+line of ours instead, as the Ale does, and Scroll01's `tells_from` says why. The jewels are the
+three rows left with MU's own sentence.
 
 ### 2.10 Special / set / socket (end of the tooltip)
 | # | Block | Colour | Where |

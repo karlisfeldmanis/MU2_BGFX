@@ -120,17 +120,29 @@ public:
     // MuDream keeps its own, a 30-pixel square edged and spaced. **A strip at all is this
     // bench's**, as it was MU2's: 0.75's client draws no status icons and MuMain gives skill 18
     // no buff to draw -- `NewUIBuffWindow` is the later thing both borrow from.
+    //
+    // A row of cells, left to right in the order the desk hands them: the skill's boon, then the
+    // Ale. The Ale's cell is as much this project's as the strip is -- MuMain gives the Ale no
+    // eBuffState and tints the hero red instead (ZzzCharacter.cpp:9320) -- and the user asked for
+    // it (2026-09-27): a thing drunk for eighty seconds wants to say how long it has left.
     struct Boon {
         int32_t skill = 0;    // MU's own number, 0 for nothing standing
+        bool ale = false;     // or the Ale's, which is no skill
         float seconds = 0.0f; // what is left of it
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
+        bool empty() const { return skill == 0 && !ale; }
         bool operator==(const Boon& o) const {
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
-            return skill == o.skill && int(seconds * 10.0f) == int(o.seconds * 10.0f);
+            return skill == o.skill && ale == o.ale &&
+                   int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
     };
-    void setBoon(const Boon& boon) { boon_ = boon; }
+    static constexpr int kBoons = 4;
+    // The cells for this frame, packed from the left; what is not handed is empty.
+    void setBoons(const Boon* boons, int count) {
+        for (int i = 0; i < kBoons; ++i) boons_[i] = i < count ? boons[i] : Boon{};
+    }
 
     // Which skill box the pointer is over, or -1, so the desk builds one card and not four.
     // Only a box with something in it: an empty box has no card and nothing to hover.
@@ -241,7 +253,7 @@ private:
         int skillStruck[kSkillKeys] = {-1, -1, -1, -1, -1};
         int skillBack[kSkillKeys] = {-1, -1, -1, -1, -1};
         Skill skill[kSkillKeys];
-        Boon boon;
+        Boon boons[kBoons];
         bool fanOpen = false;
         int fanOver = -1;           // the cell under the pointer
         int32_t carrying = 0;       // what the pointer is holding out of the list
@@ -256,6 +268,8 @@ private:
     int segment() const;     // which tenth
     int hoveredAt(float x, float y) const;
     bool tipAt(float x, float y) const;
+    // Which buff cell a point is over, only one with something standing in it, or -1.
+    int boonAt(float x, float y) const;
 
     gfx::Canvas canvas_;
     gfx::Canvas tip_;
@@ -274,7 +288,7 @@ private:
     float skillStruck_[kSkillKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
     float skillBack_[kSkillKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
     Skill skill_[kSkillKeys];
-    Boon boon_;
+    Boon boons_[kBoons];
     bool fanOpen_ = false;
     int32_t carrying_ = 0;
     std::vector<FanCell> fan_;

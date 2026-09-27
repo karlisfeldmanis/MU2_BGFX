@@ -19,6 +19,7 @@
 #include "content/ground.h"
 #include "content/tables.h"
 #include "game/fx/aura.h"
+#include "game/fx/warp.h"
 #include "game/fx/bones.h"
 #include "game/fx/breath.h"
 #include "game/fx/eyes.h"
@@ -279,6 +280,18 @@ public:
     // What a level looks like, and sounds like. Opened by the caller for the same reason as
     // the showing.
     Aura& aura() { return aura_; }
+    // Where a Town Portal Scroll lands him, opened by the caller for the same reason.
+    Warp& warp() { return warp_; }
+    void gatherWarp(gfx::Effects& effects) const {
+        if (ground_) warp_.gather(effects, *ground_);
+    }
+    // Whether he has warped since this was last asked, and forgets it: what the windows shut
+    // on, as MuMain's ReceiveTeleport shuts every one (`g_pNewUISystem->HideAll()`).
+    bool takeWarp() {
+        const bool was = warpOwed_;
+        warpOwed_ = false;
+        return was;
+    }
     // The guard: thrown when Defense lands, and kept on the body every frame after.
     void guardRise(float seconds);
     void guardStep();
@@ -337,6 +350,9 @@ public:
     // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
     // read taught something, and by `--learn` for a review run.
     void learned();
+    // And a Town Portal Scroll's arrival: the hero faded in from nothing where the realm put
+    // him, the warp thrown under him, and the windows told (`takeWarp`).
+    void warped();
 
 private:
     // One body as it is drawn: the figure, and where it was at the last two ticks so a frame
@@ -493,6 +509,8 @@ private:
     Showing showing_;
     Marker marker_;
     Aura aura_;
+    Warp warp_;
+    bool warpOwed_ = false;
     Sound sound_;
     Breath breath_;
     Bones bones_;

@@ -96,6 +96,18 @@ STATES = {
     # Marked as this project's. So is the strip it hangs in - see the note at the top of this
     # file, where 0.75's client draws no status icons at all.
     "defense": (45, "eBuff_EliteScroll2", "Defense, skill 18 - borrowed, see note"),
+    # The Ale, and the second borrowing, for the reason the first was: MuMain has no eBuffState
+    # for it either - it is ABILITY_FAST_ATTACK_SPEED, shown as the hero turned red - and the
+    # user asked for a cell with a tooltip on 2026-09-27, so the strip says how long it has left.
+    #
+    # Cell 10 is eBuff_BlessPotion, Season 6's siege potion: a blue flask. It is the sheet's one
+    # plain bottle, and a bottle is what the bag shows the Ale as, so the cell says "he drank
+    # something" before the tooltip says what. Nothing in 0.75 uses cell 10.
+    #
+    # The alternatives: cell 11 (eBuff_SoulPotion) is the same flask in violet, and either would
+    # do; cell 44, a pair of blue chevrons, reads as speed but not as a drink; cells 50 to 54
+    # are goblets on a stand, busy at 40 pixels.
+    "ale": (10, "eBuff_BlessPotion", "the Ale - borrowed, see note"),
 }
 
 

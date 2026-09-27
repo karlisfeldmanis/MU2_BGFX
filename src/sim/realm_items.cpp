@@ -62,8 +62,10 @@ void Realm::reswing(Body& hero) {
     const content::Arm* left = hero.shield >= 0 && size_t(hero.shield) < tables_->arms.size()
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
+    // An Ale's twenty ride with the excellent option's seven: both are AttackSpeedAny in OpenMU.
+    const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0);
     const int milliseconds =
-        swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left, hero.excel.speed);
+        swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left, extra);
     hero.swingMs = milliseconds;
     const int32_t ticks = swingTicks(milliseconds);
     hero.swingTicks = ticks > 0 ? ticks : kHeroSwingTicks;
@@ -306,6 +308,62 @@ bool Realm::useItem(int slot) {
         return true;
     }
 
+    // One piece off what was used: ConsumeSourceItemAsync's `Durability -= 1`, and the slot
+    // emptied at nought.
+    const auto spendOne = [&] {
+        Held left = potion;
+        left.durability = int16_t(potion.durability - 1);
+        if (left.durability <= 0) {
+            bag_.lift(slot);
+        } else {
+            bag_.put(slot, left);
+        }
+    };
+
+    // ---- the Ale: eighty seconds of a quicker arm ---------------------------------------------
+    //
+    // No cooldown and no refusal while one stands: ApplyMagicEffectConsumeHandlerPlugIn asks
+    // neither, and throws the standing effect away for the new one, so a second Ale is a fresh
+    // eighty seconds and never a second twenty.
+    if (ale(row)) {
+        hero.aleUntil = tick_ + kAleTicks;
+        spendOne();
+        reswing(hero);
+        say(What::Soused, hero, int32_t(kAleTicks), hero.swingTicks);
+        return true;
+    }
+
+    // ---- the Town Portal Scroll: back to town, at once ----------------------------------------
+    //
+    // TownPortalScrollConsumeHandlerPlugIn: spend it, then WarpToAsync the map's safe zone
+    // spawn gate. No cooldown, no cast and no wait -- the three seconds on MU's GT 157 belong to
+    // the levelled scrolls (ZzzInventory.cpp:4238 gates it on Level 1 to 8), and this is the
+    // plain one. What else a warp takes is MuMain's ReceiveTeleport with its Flag set: every
+    // window shut (HideAll), the hero stopped (SetPlayerStop), nothing selected and no attack
+    // standing (`Attacking = -1`). The monsters that were on him lose him, since a warp takes
+    // him out of every viewport that held him.
+    if (portal(row)) {
+        spendOne();
+        rise(hero);
+        dropBlow(hero);
+        order_ = Request{};
+        pending_ = Request{};
+        wants_ = skill::kNone;
+        trading_ = -1;
+        banking_ = -1;
+        const std::pair<int, int> landing = haven();
+        setDown(hero, landing.first, landing.second);
+        hero.facing = hero.aim;
+        hero.turning = false;
+        for (Body& one : bodies_) {
+            if (one.player || one.quarry != hero.id) continue;
+            one.quarry = 0;
+            one.provoked = false;
+        }
+        say(What::Warped, hero, landing.first, landing.second);
+        return true;
+    }
+
     const bool mana = restores(row);
     if (!mana && !heals(row)) return false;
     // A yes that has not come round yet, not a no. MU2's Realm.Consume.
@@ -331,13 +389,7 @@ bool Realm::useItem(int slot) {
         sips_[sipCount_++] = Sip{due, amount, mana};
     }
     potionUntil_ = tick_ + 10;  // PotionCooldown, half a second
-    Held left = potion;
-    left.durability = int16_t(potion.durability - 1);
-    if (left.durability <= 0) {
-        bag_.lift(slot);
-    } else {
-        bag_.put(slot, left);
-    }
+    spendOne();
     say(What::Drank, hero, total, mana ? 1 : 0);
     return true;
 }

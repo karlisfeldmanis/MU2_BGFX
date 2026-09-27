@@ -145,6 +145,14 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = 1.0;
+        // The Ale too, which is this project's rule and not OpenMU's: AlcoholEffectInitializer
+        // sets StopByDeath false, so there he would rise still drunk. One rule for everything in
+        // the buff strip was the user's (2026-09-25), and a knight who stands up in town with
+        // the red still on him reads as a bug.
+        if (dead.aleUntil != 0) {
+            dead.aleUntil = 0;
+            reswing(dead);
+        }
         order_ = Request{};
         pending_ = Request{};
         return;
@@ -218,8 +226,8 @@ void Realm::gain(Body& hero, int32_t award) {
     }
 }
 
-void Realm::reviveHero() {
-    Body& hero = bodies_[0];
+std::pair<int, int> Realm::haven() {
+    const Body& hero = bodies_[0];
     const int32_t* gate = tables_->safeGate;
     int column = hero.column(), row = hero.row();
     if (gate[2] > gate[0] && gate[3] > gate[1]) {
@@ -235,12 +243,12 @@ void Realm::reviveHero() {
             row = openRow;
         }
     }
+    return {column, row};
+}
+
+void Realm::setDown(Body& hero, int column, int row) {
     hero.x = float(column);
     hero.y = float(row);
-    hero.health = hero.maxHealth;
-    hero.mana = hero.maxMana;
-    hero.sd = hero.maxSd;
-    hero.sdCarry = 0.0f;
     hero.temper = Temper::Wandering;
     hero.walking = false;
     hero.route.clear();
@@ -248,6 +256,16 @@ void Realm::reviveHero() {
     hero.quarry = 0;
     hero.swingsAt = tick_;
     hero.repathsAt = 0;
+}
+
+void Realm::reviveHero() {
+    Body& hero = bodies_[0];
+    const auto [column, row] = haven();
+    hero.health = hero.maxHealth;
+    hero.mana = hero.maxMana;
+    hero.sd = hero.maxSd;
+    hero.sdCarry = 0.0f;
+    setDown(hero, column, row);
     say(What::Rose, hero, hero.level, hero.health);
 }
 

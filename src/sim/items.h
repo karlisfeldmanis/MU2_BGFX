@@ -112,6 +112,19 @@ bool ammunition(const content::ItemRow& row);
 bool heals(const content::ItemRow& row);
 bool restores(const content::ItemRow& row);
 
+// The Ale (14, 9): OpenMU's AlcoholEffectInitializer, which Version075 hangs on the row as its
+// ConsumeEffect -- a flat +20 on AttackSpeedAny for 80 seconds. MuMain's client says the same
+// twenty from the other side: CheckHack takes 20 back off the speed it reports while
+// ABILITY_FAST_ATTACK_SPEED stands (Winmain.cpp:162). A second one replaces the first rather
+// than stacking (ApplyMagicEffectConsumeHandlerPlugIn disposes the effect of the same subtype).
+bool ale(const content::ItemRow& row);
+constexpr int kAleSpeed = 20;
+constexpr int64_t kAleTicks = 80 * 20;
+// The Town Portal Scroll (14, 10): TownPortalScrollConsumeHandlerPlugIn, a warp to the map's
+// safe zone spawn gate, at once. Lorencia's own safe zone is its own (BaseMapInitializer's
+// SafezoneMapNumber), so on this map it is the box a death rises in.
+bool portal(const content::ItemRow& row);
+
 // ---- stacks ---------------------------------------------------------------------------------
 //
 // The user's, 2026-09-27, as WoW keeps its potions: pieces of one kind pour into one cell,

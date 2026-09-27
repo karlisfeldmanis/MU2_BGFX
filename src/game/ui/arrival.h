@@ -26,8 +26,9 @@
 // an imitation of it. The one thing the page drew that this does not is the name's own brief
 // blur as it comes in (0.25 cqw, gone by 22%), which is under the fade-in and not missed.
 //
-// Shown on the way into a world, never on a respawn in the same one: MU calls ShowMapName on
-// entering and on changing map.
+// Shown on the way into a world and on a Town Portal Scroll's warp, never on a respawn in the
+// same one: MU calls ShowMapName on entering, and on every ReceiveTeleport with its Flag set --
+// a change of map, or a warp into the map he is already on.
 #pragma once
 
 #include <string>

@@ -188,6 +188,11 @@ bool restores(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number >= 4 && row.number <= 6;
 }
 
+bool ale(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 9; }
+bool portal(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 10;
+}
+
 bool stacks(const content::ItemRow& row) { return heals(row) || restores(row); }
 
 bool tops(const content::Tables& tables, const Held& onto, const Held& what) {

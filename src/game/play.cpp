@@ -606,6 +606,7 @@ void Play::update(double seconds) {
     releaseDrops();
     showing_.update(float(seconds));
     aura_.update(float(seconds));
+    warp_.update(float(seconds));
     // And the guard walks with him, or goes when the realm says it has gone.
     if (isOpen()) guardStep();
 }

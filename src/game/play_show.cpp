@@ -362,6 +362,26 @@ void Play::learned() {
     sound_.play(heard_.orb);
 }
 
+// Where the realm put him, not where he is drawn: the drawing catches up on the next tick, and
+// by then the walls should already be standing. `o->Alpha = 0.f` is the spawn fade a revive
+// uses, so the figure is not seen at the tile he left in the frames before that tick.
+void Play::warped() {
+    warpOwed_ = true;
+    const sim::Body& body = realm_.hero();
+    if (Drawn* hero = drawnOf(body.id)) {
+        hero->spawnFade = 0.0f;
+        hero->swinging = 0.0f;
+        hero->casting = 0.0f;
+    }
+    if (ground_ == nullptr) return;
+    const float metres = ground_->metresPerTile();
+    const float x = (body.x + 0.5f) * metres;
+    const float z = -(body.y + 0.5f) * metres;
+    const float feet[3] = {x, ground_->heightAt(x, z), z};
+    warp_.land(feet, metres);
+    core::logf("warp: lands at tile %d,%d", body.column(), body.row());
+}
+
 // The knight's guard raised, and then kept on him while it stands.
 //
 // Two calls and not one because the barrier follows the body, which the level-up's flares do
@@ -783,14 +803,28 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // than a monster behind him would ring both at once -- leftClick's own ladder, which
         // this has to agree with since the ring is meant to show what a click would answer.
         if (hover && pointedFolk_ < 0 && one.id == pointedAt_) one.figure.gather(palette, *hover);
+        // An Ale in the hero is MuMain's red: while ABILITY_FAST_ATTACK_SPEED stands, RenderCharacter
+        // multiplies his light by (0.9, 0.5, 0.5) and copies it into `c->Light`, which lights every
+        // part he wears (ZzzCharacter.cpp:9320). The instance's `light` is that same multiplier.
+        const bool soused = one.id == realm_.hero().id && realm_.aleLeft() > 0;
+        const size_t tintFrom = out.size();
+        const auto tint = [&] {
+            if (!soused) return;
+            for (size_t i = tintFrom; i < out.size(); ++i) {
+                out[i].light[0] *= kSousedLight[0];
+                out[i].light[1] *= kSousedLight[1];
+                out[i].light[2] *= kSousedLight[2];
+            }
+        };
         if (fade < 1.0f) {
-            const size_t outFrom = out.size(), castFrom = casters ? casters->size() : 0;
+            const size_t castFrom = casters ? casters->size() : 0;
             if (casters) one.figure.gather(palette, *casters);
             one.figure.gather(palette, out);
-            for (size_t i = outFrom; i < out.size(); ++i) out[i].fade = fade;
+            for (size_t i = tintFrom; i < out.size(); ++i) out[i].fade = fade;
             if (casters) {
                 for (size_t i = castFrom; i < casters->size(); ++i) (*casters)[i].fade = fade;
             }
+            tint();
             continue;
         }
         // The sun's list is every figure, as the town's is: a body behind the camera still
@@ -800,6 +834,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // the next thing to do and not this sprint's.
         if (casters) one.figure.gather(palette, *casters);
         one.figure.gather(palette, out);
+        tint();
     }
     for (size_t i = 0; i < folk_.size(); ++i) {
         Standing& one = folk_[i];

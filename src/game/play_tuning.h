@@ -128,6 +128,10 @@ constexpr float kDropDelay = 0.12f;
 // same smoothstep the hero's own door-opening fade uses (kAppearSeconds), just shorter --
 // invention, the user asked for it not to pop.
 constexpr float kSpawnFadeSeconds = 0.35f;
+// The hero's light while an Ale stands: MuMain's AbilityLight for ABILITY_FAST_ATTACK_SPEED,
+// `AbilityLight[0] *= 0.9f; AbilityLight[1] *= 0.5f; AbilityLight[2] *= 0.5f`
+// (ZzzCharacter.cpp:9320). OpenMU's packet note calls it "shown in a red color".
+constexpr float kSousedLight[3] = {0.9f, 0.5f, 0.5f};
 
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the

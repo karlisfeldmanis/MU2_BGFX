@@ -140,6 +140,8 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.boonSkill = int32_t(boon["skill"].numberOr(0.0));
     hero.boonDamageTaken = float(boon["damage_taken"].numberOr(1.0));
     hero.boonTicksLeft = int64_t(boon["ticks_left"].numberOr(0.0));
+    // An Ale's ticks left, absent when none stood. The realm caps it at one Ale's length.
+    hero.aleTicksLeft = int64_t(doc["ale_ticks_left"].numberOr(0.0));
 
     const core::Json& items = doc["items"];
     for (size_t i = 0; i < items.size(); ++i) saved.items.push_back(readItem(items.at(i)));
@@ -214,6 +216,10 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
                      "  \"boon\": {\"skill\": %d, \"damage_taken\": %.4f, \"ticks_left\": %lld},\n",
                      hero.boonSkill, double(hero.boonDamageTaken),
                      static_cast<long long>(hero.boonTicksLeft));
+    }
+    if (hero.aleTicksLeft > 0) {
+        std::fprintf(f, "  \"ale_ticks_left\": %lld,\n",
+                     static_cast<long long>(hero.aleTicksLeft));
     }
     std::fprintf(f, "  \"items\": [");
     bool first = true;

@@ -7,22 +7,21 @@
 namespace mu::game {
 
 // Whether a row may be bound to a key at all: CanRegisterItemHotKey's list, of which this
-// catalogue has the apple, the six potions and the Town Portal Scroll. Held.Usable.
+// catalogue has the apple, the six potions, the Ale and the Town Portal Scroll. Held.Usable.
 static bool usable(const content::Tables& tables, int32_t item) {
     if (item < 0) return false;
     const content::ItemRow& row = tables.items[size_t(item)];
-    return sim::heals(row) || sim::restores(row) ||
-           (row.group == sim::kGroupPotions && row.number == 10);
+    return sim::heals(row) || sim::restores(row) || sim::ale(row) || sim::portal(row);
 }
 
 // Whether a carried row may stand in for a bound one: the same group, and either exactly the
-// Town Portal, or the same family at no higher a rank -- the healing family falls to the
-// apple and the mana family to the small mana potion. Quick.Substitutes.
+// Ale or the Town Portal, or the same family at no higher a rank -- the healing family falls
+// to the apple and the mana family to the small mana potion. Quick.Substitutes.
 static bool substitutes(const content::Tables& tables, int32_t carried, int32_t bound) {
     const content::ItemRow& c = tables.items[size_t(carried)];
     const content::ItemRow& b = tables.items[size_t(bound)];
     if (c.group != b.group) return false;
-    if (b.number == 10) return c.number == 10;
+    if (sim::ale(b) || sim::portal(b)) return c.number == b.number;
     return c.number <= b.number && (b.number >= 4 ? sim::restores(c) : sim::heals(c));
 }
 
@@ -147,6 +146,15 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 refused();
             }
         }
+    }
+    // A Town Portal Scroll read shuts the bag and the character window, silently: ReceiveTeleport's
+    // `g_pNewUISystem->HideAll()`. The realm has already closed the counter and the vault. And the
+    // same handler ends `if (Data->Flag) g_pUIMapName->ShowMapName()`, which a warp has set even
+    // into the map it left, so the town's name comes up at once, as it does on the way in.
+    if (play.takeWarp()) {
+        inventoryOpen_ = characterOpen_ = false;
+        fanLatched_ = false;
+        arrival_.announce(worldName_, 0.0f);
     }
     // **Escape, in MU's order and then the menu.** A box takes it first (above). With any window
     // open it shuts them all, as CNewUIManager's Escape closes the open windows before anything
@@ -712,15 +720,24 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     }
 
     // What is standing on him, off the realm: the sim owns the boon and the strip draws it.
-    Hud::Boon boon;
+    // The guard first and the Ale after it, whichever stands.
+    Hud::Boon boons[Hud::kBoons];
+    int standing = 0;
     if (hero.boonSkill != 0 && hero.boonUntil > realm.tick()) {
         const sim::SkillRow* row = sim::skillNumbered(hero.boonSkill);
         const float left = float(hero.boonUntil - realm.tick());
+        Hud::Boon& boon = boons[standing++];
         boon.skill = hero.boonSkill;
         boon.seconds = left * 0.05f;  // 20 Hz
         boon.share = row && row->boonTicks > 0 ? left / float(row->boonTicks) : 0.0f;
     }
-    hud_.setBoon(boon);
+    if (const int64_t left = realm.aleLeft(); left > 0) {
+        Hud::Boon& boon = boons[standing++];
+        boon.ale = true;
+        boon.seconds = float(left) * 0.05f;
+        boon.share = float(left) / float(sim::kAleTicks);
+    }
+    hud_.setBoons(boons, standing);
 
     const gfx::Window::Key keys[Hud::kSkillKeys] = {
         gfx::Window::Key::Skill1, gfx::Window::Key::Skill2, gfx::Window::Key::Skill3,

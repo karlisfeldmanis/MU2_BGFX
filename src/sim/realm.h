@@ -22,6 +22,7 @@
 //     monotonic counter.
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -81,6 +82,8 @@ enum class What : uint8_t {
     Worn,      // a worn piece lost a whole point: a: its slot, b: what is left, c: its maximum
     Repaired,  // a: the slot, or -1 for all of them, b: the Zen paid, c: pieces put right
     Refined,   // a jewel spent on a thing: a: its slot, b: the plus it had, c: the plus it has
+    Soused,    // an Ale gone down: a: the ticks it lasts, b: the swing's ticks now
+    Warped,    // a Town Portal Scroll read: a: the column he stands on, b: the row
 };
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
@@ -238,6 +241,10 @@ struct Body {
     int64_t boonUntil = 0;
     float boonDamageTaken = 1.0f;
     int32_t boonSkill = 0;
+    // Until when an Ale stands on him: kAleSpeed more attack speed, read by `reswing`. Beside
+    // the boon and not through it, because the two are different effects in OpenMU (subtypes
+    // 54 and the skill's own) and a guard raised with an Ale in him keeps both.
+    int64_t aleUntil = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
     Pose pose = Pose::Standing;
@@ -273,6 +280,8 @@ struct HeroRecord {
     int32_t boonSkill = 0;
     float boonDamageTaken = 1.0f;
     int64_t boonTicksLeft = 0;
+    // And an Ale's ticks left, 0 for none, saved for the same reason as the boon.
+    int64_t aleTicksLeft = 0;
     Held slots[kSlots];
 };
 
@@ -378,10 +387,14 @@ public:
     // A drag from one slot to another, equipping and unequipping included. Refused, whole,
     // where `movable` says no -- the same answer the window colours the cell by.
     bool moveItem(int from, int to);
-    // A right-click on a carried thing: drink it. Only potions this sprint. Refused where it
-    // is nothing drinkable or the half-second cooldown has not run (RecoverConsumeHandler's
-    // CooldownTime); the heal arrives over the next second in three instalments.
+    // A right-click on a carried thing: drink it, read it or learn from it. A potion is refused
+    // while the half-second cooldown has not run (RecoverConsumeHandler's CooldownTime) and its
+    // heal arrives over the next second in three instalments. The Ale and the Town Portal
+    // Scroll take no cooldown -- OpenMU's handlers for both ask none -- and say What::Soused
+    // and What::Warped.
     bool useItem(int slot);
+    // Whether an Ale stands on him, and the ticks it has left.
+    int64_t aleLeft() const { return std::max<int64_t>(0, bodies_[0].aleUntil - tick_); }
     // A jewel let go over a thing: the Bless or the Soul, from a bag slot, onto a thing carried
     // or worn. Refused, whole and silent, where `refinable` says no. Otherwise the jewel is
     // spent whatever the roll gives, and the thing comes back at its new plus: OpenMU's
@@ -536,6 +549,12 @@ private:
     void gain(Body& hero, int32_t award);
     void raiseBeast(Body& beast);
     void reviveHero();
+    // A standable tile in the map's spawn box, drawn off the dice: where a death rises and where
+    // a Town Portal Scroll lands, which in OpenMU are the same SafezoneSpawnGate. His own tile
+    // when the map has no box.
+    std::pair<int, int> haven();
+    // Puts him down on a tile with nothing in hand: no walk, no order, no blow, no counter.
+    void setDown(Body& hero, int column, int row);
     void rearm(Body& hero);
     // A blow's wear on the player's gear: `took` the health a blow took off him, which wears one
     // defending piece; `landed` a blow of his that did harm, which wears the weapon.

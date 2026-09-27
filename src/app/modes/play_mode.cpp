@@ -201,6 +201,7 @@ bool PlayMode::open(Context& ctx) {
             world_.played().showing().open(assets, ctx.textures);
             world_.played().marker().open(assets, ctx.textures);
             world_.played().aura().open(assets, ctx.textures);
+            world_.played().warp().open(assets, ctx.textures);
             if (world_.played().showing().isOpen()) {
                 world_.played().breath().open(assets, ctx.textures,
                                               world_.played().showing().table(),
@@ -757,6 +758,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().showing().gather(ctx.renderer.effects());
         world_.played().gatherMarker(ctx.renderer.effects());
         world_.played().gatherAura(ctx.renderer.effects(), eye.position);
+        world_.played().gatherWarp(ctx.renderer.effects());
         world_.played().breath().gather(ctx.renderer.effects());
         world_.played().snorts().gather(ctx.renderer.effects());
         world_.played().eyes().gather(ctx.renderer.effects());
