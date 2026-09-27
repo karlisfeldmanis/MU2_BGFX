@@ -4,9 +4,9 @@
 // Select, Character Select, Option, Close -- and this is that column in the windows' skin,
 // chosen by the user on 2026-09-27 from a page drawn over Lorencia: *"same style as other ui,
 // clean, fat but with diablo 4 vibe"*, then *"cleaner with rounder radius"*, then *"a little
-// bit simpler, without icons"*. A centred sheet, a gold crest on its top edge, three fat
-// rounded slabs with an engraved inner line, a warm light rising under the one the pointer is
-// on, and Exit set apart below a rule and lit red.
+// bit simpler, without icons"*. A centred sheet, three fat rounded slabs with an engraved
+// inner line, a warm light rising under the one the pointer is on, and Exit set apart below a
+// rule and lit red.
 //
 // Three pages in one sheet: the menu; Exit's one question; and Options, which offers only what
 // can change while the game runs -- the volume and the frame-rate counter. Switch Character is

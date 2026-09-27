@@ -32,6 +32,11 @@ constexpr float kGap = 10.0f;
 constexpr float kInset = 4.0f;  // the engraved line inside a slab
 constexpr float kLiftSeconds = 0.12f;
 
+// The whole menu at 85% of the page it was drawn from: the user, 2026-09-27, *"scale down menu
+// little bit"*. One number, so every measure below keeps its proportion.
+constexpr float kScale = 0.85f;
+float unit() { return tip::unit() * kScale; }
+
 // Where the sheet's centre stands: a little above the middle, where a thing to be answered
 // is looked for.
 constexpr float kCentreShare = 0.46f;
@@ -89,7 +94,7 @@ Box boxOf(Menu::Page page, int target) {
 }
 
 Box at(float x, float y, const Box& design) {
-    const float u = tip::unit();
+    const float u = unit();
     return {std::round(x + design.x * u), std::round(y + design.y * u), std::round(design.w * u),
             std::round(design.h * u)};
 }
@@ -122,7 +127,7 @@ enum class Kind : uint8_t { Plain, Danger, Inactive };
 // Held, it sinks a pixel. `lift` is the eased hover, 0 to 1.
 void slab(gfx::Canvas& canvas, const Box& box, float radius, const std::string& word,
           float size, Kind kind, float lift, bool pressed) {
-    const float u = tip::unit();
+    const float u = unit();
     const bool live = kind != Kind::Inactive;
     const float t = live ? lift : 0.0f;
     const Tone accent = kind == Kind::Danger ? kRed : kPale;
@@ -204,12 +209,6 @@ void arrow(gfx::Canvas& canvas, const Box& box, bool right, float lift) {
     canvas.polygon(nullptr, xy, nullptr, 3, kBronze.times(0.7f).mix(kPale, lift).packed());
 }
 
-// A diamond as a four-point fan, `r` from its centre to each point.
-void diamond(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t ink) {
-    const float xy[8] = {cx, cy - r, cx + r, cy, cx, cy + r, cx - r, cy};
-    canvas.polygon(nullptr, xy, nullptr, 4, ink);
-}
-
 }  // namespace
 
 void Menu::open(const gfx::Interface& interface) { interface.adopt(canvas_); }
@@ -234,7 +233,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
                   const std::string& place, Result* out) {
     Result result;
     if (up_) {
-        const float u = tip::unit();
+        const float u = unit();
         width_ = width;
         height_ = height;
         place_ = place;
@@ -323,7 +322,7 @@ void Menu::rebuild() {
     canvas_.clear();
     if (!up_) return;
     ++rebuilds_;
-    const float u = tip::unit();
+    const float u = unit();
     const float line = std::max(1.0f, std::round(u));
     const gfx::Face& face = canvas_.face();
     const auto eased = [&](int i) { return lift_[i] * lift_[i] * (3.0f - 2.0f * lift_[i]); };
@@ -343,14 +342,6 @@ void Menu::rebuild() {
     const Box sheetBox = at(x_, y_, {0.0f, 0.0f, kWide, tall});
     sheet::glass(canvas_, sheetBox, kRadius * u);
     sheet::band(canvas_, at(x_, y_, {0.0f, 0.0f, kWide, 110.0f}), true, kRadius * u);
-
-    // The crest breaking the top edge: a gold diamond, cut back to the body, a gold core.
-    {
-        const float cx = sheetBox.midX(), cy = sheetBox.y;
-        diamond(canvas_, cx, cy, 11.0f * u, kPale.packed());
-        diamond(canvas_, cx, cy, 11.0f * u - 2.0f * line, gfx::rgba(0.056f, 0.052f, 0.048f, 1.0f));
-        diamond(canvas_, cx, cy, 4.5f * u, sheet::ink::kGold);
-    }
 
     // The title, in the windows' face and ink.
     const char* titles[3] = {"MENU", "EXIT GAME", "OPTIONS"};
