@@ -1120,9 +1120,13 @@ void Desk::labelGround(const Play& play, int width, int height) {
         if (one->what.empty()) {
             name = panel::commas(one->zen) + " Zen";
         } else {
-            const content::ItemRow& row = tables.items[size_t(one->what.item)];
-            name = one->what.refinement > 0 ? row.label + " +" + std::to_string(one->what.refinement)
-                                            : row.label;
+            // As read at its plus, as the card reads it: the Orb of Summoning is six orbs by its
+            // plus, and a +1 one on the ground is the Orb of Goblin, whose plus is its name.
+            const content::ItemRow& raw = tables.items[size_t(one->what.item)];
+            const content::ItemRow row = sim::asRead(raw, one->what.refinement);
+            name = one->what.refinement > 0 && !sim::summoningOrb(raw)
+                       ? row.label + " +" + std::to_string(one->what.refinement)
+                       : row.label;
             // BuildGroundItemLabelDescriptor's tail: the option, then the luck, after the plus.
             if (one->what.option > 0) name += " +Option";
             if (one->what.luck) name += " +Luck";

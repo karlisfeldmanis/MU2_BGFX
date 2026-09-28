@@ -261,6 +261,17 @@ void Play::update(double seconds) {
                     }
                     if (look) {
                         fit(*drawn, *summon, look);
+                        // And its cries: loaded when the map opened, off the placeholder breed
+                        // its dormant slot had, so a Goblin cried as a Bull Fighter (the user,
+                        // 2026-09-29, "elf goblin summon has wrong sound"). The breed she called,
+                        // named as Play::open names every breed's.
+                        std::string named;
+                        for (char c : tables_.kinds[size_t(summon->kind)].label) {
+                            if (c != ' ') named += char(std::tolower(static_cast<unsigned char>(c)));
+                        }
+                        drawn->cryAttack = sound_.load(named + "_attack", true, true);
+                        drawn->cryDie = sound_.load(named + "_die", true, true);
+                        drawn->cryMove = sound_.load(named + "_move", true, true);
                         drawn->wasX = drawn->nowX = summon->x;
                         drawn->wasY = drawn->nowY = summon->y;
                         drawn->deadFor = -1.0f;
