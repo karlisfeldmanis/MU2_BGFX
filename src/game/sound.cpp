@@ -194,9 +194,12 @@ struct Sound::Impl {
     // through its own low-pass into `world`.
     ma_sound_group ui{}, world{}, ambience{};
     bool groups = false;
-    // The music, streamed from its file and looping: one track at a time (see Sound::music).
-    ma_sound music{};
-    bool musicReady = false;
+    // The music, streamed from its file and looping: one track playing at a time (see
+    // Sound::music), in two slots so the one going out can fade while the next comes in.
+    ma_sound music[2]{};
+    bool musicReady[2] = {false, false};
+    int musicSlot = 0;       // the slot the current track is in
+    bool musicLive = false;  // that slot is playing and not fading out
     std::string musicPath;
 
     // The room: the world's bus split into the dry and the reverb's send.
@@ -570,37 +573,63 @@ void Sound::setVolume(float level) {
     ma_engine_set_volume(&impl_->engine, std::clamp(level, 0.0f, 1.0f));
 }
 
+namespace {
+// How long music takes to go out and to come in. Ours: MU's StopMp3 cuts the track dead on the
+// tile he leaves the safe zone on, and the user asked for a fade (2026-09-28).
+constexpr ma_uint64 kMusicOutMs = 2000;
+constexpr ma_uint64 kMusicInMs = 1000;
+}  // namespace
+
 void Sound::music(const std::string& path, float gain) {
     if (!impl_ || !impl_->open) return;
-    if (impl_->musicReady && impl_->musicPath == path) return;
+    Impl& im = *impl_;
+    if (im.musicLive && im.musicPath == path) return;
     stopMusic();
+    // Into the other slot, so the track fading out keeps its own. Whatever was left there from
+    // two changes ago has faded by now or is let go.
+    const int slot = 1 - im.musicSlot;
+    if (im.musicReady[slot]) {
+        ma_sound_uninit(&im.music[slot]);
+        im.musicReady[slot] = false;
+    }
     // Streamed, not decoded whole: a theme is minutes of stereo, where an effect is a second.
     // Straight to the engine rather than through a group, so no room's reverb reaches it.
     const ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
-    if (ma_sound_init_from_file(&impl_->engine, path.c_str(), flags, nullptr, nullptr,
-                                &impl_->music) != MA_SUCCESS) {
+    if (ma_sound_init_from_file(&im.engine, path.c_str(), flags, nullptr, nullptr,
+                                &im.music[slot]) != MA_SUCCESS) {
         core::logError("sound: the music %s would not open", path.c_str());
         return;
     }
-    impl_->musicReady = true;
-    impl_->musicPath = path;
-    ma_sound_set_looping(&impl_->music, MA_TRUE);
-    ma_sound_set_volume(&impl_->music, std::clamp(gain, 0.0f, 1.0f));
-    ma_sound_start(&impl_->music);
+    im.musicReady[slot] = true;
+    im.musicSlot = slot;
+    im.musicLive = true;
+    im.musicPath = path;
+    ma_sound_set_looping(&im.music[slot], MA_TRUE);
+    ma_sound_set_volume(&im.music[slot], std::clamp(gain, 0.0f, 1.0f));
+    ma_sound_set_fade_in_milliseconds(&im.music[slot], 0.0f, 1.0f, kMusicInMs);
+    ma_sound_start(&im.music[slot]);
     core::logf("sound: music %s", path.c_str());
 }
 
 void Sound::stopMusic() {
-    if (!impl_ || !impl_->musicReady) return;
-    ma_sound_stop(&impl_->music);
-    ma_sound_uninit(&impl_->music);
-    impl_->musicReady = false;
+    if (!impl_ || !impl_->musicLive) return;
+    // Faded out, and left in its slot until the next track needs it or the device closes.
+    ma_sound_stop_with_fade_in_milliseconds(&impl_->music[impl_->musicSlot], kMusicOutMs);
+    impl_->musicLive = false;
     impl_->musicPath.clear();
 }
 
 void Sound::shutdown() {
     if (!impl_ || !impl_->open) return;
-    stopMusic();
+    // At once here: the device is closing and nothing is left to hear a fade.
+    for (int slot = 0; slot < 2; ++slot) {
+        if (!impl_->musicReady[slot]) continue;
+        ma_sound_stop(&impl_->music[slot]);
+        ma_sound_uninit(&impl_->music[slot]);
+        impl_->musicReady[slot] = false;
+    }
+    impl_->musicLive = false;
+    impl_->musicPath.clear();
     std::string heard;
     for (auto& event : impl_->events) {
         if (event->plays == 0) continue;
