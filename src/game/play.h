@@ -507,6 +507,7 @@ private:
         // figure's name, as the dragon's own case is -- MU keys it on the MODEL, not on the
         // breed, and two of its monsters share this body.
         bool bursts = false;
+        bool crumbles = false;  // and into stones, not bones: the Stone Golem (Bones::rubble)
         bool breathes = false;
         // A Giant, whose death throws up sand: MU's MonsterDieSandSmoke, keyed on the MODEL as
         // the two above are. `sandOwed` is what of a reference frame's twenty puffs is left to
@@ -517,7 +518,6 @@ private:
         // MU throws twenty puffs once, not twenty a frame -- see Play::sandOnDeath.
         bool sanded = false;
         int headBone = -1;
-        bool crumbles = false;  // and into stones, not bones: the Stone Golem (Bones::rubble)
         float fireOwed = 0.0f, dustOwed = 0.0f;
         // A Bull Fighter, either variant: smok_bone, which it snorts out of, and what of half
         // a reference frame's puff is owed. The Elite also has its two eye bones, MU's 22 and
