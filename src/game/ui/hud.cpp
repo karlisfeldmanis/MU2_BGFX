@@ -332,9 +332,9 @@ bool Hud::Face::operator==(const Face& o) const {
            (carrying == 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(quick, quick + kQuickKeys, o.quick) &&
            std::equal(struck, struck + kQuickKeys, o.struck) &&
-           std::equal(skillStruck, skillStruck + kSkillKeys, o.skillStruck) &&
-           std::equal(skillBack, skillBack + kSkillKeys, o.skillBack) && picture == o.picture &&
-           std::equal(skill, skill + kSkillKeys, o.skill);
+           std::equal(skillStruck, skillStruck + kSkillBoxes, o.skillStruck) &&
+           std::equal(skillBack, skillBack + kSkillBoxes, o.skillBack) && picture == o.picture &&
+           std::equal(skill, skill + kSkillBoxes, o.skill);
 }
 
 void Hud::strikeQuick(int key) {
@@ -342,11 +342,11 @@ void Hud::strikeQuick(int key) {
 }
 
 void Hud::strikeSkill(int key) {
-    if (key >= 0 && key < kSkillKeys) skillStruck_[key] = 0.0f;
+    if (key >= 0 && key < kSkillBoxes) skillStruck_[key] = 0.0f;
 }
 
 void Hud::readySkill(int key) {
-    if (key >= 0 && key < kSkillKeys) skillBack_[key] = 0.0f;
+    if (key >= 0 && key < kSkillBoxes) skillBack_[key] = 0.0f;
 }
 
 int Hud::quickAt(float x, float y) const {
@@ -417,7 +417,7 @@ int Hud::hoveredAt(float x, float y) const {
 }
 
 int Hud::skillAt(float x, float y) const {
-    for (int i = 0; i < kSkillKeys; ++i) {
+    for (int i = 0; i < kSkillBoxes; ++i) {
         if (skill_[i].number != 0 && plate(screen_, boxPx(i)).has(x, y)) return i;
     }
     return -1;
@@ -457,7 +457,7 @@ bool Hud::nearFan(float x, float y) const {
 }
 
 int Hud::skillSlotAt(float x, float y) const {
-    for (int i = 0; i < kSkillKeys; ++i) {
+    for (int i = 0; i < kSkillBoxes; ++i) {
         if (plate(screen_, boxPx(i)).has(x, y)) return i;
     }
     return -1;
@@ -531,7 +531,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
             now_.struck[i] =
                 struck_[i] >= kStrike ? -1 : int(struck_[i] / kStrike * float(kStrikeSteps));
         }
-        for (int i = 0; i < kSkillKeys; ++i) {
+        for (int i = 0; i < kSkillBoxes; ++i) {
             now_.skill[i] = skill_[i];
             if (skillStruck_[i] < kStrike) skillStruck_[i] += seconds;
             now_.skillStruck[i] = skillStruck_[i] >= kStrike
@@ -680,7 +680,7 @@ void Hud::rebuild() {
     // the box and too small for the one number on this frame a player reads mid-fight. The
     // user, 2026-09-23.
     const float skillSize = std::round(26.0f * kUnit * s.scale);
-    for (int i = 0; i < kSkillKeys; ++i) {
+    for (int i = 0; i < kSkillBoxes; ++i) {
         const Skill& one = skill_[i];
         if (one.number == 0) continue;
         const Box box = plate(s, boxPx(i));
@@ -770,11 +770,16 @@ void Hud::rebuild() {
 
             // The key it is already on, in a chip at the cell's bottom-right -- the one thing
             // the list has to say that the picture cannot.
-            if (one.key >= 0 && one.key < kSkillKeys && kKeys[one.key] != nullptr) {
+            // The right button's slot is the gold box, which has no letter under it on the
+            // plate; its chip names the button instead.
+            const char* cap = one.key == kRightSlot ? "RMB"
+                              : one.key >= 0 && one.key < kSkillKeys ? kKeys[one.key]
+                                                                     : nullptr;
+            if (cap != nullptr) {
                 const Box chip{cell.right() - (kChipWide + 2.0f) * u,
                                cell.bottom() - (kChipTall + 2.0f) * u, kChipWide * u,
                                kChipTall * u};
-                controls::keycap(canvas_, chip, kKeys[one.key], tip::unit());
+                controls::keycap(canvas_, chip, cap, tip::unit());
             }
         }
     }

@@ -278,6 +278,9 @@ void Play::fight(uint32_t id) {
     sim::Request request;
     request.kind = sim::Request::Kind::Attack;
     request.target = id;
+    // With the right button's skill, so an arena shows what a class fights with: a wizard
+    // throws his Energy Ball and a knight with an empty slot swings, as a right-click would.
+    request.skill = quickSkill_;
     realm_.ask(request);
     mark_ = false;
     marker_.dismiss();
@@ -296,7 +299,18 @@ bool Play::perch(int index) {
 void Play::rightClick() {
     if (!isOpen()) return;
     sim::Request request;
-    request.kind = sim::Request::Kind::Stop;
+    // **The quick slot.** A monster under the pointer is fought with the right button's skill --
+    // Energy Ball for a new wizard -- and the realm swings the weapon whenever the skill cannot be
+    // thrown (Realm::press). The left button's attack is the weapon alone. The user, 2026-09-28,
+    // the same for every class; with nothing in the slot it is the left button's attack.
+    const sim::Body* at = pointedAt_ != 0 ? realm_.find(pointedAt_) : nullptr;
+    if (at != nullptr && at->alive() && !at->player) {
+        request.kind = sim::Request::Kind::Attack;
+        request.target = pointedAt_;
+        request.skill = quickSkill_;
+    } else {
+        request.kind = sim::Request::Kind::Stop;
+    }
     realm_.ask(request);
     mark_ = false;
     marker_.dismiss();

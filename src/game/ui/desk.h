@@ -111,10 +111,10 @@ public:
     // The four skill keys, by MU's skill number, 0 for empty: what the save keeps. Restoring
     // marks the arrangement as the player's, so the first-free-key convenience does not put
     // back on the next frame what he took off before he quit -- see `autoBound_`.
-    int32_t bound(int key) const { return key >= 0 && key < Hud::kSkillKeys ? bound_[key] : 0; }
+    int32_t bound(int key) const { return key >= 0 && key < Hud::kSkillBoxes ? bound_[key] : 0; }
     void restoreBar(const int32_t* numbers, int count) {
         bool any = false;
-        for (int key = 0; key < Hud::kSkillKeys && key < count; ++key) {
+        for (int key = 0; key < Hud::kSkillBoxes && key < count; ++key) {
             bound_[key] = numbers[key];
             any |= numbers[key] != 0;
         }
@@ -202,12 +202,13 @@ private:
     // a key's skill onto another to swap the two, drag it back into the list to clear it
     // (docs/skills-dk.md §3.4, and the user's own gesture, 2026-09-23).
     // Not saved, which is faithful -- there is no SaveHotKey anywhere in MuMain.
-    int32_t bound_[Hud::kSkillKeys] = {0, 0, 0, 0, 0};
+    // And the sixth, `Hud::kRightSlot`: what a right-click on a monster throws.
+    int32_t bound_[Hud::kSkillBoxes] = {0, 0, 0, 0, 0, 0};
     // What each key was bound to and whether it could be thrown, last frame: a key that goes
     // from cooling or short of mana to throwable is told so (Hud::readySkill). By the number,
     // so a skill dropped onto a key is not announced as having come back.
-    int32_t readyFor_[Hud::kSkillKeys] = {0, 0, 0, 0, 0};
-    bool wasReady_[Hud::kSkillKeys] = {false, false, false, false, false};
+    int32_t readyFor_[Hud::kSkillBoxes] = {0, 0, 0, 0, 0, 0};
+    bool wasReady_[Hud::kSkillBoxes] = {false, false, false, false, false, false};
     uint32_t autoBound_ = 0;  // skills that have had their one free key
     bool barRestored_ = false;
     // The list above the plate: latched open by a click on the gold box, and open anyway while

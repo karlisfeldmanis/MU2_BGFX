@@ -108,6 +108,13 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // gone -- the flat hand-over of every built skill, and the ladder that handed them over by
     // level. What replaced them is `Realm::useItem`'s own branch, and the level is asked there,
     // off the item, where a requirement belongs.
+    // **Except the wizard's Energy Ball**, which he is born with: OpenMU's
+    // `AddEnergyBallForDarkWizard` writes it into a new wizard's list at creation, and 0.75 has
+    // no scroll for it. `restore` ORs a save's mask over this, so a wizard made before the spell
+    // existed stands up knowing it too.
+    if (hero.kin == Kin::DarkWizard) {
+        hero.learned |= uint32_t(1) << skillIndexOf(skill::kEnergyBall);
+    }
     bodies_.push_back(std::move(hero));
     reswing(bodies_[0]);
 
@@ -473,6 +480,38 @@ void Realm::press() {
         order_ = Request{};
         return;
     }
+
+    // **The quick slot, which is the right mouse button.** The user's rule of 2026-09-28, for
+    // every class alike: the skill on it is thrown whenever it can be, and when it cannot -- the
+    // mana is gone, the hand is wrong, it has not been learned -- he closes to arm's length and
+    // swings the weapon, which is the left button's attack. So a wizard out of mana walks in and
+    // hits with his staff, and a hit gives back the mana that lets him step off and cast again.
+    //
+    // A skill that is only COOLING is not a reason to close in: a thrown one waits at its own
+    // range for the cooldown, and a knight's, whose reach is his arm's, swings through it --
+    // which is the auto-attack floor docs/skills-dk.md §3.1a already gave him.
+    const bool sheltered = tables_->grid.safe(target->column(), target->row());
+    if (order_.skill != skill::kNone) {
+        const SkillRow* row = skillNumbered(order_.skill);
+        if (row && armed(hero, *row)) {
+            const int index = skillIndexOf(row->number);
+            const bool cooled = tick_ >= hero.cools[size_t(index)];
+            if (row->onSelf()) {
+                // A guard on the slot is raised when it can be and the fight goes on under it.
+                if (cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, hero.id);
+            } else if (within(hero, *target, row->reach) && !sheltered) {
+                if (row->thrown() || cooled) {
+                    if (tick_ >= hero.castUntil) engage(hero, *target);
+                    if (cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, order_.target);
+                    return;
+                }
+            } else if (row->thrown()) {
+                approach(hero, *target, int(row->reach));
+                return;
+            }
+        }
+    }
+
     if (within(hero, *target, float(kHeroAttackRange)) &&
         !tables_->grid.safe(target->column(), target->row())) {
         // Not while a skill's clip is running: the blow was thrown at where he was facing, and a
@@ -499,14 +538,18 @@ void Realm::press() {
     // before this line is reached. So the player is never held still by his own attack -- he
     // gives it up, which is what an attack cancel is -- and the chase, which is the engine's
     // decision rather than his, waits its turn.
+    approach(hero, *target, kHeroAttackRange);
+}
+
+void Realm::approach(Body& hero, const Body& target, int radius) {
     if (tick_ < hero.swingsAt) return;
     if (tick_ >= hero.repathsAt) {
         hero.repathsAt = tick_ + kRepath;
-        if (drifted(hero, *target)) {
-            hero.chaseX = target->x;
-            hero.chaseY = target->y;
+        if (drifted(hero, target)) {
+            hero.chaseX = target.x;
+            hero.chaseY = target.y;
             int column = 0, row = 0;
-            if (beside(*target, kHeroAttackRange, hero, &column, &row)) send(hero, column, row);
+            if (beside(target, radius, hero, &column, &row)) send(hero, column, row);
         }
     }
 }
@@ -541,6 +584,8 @@ void Realm::step() {
         // same tick is too late to stop it -- which is the honest boundary and is where the
         // player's own hand is.
         if (hero.blowAt != 0 && tick_ >= hero.blowAt) land(hero);
+        // And whatever he let go earlier and has now arrived.
+        arrive();
         accept();
         advance(hero);
         press();
@@ -689,6 +734,13 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Cast: {
             const SkillRow* row = skillNumbered(happening.a);
             std::snprintf(line, sizeof(line), "%6u %s casts %s at %s, cooling %d ticks",
+                          happening.tick, who, row ? row->name : "?",
+                          name(happening.whom).c_str(), happening.b);
+            break;
+        }
+        case What::Loosed: {
+            const SkillRow* row = skillNumbered(happening.a);
+            std::snprintf(line, sizeof(line), "%6u %s lets go %s at %s, %d ticks in the air",
                           happening.tick, who, row ? row->name : "?",
                           name(happening.whom).c_str(), happening.b);
             break;

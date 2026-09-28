@@ -105,6 +105,10 @@ private:
     // remembers what it asked for, exactly as a person at the mouse remembers what they
     // clicked, and asks again only when that body is down.
     uint32_t arenaTarget_ = 0;
+    // The quick slot's skill the arena's order was last given with: the desk binds the wizard's
+    // Energy Ball a frame or two after the first order is raised, and the order is raised again
+    // when it does, or the whole first fight is his staff.
+    int32_t arenaSkill_ = 0;
 
     FILE* shadowPoints_ = nullptr;
     FILE* shadowLog_ = nullptr;

@@ -53,6 +53,9 @@ public:
                 sim::Request request;
                 request.kind = sim::Request::Kind::Attack;
                 request.target = nearest;
+                // A wizard's hand right-clicks, as a player's does: the quick slot's Energy Ball,
+                // with the staff whenever the mana is not there. A knight's is the left button.
+                if (realm.hero().kin == sim::Kin::DarkWizard) request.skill = sim::skill::kEnergyBall;
                 realm.ask(request);
             }
             // And it presses its skill whenever the key would light up, which is what a player

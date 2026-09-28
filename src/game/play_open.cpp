@@ -165,15 +165,18 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // damage that the breed dies while the run is still going, enough health that it gets to
     // swing, breathe or throw first. Invention, like the level beside it (core/args.cpp), and
     // both move together with `--level`.
+    // A wizard's half goes into energy instead, which is his force: his Energy Ball rolls off it
+    // and his strength does nothing for a spell.
     if (!arena_.breed.empty() && realm_.hero().pointsInHand > 0) {
         const int points = realm_.hero().pointsInHand;
-        const int intoStrength = points / 2;
-        realm_.spend(intoStrength, 0, points - intoStrength, 0);
+        const int intoForce = points / 2;
+        const bool wizard = realm_.hero().kin == sim::Kin::DarkWizard;
+        realm_.spend(wizard ? 0 : intoForce, 0, points - intoForce, wizard ? intoForce : 0);
         const sim::Body& hero = realm_.hero();
-        core::logf("arena: the hero is level %d, %d points into strength and %d into vitality "
-                   "-- %d to %d damage, %d health", hero.level, intoStrength,
-                   points - intoStrength, hero.stats.minimumDamage, hero.stats.maximumDamage,
-                   hero.maxHealth);
+        core::logf("arena: the hero is level %d, %d points into %s and %d into vitality "
+                   "-- %d to %d damage, %d health", hero.level, intoForce,
+                   wizard ? "energy" : "strength", points - intoForce,
+                   hero.stats.minimumDamage, hero.stats.maximumDamage, hero.maxHealth);
     }
 
     // A figure for every body, made once. Bodies are never added or removed after the realm is

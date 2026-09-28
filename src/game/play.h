@@ -25,6 +25,7 @@
 #include "game/fx/eyes.h"
 #include "game/fx/snort.h"
 #include "game/fx/forge.h"
+#include "game/fx/bolt.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -108,7 +109,13 @@ public:
     void point(const gfx::Camera& camera, const float* view, const float* proj, float pixelX,
                float pixelY, int width, int height);
     void leftClick();   // walk to the tile under the pointer, or fight what is standing on it
-    void rightClick();  // stop
+    // The right button: a monster under it is attacked with the quick slot's skill, thrown
+    // whenever it can be and the weapon swung when it cannot; anywhere else it stops him.
+    void rightClick();
+    // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
+    // and handed down each frame, as the bar is the interface's and the order is the realm's.
+    void setQuickSkill(int32_t skill) { quickSkill_ = skill; }
+    int32_t quickSkill() const { return quickSkill_; }
     // The same Attack request a click on a body raises, by id and with no pointer: the arena's
     // hand. It goes through `Realm::ask` like every other order and decides nothing itself.
     // Refused, silently, for a body that is not there or is already dead.
@@ -307,6 +314,9 @@ public:
     void gatherBones(std::vector<gfx::Drawable>& out) const { bones_.gather(out); }
     // The Lich's meteorite: opened by the caller for the same reason as breath.
     Meteor& meteor() { return meteor_; }
+    // The wizard's Energy Ball: let go on `Loosed`, flown until its `Hit` arrives. fx/bolt.h.
+    Bolt& bolt() { return bolt_; }
+    void gatherBolt(gfx::Effects& effects) const { bolt_.gather(effects); }
     void gatherMeteor(gfx::Effects& effects) const { meteor_.gather(effects); }
     // The blade's ribbon behind a skill swing. Fed in `show`, off the pose the frame has already
     // computed -- see fx/streak.h, which is MU's own `CreateWeaponBlur` rung for a skill.
@@ -521,6 +531,11 @@ private:
     Breath breath_;
     Bones bones_;
     Meteor meteor_;
+    Bolt bolt_;
+    int32_t quickSkill_ = 0;
+    // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
+    // so watching a wizard cast never moves the sim's seeded stream.
+    uint32_t handDice_ = 0x2545f491u;
     Streak streak_;
     Gleam gleam_;
     Forge forge_;
@@ -558,7 +573,7 @@ private:
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
-        int skill[6] = {-1, -1, -1, -1, -1, -1};
+        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;

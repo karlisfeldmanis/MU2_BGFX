@@ -1856,11 +1856,12 @@ def cook_tables(world, out_dir):
     # And the skill clips, 60 to 64 and Defense's 187, for the same reason rather than a new one:
     # a skill's cooldown can never be shorter than the animation it plays (docs/skills-dk.md
     # §3.2), and the animation's length is these same two numbers. The sim asks
-    # `sim::castTicks` for it, which reads this table.
+    # `sim::castTicks` for it, which reads this table. And the wizard's two hands, 147 and 148
+    # (`PLAYER_SKILL_HAND1..2`), which is how long an Energy Ball takes to throw.
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 147, 148, 187]:
         name = str(action)
         if name not in keys or name not in speeds:
             continue

@@ -48,6 +48,7 @@ Arms Realm::armsOf(const Body& one) const {
         arms.weaponMaximumDamage -= int(float(arms.weaponMaximumDamage) * one.weaponCut);
         arms.criticalChance = double(one.luckyWorn) * kLuckCritical;
         arms.excel = one.excel;
+        arms.staffRise = double(one.staffRise);
     }
     return arms;
 }
@@ -156,6 +157,19 @@ void Realm::rearm(Body& hero) {
     // does, and wears with it. A staff's is wizardry damage, which nothing here reckons yet.
     if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower == 0) {
         hero.weaponBonus += optionValue(*rowAt(weaponSlot), bag_[weaponSlot].option);
+    }
+    // A staff's rise: half its magic power, and its plus off one of two tables by whether that
+    // power is even or odd (Version075/Items/Weapons.cs:29-30, :315). It is what a staff is FOR
+    // -- a staff grants no spell in 0.75 -- and the wizardry band is multiplied by a hundredth of
+    // it. Its additional option and its excellent 4 and 5 are wizardry damage too and are not
+    // reckoned yet; the remarks below still say so.
+    hero.staffRise = 0.0f;
+    if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower > 0) {
+        static const float kEven[16] = {0, 3, 7, 10, 14, 17, 21, 24, 28, 31, 35, 40, 45, 50, 56, 63};
+        static const float kOdd[16] = {0, 4, 7, 11, 14, 18, 21, 25, 28, 32, 36, 40, 45, 51, 57, 63};
+        const int power = rowAt(weaponSlot)->magicPower;
+        const int plus = std::clamp(int(bag_[weaponSlot].refinement), 0, 15);
+        hero.staffRise = float(power) / 2.0f + (power % 2 == 0 ? kEven[plus] : kOdd[plus]);
     }
     // Being excellent: the weapon's band + min x 25 / drop level + 5 (sim::excellentDamage).
     if (weaponSlot >= 0 && bag_[weaponSlot].excellent != 0) {

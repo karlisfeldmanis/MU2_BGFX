@@ -15,11 +15,15 @@
 
 namespace mu::sim {
 
-void Realm::strikeAt(Body& attacker, Body& target, float force) {
+void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* row,
+                     bool thrown) {
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
-    Blow blow = strike(attacker.stats, target.stats, dice_);
+    // A spell rolls the wizardry sum, off energy and the staff; everything else is a swing's.
+    Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats, row->damage, dice_)
+                                     : strike(attacker.stats, target.stats, dice_);
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
+        happenings_.back().thrown = thrown;
         return;
     }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
@@ -48,13 +52,19 @@ void Realm::strikeAt(Body& attacker, Body& target, float force) {
     // own blow pays nothing, which is what makes the basic attack the generator and the skill the
     // spender (kAttackManaShare, and the argument is there). Before the happening, so the log's
     // line and the frame's gauge agree about the tick.
-    if (attacker.player && force == 1.0f && attacker.mana < attacker.maxMana) {
+    //
+    // A primary spell pays it too: the wizard's Energy Ball is his auto-attack, costs 0.75's one
+    // mana, and a hit refunds as the knight's swing does -- the user's rule, 2026-09-28. What
+    // pays nothing is a skill with a cooldown, whose force is above one anyway.
+    const bool generates = row == nullptr ? force == 1.0f : row->primary();
+    if (attacker.player && generates && attacker.mana < attacker.maxMana) {
         const int back = std::max(1, int(float(attacker.maxMana) * kAttackManaShare));
         attacker.mana = std::min(attacker.maxMana, attacker.mana + back);
     }
     say(What::Hit, attacker, blow.damage, blow.rolled, target.health, target.id);
     happenings_.back().critical = blow.critical;
     happenings_.back().excellent = blow.excellent;
+    happenings_.back().thrown = thrown;
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent
     // back at whoever struck (Player.HitAsync's ReflectDamage). It takes no draw.
     if (target.player && target.alive() && !attacker.player && attacker.alive() &&
@@ -108,17 +118,77 @@ void Realm::land(Body& hero) {
     // that walked into the spin while the clip ran is caught by it and one that walked out is
     // not. He cannot have moved or turned himself in between -- `castUntil` holds him -- so the
     // centre and the facing are the ones he threw it with.
-    if (const SkillRow* row = skillNumbered(skill)) {
-        if (row->spread != Spread::One) {
-            strikeAround(hero, *row, force);
-            return;
-        }
+    const SkillRow* row = skillNumbered(skill);
+    if (row && row->spread != Spread::One) {
+        strikeAround(hero, *row, force);
+        return;
     }
     Body* target = body(at);
     // Gone, or dead before the arm came down: the swing is spent and nothing lands. That is the
     // same answer `strikeAt` gives for a corpse, moved a few ticks earlier.
     if (!target || !target->alive()) return;
-    strikeAt(hero, *target, force);
+    // A spell is not landed at the bottom of the clip, it is LET GO there: the damage waits for
+    // the bolt to cross the gap. MU2's rule and its reason -- "the clip's beat is the release,
+    // not the landing"; a monster flinching before the thing that hits it has left the caster
+    // is what resolving both on the clip draws.
+    if (row && row->thrown()) {
+        loose(hero, *row, at, force);
+        return;
+    }
+    strikeAt(hero, *target, force, row);
+}
+
+// How fast a bolt crosses the ground: `Direction = (0, -60, 0)` a reference frame of MU's 25,
+// which is fifteen tiles a second, and it ends a tile short of the body it was thrown at
+// (`CheckTargetRange`'s hundred units). MU2's `Bolt.Flight`, which the drawing's bolt shares
+// through `fx/bolt.h` so the number and the picture cannot disagree. A throw from beside the
+// target is in the air for no ticks and lands on the let-go.
+constexpr float kBoltTilesPerSecond = 15.0f;
+constexpr float kBoltStopsShort = 1.0f;
+constexpr float kTicksPerSecond = 20.0f;  // the realm's own clock
+
+void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force) {
+    const Body* target = body(at);
+    // The straight line, not MU's larger-axis reach: a bolt flies the diagonal.
+    const float dx = target ? target->x - hero.x : 0.0f;
+    const float dy = target ? target->y - hero.y : 0.0f;
+    const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
+    const int32_t air = int32_t(std::lround(gap / kBoltTilesPerSecond * kTicksPerSecond));
+    say(What::Loosed, hero, row.number, air, 0, at);
+    if (air > 0) {
+        for (Flight& one : flights_) {
+            if (one.at != 0) continue;
+            one = Flight{tick_ + air, at, row.number, force};
+            return;
+        }
+    }
+    // Point blank, or no room in the air: it lands now.
+    if (Body* struck = body(at); struck && struck->alive()) {
+        strikeAt(hero, *struck, force, &row, true);
+    }
+}
+
+void Realm::arrive() {
+    Body& hero = bodies_[0];
+    // In the order they were let go when two arrive together, which is the order of the array
+    // only while nothing has been freed out of the middle -- so the earliest `at` goes first,
+    // and a tie goes to the lower place. Fixed either way, which is what the seeded log needs.
+    for (;;) {
+        int next = -1;
+        for (int i = 0; i < kFlights; ++i) {
+            const Flight& one = flights_[i];
+            if (one.at == 0 || one.at > tick_) continue;
+            if (next < 0 || one.at < flights_[next].at) next = i;
+        }
+        if (next < 0) return;
+        const Flight flight = flights_[next];
+        flights_[next] = Flight{};
+        // A bolt whose target died in the air flies on past the corpse and lands on nothing:
+        // `CheckTargetRange`'s own first line is `to->Live`.
+        Body* target = body(flight.target);
+        if (!target || !target->alive()) continue;
+        strikeAt(hero, *target, flight.force, skillNumbered(flight.skill), true);
+    }
 }
 
 void Realm::kill(Body& dead, Body& killer) {
@@ -159,6 +229,8 @@ void Realm::kill(Body& dead, Body& killer) {
         // and landed the tick he stood up -- on the monster that killed him, thirty tiles away,
         // from the middle of town.
         dropBlow(dead);
+        // And his spells in the air, for the same reason.
+        for (Flight& one : flights_) one = Flight{};
         return;
     }
 

@@ -64,6 +64,11 @@ struct Cue {
     // DT_MIRROR, each its own colour (WSclient.cpp:3317-3347).
     bool excellent = false;
     bool reflected = false;
+    // A blow that FLEW: a spell let go at the bottom of a clip that may be long over, or already
+    // replaced by the next cast, by the time it lands. It belongs to no swing, so the gate that
+    // drops a cue whose swing has moved on does not apply to it -- the damage is real and the
+    // bolt that carried it has just arrived on screen.
+    bool thrown = false;
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the
     // fuses were not. See Showing::advance.

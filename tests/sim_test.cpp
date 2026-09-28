@@ -7,6 +7,7 @@
 //
 //     cmake --build build --target sim_test && build/sim_test
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
@@ -797,6 +798,94 @@ void testCastLock(const content::Tables& tables) {
     }
     check(cast, "the spin is thrown at something");
     check(landed, "and its blow lands, though a click to move came in over the top of it");
+
+    // ---- the quick slot: a wizard's right button (the user, 2026-09-28) ---------------------
+    //
+    // An Attack carrying Energy Ball: he stops at six tiles and throws, the bolt is let go at the
+    // bottom of the clip and lands when it has crossed the gap, and a hit pays mana back. Then
+    // the same order with his mana gone: he closes to arm's length and swings the staff.
+    const auto nearestTo = [](const sim::Realm& realm) {
+        const sim::Body& hero = realm.hero();
+        uint32_t nearest = 0;
+        float closest = 1e30f;
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.player || !one.alive()) continue;
+            const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
+            if (off <= 12.0f && off < closest) {
+                closest = off;
+                nearest = one.id;
+            }
+        }
+        return nearest;
+    };
+    {
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        // `far` counts the OPENING bolt of each fight: once a monster has closed on him he goes on
+        // casting point-blank, as MU's wizard does, so the rest say nothing about the range.
+        int loosed = 0, far = 0, opened = 0, thrownHits = 0, swings = 0;
+        uint32_t fighting = 0, openedOn = 0;
+        for (int tick = 0; tick < 4000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kEnergyBall;
+                wiz.ask(request);
+            }
+            wiz.step();
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.who != wiz.hero().id) continue;
+                if (one.what == sim::What::Loosed) {
+                    ++loosed;
+                    const sim::Body* at = wiz.find(one.whom);
+                    if (at && one.whom != openedOn) {
+                        openedOn = one.whom;
+                        ++opened;
+                        if (std::max(std::fabs(at->x - one.x), std::fabs(at->y - one.y)) > 1.5f) ++far;
+                    }
+                }
+                if (one.what == sim::What::Hit && one.thrown) ++thrownHits;
+                if (one.what == sim::What::Swung && one.a == 0) ++swings;
+            }
+        }
+        std::printf("  energy ball: %d loosed over %d fights, %d opened from range, %d hits\n",
+                    loosed, opened, far, thrownHits);
+        check(loosed > 20, "he throws Energy Ball over and over");
+        check(far * 4 >= opened * 3, "and opens most fights from further off than a swing reaches");
+        check(thrownHits > 0, "and the bolts land as thrown hits, after their flight");
+        checkEqual(swings, 0, "and with mana to spend he never swings the staff");
+
+        // Emptied, through the save's door: the same order now walks in and swings.
+        sim::HeroRecord dry = wiz.record();
+        dry.mana = 0;
+        sim::Realm empty;
+        check(empty.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a dry wizard raises");
+        empty.restore(dry);
+        int staff = 0, spells = 0;
+        fighting = 0;
+        for (int tick = 0; tick < 400 && staff == 0; ++tick) {
+            const uint32_t nearest = empty.hero().alive() ? nearestTo(empty) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kEnergyBall;
+                empty.ask(request);
+            }
+            empty.step();
+            for (const sim::Happening& one : empty.happenings()) {
+                if (one.who != empty.hero().id) continue;
+                if (one.what == sim::What::Swung && one.a == 0) ++staff;
+                if (one.what == sim::What::Loosed) ++spells;
+            }
+        }
+        check(staff > 0, "out of mana, the right button's order swings the weapon");
+        checkEqual(spells, 0, "and throws nothing it cannot pay for");
+    }
 }
 
 void testStandsOverTheKill(const content::Tables& tables) {
@@ -934,8 +1023,12 @@ void testSkills(const content::Tables& tables) {
     checkEqual(orbs, 9, "the blacksmith stocks all nine orbs");
     checkEqual(read, 9, "and every one of them was bought and read");
     bool all = true;
-    for (int i = 0; i < sim::skillCount(); ++i) all &= realm.knows(sim::skillAt(i).number);
-    check(all, "so the knight now knows every skill in the table");
+    for (int i = 0; i < sim::skillCount(); ++i) {
+        if (sim::skillAt(i).kin != sim::Kin::DarkKnight) continue;
+        all &= realm.knows(sim::skillAt(i).number);
+    }
+    check(all, "so the knight now knows every knight's skill in the table");
+    check(!realm.knows(sim::skill::kEnergyBall), "and not the wizard's Energy Ball");
 
     // A tenth purchase is refused at the reading rather than at the counter: MU sells a man as
     // many orbs as he can pay for, and the second one does nothing when he opens it.
@@ -996,6 +1089,33 @@ void testSkills(const content::Tables& tables) {
         check(his >= 0, "and buys the knight's orb, which nothing stops him doing");
         check(!wizard.useItem(his), "but he cannot read it");
         check(!wizard.knows(sim::skill::kUppercut), "and has learned nothing");
+
+        // ---- the wizard's own: Energy Ball (MU2/docs/spells.md) ----------------------------
+        check(wizard.knows(sim::skill::kEnergyBall),
+              "a wizard is born knowing Energy Ball (AddEnergyBallForDarkWizard)");
+        // The band on paper, which fits on a line: energy/9 + 3 to energy/4 + 3 + 1, bare-handed.
+        {
+            sim::Fighter caster;
+            caster.attackRate = 1000.0f;
+            caster.wizardMinimum = 30.0 / 9.0;
+            caster.wizardMaximum = 30.0 / 4.0;
+            sim::Fighter dummy;
+            sim::Random dice(11);
+            int lowest = 1 << 30, highest = 0;
+            for (int n = 0; n < 2000; ++n) {
+                const sim::Blow blow = sim::cast(caster, dummy, 3, dice);
+                if (!blow.hit) continue;
+                lowest = std::min(lowest, blow.rolled);
+                highest = std::max(highest, blow.rolled);
+            }
+            // int(3.33 + 3) = 6, and the top is exclusive: int(7.5 + 4) = 11, so 6 to 10.
+            checkEqual(lowest, 6, "a 30-energy Energy Ball rolls from int(30/9 + 3) = 6");
+            checkEqual(highest, 10, "to under int(30/4 + 3 + 3/2) = 11");
+            caster.wizardryRate = 1.0 + 23.0 / 100.0;  // a staff of magic power 46
+            int top = 0;
+            for (int n = 0; n < 2000; ++n) top = std::max(top, sim::cast(caster, dummy, 3, dice).rolled);
+            checkEqual(top, 13, "and a 23-rise staff lifts the top to under int(11.5 x 1.23) = 14");
+        }
     }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
 
@@ -1008,6 +1128,11 @@ void testSkills(const content::Tables& tables) {
         bool gated = true, everyFamilyHasThree = true;
         for (int i = 0; i < sim::skillCount(); ++i) {
             const sim::SkillRow& row = sim::skillAt(i);
+            // A spell asks nothing of the hand: a staff grants nothing in 0.75.
+            if (row.wizardry) {
+                gated &= row.families == sim::arms::kNone && row.suits(sim::arms::kNone);
+                continue;
+            }
             gated &= row.families != 0;
             gated &= row.onSelf() ? row.families == sim::arms::kShield
                                   : (row.families & sim::arms::kShield) == 0;

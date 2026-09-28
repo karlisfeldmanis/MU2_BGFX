@@ -83,6 +83,13 @@ public:
     // list would take its place. The list took the GOLD box's place instead, so T is a key like
     // the other four (the user, 2026-09-23, trying to drag a skill onto it).
     static constexpr int kSkillKeys = 5;
+    // And the sixth box, the gold one, which is the RIGHT MOUSE BUTTON's quick slot: the plate's
+    // own place for "the skill in hand", which MU casts from with a right-click. It holds a skill
+    // as the keys do and is filled the same way -- dragged out of the list -- and right-clicking a
+    // monster throws it (the user, 2026-09-28: *"right click is quick slot but for right
+    // click"*). Index 5 is `kGoldBox`, so the box and the slot are one number.
+    static constexpr int kRightSlot = 5;
+    static constexpr int kSkillBoxes = kSkillKeys + 1;
 
     // What one skill box shows. Given by the desk, off the realm: the skill's number (0 for an
     // empty box), the art key for its icon, how much of its cooldown is left as a fraction and in
@@ -104,7 +111,7 @@ public:
         }
     };
     void setSkill(int key, const Skill& skill) {
-        if (key >= 0 && key < kSkillKeys) skill_[key] = skill;
+        if (key >= 0 && key < kSkillBoxes) skill_[key] = skill;
     }
     // The card the box shows when the pointer rests on it, built by the desk off the realm: the
     // frame draws what it is handed and works nothing out (sprint 7's mirror). It is the ITEM
@@ -113,7 +120,7 @@ public:
     // does, what it multiplies the blow by and where that came from, what it costs, how long the
     // wait is and why the key is dark.
     void setSkillSheet(int key, const tip::Sheet& sheet) {
-        if (key >= 0 && key < kSkillKeys) sheets_[key] = sheet;
+        if (key >= 0 && key < kSkillBoxes) sheets_[key] = sheet;
     }
     // ---- the buff strip ----------------------------------------------------------------------
     // What is standing on him, drawn as a small icon above the shield bar's left end -- where
@@ -175,7 +182,7 @@ public:
         int32_t number = 0;
         std::string name;
         int mana = 0;
-        int key = -1;           // Q W E R T, or -1 for none
+        int key = -1;           // Q W E R T, 5 the right button, or -1 for none
         bool operator==(const FanCell& o) const {
             return number == o.number && mana == o.mana && key == o.key;
         }
@@ -250,9 +257,9 @@ private:
         // steps and not in seconds for the cooldown's own reason: twelve redraws for a quarter
         // of a second reads as continuous and costs twelve, not a hundred and eighty.
         int struck[kQuickKeys] = {-1, -1, -1, -1, -1};
-        int skillStruck[kSkillKeys] = {-1, -1, -1, -1, -1};
-        int skillBack[kSkillKeys] = {-1, -1, -1, -1, -1};
-        Skill skill[kSkillKeys];
+        int skillStruck[kSkillBoxes] = {-1, -1, -1, -1, -1, -1};
+        int skillBack[kSkillBoxes] = {-1, -1, -1, -1, -1, -1};
+        Skill skill[kSkillBoxes];
         Boon boons[kBoons];
         bool fanOpen = false;
         int fanOver = -1;           // the cell under the pointer
@@ -285,16 +292,16 @@ private:
     Quick quick_[kQuickKeys];
     // How long ago each box fired, in seconds, counted up and left parked past the ring's life.
     float struck_[kQuickKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
-    float skillStruck_[kSkillKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
-    float skillBack_[kSkillKeys] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
-    Skill skill_[kSkillKeys];
+    float skillStruck_[kSkillBoxes] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
+    float skillBack_[kSkillBoxes] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
+    Skill skill_[kSkillBoxes];
     Boon boons_[kBoons];
     bool fanOpen_ = false;
     int32_t carrying_ = 0;
     std::vector<FanCell> fan_;
     tip::Sheet fanSheet_;
     float width_ = 0.0f, height_ = 0.0f;
-    tip::Sheet sheets_[kSkillKeys];
+    tip::Sheet sheets_[kSkillBoxes];
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;
 };

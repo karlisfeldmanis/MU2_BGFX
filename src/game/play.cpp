@@ -276,6 +276,29 @@ void Play::update(double seconds) {
                     }
                 }
             }
+            // A spell let go, at the bottom of its clip: the bolt leaves his hand now and flies for
+            // the ticks the realm says, and SOUND_MAGIC goes with it -- ZzzCharacter.cpp:5142
+            // plays it on the line after the one that makes the bolt. From his feet to where the
+            // target is DRAWN, which is where the eye has it.
+            if (happening.what == sim::What::Loosed) {
+                const Drawn* caster = drawnOf(happening.who);
+                const Drawn* target = drawnOf(happening.whom);
+                if (caster && caster->placed && ground_) {
+                    const float from[3] = {caster->crown[0],
+                                           ground_->heightAt(caster->crown[0], caster->crown[2]),
+                                           caster->crown[2]};
+                    float to[3] = {from[0], from[1], from[2]};
+                    if (target && target->placed) {
+                        to[0] = target->crown[0];
+                        to[2] = target->crown[2];
+                    }
+                    bolt_.cast(from, to, happening.whom);
+                    const int index = sim::skillIndexOf(happening.a);
+                    if (index >= 0 && heard_.skill[index] >= 0) {
+                        emit(heard_.skill[index], from[0], from[2], caster->id);
+                    }
+                }
+            }
             // A swing is drawn because it is a POSE and not an effect: the blood, the number,
             // the fall and the health plate that hang off the landing are sprint 6's, and none
             // of them is here. What a blow does to the picture today is put the attacker into
@@ -332,8 +355,16 @@ void Play::update(double seconds) {
                         swinger->castClip = -1;
                         if (const sim::SkillRow* row = sim::skillNumbered(happening.a)) {
                             if (swinger->figure.body() && swinger->figure.body()->library) {
+                                // A spell's two hands on a coin, `PLAYER_SKILL_HAND1 + rand() %
+                                // 2` (SetPlayerMagic): every cast, not an alternation.
+                                handDice_ ^= handDice_ << 13;
+                                handDice_ ^= handDice_ >> 17;
+                                handDice_ ^= handDice_ << 5;
+                                const int32_t action =
+                                    row->clipOther != 0 && (handDice_ & 1u) ? row->clipOther
+                                                                            : row->clip;
                                 swinger->castClip =
-                                    swinger->figure.body()->library->find(row->clip);
+                                    swinger->figure.body()->library->find(action);
                             }
                         }
                     }
@@ -376,6 +407,22 @@ void Play::update(double seconds) {
                         // faster than the realm believes it was thrown.
                         swinger->swingPace =
                             (!cast && between > 0.01f && clip > between) ? clip / between : 1.0f;
+                        // A spell's clip runs at MagicSpeed, which is the realm's own length for
+                        // it (sim::castTicks): played at the authored pace, a quick wizard's
+                        // hand was still coming down when the next cast began.
+                        const sim::SkillRow* spell =
+                            cast ? sim::skillNumbered(swinger->castSkill) : nullptr;
+                        if (spell && spell->wizardry && body) {
+                            const auto armAt = [&](int32_t at) -> const content::Arm* {
+                                return at >= 0 && size_t(at) < tables_.arms.size()
+                                           ? &tables_.arms[size_t(at)] : nullptr;
+                            };
+                            const int32_t ticks =
+                                sim::castTicks(tables_, body->kin, body->points.agility,
+                                               armAt(body->weapon), armAt(body->shield), *spell);
+                            const float fits = float(ticks) * float(kTickSeconds);
+                            if (fits > 0.01f && clip > fits) swinger->swingPace = clip / fits;
+                        }
                         swinger->swinging = clip / swinger->swingPace;
                         ++swinger->swingToken;
                         // The swing's own noise, on its first key and on the body, so a bull
@@ -387,6 +434,9 @@ void Play::update(double seconds) {
                         if (cast) {
                             const int index = sim::skillIndexOf(swinger->castSkill);
                             if (index >= 0 && heard_.skill[index] >= 0) cry = heard_.skill[index];
+                            // A spell's wave is not on its wind-up: MU plays SOUND_MAGIC on the
+                            // line after the bolt is made, so it goes with `Loosed`.
+                            if (spell && spell->wizardry) cry = -1;
                         }
                         if (cry >= 0 && swinger->placed) {
                             emit(cry, swinger->crown[0], swinger->crown[2],
@@ -404,7 +454,11 @@ void Play::update(double seconds) {
                         // because ReceiveAttackDamage does all three in one handler, and on
                         // the first key the arm has not moved yet.
                         // And a skill's clip is protected from the step that may follow it.
-                        if (cast) swinger->casting = swinger->swinging;
+                        // Not for a spell: `casting` is what lays the blade's streak, and a
+                        // wizard's hand holds nothing that streaks.
+                        if (cast && !(spell && spell->wizardry)) {
+                            swinger->casting = swinger->swinging;
+                        }
 
                         // What this swing was thrown with, kept until the blow settles -- for a
                         // player that is a tick or two later, in the branch below.
@@ -484,6 +538,13 @@ void Play::update(double seconds) {
                         // The swing's own skill, remembered when it began: this is the settling
                         // half, and the cast that named it was two ticks ago.
                         cue.skill = swinger->swingSkill;
+                        // A primary spell's number is drawn as a swing's: it is his basic attack,
+                        // and the skill ramp is for the keys.
+                        if (happening.thrown) {
+                            const sim::SkillRow* row = sim::skillNumbered(cue.skill);
+                            if (row == nullptr || row->primary()) cue.skill = 0;
+                        }
+                        cue.thrown = happening.thrown;
                         cue.critical = happening.critical;
                         cue.excellent = happening.excellent;
                         cue.fuse = 0.0f;
@@ -546,6 +607,19 @@ void Play::update(double seconds) {
     // The Lich's meteors: advance every live one, collect impacts.
     meteorImpacts_.clear();
     meteor_.update(float(seconds), meteorImpacts_);
+    // The wizard's bolts, each measured against where its target is drawn this frame.
+    bolt_.update(
+        float(seconds),
+        [&](uint32_t id) {
+            const sim::Body* body = realm_.find(id);
+            return body != nullptr && body->alive();
+        },
+        [&](uint32_t id, float* out) {
+            const Drawn* drawn = drawnOf(id);
+            if (drawn == nullptr || !drawn->placed) return false;
+            for (int k = 0; k < 3; ++k) out[k] = drawn->crown[k];
+            return true;
+        });
     // On each impact: explosion sound, shock clip on everything within 2 tiles.
     for (const auto& impact : meteorImpacts_) {
         if (heard_.explosion >= 0) emit(heard_.explosion, impact.x, impact.z);
@@ -587,7 +661,8 @@ void Play::update(double seconds) {
         // The gate. A cue belongs to one swing, and if the body has moved on -- a step
         // cancels a swing here -- the cue drops itself. A dropped cue costs a splash and a
         // number and never a fact: the damage was taken on the tick either way.
-        if (swinger == nullptr || swinger->swingToken != cue.token || swinger->swinging <= 0.0f) {
+        if (swinger == nullptr ||
+            (!cue.thrown && (swinger->swingToken != cue.token || swinger->swinging <= 0.0f))) {
             showing_.drop();
             continue;
         }

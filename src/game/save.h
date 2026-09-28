@@ -35,7 +35,9 @@ struct Saved {
     // reason the potion keys are and against MuMain, which has no SaveHotKey: 0.75's bar could
     // not be arranged -- a knight's skill was whatever weapon was in his hand -- and this one
     // can, so an arrangement the player made by hand is his and not the session's.
-    int32_t bar[5] = {0, 0, 0, 0, 0};
+    // The sixth is the right button's quick slot (Hud::kRightSlot); a file from before it had
+    // five and reads its sixth as empty.
+    int32_t bar[6] = {0, 0, 0, 0, 0, 0};
     // There was a `zoom` here, the metres the camera stood back, because the wheel could
     // change it. The camera is fixed at MU's 8 m since 2026-09-24 and there is nothing to
     // keep; an older file's own `zoom` key is read by nothing and ignored.

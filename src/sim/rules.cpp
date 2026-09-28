@@ -12,6 +12,9 @@ double hitChance(float attackRate, float defenseRate) {
     return 0.03;
 }
 
+// Steps 5 to 7, which a swing and a spell share: everything after the defence is taken off.
+static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighter& defender);
+
 Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     Blow blow;
     // 1. Did it land. One draw, always.
@@ -40,9 +43,48 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     }
 
     // 4. Minus the defence, which cannot help the attacker.
-    int damage = blow.rolled - std::max(0, defender.defense);
+    const int damage = blow.rolled - std::max(0, defender.defense);
     blow.afterDefense = damage;
+    settle(blow, damage, attacker, defender);
+    return blow;
+}
 
+Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Random& dice) {
+    Blow blow;
+    // 1. The same hit roll a swing makes: a spell can miss.
+    if (!dice.nextBool(hitChance(attacker.attackRate, defender.defenseRate))) return blow;
+    blow.hit = true;
+    // 2. The band. GetSkillDmg's two lines are two different lines -- the top takes the spell's
+    // damage and half of it again -- and GetBaseDmg's cast is taken after the staff's rate.
+    const int low = int((attacker.wizardMinimum + double(skillDamage)) * attacker.wizardryRate);
+    const int high = int((attacker.wizardMaximum + double(skillDamage + skillDamage / 2)) *
+                         attacker.wizardryRate);
+    const bool critical =
+        attacker.criticalChance > 0.0 && dice.nextBool(attacker.criticalChance);
+    const bool excellent =
+        attacker.excellentChance > 0.0 && dice.nextBool(attacker.excellentChance);
+    const int defense = std::max(0, defender.defense);
+    int damage = 0;
+    // 3. The wizardry arm takes the defence off FIRST, then multiplies (:156-181).
+    if (excellent) {
+        blow.excellent = true;
+        blow.rolled = high;
+        damage = int(double(high - defense) * 1.2);
+    } else if (critical) {
+        blow.critical = true;
+        blow.rolled = high;
+        damage = high - defense;
+    } else {
+        // `if (baseMaxDamage <= baseMinDamage) dmg = baseMinDamage`: no draw, as nextInt.
+        blow.rolled = dice.nextInt(low, high);
+        damage = blow.rolled - defense;
+    }
+    blow.afterDefense = damage;
+    settle(blow, damage, attacker, defender);
+    return blow;
+}
+
+static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighter& defender) {
     // 5. Overrates: a defender who out-rates the attacker takes three tenths.
     // AttackableExtensions.cs:728-731.
     if (defender.defenseRate > attacker.attackRate) {
@@ -66,7 +108,6 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
     if (damage > 1) damage = int(double(damage) * defender.damageTaken);
 
     blow.damage = damage;
-    return blow;
 }
 
 // The three rows, each from its own initialiser under
@@ -157,6 +198,12 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
         out->minimumDamage = int(double(out->minimumDamage + byLevel) * excel.damageRate);
         out->maximumDamage = int(double(out->maximumDamage + byLevel) * excel.damageRate);
     }
+    // The wizard's band and his staff (ClassDarkWizard.cs:72-73, :81). Only his class file
+    // relates energy to wizardry damage; a knight or an elf with a staff has no band to raise.
+    const bool wizard = kin == Kin::DarkWizard;
+    out->wizardMinimum = wizard ? double(points.energy) / 9.0 : 0.0;
+    out->wizardMaximum = wizard ? double(points.energy) / 4.0 : 0.0;
+    out->wizardryRate = 1.0 + arms.staffRise / 100.0;
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;
     out->damageDecrease = excel.damageDecrease;

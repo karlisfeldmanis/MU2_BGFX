@@ -66,6 +66,15 @@ struct Fighter {
     // share taken off one received (Excellence).
     double excellentChance = 0.0;
     double damageDecrease = 0.0;
+    // The wizardry band, before a spell's own damage is added: `MinimumWizBaseDmg = energy / 9`
+    // and `MaximumWizBaseDmg = energy / 4` (ClassDarkWizard.cs:72-73). Floats, because OpenMU
+    // keeps them as float attributes and truncates only after the spell and the staff are in
+    // (AttackableExtensions.cs:848-849). Nought for the two classes that have no such row.
+    double wizardMinimum = 0.0;
+    double wizardMaximum = 0.0;
+    // `WizardryAttackDamageIncrease`: one, plus a hundredth of the staff's rise
+    // (ClassDarkWizard.cs:81). One for anybody without a staff.
+    double wizardryRate = 1.0;
 };
 
 // The workings, not just the number. A log line that says `14` cannot be checked against
@@ -89,6 +98,17 @@ struct Blow {
 // with no attack rate at all. Nothing in 0.75's data has one. The guard changes no outcome
 // this content can produce and removes an undefined one it cannot.
 double hitChance(float attackRate, float defenseRate);
+
+// One spell, the wizardry arm of the same function (AttackableExtensions.cs:155-182, :842-850),
+// and it is shorter than the physical one. `skillDamage` is the spell's own `AttackDamage`,
+// which `GetSkillDmg` adds to the bottom of the band whole and to the top half again
+// (`skillDamage + skillDamage / 2`, integer halves). The band is then `(base + skill) *
+// wizardryRate`, truncated. Defence is taken BEFORE the excellent and critical multipliers here,
+// which is the one ordering difference from a swing: an excellent spell is
+// `(top - defence) * 1.2` where an excellent swing is `top * 1.2 - defence`. Everything after
+// -- the overrate, the armour's decrease, the level floor, damageTaken -- is the swing's own.
+// The same draws in the same order as `strike`.
+Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Random& dice);
 
 // One swing, in OpenMU's own order, and the order is the behaviour rather than the
 // presentation. AttackableExtensions.cs:69-225, physical arm, with every branch 0.75 cannot
@@ -165,6 +185,9 @@ struct Arms {
     int shieldDefenseRate = 0;  // a worn shield's rate with its plus; never halved
     double criticalChance = 0.0;  // luck, 0.05 a lucky thing worn
     Excellence excel;              // what his excellent pieces come to
+    // A staff's rise, in percent: `magicPower / 2` and its plus (Version075/Items/Weapons.cs:315
+    // and the two tables at :29-30). Nought for everything that is not a staff.
+    double staffRise = 0.0;
 };
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,

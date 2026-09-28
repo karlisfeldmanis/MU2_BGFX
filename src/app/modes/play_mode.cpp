@@ -67,7 +67,7 @@ void PlayMode::keep(Context& ctx) {
     now.world = ctx.args.world;
     now.hero = world_.played().record();
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
-    for (int key = 0; key < 5; ++key) now.bar[key] = desk_.bound(key);
+    for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
     game::writeVault(game::vaultPathBeside(savePath_), *world_.played().realm().tables(),
                      world_.played().realm().vault());
@@ -192,6 +192,8 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().meteor().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
+                world_.played().bolt().open(assets, ctx.textures,
+                                            world_.played().showing().table());
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
                 world_.played().streak().open(assets, ctx.textures,
                                               world_.played().showing().table());
@@ -214,7 +216,7 @@ bool PlayMode::open(Context& ctx) {
             }
             if (resumed_) {
                 for (int key = 0; key < 5; ++key) desk_.setQuick(key, saved_.quick[key]);
-                desk_.restoreBar(saved_.bar, 5);
+                desk_.restoreBar(saved_.bar, 6);
             }
             // And the pictures the windows will ask for, last of all: after restore(), so the
             // bag being warmed is the one he is carrying and not an empty one.
@@ -359,6 +361,11 @@ void PlayMode::arenaHand() {
     const sim::Realm& realm = world_.played().realm();
     const sim::Body& hero = realm.hero();
     const sim::Body* held = arenaTarget_ != 0 ? realm.find(arenaTarget_) : nullptr;
+    const bool rearmed = world_.played().quickSkill() != arenaSkill_;
+    if (hero.alive() && held && held->alive() && rearmed) {
+        arenaSkill_ = world_.played().quickSkill();
+        world_.played().fight(arenaTarget_);
+    }
     if (hero.alive() && (!held || !held->alive())) {
         const sim::Body* nearest = nullptr;
         float best = 1e9f;
@@ -372,6 +379,7 @@ void PlayMode::arenaHand() {
         }
         if (nearest) {
             arenaTarget_ = nearest->id;
+            arenaSkill_ = world_.played().quickSkill();
             world_.played().fight(arenaTarget_);
         }
     }
@@ -665,6 +673,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         gfx::PointLight falling[gfx::Renderer::kMaxTransientLights];
         uint32_t count =
             world_.played().meteor().lights(falling, gfx::Renderer::kMaxTransientLights);
+        // And the wizard's bolts, the blue each throws on the ground it crosses.
+        count += world_.played().bolt().lights(falling + count,
+                                               gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));
@@ -774,6 +785,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().snorts().gather(ctx.renderer.effects());
         world_.played().eyes().gather(ctx.renderer.effects());
         world_.played().gatherMeteor(ctx.renderer.effects());
+        world_.played().gatherBolt(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));

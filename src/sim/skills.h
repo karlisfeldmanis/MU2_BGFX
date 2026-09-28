@@ -42,6 +42,10 @@ constexpr int32_t kSlash = 23;
 constexpr int32_t kTwistingSlash = 41;
 constexpr int32_t kRagefulBlow = 42;
 constexpr int32_t kDeathStab = 43;
+// The wizard's first spell, and the only one he is born knowing: OpenMU's
+// `AddEnergyBallForDarkWizard` puts it in a new wizard's list at creation, and 0.75 sells no
+// scroll for it (MU2/docs/spells.md).
+constexpr int32_t kEnergyBall = 17;
 }  // namespace skill
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
@@ -159,18 +163,41 @@ struct SkillRow {
     // card can print "Learned at level 52" without going looking for an item, and so the two can
     // be checked against each other. §3.3's ladder is where both come from.
     int32_t needLevel = 0;
+    // ---- the wizard's columns, appended so the knight's rows above need not name them -------
+    // Who may throw it at all. A knight's rows are the knight's and a spell is the wizard's; an
+    // orb or a scroll asks the same question of the class before it teaches.
+    Kin kin = Kin::DarkKnight;
+    // A spell and not a blow: its damage is the WIZARDRY sum (`sim::cast`, off energy and the
+    // staff) and not the swing's, it asks nothing of the hand -- a staff grants nothing in 0.75
+    // (`Weapons.cs:152-159`, `skillNumber` 0 on all eight) and a spell is thrown bare-handed as
+    // well -- and its clip runs at MagicSpeed rather than AttackSpeed (`SetAttackSpeed`, the
+    // `PLAYER_SKILL_HAND1..` loop at ZzzCharacter.cpp:939).
+    bool wizardry = false;
+    // The spell's own `AttackDamage`, which the wizardry band adds (`GetSkillDmg`).
+    int32_t damage = 0;
+    // A second clip the drawing picks between on a coin: `PLAYER_SKILL_HAND1 + rand() % 2`
+    // (ZzzCharacter.cpp:1339). Both are the same length, so the sim reads `clip` alone.
+    int32_t clipOther = 0;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
+    // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
+    // slot is his auto-attack (the user, 2026-09-28), paced by its own clip and nothing else,
+    // and like a swing it can be walked out of and a hit pays mana back.
+    bool primary() const { return coolTicks <= 0 && !onSelf(); }
+    // Whether it flies to what it is thrown at, rather than being struck at arm's length.
+    bool thrown() const { return reach > 1.5f; }
     // Whether this hand may throw it. One test, asked by the realm before it spends anything
     // and by the plate before it draws the key lit -- they must not be able to disagree.
-    bool suits(uint32_t family) const { return family != arms::kNone && (families & family) != 0; }
+    bool suits(uint32_t family) const {
+        return wizardry || (family != arms::kNone && (families & family) != 0);
+    }
 };
 
-// How many skills the sim has room for: the knight's six of 0.75 and the three that fill out the
-// families past it. Also the width of the save's learned mask and of a body's cooldown array --
+// How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
+// families past it, and the wizard's Energy Ball. Also the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 9;
+constexpr int kSkills = 10;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates
@@ -205,6 +232,9 @@ float force(const SkillRow& row, const HeroPoints& points);
 // Zero when the cooked tables do not carry the action, in which case the caller keeps the base.
 int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const content::Arm* right,
                   const content::Arm* left, const SkillRow& row);
+
+// A wizard's MagicSpeed: what his spells' clips are quickened by, as AttackSpeed quickens a swing.
+float magicSpeedStat(Kin kin, int agility);
 
 // The cooldown, in ticks: `base / (1 + agility/300)`, never shorter than `floorTicks`.
 //

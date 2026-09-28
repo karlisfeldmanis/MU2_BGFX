@@ -122,6 +122,21 @@ constexpr SkillRow kRows[kSkills] = {
     {skill::kDeathStab, "Death Stab", 15, 1.0f, 2.3f, 1.0f / 900.0f, 110, false, Spread::One, 0,
      1.0f, "The point driven through one body at speed. Nothing he has hits one thing harder.",
      61, "player_skill_sword2", true, arms::kSpear, 60},
+
+    // ---- the wizard's, appended after the knight's nine ----------------------------------------
+    //
+    // Energy Ball, 0.75's row: `CreateSkill(EnergyBall, ..., DamageType.Wizardry, 3, 6,
+    // manaConsumption: 1)` (Version095d/SkillsInitializer.cs:60, the same row 0.75 builds) --
+    // three damage, six tiles, one mana. Born knowing it (`AddEnergyBallForDarkWizard`), so its
+    // level is nought and there is no orb. No cooldown, which is MU's and is also the user's rule
+    // of 2026-09-28: on the right-click slot it is the wizard's auto-attack, paced by its clip.
+    // The clips are `PLAYER_SKILL_HAND1` and `HAND2`, 147 and 148, one of the two on a coin
+    // (`SetPlayerMagic`); the wave is `SOUND_MAGIC`, played beside the bolt's creation
+    // (ZzzCharacter.cpp:5142).
+    {skill::kEnergyBall, "Energy Ball", 1, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A bolt of light thrown at one body up to six tiles off. Its force is his energy and his "
+     "staff's.",
+     147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 3, 148},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -219,6 +234,9 @@ int skillIndexOf(int32_t number) {
 }
 
 float force(const SkillRow& row, const HeroPoints& points) {
+    // A wizard's `SkillMultiplier` is a flat one (ClassDarkWizard.cs:112): his spells take their
+    // force from the wizardry band instead, which is where energy already went.
+    if (row.wizardry) return 1.0f;
     return row.force + float(points.strength) * row.forcePerStrength +
            float(points.energy) * kForcePerEnergy;
 }
@@ -236,10 +254,21 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     // game/play.cpp): there is no blow in it to hurry. Timed with the bonus, the lock that
     // holds him still ran out while the guard was still being raised, and a click walked him
     // out of the middle of it.
-    const float bonus = row.onSelf() ? 0.0f : attackSpeedStat(kin, agility, right, left) * 0.004f;
+    // A spell reads MagicSpeed, which is the wizard's agility over ten (ClassDarkWizard.cs:59)
+    // and nothing from the weapon: `PLAYER_SKILL_HAND1..` play at `0.29 + MagicSpeed * 0.004`
+    // (ZzzCharacter.cpp:939, the RGZ_FIX arm under 509).
+    const float bonus = row.onSelf()     ? 0.0f
+                        : row.wizardry ? magicSpeedStat(kin, agility) * 0.004f
+                                       : attackSpeedStat(kin, agility, right, left) * 0.004f;
     const float rate = (clip->speed + bonus) * 25.0f;
     if (rate <= 0.0f) return 0;
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));
+}
+
+float magicSpeedStat(Kin kin, int agility) {
+    // Only the wizard's class file relates agility to MagicSpeed at a rate this game can reach;
+    // nobody else casts a spell here.
+    return kin == Kin::DarkWizard ? float(agility) / 10.0f : 0.0f;
 }
 
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {

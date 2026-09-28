@@ -84,6 +84,8 @@ enum class What : uint8_t {
     Refined,   // a jewel spent on a thing: a: its slot, b: the plus it had, c: the plus it has
     Soused,    // an Ale gone down: a: the ticks it lasts, b: the swing's ticks now
     Warped,    // a Town Portal Scroll read: a: the column he stands on, b: the row
+    Loosed,    // a spell let go at the bottom of its clip: a: its number, b: the ticks it
+               // will be in the air, whom: at whom. The `Hit` follows when it arrives.
 };
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
@@ -121,6 +123,9 @@ struct Happening {
     bool excellent = false;
     // A `Hit` that is his armour's reflect, not a blow he threw: no swing, no clip.
     bool reflected = false;
+    // A `Hit` or `Missed` that FLEW -- a spell that left his hand ticks ago and has arrived. It
+    // belongs to no swing still playing, so the drawing shows it whatever the body is doing now.
+    bool thrown = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;
@@ -160,6 +165,8 @@ struct Body {
     // And the shield's own share of `wornDefense`, which is what Defense's guard is raised on.
     int32_t shieldDefense = 0;
     int32_t weaponBonus = 0;
+    // His staff's rise, in percent, off the right hand at the last rearm (Arms::staffRise).
+    float staffRise = 0.0f;
     // How many lucky things he wears, each 5% of critical chance (sim::kLuckCritical).
     int32_t luckyWorn = 0;
     // And what his excellent pieces come to (sim::Excellence), summed in rearm.
@@ -301,6 +308,11 @@ struct Request {
     enum class Kind : uint8_t { None, WalkTo, Attack, Stop, Talk, Pick, Perch } kind = Kind::None;
     int32_t column = 0, row = 0;
     uint32_t target = 0;
+    // An Attack's quick-slot skill: the one the right mouse button carries, thrown at the target
+    // whenever it can be and the weapon swung whenever it cannot -- short of mana, the wrong
+    // hand, a knight's skill cooling. 0 is a plain attack, which is the left button. The user,
+    // 2026-09-28: *"right click is quick slot but for right click"*.
+    int32_t skill = 0;
 };
 
 struct RealmCounts {
@@ -531,11 +543,24 @@ private:
     // `force` is the skill multiplier on the blow, 1 for an ordinary swing. It multiplies the
     // damage after the roll, the defence and the level floor, which is where OpenMU's own
     // `SkillMultiplier` falls (AttackableExtensions.cs:226-247).
-    void strikeAt(Body& attacker, Body& target, float force = 1.0f);
+    // `row` is the skill the blow belongs to, null for a swing: a spell rolls the wizardry sum,
+    // and only a swing or a primary pays mana back. `thrown` marks a blow that flew.
+    void strikeAt(Body& attacker, Body& target, float force = 1.0f,
+                  const SkillRow* row = nullptr, bool thrown = false);
     // The player's blow: begun now, landing half a swing from now, and dropped whole if he is
     // given another order before it lands. `land` is what the tick calls when it is due.
     void begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t overTicks);
     void land(Body& hero);
+    // A spell let go: into the air for as long as it takes to cross the gap, and landed by
+    // `arrive` on the tick it gets there. Past his hand, a new order no longer takes it back.
+    void loose(Body& hero, const SkillRow& row, uint32_t at, float force);
+    void arrive();
+    // Walks him to within `radius` of what he is fighting, on the chase's own re-plan clock.
+    void approach(Body& hero, const Body& target, int radius);
+    // Whether the quick slot's skill could be thrown now but for the cooldown and the reach:
+    // learned, his class's, the right hand, the mana. What a right-click falls back to the
+    // weapon on.
+    bool armed(const Body& hero, const SkillRow& row) const;
     void dropBlow(Body& hero) { hero.blowAt = 0; hero.blowTarget = 0; }
     // A skill thrown, with the refusals in OpenMU's own order. False and silent for each.
     bool throwSkill(Body& hero, const SkillRow& row, uint32_t at);
@@ -612,6 +637,16 @@ private:
     int32_t wants_ = skill::kNone;
     uint32_t wantsAt_ = 0;
     int64_t wantsUntil_ = 0;
+    // Spells in the air. A fixed handful, because a wizard at speed lets the next one go before
+    // the last has landed, and this runs inside a tick; one that finds no room lands at once.
+    struct Flight {
+        int64_t at = 0;  // 0 for an empty place
+        uint32_t target = 0;
+        int32_t skill = 0;
+        float force = 1.0f;
+    };
+    static constexpr int kFlights = 8;
+    Flight flights_[kFlights] = {};
     int64_t tick_ = 0;
     std::string refusal_;
     uint32_t nextId_ = 1;

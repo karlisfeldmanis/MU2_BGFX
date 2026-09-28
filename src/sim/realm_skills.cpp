@@ -97,6 +97,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // Learned. In 0.75 this question was asked of his hands; here it is asked of what he has
     // read, which is the one place the design leaves the original on purpose.
     if ((hero.learned & (uint32_t(1) << index)) == 0) return false;
+    // And his class's. Learning already asks it -- an orb or a scroll refuses the wrong class --
+    // so this is the same answer asked again where the skill is spent.
+    if (row.kin != hero.kin) return false;
 
     // The cooldown, which is ours and has no counterpart in 0.75. A wait rather than a refusal,
     // exactly as the swing timer is: the key does nothing and says nothing.
@@ -177,18 +180,30 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.mana -= row.mana;
     }
 
+    // A primary has no cooldown at all -- its clip is its pace, and a key's wipe running down
+    // over every Energy Ball would say there was a wait where there is none.
     const int32_t cool =
-        cooldownTicks(row, hero.points.agility, floorTicksFor(row, clipTicksOf(hero, row)));
+        row.primary() ? 0
+                      : cooldownTicks(row, hero.points.agility,
+                                      floorTicksFor(row, clipTicksOf(hero, row)));
     hero.cools[size_t(index)] = tick_ + cool;
     // And the swing clock, the longer of his own rhythm and the clip this skill plays. Without
     // the second half a skill whose animation outlasts the weapon's swing is cut off by the next
     // blow -- MU2 measured exactly that on Defense, whose clip is the longest of the six.
+    //
+    // A spell pays its own clip and not the weapon's: its rhythm is MagicSpeed's and has nothing
+    // to do with how fast the staff in his hand would swing.
     const int32_t clip = clipTicksOf(hero, row);
-    hero.swingsAt = tick_ + std::max(hero.swingTicks, clip);
+    hero.swingsAt = tick_ + (row.wizardry ? std::max<int32_t>(1, clip)
+                                          : std::max(hero.swingTicks, clip));
     // And he is locked where he stands for the length of the animation: no turn, no re-path, no
     // step. `press` reads this before it engages, so a quarry that shuffles round him does not
     // spin the body mid-swing.
-    hero.castUntil = tick_ + clip;
+    //
+    // **Not a primary.** The wizard's Energy Ball is thrown over and over, and a lock on every
+    // clip would be a wizard who can never be walked away from a fight. Like a swing it is
+    // cancelled by a click until it leaves his hand; after that it is in the air and lands.
+    hero.castUntil = row.primary() ? tick_ : tick_ + clip;
     hero.walking = false;
     hero.route.clear();
     hero.onStep = 0;
@@ -282,6 +297,16 @@ void Realm::strikeAround(Body& hero, const SkillRow& row, float force) {
         // grow inside the loop -- nothing here spawns -- but ids are what survive one that does.
         if (Body* victim = body(victims[i])) strikeAt(hero, *victim, force);
     }
+}
+
+bool Realm::armed(const Body& hero, const SkillRow& row) const {
+    const int index = skillIndexOf(row.number);
+    if (index < 0 || (hero.learned & (uint32_t(1) << index)) == 0) return false;
+    if (row.kin != hero.kin || hero.mana < row.mana) return false;
+    const auto armAt = [&](int32_t at) -> const content::Arm* {
+        return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
+    };
+    return row.suits(familyOf(armAt(row.onSelf() ? hero.shield : hero.weapon)));
 }
 
 void Realm::keepBoon(Body& hero) {

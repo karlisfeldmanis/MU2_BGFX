@@ -148,6 +148,7 @@ add_executable(mu2
   src/game/fx/eyes.cpp
   src/game/fx/forge.cpp
   src/game/fx/meteor.cpp
+  src/game/fx/bolt.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp
   src/game/ui/panel.cpp

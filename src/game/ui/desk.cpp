@@ -30,8 +30,8 @@ static bool substitutes(const content::Tables& tables, int32_t carried, int32_t 
 // What each key is called, for the log. The plate prints these itself and `Hud::kKeys` has
 // them too; this is the same five, where the desk can reach them.
 static const char* keyName(int key) {
-    static const char* kNames[Hud::kSkillKeys] = {"Q", "W", "E", "R", "T"};
-    return key >= 0 && key < Hud::kSkillKeys ? kNames[key] : "?";
+    static const char* kNames[Hud::kSkillBoxes] = {"Q", "W", "E", "R", "T", "the right button"};
+    return key >= 0 && key < Hud::kSkillBoxes ? kNames[key] : "?";
 }
 
 bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
@@ -580,8 +580,16 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         // is one offer a skill, not a standing claim on the first key to fall vacant.
         autoBound_ |= bit;
         bool already = false;
-        for (int key = 0; key < Hud::kSkillKeys; ++key) already |= bound_[key] == row.number;
+        for (int key = 0; key < Hud::kSkillBoxes; ++key) already |= bound_[key] == row.number;
         if (already) continue;
+        // A primary goes to the right button, which is where it is used: the wizard's Energy
+        // Ball is on his right-click from the day he is made, as it is in MU. Everything else
+        // takes the first free key, and the right slot is the player's to fill by dragging.
+        if (row.primary() && bound_[Hud::kRightSlot] == 0) {
+            bound_[Hud::kRightSlot] = row.number;
+            core::logf("window: %s bound to %s", row.name, keyName(Hud::kRightSlot));
+            continue;
+        }
         for (int key = 0; key < Hud::kSkillKeys; ++key) {
             if (bound_[key] != 0) continue;
             bound_[key] = row.number;
@@ -656,7 +664,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         cell.number = row.number;
         cell.name = row.name;
         cell.mana = row.mana;
-        for (int key = 0; key < Hud::kSkillKeys; ++key) {
+        for (int key = 0; key < Hud::kSkillBoxes; ++key) {
             if (bound_[key] == row.number) cell.key = key;
         }
         fan_.push_back(cell);
@@ -698,7 +706,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             // dragged out of the list onto a second key MOVES rather than doubling.
             const int32_t displaced = bound_[onto];
             int other = -1;
-            for (int key = 0; key < Hud::kSkillKeys; ++key) {
+            for (int key = 0; key < Hud::kSkillBoxes; ++key) {
                 if (key != onto && bound_[key] == carried) other = key;
             }
             const bool moved = displaced != carried;
@@ -765,11 +773,17 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         play.castSkill(bound_[key], play.pointedAt());
     }
     scriptedSkill_ = -1;
+    // What a right-click on a monster throws: the realm is asked with it on the Attack order.
+    play.setQuickSkill(bound_[Hud::kRightSlot]);
     // The box rings on the realm's throw, not on the key: a press held until he is in reach
     // rings when he swings, and one refused rings never.
     if (const int32_t cast = play.heroCast()) {
-        for (int key = 0; key < Hud::kSkillKeys; ++key) {
+        for (int key = 0; key < Hud::kSkillBoxes; ++key) {
             if (bound_[key] != cast) continue;
+            // Not for a primary: it is thrown twice a second, and a ring on every one is a box
+            // that never stops flashing.
+            const sim::SkillRow* row = sim::skillNumbered(cast);
+            if (row != nullptr && row->primary()) continue;
             hud_.strikeSkill(key);
             core::logf("window: %s thrown off %s", sim::skillNumbered(cast)->name, keyName(key));
         }
@@ -780,7 +794,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // frame is four sheets of strings nobody reads.
     const int over = hud_.skillAt(pointer.x, pointer.y);
 
-    for (int key = 0; key < Hud::kSkillKeys; ++key) {
+    for (int key = 0; key < Hud::kSkillBoxes; ++key) {
         Hud::Skill box;
         box.number = bound_[key];
         if (box.number != 0) {
@@ -894,8 +908,31 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     weapon.label = "Weapon";
     const tip::Tone met = row.suits(hand) ? tip::Tone::White : tip::Tone::Red;
     for (int i = 0; i < words; ++i) weapon.values.push_back({families[i], met, false, "", 0});
-    facts.rows.push_back(weapon);
-    if (row.onSelf()) {
+    // A spell asks nothing of the hand, so it has no such row.
+    if (!row.wizardry) facts.rows.push_back(weapon);
+    if (row.wizardry) {
+        // The band it rolls in, `sim::cast`'s own two lines: energy over nine and over four, the
+        // spell's damage on the bottom and half again on the top, times the staff.
+        const sim::Fighter& me = hero.stats;
+        const int low = int((me.wizardMinimum + double(row.damage)) * me.wizardryRate);
+        const int high =
+            int((me.wizardMaximum + double(row.damage + row.damage / 2)) * me.wizardryRate);
+        facts.rows.push_back(line("Damage", std::to_string(low) + " - " + std::to_string(high),
+                                  tip::Tone::Yellow));
+        char sum[64];
+        if (hero.staffRise > 0.0f) {
+            std::snprintf(sum, sizeof(sum), "%d ene, staff +%d%%", hero.points.energy,
+                          int(hero.staffRise + 0.5f));
+        } else {
+            std::snprintf(sum, sizeof(sum), "%d ene, no staff", hero.points.energy);
+        }
+        tip::Row how;
+        how.free = sum;
+        how.freeTone = tip::Tone::Gray;
+        facts.rows.push_back(how);
+        facts.rows.push_back(line("Range", std::to_string(int(row.reach)) + " tiles",
+                                  tip::Tone::White));
+    } else if (row.onSelf()) {
         // What it takes off a blow, as a share, and for how long -- the two questions a guard
         // is asked. It was "x0.50 for 4.0 s", which left the player to do the sum.
         facts.rows.push_back(
@@ -936,7 +973,9 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     const auto wait = [&](float s) {
         return s >= 60.0f ? sim::spoken(s) : number(s, 1) + " s";
     };
-    if (left > 0) {
+    if (row.primary()) {
+        // No cooldown to state: its pace is its clip.
+    } else if (left > 0) {
         facts.rows.push_back(line("Ready in", wait(float(left) * 0.05f), tip::Tone::Red));
     } else {
         facts.rows.push_back(line("Cooldown", wait(seconds), tip::Tone::White));
