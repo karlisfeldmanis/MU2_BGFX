@@ -61,9 +61,11 @@ damage, six tiles, one mana. **Born knowing it** (`AddEnergyBallForDarkWizard`),
 
 **Ours, and marked:**
 
-- **It is a primary** (`SkillRow::primary()`): no cooldown, paced by its own clip; a hit pays back a
-  twentieth of the pool as a knight's swing does, so it is the generator and the later spells the
-  spenders. It is walked out of like a swing (no `castUntil` lock) until it leaves his hand.
+- **It is a primary** (`SkillRow::primary()`): no cooldown, paced by its own clip. **It pays no mana
+  back** -- no spell does. For a day every landed spell refunded a twentieth of the pool, six a hit
+  on a 120-mana wizard, more than Energy Ball, Fire Ball or Power Wave cost, so casting filled him up
+  (*"it gaining mana a lot"*). Now he casts until he is dry and swings his staff, whose landed blow
+  pays back as the knight's swing does; regeneration is the three-second twenty-seventh as before. It is walked out of like a swing (no `castUntil` lock) until it leaves his hand.
 - **The staff's own option and its excellent 4 and 5** are wizardry damage and are not reckoned yet.
 
 **The blow is let go, then lands.** `Realm::land` at half the clip no longer strikes a thrown skill:
@@ -162,7 +164,7 @@ so a new wizard's thirty leaves it in his bag for two levels. 0.75 asks it again
 energy never goes down here, so that test is not written. Fire is a gate with nothing behind it.
 
 - **A primary, as Energy Ball is** (the user, 2026-09-28: *"fireball dont have cooldowns same as
-  energy ball"*): no cooldown, paced by its clip, a hit pays back a twentieth of the pool. Against
+  energy ball"*): no cooldown, paced by its clip, and no mana back. Against
   one body it is about one and a half bolts at forty energy (12-22 against 7-14) for three mana
   against one, so it is the right button's upgrade once it is learned.
 - **It flies at 12.5 tiles a second**, MU's fifty units a frame against the bolt's sixty. The speed
@@ -216,8 +218,7 @@ ahead of him within three quarters of a tile of the line toward what he aimed at
 goes far"* -- the first cut stopped at six, where MU starts fading it). He still aims it at a body
 within the six tiles of its reach. `Realm::looseLine`
 says one `Loosed` (one wave is drawn) and puts a flight in the air for each body, nearest first, so
-each is struck when the wave reaches it; only the body he aimed at pays mana back, or a crowd would
-fill his pool. The air holds 32 flights now, up from 8. Seen in the arena against five spiders: one
+each is struck when the wave reaches it. The air holds 32 flights now, up from 8. Seen in the arena against five spiders: one
 wave, two numbers.
 
 **The look** is `fx/wave`, MU2's `Wave` ported. What is MU's: `Magic02.bmd` at 0.9, one additive

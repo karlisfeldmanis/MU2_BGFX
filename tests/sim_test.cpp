@@ -940,9 +940,10 @@ void testCastLock(const content::Tables& tables) {
         sim::Realm wiz;
         check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
         check(wiz.learn(sim::skill::kFireBall), "who knows Fire Ball");
-        int balls = 0, landed = 0, swings = 0;
+        int balls = 0, landed = 0, swings = 0, paidBack = 0;
         uint32_t fighting = 0;
         for (int tick = 0; tick < 3000; ++tick) {
+            const int manaBefore = wiz.hero().mana;
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
             if (nearest != 0 && nearest != fighting) {
                 fighting = nearest;
@@ -956,14 +957,20 @@ void testCastLock(const content::Tables& tables) {
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBall) ++balls;
-                if (one.what == sim::What::Hit && one.thrown) ++landed;
+                if (one.what == sim::What::Hit && one.thrown) {
+                    ++landed;
+                    // Off the three-second regeneration tick, a landed spell must not raise him.
+                    if (wiz.tick() % 60 != 0 && wiz.hero().mana > manaBefore) ++paidBack;
+                }
                 if (one.what == sim::What::Swung && one.a == 0) ++swings;
             }
         }
+        checkEqual(paidBack, 0, "a landed spell pays no mana back");
         std::printf("  fire ball: %d thrown, %d landed, %d staff swings\n", balls, landed, swings);
         check(balls > 20, "he throws Fire Ball over and over");
         check(landed > 0, "and it lands after its flight");
         checkEqual(wiz.cooling(sim::skill::kFireBall), 0LL, "and nothing is left cooling");
+        std::printf("  fire ball: %d staff swings once the pool ran dry\n", swings);
     }
 
     // ---- Power Wave: 0.75's row, a primary, off its scroll at fifty-six energy ----------------

@@ -53,10 +53,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // spender (kAttackManaShare, and the argument is there). Before the happening, so the log's
     // line and the frame's gauge agree about the tick.
     //
-    // A primary spell pays it too: the wizard's Energy Ball is his auto-attack, costs 0.75's one
-    // mana, and a hit refunds as the knight's swing does -- the user's rule, 2026-09-28. What
-    // pays nothing is a skill with a cooldown, whose force is above one anyway.
-    const bool generates = pays && (row == nullptr ? force == 1.0f : row->primary());
+    // **A spell pays nothing back**, primary or not. It did for a day: every landed Energy Ball,
+    // Fire Ball, Power Wave and Lightning refunded a twentieth of the pool, which on a wizard of
+    // 120 mana is six a hit -- more than three of the four cost -- so casting FILLED his pool
+    // (the user, 2026-09-28: "something wrong with mana spending for DW, it gaining mana a lot").
+    // Now the wizard casts until he is dry and then walks in with his staff, whose landed swing
+    // pays as the knight's does: the rule he was first given ("when it's oom it goes to melee range
+    // and attacks with the weapon").
+    const bool generates = pays && row == nullptr && force == 1.0f;
     if (attacker.player && generates && attacker.mana < attacker.maxMana) {
         const int back = std::max(1, int(float(attacker.maxMana) * kAttackManaShare));
         attacker.mana = std::min(attacker.maxMana, attacker.mana + back);
