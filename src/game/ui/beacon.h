@@ -28,7 +28,10 @@ public:
     void close();
     // A frame. Rebuilt every frame one is up, since it bobs and follows the camera; cleared and
     // left alone when nobody on screen has a quest.
-    void update(float seconds, const Play& play, const float* viewProj, int width, int height);
+    // `named` is the townsperson whose name is up and `shown` how far, 0 to 1 (Vitals::folkShown):
+    // the mark rises clear of the name by exactly that, so it moves as the name fades.
+    void update(float seconds, const Play& play, int named, float shown, const float* viewProj,
+                int width, int height);
     void dismiss() { canvas_.clear(); showing_ = false; }
 
     bool showing() const { return showing_; }

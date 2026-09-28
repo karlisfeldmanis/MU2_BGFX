@@ -1116,9 +1116,11 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
         return;
     }
     speech_.update(play, viewProj, width, height);
-    beacon_.update(seconds, play, viewProj, width, height);
     vitals_.update(seconds, play, play.pointedAt(), play.pointedFolk(), takesPointer_, viewProj,
                    width, height);
+    // After the names, so the marker rises by this frame's fade and not the last one's.
+    beacon_.update(seconds, play, vitals_.namedFolk(), vitals_.folkShown(vitals_.namedFolk()),
+                   viewProj, width, height);
     // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
     // on world points and the lane on the HUD's top edge.
     tally_.update(seconds, play, viewProj, width, height, hud_.plateTop());

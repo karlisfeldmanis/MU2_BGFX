@@ -48,6 +48,11 @@ public:
     void dismiss();
 
     bool showing() const { return (on_ != 0 && shown_ > 0.0f) || (folk_ >= 0 && folkShown_ > 0.0f); }
+    // How far a townsperson's name is shown this frame, 0 to 1, on its own fade and linger: what
+    // the quest marker over him rises by, so the two move as one.
+    float folkShown(int folk) const { return folk >= 0 && folk_ == folk ? folkShown_ : 0.0f; }
+    // The townsperson whose name is up, pointed at or still lingering, or -1.
+    int namedFolk() const { return folk_; }
     const gfx::Canvas& canvas() const { return canvas_; }
     uint64_t rebuilds() const { return rebuilds_; }
 

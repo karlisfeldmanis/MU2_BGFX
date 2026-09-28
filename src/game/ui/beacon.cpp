@@ -25,8 +25,8 @@ constexpr float kHalo = 3.2f;       // the dark halo round it, soft, for bright 
 constexpr float kEdgeLight = 0.7f;  // the pale edge on the lit side, inside the rim
 constexpr float kGrain = 0.06f;     // the wear in the metal, either way
 
-// Where it hangs: close over the crown, and lifted clear of the name while he is under the
-// pointer and the name shows there (24 units). Then the bob.
+// Where it hangs: close over the crown, and lifted clear of the name while the name shows there
+// (24 units), by the name's own fade. Then the bob.
 constexpr float kLift = 4.0f;
 constexpr float kLiftNamed = 24.0f;
 constexpr float kBob = 1.5f;  // units, either way
@@ -174,8 +174,8 @@ void Beacon::close() {
     dismiss();
 }
 
-void Beacon::update(float seconds, const Play& play, const float* viewProj, int width,
-                    int height) {
+void Beacon::update(float seconds, const Play& play, int named, float shown,
+                    const float* viewProj, int width, int height) {
     if (play.questGivers().empty()) {
         if (showing_) dismiss();
         return;
@@ -191,7 +191,10 @@ void Beacon::update(float seconds, const Play& play, const float* viewProj, int 
         float x = 0.0f, y = 0.0f;
         if (!play.folkCrownOf(folk, viewProj, width, height, &x, &y)) continue;
         const float w = float(cellW_), h = float(cellH_);
-        const float lift = play.pointedFolk() == folk ? kLiftNamed : kLift;
+        // Risen by the name's own fade, eased on the same clock: up as the name comes, held
+        // while it lingers, down as it goes.
+        const float t = folk == named ? std::clamp(shown, 0.0f, 1.0f) : 0.0f;
+        const float lift = kLift + (kLiftNamed - kLift) * t * t * (3.0f - 2.0f * t);
         canvas_.region(art_, {std::round(x - w * 0.5f), y - lift * u - h + bob, w, h},
                        {0.0f, 0.0f, w, h});
         showing_ = true;
