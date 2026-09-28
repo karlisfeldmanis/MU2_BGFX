@@ -64,6 +64,8 @@ bool Bones::open(const std::string& assetDir, content::Textures& textures,
     };
     take("Bone01", large_);
     take("Bone02", small_);
+    take("BigStone01", stoneLarge_);
+    take("BigStone02", stoneSmall_);
     core::logf("bones: Bone01 %s at %.2f m, Bone02 %s at %.2f m",
                large_.mesh ? "loaded" : "MISSING", large_.lift,
                small_.mesh ? "loaded" : "MISSING", small_.lift);
@@ -77,6 +79,8 @@ void Bones::shutdown() {
     owned_.clear();
     large_ = Model{};
     small_ = Model{};
+    stoneLarge_ = Model{};
+    stoneSmall_ = Model{};
     for (auto& piece : pieces_) piece.alive = false;
 }
 
@@ -114,6 +118,13 @@ void Bones::throwOne(const Model& model, float x, float z, float floorY, float b
     slot->velocity[2] = std::cos(slot->yaw) * scatter;
     slot->lean[0] = unit() * kTwoPi;
     slot->lean[1] = unit() * kTwoPi;
+}
+
+void Bones::rubble(float x, float z, float floorY, float bodyScale) {
+    for (int i = 0; i < kStones; ++i) {
+        throwOne(stoneLarge_, x, z, floorY, bodyScale);
+        throwOne(stoneSmall_, x, z, floorY, bodyScale);
+    }
 }
 
 void Bones::burst(float x, float z, float floorY, float bodyScale) {

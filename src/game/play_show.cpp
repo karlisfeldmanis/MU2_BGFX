@@ -484,7 +484,8 @@ void Play::fall(Drawn& dead) {
     if (dead.bursts && bones_.isOpen() && ground_) {
         const float scale = dead.figure.body() ? dead.figure.body()->scale : 1.0f;
         const float x = dead.crown[0], z = dead.crown[2];
-        bones_.burst(x, z, ground_->heightAt(x, z), scale);
+        if (dead.crumbles) bones_.rubble(x, z, ground_->heightAt(x, z), scale);
+        else bones_.burst(x, z, ground_->heightAt(x, z), scale);
         dead.deadFor = kDeathTotal;
         // As the meteor's throw does, and for the same reason: a run is read afterwards
         // rather than watched, and this is what a shot's frame is worked out from.

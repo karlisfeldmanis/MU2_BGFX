@@ -1129,7 +1129,8 @@ void Play::announce(const sim::Happening& happening) {
             const Drawn* dead = drawnOf(happening.who);
             core::logf("arena: tick %lld, %s dies, killed by %s -- it %s", tick,
                        nameOf(happening.who).c_str(), nameOf(happening.whom).c_str(),
-                       dead && dead->bursts ? "comes apart into bones, leaving no corpse"
+                       dead && dead->crumbles ? "comes apart into stones, leaving no corpse"
+                       : dead && dead->bursts ? "comes apart into bones, leaving no corpse"
                                             : "falls where it stood");
             break;
         }

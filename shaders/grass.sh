@@ -29,7 +29,7 @@ uniform vec4 u_grassWind;   // xy: the wind's direction  z: its strength  w: tim
 uniform vec4 u_grassRoot;   // rgb: what the sheet is tinted towards at the root  w: the AO at the root
 uniform vec4 u_grassTip;    // rgb: and at the tip  w: roughness
 uniform vec4 u_grassVary;   // x: cards a patch  y: the stratification's side  z: the rank share  w: how dry a dry tuft goes
-uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: 1 the meadow; the sward's grass_vary times 0.45, so under 0.5 is still the sward
+uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: 1 the meadow; the sward's grass_vary times 0.2 (0 to 2.4), so under 0.5 is still the sward
 uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  z: a scale on the patch's density  w: how far the colour grade goes
 uniform vec4 u_grassReach;  // x: metres from the eye past which no card stands  y: the band before it, over which a card shrinks away  z: where the thinning begins  w: where it has taken all it takes
 uniform vec4 u_grassWalkers[8]; // xyz: somebody's feet, world space  w: how far round them the sward is parted (0 is an empty slot)

@@ -494,6 +494,12 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             // no clip to find: the sand comes off the body's own position and the death
             // clip it already has.
             if (look->name == kSandingFigure) one.sands = true;
+            // The Stone Golem has no corpse either: `o->Live = false`, and the stones.
+            if (look->name == kCrumblingFigure) {
+                one.bursts = true;
+                one.crumbles = true;
+                one.deathClip = -1;
+            }
             if (look->name == kBreathingFigure && look->skeletonMesh) {
                 one.breathes = true;
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();

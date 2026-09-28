@@ -621,8 +621,8 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.sheet[1] = look.grassCutout;
     field.sheet[2] = look.grassMipBias;
     // The sward, not the meadow -- anything under a half is the sward -- carrying grass_vary
-    // in what is left of the half: 0 to 0.45. See fs_grass.
-    field.sheet[3] = std::clamp(look.grassVary, 0.0f, 1.0f) * 0.45f;
+    // in what is left of the half: 0 to 2.4 at a fifth, 0 to 0.48. See fs_grass.
+    field.sheet[3] = std::clamp(look.grassVary, 0.0f, 2.4f) * 0.2f;
     field.colour = look.grassColour;
 
     // The meadow, over the same patches and the same instance buffer.

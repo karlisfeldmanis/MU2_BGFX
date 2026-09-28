@@ -52,6 +52,8 @@ public:
     // a roll on the thing that threw the debris, and multiplying by THAT put a field of
     // boulders on the grass.
     void burst(float x, float z, float floorY, float bodyScale);
+    // A Stone Golem came apart: its sixteen stones instead of a skeleton's eleven bones.
+    void rubble(float x, float z, float floorY, float bodyScale);
 
     void update(float seconds);
     // Lit, opaque, and not a caster: eleven small shadows on the frame a fight is busiest is
@@ -88,6 +90,9 @@ private:
     // One large and ten small: `CreateEffect(MODEL_BONE1, ...)` once, then a loop of ten
     // MODEL_BONE2 (ZzzCharacter.cpp:1468-1470).
     static constexpr int kLarge = 1, kSmall = 10;
+    // The Stone Golem's: CharacterDie's `case MODEL_STONE_GOLEM` throws eight BigStone01 and
+    // eight BigStone02 (ZzzCharacter.cpp:1489), on the same ballistic arm as the bones.
+    static constexpr int kStones = 8;
     static constexpr float kLeastFrames = 32.0f, kMoreFrames = 16.0f;   // rand()%16 + 32
     static constexpr float kSmallestPiece = 0.8f, kLargestPiece = 1.1f; // (rand()%4 + 8) * 0.1
     static constexpr float kLeastGravity = 8.0f, kMoreGravity = 16.0f;  // rand()%16 + 8
@@ -99,6 +104,7 @@ private:
     static constexpr int kMaxPieces = 44;         // four bursts at once, and no cap inside one
 
     Model large_, small_;
+    Model stoneLarge_, stoneSmall_;
     // The two meshes themselves, kept alive for the run: a Model holds a bare pointer because
     // eleven pieces share two meshes and a piece must not own one.
     std::vector<std::unique_ptr<content::Mesh>> owned_;

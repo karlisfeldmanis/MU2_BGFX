@@ -517,6 +517,7 @@ private:
         // MU throws twenty puffs once, not twenty a frame -- see Play::sandOnDeath.
         bool sanded = false;
         int headBone = -1;
+        bool crumbles = false;  // and into stones, not bones: the Stone Golem (Bones::rubble)
         float fireOwed = 0.0f, dustOwed = 0.0f;
         // A Bull Fighter, either variant: smok_bone, which it snorts out of, and what of half
         // a reference frame's puff is owed. The Elite also has its two eye bones, MU's 22 and

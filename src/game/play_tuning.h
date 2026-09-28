@@ -219,6 +219,8 @@ inline constexpr const char* kBreathingFigure = "BudgeDragon01";
 // need its own row here. Neither stands in Lorencia, and the day one does this becomes a
 // field in the cook rather than a name in a list.
 inline constexpr const char* kBurstingFigure = "SkeletonWarrior";
+// MODEL_STONE_GOLEM, which comes apart into stones the same way (Bones::rubble).
+inline constexpr const char* kCrumblingFigure = "StoneGolem01";
 // MODEL_GIANT's own case in the same effect switch, and the whole of it is one call:
 //
 //     case MODEL_GIANT:

@@ -101,10 +101,17 @@ void main()
 		// blue-green, three bands over the same coarse field the dryness reads, and each card's
 		// own warmth widened with it. Noria's, where one graded green read as a lawn and the user
 		// asked for a jungle floor's variety (2026-09-28). Nought on Lorencia, which is as it was.
-		float swingAmount = u_grassSheet.w / 0.45;
+		float swingAmount = u_grassSheet.w / 0.2;
 		float swing = sin(vigour * 18.85) + (v_light.w - 0.5) * 0.8;
 		vec3 lean = swing > 0.0 ? vec3(1.14, 1.10, 0.68) : vec3(0.80, 0.98, 1.10);
-		albedo *= mix(vec3_splat(1.0), lean, saturate(abs(swing)) * swingAmount);
+		albedo *= mix(vec3_splat(1.0), lean, saturate(abs(swing)) * min(swingAmount, 1.0));
+		// And a second, broader field over it, past a vary of one: patches gone golden-olive
+		// where the ground is dry and deep emerald where it is wet, so a meadow has four greens
+		// in drifts rather than two (the user again, 2026-09-28: "more colour variations").
+		float broad = sin(vigour * 7.3 + 1.7) + (v_light.z - 0.5) * 0.6;
+		vec3 drift = broad > 0.0 ? vec3(1.22, 1.02, 0.58) : vec3(0.68, 1.06, 0.82);
+		albedo *= mix(vec3_splat(1.0), drift,
+		              smoothstep(0.25, 0.9, abs(broad)) * saturate(swingAmount - 1.0));
 		// And each card a little off its neighbour on top of all that.
 		albedo *= 0.84 + tint * 0.32;
 	}
