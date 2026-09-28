@@ -102,6 +102,9 @@ public:
     // How loud an ambient is, 0 to 1 of its own level: the rain, which comes and goes by degrees
     // where the wind is only on or off. Under loop()'s fade, not instead of it.
     void level(int event, float level);
+    // How long an event's first file runs, in seconds; 0 for none. What a caller holds a
+    // sound busy for when MU would not start it again while it still sounds.
+    float seconds(int event) const;
 
     // Starts a placed event at a point, in world metres. `following` is the body it belongs
     // to, whose position follow() keeps it on, or 0 for a blow that lands at a point and

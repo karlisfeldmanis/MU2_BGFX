@@ -41,14 +41,14 @@
         0.7,
         1.0
       ],
-      "low": 0.45,
-      "high": 0.75,
+      "low": 0.7,
+      "high": 1.0,
       "range_tiles": 3,
       "flicker_hz": 0.637,
       "smooth_seconds": 0.4
     }
   ],
-  "emitters_from": "ZzzObject.cpp, RenderObject, case WD_3NORIA: a BITMAP_LIGHT sprite at bone(s) 1, drawn at scale 1.5 in Luminosity * (0.4, 0.7, 1.0). The positions are those bones solved out of this model's own skeleton, in MU units, which is what `at` is in.\n\nThe breathing is the client's own and is shared by every glow in the town: g_Luminosity = sin(WorldTime * 0.004) * 0.15 + 0.6 (SceneManager.cpp:1283), so it travels between 0.45 and 0.75 at 0.637 Hz. MU re-rolls it per frame; this smooths it, for the reason Lamps gives - the same number applied to a light rather than to a texture is a strobe on the ground.\n\nThe range is the one invention. MU's is a sprite: it has a size on screen and lights nothing, so there is no reach to copy. It is taken off the sprite's own scale so the small ones stay small, and it is the number to change if the elf town reads too wet.",
+  "emitters_from": "ZzzObject.cpp, RenderObjectVisual, case WD_3NORIA: a BITMAP_LIGHT sprite at bone(s) 1, drawn at scale 1.5 in Luminosity * (0.4, 0.7, 1.0). The positions are those bones solved out of this model's own skeleton, in MU units, which is what `at` is in.\n\nThe level is RenderObjectVisual's own local Luminosity, `(rand() % 30 + 70) * 0.01` (ZzzObject.cpp:2780): 0.70 to 1.00, re-rolled every frame. It was written as g_Luminosity's 0.45 to 0.75 breathing until 2026-09-28, which is a different variable the Noria cases never read (found by the effects research, docs/noria-effects.md). The re-roll is still smoothed here, since a light that strobes per frame strobes the ground.\n\nThe range is the one invention. MU's is a sprite: it has a size on screen and lights nothing, so there is no reach to copy. It is taken off the sprite's own scale so the small ones stay small, and it is the number to change if the elf town reads too wet.",
   "islands": [
     {
       "island": 0,

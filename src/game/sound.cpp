@@ -688,6 +688,14 @@ void Sound::loop(int handle, bool wanted) {
     }
 }
 
+float Sound::seconds(int handle) const {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return 0.0f;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    float length = 0.0f;
+    ma_sound_get_length_in_seconds(&event.files.front()->sound[0], &length);
+    return length;
+}
+
 void Sound::level(int handle, float level) {
     if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
     Impl::Event& event = *impl_->events[size_t(handle)];

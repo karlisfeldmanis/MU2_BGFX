@@ -666,6 +666,10 @@ private:
     float shot_[16] = {};
     bool shotKnown_ = false;
     void hammer();
+    // The townsfolk MU gives a sound of their own, played at them on MU's roll and never over
+    // itself: MODEL_MIX_NPC's npc_mix on rand_fps_check(64), MODEL_ELF_WIZARD's npc_harp on
+    // rand_fps_check(256) (ZzzCharacter.cpp:6081). Hanzo's hammer is hammer(), on his blow.
+    void chatter(float seconds);
     // Whether each of the hero's feet has been heard on the walk cycle now playing, and whether
     // he was walking last frame. MU's c->Foot[0] and [1]; see steps().
     bool leftFoot_ = false, rightFoot_ = false, striding_ = false;
@@ -714,6 +718,12 @@ private:
         float hearthOwed[2] = {0.0f, 0.0f};
         float lastClock = 0.0f;
         uint32_t dice = 1;
+        // Who this is (the figure's name), and the sound MU has him make on a roll: the Chaos
+        // Goblin's mixing and the elf wizard's harp. -1 for the quiet ones. See chatter().
+        std::string who;
+        int voice = -1;
+        float every = 0.0f;  // seconds a roll comes up, on average
+        float busy = 0.0f;   // seconds the last one still sounds
     };
     // Starts a townsperson who cycles: its own dice, a clip by the rule, and a clock put
     // somewhere in it so that two of a kind are not in step.

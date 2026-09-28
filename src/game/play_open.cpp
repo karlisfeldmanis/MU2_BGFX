@@ -335,6 +335,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         const float at[3] = {x, ground_ ? ground_->heightAt(x, z) : 0.0f, z};
         Standing one;
         one.folk = int(i);
+        one.who = person.figure;
         one.smith = person.figure == kSmithFigure;
         // **The tile decides, not a literal `true`.** MU recomputes `c->SafeZone` from each
         // character's own tile every frame (ZzzCharacter.cpp:5607, :11676) and its NPCs are
@@ -369,6 +370,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             if (!look) continue;
             Standing one;
             one.folk = who;
+            one.who = spot.figure;
             one.smith = spot.figure == kSmithFigure;
             one.figure.stand(look, spot.position, spot.yaw, spot.scale,
                              tables_.grid.safe(column, row));
@@ -417,6 +419,17 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.soil = sound_.load("player_step_soil", true);
     heard_.wind = sound_.load("world_wind", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);
+    // The townsfolk with a voice of their own. rand_fps_check(N) is one frame in N at the 60
+    // the client's rolls are written against, so the roll comes up every N/60 seconds.
+    for (Standing& one : folk_) {
+        if (one.who == "MixNpc01") {
+            one.voice = sound_.load("npc_mix", true);
+            one.every = 64.0f / 60.0f;
+        } else if (one.who == "ElfWizard01") {
+            one.voice = sound_.load("npc_harp", true);
+            one.every = 256.0f / 60.0f;
+        }
+    }
     heard_.itemDrop = sound_.load("item_drop", true);
     heard_.moneyDrop = sound_.load("money_drop", true);
     heard_.jewel = sound_.load("jewel_get", true);

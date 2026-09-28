@@ -698,9 +698,18 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             pub = tables && tables->grid.safe(hero.column(), hero.row()) &&
                   world_.indoors(feetX, feetZ);
         }
-        const std::string path = ctx.paths.assets + "/music/Pub.mp3";
-        if (pub && core::fileExists(path)) world_.played().sound().music(path);
-        else if (!pub) world_.played().sound().stopMusic();
+        // And Noria's own, the same kind of rule: MUSIC_NORIA while he stands in its safe zone
+        // (SceneManager.cpp:1028, `if (Hero->SafeZone) PlayMp3(MUSIC_NORIA)`), stopped off it.
+        bool town = false;
+        if (args.world == "noria") {
+            const sim::Body& hero = world_.played().realm().hero();
+            const content::Tables* tables = world_.played().realm().tables();
+            town = tables && tables->grid.safe(hero.column(), hero.row());
+        }
+        const std::string path =
+            ctx.paths.assets + (town ? "/music/Noria.mp3" : "/music/Pub.mp3");
+        if ((pub || town) && core::fileExists(path)) world_.played().sound().music(path);
+        else if (!pub && !town) world_.played().sound().stopMusic();
     }
     // The ears, onto the camera just placed: its heading is what the stereo field turns by.
     if (world_.played().isOpen()) {

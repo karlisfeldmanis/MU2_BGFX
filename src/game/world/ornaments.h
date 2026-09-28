@@ -12,6 +12,13 @@
 //    drops into the river. MU throws nothing there -- only the sheet slides -- so the fountain's
 //    landing puff is thrown where this fall lands too, on the same numbers. Ours, asked for.
 //
+// 4. **Noria's glows.** RenderObjectVisual's `case WD_3NORIA`: BITMAP_LIGHT sprites at the
+//    origins of named bones -- Object02's three flower heads, the flower-lamp's bud, the big
+//    tree's four, the bluebell's, the Chaos Machine's five white ones -- in (0.4, 0.7, 1.0)
+//    times the frame's Luminosity, and the machine's star: two BITMAP_LIGHTNING+1 sprites at
+//    bone 57 spinning opposite ways at `(int)(WorldTime * 0.1) % 360`, a hundred degrees a
+//    second. The table is kNoriaGlows in ornaments.cpp; docs/noria-effects.md, items 2 and 6.
+//
 // The first two ride the pose Sway just computed, so each is thrown only where Sway posed the
 // object this frame -- in sight, as MU only runs RenderObjectVisual for objects it draws. The
 // mill does not sway; its fall is fixed in the world at open and always thrown. Nothing here
@@ -67,8 +74,17 @@ private:
         Anchor anchor;
         float clock = 0.0f;  // reference frames owed a coin flip
     };
+    // A BITMAP_LIGHT (or, sheet 1, a BITMAP_LIGHTNING+1) on a bone: its size is CreateSprite's
+    // Scale over the 64-texel sheet, its colour times the frame's Luminosity unless `steady`,
+    // and `spin` degrees a second (0 for none).
     struct Lantern {
         Anchor anchor;
+        float scale = 1.0f;
+        float colour[3] = {1.0f, 1.0f, 1.0f};
+        bool steady = false;
+        bool swells = false;  // its size breathes with Luminosity too: the merchant animal's
+        int sheet = 0;
+        float spin = 0.0f;
     };
     // A fall on a placement that never moves: its landing and scatter already in the world.
     struct Fall {
@@ -93,9 +109,11 @@ private:
     std::vector<Puff> puffs_;
     float luminosity_ = 1.0f;  // this frame's roll, shared by every lantern as MU's is
     float lanternWait_ = 0.0f;
+    float spun_ = 0.0f;  // seconds, for the machine's star: WorldTime's own clock, wrapped
     uint32_t seed_ = 0x51AB1Eu;
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;  // lightning2, MU's BITMAP_LIGHTNING+1
 };
 
 }  // namespace mu::game

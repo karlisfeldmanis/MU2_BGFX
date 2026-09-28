@@ -762,6 +762,7 @@ void Play::update(double seconds) {
     }
     steps();
     hammer();
+    chatter(float(seconds));
     smithy(float(seconds));
     exhale(float(seconds));
     snort(float(seconds));

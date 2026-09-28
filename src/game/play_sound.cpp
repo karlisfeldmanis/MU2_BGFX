@@ -111,6 +111,22 @@ void Play::hammer() {
     }
 }
 
+void Play::chatter(float seconds) {
+    for (Standing& one : folk_) {
+        if (one.voice < 0) continue;
+        one.busy -= seconds;
+        if (one.busy > 0.0f) continue;
+        one.dice ^= one.dice << 13;
+        one.dice ^= one.dice >> 17;
+        one.dice ^= one.dice << 5;
+        const float roll = float(one.dice % 10000u) / 10000.0f;
+        if (roll >= seconds / one.every) continue;
+        const float* at = one.figure.position();
+        emit(one.voice, at[0], at[2]);
+        one.busy = sound_.seconds(one.voice);
+    }
+}
+
 void Play::landed(uint32_t drop) {
     if (ground_ == nullptr) return;
     for (const sim::Lying& one : realm_.lying()) {

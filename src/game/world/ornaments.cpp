@@ -81,6 +81,35 @@ constexpr float kLanternGlowShare = 0.25f;
 // re-rolled 25 times a second. The rate is MU's frame, not an invention -- but it is a reading.
 constexpr float kLanternHz = kFramesPerSecond;
 
+// ---- Noria's glows: RenderObjectVisual, case WD_3NORIA (ZzzObject.cpp:2864) -------------
+//
+// Every one is `b->TransformPosition(BoneTransform[n], p, Position)` with p left at (0, 0, 0):
+// the bone's own origin, which is (0, 0, 0) in the bone's frame. Type N is Object{N+1}. The
+// colour is `Luminosity * (0.4, 0.7, 1.0)` with RenderObjectVisual's local Luminosity, the
+// lanterns' roll; the machine's five are `(1, 1, 1)` and do not breathe; its star is
+// `Luminosity * (0.4, 0.8, 1.0)`. Drawn at MU's full scale, unlike the merchant animal's --
+// these are small, and a flower head's glow at a third of a metre is what MU painted.
+struct NoriaGlow {
+    const char* model;
+    int bones[5];
+    int count;
+    float scale;
+    float colour[3];
+    bool steady;
+    int sheet;
+};
+constexpr NoriaGlow kNoriaGlows[] = {
+    {"Object02", {2, 4, 6}, 3, 0.5f, {0.4f, 0.7f, 1.0f}, false, 0},        // case 1
+    {"Object10", {1}, 1, 1.5f, {0.4f, 0.7f, 1.0f}, false, 0},              // case 9
+    {"Object18", {4, 7, 10, 13}, 4, 1.0f, {0.4f, 0.7f, 1.0f}, false, 0},   // case 17
+    {"Object36", {3}, 1, 1.5f, {0.4f, 0.7f, 1.0f}, false, 0},              // case 35
+    {"Object40", {61, 62, 63, 64, 65}, 5, 1.0f, {1.0f, 1.0f, 1.0f}, true, 0},  // case 39
+};
+// case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
+constexpr int kStarBone = 57;
+constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
+constexpr float kStarDegreesPerSecond = 100.0f;
+
 // A row-vector point or direction through a 4x4, as core::mulMatrix composes them.
 void through(const float* m, const float* v, float w, float* out) {
     for (int j = 0; j < 3; ++j) {
@@ -149,7 +178,39 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
             for (int k = 0; k < 2; ++k) {
                 Lantern lantern;
                 lantern.anchor = anchor(i, mesh, kLanternCarriers[k], kLanternMiddles[k], kNoAcross);
+                // CreateSprite's `Luminosity * 5`, a quarter of it: see gather().
+                lantern.scale = 5.0f * kLanternGlowShare;
+                lantern.swells = true;
+                for (int a = 0; a < 3; ++a) lantern.colour[a] = kLanternColour[a];
                 if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
+            }
+        } else {
+            static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
+            static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+            for (const NoriaGlow& glow : kNoriaGlows) {
+                if (name != glow.model) continue;
+                for (int b = 0; b < glow.count; ++b) {
+                    Lantern lantern;
+                    // The origin is the bone's own, so it goes in unchanged: anchor() would
+                    // carry a MODEL-space point, and this is already in the bone's frame.
+                    lantern.anchor = anchor(i, mesh, glow.bones[b], kOrigin, kNoAcross);
+                    for (int a = 0; a < 3; ++a) lantern.anchor.point[a] = 0.0f;
+                    lantern.scale = glow.scale;
+                    for (int a = 0; a < 3; ++a) lantern.colour[a] = glow.colour[a];
+                    lantern.steady = glow.steady;
+                    if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
+                }
+                if (name == "Object40") {
+                    for (float way : {1.0f, -1.0f}) {
+                        Lantern star;
+                        star.anchor = anchor(i, mesh, kStarBone, kOrigin, kNoAcross);
+                        for (int a = 0; a < 3; ++a) star.anchor.point[a] = 0.0f;
+                        for (int a = 0; a < 3; ++a) star.colour[a] = kStarColour[a];
+                        star.sheet = 1;
+                        star.spin = way * kStarDegreesPerSecond;
+                        if (star.anchor.bone >= 0) lanterns_.push_back(star);
+                    }
+                }
             }
         }
     }
@@ -165,6 +226,7 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
         };
         smoke_ = take("smoke01");  // Effect/smoke01, MU's BITMAP_SMOKE
         light_ = take("light");    // Effect/flare01, MU's BITMAP_LIGHT
+        lightning_ = take("lightning_2");  // Effect/lightning2, MU's BITMAP_LIGHTNING+1
     }
     if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
         core::logf("ornaments: %zu fountain spray, %zu mill falls, %zu lanterns; sheets: "
@@ -180,7 +242,7 @@ void Ornaments::shutdown() {
     lanterns_.clear();
     falls_.clear();
     puffs_.clear();
-    smoke_ = light_ = BGFX_INVALID_HANDLE;
+    smoke_ = light_ = lightning_ = BGFX_INVALID_HANDLE;
 }
 
 void Ornaments::update(float seconds, const Sway& sway) {
@@ -243,6 +305,7 @@ void Ornaments::update(float seconds, const Sway& sway) {
         }
     }
 
+    spun_ = std::fmod(spun_ + seconds, 360.0f / kStarDegreesPerSecond);
     lanternWait_ -= seconds;
     if (lanternWait_ <= 0.0f) {
         lanternWait_ = 1.0f / kLanternHz;
@@ -270,6 +333,8 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
     }
     if (bgfx::isValid(light_)) {
         for (const Lantern& lantern : lanterns_) {
+            const bgfx::TextureHandle sheet = lantern.sheet == 1 ? lightning_ : light_;
+            if (!bgfx::isValid(sheet)) continue;
             const Figure* figure = sway.posedAt(lantern.anchor.townIndex);
             if (!figure) continue;
             gfx::Sprite sprite;
@@ -279,11 +344,14 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
             // the lamp: a hard-edged orange patch on the load and half a disc hanging past the
             // corner. MU's picture hid that at 25 frames in low range. A quarter of it, the
             // lamp's own glow; ours, and marked as ours.
+            // The merchant animal's is `Luminosity * 5` in scale; Noria's are a plain Scale.
             sprite.halfWidth = sprite.halfHeight =
-                0.5f * kSheetMetres * luminosity_ * 5.0f * kLanternGlowShare;
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = kLanternColour[k] * luminosity_;
+                0.5f * kSheetMetres * lantern.scale * (lantern.swells ? luminosity_ : 1.0f);
+            const float level = lantern.steady ? 1.0f : luminosity_;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = lantern.colour[k] * level;
             sprite.colour[3] = 1.0f;
-            sprite.sheet = light_;
+            sprite.spin = lantern.spin * spun_ * 3.14159265f / 180.0f;
+            sprite.sheet = sheet;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }
