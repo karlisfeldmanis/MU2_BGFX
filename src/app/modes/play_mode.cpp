@@ -127,6 +127,8 @@ bool PlayMode::open(Context& ctx) {
     // The world's own light over the base sheet -- Noria's tropical day over Lorencia's night --
     // or the base alone when the world has no sheet (game/world/maps.h).
     ctx.time.setScene(game::mapSheet(ctx.paths.sheets, args.world));
+    // And its rain, when it has one: sheets/worlds/<world>_rain.json, blended in by the share.
+    ctx.time.setWet(game::mapSheet(ctx.paths.sheets, args.world + "_rain"));
 
     // The game's own entrance, only when somebody is playing.
     entrance_ = args.play && (args.frames == 0 || args.entrance);
@@ -812,6 +814,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               viewProj, ctx.renderer);
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         world_.weather().update(float(deltaSeconds), inside);
+        ctx.time.rain(world_.weather().rain());
         world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground(),
                                world_.weather().rain());
         world_.leaves().gather(ctx.renderer.effects(), eye.position);
@@ -1137,6 +1140,7 @@ void PlayMode::shutdown(Context& ctx) {
     keep(ctx);
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
     ctx.time.setScene("");
+    ctx.time.setWet("");
     if (shadowLog_) std::fclose(shadowLog_);
     if (shadowPoints_) std::fclose(shadowPoints_);
     shadowLog_ = shadowPoints_ = nullptr;
