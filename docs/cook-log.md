@@ -107,7 +107,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object04 | world | 2026-09-28 19:39 | passed | noria, in the world: clusters of brown spiky seed pods, MU's own art, reads as undergrowth |
 | Object05 | world | 2026-09-28 19:39 | passed | noria, in the world: low rosettes with cream-edged leaves, tropical |
 | Object06 | world | 2026-09-28 19:43 | passed | noria, in the world: small ferns in the grass |
-| Object07 | world | 2026-09-28 19:43 | awaiting |  |
+| Object07 | world | 2026-09-28 19:43 | passed | noria, in the world: vine climbing Object25's tree; MU's own saturated green, the brightest green in Noria -- a desaturate knob if it is judged too much in game |
 | Object08 | world | 2026-09-28 19:45 | passed | noria, in the world: large single taro leaves, tropical |
 | Object09 | world | 2026-09-28 19:45 | passed | noria, in the world: blue-capped mushrooms, crisp |
 | Object10 | world | 2026-09-28 19:46 | passed | noria, in the world: flower-lamp, the bud glows; its 14 lights placed; sways |
@@ -124,3 +124,22 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object21 | world | 2026-09-28 19:54 | passed | noria, in the world: MU's plants, clip playing where it has one |
 | Object22 | world | 2026-09-28 19:55 | passed | noria, in the world: MU's plants, clip playing where it has one |
 | Object23 | world | 2026-09-28 19:56 | passed | noria, in the world: MU's plants, clip playing where it has one |
+| Object24 | world | 2026-09-28 19:57 | passed | noria, in the world: MU's plants and trees |
+| Object25 | world | 2026-09-28 19:58 | passed | noria, in the world: MU's plants and trees |
+| Object26 | world | 2026-09-28 19:59 | passed | noria, in the world: MU's plants and trees |
+| Object27 | world | 2026-09-28 20:03 | passed | noria, in the world: lilies, palm, roots |
+| Object28 | world | 2026-09-28 20:04 | passed | noria, in the world: lilies, palm, roots |
+| Object29 | world | 2026-09-28 20:04 | passed | noria, in the world: lilies, palm, roots |
+| Object30 | world | 2026-09-28 20:08 | passed | noria, in the world: branch, the hollow giant tree, boulders |
+| Object31 | world | 2026-09-28 20:10 | passed | noria, in the world: branch, the hollow giant tree, boulders |
+| Object32 | world | 2026-09-28 20:10 | passed | noria, in the world: branch, the hollow giant tree, boulders |
+| Object33 | world | 2026-09-28 20:12 | passed | noria, in the world: stones, the slim plant |
+| Object34 | world | 2026-09-28 20:13 | passed | noria, in the world: stones, the slim plant |
+| Object35 | world | 2026-09-28 20:14 | passed | noria, in the world: stones, the slim plant |
+| Object36 | world | 2026-09-28 20:15 | passed | noria, in the world: bluebells with their lamp, bushes, light pools |
+| Object37 | world | 2026-09-28 20:15 | passed | noria, in the world: bluebells with their lamp, bushes, light pools |
+| Object38 | world | 2026-09-28 20:16 | passed | noria, in the world: bluebells with their lamp, bushes, light pools |
+| Object40 | world | 2026-09-28 20:18 | passed | noria, in the world: the Chaos Machine, its clip playing; its lights, sparks and sound owed (effects pass) |
+| Object41 | world | 2026-09-28 20:19 | passed | noria, in the world: the goblin at the machine, 2 s clip |
+| Object42 | world | 2026-09-28 20:20 | passed | noria, in the world: Chaos Machine part; its scroll owed where U (effects pass) |
+| Object43 | world | 2026-09-28 20:20 | passed | noria, in the world: Chaos Machine part; its scroll owed where U (effects pass) |
