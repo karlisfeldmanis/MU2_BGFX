@@ -98,6 +98,9 @@ void message(gfx::Canvas& canvas, float x, float baseline, const std::string& te
 // A small label over a thing the pointer rests on: stone under an iron rim, standing on
 // (x, bottom) and centred over x.
 void hint(gfx::Canvas& canvas, float x, float bottom, const std::string& text, float u);
+// A key cap, "ESC" or "I": an iron-rimmed stone key with its lower edge thicker, the key's name
+// in bone, standing at `x` and centred on `midY`. Returns its width.
+float keycap(gfx::Canvas& canvas, float x, float midY, const std::string& key, float u);
 // A meter: a dark well and a lit fill.
 void meter(gfx::Canvas& canvas, const gfx::Box& box, float share, uint32_t top, uint32_t foot,
            float u);
@@ -119,6 +122,8 @@ float ranged(gfx::Canvas& canvas, float right, float baseline, float size, uint3
 // A tracked small-caps heading at any size and ink.
 void caps(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t ink,
           const std::string& text, float track = 0.14f);
+// Its width, for ranging one against a right edge.
+float capsWidth(float size, const std::string& text, float track = 0.14f);
 // Where a line of `size` sits to be centred in a box `tall` high from `top`, on its capitals.
 float middle(float top, float tall, float size);
 

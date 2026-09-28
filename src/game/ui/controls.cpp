@@ -435,6 +435,10 @@ void caps(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t ink
                     ink, text);
 }
 
+float capsWidth(float size, const std::string& text, float track) {
+    return wordReady() ? s_word.measure(size, text) + size * track * float(text.size()) : 0.0f;
+}
+
 float middle(float top, float tall, float size) {
     const float ascent = labelReady() ? s_label.ascent(size) : size * 0.8f;
     return std::round(top + (tall + ascent * 0.62f) * 0.5f);
@@ -530,6 +534,22 @@ void foot(gfx::Canvas& canvas, const Box& window, float top, float u) {
     const float corners[4] = {0.0f, 0.0f, r, r};
     tip::rounded(canvas, band, corners, gfx::rgba(0, 0, 0, 0.0f), gfx::rgba(0, 0, 0, 0.38f));
     rule(canvas, window.x + 14.0f * u, top, window.w - 28.0f * u, u);
+}
+
+float keycap(gfx::Canvas& canvas, float x, float midY, const std::string& key, float u) {
+    const float line = px(u), r = style::kRadiusSmall * u;
+    const float size = 12.0f * u;
+    const float wide = labelReady() ? s_label.measure(size, key) : canvas.face().measure(size, key);
+    const Box b{std::round(x), std::round(midY - 10.5f * u), std::round(std::max(24.0f * u, wide + 12.0f * u)),
+                std::round(21.0f * u)};
+    // A seam of black round it, the iron rim, and the key's face a pixel in -- two at its foot,
+    // so it reads as a key standing up off the sheet.
+    tip::panel(canvas, b.grown(line), r + line, style::kSeam, style::kSeam);
+    tip::panel(canvas, b, r, style::kIron, style::kIronLo);
+    const Box face{b.x + line, b.y + line, b.w - line * 2.0f, b.h - line * 3.0f};
+    tip::panel(canvas, face, std::max(0.0f, r - line), style::kAsh3, style::kAsh0);
+    label(canvas, b.x + (b.w - wide) * 0.5f, middle(face.y, face.h, size), size, style::kBoneHi, key);
+    return b.w;
 }
 
 void well(gfx::Canvas& canvas, const Box& box, float u) {
