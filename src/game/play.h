@@ -518,6 +518,9 @@ private:
         int snortBone = -1;
         int eyeBones[2] = {-1, -1};
         float snortOwed = 0.0f;
+        // The Chain Scorpion's BITMAP_LIGHT at bone 7, `light_point` (ZzzCharacter.cpp:6151);
+        // -1 on everything else. Drawn in gatherFolkLights.
+        int lightBone = -1;
         // Negative while alive. Set to 0 the tick `Died` happens and counted up from there, so
         // the corpse holds its last pose and fades instead of vanishing on the tick it falls --
         // see kDeathHold and kDeathFade in play.cpp.
@@ -749,6 +752,11 @@ private:
     std::vector<Standing> folk_;
     bgfx::TextureHandle folkLight_ = BGFX_INVALID_HANDLE;
     float folkClock_ = 0.0f;  // seconds, WorldTime's own, for the lights' breathing
+    // MoveCharacterVisual's own Luminosity, `(rand() % 8 + 2) * 0.1` a frame, rolled at 25 Hz
+    // here as the lanterns' is: the scorpion's flicker.
+    float monsterLuminosity_ = 0.5f;
+    float monsterRollWait_ = 0.0f;
+    uint32_t monsterRoll_ = 0x5C0B710u;
     std::vector<int> questGivers_;
     int pointedFolk_ = -1;
     std::vector<Said> said_;

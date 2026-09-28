@@ -261,6 +261,8 @@ constexpr float kSandReach = 0.62f;
 inline constexpr const char* kSnortingFigure = "BullFighter01";
 // And the one of them MU gives Level 1 to, which is what lights RenderEye (fx/eyes.h).
 inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
+// MODEL_CHAIN_SCORPION, which carries an orange light on its `light_point` bone.
+inline constexpr const char* kScorpionFigure = "ChainScorpion01";
 // Where on the muzzle: `Vector(0.f, -4.f, 0.f, p)` in bone 24's frame, metres here.
 constexpr float kSnortAt[3] = {0.0f, -0.04f, 0.0f};
 // The four windows, in the clip's own keys: STOP1 15-20, STOP2 20-25, WALK 2-3 and 5-6.

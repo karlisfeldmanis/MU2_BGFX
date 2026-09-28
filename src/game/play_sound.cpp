@@ -128,10 +128,33 @@ void Play::gatherFolkLights(gfx::Effects& effects) const {
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
+    // And the monsters' own: the Chain Scorpion's (1, 0.4, 0.2) at Scale 1, drawn while its
+    // body is -- through the fall, as RenderCharacter draws it.
+    for (const Drawn& one : drawn_) {
+        if (one.lightBone < 0 || !one.visible || !one.placed) continue;
+        gfx::Sprite sprite;
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        if (!one.figure.pointOn(one.lightBone, origin, sprite.position)) continue;
+        sprite.halfWidth = sprite.halfHeight = 0.5f * 0.64f;
+        sprite.colour[0] = monsterLuminosity_;
+        sprite.colour[1] = 0.4f * monsterLuminosity_;
+        sprite.colour[2] = 0.2f * monsterLuminosity_;
+        sprite.sheet = folkLight_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
+    }
 }
 
 void Play::chatter(float seconds) {
     folkClock_ = std::fmod(folkClock_ + seconds, 3600.0f);
+    monsterRollWait_ -= seconds;
+    if (monsterRollWait_ <= 0.0f) {
+        monsterRollWait_ = 1.0f / 25.0f;
+        monsterRoll_ ^= monsterRoll_ << 13;
+        monsterRoll_ ^= monsterRoll_ >> 17;
+        monsterRoll_ ^= monsterRoll_ << 5;
+        monsterLuminosity_ = float(monsterRoll_ % 8u + 2u) * 0.1f;
+    }
     for (Standing& one : folk_) {
         if (one.voice < 0) continue;
         one.busy -= seconds;
