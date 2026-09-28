@@ -224,7 +224,8 @@ struct SkillRow {
     int32_t strikeFrom = 0, strikeUntil = 0;
     // And how many of its strikes one body may take in a cast: the channel is for a crowd, and
     // seven strikes into a lone monster was a one-shot ("when there is a single monster the DW
-    // casts all lightning to one monster and basically one-shots him", 2026-09-28). 0 is no cap.
+    // casts all lightning to one monster and basically one-shots him", 2026-09-28; two was still
+    // "overpowered on single target", so it is one). 0 is no cap.
     int32_t strikesEach = 0;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }

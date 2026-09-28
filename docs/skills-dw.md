@@ -247,17 +247,17 @@ cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells
   channeling"*): a strike every three ticks, seven at most.
 - **Its card** says so (`Desk::skillSheet`, *"update tooltip for this spell, because it's multiple
   monsters and is channeling"*): "Each strike" for the damage, then Channel 2.1 s, Strikes up to 7,
-  Area 4 tiles round him, a grey "going round, 2 at most on one body", and Pushes a tile away. Power
+  Area 4 tiles round him, a grey "going round, 1 at most on one body", and Pushes a tile away. Power
   Wave's card got its line the same day: Range 6, Area a line of 12 tiles, "strikes everything it
   passes through". Each strike goes to **one** body within
   **four tiles** (`Spread::Ring` at `reach` 4): the first clockwise from where the last one went
   (`Body::channelTurn`, starting where he faces), so the bolt sweeps round the ring (*"not to all
   monsters at the same time but like rotation"*); a lone body takes every strike, and a body that
-  walks in joins the round. **No body is struck more than twice in a cast** (`strikesEach` 2, the
+  walks in joins the round. **No body is struck more than once in a cast** (`strikesEach` 1, the
   tally on `Body::channelStruck`): seven strikes into a lone monster was a one-shot (*"when there is
-  a single monster the DW casts all lightning to one monster and basically one-shots him"*), so it
-  is a spell for a crowd -- a lone body takes two and the rest are not thrown, four around him share
-  the seven. A strike with nothing in reach is not thrown. Earlier cuts ran three
+  a single monster the DW casts all lightning to one monster and basically one-shots him"*), and two
+  was still *"overpowered on single target"* -- so it is a spell for a crowd: a lone body takes one
+  strike, and up to seven round him take one each. A strike with nothing in reach is not thrown. Earlier cuts ran three
   seconds from a fifth of a second in, striking everything at once, then one at a time.
   The clip's length is logged at every cast (`channel: ... s long`); the sim's clip table does not
   carry 183, so the ticks are written on the row and the log is how to check them.
@@ -309,6 +309,17 @@ somewhere in center of body"*). MU uses a fixed height per spell, 100 units for 
 the fireball; this is one height for both, scaled to the figure. The throwing hand was tried first,
 and the two cast clips put it in very different places at the let-go (1.35 m up and in front on 147,
 1.90 m up overhead on 148), so the ball jumped from throw to throw.
+
+## 2g. The keys, for spells with no cooldown
+
+- **The box wipes and rings for them too** (*"show the spell reset animation also for spells which
+  don't have cooldowns"*): a primary's wait is the cast he is in, or a swing or channel still running
+  (`Body::swingsAt`), wiped over its box against its own clip, and the ring plays as he is free. On
+  steady auto-attack the next cast starts the tick he is free, so the box is never seen ready for a
+  frame: a wipe that was nearly done and has started over also rings (`Desk::lastCooling_`).
+- **Held, it goes on** (*"if I hold W and there is no cooldown it has to continue"*): a key bound to
+  a primary asks again every frame it is down (`gfx::Window::down`), and the realm throws it each time
+  he is free. A key with a cooldown is a press, as before.
 
 ## 2c. Cooldowns outlive a restart
 

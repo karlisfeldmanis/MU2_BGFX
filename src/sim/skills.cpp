@@ -213,8 +213,9 @@ constexpr SkillRow kRows[kSkills] = {
     // ("make it shorter, like actual animation length") -- and it strikes **only while his arm is
     // up** in it, from 0.7 s to 1.6 s (ticks 14 to 32, read off the clip frame by frame on the
     // bench): a strike every three ticks, seven in all, and **it goes round**, each at ONE body
-    // within four tiles of him, and **no body more than twice** (`strikesEach`: a lone monster is
-    // struck twice, not seven times; a crowd of four shares the seven),
+    // within four tiles of him, and **no body more than once** (`strikesEach`: a lone monster is
+    // struck once, not seven times -- two was still "overpowered on single target" -- and a crowd
+    // of up to seven takes a strike each),
     // (`Spread::Ring` at `reach` 4) -- the next one clockwise from the last it struck, so the bolt
     // sweeps round the ring rather than lighting it all at once ("not to all monsters at the same
     // time but like rotation") -- pushing what it leaves standing a step away (`pushes`,
@@ -231,7 +232,7 @@ constexpr SkillRow kRows[kSkills] = {
      "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
      "another within four tiles and throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
-     3, 14, 32, 2},
+     3, 14, 32, 1},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

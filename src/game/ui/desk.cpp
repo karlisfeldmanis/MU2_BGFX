@@ -774,7 +774,12 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         gfx::Window::Key::Skill1, gfx::Window::Key::Skill2, gfx::Window::Key::Skill3,
         gfx::Window::Key::Skill4, gfx::Window::Key::Skill5};
     for (int key = 0; key < Hud::kSkillKeys; ++key) {
-        if (!window.pressed(keys[key]) && scriptedSkill_ != key) continue;
+        // **Held, a spell with no cooldown goes on**: the key asks again every frame it is down,
+        // and the realm throws it each time he is free (the user, 2026-09-28: "if I hold W and
+        // there is no cooldown it has to continue"). A key with a cooldown is a press, as it was.
+        const sim::SkillRow* held = sim::skillNumbered(bound_[key]);
+        const bool again = window.down(keys[key]) && held != nullptr && held->primary();
+        if (!window.pressed(keys[key]) && !again && scriptedSkill_ != key) continue;
         if (bound_[key] == 0) continue;
         // Aimed at what the pointer is over when it is over something, else at nothing -- the
         // realm falls back to whatever the standing order is fighting, which is the usual case:
@@ -813,6 +818,19 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             box.cooling = whole > 0 ? float(left) / float(whole) : 0.0f;
             box.seconds = float(left) * 0.05f;  // 20 Hz
             const sim::SkillRow* row = sim::skillNumbered(box.number);
+            // **A spell with no cooldown still has a wait**: the cast he is in, or a swing or a
+            // channel still running (`swingsAt`), before it can be thrown again. Wiped over its
+            // box like a cooldown, measured against its own clip (`coolsFor` is the clip for a
+            // primary), so the box comes back -- and rings -- as he is free to cast it (the user,
+            // 2026-09-28: "show the spell reset animation also for spells which don't have
+            // cooldowns"). The figure never shows: the clip is under a second.
+            if (row != nullptr && row->primary()) {
+                const int64_t gate = std::max<int64_t>(0, hero.swingsAt - realm.tick());
+                if (gate > 0 && whole > 0) {
+                    box.cooling = std::min(1.0f, float(gate) / float(whole));
+                    box.seconds = float(gate) * 0.05f;
+                }
+            }
             // Dimmed for either reason he cannot throw it: the mana is not there, or there is no
             // blade in his hand (Realm::throwSkill refuses both). MU dims a hotkey it will not
             // honour and says nothing else, and the plate decides nothing here -- it asks the
@@ -830,7 +848,14 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         // half matters as much as the first -- a skill that cooled while he was dry comes back
         // when the potion does, and that is the moment he can throw it.
         const bool throwable = box.number != 0 && box.cooling <= 0.0f && box.affordable;
-        if (throwable && !wasReady_[key] && readyFor_[key] == box.number) {
+        // And a wait that ran straight into the next: cast again on the tick he was free, the box
+        // is never seen ready for a whole frame, so a wipe that was nearly done and has started
+        // over is the moment it came back.
+        const bool rewound = box.number != 0 && readyFor_[key] == box.number &&
+                             lastCooling_[key] > 0.0f && lastCooling_[key] < 0.35f &&
+                             box.cooling > lastCooling_[key] + 0.3f;
+        lastCooling_[key] = box.cooling;
+        if (rewound || (throwable && !wasReady_[key] && readyFor_[key] == box.number)) {
             hud_.readySkill(key);
             core::logf("window: %s back on %s", sim::skillNumbered(box.number)->name,
                        keyName(key));

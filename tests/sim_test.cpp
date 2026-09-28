@@ -1050,8 +1050,8 @@ void testCastLock(const content::Tables& tables) {
               "Lightning is a channel round him as long as its clip, ten seconds to cool, and it "
               "pushes");
         check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32 &&
-                  bolt.strikesEach == 2,
-              "and it strikes every three ticks while his arm is up, twice at most a body");
+                  bolt.strikesEach == 1,
+              "and it strikes every three ticks while his arm is up, once at most a body");
         const int32_t scroll = tables.itemAt(15, 2);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kLightning &&
                   tables.items[size_t(scroll)].teachesEnergy == 72,
@@ -1164,15 +1164,15 @@ void testCastLock(const content::Tables& tables) {
                     channels, pulses, mostPulses, widest, (long long)closest, pushes, away,
                     double(worstStep));
         check(channels > 3, "he channels Lightning through a hunt");
-        // Up to seven: a strike with nothing left in reach -- pushed out of it, or killed -- is not
-        // thrown.
-        check(mostPulses > 3 && mostPulses <= 7, "and a channel strikes up to seven times");
+        // Up to seven, one a body: a strike with nobody left unstruck in reach is not thrown, so a
+        // cast strikes as many times as there are bodies round him, to seven.
+        check(mostPulses >= 1 && mostPulses <= 7, "and a channel strikes up to seven times");
         check(earliest >= 14, "and never before his arm is up");
         check(closest >= wiz.coolsFor(sim::skill::kLightning) && closest >= 60,
               "and never twice inside its cooldown");
         // One body a strike, and round the ring: a channel with company strikes more than one.
         checkEqual(widest, 1, "and each strike goes to one body");
-        check(mostOnOne <= 2, "and no body is struck more than twice in a cast");
+        check(mostOnOne <= 1, "and no body is struck more than once in a cast");
         check(sweptMost >= 2, "and a channel goes round to more than one");
         checkEqual(stillWhile, 0, "and he stands still while it runs");
         check(pushes > 5 && away > 0, "and it pushes what it does not kill, away from him");

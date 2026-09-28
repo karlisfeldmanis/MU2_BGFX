@@ -217,6 +217,7 @@ private:
     // so a skill dropped onto a key is not announced as having come back.
     int32_t readyFor_[Hud::kSkillBoxes] = {0, 0, 0, 0, 0, 0};
     bool wasReady_[Hud::kSkillBoxes] = {false, false, false, false, false, false};
+    float lastCooling_[Hud::kSkillBoxes] = {};  // last frame's wipe, to see one start over
     uint32_t autoBound_ = 0;  // skills that have had their one free key
     bool barRestored_ = false;
     // The list above the plate: latched open by a click on the gold box, and open anyway while
