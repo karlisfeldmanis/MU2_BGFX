@@ -411,10 +411,11 @@ void testInvariants(const content::Tables& tables) {
 // for it, the footprint walk, and equipping as a move through the same gate a window colours by.
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
-    // 128: the catalogue's 118, the nine knight orbs added on 2026-09-23 and the wizard's Scroll
-    // of Soul Barrier on 2026-09-28. A count rather than a list, because what it is guarding is
+    // 131: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
+    // of Soul Barrier on 2026-09-28, and the elf's Greater Defense, Greater Damage and Skillshot
+    // orbs the same day (sprint 15). A count rather than a list, because what it is guarding is
     // the cook -- a recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 128, "128 item rows cooked");
+    checkEqual(long(tables.items.size()), 131, "131 item rows cooked");
     const int shield = tables.itemAt(6, 0), axe = tables.itemAt(1, 0), staff = tables.itemAt(5, 0);
     const int small = tables.itemAt(14, 1);
     check(shield >= 0 && axe >= 0 && staff >= 0 && small >= 0, "the rows the tests use exist");
@@ -1809,6 +1810,27 @@ void testElfSkills(const content::Tables& tables) {
     check(fans > 0, "Skillshot is loosed off the quick slot");
     check(spent > 0 && flown > 0, "and its arrows strike and are paid for");
     std::printf("  %d fans, %d arrows spent, %d landed\n", fans, spent, flown);
+
+    // Her orbs: each teaches its row, Lala sells the Orb of Skillshot, and her guard's orb costs
+    // what the knight's does (the user, 2026-09-28: "same stats as others").
+    const int ward = tables.itemAt(12, 9), might = tables.itemAt(12, 10),
+              shot = tables.itemAt(12, 21), guard = tables.itemAt(12, 3);
+    check(ward >= 0 && might >= 0 && shot >= 0 && guard >= 0, "her three orbs are cooked");
+    if (ward < 0 || might < 0 || shot < 0 || guard < 0) return;
+    check(tables.items[size_t(ward)].teaches == sim::skill::kGreaterDefense &&
+              tables.items[size_t(might)].teaches == sim::skill::kGreaterDamage &&
+              tables.items[size_t(shot)].teaches == sim::skill::kSkillshot,
+          "and each teaches its own skill");
+    checkEqual((long long)sim::buyingPrice(tables.items[size_t(ward)], 0, 1, false),
+               (long long)sim::buyingPrice(tables.items[size_t(guard)], 0, 1, false),
+               "the Orb of Greater Defense costs what the Orb of Defense costs");
+    check(tables.items[size_t(ward)].needLevel == tables.items[size_t(guard)].needLevel,
+          "and asks the same level");
+    int stocked = 0;
+    const sim::Offer* lala = sim::stockOf(242, &stocked);
+    bool sold = false;
+    for (int i = 0; i < stocked; ++i) sold |= lala[i].group == 12 && lala[i].number == 21;
+    check(sold, "Elf Lala sells the Orb of Skillshot");
 }
 
 // The two area shapes, and the cooldown's own arithmetic under them.

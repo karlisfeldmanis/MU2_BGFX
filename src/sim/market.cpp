@@ -92,7 +92,9 @@ constexpr Offer kElfLala[] = {
     sip(0, 0, 1),  sip(8, 0, 3),  sip(1, 1, 1),  sip(9, 1, 3),  sip(2, 2, 1),  sip(10, 2, 3),
     sip(3, 3, 1),  sip(11, 3, 3), sip(4, 4, 1),  sip(12, 4, 3), sip(5, 5, 1),  sip(13, 5, 3),
     sip(6, 6, 1),  sip(14, 6, 3), sip(7, 8, 1),  sip(15, 8, 3),
-    gear(16, kOrbs, 8, 0), gear(17, kOrbs, 9, 0), gear(18, kOrbs, 10, 0), sip(21, 10, 1),
+    gear(16, kOrbs, 8, 0), gear(17, kOrbs, 9, 0), gear(18, kOrbs, 10, 0),
+    // Ours: the Orb of Skillshot, 12/21, on the free cell after her three (sprint 15).
+    gear(19, kOrbs, 21, 0), sip(21, 10, 1),
     gear(22, kBows, 7, 0), gear(23, kBows, 15, 0), gear(24, kOrbs, 11, 0), gear(25, kOrbs, 11, 1),
     gear(26, kOrbs, 11, 2), gear(27, kOrbs, 11, 3), gear(28, kOrbs, 11, 4),
     gear(32, kHelms, 10, 0), gear(34, kArmours, 10, 0), gear(36, kPants, 10, 0),
@@ -140,7 +142,9 @@ int spell(int number) {
 int orb(int number) {
     switch (number) {
         case 8: return 800;
-        case 9: return 3000;
+        // 9, the Orb of Greater Defense, is not 0.75's 3000 any more: it is the elf's guard and
+        // costs what the Orb of Defense and the Scroll of Soul Barrier cost -- the curve at drop
+        // level 6, which its row now carries (the user, 2026-09-28; source/items/misc/Gem03.json).
         case 10: return 7000;
         case 11: return 150;
         default: return 0;
