@@ -2871,6 +2871,24 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
            # the weapon is in the hand or on the back. The rect the world carries is the
            # gate's, and is not that bit; the engine reads the grid.
            "safe_attribute": 1}
+    # The character screen's busts (NewFace01..03) are cooked into this table by cook_one and
+    # are no world's figures, so a figure cook that rebuilt the table from the world alone
+    # took them out -- the create window stood with no face (2026-09-28). Carried over.
+    try:
+        with open(os.path.join(out_dir, figures_table(world))) as handle:
+            before = json.load(handle)
+    except (OSError, ValueError):
+        before = {}
+    busts = {one["name"] for one in index.get("objects", []) if one.get("kind") == "lobby"}
+    for name in sorted(busts & set(before.get("meshes", {}))):
+        out["meshes"].setdefault(name, before["meshes"][name])
+        if name in before.get("clips", {}):
+            out["clips"].setdefault(name, before["clips"][name])
+        if name in before.get("clip_of", {}):
+            out["clip_of"].setdefault(name, before["clip_of"][name])
+        if not any(one["name"] == name for one in out["standalone"]):
+            out["standalone"].append({"name": name, "mesh": name})
+    out["standalone"].sort(key=lambda one: one["name"])
     with open(os.path.join(out_dir, figures_table(world)), "w") as handle:
         json.dump(out, handle, indent=1, sort_keys=True)
 
