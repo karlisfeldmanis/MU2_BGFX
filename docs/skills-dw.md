@@ -168,11 +168,17 @@ energy never goes down here, so that test is not written. Fire is a gate with no
 lifted 120 units, sized 0.8 to 1.1, an ember a frame, its orange light on the ground, two stones at
 the arrival. Ours, tuned on the bench with the user watching:
 
-- **A burning head.** MU's rock read as a black lump on this camera. Two added glows on the `light`
-  sheet (a 2.2 m orange halo, a 1.1 m yellow-white heart) are drawn half a metre toward the eye:
-  at the rock's own centre, the stone sorted over the middle of the flare and hid it.
-- **Embers that cool.** Half the meteor's size, born orange and fading to MU's red and out, so the
-  stream breaks up instead of standing as one red tube.
+- **The meteor's flame, laid on its side.** MU's rock alone read as a black lump, and a big glow over
+  it as *"just orange sphere"*; asked to use the meteor's own assets, the fireball now draws
+  Fire01's flame cone too -- the Lich's streak -- turned by a whole basis so it trails back along
+  the flight, stretched 1.8x (*"little bit longer fire trail"*), with the meteor's 0.4-0.7 flicker
+  at 1.35x. Two wider, dimmer copies of the cone (1.25x at 35%, 1.55x at 18%) blur its mesh edge
+  (*"little bit more blurry"*). The rock turns as it flies.
+- **A haze round it**: a dim 1.9 m orange halo and a 0.55 m heart on the `light` sheet, drawn half a
+  metre toward the eye -- at the rock's own centre, the stone sorted over the flare and hid it.
+- **Embers that cool.** Half the meteor's size, born orange and fading to MU's red and out (on the
+  square root of their life, so they hold heat and the sparks run further back), so the stream
+  breaks up instead of standing as one red tube.
 - **No smoke trail.** MU2 laid soot here; on the bench it went through a brown band (smoke02 under
   `Dust`), a black one (smoke01 has no alpha, so `Dust` drew every puff opaque), too long, and grey
   under `Smoke` -- and was then taken out: *"there is already smoke in fireball"*.

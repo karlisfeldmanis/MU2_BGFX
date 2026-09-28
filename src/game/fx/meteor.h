@@ -165,6 +165,8 @@ private:
         float flown;          // metres since the last ember
         float left;           // reference frames
         float bodyLight;      // this frame's 0.7-1.0 roll
+        float flameLight;     // and the cone's own 0.4-0.7, as the meteor's
+        float tumble;         // radians the rock has turned
         uint32_t target;      // 0 for the bench's fixed point, `aim`
         float aim[3];
         bool missing, passed;
@@ -299,9 +301,34 @@ private:
     // on this camera the rock read as a black lump. Two added glows over it on the `light`
     // sheet -- a wide orange halo and a small yellow-white heart -- flickering with the body
     // roll, so it reads as a thing burning.
-    static constexpr float kHaloWide = 2.2f, kHeartWide = 1.1f;   // metres across
-    static constexpr float kHalo[3] = {1.0f, 0.40f, 0.06f};
-    static constexpr float kHeart[3] = {1.0f, 0.80f, 0.45f};
+    //
+    // Cut back once the meteor's flame cone was laid on it (below): at 2.2 and 1.1 m with a
+    // yellow-white heart the glow WAS the fireball, and it read as an orange sphere (the user,
+    // 2026-09-28, "not its just orange sphere"). Now it is the heat round the rock and the
+    // cone is the fire.
+    // The halo widened again for the blur, but kept deep and dim so it is a haze round the
+    // flame and not a sphere.
+    static constexpr float kHaloWide = 1.9f, kHeartWide = 0.55f;  // metres across
+    static constexpr float kHalo[3] = {0.55f, 0.2f, 0.03f};
+    static constexpr float kHeart[3] = {0.8f, 0.55f, 0.25f};
+    // The meteor's flame cone on the fireball, ours: Fire01's `fire01` group, 1.66 m up the
+    // model's Y from 0.27 below the rock's centre, laid BACK along the flight so the ball drags
+    // its own fire -- the meteor's streak turned on its side. MU gives subtype 1 no cone
+    // (`BlendMeshLight = 0`) and MU2 hid it because a yaw stood it straight up; a full turn
+    // lays it down. Brighter than the meteor's 0.4-0.7, which is lit against the whole rock.
+    static constexpr float kFireFlame = 1.35f;
+    // And drawn longer than it is modelled, along its own axis only, on *"we need little bit
+    // longer fire trail"*: 1.66 m of cone becomes three.
+    static constexpr float kFlameStretch = 1.8f;
+    // Blurred by drawing it again: two ghosts of the cone, each wider and dimmer, so its hard
+    // mesh edge melts into a soft one (*"little bit more blurry fireball please"*). Added, so
+    // they only ever brighten. Scale across the flight, then how much of the cone's light.
+    static constexpr int kFlameGhosts = 2;
+    static constexpr float kGhostWide[kFlameGhosts] = {1.25f, 1.55f};
+    static constexpr float kGhostLight[kFlameGhosts] = {0.35f, 0.18f};
+    // How fast the rock turns in the air, radians a reference frame. Ours: a dead-still stone
+    // under a flickering cone reads as a model and not as a thing thrown.
+    static constexpr float kBallSpin = 0.18f;
     static constexpr float kGlowForward = 0.5f;                   // metres toward the eye
     // Its embers, ours: half the meteor's, born orange and cooling to the red as they shrink,
     // so the stream tapers and breaks up instead of standing as one red tube.
@@ -354,6 +381,11 @@ private:
     bool loadObj(const std::string& path, float scale, const std::string& groupFilter,
                  std::vector<Corner>& out);
     // One model's triangles, placed and turned, as quads whose last two corners coincide.
+    // The same, turned by a whole basis: the model's X, Y and Z land on `x`, `y` and `z`.
+    void submitAlong(gfx::Effects& effects, const std::vector<Corner>& tris,
+                     bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3],
+                     const float x[3], const float y[3], const float z[3], float scale,
+                     const float colour[3], float alpha) const;
     void submit(gfx::Effects& effects, const std::vector<Corner>& tris,
                 bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3], float lean,
                 float tumble, float scale, const float colour[3], float alpha) const;

@@ -279,6 +279,8 @@ void Meteor::hurl(const float from[3], const float to[3], uint32_t target) {
     ball->size = between(kSmallestBall, kLargestBall);
     ball->left = kHurlFrames;
     ball->bodyLight = kBrightestGlow;
+    ball->flameLight = kBrightestFlame;
+    ball->tumble = unit() * kTwoPi;
     ball->target = target;
     for (int k = 0; k < 3; ++k) ball->aim[k] = to[k];
 }
@@ -316,6 +318,8 @@ bool Meteor::hurling(Hurled& ball, float seconds, bool standing, const float* th
 
     // The rock's 0.7-1.0 roll, re-rolled every frame, and its last five frames going out.
     ball.bodyLight = between(kDimmestGlow, kBrightestGlow);
+    ball.flameLight = between(kDimmestFlame, kBrightestFlame);
+    ball.tumble += kBallSpin * refFrames;
     if (ball.left < kFadesUnder) {
         ball.bodyLight = std::max(0.0f, ball.bodyLight - (kFadesUnder - ball.left) * kFadeStep);
     }
@@ -520,6 +524,34 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
     if (std::fabs(quake_) < kQuakeEpsilon) quake_ = 0.0f;
 }
 
+void Meteor::submitAlong(gfx::Effects& effects, const std::vector<Corner>& tris,
+                         bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3],
+                         const float x[3], const float y[3], const float z[3], float scale,
+                         const float colour[3], float alpha) const {
+    if (tris.empty() || !bgfx::isValid(sheet)) return;
+    gfx::Sprite sprite;
+    sprite.placed = true;
+    sprite.sheet = sheet;
+    sprite.blend = blend;
+    for (int k = 0; k < 3; ++k) sprite.colour[k] = colour[k];
+    sprite.colour[3] = alpha;
+    for (size_t i = 0; i + 2 < tris.size(); i += 3) {
+        for (int k = 0; k < 4; ++k) {
+            const Corner& p = tris[i + size_t(std::min(k, 2))];
+            for (int a = 0; a < 3; ++a) {
+                sprite.corner[k][a] = at[a] + (p.x * x[a] + p.y * y[a] + p.z * z[a]) * scale;
+            }
+            sprite.cornerUv[k][0] = p.u;
+            sprite.cornerUv[k][1] = p.v;
+        }
+        for (int a = 0; a < 3; ++a) {
+            sprite.position[a] =
+                (sprite.corner[0][a] + sprite.corner[1][a] + sprite.corner[2][a]) / 3.0f;
+        }
+        effects.add(sprite);
+    }
+}
+
 void Meteor::submit(gfx::Effects& effects, const std::vector<Corner>& tris,
                     bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3], float lean,
                     float tumble, float scale, const float colour[3], float alpha) const {
@@ -589,7 +621,40 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
         if (!f.alive || fireGroupCount_ == 0) continue;
         const float white[3] = {1.0f, 1.0f, 1.0f};
         submit(effects, fireGroups_[0].triangles, fireGroups_[0].sheet, fireGroups_[0].blend,
-               f.at, 0.0f, 0.0f, f.size, white, 1.0f);
+               f.at, f.tumble, f.tumble * 0.7f, f.size, white, 1.0f);
+        if (fireGroupCount_ > 1) {
+            // The cone's Y is laid back along the flight; X is level and across it; Z completes
+            // the turn. A ball flying straight up or down has no level across, and takes X.
+            const float back[3] = {-f.along[0], -f.along[1], -f.along[2]};
+            const float drawn[3] = {back[0] * kFlameStretch, back[1] * kFlameStretch,
+                                    back[2] * kFlameStretch};
+            float across[3] = {back[2], 0.0f, -back[0]};
+            float wide = std::sqrt(across[0] * across[0] + across[2] * across[2]);
+            if (wide < 1e-3f) {
+                across[0] = 1.0f;
+                across[2] = 0.0f;
+                wide = 1.0f;
+            }
+            across[0] /= wide;
+            across[2] /= wide;
+            const float third[3] = {across[1] * back[2] - across[2] * back[1],
+                                    across[2] * back[0] - across[0] * back[2],
+                                    across[0] * back[1] - across[1] * back[0]};
+            const float cone[3] = {kDaylight[0] * f.flameLight * kFireFlame,
+                                   kDaylight[1] * f.flameLight * kFireFlame,
+                                   kDaylight[2] * f.flameLight * kFireFlame};
+            submitAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
+                        fireGroups_[1].blend, f.at, across, drawn, third, f.size, cone, 1.0f);
+            for (int g = 0; g < kFlameGhosts; ++g) {
+                const float w = kGhostWide[g];
+                const float ax[3] = {across[0] * w, across[1] * w, across[2] * w};
+                const float az[3] = {third[0] * w, third[1] * w, third[2] * w};
+                const float dim[3] = {cone[0] * kGhostLight[g], cone[1] * kGhostLight[g],
+                                      cone[2] * kGhostLight[g]};
+                submitAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
+                            fireGroups_[1].blend, f.at, ax, drawn, az, f.size, dim, 1.0f);
+            }
+        }
         if (!bgfx::isValid(glowSheet_)) continue;
         // Drawn IN FRONT of the rock, half a metre toward the eye: the flare's light is in its
         // middle, and at the rock's own centre the alpha-blended stone sorted over exactly that
@@ -632,7 +697,9 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
         sprite.colour[3] = 1.0f;
         if (m.cools && m.born > 0.0f) {
             // From its own orange toward the meteor's red, and down to nothing, over its life.
-            const float life = std::max(0.0f, m.left / m.born);
+            // The square root, so they hold their heat for longer before going out and the
+            // trail of sparks runs further back behind the flame.
+            const float life = std::sqrt(std::max(0.0f, m.left / m.born));
             for (int c = 0; c < 3; ++c) {
                 sprite.colour[c] = (kGlow[c] + (m.colour[c] - kGlow[c]) * life) * life;
             }
