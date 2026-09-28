@@ -9,7 +9,9 @@
 #include <cstdlib>
 
 #include "app/preloader.h"
+#include "core/files.h"
 #include "core/log.h"
+#include "game/roster.h"
 #include "game/shine.h"
 #include "gfx/views.h"
 #include "sim/items.h"
@@ -62,7 +64,15 @@ void PlayMode::readSave(Context& ctx) {
                 : (args.frames == 0 && args.arena.empty()) ? game::defaultSavePath()
                                                            : std::string();
     if (!savePath_.empty() && !args.fresh && game::loadSave(savePath_, saved_)) {
-        if (saved_.world == args.world) {
+        if (saved_.fresh) {
+            // Made on the character screen and not yet played: his class is all there is, and
+            // he is made as a new character is -- level one, the class's own weapon, at the
+            // town's gate -- into this file, which keeps his name and slot.
+            args.kin = int(saved_.hero.kin);
+            args.level = 1;
+            args.weapon = game::cradleWeapon(saved_.hero.kin);
+            args.shield.clear();
+        } else if (saved_.world == args.world) {
             resumed_ = true;
             args.kin = int(saved_.hero.kin);
             args.level = saved_.hero.level;
@@ -85,6 +95,8 @@ void PlayMode::readSave(Context& ctx) {
 void PlayMode::keep(Context& ctx) {
     if (savePath_.empty() || !world_.played().isOpen()) return;
     game::Saved now;
+    now.name = saved_.name;
+    now.slot = saved_.slot;
     now.world = ctx.args.world;
     now.hero = world_.played().record();
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
@@ -278,6 +290,8 @@ bool PlayMode::open(Context& ctx) {
     // with --frames keeps Escape as the quit it always was, so a review can be stopped.
     if (desk_.ready() && world_.played().isOpen()) {
         desk_.setWorld(args.world);
+        // Switch Character goes back to the screen this run came through, and only then.
+        desk_.allowSwitch(args.lobby);
         fillSettings(ctx.window, args.fps, &desk_.settings());
         const bool held = args.frames == 0;
         desk_.holdEscape(held);
@@ -478,6 +492,7 @@ bool PlayMode::scriptedPointer(Context& ctx, const Frame& at, const float* view,
 void PlayMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
     const double deltaSeconds = at.deltaSeconds;
+    if (args.lobby && args.lobbyBack >= 0 && at.index >= args.lobbyBack) backNow_ = true;
 
     if (!savePath_.empty() &&
         double(bx::getHPCounter() - keptAt_) / double(bx::getHPFrequency()) > 15.0) {
@@ -649,6 +664,25 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 }
             }
         }
+    }
+    // The music: MuMain's ManageBackgroundMusic (SceneManager.cpp:992), the tavern half only.
+    // In Lorencia's safe zone MU plays Pub.mp3 while he stands on the tavern floor -- HeroTile 4,
+    // which is what World::indoors asks -- and main_theme.mp3 everywhere else. The main theme is
+    // kept for the character screen alone (the user, 2026-09-27: "don't play main theme anymore
+    // in game ... but keep pub logic"), so off the tavern floor the world is silent of music.
+    if (world_.played().isOpen()) {
+        bool pub = false;
+        if (args.world == "lorencia") {
+            const sim::Body& hero = world_.played().realm().hero();
+            const content::Tables* tables = world_.played().realm().tables();
+            float feetX = 0.0f, feetZ = 0.0f;
+            world_.characterAt(&feetX, &feetZ);
+            pub = tables && tables->grid.safe(hero.column(), hero.row()) &&
+                  world_.indoors(feetX, feetZ);
+        }
+        const std::string path = ctx.paths.assets + "/music/Pub.mp3";
+        if (pub && core::fileExists(path)) world_.played().sound().music(path);
+        else if (!pub) world_.played().sound().stopMusic();
     }
     // The ears, onto the camera just placed: its heading is what the stereo field turns by.
     if (world_.played().isOpen()) {

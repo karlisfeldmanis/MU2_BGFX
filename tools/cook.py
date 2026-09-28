@@ -1085,6 +1085,18 @@ LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
 # MU's hidden anchors in Lorencia: MoveObject's WD_0LORENCIA calls CreateFire(0|1|2, o, 0,0,0)
 # on MODEL_LIGHT01..03 and hides the holder (ZzzObject.cpp). Kind 1 is a fire, 4 a smoke.
 ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
+# And world 74's, the character screen's, which are placements with no mesh rather than hidden
+# ones: GMEmpireGuardian4 hides types 79 and 132 (HiddenMesh = -2) and hangs a fire off 79 --
+# a light sprite and flame particles, RenderObjectVisual case 79 -- and smoke off 132 (case 132).
+# Type 129's blue cloud is not carried: the user keeps that sky black.
+ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4}}
+BRAZIER_BOWLS = {"charscene": ("Object15",)}
+# World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
+# 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
+# Object130, whose green `angeflo_r` glow slabs stood on the wall tops until this was read.
+HIDDEN_BY_WORLD = {"charscene": {"Object80", "Object81", "Object83", "Object84", "Object85",
+                                 "Object86", "Object87", "Object130", "Object131", "Object132",
+                                 "Object133"}}
 # What each throws: CreateFire(0)'s own (ZzzEffectFireLeave.cpp:61) -- L = rand[0.6, 1.1),
 # colour (L, 0.6L, 0.4L), range 4 -- with index.json's flicker for every other fire. Smoke
 # throws no light. Colour, low, high, reach, hz, smoothing.
@@ -1315,7 +1327,25 @@ def cook_placements(world, out_dir, chunk_tiles):
     dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = buried = 0
 
     anchors = []
+    world_anchors = ANCHOR_KINDS_BY_WORLD.get(world, {})
+    # The braziers' bowls (Object15 on world 74), for a smoke anchor standing in one.
+    bowls = [one["at"] for one in map_data["objects"]
+             if one["model"] in BRAZIER_BOWLS.get(world, ())]
     for one in map_data["objects"]:
+        if one["model"] in world_anchors:
+            sx, sy, sz = one["at"]
+            kind = world_anchors[one["model"]]
+            anchors.append((kind, (sx / per_tile, sz / per_tile, -sy / per_tile)))
+            # A smoke in a brazier's bowl burns as well -- ours: MU only smokes the brazier at
+            # the row's left end while its three fellows burn, and the user asked for it lit.
+            if kind == 4 and any(math.hypot(bx - sx, by - sy) < 0.5 * per_tile
+                                 for bx, by, _bz in bowls):
+                anchors.append((1, (sx / per_tile, sz / per_tile, -sy / per_tile)))
+            dropped_hidden += 1
+            continue
+        if one["model"] in HIDDEN_BY_WORLD.get(world, ()):
+            dropped_hidden += 1
+            continue
         if one.get("hidden"):
             # MU's hidden anchors are still something: Light01 is a fire nobody sees the
             # holder of, Light02 and Light03 are chimney smoke (MoveObject, WD_0LORENCIA).

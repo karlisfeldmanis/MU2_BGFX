@@ -116,6 +116,9 @@ bool loadSave(const std::string& path, Saved& out) {
         return false;
     }
     Saved saved;
+    saved.name = doc["name"].stringOr("");
+    saved.slot = int(doc["slot"].numberOr(-1));
+    saved.fresh = doc["fresh"].boolOr(false);
     saved.world = doc["world"].stringOr("");
     sim::HeroRecord& hero = saved.hero;
     hero.kin = sim::Kin(int(doc["class"].numberOr(2)));
@@ -197,8 +200,11 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
     std::FILE* f = begin(path, &temporary);
     if (!f) return false;
     const sim::HeroRecord& hero = saved.hero;
-    std::fprintf(f, "{\n  \"version\": %d,\n  \"world\": \"%s\",\n", kVersion,
-                 saved.world.c_str());
+    std::fprintf(f, "{\n  \"version\": %d,\n", kVersion);
+    // The name is the roster's rule, letters and digits only, so it needs no escaping.
+    if (!saved.name.empty()) std::fprintf(f, "  \"name\": \"%s\",\n", saved.name.c_str());
+    if (saved.slot >= 0) std::fprintf(f, "  \"slot\": %d,\n", saved.slot);
+    std::fprintf(f, "  \"world\": \"%s\",\n", saved.world.c_str());
     std::fprintf(f, "  \"class\": %d,\n  \"column\": %d,\n  \"row\": %d,\n  \"facing\": %.4f,\n",
                  int(hero.kin), hero.column, hero.row, double(hero.facing));
     std::fprintf(f, "  \"level\": %d,\n  \"experience\": %llu,\n  \"points_in_hand\": %d,\n",
@@ -244,7 +250,10 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
 }
 
 std::string vaultPathBeside(const std::string& savePath) {
-    return (std::filesystem::path(savePath).parent_path() / "vault.json").string();
+    std::filesystem::path folder = std::filesystem::path(savePath).parent_path();
+    // A roster character's save is one folder down from the account's; the vault is not.
+    if (folder.filename() == "characters") folder = folder.parent_path();
+    return (folder / "vault.json").string();
 }
 
 bool loadVault(const std::string& path, Saved& saved) {

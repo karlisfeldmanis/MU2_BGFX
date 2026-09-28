@@ -196,6 +196,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             quitAsked_ = true;
             core::logf("window: exit asked from the menu");
         }
+        if (asked.switched) {
+            switchAsked_ = true;
+            core::logf("window: switch character asked from the menu");
+        }
     }
     // Modal, as the box is: the menu has the pointer and the keys while it is up, and the frame
     // it went down on hands neither on, so the click that shut it does not walk him.

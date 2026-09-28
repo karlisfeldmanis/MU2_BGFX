@@ -10,9 +10,9 @@
 //
 // Two pages in one sheet: the menu, and Options, which offers only what
 // can change while the game runs -- the display (a window or the whole screen), the window's
-// size, v-sync, the volume and the frame-rate counter. Switch Character is
-// drawn and does nothing: there is no character select until sprint 9, and the user asked for
-// the button to stand there inactive until there is.
+// size, v-sync, the volume and the frame-rate counter. Switch Character goes back to the
+// character screen (game/ui/lobby.h) when the run came through one, and stands there inactive
+// when it did not -- a --frames review or a bench-made hero has no screen to go back to.
 //
 // Modal, as the number box is: while it is up the desk gives it the pointer and every key. The
 // world is NOT held -- the user, 2026-09-27: *"dont freeze character when open menu"* -- so a
@@ -37,6 +37,7 @@ public:
         bool quit = false;      // Exit Game, which is instant: the user, 2026-09-27
         bool clicked = false;   // a button answered, for the interface's click
         bool settings = false;  // something on the Options page changed
+        bool switched = false;  // Switch Character: back to the character screen
     };
 
     // What Options edits. The caller fills it from the window and the run, and applies it back
@@ -60,6 +61,9 @@ public:
     void open(const gfx::Interface& interface);
 
     void show();
+    // Whether Switch Character answers. Only a run that came through the character screen
+    // (--lobby) has one to go back to; everywhere else the button stands there inactive.
+    void allowSwitch(bool on) { switchable_ = on; }
     void hide() { up_ = false; }
     bool up() const { return up_; }
 
@@ -80,6 +84,7 @@ private:
 
     gfx::Canvas canvas_;
     bool up_ = false;
+    bool switchable_ = false;
     Page page_ = Page::Main;
     Settings settings_;
     std::string place_;
@@ -90,6 +95,7 @@ private:
     float lift_[kTargets] = {};
     struct Drawn {
         bool up = false;
+        bool switchable = false;
         Page page = Page::Main;
         Settings settings;
         std::string place;
@@ -97,7 +103,7 @@ private:
         int over = -1, pressing = -1;
         float lift[kTargets] = {};
         bool operator==(const Drawn& o) const {
-            if (up != o.up || page != o.page || !(settings == o.settings) ||
+            if (up != o.up || switchable != o.switchable || page != o.page || !(settings == o.settings) ||
                 place != o.place || width != o.width || height != o.height || over != o.over ||
                 pressing != o.pressing) {
                 return false;

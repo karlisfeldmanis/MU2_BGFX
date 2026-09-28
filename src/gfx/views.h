@@ -51,7 +51,9 @@ enum View : uint16_t {
     // what is hovered, and a turning picture in the tooltip's head is a picture that will not
     // hold still to be read.
     ViewStageTip = 64,
-    ViewCount = 65,
+    // The character screen's create window: the class's bust, photographed (game/bust.h).
+    ViewStageBust = 65,
+    ViewCount = 66,
 };
 constexpr int kBloomLevels = 5;
 constexpr int kProbeSize = 128;  // the raw cube's edge, texels

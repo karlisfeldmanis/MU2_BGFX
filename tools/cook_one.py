@@ -131,6 +131,17 @@ def resolve(name, world):
             meshes.setdefault(base, glb)
             return "figure", "figures", meshes, figures
 
+    # A bust for the character screen's create window: index.json's kind "lobby", NewFace01 to
+    # 03. Cooked into the figures as a standalone body with its own two actions, which is how
+    # the game stands one (game/pedestals.h reads it by name); `cook.py --only figures` reaches
+    # these only when a map places one, and none does.
+    for one in index.get("objects", []):
+        if one.get("kind") == "lobby" and lower(one.get("name")) == wanted:
+            glb = os.path.join(ASSETS, one["glb"])
+            if os.path.exists(glb):
+                figures = load_json(os.path.join(ASSETS, "cooked", "figures", "figures.json"), {})
+                return "bust", "figures", {one["name"]: glb}, figures
+
     # A world object.
     world_glb = os.path.join(ASSETS, "world", world, name, f"{name}.glb")
     if os.path.exists(world_glb):
@@ -219,7 +230,7 @@ def cook_item(kind, area, meshes, extra, texcook):
     os.makedirs(mesh_dir, exist_ok=True)
 
     hidden = {}
-    if kind == "figure":
+    if kind in ("figure", "bust"):
         for row in extra.get("monsters", []):
             if row.get("hidden_mesh") is not None:
                 hidden.setdefault(row["mesh"], row["hidden_mesh"])
@@ -260,6 +271,22 @@ def cook_item(kind, area, meshes, extra, texcook):
     elif area == "figures":
         table_path = os.path.join(area_dir, "figures.json")
         extra.setdefault("meshes", {}).update(cooked)
+        if kind == "bust":
+            # Its clips are inside it, as a monster's are: action0 the idle, action1 the
+            # greeting (CharMakeWin.cpp:462), baked flat and named by MU's own slot.
+            for mesh_name, path in sorted(meshes.items()):
+                document, binary = read_glb(path)
+                clip_path = os.path.join(area_dir, "clips", mesh_name + ".muc")
+                os.makedirs(os.path.dirname(clip_path), exist_ok=True)
+                cook.cook_clips(document, binary, clip_path, {}, {}, set())
+                extra.setdefault("clips", {})[mesh_name] = os.path.relpath(clip_path, ASSETS)
+                extra.setdefault("clip_of", {})[mesh_name] = mesh_name
+                standing = [one for one in extra.get("standalone", [])
+                            if one["name"] != mesh_name]
+                standing.append({"name": mesh_name, "mesh": mesh_name})
+                extra["standalone"] = sorted(standing, key=lambda one: one["name"])
+                print(f"cook_one: {mesh_name}: its own clips -> "
+                      f"{os.path.relpath(clip_path, ROOT)}, standing alone in figures.json")
         write_json(table_path, extra)
     else:
         town = os.path.join(area_dir, f"{area}.mut")

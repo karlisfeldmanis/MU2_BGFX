@@ -29,6 +29,10 @@ public:
     bool open(Context& ctx) override;
     bool quitEarly() const override { return quitEarly_; }
     bool quitting() const override { return desk_.ready() && desk_.quitAsked(); }
+    // Back to the character screen, on the menu's Switch Character.
+    Next next() const override {
+        return (desk_.ready() && desk_.switchAsked()) || backNow_ ? Next::Lobby : Next::None;
+    }
     void frame(Context& ctx, const Frame& at) override;
     const gfx::Camera& camera() const override { return world_.camera(); }
     void report(Context& ctx) override;
@@ -107,6 +111,7 @@ private:
     std::vector<float> pointGrid_;  // x, y, z a point
 
     bool quitEarly_ = false;
+    bool backNow_ = false;  // --lobby-back's frame has come
 };
 
 }  // namespace mu::app

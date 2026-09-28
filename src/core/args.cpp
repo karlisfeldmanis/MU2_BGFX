@@ -125,6 +125,15 @@ void printUsage() {
         "  --level N                 the character's level (default 1)\n"
         "  --spend STAT              where a levelled character's points go "
         "(strength by default)");
+    logf(
+        "  --lobby                   the character screen first, then the world he is in\n"
+        "  --roster DIR              the characters in DIR, not the account's own folder\n"
+        "  --lobby-pick N            pick pedestal N (0-4)\n"
+        "  --lobby-create K          the create window on class K: 0 wizard, 1 knight, 2 elf\n"
+        "  --lobby-name S            and S typed into its name\n"
+        "  --lobby-delete            the deletion's question over the pick\n"
+        "  --lobby-enter F           enter the pick on frame F (review)\n"
+        "  --lobby-back F            and go back to the screen on frame F (review)");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -207,6 +216,22 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.savePath = v;
         } else if (!std::strcmp(s, "--fresh")) {
             a.fresh = true;
+        } else if (!std::strcmp(s, "--lobby")) {
+            a.lobby = true;
+        } else if (!std::strcmp(s, "--roster")) {
+            if (const char* v = next(s)) a.rosterPath = v;
+        } else if (!std::strcmp(s, "--lobby-pick")) {
+            if (const char* v = next(s)) a.lobbyPick = std::atoi(v);
+        } else if (!std::strcmp(s, "--lobby-create")) {
+            if (const char* v = next(s)) a.lobbyCreate = std::atoi(v);
+        } else if (!std::strcmp(s, "--lobby-name")) {
+            if (const char* v = next(s)) a.lobbyName = v;
+        } else if (!std::strcmp(s, "--lobby-delete")) {
+            a.lobbyDelete = true;
+        } else if (!std::strcmp(s, "--lobby-enter")) {
+            if (const char* v = next(s)) a.lobbyEnter = std::atoi(v);
+        } else if (!std::strcmp(s, "--lobby-back")) {
+            if (const char* v = next(s)) a.lobbyBack = std::atoi(v);
         } else if (!std::strcmp(s, "--headless")) {
             a.headless = true;
         } else if (!std::strcmp(s, "--seed")) {

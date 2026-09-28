@@ -19,6 +19,15 @@
 namespace mu::game {
 
 struct Saved {
+    // Who he is on the character screen (game/roster.h): the name he was made with and the
+    // pedestal he stands on, 0 to 4. A file from before the screen has neither, and reads as
+    // no name and slot -1; the roster names it when it takes it in.
+    std::string name;
+    int slot = -1;
+    // Made on the character screen and never played: the class and nothing else is his yet,
+    // so the game makes him as a new character is made, at the town's gate with the class's
+    // own weapon, and the first save fills the rest in. Never written back.
+    bool fresh = false;
     std::string world;
     sim::HeroRecord hero;             // hero.slots filled by resolveSave
     int32_t quick[5] = {-1, -1, -1, -1, -1};  // item rows, -1 for none; filled by resolveSave
@@ -66,7 +75,8 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
 
 // **The vault is the account's, not the character's**, as MU's is (OpenMU keeps it on
 // `Account.Vault`), so it is its own file beside the character's -- vault.json in the save's
-// folder -- and a new character finds what the last one left. Read into `saved.vaultZen` and
+// folder, or in the folder above when the save is one of the roster's in `characters/` -- and
+// every character on the account finds what the last one left. Read into `saved.vaultZen` and
 // `saved.vaultItems`; false when there is none, which is an empty vault and not an error.
 std::string vaultPathBeside(const std::string& savePath);
 bool loadVault(const std::string& path, Saved& saved);

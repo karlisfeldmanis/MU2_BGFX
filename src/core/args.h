@@ -147,6 +147,24 @@ struct Args {
     // and starts a new character, whose first save then replaces it.
     std::string savePath;
     bool fresh = false;
+    // --lobby: the character screen first (app/modes/lobby_mode.h), and the world after it on
+    // the character picked. `--roster DIR` reads and writes the characters there instead of the
+    // account's own folder, which is what a review run wants: a scripted create or delete must
+    // not touch the player's characters. The rest put the screen in a state for a still:
+    // `--lobby-pick N` picks slot N, `--lobby-create K` opens the create window on class K
+    // (0 wizard, 1 knight, 2 elf, the window's order), `--lobby-name S` types S into it, and
+    // `--lobby-delete` raises the deletion's question over the pick.
+    bool lobby = false;
+    std::string rosterPath;
+    int lobbyPick = -1;
+    int lobbyCreate = -1;
+    std::string lobbyName;
+    bool lobbyDelete = false;
+    // A review harness for the handoff, both frame numbers counted across it: `--lobby-enter F`
+    // enters the pick on frame F, and `--lobby-back F` has the world go back to the screen on F,
+    // as the menu's Switch Character does.
+    int lobbyEnter = -1;
+    int lobbyBack = -1;
     // A review harness and not a feature: every N frames it puts the pointer on a pixel from a
     // short fixed list and clicks it, through the same unprojection a hand would. It is how a
     // run with nobody at the mouse can show that a click walks and a click on a monster fights.

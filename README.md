@@ -27,10 +27,13 @@ than MU2's, and still traced to 0.75 or marked `invention`. MU2's `pipeline/`, `
     ./bootstrap.sh        # once: fetches bgfx, bx, bimg, cgltf, stb_image into extern/
     ./build.sh            # Ninja, Release, ccache when it is there
     ./build.sh --trace    # bgfx's own trace in the log, where Metal's refusals show
-    ./main.sh             # the game: a new Dark Knight in Lorencia. esc quits
+    ./main.sh             # the game: the character screen, then the one you enter
+    ./main.sh --new       # past it: a new Dark Knight straight into Lorencia
     ./run.sh              # the same binary with nothing decided for you; esc quits
 
-`main.sh` is the one that plays. It makes a character the way MU makes one — the naked class
+`main.sh` is the one that plays. It opens on the character screen, where characters are
+made, picked and deleted, and enters the world on the one you pick. `--new` passes it by and
+makes a character the way MU makes one — the naked class
 body, level one, with the Small Axe his class is given and nothing else — puts him down in
 Lorencia's square, and turns vsync on, because a frame paced to the display is what a game
 wants and a number is what `run.sh` is for. Left click walks, left click on a monster fights

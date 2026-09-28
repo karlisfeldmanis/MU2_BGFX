@@ -11,6 +11,8 @@
 // something the budget accounts cannot see.
 #pragma once
 
+#include <cstdint>
+
 #include "app/context.h"
 
 namespace mu::app {
@@ -41,6 +43,15 @@ public:
     // True once the mode has asked to end the run -- the game menu's Exit Game. The loop
     // finishes the frame it was asked on and leaves; shutdown() still runs, so a save is kept.
     virtual bool quitting() const { return false; }
+
+    // Which mode this one hands the run to, once it is done: the character screen to the world
+    // on the character picked, and the world back to the screen on the menu's Switch Character.
+    // The Application finishes the frame, shuts this mode down -- so a save is kept -- and opens
+    // the next against the same window, renderer and textures. What the next is to open with
+    // (the save, the world, the class) is left in the arguments, which is what a mode opens
+    // from anyway.
+    enum class Next : uint8_t { None, Play, Lobby };
+    virtual Next next() const { return Next::None; }
 
     // One frame of this mode's own work: its input, its update, its gather and its draw.
     virtual void frame(Context& ctx, const Frame& at) = 0;

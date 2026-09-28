@@ -36,15 +36,27 @@ void TimeOfDay::set(int which) {
         overlayStamp_ = core::fileModified(overlay);
         lighting_->readOverlay(overlay);
     }
+    sceneStamp_ = 0;
+    if (!scene_.empty()) {
+        sceneStamp_ = core::fileModified(scene_);
+        lighting_->readOverlay(scene_);
+    }
     if (which_ > 0 || announce_) core::logf("time of day: %s", kTimes[which_]);
 }
 
 void TimeOfDay::reloadIfChanged() {
     // The overlay is watched as well as the sheet, so dusk can be tuned live too.
     if (lighting_->reloadIfChanged(paths_->sheet) ||
-        (which_ > 0 && core::fileModified(overlayPath(which_)) != overlayStamp_)) {
+        (which_ > 0 && core::fileModified(overlayPath(which_)) != overlayStamp_) ||
+        (!scene_.empty() && core::fileModified(scene_) != sceneStamp_)) {
         set(which_);
     }
+}
+
+void TimeOfDay::setScene(const std::string& path) {
+    if (path == scene_) return;
+    scene_ = path;
+    set(which_);
 }
 
 float daylightOf(const gfx::Lighting& lighting) {

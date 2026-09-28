@@ -59,6 +59,9 @@ public:
     // is to tune with the window open, and at 470 fps a count of frames stat'ed the file a
     // hundred times a second. Re-applies when either the sheet or the overlay has moved.
     void reloadIfChanged();
+    // A sheet of the scene's own, laid over the base and the time of day: the character screen's
+    // clearer air (sheets/lobby.json). Empty takes it off. Watched and re-applied as the others are.
+    void setScene(const std::string& path);
 
 private:
     std::string overlayPath(int which) const;
@@ -66,6 +69,8 @@ private:
     gfx::Lighting* lighting_ = nullptr;
     int which_ = 0;
     int64_t overlayStamp_ = 0;
+    std::string scene_;
+    int64_t sceneStamp_ = 0;
     bool announce_ = false;
 };
 

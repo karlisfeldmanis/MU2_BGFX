@@ -81,6 +81,7 @@ add_executable(mu2
   src/app/context.cpp
   src/app/preloader.cpp
   src/app/modes/play_mode.cpp
+  src/app/modes/lobby_mode.cpp
   src/app/modes/bench_mode.cpp
   src/core/log.cpp
   src/core/args.cpp
@@ -121,6 +122,9 @@ add_executable(mu2
   src/game/world/boids.cpp
   src/game/world/leaves.cpp
   src/game/save.cpp
+  src/game/roster.cpp
+  src/game/pedestals.cpp
+  src/game/bust.cpp
   src/game/shine.cpp
   src/game/world/ornaments.cpp
   src/game/world/shades.cpp
@@ -156,6 +160,8 @@ add_executable(mu2
   src/game/ui/chest.cpp
   src/game/ui/amount.cpp
   src/game/ui/menu.cpp
+  src/game/ui/slab.cpp
+  src/game/ui/lobby.cpp
   src/game/ui/endurance.cpp
   src/game/ui/describe.cpp
   src/game/ui/desk.cpp

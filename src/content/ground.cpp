@@ -6,6 +6,7 @@
 #include <bx/allocator.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 
@@ -130,6 +131,38 @@ std::string materialNameFor(const core::Json& surface) {
     const std::string base = surfaceStem(surface["base"]["albedo"].stringOr(""));
     const std::string overlay = surfaceStem(surface["overlay"]["albedo"].stringOr(""));
     return overlay.empty() ? base : base + "__" + overlay;
+}
+
+// A surface pair as the tile sheets MU names it, whatever each side's spelling: lower case, and
+// each half cut to the "tile..." name. The glb's material is named after MU's own tiles
+// ("TileGround01__TileGround03"), and ground_surfaces.json after the decoded sheets, which carry
+// the pipeline's own dressing -- Lorencia's "TileGrass01 1_tiling_hd.png", and world 74's
+// "cs_tileground01_x3_tiling_hd.png", prefixed because the texture pool is flat and Lorencia
+// already owns "tileground01" (MU2 docs/character-select.md). The pairing is still checked side
+// by side; only the dressing is taken off before comparing.
+std::string tileKey(const std::string& pair) {
+    std::string out;
+    size_t from = 0;
+    while (from <= pair.size()) {
+        const size_t split = pair.find("__", from);
+        std::string half = pair.substr(from, split == std::string::npos ? std::string::npos
+                                                                        : split - from);
+        for (char& c : half) c = char(std::tolower(static_cast<unsigned char>(c)));
+        for (const char* suffix : {"_tiling_hd", "_x3"}) {
+            const std::string tail(suffix);
+            if (half.size() > tail.size() &&
+                half.compare(half.size() - tail.size(), tail.size(), tail) == 0) {
+                half.resize(half.size() - tail.size());
+            }
+        }
+        const size_t tile = half.find("tile");
+        if (tile != std::string::npos) half = half.substr(tile);
+        if (!out.empty()) out += "__";
+        out += half;
+        if (split == std::string::npos) break;
+        from = split + 2;
+    }
+    return out;
 }
 
 }  // namespace
@@ -610,7 +643,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
         const std::string materialName = m && m->name ? m->name : "";
         const std::string expected = materialNameFor(surface);
         const int stated = int(surface["surface"].numberOr(-1.0));
-        if (stated != int(pi) || materialName != expected) {
+        if (stated != int(pi) || tileKey(materialName) != tileKey(expected)) {
             core::logError("%s primitive %zu wears material '%s', and ground_surfaces.json's "
                            "entry %zu says surface %d and the pair '%s'. The primitive's place "
                            "in the mesh IS its surface, so this is not something to draw",

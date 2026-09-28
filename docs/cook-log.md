@@ -98,3 +98,6 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Stone04 | world | 2026-09-22 11:30 | passed | rebuilt on today's pipeline: three small stones on ston01, pale grey on the turf at noon and dusk, the fire's light on them at night |
 | Stone05 | world | 2026-09-22 11:31 | passed | rebuilt on today's pipeline: a ring of stones on ston01, pale grey with the rock relief; reads at noon and dusk, fire-lit at night |
 | Straw01 | world | 2026-09-25 11:42 | passed | tan straw bundles with their bindings read at noon, warm on the fire side at dusk, dark away from it at night; the softened comb does not crawl on the sheet. Judged on the uncommitted cutout_soften + uv_heal recipe |
+| NewFace01 | bust | 2026-09-27 22:26 | awaiting |  |
+| NewFace02 | bust | 2026-09-27 22:27 | awaiting |  |
+| NewFace03 | bust | 2026-09-27 22:28 | awaiting |  |

@@ -98,7 +98,9 @@ struct Preset {
 };
 constexpr Preset kDry = {0.0f, 0.5f, 0.5f};
 constexpr Preset kOpenAir = {0.126f, 0.35f, 0.6f};  // -18 dB
-constexpr Preset kRoofed = {0.32f, 0.7f, 0.35f};    // -10 dB
+// A little drier and smaller than it was (0.32 wet, 0.7 room): the user, 2026-09-27, "decrease
+// reverb inside buildings a little bit".
+constexpr Preset kRoofed = {0.22f, 0.6f, 0.4f};     // -13 dB
 constexpr float kRoomEaseMs = 150.0f;
 
 enum Importance { kCrowd = 0, kNearHero = 1, kHero = 2 };
@@ -192,6 +194,10 @@ struct Sound::Impl {
     // through its own low-pass into `world`.
     ma_sound_group ui{}, world{}, ambience{};
     bool groups = false;
+    // The music, streamed from its file and looping: one track at a time (see Sound::music).
+    ma_sound music{};
+    bool musicReady = false;
+    std::string musicPath;
 
     // The room: the world's bus split into the dry and the reverb's send.
     ma_splitter_node split{};
@@ -561,8 +567,37 @@ void Sound::setVolume(float level) {
     ma_engine_set_volume(&impl_->engine, std::clamp(level, 0.0f, 1.0f));
 }
 
+void Sound::music(const std::string& path, float gain) {
+    if (!impl_ || !impl_->open) return;
+    if (impl_->musicReady && impl_->musicPath == path) return;
+    stopMusic();
+    // Streamed, not decoded whole: a theme is minutes of stereo, where an effect is a second.
+    // Straight to the engine rather than through a group, so no room's reverb reaches it.
+    const ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
+    if (ma_sound_init_from_file(&impl_->engine, path.c_str(), flags, nullptr, nullptr,
+                                &impl_->music) != MA_SUCCESS) {
+        core::logError("sound: the music %s would not open", path.c_str());
+        return;
+    }
+    impl_->musicReady = true;
+    impl_->musicPath = path;
+    ma_sound_set_looping(&impl_->music, MA_TRUE);
+    ma_sound_set_volume(&impl_->music, std::clamp(gain, 0.0f, 1.0f));
+    ma_sound_start(&impl_->music);
+    core::logf("sound: music %s", path.c_str());
+}
+
+void Sound::stopMusic() {
+    if (!impl_ || !impl_->musicReady) return;
+    ma_sound_stop(&impl_->music);
+    ma_sound_uninit(&impl_->music);
+    impl_->musicReady = false;
+    impl_->musicPath.clear();
+}
+
 void Sound::shutdown() {
     if (!impl_ || !impl_->open) return;
+    stopMusic();
     std::string heard;
     for (auto& event : impl_->events) {
         if (event->plays == 0) continue;

@@ -1,0 +1,18 @@
+{
+  "note": "The character screen's light, laid over lighting.json and the time of day while the screen is up (app/modes/lobby_mode.cpp). World 74 is looked at from seventeen tiles off the pedestals across to a gate forty metres back: the night sheet's street dust turned that into fog, and its weak moon left the set too dark to read. MuMain's own scene is a black clear with the map's baked light and a fog that starts past anything it draws (CharacterScene.cpp), so the air here is nearly clear and the set lit up: a thin cool mist, which the eye meets mostly round the gate forty metres back and hardly at all on the pedestals seventeen off -- the user, 'add some minimal mist/fog behind char screen'. Invention on MU2's look, judged by eye on --lobby stills; the user, 2026-09-27: 'not so foggy', 'not pretty dark', and then 'darker behind characters': the set is left dim and the row is lit by its own two fill lamps (game/pedestals.cpp), which reach the figures and not the buildings.",
+  "dust_density": 0.0012,
+  "sun_strength": 1.4,
+  "ambient_strength": 0.75,
+  "sky_colour": [
+    0.26,
+    0.25,
+    0.3
+  ],
+  "exposure": 1.7,
+  "contrast": 0.35,
+  "dust_colour": [
+    0.15,
+    0.17,
+    0.23
+  ]
+}

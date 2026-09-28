@@ -134,6 +134,9 @@ public:
     bool menuUp() const { return menu_.up(); }
     // Exit Game was pressed: the run ends after this frame, and shutdown saves.
     bool quitAsked() const { return quitAsked_; }
+    // Switch Character was pressed: the run goes back to the character screen after this frame.
+    bool switchAsked() const { return switchAsked_; }
+    void allowSwitch(bool on) { menu_.allowSwitch(on); }
     // Whether Escape is the game's: in a played world it opens the menu rather than quitting.
     void holdEscape(bool held) { holdEscape_ = held; }
     // What Options edits: filled by PlayMode from the window and the run, and applied back when
@@ -158,6 +161,7 @@ private:
     Menu menu_;
     std::string worldName_;
     bool quitAsked_ = false;
+    bool switchAsked_ = false;
     bool holdEscape_ = false;
     bool settingsChanged_ = false;
     std::string scriptTyped_;

@@ -1,23 +1,37 @@
 #!/bin/zsh
-# The game. A new Dark Knight, made the way MU makes one, standing in Lorencia with the axe
-# his class is given and nothing else on him.
+# The game. The character screen -- world 74 with your characters on its five pedestals -- and
+# the game after it on the one you enter.
 #
-#   ./main.sh                     play fullscreen on the whole display, esc to quit
+#   ./main.sh                     play fullscreen on the whole display
 #   ./main.sh --windowed          in a 1920x1080 window instead
 #   ./main.sh --no-vsync          torn rather than paced to the refresh; --cap still holds
 #   ./main.sh --scale 1           every pixel the display has, rather than 85% magnified
-#   ./main.sh --at 185,120        start out in the spider field instead of in town
-#   ./main.sh --class 1           a Fairy Elf, who is given a Short Bow
-#                                 (still in Lorencia: an elf's home is Noria and the map a
-#                                 class is made on is sprint 9's, with the gate between them)
-#   ./main.sh --level 10          a character further along, his points already spent
+#   ./main.sh --roster DIR        characters from DIR instead of your own folder
+#
+#   click a figure .............. pick him; double click or Enter plays him
+#   Create Character ............ the create window: a class, a name, Create
+#   Delete ...................... asks, then wants his name typed back
+#   Menu / esc .................. the game menu; in the world, its Switch Character comes back here
 #
 #   left click on the ground ..... walk there
 #   left click on a monster ...... go and fight it until one of you is dead
 #   right click .................. stop
-#   esc .......................... quit
 #
-# What the character is, and why each of these is what it is:
+# Your characters live in ~/Library/Application Support/MU2/characters, one file each. The
+# first run takes the old hero.json in as "DarkKnight" in slot 0 and leaves hero.json where it
+# is. A deleted character is moved to characters/deleted/, not erased.
+#
+# `--new` passes the character screen by and puts a fresh one straight into Lorencia, which is
+# what a quick try of one thing wants:
+#
+#   ./main.sh --new               a new Dark Knight, the axe his class is given and nothing else
+#   ./main.sh --new --at 185,120  start out in the spider field instead of in town
+#   ./main.sh --new --class 1     a Fairy Elf, who is given a Short Bow
+#                                 (still in Lorencia: an elf's home is Noria and the map a
+#                                 class is made on is sprint 9's, with the gate between them)
+#   ./main.sh --new --level 10    a character further along, his points already spent
+#
+# What the --new character is, and why each of these is what it is:
 #
 # * **Naked.** He wears `HelmClass02` and its four fellows -- the class body itself, which is
 #   what a Dark Knight is under armour and what MU draws a new one in. The cooked `DarkKnight`
@@ -52,14 +66,19 @@ cd "$(dirname "$0")"
 # `kin`, because `class` is a keyword in the language the engine is written in.
 kin=2
 asked=no      # the caller named a weapon of his own
+lobby=yes     # the character screen, unless --new makes one here
 prev=
 for arg in "$@"; do
   case "$prev" in
     --class) kin=$arg ;;
     --weapon) asked=yes ;;
   esac
+  [ "$arg" = "--new" ] && lobby=no
   prev=$arg
 done
+# --new is this script's and not the engine's, so it goes no further.
+args=()
+for arg in "$@"; do [ "$arg" = "--new" ] || args+=("$arg"); done
 # Cradle.cs's three rows: the knight an axe, the elf a bow, the wizard empty hands.
 cradle=()
 if [ "$asked" = "no" ]; then
@@ -107,8 +126,12 @@ code=0
 # 12.3 at the 99th, so at 180 it steps between 90 and 60 several times a second, while a
 # 16.67 ms period is one it fits inside every time and the same refresh every time. Play on
 # 60; measure and hunt on 180. `--cap 0` lets it run free.
-build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.99 --level 1 --class "$kin" "${cradle[@]}" "$@" ||
-  code=$?
+if [ "$lobby" = "yes" ]; then
+  build/mu2 --lobby --fullscreen --vsync --cap 180 --scale 0.99 "${args[@]}" || code=$?
+else
+  build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.99 --level 1 --class "$kin" "${cradle[@]}" "${args[@]}" ||
+    code=$?
+fi
 if [ $code -ne 0 ]; then
   echo "mu2 stopped with $code. The last of mu2.log:"
   tail -8 mu2.log

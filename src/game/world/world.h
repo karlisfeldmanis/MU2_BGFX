@@ -53,6 +53,8 @@ public:
     Crowd& crowd() { return crowd_; }
     const Crowd& crowd() const { return crowd_; }
     const Figures& figures() const { return figures_; }
+    // For the character screen, which dresses its own bodies (Figures::dress) outside a realm.
+    Figures& figures() { return figures_; }
     Grass& grass() { return grass_; }
     const Grass& grass() const { return grass_; }
     Lamps& lamps() { return lamps_; }

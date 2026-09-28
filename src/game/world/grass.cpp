@@ -123,8 +123,12 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
         if (!ground.grassFloor(slot)) continue;
         const std::string& name = ground.floorName(slot);
         if (name.empty()) continue;
-        bgfx::TextureHandle sheet =
-            textures.load(core::join(dir, world + "_" + name + ".png"), content::TextureRole::Cutout);
+        // Asked only when it is there: a world with no copy of its own is the ordinary case (the
+        // character screen's), and a load that misses is logged as an error.
+        const std::string own = core::join(dir, world + "_" + name + ".png");
+        bgfx::TextureHandle sheet = core::fileExists(own)
+                                        ? textures.load(own, content::TextureRole::Cutout)
+                                        : bgfx::TextureHandle BGFX_INVALID_HANDLE;
         if (!bgfx::isValid(sheet)) {
             sheet = textures.load(core::join(dir, name + ".png"), content::TextureRole::Cutout);
         }

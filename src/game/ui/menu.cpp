@@ -137,7 +137,7 @@ void Menu::show() {
 int Menu::hitAt(float x, float y) const {
     for (int target = 0; target < kTargets; ++target) {
         const Box design = boxOf(page_, target);
-        if (design.w <= 0.0f || target == kSwitch) continue;
+        if (design.w <= 0.0f || (target == kSwitch && !switchable_)) continue;
         // The window's size does not step while the display is the whole screen.
         if (settings_.fullscreen && (target == kSizeDown || target == kSizeUp)) continue;
         if (at(x_, y_, design).has(x, y)) return target;
@@ -196,6 +196,10 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
         } else if (fired >= 0) {
             switch (fired) {
                 case kOptions: turn(Page::Options); break;
+                case kSwitch:
+                    up_ = false;
+                    result.switched = result.clicked = true;
+                    break;
                 case kBack: turn(Page::Main); break;
                 case kExit:
                     result.quit = result.clicked = true;
@@ -240,6 +244,7 @@ void Menu::update(float seconds, float width, float height, const Pointer& point
 
     now_ = Drawn{};
     now_.up = up_;
+    now_.switchable = switchable_;
     if (up_) {
         now_.page = page_;
         now_.settings = settings_;
@@ -306,7 +311,7 @@ void Menu::rebuild() {
                              state(target, off), u);
         };
         big(kOptions, "Options", Kind::Secondary);
-        big(kSwitch, "Switch Character", Kind::Secondary, true);
+        big(kSwitch, "Switch Character", Kind::Secondary, !switchable_);
         controls::rule(canvas_, sheet.x + kMainInset * u, y_ + kMainRule * u,
                        (kMainWide - kMainInset * 2.0f) * u, u);
         big(kExit, "Exit Game", Kind::Danger);

@@ -13,6 +13,7 @@
 #include <thread>
 
 #include "app/modes/bench_mode.h"
+#include "app/modes/lobby_mode.h"
 #include "app/modes/play_mode.h"
 #include "content/showing.h"
 #include "core/log.h"
@@ -161,8 +162,10 @@ int Application::run(int argc, char** argv) {
 
     // Either a world or the bench, never both: they are two different things to look at and
     // the camera belongs to whichever it is.
+    // Or the character screen, which hands the run to a world when a character is picked.
     std::unique_ptr<Mode> mode;
-    if (!args_.world.empty()) mode = std::make_unique<PlayMode>();
+    if (args_.lobby) mode = std::make_unique<LobbyMode>();
+    else if (!args_.world.empty()) mode = std::make_unique<PlayMode>();
     else mode = std::make_unique<BenchMode>();
 
     if (!mode->open(ctx)) {
@@ -198,7 +201,8 @@ int Application::run(int argc, char** argv) {
     double sinceLine = 0.0;
     double sinceSheetCheck = 0.0;
 
-    const bool quitEarly = mode->quitEarly();
+    bool quitEarly = mode->quitEarly();
+    bool handoffFailed = false;
     while (!quitEarly && !mode->quitting() && window_.pump() && !window_.escapePressed()) {
         renderer_.resize(window_.width(), window_.height());
 
@@ -318,6 +322,36 @@ int Application::run(int argc, char** argv) {
             sinceLine = 0.0;
         }
 
+        // A mode that is done hands the run on: the screen to the world, the world back to the
+        // screen. The one going shuts down first, so the world's save is kept and its meshes go
+        // back before the next one loads, and what it left in the renderer that belongs to a
+        // world -- the lamps' grid, a moving light, the grey of a death -- is cleared, since
+        // the next world sets its own and may not set all of them.
+        if (const Mode::Next next = mode->next(); next != Mode::Next::None) {
+            mode->shutdown(ctx);
+            mode.reset();
+            renderer_.setPointLights(nullptr, 0, 0.0f, 0.0f, 0.0f);
+            renderer_.setTransientLights(nullptr, 0);
+            renderer_.setDrain(0.0f);
+            window_.holdEscape(false);
+            window_.setTyping(false);
+            if (next == Mode::Next::Lobby) mode = std::make_unique<LobbyMode>();
+            else mode = std::make_unique<PlayMode>();
+            core::logf("handing the run to the %s", next == Mode::Next::Lobby
+                                                        ? "character screen"
+                                                        : "world");
+            if (!mode->open(ctx)) {
+                handoffFailed = true;
+                break;
+            }
+            if (mode->quitEarly()) {
+                quitEarly = true;
+                break;
+            }
+            // The load is not a frame: the next one is timed from here.
+            last = bx::getHPCounter();
+        }
+
         ++at.index;
         if (args_.frames && at.index >= args_.frames) {
             // One segment done. With --repeat the world stays loaded and the next segment
@@ -340,9 +374,10 @@ int Application::run(int argc, char** argv) {
 
     const bool withinBudget = stats.finish(args_.budget);
 
-    mode->shutdown(ctx);
+    if (!handoffFailed) mode->shutdown(ctx);
     mode.reset();
     teardown();
+    if (handoffFailed) core::logError("the mode handed to did not open");
 
     const int errors = core::logErrorCount();
     core::logf("%d frames in %d segment(s), %d errors, budget %s", at.index, args_.repeat,

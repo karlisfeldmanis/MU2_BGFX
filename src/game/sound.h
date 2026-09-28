@@ -121,6 +121,12 @@ public:
     // play(name) does it itself; a caller does it for what only it knows is big.
     void duck();
 
+    // A track of music, looping, streamed from `path` at `gain`: PlayMp3. Asking again for the
+    // track already playing does nothing, as MU's PlayMp3 no-ops; another track replaces it.
+    // Under the whole mix's level, so the menu's volume turns it down too.
+    void music(const std::string& path, float gain = 0.6f);
+    void stopMusic();
+
     // The whole mix's level, 0 to 1: the game menu's volume. A muted run stays silent.
     void setVolume(float level);
 

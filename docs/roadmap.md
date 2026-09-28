@@ -94,8 +94,6 @@ are left out. A townsperson under the pointer is named over his head.
 
 The honest gap list, checked against the code rather than remembered:
 
-- **No character creation and no character select.** `main.sh` makes one Dark Knight from
-  `Cradle`'s rules at the door. `--class 1` gives an elf, still in Lorencia.
 - **No second map and no gate.** `assets/cooked/noria/` holds `noria.mur` and nothing else —
   no land, no town, no figures cooked. `content::Tables` has `safeGate` (the safe zone's own
   rectangle) and no map-to-map gate at all.

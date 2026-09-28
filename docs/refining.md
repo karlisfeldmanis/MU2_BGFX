@@ -90,7 +90,7 @@ server allowed it, and the original is what is being built. The jewel must be in
   `ApplyJewels` ends, then eGem where the hero stands for the answer, up or down alike, as
   `ReceiveModifyItemExtended` rings it. A worn thing re-dresses the figure at its new rung.
 
-To try it: `./main.sh --give Sword01,Jewel01:3,Jewel02:3`, open the bag, and drag a jewel onto
+To try it: `./main.sh --new --give Sword01,Jewel01:3,Jewel02:3`, open the bag, and drag a jewel onto
 the Kris in the bag or the Small Axe in his hand (a level 1 knight is 7 agility short of
 wearing the Kris). A played run writes the real save on the way out,
 jewels and all; add `--save /tmp/jewels.json` to keep them out of it.
