@@ -96,15 +96,6 @@ constexpr Box kBuffsAt{292.0f, 12.0f, 40.0f, 56.0f};
 constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
-// The channel's cast bar, in the card's units: a glass panel centred on the screen, lifted clear
-// of the plate, with an icon, the name and the seconds, and a meter in the spell's own blue --
-// lightning's, the only channel yet; the colours move to the row the day a second one comes.
-constexpr float kChannelW = 300.0f, kChannelH = 44.0f, kChannelLift = 28.0f, kChannelPad = 8.0f;
-constexpr float kChannelText = 13.0f, kChannelMeter = 4.0f;
-constexpr uint32_t kChannelPanel = gfx::rgba(0.035f, 0.032f, 0.030f, 0.82f);
-constexpr uint32_t kChannelEdge = gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f);
-constexpr uint32_t kChannelTrack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f);
-constexpr uint32_t kChannelFill = gfx::rgba(0.62f, 0.76f, 1.0f, 1.0f);
 
 // The gap between two cells of the row, in plate pixels: MuDream's own strip spaces its 80-wide
 // cells by a fifth of one, and this is that at the cell's 40.
@@ -336,8 +327,6 @@ bool Hud::Face::operator==(const Face& o) const {
            character == o.character && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(boons, boons + kBoons, o.boons) && fanOpen == o.fanOpen &&
-           channelSkill == o.channelSkill && channelLeft == o.channelLeft &&
-           channelTenths == o.channelTenths &&
            fanOver == o.fanOver &&
            carrying == o.carrying &&
            fan == o.fan &&
@@ -556,10 +545,6 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         width_ = width;
         height_ = height;
         std::copy(boons_, boons_ + kBoons, now_.boons);
-        now_.channelSkill = channelSkill_;
-        now_.channelLeft =
-            channelSkill_ != 0 ? int(std::clamp(channelShare_, 0.0f, 1.0f) * 100.0f + 0.5f) : -1;
-        now_.channelTenths = channelSkill_ != 0 ? int(std::ceil(channelSeconds_ * 10.0f)) : 0;
         now_.fanOpen = fanOpen_;
         now_.fan = fan_;
         now_.carrying = carrying_;
@@ -1012,44 +997,6 @@ void Hud::rebuild() {
         const float left = std::clamp(one.share, 0.0f, 1.0f);
         const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
         canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
-    }
-
-    // ---- a channel, draining above the plate --------------------------------------------------
-    //
-    // A cast bar centred over the bar and clear of the plate: the spell's icon, its name, the
-    // seconds left, and a meter under them that drains. **Flat** (the user, 2026-09-28: "more flat
-    // and clean"): one dark panel with a hairline, a flat track and one flat fill -- no glass, no
-    // grain, no gradient, no bevel on the meter. The one thing he is waiting on while he cannot
-    // act, so it is where the eye already is, over the keys.
-    if (now_.channelSkill != 0 && now_.channelLeft >= 0) {
-        const float u = tip::unit();
-        const float wide = kChannelW * u, tall = kChannelH * u;
-        const float top = plate(s, {0.0f, 0.0f, kPlateW, kPlateH}).y - tall - kChannelLift * u;
-        const Box panel{std::round(float(width_) * 0.5f - wide * 0.5f), std::round(top),
-                        std::round(wide), std::round(tall)};
-        const float hair = std::max(1.0f, std::round(u));
-        canvas_.rect(panel, kChannelPanel);
-        canvas_.outline(panel, hair, kChannelEdge);
-        const float pad = kChannelPad * u;
-        const float side = tall - pad * 2.0f;
-        const Box icon{panel.x + pad, panel.y + pad, side, side};
-        const gfx::Art& art = arts.get("skill_" + std::to_string(now_.channelSkill));
-        if (art.valid()) canvas_.image(art, icon);
-        const float textX = icon.right() + pad;
-        const float right = panel.right() - pad;
-        const float size = std::round(kChannelText * u);
-        const float line = panel.y + pad + size;
-        const sim::SkillRow* row = sim::skillNumbered(now_.channelSkill);
-        controls::label(canvas_, textX, line, size, style::kBoneHi, row ? row->name : "");
-        char left[16];
-        std::snprintf(left, sizeof left, "%.1f s", double(now_.channelTenths) / 10.0);
-        controls::ranged(canvas_, right, line, size, style::kAshInk, left);
-        const float meterTall = std::round(kChannelMeter * u);
-        const Box meter{textX, icon.bottom() - meterTall, right - textX, meterTall};
-        canvas_.rect(meter, kChannelTrack);
-        canvas_.rect({meter.x, meter.y, std::round(meter.w * float(now_.channelLeft) / 100.0f),
-                      meter.h},
-                     kChannelFill);
     }
 
     // ---- the list, open above the plate ------------------------------------------------------

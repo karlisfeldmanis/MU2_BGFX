@@ -760,15 +760,6 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.share = float(left) / float(sim::kAleTicks);
     }
     hud_.setBoons(boons, standing);
-    // And a channel running, off the same body: what share of it is left.
-    if (hero.channelSkill != 0 && hero.channelUntil > realm.tick() &&
-        hero.channelUntil > hero.channelFrom) {
-        const float left = float(hero.channelUntil - realm.tick());
-        hud_.setChannel(hero.channelSkill, left / float(hero.channelUntil - hero.channelFrom),
-                        left * 0.05f);  // 20 Hz
-    } else {
-        hud_.setChannel(0, 0.0f, 0.0f);
-    }
 
     const gfx::Window::Key keys[Hud::kSkillKeys] = {
         gfx::Window::Key::Skill1, gfx::Window::Key::Skill2, gfx::Window::Key::Skill3,

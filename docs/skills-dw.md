@@ -277,12 +277,9 @@ cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells
 - **He crackles** (*"add some electric effect to the character itself"*; `Thunder::crackle`, ours):
   while it runs, every two reference frames two small thin sparks jump between random points round
   his body, three frames each, and a blue light flickers on him.
-- **The cast bar** (`Hud::setChannel`), reworked on *"channeling UI needs work"* and then *"more
-  flat and clean"*: one flat dark panel with a hairline edge, centred over the bar and lifted clear of
-  the plate, holding the spell's icon, its name, the seconds left to a tenth in quiet grey, and a
-  thin flat meter in lightning's blue that drains -- no glass, grain, gradient or bevel.
-  Stepped in hundredths so the frame redraws at most a hundred times a channel. Any later channel
-  uses it as it is. The first cut was a thin strip with an icon, squeezed onto the plate's edge.
+- **No cast bar.** One was built on *"we need additional UI feature for channeling spells"* -- a
+  draining bar over the plate, then a glass panel, then a flat one -- and taken out on *"don't show
+  channeling UI"*. The channel is read off his pose and the bolts.
 - **The stance was missing** at first (*"i did not see casting animation"*): a pulse's `Hit`, with
   no `Swung` in front of it, was read by the drawing as a monster's one-part blow and restarted his
   attack clip over the held stance, every pulse, until the session's first swing latched

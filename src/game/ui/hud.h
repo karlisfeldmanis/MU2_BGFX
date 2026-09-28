@@ -146,15 +146,6 @@ public:
         }
     };
     static constexpr int kBoons = 4;
-    // **A channel running**: which skill and how much of it is left, 1 at the cast and 0 at its
-    // end, handed over each frame off the realm (Desk). 0 for no channel. Drawn as a bar that
-    // drains, centred just above the plate -- the channel is the one thing on the bar that the
-    // player is waiting on while he cannot act.
-    void setChannel(int32_t skill, float share, float seconds) {
-        channelSkill_ = skill;
-        channelShare_ = share;
-        channelSeconds_ = seconds;
-    }
     // The cells for this frame, packed from the left; what is not handed is empty.
     void setBoons(const Boon* boons, int count) {
         for (int i = 0; i < kBoons; ++i) boons_[i] = i < count ? boons[i] : Boon{};
@@ -270,9 +261,6 @@ private:
         int skillBack[kSkillBoxes] = {-1, -1, -1, -1, -1, -1};
         Skill skill[kSkillBoxes];
         Boon boons[kBoons];
-        int channelSkill = 0;
-        int channelLeft = -1;  // hundredths left, so the bar redraws a hundred times at most
-        int channelTenths = 0; // and the seconds left, in tenths, for the figure on it
         bool fanOpen = false;
         int fanOver = -1;           // the cell under the pointer
         int32_t carrying = 0;       // what the pointer is holding out of the list
@@ -308,9 +296,6 @@ private:
     float skillBack_[kSkillBoxes] = {9.0f, 9.0f, 9.0f, 9.0f, 9.0f, 9.0f};
     Skill skill_[kSkillBoxes];
     Boon boons_[kBoons];
-    int32_t channelSkill_ = 0;
-    float channelShare_ = 0.0f;
-    float channelSeconds_ = 0.0f;
     bool fanOpen_ = false;
     int32_t carrying_ = 0;
     std::vector<FanCell> fan_;
