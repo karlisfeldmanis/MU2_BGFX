@@ -101,3 +101,5 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | NewFace01 | bust | 2026-09-27 22:26 | awaiting |  |
 | NewFace02 | bust | 2026-09-27 22:27 | awaiting |  |
 | NewFace03 | bust | 2026-09-27 22:28 | awaiting |  |
+| Object01 | world | 2026-09-28 19:33 | passed | noria: broad-leaved plant, clean cutout, a cooler green than the grass -- reads tropical in Noria's light |
+| Object02 | world | 2026-09-28 19:35 | passed | noria, judged in the world: white-headed flower on thin stalks, subtle among the grass, sways |

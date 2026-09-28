@@ -350,7 +350,7 @@ def report(meshes):
 
 # --------------------------------------------------------------------------- the shots
 
-def shoot(kind, name, extra, world):
+def shoot(kind, name, extra, world, dist=None):
     """The item on the viewer's stage at noon, dusk and night, and the three side by side."""
     category, pick = {
         "set": ("armour", extra["label"] if extra else name),
@@ -372,6 +372,10 @@ def shoot(kind, name, extra, world):
         # hiding its bearer; a world object at MU's own distance, which is how the town shows it.
         if kind in ("set", "figure"):
             command += ["--dist", "3.5"]
+        # Or as close as asked: a flower or a stone at the town's distance is forty pixels,
+        # which is not something a material can be judged on (Noria's plants, 2026-09-28).
+        if dist:
+            command += ["--dist", str(dist)]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         frame = os.path.join(where, "00089.png")
         if os.path.exists(frame):
@@ -458,6 +462,9 @@ def main():
     parser.add_argument("--world", default="lorencia")
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
     parser.add_argument("--no-shots", action="store_true")
+    parser.add_argument("--dist", type=float, default=None,
+                        help="the camera's distance for the shots, for an object too small "
+                             "to judge from the town's")
     parser.add_argument("--pass", dest="passed", nargs=2, metavar=("NAME", "NOTE"))
     parser.add_argument("--fail", dest="failed", nargs=2, metavar=("NAME", "NOTE"))
     args = parser.parse_args()
@@ -484,7 +491,8 @@ def main():
     report(meshes)
     log(args.name, kind=kind)
     if not args.no_shots:
-        shoot(kind, args.name, extra if kind in ("set", "arm") else None, args.world)
+        shoot(kind, args.name, extra if kind in ("set", "arm") else None, args.world,
+              args.dist)
     print(f"cook_one: logged in {os.path.relpath(LOG, ROOT)} as awaiting a look")
     return 0
 
