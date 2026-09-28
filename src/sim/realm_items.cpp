@@ -649,7 +649,14 @@ void Realm::leave(const Body& dead, const Body& killer) {
             }
         }
     } else if (roll - kItem <= kMoney) {
-        one.zen = int64_t(killExperience(dead.level, killer.level)) + kBaseMoney;
+        // Zen is not left on the ground: it goes straight into the purse, with the excellent
+        // armour's rate, and is said as picked up from the body it came off (a: the dead
+        // body's id), so the showing can ring the coins when that body falls. INVENTION and
+        // not MU's, which drops a heap to click: the user's call, 2026-09-28.
+        const int64_t zen = int64_t(killExperience(dead.level, killer.level)) + kBaseMoney;
+        money_ += int64_t(double(zen) * bodies_[0].excel.zenRate);
+        say(What::Picked, bodies_[0], int32_t(dead.id), -1, int32_t(zen));
+        return;
     } else {
         return;
     }
@@ -711,25 +718,6 @@ bool Realm::take(size_t index) {
     lying_.pop_back();
     say(What::Picked, bodies_[0], int32_t(one.id), slot, int32_t(one.zen));
     return true;
-}
-
-// Zen underfoot, taken on the tick he arrives on it. The same reach the `Pick` order uses --
-// within a tile, which is the heap's own square or one beside it -- so a heap that fell against
-// a wall is still collected by walking past it, and so that a field of bodies does not need a
-// click a corpse. INVENTION: MU makes you click every heap.
-//
-// Only Zen. An item is left where it fell, because the bag is twelve by eight and a Kris he
-// did not ask for is a slot he did not choose to spend. The list is walked backwards because
-// `take` swaps the back into the hole it leaves.
-void Realm::sweep() {
-    const Body& hero = bodies_[0];
-    for (size_t i = lying_.size(); i-- > 0;) {
-        const Lying& one = lying_[i];
-        if (!one.what.empty()) continue;
-        if (std::fabs(hero.x - float(one.column)) > 1.0f) continue;
-        if (std::fabs(hero.y - float(one.row)) > 1.0f) continue;
-        take(i);
-    }
 }
 
 bool Realm::serving(int folk) const {

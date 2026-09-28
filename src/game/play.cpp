@@ -169,9 +169,8 @@ void Play::update(double seconds) {
             // down before the last blow reached it. So the fall is owed, and paid the frame
             // nothing is left to land on it -- fallWhenLanded, after the cues below.
             // The hero's pickup, heard at his ears: ReceiveGetItem's SOUND_JEWEL01 for a jewel,
-            // SOUND_GET_ITEM01 for everything else -- and for Zen too, which in MU is silent;
-            // MU2 gave it the pickup after the commonest pickup in the game read as having
-            // missed it, and that is kept. A use, a purchase and a sale are heard off their
+            // SOUND_GET_ITEM01 for everything else, and SOUND_DROP_MONEY01's coins for Zen,
+            // which is taken with the kill rather than picked up (Play::takeZen). A use, a purchase and a sale are heard off their
             // own answers (useItem, buy, sell): they are asked between ticks, and the next
             // tick clears what they said before this loop could read it.
             // What the lane over the HUD says: his experience, his Zen and his potion. A gain
@@ -180,9 +179,9 @@ void Play::update(double seconds) {
             if (happening.who == heroId) {
                 if (happening.what == sim::What::Gained) {
                     gains_.push_back({Gain::Kind::Experience, happening.a});
-                } else if (happening.what == sim::What::Picked && happening.b < 0) {
-                    gains_.push_back({Gain::Kind::Zen, happening.c});
                 }
+                // His Zen is not here either: it is in the purse from the kill's tick, but
+                // shown with the fall, in Play::releaseDrops (below, at What::Picked).
                 // A potion is not here: it is drunk between ticks, and the next step clears
                 // what it said before this loop could read it. Play::useItem says it.
                 // His death is NOT said here. The tick it resolves on is half a swing before
@@ -202,15 +201,14 @@ void Play::update(double seconds) {
                          -(happening.y + 0.5f) * metresPerTile);
                 }
                 if (happening.what == sim::What::Picked) {
-                    // Zen rings coins rather than the pickup: it is the one thing picked up
-                    // that is not a thing, and it is now swept up rather than clicked
-                    // (Realm::sweep), so this is the only sound the whole heap ever makes.
+                    // Zen never lies on the ground: the kill puts it in the purse (Realm::leave)
+                    // and it is held here until the body it came off falls, where a drop would
+                    // have landed, and then rings coins at him (Play::takeZen).
                     if (happening.b < 0) {
-                        const Drawn* hero = drawnOf(heroId);
-                        if (heard_.moneyDrop >= 0 && hero && hero->placed) {
-                            emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
-                            continue;
-                        }
+                        const uint32_t dropper = uint32_t(happening.a);
+                        if (drawnOf(dropper)) held_.push_back({0, dropper, happening.c});
+                        else takeZen(happening.c);
+                        continue;
                     }
                     int sound = heard_.take;
                     if (happening.b >= 0 && happening.b < sim::kSlots) {

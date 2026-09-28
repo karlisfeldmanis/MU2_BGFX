@@ -450,12 +450,23 @@ void Play::releaseDrops() {
                                    else if (dropper->fallOwed) let = false;
                                    else if (dropper->deadFor < 0.0f) let = true;  // rose again
                                    else let = dropper->deadFor >= kDropDelay;
-                                   if (let) landed(one.drop);
+                                   if (let && one.zen > 0) takeZen(one.zen);
+                                   else if (let) landed(one.drop);
                                    return let;
                                }),
                 held_.end());
     heldIds_.clear();
-    for (const HeldDrop& one : held_) heldIds_.push_back(one.drop);
+    for (const HeldDrop& one : held_) {
+        if (one.zen == 0) heldIds_.push_back(one.drop);
+    }
+}
+
+void Play::takeZen(int64_t zen) {
+    gains_.push_back({Gain::Kind::Zen, zen});
+    const Drawn* hero = drawnOf(realm_.hero().id);
+    if (heard_.moneyDrop >= 0 && hero && hero->placed) {
+        emit(heard_.moneyDrop, hero->crown[0], hero->crown[2]);
+    }
 }
 
 void Play::fall(Drawn& dead) {

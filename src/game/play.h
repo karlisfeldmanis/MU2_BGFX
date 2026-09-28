@@ -541,9 +541,12 @@ private:
     // Lets go of every held drop a beat after its dropper's killing blow lands, and rewrites
     // heldIds_.
     void releaseDrops();
+    // The kill's Zen, shown taken: the coins at him and the figure in the lane.
+    void takeZen(int64_t zen);
     struct HeldDrop {
         uint32_t drop = 0;
         uint32_t dropper = 0;
+        int64_t zen = 0;  // nonzero: no drop, the kill's Zen, heard and shown as he takes it
     };
     std::vector<HeldDrop> held_;
     std::vector<uint32_t> heldIds_;

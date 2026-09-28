@@ -72,7 +72,7 @@ enum class What : uint8_t {
     Sold,      // a: the item row, b: what was paid, c: the bag slot it left
     Dropped,   // something left on the ground: a: its id, b: the item row or -1 for Zen,
                // c: the Zen or the plus
-    Picked,    // a: its id, b: the bag slot or -1 for Zen, c: the Zen
+    Picked,    // a: its id (for Zen, the body it came off), b: the bag slot or -1 for Zen, c: the Zen
     Vanished,  // a: its id: it lay too long
     Swung,     // a blow BEGUN, at the top of the swing: a: the skill's number or 0, whom: at whom
     Cast,      // a skill thrown: a: its number, b: the cooldown it set in ticks, whom: at whom
@@ -643,11 +643,6 @@ private:
     std::pair<int, int> clearing(int column, int row) const;
     bool bare(int column, int row) const;
     bool take(size_t index);
-    // Zen he has walked onto, taken without being asked. INVENTION and not MU's: the original
-    // makes you click every heap, and a hunt that drops one a body is then half spent picking
-    // them up. Items are NOT swept -- a sword he did not ask for is a bag slot he did not mean
-    // to spend, and the bag is small.
-    void sweep();
     void sip();
     void recover(Body& hero);
     bool send(Body& one, int column, int row);

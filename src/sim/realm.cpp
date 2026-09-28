@@ -598,8 +598,6 @@ void Realm::step() {
         accept();
         advance(hero);
         press();
-        // And whatever Zen he is standing on, after the step that put him there.
-        sweep();
     } else if (tick_ >= hero.risesAt) {
         reviveHero();
     }
@@ -734,6 +732,11 @@ std::string describe(const Happening& happening, const Realm& realm) {
             }
             break;
         case What::Picked:
+            if (happening.b < 0) {
+                std::snprintf(line, sizeof(line), "%6u %s takes %d Zen off #%d", happening.tick,
+                              who, happening.c, happening.a);
+                break;
+            }
             std::snprintf(line, sizeof(line), "%6u %s picks up #%d into slot %d (%d Zen)",
                           happening.tick, who, happening.a, happening.b, happening.c);
             break;
