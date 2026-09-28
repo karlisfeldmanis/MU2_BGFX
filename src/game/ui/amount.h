@@ -6,8 +6,9 @@
 // Cancel. An empty field or a nought does nothing on OK, and the box stays up -- MU's
 // CALLBACK_CONTINUE.
 //
-// Drawn in the windows' own skin, glass and a well, and its OK and Cancel are the skin's own
-// worded buttons (sheet::button): MU's leather plates read crude on the glass.
+// Drawn in Sanctuary's controls since 2026-09-28 (game/ui/controls.h): a window headed Deposit or
+// Withdraw with its close, a text field, and Cancel and OK with OK the primary. MU's leather
+// plates read crude, and the skin's own buttons were the last of `sheet::button` in a window.
 //
 // **One departure**: asked for more than there is, MU shuts the box and opens a second one that
 // says "You are short of Zen." Here the box stays up with that line in red under the field and
@@ -60,8 +61,8 @@ private:
     bool short_ = false;
     float clock_ = 0.0f;
     float x_ = 0.0f, y_ = 0.0f;
-    int over_ = -1, pressing_ = -1;  // 0 OK, 1 Cancel
-    float lift_[2] = {0.0f, 0.0f};   // each button's hover, eased
+    int over_ = -1, pressing_ = -1;       // 0 OK, 1 Cancel, 2 the head's close
+    float lift_[3] = {0.0f, 0.0f, 0.0f};  // each button's hover, eased
     struct Drawn {
         bool up = false;
         Purpose purpose = Purpose::Deposit;
@@ -69,12 +70,12 @@ private:
         bool shortOf = false, caret = false;
         float x = 0, y = 0, scale = 0;
         int over = -1, pressing = -1;
-        float lift[2] = {0.0f, 0.0f};
+        float lift[3] = {0.0f, 0.0f, 0.0f};
         bool operator==(const Drawn& o) const {
             return up == o.up && purpose == o.purpose && digits == o.digits &&
                    shortOf == o.shortOf && caret == o.caret && x == o.x && y == o.y &&
                    scale == o.scale && over == o.over && pressing == o.pressing &&
-                   lift[0] == o.lift[0] && lift[1] == o.lift[1];
+                   lift[0] == o.lift[0] && lift[1] == o.lift[1] && lift[2] == o.lift[2];
         }
     };
     Drawn drawn_, now_;
