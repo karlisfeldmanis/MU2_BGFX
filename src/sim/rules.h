@@ -228,8 +228,9 @@ double killExperience(int killedLevel, int killerLevel);
 // above is OpenMU's, and this is the server multiplier a live MU server has always had, stated
 // once here rather than folded into the formula -- so the replica's arithmetic stays readable
 // and the hunt's pace is a single line to turn. 1.0 is the original's own pace; this is what
-// the hunt was asked for (2026-09-22). It pays the character alone: the Zen a body leaves is
+// the hunt was asked for (2026-09-22), raised from 2 to 5 on 2026-09-28 (*"lets increase exp
+// gaining"*). It pays the character alone: the Zen a body leaves is
 // the untouched formula, so raising this does not quietly make the town richer too.
-constexpr double kExperienceRate = 2.0;
+constexpr double kExperienceRate = 5.0;
 
 }  // namespace mu::sim
