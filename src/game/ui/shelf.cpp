@@ -37,12 +37,11 @@ constexpr int kMendingRows = 15;
 constexpr Box kStrip{12.0f, 363.0f, 166.0f, 20.0f};
 constexpr Box kHammers[2] = {{54.0f, 390.0f, 36.0f, 29.0f}, {98.0f, 390.0f, 36.0f, 29.0f}};
 // The buy-back, on the same foot (the user, 2026-09-28: *"button at same position where
-// blacksmith has repairs"*): so every shelf is fifteen rows now, not only a mending one. Where
-// the counter mends it stands a third in the hammers' row, at their pitch; elsewhere it is in the
-// middle of the row, where a lone button does not read as one missing its neighbour.
-constexpr Box kUndoBeside{142.0f, 390.0f, 36.0f, 29.0f};
-constexpr Box kUndoAlone{(panel::kWidth - 36.0f) * 0.5f, 390.0f, 36.0f, 29.0f};
-Box undoBox(bool mends) { return mends ? kUndoBeside : kUndoAlone; }
+// blacksmith has repairs"*, then *"put on right side same as repairs"*): so every shelf is
+// fifteen rows now, not only a mending one, and the button is the bag's hammer box exactly --
+// the right end of the foot, level with the hammer in the bag beside it. At a mending counter it
+// is the row's third, after MU's two hammers.
+constexpr Box kUndo{panel::kWellRight - 30.0f, panel::kFootTop + 1.0f, 30.0f, 24.0f};
 
 Box cellOf(int slot, const content::ItemRow& row) {
     return {kOriginX + float(slot % kColumns) * kCell, kOriginY + float(slot / kColumns) * kCell,
@@ -150,7 +149,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     int64_t undoLeft = 0;
     const sim::Realm::Sale* sale = realm.lastSale(&undoLeft);
     undoable_ = sale != nullptr;
-    overUndo_ = inside && undoBox(mends_).has(ux, uy);
+    overUndo_ = inside && kUndo.has(ux, uy);
     overHammer_ = -1;
     for (int i = 0; mends_ && inside && i < 2; ++i) {
         if (kHammers[i].has(ux, uy)) overHammer_ = i;
@@ -283,7 +282,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     // because the shelf's pictures draw after this: what, for how much and for how long.
     {
         const float u = tip::unit();
-        const Box to = panel::scaled(x, y, undoBox(mends_));
+        const Box to = panel::scaled(x, y, kUndo);
         const float side = std::round(std::min(to.w, to.h));
         const Box at{std::round(to.midX() - side * 0.5f), std::round(to.midY() - side * 0.5f), side, side};
         controls::State state;
