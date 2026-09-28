@@ -182,6 +182,10 @@ struct Wearer {
     // The shield in his hand's defence, plus and wear counted, for Defense's card
     // (`guardShare`).
     int shieldDefense = 0;
+    // His wizardry band and his staff's rise (`Fighter`, `Body::staffRise`), so a scroll's card
+    // can print the damage a spell will do in his hands, as the spell's own card does.
+    double wizardMinimum = 0.0, wizardMaximum = 0.0, wizardryRate = 1.0;
+    float staffRise = 0.0f;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);

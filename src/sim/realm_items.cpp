@@ -265,7 +265,15 @@ void Realm::rearm(Body& hero) {
 
 Wearer Realm::wearer() const {
     const Body& hero = bodies_[0];
-    return Wearer{hero.kin, hero.level, hero.points, hero.learned, hero.shieldDefense};
+    return Wearer{hero.kin,
+                  hero.level,
+                  hero.points,
+                  hero.learned,
+                  hero.shieldDefense,
+                  hero.stats.wizardMinimum,
+                  hero.stats.wizardMaximum,
+                  hero.stats.wizardryRate,
+                  hero.staffRise};
 }
 
 int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,

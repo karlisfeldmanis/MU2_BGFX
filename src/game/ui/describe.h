@@ -25,6 +25,7 @@
 #include "content/tables.h"
 #include "game/ui/tip.h"
 #include "sim/items.h"
+#include "sim/skills.h"
 
 namespace mu::game {
 
@@ -34,5 +35,13 @@ tip::Sheet describe(const content::Tables& tables, const sim::Held& what, const 
 // The colour a Zen figure is drawn in: getGoldColor, a pale blue that steps through green and
 // blue as the amount grows. Bag.MoneyColour.
 uint32_t moneyColour(long long zen);
+
+// **What a spell does, as lines**: the band it rolls in his hands and the sum behind it, then
+// whom it strikes -- a channel's length and strikes, a line's sweep, a rain's area -- and a push.
+// One function for the spell's own card (`Desk::skillSheet`) and its scroll's (`describe`), so the
+// two cannot say different things about one spell. `dim` greys the values, for a scroll he has
+// read already.
+void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
+                std::vector<tip::Row>& out);
 
 }  // namespace mu::game

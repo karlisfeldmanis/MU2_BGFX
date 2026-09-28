@@ -92,6 +92,65 @@ Row stat(const char* name, const std::string& text, Tone tone) {
 
 }  // namespace
 
+void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
+                std::vector<Row>& out) {
+    const auto tone = [&](Tone lit) { return dim ? Tone::Gray : lit; };
+    const auto note = [&](const std::string& text) {
+        Row one;
+        one.free = text;
+        one.freeTone = Tone::Gray;
+        out.push_back(one);
+    };
+    // The band it rolls in, `sim::cast`'s own two lines: energy over nine and over four, the
+    // spell's damage on the bottom and half again on the top, times the staff and the spell's own
+    // multiplier (one but on the two cooldown spells).
+    const double times = double(sim::force(row, who.points));
+    const int low = int((who.wizardMinimum + double(row.damage)) * who.wizardryRate * times);
+    const int high = int((who.wizardMaximum + double(row.damage + row.damage / 2)) *
+                         who.wizardryRate * times);
+    // A channel's damage is each strike's and a rain's each rock's: the band is not the cast's.
+    const char* label = row.channelled() ? "Each strike" : row.splash > 0.0f ? "Each rock" : "Damage";
+    out.push_back(stat(label, std::to_string(low) + " - " + std::to_string(high),
+                       tone(Tone::Yellow)));
+    char sum[64];
+    if (who.staffRise > 0.0f) {
+        std::snprintf(sum, sizeof(sum), "%d ene, staff +%d%%", who.points.energy,
+                      int(who.staffRise + 0.5f));
+    } else {
+        std::snprintf(sum, sizeof(sum), "%d ene, no staff", who.points.energy);
+    }
+    note(sum);
+    // **Whom it strikes** (the user, 2026-09-28: "update tooltip for this spell, because it's
+    // multiple monsters and is channeling").
+    const std::string reach = std::to_string(int(row.reach)) + " tiles";
+    if (row.channelled()) {
+        char lasts[32];
+        std::snprintf(lasts, sizeof(lasts), "%.1f s", double(row.channelTicks) * 0.05);
+        out.push_back(stat("Channel", lasts, tone(Tone::White)));
+        const int strikes =
+            row.pulseTicks > 0 ? (row.strikeUntil - row.strikeFrom) / row.pulseTicks + 1 : 1;
+        out.push_back(stat("Strikes", "up to " + std::to_string(strikes), tone(Tone::White)));
+        out.push_back(stat("Area", reach + " round him", tone(Tone::White)));
+        note(row.strikesEach == 1   ? "going round, once each"
+             : row.strikesEach > 1 ? "one body at a time, going round, " +
+                                         std::to_string(row.strikesEach) + " times each at most"
+                                   : "one body at a time, going round");
+    } else if (row.spread == sim::Spread::Line) {
+        out.push_back(stat("Range", reach, tone(Tone::White)));
+        out.push_back(stat("Area", "a line of " + std::to_string(int(sim::kLineTiles)) + " tiles",
+                           tone(Tone::White)));
+        note("strikes everything it passes through");
+    } else if (row.splash > 0.0f) {
+        out.push_back(stat("Range", reach, tone(Tone::White)));
+        out.push_back(stat("Area", std::to_string(int(row.splash)) + " tiles round its target",
+                           tone(Tone::White)));
+        note("a rock falls on each body in it");
+    } else {
+        out.push_back(stat("Range", reach, tone(Tone::White)));
+    }
+    if (row.pushes) out.push_back(stat("Pushes", "a tile away", tone(Tone::Green)));
+}
+
 uint32_t moneyColour(long long zen) {
     if (zen >= 10000000) return gfx::rgba(0.0f, 0.0f, 1.0f);
     if (zen >= 1000000) return gfx::rgba(0.0f, 150.0f / 255.0f, 1.0f);
@@ -340,6 +399,10 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 teaches.rows.push_back(stat("Lasts",
                                             sim::spoken(float(skill->boonTicks) * 0.05f),
                                             known ? Tone::Gray : Tone::White));
+            } else if (skill->wizardry) {
+                // A spell: the lines its own card prints, in his hands (`spellLines`). The
+                // knight's "x1.00 of a swing" and its strength sum said nothing true of one.
+                spellLines(*skill, who, known, teaches.rows);
             } else {
                 char sum[64];
                 std::snprintf(sum, sizeof sum, "%.2f of a swing",
