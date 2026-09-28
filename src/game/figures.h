@@ -141,6 +141,11 @@ struct FigureBody {
     // the body is the light (fx/gleam.h). -1 on a rig without them.
     int pelvisBone = -1;
     int neckBone = -1;
+    // `Bip01 R Hand` and `Bip01 L Hand`: where a spell leaves him (Play::castFrom). -1 on a rig
+    // without them.
+    int handBones[2] = {-1, -1};
+    // And the forearm each hangs from, which says which way the hand points.
+    int forearmBones[2] = {-1, -1};
     // What this figure stands in with its weapon put away. Inside a safe zone MU carries the
     // weapon on the back and stands in the UNARMED idle, and steps out of the zone with the
     // weapon drawn: the client's own rule, from RenderCharacterBackItem and the safe-zone

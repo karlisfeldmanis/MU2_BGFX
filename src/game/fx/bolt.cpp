@@ -41,7 +41,7 @@ bool Bolt::open(const std::string& assetDir, content::Textures& textures,
     return bgfx::isValid(energy_);
 }
 
-void Bolt::cast(const float from[3], const float to[3], uint32_t target) {
+void Bolt::cast(const float from[3], const float to[3], uint32_t target, bool atHand) {
     Head* head = nullptr;
     for (Head& one : heads_) {
         if (!one.used) {
@@ -59,7 +59,7 @@ void Bolt::cast(const float from[3], const float to[3], uint32_t target) {
     head->flying = true;
     head->used = true;
     head->at[0] = from[0];
-    head->at[1] = from[1] + kChest / kPerMetre;
+    head->at[1] = from[1] + (atHand ? 0.0f : kChest / kPerMetre);
     head->at[2] = from[2];
     float way[3] = {to[0] - head->at[0], to[1] - head->at[1], to[2] - head->at[2]};
     const float far = length3(way);

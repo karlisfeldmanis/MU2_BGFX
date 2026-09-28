@@ -66,7 +66,9 @@ public:
     // A bolt let go, from the caster's feet -- the chest height is added here, where the client
     // adds it -- at `to`, the middle of the body it is thrown at, in world metres. `target` is
     // the body id, 0 for a fixed point (the bench's), arrived at as if something stood there.
-    void cast(const float from[3], const float to[3], uint32_t target);
+    // `atHand`: `from` is already where it leaves -- the casting hand (Play::castFrom) -- and no
+    // chest height is added.
+    void cast(const float from[3], const float to[3], uint32_t target, bool atHand = false);
     // The realm said this one missed: the bolt in the air at `target` flies on past it.
     void miss(uint32_t target);
 

@@ -505,6 +505,9 @@ private:
     };
 
     Drawn* drawnOf(uint32_t id);
+    // Where a spell leaves a caster thrown at `to`: the hand thrust furthest toward it, on the
+    // pose drawn last. False when the rig has no hands posed, and `out` is then his feet.
+    bool castFrom(const Drawn& caster, const float to[3], float out[3]) const;
     Arena arena_;
     // One line for one happening, in an arena run only, with the TICK on it -- because a run is
     // read afterwards and not watched, and under `--fixed-dt 16.667` a tick is exactly three

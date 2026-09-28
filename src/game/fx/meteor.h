@@ -83,7 +83,8 @@ public:
     // only the stones -- a bolt of light ends in a flash, a ball of fire ends in a burst. No
     // smoke: MU2 laid a soot trail here and the user took it out on the bench (2026-09-28,
     // "there is already smoke in fireball") -- the ember sheet carries its own.
-    void hurl(const float from[3], const float to[3], uint32_t target);
+    // `atHand`: `from` is already the casting hand, and MU's 120 units of lift are not added.
+    void hurl(const float from[3], const float to[3], uint32_t target, bool atHand = false);
     // The realm said the blow missed: the fireball nearest that body flies on past and out.
     void missHurl(uint32_t target);
     // Advances the fireballs by the frame's seconds, steering each after where its target is

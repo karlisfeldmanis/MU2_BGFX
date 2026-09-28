@@ -191,6 +191,18 @@ the arrival. Ours, tuned on the bench with the user watching:
 
 `--bolt-every N --bolt-skill 4` throws it on the bench.
 
+## 2b'. Where a spell leaves him
+
+Both spells leave **the hand that threw them**, ours (the user, 2026-09-28, *"find the perfect spot
+where energy ball and fireball is coming from"*). MU lets them go from the middle of the body at a
+fixed height -- 100 units for the bolt, 120 for the fireball -- which on this camera is a ball out of
+his chest. `Play::castFrom` reads `Bip01 R Hand` and `Bip01 L Hand` on the pose drawn last, takes
+whichever is thrust further toward the target, and carries it 12 cm past the wrist along the
+forearm to the palm. Measured in the arena at the let-go: clip 147 throws from the palm 1.35 m up
+and 0.63 m in front of him; clip 148 is the overhead throw, 1.90 m up and 0.17 m out, and the ball
+steers down from there. A rig without hands falls back to MU's heights. The bench uses the same
+call, though its figure stands idle and does not play the clip.
+
 ## 2c. Cooldowns outlive a restart
 
 The user, 2026-09-28: every key's wait is saved, as `"cooling": [[skill, ticks left], ...]` by

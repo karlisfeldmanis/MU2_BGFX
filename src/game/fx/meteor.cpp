@@ -251,7 +251,7 @@ void Meteor::emberAt(const float at[3], const float heading[3], float light, boo
     for (int c = 0; c < 3; ++c) mote->colour[c] = (fireball ? kFireEmber[c] : kGlow[c]) * light;
 }
 
-void Meteor::hurl(const float from[3], const float to[3], uint32_t target) {
+void Meteor::hurl(const float from[3], const float to[3], uint32_t target, bool atHand) {
     if (fireGroupCount_ == 0) return;
     Hurled* ball = nullptr;
     for (auto& one : fireballs_) {
@@ -264,7 +264,7 @@ void Meteor::hurl(const float from[3], const float to[3], uint32_t target) {
     *ball = Hurled{};
     ball->alive = true;
     ball->at[0] = from[0];
-    ball->at[1] = from[1] + kHurlLift * kUnit;
+    ball->at[1] = from[1] + (atHand ? 0.0f : kHurlLift * kUnit);
     ball->at[2] = from[2];
     // At the middle of the body, height and all -- ours, as the bolt's is. MU's direction has no
     // vertical term and flies level, which on this camera passes over a spider and under a dragon.

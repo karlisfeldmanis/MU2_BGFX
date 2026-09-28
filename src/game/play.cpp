@@ -289,11 +289,9 @@ void Play::update(double seconds) {
                 const Drawn* caster = drawnOf(happening.who);
                 const Drawn* target = drawnOf(happening.whom);
                 if (caster && caster->placed && ground_) {
-                    const float from[3] = {caster->crown[0],
-                                           ground_->heightAt(caster->crown[0], caster->crown[2]),
-                                           caster->crown[2]};
+                    const float feet = ground_->heightAt(caster->crown[0], caster->crown[2]);
                     // At the middle of the body, which is half its drawn height under its crown.
-                    float to[3] = {from[0], from[1] + 1.0f, from[2]};
+                    float to[3] = {caster->crown[0], feet + 1.0f, caster->crown[2]};
                     if (target && target->placed) {
                         const FigureBody* look = target->figure.body();
                         const float tall = look ? look->height * look->scale : 1.0f;
@@ -301,12 +299,15 @@ void Play::update(double seconds) {
                         to[1] = target->crown[1] - tall * 0.5f;
                         to[2] = target->crown[2];
                     }
+                    // From the hand that threw it (castFrom), or his middle on a rig with none.
+                    float from[3];
+                    const bool atHand = castFrom(*caster, to, from);
                     // Fire Ball is the Lich's rock at its other subtype, thrown flat; every
                     // other spell that flies is the bolt.
                     if (happening.a == sim::skill::kFireBall) {
-                        meteor_.hurl(from, to, happening.whom);
+                        meteor_.hurl(from, to, happening.whom, atHand);
                     } else {
-                        bolt_.cast(from, to, happening.whom);
+                        bolt_.cast(from, to, happening.whom, atHand);
                     }
                     const int index = sim::skillIndexOf(happening.a);
                     if (index >= 0 && heard_.skill[index] >= 0) {

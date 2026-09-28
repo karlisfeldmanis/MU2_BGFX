@@ -326,19 +326,65 @@ void Play::rightClick() {
     marker_.dismiss();
 }
 
+// How far past the wrist the palm's middle is, in metres, on MU's player rig.
+constexpr float kPalmReach = 0.12f;
+
+bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const {
+    out[0] = caster.crown[0];
+    out[1] = ground_ ? ground_->heightAt(caster.crown[0], caster.crown[2]) : 0.0f;
+    out[2] = caster.crown[2];
+    const FigureBody* look = caster.figure.body();
+    if (look == nullptr) return false;
+    // **The hand, and the one doing the throwing.** MU lets both spells go from the middle of
+    // the body at a fixed height (`Position[2] += 100` for the bolt, 120 for the fireball), and
+    // on this camera that is a ball appearing out of his chest. The clips 147 and 148 throw with
+    // one hand or the other, so the one thrust furthest toward the target at the let-go is the
+    // one that threw: measured, not assumed from the clip.
+    const float wayX = to[0] - caster.crown[0], wayZ = to[2] - caster.crown[2];
+    const float flat = std::sqrt(wayX * wayX + wayZ * wayZ);
+    const float origin[3] = {0.0f, 0.0f, 0.0f};
+    float best = -1e9f;
+    bool found = false;
+    for (int side = 0; side < 2; ++side) {
+        const int bone = look->handBones[side];
+        float at[3];
+        if (bone < 0 || !caster.figure.pointOn(bone, origin, at)) continue;
+        // The bone is the wrist; the ball comes off the palm, carried on past it along the line
+        // the forearm points.
+        float elbow[3];
+        if (look->forearmBones[side] >= 0 &&
+            caster.figure.pointOn(look->forearmBones[side], origin, elbow)) {
+            const float d[3] = {at[0] - elbow[0], at[1] - elbow[1], at[2] - elbow[2]};
+            const float len = std::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+            if (len > 1e-3f) for (int k = 0; k < 3; ++k) at[k] += d[k] / len * kPalmReach;
+        }
+        const float reach = flat > 1e-4f ? ((at[0] - caster.crown[0]) * wayX +
+                                            (at[2] - caster.crown[2]) * wayZ) / flat
+                                         : 0.0f;
+        if (reach > best) {
+            best = reach;
+            for (int k = 0; k < 3; ++k) out[k] = at[k];
+            found = true;
+        }
+    }
+    return found;
+}
+
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     if (!isOpen() || drawn_.empty() || !drawn_[0].placed || !ground_) return;
     const Drawn& hero = drawn_[0];
-    const float from[3] = {hero.crown[0], ground_->heightAt(hero.crown[0], hero.crown[2]),
+    const float feet[3] = {hero.crown[0], ground_->heightAt(hero.crown[0], hero.crown[2]),
                            hero.crown[2]};
     const float flat = std::max(1e-4f, std::sqrt(acrossX * acrossX + acrossZ * acrossZ));
     const float far = tiles * ground_->metresPerTile() / flat;
     // A man's middle, as if one stood there.
-    const float to[3] = {from[0] + acrossX * far, from[1] + 1.0f, from[2] + acrossZ * far};
+    const float to[3] = {feet[0] + acrossX * far, feet[1] + 1.0f, feet[2] + acrossZ * far};
+    float from[3];
+    const bool atHand = castFrom(hero, to, from);
     if (skill == sim::skill::kFireBall) {
-        meteor_.hurl(from, to, 0);
+        meteor_.hurl(from, to, 0, atHand);
     } else {
-        bolt_.cast(from, to, 0);
+        bolt_.cast(from, to, 0, atHand);
     }
     const int index = sim::skillIndexOf(skill);
     if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2], hero.id);
