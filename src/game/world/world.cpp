@@ -4,6 +4,7 @@
 
 #include "core/files.h"
 #include "core/log.h"
+#include "game/world/maps.h"
 
 namespace mu::game {
 namespace {
@@ -107,10 +108,12 @@ bool World::open(const std::string& assetDir, const std::string& name,
     grass_.build(assetDir, name, ground_, textures);
 
     if (!focusSet_) {
-        // Lorencia's safe zone is around tile 142,126 -- the middle of the town rather than
-        // the middle of the map, which is sea and empty grass.
-        focusColumn_ = 142.0f;
-        focusRow_ = 126.0f;
+        // Where a character comes in on this map: its spawn gate (game/world/maps.h), which
+        // is the middle of the town rather than the middle of the map. A world not in the
+        // table opens on Lorencia's tile, as every world did before there was a table.
+        const MapRow* map = mapOf(name);
+        focusColumn_ = map ? float(map->arrive[0]) : 142.0f;
+        focusRow_ = map ? float(map->arrive[1]) : 126.0f;
     } else {
         // A camera off the map fails the run rather than drawing the empty frame it would
         // otherwise draw. `--at 9999,9999` exited 0, showed nothing, and reported a *better*
@@ -171,7 +174,8 @@ bool World::play(const std::string& assetDir, const std::string& name, uint64_t 
     return true;
 }
 
-void World::raiseAirs(const std::string& assetDir, const std::string& name) {
+void World::raiseAirs(const std::string& assetDir, const std::string& name,
+                      const std::string& weather) {
     // What flies over the character and what blows past him. Both pools are centred on HIM and
     // exist nowhere else -- MU spawns them around the player and never anywhere on the map --
     // so a world standing with nobody in it raises neither.
@@ -185,6 +189,8 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name) {
     if (name.empty() || textures_ == nullptr || !play_.isOpen()) return;
     boids_.open(assetDir, name, boidOf(name), *textures_, airsOf(name), &play_.sound());
     leaves_.open(assetDir, *textures_, play_.showing().table());
+    // And the rain, which shares the leaves' slots, and the air's sounds. game/world/weather.h.
+    weather_.open(name, &play_.sound(), weather);
 }
 
 void World::update(double seconds, bool still) {
@@ -300,6 +306,7 @@ void World::shutdown() {
     shades_.shutdown();
     boids_.shutdown();
     leaves_.shutdown();
+    weather_.shutdown();
     grass_.shutdown();
     town_.shutdown();
     ground_.shutdown();

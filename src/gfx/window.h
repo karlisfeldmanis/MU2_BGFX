@@ -104,6 +104,7 @@ public:
         Potion1, Potion2, Potion3, Potion4, Potion5,
         Skill1, Skill2, Skill3, Skill4, Skill5,
         Repair,  // L: a mending counter's repair mode, and Shift+L its repair-all (CNewUINPCShop)
+        Move,    // M: on to the next world, until there is a Move window (app/modes/play_mode)
         Count
     };
     bool pressed(Key key) const { return keyPressed_[size_t(key)]; }

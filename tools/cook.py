@@ -2198,8 +2198,11 @@ def cook_showing(out_dir, texcook, threads):
             base = safe(os.path.splitext(os.path.basename(effects[name]))[0])
             stem = f"effect_{base}_albedo_{digest}"
             ktx_path = os.path.join(out_dir, "textures", stem + ".ktx")
-            # -1: blended, not tested. See the note above.
-            jobs.append(("albedo", -1.0, source, ktx_path))
+            # -1: blended, not tested. See the note above. Skipped when it is there: the stem
+            # carries the sheet's sha1, so existence is the up-to-date test, as in `collect`.
+            # Without it adding one sheet re-compressed all 177 on every core (2026-09-28).
+            if not os.path.exists(ktx_path):
+                jobs.append(("albedo", -1.0, source, ktx_path))
             seen[digest] = os.path.relpath(ktx_path, ASSETS)
         rows.append(write_string(name) + write_string(seen[digest]))
 
@@ -2981,8 +2984,9 @@ def main():
     parser.add_argument("--out", default=os.path.join(ASSETS, "cooked"))
     parser.add_argument("--threads", type=int, default=0)
     parser.add_argument("--texcook", default=os.path.join(ROOT, "build", "texcook"))
-    parser.add_argument("--only", choices=("textures", "meshes", "placements", "figures",
-                                           "tables", "showing", "missiles", "wardrobe", "all"),
+    parser.add_argument("--only", choices=("textures", "ground", "meshes", "placements",
+                                           "figures", "tables", "showing", "missiles",
+                                           "wardrobe", "all"),
                         default="all")
     parser.add_argument("--chunk", type=int, default=32,
                         help="a chunk's side in tiles; 32 gives Lorencia an 8x8 grid")
@@ -3046,7 +3050,13 @@ def main():
     os.makedirs(raw_dir, exist_ok=True)
 
     started = time.time()
-    jobs, manifest, drawn, missing, models = collect(args.world, out_dir, raw_dir)
+    # `ground` is the land's sheets alone: a world stood up bare, before any of its objects are
+    # judged -- Noria's first step (2026-09-28). The manifest it writes names the ground and
+    # nothing else, so a later `textures` cook rewrites it whole with the models added.
+    if args.only == "ground":
+        jobs, manifest, drawn, missing, models = [], {}, 0, [], 0
+    else:
+        jobs, manifest, drawn, missing, models = collect(args.world, out_dir, raw_dir)
     jobs += ground_jobs(args.world, out_dir, manifest)
     print(f"cook: {args.world}, {drawn} of {models} models have a .glb "
           f"({len(missing)} have none: {', '.join(missing[:6])}"

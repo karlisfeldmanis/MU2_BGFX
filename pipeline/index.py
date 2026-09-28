@@ -500,6 +500,16 @@ EFFECTS = {
     # with no model and nothing for the item pipeline to do to it.
     "leaf": "effects/leaf/leaf01.png",
 
+    # The rain, which shares the leaves' pool in the client (CreateHeavenRain: the first
+    # RainCurrent share of the slots are drops, the rest leaves). World1/rain01.OZT is
+    # BITMAP_RAIN, a 4 by 32 streak whose shape is all alpha and whose colour is near black --
+    # MU's rain is dark lines. rain01_pale.png is that alpha under white, an invention for
+    # Noria's bright tropical day, where a dark streak reads as a smudge on the screen.
+    # World1/rain02.OZT is BITMAP_RAIN_CIRCLE, the ring a drop leaves where it lands, kept
+    # as MU painted it. See src/game/world/leaves.h.
+    "rain": "effects/rain/rain01_pale.png",
+    "rain_ring": "effects/rain/rain02.png",
+
     # MU's own grass, which is a picture rather than a model.
     #
     # Three 256-wide sheets, each holding four 64-pixel columns of blades. The client stands

@@ -1,0 +1,34 @@
+// The worlds a character can stand in, one row each: what the rest of the game used to assume
+// was Lorencia by writing 142,126 and "lorencia" wherever it needed a map.
+//
+// A row is only what no cooked file says. The land, the town and the rules are each world's
+// own cook (assets/world/<name>, cooked/<name>/<name>.mut and .mur) and are found by the name;
+// the lighting laid over the base sheet is sheets/worlds/<name>.json when there is one. What is
+// left is where a character comes in, which is MU's spawn gate for the map.
+#pragma once
+
+#include <string>
+
+namespace mu::game {
+
+struct MapRow {
+    const char* world;  // the folder name, which is also --world's
+    int number;         // MU's map number: 0 Lorencia, 3 Noria (mu.db gates.map)
+    // The tile a character comes in on: the middle of mu.db's spawn gate for the map (gates
+    // 17 and 27, both spawn = 1). The realm moves him to the nearest tile he may stand on.
+    int arrive[2];
+};
+
+// The row for `world`, or nullptr for one not in the table.
+const MapRow* mapOf(const std::string& world);
+
+// The next world in the table after `world`, wrapping: the stand-in for a Move window until
+// there is one (app/modes/play_mode.cpp, the M key).
+const MapRow* mapAfter(const std::string& world);
+
+// The lighting overlay for a world, laid over sheets/lighting.json by TimeOfDay::setScene:
+// `sheetsDir`/worlds/<world>.json when the file exists, and empty -- the base sheet alone --
+// when it does not.
+std::string mapSheet(const std::string& sheetsDir, const std::string& world);
+
+}  // namespace mu::game

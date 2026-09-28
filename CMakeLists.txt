@@ -114,6 +114,8 @@ add_executable(mu2
   src/gfx/stage_pass.cpp
   src/game/bench.cpp
   src/game/world/world.cpp
+  src/game/world/maps.cpp
+  src/game/world/weather.cpp
   src/game/world/town.cpp
   src/game/world/grass.cpp
   src/game/world/lamps.cpp

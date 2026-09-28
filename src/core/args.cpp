@@ -186,6 +186,14 @@ Args parseArgs(int argc, char** argv) {
             a.lampsOn = false;
         } else if (!std::strcmp(s, "--birds-now")) {
             a.birdsNow = true;
+        } else if (!std::strcmp(s, "--weather")) {
+            if (const char* v = next(s)) {
+                if (std::strcmp(v, "rain") && std::strcmp(v, "dry")) {
+                    logError("--weather is rain or dry, got '%s'", v);
+                } else {
+                    a.weather = v;
+                }
+            }
         } else if (!std::strcmp(s, "--no-air")) {
             a.airOn = false;
         } else if (!std::strcmp(s, "--safe")) {
@@ -249,6 +257,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.lobbyEnter = std::atoi(v);
         } else if (!std::strcmp(s, "--lobby-back")) {
             if (const char* v = next(s)) a.lobbyBack = std::atoi(v);
+        } else if (!std::strcmp(s, "--travel-at")) {
+            if (const char* v = next(s)) a.travelAt = std::atoi(v);
         } else if (!std::strcmp(s, "--headless")) {
             a.headless = true;
         } else if (!std::strcmp(s, "--seed")) {

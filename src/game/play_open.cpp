@@ -97,6 +97,34 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                    population);
     }
 
+    // A breed with no cooked figure is not raised. The rules would still walk it and swing it,
+    // and a monster nobody can see that hits the hero from the grass is a bug in any world --
+    // it is what Noria's goblins were on the day its land was first stood up bare (2026-09-28),
+    // with not one of its 16 breeds cooked. The nests come back breed by breed as each is
+    // cooked (tools/cook.py --only figures), with no change here. Lorencia cooks every breed
+    // it spawns, so this takes nothing from it. The headless hunt raises the whole table: it
+    // draws nothing, so there is nothing to be invisible in.
+    if (figures_) {
+        uint32_t held = 0;
+        std::string names;
+        std::vector<content::MonsterNest> kept;
+        for (const content::MonsterNest& nest : tables_.nests) {
+            const content::MonsterKind& kind = tables_.kinds[nest.kind];
+            if (!kind.figure.empty() && figures_->body(kind.figure)) {
+                kept.push_back(nest);
+                continue;
+            }
+            held += nest.count;
+            const std::string& name = kind.figure.empty() ? kind.label : kind.figure;
+            if (names.find(name) == std::string::npos) names += (names.empty() ? "" : ", ") + name;
+        }
+        if (held > 0) {
+            core::logf("play: %u monsters of %s held back, their figures not cooked: %s", held,
+                       world.c_str(), names.c_str());
+            tables_.nests = std::move(kept);
+        }
+    }
+
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
     // A character made above level 1 arrives with his points in hand, and unspent he cannot

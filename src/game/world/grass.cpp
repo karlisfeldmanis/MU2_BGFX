@@ -179,7 +179,10 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
 
     // The walls, which the cook works out from the placed meshes. See tools/cook.py.
     const std::string wallsPath = core::join(assetDir, "cooked/" + world + "/" + world + ".walls");
-    const std::vector<uint8_t> walls = core::readFile(wallsPath);
+    // Asked before it is read: a world stood up bare, with no town cooked (Noria's first step),
+    // has no walls, and readFile counts a missing file as the run's error.
+    const std::vector<uint8_t> walls =
+        core::fileExists(wallsPath) ? core::readFile(wallsPath) : std::vector<uint8_t>();
     uint32_t header[5] = {};
     if (walls.size() >= sizeof(header)) std::memcpy(header, walls.data(), sizeof(header));
     const size_t tiles = header[4];

@@ -45,6 +45,16 @@
 //
 // Every length is MU's own divided by a hundred, and the speeds are divided with them, so the
 // wind is the client's wind at this scale rather than a new one.
+//
+// **And the rain, which is the same pool in the client.** CreateHeavenRain makes the first
+// `RainCurrent` share of the slots drops and leaves the rest to be leaves, so as the rain comes
+// in the leaves thin out, and as it goes they come back (game/world/weather.h holds the share).
+// A drop is BITMAP_RAIN, `RenderPlane3D(1, 20)`: a streak two centimetres wide and forty long,
+// laid along the way it falls and turned to face the eye. It lands, dies, and leaves a ring
+// (BITMAP_RAIN_CIRCLE, MoveHeavenRain) that widens and fades over twenty frames. What is not
+// MU's, and marked where it is set: more drops than the client's 80 slots, because at this
+// camera eighty streaks over a sixteen-metre field read as a few specks rather than a shower,
+// and the fall slanted across the screen rather than towards it.
 #pragma once
 
 #include <cstdint>
@@ -62,25 +72,49 @@ namespace mu::game {
 class Leaves {
 public:
     // The sheet is the showing's `leaf` (MU's `Effect/Leaf01.OZT`). Without it nothing blows
-    // and the log says so; it is not a reason to stop.
+    // and the log says so; it is not a reason to stop. The rain's two, `rain` and `rain_ring`,
+    // are asked for too, and without them it does not rain.
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
     void shutdown();
 
     // One frame, around wherever the character is drawn. `eye` is the camera, which decides
     // which half of the wind a leaf gets -- see the quirk in the header. `indoors` empties the
-    // air over about a third of a second.
+    // air over about a third of a second. `rain` is the weather's share, 0 to 1: that much of
+    // the leaves' slots stay empty and that much of the drops' fall.
     void update(float seconds, const float hero[3], const float eye[3], bool indoors,
-                const content::Ground& ground);
-    // Into the transparent pass.
-    void gather(gfx::Effects& effects) const;
+                const content::Ground& ground, float rain = 0.0f);
+    // Into the transparent pass. `eye` turns each streak to face the camera.
+    void gather(gfx::Effects& effects, const float eye[3]) const;
 
     bool isOpen() const { return bgfx::isValid(sheet_); }
     uint32_t blowing() const { return blowing_; }
+    uint32_t falling() const { return falling_; }
 
 private:
     // The client's `iMaxLeaves` for an ordinary map.
     static constexpr int kCount = 80;
+    // Drops, and the rings they leave. **Invention:** the client has the leaves' 80 slots for
+    // both; see the header.
+    static constexpr int kDrops = 700;
+    static constexpr int kRings = 240;
+
+    struct Drop {
+        float position[3] = {0.0f, 0.0f, 0.0f};
+        float velocity[3] = {0.0f, 0.0f, 0.0f};  // metres a second
+        float faint = 1.0f;   // its own share of the drop's alpha
+        float length = 0.2f;  // its own half-length, metres
+        bool live = false;
+    };
+    struct Ring {
+        float position[3] = {0.0f, 0.0f, 0.0f};
+        float scale = 0.0f;
+        float life = 0.0f;  // seconds left
+        float faint = 1.0f;
+        bool live = false;
+    };
+    void spawnDrop(Drop& drop, const float hero[3], const content::Ground& ground);
+    void landRing(const float at[3], float faint);
 
     struct Leaf {
         float position[3] = {0.0f, 0.0f, 0.0f};
@@ -98,8 +132,16 @@ private:
     float between(float low, float high) { return low + random01() * (high - low); }
 
     Leaf leaves_[kCount];
+    Drop drops_[kDrops];
+    Ring rings_[kRings];
+    int nextRing_ = 0;
+    // The gust: seconds on a clock that swings the slant, MU's RainAngle on sin(WorldTime).
+    float gust_ = 0.0f;
     bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle rainSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle ringSheet_ = BGFX_INVALID_HANDLE;
     uint32_t blowing_ = 0;
+    uint32_t falling_ = 0;
     uint32_t seed_ = 0x2545F491u;
 };
 

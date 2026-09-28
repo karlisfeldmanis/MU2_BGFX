@@ -99,6 +99,9 @@ public:
     // when that is already what is playing, the client's own shape. `event` is a handle from
     // an unplaced load().
     void loop(int event, bool wanted);
+    // How loud an ambient is, 0 to 1 of its own level: the rain, which comes and goes by degrees
+    // where the wind is only on or off. Under loop()'s fade, not instead of it.
+    void level(int event, float level);
 
     // Starts a placed event at a point, in world metres. `following` is the body it belongs
     // to, whose position follow() keeps it on, or 0 for a blow that lands at a point and

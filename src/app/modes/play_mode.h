@@ -29,8 +29,10 @@ public:
     bool open(Context& ctx) override;
     bool quitEarly() const override { return quitEarly_; }
     bool quitting() const override { return desk_.ready() && desk_.quitAsked(); }
-    // Back to the character screen, on the menu's Switch Character.
+    // Back to the character screen, on the menu's Switch Character; or on to another world,
+    // which is this mode handing the run to a fresh one of itself (see travel()).
     Next next() const override {
+        if (!travelTo_.empty()) return Next::Play;
         return (desk_.ready() && desk_.switchAsked()) || backNow_ ? Next::Lobby : Next::None;
     }
     void frame(Context& ctx, const Frame& at) override;
@@ -46,6 +48,14 @@ private:
     // Writes the hero whole: every fifteen seconds of play, so a crash loses little, and once
     // more on the way out.
     void keep(Context& ctx);
+    // Leaves this world for `world` at the end of the frame: the run's arguments are pointed
+    // at it and its spawn gate, the save is written as if he already stood there, and the
+    // Application opens the next world as the character screen opens the first. Everything a
+    // world owns -- land, town, realm, windows -- is shut down and raised again, which is the
+    // same path Switch Character has always taken and so the one that is known to let go of
+    // what it held. The stand-in trigger is the M key; the gates and a Move window come later.
+    void travel(Context& ctx, const std::string& world);
+    std::string travelTo_;
     // How much colour is out of the world, and where it is going: the game greys while he is
     // down and comes back as he gets up. The message that says so is the interface's
     // (game/ui/tally.cpp) and is deliberately NOT drained with it.

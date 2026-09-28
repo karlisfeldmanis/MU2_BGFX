@@ -11,6 +11,7 @@
 #include "core/files.h"
 #include "core/log.h"
 #include "game/play_tuning.h"
+#include "game/world/maps.h"
 #include "sim/audit.h"
 #include "sim/realm.h"
 #include "sim/skills.h"
@@ -160,8 +161,11 @@ int runHeadless(const core::Args& args, const char* assetDir) {
                tables.hz);
 
     sim::Realm realm;
-    const int column = args.atSet ? int(args.atColumn) : 138;
-    const int row = args.atSet ? int(args.atRow) : 124;
+    // Lorencia's hunt starts on 138,124, which is what every seeded log in tests/ was written
+    // from; any other world starts on its own spawn gate (game/world/maps.h).
+    const MapRow* map = world == "lorencia" ? nullptr : mapOf(world);
+    const int column = args.atSet ? int(args.atColumn) : (map ? map->arrive[0] : 138);
+    const int row = args.atSet ? int(args.atRow) : (map ? map->arrive[1] : 124);
     if (!realm.raise(&tables, args.seed, column, row, sim::Kin(args.kin), args.level)) {
         core::logError("the realm did not raise");
         return 1;

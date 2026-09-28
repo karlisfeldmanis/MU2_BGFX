@@ -555,6 +555,16 @@
       "gain_note": "Cut further than the wind, for the opposite reason to the wind's cut. The wind is a bed and has to sit under everything; this is ten and a half seconds of birdsong arriving over the top of it every eight, and at its own level it reads as a second bed rather than as something happening. Heard as an event, it wants to be quieter than the thing it is heard against is loud.",
       "note": "Noria's own, and the whole of what makes a wood sound different from a square: the elf town plays Lorencia's wind loop *and* this, where Lorencia plays the wind alone. Two ambients rather than one, and the second occasional rather than looped."
     },
+    "world_rain": {
+      "files": [
+        "arain.wav"
+      ],
+      "from": "Not MU's file. dragon-studio 'gentle rain 07' (downloads/, given by the user 2026-09-28 for Noria), 90 s of 48 kHz stereo made 22 kHz mono 16-bit, with its last two seconds folded over its first two so the loop has no seam. MU's own is SOUND_RAIN01, Data\\Sound\\aRain.wav, which PlayWorldAmbientSounds loops in Lorencia while it rains; this tree has neither the file nor the weather.",
+      "loop": true,
+      "gain_db": 0.0,
+      "gain_note": "Left where it is: an RMS of -36.7 dB is already where the wind lands after its own -8 dB cut, so the two beds sit level.",
+      "note": "**An invention, marked.** Noria is tropical by the user's choice, and the rain is its bed under the forest's birdsong: looped and unplaced, switched with the wind under a roof."
+    },
     "goblin_move": {
       "files": [
         "mGoblin1.wav",

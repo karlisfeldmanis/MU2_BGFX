@@ -14,6 +14,7 @@
 #include "core/log.h"
 #include "game/roster.h"
 #include "game/shine.h"
+#include "game/world/maps.h"
 #include "gfx/views.h"
 #include "sim/items.h"
 #include "sim/market.h"
@@ -66,6 +67,14 @@ void PlayMode::keep(Context& ctx) {
     now.slot = saved_.slot;
     now.world = ctx.args.world;
     now.hero = world_.played().record();
+    // On the way to another world the arguments already name it, so he is written standing on
+    // its spawn gate: the next world resumes him there, and a quit mid-load finds him there.
+    if (!travelTo_.empty()) {
+        if (const game::MapRow* map = game::mapOf(travelTo_)) {
+            now.hero.column = map->arrive[0];
+            now.hero.row = map->arrive[1];
+        }
+    }
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);
     game::writeSave(savePath_, *world_.played().realm().tables(), now);
@@ -114,6 +123,10 @@ bool PlayMode::open(Context& ctx) {
     const std::string& assets = ctx.paths.assets;
 
     readSave(ctx);
+
+    // The world's own light over the base sheet -- Noria's tropical day over Lorencia's night --
+    // or the base alone when the world has no sheet (game/world/maps.h).
+    ctx.time.setScene(game::mapSheet(ctx.paths.sheets, args.world));
 
     // The game's own entrance, only when somebody is playing.
     entrance_ = args.play && (args.frames == 0 || args.entrance);
@@ -221,7 +234,7 @@ bool PlayMode::open(Context& ctx) {
             world_.played().openSound(assets, args.mute);
             // And only now the air: the birds' calls come off the sound above and the leaves'
             // sheet off the showing's table. See World::raiseAirs.
-            if (args.airOn) world_.raiseAirs(assets, args.world);
+            if (args.airOn) world_.raiseAirs(assets, args.world, args.weather);
             // Not fatal either: a game with no HUD is still a game.
             if (args.windows != "off" && !desk_.open(ctx.paths.shaders, assets, &ctx.textures)) {
                 core::logError("the windows did not open; playing without a HUD");
@@ -480,6 +493,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     core::Args& args = ctx.args;
     const double deltaSeconds = at.deltaSeconds;
     if (args.lobby && args.lobbyBack >= 0 && at.index >= args.lobbyBack) backNow_ = true;
+
+    // M: on to the next world in the table. A stand-in for MU's Move window, which is a
+    // window this game does not have yet, and for the gates, which are sprint 12's.
+    const bool scripted = args.travelAt >= 0 && at.index >= args.travelAt;
+    if (world_.played().isOpen() && travelTo_.empty() && !ctx.window.typing() &&
+        (ctx.window.pressed(gfx::Window::Key::Move) || scripted)) {
+        args.travelAt = -1;  // once: the next world is opened with these same arguments
+        travel(ctx, game::mapAfter(args.world)->world);
+    }
 
     if (!savePath_.empty() &&
         double(bx::getHPCounter() - keptAt_) / double(bx::getHPFrequency()) > 15.0) {
@@ -759,8 +781,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const bool walking = world_.played().realm().hero().walking;
         world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),
                               viewProj, ctx.renderer);
-        world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground());
-        world_.leaves().gather(ctx.renderer.effects());
+        // The weather first: how much of the leaves' pool is rain this frame. weather.h.
+        world_.weather().update(float(deltaSeconds), inside);
+        world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground(),
+                               world_.weather().rain());
+        world_.leaves().gather(ctx.renderer.effects(), eye.position);
     }
     // The town's drawables are gathered fresh each frame into one vector that keeps
     // its capacity: a frame appends to a flat array, as foundation 7 says, and
@@ -1010,8 +1035,10 @@ void PlayMode::report(Context& ctx) {
     // one: a flock is a pass and the sky is meant to be empty between them, so "0 flying" on
     // its own says nothing. Logged whenever either pool is up. See game/world/boids.h.
     if (world_.boids().isOpen() || world_.leaves().isOpen()) {
-        core::logf("  air: %u bird(s) flying, %u leaf/leaves on the wind",
-                   world_.boids().flying(), world_.leaves().blowing());
+        core::logf("  air: %u bird(s) flying, %u leaf/leaves on the wind, %u drop(s) falling "
+                   "at rain %.2f",
+                   world_.boids().flying(), world_.leaves().blowing(), world_.leaves().falling(),
+                   world_.weather().rain());
     }
     if (desk_.ready()) core::logf("%s", desk_.line().c_str());
     if (world_.played().isOpen()) {
@@ -1053,9 +1080,31 @@ void PlayMode::report(Context& ctx) {
     }
 }
 
+void PlayMode::travel(Context& ctx, const std::string& world) {
+    const game::MapRow* map = game::mapOf(world);
+    if (map == nullptr || world == ctx.args.world) return;
+    core::Args& args = ctx.args;
+    core::logf("travel: %s to %s, coming in at %d,%d", args.world.c_str(), world.c_str(),
+               map->arrive[0], map->arrive[1]);
+    travelTo_ = world;
+    args.world = world;
+    args.play = true;
+    // He is the same character: what the save holds is what the next world raises. A run with
+    // no save (a --frames review) has only these arguments, so the tile goes in them as well,
+    // and a --fresh run stays fresh only until it has a file to resume from.
+    args.atSet = true;
+    args.atColumn = float(map->arrive[0]);
+    args.atRow = float(map->arrive[1]);
+    if (!savePath_.empty()) {
+        args.savePath = savePath_;
+        args.fresh = false;
+    }
+}
+
 void PlayMode::shutdown(Context& ctx) {
     keep(ctx);
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
+    ctx.time.setScene("");
     if (shadowLog_) std::fclose(shadowLog_);
     if (shadowPoints_) std::fclose(shadowPoints_);
     shadowLog_ = shadowPoints_ = nullptr;

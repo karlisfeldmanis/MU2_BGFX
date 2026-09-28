@@ -102,6 +102,9 @@ struct Args {
     // run is a few seconds long and would otherwise never see one; nothing about how they fly
     // changes, only how long the sky stays empty before the first pass. See boids.h.
     bool birdsNow = false;
+    // --weather rain|dry: hold the weather rather than take the world's own spells, so a review
+    // run sees the rain without waiting out a dry spell. See game/world/weather.h.
+    std::string weather;
     // --no-air: no birds and no leaves, the baseline they are reviewed and priced against.
     // A leaf is three pixels and a bird is half a metre, so "is it drawn?" is answered by
     // differencing two runs rather than by looking.
@@ -166,6 +169,9 @@ struct Args {
     // as the menu's Switch Character does.
     int lobbyEnter = -1;
     int lobbyBack = -1;
+    // And the map change's: `--travel-at F` presses M on frame F, once -- on to the next world
+    // (app/modes/play_mode.cpp, game/world/maps.h).
+    int travelAt = -1;
     // A review harness and not a feature: every N frames it puts the pointer on a pixel from a
     // short fixed list and clicks it, through the same unprojection a hand would. It is how a
     // run with nobody at the mouse can show that a click walks and a click on a monster fights.

@@ -688,6 +688,16 @@ void Sound::loop(int handle, bool wanted) {
     }
 }
 
+void Sound::level(int handle, float level) {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    if (event.placed) return;
+    // The volume and not the fader: loop() fades on the fader, so the two multiply and a
+    // doorway still takes the rain off in its 150 ms whatever level the rain is at.
+    ma_sound_set_volume(&event.files.front()->sound[0],
+                        event.volume * std::clamp(level, 0.0f, 1.0f));
+}
+
 void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
     Impl& im = *impl_;
