@@ -244,6 +244,36 @@ void Play::update(double seconds) {
                 levelOwed_ = true;
             } else if (happening.what == sim::What::Rose) {
                 if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
+            } else if (happening.what == sim::What::Spawned) {
+                // Her summon raised (Realm::conjure): the one body whose figure changes, to the
+                // breed she called, stood up where the realm put it. Every other Spawned is the
+                // realm's first tick, before any drawing.
+                const sim::Body* summon = realm_.find(happening.who);
+                Drawn* drawn = drawnOf(happening.who);
+                if (summon && summon->summoner != 0 && drawn && figures_) {
+                    const std::string& figure = tables_.kinds[size_t(summon->kind)].figure;
+                    const FigureBody* look = figures_->body(figure);
+                    // A breed this world's figure table does not carry fights undrawn, and says
+                    // so: cooked per world (tools/cook.py --only figures), a summon is only as
+                    // visible as the world she raised it in lets it be.
+                    if (!look) {
+                        core::logError("summon: %s has no figure in this world", figure.c_str());
+                    }
+                    if (look) {
+                        fit(*drawn, *summon, look);
+                        drawn->wasX = drawn->nowX = summon->x;
+                        drawn->wasY = drawn->nowY = summon->y;
+                        drawn->deadFor = -1.0f;
+                        drawn->fallOwed = false;
+                        stand(*drawn);
+                    }
+                }
+            } else if (happening.what == sim::What::Dismissed) {
+                // Gone without a fall, as MU's summons go: out of the picture on the tick.
+                if (Drawn* gone = drawnOf(happening.who)) {
+                    gone->fallOwed = false;
+                    gone->deadFor = kDeathTotal;
+                }
             }
             // A cast, said by the realm BEFORE the blow it throws, which is what lets the hit
             // below be drawn with the skill's own clip instead of the weapon's. Nothing else is
