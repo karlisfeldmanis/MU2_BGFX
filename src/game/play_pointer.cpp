@@ -336,6 +336,8 @@ void Play::rightClick() {
 // is a fixed height per spell -- 100 units for the bolt, 120 for the fireball -- and this is one
 // height for both, as a share of the figure so a tall and a short caster are alike.
 constexpr float kCastHeight = 0.6f;    // of his drawn height, from his feet
+// Where a figureless summon's bar stands: a Stone Golem's height and a little, in metres.
+constexpr float kSummonStandsTall = 2.0f;
 // Metres toward the target: just past his outstretched arms, which reach 0.6 m on clip 147 --
 // at 0.25 the ball was born inside them ("little bit front of arms").
 constexpr float kCastForward = 0.7f;
@@ -451,13 +453,23 @@ void Play::benchFace(float acrossX, float acrossZ) {
 bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,
                    float* y) const {
     const size_t at = size_t(id) - 1;
-    if (!ground_ || at >= drawn_.size() || drawn_[at].id != id || !drawn_[at].placed) {
-        return false;
-    }
+    if (!ground_ || at >= drawn_.size() || drawn_[at].id != id) return false;
     const Drawn& one = drawn_[at];
-    // MU2's CrownClearance: a third of a tile between the top of the body and the bar.
-    const float world[4] = {one.crown[0], one.crown[1] + 0.33f * ground_->metresPerTile(),
-                            one.crown[2], 1.0f};
+    float world[4] = {one.crown[0], 0.0f, one.crown[2], 1.0f};
+    if (one.placed) {
+        // MU2's CrownClearance: a third of a tile between the top of the body and the bar.
+        world[1] = one.crown[1] + 0.33f * ground_->metresPerTile();
+    } else {
+        // **Her summon, on a map whose figure table does not carry its breed**: fighting, but
+        // undrawn (Play::update, What::Spawned). Its bar still stands where it is -- the user's,
+        // 2026-09-28, "on any map where she casts it" -- over its own tile at a standing height.
+        const sim::Body* summon = realm_.find(id);
+        if (summon == nullptr || summon->summoner == 0 || !summon->alive()) return false;
+        const float metres = ground_->metresPerTile();
+        world[0] = (summon->x + 0.5f) * metres;
+        world[2] = -(summon->y + 0.5f) * metres;
+        world[1] = ground_->heightAt(world[0], world[2]) + kSummonStandsTall;
+    }
     float clip[4];
     bx::vec4MulMtx(clip, world, viewProj);
     if (clip[3] <= 0.0f) return false;
