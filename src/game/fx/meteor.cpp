@@ -643,8 +643,11 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             const float cone[3] = {kDaylight[0] * f.flameLight * kFireFlame,
                                    kDaylight[1] * f.flameLight * kFireFlame,
                                    kDaylight[2] * f.flameLight * kFireFlame};
+            const float shift = (kFlameAhead * kFlameStretch - kFlameLeads) * f.size;
+            const float from[3] = {f.at[0] + back[0] * shift, f.at[1] + back[1] * shift,
+                                   f.at[2] + back[2] * shift};
             submitAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
-                        fireGroups_[1].blend, f.at, across, drawn, third, f.size, cone, 1.0f);
+                        fireGroups_[1].blend, from, across, drawn, third, f.size, cone, 1.0f);
             for (int g = 0; g < kFlameGhosts; ++g) {
                 const float w = kGhostWide[g];
                 const float ax[3] = {across[0] * w, across[1] * w, across[2] * w};
@@ -652,7 +655,7 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
                 const float dim[3] = {cone[0] * kGhostLight[g], cone[1] * kGhostLight[g],
                                       cone[2] * kGhostLight[g]};
                 submitAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
-                            fireGroups_[1].blend, f.at, ax, drawn, az, f.size, dim, 1.0f);
+                            fireGroups_[1].blend, from, ax, drawn, az, f.size, dim, 1.0f);
             }
         }
         if (!bgfx::isValid(glowSheet_)) continue;

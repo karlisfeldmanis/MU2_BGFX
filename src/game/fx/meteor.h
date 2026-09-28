@@ -320,6 +320,14 @@ private:
     // And drawn longer than it is modelled, along its own axis only, on *"we need little bit
     // longer fire trail"*: 1.66 m of cone becomes three.
     static constexpr float kFlameStretch = 1.8f;
+    // How far the cone reaches in front of the rock's centre, in model metres: 26.8 units below
+    // its origin. Drawn from the centre as modelled, the stretch and the wide ghosts made that
+    // cap a bright rim AHEAD of the ball (*"there is something front on fireball"*); pushed back
+    // the whole of it, the flat end of the cone stood behind a bare rock (*"its to far behind"*).
+    // So its front is put just inside the rock's own leading face (the rock is 0.22 m across the
+    // middle): the fire wraps the stone and nothing leads it.
+    static constexpr float kFlameAhead = 0.268f;
+    static constexpr float kFlameLeads = 0.19f;
     // Blurred by drawing it again: two ghosts of the cone, each wider and dimmer, so its hard
     // mesh edge melts into a soft one (*"little bit more blurry fireball please"*). Added, so
     // they only ever brighten. Scale across the flight, then how much of the cone's light.
