@@ -143,3 +143,5 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object41 | world | 2026-09-28 20:19 | passed | noria, in the world: the goblin at the machine, 2 s clip |
 | Object42 | world | 2026-09-28 20:20 | passed | noria, in the world: Chaos Machine part; its scroll owed where U (effects pass) |
 | Object43 | world | 2026-09-28 20:20 | passed | noria, in the world: Chaos Machine part; its scroll owed where U (effects pass) |
+| Silk | set | 2026-09-28 21:05 | passed | purple quilted silk with gold trim and the visored hood, MU's own colours; skin islands right; nothing blown at noon, dusk or night |
+| Wind | set | 2026-09-28 21:10 | passed | deep blue quilted set with the winged helm, MU's own; skin islands right; holds at all three times |

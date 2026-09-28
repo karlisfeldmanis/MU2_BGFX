@@ -1,0 +1,111 @@
+{
+  "item": "HelmElf03",
+  "mu_name": "Wind Helm",
+  "mu_name_from": "MuMain loads helm indexes 10 to 14 from HelmElf{i+1} (ZzzOpenData.cpp line 148: `AccessModel(MODEL_HELM + i + 10, ..., L\"HelmElf\", i + 1)`), so index 12 is HelmElf03, which openmu's 0.75 Armors.cs names the Wind Helm. Group 7 index 12, Player/HelmElf03.bmd.",
+  "why_this_one": "The Fairy Elf's third set, sold beside Silk: Elf Lala in Noria carries all five pieces at +3 (src/sim/market.cpp, kElfLala, the index-12 rows). Here so that her shelf shows the pieces it sells rather than their names.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. The sheets are blue quilted fabric with a darker blue scroll worked into it, no metal colour anywhere but the Armor's two tan straps. See profiles/soft_armour.json.",
+  "keeps_head": true,
+  "keeps_head_from": "ZzzCharacter.cpp line 12122, SetCharacterScale: helms MODEL_VINE_HELM to MODEL_SPIRIT_HELM keep BODYPART_HEAD as the class's bare head and draw it under the helm, and helm 12 is inside that range (10 Vine, 11 Silk, 12 Wind, 13 Spirit). The model agrees: one sheet, 38 triangles, no skin sheet, so it carries no face of its own. See HelmElf01's note for the whole rule.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 65. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(12, 2, 2, 2, \"Wind Helm\", 28, 12, 32, 30, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 12,
+    "drop_level": 28,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 12,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 32,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. 80 agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "head_a03.png"
+  ],
+  "sheet_from": "Data/Player/head_a03.OZJ (64x64), from MuMain, and it is the only sheet the model names - one mesh, 38 triangles, no hide and no skin. The .bmd names head_a03.jpg.",
+  "sheet_note": "head_a03 is a blue fabric hood swept back like a blown scarf, a darker blue scroll worked into it and a pale ground where the sheet is unused. Mean (75, 99, 137) at chroma 62.",
+  "material_note": "Three islands, 6, 16 and 16 - head_a03's 38 and nothing else: the hood and its two swept tails. All cloth over the profile's leather: blue quilted fabric with the scroll painted into it, no plate and no metal colour anywhere on the sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 151.8,
+      "along": [
+        12.8,
+        15.9
+      ],
+      "mu_uv": [
+        0.039,
+        0.02,
+        0.636,
+        0.93
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.391,
+        0.581
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 16,
+      "area": 619.4,
+      "along": [
+        -18.4,
+        13.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.153,
+        0.005,
+        0.907,
+        0.996
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 16,
+      "area": 619.4,
+      "along": [
+        -18.4,
+        13.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.557,
+        0.557
+      ]
+    }
+  ]
+}

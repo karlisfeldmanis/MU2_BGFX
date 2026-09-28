@@ -1,0 +1,552 @@
+{
+  "item": "PantElf03",
+  "mu_name": "Wind Pants",
+  "mu_name_from": "MuMain loads pants indexes 10 to 14 from PantElf{i+1} (ZzzOpenData.cpp line 150: `AccessModel(MODEL_PANTS + i + 10, ..., L\"PantElf\", i + 1)`), so index 12 is PantElf03, which openmu's 0.75 Armors.cs names the Wind Pants. Group 9 index 12, Player/PantElf03.bmd.",
+  "why_this_one": "The Fairy Elf's third set, sold beside Silk: Elf Lala in Noria carries all five pieces at +3 (src/sim/market.cpp, kElfLala, the index-12 rows). Here so that her shelf shows the pieces it sells rather than their names.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. The sheets are blue quilted fabric with a darker blue scroll worked into it, no metal colour anywhere but the Armor's two tan straps. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 99. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(12, 4, 2, 2, \"Wind Pants\", 30, 14, 32, 30, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 12,
+    "drop_level": 30,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 14,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 32,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. 80 agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "lower_09.png",
+    "lower_09b.png",
+    "hide.png",
+    "skin_warrior_01.png"
+  ],
+  "sheet_from": "Data/Player/lower_09.OZJ (128x128), lower_09b.ozt (64x64), hide.jpg and skin_warrior_01.OZJ, from MuMain. The .bmd names lower_09.jpg, lower_09b.tga, hide.jpg and skin_warrior_01.jpg; 49 of the 152 triangles are on the first, 27 on lower_09b, 14 on hide and 62 on the skin.",
+  "sheet_note": "lower_09 is a pair of blue quilted hip guards with the darker scroll, laid out on a pale unused ground - mean (154, 161, 177) is mostly that ground, not the art. lower_09b is a blue fabric skirt panel with the scroll at its hem, its alpha cutting 2-3% at the edge. skin_warrior_01 is the elf's body sheet, for the bare legs; hide caps the openings.",
+  "material_note": "Twenty-three islands and two answers. Islands 19 to 22 are 19, 12, 19 and 12 - skin_warrior_01's 62 exactly - in the body sheet's leg corner: her legs, skin. The other nineteen are lower_09's 49, lower_09b's 27 and hide's 14, many of them one to three triangles - the hip guards cut up by the weld, the skirt panel and the caps - and all take cloth: blue quilted fabric with the scroll painted in, nothing hard on either sheet. lower_09b's small alpha cut is the panel's ragged hem.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 26,
+      "area": 1515.4,
+      "along": [
+        -14.3,
+        10.6
+      ],
+      "mu_uv": [
+        0.096,
+        0.042,
+        0.986,
+        0.999
+      ],
+      "bake_uv": [
+        0.508,
+        0.007,
+        0.909,
+        0.483
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 59.4,
+      "along": [
+        -9.0,
+        10.6
+      ],
+      "mu_uv": [
+        0.834,
+        0.001,
+        0.999,
+        0.787
+      ],
+      "bake_uv": [
+        0.618,
+        0.496,
+        0.714,
+        0.834
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 3,
+      "area": 392.1,
+      "along": [
+        -14.3,
+        10.6
+      ],
+      "mu_uv": [
+        0.547,
+        0.001,
+        0.85,
+        0.999
+      ],
+      "bake_uv": [
+        0.216,
+        0.657,
+        0.477,
+        0.936
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 3,
+      "area": 392.1,
+      "along": [
+        -14.3,
+        10.6
+      ],
+      "mu_uv": [
+        0.15,
+        0.001,
+        0.453,
+        0.999
+      ],
+      "bake_uv": [
+        0.727,
+        0.496,
+        0.988,
+        0.776
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 59.4,
+      "along": [
+        -9.0,
+        10.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.166,
+        0.787
+      ],
+      "bake_uv": [
+        0.508,
+        0.496,
+        0.604,
+        0.834
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 124.6,
+      "along": [
+        2.2,
+        13.1
+      ],
+      "mu_uv": [
+        0.403,
+        0.641,
+        0.523,
+        0.889
+      ],
+      "bake_uv": [
+        0.923,
+        0.364,
+        0.993,
+        0.44
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 124.6,
+      "along": [
+        2.2,
+        13.1
+      ],
+      "mu_uv": [
+        0.027,
+        0.641,
+        0.147,
+        0.889
+      ],
+      "bake_uv": [
+        0.007,
+        0.871,
+        0.077,
+        0.947
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 170.1,
+      "along": [
+        -9.6,
+        10.6
+      ],
+      "mu_uv": [
+        0.154,
+        0.586,
+        0.821,
+        0.781
+      ],
+      "bake_uv": [
+        0.856,
+        0.789,
+        0.967,
+        0.92
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 30.1,
+      "along": [
+        1.8,
+        4.4
+      ],
+      "mu_uv": [
+        0.466,
+        0.65,
+        0.523,
+        0.889
+      ],
+      "bake_uv": [
+        0.589,
+        0.848,
+        0.621,
+        0.935
+      ]
+    },
+    {
+      "island": 9,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 37.6,
+      "along": [
+        10.5,
+        13.1
+      ],
+      "mu_uv": [
+        0.403,
+        0.539,
+        0.445,
+        0.871
+      ],
+      "bake_uv": [
+        0.923,
+        0.007,
+        0.95,
+        0.122
+      ]
+    },
+    {
+      "island": 10,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 80.0,
+      "along": [
+        1.8,
+        13.1
+      ],
+      "mu_uv": [
+        0.41,
+        0.539,
+        0.523,
+        0.752
+      ],
+      "bake_uv": [
+        0.964,
+        0.007,
+        0.987,
+        0.063
+      ]
+    },
+    {
+      "island": 11,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 30.1,
+      "along": [
+        1.8,
+        4.4
+      ],
+      "mu_uv": [
+        0.027,
+        0.65,
+        0.084,
+        0.889
+      ],
+      "bake_uv": [
+        0.923,
+        0.264,
+        0.954,
+        0.351
+      ]
+    },
+    {
+      "island": 12,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 37.6,
+      "along": [
+        10.5,
+        13.1
+      ],
+      "mu_uv": [
+        0.105,
+        0.539,
+        0.147,
+        0.871
+      ],
+      "bake_uv": [
+        0.923,
+        0.135,
+        0.95,
+        0.251
+      ]
+    },
+    {
+      "island": 13,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 80.1,
+      "along": [
+        1.8,
+        13.1
+      ],
+      "mu_uv": [
+        0.027,
+        0.539,
+        0.14,
+        0.752
+      ],
+      "bake_uv": [
+        0.964,
+        0.135,
+        0.987,
+        0.192
+      ]
+    },
+    {
+      "island": 14,
+      "material": "cloth",
+      "triangles": 17,
+      "area": 603.9,
+      "along": [
+        10.2,
+        12.7
+      ],
+      "mu_uv": [
+        0.154,
+        0.006,
+        1.001,
+        0.865
+      ],
+      "bake_uv": [
+        0.216,
+        0.007,
+        0.495,
+        0.643
+      ]
+    },
+    {
+      "island": 15,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 107.4,
+      "along": [
+        -14.3,
+        -9.6
+      ],
+      "mu_uv": [
+        0.709,
+        0.588,
+        0.875,
+        0.733
+      ],
+      "bake_uv": [
+        0.105,
+        0.87,
+        0.171,
+        0.965
+      ]
+    },
+    {
+      "island": 16,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 167.4,
+      "along": [
+        1.8,
+        10.6
+      ],
+      "mu_uv": [
+        0.403,
+        0.539,
+        0.488,
+        0.889
+      ],
+      "bake_uv": [
+        0.508,
+        0.848,
+        0.576,
+        0.949
+      ]
+    },
+    {
+      "island": 17,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 167.4,
+      "along": [
+        1.8,
+        10.6
+      ],
+      "mu_uv": [
+        0.062,
+        0.539,
+        0.147,
+        0.889
+      ],
+      "bake_uv": [
+        0.646,
+        0.848,
+        0.714,
+        0.949
+      ]
+    },
+    {
+      "island": 18,
+      "material": "cloth",
+      "triangles": 15,
+      "area": 663.8,
+      "along": [
+        -15.9,
+        -14.3
+      ],
+      "mu_uv": [
+        0.012,
+        0.011,
+        0.519,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.203,
+        0.665
+      ]
+    },
+    {
+      "island": 19,
+      "material": "skin",
+      "triangles": 19,
+      "area": 1713.3,
+      "along": [
+        -14.3,
+        10.5
+      ],
+      "mu_uv": [
+        0.187,
+        0.003,
+        0.498,
+        0.428
+      ],
+      "bake_uv": [
+        0.105,
+        0.678,
+        0.188,
+        0.857
+      ]
+    },
+    {
+      "island": 20,
+      "material": "skin",
+      "triangles": 12,
+      "area": 1223.7,
+      "along": [
+        -10.2,
+        10.6
+      ],
+      "mu_uv": [
+        0.134,
+        0.003,
+        0.417,
+        0.389
+      ],
+      "bake_uv": [
+        0.727,
+        0.789,
+        0.778,
+        0.939
+      ]
+    },
+    {
+      "island": 21,
+      "material": "skin",
+      "triangles": 19,
+      "area": 1735.9,
+      "along": [
+        -14.3,
+        10.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.003,
+        0.359,
+        0.428
+      ],
+      "bake_uv": [
+        0.007,
+        0.678,
+        0.091,
+        0.858
+      ]
+    },
+    {
+      "island": 22,
+      "material": "skin",
+      "triangles": 12,
+      "area": 1215.9,
+      "along": [
+        -10.2,
+        10.6
+      ],
+      "mu_uv": [
+        0.045,
+        0.003,
+        0.368,
+        0.389
+      ],
+      "bake_uv": [
+        0.792,
+        0.789,
+        0.843,
+        0.938
+      ]
+    }
+  ]
+}

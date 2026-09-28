@@ -1,0 +1,155 @@
+{
+  "item": "ArmorElf02",
+  "mu_name": "Silk Armor",
+  "mu_name_from": "MuMain loads armour indexes 10 to 14 from ArmorElf{i+1} (ZzzOpenData.cpp line 149: `AccessModel(MODEL_ARMOR + i + 10, ..., L\"ArmorElf\", i + 1)`), so index 11 is ArmorElf02, which openmu's 0.75 Armors.cs names the Silk Armor. Group 8 index 11, Player/ArmorElf02.bmd.",
+  "why_this_one": "The Fairy Elf's second set, and the first one she can buy: Elf Lala in Noria carries all five pieces at +2 (src/sim/market.cpp, kElfLala, the index-11 rows). Here so that her shelf shows the pieces it sells rather than their names.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. The sheets are violet quilted fabric with gold flourishes painted into it, which is the Pad set's reading - stuffed cloth, not a plate - in the elf's colours. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 81. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(11, 3, 2, 2, \"Silk Armor\", 20, 12, 26, 30, 70, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 11,
+    "drop_level": 20,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 12,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 26,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. 70 agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "upper_07.png",
+    "hide.png",
+    "skin_warrior_01.png"
+  ],
+  "sheet_from": "Data/Player/upper_07.OZJ (128x128), hide.jpg and skin_warrior_01.OZJ (256x256), from MuMain. The .bmd names upper_07.jpg, hide.jpg and skin_warrior_01.jpg; 88 of the 156 triangles are on the first, 8 on hide and 60 on the skin.",
+  "sheet_note": "upper_07 is a violet quilted bodice with gold scrolls down the breast and a pair of gilt wing-like flourishes at each shoulder, painted into the cloth rather than modelled. Mean (128, 105, 97) at chroma 46. skin_warrior_01 is the elf's own body sheet, which the piece carries because the set leaves her arms bare. hide is MU capping the openings, a solid black square, as on ArmorElf01.",
+  "material_note": "Five islands and two answers. Islands 2, 3 and 4 are 16, 22 and 22 - 60 together, which is skin_warrior_01's 60 exactly - and sit in the body sheet's torso and limb columns, as the Vine Armor's three do: the bare arms, skin. Islands 0 and 1 are 6 and 90, 96 together, which is upper_07's 88 and hide's 8: the bodice and its caps, cloth over the profile's leather. The gold scrolls and shoulder flourishes are painted into the violet quilting rather than laid over it as a plate, which is what separates this from the Pad Gloves' brass; majority is violet fabric.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 250.0,
+      "along": [
+        -6.5,
+        8.3
+      ],
+      "mu_uv": [
+        0.213,
+        0.001,
+        0.788,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.423,
+        0.73
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 90,
+      "area": 4713.6,
+      "along": [
+        -14.8,
+        19.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.011,
+        0.999,
+        0.978
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.994,
+        0.939
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 16,
+      "area": 398.2,
+      "along": [
+        -8.7,
+        9.5
+      ],
+      "mu_uv": [
+        0.144,
+        0.534,
+        0.336,
+        0.826
+      ],
+      "bake_uv": [
+        0.285,
+        0.008,
+        0.448,
+        0.829
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1102.1,
+      "along": [
+        -6.0,
+        7.0
+      ],
+      "mu_uv": [
+        0.324,
+        0.507,
+        0.454,
+        0.986
+      ],
+      "bake_uv": [
+        0.399,
+        0.007,
+        0.526,
+        0.261
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1128.2,
+      "along": [
+        -6.0,
+        7.0
+      ],
+      "mu_uv": [
+        0.014,
+        0.507,
+        0.144,
+        0.986
+      ],
+      "bake_uv": [
+        0.534,
+        0.26,
+        0.748,
+        0.513
+      ]
+    }
+  ]
+}

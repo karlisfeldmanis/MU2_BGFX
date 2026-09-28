@@ -1,0 +1,178 @@
+{
+  "item": "GloveElf03",
+  "mu_name": "Wind Gloves",
+  "mu_name_from": "MuMain loads glove indexes 10 to 14 from GloveElf{i+1} (ZzzOpenData.cpp line 151: `AccessModel(MODEL_GLOVES + i + 10, ..., L\"GloveElf\", i + 1)`), so index 12 is GloveElf03, which openmu's 0.75 Armors.cs names the Wind Gloves. Group 10 index 12, Player/GloveElf03.bmd.",
+  "why_this_one": "The Fairy Elf's third set, sold beside Silk: Elf Lala in Noria carries all five pieces at +3 (src/sim/market.cpp, kElfLala, the index-12 rows). Here so that her shelf shows the pieces it sells rather than their names.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. The sheets are blue quilted fabric with a darker blue scroll worked into it, no metal colour anywhere but the Armor's two tan straps. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 116. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(12, \"Wind Gloves\", 26, 6, 10, 32, 30, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so `armor.Group = (byte)(slot + 5)` makes the group 10.",
+    "group": 10,
+    "number": 12,
+    "drop_level": 26,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 6,
+    "attack_speed": 10,
+    "attack_speed_note": "Recorded and unread: shared/Combat.cs takes attack speed off the weapon row alone.",
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 32,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. 80 agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "gloves_09c.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/gloves_09c.OZJ (64x64) and hide.jpg, from MuMain. The .bmd names gloves_09c.jpg and hide.jpg; 142 of the 148 triangles are on the first and 6 on hide.",
+  "sheet_note": "gloves_09c is a blue quilted gauntlet from two sides, the darker scroll up the cuff and a dark palm. Mean (55, 78, 115) at chroma 60. hide caps the opening.",
+  "material_note": "cloth on all six islands: the two gauntlets at 70 each and four slivers of 2 - gloves_09c's 142 and hide's 6. Blue quilted fabric with the scroll painted in and a dark palm; nothing on the sheet reads as hide or metal.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 9.5,
+      "along": [
+        -2.7,
+        3.8
+      ],
+      "mu_uv": [
+        0.238,
+        0.001,
+        0.425,
+        0.021
+      ],
+      "bake_uv": [
+        0.077,
+        0.058,
+        0.081,
+        0.077
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 70,
+      "area": 1333.4,
+      "along": [
+        -4.9,
+        7.2
+      ],
+      "mu_uv": [
+        0.151,
+        0.001,
+        0.932,
+        0.999
+      ],
+      "bake_uv": [
+        0.422,
+        0.064,
+        0.997,
+        0.904
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 10.2,
+      "along": [
+        3.6,
+        7.1
+      ],
+      "mu_uv": [
+        0.616,
+        0.188,
+        0.716,
+        0.298
+      ],
+      "bake_uv": [
+        0.047,
+        0.004,
+        0.083,
+        0.075
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 9.5,
+      "along": [
+        -2.7,
+        3.8
+      ],
+      "mu_uv": [
+        0.238,
+        0.001,
+        0.425,
+        0.021
+      ],
+      "bake_uv": [
+        0.034,
+        0.004,
+        0.038,
+        0.022
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 70,
+      "area": 1330.4,
+      "along": [
+        -4.9,
+        7.2
+      ],
+      "mu_uv": [
+        0.081,
+        0.001,
+        0.932,
+        0.996
+      ],
+      "bake_uv": [
+        0.003,
+        0.004,
+        0.576,
+        0.845
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 10.2,
+      "along": [
+        3.6,
+        7.1
+      ],
+      "mu_uv": [
+        0.616,
+        0.188,
+        0.716,
+        0.298
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.04,
+        0.075
+      ]
+    }
+  ]
+}

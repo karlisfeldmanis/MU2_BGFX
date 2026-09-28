@@ -1,0 +1,200 @@
+{
+  "item": "PantElf02",
+  "mu_name": "Silk Pants",
+  "mu_name_from": "MuMain loads pants indexes 10 to 14 from PantElf{i+1} (ZzzOpenData.cpp line 150: `AccessModel(MODEL_PANTS + i + 10, ..., L\"PantElf\", i + 1)`), so index 11 is PantElf02, which openmu's 0.75 Armors.cs names the Silk Pants. Group 9 index 11, Player/PantElf02.bmd.",
+  "why_this_one": "The Fairy Elf's second set, and the first one she can buy: Elf Lala in Noria carries all five pieces at +2 (src/sim/market.cpp, kElfLala, the index-11 rows). Here so that her shelf shows the pieces it sells rather than their names.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. The sheets are violet quilted fabric with gold flourishes painted into it, which is the Pad set's reading - stuffed cloth, not a plate - in the elf's colours. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 98. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(11, 4, 2, 2, \"Silk Pants\", 18, 10, 26, 30, 70, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 11,
+    "drop_level": 18,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 10,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 26,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. 70 agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": {
+    "lower_07_jpg": "lower_07.jpg.png",
+    "lower_07_tga": "lower_07.tga.png",
+    "hide": "hide.png",
+    "skin_warrior_01": "skin_warrior_01.png"
+  },
+  "sheet_from": "Data/Player/lower_07.OZJ (128x128), lower_07.OZT (64x64), hide.jpg and skin_warrior_01.OZJ, from MuMain. This model names both halves of one stem - lower_07.jpg on 42 triangles and lower_07.tga on 16 - so both are decoded carrying the extension they stand for and the slots are lower_07_jpg and lower_07_tga, which is what MuExtract writes into the .obj when a model's basenames collide (as on Shield07 and Staff02). hide takes 12 and skin_warrior_01 52; 122 in all.",
+  "sheet_note": "lower_07.jpg is violet quilted leggings, four panels across, gold flourishes at the hip and a gilt band at the knee. Mean (116, 101, 113) at chroma 25. lower_07.tga is two dark olive-gold cloth panels edged in bright yellow - the tabard flaps that hang front and back - mean (88, 76, 25). Its alpha was zero throughout and decode_texture filled it opaque; MU's own blend for that mesh was not checked, and a flap drawn opaque is the right reading of a cloth panel. skin_warrior_01 is the elf's body sheet, for the bare legs; hide caps the openings.",
+  "material_note": "Seven islands and two answers. Islands 5 and 6 are 26 each - skin_warrior_01's 52 - in the body sheet's leg corner, as the Vine Pants' two are: her legs, skin. Islands 3 and 4 are 8 each, lower_07_tga's 16: the olive-gold tabard flaps, front and back, cloth. Islands 0, 1 and 2 are 48, 3 and 3 - 54, lower_07_jpg's 42 and hide's 12 - the violet leggings and their caps, cloth. The yellow edge of the flaps is a painted hem, not a metal band.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 48,
+      "area": 2955.2,
+      "along": [
+        -14.3,
+        10.5
+      ],
+      "mu_uv": [
+        0.077,
+        0.009,
+        0.966,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.624,
+        0.797
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 3,
+      "area": 304.2,
+      "along": [
+        -9.6,
+        10.5
+      ],
+      "mu_uv": [
+        0.392,
+        0.542,
+        0.966,
+        0.666
+      ],
+      "bake_uv": [
+        0.411,
+        0.741,
+        0.858,
+        0.878
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 3,
+      "area": 305.8,
+      "along": [
+        -9.6,
+        10.5
+      ],
+      "mu_uv": [
+        0.115,
+        0.542,
+        0.727,
+        0.666
+      ],
+      "bake_uv": [
+        0.005,
+        0.754,
+        0.358,
+        0.826
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 856.8,
+      "along": [
+        -17.8,
+        -7.5
+      ],
+      "mu_uv": [
+        0.484,
+        0.009,
+        0.984,
+        0.998
+      ],
+      "bake_uv": [
+        0.411,
+        0.005,
+        0.7,
+        0.574
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 8,
+      "area": 731.1,
+      "along": [
+        7.9,
+        16.0
+      ],
+      "mu_uv": [
+        0.01,
+        0.002,
+        0.506,
+        0.999
+      ],
+      "bake_uv": [
+        0.71,
+        0.005,
+        0.995,
+        0.579
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 26,
+      "area": 2549.8,
+      "along": [
+        -10.2,
+        10.5
+      ],
+      "mu_uv": [
+        0.137,
+        -0.005,
+        0.488,
+        0.288
+      ],
+      "bake_uv": [
+        0.335,
+        0.54,
+        0.812,
+        0.957
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 26,
+      "area": 2562.8,
+      "along": [
+        -10.2,
+        10.5
+      ],
+      "mu_uv": [
+        0.005,
+        -0.005,
+        0.365,
+        0.288
+      ],
+      "bake_uv": [
+        0.263,
+        0.54,
+        0.928,
+        0.891
+      ]
+    }
+  ]
+}

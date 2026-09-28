@@ -1,0 +1,90 @@
+{
+  "item": "GloveElf02",
+  "mu_name": "Silk Gloves",
+  "mu_name_from": "MuMain loads glove indexes 10 to 14 from GloveElf{i+1} (ZzzOpenData.cpp line 151: `AccessModel(MODEL_GLOVES + i + 10, ..., L\"GloveElf\", i + 1)`), so index 11 is GloveElf02, which openmu's 0.75 Armors.cs names the Silk Gloves. Group 10 index 11, Player/GloveElf02.bmd.",
+  "why_this_one": "The Fairy Elf's second set, and the first one she can buy: Elf Lala in Noria carries all five pieces at +2 (src/sim/market.cpp, kElfLala, the index-11 rows). Here so that her shelf shows the pieces it sells rather than their names.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. The sheets are violet quilted fabric with gold flourishes painted into it, which is the Pad set's reading - stuffed cloth, not a plate - in the elf's colours. See profiles/soft_armour.json.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 115. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(11, \"Silk Gloves\", 14, 4, 8, 26, 30, 70, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so `armor.Group = (byte)(slot + 5)` makes the group 10.",
+    "group": 10,
+    "number": 11,
+    "drop_level": 14,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 4,
+    "attack_speed": 8,
+    "attack_speed_note": "Recorded and unread: shared/Combat.cs takes attack speed off the weapon row alone.",
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 26,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. 70 agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "gloves_c07.png",
+    "hide.png"
+  ],
+  "sheet_from": "Data/Player/gloves_c07.OZJ (64x64) and hide.jpg, from MuMain. The .bmd names gloves_c07.jpg and hide.jpg; 140 of the 146 triangles are on the first and 6 on hide. Note the c leads here (gloves_c07) where the Vine and Wind sheets trail it (gloves_04c, gloves_09c) - MU's spelling, kept.",
+  "sheet_note": "gloves_c07 is a violet quilted glove from two sides with a gilt bar across the back of the hand and a gilt cap at the cuff. Mean (139, 114, 127) at chroma 39; the pale ground around the two gloves lifts the mean. hide caps the opening.",
+  "material_note": "cloth on both islands, the two gloves (72 and 74 - gloves_c07's 140 and hide's 6). The gilt bar across the back of the hand and the cuff cap are a small part of each island; the rest is violet quilting, so the island reads as fabric, where the Pad Gloves took brass because their gilt plate was most of the sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 72,
+      "area": 1304.7,
+      "along": [
+        -7.7,
+        8.1
+      ],
+      "mu_uv": [
+        0.052,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.678,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 74,
+      "area": 1315.6,
+      "along": [
+        -7.7,
+        8.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.949,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.946,
+        0.723
+      ]
+    }
+  ]
+}

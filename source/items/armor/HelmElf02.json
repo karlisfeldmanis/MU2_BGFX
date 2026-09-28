@@ -1,0 +1,67 @@
+{
+  "item": "HelmElf02",
+  "mu_name": "Silk Helm",
+  "mu_name_from": "MuMain loads helm indexes 10 to 14 from HelmElf{i+1} (ZzzOpenData.cpp line 148: `AccessModel(MODEL_HELM + i + 10, ..., L\"HelmElf\", i + 1)`), so index 11 is HelmElf02, which openmu's 0.75 Armors.cs names the Silk Helm. Group 7 index 11, Player/HelmElf02.bmd.",
+  "why_this_one": "The Fairy Elf's second set, and the first one she can buy: Elf Lala in Noria carries all five pieces at +2 (src/sim/market.cpp, kElfLala, the index-11 rows). Here so that her shelf shows the pieces it sells rather than their names.",
+  "profile": "soft_armour",
+  "profile_from": "Not armour, whose default is plate_steel: nothing in this set is a forged plate. The sheets are violet quilted fabric with gold flourishes painted into it, which is the Pad set's reading - stuffed cloth, not a plate - in the elf's colours. See profiles/soft_armour.json.",
+  "keeps_head": true,
+  "keeps_head_from": "ZzzCharacter.cpp line 12122, SetCharacterScale: helms MODEL_VINE_HELM to MODEL_SPIRIT_HELM keep BODYPART_HEAD as the class's bare head and draw it under the helm, and helm 11 is inside that range (10 Vine, 11 Silk, 12 Wind, 13 Spirit). The model agrees: one sheet, 42 triangles, no skin sheet, so it carries no face of its own. See HelmElf01's note for the whole rule.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 64. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(11, 2, 2, 2, \"Silk Helm\", 16, 8, 26, 30, 70, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 11,
+    "drop_level": 16,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 8,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 26,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. 70 agility beside thirty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "head_a02.png"
+  ],
+  "sheet_from": "Data/Player/head_a02.OZJ (64x64), from MuMain, and it is the only sheet the model names - one mesh, 42 triangles, no hide and no skin. The .bmd names head_a02.jpg.",
+  "sheet_note": "head_a02 is a violet hood in quilted fabric with two gilt discs painted on it and a dark oval for the face opening. Mean (110, 85, 94) at chroma 42.",
+  "material_note": "One island, head_a02's 42 triangles, the whole hood. cloth rather than the profile's leather, for the Pad Helm's reason: quilted padding with its ornament painted in, and the two gilt discs are a few texels on an island that is otherwise violet fabric. The island is the unit and majority is not close.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 42,
+      "area": 1757.9,
+      "along": [
+        -15.6,
+        14.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.945,
+        0.996
+      ]
+    }
+  ]
+}
