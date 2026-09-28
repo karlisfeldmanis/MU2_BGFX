@@ -1,0 +1,23 @@
+{
+  "item": "Warp02",
+  "mu_name": "MODEL_WARP2, Noria's decorative warp",
+  "mu_name_from": "MapManager.cpp:88-103 loads Data/Npc/warp01..03 for Noria alone and stands one MODEL_WARP at (223 * 100, 30 * 100); ZzzObject.cpp:4722 raises five discs from it at z + 350 -- WARP, WARP2, WARP, WARP2, WARP3 at y offsets 0, 4, 8, 12, 20 -- and MoveHandlers.cpp:454 turns each about its Angle[1] and drifts its colour. No gate in OpenMU Version075 or mu.db points there: it is set dressing, and it is drawn by src/game/world/portal.cpp, not thrown by any blow.",
+  "kind": "missile",
+  "kind_note": "Filed with the missiles because that is this tree's cook for an effect mesh (a .obj and its sheet into cooked/showing); nothing throws it.",
+  "mesh": "Warp02.obj",
+  "mesh_from": "muextract export-obj on Data/Npc/warp02.bmd, from MuMain. The warp's second ring, the same 98-triangle shape on Data/Npc/twlight2.OZJ.",
+  "sheet_from": "Data/Npc/twlight2.OZJ, 256 x 256, opaque, the same kind of swirl in a second painting.",
+  "blend_from": "ZzzEffect.cpp:553: `o->BlendMesh = -2` for MODEL_WARP, WARP2 and WARP3 -- every mesh of the model drawn additively.",
+  "scale": 1.3,
+  "scale_from": "ZzzEffect.cpp:553: WARP3 at 0.6; WARP and WARP2 at `1.3 + rand() % 50 / 100`, 1.3 to 1.79, rolled per disc by the game (portal.cpp).",
+  "frames": 0,
+  "frames_from": "`o->LifeTime = 0xffffff`: it never ends.",
+  "parts": [
+    {
+      "group": "twlight2",
+      "sheet": "twlight2.png",
+      "blend": "additive",
+      "note": "The whole model, added: BlendMesh -2."
+    }
+  ]
+}

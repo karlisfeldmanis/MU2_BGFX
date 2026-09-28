@@ -779,6 +779,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
     world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
+    world_.portal().update(float(deltaSeconds));
+    world_.portal().gather(ctx.renderer.effects(), eye.target);
     // The shade under the bridges, which MU draws as a blended mesh. See game/world/shades.h.
     world_.shades().gather(ctx.renderer.effects(), eye.target);
     // What flies over the town and what blows through it. Both follow the character, both

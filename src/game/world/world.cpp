@@ -106,6 +106,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // -- it is asked of the ground every frame, because the disc moves with the camera.
     // docs/grass.md.
     grass_.build(assetDir, name, ground_, textures);
+    // Noria's decorative warp, and nothing anywhere else. See game/world/portal.h.
+    portal_.open(assetDir, name, ground_, textures);
 
     if (!focusSet_) {
         // Where a character comes in on this map: its spawn gate (game/world/maps.h), which
@@ -311,6 +313,7 @@ void World::shutdown() {
     boids_.shutdown();
     leaves_.shutdown();
     weather_.shutdown();
+    portal_.shutdown();
     grass_.shutdown();
     town_.shutdown();
     ground_.shutdown();

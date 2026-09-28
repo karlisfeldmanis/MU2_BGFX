@@ -11,6 +11,7 @@
 #include "game/world/grass.h"
 #include "game/world/lamps.h"
 #include "game/world/leaves.h"
+#include "game/world/portal.h"
 #include "game/world/weather.h"
 #include "game/world/ornaments.h"
 #include "game/world/shades.h"
@@ -70,6 +71,7 @@ public:
     const Boids& boids() const { return boids_; }
     Leaves& leaves() { return leaves_; }
     Weather& weather() { return weather_; }
+    Portal& portal() { return portal_; }
     const Leaves& leaves() const { return leaves_; }
     Play& played() { return play_; }
     const Play& played() const { return play_; }
@@ -100,6 +102,7 @@ private:
     Boids boids_;
     Leaves leaves_;
     Weather weather_;
+    Portal portal_;
     // Held from open() so play() can load the boid's mesh and the leaf's sheet. Those two
     // pools follow the PLAYER -- they are spawned around him and exist nowhere else, which is
     // MU's own arrangement -- so they are raised when somebody is played and not when the
