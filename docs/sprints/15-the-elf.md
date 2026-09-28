@@ -38,8 +38,12 @@ shot rather than OpenMU's shot that costs nothing.
    release off the bow's rail, the ember wake on Arrow01 only, `ebow`/`ecrossbow`.
 3. **The quiver worn.** The ammunition hand drawn on her back (`kQuiverOnBack` exists in
    `game/figures.cpp:63`) in the field as well as in town, arrows and bolts both.
-4. **Her skills.** Triple Shot, Heal, Greater Defense, Greater Damage as rows beside the knight's
-   and the wizard's, on QWER with cooldowns (`skills-are-diablo3-shaped`).
+4. **Her skills.** Heal, Greater Defense, Greater Damage as rows beside the knight's and the
+   wizard's, on QWER with cooldowns (`skills-are-diablo3-shaped`). **The multishot is learned
+   from an "Orb of Skillshot"** (the user's, 2026-09-28) and thrown with any bow or crossbow --
+   ours, in place of 0.75's Triple Shot, which only a bow carrying the Skill option grants
+   (skill 24: 5 mana, reach 6, three arrows at 0 and +/-15 degrees, OpenMU
+   `Version075/SkillsInitializer.cs:64`). It spends one arrow a body struck, as MU2 did.
 5. **Her summons.** Goblin, Stone Golem, Assassin, Elite Yeti, Dark Knight and Bali: one at a time,
    hers, fighting what she fights. The orbs are named **"Orb of Goblin", "Orb of Golem"** and so on,
    the user's (2026-09-28) -- ours, over 0.75's "Orb of Summoning". **A summon scales with the
@@ -58,6 +62,7 @@ shot rather than OpenMU's shot that costs nothing.
 |---|---|---|
 | 1. the shot, in the sim | **done** | `Body::archer` set in `rearm`; the band in `rules.cpp` `reckon`; `nock` in `realm_items.cpp` (reload, spend, refuse); `looseArrow` in `realm_fight.cpp`; `kArcherReach` and the flight in `realm_tuning.h`; the cradle's quiver in `equip`. `sim_test` `testArchery`: 255 drawn, 248 let go (7 targets died on the draw, and the arrow is spent at the draw), 94 from past arm's length, every arrow in the air landing a flight later, one "no more arrows" and an empty hand. A level-one elf with the Short Bow reckons 8 to 14 |
 | 2. the shot, seen | **done, for the user to judge in game** | `game/fx/arrow.*`: the four models by MuMain's `CreateArrow` switch (every bow the wooden arrow, Crossbow/Golden the steel bolt, Arquebus the saw, Light Crossbow the laser; the unbuilt ones fall back, marked ours), from MU's (-10, -60, 135) muzzle (`Play::shootArrow`), at the realm's 17.5 tiles a second, gone a tile short of the body -- the tick the blow lands. The wooden arrow sheds `BITMAP_FIRE` embers at the meteor's numbers; the others shed none, as `Move_MODEL_ARROW_STEEL` lays none. Ours: aimed at the target's middle and following it, where MU flies level. `ebow`/`ecrossbow` were already on the swing. Bench: `--bolt-skill 0` fires the hero's own arrow. Read in a shot at Lorencia's fountain: shaft head-first, the trail heavy -- MU's own sizes, left to the user |
+| 3. the quiver worn | **done** | `Figures::dress` takes the quiver as a third item (`HeldItem::alwaysSlung`, kind `quiver`, `kQuiverOnBack` for both kinds), drawn on `Bone05` in the field as well as in town (`crowd.cpp`), as `RenderCharacterBackItem` sends MODEL_ARROWS and MODEL_BOLT to the back unconditionally (`ZzzCharacter.cpp:15294`). `Play::redress` passes the ammunition hand; a draw that empties or refills it redresses her; `Play::open` redresses once after the cradle arms her. Read in arena shots: Arrows02 behind her shoulder with the Short Bow, Arrows01 with the Crossbow |
 
 **For step 5, from session mu2-bgfx-49's Noria research (2026-09-28):** the Stone Golem is not
 cooked; MU bursts it on death into 8 x (MODEL_BIG_STONE1 + BIG_STONE2) with SOUND_BONE2

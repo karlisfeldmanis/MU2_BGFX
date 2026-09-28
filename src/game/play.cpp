@@ -344,6 +344,11 @@ void Play::update(double seconds) {
                 blinkIn_ = 0.0f;
             }
             // Pushed by Lightning: the realm slides it, and it flinches as it goes.
+            // A draw that emptied the quiver hand, or refilled it from the bag.
+            if ((happening.what == sim::What::Swung || happening.what == sim::What::Arrowless) &&
+                happening.who == realm_.hero().id && quiverName() != dressedQuiver_) {
+                redress();
+            }
             if (happening.what == sim::What::Shoved) {
                 if (Drawn* pushed = drawnOf(happening.who);
                     pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {

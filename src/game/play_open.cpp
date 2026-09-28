@@ -386,6 +386,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
 
     scratch_.assign(std::max<size_t>(128, bones) * 12, 0.0f);
     remember();
+    // World::play dressed him before the realm armed him, so it could not know the quiver the
+    // cradle hands an elf beside her bow: dressed again, once, now that the hands are known.
+    if (!quiverName().empty()) redress();
 
     core::logf("play: %zu bodies, %zu of them with a figure to wear (%zu have none cooked), "
                "hero at tile %d,%d", drawn_.size(), dressed, bare, realm_.hero().column(),

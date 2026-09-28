@@ -168,6 +168,10 @@ public:
     // the figure never shows a weapon the bag no longer does. Called after anything that can
     // change a worn slot; a no-op where `open` was given no `bare` to dress over.
     void redress();
+    // The quiver's item name, off whichever hand holds ammunition, or empty; and the one the
+    // figure was last dressed in, so a shot that empties or refills the hand redresses her.
+    std::string quiverName() const;
+    std::string dressedQuiver_;
     // Puts things in his bag by the asset's name, for a scripted run: `--give Potion02:3`.
     // `count` is a stack's size for a potion and ignored for anything else.
     // `extras` is `+N` for a plus, `L` for luck and `O` then a digit for the option: +3LO2.

@@ -143,6 +143,16 @@ bool Play::discard(int slot) {
 // him at the door -- Realm::moveItem, "the satchel is the truth" -- and a weapon dragged out
 // of his hand went on being drawn in it, because nothing had ever told the figure to look
 // again.
+std::string Play::quiverName() const {
+    for (int slot : {sim::kWeaponRight, sim::kWeaponLeft}) {
+        const sim::Held& held = realm_.satchel()[slot];
+        if (held.empty() || size_t(held.item) >= tables_.items.size()) continue;
+        const content::ItemRow& row = tables_.items[size_t(held.item)];
+        if (sim::ammunition(row)) return row.name;
+    }
+    return {};
+}
+
 void Play::redress() {
     if (!figures_ || bare_.empty() || drawn_.empty()) return;
     const sim::Body& hero = realm_.hero();
@@ -175,8 +185,10 @@ void Play::redress() {
         }
         return ShineLook{};
     };
+    dressedQuiver_ = quiverName();
     const FigureBody* look = figures_->dress(kHeroDressName, bare_, weapon, shield, worn,
-                                             wornShine, handShine(weapon), handShine(shield));
+                                             wornShine, handShine(weapon), handShine(shield),
+                                             dressedQuiver_);
     if (!look) return;
     Drawn& drawn = drawn_[0];
     drawn.figure.reskin(look);

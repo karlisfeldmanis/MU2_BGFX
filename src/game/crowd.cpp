@@ -326,7 +326,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
     if (world_.empty()) return;
     for (const HeldItem& item : body_->held) {
         if (!item.mesh) continue;
-        const bool slung = safe_ && body_->backBone >= 0;
+        const bool slung = (safe_ || item.alwaysSlung) && body_->backBone >= 0;
         const int bone = slung ? body_->backBone : item.bone;
         if (bone < 0 || size_t(bone) * 16 + 16 > world_.size()) continue;
 

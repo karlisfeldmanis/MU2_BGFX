@@ -63,6 +63,7 @@ constexpr OnBack kCrossbowOnBack = {{0.0f, 180.0f, -20.0f}, {-0.10f, 0.40f, -0.0
 constexpr OnBack kQuiverOnBack = {{70.0f, 90.0f, 0.0f}, {-0.10f, 0.10f, -0.05f}, false};
 
 const OnBack& onBack(const HeldItem& item, bool leftHand) {
+    if (item.kind == "quiver") return kQuiverOnBack;
     if (item.stance == "crossbow") return kCrossbowOnBack;
     if (item.stance == "bow") return kQuiverOnBack;
     if (item.kind == "shield" || leftHand) return kShieldOnBack;
@@ -502,7 +503,8 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
                                  const std::string& weapon, const std::string& shield,
                                  const std::vector<std::string>& worn,
                                  const std::vector<ShineLook>& wornShine,
-                                 const ShineLook& weaponShine, const ShineLook& shieldShine) {
+                                 const ShineLook& weaponShine, const ShineLook& shieldShine,
+                                 const std::string& quiver) {
     const FigureBody* wearing = body(base);
     if (!wearing) {
         core::logError("nothing cooked called %s to dress %s in", base.c_str(), name.c_str());
@@ -582,6 +584,21 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
         // asks the weapon slot rather than the hand.
         if (right) made->stance = item.stance;
         made->held.push_back(item);
+    }
+    // The quiver: whichever of the two the hand beside the bow holds, hung on the back and
+    // never in a hand (sprint 15). It decides no stance.
+    if (!quiver.empty()) {
+        if (const content::Mesh* found = wearable(quiver)) {
+            HeldItem item;
+            item.mesh = found;
+            item.kind = "quiver";
+            item.boneName = kBackBone;
+            item.alwaysSlung = true;
+            made->held.push_back(item);
+        } else {
+            core::logError("%s has no cooked mesh, so %s wears no quiver", quiver.c_str(),
+                           name.c_str());
+        }
     }
 
     bind(*made);

@@ -59,6 +59,9 @@ struct HeldItem {
     std::string boneName;
     std::string kind;    // "weapon", "shield", from index.json's own rows
     std::string stance;  // "crossbow", "bow", "sword", ... -- the item's own
+    // On the back wherever he stands, not only in a safe zone: the arrows and the bolt, which
+    // `RenderCharacterBackItem` sends to the back unconditionally (ZzzCharacter.cpp:15294).
+    bool alwaysSlung = false;
 
     // **In the hand there is nothing to correct**: the rig's grip bones sit where a grip
     // belongs, so a held item hangs off one with an identity transform. That is MU2's own
@@ -214,7 +217,8 @@ public:
                             const std::string& weapon, const std::string& shield,
                             const std::vector<std::string>& worn = {},
                             const std::vector<ShineLook>& wornShine = {},
-                            const ShineLook& weaponShine = {}, const ShineLook& shieldShine = {});
+                            const ShineLook& weaponShine = {}, const ShineLook& shieldShine = {},
+                            const std::string& quiver = {});
 
     // The wardrobe: every suit of armour and every weapon index.json carries, worn and held
     // rather than laid out. It is a SECOND manifest and a second directory on purpose --
