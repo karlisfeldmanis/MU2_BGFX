@@ -475,7 +475,11 @@ void Play::update(double seconds) {
                     if (volley) {
                         lastThunderTick_ = int64_t(happening.tick);
                     }
-                    if (!again && index >= 0 && heard_.skill[index] >= 0) {
+                    // Only a spell's: its wave is held off the wind-up for this. Anything else
+                    // -- Skillshot's fan -- rang its sound on the `Swung` already, and a second
+                    // here was the double shot the user heard (2026-09-29).
+                    const bool spell = loosed != nullptr && loosed->wizardry;
+                    if (spell && !again && index >= 0 && heard_.skill[index] >= 0) {
                         emit(heard_.skill[index], from[0], from[2], caster->id);
                     }
                 }
