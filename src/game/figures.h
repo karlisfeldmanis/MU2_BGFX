@@ -199,6 +199,10 @@ class Figures {
 public:
     bool open(const std::string& assetDir, const std::string& world,
               content::Textures& textures);
+    // A monster figure this world's table does not carry, borrowed from whichever world's table
+    // does -- their meshes and clips share one cooked folder. For the elf's summon (sprint 15),
+    // which is Noria's Goblin wherever she raises it. True when the figure is here after.
+    bool borrow(const std::string& name);
     void shutdown();
 
     // A body index.json does not describe: `base`'s parts -- which for a new character is the
@@ -267,6 +271,9 @@ private:
     std::unordered_map<std::string, std::string> wardrobePaths_;  // mesh name -> cooked file
     std::unordered_map<std::string, bool> keepsHead_;             // helm name -> worn over the head
     void bind(FigureBody& body);
+    // One monster row of a figure table made into a body: open() for every breed the world
+    // carries, and borrow() for one it does not.
+    void addMonster(const core::Json& entry);
     // Which clips a finished body stands and walks in: the stance's own row, or the idle
     // index.json names for this figure when it names one. Called by open() and by dress(), so
     // that a hero and a guard pick their idle by one rule.

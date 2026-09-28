@@ -220,6 +220,23 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     drawn_.clear();
     drawn_.reserve(realm_.bodies().size());
     size_t bones = 0, dressed = 0, bare = 0;
+    // **Her summons' breeds, on any map** (the user, 2026-09-28): a Goblin is Noria's figure,
+    // and a world's table carries its own breeds alone, so the ones a summon raises are borrowed
+    // from whichever world has them (Figures::borrow). Counted into the pose buffer as well.
+    if (figures_ && realm_.hero().kin == sim::Kin::FairyElf) {
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            if (row.summons <= 0 || !row.built) continue;
+            for (const content::MonsterKind& kind : tables_.kinds) {
+                if (kind.number != row.summons) continue;
+                if (figures_->borrow(kind.figure)) {
+                    if (const FigureBody* look = figures_->body(kind.figure)) {
+                        bones = std::max(bones, look->boneCount());
+                    }
+                }
+            }
+        }
+    }
     for (const sim::Body& body : realm_.bodies()) {
         Drawn one;
         one.id = body.id;

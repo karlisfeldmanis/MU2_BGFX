@@ -1,5 +1,7 @@
 #include "game/figures.h"
 
+#include <filesystem>
+
 #include <bx/timer.h>
 
 #include <algorithm>
@@ -911,57 +913,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     }
 
     // --- the monsters: one mesh, its own clips, and its gear on a named bone -----------
-    for (const core::Json& entry : manifest["monsters"].items) {
-        auto made = std::make_unique<FigureBody>();
-        made->name = entry["name"].string;
-        made->label = entry["label"].stringOr(made->name.c_str());
-        made->kind = BodyKind::Monster;
-        made->scale = float(entry["scale"].numberOr(1.0));
-        made->stance = entry["stance"].stringOr("");
-        const content::Mesh* body = mesh(entry["mesh"].string);
-        if (!body) continue;
-        made->parts.push_back(body);
-        made->library = libraryFor(body->name());
-        for (const char* side : {"right_hand", "left_hand"}) {
-            const std::string name = entry[side].stringOr("");
-            if (name.empty()) continue;
-            const content::Mesh* found = mesh(name);
-            if (!found) continue;
-            const std::string boneField = std::string(side) + "_bone";
-            std::string bone = entry[boneField.c_str()].stringOr("");
-            // The Skeleton Warrior names no bone and is on the player rig: it takes the
-            // player's own grips, like the characters above.
-            if (bone.empty()) bone = std::string(side) == "right_hand" ? kRightGrip : kLeftGrip;
-            HeldItem item;
-            item.mesh = found;
-            item.boneName = bone;
-            describe(item);
-            made->held.push_back(item);
-        }
-        bind(*made);
-        if (made->library) {
-            // A monster's slots are its own table: 0 idle, 2 walk, 6 die. But `Skeleton01`
-            // has no clips of its own and is animated out of the PLAYER library, where slot
-            // 0 is "Set" -- a three-frame character-creation pose -- and slot 2 is "Stop
-            // female". Its index.json row says which stance it stands in, and that is the
-            // table to read: the trap this file's own header names, which the first draft of
-            // these two lines then walked into.
-            const bool playerRig = made->library->name == "player";
-            const auto [stand, walk] = stanceActions(made->stance, false);
-            made->idleClip = made->library->find(playerRig ? stand : 0);
-            made->walkClip = made->library->find(playerRig ? walk : 2);
-            // A monster never puts its weapon away: MU's safe-zone rule is the player's, and
-            // nothing hostile stands in one.
-            made->idleSafeClip = made->idleClip;
-            // Its own walk, measured the same way a man's is -- whatever it plants. A breed
-            // that plants nothing measurably (a thing that hovers, a clip with no contact)
-            // comes back zero and is paced by the cook's travel instead.
-            made->plantSpeed = measurePlant(*made, made->walkClip);
-            made->walkSafeClip = made->walkClip;
-            made->plantSpeedSafe = made->plantSpeed;
-        }
-        bodies_[made->name] = std::move(made);
-    }
+    for (const core::Json& entry : manifest["monsters"].items) addMonster(entry);
 
     // --- the standalone townsfolk: a whole model with its clips inside it --------------
     for (const core::Json& entry : manifest["standalone"].items) {
@@ -1040,6 +992,129 @@ void Figures::shutdown() {
     bodies_.clear();
     placements_.clear();
     breeds_.clear();
+}
+
+
+void Figures::addMonster(const core::Json& entry) {
+    auto describe = [&](HeldItem& item) {
+        auto found = items_.find(item.mesh ? item.mesh->name() : std::string());
+        if (found == items_.end()) return;
+        item.kind = found->second.kind;
+        item.stance = found->second.stance;
+    };
+    auto libraryFor = [&](const std::string& meshName) -> const ClipLibrary* {
+        auto found = clipOf_.find(meshName);
+        if (found == clipOf_.end()) return nullptr;
+        return library(found->second);
+    };
+    auto made = std::make_unique<FigureBody>();
+    made->name = entry["name"].string;
+    made->label = entry["label"].stringOr(made->name.c_str());
+    made->kind = BodyKind::Monster;
+    made->scale = float(entry["scale"].numberOr(1.0));
+    made->stance = entry["stance"].stringOr("");
+    const content::Mesh* body = mesh(entry["mesh"].string);
+    if (!body) return;
+    made->parts.push_back(body);
+    made->library = libraryFor(body->name());
+    for (const char* side : {"right_hand", "left_hand"}) {
+        const std::string name = entry[side].stringOr("");
+        if (name.empty()) continue;
+        const content::Mesh* found = mesh(name);
+        if (!found) continue;
+        const std::string boneField = std::string(side) + "_bone";
+        std::string bone = entry[boneField.c_str()].stringOr("");
+        // The Skeleton Warrior names no bone and is on the player rig: it takes the
+        // player's own grips, like the characters above.
+        if (bone.empty()) bone = std::string(side) == "right_hand" ? kRightGrip : kLeftGrip;
+        HeldItem item;
+        item.mesh = found;
+        item.boneName = bone;
+        describe(item);
+        made->held.push_back(item);
+    }
+    bind(*made);
+    if (made->library) {
+        // A monster's slots are its own table: 0 idle, 2 walk, 6 die. But `Skeleton01`
+        // has no clips of its own and is animated out of the PLAYER library, where slot
+        // 0 is "Set" -- a three-frame character-creation pose -- and slot 2 is "Stop
+        // female". Its index.json row says which stance it stands in, and that is the
+        // table to read: the trap this file's own header names, which the first draft of
+        // these two lines then walked into.
+        const bool playerRig = made->library->name == "player";
+        const auto [stand, walk] = stanceActions(made->stance, false);
+        made->idleClip = made->library->find(playerRig ? stand : 0);
+        made->walkClip = made->library->find(playerRig ? walk : 2);
+        // A monster never puts its weapon away: MU's safe-zone rule is the player's, and
+        // nothing hostile stands in one.
+        made->idleSafeClip = made->idleClip;
+        // Its own walk, measured the same way a man's is -- whatever it plants. A breed
+        // that plants nothing measurably (a thing that hovers, a clip with no contact)
+        // comes back zero and is paced by the cook's travel instead.
+        made->plantSpeed = measurePlant(*made, made->walkClip);
+        made->walkSafeClip = made->walkClip;
+        made->plantSpeedSafe = made->plantSpeed;
+    }
+    bodies_[made->name] = std::move(made);
+}
+
+bool Figures::borrow(const std::string& name) {
+    if (name.empty()) return false;
+    if (bodies_.count(name) != 0) return true;
+    if (textures_ == nullptr) return false;
+    const std::string dir = core::join(assetDir_, "cooked/figures");
+    std::error_code error;
+    for (const auto& file : std::filesystem::directory_iterator(dir, error)) {
+        const std::string leaf = file.path().filename().string();
+        if (leaf.rfind("figures", 0) != 0 || file.path().extension() != ".json") continue;
+        core::Json manifest = core::parseJsonFile(file.path().string());
+        if (manifest.isNull()) continue;
+        for (const core::Json& entry : manifest["monsters"].items) {
+            if (entry["name"].string != name) continue;
+            // Its meshes -- the body and anything in its hands -- and its clip library, each
+            // loaded unless this world already has it.
+            for (const char* field : {"mesh", "right_hand", "left_hand"}) {
+                const std::string part = entry[field].stringOr("");
+                if (part.empty() || meshIndex_.count(part) != 0) continue;
+                const core::Json& row = manifest["meshes"][part.c_str()];
+                std::vector<uint8_t> bytes = core::readFile(core::join(assetDir_, row["mesh"].string));
+                content::CookedMesh cooked;
+                std::string why;
+                if (bytes.empty() || !content::parseCookedMesh(bytes, cooked, why)) continue;
+                auto made = std::make_unique<content::Mesh>();
+                if (!made->buildFromCooked(cooked, part, assetDir_, *textures_)) continue;
+                meshIndex_[part] = meshes_.size();
+                meshes_.push_back(std::move(made));
+            }
+            const std::string meshName = entry["mesh"].string;
+            const std::string libraryName = manifest["clip_of"][meshName.c_str()].stringOr("");
+            if (!libraryName.empty()) {
+                clipOf_[meshName] = libraryName;
+                if (libraries_.count(libraryName) == 0) {
+                    const std::string clips = manifest["clips"][libraryName.c_str()].stringOr("");
+                    std::vector<uint8_t> bytes = core::readFile(core::join(assetDir_, clips));
+                    auto library = std::make_unique<ClipLibrary>();
+                    library->name = libraryName;
+                    std::string why;
+                    if (!bytes.empty() && content::parseCookedClips(bytes, library->clips, why)) {
+                        for (size_t i = 0; i < library->clips.clips.size(); ++i) {
+                            const content::CookedClip& clip = library->clips.clips[i];
+                            library->byName[clip.name] = int(i);
+                            if (clip.slot >= 0) library->bySlot[clip.slot] = int(i);
+                        }
+                        libraries_[libraryName] = std::move(library);
+                    }
+                }
+            }
+            addMonster(entry);
+            const bool here = bodies_.count(name) != 0;
+            core::logf("figures: %s borrowed from %s%s", name.c_str(), leaf.c_str(),
+                       here ? "" : " -- and it would not build");
+            return here;
+        }
+    }
+    core::logf("figures: %s is in no world's figure table", name.c_str());
+    return false;
 }
 
 }  // namespace mu::game
