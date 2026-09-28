@@ -972,15 +972,23 @@ void testSkills(const content::Tables& tables) {
                "300 agility halves a cooldown");
     check(sim::cooldownTicks(guard, 100000, sim::floorTicksFor(guard, 0)) > guard.boonTicks,
           "and a guard's cooldown always outlasts the guard");
-    // Defense's share: each of the four stats and the shield raises it, and none reaches the cap.
+    // Defense's share: the shield, strength and agility raise it, and nothing reaches the cap.
     const sim::HeroPoints fresh{28, 20, 25, 10};
     const float start = sim::guardShare(fresh, 3);
     check(start > 0.10f && start < 0.25f, "a new knight's guard takes a modest share");
     check(sim::guardShare(fresh, 20) > start &&
               sim::guardShare({128, 20, 25, 10}, 3) > start &&
-              sim::guardShare({28, 120, 25, 10}, 3) > start &&
-              sim::guardShare({28, 20, 25, 110}, 3) > start,
-          "the shield, strength, agility and energy each raise the guard");
+              sim::guardShare({28, 120, 25, 10}, 3) > start,
+          "the shield, strength and agility each raise the guard");
+    check(sim::guardShare({28, 20, 25, 500}, 3) == start, "and energy does not");
+    // Strength is the knight's as energy is the wizard's: each spending on his main stat stays
+    // within a point of the other at every stage.
+    for (int spent : {0, 25, 110, 300}) {
+        const float knight = sim::guardShare({28 + spent, 20, 25, 10}, 3);
+        const float wizard = sim::barrierShare({18, 18, 15, 30 + spent}, 3);
+        check(std::fabs(knight - wizard) < 0.01f,
+              "a knight on strength and a wizard on energy stand level");
+    }
     check(sim::guardShare({30000, 30000, 0, 30000}, 5000) < sim::kGuardCap,
           "and no build reaches the guard's cap");
     check(sim::force(cyclone, sim::HeroPoints{2000, 0, 0, 0}) >

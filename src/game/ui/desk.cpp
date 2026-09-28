@@ -939,19 +939,19 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
             line("Absorbs",
                  sim::absorbed(sim::boonShare(row, hero.points, hero.shieldDefense)) + " of every blow",
                  tip::Tone::Green));
-        // And what it is made of, grey and on one line as an attack's sum is: the guard points
-        // off the shield and the four stats, and the cap they climb towards. Soul Barrier's
-        // are the shield, energy and agility and nothing else (`barrierPoints`), so it names
-        // only those: a stat on the line that does not move the number is a lie by listing.
+        // And what it is made of, grey and on one line as an attack's sum is: the points off the
+        // shield, the main stat and agility, and the cap they climb towards. Each names only
+        // what its formula reads (`guardPoints`, `barrierPoints`): a stat on the line that does
+        // not move the number is a lie by listing.
         char sum[96];
         if (row.number == sim::skill::kSoulBarrier) {
             std::snprintf(sum, sizeof(sum), "%d shield, %d ene, %d agi (max %d%%)",
                           hero.shieldDefense, hero.points.energy, hero.points.agility,
                           int(sim::kGuardCap * 100.0f + 0.5f));
         } else {
-            std::snprintf(sum, sizeof(sum), "%d shield, %d str, %d agi, %d ene (max %d%%)",
+            std::snprintf(sum, sizeof(sum), "%d shield, %d str, %d agi (max %d%%)",
                           hero.shieldDefense, hero.points.strength, hero.points.agility,
-                          hero.points.energy, int(sim::kGuardCap * 100.0f + 0.5f));
+                          int(sim::kGuardCap * 100.0f + 0.5f));
         }
         tip::Row how;
         how.free = sum;

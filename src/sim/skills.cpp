@@ -299,8 +299,8 @@ int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {
 }
 
 float guardPoints(const HeroPoints& points, int shieldDefense) {
-    return 5.0f * float(std::max(0, shieldDefense)) + 0.4f * float(points.strength) +
-           1.0f * float(points.agility) + 1.2f * float(points.energy);
+    return 5.0f * float(std::max(0, shieldDefense)) + 1.1f * float(points.strength) +
+           0.5f * float(points.agility);
 }
 
 float guardShare(const HeroPoints& points, int shieldDefense) {

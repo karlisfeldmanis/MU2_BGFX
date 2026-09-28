@@ -253,27 +253,28 @@ int32_t cooldownTicks(const SkillRow& row, int agility, int32_t floorTicks);
 // seconds for a buff.
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks);
 
-// How much of every blow Defense takes away, 0 to kGuardCap, off the shield he holds and all
-// four of his stats. INVENTION, the user's call of 2026-09-25 ("a better formula, something
-// with shield defense and agility and strength and energy"); 0.75 gives a flat half. Guard
-// points are 5 a point of the shield's defence (its plus and its wear counted), 0.4 a point of
-// strength, 1 of agility and 1.2 of energy; the share is kGuardCap * points / (points + 150),
-// so it climbs fast early and flattens, and never reaches the cap. A new knight's is about
-// 17%, a level-23 knight's about 30%, a strong late build's about 49%. Read at the cast and
-// held for the guard's whole length (`Body::boonDamageTaken`), which multiplies what gets
-// past armour and the floor (`rules.cpp`).
+// How much of every blow Defense takes away, 0 to kGuardCap, off the shield he holds, his
+// strength and his agility. INVENTION: the user's call of 2026-09-25 put all four stats in it,
+// and on 2026-09-28 it became the mirror of the wizard's Soul Barrier with STRENGTH as the main
+// stat, as energy is the wizard's -- it had weighed strength least (0.4, against 1.0 agility
+// and 1.2 energy), so a knight spending on strength fell behind a wizard spending on energy.
+// 0.75 gives a flat half. Guard points are 5 a point of the shield's defence (its plus and its
+// wear counted), 1.1 a point of strength and 0.5 of agility; the share is
+// kGuardCap * points / (points + 150), so it climbs fast early and flattens, and never reaches
+// the cap. A new knight's is about 16%, a level-23 knight's who spent on strength about 34%.
+// Read at the cast and held for the guard's whole length (`Body::boonDamageTaken`), which
+// multiplies what gets past armour and the floor (`rules.cpp`).
 constexpr float kGuardCap = 0.60f;
 float guardPoints(const HeroPoints& points, int shieldDefense);
 float guardShare(const HeroPoints& points, int shieldDefense);
 
-// **Soul Barrier's share, on the same curve and under the same cap**: the knight's shield term
-// kept whole, strength's place taken by energy, and agility at half. INVENTION, the user's
-// call of 2026-09-28 -- "almost identical at the beginning of the game, but the wizard's is
-// energy and the knight's is strength". Barrier points are 5 a point of the shield's defence,
-// 1.1 a point of energy and 0.5 of agility, so a new wizard and a new knight behind the same
-// shield come within a point of each other (16.5% against 16.8% behind a Buckler +1, 14.3%
-// against 14.6% behind a Small Shield), and a wizard who spends on energy climbs about as a
-// knight who spends on his guard does. MU's own `10 + agility/50 + energy/200` percent
+// **Soul Barrier's share, on the same curve and under the same cap**: the knight's formula
+// with energy in strength's place. INVENTION, the user's call of 2026-09-28 -- "almost
+// identical at the beginning of the game, but the wizard's is energy and the knight's is
+// strength". Barrier points are 5 a point of the shield's defence, 1.1 a point of energy and
+// 0.5 of agility, so a new wizard and a new knight behind the same shield come within half a
+// point of each other (16.5% against 16.3% behind a Buckler +1, 14.3% against 14.0% behind a
+// Small Shield), and each spending on his main stat stays level with the other after. MU's own `10 + agility/50 + energy/200` percent
 // (SkillTooltipModel.cpp:248) is a tenth of this at the start and is not followed.
 float barrierPoints(const HeroPoints& points, int shieldDefense);
 float barrierShare(const HeroPoints& points, int shieldDefense);

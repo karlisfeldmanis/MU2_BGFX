@@ -129,18 +129,20 @@ What is its own: the wave, `SOUND_SOULBARRIER` (`eSoulBarrier.wav`), and the man
 
 | | shield defence | strength | agility | energy |
 |---|---|---|---|---|
-| Defense (`guardPoints`) | 5 | 0.4 | 1.0 | 1.2 |
+| Defense (`guardPoints`) | 5 | 1.1 | 0.5 | -- |
 | Soul Barrier (`barrierPoints`) | 5 | -- | 0.5 | 1.1 |
 
 Calibrated so a new character of each class behind the same shield stands within a point:
 
 | behind | new knight {28,20,25,10} | new wizard {18,18,15,30} |
 |---|---|---|
-| Small Shield (1) | 14.6% | 14.3% |
-| Buckler +1 (3) | 16.8% | 16.5% |
+| Small Shield (1) | 14.0% | 14.3% |
+| Buckler +1 (3) | 16.3% | 16.5% |
 
-A wizard spending on energy climbs about as a knight spending on agility (about a third by level 23,
-mid-40s late). MU's own `10 + agility/50 + energy/200` percent (SkillTooltipModel.cpp:248) is not
+The knight's is the mirror, strength in energy's place (2026-09-28; it had been 0.4 strength, 1.0
+agility and 1.2 energy, which left a knight spending on strength behind a wizard spending on energy).
+Each spending on his main stat stays level: 21.4% against 21.6% at level 6, 34.4% against 34.5% at
+level 23, 45.1% each late. MU's own `10 + agility/50 + energy/200` percent (SkillTooltipModel.cpp:248) is not
 followed. `tests/sim_test.cpp` holds the parity, the gate and the route through Pasi.
 
 ## 3. Measured
