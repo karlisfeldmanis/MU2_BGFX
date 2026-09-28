@@ -477,6 +477,10 @@ void Play::update(double seconds) {
                     if (const Drawn* hero = drawnOf(happening.who)) {
                         Cue cue;
                         cue.attacker = happening.who;
+            if ((happening.what == sim::What::Hit || happening.what == sim::What::Missed) &&
+                !happening.thrown && happening.who != realm_.hero().id) {
+                hunterShot(happening.who, happening.whom);
+            }
                         cue.target = happening.whom;
                         cue.damage = happening.a;
                         cue.taken = taken;

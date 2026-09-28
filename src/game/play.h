@@ -567,6 +567,10 @@ private:
     // frames, so the tick is what a shot's frame number is worked out from. The same spirit and
     // the same shape as the `meteor: tick N` and `bones: tick N` lines beside it; those two stay
     // where they are, since an effect knows things a happening does not.
+    // A Hunter's blow drawn as MU draws it: CreateArrows off its MODEL_ARQUEBUS, which throws
+    // MODEL_ARROW_SAW (ZzzCharacter.cpp:4831, ZzzEffectMagicSkill.cpp:225). The rules resolve
+    // the blow at range on the tick and are not told; this only draws the bolt it would be.
+    void hunterShot(uint32_t shooter, uint32_t target);
     void announce(const sim::Happening& happening);
     // The breed's own name for those lines, or "the hero".
     std::string nameOf(uint32_t id) const;

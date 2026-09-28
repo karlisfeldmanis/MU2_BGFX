@@ -374,6 +374,26 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom) {
     arrows_.loose(muzzle, to, whom, model);
 }
 
+void Play::hunterShot(uint32_t shooter, uint32_t target) {
+    const Drawn* from = drawnOf(shooter);
+    const Drawn* to = drawnOf(target);
+    if (!from || !to || !from->placed || !to->placed || !ground_) return;
+    const FigureBody* look = from->figure.body();
+    if (!look || look->name != kHunterFigure) return;
+    // At the middle of the one it is shot at, as every arrow is aimed.
+    const FigureBody* aim = to->figure.body();
+    const float tall = aim ? aim->height * aim->scale : 1.0f;
+    const float at[3] = {to->crown[0], to->crown[1] - tall * 0.5f, to->crown[2]};
+    const float feet = ground_->heightAt(from->crown[0], from->crown[2]);
+    const float wayX = at[0] - from->crown[0], wayZ = at[2] - from->crown[2];
+    const float flat = std::max(1e-4f, std::sqrt(wayX * wayX + wayZ * wayZ));
+    const float fx = wayX / flat, fz = wayZ / flat;
+    // MU's muzzle, (-10, -60, 135) turned by its facing, as shootArrow's.
+    const float muzzle[3] = {from->crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
+                             from->crown[2] + fz * 0.6f - fx * 0.1f};
+    arrows_.loose(muzzle, at, 0, Arrows::Saw);
+}
+
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     if (!isOpen() || drawn_.empty() || !drawn_[0].placed || !ground_) return;
     const Drawn& hero = drawn_[0];
