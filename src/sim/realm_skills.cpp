@@ -189,13 +189,25 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // A self-cast has no target to be far from and reads its victim off the caster.
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
-        hero.boonSkill = row.number;
-        // The guard's share off his shield and stats as they stand at the cast, held for its
-        // whole length: `guardShare` in sim/skills.h, where the numbers are argued -- or the
-        // wizard's `barrierShare`, off energy where the knight's is off his body.
-        hero.boonDamageTaken = 1.0f - boonShare(row, hero.points, hero.shieldDefense);
-        hero.boonUntil = tick_ + row.boonTicks;
-        hero.stats.damageTaken = double(hero.boonDamageTaken);
+        if (row.mends) {
+            // Heal: health back at once, never past the most he has.
+            hero.health = std::min(hero.maxHealth, hero.health + healOf(hero.points));
+        } else if (row.mightTicks > 0) {
+            // Greater Damage: reckoned off her energy now and held for the minute; a second cast
+            // replaces the first rather than stacking, as MU's magic effects do.
+            hero.might = mightOf(hero.points);
+            hero.mightUntil = tick_ + row.mightTicks;
+            rearm(hero);
+        } else {
+            hero.boonSkill = row.number;
+            // The guard's share off his shield and stats as they stand at the cast, held for its
+            // whole length: `guardShare` in sim/skills.h, where the numbers are argued -- or the
+            // wizard's `barrierShare`, off energy where the knight's is off his body, or the
+            // elf's `wardShare`, off agility with no shield at all.
+            hero.boonDamageTaken = 1.0f - boonShare(row, hero.points, hero.shieldDefense);
+            hero.boonUntil = tick_ + row.boonTicks;
+            hero.stats.damageTaken = double(hero.boonDamageTaken);
+        }
     } else {
         Body* target = body(at);
         // The reach, and it is the knight's own. 0.75 gave each skill a range and then added two
@@ -209,7 +221,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // does for a swing (`engage`), and the blow lands half a clip later by which time he has
         // come round. Set even on a refusal below -- a knight turns toward what he tried to hit.
         if (aimed) hero.aim = std::atan2(target->y - hero.y, target->x - hero.x);
-        if (row.spread == Spread::One || row.spread == Spread::Line) {
+        if (row.spread == Spread::One || row.spread == Spread::Line ||
+            row.spread == Spread::Fan) {
             // A line is thrown AT a body as a single blow is, and goes on through: it needs the
             // body to aim by, and the rest of its way is found when it is let go.
             if (!aimed) return false;
@@ -225,6 +238,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             uint32_t victims[kVictims];
             if (gather(hero, row, victims, kVictims) == 0) return false;
         }
+        // A fan is arrows: none in hand or in the bag and there is nothing to loose.
+        if (row.arrows > 0 && !quivered(hero)) return false;
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
     }
@@ -373,6 +388,8 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
     const int index = skillIndexOf(row.number);
     if (index < 0 || (hero.learned & (uint32_t(1) << index)) == 0) return false;
     if (row.kin != hero.kin || hero.mana < row.mana) return false;
+    // A fan with nothing to loose falls back to the bow, which then says there are no arrows.
+    if (row.arrows > 0 && !quivered(hero)) return false;
     const auto armAt = [&](int32_t at) -> const content::Arm* {
         return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
     };

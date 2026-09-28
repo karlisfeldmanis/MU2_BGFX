@@ -72,6 +72,14 @@ constexpr int32_t kIce = 7;
 // And `AT_SKILL_POISON`, off the Scroll of Poison (group 15 number 0, `Book01`) at a hundred and
 // forty energy: a blow, and then a poison that goes on hurting.
 constexpr int32_t kPoison = 1;
+// **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
+// Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
+// "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
+// with the Skill option.
+constexpr int32_t kSkillshot = 24;
+constexpr int32_t kHeal = 26;
+constexpr int32_t kGreaterDefense = 27;
+constexpr int32_t kGreaterDamage = 28;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -109,6 +117,11 @@ constexpr uint32_t kSpear = 1u << 6;
 // Defense's own hand, and the reason a shield is in this enumeration at all: it is the one
 // "weapon family" a buff asks for, so one column answers both questions instead of two.
 constexpr uint32_t kShield = 1u << 7;
+// The elf's two (sprint 15): a bow and a crossbow, which throw Skillshot and nothing a knight
+// throws.
+constexpr uint32_t kBow = 1u << 8;
+constexpr uint32_t kCrossbow = 1u << 9;
+constexpr uint32_t kMissiles = kBow | kCrossbow;
 
 constexpr uint32_t kSwords = kSword1 | kSword2;
 constexpr uint32_t kAxes = kAxe1 | kAxe2;
@@ -140,7 +153,13 @@ int familiesNamed(uint32_t families, const char** out, int room);
 // and Arc is Slash's three tiles off his facing.
 // Line is Power Wave's: every body within half a tile of the line from him toward what it was
 // thrown at, out to its reach -- the curtain sweeps through them all (the user, 2026-09-28).
-enum class Spread : uint8_t { One, Ring, Arc, Line };
+// Fan is Skillshot's: `arrows` lines out from him, one straight at the body he aims at and the
+// rest `kFanDegrees` apart either side, each striking every body within `kLineHalfWidth` of it
+// between `kFanNearest` tiles and the row's reach -- MU2's `Realm.Passes`, off MuMain's Triple
+// Shot, whose arrows fly on through what they strike (`Kind = 1`).
+enum class Spread : uint8_t { One, Ring, Arc, Line, Fan };
+constexpr float kFanDegrees = 15.0f;
+constexpr float kFanNearest = 0.6f;
 
 // Half the Line's width, in tiles: the curtain is 0.91 m across, so a body whose middle is within
 // three quarters of a tile of the line is in its way.
@@ -264,8 +283,19 @@ struct SkillRow {
     // **A poison**: how many ticks what it strikes goes on being hurt, a pulse every
     // `kPoisonEvery`. Poison's, 0.75's twenty seconds. 0 for none.
     int32_t poisonTicks = 0;
+    // ---- the elf's columns (sprint 15), appended so no row above need name them -------------
+    // Thrown with anything or nothing in hand: her buffs, which neither a bow nor a shield
+    // decides.
+    bool anyHand = false;
+    // **Heal**: health put back at once, `5 + energy / 5` (OpenMU's HealEffectInitializer).
+    bool mends = false;
+    // **Greater Damage**: `3 + energy / 7` added to every blow after the defence, for this long
+    // (GreaterDamageEffectInitializer, sixty seconds; AttackableExtensions.cs:185). 0 for none.
+    int32_t mightTicks = 0;
+    // **Skillshot**: how many arrows the fan looses. Each body struck costs one.
+    int32_t arrows = 0;
     // Whether it is cast on the caster and takes no target.
-    bool onSelf() const { return boonTicks > 0; }
+    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
     // slot is his auto-attack (the user, 2026-09-28), paced by its own clip and nothing else,
     // and like a swing it can be walked out of and a hit pays mana back.
@@ -276,7 +306,7 @@ struct SkillRow {
     // Whether this hand may throw it. One test, asked by the realm before it spends anything
     // and by the plate before it draws the key lit -- they must not be able to disagree.
     bool suits(uint32_t family) const {
-        return wizardry || (family != arms::kNone && (families & family) != 0);
+        return wizardry || anyHand || (family != arms::kNone && (families & family) != 0);
     }
 };
 
@@ -286,7 +316,7 @@ struct SkillRow {
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 18;
+constexpr int kSkills = 22;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates
@@ -362,6 +392,20 @@ float guardShare(const HeroPoints& points, int shieldDefense);
 // (SkillTooltipModel.cpp:248) is a tenth of this at the start and is not followed.
 float barrierPoints(const HeroPoints& points, int shieldDefense);
 float barrierShare(const HeroPoints& points, int shieldDefense);
+
+// **The elf's guard, Greater Defense, on the same curve and under the same cap** -- the user's
+// of 2026-09-28: learned as early as Defense and Soul Barrier and standing level with them. Ours
+// in everything but the name (0.75's Greater Defense is `2 + energy / 8` defence for a minute).
+// Her main stat in the knight's strength's place is AGILITY, which is her damage as strength is
+// his; energy takes agility's half-weight. She cannot carry a shield beside a bow, so a flat 15
+// points stands where theirs is -- a Buckler +1's, which is what the knight's own 16.3% is
+// measured behind -- and no shield is asked. A new elf's is 14.4%, beside theirs.
+constexpr float kWardShieldPoints = 15.0f;
+float wardPoints(const HeroPoints& points);
+float wardShare(const HeroPoints& points);
+// Heal's health and Greater Damage's bonus, off her energy.
+int healOf(const HeroPoints& points);
+int mightOf(const HeroPoints& points);
 
 // Whichever of the two a self-cast row is, so the realm, the card, the scroll and the strip ask
 // one question and cannot say different numbers for the same buff.

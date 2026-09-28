@@ -322,6 +322,53 @@ constexpr SkillRow kRows[kSkills] = {
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
      0, 0, 0, 0, 0, 4.0f, false, 0, 400},
+
+    // ---- the Fairy Elf's, appended after the wizard's (sprint 15) ------------------------------
+    //
+    // Skillshot 24: 0.75's Triple Shot row -- five mana, six tiles, three arrows
+    // (`SkillsInitializer.cs:64`, MU2's `Most: 3`) -- taught by the Orb of Skillshot and thrown
+    // off any bow or crossbow, the user's of 2026-09-28, where 0.75 grants it only off a bow with
+    // the Skill option. No cooldown: on the quick slot it is her auto-attack, as Energy Ball is
+    // the wizard's, paced by the bow's own clip (50; the drawing plays 51 with a crossbow). Each
+    // arrow is an archery blow at no multiplier -- ClassFairyElf.cs sets no SkillMultiplier --
+    // and the fan is its worth: three bodies struck is three blows. The level is ours.
+    //
+    // **Nine tiles and not six** (the user, 2026-09-28: "lets increase range in our game for
+    // multishot"), ours, as the wizard's Energy Ball and Fire Ball were raised to nine. Her plain
+    // shot keeps MuMain's six.
+    {.number = skill::kSkillshot, .name = "Skillshot", .mana = 5, .reach = 9.0f, .force = 1.0f,
+     .spread = Spread::Fan,
+     .tells = "Three arrows loosed in a fan at a body up to nine tiles off, each flying on "
+              "through everything in its way. One arrow is spent for every body struck.",
+     .clip = 50, .sound = "player_bow", .built = true, .families = arms::kMissiles,
+     .needLevel = 1, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3},
+    // Heal 26: twenty mana, `5 + energy / 5` health at once (HealEffectInitializer). MU casts it
+    // on a player; there is no party here, so it is hers -- and her summon's, when step 5 builds
+    // one. `PLAYER_SKILL_ELF1` (151) and `SOUND_SKILL_DEFENSE`, as MuMain's ReceiveMagic opens
+    // every elf buff (WSclient.cpp:4153-4184). Ours: a three-second cooldown, because 0.75's
+    // twenty mana is a heal every clip; and the level.
+    {.number = skill::kHeal, .name = "Heal", .mana = 20, .coolTicks = 60,
+     .tells = "Health put back at once. The keener the elf, the more.",
+     .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .needLevel = 10, .kin = Kin::FairyElf, .anyHand = true, .mends = true},
+    // Greater Defense 27: **her guard, Defense's own row in the elf's hand** -- thirty mana,
+    // five minutes, twelve seconds of cooldown floored at its length and two, learned at six --
+    // the user's of 2026-09-28, "available early, the same as the Orb of Defense and the Scroll
+    // of Soul Barrier, with the same stats". What it takes off a blow is `wardShare`. No shield:
+    // the bow leaves her no hand for one. The mana is 0.75's Greater Defense's own.
+    {.number = skill::kGreaterDefense, .name = "Greater Defense", .mana = 30, .coolTicks = 240,
+     .boonTicks = 6000, .damageTaken = 0.50f,
+     .tells = "A ward raised for five minutes. The quicker and keener the elf, the more of every "
+              "blow it takes.",
+     .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .needLevel = 6, .kin = Kin::FairyElf, .anyHand = true},
+    // Greater Damage 28: 0.75's row -- forty mana, `3 + energy / 7` on every blow for sixty
+    // seconds (GreaterDamageEffectInitializer). Ours: twelve seconds of cooldown floored at its
+    // length and two, as the guards are, and the level.
+    {.number = skill::kGreaterDamage, .name = "Greater Damage", .mana = 40, .coolTicks = 240,
+     .tells = "Every blow harder by a share of her energy, for a minute.",
+     .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .needLevel = 20, .kin = Kin::FairyElf, .anyHand = true, .mightTicks = 1200},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -341,7 +388,7 @@ uint32_t familyOf(const content::Arm* weapon) {
     // A bow, a crossbow and a staff throw none of these: the five 0.75 clips are
     // `PLAYER_ATTACK_SKILL_SWORD1..5` and the streak MU lays on them is a blade's. The missile
     // test comes first because a quiver is in group 4 with the bows.
-    if (weapon->missile()) return arms::kNone;
+    if (weapon->missile()) return weapon->bow() ? arms::kBow : arms::kCrossbow;
     const bool both = weapon->twoHanded();
     switch (weapon->group) {
         case 0: return both ? arms::kSword2 : arms::kSword1;
@@ -365,6 +412,8 @@ const char* familyName(uint32_t family) {
         case arms::kMace2: return "a two-handed mace";
         case arms::kSpear: return "a spear";
         case arms::kShield: return "a shield";
+        case arms::kBow: return "a bow";
+        case arms::kCrossbow: return "a crossbow";
         default: return "";
     }
 }
@@ -395,6 +444,9 @@ int familiesNamed(uint32_t families, const char** out, int room) {
     if (maces == arms::kMace2 && (families & arms::kMace1) == 0) add("Two-handed maces");
     else if (maces != 0) add("Maces");  // no two-handed mace is cooked; one word for the pair
     if ((families & arms::kSpear) != 0) add("Spears");
+    if ((families & arms::kMissiles) == arms::kMissiles) add("Bows and crossbows");
+    else if ((families & arms::kBow) != 0) add("Bows");
+    else if ((families & arms::kCrossbow) != 0) add("Crossbows");
     return found;
 }
 
@@ -461,6 +513,7 @@ float magicSpeedStat(Kin kin, int agility) {
 
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {
     if (row.boonTicks > 0) return row.boonTicks + kBoonGapTicks;
+    if (row.mightTicks > 0) return row.mightTicks + kBoonGapTicks;
     // A channel's own length, and two seconds: it is never ready again before it has ended.
     if (row.channelTicks > 0) return row.channelTicks + kBoonGapTicks;
     return std::max<int32_t>(1, clipTicks);
@@ -486,7 +539,21 @@ float barrierShare(const HeroPoints& points, int shieldDefense) {
     return kGuardCap * p / (p + 150.0f);
 }
 
+float wardPoints(const HeroPoints& points) {
+    return kWardShieldPoints + 1.1f * float(points.agility) + 0.5f * float(points.energy);
+}
+
+float wardShare(const HeroPoints& points) {
+    const float p = std::max(0.0f, wardPoints(points));
+    return kGuardCap * p / (p + 150.0f);
+}
+
+int healOf(const HeroPoints& points) { return 5 + std::max(0, points.energy) / 5; }
+
+int mightOf(const HeroPoints& points) { return 3 + std::max(0, points.energy) / 7; }
+
 float boonShare(const SkillRow& row, const HeroPoints& points, int shieldDefense) {
+    if (row.number == skill::kGreaterDefense) return wardShare(points);
     return row.number == skill::kSoulBarrier ? barrierShare(points, shieldDefense)
                                              : guardShare(points, shieldDefense);
 }

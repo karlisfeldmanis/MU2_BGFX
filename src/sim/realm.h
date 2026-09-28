@@ -271,6 +271,9 @@ struct Body {
     // the boon and not through it, because the two are different effects in OpenMU (subtypes
     // 54 and the skill's own) and a guard raised with an Ale in him keeps both.
     int64_t aleUntil = 0;
+    // Greater Damage on her: the bonus reckoned at the cast, and the tick it lapses.
+    int32_t might = 0;
+    int64_t mightUntil = 0;
     // Being pushed (`Realm::push`): tiles a tick to slide, and how many ticks are left. While it
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;
@@ -644,6 +647,11 @@ private:
     // An archer's shot: one piece of ammunition off the hand her bow leaves free, reloaded from
     // the bag first when that hand is empty. False, and nothing spent, when there is none.
     bool nock(Body& hero);
+    // Whether `nock` would find one, spending nothing: what Skillshot asks before it is cast.
+    bool quivered(const Body& hero) const;
+    // Skillshot let go: `arrows` lanes fanned round the body it was aimed at, an arrow into
+    // every body in each lane, each paid for as it is loosed.
+    void looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     // And the arrow let go at the bottom of the swing, into `flights_` like a spell.
     void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.

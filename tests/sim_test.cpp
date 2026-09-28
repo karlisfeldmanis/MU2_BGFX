@@ -1727,6 +1727,90 @@ void testArchery(const content::Tables& tables) {
                 flewAtAll, landedOnTime);
 }
 
+// Sprint 15, step 4: the elf's four. Greater Defense is her guard on the knight's curve with no
+// shield; Greater Damage adds its bonus to the band's fighter; Heal never overfills; Skillshot
+// on the quick slot fans arrows into the spiders and pays one arrow a body struck.
+void testElfSkills(const content::Tables& tables) {
+    std::printf("the elf's skills\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 212, 198, sim::Kin::FairyElf, 30), "an elf raises among spiders");
+    check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow and a quiver");
+    for (int32_t one : {sim::skill::kSkillshot, sim::skill::kHeal, sim::skill::kGreaterDefense,
+                        sim::skill::kGreaterDamage}) {
+        check(realm.learn(one), "she learns one of her four");
+    }
+    const auto cast = [&](int32_t skill) {
+        // Her mana back first: seventy-three at level thirty does not pay for all three at once.
+        const sim::SkillRow* row = sim::skillNumbered(skill);
+        for (int wait = 0; wait < 6000 && row && realm.hero().mana < row->mana; ++wait) {
+            realm.step();
+        }
+        realm.invoke(skill, realm.hero().id);
+        for (int tick = 0; tick < 80; ++tick) {
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Cast && h.who == realm.hero().id && h.a == skill) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    check(cast(sim::skill::kGreaterDefense), "Greater Defense is raised with no shield");
+    checkNear(realm.hero().stats.damageTaken,
+              1.0 - double(sim::wardShare(realm.hero().points)), 1e-6,
+              "and it takes the ward's share of every blow");
+    check(sim::wardShare(sim::startingPoints(sim::Kin::FairyElf)) > 0.13f &&
+              sim::wardShare(sim::startingPoints(sim::Kin::FairyElf)) < 0.16f,
+          "a new elf's ward stands beside a new knight's guard and a new wizard's barrier");
+    const int before = realm.hero().stats.minimumDamage;
+    for (int wait = 0; wait < 40; ++wait) realm.step();
+    check(cast(sim::skill::kGreaterDamage), "Greater Damage is raised");
+    check(realm.hero().stats.greaterDamage == sim::mightOf(realm.hero().points) &&
+              realm.hero().stats.minimumDamage == before,
+          "and it rides every blow after the defence, not the band");
+    for (int wait = 0; wait < 40; ++wait) realm.step();
+    check(cast(sim::skill::kHeal), "Heal is cast");
+    check(realm.hero().health <= realm.hero().maxHealth, "and never past the most she has");
+    // Greater Damage lapses on its minute.
+    for (int wait = 0; wait < 1210; ++wait) realm.step();
+    check(realm.hero().stats.greaterDamage == 0, "Greater Damage lapses after its minute");
+
+    // Skillshot on the quick slot, at the nearest spider, over and over.
+    const int quiver = realm.satchel()[sim::kWeaponRight].durability;
+    int fans = 0, flown = 0;
+    for (int tick = 0; tick < 3000; ++tick) {
+        if (tick % 10 == 0) {
+            uint32_t nearest = 0;
+            float closest = 1e30f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float d = std::max(std::fabs(one.x - realm.hero().x),
+                                         std::fabs(one.y - realm.hero().y));
+                if (d < closest) {
+                    closest = d;
+                    nearest = one.id;
+                }
+            }
+            sim::Request request;
+            request.kind = sim::Request::Kind::Attack;
+            request.target = nearest;
+            request.skill = sim::skill::kSkillshot;
+            if (nearest != 0) realm.ask(request);
+        }
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who != realm.hero().id) continue;
+            if (h.what == sim::What::Loosed && h.a == sim::skill::kSkillshot) ++fans;
+            if ((h.what == sim::What::Hit || h.what == sim::What::Missed) && h.thrown) ++flown;
+        }
+    }
+    const int spent = quiver - realm.satchel()[sim::kWeaponRight].durability;
+    check(fans > 0, "Skillshot is loosed off the quick slot");
+    check(spent > 0 && flown > 0, "and its arrows strike and are paid for");
+    std::printf("  %d fans, %d arrows spent, %d landed\n", fans, spent, flown);
+}
+
 // The two area shapes, and the cooldown's own arithmetic under them.
 //
 // A spin and a sweep cannot be posed by hand -- there is no way to put four monsters round the
@@ -2051,6 +2135,11 @@ void testSkills(const content::Tables& tables) {
                 gated &= row.families == sim::arms::kNone && row.suits(sim::arms::kNone);
                 continue;
             }
+            // The elf's buffs ask nothing of either hand (sprint 15).
+            if (row.anyHand) {
+                gated &= row.families == sim::arms::kNone && row.suits(sim::arms::kNone);
+                continue;
+            }
             gated &= row.families != 0;
             gated &= row.onSelf() ? row.families == sim::arms::kShield
                                   : (row.families & sim::arms::kShield) == 0;
@@ -2070,7 +2159,7 @@ void testSkills(const content::Tables& tables) {
         check(everyFamilyHasThree, "and every family has at least three keys to press");
         // The families a weapon reports, off the cooked rows themselves: a Rapier is a
         // one-handed sword, a Giant Sword is two-handed, a Nikkea Axe is a two-handed axe, a
-        // Berdysh is a spear whatever its width says, and a bow is no family at all.
+        // Berdysh is a spear whatever its width says, and a bow is a bow (sprint 15: Skillshot's).
         const auto familyNamed = [&](const char* name) {
             const int32_t at = tables.armNamed(name);
             return at < 0 ? 0u : sim::familyOf(&tables.arms[size_t(at)]);
@@ -2087,7 +2176,8 @@ void testSkills(const content::Tables& tables) {
                    "a Morning Star is a mace");
         checkEqual((long long)familyNamed("Spear08"), (long long)sim::arms::kSpear,
                    "a Berdysh is a spear");
-        checkEqual((long long)familyNamed("Bow01"), 0LL, "and a bow is no family at all");
+        checkEqual((long long)familyNamed("Bow01"), (long long)sim::arms::kBow,
+                   "and a bow is the elf's own family");
         checkEqual((long long)sim::familyOf(nullptr), 0LL, "as is an empty hand");
         // And the two that matter in play: 0.75's own carriers decide who may throw what.
         check(!sim::skillNumbered(sim::skill::kFallingSlash)->suits(sim::arms::kSword1),
@@ -2989,6 +3079,7 @@ int main() {
     testRecovery(tables);
     testWardens(tables);
     testArchery(tables);
+    testElfSkills(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

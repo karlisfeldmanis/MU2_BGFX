@@ -85,6 +85,10 @@ Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Ran
 }
 
 static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighter& defender) {
+    // 4b. Greater Damage, after the defence and before everything below, in both arms
+    // (AttackableExtensions.cs:185). No draw, so a log with nobody under it is unchanged.
+    damage += attacker.greaterDamage;
+
     // 5. Overrates: a defender who out-rates the attacker takes three tenths.
     // AttackableExtensions.cs:728-731.
     if (defender.defenseRate > attacker.attackRate) {
@@ -218,6 +222,7 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->excellentChance = excel.excellentChance;
     out->damageDecrease = excel.damageDecrease;
     out->damageTaken = 1.0;
+    out->greaterDamage = arms.greaterDamage;
 
     // Truncated, and it is a departure of the same kind as the two above: OpenMU keeps
     // MaximumHealth as a float attribute and compares health against it as one. Nothing in

@@ -66,6 +66,9 @@ struct Fighter {
     // share taken off one received (Excellence).
     double excellentChance = 0.0;
     double damageDecrease = 0.0;
+    // `Stats.GreaterDamageBonus`: the elf's Greater Damage, added to every blow after the
+    // defence (AttackableExtensions.cs:185). Nought for anybody not under it.
+    int greaterDamage = 0;
     // The wizardry band, before a spell's own damage is added: `MinimumWizBaseDmg = energy / 9`
     // and `MaximumWizBaseDmg = energy / 4` (ClassDarkWizard.cs:72-73). Floats, because OpenMU
     // keeps them as float attributes and truncates only after the spell and the staff are in
@@ -188,6 +191,8 @@ struct Arms {
     // A bow or a crossbow in hand, which puts the Fairy Elf's damage on her archery band
     // (ClassFairyElf.cs:78-81, ArcheryAttackMode :88-89) in place of her melee one.
     bool archery = false;
+    // Greater Damage while it stands (Fighter::greaterDamage).
+    int greaterDamage = 0;
 };
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,

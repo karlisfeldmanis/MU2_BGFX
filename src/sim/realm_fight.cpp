@@ -159,6 +159,11 @@ void Realm::land(Body& hero) {
         looseLine(hero, *row, at, force);
         return;
     }
+    // Skillshot's fan, aimed at the body and flying on whether or not it still stands.
+    if (row && row->spread == Spread::Fan) {
+        looseFan(hero, *row, at, force);
+        return;
+    }
     // Meteorite: a rock on everything round what he called it on.
     if (row && row->splash > 0.0f) {
         rain(hero, *row, at, force);
@@ -241,6 +246,52 @@ void Realm::looseArrow(Body& hero, uint32_t at, float force) {
     }
     if (Body* struck = body(at); struck && struck->alive()) {
         strikeAt(hero, *struck, force, nullptr, true, true);
+    }
+}
+
+void Realm::looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    const Body* aimed = body(aimedAt);
+    const float centre =
+        aimed ? std::atan2(aimed->y - hero.y, aimed->x - hero.x) : hero.aim;
+    // One `Loosed` for the cast: the drawing fans its own arrows off it.
+    say(What::Loosed, hero, row.number, 0, hero.archer, aimedAt);
+    constexpr float kRadians = 3.14159265358979f / 180.0f;
+    for (int a = 0; a < row.arrows; ++a) {
+        // Straight, then one either side, then the next pair out.
+        const int step = (a + 1) / 2;
+        const float turn = float(a % 2 == 1 ? step : -step) * kFanDegrees * kRadians;
+        const float cx = std::cos(centre + turn), cy = std::sin(centre + turn);
+        // Every body in the lane, nearest first and then by id, which is fixed for the log.
+        struct Struck {
+            float along;
+            uint32_t id;
+        };
+        Struck lane[kVictims];
+        int found = 0;
+        for (const Body& one : bodies_) {
+            if (!one.alive() || !one.monster()) continue;
+            if (tables_->grid.safe(one.column(), one.row())) continue;
+            const float dx = one.x - hero.x, dy = one.y - hero.y;
+            const float along = dx * cx + dy * cy;
+            const float across = std::fabs(dx * cy - dy * cx);
+            if (along < kFanNearest || along > row.reach || across > kLineHalfWidth) continue;
+            if (found == kVictims) break;
+            int at = found++;
+            while (at > 0 && (lane[at - 1].along > along ||
+                              (lane[at - 1].along == along && lane[at - 1].id > one.id))) {
+                lane[at] = lane[at - 1];
+                --at;
+            }
+            lane[at] = Struck{along, one.id};
+        }
+        for (int i = 0; i < found; ++i) {
+            // An arrow a body struck; the quiver running dry mid-fan ends the fan.
+            if (!nock(hero)) {
+                say(What::Arrowless, hero, hero.archer);
+                return;
+            }
+            loose(hero, row, lane[i].id, force, false, lane[i].id == aimedAt);
+        }
     }
 }
 
@@ -369,6 +420,8 @@ void Realm::kill(Body& dead, Body& killer) {
         // own do, rather than walking back out of town under a guard he raised in the field.
         // The cooldown is left running, so a death is not a way to raise it again sooner.
         dead.boonUntil = 0;
+        dead.mightUntil = 0;
+        dead.might = 0;
         dead.channelSkill = 0;
         dead.channelUntil = 0;
         dead.blinkAt = 0;

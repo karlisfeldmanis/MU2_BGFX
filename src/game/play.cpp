@@ -377,6 +377,27 @@ void Play::update(double seconds) {
                     if (happening.a == sim::skill::kNone) {
                         // An archer's arrow (`Realm::looseArrow`).
                         shootArrow(*caster, to, happening.whom);
+                    } else if (happening.a == sim::skill::kSkillshot) {
+                        // The fan, drawn as the realm strikes it: straight at the body and
+                        // kFanDegrees apart either side, out to the row's reach, flying on
+                        // through what they meet (MU's Triple Shot, `Kind = 1`).
+                        const sim::SkillRow* shot = sim::skillNumbered(happening.a);
+                        const float tile = ground_->metresPerTile();
+                        const float reach = (shot ? shot->reach : 6.0f) * tile;
+                        const float centre = std::atan2(to[2] - caster->crown[2],
+                                                        to[0] - caster->crown[0]);
+                        const int count = shot ? shot->arrows : 3;
+                        for (int a = 0; a < count; ++a) {
+                            const int step = (a + 1) / 2;
+                            // World z runs against the grid's rows, so a turn the realm makes
+                            // one way is drawn the other (docs/conventions.md).
+                            const float turn = -float(a % 2 == 1 ? step : -step) *
+                                               sim::kFanDegrees * 3.14159265f / 180.0f;
+                            const float far[3] = {
+                                caster->crown[0] + std::cos(centre + turn) * (reach + tile),
+                                to[1], caster->crown[2] + std::sin(centre + turn) * (reach + tile)};
+                            shootArrow(*caster, far, 0);
+                        }
                     } else if (happening.a == sim::skill::kFireBall) {
                         meteor_.hurl(from, to, happening.whom, atHand);
                     } else if (happening.a == sim::skill::kPoison) {
@@ -496,6 +517,11 @@ void Play::update(double seconds) {
                                                                             : row->clip;
                                 swinger->castClip =
                                     swinger->figure.body()->library->find(action);
+                                // Skillshot is her own draw -- the bow's 50 or the crossbow's 51
+                                // -- whichever she holds, and not the row's one number.
+                                if (row->arrows > 0 && swinger->attackClip >= 0) {
+                                    swinger->castClip = swinger->attackClip;
+                                }
                             }
                         }
                     }

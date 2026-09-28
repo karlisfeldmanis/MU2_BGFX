@@ -50,6 +50,7 @@ Arms Realm::armsOf(const Body& one) const {
         arms.excel = one.excel;
         arms.staffRise = double(one.staffRise);
         arms.archery = one.archer != 0;
+        arms.greaterDamage = one.mightUntil > tick_ ? one.might : 0;
     }
     return arms;
 }
@@ -184,6 +185,22 @@ bool Realm::nock(Body& hero) {
         bag_.put(hand, left);
     }
     return true;
+}
+
+bool Realm::quivered(const Body& hero) const {
+    if (hero.archer == 0) return false;
+    const int hand = hero.archer == 1 ? kWeaponRight : kWeaponLeft;
+    const int wanted = hero.archer == 1 ? kArrowsNumber : kBoltNumber;
+    const auto fits = [&](const Held& h) {
+        if (h.empty() || h.durability <= 0) return false;
+        const content::ItemRow& row = tables_->items[size_t(h.item)];
+        return row.group == kGroupBows && row.number == wanted;
+    };
+    if (!bag_[hand].empty()) return fits(bag_[hand]);
+    for (int slot = kSlots - 1; slot >= kWorn; --slot) {
+        if (fits(bag_[slot])) return true;
+    }
+    return false;
 }
 
 // Reads the hands and the armour off the satchel and re-reckons him. Beast.Rearm: ammunition is

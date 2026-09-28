@@ -444,6 +444,12 @@ void Realm::press() {
         hero.aleUntil = 0;
         reswing(hero);
     }
+    // And Greater Damage, off on its tick and the band re-reckoned without it.
+    if (hero.mightUntil != 0 && tick_ >= hero.mightUntil) {
+        hero.mightUntil = 0;
+        hero.might = 0;
+        rearm(hero);
+    }
 
     if (order_.kind == Request::Kind::Perch) {
         if (!hero.walking) perch(hero);
