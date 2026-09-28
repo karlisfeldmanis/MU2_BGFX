@@ -909,8 +909,8 @@ void testCastLock(const content::Tables& tables) {
         const sim::SkillRow& fire = *sim::skillNumbered(sim::skill::kFireBall);
         check(fire.wizardry && fire.kin == sim::Kin::DarkWizard && fire.thrown() && fire.primary(),
               "Fire Ball is the wizard's thrown spell, a primary with no cooldown");
-        check(fire.damage == 8 && fire.mana == 3 && fire.reach == 6.0f,
-              "at 0.75's eight damage, three mana and six tiles");
+        check(fire.damage == 8 && fire.mana == 3 && fire.reach == 9.0f,
+              "at 0.75's eight damage and three mana, thrown from nine tiles");
         check(fire.flies < sim::skillNumbered(sim::skill::kEnergyBall)->flies,
               "and it flies slower than Energy Ball");
 

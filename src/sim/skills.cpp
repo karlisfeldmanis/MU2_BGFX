@@ -133,8 +133,12 @@ constexpr SkillRow kRows[kSkills] = {
     // The clips are `PLAYER_SKILL_HAND1` and `HAND2`, 147 and 148, one of the two on a coin
     // (`SetPlayerMagic`); the wave is `SOUND_MAGIC`, played beside the bolt's creation
     // (ZzzCharacter.cpp:5142).
-    {skill::kEnergyBall, "Energy Ball", 1, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "A bolt of light thrown at one body up to six tiles off. Its force is his energy and his "
+    //
+    // **Nine tiles and not six** (the user, 2026-09-28: "lets also increase range for fireball and
+    // energy ball"). Ours. The bolt lives twenty frames at sixty units, twelve tiles, so it still
+    // reaches with room to steer.
+    {skill::kEnergyBall, "Energy Ball", 1, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A bolt of light thrown at one body up to nine tiles off. Its force is his energy and his "
      "staff's.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 3, 148},
 
@@ -177,8 +181,10 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // It flies at fifty units a reference frame, twelve and a half tiles a second -- slower than
     // the bolt, which is the difference between the two in the air.
-    {skill::kFireBall, "Fire Ball", 3, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "A ball of fire thrown at one body up to six tiles off: half again the force of an Energy "
+    //
+    // Nine tiles and not six, with Energy Ball, on the same word; the fireball lives sixty frames.
+    {skill::kFireBall, "Fire Ball", 3, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A ball of fire thrown at one body up to nine tiles off: half again the force of an Energy "
      "Ball, for three times the mana.",
      147, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 8, 148, 12.5f},
 
@@ -187,8 +193,8 @@ constexpr SkillRow kRows[kSkills] = {
     // element at all. **Every body in its line**, where 0.75 strikes the one it was thrown at: the
     // curtain sweeps on through and away (its mover never stops on the target), and the user ruled
     // on 2026-09-28 that what it passes through is hit ("it can go through multiple monsters").
-    // `Spread::Line`, half a tile each side, out to the six tiles of the spell's reach -- which is
-    // exactly the stretch MU draws it at full brightness before it fades. Each body is struck
+    // `Spread::Line`, three quarters of a tile each side, out to the twelve tiles the wave visibly
+    // sweeps (`kLineTiles`); it is aimed at a body within the six of its reach. Each body is struck
     // when the wave reaches it, and only the one it was aimed at pays mana back.
     //
     // **A primary like the other two**, the shape the user gave Fire Ball: no cooldown, paced by
@@ -196,8 +202,8 @@ constexpr SkillRow kRows[kSkills] = {
     // (20-31 against 9-18) for five mana. The same two hands; `SOUND_MAGIC`, Energy Ball's wave,
     // which MU plays for both. Sixty units a reference frame, the bolt's fifteen tiles a second.
     {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.0f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
-     "A wave of light swept along the ground for six tiles, striking everything in its line at "
-     "twice the force of an Energy Ball.",
+     "A wave of light swept along the ground for twelve tiles, striking everything in its line "
+     "at twice the force of an Energy Ball.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
 
     // Lightning 3, 0.75's row: `CreateSkill(Lightning, ..., DamageType.Wizardry, 17, 6,

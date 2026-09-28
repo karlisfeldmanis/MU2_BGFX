@@ -208,8 +208,10 @@ flies at the bolt's fifteen tiles a second.
 
 **It strikes everything in its line** (the user, 2026-09-28: *"power wave is kind of aoe, because it
 can go through multiple monsters"*), where 0.75 strikes the one body. `Spread::Line`: every body
-ahead of him within three quarters of a tile of the line toward what he aimed at, out to the six
-tiles of its reach -- the stretch MU draws it at full brightness, before it fades. `Realm::looseLine`
+ahead of him within three quarters of a tile of the line toward what he aimed at, out to the
+**twelve tiles the wave visibly sweeps** (`kLineTiles`; *"increase range for that spell because it
+goes far"* -- the first cut stopped at six, where MU starts fading it). He still aims it at a body
+within the six tiles of its reach. `Realm::looseLine`
 says one `Loosed` (one wave is drawn) and puts a flight in the air for each body, nearest first, so
 each is struck when the wave reaches it; only the body he aimed at pays mana back, or a crowd would
 fill his pool. The air holds 32 flights now, up from 8. Seen in the arena against five spiders: one
@@ -252,6 +254,13 @@ points, cool grey smoke01 added, opening and lifting and gone in about a second.
 
 `--arena-learn N` teaches the arena's hero skill N and makes the arena fight with it; the Lightning
 push was filmed with `--arena "Bull Fighter" --arena-learn 3 --level 12`.
+
+## 2f. Range
+
+Energy Ball and Fire Ball are thrown from **nine tiles**, not 0.75's six (the user, 2026-09-28: *"lets
+also increase range for fireball and energy ball"*). The bolt lives twelve tiles and the fireball
+far longer, so both still arrive. Power Wave is aimed within six and sweeps twelve; Lightning stays
+at six.
 
 ## 2b'. Where a spell leaves him
 

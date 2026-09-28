@@ -255,7 +255,8 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
     int found = 0;
     for (const Body& one : bodies_) {
         if (one.player || !one.alive()) continue;
-        if (!within(hero, one, row.reach)) continue;
+        // A line runs as far as the wave sweeps, past the reach it is aimed within.
+        if (!within(hero, one, row.spread == Spread::Line ? kLineTiles : row.reach)) continue;
         // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const float dx = one.x - hero.x, dy = one.y - hero.y;
@@ -268,7 +269,7 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
             const float c = std::cos(hero.aim), s = std::sin(hero.aim);
             const float ahead = dx * c + dy * s;
             const float aside = -dx * s + dy * c;
-            if (ahead <= 0.0f || ahead > row.reach || std::fabs(aside) > kLineHalfWidth) continue;
+            if (ahead <= 0.0f || ahead > kLineTiles || std::fabs(aside) > kLineHalfWidth) continue;
         }
         if (row.spread == Spread::Arc) {
             // The facing eighth and the two beside it. `aim` and not `facing`, because the throw

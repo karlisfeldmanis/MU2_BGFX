@@ -126,6 +126,11 @@ enum class Spread : uint8_t { One, Ring, Arc, Line };
 // Half the Line's width, in tiles: the curtain is 0.91 m across, so a body whose middle is within
 // three quarters of a tile of the line is in its way.
 constexpr float kLineHalfWidth = 0.75f;
+// And how far the line runs, in tiles: the whole of the wave's visible sweep -- twenty frames at
+// sixty units, twelve tiles -- where the spell's own reach (six) is only how far off the body it
+// is aimed at may stand. The user, 2026-09-28: "we need to increase range for that spell because
+// it goes far"; first cut stopped at six, where MU starts fading it.
+constexpr float kLineTiles = 12.0f;
 
 struct SkillRow {
     int32_t number = 0;
