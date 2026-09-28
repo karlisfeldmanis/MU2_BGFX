@@ -900,6 +900,98 @@ void testCastLock(const content::Tables& tables) {
         check(staff > 0, "out of mana, the right button's order swings the weapon");
         checkEqual(spells, 0, "and throws nothing it cannot pay for");
     }
+
+    // ---- Fire Ball (docs/skills-dw.md §2b) ----------------------------------------------------
+    //
+    // 0.75's row, and a primary as Energy Ball is: thrown over and over with no wait, flying
+    // slower than the bolt, and learned off its scroll only at forty energy.
+    {
+        const sim::SkillRow& fire = *sim::skillNumbered(sim::skill::kFireBall);
+        check(fire.wizardry && fire.kin == sim::Kin::DarkWizard && fire.thrown() && fire.primary(),
+              "Fire Ball is the wizard's thrown spell, a primary with no cooldown");
+        check(fire.damage == 8 && fire.mana == 3 && fire.reach == 6.0f,
+              "at 0.75's eight damage, three mana and six tiles");
+        check(fire.flies < sim::skillNumbered(sim::skill::kEnergyBall)->flies,
+              "and it flies slower than Energy Ball");
+
+        const int32_t scroll = tables.itemAt(15, 3);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kFireBall &&
+                  tables.items[size_t(scroll)].teachesEnergy == 40,
+              "the Scroll of Fire Ball is cooked, teaching skill 4 at forty energy");
+
+        // A wizard of thirty energy with the scroll in his bag: refused, then read at forty.
+        sim::Realm reader;
+        check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 10), "a wizard of ten raises");
+        sim::HeroRecord carrying = reader.record();
+        const int bagged = sim::kWorn + 40;
+        carrying.slots[bagged].item = scroll;
+        carrying.slots[bagged].durability = 1;
+        reader.restore(carrying);
+        check(!reader.useItem(bagged) && !reader.knows(sim::skill::kFireBall),
+              "at thirty energy the scroll will not be read");
+        carrying = reader.record();
+        carrying.points.energy = 40;
+        reader.restore(carrying);
+        check(reader.useItem(bagged) && reader.knows(sim::skill::kFireBall),
+              "at forty it is read, and Fire Ball is his");
+
+        // A hunt on Fire Ball alone, as the right button would carry it: thrown over and over,
+        // landing as thrown hits, and never swinging the staff while there is mana.
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        check(wiz.learn(sim::skill::kFireBall), "who knows Fire Ball");
+        int balls = 0, landed = 0, swings = 0;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 3000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kFireBall;
+                wiz.ask(request);
+            }
+            wiz.step();
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.who != wiz.hero().id) continue;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBall) ++balls;
+                if (one.what == sim::What::Hit && one.thrown) ++landed;
+                if (one.what == sim::What::Swung && one.a == 0) ++swings;
+            }
+        }
+        std::printf("  fire ball: %d thrown, %d landed, %d staff swings\n", balls, landed, swings);
+        check(balls > 20, "he throws Fire Ball over and over");
+        check(landed > 0, "and it lands after its flight");
+        checkEqual(wiz.cooling(sim::skill::kFireBall), 0LL, "and nothing is left cooling");
+    }
+
+    // ---- a cooldown outlives a save (the user, 2026-09-28) -----------------------------------
+    {
+        sim::Realm knight;
+        check(knight.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 30), "a knight raises to guard");
+        check(knight.learn(sim::skill::kDefense), "who knows Defense");
+        check(knight.equip(tables.armNamed("Sword01"), tables.armNamed("Shield01"), true),
+              "a sword and a Small Shield");
+        knight.invoke(sim::skill::kDefense, knight.hero().id);
+        for (int tick = 0; tick < 60 && knight.cooling(sim::skill::kDefense) == 0; ++tick) knight.step();
+        for (int tick = 0; tick < 100; ++tick) knight.step();
+        const int64_t left = knight.cooling(sim::skill::kDefense);
+        check(left > 0, "he raised it and it is cooling");
+        const sim::HeroRecord saved = knight.record();
+        sim::Realm again;
+        check(again.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 30), "and comes back");
+        again.restore(saved);
+        checkEqual((long long)again.cooling(sim::skill::kDefense), (long long)left,
+                   "with the same wait left on Defense");
+        sim::HeroRecord edited = saved;
+        edited.coolsLeft[sim::skillIndexOf(sim::skill::kDefense)] = 100000000;
+        sim::Realm forged;
+        check(forged.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 30), "a forged save raises");
+        forged.restore(edited);
+        check(forged.cooling(sim::skill::kDefense) <= forged.coolsFor(sim::skill::kDefense),
+              "and an edited file holds a key no longer than its own cooldown");
+    }
 }
 
 void testStandsOverTheKill(const content::Tables& tables) {

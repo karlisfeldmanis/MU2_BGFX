@@ -326,7 +326,7 @@ void Play::rightClick() {
     marker_.dismiss();
 }
 
-void Play::benchBolt(float tiles, float acrossX, float acrossZ) {
+void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     if (!isOpen() || drawn_.empty() || !drawn_[0].placed || !ground_) return;
     const Drawn& hero = drawn_[0];
     const float from[3] = {hero.crown[0], ground_->heightAt(hero.crown[0], hero.crown[2]),
@@ -335,8 +335,12 @@ void Play::benchBolt(float tiles, float acrossX, float acrossZ) {
     const float far = tiles * ground_->metresPerTile() / flat;
     // A man's middle, as if one stood there.
     const float to[3] = {from[0] + acrossX * far, from[1] + 1.0f, from[2] + acrossZ * far};
-    bolt_.cast(from, to, 0);
-    const int index = sim::skillIndexOf(sim::skill::kEnergyBall);
+    if (skill == sim::skill::kFireBall) {
+        meteor_.hurl(from, to, 0);
+    } else {
+        bolt_.cast(from, to, 0);
+    }
+    const int index = sim::skillIndexOf(skill);
     if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2], hero.id);
 }
 

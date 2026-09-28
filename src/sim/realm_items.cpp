@@ -315,6 +315,11 @@ bool Realm::useItem(int slot) {
         if (hero.level < std::max(row.teachesLevel, asks(row, potion.refinement).level)) {
             return false;
         }
+        // A scroll's energy, which is the requirement itself and is not scaled
+        // (`ItemExtensions.GetRequirement` returns it whole for anything unwearable): Fire Ball's
+        // forty is forty, so a new wizard with thirty keeps the scroll in his bag until he has
+        // spent ten points. OpenMU asks it at the read (`CompliesRequirements`).
+        if (hero.points.energy < row.teachesEnergy) return false;
         // A second orb of something he knows is refused rather than eaten: `learn` says no to a
         // skill already learned, and the orb stays in the bag to be sold.
         if (!learn(row.teaches)) return false;

@@ -51,6 +51,9 @@ constexpr int32_t kEnergyBall = 17;
 // is here because the user asked for the two classes to stand level behind a shield
 // (docs/skills-dw.md, 2026-09-28).
 constexpr int32_t kSoulBarrier = 16;
+// His first spell that has to be earned: MU's `AT_SKILL_FIREBALL`, off the Scroll of Fire Ball
+// (group 15 number 3, `Book04`), which asks forty energy to read. 0.75's own row.
+constexpr int32_t kFireBall = 4;
 }  // namespace skill
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
@@ -183,6 +186,11 @@ struct SkillRow {
     // A second clip the drawing picks between on a coin: `PLAYER_SKILL_HAND1 + rand() % 2`
     // (ZzzCharacter.cpp:1339). Both are the same length, so the sim reads `clip` alone.
     int32_t clipOther = 0;
+    // How fast a thrown spell crosses the ground, in tiles a second: Energy Ball's sixty units a
+    // reference frame is fifteen, Fire Ball's fifty is twelve and a half (`Direction` in each
+    // one's `CreateEffect` arm). The realm times the landing off it and the drawing flies at it,
+    // so the two cannot part.
+    float flies = 15.0f;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -202,7 +210,7 @@ struct SkillRow {
 // families past it, the wizard's Energy Ball and his Soul Barrier. Also the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 11;
+constexpr int kSkills = 12;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

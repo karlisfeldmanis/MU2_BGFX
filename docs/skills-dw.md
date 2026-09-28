@@ -145,6 +145,51 @@ Each spending on his main stat stays level: 21.4% against 21.6% at level 6, 34.4
 level 23, 45.1% each late. MU's own `10 + agility/50 + energy/200` percent (SkillTooltipModel.cpp:248) is not
 followed. `tests/sim_test.cpp` holds the parity, the gate and the route through Pasi.
 
+## 2b. Fire Ball
+
+0.75's row, `CreateSkill(FireBall, ..., DamageType.Wizardry, 8, 6, manaConsumption: 3,
+energyRequirement: 40, elementalModifier: Fire)`: eight damage, six tiles, three mana, skill 4.
+Taught by the Scroll of Fire Ball (`Book04`, group 15 #3, Pasi's slot 0, 300 zen), which
+`Realm::useItem` now refuses under **forty energy** -- a scroll's energy is the requirement whole,
+so a new wizard's thirty leaves it in his bag for two levels. 0.75 asks it again at each cast;
+energy never goes down here, so that test is not written. Fire is a gate with nothing behind it.
+
+- **A primary, as Energy Ball is** (the user, 2026-09-28: *"fireball dont have cooldowns same as
+  energy ball"*): no cooldown, paced by its clip, a hit pays back a twentieth of the pool. Against
+  one body it is about one and a half bolts at forty energy (12-22 against 7-14) for three mana
+  against one, so it is the right button's upgrade once it is learned.
+- **It flies at 12.5 tiles a second**, MU's fifty units a frame against the bolt's sixty. The speed
+  is a column now (`SkillRow::flies`), read by `Realm::loose` for the landing and by the drawing.
+- The clips are Energy Ball's (147/148 on a coin); the wave is `SOUND_METEORITE01`, which MU shares
+  with Meteorite.
+
+**The look** is `fx/meteor`'s `hurl`: MU's `MODEL_FIRE` at subtype 1, ported from MU2's
+`Meteor.Hurl`. What is MU's: the rock alone with no flame cone (subtype 1's `BlendMeshLight = 0`),
+lifted 120 units, sized 0.8 to 1.1, an ember a frame, its orange light on the ground, two stones at
+the arrival. Ours, tuned on the bench with the user watching:
+
+- **A burning head.** MU's rock read as a black lump on this camera. Two added glows on the `light`
+  sheet (a 2.2 m orange halo, a 1.1 m yellow-white heart) are drawn half a metre toward the eye:
+  at the rock's own centre, the stone sorted over the middle of the flare and hid it.
+- **Embers that cool.** Half the meteor's size, born orange and fading to MU's red and out, so the
+  stream breaks up instead of standing as one red tube.
+- **No smoke trail.** MU2 laid soot here; on the bench it went through a brown band (smoke02 under
+  `Dust`), a black one (smoke01 has no alpha, so `Dust` drew every puff opaque), too long, and grey
+  under `Smoke` -- and was then taken out: *"there is already smoke in fireball"*.
+- **Aimed at the body's middle and steered after it**, as the bolt is; a miss flies on past.
+- **A half-size Explotion01 burst on the body**, with the two stones; its light is the blast's own.
+- **The light**: four tiles of red-orange that travel with the ball -- wider than the meteor's two,
+  on *"most of DW spells are light emitters"*.
+
+`--bolt-every N --bolt-skill 4` throws it on the bench.
+
+## 2c. Cooldowns outlive a restart
+
+The user, 2026-09-28: every key's wait is saved, as `"cooling": [[skill, ticks left], ...]` by
+MU's number, and put back on load no longer than the skill's own cooldown at his agility, so an
+edited file cannot lock a key. The time away does not count, as it does not for the boon. Energy
+Ball's own trail was halved the same day (*"energy ball trail was to long"*: 6 + 3 frames a puff).
+
 ## 3. Measured
 
 - `tests/sim_test.cpp`: the band on paper (30 energy rolls 6 to 10, a 23-rise staff lifts the top to
@@ -156,10 +201,20 @@ followed. `tests/sim_test.cpp` holds the parity, the gate and the route through 
   construction (a knight's order carries no skill) and was `350ff029cbdc0f10` twice.
 - In the window, `--class 0 --arena Spider --arena-count 3 --fixed-dt 16.667`: the bolt reads blue
   and crosses to the spider, the gold box carries its icon. An arena wizard spends into energy.
+- Fire Ball, `tests/sim_test.cpp`: refused at thirty energy and read at forty; a level-30 wizard
+  hunting 3 000 ticks on it alone throws 91, lands 89, swings the staff 0 times. Defense's wait
+  comes back through the save to the tick, and a forged one is capped. Headless seed 7 after the
+  experience rate went to ten: invariants all kept, `ba9a6d2620bdf6f8`.
+- Fire Ball in the window, `--play --class 0 --at 190,110 --bolt-every 120 --bolt-skill 4
+  --fixed-dt 16.667`: ball, embers, burst and stones seen in shots; frame cost not measured.
 
 ## 4. Owed
 
 - The chip in the list reads `RMB` for the slot; unseen in a shot.
-- The next spells, in scroll-drop order: Fire Ball 5, Power Wave 9, Lightning 13. Each is a row, a
-  cooldown (they are keys, not primaries), and an effect -- Fire Ball is `fx/meteor` at subtype 1.
-- Scrolls to learn them by, which the orb route already has the shape for.
+- The next spells, in scroll-drop order: Power Wave 9, Lightning 13. Each is a row, a cooldown or
+  not (Fire Ball was ruled a primary), and an effect -- Power Wave is MU2's `Wave`, Lightning its
+  `Thunder`. Each should throw some light.
+- A thrown `Missed` does not say which spell, so a bolt and a fireball in the air at one body at
+  once can turn the wrong one aside. Rare, drawing only.
+- `sim_test`'s two fist checks fail since the empty hand swings the sword's pair (0db5733a); the
+  test still asks for MU's 462 ms fist.

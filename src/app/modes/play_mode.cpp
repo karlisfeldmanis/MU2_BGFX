@@ -509,7 +509,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             if (args.boltEvery > 0 && at.index > 0 && at.index % args.boltEvery == 0) {
                 // Screen-right, off the view's own first row, so the whole flight and its
                 // impact are across the picture rather than toward the camera.
-                world_.played().benchBolt(args.boltTiles, view[0], view[8]);
+                world_.played().benchBolt(args.boltTiles, view[0], view[8], args.boltSkill);
             }
             const float w = float(ctx.window.width()), h = float(ctx.window.height());
             // A pointer parked where the run asked, pressing nothing: what photographing a
@@ -800,7 +800,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().breath().gather(ctx.renderer.effects());
         world_.played().snorts().gather(ctx.renderer.effects());
         world_.played().eyes().gather(ctx.renderer.effects());
-        world_.played().gatherMeteor(ctx.renderer.effects());
+        world_.played().gatherMeteor(ctx.renderer.effects(), eye.position);
         world_.played().gatherBolt(ctx.renderer.effects(), eye.position);
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,

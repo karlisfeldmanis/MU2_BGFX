@@ -280,8 +280,11 @@ struct HeroRecord {
     int64_t money = 0;
     // What he has learned, by the skill table's own index. Saved because learning is permanent
     // in this design and is the one thing about a skill that is his rather than his weapon's.
-    // Cooldowns are NOT saved: a character who quits mid-fight is not owed his four seconds.
     uint32_t learned = 0;
+    // How many ticks each skill had left to cool, by the same index, 0 for ready. Saved so a
+    // restart is not a way round a wait (the user, 2026-09-28); the time away is not counted
+    // against it, as it is not against the boon below.
+    int64_t coolsLeft[kSkills] = {};
     // The buff standing on him when he was saved: which skill, the damage factor it was cast
     // at, and how many ticks of it were left. Saved so a guard raised before a restart is still
     // up after it (the user, 2026-09-25); the time away is not counted against it. 0 for none.

@@ -138,12 +138,12 @@ void Realm::land(Body& hero) {
     strikeAt(hero, *target, force, row);
 }
 
-// How fast a bolt crosses the ground: `Direction = (0, -60, 0)` a reference frame of MU's 25,
-// which is fifteen tiles a second, and it ends a tile short of the body it was thrown at
-// (`CheckTargetRange`'s hundred units). MU2's `Bolt.Flight`, which the drawing's bolt shares
-// through `fx/bolt.h` so the number and the picture cannot disagree. A throw from beside the
-// target is in the air for no ticks and lands on the let-go.
-constexpr float kBoltTilesPerSecond = 15.0f;
+// How fast a spell crosses the ground is its row's (`SkillRow::flies`): Energy Ball's
+// `Direction = (0, -60, 0)` a reference frame of MU's 25 is fifteen tiles a second, Fire Ball's
+// fifty is twelve and a half. Either ends a tile short of the body it was thrown at
+// (`CheckTargetRange`'s hundred units, one function for both). The drawing flies at the same
+// column, so the number and the picture cannot disagree. A throw from beside the target is in
+// the air for no ticks and lands on the let-go.
 constexpr float kBoltStopsShort = 1.0f;
 constexpr float kTicksPerSecond = 20.0f;  // the realm's own clock
 
@@ -153,7 +153,7 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force) {
     const float dx = target ? target->x - hero.x : 0.0f;
     const float dy = target ? target->y - hero.y : 0.0f;
     const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
-    const int32_t air = int32_t(std::lround(gap / kBoltTilesPerSecond * kTicksPerSecond));
+    const int32_t air = int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
     say(What::Loosed, hero, row.number, air, 0, at);
     if (air > 0) {
         for (Flight& one : flights_) {

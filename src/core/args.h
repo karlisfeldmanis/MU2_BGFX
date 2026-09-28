@@ -176,6 +176,8 @@ struct Args {
     bool arenaLeft = false;
     int boltEvery = 0;
     float boltTiles = 6.0f;
+    // `--bolt-skill N`: which spell the bench throws, by MU's number -- 17 Energy Ball, 4 Fire Ball.
+    int boltSkill = 17;
     // `--point X,Y`: the pointer held on one spot, as fractions of the window, and never
     // clicked -- so a shot can show what hovering there does (the ring, the cursor).
     float pointX = -1.0f, pointY = -1.0f;

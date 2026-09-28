@@ -281,7 +281,10 @@ void Play::update(double seconds) {
             // plays it on the line after the one that makes the bolt. From his feet to where the
             // target is DRAWN, which is where the eye has it.
             // A spell that missed: the bolt still in the air at that body flies on past it.
-            if (happening.what == sim::What::Missed && happening.thrown) bolt_.miss(happening.whom);
+            if (happening.what == sim::What::Missed && happening.thrown) {
+                bolt_.miss(happening.whom);
+                meteor_.missHurl(happening.whom);
+            }
             if (happening.what == sim::What::Loosed) {
                 const Drawn* caster = drawnOf(happening.who);
                 const Drawn* target = drawnOf(happening.whom);
@@ -298,7 +301,13 @@ void Play::update(double seconds) {
                         to[1] = target->crown[1] - tall * 0.5f;
                         to[2] = target->crown[2];
                     }
-                    bolt_.cast(from, to, happening.whom);
+                    // Fire Ball is the Lich's rock at its other subtype, thrown flat; every
+                    // other spell that flies is the bolt.
+                    if (happening.a == sim::skill::kFireBall) {
+                        meteor_.hurl(from, to, happening.whom);
+                    } else {
+                        bolt_.cast(from, to, happening.whom);
+                    }
                     const int index = sim::skillIndexOf(happening.a);
                     if (index >= 0 && heard_.skill[index] >= 0) {
                         emit(heard_.skill[index], from[0], from[2], caster->id);
@@ -615,21 +624,22 @@ void Play::update(double seconds) {
     // The Lich's meteors: advance every live one, collect impacts.
     meteorImpacts_.clear();
     meteor_.update(float(seconds), meteorImpacts_);
-    // The wizard's bolts, each measured against where its target is drawn this frame.
-    bolt_.update(
-        float(seconds),
-        [&](uint32_t id) {
-            const sim::Body* body = realm_.find(id);
-            return body != nullptr && body->alive();
-        },
-        [&](uint32_t id, float* out) {
-            const Drawn* drawn = drawnOf(id);
-            if (drawn == nullptr || !drawn->placed) return false;
-            const FigureBody* look = drawn->figure.body();
-            for (int k = 0; k < 3; ++k) out[k] = drawn->crown[k];
-            out[1] -= (look ? look->height * look->scale : 1.0f) * 0.5f;
-            return true;
-        });
+    // The wizard's bolts and fireballs, each measured against where its target is drawn this
+    // frame.
+    const auto standing = [&](uint32_t id) {
+        const sim::Body* body = realm_.find(id);
+        return body != nullptr && body->alive();
+    };
+    const auto middle = [&](uint32_t id, float* out) {
+        const Drawn* drawn = drawnOf(id);
+        if (drawn == nullptr || !drawn->placed) return false;
+        const FigureBody* look = drawn->figure.body();
+        for (int k = 0; k < 3; ++k) out[k] = drawn->crown[k];
+        out[1] -= (look ? look->height * look->scale : 1.0f) * 0.5f;
+        return true;
+    };
+    bolt_.update(float(seconds), standing, middle);
+    meteor_.fly(float(seconds), standing, middle);
     // On each impact: explosion sound, shock clip on everything within 2 tiles.
     for (const auto& impact : meteorImpacts_) {
         if (heard_.explosion >= 0) emit(heard_.explosion, impact.x, impact.z);

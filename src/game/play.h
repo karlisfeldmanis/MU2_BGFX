@@ -329,11 +329,11 @@ public:
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
     // are tuned on.
     // `acrossX, acrossZ` is the flat direction it is thrown in, screen-right by the caller.
-    void benchBolt(float tiles, float acrossX, float acrossZ);
+    void benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill);
     // And before it, a step that way, so he stands facing the throw: the bench asks the realm
     // for an ordinary walk of one tile, and the body turns as it always does.
     void benchFace(float acrossX, float acrossZ);
-    void gatherMeteor(gfx::Effects& effects) const { meteor_.gather(effects); }
+    void gatherMeteor(gfx::Effects& effects, const float eye[3]) const { meteor_.gather(effects, eye); }
     // The blade's ribbon behind a skill swing. Fed in `show`, off the pose the frame has already
     // computed -- see fx/streak.h, which is MU's own `CreateWeaponBlur` rung for a skill.
     Streak& streak() { return streak_; }
@@ -594,7 +594,7 @@ private:
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
-        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;

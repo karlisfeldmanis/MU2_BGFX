@@ -159,6 +159,28 @@ constexpr SkillRow kRows[kSkills] = {
      "A barrier drawn up behind the shield for five minutes. The better the shield and the "
      "keener the wizard, the more of every blow it takes.",
      187, "spell_soul_barrier", true, arms::kShield, 6, Kin::DarkWizard},
+
+    // Fire Ball 4, 0.75's row: `CreateSkill(FireBall, ..., DamageType.Wizardry, 8, 6,
+    // manaConsumption: 3, energyRequirement: 40, elementalModifier: Fire)` -- eight damage, six
+    // tiles, three mana. Fire is a gate with nothing behind it (`TryApplyElementalEffectsAsync`
+    // defines no fire effect), so nothing past the blow is owed. The same two hands as Energy
+    // Ball, `SetPlayerMagic`'s 147/148 on a coin, and `SOUND_METEORITE01`, which MU shares with
+    // Meteorite as it shares SWORD4 between Cyclone and Slash.
+    //
+    // **A primary, as Energy Ball is**: no cooldown, paced by its own clip, walked out of like a
+    // swing, and a hit pays back a twentieth of the pool (the user, 2026-09-28, "fireball dont
+    // have cooldowns same as energy ball"). So it is the wizard's second auto-attack and the
+    // natural thing for the right button once it is learned: about one and a half Energy Balls
+    // against one body at forty energy (12-22 against 7-14) for three mana against one. Its forty
+    // energy is asked by the scroll, where 0.75 asks it (`Realm::useItem`); 0.75 asks it again at
+    // every cast, and energy never goes down here, so that second test is not written.
+    //
+    // It flies at fifty units a reference frame, twelve and a half tiles a second -- slower than
+    // the bolt, which is the difference between the two in the air.
+    {skill::kFireBall, "Fire Ball", 3, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A ball of fire thrown at one body up to six tiles off: half again the force of an Energy "
+     "Ball, for three times the mana.",
+     147, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 8, 148, 12.5f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

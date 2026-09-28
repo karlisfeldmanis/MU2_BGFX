@@ -154,7 +154,9 @@ private:
     // thins, lifting a little, on MU's smoke01 tinted toward the bolt's blue.
     static constexpr float kSmokeSpacing = 0.12f;       // metres
     static constexpr float kSmokeBorn = 0.32f, kSmokeGrows = 0.075f;  // scale, and a frame
-    static constexpr float kSmokeFrames = 11.0f, kSmokeMore = 6.0f;  // life, and its spread
+    // Halved on 2026-09-28, *"energy ball trail was to long"*: 11 + 6 frames drew a tail most
+    // of the way back to his hand.
+    static constexpr float kSmokeFrames = 6.0f, kSmokeMore = 3.0f;  // life, and its spread
     static constexpr float kSmokeAlpha = 1.0f;
     static constexpr float kSmokeRises = 0.006f;        // metres a reference frame
     static constexpr float kSmokeTint[3] = {0.50f, 0.66f, 1.0f};

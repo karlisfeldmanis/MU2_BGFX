@@ -67,6 +67,31 @@ public:
         return kLift / (kFallSpeed * kCosEntry) / kReferenceFps;
     }
 
+    // **The wizard's Fire Ball: the same model thrown flat at a body instead of dropped on a
+    // tile.** `CreateEffect(MODEL_FIRE, o->Position, ..., 1, to)` -- subtype 1, the `else` at the
+    // end of the creation switch, and subtype is the whole difference between a meteor and a
+    // fireball (MU2/docs/spells.md; MU2's `Meteor.Hurl` is the second source, ported). `from` is
+    // the caster's feet, `to` the middle of the body it is thrown at, `target` that body's id.
+    //
+    // MU's: sixty frames of life, a size rolled 0.8 to 1.1, lifted 120 units off his feet, fifty
+    // units a reference frame (twelve and a half tiles a second, `SkillRow::flies`), an ember a
+    // frame, the rock alone with no flame cone (the mover gives subtype 1 `BlendMeshLight = 0`),
+    // its orange light on the ground, and two stones where it arrives.
+    //
+    // Ours, and marked: a glow over the rock, cooling embers, aimed at the body's middle and
+    // steered after it, as the bolt is; and a half-size Explotion01 on the body where MU draws
+    // only the stones -- a bolt of light ends in a flash, a ball of fire ends in a burst. No
+    // smoke: MU2 laid a soot trail here and the user took it out on the bench (2026-09-28,
+    // "there is already smoke in fireball") -- the ember sheet carries its own.
+    void hurl(const float from[3], const float to[3], uint32_t target);
+    // The realm said the blow missed: the fireball nearest that body flies on past and out.
+    void missHurl(uint32_t target);
+    // Advances the fireballs by the frame's seconds, steering each after where its target is
+    // drawn -- `alive(id)` and `where(id, out)` as `Bolt::update` takes them. Call beside update().
+    template <typename Alive, typename Where>
+    void fly(float seconds, Alive alive, Where where);
+    uint32_t liveFireballs() const;
+
     // Advances everything by the frame's own seconds and appends this frame's landings, which
     // is what tells the caller to land a blow, sound an explosion and shake the town.
     struct Impact {
@@ -75,8 +100,9 @@ public:
     };
     void update(float seconds, std::vector<Impact>& impacts);
 
-    // Writes every live thing into the transparent pass.
-    void gather(gfx::Effects& effects) const;
+    // Writes every live thing into the transparent pass. `eye` is the camera, which the
+    // fireball's glow is drawn toward; null draws it at the rock.
+    void gather(gfx::Effects& effects, const float* eye = nullptr) const;
 
     // The light a burning rock throws on the town, as MU's own `AddTerrainLight(..., 2, ...)`:
     // a deep orange-red at two tiles, its energy the SAME 0.7-1.0 roll the rock's body takes,
@@ -128,6 +154,22 @@ private:
         uint32_t attacker;
     };
 
+    // A Fire Ball in the air. Apart from `Live` rather than a flag on it, for MU2's reason: a
+    // meteor falls on a tile and ends on the ground, a fireball is aimed at a body and ends on it.
+    struct Hurled {
+        bool alive = false;
+        float at[3];          // world metres
+        float along[3];       // unit
+        float floorY;         // the ground under where it was aimed, for the stones
+        float size;           // 0.8 to 1.1
+        float flown;          // metres since the last ember
+        float left;           // reference frames
+        float bodyLight;      // this frame's 0.7-1.0 roll
+        uint32_t target;      // 0 for the bench's fixed point, `aim`
+        float aim[3];
+        bool missing, passed;
+    };
+
     // One of the six stones, on MU's shared ballistic arm -- the same one its bones and its
     // broken ice ride.
     struct Stone {
@@ -155,6 +197,9 @@ private:
         float born;      // what `left` started at
         float rise;      // the ember's accelerating lift
         float colour[3];
+        // A fireball's ember, which cools as it goes where the meteor's holds its colour (ours):
+        // born `colour`, dying toward the deep red and out.
+        bool cools = false;
         enum class Kind : uint8_t { Ember, Blast, Smoke } kind = Kind::Ember;
     };
 
@@ -237,9 +282,39 @@ private:
     static constexpr float kQuakeDecay = 0.2f;
     static constexpr float kQuakeEpsilon = 0.0001f;
 
+    // The fireball, `MODEL_FIRE` subtype 1 (see hurl()).
+    static constexpr float kHurlSpeed = 50.0f;      // units a reference frame
+    static constexpr float kHurlFrames = 60.0f;     // LifeTime
+    static constexpr float kHurlLift = 120.0f;      // Position[2] += 120
+    static constexpr float kSmallestBall = 0.8f, kLargestBall = 1.1f;  // (rand()%4+8)*0.1
+    static constexpr int kHurlStones = 2;           // CheckTargetRange's two
+    // Ours: how near the body's middle it must come to have arrived, the bolt's own; how hard
+    // it turns after a body that moved; the frames a miss has left once past; the burst's size
+    // against the meteor's.
+    static constexpr float kHurlStrikes = 0.3f;
+    static constexpr float kHurlSteer = 0.35f;
+    static constexpr float kHurlPastFrames = 4.0f;
+    static constexpr float kHurlBlastShare = 0.5f;
+    // The fire at the head, ours: MU's fireball is the dark rock under its own ember stream, and
+    // on this camera the rock read as a black lump. Two added glows over it on the `light`
+    // sheet -- a wide orange halo and a small yellow-white heart -- flickering with the body
+    // roll, so it reads as a thing burning.
+    static constexpr float kHaloWide = 2.2f, kHeartWide = 1.1f;   // metres across
+    static constexpr float kHalo[3] = {1.0f, 0.40f, 0.06f};
+    static constexpr float kHeart[3] = {1.0f, 0.80f, 0.45f};
+    static constexpr float kGlowForward = 0.5f;                   // metres toward the eye
+    // Its embers, ours: half the meteor's, born orange and cooling to the red as they shrink,
+    // so the stream tapers and breaks up instead of standing as one red tube.
+    static constexpr float kFireEmberShare = 0.55f;
+    static constexpr float kFireEmber[3] = {1.0f, 0.5f, 0.12f};
+    // The fireball's light on the ground: the rock's red-orange, over four tiles.
+    static constexpr float kHurlGlowTiles = 4.0f;
+    static constexpr float kHurlGlow[3] = {1.0f, 0.35f, 0.08f};
+
     // Pools, sized once. A thing past its pool is refused and counted, never grown -- which is
     // MU's own rule as well as this engine's.
     static constexpr int kMaxMeteors = 8;
+    static constexpr int kMaxFireballs = 8;
     static constexpr int kMaxStones = 48;   // six a landing
     static constexpr int kMaxMotes = 160;   // MU's own ceiling for the shared particle pool
 
@@ -248,9 +323,11 @@ private:
     Group stoneGroups_[2];
     bgfx::TextureHandle blastSheet_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle emberSheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle glowSheet_ = BGFX_INVALID_HANDLE;
     const content::Ground* ground_ = nullptr;
 
     Live meteors_[kMaxMeteors] = {};
+    Hurled fireballs_[kMaxFireballs] = {};
     Stone stones_[kMaxStones] = {};
     Mote motes_[kMaxMotes] = {};
 
@@ -266,7 +343,12 @@ private:
 
     Mote* freeMote();
     void ember(const Live& rock);
+    void emberAt(const float at[3], const float heading[3], float light, bool fireball = false);
+    void stonesAt(float x, float z, float floor, int count);
+    void blastAt(float x, float y, float z, float share);
     void land(const Live& rock);
+    // One fireball's frame, and whether it is still in the air.
+    bool hurling(Hurled& ball, float seconds, bool standing, const float* there);
 
     // Loads one .obj, scaled to metres, optionally keeping one named group only.
     bool loadObj(const std::string& path, float scale, const std::string& groupFilter,
@@ -276,5 +358,21 @@ private:
                 bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3], float lean,
                 float tumble, float scale, const float colour[3], float alpha) const;
 };
+
+template <typename Alive, typename Where>
+void Meteor::fly(float seconds, Alive alive, Where where) {
+    for (Hurled& ball : fireballs_) {
+        if (!ball.alive) continue;
+        float there[3];
+        bool standing = false;
+        if (ball.target == 0) {
+            standing = true;
+            for (int k = 0; k < 3; ++k) there[k] = ball.aim[k];
+        } else {
+            standing = alive(ball.target) && where(ball.target, there);
+        }
+        if (!hurling(ball, seconds, standing, standing ? there : nullptr)) ball.alive = false;
+    }
+}
 
 }  // namespace mu::game

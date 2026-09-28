@@ -8,6 +8,7 @@
 #include "core/files.h"
 #include "core/json.h"
 #include "core/log.h"
+#include "sim/skills.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -145,6 +146,13 @@ bool loadSave(const std::string& path, Saved& out) {
     hero.boonTicksLeft = int64_t(boon["ticks_left"].numberOr(0.0));
     // An Ale's ticks left, absent when none stood. The realm caps it at one Ale's length.
     hero.aleTicksLeft = int64_t(doc["ale_ticks_left"].numberOr(0.0));
+    // The cooldowns running, as [skill number, ticks left] pairs, absent when none was. By MU's
+    // number and not the table's index, as the bar is, so a row appended later lands on its own.
+    const core::Json& cooling = doc["cooling"];
+    for (size_t i = 0; i < cooling.size(); ++i) {
+        const int index = sim::skillIndexOf(int32_t(cooling.at(i).at(0).numberOr(0.0)));
+        if (index >= 0) hero.coolsLeft[index] = int64_t(cooling.at(i).at(1).numberOr(0.0));
+    }
 
     const core::Json& items = doc["items"];
     for (size_t i = 0; i < items.size(); ++i) saved.items.push_back(readItem(items.at(i)));
@@ -227,6 +235,14 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "  \"ale_ticks_left\": %lld,\n",
                      static_cast<long long>(hero.aleTicksLeft));
     }
+    bool cooling = false;
+    for (int i = 0; i < sim::kSkills; ++i) {
+        if (hero.coolsLeft[i] <= 0) continue;
+        std::fprintf(f, "%s[%d, %lld]", cooling ? ", " : "  \"cooling\": [",
+                     sim::skillAt(i).number, static_cast<long long>(hero.coolsLeft[i]));
+        cooling = true;
+    }
+    if (cooling) std::fprintf(f, "],\n");
     std::fprintf(f, "  \"items\": [");
     bool first = true;
     for (int slot = 0; slot < sim::kSlots; ++slot) {
