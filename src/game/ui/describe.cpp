@@ -334,7 +334,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             if (skill->onSelf()) {
                 teaches.rows.push_back(
                     stat("Absorbs",
-                         sim::absorbed(sim::guardShare(who.points, who.shieldDefense)) +
+                         sim::absorbed(sim::boonShare(*skill, who.points, who.shieldDefense)) +
                              " of every blow",
                          known ? Tone::Gray : Tone::Green));
                 teaches.rows.push_back(stat("Lasts",

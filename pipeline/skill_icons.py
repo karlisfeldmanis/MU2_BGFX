@@ -103,6 +103,11 @@ SKILLS = {
     41: ("Dark Knight", "Twisting Slash"),
     42: ("Dark Knight", "Rageful Blow"),
     43: ("Dark Knight", "Death Stab"),
+    # And the wizard's answer to Defense, cut on 2026-09-28: Soul Barrier, whose scroll is
+    # group 15 number 15 (MuMain's ITEM_SCROLL_OF_SOUL_BARRIER, _enum.h). Season 6 in OpenMU's
+    # tree and not 0.75, and here because the user asked for the wizard to have a guard the
+    # knight's size (docs/skills-dw.md).
+    16: ("Dark Wizard", "Soul Barrier"),
 }
 
 

@@ -104,6 +104,45 @@ Events are now found by name and kind together. And a spell's clip was left unpr
 walk (`casting` was withheld to keep the staff from streaking), so a wizard who stopped and cast on
 one tick could lose the clip to the drawn body still sliding in; the streak now asks the skill.
 
+## 2a. Soul Barrier -- the knight's guard in the wizard's hand
+
+Asked for on 2026-09-28 to balance the two classes: the knight had Defense (a five-minute guard
+behind his shield) and the wizard had nothing. The wizard now buys the **Scroll of Soul Barrier**
+at Pasi's (slot 7, the one empty cell after the seven 0.75 scrolls), reads it, and casts it on
+himself. MU's own name and number: skill 16, `AT_SKILL_SOUL_BARRIER`, scroll group 15 number 15
+(`Book16`). Season 6 in OpenMU's tree, not 0.75, and brought down to the knight's level on purpose.
+
+What is the knight's, column for column (`sim/skills.cpp`):
+
+- **Self only, behind a shield.** `families = kShield`, the same gate as Defense; the wizard wears
+  the Small Shield, the Buckler and the Skull Shield. MU casts it on a party member too; there is
+  no party, and the user ruled it self-only.
+- Five minutes (`boonTicks` 6000), twelve seconds of cooldown floored at its length plus two.
+- Level 6 to read, no stat asked, drop level 6, 300 zen -- the Orb of Defense's own numbers.
+- **Drawn as Defense is**: the knight's stance (clip 187) and his green cage for two seconds at the
+  cast, and the same buff strip (its own cell, `eBuff_WizDefense`, the blue crescent). The reading
+  is every class's orb burst and swoosh (`Play::learned`).
+
+What is its own: the wave, `SOUND_SOULBARRIER` (`eSoulBarrier.wav`), and the mana, MU's 70.
+
+**The share.** Same curve and cap as the guard, `0.60 * p / (p + 150)`, with different points:
+
+| | shield defence | strength | agility | energy |
+|---|---|---|---|---|
+| Defense (`guardPoints`) | 5 | 0.4 | 1.0 | 1.2 |
+| Soul Barrier (`barrierPoints`) | 5 | -- | 0.5 | 1.1 |
+
+Calibrated so a new character of each class behind the same shield stands within a point:
+
+| behind | new knight {28,20,25,10} | new wizard {18,18,15,30} |
+|---|---|---|
+| Small Shield (1) | 14.6% | 14.3% |
+| Buckler +1 (3) | 16.8% | 16.5% |
+
+A wizard spending on energy climbs about as a knight spending on agility (about a third by level 23,
+mid-40s late). MU's own `10 + agility/50 + energy/200` percent (SkillTooltipModel.cpp:248) is not
+followed. `tests/sim_test.cpp` holds the parity, the gate and the route through Pasi.
+
 ## 3. Measured
 
 - `tests/sim_test.cpp`: the band on paper (30 energy rolls 6 to 10, a 23-rise staff lifts the top to

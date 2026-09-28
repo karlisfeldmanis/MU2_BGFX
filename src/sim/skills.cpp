@@ -137,6 +137,28 @@ constexpr SkillRow kRows[kSkills] = {
      "A bolt of light thrown at one body up to six tiles off. Its force is his energy and his "
      "staff's.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 3, 148},
+
+    // Soul Barrier 16: the knight's Defense in the wizard's hand, and every column but the mana,
+    // the wave and the class is Defense's own so the two classes stand level (the user, 2026-09-28): five minutes, a
+    // twelve-second cooldown floored at its own length and two, **thrown on himself only**, and
+    // **only behind a shield** -- `kShield`, which the wizard wears in the Small Shield, the
+    // Buckler and the Skull Shield. MU casts it on a party member as well (`ClassAttack.cpp`,
+    // the `SelectedCharacter` arm); there is no party here and the user ruled it self-only.
+    //
+    // **And it is drawn as Defense is**, the user's of 2026-09-28: the knight's stance (187) and
+    // his green cage, where MU casts it with `SetPlayerMagic`'s two hands and five blue
+    // `MODEL_SPEARSKILL` ribbons (ClassAttack.cpp:1200, ZzzCharacter.cpp:4984). What stays MU's
+    // own is the wave, `SOUND_SOULBARRIER`, and the mana, 70
+    // (`VersionSeasonSix/SkillsInitializer.cs:134`). What it takes off a blow is `barrierShare`,
+    // off energy where the knight's is off his body.
+    //
+    // Not `wizardry`: it throws no blow, and a spell row asks nothing of the hand, which this one
+    // must.
+    {skill::kSoulBarrier, "Soul Barrier", 70, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000,
+     0.50f,
+     "A barrier drawn up behind the shield for five minutes. The better the shield and the "
+     "keener the wizard, the more of every blow it takes.",
+     187, "spell_soul_barrier", true, arms::kShield, 6, Kin::DarkWizard},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -284,6 +306,21 @@ float guardPoints(const HeroPoints& points, int shieldDefense) {
 float guardShare(const HeroPoints& points, int shieldDefense) {
     const float p = std::max(0.0f, guardPoints(points, shieldDefense));
     return kGuardCap * p / (p + 150.0f);
+}
+
+float barrierPoints(const HeroPoints& points, int shieldDefense) {
+    return 5.0f * float(std::max(0, shieldDefense)) + 1.1f * float(points.energy) +
+           0.5f * float(points.agility);
+}
+
+float barrierShare(const HeroPoints& points, int shieldDefense) {
+    const float p = std::max(0.0f, barrierPoints(points, shieldDefense));
+    return kGuardCap * p / (p + 150.0f);
+}
+
+float boonShare(const SkillRow& row, const HeroPoints& points, int shieldDefense) {
+    return row.number == skill::kSoulBarrier ? barrierShare(points, shieldDefense)
+                                             : guardShare(points, shieldDefense);
 }
 
 std::string absorbed(float share) {

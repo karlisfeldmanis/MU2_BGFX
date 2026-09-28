@@ -46,6 +46,11 @@ constexpr int32_t kDeathStab = 43;
 // `AddEnergyBallForDarkWizard` puts it in a new wizard's list at creation, and 0.75 sells no
 // scroll for it (MU2/docs/spells.md).
 constexpr int32_t kEnergyBall = 17;
+// And his guard, the knight's Defense in the wizard's hand: MU's `AT_SKILL_SOUL_BARRIER`, taught
+// by the Scroll of Soul Barrier (group 15 number 15). Season 6 in OpenMU's tree and not 0.75; it
+// is here because the user asked for the two classes to stand level behind a shield
+// (docs/skills-dw.md, 2026-09-28).
+constexpr int32_t kSoulBarrier = 16;
 }  // namespace skill
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
@@ -194,10 +199,10 @@ struct SkillRow {
 };
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
-// families past it, and the wizard's Energy Ball. Also the width of the save's learned mask and of a body's cooldown array --
+// families past it, the wizard's Energy Ball and his Soul Barrier. Also the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 10;
+constexpr int kSkills = 11;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates
@@ -260,6 +265,22 @@ int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks);
 constexpr float kGuardCap = 0.60f;
 float guardPoints(const HeroPoints& points, int shieldDefense);
 float guardShare(const HeroPoints& points, int shieldDefense);
+
+// **Soul Barrier's share, on the same curve and under the same cap**: the knight's shield term
+// kept whole, strength's place taken by energy, and agility at half. INVENTION, the user's
+// call of 2026-09-28 -- "almost identical at the beginning of the game, but the wizard's is
+// energy and the knight's is strength". Barrier points are 5 a point of the shield's defence,
+// 1.1 a point of energy and 0.5 of agility, so a new wizard and a new knight behind the same
+// shield come within a point of each other (16.5% against 16.8% behind a Buckler +1, 14.3%
+// against 14.6% behind a Small Shield), and a wizard who spends on energy climbs about as a
+// knight who spends on his guard does. MU's own `10 + agility/50 + energy/200` percent
+// (SkillTooltipModel.cpp:248) is a tenth of this at the start and is not followed.
+float barrierPoints(const HeroPoints& points, int shieldDefense);
+float barrierShare(const HeroPoints& points, int shieldDefense);
+
+// Whichever of the two a self-cast row is, so the realm, the card, the scroll and the strip ask
+// one question and cannot say different numbers for the same buff.
+float boonShare(const SkillRow& row, const HeroPoints& points, int shieldDefense);
 
 // A buff's words, for every card that describes one, so the skill key, the orb and the strip
 // cannot say it three ways. `absorbed` is a share of a blow as a player reads it, "30%".

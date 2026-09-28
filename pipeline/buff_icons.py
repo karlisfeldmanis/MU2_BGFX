@@ -96,6 +96,15 @@ STATES = {
     # Marked as this project's. So is the strip it hangs in - see the note at the top of this
     # file, where 0.75's client draws no status icons at all.
     "defense": (45, "eBuff_EliteScroll2", "Defense, skill 18 - borrowed, see note"),
+    # The wizard's Soul Barrier, and a lookup again rather than a borrowing: cell 4 is
+    # eBuff_WizDefense, which MuMain registers for AT_SKILL_SOUL_BARRIER (ZzzCharacter.cpp:4978)
+    # -- the blue crescent the knight's row above turned down for being a wizard's barrier.
+    #
+    # Its png was cut on its own, from MuMain's quarter-size sheet enlarged three times by
+    # pipeline/upscale.py (the route skill_icons.py --mumain takes), because MuDream's container
+    # refused the read that day -- so it is 60 by 84 where the others are 80 by 112, and a run
+    # of this script that CAN read MuDream will replace it with the sharper cut for free.
+    "soul_barrier": (4, "eBuff_WizDefense", "Soul Barrier, skill 16"),
     # The Ale, and the second borrowing, for the reason the first was: MuMain has no eBuffState
     # for it either - it is ABILITY_FAST_ATTACK_SPEED, shown as the hero turned red - and the
     # user asked for a cell with a tooltip on 2026-09-27, so the strip says how long it has left.

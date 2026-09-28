@@ -128,7 +128,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     if (tables_->grid.safe(hero.column(), hero.row())) return false;
 
     if (row.onSelf()) {
-        // **And the guard needs a shield on the arm.** The user's rule, 2026-09-22, and it is
+        // **And the guard needs a shield on the arm** -- the wizard's Soul Barrier as much as
+        // the knight's Defense, the user's of 2026-09-28. The user's rule, 2026-09-22, and it is
         // 0.75's own arrangement put back: skill 18 is carried by the Buckler and the nine
         // shields after it (`Version075/Items/Armors.cs:40`), so in the original a knight without
         // one simply did not have Defense. Learning it permanently took that away, and this is
@@ -145,8 +146,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.mana -= row.mana;
         hero.boonSkill = row.number;
         // The guard's share off his shield and stats as they stand at the cast, held for its
-        // whole length: `guardShare` in sim/skills.h, where the numbers are argued.
-        hero.boonDamageTaken = 1.0f - guardShare(hero.points, hero.shieldDefense);
+        // whole length: `guardShare` in sim/skills.h, where the numbers are argued -- or the
+        // wizard's `barrierShare`, off energy where the knight's is off his body.
+        hero.boonDamageTaken = 1.0f - boonShare(row, hero.points, hero.shieldDefense);
         hero.boonUntil = tick_ + row.boonTicks;
         hero.stats.damageTaken = double(hero.boonDamageTaken);
     } else {

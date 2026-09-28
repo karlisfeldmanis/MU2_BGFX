@@ -255,6 +255,9 @@ struct Args {
     // The same for the orb's aura and its swoosh, and the same warning: only the drawing. The
     // realm learns nothing, so this shows the picture on a character who cannot afford it.
     std::vector<int> learns;
+    // And the guard's cage -- the knight's Defense and the wizard's Soul Barrier share it -- on
+    // FRAME, for a review run. The same warning: only the drawing, and no boon is raised.
+    std::vector<int> guards;
     // Everything sounds and is logged, at no volume: a review run should not play into the room.
     bool mute = false;
     // Things put in the bag at the start: NAME or NAME:COUNT, comma separated.

@@ -411,10 +411,10 @@ void testInvariants(const content::Tables& tables) {
 // for it, the footprint walk, and equipping as a move through the same gate a window colours by.
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
-    // 127: the catalogue's 118 and the nine knight orbs added on 2026-09-23. A count rather than
-    // a list, because what it is guarding is the cook -- a recipe that stops being picked up is a
-    // row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 127, "127 item rows cooked");
+    // 128: the catalogue's 118, the nine knight orbs added on 2026-09-23 and the wizard's Scroll
+    // of Soul Barrier on 2026-09-28. A count rather than a list, because what it is guarding is
+    // the cook -- a recipe that stops being picked up is a row the shelf silently cannot sell.
+    checkEqual(long(tables.items.size()), 128, "128 item rows cooked");
     const int shield = tables.itemAt(6, 0), axe = tables.itemAt(1, 0), staff = tables.itemAt(5, 0);
     const int small = tables.itemAt(14, 1);
     check(shield >= 0 && axe >= 0 && staff >= 0 && small >= 0, "the rows the tests use exist");
@@ -1132,6 +1132,99 @@ void testSkills(const content::Tables& tables) {
         }
     }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
+
+    // ---- the wizard's guard: Soul Barrier (docs/skills-dw.md) --------------------------------
+    //
+    // The user's rule of 2026-09-28: bought as a scroll at Pasi's, read once, thrown on himself
+    // behind a shield, and at the start of the game within a point of what the knight's Defense
+    // takes -- off energy where the knight's is off his body.
+    {
+        const sim::HeroPoints knight{28, 20, 25, 10}, wizard{18, 18, 15, 30};
+        for (int shield : {1, 3}) {
+            const float guard = sim::guardShare(knight, shield);
+            const float barrier = sim::barrierShare(wizard, shield);
+            check(std::fabs(guard - barrier) < 0.01f,
+                  "a new wizard's barrier and a new knight's guard are within a point");
+        }
+        const sim::HeroPoints fresh = wizard;
+        const float start = sim::barrierShare(fresh, 3);
+        check(sim::barrierShare(fresh, 5) > start && sim::barrierShare({18, 18, 15, 130}, 3) > start &&
+                  sim::barrierShare({18, 118, 15, 30}, 3) > start,
+              "the shield, energy and agility each raise the barrier");
+        check(sim::barrierShare({500, 18, 15, 30}, 3) == start, "and strength does not");
+        check(sim::barrierShare({0, 30000, 0, 30000}, 5000) < sim::kGuardCap,
+              "and no build reaches the cap");
+        const sim::SkillRow& barrier = *sim::skillNumbered(sim::skill::kSoulBarrier);
+        check(barrier.onSelf() && barrier.kin == sim::Kin::DarkWizard &&
+                  barrier.families == sim::arms::kShield && !barrier.wizardry,
+              "Soul Barrier is the wizard's, thrown on himself, off a shield");
+        checkEqual(barrier.boonTicks, sim::skillNumbered(sim::skill::kDefense)->boonTicks,
+                   "and it stands as long as Defense");
+
+        int pasi = -1;
+        for (size_t i = 0; i < tables.folk.size(); ++i) {
+            if (tables.folk[i].number == 254) pasi = int(i);
+        }
+        check(pasi >= 0, "Pasi is in the town's table");
+        int stocked = 0;
+        const sim::Offer* scrolls = sim::stockOf(254, &stocked);
+        int scrollSlot = -1;
+        for (int i = 0; i < stocked; ++i) {
+            if (scrolls[i].group == 15 && scrolls[i].number == 15) scrollSlot = scrolls[i].slot;
+        }
+        check(scrollSlot >= 0, "Pasi sells the Scroll of Soul Barrier");
+        const int32_t row = tables.itemAt(15, 15);
+        check(row >= 0 && tables.items[size_t(row)].teaches == sim::skill::kSoulBarrier,
+              "and it is cooked, teaching skill 16");
+
+        sim::Realm mage;
+        check(mage.raise(&tables, 3, 138, 124, sim::Kin::DarkWizard, 6), "a wizard of six raises");
+        mage.earn(3000000);
+        sim::Request talk;
+        talk.kind = sim::Request::Kind::Talk;
+        talk.target = uint32_t(pasi);
+        mage.ask(talk);
+        for (int tick = 0; tick < 4000 && mage.trading() < 0; ++tick) mage.step();
+        check(mage.trading() == pasi, "walks to Pasi and is served");
+        const int bought = mage.buy(scrollSlot);
+        check(bought >= 0, "buys the scroll");
+        check(mage.useItem(bought), "and reads it at level six");
+        check(mage.knows(sim::skill::kSoulBarrier), "so Soul Barrier is his");
+
+        // Out of town, with nothing on his arm first: refused, as a knight's guard is.
+        sim::Realm field;
+        check(field.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 60), "a wizard in the field");
+        check(field.learn(sim::skill::kSoulBarrier), "who knows the barrier");
+        const auto thrown = [](sim::Realm& r) {
+            bool cast = false;
+            r.invoke(sim::skill::kSoulBarrier, r.hero().id);
+            for (int tick = 0; tick < 60 && !cast; ++tick) {
+                r.step();
+                for (const sim::Happening& one : r.happenings()) {
+                    cast |= one.what == sim::What::Cast && one.who == r.hero().id;
+                }
+            }
+            return cast;
+        };
+        check(!thrown(field), "is refused it with no shield on his arm");
+        check(field.equip(tables.armNamed("Staff01"), tables.armNamed("Shield01"), true),
+              "a staff in one hand and a Small Shield on the other");
+        check(thrown(field), "and throws it behind the shield");
+        const sim::Body& hero = field.hero();
+        const float share = sim::barrierShare(hero.points, hero.shieldDefense);
+        check(std::fabs(hero.boonDamageTaken - (1.0f - share)) < 1e-6f,
+              "and every blow is taken down by the barrier's share");
+        check(hero.boonUntil - field.tick() > 5000, "for five minutes");
+
+        // And a knight may not read it, whatever his level.
+        sim::Realm knightRealm;
+        check(knightRealm.raise(&tables, 3, 138, 124, sim::Kin::DarkKnight, 60), "a knight raises");
+        knightRealm.earn(3000000);
+        knightRealm.ask(talk);
+        for (int tick = 0; tick < 4000 && knightRealm.trading() < 0; ++tick) knightRealm.step();
+        const int his = knightRealm.buy(scrollSlot);
+        check(his >= 0 && !knightRealm.useItem(his), "and cannot read the wizard's scroll");
+    }
 
     // ---- the families, before the hunt (docs/skills-dk.md §3.1b) -----------------------------
     //

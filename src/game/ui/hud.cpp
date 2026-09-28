@@ -103,11 +103,13 @@ Box buffPx(int i) {
     return {kBuffsAt.x + float(i) * (kBuffsAt.w + kBuffGap), kBuffsAt.y, kBuffsAt.w, kBuffsAt.h};
 }
 
-// Which of MuDream's status cells a skill wears. Defense is the only one this game can put on a
-// character; the elf's two Greaters and the wizard's two debuffs are cut and waiting. The Ale
-// is not a skill and wears `buff_ale` (pipeline/buff_icons.py says which cell it borrows).
+// Which of MuDream's status cells a skill wears. Defense and Soul Barrier are the two this game
+// can put on a character; the elf's two Greaters and the wizard's two debuffs are cut and
+// waiting. The Ale is not a skill and wears `buff_ale` (pipeline/buff_icons.py says which cell
+// it borrows).
 const char* buffArt(int32_t skill) {
     switch (skill) {
+        case 16: return "buff_soul_barrier";
         case 18: return "buff_defense";
         case 27: return "buff_greater_defense";
         case 28: return "buff_greater_damage";

@@ -410,6 +410,13 @@
       "from": "SOUND_MAGIC, Data\\Sound\\sMagic.wav. ZzzCharacter plays it for AT_SKILL_ENERGYBALL - 0.75's Energy Ball, skill 17 - beside the CreateEffect(BITMAP_ENERGY) that throws the bolt, in the damage arm of MoveCharacter. Power Wave plays the same wave from the AT_SKILL_POWERWAVE case a few lines below, which is the wizard's version of Cyclone and Slash sharing SOUND_SKILL_SWORD4.",
       "note": "Named for the constant rather than for the spell, because two spells share it and neither owns it. Loaded with Enable3DSound and a two-channel budget, unlike the knight's four, which is the client saying it expects to hear more than one at once."
     },
+    "spell_soul_barrier": {
+      "files": [
+        "eSoulBarrier.wav"
+      ],
+      "from": "SOUND_SOULBARRIER, which ZzzOpenData loads from Data\\Sound\\eSoulBarrier.wav (ZzzOpenData.cpp:4832). ZzzCharacter plays it for AT_SKILL_SOUL_BARRIER - skill 16 - in the same block that registers eBuff_WizDefense and throws the five MODEL_SPEARSKILL ribbons (ZzzCharacter.cpp:4978-4988), so the wave, the buff and the barrier are one moment.",
+      "note": "The wizard's guard, and its own wave: where the knight's Defense is heard as a shield going up, this is the barrier itself. Played on the cast, as the knight's is, because a self-cast has no landing to wait for."
+    },
     "spell_thunder": {
       "files": [
         "eThunder.wav"

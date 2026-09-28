@@ -396,7 +396,8 @@ void Play::warped() {
     core::logf("warp: lands at tile %d,%d", body.column(), body.row());
 }
 
-// The knight's guard raised, and then kept on him while it stands.
+// The knight's guard raised, and then kept on him while it stands -- and the wizard's Soul
+// Barrier, which is the same cage on the user's word of 2026-09-28.
 //
 // Two calls and not one because the barrier follows the body, which the level-up's flares do
 // not: MU leaves a burst where it was thrown (`TargetPosition` is never assigned), and a guard
@@ -409,9 +410,24 @@ void Play::guardRise(float seconds) {
     aura_.guard(feet, hero->yaw, ground_->metresPerTile(), seconds);
 }
 
+void Play::showGuard() {
+    guardRise(kGuardShowSeconds);
+    guardPreview_ = realm_.tick() + int64_t(kGuardShowSeconds / kTickSeconds);
+}
+
 void Play::guardStep() {
     if (ground_ == nullptr) return;
     const sim::Body& hero = realm_.hero();
+    // A `--guard` preview has no boon behind it, and is held for its own two seconds instead.
+    if (realm_.tick() < guardPreview_) {
+        if (const Drawn* drawn = drawnOf(hero.id); drawn != nullptr && drawn->placed) {
+            const float feet[3] = {drawn->crown[0],
+                                   ground_->heightAt(drawn->crown[0], drawn->crown[2]),
+                                   drawn->crown[2]};
+            aura_.follow(feet);
+        }
+        return;
+    }
     // The realm decides when it lapses, as it decides everything else; the drawing reads it.
     // Both halves matter: a boon that ran out and a character who died take the ribbons away.
     if (!hero.alive() || hero.boonUntil <= realm_.tick()) {

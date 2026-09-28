@@ -67,10 +67,15 @@ constexpr Offer kBlacksmith[] = {
 };
 
 // Pasi: seven scrolls, then the robes and the staves. Market.Mage.
+//
+// **And the eighth, slot 7, which is ours**: the Scroll of Soul Barrier, the wizard's guard, on
+// the one cell left empty at the end of the scrolls' row (the user, 2026-09-28). Its price is
+// the curve's at drop level 6 -- `spell` has no value for number 15 -- which is exactly what the
+// knight's Orb of Defense costs at Hanzo's, so the two guards are bought for the same money.
 constexpr Offer kMage[] = {
     scroll(0, 3),              scroll(1, 10),             scroll(2, 2),
     scroll(3, 1),              scroll(4, 5),              scroll(5, 6),
-    scroll(6, 0),              gear(16, kHelms, 2, 0),    gear(32, kArmours, 2, 0),
+    scroll(6, 0),              scroll(7, 15),             gear(16, kHelms, 2, 0),    gear(32, kArmours, 2, 0),
     gear(48, kPants, 2, 0),    gear(64, kBoots, 2, 0),    gear(80, kGloves, 2, 0),
     gear(18, kHelms, 4, 2),    gear(34, kArmours, 4, 2),  gear(50, kPants, 4, 2),
     gear(66, kBoots, 4, 2),    gear(82, kGloves, 4, 2),   gear(20, kHelms, 7, 3),

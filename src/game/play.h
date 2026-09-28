@@ -308,6 +308,8 @@ public:
     // The guard: thrown when Defense lands, and kept on the body every frame after.
     void guardRise(float seconds);
     void guardStep();
+    // The realm tick a `showGuard` preview holds the cage until; zero when none is running.
+    int64_t guardPreview_ = 0;
     Sound& sound() { return sound_; }
     // What a Budge Dragon gives off, opened by the caller for the same reason as the showing.
     Breath& breath() { return breath_; }
@@ -374,6 +376,10 @@ public:
     // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
     // read taught something, and by `--learn` for a review run.
     void learned();
+    // And the guard's cage for `--guard` -- the knight's Defense and the wizard's Soul Barrier
+    // wear the same one -- held for the two seconds a real cast shows it, whatever the realm says.
+    // Only the drawing, like `--learn`: no boon is raised and no mana is spent.
+    void showGuard();
     // And a Town Portal Scroll's arrival: the hero faded in from nothing where the realm put
     // him, the warp thrown under him, and the windows told (`takeWarp`).
     void warped();
@@ -584,7 +590,7 @@ private:
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
-        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
