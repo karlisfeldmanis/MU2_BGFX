@@ -189,7 +189,21 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // A self-cast has no target to be far from and reads its victim off the caster.
         if (hero.mana < row.mana) return false;
         hero.mana -= row.mana;
-        if (row.mends) {
+        if (row.summons > 0) {
+            // **A second cast dismisses the one standing**, and costs nothing: OpenMU's
+            // TargetedSkillDefaultPlugin.cs:121-125, which removes the summon and returns before
+            // the mana is taken. The mana was taken above, so it is handed back.
+            Body& summon = bodies_[size_t(summonSlot_)];
+            if (summon.alive()) {
+                hero.mana += row.mana;
+                dismiss(summon);
+                return true;
+            }
+            if (!conjure(hero, row)) {
+                hero.mana += row.mana;
+                return false;
+            }
+        } else if (row.mends) {
             // Heal: health back at once, never past the most he has.
             hero.health = std::min(hero.maxHealth, hero.health + healOf(hero.points));
         } else if (row.mightTicks > 0) {

@@ -370,6 +370,38 @@ constexpr SkillRow kRows[kSkills] = {
      .tells = "Every blow harder by a share of her energy, for a minute.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::FairyElf, .anyHand = true, .mightTicks = 1200},
+
+    // Her six summons, 30 to 35, at 0.75's mana (`SkillsInitializer.cs:68-73`): one at a time,
+    // raised beside her, and a second cast dismisses the one standing (TargetedSkillDefaultPlugin
+    // .cs:121-125). `PLAYER_SKILL_ELF1` and `SOUND_SKILL_DEFENSE`, as ReceiveMagic plays them
+    // (WSclient.cpp:4153-4184). Only the Goblin and the Stone Golem are `built`: they are
+    // Noria's own breeds and are cooked. The Assassin, the Elite Yeti, the Dark Knight and Bali
+    // live on maps this game does not have, and their rows wait for their figures.
+    {.number = skill::kSummonGoblin, .name = "Summon Goblin", .mana = 40, .coolTicks = 60,
+     .tells = "A goblin at her side, that fights what she fights and draws it off her. The "
+              "keener the elf, the tougher it is.",
+     .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .kin = Kin::FairyElf, .anyHand = true, .summons = 26},
+    {.number = skill::kSummonGolem, .name = "Summon Stone Golem", .mana = 70, .coolTicks = 60,
+     .tells = "A stone golem at her side, slow and hard to break, that holds what it fights. The "
+              "keener the elf, the tougher it is.",
+     .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
+     .kin = Kin::FairyElf, .anyHand = true, .summons = 32},
+    {.number = skill::kSummonAssassin, .name = "Summon Assassin", .mana = 110, .coolTicks = 60,
+     .tells = "An assassin at her side.", .clip = 151, .sound = "player_skill_defense",
+     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .summons = 21},
+    {.number = skill::kSummonYeti, .name = "Summon Elite Yeti", .mana = 160, .coolTicks = 60,
+     .tells = "An elite yeti at her side.", .clip = 151, .sound = "player_skill_defense",
+     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .summons = 20},
+    {.number = skill::kSummonKnight, .name = "Summon Dark Knight", .mana = 200, .coolTicks = 60,
+     .tells = "A dark knight at her side.", .clip = 151, .sound = "player_skill_defense",
+     .built = false, .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true,
+     .summons = 10},
+    {.number = skill::kSummonBali, .name = "Summon Bali", .mana = 250, .coolTicks = 60,
+     .tells = "Bali at her side.", .clip = 151, .sound = "player_skill_defense", .built = false,
+     .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true, .summons = 150},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -547,6 +579,14 @@ float wardPoints(const HeroPoints& points) {
 float wardShare(const HeroPoints& points) {
     const float p = std::max(0.0f, wardPoints(points));
     return kGuardCap * p / (p + 150.0f);
+}
+
+float summonHealthRate(int energy) {
+    return 1.0f + float(std::max(0, energy)) * kSummonHealthPerEnergy;
+}
+
+float summonForceRate(int energy) {
+    return 1.0f + float(std::max(0, energy)) * kSummonForcePerEnergy;
 }
 
 int healOf(const HeroPoints& points) { return 5 + std::max(0, points.energy) / 5; }

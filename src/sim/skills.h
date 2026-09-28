@@ -80,6 +80,15 @@ constexpr int32_t kSkillshot = 24;
 constexpr int32_t kHeal = 26;
 constexpr int32_t kGreaterDefense = 27;
 constexpr int32_t kGreaterDamage = 28;
+// And her six summons, `AT_SKILL_SUMMON` to `+5`: 0.75's `SummonSkillToMonsterMapping`
+// (TargetedSkillDefaultPlugin.cs:22-31) -- the Goblin 26, the Stone Golem 32, the Assassin 21,
+// the Elite Yeti 20, the Dark Knight 10 and Bali 150.
+constexpr int32_t kSummonGoblin = 30;
+constexpr int32_t kSummonGolem = 31;
+constexpr int32_t kSummonAssassin = 32;
+constexpr int32_t kSummonYeti = 33;
+constexpr int32_t kSummonKnight = 34;
+constexpr int32_t kSummonBali = 35;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
@@ -294,8 +303,10 @@ struct SkillRow {
     int32_t mightTicks = 0;
     // **Skillshot**: how many arrows the fan looses. Each body struck costs one.
     int32_t arrows = 0;
+    // **A summon**: the monster number it raises, 0 for none (the map above).
+    int32_t summons = 0;
     // Whether it is cast on the caster and takes no target.
-    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0; }
+    bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
     // slot is his auto-attack (the user, 2026-09-28), paced by its own clip and nothing else,
     // and like a swing it can be walked out of and a hit pays mana back.
@@ -316,7 +327,7 @@ struct SkillRow {
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 22;
+constexpr int kSkills = 28;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates
@@ -403,6 +414,23 @@ float barrierShare(const HeroPoints& points, int shieldDefense);
 constexpr float kWardShieldPoints = 15.0f;
 float wardPoints(const HeroPoints& points);
 float wardShare(const HeroPoints& points);
+// **A summon scales with her energy** -- the user's, 2026-09-28: "if an elf player decided to go
+// full energy elf, that summon is actually doing good damage and can hold aggro". Ours: 0.75
+// summons the breed's row as it stands (PlayerSummon.CreateAsync), which a levelled elf outgrows.
+// Its health is the breed's times `1 + energy / 100`, and its damage, defence and both rates
+// the breed's times `1 + energy / 200`: a tank first and a weapon second. A new elf's (energy 15)
+// Goblin is barely more than the breed; at 200 energy her Stone Golem has three times its health
+// and twice its bite. One knob each, here.
+constexpr float kSummonHealthPerEnergy = 1.0f / 100.0f;
+constexpr float kSummonForcePerEnergy = 1.0f / 200.0f;
+float summonHealthRate(int energy);
+float summonForceRate(int energy);
+// How far from her it hunts, and how far it strays before it walks back: OpenMU's
+// SummonedMonsterIntelligence -- eight tiles round the owner, two tiles idle, five fighting.
+constexpr int kSummonHunt = 8;
+constexpr int kSummonTether = 2;
+constexpr int kSummonTetherFighting = 5;
+
 // Heal's health and Greater Damage's bonus, off her energy.
 int healOf(const HeroPoints& points);
 int mightOf(const HeroPoints& points);

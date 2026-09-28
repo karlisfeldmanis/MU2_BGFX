@@ -234,83 +234,17 @@ bool Play::open(const std::string& assetDir, const std::string& world,
             // A guard wears his townsperson's figure, and is drawn here rather than among the
             // folk below because he walks and fights.
             if (figures_) look = figures_->body(tables_.folk[size_t(body.warden)].figure);
+        } else if (body.summoner != 0) {
+            // Her summon's slot, dormant: no figure until she raises one, when the breed she
+            // called is put on it (Play::update, What::Spawned). Given its placeholder kind's
+            // figure here it stood as a Bull Fighter wherever the breed was not cooked.
         } else if (figures_) {
             look = figures_->body(tables_.kinds[size_t(body.kind)].figure);
         }
         if (look) {
-            const float at[3] = {0, 0, 0};
-            one.figure.stand(look, at, 0.0f, look->scale);
             bones = std::max(bones, look->boneCount());
             ++dressed;
-            // The swing, found once, and **which TABLE it is looked up in is decided by the
-            // rig and not by whether the body is the player**. MU draws its Skeleton Warrior
-            // as a MODEL_PLAYER with a skeleton sub-type, so `SetPlayerAttack` takes the
-            // player branch for it and picks a clip by the weapon in its hands -- and
-            // `monster_actions` 3, "Attack 1", is simply not a slot its library has. Asked
-            // for one anyway it found nothing and the skeleton fought without ever swinging,
-            // which is what this looked like in play.
-            //
-            // A figure that has a STANCE is a figure on the player rig: the cook writes one
-            // from index.json's row ("stance": "sword" for the Skeleton Warrior) and no
-            // monster on its own rig has one.
-            const bool onPlayerRig = body.player || !look->stance.empty();
-            if (look->library) {
-                if (onPlayerRig) {
-                    one.attackClip = look->library->find(attackSlotFor(look->stance));
-                    if (one.attackClip < 0) one.attackClip = look->library->find(38);
-                    // And no second swing: the 1-in-3 SwordCount alternation is the MONSTER
-                    // branch's, and the player branch picks one clip by the stance. Left as
-                    // -1, `swordCount` counts on and always chooses this one.
-                    one.deathClip = look->library->find(kPlayerDieSlot);
-                    // A body on the player rig that is NOT the hero still flinches in a
-                    // meteor's quake: MU's loop excludes the hero alone and gives everything
-                    // else PLAYER_SHOCK. The hero keeps none, as Play::update says.
-                    if (!body.player) one.shockClip = look->library->find(kPlayerShockSlot);
-                    // And the skeleton does not fall at all: it comes apart. Its death clip is
-                    // taken away here rather than left unplayed, so nothing can reach for one.
-                    if (!body.player && look->name == kBurstingFigure) {
-                        one.bursts = true;
-                        one.deathClip = -1;
-                    }
-                } else {
-                    one.attackClip  = look->library->find(3);  // Attack 1
-                    one.attackClip2 = look->library->find(4);  // Attack 2
-                    // A breed with no Attack 1 takes Attack 2 as its only swing.
-                    if (one.attackClip < 0) one.attackClip = one.attackClip2;
-                    one.deathClip = look->library->find(kMonsterDieSlot);
-                    one.shockClip = look->library->find(kMonsterShockSlot);
-                    // MODEL_BUDGE_DRAGON's own case in the effect switch. Its bone 7 is
-                    // Bip01 Head, found by name so the number is not a coincidence kept.
-                    // MODEL_GIANT's case, which is one call to MonsterDieSandSmoke. No bone and
-                    // no clip to find: the sand comes off the body's own position and the death
-                    // clip it already has.
-                    if (look->name == kSandingFigure) one.sands = true;
-                    if (look->name == kBreathingFigure && look->skeletonMesh) {
-                        one.breathes = true;
-                        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                        for (size_t b = 0; b < bones.size(); ++b) {
-                            if (bones[b].name == "Bip01 Head") one.headBone = int(b);
-                        }
-                    }
-                    // MODEL_BULL_FIGHTER's: smok_bone is MU's 24, and the Elite's eyes are
-                    // 22 and 23, top_bone02 and top_bone01, in RenderEye's left-right order.
-                    if (look->name == kScorpionFigure && look->skeletonMesh) {
-                        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                        for (size_t b = 0; b < bones.size(); ++b) {
-                            if (bones[b].name == "light_point") one.lightBone = int(b);
-                        }
-                    }
-                    const bool elite = look->name == kEliteBullFigure;
-                    if ((elite || look->name == kSnortingFigure) && look->skeletonMesh) {
-                        const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                        for (size_t b = 0; b < bones.size(); ++b) {
-                            if (bones[b].name == "smok_bone") one.snortBone = int(b);
-                            if (elite && bones[b].name == "top_bone02") one.eyeBones[0] = int(b);
-                            if (elite && bones[b].name == "top_bone01") one.eyeBones[1] = int(b);
-                        }
-                    }
-                }
-            }
+            fit(one, body, look);
         } else {
             ++bare;
         }
@@ -491,6 +425,84 @@ void Play::openSound(const std::string& assetDir, bool muted) {
         if (before < 0 && one.cryAttack >= 0) ++breeds;
     }
     core::logf("sound: cries for %d monster bodies", breeds);
+}
+
+
+// A figure put on a drawn body, and every clip and bone it will ask for found once: what open
+// does for each body, and what a summon's body is given again when she raises one of another
+// breed (sprint 15) -- the one body in `drawn_` whose figure changes.
+void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
+    const float at[3] = {0, 0, 0};
+    one.figure.stand(look, at, 0.0f, look->scale);
+    // The swing, found once, and **which TABLE it is looked up in is decided by the
+    // rig and not by whether the body is the player**. MU draws its Skeleton Warrior
+    // as a MODEL_PLAYER with a skeleton sub-type, so `SetPlayerAttack` takes the
+    // player branch for it and picks a clip by the weapon in its hands -- and
+    // `monster_actions` 3, "Attack 1", is simply not a slot its library has. Asked
+    // for one anyway it found nothing and the skeleton fought without ever swinging,
+    // which is what this looked like in play.
+    //
+    // A figure that has a STANCE is a figure on the player rig: the cook writes one
+    // from index.json's row ("stance": "sword" for the Skeleton Warrior) and no
+    // monster on its own rig has one.
+    const bool onPlayerRig = body.player || !look->stance.empty();
+    if (look->library) {
+        if (onPlayerRig) {
+            one.attackClip = look->library->find(attackSlotFor(look->stance));
+            if (one.attackClip < 0) one.attackClip = look->library->find(38);
+            // And no second swing: the 1-in-3 SwordCount alternation is the MONSTER
+            // branch's, and the player branch picks one clip by the stance. Left as
+            // -1, `swordCount` counts on and always chooses this one.
+            one.deathClip = look->library->find(kPlayerDieSlot);
+            // A body on the player rig that is NOT the hero still flinches in a
+            // meteor's quake: MU's loop excludes the hero alone and gives everything
+            // else PLAYER_SHOCK. The hero keeps none, as Play::update says.
+            if (!body.player) one.shockClip = look->library->find(kPlayerShockSlot);
+            // And the skeleton does not fall at all: it comes apart. Its death clip is
+            // taken away here rather than left unplayed, so nothing can reach for one.
+            if (!body.player && look->name == kBurstingFigure) {
+                one.bursts = true;
+                one.deathClip = -1;
+            }
+        } else {
+            one.attackClip  = look->library->find(3);  // Attack 1
+            one.attackClip2 = look->library->find(4);  // Attack 2
+            // A breed with no Attack 1 takes Attack 2 as its only swing.
+            if (one.attackClip < 0) one.attackClip = one.attackClip2;
+            one.deathClip = look->library->find(kMonsterDieSlot);
+            one.shockClip = look->library->find(kMonsterShockSlot);
+            // MODEL_BUDGE_DRAGON's own case in the effect switch. Its bone 7 is
+            // Bip01 Head, found by name so the number is not a coincidence kept.
+            // MODEL_GIANT's case, which is one call to MonsterDieSandSmoke. No bone and
+            // no clip to find: the sand comes off the body's own position and the death
+            // clip it already has.
+            if (look->name == kSandingFigure) one.sands = true;
+            if (look->name == kBreathingFigure && look->skeletonMesh) {
+                one.breathes = true;
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == "Bip01 Head") one.headBone = int(b);
+                }
+            }
+            // MODEL_BULL_FIGHTER's: smok_bone is MU's 24, and the Elite's eyes are
+            // 22 and 23, top_bone02 and top_bone01, in RenderEye's left-right order.
+            if (look->name == kScorpionFigure && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == "light_point") one.lightBone = int(b);
+                }
+            }
+            const bool elite = look->name == kEliteBullFigure;
+            if ((elite || look->name == kSnortingFigure) && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == "smok_bone") one.snortBone = int(b);
+                    if (elite && bones[b].name == "top_bone02") one.eyeBones[0] = int(b);
+                    if (elite && bones[b].name == "top_bone01") one.eyeBones[1] = int(b);
+                }
+            }
+        }
+    }
 }
 
 }  // namespace mu::game

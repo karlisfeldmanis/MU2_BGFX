@@ -16,7 +16,10 @@
 // And the wait for the fall, as MU2 had it: the realm kills a monster on the tick and the
 // drawing holds the collapse for the killing blow's landing cue, so the bar reads
 // Play::shownAlive and shownHealth, and the pick keeps a body that is still standing
-// (Play::point). Not kept: the elf's summon's green Escort -- there is no summon.
+// (Play::point). And MU2's Escort, since sprint 15: the elf's summon wears a small green bar
+// over its head for as long as it lives, whether pointed at or not (the user, 2026-09-28: "a
+// minimal HP bar for elf summons which is always visible"). No name and no figures -- green,
+// because red over something on her side reads as a thing to hit (Vitals.cs's Friendly).
 //
 // Godot drew the rounded pieces with StyleBoxFlat; the canvas has no such thing, so every
 // shape is laid down one pixel row at a time, each row cut to the rounded outline and its two
@@ -47,7 +50,10 @@ public:
     // Takes it down now, without the linger or the fade: leaving the world, not the monster.
     void dismiss();
 
-    bool showing() const { return (on_ != 0 && shown_ > 0.0f) || (folk_ >= 0 && folkShown_ > 0.0f); }
+    bool showing() const {
+        return (on_ != 0 && shown_ > 0.0f) || (folk_ >= 0 && folkShown_ > 0.0f) ||
+               drawn_.escort != 0;
+    }
     // How far a townsperson's name is shown this frame, 0 to 1, on its own fade and linger: what
     // the quest marker over him rises by, so the two move as one.
     float folkShown(int folk) const { return folk >= 0 && folk_ == folk ? folkShown_ : 0.0f; }
@@ -66,11 +72,15 @@ private:
         float unit = 0;
         int folk = -1;
         float folkX = 0, folkY = 0, folkShown = 0;
+        // Her summon's escort bar, 0 for none showing (sprint 15).
+        uint32_t escort = 0;
+        float escortX = 0, escortY = 0, escortHealth = 0;
         bool operator==(const Readout& o) const {
             return on == o.on && x == o.x && y == o.y && shown == o.shown && lag == o.lag &&
                    health == o.health && reading == o.reading && maximum == o.maximum &&
                    unit == o.unit && folk == o.folk && folkX == o.folkX && folkY == o.folkY &&
-                   folkShown == o.folkShown;
+                   folkShown == o.folkShown && escort == o.escort && escortX == o.escortX &&
+                   escortY == o.escortY && escortHealth == o.escortHealth;
         }
     };
 

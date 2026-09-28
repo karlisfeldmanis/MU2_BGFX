@@ -582,6 +582,9 @@ private:
     void fall(Drawn& dead);
     // Stands a body the realm has just raised: at its tile at once, in its idle at once.
     void stand(Drawn& risen);
+    // A figure put on a drawn body with its clips and bones found (play_open.cpp): every body at
+    // open, and her summon's again whenever she raises one (sprint 15).
+    void fit(Drawn& one, const sim::Body& body, const FigureBody* look);
     // Starts every owed fall whose killing blow is no longer waiting to be shown.
     void fallWhenLanded();
     // Lets go of every held drop a beat after its dropper's killing blow lands, and rewrites

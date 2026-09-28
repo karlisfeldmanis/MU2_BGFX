@@ -20,7 +20,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
     // A spell rolls the wizardry sum, off energy and the staff; everything else is a swing's.
     // A guard's fight, either way round, rolls off his own stream (`wardenDice_`).
-    Random& dice = attacker.warden >= 0 || target.warden >= 0 ? wardenDice_ : dice_;
+    Random& dice = attacker.warden >= 0 || target.warden >= 0     ? wardenDice_
+                   : attacker.summoner != 0 || target.summoner != 0 ? summonDice_
+                                                                    : dice_;
     Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats, row->damage, dice)
                                      : strike(attacker.stats, target.stats, dice);
     if (!blow.hit) {
@@ -116,7 +118,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         // or not it can see him. Without this half a caster outside its sight kills it without
         // it ever running a thought.
         target.provoked = true;
-        target.quarry = attacker.id;
+        // **Her summon holds what it has struck** (the user's, 2026-09-28: "can hold aggro"):
+        // her own shot does not turn a monster off her living summon onto her. Anybody else's
+        // blow -- the summon's own included -- turns it as it always did.
+        const Body* holder = find(target.quarry);
+        const bool held = attacker.player && holder != nullptr && holder->alive() &&
+                          holder->summoner == attacker.id;
+        if (!held) target.quarry = attacker.id;
         if (target.temper == Temper::Asleep) target.temper = Temper::Wandering;
     }
     if (target.health <= 0) kill(target, attacker);
@@ -411,6 +419,19 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.provoked = false;
     say(What::Died, dead, dead.level, 0, 0, killer.id);
 
+    // Her summon: it falls and stays down -- nothing drops, nothing is earned, and it does not
+    // rise; she casts another. What fought it forgets it.
+    if (dead.summoner != 0) {
+        dropBlow(dead);
+        for (Body& one : bodies_) {
+            if (one.quarry == dead.id) {
+                one.quarry = 0;
+                one.provoked = false;
+            }
+        }
+        return;
+    }
+
     if (dead.player) {
         // He stands up in town three seconds later, at the map's own spawn box with his health
         // restored -- MU's answer to where is a property of the map and not of the death, and
@@ -472,6 +493,15 @@ void Realm::kill(Body& dead, Body& killer) {
     if (helped && dead.guardedBy != 0) {
         if (Body* guard = body(dead.guardedBy); guard != nullptr && guard->warden >= 0) {
             pointOn(*guard, dead);
+        }
+    }
+    // **Her summon's kill is hers**: its drop and its experience, as if her own blow had been
+    // the last (ours; OpenMU pays the owner of a summon's kill the same way). Paid here and not
+    // below, which asks `killer.player`.
+    if (killer.summoner != 0) {
+        if (Body* owner = body(killer.summoner); owner != nullptr && owner->alive()) {
+            leave(dead, *owner);
+            gain(*owner, int32_t(killExperience(dead.level, owner->level) * kExperienceRate));
         }
     }
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as

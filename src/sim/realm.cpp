@@ -184,6 +184,18 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     }
     // And the guards, last, so every monster keeps the id it had before there were any.
     raiseWardens();
+    // And after them the one summon body, dormant until she casts (realm_summon.cpp): raised
+    // here so a cast never grows `bodies_` under a reference to it, and last so no guard's id
+    // moves. Kind 0 only so a reader of `kind` never indexes past the table; it is not drawn.
+    {
+        Body slot;
+        slot.id = nextId_++;
+        slot.summoner = bodies_[0].id;
+        slot.kind = 0;
+        slot.health = 0;
+        summonSlot_ = int(bodies_.size());
+        bodies_.push_back(std::move(slot));
+    }
 
     players_.clear();
     indexOfId_.assign(bodies_.size() + 1, uint32_t(bodies_.size()));
@@ -192,7 +204,9 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         if (bodies_[i].player) players_.push_back(i);
     }
 
-    for (const Body& one : bodies_) say(What::Spawned, one, one.level, one.health);
+    for (const Body& one : bodies_) {
+        if (one.summoner == 0) say(What::Spawned, one, one.level, one.health);
+    }
     core::logf("realm: map %u raised, %zu monsters of %zu breeds in %zu nests, player at "
                "(%d, %d), seed %llu", tables_->map, placed, tables_->kinds.size(),
                tables_->nests.size(), column, row, (unsigned long long)seed);
@@ -522,7 +536,11 @@ void Realm::press() {
             const bool cooled = tick_ >= hero.cools[size_t(index)];
             if (row->onSelf()) {
                 // A guard on the slot is raised when it can be and the fight goes on under it.
-                if (cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, hero.id);
+                // A summon only when none stands: a recast is a dismissal (realm_summon.cpp),
+                // and the slot re-throwing it on every cooldown would send it away each time.
+                const bool standing = row->summons > 0 && summonSlot_ >= 0 &&
+                                      bodies_[size_t(summonSlot_)].alive();
+                if (!standing && cooled && tick_ >= hero.swingsAt) throwSkill(hero, *row, hero.id);
             } else if (within(hero, *target, row->reach) && !sheltered) {
                 if (row->thrown() || cooled) {
                     if (tick_ >= hero.castUntil) engage(hero, *target);
@@ -635,6 +653,10 @@ void Realm::step() {
             watch(beast);
             continue;
         }
+        if (beast.summoner != 0) {
+            tend(beast);
+            continue;
+        }
         poisonPulse(beast);
         if (beast.alive() && beast.pushTicks > 0) {
             // Pushed: it slides and does nothing else until it lands on its tile.
@@ -670,6 +692,9 @@ std::string describe(const Happening& happening, const Realm& realm) {
         if (one->player) return "hero";
         if (one->warden >= 0) {
             return realm.tables()->folk[size_t(one->warden)].name + "#" + std::to_string(id);
+        }
+        if (one->summoner != 0) {
+            return realm.tables()->kinds[size_t(one->kind)].label + " of hero#" + std::to_string(id);
         }
         return realm.tables()->kinds[size_t(one->kind)].label + "#" + std::to_string(id);
     };
@@ -738,6 +763,9 @@ std::string describe(const Happening& happening, const Realm& realm) {
             break;
         case What::Cured:
             std::snprintf(line, sizeof(line), "%6u %s drinks an antidote", happening.tick, who);
+            break;
+        case What::Dismissed:
+            std::snprintf(line, sizeof(line), "%6u %s is dismissed", happening.tick, who);
             break;
         case What::Arrowless:
             std::snprintf(line, sizeof(line), "%6u %s has no more %s", happening.tick, who,

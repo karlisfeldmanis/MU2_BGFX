@@ -93,6 +93,7 @@ enum class What : uint8_t {
                // drawing's to choose; the realm only says that he spoke and why.
     Arrowless, // she drew and found no ammunition in hand or bag, and the attack stopped:
                // MuMain's "no more arrows" (CheckArrow). a: 1 for arrows, 2 for bolts
+    Dismissed, // her summon gone without a blow: recast, or her death (Realm::dismiss)
 };
 
 // Why a guard spoke. See Realm::watch.
@@ -320,8 +321,16 @@ struct Body {
     uint32_t guardedBy = 0;
     bool heroStruck = false;
 
+    // ---- the elf's summon (Realm::tend, sprint 15) --------------------------------------------
+    // Whose it is: the owner's id, 0 on everybody else. One body a realm, raised dormant at the
+    // end of `bodies_` and reused, so no pointer into `bodies_` moves when she casts. Not a
+    // monster: nothing that asks `monster()` attacks it, and it attacks only monsters.
+    uint32_t summoner = 0;
+    // The summon skill that raised it (30 Goblin ... 35 Bali), for the name and the recast.
+    int32_t summonedBy = 0;
+
     bool alive() const { return health > 0; }
-    bool monster() const { return !player && warden < 0; }
+    bool monster() const { return !player && warden < 0 && summoner == 0; }
     int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
     int row() const { return int(y + (y < 0.0f ? -0.5f : 0.5f)); }
 };
@@ -596,6 +605,10 @@ public:
     int64_t tick() const { return tick_; }
     const std::vector<Happening>& happenings() const { return happenings_; }
     const std::vector<Body>& bodies() const { return bodies_; }
+    // Her summon's body, alive or dormant, or null before `raise` (realm_summon.cpp).
+    const Body* summoned() const {
+        return summonSlot_ >= 0 ? &bodies_[size_t(summonSlot_)] : nullptr;
+    }
     const Body* find(uint32_t id) const;
     const Body& hero() const { return bodies_[0]; }
     // A skill's clip is still running, so he is locked where he stands: no step, no re-path.
@@ -695,6 +708,12 @@ private:
     // looking for a monster near his post, going for it, and walking back when it is dead.
     void raiseWardens();
     void watch(Body& guard);
+    // The summon's turn: guard her, peel what is on her, follow her, fight (realm_summon.cpp).
+    void tend(Body& summon);
+    // Raised beside her off the row's breed, scaled by her energy; or false with no breed cooked.
+    bool conjure(Body& hero, const SkillRow& row);
+    // Gone: dismissed, or with her death. Nothing drops and nothing rises.
+    void dismiss(Body& summon);
     // A monster a guard fought has died with the hero's help: the guard points him on and turns to
     // look toward the nearest of its kind still standing.
     void pointOn(Body& guard, const Body& dead);
@@ -782,6 +801,11 @@ private:
     // his post rolls every few seconds, and off `dice_` that moved every roll in the run after
     // it -- a seeded hunt twenty tiles away fought different fights because of it.
     Random wardenDice_{0};
+    // The summon's fights, either way round, roll off their own stream, as a guard's do: a run
+    // without a summon is not moved by one existing.
+    Random summonDice_{0};
+    // Where the one summon body sits in `bodies_`, or -1 before `raise`.
+    int summonSlot_ = -1;
     // The fraction of a point each worn slot has lost and not yet shown, beside the item it
     // was lost by: a piece moved out and back starts its fraction again, which is under a point.
     double wearCarry_[kWorn] = {};

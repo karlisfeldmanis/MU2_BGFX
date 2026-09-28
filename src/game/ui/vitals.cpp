@@ -30,6 +30,11 @@ constexpr float kChip[4] = {232 / 255.0f, 220 / 255.0f, 197 / 255.0f, 170 / 255.
 
 // ---- geometry, in interface units (panel::unit() pixels each) --------------------------
 constexpr float kBarWide = 78.0f;
+// The escort: half the hover bar's width and under half its height, and MU2's Friendly green
+// (52, 124, 58) lifted to sit beside kFill's depth.
+constexpr float kEscortWide = 40.0f;
+constexpr float kEscortTall = 3.5f;
+constexpr float kFriendly[4] = {60 / 255.0f, 150 / 255.0f, 66 / 255.0f, 1.0f};
 constexpr float kBarTall = 7.5f;  // set by the figures printed inside it
 constexpr float kEdge = 1.0f;
 constexpr float kRadius = 1.0f;   // Sanctuary's small corner, 2 pixels at 1080 lines
@@ -289,6 +294,16 @@ void Vitals::update(float seconds, const Play& play, uint32_t pointed, int folk,
         now.reading = play.shownHealth(on_);
         now.maximum = beast->maxHealth;
     }
+    // Her summon, whenever it stands: no pointer, no linger, no fade.
+    if (const sim::Body* summon = realm.summoned();
+        summon != nullptr && summon->alive() && play.shownAlive(summon->id) &&
+        play.crownOf(summon->id, viewProj, width, height, &x, &y)) {
+        now.escort = summon->id;
+        now.escortX = std::round(x);
+        now.escortY = std::round(y);
+        // In hundredths, so a bar does not rebuild on every point of a large pool.
+        now.escortHealth = std::round(fraction(summon->id) * 100.0f) / 100.0f;
+    }
     if (now == drawn_ && rebuilds_ > 0) return;
     drawn_ = now;
     ++rebuilds_;
@@ -304,6 +319,19 @@ void Vitals::rebuild(const Play& play, const Readout& r) {
         // Where the monster's name stands over its bar, with no bar under it.
         type(canvas_, std::round(r.folkX - face.measure(size, name) * 0.5f),
              std::round(r.folkY - kGap * r.unit), size, r.folkShown, name);
+    }
+    if (r.escort != 0) {
+        const float unit = r.unit;
+        const float w = std::round(kEscortWide * unit), h = std::max(2.0f, std::round(kEscortTall * unit));
+        const gfx::Box bar{r.escortX - std::round(w * 0.5f), r.escortY - h - std::round(kGap * unit), w, h};
+        const float edge = std::max(1.0f, std::round(kEdge * unit));
+        flat(canvas_, bar, kRadius * unit, 1e9f, colour(kFrame, 1.0f));
+        const gfx::Box inside = bar.grown(-edge);
+        const float in = std::max(0.0f, kRadius * unit - edge);
+        flat(canvas_, inside, in, 1e9f, colour(kTrack, 1.0f));
+        if (r.escortHealth > 0.0f) {
+            flat(canvas_, inside, in, inside.x + inside.w * r.escortHealth, colour(kFriendly, 1.0f));
+        }
     }
     if (r.on == 0 || r.shown <= 0.0f) return;
     const sim::Body* beast = play.realm().find(r.on);
