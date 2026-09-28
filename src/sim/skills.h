@@ -69,11 +69,17 @@ constexpr int32_t kTeleport = 6;
 // And `AT_SKILL_ICE`, off the Scroll of Ice (group 15 number 6, `Book07`) at a hundred and twenty
 // energy: little damage, and what it strikes walks at half speed.
 constexpr int32_t kIce = 7;
+// And `AT_SKILL_POISON`, off the Scroll of Poison (group 15 number 0, `Book01`) at a hundred and
+// forty energy: a blow, and then a poison that goes on hurting.
+constexpr int32_t kPoison = 1;
 }  // namespace skill
 
 // What an iced body's walking is multiplied by: OpenMU's `IcedMovementSpeedFactor`, 0.5, which
 // MuMain agrees with twice over (`Speed *= 0.5f`, ZzzCharacter.cpp:6353).
 constexpr float kChillFactor = 0.5f;
+
+// A poison's pulse: OpenMU's `PoisonMagicEffect` ticks every three seconds (sixty ticks here).
+constexpr int32_t kPoisonEvery = 60;
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
 //
@@ -255,6 +261,9 @@ struct SkillRow {
     // **A chill**: how many ticks what it strikes walks at `kChillFactor`. Ice's, 0.75's ten
     // seconds (`IsIced`). 0 for none.
     int32_t chillTicks = 0;
+    // **A poison**: how many ticks what it strikes goes on being hurt, a pulse every
+    // `kPoisonEvery`. Poison's, 0.75's twenty seconds. 0 for none.
+    int32_t poisonTicks = 0;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -273,11 +282,11 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning, Meteorite, Teleport and Ice. Also
+// Lightning, Meteorite, Teleport, Ice and Poison. Also
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 17;
+constexpr int kSkills = 18;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

@@ -83,6 +83,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster()) {
         target.chilledUntil = tick_ + row->chillTicks;
     }
+    // Poison's: the pulses start three seconds on, each a quarter of this blow; a second poison
+    // replaces the first, as OpenMU's re-applied effect does.
+    if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster()) {
+        target.poisonUntil = tick_ + row->poisonTicks;
+        target.poisonNext = tick_ + kPoisonEvery;
+        target.poisonDamage = std::max(1, blow.damage / 4);
+        target.poisonBy = attacker.id;
+    }
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent
     // back at whoever struck (Player.HitAsync's ReflectDamage). It takes no draw.
     if (target.player && target.alive() && !attacker.player && attacker.alive() &&
@@ -236,6 +244,24 @@ void Realm::arrive() {
         if (!target || !target->alive()) continue;
         strikeAt(hero, *target, flight.force, row, true, flight.pays);
     }
+}
+
+void Realm::poisonPulse(Body& beast) {
+    if (beast.poisonUntil == 0 || tick_ < beast.poisonNext) return;
+    if (beast.poisonNext > beast.poisonUntil || !beast.alive()) {
+        beast.poisonUntil = 0;
+        return;
+    }
+    beast.poisonNext += kPoisonEvery;
+    Body* by = body(beast.poisonBy);
+    if (by == nullptr) return;
+    // Never the last point: a poison leaves one health, and the kill is a blow's.
+    const int bite = std::min(beast.poisonDamage, beast.health - 1);
+    if (bite <= 0) return;
+    beast.health -= bite;
+    say(What::Hit, *by, bite, bite, beast.health, beast.id);
+    happenings_.back().thrown = true;
+    happenings_.back().poisoned = true;
 }
 
 void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
@@ -466,6 +492,7 @@ void Realm::raiseBeast(Body& beast) {
     beast.guardedBy = 0;
     beast.heroStruck = false;
     beast.chilledUntil = 0;
+    beast.poisonUntil = 0;
     beast.walking = false;
     beast.route.clear();
     beast.onStep = 0;

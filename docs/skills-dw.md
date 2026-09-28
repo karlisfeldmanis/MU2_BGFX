@@ -406,6 +406,34 @@ cooldown, strikes 20 times, ices up to three bodies in one cast, and no iced bod
 than half its ground in a tick. Seen in the arena with `--arena-learn 7`: the block and shards on
 the Bull Fighter and the Bull Fighter blue.
 
+## 2j. Poison -- a cooldown burst that goes on hurting
+
+0.75's row, `CreateSkill(Poison, ..., DamageType.Wizardry, 12, 6, manaConsumption: 42,
+energyRequirement: 140, elementalModifier: Poison)`: twelve damage, forty-two mana, skill 1, off the
+Scroll of Poison (`Book01`, group 15 #0, Pasi's slot 6, 17 000 zen), refused under 140 energy.
+`IsPoisoned` for twenty seconds, a pulse every three (`PoisonMagicEffect`), shown as MU's DT_POISON
+green number. MuMain lays `MODEL_POISON` and ten smoke puffs where the body stands at the let-go,
+SOUND_HEART, and draws the body green, (0.3, 1, 0.5) -- (0.3, 1, 0.8) when it is iced as well.
+
+- **A cooldown spell with an area** (the user, 2026-09-28, *"also cooldown spell with aoe"*):
+  everything within **four tiles** of the body he aims at takes the blow and the poison, Ice's shape
+  (`splash` 4 through `Realm::rain`), at **twice the band**, on **six seconds** of cooldown before
+  agility's haste. The mana and the twenty seconds are 0.75's.
+- **Each pulse is a quarter of the blow that landed** (`Body::poisonDamage`, `Realm::poisonPulse`),
+  where 0.75's is 3% of the health left -- three a pulse on a Bull Fighter, which is no poison.
+  Six pulses, half again the blow. A pulse **never kills**: it leaves one health, as 0.75's share of
+  what is left never reaches nought. A second poison replaces the first. Ours.
+- **The look** is `fx/poison`, MU2's `Poison.cs` ported: Poison01's eleven poses at 0.7, wall01 flat
+  and wall02 added, forty frames; ten smoke01 puffs thrown out and up and slowing hard; a green
+  miasma light two tiles wide; green fumes rising off him while he casts (`Poison::fume`, ours, as
+  Ice's frost is).
+- The card says Each body, Range 9, Area 4 tiles round its target, Poisons for 20 s, "a quarter of
+  the blow every 3 s".
+
+Measured in `sim_test`: a level-30 wizard hunting 6 000 ticks casts it 13 times, never inside the
+cooldown, poisons up to two bodies in one cast, and no pulse kills. Seen in the arena with
+`--arena-learn 1`: the cloud and puffs on the Bull Fighters and them green.
+
 ## 2b'. Where a spell leaves him
 
 **One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward
@@ -454,7 +482,7 @@ Ball's own trail was halved the same day (*"energy ball trail was to long"*: 6 +
 ## 4. Owed
 
 - The chip in the list reads `RMB` for the slot; unseen in a shot.
-- The next spell is Poison 30, the last on Pasi's shelf.
+- Pasi's shelf is done: all seven of 0.75's scrolls teach, and Soul Barrier beside them.
 - Teleport on the right button's quick slot does nothing: the right button throws at a body.
 - A thrown `Missed` does not say which spell, so a bolt and a fireball in the air at one body at
   once can turn the wrong one aside. Rare, drawing only.

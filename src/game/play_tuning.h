@@ -138,6 +138,9 @@ constexpr float kSpawnFadeSeconds = 0.35f;
 constexpr float kSousedLight[3] = {0.9f, 0.5f, 0.5f};
 // An iced body's light, MU's `eDeBuff_Freeze` BodyLight (ZzzObject.cpp:1126).
 constexpr float kIcedLight[3] = {0.3f, 0.5f, 1.0f};
+// A poisoned body's, `eDeBuff_Poison`, and one both poisoned and iced (ZzzObject.cpp:1118-1123).
+constexpr float kPoisonedLight[3] = {0.3f, 1.0f, 0.5f};
+constexpr float kPoisonIcedLight[3] = {0.3f, 1.0f, 0.8f};
 
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the

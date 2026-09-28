@@ -868,10 +868,15 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // its BodyLight (ZzzObject.cpp:1126).
         const sim::Body* inRealm = realm_.find(one.id);
         const bool iced = inRealm != nullptr && inRealm->chilledUntil > realm_.tick();
+        // And a poisoned one green, MU's `eDeBuff_Poison` (0.3, 1.0, 0.5); both, (0.3, 1.0, 0.8).
+        const bool poisoned = inRealm != nullptr && inRealm->poisonUntil > realm_.tick();
         const size_t tintFrom = out.size();
         const auto tint = [&] {
-            if (!soused && !iced) return;
-            const float* by = iced ? kIcedLight : kSousedLight;
+            if (!soused && !iced && !poisoned) return;
+            const float* by = poisoned && iced ? kPoisonIcedLight
+                              : poisoned       ? kPoisonedLight
+                              : iced           ? kIcedLight
+                                               : kSousedLight;
             for (size_t i = tintFrom; i < out.size(); ++i) {
                 out[i].light[0] *= by[0];
                 out[i].light[1] *= by[1];

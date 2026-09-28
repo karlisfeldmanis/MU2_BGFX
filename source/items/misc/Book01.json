@@ -24,10 +24,10 @@
     "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll, on all twelve. Read by Prize.ReadBy where the scroll is read; before the orbs it was a Trade test in Realm.Read."
   },
   "skill": {
-    "note": "What the scroll teaches, and nothing here reads it. Recorded for the same reason magic_power was recorded on the staves before spells existed: so the day skills arrive is not the day this table is transcribed a second time.",
+    "note": "What the scroll teaches, read by Realm::useItem since 2026-09-28, which asks the hundred and forty energy before it teaches. Recorded for the same reason magic_power was recorded on the staves before spells existed: so the day skills arrive is not the day this table is transcribed a second time.",
     "number": 1,
     "name": "Poison",
-    "tells": "A bolt of venom that clings where it lands and keeps eating at the thing it hit long after the blow.",
+    "tells": "A cloud of poison bursts on a body and on everything within four tiles of it, and goes on hurting them for twenty seconds.",
     "tells_from": "What the skill DOES, which is the line the tooltip prints under its name. MU never says it -- a scroll's tooltip there is the name, the requirement and the class -- so this is ours, and it describes the spell rather than its price: the numbers behind it (damage, range, mana, element, area) are in OpenMU's Version075/SkillsInitializer.cs and in docs/mu-scrolls-and-orbs.md, and the tooltip has its own rows for what a thing costs.",
     "level_requirement": 0,
     "energy_requirement": 140,

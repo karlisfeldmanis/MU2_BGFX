@@ -166,6 +166,17 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
         std::snprintf(slow, sizeof(slow), "to half for %d s", row.chillTicks / 20);
         out.push_back(stat("Slows", slow, tone(Tone::Green)));
     }
+    if (row.poisonTicks > 0) {
+        char lasts[48];
+        std::snprintf(lasts, sizeof(lasts), "for %d s", row.poisonTicks / 20);
+        out.push_back(stat("Poisons", lasts, tone(Tone::Green)));
+        char pulse[64];
+        std::snprintf(pulse, sizeof(pulse), "a quarter of the blow every %d s", sim::kPoisonEvery / 20);
+        Row how;
+        how.free = pulse;
+        how.freeTone = Tone::Gray;
+        out.push_back(how);
+    }
 }
 
 uint32_t moneyColour(long long zen) {

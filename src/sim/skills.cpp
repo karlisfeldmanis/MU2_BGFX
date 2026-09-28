@@ -302,6 +302,26 @@ constexpr SkillRow kRows[kSkills] = {
      "it strikes walks at half speed for ten seconds.",
      147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
      0, 0, 0, 0, 4.0f, false, 200},
+
+    // Poison 1: 0.75's row, `CreateSkill(Poison, ..., DamageType.Wizardry, 12, 6, manaConsumption:
+    // 42, energyRequirement: 140, elementalModifier: Poison)` -- twelve damage, forty-two mana, and
+    // `IsPoisoned` for twenty seconds, a pulse every three (`PoisonMagicEffect`). MuMain lays
+    // `MODEL_POISON` and ten smoke puffs where the body stands at the let-go, SOUND_HEART, and draws
+    // the body green (ZzzCharacter.cpp:4993, ZzzObject.cpp:1122), on `SetPlayerMagic`'s hands.
+    //
+    // **A cooldown spell with an area** (the user, 2026-09-28, "also cooldown spell with aoe"), as
+    // Ice is: everything within **four tiles** of the body he aims at takes the blow and the
+    // poison, at **twice the band**, on **six seconds** of cooldown before agility's haste.
+    //
+    // **Each pulse is a quarter of the blow that landed** (`Body::poisonDamage`), where 0.75's is
+    // 3% of what health is left: at 3% a Bull Fighter lost three a pulse, which is no poison at
+    // all. Six pulses, so the poison is half again the blow. It never kills on its own -- 0.75's
+    // shape, which only ever takes a share of what is left -- and leaves one health. Ours.
+    {skill::kPoison, "Poison", 42, 9.0f, 2.0f, 0.0f, 120, false, Spread::One, 0, 1.0f,
+     "A cloud of poison bursts on a body up to nine tiles off and on everything within four tiles "
+     "of it, and goes on hurting them for twenty seconds.",
+     147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
+     0, 0, 0, 0, 0, 4.0f, false, 0, 400},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

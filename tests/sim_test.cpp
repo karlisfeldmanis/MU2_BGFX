@@ -1050,6 +1050,84 @@ void testCastLock(const content::Tables& tables) {
         check(widest >= 2, "and one wave strikes more than one body in its line");
     }
 
+    // ---- Poison: a cooldown burst that goes on hurting ---------------------------------------
+    {
+        const sim::SkillRow& poison = *sim::skillNumbered(sim::skill::kPoison);
+        check(poison.wizardry && !poison.primary() && poison.damage == 12 && poison.mana == 42 &&
+                  poison.poisonTicks == 400 && poison.splash == 4.0f,
+              "Poison is a cooldown spell of twelve damage and forty-two mana, poisoning twenty "
+              "seconds within four tiles");
+        const int32_t scroll = tables.itemAt(15, 0);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPoison &&
+                  tables.items[size_t(scroll)].teachesEnergy == 140,
+              "the Scroll of Poison teaches skill 1 at a hundred and forty energy");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        check(wiz.learn(sim::skill::kPoison), "who knows Poison");
+        int casts = 0, widest = 0, thisCast = 0, pulses = 0, pulseKills = 0, offBeat = 0;
+        int64_t lastCast = -1, closest = 1 << 30, castTick = -1;
+        std::vector<std::pair<uint32_t, int64_t>> lastPulse;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 6000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                wiz.ask(request);
+            }
+            if (nearest != 0 && wiz.cooling(sim::skill::kPoison) == 0) {
+                wiz.invoke(sim::skill::kPoison, nearest);
+            }
+            wiz.step();
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
+                    one.a == sim::skill::kPoison) {
+                    ++casts;
+                    if (lastCast >= 0) closest = std::min<int64_t>(closest, one.tick - lastCast);
+                    lastCast = one.tick;
+                }
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kPoison) {
+                    if (int64_t(one.tick) != castTick) {
+                        castTick = one.tick;
+                        thisCast = 0;
+                    }
+                    widest = std::max(widest, ++thisCast);
+                }
+                if (one.what == sim::What::Hit && one.poisoned) {
+                    ++pulses;
+                    // A pulse leaves one health at least: the kill is a blow's.
+                    if (one.c <= 0) ++pulseKills;
+                    // And three seconds after the last pulse on the same body, or the blow.
+                    for (auto& seen : lastPulse) {
+                        if (seen.first == one.whom && int64_t(one.tick) - seen.second != sim::kPoisonEvery) {
+                            ++offBeat;
+                        }
+                    }
+                    bool known = false;
+                    for (auto& seen : lastPulse) {
+                        if (seen.first == one.whom) {
+                            seen.second = one.tick;
+                            known = true;
+                        }
+                    }
+                    if (!known) lastPulse.push_back({one.whom, int64_t(one.tick)});
+                }
+            }
+        }
+        std::printf("  poison: %d cast, %d poisoned by one cast at the most, %d pulses, "
+                    "%lld ticks apart at the closest\n",
+                    casts, widest, pulses, (long long)closest);
+        check(casts > 10 && pulses > 0, "he throws Poison through a hunt and it pulses");
+        check(widest >= 2, "and one cast poisons more than one body");
+        check(closest >= wiz.coolsFor(sim::skill::kPoison) && closest >= 100,
+              "never inside its cooldown");
+        checkEqual(pulseKills, 0, "a pulse never kills");
+        std::printf("  poison: %d pulses off the three-second beat (a recast restarts it)\n", offBeat);
+    }
+
     // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
     {
         const sim::SkillRow& ice = *sim::skillNumbered(sim::skill::kIce);

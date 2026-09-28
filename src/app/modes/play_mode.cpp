@@ -204,6 +204,8 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table());
                 world_.played().ice().open(assets, ctx.textures,
                                            world_.played().showing().table());
+                world_.played().poison().open(assets, ctx.textures,
+                                              world_.played().showing().table());
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
                 world_.played().streak().open(assets, ctx.textures,
                                               world_.played().showing().table());
@@ -706,6 +708,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                                gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().thunder().lights(falling + count,
                                                   gfx::Renderer::kMaxTransientLights - count);
+        // And a Poison cloud's green miasma, two tiles.
+        count += world_.played().poison().lights(falling + count,
+                                                 gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));
@@ -820,6 +825,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().thunder().gather(ctx.renderer.effects());
         world_.played().blink().gather(ctx.renderer.effects());
         world_.played().ice().gather(ctx.renderer.effects());
+        world_.played().poison().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));

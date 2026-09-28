@@ -136,6 +136,8 @@ struct Happening {
     // A `Hit` or `Missed` that FLEW -- a spell that left his hand ticks ago and has arrived. It
     // belongs to no swing still playing, so the drawing shows it whatever the body is doing now.
     bool thrown = false;
+    // A `Hit` that is a poison's pulse and not a blow: drawn green, as MU's DT_POISON is.
+    bool poisoned = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;
@@ -283,6 +285,11 @@ struct Body {
     int64_t blinkAt = 0;
     // Iced (`SkillRow::chillTicks`): walks at `kChillFactor` until this tick. 0 for never.
     int64_t chilledUntil = 0;
+    // Poisoned (`SkillRow::poisonTicks`): until this tick, its next pulse, how much a pulse takes,
+    // and who poisoned it. 0 for never.
+    int64_t poisonUntil = 0, poisonNext = 0;
+    int32_t poisonDamage = 0;
+    uint32_t poisonBy = 0;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
@@ -630,6 +637,8 @@ private:
     void arrive();
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // A poisoned body's pulse, when it is due.
+    void poisonPulse(Body& beast);
     // Teleport: where a blink toward `column, row` lands -- pulled back to its reach, and off a
     // wall toward him -- or false when nowhere on the line will take him.
     bool blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,

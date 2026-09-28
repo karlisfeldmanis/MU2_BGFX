@@ -162,6 +162,8 @@ const uint32_t kAbsorbedInk = byteColour(111, 182, 255);
 // shield's blue beside it that the two never read as each other. Ours; MU draws a spell's number
 // in the swing's white.
 const uint32_t kMagicInk = byteColour(196, 160, 255);
+// A poison's pulse: MuMain's DT_POISON, pure green (WSclient.cpp's `case 5`).
+const uint32_t kPoisonInk = byteColour(40, 235, 60);
 const uint32_t kMissInk = byteColour(207, 199, 184);
 const uint32_t kMissOnHeroInk = byteColour(236, 228, 214);
 // The lane's own inks, and they are deliberately not the fight's: experience is the ramp's
@@ -189,6 +191,7 @@ float sizeOf(Mark mark) {
         case Mark::Absorbed: return kSmallSize;
         case Mark::Swing:
         case Mark::Magic:
+        case Mark::Poison:
         case Mark::Taken: break;
     }
     return kSwingSize;
@@ -203,6 +206,7 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Taken: return kTakenInk;
         case Mark::Absorbed: return kAbsorbedInk;
         case Mark::Magic: return kMagicInk;
+        case Mark::Poison: return kPoisonInk;
         case Mark::Miss: return figure.onHero ? kMissOnHeroInk : kMissInk;
         case Mark::Swing: break;
     }
