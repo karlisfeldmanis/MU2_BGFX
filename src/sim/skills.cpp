@@ -238,6 +238,33 @@ constexpr SkillRow kRows[kSkills] = {
      "another within four tiles and throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
      3, 14, 32, 1},
+
+    // Meteorite 2: 0.75's row for the damage, `CreateSkill(Meteorite, ..., DamageType.Wizardry,
+    // 21, 6, manaConsumption: 12, energyRequirement: 104, elementalModifier: Earth)` -- twenty-one
+    // damage, one body, earth a gate with nothing behind it. MuMain drops it where the body
+    // stands: `CreateEffect(MODEL_FIRE, to->Position, ...)` and SOUND_METEORITE01 at the let-go
+    // (ZzzCharacter.cpp:5008), the Lich's own rock, falling for 0.34 s (`fallTicks` 7).
+    //
+    // **A rock on every body round it** (`splash`: everything within four tiles of the body he
+    // called it on gets its own -- Lightning's reach, so a crowd fighting him is all under it;
+    // two left half of four Bull Fighters out, "only 2 but there are 4 monsters"; the user,
+    // 2026-09-28), where 0.75 drops one on the one body.
+    //
+    // **A cooldown spell** (the user, 2026-09-28), and so, as Lightning taught, harder and dearer
+    // than the primaries: six seconds before agility's haste, **three times the band** (`force` 3,
+    // about 100-170 at 104 energy against Fire Ball's 19-38 -- the heaviest single blow he has),
+    // and thirty mana where 0.75 asks twelve. Nine tiles, with the other two he throws at a body.
+    // All ours.
+    //
+    // **Cast in Lightning's pose** (the user, 2026-09-28: "use same casting animation as
+    // lighting"): MU's "Skill recovery" (183), the arm thrown up to the sky, played once; the rock
+    // is called at the middle of it, with the arm up, and he cannot walk out of it. MU casts it
+    // with `SetPlayerMagic`'s two hands, 147/148.
+    {skill::kMeteorite, "Meteorite", 30, 9.0f, 3.0f, 0.0f, 120, false, Spread::One, 0, 1.0f,
+     "With his arm raised to the sky he calls burning rocks down on a body up to nine tiles off "
+     "and on everything within four tiles of it, one rock each.",
+     183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
+     0, 0, 7, 4.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

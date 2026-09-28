@@ -200,6 +200,42 @@ void Meteor::emberAt(const float at[3], const float heading[3], float light, boo
     for (int c = 0; c < 3; ++c) mote->colour[c] = (fireball ? kFireEmber[c] : kGlow[c]) * light;
 }
 
+void Meteor::burn(const float feet[3], float tall, float seconds) {
+    // The light on him, held a little past the last call so it does not blink between frames.
+    for (int k = 0; k < 3; ++k) burnAt_[k] = feet[k];
+    burnAt_[1] += tall * 0.55f;
+    burnLit_ = 0.1f;
+    burnRoll_ = between(kDimmestGlow, kBrightestGlow);
+    if (!bgfx::isValid(emberSheet_)) return;
+    burnDue_ -= seconds * kReferenceFps;
+    while (burnDue_ <= 0.0f) {
+        burnDue_ += kBurnEvery;
+        Mote* mote = freeMote();
+        if (mote == nullptr) return;
+        *mote = Mote{};
+        mote->alive = true;
+        mote->kind = Mote::Kind::Ember;
+        const float turn = unit() * kTwoPi;
+        const float reach = kBurnRadius * (0.4f + unit() * 0.6f);
+        mote->position[0] = feet[0] + std::cos(turn) * reach;
+        mote->position[1] = feet[1] + tall * (0.05f + unit() * 0.8f);
+        mote->position[2] = feet[2] + std::sin(turn) * reach;
+        // Up off him and a little out: the fire climbs his body.
+        const float speed = between(kSlowestDrift, kFastestDrift) * kUnit * kReferenceFps * kBurnClimb;
+        mote->velocity[0] = std::cos(turn) * speed * 0.3f;
+        mote->velocity[1] = speed;
+        mote->velocity[2] = std::sin(turn) * speed * 0.3f;
+        mote->size = between(kSmallestEmber, kLargestEmber) * kEmberSheetUnits * kUnit *
+                     kBurnEmberShare;
+        mote->spin = unit() * kTwoPi;
+        mote->left = mote->born = kEmberFrames;
+        mote->rise = 0.0f;
+        mote->cools = false;
+        const float light = between(kDimmestGlow, kBrightestGlow);
+        for (int c = 0; c < 3; ++c) mote->colour[c] = kBurnEmber[c] * light;
+    }
+}
+
 void Meteor::hurl(const float from[3], const float to[3], uint32_t target, bool atHand) {
     if (fireGroupCount_ == 0) return;
     Hurled* ball = nullptr;
@@ -374,6 +410,7 @@ void Meteor::blastAt(float x, float y, float z, float share) {
 
 void Meteor::update(float seconds, std::vector<Impact>& impacts) {
     const float refFrames = seconds * kReferenceFps;
+    burnLit_ = std::max(0.0f, burnLit_ - seconds);
 
     for (auto& m : meteors_) {
         if (!m.alive) continue;
@@ -685,6 +722,15 @@ uint32_t Meteor::lights(gfx::PointLight* out, uint32_t max) const {
         // colour belongs besides the embers: over the flame cone it crushes the sheet toward
         // black.
         for (int c = 0; c < 3; ++c) light.colour[c] = kGlow[c] * m.bodyLight;
+    }
+
+    // The fire on a wizard calling one down: his chest, three tiles, flickering.
+    if (burnLit_ > 0.0f && count < max) {
+        gfx::PointLight& light = out[count++];
+        for (int k = 0; k < 3; ++k) light.position[k] = burnAt_[k];
+        light.reach = kBurnGlowTiles;
+        light.height = 1.0f;
+        for (int c = 0; c < 3; ++c) light.colour[c] = kBurnGlow[c] * burnRoll_;
     }
 
     // And the wizard's fireballs in the air, MU's `AddTerrainLight` on the same deep orange-red

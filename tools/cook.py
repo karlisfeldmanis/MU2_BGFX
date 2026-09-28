@@ -1857,15 +1857,20 @@ def cook_tables(world, out_dir):
     # a skill's cooldown can never be shorter than the animation it plays (docs/skills-dk.md
     # §3.2), and the animation's length is these same two numbers. The sim asks
     # `sim::castTicks` for it, which reads this table. And the wizard's two hands, 147 and 148
-    # (`PLAYER_SKILL_HAND1..2`), which is how long an Energy Ball takes to throw.
+    # (`PLAYER_SKILL_HAND1..2`), which is how long an Energy Ball takes to throw. And 183, "Skill
+    # recovery", the arm thrown up to the sky that Lightning and Meteorite are cast in: MU gives it
+    # no play speed, so it has the exporter's default (pipeline/export_gltf.py DEFAULT_PLAY_SPEED),
+    # 13 keys at 0.25 -- the 2.08 s the drawing plays.
     keys = index.get("action_keys", {})
     speeds = index.get("action_speeds", {})
+    unassigned = {"183": 0.25}
     actions = []
-    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 147, 148, 187]:
+    for action in list(range(38, 52)) + [60, 61, 62, 63, 64, 147, 148, 183, 187]:
         name = str(action)
-        if name not in keys or name not in speeds:
+        speed = speeds.get(name, unassigned.get(name))
+        if name not in keys or speed is None:
             continue
-        actions.append(struct.pack("<iif", action, int(keys[name]), float(speeds[name])))
+        actions.append(struct.pack("<iif", action, int(keys[name]), float(speed)))
 
     world_dir = os.path.join(ASSETS, "world", world)
     with open(os.path.join(world_dir, f"{world}.json")) as handle:

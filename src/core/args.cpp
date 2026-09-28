@@ -110,7 +110,7 @@ void printUsage() {
         "  --bolt-every N            the bolt bench: an Energy Ball every N frames, drawing only\n"
         "  --bolt-tiles T            thrown at a point T tiles east of him (default 6)\n"
         "  --bolt-skill N            which spell the bench throws: 17 Energy Ball, 4 Fire Ball, 11 Power Wave,\n"
-        "                            3 Lightning\n"
+        "                            3 Lightning, 2 Meteorite\n"
         "  --lay F:LIST              on frame F lay NAME,... on the ground beside him (bench)\n"
         "  --arena BREED             one breed alone on a clear patch, fighting the hero from\n"
         "                            the first tick; no other spawn stands on the map. The name\n"

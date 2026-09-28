@@ -246,6 +246,8 @@ void Play::update(double seconds) {
             // done here: the damage, the death and the cooldown all resolved on the tick.
             if (happening.what == sim::What::Cast) {
                 if (happening.who == heroId) heroCast_ = happening.a;
+                // And held past this frame, for what hangs off the whole cast (the burn).
+                if (happening.who == heroId) heroCasting_ = happening.a;
                 if (Drawn* caster = drawnOf(happening.who)) {
                     const sim::SkillRow* row = sim::skillNumbered(happening.a);
                     caster->castSkill = happening.a;
@@ -327,6 +329,11 @@ void Play::update(double seconds) {
                     // other spell that flies is the bolt.
                     if (happening.a == sim::skill::kFireBall) {
                         meteor_.hurl(from, to, happening.whom, atHand);
+                    } else if (happening.a == sim::skill::kMeteorite) {
+                        // The Lich's rock, dropped where the body is drawn: MU's
+                        // `CreateEffect(MODEL_FIRE, to->Position, ...)` at the let-go. It
+                        // falls for the ticks the realm holds the blow.
+                        meteor_.cast(to[0], to[2], happening.who);
                     } else if (happening.a == sim::skill::kLightning) {
                         thunder_.strike(from, to, happening.whom);
                     } else if (happening.a == sim::skill::kPowerWave) {
@@ -340,9 +347,11 @@ void Play::update(double seconds) {
                     // A channel's pulse lets go at every body in it on one tick: one thunder a
                     // pulse, not one a body.
                     const sim::SkillRow* loosed = sim::skillNumbered(happening.a);
-                    const bool again = loosed != nullptr && loosed->channelled() &&
-                                       lastThunderTick_ == int64_t(happening.tick);
-                    if (loosed != nullptr && loosed->channelled()) {
+                    // And Meteorite's rain is a rock on every body on one tick: one wave for it.
+                    const bool volley =
+                        loosed != nullptr && (loosed->channelled() || loosed->splash > 0.0f);
+                    const bool again = volley && lastThunderTick_ == int64_t(happening.tick);
+                    if (volley) {
                         lastThunderTick_ = int64_t(happening.tick);
                     }
                     if (!again && index >= 0 && heard_.skill[index] >= 0) {
@@ -683,6 +692,20 @@ void Play::update(double seconds) {
     meteor_.fly(float(seconds), standing, middle);
     wave_.update(float(seconds));
     thunder_.update(float(seconds), standing, middle);
+    // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
+    // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
+    // sliding in on its run, and the fire read as a man on fire running.
+    if (const sim::Body& hero = realm_.hero();
+        heroCasting_ == sim::skill::kMeteorite && realm_.casting() && ground_) {
+        if (const Drawn* drawn = drawnOf(hero.id);
+            drawn != nullptr && drawn->placed && drawn->casting > 0.0f) {
+            const FigureBody* look = drawn->figure.body();
+            const float feet[3] = {drawn->crown[0],
+                                   ground_->heightAt(drawn->crown[0], drawn->crown[2]),
+                                   drawn->crown[2]};
+            meteor_.burn(feet, look ? look->height * look->scale : 1.8f, float(seconds));
+        }
+    }
     // The crackle on him for as long as he channels.
     if (const sim::Body& hero = realm_.hero(); hero.channelSkill != 0 && ground_) {
         if (const Drawn* drawn = drawnOf(hero.id); drawn != nullptr && drawn->placed) {
@@ -699,7 +722,9 @@ void Play::update(double seconds) {
         // The blow lands with the fire. The fuse says the same thing and would land it on its
         // own; this is what keeps the two together when the frame rate is not what the fuse
         // assumed, and what lands it early when the rock was refused by a full pool.
-        showing_.rush(impact.attacker);
+        // Not the hero's own Meteorite: the realm lands that one on its tick, as it lands every
+        // spell that flies, and rushing his cues would hurry a swing of his still coming down.
+        if (impact.attacker != realm_.hero().id) showing_.rush(impact.attacker);
         // The shock, and three things about it are MU's rather than ours
         // (ZzzEffect.cpp:7752-7773):
         //   * the HERO IS EXCLUDED -- `tc != Hero`. Your own character takes the camera's

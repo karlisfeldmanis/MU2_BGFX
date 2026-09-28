@@ -611,7 +611,7 @@ private:
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
-        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
@@ -653,6 +653,7 @@ private:
     // A potion's worth, drunk between frames and handed to the next frame's gains.
     int32_t drankHealth_ = 0, drankMana_ = 0;
     int32_t heroCast_ = 0;  // see heroCast()
+    int32_t heroCasting_ = 0;  // the hero's last cast, held until the next one
 
     std::vector<Drawn> drawn_;
     // The town's people: those the table names a figure for, where the tables say, facing

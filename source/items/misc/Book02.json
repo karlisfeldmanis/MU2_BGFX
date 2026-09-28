@@ -21,10 +21,10 @@
     "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll, on all twelve. Read by Prize.ReadBy where the scroll is read; before the orbs it was a Trade test in Realm.Read."
   },
   "skill": {
-    "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
+    "note": "What the scroll teaches, read by Realm::useItem since 2026-09-28, which asks the hundred and four energy before it teaches. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
     "number": 2,
     "name": "Meteorite",
-    "tells": "Calls a rock down out of the sky onto one target, wherever it is standing.",
+    "tells": "Calls a burning rock down out of the sky onto one body up to nine tiles off.",
     "tells_from": "What the skill DOES, which is the line the tooltip prints under its name. MU never says it -- a scroll's tooltip there is the name, the requirement and the class -- so this is ours, and it describes the spell rather than its price: the numbers behind it (damage, range, mana, element, area) are in OpenMU's Version075/SkillsInitializer.cs and in docs/mu-scrolls-and-orbs.md, and the tooltip has its own rows for what a thing costs.",
     "level_requirement": 0,
     "energy_requirement": 104,

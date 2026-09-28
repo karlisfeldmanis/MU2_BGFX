@@ -301,6 +301,45 @@ cooldown, six pulses a channel, up to four bodies in one pulse; he does not move
 pushes, no tick sliding a body more than 0.4 of a tile. Filmed with `--arena "Bull Fighter"
 --arena-count 4 --arena-learn 3 --level 12`: bolts to all four at once, the bar draining.
 
+## 2f. Meteorite -- a rain on a cooldown
+
+0.75's row for the damage, `CreateSkill(Meteorite, ..., DamageType.Wizardry, 21, 6,
+manaConsumption: 12, energyRequirement: 104, elementalModifier: Earth)`: twenty-one damage and skill
+2, off the Scroll of Meteorite (`Book02`, group 15 #1, Pasi's slot 3, 11 000 zen), refused under 104
+energy. MuMain drops it where the body stands at the let-go, `CreateEffect(MODEL_FIRE,
+to->Position, ...)` and SOUND_METEORITE01 (ZzzCharacter.cpp:5008): the Lich's own rock. The rest is
+the user's, 2026-09-28:
+
+- **A cooldown spell**, so harder and dearer, as Lightning taught: **six seconds** before agility's
+  haste (5.7 s on a level-30 wizard), **three times the band** (`force` 3, about 100-170 a rock at
+  104 energy), **thirty mana** where 0.75 asks twelve, nine tiles like the other two he throws at a
+  body.
+- **A rock on every body round the one he calls it on** (`SkillRow::splash` 4, `Realm::rain`):
+  everything within four tiles of the aimed body at the let-go gets its own rock, all let go
+  together, each a `Loosed` and a flight of its own; only the aimed body pays back (*"meteor did not
+  landed on multiple monsters around"*, *"only one meteor was flying"*; two tiles left half of four
+  Bull Fighters out, *"only 2 but there are 4 monsters"*). 0.75 drops one rock on one body.
+- **A fall, not a flight** (`SkillRow::fallTicks` 7): the rock lands 0.34 s after the let-go however
+  far off the body is (`Meteor::fallSeconds`), and the realm lands the blow then.
+- **Lightning's pose** (*"use same casting animation as lighting"*): MU's "Skill recovery" (183),
+  played once where MU casts it with 147/148, and the rocks are let go at the middle of it with his
+  arm up. He cannot walk out of it. The cook now carries 183 in the tables at the exporter's 0.25
+  (MU gives it no play speed), so the realm times the clip: 41 ticks at level 30.
+- **He burns while he casts** (*"use some fire effect for character"*; `Meteor::burn`, ours, as
+  Lightning's crackle is): small bright embers born round his body climb off him, with a warm light
+  three tiles wide on his chest, for as long as the clip is on him. The first cut ran one frame (the
+  state it read was the frame's own) and left a single ember at his feet; the second stood on him as
+  dull red specks.
+- The drawing drops `fx/meteor`'s rock on each `Loosed` at where the body is drawn, one wave for
+  the volley; the landing's explosion, stones, flinch and camera jolt are the Lich's. A hero's rock
+  does not rush the showing's cues: the realm lands it.
+
+Measured in `sim_test`: a level-30 wizard hunting 6 000 ticks casts 18 times, never inside the
+cooldown, lets go 30 rocks, lands 29, up to three bodies in one volley, every rock landing seven
+ticks after its let-go, and never moves while he casts. Filmed with `--arena "Bull Fighter"
+--arena-count 4 --arena-learn 2 --level 30`: four rocks, four numbers. `--bolt-every N
+--bolt-skill 2` drops one on the bench. Frame cost not measured.
+
 ## 2b'. Where a spell leaves him
 
 **One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward
@@ -349,8 +388,8 @@ Ball's own trail was halved the same day (*"energy ball trail was to long"*: 6 +
 ## 4. Owed
 
 - The chip in the list reads `RMB` for the slot; unseen in a shot.
-- The next spells in scroll-drop order are Teleport 17, Meteorite 21 (the Lich's `fx/meteor` at
-  subtype 0, already built) and Ice 25. Meteorite, Ice and Poison are Pasi's last three.
+- The next spells in scroll-drop order are Teleport 17 and Ice 25. Ice and Poison are Pasi's last
+  two.
 - A thrown `Missed` does not say which spell, so a bolt and a fireball in the air at one body at
   once can turn the wrong one aside. Rare, drawing only.
 - `sim_test`'s two fist checks fail since the empty hand swings the sword's pair (0db5733a); the

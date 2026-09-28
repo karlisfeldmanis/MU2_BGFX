@@ -594,6 +594,8 @@ private:
     // Power Wave: one `Loosed` for the cast, and a flight to every body in the line.
     void looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void arrive();
+    // Meteorite: a rock let go at every body within its splash of the one it was called on.
+    void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     // Walks him to within `radius` of what he is fighting, on the chase's own re-plan clock.
     void approach(Body& hero, const Body& target, int radius);
     // Whether the quick slot's skill could be thrown now but for the cooldown and the reach:

@@ -1041,6 +1041,101 @@ void testCastLock(const content::Tables& tables) {
         check(widest >= 2, "and one wave strikes more than one body in its line");
     }
 
+    // ---- Meteorite: a cooldown spell, off its scroll at a hundred and four energy ----------
+    {
+        const sim::SkillRow& rock = *sim::skillNumbered(sim::skill::kMeteorite);
+        check(rock.wizardry && !rock.primary() && rock.thrown() && rock.damage == 21 &&
+                  rock.fallTicks == 7 && rock.clip == 183 && rock.force == 3.0f,
+              "Meteorite is a thrown cooldown spell at twenty-one damage, three times the band, "
+              "falling seven ticks, cast in the arm-up clip");
+        const int32_t scroll = tables.itemAt(15, 1);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kMeteorite &&
+                  tables.items[size_t(scroll)].teachesEnergy == 104,
+              "the Scroll of Meteorite teaches skill 2 at a hundred and four energy");
+        check(tables.action(183) != nullptr, "the tables carry the arm-up clip's length");
+        sim::Realm reader;
+        check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 10), "a wizard raises");
+        sim::HeroRecord carrying = reader.record();
+        const int bagged = sim::kWorn + 40;
+        carrying.slots[bagged].item = scroll;
+        carrying.slots[bagged].durability = 1;
+        carrying.points.energy = 103;
+        reader.restore(carrying);
+        check(!reader.useItem(bagged), "at a hundred and three energy it is refused");
+        carrying = reader.record();
+        carrying.points.energy = 104;
+        reader.restore(carrying);
+        check(reader.useItem(bagged) && reader.knows(sim::skill::kMeteorite),
+              "and read at a hundred and four");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        check(wiz.learn(sim::skill::kMeteorite), "who knows Meteorite");
+        const int32_t lock = sim::castTicks(tables, sim::Kin::DarkWizard,
+                                             wiz.hero().points.agility, nullptr, nullptr, rock);
+        int casts = 0, falls = 0, landed = 0, lateOrEarly = 0, movedWhile = 0, widest = 0, thisFall = 0;
+        int64_t fallTick = -1;
+        int64_t lastCast = -1, closest = 1 << 30;
+        int64_t loosedAt[8] = {};
+        uint32_t loosedOn[8] = {};
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 6000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                wiz.ask(request);
+            }
+            if (nearest != 0 && wiz.cooling(sim::skill::kMeteorite) == 0) {
+                wiz.invoke(sim::skill::kMeteorite, nearest);
+            }
+            const float wasX = wiz.hero().x, wasY = wiz.hero().y;
+            const bool held = wiz.casting();
+            wiz.step();
+            if (held && wiz.casting() && (wiz.hero().x != wasX || wiz.hero().y != wasY)) ++movedWhile;
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.who != wiz.hero().id) continue;
+                if (one.what == sim::What::Cast && one.a == sim::skill::kMeteorite) {
+                    ++casts;
+                    if (lastCast >= 0) closest = std::min<int64_t>(closest, one.tick - lastCast);
+                    lastCast = one.tick;
+                }
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kMeteorite) {
+                    loosedAt[falls % 8] = one.tick;
+                    loosedOn[falls % 8] = one.whom;
+                    ++falls;
+                }
+                // The staff's swings do not fly, so every thrown landing is a rock -- and it
+                // lands its fall after the let-go, within two tiles of where it was called.
+                if ((one.what == sim::What::Hit || one.what == sim::What::Missed) && one.thrown) {
+                    if (one.what == sim::What::Hit) ++landed;
+                    bool matched = false;
+                    for (int k = 0; k < 8; ++k) {
+                        if (loosedOn[k] != 0 && int64_t(one.tick) - loosedAt[k] == 7) matched = true;
+                    }
+                    if (!matched) ++lateOrEarly;
+                    if (int64_t(one.tick) != fallTick) {
+                        fallTick = one.tick;
+                        thisFall = 0;
+                    }
+                    widest = std::max(widest, ++thisFall);
+                }
+            }
+        }
+        std::printf("  meteorite: %d cast, %d fell, %d landed, %d struck by one volley at the most, "
+                    "%lld ticks apart at the closest, the clip %d ticks\n",
+                    casts, falls, landed, widest, (long long)closest, lock);
+        check(lock > 20, "the arm-up clip has its length in the realm");
+        check(casts > 10 && falls > 0 && landed > 0, "he calls Meteorite through a hunt and it lands");
+        check(closest >= wiz.coolsFor(sim::skill::kMeteorite) && closest >= 100,
+              "never inside its cooldown");
+        checkEqual(lateOrEarly, 0, "every rock lands its fall after the let-go");
+        check(widest >= 2, "and one cast drops a rock on more than one body");
+        checkEqual(movedWhile, 0, "and he does not move while he calls it");
+    }
+
     // ---- Lightning: a channel -- three seconds of pulses into everything around him ----------
     {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);

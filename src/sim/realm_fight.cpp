@@ -131,6 +131,11 @@ void Realm::land(Body& hero) {
         looseLine(hero, *row, at, force);
         return;
     }
+    // Meteorite: a rock on everything round what he called it on.
+    if (row && row->splash > 0.0f) {
+        rain(hero, *row, at, force);
+        return;
+    }
     if (row && row->spread != Spread::One) {
         strikeAround(hero, *row, force);
         return;
@@ -166,7 +171,11 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
     const float dx = target ? target->x - hero.x : 0.0f;
     const float dy = target ? target->y - hero.y : 0.0f;
     const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
-    const int32_t air = int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
+    // A rock out of the sky takes its fall, however far off the body stands.
+    const int32_t air =
+        row.fallTicks > 0
+            ? row.fallTicks
+            : int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
     if (announce) say(What::Loosed, hero, row.number, air, 0, at);
     if (air > 0) {
         for (Flight& one : flights_) {
@@ -208,11 +217,43 @@ void Realm::arrive() {
         if (next < 0) return;
         const Flight flight = flights_[next];
         flights_[next] = Flight{};
+        const SkillRow* row = skillNumbered(flight.skill);
         // A bolt whose target died in the air flies on past the corpse and lands on nothing:
         // `CheckTargetRange`'s own first line is `to->Live`.
         Body* target = body(flight.target);
         if (!target || !target->alive()) continue;
-        strikeAt(hero, *target, flight.force, skillNumbered(flight.skill), true, flight.pays);
+        strikeAt(hero, *target, flight.force, row, true, flight.pays);
+    }
+}
+
+void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // A rock on every body standing within the splash of the one he called it on -- that one
+    // included, if it still stands -- each said as its own `Loosed`, so the drawing drops a rock
+    // on each, and each landing its own blow after the fall. Nearest the aimed body first and
+    // then by id, so the dice are drawn in a fixed order; only the aimed body pays back.
+    const Body* aimed = body(aimedAt);
+    if (aimed == nullptr) return;
+    const float cx = aimed->x, cy = aimed->y;
+    uint32_t victims[kVictims];
+    float off[kVictims] = {};
+    int found = 0;
+    for (const Body& one : bodies_) {
+        if (one.player || !one.alive()) continue;
+        if (tables_->grid.safe(one.column(), one.row())) continue;
+        const float gap = std::hypot(one.x - cx, one.y - cy);
+        if (gap > row.splash || found >= kVictims) continue;
+        int at = found;
+        while (at > 0 && (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
+            off[at] = off[at - 1];
+            victims[at] = victims[at - 1];
+            --at;
+        }
+        off[at] = gap;
+        victims[at] = one.id;
+        ++found;
+    }
+    for (int i = 0; i < found; ++i) {
+        loose(hero, row, victims[i], force, true, victims[i] == aimedAt);
     }
 }
 

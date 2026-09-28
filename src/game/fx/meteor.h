@@ -86,6 +86,11 @@ public:
     // "there is already smoke in fireball") -- the ember sheet carries its own.
     // `atHand`: `from` is already the casting hand, and MU's 120 units of lift are not added.
     void hurl(const float from[3], const float to[3], uint32_t target, bool atHand = false);
+    // **The fire on the caster** while he calls a Meteorite down (the user, 2026-09-28: "use some
+    // fire effect for character"), ours, as Lightning's crackle is: embers born round his body --
+    // `feet` and his drawn `tall` -- rising off him and cooling as the fireball's do, and a warm
+    // light flickering on him. Called every frame the cast runs.
+    void burn(const float feet[3], float tall, float seconds);
     // The realm said the blow missed: the fireball nearest that body flies on past and out.
     void missHurl(uint32_t target);
     // Advances the fireballs by the frame's seconds, steering each after where its target is
@@ -349,9 +354,22 @@ private:
     static constexpr float kHurlGlowTiles = 4.0f;
     static constexpr float kHurlGlow[3] = {1.0f, 0.35f, 0.08f};
 
+    // The burn on the caster: an ember a reference frame, round him within the radius, up to his
+    // shoulders, drifting up; and a warm light three tiles wide at his chest.
+    // Small, bright and quick, so they read as flame climbing off him: at 0.45 of the meteor's
+    // ember they stood on him as red blobs, and cooling to the red at 0.22 and half speed they
+    // were dull specks stuck to his legs.
+    static constexpr float kBurnEvery = 1.0f;       // reference frames
+    static constexpr float kBurnRadius = 0.35f;     // metres
+    static constexpr float kBurnEmberShare = 0.3f;   // of the meteor's ember
+    static constexpr float kBurnClimb = 1.6f;        // x the meteor ember's drift, upward
+    static constexpr float kBurnEmber[3] = {1.0f, 0.62f, 0.2f};
+    static constexpr float kBurnGlowTiles = 3.0f;
+    static constexpr float kBurnGlow[3] = {1.0f, 0.42f, 0.1f};
+
     // Pools, sized once. A thing past its pool is refused and counted, never grown -- which is
     // MU's own rule as well as this engine's.
-    static constexpr int kMaxMeteors = 8;
+    static constexpr int kMaxMeteors = 16;  // a Meteorite's rain is a rock a body
     static constexpr int kMaxFireballs = 8;
     static constexpr int kMaxStones = 48;   // six a landing
     static constexpr int kMaxMotes = 160;   // MU's own ceiling for the shared particle pool
@@ -370,6 +388,11 @@ private:
     Mote motes_[kMaxMotes] = {};
 
     float quake_ = 0.0f;
+
+    float burnDue_ = 0.0f;     // reference frames to the next ember on him
+    float burnLit_ = 0.0f;     // seconds the light on him has left; 0 is off
+    float burnAt_[3] = {};
+    float burnRoll_ = 1.0f;
 
     // The drawing's own dice. Never the sim's: a rock that took a number out of the seeded
     // stream would make watching the fight change the fight.
