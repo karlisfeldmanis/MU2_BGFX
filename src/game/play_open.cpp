@@ -179,6 +179,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                    hero.stats.minimumDamage, hero.stats.maximumDamage, hero.maxHealth);
     }
 
+    if (!arena_.breed.empty() && arena_.learn != 0 && realm_.learn(arena_.learn)) {
+        core::logf("arena: the hero is taught skill %d", arena_.learn);
+    }
+
     // A figure for every body, made once. Bodies are never added or removed after the realm is
     // raised -- a dead monster is a body waiting for its respawn -- so this list is as fixed as
     // the realm's own, and a frame walks it without allocating.

@@ -1016,6 +1016,74 @@ void testCastLock(const content::Tables& tables) {
         check(waves > 20 && landed > 0, "he throws Power Wave through a hunt and it lands");
     }
 
+    // ---- Lightning: 0.75's row, and the push the element gives, slid and not jumped -----------
+    {
+        const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
+        check(bolt.wizardry && bolt.primary() && bolt.pushes && bolt.damage == 17 &&
+                  bolt.mana == 15,
+              "Lightning is a primary at seventeen damage and fifteen mana, and it pushes");
+        const int32_t scroll = tables.itemAt(15, 2);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kLightning &&
+                  tables.items[size_t(scroll)].teachesEnergy == 72,
+              "the Scroll of Lighting teaches skill 3 at seventy-two energy");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 12), "a wizard of twelve raises");
+        check(wiz.learn(sim::skill::kLightning), "who knows Lightning");
+        int pushes = 0, away = 0;
+        float worstStep = 0.0f;
+        uint32_t fighting = 0, sliding = 0;
+        float lastX = 0.0f, lastY = 0.0f, before = 0.0f;
+        int slidFor = 0;
+        for (int tick = 0; tick < 4000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kLightning;
+                wiz.ask(request);
+            }
+            wiz.step();
+            // Follow the body being pushed: no tick moves it more than a slide's share.
+            if (sliding != 0) {
+                const sim::Body* one = wiz.find(sliding);
+                if (one != nullptr && one->alive()) {
+                    worstStep = std::max(worstStep, std::hypot(one->x - lastX, one->y - lastY));
+                    lastX = one->x;
+                    lastY = one->y;
+                    if (++slidFor == 5) {
+                        const sim::Body& me = wiz.hero();
+                        if (std::hypot(one->x - me.x, one->y - me.y) > before + 0.5f) ++away;
+                        sliding = 0;
+                    }
+                } else {
+                    sliding = 0;
+                }
+            }
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.what != sim::What::Shoved) continue;
+                ++pushes;
+                const sim::Body* pushed = wiz.find(one.who);
+                if (pushed != nullptr && sliding == 0) {
+                    sliding = one.who;
+                    lastX = pushed->x;
+                    lastY = pushed->y;
+                    slidFor = 0;
+                    const sim::Body& me = wiz.hero();
+                    before = std::hypot(pushed->x - me.x, pushed->y - me.y);
+                }
+            }
+        }
+        std::printf("  lightning: %d pushes, %d measured ending further off, worst tick %.2f "
+                    "tiles\n", pushes, away, double(worstStep));
+        check(pushes > 5, "Lightning pushes what it does not kill");
+        check(away > 0, "and a pushed body ends further from him");
+        // Two tiles over five ticks is the worst: a body off its centre, pushed on the diagonal.
+        check(worstStep <= 0.41f, "and slides there, no tick moving it more than 0.4 of a tile");
+    }
+
     // ---- a cooldown outlives a save (the user, 2026-09-28) -----------------------------------
     {
         sim::Realm knight;

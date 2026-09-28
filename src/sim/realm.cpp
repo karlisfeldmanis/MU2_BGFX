@@ -605,7 +605,15 @@ void Realm::step() {
 
     for (size_t i = 1; i < bodies_.size(); ++i) {
         Body& beast = bodies_[i];
-        if (beast.alive()) {
+        if (beast.alive() && beast.pushTicks > 0) {
+            // Pushed: it slides and does nothing else until it lands on its tile.
+            beast.x += beast.pushX;
+            beast.y += beast.pushY;
+            if (--beast.pushTicks == 0) {
+                beast.x = float(beast.column());
+                beast.y = float(beast.row());
+            }
+        } else if (beast.alive()) {
             rouse(beast);
             if (beast.temper != Temper::Asleep) {
                 advance(beast);

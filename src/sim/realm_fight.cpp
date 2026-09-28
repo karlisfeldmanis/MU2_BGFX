@@ -65,6 +65,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     happenings_.back().critical = blow.critical;
     happenings_.back().excellent = blow.excellent;
     happenings_.back().thrown = thrown;
+    // The element, after the blow and only on what it left standing: 0.75's order.
+    if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent
     // back at whoever struck (Player.HitAsync's ReflectDamage). It takes no draw.
     if (target.player && target.alive() && !attacker.player && attacker.alive() &&
@@ -197,6 +199,12 @@ void Realm::kill(Body& dead, Body& killer) {
     rise(dead);
     dead.temper = Temper::Dead;
     dead.walking = false;
+    // A push in hand ends with the body: it lies where the blow found it, on its tile.
+    if (dead.pushTicks > 0) {
+        dead.pushTicks = 0;
+        dead.x = float(dead.column());
+        dead.y = float(dead.row());
+    }
     dead.route.clear();
     dead.onStep = 0;
     dead.quarry = 0;

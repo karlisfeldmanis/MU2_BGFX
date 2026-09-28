@@ -150,6 +150,7 @@ add_executable(mu2
   src/game/fx/meteor.cpp
   src/game/fx/effect_mesh.cpp
   src/game/fx/wave.cpp
+  src/game/fx/thunder.cpp
   src/game/fx/bolt.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp

@@ -155,6 +155,7 @@ bool PlayMode::open(Context& ctx) {
                 game::Play::Arena arena;
                 arena.breed = args.arena;
                 arena.count = args.arenaCount;
+                arena.learn = args.arenaLearn;
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }
@@ -197,6 +198,8 @@ bool PlayMode::open(Context& ctx) {
                                             world_.played().showing().table());
                 world_.played().wave().open(assets, ctx.textures,
                                             world_.played().showing().table());
+                world_.played().thunder().open(assets, ctx.textures,
+                                               world_.played().showing().table());
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
                 world_.played().streak().open(assets, ctx.textures,
                                               world_.played().showing().table());
@@ -697,6 +700,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And Power Wave's, three tiles of blue.
         count += world_.played().wave().lights(falling + count,
                                                gfx::Renderer::kMaxTransientLights - count);
+        count += world_.played().thunder().lights(falling + count,
+                                                  gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));
@@ -808,6 +813,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().gatherMeteor(ctx.renderer.effects(), eye.position);
         world_.played().gatherBolt(ctx.renderer.effects(), eye.position);
         world_.played().wave().gather(ctx.renderer.effects());
+        world_.played().thunder().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));

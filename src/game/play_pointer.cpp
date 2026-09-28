@@ -290,7 +290,8 @@ void Play::fight(uint32_t id) {
     request.target = id;
     // With the right button's skill, so an arena shows what a class fights with: a wizard
     // throws his Energy Ball and a knight with an empty slot swings, as a right-click would.
-    request.skill = arenaLeft_ ? 0 : quickSkill_;
+    // Or with what `--arena-learn` taught him, which is what that option is for.
+    request.skill = arenaLeft_ ? 0 : (arena_.learn != 0 ? arena_.learn : quickSkill_);
     realm_.ask(request);
     mark_ = false;
     marker_.dismiss();
@@ -366,6 +367,8 @@ void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     const bool atHand = castFrom(hero, to, from);
     if (skill == sim::skill::kFireBall) {
         meteor_.hurl(from, to, 0, atHand);
+    } else if (skill == sim::skill::kLightning) {
+        thunder_.strike(from, to, 0);
     } else if (skill == sim::skill::kPowerWave) {
         const float ground[3] = {from[0], feet[1], from[2]};
         wave_.cast(ground, to);

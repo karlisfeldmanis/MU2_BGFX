@@ -285,6 +285,13 @@ void Play::update(double seconds) {
                 bolt_.miss(happening.whom);
                 meteor_.missHurl(happening.whom);
             }
+            // Pushed by Lightning: the realm slides it, and it flinches as it goes.
+            if (happening.what == sim::What::Shoved) {
+                if (Drawn* pushed = drawnOf(happening.who);
+                    pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {
+                    pushed->figure.play(pushed->shockClip, true);
+                }
+            }
             if (happening.what == sim::What::Loosed) {
                 const Drawn* caster = drawnOf(happening.who);
                 const Drawn* target = drawnOf(happening.whom);
@@ -306,6 +313,8 @@ void Play::update(double seconds) {
                     // other spell that flies is the bolt.
                     if (happening.a == sim::skill::kFireBall) {
                         meteor_.hurl(from, to, happening.whom, atHand);
+                    } else if (happening.a == sim::skill::kLightning) {
+                        thunder_.strike(from, to, happening.whom);
                     } else if (happening.a == sim::skill::kPowerWave) {
                         // A curtain standing on the ground, under where every spell leaves.
                         const float ground[3] = {from[0], feet, from[2]};
@@ -646,6 +655,7 @@ void Play::update(double seconds) {
     bolt_.update(float(seconds), standing, middle);
     meteor_.fly(float(seconds), standing, middle);
     wave_.update(float(seconds));
+    thunder_.update(float(seconds), standing, middle);
     // On each impact: explosion sound, shock clip on everything within 2 tiles.
     for (const auto& impact : meteorImpacts_) {
         if (heard_.explosion >= 0) emit(heard_.explosion, impact.x, impact.z);

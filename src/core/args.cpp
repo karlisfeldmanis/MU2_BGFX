@@ -109,7 +109,8 @@ void printUsage() {
         "  --arena-left              the arena attacks with the left button: the weapon alone\n"
         "  --bolt-every N            the bolt bench: an Energy Ball every N frames, drawing only\n"
         "  --bolt-tiles T            thrown at a point T tiles east of him (default 6)\n"
-        "  --bolt-skill N            which spell the bench throws: 17 Energy Ball, 4 Fire Ball, 11 Power Wave\n"
+        "  --bolt-skill N            which spell the bench throws: 17 Energy Ball, 4 Fire Ball, 11 Power Wave,\n"
+        "                            3 Lightning\n"
         "  --lay F:LIST              on frame F lay NAME,... on the ground beside him (bench)\n"
         "  --arena BREED             one breed alone on a clear patch, fighting the hero from\n"
         "                            the first tick; no other spawn stands on the map. The name\n"
@@ -118,6 +119,7 @@ void printUsage() {
         "                            for a breed (Skeleton Warrior). Implies --play, and\n"
         "                            --world lorencia when no world is named\n"
         "  --arena-count N           how many of them (default 1)\n"
+        "  --arena-learn N           the hero is taught skill N and the arena fights with it\n"
         "  --headless                run the sim with no window at all\n"
         "  --seed N                  the sim's seed; the same seed is the same run\n"
         "  --ticks N                 how many 20 Hz ticks to run (default 10000)\n"
@@ -221,6 +223,8 @@ Args parseArgs(int argc, char** argv) {
                     a.valid = false;
                 }
             }
+        } else if (!std::strcmp(s, "--arena-learn")) {
+            if (const char* v = next(s)) a.arenaLearn = std::atoi(v);
         } else if (!std::strcmp(s, "--shield")) {
             if (const char* v = next(s)) a.shield = v;
         } else if (!std::strcmp(s, "--play")) {

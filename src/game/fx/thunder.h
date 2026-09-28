@@ -1,0 +1,106 @@
+// The wizard's Lightning: a jagged bolt drawn from where he casts to the body, re-rolled every
+// frame for a third of a second, with a spark and a blue light where it bites.
+//
+// MU draws it as `BITMAP_JOINT_THUNDER` joints -- a wide one and a thin one, each a strip that
+// walks toward the target in fifty-unit strides with a random turn at every step, re-thrown every
+// frame for fifteen frames, its sheet scrolling along it (MU2's `client/core/Thunder.cs` is that
+// walk ported, fourteen hundred lines). This is a smaller build of the same picture, marked as
+// ours: the path between the two ends is re-rolled whole each frame -- points pinned at both ends
+// and thrown off the line in between -- and drawn as two crossed quads a segment, so it has width
+// from any angle without the camera. What is MU's: the sheet (JointThunder01), the two widths
+// (fifty and ten units), the scroll, the energy spark on the body, the blue ground light,
+// `SOUND_THUNDER01` on the cast. **No smoke**, the user's call of 2026-09-28; MU lays smoke01 at
+// the contact one frame in eight.
+//
+// It does not fly: MU lands the blow on the cast (`Thunder.Flight` is nought), and so does the
+// realm (`SkillRow::flies`). The push the blow gives is the realm's too (`Realm::push`).
+#pragma once
+
+#include <cstdint>
+#include <string>
+
+#include "content/showing.h"
+#include "content/texture.h"
+#include "gfx/effects.h"
+#include "gfx/renderer.h"
+
+namespace mu::game {
+
+class Thunder {
+public:
+    bool open(const std::string& assetDir, content::Textures& textures,
+              const content::Showing& table);
+
+    // A bolt from `from` to the middle of body `target` (`to` is where it is now; 0 holds `to`).
+    void strike(const float from[3], const float to[3], uint32_t target);
+
+    // `alive(id)` and `where(id, out)` as the bolt takes them: the far end follows the body.
+    template <typename Alive, typename Where>
+    void update(float seconds, Alive alive, Where where);
+
+    void gather(gfx::Effects& effects) const;
+    uint32_t lights(gfx::PointLight* out, uint32_t max) const;
+    uint32_t striking() const;
+
+private:
+    static constexpr int kPoints = 12;   // the path, ends included
+    struct Arc {
+        bool alive = false;
+        float from[3], to[3];
+        uint32_t target;
+        float left;                     // reference frames
+        float reroll;                   // frames until the path is thrown again
+        float wide[kPoints][3];         // the wide joint's path
+        float thin[kPoints][3];         // and the thin one's, thrown on its own
+        float spark;                    // the contact's roll and size, per frame
+        float sparkRoll;
+        float glow;
+    };
+
+    static constexpr float kReference = 25.0f;
+    static constexpr float kFrames = 9.0f;        // a third of a second, lit
+    static constexpr float kFadeFrames = 4.0f;    // and dimming over its last four
+    static constexpr float kRerollFrames = 1.0f;  // a new path every reference frame, as MU
+    static constexpr float kWide = 0.5f;          // metres: MU's fifty units
+    static constexpr float kThin = 0.12f;         // and the thin joint's ten, a little wider
+    static constexpr float kJag = 0.45f;          // metres off the line, at most, mid-bolt
+    static constexpr float kRepeats = 2.0f;       // the sheet twice along a bolt
+    static constexpr float kScroll = 1.0f;        // sheet widths a second
+    static constexpr float kWhite[3] = {0.85f, 0.9f, 1.0f};
+    static constexpr float kSparkWidth = 0.64f;   // Thunder01
+    static constexpr float kSparkSmallest = 0.6f, kSparkLargest = 1.3f;
+    // The light where it bites: MU's (0.2, 0.2, 1) blue, brighter than its 0.16-0.28 roll so it is
+    // seen ("most of DW spells are light emitters"), and a tile wider.
+    static constexpr float kGlow[3] = {0.35f, 0.45f, 1.0f};
+    static constexpr float kGlowTiles = 3.0f;
+    static constexpr int kMost = 8;
+
+    bgfx::TextureHandle joint_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
+    Arc arcs_[kMost] = {};
+    float clock_ = 0.0f;
+
+    uint32_t dice_ = 0x7A11B017u;
+    float unit();
+    void throwPath(Arc& arc);
+    void step(Arc& arc, float frames);
+};
+
+template <typename Alive, typename Where>
+void Thunder::update(float seconds, Alive alive, Where where) {
+    const float frames = seconds * kReference;
+    clock_ += seconds * kScroll;
+    if (clock_ >= 1.0f) clock_ -= float(int(clock_));
+    for (Arc& arc : arcs_) {
+        if (!arc.alive) continue;
+        if (arc.target != 0 && alive(arc.target)) {
+            float there[3];
+            if (where(arc.target, there)) {
+                for (int k = 0; k < 3; ++k) arc.to[k] = there[k];
+            }
+        }
+        step(arc, frames);
+    }
+}
+
+}  // namespace mu::game

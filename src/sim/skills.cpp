@@ -195,6 +195,23 @@ constexpr SkillRow kRows[kSkills] = {
      "A wave of light swept along the ground at one body up to six tiles off: twice the force "
      "of an Energy Ball, for five times the mana.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
+
+    // Lightning 3, 0.75's row: `CreateSkill(Lightning, ..., DamageType.Wizardry, 17, 6,
+    // manaConsumption: 15, energyRequirement: 72, elementalModifier: Lightning)` -- seventeen
+    // damage, six tiles, fifteen mana. **It pushes**: the Lightning element moves what it hits one
+    // tile, after the blow and never on a body the blow killed. 0.75 picks the tile at random and
+    // puts the body there at once; here it is pushed straight AWAY from the wizard and slides
+    // there over a quarter of a second (`Realm::push`), because the user's rule is no sudden moves
+    // and a push is the point (*"we need to push monsters"*, 2026-09-28). The resistance gate is
+    // not rolled: nothing in Lorencia resists lightning.
+    //
+    // A primary like the other three, for now; the push makes it the kiting spell, and a cooldown
+    // is the knob if it holds a monster off too well. It does not fly: MU draws the bolt between
+    // hand and body on the cast and lands it at once (`Thunder.Flight` is nought), so `flies` is
+    // high enough that the landing is the let-go. `SOUND_THUNDER01`.
+    {skill::kLightning, "Lightning", 15, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A bolt of lightning into one body up to six tiles off, pushing it a step away from him.",
+     147, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 148, 1000.0f, true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

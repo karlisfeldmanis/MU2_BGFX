@@ -253,6 +253,10 @@ struct Body {
     // the boon and not through it, because the two are different effects in OpenMU (subtypes
     // 54 and the skill's own) and a guard raised with an Ale in him keeps both.
     int64_t aleUntil = 0;
+    // Being pushed (`Realm::push`): tiles a tick to slide, and how many ticks are left. While it
+    // runs the body neither thinks nor walks.
+    float pushX = 0.0f, pushY = 0.0f;
+    int32_t pushTicks = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
     Pose pose = Pose::Standing;
@@ -575,6 +579,9 @@ private:
     void strikeAround(Body& hero, const SkillRow& row, float force);
     // The knock: one tile at random, onto something standable. 0.75's `movesTarget`.
     void shove(Body& target);
+    // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
+    // something standable or not at all.
+    void push(Body& target, const Body& from);
     // How long the clip this skill plays takes, and so what its cooldown cannot go under.
     int32_t clipTicksOf(const Body& hero, const SkillRow& row) const;
     void kill(Body& beast, Body& killer);

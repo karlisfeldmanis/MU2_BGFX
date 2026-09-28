@@ -57,6 +57,9 @@ constexpr int32_t kFireBall = 4;
 // And the third he buys, `AT_SKILL_POWERWAVE`, off the Scroll of Power Wave (group 15 number 10,
 // `Book11`) at fifty-six energy.
 constexpr int32_t kPowerWave = 11;
+// And the fourth, `AT_SKILL_THUNDER`, off the Scroll of Lighting (OpenMU's spelling; group 15
+// number 2, `Book03`) at seventy-two energy -- the one whose element does something: it pushes.
+constexpr int32_t kLightning = 3;
 }  // namespace skill
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
@@ -194,6 +197,10 @@ struct SkillRow {
     // one's `CreateEffect` arm). The realm times the landing off it and the drawing flies at it,
     // so the two cannot part.
     float flies = 15.0f;
+    // Whether a blow that lands and does not kill pushes the body a tile away from the caster
+    // (`Realm::push`). 0.75's Lightning element: `TryApplyElementalEffectsAsync` moves the target
+    // one tile (`MoveRandomlyAsync`), after the blow and never on a body the blow killed.
+    bool pushes = false;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -210,11 +217,12 @@ struct SkillRow {
 };
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
-// families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball and Power Wave. Also
+// families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
+// Lightning. Also
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 13;
+constexpr int kSkills = 14;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

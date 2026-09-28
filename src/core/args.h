@@ -141,6 +141,7 @@ struct Args {
     // spaces are ignored. A name that matches nothing lists what the map has and fails the run.
     std::string arena;
     int arenaCount = 1;
+    int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
     // The character's file. Empty means the default (game/save.cpp) for a played run and no
     // file at all for a review run (--frames): a scripted fight must not overwrite the
     // player's hero, nor start from wherever he last stood. `--fresh` ignores what is there

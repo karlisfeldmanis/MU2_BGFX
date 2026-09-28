@@ -336,4 +336,32 @@ void Realm::shove(Body& target) {
     say(What::Shoved, target, column, row);
 }
 
+// How long a push takes, in ticks: a quarter of a second -- quick enough to read as a blow, slow
+// enough that the drawing slides it rather than jumping it. A body caught mid-step is off its
+// tile's centre and can go up to a tile and a half to reach the next, so at four ticks the worst
+// tick was half a tile; at five it is four tenths at the very worst.
+constexpr int32_t kPushTicks = 5;
+
+void Realm::push(Body& target, const Body& from) {
+    // Straight away from him, snapped to the nearest of the eight compass steps. No draw is taken,
+    // so the seeded log's dice are the same with or without it.
+    const float dx = target.x - from.x, dy = target.y - from.y;
+    const float far = std::sqrt(dx * dx + dy * dy);
+    if (far < 1e-3f) return;
+    const int stepX = int(std::lround(dx / far)), stepY = int(std::lround(dy / far));
+    if (stepX == 0 && stepY == 0) return;
+    const int column = target.column() + stepX;
+    const int row = target.row() + stepY;
+    if (!tables_->grid.open(column, row, content::kWallCharacter)) return;
+    if (tables_->grid.safe(column, row)) return;
+    target.pushX = (float(column) - target.x) / float(kPushTicks);
+    target.pushY = (float(row) - target.y) / float(kPushTicks);
+    target.pushTicks = kPushTicks;
+    // The walk it was on is void, and it is not reaching anybody while it slides.
+    target.walking = false;
+    target.route.clear();
+    target.onStep = 0;
+    say(What::Shoved, target, column, row);
+}
+
 }  // namespace mu::sim

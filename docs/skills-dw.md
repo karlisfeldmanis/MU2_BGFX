@@ -217,6 +217,32 @@ dimmer copies of the curtain (1.12x at 35%, 1.26x at 18%) with its brightness he
 saturates. `fx/effect_mesh` is the .obj reader and basis draw the meteor and the wave now share.
 `--bolt-every N --bolt-skill 11` is its bench.
 
+## 2e. Lightning -- the spell that pushes
+
+0.75's row, `CreateSkill(Lightning, ..., DamageType.Wizardry, 17, 6, manaConsumption: 15,
+energyRequirement: 72, elementalModifier: Lightning)`: seventeen damage, six tiles, fifteen mana,
+skill 3, off the Scroll of Lighting (`Book03`, group 15 #2, Pasi's slot 2), refused under 72 energy.
+A primary like the others for now.
+
+**It pushes** (*"we need to push monsters"*). The Lightning element moves what it hits one tile,
+after the blow and never on a body the blow killed -- 0.75's order. 0.75 picks the tile at random and
+puts the body there at once; here the push is **straight away from the wizard, slid over five ticks**
+(`Realm::push`, `SkillRow::pushes`), because a push is the point and the standing rule is no sudden
+moves. A pushed body neither thinks nor walks while it slides, a blocked or sheltered tile is not
+pushed onto, and a death mid-slide leaves it on its tile. The drawing plays its flinch. The resistance
+roll is not made -- nothing in Lorencia resists lightning. The push makes this the kiting spell, and
+a cooldown is the knob if it holds monsters off too well.
+
+It does not fly: MU lands the blow on the cast, and `flies` is set so high the landing is the let-go.
+**The look** is `fx/thunder`, ours in its build: a jagged path pinned at both ends, re-thrown every
+reference frame for a third of a second, drawn as two crossed quads a segment on MU's JointThunder01,
+a wide joint and a thin one, the sheet scrolling; MU's Thunder01 spark on the body and a blue light
+three tiles wide there. **No smoke**, the user's call; MU lays smoke01 at the contact one frame in
+eight. MU2's `Thunder.cs` is the full joint walk if this ever needs it. `SOUND_THUNDER01`.
+
+`--arena-learn N` teaches the arena's hero skill N and makes the arena fight with it; the Lightning
+push was filmed with `--arena "Bull Fighter" --arena-learn 3 --level 12`.
+
 ## 2b'. Where a spell leaves him
 
 **One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward
@@ -254,8 +280,8 @@ Ball's own trail was halved the same day (*"energy ball trail was to long"*: 6 +
 ## 4. Owed
 
 - The chip in the list reads `RMB` for the slot; unseen in a shot.
-- The next spell in scroll-drop order is Lightning 13: a row and MU2's `Thunder`, the first effect
-  drawn between two points every frame. It should throw some light.
+- The next spells in scroll-drop order are Teleport 17, Meteorite 21 (the Lich's `fx/meteor` at
+  subtype 0, already built) and Ice 25. Meteorite, Ice and Poison are Pasi's last three.
 - A thrown `Missed` does not say which spell, so a bolt and a fireball in the air at one body at
   once can turn the wrong one aside. Rare, drawing only.
 - `sim_test`'s two fist checks fail since the empty hand swings the sword's pair (0db5733a); the
