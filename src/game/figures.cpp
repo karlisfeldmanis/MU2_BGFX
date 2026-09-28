@@ -199,10 +199,6 @@ void Figures::bind(FigureBody& body) {
     body.backBone = boneNamed(*body.skeletonMesh, kBackBone);
     body.pelvisBone = boneNamed(*body.skeletonMesh, "Bip01 Pelvis");
     body.neckBone = boneNamed(*body.skeletonMesh, "Bip01 Neck");
-    body.handBones[0] = boneNamed(*body.skeletonMesh, "Bip01 R Hand");
-    body.handBones[1] = boneNamed(*body.skeletonMesh, "Bip01 L Hand");
-    body.forearmBones[0] = boneNamed(*body.skeletonMesh, "Bip01 R Forearm");
-    body.forearmBones[1] = boneNamed(*body.skeletonMesh, "Bip01 L Forearm");
     for (HeldItem& item : body.held) {
         item.bone = boneNamed(*body.skeletonMesh, item.boneName);
         const OnBack& slung = onBack(item, item.boneName == kLeftGrip);

@@ -299,7 +299,7 @@ void Play::update(double seconds) {
                         to[1] = target->crown[1] - tall * 0.5f;
                         to[2] = target->crown[2];
                     }
-                    // From the hand that threw it (castFrom), or his middle on a rig with none.
+                    // From the middle of his chest (castFrom), the same for every spell.
                     float from[3];
                     const bool atHand = castFrom(*caster, to, from);
                     // Fire Ball is the Lich's rock at its other subtype, thrown flat; every

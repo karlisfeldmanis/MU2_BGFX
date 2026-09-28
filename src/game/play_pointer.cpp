@@ -326,8 +326,14 @@ void Play::rightClick() {
     marker_.dismiss();
 }
 
-// How far past the wrist the palm's middle is, in metres, on MU's player rig.
-constexpr float kPalmReach = 0.12f;
+// Where every spell leaves a caster: the middle of his chest, a little toward what it is
+// thrown at. The user's, 2026-09-28 ("spells come from same position somewhere in center of
+// body"), after the throwing hand was tried: the two cast clips put that hand in two very different
+// places (1.35 m up and in front, 1.90 m up overhead), so the ball jumped between throws. MU's own
+// is a fixed height per spell -- 100 units for the bolt, 120 for the fireball -- and this is one
+// height for both, as a share of the figure so a tall and a short caster are alike.
+constexpr float kCastHeight = 0.6f;    // of his drawn height, from his feet
+constexpr float kCastForward = 0.25f;  // metres toward the target, so it is in front of him
 
 bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const {
     out[0] = caster.crown[0];
@@ -335,39 +341,14 @@ bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const 
     out[2] = caster.crown[2];
     const FigureBody* look = caster.figure.body();
     if (look == nullptr) return false;
-    // **The hand, and the one doing the throwing.** MU lets both spells go from the middle of
-    // the body at a fixed height (`Position[2] += 100` for the bolt, 120 for the fireball), and
-    // on this camera that is a ball appearing out of his chest. The clips 147 and 148 throw with
-    // one hand or the other, so the one thrust furthest toward the target at the let-go is the
-    // one that threw: measured, not assumed from the clip.
+    out[1] += look->height * look->scale * kCastHeight;
     const float wayX = to[0] - caster.crown[0], wayZ = to[2] - caster.crown[2];
     const float flat = std::sqrt(wayX * wayX + wayZ * wayZ);
-    const float origin[3] = {0.0f, 0.0f, 0.0f};
-    float best = -1e9f;
-    bool found = false;
-    for (int side = 0; side < 2; ++side) {
-        const int bone = look->handBones[side];
-        float at[3];
-        if (bone < 0 || !caster.figure.pointOn(bone, origin, at)) continue;
-        // The bone is the wrist; the ball comes off the palm, carried on past it along the line
-        // the forearm points.
-        float elbow[3];
-        if (look->forearmBones[side] >= 0 &&
-            caster.figure.pointOn(look->forearmBones[side], origin, elbow)) {
-            const float d[3] = {at[0] - elbow[0], at[1] - elbow[1], at[2] - elbow[2]};
-            const float len = std::sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
-            if (len > 1e-3f) for (int k = 0; k < 3; ++k) at[k] += d[k] / len * kPalmReach;
-        }
-        const float reach = flat > 1e-4f ? ((at[0] - caster.crown[0]) * wayX +
-                                            (at[2] - caster.crown[2]) * wayZ) / flat
-                                         : 0.0f;
-        if (reach > best) {
-            best = reach;
-            for (int k = 0; k < 3; ++k) out[k] = at[k];
-            found = true;
-        }
+    if (flat > 1e-4f) {
+        out[0] += wayX / flat * kCastForward;
+        out[2] += wayZ / flat * kCastForward;
     }
-    return found;
+    return true;
 }
 
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
