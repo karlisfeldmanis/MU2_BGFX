@@ -188,6 +188,10 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
     // asked, the table was empty and the device was shut.
     if (name.empty() || textures_ == nullptr || !play_.isOpen()) return;
     boids_.open(assetDir, name, boidOf(name), *textures_, airsOf(name), &play_.sound());
+    if (const content::EffectSheet* light = play_.showing().table().effect("light")) {
+        boids_.setGlowSheet(
+            textures_->load(assetDir + "/" + light->path, content::TextureRole::Albedo));
+    }
     leaves_.open(assetDir, *textures_, play_.showing().table());
     // And the rain, which shares the leaves' slots, and the air's sounds. game/world/weather.h.
     weather_.open(name, &play_.sound(), weather);

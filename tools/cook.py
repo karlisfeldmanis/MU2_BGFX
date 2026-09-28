@@ -197,7 +197,18 @@ def safe(name):
 # It is a world's fact and not a boid's, which is why it is a table and not a constant: the
 # velocity, whether the terrain's light falls on it and whether it calls are the same kind of
 # fact and live beside it in the engine (game/world/boids.h), as MU2's `Airs.cs` gathered them.
-AIRS = {"lorencia": "Bird01"}
+AIRS = {"lorencia": "Bird01", "noria": "Butterfly01"}
+# Where a world's boid is built, when it is not the world's own: MuMain loads Noria's
+# MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:89).
+AIRS_FROM = {"noria": "lorencia"}
+
+
+def boid_glb(world, model):
+    """The .glb a model of this world is cooked from: its own folder, else the boid's home."""
+    own = os.path.join(ASSETS, "world", world, model, f"{model}.glb")
+    if os.path.exists(own) or model != AIRS.get(world) or world not in AIRS_FROM:
+        return own
+    return os.path.join(ASSETS, "world", AIRS_FROM[world], model, f"{model}.glb")
 
 
 def flying(world):
@@ -205,7 +216,7 @@ def flying(world):
     name = AIRS.get(world)
     if name is None:
         return None
-    if not os.path.exists(os.path.join(ASSETS, "world", world, name, f"{name}.glb")):
+    if not os.path.exists(boid_glb(world, name)):
         return None
     return name
 
@@ -226,7 +237,7 @@ def collect(world, out_dir, raw_dir):
     missing = []
 
     for model in models:
-        path = os.path.join(world_dir, model, f"{model}.glb")
+        path = boid_glb(world, model)
         if not os.path.exists(path):
             missing.append(model)
             continue
@@ -238,7 +249,7 @@ def collect(world, out_dir, raw_dir):
                 uri = document["images"][index].get("uri")
                 if uri is None:
                     continue
-                with open(os.path.join(world_dir, model, uri), "rb") as handle:
+                with open(os.path.join(os.path.dirname(path), uri), "rb") as handle:
                     data = handle.read()
             digest = hashlib.sha1(data).hexdigest()[:16]
             key = f"{digest}-{role}"
@@ -698,7 +709,7 @@ def cook_meshes(world, out_dir):
     # placements and finds none of it, which is what leaves the pool to game/world/boids.cpp.
     for model in sorted({one["model"] for one in map_data["objects"]} |
                         set(filter(None, [flying(world)]))):
-        path = os.path.join(world_dir, model, f"{model}.glb")
+        path = boid_glb(world, model)
         if not os.path.exists(path):
             continue
         scroll = 0.0

@@ -112,6 +112,11 @@ public:
                 const content::Ground& ground, const float* viewProj, gfx::Renderer& renderer);
     // The posed birds, into the frame's drawable list. After update.
     void gather(std::vector<gfx::Drawable>& out) const;
+    // The butterfly's firefly glow, MU's BITMAP_LIGHT on each: the sheet is the showing's
+    // `light`, handed in by World::raiseAirs. Nothing for a bird. stepGlow re-rolls its level.
+    void setGlowSheet(bgfx::TextureHandle sheet) { glowSheet_ = sheet; }
+    void stepGlow(float seconds);
+    void glow(gfx::Effects& effects);
 
     bool isOpen() const { return body_ != nullptr; }
     // --birds-now: the sky's FIRST flock arrives on the next frame rather than 20 to 90
@@ -137,6 +142,10 @@ private:
     std::vector<float> scratch_;
     Airs airs_;
     Sound* sound_ = nullptr;
+    bgfx::TextureHandle glowSheet_ = BGFX_INVALID_HANDLE;
+    float glowLevel_[Flight::kMaxBirds] = {};
+    float glowWait_ = 0.0f;
+    uint32_t glowSeed_ = 0xB077E7F1u;
     int call1_ = -1;
     int call2_ = -1;
 };

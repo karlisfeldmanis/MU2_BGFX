@@ -53,12 +53,22 @@ std::string boidOf(const std::string& world) {
     // takes the terrain's light nor calls, and none of that is worth writing down until there is
     // a cooked Butterfly01 to try it on. See tools/cook.py's AIRS.
     if (world == "lorencia") return "Bird01";
+    // Noria's: MODEL_BUTTERFLY01, which MuMain loads from Data/Object1 -- Lorencia's folder
+    // -- for Noria (MapManager.cpp:89). tools/cook.py's AIRS cooks it into Noria from there.
+    if (world == "noria") return "Butterfly01";
     return std::string();
 }
 
 Airs airsOf(const std::string& world) {
     Airs airs;  // the defaults are the bird's: 1.0, lit, calling
-    (void)world;
+    if (world == "noria") {
+        // GOBoid.cpp:1335: `Velocity = 0.3f; LightEnable = false; Light = (1, 1, 1)`, and not
+        // in the chain of boids that call.
+        airs.speed = 0.3f;
+        airs.lit = false;
+        airs.tint[0] = airs.tint[1] = airs.tint[2] = 1.0f;
+        airs.calls = false;
+    }
     return airs;
 }
 
@@ -69,6 +79,7 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     sound_ = sound;
     flight_.reset();
     flight_.setPace(airs_.speed);
+    flight_.setButterfly(model == "Butterfly01");
     if (model.empty()) return true;
 
     const std::string dir = core::join(assetDir, "cooked/" + world);
@@ -217,6 +228,39 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         } else {
             std::memcpy(light_[i], airs_.tint, sizeof(light_[i]));
         }
+    }
+}
+
+void Boids::glow(gfx::Effects& effects) {
+    // MODEL_BUTTERFLY01's own line in the boids' render (GOBoid.cpp:1558): a BITMAP_LIGHT at
+    // Scale 1 on the butterfly, `Luminosity * (0.2, 0.4, 0.4)` with Luminosity rolled 0.64 to
+    // 0.96 each frame MU draws -- a cyan firefly. Rolled 25 times a second here, as the
+    // lanterns are, since a roll at the monitor's rate is a strobe.
+    if (!bgfx::isValid(glowSheet_) || !flight_.isButterfly()) return;
+    for (int i = 0; i < Flight::kMaxBirds; ++i) {
+        const Flight::Bird& bird = flight_.bird(i);
+        if (!bird.live) continue;
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = bird.position[k];
+        sprite.halfWidth = sprite.halfHeight = 0.5f * 0.64f;  // Scale 1 over a 64-texel sheet
+        const float luminosity = glowLevel_[i];
+        sprite.colour[0] = 0.2f * luminosity;
+        sprite.colour[1] = sprite.colour[2] = 0.4f * luminosity;
+        sprite.sheet = glowSheet_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
+    }
+}
+
+void Boids::stepGlow(float seconds) {
+    glowWait_ -= seconds;
+    if (glowWait_ > 0.0f) return;
+    glowWait_ = 1.0f / 25.0f;
+    for (float& level : glowLevel_) {
+        glowSeed_ ^= glowSeed_ << 13;
+        glowSeed_ ^= glowSeed_ >> 17;
+        glowSeed_ ^= glowSeed_ << 5;
+        level = float(glowSeed_ % 32u + 64u) * 0.01f;
     }
 }
 

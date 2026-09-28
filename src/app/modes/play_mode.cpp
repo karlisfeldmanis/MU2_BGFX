@@ -799,6 +799,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // walk and has not gone anywhere.
         if (args.birdsNow) world_.boids().hurry();
         const bool walking = world_.played().realm().hero().walking;
+        world_.boids().stepGlow(float(deltaSeconds));
+        world_.boids().glow(ctx.renderer.effects());
         world_.boids().update(float(deltaSeconds), hero, walking, inside, world_.ground(),
                               viewProj, ctx.renderer);
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.

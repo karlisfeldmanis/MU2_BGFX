@@ -93,6 +93,10 @@ public:
 
     // `speed` is `o->Velocity` for this pool -- a bird's 1.0, a butterfly's 0.3.
     void setPace(float speed) { pace_ = speed; }
+    // Noria's butterfly rather than Lorencia's bird: MoveButterFly in place of MoveBird, and
+    // the flock asked one frame in four (GOBoid.cpp:932 and :1135). See flutter().
+    void setButterfly(bool on) { butterfly_ = on; }
+    bool isButterfly() const { return butterfly_; }
 
     // The first flock arrives on the next step rather than 20 to 90 seconds in. One-shot: a
     // caller with this in its frame loop would otherwise refill the sky the instant it empties,
@@ -115,6 +119,7 @@ private:
     void move(Bird& bird, const float hero[3], bool walking, float seconds, float factor,
               const Sky& sky);
     void flock(Bird& bird, float factor);
+    void flutter(Bird& bird, float land, float factor);
     void away(Bird& bird, const float hero[3], float factor);
     void step(Bird& bird, float speed, float seconds);
     float wander(float seconds);
@@ -123,6 +128,7 @@ private:
 
     Bird birds_[kMaxBirds];
     float pace_ = 1.0f;
+    bool butterfly_ = false;
     float wait_ = 0.0f;
     float cycle_ = 0.0f;
     uint32_t flying_ = 0;

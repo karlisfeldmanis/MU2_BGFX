@@ -218,7 +218,11 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
     const float land = sky.ground(sky.context, bird.position[0], bird.position[2]);
     if (!bird.wasSeen && sky.inFrame(sky.context, bird.position)) bird.wasSeen = true;
 
-    switch (bird.state) {
+    // A butterfly has none of the bird's states: it flutters, never dives, never perches.
+    if (butterfly_) {
+        bird.speed = 1.0f;
+        flutter(bird, land, factor);
+    } else switch (bird.state) {
         case State::Fly: {
             // Only during the first quarter of each cycle, and only from the middle distance --
             // a bird already overhead does not dive. One on its way out does not turn back for
@@ -275,7 +279,7 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
     if (bird.state != State::Ground) {
         if (bird.leaving) {
             away(bird, hero, factor);
-        } else {
+        } else if (!butterfly_ || chance(0.25f, factor)) {
             flock(bird, factor);
         }
         step(bird, bird.speed * kCruise * pace_, seconds);
@@ -341,6 +345,27 @@ void Flight::flock(Bird& bird, float factor) {
     const float difference = wrapPi(desired - bird.facing);
     const float turn = kTurnRate * kPi / 180.0f * factor;
     bird.facing = wrapPi(bird.facing + std::clamp(difference, -turn, turn));
+}
+
+void Flight::flutter(Bird& bird, float land, float factor) {
+    // MoveButterFly, in MU's units a reference frame times 0.25 for metres a second (25 frames,
+    // 100 units a metre). A new heading and a new climb on a one-in-32 roll; the climb then
+    // walks by a fifth of that each frame, is damped and pushed back inside half a metre to
+    // three over the ground, and the height itself jitters a few centimetres a frame.
+    const auto roll = [&]() { return float(int(random01() * 15.0f) - 7); };
+    if (chance(1.0f / 32.0f, factor)) {
+        bird.facing = wrapPi(random01() * kTau);
+        bird.climb = roll() * 0.25f;
+    }
+    bird.climb += roll() * 0.2f * factor * 0.25f;
+    const float damp = std::pow(0.8f, factor);
+    if (bird.position[1] < land + 0.5f) {
+        bird.climb = bird.climb * damp + factor * 0.25f;
+    }
+    if (bird.position[1] > land + 3.0f) {
+        bird.climb = bird.climb * damp - factor * 0.25f;
+    }
+    bird.position[1] += roll() * 0.3f * 0.01f * factor;
 }
 
 void Flight::away(Bird& bird, const float hero[3], float factor) {
