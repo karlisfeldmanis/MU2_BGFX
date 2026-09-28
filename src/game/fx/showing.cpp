@@ -131,7 +131,7 @@ void Showing::advance(float seconds, std::vector<Cue>& due) {
 }
 
 void Showing::land(const Cue& cue, const float feet[3], float height, float man,
-                    float attackerYaw, bool onHero) {
+                    float attackerYaw, bool onHero, bool told) {
     // Units of the target against the hero's own drawn height, not MU's 120-unit box: the
     // figures here stand about 1.8 m, so against 120 a man came out at one and a half and a
     // Giant at three, and every length in the blood grew with it.
@@ -153,7 +153,7 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         return cue.skill != 0 ? Mark::Skill : Mark::Swing;
     };
     const auto raise = [&](Mark mark, int32_t value) {
-        if (figures_.size() >= figures_.capacity()) return;
+        if (!told || figures_.size() >= figures_.capacity()) return;
         Figure figure;
         // FLAT, not scaled by `like`: see kNumberHeight.
         figure.world[0] = feet[0];

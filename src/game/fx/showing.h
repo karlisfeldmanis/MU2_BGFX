@@ -117,8 +117,11 @@ public:
     // ramp's own bone, and his own misses paler than everyone else's.
     // `man` is the hero's own drawn height in metres: the length MU's blood numbers were
     // chosen against, so a blow on a man is thrown at MU's size and nothing else is guessed.
+    // `told` is whether the blow puts a figure up at all: only the hero's own, and those that
+    // land on him. Somebody else's -- a guard's on a monster -- shows its blood and no number
+    // (the user, 2026-09-28: only his damage is his to read).
     void land(const Cue& cue, const float feet[3], float height, float man, float attackerYaw,
-              bool onHero);
+              bool onHero, bool told = true);
 
     // Ages everything alive, on the same scaled clock as the fuses.
     void update(float seconds);

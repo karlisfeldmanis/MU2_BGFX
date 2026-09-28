@@ -842,7 +842,9 @@ void Play::update(double seconds) {
         // in units of. A figure with no body drawn falls back to a man's height rather than
         // to zero, because zero would collapse the whole effect to a point.
         const bool onHero = cue.target == realm_.hero().id;
-        showing_.land(cue, feet, height, man, swinger->yaw, onHero);
+        // A number only for what he threw or took: a guard's blow on a monster is blood alone.
+        const bool told = onHero || cue.attacker == realm_.hero().id;
+        showing_.land(cue, feet, height, man, swinger->yaw, onHero, told);
         // The hit, on the attacker, which is where MoveCharacter plays it: one of MU's four,
         // at random, for every ordinary blow with a target -- a MISS as well. The sound sits in
         // the AttackTime block beside the blood, and only the blood asks `tc->Hit`.
