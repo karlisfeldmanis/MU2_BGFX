@@ -606,6 +606,7 @@ void Realm::step() {
         arrive();
         channel(hero);
         if (hero.blinkAt != 0 && tick_ >= hero.blinkAt) blink(hero);
+        poisonPulse(hero);
         accept();
         advance(hero);
         press();
@@ -719,6 +720,9 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Soused:
             std::snprintf(line, sizeof(line), "%6u %s drinks an ale for %d ticks, swinging every %d",
                           happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Cured:
+            std::snprintf(line, sizeof(line), "%6u %s drinks an antidote", happening.tick, who);
             break;
         case What::Blinked:
             std::snprintf(line, sizeof(line), "%6u %s teleports to %d,%d", happening.tick, who,

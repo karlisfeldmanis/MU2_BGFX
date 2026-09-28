@@ -145,11 +145,12 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
     // are told apart by what threw them.
     const auto markOf = [&]() {
         if (cue.miss) return Mark::Miss;
+        // A poison's pulse is green on him as on a monster: MU's DT_POISON is one colour.
+        if (cue.poison) return Mark::Poison;
         if (onHero) return Mark::Taken;
         if (cue.reflected) return Mark::Reflected;
         if (cue.excellent) return Mark::Excellent;
         if (cue.critical) return Mark::Critical;
-        if (cue.poison) return Mark::Poison;
         if (cue.magic) return Mark::Magic;
         return cue.skill != 0 ? Mark::Skill : Mark::Swing;
     };

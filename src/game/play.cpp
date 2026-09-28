@@ -455,6 +455,19 @@ void Play::update(double seconds) {
                         cue.token = hero->swingToken;
                         showing_.schedule(cue);
                     }
+                } else if (happening.what == sim::What::Hit && happening.poisoned &&
+                           happening.whom == heroId) {
+                    // A poison's pulse on him: the green number now, and no swing -- the spider
+                    // that bit him may be across the field or dead.
+                    Cue cue;
+                    cue.attacker = happening.who;
+                    cue.target = happening.whom;
+                    cue.damage = happening.a;
+                    cue.taken = taken;
+                    cue.poison = true;
+                    cue.thrown = true;
+                    cue.fuse = 0.0f;
+                    showing_.schedule(cue);
                 } else if (Drawn* swinger = drawnOf(happening.who)) {
                     // The pose is started once, by whichever half comes first: `Swung` for the
                     // player, the `Hit` itself for a monster.

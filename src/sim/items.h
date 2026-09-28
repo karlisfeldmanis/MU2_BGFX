@@ -118,6 +118,8 @@ bool restores(const content::ItemRow& row);
 // ABILITY_FAST_ATTACK_SPEED stands (Winmain.cpp:162). A second one replaces the first rather
 // than stacking (ApplyMagicEffectConsumeHandlerPlugIn disposes the effect of the same subtype).
 bool ale(const content::ItemRow& row);
+// The Antidote, group 14 number 8: it clears a poison and does nothing else.
+bool antidote(const content::ItemRow& row);
 constexpr int kAleSpeed = 20;
 constexpr int64_t kAleTicks = 80 * 20;
 // The Town Portal Scroll (14, 10): TownPortalScrollConsumeHandlerPlugIn, a warp to the map's

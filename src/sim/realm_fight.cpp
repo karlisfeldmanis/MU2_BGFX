@@ -91,6 +91,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         target.poisonDamage = std::max(1, blow.damage / 4);
         target.poisonBy = attacker.id;
     }
+    // A poisoner's bite on him: 0.75's poison, whose pulse is a share of what he has left
+    // (`poisonDamage` 0). A second bite replaces the first.
+    if (target.player && target.alive() && !attacker.player && poisons(attacker)) {
+        target.poisonUntil = tick_ + kHeroPoisonTicks;
+        target.poisonNext = tick_ + kPoisonEvery;
+        target.poisonDamage = 0;
+        target.poisonBy = attacker.id;
+    }
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent
     // back at whoever struck (Player.HitAsync's ReflectDamage). It takes no draw.
     if (target.player && target.alive() && !attacker.player && attacker.alive() &&
@@ -246,6 +254,15 @@ void Realm::arrive() {
     }
 }
 
+bool Realm::poisons(const Body& monster) const {
+    if (monster.kind < 0 || size_t(monster.kind) >= tables_->kinds.size()) return false;
+    const int32_t number = tables_->kinds[size_t(monster.kind)].number;
+    for (const int32_t one : kPoisoners) {
+        if (one == number) return true;
+    }
+    return false;
+}
+
 void Realm::poisonPulse(Body& beast) {
     if (beast.poisonUntil == 0 || tick_ < beast.poisonNext) return;
     if (beast.poisonNext > beast.poisonUntil || !beast.alive()) {
@@ -254,9 +271,13 @@ void Realm::poisonPulse(Body& beast) {
     }
     beast.poisonNext += kPoisonEvery;
     Body* by = body(beast.poisonBy);
-    if (by == nullptr) return;
+    if (by == nullptr) by = &beast;
+    // A quarter of the wizard's blow on a monster; on him, 0.75's share of what is left.
+    const int due = beast.poisonDamage > 0
+                        ? beast.poisonDamage
+                        : std::max(1, int(float(beast.health) * kHeroPoisonShare));
     // Never the last point: a poison leaves one health, and the kill is a blow's.
-    const int bite = std::min(beast.poisonDamage, beast.health - 1);
+    const int bite = std::min(due, beast.health - 1);
     if (bite <= 0) return;
     beast.health -= bite;
     say(What::Hit, *by, bite, bite, beast.health, beast.id);
@@ -325,6 +346,7 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.channelSkill = 0;
         dead.channelUntil = 0;
         dead.blinkAt = 0;
+        dead.poisonUntil = 0;
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = 1.0;

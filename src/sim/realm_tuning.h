@@ -171,4 +171,15 @@ constexpr float kWardenShare = 0.25f;
 // ticks. **invention**, for the picture: long enough to read the line he said.
 constexpr int kPointTicks = 60;
 
+// ---- the monsters whose blow poisons -----------------------------------------------------------
+// 0.75's own, by MU's number: the Dungeon's Poison Bull (8) and Larva (12) and Lost Tower's Poison
+// Shadow (39), each `AttackSkill = Poison` (Version075/Maps/Dungeon.cs:666, :791; LostTower.cs:834).
+// None of them is cooked yet. And Lorencia's Spider (3), which is ours: nothing in Lorencia poisons
+// in 0.75, and the user asked for a poisoner there so the Antidote has work (2026-09-28).
+constexpr int32_t kPoisoners[] = {3, 8, 12, 39};
+// A poison on him: 0.75's twenty seconds, a pulse every three at `PoisonDamageMultiplier` 0.03 of
+// the health left (Dungeon.cs:677), never the last point.
+constexpr int32_t kHeroPoisonTicks = 400;
+constexpr float kHeroPoisonShare = 0.03f;
+
 }  // namespace mu::sim

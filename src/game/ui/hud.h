@@ -135,13 +135,14 @@ public:
     struct Boon {
         int32_t skill = 0;    // MU's own number, 0 for nothing standing
         bool ale = false;     // or the Ale's, which is no skill
+        bool poison = false;  // or a poison on him, MU's eDeBuff_Poison
         float seconds = 0.0f; // what is left of it
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
-        bool empty() const { return skill == 0 && !ale; }
+        bool empty() const { return skill == 0 && !ale && !poison; }
         bool operator==(const Boon& o) const {
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
-            return skill == o.skill && ale == o.ale &&
+            return skill == o.skill && ale == o.ale && poison == o.poison &&
                    int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
     };

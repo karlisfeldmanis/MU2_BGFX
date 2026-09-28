@@ -189,6 +189,9 @@ bool restores(const content::ItemRow& row) {
 }
 
 bool ale(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 9; }
+bool antidote(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 8;
+}
 bool portal(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 10;
 }

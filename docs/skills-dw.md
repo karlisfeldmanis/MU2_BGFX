@@ -429,6 +429,16 @@ SOUND_HEART, and draws the body green, (0.3, 1, 0.5) -- (0.3, 1, 0.8) when it is
   Ice's frost is).
 - The card says Each body, Range 9, Area 4 tiles round its target, Poisons for 20 s, "a quarter of
   the blow every 3 s".
+- **And it poisons him** (the user, 2026-09-28, *"migrate also antidote potion"*): a bite from a
+  poisoner (`kPoisoners`, realm_tuning.h) poisons him for 0.75's twenty seconds, a pulse every three
+  at `PoisonDamageMultiplier` 0.03 of the health he has left, never the last point, green on him and
+  green in the number, with MU's poison cell (`buff_poison`) in the buff strip and its card. 0.75's
+  poisoners are the Dungeon's Poison Bull (8) and Larva (12) and Lost Tower's Poison Shadow (39),
+  none cooked yet; **Lorencia's Spider (3) poisons too, ours**, so the Antidote has work.
+- **The Antidote** (group 14 #8, Amy's, single and three) clears it: `AntidoteConsumeHandlerPlugIn`
+  disposes of the poison and does nothing else. With none on him it is refused and kept (ours).
+  `sim_test`: a level-1 knight among the spiders is bitten at tick 50, pulses at 3% of what he has,
+  is never killed by it, and one Antidote clears it with no pulse after.
 
 Measured in `sim_test`: a level-30 wizard hunting 6 000 ticks casts it 13 times, never inside the
 cooldown, poisons up to two bodies in one cast, and no pulse kills. Seen in the arena with

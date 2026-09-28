@@ -1,5 +1,7 @@
 #include "game/ui/desk.h"
 
+#include "sim/realm_tuning.h"
+
 #include <cstdio>
 
 #include "core/log.h"
@@ -762,6 +764,14 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.ale = true;
         boon.seconds = float(left) * 0.05f;
         boon.share = float(left) / float(sim::kAleTicks);
+    }
+    // And a poison on him, last: MU's debuff cell, and the reason to drink an Antidote.
+    if (hero.poisonUntil > realm.tick() && standing < Hud::kBoons) {
+        Hud::Boon& boon = boons[standing++];
+        boon.poison = true;
+        const float left = float(hero.poisonUntil - realm.tick());
+        boon.seconds = left * 0.05f;
+        boon.share = left / float(sim::kHeroPoisonTicks);
     }
     hud_.setBoons(boons, standing);
 

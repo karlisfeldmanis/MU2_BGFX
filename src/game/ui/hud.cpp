@@ -1,5 +1,7 @@
 #include "game/ui/hud.h"
 
+#include "sim/realm_tuning.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -616,7 +618,7 @@ std::string of(int now, int most) { return panel::grouped(now) + " / " + panel::
 tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     tip::Sheet sheet;
     sheet.wide = kCardWide;
-    const char* art = one.ale ? "buff_ale" : buffArt(one.skill);
+    const char* art = one.poison ? "buff_poison" : one.ale ? "buff_ale" : buffArt(one.skill);
     if (art != nullptr) {
         const gfx::Art& icon = arts.get(art);
         if (icon.valid()) {
@@ -627,6 +629,20 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     sheet.wear = sim::spoken(one.seconds) + " left";
     sheet.worn = std::clamp(one.share, 0.0f, 1.0f);
     sheet.wearTone = tip::Tone::White;
+    if (one.poison) {
+        // 0.75's poison on him: a share of what he has left every three seconds.
+        sheet.name = "Poisoned";
+        sheet.nameTone = tip::Tone::Green;
+        sheet.base = "POISON";
+        tip::Section what;
+        char share[32];
+        std::snprintf(share, sizeof share, "%d%% of health left",
+                      int(sim::kHeroPoisonShare * 100.0f + 0.5f));
+        what.rows.push_back(said("Every 3 s", share, tip::Tone::Red));
+        what.rows.push_back(prose("never the last point; an Antidote clears it"));
+        sheet.sections.push_back(what);
+        return sheet;
+    }
     if (one.ale) {
         // OpenMU's effect: the twenty on AttackSpeedAny, for eighty seconds.
         sheet.name = "Ale";
@@ -985,9 +1001,10 @@ void Hud::rebuild() {
         const Boon& one = boons_[i];
         if (one.empty()) continue;
         const Box box = plate(s, buffPx(i));
-        const char* art = one.ale ? "buff_ale"
-                          : buffArt(one.skill) ? buffArt(one.skill)
-                                               : "buff_defense";
+        const char* art = one.poison            ? "buff_poison"
+                          : one.ale              ? "buff_ale"
+                          : buffArt(one.skill)   ? buffArt(one.skill)
+                                                 : "buff_defense";
         const gfx::Art& icon = arts.get(art);
         canvas_.rect(box, kBuffBack);
         if (icon.valid()) canvas_.image(icon, box);

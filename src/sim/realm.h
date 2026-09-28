@@ -87,6 +87,7 @@ enum class What : uint8_t {
     Loosed,    // a spell let go at the bottom of its clip: a: its number, b: the ticks it
                // will be in the air, whom: at whom. The `Hit` follows when it arrives.
     Blinked,   // a Teleport put him down: a: the column, b: the row
+    Cured,     // an Antidote drunk: the poison on him is gone
     Shouted,   // a guard's line: a: a `Shout`, b and c: for a pointing, the tile he points the
                // hero to (-1 for nowhere), whom: the monster it is about. What is SAID is the
                // drawing's to choose; the realm only says that he spoke and why.
@@ -637,8 +638,10 @@ private:
     void arrive();
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
-    // A poisoned body's pulse, when it is due.
+    // A poisoned body's pulse, when it is due -- a monster's or the hero's.
     void poisonPulse(Body& beast);
+    // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).
+    bool poisons(const Body& monster) const;
     // Teleport: where a blink toward `column, row` lands -- pulled back to its reach, and off a
     // wall toward him -- or false when nowhere on the line will take him.
     bool blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,

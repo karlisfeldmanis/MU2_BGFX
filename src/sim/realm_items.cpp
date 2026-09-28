@@ -405,6 +405,19 @@ bool Realm::useItem(int slot) {
         return true;
     }
 
+    // ---- the Antidote: the poison on him is gone ------------------------------------------------
+    //
+    // AntidoteConsumeHandlerPlugIn: it looks up the poison among his effects and disposes of it,
+    // and nothing else. With no poison on him it is refused and kept -- ours; OpenMU would spend it
+    // on nothing.
+    if (antidote(row)) {
+        if (hero.poisonUntil <= tick_) return false;
+        hero.poisonUntil = 0;
+        spendOne();
+        say(What::Cured, hero);
+        return true;
+    }
+
     const bool mana = restores(row);
     if (!mana && !heals(row)) return false;
     // A yes that has not come round yet, not a no. MU2's Realm.Consume.
