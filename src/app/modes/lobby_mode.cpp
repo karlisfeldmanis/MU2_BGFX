@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "app/options.h"
 #include "app/preloader.h"
 #include "core/files.h"
 #include "core/log.h"
@@ -209,20 +210,9 @@ bool LobbyMode::open(Context& ctx) {
     // sheet's dust, tuned for Lorencia's street, fogs the gate behind the pedestals.
     ctx.time.setScene(core::join(ctx.paths.sheets, "lobby.json"));
 
-    // The sheet's options, filled from the window as the game's are; nothing on this screen
-    // changes the display, and Switch Character has nowhere to go from here.
-    {
-        game::Menu::Settings& set = menu_.settings();
-        set.fullscreen = ctx.window.fullscreen();
-        set.vsync = ctx.window.vsync();
-        set.fps = args.fps;
-        int dw = 0, dh = 0, ww = 0, wh = 0;
-        ctx.window.displaySize(&dw, &dh);
-        ctx.window.windowSize(&ww, &wh);
-        set.display = {dw, dh};
-        set.sizes = {{ww, wh}};
-        set.size = 0;
-    }
+    // The sheet's options, filled from the window as the game's are (app/options.h); Switch
+    // Character has nowhere to go from here.
+    fillSettings(ctx.window, args.fps, &menu_.settings());
     menu_.allowSwitch(false);
     // Escape is the screen's: it shuts a window, then raises the menu, whose Exit quits. A
     // --frames review keeps it as the quit it always was.
@@ -287,6 +277,14 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
     pointer.pressed = ctx.window.clicked(0);
     pointer.released = ctx.window.released(0);
     pointer.held = ctx.window.held(0);
+    // --ui-click on this screen too, so its buttons and its menu can be reviewed without a
+    // hand: pressed and let go on the frame asked for, where it is asked.
+    for (const core::Args::UiClick& c : args.uiClicks) {
+        if (at.index != c.frame || c.right) continue;
+        pointer.x = px = c.x * w;
+        pointer.y = py = c.y * h;
+        pointer.pressed = pointer.released = pointer.held = true;
+    }
     game::panel::setScreen(h);
 
     const auto play = [&](int handle) {
@@ -302,8 +300,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         if (asked.quit) quitting_ = true;
         if (asked.settings) {
             const game::Menu::Settings& set = menu_.settings();
-            if (ctx.window.fullscreen() != set.fullscreen) ctx.window.setFullscreen(set.fullscreen);
-            if (ctx.window.vsync() != set.vsync) ctx.window.setVsync(set.vsync);
+            applySettings(ctx.window, set);
             args.fps = set.fps;
             sound_.setVolume(float(set.volume) / 100.0f);
         }

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 
+#include "app/options.h"
 #include "app/preloader.h"
 #include "core/files.h"
 #include "core/log.h"
@@ -18,40 +19,6 @@
 #include "sim/market.h"
 
 namespace mu::app {
-
-namespace {
-
-// The game menu's Options, filled from what the window is now. The sizes a window may take are
-// the common 16:9 ones that fit the display, and the window's own size among them whatever it
-// is, so the row opens on the truth.
-void fillSettings(const gfx::Window& window, bool fps, game::Menu::Settings* set) {
-    set->fullscreen = window.fullscreen();
-    set->vsync = window.vsync();
-    set->fps = fps;
-    int dw = 0, dh = 0;
-    window.displaySize(&dw, &dh);
-    set->display = {dw, dh};
-    int ww = 0, wh = 0;
-    window.windowSize(&ww, &wh);
-    const std::pair<int, int> common[] = {{1280, 720}, {1600, 900}, {1920, 1080},
-                                          {2560, 1440}, {3200, 1800}, {3840, 2160}};
-    set->sizes.clear();
-    for (const auto& one : common) {
-        if (dw <= 0 || (one.first <= dw && one.second <= dh)) set->sizes.push_back(one);
-    }
-    const std::pair<int, int> now{ww, wh};
-    if (!set->fullscreen && ww > 0 &&
-        std::find(set->sizes.begin(), set->sizes.end(), now) == set->sizes.end()) {
-        set->sizes.push_back(now);
-        std::sort(set->sizes.begin(), set->sizes.end());
-    }
-    set->size = 0;
-    for (size_t i = 0; i < set->sizes.size(); ++i) {
-        if (set->sizes[i] == now) set->size = int(i);
-    }
-}
-
-}  // namespace
 
 void PlayMode::readSave(Context& ctx) {
     core::Args& args = ctx.args;
@@ -563,16 +530,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // arguments. The window's new size reaches the renderer on the next pump.
             if (desk_.settingsChanged()) {
                 const game::Menu::Settings& set = desk_.settings();
-                ctx.window.setFullscreen(set.fullscreen);
-                if (!set.fullscreen && !set.sizes.empty()) {
-                    const auto& wh = set.sizes[size_t(set.size)];
-                    int ww = 0, wh0 = 0;
-                    ctx.window.windowSize(&ww, &wh0);
-                    if (ww != wh.first || wh0 != wh.second) {
-                        ctx.window.setWindowSize(wh.first, wh.second);
-                    }
-                }
-                if (ctx.window.vsync() != set.vsync) ctx.window.setVsync(set.vsync);
+                applySettings(ctx.window, set);
                 args.fps = set.fps;
                 world_.played().sound().setVolume(float(set.volume) / 100.0f);
             }
