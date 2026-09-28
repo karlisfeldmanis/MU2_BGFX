@@ -14,6 +14,7 @@
 #include "game/ui/amount.h"
 #include "game/ui/arrival.h"
 #include "game/ui/bag.h"
+#include "game/ui/beacon.h"
 #include "game/ui/card.h"
 #include "game/ui/chest.h"
 #include "game/ui/endurance.h"
@@ -173,6 +174,7 @@ private:
     Cursor cursor_;
     Vitals vitals_;
     Speech speech_;
+    Beacon beacon_;
     Tally tally_;
     Arrival arrival_;
     ItemModels* models_ = nullptr;

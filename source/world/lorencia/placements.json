@@ -377,13 +377,13 @@
       "model": "Marlon",
       "who": "Marlon",
       "tile": [
-        136,
-        88
+        130,
+        127
       ],
-      "facing": 2,
-      "idle": "action7",
-      "idle_why": "outside the safe zone",
-      "ours": "the quest giver; OpenMU Season Six's Lorencia spawn, not Version075's"
+      "facing": 5,
+      "idle": "action1",
+      "idle_why": "inside the safe zone",
+      "ours": "the quest giver, on the square where the user put him; MU has no Marlon in Lorencia's 0.75"
     }
   ],
   "spawns_from": [

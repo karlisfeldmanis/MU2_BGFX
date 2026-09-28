@@ -319,6 +319,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // increasing). Read literally, as this first was, every townsperson stood turned away:
     // Lumen faced the back wall of her bar instead of the room.
     folk_.clear();
+    questGivers_.clear();
+    for (size_t i = 0; i < tables_.folk.size(); ++i) {
+        if (tables_.folk[i].number == kQuestGiver) questGivers_.push_back(int(i));
+    }
     const float metresPerTile = ground_ ? ground_->metresPerTile() : 1.0f;
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
         const content::Townsperson& person = tables_.folk[i];

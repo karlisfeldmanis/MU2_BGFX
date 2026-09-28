@@ -251,6 +251,11 @@ public:
                      float* y) const;
     // The body a townsperson is in the realm -- a guard's -- or 0 for one who stands still.
     uint32_t wardenBody(int folk) const;
+    // The townsfolk with a quest to give, by the tables' folk index: the ones the quest marker
+    // floats over. Marlon, today -- MuMain's MONSTER_MARLON, the one NPC its interface opens the
+    // quest dialogue for. Whether he still has one to give is the quest's to say when it lands.
+    static constexpr int32_t kQuestGiver = 229;
+    const std::vector<int>& questGivers() const { return questGivers_; }
 
     // What the guards are saying: who, the line, and how long it has been up, in seconds. Put
     // up by a `Shouted`, newest last, one line a speaker (a new one replaces his last), and
@@ -734,6 +739,7 @@ private:
     // MU2's Scenery.Next, which generalised it past two alternates.
     static int fidget(Standing& one);
     std::vector<Standing> folk_;
+    std::vector<int> questGivers_;
     int pointedFolk_ = -1;
     std::vector<Said> said_;
     // A guard's `Shouted` put into words and up over his head. See Play::said.

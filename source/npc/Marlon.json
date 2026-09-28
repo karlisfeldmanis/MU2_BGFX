@@ -18,8 +18,8 @@
   "parts_from": "ZzzCharacter.cpp, case MONSTER_MARLON: BODYPART_HELM/ARMOR/PANTS/GLOVES/BOOTS all MODEL_PLATE_*, each at Level 7, then SetCharacterScale.",
   "right_hand_from": "The same case, c->Weapon[0].Type = MODEL_BERDYSH at Level 8, and Weapon[1] empty.",
   "plus_from": "The Levels in that case. +7 and +8 both land on RenderPartObjectBodyColor's first refined tier, TIER_CHROME_1 (ZzzObject.cpp:10365): the body at 0.8 and one bright chrome pass over it.",
-  "idle": "action7",
-  "idle_from": "SetPlayerStop, as for the Berdysh Guard: he stands on 136,88, outside the safe zone (attributes.png reads 0 there), holding a two-handed spear-group weapon that is neither the Spear nor the Dragon Lance, so PLAYER_STOP_SCYTHE, action 7.",
-  "wandering_note": "OpenMU spawns him Wandering: one of four spots at a time - Lorencia 136,88, Devias, Noria, Atlans - moved every 60 to 180 minutes (WanderingMerchantsPlugIn). He never walks. Lorencia is the scope, so here he simply stays.",
+  "idle": "action1",
+  "idle_from": "SetPlayerStop, as for the Berdysh Guard at 131,148: he stands on 130,127 on the town square, inside the safe zone (attributes.png reads 0x0001 there), and the first branch `(no weapon) || (SafeZone && !BloodCastle)` lands on PLAYER_STOP_MALE, action 1 - with the Berdysh slung on his back by the same tile bit (RenderCharacterBackItem).",
+  "place_note": "The user put him on the square at 130,127, facing due east, square out from the wall at his back rather than on the diagonal (2026-09-28) - beside where OpenMU Season Six stands its Elf Soldier (130,128). OpenMU's own Marlon spawns Wandering from 136,88 by the north bridge: one of four spots at a time - Lorencia, Devias, Noria, Atlans - moved every 60 to 180 minutes (WanderingMerchantsPlugIn). He never walks. Lorencia is the scope, so here he simply stays.",
   "playable": false
 }

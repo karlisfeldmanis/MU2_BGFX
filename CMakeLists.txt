@@ -116,6 +116,7 @@ add_executable(mu2
   src/game/world/world.cpp
   src/game/world/maps.cpp
   src/game/world/weather.cpp
+  src/game/world/portal.cpp
   src/game/world/town.cpp
   src/game/world/grass.cpp
   src/game/world/lamps.cpp
@@ -179,6 +180,7 @@ add_executable(mu2
   src/game/ui/tally.cpp
   src/game/ui/vitals.cpp
   src/game/ui/speech.cpp
+  src/game/ui/beacon.cpp
   src/game/ui/controls.cpp
   src/game/ui/specimen.cpp
   src/game/ui/items_stage.cpp

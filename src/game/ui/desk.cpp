@@ -69,6 +69,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
     speech_.open(interface_);
+    beacon_.open(interface_);
     tally_.open(interface_);
     arrival_.open(interface_);
     // The Sanctuary controls' faces and stone, which every window's frame is drawn with.
@@ -88,6 +89,7 @@ void Desk::shutdown() {
     tipStagePicture_.shutdown();
     arrival_.shutdown();
     tally_.shutdown();
+    beacon_.close();
     interface_.shutdown();
 }
 
@@ -1110,9 +1112,11 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
         vitals_.dismiss();
         tally_.dismiss();
         speech_.dismiss();
+        beacon_.dismiss();
         return;
     }
     speech_.update(play, viewProj, width, height);
+    beacon_.update(seconds, play, viewProj, width, height);
     vitals_.update(seconds, play, play.pointedAt(), play.pointedFolk(), takesPointer_, viewProj,
                    width, height);
     // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
@@ -1136,6 +1140,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.begin(width, height);
     interface_.add(ground_);
     // Over the world's labels and under every window: it is a reading lying on the scene.
+    // The quest marker under the names and bars, which are read at the moment of pointing.
+    if (beacon_.showing()) interface_.add(beacon_.canvas());
     if (vitals_.showing()) interface_.add(vitals_.canvas());
     // What the guards are saying, over the bars and names and under every window.
     if (speech_.showing()) interface_.add(speech_.canvas());

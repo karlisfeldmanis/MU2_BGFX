@@ -1721,10 +1721,10 @@ FOLK_VERSION075 = {
         (253, "Potion Girl Amy", "PotionGirlAmy", 127, 86, 3),
         (254, "Pasi The Mage", "", 118, 113, 4),
         (255, "Lumen the Barmaid", "LumentheBarmaid", 123, 135, 2),
-        # Ours, not Version075's: the quest giver. MuMain's MONSTER_MARLON, at OpenMU Season
-        # Six's Lorencia spawn (VersionSeasonSix/Maps/Lorencia.cs:41). There he wanders
-        # between four maps; Lorencia is the scope, so here he stays.
-        (229, "Marlon", "Marlon", 136, 88, 2),
+        # Ours, not Version075's: the quest giver, MuMain's MONSTER_MARLON, on the town square
+        # where the user placed him (2026-09-28), square to the wall at his back -- OpenMU Season Six has him wandering from
+        # 136,88 by the north bridge. Lorencia is the scope, so here he stays.
+        (229, "Marlon", "Marlon", 130, 127, 5),
     ],
     3: [  # Noria
         (253, "Potion Girl Amy", "PotionGirlAmy", 169, 109, 4),
