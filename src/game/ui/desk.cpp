@@ -297,10 +297,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (trading_) {
         int buy = -1;
         bool close = false;
+        bool undo = false;
         ShelfMending mend;
         shelf_.setMending(mending_);
         shelf_.update(float(window.width()), float(window.height()), 2, play.realm(), pointer,
-                      shelfStage_, &buy, &close, &mend);
+                      shelfStage_, &buy, &close, &mend, &undo);
         // A purchase that goes through is heard as its coins, off the realm's Bought; one
         // refused is the interface's no.
         if (buy >= 0 && !play.buy(buy)) refused();
@@ -309,6 +310,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             click();
         }
         if (mend.all && !play.repairAll()) refused();
+        if (undo && !play.buyBack()) refused();
         if (close) {
             play.closeTrade();
             click();

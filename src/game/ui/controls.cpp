@@ -359,6 +359,25 @@ void glyph(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float
             }
             break;
         }
+        case Glyph::Undo: {
+            // An arrow turning back on itself: most of a ring open at the lower left, and the
+            // head at its upper-left end pointing back the way it came.
+            const float r = s * 0.17f, w = std::max(1.0f, 1.2f * u);
+            constexpr int kSteps = 18;
+            const float from = -2.2f, to = 2.4f;  // radians, clockwise from the head
+            for (int i = 0; i < kSteps; ++i) {
+                const float a = from + (to - from) * float(i) / float(kSteps);
+                const float b = from + (to - from) * float(i + 1) / float(kSteps);
+                bar(canvas, cx + std::cos(a) * r, cy + std::sin(a) * r, cx + std::cos(b) * r,
+                    cy + std::sin(b) * r, w * 0.5f + t * 0.3f, ink);
+            }
+            const float hx = cx + std::cos(from) * r, hy = cy + std::sin(from) * r;
+            const float a = s * 0.11f;
+            // Travel at the head runs down and to the left, into the gap; the barbs trail it.
+            bar(canvas, hx, hy, hx + a, hy + a * 0.07f, t, ink);
+            bar(canvas, hx, hy, hx + a * 0.24f, hy - a * 0.97f, t, ink);
+            break;
+        }
     }
 }
 

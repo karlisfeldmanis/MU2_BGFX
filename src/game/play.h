@@ -174,6 +174,8 @@ public:
     // away. Each the realm's to refuse.
     bool buy(int shelfSlot);
     bool sell(int bagSlot);
+    // The shelf's undo: the newest sale taken back at what it fetched (Realm::buyBack).
+    bool buyBack();
     // A mending counter's two: one thing by its slot, worn or in the bag, and everything.
     // Heard as MU's SOUND_REPAIR when the realm takes the Zen.
     bool repair(int slot);

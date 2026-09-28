@@ -274,6 +274,15 @@ bool Play::buy(int shelfSlot) {
     return slot >= 0;
 }
 
+bool Play::buyBack() {
+    const int slot = realm_.buyBack();
+    core::logf("window: buy back %s (slot %d, %lld Zen left)", slot >= 0 ? "taken" : "refused",
+               slot, (long long)realm_.money());
+    // The purchase's pickup: the thing is arriving in the bag again.
+    if (slot >= 0) sound_.play(heard_.take);
+    return slot >= 0;
+}
+
 bool Play::sell(int bagSlot) {
     const int64_t paid = realm_.sellItem(bagSlot);
     core::logf("window: sell slot %d %s (%lld paid, %lld Zen now)", bagSlot,

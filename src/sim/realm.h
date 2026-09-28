@@ -466,6 +466,22 @@ public:
     // Sells a carried thing to the open shop: bag slots only, never what is worn. What was
     // paid, or -1 refused. Realm.Sell.
     int64_t sellItem(int slot);
+    // The undo on a sale, and no rule of MU's (the user's, 2026-09-28): the last few sales stay
+    // at the counter for `kBuybackSeconds`, and one bought back costs exactly what it fetched.
+    // Newest first, at any merchant, while a counter is open and he is in reach of it.
+    struct Sale {
+        Held what;
+        int64_t paid = 0;
+        int slot = -1;     // the bag slot it left, which it goes back to when that is free
+        int64_t at = 0;    // the tick it was sold on
+    };
+    static constexpr int kBuybackSeconds = 60;
+    static constexpr int kBuybacks = 5;
+    // The newest sale still in its window, or nullptr. Ticks left beside it, if asked.
+    const Sale* lastSale(int64_t* ticksLeft = nullptr) const;
+    // Takes the newest sale back: paid for, then put where it was or the first place it fits.
+    // The bag slot, or -1 refused (nothing to undo, no counter, no room, no Zen).
+    int buyBack();
     // What `sellItem` would pay for the thing in this slot at any counter, or -1 when it cannot
     // be sold at all: a worn slot, an empty one, or a thing worth nothing. The item card's.
     int64_t sellValue(int slot) const;
@@ -692,6 +708,7 @@ private:
     int32_t wearItem_[kWorn] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     int64_t money_ = 0;
     int trading_ = -1;
+    std::vector<Sale> sold_;  // oldest first, at most kBuybacks
     int banking_ = -1;
     Vault vault_;
     bool banked() const { return banking_ >= 0 && serving(banking_); }

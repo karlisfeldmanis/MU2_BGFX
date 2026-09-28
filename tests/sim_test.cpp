@@ -1372,6 +1372,22 @@ void testSkills(const content::Tables& tables) {
         check(at >= 0, "a second orb of something he knows is sold to him");
         check(!realm.useItem(at), "and reading it again is refused");
         check(!realm.satchel()[at].empty(), "so it is still in his bag to be sold");
+
+        // The undo on a sale (the user's, 2026-09-28): taken back at what it fetched, into
+        // the slot it left, and only for kBuybackSeconds.
+        const int32_t orb = realm.satchel()[at].item;
+        const int64_t purse = realm.money();
+        const int64_t paid = realm.sellItem(at);
+        check(paid > 0 && realm.satchel()[at].empty(), "the spare orb sells");
+        check(realm.lastSale() != nullptr, "and the sale can be undone");
+        checkEqual(realm.buyBack(), at, "bought back into the slot it left");
+        checkEqual((long long)realm.money(), (long long)purse, "for exactly what it fetched");
+        checkEqual(realm.satchel()[at].item, orb, "and it is the same orb");
+        check(realm.buyBack() < 0, "a second undo has nothing to take back");
+        realm.sellItem(at);
+        for (int t = 0; t < sim::Realm::kBuybackSeconds * 20; ++t) realm.step();
+        check(realm.lastSale() == nullptr && realm.buyBack() < 0,
+              "and past its window a sale is final");
     }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
 

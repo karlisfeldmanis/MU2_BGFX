@@ -785,8 +785,43 @@ int64_t Realm::sellItem(int slot) {
     const int64_t paid = std::max<int64_t>(0, sellValue(slot));
     bag_.lift(slot);
     money_ += paid;
+    if (int(sold_.size()) >= kBuybacks) sold_.erase(sold_.begin());
+    sold_.push_back({thing, paid, slot, tick_});
     say(What::Sold, bodies_[0], thing.item, int32_t(paid), slot);
     return paid;
+}
+
+const Realm::Sale* Realm::lastSale(int64_t* ticksLeft) const {
+    if (sold_.empty()) return nullptr;
+    const Sale& last = sold_.back();
+    const int64_t left = last.at + int64_t(kBuybackSeconds) * 20 - tick_;
+    if (left <= 0) return nullptr;
+    if (ticksLeft) *ticksLeft = left;
+    return &last;
+}
+
+int Realm::buyBack() {
+    if (trading_ < 0 || !serving(trading_)) return -1;
+    // Anything older than the newest is older still, so a lapsed newest empties the list.
+    const Sale* last = lastSale();
+    if (!last) {
+        sold_.clear();
+        return -1;
+    }
+    if (money_ < last->paid) return -1;
+    const content::ItemRow& row = tables_->items[size_t(last->what.item)];
+    int slot = -1;
+    if (baggable(last->slot) && bag_.room(*tables_, last->slot, row.width, row.height)) {
+        bag_.put(last->slot, last->what);
+        slot = last->slot;
+    } else {
+        slot = pour(*tables_, bag_, kWorn, kSlots, last->what);
+    }
+    if (slot < 0) return -1;
+    money_ -= last->paid;
+    say(What::Bought, bodies_[0], last->what.item, int32_t(last->paid), slot);
+    sold_.pop_back();
+    return slot;
 }
 
 // ---- wear -----------------------------------------------------------------------------------

@@ -73,7 +73,7 @@ void kicker(gfx::Canvas& canvas, float x, float baseline, const std::string& tex
 void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, Kind kind,
             const State& state, float u, float wordSize = 0.0f);
 
-enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers };
+enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers, Undo };
 // A small square button (close, spend) or an icon square (the coins, the hammers). `red` is the
 // spend's look; `on` is a toggle held down, the repair mode.
 void square(gfx::Canvas& canvas, const gfx::Box& box, Glyph glyph, const State& state, float u,

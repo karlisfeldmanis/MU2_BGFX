@@ -52,7 +52,9 @@ bool Shelf::Drawn::operator==(const Drawn& o) const {
            strength == o.strength && agility == o.agility && vitality == o.vitality &&
            energy == o.energy && money == o.money && version == o.version &&
            picture == o.picture && mendingOn == o.mendingOn && overHammer == o.overHammer &&
-           pressedHammer == o.pressedHammer && mendAll == o.mendAll;
+           pressedHammer == o.pressedHammer && mendAll == o.mendAll && undoItem == o.undoItem &&
+           undoSeconds == o.undoSeconds && overUndo == o.overUndo &&
+           pressingUndo == o.pressingUndo;
 }
 
 void Shelf::open(const gfx::Interface& interface, panel::Arts* arts) {
@@ -117,7 +119,7 @@ int Shelf::lineAt(const content::Tables& tables, float ux, float uy) const {
 
 void Shelf::update(float width, float height, int column, const sim::Realm& realm,
                    const Pointer& pointer, Stage* stage, int* buy, bool* close,
-                   ShelfMending* mend) {
+                   ShelfMending* mend, bool* undo) {
     const int trading = realm.trading();
     up_ = trading >= 0 && realm.tables();
     if (!up_) {
@@ -138,6 +140,10 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
 
     const Box cross = panel::frameClose();
     overClose_ = inside && cross.has(ux, uy);
+    int64_t undoLeft = 0;
+    const sim::Realm::Sale* sale = realm.lastSale(&undoLeft);
+    undoable_ = sale != nullptr;
+    overUndo_ = undoable_ && inside && panel::headSocket(false).has(ux, uy);
     overHammer_ = -1;
     for (int i = 0; mends_ && inside && i < 2; ++i) {
         if (kHammers[i].has(ux, uy)) overHammer_ = i;
@@ -146,6 +152,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
         if (cross.has(ux, uy)) closing_ = true;
         pressing_ = hovered_ >= 0;
         pressedHammer_ = overHammer_;
+        pressingUndo_ = overUndo_;
     }
     // Bought on release, not on press -- CNewUINPCShop tests IsRelease(VK_LBUTTON) before it
     // sends, so sliding off an item you did not mean to buy costs nothing. The hammers the same.
@@ -156,9 +163,11 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
             if (pressedHammer_ == 0) mend->toggle = true;
             else mend->all = true;
         }
+        if (undo && pressingUndo_ && overUndo_) *undo = true;
         closing_ = false;
         pressing_ = false;
         pressedHammer_ = -1;
+        pressingUndo_ = false;
     }
 
     standing_.clear();
@@ -196,6 +205,11 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     // RepairAllGold, re-reckoned every frame as CNewUINPCShop::Update does: it moves with the
     // purse's colour and with every point a fight takes off the gear.
     now_.mendAll = mends_ ? realm.repairAllCost() : -1;
+    now_.undoItem = sale ? sale->what.item : -1;
+    // Rounded up, so the hint never reads 0s while the arrow is still there.
+    now_.undoSeconds = sale ? int((undoLeft + 19) / 20) : -1;
+    now_.overUndo = overUndo_;
+    now_.pressingUndo = pressingUndo_;
     if (now_ == drawn_ && rebuilds_ > 0) return;
     drawn_ = now_;
     rebuild(realm, stage);
@@ -257,6 +271,29 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
                     sheet::Cell::Over);
     }
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
+    // The undo, the X's mirror in the head's left socket, and only while there is a sale to take
+    // back. The hint says what and for how long, and what it costs.
+    if (undoable_) {
+        const float u = tip::unit();
+        const Box socket = panel::scaled(x, y, panel::headSocket(false));
+        const float s = std::round(std::min(style::kSmallSquare * u, socket.h));
+        const Box at{std::round(socket.x), std::round(socket.midY() - s * 0.5f), s, s};
+        controls::State state;
+        state.lift = overUndo_ ? 1.0f : 0.0f;
+        state.held = pressingUndo_;
+        controls::square(canvas_, at, controls::Glyph::Undo, state, u);
+        if (overUndo_) {
+            if (const sim::Realm::Sale* sale = realm.lastSale()) {
+                // Under the head and across the window's middle, on the tooltip layer: over the
+                // head it would leave the screen's top, and the shelf's pictures draw after this.
+                controls::hint(tip_, x + panel::kWidth * k * 0.5f, at.bottom() + 30.0f * u,
+                               "Buy back " + tables.items[size_t(sale->what.item)].label + " for " +
+                                   panel::commas(sale->paid) + " Zen (" +
+                                   std::to_string(now_.undoSeconds) + "s)",
+                               u);
+            }
+        }
+    }
 
     const gfx::Art picture = stage ? stage->picture() : gfx::Art{};
     if (picture.valid()) {
