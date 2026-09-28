@@ -147,12 +147,14 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
         const float away = reach(body.x, body.y, drawn->figure);
         if (away < closest) {
             closest = away;
-            pointedAt_ = body.id;
+            // A guard is pointed at as the townsperson he is: his name, and no bar or attack.
+            pointedAt_ = body.warden >= 0 ? 0 : body.id;
+            pointedFolk_ = body.warden;
         }
     }
     // What lies on the ground, only where nothing living is closer: a click on a drop next
     // to a monster is a click on the monster, as MU's own picking orders it.
-    if (pointedAt_ == 0) {
+    if (pointedAt_ == 0 && pointedFolk_ < 0) {
         float nearest = 0.8f;
         for (const sim::Lying& one : realm_.lying()) {
             if (std::find(heldIds_.begin(), heldIds_.end(), one.id) != heldIds_.end()) continue;
@@ -284,7 +286,7 @@ void Play::leftClick() {
 void Play::fight(uint32_t id) {
     if (!isOpen()) return;
     const sim::Body* target = realm_.find(id);
-    if (!target || !target->alive() || target->player) return;
+    if (!target || !target->alive() || !target->monster()) return;
     sim::Request request;
     request.kind = sim::Request::Kind::Attack;
     request.target = id;
@@ -315,7 +317,7 @@ void Play::rightClick() {
     // thrown (Realm::press). The left button's attack is the weapon alone. The user, 2026-09-28,
     // the same for every class; with nothing in the slot it is the left button's attack.
     const sim::Body* at = pointedAt_ != 0 ? realm_.find(pointedAt_) : nullptr;
-    if (at != nullptr && at->alive() && !at->player) {
+    if (at != nullptr && at->alive() && at->monster()) {
         request.kind = sim::Request::Kind::Attack;
         request.target = pointedAt_;
         request.skill = quickSkill_;
@@ -413,6 +415,7 @@ bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, fl
 bool Play::folkCrownOf(int folk, const float* viewProj, int width, int height, float* x,
                        float* y) const {
     if (!ground_ || folk < 0) return false;
+    if (const uint32_t guard = wardenBody(folk)) return crownOf(guard, viewProj, width, height, x, y);
     for (const Standing& one : folk_) {
         if (one.folk != folk || !one.figure.body()) continue;
         const float* at = one.figure.position();

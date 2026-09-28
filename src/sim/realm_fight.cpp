@@ -19,8 +19,10 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                      bool thrown, bool pays) {
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
     // A spell rolls the wizardry sum, off energy and the staff; everything else is a swing's.
-    Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats, row->damage, dice_)
-                                     : strike(attacker.stats, target.stats, dice_);
+    // A guard's fight, either way round, rolls off his own stream (`wardenDice_`).
+    Random& dice = attacker.warden >= 0 || target.warden >= 0 ? wardenDice_ : dice_;
+    Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats, row->damage, dice)
+                                     : strike(attacker.stats, target.stats, dice);
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
@@ -42,6 +44,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         wound = blow.damage - onto + std::max(0, over);
     }
     target.health = std::max(0, target.health - wound);
+    // A guard is not killed: ten thousand health against Lorencia's blows is never reached, and
+    // this is the floor that says so rather than a guard lying dead at the gate. invention.
+    if (target.warden >= 0) target.health = std::max(1, target.health);
+    // The hero's hand on a monster, which is what a guard asks after when it dies.
+    if (attacker.player && target.monster() && wound > 0) target.heroStruck = true;
     // And what it cost the gear, on the health it took and nothing else: a blow the shield
     // soaked whole wears nothing, as a miss wears nothing (OpenMU reads HitInfo.HealthDamage).
     if (wound > 0) {
@@ -238,7 +245,7 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
     float off[kVictims] = {};
     int found = 0;
     for (const Body& one : bodies_) {
-        if (one.player || !one.alive()) continue;
+        if (!one.monster() || !one.alive()) continue;
         if (tables_->grid.safe(one.column(), one.row())) continue;
         const float gap = std::hypot(one.x - cx, one.y - cy);
         if (gap > row.splash || found >= kVictims) continue;
@@ -317,6 +324,22 @@ void Realm::kill(Body& dead, Body& killer) {
         if (one.quarry == dead.id) {
             one.quarry = 0;
             one.provoked = false;
+        }
+    }
+    // **A guard's kill the hero had a hand in is the hero's kill**: its drop and its experience
+    // go to him, as if his own blow had been the last. One the guard took alone gives nothing,
+    // which is what keeps a hero from standing at the gate while the guards farm for him.
+    // invention, with the guards themselves.
+    Body& hero = bodies_[0];
+    const bool helped = dead.heroStruck && hero.alive();
+    if (killer.warden >= 0 && helped) {
+        leave(dead, hero);
+        gain(hero, int32_t(killExperience(dead.level, hero.level) * kExperienceRate));
+    }
+    // And the guard who fought it points him on to the rest, whoever landed the last blow.
+    if (helped && dead.guardedBy != 0) {
+        if (Body* guard = body(dead.guardedBy); guard != nullptr && guard->warden >= 0) {
+            pointOn(*guard, dead);
         }
     }
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
@@ -435,6 +458,8 @@ void Realm::raiseBeast(Body& beast) {
     beast.temper = Temper::Asleep;
     beast.quarry = 0;
     beast.provoked = false;
+    beast.guardedBy = 0;
+    beast.heroStruck = false;
     beast.walking = false;
     beast.route.clear();
     beast.onStep = 0;

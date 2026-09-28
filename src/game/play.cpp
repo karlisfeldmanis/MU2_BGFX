@@ -233,7 +233,13 @@ void Play::update(double seconds) {
                 if (Drawn* dead = drawnOf(happening.who)) dead->fallOwed = true;
                 // The experience, and so the level, is said after the death on the same tick:
                 // the kill is what the level waits to be shown on.
-                if (happening.whom == heroId) levelOn_ = happening.who;
+                // A guard's kill the hero helped with is his too, level and all (Realm::kill).
+                const sim::Body* killer = realm_.find(happening.whom);
+                if (happening.whom == heroId || (killer && killer->warden >= 0)) {
+                    levelOn_ = happening.who;
+                }
+            } else if (happening.what == sim::What::Shouted) {
+                speak(happening);
             } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
                 levelOwed_ = true;
             } else if (happening.what == sim::What::Rose) {
@@ -860,14 +866,97 @@ void Play::update(double seconds) {
     warp_.update(float(seconds));
     // And the guard walks with him, or goes when the realm says it has gone.
     if (isOpen()) guardStep();
+    // What the town's guards said, aged and taken down.
+    for (Said& one : said_) one.age += float(seconds);
+    said_.erase(std::remove_if(said_.begin(), said_.end(),
+                               [](const Said& one) { return one.age >= kSaidSeconds; }),
+                said_.end());
 }
 
 std::string Play::nameOf(uint32_t id) const {
     const sim::Body* one = realm_.find(id);
     if (!one) return "nobody";
     if (one->player) return "the hero";
+    if (one->warden >= 0) return tables_.folk[size_t(one->warden)].name + "#" + std::to_string(id);
     if (one->kind < 0 || size_t(one->kind) >= tables_.kinds.size()) return "a monster";
     return tables_.kinds[size_t(one->kind)].label + "#" + std::to_string(id);
+}
+
+uint32_t Play::wardenBody(int folk) const {
+    if (folk < 0) return 0;
+    for (const sim::Body& one : realm_.bodies()) {
+        if (one.warden == folk) return one.id;
+    }
+    return 0;
+}
+
+// The guard's words: a challenge that names what he has seen, or, after a kill the hero shared,
+// where the rest of them are. The user's (2026-09-28) -- MU's guards say nothing -- and a
+// challenge is chosen by the breed's label, so a
+// breed another map adds falls through to the plain ones rather than to silence. Which of a
+// breed's lines is said is off the monster's id and the tick: steady for a replayed seed, and
+// not the same line twice in a row at one gate.
+void Play::speak(const sim::Happening& happening) {
+    struct Lines {
+        const char* breed;  // a piece of the label, lowered
+        const char* lines[3];
+    };
+    static const Lines kChallenges[] = {
+        {"spider", {"Get over here, you eight-legged bastard!", "Filthy crawler! Come here!",
+                    "Back to your webs, vermin!"}},
+        {"dragon", {"Come here, you scaly bastard!", "Keep your fire off our walls, lizard!",
+                    "Budge, is it? Budge this!"}},
+        {"bull", {"Come here, you bull-headed bastard!", "Horns down, beast!",
+                  "Charge me, then! Come on!"}},
+        {"hound", {"Here, dog! Come and get it!", "Heel, you mangy cur!",
+                   "Come here, you flea-bitten bastard!"}},
+        {"lich", {"Back to the grave, dead thing!", "Come here, you rotten bastard!",
+                  "Keep your spells out of Lorencia!"}},
+        {"giant", {"Come here, you great lump!", "The bigger they are...!",
+                   "Not one more step, giant!"}},
+        {"skeleton", {"Come here, you bony bastard!", "Back to the grave, bag of bones!",
+                      "I'll rattle you apart!"}},
+    };
+    static const char* const kPlain[] = {"Come here, bastard!", "Not past this gate!",
+                                         "To arms! Monster at the gate!"};
+
+    const uint32_t pick = happening.whom + happening.tick;
+    std::string line;
+    if (happening.a == int32_t(sim::Shout::Pointing)) {
+        // Where the rest of them are, as he turns to look -- and nothing when there are none. No
+        // "thank you": the user's, 2026-09-28.
+        if (happening.whom == 0) return;
+        line = "There are more of them in that direction.";
+    } else {
+        std::string label;
+        if (const sim::Body* about = realm_.find(happening.whom);
+            about && about->kind >= 0 && size_t(about->kind) < tables_.kinds.size()) {
+            for (char c : tables_.kinds[size_t(about->kind)].label) {
+                label += char(std::tolower(static_cast<unsigned char>(c)));
+            }
+        }
+        line = kPlain[pick % 3];
+        for (const Lines& one : kChallenges) {
+            if (label.find(one.breed) != std::string::npos) line = one.lines[pick % 3];
+        }
+    }
+    // One line a speaker, and a challenge does not talk over one of his still being read: at a
+    // gate a guard takes on the next monster the tick after the last falls, and every one of
+    // them said aloud was a new bubble every second. Where the rest are always replaces what he
+    // said before it, since it is said once a kill.
+    const bool pointing = happening.a == int32_t(sim::Shout::Pointing);
+    for (const Said& one : said_) {
+        if (!pointing && one.who == happening.who && one.age < kSaidSeconds * 0.75f) return;
+    }
+    said_.erase(std::remove_if(said_.begin(), said_.end(),
+                               [&](const Said& one) { return one.who == happening.who; }),
+                said_.end());
+    said_.push_back({happening.who, line, 0.0f});
+    // With the tick, so a run is read afterwards and a shot aimed at the line.
+    std::string flat = line;
+    std::replace(flat.begin(), flat.end(), '\n', ' ');
+    core::logf("guard: tick %lld, %s says \"%s\" about %s", (long long)realm_.tick(),
+               nameOf(happening.who).c_str(), flat.c_str(), nameOf(happening.whom).c_str());
 }
 
 // What an arena run is read by. One line a happening, with the tick on it, for the five that

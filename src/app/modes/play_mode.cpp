@@ -378,7 +378,7 @@ void PlayMode::arenaHand() {
         const sim::Body* nearest = nullptr;
         float best = 1e9f;
         for (const sim::Body& body : realm.bodies()) {
-            if (body.player || !body.alive()) continue;
+            if (!body.monster() || !body.alive()) continue;
             const float dx = body.x - hero.x, dy = body.y - hero.y;
             if (dx * dx + dy * dy < best) {
                 best = dx * dx + dy * dy;
@@ -420,7 +420,7 @@ bool PlayMode::scriptedPointer(Context& ctx, const Frame& at, const float* view,
     const sim::Body* nearest = nullptr;
     float best = 1e9f;
     for (const sim::Body& body : realm.bodies()) {
-        if (body.player || !body.alive()) continue;
+        if (!body.monster() || !body.alive()) continue;
         const float dx = body.x - hero.x, dy = body.y - hero.y;
         const float away = dx * dx + dy * dy;
         if (away < best) {

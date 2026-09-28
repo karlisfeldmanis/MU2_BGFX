@@ -25,6 +25,7 @@
 #include "game/ui/shelf.h"
 #include "game/ui/specimen.h"
 #include "game/ui/tally.h"
+#include "game/ui/speech.h"
 #include "game/ui/vitals.h"
 #include "game/ui/panel.h"
 #include "gfx/interface.h"
@@ -171,6 +172,7 @@ private:
     Endurance endurance_;
     Cursor cursor_;
     Vitals vitals_;
+    Speech speech_;
     Tally tally_;
     Arrival arrival_;
     ItemModels* models_ = nullptr;

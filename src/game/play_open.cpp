@@ -199,6 +199,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         if (body.player) {
             look = heroLook;
             if (!look && figures_) look = figures_->body(kHeroFigure);
+        } else if (body.warden >= 0) {
+            // A guard wears his townsperson's figure, and is drawn here rather than among the
+            // folk below because he walks and fights.
+            if (figures_) look = figures_->body(tables_.folk[size_t(body.warden)].figure);
         } else if (figures_) {
             look = figures_->body(tables_.kinds[size_t(body.kind)].figure);
         }
@@ -290,6 +294,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
         const FigureBody* look =
             person.figure.empty() || !figures_ ? nullptr : figures_->body(person.figure);
         if (!look) continue;
+        // A guard is a body in the realm and is drawn with the bodies above.
+        if (wardenBody(int(i)) != 0) continue;
         const int facing = person.look >= 1 && person.look <= 8 ? person.look : 3;
         const float bearing = float(((facing - 3) % 8 + 8) % 8) * (bx::kPi / 4.0f);
         // The bearing as a direction on the tile grid, then as the sim's own facing angle,

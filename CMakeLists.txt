@@ -173,6 +173,7 @@ add_executable(mu2
   src/game/ui/tip.cpp
   src/game/ui/tally.cpp
   src/game/ui/vitals.cpp
+  src/game/ui/speech.cpp
   src/game/ui/controls.cpp
   src/game/ui/specimen.cpp
   src/game/ui/items_stage.cpp
@@ -194,6 +195,7 @@ add_executable(mu2
   src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
+  src/sim/realm_watch.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
 )
@@ -305,6 +307,7 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
+  src/sim/realm_watch.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
   src/content/grid.cpp

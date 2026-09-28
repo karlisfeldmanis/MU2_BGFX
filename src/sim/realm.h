@@ -87,6 +87,15 @@ enum class What : uint8_t {
     Loosed,    // a spell let go at the bottom of its clip: a: its number, b: the ticks it
                // will be in the air, whom: at whom. The `Hit` follows when it arrives.
     Blinked,   // a Teleport put him down: a: the column, b: the row
+    Shouted,   // a guard's line: a: a `Shout`, b and c: for a pointing, the tile he points the
+               // hero to (-1 for nowhere), whom: the monster it is about. What is SAID is the
+               // drawing's to choose; the realm only says that he spoke and why.
+};
+
+// Why a guard spoke. See Realm::watch.
+enum class Shout : int32_t {
+    Challenge = 0,  // he has seen a monster and is going for it
+    Pointing = 1,   // one he fought died with the hero's help: he points him on to the rest
 };
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
@@ -278,7 +287,23 @@ struct Body {
     Pose pose = Pose::Standing;
     int32_t perch = -1;
 
+    // ---- the town's guards (Realm::watch) ----------------------------------------------------
+    // A guard's row in Tables::folk, -1 on everybody else. A guard is a body like a monster, at
+    // the end of `bodies_`, so the fight and the drawing read him as they read anything else;
+    // he is not a monster, and every "which of these can be attacked" loop asks `monster()`.
+    int32_t warden = -1;
+    // Where he looks when he is at his post, in the sim's radians.
+    float post = 0.0f;
+    // The last monster he challenged, so one that steps out of his leash and back in is not
+    // challenged twice. Forgotten when he is back at his post.
+    uint32_t challenged = 0;
+    // On a monster: the guard who last swung at it, 0 for none, and whether the hero has landed
+    // a blow on it. Both cleared when it rises. Together they are "the hero helped a guard".
+    uint32_t guardedBy = 0;
+    bool heroStruck = false;
+
     bool alive() const { return health > 0; }
+    bool monster() const { return !player && warden < 0; }
     int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
     int row() const { return int(y + (y < 0.0f ? -0.5f : 0.5f)); }
 };
@@ -634,6 +659,13 @@ private:
     // How long the clip this skill plays takes, and so what its cooldown cannot go under.
     int32_t clipTicksOf(const Body& hero, const SkillRow& row) const;
     void kill(Body& beast, Body& killer);
+    // The town's guards: raised off the folk table once the monsters are placed, and each tick
+    // looking for a monster near his post, going for it, and walking back when it is dead.
+    void raiseWardens();
+    void watch(Body& guard);
+    // A monster a guard fought has died with the hero's help: the guard points him on and turns to
+    // look toward the nearest of its kind still standing.
+    void pointOn(Body& guard, const Body& dead);
     void gain(Body& hero, int32_t award);
     void raiseBeast(Body& beast);
     void reviveHero();
@@ -673,7 +705,8 @@ private:
     const content::Tables* tables_ = nullptr;
     Random dice_{0};
     Router router_;
-    std::vector<Body> bodies_;  // [0] is the player; the rest are monsters, in spawn order
+    // [0] is the player; then the monsters, in spawn order; then the town's guards.
+    std::vector<Body> bodies_;
     // Who is a player, by index, and where an id lives. Both are lists and not maps: an
     // unordered_map walked to produce a happening is the first thing the census warns about,
     // and ids here are handed out by one counter from 1, so the second is a plain lookup.
@@ -713,6 +746,10 @@ private:
     // from `dice_` would move every roll after it, so a seeded fight would change for a rule
     // that decides nothing in it.
     Random wearDice_{0};
+    // And the guards' fights, for the same reason: a guard at a far gate killing what spawns on
+    // his post rolls every few seconds, and off `dice_` that moved every roll in the run after
+    // it -- a seeded hunt twenty tiles away fought different fights because of it.
+    Random wardenDice_{0};
     // The fraction of a point each worn slot has lost and not yet shown, beside the item it
     // was lost by: a piece moved out and back starts its fraction again, which is under a point.
     double wearCarry_[kWorn] = {};

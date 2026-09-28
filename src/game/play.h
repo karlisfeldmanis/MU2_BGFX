@@ -242,6 +242,19 @@ public:
     // And the same over a townsperson, by the tables' folk index: where the name goes.
     bool folkCrownOf(int folk, const float* viewProj, int width, int height, float* x,
                      float* y) const;
+    // The body a townsperson is in the realm -- a guard's -- or 0 for one who stands still.
+    uint32_t wardenBody(int folk) const;
+
+    // What the guards are saying: who, the line, and how long it has been up, in seconds. Put
+    // up by a `Shouted`, newest last, one line a speaker (a new one replaces his last), and
+    // taken down after `kSaidSeconds`. The words are chosen here, off the monster it is about.
+    struct Said {
+        uint32_t who = 0;
+        std::string line;
+        float age = 0.0f;
+    };
+    static constexpr float kSaidSeconds = 4.0f;
+    const std::vector<Said>& said() const { return said_; }
     // A body's health as the DRAWING has shown it: the realm's, with every blow still waiting
     // for its landing cue added back, and nought once it is dead. See Showing::owed.
     int32_t shownHealth(uint32_t id) const;
@@ -695,6 +708,9 @@ private:
     static int fidget(Standing& one);
     std::vector<Standing> folk_;
     int pointedFolk_ = -1;
+    std::vector<Said> said_;
+    // A guard's `Shouted` put into words and up over his head. See Play::said.
+    void speak(const sim::Happening& happening);
     uint32_t pointedLying_ = 0;
     int pointedPerch_ = -1;
     std::vector<float> scratch_;

@@ -64,6 +64,13 @@ void audit(const Realm& realm, Findings& findings) {
         for (const Body& one : realm.bodies()) {
             if (one.id < findings.dead.size()) findings.dead[one.id] = one.alive() ? 0 : 1;
         }
+        // Seeded AFTER the tick it is first asked about, so a body that died on that tick is
+        // not yet dead going into it -- a guard's first blow at the gate kills on tick 1.
+        for (const Happening& happening : realm.happenings()) {
+            if (happening.what == What::Died && happening.who < findings.dead.size()) {
+                findings.dead[happening.who] = 0;
+            }
+        }
     }
     for (size_t i = 0; i < realm.happenings().size(); ++i) {
         const Happening& happening = realm.happenings()[i];

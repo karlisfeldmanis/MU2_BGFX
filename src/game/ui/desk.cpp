@@ -66,6 +66,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
+    speech_.open(interface_);
     tally_.open(interface_);
     arrival_.open(interface_);
     // The Sanctuary controls' faces and stone, which every window's frame is drawn with.
@@ -1098,8 +1099,10 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
     if (!play.isOpen()) {
         vitals_.dismiss();
         tally_.dismiss();
+        speech_.dismiss();
         return;
     }
+    speech_.update(play, viewProj, width, height);
     vitals_.update(seconds, play, play.pointedAt(), play.pointedFolk(), takesPointer_, viewProj,
                    width, height);
     // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
@@ -1124,6 +1127,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     interface_.add(ground_);
     // Over the world's labels and under every window: it is a reading lying on the scene.
     if (vitals_.showing()) interface_.add(vitals_.canvas());
+    // What the guards are saying, over the bars and names and under every window.
+    if (speech_.showing()) interface_.add(speech_.canvas());
     // The blows' figures over the bar, because a number is the thing being read at that
     // instant and the bar is the state behind it -- and still under every window.
     if (tally_.showing()) interface_.add(tally_.canvas());

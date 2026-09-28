@@ -40,7 +40,7 @@ public:
         uint32_t nearest = 0;
         float closest = 1e30f;
         for (const sim::Body& one : realm.bodies()) {
-            if (one.player || !one.alive()) continue;
+            if (!one.monster() || !one.alive()) continue;
             const float far = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
             if (far <= kSight && far < closest) {
                 closest = far;

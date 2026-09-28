@@ -136,4 +136,39 @@ inline int strayed(const Body& beast) {
                     std::abs(beast.row() - beast.homeRow));
 }
 
+// ---- the town's guards -----------------------------------------------------------------------
+// The two townsfolk 0.75 gives a fighting row: OpenMU's Version075 NpcInitialization declares
+// 247 and 249 `NpcObjectKind.Guard` with `GuardIntelligence` and these numbers, transcribed in
+// MU2's shared/Folk.cs `Townsfolk.Watch`. Every field is theirs, the delays turned into ticks
+// at 20 Hz: a 400 ms tile is 8, a 1500 ms swing 30. They differ in their reach alone -- five
+// tiles for the crossbow, two for the berdysh.
+struct WardenRow {
+    int32_t number, level, health, minimumDamage, maximumDamage, defense;
+    int32_t attackRange, viewRange, moveTicks, attackTicks, attackRate, defenseRate;
+};
+constexpr WardenRow kWardens[] = {
+    {247, 90, 10000, 180, 195, 70, 5, 7, 8, 30, 300, 100},  // Crossbow Guard
+    {249, 90, 10000, 180, 195, 70, 2, 7, 8, 30, 300, 100},  // Berdysh Guard
+};
+inline const WardenRow* wardenRow(int32_t number) {
+    for (const WardenRow& row : kWardens) {
+        if (row.number == number) return &row;
+    }
+    return nullptr;
+}
+// How far from his post a guard will follow a monster before he lets it go and walks back.
+// **invention**: OpenMU's guard stands where it is put, and its sight is all its reach. A guard
+// who cannot take a step never reaches a monster that stops two tiles off, which is where one
+// led to the gate ends up; eight is his sight and one more, so he meets what he has seen.
+constexpr int kWardenLeash = 8;
+// What a guard's blow takes, as a share of the monster's whole health. **invention**: at
+// OpenMU's 180 to 195 a blow he killed everything in Lorencia with one swing, which is no fight
+// to watch and none to join (the user, 2026-09-28). The row's own band still rolls -- the hit
+// chance and the spread are its -- and is scaled to this share of what it hits, so a fight is
+// about four of his 1.5-second swings.
+constexpr float kWardenShare = 0.25f;
+// How long he stands looking where he pointed the hero before he goes back to his post, in
+// ticks. **invention**, for the picture: long enough to read the line he said.
+constexpr int kPointTicks = 60;
+
 }  // namespace mu::sim

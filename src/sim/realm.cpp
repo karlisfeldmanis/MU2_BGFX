@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 
 #include "core/log.h"
 #include "sim/realm_tuning.h"
@@ -28,6 +29,7 @@ Body* Realm::body(uint32_t id) {
 RealmCounts Realm::counts() const {
     RealmCounts out;
     for (size_t i = 1; i < bodies_.size(); ++i) {
+        if (!bodies_[i].monster()) continue;
         ++out.monsters;
         if (bodies_[i].alive()) ++out.alive;
         if (bodies_[i].temper != Temper::Asleep && bodies_[i].temper != Temper::Dead) ++out.roused;
@@ -38,6 +40,10 @@ RealmCounts Realm::counts() const {
 
 void Realm::say(What what, const Body& who, int32_t a, int32_t b, int32_t c, uint32_t whom) {
     Happening happening;
+    // Every byte, padding included: a seeded run is compared by hashing these whole, and the
+    // three bytes after `what` were whatever the caller's stack held -- the same run from two
+    // call depths hashed differently. Every field's default is nought, so this changes no value.
+    std::memset(static_cast<void*>(&happening), 0, sizeof(happening));
     happening.tick = uint32_t(tick_);
     happening.what = what;
     happening.who = who.id;
@@ -57,6 +63,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     dice_.seed(seed);
     // A stream of its own, off the same seed: see `wearDice_`.
     wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
+    wardenDice_.seed(seed ^ 0xc2b2ae3d27d4eb4full);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
@@ -175,6 +182,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
         core::logError("%zu monsters had no standable tile in their nest after 20 attempts",
                        short_);
     }
+    // And the guards, last, so every monster keeps the id it had before there were any.
+    raiseWardens();
 
     players_.clear();
     indexOfId_.assign(bodies_.size() + 1, uint32_t(bodies_.size()));
@@ -484,7 +493,8 @@ void Realm::press() {
 
     if (order_.kind != Request::Kind::Attack) return;
     const Body* target = find(order_.target);
-    if (!target || !target->alive()) {
+    // Only a monster: a guard is a body, and not one he may raise a hand to.
+    if (!target || !target->alive() || !target->monster()) {
         order_ = Request{};
         return;
     }
@@ -605,6 +615,10 @@ void Realm::step() {
 
     for (size_t i = 1; i < bodies_.size(); ++i) {
         Body& beast = bodies_[i];
+        if (beast.warden >= 0) {
+            watch(beast);
+            continue;
+        }
         if (beast.alive() && beast.pushTicks > 0) {
             // Pushed: it slides and does nothing else until it lands on its tile.
             beast.x += beast.pushX;
@@ -637,6 +651,9 @@ std::string describe(const Happening& happening, const Realm& realm) {
         const Body* one = realm.find(id);
         if (!one) return "nobody";
         if (one->player) return "hero";
+        if (one->warden >= 0) {
+            return realm.tables()->folk[size_t(one->warden)].name + "#" + std::to_string(id);
+        }
         return realm.tables()->kinds[size_t(one->kind)].label + "#" + std::to_string(id);
     };
     char line[512];
@@ -709,6 +726,11 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Warped:
             std::snprintf(line, sizeof(line), "%6u %s reads a town portal to %d,%d",
                           happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Shouted:
+            std::snprintf(line, sizeof(line), "%6u %s %s %s, pointing to %d,%d", happening.tick,
+                          who, happening.a == int32_t(Shout::Pointing) ? "points the hero on from" : "challenges",
+                          name(happening.whom).c_str(), happening.b, happening.c);
             break;
         case What::Served:
             std::snprintf(line, sizeof(line), "%6u %s is served by %s", happening.tick, who,

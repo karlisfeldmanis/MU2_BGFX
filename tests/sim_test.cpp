@@ -387,7 +387,7 @@ void testInvariants(const content::Tables& tables) {
     // Every monster was placed somewhere it may stand, and outside the town.
     bool placed = true, outside = true;
     for (const sim::Body& one : realm.bodies()) {
-        if (one.player) continue;
+        if (!one.monster()) continue;
         placed &= tables.grid.open(one.column(), one.row(), content::kWallCharacter);
         outside &= !tables.grid.safe(one.column(), one.row());
     }
@@ -558,7 +558,7 @@ void testLoot(const content::Tables& tables) {
             }
             if (request.kind == sim::Request::Kind::None) {
                 for (const sim::Body& body : realm.bodies()) {
-                    if (body.player || !body.alive()) continue;
+                    if (!body.monster() || !body.alive()) continue;
                     const float dx = body.x - hero.x, dy = body.y - hero.y;
                     if (dx * dx + dy * dy < best) {
                         best = dx * dx + dy * dy;
@@ -764,7 +764,7 @@ void testCastLock(const content::Tables& tables) {
             uint32_t nearest = 0;
             float closest = 1e30f;
             for (const sim::Body& one : fight.bodies()) {
-                if (one.player || !one.alive()) continue;
+                if (!one.monster() || !one.alive()) continue;
                 const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
                 if (off <= 12.0f && off < closest) {
                     closest = off;
@@ -810,7 +810,7 @@ void testCastLock(const content::Tables& tables) {
         uint32_t nearest = 0;
         float closest = 1e30f;
         for (const sim::Body& one : realm.bodies()) {
-            if (one.player || !one.alive()) continue;
+            if (!one.monster() || !one.alive()) continue;
             const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
             if (off <= 12.0f && off < closest) {
                 closest = off;
@@ -827,10 +827,18 @@ void testCastLock(const content::Tables& tables) {
         int loosed = 0, far = 0, opened = 0, thrownHits = 0, swings = 0;
         float worstFacing = 0.0f;
         uint32_t fighting = 0, openedOn = 0;
+        // Whether the fight he was just given was already inside a swing when he took it on: a
+        // monster that rises a tile from where he stands cannot be opened on from range, and
+        // counting it measures where the nests are rather than what the wizard chooses.
+        bool beganClose = false;
         for (int tick = 0; tick < 4000; ++tick) {
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
             if (nearest != 0 && nearest != fighting) {
                 fighting = nearest;
+                if (const sim::Body* at = wiz.find(nearest)) {
+                    beganClose = std::max(std::fabs(at->x - wiz.hero().x),
+                                          std::fabs(at->y - wiz.hero().y)) <= 1.5f;
+                }
                 sim::Request request;
                 request.kind = sim::Request::Kind::Attack;
                 request.target = nearest;
@@ -854,6 +862,7 @@ void testCastLock(const content::Tables& tables) {
                     }
                     if (at && one.whom != openedOn) {
                         openedOn = one.whom;
+                        if (one.whom == fighting && beganClose) continue;
                         ++opened;
                         if (std::max(std::fabs(at->x - one.x), std::fabs(at->y - one.y)) > 1.5f) ++far;
                     }
@@ -1389,7 +1398,7 @@ void testStandsOverTheKill(const content::Tables& tables) {
     };
     std::vector<Where> over;
     for (const sim::Body& one : realm.bodies()) {
-        if (one.player || !one.alive()) continue;
+        if (!one.monster() || !one.alive()) continue;
         if (std::max(std::fabs(one.x - heroX), std::fabs(one.y - heroY)) <= 3.0f) {
             over.push_back({one.id, one.x, one.y});
         }
@@ -1800,7 +1809,7 @@ void testSkills(const content::Tables& tables) {
             uint32_t nearest = 0;
             float closest = 1e30f;
             for (const sim::Body& one : realm.bodies()) {
-                if (one.player || !one.alive()) continue;
+                if (!one.monster() || !one.alive()) continue;
                 const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
                 if (off <= 12.0f && off < closest) {
                     closest = off;
@@ -1843,6 +1852,13 @@ void testSkills(const content::Tables& tables) {
                 if (index >= 0) ++casts[index];
                 casting = happening.a;
                 castAim = hero2.aim;
+            }
+            // A plain swing begun: whatever skill was in the air has landed, on somebody or on
+            // nobody. A sweep whose one target a guard killed mid-clip strikes nothing, and left
+            // set, `casting` scored his next ordinary blow as that sweep, against its old aim.
+            if (happening.what == sim::What::Swung && happening.who == hero2.id &&
+                happening.a == 0) {
+                casting = 0;
             }
             if ((happening.what != sim::What::Hit && happening.what != sim::What::Missed) ||
                 happening.who != hero2.id) {
@@ -2521,6 +2537,94 @@ void testVault(const content::Tables& tables) {
 
 // Health comes back in a safe zone alone: a hundredth of the pool every three seconds on a safe
 // tile, nothing on the grass outside it. Realm::recover.
+// The town's guards (sim/realm_watch.cpp): a level-one knight hunting just outside the east gate,
+// too weak to finish much alone. The guard there goes for what the hunt wakes, says so, lands
+// his blows, points the knight on after a kill they shared, never leaves his leash, is never struck
+// by the knight, and is back at his post once it is over.
+void testWardens(const content::Tables& tables) {
+    std::printf("wardens\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 178, 122), "a level-one knight raises at the east gate");
+    int guards = 0;
+    for (const sim::Body& one : realm.bodies()) guards += one.warden >= 0 ? 1 : 0;
+    checkEqual(guards, 6, "Lorencia stands its six guards");
+
+    int challenged = 0, guardBlows = 0, thanked = 0, pointed = 0, struckGuard = 0;
+    bool leashed = true, standing = true;
+    uint32_t fighting = 0;
+    for (int tick = 0; tick < 6000; ++tick) {
+        const sim::Body& hero = realm.hero();
+        // For the first two minutes he fights what is near; then he walks back into town and
+        // leaves the guards to it.
+        if (tick < 2400 && hero.alive()) {
+            uint32_t nearest = 0;
+            float closest = 1e30f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                // Only what comes within the east guard's reach of his post at 173,125: the
+                // fight the feature is for is one at the gate, not one up the road.
+                if (std::max(std::fabs(one.x - 173.0f), std::fabs(one.y - 125.0f)) > 6.0f) continue;
+                const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
+                if (off <= 10.0f && off < closest) {
+                    closest = off;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+        } else if (tick == 2400) {
+            sim::Request request;
+            request.kind = sim::Request::Kind::WalkTo;
+            request.column = 150;
+            request.row = 125;
+            realm.ask(request);
+        }
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            const sim::Body* who = realm.find(one.who);
+            const sim::Body* whom = realm.find(one.whom);
+            if (one.what == sim::What::Shouted) {
+                if (one.a == int32_t(sim::Shout::Challenge)) ++challenged;
+                if (one.a == int32_t(sim::Shout::Pointing)) {
+                    ++thanked;
+                    if (one.b >= 0) ++pointed;
+                }
+            }
+            if (one.what == sim::What::Hit && who && who->warden >= 0) ++guardBlows;
+            if ((one.what == sim::What::Hit || one.what == sim::What::Missed) && who &&
+                who->player && whom && whom->warden >= 0) {
+                ++struckGuard;
+            }
+        }
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.warden < 0) continue;
+            standing &= one.alive();
+            leashed &= std::max(std::abs(one.column() - one.homeColumn),
+                                std::abs(one.row() - one.homeRow)) <= 8 + 2;
+        }
+    }
+    std::printf("  %d challenges, %d guard blows landed, %d kills shared (%d pointing on)\n", challenged,
+                guardBlows, thanked, pointed);
+    check(challenged > 0, "a guard challenges a monster the hunt woke");
+    check(guardBlows > 0, "and his blows land");
+    check(thanked > 0, "and a kill they shared is said aloud");
+    check(pointed > 0, "and points him on toward more of them");
+    check(struckGuard == 0, "the knight never strikes a guard");
+    check(standing, "no guard falls");
+    check(leashed, "and none follows a monster past his leash");
+    bool home = true;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.warden < 0 || one.quarry != 0) continue;
+        home &= one.column() == one.homeColumn && one.row() == one.homeRow && !one.walking;
+    }
+    check(home, "and every guard with nothing to fight is back at his post");
+}
+
 void testRecovery(const content::Tables& tables) {
     std::printf("recovery\n");
     const auto hurt = [&](int column, int row, const char* raised) {
@@ -2574,6 +2678,7 @@ int main() {
     testExcellent(tables);
     testWear(tables);
     testRecovery(tables);
+    testWardens(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

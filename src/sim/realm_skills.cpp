@@ -202,7 +202,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // tiles of slack because three of the five were thrown from a step or two out and closed
         // the gap themselves; nothing closes a gap here (docs/skills-dk.md §3.1a), so the test
         // is the swing's.
-        const bool aimed = target && target->alive() && !target->player &&
+        const bool aimed = target && target->alive() && target->monster() &&
                            within(hero, *target, row.reach);
         // Aimed before the shape is measured, because Arc is measured off where he is looking.
         // Only the aim is set and not the facing: he turns to it at the body's own rate, as he
@@ -312,7 +312,7 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
     float turnOf[kVictims] = {};
     int found = 0;
     for (const Body& one : bodies_) {
-        if (one.player || !one.alive()) continue;
+        if (!one.monster() || !one.alive()) continue;
         // A line runs as far as the wave sweeps, past the reach it is aimed within.
         if (!within(hero, one, row.spread == Spread::Line ? kLineTiles : row.reach)) continue;
         // Sheltered ground is sheltered from a spin as well: the same test a single blow makes.
