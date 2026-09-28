@@ -256,9 +256,10 @@ cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells
   bench over Hellfire's 155 (arms swinging), Chain Lightning's 161 (a quick thrust) and Inferno's 154
   (a leap). He **cannot walk out of it**, the rule of 2026-09-23 for every skill: the realm holds him
   (`castUntil`) and drops a click to move. One thunder a pulse, not one a body.
-- **The cast bar** (`Hud::setChannel`), reworked on *"channeling UI needs work"*: a glass panel in
-  the item card's own container, centred over the bar and lifted clear of the plate, holding the
-  spell's icon, its name, the seconds left to a tenth, and a meter in lightning's blue that drains.
+- **The cast bar** (`Hud::setChannel`), reworked on *"channeling UI needs work"* and then *"more
+  flat and clean"*: one flat dark panel with a hairline edge, centred over the bar and lifted clear of
+  the plate, holding the spell's icon, its name, the seconds left to a tenth in quiet grey, and a
+  thin flat meter in lightning's blue that drains -- no glass, grain, gradient or bevel.
   Stepped in hundredths so the frame redraws at most a hundred times a channel. Any later channel
   uses it as it is. The first cut was a thin strip with an icon, squeezed onto the plate's edge.
 - **The stance was missing** at first (*"i did not see casting animation"*): a pulse's `Hit`, with
