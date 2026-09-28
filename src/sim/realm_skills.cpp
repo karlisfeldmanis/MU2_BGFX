@@ -220,6 +220,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.channelUntil = tick_ + row.channelTicks;
         // The first strike a fifth of a second in, as he settles into the stance.
         hero.channelNext = tick_ + kFirstPulseTicks;
+        // The sweep starts where he is facing.
+        hero.channelTurn = hero.aim;
     }
     hero.walking = false;
     hero.route.clear();
@@ -372,26 +374,44 @@ void Realm::channel(Body& hero) {
         return;
     }
     hero.channelNext += std::max<int32_t>(1, row->pulseTicks);
-    // Everything in its shape now, nearest first -- a body that walked in since the last pulse is
-    // struck by this one. One `Loosed` a body, which is what the drawing throws a bolt on, and the
-    // blow on the same tick: lightning does not fly.
+    // Everything in its shape now -- a body that walked in since the last strike can be the next
+    // -- and of those ONE: the first clockwise from where the last strike went, so the bolt goes
+    // round the ring. Clockwise is the bearing increasing in the realm's own x/y; a lone body is
+    // struck every time. One `Loosed`, which is what the drawing throws a bolt on, and the blow
+    // on the same tick: lightning does not fly. Ties go to the lower id, so the log is fixed.
     uint32_t victims[kVictims];
     const int found = gather(hero, *row, victims, kVictims);
+    Body* next = nullptr;
+    float nextTurn = 0.0f, nextGap = 0.0f;
     for (int i = 0; i < found; ++i) {
         Body* victim = body(victims[i]);
         if (victim == nullptr || !victim->alive()) continue;
-        say(What::Loosed, hero, row->number, 0, 0, victim->id);
-        strikeAt(hero, *victim, force(*row, hero.points), row, true);
+        const float turn = std::atan2(victim->y - hero.y, victim->x - hero.x);
+        float gap = turn - hero.channelTurn;
+        while (gap <= 1e-4f) gap += 6.28318530718f;
+        while (gap > 6.28318530718f + 1e-4f) gap -= 6.28318530718f;
+        if (next == nullptr || gap < nextGap || (gap == nextGap && victim->id < next->id)) {
+            next = victim;
+            nextTurn = turn;
+            nextGap = gap;
+        }
     }
+    if (next == nullptr) return;
+    hero.channelTurn = nextTurn;
+    say(What::Loosed, hero, row->number, 0, 0, next->id);
+    strikeAt(hero, *next, force(*row, hero.points), row, true);
 }
 
-// How long a push takes, in ticks: a quarter of a second -- quick enough to read as a blow, slow
-// enough that the drawing slides it rather than jumping it. A body caught mid-step is off its
-// tile's centre and can go up to a tile and a half to reach the next, so at four ticks the worst
-// tick was half a tile; at five it is four tenths at the very worst.
-constexpr int32_t kPushTicks = 5;
+// How long a push takes, in ticks: three tenths of a second -- quick enough to read as a blow,
+// slow enough that the drawing slides it rather than jumping it. A body caught mid-step on a
+// diagonal is off its tile's centre and can go up to 2.1 tiles to reach the next, so at five
+// ticks the worst tick was 0.42 of a tile; at six it is 0.35.
+constexpr int32_t kPushTicks = 6;
 
 void Realm::push(Body& target, const Body& from) {
+    // Not again while it is still sliding: a push restarted mid-slide begins off the tile's
+    // centre and can go two tiles in five ticks. The next strike finds it landed.
+    if (target.pushTicks > 0) return;
     // Straight away from him, snapped to the nearest of the eight compass steps. No draw is taken,
     // so the seeded log's dice are the same with or without it.
     const float dx = target.x - from.x, dy = target.y - from.y;

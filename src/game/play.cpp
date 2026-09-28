@@ -261,12 +261,12 @@ void Play::update(double seconds) {
                     if (row && row->onSelf() && happening.who == heroId) {
                         guardRise(kGuardShowSeconds);
                     }
-                    // A channel: its stance, played once and held for as long as it runs. No
-                    // blow follows the cast to play it, so it is played here. The thunder is
-                    // the pulses' (below), not the cast's.
+                    // A channel: its clip, looping for as long as it runs. No blow follows the
+                    // cast to play it, so it is played here. The thunder is the pulses' (below),
+                    // not the cast's.
                     if (row && row->channelled() && caster->castClip >= 0) {
                         const float lasts = float(row->channelTicks) * float(kTickSeconds);
-                        caster->figure.play(caster->castClip, true, kCastBlend, true);
+                        caster->figure.play(caster->castClip, true, kCastBlend);
                         caster->casting = lasts;
                         caster->swingPace = 1.0f;
                         caster->swinging = lasts;
@@ -681,6 +681,16 @@ void Play::update(double seconds) {
     meteor_.fly(float(seconds), standing, middle);
     wave_.update(float(seconds));
     thunder_.update(float(seconds), standing, middle);
+    // The crackle on him for as long as he channels.
+    if (const sim::Body& hero = realm_.hero(); hero.channelSkill != 0 && ground_) {
+        if (const Drawn* drawn = drawnOf(hero.id); drawn != nullptr && drawn->placed) {
+            const FigureBody* look = drawn->figure.body();
+            const float feet[3] = {drawn->crown[0],
+                                   ground_->heightAt(drawn->crown[0], drawn->crown[2]),
+                                   drawn->crown[2]};
+            thunder_.crackle(feet, look ? look->height * look->scale : 1.8f, float(seconds));
+        }
+    }
     // On each impact: explosion sound, shock clip on everything within 2 tiles.
     for (const auto& impact : meteorImpacts_) {
         if (heard_.explosion >= 0) emit(heard_.explosion, impact.x, impact.z);

@@ -239,23 +239,29 @@ saturates. `fx/effect_mesh` is the .obj reader and basis draw the meteor and the
 and lightning finds all monsters around him and casts lightning to them (aoe)"*, *"it also has
 cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells"*.
 
-- **A channel** (`SkillRow::channelTicks` 60, `pulseTicks` 10; `Realm::channel`): three seconds from
-  the cast, a pulse a fifth of a second in and every half second after, six in all. Each pulse finds
-  everything within **four tiles** of him (`Spread::Ring` at `reach` 4) at that moment -- a body that
-  walks in is struck by the next -- and lets a bolt go at each (`Loosed`) with its blow on the same
-  tick: lightning does not fly.
-- **It pushes** what each pulse leaves standing a step straight away from him, slid over five ticks
-  (`Realm::push`): no teleport, a flinch, no thinking or walking while it slides, never onto a
+- **A channel that goes round** (`SkillRow::channelTicks` 60, `pulseTicks` 4; `Realm::channel`):
+  three seconds from the cast, a strike a fifth of a second in and every fifth of a second after,
+  fourteen at most. Each strike goes to **one** body within **four tiles** (`Spread::Ring` at `reach`
+  4): the first clockwise from where the last one went (`Body::channelTurn`, starting where he
+  faces), so the bolt sweeps round the ring (*"not to all monsters at the same time but like
+  rotation"*); a lone body takes every strike, and a body that walks in joins the round. A strike
+  with nothing in reach is not thrown. The first cut struck everything at once every half second.
+- **It pushes** what each strike leaves standing a step straight away from him, slid over six ticks
+  (`Realm::push`), and not again until it has landed: no teleport, a flinch, no thinking or walking while it slides, never onto a
   blocked or sheltered tile, and a death mid-slide leaves the body on its tile. 0.75 moves a random
   neighbour at once. Nothing in Lorencia resists lightning, so the resistance roll is not made.
 - **Ten seconds of cooldown**, before agility's haste as every key's is (9.5 s on a young wizard),
   floored at the channel and two seconds. Fifteen mana at the cast. It asks for something within
   four tiles before it goes, so it is never spent on empty air.
-- **He stands in it.** MU's "Skill lightning shock" (186) -- a low stance, both fists thrust out --
-  played once and held on its last key (`Figure::play`'s `hold`) for the whole channel; chosen on the
-  bench over Hellfire's 155 (arms swinging), Chain Lightning's 161 (a quick thrust) and Inferno's 154
-  (a leap). He **cannot walk out of it**, the rule of 2026-09-23 for every skill: the realm holds him
-  (`castUntil`) and drops a click to move. One thunder a pulse, not one a body.
+- **He channels in it.** MU's "Skill recovery" (183) -- one arm thrown up to the sky -- looping for
+  the whole channel. Chosen by the user off bench sheets after two misses: "Skill lightning shock"
+  (186) held on its last key read as frozen (*"cast animation is freezed"*), and "Skill drain life"
+  (169) turned out in play to be a mount's pose (*"this casting animation is for mount"*). He
+  **cannot walk out of it**, the rule of 2026-09-23 for every skill: the realm holds him
+  (`castUntil`) and drops a click to move. One thunder a strike.
+- **He crackles** (*"add some electric effect to the character itself"*; `Thunder::crackle`, ours):
+  while it runs, every two reference frames two small thin sparks jump between random points round
+  his body, three frames each, and a blue light flickers on him.
 - **The cast bar** (`Hud::setChannel`), reworked on *"channeling UI needs work"* and then *"more
   flat and clean"*: one flat dark panel with a hairline edge, centred over the bar and lifted clear of
   the plate, holding the spell's icon, its name, the seconds left to a tenth in quiet grey, and a

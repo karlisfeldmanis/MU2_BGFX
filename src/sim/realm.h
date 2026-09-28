@@ -261,6 +261,9 @@ struct Body {
     // its next pulse. 0 for none. The interface reads the first three for its bar.
     int32_t channelSkill = 0;
     int64_t channelFrom = 0, channelUntil = 0, channelNext = 0;
+    // Where the last strike went, as a bearing from him in radians: the next goes to the body
+    // clockwise from it, so the channel sweeps round.
+    float channelTurn = 0.0f;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
     Pose pose = Pose::Standing;

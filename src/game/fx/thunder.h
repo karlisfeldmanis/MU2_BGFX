@@ -18,6 +18,7 @@
 // realm (`SkillRow::flies`). The push the blow gives is the realm's too (`Realm::push`).
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 
@@ -35,6 +36,12 @@ public:
 
     // A bolt from `from` to the middle of body `target` (`to` is where it is now; 0 holds `to`).
     void strike(const float from[3], const float to[3], uint32_t target);
+
+    // **The crackle on the caster himself** while he channels (the user, 2026-09-28: "add some
+    // electric effect to the character itself"), ours: every couple of reference frames two small
+    // sparks jump between random points round his body -- `feet` and his drawn `tall` -- and a blue
+    // light flickers on him. Called every frame the channel runs; it stops when the calls stop.
+    void crackle(const float feet[3], float tall, float seconds);
 
     // `alive(id)` and `where(id, out)` as the bolt takes them: the far end follows the body.
     template <typename Alive, typename Where>
@@ -62,6 +69,7 @@ private:
         float spark;                    // the contact's roll and size, per frame
         float sparkRoll;
         float glow;
+        bool small;                     // a crackle on the caster: thin, brief, no spark or light
         bool smoked;                    // the smoke is laid once, as it starts to go out
     };
     struct Puff {
@@ -97,7 +105,13 @@ private:
     // seen ("most of DW spells are light emitters"), and a tile wider.
     static constexpr float kGlow[3] = {0.35f, 0.45f, 1.0f};
     static constexpr float kGlowTiles = 3.0f;
-    static constexpr int kMost = 8;
+    static constexpr int kMost = 32;
+    // The crackle: a pair every two reference frames, each three frames long, a third the width.
+    static constexpr float kCrackleEvery = 2.0f, kCrackleFrames = 3.0f, kCrackleWidth = 0.35f;
+    static constexpr int kCracklePair = 2;
+    static constexpr float kCrackleRadius = 0.45f;      // metres round his middle
+    static constexpr float kCrackleGlow[3] = {0.30f, 0.40f, 1.0f};
+    static constexpr float kCrackleGlowTiles = 2.5f;
     // The smoke off the path: one puff at every point along the wide joint, born small and
     // faint, opening and lifting, gone in a little over a second. smoke01, added and tinted a
     // cool grey, as MU adds that sheet.
@@ -114,6 +128,10 @@ private:
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
     Puff puffs_[kMostPuffs] = {};
     Arc arcs_[kMost] = {};
+    float crackleDue_ = 0.0f;       // reference frames to the next pair
+    float crackleLit_ = 0.0f;       // seconds the light on him has left; 0 is off
+    float crackleAt_[3] = {};
+    float crackleRoll_ = 1.0f;
     float clock_ = 0.0f;
 
     uint32_t dice_ = 0x7A11B017u;
@@ -138,6 +156,7 @@ void Thunder::update(float seconds, Alive alive, Where where) {
         }
         step(arc, frames);
     }
+    crackleLit_ = std::max(0.0f, crackleLit_ - seconds);
     for (Puff& one : puffs_) {
         if (!one.alive) continue;
         one.left -= frames;

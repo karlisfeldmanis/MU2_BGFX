@@ -209,18 +209,21 @@ constexpr SkillRow kRows[kSkills] = {
     // Lightning 3: 0.75's row for the numbers that survive -- seventeen damage, fifteen mana,
     // seventy-two energy -- and **this game's first channel** (the user, 2026-09-28): "when it
     // gets cast it has duration, the wizard uses a special animation and lightning finds all the
-    // monsters around him and casts lightning to them". Three seconds, a pulse every half second
-    // from a fifth of a second in (six in all), each striking everything within four tiles of him
-    // (`Spread::Ring` at `reach` 4) and pushing what it leaves standing a step away (`pushes`,
-    // `Realm::push`). Ten seconds of cooldown, the user's, before agility's haste. He holds MU's
-    // "Skill lightning shock" (186), a low stance with both fists thrust out, for the whole of
-    // it, and cannot walk out of it (the rule of 2026-09-23 for every skill). 0.75's Lightning is
+    // monsters around him and casts lightning to them". Three seconds, and **it goes round**: a
+    // strike every fifth of a second (fourteen in all), each at ONE body within four tiles of him
+    // (`Spread::Ring` at `reach` 4) -- the next one clockwise from the last it struck, so the bolt
+    // sweeps round the ring rather than lighting it all at once ("not to all monsters at the same
+    // time but like rotation") -- pushing what it leaves standing a step away (`pushes`,
+    // `Realm::push`). Ten seconds of cooldown, the user's, before agility's haste. He plays MU's
+    // "Skill recovery" (183), one arm thrown up to the sky, looping for the whole of it -- the
+    // user's pick of 2026-09-28 off a bench sheet, after 186 held read as frozen and 169 turned
+    // out to be a mount's pose -- and cannot walk out of it (the rule of 2026-09-23). 0.75's Lightning is
     // one bolt at one body; what is kept of it is the bolt, the push and the thunder.
     {skill::kLightning, "Lightning", 15, 4.0f, 1.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
-     "For three seconds lightning leaps from him into everything within four tiles, twice a "
-     "second, and throws each back a step.",
-     186, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 60,
-     10},
+     "For three seconds lightning sweeps round him, leaping into one body after another within "
+     "four tiles and throwing each back a step.",
+     183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 60,
+     4},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

@@ -55,6 +55,44 @@ void Thunder::strike(const float from[3], const float to[3], uint32_t target) {
     throwPath(*arc);
 }
 
+void Thunder::crackle(const float feet[3], float tall, float seconds) {
+    const float frames = seconds * kReference;
+    // The light on him, held a little past the last call so it does not blink between frames.
+    for (int k = 0; k < 3; ++k) crackleAt_[k] = feet[k];
+    crackleAt_[1] += tall * 0.55f;
+    crackleLit_ = 0.1f;
+    crackleRoll_ = 0.6f + unit() * 0.4f;
+    crackleDue_ -= frames;
+    if (crackleDue_ > 0.0f) return;
+    crackleDue_ += kCrackleEvery;
+    const auto around = [&](float out[3]) {
+        const float turn = unit() * kTwoPi;
+        const float reach = kCrackleRadius * (0.5f + unit() * 0.5f);
+        out[0] = feet[0] + std::cos(turn) * reach;
+        out[1] = feet[1] + tall * (0.2f + unit() * 0.75f);
+        out[2] = feet[2] + std::sin(turn) * reach;
+    };
+    for (int n = 0; n < kCracklePair; ++n) {
+        Arc* arc = nullptr;
+        for (Arc& one : arcs_) {
+            if (!one.alive) {
+                arc = &one;
+                break;
+            }
+        }
+        if (arc == nullptr) return;
+        *arc = Arc{};
+        arc->alive = true;
+        arc->small = true;
+        around(arc->from);
+        around(arc->to);
+        arc->target = 0;
+        arc->left = kCrackleFrames;
+        throwPath(*arc);
+        arc->forked = false;
+    }
+}
+
 void Thunder::throwPath(Arc& arc) {
     // Two directions off the line to throw the points along: level across it, and up.
     float line[3] = {arc.to[0] - arc.from[0], arc.to[1] - arc.from[1], arc.to[2] - arc.from[2]};
@@ -145,7 +183,7 @@ void Thunder::smoke(const Arc& arc) {
 
 void Thunder::step(Arc& arc, float frames) {
     // The smoke rises off the path it last took, as the bolt starts to go out.
-    if (!arc.smoked && arc.left - frames <= kFadeFrames) {
+    if (!arc.small && !arc.smoked && arc.left - frames <= kFadeFrames) {
         arc.smoked = true;
         smoke(arc);
     }
@@ -170,7 +208,7 @@ void Thunder::gather(gfx::Effects& effects) const {
             if (path == 2 && !arc.forked) break;
             const float (*points)[3] = path == 0 ? arc.wide : path == 1 ? arc.thin : arc.fork;
             const int count = path == 2 ? kForkPoints : arc.points;
-            const float half = (path == 0 ? kWide : kThin) * 0.5f;
+            const float half = (path == 0 ? kWide : kThin) * 0.5f * (arc.small ? kCrackleWidth : 1.0f);
             const float bright = path == 0 ? lit : path == 1 ? lit * 0.9f : lit * 0.7f;
             for (int i = 0; i + 1 < count; ++i) {
                 const float* a = points[i];
@@ -221,7 +259,7 @@ void Thunder::gather(gfx::Effects& effects) const {
         }
         // The spark where it bites: MU's Thunder01 at the wide joint's head, re-rolled a frame.
         // (The smoke is gathered below, once, for every bolt's puffs together.)
-        if (bgfx::isValid(spark_)) {
+        if (!arc.small && bgfx::isValid(spark_)) {
             gfx::Sprite spark;
             for (int k = 0; k < 3; ++k) spark.position[k] = arc.to[k];
             spark.halfWidth = spark.halfHeight = kSparkWidth * arc.spark * 0.5f;
@@ -254,8 +292,15 @@ void Thunder::gatherSmoke(gfx::Effects& effects) const {
 uint32_t Thunder::lights(gfx::PointLight* out, uint32_t max) const {
     if (out == nullptr) return 0;
     uint32_t count = 0;
+    if (crackleLit_ > 0.0f && count < max) {
+        gfx::PointLight& light = out[count++];
+        for (int k = 0; k < 3; ++k) light.position[k] = crackleAt_[k];
+        light.reach = kCrackleGlowTiles;
+        light.height = 1.0f;
+        for (int k = 0; k < 3; ++k) light.colour[k] = kCrackleGlow[k] * crackleRoll_;
+    }
     for (const Arc& arc : arcs_) {
-        if (!arc.alive || count >= max) continue;
+        if (!arc.alive || arc.small || count >= max) continue;
         const float lit = std::min(1.0f, arc.left / kFadeFrames) * arc.glow;
         gfx::PointLight& light = out[count++];
         for (int k = 0; k < 3; ++k) light.position[k] = arc.to[k];

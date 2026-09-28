@@ -1048,6 +1048,7 @@ void testCastLock(const content::Tables& tables) {
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
                   bolt.mana == 15 && bolt.coolTicks == 200 && bolt.channelTicks == 60,
               "Lightning is a three-second channel round him, ten seconds to cool, and it pushes");
+        check(bolt.pulseTicks == 4, "and it strikes every fifth of a second");
         const int32_t scroll = tables.itemAt(15, 2);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kLightning &&
                   tables.items[size_t(scroll)].teachesEnergy == 72,
@@ -1058,7 +1059,9 @@ void testCastLock(const content::Tables& tables) {
         check(wiz.learn(sim::skill::kLightning), "who knows Lightning");
         int channels = 0, pushes = 0, away = 0, widest = 0, stillWhile = 0;
         int64_t lastCast = -1, closest = 1 << 30, pulseTick = -1;
-        int pulses = 0, mostPulses = 0, thisPulse = 0, thisChannel = 0;
+        int pulses = 0, mostPulses = 0, thisPulse = 0, thisChannel = 0, sweptMost = 0;
+        uint32_t swept[16] = {};
+        int sweptCount = 0;
         float worstStep = 0.0f;
         uint32_t fighting = 0, sliding = 0;
         float lastX = 0.0f, lastY = 0.0f, before = 0.0f;
@@ -1091,7 +1094,7 @@ void testCastLock(const content::Tables& tables) {
                     worstStep = std::max(worstStep, std::hypot(one->x - lastX, one->y - lastY));
                     lastX = one->x;
                     lastY = one->y;
-                    if (++slidFor == 5) {
+                    if (++slidFor == 6) {
                         const sim::Body& me = wiz.hero();
                         if (std::hypot(one->x - me.x, one->y - me.y) > before + 0.5f) ++away;
                         sliding = 0;
@@ -1108,6 +1111,8 @@ void testCastLock(const content::Tables& tables) {
                     lastCast = one.tick;
                     mostPulses = std::max(mostPulses, thisChannel);
                     thisChannel = 0;
+                    sweptMost = std::max(sweptMost, sweptCount);
+                    sweptCount = 0;
                 }
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kLightning) {
                     if (int64_t(one.tick) != pulseTick) {
@@ -1117,6 +1122,9 @@ void testCastLock(const content::Tables& tables) {
                         thisPulse = 0;
                     }
                     widest = std::max(widest, ++thisPulse);
+                    bool seen = false;
+                    for (int k = 0; k < sweptCount; ++k) seen |= swept[k] == one.whom;
+                    if (!seen && sweptCount < 16) swept[sweptCount++] = one.whom;
                 }
                 if (one.what != sim::What::Shoved) continue;
                 ++pushes;
@@ -1132,16 +1140,21 @@ void testCastLock(const content::Tables& tables) {
             }
         }
         mostPulses = std::max(mostPulses, thisChannel);
+        sweptMost = std::max(sweptMost, sweptCount);
         std::printf("  lightning: %d channels, %d pulses (%d in one at most), %d bodies in one "
                     "pulse at most, closest casts %lld ticks apart, %d pushes, %d measured "
                     "further off, worst tick %.2f tiles\n",
                     channels, pulses, mostPulses, widest, (long long)closest, pushes, away,
                     double(worstStep));
         check(channels > 3, "he channels Lightning through a hunt");
-        check(mostPulses == 6, "and a channel strikes six times");
+        // Up to fourteen: a strike with nothing left in reach -- pushed out of it, or killed -- is
+        // not thrown.
+        check(mostPulses > 6 && mostPulses <= 14, "and a channel strikes up to fourteen times");
         check(closest >= wiz.coolsFor(sim::skill::kLightning) && closest >= 60,
               "and never twice inside its cooldown");
-        check(widest >= 2, "and one pulse strikes more than one body");
+        // One body a strike, and round the ring: a channel with company strikes more than one.
+        checkEqual(widest, 1, "and each strike goes to one body");
+        check(sweptMost >= 2, "and a channel goes round to more than one");
         checkEqual(stillWhile, 0, "and he stands still while it runs");
         check(pushes > 5 && away > 0, "and it pushes what it does not kill, away from him");
         check(worstStep <= 0.41f, "and slides it there, no tick moving it more than 0.4 of a tile");
