@@ -518,10 +518,6 @@ void Play::update(double seconds) {
                     if (const Drawn* hero = drawnOf(happening.who)) {
                         Cue cue;
                         cue.attacker = happening.who;
-            if ((happening.what == sim::What::Hit || happening.what == sim::What::Missed) &&
-                !happening.thrown && happening.who != realm_.hero().id) {
-                hunterShot(happening.who, happening.whom);
-            }
                         cue.target = happening.whom;
                         cue.damage = happening.a;
                         cue.taken = taken;
@@ -728,6 +724,12 @@ void Play::update(double seconds) {
                     // `Swung`, so the blow is shown the moment it is told rather than half a
                     // swing later. Everything else about the cue is the same.
                     if (!begun && swinger->landing) {
+                        } else if (isHunter(happening.who)) {
+                            // The bolt leaves at MU's release key and the blow lands with it;
+                            // the fuse is only the fallback if the bolt never arrives.
+                            const float release = std::min(15.0f / 25.0f, swinger->swinging);
+                            volleys_.push_back({happening.who, happening.whom, release});
+                            cue.fuse = release + 0.6f;
                         // NOT cleared here, and that is what lets a spin settle on four monsters
                         // at once: an area skill says one `Swung` and then a `Hit` per target on
                         // the same tick, and clearing the flag on the first of them would make the
@@ -845,7 +847,15 @@ void Play::update(double seconds) {
     // A blink the realm dropped -- he died in the fade -- is never put down: he is drawn again.
     if (blinkOut_ >= 0.0f && realm_.hero().blinkAt == 0) blinkOut_ = -1.0f;
     if (blinkIn_ >= 0.0f) {
+    for (Volley& volley : volleys_) {
+        volley.wait -= float(seconds);
+        if (volley.wait <= 0.0f) hunterShot(volley.shooter, volley.target);
+    }
+    volleys_.erase(std::remove_if(volleys_.begin(), volleys_.end(),
+                                  [](const Volley& v) { return v.wait <= 0.0f; }),
+                   volleys_.end());
         blinkIn_ += float(seconds);
+    for (uint32_t shooter : arrows_.landed()) showing_.rush(shooter);
         if (blinkIn_ >= kBlinkFadeSeconds) blinkIn_ = -1.0f;
     }
     thunder_.update(float(seconds), standing, middle);

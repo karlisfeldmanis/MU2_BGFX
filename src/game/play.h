@@ -567,16 +567,25 @@ private:
     // frames, so the tick is what a shot's frame number is worked out from. The same spirit and
     // the same shape as the `meteor: tick N` and `bones: tick N` lines beside it; those two stay
     // where they are, since an effect knows things a happening does not.
-    // A Hunter's blow drawn as MU draws it: CreateArrows off its MODEL_ARQUEBUS, which throws
-    // MODEL_ARROW_SAW (ZzzCharacter.cpp:4831, ZzzEffectMagicSkill.cpp:225). The rules resolve
-    // the blow at range on the tick and are not told; this only draws the bolt it would be.
-    void hunterShot(uint32_t shooter, uint32_t target);
     void announce(const sim::Happening& happening);
     // The breed's own name for those lines, or "the hero".
     std::string nameOf(uint32_t id) const;
     void remember();  // the tick's positions become "was", the sim's become "now"
     // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
     // frame's own, which the coast and the stop are measured in.
+    // A Hunter's blow drawn as MU draws it: CreateArrows off its MODEL_ARQUEBUS, which throws
+    // MODEL_ARROW_SAW (ZzzCharacter.cpp:4831, ZzzEffectMagicSkill.cpp:225). The rules resolve
+    // the blow at range on the tick and are not told; this only draws the bolt it would be.
+    void hunterShot(uint32_t shooter, uint32_t target);
+    // Its bolts waiting for the release key: MU looses a monster's shot when its AttackTime
+    // reaches 15 frames (ZzzCharacter.cpp:4140, g_iLimitAttackTime), and the blow is shown
+    // where the bolt lands -- its cue is rushed by Arrows::landed, as a meteor's impact rushes.
+    struct Volley {
+        uint32_t shooter = 0, target = 0;
+        float wait = 0.0f;  // seconds to the release
+    };
+    std::vector<Volley> volleys_;
+    bool isHunter(uint32_t id);
     void follow(float seconds);
     // Starts a body's death clip, its hold and its fade.
     void fall(Drawn& dead);

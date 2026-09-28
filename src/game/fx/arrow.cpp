@@ -96,7 +96,8 @@ float Arrows::roll() {
     return float(dice_ >> 8) / float(1u << 24);
 }
 
-void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model model) {
+void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model model,
+                   uint32_t shooter) {
     Shot* shot = nullptr;
     for (Shot& one : shots_) {
         if (!one.alive) {
@@ -109,6 +110,7 @@ void Arrows::loose(const float from[3], const float to[3], uint32_t whom, Model 
     shot->alive = true;
     shot->model = model;
     shot->whom = whom;
+    shot->shooter = shooter;
     for (int k = 0; k < 3; ++k) {
         shot->at[k] = from[k];
         shot->to[k] = to[k];
@@ -124,6 +126,7 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
     const float frames = seconds * kReference;
     const float speed = kTilesASecond * metresPerTile_;  // metres a second
     const float spacing = kEmberSpacingUnits * kUnit;
+    landed_.clear();
     for (Shot& shot : shots_) {
         if (!shot.alive) continue;
         shot.left -= frames;
@@ -150,7 +153,10 @@ void Arrows::update(float seconds, const std::function<bool(uint32_t, float*)>& 
         }
         // A tile short of the body, on the ground plane: CheckClientArrow, and the realm's hit.
         const float dx = shot.to[0] - shot.at[0], dz = shot.to[2] - shot.at[2];
-        if (std::sqrt(dx * dx + dz * dz) <= kStopsShort * metresPerTile_) shot.alive = false;
+        if (std::sqrt(dx * dx + dz * dz) <= kStopsShort * metresPerTile_) {
+            shot.alive = false;
+            if (shot.shooter != 0) landed_.push_back(shot.shooter);
+        }
     }
     for (Ember& e : embers_) {
         if (!e.alive) continue;

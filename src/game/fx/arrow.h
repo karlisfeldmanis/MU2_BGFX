@@ -48,7 +48,11 @@ public:
     static Model modelFor(int32_t group, int32_t number);
 
     // One let go from `from` at the body `whom`, aimed first at `to`.
-    void loose(const float from[3], const float to[3], uint32_t whom, Model model);
+    // `shooter`, when not 0, is reported in landed() the frame the arrow reaches `whom`: a
+    // monster's shot, whose blow is shown where it lands (Play::hunterShot).
+    void loose(const float from[3], const float to[3], uint32_t whom, Model model,
+               uint32_t shooter = 0);
+    const std::vector<uint32_t>& landed() const { return landed_; }
 
     // `middle` answers where a body's middle is drawn now, false once it is not drawn.
     void update(float seconds, const std::function<bool(uint32_t, float*)>& middle);
@@ -57,6 +61,7 @@ public:
     uint32_t flying() const;
 
 private:
+    std::vector<uint32_t> landed_;  // this update's shooters whose arrow reached its body
     struct Part {
         std::vector<EffectCorner> triangles;
         bgfx::TextureHandle sheet = BGFX_INVALID_HANDLE;
@@ -69,6 +74,7 @@ private:
         bool alive = false;
         Model model = Wood;
         uint32_t whom = 0;
+        uint32_t shooter = 0;
         float at[3];
         float along[3];  // unit, the way it is going
         float to[3];     // where the body's middle was last seen
