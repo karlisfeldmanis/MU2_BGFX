@@ -173,7 +173,7 @@ the arrival. Ours, tuned on the bench with the user watching:
   Fire01's flame cone too -- the Lich's streak -- turned by a whole basis so it trails back along
   the flight, stretched 1.8x (*"little bit longer fire trail"*), with the meteor's 0.4-0.7 flicker
   at 1.35x. Two wider, dimmer copies of the cone (1.25x at 35%, 1.55x at 18%) blur its mesh edge
-  (*"little bit more blurry"*). The rock turns as it flies. The cone's front is set just inside
+  (*"little bit more blurry"*). The rock turns as it flies. The cone's front is set level with
   the rock's leading face: as modelled it put a bright rim ahead of the ball, pushed all the way
   back it left a bare stone in front of a flat end.
 - **A haze round it**: a dim 1.9 m orange halo and a 0.55 m heart on the `light` sheet, drawn half a
