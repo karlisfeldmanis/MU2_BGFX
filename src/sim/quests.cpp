@@ -16,24 +16,35 @@ QuestRow marlon() {
     row.giver = 229;
     row.giverName = "Marlon";
     row.title = "Clear Lorencia";
+    // His story, on the user's word (2026-09-29: "some kind of story ... based on MU story
+    // line"). MU's own premise: Kundun, sealed in Kalima, and his minions loose on the continent
+    // as the seal fails (Blood Castle's "Kundun minions", the Lost Kalima gates), with the
+    // Dungeon east of Lorencia (Webzen's Continent of MU map). Marlon as the last of Lorencia's
+    // sworn knights, and the clear as a warning sent below, are ours.
     row.offer[0] =
-        "\"The guards hold the walls, and that is all they hold. Outside them the fields belong "
-        "to whatever crawls out of the hills.\"";
+        "\"When Kundun was bound in Kalima, the knights of Lorencia swore to keep this land "
+        "while the seal held. I am what is left of that oath.\"";
     row.offer[1] =
-        "\"I want them cleared. Not thinned: cleared. Every spider in the grass, every dragon "
-        "in the fields, every one of the dead that walk by the old road.\"";
+        "\"The seal is cracking. Every night more of his brood climbs out of the Dungeon to the "
+        "east: the dead that walk the old road, the Liches that drive them, the Giants that "
+        "follow the noise. And the beasts of the fields have gone mad with it, the spiders, "
+        "the Budge Dragons and the Bull Fighters in the hills.\"";
     row.offer[2] =
-        "\"They will come back, they always do. But for half a day Lorencia will breathe. Come "
-        "back to me when it is done.\"";
-    row.underway = "\"The fields are not clear yet. I can hear them from here.\"";
+        "\"The guards hold the walls, and that is all they hold. I want the fields cleared. Not "
+        "thinned: cleared, every breed of them. It will not mend the seal. But it tells whatever "
+        "stirs under Kalima that Lorencia still has a sword.\"";
+    row.offer[3] =
+        "\"They will come back; they always do. Come back to me when it is done.\"";
+    row.underway =
+        "\"Not yet. I can still hear them in the fields, and the dead still walk the old road.\"";
     row.handIn[0] =
-        "\"Quiet. I have not heard the fields this quiet since before the war.\"";
+        "\"Quiet. The fields have not been this quiet since the seal began to crack.\"";
     row.handIn[1] =
-        "\"It will not last past nightfall, so take your pay while it does. Choose what suits "
-        "your hand.\"";
+        "\"It will not last past nightfall. Kundun's brood never stays gone. Take your pay while "
+        "it does, and choose what suits your hand.\"";
     row.resting =
-        "\"You have done enough for today. Come back when they have crept down from the hills "
-        "again.\"";
+        "\"Rest while you can. By morning they will have crept up out of the Dungeon again, and "
+        "I will need you.\"";
     row.steps[0] = {QuestStepKind::Clear, 3, 0, "Spiders"};
     row.steps[1] = {QuestStepKind::Clear, 2, 0, "Budge Dragons"};
     row.steps[2] = {QuestStepKind::Clear, 0, 0, "Bull Fighters"};

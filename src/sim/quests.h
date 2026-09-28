@@ -54,7 +54,7 @@ struct QuestRow {
     const char* title = "";
     // What he says: offering it, while it is under way, taking it back done, and while it is
     // not yet his to give again. Each a paragraph; unused ones are null.
-    const char* offer[3] = {};
+    const char* offer[4] = {};
     const char* underway = "";
     const char* handIn[2] = {};
     const char* resting = "";
