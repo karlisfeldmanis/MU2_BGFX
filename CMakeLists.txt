@@ -152,6 +152,7 @@ add_executable(mu2
   src/game/fx/meteor.cpp
   src/game/fx/effect_mesh.cpp
   src/game/fx/wave.cpp
+  src/game/fx/arrow.cpp
   src/game/fx/thunder.cpp
   src/game/fx/blink.cpp
   src/game/fx/ice.cpp

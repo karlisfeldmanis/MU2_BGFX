@@ -27,6 +27,7 @@
 #include "game/fx/forge.h"
 #include "game/fx/bolt.h"
 #include "game/fx/wave.h"
+#include "game/fx/arrow.h"
 #include "game/fx/blink.h"
 #include "game/fx/ice.h"
 #include "game/fx/poison.h"
@@ -349,6 +350,7 @@ public:
     Bolt& bolt() { return bolt_; }
     // The wizard's Power Wave, opened beside the bolt. fx/wave.h.
     Wave& wave() { return wave_; }
+    Arrows& arrows() { return arrows_; }
     // And his Lightning. fx/thunder.h.
     Thunder& thunder() { return thunder_; }
     // And his Teleport's sparks. fx/blink.h.
@@ -541,6 +543,8 @@ private:
     // Where a spell leaves a caster thrown at `to`: the middle of his chest, a little toward it.
     // False when there is no figure to measure, and `out` is then his feet.
     bool castFrom(const Drawn& caster, const float to[3], float out[3]) const;
+    // And an archer's arrow at `to`, from MU's muzzle, in the model her weapon throws.
+    void shootArrow(const Drawn& shooter, const float to[3], uint32_t whom);
     Arena arena_;
     // One line for one happening, in an arena run only, with the TICK on it -- because a run is
     // read afterwards and not watched, and under `--fixed-dt 16.667` a tick is exactly three
@@ -592,6 +596,7 @@ private:
     Meteor meteor_;
     Bolt bolt_;
     Wave wave_;
+    Arrows arrows_;
     Thunder thunder_;
     int64_t lastThunderTick_ = -1;  // the tick a channel's pulse last sounded on
     Blink blink_;

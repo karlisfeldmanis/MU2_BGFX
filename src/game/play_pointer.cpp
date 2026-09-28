@@ -356,6 +356,24 @@ bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const 
     return true;
 }
 
+// MU's muzzle: her feet plus (-10, -60, 135) units turned by her facing -- 1.35 m up, 0.6 m
+// toward the target, a hand's width to the side (fx/arrow.h). The model is her weapon's.
+void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom) {
+    const float feet = ground_ ? ground_->heightAt(shooter.crown[0], shooter.crown[2]) : 0.0f;
+    const float wayX = to[0] - shooter.crown[0], wayZ = to[2] - shooter.crown[2];
+    const float flat = std::max(1e-4f, std::sqrt(wayX * wayX + wayZ * wayZ));
+    const float fx = wayX / flat, fz = wayZ / flat;
+    const float muzzle[3] = {shooter.crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
+                             shooter.crown[2] + fz * 0.6f - fx * 0.1f};
+    Arrows::Model model = Arrows::Wood;
+    if (const sim::Body* body = realm_.find(shooter.id);
+        body && body->weapon >= 0 && size_t(body->weapon) < tables_.arms.size()) {
+        const content::Arm& arm = tables_.arms[size_t(body->weapon)];
+        model = Arrows::modelFor(arm.group, arm.number);
+    }
+    arrows_.loose(muzzle, to, whom, model);
+}
+
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     if (!isOpen() || drawn_.empty() || !drawn_[0].placed || !ground_) return;
     const Drawn& hero = drawn_[0];
@@ -367,6 +385,11 @@ void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     const float to[3] = {feet[0] + acrossX * far, feet[1] + 1.0f, feet[2] + acrossZ * far};
     float from[3];
     const bool atHand = castFrom(hero, to, from);
+    if (skill == sim::skill::kNone) {
+        // Her own weapon's arrow, from the muzzle a shot leaves.
+        shootArrow(hero, to, 0);
+        return;
+    }
     if (skill == sim::skill::kFireBall) {
         meteor_.hurl(from, to, 0, atHand);
     } else if (skill == sim::skill::kMeteorite) {
