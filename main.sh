@@ -79,11 +79,12 @@ done
 # --new is this script's and not the engine's, so it goes no further.
 args=()
 for arg in "$@"; do [ "$arg" = "--new" ] || args+=("$arg"); done
-# Cradle.cs's three rows: the knight an axe, the elf a bow, the wizard empty hands.
+# Cradle.cs's rows: the knight an axe, the elf a bow -- and the wizard the Skull Staff, which is
+# ours (0.75 makes him empty-handed; game/roster.h has the reason).
 cradle=()
 if [ "$asked" = "no" ]; then
   case "$kin" in
-    0) ;;
+    0) cradle=(--weapon Staff01) ;;
     1) cradle=(--weapon Bow01) ;;
     *) cradle=(--weapon Axe01) ;;
   esac

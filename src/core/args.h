@@ -171,6 +171,9 @@ struct Args {
     int demoClicks = 0;
     // `--bolt-every N [--bolt-tiles T]`: the bolt bench -- an Energy Ball thrown every N frames
     // from where he stands at a point T tiles east (default 6), drawing only. Tuning, not play.
+    // `--arena-left`: the arena's hand attacks with the left button, the weapon alone, rather
+    // than with the right button's quick slot.
+    bool arenaLeft = false;
     int boltEvery = 0;
     float boltTiles = 6.0f;
     // `--point X,Y`: the pointer held on one spot, as fractions of the window, and never

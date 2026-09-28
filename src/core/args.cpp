@@ -105,6 +105,7 @@ void printUsage() {
         "  --play                    raise the realm behind the window: click to walk, click "
         "to fight\n"
         "  --click-every N           a scripted click every N frames, through the real pick\n"
+        "  --arena-left              the arena attacks with the left button: the weapon alone\n"
         "  --bolt-every N            the bolt bench: an Energy Ball every N frames, drawing only\n"
         "  --bolt-tiles T            thrown at a point T tiles east of him (default 6)\n"
         "  --lay F:LIST              on frame F lay NAME,... on the ground beside him (bench)\n"
@@ -191,6 +192,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.figure = v;
         } else if (!std::strcmp(s, "--clip")) {
             if (const char* v = next(s)) a.clip = std::atoi(v);
+        } else if (!std::strcmp(s, "--arena-left")) {
+            a.arenaLeft = true;
         } else if (!std::strcmp(s, "--bolt-every")) {
             if (const char* v = next(s)) a.boltEvery = std::atoi(v);
         } else if (!std::strcmp(s, "--bolt-tiles")) {

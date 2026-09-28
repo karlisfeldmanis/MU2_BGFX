@@ -156,6 +156,7 @@ bool PlayMode::open(Context& ctx) {
                 arena.breed = args.arena;
                 arena.count = args.arenaCount;
                 world_.played().setArena(arena);
+                world_.played().setArenaLeft(args.arenaLeft);
             }
             world_.play(assets, args.world, args.seed, args.kin, args.level, args.weapon,
                         args.shield);

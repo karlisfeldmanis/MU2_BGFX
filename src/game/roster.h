@@ -63,8 +63,11 @@ bool makeCharacter(const std::string& folder, const std::vector<Seat>& roster,
 bool dropCharacter(const std::string& folder, const Seat& who);
 
 // What a new character is given to hold: OpenMU's Version075 by way of MU2's Cradle.cs -- a
-// Small Axe for the knight, a Short Bow for the elf, and nothing for the wizard. main.sh's own
-// table, the same three rows.
+// Small Axe for the knight and a Short Bow for the elf -- and, OURS, the Skull Staff for the
+// wizard, whom 0.75 makes empty-handed. The user's choice, 2026-09-28: a bare-handed swing reads
+// as nothing, whether MU's flailing fist or the sword's clip with no sword in it, and with a
+// staff his left button is a weapon swing as the knight's is. The staff's rise also lifts his
+// Energy Ball its 3%. He is given it short of its strength, as the knight is his axe.
 const char* cradleWeapon(sim::Kin kin);
 
 // The class as the name plate says it: MU's texts 20-22.

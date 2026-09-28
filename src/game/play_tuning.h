@@ -164,7 +164,9 @@ inline int attackSlotFor(const std::string& stance) {
     if (stance == "scythe") return 47;
     if (stance == "bow") return 50;
     if (stance == "crossbow") return 51;
-    return 38;  // bare hands
+    // Bare hands: MU's 38, Attack fist, is a flailing spin that read as nothing like a blow, so
+    // an empty hand swings the one-handed sword's clip (sim/swings.cpp, the same departure).
+    return 39;
 }
 
 // An angle folded into a half turn either side of nothing, so that a body a few degrees the

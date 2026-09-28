@@ -40,8 +40,9 @@ int Play::swingSound(const sim::Body& body) const {
                   (right->group == 3 && right->number == 0))) {
         return heard_.swingLong;
     }
-    // Bare hands make no swing sound; the hit they land is separate.
-    return right || left ? heard_.swing : -1;
+    // Bare hands make no swing sound in MU. They do here: an empty hand swings the sword's clip
+    // now (sim/swings.cpp), and the same swing in silence read as something missing. Ours.
+    return heard_.swing;
 }
 
 void Play::steps() {

@@ -162,8 +162,9 @@ void testSwings(const content::Tables& tables) {
     if (!kris || !giant || !smallAxe || !spear || !scythe || !shield) return;
 
     int32_t actions[4] = {};
-    checkEqual(sim::attackActions(nullptr, nullptr, actions), 1, "empty hands are one action");
-    checkEqual(actions[0], 38, "and it is the fist");
+    // MU's fist (38) is not used: an empty hand swings the sword's pair (ours, sim/swings.cpp).
+    checkEqual(sim::attackActions(nullptr, nullptr, actions), 2, "empty hands swing the sword's pair");
+    checkEqual(actions[0], 39, "and not the fist");
     checkEqual(sim::attackActions(kris, nullptr, actions), 2, "a one-handed sword has two");
     checkEqual(actions[0], 39, "right 1");
     checkEqual(actions[1], 40, "right 2");
@@ -177,9 +178,9 @@ void testSwings(const content::Tables& tables) {
     checkEqual(actions[0], 46, "the Spear is named individually");
     checkEqual(sim::attackActions(scythe, nullptr, actions), 3, "the Great Scythe is not");
     checkEqual(actions[0], 47, "and falls to the scythe rung");
-    // A shield alone is the fist again, which is the client's final else.
+    // A shield alone is the client's final else, the fist, which is the empty hand's swing here.
     sim::attackActions(nullptr, shield, actions);
-    checkEqual(actions[0], 38, "a shield in the off hand swings nothing");
+    checkEqual(actions[0], 39, "a shield in the off hand swings as an empty hand does");
 
     // The stat, and then the interval. A Dark Knight buys attack speed at 1/15 an agility.
     checkNear(sim::attackSpeedStat(sim::Kin::DarkKnight, 30, nullptr, nullptr), 2.0, 1e-5,

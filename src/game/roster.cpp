@@ -201,7 +201,7 @@ bool dropCharacter(const std::string& folderPath, const Seat& who) {
 
 const char* cradleWeapon(sim::Kin kin) {
     switch (kin) {
-        case sim::Kin::DarkWizard: return "";
+        case sim::Kin::DarkWizard: return "Staff01";  // the Skull Staff: ours, see roster.h
         case sim::Kin::FairyElf: return "Bow01";
         case sim::Kin::DarkKnight: return "Axe01";
     }

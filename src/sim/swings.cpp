@@ -32,10 +32,15 @@ float attackSpeedPerAgility(Kin kin) {
 }  // namespace
 
 int attackActions(const content::Arm* right, const content::Arm* left, int32_t* out) {
-    // 38 Attack fist, and the only rung above the ladder: nothing in either hand.
+    // Nothing in either hand. MU's rung is 38, Attack fist, and it is **not used here**: the
+    // user, 2026-09-28, of a bare-handed wizard -- *"feels a little bit weird, not like for DK"*,
+    // *"animation looked weird"* -- and filmed it is a wide flailing spin, torso side-on to what
+    // it hits, over in under half a second. An empty hand swings the one-handed sword's pair
+    // instead, at their pace, which is the knight's swing with nothing in it. INVENTION.
     if (!right && !left) {
-        out[0] = 38;
-        return 1;
+        out[0] = 39;
+        out[1] = 40;
+        return 2;
     }
     const bool rightSwings = right && !right->isShield() && right->group >= 0 &&
                              right->group <= kMaces;
@@ -72,17 +77,12 @@ int attackActions(const content::Arm* right, const content::Arm* left, int32_t* 
         return 2;
     }
 
-    // A one-handed staff swings like a sword; a two-handed one casts, and a cast's own clips are
-    // the skill weapons, which this game has no skills for yet. Bare hands until it does, and
-    // that is a gap rather than a decision -- PLAN.md's skills are their own sprint.
+    // A one-handed staff swings like a sword. A two-handed one falls to MU's fist, and the fist
+    // is the empty hand's swing here (above), so it swings the sword's pair as well.
     if (right && right->group == kStaves) {
-        if (!right->twoHanded()) {
-            out[0] = 39;
-            out[1] = 40;
-            return 2;
-        }
-        out[0] = 38;
-        return 1;
+        out[0] = 39;
+        out[1] = 40;
+        return 2;
     }
 
     // 46 Attack spear 1, for the two the client names individually: the Spear at (3,1) and the
@@ -111,9 +111,10 @@ int attackActions(const content::Arm* right, const content::Arm* left, int32_t* 
     }
 
     // Holding something the ladder does not recognise -- a shield alone, a jewel -- is the fist
-    // again, and the client's final else says so.
-    out[0] = 38;
-    return 1;
+    // in the client's final else, and the empty hand's swing here.
+    out[0] = 39;
+    out[1] = 40;
+    return 2;
 }
 
 float attackSpeedStat(Kin kin, int agility, const content::Arm* right, const content::Arm* left) {

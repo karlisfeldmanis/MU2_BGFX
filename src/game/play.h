@@ -115,6 +115,8 @@ public:
     // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
     // and handed down each frame, as the bar is the interface's and the order is the realm's.
     void setQuickSkill(int32_t skill) { quickSkill_ = skill; }
+    // The arena's hand on the left button instead: `fight` then carries no skill.
+    void setArenaLeft(bool left) { arenaLeft_ = left; }
     int32_t quickSkill() const { return quickSkill_; }
     // The same Attack request a click on a body raises, by id and with no pointer: the arena's
     // hand. It goes through `Realm::ask` like every other order and decides nothing itself.
@@ -541,6 +543,7 @@ private:
     Meteor meteor_;
     Bolt bolt_;
     int32_t quickSkill_ = 0;
+    bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
     // so watching a wizard cast never moves the sim's seeded stream.
     uint32_t handDice_ = 0x2545f491u;

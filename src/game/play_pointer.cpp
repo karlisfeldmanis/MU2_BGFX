@@ -280,7 +280,7 @@ void Play::fight(uint32_t id) {
     request.target = id;
     // With the right button's skill, so an arena shows what a class fights with: a wizard
     // throws his Energy Ball and a knight with an empty slot swings, as a right-click would.
-    request.skill = quickSkill_;
+    request.skill = arenaLeft_ ? 0 : quickSkill_;
     realm_.ask(request);
     mark_ = false;
     marker_.dismiss();

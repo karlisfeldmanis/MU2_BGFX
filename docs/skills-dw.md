@@ -32,6 +32,17 @@ reads its sixth as empty.
 
 The Elf has no skill built yet, so her right button is her weapon until she has one.
 
+**The wizard's left button is a staff.** A new wizard is made holding the Skull Staff (`Staff01`),
+which is ours -- 0.75 makes him empty-handed -- and the user's choice of 2026-09-28 after both
+bare-handed swings were filmed: MU's fist (action 38) is a flailing spin with the torso side-on to
+the target, and the knight's one-handed swing with nothing in the hand ends with the arms held out
+wide. With the staff it is a weapon swing, the knight's clip and pace, and the staff's 3% rise is on
+his Energy Ball. He is given it short of its strength, as the knight is given his axe. An empty
+hand now swings the sword's pair (39/40) with the swing's whoosh rather than MU's silent fist, for
+the day he takes the staff off. A wizard saved before this change keeps his empty hands.
+
+`--arena-left` makes the arena's hand attack with the left button, for filming the weapon.
+
 ## 2. Energy Ball
 
 0.75's row, `CreateSkill(EnergyBall, ..., DamageType.Wizardry, 3, 6, manaConsumption: 1)`: three
