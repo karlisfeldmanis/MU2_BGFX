@@ -1044,9 +1044,9 @@ void testCastLock(const content::Tables& tables) {
     // ---- Teleport: a blink to the ground he points at ----------------------------------------
     {
         const sim::SkillRow& blink = *sim::skillNumbered(sim::skill::kTeleport);
-        check(blink.blinks && !blink.primary() && blink.mana == 30 && blink.clip == 152 &&
+        check(blink.blinks && !blink.primary() && blink.mana == 30 && blink.clip == 147 &&
                   blink.reach == 6.0f,
-              "Teleport is a blink of six tiles for thirty mana, cast in the teleport clip");
+              "Teleport is a blink of six tiles for thirty mana, cast with one hand");
         const int32_t scroll = tables.itemAt(15, 5);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kTeleport &&
                   tables.items[size_t(scroll)].teachesEnergy == 88,

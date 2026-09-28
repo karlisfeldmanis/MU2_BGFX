@@ -345,12 +345,14 @@ ticks after its let-go, and never moves while he casts. Filmed with `--arena "Bu
 0.75's row, `CreateSkill(Teleport, ..., manaConsumption: 30, energyRequirement: 88)`: thirty mana,
 six tiles, no damage, skill 6, off the Scroll of Teleport (`Book06`, group 15 #5, Pasi's slot 4,
 5 000 zen), refused under 88 energy. MuMain's: aimed at the tile under the pointer and refused on a
-wall (ClassAttack.cpp:1514); `CreateTeleportBegin` plays "Skill teleport" (152), fades the body a
+wall (ClassAttack.cpp:1514); `CreateTeleportBegin` plays "Skill teleport" (152, not used here), fades the body a
 tenth of its alpha a frame, throws `BITMAP_SPARK + 1` and SOUND_MAGIC; the server puts him down and
 `CreateTeleportEnd` fades him back in with the spark and the sound again.
 
 - **A key aimed at the ground** (`SkillRow::blinks`, `Realm::invokeAt`): the key throws at the tile
   under the pointer; with no ground under it nothing is asked. It is never on the right button.
+- **Cast with one hand**: Energy Ball's quick throw (147), where MU plays "Skill teleport" (152) --
+  the user's, *"more simple cast animation for teleport"*.
 - **He is put down eight ticks after the cast** (`Realm::blink`), when MU's ten-frame fade has run,
   and may act four ticks later; the drawing fades him out and in over 0.4 s each way and snaps him
   and the camera to the tile (`What::Blinked`).
@@ -360,9 +362,9 @@ tenth of its alpha a frame, throws `BITMAP_SPARK + 1` and SOUND_MAGIC; the serve
   MU refuses both; the fight he was in is dropped, as the Town Portal drops it. Nothing is cast in
   the safe zone, this included, as 0.75 refuses every skill there.
 - **The sparks** (`fx/blink`): MU's column of Spark03 flashing out from his feet for ten frames at
-  both ends. MU's eighteen a frame up 4.3 m at fifty units a frame was *"sparkles to crazy"*; six a
-  frame up the height of a man, drifting at a fifth of the speed and dimmer, a third of the size
-  after *"sparkles to big"* and *"to large"* (and no doubled spark at his feet), is ours. The staff's
+  both ends. MU's eighteen a frame up 4.3 m at fifty units a frame was *"sparkles to crazy"*; four a
+  frame up the height of a man, drifting at a fifth of the speed and dimmer, and cut to specks over
+  three rounds of *"sparkles to big"* (and no doubled spark at his feet), is ours. The staff's
   streak is off for the clip; it had been drawn stretched across the jump.
 
 Measured in `sim_test`: cast at tick 1 and put down at tick 9, three tiles, thirty mana, cooling; a

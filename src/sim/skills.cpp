@@ -276,10 +276,12 @@ constexpr SkillRow kRows[kSkills] = {
     // of cooldown before agility's haste, where 0.75 has none; a point past six tiles is pulled
     // back along the line to six, and a wall falls back to the nearest open tile toward him,
     // where MU refuses both; and the fight he was in is dropped, as the Town Portal drops it.
+    // **Cast with Energy Ball's one hand** (147), not MU's Skill teleport (152): the user,
+    // 2026-09-28, "more simple cast animation for teleport".
     {skill::kTeleport, "Teleport", 30, 6.0f, 1.0f, 0.0f, 60, false, Spread::One, 0, 1.0f,
      "He fades and is put down on the ground he points at, up to six tiles off, leaving the "
      "fight where it stood.",
-     152, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 0, 0, 15.0f, false, 0, 0, 0,
+     147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 0, 0, 15.0f, false, 0, 0, 0,
      0, 0, 0, 0.0f, true},
 };
 

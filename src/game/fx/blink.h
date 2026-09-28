@@ -55,16 +55,16 @@ private:
     // 4.3 m, flying fifty units a frame, was a fountain of glitter. Six a frame up the height of
     // a man, drifting at a fifth of the speed and dimmer; the shape -- a column that flashes out
     // and dies -- is MU's.
-    static constexpr int kRows = 6;              // sparks a frame, up the column (MU 18)
-    static constexpr float kRowUnits = 32.0f;    // the step up (MU 24, over 18)
+    static constexpr int kRows = 4;              // sparks a frame, up the column (MU 18)
+    static constexpr float kRowUnits = 45.0f;    // the step up (MU 24, over 18)
     static constexpr float kScale = 6.0f;        // MU doubles the bottom one; not here
     static constexpr float kFlyUnits = 10.0f;    // a frame (MU 50)
     static constexpr float kShrink = 1.2f;       // scale a frame (MU 2)
     static constexpr float kGone = 0.2f;
     static constexpr float kBrightness = 0.6f;
     // Ours: metres across a scale of one -- 0.1 was "sparkles to big", 0.05 with MU's doubled
-    // bottom spark (a flare at his feet) "sparkles to large".
-    static constexpr float kMetresPerScale = 0.03f;
+    // bottom spark (a flare at his feet) "sparkles to large", 0.03 still "to big".
+    static constexpr float kMetresPerScale = 0.018f;
 
     static constexpr int kPillars = 4;
     static constexpr int kSparks = 256;
