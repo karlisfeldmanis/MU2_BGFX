@@ -2,7 +2,7 @@
   "item": "Book16",
   "mu_name": "Scroll of Soul Barrier",
   "mu_name_from": "ZzzOpenData.cpp loads item group ITEM_ETC number i from Book{i+1:02}.bmd for i up to 19, so number 15 is Book16.bmd; MuMain's _enum.h names it ITEM_SCROLL_OF_SOUL_BARRIER = ITEM_ETC + 15, and OpenMU's VersionSeasonSix/Items/Scrolls.cs:52 names group 15 number 15 the Scroll of Soul Barrier. Season 6 in OpenMU's tree, not 0.75 (docs/mu-scrolls-and-orbs.md SS1).",
-  "why_this_one": "The wizard's answer to the knight's Orb of Defense, asked for by the user on 2026-09-28: buy the scroll, read it, cast it on himself (no shield asked since 2026-09-28), and stand five minutes under a guard the knight's size. It is a late spell in MU (energy 408 in Season 6) and is brought down to the knight's level on purpose: every requirement, the drop level and the price are the Orb of Defense's, so the two classes meet their guard at the same point in the game. See docs/skills-dw.md.",
+  "why_this_one": "The wizard's answer to the knight's Orb of Defense, asked for by the user on 2026-09-28: buy the scroll, read it, cast it on himself behind a shield, and stand five minutes under a guard the knight's size. It is a late spell in MU (energy 408 in Season 6) and is brought down to the knight's level on purpose: every requirement, the drop level and the price are the Orb of Defense's, so the two classes meet their guard at the same point in the game. See docs/skills-dw.md.",
   "mesh": "Book01",
   "mesh_note": "No geometry of its own. Book01.bmd through Book19.bmd are byte-identical in MuMain's Data/Item -- one md5 across all nineteen -- so this names the one the pipeline has built, as Book02 through Book12 do.",
   "stats": {
@@ -31,7 +31,7 @@
     "note": "What the scroll teaches. Read once and gone.",
     "number": 16,
     "name": "Soul Barrier",
-    "tells": "A barrier drawn up about him for five minutes. The keener the wizard, and the better the shield if he carries one, the more of every blow it takes.",
+    "tells": "A barrier drawn up behind the shield for five minutes. The better the shield and the keener the wizard, the more of every blow it takes.",
     "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the scroll's tooltip and the skill's card say the same thing.",
     "level_requirement": 6,
     "energy_requirement": 0,

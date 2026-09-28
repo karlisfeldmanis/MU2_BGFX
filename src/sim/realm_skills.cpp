@@ -143,7 +143,6 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
                                          : nullptr;
         // Asked through the same column as an attack's, because `arms::kShield` is a family:
         // one question -- does this hand suit this row -- rather than two rules that can drift.
-        // Soul Barrier names no hand, and `suits` says yes to it bare.
         if (!row.suits(familyOf(shield))) return false;
         // A self-cast has no target to be far from and reads its victim off the caster.
         if (hero.mana < row.mana) return false;
