@@ -1315,6 +1315,11 @@ void testSkills(const content::Tables& tables) {
         check(std::fabs(hero.boonDamageTaken - (1.0f - share)) < 1e-6f,
               "and every blow is taken down by the barrier's share");
         check(hero.boonUntil - field.tick() > 5000, "for five minutes");
+        // And the shield taken off ends it, the barrier's share and all.
+        check(field.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "the shield goes into the bag");
+        check(field.hero().boonUntil <= field.tick() && field.hero().stats.damageTaken == 1.0,
+              "and the barrier falls with it");
+        check(field.cooling(sim::skill::kSoulBarrier) > 0, "while its wait runs on");
 
         // And a knight may not read it, whatever his level.
         sim::Realm knightRealm;

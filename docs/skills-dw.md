@@ -123,6 +123,10 @@ What is the knight's, column for column (`sim/skills.cpp`):
   cast, and the same buff strip (its own cell, `eBuff_WizDefense`, the blue crescent). The reading
   is every class's orb burst and swoosh (`Play::learned`).
 
+**Taking the shield off ends it** (and the knight's Defense), aura and share together, in
+`Realm::rearm` -- the user's, 2026-09-28. The cooldown runs on, so the shield put back on is not a
+quicker recast.
+
 What is its own: the wave, `SOUND_SOULBARRIER` (`eSoulBarrier.wav`), and the mana, MU's 70.
 
 **The share.** Same curve and cap as the guard, `0.60 * p / (p + 150)`, with different points:
