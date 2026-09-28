@@ -76,6 +76,8 @@ public:
 
     // Whether the pointer this frame belongs to a window rather than to the ground.
     bool takesPointer() const { return takesPointer_; }
+    // The drop whose name plate is under this pixel, or 0. The last drawn is on top and wins.
+    uint32_t labelUnder(float x, float y) const;
 
     // The item pictures, taken after update() has said what stands on each stage and before
     // the renderer's frame is submitted. Sprint 7 step 5: the bag and the shelf draw the real
@@ -179,6 +181,12 @@ private:
     // The names over the drops, on MU's own black plate. Rebuilt when one moves on screen.
     gfx::Canvas ground_;
     std::vector<Play::OnScreen> onScreen_, drawnOnScreen_;
+    // Each name's plate as it was drawn, so the pointer can be on a name as well as on a thing.
+    struct Plate {
+        uint32_t id = 0;
+        gfx::Box box;
+    };
+    std::vector<Plate> plates_;
     float viewProj_[16] = {};
     uint64_t groundRebuilds_ = 0;
     void labelGround(const Play& play, int width, int height);

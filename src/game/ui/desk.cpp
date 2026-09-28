@@ -1042,6 +1042,7 @@ void Desk::labelGround(const Play& play, int width, int height) {
     drawnOnScreen_ = onScreen_;
     ++groundRebuilds_;
     ground_.clear();
+    plates_.clear();
     const content::Tables& tables = *play.realm().tables();
     const gfx::Face& face = ground_.face();
     // The tooltip's size: MU's labels are its small type, and the two read as one family.
@@ -1070,8 +1071,16 @@ void Desk::labelGround(const Play& play, int width, int height) {
         const float w = face.measure(set, name), h = face.height(set);
         const gfx::Box plate{at.x - w * 0.5f, at.y - h, w, h};
         ground_.rect(plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
+        plates_.push_back({at.id, plate});
         ground_.text(plate.x, plate.y + face.ascent(set), set, tintOf(tables, *one), name);
     }
+}
+
+uint32_t Desk::labelUnder(float x, float y) const {
+    for (auto one = plates_.rbegin(); one != plates_.rend(); ++one) {
+        if (one->box.has(x, y)) return one->id;
+    }
+    return 0;
 }
 
 void Desk::overhead(float seconds, const Play& play, const float* viewProj, int width,

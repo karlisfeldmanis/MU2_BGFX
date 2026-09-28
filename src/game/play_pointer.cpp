@@ -225,6 +225,16 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     }
 }
 
+void Play::pointAtLabel(uint32_t lying) {
+    if (lying == 0 || !isOpen()) return;
+    // Still held behind a falling monster: not yet a thing to be picked up.
+    if (std::find(heldIds_.begin(), heldIds_.end(), lying) != heldIds_.end()) return;
+    pointedLying_ = lying;
+    pointedAt_ = 0;
+    pointedFolk_ = -1;
+    pointedPerch_ = -1;
+}
+
 void Play::leftClick() {
     if (!isOpen()) return;
     sim::Request request;

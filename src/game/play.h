@@ -216,6 +216,10 @@ public:
     int pointedFolk() const { return pointedFolk_; }
     // The thing on the ground under the pointer, by its id, or 0.
     uint32_t pointedLying() const { return pointedLying_; }
+    // The pointer is on this drop's NAME, which outranks anything the ray found: the plate is
+    // drawn over the world, so what the eye is on is the name and not the monster behind it
+    // (the user, 2026-09-28). Called after `point`, with the desk's `labelUnder`; 0 does nothing.
+    void pointAtLabel(uint32_t lying);
     // Something to sit on or lean against under the pointer, as an index into the tables'
     // perches, or -1. Tested last, after bodies, drops and townsfolk.
     int pointedPerch() const { return pointedPerch_; }
