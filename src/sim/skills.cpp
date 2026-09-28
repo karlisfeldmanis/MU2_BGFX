@@ -331,7 +331,8 @@ constexpr SkillRow kRows[kSkills] = {
     // the Skill option. No cooldown: on the quick slot it is her auto-attack, as Energy Ball is
     // the wizard's, paced by the bow's own clip (50; the drawing plays 51 with a crossbow). Each
     // arrow is an archery blow at no multiplier -- ClassFairyElf.cs sets no SkillMultiplier --
-    // and the fan is its worth: three bodies struck is three blows. The level is ours.
+    // and the fan is its worth: three bodies struck is three blows. Its orb, OrbSkillshot.json,
+    // asks nothing.
     //
     // **Nine tiles and not six** (the user, 2026-09-28: "lets increase range in our game for
     // multishot"), ours, as the wizard's Energy Ball and Fire Ball were raised to nine. Her plain
@@ -341,16 +342,16 @@ constexpr SkillRow kRows[kSkills] = {
      .tells = "Three arrows loosed in a fan at a body up to nine tiles off, each flying on "
               "through everything in its way. One arrow is spent for every body struck.",
      .clip = 50, .sound = "player_bow", .built = true, .families = arms::kMissiles,
-     .needLevel = 1, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3},
+     .needLevel = 0, .kin = Kin::FairyElf, .flies = 17.5f, .arrows = 3},
     // Heal 26: twenty mana, `5 + energy / 5` health at once (HealEffectInitializer). MU casts it
     // on a player; there is no party here, so it is hers -- and her summon's, when step 5 builds
     // one. `PLAYER_SKILL_ELF1` (151) and `SOUND_SKILL_DEFENSE`, as MuMain's ReceiveMagic opens
     // every elf buff (WSclient.cpp:4153-4184). Ours: a three-second cooldown, because 0.75's
-    // twenty mana is a heal every clip; and the level.
+    // twenty mana is a heal every clip. Its orb asks 52 energy and no level (Gem02.json).
     {.number = skill::kHeal, .name = "Heal", .mana = 20, .coolTicks = 60,
      .tells = "Health put back at once. The keener the elf, the more.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
-     .needLevel = 10, .kin = Kin::FairyElf, .anyHand = true, .mends = true},
+     .needLevel = 0, .kin = Kin::FairyElf, .anyHand = true, .mends = true},
     // Greater Defense 27: **her guard, Defense's own row in the elf's hand** -- thirty mana,
     // five minutes, twelve seconds of cooldown floored at its length and two, learned at six --
     // the user's of 2026-09-28, "available early, the same as the Orb of Defense and the Scroll
@@ -364,11 +365,11 @@ constexpr SkillRow kRows[kSkills] = {
      .needLevel = 6, .kin = Kin::FairyElf, .anyHand = true},
     // Greater Damage 28: 0.75's row -- forty mana, `3 + energy / 7` on every blow for sixty
     // seconds (GreaterDamageEffectInitializer). Ours: twelve seconds of cooldown floored at its
-    // length and two, as the guards are, and the level.
+    // length and two, as the guards are. Its orb asks 92 energy and no level (Gem04.json).
     {.number = skill::kGreaterDamage, .name = "Greater Damage", .mana = 40, .coolTicks = 240,
      .tells = "Every blow harder by a share of her energy, for a minute.",
      .clip = 151, .sound = "player_skill_defense", .built = true, .families = arms::kNone,
-     .needLevel = 20, .kin = Kin::FairyElf, .anyHand = true, .mightTicks = 1200},
+     .needLevel = 0, .kin = Kin::FairyElf, .anyHand = true, .mightTicks = 1200},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

@@ -1,0 +1,43 @@
+{
+  "item": "Gem04",
+  "mu_name": "Orb of Greater Damage",
+  "mu_name_from": "0.75's own name and number: CreateOrb(10, SkillNumber.GreaterDamage, 1, \"Orb of Greater Damage\", 18, 0, 100, 0, 0, 7000, CharacterClasses.FairyElf) (Version075/Items/Orbs.cs:35).",
+  "why_this_one": "0.75's row, sprint 15: the elf's buff on every blow for a minute.",
+  "mesh": "Gem05",
+  "mesh_note": "No geometry of its own. Gem01.bmd through Gem05.bmd are byte-identical in MuMain's Data/Item -- one md5 across all five -- so every orb in MU is one model told apart by its row, and this names the one the pipeline has built.",
+  "stats": {
+    "note": "OpenMU's row (Version075/Items/Orbs.cs:35).",
+    "group": 12,
+    "number": 10,
+    "drop_level": 18,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. One reading, as a scroll is.",
+    "value": 7000,
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "CharacterClasses.FairyElf. Every skill in this orb's family is the elf's; a knight or a wizard cannot learn it at any level.",
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 92,
+      "vitality": 0
+    },
+    "requires_note": "Carried raw, as every orb's is (docs/mu-scrolls-and-orbs.md SS4). The same numbers are on the skill block below, which is what Realm::useItem checks."
+  },
+  "skill": {
+    "note": "What the orb teaches. Read once and gone.",
+    "number": 28,
+    "name": "Greater Damage",
+    "tells": "Every blow harder by a share of her energy, for a minute.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things.",
+    "level_requirement": 0,
+    "energy_requirement": 92,
+    "energy_from": "MuMain's and not OpenMU's, as the Orb of Healing's is (Gem02.json): 20 + 100 x 18 x 4 / 100 = 92 (ZzzInfomation.cpp:786), which is also SkillsInitializer.cs:67's own energyRequirement.",
+    "value": 7000
+  }
+}

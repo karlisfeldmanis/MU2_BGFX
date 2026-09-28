@@ -1,0 +1,43 @@
+{
+  "item": "OrbSkillshot",
+  "mu_name": "Orb of Skillshot",
+  "mu_name_from": "OURS, the user's of 2026-09-28: 'in our game we will have orb of skillshot, that is multishot skill for any elf bow or crossbow'. 0.75 has no such orb: Triple Shot (24) comes only on a bow carrying the Skill option.",
+  "why_this_one": "The elf's first skill and her quick-slot auto-attack (sim/skills.cpp, Skillshot). Early and cheap, as the Orb of Summoning is: drop level 3, 150 zen, no requirement. Its number, 21, is free in 0.75's group 12 (wings 0-2, the elf's orbs 8-11, the Jewel of Chaos 15; every other free number already carries one of this project's knight orbs).",
+  "mesh": "Gem05",
+  "mesh_note": "No geometry of its own. Gem01.bmd through Gem05.bmd are byte-identical in MuMain's Data/Item -- one md5 across all five -- so every orb in MU is one model told apart by its row, and this names the one the pipeline has built.",
+  "stats": {
+    "note": "Ours: the Orb of Summoning's shape (Version075/Items/Orbs.cs:36) with a free number.",
+    "group": 12,
+    "number": 21,
+    "drop_level": 3,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. One reading, as a scroll is.",
+    "value": 150,
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "CharacterClasses.FairyElf. Every skill in this orb's family is the elf's; a knight or a wizard cannot learn it at any level.",
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "Carried raw, as every orb's is (docs/mu-scrolls-and-orbs.md SS4). The same numbers are on the skill block below, which is what Realm::useItem checks."
+  },
+  "skill": {
+    "note": "What the orb teaches. Read once and gone.",
+    "number": 24,
+    "name": "Skillshot",
+    "tells": "Three arrows loosed in a fan at a body up to nine tiles off, each flying on through everything in its way. One arrow is spent for every body struck.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things.",
+    "level_requirement": 0,
+    "energy_requirement": 0,
+    "energy_from": "None: it is how a new elf's bow becomes her bar, and nothing about it wants energy.",
+    "value": 150
+  }
+}

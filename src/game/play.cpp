@@ -263,8 +263,9 @@ void Play::update(double seconds) {
                     // it is played here instead, and the wave with it.
                     // The barrier, thrown with the clip and played once: MU's own ribbons for
                     // two seconds at the cast, not for the guard's whole five minutes. The
-                    // user's, 2026-09-25.
-                    if (row && row->onSelf() && happening.who == heroId) {
+                    // user's, 2026-09-25. A guard's alone -- Defense, Soul Barrier and the elf's
+                    // Greater Defense -- and not her Heal or Greater Damage, which raise none.
+                    if (row && row->boonTicks > 0 && happening.who == heroId) {
                         guardRise(kGuardShowSeconds);
                     }
                     // A channel: its clip, looping for as long as it runs. No blow follows the

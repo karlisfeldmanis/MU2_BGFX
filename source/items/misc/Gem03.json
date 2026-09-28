@@ -1,0 +1,43 @@
+{
+  "item": "Gem03",
+  "mu_name": "Orb of Greater Defense",
+  "mu_name_from": "0.75's own name and number: CreateOrb(9, SkillNumber.GreaterDefense, 1, \"Orb of Greater Defense\", 13, 0, 100, 0, 0, 3000, CharacterClasses.FairyElf) (Version075/Items/Orbs.cs:34).",
+  "why_this_one": "The elf's guard, sprint 15. OURS in everything but the name and the number: the user's of 2026-09-28 -- 'we need that elf defense orb available early, same as the Orb of Defense and the Scroll of Soul Barrier, with the same stats as the others'. So its drop level, level, price and energy are the Orb of Defense's (6, 6, 500, none) and not 0.75's (13, none, 3000, 72 as MuMain shows it), and what it teaches is Defense's row in her hand (sim/skills.cpp).",
+  "mesh": "Gem05",
+  "mesh_note": "No geometry of its own. Gem01.bmd through Gem05.bmd are byte-identical in MuMain's Data/Item -- one md5 across all five -- so every orb in MU is one model told apart by its row, and this names the one the pipeline has built.",
+  "stats": {
+    "note": "Ours: the Orb of Defense's row with the elf's class. 0.75's row is at mu_name_from.",
+    "group": 12,
+    "number": 9,
+    "drop_level": 6,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "durability_note": "One. One reading, as a scroll is.",
+    "value": 500,
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "CharacterClasses.FairyElf. Every skill in this orb's family is the elf's; a knight or a wizard cannot learn it at any level.",
+    "requires": {
+      "level": 6,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "requires_note": "Carried raw, as every orb's is (docs/mu-scrolls-and-orbs.md SS4). The same numbers are on the skill block below, which is what Realm::useItem checks."
+  },
+  "skill": {
+    "note": "What the orb teaches. Read once and gone.",
+    "number": 27,
+    "name": "Greater Defense",
+    "tells": "A ward raised for five minutes. The quicker and keener the elf, the more of every blow it takes.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the orb's tooltip and the skill's card cannot say different things.",
+    "level_requirement": 6,
+    "energy_requirement": 0,
+    "energy_from": "None, as the Orb of Defense asks none: the guards stand level (the user, 2026-09-28). 0.75 asks 72 (MuMain's ZzzInfomation.cpp:786 on the row's 100 at drop level 13) and is not followed.",
+    "value": 500
+  }
+}
