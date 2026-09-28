@@ -127,6 +127,10 @@ constexpr int kRiseTicks = 60;
 constexpr int32_t kRecoverEveryTicks = 60;       // 3000 ms at 20 Hz
 constexpr float kManaRecoveryShare = 1.0f / 27.5f;
 constexpr float kAttackManaShare = 0.05f;        // invention: a twentieth of the pool a blow
+// Health comes back in a safe zone and nowhere else: OpenMU's HealthRecoveryMultiplier is the one
+// relationship `0.01 x IsInSafezone` (AddCommonAttributeRelationships), with no base and no flat
+// part, so outside town 0.75 is played off potions. MU2's Realm.HealthRecoveryInSafeZone.
+constexpr float kHealthRecoveryInSafeZone = 0.01f;
 
 // The shield: its share of a blow and its safe-zone recovery, every three seconds. Rates.cs.
 constexpr float kShieldShare = 0.9f;

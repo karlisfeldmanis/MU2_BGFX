@@ -462,6 +462,17 @@ void Realm::recover(Body& hero) {
         hero.manaCarry -= float(whole);
         if (whole > 0) hero.mana = std::min(hero.maxMana, hero.mana + whole);
     }
+    // Health on the same three seconds, a hundredth of the pool, and only on a safe tile.
+    if (hero.alive() && tick_ % kRecoverEveryTicks == 0) {
+        if (hero.health >= hero.maxHealth || !tables_->grid.safe(hero.column(), hero.row())) {
+            hero.healthCarry = 0.0f;
+        } else {
+            hero.healthCarry += float(hero.maxHealth) * kHealthRecoveryInSafeZone;
+            const int whole = int(hero.healthCarry);
+            hero.healthCarry -= float(whole);
+            if (whole > 0) hero.health = std::min(hero.maxHealth, hero.health + whole);
+        }
+    }
     if (tick_ % kRecoveryTicks != 0 || !hero.alive() || hero.sd >= hero.maxSd) {
         if (hero.sd >= hero.maxSd) hero.sdCarry = 0.0f;
         return;

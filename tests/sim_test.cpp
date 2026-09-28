@@ -1794,6 +1794,29 @@ void testVault(const content::Tables& tables) {
     check(!realm.withdrawZen(100) && realm.vault().zen() == 300, "and what is kept stays kept");
 }
 
+// Health comes back in a safe zone alone: a hundredth of the pool every three seconds on a safe
+// tile, nothing on the grass outside it. Realm::recover.
+void testRecovery(const content::Tables& tables) {
+    std::printf("recovery\n");
+    const auto hurt = [&](int column, int row, const char* raised) {
+        sim::Realm realm;
+        check(realm.raise(&tables, 13, column, row), raised);
+        sim::HeroRecord saved = realm.record();
+        saved.health = realm.hero().maxHealth / 2;
+        realm.restore(saved);
+        const int before = realm.hero().health;
+        for (int tick = 0; tick < 61; ++tick) realm.step();
+        return std::pair{realm.hero().health - before,
+                         tables.grid.safe(realm.hero().column(), realm.hero().row())};
+    };
+    const auto [inTown, safe] = hurt(138, 124, "a realm raises in the town");
+    check(safe, "he stands on a safe tile");
+    check(inTown > 0, "and his health comes back there");
+    const auto [outside, unsafe] = hurt(170, 66, "a realm raises on the grass east of town");
+    check(!unsafe, "which is not safe");
+    check(outside <= 0, "and nothing comes back there");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -1825,6 +1848,7 @@ int main() {
     testOptions(tables);
     testExcellent(tables);
     testWear(tables);
+    testRecovery(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
