@@ -58,6 +58,11 @@ public:
     void gather(gfx::Effects& effects, const Sway& sway) const;
 
     uint32_t puffCount() const { return uint32_t(puffs_.size()); }
+    // The Chaos Machine's spark bursts due this frame, at bone 58, in world metres: MU's
+    // CreateJoint(BITMAP_JOINT_SPARK) and CreateParticle(BITMAP_SPARK), eight pairs a burst,
+    // which the caller throws through the forge (game/fx/forge.h), the smith's own recipe.
+    size_t strikeCount() const { return strikeCount_; }
+    const float* strikeAt(size_t i) const { return strikes_[i]; }
 
 private:
     // A point on a bone and the two directions MU scatters across, all in the bone's OWN
@@ -100,6 +105,20 @@ private:
         float spin = 0.0f;
     };
 
+    // A BITMAP_SHINY glint: subtype 0 twinkles, 1 twinkles smaller and turns (ZzzEffectParticle).
+    struct Glint {
+        float position[3] = {0, 0, 0};
+        float age = 0.0f;  // reference frames
+        float spin = 0.0f;
+        bool small = false;
+    };
+    // A bone that throws on a roll: `every` is rand_fps_check's N, `clock` the frames owed.
+    struct Thrower {
+        Anchor anchor;
+        int every = 1;
+        float clock = 0.0f;
+        bool sparks = false;  // bone 58's bursts, else a glint pair
+    };
     uint32_t next();
     float unit();
 
@@ -107,13 +126,18 @@ private:
     std::vector<Lantern> lanterns_;
     std::vector<Fall> falls_;
     std::vector<Puff> puffs_;
+    std::vector<Glint> glints_;
+    std::vector<Thrower> throwers_;
+    float strikes_[4][3] = {};
+    size_t strikeCount_ = 0;
     float luminosity_ = 1.0f;  // this frame's roll, shared by every lantern as MU's is
     float lanternWait_ = 0.0f;
     float spun_ = 0.0f;  // seconds, for the machine's star: WorldTime's own clock, wrapped
     uint32_t seed_ = 0x51AB1Eu;
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;  // lightning2, MU's BITMAP_LIGHTNING+1
+    bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;  // Effect/Shiny01, MU's BITMAP_SHINY  // lightning2, MU's BITMAP_LIGHTNING+1
 };
 
 }  // namespace mu::game

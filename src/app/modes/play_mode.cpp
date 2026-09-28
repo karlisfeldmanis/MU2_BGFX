@@ -770,6 +770,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // What rides those bones, on this frame's pose: the fountain's spray and the
     // merchant animal's lanterns. See game/world/ornaments.h.
     world_.ornaments().update(float(deltaSeconds), world_.sway());
+    // The Chaos Machine's bursts, thrown through the smith's forge: eight pairs is two of its
+    // strikes (game/world/ornaments.h).
+    if (world_.played().isOpen()) {
+        for (size_t i = 0; i < world_.ornaments().strikeCount(); ++i) {
+            world_.played().forge().strike(world_.ornaments().strikeAt(i));
+            world_.played().forge().strike(world_.ornaments().strikeAt(i));
+        }
+    }
     world_.ornaments().gather(ctx.renderer.effects(), world_.sway());
     // The shade under the bridges, which MU draws as a blended mesh. See game/world/shades.h.
     world_.shades().gather(ctx.renderer.effects(), eye.target);
@@ -1049,9 +1057,10 @@ void PlayMode::report(Context& ctx) {
     // its own says nothing. Logged whenever either pool is up. See game/world/boids.h.
     if (world_.boids().isOpen() || world_.leaves().isOpen()) {
         core::logf("  air: %u bird(s) flying, %u leaf/leaves on the wind, %u drop(s) falling "
-                   "at rain %.2f",
+                   "at rain %.2f; %u forge sparks and smoke live",
                    world_.boids().flying(), world_.leaves().blowing(), world_.leaves().falling(),
-                   world_.weather().rain());
+                   world_.weather().rain(),
+                   world_.played().isOpen() ? world_.played().forge().live() : 0u);
     }
     if (desk_.ready()) core::logf("%s", desk_.line().c_str());
     if (world_.played().isOpen()) {

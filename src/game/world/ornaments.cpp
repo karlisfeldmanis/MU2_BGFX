@@ -109,6 +109,17 @@ constexpr NoriaGlow kNoriaGlows[] = {
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
 constexpr float kStarDegreesPerSecond = 100.0f;
+// And its throwers. Bones 61 to 65 roll rand_fps_check(32) each and throw two BITMAP_SHINY,
+// subtypes 0 and 1, in white; bone 58 rolls rand_fps_check(8) and throws a burst of eight
+// spark pairs. A glint lives 18 frames at Scale `sin(LifeTime * 10 deg)` -- nothing, up to one
+// at the ninth frame, nothing again -- and subtype 1 shrinks by 0.75 a frame and turns 12
+// degrees a frame against the clock. The sheet is Shiny01, 64 texels, so Scale 1 is kSheetMetres.
+constexpr int kGlintBones[5] = {61, 62, 63, 64, 65};
+constexpr int kGlintEvery = 32;
+constexpr int kSparkBone = 58;
+constexpr int kSparkEvery = 8;
+constexpr float kGlintLife = 18.0f;
+constexpr size_t kMostGlints = 32;
 
 // A row-vector point or direction through a 4x4, as core::mulMatrix composes them.
 void through(const float* m, const float* v, float w, float* out) {
@@ -201,6 +212,19 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
                     if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
                 }
                 if (name == "Object40") {
+                    for (int bone : kGlintBones) {
+                        Thrower glinter;
+                        glinter.anchor = anchor(i, mesh, bone, kOrigin, kNoAcross);
+                        for (int a = 0; a < 3; ++a) glinter.anchor.point[a] = 0.0f;
+                        glinter.every = kGlintEvery;
+                        if (glinter.anchor.bone >= 0) throwers_.push_back(glinter);
+                    }
+                    Thrower sparker;
+                    sparker.anchor = anchor(i, mesh, kSparkBone, kOrigin, kNoAcross);
+                    for (int a = 0; a < 3; ++a) sparker.anchor.point[a] = 0.0f;
+                    sparker.every = kSparkEvery;
+                    sparker.sparks = true;
+                    if (sparker.anchor.bone >= 0) throwers_.push_back(sparker);
                     for (float way : {1.0f, -1.0f}) {
                         Lantern star;
                         star.anchor = anchor(i, mesh, kStarBone, kOrigin, kNoAcross);
@@ -215,6 +239,7 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
         }
     }
     puffs_.reserve(kMostPuffs);
+    glints_.reserve(kMostGlints);
 
     content::Showing table;
     std::string error;
@@ -227,6 +252,7 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
         smoke_ = take("smoke01");  // Effect/smoke01, MU's BITMAP_SMOKE
         light_ = take("light");    // Effect/flare01, MU's BITMAP_LIGHT
         lightning_ = take("lightning_2");  // Effect/lightning2, MU's BITMAP_LIGHTNING+1
+        shiny_ = take("shiny");    // Effect/Shiny01, MU's BITMAP_SHINY
     }
     if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
         core::logf("ornaments: %zu fountain spray, %zu mill falls, %zu lanterns; sheets: "
@@ -242,7 +268,10 @@ void Ornaments::shutdown() {
     lanterns_.clear();
     falls_.clear();
     puffs_.clear();
-    smoke_ = light_ = lightning_ = BGFX_INVALID_HANDLE;
+    glints_.clear();
+    throwers_.clear();
+    strikeCount_ = 0;
+    smoke_ = light_ = lightning_ = shiny_ = BGFX_INVALID_HANDLE;
 }
 
 void Ornaments::update(float seconds, const Sway& sway) {
@@ -306,6 +335,37 @@ void Ornaments::update(float seconds, const Sway& sway) {
     }
 
     spun_ = std::fmod(spun_ + seconds, 360.0f / kStarDegreesPerSecond);
+
+    for (Glint& glint : glints_) glint.age += dt * kFramesPerSecond;
+    glints_.erase(std::remove_if(glints_.begin(), glints_.end(),
+                                 [](const Glint& g) { return g.age >= kGlintLife; }),
+                  glints_.end());
+    strikeCount_ = 0;
+    for (Thrower& thrower : throwers_) {
+        const Figure* figure = sway.posedAt(thrower.anchor.townIndex);
+        thrower.clock += dt * kFramesPerSecond;
+        while (thrower.clock >= 1.0f) {
+            thrower.clock -= 1.0f;
+            if (!figure || next() % uint32_t(thrower.every) != 0u) continue;
+            float at[3];
+            if (!figure->pointOn(thrower.anchor.bone, thrower.anchor.point, at)) continue;
+            if (thrower.sparks) {
+                if (strikeCount_ < 4) {
+                    for (int k = 0; k < 3; ++k) strikes_[strikeCount_][k] = at[k];
+                    ++strikeCount_;
+                }
+                continue;
+            }
+            for (bool small : {false, true}) {
+                if (glints_.size() >= kMostGlints) break;
+                Glint glint;
+                for (int k = 0; k < 3; ++k) glint.position[k] = at[k];
+                glint.small = small;
+                glint.spin = 6.2831853f * unit();
+                glints_.push_back(glint);
+            }
+        }
+    }
     lanternWait_ -= seconds;
     if (lanternWait_ <= 0.0f) {
         lanternWait_ = 1.0f / kLanternHz;
@@ -327,6 +387,21 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
             sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = 1.0f;
             sprite.colour[3] = light;
             sprite.sheet = smoke_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    if (bgfx::isValid(shiny_)) {
+        for (const Glint& glint : glints_) {
+            const float life = kGlintLife - glint.age;
+            float scale = std::sin(life * 10.0f * 3.14159265f / 180.0f);
+            if (glint.small) scale *= std::pow(0.75f, glint.age);
+            if (scale <= 0.0f) continue;
+            gfx::Sprite sprite;
+            for (int k = 0; k < 3; ++k) sprite.position[k] = glint.position[k];
+            sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * scale;
+            sprite.spin = glint.spin - (glint.small ? glint.age * 12.0f * 3.14159265f / 180.0f : 0.0f);
+            sprite.sheet = shiny_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }
