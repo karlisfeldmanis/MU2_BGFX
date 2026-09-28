@@ -70,7 +70,11 @@ std::vector<Seat> readRoster(const std::string& folderPath) {
         std::vector<fs::path> found;
         if (!fs::is_directory(folder, error)) return found;
         for (const fs::directory_entry& entry : fs::directory_iterator(folder, error)) {
-            if (entry.is_regular_file() && entry.path().extension() == ".json") {
+            // The vault's own file is no character: it lives beside the account's folder, but
+            // a --roster folder of any other name has it written in among the characters
+            // (game/save.h's vaultPathBeside), where it was read as one called "vault".
+            if (entry.is_regular_file() && entry.path().extension() == ".json" &&
+                entry.path().filename() != "vault.json") {
                 found.push_back(entry.path());
             }
         }
