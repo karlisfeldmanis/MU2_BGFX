@@ -1,0 +1,210 @@
+{
+  "item": "CrossBow02",
+  "mu_name": "Golden Crossbow",
+  "mu_name_from": "The client loads the bow group in two passes - `AccessModel(MODEL_BOW + i, ..., L\"Bow\", i + 1)` for the first seven and `AccessModel(MODEL_BOW + i + 8, ..., L\"CrossBow\", i + 1)` for the rest (ZzzOpenData.cpp:690-693) - so number 9 is CrossBow02.bmd, and _enum.h names it `MODEL_GOLDEN_CROSSBOW = MODEL_BOW + 9`. OpenMU's 0.75 table names group 4 number 9 the Golden Crossbow.",
+  "why_this_one": "Eo the Craftsman's, in Noria: his shelf carries it at +3 (src/sim/market.cpp, kCraftsman, gear(38, kBows, 9, 3, true)), and until this file it was a line he stocked and nothing could draw.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs line 144. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(4, 9, 0, 24, 2, 2, true, \"Golden Crossbow\", 12, 13, 19, 40, 26, 0, 0, 30, 90, 0, 0, 0, 0, 1)",
+    "group": 4,
+    "number": 9,
+    "drop_level": 12,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does: the bool before the name is dropsFromMonsters and the int after it is the drop level.",
+    "slot": 0,
+    "slot_note": "Right hand, which is the opposite of what the name suggests and is the client's own doing: ZzzCharacter.cpp tests IsBowModel(Weapon[1]) and IsCrossbowModel(Weapon[0]), so a bow is a left-hand item and a crossbow a right-hand one. OpenMU's rows agree from the other side - the bows carry slot 1 and the crossbows slot 0 - and the Short Bow already built is the case that proves it.",
+    "width": 2,
+    "width_note": "Two, and here it does NOT mean two-handed: OpenMU's test is `if (group < Bows && width == 2)`, and this is group 4, which is Bows. Two-handedness comes from MuWeapons.cs instead, which says TwoHanded: true for every crossbow in the group. The two agree by different routes, which is the check worth having.",
+    "height": 2,
+    "height_note": "Height is the sixth argument of the call above and was not carried across when this row was first transcribed - see width_note, which explains why width was. Both are needed now that the bag has a footprint: an item occupies a rectangle of the inventory grid rather than one cell, so a Small Axe is one across and three down, and drawing it in a single square is what made every weapon read as a thumbnail. See Satchel.Covered, which walks the rectangle.",
+    "minimum_damage": 13,
+    "maximum_damage": 19,
+    "attack_speed": 40,
+    "attack_speed_note": "Forty, the crossbows' rate against the bows' thirty. OpenMU adds it whole to the character's AttackSpeed and the client spends it as `PlaySpeed = base + AttackSpeed * 0.004`.",
+    "durability": 26,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 90,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the elf alone - and MuWeapons.cs carries PlayerClasses.Elf for all seven crossbows. Ninety agility against twenty strength is the row saying the same thing in stats.",
+    "skill": 24,
+    "skill_note": "The skillNumber of the call, and the same twenty-four on every bow and crossbow in 0.75: Triple Shot is the Fairy Elf's, and it is the weapon that grants it rather than anything she learns. There are no skills in this simulation, so it is carried for the row to read against the call it came from and nothing more."
+  },
+  "stance": "crossbow",
+  "stance_from": "MuWeapons.cs, WeaponStance.Crossbow on all seven of the group. Crossbows have a stance of their own rather than sharing the bow's: actions 9 and 22 against the bow's 8 and 21.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs, TwoHanded: true. Declared apart from the stance because the client keeps them apart - a bow has its own stance and is not two-handed - so neither implies the other.",
+  "animation_note": "Rigged the same way as the plain Crossbow, and measured rather than carried across: twelve bones in the same two chains. Bone01 is a root at (-1.75, 0, -88.13) carrying Bone02 and Bone03 - the carriage, and the one bone the action translates - and Bone04 is the second root carrying the body with the two mirrored limb chains Bone05-Bone07 and Bone08-Bone10. The seven vertices on crossbow05 are the bolt, bound to Bone02, so the bolt rides the sliding chain as on CrossBow01. Two numbers differ from CrossBow01: the carriage sits eight units further forward, and the limbs rest more bent (Bone05's yaw quaternion -0.164 against -0.066). MU never plays the clip; see CrossBow04's animation_note.",
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, read off this rig's own tracks, and the clip is shaped differently from the plain Crossbow's, which is why it was read rather than copied. Bone01, the carriage, runs z -88.1, -85.5, -82.1, -83.9 through keys 0 to 3 - six units back and a little forward again - and then -106.6 on key 4: 22.7 units forward in a single key. On the same key the limbs let go: Bone05's yaw quaternion runs -0.164, -0.174, -0.195, -0.181 and then -0.033, Bone08's 0.222, 0.236, 0.260, 0.245 and then 0.058. The draw here peaks on key 2 and eases on key 3 where the Crossbow's peaks on 3, but the jump and the snap are both on key 4. That is the release.",
+  "muzzle_bone": "Bone01",
+  "muzzle_bone_from": "The carriage, the one bone the animation translates, and the bone at the bolt's point: Bone01 is at (-1.75, -88.13, 0.0) in the model's axes (x, z, -y) and the bolt's front vertex at (-2.28, -87.72, 15.39). As on CrossBow01, not Bone02, which the bolt vertices are bound to eleven units behind.",
+  "muzzle_axis": "Bone03",
+  "muzzle_axis_from": "The far end of the same chain, 66 units behind Bone01 on the same line: Bone01 minus Bone03 is (0.006, -1, 0) in the model's axes, tip minus tail, pointing the way the carriage jumps on the release key (z -88 to -107, forward is negative). Neither Bone02 nor Bone03 rotates through the clip.",
+  "muzzle_offset": [
+    -0.53,
+    0.41,
+    15.39
+  ],
+  "muzzle_offset_from": "Bone01 to the bolt's front tip, in MU units and the model's own axes: the bolt's lowest-y vertex is at (-2.279, -87.725, 15.390) against the bone's (-1.75, -88.13, 0.0), which is (-0.53, +0.41, +15.39). The bolt rides 2.7 units higher over the rail than the plain Crossbow's (12.66), which is this model's taller stock. The release is not folded in, for the reason CrossBow04's muzzle_offset_from gives.",
+  "fires": "ArrowSteel01",
+  "fires_from": "ZzzEffectMagicSkill.cpp's CreateArrow: `case MODEL_GOLDEN_CROSSBOW: CreateEffect(MODEL_ARROW_STEEL, ...)`, the row directly under the plain Crossbow's and the same missile. MODEL_ARROW_STEEL is Data/Skill/ArrowSteel01.bmd, built in source/effects/missiles; src/game/fx/arrow.cpp's modelFor already sends number 9 there.",
+  "sheets": {
+    "crossbow02": "crossbow02.png",
+    "crossbow05": "crossbow05.png"
+  },
+  "sheet_from": "Data/Item/crossbow02.OZJ (64x64) and crossbow05.OZJ (128x64), both from MuMain. The .bmd names crossbow05.jpg on 10 triangles and crossbow02.jpg on 95. crossbow05.png was already in the tree from the Crossbow and the Light Crossbow; re-decoding it from MuMain gave a byte-identical file, so it is reused.",
+  "sheet_note": "crossbow02 is the whole weapon on a 64 square: a pale gold band across the top, a dark blue-black steel band under it, a brown timber ground, and silver-grey straps and a bracket running down. crossbow05 is the ornament sheet, here for the ten triangles of the bolt, as on the plain Crossbow.",
+  "material_note": "Six islands, sampled per triangle at each face's MU-UV centre off the built low-poly. Island 0 is forty-four triangles over the lower part of crossbow02 - the stock - at a red-brown timber mean of (108, 80, 72), and takes wood as the other crossbows' stocks do. Islands 1 and 2 are a mirrored pair of sixteen at the front (10.8 to 15.8 along), sampling the dark blue-grey band at (80, 97, 118): the prod, which is steel on this crossbow and not timber. Island 3 is six triangles of the stock's brown and takes wood. Island 4 is thirteen triangles on the pale gold strip along the top of the sheet, (254, 199, 118), running tip to tip across the front (x -32.9 to 29.1): the string, and it takes leather_wrap as the Light Crossbow's string does. Island 5 is the bolt on crossbow05, the same 47x5 strip the other two crossbows' bolts sample, and takes wrought_iron as they do.",
+  "open_question": "The string's material disagrees between the templates. CrossBow01 gives its thirteen-triangle top band steel and CrossBow04 gives its own leather_wrap; measured here, all three are thirteen (or twelve) triangles sampling the top strip of their sheet and spanning the bow tip to tip across the front, so all three are the string. This file follows CrossBow04. The gold of it is MU's paint; whether the Golden Crossbow's fittings should read as gilt metal rather than painted timber is not something the islands can express - the gold is only the string strip and the highlights inside the stock island.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 44,
+      "area": 2355.3,
+      "along": [
+        -8.4,
+        14.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.005,
+        0.998,
+        0.439
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.841,
+        0.532
+      ],
+      "note": "the stock, -8.4 to 14.0 along, on the lower part of the sheet: red-brown timber with a few grey strap and blue triangles inside it."
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 16,
+      "area": 615.5,
+      "along": [
+        10.8,
+        15.8
+      ],
+      "mu_uv": [
+        0.547,
+        0.677,
+        0.999,
+        0.932
+      ],
+      "bake_uv": [
+        0.008,
+        0.546,
+        0.792,
+        0.994
+      ],
+      "note": "one arm of the prod, the right half of the dark blue-grey band, (80, 97, 118)."
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 16,
+      "area": 614.7,
+      "along": [
+        10.8,
+        15.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.677,
+        0.453,
+        0.932
+      ],
+      "bake_uv": [
+        0.006,
+        0.546,
+        0.711,
+        0.949
+      ],
+      "note": "the other arm of the prod, the left half of the same band."
+    },
+    {
+      "island": 3,
+      "material": "wood",
+      "triangles": 6,
+      "area": 207.6,
+      "along": [
+        11.2,
+        13.6
+      ],
+      "mu_uv": [
+        0.668,
+        0.215,
+        0.888,
+        0.435
+      ],
+      "bake_uv": [
+        0.789,
+        0.512,
+        0.965,
+        0.962
+      ],
+      "note": "a block on the stock, six triangles of the same brown timber, (136, 78, 50)."
+    },
+    {
+      "island": 4,
+      "material": "leather_wrap",
+      "triangles": 13,
+      "area": 302.0,
+      "along": [
+        14.0,
+        15.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.959,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.71,
+        0.794,
+        0.787
+      ],
+      "note": "the string, thirteen triangles tip to tip across the front on the pale gold strip at the top of the sheet. See open_question."
+    },
+    {
+      "island": 5,
+      "material": "wrought_iron",
+      "triangles": 10,
+      "area": 492.3,
+      "along": [
+        14.0,
+        16.6
+      ],
+      "mu_uv": [
+        0.532,
+        0.377,
+        0.898,
+        0.451
+      ],
+      "bake_uv": [
+        0.006,
+        0.803,
+        0.596,
+        0.864
+      ],
+      "note": "the bolt lying in the groove, on crossbow05, near-black - the same strip and the same answer as the other two crossbows' bolts.",
+      "nocked": true,
+      "nocked_from": "The missile sitting on the weapon, which MU keeps as a mesh of its own on a sheet of its own bound to a bone of its own - and then never hides. Flagged so the exporter gives it a primitive of its own, which lets the viewer take it away between the release and the next draw, as CrossBow04 does."
+    }
+  ]
+}

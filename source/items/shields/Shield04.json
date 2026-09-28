@@ -1,0 +1,258 @@
+{
+  "item": "Shield04",
+  "mu_name": "Elven Shield",
+  "mu_name_from": "MuMain loads MODEL_SHIELD + i from Shield{i+1} (ZzzOpenData.cpp:664-665), so Shield04.bmd is shield index 3, and _enum.h names it `MODEL_ELVEN_SHIELD = MODEL_SHIELD + 3`. OpenMU's 0.75 Armors.cs names group 6 index 3 the Elven Shield.",
+  "why_this_one": "Eo the Craftsman's, in Noria: his shelf carries it at +3 (src/sim/market.cpp, kCraftsman, gear(78, kShields, 3, 3)), and until this file it was a line he stocked and nothing could draw.",
+  "profile": "weapon",
+  "profile_from": "The weapon profile, as the two built shields use, and its default material is not kept: steel there is blade steel with a directional grain, and a shield is armour. See Shield10, which records the same swap.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 39. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateShield(3, 1, 0, 2, 2, \"Elven Shield\", 21, 8, 21, 36, 30, 100, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateShield(number, slot, skill, width, height, name, dropLevel, defense, defenseRate, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). The group is not in the call: CreateArmor ends `armor.Group = (byte)(slot + 5)` and a shield's slot is 1, so the group is 6. See Shield01, which worked that out first.",
+    "group": 6,
+    "number": 3,
+    "drop_level": 21,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 2,
+    "defense": 8,
+    "defense_rate": 21,
+    "defense_rate_note": "The shield's own block chance, which the fight does not roll yet. Recorded and unread.",
+    "durability": 36,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 100,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the elf alone, and the only shield in the twelve that is hers alone. Thirty strength and a hundred agility is the row saying the same thing in stats.",
+    "skill_note": "No skill: the third argument of the call is 0, as on the Small, Horn and Kite Shields."
+  },
+  "sheets": {
+    "shield07_jpg": "shield07.jpg.png",
+    "shield07_tga": "shield07.tga.png"
+  },
+  "sheet_from": "Data/Item/shield07.OZJ (32x32) and shield07.ozt (32x64), from MuMain. The file numbers do not follow the item numbers - this model, Shield04.bmd, names shield07.jpg on 22 triangles and shield07.tga on 16, where Shield07.bmd itself wears shield04's pair - and both halves of the one stem are decoded carrying the extension they stand for, with the slots called shield07_jpg and shield07_tga as MuExtract writes them into the .obj when basenames collide.",
+  "sheet_note": "shield07.jpg is a round gold face worked with a white knotwork cross and four panels, mean gold on white. shield07.tga is a pale blue-white feathered wing on a 32x64 whose alpha is soft: 24% of it fully clear, 8% fully opaque and 68% in between. It is a wisp more than a card with holes in it.",
+  "cutout": [
+    "shield07_tga"
+  ],
+  "cutout_note": "Declared rather than left to the sniff, and it is the honest nearest answer rather than MU's. MU draws a four-channel sheet through EnableAlphaTest, which in this client blends SRC_ALPHA / ONE_MINUS_SRC_ALPHA (ZzzOpenglUtil.cpp) - the wing is alpha-blended there, soft edges and all. The pipeline's cut-out tests at 0.25, so the wing's feathered edge will come out hard. Worth looking at in the studio; a blended wing would need a pipeline change, not a recipe one.",
+  "material_note": "Nine islands, sampled per triangle at each face's MU-UV centre off the built low-poly. The shield is mostly its wings: island 0 is a boss twenty units across on shield07.jpg, and islands 1 to 8 are eight two-triangle cards, each wearing the whole of shield07.tga, fanned out to 34 units either side of it. The boss is gold ground under a white knotwork cross and takes brass, the library's cast yellow metal. The eight cards are a pale feathered wing and take feather, which the library writes for 'a wing on a staff'. Neither takes plate_steel, which the Dark Knight's shields wear: nothing on this one is plate.",
+  "open_question": "The boss's white knotwork is inside the brass island - five of twenty-two triangles - and will read as pale metal rather than as enamel or inlay. And the wing's soft alpha is hardened by the cut-out; see cutout_note.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 22,
+      "area": 861.3,
+      "along": [
+        -9.8,
+        9.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.454,
+        0.456
+      ],
+      "note": "the round boss, -9.8 to 9.7 across and the only part on shield07.jpg: gold worked with a white knotwork cross. Seven of its triangles sample gold, six dark lines, five white; the gold is the ground."
+    },
+    {
+      "island": 1,
+      "material": "feather",
+      "triangles": 2,
+      "area": 920.1,
+      "along": [
+        -14.9,
+        16.2
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.277,
+        0.692,
+        0.534,
+        0.955
+      ],
+      "note": "-14.9 to 16.2: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    },
+    {
+      "island": 2,
+      "material": "feather",
+      "triangles": 2,
+      "area": 920.1,
+      "along": [
+        -16.1,
+        15.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.423,
+        0.418,
+        0.681,
+        0.681
+      ],
+      "note": "-16.1 to 15.0: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    },
+    {
+      "island": 3,
+      "material": "feather",
+      "triangles": 2,
+      "area": 898.6,
+      "along": [
+        6.6,
+        34.2
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.737,
+        0.006,
+        0.995,
+        0.268
+      ],
+      "note": "6.6 to 34.2: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    },
+    {
+      "island": 4,
+      "material": "feather",
+      "triangles": 2,
+      "area": 898.6,
+      "along": [
+        -33.7,
+        -6.1
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.467,
+        0.006,
+        0.725,
+        0.268
+      ],
+      "note": "-33.7 to -6.1: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    },
+    {
+      "island": 5,
+      "material": "feather",
+      "triangles": 2,
+      "area": 622.5,
+      "along": [
+        3.2,
+        32.9
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.006,
+        0.439,
+        0.263,
+        0.702
+      ],
+      "note": "3.2 to 32.9: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    },
+    {
+      "island": 6,
+      "material": "feather",
+      "triangles": 2,
+      "area": 622.4,
+      "along": [
+        -32.2,
+        -2.5
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.007,
+        0.716,
+        0.264,
+        0.979
+      ],
+      "note": "-32.2 to -2.5: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    },
+    {
+      "island": 7,
+      "material": "feather",
+      "triangles": 2,
+      "area": 616.4,
+      "along": [
+        2.7,
+        32.4
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.691,
+        0.284,
+        0.949,
+        0.546
+      ],
+      "note": "2.7 to 32.4: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    },
+    {
+      "island": 8,
+      "material": "feather",
+      "triangles": 2,
+      "area": 616.2,
+      "along": [
+        -31.7,
+        -2.0
+      ],
+      "mu_uv": [
+        0.012,
+        0.003,
+        0.981,
+        0.991
+      ],
+      "bake_uv": [
+        0.693,
+        0.562,
+        0.951,
+        0.825
+      ],
+      "note": "-31.7 to -2.0: a feathered wing card on the cut-out shield07.tga, pale blue-white (196, 216, 225) where it is not clear."
+    }
+  ]
+}

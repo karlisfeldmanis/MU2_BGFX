@@ -1,0 +1,187 @@
+{
+  "item": "Bow04",
+  "mu_name": "Battle Bow",
+  "mu_name_from": "ZzzOpenData.cpp loads the group by hand and one behind - `AccessModel(MODEL_BOW + i, L\"Data\\\\Item\\\\\", L\"Bow\", i + 1)` for i 0 to 6 - so item number 3 is Bow04.bmd, and _enum.h names it `MODEL_BATTLE_BOW = MODEL_BOW + 3`. OpenMU's 0.75 table names group 4 number 3 the Battle Bow.",
+  "why_this_one": "Eo the Craftsman's, in Noria: his shelf carries it at +3 (src/sim/market.cpp, kCraftsman, gear(.., kBows, 3, 3, true)), and until this file it was a line he stocked and nothing could draw.",
+  "profile": "weapon",
+  "stats": {
+    "note": "OpenMU's row, copied rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs line 138. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(4, 3, 1, 24, 2, 3, true, \"Battle Bow\", 26, 28, 37, 30, 36, 0, 0, 30, 90, 0, 0, 0, 0, 1)",
+    "group": 4,
+    "number": 3,
+    "drop_level": 26,
+    "drops_from_monsters": true,
+    "drop_level_note": "The lowest monster that may leave this, and whether one ever does. Both are already in the call above: the bool before the name is dropsFromMonsters and the int after it is the drop level.",
+    "slot": 1,
+    "slot_note": "Slot 1, as every bow: GetEquipedBowType tests IsBowModel against Weapon[1] and IsCrossbowModel against Weapon[0], and OpenMU's rows carry the same answer.",
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 28,
+    "maximum_damage": 37,
+    "attack_speed": 30,
+    "durability": 36,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 90,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_note": "The last three ints of the call are 0, 0, 1 - the elf alone, as every row in group 4 is.",
+    "skill": 24,
+    "skill_note": "The skillNumber of the call, and the same twenty-four on every bow and crossbow in 0.75: Triple Shot, granted by the weapon. Carried for the row to read against the call."
+  },
+  "stance": "bow",
+  "stance_from": "PLAYER_STOP_BOW is 8 and PLAYER_WALK_BOW is 21, out of the client's own enum. The stance is a fact about the weapon and not about the character.",
+  "two_handed": true,
+  "two_handed_from": "MuWeapons.cs carries TwoHanded for every bow, and OpenMU gives the same answer from the other side: width 2 in the Bows group.",
+  "fires": "Arrow01",
+  "fires_from": "ZzzEffectMagicSkill.cpp's CreateArrow: `case MODEL_BATTLE_BOW: CreateEffect(MODEL_ARROW, ...)`. MODEL_ARROW is Data/Skill/Arrow01.bmd, built in source/effects/missiles, the same wooden arrow with a fire sprite the Bow throws.",
+  "sheets": {
+    "bow04": "bow04.png",
+    "bow01": "bow01.png",
+    "bow05": "bow05.tga.png"
+  },
+  "sheet_from": "Data/Item/bow04.OZJ at 64x64, bow01.OZJ at 32x32 and bow05.ozt at 32x32, all out of MuMain. The .bmd names bow04.jpg on 89 triangles, bow01.jpg on 10 and bow05.tga on 3. bow01.png and bow05.tga.png were already in the tree from the Short Bow and the Bow; re-decoding both from MuMain gave byte-identical files, so they are reused.",
+  "sheet_note": "Three sheets over three meshes, the Bow's arrangement: bow04 is this bow's own limbs, bow01 carries the nocked arrow (the same ten triangles at the same UVs the Short Bow and the Bow draw), and bow05.tga is the string. bow04 is a limb painted in a banded, snake-skin run of rust, blue and ochre, a pale golden horn curving across the lower half, and plain brown strips down the right edge, on grey padding.",
+  "cutout": [
+    "bow05"
+  ],
+  "cutout_note": "Declared and not detected, as the Short Bow does: bow05 is the bowstring drawn as a cut-out card.",
+  "mu_render_note": "ZzzObject.cpp has one line for this model, `Type == MODEL_BATTLE_BOW && (RenderType & RENDER_EXTRA)`, which draws the body again at BodyLight 0.1 - a pass for the extra render flag, not the ordinary draw. Nothing here reproduces it; written down so its absence is a choice.",
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, read off this rig's own tracks. Bone10 - the second root carrying the arrow and the string - runs -46.6, -25.2, -8.2, +4.4 through keys 0 to 3 and then -54.5 on key 4: fifty-nine units back in one key, while the six limb bones (Bone02-04, Bone06-08) that bent through keys 0 to 3 fall to within 0.03 rad of rest on the same key. That is the loose. Only key 1 differs from the Bow's track (-25.2 against -23.4), which is the draw and not the release.",
+  "muzzle_bone": "Bone10",
+  "muzzle_axis": "Bone11",
+  "muzzle_offset": [
+    1.0,
+    -10.7,
+    0.3
+  ],
+  "muzzle_from": "Measured, and it comes out the Bow's. Bone10 is at (0, -6.173, -46.594) with no parent and Bone11 at (0, 0.326, 64.829) off it, the same as Bow02's rig, and the arrow is the same seven vertices on bow01, all bound to Bone10. In the model's axes (x, z, -y) the bone is at (0, -46.59, 6.17) and the arrow's lowest-y vertex, its point, at (1.05, -57.29, 6.46): (+1.05, -10.70, +0.29). Bone10 minus Bone11 is (0, -1, 0.005), down the shaft toward the point. The release is not folded in, for the reason Bow02.json's muzzle_offset_from gives.",
+  "material_note": "Five islands, and they line up with the Bow's: 10 triangles on bow01 are the nocked arrow, 76 + 13 on bow04 are the limbs and horn (broad faces) and the sawn edge, and 1 + 2 on bow05.tga are the nock and the string. Sampled per triangle at each UV centre. Wood on the arrow, the limbs and the nock and cloth on the string, which is the Bow's assignment; islands 0, 3 and 4 are the same triangle counts at the same UVs as Bow02's 0, 3 and 4.",
+  "open_question": "The horn is inside the limb island. Of island 1's 76 triangles about twenty sample the pale golden horn across the sheet's lower half - (248, 167, 62), (255, 233, 166), (211, 143, 58) - and the rest the banded rust, blue and brown of the limb, which is timber. The island is the unit, so it takes the majority reading, wood, and the horn ships as MU's painted gold on a wood surface. bone would be the better answer for those twenty triangles alone; splitting them needs assignment finer than an island.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 10,
+      "area": 481.2,
+      "along": [
+        5.4,
+        7.4
+      ],
+      "mu_uv": [
+        0.941,
+        0.014,
+        0.98,
+        0.51
+      ],
+      "bake_uv": [
+        0.93,
+        0.113,
+        0.992,
+        0.423
+      ],
+      "note": "the nocked arrow on bow01.jpg: the same ten triangles at the same UVs as the Short Bow's and the Bow's.",
+      "nocked": true,
+      "nocked_from": "The missile sitting on the weapon, which MU keeps as a mesh of its own on a sheet of its own bound to a bone of its own - and then never hides. Flagged so the exporter gives it a primitive of its own, which lets the viewer take it away between the release and the next draw, as Bow02 does."
+    },
+    {
+      "island": 1,
+      "material": "wood",
+      "triangles": 76,
+      "area": 6363.6,
+      "along": [
+        -78.2,
+        82.2
+      ],
+      "mu_uv": [
+        -0.007,
+        0.018,
+        0.999,
+        0.996
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.953,
+        0.944
+      ],
+      "note": "the limbs and the horn at the grip, broad faces, -78.2 to 82.2. See open_question."
+    },
+    {
+      "island": 2,
+      "material": "wood",
+      "triangles": 13,
+      "area": 634.2,
+      "along": [
+        -73.1,
+        77.6
+      ],
+      "mu_uv": [
+        0.921,
+        0.293,
+        0.989,
+        0.87
+      ],
+      "bake_uv": [
+        0.877,
+        0.151,
+        0.966,
+        0.802
+      ],
+      "note": "the limbs edge on, the brown strip at (149, 103, 79) down the sheet's right side."
+    },
+    {
+      "island": 3,
+      "material": "wood",
+      "triangles": 1,
+      "area": 41.7,
+      "along": [
+        3.7,
+        8.8
+      ],
+      "mu_uv": [
+        0.569,
+        0.468,
+        0.889,
+        0.698
+      ],
+      "bake_uv": [
+        0.439,
+        0.008,
+        0.614,
+        0.134
+      ],
+      "note": "one brown triangle on the string's sheet, the nock, as on the Bow."
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 234.7,
+      "along": [
+        -0.9,
+        13.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.79,
+        0.568,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.619,
+        0.319,
+        0.733
+      ],
+      "note": "the string on bow05.tga, the cut-out card. cloth is the near answer for laid cord, as on the Bow."
+    }
+  ]
+}

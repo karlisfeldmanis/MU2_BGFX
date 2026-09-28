@@ -145,3 +145,8 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object43 | world | 2026-09-28 20:20 | passed | noria, in the world: Chaos Machine part; its scroll owed where U (effects pass) |
 | Silk | set | 2026-09-28 21:05 | passed | purple quilted silk with gold trim and the visored hood, MU's own colours; skin islands right; nothing blown at noon, dusk or night |
 | Wind | set | 2026-09-28 21:10 | passed | deep blue quilted set with the winged helm, MU's own; skin islands right; holds at all three times |
+| Bow03 | arm | 2026-09-28 21:13 | passed | green elven limbs and binding, MU's own; arrow nocked |
+| Bow04 | arm | 2026-09-28 21:14 | passed | the painted Battle Bow, MU's own colours; arrow nocked |
+| Bow05 | arm | 2026-09-28 21:15 | passed | orange spined Tiger Bow, MU's own; arrow nocked |
+| CrossBow02 | arm | 2026-09-28 21:16 | passed | reads silver at noon: the sheet's prod is MU's blue-grey band (80,97,118), not gold paint -- 'Golden' is the name, and the steel is physical |
+| Shield04 | arm | 2026-09-28 21:18 | passed | pale feathered wings round a brass boss, MU's own; the wing edges are cut, not blended as MU blends them -- a closer look owed in the studio |
