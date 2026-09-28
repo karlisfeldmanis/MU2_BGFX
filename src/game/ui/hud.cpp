@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "game/ui/controls.h"
 #include "game/ui/tip.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
@@ -117,7 +118,6 @@ const char* buffArt(int32_t skill) {
 // The painted key labels: a dark cell on rows 164 to 177 under every box, the figure centred on
 // the box. Measured off hud_base.png for this sprint; (15, 16, 17) is the cell's own dark.
 constexpr float kLabelTop = 164.0f, kLabelTall = 14.0f, kLabelWide = 20.0f;
-constexpr float kLabelBaseline = 176.0f, kLabelSize = 15.0f;
 // What each box's key is now, left to right. Skills on Q W E R T, potions on 1 to 5, and the
 // box in hand prints nothing -- the mouse under the gold box stays, since that box IS the
 // button's.
@@ -130,8 +130,6 @@ constexpr uint32_t kDeadIcon = gfx::rgba(0.55f, 0.55f, 0.55f, 0.6f);
 constexpr uint32_t kTipColour = gfx::rgba(238.0f / 255.0f, 230.0f / 255.0f, 214.0f / 255.0f);
 constexpr uint32_t kTipNameColour = gfx::rgba(236.0f / 255.0f, 198.0f / 255.0f, 92.0f / 255.0f);
 constexpr uint32_t kLabelCell = gfx::rgba(15.0f / 255.0f, 16.0f / 255.0f, 17.0f / 255.0f);
-constexpr uint32_t kSkillKey = gfx::rgba(141.0f / 255.0f, 127.0f / 255.0f, 125.0f / 255.0f);
-constexpr uint32_t kQuickKey = gfx::rgba(206.0f / 255.0f, 186.0f / 255.0f, 73.0f / 255.0f);
 
 // The ring a fired potion box wears: the key's own gold, a quarter of a second of it, stepping
 // four plate pixels out of the box's edge as it goes and fading as it steps. The ring is OUTSIDE
@@ -219,14 +217,11 @@ constexpr float kCellGap = 6.0f;
 constexpr int kAcross = 6;              // before it wraps to a second row
 constexpr float kChipWide = 15.0f;
 constexpr float kChipTall = 15.0f;
-constexpr float kChipSize = 9.5f;
 
 constexpr uint32_t kCellBack = gfx::rgba(1.0f, 1.0f, 1.0f, 0.035f);
 constexpr uint32_t kCellOver = gfx::rgba(1.0f, 1.0f, 1.0f, 0.10f);
 constexpr uint32_t kCellEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.22f);
 constexpr uint32_t kCellEdgeOver = gfx::rgba(0.878f, 0.800f, 0.573f, 0.55f);
-constexpr uint32_t kChipBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f);
-constexpr uint32_t kGilt = gfx::rgba(0.761f, 0.706f, 0.561f);
 
 // How many columns and rows a count of entries is laid out in: up to six across, then wrapped.
 int fanAcross(size_t count) { return int(std::min<size_t>(count, size_t(kAcross))); }
@@ -757,7 +752,6 @@ void Hud::rebuild() {
     // see the note on the metrics above, and the user's rule that it be the same style.
     if (fanOpen_ && !fan_.empty()) {
         const float u = tip::unit();
-        const gfx::Face& face = canvas_.face();
         const Box rail = listBox(s, fan_.size(), width_);
         tip::glass(canvas_, rail, u);
 
@@ -780,11 +774,7 @@ void Hud::rebuild() {
                 const Box chip{cell.right() - (kChipWide + 2.0f) * u,
                                cell.bottom() - (kChipTall + 2.0f) * u, kChipWide * u,
                                kChipTall * u};
-                canvas_.rect(chip, kChipBack);
-                canvas_.outline(chip, std::max(1.0f, u), kCellEdge);
-                const float size = kChipSize * u;
-                canvas_.text(chip.x, tip::middle(face, chip.y, chip.h, size), size, kGilt,
-                             kKeys[one.key], gfx::Align::Centre, chip.w);
+                controls::keycap(canvas_, chip, kKeys[one.key], tip::unit());
             }
         }
     }
@@ -801,18 +791,22 @@ void Hud::rebuild() {
     }
 
     // The keys, relabelled. The painted figure is covered by the rail's own dark and the key
-    // that really fires the box printed in its place, in the plate's own two inks.
-    const float labelSize = kLabelSize * kUnit * s.scale;
+    // that really fires the box stood in its place as a Sanctuary key cap (2026-09-28): bone on
+    // iron for skills and potions alike, where the plate had them in its grey and its gold, and
+    // gold is the loot's.
     for (int i = 0; i < kSlots; ++i) {
         if (kKeys[i] == nullptr) continue;
         const Box box = boxPx(i);
         const float cx = box.midX();
-        canvas_.rect(plate(s, {cx - kLabelWide * 0.5f, kLabelTop, kLabelWide, kLabelTall}),
-                     kLabelCell);
+        const Box cell = plate(s, {cx - kLabelWide * 0.5f, kLabelTop, kLabelWide, kLabelTall});
+        canvas_.rect(cell, kLabelCell);
         if (kKeys[i][0] == '\0') continue;
-        const Box at = plate(s, {cx, kLabelBaseline, 0.0f, 0.0f});
-        canvas_.text(at.x, at.y, labelSize, i < kFirstQuick ? kSkillKey : kQuickKey, kKeys[i],
-                     gfx::Align::Centre, 0.0f);
+        // A little taller than the painted cell and square-ish, centred on it, so the letter
+        // can be read at a glance down the bar.
+        const float side = std::round(cell.h * 1.2f);
+        controls::keycap(canvas_, {std::round(cell.midX() - side * 0.6f), std::round(cell.midY() - side * 0.5f),
+                                   std::round(side * 1.2f), side},
+                         kKeys[i], tip::unit());
     }
 
     // The side buttons: a disc each, MuMain's icon on it, in the state the pointer and the

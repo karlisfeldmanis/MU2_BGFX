@@ -102,6 +102,9 @@ void hint(gfx::Canvas& canvas, float x, float bottom, const std::string& text, f
 // A key cap, "ESC" or "I": an iron-rimmed stone key with its lower edge thicker, the key's name
 // in bone, standing at `x` and centred on `midY`. Returns its width.
 float keycap(gfx::Canvas& canvas, float x, float midY, const std::string& key, float u);
+// The same key filling `box`, its letter sized to the box: for a place the art already sets
+// aside, the HUD's strip under its keys and a skill's chip.
+void keycap(gfx::Canvas& canvas, const gfx::Box& box, const std::string& key, float u);
 // A meter: a dark well and a lit fill.
 void meter(gfx::Canvas& canvas, const gfx::Box& box, float share, uint32_t top, uint32_t foot,
            float u);

@@ -546,19 +546,29 @@ void foot(gfx::Canvas& canvas, const Box& window, float top, float u) {
 }
 
 float keycap(gfx::Canvas& canvas, float x, float midY, const std::string& key, float u) {
-    const float line = px(u), r = style::kRadiusSmall * u;
     const float size = 12.0f * u;
     const float wide = labelReady() ? s_label.measure(size, key) : canvas.face().measure(size, key);
     const Box b{std::round(x), std::round(midY - 10.5f * u), std::round(std::max(24.0f * u, wide + 12.0f * u)),
                 std::round(21.0f * u)};
+    keycap(canvas, b, key, u);
+    return b.w;
+}
+
+void keycap(gfx::Canvas& canvas, const Box& box, const std::string& key, float u) {
+    const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
+    const float line = px(u), r = std::min(style::kRadiusSmall * u, b.h * 0.25f);
     // A seam of black round it, the iron rim, and the key's face a pixel in -- two at its foot,
     // so it reads as a key standing up off the sheet.
     tip::panel(canvas, b.grown(line), r + line, style::kSeam, style::kSeam);
     tip::panel(canvas, b, r, style::kIron, style::kIronLo);
     const Box face{b.x + line, b.y + line, b.w - line * 2.0f, b.h - line * 3.0f};
     tip::panel(canvas, face, std::max(0.0f, r - line), style::kAsh3, style::kAsh0);
+    if (key.empty()) return;
+    // The letter's capitals fill most of the face: Alegreya's capital is about six tenths of its
+    // size, so a size of the face's height and a third stands the capital two thirds up it.
+    const float size = std::round(std::min(12.0f * u, face.h * 1.35f) * 2.0f) * 0.5f;
+    const float wide = labelReady() ? s_label.measure(size, key) : canvas.face().measure(size, key);
     label(canvas, b.x + (b.w - wide) * 0.5f, middle(face.y, face.h, size), size, style::kBoneHi, key);
-    return b.w;
 }
 
 void well(gfx::Canvas& canvas, const Box& box, float u) {
