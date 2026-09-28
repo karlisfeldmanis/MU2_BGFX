@@ -9,8 +9,10 @@
 // and thrown off the line in between -- and drawn as two crossed quads a segment, so it has width
 // from any angle without the camera. What is MU's: the sheet (JointThunder01), the two widths
 // (fifty and ten units), the scroll, the energy spark on the body, the blue ground light,
-// `SOUND_THUNDER01` on the cast. **No smoke**, the user's call of 2026-09-28; MU lays smoke01 at
-// the contact one frame in eight.
+// `SOUND_THUNDER01` on the cast. Not MU's smoke at the contact (smoke01 one frame in eight, which
+// the user turned down); instead, ours, a little smoke rising off the bolt's own path as it goes
+// out, as if the air it burned through were smoking (*"a little bit smoke after lightning is cast,
+// which comes from the lightning itself"*, 2026-09-28).
 //
 // It does not fly: MU lands the blow on the cast (`Thunder.Flight` is nought), and so does the
 // realm (`SkillRow::flies`). The push the blow gives is the realm's too (`Realm::push`).
@@ -39,6 +41,7 @@ public:
     void update(float seconds, Alive alive, Where where);
 
     void gather(gfx::Effects& effects) const;
+    void gatherSmoke(gfx::Effects& effects) const;
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
     uint32_t striking() const;
 
@@ -55,6 +58,15 @@ private:
         float spark;                    // the contact's roll and size, per frame
         float sparkRoll;
         float glow;
+        bool smoked;                    // the smoke is laid once, as it starts to go out
+    };
+    struct Puff {
+        bool alive = false;
+        float at[3];
+        float drift[3];                 // metres a second
+        float size;                     // metres across
+        float spin;
+        float left, full;               // reference frames
     };
 
     static constexpr float kReference = 25.0f;
@@ -74,9 +86,21 @@ private:
     static constexpr float kGlow[3] = {0.35f, 0.45f, 1.0f};
     static constexpr float kGlowTiles = 3.0f;
     static constexpr int kMost = 8;
+    // The smoke off the path: one puff at every point along the wide joint, born small and
+    // faint, opening and lifting, gone in a little over a second. smoke01, added and tinted a
+    // cool grey, as MU adds that sheet.
+    static constexpr int kSmokeEvery = 1;
+    static constexpr float kSmokeBorn = 0.5f, kSmokeGrows = 0.028f;   // metres, and a frame
+    static constexpr float kSmokeFrames = 28.0f;
+    static constexpr float kSmokeRise = 0.35f;                        // metres a second
+    static constexpr float kSmokeDrift = 0.15f;                       // metres a second
+    static constexpr float kSmokeTint[3] = {0.48f, 0.50f, 0.58f};
+    static constexpr int kMostPuffs = 96;
 
     bgfx::TextureHandle joint_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle spark_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
+    Puff puffs_[kMostPuffs] = {};
     Arc arcs_[kMost] = {};
     float clock_ = 0.0f;
 
@@ -84,6 +108,7 @@ private:
     float unit();
     void throwPath(Arc& arc);
     void step(Arc& arc, float frames);
+    void smoke(const Arc& arc);
 };
 
 template <typename Alive, typename Where>
@@ -100,6 +125,16 @@ void Thunder::update(float seconds, Alive alive, Where where) {
             }
         }
         step(arc, frames);
+    }
+    for (Puff& one : puffs_) {
+        if (!one.alive) continue;
+        one.left -= frames;
+        if (one.left <= 0.0f) {
+            one.alive = false;
+            continue;
+        }
+        for (int k = 0; k < 3; ++k) one.at[k] += one.drift[k] * seconds;
+        one.size += kSmokeGrows * frames;
     }
 }
 

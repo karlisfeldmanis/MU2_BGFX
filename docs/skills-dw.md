@@ -237,8 +237,9 @@ It does not fly: MU lands the blow on the cast, and `flies` is set so high the l
 **The look** is `fx/thunder`, ours in its build: a jagged path pinned at both ends, re-thrown every
 reference frame for a third of a second, drawn as two crossed quads a segment on MU's JointThunder01,
 a wide joint and a thin one, the sheet scrolling; MU's Thunder01 spark on the body and a blue light
-three tiles wide there. **No smoke**, the user's call; MU lays smoke01 at the contact one frame in
-eight. MU2's `Thunder.cs` is the full joint walk if this ever needs it. `SOUND_THUNDER01`.
+three tiles wide there. Not MU's smoke at the contact (smoke01 one frame in eight, turned down), but,
+asked for after, **a little smoke off the bolt's own path** as it goes out: a puff at each of its
+points, cool grey smoke01 added, opening and lifting and gone in about a second. MU2's `Thunder.cs` is the full joint walk if this ever needs it. `SOUND_THUNDER01`.
 
 `--arena-learn N` teaches the arena's hero skill N and makes the arena fight with it; the Lightning
 push was filmed with `--arena "Bull Fighter" --arena-learn 3 --level 12`.

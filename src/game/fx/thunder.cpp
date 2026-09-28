@@ -29,6 +29,7 @@ bool Thunder::open(const std::string& assetDir, content::Textures& textures,
     };
     joint_ = cooked("joint_thunder");
     spark_ = cooked("energy");
+    smoke_ = cooked("smoke01");
     core::logf("thunder: joint %s, spark %s", bgfx::isValid(joint_) ? "yes" : "NO",
                bgfx::isValid(spark_) ? "yes" : "NO");
     return bgfx::isValid(joint_);
@@ -85,7 +86,35 @@ void Thunder::throwPath(Arc& arc) {
     arc.glow = 0.75f + unit() * 0.25f;
 }
 
+void Thunder::smoke(const Arc& arc) {
+    if (!bgfx::isValid(smoke_)) return;
+    for (int i = 1; i + 1 < kPoints; i += kSmokeEvery) {
+        Puff* one = nullptr;
+        for (Puff& p : puffs_) {
+            if (!p.alive) {
+                one = &p;
+                break;
+            }
+        }
+        if (one == nullptr) return;
+        *one = Puff{};
+        one->alive = true;
+        for (int k = 0; k < 3; ++k) one->at[k] = arc.wide[i][k];
+        one->drift[0] = (unit() * 2.0f - 1.0f) * kSmokeDrift;
+        one->drift[1] = kSmokeRise * (0.7f + unit() * 0.6f);
+        one->drift[2] = (unit() * 2.0f - 1.0f) * kSmokeDrift;
+        one->size = kSmokeBorn * (0.8f + unit() * 0.4f);
+        one->spin = unit() * kTwoPi;
+        one->left = one->full = kSmokeFrames * (0.8f + unit() * 0.4f);
+    }
+}
+
 void Thunder::step(Arc& arc, float frames) {
+    // The smoke rises off the path it last took, as the bolt starts to go out.
+    if (!arc.smoked && arc.left - frames <= kFadeFrames) {
+        arc.smoked = true;
+        smoke(arc);
+    }
     arc.left -= frames;
     if (arc.left <= 0.0f) {
         arc.alive = false;
@@ -99,6 +128,7 @@ void Thunder::step(Arc& arc, float frames) {
 }
 
 void Thunder::gather(gfx::Effects& effects) const {
+    gatherSmoke(effects);
     for (const Arc& arc : arcs_) {
         if (!arc.alive) continue;
         const float lit = std::min(1.0f, arc.left / kFadeFrames);
@@ -154,6 +184,7 @@ void Thunder::gather(gfx::Effects& effects) const {
             }
         }
         // The spark where it bites: MU's Thunder01 at the wide joint's head, re-rolled a frame.
+        // (The smoke is gathered below, once, for every bolt's puffs together.)
         if (bgfx::isValid(spark_)) {
             gfx::Sprite spark;
             for (int k = 0; k < 3; ++k) spark.position[k] = arc.to[k];
@@ -164,6 +195,23 @@ void Thunder::gather(gfx::Effects& effects) const {
             spark.blend = gfx::Blend::Additive;
             effects.add(spark);
         }
+    }
+}
+
+void Thunder::gatherSmoke(gfx::Effects& effects) const {
+    for (const Puff& one : puffs_) {
+        if (!one.alive) continue;
+        // In over its first fifth and thinning over the rest: added, so the fade is on the colour.
+        const float age = 1.0f - one.left / one.full;
+        const float fade = std::min(1.0f, age / 0.2f) * (one.left / one.full);
+        gfx::Sprite sprite;
+        for (int k = 0; k < 3; ++k) sprite.position[k] = one.at[k];
+        sprite.halfWidth = sprite.halfHeight = one.size * 0.5f;
+        sprite.spin = one.spin;
+        for (int k = 0; k < 3; ++k) sprite.colour[k] = kSmokeTint[k] * fade;
+        sprite.sheet = smoke_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
     }
 }
 
