@@ -5,6 +5,7 @@
 
 #include "content/cooked.h"
 #include "content/missiles.h"
+#include "content/showing.h"
 #include "core/files.h"
 #include "core/log.h"
 
@@ -85,6 +86,16 @@ bool Portal::open(const std::string& assetDir, const std::string& world,
         disc.angle = float(next() % 360u) * 3.14159265f / 180.0f;
         discs_.push_back(disc);
     }
+    content::Showing table;
+    std::string showingError;
+    if (content::loadShowing(core::join(assetDir, "cooked/showing/showing.mus"), table,
+                             showingError)) {
+        if (const content::EffectSheet* sheet = table.effect("spark_flash")) {
+            sparkSheet_ = textures.load(core::join(assetDir, sheet->path),
+                                        content::TextureRole::Albedo);
+        }
+    }
+    sparks_.reserve(32);
     core::logf("portal: Noria's warp stands at tile %.0f,%.0f, five discs", kColumn, kRow);
     return true;
 }
@@ -92,6 +103,8 @@ bool Portal::open(const std::string& assetDir, const std::string& world,
 void Portal::shutdown() {
     shapes_.clear();
     discs_.clear();
+    sparks_.clear();
+    sparkSheet_ = BGFX_INVALID_HANDLE;
 }
 
 void Portal::update(float seconds) {
@@ -101,6 +114,33 @@ void Portal::update(float seconds) {
     colour_[0] = std::max(0.0f, std::sin(ms * 0.0011f) * 0.2f + 0.01f);
     colour_[1] = std::max(0.0f, std::sin(ms * 0.0017f) * 0.2f + 0.01f);
     colour_[2] = std::max(0.0f, std::sin(ms * 0.0013f) * 0.2f + 0.01f);
+    // The shimmer, one spark a reference frame, each moved a frame at a time as MU moves it.
+    sparkOwed_ += seconds * kReference;
+    while (sparkOwed_ >= 1.0f) {
+        sparkOwed_ -= 1.0f;
+        for (Spark& spark : sparks_) {
+            for (int k = 0; k < 3; ++k) spark.position[k] += spark.velocity[k];
+            spark.velocity[0] -= 0.012f;  // MU's x, 1.2 units
+            spark.velocity[1] -= 0.010f;  // MU's z -- our up -- 1.0 unit
+            spark.scale -= 0.08f;
+        }
+        sparks_.erase(std::remove_if(sparks_.begin(), sparks_.end(),
+                                     [](const Spark& s) { return s.scale < 0.2f; }),
+                      sparks_.end());
+        if (sparks_.size() < 32) {
+            // (0, 0, 160 to 169) turned about MU's y by a random angle: a circle in MU's x-z,
+            // which is our x and up. Centred 50 units along MU's -y -- our +z -- from the warp.
+            const float around = float(next() % 360u) * 3.14159265f / 180.0f;
+            const float out = (160.0f + float(next() % 10u)) * 0.01f;
+            Spark spark;
+            spark.position[0] = centre_[0] + std::sin(around) * out;
+            spark.position[1] = centre_[1] + std::cos(around) * out;
+            spark.position[2] = centre_[2] + 0.5f;
+            spark.velocity[0] = 0.12f;
+            spark.velocity[1] = -0.02f;
+            sparks_.push_back(spark);
+        }
+    }
     for (Disc& disc : discs_) {
         disc.angle = std::fmod(disc.angle + disc.turn * kReference * seconds * 3.14159265f / 180.0f,
                                6.2831853f);
@@ -111,6 +151,18 @@ void Portal::gather(gfx::Effects& effects, const float near[3]) const {
     if (discs_.empty()) return;
     const float dx = near[0] - centre_[0], dz = near[2] - centre_[2];
     if (dx * dx + dz * dz > kSight * kSight) return;
+    if (bgfx::isValid(sparkSheet_)) {
+        for (const Spark& spark : sparks_) {
+            gfx::Sprite sprite;
+            for (int k = 0; k < 3; ++k) sprite.position[k] = spark.position[k];
+            // A 32-texel sheet at its Scale, in metres; light 0.5.
+            sprite.halfWidth = sprite.halfHeight = 0.5f * 0.32f * spark.scale;
+            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = 0.5f;
+            sprite.sheet = sparkSheet_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
     const float cy = std::cos(kYaw), sy = std::sin(kYaw);
     for (const Disc& disc : discs_) {
         const Shape& shape = shapes_[size_t(disc.shape)];

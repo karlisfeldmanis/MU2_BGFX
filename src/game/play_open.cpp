@@ -432,6 +432,8 @@ void Play::openSound(const std::string& assetDir, bool muted) {
         if (one.who == "MixNpc01") {
             one.voice = sound_.load("npc_mix", true);
             one.every = 64.0f / 60.0f;
+            one.glowBone = 32;
+            one.glowScale = 1.5f;
         } else if (one.who == "ElfWizard01") {
             one.voice = sound_.load("npc_harp", true);
             one.every = 256.0f / 60.0f;

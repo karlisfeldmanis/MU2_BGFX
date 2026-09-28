@@ -17,8 +17,13 @@
 // the glow shader carries one brightness per instance and MU's warp is a COLOUR per disc. 98
 // triangles a ring, 2 for the centre: 396 a frame, and none when the hero is far away.
 //
-// Not drawn: the BITMAP_SPARK+1 shimmer MoveObject throws at it (ZzzObject.cpp:3967), which is
-// owed. Nothing here reaches the sim.
+// And its shimmer, which MoveObject throws at it every frame (ZzzObject.cpp:3967):
+// `CreateParticleFpsChecked(BITMAP_SPARK+1, (x, y - 50, z + 350), ..., light 0.5, subtype 9,
+// scale 1.4)`. Subtype 9 (ZzzEffectParticle.cpp:2177 and :6684) is born 160 to 169 units out on
+// a circle in MU's upright x-z plane, flies off at (12, 0, -2) units a frame, loses 1.2 and 1.0
+// of that a frame so it arcs back and down, and shrinks 0.08 a frame until it is under 0.2 --
+// fifteen frames, a bright point falling out of the ring. Spark03, the tree's `spark_flash`.
+// Nothing here reaches the sim.
 #pragma once
 
 #include <cstdint>
@@ -58,7 +63,15 @@ private:
         float turn = 0.0f;     // degrees a reference frame: 4 + Gravity
         float angle = 0.0f;    // radians, about the disc's own horizontal axis
     };
+    struct Spark {
+        float position[3] = {0, 0, 0};
+        float velocity[3] = {0, 0, 0};  // metres a reference frame
+        float scale = 1.4f;
+    };
     uint32_t next();
+    std::vector<Spark> sparks_;
+    float sparkOwed_ = 0.0f;
+    bgfx::TextureHandle sparkSheet_ = BGFX_INVALID_HANDLE;
 
     std::vector<Shape> shapes_;
     std::vector<Disc> discs_;

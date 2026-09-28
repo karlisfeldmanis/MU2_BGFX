@@ -391,6 +391,10 @@ public:
     // breath; fed in `snort`.
     Snort& snorts() { return snort_; }
     Eyes& eyes() { return eyes_; }
+    // The townsfolk's RenderLight sprites, in `sheet` (the showing's `light`, MU's BITMAP_LIGHT):
+    // `(1, 0.6, 0.4) * (sin(WorldTime * 0.002) * 0.3 + 0.7)`, one per glowing person.
+    void setFolkLight(bgfx::TextureHandle sheet) { folkLight_ = sheet; }
+    void gatherFolkLights(gfx::Effects& effects) const;
     void gatherForge(gfx::Effects& effects, const float eye[3], const float near[3],
                      float daylight) const {
         forge_.gather(effects, eye, near, daylight);
@@ -729,6 +733,10 @@ private:
         int voice = -1;
         float every = 0.0f;  // seconds a roll comes up, on average
         float busy = 0.0f;   // seconds the last one still sounds
+        // MU's RenderLight on a bone, or -1: the Chaos Goblin's BITMAP_LIGHT at bone 32, Scale
+        // 1.5 (ZzzCharacter.cpp:11243). See gatherFolkLights.
+        int glowBone = -1;
+        float glowScale = 1.0f;
     };
     // Starts a townsperson who cycles: its own dice, a clip by the rule, and a clock put
     // somewhere in it so that two of a kind are not in step.
@@ -739,6 +747,8 @@ private:
     // MU2's Scenery.Next, which generalised it past two alternates.
     static int fidget(Standing& one);
     std::vector<Standing> folk_;
+    bgfx::TextureHandle folkLight_ = BGFX_INVALID_HANDLE;
+    float folkClock_ = 0.0f;  // seconds, WorldTime's own, for the lights' breathing
     std::vector<int> questGivers_;
     int pointedFolk_ = -1;
     std::vector<Said> said_;

@@ -197,6 +197,11 @@ bool PlayMode::open(Context& ctx) {
             world_.played().aura().open(assets, ctx.textures);
             world_.played().warp().open(assets, ctx.textures);
             if (world_.played().showing().isOpen()) {
+                if (const content::EffectSheet* light =
+                        world_.played().showing().table().effect("light")) {
+                    world_.played().setFolkLight(ctx.textures.load(
+                        core::join(assets, light->path), content::TextureRole::Albedo));
+                }
                 world_.played().breath().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());
@@ -877,6 +882,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().ice().gather(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
+        world_.played().gatherFolkLights(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
