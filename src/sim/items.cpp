@@ -95,7 +95,10 @@ bool expensive(const content::Tables& tables, const Held& what) {
     const content::ItemRow& row = tables.items[size_t(what.item)];
     // `(iLevel > 6 && pItem->Type < ITEM_WING)`: every group before the wings' twelve.
     constexpr int kGroupWings = 12;
-    return row.jewel() || (what.refinement > 6 && row.group < kGroupWings) || what.excellent != 0;
+    // And, ours, the Rune of Creation and anything with a socket: the user, 2026-09-29, "jewel of
+    // creation or item with sockets is not dropobale".
+    return row.jewel() || (what.refinement > 6 && row.group < kGroupWings) || what.excellent != 0 ||
+           creation(row) || what.sockets > 0;
 }
 
 bool takesOptions(const content::ItemRow& row) {
