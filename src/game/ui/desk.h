@@ -23,6 +23,8 @@
 #include "game/item_models.h"
 #include "game/ui/items_stage.h"
 #include "game/ui/menu.h"
+#include "game/ui/quest_dialog.h"
+#include "game/ui/tracker.h"
 #include "game/ui/shelf.h"
 #include "game/ui/specimen.h"
 #include "game/ui/tally.h"
@@ -164,6 +166,9 @@ private:
     Amount amount_;
     Menu menu_;
     std::string worldName_;
+    // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
+    QuestDialog questDialog_;
+    Tracker tracker_;
     bool quitAsked_ = false;
     bool switchAsked_ = false;
     bool holdEscape_ = false;

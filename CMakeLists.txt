@@ -181,6 +181,8 @@ add_executable(mu2
   src/game/ui/vitals.cpp
   src/game/ui/speech.cpp
   src/game/ui/beacon.cpp
+  src/game/ui/tracker.cpp
+  src/game/ui/quest_dialog.cpp
   src/game/ui/controls.cpp
   src/game/ui/specimen.cpp
   src/game/ui/items_stage.cpp
@@ -200,6 +202,8 @@ add_executable(mu2
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_move.cpp
+  src/sim/realm_quests.cpp
+  src/sim/quests.cpp
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
@@ -314,6 +318,8 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/realm_items.cpp
   src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
+  src/sim/realm_quests.cpp
+  src/sim/quests.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
   src/sim/realm_summon.cpp

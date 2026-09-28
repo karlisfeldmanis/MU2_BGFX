@@ -29,6 +29,7 @@
 #include <vector>
 
 #include "content/tables.h"
+#include "sim/quests.h"
 #include "sim/items.h"
 #include "sim/market.h"
 #include "sim/random.h"
@@ -88,6 +89,11 @@ enum class What : uint8_t {
                // will be in the air, whom: at whom. The `Hit` follows when it arrives.
     Blinked,   // a Teleport put him down: a: the column, b: the row
     Cured,     // an Antidote drunk: the poison on him is gone
+    Offered,   // a quest giver spoke (sim/quests.h): a: the quest, b: his folk index, c: the state
+    QuestTaken,  // a: the quest
+    QuestStep,   // a live step's count moved: a: the quest, b: the count, c: the step
+    QuestReady,  // every counted step done: back to the giver. a: the quest
+    QuestDone,   // handed in and paid: a: the quest, b: the chosen item row, c: its bag slot
     Shouted,   // a guard's line: a: a `Shout`, b and c: for a pointing, the tile he points the
                // hero to (-1 for nowhere), whom: the monster it is about. What is SAID is the
                // drawing's to choose; the realm only says that he spoke and why.
@@ -371,6 +377,8 @@ struct HeroRecord {
 // What the game asks the sim for. Nothing here is a skill, and that is on purpose: PLAN.md
 // decided the skill system is Diablo 3's shape -- learned permanently, four keys, real
 // cooldowns -- and the one thing this sprint owes it is not baking in MU's assumptions. An
+    // Every quest's progress, by sim/quests.h's index.
+    QuestProgress quests[kQuests];
 // attack is a request to fight a body, not a swing fired from an item, and the swing clock it
 // runs on is per-body and already separate from the thinking clock, so a per-skill cooldown
 // goes beside it rather than through it.
@@ -590,6 +598,28 @@ public:
     // Bag to vault: a bag slot (never a worn one, as a sale is never a worn one) to a vault
     // cell, or -1 for the first cell it fits. The cell, or -1 refused.
     int deposit(int bagSlot, int cell = -1);
+
+    // ---- the quests (sim/quests.h) ------------------------------------------------------------
+    // A giver's dialog, opened by a Talk order arriving within `kCounter` of him and closed by
+    // any other order, as a counter is: his index in Tables::folk, or -1.
+    int questing() const { return questing_; }
+    void closeQuest() { questing_ = -1; }
+    const QuestProgress& quest(int index) const { return quests_[index]; }
+    // A step's goal: its row's count, or for a Clear with none the breed's population here.
+    int questGoal(int index, int step) const;
+    // Whether the giver would offer it now: never taken, or resting and its time has come.
+    bool questOffered(int index) const;
+    // The wall clock, in unix seconds, which a repeating quest waits on. Handed in by the game;
+    // a run that never sets it (the headless hunt) never sees a quest come back.
+    void setWallClock(int64_t unixSeconds) { wall_ = unixSeconds; }
+    int64_t wallClock() const { return wall_; }
+    // Whether his class may be paid this choice: the item's own class bits, as a purchase asks.
+    bool questChoiceFits(int index, int choice) const;
+    // Accept, at the giver: offered, and his dialog open. Refused whole and silent otherwise.
+    bool acceptQuest(int index);
+    // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
+    // him), and room in the bag for all of it before anything is given. Pays and rests it.
+    bool completeQuest(int index, int choice);
     // Vault to bag: a cell to a bag slot, or -1 for the first slot it fits. The slot, or -1.
     int withdraw(int cell, int bagSlot = -1);
     // Inside the vault: from one cell to another, onto a clear rectangle.
@@ -823,6 +853,11 @@ private:
     // and three instalments a potion is at most six in flight.
     struct Sip {
         int64_t due = 0;
+    QuestProgress quests_[kQuests];
+    int questing_ = -1;
+    int64_t wall_ = 0;
+    // A monster the hero killed, counted against every live Clear of its breed.
+    void countKill(const Body& dead);
         int32_t amount = 0;
         bool mana = false;
     };

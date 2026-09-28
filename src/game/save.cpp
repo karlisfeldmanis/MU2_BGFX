@@ -154,6 +154,21 @@ bool loadSave(const std::string& path, Saved& out) {
         if (index >= 0) hero.coolsLeft[index] = int64_t(cooling.at(i).at(1).numberOr(0.0));
     }
 
+    // The quests, by the table's index: [state, [counts...], available at, completions].
+    // Absent in a file written before there were quests, which reads as none taken.
+    const core::Json& quests = doc["quests"];
+    for (size_t i = 0; i < quests.size() && i < size_t(sim::kQuests); ++i) {
+        const core::Json& one = quests.at(i);
+        sim::QuestProgress& into = hero.quests[i];
+        into.state = sim::QuestState(int(one.at(0).numberOr(0.0)));
+        const core::Json& counts = one.at(1);
+        for (size_t step = 0; step < counts.size() && step < size_t(sim::kQuestSteps); ++step) {
+            into.counts[step] = uint16_t(counts.at(step).numberOr(0.0));
+        }
+        into.availableAt = int64_t(one.at(2).numberOr(0.0));
+        into.completions = uint32_t(one.at(3).numberOr(0.0));
+    }
+
     const core::Json& items = doc["items"];
     for (size_t i = 0; i < items.size(); ++i) saved.items.push_back(readItem(items.at(i)));
     // Absent in a file written before the bar could be arranged, which reads as four empty keys
@@ -235,6 +250,16 @@ bool writeSave(const std::string& path, const content::Tables& tables, const Sav
         std::fprintf(f, "  \"ale_ticks_left\": %lld,\n",
                      static_cast<long long>(hero.aleTicksLeft));
     }
+    std::fprintf(f, "  \"quests\": [");
+    for (int i = 0; i < sim::kQuests; ++i) {
+        const sim::QuestProgress& one = hero.quests[i];
+        std::fprintf(f, "%s[%d, [", i ? ", " : "", int(one.state));
+        for (int step = 0; step < sim::kQuestSteps; ++step) {
+            std::fprintf(f, "%s%d", step ? ", " : "", int(one.counts[step]));
+        }
+        std::fprintf(f, "], %lld, %u]", static_cast<long long>(one.availableAt), one.completions);
+    }
+    std::fprintf(f, "],\n");
     bool cooling = false;
     for (int i = 0; i < sim::kSkills; ++i) {
         if (hero.coolsLeft[i] <= 0) continue;

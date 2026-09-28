@@ -2,6 +2,7 @@
 
 #include "sim/realm_tuning.h"
 
+#include <ctime>
 #include <cstdio>
 
 #include "core/log.h"
@@ -65,6 +66,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     chest_.open(interface_, &arts_);
     amount_.open(interface_, &arts_);
     menu_.open(interface_);
+    questDialog_.open(interface_);
+    tracker_.open(interface_);
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
     vitals_.open(interface_);
@@ -81,6 +84,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
 
 void Desk::shutdown() {
     specimen_.close();
+    questDialog_.close();
+    tracker_.close();
     controls::close();
     panel::closeTitleFace();
     bagStagePicture_.shutdown();
@@ -135,7 +140,10 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // Escape this frame, taken before the box below spends the script's: the box has it first
     // while it is up, and only otherwise is it the menu's. A scripted one always is, so a review
     // run can open the menu; a real one only when the game holds Escape (PlayMode::open).
-    const bool escape = !typing && (scriptEscape_ || (holdEscape_ && window.escaped()));
+    // And a quest giver's window, which is answered as the box is and takes Escape before the menu.
+    const bool questing = play.isOpen() && play.realm().questing() >= 0;
+    const bool escape =
+        !typing && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
     {
         Amount::Result result;
         const std::string typed = window.typed() + scriptTyped_;
@@ -160,6 +168,30 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
     }
     // A Town Portal Scroll read shuts the bag and the character window, silently: ReceiveTeleport's
+    // The quest giver's window: the realm opened it when he was reached, and closes it on any other
+    // order; this only answers. The wall clock a repeating quest waits on goes in first.
+    if (play.isOpen()) {
+        play.setWallClock(int64_t(std::time(nullptr)));
+        const sim::Realm& realm = play.realm();
+        int quest = -1;
+        if (realm.questing() >= 0) {
+            quest = sim::questOf(realm.tables()->folk[size_t(realm.questing())].number);
+        }
+        QuestDialog::Result result;
+        const bool free = !typing && quest >= 0;
+        questDialog_.update(seconds, play, quest, float(window.width()), float(window.height()),
+                            free ? pointer : Pointer{}, free ? window.scroll() : 0.0f,
+                            free && window.entered(),
+                            free && (window.escaped() || scriptEscape_), shelfStage_, &result);
+        if (result.close) {
+            play.closeQuest();
+            click();
+        } else if (result.accept) {
+            if (play.acceptQuest(quest)) play.closeQuest();
+        } else if (result.complete) {
+            if (play.completeQuest(quest, result.choice)) play.closeQuest();
+        }
+    }
     // `g_pNewUISystem->HideAll()`. The realm has already closed the counter and the vault. And the
     // same handler ends `if (Data->Flag) g_pUIMapName->ShowMapName()`, which a warp has set even
     // into the map it left, so the town's name comes up at once, as it does on the way in.
@@ -457,6 +489,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
                     (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
+                    questDialog_.covers(pointer.x, pointer.y) ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
@@ -1122,6 +1155,10 @@ void Desk::overhead(float seconds, const Play& play, const float* viewProj, int 
     beacon_.update(seconds, play, vitals_.namedFolk(), vitals_.folkShown(vitals_.namedFolk()),
                    viewProj, width, height);
     // The blows' own figures and the gain lane, on the same frame's camera: the figures hang
+    // The quest on screen, out of the way of a window on the right and of the giver's own.
+    tracker_.update(seconds, play,
+                    inventoryOpen_ || characterOpen_ || trading_ || banking_ || questDialog_.up(),
+                    viewProj, width, height);
     // on world points and the lane on the HUD's top edge.
     tally_.update(seconds, play, viewProj, width, height, hud_.plateTop());
 }
@@ -1133,6 +1170,10 @@ void Desk::photograph(gfx::Renderer& renderer, double seconds) {
     if (inventoryOpen_) bagStagePicture_.render(renderer, pixelsPerUnit, seconds);
     if (trading_ || banking_) shelfStagePicture_.render(renderer, pixelsPerUnit, seconds);
     // The potion boxes are always on screen, and at rest their stage costs nothing.
+    // The quest giver's rewards on the same stage, which is free whenever he is (no counter).
+    else if (questDialog_.up()) {
+        shelfStagePicture_.render(renderer, questDialog_.pixelsPerUnit(), seconds);
+    }
     quickStagePicture_.render(renderer, hud_.pixelsPerUnit(), seconds);
     // The tooltip's picture, at the tip's own scale -- the interface pixel, not the windows'.
     tipStagePicture_.render(renderer, panel::unit(), seconds);
@@ -1153,6 +1194,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // The map's name, a reading on the scene as well, and under every window.
     if (arrival_.showing()) interface_.add(arrival_.canvas());
     interface_.add(hud_.canvas());
+    if (tracker_.showing()) interface_.add(tracker_.canvas());
+    if (tracker_.announcing()) interface_.add(tracker_.banner());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());
     if (banking_) interface_.add(chest_.canvas());
@@ -1170,6 +1213,10 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     // Last of all, over every window too: MU2's own CanvasLayer{Layer=128} -- a pointer is over
     // whatever it is pointing at, and the panel is something you point at as well.
     if (amount_.up()) interface_.add(amount_.canvas());
+    if (questDialog_.up()) {
+        interface_.add(questDialog_.canvas());
+        interface_.add(questDialog_.body());
+    }
     // The menu over everything but the pointer: it dims the whole screen, windows and HUD too.
     if (menu_.up()) interface_.add(menu_.canvas());
     if (specimenOpen_) interface_.add(specimen_.canvas());

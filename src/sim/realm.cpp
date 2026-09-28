@@ -236,6 +236,7 @@ HeroRecord Realm::record() const {
     out.aleTicksLeft = aleLeft();
     for (int i = 0; i < kSkills; ++i) out.coolsLeft[i] = std::max<int64_t>(0, hero.cools[i] - tick_);
     for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
+    for (int i = 0; i < kQuests; ++i) out.quests[i] = quests_[i];
     return out;
 }
 
@@ -252,6 +253,16 @@ void Realm::restore(const HeroRecord& saved) {
     hero.learned |= saved.learned;
     hero.facing = hero.aim = saved.facing;
     money_ = std::max<int64_t>(0, saved.money);
+    // The quests as saved, each count held to its step's goal so an edited file cannot hand in
+    // a clear it never made.
+    for (int i = 0; i < kQuests; ++i) {
+        quests_[i] = saved.quests[i];
+        if (int(quests_[i].state) > int(QuestState::Resting)) quests_[i] = QuestProgress{};
+        for (int step = 0; step < kQuestSteps; ++step) {
+            quests_[i].counts[step] = uint16_t(std::min<int>(quests_[i].counts[step],
+                                                             questGoal(i, step)));
+        }
+    }
     bag_.clear();
     for (int slot = 0; slot < kSlots; ++slot) {
         const Held& one = saved.slots[slot];
@@ -337,9 +348,11 @@ void Realm::accept() {
         if (!same) dropBlow(hero);
         order_ = pending_;
         pending_ = Request{};
-        // Any order is walking away from a counter, including another Talk -- and from the vault.
+        // Any order is walking away from a counter, including another Talk -- and from the vault,
+        // and from a quest giver's dialog.
         trading_ = -1;
         banking_ = -1;
+        questing_ = -1;
         if (order_.kind == Request::Kind::WalkTo) {
             send(hero, order_.column, order_.row);
         } else if (order_.kind == Request::Kind::Stop) {
@@ -505,6 +518,11 @@ void Realm::press() {
             } else if (one.number == kVaultKeeper) {
                 banking_ = int(order_.target);
                 say(What::Served, hero, banking_, one.number);
+            } else if (const int quest = questOf(one.number); quest >= 0) {
+                // A quest giver: his dialog opens, whatever it has to say -- the offer, the
+                // quest under way, the hand-in, or that it is not his to give again yet.
+                questing_ = int(order_.target);
+                say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
             }
             order_ = Request{};
         }
@@ -756,6 +774,27 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Drank:
             std::snprintf(line, sizeof(line), "%6u %s drinks for %d %s", happening.tick, who,
                           happening.a, happening.b ? "mana" : "health");
+            break;
+        case What::Offered:
+            std::snprintf(line, sizeof(line), "%6u %s hears quest %d from %s (%d)", happening.tick,
+                          who, happening.a, realm.tables()->folk[size_t(happening.b)].name.c_str(),
+                          happening.c);
+            break;
+        case What::QuestTaken:
+            std::snprintf(line, sizeof(line), "%6u %s takes quest %d", happening.tick, who,
+                          happening.a);
+            break;
+        case What::QuestStep:
+            std::snprintf(line, sizeof(line), "%6u %s counts %d on quest %d step %d", happening.tick,
+                          who, happening.b, happening.a, happening.c);
+            break;
+        case What::QuestReady:
+            std::snprintf(line, sizeof(line), "%6u %s has done quest %d; back to its giver",
+                          happening.tick, who, happening.a);
+            break;
+        case What::QuestDone:
+            std::snprintf(line, sizeof(line), "%6u %s hands in quest %d, choosing item %d into %d",
+                          happening.tick, who, happening.a, happening.b, happening.c);
             break;
         case What::Soused:
             std::snprintf(line, sizeof(line), "%6u %s drinks an ale for %d ticks, swinging every %d",

@@ -312,6 +312,12 @@ void Interface::submit(bgfx::ViewId view) {
             bgfx::setVertexBuffer(0, &tvb);
             bgfx::setIndexBuffer(&tib, iAt + run.firstIndex, run.count);
             bgfx::setTexture(0, sampler_, run.texture);
+            if (c->clip_.w > 0.0f && c->clip_.h > 0.0f) {
+                const float x0 = std::max(0.0f, c->clip_.x), y0 = std::max(0.0f, c->clip_.y);
+                bgfx::setScissor(uint16_t(x0), uint16_t(y0),
+                                 uint16_t(std::max(0.0f, c->clip_.x + c->clip_.w - x0)),
+                                 uint16_t(std::max(0.0f, c->clip_.y + c->clip_.h - y0)));
+            }
             bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
                            BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
                                                  BGFX_STATE_BLEND_INV_SRC_ALPHA));

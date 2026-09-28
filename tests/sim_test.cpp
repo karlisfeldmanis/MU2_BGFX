@@ -3183,6 +3183,97 @@ void testRecovery(const content::Tables& tables) {
     check(outside <= 0, "and nothing comes back there");
 }
 
+// Lorencia's one quest (sim/quests.h): Marlon offers it, a kill of his own counts, a hand-in pays
+// only what his class may take and only into room, and twelve hours of wall clock bring it back.
+void testQuests(const content::Tables& tables) {
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkKnight, 60), "a quest realm raises");
+    int marlon = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 229) marlon = int(i);
+    }
+    check(marlon >= 0, "Marlon is in the town's table");
+    const int quest = sim::questOf(229);
+    checkEqual(quest, 0, "and he gives the first quest");
+    int goal = 0;
+    for (int s = 0; s < sim::questAt(quest).stepCount; ++s) {
+        if (sim::questAt(quest).steps[s].kind == sim::QuestStepKind::Clear) {
+            goal += realm.questGoal(quest, s);
+        }
+    }
+    checkEqual(goal, int(tables.population()), "clearing Lorencia is every monster it spawns");
+    realm.setWallClock(1000000);
+    check(realm.questOffered(quest), "never taken, it is offered");
+    check(!realm.acceptQuest(quest), "but not from across the map");
+    const auto talk = [&]() {
+        sim::Request ask;
+        ask.kind = sim::Request::Kind::Talk;
+        ask.target = uint32_t(marlon);
+        realm.ask(ask);
+        for (int tick = 0; tick < 4000 && realm.questing() < 0; ++tick) realm.step();
+    };
+    talk();
+    checkEqual(realm.questing(), marlon, "walked to Marlon and his window opened");
+    check(realm.acceptQuest(quest), "and the quest is taken");
+    check(realm.quest(quest).state == sim::QuestState::Active, "which is under way");
+    check(!realm.questOffered(quest), "and no longer offered");
+
+    // One kill of his own, of the nearest Spider (breed 3), counts once toward its step.
+    const sim::Body* spider = nullptr;
+    float best = 1e9f;
+    for (const sim::Body& one : realm.bodies()) {
+        if (!one.monster() || !one.alive() || tables.kinds[size_t(one.kind)].number != 3) continue;
+        const float dx = one.x - realm.hero().x, dy = one.y - realm.hero().y;
+        if (dx * dx + dy * dy < best) {
+            best = dx * dx + dy * dy;
+            spider = &one;
+        }
+    }
+    check(spider != nullptr, "a Spider stands somewhere in Lorencia");
+    if (spider) {
+        const uint32_t id = spider->id;
+        sim::Request attack;
+        attack.kind = sim::Request::Kind::Attack;
+        attack.target = id;
+        realm.ask(attack);
+        for (int tick = 0; tick < 6000; ++tick) {
+            realm.step();
+            const sim::Body* one = realm.find(id);
+            if (!one || !one->alive()) break;
+        }
+        checkEqual(int(realm.quest(quest).counts[0]), 1, "the Spider he killed counted once");
+    }
+
+    // Ready, as a finished clear leaves it, and handed in.
+    sim::HeroRecord record = realm.record();
+    record.quests[quest].state = sim::QuestState::Ready;
+    for (int s = 0; s < sim::kQuestSteps; ++s) {
+        record.quests[quest].counts[s] = uint16_t(realm.questGoal(quest, s));
+    }
+    realm.restore(record);
+    talk();
+    checkEqual(realm.questing(), marlon, "back at Marlon with the clear done");
+    const int64_t purse = realm.money();
+    check(!realm.completeQuest(quest, 1), "a staff is not a knight's to be paid");
+    check(!realm.completeQuest(quest, -1), "and a choice is owed when he has one to make");
+    check(realm.completeQuest(quest, 0), "the Kris is");
+    checkEqual(realm.money() - purse, sim::questAt(quest).zen, "and the purse is paid");
+    int krises = 0;
+    const int32_t kris = tables.itemNamed("Sword01");
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        const sim::Held& one = realm.satchel()[slot];
+        if (one.item == kris && one.refinement == 4) ++krises;
+    }
+    checkEqual(krises, 1, "and a Kris +4 is in his bag");
+    check(realm.quest(quest).state == sim::QuestState::Resting, "the quest rests");
+    check(!realm.questOffered(quest), "and is not offered again at once");
+    realm.setWallClock(1000000 + sim::questAt(quest).repeatSeconds - 1);
+    check(!realm.questOffered(quest), "nor a second before twelve hours are up");
+    realm.setWallClock(1000000 + sim::questAt(quest).repeatSeconds);
+    check(realm.questOffered(quest), "and it is offered again when they are");
+    checkEqual(int(realm.quest(quest).completions), 1, "counted once handed in");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -3223,3 +3314,4 @@ int main() {
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
 }
+    testQuests(tables);

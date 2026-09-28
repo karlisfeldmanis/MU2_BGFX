@@ -526,6 +526,14 @@ void Realm::kill(Body& dead, Body& killer) {
         // one number at one place, stated, the way a live server states one. See kExperienceRate.
         gain(killer, int32_t(killExperience(dead.level, killer.level) * kExperienceRate));
     }
+    // And his quests count it, when the kill is his by the rules above: his own blow, her
+    // summon's, or a guard's he had a hand in. A guard's own kill does not count, as it pays him
+    // nothing.
+    if (dead.monster() &&
+        (killer.player || killer.summoner != 0 ||
+         (killer.warden >= 0 && dead.heroStruck && bodies_[0].alive()))) {
+        countKill(dead);
+    }
 }
 
 void Realm::gain(Body& hero, int32_t award) {

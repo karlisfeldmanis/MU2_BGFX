@@ -189,6 +189,13 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
     const float bob = std::sin(clock_ * kTau * kBobHz) * kBob * u;
     for (int folk : play.questGivers()) {
         float x = 0.0f, y = 0.0f;
+        // Only while he has something for the hero: the quest on offer, or its hand-in. Taken
+        // and under way, or resting until it is his to give again, he is a townsperson.
+        const int quest = sim::questOf(realm.tables()->folk[size_t(folk)].number);
+        if (quest >= 0 && !realm.questOffered(quest) &&
+            realm.quest(quest).state != sim::QuestState::Ready) {
+            continue;
+        }
         if (!play.folkCrownOf(folk, viewProj, width, height, &x, &y)) continue;
         const float w = float(cellW_), h = float(cellH_);
         // Risen by the name's own fade, eased on the same clock: up as the name comes, held

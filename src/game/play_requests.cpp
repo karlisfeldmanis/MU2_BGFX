@@ -295,6 +295,24 @@ bool Play::buy(int shelfSlot) {
     return slot >= 0;
 }
 
+bool Play::acceptQuest(int quest) {
+    const bool taken = realm_.acceptQuest(quest);
+    core::logf("window: accept quest %d %s", quest, taken ? "taken" : "refused");
+    // The interface's own click; the banner that follows carries the moment.
+    if (taken) ui(Ui::Opened);
+    return taken;
+}
+
+bool Play::completeQuest(int quest, int choice) {
+    const bool paid = realm_.completeQuest(quest, choice);
+    core::logf("window: hand in quest %d, choice %d, %s", quest, choice,
+               paid ? "paid" : "refused (not ready, no choice, or no room)");
+    // A thing arriving in the bag, as a purchase is heard; refused, the window's own no.
+    if (paid) sound_.play(heard_.take);
+    else ui(Ui::Refused);
+    return paid;
+}
+
 bool Play::buyBack() {
     const int slot = realm_.buyBack();
     core::logf("window: buy back %s (slot %d, %lld Zen left)", slot >= 0 ? "taken" : "refused",

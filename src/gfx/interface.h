@@ -97,6 +97,11 @@ public:
 
     const Face& face() const;
 
+    // Clips everything this canvas draws to a screen rectangle, in pixels: a window whose
+    // contents scroll (the quest dialog). A box of no size, the default, clips nothing. Kept
+    // across clear(), as it is where the canvas lives rather than what it holds.
+    void clip(const Box& box) { clip_ = box; }
+
 private:
     friend class Interface;
     struct Vertex {
@@ -114,6 +119,7 @@ private:
               uint32_t abgr);
 
     const Interface* owner_ = nullptr;
+    Box clip_{0.0f, 0.0f, 0.0f, 0.0f};
     std::vector<Vertex> vertices_;
     std::vector<uint32_t> indices_;
     std::vector<Run> runs_;

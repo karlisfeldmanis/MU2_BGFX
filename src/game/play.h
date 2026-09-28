@@ -198,6 +198,12 @@ public:
     bool withdrawZen(int64_t zen);
     void closeVault() { realm_.closeVault(); }
     void restoreVault(const sim::Vault& saved) { realm_.restoreVault(saved); }
+    // A quest giver's dialog (sim/quests.h): accept, hand in with a choice, walk away. The wall
+    // clock a repeating quest waits on is handed to the realm each frame (Realm::setWallClock).
+    bool acceptQuest(int quest);
+    bool completeQuest(int quest, int choice);
+    void closeQuest() { realm_.closeQuest(); }
+    void setWallClock(int64_t unixSeconds) { realm_.setWallClock(unixSeconds); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
     void earn(long long zen) { realm_.earn(zen); }
