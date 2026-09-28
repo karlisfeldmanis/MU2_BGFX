@@ -195,6 +195,8 @@ bool PlayMode::open(Context& ctx) {
                                               &world_.ground());
                 world_.played().bolt().open(assets, ctx.textures,
                                             world_.played().showing().table());
+                world_.played().wave().open(assets, ctx.textures,
+                                            world_.played().showing().table());
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
                 world_.played().streak().open(assets, ctx.textures,
                                               world_.played().showing().table());
@@ -692,6 +694,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And the wizard's bolts, the blue each throws on the ground it crosses.
         count += world_.played().bolt().lights(falling + count,
                                                gfx::Renderer::kMaxTransientLights - count);
+        // And Power Wave's, three tiles of blue.
+        count += world_.played().wave().lights(falling + count,
+                                               gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));
@@ -802,6 +807,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().eyes().gather(ctx.renderer.effects());
         world_.played().gatherMeteor(ctx.renderer.effects(), eye.position);
         world_.played().gatherBolt(ctx.renderer.effects(), eye.position);
+        world_.played().wave().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));

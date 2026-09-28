@@ -30,6 +30,7 @@
 #include "content/ground.h"
 #include "content/showing.h"
 #include "content/texture.h"
+#include "game/fx/effect_mesh.h"
 #include "gfx/effects.h"
 #include "gfx/renderer.h"
 
@@ -129,10 +130,7 @@ public:
     uint32_t refused() const { return refused_; }
 
 private:
-    // A corner of an .obj triangle, as the Marker keeps its pin.
-    struct Corner {
-        float x, y, z, u, v;
-    };
+    using Corner = EffectCorner;
 
     // One model's group: its triangles and its sheet.
     struct Group {
@@ -390,15 +388,6 @@ private:
     // One fireball's frame, and whether it is still in the air.
     bool hurling(Hurled& ball, float seconds, bool standing, const float* there);
 
-    // Loads one .obj, scaled to metres, optionally keeping one named group only.
-    bool loadObj(const std::string& path, float scale, const std::string& groupFilter,
-                 std::vector<Corner>& out);
-    // One model's triangles, placed and turned, as quads whose last two corners coincide.
-    // The same, turned by a whole basis: the model's X, Y and Z land on `x`, `y` and `z`.
-    void submitAlong(gfx::Effects& effects, const std::vector<Corner>& tris,
-                     bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3],
-                     const float x[3], const float y[3], const float z[3], float scale,
-                     const float colour[3], float alpha) const;
     void submit(gfx::Effects& effects, const std::vector<Corner>& tris,
                 bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3], float lean,
                 float tumble, float scale, const float colour[3], float alpha) const;

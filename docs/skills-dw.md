@@ -197,6 +197,26 @@ the arrival. Ours, tuned on the bench with the user watching:
 
 `--bolt-every N --bolt-skill 4` throws it on the bench.
 
+## 2d. Power Wave
+
+0.75's row, `CreateSkill(PowerWave, ..., DamageType.Wizardry, 14, 6, manaConsumption: 5,
+energyRequirement: 56)`: fourteen damage, six tiles, five mana, skill 11, no element. Taught by the
+Scroll of Power Wave (`Book11`, group 15 #10, Pasi's slot 1, 1 100 zen), refused under 56 energy. A
+**primary like the other two**, on the shape the user gave Fire Ball: about twice Energy Ball against
+one body at 56 energy for five mana. One body is struck, as in 0.75. The clips are Energy Ball's, the
+wave is `SOUND_MAGIC`, and it flies at the bolt's fifteen tiles a second.
+
+**The look** is `fx/wave`, MU2's `Wave` ported. What is MU's: `Magic02.bmd` at 0.9, one additive
+curtain standing on the ground; sixty units a frame, flat, for twenty frames -- twelve tiles, so it
+**sweeps through its target and on out**, never stopping (its mover calls no `CheckTargetRange`);
+the sheet streaming along it (`BlendMeshTexCoordU = -LifeTime * 0.2`, the first scrolling texture
+here, which the albedo sampler's wrap allows); four smoke01 puffs a frame in a 45-degree cone,
+faintly blue, doubling and stopping hard; a blue light three tiles wide. Ours: it stands on the
+ground under the spot every spell leaves from; and, on *"make it little bit more blurry"*, two wider,
+dimmer copies of the curtain (1.12x at 35%, 1.26x at 18%) with its brightness held at 0.8 where MU's
+saturates. `fx/effect_mesh` is the .obj reader and basis draw the meteor and the wave now share.
+`--bolt-every N --bolt-skill 11` is its bench.
+
 ## 2b'. Where a spell leaves him
 
 **One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward
@@ -234,9 +254,8 @@ Ball's own trail was halved the same day (*"energy ball trail was to long"*: 6 +
 ## 4. Owed
 
 - The chip in the list reads `RMB` for the slot; unseen in a shot.
-- The next spells, in scroll-drop order: Power Wave 9, Lightning 13. Each is a row, a cooldown or
-  not (Fire Ball was ruled a primary), and an effect -- Power Wave is MU2's `Wave`, Lightning its
-  `Thunder`. Each should throw some light.
+- The next spell in scroll-drop order is Lightning 13: a row and MU2's `Thunder`, the first effect
+  drawn between two points every frame. It should throw some light.
 - A thrown `Missed` does not say which spell, so a bolt and a fireball in the air at one body at
   once can turn the wrong one aside. Rare, drawing only.
 - `sim_test`'s two fist checks fail since the empty hand swings the sword's pair (0db5733a); the

@@ -181,6 +181,20 @@ constexpr SkillRow kRows[kSkills] = {
      "A ball of fire thrown at one body up to six tiles off: half again the force of an Energy "
      "Ball, for three times the mana.",
      147, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 8, 148, 12.5f},
+
+    // Power Wave 11, 0.75's row: `CreateSkill(PowerWave, ..., DamageType.Wizardry, 14, 6,
+    // manaConsumption: 5, energyRequirement: 56)` -- fourteen damage, six tiles, five mana, and no
+    // element at all. One body, as 0.75 has it: the wave sweeps on through and away (its mover
+    // never stops on the target), but only what it was thrown at is struck.
+    //
+    // **A primary like the other two**, the shape the user gave Fire Ball: no cooldown, paced by
+    // its clip, a hit paying back. About twice Energy Ball against one body at fifty-six energy
+    // (20-31 against 9-18) for five mana. The same two hands; `SOUND_MAGIC`, Energy Ball's wave,
+    // which MU plays for both. Sixty units a reference frame, the bolt's fifteen tiles a second.
+    {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+     "A wave of light swept along the ground at one body up to six tiles off: twice the force "
+     "of an Energy Ball, for five times the mana.",
+     147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

@@ -54,6 +54,9 @@ constexpr int32_t kSoulBarrier = 16;
 // His first spell that has to be earned: MU's `AT_SKILL_FIREBALL`, off the Scroll of Fire Ball
 // (group 15 number 3, `Book04`), which asks forty energy to read. 0.75's own row.
 constexpr int32_t kFireBall = 4;
+// And the third he buys, `AT_SKILL_POWERWAVE`, off the Scroll of Power Wave (group 15 number 10,
+// `Book11`) at fifty-six energy.
+constexpr int32_t kPowerWave = 11;
 }  // namespace skill
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
@@ -207,10 +210,11 @@ struct SkillRow {
 };
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
-// families past it, the wizard's Energy Ball and his Soul Barrier. Also the width of the save's learned mask and of a body's cooldown array --
+// families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball and Power Wave. Also
+// the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 12;
+constexpr int kSkills = 13;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

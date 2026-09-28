@@ -21,11 +21,11 @@
     "classes_from": "QualifiedCharacters.Add(DarkWizard) in CreateScroll, on all twelve. Read by Prize.ReadBy where the scroll is read; before the orbs it was a Trade test in Realm.Read."
   },
   "skill": {
-    "note": "What the scroll teaches, and nothing here reads it. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
+    "note": "What the scroll teaches, read by Realm::useItem since 2026-09-28, which asks the fifty-six energy before it teaches. See Book01, which carries the argument for recording it and the two rules attached to these numbers - the requirement is not scaled, and the value is the price outright.",
     "number": 11,
     "name": "Power Wave",
-    "tells": "Shoves a wave of force ahead of him, knocking through whatever stands in its line.",
-    "tells_from": "What the skill DOES, which is the line the tooltip prints under its name. MU never says it -- a scroll's tooltip there is the name, the requirement and the class -- so this is ours, and it describes the spell rather than its price: the numbers behind it (damage, range, mana, element, area) are in OpenMU's Version075/SkillsInitializer.cs and in docs/mu-scrolls-and-orbs.md, and the tooltip has its own rows for what a thing costs.",
+    "tells": "A wave of light swept along the ground at one body up to six tiles off: twice the force of an Energy Ball, for five times the mana.",
+    "tells_from": "The skill's own line in sim/skills.cpp, kept letter for letter so the scroll's tooltip and the skill's card say the same thing. What the skill DOES, which is the line the tooltip prints under its name. MU never says it -- a scroll's tooltip there is the name, the requirement and the class -- so this is ours, and it describes the spell rather than its price: the numbers behind it (damage, range, mana, element, area) are in OpenMU's Version075/SkillsInitializer.cs and in docs/mu-scrolls-and-orbs.md, and the tooltip has its own rows for what a thing costs.",
     "level_requirement": 0,
     "energy_requirement": 56,
     "value": 1100

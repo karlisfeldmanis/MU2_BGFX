@@ -966,6 +966,56 @@ void testCastLock(const content::Tables& tables) {
         checkEqual(wiz.cooling(sim::skill::kFireBall), 0LL, "and nothing is left cooling");
     }
 
+    // ---- Power Wave: 0.75's row, a primary, off its scroll at fifty-six energy ----------------
+    {
+        const sim::SkillRow& wave = *sim::skillNumbered(sim::skill::kPowerWave);
+        check(wave.wizardry && wave.primary() && wave.thrown() && wave.damage == 14 &&
+                  wave.mana == 5 && wave.flies == 15.0f,
+              "Power Wave is a thrown primary at fourteen damage and five mana");
+        const int32_t scroll = tables.itemAt(15, 10);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPowerWave &&
+                  tables.items[size_t(scroll)].teachesEnergy == 56,
+              "the Scroll of Power Wave teaches skill 11 at fifty-six energy");
+        sim::Realm reader;
+        check(reader.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 10), "a wizard raises");
+        sim::HeroRecord carrying = reader.record();
+        const int bagged = sim::kWorn + 40;
+        carrying.slots[bagged].item = scroll;
+        carrying.slots[bagged].durability = 1;
+        carrying.points.energy = 55;
+        reader.restore(carrying);
+        check(!reader.useItem(bagged), "at fifty-five energy it is refused");
+        carrying = reader.record();
+        carrying.points.energy = 56;
+        reader.restore(carrying);
+        check(reader.useItem(bagged) && reader.knows(sim::skill::kPowerWave), "and read at fifty-six");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        check(wiz.learn(sim::skill::kPowerWave), "who knows Power Wave");
+        int waves = 0, landed = 0;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 3000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kPowerWave;
+                wiz.ask(request);
+            }
+            wiz.step();
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.who != wiz.hero().id) continue;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kPowerWave) ++waves;
+                if (one.what == sim::What::Hit && one.thrown) ++landed;
+            }
+        }
+        std::printf("  power wave: %d thrown, %d landed\n", waves, landed);
+        check(waves > 20 && landed > 0, "he throws Power Wave through a hunt and it lands");
+    }
+
     // ---- a cooldown outlives a save (the user, 2026-09-28) -----------------------------------
     {
         sim::Realm knight;

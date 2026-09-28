@@ -26,6 +26,7 @@
 #include "game/fx/snort.h"
 #include "game/fx/forge.h"
 #include "game/fx/bolt.h"
+#include "game/fx/wave.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -324,6 +325,8 @@ public:
     Meteor& meteor() { return meteor_; }
     // The wizard's Energy Ball: let go on `Loosed`, flown until its `Hit` arrives. fx/bolt.h.
     Bolt& bolt() { return bolt_; }
+    // The wizard's Power Wave, opened beside the bolt. fx/wave.h.
+    Wave& wave() { return wave_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -555,6 +558,7 @@ private:
     Bones bones_;
     Meteor meteor_;
     Bolt bolt_;
+    Wave wave_;
     int32_t quickSkill_ = 0;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
@@ -597,7 +601,7 @@ private:
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
-        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;

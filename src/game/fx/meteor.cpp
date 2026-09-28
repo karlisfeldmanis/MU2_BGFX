@@ -1,5 +1,7 @@
 #include "game/fx/meteor.h"
 
+#include "game/fx/effect_mesh.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -47,59 +49,6 @@ float Meteor::between(float a, float b) {
     return a + unit() * (b - a);
 }
 
-bool Meteor::loadObj(const std::string& path, float scale, const std::string& groupFilter,
-                     std::vector<Corner>& out) {
-    const std::vector<uint8_t> bytes = core::readFile(path);
-    if (bytes.empty()) {
-        core::logError("meteor: no %s", path.c_str());
-        return false;
-    }
-    std::vector<float> at, uv;
-    std::string line;
-    std::string currentGroup;
-    const auto corner = [&](const char* token) {
-        int v = 0, t = 0;
-        if (std::sscanf(token, "%d/%d", &v, &t) < 1) return;
-        if (v <= 0 || size_t(v) * 3 > at.size()) return;
-        Corner c;
-        c.x = at[size_t(v - 1) * 3 + 0] * scale;
-        c.y = at[size_t(v - 1) * 3 + 1] * scale;
-        // MU's Y runs south and this engine's Z runs north: docs/conventions.md, and the one
-        // negation belongs here at the edge rather than in the motion.
-        c.z = -at[size_t(v - 1) * 3 + 2] * scale;
-        c.u = t > 0 && size_t(t) * 2 <= uv.size() ? uv[size_t(t - 1) * 2] : 0.5f;
-        c.v = t > 0 && size_t(t) * 2 <= uv.size() ? 1.0f - uv[size_t(t - 1) * 2 + 1] : 0.5f;
-        out.push_back(c);
-    };
-    for (size_t i = 0; i <= bytes.size(); ++i) {
-        if (i < bytes.size() && bytes[i] != '\n') {
-            line.push_back(char(bytes[i]));
-            continue;
-        }
-        float a = 0, b = 0, c = 0;
-        char p[3][32];
-        if (std::sscanf(line.c_str(), "v %f %f %f", &a, &b, &c) == 3) {
-            at.insert(at.end(), {a, b, c});
-        } else if (std::sscanf(line.c_str(), "vt %f %f", &a, &b) == 2) {
-            uv.insert(uv.end(), {a, b});
-        } else if (line.size() > 2 && line[0] == 'g' && line[1] == ' ') {
-            currentGroup = line.substr(2);
-            while (!currentGroup.empty() &&
-                   (currentGroup.back() == '\r' || currentGroup.back() == ' ')) {
-                currentGroup.pop_back();
-            }
-        } else if (std::sscanf(line.c_str(), "f %31s %31s %31s", p[0], p[1], p[2]) == 3) {
-            if (groupFilter.empty() || currentGroup == groupFilter) {
-                const size_t before = out.size();
-                for (auto& token : p) corner(token);
-                if (out.size() != before + 3) out.resize(before);
-            }
-        }
-        line.clear();
-    }
-    return !out.empty();
-}
-
 bool Meteor::open(const std::string& assetDir, content::Textures& textures,
                   const content::Showing& table, const content::Ground* ground) {
     ground_ = ground;
@@ -126,19 +75,19 @@ bool Meteor::open(const std::string& assetDir, content::Textures& textures,
     // blends, two independent flickers -- which is why they are kept apart here rather than
     // merged into one mesh.
     fireGroupCount_ = 0;
-    if (loadObj(dir + "Fire01.obj", kUnit, "fire02", fireGroups_[0].triangles)) {
+    if (loadEffectObj(dir + "Fire01.obj", kUnit, "fire02", fireGroups_[0].triangles)) {
         fireGroups_[0].sheet = raw("fire02.png");
         fireGroups_[0].blend = gfx::Blend::Alpha;
         fireGroupCount_ = 1;
     }
-    if (loadObj(dir + "Fire01.obj", kUnit, "fire01", fireGroups_[1].triangles)) {
+    if (loadEffectObj(dir + "Fire01.obj", kUnit, "fire01", fireGroups_[1].triangles)) {
         fireGroups_[1].sheet = raw("fire01.png");
         fireGroups_[1].blend = gfx::Blend::Additive;
         fireGroupCount_ = 2;
     }
     for (int s = 0; s < 2; ++s) {
         const std::string name = s == 0 ? "Stone01.obj" : "Stone02.obj";
-        if (loadObj(dir + name, kUnit, "", stoneGroups_[s].triangles)) {
+        if (loadEffectObj(dir + name, kUnit, "", stoneGroups_[s].triangles)) {
             stoneGroups_[s].sheet = raw("fire02.png");
             stoneGroups_[s].blend = gfx::Blend::Alpha;
         }
@@ -525,34 +474,6 @@ void Meteor::update(float seconds, std::vector<Impact>& impacts) {
     if (std::fabs(quake_) < kQuakeEpsilon) quake_ = 0.0f;
 }
 
-void Meteor::submitAlong(gfx::Effects& effects, const std::vector<Corner>& tris,
-                         bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3],
-                         const float x[3], const float y[3], const float z[3], float scale,
-                         const float colour[3], float alpha) const {
-    if (tris.empty() || !bgfx::isValid(sheet)) return;
-    gfx::Sprite sprite;
-    sprite.placed = true;
-    sprite.sheet = sheet;
-    sprite.blend = blend;
-    for (int k = 0; k < 3; ++k) sprite.colour[k] = colour[k];
-    sprite.colour[3] = alpha;
-    for (size_t i = 0; i + 2 < tris.size(); i += 3) {
-        for (int k = 0; k < 4; ++k) {
-            const Corner& p = tris[i + size_t(std::min(k, 2))];
-            for (int a = 0; a < 3; ++a) {
-                sprite.corner[k][a] = at[a] + (p.x * x[a] + p.y * y[a] + p.z * z[a]) * scale;
-            }
-            sprite.cornerUv[k][0] = p.u;
-            sprite.cornerUv[k][1] = p.v;
-        }
-        for (int a = 0; a < 3; ++a) {
-            sprite.position[a] =
-                (sprite.corner[0][a] + sprite.corner[1][a] + sprite.corner[2][a]) / 3.0f;
-        }
-        effects.add(sprite);
-    }
-}
-
 void Meteor::submit(gfx::Effects& effects, const std::vector<Corner>& tris,
                     bgfx::TextureHandle sheet, gfx::Blend blend, const float at[3], float lean,
                     float tumble, float scale, const float colour[3], float alpha) const {
@@ -653,7 +574,7 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             const float shift = (kFlameAhead * stretch - kFlameLeads) * f.size;
             const float from[3] = {f.at[0] + back[0] * shift, f.at[1] + back[1] * shift,
                                    f.at[2] + back[2] * shift};
-            submitAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
+            submitEffectAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
                         fireGroups_[1].blend, from, across, drawn, third, f.size, cone, 1.0f);
             for (int g = 0; g < kFlameGhosts; ++g) {
                 const float w = kGhostWide[g];
@@ -661,7 +582,7 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
                 const float az[3] = {third[0] * w, third[1] * w, third[2] * w};
                 const float dim[3] = {cone[0] * kGhostLight[g], cone[1] * kGhostLight[g],
                                       cone[2] * kGhostLight[g]};
-                submitAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
+                submitEffectAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
                             fireGroups_[1].blend, from, ax, drawn, az, f.size, dim, 1.0f);
             }
         }

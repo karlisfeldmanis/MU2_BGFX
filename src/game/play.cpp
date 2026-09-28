@@ -306,6 +306,10 @@ void Play::update(double seconds) {
                     // other spell that flies is the bolt.
                     if (happening.a == sim::skill::kFireBall) {
                         meteor_.hurl(from, to, happening.whom, atHand);
+                    } else if (happening.a == sim::skill::kPowerWave) {
+                        // A curtain standing on the ground, under where every spell leaves.
+                        const float ground[3] = {from[0], feet, from[2]};
+                        wave_.cast(ground, to);
                     } else {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
@@ -641,6 +645,7 @@ void Play::update(double seconds) {
     };
     bolt_.update(float(seconds), standing, middle);
     meteor_.fly(float(seconds), standing, middle);
+    wave_.update(float(seconds));
     // On each impact: explosion sound, shock clip on everything within 2 tiles.
     for (const auto& impact : meteorImpacts_) {
         if (heard_.explosion >= 0) emit(heard_.explosion, impact.x, impact.z);
