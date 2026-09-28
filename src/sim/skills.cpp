@@ -143,11 +143,15 @@ constexpr SkillRow kRows[kSkills] = {
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 3, 148},
 
     // Soul Barrier 16: the knight's Defense in the wizard's hand, and every column but the mana,
-    // the wave and the class is Defense's own so the two classes stand level (the user, 2026-09-28): five minutes, a
-    // twelve-second cooldown floored at its own length and two, **thrown on himself only**, and
-    // **only behind a shield** -- `kShield`, which the wizard wears in the Small Shield, the
-    // Buckler and the Skull Shield. MU casts it on a party member as well (`ClassAttack.cpp`,
-    // the `SelectedCharacter` arm); there is no party here and the user ruled it self-only.
+    // the wave, the class and the hand is Defense's own so the two classes stand level (the user,
+    // 2026-09-28): five minutes, a twelve-second cooldown floored at its own length and two,
+    // **thrown on himself only**. MU casts it on a party member as well (`ClassAttack.cpp`, the
+    // `SelectedCharacter` arm); there is no party here and the user ruled it self-only.
+    //
+    // **No shield asked**, the user's later call of 2026-09-28 ("remove shield requirement for DW
+    // for soul barrier"), which is also MU's own: nothing in MuMain or OpenMU gates it on a
+    // shield. `families` is `kNone`, which asks nothing of either hand, and so taking a shield off
+    // does not end it (`Realm::rearm`). A shield still counts in `barrierShare`, as its defence.
     //
     // **And it is drawn as Defense is**, the user's of 2026-09-28: the knight's stance (187) and
     // his green cage, where MU casts it with `SetPlayerMagic`'s two hands and five blue
@@ -156,13 +160,12 @@ constexpr SkillRow kRows[kSkills] = {
     // (`VersionSeasonSix/SkillsInitializer.cs:134`). What it takes off a blow is `barrierShare`,
     // off energy where the knight's is off his body.
     //
-    // Not `wizardry`: it throws no blow, and a spell row asks nothing of the hand, which this one
-    // must.
+    // Not `wizardry`: it throws no blow.
     {skill::kSoulBarrier, "Soul Barrier", 70, 0.0f, 1.0f, 0.0f, 240, false, Spread::One, 6000,
      0.50f,
-     "A barrier drawn up behind the shield for five minutes. The better the shield and the "
-     "keener the wizard, the more of every blow it takes.",
-     187, "spell_soul_barrier", true, arms::kShield, 6, Kin::DarkWizard},
+     "A barrier drawn up about him for five minutes. The keener the wizard, and the better the "
+     "shield if he carries one, the more of every blow it takes.",
+     187, "spell_soul_barrier", true, arms::kNone, 6, Kin::DarkWizard},
 
     // Fire Ball 4, 0.75's row: `CreateSkill(FireBall, ..., DamageType.Wizardry, 8, 6,
     // manaConsumption: 3, energyRequirement: 40, elementalModifier: Fire)` -- eight damage, six

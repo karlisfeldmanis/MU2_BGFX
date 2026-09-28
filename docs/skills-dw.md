@@ -123,9 +123,12 @@ What is the knight's, column for column (`sim/skills.cpp`):
   cast, and the same buff strip (its own cell, `eBuff_WizDefense`, the blue crescent). The reading
   is every class's orb burst and swoosh (`Play::learned`).
 
-**Taking the shield off ends it** (and the knight's Defense), aura and share together, in
-`Realm::rearm` -- the user's, 2026-09-28. The cooldown runs on, so the shield put back on is not a
-quicker recast.
+**No shield is asked** (the user, later on 2026-09-28: *"remove shield requirement for DW for soul
+barrier"*), which is also MU's own -- nothing in MuMain or OpenMU gates it on one. Its `families` is
+`kNone`, which asks nothing of either hand, so it is cast bare and taking a shield off does not end
+it. A shield still adds its defence to `barrierPoints`; with none, a new wizard's barrier takes about
+13%. **The knight's Defense still needs his shield**, and taking it off ends his guard, aura and share
+together, in `Realm::rearm`; the cooldown runs on, so the shield put back on is not a quicker recast.
 
 What is its own: the wave, `SOUND_SOULBARRIER` (`eSoulBarrier.wav`), and the mana, MU's 70.
 

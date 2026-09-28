@@ -908,8 +908,8 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
     weapon.label = "Weapon";
     const tip::Tone met = row.suits(hand) ? tip::Tone::White : tip::Tone::Red;
     for (int i = 0; i < words; ++i) weapon.values.push_back({families[i], met, false, "", 0});
-    // A spell asks nothing of the hand, so it has no such row.
-    if (!row.wizardry) facts.rows.push_back(weapon);
+    // A spell asks nothing of the hand, so it has no such row; nor does a row that names no hand.
+    if (!row.wizardry && words > 0) facts.rows.push_back(weapon);
     if (row.wizardry) {
         // The band it rolls in, `sim::cast`'s own two lines: energy over nine and over four, the
         // spell's damage on the bottom and half again on the top, times the staff.

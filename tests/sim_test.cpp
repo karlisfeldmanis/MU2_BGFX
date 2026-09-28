@@ -1114,6 +1114,10 @@ void testCastLock(const content::Tables& tables) {
         for (int tick = 0; tick < 100; ++tick) knight.step();
         const int64_t left = knight.cooling(sim::skill::kDefense);
         check(left > 0, "he raised it and it is cooling");
+        // The knight's guard still stands only behind his shield.
+        sim::Realm bare = knight;
+        check(bare.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "his shield put in the bag");
+        check(bare.hero().boonUntil <= bare.tick(), "and his Defense falls with it");
         const sim::HeroRecord saved = knight.record();
         sim::Realm again;
         check(again.raise(&tables, 7, 190, 110, sim::Kin::DarkKnight, 30), "and comes back");
@@ -1392,8 +1396,8 @@ void testSkills(const content::Tables& tables) {
               "and no build reaches the cap");
         const sim::SkillRow& barrier = *sim::skillNumbered(sim::skill::kSoulBarrier);
         check(barrier.onSelf() && barrier.kin == sim::Kin::DarkWizard &&
-                  barrier.families == sim::arms::kShield && !barrier.wizardry,
-              "Soul Barrier is the wizard's, thrown on himself, off a shield");
+                  barrier.families == sim::arms::kNone && !barrier.wizardry,
+              "Soul Barrier is the wizard's, thrown on himself, asking no shield");
         checkEqual(barrier.boonTicks, sim::skillNumbered(sim::skill::kDefense)->boonTicks,
                    "and it stands as long as Defense");
 
@@ -1442,20 +1446,19 @@ void testSkills(const content::Tables& tables) {
             }
             return cast;
         };
-        check(!thrown(field), "is refused it with no shield on his arm");
-        check(field.equip(tables.armNamed("Staff01"), tables.armNamed("Shield01"), true),
-              "a staff in one hand and a Small Shield on the other");
-        check(thrown(field), "and throws it behind the shield");
+        check(field.equip(tables.armNamed("Staff01"), -1, true), "a staff and no shield");
+        check(thrown(field), "throws it with no shield on his arm");
         const sim::Body& hero = field.hero();
         const float share = sim::barrierShare(hero.points, hero.shieldDefense);
-        check(std::fabs(hero.boonDamageTaken - (1.0f - share)) < 1e-6f,
-              "and every blow is taken down by the barrier's share");
+        check(hero.shieldDefense == 0 && share > 0.1f &&
+                  std::fabs(hero.boonDamageTaken - (1.0f - share)) < 1e-6f,
+              "and every blow is taken down by the barrier's share, off energy alone");
         check(hero.boonUntil - field.tick() > 5000, "for five minutes");
-        // And the shield taken off ends it, the barrier's share and all.
-        check(field.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "the shield goes into the bag");
-        check(field.hero().boonUntil <= field.tick() && field.hero().stats.damageTaken == 1.0,
-              "and the barrier falls with it");
-        check(field.cooling(sim::skill::kSoulBarrier) > 0, "while its wait runs on");
+        // And a shield taken up and put down again does not end it.
+        check(field.equip(tables.armNamed("Staff01"), tables.armNamed("Shield01"), true),
+              "a Small Shield taken up");
+        check(field.moveItem(sim::kWeaponLeft, sim::kWorn + 30), "and put back in the bag");
+        check(field.hero().boonUntil > field.tick(), "and the barrier stands");
 
         // And a knight may not read it, whatever his level.
         sim::Realm knightRealm;
@@ -1481,9 +1484,10 @@ void testSkills(const content::Tables& tables) {
                 gated &= row.families == sim::arms::kNone && row.suits(sim::arms::kNone);
                 continue;
             }
-            gated &= row.families != 0;
-            gated &= row.onSelf() ? row.families == sim::arms::kShield
-                                  : (row.families & sim::arms::kShield) == 0;
+            // A guard asks a shield (Defense) or no hand at all (Soul Barrier).
+            gated &= row.onSelf() ? (row.families == sim::arms::kShield ||
+                                     row.families == sim::arms::kNone)
+                                  : (row.families != 0 && (row.families & sim::arms::kShield) == 0);
         }
         check(gated, "every skill names the hand it is thrown with");
         // And no family is left with a dead bar, which is the whole reason the three rows past

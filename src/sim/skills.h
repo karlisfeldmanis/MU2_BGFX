@@ -223,7 +223,9 @@ struct SkillRow {
     // Whether this hand may throw it. One test, asked by the realm before it spends anything
     // and by the plate before it draws the key lit -- they must not be able to disagree.
     bool suits(uint32_t family) const {
-        return wizardry || (family != arms::kNone && (families & family) != 0);
+        // A row that names no hand asks nothing of it: the wizard's Soul Barrier since 2026-09-28.
+        if (wizardry || families == arms::kNone) return true;
+        return family != arms::kNone && (families & family) != 0;
     }
 };
 
