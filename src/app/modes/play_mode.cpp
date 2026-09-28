@@ -200,6 +200,8 @@ bool PlayMode::open(Context& ctx) {
                                             world_.played().showing().table());
                 world_.played().thunder().open(assets, ctx.textures,
                                                world_.played().showing().table());
+                world_.played().blink().open(assets, ctx.textures,
+                                             world_.played().showing().table());
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
                 world_.played().streak().open(assets, ctx.textures,
                                               world_.played().showing().table());
@@ -814,6 +816,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().gatherBolt(ctx.renderer.effects(), eye.position);
         world_.played().wave().gather(ctx.renderer.effects());
         world_.played().thunder().gather(ctx.renderer.effects());
+        world_.played().blink().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));

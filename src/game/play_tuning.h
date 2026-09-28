@@ -34,6 +34,10 @@ constexpr double kTickSeconds = 1.0 / 20.0;
 constexpr int kMostTicks = 5;
 // The least time between two ticks taken early for a click, in seconds. See Play::update.
 constexpr float kEarlyApart = 0.5f;
+// A Teleport's fade, each way: MU takes a tenth of the body's alpha a frame, ten frames
+// (ZzzInterface.cpp:2603), which is the realm's eight ticks.
+constexpr float kBlinkFadeSeconds = 0.4f;
+
 // How long the character takes to dissolve in when the game has loaded. Invention.
 constexpr float kAppearSeconds = 1.1f;
 // How long Defense's ribbons play at the cast: once, and not for the guard's whole length.

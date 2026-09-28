@@ -86,6 +86,7 @@ enum class What : uint8_t {
     Warped,    // a Town Portal Scroll read: a: the column he stands on, b: the row
     Loosed,    // a spell let go at the bottom of its clip: a: its number, b: the ticks it
                // will be in the air, whom: at whom. The `Hit` follows when it arrives.
+    Blinked,   // a Teleport put him down: a: the column, b: the row
 };
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
@@ -268,6 +269,10 @@ struct Body {
     uint32_t channelStruck[kVictims] = {};
     uint8_t channelTimes[kVictims] = {};
     int32_t channelStruckCount = 0;
+    // A Teleport cast and not yet landed (`Realm::blink`): the tick he is put down, 0 for none,
+    // and where.
+    int64_t blinkAt = 0;
+    int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
     Pose pose = Pose::Standing;
@@ -363,6 +368,8 @@ public:
     // Every refusal is silent, as `Swing`'s and `Move`'s are: the interface asks, and a no is a
     // message that does not come back.
     void invoke(int32_t skill, uint32_t at);
+    // The same wish aimed at the ground rather than a body: Teleport's, at a tile.
+    void invokeAt(int32_t skill, int column, int row);
     // Learning, which in this design is permanent and saved: an orb consumed sets a bit. Nothing
     // in 0.75 does this -- the knight's skills were carried by the weapon in his hand -- so it
     // is `invention`, argued in the doc's §3.3.
@@ -596,6 +603,12 @@ private:
     void arrive();
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Teleport: where a blink toward `column, row` lands -- pulled back to its reach, and off a
+    // wall toward him -- or false when nowhere on the line will take him.
+    bool blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,
+                 int* outRow) const;
+    // And putting him down there, on the tick the fade-out ends.
+    void blink(Body& hero);
     // Walks him to within `radius` of what he is fighting, on the chase's own re-plan clock.
     void approach(Body& hero, const Body& target, int radius);
     // Whether the quick slot's skill could be thrown now but for the cooldown and the reach:
@@ -677,6 +690,7 @@ private:
     // the swing it waits for is not lost. Cleared the moment it is thrown or it goes stale.
     int32_t wants_ = skill::kNone;
     uint32_t wantsAt_ = 0;
+    int wantsColumn_ = -1, wantsRow_ = -1;  // a wish aimed at the ground; -1 for none
     int64_t wantsUntil_ = 0;
     // Spells in the air. A fixed handful, because a wizard at speed lets the next one go before
     // the last has landed, and this runs inside a tick; one that finds no room lands at once.

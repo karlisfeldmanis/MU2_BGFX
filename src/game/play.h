@@ -27,6 +27,7 @@
 #include "game/fx/forge.h"
 #include "game/fx/bolt.h"
 #include "game/fx/wave.h"
+#include "game/fx/blink.h"
 #include "game/fx/thunder.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
@@ -335,6 +336,8 @@ public:
     Wave& wave() { return wave_; }
     // And his Lightning. fx/thunder.h.
     Thunder& thunder() { return thunder_; }
+    // And his Teleport's sparks. fx/blink.h.
+    Blink& blink() { return blink_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -572,6 +575,10 @@ private:
     Wave wave_;
     Thunder thunder_;
     int64_t lastThunderTick_ = -1;  // the tick a channel's pulse last sounded on
+    Blink blink_;
+    // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
+    // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
+    float blinkOut_ = -1.0f, blinkIn_ = -1.0f;
     int32_t quickSkill_ = 0;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
@@ -614,7 +621,7 @@ private:
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
-        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;

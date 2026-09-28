@@ -340,6 +340,35 @@ ticks after its let-go, and never moves while he casts. Filmed with `--arena "Bu
 --arena-count 4 --arena-learn 2 --level 30`: four rocks, four numbers. `--bolt-every N
 --bolt-skill 2` drops one on the bench. Frame cost not measured.
 
+## 2h. Teleport -- a blink to the ground he points at
+
+0.75's row, `CreateSkill(Teleport, ..., manaConsumption: 30, energyRequirement: 88)`: thirty mana,
+six tiles, no damage, skill 6, off the Scroll of Teleport (`Book06`, group 15 #5, Pasi's slot 4,
+5 000 zen), refused under 88 energy. MuMain's: aimed at the tile under the pointer and refused on a
+wall (ClassAttack.cpp:1514); `CreateTeleportBegin` plays "Skill teleport" (152), fades the body a
+tenth of its alpha a frame, throws `BITMAP_SPARK + 1` and SOUND_MAGIC; the server puts him down and
+`CreateTeleportEnd` fades him back in with the spark and the sound again.
+
+- **A key aimed at the ground** (`SkillRow::blinks`, `Realm::invokeAt`): the key throws at the tile
+  under the pointer; with no ground under it nothing is asked. It is never on the right button.
+- **He is put down eight ticks after the cast** (`Realm::blink`), when MU's ten-frame fade has run,
+  and may act four ticks later; the drawing fades him out and in over 0.4 s each way and snaps him
+  and the camera to the tile (`What::Blinked`).
+- **Ours** (the user, 2026-09-28, "a blink ... on a short cooldown, D3 style"): three seconds of
+  cooldown before agility's haste; a point past six tiles is pulled back along the line to six, and
+  a wall or sheltered ground falls back to the nearest open tile toward him (`Realm::blinkTo`), where
+  MU refuses both; the fight he was in is dropped, as the Town Portal drops it. Nothing is cast in
+  the safe zone, this included, as 0.75 refuses every skill there.
+- **The sparks** (`fx/blink`): MU's column of Spark03 flashing out from his feet for ten frames at
+  both ends. MU's eighteen a frame up 4.3 m at fifty units a frame was *"sparkles to crazy"*; six a
+  frame up the height of a man, drifting at a fifth of the speed and dimmer, and half the size
+  after *"sparkles to big"*, is ours.
+
+Measured in `sim_test`: cast at tick 1 and put down at tick 9, three tiles, thirty mana, cooling; a
+press while it cools does nothing; twenty tiles off he goes six at the most; with no ground named it
+is not thrown. Filmed in the arena with `--arena-learn 6 --ui-hover 0.7:0.45 --ui-skill 60:1`: the
+column, the fade, and him standing three tiles off while the Bull Fighters swing at where he was.
+
 ## 2b'. Where a spell leaves him
 
 **One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward
@@ -388,8 +417,8 @@ Ball's own trail was halved the same day (*"energy ball trail was to long"*: 6 +
 ## 4. Owed
 
 - The chip in the list reads `RMB` for the slot; unseen in a shot.
-- The next spells in scroll-drop order are Teleport 17 and Ice 25. Ice and Poison are Pasi's last
-  two.
+- The next spells in scroll-drop order are Ice 25 and Poison 30, Pasi's last two.
+- Teleport on the right button's quick slot does nothing: the right button throws at a body.
 - A thrown `Missed` does not say which spell, so a bolt and a fireball in the air at one body at
   once can turn the wrong one aside. Rare, drawing only.
 - `sim_test`'s two fist checks fail since the empty hand swings the sword's pair (0db5733a); the

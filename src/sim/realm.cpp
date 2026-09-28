@@ -595,6 +595,7 @@ void Realm::step() {
         // And whatever he let go earlier and has now arrived.
         arrive();
         channel(hero);
+        if (hero.blinkAt != 0 && tick_ >= hero.blinkAt) blink(hero);
         accept();
         advance(hero);
         press();
@@ -700,6 +701,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Soused:
             std::snprintf(line, sizeof(line), "%6u %s drinks an ale for %d ticks, swinging every %d",
                           happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Blinked:
+            std::snprintf(line, sizeof(line), "%6u %s teleports to %d,%d", happening.tick, who,
+                          happening.a, happening.b);
             break;
         case What::Warped:
             std::snprintf(line, sizeof(line), "%6u %s reads a town portal to %d,%d",

@@ -286,6 +286,7 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.boonUntil = 0;
         dead.channelSkill = 0;
         dead.channelUntil = 0;
+        dead.blinkAt = 0;
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = 1.0;

@@ -35,8 +35,15 @@ void Play::castSkill(int32_t skill, uint32_t at) {
     // works out for itself, because the standing order is its own. A press on a skill he has not
     // learned, or one that is cooling, is refused down there and says nothing: the box's sweep is
     // the answer. See Realm::invoke.
-    realm_.invoke(skill, at);
     const sim::SkillRow* row = sim::skillNumbered(skill);
+    // A blink is aimed at the ground under the pointer, not at a body; with no ground under it
+    // there is nothing to aim at and nothing is asked.
+    if (row != nullptr && row->blinks) {
+        if (pointedColumn_ < 0) return;
+        realm_.invokeAt(skill, pointedColumn_, pointedRow_);
+    } else {
+        realm_.invoke(skill, at);
+    }
     core::logf("window: %s asked (cooling %lld ticks, %d mana of %d)",
                row ? row->name : "a skill", (long long)realm_.cooling(skill),
                row ? row->mana : 0, realm_.hero().mana);

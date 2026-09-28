@@ -1041,6 +1041,65 @@ void testCastLock(const content::Tables& tables) {
         check(widest >= 2, "and one wave strikes more than one body in its line");
     }
 
+    // ---- Teleport: a blink to the ground he points at ----------------------------------------
+    {
+        const sim::SkillRow& blink = *sim::skillNumbered(sim::skill::kTeleport);
+        check(blink.blinks && !blink.primary() && blink.mana == 30 && blink.clip == 152 &&
+                  blink.reach == 6.0f,
+              "Teleport is a blink of six tiles for thirty mana, cast in the teleport clip");
+        const int32_t scroll = tables.itemAt(15, 5);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kTeleport &&
+                  tables.items[size_t(scroll)].teachesEnergy == 88,
+              "the Scroll of Teleport teaches skill 6 at eighty-eight energy");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises");
+        check(wiz.learn(sim::skill::kTeleport), "who knows Teleport");
+        // Run until what was asked has happened or a second has gone; say what was seen.
+        const auto run = [&](int ticks, int64_t* castAt, int64_t* blinkAt) {
+            *castAt = *blinkAt = -1;
+            for (int t = 0; t < ticks; ++t) {
+                wiz.step();
+                for (const sim::Happening& one : wiz.happenings()) {
+                    if (one.who != wiz.hero().id) continue;
+                    if (one.what == sim::What::Cast && one.a == sim::skill::kTeleport) {
+                        *castAt = one.tick;
+                    }
+                    if (one.what == sim::What::Blinked) *blinkAt = one.tick;
+                }
+            }
+        };
+        const float fromX = wiz.hero().x, fromY = wiz.hero().y;
+        const int mana = wiz.hero().mana;
+        wiz.invokeAt(sim::skill::kTeleport, int(fromX) + 3, int(fromY));
+        int64_t castAt = 0, blinkAt = 0;
+        run(20, &castAt, &blinkAt);
+        const float went = std::hypot(wiz.hero().x - fromX, wiz.hero().y - fromY);
+        std::printf("  teleport: cast at %lld, put down at %lld, %.2f tiles, %d mana spent\n",
+                    (long long)castAt, (long long)blinkAt, double(went), mana - wiz.hero().mana);
+        check(castAt >= 0 && blinkAt - castAt == 8, "he is put down eight ticks after the cast");
+        check(went >= 1.0f && went <= 3.6f, "on the tile he pointed at, or beside it");
+        check(mana - wiz.hero().mana >= 30, "for thirty mana");
+        check(wiz.cooling(sim::skill::kTeleport) > 0, "and it cools");
+
+        const float midX = wiz.hero().x, midY = wiz.hero().y;
+        wiz.invokeAt(sim::skill::kTeleport, int(midX) - 3, int(midY));
+        run(10, &castAt, &blinkAt);
+        check(castAt < 0 && wiz.hero().x == midX, "a press while it cools does nothing");
+
+        run(80, &castAt, &blinkAt);
+        wiz.invokeAt(sim::skill::kTeleport, int(midX) + 20, int(midY));
+        run(20, &castAt, &blinkAt);
+        const float far = std::hypot(wiz.hero().x - midX, wiz.hero().y - midY);
+        check(castAt >= 0 && far >= 1.0f && far <= 6.5f,
+              "twenty tiles off, he goes six at the most");
+
+        run(80, &castAt, &blinkAt);
+        wiz.invoke(sim::skill::kTeleport, 0);
+        run(20, &castAt, &blinkAt);
+        check(castAt < 0, "and with no ground named it is not thrown");
+    }
+
     // ---- Meteorite: a cooldown spell, off its scroll at a hundred and four energy ----------
     {
         const sim::SkillRow& rock = *sim::skillNumbered(sim::skill::kMeteorite);

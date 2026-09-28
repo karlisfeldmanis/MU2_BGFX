@@ -265,6 +265,22 @@ constexpr SkillRow kRows[kSkills] = {
      "and on everything within four tiles of it, one rock each.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
      0, 0, 7, 4.0f},
+
+    // Teleport 6: 0.75's row, `CreateSkill(Teleport, ..., manaConsumption: 30, energyRequirement:
+    // 88)` -- thirty mana, six tiles, no damage. MuMain's: aimed at the tile under the pointer and
+    // refused on a wall (`TerrainWall[...] == 0`, ClassAttack.cpp:1514), MU's "Skill teleport"
+    // (152), the body fading out at a tenth a frame (CreateTeleportBegin, ZzzInterface.cpp:2603),
+    // put down, and fading back in; the spark and SOUND_MAGIC at both ends.
+    //
+    // **Ours** (the user, 2026-09-28, "a blink ... on a short cooldown, D3 style"): three seconds
+    // of cooldown before agility's haste, where 0.75 has none; a point past six tiles is pulled
+    // back along the line to six, and a wall falls back to the nearest open tile toward him,
+    // where MU refuses both; and the fight he was in is dropped, as the Town Portal drops it.
+    {skill::kTeleport, "Teleport", 30, 6.0f, 1.0f, 0.0f, 60, false, Spread::One, 0, 1.0f,
+     "He fades and is put down on the ground he points at, up to six tiles off, leaving the "
+     "fight where it stood.",
+     152, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 0, 0, 15.0f, false, 0, 0, 0,
+     0, 0, 0, 0.0f, true},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

@@ -818,6 +818,15 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     // respawn easing back in. All three are the same smoothstep on a different clock, so
     // they are one function and not three copies of it.
     const auto fadeOf = [&](const Drawn& one) -> float {
+        // A Teleport: out over MU's ten frames, gone until he is put down, and back in.
+        if (&one == &drawn_[0] && blinkOut_ >= 0.0f) {
+            const float t = std::clamp(blinkOut_ / kBlinkFadeSeconds, 0.0f, 1.0f);
+            return 1.0f - t * t * (3.0f - 2.0f * t);
+        }
+        if (&one == &drawn_[0] && blinkIn_ >= 0.0f) {
+            const float t = std::clamp(blinkIn_ / kBlinkFadeSeconds, 0.0f, 1.0f);
+            return t * t * (3.0f - 2.0f * t);
+        }
         if (&one == &drawn_[0] && appearing_) {
             const float t = std::clamp(appearAt_ / kAppearSeconds, 0.0f, 1.0f);
             return t * t * (3.0f - 2.0f * t);

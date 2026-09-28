@@ -63,6 +63,9 @@ constexpr int32_t kLightning = 3;
 // And the fifth, `AT_SKILL_METEO`, off the Scroll of Meteorite (group 15 number 1, `Book02`) at a
 // hundred and four energy: a rock called down out of the sky onto one body, on a cooldown.
 constexpr int32_t kMeteorite = 2;
+// And `AT_SKILL_TELEPORT`, off the Scroll of Teleport (group 15 number 5, `Book06`) at eighty-eight
+// energy: no blow at all, a blink to the ground he points at.
+constexpr int32_t kTeleport = 6;
 }  // namespace skill
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
@@ -239,6 +242,9 @@ struct SkillRow {
     // within this many tiles of the aimed one at the let-go gets its own, each landing its own
     // blow; only the aimed body pays back. 0 is the one body.
     float splash = 0.0f;
+    // **A blink**: thrown at the ground under the pointer rather than at a body, and what it does
+    // is put him there (`Realm::blink`), up to `reach` tiles off. Teleport's alone.
+    bool blinks = false;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -257,11 +263,11 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning and Meteorite. Also
+// Lightning, Meteorite and Teleport. Also
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 15;
+constexpr int kSkills = 16;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

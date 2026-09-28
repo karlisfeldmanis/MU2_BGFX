@@ -95,6 +95,15 @@ Row stat(const char* name, const std::string& text, Tone tone) {
 void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
                 std::vector<Row>& out) {
     const auto tone = [&](Tone lit) { return dim ? Tone::Gray : lit; };
+    // A blink strikes nothing: where it goes is the whole of it.
+    if (row.blinks) {
+        out.push_back(stat("Range", std::to_string(int(row.reach)) + " tiles", tone(Tone::White)));
+        Row where;
+        where.free = "to the ground under the pointer";
+        where.freeTone = Tone::Gray;
+        out.push_back(where);
+        return;
+    }
     const auto note = [&](const std::string& text) {
         Row one;
         one.free = text;

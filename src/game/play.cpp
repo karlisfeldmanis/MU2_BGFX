@@ -275,7 +275,20 @@ void Play::update(double seconds) {
                         ++caster->swingToken;
                         caster->castSkill = 0;
                     }
-                    if (row && row->onSelf() && caster->castClip >= 0) {
+                    // A Teleport: its clip, the sparks where he stands and the fade out. The realm
+                    // puts him down when the fade has run (`Blinked`, below).
+                    if (row && row->blinks && happening.who == heroId && caster->placed &&
+                        ground_) {
+                        const float feet[3] = {
+                            caster->crown[0],
+                            ground_->heightAt(caster->crown[0], caster->crown[2]),
+                            caster->crown[2]};
+                        blink_.cast(feet);
+                        blinkOut_ = 0.0f;
+                        blinkIn_ = -1.0f;
+                        marker_.dismiss();
+                    }
+                    if (row && (row->onSelf() || row->blinks) && caster->castClip >= 0) {
                         caster->figure.play(caster->castClip, true, kCastBlend);
                         caster->casting = caster->figure.length();
                         caster->swingPace = 1.0f;
@@ -298,6 +311,26 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Missed && happening.thrown) {
                 bolt_.miss(happening.whom);
                 meteor_.missHurl(happening.whom);
+            }
+            // Put down by a Teleport: drawn there from this frame, not slid there; the sparks and
+            // SOUND_MAGIC again (CreateTeleportEnd), and the fade back in.
+            if (happening.what == sim::What::Blinked && happening.who == heroId) {
+                const sim::Body& body = realm_.hero();
+                if (Drawn* hero = drawnOf(body.id)) {
+                    hero->nowX = hero->wasX = body.x;
+                    hero->nowY = hero->wasY = body.y;
+                    hero->groundSpeed = 0.0f;
+                }
+                if (ground_) {
+                    const float metres = ground_->metresPerTile();
+                    const float x = (body.x + 0.5f) * metres;
+                    const float z = -(body.y + 0.5f) * metres;
+                    const float feet[3] = {x, ground_->heightAt(x, z), z};
+                    blink_.cast(feet);
+                    sound_.play(heard_.warp);
+                }
+                blinkOut_ = -1.0f;
+                blinkIn_ = 0.0f;
             }
             // Pushed by Lightning: the realm slides it, and it flinches as it goes.
             if (happening.what == sim::What::Shoved) {
@@ -689,6 +722,14 @@ void Play::update(double seconds) {
     bolt_.update(float(seconds), standing, middle);
     meteor_.fly(float(seconds), standing, middle);
     wave_.update(float(seconds));
+    blink_.update(float(seconds));
+    if (blinkOut_ >= 0.0f) blinkOut_ += float(seconds);
+    // A blink the realm dropped -- he died in the fade -- is never put down: he is drawn again.
+    if (blinkOut_ >= 0.0f && realm_.hero().blinkAt == 0) blinkOut_ = -1.0f;
+    if (blinkIn_ >= 0.0f) {
+        blinkIn_ += float(seconds);
+        if (blinkIn_ >= kBlinkFadeSeconds) blinkIn_ = -1.0f;
+    }
     thunder_.update(float(seconds), standing, middle);
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still

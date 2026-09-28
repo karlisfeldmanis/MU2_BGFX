@@ -33,6 +33,13 @@ namespace {
 // aiming at. MU2 keeps its `Wants` on the same argument and bounds it by the swing instead.
 constexpr int64_t kWishTicks = 30;
 
+// A Teleport's fade out, in ticks: MU takes a tenth off the body's alpha a frame
+// (ZzzInterface.cpp:2603), ten frames, 0.4 s. He is put down when it has run.
+constexpr int64_t kBlinkFadeTicks = 8;
+// And how long after he is put down before he may act again: the first of the fade back in.
+// Ours -- MU plays the clip's last eight keys, a second, and a blink held that long read slow.
+constexpr int64_t kBlinkSettleTicks = 4;
+
 
 }  // namespace
 
@@ -42,7 +49,14 @@ void Realm::invoke(int32_t skill, uint32_t at) {
     if (skillIndexOf(skill) < 0) return;
     wants_ = skill;
     wantsAt_ = at;
+    wantsColumn_ = wantsRow_ = -1;
     wantsUntil_ = tick_ + kWishTicks;
+}
+
+void Realm::invokeAt(int32_t skill, int column, int row) {
+    invoke(skill, 0);
+    wantsColumn_ = column;
+    wantsRow_ = row;
 }
 
 bool Realm::learn(int32_t skill) {
@@ -127,6 +141,36 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // `player.IsAtSafezone()` refuses everything, buffs included -- so a knight cannot even
     // raise his guard in Lorencia's square. The same rule `press` already applies to a swing.
     if (tables_->grid.safe(hero.column(), hero.row())) return false;
+
+    // **A blink** (Teleport): no body, no blow -- the ground the key named, a fade, and him put
+    // down there. The fight he was in is dropped, as a Town Portal drops it: left standing, the
+    // order walked him straight back to what he had just left.
+    if (row.blinks) {
+        int column = 0, where = 0;
+        if (wantsColumn_ < 0 ||
+            !blinkTo(hero, row, wantsColumn_, wantsRow_, &column, &where)) {
+            return false;
+        }
+        if (hero.mana < row.mana) return false;
+        hero.mana -= row.mana;
+        const int32_t cool = cooldownTicks(row, hero.points.agility,
+                                           floorTicksFor(row, clipTicksOf(hero, row)));
+        hero.cools[size_t(index)] = tick_ + cool;
+        hero.blinkAt = tick_ + kBlinkFadeTicks;
+        hero.blinkColumn = column;
+        hero.blinkRow = where;
+        hero.swingsAt = hero.castUntil = hero.blinkAt + kBlinkSettleTicks;
+        hero.aim = std::atan2(float(where) - hero.y, float(column) - hero.x);
+        hero.walking = false;
+        hero.route.clear();
+        hero.onStep = 0;
+        dropBlow(hero);
+        order_ = Request{};
+        pending_ = Request{};
+        rise(hero);
+        say(What::Cast, hero, row.number, cool, 0, hero.id);
+        return true;
+    }
 
     if (row.onSelf()) {
         // **And the guard needs a shield on the arm** -- the wizard's Soul Barrier as much as
@@ -423,6 +467,39 @@ void Realm::channel(Body& hero) {
     }
     say(What::Loosed, hero, row->number, 0, 0, next->id);
     strikeAt(hero, *next, force(*row, hero.points), row, true);
+}
+
+bool Realm::blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,
+                    int* outRow) const {
+    const float dx = float(column) - hero.x, dy = float(row_) - hero.y;
+    const float far = std::sqrt(dx * dx + dy * dy);
+    if (far < 1.0f) return false;
+    // Pulled back to its reach along the line, and then walked back toward him a quarter tile at a
+    // time until a tile will take him: open to a character, not sheltered (MU's `Wall == 0`
+    // refuses both), and not the one he stands on.
+    const float reach = std::min(far, row.reach);
+    for (float along = reach; along >= 1.0f; along -= 0.25f) {
+        const int c = int(std::lround(hero.x + dx / far * along));
+        const int r = int(std::lround(hero.y + dy / far * along));
+        if (c == hero.column() && r == hero.row()) continue;
+        if (!tables_->grid.open(c, r, content::kWallCharacter)) continue;
+        if (tables_->grid.safe(c, r)) continue;
+        *outColumn = c;
+        *outRow = r;
+        return true;
+    }
+    return false;
+}
+
+void Realm::blink(Body& hero) {
+    hero.x = float(hero.blinkColumn);
+    hero.y = float(hero.blinkRow);
+    hero.blinkAt = 0;
+    hero.walking = false;
+    hero.route.clear();
+    hero.onStep = 0;
+    hero.repathsAt = 0;
+    say(What::Blinked, hero, hero.blinkColumn, hero.blinkRow);
 }
 
 // How long a push takes, in ticks: three tenths of a second -- quick enough to read as a blow,
