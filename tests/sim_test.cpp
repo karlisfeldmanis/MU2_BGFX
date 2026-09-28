@@ -3310,8 +3310,8 @@ int main() {
     testArchery(tables);
     testElfSkills(tables);
     testSummons(tables);
+    testQuests(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
 }
-    testQuests(tables);

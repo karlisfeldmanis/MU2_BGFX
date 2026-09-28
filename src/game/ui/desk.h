@@ -164,11 +164,11 @@ private:
     Chest chest_;
     // The number box the vault's coin buttons open. Modal: see Desk::update.
     Amount amount_;
-    Menu menu_;
-    std::string worldName_;
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
     QuestDialog questDialog_;
     Tracker tracker_;
+    Menu menu_;
+    std::string worldName_;
     bool quitAsked_ = false;
     bool switchAsked_ = false;
     bool holdEscape_ = false;

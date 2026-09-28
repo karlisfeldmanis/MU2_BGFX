@@ -201,9 +201,9 @@ add_executable(mu2
   src/sim/vault.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
-  src/sim/realm_move.cpp
   src/sim/realm_quests.cpp
   src/sim/quests.cpp
+  src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
@@ -316,10 +316,10 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/vault.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
-  src/sim/realm_move.cpp
-  src/sim/realm_fight.cpp
   src/sim/realm_quests.cpp
   src/sim/quests.cpp
+  src/sim/realm_move.cpp
+  src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
   src/sim/realm_summon.cpp

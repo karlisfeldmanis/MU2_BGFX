@@ -372,13 +372,13 @@ struct HeroRecord {
     // And an Ale's ticks left, 0 for none, saved for the same reason as the boon.
     int64_t aleTicksLeft = 0;
     Held slots[kSlots];
+    // Every quest's progress, by sim/quests.h's index.
+    QuestProgress quests[kQuests];
 };
 
 // What the game asks the sim for. Nothing here is a skill, and that is on purpose: PLAN.md
 // decided the skill system is Diablo 3's shape -- learned permanently, four keys, real
 // cooldowns -- and the one thing this sprint owes it is not baking in MU's assumptions. An
-    // Every quest's progress, by sim/quests.h's index.
-    QuestProgress quests[kQuests];
 // attack is a request to fight a body, not a swing fired from an item, and the swing clock it
 // runs on is per-body and already separate from the thinking clock, so a per-skill cooldown
 // goes beside it rather than through it.
@@ -593,11 +593,6 @@ public:
     int banking() const { return banking_; }
     void closeVault() { banking_ = -1; }
     const Vault& vault() const { return vault_; }
-    // Laid on the realm from the save, or emptied. Never refused: it is the account's.
-    void restoreVault(const Vault& saved) { vault_ = saved; }
-    // Bag to vault: a bag slot (never a worn one, as a sale is never a worn one) to a vault
-    // cell, or -1 for the first cell it fits. The cell, or -1 refused.
-    int deposit(int bagSlot, int cell = -1);
 
     // ---- the quests (sim/quests.h) ------------------------------------------------------------
     // A giver's dialog, opened by a Talk order arriving within `kCounter` of him and closed by
@@ -620,6 +615,11 @@ public:
     // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
     // him), and room in the bag for all of it before anything is given. Pays and rests it.
     bool completeQuest(int index, int choice);
+    // Laid on the realm from the save, or emptied. Never refused: it is the account's.
+    void restoreVault(const Vault& saved) { vault_ = saved; }
+    // Bag to vault: a bag slot (never a worn one, as a sale is never a worn one) to a vault
+    // cell, or -1 for the first cell it fits. The cell, or -1 refused.
+    int deposit(int bagSlot, int cell = -1);
     // Vault to bag: a cell to a bag slot, or -1 for the first slot it fits. The slot, or -1.
     int withdraw(int cell, int bagSlot = -1);
     // Inside the vault: from one cell to another, onto a clear rectangle.
@@ -845,6 +845,11 @@ private:
     std::vector<Sale> sold_;  // oldest first, at most kBuybacks
     int banking_ = -1;
     Vault vault_;
+    QuestProgress quests_[kQuests];
+    int questing_ = -1;
+    int64_t wall_ = 0;
+    // A monster the hero killed, counted against every live Clear of its breed.
+    void countKill(const Body& dead);
     bool banked() const { return banking_ >= 0 && serving(banking_); }
     std::vector<Lying> lying_;
     int64_t potionUntil_ = 0;
@@ -853,11 +858,6 @@ private:
     // and three instalments a potion is at most six in flight.
     struct Sip {
         int64_t due = 0;
-    QuestProgress quests_[kQuests];
-    int questing_ = -1;
-    int64_t wall_ = 0;
-    // A monster the hero killed, counted against every live Clear of its breed.
-    void countKill(const Body& dead);
         int32_t amount = 0;
         bool mana = false;
     };
