@@ -491,8 +491,8 @@ void Play::update(double seconds) {
                     }
                 } else if (happening.what == sim::What::Hit && happening.poisoned &&
                            happening.whom == heroId) {
-                    // A poison's pulse on him: the green number now, and no swing -- the spider
-                    // that bit him may be across the field or dead.
+                    // A poison's pulse on him: the green number now, and no swing -- the monster
+                    // that poisoned him may be across the field or dead.
                     Cue cue;
                     cue.attacker = happening.who;
                     cue.target = happening.whom;

@@ -434,11 +434,12 @@ SOUND_HEART, and draws the body green, (0.3, 1, 0.5) -- (0.3, 1, 0.8) when it is
   at `PoisonDamageMultiplier` 0.03 of the health he has left, never the last point, green on him and
   green in the number, with MU's poison cell (`buff_poison`) in the buff strip and its card. 0.75's
   poisoners are the Dungeon's Poison Bull (8) and Larva (12) and Lost Tower's Poison Shadow (39),
-  none cooked yet; **Lorencia's Spider (3) poisons too, ours**, so the Antidote has work.
+  none cooked yet. Lorencia's Spider (3) was added as ours and taken out the same day (the user:
+  *"lorencia spiders dont do poison"*), so nothing poisons him until the Dungeon.
 - **The Antidote** (group 14 #8, Amy's, single and three) clears it: `AntidoteConsumeHandlerPlugIn`
   disposes of the poison and does nothing else. With none on him it is refused and kept (ours).
-  `sim_test`: a level-1 knight among the spiders is bitten at tick 50, pulses at 3% of what he has,
-  is never killed by it, and one Antidote clears it with no pulse after.
+  `sim_test`: a level-1 knight among Lorencia's spiders is bitten and never poisoned, and the
+  Antidote he carries is kept.
 
 Measured in `sim_test`: a level-30 wizard hunting 6 000 ticks casts it 13 times, never inside the
 cooldown, poisons up to two bodies in one cast, and no pulse kills. Seen in the arena with

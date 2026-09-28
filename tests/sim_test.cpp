@@ -1064,7 +1064,7 @@ void testCastLock(const content::Tables& tables) {
         check(widest >= 2, "and one wave strikes more than one body in its line");
     }
 
-    // ---- a spider's poison on him, and the Antidote that clears it ----------------------------
+    // ---- Lorencia's spiders bite and never poison, and the Antidote is kept ------------------
     {
         const int32_t antidote = tables.itemAt(14, 8);
         check(antidote >= 0, "the Antidote is in the tables");
@@ -1082,54 +1082,27 @@ void testCastLock(const content::Tables& tables) {
         check(column >= 0, "Lorencia has spiders");
         sim::Realm bit;
         check(bit.raise(&tables, 7, column, row, sim::Kin::DarkKnight, 1), "a knight among them");
-        int64_t poisonedAt = -1;
-        int pulses = 0, pulseWrong = 0, pulseKilled = 0;
-        for (int tick = 0; tick < 3000 && bit.hero().alive(); ++tick) {
-            const int before = bit.hero().health;
+        int bites = 0, poisoned = 0;
+        for (int tick = 0; tick < 1500 && bit.hero().alive(); ++tick) {
             bit.step();
-            if (poisonedAt < 0 && bit.hero().poisonUntil > bit.tick()) poisonedAt = bit.tick();
+            if (bit.hero().poisonUntil != 0) ++poisoned;
             for (const sim::Happening& one : bit.happenings()) {
-                if (one.what != sim::What::Hit || !one.poisoned || one.whom != bit.hero().id) continue;
-                ++pulses;
-                // 0.75's share of what he had, at least one, never the last point.
-                const int due = std::max(1, int(float(before) * 0.03f));
-                if (one.a > due) ++pulseWrong;
-                if (one.c <= 0) ++pulseKilled;
+                if (one.what != sim::What::Hit || one.whom != bit.hero().id) continue;
+                if (one.poisoned) ++poisoned;
+                else ++bites;
             }
-            if (pulses >= 2) break;
+            if (bites >= 5) break;
         }
-        std::printf("  spider poison: bitten at tick %lld, %d pulses\n", (long long)poisonedAt, pulses);
-        check(poisonedAt >= 0, "a spider's bite poisons him");
-        check(pulses >= 1 && pulseWrong == 0, "and it pulses at a share of what he has left");
-        checkEqual(pulseKilled, 0, "never killing him");
+        std::printf("  spiders: %d bites, %d poisoned\n", bites, poisoned);
+        check(bites >= 1, "a spider bites him");
+        checkEqual(poisoned, 0, "and never poisons him -- nothing in Lorencia does");
 
         sim::HeroRecord carrying = bit.record();
         const int bagged = sim::kWorn + 40;
         carrying.slots[bagged].item = antidote;
         carrying.slots[bagged].durability = 1;
-        carrying.slots[bagged + 1].item = antidote;
-        carrying.slots[bagged + 1].durability = 1;
-        // Restoring a record keeps what is standing on him? Re-bite if not.
         bit.restore(carrying);
-        for (int tick = 0; tick < 3000 && bit.hero().poisonUntil <= bit.tick(); ++tick) bit.step();
-        check(bit.hero().poisonUntil > bit.tick(), "poisoned again for the Antidote");
-        check(bit.useItem(bagged) && bit.hero().poisonUntil == 0, "an Antidote clears it");
-        bool pulsedAfter = false;
-        for (int tick = 0; tick < 80; ++tick) {
-            // Kept out of the spiders' reach would be cleaner; a fresh bite is allowed.
-            bit.step();
-            for (const sim::Happening& one : bit.happenings()) {
-                if (one.what == sim::What::Hit && one.poisoned && one.whom == bit.hero().id &&
-                    bit.hero().poisonUntil == 0) {
-                    pulsedAfter = true;
-                }
-            }
-            if (bit.hero().poisonUntil != 0) break;
-        }
-        check(!pulsedAfter, "and no pulse follows it");
-        if (bit.hero().poisonUntil == 0) {
-            check(!bit.useItem(bagged + 1), "with no poison on him the Antidote is kept");
-        }
+        check(!bit.useItem(bagged), "with no poison on him the Antidote is kept");
     }
 
     // ---- Poison: a cooldown burst that goes on hurting ---------------------------------------
