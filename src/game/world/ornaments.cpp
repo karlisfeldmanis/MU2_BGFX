@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "content/showing.h"
+#include "content/placement.h"
 #include "core/log.h"
 #include "game/world/sway.h"
 #include "game/world/town.h"
@@ -42,6 +43,20 @@ constexpr float kPuffGrowth = 0.05f * kFramesPerSecond;  // Scale a second
 constexpr float kPuffLift = 1.25f;
 constexpr float kSheetMetres = 64.0f / 100.0f;  // a 64-texel sheet at Scale 1, in metres
 constexpr size_t kMostPuffs = 64;
+
+// ---- the mill's fall: ours ------------------------------------------------------------
+//
+// House05's ston02 sheet runs level along its flume and turns down off the end: its lowest
+// row is x 1.70 to 2.31, 1.40 m under the model's origin, at z 2.38 to 2.53 (House05.obj,
+// already on our axes, in metres). The landing is the middle of that row, and the scatter is
+// across the fall's 0.6 m width and the fountain's 0.16 m through it. It is only raised to the
+// land, never lowered: the sheet reaches into the river, and the puff wants the surface -- and
+// then kMillRise over it, as born on the water it sat under the ferns at the bank.
+// The fall is twice the fountain's width, so a flip throws a puff on each half of it.
+constexpr float kMillLanding[3] = {2.004f, -1.40f, 2.45f};
+constexpr float kMillRise = 0.2f;
+constexpr float kMillAcross[2][3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}};
+constexpr float kMillReach[2] = {0.30f, kScatter};
 
 // ---- the lanterns ---------------------------------------------------------------------
 //
@@ -86,7 +101,7 @@ uint32_t Ornaments::next() {
 float Ornaments::unit() { return float(next() & 0xFFFFFF) / float(0x1000000); }
 
 bool Ornaments::open(const std::string& assetDir, const Town& town,
-                     content::Textures& textures) {
+                     const content::Ground& ground, content::Textures& textures) {
     const auto& models = town.cooked().models;
     // The bind pose's model-space point, carried into the bone's own frame through its
     // inverse bind; Figure::pointOn carries it back out through the posed bone.
@@ -112,6 +127,23 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
             Spout spout;
             spout.anchor = anchor(i, mesh, kLandingBone, kLanding, kLandingAcross);
             if (spout.anchor.bone >= 0) spouts_.push_back(spout);
+        } else if (name == "House05") {
+            const content::TownInstance& at = town.cooked().instances[i];
+            float m[16];
+            content::placementTransform(at.pitch, at.yaw, at.roll, at.scale, at.position, m);
+            Fall fall;
+            through(m, kMillLanding, 1.0f, fall.point);
+            fall.point[1] =
+                std::max(fall.point[1], ground.heightAt(fall.point[0], fall.point[2])) + kMillRise;
+            for (int a = 0; a < 2; ++a) {
+                through(m, kMillAcross[a], 0.0f, fall.across[a]);
+                const float length = std::sqrt(fall.across[a][0] * fall.across[a][0] +
+                                               fall.across[a][1] * fall.across[a][1] +
+                                               fall.across[a][2] * fall.across[a][2]);
+                for (int k = 0; k < 3; ++k) fall.across[a][k] /= std::max(length, 1e-6f);
+                fall.reach[a] = kMillReach[a];
+            }
+            falls_.push_back(fall);
         } else if (name == "MerchantAnimal01") {
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
             for (int k = 0; k < 2; ++k) {
@@ -134,9 +166,10 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
         smoke_ = take("smoke01");  // Effect/smoke01, MU's BITMAP_SMOKE
         light_ = take("light");    // Effect/flare01, MU's BITMAP_LIGHT
     }
-    if (!spouts_.empty() || !lanterns_.empty()) {
-        core::logf("ornaments: %zu fountain spray, %zu lanterns; sheets: smoke01 %s, light %s",
-                   spouts_.size(), lanterns_.size(), bgfx::isValid(smoke_) ? "yes" : "NO",
+    if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
+        core::logf("ornaments: %zu fountain spray, %zu mill falls, %zu lanterns; sheets: "
+                   "smoke01 %s, light %s",
+                   spouts_.size(), falls_.size(), lanterns_.size(), bgfx::isValid(smoke_) ? "yes" : "NO",
                    bgfx::isValid(light_) ? "yes" : "NO");
     }
     return true;
@@ -145,6 +178,7 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
 void Ornaments::shutdown() {
     spouts_.clear();
     lanterns_.clear();
+    falls_.clear();
     puffs_.clear();
     smoke_ = light_ = BGFX_INVALID_HANDLE;
 }
@@ -184,6 +218,28 @@ void Ornaments::update(float seconds, const Sway& sway) {
             puff.scale = 0.48f + 0.32f * unit();
             puff.spin = 6.2831853f * unit();
             puffs_.push_back(puff);
+        }
+    }
+
+    for (Fall& fall : falls_) {
+        fall.clock += dt * kFramesPerSecond;
+        while (fall.clock >= 1.0f) {
+            fall.clock -= 1.0f;
+            // The fountain's own coin flip, so the two read as the same water.
+            if (next() & 1u) continue;
+            for (float half : {-1.0f, 1.0f}) {
+                if (puffs_.size() >= kMostPuffs) break;
+                const float u = half * unit() * fall.reach[0];
+                const float w = (unit() * 2.0f - 1.0f) * fall.reach[1];
+                Puff puff;
+                for (int k = 0; k < 3; ++k) {
+                    puff.position[k] =
+                        fall.point[k] + fall.across[0][k] * u + fall.across[1][k] * w;
+                }
+                puff.scale = 0.48f + 0.32f * unit();
+                puff.spin = 6.2831853f * unit();
+                puffs_.push_back(puff);
+            }
         }
     }
 

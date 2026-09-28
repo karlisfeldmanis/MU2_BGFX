@@ -96,8 +96,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     // And what burns in it. Nothing without a town, since every light hangs on a placement.
     if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures);
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
-    // And what rides the swaying bones: the fountain's spray, the lanterns.
-    if (town_.isOpen()) ornaments_.open(assetDir, town_, textures);
+    // And what rides the swaying bones: the fountain's spray, the lanterns; and the mill's fall.
+    if (town_.isOpen()) ornaments_.open(assetDir, town_, ground_, textures);
     // And the shade MU hangs under each bridge. See game/world/shades.h.
     if (town_.isOpen()) shades_.open(assetDir, town_, textures);
     // The near field: the card strip, built once, and MU's own painted grass sheets for

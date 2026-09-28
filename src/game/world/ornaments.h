@@ -8,9 +8,13 @@
 // 2. **The merchant animal's two lanterns.** MODEL_MERCHANT_ANIMAL01: a BITMAP_LIGHT sprite at
 //    bones 48 and 57, `Luminosity * 5` in scale and `(0.6, 0.3, 0.1) * Luminosity` in colour,
 //    Luminosity re-rolled 0.7 to 1.0 every frame MU draws. MU2 never drew these.
+// 3. **The mill's fall.** House05's water sheet (ston02, BlendMesh 2) runs off its flume and
+//    drops into the river. MU throws nothing there -- only the sheet slides -- so the fountain's
+//    landing puff is thrown where this fall lands too, on the same numbers. Ours, asked for.
 //
-// Both ride the pose Sway just computed, so each is thrown only where Sway posed the object
-// this frame -- in sight, as MU only runs RenderObjectVisual for objects it draws. Nothing here
+// The first two ride the pose Sway just computed, so each is thrown only where Sway posed the
+// object this frame -- in sight, as MU only runs RenderObjectVisual for objects it draws. The
+// mill does not sway; its fall is fixed in the world at open and always thrown. Nothing here
 // reaches the sim or its seeded log.
 #pragma once
 
@@ -20,6 +24,7 @@
 
 #include <bgfx/bgfx.h>
 
+#include "content/ground.h"
 #include "content/texture.h"
 #include "gfx/effects.h"
 
@@ -33,8 +38,10 @@ public:
     // Finds the fountains and the merchant animals among `town`'s placements and carries MU's
     // points into their bones' own frames. The sheets are the showing's `smoke01` (MU's
     // BITMAP_SMOKE) and `light` (Effect/flare01, MU's BITMAP_LIGHT); without one, that
-    // ornament is not drawn and the log says so.
-    bool open(const std::string& assetDir, const Town& town, content::Textures& textures);
+    // ornament is not drawn and the log says so. The ground keeps the mill's fall's landing
+    // from being put under the land it lands on.
+    bool open(const std::string& assetDir, const Town& town, const content::Ground& ground,
+              content::Textures& textures);
     void shutdown();
 
     // Steps the puffs, throws new ones where a fountain was posed, and re-rolls the lanterns.
@@ -63,6 +70,13 @@ private:
     struct Lantern {
         Anchor anchor;
     };
+    // A fall on a placement that never moves: its landing and scatter already in the world.
+    struct Fall {
+        float point[3] = {0, 0, 0};
+        float across[2][3] = {{0, 0, 0}, {0, 0, 0}};
+        float reach[2] = {0, 0};  // half the scatter along each direction, metres
+        float clock = 0.0f;
+    };
     struct Puff {
         float position[3] = {0, 0, 0};
         float age = 0.0f;
@@ -75,6 +89,7 @@ private:
 
     std::vector<Spout> spouts_;
     std::vector<Lantern> lanterns_;
+    std::vector<Fall> falls_;
     std::vector<Puff> puffs_;
     float luminosity_ = 1.0f;  // this frame's roll, shared by every lantern as MU's is
     float lanternWait_ = 0.0f;
