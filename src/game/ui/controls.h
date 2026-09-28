@@ -68,9 +68,10 @@ void kicker(gfx::Canvas& canvas, float x, float baseline, const std::string& tex
 
 // ---- buttons -----------------------------------------------------------------------------------
 
-// A worded button, its word in Alegreya Sans SC Bold with no tracking, centred.
+// A worded button, its word in Alegreya Sans SC Bold with no tracking, centred. The word's size
+// follows the button's height unless `wordSize` (in pixels) asks for another.
 void button(gfx::Canvas& canvas, const gfx::Box& box, const std::string& word, Kind kind,
-            const State& state, float u);
+            const State& state, float u, float wordSize = 0.0f);
 
 enum class Glyph : uint8_t { Close, Plus, Left, Right, CoinIn, CoinOut, Hammer, Hammers };
 // A small square button (close, spend) or an icon square (the coins, the hammers). `red` is the

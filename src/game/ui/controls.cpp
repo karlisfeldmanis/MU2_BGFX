@@ -366,7 +366,14 @@ void glyph(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float
 
 // ---- lifetime ------------------------------------------------------------------------------------
 
+// Opened by each screen that draws controls -- the desk in the world, the character screen
+// before it -- and the two can overlap while one hands over to the other, so the bake is
+// counted: the first open makes it and the last close takes it down.
+int s_opens = 0;
+bool s_opened = false;
+
 bool open() {
+    if (s_opens++ > 0) return s_opened;
     bool ok = true;
     if (!bakeFace(s_word, s_wordTexture, kWordFacePath, "button words")) {
         core::logError("controls: the button face did not bake (%s); buttons keep the body face",
@@ -381,10 +388,12 @@ bool open() {
         core::logError("controls: the stone texture did not make; surfaces are flat");
         ok = false;
     }
+    s_opened = ok;
     return ok;
 }
 
 void close() {
+    if (s_opens == 0 || --s_opens > 0) return;
     for (bgfx::TextureHandle* t : {&s_wordTexture, &s_labelTexture, &s_stone}) {
         if (bgfx::isValid(*t)) bgfx::destroy(*t);
         *t = BGFX_INVALID_HANDLE;
@@ -606,12 +615,13 @@ void rule(gfx::Canvas& canvas, float x, float y, float wide, float u) {
 // ---- buttons -----------------------------------------------------------------------------------
 
 void button(gfx::Canvas& canvas, const Box& box, const std::string& text, Kind kind,
-            const State& state, float u) {
+            const State& state, float u, float wordSize) {
     const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
-    const float size = (b.h >= style::kButtonL * u - 0.5f   ? style::kButtonWordL
-                        : b.h >= style::kButtonM * u - 0.5f ? style::kButtonWordM
-                                                            : style::kButtonWordS) *
-                       u;
+    const float size = wordSize > 0.0f ? wordSize
+                       : (b.h >= style::kButtonL * u - 0.5f   ? style::kButtonWordL
+                          : b.h >= style::kButtonM * u - 0.5f ? style::kButtonWordM
+                                                              : style::kButtonWordS) *
+                             u;
     if (kind == Kind::Quiet) {
         const Tone rest{0.561f, 0.522f, 0.459f, 1}, lit{0.953f, 0.910f, 0.831f, 1};
         word(canvas, b, size, state.off ? Tone{0.361f, 0.322f, 0.286f, 1} : rest.mix(lit, state.lift),

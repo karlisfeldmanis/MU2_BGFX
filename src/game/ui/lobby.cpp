@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 
+#include "game/ui/controls.h"
 #include "game/ui/panel.h"
 #include "game/ui/sheet.h"
 #include "game/ui/slab.h"
@@ -49,10 +50,12 @@ float unit() { return tip::unit() * kScale; }
 
 // The bar along the foot: MU's four, Create and Menu from the left, Connect and Delete from the
 // right (CharSelMainWin.cpp:141), sat on the bottom edge as MU2 sits them.
-constexpr float kBarTall = 62.0f, kBarRadius = 14.0f, kBarFoot = 40.0f, kBarInset = 48.0f,
-                kBarGap = 12.0f;
-constexpr float kCreateWide = 280.0f, kMenuWide = 170.0f, kEnterWide = 300.0f,
-                kDeleteWide = 200.0f;
+// Smaller boxes and a larger word than the slabs had: the user, 2026-09-28, "bigger font size in
+// lobby bottom buttons and scale down size".
+constexpr float kBarTall = 46.0f, kBarFoot = 40.0f, kBarInset = 48.0f, kBarGap = 10.0f;
+constexpr float kBarWord = 20.0f;
+constexpr float kCreateWide = 236.0f, kMenuWide = 116.0f, kEnterWide = 210.0f,
+                kDeleteWide = 128.0f;
 // How far up the screen the foot's shade reaches: MU's strip was black at alpha 143 between the
 // button pairs; MU2 made it a fade up from the edge, and so does this.
 constexpr float kFootShade = 230.0f;
@@ -558,14 +561,16 @@ void Lobby::rebuild() {
 
     // ---- the bar (CCharSelMainWin) --------------------------------------------------------
     {
-        const auto bar = [&](int t, const char* word, slab::Kind kind) {
-            slab::draw(canvas_, boxOf(t), kBarRadius * u, word, 17.0f,
-                       enabled(t) ? kind : slab::Kind::Inactive, lit(t), held(t), u);
+        // Sanctuary's buttons since 2026-09-28 (game/ui/controls.h), in the slabs' own places:
+        // Enter World the primary, Delete the danger, and each inactive while it cannot answer.
+        const auto bar = [&](int t, const char* word, controls::Kind kind) {
+            controls::button(canvas_, boxOf(t), word, kind,
+                             {lit(t), held(t), !enabled(t)}, u, kBarWord * u);
         };
-        bar(kCreate, "Create Character", slab::Kind::Plain);
-        bar(kMenu, "Menu", slab::Kind::Plain);
-        bar(kEnter, "Enter World", slab::Kind::Plain);
-        bar(kDelete, "Delete", slab::Kind::Danger);
+        bar(kCreate, "Create Character", controls::Kind::Secondary);
+        bar(kMenu, "Menu", controls::Kind::Secondary);
+        bar(kEnter, "Enter World", controls::Kind::Primary);
+        bar(kDelete, "Delete", controls::Kind::Danger);
     }
 
     // ---- the create window (CCharMakeWin) --------------------------------------------------
@@ -641,12 +646,12 @@ void Lobby::rebuild() {
                           std::to_string(values[i]));
         }
 
-        // The class buttons, the chosen one lit.
+        // The class buttons, the chosen one the primary's red.
         for (int row = 0; row < 3; ++row) {
             const int t = kClass0 + row;
-            const float lift = row == classRow_ ? 1.0f : lit(t) * 0.6f;
-            slab::draw(canvas_, boxOf(t).grown(-std::round(1.5f * k)), 8.0f * k,
-                       className(kClasses[row]), 12.0f, slab::Kind::Plain, lift, held(t), k);
+            controls::button(canvas_, boxOf(t).grown(-std::round(1.5f * k)), className(kClasses[row]),
+                             row == classRow_ ? controls::Kind::Primary : controls::Kind::Secondary,
+                             {lit(t), held(t), false}, k);
         }
 
         // The name row, one container across the window where MU's plate and its two buttons
@@ -678,10 +683,10 @@ void Lobby::rebuild() {
                              sheet::ink::kTitle);
             }
         }
-        slab::draw(canvas_, boxOf(kMake), 7.0f * k, "OK", 12.5f, slab::Kind::Plain, lit(kMake),
-                   held(kMake), k);
-        slab::draw(canvas_, boxOf(kCancel), 7.0f * k, "Cancel", 11.0f, slab::Kind::Plain,
-                   lit(kCancel), held(kCancel), k);
+        controls::button(canvas_, boxOf(kMake), "OK", controls::Kind::Primary,
+                         {lit(kMake), held(kMake), false}, k);
+        controls::button(canvas_, boxOf(kCancel), "Cancel", controls::Kind::Secondary,
+                         {lit(kCancel), held(kCancel), false}, k);
 
         // The description strip, black at 143, the text from (10, 12).
         // Straight on the backdrop, where MU's black strip was: a box of its own here was one
@@ -740,12 +745,14 @@ void Lobby::rebuild() {
                   u, typed_, drawn_.caret);
         }
         const bool pair = box_ != Ask::Notice;
-        slab::draw(canvas_, boxOf(kBoxOk), 12.0f * u, box_ == Ask::Confirm ? "Yes" : "OK", 16.0f,
-                   box_ == Ask::Name ? slab::Kind::Danger : slab::Kind::Plain, lit(kBoxOk),
-                   held(kBoxOk), u);
+        // The answer the box expects is the primary; the deletion's last word is a danger, and
+        // never the primary, so Return alone cannot delete a character.
+        controls::button(canvas_, boxOf(kBoxOk), box_ == Ask::Confirm ? "Yes" : "OK",
+                         box_ == Ask::Name ? controls::Kind::Danger : controls::Kind::Primary,
+                         {lit(kBoxOk), held(kBoxOk), false}, u);
         if (pair) {
-            slab::draw(canvas_, boxOf(kBoxCancel), 12.0f * u, box_ == Ask::Confirm ? "No" : "Cancel",
-                       16.0f, slab::Kind::Plain, lit(kBoxCancel), held(kBoxCancel), u);
+            controls::button(canvas_, boxOf(kBoxCancel), box_ == Ask::Confirm ? "No" : "Cancel",
+                             controls::Kind::Secondary, {lit(kBoxCancel), held(kBoxCancel), false}, u);
         }
     }
 }

@@ -8,6 +8,7 @@
 #include "app/preloader.h"
 #include "core/files.h"
 #include "core/log.h"
+#include "game/ui/controls.h"
 
 namespace mu::app {
 
@@ -177,6 +178,8 @@ bool LobbyMode::open(Context& ctx) {
             cursor_.open(interface_, &arts_);
             lobby_.open(interface_);
             menu_.open(interface_);
+            // The Sanctuary controls, which the screen's buttons and the menu are drawn with.
+            game::controls::open();
         } else {
             core::logError("lobby: the interface did not open");
         }
@@ -463,6 +466,7 @@ void LobbyMode::shutdown(Context& ctx) {
     sound_.shutdown();
     pedestals_.shutdown();
     if (interfaceUp_) {
+        game::controls::close();
         game::panel::closeTitleFace();
         interface_.shutdown();
         interfaceUp_ = false;
