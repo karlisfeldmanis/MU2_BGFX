@@ -128,6 +128,14 @@ inline constexpr Recipe kGuarding{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f,
 // frame with `--learn`, which is what that switch is for.
 inline constexpr Recipe kLearning{8,    42.0f, 34.0f, 16.0f, 20.0f, 20.0f, 10.0f, 0.0f,
                                   true, false, false, {0.15f, 0.45f, 2.40f}};
+// The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
+// the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
+// eBuff_Attack. The learning burst's shape, thrown once at the cast: a slower green-white climb
+// for a wound closing, a quicker red-orange one for her blows hardening.
+inline constexpr Recipe kMending{8,    34.0f, 30.0f, 22.0f, 12.0f, 16.0f, 12.0f, 0.0f,
+                                 true, false, false, {0.45f, 1.70f, 0.60f}};
+inline constexpr Recipe kMight{8,    44.0f, 34.0f, 16.0f, 20.0f, 22.0f, 10.0f, 0.0f,
+                               true, false, false, {2.20f, 0.55f, 0.15f}};
 
 class Aura {
 public:
@@ -144,6 +152,10 @@ public:
     // A skill read off an orb: thrown like the level-up and never following, because the moment
     // is over in two thirds of a second and he cannot walk out of it. See kLearning.
     void learn(const float feet[3], float yaw, float metresPerTile);
+    // Any recipe thrown once where she stands: her Heal and Greater Damage.
+    void cast(const Recipe& recipe, const float feet[3], float yaw, float metresPerTile) {
+        throwOne(recipe, feet, yaw, metresPerTile);
+    }
 
     // The knight's guard: thrown like a burst, but it lives for `seconds` -- the boon's own
     // duration, so the picture and the sim lapse together -- and follows the body until then.

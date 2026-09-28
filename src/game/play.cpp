@@ -268,6 +268,17 @@ void Play::update(double seconds) {
                     if (row && row->boonTicks > 0 && happening.who == heroId) {
                         guardRise(kGuardShowSeconds);
                     }
+                    // Her Heal and Greater Damage: a burst where she stands, once (fx/aura.h,
+                    // kMending and kMight -- ours, MU draws neither).
+                    if (row && (row->mends || row->mightTicks > 0) && happening.who == heroId &&
+                        caster->placed && ground_) {
+                        const float feet[3] = {
+                            caster->crown[0],
+                            ground_->heightAt(caster->crown[0], caster->crown[2]),
+                            caster->crown[2]};
+                        aura_.cast(row->mends ? kMending : kMight, feet, caster->yaw,
+                                   ground_->metresPerTile());
+                    }
                     // A channel: its clip, looping for as long as it runs. No blow follows the
                     // cast to play it, so it is played here. The thunder is the pulses' (below),
                     // not the cast's.
