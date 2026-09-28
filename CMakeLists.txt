@@ -152,6 +152,7 @@ add_executable(mu2
   src/game/fx/wave.cpp
   src/game/fx/thunder.cpp
   src/game/fx/blink.cpp
+  src/game/fx/ice.cpp
   src/game/fx/bolt.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp

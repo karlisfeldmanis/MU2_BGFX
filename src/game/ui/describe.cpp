@@ -118,7 +118,10 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
     const int high = int((who.wizardMaximum + double(row.damage + row.damage / 2)) *
                          who.wizardryRate * times);
     // A channel's damage is each strike's and a rain's each rock's: the band is not the cast's.
-    const char* label = row.channelled() ? "Each strike" : row.splash > 0.0f ? "Each rock" : "Damage";
+    const char* label = row.channelled()                          ? "Each strike"
+                        : row.splash > 0.0f && row.fallTicks > 0 ? "Each rock"
+                        : row.splash > 0.0f                      ? "Each body"
+                                                                 : "Damage";
     out.push_back(stat(label, std::to_string(low) + " - " + std::to_string(high),
                        tone(Tone::Yellow)));
     char sum[64];
@@ -153,11 +156,16 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
         out.push_back(stat("Range", reach, tone(Tone::White)));
         out.push_back(stat("Area", std::to_string(int(row.splash)) + " tiles round its target",
                            tone(Tone::White)));
-        note("a rock falls on each body in it");
+        note(row.fallTicks > 0 ? "a rock falls on each body in it" : "it bursts on each body in it");
     } else {
         out.push_back(stat("Range", reach, tone(Tone::White)));
     }
     if (row.pushes) out.push_back(stat("Pushes", "a tile away", tone(Tone::Green)));
+    if (row.chillTicks > 0) {
+        char slow[48];
+        std::snprintf(slow, sizeof(slow), "to half for %d s", row.chillTicks / 20);
+        out.push_back(stat("Slows", slow, tone(Tone::Green)));
+    }
 }
 
 uint32_t moneyColour(long long zen) {

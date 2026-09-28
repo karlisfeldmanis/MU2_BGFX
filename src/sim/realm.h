@@ -281,6 +281,8 @@ struct Body {
     // A Teleport cast and not yet landed (`Realm::blink`): the tick he is put down, 0 for none,
     // and where.
     int64_t blinkAt = 0;
+    // Iced (`SkillRow::chillTicks`): walks at `kChillFactor` until this tick. 0 for never.
+    int64_t chilledUntil = 0;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.

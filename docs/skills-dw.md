@@ -372,6 +372,40 @@ press while it cools does nothing; twenty tiles off he goes six at the most; wit
 is not thrown. Filmed in the arena with `--arena-learn 6 --ui-hover 0.7:0.45 --ui-skill 60:1`: the
 column, the fade, and him standing three tiles off while the Bull Fighters swing at where he was.
 
+## 2i. Ice -- a cooldown burst that halves the walk
+
+0.75's row, `CreateSkill(Ice, ..., DamageType.Wizardry, 10, 6, manaConsumption: 38,
+energyRequirement: 120, elementalModifier: Ice)`: ten damage, thirty-eight mana, skill 7, off the
+Scroll of Ice (`Book07`, group 15 #6, Pasi's slot 5, 14 000 zen), refused under 120 energy. Its
+element is the point: `IsIced` for ten seconds with `MovementSpeedFactor` at OpenMU's 0.5, which
+MuMain agrees with (`Speed *= 0.5f`, ZzzCharacter.cpp:6353). MuMain makes the ice where the body
+stands at the let-go -- `MODEL_ICE` and five `MODEL_ICE_SMALL`, SOUND_ICE (ZzzCharacter.cpp:4956)
+-- on `SetPlayerMagic`'s two hands, and draws the frozen body blue, (0.3, 0.5, 1.0)
+(ZzzObject.cpp:1126).
+
+- **A cooldown spell** (the user, 2026-09-28), so wider and harder than 0.75's, as Lightning and
+  Meteorite are: **everything within four tiles of the body he aims at** takes its own ice and its
+  own chill (`splash` 4 through Meteorite's `Realm::rain`, with no fall -- `flies` is so fast it
+  lands on the let-go), at **twice the band**, on **five seconds** of cooldown before agility's
+  haste. The mana and the ten seconds are 0.75's. Two tiles, the first cut, iced one of four Bull
+  Fighters (*"only 1 of 4 monsters was iced"*).
+- **The chill** (`SkillRow::chillTicks` 200, `Body::chilledUntil`, `kChillFactor`): what it leaves
+  standing walks at half speed; a second chill restarts the ten seconds. Only the walk: MU slows
+  nothing else. A respawn clears it.
+- **The look** is `fx/ice`, MU2's `Ice.cs` ported: Ice01 stepping a key a frame through its six
+  poses at 0.8, holding, and going out a twentieth a frame with a wisp of vapour; five Ice02 shards
+  thrown flat, bouncing and tumbling; the body blue while the chill lasts (`kIcedLight`). MU's
+  negative ground light under the block is not ported -- this renderer only adds light.
+- **Frost on him while he casts** (*"character need some ice smoke effect on cast"*; `Ice::chill`,
+  ours, as Meteorite's burn is): pale blue wisps born round his body, rising off him.
+- The card says Each body, Range 9, Area 4 tiles round its target, "it bursts on each body in it",
+  and Slows to half for 10 s.
+
+Measured in `sim_test`: a level-30 wizard hunting 6 000 ticks casts it 14 times, never inside the
+cooldown, strikes 20 times, ices up to three bodies in one cast, and no iced body ever covers more
+than half its ground in a tick. Seen in the arena with `--arena-learn 7`: the block and shards on
+the Bull Fighter and the Bull Fighter blue.
+
 ## 2b'. Where a spell leaves him
 
 **One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward
@@ -420,7 +454,7 @@ Ball's own trail was halved the same day (*"energy ball trail was to long"*: 6 +
 ## 4. Owed
 
 - The chip in the list reads `RMB` for the slot; unseen in a shot.
-- The next spells in scroll-drop order are Ice 25 and Poison 30, Pasi's last two.
+- The next spell is Poison 30, the last on Pasi's shelf.
 - Teleport on the right button's quick slot does nothing: the right button throws at a body.
 - A thrown `Missed` does not say which spell, so a bolt and a fireball in the air at one body at
   once can turn the wrong one aside. Rare, drawing only.

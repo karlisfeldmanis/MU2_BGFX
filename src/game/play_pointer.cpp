@@ -371,6 +371,9 @@ void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
         meteor_.hurl(from, to, 0, atHand);
     } else if (skill == sim::skill::kMeteorite) {
         meteor_.cast(to[0], to[2], 0);
+    } else if (skill == sim::skill::kIce) {
+        const float feet[3] = {to[0], ground_ ? ground_->heightAt(to[0], to[2]) : to[1], to[2]};
+        ice_.freeze(feet, hero.yaw);
     } else if (skill == sim::skill::kLightning) {
         thunder_.strike(from, to, 0);
     } else if (skill == sim::skill::kPowerWave) {

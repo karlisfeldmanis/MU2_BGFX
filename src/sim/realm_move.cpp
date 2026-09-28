@@ -132,7 +132,8 @@ void Realm::advance(Body& one) {
     // its route: a pulled route's points are the ends of long legs, and the log's Stepped
     // still means one tile.
     const int wasColumn = one.column(), wasRow = one.row();
-    float left = one.speed;
+    // Iced, it covers half the ground a tick (`kChillFactor`).
+    float left = one.speed * (one.chilledUntil > tick_ ? kChillFactor : 1.0f);
     while (left > 0.0f && one.onStep < one.route.size()) {
         const Step& target = one.route[one.onStep];
         const float dx = float(target.column) - one.x;

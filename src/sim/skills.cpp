@@ -283,6 +283,25 @@ constexpr SkillRow kRows[kSkills] = {
      "fight where it stood.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 0, 0, 15.0f, false, 0, 0, 0,
      0, 0, 0, 0.0f, true},
+
+    // Ice 7: 0.75's row, `CreateSkill(Ice, ..., DamageType.Wizardry, 10, 6, manaConsumption: 38,
+    // energyRequirement: 120, elementalModifier: Ice)` -- ten damage, thirty-eight mana, and its
+    // element is the point: `IsIced` for ten seconds and the walk halved (`chillTicks`,
+    // `kChillFactor`). MuMain makes the ice where the body stands at the let-go, no flight
+    // (`CreateEffect(MODEL_ICE, to->Position, ...)` and five `MODEL_ICE_SMALL`, SOUND_ICE,
+    // ZzzCharacter.cpp:4956), on `SetPlayerMagic`'s two hands.
+    //
+    // **A cooldown spell** (the user, 2026-09-28), so, as Lightning and Meteorite taught, it is
+    // wider and harder than 0.75's: **everything within four tiles of the body he aims at** takes
+    // its own ice and its own chill (`splash`, Meteorite's rain with no fall -- `flies` is so fast
+    // it lands on the let-go), at **twice the band**, on five seconds of cooldown before agility's
+    // haste. The mana is 0.75's. Nine tiles, with the other spells he throws at a body. Four and
+    // not two, Meteorite's: two iced one of four Bull Fighters ("only 1 of 4 monsters was iced").
+    {skill::kIce, "Ice", 38, 9.0f, 2.0f, 0.0f, 100, false, Spread::One, 0, 1.0f,
+     "Ice bursts on a body up to nine tiles off and on everything within four tiles of it; what "
+     "it strikes walks at half speed for ten seconds.",
+     147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
+     0, 0, 0, 0, 4.0f, false, 200},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

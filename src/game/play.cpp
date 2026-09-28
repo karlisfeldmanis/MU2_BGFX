@@ -371,6 +371,11 @@ void Play::update(double seconds) {
                     // other spell that flies is the bolt.
                     if (happening.a == sim::skill::kFireBall) {
                         meteor_.hurl(from, to, happening.whom, atHand);
+                    } else if (happening.a == sim::skill::kIce) {
+                        // The block where the body is drawn, turned to his yaw, as MU turns it.
+                        const float floor = ground_->heightAt(to[0], to[2]);
+                        const float feet[3] = {to[0], floor, to[2]};
+                        ice_.freeze(feet, caster->yaw);
                     } else if (happening.a == sim::skill::kMeteorite) {
                         // The Lich's rock, dropped where the body is drawn: MU's
                         // `CreateEffect(MODEL_FIRE, to->Position, ...)` at the let-go. It
@@ -734,6 +739,7 @@ void Play::update(double seconds) {
     meteor_.fly(float(seconds), standing, middle);
     wave_.update(float(seconds));
     blink_.update(float(seconds));
+    ice_.update(float(seconds));
     if (blinkOut_ >= 0.0f) blinkOut_ += float(seconds);
     // A blink the realm dropped -- he died in the fade -- is never put down: he is drawn again.
     if (blinkOut_ >= 0.0f && realm_.hero().blinkAt == 0) blinkOut_ = -1.0f;
@@ -754,6 +760,18 @@ void Play::update(double seconds) {
                                    ground_->heightAt(drawn->crown[0], drawn->crown[2]),
                                    drawn->crown[2]};
             meteor_.burn(feet, look ? look->height * look->scale : 1.8f, float(seconds));
+        }
+    }
+    // The frost on him while he casts Ice.
+    if (const sim::Body& hero = realm_.hero();
+        heroCasting_ == sim::skill::kIce && realm_.casting() && ground_) {
+        if (const Drawn* drawn = drawnOf(hero.id);
+            drawn != nullptr && drawn->placed && drawn->casting > 0.0f) {
+            const FigureBody* look = drawn->figure.body();
+            const float feet[3] = {drawn->crown[0],
+                                   ground_->heightAt(drawn->crown[0], drawn->crown[2]),
+                                   drawn->crown[2]};
+            ice_.chill(feet, look ? look->height * look->scale : 1.8f, float(seconds));
         }
     }
     // The crackle on him for as long as he channels.

@@ -864,13 +864,18 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // multiplies his light by (0.9, 0.5, 0.5) and copies it into `c->Light`, which lights every
         // part he wears (ZzzCharacter.cpp:9320). The instance's `light` is that same multiplier.
         const bool soused = one.id == realm_.hero().id && realm_.aleLeft() > 0;
+        // And an iced body is MU's blue while it lasts: `eDeBuff_Freeze` puts (0.3, 0.5, 1.0) on
+        // its BodyLight (ZzzObject.cpp:1126).
+        const sim::Body* inRealm = realm_.find(one.id);
+        const bool iced = inRealm != nullptr && inRealm->chilledUntil > realm_.tick();
         const size_t tintFrom = out.size();
         const auto tint = [&] {
-            if (!soused) return;
+            if (!soused && !iced) return;
+            const float* by = iced ? kIcedLight : kSousedLight;
             for (size_t i = tintFrom; i < out.size(); ++i) {
-                out[i].light[0] *= kSousedLight[0];
-                out[i].light[1] *= kSousedLight[1];
-                out[i].light[2] *= kSousedLight[2];
+                out[i].light[0] *= by[0];
+                out[i].light[1] *= by[1];
+                out[i].light[2] *= by[2];
             }
         };
         if (fade < 1.0f) {

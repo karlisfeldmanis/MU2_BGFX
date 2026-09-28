@@ -136,6 +136,8 @@ constexpr float kSpawnFadeSeconds = 0.35f;
 // `AbilityLight[0] *= 0.9f; AbilityLight[1] *= 0.5f; AbilityLight[2] *= 0.5f`
 // (ZzzCharacter.cpp:9320). OpenMU's packet note calls it "shown in a red color".
 constexpr float kSousedLight[3] = {0.9f, 0.5f, 0.5f};
+// An iced body's light, MU's `eDeBuff_Freeze` BodyLight (ZzzObject.cpp:1126).
+constexpr float kIcedLight[3] = {0.3f, 0.5f, 1.0f};
 
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the

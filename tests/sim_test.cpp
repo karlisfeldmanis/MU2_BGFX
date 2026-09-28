@@ -1050,6 +1050,76 @@ void testCastLock(const content::Tables& tables) {
         check(widest >= 2, "and one wave strikes more than one body in its line");
     }
 
+    // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
+    {
+        const sim::SkillRow& ice = *sim::skillNumbered(sim::skill::kIce);
+        check(ice.wizardry && !ice.primary() && ice.damage == 10 && ice.mana == 38 &&
+                  ice.chillTicks == 200 && ice.splash == 4.0f,
+              "Ice is a cooldown spell of ten damage and thirty-eight mana, chilling ten seconds "
+              "within four tiles");
+        const int32_t scroll = tables.itemAt(15, 6);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kIce &&
+                  tables.items[size_t(scroll)].teachesEnergy == 120,
+              "the Scroll of Ice teaches skill 7 at a hundred and twenty energy");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        check(wiz.learn(sim::skill::kIce), "who knows Ice");
+        int casts = 0, struck = 0, widest = 0, thisCast = 0, fastWhileIced = 0, icedSteps = 0;
+        int64_t lastCast = -1, closest = 1 << 30, castTick = -1;
+        uint32_t fighting = 0;
+        std::vector<std::pair<float, float>> was;
+        for (int tick = 0; tick < 6000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                wiz.ask(request);
+            }
+            if (nearest != 0 && wiz.cooling(sim::skill::kIce) == 0) {
+                wiz.invoke(sim::skill::kIce, nearest);
+            }
+            was.clear();
+            for (const sim::Body& one : wiz.bodies()) was.push_back({one.x, one.y});
+            wiz.step();
+            // An iced body never covers more than half its own ground in a tick.
+            for (size_t i = 1; i < wiz.bodies().size() && i < was.size(); ++i) {
+                const sim::Body& one = wiz.bodies()[i];
+                if (!one.monster() || !one.alive() || one.chilledUntil <= wiz.tick()) continue;
+                if (one.pushTicks > 0) continue;
+                const float moved = std::hypot(one.x - was[i].first, one.y - was[i].second);
+                if (moved > 0.0f) ++icedSteps;
+                if (moved > one.speed * sim::kChillFactor + 1e-3f && moved < 2.0f) ++fastWhileIced;
+            }
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.who != wiz.hero().id) continue;
+                if (one.what == sim::What::Cast && one.a == sim::skill::kIce) {
+                    ++casts;
+                    if (lastCast >= 0) closest = std::min<int64_t>(closest, one.tick - lastCast);
+                    lastCast = one.tick;
+                }
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kIce) {
+                    if (int64_t(one.tick) != castTick) {
+                        castTick = one.tick;
+                        thisCast = 0;
+                    }
+                    widest = std::max(widest, ++thisCast);
+                }
+                if (one.what == sim::What::Hit && one.thrown) ++struck;
+            }
+        }
+        std::printf("  ice: %d cast, %d struck, %d iced by one cast at the most, %lld ticks apart "
+                    "at the closest, %d iced steps, %d too fast\n",
+                    casts, struck, widest, (long long)closest, icedSteps, fastWhileIced);
+        check(casts > 10 && struck > 0, "he throws Ice through a hunt and it strikes");
+        check(widest >= 2, "and one cast ices more than one body");
+        check(closest >= wiz.coolsFor(sim::skill::kIce) && closest >= 80, "never inside its cooldown");
+        check(icedSteps > 0, "iced bodies still walk");
+        checkEqual(fastWhileIced, 0, "at half their pace");
+    }
+
     // ---- Teleport: a blink to the ground he points at ----------------------------------------
     {
         const sim::SkillRow& blink = *sim::skillNumbered(sim::skill::kTeleport);

@@ -78,6 +78,11 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     happenings_.back().thrown = thrown;
     // The element, after the blow and only on what it left standing: 0.75's order.
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
+    // Ice's element: what it leaves standing walks at half speed for its ticks, the last one
+    // wins (a second chill restarts the ten seconds, as OpenMU's re-applied effect does).
+    if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster()) {
+        target.chilledUntil = tick_ + row->chillTicks;
+    }
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent
     // back at whoever struck (Player.HitAsync's ReflectDamage). It takes no draw.
     if (target.player && target.alive() && !attacker.player && attacker.alive() &&
@@ -460,6 +465,7 @@ void Realm::raiseBeast(Body& beast) {
     beast.provoked = false;
     beast.guardedBy = 0;
     beast.heroStruck = false;
+    beast.chilledUntil = 0;
     beast.walking = false;
     beast.route.clear();
     beast.onStep = 0;
