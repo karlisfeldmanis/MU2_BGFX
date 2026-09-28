@@ -21,11 +21,11 @@ using gfx::Box;
 // EIGHTEEN rows, whose last ends at 422 -- seven over the foot, eight under the head's rule, as
 // one ruled block with no air between the cells. MU's stock tables never fill a
 // slot past the fifteenth row, so the three extra rows are empty wells, as most of the fifteen
-// were. Prices are not printed on the shelf: the user, the same day, *"dont show prices on
+// were. (Since 2026-09-28 every shelf stops at fifteen, below, for the foot's buy-back.) Prices are not printed on the shelf: the user, the same day, *"dont show prices on
 // vendor without tooltip"* -- the card under the pointer carries the figure, in full and in the
 // colour that says whether he can pay.
 constexpr float kOriginX = panel::kGridX, kOriginY = 44.0f;
-constexpr int kColumns = 8, kRows = 18;
+constexpr int kColumns = 8;
 constexpr float kCell = panel::kPitch;
 constexpr float kHeight = panel::kHeight;
 
@@ -36,6 +36,12 @@ constexpr float kHeight = panel::kHeight;
 constexpr int kMendingRows = 15;
 constexpr Box kStrip{12.0f, 363.0f, 166.0f, 20.0f};
 constexpr Box kHammers[2] = {{54.0f, 390.0f, 36.0f, 29.0f}, {98.0f, 390.0f, 36.0f, 29.0f}};
+// The buy-back, on the same foot (the user, 2026-09-28: *"button at same position where
+// blacksmith has repairs"*): so every shelf is fifteen rows now, not only a mending one. Where
+// the counter mends it stands a third in the hammers' row, at their pitch; elsewhere it takes the
+// Repair hammer's own place.
+constexpr Box kUndoBeside{142.0f, 390.0f, 36.0f, 29.0f};
+Box undoBox(bool mends) { return mends ? kUndoBeside : kHammers[0]; }
 
 Box cellOf(int slot, const content::ItemRow& row) {
     return {kOriginX + float(slot % kColumns) * kCell, kOriginY + float(slot / kColumns) * kCell,
@@ -102,7 +108,7 @@ void Shelf::restock(const sim::Realm& realm, int folk) {
 
 int Shelf::lineAt(const content::Tables& tables, float ux, float uy) const {
     const float cx = (ux - kOriginX) / kCell, cy = (uy - kOriginY) / kCell;
-    const int rows = mends_ ? kMendingRows : kRows;
+    const int rows = kMendingRows;
     if (cx < 0.0f || cy < 0.0f || cx >= float(kColumns) || cy >= float(rows)) return -1;
     const int column = int(cx), row = int(cy);
     // Recorded at its top-left, so the cell under the pointer may be covered by something that
@@ -143,7 +149,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
     int64_t undoLeft = 0;
     const sim::Realm::Sale* sale = realm.lastSale(&undoLeft);
     undoable_ = sale != nullptr;
-    overUndo_ = undoable_ && inside && panel::headSocket(false).has(ux, uy);
+    overUndo_ = inside && undoBox(mends_).has(ux, uy);
     overHammer_ = -1;
     for (int i = 0; mends_ && inside && i < 2; ++i) {
         if (kHammers[i].has(ux, uy)) overHammer_ = i;
@@ -163,7 +169,7 @@ void Shelf::update(float width, float height, int column, const sim::Realm& real
             if (pressedHammer_ == 0) mend->toggle = true;
             else mend->all = true;
         }
-        if (undo && pressingUndo_ && overUndo_) *undo = true;
+        if (undo && undoable_ && pressingUndo_ && overUndo_) *undo = true;
         closing_ = false;
         pressing_ = false;
         pressedHammer_ = -1;
@@ -228,7 +234,7 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
     panel::frame(canvas_, arts, x, y, merchant_);
     // The shelf as one ruled block, so a half-stocked shelf reads as a shelf and not as a hole,
     // and the offer under the pointer lit over its whole footprint.
-    panel::grid(canvas_, x, y, kOriginX, kOriginY, kColumns, mends_ ? kMendingRows : kRows);
+    panel::grid(canvas_, x, y, kOriginX, kOriginY, kColumns, kMendingRows);
     if (mends_) {
         // The strip: MU's `Repair All` and the sum, in gilt on a well, the figure red when the
         // purse cannot cover it (getGoldColor's job there).
@@ -271,27 +277,27 @@ void Shelf::rebuild(const sim::Realm& realm, Stage* stage) {
                     sheet::Cell::Over);
     }
     panel::close(canvas_, x, y, now_.overClose, now_.closing);
-    // The undo, the X's mirror in the head's left socket, and only while there is a sale to take
-    // back. The hint says what and for how long, and what it costs.
-    if (undoable_) {
+    // The buy-back, always there and dark while there is nothing to take back, so the foot does
+    // not shift under the pointer. Its tooltip over it as the hammers' are, on the tooltip layer
+    // because the shelf's pictures draw after this: what, for how much and for how long.
+    {
         const float u = tip::unit();
-        const Box socket = panel::scaled(x, y, panel::headSocket(false));
-        const float s = std::round(std::min(style::kSmallSquare * u, socket.h));
-        const Box at{std::round(socket.x), std::round(socket.midY() - s * 0.5f), s, s};
+        const Box to = panel::scaled(x, y, undoBox(mends_));
+        const float side = std::round(std::min(to.w, to.h));
+        const Box at{std::round(to.midX() - side * 0.5f), std::round(to.midY() - side * 0.5f), side, side};
         controls::State state;
-        state.lift = overUndo_ ? 1.0f : 0.0f;
-        state.held = pressingUndo_;
+        state.lift = overUndo_ && undoable_ ? 1.0f : 0.0f;
+        state.held = pressingUndo_ && undoable_;
+        state.off = !undoable_;
         controls::square(canvas_, at, controls::Glyph::Undo, state, u);
         if (overUndo_) {
-            if (const sim::Realm::Sale* sale = realm.lastSale()) {
-                // Under the head and across the window's middle, on the tooltip layer: over the
-                // head it would leave the screen's top, and the shelf's pictures draw after this.
-                controls::hint(tip_, x + panel::kWidth * k * 0.5f, at.bottom() + 30.0f * u,
-                               "Buy back " + tables.items[size_t(sale->what.item)].label + " for " +
-                                   panel::commas(sale->paid) + " Zen (" +
-                                   std::to_string(now_.undoSeconds) + "s)",
-                               u);
-            }
+            const sim::Realm::Sale* sale = realm.lastSale();
+            controls::hint(tip_, at.midX(), at.y - 6.0f * u,
+                           sale ? "Buy back " + tables.items[size_t(sale->what.item)].label +
+                                      " for " + panel::commas(sale->paid) + " Zen (" +
+                                      std::to_string(now_.undoSeconds) + "s)"
+                                : std::string("Buy back (nothing sold)"),
+                           u);
         }
     }
 
