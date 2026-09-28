@@ -41,6 +41,8 @@ void Play::castSkill(int32_t skill, uint32_t at) {
     if (row != nullptr && row->blinks) {
         if (pointedColumn_ < 0) return;
         realm_.invokeAt(skill, pointedColumn_, pointedRow_);
+        core::logf("window: %s aimed at tile %d,%d from %d,%d", row->name, pointedColumn_,
+                   pointedRow_, realm_.hero().column(), realm_.hero().row());
     } else {
         realm_.invoke(skill, at);
     }

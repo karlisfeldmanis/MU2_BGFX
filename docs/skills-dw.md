@@ -361,8 +361,9 @@ tenth of its alpha a frame, throws `BITMAP_SPARK + 1` and SOUND_MAGIC; the serve
   the safe zone, this included, as 0.75 refuses every skill there.
 - **The sparks** (`fx/blink`): MU's column of Spark03 flashing out from his feet for ten frames at
   both ends. MU's eighteen a frame up 4.3 m at fifty units a frame was *"sparkles to crazy"*; six a
-  frame up the height of a man, drifting at a fifth of the speed and dimmer, and half the size
-  after *"sparkles to big"*, is ours.
+  frame up the height of a man, drifting at a fifth of the speed and dimmer, a third of the size
+  after *"sparkles to big"* and *"to large"* (and no doubled spark at his feet), is ours. The staff's
+  streak is off for the clip; it had been drawn stretched across the jump.
 
 Measured in `sim_test`: cast at tick 1 and put down at tick 9, three tiles, thirty mana, cooling; a
 press while it cools does nothing; twenty tiles off he goes six at the most; with no ground named it

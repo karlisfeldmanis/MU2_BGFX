@@ -287,6 +287,9 @@ void Play::update(double seconds) {
                         blinkOut_ = 0.0f;
                         blinkIn_ = -1.0f;
                         marker_.dismiss();
+                        // A spell's clip: the staff lays no streak. Left as the last swing's, it
+                        // streaked through the blink and was drawn stretched across the jump.
+                        caster->swingSkill = happening.a;
                     }
                     if (row && (row->onSelf() || row->blinks) && caster->castClip >= 0) {
                         caster->figure.play(caster->castClip, true, kCastBlend);
@@ -321,6 +324,8 @@ void Play::update(double seconds) {
                     hero->nowY = hero->wasY = body.y;
                     hero->groundSpeed = 0.0f;
                 }
+                // And no ribbon of anything may span the jump.
+                streak_.clear();
                 if (ground_) {
                     const float metres = ground_->metresPerTile();
                     const float x = (body.x + 0.5f) * metres;

@@ -64,7 +64,7 @@ void Blink::row(const Pillar& pillar) {
         spark->velocity[0] = flat * std::cos(turn) * speed;
         spark->velocity[1] = z * speed;
         spark->velocity[2] = flat * std::sin(turn) * speed;
-        spark->scale = j == 0 ? kScale * 2.0f : kScale;
+        spark->scale = kScale;
         spark->light = light;
         spark->spin = unit() * 6.28318531f;
     }
