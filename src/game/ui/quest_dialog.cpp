@@ -5,11 +5,13 @@
 
 #include "game/play.h"
 #include "game/ui/controls.h"
+#include "game/ui/describe.h"
 #include "game/ui/panel.h"
 #include "game/ui/style.h"
 #include "game/ui/tip.h"
 #include "game/ui/tracker.h"
 #include "sim/quests.h"
+#include "sim/wear.h"
 
 namespace mu::game {
 namespace {
@@ -97,11 +99,13 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
 void QuestDialog::open(const gfx::Interface& interface) {
     interface.adopt(canvas_);
     interface.adopt(body_);
+    interface.adopt(tip_);
 }
 
 void QuestDialog::close() {
     canvas_.clear();
     body_.clear();
+    tip_.clear();
     quest_ = -1;
     built_ = false;
     dragging_ = false;
@@ -130,12 +134,12 @@ int QuestDialog::buttonAt(float ux, float uy) const {
     return -1;
 }
 
-int QuestDialog::cellAt(float ux, float uy) const {
+int QuestDialog::cellAt(float ux, float uy, bool anyCell) const {
     // Only inside the pane: a cell scrolled out of it is not there to be chosen.
     if (uy < paneTop() || uy > paneTop() + paneTall()) return -1;
     const float by = uy - paneTop() + scroll_;
     for (size_t i = 0; i < cells_.size(); ++i) {
-        if (cells_[i].choice >= 0 && cells_[i].box.has(ux, by)) return int(i);
+        if ((anyCell || cells_[i].choice >= 0) && cells_[i].box.has(ux, by)) return int(i);
     }
     return -1;
 }
@@ -248,7 +252,6 @@ void QuestDialog::update(float seconds, const Play& play, int quest, float width
         if (quest_ >= 0 || !canvas_.empty()) close();
         return;
     }
-    (void)width;
     const sim::Realm& realm = play.realm();
     if (quest != quest_) {
         quest_ = quest;
@@ -340,6 +343,9 @@ void QuestDialog::update(float seconds, const Play& play, int quest, float width
     // The standing list again, now the hover, the choice and the scroll are this frame's.
     layout(play);
     if (stage) stage->stand(standing_, kWide, kTall);
+    // The card over whatever reward is under the pointer, every frame as the bag's is: it waits
+    // a frame on its own stage's picture, which the window's cache knows nothing of.
+    drawTip(play, dragging_ ? -1 : cellAt(ux, uy, true), width, height);
 
     Drawn now;
     now.quest = quest_;
@@ -362,6 +368,29 @@ void QuestDialog::update(float seconds, const Play& play, int quest, float width
     drawn_ = now;
     built_ = true;
     rebuild(play, stage);
+}
+
+void QuestDialog::drawTip(const Play& play, int cell, float width, float height) {
+    tip_.clear();
+    if (cell < 0) return;
+    const Cell& one = cells_[size_t(cell)];
+    if (one.item < 0) return;
+    const sim::Realm& realm = play.realm();
+    const content::Tables& tables = *realm.tables();
+    const content::ItemRow& row = tables.items[size_t(one.item)];
+    // The reward as completeQuest will put it in the bag: a stack is one piece of its count, gear
+    // comes whole at its plus.
+    sim::Held what;
+    what.item = one.item;
+    what.refinement = int16_t(one.plus);
+    what.durability = int16_t(sim::stacks(row) ? std::max(1, one.count)
+                                               : sim::fullDurability(row, one.plus));
+    tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
+    if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
+    // Over the cell as it stands on screen, scrolled.
+    const Box at{x_ + one.box.x * unit_, y_ + (paneTop() + one.box.y - scroll_) * unit_,
+                 one.box.w * unit_, one.box.h * unit_};
+    tip::draw(tip_, sheet, at, width, height);
 }
 
 void QuestDialog::rebuild(const Play& play, Stage* stage) {

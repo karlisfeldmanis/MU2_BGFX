@@ -60,6 +60,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     bag_.useTipStage(&tipStagePicture_);
     shelf_.useTipStage(&tipStagePicture_);
     chest_.useTipStage(&tipStagePicture_);
+    questDialog_.useTipStage(&tipStagePicture_);
     card_.open(interface_, &arts_);
     bag_.open(interface_, &arts_);
     shelf_.open(interface_, &arts_);
@@ -1215,6 +1216,7 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (questDialog_.up()) {
         interface_.add(questDialog_.canvas());
         interface_.add(questDialog_.body());
+        interface_.add(questDialog_.tipCanvas());
     }
     if (amount_.up()) interface_.add(amount_.canvas());
     // The menu over everything but the pointer: it dims the whole screen, windows and HUD too.

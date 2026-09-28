@@ -53,6 +53,10 @@ public:
     // The frame and the body, which scrolls clipped to its pane; drawn in that order.
     const gfx::Canvas& canvas() const { return canvas_; }
     const gfx::Canvas& body() const { return body_; }
+    // The item card over a reward under the pointer, in any mode: the bag's own card, so a
+    // reward is read before it is chosen. Drawn over the window, on the tooltip's stage.
+    void useTipStage(Stage* stage) { tipStage_ = stage; }
+    const gfx::Canvas& tipCanvas() const { return tip_; }
     // The rewards' picture wants photographing at this many pixels a unit.
     float pixelsPerUnit() const { return unit_; }
 
@@ -68,12 +72,15 @@ private:
     void layout(const Play& play);
     void rebuild(const Play& play, Stage* stage);
     int buttonAt(float ux, float uy) const;
-    int cellAt(float ux, float uy) const;
+    int cellAt(float ux, float uy, bool anyCell = false) const;
+    void drawTip(const Play& play, int cell, float width, float height);
     float scrollMost() const;
     gfx::Box thumb() const;  // the scrollbar's thumb, in window units
 
     gfx::Canvas canvas_;
     gfx::Canvas body_;
+    gfx::Canvas tip_;
+    Stage* tipStage_ = nullptr;
     int quest_ = -1;
     Mode mode_ = Mode::Offer;
     int chosen_ = -1;
