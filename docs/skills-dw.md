@@ -203,8 +203,17 @@ the arrival. Ours, tuned on the bench with the user watching:
 energyRequirement: 56)`: fourteen damage, six tiles, five mana, skill 11, no element. Taught by the
 Scroll of Power Wave (`Book11`, group 15 #10, Pasi's slot 1, 1 100 zen), refused under 56 energy. A
 **primary like the other two**, on the shape the user gave Fire Ball: about twice Energy Ball against
-one body at 56 energy for five mana. One body is struck, as in 0.75. The clips are Energy Ball's, the
-wave is `SOUND_MAGIC`, and it flies at the bolt's fifteen tiles a second.
+one body at 56 energy for five mana. The clips are Energy Ball's, the wave is `SOUND_MAGIC`, and it
+flies at the bolt's fifteen tiles a second.
+
+**It strikes everything in its line** (the user, 2026-09-28: *"power wave is kind of aoe, because it
+can go through multiple monsters"*), where 0.75 strikes the one body. `Spread::Line`: every body
+ahead of him within three quarters of a tile of the line toward what he aimed at, out to the six
+tiles of its reach -- the stretch MU draws it at full brightness, before it fades. `Realm::looseLine`
+says one `Loosed` (one wave is drawn) and puts a flight in the air for each body, nearest first, so
+each is struck when the wave reaches it; only the body he aimed at pays mana back, or a crowd would
+fill his pool. The air holds 32 flights now, up from 8. Seen in the arena against five spiders: one
+wave, two numbers.
 
 **The look** is `fx/wave`, MU2's `Wave` ported. What is MU's: `Magic02.bmd` at 0.9, one additive
 curtain standing on the ground; sixty units a frame, flat, for twenty frames -- twelve tiles, so it

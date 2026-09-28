@@ -164,7 +164,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // does for a swing (`engage`), and the blow lands half a clip later by which time he has
         // come round. Set even on a refusal below -- a knight turns toward what he tried to hit.
         if (aimed) hero.aim = std::atan2(target->y - hero.y, target->x - hero.x);
-        if (row.spread == Spread::One) {
+        if (row.spread == Spread::One || row.spread == Spread::Line) {
+            // A line is thrown AT a body as a single blow is, and goes on through: it needs the
+            // body to aim by, and the rest of its way is found when it is let go.
             if (!aimed) return false;
             // Nothing may be thrown at something sheltered either, which is the check the far end
             // of `ApplySkillAsync` makes and `press` already makes for a swing.
@@ -261,6 +263,13 @@ int Realm::gather(const Body& hero, const SkillRow& row, uint32_t* victims, int 
         // of the row, borrowed here only to give the sort a stated zero.
         float turn = std::atan2(dx, -dy);
         if (turn < 0.0f) turn += 6.28318530718f;
+        if (row.spread == Spread::Line) {
+            // Ahead of him along the aim, and within half the curtain's width of the line.
+            const float c = std::cos(hero.aim), s = std::sin(hero.aim);
+            const float ahead = dx * c + dy * s;
+            const float aside = -dx * s + dy * c;
+            if (ahead <= 0.0f || ahead > row.reach || std::fabs(aside) > kLineHalfWidth) continue;
+        }
         if (row.spread == Spread::Arc) {
             // The facing eighth and the two beside it. `aim` and not `facing`, because the throw
             // aims him at what the key named and the body turns to it over the clip; the blow

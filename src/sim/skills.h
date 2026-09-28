@@ -119,7 +119,13 @@ int familiesNamed(uint32_t families, const char** out, int room);
 // because the cooldown state and the request are the same for them and choosing the shape later
 // should not mean changing either. Ring is Cyclone -- everything within a tile of the caster --
 // and Arc is Slash's three tiles off his facing.
-enum class Spread : uint8_t { One, Ring, Arc };
+// Line is Power Wave's: every body within half a tile of the line from him toward what it was
+// thrown at, out to its reach -- the curtain sweeps through them all (the user, 2026-09-28).
+enum class Spread : uint8_t { One, Ring, Arc, Line };
+
+// Half the Line's width, in tiles: the curtain is 0.91 m across, so a body whose middle is within
+// three quarters of a tile of the line is in its way.
+constexpr float kLineHalfWidth = 0.75f;
 
 struct SkillRow {
     int32_t number = 0;

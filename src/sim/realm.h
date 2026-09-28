@@ -553,14 +553,19 @@ private:
     // `row` is the skill the blow belongs to, null for a swing: a spell rolls the wizardry sum,
     // and only a swing or a primary pays mana back. `thrown` marks a blow that flew.
     void strikeAt(Body& attacker, Body& target, float force = 1.0f,
-                  const SkillRow* row = nullptr, bool thrown = false);
+                  const SkillRow* row = nullptr, bool thrown = false, bool pays = true);
     // The player's blow: begun now, landing half a swing from now, and dropped whole if he is
     // given another order before it lands. `land` is what the tick calls when it is due.
     void begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t overTicks);
     void land(Body& hero);
     // A spell let go: into the air for as long as it takes to cross the gap, and landed by
     // `arrive` on the tick it gets there. Past his hand, a new order no longer takes it back.
-    void loose(Body& hero, const SkillRow& row, uint32_t at, float force);
+    // `announce` says `Loosed` (one wave is drawn per cast, so a line says it once); `pays` is
+    // whether the landing pays mana back (a line pays for the body it was aimed at only).
+    void loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce = true,
+               bool pays = true);
+    // Power Wave: one `Loosed` for the cast, and a flight to every body in the line.
+    void looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void arrive();
     // Walks him to within `radius` of what he is fighting, on the chase's own re-plan clock.
     void approach(Body& hero, const Body& target, int radius);
@@ -654,8 +659,10 @@ private:
         uint32_t target = 0;
         int32_t skill = 0;
         float force = 1.0f;
+        bool pays = true;
     };
-    static constexpr int kFlights = 8;
+    // Room for a line's worth of bodies and the bolts around it.
+    static constexpr int kFlights = 32;
     Flight flights_[kFlights] = {};
     int64_t tick_ = 0;
     std::string refusal_;

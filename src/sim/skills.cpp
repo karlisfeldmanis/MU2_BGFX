@@ -184,16 +184,20 @@ constexpr SkillRow kRows[kSkills] = {
 
     // Power Wave 11, 0.75's row: `CreateSkill(PowerWave, ..., DamageType.Wizardry, 14, 6,
     // manaConsumption: 5, energyRequirement: 56)` -- fourteen damage, six tiles, five mana, and no
-    // element at all. One body, as 0.75 has it: the wave sweeps on through and away (its mover
-    // never stops on the target), but only what it was thrown at is struck.
+    // element at all. **Every body in its line**, where 0.75 strikes the one it was thrown at: the
+    // curtain sweeps on through and away (its mover never stops on the target), and the user ruled
+    // on 2026-09-28 that what it passes through is hit ("it can go through multiple monsters").
+    // `Spread::Line`, half a tile each side, out to the six tiles of the spell's reach -- which is
+    // exactly the stretch MU draws it at full brightness before it fades. Each body is struck
+    // when the wave reaches it, and only the one it was aimed at pays mana back.
     //
     // **A primary like the other two**, the shape the user gave Fire Ball: no cooldown, paced by
     // its clip, a hit paying back. About twice Energy Ball against one body at fifty-six energy
     // (20-31 against 9-18) for five mana. The same two hands; `SOUND_MAGIC`, Energy Ball's wave,
     // which MU plays for both. Sixty units a reference frame, the bolt's fifteen tiles a second.
-    {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "A wave of light swept along the ground at one body up to six tiles off: twice the force "
-     "of an Energy Ball, for five times the mana.",
+    {skill::kPowerWave, "Power Wave", 5, 6.0f, 1.0f, 0.0f, 0, false, Spread::Line, 0, 1.0f,
+     "A wave of light swept along the ground for six tiles, striking everything in its line at "
+     "twice the force of an Energy Ball.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
 
     // Lightning 3, 0.75's row: `CreateSkill(Lightning, ..., DamageType.Wizardry, 17, 6,

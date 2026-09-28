@@ -16,7 +16,7 @@
 namespace mu::sim {
 
 void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* row,
-                     bool thrown) {
+                     bool thrown, bool pays) {
     if (!target.alive()) return;  // no blow lands on the dead: the invariant, kept here
     // A spell rolls the wizardry sum, off energy and the staff; everything else is a swing's.
     Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats, row->damage, dice_)
@@ -56,7 +56,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // A primary spell pays it too: the wizard's Energy Ball is his auto-attack, costs 0.75's one
     // mana, and a hit refunds as the knight's swing does -- the user's rule, 2026-09-28. What
     // pays nothing is a skill with a cooldown, whose force is above one anyway.
-    const bool generates = row == nullptr ? force == 1.0f : row->primary();
+    const bool generates = pays && (row == nullptr ? force == 1.0f : row->primary());
     if (attacker.player && generates && attacker.mana < attacker.maxMana) {
         const int back = std::max(1, int(float(attacker.maxMana) * kAttackManaShare));
         attacker.mana = std::min(attacker.maxMana, attacker.mana + back);
@@ -121,6 +121,12 @@ void Realm::land(Body& hero) {
     // not. He cannot have moved or turned himself in between -- `castUntil` holds him -- so the
     // centre and the facing are the ones he threw it with.
     const SkillRow* row = skillNumbered(skill);
+    // A line is let go along where he aimed, whether or not what he aimed at still stands, and
+    // flies to every body in it.
+    if (row && row->spread == Spread::Line) {
+        looseLine(hero, *row, at, force);
+        return;
+    }
     if (row && row->spread != Spread::One) {
         strikeAround(hero, *row, force);
         return;
@@ -149,24 +155,37 @@ void Realm::land(Body& hero) {
 constexpr float kBoltStopsShort = 1.0f;
 constexpr float kTicksPerSecond = 20.0f;  // the realm's own clock
 
-void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force) {
+void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, bool announce,
+                  bool pays) {
     const Body* target = body(at);
     // The straight line, not MU's larger-axis reach: a bolt flies the diagonal.
     const float dx = target ? target->x - hero.x : 0.0f;
     const float dy = target ? target->y - hero.y : 0.0f;
     const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
     const int32_t air = int32_t(std::lround(gap / std::max(1.0f, row.flies) * kTicksPerSecond));
-    say(What::Loosed, hero, row.number, air, 0, at);
+    if (announce) say(What::Loosed, hero, row.number, air, 0, at);
     if (air > 0) {
         for (Flight& one : flights_) {
             if (one.at != 0) continue;
-            one = Flight{tick_ + air, at, row.number, force};
+            one = Flight{tick_ + air, at, row.number, force, pays};
             return;
         }
     }
     // Point blank, or no room in the air: it lands now.
     if (Body* struck = body(at); struck && struck->alive()) {
-        strikeAt(hero, *struck, force, &row, true);
+        strikeAt(hero, *struck, force, &row, true, pays);
+    }
+}
+
+void Realm::looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // The wave is drawn once, toward what he aimed at, and said once.
+    say(What::Loosed, hero, row.number, 0, 0, aimedAt);
+    uint32_t victims[kVictims];
+    const int found = gather(hero, row, victims, kVictims);
+    // Nearest first, as `gather` sorts them, so the landings come in the order the wave meets
+    // them; the body he aimed at is the one that pays back, as a single throw would.
+    for (int i = 0; i < found; ++i) {
+        loose(hero, row, victims[i], force, false, victims[i] == aimedAt);
     }
 }
 
@@ -189,7 +208,7 @@ void Realm::arrive() {
         // `CheckTargetRange`'s own first line is `to->Live`.
         Body* target = body(flight.target);
         if (!target || !target->alive()) continue;
-        strikeAt(hero, *target, flight.force, skillNumbered(flight.skill), true);
+        strikeAt(hero, *target, flight.force, skillNumbered(flight.skill), true, flight.pays);
     }
 }
 

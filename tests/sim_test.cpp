@@ -970,8 +970,8 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& wave = *sim::skillNumbered(sim::skill::kPowerWave);
         check(wave.wizardry && wave.primary() && wave.thrown() && wave.damage == 14 &&
-                  wave.mana == 5 && wave.flies == 15.0f,
-              "Power Wave is a thrown primary at fourteen damage and five mana");
+                  wave.mana == 5 && wave.flies == 15.0f && wave.spread == sim::Spread::Line,
+              "Power Wave is a thrown primary at fourteen damage and five mana, down a line");
         const int32_t scroll = tables.itemAt(15, 10);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPowerWave &&
                   tables.items[size_t(scroll)].teachesEnergy == 56,
@@ -993,9 +993,10 @@ void testCastLock(const content::Tables& tables) {
         sim::Realm wiz;
         check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
         check(wiz.learn(sim::skill::kPowerWave), "who knows Power Wave");
-        int waves = 0, landed = 0;
+        int waves = 0, landed = 0, widest = 0, thisWave = 0;
+        float farthestAside = 0.0f;
         uint32_t fighting = 0;
-        for (int tick = 0; tick < 3000; ++tick) {
+        for (int tick = 0; tick < 6000; ++tick) {
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
             if (nearest != 0 && nearest != fighting) {
                 fighting = nearest;
@@ -1008,12 +1009,29 @@ void testCastLock(const content::Tables& tables) {
             wiz.step();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
-                if (one.what == sim::What::Loosed && one.a == sim::skill::kPowerWave) ++waves;
-                if (one.what == sim::What::Hit && one.thrown) ++landed;
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kPowerWave) {
+                    ++waves;
+                    thisWave = 0;
+                }
+                if ((one.what == sim::What::Hit || one.what == sim::What::Missed) && one.thrown) {
+                    if (one.what == sim::What::Hit) ++landed;
+                    widest = std::max(widest, ++thisWave);
+                    // Where it was, against the line he threw along: never beside it.
+                    if (const sim::Body* victim = wiz.find(one.whom)) {
+                        const sim::Body& me = wiz.hero();
+                        const float dx = victim->x - me.x, dy = victim->y - me.y;
+                        farthestAside = std::max(
+                            farthestAside,
+                            std::fabs(-dx * std::sin(me.aim) + dy * std::cos(me.aim)));
+                    }
+                }
             }
         }
-        std::printf("  power wave: %d thrown, %d landed\n", waves, landed);
+        std::printf("  power wave: %d thrown, %d landed, %d struck by one wave at the most, "
+                    "%.2f tiles off the line at the most\n",
+                    waves, landed, widest, double(farthestAside));
         check(waves > 20 && landed > 0, "he throws Power Wave through a hunt and it lands");
+        check(widest >= 2, "and one wave strikes more than one body in its line");
     }
 
     // ---- Lightning: 0.75's row, and the push the element gives, slid and not jumped -----------
