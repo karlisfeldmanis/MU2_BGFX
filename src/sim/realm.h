@@ -331,10 +331,6 @@ public:
                Kin kin = Kin::DarkKnight, int level = 1);
 
     void ask(const Request& request) { pending_ = request; }
-    // What he is doing, and what the window has asked for and the tick has not taken yet: what
-    // a held button reads to know whether the fight it started is still going.
-    const Request& order() const { return order_; }
-    const Request& pending() const { return pending_; }
 
     // ---- skills (docs/skills-dk.md) --------------------------------------------------------
     // A key pressed: throw this skill at this body. NOT a Request, and that is the design and

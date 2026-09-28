@@ -115,9 +115,6 @@ public:
     // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
     // and handed down each frame, as the bar is the interface's and the order is the realm's.
     void setQuickSkill(int32_t skill) { quickSkill_ = skill; }
-    // The right button HELD: while it is down he goes on fighting. When the monster he is on dies
-    // or goes, the next is the one under the pointer, and failing that the nearest in reach.
-    void holdRight();
     int32_t quickSkill() const { return quickSkill_; }
     // The same Attack request a click on a body raises, by id and with no pointer: the arena's
     // hand. It goes through `Realm::ask` like every other order and decides nothing itself.

@@ -29,11 +29,6 @@ reads its sixth as empty.
 - **An empty slot**: the right button's attack is the left button's.
 - **A primary goes to the slot by itself** the first time it is learned; everything else takes the
   first free key, and the slot is the player's to fill.
-- **Held**, it goes on killing (*"hold right click and continue to kill monsters"*): while the
-  button is down and the monster he is on dies, the next is the one under the pointer, and failing
-  that the nearest within the slot's reach -- six tiles for Energy Ball, two for the weapon. It
-  never changes target while the one he is on is alive, because a new order drops the blow in the
-  air (`Play::holdRight`).
 
 The Elf has no skill built yet, so her right button is her weapon until she has one.
 

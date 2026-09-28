@@ -559,9 +559,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               ctx.window.width(), ctx.window.height());
         if ((ctx.window.clicked(0) && !windowed) || clickNow) world_.played().leftClick();
         if (ctx.window.clicked(1) && !windowed) world_.played().rightClick();
-        // And held: the fight carries on from one monster to the next without another click
-        // (the user, 2026-09-28: "hold right click and continue to kill monsters").
-        else if (ctx.window.held(1) && !windowed) world_.played().holdRight();
         world_.played().update(deltaSeconds);
         // The colour goes out of the world while he is down. Half a second out and a second
         // back: a fall should land and a recovery should feel like one. The renderer drains the

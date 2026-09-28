@@ -341,49 +341,6 @@ void Play::benchFace(float acrossX, float acrossZ) {
     realm_.ask(request);
 }
 
-void Play::holdRight() {
-    if (!isOpen() || !realm_.hero().alive()) return;
-    // Still on something alive: leave it be. Changing target every time the pointer crosses
-    // another body would throw away the blow in the air on each crossing (Realm::accept drops an
-    // unlanded blow when the order changes), which is a held button that never lands anything.
-    const sim::Request& now =
-        realm_.pending().kind != sim::Request::Kind::None ? realm_.pending() : realm_.order();
-    if (now.kind == sim::Request::Kind::Attack) {
-        const sim::Body* fighting = realm_.find(now.target);
-        if (fighting != nullptr && fighting->alive()) return;
-    }
-    const auto open = [&](const sim::Body& one) {
-        return !one.player && one.alive() &&
-               !tables_.grid.safe(one.column(), one.row());
-    };
-    uint32_t next = 0;
-    const sim::Body* at = pointedAt_ != 0 ? realm_.find(pointedAt_) : nullptr;
-    if (at != nullptr && open(*at)) {
-        next = at->id;
-    } else {
-        // **Ours**: MU's held button casts at whatever is under the cursor and nothing else. The
-        // nearest within the slot's own reach -- six tiles for Energy Ball, a couple for the
-        // weapon -- is what makes holding it "go on killing" rather than "go on aiming".
-        const sim::SkillRow* row = sim::skillNumbered(quickSkill_);
-        const float reach = row != nullptr && row->thrown() ? row->reach : kHoldWeaponReach;
-        const sim::Body& hero = realm_.hero();
-        float best = 1e30f;
-        for (const sim::Body& one : realm_.bodies()) {
-            if (!open(one)) continue;
-            const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
-            if (off > reach || off >= best) continue;
-            best = off;
-            next = one.id;
-        }
-    }
-    if (next == 0) return;
-    sim::Request request;
-    request.kind = sim::Request::Kind::Attack;
-    request.target = next;
-    request.skill = quickSkill_;
-    realm_.ask(request);
-}
-
 bool Play::crownOf(uint32_t id, const float* viewProj, int width, int height, float* x,
                    float* y) const {
     const size_t at = size_t(id) - 1;

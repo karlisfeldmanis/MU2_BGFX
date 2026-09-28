@@ -26,9 +26,6 @@ namespace mu::game {
 // The sim's own rate. docs/conventions.md, "Time": the tick never reads the frame's delta and
 // the frame never decides how many ticks have passed except by this number.
 constexpr double kTickSeconds = 1.0 / 20.0;
-// How far a held right button looks for the next monster when its slot holds no thrown spell:
-// the weapon's tile and one more. Ours, as the held search is.
-constexpr float kHoldWeaponReach = 2.0f;
 // The most ticks one frame may run. A window that was away -- dragged, or stalled on a
 // screenshot's readback -- comes back owing seconds of simulation, and stepping all of it in
 // one frame is a stall that makes the next frame owe more. MU2 called this the mirror clock's
