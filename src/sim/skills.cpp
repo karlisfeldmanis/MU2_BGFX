@@ -213,7 +213,8 @@ constexpr SkillRow kRows[kSkills] = {
     // ("make it shorter, like actual animation length") -- and it strikes **only while his arm is
     // up** in it, from 0.7 s to 1.6 s (ticks 14 to 32, read off the clip frame by frame on the
     // bench): a strike every three ticks, seven in all, and **it goes round**, each at ONE body
-    // within four tiles of him
+    // within four tiles of him, and **no body more than twice** (`strikesEach`: a lone monster is
+    // struck twice, not seven times; a crowd of four shares the seven),
     // (`Spread::Ring` at `reach` 4) -- the next one clockwise from the last it struck, so the bolt
     // sweeps round the ring rather than lighting it all at once ("not to all monsters at the same
     // time but like rotation") -- pushing what it leaves standing a step away (`pushes`,
@@ -222,11 +223,15 @@ constexpr SkillRow kRows[kSkills] = {
     // user's pick of 2026-09-28 off a bench sheet, after 186 held read as frozen and 169 turned
     // out to be a mount's pose -- and cannot walk out of it (the rule of 2026-09-23). 0.75's Lightning is
     // one bolt at one body; what is kept of it is the bolt, the push and the thunder.
-    {skill::kLightning, "Lightning", 15, 4.0f, 1.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
+    //
+    // **Forty mana, not 0.75's fifteen** (the user, 2026-09-28: "lightning has to spend more mana"):
+    // a channel that sweeps a ring and pushes it back is worth a third of a young wizard's pool,
+    // about what MU asks for Ice (38). Ours.
+    {skill::kLightning, "Lightning", 40, 4.0f, 1.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
      "another within four tiles and throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
-     3, 14, 32},
+     3, 14, 32, 2},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

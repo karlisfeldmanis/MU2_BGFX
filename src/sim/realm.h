@@ -264,6 +264,10 @@ struct Body {
     // Where the last strike went, as a bearing from him in radians: the next goes to the body
     // clockwise from it, so the channel sweeps round.
     float channelTurn = 0.0f;
+    // Whom this channel has struck and how often, for `SkillRow::strikesEach`. Emptied at the cast.
+    uint32_t channelStruck[kVictims] = {};
+    uint8_t channelTimes[kVictims] = {};
+    int32_t channelStruckCount = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
     Pose pose = Pose::Standing;

@@ -218,8 +218,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.channelUntil = tick_ + row.channelTicks;
         // The first strike when his arm is up in the clip.
         hero.channelNext = tick_ + row.strikeFrom;
-        // The sweep starts where he is facing.
+        // The sweep starts where he is facing, and nobody has been struck yet.
         hero.channelTurn = hero.aim;
+        hero.channelStruckCount = 0;
     }
     hero.walking = false;
     hero.route.clear();
@@ -381,11 +382,20 @@ void Realm::channel(Body& hero) {
     // on the same tick: lightning does not fly. Ties go to the lower id, so the log is fixed.
     uint32_t victims[kVictims];
     const int found = gather(hero, *row, victims, kVictims);
+    // How often this channel has struck a body already.
+    const auto times = [&](uint32_t id) -> int {
+        for (int k = 0; k < hero.channelStruckCount; ++k) {
+            if (hero.channelStruck[k] == id) return hero.channelTimes[k];
+        }
+        return 0;
+    };
     Body* next = nullptr;
     float nextTurn = 0.0f, nextGap = 0.0f;
     for (int i = 0; i < found; ++i) {
         Body* victim = body(victims[i]);
         if (victim == nullptr || !victim->alive()) continue;
+        // Struck its share already: the sweep passes it by.
+        if (row->strikesEach > 0 && times(victim->id) >= row->strikesEach) continue;
         const float turn = std::atan2(victim->y - hero.y, victim->x - hero.x);
         float gap = turn - hero.channelTurn;
         while (gap <= 1e-4f) gap += 6.28318530718f;
@@ -398,6 +408,19 @@ void Realm::channel(Body& hero) {
     }
     if (next == nullptr) return;
     hero.channelTurn = nextTurn;
+    // Counted before the blow, so a death under it changes nothing.
+    bool counted = false;
+    for (int k = 0; k < hero.channelStruckCount; ++k) {
+        if (hero.channelStruck[k] == next->id) {
+            ++hero.channelTimes[k];
+            counted = true;
+        }
+    }
+    if (!counted && hero.channelStruckCount < kVictims) {
+        hero.channelStruck[hero.channelStruckCount] = next->id;
+        hero.channelTimes[hero.channelStruckCount] = 1;
+        ++hero.channelStruckCount;
+    }
     say(What::Loosed, hero, row->number, 0, 0, next->id);
     strikeAt(hero, *next, force(*row, hero.points), row, true);
 }

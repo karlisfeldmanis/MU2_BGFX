@@ -926,7 +926,9 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         const int low = int((me.wizardMinimum + double(row.damage)) * me.wizardryRate);
         const int high =
             int((me.wizardMaximum + double(row.damage + row.damage / 2)) * me.wizardryRate);
-        facts.rows.push_back(line("Damage", std::to_string(low) + " - " + std::to_string(high),
+        // A channel's damage is each strike's, and the card says so: the band is not the cast's.
+        facts.rows.push_back(line(row.channelled() ? "Each strike" : "Damage",
+                                  std::to_string(low) + " - " + std::to_string(high),
                                   tip::Tone::Yellow));
         char sum[64];
         if (hero.staffRise > 0.0f) {
@@ -939,8 +941,42 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         how.free = sum;
         how.freeTone = tip::Tone::Gray;
         facts.rows.push_back(how);
-        facts.rows.push_back(line("Range", std::to_string(int(row.reach)) + " tiles",
-                                  tip::Tone::White));
+        // **Whom it strikes**, which is no longer always one body at a range (the user,
+        // 2026-09-28: "update tooltip for this spell, because it's multiple monsters and is
+        // channeling"). A channel says how long it runs, how many strikes it throws and that they
+        // go round him one at a time; a line says how far it sweeps; and a push is said.
+        if (row.channelled()) {
+            facts.rows.push_back(line("Channel", number(float(row.channelTicks) * 0.05f, 1) + " s",
+                                      tip::Tone::White));
+            const int strikes =
+                row.pulseTicks > 0 ? (row.strikeUntil - row.strikeFrom) / row.pulseTicks + 1 : 1;
+            facts.rows.push_back(line("Strikes", "up to " + std::to_string(strikes),
+                                      tip::Tone::White));
+            facts.rows.push_back(line("Area", std::to_string(int(row.reach)) + " tiles round him",
+                                      tip::Tone::White));
+            tip::Row turn;
+            turn.free = row.strikesEach > 0
+                            ? "going round, " + std::to_string(row.strikesEach) + " at most on one body"
+                            : "one body at a time, going round";
+            turn.freeTone = tip::Tone::Gray;
+            facts.rows.push_back(turn);
+        } else if (row.spread == sim::Spread::Line) {
+            facts.rows.push_back(line("Range", std::to_string(int(row.reach)) + " tiles",
+                                      tip::Tone::White));
+            facts.rows.push_back(line("Area", "a line of " +
+                                                  std::to_string(int(sim::kLineTiles)) + " tiles",
+                                      tip::Tone::White));
+            tip::Row through;
+            through.free = "strikes everything it passes through";
+            through.freeTone = tip::Tone::Gray;
+            facts.rows.push_back(through);
+        } else {
+            facts.rows.push_back(line("Range", std::to_string(int(row.reach)) + " tiles",
+                                      tip::Tone::White));
+        }
+        if (row.pushes) {
+            facts.rows.push_back(line("Pushes", "a tile away", tip::Tone::Green));
+        }
     } else if (row.onSelf()) {
         // What it takes off a blow, as a share, and for how long -- the two questions a guard
         // is asked. It was "x0.50 for 4.0 s", which left the player to do the sum.

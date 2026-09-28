@@ -233,7 +233,8 @@ saturates. `fx/effect_mesh` is the .obj reader and basis draw the meteor and the
 
 ## 2e. Lightning -- the first channel
 
-0.75's numbers where they survive: seventeen damage, fifteen mana, skill 3, off the Scroll of Lighting
+0.75's numbers where they survive: seventeen damage and skill 3 -- the mana is **forty**, not 0.75's
+fifteen (*"lightning has to spend more mana"*), about MU's Ice -- off the Scroll of Lighting
 (`Book03`, group 15 #2, Pasi's slot 2), refused under 72 energy. The rest is this game's (the user,
 2026-09-28): *"Lightning in our game will be first cast duration spell ... DW uses special animation
 and lightning finds all monsters around him and casts lightning to them (aoe)"*, *"it also has
@@ -243,11 +244,20 @@ cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells
   `strikeFrom` 14, `strikeUntil` 32; `Realm::channel`). It lasts the Recovery clip once, 2.08 s
   (*"make it shorter, like actual animation length"*), and strikes **only while his arm is up** in
   it, 0.7 s to 1.6 s, read off the clip frame by frame on the bench (*"when hand is up only then start
-  channeling"*): a strike every three ticks, seven at most. Each strike goes to **one** body within
+  channeling"*): a strike every three ticks, seven at most.
+- **Its card** says so (`Desk::skillSheet`, *"update tooltip for this spell, because it's multiple
+  monsters and is channeling"*): "Each strike" for the damage, then Channel 2.1 s, Strikes up to 7,
+  Area 4 tiles round him, a grey "going round, 2 at most on one body", and Pushes a tile away. Power
+  Wave's card got its line the same day: Range 6, Area a line of 12 tiles, "strikes everything it
+  passes through". Each strike goes to **one** body within
   **four tiles** (`Spread::Ring` at `reach` 4): the first clockwise from where the last one went
   (`Body::channelTurn`, starting where he faces), so the bolt sweeps round the ring (*"not to all
   monsters at the same time but like rotation"*); a lone body takes every strike, and a body that
-  walks in joins the round. A strike with nothing in reach is not thrown. Earlier cuts ran three
+  walks in joins the round. **No body is struck more than twice in a cast** (`strikesEach` 2, the
+  tally on `Body::channelStruck`): seven strikes into a lone monster was a one-shot (*"when there is
+  a single monster the DW casts all lightning to one monster and basically one-shots him"*), so it
+  is a spell for a crowd -- a lone body takes two and the rest are not thrown, four around him share
+  the seven. A strike with nothing in reach is not thrown. Earlier cuts ran three
   seconds from a fifth of a second in, striking everything at once, then one at a time.
   The clip's length is logged at every cast (`channel: ... s long`); the sim's clip table does not
   carry 183, so the ticks are written on the row and the log is how to check them.
@@ -256,7 +266,7 @@ cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells
   blocked or sheltered tile, and a death mid-slide leaves the body on its tile. 0.75 moves a random
   neighbour at once. Nothing in Lorencia resists lightning, so the resistance roll is not made.
 - **Ten seconds of cooldown**, before agility's haste as every key's is (9.5 s on a young wizard),
-  floored at the channel and two seconds. Fifteen mana at the cast. It asks for something within
+  floored at the channel and two seconds. Forty mana at the cast. It asks for something within
   four tiles before it goes, so it is never spent on empty air.
 - **He channels in it.** MU's "Skill recovery" (183) -- one arm thrown up to the sky -- looping for
   the whole channel. Chosen by the user off bench sheets after two misses: "Skill lightning shock"

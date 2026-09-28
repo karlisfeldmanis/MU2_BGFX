@@ -1046,11 +1046,12 @@ void testCastLock(const content::Tables& tables) {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
         check(bolt.wizardry && bolt.channelled() && !bolt.primary() && !bolt.thrown() &&
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
-                  bolt.mana == 15 && bolt.coolTicks == 200 && bolt.channelTicks == 42,
+                  bolt.mana == 40 && bolt.coolTicks == 200 && bolt.channelTicks == 42,
               "Lightning is a channel round him as long as its clip, ten seconds to cool, and it "
               "pushes");
-        check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32,
-              "and it strikes every three ticks while his arm is up");
+        check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32 &&
+                  bolt.strikesEach == 2,
+              "and it strikes every three ticks while his arm is up, twice at most a body");
         const int32_t scroll = tables.itemAt(15, 2);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kLightning &&
                   tables.items[size_t(scroll)].teachesEnergy == 72,
@@ -1063,7 +1064,8 @@ void testCastLock(const content::Tables& tables) {
         int64_t lastCast = -1, closest = 1 << 30, pulseTick = -1, earliest = 1 << 30;
         int pulses = 0, mostPulses = 0, thisPulse = 0, thisChannel = 0, sweptMost = 0;
         uint32_t swept[16] = {};
-        int sweptCount = 0;
+        int sweptTimes[16] = {};
+        int sweptCount = 0, mostOnOne = 0;
         float worstStep = 0.0f;
         uint32_t fighting = 0, sliding = 0;
         float lastX = 0.0f, lastY = 0.0f, before = 0.0f;
@@ -1128,8 +1130,18 @@ void testCastLock(const content::Tables& tables) {
                     }
                     widest = std::max(widest, ++thisPulse);
                     bool seen = false;
-                    for (int k = 0; k < sweptCount; ++k) seen |= swept[k] == one.whom;
-                    if (!seen && sweptCount < 16) swept[sweptCount++] = one.whom;
+                    for (int k = 0; k < sweptCount; ++k) {
+                        if (swept[k] == one.whom) {
+                            seen = true;
+                            ++sweptTimes[k];
+                            mostOnOne = std::max(mostOnOne, sweptTimes[k]);
+                        }
+                    }
+                    if (!seen && sweptCount < 16) {
+                        sweptTimes[sweptCount] = 1;
+                        mostOnOne = std::max(mostOnOne, 1);
+                        swept[sweptCount++] = one.whom;
+                    }
                 }
                 if (one.what != sim::What::Shoved) continue;
                 ++pushes;
@@ -1160,6 +1172,7 @@ void testCastLock(const content::Tables& tables) {
               "and never twice inside its cooldown");
         // One body a strike, and round the ring: a channel with company strikes more than one.
         checkEqual(widest, 1, "and each strike goes to one body");
+        check(mostOnOne <= 2, "and no body is struck more than twice in a cast");
         check(sweptMost >= 2, "and a channel goes round to more than one");
         checkEqual(stillWhile, 0, "and he stands still while it runs");
         check(pushes > 5 && away > 0, "and it pushes what it does not kill, away from him");
