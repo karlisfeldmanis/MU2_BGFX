@@ -302,6 +302,12 @@ private:
     tip::Sheet fanSheet_;
     float width_ = 0.0f, height_ = 0.0f;
     tip::Sheet sheets_[kSkillBoxes];
+    // The plate's hover cards, built when the pointer rests (hud.cpp says what each carries).
+    tip::Sheet boonSheet(const Boon& one, panel::Arts& arts) const;
+    tip::Sheet lifeSheet() const;
+    tip::Sheet manaSheet() const;
+    tip::Sheet shieldSheet() const;
+    tip::Sheet experienceSheet() const;
     Stage* stage_ = nullptr;
     std::vector<Standing> standing_;
 };

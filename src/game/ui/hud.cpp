@@ -9,6 +9,7 @@
 
 #include "game/ui/controls.h"
 #include "game/ui/tip.h"
+#include "sim/recovery.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
 
@@ -80,7 +81,6 @@ constexpr int kTenths = 10;
 
 // Type, in plate pixels like everything else here.
 constexpr float kReadingTall = 20.0f;
-constexpr float kTipTall = 15.0f;
 
 // The buff strip: MuDream's own place for it, the row starting over the shield bar's left end
 // and running right. MU2 draws a 30-pixel SQUARE there (`Hud.BuffsAt`), and this is bigger than
@@ -129,10 +129,6 @@ constexpr uint32_t kSocketBack = gfx::rgba(0.05f, 0.055f, 0.07f, 0.9f);
 constexpr uint32_t kInk = gfx::rgba(1.0f, 250.0f / 255.0f, 240.0f / 255.0f);
 constexpr uint32_t kInkShadow = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
 constexpr uint32_t kDeadIcon = gfx::rgba(0.55f, 0.55f, 0.55f, 0.6f);
-constexpr uint32_t kTipColour = gfx::rgba(238.0f / 255.0f, 230.0f / 255.0f, 214.0f / 255.0f);
-constexpr uint32_t kTipNameColour = gfx::rgba(236.0f / 255.0f, 198.0f / 255.0f, 92.0f / 255.0f);
-// The grey of a sum, under the line it explains.
-constexpr uint32_t kTipGrey = gfx::rgba(0.62f, 0.62f, 0.62f);
 constexpr uint32_t kLabelCell = gfx::rgba(15.0f / 255.0f, 16.0f / 255.0f, 17.0f / 255.0f);
 
 // The ring a fired potion box wears: the key's own gold, a quarter of a second of it, stepping
@@ -574,6 +570,260 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
     rebuild();
 }
 
+// ---- the cards over the plate ---------------------------------------------------------------
+//
+// Every hover on the plate is the skill card's glass since 2026-09-28 (the user: "improve the
+// tooltips"): a name in its colour, the reading first and large enough to find, then what it is
+// made of as label-and-figure rows, and the foot for how long or how full. The sums use the
+// realm's own formulas and constants (sim/rules.h, sim/recovery.h, sim/skills.h), so a card can
+// not say a number the game does not use.
+namespace {
+
+constexpr float kCardWide = 244.0f;
+
+tip::Row said(const std::string& label, const std::string& value, tip::Tone tone) {
+    tip::Row one;
+    one.label = label;
+    one.values.push_back({value, tone, false, "", 0});
+    return one;
+}
+
+tip::Row prose(const std::string& text, tip::Tone tone = tip::Tone::Gray) {
+    tip::Row one;
+    one.free = text;
+    one.freeTone = tone;
+    return one;
+}
+
+std::string times(int count, float each) {
+    char text[48];
+    std::snprintf(text, sizeof text, each == float(int(each)) ? "%d x %.0f" : "%d x %.1f", count,
+                  double(each));
+    return text;
+}
+
+std::string percent(float share, int places = 0) {
+    char text[16];
+    std::snprintf(text, sizeof text, places == 0 ? "%.0f%%" : "%.1f%%", double(share) * 100.0);
+    return text;
+}
+
+std::string of(int now, int most) { return panel::grouped(now) + " / " + panel::grouped(most); }
+
+}  // namespace
+
+tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
+    tip::Sheet sheet;
+    sheet.wide = kCardWide;
+    const char* art = one.ale ? "buff_ale" : buffArt(one.skill);
+    if (art != nullptr) {
+        const gfx::Art& icon = arts.get(art);
+        if (icon.valid()) {
+            sheet.picture = icon;
+            sheet.from = {0.0f, 0.0f, icon.width, icon.height};
+        }
+    }
+    sheet.wear = sim::spoken(one.seconds) + " left";
+    sheet.worn = std::clamp(one.share, 0.0f, 1.0f);
+    sheet.wearTone = tip::Tone::White;
+    if (one.ale) {
+        // OpenMU's effect: the twenty on AttackSpeedAny, for eighty seconds.
+        sheet.name = "Ale";
+        sheet.nameTone = tip::Tone::Yellow;
+        sheet.base = "POTION";
+        tip::Section what;
+        what.rows.push_back(said("Attack speed", "+" + std::to_string(sim::kAleSpeed),
+                                 tip::Tone::Green));
+        sheet.sections.push_back(what);
+        return sheet;
+    }
+    const sim::SkillRow* row = sim::skillNumbered(one.skill);
+    if (row == nullptr) return {};
+    sheet.name = row->name;
+    sheet.nameTone = tip::Tone::Blue;
+    const bool barrier = row->number == sim::skill::kSoulBarrier;
+    sheet.base = barrier ? "AURA \xc2\xb7 DARK WIZARD" : "AURA \xc2\xb7 DARK KNIGHT";
+
+    // What it does now, which was fixed at the cast.
+    const float held = 1.0f - hero_->boonDamageTaken;
+    tip::Section what;
+    what.rows.push_back(said("Absorbs", percent(held), tip::Tone::Green));
+    what.rows.push_back(prose("of every blow that gets past armour"));
+    sheet.sections.push_back(what);
+
+    // And how it is reckoned, with his own numbers: the points, then the curve. Strength is the
+    // knight's main stat and energy the wizard's (`guardPoints`, `barrierPoints`).
+    const sim::HeroPoints& has = hero_->points;
+    const int shield = hero_->shieldDefense;
+    const int main = barrier ? has.energy : has.strength;
+    const float points =
+        barrier ? sim::barrierPoints(has, shield) : sim::guardPoints(has, shield);
+    const float now = sim::boonShare(*row, has, shield);
+    tip::Section sum;
+    sum.kicker = barrier ? "Barrier points" : "Guard points";
+    sum.rows.push_back(said("Shield  " + times(shield, 5.0f), std::to_string(5 * shield),
+                            tip::Tone::White));
+    sum.rows.push_back(said(std::string(barrier ? "Energy  " : "Strength  ") + times(main, 1.1f),
+                            std::to_string(int(std::lround(1.1 * main))), tip::Tone::White));
+    sum.rows.push_back(said("Agility  " + times(has.agility, 0.5f),
+                            std::to_string(int(std::lround(0.5 * has.agility))),
+                            tip::Tone::White));
+    sum.rows.push_back(said("Total", std::to_string(int(std::lround(points))), tip::Tone::Yellow));
+    char curve[96];
+    std::snprintf(curve, sizeof curve, "%d%% x %.0f / (%.0f + 150) = %s  (cap %d%%)",
+                  int(sim::kGuardCap * 100.0f + 0.5f), double(points), double(points),
+                  percent(now).c_str(), int(sim::kGuardCap * 100.0f + 0.5f));
+    sum.rows.push_back(prose(curve));
+    sheet.sections.push_back(sum);
+
+    // Held at the cast: a shield changed or points spent since show in the sum and not in the
+    // share until he casts it again, and the card says so rather than disagree with itself.
+    if (percent(now) != percent(held)) {
+        sheet.note = "Cast again for " + percent(now);
+        sheet.noteTone = now > held ? tip::Tone::Green : tip::Tone::Red;
+    }
+    return sheet;
+}
+
+tip::Sheet Hud::lifeSheet() const {
+    tip::Sheet sheet;
+    sheet.wide = kCardWide;
+    sheet.name = "Life";
+    sheet.nameTone = tip::Tone::Red;
+    tip::Section now;
+    now.rows.push_back(said("Life", of(hero_->health, hero_->maxHealth), tip::Tone::White));
+    sheet.sections.push_back(now);
+
+    // `reckon`'s own sum: the class's base, its rate a level and its rate a point of vitality,
+    // and the excellent armour's four percent a piece on top.
+    const sim::ClassRow& row = sim::rowOf(hero_->kin);
+    tip::Section most;
+    most.kicker = "Maximum";
+    most.rows.push_back(said("Base", std::to_string(int(row.baseHealth)), tip::Tone::White));
+    most.rows.push_back(said("Level  " + times(hero_->level, row.healthPerLevel),
+                             std::to_string(int(float(hero_->level) * row.healthPerLevel)),
+                             tip::Tone::White));
+    most.rows.push_back(said("Vitality  " + times(hero_->points.vitality, row.healthPerVitality),
+                             std::to_string(int(float(hero_->points.vitality) *
+                                                row.healthPerVitality)),
+                             tip::Tone::White));
+    if (hero_->excel.healthRate != 1.0) {
+        most.rows.push_back(said("Excellent armour", "+" + percent(float(hero_->excel.healthRate - 1.0)),
+                                 tip::Tone::Green));
+    }
+    sheet.sections.push_back(most);
+
+    tip::Section back;
+    back.kicker = "Recovery";
+    back.rows.push_back(prose(percent(sim::kHealthRecoveryInSafeZone) + " of the maximum every " +
+                              std::to_string(sim::kRecoverEveryTicks / 20) +
+                              " s, in town only. Potions everywhere else."));
+    sheet.sections.push_back(back);
+    sheet.wear = percent(fraction(hero_->health, hero_->maxHealth)) + " full";
+    sheet.worn = fraction(hero_->health, hero_->maxHealth);
+    sheet.wearTone = tip::Tone::Red;
+    return sheet;
+}
+
+tip::Sheet Hud::manaSheet() const {
+    tip::Sheet sheet;
+    sheet.wide = kCardWide;
+    sheet.name = "Mana";
+    sheet.nameTone = tip::Tone::Blue;
+    tip::Section now;
+    now.rows.push_back(said("Mana", of(hero_->mana, hero_->maxMana), tip::Tone::White));
+    sheet.sections.push_back(now);
+
+    // `maximumMana`'s three parts, found by asking it with each input taken away: its rates are
+    // its own and are not copied here.
+    const sim::HeroPoints bare{hero_->points.strength, hero_->points.agility,
+                               hero_->points.vitality, 0};
+    const int base = sim::maximumMana(hero_->kin, 0, {});
+    const int byLevel = sim::maximumMana(hero_->kin, hero_->level, {}) - base;
+    const int byEnergy = sim::maximumMana(hero_->kin, hero_->level, hero_->points) -
+                         sim::maximumMana(hero_->kin, hero_->level, bare);
+    tip::Section most;
+    most.kicker = "Maximum";
+    if (base > 0) most.rows.push_back(said("Base", std::to_string(base), tip::Tone::White));
+    most.rows.push_back(said("Level  " + std::to_string(hero_->level), std::to_string(byLevel),
+                             tip::Tone::White));
+    most.rows.push_back(said("Energy  " + std::to_string(hero_->points.energy),
+                             std::to_string(byEnergy), tip::Tone::White));
+    if (hero_->excel.manaRate != 1.0) {
+        most.rows.push_back(said("Excellent armour", "+" + percent(float(hero_->excel.manaRate - 1.0)),
+                                 tip::Tone::Green));
+    }
+    sheet.sections.push_back(most);
+
+    tip::Section back;
+    back.kicker = "Recovery";
+    back.rows.push_back(prose(percent(sim::kManaRecoveryShare, 1) + " of the maximum every " +
+                              std::to_string(sim::kRecoverEveryTicks / 20) + " s, anywhere."));
+    back.rows.push_back(prose(percent(sim::kAttackManaShare) + " back on every landed attack."));
+    sheet.sections.push_back(back);
+    sheet.wear = percent(fraction(hero_->mana, hero_->maxMana)) + " full";
+    sheet.worn = fraction(hero_->mana, hero_->maxMana);
+    sheet.wearTone = tip::Tone::Blue;
+    return sheet;
+}
+
+tip::Sheet Hud::shieldSheet() const {
+    tip::Sheet sheet;
+    sheet.wide = kCardWide;
+    sheet.name = "Shield";
+    sheet.nameTone = tip::Tone::Yellow;
+    tip::Section now;
+    now.rows.push_back(said("Shield", of(hero_->sd, hero_->maxSd), tip::Tone::White));
+    now.rows.push_back(prose("Takes " + percent(sim::kShieldShare) +
+                             " of every blow until it breaks; the rest reaches life."));
+    sheet.sections.push_back(now);
+
+    // `maximumShield`: 1.2 a point of all four stats, the defence, and the level squared over 30.
+    const sim::HeroPoints& has = hero_->points;
+    const int stats = has.strength + has.agility + has.vitality + has.energy;
+    tip::Section most;
+    most.kicker = "Maximum";
+    most.rows.push_back(said("All stats  " + times(stats, 1.2f),
+                             std::to_string(int(1.2f * float(stats))), tip::Tone::White));
+    most.rows.push_back(said("Defense", std::to_string(hero_->stats.defense), tip::Tone::White));
+    most.rows.push_back(said("Level  " + times(hero_->level, float(hero_->level)) + " / 30",
+                             std::to_string(hero_->level * hero_->level / 30), tip::Tone::White));
+    sheet.sections.push_back(most);
+
+    tip::Section back;
+    back.kicker = "Recovery";
+    back.rows.push_back(prose(percent(sim::kShieldRecovery) + " of the maximum every " +
+                              std::to_string(sim::kRecoveryTicks / 20) + " s, in town only."));
+    sheet.sections.push_back(back);
+    sheet.wear = percent(fraction(hero_->sd, hero_->maxSd)) + " full";
+    sheet.worn = fraction(hero_->sd, hero_->maxSd);
+    sheet.wearTone = tip::Tone::Yellow;
+    return sheet;
+}
+
+tip::Sheet Hud::experienceSheet() const {
+    tip::Sheet sheet;
+    sheet.wide = kCardWide;
+    sheet.name = "Experience";
+    sheet.nameTone = tip::Tone::Yellow;
+    const uint64_t at = sim::neededExperience(hero_->level);
+    const uint64_t next = sim::neededExperience(hero_->level + 1);
+    const uint64_t into = hero_->experience > at ? hero_->experience - at : 0;
+    const uint64_t span = next > at ? next - at : 1;
+    tip::Section now;
+    now.rows.push_back(said("Level", std::to_string(hero_->level), tip::Tone::White));
+    now.rows.push_back(said("This level", panel::commas((long long)into) + " / " +
+                                              panel::commas((long long)span),
+                            tip::Tone::White));
+    now.rows.push_back(said("To the next", panel::commas((long long)(span - std::min(into, span))),
+                            tip::Tone::Yellow));
+    sheet.sections.push_back(now);
+    sheet.wear = std::to_string(segment()) + " of " + std::to_string(kTenths) + " marks";
+    sheet.worn = float(double(into) / double(span));
+    sheet.wearTone = tip::Tone::Yellow;
+    return sheet;
+}
+
 void Hud::rebuild() {
     ++rebuilds_;
     canvas_.clear();
@@ -895,78 +1145,35 @@ void Hud::rebuild() {
             tip::draw(tip_, sheets_[overSkill], box.midX(), box.y, now_.width, now_.height);
             return;
         }
-        // The buff: what is on him, what it does and for how much longer. The hairline under the
-        // icon says the last as a share; this says it in minutes, in the skill card's own words.
+        // The buff: what is on him, what it does, how that is reckoned and for how much longer,
+        // on the skill card's own glass (the user, 2026-09-28).
         if (const int over = boonAt(px, py); over >= 0) {
-            const Boon& one = boons_[over];
             const Box cell = plate(s, buffPx(over));
-            std::vector<panel::Line> lines;
-            // The Ale's three lines say what OpenMU's effect is: the twenty on AttackSpeedAny,
-            // and what is left of the eighty seconds.
-            if (one.ale) {
-                lines = {{"Ale", kTipNameColour, true},
-                         {"Attack speed +" + std::to_string(sim::kAleSpeed), kTipColour, false},
-                         {sim::spoken(one.seconds) + " left", kTipColour, false}};
-            } else if (const sim::SkillRow* row = sim::skillNumbered(one.skill)) {
-                const float held = 1.0f - hero_->boonDamageTaken;
-                lines = {{row->name, kTipNameColour, true},
-                         {"Absorbs " + sim::absorbed(held) + " of every blow", kTipColour,
-                          false}};
-                // And how that share is reckoned, with his own numbers in it, grey as the skill
-                // card's sum is (the user, 2026-09-28): the points off the shield, the main stat
-                // and agility, then the curve that turns them into a share. The main stat is
-                // strength on the knight's guard and energy on the wizard's barrier.
-                const sim::HeroPoints& has = hero_->points;
-                const int shield = hero_->shieldDefense;
-                const bool barrier = row->number == sim::skill::kSoulBarrier;
-                const float points = barrier ? sim::barrierPoints(has, shield)
-                                             : sim::guardPoints(has, shield);
-                const float now = sim::boonShare(*row, has, shield);
-                char sum[128], curve[128];
-                std::snprintf(sum, sizeof sum, "5 x %d shield + 1.1 x %d %s + 0.5 x %d agi = %.0f",
-                              shield, barrier ? has.energy : has.strength, barrier ? "ene" : "str",
-                              has.agility, double(points));
-                std::snprintf(curve, sizeof curve, "%d%% x %.0f / (%.0f + 150) = %s",
-                              int(sim::kGuardCap * 100.0f + 0.5f), double(points),
-                              double(points), sim::absorbed(now).c_str());
-                lines.push_back({sum, kTipGrey, false});
-                lines.push_back({curve, kTipGrey, false});
-                // Held at the cast: a shield changed or points spent since show here and not in
-                // the share until he casts it again, and the tip says so rather than disagree.
-                if (sim::absorbed(now) != sim::absorbed(held)) {
-                    lines.push_back({"Cast again for " + sim::absorbed(now), kTipGrey, false});
-                }
-                lines.push_back({sim::spoken(one.seconds) + " left", kTipColour, false});
-            }
-            if (!lines.empty()) {
-                panel::tooltip(tip_, cell.midX(), cell.y, lines,
-                               std::round(kTipTall * kUnit * s.scale), now_.width, now_.height);
+            const tip::Sheet sheet = boonSheet(boons_[over], arts);
+            if (!sheet.empty()) {
+                tip::draw(tip_, sheet, cell.midX(), cell.y, now_.width, now_.height);
                 return;
             }
         }
-        std::string name, value;
-        if (plate(s, kLifeHole).has(px, py)) {
-            name = "Life";
-            value = std::to_string(hero_->health) + " / " + std::to_string(hero_->maxHealth);
-        } else if (plate(s, kManaHole).has(px, py)) {
-            name = "Mana";
-            value = std::to_string(hero_->mana) + " / " + std::to_string(hero_->maxMana);
+        // And the plate's own readings: life, mana, the shield and experience, each on the same
+        // card, standing on what it describes.
+        tip::Sheet sheet;
+        float anchorX = px, anchorY = plate(s, {0.0f, 0.0f, kPlateW, kPlateH}).y;
+        if (const Box life = plate(s, kLifeHole); life.has(px, py)) {
+            sheet = lifeSheet();
+            anchorX = life.midX();
+            anchorY = life.y;
+        } else if (const Box mana = plate(s, kManaHole); mana.has(px, py)) {
+            sheet = manaSheet();
+            anchorX = mana.midX();
+            anchorY = mana.y;
         } else if (hero_->maxSd > 0 && plate(s, kShieldBar).has(px, py)) {
-            name = "Shield";
-            value = std::to_string(hero_->sd) + " / " + std::to_string(hero_->maxSd);
+            sheet = shieldSheet();
+            anchorY = plate(s, kShieldBar).y;
         } else {
-            name = "Experience";
-            const uint64_t at = sim::neededExperience(hero_->level);
-            const uint64_t next = sim::neededExperience(hero_->level + 1);
-            const uint64_t into = hero_->experience > at ? hero_->experience - at : 0;
-            value = panel::commas((long long)into) + " / " + panel::commas((long long)(next - at)) +
-                    "   (" + std::to_string(segment()) + "/" + std::to_string(kTenths) + ")";
+            sheet = experienceSheet();
         }
-        const std::vector<panel::Line> lines = {{name, kTipNameColour, true},
-                                                {value, kTipColour, false}};
-        const Box top = plate(s, {0.0f, 0.0f, kPlateW, kPlateH});
-        panel::tooltip(tip_, px, top.y, lines, std::round(kTipTall * kUnit * s.scale),
-                       now_.width, now_.height);
+        tip::draw(tip_, sheet, anchorX, anchorY, now_.width, now_.height);
     }
 }
 
