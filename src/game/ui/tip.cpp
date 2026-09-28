@@ -122,6 +122,53 @@ void roundedFan(gfx::Canvas& canvas, const gfx::Box& box, const float radius[4],
     canvas.polygon(xy, colours, at / 2);
 }
 
+// The ring between two rounded rectangles, `outer` round `inner`, as a strip of four-point
+// quads round the corners: what an edge is drawn with when the card behind it is see-through.
+// A filled fan under the body stacks its alpha into the body's and the glass reads solid
+// however thin the body is -- which is what it did until 2026-09-28. Graded top to foot as
+// `roundedFan` grades.
+void roundedBand(gfx::Canvas& canvas, const gfx::Box& outer, const float outerRadius[4],
+                 const gfx::Box& inner, const float innerRadius[4], uint32_t top, uint32_t foot) {
+    constexpr int kPoints = (kCorner + 1) * 4;
+    float out[kPoints * 2], in[kPoints * 2];
+    const auto trace = [](const gfx::Box& box, const float radius[4], float* xy) {
+        const float cx[4] = {box.x, box.right(), box.right(), box.x};
+        const float cy[4] = {box.y, box.y, box.bottom(), box.bottom()};
+        const float sx[4] = {1.0f, -1.0f, -1.0f, 1.0f};
+        const float sy[4] = {1.0f, 1.0f, -1.0f, -1.0f};
+        const float from[4] = {3.14159265f, 4.71238898f, 0.0f, 1.57079633f};
+        int at = 0;
+        for (int c = 0; c < 4; ++c) {
+            const float rad = std::min({radius[c], box.w * 0.5f, box.h * 0.5f});
+            const float ox = cx[c] + sx[c] * rad, oy = cy[c] + sy[c] * rad;
+            for (int i = 0; i <= kCorner; ++i) {
+                const float a = from[c] + 1.57079633f * float(i) / float(kCorner);
+                xy[at++] = ox + std::cos(a) * rad;
+                xy[at++] = oy + std::sin(a) * rad;
+            }
+        }
+    };
+    trace(outer, outerRadius, out);
+    trace(inner, innerRadius, in);
+    const auto channel = [](uint32_t c, int shift) { return float((c >> shift) & 0xFFu); };
+    const auto at = [&](float y) {
+        const float t = outer.h > 0.0f ? std::clamp((y - outer.y) / outer.h, 0.0f, 1.0f) : 0.0f;
+        uint32_t mixed = 0;
+        for (int shift = 0; shift < 32; shift += 8) {
+            const float v = channel(top, shift) + (channel(foot, shift) - channel(top, shift)) * t;
+            mixed |= uint32_t(v + 0.5f) << shift;
+        }
+        return mixed;
+    };
+    for (int i = 0; i < kPoints; ++i) {
+        const int j = (i + 1) % kPoints;
+        const float xy[8] = {out[i * 2], out[i * 2 + 1], out[j * 2], out[j * 2 + 1],
+                             in[j * 2],  in[j * 2 + 1],  in[i * 2], in[i * 2 + 1]};
+        const uint32_t colours[4] = {at(xy[1]), at(xy[3]), at(xy[5]), at(xy[7])};
+        canvas.polygon(xy, colours, 4);
+    }
+}
+
 // Every word on the card is printed over its own shadow: a pixel down and right in black, which
 // is MU's own way of putting text over art (`RenderTextByScript`'s drop) and what makes a label
 // readable on glass this thin. The colour is passed through `fade` by the caller; the shadow is
@@ -379,9 +426,13 @@ void glass(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius, uint
     const float all[4] = {r, r, r, r};
     const float wider[4] = {r + line, r + line, r + line, r + line};
     const float widest[4] = {r + line * 2.0f, r + line * 2.0f, r + line * 2.0f, r + line * 2.0f};
-    // Sanctuary's edge: a seam of black outside a lit iron ring, then the body on stone.
-    roundedFan(canvas, box.grown(line * 2.0f), widest, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
-    roundedFan(canvas, box.grown(line), wider, fade(kRing), fade(gfx::rgba(0.165f, 0.125f, 0.098f)));
+    // Sanctuary's edge: a seam of black outside a lit iron ring, then the body on stone. The
+    // seam and the ring are bands round the body and not fills under it, so the body's own alpha
+    // is the whole of what covers the world (the user: "a little bit transparent", 2026-09-28).
+    const uint32_t black = gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f);
+    roundedBand(canvas, box.grown(line * 2.0f), widest, box.grown(line), wider, black, black);
+    roundedBand(canvas, box.grown(line), wider, box, all, fade(kRing),
+                fade(gfx::rgba(0.165f, 0.125f, 0.098f)));
     roundedFan(canvas, box, all, top != 0u ? top : kBodyTop, foot != 0u ? foot : kBodyFoot);
     controls::grain(canvas, box.grown(-line));
 }

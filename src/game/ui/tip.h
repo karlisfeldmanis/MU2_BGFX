@@ -95,8 +95,10 @@ struct FootLine {
 namespace ink {
 // The body, graded from its head to its foot, and the iron that is its edge: Sanctuary's ash
 // and iron (game/ui/style.h) since 2026-09-28, where it was a cool black under a warm hairline.
-constexpr uint32_t kBodyTop = gfx::rgba(0.051f, 0.039f, 0.031f, 0.97f);
-constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.012f, 0.012f, 0.93f);
+// A little see-through since the same day, on the user's word: the world moves behind a card,
+// and the words keep their own drop shadow to hold an edge on it.
+constexpr uint32_t kBodyTop = gfx::rgba(0.051f, 0.039f, 0.031f, 0.84f);
+constexpr uint32_t kBodyFoot = gfx::rgba(0.020f, 0.012f, 0.012f, 0.80f);
 constexpr uint32_t kRing = gfx::rgba(0.420f, 0.337f, 0.271f, 1.0f);
 constexpr uint32_t kHair = gfx::rgba(1.0f, 1.0f, 1.0f, 0.06f);
 constexpr uint32_t kLabel = gfx::rgba(0.769f, 0.757f, 0.706f);
