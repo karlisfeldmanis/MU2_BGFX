@@ -3,10 +3,11 @@
 //
 // Ours: MU has no marker. MuMain's quest NPC is found by walking up to him. The shape follows the
 // Sanctuary taste (docs of 2026-09-27): one clean glyph, round where it is round, no diamond, no
-// frame and no ornament -- a tapered bar and a round dot, with a dark rim so it reads over
-// bright stone as well as over the night. Flat, as the user asked (2026-09-28): no gradient and
-// no glow; the detail is in flat shapes -- two facets split down the middle, an engraved line
-// just inside the edge, one short highlight and a hard shadow.
+// frame and no ornament. A slim forged blade -- a flat top with its corners cut, tapering to a
+// point -- over a small round dot, in old gold: a ridge down the middle with the left face lit
+// and the right in shade, a pale edge on the lit side, a little wear, a hairline of ink and a
+// soft dark halo so it reads over bright stone. No glow. The user turned down a rounded, bright
+// yellow capsule with a thick rim as cartoonish (2026-09-28): Diablo IV's are sharp and quiet.
 //
 // The picture is baked in code, as the controls' stone is, at the size it is drawn: a signed
 // distance per pixel, sixteen samples a pixel, rebuilt only when the interface unit changes. So
