@@ -38,10 +38,11 @@ constexpr Box kStrip{12.0f, 363.0f, 166.0f, 20.0f};
 constexpr Box kHammers[2] = {{54.0f, 390.0f, 36.0f, 29.0f}, {98.0f, 390.0f, 36.0f, 29.0f}};
 // The buy-back, on the same foot (the user, 2026-09-28: *"button at same position where
 // blacksmith has repairs"*): so every shelf is fifteen rows now, not only a mending one. Where
-// the counter mends it stands a third in the hammers' row, at their pitch; elsewhere it takes the
-// Repair hammer's own place.
+// the counter mends it stands a third in the hammers' row, at their pitch; elsewhere it is in the
+// middle of the row, where a lone button does not read as one missing its neighbour.
 constexpr Box kUndoBeside{142.0f, 390.0f, 36.0f, 29.0f};
-Box undoBox(bool mends) { return mends ? kUndoBeside : kHammers[0]; }
+constexpr Box kUndoAlone{(panel::kWidth - 36.0f) * 0.5f, 390.0f, 36.0f, 29.0f};
+Box undoBox(bool mends) { return mends ? kUndoBeside : kUndoAlone; }
 
 Box cellOf(int slot, const content::ItemRow& row) {
     return {kOriginX + float(slot % kColumns) * kCell, kOriginY + float(slot / kColumns) * kCell,

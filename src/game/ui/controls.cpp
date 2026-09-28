@@ -305,6 +305,60 @@ void bar(gfx::Canvas& canvas, float x0, float y0, float x1, float y1, float t, u
     canvas.polygon(nullptr, xy, nullptr, 4, ink);
 }
 
+// The canvas has no antialiasing, so an edge that must read smooth at a glyph's size is given a
+// one-pixel fringe fading to nothing: a band of per-vertex colour outside the solid shape.
+uint32_t clear(uint32_t ink) { return ink & 0x00FFFFFFu; }
+
+void fringe(gfx::Canvas& canvas, float ax, float ay, float bx, float by, float ox, float oy,
+            uint32_t ink) {
+    const float xy[8] = {ax, ay, bx, by, bx + ox, by + oy, ax + ox, ay + oy};
+    const uint32_t c[4] = {ink, ink, clear(ink), clear(ink)};
+    canvas.polygon(xy, c, 4);
+}
+
+// A convex polygon, solid, with its fringe. Points in either winding.
+void featheredPolygon(gfx::Canvas& canvas, const float* xy, int count, uint32_t ink) {
+    canvas.polygon(nullptr, xy, nullptr, count, ink);
+    float mx = 0.0f, my = 0.0f;
+    for (int i = 0; i < count; ++i) mx += xy[i * 2], my += xy[i * 2 + 1];
+    mx /= float(count), my /= float(count);
+    for (int i = 0; i < count; ++i) {
+        const int n = (i + 1) % count;
+        const float ax = xy[i * 2], ay = xy[i * 2 + 1], bx = xy[n * 2], by = xy[n * 2 + 1];
+        const float dx = bx - ax, dy = by - ay;
+        const float len = std::max(0.001f, std::sqrt(dx * dx + dy * dy));
+        float ox = -dy / len, oy = dx / len;
+        // Outward: away from the middle.
+        if ((ax - mx) * ox + (ay - my) * oy < 0.0f) ox = -ox, oy = -oy;
+        fringe(canvas, ax, ay, bx, by, ox, oy, ink);
+    }
+}
+
+// An arc `w` either side of radius `r` from angle `a0` to `a1`, fringed on both rims and at
+// both ends.
+void featheredArc(gfx::Canvas& canvas, float cx, float cy, float r, float w, float a0, float a1,
+                  uint32_t ink) {
+    const int steps = std::max(12, int(std::abs(a1 - a0) * r * 0.5f));
+    const float in = r - w, out = r + w;
+    for (int i = 0; i < steps; ++i) {
+        const float a = a0 + (a1 - a0) * float(i) / float(steps);
+        const float b = a0 + (a1 - a0) * float(i + 1) / float(steps);
+        const float ca = std::cos(a), sa = std::sin(a), cb = std::cos(b), sb = std::sin(b);
+        const float core[8] = {cx + ca * out, cy + sa * out, cx + cb * out, cy + sb * out,
+                               cx + cb * in,  cy + sb * in,  cx + ca * in,  cy + sa * in};
+        canvas.polygon(nullptr, core, nullptr, 4, ink);
+        fringe(canvas, cx + ca * out, cy + sa * out, cx + cb * out, cy + sb * out, ca, sa, ink);
+        fringe(canvas, cx + ca * in, cy + sa * in, cx + cb * in, cy + sb * in, -ca, -sa, ink);
+    }
+    // The two ends, fringed along the way the arc would have gone on.
+    const float ends[2] = {a0, a1};
+    for (int e = 0; e < 2; ++e) {
+        const float c = std::cos(ends[e]), sn = std::sin(ends[e]);
+        const float d = e == 0 ? -1.0f : 1.0f;
+        fringe(canvas, cx + c * out, cy + sn * out, cx + c * in, cy + sn * in, -sn * d, c * d, ink);
+    }
+}
+
 void glyph(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float u) {
     const float cx = box.midX(), cy = box.midY();
     const float s = std::min(box.w, box.h);
@@ -360,22 +414,21 @@ void glyph(gfx::Canvas& canvas, const Box& box, Glyph which, uint32_t ink, float
             break;
         }
         case Glyph::Undo: {
-            // An arrow turning back on itself: most of a ring open at the lower left, and the
-            // head at its upper-left end pointing back the way it came.
-            const float r = s * 0.17f, w = std::max(1.0f, 1.2f * u);
-            constexpr int kSteps = 18;
-            const float from = -2.2f, to = 2.4f;  // radians, clockwise from the head
-            for (int i = 0; i < kSteps; ++i) {
-                const float a = from + (to - from) * float(i) / float(kSteps);
-                const float b = from + (to - from) * float(i + 1) / float(kSteps);
-                bar(canvas, cx + std::cos(a) * r, cy + std::sin(a) * r, cx + std::cos(b) * r,
-                    cy + std::sin(b) * r, w * 0.5f + t * 0.3f, ink);
-            }
+            // An arrow turning back on itself: most of a ring open at the left, and a solid head
+            // at its upper end pointing down into the gap. Feathered, both of it, because the
+            // canvas does not antialias and a thin arc of bars read as stairs.
+            const float r = s * 0.16f, w = std::max(1.0f, 1.1f * u);
+            const float from = -2.0f, to = 2.55f;  // radians, clockwise from the head
+            featheredArc(canvas, cx, cy, r, w, from, to, ink);
             const float hx = cx + std::cos(from) * r, hy = cy + std::sin(from) * r;
-            const float a = s * 0.11f;
-            // Travel at the head runs down and to the left, into the gap; the barbs trail it.
-            bar(canvas, hx, hy, hx + a, hy + a * 0.07f, t, ink);
-            bar(canvas, hx, hy, hx + a * 0.24f, hy - a * 0.97f, t, ink);
+            // Along the travel at the head (down the ring, anticlockwise) and across it.
+            const float tx = std::sin(from), ty = -std::cos(from);
+            const float nx = std::cos(from), ny = std::sin(from);
+            const float len = s * 0.13f, half = s * 0.1f;
+            const float xy[6] = {hx + tx * len, hy + ty * len,
+                                 hx - tx * len * 0.2f + nx * half, hy - ty * len * 0.2f + ny * half,
+                                 hx - tx * len * 0.2f - nx * half, hy - ty * len * 0.2f - ny * half};
+            featheredPolygon(canvas, xy, 3, ink);
             break;
         }
     }
