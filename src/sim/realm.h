@@ -91,6 +91,8 @@ enum class What : uint8_t {
     Shouted,   // a guard's line: a: a `Shout`, b and c: for a pointing, the tile he points the
                // hero to (-1 for nowhere), whom: the monster it is about. What is SAID is the
                // drawing's to choose; the realm only says that he spoke and why.
+    Arrowless, // she drew and found no ammunition in hand or bag, and the attack stopped:
+               // MuMain's "no more arrows" (CheckArrow). a: 1 for arrows, 2 for bolts
 };
 
 // Why a guard spoke. See Realm::watch.
@@ -180,6 +182,9 @@ struct Body {
     int32_t weaponBonus = 0;
     // His staff's rise, in percent, off the right hand at the last rearm (Arms::staffRise).
     float staffRise = 0.0f;
+    // A bow (+1) or a crossbow (+2) in hand at the last rearm, 0 for anything else: she shoots
+    // from `kArcherReach`, spends ammunition from the other hand, and reckons her archery band.
+    int8_t archer = 0;
     // How many lucky things he wears, each 5% of critical chance (sim::kLuckCritical).
     int32_t luckyWorn = 0;
     // And what his excellent pieces come to (sim::Excellence), summed in rearm.
@@ -636,6 +641,11 @@ private:
     // Power Wave: one `Loosed` for the cast, and a flight to every body in the line.
     void looseLine(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     void arrive();
+    // An archer's shot: one piece of ammunition off the hand her bow leaves free, reloaded from
+    // the bag first when that hand is empty. False, and nothing spent, when there is none.
+    bool nock(Body& hero);
+    // And the arrow let go at the bottom of the swing, into `flights_` like a spell.
+    void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
     // A poisoned body's pulse, when it is due -- a monster's or the hero's.

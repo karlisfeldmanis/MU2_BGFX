@@ -187,6 +187,16 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
                              (strength + agility) *
                                  double(row.maximumDamagePerStrengthAndAgility)) +
                          arms.weaponMaximumDamage;
+    // Her archery band, which REPLACES the melee pair while a bow type is drawn: the two are
+    // conditional on ArcheryAttackMode and MeleeAttackMode, one of which is always nought
+    // (ClassFairyElf.cs:78-81, :87-93). Ammunition adds nothing in 0.75 -- AmmunitionDamageBonus
+    // is 0.95d's (Version095d/Items/Weapons.cs:213).
+    if (arms.archery && kin == Kin::FairyElf) {
+        out->minimumDamage =
+            int(agility / 7.0 + strength / 14.0) + arms.weaponMinimumDamage;
+        out->maximumDamage =
+            int(agility / 4.0 + strength / 8.0) + arms.weaponMaximumDamage;
+    }
     // The luck option is 0.75's only source: a twentieth for each lucky thing worn.
     out->criticalChance = arms.criticalChance;
     // The excellent options: damage + level / 20 a piece, then x1.02 a piece (the order is ours;

@@ -369,7 +369,10 @@ void Play::update(double seconds) {
                     const bool atHand = castFrom(*caster, to, from);
                     // Fire Ball is the Lich's rock at its other subtype, thrown flat; every
                     // other spell that flies is the bolt.
-                    if (happening.a == sim::skill::kFireBall) {
+                    if (happening.a == sim::skill::kNone) {
+                        // An archer's arrow (`Realm::looseArrow`, `c` 1 arrow, 2 bolt). Not the
+                        // bolt below: sprint 15's second step draws MU's arrow models here.
+                    } else if (happening.a == sim::skill::kFireBall) {
                         meteor_.hurl(from, to, happening.whom, atHand);
                     } else if (happening.a == sim::skill::kPoison) {
                         const float feet[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};

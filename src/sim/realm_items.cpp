@@ -49,6 +49,7 @@ Arms Realm::armsOf(const Body& one) const {
         arms.criticalChance = double(one.luckyWorn) * kLuckCritical;
         arms.excel = one.excel;
         arms.staffRise = double(one.staffRise);
+        arms.archery = one.archer != 0;
     }
     return arms;
 }
@@ -133,7 +134,55 @@ bool Realm::equip(int32_t weapon, int32_t shield, bool given) {
         const int hand = placeOf(row);
         if (hand >= 0) bag_.put(hand, Held{item, 0, int16_t(fullDurability(row, 0))});
     }
+    // What the cradle gives beside a bow type: a full quiver in the other hand. OpenMU's
+    // AddArrowsForFairyElf -- 255 Arrows in slot 0 beside the Short Bow in slot 1 -- and the
+    // Bolt the same way beside a crossbow, which no cradle in 0.75 hands out but an arena does.
+    // With or without `given`: this call is only ever the cradle, an arena or the harness arming
+    // her, and a bow handed over with nothing to shoot is no weapon at all.
+    if (weapon >= 0) {
+        const content::Arm& arm = tables_->arms[size_t(weapon)];
+        const int hand = arm.bow() ? kWeaponRight : arm.crossbow() ? kWeaponLeft : -1;
+        const int number = arm.bow() ? kArrowsNumber : kBoltNumber;
+        for (size_t i = 0; hand >= 0 && i < tables_->items.size(); ++i) {
+            const content::ItemRow& row = tables_->items[i];
+            if (row.group != kGroupBows || row.number != number) continue;
+            if (bag_[hand].empty()) bag_.put(hand, Held{int32_t(i), 0, int16_t(fullDurability(row, 0))});
+            break;
+        }
+    }
     rearm(hero);
+    return true;
+}
+
+// MuMain's CheckArrow and SearchArrow: the quiver hand is the one the bow leaves free (arrows on
+// the right beside a bow, the bolt on the left beside a crossbow). Empty, it is filled from the
+// bag by `FindItemReverseIndex` -- the LAST matching slot first -- and one piece is spent, hit or
+// miss (AmmunitionConsumptionRate 1 on every bow, Version075/Items/Weapons.cs:329). The wrong
+// kind in hand, or none anywhere, and nothing is spent.
+bool Realm::nock(Body& hero) {
+    if (hero.archer == 0) return true;
+    const int hand = hero.archer == 1 ? kWeaponRight : kWeaponLeft;
+    const int wanted = hero.archer == 1 ? kArrowsNumber : kBoltNumber;
+    const auto fits = [&](const Held& h) {
+        if (h.empty()) return false;
+        const content::ItemRow& row = tables_->items[size_t(h.item)];
+        return row.group == kGroupBows && row.number == wanted;
+    };
+    if (bag_[hand].empty()) {
+        for (int slot = kSlots - 1; slot >= kWorn; --slot) {
+            if (!fits(bag_[slot])) continue;
+            bag_.put(hand, bag_.lift(slot));
+            break;
+        }
+    }
+    if (!fits(bag_[hand]) || bag_[hand].durability <= 0) return false;
+    Held left = bag_[hand];
+    left.durability = int16_t(left.durability - 1);
+    if (left.durability <= 0) {
+        bag_.lift(hand);
+    } else {
+        bag_.put(hand, left);
+    }
     return true;
 }
 
@@ -153,6 +202,13 @@ void Realm::rearm(Body& hero) {
     int weaponSlot = swung(right) ? kWeaponRight : (swung(left) ? kWeaponLeft : -1);
     hero.weapon = weaponSlot >= 0 ? tables_->armNamed(rowAt(weaponSlot)->name) : -1;
     hero.weaponBonus = weaponSlot >= 0 ? damageBonus(bag_[weaponSlot].refinement) : 0;
+    // A bow type, by the arm's own flags. The hand rule already put a bow on the left and a
+    // crossbow on the right, so the other hand is the quiver's.
+    hero.archer = 0;
+    if (hero.weapon >= 0 && size_t(hero.weapon) < tables_->arms.size()) {
+        const content::Arm& held = tables_->arms[size_t(hero.weapon)];
+        hero.archer = held.bow() ? 1 : held.crossbow() ? 2 : 0;
+    }
     // The additional option on the weapon adds to both ends of the band, as Stats.PhysicalBaseDmg
     // does, and wears with it. A staff's is wizardry damage, which nothing here reckons yet.
     if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower == 0) {

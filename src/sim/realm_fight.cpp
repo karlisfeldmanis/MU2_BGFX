@@ -180,6 +180,11 @@ void Realm::land(Body& hero) {
         loose(hero, *row, at, force);
         return;
     }
+    // An archer's plain shot is let go here in the same way, the arrow already paid for.
+    if (!row && hero.player && hero.archer != 0) {
+        looseArrow(hero, at, force);
+        return;
+    }
     strikeAt(hero, *target, force, row);
 }
 
@@ -215,6 +220,27 @@ void Realm::loose(Body& hero, const SkillRow& row, uint32_t at, float force, boo
     // Point blank, or no room in the air: it lands now.
     if (Body* struck = body(at); struck && struck->alive()) {
         strikeAt(hero, *struck, force, &row, true, pays);
+    }
+}
+
+// A plain shot: the spell's flight with the arrow's speed and no row, so `arrive` lands it as a
+// swing -- the archery band, not the wizardry sum. Said as a `Loosed` with no skill number.
+void Realm::looseArrow(Body& hero, uint32_t at, float force) {
+    const Body* target = body(at);
+    const float dx = target ? target->x - hero.x : 0.0f;
+    const float dy = target ? target->y - hero.y : 0.0f;
+    const float gap = std::max(0.0f, std::sqrt(dx * dx + dy * dy) - kBoltStopsShort);
+    const int32_t air = int32_t(std::lround(gap / kArrowTilesPerSecond * kTicksPerSecond));
+    say(What::Loosed, hero, skill::kNone, air, hero.archer, at);
+    if (air > 0) {
+        for (Flight& one : flights_) {
+            if (one.at != 0) continue;
+            one = Flight{tick_ + air, at, skill::kNone, force, true};
+            return;
+        }
+    }
+    if (Body* struck = body(at); struck && struck->alive()) {
+        strikeAt(hero, *struck, force, nullptr, true, true);
     }
 }
 

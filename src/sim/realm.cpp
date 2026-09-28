@@ -530,12 +530,21 @@ void Realm::press() {
         }
     }
 
-    if (within(hero, *target, float(kHeroAttackRange)) &&
+    const int reachOf = hero.archer != 0 ? kArcherReach : kHeroAttackRange;
+    if (within(hero, *target, float(reachOf)) &&
         !tables_->grid.safe(target->column(), target->row())) {
         // Not while a skill's clip is running: the blow was thrown at where he was facing, and a
         // body that turns under its own animation is the sudden movement the user objected to.
         if (tick_ >= hero.castUntil) engage(hero, *target);
         if (tick_ >= hero.swingsAt) {
+            // An archer pays for the shot as she draws. None in hand or bag and the attack
+            // stops where she stands -- ours: OpenMU lets an empty quiver shoot for nothing.
+            if (!nock(hero)) {
+                say(What::Arrowless, hero, hero.archer);
+                order_ = Request{};
+                halt(hero);
+                return;
+            }
             hero.swingsAt = tick_ + hero.swingTicks;
             begin(hero, order_.target, 1.0f, skill::kNone, hero.swingTicks);
         }
@@ -556,7 +565,7 @@ void Realm::press() {
     // before this line is reached. So the player is never held still by his own attack -- he
     // gives it up, which is what an attack cancel is -- and the chase, which is the engine's
     // decision rather than his, waits its turn.
-    approach(hero, *target, kHeroAttackRange);
+    approach(hero, *target, reachOf);
 }
 
 void Realm::approach(Body& hero, const Body& target, int radius) {
@@ -724,6 +733,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Cured:
             std::snprintf(line, sizeof(line), "%6u %s drinks an antidote", happening.tick, who);
             break;
+        case What::Arrowless:
+            std::snprintf(line, sizeof(line), "%6u %s has no more %s", happening.tick, who,
+                          happening.a == 2 ? "bolts" : "arrows");
+            break;
         case What::Blinked:
             std::snprintf(line, sizeof(line), "%6u %s teleports to %d,%d", happening.tick, who,
                           happening.a, happening.b);
@@ -793,7 +806,11 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Loosed: {
             const SkillRow* row = skillNumbered(happening.a);
             std::snprintf(line, sizeof(line), "%6u %s lets go %s at %s, %d ticks in the air",
-                          happening.tick, who, row ? row->name : "?",
+                          happening.tick, who,
+                          row                ? row->name
+                          : happening.c == 2 ? "a bolt"
+                          : happening.c == 1 ? "an arrow"
+                                             : "?",
                           name(happening.whom).c_str(), happening.b);
             break;
         }

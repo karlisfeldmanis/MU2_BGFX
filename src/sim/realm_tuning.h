@@ -104,6 +104,15 @@ constexpr float kPivotDegrees = 60.0f;
 
 // A player reaches one tile. Sprint 7's weapons have their own reach.
 constexpr int kHeroAttackRange = 1;
+// And six with any bow type drawn: MuMain's `Action()`, `Range = 6.f` whenever
+// GetEquipedBowType is not BOWTYPE_NONE (ZzzInterface.cpp:1245-1261).
+constexpr int kArcherReach = 6;
+// An arrow's flight: MU's `Direction[1] = -70` units a reference frame at 25, 1750 units -- 17.5
+// tiles -- a second, stopping a tile short of the body as a spell does (MU2 Realm.cs:79).
+constexpr float kArrowTilesPerSecond = 17.5f;
+// The two ammunition rows in the bow group: Arrows for a bow, the Bolt for a crossbow.
+constexpr int kArrowsNumber = 15;
+constexpr int kBoltNumber = 7;
 // How long a dead character lies there before he stands up in town. MU2's Player.cs:1687, three
 // seconds, which is also when a summon is taken off him.
 constexpr int kRiseTicks = 60;

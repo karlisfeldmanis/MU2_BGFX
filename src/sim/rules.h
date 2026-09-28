@@ -170,11 +170,8 @@ const ClassRow& rowOf(Kin kin);
 // A character's stats from his points and his level. No weapon and no armour: sprint 7 owns
 // items, and until then a fighter's damage is his arms and his defence is his agility.
 //
-// What is deliberately not here: mana, ability, shield, and the Fairy Elf's archery mode --
-// which is a real branch of her damage (ClassFairyElf.cs:75-78, agility and strength at
-// different rates when a bow is drawn) and is unreachable until there is a bow to draw. Melee
-// is what a class with no items has. A stat with nothing reading it is a field to get wrong
-// twice.
+// The Fairy Elf's archery mode is `Arms::archery` (sprint 15): with a bow or crossbow drawn her
+// band is agility and strength at their own rates instead of her melee pair.
 // What a character has in his hands, as the arithmetic reads it. Zeroes are bare hands and no
 // shield, which is a real state and not a missing one: 0.75 says a man with no weapon swings
 // his arms, and the damage floor is what he has instead of nothing.
@@ -188,6 +185,9 @@ struct Arms {
     // A staff's rise, in percent: `magicPower / 2` and its plus (Version075/Items/Weapons.cs:315
     // and the two tables at :29-30). Nought for everything that is not a staff.
     double staffRise = 0.0;
+    // A bow or a crossbow in hand, which puts the Fairy Elf's damage on her archery band
+    // (ClassFairyElf.cs:78-81, ArcheryAttackMode :88-89) in place of her melee one.
+    bool archery = false;
 };
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,

@@ -1634,6 +1634,99 @@ void testStandsOverTheKill(const content::Tables& tables) {
     check(held, "and not one of them takes a step while the body is going down");
 }
 
+// Sprint 15: the elf's bow. Her band is the archery one, she shoots from six tiles, one arrow a
+// shot, the damage a flight after the let-go, the first shot reloads the empty hand from the
+// bag, and when the quiver runs out the attack stops with "no more arrows".
+void testArchery(const content::Tables& tables) {
+    std::printf("archery\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 7, 212, 198, sim::Kin::FairyElf, 10), "an elf raises among spiders");
+    check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow");
+    const sim::Satchel& bag = realm.satchel();
+    check(realm.hero().archer == 1, "and she is an archer");
+    check(!bag[sim::kWeaponLeft].empty() && bag[sim::kWeaponRight].durability == 255,
+          "the bow in her left hand and 255 arrows in her right");
+    // Her archery band: level-one points, agility 25 and strength 22, on the Short Bow.
+    sim::Fighter melee;
+    int health = 0;
+    sim::reckon(sim::Kin::FairyElf, 10, sim::startingPoints(sim::Kin::FairyElf), sim::Arms{},
+                &melee, &health);
+    check(realm.hero().stats.minimumDamage != melee.minimumDamage,
+          "the band is not her melee one");
+
+    // The quiver into the bag: the first shot must take it back into the empty hand.
+    check(realm.moveItem(sim::kWeaponRight, sim::kWorn), "the arrows go into the bag");
+    check(bag[sim::kWeaponRight].empty(), "and her right hand is empty");
+
+    int drawn = 0, loosed = 0, far = 0, arrowless = 0, landedOnTime = 0, flewAtAll = 0;
+    int64_t firstShotTick = -1;
+    struct Due {
+        int64_t at;
+        uint32_t whom;
+    };
+    std::vector<Due> due;
+    for (int tick = 0; tick < 40000 && arrowless == 0; ++tick) {
+        if (tick % 10 == 0) {
+            uint32_t nearest = 0;
+            float closest = 1e30f;
+            const sim::Body& hero = realm.hero();
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float d = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
+                if (d < closest) {
+                    closest = d;
+                    nearest = one.id;
+                }
+            }
+            sim::Request request;
+            request.kind = sim::Request::Kind::Attack;
+            request.target = nearest;
+            if (nearest != 0) realm.ask(request);
+        }
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who == realm.hero().id && h.what == sim::What::Swung) ++drawn;
+            if (h.who == realm.hero().id && h.what == sim::What::Loosed) {
+                ++loosed;
+                if (firstShotTick < 0) firstShotTick = realm.tick();
+                if (h.b > 0) {
+                    ++flewAtAll;
+                    due.push_back({realm.tick() + h.b, h.whom});
+                }
+                const sim::Body* at = realm.find(h.whom);
+                if (at && std::max(std::fabs(at->x - realm.hero().x),
+                                   std::fabs(at->y - realm.hero().y)) > 1.5f) {
+                    ++far;
+                }
+            }
+            if (h.who == realm.hero().id &&
+                (h.what == sim::What::Hit || h.what == sim::What::Missed)) {
+                for (Due& d : due) {
+                    if (d.at == realm.tick() && d.whom == h.whom) {
+                        ++landedOnTime;
+                        d.at = -1;
+                    }
+                }
+            }
+            if (h.what == sim::What::Arrowless) ++arrowless;
+        }
+        if (firstShotTick == realm.tick()) {
+            check(bag[sim::kWeaponRight].durability == 254 && bag[sim::kWorn].empty(),
+                  "the first shot reloads the hand from the bag and spends one");
+        }
+    }
+    // Drawn, not let go: a shot whose target dies before the string is released has still
+    // spent its arrow, as MU spends it at the draw.
+    check(drawn == 255, "every arrow is one draw, and no draw without one");
+    check(loosed <= drawn && loosed > 200, "and nearly every draw is let go");
+    check(far > 0, "some are shot from past arm's length");
+    check(flewAtAll > 0 && landedOnTime > 0, "and those land a flight after the let-go");
+    check(arrowless == 1, "the empty quiver stops the attack with no more arrows");
+    check(bag[sim::kWeaponRight].empty(), "and leaves the hand empty");
+    std::printf("  %d drawn, %d shots, %d from range, %d in the air, %d landed on time\n", drawn, loosed, far,
+                flewAtAll, landedOnTime);
+}
+
 // The two area shapes, and the cooldown's own arithmetic under them.
 //
 // A spin and a sweep cannot be posed by hand -- there is no way to put four monsters round the
@@ -2895,6 +2988,7 @@ int main() {
     testWear(tables);
     testRecovery(tables);
     testWardens(tables);
+    testArchery(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
