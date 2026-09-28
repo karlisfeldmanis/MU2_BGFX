@@ -120,6 +120,14 @@ bool restores(const content::ItemRow& row);
 bool ale(const content::ItemRow& row);
 // The Antidote, group 14 number 8: it clears a poison and does nothing else.
 bool antidote(const content::ItemRow& row);
+// **The Orb of Summoning (12/11) read at its plus.** One row teaches all six summons in 0.75:
+// SummoningOrbConsumeHandlerPlugIn teaches `30 + item.Level`, so +0 is the Goblin and +5 Bali.
+// This is that row as the plus makes it -- the skill, its name and line, the energy the summon
+// asks (0.75's SkillsInitializer.cs:68-73: 30, 60, 90, 130, 170, 210) -- and, ours, the user's
+// (2026-09-28), named for what it raises: "Orb of Goblin", "Orb of Golem" and on. Every other row
+// comes back as it is. Reading and the tooltip both go through here, so the two cannot differ.
+bool summoningOrb(const content::ItemRow& row);
+content::ItemRow asRead(const content::ItemRow& row, int refinement);
 constexpr int kAleSpeed = 20;
 constexpr int64_t kAleTicks = 80 * 20;
 // The Town Portal Scroll (14, 10): TownPortalScrollConsumeHandlerPlugIn, a warp to the map's

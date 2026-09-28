@@ -1,5 +1,7 @@
 #include "sim/items.h"
 
+#include "sim/skills.h"
+
 #include <algorithm>
 
 namespace mu::sim {
@@ -189,6 +191,25 @@ bool restores(const content::ItemRow& row) {
 }
 
 bool ale(const content::ItemRow& row) { return row.group == kGroupPotions && row.number == 9; }
+bool summoningOrb(const content::ItemRow& row) { return row.group == 12 && row.number == 11; }
+
+content::ItemRow asRead(const content::ItemRow& row, int refinement) {
+    content::ItemRow read = row;
+    if (!summoningOrb(row)) return read;
+    static const char* const kNames[6] = {"Goblin", "Golem", "Assassin",
+                                          "Elite Yeti", "Dark Knight", "Bali"};
+    static const int kEnergy[6] = {30, 60, 90, 130, 170, 210};
+    const int at = std::clamp(refinement, 0, 5);
+    read.teaches = skill::kSummonGoblin + at;
+    read.teachesEnergy = kEnergy[at];
+    read.label = std::string("Orb of ") + kNames[at];
+    if (const SkillRow* taught = skillNumbered(read.teaches)) {
+        read.teachesName = taught->name;
+        read.teachesTells = taught->tells;
+    }
+    return read;
+}
+
 bool antidote(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 8;
 }

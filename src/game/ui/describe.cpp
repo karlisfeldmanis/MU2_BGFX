@@ -190,13 +190,15 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                const sim::Satchel& bag) {
     Sheet sheet;
     if (what.empty() || size_t(what.item) >= tables.items.size()) return sheet;
-    const content::ItemRow& row = tables.items[size_t(what.item)];
+    // As read at its plus: the Orb of Summoning is six orbs by its plus (sim::asRead).
+    const content::ItemRow row = sim::asRead(tables.items[size_t(what.item)], what.refinement);
     const int plus = what.refinement;
     sheet.item = true;
     // A third of the square a bag cell of its longer side, so a three-cell sword or a two-by-
     // three armour fills it and a one-cell jewel stands at 40 px, about its own cell's size.
     sheet.artScale = std::clamp(float(std::max(row.width, row.height)) / 3.0f, 0.42f, 1.0f);
-    sheet.name = label(row, plus);
+    // A summoning orb's plus is already in its name.
+    sheet.name = sim::summoningOrb(row) ? row.label : label(row, plus);
     // MU's name ladder, as far as these rows reach it: a jewel is yellow, +7 and above is
     // yellow, anything carrying an option is blue, everything else white. Excellent, ancient
     // and socket colours wait for the items that have them.

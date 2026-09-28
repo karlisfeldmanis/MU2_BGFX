@@ -403,7 +403,8 @@ bool Realm::useItem(int slot) {
     //
     // The refusals, in the order the tooltip reads: who may hold it, what he must be, and
     // whether he has read it before. Each is silent, as every refusal down here is.
-    if (row.teaches != 0) {
+    // The Orb of Summoning teaches by its plus (sim::asRead); every other row as it stands.
+    if (const content::ItemRow read = asRead(row, potion.refinement); read.teaches != 0) {
         // mu.db's class enumeration, as `fits` reads it: bit 0 wizard, 1 elf, 2 knight, and none
         // named is anybody. OpenMU asks this of an orb at the moment it is read, not worn.
         if (row.classes != 0 && (row.classes & (1 << int(hero.kin))) == 0) return false;
@@ -414,10 +415,10 @@ bool Realm::useItem(int slot) {
         // (`ItemExtensions.GetRequirement` returns it whole for anything unwearable): Fire Ball's
         // forty is forty, so a new wizard with thirty keeps the scroll in his bag until he has
         // spent ten points. OpenMU asks it at the read (`CompliesRequirements`).
-        if (hero.points.energy < row.teachesEnergy) return false;
+        if (hero.points.energy < read.teachesEnergy) return false;
         // A second orb of something he knows is refused rather than eaten: `learn` says no to a
         // skill already learned, and the orb stays in the bag to be sold.
-        if (!learn(row.teaches)) return false;
+        if (!learn(read.teaches)) return false;
         bag_.lift(slot);
         return true;
     }

@@ -1819,6 +1819,136 @@ void testElfSkills(const content::Tables& tables) {
     check(sold, "Elf Lala sells the Orb of Skillshot");
 }
 
+// Sprint 15, step 5: her summon. Raised beside her off the breed's row and scaled by her energy;
+// it hunts round her, its kills are hers, it holds a monster against her own shots, and a second
+// cast dismisses it for nothing.
+void testSummons(const content::Tables& tables) {
+    std::printf("the elf's summon\n");
+    // Among the Skeleton Warriors (525 health): a spider dies to one of the golem's blows and
+    // never lives to turn on it. Found in a first realm, then stood three tiles off one.
+    int standColumn = 212, standRow = 198;
+    {
+        sim::Realm look;
+        look.raise(&tables, 5, 212, 198, sim::Kin::FairyElf, 40);
+        for (const sim::Body& one : look.bodies()) {
+            if (one.monster() && tables.kinds[size_t(one.kind)].number == 14) {
+                standColumn = one.homeColumn + 3;
+                standRow = one.homeRow;
+                break;
+            }
+        }
+    }
+    sim::Realm realm;
+    check(realm.raise(&tables, 5, standColumn, standRow, sim::Kin::FairyElf, 40),
+          "an elf raises by the Skeleton Warriors");
+    check(realm.equip(tables.armNamed("Bow01"), -1, true), "with the Short Bow");
+    check(realm.spend(0, 0, 0, 150), "and puts 150 points into energy");
+    check(realm.learn(sim::skill::kSummonGolem), "she knows Summon Stone Golem");
+    const auto summonOf = [&]() -> const sim::Body* {
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.summoner != 0) return &one;
+        }
+        return nullptr;
+    };
+    check(summonOf() != nullptr && !summonOf()->alive(), "a dormant summon body stands ready");
+    for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+    realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+    for (int tick = 0; tick < 60 && !(summonOf() && summonOf()->alive()); ++tick) realm.step();
+    const sim::Body* golem = summonOf();
+    check(golem != nullptr && golem->alive() && golem->summoner == realm.hero().id,
+          "the Stone Golem stands beside her");
+    if (golem == nullptr || !golem->alive()) return;
+    const content::MonsterKind& kind = tables.kinds[size_t(golem->kind)];
+    checkEqual((long long)kind.number, 32LL, "and it is the Stone Golem's breed");
+    const int energy = realm.hero().points.energy;
+    checkEqual((long long)golem->maxHealth,
+               (long long)int(float(kind.health) * sim::summonHealthRate(energy)),
+               "its health is the breed's scaled by her energy");
+    check(golem->stats.minimumDamage > kind.minimumDamage, "and it bites harder than the breed");
+    const uint32_t golemId = golem->id;
+
+    // Left alone, it hunts round her: the first monster that turns on it is the one she shoots
+    // next, to see that it stays on the golem.
+    const uint64_t before = realm.hero().experience;
+    int blows = 0, kills = 0;
+    uint32_t held = 0;
+    for (int tick = 0; tick < 3000 && held == 0; ++tick) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.who == golemId && h.what == sim::What::Hit) ++blows;
+        }
+        for (const sim::Body& one : realm.bodies()) {
+            if (one.monster() && one.alive() && one.quarry == golemId && one.health > one.maxHealth / 2) {
+                held = one.id;
+            }
+        }
+    }
+    check(blows > 0, "the golem fights what is round her");
+    check(held != 0, "a monster turns on the golem");
+    if (held != 0) {
+        sim::Request shoot;
+        shoot.kind = sim::Request::Kind::Attack;
+        shoot.target = held;
+        realm.ask(shoot);
+        bool turned = false, struck = false;
+        for (int tick = 0; tick < 200; ++tick) {
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who == realm.hero().id && h.whom == held &&
+                    (h.what == sim::What::Hit || h.what == sim::What::Missed)) {
+                    struck = true;
+                }
+            }
+            const sim::Body* one = realm.find(held);
+            const sim::Body* g = realm.find(golemId);
+            if (one && one->alive() && g && g->alive() && one->quarry == realm.hero().id) turned = true;
+        }
+        check(struck, "she shoots it");
+        check(!turned, "and it stays on the golem: the summon holds aggro");
+    }
+    // And its kills are hers.
+    sim::Request stop;
+    stop.kind = sim::Request::Kind::Stop;
+    realm.ask(stop);
+    for (int tick = 0; tick < 3000; ++tick) {
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what == sim::What::Died && h.whom == golemId) ++kills;
+        }
+    }
+    check(kills > 0 && realm.hero().experience > before, "what the golem kills pays her");
+
+    // A second cast dismisses it, for nothing.
+    if (const sim::Body* g = realm.find(golemId); g && g->alive()) {
+        for (int wait = 0; wait < 6000 && realm.hero().mana < 70; ++wait) realm.step();
+        for (int wait = 0; wait < 100; ++wait) realm.step();
+        const int mana = realm.hero().mana;
+        bool dismissed = false;
+        realm.invoke(sim::skill::kSummonGolem, realm.hero().id);
+        for (int tick = 0; tick < 60 && !dismissed; ++tick) {
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                dismissed |= h.what == sim::What::Dismissed && h.who == golemId;
+            }
+        }
+        check(dismissed && !realm.find(golemId)->alive(), "a second cast dismisses it");
+        check(realm.hero().mana >= mana, "and costs nothing");
+    }
+    // The Orb of Summoning is six orbs by its plus, named for what it raises.
+    const int orb = tables.itemAt(12, 11);
+    check(orb >= 0, "the Orb of Summoning is cooked");
+    if (orb >= 0) {
+        const content::ItemRow golemOrb = sim::asRead(tables.items[size_t(orb)], 1);
+        check(golemOrb.label == "Orb of Golem" && golemOrb.teaches == sim::skill::kSummonGolem &&
+                  golemOrb.teachesEnergy == 60,
+              "at +1 it is the Orb of Golem, teaching Summon Stone Golem at 60 energy");
+        check(sim::asRead(tables.items[size_t(orb)], 0).label == "Orb of Goblin",
+              "and at +0 the Orb of Goblin");
+    }
+    std::printf("  golem %d health, %d-%d, %d blows, %d killed\n", golem->maxHealth,
+                golem->stats.minimumDamage, golem->stats.maximumDamage, blows, kills);
+}
+
 // The two area shapes, and the cooldown's own arithmetic under them.
 //
 // A spin and a sweep cannot be posed by hand -- there is no way to put four monsters round the
@@ -3088,6 +3218,7 @@ int main() {
     testWardens(tables);
     testArchery(tables);
     testElfSkills(tables);
+    testSummons(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
