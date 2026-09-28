@@ -1131,7 +1131,7 @@ void Hud::rebuild() {
         const int overCell = fanAt(now_.pointerX, now_.pointerY);
         if (overCell >= 0 && carrying_ == 0 && !fanSheet_.empty()) {
             const Box pill = cellBox(s, fan_.size(), width_, overCell);
-            tip::draw(tip_, fanSheet_, pill.midX(), pill.y, now_.width, now_.height);
+            tip::draw(tip_, fanSheet_, pill, now_.width, now_.height);
             return;
         }
     }
@@ -1143,7 +1143,7 @@ void Hud::rebuild() {
         const int overSkill = skillAt(px, py);
         if (overSkill >= 0 && !sheets_[overSkill].empty()) {
             const Box box = plate(s, boxPx(overSkill));
-            tip::draw(tip_, sheets_[overSkill], box.midX(), box.y, now_.width, now_.height);
+            tip::draw(tip_, sheets_[overSkill], box, now_.width, now_.height);
             return;
         }
         // The buff: what is on him, what it does, how that is reckoned and for how much longer,
@@ -1152,7 +1152,7 @@ void Hud::rebuild() {
             const Box cell = plate(s, buffPx(over));
             const tip::Sheet sheet = boonSheet(boons_[over], arts);
             if (!sheet.empty()) {
-                tip::draw(tip_, sheet, cell.midX(), cell.y, now_.width, now_.height);
+                tip::draw(tip_, sheet, cell, now_.width, now_.height);
                 return;
             }
         }

@@ -490,7 +490,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             card.noteTone = tip::Tone::Gray;
         }
         const Box over = panel::scaled(x, y, kHammer);
-        tip::draw(tip_, card, over.midX(), over.y, screenW_, screenH_);
+        tip::draw(tip_, card, over, screenW_, screenH_);
     }
 
     // The tip, last, and never during a drag. The card carries the thing's own picture, cut
@@ -524,7 +524,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         // Over the item's own cells rather than over the pointer: a tall thing hovered near its
         // top had the card lying across the rest of it.
         const Box cell = panel::scaled(x, y, itemBox(tables, hovered_, bag[hovered_]));
-        tip::draw(tip_, sheet, cell.midX(), cell.y, screenW_, screenH_);
+        tip::draw(tip_, sheet, cell, screenW_, screenH_);
     }
 }
 

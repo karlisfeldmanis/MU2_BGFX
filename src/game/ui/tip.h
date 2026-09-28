@@ -229,6 +229,12 @@ void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet);
 // described -- the hovered item's own cell, not the pointer -- and the card is centred over it
 // and lifted clear, so the thing you are reading about is never under the thing describing it.
 // MU anchors the same way (NewUIInventoryCtrl.cpp:1513: the cells' centre and top, then up).
+//
+// Given the whole box of what is described, a card with no room above it drops under the box,
+// and one with room for neither stands beside it -- near the top of the screen a card clamped
+// down would cover the very thing it describes. The point form is a box of no size.
+void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float screenWidth,
+          float screenHeight);
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
           float screenHeight);
 

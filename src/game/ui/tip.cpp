@@ -557,6 +557,11 @@ std::vector<Span> spansOf(const gfx::Face& face, float size, const std::string& 
 
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
           float screenHeight) {
+    draw(canvas, sheet, gfx::Box{x, y, 0.0f, 0.0f}, screenWidth, screenHeight);
+}
+
+void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float screenWidth,
+          float screenHeight) {
     if (sheet.empty()) return;
     const Type type = typeOf(canvas);
     const gfx::Face& face = type.face;
@@ -670,10 +675,25 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
     tall += sellTall;
 
     // ---- place ------------------------------------------------------------------------------
-    const float margin = 4.0f * u;
-    const float ox = std::clamp(x - wide * 0.5f, margin, std::max(margin, screenWidth - margin - wide));
-    const float oy = std::clamp(y - tall - kStandOff * u, margin,
-                                std::max(margin, screenHeight - margin - tall));
+    // Over the thing if the card fits there, under it if it does not, and beside it if it fits
+    // neither -- a card clamped down onto its own item was the one thing the anchor exists to
+    // prevent. Beside is the side with more room, level with the thing and held on screen.
+    const float margin = 4.0f * u, off = kStandOff * u;
+    const float lowX = margin, highX = std::max(margin, screenWidth - margin - wide);
+    const float lowY = margin, highY = std::max(margin, screenHeight - margin - tall);
+    float ox = std::clamp(over.midX() - wide * 0.5f, lowX, highX);
+    float oy = over.y - off - tall;
+    if (oy < margin) {
+        oy = over.bottom() + off;
+        if (oy + tall > screenHeight - margin) {
+            const float roomLeft = over.x - off - margin;
+            const float roomRight = screenWidth - margin - over.right() - off;
+            ox = roomRight >= wide || roomRight >= roomLeft ? over.right() + off
+                                                            : over.x - off - wide;
+            ox = std::clamp(ox, lowX, highX);
+            oy = std::clamp(over.midY() - tall * 0.5f, lowY, highY);
+        }
+    }
     const gfx::Box box{ox, oy, wide, tall};
 
     glass(canvas, box, u);

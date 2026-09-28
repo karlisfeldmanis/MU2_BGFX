@@ -292,7 +292,7 @@ void Chest::rebuild(const sim::Realm& realm, Stage* stage) {
         tip::Sheet sheet = describe(tables, vault[hovered_], realm.wearer(), realm.satchel());
         if (tipStage_) tip::stand(*tipStage_, vault[hovered_].item, vault[hovered_].refinement, sheet);
         const Box cell = panel::scaled(x, y, itemBox(tables, hovered_, vault[hovered_]));
-        tip::draw(tip_, sheet, cell.midX(), cell.y, screenW_, screenH_);
+        tip::draw(tip_, sheet, cell, screenW_, screenH_);
     } else if (dragging_ < 0 && button_ >= 0) {
         const Box to = panel::scaled(x, y, buttonBox(button_));
         panel::tooltip(tip_, to.midX(), to.y, {{kButtonTip[button_], panel::kOrdinary}},
