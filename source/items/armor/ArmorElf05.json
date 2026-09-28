@@ -39,32 +39,166 @@
   ],
   "sheet_from": "Data/Player/upper_03.OZJ (128x128), skin_warrior_01.OZJ (256x256) and hide.jpg, from MuMain. The .bmd names upper_03.jpg, skin_warrior_01.jpg and hide.jpg; 176 of the 236 triangles are on the first, 44 on the skin and 16 on hide.",
   "sheet_note": "upper_03 is a silver cuirass with a gold-cupped breast and gold scroll at the collar and waist, the back below it, a pair of gold-edged pauldrons on the right and a gold ring ornament at the top right. Mean (170, 163, 152) at chroma 22: the brightest body sheet built so far, a white page with grey metal painted on it. skin_warrior_01 is the elf's own body sheet for her bare arms. hide is MU capping the openings.",
-  "material_note": "Five islands, and one real argument. Islands 1 to 4 are 28, 22, 28 and 22 - upper_03's other 100, the two pauldrons and the two ring ornaments - and take plate_steel. Island 0 is 136 triangles: upper_03's 76 and hide's 16, the cuirass, and all 44 of skin_warrior_01's triangles, the elf's bare arms, welded into the same shell. The island is the unit, so it takes the majority, plate_steel, and her arms go with the cuirass. That is the cost of the island rule here and it is recorded rather than hidden: 44 triangles of skin at metallic 1.0 will read as a warm polished metal rather than as skin. Taking skin for the whole island would put a cuirass of 92 plate triangles in a dielectric that scatters, which loses the thing the set is. Splitting the arms off needs assignment finer than an island, the same want the Bow04 horn recorded.",
+  "material_note": "Eleven islands, and the arms are their own. separate_meshes keeps upper_03, skin_warrior_01 and hide apart in the weld, so the 136-triangle shell that used to carry the cuirass, its caps and the elf's bare arms together comes apart along the sheets. Islands 4 and 5 are 22 each, 44 together, skin_warrior_01's 44 exactly, at the same UV columns as the Vine and Spirit armours' arms (0.33-0.47 and 0.01-0.14 across, 0.51-0.98 down): skin. Island 6 is upper_03's 76, the cuirass, and islands 7 to 10 are 28, 22, 28 and 22 - upper_03's other 100, the two pauldrons and the two ring ornaments: plate_steel. Islands 0 to 3 are 3, 3, 4 and 6, hide's 16, MU capping the openings in black: plate_steel, where the cuirass's shell had them before, since a black cap takes no colour from its material either way. Before this the arms were welded into the cuirass's island and rendered as warm polished metal; the island rule stands, and the weld was what had to change.",
+  "separate_meshes": true,
+  "separate_meshes_from": "Declared for the Giant's and the Lich's reason, on a worn piece. ArmorElf05's three meshes - upper_03, skin_warrior_01 and hide - meet at the shoulders on the same bones, and the per-bone weld joined all 44 of the skin's triangles, the elf's bare arms, into the cuirass's island, which then took plate_steel and drew her arms as polished metal. Kept apart, the arms come away as islands of their own on the skin sheet, the way the Vine and Spirit armours' arms already did without asking, and take skin; the plate stays plate. The switch is clean_lowpoly.kept_apart's; nothing else reads it.",
   "islands": [
     {
       "island": 0,
       "material": "plate_steel",
-      "triangles": 136,
-      "area": 6764.0,
+      "triangles": 3,
+      "area": 37.9,
+      "along": [
+        -2.9,
+        2.0
+      ],
+      "mu_uv": [
+        0.871,
+        0.342,
+        0.999,
+        0.669
+      ],
+      "bake_uv": [
+        0.008,
+        0.622,
+        0.099,
+        0.855
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 30.0,
       "along": [
         -20.6,
-        17.5
+        -14.9
       ],
       "mu_uv": [
         0.001,
+        0.342,
+        0.129,
+        0.669
+      ],
+      "bake_uv": [
+        0.503,
+        0.007,
+        0.594,
+        0.24
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 4,
+      "area": 157.8,
+      "along": [
+        -6.9,
+        7.1
+      ],
+      "mu_uv": [
+        0.398,
+        0.247,
+        0.602,
+        0.766
+      ],
+      "bake_uv": [
+        0.842,
+        0.414,
+        0.987,
+        0.783
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 635.1,
+      "along": [
+        -12.6,
+        12.7
+      ],
+      "mu_uv": [
+        0.25,
         0.001,
-        0.999,
+        0.75,
         0.999
       ],
       "bake_uv": [
         0.008,
         0.007,
-        0.987,
+        0.362,
+        0.717
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1076.1,
+      "along": [
+        -5.5,
+        2.4
+      ],
+      "mu_uv": [
+        0.328,
+        0.506,
+        0.465,
+        0.98
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.962,
+        0.97
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 22,
+      "area": 1097.5,
+      "along": [
+        -20.6,
+        8.5
+      ],
+      "mu_uv": [
+        0.007,
+        0.506,
+        0.141,
+        0.98
+      ],
+      "bake_uv": [
+        0.332,
+        0.801,
+        0.849,
         0.993
       ]
     },
     {
-      "island": 1,
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 76,
+      "area": 3729.6,
+      "along": [
+        -12.6,
+        17.5
+      ],
+      "mu_uv": [
+        0.156,
+        0.042,
+        0.576,
+        0.997
+      ],
+      "bake_uv": [
+        0.34,
+        0.092,
+        0.868,
+        0.581
+      ]
+    },
+    {
+      "island": 7,
       "material": "plate_steel",
       "triangles": 28,
       "area": 1196.1,
@@ -86,7 +220,7 @@
       ]
     },
     {
-      "island": 2,
+      "island": 8,
       "material": "plate_steel",
       "triangles": 22,
       "area": 688.2,
@@ -108,7 +242,7 @@
       ]
     },
     {
-      "island": 3,
+      "island": 9,
       "material": "plate_steel",
       "triangles": 28,
       "area": 1205.8,
@@ -130,7 +264,7 @@
       ]
     },
     {
-      "island": 4,
+      "island": 10,
       "material": "plate_steel",
       "triangles": 22,
       "area": 688.2,
