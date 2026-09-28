@@ -115,6 +115,9 @@ public:
     // What the right button's quick slot holds, by MU's skill number, 0 for nothing. The desk's
     // and handed down each frame, as the bar is the interface's and the order is the realm's.
     void setQuickSkill(int32_t skill) { quickSkill_ = skill; }
+    // The right button HELD: while it is down he goes on fighting. When the monster he is on dies
+    // or goes, the next is the one under the pointer, and failing that the nearest in reach.
+    void holdRight();
     int32_t quickSkill() const { return quickSkill_; }
     // The same Attack request a click on a body raises, by id and with no pointer: the arena's
     // hand. It goes through `Realm::ask` like every other order and decides nothing itself.
@@ -316,7 +319,15 @@ public:
     Meteor& meteor() { return meteor_; }
     // The wizard's Energy Ball: let go on `Loosed`, flown until its `Hit` arrives. fx/bolt.h.
     Bolt& bolt() { return bolt_; }
-    void gatherBolt(gfx::Effects& effects) const { bolt_.gather(effects); }
+    void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
+    // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
+    // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
+    // are tuned on.
+    // `acrossX, acrossZ` is the flat direction it is thrown in, screen-right by the caller.
+    void benchBolt(float tiles, float acrossX, float acrossZ);
+    // And before it, a step that way, so he stands facing the throw: the bench asks the realm
+    // for an ordinary walk of one tile, and the body turns as it always does.
+    void benchFace(float acrossX, float acrossZ);
     void gatherMeteor(gfx::Effects& effects) const { meteor_.gather(effects); }
     // The blade's ribbon behind a skill swing. Fed in `show`, off the pose the frame has already
     // computed -- see fx/streak.h, which is MU's own `CreateWeaponBlur` rung for a skill.

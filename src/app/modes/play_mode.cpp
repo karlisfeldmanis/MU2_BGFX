@@ -502,6 +502,14 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             for (const auto& [f, k] : args.uiSkills) {
                 if (at.index == f) desk_.scriptSkill(k - 1);
             }
+            if (args.boltEvery > 40 && at.index % args.boltEvery == args.boltEvery - 40) {
+                world_.played().benchFace(view[0], view[8]);
+            }
+            if (args.boltEvery > 0 && at.index > 0 && at.index % args.boltEvery == 0) {
+                // Screen-right, off the view's own first row, so the whole flight and its
+                // impact are across the picture rather than toward the camera.
+                world_.played().benchBolt(args.boltTiles, view[0], view[8]);
+            }
             const float w = float(ctx.window.width()), h = float(ctx.window.height());
             // A pointer parked where the run asked, pressing nothing: what photographing a
             // tooltip needs, since a click on an item in the bag picks it up instead of
@@ -551,6 +559,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               ctx.window.width(), ctx.window.height());
         if ((ctx.window.clicked(0) && !windowed) || clickNow) world_.played().leftClick();
         if (ctx.window.clicked(1) && !windowed) world_.played().rightClick();
+        // And held: the fight carries on from one monster to the next without another click
+        // (the user, 2026-09-28: "hold right click and continue to kill monsters").
+        else if (ctx.window.held(1) && !windowed) world_.played().holdRight();
         world_.played().update(deltaSeconds);
         // The colour goes out of the world while he is down. Half a second out and a second
         // back: a fall should land and a recovery should feel like one. The renderer drains the
@@ -785,7 +796,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().snorts().gather(ctx.renderer.effects());
         world_.played().eyes().gather(ctx.renderer.effects());
         world_.played().gatherMeteor(ctx.renderer.effects());
-        world_.played().gatherBolt(ctx.renderer.effects());
+        world_.played().gatherBolt(ctx.renderer.effects(), eye.position);
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));

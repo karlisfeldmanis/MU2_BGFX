@@ -158,6 +158,10 @@ const uint32_t kExcellentInk = byteColour(0, 255, 153);
 const uint32_t kReflectedInk = byteColour(255, 0, 255);
 const uint32_t kTakenInk = byteColour(239, 74, 60);
 const uint32_t kAbsorbedInk = byteColour(111, 182, 255);
+// A spell's damage: lavender, the colour of the bolt's own violet halo, and far enough from the
+// shield's blue beside it that the two never read as each other. Ours; MU draws a spell's number
+// in the swing's white.
+const uint32_t kMagicInk = byteColour(196, 160, 255);
 const uint32_t kMissInk = byteColour(207, 199, 184);
 const uint32_t kMissOnHeroInk = byteColour(236, 228, 214);
 // The lane's own inks, and they are deliberately not the fight's: experience is the ramp's
@@ -184,6 +188,7 @@ float sizeOf(Mark mark) {
         case Mark::Miss: return kMissSize;
         case Mark::Absorbed: return kSmallSize;
         case Mark::Swing:
+        case Mark::Magic:
         case Mark::Taken: break;
     }
     return kSwingSize;
@@ -197,6 +202,7 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Reflected: return kReflectedInk;
         case Mark::Taken: return kTakenInk;
         case Mark::Absorbed: return kAbsorbedInk;
+        case Mark::Magic: return kMagicInk;
         case Mark::Miss: return figure.onHero ? kMissOnHeroInk : kMissInk;
         case Mark::Swing: break;
     }

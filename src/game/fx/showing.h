@@ -32,6 +32,7 @@ enum class Mark : uint8_t {
     Taken,     // a blow on him, MU's red
     Absorbed,  // what his shield ate of it, blue and small, beside the red
     Miss,      // the word
+    Magic,     // a spell's damage, lavender: wizardry and not the weapon (the user, 2026-09-28)
 };
 
 // A blow that has landed on the tick and has not yet been shown.
@@ -69,6 +70,8 @@ struct Cue {
     // drops a cue whose swing has moved on does not apply to it -- the damage is real and the
     // bolt that carried it has just arrived on screen.
     bool thrown = false;
+    // Wizardry damage, which is drawn in its own colour: a spell is not a swing.
+    bool magic = false;
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the
     // fuses were not. See Showing::advance.

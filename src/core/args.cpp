@@ -105,6 +105,8 @@ void printUsage() {
         "  --play                    raise the realm behind the window: click to walk, click "
         "to fight\n"
         "  --click-every N           a scripted click every N frames, through the real pick\n"
+        "  --bolt-every N            the bolt bench: an Energy Ball every N frames, drawing only\n"
+        "  --bolt-tiles T            thrown at a point T tiles east of him (default 6)\n"
         "  --lay F:LIST              on frame F lay NAME,... on the ground beside him (bench)\n"
         "  --arena BREED             one breed alone on a clear patch, fighting the hero from\n"
         "                            the first tick; no other spawn stands on the map. The name\n"
@@ -189,6 +191,10 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.figure = v;
         } else if (!std::strcmp(s, "--clip")) {
             if (const char* v = next(s)) a.clip = std::atoi(v);
+        } else if (!std::strcmp(s, "--bolt-every")) {
+            if (const char* v = next(s)) a.boltEvery = std::atoi(v);
+        } else if (!std::strcmp(s, "--bolt-tiles")) {
+            if (const char* v = next(s)) a.boltTiles = float(std::atof(v));
         } else if (!std::strcmp(s, "--click-every")) {
             if (const char* v = next(s)) a.demoClicks = std::atoi(v);
         } else if (!std::strcmp(s, "--point")) {

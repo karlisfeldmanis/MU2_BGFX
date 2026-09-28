@@ -99,6 +99,10 @@ void Play::exhale(float seconds) {
     streak_.update(seconds);
     for (Drawn& one : drawn_) {
         if (one.casting <= 0.0f || !one.visible || !one.placed) continue;
+        // A spell is thrown from an empty hand's gesture, and a staff streaks nothing.
+        if (const sim::SkillRow* row = sim::skillNumbered(one.swingSkill); row && row->wizardry) {
+            continue;
+        }
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the

@@ -474,7 +474,10 @@ bool Sound::open(const std::string& assetDir, const content::Showing& table, boo
 int Sound::load(const std::string& name, bool placed, bool quietly) {
     if (!impl_->open || impl_->table == nullptr) return -1;
     for (size_t i = 0; i < impl_->events.size(); ++i) {
-        if (impl_->events[i]->name == name) return int(i);
+        // By its name AND its kind. One wave can be both: `spell_magic` is the Town Portal's
+        // landing at the ears and the Energy Ball's let-go on the caster, and handing the spell
+        // the portal's unplaced handle made `playAt` refuse it -- the spell was silent.
+        if (impl_->events[i]->name == name && impl_->events[i]->placed == placed) return int(i);
     }
     const content::SoundEvent* cooked = impl_->table->event(name);
     if (cooked == nullptr || cooked->files.empty()) {

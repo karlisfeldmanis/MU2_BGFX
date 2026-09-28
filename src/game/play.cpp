@@ -280,6 +280,8 @@ void Play::update(double seconds) {
             // the ticks the realm says, and SOUND_MAGIC goes with it -- ZzzCharacter.cpp:5142
             // plays it on the line after the one that makes the bolt. From his feet to where the
             // target is DRAWN, which is where the eye has it.
+            // A spell that missed: the bolt still in the air at that body flies on past it.
+            if (happening.what == sim::What::Missed && happening.thrown) bolt_.miss(happening.whom);
             if (happening.what == sim::What::Loosed) {
                 const Drawn* caster = drawnOf(happening.who);
                 const Drawn* target = drawnOf(happening.whom);
@@ -287,9 +289,13 @@ void Play::update(double seconds) {
                     const float from[3] = {caster->crown[0],
                                            ground_->heightAt(caster->crown[0], caster->crown[2]),
                                            caster->crown[2]};
-                    float to[3] = {from[0], from[1], from[2]};
+                    // At the middle of the body, which is half its drawn height under its crown.
+                    float to[3] = {from[0], from[1] + 1.0f, from[2]};
                     if (target && target->placed) {
+                        const FigureBody* look = target->figure.body();
+                        const float tall = look ? look->height * look->scale : 1.0f;
                         to[0] = target->crown[0];
+                        to[1] = target->crown[1] - tall * 0.5f;
                         to[2] = target->crown[2];
                     }
                     bolt_.cast(from, to, happening.whom);
@@ -454,11 +460,10 @@ void Play::update(double seconds) {
                         // because ReceiveAttackDamage does all three in one handler, and on
                         // the first key the arm has not moved yet.
                         // And a skill's clip is protected from the step that may follow it.
-                        // Not for a spell: `casting` is what lays the blade's streak, and a
-                        // wizard's hand holds nothing that streaks.
-                        if (cast && !(spell && spell->wizardry)) {
-                            swinger->casting = swinger->swinging;
-                        }
+                        // A spell too: `casting` is what keeps the walk from cutting the clip when
+                        // the drawn body is still sliding in to where the realm has stopped him.
+                        // The streak asks the skill itself, and a spell lays none.
+                        if (cast) swinger->casting = swinger->swinging;
 
                         // What this swing was thrown with, kept until the blow settles -- for a
                         // player that is a tick or two later, in the branch below.
@@ -545,6 +550,9 @@ void Play::update(double seconds) {
                             if (row == nullptr || row->primary()) cue.skill = 0;
                         }
                         cue.thrown = happening.thrown;
+                        // Only a spell flies, so a thrown blow is wizardry -- asked of the blow and
+                        // not of `swingSkill`, which a dry wizard's staff may already have replaced.
+                        cue.magic = happening.thrown;
                         cue.critical = happening.critical;
                         cue.excellent = happening.excellent;
                         cue.fuse = 0.0f;
@@ -617,7 +625,9 @@ void Play::update(double seconds) {
         [&](uint32_t id, float* out) {
             const Drawn* drawn = drawnOf(id);
             if (drawn == nullptr || !drawn->placed) return false;
+            const FigureBody* look = drawn->figure.body();
             for (int k = 0; k < 3; ++k) out[k] = drawn->crown[k];
+            out[1] -= (look ? look->height * look->scale : 1.0f) * 0.5f;
             return true;
         });
     // On each impact: explosion sound, shock clip on everything within 2 tiles.

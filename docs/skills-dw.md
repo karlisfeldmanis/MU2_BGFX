@@ -29,6 +29,11 @@ reads its sixth as empty.
 - **An empty slot**: the right button's attack is the left button's.
 - **A primary goes to the slot by itself** the first time it is learned; everything else takes the
   first free key, and the slot is the player's to fill.
+- **Held**, it goes on killing (*"hold right click and continue to kill monsters"*): while the
+  button is down and the monster he is on dies, the next is the one under the pointer, and failing
+  that the nearest within the slot's reach -- six tiles for Energy Ball, two for the weapon. It
+  never changes target while the one he is on is alive, because a new order drops the blow in the
+  air (`Play::holdRight`).
 
 The Elf has no skill built yet, so her right button is her weapon until she has one.
 
@@ -62,9 +67,36 @@ nothing; a new order does not take back a bolt already let go; a death clears th
 throws `fx/bolt` on `Loosed` and shows the landing cue on the thrown `Hit`, past the gate that
 drops a cue whose swing has moved on -- by then the next cast may have begun.
 
-`fx/bolt.cpp` is MU2's `Bolt.cs` ported: the wake a reference frame apart by distance, the 1.28 m
-halo, the turning star, the pinned arrival, the ground light -- and MU2's two additions, the core
-star and the faint blue haze, both marked in the file.
+**The look**, tuned on the bolt bench on the user's asking (*"a nice trail, a perfect impact"*,
+then *"stupid sparkles, we need elegant trail smoke"* and *"and puff on impact"*); `fx/bolt.h`
+carries the argument at its head. MU's is kept where it is MU's: the speed, the 1.28 m halo, the
+turning Thunder01 star, the ground light. Ours, and marked:
+
+- **One ball.** The halo is drawn once at the head; MU lays one with every wake stamp, and a stamp
+  a metre back with its own halo is a second ball. The wake is smaller and dimmer, and fades.
+- **A smoke tail** on MU's smoke01, tinted the bolt's blue, added as MU adds that sheet: puffs born
+  small behind the ball, opening, wandering off the line and going out, so the wisp tapers and
+  breaks up. Tried and thrown out on the way: MU2's flare_blue haze (a solid beam), a ribbon on
+  joint_energy (too thin to see), shiny sparkles (the user's "stupid sparkles"), smoke02 (painted
+  orange -- a brown band), a magic_ground shock ring (a daisy).
+- **The impact is on the body**: a white-violet starburst, a soft bloom, a puff of the same smoke
+  thrown out all round and slowed hard, and a short blue flash on the ground. The bolt ends there.
+- **It meets the body.** Aimed at the middle of what it was thrown at and steered gently after it,
+  where MU flies level at the caster's chest and aims once; on this camera that read as a bolt
+  passing under a Budge Dragon.
+- **A miss flies past.** The realm's `Missed` reaches the drawing a tile before the bolt reaches the
+  body, and that bolt goes on by and out, with no impact.
+- **Magic damage is lavender** (`Mark::Magic`, *"different color for magic damage"*), the bolt's own
+  violet and far from the shield's blue beside it.
+
+`--bolt-every N [--bolt-tiles T]` is the bench: a bolt every N frames from where he stands at a point
+T tiles to screen-right, drawing only, with a one-tile step that way beforehand so he faces it.
+
+**Two bugs found on the way.** `spell_magic` is also the Town Portal's unplaced wave, and
+`Sound::load` handed the spell that unplaced handle, which `playAt` refuses: the spell was silent.
+Events are now found by name and kind together. And a spell's clip was left unprotected from the
+walk (`casting` was withheld to keep the staff from streaking), so a wizard who stopped and cast on
+one tick could lose the clip to the drawn body still sliding in; the streak now asks the skill.
 
 ## 3. Measured
 

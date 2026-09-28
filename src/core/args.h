@@ -169,6 +169,10 @@ struct Args {
     // short fixed list and clicks it, through the same unprojection a hand would. It is how a
     // run with nobody at the mouse can show that a click walks and a click on a monster fights.
     int demoClicks = 0;
+    // `--bolt-every N [--bolt-tiles T]`: the bolt bench -- an Energy Ball thrown every N frames
+    // from where he stands at a point T tiles east (default 6), drawing only. Tuning, not play.
+    int boltEvery = 0;
+    float boltTiles = 6.0f;
     // `--point X,Y`: the pointer held on one spot, as fractions of the window, and never
     // clicked -- so a shot can show what hovering there does (the ring, the cursor).
     float pointX = -1.0f, pointY = -1.0f;

@@ -824,6 +824,7 @@ void testCastLock(const content::Tables& tables) {
         // `far` counts the OPENING bolt of each fight: once a monster has closed on him he goes on
         // casting point-blank, as MU's wizard does, so the rest say nothing about the range.
         int loosed = 0, far = 0, opened = 0, thrownHits = 0, swings = 0;
+        float worstFacing = 0.0f;
         uint32_t fighting = 0, openedOn = 0;
         for (int tick = 0; tick < 4000; ++tick) {
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
@@ -841,6 +842,15 @@ void testCastLock(const content::Tables& tables) {
                 if (one.what == sim::What::Loosed) {
                     ++loosed;
                     const sim::Body* at = wiz.find(one.whom);
+                    // He faces what he throws at: the angle between where he looks and the
+                    // target, at the let-go, half a clip after the cast aimed him.
+                    if (at) {
+                        const sim::Body& me = wiz.hero();
+                        float off = std::atan2(at->y - me.y, at->x - me.x) - me.facing;
+                        while (off > 3.14159265f) off -= 6.28318531f;
+                        while (off < -3.14159265f) off += 6.28318531f;
+                        worstFacing = std::max(worstFacing, std::fabs(off));
+                    }
                     if (at && one.whom != openedOn) {
                         openedOn = one.whom;
                         ++opened;
@@ -853,7 +863,10 @@ void testCastLock(const content::Tables& tables) {
         }
         std::printf("  energy ball: %d loosed over %d fights, %d opened from range, %d hits\n",
                     loosed, opened, far, thrownHits);
+        std::printf("  energy ball: worst facing at a let-go %.1f degrees\n",
+                    double(worstFacing) * 57.2958);
         check(loosed > 20, "he throws Energy Ball over and over");
+        check(worstFacing < 0.35f, "and faces what he throws at, within twenty degrees");
         check(far * 4 >= opened * 3, "and opens most fights from further off than a swing reaches");
         check(thrownHits > 0, "and the bolts land as thrown hits, after their flight");
         checkEqual(swings, 0, "and with mana to spend he never swings the staff");
