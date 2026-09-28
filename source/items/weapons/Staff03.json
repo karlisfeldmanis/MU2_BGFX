@@ -35,9 +35,9 @@
     ],
     "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone, on all four."
   },
-  "stance": "scythe",
-  "stance_from": "MuWeapons.cs: WeaponStance.Scythe, TwoHanded: true. The stance enum says why in its own comments - Sword is 'a one-handed sword, mace, or a one-handed staff' and Scythe is 'a scythe, or any two-handed staff or polearm' - so a staff takes the stance its handedness gives it and there is no staff stance. Actions 7 and 20.",
-  "two_handed": true,
+  "stance": "sword",
+  "stance_from": "OURS, not 0.75: MuWeapons.cs has it WeaponStance.Scythe, TwoHanded: true, and this one is held one-handed by choice (2026-09-28). The mesh is 196 units long, inside the one-handed swords' reach (Sword03 is 171) and well short of the spears (230-343), so it reads as a one-handed staff. Width cannot object - OpenMU never tests width on group 5 - and the stance enum says a one-handed staff takes Sword: 'a one-handed sword, mace, or a one-handed staff'. Actions 4 and 17, and the shield hand is free, as on the Skull Staff. The Thunder Staff (288, a spear's length) stays two-handed.",
+  "two_handed": false,
   "sheets": {
     "wand04": "wand04.png"
   },
