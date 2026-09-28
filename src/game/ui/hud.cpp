@@ -131,6 +131,8 @@ constexpr uint32_t kInkShadow = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
 constexpr uint32_t kDeadIcon = gfx::rgba(0.55f, 0.55f, 0.55f, 0.6f);
 constexpr uint32_t kTipColour = gfx::rgba(238.0f / 255.0f, 230.0f / 255.0f, 214.0f / 255.0f);
 constexpr uint32_t kTipNameColour = gfx::rgba(236.0f / 255.0f, 198.0f / 255.0f, 92.0f / 255.0f);
+// The grey of a sum, under the line it explains.
+constexpr uint32_t kTipGrey = gfx::rgba(0.62f, 0.62f, 0.62f);
 constexpr uint32_t kLabelCell = gfx::rgba(15.0f / 255.0f, 16.0f / 255.0f, 17.0f / 255.0f);
 
 // The ring a fired potion box wears: the key's own gold, a quarter of a second of it, stepping
@@ -906,11 +908,35 @@ void Hud::rebuild() {
                          {"Attack speed +" + std::to_string(sim::kAleSpeed), kTipColour, false},
                          {sim::spoken(one.seconds) + " left", kTipColour, false}};
             } else if (const sim::SkillRow* row = sim::skillNumbered(one.skill)) {
+                const float held = 1.0f - hero_->boonDamageTaken;
                 lines = {{row->name, kTipNameColour, true},
-                         {"Absorbs " + sim::absorbed(1.0f - hero_->boonDamageTaken) +
-                              " of every blow",
-                          kTipColour, false},
-                         {sim::spoken(one.seconds) + " left", kTipColour, false}};
+                         {"Absorbs " + sim::absorbed(held) + " of every blow", kTipColour,
+                          false}};
+                // And how that share is reckoned, with his own numbers in it, grey as the skill
+                // card's sum is (the user, 2026-09-28): the points off the shield, the main stat
+                // and agility, then the curve that turns them into a share. The main stat is
+                // strength on the knight's guard and energy on the wizard's barrier.
+                const sim::HeroPoints& has = hero_->points;
+                const int shield = hero_->shieldDefense;
+                const bool barrier = row->number == sim::skill::kSoulBarrier;
+                const float points = barrier ? sim::barrierPoints(has, shield)
+                                             : sim::guardPoints(has, shield);
+                const float now = sim::boonShare(*row, has, shield);
+                char sum[128], curve[128];
+                std::snprintf(sum, sizeof sum, "5 x %d shield + 1.1 x %d %s + 0.5 x %d agi = %.0f",
+                              shield, barrier ? has.energy : has.strength, barrier ? "ene" : "str",
+                              has.agility, double(points));
+                std::snprintf(curve, sizeof curve, "%d%% x %.0f / (%.0f + 150) = %s",
+                              int(sim::kGuardCap * 100.0f + 0.5f), double(points),
+                              double(points), sim::absorbed(now).c_str());
+                lines.push_back({sum, kTipGrey, false});
+                lines.push_back({curve, kTipGrey, false});
+                // Held at the cast: a shield changed or points spent since show here and not in
+                // the share until he casts it again, and the tip says so rather than disagree.
+                if (sim::absorbed(now) != sim::absorbed(held)) {
+                    lines.push_back({"Cast again for " + sim::absorbed(now), kTipGrey, false});
+                }
+                lines.push_back({sim::spoken(one.seconds) + " left", kTipColour, false});
             }
             if (!lines.empty()) {
                 panel::tooltip(tip_, cell.midX(), cell.y, lines,
