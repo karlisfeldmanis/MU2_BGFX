@@ -33,8 +33,6 @@ namespace {
 // aiming at. MU2 keeps its `Wants` on the same argument and bounds it by the swing instead.
 constexpr int64_t kWishTicks = 30;
 
-// A channel's first pulse, in ticks after the cast: a fifth of a second, as he settles in.
-constexpr int32_t kFirstPulseTicks = 4;
 
 }  // namespace
 
@@ -218,8 +216,8 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         hero.channelSkill = row.number;
         hero.channelFrom = tick_;
         hero.channelUntil = tick_ + row.channelTicks;
-        // The first strike a fifth of a second in, as he settles into the stance.
-        hero.channelNext = tick_ + kFirstPulseTicks;
+        // The first strike when his arm is up in the clip.
+        hero.channelNext = tick_ + row.strikeFrom;
         // The sweep starts where he is facing.
         hero.channelTurn = hero.aim;
     }
@@ -373,6 +371,8 @@ void Realm::channel(Body& hero) {
         hero.channelSkill = skill::kNone;
         return;
     }
+    // Past the window, his arm is coming down: the channel runs out without striking.
+    if (tick_ > hero.channelFrom + row->strikeUntil) return;
     hero.channelNext += std::max<int32_t>(1, row->pulseTicks);
     // Everything in its shape now -- a body that walked in since the last strike can be the next
     // -- and of those ONE: the first clockwise from where the last strike went, so the bolt goes

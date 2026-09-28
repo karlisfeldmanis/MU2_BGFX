@@ -239,13 +239,18 @@ saturates. `fx/effect_mesh` is the .obj reader and basis draw the meteor and the
 and lightning finds all monsters around him and casts lightning to them (aoe)"*, *"it also has
 cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells"*.
 
-- **A channel that goes round** (`SkillRow::channelTicks` 60, `pulseTicks` 4; `Realm::channel`):
-  three seconds from the cast, a strike a fifth of a second in and every fifth of a second after,
-  fourteen at most. Each strike goes to **one** body within **four tiles** (`Spread::Ring` at `reach`
-  4): the first clockwise from where the last one went (`Body::channelTurn`, starting where he
-  faces), so the bolt sweeps round the ring (*"not to all monsters at the same time but like
-  rotation"*); a lone body takes every strike, and a body that walks in joins the round. A strike
-  with nothing in reach is not thrown. The first cut struck everything at once every half second.
+- **A channel as long as its clip, that goes round** (`SkillRow::channelTicks` 42, `pulseTicks` 3,
+  `strikeFrom` 14, `strikeUntil` 32; `Realm::channel`). It lasts the Recovery clip once, 2.08 s
+  (*"make it shorter, like actual animation length"*), and strikes **only while his arm is up** in
+  it, 0.7 s to 1.6 s, read off the clip frame by frame on the bench (*"when hand is up only then start
+  channeling"*): a strike every three ticks, seven at most. Each strike goes to **one** body within
+  **four tiles** (`Spread::Ring` at `reach` 4): the first clockwise from where the last one went
+  (`Body::channelTurn`, starting where he faces), so the bolt sweeps round the ring (*"not to all
+  monsters at the same time but like rotation"*); a lone body takes every strike, and a body that
+  walks in joins the round. A strike with nothing in reach is not thrown. Earlier cuts ran three
+  seconds from a fifth of a second in, striking everything at once, then one at a time.
+  The clip's length is logged at every cast (`channel: ... s long`); the sim's clip table does not
+  carry 183, so the ticks are written on the row and the log is how to check them.
 - **It pushes** what each strike leaves standing a step straight away from him, slid over six ticks
   (`Realm::push`), and not again until it has landed: no teleport, a flinch, no thinking or walking while it slides, never onto a
   blocked or sheltered tile, and a death mid-slide leaves the body on its tile. 0.75 moves a random

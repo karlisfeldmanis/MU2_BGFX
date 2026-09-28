@@ -209,8 +209,11 @@ constexpr SkillRow kRows[kSkills] = {
     // Lightning 3: 0.75's row for the numbers that survive -- seventeen damage, fifteen mana,
     // seventy-two energy -- and **this game's first channel** (the user, 2026-09-28): "when it
     // gets cast it has duration, the wizard uses a special animation and lightning finds all the
-    // monsters around him and casts lightning to them". Three seconds, and **it goes round**: a
-    // strike every fifth of a second (fourteen in all), each at ONE body within four tiles of him
+    // monsters around him and casts lightning to them". **As long as its clip**, 2.08 s -- 42 ticks
+    // ("make it shorter, like actual animation length") -- and it strikes **only while his arm is
+    // up** in it, from 0.7 s to 1.6 s (ticks 14 to 32, read off the clip frame by frame on the
+    // bench): a strike every three ticks, seven in all, and **it goes round**, each at ONE body
+    // within four tiles of him
     // (`Spread::Ring` at `reach` 4) -- the next one clockwise from the last it struck, so the bolt
     // sweeps round the ring rather than lighting it all at once ("not to all monsters at the same
     // time but like rotation") -- pushing what it leaves standing a step away (`pushes`,
@@ -220,10 +223,10 @@ constexpr SkillRow kRows[kSkills] = {
     // out to be a mount's pose -- and cannot walk out of it (the rule of 2026-09-23). 0.75's Lightning is
     // one bolt at one body; what is kept of it is the bolt, the push and the thunder.
     {skill::kLightning, "Lightning", 15, 4.0f, 1.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
-     "For three seconds lightning sweeps round him, leaping into one body after another within "
-     "four tiles and throwing each back a step.",
-     183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 60,
-     4},
+     "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
+     "another within four tiles and throwing each back a step.",
+     183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
+     3, 14, 32},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

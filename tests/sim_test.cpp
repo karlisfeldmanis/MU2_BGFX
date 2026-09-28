@@ -1046,9 +1046,11 @@ void testCastLock(const content::Tables& tables) {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
         check(bolt.wizardry && bolt.channelled() && !bolt.primary() && !bolt.thrown() &&
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
-                  bolt.mana == 15 && bolt.coolTicks == 200 && bolt.channelTicks == 60,
-              "Lightning is a three-second channel round him, ten seconds to cool, and it pushes");
-        check(bolt.pulseTicks == 4, "and it strikes every fifth of a second");
+                  bolt.mana == 15 && bolt.coolTicks == 200 && bolt.channelTicks == 42,
+              "Lightning is a channel round him as long as its clip, ten seconds to cool, and it "
+              "pushes");
+        check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32,
+              "and it strikes every three ticks while his arm is up");
         const int32_t scroll = tables.itemAt(15, 2);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kLightning &&
                   tables.items[size_t(scroll)].teachesEnergy == 72,
@@ -1058,7 +1060,7 @@ void testCastLock(const content::Tables& tables) {
         check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 12), "a wizard of twelve raises");
         check(wiz.learn(sim::skill::kLightning), "who knows Lightning");
         int channels = 0, pushes = 0, away = 0, widest = 0, stillWhile = 0;
-        int64_t lastCast = -1, closest = 1 << 30, pulseTick = -1;
+        int64_t lastCast = -1, closest = 1 << 30, pulseTick = -1, earliest = 1 << 30;
         int pulses = 0, mostPulses = 0, thisPulse = 0, thisChannel = 0, sweptMost = 0;
         uint32_t swept[16] = {};
         int sweptCount = 0;
@@ -1114,6 +1116,9 @@ void testCastLock(const content::Tables& tables) {
                     sweptMost = std::max(sweptMost, sweptCount);
                     sweptCount = 0;
                 }
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kLightning && lastCast >= 0) {
+                    earliest = std::min<int64_t>(earliest, int64_t(one.tick) - lastCast);
+                }
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kLightning) {
                     if (int64_t(one.tick) != pulseTick) {
                         pulseTick = one.tick;
@@ -1147,9 +1152,10 @@ void testCastLock(const content::Tables& tables) {
                     channels, pulses, mostPulses, widest, (long long)closest, pushes, away,
                     double(worstStep));
         check(channels > 3, "he channels Lightning through a hunt");
-        // Up to fourteen: a strike with nothing left in reach -- pushed out of it, or killed -- is
-        // not thrown.
-        check(mostPulses > 6 && mostPulses <= 14, "and a channel strikes up to fourteen times");
+        // Up to seven: a strike with nothing left in reach -- pushed out of it, or killed -- is not
+        // thrown.
+        check(mostPulses > 3 && mostPulses <= 7, "and a channel strikes up to seven times");
+        check(earliest >= 14, "and never before his arm is up");
         check(closest >= wiz.coolsFor(sim::skill::kLightning) && closest >= 60,
               "and never twice inside its cooldown");
         // One body a strike, and round the ring: a channel with company strikes more than one.

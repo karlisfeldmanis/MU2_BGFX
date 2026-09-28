@@ -218,6 +218,10 @@ struct SkillRow {
     // its shape; nothing else is thrown until it ends (`Realm::channel`).
     int32_t channelTicks = 0;
     int32_t pulseTicks = 0;
+    // And the window it strikes in, in ticks from the cast: from `strikeFrom` to `strikeUntil`
+    // (the arm up in its clip, "when the hand is up only then start channeling"); the rest of the
+    // channel is the wind-up and the arm coming down.
+    int32_t strikeFrom = 0, strikeUntil = 0;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick

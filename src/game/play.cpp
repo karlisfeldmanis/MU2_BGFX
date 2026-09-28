@@ -267,6 +267,8 @@ void Play::update(double seconds) {
                     if (row && row->channelled() && caster->castClip >= 0) {
                         const float lasts = float(row->channelTicks) * float(kTickSeconds);
                         caster->figure.play(caster->castClip, true, kCastBlend);
+                        core::logf("channel: %s plays clip %d, %.3f s long", row->name, row->clip,
+                                   double(caster->figure.length()));
                         caster->casting = lasts;
                         caster->swingPace = 1.0f;
                         caster->swinging = lasts;
