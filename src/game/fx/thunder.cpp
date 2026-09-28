@@ -65,20 +65,54 @@ void Thunder::throwPath(Arc& arc) {
     const float wide = std::max(1e-3f, std::sqrt(across[0] * across[0] + across[2] * across[2]));
     across[0] /= wide;
     across[2] /= wide;
-    // A shorter bolt jags less, so point blank is not a scribble.
-    const float jag = kJag * std::min(1.0f, far / 3.0f);
+    // A shorter bolt wanders less, so point blank is not a scribble; and each throw its own mood.
+    const float mood = kTamest + unit() * (kWildest - kTamest);
+    const float step = kJag * mood * std::min(1.0f, far / 3.0f);
+    arc.points = kFewest + int(unit() * float(kPoints - kFewest + 1));
+    arc.points = std::min(arc.points, kPoints);
+    // Where along the line each point falls: uneven gaps, so the kinks do not come in a rhythm.
+    float at[kPoints];
+    at[0] = 0.0f;
+    for (int i = 1; i < arc.points; ++i) at[i] = at[i - 1] + 0.4f + unit();
+    for (int i = 1; i < arc.points; ++i) at[i] /= at[arc.points - 1];
     for (int path = 0; path < 2; ++path) {
         float (*points)[3] = path == 0 ? arc.wide : arc.thin;
-        for (int i = 0; i < kPoints; ++i) {
-            const float t = float(i) / float(kPoints - 1);
-            // Pinned at both ends and freest in the middle.
-            const float room = jag * std::sin(t * 3.14159265f);
-            const float side = (unit() * 2.0f - 1.0f) * room;
-            const float lift = (unit() * 2.0f - 1.0f) * room * 0.6f;
+        // The thin joint wanders on its own and a little harder, so the two do not run as one.
+        const float stride = path == 0 ? step : step * 1.3f;
+        // A random walk off the line, then the drift taken off so both ends are pinned.
+        float side[kPoints], lift[kPoints];
+        side[0] = lift[0] = 0.0f;
+        for (int i = 1; i < arc.points; ++i) {
+            side[i] = side[i - 1] + (unit() * 2.0f - 1.0f) * stride;
+            lift[i] = lift[i - 1] + (unit() * 2.0f - 1.0f) * stride * 0.6f;
+        }
+        const float endSide = side[arc.points - 1], endLift = lift[arc.points - 1];
+        for (int i = 0; i < arc.points; ++i) {
+            const float t = at[i];
+            const float s = side[i] - endSide * t, l = lift[i] - endLift * t;
             for (int k = 0; k < 3; ++k) {
-                points[i][k] = arc.from[k] + (arc.to[k] - arc.from[k]) * t + across[k] * side;
+                points[i][k] = arc.from[k] + (arc.to[k] - arc.from[k]) * t + across[k] * s;
             }
-            points[i][1] += lift;
+            points[i][1] += l;
+        }
+    }
+    // Now and then a branch splits off the wide joint partway along and dies in the air.
+    arc.forked = unit() < kForkChance && arc.points > 4;
+    if (arc.forked) {
+        const int root = 1 + int(unit() * float(arc.points - 3));
+        const float length = kForkShortest + unit() * (kForkLongest - kForkShortest);
+        const float swing = (unit() * 2.0f - 1.0f);
+        float dir[3] = {line[0] + across[0] * swing * 1.4f, line[1] + (unit() - 0.3f) * 0.8f,
+                        line[2] + across[2] * swing * 1.4f};
+        const float d = std::max(1e-3f, std::sqrt(dir[0] * dir[0] + dir[1] * dir[1] +
+                                                  dir[2] * dir[2]));
+        for (float& one : dir) one /= d;
+        for (int i = 0; i < kForkPoints; ++i) {
+            const float t = float(i) / float(kForkPoints - 1);
+            for (int k = 0; k < 3; ++k) {
+                arc.fork[i][k] = arc.wide[root][k] + dir[k] * length * t +
+                                 (i > 0 ? (unit() * 2.0f - 1.0f) * step * 0.8f : 0.0f);
+            }
         }
     }
     arc.spark = kSparkSmallest + unit() * (kSparkLargest - kSparkSmallest);
@@ -88,7 +122,7 @@ void Thunder::throwPath(Arc& arc) {
 
 void Thunder::smoke(const Arc& arc) {
     if (!bgfx::isValid(smoke_)) return;
-    for (int i = 1; i + 1 < kPoints; i += kSmokeEvery) {
+    for (int i = 1; i + 1 < arc.points; i += kSmokeEvery) {
         Puff* one = nullptr;
         for (Puff& p : puffs_) {
             if (!p.alive) {
@@ -132,11 +166,13 @@ void Thunder::gather(gfx::Effects& effects) const {
     for (const Arc& arc : arcs_) {
         if (!arc.alive) continue;
         const float lit = std::min(1.0f, arc.left / kFadeFrames);
-        for (int path = 0; path < 2; ++path) {
-            const float (*points)[3] = path == 0 ? arc.wide : arc.thin;
+        for (int path = 0; path < 3; ++path) {
+            if (path == 2 && !arc.forked) break;
+            const float (*points)[3] = path == 0 ? arc.wide : path == 1 ? arc.thin : arc.fork;
+            const int count = path == 2 ? kForkPoints : arc.points;
             const float half = (path == 0 ? kWide : kThin) * 0.5f;
-            const float bright = path == 0 ? lit : lit * 0.9f;
-            for (int i = 0; i + 1 < kPoints; ++i) {
+            const float bright = path == 0 ? lit : path == 1 ? lit * 0.9f : lit * 0.7f;
+            for (int i = 0; i + 1 < count; ++i) {
                 const float* a = points[i];
                 const float* b = points[i + 1];
                 float along[3] = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
@@ -158,8 +194,8 @@ void Thunder::gather(gfx::Effects& effects) const {
                 const float upright[3] = {level[1] * along[2] - level[2] * along[1],
                                           level[2] * along[0] - level[0] * along[2],
                                           level[0] * along[1] - level[1] * along[0]};
-                const float u0 = float(i) / float(kPoints - 1) * kRepeats - clock_;
-                const float u1 = float(i + 1) / float(kPoints - 1) * kRepeats - clock_;
+                const float u0 = float(i) / float(count - 1) * kRepeats - clock_;
+                const float u1 = float(i + 1) / float(count - 1) * kRepeats - clock_;
                 for (int face = 0; face < 2; ++face) {
                     const float* side = face == 0 ? level : upright;
                     gfx::Sprite quad;

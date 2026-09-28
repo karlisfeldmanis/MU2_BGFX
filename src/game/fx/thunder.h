@@ -46,7 +46,8 @@ public:
     uint32_t striking() const;
 
 private:
-    static constexpr int kPoints = 12;   // the path, ends included
+    static constexpr int kPoints = 16;   // room for the path, ends included
+    static constexpr int kForkPoints = 5;
     struct Arc {
         bool alive = false;
         float from[3], to[3];
@@ -55,6 +56,9 @@ private:
         float reroll;                   // frames until the path is thrown again
         float wide[kPoints][3];         // the wide joint's path
         float thin[kPoints][3];         // and the thin one's, thrown on its own
+        int points;                     // how many of each this throw uses
+        float fork[kForkPoints][3];     // a branch off the side, when there is one
+        bool forked;
         float spark;                    // the contact's roll and size, per frame
         float sparkRoll;
         float glow;
@@ -75,7 +79,15 @@ private:
     static constexpr float kRerollFrames = 1.0f;  // a new path every reference frame, as MU
     static constexpr float kWide = 0.5f;          // metres: MU's fifty units
     static constexpr float kThin = 0.12f;         // and the thin joint's ten, a little wider
-    static constexpr float kJag = 0.45f;          // metres off the line, at most, mid-bolt
+    // How far the path may wander off the line, in metres, before it is pinned back to both ends:
+    // each throw rolls its own wildness in a band, walks away from the line step by step, and
+    // takes off the drift so it ends where it must. More random than MU's fixed-stride walk on
+    // the user's word ("more random so they all don't look the same").
+    static constexpr float kJag = 0.30f;          // a step's wander, metres, at the middle
+    static constexpr float kWildest = 1.6f, kTamest = 0.6f;
+    static constexpr int kFewest = 8;             // points a throw, fewest and most
+    static constexpr float kForkChance = 0.45f;   // a throw that splits a branch off
+    static constexpr float kForkLongest = 1.3f, kForkShortest = 0.5f;  // metres
     static constexpr float kRepeats = 2.0f;       // the sheet twice along a bolt
     static constexpr float kScroll = 1.0f;        // sheet widths a second
     static constexpr float kWhite[3] = {0.85f, 0.9f, 1.0f};

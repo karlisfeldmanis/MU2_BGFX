@@ -257,13 +257,21 @@ cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells
   bench over Hellfire's 155 (arms swinging), Chain Lightning's 161 (a quick thrust) and Inferno's 154
   (a leap). He **cannot walk out of it**, the rule of 2026-09-23 for every skill: the realm holds him
   (`castUntil`) and drops a click to move. One thunder a pulse, not one a body.
-- **The channel bar** (`Hud::setChannel`): the spell's icon and a bar beside it, centred just above
-  the plate, draining from full to empty over the channel, in the buff strip's colours, no ornament.
+- **The cast bar** (`Hud::setChannel`), reworked on *"channeling UI needs work"*: a glass panel in
+  the item card's own container, centred over the bar and lifted clear of the plate, holding the
+  spell's icon, its name, the seconds left to a tenth, and a meter in lightning's blue that drains.
   Stepped in hundredths so the frame redraws at most a hundred times a channel. Any later channel
-  uses it as it is.
-- **The look** is `fx/thunder`: a jagged bolt pinned at both ends, re-thrown every reference frame
-  for a third of a second, two crossed quads a segment on MU's JointThunder01, a wide joint and a thin
-  one, the sheet scrolling; MU's Thunder01 spark on the body and a blue light three tiles wide there;
+  uses it as it is. The first cut was a thin strip with an icon, squeezed onto the plate's edge.
+- **The stance was missing** at first (*"i did not see casting animation"*): a pulse's `Hit`, with
+  no `Swung` in front of it, was read by the drawing as a monster's one-part blow and restarted his
+  attack clip over the held stance, every pulse, until the session's first swing latched
+  `landing`. The hero's `Hit` never starts a pose now.
+- **The look** is `fx/thunder`: a jagged bolt re-thrown every reference frame for a third of a
+  second, two crossed quads a segment on MU's JointThunder01, a wide joint and a thin one, the sheet
+  scrolling. Each throw is its own (*"more random so they all don't look the same"*): a random walk
+  off the line pinned back to both ends, eight to sixteen points at uneven gaps, a wildness rolled
+  per throw, the thin joint wandering on its own, and a branch forking off the side about half the
+  time; MU's Thunder01 spark on the body and a blue light three tiles wide there;
   a little cool-grey smoke off the bolt's own path as it goes out. MU2's `Thunder.cs` is the full
   joint walk if this ever needs it. `SOUND_THUNDER01`.
 

@@ -417,7 +417,12 @@ void Play::update(double seconds) {
                             }
                         }
                     }
-                    const bool pose = begun || !swinger->landing;
+                    // Never the hero's `Hit`: every blow of his has a `Swung` in front of it, except
+                    // what flies and what a channel strikes -- and a channel's pulse read as a
+                    // monster's one-part blow restarted his attack clip over the held stance on
+                    // every pulse, until the first swing of the session latched `landing`.
+                    const bool pose =
+                        begun || (!swinger->landing && happening.who != realm_.hero().id);
                     // MU's SwordCount % 3: one in three is Attack 1, the rest Attack 2.
                     // A breed with no Attack 2 keeps attackClip2 == -1 and always swings
                     // Attack 1 -- the counter still counts, harmlessly.
