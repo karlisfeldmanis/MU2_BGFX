@@ -165,8 +165,11 @@ bool makeCharacter(const std::string& folderPath, const std::vector<Seat>& roste
     std::error_code error;
     fs::create_directories(folder, error);
     const fs::path path = folder / (name + ".json");
-    // Everybody starts in Lorencia for now: an elf's home is Noria, and Noria is not cooked
-    // (docs/roadmap.md, sprint 12). Invention until it is.
+    // Where the class is born: the Fairy Elf in Noria, the elves' town, and the knight and the
+    // wizard in Lorencia, as in MU and as MU2's server started them (the user, 2026-09-28:
+    // "created elf, spawned at lorencia not noria"). She comes in on Noria's spawn gate
+    // (game/world/maps.h). The source for MU's own table is not on this machine to cite.
+    const char* home = kin == sim::Kin::FairyElf ? "noria" : "lorencia";
     std::FILE* f = std::fopen(path.string().c_str(), "wb");
     if (!f) {
         core::logError("roster: cannot write %s", path.string().c_str());
@@ -174,10 +177,13 @@ bool makeCharacter(const std::string& folderPath, const std::vector<Seat>& roste
     }
     std::fprintf(f,
                  "{\n  \"version\": 1,\n  \"name\": \"%s\",\n  \"slot\": %d,\n  \"fresh\": true,\n"
-                 "  \"world\": \"lorencia\",\n  \"class\": %d,\n  \"level\": 1\n}\n",
-                 name.c_str(), slot, int(kin));
+                 "  \"world\": \"%s\",\n  \"class\": %d,\n  \"level\": 1\n}\n",
+                 name.c_str(), slot, home, int(kin));
     const bool ok = std::fclose(f) == 0;
-    if (ok) core::logf("roster: made %s, a %s, in slot %d", name.c_str(), className(kin), slot);
+    if (ok) {
+        core::logf("roster: made %s, a %s, in slot %d, born in %s", name.c_str(), className(kin),
+                   slot, home);
+    }
     return ok;
 }
 
