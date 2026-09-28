@@ -36,6 +36,16 @@ tip::Sheet describe(const content::Tables& tables, const sim::Held& what, const 
 // blue as the amount grows. Bag.MoneyColour.
 uint32_t moneyColour(long long zen);
 
+// **A thing's sockets, as the windows read them**: how many it has, up to three (the user,
+// 2026-09-28: "there could be max of 3 socket slots"), and the power set in the one at `at`,
+// 0 for empty. The only two places the windows touch the sim's socket fields, so a change in
+// how sim::Held keeps them is followed here and nowhere else.
+constexpr int kMostSockets = sim::kMostSockets;
+inline int socketsOf(const sim::Held& held) { return held.sockets; }
+inline uint8_t powerAt(const sim::Held& held, int at) {
+    return at >= 0 && at < kMostSockets ? held.powers[at] : 0;
+}
+
 // **What a spell does, as lines**: the band it rolls in his hands and the sum behind it, then
 // whom it strikes -- a channel's length and strikes, a line's sweep, a rain's area -- and a push.
 // One function for the spell's own card (`Desk::skillSheet`) and its scroll's (`describe`), so the

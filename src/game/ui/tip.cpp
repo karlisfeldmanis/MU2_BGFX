@@ -28,6 +28,11 @@ constexpr float kChipTrack = 0.08f;
 constexpr float kRowTall = 1.5f;       // of its own size
 constexpr float kRailPad = 8.0f;
 constexpr float kMarkColumn = 16.0f;
+// A socket's ring (Mark::Ring): Diablo III's bronze rim over a shade, and the hole in it.
+constexpr uint32_t kSocketShade = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
+constexpr uint32_t kSocketRim = gfx::rgba(0.62f, 0.45f, 0.24f, 1.0f);
+constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 1.0f);
+constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.9f, 0.75f, 0.9f);
 constexpr float kMarkGap = 9.0f;
 // The corners, and how many segments each quarter turn is cut into. Six is smooth at this
 // radius and keeps the whole card inside one fan of 28 points.
@@ -294,6 +299,30 @@ void glyphAt(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, ui
             }
             break;
         }
+        case Mark::Ring:
+        case Mark::RingSet: {
+            // A socket: a bronze rim lit from above, a dark hole, and in a set one the stone
+            // with a glint at its upper left. Discs as fans, as the canvas has no round.
+            const auto disc = [&](float x, float y, float r, uint32_t ink) {
+                float xy[40];
+                for (int i = 0; i < 20; ++i) {
+                    const float a = float(i) * 6.2831853f / 20.0f;
+                    xy[i * 2] = x + std::cos(a) * r;
+                    xy[i * 2 + 1] = y + std::sin(a) * r;
+                }
+                canvas.polygon(nullptr, xy, nullptr, 20, ink);
+            };
+            const uint32_t alpha = colour & 0xFF000000u;
+            const auto faded = [&](uint32_t ink) { return (ink & 0x00FFFFFFu) | alpha; };
+            disc(cx, cy, h, faded(kSocketShade));
+            disc(cx, cy - h * 0.06f, h * 0.9f, faded(kSocketRim));
+            disc(cx, cy + h * 0.04f, h * 0.66f, faded(kSocketHole));
+            if (which == Mark::RingSet) {
+                disc(cx, cy + h * 0.04f, h * 0.5f, colour);
+                disc(cx - h * 0.17f, cy - h * 0.13f, h * 0.16f, faded(kSocketGlint));
+            }
+            break;
+        }
         case Mark::Note: {
             const float t = size * 0.13f;
             quad(cx - t, cy - h, cx + t, cy - h, cx + t * 0.6f, cy + h * 0.2f, cx - t * 0.6f,
@@ -449,6 +478,7 @@ constexpr float kHeroWordSize = 15.0f;
 constexpr float kRailSize = 13.5f;
 constexpr float kRailIndent = 13.0f;     // the rail's text, past its line
 constexpr float kMarkSize = 8.0f;        // a row's mark, smaller than a section's
+constexpr float kSocketSize = 14.0f;     // a socket's ring, near the row's own height
 constexpr float kFootLine = 1.5f;        // a foot line, of the foot's size
 constexpr uint32_t kRailInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.18f);
 
@@ -842,8 +872,10 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
         for (size_t r = 0; r < section.rows.size(); ++r) {
             const Row& row = section.rows[r];
             if (row.mark != Mark::None) {
+                const bool socket = row.mark == Mark::Ring || row.mark == Mark::RingSet;
                 glyphAt(canvas, row.mark, box.x + pad + kMarkColumn * u * 0.5f,
-                        rowPen + rowTall * 0.5f, kMarkSize * u, fade(colourOf(row.markTone)));
+                        rowPen + rowTall * 0.5f, (socket ? kSocketSize : kMarkSize) * u,
+                        fade(colourOf(row.markTone)));
             }
             if (prosaic(row)) {
                 // Coloured by what part of the row each piece is: the keyword white, the prose in

@@ -1,6 +1,7 @@
 #include "game/ui/bag.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include "game/ui/controls.h"
@@ -109,6 +110,33 @@ constexpr float kWornFoot = 203.0f;
 // with the Zen figure ranged against it.
 constexpr Box kHammer{panel::kWellRight - 30.0f, panel::kFootTop + 1.0f, 30.0f, 24.0f};
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
+
+// A piece's sockets over its middle, in units: the item card's socket ring (tip::Mark::Ring), a
+// bronze rim round the orange stone of a Rune of Creation or round a dark hole, stacked down the
+// piece when it has two or three, as Diablo II sets its holes over the picture. As large as
+// `kSocketStone` where the piece has the room, and smaller on a narrow one.
+constexpr float kSocketStone = 6.0f;
+constexpr float kSocketGap = 2.0f;
+constexpr uint32_t kSocketEmber = gfx::rgba(0.9f, 0.42f, 0.04f, 1.0f);
+constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.78f, 0.45f, 0.85f);
+constexpr uint32_t kSocketShade = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
+constexpr uint32_t kSocketRim = gfx::rgba(0.62f, 0.45f, 0.24f, 1.0f);
+constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 0.82f);
+
+bool creationJewel(const content::Tables& tables, const sim::Held& held) {
+    return !held.empty() && sim::creation(tables.items[size_t(held.item)]);
+}
+
+// A filled circle, as a fan of sixteen: the canvas has rectangles and polygons, no round.
+void disc(gfx::Canvas& canvas, float cx, float cy, float r, uint32_t colour) {
+    float xy[32];
+    for (int i = 0; i < 16; ++i) {
+        const float a = float(i) * 6.2831853f / 16.0f;
+        xy[i * 2] = cx + std::cos(a) * r;
+        xy[i * 2 + 1] = cy + std::sin(a) * r;
+    }
+    canvas.polygon(nullptr, xy, nullptr, 16, colour);
+}
 
 // The Zen strip is drawn by `panel::zenFoot`, on the panel's shared foot rule.
 
@@ -224,7 +252,11 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
                 // ApplyJewels first, as HandlePickedItemPlacement asks it: over a thing the
                 // jewel goes on, the drop is that and never a swap.
                 const int under = bag.holder(tables, cell);
-                if (under >= 0 && under != from && sim::refinable(tables, bag[from], bag[under])) {
+                // A Rune of Creation set in a socket rides the same request: the realm's refine
+                // takes either, and refuses whole what it cannot do.
+                if (under >= 0 && under != from &&
+                    (sim::refinable(tables, bag[from], bag[under]) ||
+                     sim::settable(tables, bag[from], bag[under], realm.wearer().kin))) {
                     out->refineJewel = from;
                     out->refineTarget = under;
                 } else {
@@ -394,10 +426,19 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             // A jewel over a thing it goes on lights the thing, all of its cells, and not the
             // jewel's own footprint: MuMain's CanUpgradeItem colour, MU2's Bag.Target.
             const int under = bag.holder(tables, cell);
-            if (under >= 0 && under != dragging_ && sim::refinable(tables, moving, bag[under])) {
+            // A Rune of Creation lights the piece it is over, all of it: blue where it would be
+            // set, red over a socket it cannot go in -- taken already, the other kind of piece, or
+            // another class's power. The drop there would only be a swap, and a swap is not what
+            // the hand holding the jewel means.
+            const bool setting = under >= 0 && under != dragging_ &&
+                                 sim::settable(tables, moving, bag[under], realm.wearer().kin);
+            const bool refused = under >= 0 && under != dragging_ && !setting &&
+                                 creationJewel(tables, moving) && socketsOf(bag[under]) > 0;
+            if (under >= 0 && under != dragging_ &&
+                (setting || refused || sim::refinable(tables, moving, bag[under]))) {
                 const content::ItemRow& target = tables.items[size_t(bag[under].item)];
                 const int covering = bag.covered(under, target.width, target.height, cells);
-                for (int i = 0; i < covering; ++i) light(cells[i], true);
+                for (int i = 0; i < covering; ++i) light(cells[i], !refused);
             } else {
                 if (count == 0) light(cell, false);
                 for (int i = 0; i < count; ++i) light(cells[i], fits);
@@ -426,6 +467,33 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
             const std::string& name = tables.items[size_t(one.item)].label;
             canvas_.text(box.x + 2.0f, box.y + face.ascent(7.0f * k) + 2.0f, 7.0f * k,
                          panel::kLettering, name.substr(0, std::min<size_t>(name.size(), 6)));
+        }
+    }
+    // **The sockets, over the piece's middle** (the user, 2026-09-28: "make socket placeholders
+    // bigger and put in on item center"). Every one, empty or set, on every socketed piece in
+    // the bag and on him: one in the middle, two or three stacked down it, each an orange stone
+    // in its ring where a Rune of Creation is set and a dark hole where none is. Not on the one
+    // riding the pointer, which is drawn whole above.
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        const sim::Held& held = bag[slot];
+        const int sockets = held.empty() ? 0 : std::min(socketsOf(held), kMostSockets);
+        if (sockets == 0 || slot == dragging_) continue;
+        const Box box =
+            panel::scaled(x, y, wellOf(itemBox(tables, slot, held), sim::wearable(slot)));
+        const float gap = kSocketGap * k;
+        const float r = std::min({kSocketStone * k, box.w * 0.38f,
+                                  (box.h - gap * float(sockets + 1)) / float(sockets) * 0.5f});
+        const float pitch = r * 2.0f + gap;
+        const float top = box.midY() - pitch * float(sockets - 1) * 0.5f;
+        for (int at = 0; at < sockets; ++at) {
+            const float cx = box.midX(), cy = top + pitch * float(at);
+            disc(canvas_, cx, cy, r + std::max(1.0f, 0.6f * k), kSocketShade);
+            disc(canvas_, cx, cy - r * 0.05f, r * 0.92f, kSocketRim);
+            disc(canvas_, cx, cy + r * 0.03f, r * 0.68f, kSocketHole);
+            if (powerAt(held, at) != 0) {
+                disc(canvas_, cx, cy + r * 0.03f, r * 0.54f, kSocketEmber);
+                disc(canvas_, cx - r * 0.18f, cy - r * 0.14f, r * 0.17f, kSocketGlint);
+            }
         }
     }
     // A stack's count at its cell's foot, right-aligned, as WoW prints it; a single piece

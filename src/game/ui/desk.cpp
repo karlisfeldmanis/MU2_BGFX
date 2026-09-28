@@ -1077,8 +1077,14 @@ static bool boldOf(const content::Tables& tables, const sim::Lying& one) {
 // in its `yellowTextItems` beside Zen (ZzzInventory.cpp:6101), which the ladder skips.
 static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one) {
     const uint32_t yellow = gfx::rgba(1.0f, 0.8f, 0.1f);
+    // Ours above MU's ladder, as the item card's name has them (game/ui/describe.cpp): a Rune of
+    // Creation is the epic orange, and anything socketed the rare violet, under excellent.
+    if (!one.what.empty() && sim::creation(tables.items[size_t(one.what.item)])) {
+        return tip::colourOf(tip::Tone::Orange);
+    }
     // Excellent is green, above the +7 yellow: `(ItemOption & 63) > 0` is tested first.
     if (!one.what.empty() && one.what.excellent != 0) return gfx::rgba(0.1f, 1.0f, 0.5f);
+    if (!one.what.empty() && socketsOf(one.what) > 0) return tip::colourOf(tip::Tone::Violet);
     if (one.what.empty() || one.what.refinement >= 7 || boldOf(tables, one)) return yellow;
     if (one.what.luck || one.what.option > 0) return gfx::rgba(0.4f, 0.7f, 1.0f);
     const int plus = one.what.refinement;
@@ -1120,6 +1126,10 @@ void Desk::labelGround(const Play& play, int width, int height) {
             // BuildGroundItemLabelDescriptor's tail: the option, then the luck, after the plus.
             if (one->what.option > 0) name += " +Option";
             if (one->what.luck) name += " +Luck";
+            // And ours last: the socket, named as the options are (the user, 2026-09-28).
+            if (const int n = socketsOf(one->what); n > 0) {
+                name += n == 1 ? " +Socket" : " +" + std::to_string(n) + " Sockets";
+            }
         }
         // RenderGroundItemLabelTexture: the plate is the text's own box, opaque black, and no
         // padding anywhere in it.

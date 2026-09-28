@@ -49,6 +49,8 @@ std::string kindOf(const content::ItemRow& row) {
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
     if (row.shield()) return "Shield";
     if (row.jewel()) return "Jewel";
+    // In the potions' group as MU files it (14, 22), and not drunk: set in a socket.
+    if (sim::creation(row)) return "Epic jewel";
     if (row.group == 15) return "Scroll";
     if (row.group == 12) return "Orb";
     switch (row.group) {
@@ -203,8 +205,14 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // yellow, anything carrying an option is blue, everything else white. Excellent, ancient
     // and socket colours wait for the items that have them.
     // Excellent is green whatever its plus: MU's rule 5, above the +7 yellow.
-    sheet.nameTone = row.jewel() ? Tone::Yellow
+    // A Rune of Creation is MU's orange, the epic colour (ours, as the jewel is).
+    sheet.nameTone = sim::creation(row) ? Tone::Orange
+                     : row.jewel() ? Tone::Yellow
                      : what.excellent != 0 ? Tone::Green
+                     // Rare: a socket, which drops seldom (ours, the user's word 2026-09-28:
+                     // "item drop with +socket is rare", "we need color code for rare items").
+                     // Violet, MU's one ink the ladder had not taken; under excellent, over +7.
+                     : socketsOf(what) > 0 ? Tone::Violet
                      : plus >= kRefinedFrom ? Tone::Yellow
                      : what.skill || what.luck || what.option > 0 ? Tone::Blue
                                   : Tone::White;
@@ -377,6 +385,51 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             }
         }
         sheet.sections.push_back(options);
+    }
+
+    // ---- its socket --------------------------------------------------------------------------
+    // Ours, not MU's: a weapon or a piece of armour may roll up to three sockets as it rolls
+    // luck, and a Rune of Creation is set in it (sim/items.h). Drawn as Diablo III
+    // draws its sockets, on the user's reference of 2026-09-28: no frame, a row a socket under
+    // the options, a round bronze ring in the gutter and "Empty Socket" in the options' blue --
+    // or, set, the stone in the ring and its power in MU's orange, the jewel's own name colour.
+    if (const int sockets = std::min(socketsOf(what), kMostSockets); sockets > 0) {
+        Section socket;
+        for (int at = 0; at < sockets; ++at) {
+            Row line;
+            if (const sim::PowerRow* power = sim::powerOf(powerAt(what, at))) {
+                line.keyword = power->name;
+                line.free = power->tells ? power->tells : "";
+                line.freeTone = Tone::Orange;
+                line.mark = tip::Mark::RingSet;
+                line.markTone = Tone::Orange;
+            } else {
+                line.free = "Empty Socket";
+                line.freeTone = Tone::Blue;
+                line.mark = tip::Mark::Ring;
+            }
+            socket.rows.push_back(line);
+        }
+        sheet.sections.push_back(socket);
+    }
+    // A Rune of Creation: the power it carries, what that does, and whose and where it goes.
+    if (sim::creation(row)) {
+        if (const sim::PowerRow* power = sim::powerOf(powerAt(what, 0))) {
+            Section carries;
+            Row line;
+            line.keyword = power->name;
+            line.mark = tip::Mark::RingSet;
+            line.markTone = Tone::Orange;
+            line.free = power->tells ? power->tells : "";
+            line.freeTone = Tone::Orange;
+            carries.rows.push_back(line);
+            Row where;
+            where.free = std::string(kNames[size_t(power->kin)]) + " \xC2\xB7 " +
+                         (power->weapon ? "a weapon's socket" : "an armour's socket");
+            where.freeTone = Tone::Gray;
+            carries.rows.push_back(where);
+            sheet.sections.push_back(carries);
+        }
     }
 
     // ---- what it teaches ----------------------------------------------------------------------

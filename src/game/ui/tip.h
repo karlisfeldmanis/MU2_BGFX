@@ -45,7 +45,10 @@ struct Value {
 };
 
 // Which mark stands beside a section, or beside a row.
-enum class Mark : uint8_t { None, Blade, Shield, Star, Triangle, Diamond, Socket, Note };
+// `Ring` and `RingSet` are a socket as Diablo III draws one beside its row (the user's
+// reference, 2026-09-28): a round bronze rim, dark and empty, or holding a stone of the mark's
+// colour. Drawn larger than the other marks, near the line's own height.
+enum class Mark : uint8_t { None, Blade, Shield, Star, Triangle, Diamond, Socket, Note, Ring, RingSet };
 
 // A row: a label and its values, or a free line of prose that runs the width.
 struct Row {
