@@ -1579,7 +1579,10 @@ def figure_set(world):
                  # and 18 where a sword is 4 and 17.
                  "stance": stance_of.get(
                      os.path.splitext(os.path.basename(one.get("right_hand") or ""))[0], ""),
-                 "idle": one.get("idle", "")}
+                 "idle": one.get("idle", ""),
+                 # The plus each piece is drawn at ({"parts": 7, "right_hand": 8}); the game
+                 # turns it into a shine once it has the item table. Empty is +0.
+                 "plus": one.get("plus", {})}
         entry["parts"] = [p for p in entry["parts"] if p]
         characters.append(entry)
 
@@ -1707,6 +1710,10 @@ FOLK_VERSION075 = {
         (253, "Potion Girl Amy", "PotionGirlAmy", 127, 86, 3),
         (254, "Pasi The Mage", "", 118, 113, 4),
         (255, "Lumen the Barmaid", "LumentheBarmaid", 123, 135, 2),
+        # Ours, not Version075's: the quest giver. MuMain's MONSTER_MARLON, at OpenMU Season
+        # Six's Lorencia spawn (VersionSeasonSix/Maps/Lorencia.cs:41). There he wanders
+        # between four maps; Lorencia is the scope, so here he stays.
+        (229, "Marlon", "Marlon", 136, 88, 2),
     ],
     3: [  # Noria
         (253, "Potion Girl Amy", "PotionGirlAmy", 169, 109, 4),

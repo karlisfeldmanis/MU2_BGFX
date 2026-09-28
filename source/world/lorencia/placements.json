@@ -372,6 +372,18 @@
       "facing": 4,
       "idle": "action1",
       "idle_why": "inside the safe zone"
+    },
+    {
+      "model": "Marlon",
+      "who": "Marlon",
+      "tile": [
+        136,
+        88
+      ],
+      "facing": 2,
+      "idle": "action7",
+      "idle_why": "outside the safe zone",
+      "ours": "the quest giver; OpenMU Season Six's Lorencia spawn, not Version075's"
     }
   ],
   "spawns_from": [

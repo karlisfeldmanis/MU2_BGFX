@@ -612,6 +612,40 @@ const FigureBody* Figures::dress(const std::string& name, const std::string& bas
     return kept;
 }
 
+void Figures::shine(const std::vector<content::ItemRow>& items) {
+    auto rowOf = [&](const content::Mesh* mesh) -> const content::ItemRow* {
+        if (!mesh) return nullptr;
+        for (const content::ItemRow& row : items) {
+            if (row.name == mesh->name()) return &row;
+        }
+        return nullptr;
+    };
+    for (auto& [name, body] : bodies_) {
+        if (body->wornPlus > 0) {
+            body->partShine.assign(body->parts.size(), ShineLook{});
+            for (size_t i = 0; i < body->parts.size(); ++i) {
+                if (const content::ItemRow* row = rowOf(body->parts[i])) {
+                    body->partShine[i] = shineOf(*row, body->wornPlus);
+                } else {
+                    core::logError("%s wears %s at +%d, which the item table does not know, so "
+                                   "it is drawn plain", name.c_str(),
+                                   body->parts[i]->name().c_str(), body->wornPlus);
+                }
+            }
+        }
+        for (HeldItem& item : body->held) {
+            if (item.plus <= 0) continue;
+            if (const content::ItemRow* row = rowOf(item.mesh)) {
+                item.shine = shineOf(*row, item.plus);
+            } else {
+                core::logError("%s holds %s at +%d, which the item table does not know, so it "
+                               "is drawn plain", name.c_str(),
+                               item.mesh ? item.mesh->name().c_str() : "nothing", item.plus);
+            }
+        }
+    }
+}
+
 namespace {
 
 // Which bare body wears a thing, out of the classes its index.json row lists. A suit or a
@@ -841,6 +875,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
         made->kind = BodyKind::Character;
         made->female = entry["female"].boolOr(false);
         made->stance = entry["stance"].stringOr("");
+        made->wornPlus = int(entry["plus"]["parts"].numberOr(0.0));
         for (const core::Json& part : entry["parts"].items) {
             if (const content::Mesh* found = mesh(part.string)) {
                 made->parts.push_back(found);
@@ -863,6 +898,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
             }
             HeldItem item;
             item.mesh = found;
+            item.plus = int(entry["plus"][field].numberOr(0.0));
             describe(item);
             // A bow goes in the LEFT hand whichever slot index.json names it in -- MU reads
             // one out of `Weapon[1]` and a crossbow out of `Weapon[0]` -- as in `dress`.

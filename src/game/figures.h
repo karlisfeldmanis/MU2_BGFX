@@ -79,8 +79,11 @@ struct HeldItem {
     // A shield is placed by its middle rather than by its origin: MU places one by a point
     // inside its mesh and the disc then sinks into the armour. MU2 centres it instead.
     bool centred = false;
-    // How its plus shows. Only a body Figures::dress made carries one.
+    // How its plus shows. A body Figures::dress made carries one, and so does a townsperson
+    // whose recipe names a plus (Figures::shine).
     ShineLook shine;
+    // That plus as the recipe gives it, before the item table turns it into `shine`.
+    int plus = 0;
 };
 
 // Which of the manifest's three lists a body came out of. It is not the rig and not the
@@ -100,9 +103,12 @@ struct FigureBody {
     std::string label;
     BodyKind kind = BodyKind::Character;
     std::vector<const content::Mesh*> parts;   // skinned, all against one skeleton
-    // How each part's plus shows, beside `parts`; empty, or shorter, is +0. Only a body
-    // Figures::dress made has any.
+    // How each part's plus shows, beside `parts`; empty, or shorter, is +0. A body
+    // Figures::dress made has them, and so does a townsperson whose recipe names a plus.
     std::vector<ShineLook> partShine;
+    // The plus every worn part is at by its recipe -- Marlon's plate is +7 -- until
+    // Figures::shine reads the item table and turns it into partShine.
+    int wornPlus = 0;
     std::vector<HeldItem> held;
     const content::Mesh* skeletonMesh = nullptr;  // whose bone table the palette is built on
     const ClipLibrary* library = nullptr;
@@ -233,6 +239,12 @@ public:
     // in a hash map, whose order is neither stable between runs nor anything a person could
     // walk, so a list to be stepped through by hand is built here rather than there.
     std::vector<const FigureBody*> bodiesOf(BodyKind kind) const;
+    // Turns the plus a townsperson's recipe names into the shine it is drawn with, now that
+    // the item table is known: the chrome's level and colour are the item's (game::shineOf),
+    // and the figures open before the tables do. Idempotent; a body with no plus is left
+    // alone, so a dressed hero is not undressed.
+    void shine(const std::vector<content::ItemRow>& items);
+
     const std::vector<FigurePlacement>& placements() const { return placements_; }
     const std::vector<Breed>& breeds() const { return breeds_; }
     const ClipLibrary* library(const std::string& name) const;

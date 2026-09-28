@@ -33,6 +33,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                        world.c_str(), error.c_str(), world.c_str());
         return false;
     }
+    // A townsperson's plus becomes its chrome here, the first moment the item table is in
+    // hand: Marlon's plate at +7 and Berdysh at +8.
+    if (figures_) figures_->shine(tables_.items);
 
     // The two copies of the attribute grid, compared -- the one the cook wrote into the tables
     // and the one the ground read out of attributes.png. This is the only run in which both

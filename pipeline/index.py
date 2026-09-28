@@ -2192,6 +2192,12 @@ def main() -> None:
                 if (idle := document.get("idle")):
                     entry["idle"] = idle
 
+                # The plus his gear is drawn at, for the one townsperson whose gear has one:
+                # Marlon's plate at +7 and his Berdysh at +8. "parts" covers every worn piece
+                # and each hand is named on its own.
+                if (plus := document.get("plus")):
+                    entry["plus"] = plus
+
                 # Whether anybody can *be* this one.
                 #
                 # A townsperson is assembled exactly like a player — a base rig with pieces
