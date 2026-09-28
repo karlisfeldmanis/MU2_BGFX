@@ -1,0 +1,135 @@
+{
+  "item": "GloveElf04",
+  "mu_name": "Spirit Gloves",
+  "mu_name_from": "MuMain loads glove indexes 10 to 14 from GloveElf{i+1} (ZzzOpenData.cpp line 151: `AccessModel(MODEL_GLOVES + i + 10, ..., L\"GloveElf\", i + 1)`), so index 13 is GloveElf04, which openmu's 0.75 Armors.cs names the Spirit Gloves. mu.db agrees: code 5133, group 10 index 13, Player/GloveElf04.bmd.",
+  "why_this_one": "The Fairy Elf's fourth set and the first of her two that are plate: Eo the Craftsman sells all five pieces at +3 on the first row of his shelf (src/sim/market.cpp, kCraftsman), so Noria's second merchant had a shelf whose top half could not be looked at. Spirit is the Brass set's metal in the elf's green: the same 10-series sheets MU recoloured with a `c`.",
+  "profile": "armour",
+  "profile_from": "armour, not soft_armour. Vine, Silk and Wind are hide and cloth and took soft_armour; Spirit is plate. Its sheets are the Brass set's 10-series in the elf's green - upper_10c and lower_10c are upper_10_m and lower_10_m repainted, and the Brass set is plate_steel with brass ornaments - so the default plate_steel is what most of it is, and the `c` recolour changes the paint and not how the thing was made.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 117. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(13, \"Spirit Gloves\", 38, 9, 4, 38, 40, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so `armor.Group = (byte)(slot + 5)` makes the group 10.",
+    "group": 10,
+    "number": 13,
+    "drop_level": 38,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 9,
+    "attack_speed": 4,
+    "attack_speed_note": "Recorded and unread: the sim takes attack speed off the weapon row alone.",
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 38,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Eighty agility beside forty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "gloves_10c.png",
+    "hide.png",
+    "lower_09c.png"
+  ],
+  "sheet_from": "Data/Player/gloves_10c.OZJ (64x64), hide.jpg and lower_09c.OZT (32x32), from MuMain. The .bmd names gloves_10c.jpg, hide.jpg and lower_09c.tga; 80 of the 144 triangles are on the first, 6 on hide and 58 on lower_09c.",
+  "sheet_note": "gloves_10c is the Brass Gloves' gloves_10 in the elf's green, a dark green vambrace with a gold-ribbed cuff, drawn from two sides. Mean (37, 58, 49) at chroma 34. lower_09c is the curled green-and-gold fin whose alpha cuts 53% away, and here it carries 58 triangles, far more than the four quads the armour and boots give it: 54 of them are welded into the gauntlet as its flared cuff, and 4 are fins on crossed quads at the wrist. hide is MU capping the openings.",
+  "material_note": "Four islands. Islands 0 and 1 are 70 each: gloves_10c's 40, lower_09c's 27 and hide's 3 per hand, welded into one shell - so 54 of lower_09c's 58 triangles are not a free ornament here but the flared green cuff built into the gauntlet. plate_steel, by the island rule and by the majority, and the cuff is hard green-and-gold paint that reads as plate anyway. Islands 2 and 3 are two triangles each, lower_09c's other 4: the fins on crossed quads at each wrist, where the Brass Gloves carry their gold fans, and they take brass as those do. The green is dark - lower_10c averages lum about 60 - and a dark albedo at metallic 1.0 is the shape of the Bone set's fault, so it was weighed: here it is plate, as the Bronze-green Scale set's verdigris plate is (HelmMale07's note), and the gold ribbing is what the metal's highlight has to catch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 70,
+      "area": 1543.4,
+      "along": [
+        -6.5,
+        8.3
+      ],
+      "mu_uv": [
+        0.007,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.469,
+        0.005,
+        0.995,
+        0.98
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 70,
+      "area": 1541.5,
+      "along": [
+        -6.5,
+        8.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.993,
+        0.999
+      ],
+      "bake_uv": [
+        0.469,
+        0.005,
+        0.995,
+        0.98
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 2,
+      "area": 282.6,
+      "along": [
+        -21.5,
+        -0.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.469,
+        0.458,
+        0.921
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 2,
+      "area": 282.6,
+      "along": [
+        -21.4,
+        -0.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.458,
+        0.458
+      ]
+    }
+  ]
+}

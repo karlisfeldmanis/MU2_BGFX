@@ -1,0 +1,89 @@
+{
+  "item": "BootElf05",
+  "mu_name": "Guardian Boots",
+  "mu_name_from": "MuMain loads boot indexes 10 to 14 from BootElf{i+1} (ZzzOpenData.cpp line 152: `AccessModel(MODEL_BOOTS + i + 10, ..., L\"BootElf\", i + 1)`), so index 14 is BootElf05, which openmu's 0.75 Armors.cs names the Guardian Boots. mu.db agrees: code 5646, group 11 index 14, Player/BootElf05.bmd.",
+  "why_this_one": "The Fairy Elf's fifth and last 0.75 set, and the one Eo the Craftsman sells after Spirit - all five pieces at +3 on his shelf (src/sim/market.cpp, kCraftsman). Silver plate with gilt edging, the brightest metal in her wardrobe, and the piece that finishes his shelf.",
+  "profile": "armour",
+  "profile_from": "armour, not soft_armour. Guardian is polished silver plate with gilt edging on every sheet (upper_03, lower_03, gloves_03b, boots_03b are all grey metal at chroma about 22 with gold scroll along the edges), so plate_steel, the armour default, is what almost all of it is.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 135. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(14, 6, 2, 2, \"Guardian Boots\", 52, 16, 0, 45, 40, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 14,
+    "drop_level": 52,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 16,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 0,
+    "walk_speed_note": "Nought, as on every elf boot: the row's own asymmetry against the knight's, recorded rather than smoothed.",
+    "durability": 45,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Eighty agility beside forty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "boots_03b.png"
+  ],
+  "sheet_from": "Data/Player/boots_03b.OZJ (64x64), from MuMain, the only sheet the model names: one mesh, 152 triangles. The .bmd names boots_03b.jpg.",
+  "sheet_note": "boots_03b is a silver greave and sabaton with a gold-scrolled knee cop and a gold curl standing off the calf, painted into the same page. Mean (128, 121, 109) at chroma 34.",
+  "material_note": "Two islands, one boot each, 76 triangles apiece on boots_03b: plate_steel. The gold knee cop and the curl off the calf are painted into the same page and welded into the same shell, so they go with the plate, which is the island rule; unlike the Pad and Brass boots there is no separate ornament sheet to hand brass to.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 76,
+      "area": 3726.5,
+      "along": [
+        -10.1,
+        31.8
+      ],
+      "mu_uv": [
+        -0.003,
+        0.007,
+        0.987,
+        0.993
+      ],
+      "bake_uv": [
+        0.008,
+        0.007,
+        0.871,
+        0.74
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 76,
+      "area": 3738.3,
+      "along": [
+        -32.7,
+        11.9
+      ],
+      "mu_uv": [
+        -0.003,
+        0.007,
+        0.987,
+        0.993
+      ],
+      "bake_uv": [
+        0.008,
+        0.104,
+        0.985,
+        0.993
+      ]
+    }
+  ]
+}

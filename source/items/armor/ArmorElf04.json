@@ -1,0 +1,200 @@
+{
+  "item": "ArmorElf04",
+  "mu_name": "Spirit Armor",
+  "mu_name_from": "MuMain loads armour indexes 10 to 14 from ArmorElf{i+1} (ZzzOpenData.cpp line 149: `AccessModel(MODEL_ARMOR + i + 10, ..., L\"ArmorElf\", i + 1)`), so index 13 is ArmorElf04, which openmu's 0.75 Armors.cs names the Spirit Armor. mu.db agrees: code 4109, group 8 index 13, Player/ArmorElf04.bmd.",
+  "why_this_one": "The Fairy Elf's fourth set and the first of her two that are plate: Eo the Craftsman sells all five pieces at +3 on the first row of his shelf (src/sim/market.cpp, kCraftsman), so Noria's second merchant had a shelf whose top half could not be looked at. Spirit is the Brass set's metal in the elf's green: the same 10-series sheets MU recoloured with a `c`.",
+  "profile": "armour",
+  "profile_from": "armour, not soft_armour. Vine, Silk and Wind are hide and cloth and took soft_armour; Spirit is plate. Its sheets are the Brass set's 10-series in the elf's green - upper_10c and lower_10c are upper_10_m and lower_10_m repainted, and the Brass set is plate_steel with brass ornaments - so the default plate_steel is what most of it is, and the `c` recolour changes the paint and not how the thing was made.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 83. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(13, 3, 2, 2, \"Spirit Armor\", 44, 21, 38, 40, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 13,
+    "drop_level": 44,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 21,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 38,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Eighty agility beside forty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "upper_10c.png",
+    "hide.png",
+    "skin_warrior_01.png",
+    "lower_09c.png"
+  ],
+  "sheet_from": "Data/Player/upper_10c.OZJ (128x128), hide.jpg, skin_warrior_01.OZJ (256x256) and lower_09c.OZT (32x32), from MuMain. The .bmd names upper_10c.jpg, hide.jpg, skin_warrior_01.jpg and lower_09c.tga; 116 of the 182 triangles are on the first, 16 on hide, 46 on the skin and 4 on lower_09c.",
+  "sheet_note": "upper_10c is a breastplate and backplate in dark green with gold ribbing and a gold scroll over the breast, and two shoulder plates below - the Brass Armor's upper_10_m repainted in the elf's green. Mean (78, 105, 92) at chroma 48. lower_09c is a curled green-and-gold fin on a 32-square whose alpha cuts 53% away, the ornament standing off the shoulders. skin_warrior_01 is the elf's own body sheet, which the piece carries for her bare arms. hide is MU capping the openings, a solid black square.",
+  "material_note": "Seven islands and the Brass Armor's shape in green. Island 0 is 92 triangles - upper_10c's 76 and hide's 16, the cuirass and its caps - and islands 5 and 6 are 20 each, upper_10c's other 40, the shoulder plates: plate_steel. Islands 3 and 4 are 23 each, 46 together, skin_warrior_01's 46 exactly, at the same UV columns as the Vine Armor's arms: skin. Islands 1 and 2 are two triangles each, lower_09c's 4: the curled fins on crossed quads standing off the back, where the Brass Armor has its gold quills, and they take brass by the Brass set's own rule - a small ornament on its own .OZT is a cast piece, not a beaten plate, whatever colour it is painted. The green is dark - lower_10c averages lum about 60 - and a dark albedo at metallic 1.0 is the shape of the Bone set's fault, so it was weighed: here it is plate, as the Bronze-green Scale set's verdigris plate is (HelmMale07's note), and the gold ribbing is what the metal's highlight has to catch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 92,
+      "area": 5250.6,
+      "along": [
+        -12.3,
+        19.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.979,
+        0.826
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 2,
+      "area": 313.7,
+      "along": [
+        -25.7,
+        -9.0
+      ],
+      "mu_uv": [
+        0.333,
+        0.001,
+        0.666,
+        0.999
+      ],
+      "bake_uv": [
+        0.534,
+        0.008,
+        0.706,
+        0.523
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 2,
+      "area": 311.5,
+      "along": [
+        -25.6,
+        -9.0
+      ],
+      "mu_uv": [
+        0.333,
+        0.001,
+        0.664,
+        0.999
+      ],
+      "bake_uv": [
+        0.708,
+        0.007,
+        0.878,
+        0.523
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 23,
+      "area": 1123.8,
+      "along": [
+        -7.8,
+        7.0
+      ],
+      "mu_uv": [
+        0.005,
+        0.508,
+        0.149,
+        0.986
+      ],
+      "bake_uv": [
+        0.225,
+        0.008,
+        0.496,
+        0.708
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 23,
+      "area": 1097.9,
+      "along": [
+        -7.8,
+        7.0
+      ],
+      "mu_uv": [
+        0.328,
+        0.508,
+        0.469,
+        0.986
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.143,
+        0.933
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 20,
+      "area": 1229.6,
+      "along": [
+        -11.9,
+        15.6
+      ],
+      "mu_uv": [
+        0.079,
+        -0.002,
+        0.66,
+        0.412
+      ],
+      "bake_uv": [
+        0.008,
+        0.319,
+        0.919,
+        0.926
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 20,
+      "area": 1189.6,
+      "along": [
+        -11.9,
+        13.7
+      ],
+      "mu_uv": [
+        0.079,
+        -0.002,
+        0.66,
+        0.412
+      ],
+      "bake_uv": [
+        0.494,
+        0.008,
+        0.993,
+        0.933
+      ]
+    }
+  ]
+}

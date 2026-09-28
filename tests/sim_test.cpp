@@ -411,11 +411,24 @@ void testInvariants(const content::Tables& tables) {
 // for it, the footprint walk, and equipping as a move through the same gate a window colours by.
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
-    // 131: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
+    // 156: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
     // of Soul Barrier on 2026-09-28, and the elf's Greater Defense, Greater Damage and Skillshot
-    // orbs the same day (sprint 15). A count rather than a list, because what it is guarding is
-    // the cook -- a recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 131, "131 item rows cooked");
+    // orbs the same day (sprint 15), and the 25 Noria's shelves were missing: the Silk, Wind,
+    // Spirit and Guardian sets, the Elven, Battle and Tiger Bows, the Golden Crossbow and the
+    // Elven Shield. A count rather than a list, because what it is guarding is the cook -- a
+    // recipe that stops being picked up is a row the shelf silently cannot sell.
+    checkEqual(long(tables.items.size()), 156, "156 item rows cooked");
+    // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
+    // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
+    for (const int npc : {242, 243, 253}) {
+        int stocked = 0;
+        const sim::Offer* offers = sim::stockOf(npc, &stocked);
+        int unmade = 0;
+        for (int i = 0; i < stocked; ++i) {
+            if (tables.itemAt(offers[i].group, offers[i].number) < 0) ++unmade;
+        }
+        checkEqual((long long)unmade, 0LL, "every offer on a Noria shelf is a cooked item");
+    }
     const int shield = tables.itemAt(6, 0), axe = tables.itemAt(1, 0), staff = tables.itemAt(5, 0);
     const int small = tables.itemAt(14, 1);
     check(shield >= 0 && axe >= 0 && staff >= 0 && small >= 0, "the rows the tests use exist");

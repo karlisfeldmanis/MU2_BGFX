@@ -1,0 +1,179 @@
+{
+  "item": "BootElf04",
+  "mu_name": "Spirit Boots",
+  "mu_name_from": "MuMain loads boot indexes 10 to 14 from BootElf{i+1} (ZzzOpenData.cpp line 152: `AccessModel(MODEL_BOOTS + i + 10, ..., L\"BootElf\", i + 1)`), so index 13 is BootElf04, which openmu's 0.75 Armors.cs names the Spirit Boots. mu.db agrees: code 5645, group 11 index 13, Player/BootElf04.bmd.",
+  "why_this_one": "The Fairy Elf's fourth set and the first of her two that are plate: Eo the Craftsman sells all five pieces at +3 on the first row of his shelf (src/sim/market.cpp, kCraftsman), so Noria's second merchant had a shelf whose top half could not be looked at. Spirit is the Brass set's metal in the elf's green: the same 10-series sheets MU recoloured with a `c`.",
+  "profile": "armour",
+  "profile_from": "armour, not soft_armour. Vine, Silk and Wind are hide and cloth and took soft_armour; Spirit is plate. Its sheets are the Brass set's 10-series in the elf's green - upper_10c and lower_10c are upper_10_m and lower_10_m repainted, and the Brass set is plate_steel with brass ornaments - so the default plate_steel is what most of it is, and the `c` recolour changes the paint and not how the thing was made.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 134. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(13, 6, 2, 2, \"Spirit Boots\", 40, 10, 0, 38, 40, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 13,
+    "drop_level": 40,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 10,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 0,
+    "walk_speed_note": "Nought, as on every elf boot: the row's own asymmetry against the knight's, recorded rather than smoothed.",
+    "durability": 38,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Eighty agility beside forty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "boot_10c.png",
+    "lower_09c.png",
+    "boots_10.png"
+  ],
+  "sheet_from": "Data/Player/boot_10c.OZJ (64x64), lower_09c.OZT (32x32) and boots_10.OZJ (64x64), from MuMain. The .bmd names boot_10c.jpg, lower_09c.tga and boots_10.jpg; 130 of the 142 triangles are on the first, 4 on lower_09c and 8 on boots_10. boots_10.png was already in the tree, decoded for the Brass Boots, and is reused.",
+  "sheet_note": "boot_10c is the boot from two sides, green greaves with gold ribbing and a gold-studded cuff, mean (59, 91, 72) at chroma 53. boots_10 is the Brass Boots' own gold sheet, unrecoloured: MU left eight triangles of the knight's gold on the elf's boot. lower_09c is the curled green-and-gold fin on two crossed quads.",
+  "material_note": "Six islands, and the counts are the Brass Boots' own - 53, 53, 16, 16, 2, 2 - which is how you know it is the same mesh repainted. Islands 0 and 1 are the two greaves, boot_10c's; islands 2 and 3 are the cuffs, boot_10c's 12 and boots_10's 4 each - the gold the Brass Boots wear, left unrecoloured on the cuff. All four plate_steel. Islands 4 and 5 are two triangles each, lower_09c's 4: the curled fins on crossed quads standing off the calf where the Brass Boots have boots_10b's gold fan, brass as those are. The green is dark - lower_10c averages lum about 60 - and a dark albedo at metallic 1.0 is the shape of the Bone set's fault, so it was weighed: here it is plate, as the Bronze-green Scale set's verdigris plate is (HelmMale07's note), and the gold ribbing is what the metal's highlight has to catch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 2646.1,
+      "along": [
+        -8.8,
+        21.2
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.979,
+        0.915
+      ],
+      "bake_uv": [
+        0.417,
+        0.007,
+        0.961,
+        0.727
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 53,
+      "area": 2653.7,
+      "along": [
+        -8.8,
+        21.2
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.979,
+        0.915
+      ],
+      "bake_uv": [
+        0.286,
+        0.007,
+        0.994,
+        0.935
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 1099.4,
+      "along": [
+        -9.1,
+        15.7
+      ],
+      "mu_uv": [
+        0.2,
+        0.656,
+        0.7,
+        0.99
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.368,
+        0.802
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 1099.3,
+      "along": [
+        -9.1,
+        15.7
+      ],
+      "mu_uv": [
+        0.2,
+        0.656,
+        0.7,
+        0.99
+      ],
+      "bake_uv": [
+        0.129,
+        0.007,
+        0.835,
+        0.837
+      ]
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 2,
+      "area": 355.4,
+      "along": [
+        -21.8,
+        -3.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.303,
+        0.405,
+        0.701
+      ]
+    },
+    {
+      "island": 5,
+      "material": "brass",
+      "triangles": 2,
+      "area": 355.4,
+      "along": [
+        -21.8,
+        -3.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.405,
+        0.405
+      ]
+    }
+  ]
+}

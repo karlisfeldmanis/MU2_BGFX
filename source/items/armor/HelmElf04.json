@@ -1,0 +1,111 @@
+{
+  "item": "HelmElf04",
+  "mu_name": "Spirit Helm",
+  "mu_name_from": "MuMain loads helm indexes 10 to 14 from HelmElf{i+1} (ZzzOpenData.cpp line 148: `AccessModel(MODEL_HELM + i + 10, ..., L\"HelmElf\", i + 1)`), so index 13 is HelmElf04, which openmu's 0.75 Armors.cs names the Spirit Helm. mu.db agrees: code 3597, group 7 index 13, Player/HelmElf04.bmd.",
+  "why_this_one": "The Fairy Elf's fourth set and the first of her two that are plate: Eo the Craftsman sells all five pieces at +3 on the first row of his shelf (src/sim/market.cpp, kCraftsman), so Noria's second merchant had a shelf whose top half could not be looked at. Spirit is the Brass set's metal in the elf's green: the same 10-series sheets MU recoloured with a `c`.",
+  "profile": "armour",
+  "profile_from": "armour, not soft_armour. Vine, Silk and Wind are hide and cloth and took soft_armour; Spirit is plate. Its sheets are the Brass set's 10-series in the elf's green - upper_10c and lower_10c are upper_10_m and lower_10_m repainted, and the Brass set is plate_steel with brass ornaments - so the default plate_steel is what most of it is, and the `c` recolour changes the paint and not how the thing was made.",
+  "keeps_head": true,
+  "keeps_head_from": "ZzzCharacter.cpp line 12122, SetCharacterScale: `(Helm >= MODEL_VINE_HELM && Helm <= MODEL_SPIRIT_HELM)` sets BODYPART_HEAD to `MODEL_BODY_HELM + c->SkinIndex`, the elf's bare head, and draws it under the helm. MODEL_SPIRIT_HELM is MODEL_HELM + 13 (_enum.h line 1658), the last of the range, so this is the last helm that keeps the head. The mesh agrees: 68 triangles all on head_a04 and none on skin, an open helm with no face of its own.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 66. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(13, 2, 2, 2, \"Spirit Helm\", 40, 16, 38, 40, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 13,
+    "drop_level": 40,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 16,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 38,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Eighty agility beside forty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "head_a04.png"
+  ],
+  "sheet_from": "Data/Player/head_a04.OZJ (64x64), from MuMain, the only sheet the model names - one mesh, 68 triangles, no skin and no hide. The .bmd names head_a04.jpg.",
+  "sheet_note": "head_a04 is an open helm: a silver-grey brow mask with a gold boss at the forehead on the left of the page, and green scales edged in gold down the right, which are the cheek and crown plates. Mean (108, 117, 99) at chroma 28. It carries no face - the elf's own head is drawn under it, see keeps_head.",
+  "material_note": "Three islands, all plate_steel. Island 0 is 48 triangles, the brow mask and crown on the page's left; islands 1 and 2 are 10 each, the green scale plates down the right of the page, a cheek guard either side. head_a04 is the only sheet and all of it is plate: a silver-grey mask and green scales edged in gold, hard highlights on every scale. The gold boss and edging are paint on the same plates and go with them, which is the island rule.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 48,
+      "area": 1771.9,
+      "along": [
+        -14.5,
+        14.9
+      ],
+      "mu_uv": [
+        0.06,
+        0.044,
+        0.966,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.923,
+        0.924
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 640.0,
+      "along": [
+        -13.9,
+        7.9
+      ],
+      "mu_uv": [
+        0.549,
+        0.093,
+        0.975,
+        0.972
+      ],
+      "bake_uv": [
+        0.281,
+        0.006,
+        0.951,
+        0.584
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 10,
+      "area": 640.0,
+      "along": [
+        -13.9,
+        7.9
+      ],
+      "mu_uv": [
+        0.549,
+        0.093,
+        0.975,
+        0.972
+      ],
+      "bake_uv": [
+        0.248,
+        0.006,
+        0.756,
+        0.994
+      ]
+    }
+  ]
+}

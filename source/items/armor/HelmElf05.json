@@ -1,0 +1,265 @@
+{
+  "item": "HelmElf05",
+  "mu_name": "Guardian Helm",
+  "mu_name_from": "MuMain loads helm indexes 10 to 14 from HelmElf{i+1} (ZzzOpenData.cpp line 148: `AccessModel(MODEL_HELM + i + 10, ..., L\"HelmElf\", i + 1)`), so index 14 is HelmElf05, which openmu's 0.75 Armors.cs names the Guardian Helm. mu.db agrees: code 3598, group 7 index 14, Player/HelmElf05.bmd.",
+  "why_this_one": "The Fairy Elf's fifth and last 0.75 set, and the one Eo the Craftsman sells after Spirit - all five pieces at +3 on his shelf (src/sim/market.cpp, kCraftsman). Silver plate with gilt edging, the brightest metal in her wardrobe, and the piece that finishes his shelf.",
+  "profile": "armour",
+  "profile_from": "armour, not soft_armour. Guardian is polished silver plate with gilt edging on every sheet (upper_03, lower_03, gloves_03b, boots_03b are all grey metal at chroma about 22 with gold scroll along the edges), so plate_steel, the armour default, is what almost all of it is.",
+  "keeps_head_from": "Not set, which is the rule and the mesh agreeing. The range in ZzzCharacter.cpp line 12122 stops at MODEL_SPIRIT_HELM, helm 13, and the Guardian Helm is 14, so the client sets BODYPART_HEAD to -1 and draws no head under it. It does not need one: 64 of its 162 triangles are on skin_warrior_01, a face inside the helm's own model, as the Leather Helm carries one.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs line 67. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(14, 2, 2, 2, \"Guardian Helm\", 53, 23, 45, 40, 80, 0, 0, 1)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 14,
+    "drop_level": 53,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 23,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 45,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 80,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "classes_from": "The last three ints of the call are 0, 0, 1 - the Fairy Elf alone. Eighty agility beside forty strength is the row saying the same thing in stats."
+  },
+  "sheets": [
+    "head_a05.png",
+    "skin_warrior_01.png"
+  ],
+  "sheet_from": "Data/Player/head_a05.OZJ (64x64) and skin_warrior_01.OZJ (256x256), from MuMain. The .bmd names head_a05.jpg and skin_warrior_01.jpg; 98 of the 162 triangles are on the first and 64 on the skin.",
+  "sheet_note": "head_a05 is a close silver helm with a sweeping gold crest and a dark eye slot, one large view filling the page. Mean (144, 137, 123) at chroma 40. skin_warrior_01 is the elf's own body sheet: this helm carries its own face, 64 triangles of it, so it needs no head under it.",
+  "material_note": "Ten islands. Island 9 is 64 triangles, skin_warrior_01's 64 exactly: the face inside the helm, skin. The other nine are head_a05's 98 - the shell at 52 and eight small pieces of 5 or 6 triangles, which are the crest's gold sweeps and the cheek guards in pairs - and take plate_steel. The crest is gold paint on the same plate and goes with it, which is the island rule; it is welded to nothing of its own sheet that would argue for brass.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 52,
+      "area": 2291.7,
+      "along": [
+        -21.8,
+        15.1
+      ],
+      "mu_uv": [
+        -0.003,
+        0.001,
+        0.999,
+        0.985
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.9,
+        0.847
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 5,
+      "area": 194.8,
+      "along": [
+        -3.9,
+        10.3
+      ],
+      "mu_uv": [
+        0.011,
+        0.541,
+        0.215,
+        0.988
+      ],
+      "bake_uv": [
+        0.008,
+        0.126,
+        0.656,
+        0.818
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 197.9,
+      "along": [
+        -28.4,
+        -1.3
+      ],
+      "mu_uv": [
+        0.271,
+        0.435,
+        0.837,
+        0.587
+      ],
+      "bake_uv": [
+        0.009,
+        0.533,
+        0.394,
+        0.695
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 90.4,
+      "along": [
+        -23.6,
+        -0.8
+      ],
+      "mu_uv": [
+        0.288,
+        0.437,
+        0.828,
+        0.593
+      ],
+      "bake_uv": [
+        0.348,
+        0.059,
+        0.853,
+        0.918
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 5,
+      "area": 194.8,
+      "along": [
+        -3.9,
+        10.3
+      ],
+      "mu_uv": [
+        0.011,
+        0.541,
+        0.215,
+        0.988
+      ],
+      "bake_uv": [
+        0.008,
+        0.258,
+        0.838,
+        0.844
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 197.9,
+      "along": [
+        -28.4,
+        -1.3
+      ],
+      "mu_uv": [
+        0.271,
+        0.435,
+        0.837,
+        0.587
+      ],
+      "bake_uv": [
+        0.146,
+        0.691,
+        0.55,
+        0.847
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 90.4,
+      "along": [
+        -23.6,
+        -0.8
+      ],
+      "mu_uv": [
+        0.288,
+        0.437,
+        0.828,
+        0.593
+      ],
+      "bake_uv": [
+        0.008,
+        0.144,
+        0.901,
+        0.94
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 66.5,
+      "along": [
+        9.2,
+        15.1
+      ],
+      "mu_uv": [
+        0.007,
+        0.593,
+        0.167,
+        0.987
+      ],
+      "bake_uv": [
+        0.8,
+        0.479,
+        0.955,
+        0.792
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 66.1,
+      "along": [
+        9.2,
+        13.0
+      ],
+      "mu_uv": [
+        0.007,
+        0.593,
+        0.167,
+        0.987
+      ],
+      "bake_uv": [
+        0.9,
+        0.346,
+        0.992,
+        0.922
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 64,
+      "area": 1072.0,
+      "along": [
+        -11.5,
+        9.6
+      ],
+      "mu_uv": [
+        0.503,
+        0.779,
+        0.993,
+        0.931
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.898,
+        0.948
+      ]
+    }
+  ]
+}

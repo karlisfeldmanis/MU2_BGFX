@@ -150,3 +150,5 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Bow05 | arm | 2026-09-28 21:15 | passed | orange spined Tiger Bow, MU's own; arrow nocked |
 | CrossBow02 | arm | 2026-09-28 21:16 | passed | reads silver at noon: the sheet's prod is MU's blue-grey band (80,97,118), not gold paint -- 'Golden' is the name, and the steel is physical |
 | Shield04 | arm | 2026-09-28 21:18 | passed | pale feathered wings round a brass boss, MU's own; the wing edges are cut, not blended as MU blends them -- a closer look owed in the studio |
+| Spirit | set | 2026-09-28 21:25 | passed | dark green plate with pale fins, MU's own; bare arms skin; one boot highlight flashes white at dusk, a highlight and not a material |
+| Guardian | set | 2026-09-28 21:30 | FAILED | the elf's bare arms share an island with the chest plate (44 tris) and render as plate_steel -- a wrong material; needs the island split finer than one material each. Otherwise MU's silver plate with gold trim |
