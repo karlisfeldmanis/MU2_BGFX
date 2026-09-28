@@ -195,8 +195,8 @@ the arrival. Ours, tuned on the bench with the user watching:
 
 ## 2b'. Where a spell leaves him
 
-**One place for every spell: the middle of his chest**, 60% of his drawn height up and 25 cm toward
-the target (`Play::castFrom`), the user's call of 2026-09-28 (*"spells come from same position
+**One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward
+the target -- just past his outstretched arms (*"little bit front of arms"*; 25 cm was inside them) (`Play::castFrom`), the user's call of 2026-09-28 (*"spells come from same position
 somewhere in center of body"*). MU uses a fixed height per spell, 100 units for the bolt and 120 for
 the fireball; this is one height for both, scaled to the figure. The throwing hand was tried first,
 and the two cast clips put it in very different places at the let-go (1.35 m up and in front on 147,

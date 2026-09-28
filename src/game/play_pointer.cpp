@@ -333,7 +333,9 @@ void Play::rightClick() {
 // is a fixed height per spell -- 100 units for the bolt, 120 for the fireball -- and this is one
 // height for both, as a share of the figure so a tall and a short caster are alike.
 constexpr float kCastHeight = 0.6f;    // of his drawn height, from his feet
-constexpr float kCastForward = 0.25f;  // metres toward the target, so it is in front of him
+// Metres toward the target: just past his outstretched arms, which reach 0.6 m on clip 147 --
+// at 0.25 the ball was born inside them ("little bit front of arms").
+constexpr float kCastForward = 0.7f;
 
 bool Play::castFrom(const Drawn& caster, const float to[3], float out[3]) const {
     out[0] = caster.crown[0];
