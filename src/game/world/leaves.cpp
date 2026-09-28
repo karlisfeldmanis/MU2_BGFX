@@ -75,7 +75,7 @@ constexpr float kGustSeconds = 40.0f;
 // The colour a drop is drawn in, over the whitened sheet, and the most of it any one shows:
 // a drop is caught by the light, not painted on the air.
 constexpr float kDropColour[3] = {0.8f, 0.86f, 0.94f};
-constexpr float kDropAlpha = 0.28f;
+constexpr float kDropAlpha = 0.17f;  // 0.28 until the user asked for it less visible
 
 // The ring a drop leaves: twenty frames at 25, a scale of 0.8 to 1.3 that grows 0.03 a frame
 // (ZzzEffectParticle.cpp, BITMAP_RAIN_CIRCLE). The sheet is 32 by 16, an ellipse already drawn in
@@ -86,7 +86,7 @@ constexpr float kRingSeconds = 20.0f / 25.0f;
 constexpr float kRingGrowth = 0.03f * 25.0f;  // scale a second
 constexpr float kRingHalfWidth = 0.18f;
 constexpr float kRingLift = 1.6f;
-constexpr float kRingAlpha = 0.55f;
+constexpr float kRingAlpha = 0.35f;
 
 }  // namespace
 
