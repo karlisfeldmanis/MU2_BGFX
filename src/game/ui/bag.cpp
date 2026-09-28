@@ -111,7 +111,6 @@ constexpr Box kHammer{panel::kWellRight - 30.0f, panel::kFootTop + 1.0f, 30.0f, 
 constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 
 // The Zen strip is drawn by `panel::zenFoot`, on the panel's shared foot rule.
-constexpr float kTipSize = 8.0f;
 
 // The drop target is the skin's own two cell states now (`sheet::Cell::Fits` and `Blocked`),
 // which are MU's blue and red at the weight the rest of this window is drawn at.

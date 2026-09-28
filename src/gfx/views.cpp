@@ -38,7 +38,9 @@ const char* const* probeViewNames() {
 }  // namespace
 
 const char* viewName(View v) {
-    switch (v) {
+    // On the number and not the enum, because the bloom's levels are named as offsets off their
+    // first view rather than as enumerators of their own.
+    switch (uint16_t(v)) {
         case ViewShadow: return "shadow";
         case ViewPrepass: return "prepass";
         case ViewSsao: return "ssao";

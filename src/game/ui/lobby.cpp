@@ -119,27 +119,6 @@ std::vector<std::string> wrapped(const gfx::Face& face, float px, float wide,
 
 float boxTall(bool field) { return 186.0f + (field ? 66.0f : 0.0f); }
 
-// A title across a sheet's head, in the windows' face and ink.
-void titled(gfx::Canvas& canvas, const Box& band, float u, const std::string& title) {
-    const gfx::Face* gothic = panel::titleFace();
-    const gfx::Face& tf = gothic ? *gothic : canvas.face();
-    // The menu's 22 at a third of an em apart, less for a longer title: "CREATE CHARACTER" at the
-    // menu's measure runs under the close button.
-    const float px = (title.size() > 10 ? 19.0f : 22.0f) * u;
-    const float tracking = px * (title.size() > 10 ? 0.22f : 0.34f);
-    const float wide = tf.measure(px, title) + tracking * float(title.size() - 1);
-    const float x = std::round(band.midX() - wide * 0.5f);
-    const float baseline = std::round(band.y + (band.h + tf.ascent(px) * 0.72f) * 0.5f);
-    if (gothic) {
-        canvas.lettered(tf, panel::titleTexture(), x + 1.0f, baseline + 1.0f, px, tracking,
-                        tip::ink::kDrop, title);
-        canvas.lettered(tf, panel::titleTexture(), x, baseline, px, tracking, sheet::ink::kTitle,
-                        title);
-    } else {
-        tip::tracked(canvas, x, baseline, px, 0.34f, sheet::ink::kTitle, title, 1.0f);
-    }
-}
-
 // The field a name is typed into: a dark rounded well, the letters, and a caret while it blinks.
 void field(gfx::Canvas& canvas, const Box& box, float u, const std::string& text, bool caret,
            bool masked = false) {
@@ -317,7 +296,6 @@ void Lobby::update(float seconds, float width, float height, const Pointer& poin
     // Whether the pointer is on the screen's own furniture, so the figures do not hear it: the
     // create window's whole sheet, and every bar button whether or not it answers.
     {
-        const float u = unit();
         const Box make = makeCell(width, height, 0.0f, 0.0f, kMakeW, kMakeH);
         overUi_ = over_ >= 0 || (creating_ && make.has(pointer.x, pointer.y));
         for (int t = kCreate; t <= kDelete && !overUi_; ++t) {

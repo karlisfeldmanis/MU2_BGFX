@@ -504,7 +504,9 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
             case Row::Kind::Zen: ink = kZenInk; word = "zen"; break;
             case Row::Kind::Health: ink = kHealthInk; word = "life"; break;
             case Row::Kind::Mana: ink = kManaInk; word = "mana"; break;
-            case Row::Kind::Experience: break;
+            // Drawn above and passed over by the `continue`: it is not a gain.
+            case Row::Kind::Experience:
+            case Row::Kind::Died: break;
         }
         const std::string figure = "+" + panel::commas((long long)row.value);
         const std::string unitWord = word;

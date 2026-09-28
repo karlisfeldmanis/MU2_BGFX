@@ -12,9 +12,8 @@
 namespace mu::game {
 namespace {
 
-// MU's reference clock and its units. Every rate below is per frame of it, and
-// docs/conventions.md carries the trap: a speed takes one factor of 25, an acceleration two.
-constexpr float kReference = 25.0f;
+// MU's units. Its rates are per frame of its 25 Hz reference clock, and docs/conventions.md
+// carries the trap: a speed takes one factor of 25, an acceleration two.
 constexpr float kPerMetre = 100.0f;
 
 // --- the fire, sprint 8b --------------------------------------------------------------------
