@@ -1512,6 +1512,18 @@ def cook_placements(world, out_dir, chunk_tiles):
     return 0
 
 
+def figures_table(world):
+    """The file a world's figures are listed in, under cooked/figures.
+
+    One per world, since the meshes, clips and textures beside it are shared and the table
+    is what differs: which breeds spawn, which townsfolk stand, where. `figures.json` stays
+    Lorencia's name because every figure cooked before there was a second world is in it;
+    any other world is `figures_<world>.json`. Before this, cooking Noria's figures would
+    have written over Lorencia's table and taken its town away (2026-09-28).
+    """
+    return "figures.json" if world == "lorencia" else f"figures_{world}.json"
+
+
 def figure_set(world):
     """What figures the world reaches, resolved out of index.json. No file is written.
 
@@ -2636,9 +2648,21 @@ def cook_missiles(out_dir, texcook, threads):
     return 0
 
 
-def cook_figures(world, out_dir, texcook, threads):
-    """Every figure the world reaches: its textures, its meshes, its clips and a manifest."""
+def cook_figures(world, out_dir, texcook, threads, with_monsters=True):
+    """Every figure the world reaches: its textures, its meshes, its clips and a manifest.
+
+    `with_monsters` false cooks the world's people without its breeds -- Noria's townsfolk
+    stood before its monsters were judged -- and a breed with no figure is held back by the
+    game rather than walked invisible (Play::open)."""
     models, characters, monsters, standalone, placements, index = figure_set(world)
+    if not with_monsters:
+        for one in monsters:
+            for part in (one["mesh"], one.get("right_hand"), one.get("left_hand")):
+                if part and not any(part in c["parts"] or part in (c["right_hand"], c["left_hand"])
+                                    for c in characters) \
+                        and not any(part == s["mesh"] for s in standalone):
+                    models.pop(part, None)
+        monsters = []
     os.makedirs(os.path.join(out_dir, "textures"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "meshes"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "clips"), exist_ok=True)
@@ -2695,9 +2719,16 @@ def cook_figures(world, out_dir, texcook, threads):
         result = subprocess.run(command)
         if result.returncode:
             return result.returncode
+    # Merged, not written over: the textures are shared by every world's figures, and a
+    # world's cook naming only its own would leave another's meshes pointing at nothing listed.
+    try:
+        with open(os.path.join(out_dir, "textures.json")) as handle:
+            merged = json.load(handle).get("textures", {})
+    except (OSError, ValueError):
+        merged = {}
+    merged.update(manifest)
     with open(os.path.join(out_dir, "textures.json"), "w") as handle:
-        json.dump({"version": 1, "world": world, "textures": manifest}, handle, indent=1,
-                  sort_keys=True)
+        json.dump({"version": 1, "textures": merged}, handle, indent=1, sort_keys=True)
 
     # --- the meshes, and the clip library each one names ------------------------------
     # Two rows share one glb -- EliteBullFighter01 is BullFighter01 at 1.15 with a spear --
@@ -2810,7 +2841,7 @@ def cook_figures(world, out_dir, texcook, threads):
            # the weapon is in the hand or on the back. The rect the world carries is the
            # gate's, and is not that bit; the engine reads the grid.
            "safe_attribute": 1}
-    with open(os.path.join(out_dir, "figures.json"), "w") as handle:
+    with open(os.path.join(out_dir, figures_table(world)), "w") as handle:
         json.dump(out, handle, indent=1, sort_keys=True)
 
     cooked = sum(os.path.getsize(os.path.join(out_dir, "textures", f))
@@ -2988,6 +3019,8 @@ def main():
                                            "figures", "tables", "showing", "missiles",
                                            "wardrobe", "all"),
                         default="all")
+    parser.add_argument("--no-monsters", action="store_true",
+                        help="with --only figures: the world's people without its breeds")
     parser.add_argument("--chunk", type=int, default=32,
                         help="a chunk's side in tiles; 32 gives Lorencia an 8x8 grid")
     args = parser.parse_args()
@@ -3037,7 +3070,7 @@ def main():
         # a suit of armour and a monster are reached by several maps, and cooking them per
         # world would write the same Bull Fighter into every one of them.
         return cook_figures(args.world, os.path.join(args.out, "figures"), args.texcook,
-                            args.threads)
+                            args.threads, with_monsters=not args.no_monsters)
 
     if not os.path.exists(args.texcook):
         print(f"cook: {args.texcook} is not built. cmake --build build --target texcook",

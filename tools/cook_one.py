@@ -112,7 +112,7 @@ def resolve(name, world):
             return "arm", "wardrobe", {file: os.path.join(ASSETS, one["glb"])}, entry
 
     # A figure's mesh, and any variant cut from it (BullFighter01~whole).
-    figures = load_json(os.path.join(ASSETS, "cooked", "figures", "figures.json"), {})
+    figures = load_json(os.path.join(ASSETS, "cooked", "figures", cook.figures_table(world)), {})
     labels = {lower(m.get("label")): m.get("mesh") for m in figures.get("monsters", [])}
     base = labels.get(wanted)
     for mesh_name in figures.get("meshes", {}):
@@ -139,7 +139,7 @@ def resolve(name, world):
         if one.get("kind") == "lobby" and lower(one.get("name")) == wanted:
             glb = os.path.join(ASSETS, one["glb"])
             if os.path.exists(glb):
-                figures = load_json(os.path.join(ASSETS, "cooked", "figures", "figures.json"), {})
+                figures = load_json(os.path.join(ASSETS, "cooked", "figures", cook.figures_table(world)), {})
                 return "bust", "figures", {one["name"]: glb}, figures
 
     # A world object.
@@ -221,7 +221,7 @@ def cook_textures(meshes, area_dir, texcook):
     return manifest
 
 
-def cook_item(kind, area, meshes, extra, texcook):
+def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
     area_dir = os.path.join(ASSETS, "cooked", area)
     manifest = cook_textures(meshes, area_dir, texcook)
     if manifest is None:
@@ -260,16 +260,16 @@ def cook_item(kind, area, meshes, extra, texcook):
         # draw a guard's Small Axe out of cooked/figures, so a weapon recooked only here
         # changed nothing anybody sees: Axe01 was shot three times from the figures' copy,
         # baked before the flip fix, while the wardrobe's was rebuilt underneath it.
-        figures_path = os.path.join(ASSETS, "cooked", "figures", "figures.json")
+        figures_path = os.path.join(ASSETS, "cooked", "figures", cook.figures_table(world))
         figures = load_json(figures_path, {})
         carried = {m: p for m, p in meshes.items() if m in figures.get("meshes", {})}
         if carried and kind == "arm":
             print(f"cook_one: {', '.join(sorted(carried))} is carried in the town; "
                   f"recooking the figures' copy")
-            if cook_item("figure", "figures", carried, figures, texcook) is None:
+            if cook_item("figure", "figures", carried, figures, texcook, world) is None:
                 return None
     elif area == "figures":
-        table_path = os.path.join(area_dir, "figures.json")
+        table_path = os.path.join(area_dir, cook.figures_table(world))
         extra.setdefault("meshes", {}).update(cooked)
         if kind == "bust":
             # Its clips are inside it, as a monster's are: action0 the idle, action1 the
@@ -486,7 +486,7 @@ def main():
               f"or a {args.world} object", file=sys.stderr)
         return 1
     print(f"cook_one: {args.name} is a {kind} in {area}: {', '.join(sorted(meshes))}")
-    if cook_item(kind, area, meshes, extra, args.texcook) is None:
+    if cook_item(kind, area, meshes, extra, args.texcook, args.world) is None:
         return 1
     report(meshes)
     log(args.name, kind=kind)

@@ -756,7 +756,11 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     assetDir_ = assetDir;
     textures_ = &textures;
     const std::string dir = core::join(assetDir, "cooked/figures");
-    const std::string path = core::join(dir, "figures.json");
+    // One table a world, over meshes and clips every world shares: figures_<world>.json, and
+    // the older figures.json -- Lorencia's, cooked before there was a second world -- when a
+    // world has none of its own. tools/cook.py's figures_table.
+    std::string path = core::join(dir, "figures_" + world + ".json");
+    if (!core::fileExists(path)) path = core::join(dir, "figures.json");
     core::Json manifest = core::parseJsonFile(path);
     if (manifest.isNull()) {
         core::logf("no cooked figures at %s -- the town will stand empty of people. "
