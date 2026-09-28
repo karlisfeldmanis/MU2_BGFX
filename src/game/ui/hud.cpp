@@ -95,6 +95,11 @@ constexpr Box kBuffsAt{292.0f, 12.0f, 40.0f, 56.0f};
 constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
+// The channel bar, in plate pixels: centred over the plate, a little above its top edge. Its fill
+// is the buff hairline's bone, a little brighter, so the two read as one family.
+constexpr float kChannelW = 280.0f, kChannelH = 12.0f, kChannelIcon = 30.0f, kChannelGap = 8.0f;
+constexpr float kChannelY = -34.0f;
+constexpr uint32_t kChannelFill = gfx::rgba(0.86f, 0.80f, 0.64f, 0.95f);
 
 // The gap between two cells of the row, in plate pixels: MuDream's own strip spaces its 80-wide
 // cells by a fifth of one, and this is that at the cell's 40.
@@ -326,6 +331,7 @@ bool Hud::Face::operator==(const Face& o) const {
            character == o.character && hovered == o.hovered && tip == o.tip &&
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(boons, boons + kBoons, o.boons) && fanOpen == o.fanOpen &&
+           channelSkill == o.channelSkill && channelLeft == o.channelLeft &&
            fanOver == o.fanOver &&
            carrying == o.carrying &&
            fan == o.fan &&
@@ -544,6 +550,9 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         width_ = width;
         height_ = height;
         std::copy(boons_, boons_ + kBoons, now_.boons);
+        now_.channelSkill = channelSkill_;
+        now_.channelLeft =
+            channelSkill_ != 0 ? int(std::clamp(channelShare_, 0.0f, 1.0f) * 100.0f + 0.5f) : -1;
         now_.fanOpen = fanOpen_;
         now_.fan = fan_;
         now_.carrying = carrying_;
@@ -996,6 +1005,27 @@ void Hud::rebuild() {
         const float left = std::clamp(one.share, 0.0f, 1.0f);
         const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
         canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
+    }
+
+    // ---- a channel, draining above the plate --------------------------------------------------
+    //
+    // The spell's icon and a bar beside it that empties as the channel runs out. In the buff
+    // strip's own colours -- a dark wash, the bone hairline, the pale fill -- because it is the
+    // same kind of fact about him: something standing on him for a while. No ornament.
+    if (now_.channelSkill != 0 && now_.channelLeft >= 0) {
+        const float wide = kChannelW, tall = kChannelH;
+        const float left = kPlateW * 0.5f - (wide + kChannelIcon + kChannelGap) * 0.5f;
+        const Box icon = plate(s, {left, kChannelY - (kChannelIcon - tall) * 0.5f, kChannelIcon,
+                                   kChannelIcon});
+        const Box bar = plate(s, {left + kChannelIcon + kChannelGap, kChannelY, wide, tall});
+        const gfx::Art& art = arts.get("skill_" + std::to_string(now_.channelSkill));
+        canvas_.rect(icon, kBuffBack);
+        if (art.valid()) canvas_.image(art, icon);
+        canvas_.outline(icon, std::max(1.0f, s.scale), kBuffEdge);
+        canvas_.rect(bar, kBuffBack);
+        const float share = float(now_.channelLeft) / 100.0f;
+        canvas_.rect({bar.x, bar.y, bar.w * share, bar.h}, kChannelFill);
+        canvas_.outline(bar, std::max(1.0f, s.scale), kBuffEdge);
     }
 
     // ---- the list, open above the plate ------------------------------------------------------

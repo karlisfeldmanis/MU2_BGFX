@@ -209,22 +209,21 @@ constexpr SkillRow kRows[kSkills] = {
      "at twice the force of an Energy Ball.",
      147, "spell_magic", true, arms::kNone, 0, Kin::DarkWizard, true, 14, 148, 15.0f},
 
-    // Lightning 3, 0.75's row: `CreateSkill(Lightning, ..., DamageType.Wizardry, 17, 6,
-    // manaConsumption: 15, energyRequirement: 72, elementalModifier: Lightning)` -- seventeen
-    // damage, six tiles, fifteen mana. **It pushes**: the Lightning element moves what it hits one
-    // tile, after the blow and never on a body the blow killed. 0.75 picks the tile at random and
-    // puts the body there at once; here it is pushed straight AWAY from the wizard and slides
-    // there over a quarter of a second (`Realm::push`), because the user's rule is no sudden moves
-    // and a push is the point (*"we need to push monsters"*, 2026-09-28). The resistance gate is
-    // not rolled: nothing in Lorencia resists lightning.
-    //
-    // A primary like the other three, for now; the push makes it the kiting spell, and a cooldown
-    // is the knob if it holds a monster off too well. It does not fly: MU draws the bolt between
-    // hand and body on the cast and lands it at once (`Thunder.Flight` is nought), so `flies` is
-    // high enough that the landing is the let-go. `SOUND_THUNDER01`.
-    {skill::kLightning, "Lightning", 15, 6.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
-     "A bolt of lightning into one body up to six tiles off, pushing it a step away from him.",
-     147, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 148, 1000.0f, true},
+    // Lightning 3: 0.75's row for the numbers that survive -- seventeen damage, fifteen mana,
+    // seventy-two energy -- and **this game's first channel** (the user, 2026-09-28): "when it
+    // gets cast it has duration, the wizard uses a special animation and lightning finds all the
+    // monsters around him and casts lightning to them". Three seconds, a pulse every half second
+    // from a fifth of a second in (six in all), each striking everything within four tiles of him
+    // (`Spread::Ring` at `reach` 4) and pushing what it leaves standing a step away (`pushes`,
+    // `Realm::push`). Ten seconds of cooldown, the user's, before agility's haste. He holds MU's
+    // "Skill lightning shock" (186), a low stance with both fists thrust out, for the whole of
+    // it, and cannot walk out of it (the rule of 2026-09-23 for every skill). 0.75's Lightning is
+    // one bolt at one body; what is kept of it is the bolt, the push and the thunder.
+    {skill::kLightning, "Lightning", 15, 4.0f, 1.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
+     "For three seconds lightning leaps from him into everything within four tiles, twice a "
+     "second, and throws each back a step.",
+     186, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 60,
+     10},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy
@@ -361,6 +360,8 @@ float magicSpeedStat(Kin kin, int agility) {
 
 int32_t floorTicksFor(const SkillRow& row, int32_t clipTicks) {
     if (row.boonTicks > 0) return row.boonTicks + kBoonGapTicks;
+    // A channel's own length, and two seconds: it is never ready again before it has ended.
+    if (row.channelTicks > 0) return row.channelTicks + kBoonGapTicks;
     return std::max<int32_t>(1, clipTicks);
 }
 

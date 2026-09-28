@@ -212,6 +212,12 @@ struct SkillRow {
     // (`Realm::push`). 0.75's Lightning element: `TryApplyElementalEffectsAsync` moves the target
     // one tile (`MoveRandomlyAsync`), after the blow and never on a body the blow killed.
     bool pushes = false;
+    // **A channel**: how many ticks it runs once cast, and how often it strikes while it does.
+    // Nought for everything but Lightning (the user, 2026-09-28: "the first cast duration spell").
+    // While it runs he stands in its clip, held, and every `pulseTicks` it strikes everything in
+    // its shape; nothing else is thrown until it ends (`Realm::channel`).
+    int32_t channelTicks = 0;
+    int32_t pulseTicks = 0;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -219,7 +225,8 @@ struct SkillRow {
     // and like a swing it can be walked out of and a hit pays mana back.
     bool primary() const { return coolTicks <= 0 && !onSelf(); }
     // Whether it flies to what it is thrown at, rather than being struck at arm's length.
-    bool thrown() const { return reach > 1.5f; }
+    bool thrown() const { return reach > 1.5f && channelTicks == 0; }
+    bool channelled() const { return channelTicks > 0; }
     // Whether this hand may throw it. One test, asked by the realm before it spends anything
     // and by the plate before it draws the key lit -- they must not be able to disagree.
     bool suits(uint32_t family) const {

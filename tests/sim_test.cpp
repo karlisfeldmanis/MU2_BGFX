@@ -1041,12 +1041,13 @@ void testCastLock(const content::Tables& tables) {
         check(widest >= 2, "and one wave strikes more than one body in its line");
     }
 
-    // ---- Lightning: 0.75's row, and the push the element gives, slid and not jumped -----------
+    // ---- Lightning: a channel -- three seconds of pulses into everything around him ----------
     {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
-        check(bolt.wizardry && bolt.primary() && bolt.pushes && bolt.damage == 17 &&
-                  bolt.mana == 15,
-              "Lightning is a primary at seventeen damage and fifteen mana, and it pushes");
+        check(bolt.wizardry && bolt.channelled() && !bolt.primary() && !bolt.thrown() &&
+                  bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
+                  bolt.mana == 15 && bolt.coolTicks == 200 && bolt.channelTicks == 60,
+              "Lightning is a three-second channel round him, ten seconds to cool, and it pushes");
         const int32_t scroll = tables.itemAt(15, 2);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kLightning &&
                   tables.items[size_t(scroll)].teachesEnergy == 72,
@@ -1055,23 +1056,35 @@ void testCastLock(const content::Tables& tables) {
         sim::Realm wiz;
         check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 12), "a wizard of twelve raises");
         check(wiz.learn(sim::skill::kLightning), "who knows Lightning");
-        int pushes = 0, away = 0;
+        int channels = 0, pushes = 0, away = 0, widest = 0, stillWhile = 0;
+        int64_t lastCast = -1, closest = 1 << 30, pulseTick = -1;
+        int pulses = 0, mostPulses = 0, thisPulse = 0, thisChannel = 0;
         float worstStep = 0.0f;
         uint32_t fighting = 0, sliding = 0;
         float lastX = 0.0f, lastY = 0.0f, before = 0.0f;
         int slidFor = 0;
-        for (int tick = 0; tick < 4000; ++tick) {
+        for (int tick = 0; tick < 6000; ++tick) {
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
             if (nearest != 0 && nearest != fighting) {
                 fighting = nearest;
                 sim::Request request;
                 request.kind = sim::Request::Kind::Attack;
                 request.target = nearest;
-                request.skill = sim::skill::kLightning;
                 wiz.ask(request);
             }
+            // The key, pressed whenever it may be.
+            if (nearest != 0 && wiz.cooling(sim::skill::kLightning) == 0) {
+                wiz.invoke(sim::skill::kLightning, nearest);
+            }
+            const float wasX = wiz.hero().x, wasY = wiz.hero().y;
+            // Running before this tick: the cast's own tick may finish the step he was on.
+            const bool running = wiz.hero().channelSkill != 0;
             wiz.step();
-            // Follow the body being pushed: no tick moves it more than a slide's share.
+            // He does not move while it runs.
+            if (running && wiz.hero().channelSkill != 0 &&
+                (wiz.hero().x != wasX || wiz.hero().y != wasY)) {
+                ++stillWhile;
+            }
             if (sliding != 0) {
                 const sim::Body* one = wiz.find(sliding);
                 if (one != nullptr && one->alive()) {
@@ -1088,6 +1101,23 @@ void testCastLock(const content::Tables& tables) {
                 }
             }
             for (const sim::Happening& one : wiz.happenings()) {
+                if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
+                    one.a == sim::skill::kLightning) {
+                    ++channels;
+                    if (lastCast >= 0) closest = std::min<int64_t>(closest, one.tick - lastCast);
+                    lastCast = one.tick;
+                    mostPulses = std::max(mostPulses, thisChannel);
+                    thisChannel = 0;
+                }
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kLightning) {
+                    if (int64_t(one.tick) != pulseTick) {
+                        pulseTick = one.tick;
+                        ++pulses;
+                        ++thisChannel;
+                        thisPulse = 0;
+                    }
+                    widest = std::max(widest, ++thisPulse);
+                }
                 if (one.what != sim::What::Shoved) continue;
                 ++pushes;
                 const sim::Body* pushed = wiz.find(one.who);
@@ -1101,12 +1131,20 @@ void testCastLock(const content::Tables& tables) {
                 }
             }
         }
-        std::printf("  lightning: %d pushes, %d measured ending further off, worst tick %.2f "
-                    "tiles\n", pushes, away, double(worstStep));
-        check(pushes > 5, "Lightning pushes what it does not kill");
-        check(away > 0, "and a pushed body ends further from him");
-        // Two tiles over five ticks is the worst: a body off its centre, pushed on the diagonal.
-        check(worstStep <= 0.41f, "and slides there, no tick moving it more than 0.4 of a tile");
+        mostPulses = std::max(mostPulses, thisChannel);
+        std::printf("  lightning: %d channels, %d pulses (%d in one at most), %d bodies in one "
+                    "pulse at most, closest casts %lld ticks apart, %d pushes, %d measured "
+                    "further off, worst tick %.2f tiles\n",
+                    channels, pulses, mostPulses, widest, (long long)closest, pushes, away,
+                    double(worstStep));
+        check(channels > 3, "he channels Lightning through a hunt");
+        check(mostPulses == 6, "and a channel strikes six times");
+        check(closest >= wiz.coolsFor(sim::skill::kLightning) && closest >= 60,
+              "and never twice inside its cooldown");
+        check(widest >= 2, "and one pulse strikes more than one body");
+        checkEqual(stillWhile, 0, "and he stands still while it runs");
+        check(pushes > 5 && away > 0, "and it pushes what it does not kill, away from him");
+        check(worstStep <= 0.41f, "and slides it there, no tick moving it more than 0.4 of a tile");
     }
 
     // ---- a cooldown outlives a save (the user, 2026-09-28) -----------------------------------

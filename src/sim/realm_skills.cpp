@@ -33,6 +33,9 @@ namespace {
 // aiming at. MU2 keeps its `Wants` on the same argument and bounds it by the swing instead.
 constexpr int64_t kWishTicks = 30;
 
+// A channel's first pulse, in ticks after the cast: a fifth of a second, as he settles in.
+constexpr int32_t kFirstPulseTicks = 4;
+
 }  // namespace
 
 void Realm::invoke(int32_t skill, uint32_t at) {
@@ -199,8 +202,9 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // A spell pays its own clip and not the weapon's: its rhythm is MagicSpeed's and has nothing
     // to do with how fast the staff in his hand would swing.
     const int32_t clip = clipTicksOf(hero, row);
-    hero.swingsAt = tick_ + (row.wizardry ? std::max<int32_t>(1, clip)
-                                          : std::max(hero.swingTicks, clip));
+    hero.swingsAt = tick_ + (row.channelled() ? row.channelTicks
+                             : row.wizardry  ? std::max<int32_t>(1, clip)
+                                             : std::max(hero.swingTicks, clip));
     // And he is locked where he stands for the length of the animation: no turn, no re-path, no
     // step. `press` reads this before it engages, so a quarry that shuffles round him does not
     // spin the body mid-swing.
@@ -208,7 +212,16 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // **Not a primary.** The wizard's Energy Ball is thrown over and over, and a lock on every
     // clip would be a wizard who can never be walked away from a fight. Like a swing it is
     // cancelled by a click until it leaves his hand; after that it is in the air and lands.
-    hero.castUntil = row.primary() ? tick_ : tick_ + clip;
+    hero.castUntil = row.primary()      ? tick_
+                     : row.channelled() ? tick_ + row.channelTicks
+                                        : tick_ + clip;
+    if (row.channelled()) {
+        hero.channelSkill = row.number;
+        hero.channelFrom = tick_;
+        hero.channelUntil = tick_ + row.channelTicks;
+        // The first strike a fifth of a second in, as he settles into the stance.
+        hero.channelNext = tick_ + kFirstPulseTicks;
+    }
     hero.walking = false;
     hero.route.clear();
     hero.onStep = 0;
@@ -226,7 +239,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     rise(hero);
     say(What::Cast, hero, row.number, cool, 0, row.onSelf() ? hero.id : at);
 
-    if (!row.onSelf()) {
+    if (!row.onSelf() && !row.channelled()) {
         // Begun rather than landed: the blow settles halfway through the clip, as a swing's does
         // (Realm::begin), so what is drawn and what is dealt are the same moment. The multiplier
         // rides with it -- 0.75's own `SkillMultiplier` with strength on it, §3.2 -- and the
@@ -345,6 +358,32 @@ void Realm::shove(Body& target) {
     target.route.clear();
     target.onStep = 0;
     say(What::Shoved, target, column, row);
+}
+
+void Realm::channel(Body& hero) {
+    if (hero.channelSkill == skill::kNone) return;
+    if (tick_ >= hero.channelUntil) {
+        hero.channelSkill = skill::kNone;
+        return;
+    }
+    if (tick_ < hero.channelNext) return;
+    const SkillRow* row = skillNumbered(hero.channelSkill);
+    if (row == nullptr) {
+        hero.channelSkill = skill::kNone;
+        return;
+    }
+    hero.channelNext += std::max<int32_t>(1, row->pulseTicks);
+    // Everything in its shape now, nearest first -- a body that walked in since the last pulse is
+    // struck by this one. One `Loosed` a body, which is what the drawing throws a bolt on, and the
+    // blow on the same tick: lightning does not fly.
+    uint32_t victims[kVictims];
+    const int found = gather(hero, *row, victims, kVictims);
+    for (int i = 0; i < found; ++i) {
+        Body* victim = body(victims[i]);
+        if (victim == nullptr || !victim->alive()) continue;
+        say(What::Loosed, hero, row->number, 0, 0, victim->id);
+        strikeAt(hero, *victim, force(*row, hero.points), row, true);
+    }
 }
 
 // How long a push takes, in ticks: a quarter of a second -- quick enough to read as a blow, slow

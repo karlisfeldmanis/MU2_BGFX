@@ -49,10 +49,11 @@ void Figure::place(const float position[3], float yaw, bool safe) {
     safe_ = safe;
 }
 
-void Figure::play(int clip, bool restart, float fade) {
+void Figure::play(int clip, bool restart, float fade, bool hold) {
     if (!body_ || !body_->library) return;
     if (clip < 0 || clip >= int(body_->library->clips.clips.size())) return;
     if (clip == clip_ && !restart) return;
+    holding_ = hold;
     previous_ = clip_;
     previousTime_ = time_;
     fadeLength_ = fade >= 0.0f ? fade : kBlendSeconds;
@@ -103,7 +104,7 @@ void Figure::update(float seconds, float clipRate) {
     // seconds. See the note on this function in crowd.h.
     const float clipSeconds = seconds * clipRate;
     time_ += clipSeconds;
-    if (clip.hold) {
+    if (clip.hold || holding_) {
         time_ = std::min(time_, clip.duration);
     } else if (clip.duration > 0.0f) {
         // The clock wraps, not the frame index. The extra key a looping clip carries holds

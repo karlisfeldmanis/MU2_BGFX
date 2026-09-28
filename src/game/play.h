@@ -566,6 +566,7 @@ private:
     Bolt bolt_;
     Wave wave_;
     Thunder thunder_;
+    int64_t lastThunderTick_ = -1;  // the tick a channel's pulse last sounded on
     int32_t quickSkill_ = 0;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,

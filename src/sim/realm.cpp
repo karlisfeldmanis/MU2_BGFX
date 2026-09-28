@@ -594,6 +594,7 @@ void Realm::step() {
         if (hero.blowAt != 0 && tick_ >= hero.blowAt) land(hero);
         // And whatever he let go earlier and has now arrived.
         arrive();
+        channel(hero);
         accept();
         advance(hero);
         press();

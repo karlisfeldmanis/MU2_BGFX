@@ -48,7 +48,9 @@ public:
     // The two directions of one change are not the same change -- setting off is a weight
     // shift the eye wants to see take a moment, and stopping is an arrival the body is already
     // late for -- so the caller says which it is. MU2's `Crowd.Gaiting` and `Crowd.Halting`.
-    void play(int clip, bool restart = false, float fade = -1.0f);
+    // `hold`: stop on the clip's last key and stay there, as a death does, whatever the cooked
+    // clip says -- a channel's stance, held for as long as it runs.
+    void play(int clip, bool restart = false, float fade = -1.0f, bool hold = false);
     // Puts the clock somewhere in the clip. A walk resumes where it left off rather than at
     // its first key, which is one leg fully forward: taken from legs caught mid-cross, that is
     // the longest crossfade in the game and the one nobody asked for.
@@ -133,6 +135,7 @@ private:
     float pitch_ = 0.0f, roll_ = 0.0f;
     float scale_ = 1.0f;
     int clip_ = -1;
+    bool holding_ = false;  // this play of the clip stops on its last key (see play)
     int previous_ = -1;
     float time_ = 0.0f;
     float previousTime_ = 0.0f;

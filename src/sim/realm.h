@@ -257,6 +257,10 @@ struct Body {
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;
     int32_t pushTicks = 0;
+    // A channel running (`Realm::channel`): which skill, when it began and ends, and the tick of
+    // its next pulse. 0 for none. The interface reads the first three for its bar.
+    int32_t channelSkill = 0;
+    int64_t channelFrom = 0, channelUntil = 0, channelNext = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
     // none). The player's only; a monster never poses.
     Pose pose = Pose::Standing;
@@ -587,6 +591,8 @@ private:
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
     // something standable or not at all.
     void push(Body& target, const Body& from);
+    // The channel's tick: a pulse when one is due, and the end when it is over.
+    void channel(Body& hero);
     // How long the clip this skill plays takes, and so what its cooldown cannot go under.
     int32_t clipTicksOf(const Body& hero, const SkillRow& row) const;
     void kill(Body& beast, Body& killer);

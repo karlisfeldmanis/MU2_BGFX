@@ -261,6 +261,18 @@ void Play::update(double seconds) {
                     if (row && row->onSelf() && happening.who == heroId) {
                         guardRise(kGuardShowSeconds);
                     }
+                    // A channel: its stance, played once and held for as long as it runs. No
+                    // blow follows the cast to play it, so it is played here. The thunder is
+                    // the pulses' (below), not the cast's.
+                    if (row && row->channelled() && caster->castClip >= 0) {
+                        const float lasts = float(row->channelTicks) * float(kTickSeconds);
+                        caster->figure.play(caster->castClip, true, kCastBlend, true);
+                        caster->casting = lasts;
+                        caster->swingPace = 1.0f;
+                        caster->swinging = lasts;
+                        ++caster->swingToken;
+                        caster->castSkill = 0;
+                    }
                     if (row && row->onSelf() && caster->castClip >= 0) {
                         caster->figure.play(caster->castClip, true, kCastBlend);
                         caster->casting = caster->figure.length();
@@ -323,7 +335,15 @@ void Play::update(double seconds) {
                         bolt_.cast(from, to, happening.whom, atHand);
                     }
                     const int index = sim::skillIndexOf(happening.a);
-                    if (index >= 0 && heard_.skill[index] >= 0) {
+                    // A channel's pulse lets go at every body in it on one tick: one thunder a
+                    // pulse, not one a body.
+                    const sim::SkillRow* loosed = sim::skillNumbered(happening.a);
+                    const bool again = loosed != nullptr && loosed->channelled() &&
+                                       lastThunderTick_ == int64_t(happening.tick);
+                    if (loosed != nullptr && loosed->channelled()) {
+                        lastThunderTick_ = int64_t(happening.tick);
+                    }
+                    if (!again && index >= 0 && heard_.skill[index] >= 0) {
                         emit(heard_.skill[index], from[0], from[2], caster->id);
                     }
                 }

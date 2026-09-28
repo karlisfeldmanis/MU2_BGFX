@@ -232,39 +232,45 @@ dimmer copies of the curtain (1.12x at 35%, 1.26x at 18%) with its brightness he
 saturates. `fx/effect_mesh` is the .obj reader and basis draw the meteor and the wave now share.
 `--bolt-every N --bolt-skill 11` is its bench.
 
-## 2e. Lightning -- the spell that pushes
+## 2e. Lightning -- the first channel
 
-0.75's row, `CreateSkill(Lightning, ..., DamageType.Wizardry, 17, 6, manaConsumption: 15,
-energyRequirement: 72, elementalModifier: Lightning)`: seventeen damage, six tiles, fifteen mana,
-skill 3, off the Scroll of Lighting (`Book03`, group 15 #2, Pasi's slot 2), refused under 72 energy.
-A primary like the others for now.
+0.75's numbers where they survive: seventeen damage, fifteen mana, skill 3, off the Scroll of Lighting
+(`Book03`, group 15 #2, Pasi's slot 2), refused under 72 energy. The rest is this game's (the user,
+2026-09-28): *"Lightning in our game will be first cast duration spell ... DW uses special animation
+and lightning finds all monsters around him and casts lightning to them (aoe)"*, *"it also has
+cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells"*.
 
-**It pushes** (*"we need to push monsters"*). The Lightning element moves what it hits one tile,
-after the blow and never on a body the blow killed -- 0.75's order. 0.75 picks the tile at random and
-puts the body there at once; here the push is **straight away from the wizard, slid over five ticks**
-(`Realm::push`, `SkillRow::pushes`), because a push is the point and the standing rule is no sudden
-moves. A pushed body neither thinks nor walks while it slides, a blocked or sheltered tile is not
-pushed onto, and a death mid-slide leaves it on its tile. The drawing plays its flinch. The resistance
-roll is not made -- nothing in Lorencia resists lightning. The push makes this the kiting spell, and
-a cooldown is the knob if it holds monsters off too well.
+- **A channel** (`SkillRow::channelTicks` 60, `pulseTicks` 10; `Realm::channel`): three seconds from
+  the cast, a pulse a fifth of a second in and every half second after, six in all. Each pulse finds
+  everything within **four tiles** of him (`Spread::Ring` at `reach` 4) at that moment -- a body that
+  walks in is struck by the next -- and lets a bolt go at each (`Loosed`) with its blow on the same
+  tick: lightning does not fly.
+- **It pushes** what each pulse leaves standing a step straight away from him, slid over five ticks
+  (`Realm::push`): no teleport, a flinch, no thinking or walking while it slides, never onto a
+  blocked or sheltered tile, and a death mid-slide leaves the body on its tile. 0.75 moves a random
+  neighbour at once. Nothing in Lorencia resists lightning, so the resistance roll is not made.
+- **Ten seconds of cooldown**, before agility's haste as every key's is (9.5 s on a young wizard),
+  floored at the channel and two seconds. Fifteen mana at the cast. It asks for something within
+  four tiles before it goes, so it is never spent on empty air.
+- **He stands in it.** MU's "Skill lightning shock" (186) -- a low stance, both fists thrust out --
+  played once and held on its last key (`Figure::play`'s `hold`) for the whole channel; chosen on the
+  bench over Hellfire's 155 (arms swinging), Chain Lightning's 161 (a quick thrust) and Inferno's 154
+  (a leap). He **cannot walk out of it**, the rule of 2026-09-23 for every skill: the realm holds him
+  (`castUntil`) and drops a click to move. One thunder a pulse, not one a body.
+- **The channel bar** (`Hud::setChannel`): the spell's icon and a bar beside it, centred just above
+  the plate, draining from full to empty over the channel, in the buff strip's colours, no ornament.
+  Stepped in hundredths so the frame redraws at most a hundred times a channel. Any later channel
+  uses it as it is.
+- **The look** is `fx/thunder`: a jagged bolt pinned at both ends, re-thrown every reference frame
+  for a third of a second, two crossed quads a segment on MU's JointThunder01, a wide joint and a thin
+  one, the sheet scrolling; MU's Thunder01 spark on the body and a blue light three tiles wide there;
+  a little cool-grey smoke off the bolt's own path as it goes out. MU2's `Thunder.cs` is the full
+  joint walk if this ever needs it. `SOUND_THUNDER01`.
 
-It does not fly: MU lands the blow on the cast, and `flies` is set so high the landing is the let-go.
-**The look** is `fx/thunder`, ours in its build: a jagged path pinned at both ends, re-thrown every
-reference frame for a third of a second, drawn as two crossed quads a segment on MU's JointThunder01,
-a wide joint and a thin one, the sheet scrolling; MU's Thunder01 spark on the body and a blue light
-three tiles wide there. Not MU's smoke at the contact (smoke01 one frame in eight, turned down), but,
-asked for after, **a little smoke off the bolt's own path** as it goes out: a puff at each of its
-points, cool grey smoke01 added, opening and lifting and gone in about a second. MU2's `Thunder.cs` is the full joint walk if this ever needs it. `SOUND_THUNDER01`.
-
-`--arena-learn N` teaches the arena's hero skill N and makes the arena fight with it; the Lightning
-push was filmed with `--arena "Bull Fighter" --arena-learn 3 --level 12`.
-
-## 2f. Range
-
-Energy Ball and Fire Ball are thrown from **nine tiles**, not 0.75's six (the user, 2026-09-28: *"lets
-also increase range for fireball and energy ball"*). The bolt lives twelve tiles and the fireball
-far longer, so both still arrive. Power Wave is aimed within six and sweeps twelve; Lightning stays
-at six.
+Measured in `sim_test`: over 6 000 ticks a wizard of twelve channels 30 times, never inside the
+cooldown, six pulses a channel, up to four bodies in one pulse; he does not move while it runs; 88
+pushes, no tick sliding a body more than 0.4 of a tile. Filmed with `--arena "Bull Fighter"
+--arena-count 4 --arena-learn 3 --level 12`: bolts to all four at once, the bar draining.
 
 ## 2b'. Where a spell leaves him
 

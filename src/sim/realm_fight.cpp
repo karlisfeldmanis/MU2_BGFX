@@ -243,6 +243,8 @@ void Realm::kill(Body& dead, Body& killer) {
         // own do, rather than walking back out of town under a guard he raised in the field.
         // The cooldown is left running, so a death is not a way to raise it again sooner.
         dead.boonUntil = 0;
+        dead.channelSkill = 0;
+        dead.channelUntil = 0;
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = 1.0;
