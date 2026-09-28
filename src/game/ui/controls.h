@@ -109,6 +109,10 @@ void meter(gfx::Canvas& canvas, const gfx::Box& box, float share, uint32_t top, 
 float label(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t ink,
             const std::string& text);
 float labelWidth(float size, const std::string& text);
+// The label face and its texture, for a window that measures, wraps and sets its own lines in
+// it; null (and an invalid texture) before open() or when the face failed to bake.
+const gfx::Face* labelFace();
+bgfx::TextureHandle labelTexture();
 // The same ranged against `right`.
 float ranged(gfx::Canvas& canvas, float right, float baseline, float size, uint32_t ink,
              const std::string& text);

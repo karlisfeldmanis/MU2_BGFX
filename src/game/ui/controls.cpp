@@ -412,6 +412,11 @@ float labelWidth(float size, const std::string& text) {
     return labelReady() ? s_label.measure(size, text) : 0.0f;
 }
 
+const gfx::Face* labelFace() { return labelReady() ? &s_label : nullptr; }
+bgfx::TextureHandle labelTexture() {
+    return labelReady() ? s_labelTexture : bgfx::TextureHandle BGFX_INVALID_HANDLE;
+}
+
 float ranged(gfx::Canvas& canvas, float right, float baseline, float size, uint32_t ink,
              const std::string& text) {
     const float wide = labelReady() ? s_label.measure(size, text) : canvas.face().measure(size, text);

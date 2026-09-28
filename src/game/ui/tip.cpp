@@ -14,12 +14,14 @@ namespace {
 constexpr float kWide = 346.0f;
 constexpr float kPad = 12.0f;
 constexpr float kPlate = 56.0f;
-constexpr float kNameSize = 15.5f;
-constexpr float kBaseSize = 10.5f;
-constexpr float kKickerSize = 9.5f;
-constexpr float kRowSize = 12.5f;
-constexpr float kChipSize = 10.0f;
-constexpr float kFootSize = 11.5f;
+// Alegreya Sans since 2026-09-28: a size smaller to the eye than Open Sans at the same pixels,
+// so each is taken up toward the design page's 14 for a line of text.
+constexpr float kNameSize = 17.0f;
+constexpr float kBaseSize = 11.5f;
+constexpr float kKickerSize = 10.5f;
+constexpr float kRowSize = 14.0f;
+constexpr float kChipSize = 11.0f;
+constexpr float kFootSize = 13.0f;
 constexpr float kBaseTrack = 0.14f;    // em
 constexpr float kKickerTrack = 0.16f;
 constexpr float kChipTrack = 0.08f;
@@ -390,10 +392,10 @@ namespace {
 constexpr float kArt = 96.0f;            // the picture, square, at the head's right
 constexpr float kItemNameSize = 17.0f;
 constexpr float kItemNameTrack = 0.06f;  // em
-constexpr float kTypeSize = 13.0f;
-constexpr float kHeroSize = 21.0f;
-constexpr float kHeroWordSize = 13.5f;
-constexpr float kRailSize = 12.0f;
+constexpr float kTypeSize = 14.0f;
+constexpr float kHeroSize = 24.0f;
+constexpr float kHeroWordSize = 15.0f;
+constexpr float kRailSize = 13.5f;
 constexpr float kRailIndent = 13.0f;     // the rail's text, past its line
 constexpr float kMarkSize = 8.0f;        // a row's mark, smaller than a section's
 constexpr float kFootLine = 1.5f;        // a foot line, of the foot's size
@@ -417,16 +419,54 @@ uint32_t brighter(uint32_t abgr) {
     return out;
 }
 
-// A heavier weight than the face has: the line struck twice, half a pixel apart. The one body
-// face is Open Sans SemiBold, and a Bold is another bake and another texture for the handful of
-// characters a value is; at twelve pixels the doubled stroke reads as bold. Returns the width.
-float heavy(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t colour,
-            const std::string& s, float drop, float u) {
+// The card's type since 2026-09-28: Sanctuary's label face, Alegreya Sans Medium, which the
+// controls bake. Everything the card prints goes through this, and everything it wraps or ranges
+// right is measured by the same face, or a line breaks by one face's widths and prints in
+// another's. Where the controls have no face the windows' own stands in, so a card is never blank.
+struct Type {
+    const gfx::Face& face;
+    bgfx::TextureHandle texture;
+
+    // One line, `track` ems after every letter; returns its width.
+    float write(gfx::Canvas& canvas, float x, float baseline, float size, uint32_t colour,
+                const std::string& s, float track = 0.0f) const {
+        if (bgfx::isValid(texture)) {
+            return canvas.lettered(face, texture, x, baseline, size, size * track, colour, s);
+        }
+        if (track == 0.0f) return canvas.text(x, baseline, size, colour, s);
+        float pen = x;
+        for (char c : s) pen += canvas.text(pen, baseline, size, colour, std::string(1, c)) + size * track;
+        return pen - x;
+    }
+};
+
+Type typeOf(const gfx::Canvas& canvas) {
+    if (const gfx::Face* label = controls::labelFace()) return {*label, controls::labelTexture()};
+    return {canvas.face(), BGFX_INVALID_HANDLE};
+}
+
+// A line over its drop, as `printed` above, in the card's type.
+float say(const Type& type, gfx::Canvas& canvas, float x, float baseline, float size,
+          uint32_t colour, const std::string& s, float drop) {
+    type.write(canvas, x + drop, baseline + drop, size, kDrop, s);
+    return type.write(canvas, x, baseline, size, colour, s);
+}
+void spaced(const Type& type, gfx::Canvas& canvas, float x, float baseline, float size,
+            float track, uint32_t colour, const std::string& s, float drop) {
+    type.write(canvas, x + drop, baseline + drop, size, kDrop, s, track);
+    type.write(canvas, x, baseline, size, colour, s, track);
+}
+
+// A heavier weight than the face has: the line struck twice, half a pixel apart. A Bold is
+// another bake and another texture for the handful of characters a value is; at these sizes the
+// doubled stroke reads as bold. Returns the width.
+float heavy(const Type& type, gfx::Canvas& canvas, float x, float baseline, float size,
+            uint32_t colour, const std::string& s, float drop, float u) {
     const float thicken = std::max(0.5f, 0.45f * u);
-    canvas.text(x + drop, baseline + drop, size, kDrop, s);
-    canvas.text(x + thicken + drop, baseline + drop, size, kDrop, s);
-    canvas.text(x, baseline, size, colour, s);
-    return canvas.text(x + thicken, baseline, size, colour, s) + thicken;
+    type.write(canvas, x + drop, baseline + drop, size, kDrop, s);
+    type.write(canvas, x + thicken + drop, baseline + drop, size, kDrop, s);
+    type.write(canvas, x, baseline, size, colour, s);
+    return type.write(canvas, x + thicken, baseline, size, colour, s) + thicken;
 }
 
 // A free row as one string: the keyword, the prose and the value, which wrap together.
@@ -467,7 +507,8 @@ std::vector<Span> spansOf(const gfx::Face& face, float size, const std::string& 
 void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float screenWidth,
           float screenHeight) {
     if (sheet.empty()) return;
-    const gfx::Face& face = canvas.face();
+    const Type type = typeOf(canvas);
+    const gfx::Face& face = type.face;
     const float u = unit();
     const bool item = sheet.item;
     const float wide = (sheet.wide > 0.0f ? sheet.wide : kWide) * u, pad = kPad * u;
@@ -613,12 +654,12 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         roundedFan(canvas, strip, bottoms, fade(gfx::rgba(0.0f, 0.0f, 0.0f, 0.55f)));
         canvas.rect({strip.x, strip.y, strip.w, line}, fade(gfx::rgba(0.420f, 0.337f, 0.271f, 0.9f)));
         const float baseline = middle(face, strip.y, strip.h, footSize);
-        tracked(canvas, strip.x + pad, baseline, footSize * 0.92f, 0.12f, fade(kFoot), "SELLS FOR",
+        spaced(type, canvas, strip.x + pad, baseline, footSize * 0.92f, 0.12f, fade(kFoot), "SELLS FOR",
                 drop);
         const float figure = footSize * 1.12f;
         const float w = face.measure(figure, sheet.sell);
         const float right = strip.right() - pad;
-        heavy(canvas, right - w, baseline, figure, fade(colourOf(Tone::Yellow)), sheet.sell, drop, u);
+        heavy(type, canvas, right - w, baseline, figure, fade(colourOf(Tone::Yellow)), sheet.sell, drop, u);
         if (sheet.coin.valid()) {
             const float side = std::round(figure * 1.25f);
             const float cw = side * sheet.coin.width / std::max(1.0f, sheet.coin.height);
@@ -649,7 +690,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             canvas.lettered(*gothic, texture, box.x + headTextX, baseline, nameSize, nameTrack,
                             fade(nameColour), words);
         } else {
-            printed(canvas, box.x + headTextX, baseline, nameSize, fade(nameColour), words, drop);
+            say(type, canvas, box.x + headTextX, baseline, nameSize, fade(nameColour), words, drop);
         }
         headPen += titleLine;
     }
@@ -657,10 +698,10 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         // The item card's type line is the name's own tone, as Diablo's "Legendary Bow" is the
         // legendary's: it is where "Excellent" stands.
         if (item) {
-            printed(canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
+            say(type, canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
                     fade(nameColour), sheet.base, drop);
         } else {
-            tracked(canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
+            spaced(type, canvas, box.x + headTextX, middle(face, headPen, baseTall, baseSize), baseSize,
                     kBaseTrack, fade(kQuiet), sheet.base, drop);
         }
     }
@@ -671,12 +712,12 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         const float left = box.x + pad;
         float at = left;
         const float baseline = middle(face, pen, heroLine, heroSize);
-        at += heavy(canvas, at, baseline, heroSize, fade(colourOf(hero.tone)), hero.value, drop, u);
+        at += heavy(type, canvas, at, baseline, heroSize, fade(colourOf(hero.tone)), hero.value, drop, u);
         at += heroSize * 0.35f;
-        at += printed(canvas, at, baseline, heroWordSize, fade(kLabel), hero.word, drop);
+        at += say(type, canvas, at, baseline, heroWordSize, fade(kLabel), hero.word, drop);
         if (!hero.delta.empty()) {
             at += heroSize * 0.45f;
-            printed(canvas, at, baseline, footSize,
+            say(type, canvas, at, baseline, footSize,
                     fade(hero.deltaWay > 0 ? kGood : hero.deltaWay < 0 ? kBad : kQuiet), hero.delta,
                     drop);
         }
@@ -691,11 +732,11 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             const float rb = middle(face, railPen, railLine, railSize);
             if (!row.values.empty()) {
                 const Value& v = row.values[0];
-                rx += heavy(canvas, rx, rb, railSize,
+                rx += heavy(type, canvas, rx, rb, railSize,
                             fade(v.tone == Tone::White ? kLabel : colourOf(v.tone)), v.text, drop, u);
                 rx += railSize * 0.35f;
             }
-            printed(canvas, rx, rb, railSize, fade(kQuiet), row.label, drop);
+            say(type, canvas, rx, rb, railSize, fade(kQuiet), row.label, drop);
             railPen += railLine;
         }
     }
@@ -723,7 +764,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         }
         if (kicked) {
             const float kickerTall = std::round(kickerSize * 1.75f);
-            tracked(canvas, left, middle(face, rowPen, kickerTall, kickerSize), kickerSize,
+            spaced(type, canvas, left, middle(face, rowPen, kickerTall, kickerSize), kickerSize,
                     kKickerTrack, fade(kQuiet), section.kicker, drop);
             rowPen += kickerTall;
         }
@@ -752,9 +793,9 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                                             : value ? end
                                                     : std::min(end, tailAt);
                         const std::string piece = full.substr(at, stop - at);
-                        px += value ? heavy(canvas, px, baseline, rowSize, fade(brighter(tone)),
+                        px += value ? heavy(type, canvas, px, baseline, rowSize, fade(brighter(tone)),
                                             piece, drop, u)
-                                    : printed(canvas, px, baseline, rowSize,
+                                    : say(type, canvas, px, baseline, rowSize,
                                               fade(key ? colourOf(Tone::White) : tone), piece,
                                               drop);
                         at = stop;
@@ -766,7 +807,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             // The label once, at the top of its values: MU repeats it, and that is the stutter
             // this layout is here to fix.
             if (!row.label.empty()) {
-                printed(canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize, fade(kLabel),
+                say(type, canvas, left, middle(face, rowPen, rowTall, rowSize), rowSize, fade(kLabel),
                         row.label, drop);
             }
             float chipPen = right;
@@ -781,7 +822,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                     const float h = std::round(chipSize * 1.9f);
                     const gfx::Box at{chipPen - w, rowPen + (rowTall - h) * 0.5f, w, h};
                     canvas.outline(at, std::max(1.0f, u), fade(colourOf(value.tone)));
-                    tracked(canvas, at.x + pad * 0.4f, middle(face, at.y, h, chipSize), chipSize,
+                    spaced(type, canvas, at.x + pad * 0.4f, middle(face, at.y, h, chipSize), chipSize,
                             kChipTrack, fade(colourOf(value.tone)), value.text, drop);
                     chipPen -= w + pad * 0.4f;
                     continue;
@@ -789,7 +830,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                 float end = right;
                 if (!value.delta.empty()) {
                     const float dw = face.measure(footSize, value.delta);
-                    printed(canvas, end - dw, baseline, footSize,
+                    say(type, canvas, end - dw, baseline, footSize,
                                 fade(value.deltaWay > 0   ? kGood
                                  : value.deltaWay < 0 ? kBad
                                                       : kQuiet),
@@ -797,7 +838,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                     end -= dw + pad * 0.4f;
                 }
                 const float w = face.measure(rowSize, value.text);
-                printed(canvas, end - w, baseline, rowSize, fade(colourOf(value.tone)), value.text, drop);
+                say(type, canvas, end - w, baseline, rowSize, fade(colourOf(value.tone)), value.text, drop);
             }
             rowPen += rowTall * float(std::max<size_t>(1, row.values.size()));
         }
@@ -817,7 +858,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             };
             float at = pen + railPad;
             for (const FootLine& l : sheet.who) {
-                printed(canvas, box.x + pad, middle(face, at, footLine, footSize), footSize, ink(l),
+                say(type, canvas, box.x + pad, middle(face, at, footLine, footSize), footSize, ink(l),
                         l.text, drop);
                 at += footLine;
             }
@@ -829,7 +870,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                 const float w = face.measure(footSize, l.text);
                 // The wear's bar stands to the left of its words, in its band's colour.
                 if (i == 0 && !sheet.wear.empty()) {
-                    printed(canvas, edge - w, baseline, footSize, fade(kFoot), l.text, drop);
+                    say(type, canvas, edge - w, baseline, footSize, fade(kFoot), l.text, drop);
                     const gfx::Box bar{edge - w - pad * 0.5f - barWide,
                                        baseline - footSize * 0.35f, barWide, barTall};
                     canvas.rect(bar, fade(kBarBack));
@@ -837,7 +878,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
                                 fade(sheet.wearTone == Tone::White ? panel::kLettering
                                                                    : colourOf(sheet.wearTone)));
                 } else {
-                    printed(canvas, edge - w, baseline, footSize, ink(l), l.text, drop);
+                    say(type, canvas, edge - w, baseline, footSize, ink(l), l.text, drop);
                 }
                 at += footLine;
             }
@@ -850,7 +891,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
         // the day something did would be a bug nobody went looking for.
         float left = box.x + pad;
         if (!sheet.wear.empty()) {
-            const float w = printed(canvas, left, baseline, footSize, fade(kFoot), sheet.wear, drop);
+            const float w = say(type, canvas, left, baseline, footSize, fade(kFoot), sheet.wear, drop);
             const gfx::Box bar{left + w + pad * 0.5f, baseline - footSize * 0.35f, barWide, barTall};
             canvas.rect(bar, fade(kBarBack));
             canvas.rect({bar.x, bar.y, barWide * std::clamp(sheet.worn, 0.0f, 1.0f), barTall},
@@ -859,12 +900,12 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, float x, float y, float scree
             left = bar.right() + pad;
         }
         if (!sheet.note.empty()) {
-            printed(canvas, left, baseline, footSize, fade(colourOf(sheet.noteTone)), sheet.note,
+            say(type, canvas, left, baseline, footSize, fade(colourOf(sheet.noteTone)), sheet.note,
                     drop);
         }
         if (!sheet.price.empty()) {
             const float w = face.measure(footSize, sheet.price);
-            printed(canvas, box.right() - pad - w, baseline, footSize,
+            say(type, canvas, box.right() - pad - w, baseline, footSize,
                     fade(colourOf(sheet.priceTone)), sheet.price, drop);
         }
     }
