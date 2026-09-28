@@ -164,6 +164,7 @@ private:
         float floorY;         // the ground under where it was aimed, for the stones
         float size;           // 0.8 to 1.1
         float flown;          // metres since the last ember
+        float travelled;      // metres since it left his hand, which the flame may not outrun
         float left;           // reference frames
         float bodyLight;      // this frame's 0.7-1.0 roll
         float flameLight;     // and the cone's own 0.4-0.7, as the meteor's
@@ -329,6 +330,9 @@ private:
     // 0.19 and then 0.26 were each *"a little bit more"* short): the fire wraps the stone.
     static constexpr float kFlameAhead = 0.268f;
     static constexpr float kFlameLeads = 0.32f;
+    // How far the cone reaches behind its origin, in model metres (138.9 units), which with the
+    // stretch is how long the tail is at full grown.
+    static constexpr float kFlameBehind = 1.389f;
     // Blurred by drawing it again: two ghosts of the cone, each wider and dimmer, so its hard
     // mesh edge melts into a soft one (*"little bit more blurry fireball please"*). Added, so
     // they only ever brighten. Scale across the flight, then how much of the cone's light.

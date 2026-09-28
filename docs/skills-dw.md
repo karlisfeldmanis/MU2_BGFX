@@ -175,7 +175,9 @@ the arrival. Ours, tuned on the bench with the user watching:
   at 1.35x. Two wider, dimmer copies of the cone (1.25x at 35%, 1.55x at 18%) blur its mesh edge
   (*"little bit more blurry"*). The rock turns as it flies. The cone's front is set a little past
   the rock's leading face (0.32 m ahead of its centre, tuned by eye): as modelled it put a bright rim ahead of the ball, pushed all the way
-  back it left a bare stone in front of a flat end.
+  back it left a bare stone in front of a flat end. **The tail grows with the flight**: at full length it is three
+  metres, and a ball just out of his hand drew it back through him and out behind (*"looks like
+  fireball trail is behind character"*), so the cone is squeezed to the ground covered.
 - **A haze round it**: a dim 1.9 m orange halo and a 0.55 m heart on the `light` sheet, drawn half a
   metre toward the eye -- at the rock's own centre, the stone sorted over the flare and hid it.
 - **Embers that cool.** Half the meteor's size, born orange and fading to MU's red and out (on the

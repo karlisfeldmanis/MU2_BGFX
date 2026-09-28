@@ -349,6 +349,7 @@ bool Meteor::hurling(Hurled& ball, float seconds, bool standing, const float* th
 
     // An ember every fifty units, which at fifty a frame is MU's one a frame at any frame rate.
     ball.flown += went;
+    ball.travelled += went;
     while (ball.flown >= kEmberSpacingUnits * kUnit) {
         ball.flown -= kEmberSpacingUnits * kUnit;
         emberAt(ball.at, ball.along, ball.bodyLight, true);
@@ -626,8 +627,14 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             // The cone's Y is laid back along the flight; X is level and across it; Z completes
             // the turn. A ball flying straight up or down has no level across, and takes X.
             const float back[3] = {-f.along[0], -f.along[1], -f.along[2]};
-            const float drawn[3] = {back[0] * kFlameStretch, back[1] * kFlameStretch,
-                                    back[2] * kFlameStretch};
+            // **The tail grows as it flies.** At full length it is three metres behind the ball,
+            // and a ball just out of his hand drew its fire back through him and out behind him
+            // (the user, 2026-09-28: "looks like fireball trail is behind character"). So the
+            // cone is squeezed to the ground it has covered, never shorter than a tenth.
+            const float full = (kFlameAhead + kFlameBehind) * kFlameStretch * f.size;
+            const float grown = std::clamp((f.travelled + kFlameLeads * f.size) / full, 0.1f, 1.0f);
+            const float stretch = kFlameStretch * grown;
+            const float drawn[3] = {back[0] * stretch, back[1] * stretch, back[2] * stretch};
             float across[3] = {back[2], 0.0f, -back[0]};
             float wide = std::sqrt(across[0] * across[0] + across[2] * across[2]);
             if (wide < 1e-3f) {
@@ -643,7 +650,7 @@ void Meteor::gather(gfx::Effects& effects, const float* eye) const {
             const float cone[3] = {kDaylight[0] * f.flameLight * kFireFlame,
                                    kDaylight[1] * f.flameLight * kFireFlame,
                                    kDaylight[2] * f.flameLight * kFireFlame};
-            const float shift = (kFlameAhead * kFlameStretch - kFlameLeads) * f.size;
+            const float shift = (kFlameAhead * stretch - kFlameLeads) * f.size;
             const float from[3] = {f.at[0] + back[0] * shift, f.at[1] + back[1] * shift,
                                    f.at[2] + back[2] * shift};
             submitAlong(effects, fireGroups_[1].triangles, fireGroups_[1].sheet,
