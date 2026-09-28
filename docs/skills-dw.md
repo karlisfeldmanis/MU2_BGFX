@@ -233,8 +233,11 @@ saturates. `fx/effect_mesh` is the .obj reader and basis draw the meteor and the
 
 ## 2e. Lightning -- the first channel
 
-0.75's numbers where they survive: seventeen damage and skill 3 -- the mana is **forty**, not 0.75's
-fifteen (*"lightning has to spend more mana"*), about MU's Ice -- off the Scroll of Lighting
+0.75's numbers where they survive: seventeen damage and skill 3 -- but each strike lands at **twice
+the band** (`force` 2, *"lightning has to be stronger because it's a cooldown spell"*; a spell's
+`force` was fixed at one, and is now the row's own, one on every other spell), about 60-110 at 120
+energy; and the mana is **forty**, not 0.75's fifteen (*"lightning has to spend more mana"*), about
+MU's Ice -- off the Scroll of Lighting
 (`Book03`, group 15 #2, Pasi's slot 2), refused under 72 energy. The rest is this game's (the user,
 2026-09-28): *"Lightning in our game will be first cast duration spell ... DW uses special animation
 and lightning finds all monsters around him and casts lightning to them (aoe)"*, *"it also has

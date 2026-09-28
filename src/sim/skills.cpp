@@ -228,7 +228,12 @@ constexpr SkillRow kRows[kSkills] = {
     // **Forty mana, not 0.75's fifteen** (the user, 2026-09-28: "lightning has to spend more mana"):
     // a channel that sweeps a ring and pushes it back is worth a third of a young wizard's pool,
     // about what MU asks for Ice (38). Ours.
-    {skill::kLightning, "Lightning", 40, 4.0f, 1.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
+    //
+    // **Each strike at twice the band** (`force` 2), the user's "lightning has to be stronger
+    // because it's a cooldown spell": the spells that pay nothing to wait strike at one, and this
+    // one waits ten seconds. About 60-110 a strike at 120 energy against Fire Ball's 21-42 -- the
+    // hardest single blow he has, once a body, into everything round him.
+    {skill::kLightning, "Lightning", 40, 4.0f, 2.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
      "another within four tiles and throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
@@ -332,7 +337,10 @@ int skillIndexOf(int32_t number) {
 float force(const SkillRow& row, const HeroPoints& points) {
     // A wizard's `SkillMultiplier` is a flat one (ClassDarkWizard.cs:112): his spells take their
     // force from the wizardry band instead, which is where energy already went.
-    if (row.wizardry) return 1.0f;
+    // A spell's own `force` column only, where 0.75 has none: one on every spell but Lightning,
+    // whose two is what a ten-second cooldown buys (the user, 2026-09-28: "lightning has to be
+    // stronger because it's a cooldown spell"). Energy and the staff are already in the band.
+    if (row.wizardry) return row.force;
     return row.force + float(points.strength) * row.forcePerStrength +
            float(points.energy) * kForcePerEnergy;
 }

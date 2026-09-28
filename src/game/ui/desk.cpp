@@ -939,9 +939,11 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
         // The band it rolls in, `sim::cast`'s own two lines: energy over nine and over four, the
         // spell's damage on the bottom and half again on the top, times the staff.
         const sim::Fighter& me = hero.stats;
-        const int low = int((me.wizardMinimum + double(row.damage)) * me.wizardryRate);
-        const int high =
-            int((me.wizardMaximum + double(row.damage + row.damage / 2)) * me.wizardryRate);
+        // And the spell's own multiplier, which is one but on Lightning.
+        const double times = double(sim::force(row, hero.points));
+        const int low = int((me.wizardMinimum + double(row.damage)) * me.wizardryRate * times);
+        const int high = int((me.wizardMaximum + double(row.damage + row.damage / 2)) *
+                             me.wizardryRate * times);
         // A channel's damage is each strike's, and the card says so: the band is not the cast's.
         facts.rows.push_back(line(row.channelled() ? "Each strike" : "Damage",
                                   std::to_string(low) + " - " + std::to_string(high),

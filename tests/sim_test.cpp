@@ -1049,6 +1049,9 @@ void testCastLock(const content::Tables& tables) {
                   bolt.mana == 40 && bolt.coolTicks == 200 && bolt.channelTicks == 42,
               "Lightning is a channel round him as long as its clip, ten seconds to cool, and it "
               "pushes");
+        check(bolt.force == 2.0f && sim::force(bolt, sim::HeroPoints{}) == 2.0f &&
+                  sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.0f,
+              "and each strike is twice the band, where the other spells are once");
         check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32 &&
                   bolt.strikesEach == 1,
               "and it strikes every three ticks while his arm is up, once at most a body");
@@ -1175,7 +1178,9 @@ void testCastLock(const content::Tables& tables) {
         check(mostOnOne <= 1, "and no body is struck more than once in a cast");
         check(sweptMost >= 2, "and a channel goes round to more than one");
         checkEqual(stillWhile, 0, "and he stands still while it runs");
-        check(pushes > 5 && away > 0, "and it pushes what it does not kill, away from him");
+        // A strike at twice the band kills most of what it hits here, and the dead are not
+        // pushed; what survives is.
+        check(pushes >= 2 && away > 0, "and it pushes what it does not kill, away from him");
         check(worstStep <= 0.41f, "and slides it there, no tick moving it more than 0.4 of a tile");
     }
 
