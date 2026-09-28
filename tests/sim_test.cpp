@@ -411,13 +411,13 @@ void testInvariants(const content::Tables& tables) {
 // for it, the footprint walk, and equipping as a move through the same gate a window colours by.
 void testItems(const content::Tables& tables) {
     std::printf("items\n");
-    // 156: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
+    // 157: the catalogue's 118, the nine knight orbs added on 2026-09-23, the wizard's Scroll
     // of Soul Barrier on 2026-09-28, and the elf's Greater Defense, Greater Damage and Skillshot
     // orbs the same day (sprint 15), and the 25 Noria's shelves were missing: the Silk, Wind,
     // Spirit and Guardian sets, the Elven, Battle and Tiger Bows, the Golden Crossbow and the
-    // Elven Shield. A count rather than a list, because what it is guarding is the cook -- a
+    // Elven Shield, and the Rune of Creation (14, 22) on 2026-09-28. A count rather than a list, because what it is guarding is the cook -- a
     // recipe that stops being picked up is a row the shelf silently cannot sell.
-    checkEqual(long(tables.items.size()), 156, "156 item rows cooked");
+    checkEqual(long(tables.items.size()), 157, "157 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
     for (const int npc : {242, 243, 253}) {
@@ -3274,6 +3274,125 @@ void testQuests(const content::Tables& tables) {
     checkEqual(int(realm.quest(quest).completions), 1, "counted once handed in");
 }
 
+// Sockets and the Rune of Creation (sim/items.h): which rune goes in what, setting fills the first
+// free socket, and Stormcall and Meteor call their lightning or rock on ANOTHER monster -- and
+// never without a power worn.
+void testRunes(const content::Tables& tables) {
+    std::printf("sockets\n");
+    const int rune = tables.itemAt(14, 22), serpent = tables.itemAt(0, 8);
+    const int plate = tables.itemAt(8, 9);
+    check(rune >= 0 && serpent >= 0 && plate >= 0, "the Rune of Creation, a Serpent Sword and a plate");
+    if (rune < 0 || serpent < 0 || plate < 0) return;
+    const uint8_t storm = uint8_t(sim::Power::Stormcall), meteor = uint8_t(sim::Power::Meteor);
+    const auto held = [](int item, uint8_t sockets, uint8_t first, uint8_t second = 0) {
+        sim::Held h{int32_t(item), 0, 1};
+        h.sockets = sockets;
+        h.powers[0] = first;
+        h.powers[1] = second;
+        return h;
+    };
+    const sim::Kin dk = sim::Kin::DarkKnight;
+    const sim::Held carried = held(rune, 0, storm);
+    check(sim::settable(tables, carried, held(serpent, 1, 0), dk),
+          "Stormcall goes in a knight's socketed sword");
+    check(!sim::settable(tables, carried, held(serpent, 1, 0), sim::Kin::DarkWizard),
+          "and not by a wizard");
+    check(!sim::settable(tables, carried, held(serpent, 0, 0), dk), "nor in a sword with no socket");
+    check(!sim::settable(tables, carried, held(serpent, 1, storm), dk), "nor in a full one");
+    check(sim::settable(tables, carried, held(serpent, 2, storm), dk),
+          "but in the second of two, one set");
+    check(!sim::settable(tables, carried, held(plate, 1, 0), dk),
+          "nor in armour: it is a weapon's power");
+    check(!sim::settable(tables, held(rune, 0, 0), held(serpent, 1, 0), dk),
+          "and a Rune of Creation with no power sets nothing");
+
+    {
+        sim::Realm realm;
+        check(realm.raise(&tables, 11, 138, 124), "a realm raises for the sockets");
+        const int sword = realm.give(serpent, -1, 0, -1, false, 0, 0, 3);
+        const uint8_t one[3] = {storm, 0, 0}, two[3] = {meteor, 0, 0};
+        const int first = realm.give(rune, -1, 0, 1, false, 0, 0, 0, one);
+        const int second = realm.give(rune, -1, 0, 1, false, 0, 0, 0, two);
+        check(sword >= 0 && first >= 0 && second >= 0, "a three-socket sword and two runes");
+        checkEqual(int(realm.satchel()[first].powers[0]), int(storm), "the first carries Stormcall");
+        check(realm.refine(first, sword), "the first is set");
+        check(realm.refine(second, sword), "and the second");
+        const sim::Held& now = realm.satchel()[sword];
+        check(now.powers[0] == storm && now.powers[1] == meteor && now.powers[2] == 0,
+              "into the first two sockets, the third still empty");
+        check(realm.satchel()[first].empty() && realm.satchel()[second].empty(),
+              "and both runes are gone");
+        const std::vector<sim::Happening>& said = realm.happenings();
+        check(!said.empty() && said.back().what == sim::What::Set &&
+                  said.back().b == int(meteor) && said.back().c == 1,
+              "and the realm says the second went in socket 1");
+    }
+
+    // A knight in the hunting ground, swinging at the nearest thing: with a power worn, some of
+    // his landed swings call it, each on a monster other than the one he struck; with the same
+    // sword and its sockets empty, none do.
+    const auto hunt = [&](uint8_t power, int* swings, int* calls, int* onTarget, int* landed) {
+        sim::Realm realm;
+        realm.raise(&tables, 3, 200, 160, sim::Kin::DarkKnight, 60);
+        const uint8_t powers[3] = {power, 0, 0};
+        realm.give(serpent, sim::kWeaponRight, 9, -1, false, 0, 0, 1, powers);
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            uint32_t struck = 0;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id) continue;
+                if (h.what == sim::What::Hit && !h.thrown) {
+                    ++*swings;
+                    struck = h.whom;
+                }
+                if (h.what == sim::What::Loosed &&
+                    (h.a == sim::skill::kLightning || h.a == sim::skill::kMeteorite)) {
+                    ++*calls;
+                    if (h.whom == struck) ++*onTarget;
+                }
+                if (h.what == sim::What::Hit && h.thrown) ++*landed;
+            }
+        }
+    };
+    int swings = 0, calls = 0, onTarget = 0, landed = 0;
+    hunt(storm, &swings, &calls, &onTarget, &landed);
+    std::printf("  %d landed swings, %d lightning calls\n", swings, calls);
+    check(swings > 50, "the knight lands swings");
+    check(calls > 0, "and Stormcall calls lightning");
+    check(double(calls) <= double(swings) * 0.25, "at no more than its chance and some");
+    checkEqual(onTarget, 0, "never on the monster he struck");
+    int bareSwings = 0, bareCalls = 0, bareOn = 0, bareLanded = 0;
+    hunt(0, &bareSwings, &bareCalls, &bareOn, &bareLanded);
+    checkEqual(bareCalls, 0, "and none from the same sword with its socket empty");
+
+    // Meteor: the same, with a rock whose blow lands after its fall.
+    int mSwings = 0, rocks = 0, mOn = 0, mLanded = 0;
+    hunt(meteor, &mSwings, &rocks, &mOn, &mLanded);
+    std::printf("  %d landed swings, %d rocks called, %d landed\n", mSwings, rocks, mLanded);
+    check(rocks > 0, "Meteor calls rocks down");
+    checkEqual(mOn, 0, "never on the monster he struck");
+    check(mLanded > 0 && mLanded <= rocks, "and they land, one blow a rock at most");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -3311,6 +3430,7 @@ int main() {
     testElfSkills(tables);
     testSummons(tables);
     testQuests(tables);
+    testRunes(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

@@ -82,6 +82,11 @@ struct Held {
     // its family (sim::excellentLine), up to bit 5. None on anything a drop did not make
     // excellent. See docs/refining.md, "Excellent".
     uint8_t excellent = 0;
+    // Its sockets (see "sockets and the Rune of Creation" below): how many it rolled, 0 to 3,
+    // and the power set in each -- 0 for an empty one. A Rune of Creation carries its own power
+    // in `powers[0]`.
+    uint8_t sockets = 0;
+    uint8_t powers[3] = {};
     bool empty() const { return item < 0; }
 };
 
@@ -332,5 +337,50 @@ inline int excellentCount(uint8_t mask) {
     for (int bit = 0; bit < kExcellentOptions; ++bit) n += (mask >> bit) & 1;
     return n;
 }
+
+// ---- sockets and the Rune of Creation ----------------------------------------------------
+//
+// **invention**, the user's (2026-09-28): an item may roll **+Socket** as it rolls +Luck -- up to
+// three of them -- and each socket takes one epic rune. The rune is the **Rune of Creation**,
+// MU's Jewel of Creation (14, 22, Season 2's) renamed on the user's word, carrying a **power**,
+// which it gives the item it is set into. Very rare on purpose: the first completion of a city
+// quest gives one, never a repeat, and later the highest drops. Set by dropping the rune on the
+// item, as a Bless goes on (`Realm::refine`), into its first empty socket. Each power set rolls
+// on its own. The design page is claude.ai/artifact/DPhyHWRcYTo97PHpa2FaAu.
+enum class Power : uint8_t { None = 0, Stormcall = 1, Meteor = 2 };
+struct PowerRow {
+    Power power;
+    const char* name;
+    const char* tells;
+    bool weapon;  // true a weapon's socket, false armour's or a shield's
+    Kin kin;      // who may set it
+};
+// Nullptr for none and for a number no row has.
+const PowerRow* powerOf(uint8_t power);
+// The Rune of Creation's row: 14, 22.
+bool creation(const content::ItemRow& row);
+// Who may roll sockets: the option-bearing set, weapons, armour and shields.
+inline bool takesSockets(const content::ItemRow& row) { return takesOptions(row); }
+constexpr int kMostSockets = 3;
+// A drop's chance of a socket, drawn after luck and the option, and then of each further one
+// (the user, 2026-09-28: "item drop with +socket is rare"). invention.
+constexpr double kSocketChance = 0.005;
+constexpr double kMoreSocketChance = 0.25;
+// The first socket with nothing set in it, or -1.
+int freeSocket(const Held& thing);
+// Whether this rune may be set into that thing by this class: a Creation with a power, a thing
+// with a free socket, of the power's kind (weapon or not), and the class the power names.
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin);
+
+// **Stormcall**, the Dark Knight's first power: a swing that lands has this chance to call
+// lightning down on another monster within `kStormcallReach` tiles of him, which takes his
+// swing's roll at `kStormcallForce` and is pushed as Lightning pushes. invention.
+constexpr double kStormcallChance = 0.15;
+constexpr float kStormcallReach = 4.0f;
+constexpr float kStormcallForce = 1.0f;
+// **Meteor**, his second: the same chance and reach, and a burning rock -- the wizard's
+// Meteorite, drawn as his -- lands its fall later at `kMeteorForce` of his swing's roll. invention.
+constexpr double kMeteorChance = 0.15;
+constexpr float kMeteorForce = 1.5f;
 
 }  // namespace mu::sim

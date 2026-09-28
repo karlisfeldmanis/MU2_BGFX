@@ -1,0 +1,65 @@
+{
+  "item": "Jewel22",
+  "mu_name": "Rune of Creation",
+  "mu_name_note": "Ours, not MU's: MU calls this model the Jewel of Creation. The user, 2026-09-28: \"rename jewel of creation to rune of creation\" -- it is the thing a +Rune item takes.",
+  "mu_name_from": "ZzzOpenData.cpp:1008: `AccessModel(MODEL_JEWEL_OF_CREATION, L\"Data\\\\Item\\\\\", L\"jewel\", 22)`, and _enum.h:2090 `MODEL_JEWEL_OF_CREATION = MODEL_POTION + 22` -- group 14, number 22. The file on disk is lower-case jewel22.bmd.",
+  "why_this_one": "invention, and not a 0.75 row: the Jewel of Creation is Season 2's. The user, 2026-09-28: \"we will use jewel of creation as runes\". It is the epic jewel a +Rune item takes -- one power in it, rolled or given, set into the item's one Rune by dropping it on the item (sim/powers.h). Very rare by design: the first completion of a city quest gives one, never a repeat, and very high-end drops later. So it drops from nothing, and it is not flagged a jewel either -- the jewel flag is what the drop's jewel group counts, and a row there with no drop level would fall in Lorencia.",
+  "profile": "weapon",
+  "tells": "",
+  "tells_note": "Empty on purpose: what the jewel does is its power's, which the card prints from sim/powers.h, and a row carries one line for every jewel of its kind.",
+  "stats": {
+    "note": "Group and number are MU's; the rest is ours. The footprint is the jewels' one cell.",
+    "group": 14,
+    "number": 22,
+    "drop_level": 0,
+    "drops_from_monsters": false,
+    "jewel": false,
+    "jewel_note": "Not flagged. See why_this_one: the flag enters the drop's jewel group.",
+    "width": 1,
+    "height": 1,
+    "durability": 1,
+    "requires": {
+      "level": 0,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    }
+  },
+  "sheets": {
+    "red_jewel": "red_jewel.png",
+    "blue_jewel": "blue_jewel.png"
+  },
+  "sheet_from": "Data/Item/red_jewel.OZJ and blue_jewel.OZJ, from MuMain's own bin/Data: jewel22.bmd names red_jewel.jpg on 24 triangles and blue_jewel.jpg on 12. Both are eight texels square, a pink-red (255,100,178 on average) and a blue-violet (140,129,254).",
+  "cutout": false,
+  "cutout_from": "No alpha in either .OZJ, and the mesh is a closed solid.",
+  "flat_shaded": true,
+  "flat_shaded_why": "As the other jewels: a cut stone is its facets.",
+  "material_note": "glass on both islands, as Jewel01, 02 and 15: a gem is a dielectric.",
+  "upright": true,
+  "upright_from": "As the other jewels: shown as authored, point down and point up.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 36,
+      "area": 2974.1,
+      "along": [
+        -19.5,
+        19.5
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.991,
+        0.991
+      ]
+    }
+  ]
+}

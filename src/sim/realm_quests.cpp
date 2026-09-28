@@ -125,6 +125,30 @@ bool Realm::completeQuest(int index, int choice) {
         return false;
     }
 
+    // The first completion, and only the first, pays a Rune of Creation carrying his class's
+    // power (sim/items.h). A class with no power yet gets none. invention.
+    uint8_t power = 0;
+    if (one.completions == 0) {
+        const uint8_t kPowers[] = {uint8_t(Power::Stormcall)};
+        for (uint8_t p : kPowers) {
+            if (const PowerRow* r = powerOf(p); r && r->kin == bodies_[0].kin) power = p;
+        }
+    }
+    if (power != 0) {
+        int32_t jewel = -1;
+        for (size_t i = 0; i < tables_->items.size(); ++i) {
+            if (creation(tables_->items[i])) jewel = int32_t(i);
+        }
+        const int slot = jewel >= 0 ? give(jewel, -1, 0, 1) : -1;
+        if (slot < 0) {
+            bag_ = before;
+            return false;
+        }
+        Held held = bag_[slot];
+        held.powers[0] = power;
+        bag_.put(slot, held);
+    }
+
     money_ += row.zen;
     Body& hero = bodies_[0];
     const int32_t chosenItem =

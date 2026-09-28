@@ -51,6 +51,11 @@ Saved::Item readItem(const core::Json& one) {
     item.luck = one["luck"].boolOr(false);
     item.option = std::clamp(int(one["option"].numberOr(0)), 0, sim::kMostOption);
     item.excellent = int(one["excellent"].numberOr(0)) & 63;
+    item.sockets = std::clamp(int(one["sockets"].numberOr(0)), 0, sim::kMostSockets);
+    const core::Json& powers = one["powers"];
+    for (size_t i = 0; i < 3 && i < powers.size(); ++i) {
+        item.powers[i] = std::clamp(int(powers.at(i).numberOr(0)), 0, 255);
+    }
     item.worn = one["wear"].boolOr(false);
     return item;
 }
@@ -63,9 +68,12 @@ void writeHeld(std::FILE* f, const content::Tables& tables, int slot, const sim:
     writeItem(f, tables, held.item);
     std::fprintf(f,
                  ", \"plus\": %d, \"durability\": %d, \"wear\": true, \"skill\": %s, "
-                 "\"luck\": %s, \"option\": %d, \"excellent\": %d}",
+                 "\"luck\": %s, \"option\": %d, \"excellent\": %d, \"sockets\": %d, "
+                 "\"powers\": [%d, %d, %d]}",
                  int(held.refinement), int(held.durability), held.skill ? "true" : "false",
-                 held.luck ? "true" : "false", int(held.option), int(held.excellent));
+                 held.luck ? "true" : "false", int(held.option), int(held.excellent),
+                 int(held.sockets), int(held.powers[0]), int(held.powers[1]),
+                 int(held.powers[2]));
     *first = false;
 }
 
@@ -209,6 +217,8 @@ void resolveSave(const content::Tables& tables, Saved& saved) {
         held.luck = item.luck;
         held.option = int8_t(item.option);
         held.excellent = uint8_t(item.excellent);
+        held.sockets = uint8_t(item.sockets);
+        for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
     }
     for (int key = 0; key < 5; ++key) {
         saved.quick[key] = rowOf(tables, saved.quickGroup[key], saved.quickNumber[key]);
@@ -327,9 +337,11 @@ sim::Vault resolveVault(const content::Tables& tables, const Saved& saved) {
             ++lost;
             continue;
         }
-        vault.put(item.slot, sim::Held{row, int16_t(item.plus), durabilityOf(tables, row, item),
-                                       item.skill, item.luck, int8_t(item.option),
-                                       uint8_t(item.excellent)});
+        sim::Held held{row, int16_t(item.plus), durabilityOf(tables, row, item),
+                       item.skill, item.luck, int8_t(item.option), uint8_t(item.excellent)};
+        held.sockets = uint8_t(item.sockets);
+        for (int i = 0; i < 3; ++i) held.powers[i] = uint8_t(item.powers[i]);
+        vault.put(item.slot, held);
     }
     if (lost > 0) core::logError("save: %d vault item(s) could not be put back", lost);
     return vault;

@@ -94,6 +94,8 @@ enum class What : uint8_t {
     QuestStep,   // a live step's count moved: a: the quest, b: the count, c: the step
     QuestReady,  // every counted step done: back to the giver. a: the quest
     QuestDone,   // handed in and paid: a: the quest, b: the chosen item row, c: its bag slot
+    Set,       // a Rune of Creation set in a thing's socket: a: the thing's slot, b: the power
+               // (sim::Power), c: which socket. invention, see sim/items.h
     Shouted,   // a guard's line: a: a `Shout`, b and c: for a pointing, the tile he points the
                // hero to (-1 for nowhere), whom: the monster it is about. What is SAID is the
                // drawing's to choose; the realm only says that he spoke and why.
@@ -481,7 +483,8 @@ public:
     // axe, and a purchase into the first place it fits. -1 for anywhere in the bag. The slot
     // it went to, or -1 when there was nowhere. A durability of -1 is whole at its plus.
     int give(int32_t item, int slot = -1, int refinement = 0, int durability = -1,
-             bool luck = false, int option = 0, uint8_t excellent = 0);
+             bool luck = false, int option = 0, uint8_t excellent = 0, uint8_t sockets = 0,
+             const uint8_t* powers = nullptr);
     // A drag from one slot to another, equipping and unequipping included. Refused, whole,
     // where `movable` says no -- the same answer the window colours the cell by.
     bool moveItem(int from, int to);
@@ -726,6 +729,12 @@ private:
     void strikeAround(Body& hero, const SkillRow& row, float force);
     // The knock: one tile at random, onto something standable. 0.75's `movesTarget`.
     void shove(Body& target);
+    // His weapon's socketed powers (sim/items.h), after his swing lands on `struck`: each one
+    // rolls, Stormcall's lightning or Meteor's rock on another monster near him. Draws nothing
+    // unless one is worn.
+    void stormcall(Body& hero, const Body& struck);
+    // One power's roll and, when it answers, its lightning or rock.
+    void callDown(Body& hero, const Body& struck, const PowerRow& power);
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
     // something standable or not at all.
     void push(Body& target, const Body& from);
@@ -834,6 +843,9 @@ private:
     // The summon's fights, either way round, roll off their own stream, as a guard's do: a run
     // without a summon is not moved by one existing.
     Random summonDice_{0};
+    // The sockets' own (sim/items.h): whether a drop rolls them, and a power's chance and pick.
+    // Off `dice_`, the one extra draw a drop moved every roll after it.
+    Random runeDice_{0};
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;
     // The fraction of a point each worn slot has lost and not yet shown, beside the item it

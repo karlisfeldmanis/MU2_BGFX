@@ -212,9 +212,17 @@ void Play::restore(const sim::HeroRecord& saved) {
 // damage rate on a weapon), and `W` to put it on him rather than in the bag -- the bench's, like
 // --weapon, and asked of no requirement. Anything else is ignored.
 static void readExtras(const std::string& extras, int* plus, bool* luck, int* option,
-                       uint8_t* excellent, bool* worn = nullptr) {
+                       uint8_t* excellent, bool* worn = nullptr, int* sockets = nullptr,
+                       uint8_t* powers = nullptr) {
+    int nextPower = 0;
     for (size_t i = 0; i < extras.size(); ++i) {
         const char c = extras[i];
+        // S<n>: that many sockets; P<n>, again for each: the powers set in them in order, or a
+        // Rune of Creation's own (sim/items.h).
+        if ((c == 'S' || c == 's') && sockets) *sockets = std::atoi(extras.c_str() + i + 1);
+        if ((c == 'P' || c == 'p') && powers && nextPower < 3) {
+            powers[nextPower++] = uint8_t(std::atoi(extras.c_str() + i + 1));
+        }
         if ((c == 'W' || c == 'w') && worn) *worn = true;
         if (c == '+') *plus = std::atoi(extras.c_str() + i + 1);
         if (c == 'L' || c == 'l') *luck = true;
@@ -245,7 +253,9 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
         bool luck = false;
         uint8_t excellent = 0;
         bool worn = false;
-        readExtras(extras, &plus, &luck, &option, &excellent, &worn);
+        int sockets = 0;
+        uint8_t powers[3] = {};
+        readExtras(extras, &plus, &luck, &option, &excellent, &worn, &sockets, powers);
         const int into = worn ? sim::placeOf(row) : -1;
         // Whatever he wears there already goes into the bag first -- the arena's own sword.
         if (into >= 0 && !realm_.satchel()[into].empty()) {
@@ -255,7 +265,7 @@ bool Play::give(const std::string& name, int count, const std::string& extras) {
             if (spare >= 0) realm_.moveItem(into, spare);
         }
         slot = realm_.give(item, into, plus, stacks ? durability : sim::fullDurability(row, plus),
-                           luck, option, excellent);
+                           luck, option, excellent, uint8_t(sockets), powers);
         if (worn && slot >= 0) redress();
         core::logf("given %s%s into slot %d", row.label.c_str(),
                    stacks ? (" x" + std::to_string(durability)).c_str() : "", slot);

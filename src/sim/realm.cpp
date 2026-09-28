@@ -64,6 +64,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // A stream of its own, off the same seed: see `wearDice_`.
     wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
     wardenDice_.seed(seed ^ 0xc2b2ae3d27d4eb4full);
+    runeDice_.seed(seed ^ 0x165667b19e3779f9ull);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
@@ -795,6 +796,11 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::QuestDone:
             std::snprintf(line, sizeof(line), "%6u %s hands in quest %d, choosing item %d into %d",
                           happening.tick, who, happening.a, happening.b, happening.c);
+            break;
+        case What::Set:
+            std::snprintf(line, sizeof(line),
+                          "%6u %s sets a Rune of Creation (power %d) in socket %d of slot %d",
+                          happening.tick, who, happening.b, happening.c, happening.a);
             break;
         case What::Soused:
             std::snprintf(line, sizeof(line), "%6u %s drinks an ale for %d ticks, swinging every %d",

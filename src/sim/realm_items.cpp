@@ -350,7 +350,7 @@ Wearer Realm::wearer() const {
 }
 
 int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,
-                uint8_t excellent) {
+                uint8_t excellent, uint8_t sockets, const uint8_t* powers) {
     if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return -1;
     const content::ItemRow& row = tables_->items[size_t(item)];
     // A stack asked for anywhere pours into what he carries, twenty a cell.
@@ -369,11 +369,15 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
         put.luck = luck;
         put.option = int8_t(std::clamp(option, 0, kMostOption));
         put.excellent = uint8_t(excellent & 63);
+        put.sockets = uint8_t(std::min<int>(sockets, kMostSockets));
+        for (int i = 0; i < put.sockets && powers; ++i) put.powers[i] = powers[i];
         // Whole means whole with its fifteen, when it was asked for whole.
         if (put.excellent && durability == fullDurability(row, refinement) && wears(row)) {
             put.durability = int16_t(maximumDurability(row, put));
         }
     }
+    // A Rune of Creation carries its power.
+    if (creation(row) && powers) put.powers[0] = powers[0];
     bag_.put(slot, put);
     if (wearable(slot)) rearm(bodies_[0]);
     return slot;
@@ -545,6 +549,17 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     if (!hero.alive()) return false;
     const Held jewel = bag_[jewelSlot];
     Held thing = bag_[targetSlot];
+    // A Rune of Creation is set, not spent on a roll: its power into the thing's first empty
+    // socket, and the rune gone. Nothing is drawn.
+    if (settable(*tables_, jewel, thing, hero.kin)) {
+        const int socket = freeSocket(thing);
+        thing.powers[socket] = jewel.powers[0];
+        bag_.lift(jewelSlot);
+        bag_.put(targetSlot, thing);
+        if (wearable(targetSlot)) rearm(hero);
+        say(What::Set, hero, targetSlot, thing.powers[socket], socket);
+        return true;
+    }
     if (!refinable(*tables_, jewel, thing)) return false;
     const content::ItemRow& row = tables_->items[size_t(thing.item)];
     const bool soul = jewelOf(tables_->items[size_t(jewel.item)]) == Jewel::Soul;
@@ -733,6 +748,13 @@ void Realm::leave(const Body& dead, const Body& killer) {
             one.what.luck = dice_.nextBool(kLuckChance);
             if (dice_.nextBool(kOptionChance)) {
                 one.what.option = int8_t(dice_.nextInt(1, kMostOptionDropped + 1));
+            }
+            // Sockets: rare, and each further one rarer. invention.
+            if (takesSockets(row) && runeDice_.nextBool(kSocketChance)) {
+                one.what.sockets = 1;
+                while (one.what.sockets < kMostSockets && runeDice_.nextBool(kMoreSocketChance)) {
+                    ++one.what.sockets;
+                }
             }
         }
     } else if (roll - kItem <= kMoney) {

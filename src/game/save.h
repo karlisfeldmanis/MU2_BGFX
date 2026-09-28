@@ -52,6 +52,10 @@ struct Saved {
         bool luck = false;
         int option = 0;
         int excellent = 0;  // its excellent options, a bit each
+        // Its sockets and the power set in each, or a Rune of Creation's own in the first
+        // (sim/items.h). Absent in a file from before sockets.
+        int sockets = 0;
+        int powers[3] = {0, 0, 0};
         // Whether the file recorded wear. A file written before gear had durability says 0 for
         // every sword, and that 0 is not "broken" -- it is "never counted", read back as full.
         bool worn = false;

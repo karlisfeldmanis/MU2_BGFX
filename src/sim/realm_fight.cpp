@@ -128,6 +128,70 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         if (target.temper == Temper::Asleep) target.temper = Temper::Wandering;
     }
     if (target.health <= 0) kill(target, attacker);
+    // His swing, landed: the Rune's power may answer it. Only a plain swing -- a skill's blow, a
+    // flight and the lightning itself (`thrown`) call nothing, so it cannot call itself.
+    if (attacker.player && row == nullptr && !thrown && pays) stormcall(attacker, target);
+}
+
+void Realm::stormcall(Body& hero, const Body& struck) {
+    if (!tables_) return;
+    const Held& hand = bag_[kWeaponRight];
+    if (hand.empty()) return;
+    // Each socket's power rolls on its own, in socket order.
+    for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
+        const PowerRow* power = powerOf(hand.powers[socket]);
+        if (power == nullptr || !power->weapon || power->kin != hero.kin) continue;
+        callDown(hero, struck, *power);
+        if (!hero.alive()) return;
+    }
+}
+
+void Realm::callDown(Body& hero, const Body& struck, const PowerRow& power) {
+    const bool meteor = power.power == Power::Meteor;
+    // Off the sockets' own stream, so a run is not moved by a power being worn.
+    if (!runeDice_.nextBool(meteor ? kMeteorChance : kStormcallChance)) return;
+    // Every other living monster within reach of him, and of those one at random.
+    const auto near = [&](const Body& b) {
+        if (!b.monster() || !b.alive() || b.id == struck.id) return false;
+        const float dx = b.x - hero.x, dy = b.y - hero.y;
+        return dx * dx + dy * dy <= kStormcallReach * kStormcallReach;
+    };
+    int count = 0;
+    for (const Body& b : bodies_) count += near(b) ? 1 : 0;
+    if (count == 0) return;
+    int pick = runeDice_.nextInt(0, count);
+    Body* struckBy = nullptr;
+    for (Body& b : bodies_) {
+        if (!near(b)) continue;
+        if (pick-- == 0) {
+            struckBy = &b;
+            break;
+        }
+    }
+    if (struckBy == nullptr) return;
+    if (meteor) {
+        // Said as Meteorite let go at it, which is what the drawing drops the rock on; the blow is
+        // a flight with no skill, so it lands his swing's roll when the rock does, and pays no mana.
+        const SkillRow* rock = skillNumbered(skill::kMeteorite);
+        const int32_t fall = rock != nullptr && rock->fallTicks > 0 ? rock->fallTicks : 1;
+        say(What::Loosed, hero, skill::kMeteorite, fall, 0, struckBy->id);
+        core::logf("meteor rune: tick %lld, a rock on #%u beside #%u", (long long)tick_,
+                   struckBy->id, struck.id);
+        for (Flight& one : flights_) {
+            if (one.at != 0) continue;
+            one = Flight{tick_ + fall, struckBy->id, 0, kMeteorForce, false};
+            return;
+        }
+        strikeAt(hero, *struckBy, kMeteorForce, nullptr, true, false);
+        return;
+    }
+    // Said as Lightning let go at it, which is what the drawing throws a thunder on; the blow
+    // is his swing's roll, on the same tick -- lightning does not fly -- and pays no mana.
+    say(What::Loosed, hero, skill::kLightning, 0, 0, struckBy->id);
+    core::logf("stormcall: tick %lld, lightning on #%u beside #%u", (long long)tick_,
+               struckBy->id, struck.id);
+    strikeAt(hero, *struckBy, kStormcallForce, nullptr, true, false);
+    if (struckBy->alive()) push(*struckBy, hero);
 }
 
 // A blow begun. The clip starts now and the damage is settled when the arm comes down -- half the

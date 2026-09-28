@@ -173,6 +173,46 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
     return target.refinement <= highest && target.refinement < kRefineCap;
 }
 
+const PowerRow* powerOf(uint8_t power) {
+    static const PowerRow kPowers[] = {
+        {Power::Stormcall, "Stormcall",
+         "A swing that lands has a 15% chance to call lightning down on another monster near him",
+         true, Kin::DarkKnight},
+        {Power::Meteor, "Meteor",
+         "A swing that lands has a 15% chance to bring a burning rock down on another monster "
+         "near him",
+         true, Kin::DarkKnight},
+    };
+    for (const PowerRow& row : kPowers) {
+        if (uint8_t(row.power) == power) return &row;
+    }
+    return nullptr;
+}
+
+int freeSocket(const Held& thing) {
+    for (int i = 0; i < std::min<int>(thing.sockets, kMostSockets); ++i) {
+        if (thing.powers[i] == 0) return i;
+    }
+    return -1;
+}
+
+bool creation(const content::ItemRow& row) {
+    return row.group == kGroupPotions && row.number == 22;
+}
+
+bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin) {
+    const auto known = [&](const Held& h) {
+        return !h.empty() && size_t(h.item) < tables.items.size();
+    };
+    if (!known(jewel) || !known(target)) return false;
+    if (!creation(tables.items[size_t(jewel.item)])) return false;
+    const PowerRow* power = powerOf(jewel.powers[0]);
+    if (power == nullptr || power->kin != kin) return false;
+    const content::ItemRow& row = tables.items[size_t(target.item)];
+    if (!takesSockets(row) || freeSocket(target) < 0) return false;
+    return power->weapon == (row.weapon() && !row.shield());
+}
+
 int placeOf(const content::ItemRow& row) {
     if (row.group < kGroupShields) {
         // A bow is Weapon[1] and a crossbow Weapon[0] (GetEquipedBowType); the bolt goes in
