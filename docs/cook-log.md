@@ -103,3 +103,6 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | NewFace03 | bust | 2026-09-27 22:28 | awaiting |  |
 | Object01 | world | 2026-09-28 19:33 | passed | noria: broad-leaved plant, clean cutout, a cooler green than the grass -- reads tropical in Noria's light |
 | Object02 | world | 2026-09-28 19:35 | passed | noria, judged in the world: white-headed flower on thin stalks, subtle among the grass, sways |
+| Object03 | world | 2026-09-28 19:37 | passed | noria, in the world: yellow cup flowers on striped stalks, static as in MU |
+| Object04 | world | 2026-09-28 19:39 | passed | noria, in the world: clusters of brown spiky seed pods, MU's own art, reads as undergrowth |
+| Object05 | world | 2026-09-28 19:39 | passed | noria, in the world: low rosettes with cream-edged leaves, tropical |

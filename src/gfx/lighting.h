@@ -79,6 +79,9 @@ struct Lighting {
     // a white wall, so by day it is the flames, the glows and the lamps that bloom and not the
     // town. `knee` softens the edge of the threshold; `strength` is how much of the chain is
     // added back. Invention: MU has no bloom. Judged by eye.
+    // How fast the ground's water slides, as a share of MuMain's one sheet every twenty seconds.
+    // 1 is Lorencia's river; 0 holds a world's water still.
+    float waterFlow = 1.0f;
     float bloomThreshold = 1.2f;
     float bloomKnee = 0.6f;
     float bloomStrength = 0.25f;
@@ -174,6 +177,10 @@ struct Lighting {
     // Low. MU's grass is green, and the straw patches are seasoning on it -- at 0.40 half the
     // field had gone over and the whole thing read yellow.
     float grassDry = 0.16f;
+    // How much of the grass's colour varies patch to patch, 0 none: a second clump field, laid
+    // over the dryness, that moves a patch between the root's hue and a warmer or a bluer
+    // green. Invention, for Noria (the user, 2026-09-28: "more colour variation").
+    float grassVary = 0.0f;
     // How far a card may be widened at the far edge of the disc. The thinning with distance and
     // this widening are one mechanism: coverage is held while the card count falls, and a
     // painted blade is kept over a pixel wide where it would otherwise crawl. docs/grass.md.

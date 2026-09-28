@@ -97,6 +97,14 @@ void main()
 		albedo *= vec3(1.0 + 0.30 * parched, 1.0 + 0.04 * parched, 1.0 - 0.35 * parched);
 		float lush = smoothstep(0.55, 0.1, vigour);
 		albedo *= vec3(1.0 - 0.12 * lush, 1.0 + 0.08 * lush, 1.0);
+		// And the hue swing, `grass_vary`: patches metres across that lean lime-yellow or deep
+		// blue-green, three bands over the same coarse field the dryness reads, and each card's
+		// own warmth widened with it. Noria's, where one graded green read as a lawn and the user
+		// asked for a jungle floor's variety (2026-09-28). Nought on Lorencia, which is as it was.
+		float swingAmount = u_grassSheet.w / 0.45;
+		float swing = sin(vigour * 18.85) + (v_light.w - 0.5) * 0.8;
+		vec3 lean = swing > 0.0 ? vec3(1.14, 1.10, 0.68) : vec3(0.80, 0.98, 1.10);
+		albedo *= mix(vec3_splat(1.0), lean, saturate(abs(swing)) * swingAmount);
 		// And each card a little off its neighbour on top of all that.
 		albedo *= 0.84 + tint * 0.32;
 	}

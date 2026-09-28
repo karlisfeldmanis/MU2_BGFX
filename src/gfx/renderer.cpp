@@ -374,7 +374,9 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             // every tile that wears TileWater01 -- one sheet width every twenty seconds, along
             // the columns, the same on every water tile so the river moves as one. w is how
             // many layers the part weighs: most of the land is one, and reads one set.
-            const float slide = std::fmod(elapsed_, 20.0f) * 0.05f;
+            // Times the sheet's water_flow: Noria's water is puddles, and a puddle sliding a
+            // sheet every twenty seconds reads as a river in a hole (the user, 2026-09-28).
+            const float slide = std::fmod(elapsed_ * waterFlow_, 20.0f) * 0.05f;
             const float blend[4] = {l[0].water ? slide : 0.0f, l[1].water ? slide : 0.0f,
                                     l[2].water ? slide : 0.0f, float(part.layerCount)};
             bgfx::setUniform(uGroundBlend_, blend);
@@ -431,6 +433,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>& drawables, const content::Ground* ground,
                     const std::vector<Drawable>* casters, const GrassField* grass) {
     drawCount_ = 0;
+    waterFlow_ = lighting.waterFlow;
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
 

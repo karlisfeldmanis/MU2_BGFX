@@ -515,6 +515,7 @@ private:
     // each other, the way "every placement of a type moves in step" requires. See
     // content::Material::scrollPerSecond, and setClock() for why it is not the wall clock.
     float elapsed_ = 0.0f;
+    float waterFlow_ = 1.0f;  // the sheet's water_flow, taken at draw() for submitGround
     // The shine (setShine): its sheets, and u_refine, bound for each draw by bindShine() off
     // the same play clock. `shineStrength_` is how strongly the chrome is added, and
     // `shineTint_` how much of MuMain's tint the lit colour takes; 1 is MuMain's own for both.
