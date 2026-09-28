@@ -2666,13 +2666,21 @@ def cook_missiles(out_dir, texcook, threads):
     return 0
 
 
-def cook_figures(world, out_dir, texcook, threads, with_monsters=True):
+def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None):
     """Every figure the world reaches: its textures, its meshes, its clips and a manifest.
 
     `with_monsters` false cooks the world's people without its breeds -- Noria's townsfolk
     stood before its monsters were judged -- and a breed with no figure is held back by the
     game rather than walked invisible (Play::open)."""
     models, characters, monsters, standalone, placements, index = figure_set(world)
+    # `only`: just these breeds, by name -- a world's monsters brought in one at a time, each
+    # judged before the next (the user, 2026-09-28: "don't cook all at the same time, we need
+    # to approve"). The rest are left out exactly as --no-monsters leaves them all.
+    everything = dict(models)
+    keep = [one for one in monsters if only is not None and one["name"] in only]
+    if only is not None:
+        monsters = [one for one in monsters if one["name"] not in only]
+        with_monsters = False
     if not with_monsters:
         for one in monsters:
             for part in (one["mesh"], one.get("right_hand"), one.get("left_hand")):
@@ -2680,7 +2688,11 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True):
                                     for c in characters) \
                         and not any(part == s["mesh"] for s in standalone):
                     models.pop(part, None)
-        monsters = []
+        monsters = keep
+        for one in keep:
+            for part in (one["mesh"], one.get("right_hand"), one.get("left_hand")):
+                if part:
+                    models[part] = everything[part]
     os.makedirs(os.path.join(out_dir, "textures"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "meshes"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "clips"), exist_ok=True)
@@ -3037,6 +3049,8 @@ def main():
                                            "figures", "tables", "showing", "missiles",
                                            "wardrobe", "all"),
                         default="all")
+    parser.add_argument("--monsters", default=None,
+                        help="with --only figures: just these breeds, comma-separated")
     parser.add_argument("--no-monsters", action="store_true",
                         help="with --only figures: the world's people without its breeds")
     parser.add_argument("--chunk", type=int, default=32,
@@ -3087,8 +3101,10 @@ def main():
         # The figures are cooked into their own directory and not into the world's: a body,
         # a suit of armour and a monster are reached by several maps, and cooking them per
         # world would write the same Bull Fighter into every one of them.
+        only = (set(filter(None, args.monsters.split(",")))
+                if args.monsters is not None else None)
         return cook_figures(args.world, os.path.join(args.out, "figures"), args.texcook,
-                            args.threads, with_monsters=not args.no_monsters)
+                            args.threads, with_monsters=not args.no_monsters, only=only)
 
     if not os.path.exists(args.texcook):
         print(f"cook: {args.texcook} is not built. cmake --build build --target texcook",
