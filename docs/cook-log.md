@@ -106,3 +106,21 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object03 | world | 2026-09-28 19:37 | passed | noria, in the world: yellow cup flowers on striped stalks, static as in MU |
 | Object04 | world | 2026-09-28 19:39 | passed | noria, in the world: clusters of brown spiky seed pods, MU's own art, reads as undergrowth |
 | Object05 | world | 2026-09-28 19:39 | passed | noria, in the world: low rosettes with cream-edged leaves, tropical |
+| Object06 | world | 2026-09-28 19:43 | passed | noria, in the world: small ferns in the grass |
+| Object07 | world | 2026-09-28 19:43 | awaiting |  |
+| Object08 | world | 2026-09-28 19:45 | passed | noria, in the world: large single taro leaves, tropical |
+| Object09 | world | 2026-09-28 19:45 | passed | noria, in the world: blue-capped mushrooms, crisp |
+| Object10 | world | 2026-09-28 19:46 | passed | noria, in the world: flower-lamp, the bud glows; its 14 lights placed; sways |
+| Object11 | world | 2026-09-28 19:46 | passed | noria, in the world: small wooden signboard |
+| Object12 | world | 2026-09-28 19:47 | passed | noria, in the world: a patch of MU's flowers, sways |
+| Object13 | world | 2026-09-28 19:47 | passed | noria, in the world: a patch of MU's flowers, sways |
+| Object14 | world | 2026-09-28 19:47 | passed | noria, in the world: a patch of MU's flowers, sways |
+| Object15 | world | 2026-09-28 19:48 | passed | noria, in the world: a patch of MU's flowers, sways |
+| Object16 | world | 2026-09-28 19:49 | passed | noria, in the world: a patch of MU's flowers, sways |
+| Object17 | world | 2026-09-28 19:49 | passed | noria, in the world: a patch of MU's flowers, sways |
+| Object18 | world | 2026-09-28 19:51 | passed | noria, in the world: big tree with yellow caps, its lamps placed, sways |
+| Object19 | world | 2026-09-28 19:52 | passed | noria, in the world: contraption in scrolling green ribbons (MU's BlendMeshTexCoordV), 4 s clip |
+| Object20 | world | 2026-09-28 19:52 | passed | noria, in the world: MU's translucent yellow light arches |
+| Object21 | world | 2026-09-28 19:54 | passed | noria, in the world: MU's plants, clip playing where it has one |
+| Object22 | world | 2026-09-28 19:55 | passed | noria, in the world: MU's plants, clip playing where it has one |
+| Object23 | world | 2026-09-28 19:56 | passed | noria, in the world: MU's plants, clip playing where it has one |
