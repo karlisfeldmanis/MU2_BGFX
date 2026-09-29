@@ -97,10 +97,11 @@ struct Preset {
     float damp;  // and its damping, 0..1
 };
 constexpr Preset kDry = {0.0f, 0.5f, 0.5f};
-constexpr Preset kOpenAir = {0.126f, 0.35f, 0.6f};  // -18 dB
-// A little drier and smaller than it was (0.32 wet, 0.7 room): the user, 2026-09-27, "decrease
-// reverb inside buildings a little bit".
-constexpr Preset kRoofed = {0.22f, 0.6f, 0.4f};     // -13 dB
+// Drier, shorter and duller than it was (open 0.126 wet 0.35 room 0.6 damp, roofed 0.22 / 0.6 /
+// 0.4): the user, 2026-09-29, the monsters' reverb "too pleasant". And before that (0.32 wet,
+// 0.7 room under a roof), 2026-09-27, "decrease reverb inside buildings a little bit".
+constexpr Preset kOpenAir = {0.089f, 0.28f, 0.7f};  // -21 dB
+constexpr Preset kRoofed = {0.16f, 0.52f, 0.5f};    // -16 dB
 constexpr float kRoomEaseMs = 150.0f;
 
 enum Importance { kCrowd = 0, kNearHero = 1, kHero = 2 };
