@@ -333,10 +333,12 @@ void Lamps::follow(const Sway& sway, gfx::Renderer& renderer) {
     }
 }
 
-bool Lamps::nearestBonfire(const float from[3], float at[3]) const {
+bool Lamps::nearestBonfire(const float from[3], float at[3], Heard heard,
+                           void* context) const {
     float best = -1.0f;
     for (const Fire& fire : fires_) {
         if (!fire.crackles) continue;
+        if (heard != nullptr && !heard(context, fire.at)) continue;
         const float dx = fire.at[0] - from[0], dz = fire.at[2] - from[2];
         const float d = dx * dx + dz * dz;
         if (best >= 0.0f && d >= best) continue;

@@ -57,8 +57,11 @@ public:
     void gather(gfx::Effects& effects, const float near[3], float daylight) const;
 
     // Where the bonfire nearest `from` burns, measured flat, into `at`; false when the town has
-    // none. What the crackle is heard from (Play::hearFire).
-    bool nearestBonfire(const float from[3], float at[3]) const;
+    // none. What the crackle is heard from (Play::hearFire). `heard`, when given, passes over
+    // the fires it answers false for -- a hearth indoors, to somebody outside.
+    using Heard = bool (*)(void* context, const float at[3]);
+    bool nearestBonfire(const float from[3], float at[3], Heard heard = nullptr,
+                        void* context = nullptr) const;
 
     uint32_t lightCount() const { return uint32_t(lights_.size()); }
     uint32_t fireCount() const { return uint32_t(fires_.size()); }

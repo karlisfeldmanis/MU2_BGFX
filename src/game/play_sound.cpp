@@ -272,12 +272,26 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
         this);
 }
 
-void Play::hearWorld(const Lamps* lamps, const Ornaments& ornaments) {
+void Play::hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside inside,
+                     void* context) {
     if (!sound_.isOpen()) return;
     const Drawn* hero = drawnOf(realm_.hero().id);
     const bool placed = hero != nullptr && hero->placed && shotKnown_;
     float fire[3], water[3];
-    const bool burns = placed && lamps != nullptr && lamps->nearestBonfire(hero->crown, fire);
+    // An indoor hearth is passed over while he is out of doors, and the next fire out there is
+    // the one heard. In doors he hears either, and the walls' line of sight does the rest.
+    struct Ears {
+        Inside inside;
+        void* context;
+        bool in;
+    } ears{inside, context, false};
+    if (placed && inside != nullptr) ears.in = inside(context, hero->crown[0], hero->crown[2]);
+    const auto heard = [](void* self, const float at[3]) {
+        const Ears& e = *static_cast<const Ears*>(self);
+        return e.inside == nullptr || e.in || !e.inside(e.context, at[0], at[2]);
+    };
+    const bool burns =
+        placed && lamps != nullptr && lamps->nearestBonfire(hero->crown, fire, heard, &ears);
     const bool flows = placed && ornaments.nearestFountain(hero->crown, water);
     hearFrom(heard_.fire, burns ? fire : nullptr, kFireFull, kFireReach);
     hearFrom(heard_.fountain, flows ? water : nullptr, kFountainFull, kFountainReach);

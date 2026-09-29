@@ -820,8 +820,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().hear(world_.camera(),
                              world_.indoors(world_.camera().target[0],
                                             world_.camera().target[2]));
-        world_.played().hearWorld(args.lampsOn ? &world_.lamps() : nullptr,
-                                  world_.ornaments());
+        world_.played().hearWorld(
+            args.lampsOn ? &world_.lamps() : nullptr, world_.ornaments(),
+            [](void* self, float x, float z) {
+                return static_cast<const game::World*>(self)->indoors(x, z);
+            },
+            &world_);
     }
     // The lamps flicker, the fires burn, and the glows' levels go into the town before
     // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.

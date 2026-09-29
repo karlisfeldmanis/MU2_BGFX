@@ -437,7 +437,12 @@ public:
     // The world's own water and fire, after hear(): the nearest bonfire's crackle and the
     // nearest fountain's drip, each one loop levelled and panned from that place, on within
     // its reach of the character and off past it. Ours. `lamps` is null with the lamps off.
-    void hearWorld(const Lamps* lamps, const Ornaments& ornaments);
+    // `inside` says whether a point in metres is under a roof (World::indoors): a fire burning
+    // indoors is heard only by a character indoors too, and never through the wall (the user,
+    // 2026-09-29).
+    using Inside = bool (*)(void* context, float x, float z);
+    void hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside inside = nullptr,
+                   void* context = nullptr);
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
     // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
