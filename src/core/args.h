@@ -147,6 +147,7 @@ struct Args {
     std::string arena;
     int arenaCount = 1;
     int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
+    bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
     // The character's file. Empty means the default (game/save.cpp) for a played run and no
     // file at all for a review run (--frames): a scripted fight must not overwrite the
     // player's hero, nor start from wherever he last stood. `--fresh` ignores what is there

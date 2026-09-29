@@ -63,6 +63,8 @@ public:
         // A skill the arena's hero is taught when he is raised, by MU's number (0 for none), and the
         // arena's hand attacks with it (Play::fight). For filming.
         int32_t learn = 0;
+        // `--arena-undying`: the hero is never felled, so a long fight can be watched.
+        bool undying = false;
         // Where the fight happens, and why this tile. Lorencia is the only cooked world, and
         // this is the brightest of the flat, empty, non-safe patches on it -- the grass east of
         // the town, above the spider field. Chosen by reading four of the map's own files

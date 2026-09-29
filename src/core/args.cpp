@@ -122,6 +122,7 @@ void printUsage() {
         "                            --world lorencia when no world is named\n"
         "  --arena-count N           how many of them (default 1)\n"
         "  --arena-learn N           the hero is taught skill N and the arena fights with it\n"
+        "  --arena-undying           a blow that would fell the arena's hero fills his health\n"
         "  --headless                run the sim with no window at all\n"
         "  --seed N                  the sim's seed; the same seed is the same run\n"
         "  --ticks N                 how many 20 Hz ticks to run (default 10000)\n"
@@ -236,6 +237,8 @@ Args parseArgs(int argc, char** argv) {
             }
         } else if (!std::strcmp(s, "--arena-learn")) {
             if (const char* v = next(s)) a.arenaLearn = std::atoi(v);
+        } else if (!std::strcmp(s, "--arena-undying")) {
+            a.arenaUndying = true;
         } else if (!std::strcmp(s, "--shield")) {
             if (const char* v = next(s)) a.shield = v;
         } else if (!std::strcmp(s, "--play")) {

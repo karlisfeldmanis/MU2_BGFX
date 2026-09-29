@@ -173,6 +173,7 @@ bool PlayMode::open(Context& ctx) {
                 arena.breed = args.arena;
                 arena.count = args.arenaCount;
                 arena.learn = args.arenaLearn;
+                arena.undying = args.arenaUndying;
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }

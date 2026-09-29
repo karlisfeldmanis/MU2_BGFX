@@ -445,6 +445,9 @@ public:
     // in 0.75 does this -- the knight's skills were carried by the weapon in his hand -- so it
     // is `invention`, argued in the doc's §3.3.
     bool learn(int32_t skill);
+    // The bench's (`--arena-undying`): a blow that would fell the hero fills his health instead,
+    // so a fight runs as long as it is watched. Never set in play.
+    void undying(bool on) { undying_ = on; }
     bool knows(int32_t skill) const;
     // Ticks left on a skill's cooldown, and the whole cooldown it was set to, which is what the
     // frame needs to draw a sweep. Zero and zero when it is ready.
@@ -862,6 +865,7 @@ private:
         float force = 1.0f;
     };
     Echo echo_;
+    bool undying_ = false;  // `undying`
     int64_t tick_ = 0;
     std::string refusal_;
     uint32_t nextId_ = 1;
