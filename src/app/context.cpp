@@ -48,7 +48,7 @@ void TimeOfDay::set(int which) {
         wetStamp_ = core::fileModified(wetPath_);
         wet_.readOverlay(wetPath_);
     }
-    rain(share_);
+    rain(share_, flash_);
     if (which_ > 0 || announce_) core::logf("time of day: %s", kTimes[which_]);
 }
 
@@ -74,16 +74,39 @@ void TimeOfDay::setWet(const std::string& path) {
     set(which_);
 }
 
-void TimeOfDay::rain(float share) {
+void TimeOfDay::rain(float share, float flash) {
     share_ = std::clamp(share, 0.0f, 1.0f);
-    if (lighting_ == nullptr) return;
-    if (wetPath_.empty() || share_ <= 0.0f) {
-        if (!wetPath_.empty()) *lighting_ = dry_;
-        return;
-    }
+    flash_ = std::clamp(flash, 0.0f, 1.0f);
+    if (lighting_ == nullptr || wetPath_.empty()) return;
     // Only what a wet sheet is for: the light, the air and the grade. Everything else -- the
     // shadow's fit, the grass, the metal -- stands as the dry light has it.
     *lighting_ = dry_;
+    if (share_ > 0.0f) wetten();
+    if (flash_ > 0.0f) lightning();
+}
+
+// The lightning: the whole sky lit at once for the moment of a strike, so it comes in as
+// ambient -- the hemisphere every surface is lit by -- and not as a sun, and casts nothing.
+// The zenith and the bounce go blue-white and several times stronger, the air's haze lights up
+// with them only a little -- lit fully it was a white fog over the square -- and the colour
+// drains, as a flash bleaches what it shows. Invention, judged by eye on Lorencia's night,
+// the same in both worlds.
+void TimeOfDay::lightning() {
+    constexpr float kSky[3] = {0.72f, 0.8f, 1.0f};
+    constexpr float kBounce[3] = {0.16f, 0.17f, 0.21f};
+    constexpr float kAir[3] = {0.36f, 0.4f, 0.5f};
+    const float t = flash_;
+    gfx::Lighting& l = *lighting_;
+    for (int k = 0; k < 3; ++k) {
+        l.skyColour[k] += (kSky[k] - l.skyColour[k]) * t;
+        l.groundColour[k] += (kBounce[k] - l.groundColour[k]) * t;
+        l.dustColour[k] += (kAir[k] - l.dustColour[k]) * t * 0.5f;
+    }
+    l.ambientStrength += 1.1f * t;
+    l.saturation *= 1.0f - 0.25f * t;
+}
+
+void TimeOfDay::wetten() {
     const float t = share_;
     const auto mix = [t](float& to, float a, float b) { to = a + (b - a) * t; };
     gfx::Lighting& l = *lighting_;

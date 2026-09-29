@@ -248,6 +248,7 @@ struct Sound::Impl {
     struct File {
         std::string path;
         float lead = 0.0f;  // seconds of silence at its head
+        std::vector<float> loud;  // dBFS every kLoudStep from its first sample; Sound::loudness
         ma_sound sound[kVoices]{};
         ma_lpf_node air[kVoices]{};
         float cutoff[kVoices] = {0.0f, 0.0f};
@@ -532,6 +533,18 @@ int Sound::load(const std::string& name, bool placed, bool quietly) {
             ma_uint64 first = 0;
             while (first < frames && std::fabs(samples[first]) < kSilence) ++first;
             if (fileRate > 0 && first < frames) file->lead = float(first) / float(fileRate);
+            // And its loudness over its length, from the same samples.
+            const ma_uint64 step = ma_uint64(float(fileRate) * Sound::kLoudStep);
+            if (step > 0) {
+                file->loud.reserve(size_t(frames / step));
+                for (ma_uint64 at = 0; at + step <= frames; at += step) {
+                    double power = 0.0;
+                    for (ma_uint64 k = at; k < at + step; ++k) {
+                        power += double(samples[k]) * double(samples[k]);
+                    }
+                    file->loud.push_back(float(10.0 * std::log10(power / double(step) + 1e-12)));
+                }
+            }
             ma_free(pcm, nullptr);
         }
 
@@ -767,6 +780,34 @@ float Sound::seconds(int handle) const {
     float length = 0.0f;
     ma_sound_get_length_in_seconds(&event.files.front()->sound[0], &length);
     return length;
+}
+
+int Sound::files(int handle) const {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return 0;
+    return int(impl_->events[size_t(handle)]->files.size());
+}
+
+const std::vector<float>& Sound::loudness(int handle, int file) const {
+    static const std::vector<float> kNone;
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return kNone;
+    const Impl::Event& event = *impl_->events[size_t(handle)];
+    if (file < 0 || size_t(file) >= event.files.size()) return kNone;
+    return event.files[size_t(file)]->loud;
+}
+
+int Sound::heard(int handle, float ahead, float* seconds) const {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return -1;
+    const Impl::Event& event = *impl_->events[size_t(handle)];
+    if (event.placed) return -1;
+    for (size_t f = 0; f < event.files.size(); ++f) {
+        const ma_sound& sound = event.files[f]->sound[0];
+        if (!ma_sound_is_playing(&sound) || ma_sound_at_end(&sound)) continue;
+        float cursor = 0.0f;
+        if (ma_sound_get_cursor_in_seconds(&sound, &cursor) != MA_SUCCESS) continue;
+        if (seconds) *seconds = cursor - impl_->latency + ahead;
+        return int(f);
+    }
+    return -1;
 }
 
 void Sound::level(int handle, float level) {

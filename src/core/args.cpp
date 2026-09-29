@@ -188,8 +188,9 @@ Args parseArgs(int argc, char** argv) {
             a.birdsNow = true;
         } else if (!std::strcmp(s, "--weather")) {
             if (const char* v = next(s)) {
-                if (std::strcmp(v, "rain") && std::strcmp(v, "dry") && std::strcmp(v, "cycle")) {
-                    logError("--weather is rain, dry or cycle, got '%s'", v);
+                if (std::strcmp(v, "rain") && std::strcmp(v, "dry") && std::strcmp(v, "cycle") &&
+                    std::strcmp(v, "storm")) {
+                    logError("--weather is rain, dry, cycle or storm, got '%s'", v);
                 } else {
                     a.weather = v;
                 }

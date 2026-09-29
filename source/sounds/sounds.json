@@ -574,6 +574,22 @@
       "gain_note": "Left where it is: an RMS of -36.7 dB is already where the wind lands after its own -8 dB cut, so the two beds sit level.",
       "note": "**An invention, marked.** Noria is tropical by the user's choice, and the rain is its bed under the forest's birdsong: looped and unplaced, switched with the wind under a roof."
     },
+    "world_thunder": {
+      "files": [
+        "thunder1.wav",
+        "thunder2.wav",
+        "thunder3.wav",
+        "thunder4.wav",
+        "thunder5.wav",
+        "thunder6.wav",
+        "thunder7.wav"
+      ],
+      "from": "Not MU's file. freesound_community 'thunderstorm 14708' (downloads/, given by the user 2026-09-29): two minutes of 24 kHz stereo thunder with no rain under it, seven claps with near silence between. tools/thunder.py cuts each clap to its own file, 22 kHz mono 16-bit, the whole scaled once to a 0.95 peak (the mp3 decodes to 1.19) so a far clap stays quieter than a near one. MU has no thunder in its weather; its only thunder is the skills'.",
+      "loop": false,
+      "gain_db": -8.0,
+      "gain_note": "A near crack peaks at -8 dB RMS over 100 ms before this, the rumble after it at -20 to -30: taken 8 dB down it still stands some 20 dB over the rain bed at its crack and settles to a few dB over it as it rolls, loud as thunder is and never on top of the footsteps for long.",
+      "note": "**An invention, marked.** The storm inside every wet spell (game/world/weather.cpp): a clap every 20 to 50 seconds once the rain is in, unplaced, one file at random. The lightning is read off the file's own loudness where the ear is in it, so each clap flashes on its crack."
+    },
     "goblin_move": {
       "files": [
         "mGoblin1.wav",

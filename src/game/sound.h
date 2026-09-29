@@ -60,6 +60,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "content/showing.h"
 
@@ -105,6 +106,20 @@ public:
     // How long an event's first file runs, in seconds; 0 for none. What a caller holds a
     // sound busy for when MU would not start it again while it still sounds.
     float seconds(int event) const;
+
+    // What one file of an event says over its length: its loudness in dBFS, one value every
+    // kLoudStep seconds from the file's first sample, measured at load from the same decode
+    // that finds the lead. Empty for a handle or file it lacks. The thunder's flash is read off
+    // it (game/world/weather.cpp), so the light is cut from the samples the ear gets.
+    static constexpr float kLoudStep = 0.01f;
+    int files(int event) const;
+    const std::vector<float>& loudness(int event, int file) const;
+    // Which file of an unplaced event is sounding, and where in it the ear is when the frame
+    // being drawn reaches the screen: the voice's own cursor, in seconds from the file's first
+    // sample, less the device's buffer, plus `ahead` -- how long the frame takes to be shown.
+    // Read off the mixer's clock rather than counted in frames, so a hitch cannot pull the two
+    // apart. -1 when none sounds.
+    int heard(int event, float ahead, float* seconds) const;
 
     // Starts a placed event at a point, in world metres. `following` is the body it belongs
     // to, whose position follow() keeps it on, or 0 for a blow that lands at a point and

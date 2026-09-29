@@ -65,12 +65,15 @@ public:
     // The scene's wet sheet, laid over the scene for rain: sheets/worlds/<world>_rain.json.
     // Empty takes it off. rain() then blends the frame's light between the two by the weather's
     // share, 0 dry to 1 raining (game/world/weather.h) -- the rain darkens the world as it comes
-    // in and lifts as it goes, rather than switching.
+    // in and lifts as it goes, rather than switching. `flash` is the lightning over it, 0 to 1
+    // (Weather::flash): the sky and the air go blue-white for the moment of a strike.
     void setWet(const std::string& path);
-    void rain(float share);
+    void rain(float share, float flash = 0.0f);
 
 private:
     std::string overlayPath(int which) const;
+    void wetten();      // the wet sheet blended in by the share
+    void lightning();   // the flash over it
     const Paths* paths_ = nullptr;
     gfx::Lighting* lighting_ = nullptr;
     int which_ = 0;
@@ -81,6 +84,7 @@ private:
     int64_t wetStamp_ = 0;
     gfx::Lighting dry_, wet_;  // the light as set() built it, and that with the wet sheet over it
     float share_ = 0.0f;
+    float flash_ = 0.0f;
     bool announce_ = false;
 };
 

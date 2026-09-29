@@ -104,7 +104,8 @@ struct Args {
     bool birdsNow = false;
     // --weather rain|dry: hold the weather rather than take the world's own spells, so a review
     // run sees the rain without waiting out a dry spell; cycle: the world's own spells, short,
-    // so a whole dry-wet-dry turn is watched in under two minutes. See game/world/weather.h.
+    // so a whole dry-wet-dry turn is watched in under two minutes; storm: raining, with a clap
+    // and its lightning every 8 to 16 seconds. See game/world/weather.h.
     std::string weather;
     // --no-air: no birds and no leaves, the baseline they are reviewed and priced against.
     // A leaf is three pixels and a bird is half a metre, so "is it drawn?" is answered by

@@ -877,7 +877,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               viewProj, ctx.renderer);
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         world_.weather().update(float(deltaSeconds), inside);
-        ctx.time.rain(world_.weather().rain());
+        ctx.time.rain(world_.weather().rain(), world_.weather().flash());
         world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground(),
                                world_.weather().pour());
         world_.leaves().gather(ctx.renderer.effects(), eye.position);
