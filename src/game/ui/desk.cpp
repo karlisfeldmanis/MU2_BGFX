@@ -1143,6 +1143,15 @@ void Desk::labelGround(const Play& play, int width, int height) {
     const gfx::Face& face = ground_.face();
     // The tooltip's size: MU's labels are its small type, and the two read as one family.
     const float size = 8.0f * panel::unit();
+    struct Label {
+        uint32_t id;
+        std::string name;
+        float set;
+        uint32_t tint;
+        gfx::Box plate;
+    };
+    std::vector<Label> labels;
+    labels.reserve(onScreen_.size());
     for (const Play::OnScreen& at : onScreen_) {
         const sim::Lying* one = nullptr;
         for (const sim::Lying& l : play.realm().lying()) {
@@ -1176,10 +1185,44 @@ void Desk::labelGround(const Play& play, int width, int height) {
         // g_hFontBold for a jewel, which is a point up here, as a tip's bold line is.
         const float set = boldOf(tables, *one) ? size + panel::unit() : size;
         const float w = face.measure(set, name), h = face.height(set);
-        const gfx::Box plate{at.x - w * 0.5f, at.y - h, w, h};
-        ground_.rect(plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
-        plates_.push_back({at.id, plate});
-        ground_.text(plate.x, plate.y + face.ascent(set), set, tintOf(tables, *one), name);
+        labels.push_back({at.id, std::move(name), set, tintOf(tables, *one),
+                          {at.x - w * 0.5f, at.y - h, w, h}});
+    }
+    // **No label over another** (ours, the user's 2026-09-29, as Diablo and WoW stack a pile's
+    // names): the lowest on screen keeps its place, and each one above it that would cross a
+    // placed plate climbs to just over it, until it crosses none. Each climb clears one plate for
+    // good, so a pile of n settles in n climbs at most.
+    std::vector<size_t> order(labels.size());
+    for (size_t i = 0; i < order.size(); ++i) order[i] = i;
+    std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {
+        const float ya = labels[a].plate.y + labels[a].plate.h;
+        const float yb = labels[b].plate.y + labels[b].plate.h;
+        return ya != yb ? ya > yb : labels[a].id < labels[b].id;
+    });
+    const float gap = panel::unit();
+    const auto crosses = [gap](const gfx::Box& a, const gfx::Box& b) {
+        return a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap &&
+               b.y < a.y + a.h + gap;
+    };
+    std::vector<size_t> placed;
+    placed.reserve(order.size());
+    for (size_t i : order) {
+        gfx::Box& plate = labels[i].plate;
+        for (bool moved = true; moved;) {
+            moved = false;
+            for (size_t p : placed) {
+                if (crosses(plate, labels[p].plate)) {
+                    plate.y = labels[p].plate.y - plate.h - gap;
+                    moved = true;
+                }
+            }
+        }
+        placed.push_back(i);
+    }
+    for (const Label& l : labels) {
+        ground_.rect(l.plate, gfx::rgba(0.0f, 0.0f, 0.0f, 1.0f));
+        plates_.push_back({l.id, l.plate});
+        ground_.text(l.plate.x, l.plate.y + face.ascent(l.set), l.set, l.tint, l.name);
     }
 }
 
