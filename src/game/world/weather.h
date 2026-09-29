@@ -14,7 +14,7 @@
 // hundred steps at 25 a second, four seconds from dry to full rain.
 //
 // And the sounds that go with it, which are unplaced ambients: the rain loop, whose level is
-// the share (sounds.json's `world_rain`, an invention with the rain), and Noria's forest
+// the share, the same in every world (sounds.json's `world_rain`, an invention with the rain), and Noria's forest
 // birdsong -- `world_forest`, MU's SOUND_FOREST01, which PlayWorldAmbientSounds fires for
 // WD_3NORIA as a one-shot on rand_fps_check(512), about every eight and a half seconds. The
 // birds keep quiet while it rains, which is this game's.

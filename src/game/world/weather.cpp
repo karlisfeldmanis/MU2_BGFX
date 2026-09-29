@@ -23,6 +23,12 @@ constexpr float kTurnSeconds = 100.0f / 25.0f;
 // rand_fps_check(512) against the 60-a-second frame it is written for: one frame in 512.
 constexpr float kBirdEvery = 512.0f / 60.0f;
 
+// How loud the rain's loop is at full rain, the same in every world: what Lorencia's drizzle
+// was heard at when the loop followed pour(), a third of the file's level. It follows the
+// wetness alone now, not how many drops fall -- the user, 2026-09-29, hearing Noria's downpour
+// some 10 dB over Lorencia's: "both has to be same".
+constexpr float kRainLevel = 0.33f;
+
 // How far apart the claps are, in seconds of full rain: a storm heard now and then under the
 // rain rather than a barrage -- one to three in a wet spell of three to five minutes. The
 // user, 2026-09-29: "lightning has to be not too often", against 20 to 50 s at first.
@@ -158,7 +164,7 @@ void Weather::update(float seconds, bool indoors) {
     if (!sound_) return;
     if (rainSound_ >= 0) {
         sound_->loop(rainSound_, share_ > 0.0f && !indoors);
-        sound_->level(rainSound_, pour());
+        sound_->level(rainSound_, share_ * kRainLevel);
     }
     // The thunder: counted down only while the rain is in, and heard under a roof as well.
     if (thunderSound_ >= 0 && wet_ && share_ >= kThunderShare) {
