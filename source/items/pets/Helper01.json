@@ -1,0 +1,118 @@
+{
+  "item": "Helper01",
+  "mu_name": "Guardian Angel",
+  "mu_name_from": "ZzzOpenData.cpp:707-708 loads the helpers as a run, `AccessModel(MODEL_HELPER + i, L\"Data\\\\Player\\\\\", L\"Helper\", i + 1)`, so MODEL_HELPER+0 is Data/Player/Helper01.bmd; its textures come from Data/Item (:1343-1352). ITEM_GUARDIAN_ANGEL is ITEM_HELPER+0 (_enum.h:2701), group 13 number 0. The .bmd's own name for itself is Data2\\Item\\Helper\\fairy.smd.",
+  "profile": "monster",
+  "profile_note": "A small creature on its own rig, seen close beside the character: the monster profile's situation, and its 3x cap. One model is the follower, the drop and the bag icon alike - MU has no separate item model for it.",
+  "rig_from": "Eight bones and one action of seven keys. MU never calls SetAction on it (GOBoid.cpp MoveMount), so action 0 is all it ever plays, and at o->Velocity = 0.5 (GOBoid.cpp:67-126) where a townsperson's default is 0.25.",
+  "play_speed": 0.5,
+  "sheets": {
+    "fairy": "fairy.png",
+    "fairy2": "fairy2.png"
+  },
+  "sheet_from": "Data/Item/fairy.OZJ (16x16, the body, 46 triangles) and fairy2.OZJ (32x32, the wings, 4 triangles), from MuMain's own bin/Data. Neither has alpha.",
+  "additive": [
+    "fairy2"
+  ],
+  "additive_from": "GOBoid.cpp CreateMount sets o->BlendMesh = 1 for MODEL_HELPER, and ItemObjectAttribute (ZzzObject.cpp:5321-5323) does the same for the drop: mesh 1, the wings, is added over what is behind it. Grey feathers on black, and the black is the part that adds nothing.",
+  "tiled": true,
+  "tiled_why": "The wings are added and the baked path cannot say so: one atlas, one material, nowhere for a sheet to be added. Tiled keeps each sheet its own material, and tiled_maps turns the additive one emissive. Elf Lala's wing, ElfWizard01, is the same case.",
+  "sheet_materials": {
+    "fairy": "skin",
+    "fairy2": "feather"
+  },
+  "sheet_materials_from": "The body sheet is a painted face and gown in flesh tones; the wings are feathers. Judged from the sheets.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Pets.cs:32-33 and CreatePet (:40-71).",
+    "call": "this.CreatePet(0, \"Guardian Angel\", 23, (Stats.DamageReceiveDecrement, 0.8f, AggregateType.Multiplicate), (Stats.MaximumHealth, 50f, AggregateType.AddRaw)); AddItemToJewelItemDrop",
+    "group": 13,
+    "number": 0,
+    "drop_level": 23,
+    "drops_from_monsters": true,
+    "jewel": true,
+    "width": 1,
+    "height": 1,
+    "durability": 255,
+    "slot": 8,
+    "requires": {
+      "level": 23,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "damage_taken": 0.8,
+    "max_health": 50,
+    "power_note": "Damage taken x0.8 and +50 maximum health, applied only while its Life is above 0 (ItemPowerUpFactory.cs:38-41). The multiplier is taken in AttackableExtensions.cs:220-224, after the defence and the level/10 minimum and before the skill's multiplier. No options, no luck, no plus.",
+    "classes_note": "All three 0.75 classes (CreatePet :53)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 46,
+      "area": 834.3,
+      "along": [
+        -13.7,
+        5.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.496
+      ]
+    },
+    {
+      "island": 1,
+      "material": "feather",
+      "triangles": 2,
+      "area": 1647.4,
+      "along": [
+        -26.4,
+        0.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.504,
+        0.504,
+        0.996,
+        0.996
+      ]
+    },
+    {
+      "island": 2,
+      "material": "feather",
+      "triangles": 2,
+      "area": 1647.4,
+      "along": [
+        -24.4,
+        0.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.504,
+        0.496,
+        0.996
+      ]
+    }
+  ]
+}

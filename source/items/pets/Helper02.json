@@ -1,0 +1,112 @@
+{
+  "item": "Helper02",
+  "mu_name": "Imp",
+  "mu_name_from": "MODEL_HELPER+1, Data/Player/Helper02.bmd (ZzzOpenData.cpp:707-708), textures from Data/Item. ITEM_IMP is ITEM_HELPER+1 (_enum.h:2702), group 13 number 1. The .bmd names itself Data2\\Item\\Helper\\satan.smd, which is where 'Satan' comes from; 0.75's item name is Imp.",
+  "profile": "monster",
+  "profile_note": "A small creature on its own rig: the monster profile and its 3x cap, as the Guardian Angel. One model is the worn figure, the drop and the bag icon.",
+  "rig_from": "Eight bones and one action of seven keys, played at PlaySpeed 0.5 (ZzzCharacter.cpp:15433-15466).",
+  "play_speed": 0.5,
+  "sheets": {
+    "satan": "satan.png",
+    "satan2": "satan2.png"
+  },
+  "sheet_from": "Data/Item/satan.OZJ (16x16, the body, 54 triangles) and satan2.ozt (32x32 with alpha, the wings, 4 triangles), from MuMain's own bin/Data. The .ozt's alpha cuts away 61% of the square and is a real mask, so no cutout is declared: the sheet's own alpha is used (see BudgeDragon01's cutout_from).",
+  "sheet_materials": {
+    "satan": "leather",
+    "satan2": "leather"
+  },
+  "sheet_materials_from": "A brown hide and bat wings, the Budge Dragon's membrane. Judged from the sheets.",
+  "worn_note": "Not a flyer. MuMain creates no follower for the Imp (ChangeCharacterExt, ZzzCharacter.cpp:12650-12662, spawns one only for helper 0): it is drawn linked to the player's bone 34, Bip01 L Clavicle, at (20, 0, 0) from the bone, at the character's scale, with a red BITMAP_LIGHT of size 1.5 at (20, 0, 15) flickering 0.7-1.0 (ZzzCharacter.cpp:15433-15466). GOBoid.cpp has fly code for MODEL_IMP that nothing reaches.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Pets.cs:34-35 and CreatePet (:40-71).",
+    "call": "this.CreatePet(1, \"Imp\", 28, (Stats.AttackDamageIncrease, 1.3f, AggregateType.Multiplicate)); AddItemToJewelItemDrop",
+    "group": 13,
+    "number": 1,
+    "drop_level": 28,
+    "drops_from_monsters": true,
+    "jewel": true,
+    "width": 1,
+    "height": 1,
+    "durability": 255,
+    "slot": 8,
+    "requires": {
+      "level": 28,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "damage_dealt": 1.3,
+    "power_note": "Damage dealt x1.3, applied only while its Life is above 0 (ItemPowerUpFactory.cs:38-41), in AttackableExtensions.cs:220-224 before the skill's multiplier, so it lifts skills too. MuMain's character window shows attack and wizardry x1.3 with it worn (NewUICharacterInfoWindow.cpp:734-738).",
+    "classes_note": "All three 0.75 classes (CreatePet :53)."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "leather",
+      "triangles": 54,
+      "area": 1554.1,
+      "along": [
+        -1.8,
+        21.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.785,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather",
+      "triangles": 2,
+      "area": 1918.6,
+      "along": [
+        -26.0,
+        15.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.399,
+        0.399,
+        0.785,
+        0.785
+      ]
+    },
+    {
+      "island": 2,
+      "material": "leather",
+      "triangles": 2,
+      "area": 1918.6,
+      "along": [
+        -25.6,
+        16.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.399,
+        0.391,
+        0.785
+      ]
+    }
+  ]
+}
