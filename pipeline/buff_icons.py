@@ -116,7 +116,9 @@ STATES = {
     # The alternatives: cell 11 (eBuff_SoulPotion) is the same flask in violet, and either would
     # do; cell 44, a pair of blue chevrons, reads as speed but not as a drink; cells 50 to 54
     # are goblets on a stand, busy at 40 pixels.
-    "ale": (10, "eBuff_BlessPotion", "the Ale - borrowed, see note"),
+    #
+    # Retired 2026-09-29: the Ale's cell is its own bottle now, rendered by model_icons.py, and
+    # this line would cut the flask back over it. Cell 10 read soft beside every other.
 }
 
 
