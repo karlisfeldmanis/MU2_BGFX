@@ -104,6 +104,9 @@ public:
     // blows sideways at up to a storm wind in gusts, falls faster, fills a larger pool and
     // streaks, and what lands is blown on rather than lying. docs/devias-blizzard.md.
     void setStorm(float share) { storm_ = share; }
+    // Where the blizzard's wind blows now, in the lighting sheet's grass_wind_degrees (turning
+    // from +x towards -z): the leaves' -x is 180, and the heading turns it towards +z.
+    float windDegrees() const { return 180.0f + windHeading_ * 57.2957795f; }
 
     bool isOpen() const { return bgfx::isValid(sheet_); }
     uint32_t blowing() const { return blowing_; }

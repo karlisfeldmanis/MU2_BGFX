@@ -27,7 +27,7 @@ What the user asked for (2026-09-29):
 Landed 2026-09-30:
 
 - **The snow storms** (`world/leaves.cpp`, `setStorm`):
-  - the wind blows it along −x at up to 9 m/s in gusts, and it falls 1.5 to 3 m/s faster;
+  - the wind blows it along −x at up to 15 m/s in gusts, and it falls 2 to 4 m/s faster (9 and 3 at first; "has to fly faster");
   - it spawns upwind and streaks along its flight past 2.5 m/s;
   - landed snow blows away;
   - the pool fills from 150 to 180.
@@ -35,11 +35,14 @@ Landed 2026-09-30:
 - **The haze** 0.009 to 0.02, then 0.032 and paler ("stronger snow dust effect", twice).
 - **The wind wanders** ("we need some randomness like wind changes"): every 6 to 14 s a new heading within about 55° of −x and a new strength from 55 to 100%. The wind turns to them at 0.35 rad/s and 0.25 a second, with the gust swell on top, and flakes spawn upwind of wherever it blows from.
 
+- **Grass and trees react** ("grass and trees has to react"):
+  - the storm sheet's grass wind is 0.6 against the calm's 0.16, and `TimeOfDay::setWind` turns the grass to the snow's own wandering heading;
+  - the town's sway clips (the firs above all) run up to 2.5 times their rate by the share. That's faster, not wider: the clips are MU's.
+
 Still to do:
 
 - **Gusts from the sound.** The gust is a fixed swell (`stormGust`, five seconds with a two-second flurry). The plan is to read it off the blizzard loop's loudness instead, as the thunder's flash is read off its claps, so a gust in the eye lands with a swell in the ear.
 - **Ground drift:** low, fast snow skimming the ground along the wind.
-- **Grass and trees:** the grass wind and the objects' sway pushed by the gust.
 - **The hero:** a denser band of gusting snow around them, and cloth and hair fluttering harder if the figures' sway can take a wind.
 - **Budget:** measure the flake count at 2K before and after (docs/budget.md).
 

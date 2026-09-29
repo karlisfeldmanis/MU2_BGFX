@@ -872,8 +872,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         float viewProj[16];
         ctx.renderer.cameraMatrices(eye, view, proj);
         bx::mtxMul(viewProj, view, proj);
-        world_.sway().update(float(deltaSeconds), args.cullChunks ? viewProj : nullptr,
-                             ctx.renderer, world_.town());
+        // In Devias's blizzard the town's own clips -- the firs' sway above all -- run up to two
+        // and a half times their rate, so the trees thrash rather than drift. **Invention.**
+        const float storm = world_.weather().snows() ? world_.weather().rain() : 0.0f;
+        world_.sway().update(float(deltaSeconds) * (1.0f + 1.5f * storm),
+                             args.cullChunks ? viewProj : nullptr, ctx.renderer, world_.town());
         // The street lamps' lights, carried with their lanterns on the pose just taken.
         if (args.lampsOn) world_.lamps().follow(world_.sway(), ctx.renderer);
     }
@@ -917,6 +920,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               viewProj, ctx.renderer);
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         world_.weather().update(float(deltaSeconds), inside);
+        // Devias's blizzard bends the grass the way its snow blows. app/context.cpp, wetten.
+        if (world_.weather().snows()) ctx.time.setWind(world_.leaves().windDegrees());
         ctx.time.rain(world_.weather().rain(), world_.weather().flash());
         // Devias's blizzard drives the snow; everywhere else the storm is nought.
         world_.leaves().setStorm(world_.weather().snows() ? world_.weather().rain() : 0.0f);

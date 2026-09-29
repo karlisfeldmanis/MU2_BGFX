@@ -1,5 +1,5 @@
 {
-  "note": "Devias in a blizzard, laid over sheets/worlds/devias.json and blended in by the weather's share (app/context.cpp, TimeOfDay::rain), which Devias walks between a calm and a storm over eighteen seconds (game/world/weather.cpp). Named _rain because that is the wet spell's sheet in every world. The user, 2026-09-29: 'logic has to be similar like rain, lighting change it becomes darker ... still playable'. So not a whiteout: the winter day goes to a dark, cold storm light -- the sun weak and grey behind the snow, the sky a slate blue that fills the shade, the colour drained, the contrast eased -- and the haze only a little thicker than the calm's and greyer, about 16% at MU's camera distance, so a monster across the screen still reads. Then 'we need stronger snow dust effect' (2026-09-30): 0.009 to 0.02, about a third at the camera, and paler, (0.70, 0.76, 0.86), so it reads as snow on the air -- the storm's weak sun keeps it from lifting the frame to white. Then 'stronger snow dust effect on storm' again: 0.032, about half at the camera, and paler still, (0.74, 0.80, 0.90). The fires and lamps come up so they glow warm through it. MU 0.75 has no blizzard: invention, first cut 2026-09-29, judged by eye in the review shots and not yet in game.",
+  "note": "Devias in a blizzard, laid over sheets/worlds/devias.json and blended in by the weather's share (app/context.cpp, TimeOfDay::rain), which Devias walks between a calm and a storm over eighteen seconds (game/world/weather.cpp). Named _rain because that is the wet spell's sheet in every world. The user, 2026-09-29: 'logic has to be similar like rain, lighting change it becomes darker ... still playable'. So not a whiteout: the winter day goes to a dark, cold storm light -- the sun weak and grey behind the snow, the sky a slate blue that fills the shade, the colour drained, the contrast eased -- and the haze only a little thicker than the calm's and greyer, about 16% at MU's camera distance, so a monster across the screen still reads. Then 'we need stronger snow dust effect' (2026-09-30): 0.009 to 0.02, about a third at the camera, and paler, (0.70, 0.76, 0.86), so it reads as snow on the air -- the storm's weak sun keeps it from lifting the frame to white. Then 'stronger snow dust effect on storm' again: 0.032, about half at the camera, and paler still, (0.74, 0.80, 0.90). The fires and lamps come up so they glow warm through it. And 'grass and trees has to react' (2026-09-30): the grass wind 0.16 to 0.6, turned to the snow's own wandering heading (TimeOfDay::setWind). MU 0.75 has no blizzard: invention, first cut 2026-09-29, judged by eye in the review shots and not yet in game.",
   "sun_colour": [0.78, 0.84, 0.95],
   "sun_strength": 1.1,
   "sky_colour": [0.30, 0.36, 0.46],
@@ -16,5 +16,6 @@
   "tint_high": [1.0, 1.0, 1.0],
   "bloom_strength": 0.3,
   "lamp_strength": 3.8,
-  "glow_strength": 1.3
+  "glow_strength": 1.3,
+  "grass_wind_strength": 0.6
 }

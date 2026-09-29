@@ -110,13 +110,14 @@ constexpr float kFlakeAlpha = 0.85f;
 
 // Devias's blizzard, all of it OURS (the user, 2026-09-30: "snow leaves are more active like in
 // storm", "fly faster and on different angle"). At a full storm the wind carries a flake along
-// the leaves' own -x at up to nine metres a second -- MU's face-value fall is five to fourteen,
-// the leaves' note calls that a blizzard -- in gusts, and it falls three metres a second faster,
-// so the snow goes across the screen, not down it. Spawned upwind by the distance the wind
+// the leaves' own -x at up to fifteen metres a second -- MU's face-value fall is five to
+// fourteen, the leaves' note calls that a blizzard -- in gusts, and it falls up to four metres
+// a second faster, so the snow goes across the screen, not down it. Nine and three at first;
+// "storm snow flakes has to fly faster" (2026-09-30). Spawned upwind by the distance the wind
 // carries it while it falls, so the stream crosses the hero instead of leaving him in a lee.
-constexpr float kStormWind = 9.0f;
-constexpr float kStormFall = 3.0f;
-constexpr float kStormUpwind = 7.0f;
+constexpr float kStormWind = 15.0f;
+constexpr float kStormFall = 4.0f;
+constexpr float kStormUpwind = 11.0f;
 // How fast a flake takes up the wind's speed: a second's tenth, so a gust sweeps through the
 // field and does not arrive in every flake at once.
 constexpr float kStormGrip = 10.0f;

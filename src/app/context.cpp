@@ -129,6 +129,18 @@ void TimeOfDay::wetten() {
     mix(l.bloomStrength, dry_.bloomStrength, wet_.bloomStrength);
     mix(l.lampStrength, dry_.lampStrength, wet_.lampStrength);
     mix(l.glowStrength, dry_.glowStrength, wet_.glowStrength);
+    // And the grass's wind: Devias's blizzard bends it (the user, 2026-09-30: "grass and trees
+    // has to react"), turning from the dry heading to the storm's own by the share -- through
+    // the direction, not the angle, so it never swings the long way round.
+    mix(l.grassWindStrength, dry_.grassWindStrength, wet_.grassWindStrength);
+    if (windSet_) {
+        constexpr float kRadians = 3.14159265f / 180.0f;
+        const float x = std::cos(dry_.grassWindDegrees * kRadians) * (1.0f - t) +
+                        std::cos(wind_ * kRadians) * t;
+        const float z = std::sin(dry_.grassWindDegrees * kRadians) * (1.0f - t) +
+                        std::sin(wind_ * kRadians) * t;
+        l.grassWindDegrees = std::atan2(z, x) / kRadians;
+    }
 }
 
 float daylightOf(const gfx::Lighting& lighting) {
