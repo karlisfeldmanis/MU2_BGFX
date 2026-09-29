@@ -125,14 +125,6 @@ constexpr float kRuneStrip = 24.0f;
 constexpr float kStageTall = panel::kHeight + kRuneStrip;
 constexpr gfx::Box kRuneStands{4.0f, panel::kHeight + 2.0f, 20.0f, 20.0f};
 
-// The Rune of Creation's row in these tables, or -1.
-int32_t runeRow(const content::Tables& tables) {
-    for (size_t i = 0; i < tables.items.size(); ++i) {
-        if (sim::creation(tables.items[i])) return int32_t(i);
-    }
-    return -1;
-}
-
 // Where a piece's sockets sit, in whatever space `box` is in: centres down its middle, one
 // radius for all. The bag's rings and its runes are laid by this one rule.
 float socketsIn(const gfx::Box& box, int sockets, float unit, float* cy) {

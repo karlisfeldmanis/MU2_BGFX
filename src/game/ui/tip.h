@@ -194,6 +194,11 @@ struct Sheet {
     // drawn this thing at this size for the bag.
     gfx::Art picture;
     gfx::Box from;
+    // The Rune of Creation's row when a socket on the card holds one, or -1: `stand` photographs
+    // it beside the item, and every set socket's ring is given that picture (`runeFrom`, in the
+    // same picture), the 3D rune in its setting rather than a flat stone (the user, 2026-09-29).
+    int32_t rune = -1;
+    gfx::Box runeFrom;
 
     // **The item card**, concept B of the design page of 2026-09-27 (the Diablo IV tooltip read
     // in MU's inks). Set by `describe`, and nothing else sets it, so a skill's card, the vault's

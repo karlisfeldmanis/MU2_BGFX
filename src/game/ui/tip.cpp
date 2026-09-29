@@ -35,6 +35,8 @@ constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 1.0f);
 constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.9f, 0.75f, 0.9f);
 constexpr uint32_t kRuneViolet = gfx::rgba(0.55f, 0.5f, 1.0f, 1.0f);
 constexpr uint32_t kRuneRose = gfx::rgba(1.0f, 0.39f, 0.70f, 1.0f);
+// The rune on the card's stage, standing beside the item, in the stage's units.
+constexpr float kRuneUnits = 20.0f;
 constexpr float kMarkGap = 9.0f;
 // The corners, and how many segments each quarter turn is cut into. Six is smooth at this
 // radius and keeps the whole card inside one fan of 28 points.
@@ -357,13 +359,20 @@ uint32_t colourOf(Tone tone) {
 }
 
 void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet) {
-    const std::vector<Standing> one = {
+    // The rune, when the card has a set socket, stands to the right of the item on the same
+    // stage, which is widened by it; the head is cut from the left square as before.
+    const bool rune = sheet.rune >= 0;
+    const float wide = kPlateUnits + (rune ? kRuneUnits : 0.0f);
+    std::vector<Standing> standing = {
         Standing{item, {0.0f, 0.0f, kPlateUnits, kPlateUnits}, refinement, false}};
-    stage.stand(one, kPlateUnits, kPlateUnits);
+    if (rune) standing.push_back({sheet.rune, {kPlateUnits, 0.0f, kRuneUnits, kRuneUnits}, 0, false});
+    stage.stand(standing, wide, kPlateUnits);
     const gfx::Art picture = stage.picture();
     if (!picture.valid()) return;
+    const float perUnit = picture.width / wide;
     sheet.picture = picture;
-    sheet.from = {0.0f, 0.0f, picture.width, picture.height};
+    sheet.from = {0.0f, 0.0f, kPlateUnits * perUnit, picture.height};
+    if (rune) sheet.runeFrom = {kPlateUnits * perUnit, 0.0f, kRuneUnits * perUnit, kRuneUnits * perUnit};
 }
 
 // The container: the shadow, the ring and the graded body, and nothing printed on it.
@@ -879,9 +888,15 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
             const Row& row = section.rows[r];
             if (row.mark != Mark::None) {
                 const bool socket = row.mark == Mark::Ring || row.mark == Mark::RingSet;
-                glyphAt(canvas, row.mark, box.x + pad + kMarkColumn * u * 0.5f,
-                        rowPen + rowTall * 0.5f, (socket ? kSocketSize : kMarkSize) * u,
+                const float mx = box.x + pad + kMarkColumn * u * 0.5f, my = rowPen + rowTall * 0.5f;
+                glyphAt(canvas, row.mark, mx, my, (socket ? kSocketSize : kMarkSize) * u,
                         fade(colourOf(row.markTone)));
+                // The rune itself in a set ring, over the flat stone, once its picture is taken.
+                if (row.mark == Mark::RingSet && sheet.picture.valid() && sheet.runeFrom.w > 0.0f) {
+                    const float side = kSocketSize * u * 0.85f;
+                    canvas.region(sheet.picture, {mx - side * 0.5f, my - side * 0.5f, side, side},
+                                  sheet.runeFrom, fade(0xFFFFFFFFu));
+                }
             }
             if (prosaic(row)) {
                 // Coloured by what part of the row each piece is: the keyword white, the prose in

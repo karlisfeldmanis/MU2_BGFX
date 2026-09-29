@@ -41,6 +41,8 @@ uint32_t moneyColour(long long zen);
 // 0 for empty. The only two places the windows touch the sim's socket fields, so a change in
 // how sim::Held keeps them is followed here and nowhere else.
 constexpr int kMostSockets = sim::kMostSockets;
+// The Rune of Creation's row in these tables, or -1: what a set socket is drawn holding.
+int32_t runeRow(const content::Tables& tables);
 inline int socketsOf(const sim::Held& held) { return held.sockets; }
 inline uint8_t powerAt(const sim::Held& held, int at) {
     return at >= 0 && at < kMostSockets ? held.powers[at] : 0;

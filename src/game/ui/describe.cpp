@@ -188,6 +188,13 @@ uint32_t moneyColour(long long zen) {
     return gfx::rgba(150.0f / 255.0f, 220.0f / 255.0f, 1.0f);
 }
 
+int32_t runeRow(const content::Tables& tables) {
+    for (size_t i = 0; i < tables.items.size(); ++i) {
+        if (sim::creation(tables.items[i])) return int32_t(i);
+    }
+    return -1;
+}
+
 Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::Wearer& who,
                const sim::Satchel& bag) {
     Sheet sheet;
@@ -398,6 +405,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         for (int at = 0; at < sockets; ++at) {
             Row line;
             if (const sim::PowerRow* power = sim::powerOf(powerAt(what, at))) {
+                sheet.rune = runeRow(tables);
                 line.keyword = power->name;
                 line.free = power->tells ? power->tells : "";
                 line.freeTone = Tone::Orange;
@@ -415,6 +423,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // A Rune of Creation: the power it carries, what that does, and whose and where it goes.
     if (sim::creation(row)) {
         if (const sim::PowerRow* power = sim::powerOf(powerAt(what, 0))) {
+            sheet.rune = runeRow(tables);
             Section carries;
             Row line;
             line.keyword = power->name;
