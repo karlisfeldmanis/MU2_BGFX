@@ -116,7 +116,7 @@ private:
     // eighty specks over a sixteen-metre field read as a few motes rather than a snowfall.
     static constexpr int kFlakes = 150;
     // And in Devias's blizzard, filled towards this as the storm comes in. **Invention.**
-    static constexpr int kStormFlakes = 220;
+    static constexpr int kStormFlakes = 180;
     // Drops, and the rings they leave. **Invention:** the client has the leaves' 80 slots for
     // both; see the header.
     static constexpr int kDrops = 700;
@@ -164,6 +164,11 @@ private:
     Leaf leaves_[kStormFlakes > kCount ? kStormFlakes : kCount];
     bool snow_ = false;
     float storm_ = 0.0f;  // setStorm: how far Devias's blizzard is in, 0 to 1
+    // The blizzard's wind, which wanders: its heading off the leaves' -x in radians and its
+    // strength as a share, each turning towards a target drawn afresh every few seconds.
+    float windHeading_ = 0.0f, windHeadingTo_ = 0.0f;
+    float windStrength_ = 0.8f, windStrengthTo_ = 0.8f;
+    float windChangeIn_ = 0.0f;
     bgfx::TextureHandle starSheet_ = BGFX_INVALID_HANDLE;
     Drop drops_[kDrops];
     Ring rings_[kRings];

@@ -30,9 +30,10 @@ Landed 2026-09-30:
   - the wind blows it along −x at up to 9 m/s in gusts, and it falls 1.5 to 3 m/s faster;
   - it spawns upwind and streaks along its flight past 2.5 m/s;
   - landed snow blows away;
-  - the pool fills from 150 to 220.
-- **Softened** ("snow flakes too much visible"): at a full storm a flake shows 30% of its light (half at first, still too visible).
-- **The haze** 0.009 to 0.02 ("stronger snow dust effect").
+  - the pool fills from 150 to 180.
+- **Softened** ("snow flakes too much visible"): at a full storm a flake shows 25% of its light and streaks half as wide (half and 30% were too visible, 15% too faint).
+- **The haze** 0.009 to 0.02, then 0.032 and paler ("stronger snow dust effect", twice).
+- **The wind wanders** ("we need some randomness like wind changes"): every 6 to 14 s a new heading within about 55° of −x and a new strength from 55 to 100%. The wind turns to them at 0.35 rad/s and 0.25 a second, with the gust swell on top, and flakes spawn upwind of wherever it blows from.
 
 Still to do:
 

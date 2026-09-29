@@ -123,11 +123,21 @@ constexpr float kStormGrip = 10.0f;
 // What lands is blown on: gone this many times faster than MoveEtcLeaf's fade.
 constexpr float kStormLift = 8.0f;
 // How much of its light a flake keeps at a full storm: "snow flakes too much visible" (the
-// user, 2026-09-30, twice) at full strength and 450 of them: half and 300, then 0.3 and 220.
-constexpr float kStormShown = 0.3f;
+// user, 2026-09-30, three times) at full strength and 450 of them: half and 300, 0.3 and 220,
+// then 0.15 and 180 with the streak half as wide -- and "little bit better visible", 0.25.
+constexpr float kStormShown = 0.25f;
 // Past this speed a flake is drawn as a streak along its flight, this many seconds of it long.
 constexpr float kStreakFrom = 2.5f;
 constexpr float kStreakSeconds = 0.035f;
+
+// And the wind wanders ("we need some randomness like wind changes", the user, 2026-09-30):
+// every six to fourteen seconds a new heading within this far of the leaves' -x and a new
+// strength in this range, each turned to at these rates, so the stream swings and swells.
+constexpr float kWindSwing = 0.95f;  // radians, about 55 degrees either way
+constexpr float kWindWeakest = 0.55f;
+constexpr float kWindChangeLow = 6.0f, kWindChangeHigh = 14.0f;
+constexpr float kWindTurnRate = 0.35f;  // radians a second
+constexpr float kWindSwellRate = 0.25f; // share a second
 
 // The gust, 0.45 to 1.0 of the storm's wind: a five-second swell with a two-second flurry on it,
 // both on the leaves' forty-second clock so it never jumps where the clock wraps.
@@ -233,6 +243,18 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
     const bool wet = bgfx::isValid(rainSheet_) && bgfx::isValid(ringSheet_);
     const int drops = wet ? int(rain * float(kDrops)) : 0;
     gust_ = std::fmod(gust_ + seconds, kGustSeconds);
+    // The blizzard's wind wandering: a new heading and strength every few seconds, turned to.
+    if (snow_ && storm_ > 0.0f) {
+        windChangeIn_ -= seconds;
+        if (windChangeIn_ <= 0.0f) {
+            windChangeIn_ = between(kWindChangeLow, kWindChangeHigh);
+            windHeadingTo_ = between(-kWindSwing, kWindSwing);
+            windStrengthTo_ = between(kWindWeakest, 1.0f);
+        }
+        const float turn = kWindTurnRate * seconds, swell = kWindSwellRate * seconds;
+        windHeading_ += std::clamp(windHeadingTo_ - windHeading_, -turn, turn);
+        windStrength_ += std::clamp(windStrengthTo_ - windStrength_, -swell, swell);
+    }
     uint32_t falling = 0;
     for (int i = 0; i < kDrops; ++i) {
         Drop& drop = drops_[i];
@@ -339,12 +361,15 @@ void Leaves::spawnFlake(Leaf& flake, const float hero[3], const content::Ground&
     flake.position[0] = hero[0] + between(-8.0f, 7.99f);
     flake.position[2] = hero[2] - between(-5.0f, 8.99f);
     flake.position[1] = ground.heightAt(hero[0], hero[2]) + between(kFlakeLow, kFlakeHigh);
-    // In a blizzard, upwind (the wind is -x) and falling faster, already on the wind.
-    flake.position[0] += storm_ * kStormUpwind;
+    // In a blizzard, upwind of where the wind now blows from, falling faster, already on it.
+    const float windX = -std::cos(windHeading_), windZ = std::sin(windHeading_);
+    flake.position[0] -= windX * storm_ * kStormUpwind;
+    flake.position[2] -= windZ * storm_ * kStormUpwind;
     const float fall = between(kFlakeSlow, kFlakeFast) + storm_ * between(0.5f, 1.0f) * kStormFall;
-    flake.velocity[0] = -storm_ * kStormWind * stormGust(gust_);
+    const float blow = storm_ * kStormWind * windStrength_ * stormGust(gust_);
+    flake.velocity[0] = windX * blow;
     flake.velocity[1] = -fall;
-    flake.velocity[2] = fall * kFlakeSlant;
+    flake.velocity[2] = fall * kFlakeSlant + windZ * blow;
     // rand_fps_check(10): one in ten a glint.
     flake.star = random01() < 0.1f;
     // Squared, as the rain's is: most flakes are barely there, a few catch the light.
@@ -379,10 +404,16 @@ void Leaves::moveFlake(Leaf& flake, float seconds, float factor, const content::
     }
     // The blizzard's wind, taken up over a tenth of a second, each flake at its own share of the
     // gust (off its phase) so the stream shears instead of moving as one sheet.
-    const float wind = -storm_ * kStormWind * stormGust(gust_ + flake.phase * 0.3f);
+    // Along the wind's heading as it wanders, at its strength of the moment.
+    const float blow = storm_ * kStormWind * windStrength_ * stormGust(gust_ + flake.phase * 0.3f);
+    const float windX = -std::cos(windHeading_) * blow;
+    const float windZ = std::sin(windHeading_) * blow - flake.velocity[1] * kFlakeSlant;
     // Scaled by the storm, so the calm's random walk is left exactly as it was.
-    flake.velocity[0] += (wind - flake.velocity[0]) * std::min(1.0f, seconds * kStormGrip * storm_);
-    flake.velocity[0] = std::clamp(flake.velocity[0], wind - 0.35f, 0.35f);
+    const float grip = std::min(1.0f, seconds * kStormGrip * storm_);
+    flake.velocity[0] += (windX - flake.velocity[0]) * grip;
+    flake.velocity[2] += (windZ - flake.velocity[2]) * grip;
+    flake.velocity[0] = std::clamp(flake.velocity[0], std::min(windX, 0.0f) - 0.35f,
+                                   std::max(windX, 0.0f) + 0.35f);
     flake.position[0] += flake.velocity[0] * seconds + across;
     flake.position[1] += flake.velocity[1] * seconds;
     flake.position[2] += flake.velocity[2] * seconds + across * 0.4f;
@@ -495,7 +526,7 @@ void Leaves::gather(gfx::Effects& effects, const float eye[3]) const {
             const float across = std::sqrt(side[0] * side[0] + side[1] * side[1] + side[2] * side[2]);
             if (!flake.star && speed > kStreakFrom && across > 0.0f) {
                 const float half = speed * kStreakSeconds * 0.5f;
-                for (float& s : side) s *= kFlakeHalf / across;
+                for (float& s : side) s *= kFlakeHalf * 0.5f / across;
                 sprite.placed = true;
                 for (int a = 0; a < 3; ++a) {
                     const float ahead = flake.position[a] + v[a] / speed * half;
