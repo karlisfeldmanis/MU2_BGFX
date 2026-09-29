@@ -48,8 +48,8 @@ constexpr float kCell = 0.5f;
 
 // --- a learned skill's smoke, this engine's own (see Aura::learn) ---------------------------
 // All in MU's units and reference ticks, turned to metres by the tile at the throw.
-constexpr int kBodyPuffs = 10;           // smoke02, mixed: the smoke itself
-constexpr int kGlowPuffs = 5;            // smoke01, added: a faint light in it
+constexpr int kBodyPuffs = 7;            // smoke02, mixed: the smoke itself
+constexpr int kGlowPuffs = 4;            // smoke01, added: a faint light in it
 constexpr float kSecondStab = 0.35f;     // this share of them wait for the second stab
 constexpr float kDrag = 0.90f;           // velocity kept a tick
 constexpr float kBuoyancy = 0.06f;       // units a tick gained upward, every tick
@@ -59,10 +59,11 @@ constexpr float kSpread = 0.5f;          // and units a tick after that, forever
 // The colour: a cool blue smoke, mixed and not added, so it reads as smoke that is really
 // there -- the user's call after gold (2026-09-29). The tint runs a little past one on blue so
 // the puff is pale and lit rather than a grey-blue stain. The first try, a cloud of 22 gold
-// puffs at 0.62, hid him and was too much: he must stay readable through it. The added wisps
-// are a faint cold light in it, kept low so the whole never reads as a glow.
+// puffs at 0.62, hid him and was too much, and ten at 0.30 was still a little much: he must
+// stay readable through it. The added wisps are a faint cold light in it, kept low so the
+// whole never reads as a glow.
 constexpr float kSmokeBlue[3] = {0.62f, 0.82f, 1.25f};
-constexpr float kBodyAlpha = 0.30f;
+constexpr float kBodyAlpha = 0.22f;
 constexpr float kGlow[3] = {0.05f, 0.14f, 0.36f};
 // The circle: MU's own blue, at half the level-up's width and kept low on lit ground.
 constexpr float kLearnRing[3] = {0.30f, 0.48f, 0.85f};
