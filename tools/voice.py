@@ -37,6 +37,17 @@ POLISH = ("bass=g=2:f=140,acompressor=threshold=0.15:ratio=2.5:attack=10:release
           "apad=pad_dur=0.6,loudnorm=I=-16:TP=-1.5:LRA=11")
 
 
+# Words the model says wrong, spelled as they are said: the window keeps the written form. MU is
+# one syllable, "moo" (the user, 2026-09-29: "Moo is correct").
+SPOKEN = {r"\bMU\b": "Moo"}
+
+
+def spoken(words):
+    for pattern, said in SPOKEN.items():
+        words = re.sub(pattern, said, words)
+    return words
+
+
 def pages(voice):
     """The quest row whose `row.voice` is `voice`, as {page: [paragraph, ...]}."""
     text = QUESTS.read_text()
@@ -79,7 +90,7 @@ def main():
             parts = []
             for i, words in enumerate(paragraphs):
                 torch.manual_seed(7)
-                wav = model.generate(words, audio_prompt_path=str(REF),
+                wav = model.generate(spoken(words), audio_prompt_path=str(REF),
                                      exaggeration=EXAGGERATION, cfg_weight=CFG_WEIGHT,
                                      temperature=0.8)
                 raw = pathlib.Path(scratch) / f"{page}{i}.raw.wav"
