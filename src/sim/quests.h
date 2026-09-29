@@ -10,9 +10,9 @@
 //
 // And the user's rule for Lorencia, the same day: **one quest, repeatable every twelve hours,
 // whose goal is to clear Lorencia** -- every breed, and a lot of each. So its steps are one
-// Clear a breed, each counted at that breed's whole population on the map (read from the nests
-// when the realm is raised, so a change of spawns changes the quest with it), all at once and in
-// any order, then the return. Handed in, it comes back twelve real hours later.
+// Clear a breed, all at once and in any order, then the return. A step's count was each breed's
+// whole population at first. Since 2026-09-29 Marlon and Peia share one fixed ladder, so the two
+// maps ask the same hunt (quests.cpp). Handed in, it comes back twelve real hours later.
 //
 // The words live beside the rules because the rules name them -- a step's line is what the
 // tracker prints for it -- and nothing here draws.

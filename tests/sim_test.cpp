@@ -3283,7 +3283,7 @@ void testQuests(const content::Tables& tables) {
             goal += realm.questGoal(quest, s);
         }
     }
-    checkEqual(goal, int(tables.population()), "clearing Lorencia is every monster it spawns");
+    checkEqual(goal, 210, "clearing Lorencia is the ladder's 210 kills");
     realm.setWallClock(1000000);
     check(realm.questOffered(quest), "never taken, it is offered");
     check(!realm.acceptQuest(quest), "but not from across the map");

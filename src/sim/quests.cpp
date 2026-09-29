@@ -7,17 +7,24 @@ namespace {
 
 // Marlon's, and Lorencia's only: clear the map. The eight breeds are Lorencia's own (mu.db's
 // spawns for map 0), weakest first, which is the order a character meets them walking out of
-// town; their counts are left at 0 so the realm takes each breed's population, 290 in all.
+// town.
+//
+// The counts are one ladder shared with Peia's, balanced on the user's word of 2026-09-29: 40,
+// 35, 30, 30, 25, 20, 15, 15 by the breeds' order, 210 kills. The two maps' breeds stand level
+// for level (Lorencia's 2-19, Noria's 3-18), so one ladder asks about the same hunt of each:
+// 34,000 health cut down here, 37,000 there. It was each breed's whole population here (290,
+// but 45 Spiders to 15 Skeletons, 43,000) and forty of each there (320, with forty Golems,
+// 69,000) -- Noria half again as long. Lorencia's last three still ask for about all of them.
 //
 // The reward is invention, the user's of 2026-09-29, and class by class: the Dark Knight's first,
-// the Dark Wizard's with his runes later. Every clear pays experience worth about a third of the
-// kills again, 50,000 Zen, three Jewels of Bless and twenty large potions. The first, and only
-// the first, adds a one-handed weapon with luck and a socket, and a Rune of Creation to set in
-// it -- the quest's one rune, never a repeat (sim/items.h). The weapon is one he can almost
-// hold: a clear walked weakest first from level 1 ends near level 13, and the hand-in's
-// experience takes him to 16, 103 strength spent all on strength; the Falchion asks 106 (MU's
-// formula over its raw 120 at drop level 24), a level or two more. It is also the next built
-// one-hander past the Gladius, which he could already hold, and it carries Uppercut.
+// the Dark Wizard's with his runes later. Every clear pays 25,000 experience, 50,000 Zen, three
+// Jewels of Bless and twenty large potions. The first, and only the first, adds a one-handed
+// weapon with luck and a socket, and a Rune of Creation to set in it -- the quest's one rune,
+// never a repeat (sim/items.h). The Falchion asks 106 strength (MU's formula over its raw 120
+// at drop level 24). It is the next built one-hander past the Gladius, and it carries Uppercut.
+// At kExperienceRate 10 the ladder walked weakest first from level 1 ends near level 28, so he
+// can hold it at once. (Its note once said 13 and "a level or two short", but that was at the
+// original rate of 1.)
 QuestRow marlon() {
     QuestRow row;
     row.giver = 229;
@@ -68,14 +75,14 @@ QuestRow marlon() {
         "I will need you.\"";
     // Read by Chatterbox (Resemble AI, MIT) off Kokoro's bm_george, dramatic: source/voice.
     row.voice = "marlon";
-    row.steps[0] = {QuestStepKind::Clear, 3, 0, "Spiders"};
-    row.steps[1] = {QuestStepKind::Clear, 2, 0, "Budge Dragons"};
-    row.steps[2] = {QuestStepKind::Clear, 0, 0, "Bull Fighters"};
-    row.steps[3] = {QuestStepKind::Clear, 1, 0, "Hounds"};
-    row.steps[4] = {QuestStepKind::Clear, 4, 0, "Elite Bull Fighters"};
-    row.steps[5] = {QuestStepKind::Clear, 6, 0, "Liches"};
-    row.steps[6] = {QuestStepKind::Clear, 7, 0, "Giants"};
-    row.steps[7] = {QuestStepKind::Clear, 14, 0, "Skeleton Warriors"};
+    row.steps[0] = {QuestStepKind::Clear, 3, 40, "Spiders"};
+    row.steps[1] = {QuestStepKind::Clear, 2, 35, "Budge Dragons"};
+    row.steps[2] = {QuestStepKind::Clear, 0, 30, "Bull Fighters"};
+    row.steps[3] = {QuestStepKind::Clear, 1, 30, "Hounds"};
+    row.steps[4] = {QuestStepKind::Clear, 4, 25, "Elite Bull Fighters"};
+    row.steps[5] = {QuestStepKind::Clear, 6, 20, "Liches"};
+    row.steps[6] = {QuestStepKind::Clear, 7, 15, "Giants"};
+    row.steps[7] = {QuestStepKind::Clear, 14, 15, "Skeleton Warriors"};
     row.steps[8] = {QuestStepKind::Return, 0, 1, "Return to Marlon"};
     row.stepCount = 9;
     row.repeatSeconds = 12 * 60 * 60;
@@ -96,12 +103,10 @@ QuestRow marlon() {
 // quest shaped for the Fairy Elf (the user, 2026-09-29: "basically its same rewards as Marlon but
 // for elfs"), with a story of Noria's own.
 //
-// Its counts are fixed, forty of each of Noria's eight breeds -- 320, about Lorencia's 290 --
-// where Marlon's are the whole population: Noria holds 1005, and clearing them takes a new elf
-// to level 25, too long for a clear that comes back every twelve hours. Walked weakest first
-// from level 1 the 320 end near level 16, 18 with the hand-in's experience: 85 points, where
-// the Battle Bow asks 90 agility and 43 strength (86 over her start), so it is one level out
-// of her hands -- the Falchion's rule. Invention, all of it.
+// Its counts are Marlon's ladder (see marlon()), never Noria's whole population: Noria holds
+// 1005, far too long a hunt for a clear that comes back every twelve hours. Walked weakest
+// first from level 1 the 210 end near level 29, well past the Battle Bow's 90 agility and 43
+// strength. Invention, all of it.
 QuestRow peia() {
     QuestRow row;
     row.giver = 257;
@@ -133,13 +138,13 @@ QuestRow peia() {
         "morning.\"";
     row.voice = "peia";
     row.steps[0] = {QuestStepKind::Clear, 26, 40, "Goblins"};
-    row.steps[1] = {QuestStepKind::Clear, 27, 40, "Chain Scorpions"};
-    row.steps[2] = {QuestStepKind::Clear, 33, 40, "Elite Goblins"};
-    row.steps[3] = {QuestStepKind::Clear, 28, 40, "Beetle Monsters"};
-    row.steps[4] = {QuestStepKind::Clear, 29, 40, "Hunters"};
-    row.steps[5] = {QuestStepKind::Clear, 30, 40, "Forest Monsters"};
-    row.steps[6] = {QuestStepKind::Clear, 31, 40, "Agon"};
-    row.steps[7] = {QuestStepKind::Clear, 32, 40, "Stone Golems"};
+    row.steps[1] = {QuestStepKind::Clear, 27, 35, "Chain Scorpions"};
+    row.steps[2] = {QuestStepKind::Clear, 33, 30, "Elite Goblins"};
+    row.steps[3] = {QuestStepKind::Clear, 28, 30, "Beetle Monsters"};
+    row.steps[4] = {QuestStepKind::Clear, 29, 25, "Hunters"};
+    row.steps[5] = {QuestStepKind::Clear, 30, 20, "Forest Monsters"};
+    row.steps[6] = {QuestStepKind::Clear, 31, 15, "Agon"};
+    row.steps[7] = {QuestStepKind::Clear, 32, 15, "Stone Golems"};
     row.steps[8] = {QuestStepKind::Return, 0, 1, "Return to Peia"};
     row.stepCount = 9;
     row.repeatSeconds = 12 * 60 * 60;
