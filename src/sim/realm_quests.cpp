@@ -112,41 +112,27 @@ bool Realm::completeQuest(int index, int choice) {
             if (slotOut) *slotOut = slot;
             return slot >= 0;
         }
+        // Gear comes whole at its plus, with its luck and its empty sockets; a Rune of Creation
+        // with its power.
+        const uint8_t powers[kMostSockets] = {what.power};
         for (int piece = 0; piece < std::max(1, what.count); ++piece) {
-            const int slot = give(item, -1, what.plus, fullDurability(itemRow, what.plus));
+            const int slot = give(item, -1, what.plus, fullDurability(itemRow, what.plus), what.luck,
+                                  0, 0, what.sockets, creation(itemRow) ? powers : nullptr);
             if (slot < 0) return false;
             if (slotOut && piece == 0) *slotOut = slot;
         }
         return true;
     };
     int chosenSlot = -1;
-    if (!pay(row.always, nullptr) || (anyFits && !pay(row.choices[choice], &chosenSlot))) {
+    bool paid = true;
+    for (int i = 0; i < row.paidCount && paid; ++i) {
+        if (questPays(row.paid[i], int(bodies_[0].kin), one.completions)) {
+            paid = pay(row.paid[i], nullptr);
+        }
+    }
+    if (!paid || (anyFits && !pay(row.choices[choice], &chosenSlot))) {
         bag_ = before;
         return false;
-    }
-
-    // The first completion, and only the first, pays a Rune of Creation carrying his class's
-    // power (sim/items.h). A class with no power yet gets none. invention.
-    uint8_t power = 0;
-    if (one.completions == 0) {
-        const uint8_t kPowers[] = {uint8_t(Power::Stormcall)};
-        for (uint8_t p : kPowers) {
-            if (const PowerRow* r = powerOf(p); r && r->kin == bodies_[0].kin) power = p;
-        }
-    }
-    if (power != 0) {
-        int32_t jewel = -1;
-        for (size_t i = 0; i < tables_->items.size(); ++i) {
-            if (creation(tables_->items[i])) jewel = int32_t(i);
-        }
-        const int slot = jewel >= 0 ? give(jewel, -1, 0, 1) : -1;
-        if (slot < 0) {
-            bag_ = before;
-            return false;
-        }
-        Held held = bag_[slot];
-        held.powers[0] = power;
-        bag_.put(slot, held);
     }
 
     money_ += row.zen;

@@ -1,5 +1,7 @@
 #include "sim/quests.h"
 
+#include "sim/items.h"
+
 namespace mu::sim {
 namespace {
 
@@ -7,10 +9,15 @@ namespace {
 // spawns for map 0), weakest first, which is the order a character meets them walking out of
 // town; their counts are left at 0 so the realm takes each breed's population, 290 in all.
 //
-// The reward is set against that hunt and is invention: a clear is hours for a new character and
-// minutes for a strong one, and it comes back every twelve hours, so it pays well without
-// replacing the hunt it asks for -- experience worth about a third of the kills again, a purse,
-// five large potions, and a choice of the class's +4 starting weapon or armour or two jewels.
+// The reward is invention, the user's of 2026-09-29, and class by class: the Dark Knight's first,
+// the Dark Wizard's with his runes later. Every clear pays experience worth about a third of the
+// kills again, 50,000 Zen, three Jewels of Bless and twenty large potions. The first, and only
+// the first, adds a one-handed weapon with luck and a socket, and a Rune of Creation to set in
+// it -- the quest's one rune, never a repeat (sim/items.h). The weapon is one he can almost
+// hold: a clear walked weakest first from level 1 ends near level 13, and the hand-in's
+// experience takes him to 16, 103 strength spent all on strength; the Falchion asks 106 (MU's
+// formula over its raw 120 at drop level 24), a level or two more. It is also the next built
+// one-hander past the Gladius, which he could already hold, and it carries Uppercut.
 QuestRow marlon() {
     QuestRow row;
     row.giver = 229;
@@ -68,16 +75,15 @@ QuestRow marlon() {
     row.stepCount = 9;
     row.repeatSeconds = 12 * 60 * 60;
     row.experience = 25000;
-    row.zen = 30000;
-    row.always = {"Potion04", 5, 0};
-    row.choices[0] = {"Sword01", 1, 4};      // Kris
-    row.choices[1] = {"Staff01", 1, 4};      // Skull Staff
-    row.choices[2] = {"Bow01", 1, 4};        // Short Bow
-    row.choices[3] = {"ArmorMale06", 1, 4};  // Leather Armor
-    row.choices[4] = {"ArmorMale03", 1, 4};  // Pad Armor
-    row.choices[5] = {"ArmorElf01", 1, 4};   // Vine Armor
-    row.choices[6] = {"Jewel01", 2, 0};      // two Jewels of Bless
-    row.choiceCount = 7;
+    row.zen = 50000;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    row.paid[0] = {.item = "Sword08", .kin = knight, .luck = true, .sockets = 1,
+                   .firstOnly = true};  // Falchion
+    row.paid[1] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Stormcall),
+                   .firstOnly = true};  // Rune of Creation, Stormcall's lightning
+    row.paid[2] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
+    row.paid[3] = {.item = "Potion04", .count = 20};  // Large Healing Potions
+    row.paidCount = 4;
     return row;
 }
 

@@ -3335,18 +3335,35 @@ void testQuests(const content::Tables& tables) {
     realm.restore(record);
     talk();
     checkEqual(realm.questing(), marlon, "back at Marlon with the clear done");
+    // The knight's reward, and no choice: a lucky Falchion with a socket, a Rune of Creation
+    // carrying Stormcall, three Jewels of Bless, twenty large potions and the purse.
+    const auto tally = [&](const sim::Realm& r, bool* falchion, int* runes, int* bless, int* potions) {
+        const int32_t sword = tables.itemNamed("Sword08"), rune = tables.itemNamed("Jewel22");
+        const int32_t jewel = tables.itemNamed("Jewel01"), potion = tables.itemNamed("Potion04");
+        *falchion = false;
+        *runes = *bless = *potions = 0;
+        for (int slot = 0; slot < sim::kSlots; ++slot) {
+            const sim::Held& one = r.satchel()[slot];
+            if (one.item == sword && one.luck && one.sockets == 1 && one.powers[0] == 0) {
+                *falchion = true;
+            }
+            if (one.item == rune && one.powers[0] == uint8_t(sim::Power::Stormcall)) ++*runes;
+            if (one.item == jewel) *bless += sim::stacks(tables.items[size_t(jewel)]) ? one.durability : 1;
+            if (one.item == potion) *potions += one.durability;
+        }
+    };
+    bool falchion = false;
+    int runes = 0, bless = 0, potions = 0;
+    tally(realm, &falchion, &runes, &bless, &potions);
+    const int blessBefore = bless, potionsBefore = potions;
     const int64_t purse = realm.money();
-    check(!realm.completeQuest(quest, 1), "a staff is not a knight's to be paid");
-    check(!realm.completeQuest(quest, -1), "and a choice is owed when he has one to make");
-    check(realm.completeQuest(quest, 0), "the Kris is");
-    checkEqual(realm.money() - purse, sim::questAt(quest).zen, "and the purse is paid");
-    int krises = 0;
-    const int32_t kris = tables.itemNamed("Sword01");
-    for (int slot = 0; slot < sim::kSlots; ++slot) {
-        const sim::Held& one = realm.satchel()[slot];
-        if (one.item == kris && one.refinement == 4) ++krises;
-    }
-    checkEqual(krises, 1, "and a Kris +4 is in his bag");
+    check(realm.completeQuest(quest, -1), "handed in with no choice to make");
+    checkEqual(realm.money() - purse, int64_t(50000), "and the purse is paid");
+    tally(realm, &falchion, &runes, &bless, &potions);
+    check(falchion, "a lucky Falchion with an empty socket is in his bag");
+    checkEqual(runes, 1, "and a Rune of Creation carrying Stormcall");
+    checkEqual(bless - blessBefore, 3, "three Jewels of Bless");
+    checkEqual(potions - potionsBefore, 20, "and twenty large potions");
     check(realm.quest(quest).state == sim::QuestState::Resting, "the quest rests");
     check(!realm.questOffered(quest), "and is not offered again at once");
     realm.setWallClock(1000000 + sim::questAt(quest).repeatSeconds - 1);
@@ -3354,6 +3371,31 @@ void testQuests(const content::Tables& tables) {
     realm.setWallClock(1000000 + sim::questAt(quest).repeatSeconds);
     check(realm.questOffered(quest), "and it is offered again when they are");
     checkEqual(int(realm.quest(quest).completions), 1, "counted once handed in");
+
+    // A repeat pays the purse and the stacks again, and the weapon and the rune never.
+    check(realm.acceptQuest(quest), "taken again");
+    record = realm.record();
+    record.quests[quest].state = sim::QuestState::Ready;
+    for (int s = 0; s < sim::kQuestSteps; ++s) {
+        record.quests[quest].counts[s] = uint16_t(realm.questGoal(quest, s));
+    }
+    realm.restore(record);
+    talk();
+    int swords = 0;
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        swords += realm.satchel()[slot].item == tables.itemNamed("Sword08") ? 1 : 0;
+    }
+    const int bless1 = bless, potions1 = potions;
+    check(realm.completeQuest(quest, -1), "and handed in again");
+    tally(realm, &falchion, &runes, &bless, &potions);
+    int swordsAfter = 0;
+    for (int slot = 0; slot < sim::kSlots; ++slot) {
+        swordsAfter += realm.satchel()[slot].item == tables.itemNamed("Sword08") ? 1 : 0;
+    }
+    checkEqual(swordsAfter, swords, "no second Falchion");
+    checkEqual(runes, 1, "nor a second rune");
+    checkEqual(bless - bless1, 3, "but three more Jewels of Bless");
+    checkEqual(potions - potions1, 20, "and twenty more potions");
 }
 
 // Sockets and the Rune of Creation (sim/items.h): which rune goes in what, setting fills the first

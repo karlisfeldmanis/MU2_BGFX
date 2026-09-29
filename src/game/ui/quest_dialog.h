@@ -68,10 +68,14 @@ public:
 private:
     enum class Mode : uint8_t { Offer, Underway, HandIn, Resting };
     struct Cell {
-        int choice = -1;  // the row's choice index, or -1 for the always-paid item
+        int choice = -1;  // the row's choice index, or -1 for a paid item
         int32_t item = -1;
         int plus = 0;
         int count = 1;
+        bool luck = false;
+        uint8_t sockets = 0;
+        uint8_t power = 0;
+        uint32_t ink = 0;  // its name's, the card's own tone for it
         gfx::Box box;     // in the body's own units, from the top of what scrolls
     };
     void layout(const Play& play);

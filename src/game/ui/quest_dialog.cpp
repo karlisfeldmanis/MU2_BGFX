@@ -37,7 +37,8 @@ constexpr float kSection = 18.0f;
 constexpr float kStepRow = 23.0f;
 constexpr float kCellGap = 12.0f, kCellTall = 96.0f, kNameRoom = 26.0f;
 constexpr float kChoiceColumns = 2.0f;
-constexpr float kAlwaysCell = 64.0f;
+constexpr float kPurse = 30.0f;  // the experience and the Zen, one line over the paid grid
+constexpr float kAsk = 22.0f;    // the choice's line over its grid
 constexpr float kButtonW = 120.0f, kButtonWide = 180.0f;
 constexpr uint32_t kZenGold = gfx::rgba(1.0f, 0.8f, 0.102f);
 constexpr uint32_t kItemWhite = gfx::rgba(1.0f, 1.0f, 1.0f);
@@ -76,7 +77,23 @@ Box placed(float x, float y, const Box& b, float u) {
     return {std::round(x + b.x * u), std::round(y + b.y * u), std::round(b.w * u), std::round(b.h * u)};
 }
 
-bool isJewel(const std::string& label) { return label.rfind("Jewel", 0) == 0; }
+// A reward as completeQuest will put it in the bag: a stack is one piece of its count, gear comes
+// whole at its plus with its luck and empty sockets, a Rune of Creation with its power.
+sim::Held rewardHeld(const content::Tables& tables, int32_t item, int plus, int count, bool luck,
+                     uint8_t sockets, uint8_t power) {
+    const content::ItemRow& row = tables.items[size_t(item)];
+    sim::Held what;
+    what.item = item;
+    what.refinement = int16_t(plus);
+    what.durability =
+        int16_t(sim::stacks(row) ? std::max(1, count) : sim::fullDurability(row, plus));
+    if (sim::takesOptions(row)) {
+        what.luck = luck;
+        what.sockets = uint8_t(std::min<int>(sockets, sim::kMostSockets));
+    }
+    if (sim::creation(row)) what.powers[0] = power;
+    return what;
+}
 
 }  // namespace
 
@@ -182,35 +199,50 @@ void QuestDialog::layout(const Play& play) {
             counted += row.steps[s].kind == sim::QuestStepKind::Clear ? 1 : 0;
         }
         y += kSection * 0.5f + 24.0f + float(counted + 1) * kStepRow + kSection;
-        y += 16.0f;
-        const int32_t always = row.always.item ? tables.itemNamed(row.always.item) : -1;
-        if (always >= 0) {
-            Cell cell;
-            cell.item = always;
-            cell.count = row.always.count;
-            cell.plus = row.always.plus;
-            cell.box = {kInset, y, kAlwaysCell, kAlwaysCell};
-            cells_.push_back(cell);
-        }
-        y += kAlwaysCell + 14.0f + 22.0f;
+        y += 16.0f + kPurse;
+        // Two grids of the same cells: what his class is paid at this completion, then the
+        // choice, when there is one, under its own line.
         const int across = int(kChoiceColumns);
-        std::vector<int> fits;
-        for (int c = 0; c < row.choiceCount; ++c) {
-            if (realm.questChoiceFits(quest_, c)) fits.push_back(c);
-        }
         const float cellWide = (wide - kCellGap * (kChoiceColumns - 1.0f)) / kChoiceColumns;
-        for (size_t i = 0; i < fits.size(); ++i) {
-            const int column = int(i) % across, rowOf = int(i) / across;
-            Cell cell;
-            cell.choice = fits[i];
-            cell.item = tables.itemNamed(row.choices[fits[i]].item);
-            cell.count = row.choices[fits[i]].count;
-            cell.plus = row.choices[fits[i]].plus;
-            cell.box = {kInset + float(column) * (cellWide + kCellGap),
-                        y + float(rowOf) * (kCellTall + kNameRoom + kCellGap), cellWide, kCellTall};
-            cells_.push_back(cell);
+        const auto grid = [&](const std::vector<std::pair<int, const sim::QuestItem*>>& items) {
+            for (size_t i = 0; i < items.size(); ++i) {
+                const int column = int(i) % across, rowOf = int(i) / across;
+                const sim::QuestItem& what = *items[i].second;
+                Cell cell;
+                cell.choice = items[i].first;
+                cell.item = tables.itemNamed(what.item);
+                cell.count = what.count;
+                cell.plus = what.plus;
+                cell.luck = what.luck;
+                cell.sockets = what.sockets;
+                cell.power = what.power;
+                if (cell.item >= 0) {
+                    const sim::Held held = rewardHeld(tables, cell.item, cell.plus, cell.count,
+                                                      cell.luck, cell.sockets, cell.power);
+                    cell.ink = tip::colourOf(
+                        describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
+                }
+                cell.box = {kInset + float(column) * (cellWide + kCellGap),
+                            y + float(rowOf) * (kCellTall + kNameRoom + kCellGap), cellWide,
+                            kCellTall};
+                cells_.push_back(cell);
+            }
+            y += float((int(items.size()) + across - 1) / across) * (kCellTall + kNameRoom + kCellGap);
+        };
+        std::vector<std::pair<int, const sim::QuestItem*>> paid, fits;
+        const uint32_t completions = realm.quest(quest_).completions;
+        for (int p = 0; p < row.paidCount; ++p) {
+            if (sim::questPays(row.paid[p], int(realm.hero().kin), completions) &&
+                tables.itemNamed(row.paid[p].item) >= 0) {
+                paid.push_back({-1, &row.paid[p]});
+            }
         }
-        y += float((int(fits.size()) + across - 1) / across) * (kCellTall + kNameRoom + kCellGap);
+        grid(paid);
+        for (int c = 0; c < row.choiceCount; ++c) {
+            if (realm.questChoiceFits(quest_, c)) fits.push_back({c, &row.choices[c]});
+        }
+        if (!fits.empty()) y += kAsk;
+        grid(fits);
     } else {
         y += kLead;
     }
@@ -383,14 +415,8 @@ void QuestDialog::drawTip(const Play& play, int cell, float width, float height)
     if (one.item < 0) return;
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
-    const content::ItemRow& row = tables.items[size_t(one.item)];
-    // The reward as completeQuest will put it in the bag: a stack is one piece of its count, gear
-    // comes whole at its plus.
-    sim::Held what;
-    what.item = one.item;
-    what.refinement = int16_t(one.plus);
-    what.durability = int16_t(sim::stacks(row) ? std::max(1, one.count)
-                                               : sim::fullDurability(row, one.plus));
+    const sim::Held what =
+        rewardHeld(tables, one.item, one.plus, one.count, one.luck, one.sockets, one.power);
     tip::Sheet sheet = describe(tables, what, realm.wearer(), realm.satchel());
     if (tipStage_) tip::stand(*tipStage_, what.item, what.refinement, sheet);
     // Over the cell as it stands on screen, scrolled.
@@ -515,21 +541,18 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             return Box{std::round(sx(one.box.x)), std::round(by(one.box.y)),
                        std::round(one.box.w * u), std::round(one.box.h * u)};
         };
+        // The purse, one line: the experience, and the Zen ranged to the right.
+        controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, style::kBone,
+                        panel::commas(row.experience) + " experience");
+        controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
+                         panel::commas(row.zen) + " Zen");
+        // The choice's line stands over the first of its cells, under the paid grid.
         for (const Cell& one : cells_) {
-            if (one.choice >= 0) continue;
-            const Box box = cellBox(one);
-            controls::cell(body_, box, controls::Cell::Rest, u);
-            const content::ItemRow& item = tables.items[size_t(one.item)];
-            const float tx = one.box.right() + 14.0f;
-            const std::string name =
-                item.label + (one.count > 1 ? " x" + std::to_string(one.count) : std::string());
-            controls::label(body_, sx(tx), by(one.box.y + 20.0f), kBody * u, kItemWhite, name);
-            controls::label(body_, sx(tx), by(one.box.y + 44.0f), 14.0f * u, style::kBone,
-                            panel::commas(row.experience) + " experience");
-            controls::label(body_, sx(tx), by(one.box.y + 62.0f), 14.0f * u, kZenGold,
-                            panel::commas(row.zen) + " Zen");
+            if (one.choice >= 0) {
+                cy = one.box.y - kAsk;
+                break;
+            }
         }
-        cy += kAlwaysCell + 14.0f;
         if (owed) {
             std::string ask = "And one of these when you return:";
             uint32_t ink = style::kAshInk;
@@ -541,7 +564,6 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         }
         for (size_t i = 0; i < cells_.size(); ++i) {
             const Cell& one = cells_[i];
-            if (one.choice < 0) continue;
             const Box box = cellBox(one);
             controls::cell(body_, box, over_ == 10 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);
             if (one.choice == chosen_) {
@@ -557,7 +579,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             if (one.count > 1) name += " x" + std::to_string(one.count);
             const float nw = widthOf(15.0f * u, name);
             controls::label(body_, box.x + (box.w - nw) * 0.5f, box.y + box.h + 18.0f * u, 15.0f * u,
-                            isJewel(item.label) ? kZenGold : kItemWhite, name);
+                            one.ink ? one.ink : kItemWhite, name);
         }
     }
 

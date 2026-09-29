@@ -5,7 +5,8 @@
 // MONSTER_MARLON alone, ZzzInterface.cpp). The shape is the proposal the user asked for on
 // 2026-09-28 (claude.ai/artifact/8nQVewJ3f2VkKd74T2ktn2): a giver offers a quest in a dialog,
 // its steps are counted by the realm, the tracker shows them, and the hand-in pays a fixed
-// reward plus one item the player chooses, from those his class can use.
+// reward, some of it his class's own, plus any item the player chooses from those his class can
+// use.
 //
 // And the user's rule for Lorencia, the same day: **one quest, repeatable every twelve hours,
 // whose goal is to clear Lorencia** -- every breed, and a lot of each. So its steps are one
@@ -25,6 +26,7 @@ namespace mu::sim {
 inline constexpr int kQuests = 1;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
+inline constexpr int kQuestPaid = 6;
 
 enum class QuestStepKind : uint8_t {
     // Kill `count` of breed `target` (MU's monster number); a count of 0 is the breed's whole
@@ -41,12 +43,24 @@ struct QuestStepRow {
     const char* line = "";  // the tracker's words: the breed's plural, or "Return to Marlon"
 };
 
-// A thing paid: an item by its file name (Tables::itemNamed), how many, at what plus.
+// A thing paid: an item by its file name (Tables::itemNamed), how many, at what plus, and to
+// whom -- on the user's word of 2026-09-29 the reward is the class's own, the Dark Knight's
+// first and the others' as their runes are made.
 struct QuestItem {
     const char* item = nullptr;
     int32_t count = 1;
     int32_t plus = 0;
+    int8_t kin = -1;          // the class it is paid to (sim::Kin), -1 every class
+    bool luck = false;
+    uint8_t sockets = 0;
+    uint8_t power = 0;        // a Rune of Creation's (sim::Power)
+    bool firstOnly = false;   // paid on the first completion and never again
 };
+
+// Whether this thing is paid to this class at this completion (0 the first).
+inline bool questPays(const QuestItem& what, int kin, uint32_t completions) {
+    return what.item && (what.kin < 0 || what.kin == kin) && (!what.firstOnly || completions == 0);
+}
 
 struct QuestRow {
     int32_t giver = 0;          // the giver's MU NPC number (Tables::folk)
@@ -67,9 +81,11 @@ struct QuestRow {
     int64_t repeatSeconds = 0;
     int64_t experience = 0;
     int64_t zen = 0;
-    QuestItem always;
+    // Every one of these his class is paid (questPays), all of them.
+    QuestItem paid[kQuestPaid];
+    int paidCount = 0;
     // One of these, the player's choice, from those his class may use. The table lists every
-    // class's candidates; the dialog shows his.
+    // class's candidates; the dialog shows his. None, when the whole reward is `paid`.
     QuestItem choices[kQuestChoices];
     int choiceCount = 0;
 };
