@@ -495,10 +495,11 @@ private:
         // `_attack`, `_die` and `_move` by MU2's naming (the label lowered, no spaces). -1 for
         // the character and for a breed with nothing cooked, which is silence.
         int cryAttack = -1, cryDie = -1, cryMove = -1;
-        // MONSTER01_SHOCK (slot 5), played on the meteor's quake only, and SILENTLY: MU has
-        // no shock sound at all -- a model's `Sounds[]` are idle/move, the attack pair and
-        // the death, and the cooked `_shock` event for a breed is its attack pair under a
-        // second name. -1 for breeds that lack the clip.
+        // MONSTER01_SHOCK (slot 5): on the meteor's quake, silently, and on one landed blow in
+        // two, crying its attack pair -- MU has no shock sound of its own: a model's
+        // `Sounds[]` are idle/move, the attack pair and the death, and the cooked `_shock`
+        // event for a breed is its attack pair under a second name. -1 for breeds that lack
+        // the clip.
         int shockClip = -1;
         // A Budge Dragon: its head bone, which the fire comes out of, and what of a reference
         // frame's spark and a fourth of one's puff is owed. See Play::exhale.
@@ -680,6 +681,8 @@ private:
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept
+    // The flinch's coin, `rand_fps_check(2)` on a blow that lands: the drawing's too.
+    uint32_t flinchDice_ = 0x9e3779b9u;
         int warp = -1;                                  // sMagic: a Town Portal landing
         int click = -1, refused = -1, opened = -1;      // the windows
         int repair = -1;                                // SOUND_REPAIR: a counter mended

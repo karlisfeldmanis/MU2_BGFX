@@ -105,10 +105,9 @@ constexpr float kShockTiles = 2.0f;
 constexpr int kPlayerShockSlot = 231;
 // The HERO has none, and that is a decision rather than an omission. MU's quake
 // loop excludes the hero outright, so he never flinches for a meteor. MU *does* flinch him on
-// an ordinary blow -- `SetPlayerShock`, ZzzCharacter.cpp:1392, fed by the damage packets --
-// and this engine does not, for anybody: see game/showing.h, where the same question was
-// answered the same way for the blood. That is the fight's feel and belongs to the sprint
-// that owns it, not to a meteor.
+// an ordinary blow only when the packet's success bit is up, which OpenMU never raises on a
+// hit -- so under 0.75 he never flinches, and everything else flinches one blow in two (the
+// cue loop in Play::update).
 // PLAYER_DIE1, which the cook also holds (source/players/rig/actions.json, hold_at_end). The
 // hero plays it and lies there until the realm revives him at the gate -- no fade: MU leaves
 // the player's body on the ground for the whole wait.

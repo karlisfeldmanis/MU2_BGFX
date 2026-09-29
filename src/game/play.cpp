@@ -1027,6 +1027,27 @@ void Play::update(double seconds) {
 
 std::string Play::nameOf(uint32_t id) const {
     const sim::Body* one = realm_.find(id);
+        // The flinch: SetPlayerShock (ZzzCharacter.cpp:1365), from ReceiveAttackDamage's `else`,
+        // which is every ordinary hit under OpenMU -- it never raises the target id's top bit
+        // on a hit. There the hero takes no shock at all, and anything else takes one on a
+        // blow that did damage, one time in two, unless it is mid-attack. MONSTER01_SHOCK,
+        // and on its first frame the breed's attack pair, `Sounds[2 + rand() % 2]`: SetAction
+        // to the clip already playing changes nothing, so a flinch in progress is not begun
+        // again and cries once. A killing blow is left to the fall that comes this frame.
+        Drawn* struck = drawnOf(cue.target);
+        if (!onHero && !cue.miss && cue.damage > 0 && target->alive() && struck &&
+            struck->placed && struck->shockClip >= 0 && struck->swinging <= 0.0f &&
+            struck->figure.clip() != struck->shockClip) {
+            flinchDice_ ^= flinchDice_ << 13;
+            flinchDice_ ^= flinchDice_ >> 17;
+            flinchDice_ ^= flinchDice_ << 5;
+            if (flinchDice_ & 1u) {
+                struck->figure.play(struck->shockClip, true);
+                if (struck->cryAttack >= 0) {
+                    emit(struck->cryAttack, struck->crown[0], struck->crown[2], struck->id);
+                }
+            }
+        }
     if (!one) return "nobody";
     if (one->player) return "the hero";
     if (one->warden >= 0) return tables_.folk[size_t(one->warden)].name + "#" + std::to_string(id);
