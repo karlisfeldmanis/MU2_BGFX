@@ -566,7 +566,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             const Cell& one = cells_[i];
             const Box box = cellBox(one);
             controls::cell(body_, box, over_ == 10 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);
-            if (one.choice == chosen_) {
+            if (one.choice >= 0 && one.choice == chosen_) {
                 // The chosen one: the hover's ember from its foot and a blood rim.
                 const uint32_t hot = quest_marks::faded(style::kBlood, style::kEmberAlpha);
                 const uint32_t clear = quest_marks::faded(style::kBlood, 0.0f);
