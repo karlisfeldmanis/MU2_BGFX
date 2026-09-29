@@ -117,6 +117,33 @@ constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 // `kSocketStone` where the piece has the room, and smaller on a narrow one.
 constexpr float kSocketStone = 6.0f;
 constexpr float kSocketGap = 2.0f;
+// **The Rune of Creation in its socket, as its own picture** (the user, 2026-09-29: "we need to
+// show that jewel creation is attached in rune slot"). One rune stands on the bag's stage in a
+// strip below the window, which the window never shows, and each set socket is given that
+// picture inside its ring. The stage is taller than the window by the strip.
+constexpr float kRuneStrip = 24.0f;
+constexpr float kStageTall = panel::kHeight + kRuneStrip;
+constexpr gfx::Box kRuneStands{4.0f, panel::kHeight + 2.0f, 20.0f, 20.0f};
+
+// The Rune of Creation's row in these tables, or -1.
+int32_t runeRow(const content::Tables& tables) {
+    for (size_t i = 0; i < tables.items.size(); ++i) {
+        if (sim::creation(tables.items[i])) return int32_t(i);
+    }
+    return -1;
+}
+
+// Where a piece's sockets sit, in whatever space `box` is in: centres down its middle, one
+// radius for all. The bag's rings and its runes are laid by this one rule.
+float socketsIn(const gfx::Box& box, int sockets, float unit, float* cy) {
+    const float gap = kSocketGap * unit;
+    const float r = std::min({kSocketStone * unit, box.w * 0.38f,
+                              (box.h - gap * float(sockets + 1)) / float(sockets) * 0.5f});
+    const float pitch = r * 2.0f + gap;
+    const float top = box.midY() - pitch * float(sockets - 1) * 0.5f;
+    for (int at = 0; at < sockets; ++at) cy[at] = top + pitch * float(at);
+    return r;
+}
 constexpr uint32_t kSocketEmber = gfx::rgba(0.9f, 0.42f, 0.04f, 1.0f);
 constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.78f, 0.45f, 0.85f);
 constexpr uint32_t kSocketShade = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
@@ -285,7 +312,17 @@ void Bag::update(float width, float height, int column, const sim::Realm& realm,
         standing_.push_back({what.item, box, what.refinement,
                              slot == hovered_ && dragging_ < 0, what.excellent != 0});
     }
-    if (stage) stage->stand(standing_, panel::kWidth, panel::kHeight);
+    // The one rune the set sockets are drawn with, in the strip under the window.
+    bool anySet = false;
+    for (int slot = 0; slot < sim::kSlots && !anySet; ++slot) {
+        for (int at = 0; at < std::min(socketsOf(bag[slot]), kMostSockets); ++at) {
+            anySet |= !bag[slot].empty() && powerAt(bag[slot], at) != 0;
+        }
+    }
+    if (const int32_t rune = anySet ? runeRow(tables) : -1; rune >= 0) {
+        standing_.push_back({rune, kRuneStands, 0, false, false});
+    }
+    if (stage) stage->stand(standing_, panel::kWidth, kStageTall);
 
     const sim::Body& hero = realm.hero();
     now_ = Contents{};
@@ -454,7 +491,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
     if (picture.valid()) {
         // In two bands on the line the worn block ends: the worn half a shade transparent, so a
         // slot goes on saying what it is for with a piece standing in it, and the satchel whole.
-        const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
+        const float sx = picture.width / panel::kWidth, sy = picture.height / kStageTall;
         const float below = panel::kHeight - kWornFoot;
         canvas_.region(picture, panel::scaled(x, y, {0.0f, 0.0f, panel::kWidth, kWornFoot}),
                        {0.0f, 0.0f, panel::kWidth * sx, kWornFoot * sy}, kWornInk);
@@ -480,17 +517,23 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         if (sockets == 0 || slot == dragging_) continue;
         const Box box =
             panel::scaled(x, y, wellOf(itemBox(tables, slot, held), sim::wearable(slot)));
-        const float gap = kSocketGap * k;
-        const float r = std::min({kSocketStone * k, box.w * 0.38f,
-                                  (box.h - gap * float(sockets + 1)) / float(sockets) * 0.5f});
-        const float pitch = r * 2.0f + gap;
-        const float top = box.midY() - pitch * float(sockets - 1) * 0.5f;
+        float centres[kMostSockets];
+        const float r = socketsIn(box, sockets, k, centres);
         for (int at = 0; at < sockets; ++at) {
-            const float cx = box.midX(), cy = top + pitch * float(at);
+            const float cx = box.midX(), cy = centres[at];
             disc(canvas_, cx, cy, r + std::max(1.0f, 0.6f * k), kSocketShade);
             disc(canvas_, cx, cy - r * 0.05f, r * 0.92f, kSocketRim);
             disc(canvas_, cx, cy + r * 0.03f, r * 0.68f, kSocketHole);
-            if (powerAt(held, at) != 0) {
+            if (powerAt(held, at) == 0) continue;
+            // The rune itself, cut from the strip and set in the hole, a little proud of it as
+            // a stone stands in its setting; the ember where there is no picture yet.
+            if (picture.valid()) {
+                const float sx = picture.width / panel::kWidth, sy = picture.height / kStageTall;
+                const float side = r * 1.7f;
+                canvas_.region(picture, {cx - side * 0.5f, cy - side * 0.5f, side, side},
+                               {kRuneStands.x * sx, kRuneStands.y * sy, kRuneStands.w * sx,
+                                kRuneStands.h * sy});
+            } else {
                 disc(canvas_, cx, cy + r * 0.03f, r * 0.54f, kSocketEmber);
                 disc(canvas_, cx - r * 0.18f, cy - r * 0.14f, r * 0.17f, kSocketGlint);
             }
@@ -515,7 +558,7 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         const Box to{now_.dragX - units.w * k * 0.5f, now_.dragY - units.h * k * 0.5f, units.w * k,
                      units.h * k};
         if (picture.valid()) {
-            const float sx = picture.width / panel::kWidth, sy = picture.height / panel::kHeight;
+            const float sx = picture.width / panel::kWidth, sy = picture.height / kStageTall;
             // A shade under it and the thing itself a little transparent: what the hand is
             // holding is between the window and the pointer, and at full strength it reads as
             // something that has already been put down.

@@ -33,6 +33,8 @@ constexpr uint32_t kSocketShade = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
 constexpr uint32_t kSocketRim = gfx::rgba(0.62f, 0.45f, 0.24f, 1.0f);
 constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 1.0f);
 constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.9f, 0.75f, 0.9f);
+constexpr uint32_t kRuneViolet = gfx::rgba(0.55f, 0.5f, 1.0f, 1.0f);
+constexpr uint32_t kRuneRose = gfx::rgba(1.0f, 0.39f, 0.70f, 1.0f);
 constexpr float kMarkGap = 9.0f;
 // The corners, and how many segments each quarter turn is cut into. Six is smooth at this
 // radius and keeps the whole card inside one fan of 28 points.
@@ -317,9 +319,13 @@ void glyphAt(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, ui
             disc(cx, cy, h, faded(kSocketShade));
             disc(cx, cy - h * 0.06f, h * 0.9f, faded(kSocketRim));
             disc(cx, cy + h * 0.04f, h * 0.66f, faded(kSocketHole));
+            // Set, it holds a Rune of Creation drawn in the jewel's own two inks -- its model's
+            // blue-violet and pink-red (Jewel22's blue_jewel and red_jewel) -- so the row says
+            // which stone is in it and not only that one is (the user, 2026-09-29).
             if (which == Mark::RingSet) {
-                disc(cx, cy + h * 0.04f, h * 0.5f, colour);
-                disc(cx - h * 0.17f, cy - h * 0.13f, h * 0.16f, faded(kSocketGlint));
+                disc(cx, cy + h * 0.04f, h * 0.52f, faded(kRuneViolet));
+                disc(cx - h * 0.08f, cy - h * 0.04f, h * 0.36f, faded(kRuneRose));
+                disc(cx - h * 0.2f, cy - h * 0.17f, h * 0.13f, faded(kSocketGlint));
             }
             break;
         }
