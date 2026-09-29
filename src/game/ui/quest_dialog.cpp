@@ -489,6 +489,11 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     // ---- the body, clipped to its pane --------------------------------------------------------
     const Box pane = placed(x, y, {kPaneSide, paneTop(), kWide - kPaneSide * 2.0f, paneTall()}, u);
     body_.clip(pane);
+    const auto cellBox = [&](const Cell& one) {
+        return Box{std::round(sx(one.box.x)), std::round(by(one.box.y)), std::round(one.box.w * u),
+                   std::round(one.box.h * u)};
+    };
+    const bool offered = mode_ != Mode::Stranger && mode_ != Mode::Resting;
 
     float cy = 12.0f;
     controls::caps(body_, sx(kInset), by(cy + 10.0f), style::kKickerSize * u, style::kAshInk,
@@ -553,10 +558,6 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
 
         controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Rewards", u);
         cy += 16.0f;
-        const auto cellBox = [&](const Cell& one) {
-            return Box{std::round(sx(one.box.x)), std::round(by(one.box.y)),
-                       std::round(one.box.w * u), std::round(one.box.h * u)};
-        };
         // The purse, one line: the experience, and the Zen ranged to the right.
         controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, style::kBone,
                         panel::commas(sim::questExperience(
@@ -606,10 +607,6 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                                 one.ink ? one.ink : kItemWhite, line);
                 ly += lead;
             }
-            if (one.count > 1) {
-                controls::ranged(body_, icon.right() - 4.0f * u, icon.bottom() - 5.0f * u, 13.0f * u,
-                                 kItemWhite, std::to_string(one.count));
-            }
         }
     }
 
@@ -617,6 +614,16 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     if (stage) {
         const gfx::Art picture = stage->picture();
         if (picture.valid()) body_.image(picture, placed(x, y, {0.0f, 0.0f, kWide, kTall}, u));
+    }
+    // A stack's count on its picture's foot, after the picture so the model cannot cover it, and
+    // shadowed as the bag prints it.
+    for (const Cell& one : cells_) {
+        if (!offered || one.count <= 1) continue;
+        const Box box = cellBox(one);
+        const Box icon{box.x, box.y, box.h, box.h};
+        body_.shadowed(icon.x, icon.bottom() - 4.0f * u, 13.0f * u, kItemWhite,
+                       gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, u),
+                       std::to_string(one.count), gfx::Align::Right, icon.w - 4.0f * u);
     }
 
     // And the pane's edges soften into the sheet where more lies past them, so a line cut by the
