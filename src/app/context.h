@@ -62,12 +62,6 @@ public:
     // A sheet of the scene's own, laid over the base and the time of day: the character screen's
     // clearer air (sheets/lobby.json). Empty takes it off. Watched and re-applied as the others are.
     void setScene(const std::string& path);
-    // The scene's wet sheet, laid over the scene for rain: sheets/worlds/<world>_rain.json.
-    // Empty takes it off. rain() then blends the frame's light between the two by the weather's
-    // share, 0 dry to 1 raining (game/world/weather.h) -- the rain darkens the world as it comes
-    // in and lifts as it goes, rather than switching.
-    void setWet(const std::string& path);
-    void rain(float share);
 
 private:
     std::string overlayPath(int which) const;
@@ -77,10 +71,6 @@ private:
     int64_t overlayStamp_ = 0;
     std::string scene_;
     int64_t sceneStamp_ = 0;
-    std::string wetPath_;
-    int64_t wetStamp_ = 0;
-    gfx::Lighting dry_, wet_;  // the light as set() built it, and that with the wet sheet over it
-    float share_ = 0.0f;
     bool announce_ = false;
 };
 

@@ -62,6 +62,13 @@ private:
     float ember_[sim::kQuestSteps] = {};
     int quest_ = -1;  // the quest the tracker follows
 
+    // Awake: a kill or a turn of the quest lifts the tracker for a few seconds, the step just
+    // counted at full and the rest dimmed, then it fades away. Ready holds it up.
+    float awake_ = 0.0f;  // seconds of hold left
+    float wake_ = 0.0f;   // the eased lift, 0..1
+    int focus_ = -1;      // the step last counted, or -1 for all at full
+    float lit_[sim::kQuestSteps] = {};
+
     // The banner: what it says, and where it is in its life.
     std::string bannerKicker_, bannerTitle_, bannerLine_, bannerZen_;
     float bannerAge_ = -1.0f;
@@ -77,6 +84,8 @@ private:
         sim::QuestProgress progress;
         int counts[sim::kQuestSteps] = {};
         int embers[sim::kQuestSteps] = {};
+        int lit[sim::kQuestSteps] = {};
+        int focus = -1;
         int shown = 0;
         int width = 0, height = 0;
         int64_t minutesLeft = 0;

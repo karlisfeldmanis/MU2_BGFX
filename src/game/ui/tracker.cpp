@@ -34,6 +34,10 @@ constexpr float kFadeSeconds = style::kOpenSeconds;  // in and out of a window's
 constexpr float kBarSeconds = 0.25f;
 constexpr float kEmberSeconds = 0.6f;
 constexpr float kBannerIn = style::kOpenSeconds, kBannerOut = 0.4f;
+// Awake: how long a kill holds the tracker up, how slowly it then goes, and the steps not just
+// counted. The user, 2026-09-29: fade out when nothing is killed, the killed row alone at full.
+constexpr float kWakeHold = 5.0f, kWakeFade = 0.8f;
+constexpr float kDim = 0.35f;
 // The edge pointer: how far in from the frame's edge it stands, and when the giver counts as
 // on the frame (the blade over his head takes over).
 constexpr float kEdgeInset = 64.0f;
@@ -154,11 +158,11 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
     if (quest != o.quest || shown != o.shown || width != o.width || height != o.height ||
         minutesLeft != o.minutesLeft || pointing != o.pointing || pointX != o.pointX ||
         pointY != o.pointY || pointMetres != o.pointMetres ||
-        progress.state != o.progress.state) {
+        focus != o.focus || progress.state != o.progress.state) {
         return false;
     }
     for (int i = 0; i < sim::kQuestSteps; ++i) {
-        if (counts[i] != o.counts[i] || embers[i] != o.embers[i] ||
+        if (counts[i] != o.counts[i] || embers[i] != o.embers[i] || lit[i] != o.lit[i] ||
             progress.counts[i] != o.progress.counts[i]) {
             return false;
         }
@@ -217,9 +221,17 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                 bannerHold_ = 3.0f;
                 bannerAge_ = 0.0f;
             }
+            if (now.state != was.state) {
+                awake_ = kWakeHold;
+                focus_ = -1;
+            }
             if (q == quest_) {
                 for (int s = 0; s < sim::kQuestSteps; ++s) {
-                    if (now.counts[s] > was.counts[s]) ember_[s] = 1.0f;
+                    if (now.counts[s] > was.counts[s]) {
+                        ember_[s] = 1.0f;
+                        awake_ = kWakeHold;
+                        focus_ = s;
+                    }
                 }
             }
         }
@@ -250,6 +262,24 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
             counts_[s] = counts_[s] < target ? std::min(target, counts_[s] + std::max(speed, seconds))
                                              : target;
             ember_[s] = std::max(0.0f, ember_[s] - seconds / kEmberSeconds);
+        }
+    }
+
+    // Awake while a kill is fresh, and always while the giver waits for the hand-in.
+    awake_ = std::max(0.0f, awake_ - seconds);
+    const bool ready = quest_ >= 0 && realm.quest(quest_).state == sim::QuestState::Ready;
+    wake_ = awake_ > 0.0f || ready ? std::min(1.0f, wake_ + step)
+                                   : std::max(0.0f, wake_ - seconds / kWakeFade);
+    if (quest_ >= 0) {
+        const sim::QuestRow& row = sim::questAt(quest_);
+        for (int s = 0; s < sim::kQuestSteps; ++s) {
+            const bool counted = s < row.stepCount && row.steps[s].kind == sim::QuestStepKind::Clear;
+            const bool full = ready ? !counted : focus_ < 0 || s == focus_;
+            const float target = full ? 1.0f : kDim;
+            // Faded away, a row takes its new weight at once: the next kill shows it already set.
+            if (wake_ <= 0.0f) lit_[s] = target;
+            else lit_[s] = lit_[s] < target ? std::min(target, lit_[s] + step)
+                                            : std::max(target, lit_[s] - step);
         }
     }
 
@@ -298,8 +328,8 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     }
 
     Drawn now;
-    now.quest = shown_ > 0.0f ? quest_ : -1;
-    now.shown = int(std::lround(shown_ * 64.0f));
+    now.quest = shown_ * wake_ > 0.0f ? quest_ : -1;
+    now.shown = int(std::lround(shown_ * wake_ * 64.0f));
     now.width = width;
     now.height = height;
     now.pointing = pointing_;
@@ -313,7 +343,9 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         for (int s = 0; s < sim::kQuestSteps; ++s) {
             now.counts[s] = int(counts_[s] * 8.0f);
             now.embers[s] = int(ember_[s] * 32.0f);
+            now.lit[s] = int(std::lround(lit_[s] * 32.0f));
         }
+        now.focus = ready ? -1 : focus_;
         if (now.progress.state == sim::QuestState::Resting) {
             now.minutesLeft = std::max<int64_t>(0, now.progress.availableAt - realm.wallClock()) / 60;
         }
@@ -380,7 +412,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
     {
         const float tall = now.state == sim::QuestState::Resting
                                ? 70.0f
-                               : 60.0f + float(row.stepCount) * (kStep + kRowGap + kBarGap);
+                               : 60.0f + float(row.stepCount) * (kStep + kRowGap);
         const float cx = float(width), cy = y + tall * 0.5f * u;
         const float sx = kScrimWide * u * 0.55f, sy = tall * u * 0.42f;
         constexpr int kColumns = 12, kRows = 12;
@@ -439,6 +471,8 @@ void Tracker::rebuild(const Play& play, int width, int height) {
             ink = ready ? style::kBloodHi : style::kAshInk2;
         }
         const float rowTall = kStep * u;
+        // The step just counted at full, the rest dimmed (Tracker::update).
+        const float rowAlpha = alpha * float(drawn_.lit[s]) / 32.0f;
         // The ember under a count that just moved: the hover's own, rising from the row's foot.
         const float ember = float(drawn_.embers[s]) / 32.0f;
         if (ember > 0.0f) {
@@ -447,27 +481,27 @@ void Tracker::rebuild(const Play& play, int width, int height) {
             canvas_.shade({left - 8.0f * u, y - 4.0f * u, kWide * u + 16.0f * u, rowTall + 12.0f * u},
                           clear, clear, hot, hot);
         }
-        quest_marks::mark(canvas_, kind, left + 7.0f * u, y + rowTall * 0.5f, u, alpha);
+        quest_marks::mark(canvas_, kind, left + 7.0f * u, y + rowTall * 0.5f, u, rowAlpha);
         const float baseline = controls::middle(y, rowTall, kStep * u);
-        line(canvas_, left + kMarkRoom * u, baseline, kStep * u, ink, alpha, want.line);
+        line(canvas_, left + kMarkRoom * u, baseline, kStep * u, ink, rowAlpha, want.line);
         if (counted) {
             const float shownCount = float(drawn_.counts[s]) / 8.0f;
             const std::string figure = std::to_string(int(std::floor(shownCount))) + " / " +
                                        std::to_string(goal);
             const float fw = lineWidth(kStep * u, figure);
             line(canvas_, right - fw, baseline, kStep * u, done ? style::kAshInk : style::kBoneHi,
-                 alpha, figure);
-            if (!done) {
+                 rowAlpha, figure);
+            // One bar, under the step just counted only, in the row gap so nothing shifts.
+            if (!done && s == drawn_.focus) {
                 const float barY = y + rowTall + kBarGap * u * 0.5f;
                 const float barLeft = left + kMarkRoom * u, barWide = right - barLeft;
                 const float h = std::max(1.0f, 2.0f * u);
-                canvas_.rect({barLeft, barY, barWide, h}, faded(style::kIronDk, alpha));
+                canvas_.rect({barLeft, barY, barWide, h}, faded(style::kIronDk, rowAlpha));
                 const float share = std::clamp(shownCount / float(std::max(1, goal)), 0.0f, 1.0f);
                 if (share > 0.0f) {
                     canvas_.rect({barLeft, barY, std::round(barWide * share), h},
-                                 faded(style::kBone, alpha));
+                                 faded(style::kBone, rowAlpha));
                 }
-                y += kBarGap * u;
             }
         }
         y += rowTall + kRowGap * u;
