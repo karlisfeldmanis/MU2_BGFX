@@ -962,9 +962,13 @@ void Hud::rebuild() {
         // colour out of it, and a wash over the top takes the brightness. MU dims a hotkey it
         // will not honour; this says the same thing louder, because a cooldown already owns the
         // "dark for a moment" language and the two must not read as each other.
-        const uint32_t tint = one.affordable ? 0xFFFFFFFFu : gfx::rgba(0.42f, 0.44f, 0.52f, 1.0f);
+        // A cooling skill is not throwable either, so it goes cold too, and the wipe over it
+        // still says how long: a long wait with a thin wipe left the rest of the icon at full
+        // colour and the box read as ready. The user, 2026-09-29.
+        const bool ready = one.affordable && one.cooling <= 0.0f;
+        const uint32_t tint = ready ? 0xFFFFFFFFu : gfx::rgba(0.42f, 0.44f, 0.52f, 1.0f);
         if (icon.valid()) canvas_.image(icon, box, tint);
-        if (!one.affordable) canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.02f, 0.45f));
+        if (!ready) canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.02f, 0.45f));
         if (one.cooling > 0.0f) {
             const float tall = box.h * std::min(1.0f, one.cooling);
             canvas_.rect({box.x, box.y, box.w, tall}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.62f));
