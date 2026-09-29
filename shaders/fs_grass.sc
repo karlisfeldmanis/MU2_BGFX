@@ -112,6 +112,24 @@ void main()
 		vec3 drift = broad > 0.0 ? vec3(1.22, 1.02, 0.58) : vec3(0.68, 1.06, 0.82);
 		albedo *= mix(vec3_splat(1.0), drift,
 		              smoothstep(0.25, 0.9, abs(broad)) * saturate(swingAmount - 1.0));
+		// And the tropics' own accents, past a vary of 1.8 and full at 2.4, the most the sheet
+		// carries (the user, 2026-09-29: "more colors on noria procedural grass, it need that
+		// tropical vibe"): crowns re-coloured, as a croton's or a red ti leaf's are -- a card
+		// in twelve crimson, one in twelve orange-bronze and one in eleven golden-lime --
+		// and the wettest drifts gone teal. A re-colour and not a multiply, as the grade above
+		// is: a green times anything is an olive, never a red, so the blade's own light and
+		// shade are kept and put under the new hue. The tips and not the blade, so the floor
+		// stays green and the colour is in its crown. Nought below 1.8: Lorencia is as it was.
+		float tropic = saturate((swingAmount - 1.8) / 0.6);
+		float crown = smoothstep(0.15, 0.8, up);
+		float lit = dot(albedo, vec3(0.299, 0.587, 0.114));
+		vec3 flush = vec3_splat(0.0);
+		if (v_light.z > 0.92)      flush = vec3(2.4, 0.55, 0.42);   // crimson
+		else if (v_light.z > 0.84) flush = vec3(2.2, 1.1, 0.3);     // orange-bronze
+		else if (v_light.z > 0.75) flush = vec3(1.6, 1.8, 0.36);    // golden-lime
+		if (flush.r > 0.0) albedo = mix(albedo, lit * flush, crown * tropic * 0.95);
+		float wettest = smoothstep(-0.75, -0.98, sin(vigour * 4.1 + 0.6));
+		albedo = mix(albedo, lit * vec3(0.55, 1.45, 1.35), wettest * tropic * 0.35);
 		// And each card a little off its neighbour on top of all that.
 		albedo *= 0.84 + tint * 0.32;
 	}
