@@ -32,11 +32,14 @@ constexpr float kMarkColumn = 16.0f;
 constexpr uint32_t kSocketShade = gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f);
 constexpr uint32_t kSocketRim = gfx::rgba(0.62f, 0.45f, 0.24f, 1.0f);
 constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 1.0f);
-constexpr uint32_t kSocketGlint = gfx::rgba(1.0f, 0.9f, 0.75f, 0.9f);
 constexpr uint32_t kRuneViolet = gfx::rgba(0.55f, 0.5f, 1.0f, 1.0f);
 constexpr uint32_t kRuneRose = gfx::rgba(1.0f, 0.39f, 0.70f, 1.0f);
 // The rune on the card's stage, standing beside the item, in the stage's units.
 constexpr float kRuneUnits = 20.0f;
+// The jewel's shape, as the bag's (game/ui/bag.cpp): width to height, and how much of its
+// picture's square the jewel fills.
+constexpr float kJewelAspect = 0.8f;
+constexpr float kRuneFills = 0.81f;
 constexpr float kMarkGap = 9.0f;
 // The corners, and how many segments each quarter turn is cut into. Six is smooth at this
 // radius and keeps the whole card inside one fan of 28 points.
@@ -305,29 +308,24 @@ void glyphAt(gfx::Canvas& canvas, Mark which, float cx, float cy, float size, ui
         }
         case Mark::Ring:
         case Mark::RingSet: {
-            // A socket: a bronze rim lit from above, a dark hole, and in a set one the stone
-            // with a glint at its upper left. Discs as fans, as the canvas has no round.
-            const auto disc = [&](float x, float y, float r, uint32_t ink) {
-                float xy[40];
-                for (int i = 0; i < 20; ++i) {
-                    const float a = float(i) * 6.2831853f / 20.0f;
-                    xy[i * 2] = x + std::cos(a) * r;
-                    xy[i * 2 + 1] = y + std::sin(a) * r;
-                }
-                canvas.polygon(nullptr, xy, nullptr, 20, ink);
-            };
+            // A socket: a bronze setting over a shade, a dark hole, and in a set one the stone.
             const uint32_t alpha = colour & 0xFF000000u;
             const auto faded = [&](uint32_t ink) { return (ink & 0x00FFFFFFu) | alpha; };
-            disc(cx, cy, h, faded(kSocketShade));
-            disc(cx, cy - h * 0.06f, h * 0.9f, faded(kSocketRim));
-            disc(cx, cy + h * 0.04f, h * 0.66f, faded(kSocketHole));
+            // The jewel's own lozenge (the user, 2026-09-29), as the bag draws its sockets.
+            const auto lozenge = [&](float hh, uint32_t ink) {
+                const float ww = hh * kJewelAspect;
+                const float xy[8] = {cx, cy - hh, cx + ww, cy, cx, cy + hh, cx - ww, cy};
+                canvas.polygon(nullptr, xy, nullptr, 4, ink);
+            };
+            lozenge(h, faded(kSocketShade));
+            lozenge(h * 0.88f, faded(kSocketRim));
+            lozenge(h * 0.6f, faded(kSocketHole));
             // Set, it holds a Rune of Creation drawn in the jewel's own two inks -- its model's
             // blue-violet and pink-red (Jewel22's blue_jewel and red_jewel) -- so the row says
             // which stone is in it and not only that one is (the user, 2026-09-29).
             if (which == Mark::RingSet) {
-                disc(cx, cy + h * 0.04f, h * 0.52f, faded(kRuneViolet));
-                disc(cx - h * 0.08f, cy - h * 0.04f, h * 0.36f, faded(kRuneRose));
-                disc(cx - h * 0.2f, cy - h * 0.17f, h * 0.13f, faded(kSocketGlint));
+                lozenge(h * 0.62f, faded(kRuneViolet));
+                lozenge(h * 0.4f, faded(kRuneRose));
             }
             break;
         }
@@ -385,7 +383,8 @@ void stand(Stage& stage, int32_t item, int refinement, Sheet& sheet) {
 // the three falloffs summed into one field and laid down as a grid of shaded quads, so it has no
 // edge anywhere. A rectangle blurred by a Gaussian is the product of two error functions, one
 // each way, which is what `edge` is.
-void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius) {
+void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius,
+                 float strength) {
     {
         const float reach = kFalls[2].sigma * 3.0f * u + kFalls[2].drop * u;
         const auto edge = [](float at, float low, float high, float sigma) {
@@ -411,7 +410,7 @@ void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius
                 sum += f.alpha * edge(px, box.x, box.right(), f.sigma * u) *
                        edge(py, box.y + f.drop * u, box.bottom() + f.drop * u, f.sigma * u);
             }
-            return std::min(0.85f, sum) * (1.0f - covered(px, py));
+            return std::min(0.85f, sum) * strength * (1.0f - covered(px, py));
         };
         // The grid's lines fall on the card's edges and round its corners, finer there. On an
         // even grid the cut landed inside a cell and was smeared across it: at the menu's size
@@ -493,7 +492,7 @@ constexpr float kHeroWordSize = 15.0f;
 constexpr float kRailSize = 13.5f;
 constexpr float kRailIndent = 13.0f;     // the rail's text, past its line
 constexpr float kMarkSize = 8.0f;        // a row's mark, smaller than a section's
-constexpr float kSocketSize = 14.0f;     // a socket's ring, near the row's own height
+constexpr float kSocketSize = 18.0f;     // a socket's setting, near the row's own height
 constexpr float kFootLine = 1.5f;        // a foot line, of the foot's size
 constexpr uint32_t kRailInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.18f);
 
@@ -893,7 +892,7 @@ void draw(gfx::Canvas& canvas, const Sheet& sheet, const gfx::Box& over, float s
                         fade(colourOf(row.markTone)));
                 // The rune itself in a set ring, over the flat stone, once its picture is taken.
                 if (row.mark == Mark::RingSet && sheet.picture.valid() && sheet.runeFrom.w > 0.0f) {
-                    const float side = kSocketSize * u * 0.85f;
+                    const float side = kSocketSize * u * 0.5f * 0.6f * 2.0f / kRuneFills;
                     canvas.region(sheet.picture, {mx - side * 0.5f, my - side * 0.5f, side, side},
                                   sheet.runeFrom, fade(0xFFFFFFFFu));
                 }

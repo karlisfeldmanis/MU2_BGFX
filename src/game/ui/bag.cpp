@@ -115,7 +115,13 @@ constexpr uint32_t kWornInk = gfx::rgba(1.0f, 1.0f, 1.0f, 0.88f);
 // bronze rim round the orange stone of a Rune of Creation or round a dark hole, stacked down the
 // piece when it has two or three, as Diablo II sets its holes over the picture. As large as
 // `kSocketStone` where the piece has the room, and smaller on a narrow one.
-constexpr float kSocketStone = 6.0f;
+constexpr float kSocketStone = 7.5f;
+// A socket is the jewel's own shape (the user, 2026-09-29: "border has to be same shape as
+// jewel"): the Rune of Creation photographs as an upright lozenge this much narrower than it is
+// tall, and the setting, the hole and the stone all follow it. `kRuneFills` is how much of its
+// square the stage's picture of the rune is jewel, so the stone can be sized to its hole.
+constexpr float kJewelAspect = 0.8f;
+constexpr float kRuneFills = 0.81f;
 constexpr float kSocketGap = 2.0f;
 // **The Rune of Creation in its socket, as its own picture** (the user, 2026-09-29: "we need to
 // show that jewel creation is attached in rune slot"). One rune stands on the bag's stage in a
@@ -129,7 +135,7 @@ constexpr gfx::Box kRuneStands{4.0f, panel::kHeight + 2.0f, 20.0f, 20.0f};
 // radius for all. The bag's rings and its runes are laid by this one rule.
 float socketsIn(const gfx::Box& box, int sockets, float unit, float* cy) {
     const float gap = kSocketGap * unit;
-    const float r = std::min({kSocketStone * unit, box.w * 0.38f,
+    const float r = std::min({kSocketStone * unit, box.w * 0.46f / kJewelAspect,
                               (box.h - gap * float(sockets + 1)) / float(sockets) * 0.5f});
     const float pitch = r * 2.0f + gap;
     const float top = box.midY() - pitch * float(sockets - 1) * 0.5f;
@@ -144,6 +150,13 @@ constexpr uint32_t kSocketHole = gfx::rgba(0.05f, 0.035f, 0.03f, 0.82f);
 
 bool creationJewel(const content::Tables& tables, const sim::Held& held) {
     return !held.empty() && sim::creation(tables.items[size_t(held.item)]);
+}
+
+// A lozenge the jewel's shape, `h` from its middle to its point.
+void lozenge(gfx::Canvas& canvas, float cx, float cy, float h, uint32_t colour) {
+    const float w = h * kJewelAspect;
+    const float xy[8] = {cx, cy - h, cx + w, cy, cx, cy + h, cx - w, cy};
+    canvas.polygon(nullptr, xy, nullptr, 4, colour);
 }
 
 // A filled circle, as a fan of sixteen: the canvas has rectangles and polygons, no round.
@@ -513,15 +526,15 @@ void Bag::rebuild(const sim::Realm& realm, Stage* stage) {
         const float r = socketsIn(box, sockets, k, centres);
         for (int at = 0; at < sockets; ++at) {
             const float cx = box.midX(), cy = centres[at];
-            disc(canvas_, cx, cy, r + std::max(1.0f, 0.6f * k), kSocketShade);
-            disc(canvas_, cx, cy - r * 0.05f, r * 0.92f, kSocketRim);
-            disc(canvas_, cx, cy + r * 0.03f, r * 0.68f, kSocketHole);
+            lozenge(canvas_, cx, cy, r + std::max(1.0f, 0.8f * k), kSocketShade);
+            lozenge(canvas_, cx, cy, r, kSocketRim);
+            lozenge(canvas_, cx, cy, r * 0.7f, kSocketHole);
             if (powerAt(held, at) == 0) continue;
-            // The rune itself, cut from the strip and set in the hole, a little proud of it as
-            // a stone stands in its setting; the ember where there is no picture yet.
+            // The rune itself, cut from the strip and set in the hole at the hole's own size, so
+            // the bronze shows all the way round it; the ember where there is no picture.
             if (picture.valid()) {
                 const float sx = picture.width / panel::kWidth, sy = picture.height / kStageTall;
-                const float side = r * 1.7f;
+                const float side = r * 0.7f * 2.0f / kRuneFills;
                 canvas_.region(picture, {cx - side * 0.5f, cy - side * 0.5f, side, side},
                                {kRuneStands.x * sx, kRuneStands.y * sy, kRuneStands.w * sx,
                                 kRuneStands.h * sy});

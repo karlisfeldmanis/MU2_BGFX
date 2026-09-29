@@ -217,17 +217,19 @@ void QuestDialog::layout(const Play& play) {
     bodyTall_ = y + 8.0f;
     scroll_ = std::clamp(scroll_, 0.0f, scrollMost());
 
-    // The answers at the foot, ranged right, the primary last.
+    // The answers at the foot, centred on the window (the user, 2026-09-29: "center quest
+    // buttons"), the primary last: a pair as one group, a lone answer on its own.
     const float buttonTop = kTall - 18.0f - style::kButtonM;
-    const float right = kWide - 18.0f;
+    const float middle = kWide * 0.5f;
     for (Box& one : buttons_) one = {0, 0, 0, 0};
     if (mode_ == Mode::Offer) {
-        buttons_[0] = {right - kButtonW, buttonTop, kButtonW, style::kButtonM};
-        buttons_[1] = {right - kButtonW * 2.0f - style::kGap, buttonTop, kButtonW, style::kButtonM};
+        const float left = middle - kButtonW - style::kGap * 0.5f;
+        buttons_[1] = {left, buttonTop, kButtonW, style::kButtonM};
+        buttons_[0] = {left + kButtonW + style::kGap, buttonTop, kButtonW, style::kButtonM};
     } else if (mode_ == Mode::HandIn) {
-        buttons_[0] = {right - kButtonWide, buttonTop, kButtonWide, style::kButtonM};
+        buttons_[0] = {middle - kButtonWide * 0.5f, buttonTop, kButtonWide, style::kButtonM};
     } else {
-        buttons_[1] = {right - kButtonW, buttonTop, kButtonW, style::kButtonM};
+        buttons_[1] = {middle - kButtonW * 0.5f, buttonTop, kButtonW, style::kButtonM};
     }
     const float side = style::kSmallSquare;
     buttons_[2] = {kWide - style::kPad - side, (style::kHead - side) * 0.5f, side, side};
