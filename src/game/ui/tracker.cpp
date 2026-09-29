@@ -24,8 +24,11 @@ constexpr float kRight = 44.0f;   // the right edge, in from the screen's
 constexpr float kTop = 196.0f;
 constexpr float kTitle = 18.0f, kTitleTrack = 0.08f;
 constexpr float kStep = 16.0f;    // a step's words
-constexpr float kRowGap = 10.0f;  // between rows
-constexpr float kBarGap = 6.0f;   // a count's bar under its row
+constexpr float kRowGap = 16.0f;  // between rows
+constexpr float kBarGap = 9.0f;   // a count's bar under its row
+// And a step that is not a count -- the walk back to the giver -- stands apart from the kills.
+constexpr float kTurnInGap = 8.0f;
+constexpr float kRuleGap = 16.0f;  // from the title's line to the first row
 constexpr float kMarkRoom = 24.0f;
 constexpr float kScrimWide = 260.0f;
 constexpr float kScrimAlpha = 0.55f;
@@ -37,7 +40,7 @@ constexpr float kBannerIn = style::kOpenSeconds, kBannerOut = 0.4f;
 // Awake: how long a kill holds the tracker up, how slowly it then goes, and the steps not just
 // counted. The user, 2026-09-29: fade out when nothing is killed, the killed row alone at full.
 constexpr float kWakeHold = 5.0f, kWakeFade = 0.8f;
-constexpr float kDim = 0.35f;
+constexpr float kDim = 0.45f;
 // Struck off, in seconds from the count reaching its goal: the bar has filled by kFlareAt, a
 // light runs along the row and the words turn gold and are struck through, it holds, and from
 // kFoldAt the row fades and folds away, gone at kStruckSeconds.
@@ -537,10 +540,15 @@ void Tracker::rebuild(const Play& play, int width, int height) {
     // rectangle fading one way only showed its top and bottom over bright paving.
     {
         float rows = 0.0f;
-        for (int s = 0; s < row.stepCount; ++s) rows += standing(float(drawn_.struck[s]) / 60.0f);
+        float apart = 0.0f;
+        for (int s = 0; s < row.stepCount; ++s) {
+            const float keep = standing(float(drawn_.struck[s]) / 60.0f);
+            rows += keep;
+            if (s > 0 && row.steps[s].kind != sim::QuestStepKind::Clear) apart += kTurnInGap * keep;
+        }
         const float tall = now.state == sim::QuestState::Resting
                                ? 70.0f
-                               : 60.0f + rows * (kStep + kRowGap);
+                               : 64.0f + rows * (kStep + kRowGap) + apart;
         const float cx = float(width), cy = y + tall * 0.5f * u;
         const float sx = kScrimWide * u * 0.55f, sy = tall * u * 0.42f;
         constexpr int kColumns = 12, kRows = 12;
@@ -581,7 +589,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
         canvas_.shade({left, y, third, std::max(1.0f, u)}, clear, iron, iron, clear);
         canvas_.rect({left + third, y, kWide * u - third, std::max(1.0f, u)}, iron);
     }
-    y += 12.0f * u;
+    y += kRuleGap * u;
 
     const bool ready = now.state == sim::QuestState::Ready;
     for (int s = 0; s < row.stepCount; ++s) {
@@ -596,9 +604,11 @@ void Tracker::rebuild(const Play& play, int width, int height) {
             ink = style::kAshInk;
         } else if (!counted) {
             kind = ready ? StepMark::Ready : StepMark::Waiting;
-            ink = ready ? style::kBloodHi : style::kAshInk2;
+            // Waiting, it still has to be read over bright ground: ash, not the darker ash.
+            ink = ready ? style::kBloodHi : style::kAshInk;
         }
         const float rowTall = kStep * u;
+        if (s > 0 && !counted) y += kTurnInGap * u * standing(float(drawn_.struck[s]) / 60.0f);
         // Struck off and folded away: gone from the list, the rows under it closed up.
         const float struck = float(drawn_.struck[s]) / 60.0f;
         const float keep = standing(struck);
@@ -633,7 +643,8 @@ void Tracker::rebuild(const Play& play, int width, int height) {
                 const float barY = y + rowTall + kBarGap * u * 0.5f;
                 const float barLeft = left + kMarkRoom * u, barWide = right - barLeft;
                 const float h = std::max(1.0f, 2.0f * u);
-                canvas_.rect({barLeft, barY, barWide, h}, faded(style::kIronDk, rowAlpha));
+                // The whole run faintly, so the share reads as a share and not as an underline.
+                canvas_.rect({barLeft, barY, barWide, h}, faded(style::kIron, rowAlpha * 0.5f));
                 const float share = std::clamp(shownCount / float(std::max(1, goal)), 0.0f, 1.0f);
                 if (share > 0.0f) {
                     canvas_.rect({barLeft, barY, std::round(barWide * share), h},
