@@ -15,7 +15,7 @@ QuestRow marlon() {
     QuestRow row;
     row.giver = 229;
     row.giverName = "Marlon";
-    row.title = "Clear Lorencia";
+    row.title = "Lorencia, Once More";
     // His story, on the user's word (2026-09-29: "some kind of story ... based on MU story
     // line"). MU's own premise: Kundun, sealed in Kalima, and his minions loose on the continent
     // as the seal fails (Blood Castle's "Kundun minions", the Lost Kalima gates), with the
