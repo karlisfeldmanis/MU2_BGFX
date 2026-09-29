@@ -1130,7 +1130,9 @@ void Play::speak(const sim::Happening& happening) {
     static const char* const kPlain[] = {"Come here, bastard!", "Not past this gate!",
                                          "To arms! Monster at the gate!"};
 
-    const uint32_t pick = happening.whom + happening.tick;
+    // The speaker too: a road's two guards take on the same monster on the same tick, and
+    // without him in it they said the same line together.
+    const uint32_t pick = happening.whom + happening.tick + happening.who;
     // Who walks the rounds a Chat or a Salute is about, by MU's NPC number: 229 Marlon, 257 Peia.
     const auto roundsOf = [&](uint32_t id) {
         const sim::Body* one = realm_.find(id);

@@ -132,6 +132,17 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // draws, which is itself part of the seeded stream and is why the attempt count is
     // bounded rather than "until it works".
     size_t placed = 0, short_ = 0;
+    // And kept clear of Noria's guard posts (kPostClearing).
+    const auto byPost = [&](int column, int row) {
+        if (tables_->map != kClearedMap) return false;
+        for (const content::Townsperson& person : tables_->folk) {
+            if (wardenRow(person.number) == nullptr) continue;
+            if (std::max(std::abs(column - person.x), std::abs(row - person.y)) <= kPostClearing) {
+                return true;
+            }
+        }
+        return false;
+    };
     for (const content::MonsterNest& nest : tables_->nests) {
         const content::MonsterKind& kind = tables_->kinds[nest.kind];
         for (uint32_t n = 0; n < nest.count; ++n) {
@@ -144,7 +155,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
                 // fraction of a percent, which is enough to put a Hound inside the ring where
                 // nothing may be attacked.
                 found = tables_->grid.open(tileColumn, tileRow, content::kWallCharacter) &&
-                        !tables_->grid.safe(tileColumn, tileRow);
+                        !tables_->grid.safe(tileColumn, tileRow) && !byPost(tileColumn, tileRow);
             }
             if (!found) {
                 ++short_;

@@ -170,6 +170,15 @@ inline const WardenRow* wardenRow(int32_t number) {
 // who cannot take a step never reaches a monster that stops two tiles off, which is where one
 // led to the gate ends up; eight is his sight and one more, so he meets what he has seen.
 constexpr int kWardenLeash = 8;
+// Round each of Noria's guard posts no monster is placed, in tiles on MU's measure, so its
+// roads are not a fight on every tick. **invention**, the user's of 2026-09-29: "there is too
+// much monsters near entrances ... so its not making problems for guard scenes". Noria's nests
+// are 0.75's quadrant-wide scatters and reach right to the town's edge. A monster drawn inside
+// draws again, so every breed keeps its count; a respawn rises on its own home tile, which is
+// outside. Nine is his leash and one more: at twelve a seeded run's guards struck 3 blows in
+// 20000 ticks, at nine 57, where the whole scatter gave 986. Lorencia's gates keep MU's own.
+constexpr uint32_t kClearedMap = 3;
+constexpr int kPostClearing = 9;
 // What a guard's blow takes, as a share of the monster's whole health. **invention**: at
 // OpenMU's 180 to 195 a blow he killed everything in Lorencia with one swing, which is no fight
 // to watch and none to join (the user, 2026-09-28). The row's own band still rolls -- the hit
