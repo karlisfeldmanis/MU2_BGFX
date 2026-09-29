@@ -42,9 +42,8 @@ QuestRow marlon() {
         "while the seal held. I am what is left of that oath.\"";
     row.offer[1] =
         "\"But the seal is cracking! Every night more of his brood climbs out of the Dungeon to "
-        "the east. The dead that walk the old road. The Liches that drive them. The Giants that "
-        "follow the noise. And the beasts of the fields have gone mad with it: the spiders, the "
-        "Budge Dragons, and the Bull Fighters in the hills.\"";
+        "the east, and the dead walk the old road again. Even the beasts of the fields have gone "
+        "mad with it.\"";
     row.offer[2] =
         "\"The guards hold the walls, and that is all they hold. I want the fields cleared. Not "
         "thinned. Cleared! Every breed of them. It will not mend the seal. But it tells whatever "
@@ -70,11 +69,17 @@ QuestRow marlon() {
         "\"Back already? I did not believe it could be done so quickly. The fields are quiet, "
         "and Lorencia thanks you.\"";
     row.handIn[1] =
-        "\"Take these. May they serve you well, until all of MU is free of Kundun's darkness.\"";
+        "\"Take these. May they serve you well, until all of MU is free of Kundun's darkness. "
+        "And when you are ready, ride for Devias. Apostle Devin holds the line there, and he "
+        "will have need of a sword like yours.\"";
     row.resting =
         "\"Rest while you can. By morning they will have crept up out of the Dungeon again, and "
         "I will need you.\"";
-    // Read by Chatterbox (Resemble AI, MIT) off Kokoro's bm_george, dramatic: source/voice.
+    // The way on, once Lorencia is clear (the user, 2026-09-29): Devias, and its quest giver.
+    // Apostle Devin is MU's own there (MONSTER 406, the third class's quest in Season Two and
+    // after, not 0.75); Devias is not built yet, so for now this is only the tip.
+    row.next = "Seek Apostle Devin in Devias";
+    // Read by Chatterbox (Resemble AI, MIT) off Kokoro's bm_lewis, heroic: source/voice.
     row.voice = "marlon";
     row.steps[0] = {QuestStepKind::Clear, 3, 40, "Spiders"};
     row.steps[1] = {QuestStepKind::Clear, 2, 35, "Budge Dragons"};
@@ -148,10 +153,12 @@ QuestRow peia() {
         "forest is singing again.\"";
     row.handIn[1] =
         "\"Take these, with the elves' blessing. May they guide your arrows, until all of MU "
-        "is free of Kundun's darkness.\"";
+        "is free of Kundun's darkness. When you are ready, go to Devias, beyond Lorencia. "
+        "Apostle Devin waits there; he will know what must be done next.\"";
     row.resting =
         "\"Rest, and listen to it while it lasts. The dark will creep back into the roots by "
         "morning.\"";
+    row.next = "Seek Apostle Devin in Devias";  // as Marlon's
     row.voice = "peia";
     row.steps[0] = {QuestStepKind::Clear, 26, 40, "Goblins"};
     row.steps[1] = {QuestStepKind::Clear, 27, 35, "Chain Scorpions"};

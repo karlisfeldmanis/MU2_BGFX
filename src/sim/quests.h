@@ -74,6 +74,10 @@ struct QuestRow {
     const char* underway = "";
     const char* handIn[2] = {};
     const char* resting = "";
+    // Where to go once it is done: the tip under the "Quest complete" banner and on the resting
+    // tracker, the written reminder of what the giver says at the end of his hand-in. Empty for
+    // none.
+    const char* next = "";
     // His voice: assets/voice/<voice>/<voice>_offer.wav, _underway, _handin and _resting, one
     // file a page, each the page's words read whole. Empty for a giver who is not voiced.
     const char* voice = "";

@@ -85,7 +85,7 @@ private:
     bool strikeHeard_ = false;
 
     // The banner: what it says, and where it is in its life.
-    std::string bannerKicker_, bannerTitle_, bannerLine_, bannerZen_;
+    std::string bannerKicker_, bannerTitle_, bannerLine_, bannerZen_, bannerNext_;
     float bannerAge_ = -1.0f;
     float bannerHold_ = 2.2f;
 

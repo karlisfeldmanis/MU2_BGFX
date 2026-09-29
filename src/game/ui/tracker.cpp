@@ -305,6 +305,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                 bannerTitle_ = row.title;
                 bannerLine_.clear();
                 bannerZen_.clear();
+                bannerNext_.clear();
                 bannerHold_ = 2.2f;
                 bannerAge_ = 0.0f;
                 for (int s = 0; s < sim::kQuestSteps; ++s) counts_[s] = float(now.counts[s]);
@@ -313,6 +314,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                 bannerTitle_ = std::string("Return to ") + row.giverName;
                 bannerLine_.clear();
                 bannerZen_.clear();
+                bannerNext_.clear();
                 bannerHold_ = 2.2f;
                 bannerAge_ = 0.0f;
             } else if (now.state == sim::QuestState::Resting &&
@@ -324,7 +326,9 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                                                        was.completions))) +
                               " experience      ";
                 bannerZen_ = grouped(row.zen) + " Zen";
-                bannerHold_ = 5.0f;  // longer than the others: the stinger is still going
+                bannerNext_ = row.next;
+                // Longer than the others: the stinger is still going, and the way on is to read.
+                bannerHold_ = bannerNext_.empty() ? 5.0f : 6.5f;
                 bannerAge_ = 0.0f;
             }
             if (now.state != was.state) {
@@ -550,7 +554,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
             if (s > 0 && row.steps[s].kind != sim::QuestStepKind::Clear) apart += kTurnInGap * keep;
         }
         const float tall = now.state == sim::QuestState::Resting
-                               ? 70.0f
+                               ? (*row.next ? 92.0f : 70.0f)
                                : 64.0f + rows * (kStep + kRowGap) + apart;
         const float cx = float(width), cy = y + tall * 0.5f * u;
         const float sx = kScrimWide * u * 0.55f, sy = tall * u * 0.42f;
@@ -577,6 +581,7 @@ void Tracker::rebuild(const Play& play, int width, int height) {
         title(canvas_, left, y + 36.0f * u, 15.0f * u, 0.06f, style::kBone2, alpha, row.title);
         line(canvas_, left, y + 58.0f * u, 15.0f * u, style::kAshInk, alpha,
              "Offered again in " + quest_marks::wait(drawn_.minutesLeft * 60 + 59));
+        if (*row.next) line(canvas_, left, y + 80.0f * u, 15.0f * u, style::kBone2, alpha, row.next);
         return;
     }
 
@@ -677,8 +682,9 @@ void Tracker::rebuildBanner(int width, int height) {
     // the words. The user, 2026-09-28: "use similar shadow behind quest messages as map names".
     // Wider and a little taller than the map name's, for the longer title and the reward line.
     {
-        const float cy = top + (bannerLine_.empty() ? 40.0f : 52.0f) * u;
-        const float sx = 290.0f * u, sy = (bannerLine_.empty() ? 50.0f : 60.0f) * u;
+        const float cy = top + (bannerLine_.empty() ? 40.0f : bannerNext_.empty() ? 52.0f : 64.0f) * u;
+        const float sx = 290.0f * u,
+                    sy = (bannerLine_.empty() ? 50.0f : bannerNext_.empty() ? 60.0f : 70.0f) * u;
         constexpr int kColumns = 16, kRows = 8;
         const auto at = [&](int i, int j) {
             const float gx = -3.0f + 6.0f * float(i) / kColumns;
@@ -720,6 +726,13 @@ void Tracker::rebuildBanner(int width, int height) {
         const float base = top + 88.0f * u + rise;
         line(banner_, x, base, size, style::kBone, alpha, bannerLine_);
         line(banner_, x + lw, base, size, kZenGold, alpha, bannerZen_);
+    }
+    if (!bannerNext_.empty()) {
+        // The way on, under the reward: quieter, the resting tracker keeps it after.
+        const float size = 15.0f * u;
+        const float nw = lineWidth(size, bannerNext_);
+        line(banner_, cx - nw * 0.5f, top + 114.0f * u + rise, size, style::kBone2, alpha,
+             bannerNext_);
     }
 }
 

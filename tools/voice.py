@@ -32,13 +32,22 @@ import tempfile
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 QUESTS = ROOT / "src" / "sim" / "quests.cpp"
 REFS = ROOT / "source" / "voice" / "ref"
+# Every pause in a raw line held to 0.3 s, before any finish: Chatterbox leaves a second or more at
+# a dash or a full stop, and a paragraph's tail, and Peia's first takes stood 4.3 s silent in the
+# middle of her thanks (the user, 2026-09-29: "pretty big pauses"). Her hand-in went 28.7 s to 21.6.
+SQUEEZE = ("silenceremove=start_periods=1:start_threshold=-45dB:stop_periods=-1:"
+           "stop_duration=0.3:stop_threshold=-45dB:stop_silence=0.3,")
 POLISH = ("bass=g=2:f=140,acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
-          "apad=pad_dur=0.6,loudnorm=I=-16:TP=-1.5:LRA=11")
+          "apad=pad_dur=0.4,loudnorm=I=-16:TP=-1.5:LRA=11")
 # Each giver's reading: the cloned reference, how dramatic (`exaggeration`, 0.5 the model's even
 # reading), how deliberate (`cfg_weight`, lower is slower), and the finish.
 VOICES = {
-    # Marlon: pleading, dry. Kokoro-82M's bm_george.
-    "marlon": dict(ref="bm_george.wav", exaggeration=0.85, cfg_weight=0.35, polish=POLISH),
+    # Marlon: lower and heroic (the user, 2026-09-29), no longer pleading. Kokoro-82M's bm_lewis
+    # (Apache 2.0), 116 Hz median against bm_george's 141, reading a rallying line, so the clone
+    # carries the delivery; steadier than the first take's 0.85, a semitone down, more chest.
+    "marlon": dict(ref="bm_lewis.wav", exaggeration=0.6, cfg_weight=0.5,
+                   polish="asetrate=24000*0.944,aresample=24000,atempo=1.0593,"
+                          "bass=g=2:f=110," + POLISH),
     # Peia: low and mystical (the user, 2026-09-29). Kokoro-82M's af_nicole (Apache 2.0), the
     # lowest of six female voices measured -- 156 Hz median against 180 to 220 -- and breathy;
     # read calm rather than pleading, a little slower, taken down a semitone (asetrate 0.94,
@@ -51,7 +60,8 @@ VOICES = {
 
 # Words the model says wrong, spelled as they are said: the window keeps the written form. MU is
 # one syllable, "moo" (the user, 2026-09-29: "Moo is correct").
-SPOKEN = {r"\bMU\b": "Moo"}
+# A dash is read as a comma: the model held a long breath at one.
+SPOKEN = {r"\bMU\b": "Moo", r"\s*--\s*": ", "}
 
 
 def spoken(words):
@@ -110,7 +120,7 @@ def main():
                 raw = pathlib.Path(scratch) / f"{page}{i}.raw.wav"
                 torchaudio.save(str(raw), wav, model.sr)
                 part = pathlib.Path(scratch) / f"{page}{i}.wav"
-                subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", how["polish"],
+                subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", SQUEEZE + how["polish"],
                                 "-ar", "24000", "-ac", "1", "-sample_fmt", "s16", str(part)],
                                check=True)
                 parts.append(part)
