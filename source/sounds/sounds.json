@@ -563,15 +563,15 @@
       "gain_note": "Taken down again, -14 to -17 dB, when the user asked for the wind a little quieter (2026-09-29), with the rain under it made one level in both worlds. Before that, taken from -8 to -14 dB, about half as loud, when the user found it too loud in Lorencia (2026-09-28). Cut, where every other correction here is a lift, and for the opposite half of the same argument. The file is not loud - stereo 22 kHz peaking at 0.187, an RMS of -27 dB, well under pDropItem's -19.5 - but it is the only sound in the game that is unplaced and never stops, so it is the one thing a placed sound has to be heard over from across the square. What that sounded like was a wind that sat on top of the footsteps. Measured against the bed rather than against the peak, which is the number that matters for something you hear for an hour.",
       "note": "The one ambient Lorencia has. Its own switch is the tile texture under the hero, which is the same blunt test the leaves already use and the roofs already fade on - see World.Indoors - so the wind stops exactly when the roof comes off and the two can never disagree. Rain is the other half of the original's branch and there is no rain here yet."
     },
-    "world_forest": {
+    "world_jungle": {
       "files": [
-        "aforest.wav"
+        "ajungle.wav"
       ],
-      "from": "SOUND_FOREST01, Data\\Sound\\aForest.wav. PlayWorldAmbientSounds in SceneManager.cpp:868 plays it for WD_3NORIA alone, and unlike the wind beside it the call carries no `true`: `PlayBuffer(SOUND_FOREST01)` is a one-shot, fired on rand_fps_check(512) - about once every 512 rendered frames, so roughly every eight seconds at sixty. StopInactiveAmbientSounds stops it on every world that is not Noria.",
-      "loop": false,
-      "gain_db": -10.0,
-      "gain_note": "Cut further than the wind, for the opposite reason to the wind's cut. The wind is a bed and has to sit under everything; this is ten and a half seconds of birdsong arriving over the top of it every eight, and at its own level it reads as a second bed rather than as something happening. Heard as an event, it wants to be quieter than the thing it is heard against is loud.",
-      "note": "Noria's own, and the whole of what makes a wood sound different from a square: the elf town plays Lorencia's wind loop *and* this, where Lorencia plays the wind alone. Two ambients rather than one, and the second occasional rather than looped."
+      "from": "Not MU's file. emycutiepants 'jungle ambience' (Pixabay 339096, downloads/), given by the user 2026-09-29 for Noria's day: 213 s of 44.1 kHz stereo made 22 kHz mono 16-bit, with its last two seconds folded over its first two at equal power so the loop has no seam, and brought to a 0.95 peak (the mono sum went over). 211 s, an RMS of -24.1 dB. It replaces SOUND_FOREST01 (aForest.wav), which PlayWorldAmbientSounds fired for WD_3NORIA as a one-shot on rand_fps_check(512).",
+      "loop": true,
+      "gain_db": -20.0,
+      "gain_note": "Cut to sit with the other beds: the wind lands near -44 dB after its -17 dB and the rain near -46 dB at its 0.33 level, and this file is some 20 dB hotter than either.",
+      "note": "**An invention, marked.** Noria's daytime bed in place of MU's occasional birdsong, at the user's word (2026-09-29): looped and unplaced, off under a roof as Lorencia's wind is, and faded out as the rain comes in -- 'when its raining then we dont use this sounds'. It is the whole of Noria's air: the wind loop is not loaded there (Play::windy_), 'we have our new ambient sound which is perfect'."
     },
     "world_rain": {
       "files": [
@@ -581,7 +581,7 @@
       "loop": true,
       "gain_db": 0.0,
       "gain_note": "Left where it is: an RMS of -36.7 dB is already where the wind lands after its own -8 dB cut, so the two beds sit level.",
-      "note": "**An invention, marked.** Noria is tropical by the user's choice, and the rain is its bed under the forest's birdsong: looped and unplaced, switched with the wind under a roof."
+      "note": "**An invention, marked.** Noria is tropical by the user's choice, and the rain is its bed in place of the jungle's: looped and unplaced, switched with the wind under a roof."
     },
     "world_bonfire": {
       "files": [

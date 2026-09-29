@@ -27,6 +27,7 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     ground_ = ground;
     figures_ = figures;
     bare_ = bareName;
+    windy_ = world != "noria";
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
     std::string error;
     if (!content::loadTables(path, tables_, error)) {
@@ -390,7 +391,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.shockFemale = sound_.load("player_shock_female", true);
     heard_.grass = sound_.load("player_step_grass", true);
     heard_.soil = sound_.load("player_step_soil", true);
-    heard_.wind = sound_.load("world_wind", false);
+    if (windy_) heard_.wind = sound_.load("world_wind", false);
     heard_.fire = sound_.load("world_bonfire", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);
     // The townsfolk with a voice of their own. rand_fps_check(N) is one frame in N at the 60

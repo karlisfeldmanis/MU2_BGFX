@@ -645,6 +645,10 @@ private:
     const content::Ground* ground_ = nullptr;
     Figures* figures_ = nullptr;
     std::string bare_;  // the naked class body redress() dresses back over; see open()
+    // Whether the world's air is MU's wind loop. Not Noria's since 2026-09-29: its jungle bed
+    // (game/world/weather.h) is the whole of its air, the user's word -- "dont use lorencia
+    // wind in noria, we have our new ambient sound which is perfect".
+    bool windy_ = true;
 
     Showing showing_;
     Marker marker_;

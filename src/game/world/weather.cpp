@@ -21,9 +21,6 @@ constexpr float kWetLow = 180.0f, kWetHigh = 300.0f;
 // steps fills the pool (CreateHeavenRain's `RainCurrent * MAX_LEAVES / 100`).
 constexpr float kTurnSeconds = 100.0f / 25.0f;
 
-// rand_fps_check(512) against the 60-a-second frame it is written for: one frame in 512.
-constexpr float kBirdEvery = 512.0f / 60.0f;
-
 // How loud the rain's loop is at full rain, the same in every world: what Lorencia's drizzle
 // was heard at when the loop followed pour(), a third of the file's level. It follows the
 // wetness alone now, not how many drops fall -- the user, 2026-09-29, hearing Noria's downpour
@@ -101,7 +98,7 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // visible"), a drizzle under the moon rather than Noria's downpour.
     rains_ = world == "noria" || world == "lorencia";
     peak_ = world == "lorencia" ? 0.33f : 1.0f;
-    forest_ = world == "noria";
+    jungle_ = world == "noria";
     if (force == "rain" || force == "dry" || force == "storm") {
         forced_ = true;
         rains_ = force != "dry";
@@ -121,27 +118,27 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
         wet_ = false;
         left_ = rains_ ? kDryLow * 0.5f : 0.0f;
     }
-    birdIn_ = kBirdEvery * (0.5f + random01());
     if (sound_) {
         if (rains_) rainSound_ = sound_->load("world_rain", false);
-        if (forest_) forestSound_ = sound_->load("world_forest", false);
+        if (jungle_) jungleSound_ = sound_->load("world_jungle", false);
         if (rains_) thunderSound_ = sound_->load("world_thunder", false);
         for (int f = 0; f < sound_->files(thunderSound_); ++f) {
             flashes_.push_back(flashOf(sound_->loudness(thunderSound_, f)));
         }
     }
-    if (rains_ || forest_) {
+    if (rains_ || jungle_) {
         core::logf("weather %s: %s%s", world.c_str(),
                    forced_ ? (storm_ ? "a storm, held by --weather"
                            : wet_ ? "raining, held by --weather"
                                   : "dry, held by --weather")
                            : (rains_ ? "dry and wet spells in turn" : "never rains"),
-                   forest_ ? ", the forest's birdsong" : "");
+                   jungle_ ? ", the jungle's day" : "");
     }
 }
 
 void Weather::shutdown() {
     if (sound_ && rainSound_ >= 0) sound_->loop(rainSound_, false);
+    if (sound_ && jungleSound_ >= 0) sound_->loop(jungleSound_, false);
     *this = Weather();
 }
 
@@ -191,12 +188,11 @@ void Weather::update(float seconds, bool indoors) {
         }
     }
 
-    if (forestSound_ >= 0) {
-        birdIn_ -= seconds;
-        if (birdIn_ <= 0.0f) {
-            birdIn_ = kBirdEvery * (0.5f + random01());
-            if (!indoors && share_ < 0.5f) sound_->play(forestSound_);
-        }
+    // The jungle is what the rain is not: all of it dry, none of it once the rain is in, and
+    // the four-second turn between is the crossfade.
+    if (jungleSound_ >= 0) {
+        sound_->loop(jungleSound_, share_ < 1.0f && !indoors);
+        sound_->level(jungleSound_, 1.0f - share_);
     }
 }
 
