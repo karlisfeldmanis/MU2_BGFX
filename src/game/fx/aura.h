@@ -98,21 +98,25 @@ inline constexpr Recipe kGuarding{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f,
                                   true, true,  true,  {0.18f, 1.0f, 0.35f}};
 // And the third, which is wholly this engine's: a skill read off an orb (user, 2026-09-23).
 // Nothing in MU is being copied here -- 0.75's client never reads an orb out of the bag -- so
-// what it is traced to instead is the SOUND, `player_learn_skill`, a 0.60 s swoosh the user
-// supplied. The picture is cut to the wave and every number below comes off it:
+// what it is traced to instead is the SOUND, `player_learn_skill`, a 2.39 s dark-magic stab the
+// user supplied for every skill read off the bag, orb or scroll. The picture is cut to the wave
+// and every number below comes off it:
 //
-//   * **sixteen ticks.** The fade law is fixed at ten (`kDims`), so a burst holds full light
-//     for `ticks - 10` and then falls by 1/1.3 a tick. The swell arrives at 0.228 s, which is
-//     six ticks; sixteen puts the start of the fall on the swell's peak and the last of the
-//     light 40 ms past the end of the file. The wave's own fall and the flares' are the same
-//     shape, so nothing had to be bent to match -- that is why sixteen and not fifteen.
+//   * **twenty-nine ticks.** The fade law is fixed at ten (`kDims`), so a burst holds full
+//     light for `ticks - 10` and then falls by 1/1.3 a tick. The wave stabs at 0.08 s and
+//     0.16 s and its tonal body holds within a few dB of the top to 0.75 s, which is nineteen
+//     ticks; twenty-nine puts the start of the fall on the body giving way (it drops 5 dB in
+//     the next 50 ms) and the light at -23 dB by 1.16 s, where the wave is some 15 dB down and
+//     still ringing. Its tail runs a second past that; the ribbons do not wait for it.
+//   * **a slower climb.** 12 units a tick, so 348 over the twenty-nine ticks -- about what the
+//     old swoosh's 20 a tick came to over sixteen, stretched to a heavier sound.
 //   * **eight ribbons, spread.** Evenly round the ring, as the guard's five are: where a flare
 //     starts is drawn at random for a level, which is right for a burst of celebration and
 //     wrong for this. Even spacing is the difference between a scatter and a figure. Six was
 //     the first try and read as one stray arc at his knee; eight is a sweep.
-//   * **they leave.** 320 units over the sixteen ticks, so from his feet to well over his head
-//     by the end -- MU's climb, which is what makes a level-up's flares LEAVE, and the right
-//     verb here too: the orb is spent and what was in it has gone into him.
+//   * **they leave.** From his feet to well over his head by the end -- MU's climb, which is
+//     what makes a level-up's flares LEAVE, and the right verb here too: the orb or the scroll
+//     is spent and what was in it has gone into him.
 //   * **a ring wider than he is.** 42 against the level-up's 40, with a 34-wide cross against
 //     its 40: it has to stand OUTSIDE his silhouette to read as a thing going round him. At
 //     24, the first try, it was inside his legs and looked like a snagged ribbon.
@@ -126,7 +130,7 @@ inline constexpr Recipe kGuarding{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f,
 // honest blue-white -- came out through that gold as a yellow-green thread, so blue is carried
 // past one into the HDR at 2.40 and red cut to 0.15. Judged on fixed-step shots at 40 ms a
 // frame with `--learn`, which is what that switch is for.
-inline constexpr Recipe kLearning{8,    42.0f, 34.0f, 16.0f, 20.0f, 20.0f, 10.0f, 0.0f,
+inline constexpr Recipe kLearning{8,    42.0f, 34.0f, 29.0f, 12.0f, 12.0f, 10.0f, 0.0f,
                                   true, false, false, {0.15f, 0.45f, 2.40f}};
 // The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
 // the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
@@ -149,8 +153,8 @@ public:
     // not the character's: a ring on the ground is a ring on the ground.
     void rise(const float feet[3], float yaw, float metresPerTile);
 
-    // A skill read off an orb: thrown like the level-up and never following, because the moment
-    // is over in two thirds of a second and he cannot walk out of it. See kLearning.
+    // A skill read off an orb or a scroll: thrown like the level-up and never following, because
+    // the moment is over in a second and he cannot walk out of it. See kLearning.
     void learn(const float feet[3], float yaw, float metresPerTile);
     // Any recipe thrown once where she stands: her Heal and Greater Damage.
     void cast(const Recipe& recipe, const float feet[3], float yaw, float metresPerTile) {
