@@ -18,3 +18,5 @@ mkdir -p assets
 python3 tools/sync.py --src "$SRC" --dst assets "$@"
 # The quest givers' voices, finished WAVs out of tools/voice.py: copied as they are.
 [ -d source/voice ] && rsync -a --exclude ref source/voice/ assets/voice/
+# The stingers, the user's own music (Sound::stinger): copied as they are, beside MU's tracks.
+[ -d source/music ] && rsync -a source/music/ assets/music/

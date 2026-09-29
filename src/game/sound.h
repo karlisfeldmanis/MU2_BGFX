@@ -154,6 +154,12 @@ public:
     void voice(const std::string& relative);
     void stopVoice();
 
+    // A short piece of music, `relative` to the assets, played once at `gain` and unplaced, in
+    // its own slot: a quest handed in. Streamed at the file's own quality, where an event is
+    // cooked to mono 22 kHz; it neither cuts a voice nor replaces the track. A new one cuts the
+    // last. Ours, like the voice.
+    void stinger(const std::string& relative, float gain = 0.7f);
+
     // The whole mix's level, 0 to 1: the game menu's volume. A muted run stays silent.
     void setVolume(float level);
 

@@ -216,6 +216,8 @@ struct Sound::Impl {
     // A spoken line (Sound::voice): one, streamed, played once.
     ma_sound voiceLine{};
     bool voiceReady = false;
+    ma_sound stingerLine{};
+    bool stingerReady = false;
 
     // The room: the world's bus split into the dry and the reverb's send.
     ma_splitter_node split{};
@@ -675,9 +677,40 @@ void Sound::stopVoice() {
     impl_->voiceReady = false;
 }
 
+void Sound::stinger(const std::string& relative, float gain) {
+    if (!impl_ || !impl_->open) return;
+    Impl& im = *impl_;
+    if (im.stingerReady) {
+        ma_sound_stop(&im.stingerLine);
+        ma_sound_uninit(&im.stingerLine);
+        im.stingerReady = false;
+    }
+    const std::string path = im.assetDir + "/" + relative;
+    if (!core::fileExists(path)) {
+        core::logError("sound: no stinger %s (tools/sync.sh copies source/music)", path.c_str());
+        return;
+    }
+    // As the voice is: streamed at the file's own stereo and rate, straight to the engine.
+    const ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
+    if (ma_sound_init_from_file(&im.engine, path.c_str(), flags, nullptr, nullptr,
+                                &im.stingerLine) != MA_SUCCESS) {
+        core::logError("sound: the stinger %s would not open", path.c_str());
+        return;
+    }
+    im.stingerReady = true;
+    ma_sound_set_volume(&im.stingerLine, std::clamp(gain, 0.0f, 1.0f));
+    ma_sound_start(&im.stingerLine);
+    core::logf("sound: stinger %s", relative.c_str());
+}
+
 void Sound::shutdown() {
     if (!impl_ || !impl_->open) return;
     stopVoice();
+    if (impl_->stingerReady) {
+        ma_sound_stop(&impl_->stingerLine);
+        ma_sound_uninit(&impl_->stingerLine);
+        impl_->stingerReady = false;
+    }
     // At once here: the device is closing and nothing is left to hear a fade.
     for (int slot = 0; slot < 2; ++slot) {
         if (!impl_->musicReady[slot]) continue;

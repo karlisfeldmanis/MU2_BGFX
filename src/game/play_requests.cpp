@@ -317,9 +317,14 @@ bool Play::completeQuest(int quest, int choice) {
     const bool paid = realm_.completeQuest(quest, choice);
     core::logf("window: hand in quest %d, choice %d, %s", quest, choice,
                paid ? "paid" : "refused (not ready, no choice, or no room)");
-    // A thing arriving in the bag, as a purchase is heard; refused, the window's own no.
-    if (paid) sound_.play(heard_.take);
-    else ui(Ui::Refused);
+    // The user's stinger, under the "Quest complete" banner the tracker raises this same frame,
+    // the world leaning back for it; refused, the window's own no.
+    if (paid) {
+        sound_.stinger("music/quest_complete.wav");
+        sound_.duck();
+    } else {
+        ui(Ui::Refused);
+    }
     return paid;
 }
 
