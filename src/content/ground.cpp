@@ -4,6 +4,7 @@
 
 #include <bimg/decode.h>
 #include <bx/allocator.h>
+#include <bx/math.h>
 
 #include <algorithm>
 #include <cctype>
@@ -389,11 +390,17 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     // The world is metres and one tile is one metre; the content counts a hundred units to
     // the tile and is divided on the way in. docs/conventions.md.
     metresPerTile_ = unitsPerTile / 100.0f;
+    const core::Json chasm = doc["void"];
+    voidFade_ = float(chasm["fade"].numberOr(0.0));
+    voidSink_ = float(chasm["sink"].numberOr(8.0));
+    abyssStart_ = float(chasm["start"].numberOr(1.5));
+    abyssDepth_ = float(chasm["depth"].numberOr(5.0));
 
     if (!readGrids(worldDir, doc["height"].stringOr("height.png"),
                    doc["attributes"].stringOr("attributes.png"))) {
         return false;
     }
+    buildAbyss();
 
     // Which texture each tile is floored with, and the two channels beside it. Not required:
     // without the grid the indoor test is simply never true and no grass grows.
@@ -607,6 +614,8 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
                 v.weight[0] = 1.0f - v.colour[3];
                 v.weight[1] = v.colour[3];
                 v.weight[2] = v.weight[3] = 0.0f;
+                // Read, and nothing draws by the channel after this.
+                v.colour[3] = 0.0f;
             }
         } else {
             for (size_t i = 0; i < count; ++i) {
@@ -737,6 +746,69 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     return bgfx::isValid(vbh_) && bgfx::isValid(ibh_);
 }
 
+// The level everything is dark below. On ground it is the ground's own height, which nothing
+// that can be seen is under. Across a chasm it is the height of the nearest point that still
+// touches ground, spread in by a breadth-first fill, so a wall hanging from the rim, the
+// slope splat sinks, and a tree MU buried in the void all go dark by how far below the rim
+// they are. A point touches ground when any of the four tiles round it is not NoGround.
+void Ground::buildAbyss() {
+    const int n = size_;
+    if (n <= 0 || height_.size() != size_t(n) * size_t(n) || abyssDepth_ <= 0.0f) return;
+    auto isVoid = [&](int c, int r) {
+        return c >= 0 && r >= 0 && c < n && r < n && (grid_.at(c, r) & kNoGround) != 0;
+    };
+    std::vector<int> source(size_t(n) * size_t(n), -1);
+    std::vector<int> queue;
+    queue.reserve(source.size());
+    for (int r = 0; r < n; ++r) {
+        for (int c = 0; c < n; ++c) {
+            bool ground = false;
+            for (int tr = r - 1; tr <= r && !ground; ++tr) {
+                for (int tc = c - 1; tc <= c && !ground; ++tc) {
+                    if (tc < 0 || tr < 0 || tc >= n || tr >= n) continue;
+                    ground = !isVoid(tc, tr);
+                }
+            }
+            if (!ground) continue;
+            const int p = r * n + c;
+            source[size_t(p)] = p;
+            queue.push_back(p);
+        }
+    }
+    const size_t touching = queue.size();
+    if (touching == source.size()) return;  // no chasm: nothing to bind
+    for (size_t head = 0; head < queue.size(); ++head) {
+        const int p = queue[head];
+        const int c = p % n, r = p / n;
+        for (int dr = -1; dr <= 1; ++dr) {
+            for (int dc = -1; dc <= 1; ++dc) {
+                const int cc = c + dc, rr = r + dr;
+                if (cc < 0 || rr < 0 || cc >= n || rr >= n) continue;
+                const int q = rr * n + cc;
+                if (source[size_t(q)] >= 0) continue;
+                source[size_t(q)] = source[size_t(p)];
+                queue.push_back(q);
+            }
+        }
+    }
+    std::vector<uint16_t> texels(source.size());
+    for (size_t i = 0; i < source.size(); ++i) {
+        const float level = source[i] >= 0 ? height_[size_t(source[i])] : height_[i];
+        texels[i] = bx::halfFromFloat(level);
+    }
+    abyss_ = bgfx::createTexture2D(uint16_t(n), uint16_t(n), false, 1, bgfx::TextureFormat::R16F,
+                                   BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
+                                   bgfx::copy(texels.data(), uint32_t(texels.size() * 2)));
+    // Texel (c, r) is the point at x = c tiles and z = -r tiles, sampled at its centre.
+    abyssParams_[0] = abyssStart_;
+    abyssParams_[1] = abyssDepth_;
+    abyssParams_[2] = 1.0f / (metresPerTile_ * float(n));
+    abyssParams_[3] = 0.5f / float(n);
+    core::logf("abyss: %zu of %zu points dark below their nearest rim, %.1f m to %.1f m under it",
+               source.size() - touching, source.size(), double(abyssStart_),
+               double(abyssStart_ + abyssDepth_));
+}
+
 // The land by material, not by pair.
 //
 // MU gives a tile a base and an overlay of its own, and a weight at each grid position that
@@ -827,6 +899,100 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         quadTile[q] = minR * n + minC;
     }
 
+    // A chasm's edge, into the dark. MU cuts a NoGround tile and the clear colour shows
+    // through, which on Devias is a hard, tile-stepped line wherever no ice wall stands. Here
+    // the void tiles nearest the ground are drawn after all, each corner sunk by how far it
+    // lies from the last corner that touches real ground -- nothing at the rim, voidSink_ at
+    // voidFade_ tiles -- so the land rolls over a lip. The dark is not painted on: it is the
+    // abyss (buildAbyss, and abyss() in common.sh), which takes everything below the rim's
+    // level down to black by depth -- this slope, MU's ice walls hanging from the rim, the
+    // sunk trees -- so where the slope runs under a wall both are equally dark and no seam
+    // shows. A tile is still left out once all four corners are past that dark. The sim never
+    // sees any of it: heightAt reads height_, and nobody stands on NoGround.
+    //
+    // Off by default (voidFade_ 0, MU's own cut): tried on Devias 2026-09-29 at three, two and
+    // one tiles, the slope rolled out in front of MU's ice walls and hid them -- a snow bank
+    // where MU has a cliff -- and at one tile it stood up as a stretched snow face instead.
+    // The abyss alone takes the walls into the dark. It is here for a rim no wall covers.
+    std::vector<float> sink(size_t(side) * size_t(side), 0.0f);
+    auto isVoid = [&](int c, int r) {
+        return c >= 0 && r >= 0 && c < n && r < n && (grid_.at(c, r) & kNoGround) != 0;
+    };
+    if (voidFade_ > 0.0f) {
+        // A rim corner touches at least one drawn tile on the map.
+        std::vector<uint8_t> rim(size_t(side) * size_t(side), 0);
+        bool anyVoid = false;
+        for (int r = 0; r < side; ++r) {
+            for (int c = 0; c < side; ++c) {
+                bool ground = false, chasm = false;
+                for (int tr = r - 1; tr <= r; ++tr) {
+                    for (int tc = c - 1; tc <= c; ++tc) {
+                        if (tc < 0 || tr < 0 || tc >= n || tr >= n) continue;
+                        (isVoid(tc, tr) ? chasm : ground) = true;
+                    }
+                }
+                rim[size_t(r) * size_t(side) + size_t(c)] = ground;
+                anyVoid = anyVoid || chasm;
+            }
+        }
+        if (anyVoid) {
+            const int reach = int(std::ceil(voidFade_)) + 1;
+            for (int r = 0; r < side; ++r) {
+                for (int c = 0; c < side; ++c) {
+                    const size_t v = size_t(r) * size_t(side) + size_t(c);
+                    if (rim[v]) continue;
+                    float nearest = float(reach);
+                    for (int dr = -reach; dr <= reach; ++dr) {
+                        for (int dc = -reach; dc <= reach; ++dc) {
+                            const int rr = r + dr, cc = c + dc;
+                            if (rr < 0 || cc < 0 || rr >= side || cc >= side) continue;
+                            if (!rim[size_t(rr) * size_t(side) + size_t(cc)]) continue;
+                            nearest = std::min(nearest, std::sqrt(float(dr * dr + dc * dc)));
+                        }
+                    }
+                    const float t = std::clamp(nearest / voidFade_, 0.0f, 1.0f);
+                    // Level at the rim and steepening, which is a lip rather than a bevel.
+                    sink[v] = voidSink_ * t * t;
+                }
+            }
+
+            // The sunk heights, and the normals of every corner whose neighbourhood moved:
+            // the rim's own corners too, since the slope beside them is new.
+            std::vector<float> cornerY(sink.size(), 0.0f);
+            for (size_t i = 0; i < vertices.size(); ++i) {
+                const size_t v = size_t(quadCorner[i]);
+                vertices[i].position[1] -= sink[v];
+                cornerY[v] = vertices[i].position[1];
+            }
+            auto yAt = [&](int c, int r) {
+                c = std::clamp(c, 0, side - 1);
+                r = std::clamp(r, 0, side - 1);
+                return cornerY[size_t(r) * size_t(side) + size_t(c)];
+            };
+            const float span = 2.0f * metresPerTile_;
+            for (size_t i = 0; i < vertices.size(); ++i) {
+                const int corner = quadCorner[i];
+                const int c = corner % side, r = corner / side;
+                bool moved = false;
+                for (int dr = -1; dr <= 1 && !moved; ++dr) {
+                    for (int dc = -1; dc <= 1 && !moved; ++dc) {
+                        const int rr = std::clamp(r + dr, 0, side - 1);
+                        const int cc = std::clamp(c + dc, 0, side - 1);
+                        moved = sink[size_t(rr) * size_t(side) + size_t(cc)] > 0.0f;
+                    }
+                }
+                if (!moved) continue;
+                // Column is +x and row is -z, so a rise down the rows is a fall along z.
+                const float dx = (yAt(c + 1, r) - yAt(c - 1, r)) / span;
+                const float dz = -(yAt(c, r + 1) - yAt(c, r - 1)) / span;
+                const float len = std::sqrt(dx * dx + 1.0f + dz * dz);
+                vertices[i].normal[0] = -dx / len;
+                vertices[i].normal[1] = 1.0f / len;
+                vertices[i].normal[2] = -dz / len;
+            }
+        }
+    }
+
     // A tile's materials: the strongest three the shader will read for it, in slot order so
     // that a set names one draw however its tiles came by it. Read over the sixteen corners
     // from one before the tile to two after, not its own four: the shader draws the weights
@@ -846,11 +1012,17 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
         // MU draws no ground at all on a NoGround tile (ZzzLodTerrain.cpp:2178, RenderTerrainTile
         // returns before the face), and what shows through is the clear colour: Devias's chasms
         // are that and nothing else -- the heights under them sit less than a metre below the
-        // banks, and the depth is the dark. So the quad goes into no draw. Its materials still
-        // weigh into the corners it shares, as a neighbour's texture does in MU.
-        if (grid_.at(tc, tr) & kNoGround) {
-            ++voids;
-            continue;
+        // banks, and the depth is the dark. So the quad goes into no draw once all four of its
+        // corners have sunk past the abyss's black (above); before then it is the edge's slope.
+        if (isVoid(tc, tr)) {
+            const auto at = [&](int c, int r) { return sink[size_t(r) * size_t(side) + size_t(c)]; };
+            const float black = std::min(voidSink_, abyssStart_ + std::max(abyssDepth_, 0.0f));
+            if (voidFade_ <= 0.0f || std::min(std::min(at(tc, tr), at(tc + 1, tr)),
+                                              std::min(at(tc, tr + 1), at(tc + 1, tr + 1))) >=
+                                         black - 1e-4f) {
+                ++voids;
+                continue;
+            }
         }
         for (int s = 0; s < slots; ++s) {
             float sum = 0.0f;
@@ -1116,6 +1288,9 @@ void Ground::shutdown() {
     floors_.clear();
     overlays_.clear();
     blends_.clear();
+    if (bgfx::isValid(abyss_)) bgfx::destroy(abyss_);
+    abyss_ = BGFX_INVALID_HANDLE;
+    abyssParams_[1] = 0.0f;
     light_.clear();
     grassSlots_.clear();
     slotNames_.clear();

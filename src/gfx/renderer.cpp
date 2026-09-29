@@ -49,6 +49,10 @@ void Renderer::bindShadeInputs() {
     // the dust it draws is the near air's, which is little.
     bgfx::setUniform(uDust_, shade_.dust);
     bgfx::setUniform(uEdge_, edge_);
+    // Stage 6 for fs_shade, which reads no prepass; the land rebinds it to 15 after this.
+    bgfx::setUniform(uAbyss_, abyssParams_);
+    bgfx::setTexture(6, sAbyss_, bgfx::isValid(abyss_) ? abyss_ : whiteAo_,
+                     BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
     if (probePass_) {
         // A probe face is lit for its own eye, not the camera's.
         const float eye[4] = {probeAt_[0], probeAt_[1], probeAt_[2], shade_.camPos[3]};
@@ -401,7 +405,10 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             bgfx::setUniform(uGroundWeights_, weights);
             bgfx::setTexture(6, sGroundWeights_, splat ? g.weights() : l[0].albedo,
                              BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
-            bindShadeInputs();
+            // The abyss on 15, over the probe's cube: stage 6 is the weights here, and
+            // bindShadeInputs (above, first, so nothing below is overwritten) put it on 6.
+            bgfx::setTexture(15, sAbyss_, bgfx::isValid(abyss_) ? abyss_ : whiteAo_,
+                             BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP);
         }
         bgfx::setVertexBuffer(0, g.vertexBuffer());
         bgfx::setIndexBuffer(g.indexBuffer(), part.firstIndex, part.indexCount);
@@ -434,6 +441,13 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>* casters, const GrassField* grass) {
     drawCount_ = 0;
     waterFlow_ = lighting.waterFlow;
+    // The chasms' dark, which is the world's and not the sheet's. content::Ground::abyss.
+    abyss_ = ground ? ground->abyss() : bgfx::TextureHandle{bgfx::kInvalidHandle};
+    if (bgfx::isValid(abyss_)) {
+        std::memcpy(abyssParams_, ground->abyssParams(), sizeof(abyssParams_));
+    } else {
+        abyssParams_[1] = 0.0f;
+    }
     // The ground has no cutout, and fs_shadow and fs_ground_prepass read this to know it.
     const float noCutout[4] = {-1.0f, 0.0f, 0.0f, 0.0f};
 

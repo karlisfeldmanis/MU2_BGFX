@@ -2,6 +2,8 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_r
 
 // The one lit pass. Depth is tested EQUAL against what the prepass laid down and nothing is
 // written back, so no pixel here is shaded twice.
+// Stage 6 is the prepass's, which this pass never reads. abyss() in common.sh.
+#define MU2_ABYSS 6
 #include "common.sh"
 
 #include "shadow.sh"
@@ -210,5 +212,5 @@ void main()
 	}
 	colour += emissive;
 
-	gl_FragColor = vec4(dusty(colour, v_wpos), fade);
+	gl_FragColor = vec4(abyss(dusty(colour, v_wpos), v_wpos), fade);
 }

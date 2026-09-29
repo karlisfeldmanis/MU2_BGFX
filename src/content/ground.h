@@ -25,7 +25,8 @@ struct GroundVertex {
     float normal[3];
     float uv[2];      // in TILES, not in [0,1]; each half multiplies by its own repeat
     // rgb: MU's baked TerrainLight, which multiplies the ALBEDO and nothing else.
-    // a: the weight MU painted from base to overlay, as the glb carried it. Not drawn by.
+    // a: the weight MU painted from base to overlay, as the glb carried it. Read into
+    // `weight` at load and zeroed; not drawn by.
     float colour[4];
     // How much of each of its part's three layers this corner is, before the height blend
     // bites. Summing to one. See Ground::splat for why a corner is shared by every tile on it.
@@ -134,6 +135,12 @@ public:
     // where the land is drawn by pair. weightSize() is (width, height, rows a band) in texels.
     static constexpr int kWeightPad = 2;
     bgfx::TextureHandle weights() const { return weights_; }
+    // The level each point of the map is dark below, in metres: its own height on ground, the
+    // nearest rim's across a NoGround chasm. Invalid on a world with no chasm. With it, u_abyss:
+    // x where the dark starts below that level, y over how many metres it is whole (0 is off),
+    // zw the texture's uv as world x and -z times z plus w. abyss() in common.sh.
+    bgfx::TextureHandle abyss() const { return abyss_; }
+    const float* abyssParams() const { return abyssParams_; }
     const float* weightSize() const { return weightSize_; }
 
     static const bgfx::VertexLayout& layout();
@@ -156,6 +163,18 @@ private:
     int size_ = 0;
     float metresPerTile_ = 1.0f;
     float heightFactor_ = 1.5f;
+    // How a NoGround chasm's edge goes into the dark: the land sinks `voidSink_` metres over
+    // `voidFade_` tiles from the last drawn ground (Ground::splat), and everything below the
+    // rim's level is taken to black between `abyssStart_` and `abyssStart_ + abyssDepth_`
+    // metres down (buildAbyss). The world json's "void" overrides all four. Invention: MU
+    // cuts the tile and shows the clear colour.
+    void buildAbyss();
+    float voidFade_ = 0.0f;
+    float voidSink_ = 8.0f;
+    float abyssStart_ = 1.5f;
+    float abyssDepth_ = 5.0f;
+    bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
+    float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     std::vector<float> height_;  // metres, [row * size + column]
     std::vector<uint8_t> floors_;   // tiles.png red: MU's base slot; empty when absent
     std::vector<uint8_t> overlays_; // tiles.png green: MU's overlay slot

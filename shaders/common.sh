@@ -115,6 +115,24 @@ vec3 dusty(vec3 colour, vec3 wpos)
 	return air * smoothstep(0.0, u_edge.z, toEdge);
 }
 
+// The chasms' dark. MU draws no ground on a NoGround tile and the frame's black shows through,
+// which is Devias's chasms under and beside its bridges -- and a hard line wherever the last
+// lit surface meets it: the foot of an ice wall, the rim of the ground. So everything below the
+// level of the nearest rim goes into that black by how far below it is: nothing at u_abyss.x
+// metres down, black by x + y. On ground the level is the ground itself, so nothing that can be
+// seen there is touched. A shader asks for it by defining MU2_ABYSS as a free sampler stage
+// before including this file; content::Ground::abyss has the level and u_abyss's layout.
+#ifdef MU2_ABYSS
+SAMPLER2D(s_abyss, MU2_ABYSS);
+uniform vec4 u_abyss;
+vec3 abyss(vec3 colour, vec3 wpos)
+{
+	if (u_abyss.y <= 0.0) return colour;
+	float level = texture2D(s_abyss, vec2(wpos.x, -wpos.z) * u_abyss.z + u_abyss.w).r;
+	return colour * (1.0 - smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, level - wpos.y));
+}
+#endif
+
 // Karis' analytic fit to the split-sum BRDF, so there is no lookup texture to carry.
 vec3 envBRDFApprox(vec3 f0, float roughness, float ndotv)
 {

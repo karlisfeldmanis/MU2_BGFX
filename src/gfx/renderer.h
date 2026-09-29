@@ -507,6 +507,10 @@ private:
     // ShadeUniforms because it is the WORLD's and not the sheet's: it is set once when a map
     // is raised, and nothing in the lighting can move it.
     float edge_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    // The chasms' dark, taken off the ground each frame and borrowed, not owned: the level
+    // texture and u_abyss. content::Ground::abyss; y at 0 is off.
+    bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
+    float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lampParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float lampGridUniform_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float glowStrength_ = 1.0f;
@@ -665,6 +669,8 @@ private:
     bgfx::UniformHandle uGroundColour_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uDust_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uEdge_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uAbyss_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle sAbyss_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamPos_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uParams_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uMaterial_ = BGFX_INVALID_HANDLE;

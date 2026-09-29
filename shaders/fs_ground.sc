@@ -3,6 +3,8 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 // The land, lit. Up to three full material sets blended by the weights Ground::splat shares
 // between every tile on a corner, under MU's own baked terrain light. This is the one surface that does not fit the closed
 // material model in docs/conventions.md, and it is a second shader rather than a fourth flag.
+// Stage 15 is the probe's, which the land never reads. abyss() in common.sh.
+#define MU2_ABYSS 15
 #include "common.sh"
 
 #include "shadow.sh"
@@ -244,5 +246,6 @@ void main()
 	// everywhere, so Fresnel spreads that highlight across most of the frame. MU2 measured
 	// this and pins its ground SPECULAR to zero; water is the exception and is sprint 8's.
 
-	gl_FragColor = vec4(dusty(colour, v_wpos), 1.0);
+	// Last, so the haze goes into the chasm's black with the land. Ground::splat's slope.
+	gl_FragColor = vec4(abyss(dusty(colour, v_wpos), v_wpos), 1.0);
 }
