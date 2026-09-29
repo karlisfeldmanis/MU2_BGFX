@@ -1198,7 +1198,8 @@ uint32_t Realm::discard(int slot) {
     return one.id;
 }
 
-uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t excellent) {
+uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t excellent,
+                    uint8_t sockets) {
     if (!tables_ || item < 0 || size_t(item) >= tables_->items.size()) return 0;
     const Body& hero = bodies_[0];
     const content::ItemRow& row = tables_->items[size_t(item)];
@@ -1210,6 +1211,7 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
         one.what.luck = luck;
         one.what.option = int8_t(std::clamp(option, 0, kMostOption));
         one.what.excellent = uint8_t(excellent & 63);
+        one.what.sockets = uint8_t(std::min<int>(sockets, kMostSockets));
         if (one.what.excellent && wears(row)) one.what.durability = int16_t(maximumDurability(row, one.what));
     }
     std::tie(one.column, one.row) = clearing(hero.column(), hero.row());

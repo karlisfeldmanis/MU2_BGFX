@@ -280,15 +280,16 @@ bool Play::lay(const std::string& asked) {
     int plus = 0, option = 0;
     bool luck = false;
     uint8_t excellent = 0;
+    int sockets = 0;
     if (colon != std::string::npos) {
-        readExtras(asked.substr(colon + 1), &plus, &luck, &option, &excellent);
+        readExtras(asked.substr(colon + 1), &plus, &luck, &option, &excellent, nullptr, &sockets);
     }
     const int32_t item = tables_.itemNamed(name);
     if (item < 0) {
         core::logError("--lay: no item named %s", name.c_str());
         return false;
     }
-    const uint32_t id = realm_.lay(item, plus, luck, option, excellent);
+    const uint32_t id = realm_.lay(item, plus, luck, option, excellent, uint8_t(sockets));
     core::logf("laid %s on the ground (drop %u)", tables_.items[size_t(item)].label.c_str(), id);
     if (id == 0) return false;
     landed(id);

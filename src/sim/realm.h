@@ -534,7 +534,7 @@ public:
     // The bench's, and no rule of MU's: a thing laid on the ground beside him as a kill's drop
     // lies, from nobody's bag, for looking at a drop Lorencia never leaves. Its id, or 0.
     uint32_t lay(int32_t item, int refinement = 0, bool luck = false, int option = 0,
-                 uint8_t excellent = 0);
+                 uint8_t excellent = 0, uint8_t sockets = 0);
 
     // ---- the merchants (sprint 7) ---------------------------------------------------------
     // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a
