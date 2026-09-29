@@ -195,6 +195,7 @@ bool LobbyMode::open(Context& ctx) {
         if (content::loadShowing(core::join(assets, "cooked/showing/showing.mus"), showing_,
                                  error) &&
             sound_.open(assets, showing_, args.mute)) {
+            sound_.setVolume(float(args.volume) / 100.0f);
             click_ = sound_.load("window_click", false);
             refused_ = sound_.load("window_refused", false);
             // MU's anthem. MuMain plays login_theme.mp3 here, from the login screen through
@@ -221,7 +222,7 @@ bool LobbyMode::open(Context& ctx) {
 
     // The sheet's options, filled from the window as the game's are (app/options.h); Switch
     // Character has nowhere to go from here.
-    fillSettings(ctx.window, args.fps, &menu_.settings());
+    fillSettings(ctx.window, args, &menu_.settings());
     menu_.allowSwitch(false);
     // Escape is the screen's: it shuts a window, then raises the menu, whose Exit quits. A
     // --frames review keeps it as the quit it always was.
@@ -309,8 +310,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         if (asked.quit) quitting_ = true;
         if (asked.settings) {
             const game::Menu::Settings& set = menu_.settings();
-            applySettings(ctx.window, set);
-            args.fps = set.fps;
+            applySettings(ctx.window, set, args);
             sound_.setVolume(float(set.volume) / 100.0f);
         }
     } else {

@@ -41,7 +41,7 @@ public:
     };
 
     // What Options edits. The caller fills it from the window and the run, and applies it back
-    // when `Result::settings` says so. Not saved: a new run starts from its own arguments.
+    // when `Result::settings` says so, and main.sh's runs keep it (app/options.h).
     struct Settings {
         bool fullscreen = false;
         // The window's size, as an index into `sizes`, which are in screen points. Fullscreen

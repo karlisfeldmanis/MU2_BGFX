@@ -8,6 +8,11 @@
 #   ./main.sh --scale 1           every pixel the display has, rather than 85% magnified
 #   ./main.sh --roster DIR        characters from DIR instead of your own folder
 #
+# The game menu's Options -- fullscreen or windowed, the window's size, v-sync, volume and the
+# frame counter -- are kept in ~/Library/Application Support/MU2/options.txt and the next run
+# opens on them (`--remember`, after this script's own --fullscreen and --vsync so it overrides
+# them). A switch given here still wins for that run; delete the file to start from the defaults.
+#
 #   click a figure .............. pick him; double click or Enter plays him
 #   Create Character ............ the create window: a class, a name, Create
 #   Delete ...................... asks, then wants his name typed back
@@ -131,9 +136,9 @@ code=0
 # 16.67 ms period is one it fits inside every time and the same refresh every time. Play on
 # 60; measure and hunt on 180. `--cap 0` lets it run free.
 if [ "$lobby" = "yes" ]; then
-  build/mu2 --lobby --fullscreen --vsync --cap 180 --scale 0.99 "${args[@]}" || code=$?
+  build/mu2 --lobby --fullscreen --vsync --cap 180 --scale 0.99 --remember "${args[@]}" || code=$?
 else
-  build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.99 --level 1 --class "$kin" "${cradle[@]}" "${args[@]}" ||
+  build/mu2 --world lorencia --play --fullscreen --vsync --cap 180 --scale 0.99 --remember --level 1 --class "$kin" "${cradle[@]}" "${args[@]}" ||
     code=$?
 fi
 if [ $code -ne 0 ]; then

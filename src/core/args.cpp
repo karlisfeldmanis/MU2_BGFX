@@ -18,7 +18,48 @@ bool wantsAbsolute(const char* what, const std::string& path, bool* valid) {
     return false;
 }
 
+// What the player last chose on the Options page, over whatever the line said before
+// --remember. No file is the first run, and changes nothing.
+void readOptions(Args& a) {
+    FILE* file = std::fopen(optionsPath().c_str(), "r");
+    if (!file) return;
+    char key[32];
+    int value = 0;
+    while (std::fscanf(file, "%31s %d", key, &value) == 2) {
+        if (!std::strcmp(key, "fullscreen")) a.fullscreen = value != 0;
+        else if (!std::strcmp(key, "width") && value > 0) a.width = value;
+        else if (!std::strcmp(key, "height") && value > 0) a.height = value;
+        else if (!std::strcmp(key, "vsync")) a.vsync = value != 0;
+        else if (!std::strcmp(key, "volume")) a.volume = value < 0 ? 0 : value > 100 ? 100 : value;
+        else if (!std::strcmp(key, "fps")) {
+            a.fps = value != 0;
+            a.fpsAsked = true;
+        }
+    }
+    std::fclose(file);
+    logf("options: %s from %s, %dx%d", a.fullscreen ? "fullscreen" : "windowed",
+        optionsPath().c_str(), a.width, a.height);
+}
+
 }  // namespace
+
+std::string optionsPath() {
+    const char* home = std::getenv("HOME");
+    return std::string(home ? home : ".") + "/Library/Application Support/MU2/options.txt";
+}
+
+void saveOptions(const Args& a) {
+    if (!a.remember) return;
+    FILE* file = std::fopen(optionsPath().c_str(), "w");
+    if (!file) {
+        logError("options: could not write %s", optionsPath().c_str());
+        return;
+    }
+    std::fprintf(file, "fullscreen %d\nwidth %d\nheight %d\nvsync %d\nvolume %d\nfps %d\n",
+                 a.fullscreen ? 1 : 0, a.width, a.height, a.vsync ? 1 : 0, a.volume,
+                 a.fps ? 1 : 0);
+    std::fclose(file);
+}
 
 void printUsage() {
     logf(
@@ -28,6 +69,8 @@ void printUsage() {
         "ignored\n"
         "  --windowed                and back into a window, which is how main.sh's own "
         "--fullscreen is taken back\n"
+        "  --remember                the game menu's Options as last chosen, and kept when "
+        "changed (main.sh's)\n"
         "  --vsync                   cap to the display; off by default so a number is a number\n"
         "  --no-vsync                and off again, which is how main.sh's own --vsync is "
         "taken back\n"
@@ -184,6 +227,9 @@ Args parseArgs(int argc, char** argv) {
         } else if (!std::strcmp(s, "--fullscreen")) {
             a.fullscreen = true;
         } else if (!std::strcmp(s, "--no-figures")) {
+        } else if (!std::strcmp(s, "--remember")) {
+            a.remember = true;
+            readOptions(a);
             a.figuresOn = false;
         } else if (!std::strcmp(s, "--no-lamps")) {
             a.lampsOn = false;

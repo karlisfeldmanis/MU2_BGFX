@@ -260,6 +260,7 @@ bool PlayMode::open(Context& ctx) {
             // Hanzo's coals, into the lamps' static set before it goes to the renderer below.
             if (args.lampsOn) world_.played().lightForges(world_.lamps());
             core::Loading::stage("sounds", 0.53f, 0.58f);
+            world_.played().sound().setVolume(float(args.volume) / 100.0f);
             world_.played().openSound(assets, args.mute);
             core::Loading::stage("the weather", 0.58f, 0.60f);
             // And only now the air: the birds' calls come off the sound above and the leaves'
@@ -318,7 +319,7 @@ bool PlayMode::open(Context& ctx) {
         desk_.setWorld(args.world);
         // Switch Character goes back to the screen this run came through, and only then.
         desk_.allowSwitch(args.lobby);
-        fillSettings(ctx.window, args.fps, &desk_.settings());
+        fillSettings(ctx.window, args, &desk_.settings());
         const bool held = args.frames == 0;
         desk_.holdEscape(held);
         ctx.window.holdEscape(held);
@@ -620,12 +621,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             // A box that has the keyboard has Escape too, which otherwise quits.
             ctx.window.setTyping(desk_.typing());
             // What the menu's Options changed: the display, the window's size, v-sync, the
-            // volume and the counter in the corner. Not saved; a new run starts from its own
-            // arguments. The window's new size reaches the renderer on the next pump.
+            // volume and the counter in the corner. Kept in options.txt when main.sh ran us
+            // (--remember). The window's new size reaches the renderer on the next pump.
             if (desk_.settingsChanged()) {
                 const game::Menu::Settings& set = desk_.settings();
-                applySettings(ctx.window, set);
-                args.fps = set.fps;
+                applySettings(ctx.window, set, args);
                 world_.played().sound().setVolume(float(set.volume) / 100.0f);
             }
             // And the pictures for whatever the windows now hold: MU2's Panel.Repaint,

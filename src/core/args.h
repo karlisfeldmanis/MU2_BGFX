@@ -20,6 +20,12 @@ struct Args {
     // taken windowed at 1080p; this is for playing it.
     bool fullscreen = false;
     bool vsync = false;  // off for every measurement; see docs/budget.md
+    // --remember: the game menu's Options kept across runs, in optionsPath(). Read where the
+    // switch stands on the line, so main.sh's own --fullscreen and --vsync before it give way to
+    // what the player chose and a switch after it still wins; written back whenever Options
+    // changes something. Only main.sh asks for it, so no measurement run reads a player's file.
+    bool remember = false;
+    int volume = 100;  // percent: the Options page's Volume row
     // How much of the backbuffer the WORLD is drawn at, 1 for all of it. The present pass
     // magnifies it; the hover ring and the HUD are drawn at the screen's own size whatever
     // this is, so the plate and its text stay as sharp as the display. Held to 0.5 at the
@@ -309,5 +315,10 @@ struct Args {
 Args parseArgs(int argc, char** argv);
 
 void printUsage();
+
+// ~/Library/Application Support/MU2/options.txt, beside the characters: what --remember reads
+// and what the game menu writes back. `key value` a line; a key it does not know is passed by.
+std::string optionsPath();
+void saveOptions(const Args& args);
 
 }  // namespace mu::core
