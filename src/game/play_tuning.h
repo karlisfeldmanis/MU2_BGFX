@@ -56,6 +56,12 @@ constexpr float kCastBlend = 0.28f;
 // MU's 20-to-120 read as fractions of the weapon's own measured length.
 constexpr float kStreakWindUp = 3.0f;
 constexpr float kStreakFrom = 20.0f / 120.0f;
+// A plain blow with a spear or a scythe: MU's `BlurType 3`, from 100 of 120 -- the head alone.
+constexpr float kStreakPoleFrom = 100.0f / 120.0f;
+// And the plain blow's light, mapping 0's ladder in `CreateWeaponBlur`: grey, then red from +3,
+// blue from +5, orange from +7. A skill's ribbon is white whatever the plus.
+constexpr float kStreakLight[4][3] = {
+    {0.8f, 0.8f, 0.8f}, {1.0f, 0.2f, 0.2f}, {0.2f, 0.4f, 1.0f}, {1.0f, 0.6f, 0.2f}};
 
 // A breed's name as the command line may spell it: lowered, with everything that is not a
 // letter or a digit dropped, so "Skeleton Warrior", "skeletonwarrior" and "Skeleton_Warrior"

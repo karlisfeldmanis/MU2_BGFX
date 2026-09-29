@@ -86,10 +86,10 @@ void Play::exhale(float seconds) {
     if (ground_ == nullptr) return;
     const float frames = seconds * 25.0f;
 
-    // The blade's ribbon, before the dragons: every body mid-skill lays two more points on its
-    // streak this frame, off the pose the frame has already computed. See fx/streak.h -- this is
-    // MU's `CreateWeaponBlur` rung that tests the skill actions before it asks what is in the
-    // hand, and it is the one effect a knight's skill has of its own.
+    // The blade's ribbon, before the dragons: every body mid-skill or mid-blow lays two more
+    // points on its streak this frame, off the pose the frame has already computed. See
+    // fx/streak.h -- MU's `CreateWeaponBlur`: the skill rung, tested before it asks what is in
+    // the hand, and the plain swing's, which MU keeps to swords and this lays for any weapon.
     //
     // Sampled once a rendered frame rather than MU's ten sub-steps an animation frame. The
     // client re-poses the whole skeleton ten times to lay ten points because it samples at 25
@@ -98,9 +98,16 @@ void Play::exhale(float seconds) {
     // Trails made the same cut and says so.
     streak_.update(seconds);
     for (Drawn& one : drawn_) {
-        if (one.casting <= 0.0f || !one.visible || !one.placed) continue;
+        if (!one.visible || !one.placed || one.deadFor >= 0.0f) continue;
+        const bool skill = one.casting > 0.0f;
+        // A plain blow: a swing thrown with the weapon. Not a salute, which is held as a swing
+        // is but given with the weapon slung.
+        const bool blow =
+            !skill && one.swinging > 0.0f && one.swingSkill == 0 && one.stowed <= 0.0f;
+        if (!skill && !blow) continue;
         // A spell is thrown from an empty hand's gesture, and a staff streaks nothing.
-        if (const sim::SkillRow* row = sim::skillNumbered(one.swingSkill); row && row->wizardry) {
+        if (const sim::SkillRow* row = sim::skillNumbered(one.swingSkill);
+            skill && row && row->wizardry) {
             continue;
         }
         const FigureBody* look = one.figure.body();
@@ -127,14 +134,27 @@ void Play::exhale(float seconds) {
                 }
             }
             if (far <= 0.001f) continue;
+            // The look: white on motion_blur_r for a skill; for a plain blow, blur01 from a sixth
+            // of the blade, or blur02 over a spear's or a scythe's head, lit by mapping 0's ladder.
+            const bool pole = held.stance == "spear" || held.stance == "scythe";
+            Streak::Sheet sheet = Streak::Sheet::Skill;
+            float light[3] = {1.0f, 1.0f, 1.0f};
+            if (blow) {
+                sheet = pole ? Streak::Sheet::Spear : Streak::Sheet::Plain;
+                const float* ladder = held.plus >= 7   ? kStreakLight[3]
+                                      : held.plus >= 5 ? kStreakLight[2]
+                                      : held.plus >= 3 ? kStreakLight[1]
+                                                       : kStreakLight[0];
+                for (int k = 0; k < 3; ++k) light[k] = ladder[k];
+            }
             const float way = std::fabs(box.max[axis]) >= std::fabs(box.min[axis]) ? 1.0f : -1.0f;
             float grip[3] = {0.0f, 0.0f, 0.0f}, tip[3] = {0.0f, 0.0f, 0.0f};
-            grip[axis] = way * far * kStreakFrom;
+            grip[axis] = way * far * (blow && pole ? kStreakPoleFrom : kStreakFrom);
             tip[axis] = way * far;
             float from[3], to[3];
             if (!one.figure.pointOn(held.bone, grip, from)) break;
             if (!one.figure.pointOn(held.bone, tip, to)) break;
-            streak_.feed(one.id, from, to);
+            streak_.feed(one.id, from, to, sheet, light);
             break;
         }
     }

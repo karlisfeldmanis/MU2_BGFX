@@ -26,10 +26,18 @@
 //   * **Three keys of wind-up.** The client's outermost guard is `AnimationFrame >= 3`, so the
 //     gathering of the swing leaves nothing and the ribbon appears as the blade comes round.
 //
-// What is deliberately NOT here is the ordinary swing's streak (mapping 0, refined by the
-// weapon's plus, on swords alone). It is a different sheet and a different rule and it belongs
-// with the swing, not with the skill sprint; this file is written so that adding it is a sheet
-// and a fraction rather than a second ribbon.
+// **And the ordinary swing's**, which MU keeps to swords (mapping 0, `Type >= MODEL_SWORD` on the
+// sword actions) and which this engine lays for every melee weapon on a basic blow -- the user's
+// call, 2026-09-29, and so an **invention** past the swords: an axe, a mace, a staff and a spear
+// streak on a plain swing too. Everything else is MU's own:
+//
+//   * **blur01** (`BITMAP_BLUR`, cooked `trail`) for a blade, axe or club, from a sixth of it to
+//     the tip, as `BlurType 1`; **blur02** (`BITMAP_BLUR2`, `trail_spear`) over the head alone
+//     for a spear or a scythe, from 100 of 120, as `BlurType 3`.
+//   * **Coloured by the plus**, mapping 0's ladder and no other's: grey, red from +3, blue from
+//     +5, orange from +7.
+//   * The same span, fade and wind-up as the skill ribbon, since `CreateBlur` is one call.
+
 #pragma once
 
 #include <cstdint>
@@ -45,15 +53,20 @@ namespace mu::game {
 
 class Streak {
 public:
+    // Which of MU's sheets a ribbon is drawn with. See the header.
+    enum class Sheet : uint8_t { Skill, Plain, Spear };
+
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table);
-    bool isOpen() const { return bgfx::isValid(sheet_); }
+    bool isOpen() const { return bgfx::isValid(sheets_[0]); }
 
     // One body's blade, this frame: the two ends of the ribbon in world metres. Called every
     // frame a skill clip is running on it and not at all otherwise, which is what starts and
     // feeds a ribbon -- there is no begin() and no end(), because a swing's own clip is the
     // only thing that decides either.
-    void feed(uint32_t id, const float from[3], const float to[3]);
+    // `colour` is the ribbon's light: white on a skill, the plus's ladder on a plain swing.
+    void feed(uint32_t id, const float from[3], const float to[3], Sheet sheet,
+              const float colour[3]);
     // Ages every ribbon: the span rolls off the tail, and one that stopped being fed retracts
     // and dims rather than hanging in the air.
     void update(float seconds);
@@ -77,12 +90,15 @@ private:
         Pair pairs[kPairs];
         int count = 0;
         float idle = 0.0f;  // seconds since it was last fed
+        Sheet sheet = Sheet::Skill;
+        float colour[3] = {1, 1, 1};
     };
 
     Ribbon* ribbonFor(uint32_t id);
 
     Ribbon ribbons_[kRibbons];
-    bgfx::TextureHandle sheet_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle sheets_[3] = {BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE,
+                                      BGFX_INVALID_HANDLE};
 };
 
 }  // namespace mu::game

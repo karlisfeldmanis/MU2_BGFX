@@ -24,16 +24,22 @@ constexpr float kBrightest = 0.85f;
 bool Streak::open(const std::string& assetDir, content::Textures& textures,
                   const content::Showing& table) {
     clear();
-    const content::EffectSheet* sheet = table.effect("trail_skill");
-    if (sheet == nullptr) {
-        // Not fatal and not silent: the skill still swings, and the log says what is missing.
-        core::logError("streak: no cooked effect named 'trail_skill'; skills swing without one");
-        return false;
+    // In `Sheet`'s order. The skill's is the one the rest cannot do without; a missing plain or
+    // spear sheet leaves that swing bare and says so.
+    static constexpr const char* kNames[3] = {"trail_skill", "trail", "trail_spear"};
+    for (int i = 0; i < 3; ++i) {
+        sheets_[i] = BGFX_INVALID_HANDLE;
+        const content::EffectSheet* sheet = table.effect(kNames[i]);
+        if (sheet == nullptr) {
+            // Not fatal and not silent: the blow still swings, and the log says what is missing.
+            core::logError("streak: no cooked effect named '%s'; its swings lay nothing", kNames[i]);
+            continue;
+        }
+        sheets_[i] = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
+        core::logf("streak: the %s ribbon is %s (%s)", kNames[i],
+                   bgfx::isValid(sheets_[i]) ? "ready" : "missing", sheet->path.c_str());
     }
-    sheet_ = textures.load(assetDir + "/" + sheet->path, content::TextureRole::Albedo);
-    core::logf("streak: the skill ribbon is %s (%s)", bgfx::isValid(sheet_) ? "ready" : "missing",
-               sheet->path.c_str());
-    return bgfx::isValid(sheet_);
+    return isOpen();
 }
 
 void Streak::clear() {
@@ -64,11 +70,15 @@ Streak::Ribbon* Streak::ribbonFor(uint32_t id) {
     return pick;
 }
 
-void Streak::feed(uint32_t id, const float from[3], const float to[3]) {
-    if (!isOpen()) return;
+void Streak::feed(uint32_t id, const float from[3], const float to[3], Sheet sheet,
+                  const float colour[3]) {
+    if (!bgfx::isValid(sheets_[int(sheet)])) return;
     Ribbon* ribbon = ribbonFor(id);
     if (ribbon == nullptr) return;
     ribbon->idle = 0.0f;
+    // A skill straight after a swing is the same body's ribbon: it takes the new look whole.
+    ribbon->sheet = sheet;
+    for (int i = 0; i < 3; ++i) ribbon->colour[i] = colour[i];
     // Newest first, so the head of the array is the blade and the tail is the oldest sample --
     // which is the order the quads are laid in and the order the fade runs along.
     if (ribbon->count < kPairs) ++ribbon->count;
@@ -100,9 +110,8 @@ void Streak::update(float seconds) {
 }
 
 void Streak::gather(gfx::Effects& effects) const {
-    if (!isOpen()) return;
     for (const Ribbon& one : ribbons_) {
-        if (one.count < 2) continue;
+        if (one.count < 2 || !bgfx::isValid(sheets_[int(one.sheet)])) continue;
         // What is left of it as a whole, once the swing has stopped feeding it.
         const float leaving =
             one.idle <= 0.0f ? 1.0f : std::max(0.0f, 1.0f - one.idle / kFades);
@@ -119,8 +128,8 @@ void Streak::gather(gfx::Effects& effects) const {
             gfx::Sprite quad;
             quad.placed = true;
             quad.blend = gfx::Blend::Additive;
-            quad.sheet = sheet_;
-            quad.colour[0] = quad.colour[1] = quad.colour[2] = 1.0f;
+            quad.sheet = sheets_[int(one.sheet)];
+            for (int k = 0; k < 3; ++k) quad.colour[k] = one.colour[k];
             quad.colour[3] = alpha;
             // The quad's own corners: the grip end and the tip of two consecutive samples, in
             // the winding the pass wants (bottom left, bottom right, top right, top left).
