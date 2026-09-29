@@ -3395,6 +3395,92 @@ void testRunes(const content::Tables& tables) {
     check(rocks > 0, "Meteor calls rocks down");
     checkEqual(mOn, 0, "never on the monster he struck");
     check(mLanded > 0 && mLanded <= rocks, "and they land, one blow a rock at most");
+
+    // Ice and Poison: on the very monster he struck, the spell's element and no blow of its own
+    // -- a chill it walks slowed under, or pulses that go on hurting it; the same sword with its
+    // socket empty leaves nothing on anything.
+    struct Elements {
+        int swings = 0, said = 0, onStruck = 0, took = 0, pulses = 0;
+    };
+    const auto elements = [&](uint8_t power) {
+        Elements seen;
+        sim::Realm realm;
+        // Weaker than the knight above, whose +9 sword kills a Lorencia monster a swing and so
+        // leaves nothing standing to chill or poison: a level 20 knight with a +0 blade.
+        realm.raise(&tables, 3, 200, 160, sim::Kin::DarkKnight, 20);
+        const uint8_t powers[3] = {power, 0, 0};
+        realm.give(serpent, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        uint32_t fighting = 0;
+        // After a poisoning he stands off for five seconds, so the monster lives to its pulses
+        // (the first is three seconds on) rather than dying to his next swing.
+        int standOff = 0;
+        for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (standOff > 0) {
+                --standOff;
+            } else if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            uint32_t struck = 0;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id) continue;
+                if (h.what == sim::What::Hit && h.poisoned) ++seen.pulses;
+                if (h.what == sim::What::Hit && !h.thrown && !h.poisoned) {
+                    ++seen.swings;
+                    struck = h.whom;
+                }
+                if (h.what == sim::What::Loosed &&
+                    (h.a == sim::skill::kIce || h.a == sim::skill::kPoison)) {
+                    ++seen.said;
+                    if (h.whom == struck) ++seen.onStruck;
+                    if (h.a == sim::skill::kPoison && standOff == 0) {
+                        standOff = 100;
+                        fighting = 0;
+                        sim::Request stop;
+                        stop.kind = sim::Request::Kind::Stop;
+                        realm.ask(stop);
+                    }
+                    for (const sim::Body& b : realm.bodies()) {
+                        if (b.id != h.whom) continue;
+                        const bool chilled = b.chilledUntil > realm.tick();
+                        const bool poisoned = b.poisonUntil > realm.tick();
+                        if (h.a == sim::skill::kIce ? chilled : poisoned) ++seen.took;
+                    }
+                }
+            }
+        }
+        return seen;
+    };
+    const Elements ice = elements(uint8_t(sim::Power::Ice));
+    std::printf("  %d landed swings, %d chills\n", ice.swings, ice.said);
+    check(ice.said > 0, "Ice chills");
+    checkEqual(ice.onStruck, ice.said, "always the monster he struck");
+    checkEqual(ice.took, ice.said, "which walks chilled after it");
+    check(double(ice.said) <= double(ice.swings) * 0.25, "at no more than its chance and some");
+    const Elements venom = elements(uint8_t(sim::Power::Poison));
+    std::printf("  %d landed swings, %d poisonings, %d pulses\n", venom.swings, venom.said,
+                venom.pulses);
+    check(venom.said > 0, "Poison poisons");
+    checkEqual(venom.onStruck, venom.said, "always the monster he struck");
+    checkEqual(venom.took, venom.said, "which goes on poisoned after it");
+    check(venom.pulses > 0, "and its pulses hurt, his");
+    const Elements bare = elements(0);
+    check(bare.said == 0 && bare.pulses == 0, "and none of either from an empty socket");
 }
 
 int main() {

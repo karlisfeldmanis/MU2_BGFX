@@ -347,7 +347,7 @@ inline int excellentCount(uint8_t mask) {
 // quest gives one, never a repeat, and later the highest drops. Set by dropping the rune on the
 // item, as a Bless goes on (`Realm::refine`), into its first empty socket. Each power set rolls
 // on its own. The design page is claude.ai/artifact/DPhyHWRcYTo97PHpa2FaAu.
-enum class Power : uint8_t { None = 0, Stormcall = 1, Meteor = 2 };
+enum class Power : uint8_t { None = 0, Stormcall = 1, Meteor = 2, Ice = 3, Poison = 4 };
 struct PowerRow {
     Power power;
     const char* name;
@@ -382,5 +382,12 @@ constexpr float kStormcallForce = 1.0f;
 // Meteorite, drawn as his -- lands its fall later at `kMeteorForce` of his swing's roll. invention.
 constexpr double kMeteorChance = 0.15;
 constexpr float kMeteorForce = 1.5f;
+// **Ice** and **Poison**, his third and fourth (the user, 2026-09-29: "lets create Ice and Poision
+// also"; a knight's weapon powers, on the monster he struck): the same chance, and the wizard's
+// spell's own element on what his swing left standing -- Ice's chill (its `chillTicks`, walking
+// at `kChillFactor`), Poison's pulses (its `poisonTicks`, each a quarter of the swing's wound).
+// No blow of their own. invention.
+constexpr double kIceRuneChance = 0.15;
+constexpr double kPoisonRuneChance = 0.15;
 
 }  // namespace mu::sim

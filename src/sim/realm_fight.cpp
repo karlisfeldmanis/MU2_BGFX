@@ -130,10 +130,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (target.health <= 0) kill(target, attacker);
     // His swing, landed: the Rune's power may answer it. Only a plain swing -- a skill's blow, a
     // flight and the lightning itself (`thrown`) call nothing, so it cannot call itself.
-    if (attacker.player && row == nullptr && !thrown && pays) stormcall(attacker, target);
+    if (attacker.player && row == nullptr && !thrown && pays) {
+        stormcall(attacker, target, blow.damage);
+    }
 }
 
-void Realm::stormcall(Body& hero, const Body& struck) {
+void Realm::stormcall(Body& hero, Body& struck, int wound) {
     if (!tables_) return;
     const Held& hand = bag_[kWeaponRight];
     if (hand.empty()) return;
@@ -141,12 +143,34 @@ void Realm::stormcall(Body& hero, const Body& struck) {
     for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
         const PowerRow* power = powerOf(hand.powers[socket]);
         if (power == nullptr || !power->weapon || power->kin != hero.kin) continue;
-        callDown(hero, struck, *power);
+        callDown(hero, struck, *power, wound);
         if (!hero.alive()) return;
     }
 }
 
-void Realm::callDown(Body& hero, const Body& struck, const PowerRow& power) {
+void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound) {
+    // Ice and Poison take the monster he struck, and only while it stands: the spell's element
+    // without its blow, said as the spell let go at it so the drawing puts its ice or its cloud
+    // there. A second of either restarts it, as the spell's own does.
+    if (power.power == Power::Ice || power.power == Power::Poison) {
+        const bool ice = power.power == Power::Ice;
+        if (!runeDice_.nextBool(ice ? kIceRuneChance : kPoisonRuneChance)) return;
+        if (!struck.alive() || !struck.monster()) return;
+        const SkillRow* spell = skillNumbered(ice ? skill::kIce : skill::kPoison);
+        if (spell == nullptr) return;
+        if (ice) {
+            struck.chilledUntil = tick_ + spell->chillTicks;
+        } else {
+            struck.poisonUntil = tick_ + spell->poisonTicks;
+            struck.poisonNext = tick_ + kPoisonEvery;
+            struck.poisonDamage = std::max(1, wound / 4);
+            struck.poisonBy = hero.id;
+        }
+        say(What::Loosed, hero, ice ? skill::kIce : skill::kPoison, 0, 0, struck.id);
+        core::logf("%s rune: tick %lld, on #%u", ice ? "ice" : "poison", (long long)tick_,
+                   struck.id);
+        return;
+    }
     const bool meteor = power.power == Power::Meteor;
     // Off the sockets' own stream, so a run is not moved by a power being worn.
     if (!runeDice_.nextBool(meteor ? kMeteorChance : kStormcallChance)) return;

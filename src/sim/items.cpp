@@ -185,6 +185,14 @@ const PowerRow* powerOf(uint8_t power) {
          "A swing that lands has a 15% chance to bring a burning rock down on another monster "
          "near him",
          true, Kin::DarkKnight},
+        {Power::Ice, "Ice",
+         "A swing that lands has a 15% chance to freeze the monster he struck, slowing it to half "
+         "its pace",
+         true, Kin::DarkKnight},
+        {Power::Poison, "Poison",
+         "A swing that lands has a 15% chance to poison the monster he struck, hurting it for "
+         "twenty seconds",
+         true, Kin::DarkKnight},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;

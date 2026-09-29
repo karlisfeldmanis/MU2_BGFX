@@ -729,12 +729,12 @@ private:
     void strikeAround(Body& hero, const SkillRow& row, float force);
     // The knock: one tile at random, onto something standable. 0.75's `movesTarget`.
     void shove(Body& target);
-    // His weapon's socketed powers (sim/items.h), after his swing lands on `struck`: each one
-    // rolls, Stormcall's lightning or Meteor's rock on another monster near him. Draws nothing
-    // unless one is worn.
-    void stormcall(Body& hero, const Body& struck);
-    // One power's roll and, when it answers, its lightning or rock.
-    void callDown(Body& hero, const Body& struck, const PowerRow& power);
+    // His weapon's socketed powers (sim/items.h), after his swing lands on `struck` for `wound`:
+    // each one rolls, Stormcall's lightning or Meteor's rock on another monster near him, Ice's
+    // chill or Poison's pulses on `struck` itself. Draws nothing unless one is worn.
+    void stormcall(Body& hero, Body& struck, int wound);
+    // One power's roll and, when it answers, its lightning, rock, chill or poison.
+    void callDown(Body& hero, Body& struck, const PowerRow& power, int wound);
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
     // something standable or not at all.
     void push(Body& target, const Body& from);
