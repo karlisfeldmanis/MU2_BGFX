@@ -1,6 +1,7 @@
 // What a level looks like: fifteen flares climbing out of the ground around whoever earned it.
 // Ported from MU2's `client/core/Aura.cs`, the level-up recipe first and its Defense barrier
-// once the knight had the skill; the orb's is this engine's own. See Recipe for all three.
+// once the knight had the skill. See Recipe for those. A skill learned is this engine's own and
+// is not a burst of flares at all but a puff of blue smoke; see Aura::learn.
 //
 // MuMain's `ReceiveLevelUp` is the whole of it:
 //
@@ -35,7 +36,7 @@
 //     burned white; see kStrength in aura.cpp, judged on fixed-step shots.
 //
 // The sound is not here, and never was: a burst is thrown and a wave is played on the same
-// frame by whoever threw it -- Play::rise for the level and Play::learned for the orb -- which
+// frame by whoever threw it -- Play::rise for the level and Play::learned for a skill -- which
 // is MU's own shape, where ReceiveLevelUp does both in one block.
 //
 // It stays where it was thrown and does not follow a character who walks away -- MU's, since
@@ -54,10 +55,9 @@ class Ground;
 
 namespace mu::game {
 
-// What a burst is made of. **Three recipes, where MU2's `Aura.cs` had two**: MU's level-up
-// flares, the knight's Defense barrier -- which this engine left out in so many words, "a
-// bench invention on a skill this engine does not have yet", and has the skill now -- and the
-// orb's, which is nobody's but this engine's and is cut to a sound rather than to a client.
+// What a burst is made of: MU's level-up flares, the knight's Defense barrier -- which this
+// engine left out in so many words, "a bench invention on a skill this engine does not have
+// yet", and has the skill now -- and the elf's two casts.
 //
 // The barrier's numbers are MU2's Defense recipe (`Shape.Barrier, 5, 20, 100, Circle, Follows,
 // Tails 30, Light (0.4, 0.8, 0.2)`), and what they are taken FROM is worth repeating here
@@ -79,6 +79,10 @@ struct Recipe {
     bool follows = false;     // whether it walks with the body
     bool circle = false;      // MU's ground circle thrown with it
     float light[3] = {1.0f, 1.0f, 1.0f};
+    // The circle's colour and how fast it opens, in tiles a tick: MU's blue at 0.15, three
+    // tiles across over its twenty ticks. A learned skill's is half as wide.
+    float ring[3] = {0.4f, 0.6f, 1.0f};
+    float ringOpens = 0.15f;
 };
 
 // MU's level-up: fifteen flares on a ring of forty, climbing away and dimming. The circle is
@@ -96,45 +100,10 @@ inline constexpr Recipe kRising{};
 // and what is passed here is what is left of it.
 inline constexpr Recipe kGuarding{5,    20.0f, 20.0f, 100.0f, 0.0f, 0.0f, 12.0f, 150.0f,
                                   true, true,  true,  {0.18f, 1.0f, 0.35f}};
-// And the third, which is wholly this engine's: a skill read off an orb (user, 2026-09-23).
-// Nothing in MU is being copied here -- 0.75's client never reads an orb out of the bag -- so
-// what it is traced to instead is the SOUND, `player_learn_skill`, a 2.39 s dark-magic stab the
-// user supplied for every skill read off the bag, orb or scroll. The picture is cut to the wave
-// and every number below comes off it:
-//
-//   * **twenty-nine ticks.** The fade law is fixed at ten (`kDims`), so a burst holds full
-//     light for `ticks - 10` and then falls by 1/1.3 a tick. The wave stabs at 0.08 s and
-//     0.16 s and its tonal body holds within a few dB of the top to 0.75 s, which is nineteen
-//     ticks; twenty-nine puts the start of the fall on the body giving way (it drops 5 dB in
-//     the next 50 ms) and the light at -23 dB by 1.16 s, where the wave is some 15 dB down and
-//     still ringing. Its tail runs a second past that; the ribbons do not wait for it.
-//   * **a slower climb.** 12 units a tick, so 348 over the twenty-nine ticks -- about what the
-//     old swoosh's 20 a tick came to over sixteen, stretched to a heavier sound.
-//   * **eight ribbons, spread.** Evenly round the ring, as the guard's five are: where a flare
-//     starts is drawn at random for a level, which is right for a burst of celebration and
-//     wrong for this. Even spacing is the difference between a scatter and a figure. Six was
-//     the first try and read as one stray arc at his knee; eight is a sweep.
-//   * **they leave.** From his feet to well over his head by the end -- MU's climb, which is
-//     what makes a level-up's flares LEAVE, and the right verb here too: the orb or the scroll
-//     is spent and what was in it has gone into him.
-//   * **a ring wider than he is.** 42 against the level-up's 40, with a 34-wide cross against
-//     its 40: it has to stand OUTSIDE his silhouette to read as a thing going round him. At
-//     24, the first try, it was inside his legs and looked like a snagged ribbon.
-//   * **ten ticks of tail.** The ring turns half a radian a tick, so ten is 286 degrees -- a
-//     ribbon with most of a turn in it, which still does not close into a collar.
-//   * **no ground circle**, for the reason play has never drawn one: a three-tile wash of blue
-//     under a character is what MU2's crowd was silenced for.
-//
-// The colour is a cold blue, and it is pushed hard for the reason the guard's green is: the
-// sheet is golden and what is passed here is what is left of it. (0.30, 0.62, 1.00) -- an
-// honest blue-white -- came out through that gold as a yellow-green thread, so blue is carried
-// past one into the HDR at 2.40 and red cut to 0.15. Judged on fixed-step shots at 40 ms a
-// frame with `--learn`, which is what that switch is for.
-inline constexpr Recipe kLearning{8,    42.0f, 34.0f, 29.0f, 12.0f, 12.0f, 10.0f, 0.0f,
-                                  true, false, false, {0.15f, 0.45f, 2.40f}};
 // The elf's Heal and Greater Damage (sprint 15), ours: MuMain draws neither -- ReceiveMagic plays
 // the elf's cast and SOUND_SKILL_DEFENSE and registers the buff, and nothing renders
-// eBuff_Attack. The learning burst's shape, thrown once at the cast: a slower green-white climb
+// eBuff_Attack. Eight ribbons spread evenly round a ring wider than she is, thrown once at the
+// cast (the shape a learned skill had until 2026-09-29): a slower green-white climb
 // for a wound closing, a quicker red-orange one for her blows hardening.
 inline constexpr Recipe kMending{8,    34.0f, 30.0f, 22.0f, 12.0f, 16.0f, 12.0f, 0.0f,
                                  true, false, false, {0.45f, 1.70f, 0.60f}};
@@ -153,9 +122,30 @@ public:
     // not the character's: a ring on the ground is a ring on the ground.
     void rise(const float feet[3], float yaw, float metresPerTile);
 
-    // A skill read off an orb or a scroll: thrown like the level-up and never following, because
-    // the moment is over in a second and he cannot walk out of it. See kLearning.
-    void learn(const float feet[3], float yaw, float metresPerTile);
+    // A skill read off an orb or a scroll: a puff of blue smoke out of the body, and no
+    // flares. The user's picture (2026-09-29), cut to `player_learn_skill`, which Play::learned
+    // plays on the same frame:
+    //
+    //   * **two puffs, on the two stabs.** The wave stabs at 0.08 s and 0.16 s, ticks two and
+    //     four, so most of the smoke is born over the first two ticks and the rest around the
+    //     fourth, and each one blooms fast -- most of its growth in its first six ticks -- so
+    //     the puff lands on the hit and not after it;
+    //   * **out of the body, not round it.** Born inside him, a hand either side of his middle
+    //     from the knees to the crown, let go a little outward and up, and slowed by a drag of
+    //     0.9 a tick, so it drifts a hand past him and then rises;
+    //   * **subtle.** Fifteen small puffs, faint, and he stays readable through all of them:
+    //     the first try, a cloud of 22 puffs at 0.62, hid him in yellow and was too much;
+    //   * **held while the sound holds.** Full until the wave's tonal body gives way at 0.75 s,
+    //     nineteen ticks, and gone by 1.2 s while the tail rings on;
+    //   * **a circle under him.** MU's level-up circle in its own blue, which play has off,
+    //     thrown for this alone at the user's asking: half its width, and its twenty ticks end
+    //     as the wave's body does;
+    //   * **real smoke, blue.** Ten puffs of smoke02 mixed in (`Blend::Smoke`), tinted a pale
+    //     cool blue, are the smoke; five of smoke01 added are a faint cold light in it. Gold
+    //     came first and the user asked for realistic blue smoke instead (2026-09-29).
+    //
+    // Never following: the moment is over in a second and he cannot walk out of it.
+    void learn(const float feet[3], float metresPerTile);
     // Any recipe thrown once where she stands: her Heal and Greater Damage.
     void cast(const Recipe& recipe, const float feet[3], float yaw, float metresPerTile) {
         throwOne(recipe, feet, yaw, metresPerTile);
@@ -187,6 +177,8 @@ public:
     // Two at once is a level earned while the last is still in the air, and the third slot is
     // the guard's, which stands for seconds at a time and must not take a level-up's place.
     static constexpr int kBursts = 3;
+    // Room for two skills read inside a second of each other; a third's puffs are not drawn.
+    static constexpr int kPuffs = 64;
 
 private:
     struct Joint {
@@ -205,12 +197,31 @@ private:
         Joint joints[kJoints];
     };
 
+    // One wisp of a learned skill's smoke. Lengths in world metres, times in reference ticks.
+    struct Puff {
+        bool living = false;
+        bool glow = false;     // smoke01 added, rather than smoke02 mixed
+        float at[3] = {0.0f, 0.0f, 0.0f};
+        float velocity[3] = {0.0f, 0.0f, 0.0f};  // metres a tick, slowed by the drag
+        float age = 0.0f;      // negative until it is born
+        float holds = 19.0f;   // full until this age...
+        float life = 29.0f;    // ...and gone by this one
+        float size = 0.5f;     // across, at birth
+        float per = 0.01f;     // metres in one of MU's units
+        float spin = 0.0f;
+        float turns = 0.0f;    // radians a tick
+    };
+
     // Where joint `j` of `b` was `back` ticks ago, as an offset from the feet.
     static void at(const Burst& b, const Joint& j, float back, float out[3]);
     void gatherCircle(gfx::Effects& effects, const content::Ground& ground, const Burst& b) const;
 
     bgfx::TextureHandle flare_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle ground_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;  // smoke02, the body of the puff
+    bgfx::TextureHandle wisp_ = BGFX_INVALID_HANDLE;   // smoke01, its glow
+    Puff puffs_[kPuffs];
+    void gatherPuffs(gfx::Effects& effects) const;
     bool circle_ = false;
     int guarding_ = -1;  // which burst is the standing guard, or -1
     Burst bursts_[kBursts];

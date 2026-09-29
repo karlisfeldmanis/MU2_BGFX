@@ -39,14 +39,34 @@ constexpr float kStrength = 0.65f;
 
 // --- the circle, ZzzEffect.cpp BITMAP_MAGIC + 1 subtype 0 ----------------------------------
 constexpr float kRingTicks = 20.0f;      // LifeTime
-constexpr float kRingOpens = 0.15f;      // Scale = (20 - LifeTime) * 0.15, in tiles
 constexpr float kRingDims = 5.0f;        // full until five ticks are left...
 constexpr float kRingDim = 0.2f;         // ...then a fifth a tick
 constexpr float kRingLifts = 5.0f;       // RenderTerrainAlphaBitmap's own lift, in units
-constexpr float kCirclingBlue[3] = {0.4f, 0.6f, 1.0f};
 // The circle follows the land in cells no wider than this, as the marker's parts do: MU paints
 // it onto the terrain tiles it covers, and one flat quad would sink into a slope.
 constexpr float kCell = 0.5f;
+
+// --- a learned skill's smoke, this engine's own (see Aura::learn) ---------------------------
+// All in MU's units and reference ticks, turned to metres by the tile at the throw.
+constexpr int kBodyPuffs = 10;           // smoke02, mixed: the smoke itself
+constexpr int kGlowPuffs = 5;            // smoke01, added: a faint light in it
+constexpr float kSecondStab = 0.35f;     // this share of them wait for the second stab
+constexpr float kDrag = 0.90f;           // velocity kept a tick
+constexpr float kBuoyancy = 0.06f;       // units a tick gained upward, every tick
+constexpr float kBloom = 0.7f;           // the size a puff gains, times its own...
+constexpr float kBloomTicks = 5.0f;      // ...most of it over this many
+constexpr float kSpread = 0.5f;          // and units a tick after that, forever
+// The colour: a cool blue smoke, mixed and not added, so it reads as smoke that is really
+// there -- the user's call after gold (2026-09-29). The tint runs a little past one on blue so
+// the puff is pale and lit rather than a grey-blue stain. The first try, a cloud of 22 gold
+// puffs at 0.62, hid him and was too much: he must stay readable through it. The added wisps
+// are a faint cold light in it, kept low so the whole never reads as a glow.
+constexpr float kSmokeBlue[3] = {0.62f, 0.82f, 1.25f};
+constexpr float kBodyAlpha = 0.30f;
+constexpr float kGlow[3] = {0.05f, 0.14f, 0.36f};
+// The circle: MU's own blue, at half the level-up's width and kept low on lit ground.
+constexpr float kLearnRing[3] = {0.30f, 0.48f, 0.85f};
+constexpr float kLearnRingOpens = 0.075f;
 
 float smoothstep(float edge0, float edge1, float x) {
     const float t = std::clamp((x - edge0) / (edge1 - edge0), 0.0f, 1.0f);
@@ -74,6 +94,9 @@ bool Aura::open(const std::string& assetDir, content::Textures& textures) {
     };
     flare_ = take("flare.png");
     ground_ = take("magic_ground.png");
+    // The fire's smoke sheets, which the skill's puff is made of.
+    smoke_ = take("../fire/smoke02.png");
+    wisp_ = take("../fire/smoke01.png");
     core::logf("aura: flare %s, circle %s", bgfx::isValid(flare_) ? "in hand" : "MISSING",
                bgfx::isValid(ground_) ? "in hand" : "MISSING");
     return bgfx::isValid(flare_);
@@ -82,6 +105,7 @@ bool Aura::open(const std::string& assetDir, content::Textures& textures) {
 void Aura::shutdown() {
     // The sheets belong to Textures, which destroys them.
     for (Burst& b : bursts_) b.living = false;
+    for (Puff& p : puffs_) p.living = false;
 }
 
 int Aura::live() const {
@@ -148,11 +172,51 @@ void Aura::rise(const float feet[3], float yaw, float metresPerTile) {
     throwOne(recipe, feet, yaw, metresPerTile);
 }
 
-void Aura::learn(const float feet[3], float yaw, float metresPerTile) {
-    // The recipe as written and no circle: unlike `rise`, this one does not answer to the
-    // circle switch, because the switch is MU's own line in ReceiveLevelUp and there is no
-    // ReceiveLearn to have one.
-    throwOne(kLearning, feet, yaw, metresPerTile);
+void Aura::learn(const float feet[3], float metresPerTile) {
+    if (!bgfx::isValid(smoke_) || metresPerTile <= 0.0001f) return;
+    const float per = metresPerTile / kPerTile;
+    // The circle alone, as a burst with no flares; it lies square to the world, not to him.
+    Recipe circle{};
+    circle.joints = 0;
+    circle.circle = true;
+    circle.ticks = 0.0f;
+    circle.ringOpens = kLearnRingOpens;
+    for (int k = 0; k < 3; ++k) circle.ring[k] = kLearnRing[k];
+    throwOne(circle, feet, 0.0f, metresPerTile);
+    const int count = kBodyPuffs + (bgfx::isValid(wisp_) ? kGlowPuffs : 0);
+    int made = 0;
+    for (Puff& p : puffs_) {
+        if (made == count) break;
+        if (p.living) continue;
+        const bool glow = made >= kBodyPuffs;
+        ++made;
+        p = Puff{};
+        p.living = true;
+        p.glow = glow;
+        p.per = per;
+        // Born on the first stab or the second, a tick either side of it.
+        const bool second = unit() < kSecondStab;
+        p.age = -(second ? 3.0f + unit() * 2.0f : unit() * 2.0f);
+        // Inside him: a hand from his middle, the smoke from his knees to his crown and the
+        // light kept to his chest.
+        const float a = unit() * 6.28318530718f;
+        const float from = (8.0f + unit() * 16.0f) * per;
+        const float height = (glow ? 60.0f + unit() * 70.0f : 30.0f + unit() * 120.0f) * per;
+        p.at[0] = feet[0] + std::cos(a) * from;
+        p.at[1] = feet[1] + height;
+        p.at[2] = feet[2] + std::sin(a) * from;
+        // A little out and up; with the drag it travels ten times this before it hangs, and
+        // the buoyancy then carries it on up past his shoulders.
+        const float out = (1.2f + unit() * 1.3f) * per;
+        p.velocity[0] = std::cos(a) * out;
+        p.velocity[1] = (0.8f + unit() * 1.4f) * per;
+        p.velocity[2] = std::sin(a) * out;
+        p.size = (glow ? 38.0f + unit() * 22.0f : 34.0f + unit() * 22.0f) * per;
+        p.holds = 17.0f + unit() * 4.0f;
+        p.life = p.holds + 8.0f + unit() * 3.0f;
+        p.spin = unit() * 6.28318530718f;
+        p.turns = (unit() - 0.5f) * 0.08f;
+    }
 }
 
 void Aura::guard(const float feet[3], float yaw, float metresPerTile, float seconds) {
@@ -191,10 +255,59 @@ void Aura::update(float seconds) {
             if (guarding_ >= 0 && &b == &bursts_[guarding_]) guarding_ = -1;
         }
     }
+    for (Puff& p : puffs_) {
+        if (!p.living) continue;
+        const float was = p.age;
+        p.age += ticks;
+        if (p.age >= p.life) {
+            p.living = false;
+            continue;
+        }
+        if (p.age <= 0.0f) continue;
+        // Moved only for the part of the frame it has been born.
+        const float moving = p.age - std::max(0.0f, was);
+        p.velocity[1] += kBuoyancy * p.per * moving;
+        const float drag = std::pow(kDrag, moving);
+        for (int d = 0; d < 3; ++d) {
+            p.at[d] += p.velocity[d] * moving;
+            p.velocity[d] *= drag;
+        }
+        p.spin += p.turns * moving;
+    }
+}
+
+void Aura::gatherPuffs(gfx::Effects& effects) const {
+    for (const Puff& p : puffs_) {
+        if (!p.living || p.age <= 0.0f) continue;
+        // Up in a tick and a half, held, and out by its life's end, eased both ways.
+        const float in = smoothstep(0.0f, 1.5f, p.age);
+        const float out = 1.0f - smoothstep(p.holds, p.life, p.age);
+        const float fade = in * out;
+        if (fade <= 0.0f) continue;
+        const float bloom = 1.0f + kBloom * (1.0f - std::exp(-p.age / kBloomTicks));
+        const float across = p.size * bloom + kSpread * p.per * p.age;
+        gfx::Sprite sprite;
+        for (int d = 0; d < 3; ++d) sprite.position[d] = p.at[d];
+        sprite.halfWidth = sprite.halfHeight = across * 0.5f;
+        sprite.spin = p.spin;
+        if (p.glow) {
+            for (int d = 0; d < 3; ++d) sprite.colour[d] = kGlow[d] * fade;
+            sprite.colour[3] = 1.0f;
+            sprite.sheet = wisp_;
+            sprite.blend = gfx::Blend::Additive;
+        } else {
+            for (int d = 0; d < 3; ++d) sprite.colour[d] = kSmokeBlue[d];
+            sprite.colour[3] = kBodyAlpha * fade;
+            sprite.sheet = smoke_;
+            sprite.blend = gfx::Blend::Smoke;
+        }
+        if (!effects.add(sprite)) return;
+    }
 }
 
 void Aura::gather(gfx::Effects& effects, const content::Ground& ground,
                   const float eye[3]) const {
+    gatherPuffs(effects);
     for (const Burst& b : bursts_) {
         if (!b.living) continue;
         if (b.r.circle) gatherCircle(effects, ground, b);
@@ -290,7 +403,7 @@ void Aura::gatherCircle(gfx::Effects& effects, const content::Ground& ground,
     if (!bgfx::isValid(ground_) || ringLeft <= 0.0f) return;
     // Opens from nothing to three tiles across, and is turned by the hero's facing and left
     // there: only subtype 7 spins.
-    const float across = b.age * kRingOpens * kPerTile * b.per;
+    const float across = b.age * b.r.ringOpens * kPerTile * b.per;
     if (across <= 0.0f) return;
     const float lit =
         ringLeft < kRingDims ? std::max(0.0f, 1.0f - (kRingDims - ringLeft) * kRingDim) : 1.0f;
@@ -308,7 +421,7 @@ void Aura::gatherCircle(gfx::Effects& effects, const content::Ground& ground,
     sprite.placed = true;
     sprite.sheet = ground_;
     sprite.blend = gfx::Blend::Additive;
-    for (int k = 0; k < 3; ++k) sprite.colour[k] = kCirclingBlue[k] * lit;
+    for (int k = 0; k < 3; ++k) sprite.colour[k] = b.r.ring[k] * lit;
     sprite.colour[3] = 1.0f;
     const float inv = 1.0f / float(cells);
     for (int j = 0; j < cells; ++j) {

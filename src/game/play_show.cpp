@@ -371,18 +371,18 @@ void Play::rise() {
     sound_.play("player_level_up");
 }
 
-// A skill read off an orb: the ribbons and the swoosh on the same frame.
+// A skill read off an orb or a scroll: the smoke and its sound on the same frame.
 //
 // Written as `rise`'s twin and calling the two in the same order for the same reason -- the
-// picture and the wave have to start together or the swell arrives over ribbons that are
-// already climbing. Sound::play takes the rest of the sync, the file's own lead and the
-// device's buffer. The recipe's twenty-nine ticks are cut to this file; see kLearning.
+// picture and the wave have to start together or the stabs arrive over smoke that has
+// already bloomed. Sound::play takes the rest of the sync, the file's own lead and the
+// device's buffer. The puff's timings are cut to this file; see Aura::learn.
 void Play::learned() {
     const Drawn* hero = drawnOf(realm_.hero().id);
     if (hero == nullptr || !hero->placed || ground_ == nullptr) return;
     const float feet[3] = {hero->crown[0], ground_->heightAt(hero->crown[0], hero->crown[2]),
                            hero->crown[2]};
-    aura_.learn(feet, hero->yaw, ground_->metresPerTile());
+    aura_.learn(feet, ground_->metresPerTile());
     sound_.play(heard_.orb);
 }
 
