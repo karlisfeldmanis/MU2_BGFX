@@ -136,7 +136,10 @@ void Play::point(const gfx::Camera& camera, const float* view, const float* proj
     };
     float closest = 1.0f;
     for (const sim::Body& body : realm_.bodies()) {
-        if (body.player) continue;
+        // Nor her own summon: it is never fought, so it gets no attack pointer and no hover
+        // bar, and the pointer passes through it to the monster behind -- where it stood
+        // in front of her quarry, a click took the summon and she attacked nothing.
+        if (body.player || body.summoner != 0) continue;
         const Drawn* drawn = drawnOf(body.id);
         if (drawn == nullptr || !drawn->visible) continue;
         // Standing on screen, not alive in the realm: a monster killed on this tick is still
