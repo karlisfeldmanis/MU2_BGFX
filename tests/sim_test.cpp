@@ -3183,10 +3183,24 @@ void testStrollers(const content::Tables& tables) {
     }
     check(folk >= 0 && marlon != 0, "Marlon stands as a body");
     if (marlon == 0) return;
-    int sat = 0, salutes = 0, offered = 0;
+    int lumen = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 255) lumen = int(i);
+    }
+    int sat = 0, salutes = 0, offered = 0, firstRound = 0, overTheCounter = 0;
     bool stillForTheTalk = true;
     int talkColumn = -1, talkRow = -1;
     for (int tick = 0; tick < 6000; ++tick) {
+        // Mid-talk, the hero goes to her counter, and leaves it five seconds after it opens.
+        if (tick == 1000) {
+            sim::Request request;
+            request.kind = sim::Request::Kind::Talk;
+            request.target = uint32_t(lumen);
+            realm.ask(request);
+        }
+        static int openedAt = -1;
+        if (realm.trading() == lumen && openedAt < 0) openedAt = tick;
+        if (openedAt >= 0 && tick == openedAt + 100) realm.closeTrade();
         if (tick == 2400) {
             sim::Request request;
             request.kind = sim::Request::Kind::Talk;
@@ -3214,6 +3228,10 @@ void testStrollers(const content::Tables& tables) {
                 ++salutes;
             }
             if (one.what == sim::What::Offered) ++offered;
+            if (one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Chat)) {
+                if (tick < 2400) ++firstRound;
+                if (realm.trading() == lumen) ++overTheCounter;
+            }
         }
     }
     std::printf("  sat %d times, saluted %d times, his window opened %d times\n", sat, salutes,
@@ -3222,6 +3240,8 @@ void testStrollers(const content::Tables& tables) {
     check(salutes >= 4, "and both gate guards salute him each round");
     check(offered == 1, "the hero's talk reaches him wherever he is on his rounds");
     check(stillForTheTalk, "and he stands where he was for the talk and the window");
+    checkEqual(firstRound, sim::kChatLines, "he and Lumen say their whole talk at her bar");
+    checkEqual(overTheCounter, 0, "and none of it while the hero is at her counter");
 }
 
 void testRecovery(const content::Tables& tables) {

@@ -641,7 +641,12 @@ void Play::follow(float seconds) {
         {
             const FigureBody* look = one.figure.body();
             one.crown[0] = position[0];
-            one.crown[1] = position[1] + look->height * look->scale;
+            // Seated, the head is lower by about a third: what hangs over it -- a name, a bar, a
+            // line he says at the bar (realm_folk.cpp) -- comes down with it and does not float
+            // over whoever stands behind him.
+            constexpr float kSeated = 0.68f;
+            const bool seated = body->pose == sim::Pose::Sitting;
+            one.crown[1] = position[1] + look->height * look->scale * (seated ? kSeated : 1.0f);
             one.crown[2] = position[2];
             one.placed = true;
         }

@@ -111,6 +111,8 @@ enum class Shout : int32_t {
     Challenge = 0,  // he has seen a monster and is going for it
     Pointing = 1,   // one he fought died with the hero's help: he points him on to the rest
     Salute = 2,     // a townsperson on his rounds came to his post (realm_folk.cpp); whom: him
+    Chat = 3,       // his talk at a stop (realm_folk.cpp): b: the line, c: the folk row that says
+                    // it, or -1 for him. Said by him, whoever speaks.
 };
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
@@ -883,6 +885,8 @@ private:
         bool held = false;      // the hero is talking to him
         int64_t freeAt = 0;     // after a talk, the tick he takes up his rounds again
         int perch = -1;         // the bench he sits on, while he sits
+        int chatLine = 0;       // the next line of his talk at this stop
+        int64_t chatAt = 0;     // the tick it is said
     };
     std::vector<Stroller> strollers_;
     int64_t wall_ = 0;

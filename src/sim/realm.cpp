@@ -831,6 +831,7 @@ std::string describe(const Happening& happening, const Realm& realm) {
                           who,
                           happening.a == int32_t(Shout::Pointing) ? "points the hero on from"
                           : happening.a == int32_t(Shout::Salute) ? "salutes"
+                          : happening.a == int32_t(Shout::Chat)   ? "talks at the bar (b the line, c who says it) --"
                                                                   : "challenges",
                           name(happening.whom).c_str(), happening.b, happening.c);
             break;

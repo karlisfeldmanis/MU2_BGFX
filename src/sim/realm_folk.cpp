@@ -129,6 +129,7 @@ void Realm::stroll(Body& walker) {
         standUp();
         s.stop = (s.stop + 1) % s.row->count;
         s.there = false;
+        s.chatLine = 0;
     };
 
     // Where this stop is: his own spot, the bench's tile, or beside the guard.
@@ -199,6 +200,9 @@ void Realm::stroll(Body& walker) {
             walker.perch = perch;
             s.perch = perch;
             say(What::Posed, walker, int32_t(walker.pose), perch);
+            // The talk starts a second after he sits -- or goes on, after a pause, from the line
+            // it had reached: `chatLine` is only reset when he leaves the stop.
+            s.chatAt = tick_ + kChatTicks / 3;
         } else {
             walker.aim = std::atan2(guard->y - walker.y, guard->x - walker.x);
             // The guard, when he is at his post and not in a fight: turned to him, and the salute,
@@ -211,6 +215,30 @@ void Realm::stroll(Body& walker) {
             }
         }
         return;
+    }
+    // **His talk at the stop**, her line first and then his, turn about. The hero at her
+    // counter -- or on his way to it -- pauses it: the time at the stop stands still with it, so
+    // the talk is finished when he goes and not cut off.
+    if (stop.with != 0) {
+        int partner = -1;
+        for (size_t i = 0; i < tables_->folk.size(); ++i) {
+            if (tables_->folk[i].number == stop.with) partner = int(i);
+        }
+        const bool busy = partner >= 0 && (trading_ == partner || banking_ == partner ||
+                                           questing_ == partner ||
+                                           (order_.kind == Request::Kind::Talk &&
+                                            int(order_.target) == partner));
+        if (busy) {
+            ++s.leaves;
+            ++s.chatAt;
+            return;
+        }
+        if (s.chatLine < kChatLines && tick_ >= s.chatAt) {
+            const int speaker = s.chatLine % 2 == 0 ? partner : -1;
+            say(What::Shouted, walker, int32_t(Shout::Chat), s.chatLine, speaker, 0);
+            ++s.chatLine;
+            s.chatAt = tick_ + kChatTicks;
+        }
     }
     if (tick_ < s.leaves) return;
     next();

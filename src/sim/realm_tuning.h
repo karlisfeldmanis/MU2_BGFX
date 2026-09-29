@@ -191,6 +191,7 @@ struct StrollStop {
     StopKind kind;
     int32_t column, row;
     int32_t seconds;  // how long he stays, from the tick he arrives
+    int32_t with = 0; // at a Sit, the NPC number he talks with there (kChatLines), or 0
 };
 constexpr int kStrollStops = 6;
 struct StrollRow {
@@ -200,7 +201,7 @@ struct StrollRow {
 };
 constexpr StrollRow kStrollers[] = {
     {229, 4, {{StopKind::Stand, 130, 127, 40},     // Marlon: his own spot, his table's tile
-              {StopKind::Sit, 124, 133, 30},       // the bench before Lumen's bar
+              {StopKind::Sit, 124, 133, 38, 255},  // the bench before Lumen's bar, talking
               {StopKind::Visit, 131, 148, 6},      // the Berdysh Guard at the south gate
               {StopKind::Visit, 114, 125, 6}}},    // the Crossbow Guard at the west gate
 };
@@ -217,6 +218,12 @@ constexpr int kStrollTicks = 10;
 constexpr int kStrollResumeTicks = 40;
 // How long a visited guard holds his salute and his turn toward him.
 constexpr int kSaluteTicks = 50;
+// His talk at the bar (the user's, 2026-09-29: "make some dialog with Marlon and barmaid"): this
+// many lines, she first and then turn about, one every kChatTicks from a second after he sits.
+// The words are the drawing's (game/play.cpp, kBarTalk), which must have exactly this many. The
+// hero talking to either of them pauses it, and it goes on from the line it stopped at.
+constexpr int kChatLines = 10;
+constexpr int kChatTicks = 70;
 
 // ---- the monsters whose blow poisons -----------------------------------------------------------
 // 0.75's own, by MU's number: the Dungeon's Poison Bull (8) and Larva (12) and Lost Tower's Poison

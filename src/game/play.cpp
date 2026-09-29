@@ -11,6 +11,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "sim/realm_tuning.h"
 
 namespace mu::game {
 
@@ -1093,6 +1094,41 @@ void Play::speak(const sim::Happening& happening) {
 
     const uint32_t pick = happening.whom + happening.tick;
     std::string line;
+    if (happening.a == int32_t(sim::Shout::Chat)) {
+        // Marlon and Lumen at her bar (realm_folk.cpp): her line and then his, turn about, over
+        // whichever of them says it. Ours, the user's of 2026-09-29.
+        static const char* const kBarTalk[] = {
+            "The usual, Sir Marlon?",
+            "The usual, Lumen. And make it strong.",
+            "You look tired. Were you on the walls all night again?",
+            "The dead were on the old road again. More of them than last week.",
+            "The merchants say the Dungeon gate groans after dark.",
+            "Let them talk. Keep your doors barred at night.",
+            "And who keeps watch over you, Sir Marlon?",
+            "The oath does. Same as always.",
+            "Then drink. The oath can wait one cup.",
+            "...One cup.",
+        };
+        static_assert(sizeof(kBarTalk) / sizeof(kBarTalk[0]) == sim::kChatLines,
+                      "one line for every line the realm says");
+        if (happening.b < 0 || happening.b >= sim::kChatLines) return;
+        const int folk = happening.c;
+        said_.erase(std::remove_if(said_.begin(), said_.end(),
+                                   [&](const Said& one) {
+                                       return folk >= 0 ? one.folk == folk
+                                                        : one.folk < 0 && one.who == happening.who;
+                                   }),
+                    said_.end());
+        Said one;
+        one.who = happening.who;
+        one.line = kBarTalk[happening.b];
+        one.folk = folk;
+        said_.push_back(one);
+        core::logf("bar: tick %lld, %s says \"%s\"", (long long)realm_.tick(),
+                   folk >= 0 ? tables_.folk[size_t(folk)].name.c_str() : nameOf(happening.who).c_str(),
+                   one.line.c_str());
+        return;
+    }
     if (happening.a == int32_t(sim::Shout::Salute)) {
         // To the last knight of Lorencia, as he comes by the post (realm_folk.cpp).
         static const char* const kSalutes[] = {"Sir Marlon!", "All quiet at the gate, sir.",

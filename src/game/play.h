@@ -270,6 +270,7 @@ public:
         uint32_t who = 0;
         std::string line;
         float age = 0.0f;
+        int folk = -1;  // said by a townsperson who stands as no body (Lumen at her bar)
     };
     static constexpr float kSaidSeconds = 4.0f;
     const std::vector<Said>& said() const { return said_; }
