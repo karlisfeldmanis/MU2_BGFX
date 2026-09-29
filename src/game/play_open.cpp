@@ -132,6 +132,36 @@ bool Play::open(const std::string& assetDir, const std::string& world,
 
     if (!realm_.raise(&tables_, seed, column, row, sim::Kin(kin), level)) return false;
 
+    // The roads, for the townsfolk's rounds to keep to (the user's, 2026-09-29: "peia has to
+    // use roads"): a tile whose painted slot -- the overlay where it is laid over half or more,
+    // else the base -- is one of the world's road sheets. Off the ground's own grid, which the
+    // sim does not have. Noria's alone: its roads are TileRock01's cobble and nothing else is
+    // laid as one -- its TileGround01 is turf in specks, not a path -- and Lorencia's Marlon
+    // walks as he did. A world added here names its own sheets.
+    static const char* const kNoriaRoads[] = {"TileRock01", "TileRock02", "TileWood01"};
+    if (world == "noria" && ground_ != nullptr && tables_.grid.size() > 0 &&
+        ground_->floorAt(0, 0) >= 0) {
+        const int size = tables_.grid.size();
+        std::vector<uint8_t> roads(size_t(size) * size_t(size), 0);
+        size_t paved = 0;
+        for (int r = 0; r < size; ++r) {
+            for (int c = 0; c < size; ++c) {
+                const int over = ground_->overlayAt(c, r);
+                const int slot = over >= 0 && ground_->blendAt(c, r) >= 0.5f ? over
+                                                                              : ground_->floorAt(c, r);
+                if (slot < 0) continue;
+                const std::string& name = ground_->floorName(slot);
+                bool road = false;
+                for (const char* one : kNoriaRoads) road = road || name == one;
+                if (!road) continue;
+                roads[size_t(r) * size_t(size) + size_t(c)] = 1;
+                ++paved;
+            }
+        }
+        core::logf("play: %zu road tiles for the townsfolk's rounds", paved);
+        realm_.setRoads(std::move(roads));
+    }
+
     // A character made above level 1 arrives with his points in hand, and unspent he cannot
     // lift the weapon he was asked to carry. So the courtesy the headless hand does itself
     // (game/headless.cpp): pay for what he is about to hold. The REST stays in hand since

@@ -48,20 +48,31 @@ public:
     //
     // `wall` is MU's own threshold argument: kWallCharacter for a body that may not share a
     // tile, kWallNoMove for the relaxed pass.
+    //
+    // `byRoad` keeps to the roads (setRoads): a step onto a tile that is not road costs
+    // kOffRoad times as much, so a walker takes the road round unless there is none. Ours, for
+    // a townsperson's rounds -- the user's, 2026-09-29: "peia has to use roads".
     bool plan(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall,
-              std::vector<Step>& out);
+              std::vector<Step>& out, bool byRoad = false);
+
+    // Which tiles are road, a byte a tile in the grid's order, or null for none. Borrowed:
+    // the realm keeps it. Without it `byRoad` asks nothing.
+    void setRoads(const std::vector<uint8_t>* roads) { roads_ = roads; }
 
     // Whether a straight line between two points, in tiles, touches only open tiles. Exact: the
     // grid is walked boundary to boundary as a ray through voxels, and a line through a corner
     // exactly needs both tiles beside it open, the same rule `corner` keeps. MU2's Route.Sees.
-    bool sees(float fromX, float fromY, float toX, float toY, uint16_t wall) const;
+    // `byRoad`: and only road, so a leg pulled tight does not cut across the grass.
+    bool sees(float fromX, float fromY, float toX, float toY, uint16_t wall,
+              bool byRoad = false) const;
 
     // The route pulled tight, in place: each leg runs from where the last one ended to the
     // furthest tile of the route still in a straight clear line, stopping at the first that is
     // not (carrying on past it would let a later tile that comes back into view cut a corner).
     // The first leg starts where the body really stands. MU2's Route.Along -- the zig-zag of an
     // eight-way search on a tile grid, straightened. Allocates nothing.
-    void pull(float fromX, float fromY, uint16_t wall, std::vector<Step>& route) const;
+    void pull(float fromX, float fromY, uint16_t wall, std::vector<Step>& route,
+              bool byRoad = false) const;
 
     // The nearest tile to (column, row) that something may stand on, searched outward in
     // rings, straight before diagonal within a ring. Answered before the search rather than
@@ -79,8 +90,13 @@ public:
 private:
     int index(int column, int row) const { return row * size_ + column; }
     bool corner(int column, int row, int dx, int dy, uint16_t wall) const;
+    // Off the road, where a road is asked for and known. False with no roads at all.
+    bool offRoad(int column, int row) const {
+        return roads_ != nullptr && !roads_->empty() && (*roads_)[size_t(index(column, row))] == 0;
+    }
 
     const content::Grid* grid_ = nullptr;
+    const std::vector<uint8_t>* roads_ = nullptr;
     int size_ = 0;
 
     // Generation-stamped scratch: `stamp_[i] == generation_` says the rest is this search's.

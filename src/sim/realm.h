@@ -617,6 +617,13 @@ public:
     // Where a townsperson stands now: his body's tile when he walks rounds (realm_folk.cpp) or
     // guards a post, else his table's. False for an index off the table.
     bool folkTile(int folk, int* column, int* row) const;
+    // Which tiles are road, a byte a tile in the grid's order, for the townsfolk's rounds to
+    // keep to (Router::plan's `byRoad`). Handed over by the drawing, which has the ground's
+    // painted slots; a realm never given one -- a headless run -- walks them as before.
+    void setRoads(std::vector<uint8_t> roads) {
+        roads_ = std::move(roads);
+        router_.setRoads(&roads_);
+    }
     const QuestProgress& quest(int index) const { return quests_[index]; }
     // A step's goal: its row's count, or for a Clear with none the breed's population here.
     int questGoal(int index, int step) const;
@@ -809,7 +816,8 @@ private:
     bool take(size_t index);
     void sip();
     void recover(Body& hero);
-    bool send(Body& one, int column, int row);
+    // `byRoad`: kept to the roads where it can be (setRoads), for a townsperson's rounds.
+    bool send(Body& one, int column, int row, bool byRoad = false);
     // The pass a body plans on: a monster's walls the safe zone off (content::kWallMonster),
     // everybody else's -- the hero, his summons, the guards and the town -- is the strict one.
     static uint16_t wallOf(const Body& one) {
@@ -829,6 +837,7 @@ private:
     const content::Tables* tables_ = nullptr;
     Random dice_{0};
     Router router_;
+    std::vector<uint8_t> roads_;  // see setRoads
     // [0] is the player; then the monsters, in spawn order; then the town's guards.
     std::vector<Body> bodies_;
     // Who is a player, by index, and where an id lives. Both are lists and not maps: an

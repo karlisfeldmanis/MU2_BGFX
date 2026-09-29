@@ -18,7 +18,7 @@
 
 namespace mu::sim {
 
-bool Realm::send(Body& one, int column, int row) {
+bool Realm::send(Body& one, int column, int row, bool byRoad) {
     // The tile he is standing on, asked for while he is between two tiles: a stop THERE. The
     // router has no route from a tile to itself, and this used to be a refusal, which left the
     // old walk running -- a click on his own feet mid-stride carried him on to wherever he was
@@ -33,7 +33,7 @@ bool Realm::send(Body& one, int column, int row) {
         say(What::Walked, one, column, row, 1);
         return true;
     }
-    if (!router_.plan(one.column(), one.row(), column, row, wallOf(one), scratch_)) {
+    if (!router_.plan(one.column(), one.row(), column, row, wallOf(one), scratch_, byRoad)) {
         // A refusal is an event and not a silence. It was a silence for one evening, and the
         // scripted hand -- which asks again whenever it is not walking -- asked for the same
         // impossible tile every tick for the rest of the run: nine thousand ticks in which
@@ -47,7 +47,7 @@ bool Realm::send(Body& one, int column, int row) {
     // walked tile to tile that staircase is a zig-zag. The legs are exactly as clear as the
     // tiles were -- Router::sees tests every tile a leg touches -- so nothing walks through
     // anything the plan went round. Invention against MU, which walks the staircase.
-    router_.pull(one.x, one.y, wallOf(one), scratch_);
+    router_.pull(one.x, one.y, wallOf(one), scratch_, byRoad);
     one.route.assign(scratch_.begin(), scratch_.end());
     one.onStep = 0;
     one.walking = true;

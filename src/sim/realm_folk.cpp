@@ -181,7 +181,8 @@ void Realm::stroll(Body& walker) {
                     return;
                 }
                 // No way there: on to the next stop rather than standing in the road for ever.
-                if (!send(walker, column, row)) next();
+                // By the road, as a townsperson walks the town (the user's, 2026-09-29).
+                if (!send(walker, column, row, true)) next();
             }
             return;
         }

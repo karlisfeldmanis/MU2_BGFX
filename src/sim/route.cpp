@@ -10,6 +10,10 @@ namespace {
 // Route.cs:85-88. The client truncates 5 x 1.414 to 7.
 constexpr int kStraight = 5;
 constexpr int kDiagonal = 7;
+// What a step off the road costs a walker keeping to it, as a multiple. Ours: three is enough
+// that the road round a lawn beats the lawn, and not so much that a stop off the road is
+// reached by walking the whole town's paving first.
+constexpr int kOffRoad = 3;
 
 // Route.cs:96-102, "neighbour offsets, in the client's order".
 constexpr int8_t kAround[8][2] = {
@@ -53,7 +57,8 @@ bool Router::corner(int column, int row, int dx, int dy, uint16_t wall) const {
     return grid_->open(column + dx, row, wall) && grid_->open(column, row + dy, wall);
 }
 
-bool Router::sees(float fromX, float fromY, float toX, float toY, uint16_t wall) const {
+bool Router::sees(float fromX, float fromY, float toX, float toY, uint16_t wall,
+                  bool byRoad) const {
     if (!grid_ || grid_->empty()) return false;
     // Into a space where a tile is the unit square from its own index, so the boundaries are
     // whole numbers. Double, because a line exactly through a corner is decided by equality.
@@ -92,18 +97,23 @@ bool Router::sees(float fromX, float fromY, float toX, float toY, uint16_t wall)
             farY += perY;
         }
         if (!grid_->open(column, row, wall)) return false;
+        if (byRoad && offRoad(column, row)) return false;
     }
     return column == lastColumn && row == lastRow;
 }
 
-void Router::pull(float fromX, float fromY, uint16_t wall, std::vector<Step>& route) const {
+void Router::pull(float fromX, float fromY, uint16_t wall, std::vector<Step>& route,
+                  bool byRoad) const {
     if (route.size() < 2) return;
     float atX = fromX, atY = fromY;
     size_t next = 0, kept = 0;
     while (next < route.size()) {
         size_t furthest = next;
         for (size_t test = next + 1; test < route.size(); ++test) {
-            if (!sees(atX, atY, float(route[test].column), float(route[test].row), wall)) break;
+            if (!sees(atX, atY, float(route[test].column), float(route[test].row), wall,
+                      byRoad)) {
+                break;
+            }
             furthest = test;
         }
         // In place: `kept` never passes `furthest`, so nothing is overwritten before it is read.
@@ -149,7 +159,7 @@ bool Router::nearestOpen(int column, int row, uint16_t wall, int rings, int* out
 }
 
 bool Router::plan(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t wall,
-                  std::vector<Step>& out) {
+                  std::vector<Step>& out, bool byRoad) {
     out.clear();
     if (!grid_ || grid_->empty()) return false;
     if (!grid_->inside(fromColumn, fromRow) || !grid_->inside(toColumn, toRow)) return false;
@@ -213,7 +223,11 @@ bool Router::plan(int fromColumn, int fromRow, int toColumn, int toRow, uint16_t
             if (!grid_->open(nextColumn, nextRow, wall)) continue;
             if (dx != 0 && dy != 0 && !corner(column, row, dx, dy, wall)) continue;
             const int next = index(nextColumn, nextRow);
-            const int candidate = cost_[tile] + ((dx == 0 || dy == 0) ? kStraight : kDiagonal);
+            // Dearer off the road, which only raises costs: the estimate still never over-
+            // estimates, so the route is still the cheapest under them.
+            const int pace = (dx == 0 || dy == 0) ? kStraight : kDiagonal;
+            const int candidate =
+                cost_[tile] + (byRoad && offRoad(nextColumn, nextRow) ? pace * kOffRoad : pace);
             if (stamp_[next] == generation_ && cost_[next] <= candidate) continue;
             stamp_[next] = generation_;
             cost_[next] = candidate;
