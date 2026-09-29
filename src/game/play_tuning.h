@@ -106,9 +106,11 @@ constexpr int kMonsterShockSlot = 5;
 // How far the quake reaches: MU's `Distance <= 200`, a hundred units to the tile.
 constexpr float kShockTiles = 2.0f;
 // PLAYER_SHOCK, for a body on the player rig that is not the hero -- the Skeleton Warrior.
-// 231 is what index.json's own `actions` table calls "Shock"; MuMain's enum numbers it 238,
-// and the two tables are not the same enumeration, which is why this reads ours.
-constexpr int kPlayerShockSlot = 231;
+// 230, which index.json's `actions` table labels "Come up": player.muc's labels are one slot off
+// here, as the salute's are, and the clip under "Shock" (231, 30 keys) is a fall to the ground.
+// 230 is the short recoil, the feet planted -- checked on the bench and chosen by the user,
+// 2026-09-29.
+constexpr int kPlayerShockSlot = 230;
 // The HERO keeps none on his Drawn, and that is a decision rather than an omission. MU's quake
 // loop excludes the hero outright, so he never flinches for a meteor. His flinch from a blow
 // looks this slot up itself: Play::flinch.
