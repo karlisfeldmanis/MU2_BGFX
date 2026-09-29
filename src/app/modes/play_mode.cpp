@@ -11,6 +11,7 @@
 #include "app/options.h"
 #include "app/preloader.h"
 #include "core/files.h"
+#include "core/loading.h"
 #include "core/log.h"
 #include "game/roster.h"
 #include "game/shine.h"
@@ -101,10 +102,18 @@ void PlayMode::warmItems() {
     // costs nothing that shows. The whole table would be the same thing again for the rows
     // nobody can reach -- a session sees a few dozen kinds of item, and these are the kinds.
     int warmed = 0;
+    // Counted first, so the spinner can say how far through the shelves it is.
+    size_t shelved = 0, asked = 0;
+    for (const content::Townsperson& person : tables.folk) {
+        int count = 0;
+        sim::stockOf(person.number, &count);
+        shelved += size_t(count);
+    }
     for (const content::Townsperson& person : tables.folk) {
         int count = 0;
         const sim::Offer* stock = sim::stockOf(person.number, &count);
         for (int i = 0; i < count; ++i) {
+            core::Loading::part(asked++, shelved);
             const int32_t item = tables.itemAt(stock[i].group, stock[i].number);
             if (item >= 0 && itemModels_.of(item)) ++warmed;
         }
@@ -151,8 +160,12 @@ bool PlayMode::open(Context& ctx) {
         // No crowd when the realm is going to be raised: the crowd stands monsters where
         // it chooses and the sim stands them where they are, and raising both means
         // loading, posing and then throwing away 45 figures a run.
+        // The shares below are what each part took on a cold start, which is the load
+        // anybody waits long enough to read them on (core/loading.h).
+        core::Loading::span(0.0f, 0.48f);
         const bool ok = world_.open(assets, args.world, ctx.textures,
                                     args.play ? 0 : args.crowd, args.figuresOn);
+        core::Loading::span(0.0f, 1.0f);
         // Where this map stops, so the last metres of it can go dark instead of ending at a
         // line. MU draws nothing past the last tile and lets the player walk to within three
         // of it, so the border was lit ground against the cleared frame; eight metres is wide
@@ -166,6 +179,7 @@ bool PlayMode::open(Context& ctx) {
         // And the realm behind it, when there is somebody playing. A world that cannot
         // raise one -- no cooked tables yet -- says so and is still a world to look at.
         if (ok && args.play) {
+            core::Loading::stage("the realm", 0.48f, 0.49f);
             // Before the realm is raised, because all the arena is is the nest table the
             // realm is about to be handed. See Play::Arena.
             if (!args.arena.empty()) {
@@ -197,6 +211,7 @@ bool PlayMode::open(Context& ctx) {
             }
             // What a blow looks like and where a click sent him. Not fatal: open() has
             // said why in the log.
+            core::Loading::stage("effects", 0.49f, 0.53f);
             world_.played().showing().open(assets, ctx.textures);
             world_.played().marker().open(assets, ctx.textures);
             world_.played().aura().open(assets, ctx.textures);
@@ -244,11 +259,14 @@ bool PlayMode::open(Context& ctx) {
             }
             // Hanzo's coals, into the lamps' static set before it goes to the renderer below.
             if (args.lampsOn) world_.played().lightForges(world_.lamps());
+            core::Loading::stage("sounds", 0.53f, 0.58f);
             world_.played().openSound(assets, args.mute);
+            core::Loading::stage("the weather", 0.58f, 0.60f);
             // And only now the air: the birds' calls come off the sound above and the leaves'
             // sheet off the showing's table. See World::raiseAirs.
             if (args.airOn) world_.raiseAirs(assets, args.world, args.weather);
             // Not fatal either: a game with no HUD is still a game.
+            core::Loading::stage("the interface", 0.60f, 0.675f);
             if (args.windows != "off" && !desk_.open(ctx.paths.shaders, assets, &ctx.textures)) {
                 core::logError("the windows did not open; playing without a HUD");
             }
@@ -258,6 +276,7 @@ bool PlayMode::open(Context& ctx) {
             }
             // And the pictures the windows will ask for, last of all: after restore(), so the
             // bag being warmed is the one he is carrying and not an empty one.
+            core::Loading::stage("items", 0.675f, 1.0f);
             openItems(ctx);
             warmItems();
         }

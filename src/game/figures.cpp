@@ -12,6 +12,7 @@
 
 #include "core/files.h"
 #include "core/json.h"
+#include "core/loading.h"
 #include "core/log.h"
 #include "core/maths.h"  // measurePlant walks the rig itself
 
@@ -810,6 +811,7 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
     size_t failed = 0;
     uint32_t triangles = 0;
     for (const auto& [name, entry] : meshes.members) {
+        core::Loading::part(meshes_.size() + failed, meshes.members.size());
         std::vector<uint8_t> bytes = core::readFile(core::join(assetDir, entry["mesh"].string));
         content::CookedMesh cooked;
         std::string error;

@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "core/files.h"
+#include "core/loading.h"
 #include "core/log.h"
 #include "game/world/maps.h"
 
@@ -90,12 +91,16 @@ bool World::open(const std::string& assetDir, const std::string& name,
                  content::Textures& textures, int crowd, bool figures) {
     const std::string dir = core::join(assetDir, "world/" + name);
     textures_ = &textures;
+    // Its share of the load, by what each took on a cold start (core/loading.h).
+    core::Loading::stage("the land", 0.0f, 0.05f);
     if (!ground_.load(dir, name, textures)) return false;
+    core::Loading::stage("the town", 0.05f, 0.56f);
     // The town is not required: the land is a world on its own, and a cook that has not been
     // run yet says so in the log rather than failing the launch.
     town_.open(assetDir, name, textures);
     // And what burns in it. Nothing without a town, since every light hangs on a placement.
     if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures);
+    core::Loading::stage("the town's lights and grass", 0.56f, 0.63f);
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
     // And what rides the swaying bones: the fountain's spray, the lanterns; and the mill's fall.
     if (town_.isOpen()) ornaments_.open(assetDir, town_, ground_, textures);
@@ -134,6 +139,7 @@ bool World::open(const std::string& assetDir, const std::string& name,
     }
     // The figures are not required either, for the same reason the town is not: a cook that
     // has not been run says so in the log rather than failing the launch.
+    core::Loading::stage("people and monsters", 0.63f, 1.0f);
     if (figures && figures_.open(assetDir, name, textures)) {
         int monsters = crowd;
         if (monsters < 0) {

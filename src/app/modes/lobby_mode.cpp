@@ -8,6 +8,7 @@
 #include "app/options.h"
 #include "app/preloader.h"
 #include "core/files.h"
+#include "core/loading.h"
 #include "core/log.h"
 #include "game/ui/controls.h"
 
@@ -137,8 +138,12 @@ bool LobbyMode::open(Context& ctx) {
 
     world_.setFocusTile(kFocusColumn, kFocusRow);
     const bool up = Preloader::run(ctx, [&]() {
+        // Shares by guess rather than by measure: the set is the bulk of it (core/loading.h).
+        core::Loading::span(0.0f, 0.7f);
         bool ok = world_.open(assets, game::Pedestals::kMap, ctx.textures, 0, true);
+        core::Loading::span(0.0f, 1.0f);
         if (!ok) return false;
+        core::Loading::stage("characters", 0.7f, 0.85f);
         // The crowd would stand a knight of its own at the focus; the pedestals are the people.
         world_.crowd().shutdown();
         const float reach = float(world_.ground().size()) * world_.ground().metresPerTile();
@@ -172,6 +177,7 @@ bool LobbyMode::open(Context& ctx) {
         roster_ = game::readRoster(folder_);
         pedestals_.raise(roster_);
 
+        core::Loading::stage("the interface", 0.85f, 0.95f);
         if (interface_.init(ctx.paths.shaders)) {
             interfaceUp_ = true;
             arts_.open(assets, &ctx.textures);
@@ -185,6 +191,7 @@ bool LobbyMode::open(Context& ctx) {
             core::logError("lobby: the interface did not open");
         }
         // The clicks: SOUND_CLICK01 on every button and on Enter and Escape, as MU plays it.
+        core::Loading::stage("sounds", 0.95f, 1.0f);
         if (content::loadShowing(core::join(assets, "cooked/showing/showing.mus"), showing_,
                                  error) &&
             sound_.open(assets, showing_, args.mute)) {

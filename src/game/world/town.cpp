@@ -6,6 +6,7 @@
 
 #include "content/placement.h"
 #include "core/files.h"
+#include "core/loading.h"
 #include "core/log.h"
 
 namespace mu::game {
@@ -78,6 +79,7 @@ size_t Town::loadMeshes(const std::string& assetDir, const std::vector<bool>& wa
     size_t failed = 0;
     std::string error;
     for (size_t i = 0; i < town_.models.size(); ++i) {
+        core::Loading::part(i, town_.models.size());
         if (!wanted.empty() && !wanted[i]) continue;
         const content::TownModel& model = town_.models[i];
         std::vector<uint8_t> meshBytes = core::readFile(core::join(assetDir, model.mesh));

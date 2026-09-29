@@ -8,9 +8,12 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
+#include <string>
 #include <thread>
 
+#include "core/loading.h"
 #include "core/log.h"
 #include "gfx/views.h"
 
@@ -18,6 +21,7 @@ namespace mu::app {
 
 bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly) {
     std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
+    core::Loading::reset();
     std::thread loader([&]() { loaded.store(load() ? 1 : -1); });
 
     ctx.curtain.init(ctx.paths.shaders);
@@ -48,7 +52,22 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
     // A comet arc chasing round: its head is the brightest and largest dot, at a continuous
     // angle, so it moves by fractions of a dot a frame rather than stepping between them.
     // MU's marker gold.
+    //
+    // Under it, what is being loaded, and in it how much of the whole is done. The number is
+    // eased rather than printed raw: it catches up quickly with a stage that counts itself,
+    // creeps a little way into one that cannot, so a long stage does not read as a hang, and
+    // never goes back.
+    float shown = 0.0f;
+    double shownAt = 0.0;
     const auto spinner = [&](float alpha, double seconds) {
+        {
+            const float dt = float(std::max(0.0, seconds - shownAt));
+            shownAt = seconds;
+            const float real = core::Loading::at();
+            const float ceiling = real + (core::Loading::stageEnd() - real) * 0.85f;
+            if (shown < real) shown += (real - shown) * std::min(1.0f, dt * 10.0f);
+            else if (shown < ceiling) shown += (ceiling - shown) * std::min(1.0f, dt * 0.25f);
+        }
         const int w = ctx.window.width(), h = ctx.window.height();
         bgfx::setViewFrameBuffer(gfx::ViewHud, BGFX_INVALID_HANDLE);
         bgfx::setViewRect(gfx::ViewHud, 0, 0, uint16_t(w), uint16_t(h));
@@ -123,10 +142,21 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         if (ctx.curtain.ready() && alpha > 0.0f) {
             ctx.curtain.begin(w, h);
             const float scale = 2.2f * unit;
-            const char* word = "Loading";
+            const std::string stage = core::Loading::what();
+            const std::string word = stage.empty() ? "Loading" : "Loading " + stage;
             const float across = ctx.curtain.measure(scale, word);
             const uint32_t ink = (uint32_t(alpha * 0.5f * 255.0f) << 24) | 0x00c8d8e6u;
             ctx.curtain.text(cx - across * 0.5f, cy + radius + 24.0f * unit, scale, ink, word);
+            // The share done, in the ring. Held under 100 until the worker has actually
+            // finished, which is when the spinner goes.
+            char percent[8];
+            std::snprintf(percent, sizeof percent, "%d%%",
+                          std::min(99, int(shown * 100.0f)));
+            const float small = 1.8f * unit;
+            const float wide = ctx.curtain.measure(small, percent);
+            const uint32_t gold = (uint32_t(alpha * 0.8f * 255.0f) << 24) | 0x0061bdffu;
+            ctx.curtain.text(cx - wide * 0.5f, cy - gfx::Overlay::lineHeight(small) * 0.5f,
+                             small, gold, percent);
             ctx.curtain.submit(gfx::ViewHud);
         }
         bgfx::frame();
