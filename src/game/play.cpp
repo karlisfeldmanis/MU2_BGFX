@@ -240,11 +240,15 @@ void Play::update(double seconds) {
                     levelOn_ = happening.who;
                 }
             } else if (happening.what == sim::What::Shouted) {
-                // A salute is a pose as well as a line: MU's PLAYER_SALUTE1, action 219 of the
-                // player library a guard is animated from ("Salute 1" in player.muc), played
-                // once and held as a swing is held.
+                // A salute is a pose as well as a line: MU's PLAYER_SALUTE1, played once and
+                // held as a swing is held. **Action 218, whatever player.muc's label says.**
+                // Its labels are one slot off here: "Salute 1" (219) is 9 frames like the two
+                // after it, which are Rock-Paper-Scissors -- a fist shaken and thrown out, the
+                // guard aiming at Marlon the user saw -- and 218, labelled "Respect", is the hand
+                // brought up to the helmet and held; 217 is the bow. Checked frame by frame on
+                // the bench, 2026-09-29.
                 if (happening.a == int32_t(sim::Shout::Salute)) {
-                    constexpr int kSaluteAction = 219;
+                    constexpr int kSaluteAction = 218;
                     if (Drawn* guard = drawnOf(happening.who);
                         guard && guard->figure.body() && guard->figure.body()->library) {
                         const int clip = guard->figure.body()->library->find(kSaluteAction);
