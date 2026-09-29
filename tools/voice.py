@@ -11,7 +11,7 @@ The model is Chatterbox (Resemble AI, MIT), local, chosen 2026-09-29 for its `ex
 the user wanted him dramatic, a man asking for help, and Kokoro read him flat. Each giver's
 voice is cloned from a line Kokoro-82M (Apache 2.0) read, in source/voice/ref, and read to the
 settings in VOICES. No reverb on Marlon: the user heard one on his first take and called it
-weird. Peia, low and mystical, carries a faint echo.
+weird. Peia, low and mystical, carries a faint echo, and Devin the same one.
 
 Needs its own Python, which this repo does not carry:
 
@@ -51,7 +51,7 @@ VOICES = {
     # Peia: low and mystical (the user, 2026-09-29). Kokoro-82M's af_nicole (Apache 2.0), the
     # lowest of six female voices measured -- 156 Hz median against 180 to 220 -- and breathy;
     # read calm rather than pleading, a little slower, taken down a semitone (asetrate 0.94,
-    # tempo put back), and a faint echo, the one voice here with any.
+    # tempo put back), and a faint echo, which Devin shares.
     "peia": dict(ref="af_nicole.wav", exaggeration=0.4, cfg_weight=0.3,
                  polish="asetrate=24000*0.94,aresample=24000,atempo=1.0638,"
                         "aecho=0.8:0.5:70|140:0.18|0.1," + POLISH),
@@ -61,13 +61,14 @@ VOICES = {
     # bm_lewis, at exaggeration 0.9; cloned here by the English model, the accent survives only
     # as colour. devin_sv.wav, a calm read, gave a monotone Devin at any setting. Dramatic, 0.9
     # and 0.3, chosen over 1.1 and 1.3. Two semitones down (asetrate 0.89, tempo put back) and
-    # more chest: older than Marlon.
+    # more chest: older than Marlon. And Peia's faint echo, the user's "mystical echo" (2026-09-29);
+    # his finished WAVs took it afterwards, echo then loudnorm, since their raw takes are not kept.
     # His pages were NOT read by main(): each paragraph read whole (stitched sentences sounded
     # cropped), seed 11, then the sentence gaps stretched and the paragraphs joined 0.9 s apart
     # -- see docs/devin-quest.md and source/voice/devin/recorded_with.py.txt. main() would undo that.
     "devin": dict(ref="devin_sv_dramatic.wav", exaggeration=0.9, cfg_weight=0.3,
                   polish="asetrate=24000*0.89,aresample=24000,atempo=1.1236,"
-                         "bass=g=3:f=100," + POLISH),
+                         "aecho=0.8:0.5:70|140:0.18|0.1,bass=g=3:f=100," + POLISH),
 }
 
 
