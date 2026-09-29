@@ -166,7 +166,9 @@ void Weather::update(float seconds, bool indoors) {
         left_ -= seconds;
         if (left_ <= 0.0f) {
             wet_ = !wet_;
-            left_ = cycle_ ? (wet_ ? 30.0f : 20.0f)
+            // --weather cycle: a blizzard is held a minute, so its eighteen-second build leaves
+            // forty at full before it eases back into the calm.
+            left_ = cycle_ ? (wet_ ? (snows_ ? 60.0f : 30.0f) : 20.0f)
                     : wet_ ? (snows_ ? kStormLow + random01() * (kStormHigh - kStormLow)
                                      : kWetLow + random01() * (kWetHigh - kWetLow))
                            : kDryLow + random01() * (kDryHigh - kDryLow);
