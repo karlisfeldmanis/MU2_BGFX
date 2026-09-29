@@ -38,6 +38,13 @@ void audit(const Realm& realm, Findings& findings) {
                  (long long)realm.tick(), one.id, one.column(), one.row(),
                  tables->grid.at(one.column(), one.row()));
         }
+        // A monster in the town. None is placed there and none may plan a step onto it
+        // (content::kWallMonster), so one standing there walked a route that should not exist.
+        if (one.monster() && one.alive() && tables->grid.safe(one.column(), one.row())) {
+            ++findings.inTown;
+            note(findings, "tick %lld: monster %u stands in the safe zone at (%d, %d)",
+                 (long long)realm.tick(), one.id, one.column(), one.row());
+        }
         if (one.health < 0) {
             ++findings.belowZero;
             note(findings, "tick %lld: body %u has %d health", (long long)realm.tick(), one.id,

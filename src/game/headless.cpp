@@ -437,12 +437,13 @@ int runHeadless(const core::Args& args, const char* assetDir) {
         return 0;
     }
     core::logError("  invariants: %llu on a blocked tile, %llu below zero health, %llu blows on "
-                   "the dead, %llu past the leash, %llu unpaid levels, %llu skills unlearned, "
+                   "the dead, %llu past the leash, %llu in the safe zone, %llu unpaid levels, %llu skills unlearned, "
                    "%llu cast early, %llu guards that never lapse",
                    (unsigned long long)findings.onBlocked,
                    (unsigned long long)findings.belowZero,
                    (unsigned long long)findings.hitTheDead,
                    (unsigned long long)findings.pastTheLeash,
+                   (unsigned long long)findings.inTown,
                    (unsigned long long)findings.unpaidLevel,
                    (unsigned long long)findings.castUnlearned,
                    (unsigned long long)findings.castEarly,

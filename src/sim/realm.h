@@ -810,6 +810,11 @@ private:
     void sip();
     void recover(Body& hero);
     bool send(Body& one, int column, int row);
+    // The pass a body plans on: a monster's walls the safe zone off (content::kWallMonster),
+    // everybody else's -- the hero, his summons, the guards and the town -- is the strict one.
+    static uint16_t wallOf(const Body& one) {
+        return one.monster() ? content::kWallMonster : content::kWallCharacter;
+    }
     void halt(Body& one);
     // The Perch order's arrival, and the four things that end a pose. See Pose.
     void perch(Body& hero);

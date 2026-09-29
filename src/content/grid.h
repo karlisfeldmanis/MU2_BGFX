@@ -41,6 +41,10 @@ constexpr uint16_t kNonBlocking = kAction | kHeight | kCameraUp;
 // argument and not a constant.
 constexpr uint16_t kWallCharacter = kCharacter;
 constexpr uint16_t kWallNoMove = kNoMove;
+// A monster's pass: the strict one with the safe zone walled off as well, OpenMU's AIgrid
+// (GameMapTerrain: walkable and not Safezone), which every monster walk plans on. A town's
+// tiles are nobody's to wander, chase or come home through.
+constexpr uint16_t kWallMonster = kSafeZone;
 
 // MU's test, and the only one in this engine.
 inline bool passable(uint16_t word, uint16_t wall) {

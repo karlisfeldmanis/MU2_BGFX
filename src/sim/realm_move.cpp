@@ -33,7 +33,7 @@ bool Realm::send(Body& one, int column, int row) {
         say(What::Walked, one, column, row, 1);
         return true;
     }
-    if (!router_.plan(one.column(), one.row(), column, row, content::kWallCharacter, scratch_)) {
+    if (!router_.plan(one.column(), one.row(), column, row, wallOf(one), scratch_)) {
         // A refusal is an event and not a silence. It was a silence for one evening, and the
         // scripted hand -- which asks again whenever it is not walking -- asked for the same
         // impossible tile every tick for the rest of the run: nine thousand ticks in which
@@ -47,7 +47,7 @@ bool Realm::send(Body& one, int column, int row) {
     // walked tile to tile that staircase is a zig-zag. The legs are exactly as clear as the
     // tiles were -- Router::sees tests every tile a leg touches -- so nothing walks through
     // anything the plan went round. Invention against MU, which walks the staircase.
-    router_.pull(one.x, one.y, content::kWallCharacter, scratch_);
+    router_.pull(one.x, one.y, wallOf(one), scratch_);
     one.route.assign(scratch_.begin(), scratch_.end());
     one.onStep = 0;
     one.walking = true;
@@ -220,7 +220,7 @@ void Realm::wander(Body& beast) {
     // wander that retried until it found somewhere would consume a variable number of draws.
     const int column = beast.column() + dice_.nextInt(-kind.moveRange, kind.moveRange + 1);
     const int row = beast.row() + dice_.nextInt(-kind.moveRange, kind.moveRange + 1);
-    if (tables_->grid.open(column, row, content::kWallCharacter)) send(beast, column, row);
+    if (tables_->grid.open(column, row, wallOf(beast))) send(beast, column, row);
 }
 
 void Realm::retreat(Body& beast) {
@@ -266,7 +266,7 @@ bool Realm::beside(const Body& target, int radius, const Body& walker, int* colu
         for (int across = -radius; across <= radius; ++across) {
             if (across == 0 && down == 0) continue;
             const int c = target.column() + across, r = target.row() + down;
-            if (!tables_->grid.open(c, r, content::kWallCharacter)) continue;
+            if (!tables_->grid.open(c, r, wallOf(walker))) continue;
             if (c == walker.column() && r == walker.row()) continue;
             // Standing here has to be close enough on the same measure the arrival will be
             // judged by -- the centre of this tile against where the target actually is. Without

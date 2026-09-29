@@ -21,14 +21,15 @@ struct Findings {
     uint64_t belowZero = 0;    // health under zero rather than clamped at it
     uint64_t hitTheDead = 0;   // a blow landed on something already dead
     uint64_t pastTheLeash = 0; // a monster further from its nest than a grudge allows
+    uint64_t inTown = 0;       // a live monster on a safe-zone tile, which it may never walk
     uint64_t unpaidLevel = 0;  // a level-up not preceded by the experience that buys it
     // The three a skill can break, and each is a thing the cooldown exists to prevent:
     uint64_t castUnlearned = 0;  // a skill thrown that its caster has never learned
     uint64_t castEarly = 0;      // thrown again before the cooldown the last throw declared
     uint64_t castForever = 0;    // a buff whose cooldown is no longer than the boon it grants
     uint64_t total() const {
-        return onBlocked + belowZero + hitTheDead + pastTheLeash + unpaidLevel + castUnlearned +
-               castEarly + castForever;
+        return onBlocked + belowZero + hitTheDead + pastTheLeash + inTown + unpaidLevel +
+               castUnlearned + castEarly + castForever;
     }
     // The first line of each kind, kept whole: the count says how bad and the line says what.
     std::vector<std::string> first;

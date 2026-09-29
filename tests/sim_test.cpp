@@ -403,6 +403,7 @@ void testInvariants(const content::Tables& tables) {
     checkEqual((long long)findings.belowZero, 0, "nothing fell below zero health");
     checkEqual((long long)findings.hitTheDead, 0, "no blow landed on the dead");
     checkEqual((long long)findings.pastTheLeash, 0, "nothing wandered past its leash");
+    checkEqual((long long)findings.inTown, 0, "no monster walked into the safe zone");
     checkEqual((long long)findings.unpaidLevel, 0, "no level was won unpaid");
     for (const std::string& line : findings.first) std::printf("    %s\n", line.c_str());
 }
