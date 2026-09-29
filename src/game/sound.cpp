@@ -100,8 +100,10 @@ constexpr Preset kDry = {0.0f, 0.5f, 0.5f};
 // Drier, shorter and duller than it was (open 0.126 wet 0.35 room 0.6 damp, roofed 0.22 / 0.6 /
 // 0.4): the user, 2026-09-29, the monsters' reverb "too pleasant". And before that (0.32 wet,
 // 0.7 room under a roof), 2026-09-27, "decrease reverb inside buildings a little bit".
-constexpr Preset kOpenAir = {0.089f, 0.28f, 0.7f};  // -21 dB
-constexpr Preset kRoofed = {0.16f, 0.52f, 0.5f};    // -16 dB
+// Then drier again, open 0.089 and roofed 0.16, with the tails narrowed to the middle (Reverb's
+// kWidth): "reduce more that stereo reverb effect".
+constexpr Preset kOpenAir = {0.063f, 0.28f, 0.7f};  // -24 dB
+constexpr Preset kRoofed = {0.126f, 0.52f, 0.5f};   // -18 dB
 constexpr float kRoomEaseMs = 150.0f;
 
 enum Importance { kCrowd = 0, kNearHero = 1, kHero = 2 };
@@ -127,6 +129,11 @@ struct Reverb {
     Line pass[2][kPasses];
     volatile float room = 0.5f;
     volatile float damp = 0.5f;
+    // How far apart the ears are, Freeverb's `width`: 1 is its two tails apart, 0 is one tail in
+    // the middle. Narrow, the user, 2026-09-29: "reduce more that stereo reverb effect".
+    static constexpr float kWidth = 0.3f;
+    static constexpr float kWidthOwn = (1.0f + kWidth) * 0.5f;
+    static constexpr float kWidthOther = (1.0f - kWidth) * 0.5f;
 
     void size(ma_uint32 rate) {
         static constexpr int kComb[kCombs] = {1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617};
@@ -172,6 +179,10 @@ struct Reverb {
                 }
                 dst[f * 2 + side] = sum;
             }
+            // Freeverb's width: each ear mostly its own tail, a share of the other's.
+            const float l = dst[f * 2], rr = dst[f * 2 + 1];
+            dst[f * 2] = l * kWidthOwn + rr * kWidthOther;
+            dst[f * 2 + 1] = rr * kWidthOwn + l * kWidthOther;
         }
         *outCount = frames;
     }
