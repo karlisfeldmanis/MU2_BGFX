@@ -294,6 +294,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // The sweep starts where he is facing, and nobody has been struck yet.
         hero.channelTurn = hero.aim;
         hero.channelStruckCount = 0;
+        hero.channelEcho = false;
     }
     hero.walking = false;
     hero.route.clear();
@@ -438,7 +439,21 @@ void Realm::shove(Body& target) {
 void Realm::channel(Body& hero) {
     if (hero.channelSkill == skill::kNone) return;
     if (tick_ >= hero.channelUntil) {
+        // An Arcane Echo (sim/items.h): the sweep once more, a beat after, from where he stands
+        // and without his arm -- the clip is not played again and nothing holds him -- striking
+        // afresh, each body its share again. The echo's own end does not echo.
+        const SkillRow* row = skillNumbered(hero.channelSkill);
+        if (row != nullptr && !hero.channelEcho && echoes(hero)) {
+            hero.channelEcho = true;
+            hero.channelNext = tick_ + kEchoTicks;
+            hero.channelFrom = hero.channelNext - row->strikeFrom;
+            hero.channelUntil = hero.channelFrom + row->strikeUntil + 1;
+            hero.channelStruckCount = 0;
+            core::logf("arcane echo: tick %lld, %s sweeps again", (long long)tick_, row->name);
+            return;
+        }
         hero.channelSkill = skill::kNone;
+        hero.channelEcho = false;
         return;
     }
     if (tick_ < hero.channelNext) return;

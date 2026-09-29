@@ -351,7 +351,15 @@ inline int excellentCount(uint8_t mask) {
 // quest gives one, never a repeat, and later the highest drops. Set by dropping the rune on the
 // item, as a Bless goes on (`Realm::refine`), into its first empty socket. Each power set rolls
 // on its own. The design page is claude.ai/artifact/DPhyHWRcYTo97PHpa2FaAu.
-enum class Power : uint8_t { None = 0, Stormcall = 1, Meteor = 2, Ice = 3, Poison = 4, Frost = 5 };
+enum class Power : uint8_t {
+    None = 0,
+    Stormcall = 1,
+    Meteor = 2,
+    Ice = 3,
+    Poison = 4,
+    Frost = 5,
+    Echo = 6
+};
 struct PowerRow {
     Power power;
     const char* name;
@@ -400,5 +408,12 @@ constexpr double kPoisonRuneChance = 0.15;
 constexpr double kFrostChance = 0.15;
 constexpr int64_t kFrostTicks = 40;  // two seconds of the realm's twenty ticks
 constexpr float kFrostWound = 0.5f;
+// **Arcane Echo**, the Dark Wizard's first (the user, 2026-09-29: "casting abilities has 15%
+// chance to cast twice"), in a staff's socket: a spell he lets go has this chance to be let go
+// again `kEchoTicks` later -- the same spell, at the same aim and force, for no mana and no
+// cooldown, and an echo never echoes. Lightning's echo is its sweep run once more when the
+// channel ends, without his arm and without holding him. invention.
+constexpr double kEchoChance = 0.15;
+constexpr int64_t kEchoTicks = 6;  // 0.3 s: two throws, read apart
 
 }  // namespace mu::sim

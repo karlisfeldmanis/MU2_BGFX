@@ -656,6 +656,31 @@ void Realm::step() {
         // same tick is too late to stop it -- which is the honest boundary and is where the
         // player's own hand is.
         if (hero.blowAt != 0 && tick_ >= hero.blowAt) land(hero);
+        // An Arcane Echo's second throw, let go as the first was, paying nothing.
+        if (echo_.at != 0 && tick_ >= echo_.at) {
+            Echo echo = echo_;
+            echo_ = Echo{};
+            // The first throw may have killed what it was aimed at: the echo goes on to the
+            // nearest living monster within the spell's reach, and is spent if there is none.
+            const Body* aimed = body(echo.target);
+            const SkillRow* row = skillNumbered(echo.skill);
+            if ((aimed == nullptr || !aimed->alive()) && row != nullptr) {
+                echo.target = 0;
+                float best = 0.0f;
+                for (const Body& one : bodies_) {
+                    if (!one.monster() || !one.alive() || !within(hero, one, row->reach)) continue;
+                    if (tables_->grid.safe(one.column(), one.row())) continue;
+                    const float gap = reach(hero, one);
+                    if (echo.target == 0 || gap < best) {
+                        echo.target = one.id;
+                        best = gap;
+                    }
+                }
+            }
+            core::logf("arcane echo: tick %lld, skill %d at #%u", (long long)tick_, echo.skill,
+                       echo.target);
+            release(hero, echo.target, echo.force, echo.skill);
+        }
         // And whatever he let go earlier and has now arrived.
         arrive();
         channel(hero);

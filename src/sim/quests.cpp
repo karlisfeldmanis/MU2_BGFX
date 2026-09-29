@@ -89,13 +89,20 @@ QuestRow marlon() {
     row.experience = 25000;
     row.zen = 50000;
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     row.paid[0] = {.item = "Sword08", .kin = knight, .luck = true, .sockets = 1,
                    .firstOnly = true};  // Falchion
     row.paid[1] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Stormcall),
                    .firstOnly = true};  // Rune of Creation, Stormcall's lightning
-    row.paid[2] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
-    row.paid[3] = {.item = "Potion04", .count = 20};  // Large Healing Potions
-    row.paidCount = 4;
+    // The wizard's (the user, 2026-09-29): a lucky Serpent Staff with a socket, and the rune
+    // that echoes his spells.
+    row.paid[2] = {.item = "Staff03", .kin = wizard, .luck = true, .sockets = 1,
+                   .firstOnly = true};  // Serpent Staff
+    row.paid[3] = {.item = "Jewel22", .kin = wizard, .power = uint8_t(Power::Echo),
+                   .firstOnly = true};  // Rune of Creation, Arcane Echo
+    row.paid[4] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
+    row.paid[5] = {.item = "Potion04", .count = 20};  // Large Healing Potions
+    row.paidCount = 6;
     return row;
 }
 

@@ -3621,6 +3621,64 @@ void testRunes(const content::Tables& tables) {
     check(venom.pulses > 0, "and its pulses hurt, his");
     const Elements bare = elements(0);
     check(bare.said == 0 && bare.pulses == 0, "and none of either from an empty socket");
+
+    // Arcane Echo, the wizard's: a staff's socket, his alone, and some of his casts let go twice
+    // -- more Energy Balls in the air than he cast, and none extra from the same staff bare.
+    const int staff = tables.itemNamed("Staff03");
+    const uint8_t echo = uint8_t(sim::Power::Echo);
+    check(staff >= 0, "a Serpent Staff");
+    if (staff < 0) return;
+    check(sim::settable(tables, held(rune, 0, echo), held(staff, 1, 0), sim::Kin::DarkWizard),
+          "Arcane Echo goes in a wizard's socketed staff");
+    check(!sim::settable(tables, held(rune, 0, echo), held(serpent, 1, 0), dk),
+          "and not by a knight");
+    const auto casts = [&](uint8_t power, int* cast, int* loosed) {
+        sim::Realm realm;
+        realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
+        const uint8_t powers[3] = {power, 0, 0};
+        realm.give(staff, sim::kWeaponRight, 0, -1, false, 0, 0, 1, powers);
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 4000 && realm.hero().alive(); ++tick) {
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                request.skill = sim::skill::kEnergyBall;
+                realm.ask(request);
+            }
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.who != realm.hero().id || h.a != sim::skill::kEnergyBall) continue;
+                if (h.what == sim::What::Cast) ++*cast;
+                if (h.what == sim::What::Loosed) ++*loosed;
+            }
+        }
+    };
+    int cast = 0, loosed = 0;
+    casts(echo, &cast, &loosed);
+    int bareCast = 0, bareLoosed = 0;
+    casts(0, &bareCast, &bareLoosed);
+    std::printf("  %d Energy Balls cast, %d let go; bare %d and %d\n", cast, loosed, bareCast,
+                bareLoosed);
+    check(cast > 50 && bareCast > 50, "the wizard casts");
+    // A cast whose body died under an earlier bolt lets nothing go, so the bare staff is the
+    // measure: the echo's share is what the rune adds over it.
+    check(bareLoosed <= bareCast, "one bolt a cast at most from the same staff bare");
+    const double more = double(loosed) / cast - double(bareLoosed) / bareCast;
+    check(more > 0.05, "and Arcane Echo lets some go twice");
+    check(more < 0.25, "at no more than its chance and some");
 }
 
 int main() {

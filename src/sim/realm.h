@@ -303,6 +303,8 @@ struct Body {
     uint32_t channelStruck[kVictims] = {};
     uint8_t channelTimes[kVictims] = {};
     int32_t channelStruckCount = 0;
+    // This channel is an Arcane Echo's second sweep (sim/items.h), which echoes no further.
+    bool channelEcho = false;
     // A Teleport cast and not yet landed (`Realm::blink`): the tick he is put down, 0 for none,
     // and where.
     int64_t blinkAt = 0;
@@ -694,6 +696,12 @@ private:
     // given another order before it lands. `land` is what the tick calls when it is due.
     void begin(Body& hero, uint32_t at, float force, int32_t skill, int32_t overTicks);
     void land(Body& hero);
+    // What `land` does once the blow is due: the skill let go, flown, rained or swept, or the
+    // swing struck. An Arcane Echo's second throw comes through here too, without the landing.
+    void release(Body& hero, uint32_t at, float force, int32_t skill);
+    // Whether his staff's Arcane Echo answers this cast: each socket carrying it rolls, off the
+    // runes' own dice. Draws nothing unless one is worn, so the seeded log does not move.
+    bool echoes(Body& hero);
     // A spell let go: into the air for as long as it takes to cross the gap, and landed by
     // `arrive` on the tick it gets there. Past his hand, a new order no longer takes it back.
     // `announce` says `Loosed` (one wave is drawn per cast, so a line says it once); `pays` is
@@ -845,6 +853,15 @@ private:
     // Room for a line's worth of bodies and the bolts around it.
     static constexpr int kFlights = 32;
     Flight flights_[kFlights] = {};
+    // An Arcane Echo waiting to be let go: the spell again, at `at`. One at a time; a cast that
+    // echoes while one waits does not.
+    struct Echo {
+        int64_t at = 0;  // 0 for none
+        uint32_t target = 0;
+        int32_t skill = 0;
+        float force = 1.0f;
+    };
+    Echo echo_;
     int64_t tick_ = 0;
     std::string refusal_;
     uint32_t nextId_ = 1;

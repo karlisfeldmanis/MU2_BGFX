@@ -197,6 +197,9 @@ const PowerRow* powerOf(uint8_t power) {
          "An arrow that lands has a 15% chance to freeze the monster it struck for two seconds "
          "and wound it again for half the arrow's damage",
          true, Kin::FairyElf},
+        {Power::Echo, "Arcane Echo",
+         "A spell he casts has a 15% chance to be cast a second time, for no mana", true,
+         Kin::DarkWizard},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;

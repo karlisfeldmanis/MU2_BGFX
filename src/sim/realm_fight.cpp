@@ -265,6 +265,30 @@ void Realm::land(Body& hero) {
     hero.blowTarget = 0;
     hero.blowSkill = 0;
     hero.blowForce = 1.0f;
+    // His spell, let go: an Arcane Echo may throw it again a beat later (sim/items.h). Rolled
+    // before the release, whatever the release finds, as a swing's rune rolls on the landing.
+    const SkillRow* spell = skillNumbered(skill);
+    if (spell && spell->wizardry && hero.player && echo_.at == 0 && echoes(hero)) {
+        echo_ = Echo{tick_ + kEchoTicks, at, skill, force};
+    }
+    release(hero, at, force, skill);
+}
+
+bool Realm::echoes(Body& hero) {
+    if (!tables_) return false;
+    for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
+        const Held& hand = bag_[slot];
+        if (hand.empty()) continue;
+        for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
+            const PowerRow* power = powerOf(hand.powers[socket]);
+            if (power == nullptr || power->power != Power::Echo || power->kin != hero.kin) continue;
+            if (runeDice_.nextBool(kEchoChance)) return true;
+        }
+    }
+    return false;
+}
+
+void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
     // An area skill has no one victim and is resolved where he stands rather than against the
     // body the key named: the shape is measured NOW, at the bottom of the swing, so a monster
     // that walked into the spin while the clip ran is caught by it and one that walked out is
@@ -576,6 +600,8 @@ void Realm::kill(Body& dead, Body& killer) {
         dropBlow(dead);
         // And his spells in the air, for the same reason.
         for (Flight& one : flights_) one = Flight{};
+        echo_ = Echo{};
+        dead.channelEcho = false;
         return;
     }
 
