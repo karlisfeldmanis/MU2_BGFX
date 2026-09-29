@@ -30,7 +30,8 @@ class Sound;
 class Weather {
 public:
     // `force`: "" for the world's own spells, "rain" to rain from the first frame, "dry" to
-    // never rain -- `--weather`, so a review shot does not wait out a dry spell.
+    // never rain -- `--weather`, so a review shot does not wait out a dry spell -- or "cycle"
+    // for the world's own spells cut short, 20 s dry and 30 s wet.
     void open(const std::string& world, Sound* sound, const std::string& force);
     void shutdown();
 
@@ -51,6 +52,7 @@ private:
     bool rains_ = false;    // this world has a wet spell at all
     bool forest_ = false;   // this world has MU's forest birdsong
     bool forced_ = false;   // --weather held the spell
+    bool cycle_ = false;    // --weather cycle: short spells, to watch the turn
     bool wet_ = false;      // the spell now: dry or wet
     float peak_ = 1.0f;     // the share a wet spell rises to
     float left_ = 0.0f;     // seconds of it left

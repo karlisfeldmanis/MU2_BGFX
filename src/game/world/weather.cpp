@@ -46,6 +46,11 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
         rains_ = force == "rain";
         wet_ = rains_;
         share_ = wet_ ? 1.0f : 0.0f;
+    } else if (force == "cycle") {
+        // Short spells for watching the whole turn: 20 s dry, then 30 s wet, again and again.
+        cycle_ = rains_;
+        wet_ = false;
+        left_ = 20.0f;
     } else {
         // A world that rains starts dry, with its first spell short, so a walk in finds leaves
         // and does not wait the whole of a long dry spell to see the rain.
@@ -75,8 +80,9 @@ void Weather::update(float seconds, bool indoors) {
         left_ -= seconds;
         if (left_ <= 0.0f) {
             wet_ = !wet_;
-            left_ = wet_ ? kWetLow + random01() * (kWetHigh - kWetLow)
-                         : kDryLow + random01() * (kDryHigh - kDryLow);
+            left_ = cycle_ ? (wet_ ? 30.0f : 20.0f)
+                    : wet_ ? kWetLow + random01() * (kWetHigh - kWetLow)
+                           : kDryLow + random01() * (kDryHigh - kDryLow);
             core::logf("weather: %s for %.0f s", wet_ ? "rain" : "dry", left_);
         }
     }

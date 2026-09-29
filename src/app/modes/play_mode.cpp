@@ -713,7 +713,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // Lorencia the same, to its own main_theme.mp3 -- MU's field music off the tavern floor,
         // brought back only for the fights (the user, 2026-09-29: "use main theme for lorencia
         // combat"); the character screen has MuTheme instead.
-        const char* huntTrack = args.world == "noria"      ? "/music/Noria.mp3"
+        // Off for now in both (the user, 2026-09-29: "lets dont play music at noria and
+        // lorencia for now, we figure out that later"); the rule below stands for when it
+        // returns, and the tavern's Pub.mp3 plays as before.
+        constexpr bool kHuntMusic = false;
+        const char* huntTrack = !kHuntMusic                ? nullptr
+                                : args.world == "noria"    ? "/music/Noria.mp3"
                                 : args.world == "lorencia" ? "/music/main_theme.mp3"
                                                            : nullptr;
         bool hunt = false;
