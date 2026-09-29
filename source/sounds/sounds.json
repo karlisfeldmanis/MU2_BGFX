@@ -583,6 +583,16 @@
       "gain_note": "Left where it is: an RMS of -36.7 dB is already where the wind lands after its own -8 dB cut, so the two beds sit level.",
       "note": "**An invention, marked.** Noria is tropical by the user's choice, and the rain is its bed under the forest's birdsong: looped and unplaced, switched with the wind under a roof."
     },
+    "world_bonfire": {
+      "files": [
+        "abonfire.wav"
+      ],
+      "from": "Not MU's file: MU 0.75's bonfires make no sound. freesound_community 'bonfire' (Pixabay 6449, downloads/), given by the user 2026-09-29 for the bonfires: 35.8 s of 48 kHz mono made 22 kHz mono 16-bit, cut from 0.5 s past its fade-in and 0.2 s short of its end, with its last two seconds folded over its first two at equal power so the loop has no seam. 33.1 s, an RMS of -40.1 dB, peaking at 0.40.",
+      "loop": true,
+      "gain_db": 3.0,
+      "gain_note": "Three up, so that standing at a fire it sits a little over the rain's -36.7 dB bed; walked away from, Play::hearFire takes it down by 1/d and out by its reach.",
+      "note": "**An invention, marked** (docs/spatial-sound.md, G). One loop, unplaced in the loader but levelled and panned every frame from the nearest Bonfire01 within reach, as a placed voice is from the screen (Sound::loopAt). The torches stay silent."
+    },
     "world_thunder": {
       "files": [
         "thunder1.wav",

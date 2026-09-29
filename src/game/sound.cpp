@@ -853,6 +853,18 @@ void Sound::level(int handle, float level) {
                         event.volume * std::clamp(level, 0.0f, 1.0f));
 }
 
+void Sound::loopAt(int handle, const float at[3], float level) {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    if (event.placed) return;
+    // No filter of its own and no wall: an unplaced load has neither, and a fire is heard
+    // round a corner as well as a wind is. The 1/d, the frame's edge and the pan are weigh()'s.
+    const Impl::Weight w = impl_->weigh(at, 0);
+    ma_sound& sound = event.files.front()->sound[0];
+    ma_sound_set_pan(&sound, w.pan);
+    ma_sound_set_volume(&sound, event.volume * w.gain * std::clamp(level, 0.0f, 1.0f));
+}
+
 void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
     Impl& im = *impl_;

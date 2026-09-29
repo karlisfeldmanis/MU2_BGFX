@@ -16,6 +16,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "game/world/lamps.h"
 
 namespace mu::game {
 
@@ -268,6 +269,21 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
             return true;
         },
         this);
+}
+
+void Play::hearFire(const Lamps& lamps) {
+    if (!sound_.isOpen() || heard_.fire < 0) return;
+    const Drawn* hero = drawnOf(realm_.hero().id);
+    float at[3];
+    float d = kFireReach;
+    if (hero != nullptr && hero->placed && shotKnown_ && lamps.nearestBonfire(hero->crown, at)) {
+        const float dx = at[0] - hero->crown[0], dz = at[2] - hero->crown[2];
+        d = std::sqrt(dx * dx + dz * dz);
+    }
+    sound_.loop(heard_.fire, d < kFireReach);
+    if (d >= kFireReach) return;
+    const float hush = std::clamp((kFireReach - d) / (kFireReach - kFireFull), 0.0f, 1.0f);
+    sound_.loopAt(heard_.fire, at, hush);
 }
 
 }  // namespace mu::game

@@ -103,6 +103,10 @@ public:
     // How loud an ambient is, 0 to 1 of its own level: the rain, which comes and goes by degrees
     // where the wind is only on or off. Under loop()'s fade, not instead of it.
     void level(int event, float level);
+    // An ambient heard from somewhere: its level and pan set as a placed voice's are, from
+    // where `at` is on the screen and how far from the ears, times `level`. The bonfire's
+    // crackle, one loop moved to whichever fire is nearest. After listen(), instead of level().
+    void loopAt(int event, const float at[3], float level);
     // How long an event's first file runs, in seconds; 0 for none. What a caller holds a
     // sound busy for when MU would not start it again while it still sounds.
     float seconds(int event) const;

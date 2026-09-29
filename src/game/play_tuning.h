@@ -329,6 +329,11 @@ constexpr int kGrassFloor = 0;
 constexpr float kHeardHeight = 1.0f;
 constexpr float kHeardReach = 1.5f;
 
+// A bonfire's crackle, in metres from the character: 1/d as any placed voice to kFireFull, then
+// taken out straight to nothing at kFireReach, where the loop stops. Ours: MU's fires are silent.
+constexpr float kFireFull = 8.0f;
+constexpr float kFireReach = 16.0f;
+
 // Where a figure's clock stands in its clip's own keys -- MU's AnimationFrame, which is what
 // every one of its sound tests reads. A looping clip is cooked with one closing key, so its
 // duration spans frames - 1 intervals and this runs 0 to the key count MU authored.

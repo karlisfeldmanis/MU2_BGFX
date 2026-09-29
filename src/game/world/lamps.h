@@ -56,6 +56,10 @@ public:
     // by it, since the transparent pass lights nothing.
     void gather(gfx::Effects& effects, const float near[3], float daylight) const;
 
+    // Where the bonfire nearest `from` burns, measured flat, into `at`; false when the town has
+    // none. What the crackle is heard from (Play::hearFire).
+    bool nearestBonfire(const float from[3], float at[3]) const;
+
     uint32_t lightCount() const { return uint32_t(lights_.size()); }
     uint32_t fireCount() const { return uint32_t(fires_.size()); }
     uint32_t flameCount() const { return uint32_t(particles_.size()); }

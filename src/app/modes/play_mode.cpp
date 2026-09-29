@@ -843,6 +843,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                                gfx::Renderer::kMaxTransientLights - count);
         // And Power Wave's, three tiles of blue.
         count += world_.played().wave().lights(falling + count,
+        if (args.lampsOn) world_.played().hearFire(world_.lamps());
                                                gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().thunder().lights(falling + count,
                                                   gfx::Renderer::kMaxTransientLights - count);

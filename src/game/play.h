@@ -432,6 +432,9 @@ public:
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
+    // The nearest bonfire's crackle, after hear(): one loop, levelled and panned from that
+    // fire, on within kFireReach of the character and off past it. Ours.
+    void hearFire(const Lamps& lamps);
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
     // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
@@ -710,6 +713,7 @@ private:
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        int fire = -1;                                           // a bonfire's crackle
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
