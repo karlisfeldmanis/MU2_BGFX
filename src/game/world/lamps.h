@@ -89,6 +89,9 @@ private:
         float drift[3] = {0, 0, 0};
         float spin = 0.0f;
         bool bonfire = false;
+        // Heard: the crackle follows it (nearestBonfire). A bonfire, and Devias's hearth fires,
+        // Object67 -- MU's CreateFire(0), the bonfire's own fire, in a torch's flame here.
+        bool crackles = false;
         // What each kind is owed, in particles; a whole one is spawned and taken off.
         float clock = 0.0f, embers = 0.0f, smoke = 0.0f;
     };

@@ -148,7 +148,7 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
     // `away` is the side of its holder it lights, flat and unit length in the world, or null
     // for a light that lights all round. See sideOf.
     auto place = [&](const content::TownEmitter& one, const float at[3], const float drift[3],
-                     float spin, bool bonfire, const float* away) {
+                     float spin, bool bonfire, bool crackles, const float* away) {
         if (one.kind != content::EmitterKind::Smoke && one.reach > 0.0f) {
             gfx::PointLight light;
             for (int i = 0; i < 3; ++i) {
@@ -182,6 +182,7 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
             }
             fire.spin = spin;
             fire.bonfire = bonfire;
+            fire.crackles = crackles;
             // Staggered, so eighty fires do not all spawn on the same frame.
             fire.clock = unit();
             fires_.push_back(fire);
@@ -224,7 +225,9 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
             const size_t before = set_.size();
             float away[3];
             const bool sided = sideOf(*one, cooked.models[instance.model], turn, away);
-            place(*one, at, drift, instance.pitch, model == "Bonfire01", sided ? away : nullptr);
+            const bool bonfire = model == "Bonfire01";
+            place(*one, at, drift, instance.pitch, bonfire, bonfire || model == "Object67",
+                  sided ? away : nullptr);
             if (rides != nullptr && set_.size() > before) {
                 Rider rider;
                 rider.light = uint32_t(before);
@@ -242,7 +245,7 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
     // Two in Lorencia. A gap, marked.
     const float still[3] = {0.0f, 0.0f, 0.0f};
     for (const content::TownEmitter* one : anchors) {
-        place(*one, one->at, still, 0.0f, false, nullptr);
+        place(*one, one->at, still, 0.0f, false, false, nullptr);
     }
 
     levels_.assign(lights_.size(), 1.0f);
@@ -333,7 +336,7 @@ void Lamps::follow(const Sway& sway, gfx::Renderer& renderer) {
 bool Lamps::nearestBonfire(const float from[3], float at[3]) const {
     float best = -1.0f;
     for (const Fire& fire : fires_) {
-        if (!fire.bonfire) continue;
+        if (!fire.crackles) continue;
         const float dx = fire.at[0] - from[0], dz = fire.at[2] - from[2];
         const float d = dx * dx + dz * dz;
         if (best >= 0.0f && d >= best) continue;
