@@ -121,6 +121,9 @@ enum class Shout : int32_t {
 
 // Devias's Guild Master, MU's NPC 241 (OpenMU's NpcWindow.GuildMaster). Shout::Greet.
 constexpr int kGuildMaster = 241;
+// Sevina the Priestess, MU's NPC 235: the class change's giver, whose quest is not written yet.
+// Until it is she wears a grey "!" and tells the hero he is not ready (the user, 2026-09-30).
+constexpr int kSevina = 235;
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
 // numbers included. These persist -- MU's StopAnimationSetting re-picks the idle only up to

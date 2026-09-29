@@ -49,6 +49,11 @@ constexpr Rgb kLit = {1.00f, 0.88f, 0.42f};
 constexpr Rgb kShade = {0.90f, 0.66f, 0.22f};
 constexpr Rgb kEdge = {1.00f, 0.98f, 0.86f};
 constexpr Rgb kInk = {0.07f, 0.045f, 0.025f};
+// A quest still to come -- Sevina's, before its words are written (the user, 2026-09-30): the
+// same "!" gone to cold iron, lit and shaded as the gold one is, so it reads as "not yet".
+constexpr Rgb kLitLater = {0.70f, 0.70f, 0.68f};
+constexpr Rgb kShadeLater = {0.50f, 0.50f, 0.49f};
+constexpr Rgb kEdgeLater = {0.86f, 0.86f, 0.84f};
 
 float clamp01(float v) { return std::clamp(v, 0.0f, 1.0f); }
 
@@ -140,8 +145,9 @@ bool Beacon::bake(float unit) {
     art_ = {};
     cellW_ = int(std::ceil(kCellW * unit));
     cellH_ = int(std::ceil(kCellH * unit));
-    // Two cells side by side: the offer's "!" and the hand-in's "?".
-    const int wide = cellW_ * 2;
+    // Three cells side by side: the offer's "!", the hand-in's "?" and the grey "!" of a quest
+    // still to come.
+    const int wide = cellW_ * 3;
     std::vector<uint8_t> rgba(size_t(wide) * size_t(cellH_) * 4, 0);
     const float texel = 1.0f / unit;  // one texel, in units
     constexpr int kSide = 4;          // samples a side
@@ -150,8 +156,9 @@ bool Beacon::bake(float unit) {
     const auto cover = [&](float d) { return clamp01(0.5f - d / texel); };
     for (int py = 0; py < cellH_; ++py) {
         for (int column = 0; column < wide; ++column) {
-            const bool ask = column >= cellW_;
-            const int px = ask ? column - cellW_ : column;
+            const int cell = column / cellW_;
+            const bool ask = cell == 1, later = cell == 2;
+            const int px = column - cell * cellW_;
             Pre sum;
             for (int sy = 0; sy < kSide; ++sy) {
                 for (int sx = 0; sx < kSide; ++sx) {
@@ -172,13 +179,15 @@ bool Beacon::bake(float unit) {
                         const bool lit = x < kMid;
                         const float fall = 1.0f - 0.18f * clamp01((y - kTop) / (kDotY - kTop));
                         const float wear = 1.0f + kGrain * grain(px, py);
-                        const Rgb& face = lit ? kLit : kShade;
+                        const Rgb& face = later ? (lit ? kLitLater : kShadeLater)
+                                                : (lit ? kLit : kShade);
                         one.over({clamp01(face.r * fall * wear), clamp01(face.g * fall * wear),
                                   clamp01(face.b * fall * wear)},
                                  inside);
                         // The pale edge along the lit side and the flat of the top.
                         if (lit || y < kShoulder) {
-                            one.over(kEdge, 0.8f * inside * clamp01(1.0f + d / kEdgeLight));
+                            one.over(later ? kEdgeLater : kEdge,
+                                     0.8f * inside * clamp01(1.0f + d / kEdgeLight));
                         }
                     }
                     sum.r += one.r;
@@ -234,6 +243,8 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         // and under way, or resting until it is his to give again, he is a townsperson.
         const int quest = sim::questOf(realm.tables()->folk[size_t(folk)].number);
         const bool ready = quest >= 0 && realm.quest(quest).state == sim::QuestState::Ready;
+        // No quest of his in the table: one still to come (Play::questGivers), marked grey.
+        const bool later = quest < 0;
         if (quest >= 0 && !realm.questOffered(quest) && !ready) continue;
         float x = 0.0f, y = 0.0f;
         if (!play.folkCrownOf(folk, viewProj, width, height, &x, &y)) continue;
@@ -243,7 +254,7 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         const float t = folk == named ? std::clamp(shown, 0.0f, 1.0f) : 0.0f;
         const float lift = kLift + (kLiftNamed - kLift) * t * t * (3.0f - 2.0f * t);
         canvas_.region(art_, {std::round(x - w * 0.5f), y - lift * u - h + bob, w, h},
-                       {ready ? w : 0.0f, 0.0f, w, h});
+                       {ready ? w : (later ? w * 2.0f : 0.0f), 0.0f, w, h});
         showing_ = true;
     }
 }

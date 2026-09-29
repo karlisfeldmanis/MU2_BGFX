@@ -1152,12 +1152,19 @@ void Play::speak(const sim::Happening& happening) {
     };
     std::string line;
     if (happening.a == int32_t(sim::Shout::Greet)) {
-        // The Guild Master, spoken to (Realm's Talk). Ours, the user's of 2026-09-29: MU's guild
+        // The Guild Master or Sevina, spoken to (Realm's Talk). Ours, the user's of 2026-09-29: MU's guild
         // window has nothing to open alone, so he says so, in Devin's plain register.
         static const char* const kGuildMaster[] = {
             "A guild is sworn by many hands. Come back when you have them.",
             "Devias remembers those who stand together. Find yours.",
             "No banner is raised alone, traveller.",
+        };
+        // Sevina, whose class change is still to come (the user, 2026-09-30): the hero is not
+        // ready. Hers is the quest the Soul Master and the Blade Knight are born of.
+        static const char* const kSevina[] = {
+            "You are not ready, child. The path beyond your strength is not yet open to you.",
+            "Not yet. Grow stronger, and come back to me when the gods can hear you.",
+            "I see what you could become. But not today.",
         };
         const int folk = happening.c;
         if (folk < 0 || size_t(folk) >= tables_.folk.size()) return;
@@ -1166,7 +1173,8 @@ void Play::speak(const sim::Happening& happening) {
                     said_.end());
         Said one;
         one.who = happening.who;
-        one.line = kGuildMaster[realm_.tick() % 3];
+        const bool sevina = tables_.folk[size_t(folk)].number == sim::kSevina;
+        one.line = (sevina ? kSevina : kGuildMaster)[realm_.tick() % 3];
         one.folk = folk;
         said_.push_back(one);
         core::logf("greet: tick %lld, %s says \"%s\"", (long long)realm_.tick(),

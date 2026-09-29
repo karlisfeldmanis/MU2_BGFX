@@ -537,9 +537,10 @@ void Realm::press() {
                 // quest under way, the hand-in, or that it is not his to give again yet.
                 questing_ = int(order_.target);
                 say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
-            } else if (one.number == kGuildMaster) {
+            } else if (one.number == kGuildMaster || one.number == kSevina) {
                 // Ours (the user, 2026-09-29): MU opens the guild window here, which a single
                 // player game has no use for, so he answers with a line instead of nothing.
+                // And Sevina, whose class change is not written yet: that he is not ready.
                 say(What::Shouted, hero, int32_t(Shout::Greet), 0, int(order_.target));
             }
             order_ = Request{};
