@@ -112,8 +112,11 @@ constexpr float kStarDegreesPerSecond = 100.0f;
 // And its throwers. Bones 61 to 65 roll rand_fps_check(32) each and throw two BITMAP_SHINY,
 // subtypes 0 and 1, in white; bone 58 rolls rand_fps_check(8) and throws a burst of eight
 // spark pairs. A glint lives 18 frames at Scale `sin(LifeTime * 10 deg)` -- nothing, up to one
-// at the ninth frame, nothing again -- and subtype 1 shrinks by 0.75 a frame and turns 12
-// degrees a frame against the clock. The sheet is Shiny01, 64 texels, so Scale 1 is kSheetMetres.
+// at the ninth frame, nothing again -- and subtype 1 is that times 0.75 (MovePartices sets the
+// sin afresh each frame, then scales it once) and turns 12 degrees a frame against the clock.
+// RenderParticles sizes a particle by its bitmap: Shiny01 is 16 texels, so Scale 1 is 0.16 m.
+constexpr float kShinyMetres = 16.0f / 100.0f;
+constexpr float kGlintSmall = 0.75f;
 constexpr int kGlintBones[5] = {61, 62, 63, 64, 65};
 constexpr int kGlintEvery = 32;
 constexpr int kSparkBone = 58;
@@ -395,11 +398,11 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
         for (const Glint& glint : glints_) {
             const float life = kGlintLife - glint.age;
             float scale = std::sin(life * 10.0f * 3.14159265f / 180.0f);
-            if (glint.small) scale *= std::pow(0.75f, glint.age);
+            if (glint.small) scale *= kGlintSmall;
             if (scale <= 0.0f) continue;
             gfx::Sprite sprite;
             for (int k = 0; k < 3; ++k) sprite.position[k] = glint.position[k];
-            sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * scale;
+            sprite.halfWidth = sprite.halfHeight = 0.5f * kShinyMetres * scale;
             sprite.spin = glint.spin - (glint.small ? glint.age * 12.0f * 3.14159265f / 180.0f : 0.0f);
             sprite.sheet = shiny_;
             sprite.blend = gfx::Blend::Additive;
