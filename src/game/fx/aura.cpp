@@ -48,8 +48,9 @@ constexpr float kCell = 0.5f;
 
 // --- a learned skill's smoke, this engine's own (see Aura::learn) ---------------------------
 // All in MU's units and reference ticks, turned to metres by the tile at the throw.
-constexpr int kBodyPuffs = 7;            // smoke02, mixed: the smoke itself
-constexpr int kGlowPuffs = 4;            // smoke01, added: a faint light in it
+constexpr int kBodyPuffs = 12;           // smoke02, mixed: the smoke itself
+constexpr int kGlowPuffs = 5;            // smoke01, added: a faint light in it
+constexpr float kCrown = 185.0f;         // units from his feet the smoke is laid up to
 constexpr float kSecondStab = 0.35f;     // this share of them wait for the second stab
 constexpr float kDrag = 0.90f;           // velocity kept a tick
 constexpr float kBuoyancy = 0.06f;       // units a tick gained upward, every tick
@@ -59,12 +60,12 @@ constexpr float kSpread = 0.5f;          // and units a tick after that, forever
 // The colour: a cool blue smoke, mixed and not added, so it reads as smoke that is really
 // there -- the user's call after gold (2026-09-29). The tint runs a little past one on blue so
 // the puff is pale and lit rather than a grey-blue stain. The first try, a cloud of 22 gold
-// puffs at 0.62, hid him and was too much, and ten at 0.30 was still a little much: he must
-// stay readable through it. The added wisps are a faint cold light in it, kept low so the
-// whole never reads as a glow.
+// puffs at 0.62, hid him and was too much, and ten at 0.30, then seven at 0.22, were still
+// too visible: he must stay readable through it. The added wisps are a faint cold light in it,
+// kept low so the whole never reads as a glow.
 constexpr float kSmokeBlue[3] = {0.62f, 0.82f, 1.25f};
-constexpr float kBodyAlpha = 0.22f;
-constexpr float kGlow[3] = {0.05f, 0.14f, 0.36f};
+constexpr float kBodyAlpha = 0.14f;
+constexpr float kGlow[3] = {0.03f, 0.09f, 0.24f};
 // The circle: MU's own blue, at half the level-up's width and kept low on lit ground.
 constexpr float kLearnRing[3] = {0.30f, 0.48f, 0.85f};
 constexpr float kLearnRingOpens = 0.075f;
@@ -190,6 +191,10 @@ void Aura::learn(const float feet[3], float metresPerTile) {
         if (made == count) break;
         if (p.living) continue;
         const bool glow = made >= kBodyPuffs;
+        // Which of its kind this is, and how many there are: the kind is laid up his body in
+        // even bands and round him by the golden angle, so it leaves the WHOLE of him.
+        const int nth = glow ? made - kBodyPuffs : made;
+        const int of = glow ? kGlowPuffs : kBodyPuffs;
         ++made;
         p = Puff{};
         p.living = true;
@@ -198,11 +203,11 @@ void Aura::learn(const float feet[3], float metresPerTile) {
         // Born on the first stab or the second, a tick either side of it.
         const bool second = unit() < kSecondStab;
         p.age = -(second ? 3.0f + unit() * 2.0f : unit() * 2.0f);
-        // Inside him: a hand from his middle, the smoke from his knees to his crown and the
-        // light kept to his chest.
-        const float a = unit() * 6.28318530718f;
-        const float from = (8.0f + unit() * 16.0f) * per;
-        const float height = (glow ? 60.0f + unit() * 70.0f : 30.0f + unit() * 120.0f) * per;
+        // Inside him and off the whole of him, feet to crown, one to a band, the user's
+        // (2026-09-29): out of his middle alone it read as a cloud held at the waist.
+        const float a = (float(nth) * 2.39996323f + unit() * 0.6f) + (glow ? 1.2f : 0.0f);
+        const float from = (8.0f + unit() * 14.0f) * per;
+        const float height = (float(nth) + unit()) / float(of) * kCrown * per;
         p.at[0] = feet[0] + std::cos(a) * from;
         p.at[1] = feet[1] + height;
         p.at[2] = feet[2] + std::sin(a) * from;
@@ -212,7 +217,7 @@ void Aura::learn(const float feet[3], float metresPerTile) {
         p.velocity[0] = std::cos(a) * out;
         p.velocity[1] = (0.8f + unit() * 1.4f) * per;
         p.velocity[2] = std::sin(a) * out;
-        p.size = (glow ? 38.0f + unit() * 22.0f : 34.0f + unit() * 22.0f) * per;
+        p.size = (glow ? 34.0f + unit() * 16.0f : 26.0f + unit() * 14.0f) * per;
         p.holds = 17.0f + unit() * 4.0f;
         p.life = p.holds + 8.0f + unit() * 3.0f;
         p.spin = unit() * 6.28318530718f;

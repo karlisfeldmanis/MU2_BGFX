@@ -130,18 +130,18 @@ public:
     //     four, so most of the smoke is born over the first two ticks and the rest around the
     //     fourth, and each one blooms fast -- most of its growth in its first six ticks -- so
     //     the puff lands on the hit and not after it;
-    //   * **out of the body, not round it.** Born inside him, a hand either side of his middle
-    //     from the knees to the crown, let go a little outward and up, and slowed by a drag of
-    //     0.9 a tick, so it drifts a hand past him and then rises;
-    //   * **subtle.** Eleven small puffs, faint, and he stays readable through all of them:
+    //   * **out of the whole body, not round it.** Born inside him, a hand from his middle,
+    //     one to a band from his feet to his crown, let go a little outward and up, and
+    //     slowed by a drag of 0.9 a tick, so it drifts a hand past him and then rises;
+    //   * **subtle.** Seventeen small puffs, faint, and he stays readable through all of them:
     //     the first try, a cloud of 22 puffs at 0.62, hid him in yellow and was too much;
     //   * **held while the sound holds.** Full until the wave's tonal body gives way at 0.75 s,
     //     nineteen ticks, and gone by 1.2 s while the tail rings on;
     //   * **a circle under him.** MU's level-up circle in its own blue, which play has off,
     //     thrown for this alone at the user's asking: half its width, and its twenty ticks end
     //     as the wave's body does;
-    //   * **real smoke, blue.** Seven puffs of smoke02 mixed in (`Blend::Smoke`), tinted a pale
-    //     cool blue, are the smoke; four of smoke01 added are a faint cold light in it. Gold
+    //   * **real smoke, blue.** Twelve puffs of smoke02 mixed in (`Blend::Smoke`), tinted a pale
+    //     cool blue, are the smoke; five of smoke01 added are a faint cold light in it. Gold
     //     came first and the user asked for realistic blue smoke instead (2026-09-29).
     //
     // Never following: the moment is over in a second and he cannot walk out of it.
