@@ -1,0 +1,261 @@
+{
+  "item": "ArmorMale02",
+  "mu_name": "Dragon Armor",
+  "mu_name_from": "MuMain maps MODEL_ARMOR + i to ArmorMale{i+1}; file 2 is index 1, which openmu names Dragon.",
+  "profile": "armour",
+  "why_this_one": "Apostle Devin's reward in Devias (docs/devin-quest.md). The body armour alone; the rest of the set is not built.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(1, 3, 2, 3, \"Dragon Armor\", 59, 37, 68, 120, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 1,
+    "drop_level": 59,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 3,
+    "defense": 37,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 68,
+    "requires": {
+      "level": 0,
+      "strength": 120,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": [
+    "hide.png",
+    "upper_03_m.png",
+    "lower_03b_m.png"
+  ],
+  "sheet_from": "Data/Player/hide.jpg, upper_03_m.OZJ (128x128) and lower_03b_m.ozt (64x64), from MuMain's Player tree at c0d74c4 - the plain ArmorMale02.bmd, not the CW_/HDK_ variants. The .bmd names hide.jpg, upper_03_m.jpg and lower_03b_m.tga, in that order; 16 of the 254 triangles are on hide, 222 on the cuirass and 16 on the rib plate.",
+  "sheet_note": "upper_03_m is the cuirass front and back and the pauldrons: red lacquered plate, mean (138, 64, 53), with a bone-and-gold dragon's ribcage worked over the chest and scale-patterned red sleeves in the lower half. lower_03b_m is a plate of bone ribs and red scales hanging over the belly, its alpha cutting 33% away round the ribs - the spikes' own outline. hide is MU capping the openings, a solid black square, as on ArmorMale10.",
+  "material_note": "plate_steel on all nine islands, the profile's default and the right one: every island is forged plate - island 0 the cuirass (78 triangles of upper_03_m and 10 of hide), 1 and 2 the pauldrons' wings, 5 to 8 the scaled sleeves, 3 and 4 the rib plate on lower_03b_m, two crossed quads cut round by alpha. The red lacquer and the gold ribcage share islands, so they share a material; the alloy is MU's paint.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.5,
+      "f0_from_art": 0.6,
+      "f0_desaturation": 1.0,
+      "roughness": 0.42
+    }
+  },
+  "material_overrides_why": "First cooked at the library's plate_steel and the user called it grainy. The maps were not the cause: normal-map tilt, normal and roughness high frequency all measured level with the Plate Armor's (tilt mean 0.059 against 0.060, roughness hf 0.0037 against 0.0040). What was wrong was the metal. The library lifts a dark sheet's f0 toward 0.575 (0.263 -> 0.52 here, 10% of it at the ceiling) and takes a quarter of its colour out, which turned the red lacquer and the gold ribs into silver chrome, and at roughness 0.34 that chrome mirrored MU's dithered mottle back as sparkle. Plate gets away with it because its sheet is grey and smooth. So: desaturation 1.0 keeps the red and the gold (the Bronze and Brass sets' fix), f0 0.42 and 0.70 of the art keep the bone out of the ceiling and the painting's contrast in, and roughness 0.55 - the Scale set's figure - calms the glints. Judged on the studio sheet at noon, dusk and night: red plate, gold chest, dark wings, no white slab. 2026-09-30: the user found it missing the metallic feel the Plate set has. The colour fix stays (desaturation 1.0, so no silver chrome), and the metal comes part way back: f0 0.42 -> 0.50, art 0.70 -> 0.60, roughness 0.55 -> 0.42 -- between the Scale set's calm and plate's 0.34 sparkle, with the upscale's detail already at 0.35 against the grain.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35, under the profile's 0.65. A 128-square sheet of dithered red paint at 0.65 came back with generated crunch on top of MU's own mottle, which is half of what read as grain; 0.35 keeps MU's drawing, as on Sword01."
+  },
+  "cutout": [
+    "lower_03b_m"
+  ],
+  "cutout_from": "Declared, not detected. The alpha is real - decode_texture reads it as present and cutting 33% - and it is the rib spikes' outline.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 88,
+      "area": 5769.9,
+      "along": [
+        -18.1,
+        16.7
+      ],
+      "mu_uv": [
+        -0.002,
+        0.001,
+        0.964,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.901,
+        0.885
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 25,
+      "area": 1372.1,
+      "along": [
+        -6.8,
+        16.7
+      ],
+      "mu_uv": [
+        0.001,
+        -0.002,
+        0.995,
+        0.755
+      ],
+      "bake_uv": [
+        0.276,
+        0.106,
+        0.991,
+        0.993
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 25,
+      "area": 1436.5,
+      "along": [
+        -34.3,
+        5.0
+      ],
+      "mu_uv": [
+        0.539,
+        -0.003,
+        0.999,
+        0.755
+      ],
+      "bake_uv": [
+        0.81,
+        0.079,
+        0.984,
+        0.935
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 885.6,
+      "along": [
+        3.4,
+        20.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.011,
+        0.996,
+        0.993
+      ],
+      "bake_uv": [
+        0.393,
+        0.398,
+        0.82,
+        0.822
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 890.3,
+      "along": [
+        -20.8,
+        -13.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.438,
+        0.438
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 28,
+      "area": 2448.3,
+      "along": [
+        -30.0,
+        10.5
+      ],
+      "mu_uv": [
+        -0.001,
+        0.006,
+        0.835,
+        0.663
+      ],
+      "bake_uv": [
+        0.409,
+        0.252,
+        0.932,
+        0.5
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 925.4,
+      "along": [
+        -33.6,
+        -6.0
+      ],
+      "mu_uv": [
+        0.399,
+        0.006,
+        0.538,
+        0.304
+      ],
+      "bake_uv": [
+        0.424,
+        0.837,
+        0.484,
+        0.965
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 28,
+      "area": 2470.2,
+      "along": [
+        -6.4,
+        20.1
+      ],
+      "mu_uv": [
+        -0.001,
+        0.006,
+        0.835,
+        0.663
+      ],
+      "bake_uv": [
+        0.238,
+        0.452,
+        0.66,
+        0.932
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 969.7,
+      "along": [
+        -5.1,
+        21.5
+      ],
+      "mu_uv": [
+        0.399,
+        0.006,
+        0.538,
+        0.304
+      ],
+      "bake_uv": [
+        0.502,
+        0.837,
+        0.562,
+        0.965
+      ]
+    }
+  ]
+}

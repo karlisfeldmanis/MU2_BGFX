@@ -1,0 +1,168 @@
+{
+  "item": "ArmorMale04",
+  "mu_name": "Legendary Armor",
+  "mu_name_from": "MuMain maps MODEL_ARMOR + i to ArmorMale{i+1}; file 4 is index 3, which openmu names Legendary.",
+  "profile": "armour",
+  "why_this_one": "Apostle Devin's reward in Devias (docs/devin-quest.md). The body armour alone; the rest of the set is not built.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(3, 3, 2, 2, \"Legendary Armor\", 56, 22, 42, 40, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 8,
+    "number": 3,
+    "drop_level": 56,
+    "drops_from_monsters": true,
+    "slot": 3,
+    "width": 2,
+    "height": 2,
+    "defense": 22,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 42,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone. No agility, as on the Sphinx set."
+  },
+  "sheets": [
+    "upper_13m.png",
+    "hide_m.png"
+  ],
+  "sheet_from": "Data/Player/upper_13m.OZJ (128x128) and hide_m.jpg, from MuMain's Player tree at c0d74c4 - the plain ArmorMale04.bmd, not the CW_/HDK_ variants. The .bmd names upper_13m.jpg and hide_m.jpg; 147 of the 163 triangles are on the robe and 16 on hide.",
+  "sheet_note": "upper_13m is a deep blue robe-cuirass with gold filigree in raised bands over the chest and collar, mean (56, 46, 54): blue cloth dark in its folds, the gold a small part of the area, black hair painted down the right-hand side where the back of the collar is, and pale pink margins. hide_m is MU capping the openings, a solid black square, as on ArmorMale10.",
+  "material_note": "Five islands, a robe with a plated mantle. Island 0 (92 triangles) is the chest and shoulder mantle, blue enamel under raised gold filigree, and island 1 (22) the lower band of the same plate: both plate_steel. Islands 2 and 3 are the sleeves, drawn on the sheet's black right-hand column, and 4 a single triangle beside them: cloth, as the Sphinx bodysuit is.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.42,
+      "f0_from_art": 0.7,
+      "f0_desaturation": 1.0,
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "The Dragon Armor's override, for the same fault: at the library's values the sheet (mean 56, f0 lifted 0.195 -> 0.52) came back grey chrome with its blue gone and a grainy mottle. Desaturation 1.0 keeps the blue and the gold, f0 0.42 at 0.70 of the art keeps the filigree legible, roughness 0.55 takes the mirror off.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Dragon Armor: a dark 128-square sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 92,
+      "area": 6186.8,
+      "along": [
+        -14.7,
+        17.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.183,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.69,
+        0.813
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 1807.5,
+      "along": [
+        -16.1,
+        14.3
+      ],
+      "mu_uv": [
+        0.26,
+        0.001,
+        0.731,
+        0.781
+      ],
+      "bake_uv": [
+        0.008,
+        0.594,
+        0.885,
+        0.89
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 23,
+      "area": 1340.6,
+      "along": [
+        -9.3,
+        7.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.007,
+        0.999,
+        0.701
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.808,
+        0.746
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 25,
+      "area": 1425.3,
+      "along": [
+        -9.3,
+        7.7
+      ],
+      "mu_uv": [
+        0.805,
+        0.006,
+        0.999,
+        0.701
+      ],
+      "bake_uv": [
+        0.407,
+        0.009,
+        0.991,
+        0.993
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 12.2,
+      "along": [
+        -6.3,
+        -1.5
+      ],
+      "mu_uv": [
+        0.913,
+        0.007,
+        0.999,
+        0.104
+      ],
+      "bake_uv": [
+        0.947,
+        0.632,
+        0.991,
+        0.682
+      ]
+    }
+  ]
+}
