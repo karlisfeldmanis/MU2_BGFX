@@ -88,7 +88,8 @@ const char* titled(sim::Kin kin) {
 }  // namespace
 
 bool Card::Sheet::operator==(const Sheet& o) const {
-    return who == o.who && width == o.width && height == o.height && level == o.level &&
+    return who == o.who && width == o.width && height == o.height && top == o.top &&
+           level == o.level &&
            points == o.points && experience == o.experience && strength == o.strength &&
            agility == o.agility && vitality == o.vitality && energy == o.energy &&
            minimum == o.minimum && maximum == o.maximum && attackRate == o.attackRate &&
@@ -154,6 +155,7 @@ void Card::update(float width, float height, const sim::Body* hero, const Pointe
         now_.who = hero;
         now_.width = width;
         now_.height = height;
+        now_.top = y_;
         now_.level = hero->level;
         now_.points = hero->pointsInHand;
         now_.experience = hero->experience;

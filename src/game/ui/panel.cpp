@@ -1,6 +1,7 @@
 #include "game/ui/panel.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 
 #include "core/json.h"
@@ -72,25 +73,35 @@ Screen screenOf(float width, float height) {
 namespace {
 float s_scale = 2.0f;
 float s_unit = 2.0f;
+float s_floor = 0.0f;
+float s_lines = 1080.0f;
 }
 
 void setScreen(float height) {
     const float lines = std::max(height, 540.0f);
+    s_lines = lines;
     s_unit = 2.0f * lines / 1080.0f;
     s_scale = kScreenShare * lines / kHeight;
+    s_floor = 0.0f;
 }
+void setFloor(float y) { s_floor = y; }
+float sideMargin() { return std::round(kSideShare * s_lines); }
 float scale() { return s_scale; }
 float unit() { return s_unit; }
 
 float columnX(float screenWidth, int column) {
     const float k = scale();
-    return screenWidth - kRightMargin - kWidth * k * float(column) -
+    return screenWidth - sideMargin() - kWidth * k * float(column) -
            kColumnGap * k * float(column - 1);
 }
 
-// Hung from the top, not centred, and never off the bottom of a short window.
+// Centred over the HUD (panel.h), and never off the bottom of a short window. A floor under half
+// the screen is a plate not laid out yet, and ignored.
 float panelY(float screenHeight) {
-    return std::min(kTopShare * screenHeight, std::max(0.0f, screenHeight - kHeight * scale()));
+    const float tall = kHeight * scale();
+    const float lowest = std::max(0.0f, screenHeight - tall);
+    if (s_floor < screenHeight * 0.5f) return std::min(kTopShare * screenHeight, lowest);
+    return std::clamp(std::round((s_floor - tall) * 0.5f), 0.0f, lowest);
 }
 
 // ---- the head's face -------------------------------------------------------------------------

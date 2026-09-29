@@ -549,7 +549,10 @@ void frame(gfx::Canvas& canvas, const Box& window, float u, const std::string& t
     // Outside in: seam, the outer iron ring, the dark gap, a seam, the lit edge, the body.
     const float seam = line, ringOut = line;
     const float out = seam + ringOut + gap + seam + line;
-    tip::shadowUnder(canvas, b.grown(out), u, r + out);
+    // Lighter than a card's: a window is big, and the card's full shadow round two or three of
+    // them blacked out the world between -- the user, 2026-09-29, "window shadows is to dark".
+    constexpr float kWindowShadow = 0.45f;
+    tip::shadowUnder(canvas, b.grown(out), u, r + out, kWindowShadow);
     tip::panel(canvas, b.grown(out), r + out, style::kSeam, style::kSeam);
     tip::panel(canvas, b.grown(out - seam), r + out - seam, style::kIronLo, style::kIronLo);
     const uint32_t gapInk = gfx::rgba(0.067f, 0.051f, 0.043f);

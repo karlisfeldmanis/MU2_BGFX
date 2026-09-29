@@ -122,7 +122,9 @@ float unit();
 // its own edge between them (game/ui/sheet.h draws a gradient stroke there). `radius` is in
 // pixels for `panel` and in the card's units for `glass`. `shadowUnder`'s is the card's corner in
 // pixels, so the cut-out under the glass follows it round.
-void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius = 0.0f);
+// `strength` scales the whole shadow: 1 is the card's; a window asks for less (controls::frame).
+void shadowUnder(gfx::Canvas& canvas, const gfx::Box& box, float u, float radius = 0.0f,
+                 float strength = 1.0f);
 void panel(gfx::Canvas& canvas, const gfx::Box& box, float radius, uint32_t top, uint32_t foot);
 // The same with a radius a corner (top-left, top-right, bottom-right, bottom-left, in pixels):
 // what a band laid under a rounded window's head is cut with, so its square corners do not

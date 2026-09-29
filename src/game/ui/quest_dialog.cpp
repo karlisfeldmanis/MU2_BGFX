@@ -278,7 +278,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, float width
     unit_ = tip::unit();
     kWide = panel::kWidth * panel::scale() / unit_;
     kTall = panel::kHeight * panel::scale() / unit_;
-    x_ = std::round(panel::kRightMargin);
+    x_ = panel::sideMargin();
     y_ = std::round(panel::panelY(height));
     layout(play);
 

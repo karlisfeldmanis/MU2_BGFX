@@ -35,6 +35,7 @@ private:
     struct Sheet {
         const sim::Body* who = nullptr;
         float width = 0, height = 0;
+        float top = 0;  // y_: the window comes down once the HUD's plate is laid out
         int level = 0, points = 0;
         unsigned long long experience = 0;
         int strength = 0, agility = 0, vitality = 0, energy = 0;

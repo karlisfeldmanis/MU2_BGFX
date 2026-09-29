@@ -78,7 +78,11 @@ constexpr float kHeight = 429.0f;
 // Two thirds of the height, near enough. It went 0.79 (centred, and too big) to 0.62 to this:
 // the user, 2026-09-23, *"windows are little bit to small and little bit to hight"*.
 constexpr float kScreenShare = 0.68f;
-constexpr float kRightMargin = 24.0f;
+// The air between a window and the screen's side, as a share of the height as the window is.
+// It was 24 pixels, flat, which is a hairline on a 4K panel; the user, 2026-09-29: "dont put
+// windows to close to screen sides". Five hundredths: 54 pixels at 1080.
+constexpr float kSideShare = 0.05f;
+float sideMargin();
 // And the air over it, a share of the height like the window itself rather than a fixed count of
 // pixels -- a 24-pixel gap over a window that is two thirds of a 4K panel is no gap at all. A
 // window used to be centred down the screen, which hung it between two empty bands and put its
@@ -87,12 +91,20 @@ constexpr float kRightMargin = 24.0f;
 constexpr float kTopShare = 0.05f;
 // The air between two open windows. MU butts its columns flush, which worked while every window
 // was a slab of leather with its own carved border; two hairline-edged panels flush against each
-// other read as one panel with a seam, so the skin puts six units between them.
-constexpr float kColumnGap = 6.0f;
-// Where a panel in the n-th column from the right begins, and its top: under the top margin.
+// other read as one panel with a seam, so the skin puts air between them: six units first, and
+// twenty-four since the user's "bigger gap between inventory and character windows" (2026-09-29).
+constexpr float kColumnGap = 24.0f;
+// Where a panel in the n-th column from the right begins, and its top.
 // MU moves the INVENTORY left to column two when the character window opens, not the other way.
 float columnX(float screenWidth, int column);
+// The top: centred in the room between the screen's top and the HUD plate's (setFloor), the same
+// air over a window as under it -- the user, 2026-09-29, "windows sit lower / centred". The
+// 2026-09-23 margin hung them from the top instead and left the lower band empty; centring down
+// the WHOLE screen, before that, put the foot on the HUD, which the floor now stops. With no
+// floor set (the lobby) it is the top margin, as it was.
 float panelY(float screenHeight);
+// The HUD plate's top in backbuffer pixels, once a frame; setScreen clears it.
+void setFloor(float y);
 
 // A rectangle in MU's panel frame, on screen, for a panel whose corner is at (x, y).
 inline gfx::Box scaled(float x, float y, const gfx::Box& units) {

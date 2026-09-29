@@ -116,6 +116,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
 
     panel::setScreen(float(window.height()));
+    panel::setFloor(hud_.plateTop());
     arrival_.update(seconds, float(window.width()), float(window.height()));
     const sim::Body* hero = play.isOpen() ? &play.realm().hero() : nullptr;
     hud_.follow(hero);
