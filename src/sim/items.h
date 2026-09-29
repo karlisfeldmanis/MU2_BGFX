@@ -201,6 +201,10 @@ struct Wearer {
     // can print the damage a spell will do in his hands, as the spell's own card does.
     double wizardMinimum = 0.0, wizardMaximum = 0.0, wizardryRate = 1.0;
     float staffRise = 0.0f;
+    // The weapon family in his right hand and the shield's in his left (`familyOf`), so an orb's
+    // card can say whether what it teaches can be thrown with what he holds, as the skill's own
+    // card does (`SkillRow::suits`).
+    uint32_t hand = 0, offHand = 0;
 };
 // Whether this character may wear it at all: his class, and every requirement met.
 bool fits(const content::Tables& tables, const Wearer& who, const Held& what);

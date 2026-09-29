@@ -150,11 +150,14 @@ uint32_t familyOf(const content::Arm* weapon);
 // What that family is called, for the card and for the refusal: "a one-handed sword", "an axe".
 const char* familyName(uint32_t family);
 
-// Every family a skill may be thrown with, as words -- "Axes", "Maces"; "Two-handed swords",
-// "Two-handed axes"; "Any weapon". Filled into `out` in the table's own order and the count comes
-// back, because the card stacks them one under another rather than running them into a sentence:
-// a value is right-aligned against its label and a long one walks over it.
+// Every family a skill may be thrown with, as short words -- "Axes", "Maces"; "2-hand swords",
+// "2-hand axes"; "Any weapon". Filled into `out` in the table's own order and the count comes
+// back. The cards print them on one line with commas (`familiesListed`), the user's of
+// 2026-09-29 ("use commas axes, 1-hand sword"); the short words are what keep the longest,
+// Slash's, clear of its label.
 int familiesNamed(uint32_t families, const char** out, int room);
+// The same, joined: "Axes, Maces".
+std::string familiesListed(uint32_t families);
 
 // Whom a cast lands on. One target is all that is built; the two area shapes are written down
 // because the cooldown state and the request are the same for them and choosing the shape later

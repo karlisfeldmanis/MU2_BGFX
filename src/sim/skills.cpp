@@ -467,20 +467,28 @@ int familiesNamed(uint32_t families, const char** out, int room) {
     // this is a list and not a sentence -- no "and", no commas, nothing to wrap.
     const uint32_t swords = families & arms::kSwords;
     if (swords == arms::kSwords) add("Swords");
-    else if (swords == arms::kSword1) add("One-handed swords");
-    else if (swords == arms::kSword2) add("Two-handed swords");
+    else if (swords == arms::kSword1) add("1-hand swords");
+    else if (swords == arms::kSword2) add("2-hand swords");
     const uint32_t axes = families & arms::kAxes;
     if (axes == arms::kAxes) add("Axes");
-    else if (axes == arms::kAxe1) add("One-handed axes");
-    else if (axes == arms::kAxe2) add("Two-handed axes");
+    else if (axes == arms::kAxe1) add("1-hand axes");
+    else if (axes == arms::kAxe2) add("2-hand axes");
     const uint32_t maces = families & arms::kMaces;
-    if (maces == arms::kMace2 && (families & arms::kMace1) == 0) add("Two-handed maces");
+    if (maces == arms::kMace2 && (families & arms::kMace1) == 0) add("2-hand maces");
     else if (maces != 0) add("Maces");  // no two-handed mace is cooked; one word for the pair
     if ((families & arms::kSpear) != 0) add("Spears");
     if ((families & arms::kMissiles) == arms::kMissiles) add("Bows and crossbows");
     else if ((families & arms::kBow) != 0) add("Bows");
     else if ((families & arms::kCrossbow) != 0) add("Crossbows");
     return found;
+}
+
+std::string familiesListed(uint32_t families) {
+    const char* words[8] = {};
+    const int found = familiesNamed(families, words, 8);
+    std::string listed;
+    for (int i = 0; i < found; ++i) listed += (i > 0 ? ", " : "") + std::string(words[i]);
+    return listed;
 }
 
 int skillCount() { return kSkills; }

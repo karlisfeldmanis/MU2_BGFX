@@ -1019,17 +1019,14 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
                                                                     : nullptr;
     };
     const uint32_t hand = sim::familyOf(armIn(row.onSelf() ? hero.shield : hero.weapon));
-    // **One family a line, stacked under the label.** A row's values are right-aligned against
-    // the card's edge and nothing wraps them, so "Two-handed swords and axes" as one value walks
-    // straight over the word `Weapon` on the left. The card already has the answer and it is the
-    // rule it was designed around -- *one row a label, the values sit under each other* -- which
-    // is how `describe.cpp` prints a class list. Fixed 2026-09-23 on the user's word.
-    const char* families[4] = {};
-    const int words = sim::familiesNamed(row.families, families, 4);
+    // **The families on one line, with commas** (`familiesListed`), the user's of 2026-09-29 --
+    // the same line the orb's card prints. They were stacked a line each (2026-09-23) when the
+    // words were long: "Two-handed swords and axes" as one value walked over the label. The
+    // short words ("2-hand swords") keep the longest clear of it.
     tip::Row weapon;
     weapon.label = "Weapon";
     const tip::Tone met = row.suits(hand) ? tip::Tone::White : tip::Tone::Red;
-    for (int i = 0; i < words; ++i) weapon.values.push_back({families[i], met, false, "", 0});
+    weapon.values.push_back({sim::familiesListed(row.families), met, false, "", 0});
     // A spell asks nothing of the hand, so it has no such row.
     if (!row.wizardry) facts.rows.push_back(weapon);
     if (row.wizardry) {

@@ -338,6 +338,9 @@ void Realm::rearm(Body& hero) {
 
 Wearer Realm::wearer() const {
     const Body& hero = bodies_[0];
+    const auto armAt = [&](int32_t at) -> const content::Arm* {
+        return at >= 0 && size_t(at) < tables_->arms.size() ? &tables_->arms[size_t(at)] : nullptr;
+    };
     return Wearer{hero.kin,
                   hero.level,
                   hero.points,
@@ -346,7 +349,9 @@ Wearer Realm::wearer() const {
                   hero.stats.wizardMinimum,
                   hero.stats.wizardMaximum,
                   hero.stats.wizardryRate,
-                  hero.staffRise};
+                  hero.staffRise,
+                  familyOf(armAt(hero.weapon)),
+                  familyOf(armAt(hero.shield))};
 }
 
 int Realm::give(int32_t item, int slot, int refinement, int durability, bool luck, int option,

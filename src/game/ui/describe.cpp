@@ -462,6 +462,19 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         if (!row.teachesName.empty()) {
             teaches.rows.push_back(stat("Skill", row.teachesName, known ? Tone::Gray : Tone::Blue));
         }
+        // **And what it is thrown with** (the user, 2026-09-29: "on orb tooltip for DK skills we
+        // need to also show for which weapon type its usable"): the row the skill's own card
+        // prints (`Desk::skillSheet`), one family a line under the label, white when what he
+        // holds will throw it and red when it will not. A spell asks nothing of the hand and has
+        // no such row, as on its card.
+        if (const sim::SkillRow* skill = sim::skillNumbered(row.teaches); skill && !skill->wizardry) {
+            const std::string families = sim::familiesListed(skill->families);
+            if (!families.empty()) {
+                const bool holds = skill->suits(skill->onSelf() ? who.offHand : who.hand);
+                teaches.rows.push_back(
+                    stat("Weapon", families, known ? Tone::Gray : holds ? Tone::White : Tone::Red));
+            }
+        }
         if (known) {
             // The words go in the FOOT, opposite the Zen -- the user, 2026-09-23, moving them
             // out of this block where they first landed as a "Known" row. The foot is where
