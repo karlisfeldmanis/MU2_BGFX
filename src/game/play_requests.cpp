@@ -309,8 +309,9 @@ bool Play::buy(int shelfSlot) {
 bool Play::acceptQuest(int quest) {
     const bool taken = realm_.acceptQuest(quest);
     core::logf("window: accept quest %d %s", quest, taken ? "taken" : "refused");
-    // The interface's own click; the banner that follows carries the moment.
-    if (taken) ui(Ui::Opened);
+    // The user's drum hit, the quest taken; refused, the window's own no.
+    if (taken) sound_.play(sound_.load("quest_accept", false));
+    else ui(Ui::Refused);
     return taken;
 }
 

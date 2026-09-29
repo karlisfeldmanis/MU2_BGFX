@@ -167,6 +167,7 @@ private:
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
     QuestDialog questDialog_;
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
+    bool questing_ = false;  // a giver's window was up last frame, so its opening is heard once
     int voiced_ = -1;  // the quest page whose voice was last started: quest * 4 + page, or -1
     Tracker tracker_;
     Menu menu_;

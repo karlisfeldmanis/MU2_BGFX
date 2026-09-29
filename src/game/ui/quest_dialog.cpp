@@ -366,6 +366,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     bool primary = enter && !primaryOff && !reading_ &&
                    (mode_ == Mode::Offer || mode_ == Mode::HandIn);
     bool cancel = escape;
+    bool chose = false;
     if (pointer.released) {
         if (pressing_ >= 0 && pressing_ == over_) {
             if (pressing_ == 0 && !primaryOff && !reading_) primary = true;
@@ -373,11 +374,13 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
             else if (pressing_ >= 10) {
                 const int picked = cells_[size_t(pressing_ - 10)].choice;
                 chosen_ = chosen_ == picked ? -1 : picked;
+                chose = picked >= 0;
             }
         }
         pressing_ = -1;
     }
     if (out) {
+        out->picked = chose;
         if (cancel) out->close = true;
         else if (primary && mode_ == Mode::Offer) out->accept = true;
         else if (primary && mode_ == Mode::HandIn) {

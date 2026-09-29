@@ -37,6 +37,7 @@ public:
         bool accept = false;
         bool complete = false;
         int choice = -1;  // with `complete`: the quest row's choice index, or -1 for none owed
+        bool picked = false;  // a reward cell was chosen or unchosen this frame
     };
     void open(const gfx::Interface& interface);
     void close();

@@ -340,6 +340,15 @@
       "gain_note": "A decibel down, as the swoosh was. Its body sits at about the swoosh's loudness (-11.6 dB RMS over its first quarter second against -12.6 over the swoosh's swell) though it peaks lower, and a level is still the bigger moment. Worth a pass by ear.",
       "note": "Unplaced: heard flat on the player, like the drink and the level-up, and not out at a point in the world. Play::learned throws it on the same frame as Aura::learn in game/fx/aura.h, a breath of blue smoke cut to this file: its puffs are born on the two stabs, bloom over five ticks, hold while the body holds (about nineteen ticks, 0.76 s) and are gone by 1.2 s while the tail rings on, over a small blue circle whose twenty ticks end with the body."
     },
+    "quest_accept": {
+      "files": [
+        "quest_accept.wav"
+      ],
+      "gain_db": -3.0,
+      "from": "This project's: MU 0.75 has no quests. The file was given by the user on 2026-09-29: floraphonic's \"Percussive Drum Hit 1\" (Pixabay 189787), for a quest taken from its giver.",
+      "trim_note": "The mp3 is 2.57 s, of which everything past 1.7 s is under -46 dB. Cut from 0.027 s, 3 ms ahead of the first hit, with a 3 ms fade in, and to 1.70 s with a squared fade out over the last 0.30 s: 1.67 s, stereo 44.1 kHz, peaking at 0.95 and not normalised. The loudest stroke lands 0.2 s in.",
+      "note": "Unplaced, heard flat on the player like the step's blade. Play::acceptQuest throws it in place of the window's own open sound when the realm takes the quest; refused, the window's no. Three down, as the step's, because it is a full-scale file."
+    },
     "quest_step_done": {
       "files": [
         "quest_step.wav"

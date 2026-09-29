@@ -207,6 +207,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // A step struck off on the tracker last frame: the blade's cut on its flare, heard at the
         // ears as the interface's are.
         if (tracker_.takeStrike()) play.sound().play(play.sound().load("quest_step_done", false));
+        // A giver's window opens as a counter does: ReceiveTalk's click and SOUND_INTERFACE01.
+        const bool questing = realm.questing() >= 0;
+        if (questing && !questing_) {
+            click();
+            play.ui(Play::Ui::Opened);
+        }
+        questing_ = questing;
+        if (result.picked) click();
         if (result.close) {
             if (reading) journal_ = -1;
             else play.closeQuest();
