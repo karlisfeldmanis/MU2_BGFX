@@ -30,6 +30,13 @@
 // frame the flash is that curve at the point the ear is in the playing clap -- the mixer's own
 // cursor. The crack flashes, flickering with its own hits, and the rumble after it only glows
 // faintly in the cloud. flash() is what the light takes (app/context.cpp, TimeOfDay::rain).
+//
+// And Devias's blizzard, which is the rain's shape for snow and this game's too (the user,
+// 2026-09-29): a calm and a storm in turn, the share walked between them over eighteen seconds,
+// the light blended to sheets/worlds/devias_rain.json by it -- darker, not a whiteout, so
+// the game stays playable -- and `world_blizzard` howling at the share, muffled under a roof
+// rather than cut. No drops and no thunder. The wind in the snow is docs/devias-blizzard.md's
+// second pass.
 #pragma once
 
 #include <cstdint>
@@ -59,6 +66,8 @@ public:
     // Lorencia's drizzle darkens the night fully with a third of Noria's drops.
     float pour() const { return share_ * peak_; }
     bool rains() const { return rains_; }
+    // Devias: the wet spell is a blizzard, and rain() is how far the storm is in.
+    bool snows() const { return snows_; }
     // The lightning now, 0 none to 1 a near strike at its brightest: the playing clap's flash
     // curve where the ear is in it. update() reads it.
     float flash() const { return flash_; }
@@ -69,6 +78,8 @@ private:
 
     Sound* sound_ = nullptr;
     bool rains_ = false;    // this world has a wet spell at all
+    bool snows_ = false;    // and it is Devias's blizzard, not rain
+    float sheltered_ = 0.0f;  // how far under a roof the ear is, for the blizzard's muffle
     bool jungle_ = false;   // this world has the jungle's daytime bed
     bool forced_ = false;   // --weather held the spell
     bool cycle_ = false;    // --weather cycle: short spells, to watch the turn
@@ -82,6 +93,7 @@ private:
     int rainSound_ = -1;
     int jungleSound_ = -1;
     int thunderSound_ = -1;
+    int blizzardSound_ = -1;
     std::vector<std::vector<float>> flashes_;  // each clap's flash, a value every Sound::kLoudStep
     uint32_t seed_ = 0x9E3779B9u;
 };

@@ -21,6 +21,18 @@ constexpr float kWetLow = 180.0f, kWetHigh = 300.0f;
 // steps fills the pool (CreateHeavenRain's `RainCurrent * MAX_LEAVES / 100`).
 constexpr float kTurnSeconds = 100.0f / 25.0f;
 
+// Devias's blizzard, the rain's shape for snow and all of it this game's (the user, 2026-09-29:
+// "logic has to be similar like rain, lighting change it becomes darker ... strong snow wind
+// effect, still playable"). The calm is the dry spell's length; the storm is shorter than a
+// wet spell, two to four minutes, and it rolls in over eighteen seconds where rain takes MU's
+// four -- a storm that arrives in a blink reads as a switch. Invention, judged.
+constexpr float kStormLow = 120.0f, kStormHigh = 240.0f;
+constexpr float kBuildSeconds = 18.0f;
+// Under a roof the howl is muffled to this share rather than cut, over this long a turn, so a
+// doorway is a step into shelter and not a click.
+constexpr float kShelteredLevel = 0.25f;
+constexpr float kShelterSeconds = 0.6f;
+
 // How loud the rain's loop is at full rain, the same in every world: what Lorencia's drizzle
 // was heard at when the loop followed pour(), a third of the file's level. It follows the
 // wetness alone now, not how many drops fall -- the user, 2026-09-29, hearing Noria's downpour
@@ -96,8 +108,11 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     // spells; its night has no wet sheet, so the rain there is drops, rings and sound only.
     // And thin: a third of the pool at its heaviest (the user: "rain in lorencia too much
     // visible"), a drizzle under the moon rather than Noria's downpour.
-    rains_ = world == "noria" || world == "lorencia";
-    peak_ = world == "lorencia" ? 0.33f : 1.0f;
+    // Devias's wet spell is the blizzard: no drops (its peak is nought, so pour() is), no
+    // thunder, and its own loop; its light is sheets/worlds/devias_rain.json like any wet spell.
+    snows_ = world == "devias";
+    rains_ = world == "noria" || world == "lorencia" || snows_;
+    peak_ = world == "lorencia" ? 0.33f : snows_ ? 0.0f : 1.0f;
     jungle_ = world == "noria";
     if (force == "rain" || force == "dry" || force == "storm") {
         forced_ = true;
@@ -119,9 +134,10 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
         left_ = rains_ ? kDryLow * 0.5f : 0.0f;
     }
     if (sound_) {
-        if (rains_) rainSound_ = sound_->load("world_rain", false);
+        if (snows_) blizzardSound_ = sound_->load("world_blizzard", false);
+        if (rains_ && !snows_) rainSound_ = sound_->load("world_rain", false);
         if (jungle_) jungleSound_ = sound_->load("world_jungle", false);
-        if (rains_) thunderSound_ = sound_->load("world_thunder", false);
+        if (rains_ && !snows_) thunderSound_ = sound_->load("world_thunder", false);
         for (int f = 0; f < sound_->files(thunderSound_); ++f) {
             flashes_.push_back(flashOf(sound_->loudness(thunderSound_, f)));
         }
@@ -129,9 +145,11 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
     if (rains_ || jungle_) {
         core::logf("weather %s: %s%s", world.c_str(),
                    forced_ ? (storm_ ? "a storm, held by --weather"
-                           : wet_ ? "raining, held by --weather"
+                           : wet_ ? (snows_ ? "a blizzard, held by --weather"
+                                            : "raining, held by --weather")
                                   : "dry, held by --weather")
-                           : (rains_ ? "dry and wet spells in turn" : "never rains"),
+                           : (snows_ ? "calm and blizzard in turn"
+                              : rains_ ? "dry and wet spells in turn" : "never rains"),
                    jungle_ ? ", the jungle's day" : "");
     }
 }
@@ -139,6 +157,7 @@ void Weather::open(const std::string& world, Sound* sound, const std::string& fo
 void Weather::shutdown() {
     if (sound_ && rainSound_ >= 0) sound_->loop(rainSound_, false);
     if (sound_ && jungleSound_ >= 0) sound_->loop(jungleSound_, false);
+    if (sound_ && blizzardSound_ >= 0) sound_->loop(blizzardSound_, false);
     *this = Weather();
 }
 
@@ -148,18 +167,28 @@ void Weather::update(float seconds, bool indoors) {
         if (left_ <= 0.0f) {
             wet_ = !wet_;
             left_ = cycle_ ? (wet_ ? 30.0f : 20.0f)
-                    : wet_ ? kWetLow + random01() * (kWetHigh - kWetLow)
+                    : wet_ ? (snows_ ? kStormLow + random01() * (kStormHigh - kStormLow)
+                                     : kWetLow + random01() * (kWetHigh - kWetLow))
                            : kDryLow + random01() * (kDryHigh - kDryLow);
-            core::logf("weather: %s for %.0f s", wet_ ? "rain" : "dry", left_);
+            core::logf("weather: %s for %.0f s",
+                       wet_ ? (snows_ ? "blizzard" : "rain") : (snows_ ? "calm" : "dry"), left_);
             // The first clap a while after the rain is in, and not always inside a short spell.
             if (wet_) thunderIn_ = 30.0f + random01() * 60.0f;
         }
     }
     const float target = rains_ && wet_ ? 1.0f : 0.0f;
-    const float step = seconds / kTurnSeconds;
+    const float step = seconds / (snows_ ? kBuildSeconds : kTurnSeconds);
     share_ = share_ < target ? std::min(target, share_ + step) : std::max(target, share_ - step);
 
     if (!sound_) return;
+    if (blizzardSound_ >= 0) {
+        const float shelter = indoors ? 1.0f : 0.0f;
+        const float turn = seconds / kShelterSeconds;
+        sheltered_ = sheltered_ < shelter ? std::min(shelter, sheltered_ + turn)
+                                          : std::max(shelter, sheltered_ - turn);
+        sound_->loop(blizzardSound_, share_ > 0.0f);
+        sound_->level(blizzardSound_, share_ * (1.0f - (1.0f - kShelteredLevel) * sheltered_));
+    }
     if (rainSound_ >= 0) {
         sound_->loop(rainSound_, share_ > 0.0f && !indoors);
         sound_->level(rainSound_, share_ * kRainLevel);

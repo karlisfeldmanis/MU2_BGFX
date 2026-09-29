@@ -619,6 +619,16 @@
       "gain_note": "A near crack peaks at -8 dB RMS over 100 ms before this, the rumble after it at -20 to -30: taken 8 dB down it still stands some 20 dB over the rain bed at its crack and settles to a few dB over it as it rolls, loud as thunder is and never on top of the footsteps for long.",
       "note": "**An invention, marked.** The storm inside every wet spell (game/world/weather.cpp): a clap every 20 to 50 seconds once the rain is in, unplaced, one file at random. The lightning is read off the file's own loudness where the ear is in it, so each clap flashes on its crack."
     },
+    "world_blizzard": {
+      "files": [
+        "ablizzard.wav"
+      ],
+      "from": "Not MU's file. nickpanek 'whiteout valley blizzard ambient loop with howling hillside winds' (Pixabay 563822, downloads/), given by the user 2026-09-29 for Devias's storm: 39 s of 44.1 kHz stereo made 22 kHz mono 16-bit by tools/blizzard.py, its last two seconds folded over its first two at equal power so the loop has no seam, brought to a 0.95 peak. 37.0 s, an RMS of -14.0 dB. MU 0.75 has no blizzard; Devias's only air is SOUND_WIND01.",
+      "loop": true,
+      "gain_db": -16.0,
+      "gain_note": "Sixteen down, to about -30 dB at a full storm: the one bed meant to be over the others (the wind near -44, the rain near -46), as a blizzard is, and still under a thunder crack. Judged, not heard in game yet.",
+      "note": "**An invention, marked.** Devias's storm, the rain's shape for snow (game/world/weather.cpp): looped and unplaced, its level the storm's share, and under a roof muffled to a quarter rather than cut, since a blizzard is heard through walls."
+    },
     "goblin_move": {
       "files": [
         "mGoblin1.wav",
