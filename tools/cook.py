@@ -1791,6 +1791,16 @@ PERCHES = {
         145: (2, True, False, False),   # Furniture06
         146: (2, False, False, False),  # Furniture07
     },
+    2: {  # Devias: MOVEMENT_OPERATE's WD_2DEVIAS arm (ZzzInterface.cpp:1715-1726), and 91 on
+          # RenderCursor's lean list (:4054). 44 lean boxes, 85 seats in the church and the inns.
+        91: (3, True, True, True),      # Object92, the lean box, invisible
+        22: (2, True, False, False),    # Object23
+        25: (2, True, False, False),    # Object26
+        40: (2, True, False, False),    # Object41
+        55: (2, True, False, False),    # Object56
+        45: (2, False, False, False),   # Object46
+        73: (2, False, False, False),   # Object74
+    },
     3: {  # Noria
         38: (4, True, True, False),     # the hanging tree, invisible
         8: (2, False, False, False),    # the stump

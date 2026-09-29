@@ -43,6 +43,7 @@ NO_GROUND = 0x0008
 #: seats open on the other's grid would open tiles MU closed.
 OPERABLE_BY_MAP = {
     0: {6, 133, 145, 146},
+    2: {22, 25, 40, 45, 55, 73, 91},
     3: {8, 38},
 }
 
