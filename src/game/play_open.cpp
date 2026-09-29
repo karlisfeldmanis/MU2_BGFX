@@ -4,6 +4,7 @@
 // Found ONCE, at open, and never per frame: an attack slot, a death clip or a cry looked up by
 // name while a fight is running is a string compare in the middle of the thing it is timing.
 #include "game/play.h"
+#include "sim/quests.h"
 
 #include <bx/math.h>
 #include <bx/timer.h>
@@ -278,7 +279,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     folk_.clear();
     questGivers_.clear();
     for (size_t i = 0; i < tables_.folk.size(); ++i) {
-        if (tables_.folk[i].number == kQuestGiver) questGivers_.push_back(int(i));
+        // Whoever hands out a quest (sim/quests.cpp), in either town: Marlon, and Peia.
+        if (sim::questOf(tables_.folk[i].number) >= 0) questGivers_.push_back(int(i));
     }
     const float metresPerTile = ground_ ? ground_->metresPerTile() : 1.0f;
     for (size_t i = 0; i < tables_.folk.size(); ++i) {

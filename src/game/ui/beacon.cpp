@@ -24,6 +24,9 @@ constexpr float kRim = 0.9f;        // the hairline edge
 constexpr float kHalo = 3.2f;       // the dark halo round it, soft, for bright ground
 constexpr float kEdgeLight = 0.7f;  // the pale edge on the lit side, inside the rim
 constexpr float kGrain = 0.06f;     // the wear in the metal, either way
+// And a drop shadow, the same user the same day ("some minimal drop shadow"): the glyph again,
+// down and to the right, dark and a little soft, under the halo.
+constexpr float kShadowX = 1.3f, kShadowY = 1.6f, kShadowSoft = 1.2f, kShadowAlpha = 0.55f;
 
 // Where it hangs: close over the crown, and lifted clear of the name while the name shows there
 // (24 units), by the name's own fade. Then the bob.
@@ -39,9 +42,12 @@ constexpr float kSize = 1.05f;
 struct Rgb {
     float r, g, b;
 };
-constexpr Rgb kLit = {0.90f, 0.72f, 0.40f};
-constexpr Rgb kShade = {0.60f, 0.42f, 0.19f};
-constexpr Rgb kEdge = {1.00f, 0.90f, 0.66f};
+// Brighter since the user's "very calm, need to make little brighter" and "brighter gold
+// color" (2026-09-29): a bright gold on the lit face, the shaded one lifted to a warm amber, the
+// edge nearly white.
+constexpr Rgb kLit = {1.00f, 0.88f, 0.42f};
+constexpr Rgb kShade = {0.90f, 0.66f, 0.22f};
+constexpr Rgb kEdge = {1.00f, 0.98f, 0.86f};
 constexpr Rgb kInk = {0.07f, 0.045f, 0.025f};
 
 float clamp01(float v) { return std::clamp(v, 0.0f, 1.0f); }
@@ -153,6 +159,8 @@ bool Beacon::bake(float unit) {
                     const float y = (float(py) + (float(sy) + 0.5f) / kSide) * texel;
                     const float d = mark(x, y, ask);
                     Pre one;
+                    const float cast = mark(x - kShadowX, y - kShadowY, ask);
+                    one.over(kInk, kShadowAlpha * clamp01(0.5f - cast / kShadowSoft));
                     // The halo, soft, and the hairline, crisp.
                     const float halo = clamp01(1.0f - (d - kRim) / kHalo);
                     one.over(kInk, 0.32f * halo * halo);
