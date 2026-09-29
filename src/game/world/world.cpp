@@ -200,7 +200,7 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
         boids_.setGlowSheet(
             textures_->load(assetDir + "/" + light->path, content::TextureRole::Albedo));
     }
-    leaves_.open(assetDir, *textures_, play_.showing().table());
+    leaves_.open(assetDir, *textures_, play_.showing().table(), name == "devias");
     // And the rain, which shares the leaves' slots, and the air's sounds. game/world/weather.h.
     weather_.open(name, &play_.sound(), weather);
 }

@@ -918,6 +918,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         world_.weather().update(float(deltaSeconds), inside);
         ctx.time.rain(world_.weather().rain(), world_.weather().flash());
+        // Devias's blizzard drives the snow; everywhere else the storm is nought.
+        world_.leaves().setStorm(world_.weather().snows() ? world_.weather().rain() : 0.0f);
         world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground(),
                                world_.weather().pour());
         world_.leaves().gather(ctx.renderer.effects(), eye.position);

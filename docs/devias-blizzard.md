@@ -22,14 +22,21 @@ What the user asked for (2026-09-29):
   - under a roof it is muffled to a quarter over 0.6 s rather than cut;
   - MU's wind loop plays under it.
 
-## Pass 2: the wind (next)
+## Pass 2: the wind
 
-- **Gusts from the sound.** Measure the blizzard loop's loudness at load, as the thunder's flash is read off its claps. Smoothed, that is the gust curve, and a gust in the eye lands with a swell in the ear. One number drives everything below.
-- **Snow** (`world/leaves.cpp`'s snow pool):
-  - more flakes as the storm builds;
-  - fall speed from the calm's tenth of MU's value up to MU's face value (the leaves' note: "at face value it is a blizzard");
-  - the slant towards level with each gust;
-  - near flakes stretched along their motion into streaks, far ones kept as dots.
+Landed 2026-09-30:
+
+- **The snow storms** (`world/leaves.cpp`, `setStorm`):
+  - the wind blows it along −x at up to 9 m/s in gusts, and it falls 1.5 to 3 m/s faster;
+  - it spawns upwind and streaks along its flight past 2.5 m/s;
+  - landed snow blows away;
+  - the pool fills from 150 to 220.
+- **Softened** ("snow flakes too much visible"): at a full storm a flake shows 30% of its light (half at first, still too visible).
+- **The haze** 0.009 to 0.02 ("stronger snow dust effect").
+
+Still to do:
+
+- **Gusts from the sound.** The gust is a fixed swell (`stormGust`, five seconds with a two-second flurry). The plan is to read it off the blizzard loop's loudness instead, as the thunder's flash is read off its claps, so a gust in the eye lands with a swell in the ear.
 - **Ground drift:** low, fast snow skimming the ground along the wind.
 - **Grass and trees:** the grass wind and the objects' sway pushed by the gust.
 - **The hero:** a denser band of gusting snow around them, and cloth and hair fluttering harder if the figures' sway can take a wind.

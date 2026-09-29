@@ -55,6 +55,17 @@
 // MU's, and marked where it is set: more drops than the client's 80 slots, because at this
 // camera eighty streaks over a sixteen-metre field read as a few specks rather than a shower,
 // and the fall slanted across the screen rather than towards it.
+//
+// **And Devias's snow, which is the same pool again.** CreateDeviasSnow puts a flake in every
+// slot a leaf would take: BITMAP_LEAF1, World3's leaf01.jpg, a soft white dot at scale 5, and
+// one in ten BITMAP_LEAF2, a six-pointed glint at 10; 200 to 399 units over the hero in the
+// leaves' own field, falling 8 to 23 units a frame on a slant of 30 degrees, then MoveEtcLeaf's
+// random walk and its landing fade (ZzzEffectFireLeave.cpp:274-297, :400-420). Drawn as
+// sprites facing the eye under EnableAlphaBlend, and never indoors (MainScene.cpp:81). What is
+// not MU's, and marked where it is set: the fall is a tenth of the client's face value, as the
+// leaves' wind is and for the same reason -- at face value it is a blizzard, and this is the
+// daytime snow; the storm is a weather spell of its own, later -- and each flake has a slow
+// sway of its own over the walk, since a flake that only jitters reads as noise.
 #pragma once
 
 #include <cstdint>
@@ -74,8 +85,10 @@ public:
     // The sheet is the showing's `leaf` (MU's `Effect/Leaf01.OZT`). Without it nothing blows
     // and the log says so; it is not a reason to stop. The rain's two, `rain` and `rain_ring`,
     // are asked for too, and without them it does not rain.
+    // `snow` is Devias's: the same pool falls as CreateDeviasSnow's flakes instead of blowing
+    // as leaves, off the showing's `snow` and `snow_star`. See the note on Flakes below.
     bool open(const std::string& assetDir, content::Textures& textures,
-              const content::Showing& table);
+              const content::Showing& table, bool snow = false);
     void shutdown();
 
     // One frame, around wherever the character is drawn. `eye` is the camera, which decides
@@ -87,6 +100,11 @@ public:
     // Into the transparent pass. `eye` turns each streak to face the camera.
     void gather(gfx::Effects& effects, const float eye[3]) const;
 
+    // Devias's blizzard, 0 calm to 1 full (game/world/weather.h's rain() on Devias): the snow
+    // blows sideways at up to a storm wind in gusts, falls faster, fills a larger pool and
+    // streaks, and what lands is blown on rather than lying. docs/devias-blizzard.md.
+    void setStorm(float share) { storm_ = share; }
+
     bool isOpen() const { return bgfx::isValid(sheet_); }
     uint32_t blowing() const { return blowing_; }
     uint32_t falling() const { return falling_; }
@@ -94,6 +112,11 @@ public:
 private:
     // The client's `iMaxLeaves` for an ordinary map.
     static constexpr int kCount = 80;
+    // Devias's flakes. **Invention:** the client's pool is the same 80 there; at this camera
+    // eighty specks over a sixteen-metre field read as a few motes rather than a snowfall.
+    static constexpr int kFlakes = 150;
+    // And in Devias's blizzard, filled towards this as the storm comes in. **Invention.**
+    static constexpr int kStormFlakes = 220;
     // Drops, and the rings they leave. **Invention:** the client has the leaves' 80 slots for
     // both; see the header.
     static constexpr int kDrops = 700;
@@ -123,15 +146,25 @@ private:
         // The client's `Light`, which is both its colour and its life.
         float light = 0.0f;
         bool live = false;
+        // A flake's own: one in ten is BITMAP_LEAF2's glint at twice the size, and each is
+        // drawn at its own share of the light so the fall has depth.
+        bool star = false;
+        float faint = 1.0f;
+        float phase = 0.0f;  // where its sway is, radians
     };
 
     void spawn(Leaf& leaf, const float hero[3], const float eye[3],
                const content::Ground& ground);
     void move(Leaf& leaf, float factor, const content::Ground& ground);
+    void spawnFlake(Leaf& flake, const float hero[3], const content::Ground& ground);
+    void moveFlake(Leaf& flake, float seconds, float factor, const content::Ground& ground);
     float random01();
     float between(float low, float high) { return low + random01() * (high - low); }
 
-    Leaf leaves_[kCount];
+    Leaf leaves_[kStormFlakes > kCount ? kStormFlakes : kCount];
+    bool snow_ = false;
+    float storm_ = 0.0f;  // setStorm: how far Devias's blizzard is in, 0 to 1
+    bgfx::TextureHandle starSheet_ = BGFX_INVALID_HANDLE;
     Drop drops_[kDrops];
     Ring rings_[kRings];
     int nextRing_ = 0;

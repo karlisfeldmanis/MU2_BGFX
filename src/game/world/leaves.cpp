@@ -88,6 +88,54 @@ constexpr float kRingHalfWidth = 0.18f;
 constexpr float kRingLift = 1.6f;
 constexpr float kRingAlpha = 0.3f;  // 0.35 standing, 0.55 flat was "visible too much"
 
+// Devias's snow. MU's sprite scales are the quad's full width in its units, so 5 is five
+// centimetres and the glint's 10 is ten. Smaller than that here: the user, 2026-09-29, asked
+// for finer flakes than MU's own, so three centimetres and six.
+constexpr float kFlakeHalf = 0.015f;
+constexpr float kStarHalf = 0.03f;
+// CreateDeviasSnow's 200 to 399 units over the hero.
+constexpr float kFlakeLow = 2.0f, kFlakeHigh = 3.99f;
+// The fall, metres a second. **Invention:** MU's 8 to 23 units a frame is five to fourteen
+// metres a second, a blizzard; a tenth of it is a daytime snowfall, which is what this is.
+constexpr float kFlakeSlow = 0.55f, kFlakeFast = 1.3f;
+// Its slant: the client turns the fall 30 degrees about x, which puts a share of tan 30 of it
+// along MU's -y, towards the camera here.
+constexpr float kFlakeSlant = 0.577f;
+// The sway, OURS: a slow pendulum across the fall, a few centimetres, over two to four seconds.
+constexpr float kSwayMetres = 0.18f;
+constexpr float kSwayLow = 1.6f, kSwayHigh = 3.1f;  // radians a second
+// Its brightness: the client draws them full white under a blend that only adds, which on
+// Devias's white ground vanishes. Drawn over the ground with alpha here, most of them faint.
+constexpr float kFlakeAlpha = 0.85f;
+
+// Devias's blizzard, all of it OURS (the user, 2026-09-30: "snow leaves are more active like in
+// storm", "fly faster and on different angle"). At a full storm the wind carries a flake along
+// the leaves' own -x at up to nine metres a second -- MU's face-value fall is five to fourteen,
+// the leaves' note calls that a blizzard -- in gusts, and it falls three metres a second faster,
+// so the snow goes across the screen, not down it. Spawned upwind by the distance the wind
+// carries it while it falls, so the stream crosses the hero instead of leaving him in a lee.
+constexpr float kStormWind = 9.0f;
+constexpr float kStormFall = 3.0f;
+constexpr float kStormUpwind = 7.0f;
+// How fast a flake takes up the wind's speed: a second's tenth, so a gust sweeps through the
+// field and does not arrive in every flake at once.
+constexpr float kStormGrip = 10.0f;
+// What lands is blown on: gone this many times faster than MoveEtcLeaf's fade.
+constexpr float kStormLift = 8.0f;
+// How much of its light a flake keeps at a full storm: "snow flakes too much visible" (the
+// user, 2026-09-30, twice) at full strength and 450 of them: half and 300, then 0.3 and 220.
+constexpr float kStormShown = 0.3f;
+// Past this speed a flake is drawn as a streak along its flight, this many seconds of it long.
+constexpr float kStreakFrom = 2.5f;
+constexpr float kStreakSeconds = 0.035f;
+
+// The gust, 0.45 to 1.0 of the storm's wind: a five-second swell with a two-second flurry on it,
+// both on the leaves' forty-second clock so it never jumps where the clock wraps.
+float stormGust(float clock) {
+    constexpr float kTau = 6.2831853f;
+    return 0.72f + 0.2f * std::sin(clock * kTau / 5.0f) + 0.08f * std::sin(clock * kTau / 2.0f);
+}
+
 }  // namespace
 
 float Leaves::random01() {
@@ -98,8 +146,24 @@ float Leaves::random01() {
 }
 
 bool Leaves::open(const std::string& assetDir, content::Textures& textures,
-                  const content::Showing& table) {
+                  const content::Showing& table, bool snow) {
     shutdown();
+    snow_ = snow;
+    if (snow_) {
+        const content::EffectSheet* flake = table.effect("snow");
+        const content::EffectSheet* star = table.effect("snow_star");
+        if (flake == nullptr || star == nullptr) {
+            core::logError("leaves: no cooked effect named 'snow' or 'snow_star'; nothing falls "
+                           "on Devias (tools/cook.py --only showing)");
+            return false;
+        }
+        sheet_ = textures.load(assetDir + "/" + flake->path, content::TextureRole::Albedo);
+        starSheet_ = textures.load(assetDir + "/" + star->path, content::TextureRole::Albedo);
+        core::logf("leaves: %d flakes of snow, sheets %s and %s (%s)", kFlakes,
+                   flake->path.c_str(), star->path.c_str(),
+                   bgfx::isValid(sheet_) && bgfx::isValid(starSheet_) ? "ready" : "missing");
+        return bgfx::isValid(sheet_) && bgfx::isValid(starSheet_);
+    }
     const content::EffectSheet* sheet = table.effect("leaf");
     if (sheet == nullptr) {
         core::logError("leaves: no cooked effect named 'leaf'; nothing blows over the town");
@@ -121,7 +185,8 @@ void Leaves::shutdown() {
     for (Leaf& leaf : leaves_) leaf = Leaf();
     for (Drop& drop : drops_) drop = Drop();
     for (Ring& ring : rings_) ring = Ring();
-    sheet_ = rainSheet_ = ringSheet_ = BGFX_INVALID_HANDLE;
+    sheet_ = rainSheet_ = ringSheet_ = starSheet_ = BGFX_INVALID_HANDLE;
+    snow_ = false;
     blowing_ = falling_ = 0;
 }
 
@@ -213,10 +278,17 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
     // there has to be NOT leaves") -- no new one grows, and one still on the wind goes out as
     // it does indoors. MU's pool shares its slots between the two instead.
     const bool raining = rain > 0.0f;
-    for (int i = 0; i < kCount; ++i) {
+    // A blizzard fills a larger pool; every slot still moves, so what the storm raised above
+    // the calm's count finishes its flight as the storm goes, and is not refilled.
+    const int count = snow_ ? kFlakes + int(storm_ * float(kStormFlakes - kFlakes)) : kCount;
+    const int slots = snow_ ? kStormFlakes : kCount;
+    for (int i = 0; i < slots; ++i) {
         Leaf& leaf = leaves_[i];
         if (!leaf.live) {
-            if (!indoors && !raining) spawn(leaf, hero, eye, ground);
+            if (i < count && !indoors && !raining) {
+                if (snow_) spawnFlake(leaf, hero, ground);
+                else spawn(leaf, hero, eye, ground);
+            }
         } else if (indoors || raining) {
             // Inside: it is on its way out wherever it happens to be. No wind, no walk, no
             // landing -- just gone, quickly enough that the tavern is still.
@@ -226,7 +298,8 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
                 leaf.light = 0.0f;
             }
         } else {
-            move(leaf, factor, ground);
+            if (snow_) moveFlake(leaf, seconds, factor, ground);
+            else move(leaf, factor, ground);
             // Blown out of the neighbourhood: the slot is worth more back around the player
             // than the leaf is where it has got to.
             const float dx = leaf.position[0] - hero[0];
@@ -237,6 +310,7 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
         if (leaf.live) ++live;
     }
     blowing_ = live;
+
 }
 
 void Leaves::spawn(Leaf& leaf, const float hero[3], const float eye[3],
@@ -258,6 +332,60 @@ void Leaves::spawn(Leaf& leaf, const float hero[3], const float eye[3],
     leaf.velocity[2] = -between(-0.016f, 0.015f) * kWindScale;
     leaf.light = 1.0f;
     leaf.live = true;
+}
+
+void Leaves::spawnFlake(Leaf& flake, const float hero[3], const content::Ground& ground) {
+    // The leaves' own field, CreateDeviasSnow's -800..799 by -500..899 units.
+    flake.position[0] = hero[0] + between(-8.0f, 7.99f);
+    flake.position[2] = hero[2] - between(-5.0f, 8.99f);
+    flake.position[1] = ground.heightAt(hero[0], hero[2]) + between(kFlakeLow, kFlakeHigh);
+    // In a blizzard, upwind (the wind is -x) and falling faster, already on the wind.
+    flake.position[0] += storm_ * kStormUpwind;
+    const float fall = between(kFlakeSlow, kFlakeFast) + storm_ * between(0.5f, 1.0f) * kStormFall;
+    flake.velocity[0] = -storm_ * kStormWind * stormGust(gust_);
+    flake.velocity[1] = -fall;
+    flake.velocity[2] = fall * kFlakeSlant;
+    // rand_fps_check(10): one in ten a glint.
+    flake.star = random01() < 0.1f;
+    // Squared, as the rain's is: most flakes are barely there, a few catch the light.
+    const float catchLight = random01();
+    flake.faint = 0.3f + 0.7f * catchLight * catchLight;
+    flake.phase = between(0.0f, 6.2831853f);
+    flake.light = 1.0f;
+    flake.live = true;
+}
+
+void Leaves::moveFlake(Leaf& flake, float seconds, float factor, const content::Ground& ground) {
+    const float land = ground.heightAt(flake.position[0], flake.position[2]);
+    if (flake.position[1] <= land) {
+        // Lying where it fell and going out, MoveEtcLeaf's twentieth a frame.
+        flake.position[1] = land;
+        flake.light -= kFadeRate * factor * (1.0f + storm_ * kStormLift);
+        if (flake.light <= 0.0f) {
+            flake.live = false;
+            flake.light = 0.0f;
+        }
+        return;
+    }
+    // Its sway: each flake its own rate, off its phase, so no two keep time.
+    const float rate = kSwayLow + (kSwayHigh - kSwayLow) * std::fmod(flake.phase * 0.61803f, 1.0f);
+    const float before = std::sin(flake.phase);
+    flake.phase += rate * seconds;
+    const float across = (std::sin(flake.phase) - before) * kSwayMetres;
+    // And MoveEtcLeaf's random walk on top, at the leaves' tenth, on the level only: a flake
+    // that wanders up as well is a flake that never lands.
+    for (int axis : {0, 2}) {
+        flake.velocity[axis] += between(-0.008f, 0.007f) * factor * kWindScale * 6.0f;
+    }
+    // The blizzard's wind, taken up over a tenth of a second, each flake at its own share of the
+    // gust (off its phase) so the stream shears instead of moving as one sheet.
+    const float wind = -storm_ * kStormWind * stormGust(gust_ + flake.phase * 0.3f);
+    // Scaled by the storm, so the calm's random walk is left exactly as it was.
+    flake.velocity[0] += (wind - flake.velocity[0]) * std::min(1.0f, seconds * kStormGrip * storm_);
+    flake.velocity[0] = std::clamp(flake.velocity[0], wind - 0.35f, 0.35f);
+    flake.position[0] += flake.velocity[0] * seconds + across;
+    flake.position[1] += flake.velocity[1] * seconds;
+    flake.position[2] += flake.velocity[2] * seconds + across * 0.4f;
 }
 
 void Leaves::move(Leaf& leaf, float factor, const content::Ground& ground) {
@@ -344,6 +472,48 @@ void Leaves::gather(gfx::Effects& effects, const float eye[3]) const {
         sprite.colour[3] =
             kRingAlpha * ring.faint * std::clamp(ring.life / kRingSeconds, 0.0f, 1.0f);
         effects.add(sprite);
+    }
+    if (snow_) {
+        for (int i = 0; i < kStormFlakes; ++i) {
+            const Leaf& flake = leaves_[i];
+            if (!flake.live || flake.light <= 0.0f) continue;
+            gfx::Sprite sprite;
+            for (int a = 0; a < 3; ++a) sprite.position[a] = flake.position[a];
+            sprite.halfWidth = sprite.halfHeight = flake.star ? kStarHalf : kFlakeHalf;
+            sprite.sheet = flake.star ? starSheet_ : sheet_;
+            sprite.blend = gfx::Blend::Alpha;
+            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = 1.0f;
+            sprite.colour[3] = kFlakeAlpha * flake.faint * flake.light *
+                               (1.0f - (1.0f - kStormShown) * storm_);
+            // A blizzard's flake is a streak along its flight, as a drop is, facing the eye.
+            const float* v = flake.velocity;
+            const float speed = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+            const float look[3] = {eye[0] - flake.position[0], eye[1] - flake.position[1],
+                                   eye[2] - flake.position[2]};
+            float side[3] = {v[1] * look[2] - v[2] * look[1], v[2] * look[0] - v[0] * look[2],
+                             v[0] * look[1] - v[1] * look[0]};
+            const float across = std::sqrt(side[0] * side[0] + side[1] * side[1] + side[2] * side[2]);
+            if (!flake.star && speed > kStreakFrom && across > 0.0f) {
+                const float half = speed * kStreakSeconds * 0.5f;
+                for (float& s : side) s *= kFlakeHalf / across;
+                sprite.placed = true;
+                for (int a = 0; a < 3; ++a) {
+                    const float ahead = flake.position[a] + v[a] / speed * half;
+                    const float behind = flake.position[a] - v[a] / speed * half;
+                    sprite.corner[0][a] = ahead - side[a];
+                    sprite.corner[1][a] = ahead + side[a];
+                    sprite.corner[2][a] = behind + side[a];
+                    sprite.corner[3][a] = behind - side[a];
+                }
+                const float uv[4][2] = {{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
+                for (int c = 0; c < 4; ++c) {
+                    sprite.cornerUv[c][0] = uv[c][0];
+                    sprite.cornerUv[c][1] = uv[c][1];
+                }
+            }
+            effects.add(sprite);
+        }
+        return;
     }
     for (const Leaf& leaf : leaves_) {
         if (!leaf.live || leaf.light <= 0.0f) continue;
