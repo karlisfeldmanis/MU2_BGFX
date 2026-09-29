@@ -57,9 +57,10 @@ struct QuestItem {
     bool firstOnly = false;   // paid on the first completion and never again
 };
 
-// Whether this thing is paid to this class at this completion (0 the first).
-inline bool questPays(const QuestItem& what, int kin, uint32_t completions) {
-    return what.item && (what.kin < 0 || what.kin == kin) && (!what.firstOnly || completions == 0);
+// Whether this thing is paid to this class; `first` is questFirst's, the first clear of one born
+// in the giver's town.
+inline bool questPays(const QuestItem& what, int kin, bool first) {
+    return what.item && (what.kin < 0 || what.kin == kin) && (!what.firstOnly || first);
 }
 
 struct QuestRow {
@@ -83,7 +84,17 @@ struct QuestRow {
     int64_t experience = 0;
     int64_t zen = 0;
     // Every one of these his class is paid (questPays), all of them.
+    // Who was born in the giver's town (1 << sim::Kin, each class its starting map). One born
+    // elsewhere may take the quest only if `strangers`, and is then never paid the first clear's
+    // things or experience -- the user's rule of 2026-09-29: an elf may clear Lorencia for its
+    // jewels, Zen and experience, but the weapon and the rune are Marlon's to his own, and Noria's
+    // quest is the elves' alone. `stranger` is what the giver says to one he will not serve.
+    uint8_t natives = 0;
+    bool strangers = false;
+    const char* stranger = "";
     QuestItem paid[kQuestPaid];
+    // Paid in place of `experience` on a native's first clear.
+    int64_t firstExperience = 0;
     int paidCount = 0;
     // One of these, the player's choice, from those his class may use. The table lists every
     // class's candidates; the dialog shows his. None, when the whole reward is `paid`.
@@ -94,6 +105,17 @@ struct QuestRow {
 const QuestRow& questAt(int index);
 // The quest a giver hands out, by NPC number, or -1. One a giver.
 int questOf(int32_t giver);
+inline bool questNative(const QuestRow& row, int kin) { return (row.natives >> kin) & 1u; }
+// Whether a class may take the quest at all.
+inline bool questOpen(const QuestRow& row, int kin) { return row.strangers || questNative(row, kin); }
+// Whether the clear after `completions` is the one that pays the first clear's rewards.
+inline bool questFirst(const QuestRow& row, int kin, uint32_t completions) {
+    return completions == 0 && questNative(row, kin);
+}
+inline int64_t questExperience(const QuestRow& row, bool first) {
+    return first && row.firstExperience > 0 ? row.firstExperience : row.experience;
+}
+
 
 enum class QuestState : uint8_t {
     Untaken = 0,

@@ -189,13 +189,16 @@ void QuestDialog::layout(const Play& play) {
         case Mode::Resting:
             words(row.resting);
             break;
+        case Mode::Stranger:
+            words(row.stranger);
+            break;
     }
 
     // The body, top down in its own units: the kicker and his words, the steps, the rewards.
     float y = 12.0f + 16.0f;
     for (const std::string& one : lines_) y += one.empty() ? kParagraph : kLead;
     y += kSection;
-    if (mode_ != Mode::Resting) {
+    if (mode_ != Mode::Resting && mode_ != Mode::Stranger) {
         int counted = 0;
         for (int s = 0; s < row.stepCount; ++s) {
             counted += row.steps[s].kind == sim::QuestStepKind::Clear ? 1 : 0;
@@ -234,9 +237,10 @@ void QuestDialog::layout(const Play& play) {
             y += float((int(items.size()) + across - 1) / across) * (kIcon + kCellGap);
         };
         std::vector<std::pair<int, const sim::QuestItem*>> paid, fits;
-        const uint32_t completions = realm.quest(quest_).completions;
+        const bool first =
+            sim::questFirst(row, int(realm.hero().kin), realm.quest(quest_).completions);
         for (int p = 0; p < row.paidCount; ++p) {
-            if (sim::questPays(row.paid[p], int(realm.hero().kin), completions) &&
+            if (sim::questPays(row.paid[p], int(realm.hero().kin), first) &&
                 tables.itemNamed(row.paid[p].item) >= 0) {
                 paid.push_back({-1, &row.paid[p]});
             }
@@ -306,6 +310,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     else if (progress.state == sim::QuestState::Resting && !realm.questOffered(quest_)) {
         mode = Mode::Resting;
     }
+    if (!sim::questOpen(sim::questAt(quest_), int(realm.hero().kin))) mode = Mode::Stranger;
     if (mode != mode_) {
         mode_ = mode;
         chosen_ = -1;
@@ -496,7 +501,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     }
     cy += kSection;
 
-    if (mode_ == Mode::Resting) {
+    if (mode_ == Mode::Stranger) {
+        // His words are the whole of it: nothing offered, so nothing to count or pay.
+    } else if (mode_ == Mode::Resting) {
         const int64_t left = std::max<int64_t>(0, progress.availableAt - realm.wallClock());
         controls::label(body_, sx(kInset), by(cy), 15.0f * u, style::kAshInk,
                         "He will have work again in " + quest_marks::wait(left) + ".");
@@ -549,7 +556,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         };
         // The purse, one line: the experience, and the Zen ranged to the right.
         controls::label(body_, sx(kInset), by(cy + 18.0f), kBody * u, style::kBone,
-                        panel::commas(row.experience) + " experience");
+                        panel::commas(sim::questExperience(
+                            row, sim::questFirst(row, int(realm.hero().kin), progress.completions))) +
+                            " experience");
         controls::ranged(body_, sx(kInset + inner()), by(cy + 18.0f), kBody * u, kZenGold,
                          panel::commas(row.zen) + " Zen");
         // The choice's line stands over the first of its cells, under the paid grid.

@@ -52,7 +52,8 @@ public:
     bool up() const { return quest_ >= 0; }
     // The page up -- 0 the offer, 1 under way, 2 the hand-in, 3 resting -- or -1: what the
     // giver's voice reads (QuestRow::voice).
-    int page() const { return quest_ >= 0 ? int(mode_) : -1; }
+    // A stranger turned away is not voiced.
+    int page() const { return quest_ >= 0 && mode_ != Mode::Stranger ? int(mode_) : -1; }
     // The window's rectangle on screen, for the pointer the desk keeps from the world.
     bool covers(float x, float y) const;
     // The frame and the body, which scrolls clipped to its pane; drawn in that order.
@@ -66,7 +67,8 @@ public:
     float pixelsPerUnit() const { return unit_; }
 
 private:
-    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting };
+    // Stranger: one born outside the giver's town, whom he does not serve (sim::questOpen).
+    enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger };
     struct Cell {
         int choice = -1;  // the row's choice index, or -1 for a paid item
         int32_t item = -1;

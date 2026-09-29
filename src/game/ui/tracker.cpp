@@ -319,7 +319,10 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                        was.state == sim::QuestState::Ready) {
                 bannerKicker_ = "Quest complete";
                 bannerTitle_ = row.title;
-                bannerLine_ = grouped(row.experience) + " experience      ";
+                bannerLine_ = grouped(sim::questExperience(
+                                  row, sim::questFirst(row, int(realm.hero().kin),
+                                                       was.completions))) +
+                              " experience      ";
                 bannerZen_ = grouped(row.zen) + " Zen";
                 bannerHold_ = 5.0f;  // longer than the others: the stinger is still going
                 bannerAge_ = 0.0f;

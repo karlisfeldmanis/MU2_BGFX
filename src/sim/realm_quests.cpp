@@ -27,6 +27,8 @@ int Realm::questGoal(int index, int step) const {
 
 bool Realm::questOffered(int index) const {
     if (index < 0 || index >= kQuests) return false;
+    // Never to one born outside a giver's town who does not serve strangers.
+    if (!questOpen(questAt(index), int(bodies_[0].kin))) return false;
     const QuestProgress& one = quests_[index];
     if (one.state == QuestState::Untaken) return true;
     return one.state == QuestState::Resting && questAt(index).repeatSeconds > 0 &&
@@ -125,8 +127,9 @@ bool Realm::completeQuest(int index, int choice) {
     };
     int chosenSlot = -1;
     bool paid = true;
+    const bool first = questFirst(row, int(bodies_[0].kin), one.completions);
     for (int i = 0; i < row.paidCount && paid; ++i) {
-        if (questPays(row.paid[i], int(bodies_[0].kin), one.completions)) {
+        if (questPays(row.paid[i], int(bodies_[0].kin), first)) {
             paid = pay(row.paid[i], nullptr);
         }
     }
@@ -140,7 +143,7 @@ bool Realm::completeQuest(int index, int choice) {
     const int32_t chosenItem =
         anyFits ? tables_->itemNamed(row.choices[choice].item) : -1;
     say(What::QuestDone, hero, index, chosenItem, chosenSlot);
-    gain(hero, int32_t(row.experience));
+    gain(hero, int32_t(questExperience(row, first)));
     const uint32_t completions = one.completions + 1;
     one = QuestProgress{};
     one.state = QuestState::Resting;

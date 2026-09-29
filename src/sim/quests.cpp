@@ -18,7 +18,8 @@ namespace {
 //
 // The reward is invention, the user's of 2026-09-29, and class by class: the Dark Knight's first,
 // the Dark Wizard's with his runes later. Every clear pays 25,000 experience, 50,000 Zen, three
-// Jewels of Bless and twenty large potions. The first, and only the first, adds a one-handed
+// Jewels of Bless and twenty large potions. The first, and only the first -- and only to one
+// born in Lorencia -- raises the experience to 100,000 and adds a one-handed
 // weapon with luck and a socket, and a Rune of Creation to set in it -- the quest's one rune,
 // never a repeat (sim/items.h). The Falchion asks 106 strength (MU's formula over its raw 120
 // at drop level 24). It is the next built one-hander past the Gladius, and it carries Uppercut.
@@ -86,10 +87,18 @@ QuestRow marlon() {
     row.steps[8] = {QuestStepKind::Return, 0, 1, "Return to Marlon"};
     row.stepCount = 9;
     row.repeatSeconds = 12 * 60 * 60;
-    row.experience = 25000;
-    row.zen = 50000;
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    // Lorencia's born, the knight and the wizard; an elf may come for the jewels, Zen and
+    // experience, and goes without the weapon, the rune and the first clear's experience.
+    row.natives = uint8_t((1u << knight) | (1u << wizard));
+    row.strangers = true;
+    row.experience = 25000;
+    // The first clear's, raised on the user's word of 2026-09-29: at the level-28 end of the
+    // ladder 100,000 carries about three levels (neededExperience: 262,440 at 28, 351,000 at 31),
+    // where the repeat's 25,000 is most of one.
+    row.firstExperience = 100000;
+    row.zen = 50000;
     row.paid[0] = {.item = "Sword08", .kin = knight, .luck = true, .sockets = 1,
                    .firstOnly = true};  // Falchion
     row.paid[1] = {.item = "Jewel22", .kin = knight, .power = uint8_t(Power::Stormcall),
@@ -155,9 +164,16 @@ QuestRow peia() {
     row.steps[8] = {QuestStepKind::Return, 0, 1, "Return to Peia"};
     row.stepCount = 9;
     row.repeatSeconds = 12 * 60 * 60;
-    row.experience = 25000;
-    row.zen = 50000;
     constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // The elves' alone: one born in Lorencia is turned away (quests.h, `natives`).
+    row.natives = uint8_t(1u << elf);
+    row.strangers = false;
+    row.stranger =
+        "\"The forest does not know your step, traveller. Its song is for the elves to mend. Go "
+        "back to Lorencia -- Marlon will have work for you there.\"";
+    row.experience = 25000;
+    row.firstExperience = 100000;  // Marlon's, for the same ladder
+    row.zen = 50000;
     row.paid[0] = {.item = "Bow04", .kin = elf, .luck = true, .sockets = 1,
                    .firstOnly = true};  // Battle Bow
     row.paid[1] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
