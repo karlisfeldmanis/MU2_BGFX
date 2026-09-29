@@ -16,3 +16,5 @@ SRC=${MU2_BUILD:-workshop}
 [ -f "$SRC/index.json" ] || { echo "no index.json in $SRC: run tools/content.sh"; exit 1; }
 mkdir -p assets
 python3 tools/sync.py --src "$SRC" --dst assets "$@"
+# The quest givers' voices, finished WAVs out of tools/voice.py: copied as they are.
+[ -d source/voice ] && rsync -a --exclude ref source/voice/ assets/voice/

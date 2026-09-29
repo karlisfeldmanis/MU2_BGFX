@@ -166,6 +166,7 @@ private:
     Amount amount_;
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
     QuestDialog questDialog_;
+    int voiced_ = -1;  // the quest page whose voice was last started: quest * 4 + page, or -1
     Tracker tracker_;
     Menu menu_;
     std::string worldName_;

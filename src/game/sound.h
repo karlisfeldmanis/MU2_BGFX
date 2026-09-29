@@ -133,6 +133,12 @@ public:
     void music(const std::string& path, float gain = 0.6f);
     void stopMusic();
 
+    // A spoken line, `relative` to the assets, played once and unplaced: a quest giver reading
+    // his page. One at a time: a new line cuts the last.
+    // Ours: MU 0.75 speaks no lines. A missing file is logged and nothing plays.
+    void voice(const std::string& relative);
+    void stopVoice();
+
     // The whole mix's level, 0 to 1: the game menu's volume. A muted run stays silent.
     void setVolume(float level);
 

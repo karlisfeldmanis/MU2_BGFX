@@ -48,6 +48,9 @@ public:
                 const Pointer& pointer, float wheel, bool enter, bool escape, Stage* stage,
                 Result* out);
     bool up() const { return quest_ >= 0; }
+    // The page up -- 0 the offer, 1 under way, 2 the hand-in, 3 resting -- or -1: what the
+    // giver's voice reads (QuestRow::voice).
+    int page() const { return quest_ >= 0 ? int(mode_) : -1; }
     // The window's rectangle on screen, for the pointer the desk keeps from the world.
     bool covers(float x, float y) const;
     // The frame and the body, which scrolls clipped to its pane; drawn in that order.

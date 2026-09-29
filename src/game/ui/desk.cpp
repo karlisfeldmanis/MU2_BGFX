@@ -183,6 +183,21 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                             free ? pointer : Pointer{}, free ? window.scroll() : 0.0f,
                             free && window.entered(),
                             free && (window.escaped() || scriptEscape_), shelfStage_, &result);
+        // His voice reads the page, from the frame it comes up: a new page cuts the last one
+        // and the window shutting stops him mid-line.
+        const int page = questDialog_.page();
+        const int voiced = page < 0 ? -1 : quest * 4 + page;
+        if (voiced != voiced_) {
+            voiced_ = voiced;
+            const char* who = voiced >= 0 ? sim::questAt(quest).voice : "";
+            if (who && *who) {
+                static const char* const kPage[4] = {"offer", "underway", "handin", "resting"};
+                play.sound().voice(std::string("voice/") + who + "/" + who + "_" + kPage[page] +
+                                   ".wav");
+            } else {
+                play.sound().stopVoice();
+            }
+        }
         if (result.close) {
             play.closeQuest();
             click();

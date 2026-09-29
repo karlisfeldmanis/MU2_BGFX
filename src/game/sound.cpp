@@ -201,6 +201,9 @@ struct Sound::Impl {
     int musicSlot = 0;       // the slot the current track is in
     bool musicLive = false;  // that slot is playing and not fading out
     std::string musicPath;
+    // A spoken line (Sound::voice): one, streamed, played once.
+    ma_sound voiceLine{};
+    bool voiceReady = false;
 
     // The room: the world's bus split into the dry and the reverb's send.
     ma_splitter_node split{};
@@ -619,8 +622,37 @@ void Sound::stopMusic() {
     impl_->musicPath.clear();
 }
 
+void Sound::voice(const std::string& relative) {
+    if (!impl_ || !impl_->open) return;
+    Impl& im = *impl_;
+    stopVoice();
+    const std::string path = im.assetDir + "/" + relative;
+    if (!core::fileExists(path)) {
+        core::logError("sound: no voice %s (tools/sync.sh copies source/voice)", path.c_str());
+        return;
+    }
+    // Straight to the engine as the music is: no room's reverb on a man talking to you.
+    const ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
+    if (ma_sound_init_from_file(&im.engine, path.c_str(), flags, nullptr, nullptr,
+                                &im.voiceLine) != MA_SUCCESS) {
+        core::logError("sound: the voice %s would not open", path.c_str());
+        return;
+    }
+    im.voiceReady = true;
+    ma_sound_start(&im.voiceLine);
+    core::logf("sound: voice %s", relative.c_str());
+}
+
+void Sound::stopVoice() {
+    if (!impl_ || !impl_->voiceReady) return;
+    ma_sound_stop(&impl_->voiceLine);
+    ma_sound_uninit(&impl_->voiceLine);
+    impl_->voiceReady = false;
+}
+
 void Sound::shutdown() {
     if (!impl_ || !impl_->open) return;
+    stopVoice();
     // At once here: the device is closing and nothing is left to hear a fade.
     for (int slot = 0; slot < 2; ++slot) {
         if (!impl_->musicReady[slot]) continue;

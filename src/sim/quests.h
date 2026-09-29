@@ -54,10 +54,13 @@ struct QuestRow {
     const char* title = "";
     // What he says: offering it, while it is under way, taking it back done, and while it is
     // not yet his to give again. Each a paragraph; unused ones are null.
-    const char* offer[4] = {};
+    const char* offer[5] = {};
     const char* underway = "";
     const char* handIn[2] = {};
     const char* resting = "";
+    // His voice: assets/voice/<voice>/<voice>_offer.wav, _underway, _handin and _resting, one
+    // file a page, each the page's words read whole. Empty for a giver who is not voiced.
+    const char* voice = "";
     QuestStepRow steps[kQuestSteps];
     int stepCount = 0;
     // Seconds between a hand-in and the offer standing again; 0 for once only.

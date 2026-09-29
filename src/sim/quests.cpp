@@ -25,18 +25,27 @@ QuestRow marlon() {
         "\"When Kundun was bound in Kalima, the knights of Lorencia swore to keep this land "
         "while the seal held. I am what is left of that oath.\"";
     row.offer[1] =
-        "\"The seal is cracking. Every night more of his brood climbs out of the Dungeon to the "
-        "east: the dead that walk the old road, the Liches that drive them, the Giants that "
-        "follow the noise. And the beasts of the fields have gone mad with it, the spiders, "
-        "the Budge Dragons and the Bull Fighters in the hills.\"";
+        "\"But the seal is cracking! Every night more of his brood climbs out of the Dungeon to "
+        "the east. The dead that walk the old road. The Liches that drive them. The Giants that "
+        "follow the noise. And the beasts of the fields have gone mad with it: the spiders, the "
+        "Budge Dragons, and the Bull Fighters in the hills.\"";
     row.offer[2] =
         "\"The guards hold the walls, and that is all they hold. I want the fields cleared. Not "
-        "thinned: cleared, every breed of them. It will not mend the seal. But it tells whatever "
+        "thinned. Cleared! Every breed of them. It will not mend the seal. But it tells whatever "
         "stirs under Kalima that Lorencia still has a sword.\"";
+    // What to do and why, in his words, on the user's of 2026-09-29 ("he has to read what
+    // character has to do and why"): the steps below, in their order, as he asks for them.
     row.offer[3] =
-        "\"They will come back; they always do. Come back to me when it is done.\"";
+        "\"So hear me, and I beg you, do not fail me. Hunt the spiders at the edge of town. Slay "
+        "the Budge Dragons, and the Bull Fighters in the hills. Put down the Hounds, and the "
+        "Elite Bull Fighters that lead them. Then go east, to the old road, and destroy the "
+        "Liches, the Giants, and the Skeleton Warriors. Every last one of them, until the fields "
+        "fall silent. Do this, and Lorencia lives to see one more dawn. I have no one else to "
+        "ask.\"";
+    row.offer[4] =
+        "\"They will come back. They always do. Come back to me when it is done.\"";
     row.underway =
-        "\"Not yet. I can still hear them in the fields, and the dead still walk the old road.\"";
+        "\"Not yet! I can still hear them in the fields, and the dead still walk the old road.\"";
     row.handIn[0] =
         "\"Quiet. The fields have not been this quiet since the seal began to crack.\"";
     row.handIn[1] =
@@ -45,6 +54,8 @@ QuestRow marlon() {
     row.resting =
         "\"Rest while you can. By morning they will have crept up out of the Dungeon again, and "
         "I will need you.\"";
+    // Read by Chatterbox (Resemble AI, MIT) off Kokoro's bm_george, dramatic: source/voice.
+    row.voice = "marlon";
     row.steps[0] = {QuestStepKind::Clear, 3, 0, "Spiders"};
     row.steps[1] = {QuestStepKind::Clear, 2, 0, "Budge Dragons"};
     row.steps[2] = {QuestStepKind::Clear, 0, 0, "Bull Fighters"};
