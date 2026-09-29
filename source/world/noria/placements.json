@@ -57,6 +57,18 @@
         103
       ],
       "facing": 2
+    },
+    {
+      "model": "Peia",
+      "who": "Peia",
+      "tile": [
+        171,
+        118
+      ],
+      "facing": 3,
+      "idle": "action2",
+      "idle_why": "inside the safe zone",
+      "ours": "the elf's quest giver, in the flower bed where the user put her (2026-09-29); OpenMU Season Six's Elf Soldier stands at 167,118"
     }
   ],
   "spawns_from": [

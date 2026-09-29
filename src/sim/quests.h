@@ -23,7 +23,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 1;
+inline constexpr int kQuests = 2;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 6;
@@ -65,6 +65,7 @@ inline bool questPays(const QuestItem& what, int kin, uint32_t completions) {
 struct QuestRow {
     int32_t giver = 0;          // the giver's MU NPC number (Tables::folk)
     const char* giverName = "";
+    const char* place = "";     // the giver's town, for the dialog's "Marlon of Lorencia"
     const char* title = "";
     // What he says: offering it, while it is under way, taking it back done, and while it is
     // not yet his to give again. Each a paragraph; unused ones are null.

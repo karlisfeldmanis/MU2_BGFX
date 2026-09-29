@@ -1733,6 +1733,10 @@ FOLK_VERSION075 = {
         (243, "Eo the Craftsman", "", 195, 124, 3),
         (240, "Baz The Vault Keeper", "", 172, 96, 4),
         (238, "Chaos Goblin", "", 180, 103, 2),
+        # Ours, not Version075's: the elf's quest giver. MuMain's MONSTER_ELF_SOLDIER, whom its
+        # Korean client names Peia, in the flower bed under the town's great tree where the user
+        # put her (2026-09-29) -- OpenMU Season Six stands her four tiles west, at 167,118.
+        (257, "Peia", "Peia", 171, 118, 3),
     ],
 }
 

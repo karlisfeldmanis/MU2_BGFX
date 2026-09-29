@@ -1,0 +1,18 @@
+{
+  "item": "Peia",
+  "mu_name": "Elf Soldier",
+  "kind": "character",
+  "parts": ["HelmElf04", "ArmorElf04", "PantElf04", "GloveElf04", "BootElf04"],
+  "right_hand": "Bow03",
+  "plus": {"parts": 7, "right_hand": 7},
+  "female": true,
+  "note": "Noria's quest giver, and OURS rather than 0.75's: the Elf Soldier (MONSTER_ELF_SOLDIER, 257) is not in Version075's Noria. MuMain has her, and names her 페이아 - Peia - in her own case of ZzzCharacter.cpp; OpenMU's Season Six stands her in Noria at 167,118 and gives her a buff for the young, where here she gives the elf's quest (the user, 2026-09-29).\n\nShe is built Marlon's way because MuMain builds her that way: CreateCharacter with MODEL_PLAYER and a set of armour (MakeElfHelper). Hers is the Red Spirit set at +13 under the Wings of Spirits, hovering in PLAYER_STOP_FLY; none of the three is built here, so she wears the Spirit set, stands, and carries an Elven Bow, all at Marlon's +7 (the user's choice, 2026-09-29).",
+  "parts_from": "The Spirit set (ArmorElf04 and its four fellows) in place of MakeElfHelper's MODEL_RED_SPIRIT_* at Level 13, which is not built; the user chose it over the Guardian set on the studio sheets of 2026-09-29.",
+  "right_hand_from": "Ours: MakeElfHelper gives her no weapon. The Elven Bow, the elves' own, at +7 beside the armour - the user asked for Marlon's +7 armour and +7 weapon.",
+  "plus_from": "+7, as Marlon: the first refined tier, TIER_CHROME_1 (ZzzObject.cpp:10365).",
+  "female_from": "The Fairy Elf's own body and clips: PLAYER_STOP_FEMALE is her idle.",
+  "idle": "action2",
+  "idle_from": "SetPlayerStop inside the safe zone, as Marlon's action1 but for a woman: PLAYER_STOP_FEMALE, action 2, the bow slung on her back by the same tile bit (RenderCharacterBackItem).",
+  "place_note": "Noria at 171,118, in the flower bed under the town's great vine-wound tree by the stream, at the spawn box's edge (171-177 x 108-117), where the user put her on 2026-09-29 from an in-game shot. OpenMU Season Six stands its Elf Soldier four tiles west at 167,118 (Maps/Noria.cs), in the tree's roots, where she was half hidden in its leaves.",
+  "playable": false
+}

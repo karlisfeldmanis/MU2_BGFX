@@ -22,6 +22,7 @@ QuestRow marlon() {
     QuestRow row;
     row.giver = 229;
     row.giverName = "Marlon";
+    row.place = "Lorencia";
     row.title = "Lorencia, Once More";
     // His story, on the user's word (2026-09-29: "some kind of story ... based on MU story
     // line"). MU's own premise: Kundun, sealed in Kalima, and his minions loose on the continent
@@ -91,7 +92,71 @@ QuestRow marlon() {
     return row;
 }
 
-const QuestRow kTable[kQuests] = {marlon()};
+// Peia's, and Noria's only: the elves' forest, sick since Kundun's seal began to crack. Marlon's
+// quest shaped for the Fairy Elf (the user, 2026-09-29: "basically its same rewards as Marlon but
+// for elfs"), with a story of Noria's own.
+//
+// Its counts are fixed, forty of each of Noria's eight breeds -- 320, about Lorencia's 290 --
+// where Marlon's are the whole population: Noria holds 1005, and clearing them takes a new elf
+// to level 25, too long for a clear that comes back every twelve hours. Walked weakest first
+// from level 1 the 320 end near level 16, 18 with the hand-in's experience: 85 points, where
+// the Battle Bow asks 90 agility and 43 strength (86 over her start), so it is one level out
+// of her hands -- the Falchion's rule. Invention, all of it.
+QuestRow peia() {
+    QuestRow row;
+    row.giver = 257;
+    row.giverName = "Peia";
+    row.place = "Noria";
+    row.title = "Noria's Song";
+    // Her story, ours: the same seal as Marlon's cracking, seen from the elves' forest -- a song
+    // in the trees gone quiet, its old keepers the Forest Monsters turned, the Stone Golems
+    // woken, the goblins at the gates. Noria's own breeds (mu.db's spawns for map 3).
+    row.offer[0] = "\"Walk softly, traveller. This is Noria, the elves' own forest, and it is sick.\"";
+    row.offer[1] =
+        "\"Its trees carry a song older than any kingdom. Since Kundun's seal began to crack, the "
+        "song has gone quiet. The Forest Monsters were its keepers once; now they are rotten "
+        "wood. The Stone Golems have woken in the old stones, and the goblins grow bold enough "
+        "to raid our gates.\"";
+    row.offer[2] =
+        "\"Hunt them for me: the Goblins and their Elites, the Chain Scorpions, the Beetle "
+        "Monsters, the Hunters, the Forest Monsters, Agon and the Golems. Enough of each that "
+        "the trees can sing again. Come back to me when it is done.\"";
+    row.underway = "\"Not yet. Listen -- the forest is still silent.\"";
+    row.handIn[0] =
+        "\"Already? I did not think a stranger's bow could do so much, so soon. Listen -- the "
+        "forest is singing again.\"";
+    row.handIn[1] =
+        "\"Take these, with the elves' blessing. May they guide your arrows, until all of MU "
+        "is free of Kundun's darkness.\"";
+    row.resting =
+        "\"Rest, and listen to it while it lasts. The dark will creep back into the roots by "
+        "morning.\"";
+    row.voice = "peia";
+    row.steps[0] = {QuestStepKind::Clear, 26, 40, "Goblins"};
+    row.steps[1] = {QuestStepKind::Clear, 27, 40, "Chain Scorpions"};
+    row.steps[2] = {QuestStepKind::Clear, 33, 40, "Elite Goblins"};
+    row.steps[3] = {QuestStepKind::Clear, 28, 40, "Beetle Monsters"};
+    row.steps[4] = {QuestStepKind::Clear, 29, 40, "Hunters"};
+    row.steps[5] = {QuestStepKind::Clear, 30, 40, "Forest Monsters"};
+    row.steps[6] = {QuestStepKind::Clear, 31, 40, "Agon"};
+    row.steps[7] = {QuestStepKind::Clear, 32, 40, "Stone Golems"};
+    row.steps[8] = {QuestStepKind::Return, 0, 1, "Return to Peia"};
+    row.stepCount = 9;
+    row.repeatSeconds = 12 * 60 * 60;
+    row.experience = 25000;
+    row.zen = 50000;
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.paid[0] = {.item = "Bow04", .kin = elf, .luck = true, .sockets = 1,
+                   .firstOnly = true};  // Battle Bow
+    row.paid[1] = {.item = "Jewel22", .kin = elf, .power = uint8_t(Power::Frost),
+                   .firstOnly = true};  // Rune of Creation, Frost Arrow
+    row.paid[2] = {.item = "Jewel01", .count = 3};    // Jewels of Bless
+    row.paid[3] = {.item = "Potion04", .count = 20};  // Large Healing Potions
+    row.paidCount = 4;
+    return row;
+}
+
+const QuestRow kTable[kQuests] = {marlon(), peia()};
 
 }  // namespace
 

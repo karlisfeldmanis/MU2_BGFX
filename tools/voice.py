@@ -8,9 +8,10 @@ copies to assets/voice, where the quest window plays them (Desk, QuestRow::voice
 are read out of quests.cpp itself, so what he says and what the window shows are one text.
 
 The model is Chatterbox (Resemble AI, MIT), local, chosen 2026-09-29 for its `exaggeration`:
-the user wanted him dramatic, a man asking for help, and Kokoro read him flat. Its voice is
-cloned from source/voice/ref/bm_george.wav, a line Kokoro-82M (Apache 2.0) read as bm_george.
-No reverb: the user heard one on the first take and called it weird.
+the user wanted him dramatic, a man asking for help, and Kokoro read him flat. Each giver's
+voice is cloned from a line Kokoro-82M (Apache 2.0) read, in source/voice/ref, and read to the
+settings in VOICES. No reverb on Marlon: the user heard one on his first take and called it
+weird. Peia, low and mystical, carries a faint echo.
 
 Needs its own Python, which this repo does not carry:
 
@@ -30,11 +31,22 @@ import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 QUESTS = ROOT / "src" / "sim" / "quests.cpp"
-REF = ROOT / "source" / "voice" / "ref" / "bm_george.wav"
-EXAGGERATION = 0.85   # 0.5 is the model's even reading; he is pleading
-CFG_WEIGHT = 0.35     # lower is slower and more deliberate
+REFS = ROOT / "source" / "voice" / "ref"
 POLISH = ("bass=g=2:f=140,acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
           "apad=pad_dur=0.6,loudnorm=I=-16:TP=-1.5:LRA=11")
+# Each giver's reading: the cloned reference, how dramatic (`exaggeration`, 0.5 the model's even
+# reading), how deliberate (`cfg_weight`, lower is slower), and the finish.
+VOICES = {
+    # Marlon: pleading, dry. Kokoro-82M's bm_george.
+    "marlon": dict(ref="bm_george.wav", exaggeration=0.85, cfg_weight=0.35, polish=POLISH),
+    # Peia: low and mystical (the user, 2026-09-29). Kokoro-82M's af_nicole (Apache 2.0), the
+    # lowest of six female voices measured -- 156 Hz median against 180 to 220 -- and breathy;
+    # read calm rather than pleading, a little slower, taken down a semitone (asetrate 0.94,
+    # tempo put back), and a faint echo, the one voice here with any.
+    "peia": dict(ref="af_nicole.wav", exaggeration=0.4, cfg_weight=0.3,
+                 polish="asetrate=24000*0.94,aresample=24000,atempo=1.0638,"
+                        "aecho=0.8:0.5:70|140:0.18|0.1," + POLISH),
+}
 
 
 # Words the model says wrong, spelled as they are said: the window keeps the written form. MU is
@@ -80,6 +92,7 @@ def main():
     import torchaudio
     from chatterbox.tts import ChatterboxTTS
 
+    how = VOICES[args.voice]
     model = ChatterboxTTS.from_pretrained(device=args.device)
     out = ROOT / "source" / "voice" / args.voice
     out.mkdir(parents=True, exist_ok=True)
@@ -90,13 +103,14 @@ def main():
             parts = []
             for i, words in enumerate(paragraphs):
                 torch.manual_seed(7)
-                wav = model.generate(spoken(words), audio_prompt_path=str(REF),
-                                     exaggeration=EXAGGERATION, cfg_weight=CFG_WEIGHT,
+                wav = model.generate(spoken(words), audio_prompt_path=str(REFS / how["ref"]),
+                                     exaggeration=how["exaggeration"],
+                                     cfg_weight=how["cfg_weight"],
                                      temperature=0.8)
                 raw = pathlib.Path(scratch) / f"{page}{i}.raw.wav"
                 torchaudio.save(str(raw), wav, model.sr)
                 part = pathlib.Path(scratch) / f"{page}{i}.wav"
-                subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", POLISH,
+                subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", how["polish"],
                                 "-ar", "24000", "-ac", "1", "-sample_fmt", "s16", str(part)],
                                check=True)
                 parts.append(part)

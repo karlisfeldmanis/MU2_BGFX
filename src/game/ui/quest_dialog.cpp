@@ -484,7 +484,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
 
     float cy = 12.0f;
     controls::caps(body_, sx(kInset), by(cy + 10.0f), style::kKickerSize * u, style::kAshInk,
-                   std::string(row.giverName) + " of Lorencia");
+                   std::string(row.giverName) + " of " + row.place);
     cy += 16.0f;
     for (const std::string& one : lines_) {
         if (one.empty()) {
