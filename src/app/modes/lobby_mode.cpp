@@ -190,10 +190,12 @@ bool LobbyMode::open(Context& ctx) {
             sound_.open(assets, showing_, args.mute)) {
             click_ = sound_.load("window_click", false);
             refused_ = sound_.load("window_refused", false);
-            // MU's main theme. MuMain plays login_theme.mp3 here, from the login screen through
-            // this one until loading (LoginScene.cpp:384, LoadingScene.cpp:84); the user,
-            // 2026-09-27, chose main_theme.mp3 instead. Ours.
-            const std::string theme = core::join(assets, "music/main_theme.mp3");
+            // MU's anthem. MuMain plays login_theme.mp3 here, from the login screen through
+            // this one until loading (LoginScene.cpp:384, LoadingScene.cpp:84), and MuTheme.mp3
+            // on its login window (LoginMainWin.cpp:112). The user chose main_theme.mp3 on
+            // 2026-09-27, then on 2026-09-29 moved it to Lorencia's fights ("use other music
+            // when game start"), so MuTheme here. Ours.
+            const std::string theme = core::join(assets, "music/MuTheme.mp3");
             if (core::fileExists(theme)) sound_.music(theme);
         }
         return interfaceUp_;

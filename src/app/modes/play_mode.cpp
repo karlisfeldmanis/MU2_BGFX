@@ -690,9 +690,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     }
     // The music: MuMain's ManageBackgroundMusic (SceneManager.cpp:992), the tavern half only.
     // In Lorencia's safe zone MU plays Pub.mp3 while he stands on the tavern floor -- HeroTile 4,
-    // which is what World::indoors asks -- and main_theme.mp3 everywhere else. The main theme is
-    // kept for the character screen alone (the user, 2026-09-27: "don't play main theme anymore
-    // in game ... but keep pub logic"), so off the tavern floor the world is silent of music.
+    // which is what World::indoors asks -- and main_theme.mp3 everywhere else. Not here (the
+    // user, 2026-09-27: "don't play main theme anymore in game ... but keep pub logic"), so off
+    // the tavern floor the town is silent of music; the main theme comes back for fights below.
     if (world_.played().isOpen()) {
         bool pub = false;
         if (args.world == "lorencia") {
@@ -709,7 +709,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // a fight rolls for it at most every fightRest_ seconds, it plays while blows keep
         // landing, and goes out once the fight has been quiet a while or it has run its length.
         bool hunt = false;
-        if (args.world == "noria") {
+        if (huntTrack != nullptr) {
             const sim::Realm& realm = world_.played().realm();
             const sim::Body& hero = realm.hero();
             const content::Tables* tables = realm.tables();
@@ -731,6 +731,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             }
             const float seconds = float(deltaSeconds);
             fightRest_ = std::max(0.0f, fightRest_ - seconds);
+        // Lorencia the same, to its own main_theme.mp3 -- MU's field music off the tavern floor,
+        // brought back only for the fights (the user, 2026-09-29: "use main theme for lorencia
+        // combat"); the character screen has MuTheme instead.
+        const char* huntTrack = args.world == "noria"      ? "/music/Noria.mp3"
+                                : args.world == "lorencia" ? "/music/main_theme.mp3"
+                                                           : nullptr;
             fightQuiet_ = fighting ? 0.0f : fightQuiet_ + seconds;
             if (town) {
                 fightMusic_ = false;
@@ -758,7 +764,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             hunt = fightMusic_;
         }
         const std::string path =
-            ctx.paths.assets + (hunt ? "/music/Noria.mp3" : "/music/Pub.mp3");
+            ctx.paths.assets + (hunt ? huntTrack : "/music/Pub.mp3");
         if ((pub || hunt) && core::fileExists(path)) world_.played().sound().music(path);
         else if (!pub && !hunt) world_.played().sound().stopMusic();
     }
