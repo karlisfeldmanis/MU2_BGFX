@@ -12,8 +12,9 @@ namespace {
 // How long each of Noria's spells lasts, in seconds, drawn afresh each time between these.
 // Invention, judged: long enough that a spell is a mood and not a flicker, short enough that a
 // session of hunting sees both. Lengthened 2026-09-29 (the user: "rain is happening longer and
-// daytime also is longer"), from 2-4 min dry and 1-2 min wet.
-constexpr float kDryLow = 300.0f, kDryHigh = 540.0f;
+// daytime also is longer"), from 2-4 min dry and 1-2 min wet; the dry spell doubled again the
+// same day (the user: "we need bigger intervals between daytime and rain"), from 5-9 min.
+constexpr float kDryLow = 600.0f, kDryHigh = 1080.0f;
 constexpr float kWetLow = 180.0f, kWetHigh = 300.0f;
 
 // Dry to full rain: MU steps RainCurrent by one a frame at 25 frames a second, and a hundred
