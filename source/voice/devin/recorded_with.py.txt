@@ -1,0 +1,60 @@
+import sys, re, subprocess, numpy as np, soundfile as sf
+sys.path.insert(0, "/Users/karlisfeldmanis/Documents/muremaster2/MU2_BGFX/tools")
+import voice, torch, torchaudio
+torch.set_num_threads(4)
+from chatterbox.tts import ChatterboxTTS
+S, L, XL = 0.5, 0.7, 0.9   # pause after a sentence; XL is also spoken as "..."
+LINES = {
+ "offer1": [("So you are the one.", L), ("Lorencia is quiet, and Noria's trees sing again.", S),
+            ("Word travels, even this far north.", 0)],
+ "offer2": [("I am Devin, and this is Devias.", L),
+            ("Snow buries the roads, Yetis roam the passes, and Kundun's Assassins hunt anyone who walks alone.", 0)],
+ "offer3": [("But the Ice Queens are the real danger!", XL),
+            ("They call the storms down on us, and while they live, the storms never stop.", 0)],
+ "offer4": [("Clear the Worms, Ice Monsters, Hommerds, Assassins and Yetis.", L), ("Then bring down the Queens.", 0)],
+ "offer5": [("Dress for the cold, and come back alive.", 0)],
+ "underway": [("Not yet.", S), ("The storms still rage, and the Queens still live.", 0)],
+ "handin1": [("The sky over Devias is clear again.", L), ("Thank you.", 0)],
+ "handin2": [("Take these.", S), ("You will need them for what comes next: the Lost Tower.", XL),
+             ("But that is a story for another day.", 0)],
+ "resting": [("Rest now.", L), ("By morning, the Queens will call the storms back.", 0)],
+}
+how = voice.VOICES["devin"]
+SQ = ("silenceremove=start_periods=1:start_threshold=-50dB:stop_periods=-1:"
+      "stop_duration=1.0:stop_threshold=-50dB:stop_silence=1.0,")
+def gaps(path):
+    err = subprocess.run(["ffmpeg", "-i", path, "-af", "silencedetect=n=-42dB:d=0.06", "-f", "null", "-"],
+                         capture_output=True, text=True).stderr
+    st = [float(v) for v in re.findall(r"silence_start: ([0-9.]+)", err)]
+    en = [float(v) for v in re.findall(r"silence_end: ([0-9.]+)", err)]
+    return list(zip(st, en))
+model = ChatterboxTTS.from_pretrained(device="cpu")
+only = sys.argv[1:]
+for name, parts in LINES.items():
+    if only and name not in only: continue
+    text = ""
+    for i, (w, p) in enumerate(parts):
+        text += w + (" ... " if p >= XL else " ") if i < len(parts) - 1 else w
+    torch.manual_seed(11)
+    wav = model.generate(voice.spoken(text), audio_prompt_path="v3/ref_dramatic_sv.wav",
+                         exaggeration=0.9, cfg_weight=0.3, temperature=0.8)
+    raw = f"v4/{name}.raw.wav"; torchaudio.save(raw, wav.cpu(), model.sr)
+    x, sr = sf.read(raw)
+    g = [(a, b) for a, b in gaps(raw) if a > 0.05 and b < len(x) / sr - 0.05]
+    s0 = gaps(raw)[0][1] if gaps(raw) and gaps(raw)[0][0] < 0.01 else 0.0
+    s1 = g[-1][1] if False else len(x) / sr
+    chars = sum(len(w) for w, _ in parts); c = 0; adds = []
+    for w, p in parts[:-1]:
+        c += len(w); t = s0 + (s1 - s0) * c / chars
+        free = [q for q in g if q not in [a[2] for a in adds]]
+        if not free: break
+        q = min(free, key=lambda q: abs((q[0] + q[1]) / 2 - t))
+        adds.append(((q[0] + q[1]) / 2, max(0.0, p - (q[1] - q[0])), q))
+    out, last = [], 0
+    for t, add, _ in sorted(adds):
+        i = int(t * sr); out += [x[last:i], np.zeros(int(add * sr))]; last = i
+    out.append(x[last:])
+    sf.write(f"v4/{name}.paused.wav", np.concatenate(out), sr)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", f"v4/{name}.paused.wav", "-af",
+                    SQ + how["polish"], "-ar", "24000", "-ac", "1", f"v4/{name}.wav"], check=True)
+    print(name, f"{wav.shape[-1]/sr:.1f}s", "breaks", [round(a[0], 2) for a in sorted(adds)], flush=True)

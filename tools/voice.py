@@ -57,10 +57,15 @@ VOICES = {
                         "aecho=0.8:0.5:70|140:0.18|0.1," + POLISH),
     # Devin: low, with a Nordic accent, but only a trace (the user, 2026-09-29: the full accent
     # was "to strong", the trace "perfect"). His reference is Chatterbox's multilingual model
-    # (ChatterboxMultilingualTTS) reading one of his English lines as Swedish, language_id "sv",
-    # off bm_lewis; cloned here by the English model, the accent survives only as colour.
-    # Two semitones down (asetrate 0.89, tempo put back) and more chest: older than Marlon.
-    "devin": dict(ref="devin_sv.wav", exaggeration=0.45, cfg_weight=0.4,
+    # (ChatterboxMultilingualTTS) reading a heroic line as Swedish, language_id "sv", off
+    # bm_lewis, at exaggeration 0.9; cloned here by the English model, the accent survives only
+    # as colour. devin_sv.wav, a calm read, gave a monotone Devin at any setting. Dramatic, 0.9
+    # and 0.3, chosen over 1.1 and 1.3. Two semitones down (asetrate 0.89, tempo put back) and
+    # more chest: older than Marlon.
+    # His pages were NOT read by main(): each paragraph read whole (stitched sentences sounded
+    # cropped), seed 11, then the sentence gaps stretched and the paragraphs joined 0.9 s apart
+    # -- see docs/devin-quest.md and source/voice/devin/recorded_with.py.txt. main() would undo that.
+    "devin": dict(ref="devin_sv_dramatic.wav", exaggeration=0.9, cfg_weight=0.3,
                   polish="asetrate=24000*0.89,aresample=24000,atempo=1.1236,"
                          "bass=g=3:f=100," + POLISH),
 }

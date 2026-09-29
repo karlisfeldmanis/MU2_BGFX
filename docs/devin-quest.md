@@ -5,29 +5,33 @@ for every class (`natives` all three, no stranger line), repeatable every 12 hou
 and Peia's. Devin is MU's own (Priest Devin 406, Season 6's `Devias.cs:36`, 181,35 SouthEast;
 `Npc/devin.bmd`), not Version075's; his story is ours.
 
-His character, on the user's word: dry humour and irony, a scholar who writes the dead down; he
-says plainly that Devias is the real deal, not a joke; the Ice Queens are the real problem; he
-names both Marlon and Peia; and he will not talk about the Lost Tower yet. Short: it was cut to
-Marlon's five offer and two hand-in paragraphs because the first drafts ran long.
+His character, on the user's word: serious, short and clear, no jokes (a dry, joking draft was
+tried and dropped, then the text rewritten from scratch): the player has just cleared Lorencia,
+Noria or both; he says what Devias is and its worst danger, the Ice Queens and their storms;
+every instruction in one line, in the steps' order; the Lost Tower only at the end of the hand-in. Short:
+Marlon's five offer and two hand-in paragraphs; the first drafts ran long.
 
 The card font has no em dash: "--" prints literally, as in Marlon's.
 
 ## Text
 
 **Offer**
-1. "Another hero. Marlon sends me swords, Peia sends me bows. I write each name down -- it saves time later, on the other list."
-2. "I am Devin, an apostle. I came north to study Kundun's seal in peace. The peace lasted a week."
-3. "You cleared Lorencia? Spiders and little dragons. Here the Yetis are taller than the walls, and the Ice Queens freeze you where you stand. This is not a joke. People die in Devias. I know -- I write it down."
-4. "The rest is weather. The Ice Queens are the problem. They bring the storms, and Kundun's Assassins hide inside them. Clear the Worms, the Ice Monsters, the Hommerds, the Assassins and the Yetis first. Then go for the Queens."
-5. "Dress warmly. Come back at all, and you are already ahead of most."
+1. "So you are the one. Lorencia is quiet, and Noria's trees sing again. Word travels, even this far north."
+2. "I am Devin, and this is Devias. Snow buries the roads, Yetis roam the passes, and Kundun's Assassins hunt anyone who walks alone."
+3. "But the Ice Queens are the real danger. They call the storms down on us, and while they live, the storms never stop."
+4. "Clear the Worms, Ice Monsters, Hommerds, Assassins and Yetis. Then bring down the Queens."
+5. "Dress for the cold, and come back alive."
 
-**Underway:** "Still alive? Good. Still windy? Then the Queens are too. Go on."
+**Underway:** "Not yet. The storms still rage, and the Queens still live."
 
 **Hand-in**
-1. "Back, and with all your fingers. The wind has dropped. I have nothing clever to say, which is a first."
-2. "Take these -- your name goes on the short list. And no, I will not talk about the Lost Tower. Let us see how you deal with this first."
+1. "The sky over Devias is clear again. Thank you."
+2. "Take these. You will need them for what comes next: the Lost Tower. But that is a story for another day."
 
-**Resting:** "The Queens will bring the storm back by morning. They always do. And still no, about the tower."
+**Resting:** "Rest now. By morning, the Queens will call the storms back."
+
+The Lost Tower is mentioned once, at the hand-in, when the quest is finished (the user,
+2026-09-29), and nowhere else.
 
 **Next:** none until the Lost Tower is decided.
 
@@ -50,11 +54,23 @@ brackets). Devias's breeds (19-25) are not in mu.db yet.
 
 `tools/voice.py` VOICES `"devin"`: low, a trace of a Nordic accent. The user heard three full
 accents (Swedish, Norwegian, Danish, from Chatterbox's multilingual model) as too strong, and the
-Swedish read cloned by the English model as perfect. The reference is `source/voice/ref/devin_sv.wav`.
-Read with `tools/voice.py devin` once his row carries `row.voice = "devin"`.
+Swedish read cloned by the English model as perfect. The pages are already recorded in
+source/voice/devin; do NOT re-read them with `tools/voice.py devin` -- its main() reads
+sentence-joined, squeezes pauses to 0.3 s and would undo the approved reading below.
+
+The reading the user approved (2026-09-29), recorded by hand, not by `tools/voice.py`'s main():
+each paragraph read WHOLE, not sentence by sentence (stitched sentences sounded cropped and
+unnatural); reference `devin_sv_dramatic.wav` (a heroic line read as Swedish at exaggeration 0.9 --
+the calm devin_sv.wav gave a monotone Devin, "without any personality"); exaggeration 0.9,
+cfg_weight 0.3, seed 11; "..." spoken at the long beats and "danger!" in offer 3. Then the gaps at
+sentence ends stretched in the raw take -- 0.5 s plain, 0.7 s after a question or a setup, 0.9 s
+before a punchline -- and paragraphs joined 0.9 s apart into the four pages in source/voice/devin.
+The break finder guesses from the text and missed twice on "Rest now." -- check each break
+against the gaps before playing. The script is source/voice/devin/recorded_with.py.txt.
 
 ## Open
 
-- Rewards: per class like Marlon's and Peia's, or one set for all.
+- Rewards: per class, like Marlon's and Peia's (the user, 2026-09-29); which items, the user
+  names at a later stage.
 - His position (Season 6: 181,35 SouthEast) and the user's nod on it.
 - Whether clearing the Queens should really still the planned blizzard until the repeat.
