@@ -5,6 +5,8 @@
 #include <cstdarg>
 #include <cstdio>
 
+#include "sim/realm_tuning.h"
+
 namespace mu::sim {
 namespace {
 
@@ -50,7 +52,11 @@ void audit(const Realm& realm, Findings& findings) {
             note(findings, "tick %lld: body %u has %d health", (long long)realm.tick(), one.id,
                  one.health);
         }
-        if (!one.player && one.alive()) {
+        // Not a townsperson on his rounds (realm_folk.cpp): he walks the town by design, and
+        // Peia's north road is half again the grudge from her flower bed.
+        const bool rounds = one.warden >= 0 && size_t(one.warden) < tables->folk.size() &&
+                            strollRow(tables->folk[size_t(one.warden)].number) != nullptr;
+        if (!one.player && one.alive() && !rounds) {
             const int away = std::max(std::abs(one.column() - one.homeColumn),
                                       std::abs(one.row() - one.homeRow));
             if (away > kFurthest) {

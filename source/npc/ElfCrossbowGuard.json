@@ -1,0 +1,15 @@
+{
+  "item": "ElfCrossbowGuard",
+  "mu_name": "Elf Crossbow Guard",
+  "kind": "character",
+  "parts": ["HelmElf05", "ArmorElf05", "PantElf05", "GloveElf05", "BootElf05"],
+  "right_hand": "CrossBow04",
+  "female": true,
+  "note": "OURS, not 0.75's: Noria's watch, beside the Elf Archer (see her note). The Crossbow Guard's row, 247, and his weapon, in the elves' Guardian set; her blow is drawn as a bolt in flight.",
+  "parts_from": "The Guardian set at +0, as the Elf Archer: no +7 on the watch (the user, 2026-09-29).",
+  "right_hand_from": "Lorencia's Crossbow Guard's own Light Crossbow (CrossBow04, MODEL_LIGHT_CROSSBOW), in the right hand as MU holds a crossbow.",
+  "female_from": "The Fairy Elf's own body and clips, as Peia.",
+  "idle": "action2",
+  "idle_from": "As the Elf Archer: posted outside the safe bit, so the tile gives PLAYER_STOP_CROSSBOW; action2 only on a safe tile.",
+  "playable": false
+}

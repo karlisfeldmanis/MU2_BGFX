@@ -755,7 +755,7 @@ void Play::update(double seconds) {
                             // what lands the blow when the pool was full and there was no
                             // meteor to rush it.
                             cue.fuse = Meteor::fallSeconds();
-                        } else if (isHunter(happening.who)) {
+                        } else if (Arrows::Model shot; shoots(happening.who, &shot)) {
                             // The bolt leaves at MU's release key and the blow lands with it;
                             // the fuse is only the fallback if the bolt never arrives.
                             const float release = std::min(15.0f / 25.0f, swinger->swinging);
@@ -890,7 +890,7 @@ void Play::update(double seconds) {
     bolt_.update(float(seconds), standing, middle);
     for (Volley& volley : volleys_) {
         volley.wait -= float(seconds);
-        if (volley.wait <= 0.0f) hunterShot(volley.shooter, volley.target);
+        if (volley.wait <= 0.0f) volleyShot(volley.shooter, volley.target);
     }
     volleys_.erase(std::remove_if(volleys_.begin(), volleys_.end(),
                                   [](const Volley& v) { return v.wait <= 0.0f; }),
@@ -1107,11 +1107,35 @@ void Play::speak(const sim::Happening& happening) {
                    "Not one more step, giant!"}},
         {"skeleton", {"Come here, you bony bastard!", "Back to the grave, bag of bones!",
                       "I'll rattle you apart!"}},
+        // Noria's eight, said by its elves -- no Lorencia guard ever sees one. Ours, the user's
+        // of 2026-09-29, in the Lorencia guards' manner.
+        // The last match wins, so the Elite Goblin comes after the goblin it also matches.
+        {"goblin", {"Goblins on the road! Loose!", "Back to your holes, you little thieves!",
+                    "Not one step into Noria!"}},
+        {"elite goblin", {"Their captain! Bring him down!", "Loose! Loose on the big one!",
+                          "Not so elite with an arrow in you!"}},
+        {"scorpion", {"Scorpion! Mind the tail!", "Back to the sand, crawler!",
+                      "Pin it before it strikes!"}},
+        {"beetle", {"Beetle on the road! Loose!", "Crack that shell!",
+                    "Come here, you armoured pest!"}},
+        {"hunter", {"A hunter! Draw on him first!", "Not in our forest, poacher!",
+                    "Loose before he does!"}},
+        {"forest", {"The woods have turned! Loose!", "Back into the trees, rot-heart!",
+                    "Burn in your own roots!"}},
+        {"agon", {"Agon! Keep your distance and loose!", "Come here, you ugly brute!",
+                  "Not one step nearer the town!"}},
+        {"golem", {"A golem! Aim for the joints!", "Back to the rocks, stone-head!",
+                   "Keep it off the gate! Loose!"}},
     };
     static const char* const kPlain[] = {"Come here, bastard!", "Not past this gate!",
                                          "To arms! Monster at the gate!"};
 
     const uint32_t pick = happening.whom + happening.tick;
+    // Who walks the rounds a Chat or a Salute is about, by MU's NPC number: 229 Marlon, 257 Peia.
+    const auto roundsOf = [&](uint32_t id) {
+        const sim::Body* one = realm_.find(id);
+        return one && one->warden >= 0 ? tables_.folk[size_t(one->warden)].number : 0;
+    };
     std::string line;
     if (happening.a == int32_t(sim::Shout::Chat)) {
         // Marlon and Lumen at her bar (realm_folk.cpp): her line and then his, turn about, over
@@ -1130,7 +1154,25 @@ void Play::speak(const sim::Happening& happening) {
         };
         static_assert(sizeof(kBarTalk) / sizeof(kBarTalk[0]) == sim::kChatLines,
                       "one line for every line the realm says");
+        // Peia and Elf Lala under her harp, Lala first. Ours, the user's of 2026-09-29: "elf
+        // quest giver has to talk with elf lala at some point". The song gone quiet is Peia's
+        // quest's own story (sim/quests.cpp, "Noria's Song").
+        static const char* const kHarpTalk[] = {
+            "Peia! Stay a while. The harp has missed its listener.",
+            "Only a while, Lala. The roads don't watch themselves.",
+            "The trees were restless last night. The song kept breaking.",
+            "Goblins at the west road again. Bolder than last week.",
+            "And the golems? They never came so near the town before.",
+            "Something is waking them. Something under the forest.",
+            "Then I'll play louder. The old songs keep the dark back.",
+            "Play, then. My archers will keep the rest.",
+            "Come back before dusk. I'll save you the last song.",
+            "...The last song, then.",
+        };
+        static_assert(sizeof(kHarpTalk) / sizeof(kHarpTalk[0]) == sim::kChatLines,
+                      "one line for every line the realm says");
         if (happening.b < 0 || happening.b >= sim::kChatLines) return;
+        const char* const* talk = roundsOf(happening.who) == 257 ? kHarpTalk : kBarTalk;
         const int folk = happening.c;
         said_.erase(std::remove_if(said_.begin(), said_.end(),
                                    [&](const Said& one) {
@@ -1140,7 +1182,7 @@ void Play::speak(const sim::Happening& happening) {
                     said_.end());
         Said one;
         one.who = happening.who;
-        one.line = kBarTalk[happening.b];
+        one.line = talk[happening.b];
         one.folk = folk;
         said_.push_back(one);
         core::logf("bar: tick %lld, %s says \"%s\"", (long long)realm_.tick(),
@@ -1152,7 +1194,10 @@ void Play::speak(const sim::Happening& happening) {
         // To the last knight of Lorencia, as he comes by the post (realm_folk.cpp).
         static const char* const kSalutes[] = {"Sir Marlon!", "All quiet at the gate, sir.",
                                                "The gate holds, sir."};
-        line = kSalutes[pick % 3];
+        // And Noria's watch to Peia, as she looks in on each road.
+        static const char* const kElfSalutes[] = {"Captain Peia!", "The road is quiet, captain.",
+                                                  "Nothing gets past us, captain."};
+        line = roundsOf(happening.whom) == 257 ? kElfSalutes[pick % 3] : kSalutes[pick % 3];
     } else if (happening.a == int32_t(sim::Shout::Pointing)) {
         // Where the rest of them are, as he turns to look -- and nothing when there are none. No
         // "thank you": the user's, 2026-09-28.

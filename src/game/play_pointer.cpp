@@ -385,17 +385,35 @@ void Play::shootArrow(const Drawn& shooter, const float to[3], uint32_t whom) {
     arrows_.loose(muzzle, to, whom, model);
 }
 
-bool Play::isHunter(uint32_t id) {
+bool Play::shoots(uint32_t id, Arrows::Model* model) {
     const Drawn* one = drawnOf(id);
     const FigureBody* look = one ? one->figure.body() : nullptr;
-    return look && look->name == kHunterFigure;
+    if (!look) return false;
+    if (look->name == kHunterFigure) {
+        *model = Arrows::Saw;
+        return true;
+    }
+    // A guard: an arrow off a bow, and off a crossbow the Light Crossbow's own bolt, which is
+    // the one every crossbow guard holds (MU's CreateArrow gives MODEL_LIGHT_CROSSBOW Laser).
+    const sim::Body* body = realm_.find(id);
+    if (!body || body->warden < 0) return false;
+    if (look->stance == "bow") {
+        *model = Arrows::Wood;
+        return true;
+    }
+    if (look->stance == "crossbow") {
+        *model = Arrows::Laser;
+        return true;
+    }
+    return false;
 }
 
-void Play::hunterShot(uint32_t shooter, uint32_t target) {
+void Play::volleyShot(uint32_t shooter, uint32_t target) {
     const Drawn* from = drawnOf(shooter);
     const Drawn* to = drawnOf(target);
     if (!from || !to || !from->placed || !to->placed || !ground_) return;
-    if (!isHunter(shooter)) return;
+    Arrows::Model model = Arrows::Saw;
+    if (!shoots(shooter, &model)) return;
     // At the middle of the one it is shot at, as every arrow is aimed.
     const FigureBody* aim = to->figure.body();
     const float tall = aim ? aim->height * aim->scale : 1.0f;
@@ -407,7 +425,7 @@ void Play::hunterShot(uint32_t shooter, uint32_t target) {
     // MU's muzzle, (-10, -60, 135) turned by its facing, as shootArrow's.
     const float muzzle[3] = {from->crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
                              from->crown[2] + fz * 0.6f - fx * 0.1f};
-    arrows_.loose(muzzle, at, target, Arrows::Saw, shooter);
+    arrows_.loose(muzzle, at, target, model, shooter);
 }
 
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {

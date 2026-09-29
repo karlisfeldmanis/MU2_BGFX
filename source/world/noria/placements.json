@@ -69,6 +69,48 @@
       "idle": "action2",
       "idle_why": "inside the safe zone",
       "ours": "the elf's quest giver, in the flower bed where the user put her (2026-09-29); OpenMU Season Six's Elf Soldier stands at 167,118"
+    },
+    {
+      "model": "ElfArcher",
+      "who": "Elf Archer",
+      "tile": [166, 80],
+      "facing": 3,
+      "ours": "Noria's watch (the user, 2026-09-29): the north road into the pass, one tile outside the safe bit so she stands armed"
+    },
+    {
+      "model": "ElfCrossbowGuard",
+      "who": "Elf Crossbow Guard",
+      "tile": [163, 83],
+      "facing": 2,
+      "ours": "Noria's watch: the north road, across it from the archer"
+    },
+    {
+      "model": "ElfArcher",
+      "who": "Elf Archer",
+      "tile": [157, 112],
+      "facing": 1,
+      "ours": "Noria's watch: the west road, one tile outside the safe bit"
+    },
+    {
+      "model": "ElfCrossbowGuard",
+      "who": "Elf Crossbow Guard",
+      "tile": [157, 116],
+      "facing": 1,
+      "ours": "Noria's watch: the west road, across it from the archer"
+    },
+    {
+      "model": "ElfArcher",
+      "who": "Elf Archer",
+      "tile": [208, 128],
+      "facing": 6,
+      "ours": "Noria's watch: the south-east road, one tile outside the safe bit"
+    },
+    {
+      "model": "ElfCrossbowGuard",
+      "who": "Elf Crossbow Guard",
+      "tile": [204, 131],
+      "facing": 6,
+      "ours": "Noria's watch: the south-east road, across it from the archer"
     }
   ],
   "spawns_from": [

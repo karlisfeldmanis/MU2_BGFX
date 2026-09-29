@@ -1,0 +1,15 @@
+{
+  "item": "ElfArcher",
+  "mu_name": "Elf Archer",
+  "kind": "character",
+  "parts": ["HelmElf05", "ArmorElf05", "PantElf05", "GloveElf05", "BootElf05"],
+  "right_hand": "Bow05",
+  "female": true,
+  "note": "OURS, not 0.75's: Noria has no guards in Version075 or in MuMain. The user asked for them on 2026-09-29 -- elves on the town's entrances who defend it with bows and crossbows, the same system as Lorencia's. Three roads, an archer and a crossbow at each (tools/cook.py's Noria folk rows). She fights on the Crossbow Guard's row, 247, whose five-tile reach is a bow's as much as a crossbow's (sim/realm_tuning.h, kWardens), and her blow is drawn as an arrow in flight.",
+  "parts_from": "The Guardian set at +0, as Lorencia's guards wear their Plate at +0 -- the user's, 2026-09-29: elf guards do not wear +7 as Peia does. Guardian and not Peia's Spirit, so the quest giver stands out from the watch.",
+  "right_hand_from": "Ours: the Tiger Bow, the best of the elves' bows in 0.75, as a guard's Light Crossbow is a real one. Held as Peia holds hers; a bow's hand is the engine's business.",
+  "female_from": "The Fairy Elf's own body and clips, as Peia.",
+  "idle": "action2",
+  "idle_from": "PLAYER_STOP_FEMALE on a safe tile. She is posted one tile OUTSIDE the safe bit at each road, as four of Lorencia's six guards are, so the tile gives her PLAYER_STOP_BOW with the bow up; action2 is her stance only if she is walked back into the town.",
+  "playable": false
+}

@@ -593,7 +593,9 @@ private:
     // A Hunter's blow drawn as MU draws it: CreateArrows off its MODEL_ARQUEBUS, which throws
     // MODEL_ARROW_SAW (ZzzCharacter.cpp:4831, ZzzEffectMagicSkill.cpp:225). The rules resolve
     // the blow at range on the tick and are not told; this only draws the bolt it would be.
-    void hunterShot(uint32_t shooter, uint32_t target);
+    // And a guard's the same way when her figure holds a bow or a crossbow: Noria's watch and
+    // Lorencia's Crossbow Guard (the user's, 2026-09-29: "defend city with arrows").
+    void volleyShot(uint32_t shooter, uint32_t target);
     // Its bolts waiting for the release key: MU looses a monster's shot when its AttackTime
     // reaches 15 frames (ZzzCharacter.cpp:4140, g_iLimitAttackTime), and the blow is shown
     // where the bolt lands -- its cue is rushed by Arrows::landed, as a meteor's impact rushes.
@@ -602,7 +604,9 @@ private:
         float wait = 0.0f;  // seconds to the release
     };
     std::vector<Volley> volleys_;
-    bool isHunter(uint32_t id);
+    // Whether a body's blow is drawn as a missile, and in which model: the Hunter's saw bolt,
+    // or a guard's arrow or bolt by what she holds.
+    bool shoots(uint32_t id, Arrows::Model* model);
     void follow(float seconds);
     // Starts a body's death clip, its hold and its fade.
     void fall(Drawn& dead);

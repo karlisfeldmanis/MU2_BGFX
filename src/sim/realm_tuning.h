@@ -191,7 +191,7 @@ struct StrollStop {
     StopKind kind;
     int32_t column, row;
     int32_t seconds;  // how long he stays, from the tick he arrives
-    int32_t with = 0; // at a Sit, the NPC number he talks with there (kChatLines), or 0
+    int32_t with = 0; // at a Sit or Stand, the NPC number he talks with there (kChatLines), or 0
 };
 constexpr int kStrollStops = 6;
 struct StrollRow {
@@ -204,6 +204,14 @@ constexpr StrollRow kStrollers[] = {
               {StopKind::Sit, 124, 133, 38, 255},  // the bench before Lumen's bar, talking
               {StopKind::Visit, 131, 148, 6},      // the Berdysh Guard at the south gate
               {StopKind::Visit, 114, 125, 6}}},    // the Crossbow Guard at the west gate
+    // Peia, the user's of 2026-09-29: "elf quest giver patrol to guards", and "has to talk with
+    // elf lala at some point". Her flower bed, the watch at each of Noria's three roads, and a
+    // talk with Lala standing under her harp -- a Stand with someone to talk to faces them.
+    {257, 5, {{StopKind::Stand, 171, 118, 40},     // Peia: her flower bed under the great tree
+              {StopKind::Visit, 157, 112, 6},      // the Elf Archer at the west road
+              {StopKind::Visit, 166, 80, 6},       // the Elf Archer at the north road
+              {StopKind::Visit, 208, 128, 6},      // the Elf Archer at the south-east road
+              {StopKind::Stand, 173, 123, 38, 242}}},  // before Elf Lala, talking
 };
 inline const StrollRow* strollRow(int32_t number) {
     for (const StrollRow& row : kStrollers) {

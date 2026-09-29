@@ -1737,6 +1737,16 @@ FOLK_VERSION075 = {
         # Korean client names Peia, in the flower bed under the town's great tree where the user
         # put her (2026-09-29) -- OpenMU Season Six stands her four tiles west, at 167,118.
         (257, "Peia", "Peia", 171, 118, 3),
+        # Ours: Noria's watch (the user, 2026-09-29), which neither Version075 nor MuMain has.
+        # An archer and a crossbow at each of the town's three roads, a tile outside the safe
+        # bit. Every one fights on the Crossbow Guard's row, 247 -- five tiles is a bow's reach
+        # as much as a crossbow's -- and the figure says which weapon she draws.
+        (247, "Elf Archer", "ElfArcher", 166, 80, 3),
+        (247, "Elf Crossbow Guard", "ElfCrossbowGuard", 163, 83, 2),
+        (247, "Elf Archer", "ElfArcher", 157, 112, 1),
+        (247, "Elf Crossbow Guard", "ElfCrossbowGuard", 157, 116, 1),
+        (247, "Elf Archer", "ElfArcher", 208, 128, 6),
+        (247, "Elf Crossbow Guard", "ElfCrossbowGuard", 204, 131, 6),
     ],
 }
 

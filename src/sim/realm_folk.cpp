@@ -189,6 +189,16 @@ void Realm::stroll(Body& walker) {
         s.leaves = tick_ + int64_t(stop.seconds) * kTicksASecond;
         if (stop.kind == StopKind::Stand) {
             walker.aim = walker.post;
+            // A stop with someone to talk to: turned to them where the table stands them, and
+            // the talk starts a second later, as it does on the bench.
+            if (stop.with != 0) {
+                for (const content::Townsperson& one : tables_->folk) {
+                    if (one.number != stop.with) continue;
+                    walker.aim = std::atan2(float(one.y) - walker.y, float(one.x) - walker.x);
+                    break;
+                }
+                s.chatAt = tick_ + kChatTicks / 3;
+            }
         } else if (stop.kind == StopKind::Sit) {
             // Sat as the hero sits (Realm::perch): the bench's own facing, and said.
             const content::Perch& one = tables_->perches[size_t(perch)];
