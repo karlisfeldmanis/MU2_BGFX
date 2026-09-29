@@ -113,7 +113,12 @@ enum class Shout : int32_t {
     Salute = 2,     // a townsperson on his rounds came to his post (realm_folk.cpp); whom: him
     Chat = 3,       // his talk at a stop (realm_folk.cpp): b: the line, c: the folk row that says
                     // it, or -1 for him. Said by him, whoever speaks.
+    Greet = 4,      // the hero spoke to a townsperson with nothing to sell, keep or give -- the
+                    // Guild Master, who has no guild window alone: c: his folk row. Said by the hero.
 };
+
+// Devias's Guild Master, MU's NPC 241 (OpenMU's NpcWindow.GuildMaster). Shout::Greet.
+constexpr int kGuildMaster = 241;
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
 // numbers included. These persist -- MU's StopAnimationSetting re-picks the idle only up to

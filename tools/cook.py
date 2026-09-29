@@ -1748,6 +1748,21 @@ FOLK_VERSION075 = {
         (247, "Elf Archer", "ElfArcher", 208, 128, 6),
         (247, "Elf Crossbow Guard", "ElfCrossbowGuard", 204, 131, 6),
     ],
+    2: [  # Devias: Version075/Maps/Devias.cs:46-54
+        (244, "Caren the Barmaid", "", 226, 25, 4),
+        (245, "Izabel The Wizard", "", 225, 41, 4),
+        (246, "Zienna The Weapons Merchant", "", 186, 47, 4),
+        (247, "Crossbow Guard", "CrossbowGuard", 224, 79, 6),
+        (247, "Crossbow Guard", "CrossbowGuard", 219, 79, 6),
+        (247, "Crossbow Guard", "CrossbowGuard", 169, 45, 8),
+        (247, "Crossbow Guard", "CrossbowGuard", 169, 39, 8),
+        (241, "Guild Master", "", 215, 45, 2),
+        (240, "Baz The Vault Keeper", "", 218, 63, 3),
+        # Ours, not Version075's: Devias's quest giver, MuMain's MONSTER_PRIEST_DEVIN (406),
+        # where OpenMU's Season Six stands him (VersionSeasonSix/Maps/Devias.cs:36); the user
+        # took that spot, 2026-09-29.
+        (406, "Apostle Devin", "", 181, 35, 4),
+    ],
 }
 
 

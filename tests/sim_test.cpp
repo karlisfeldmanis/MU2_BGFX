@@ -3003,6 +3003,47 @@ void testWear(const content::Tables& tables) {
     checkEqual(grown.repairAll(), 0, "and there is no repair-all away from a counter");
 }
 
+// Devias's townsfolk (2026-09-29): Version075's nine and Apostle Devin, the three shelves, Zienna's
+// counter, and the Guild Master answering with a line where MU opens a guild window.
+void testDeviasFolk() {
+    std::printf("devias folk\n");
+    content::Tables devias;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur";
+    check(content::loadTables(path, devias, error), "Devias's tables load");
+    checkEqual(long(devias.folk.size()), 10L, "ten townsfolk stand in Devias");
+    int master = -1;
+    for (size_t i = 0; i < devias.folk.size(); ++i) {
+        if (devias.folk[i].number == sim::kGuildMaster) master = int(i);
+    }
+    check(master >= 0, "the Guild Master is in the table");
+    for (const int npc : {244, 245, 246}) {
+        int stocked = 0, made = 0;
+        const sim::Offer* offers = sim::stockOf(npc, &stocked);
+        for (int i = 0; i < stocked; ++i) made += devias.itemAt(offers[i].group, offers[i].number) >= 0;
+        check(made > 0, "Caren, Izabel and Zienna each have something on the shelf");
+    }
+    check(sim::repairsAt(246), "Zienna mends");
+    if (master < 0) return;
+
+    sim::Realm realm;
+    check(realm.raise(&devias, 7, 213, 47), "a realm raises by the Guild Master");
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(master);
+    realm.ask(talk);
+    bool greeted = false;
+    for (int tick = 0; tick < 400 && !greeted; ++tick) {
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            greeted |= one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Greet) &&
+                       one.c == master;
+        }
+    }
+    check(greeted, "walked to the Guild Master and he answered");
+    check(realm.trading() < 0 && realm.banking() < 0, "and opened nothing");
+}
+
 void testVault(const content::Tables& tables) {
     std::printf("vault\n");
     sim::Realm realm;
@@ -3709,6 +3750,7 @@ int main() {
     testCastLock(tables);
     testPerches(tables);
     testVault(tables);
+    testDeviasFolk();
     testRefine(tables);
     testOptions(tables);
     testExcellent(tables);

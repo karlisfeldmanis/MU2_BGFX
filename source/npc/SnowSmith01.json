@@ -1,0 +1,205 @@
+{
+  "item": "SnowSmith01",
+  "mu_name": "Zienna The Weapons Merchant",
+  "mu_name_from": "NPC/SnowSmith01.bmd, loaded as MODEL_SNOW_SMITH (ZzzOpenData.cpp:1877). The client names her the Korean for 'weapons merchant' in ZzzCharacter.cpp's MONSTER_ZIENNA_THE_WEAPONS_MERCHANT arm; OpenMU's Version075 calls her Zienna The Weapons Merchant, gives her the Dragon set and the swords, and she repairs. Type 246, standing once in Devias at 186,47.",
+  "world": "devias",
+  "object_type": -1,
+  "why_this_one": "Devias's smith is a woman in violet plate with a crest on her helm: 558 triangles on one sheet and a 14-triangle plume on a second. One file with its own clips, as Hanzo is.",
+  "profile": "npc",
+  "sheets": {
+    "snow_girl": "npc_snow_girl.png",
+    "snow_girl02": "npc_snow_girl02.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix.",
+  "sheet_materials": {
+    "snow_girl": "skin",
+    "snow_girl02": "skin"
+  },
+  "sheet_materials_from": "snow_girl paints her face and her thighs on the same page as the plate, so it takes skin; plate_steel would put a metal's highlight on her cheek. snow_girl02 is the plume.",
+  "cutout": [
+    "snow_girl02"
+  ],
+  "cutout_from": "The .OZT carries a real alpha channel: the plume is a shape cut out of a square.",
+  "cutout_at": {
+    "snow_girl02": 0.3
+  },
+  "cutout_at_from": "The plume is painted in soft alpha, as Pasi's hair is: 1% of the sheet is fully solid and the mean is 101 of 255, so a test at a half keeps 40% of it and a third keeps the feather's shape. Pasi's tenth was for a sheet half as dense.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 341,
+      "area": 15122.6,
+      "along": [
+        -34.2,
+        8.1
+      ],
+      "mu_uv": [
+        0.005,
+        0.085,
+        0.997,
+        0.988
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.981,
+        0.984
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 97,
+      "area": 2239.2,
+      "along": [
+        -30.2,
+        4.5
+      ],
+      "mu_uv": [
+        0.104,
+        0.742,
+        0.655,
+        1.005
+      ],
+      "bake_uv": [
+        0.26,
+        0.815,
+        0.97,
+        0.993
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 55,
+      "area": 2228.1,
+      "along": [
+        -13.7,
+        15.0
+      ],
+      "mu_uv": [
+        0.128,
+        0.001,
+        0.978,
+        0.67
+      ],
+      "bake_uv": [
+        0.296,
+        0.007,
+        0.988,
+        0.929
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 65,
+      "area": 3043.4,
+      "along": [
+        -26.3,
+        2.5
+      ],
+      "mu_uv": [
+        0.103,
+        0.001,
+        0.845,
+        0.67
+      ],
+      "bake_uv": [
+        0.337,
+        0.26,
+        0.983,
+        0.976
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 3,
+      "area": 376.8,
+      "along": [
+        -17.4,
+        10.9
+      ],
+      "mu_uv": [
+        0.02,
+        0.015,
+        0.995,
+        0.997
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.392,
+        0.394
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 4,
+      "area": 436.9,
+      "along": [
+        -23.0,
+        5.3
+      ],
+      "mu_uv": [
+        0.009,
+        0.014,
+        0.986,
+        0.993
+      ],
+      "bake_uv": [
+        0.007,
+        0.408,
+        0.392,
+        0.794
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 4,
+      "area": 436.9,
+      "along": [
+        -22.8,
+        5.6
+      ],
+      "mu_uv": [
+        0.009,
+        0.014,
+        0.986,
+        0.993
+      ],
+      "bake_uv": [
+        0.406,
+        0.408,
+        0.791,
+        0.794
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 3,
+      "area": 376.8,
+      "along": [
+        -16.0,
+        12.7
+      ],
+      "mu_uv": [
+        0.02,
+        0.015,
+        0.995,
+        0.997
+      ],
+      "bake_uv": [
+        0.406,
+        0.007,
+        0.79,
+        0.394
+      ]
+    }
+  ]
+}

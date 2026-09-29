@@ -1,0 +1,88 @@
+{
+  "world": "devias",
+  "summary": "What the extraction cannot know, for Devias: its townspeople. Nine of Version075's and Apostle Devin, who is ours. See docs/devias-port.md section 1.7.",
+  "spawns": [
+    {
+      "model": "SnowMerchant01",
+      "who": "Caren the Barmaid",
+      "tile": [226, 25],
+      "facing": 4
+    },
+    {
+      "model": "SnowWizard01",
+      "who": "Izabel The Wizard",
+      "tile": [225, 41],
+      "facing": 4
+    },
+    {
+      "model": "SnowSmith01",
+      "who": "Zienna The Weapons Merchant",
+      "tile": [186, 47],
+      "facing": 4,
+      "tile_why": "Word 5, safe and no-move: she stands on the east edge of her shop's blocked footprint, behind the counter, with open ground at 187,47 in front of her. That is where OpenMU puts her and where MU drew the shop round her, so she stays."
+    },
+    {
+      "model": "CrossbowGuard",
+      "who": "Crossbow Guard",
+      "tile": [224, 79],
+      "facing": 6
+    },
+    {
+      "model": "CrossbowGuard",
+      "who": "Crossbow Guard",
+      "tile": [219, 79],
+      "facing": 6
+    },
+    {
+      "model": "CrossbowGuard",
+      "who": "Crossbow Guard",
+      "tile": [169, 45],
+      "facing": 8
+    },
+    {
+      "model": "CrossbowGuard",
+      "who": "Crossbow Guard",
+      "tile": [169, 39],
+      "facing": 8
+    },
+    {
+      "model": "Master01",
+      "who": "Guild Master",
+      "tile": [215, 45],
+      "facing": 2
+    },
+    {
+      "model": "Storage01",
+      "who": "Baz The Vault Keeper",
+      "tile": [218, 63],
+      "facing": 3
+    },
+    {
+      "model": "Devin",
+      "who": "Apostle Devin",
+      "tile": [181, 35],
+      "facing": 4,
+      "ours": "Devias's quest giver (the user, 2026-09-29), where OpenMU's Season Six stands Priest Devin; Version075 has no Devin"
+    }
+  ],
+  "spawns_from": [
+    "OpenMU's Version075/Maps/Devias.cs, CreateNpcSpawns (:46-54), nine lines:",
+    "",
+    "    CreateMonsterSpawn(1, NpcDictionary[244], 226, 25, Direction.SouthEast)",
+    "    CreateMonsterSpawn(2, NpcDictionary[245], 225, 41, Direction.SouthEast)",
+    "    CreateMonsterSpawn(3, NpcDictionary[246], 186, 47, Direction.SouthEast)",
+    "    CreateMonsterSpawn(4, NpcDictionary[247], 224, 79, Direction.NorthEast)",
+    "    CreateMonsterSpawn(5, NpcDictionary[247], 219, 79, Direction.NorthEast)",
+    "    CreateMonsterSpawn(6, NpcDictionary[247], 169, 45, Direction.NorthWest)",
+    "    CreateMonsterSpawn(7, NpcDictionary[247], 169, 39, Direction.NorthWest)",
+    "    CreateMonsterSpawn(8, NpcDictionary[241], 215, 45, Direction.SouthWest)",
+    "    CreateMonsterSpawn(9, NpcDictionary[240], 218, 63, Direction.South)",
+    "",
+    "The models are ZzzCharacter.cpp's (:14416-14477): 244 MODEL_SNOW_MERCHANT, 245",
+    "MODEL_SNOW_WIZARD, 246 MODEL_SNOW_SMITH, 241 MODEL_MASTER, 240 MODEL_STORAGE, and 247",
+    "the player body in plate with a crossbow, as in Lorencia.",
+    "",
+    "All four guards stand one tile outside the safe bit (their words are 0), so they stand",
+    "armed; the tile decides, as it does for Noria's watch, and no idle is written here."
+  ]
+}

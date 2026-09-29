@@ -6,7 +6,7 @@ namespace mu::sim {
 namespace {
 
 constexpr int kHelms = 7, kArmours = 8, kPants = 9, kGloves = 10, kBoots = 11, kShields = 6;
-constexpr int kSwords = 0, kAxes = 1, kMaces = 2, kBows = 4, kStaves = 5;
+constexpr int kSwords = 0, kAxes = 1, kMaces = 2, kSpears = 3, kBows = 4, kStaves = 5;
 constexpr int kOrbs = 12, kPotions = 14, kScrolls = 15;
 
 constexpr Offer gear(int slot, int group, int number, int refinement, bool skill = false) {
@@ -113,6 +113,30 @@ constexpr Offer kCraftsman[] = {
     gear(76, kBows, 10, 3, true), gear(78, kShields, 3, 3),
 };
 
+// Izabel and Zienna, Devias's two (MerchantStores.cs:270-322 and :365-400). Caren the Barmaid
+// keeps Lumen's shop, as Version075 gives her. Transcribed whole: a line whose item is not
+// cooked yet drops off the shelf (PlayMode's Market rule) and comes back when it is -- on
+// 2026-09-29 the Legendary and Dragon sets, the Legendary Staff, the Lightning and Heliacal
+// swords, the Bill of Balrog and the Silver, Serpent and Bluewing bows were not.
+constexpr Offer kIzabel[] = {
+    sip(0, 0, 1),  sip(8, 0, 3),  sip(1, 1, 1),  sip(9, 1, 3),  sip(2, 2, 1),  sip(10, 2, 3),
+    sip(3, 3, 1),  sip(11, 3, 3), sip(4, 4, 1),  sip(12, 4, 3), sip(5, 5, 1),  sip(13, 5, 3),
+    sip(6, 6, 1),  sip(14, 6, 3), sip(7, 8, 1),  sip(15, 8, 3),
+    gear(16, kHelms, 3, 3),   gear(18, kArmours, 3, 3),  gear(20, kPants, 3, 3),
+    gear(22, kGloves, 3, 3),  gear(32, kBoots, 3, 3),    sip(34, 10, 1),
+    gear(35, kBows, 7, 0),    gear(36, kBows, 15, 0),    scroll(37, 4),
+    scroll(38, 7),            gear(48, kStaves, 4, 3),   gear(50, kStaves, 5, 3),
+    gear(52, kShields, 14, 3),
+};
+constexpr Offer kZienna[] = {
+    gear(0, kHelms, 1, 3),         gear(2, kArmours, 1, 3),       gear(4, kPants, 1, 3),
+    gear(6, kGloves, 1, 3),        gear(16, kBoots, 1, 3),        gear(20, kSwords, 9, 3, true),
+    gear(22, kSwords, 11, 3, true), gear(32, kSwords, 13, 3, true), gear(33, kSwords, 14, 3, true),
+    gear(26, kSwords, 15, 3, true), gear(44, kSwords, 12, 3, true), gear(46, kBows, 12, 3, true),
+    gear(56, kSpears, 9, 3, true),  gear(50, kSpears, 8, 3, true),  gear(68, kBows, 5, 3, true),
+    gear(70, kBows, 13, 3, true),
+};
+
 template <size_t N>
 const Offer* table(const Offer (&t)[N], int* count) {
     *count = int(N);
@@ -165,7 +189,9 @@ const Offer* stockOf(int npc, int* count) {
         case 251: return table(kBlacksmith, count);
         case 253: return table(kPotionGirl, count);
         case 254: return table(kMage, count);
-        case 255: return table(kBarmaid, count);
+        case 255: case 244: return table(kBarmaid, count);
+        case 245: return table(kIzabel, count);
+        case 246: return table(kZienna, count);
         case 242: return table(kElfLala, count);
         case 243: return table(kCraftsman, count);
         default: *count = 0; return nullptr;

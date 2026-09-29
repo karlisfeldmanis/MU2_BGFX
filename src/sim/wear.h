@@ -61,8 +61,9 @@ int maximumDurability(const content::ItemRow& row, const Held& held);
 int fullDurability(const content::ItemRow& row, int refinement);
 
 // Whether this NPC's counter mends as well as sells: MuMain's `isRepairNpc`
-// (ZzzInterface.cpp:1565) -- Hanzo the Blacksmith (251) and Eo the Craftsman (243) of the ones
-// this world has. Zienna, Rhea and Bolo are the other three and live on maps not built here.
+// (ZzzInterface.cpp:1565) -- Hanzo the Blacksmith (251), Eo the Craftsman (243) and Zienna
+// (246) of the ones this world has. Rhea and Bolo are the other two and live on maps not built
+// here.
 bool repairsAt(int npc);
 
 // The share of its own contribution a worn piece loses, as CalcDurabilityPercent cuts damage,

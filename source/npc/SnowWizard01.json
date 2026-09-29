@@ -1,0 +1,41 @@
+{
+  "item": "SnowWizard01",
+  "mu_name": "Izabel The Wizard",
+  "mu_name_from": "NPC/SnowWizard01.bmd, loaded as MODEL_SNOW_WIZARD (ZzzOpenData.cpp:1880). The client names her the Korean for 'wizard' in ZzzCharacter.cpp's MONSTER_IZABEL_THE_WIZARD arm; OpenMU's Version075 calls her Izabel The Wizard and gives her the potion-and-staff store. Type 245, standing once in Devias at 225,41.",
+  "world": "devias",
+  "object_type": -1,
+  "why_this_one": "One mesh and one sheet: a woman in a black gown with gilt lacing and a fur hat, face, hair, gown and hem all on one 128 square. She is Eo the Craftsman's shape, the simplest kind of townsperson.",
+  "profile": "npc",
+  "sheets": {
+    "snows": "npc_snows.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix as Noria's were, so a bare name like `snows` cannot collide with a world's sheet.",
+  "sheet_materials": {
+    "snows": "skin"
+  },
+  "sheet_materials_from": "One page carrying a face and a gown together, so skin, for the reason every townsperson's is: cloth declares a weave that would land on her cheek.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 468,
+      "area": 20805.1,
+      "along": [
+        -35.6,
+        25.0
+      ],
+      "mu_uv": [
+        0.005,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.993,
+        0.995
+      ]
+    }
+  ]
+}

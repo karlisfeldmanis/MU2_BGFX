@@ -537,6 +537,10 @@ void Realm::press() {
                 // quest under way, the hand-in, or that it is not his to give again yet.
                 questing_ = int(order_.target);
                 say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
+            } else if (one.number == kGuildMaster) {
+                // Ours (the user, 2026-09-29): MU opens the guild window here, which a single
+                // player game has no use for, so he answers with a line instead of nothing.
+                say(What::Shouted, hero, int32_t(Shout::Greet), 0, int(order_.target));
             }
             order_ = Request{};
         }
@@ -868,6 +872,7 @@ std::string describe(const Happening& happening, const Realm& realm) {
                           happening.a == int32_t(Shout::Pointing) ? "points the hero on from"
                           : happening.a == int32_t(Shout::Salute) ? "salutes"
                           : happening.a == int32_t(Shout::Chat)   ? "talks at the bar (b the line, c who says it) --"
+                          : happening.a == int32_t(Shout::Greet)  ? "is greeted (c the folk row) --"
                                                                   : "challenges",
                           name(happening.whom).c_str(), happening.b, happening.c);
             break;

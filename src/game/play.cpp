@@ -1139,6 +1139,28 @@ void Play::speak(const sim::Happening& happening) {
         return one && one->warden >= 0 ? tables_.folk[size_t(one->warden)].number : 0;
     };
     std::string line;
+    if (happening.a == int32_t(sim::Shout::Greet)) {
+        // The Guild Master, spoken to (Realm's Talk). Ours, the user's of 2026-09-29: MU's guild
+        // window has nothing to open alone, so he says so, in Devin's plain register.
+        static const char* const kGuildMaster[] = {
+            "A guild is sworn by many hands. Come back when you have them.",
+            "Devias remembers those who stand together. Find yours.",
+            "No banner is raised alone, traveller.",
+        };
+        const int folk = happening.c;
+        if (folk < 0 || size_t(folk) >= tables_.folk.size()) return;
+        said_.erase(std::remove_if(said_.begin(), said_.end(),
+                                   [&](const Said& one) { return one.folk == folk; }),
+                    said_.end());
+        Said one;
+        one.who = happening.who;
+        one.line = kGuildMaster[realm_.tick() % 3];
+        one.folk = folk;
+        said_.push_back(one);
+        core::logf("greet: tick %lld, %s says \"%s\"", (long long)realm_.tick(),
+                   tables_.folk[size_t(folk)].name.c_str(), one.line.c_str());
+        return;
+    }
     if (happening.a == int32_t(sim::Shout::Chat)) {
         // Marlon and Lumen at her bar (realm_folk.cpp): her line and then his, turn about, over
         // whichever of them says it. Ours, the user's of 2026-09-29.
