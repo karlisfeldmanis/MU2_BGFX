@@ -920,8 +920,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               viewProj, ctx.renderer);
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         world_.weather().update(float(deltaSeconds), inside);
-        // Devias's blizzard bends the grass the way its snow blows. app/context.cpp, wetten.
-        if (world_.weather().snows()) ctx.time.setWind(world_.leaves().windDegrees());
         ctx.time.rain(world_.weather().rain(), world_.weather().flash());
         // Devias's blizzard drives the snow; everywhere else the storm is nought.
         world_.leaves().setStorm(world_.weather().snows() ? world_.weather().rain() : 0.0f);

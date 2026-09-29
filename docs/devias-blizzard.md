@@ -27,16 +27,16 @@ What the user asked for (2026-09-29):
 Landed 2026-09-30:
 
 - **The snow storms** (`world/leaves.cpp`, `setStorm`):
-  - the wind blows it along −x at up to 15 m/s in gusts, and it falls 2 to 4 m/s faster (9 and 3 at first; "has to fly faster");
+  - the wind blows it along the grass's axis (45° off −x) at up to 15 m/s in gusts, and it falls 2 to 4 m/s faster (9 and 3 at first; "has to fly faster");
   - it spawns upwind and streaks along its flight past 2.5 m/s;
   - landed snow blows away;
   - the pool fills from 150 to 180.
 - **Softened** ("snow flakes too much visible"): at a full storm a flake shows 25% of its light and streaks half as wide (half and 30% were too visible, 15% too faint).
 - **The haze** 0.009 to 0.02, then 0.032 and paler ("stronger snow dust effect", twice).
-- **The wind wanders** ("we need some randomness like wind changes"): every 6 to 14 s a new heading within about 55° of −x and a new strength from 55 to 100%. The wind turns to them at 0.35 rad/s and 0.25 a second, with the gust swell on top, and flakes spawn upwind of wherever it blows from.
+- **The wind wanders** ("we need some randomness like wind changes"): every 6 to 14 s a new heading within about 55° of the grass's axis and a new strength from 55 to 100%. The wind turns to them at 0.35 rad/s and 0.25 a second, with the gust swell on top, and flakes spawn upwind of wherever it blows from.
 
 - **Grass and trees react** ("grass and trees has to react"):
-  - the storm sheet's grass wind is 0.6 against the calm's 0.16, and `TimeOfDay::setWind` turns the grass to the snow's own wandering heading;
+  - the storm sheet's grass wind is 0.3 against the calm's 0.16. The grass keeps its one wind axis, and the snow's wind wanders about that same axis (45° off −x, `kWindBase`). A first try at 0.6, turned with the snow's heading, "looked buggy": the strength whipped and stretched the blades, and a turning heading sweeps fs_grass's wave phase (`dot(position, direction)` over hundreds of metres) so the field flickers;
   - the town's sway clips (the firs above all) run up to 2.5 times their rate by the share. That's faster, not wider: the clips are MU's.
 
 Still to do:

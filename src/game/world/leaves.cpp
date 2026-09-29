@@ -135,6 +135,10 @@ constexpr float kStreakSeconds = 0.035f;
 // every six to fourteen seconds a new heading within this far of the leaves' -x and a new
 // strength in this range, each turned to at these rates, so the stream swings and swells.
 constexpr float kWindSwing = 0.95f;  // radians, about 55 degrees either way
+// What it wanders about: 45 degrees off -x towards +z, which is the grass's own wind axis (the
+// lighting sheet's grass_wind_degrees, 45 by default and not set on Devias), so the snow blows
+// along the line the grass sways on. The grass cannot turn with it: see TimeOfDay::wetten.
+constexpr float kWindBase = 0.785f;
 constexpr float kWindWeakest = 0.55f;
 constexpr float kWindChangeLow = 6.0f, kWindChangeHigh = 14.0f;
 constexpr float kWindTurnRate = 0.35f;  // radians a second
@@ -249,7 +253,7 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
         windChangeIn_ -= seconds;
         if (windChangeIn_ <= 0.0f) {
             windChangeIn_ = between(kWindChangeLow, kWindChangeHigh);
-            windHeadingTo_ = between(-kWindSwing, kWindSwing);
+            windHeadingTo_ = kWindBase + between(-kWindSwing, kWindSwing);
             windStrengthTo_ = between(kWindWeakest, 1.0f);
         }
         const float turn = kWindTurnRate * seconds, swell = kWindSwellRate * seconds;

@@ -69,13 +69,6 @@ public:
     // (Weather::flash): the sky and the air go blue-white for the moment of a strike.
     void setWet(const std::string& path);
     void rain(float share, float flash = 0.0f);
-    // Which way the wet spell's wind blows the grass, in the sheet's grass_wind_degrees: Devias's
-    // blizzard hands its wandering heading here each frame (Leaves::windHeading), and the grass
-    // turns towards it by the share. Unset, the grass keeps the dry sheet's heading.
-    void setWind(float degrees) {
-        wind_ = degrees;
-        windSet_ = true;
-    }
 
 private:
     std::string overlayPath(int which) const;
@@ -92,8 +85,6 @@ private:
     gfx::Lighting dry_, wet_;  // the light as set() built it, and that with the wet sheet over it
     float share_ = 0.0f;
     float flash_ = 0.0f;
-    float wind_ = 0.0f;
-    bool windSet_ = false;
     bool announce_ = false;
 };
 
