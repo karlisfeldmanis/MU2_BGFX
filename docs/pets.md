@@ -75,7 +75,7 @@ jewel group (0.001 a kill, drop level ≤ monster level, no 12-level window).
   +50 increased", "Increase 30% of attacking & Wizardry Dmg"), `Life n / 255` in the foot. They
   ride in the jewel drop group but are not jewels: no gold name, droppable, not bold on the ground.
 - **Buff strip** (`game/ui/hud.cpp`): the pet's cell first, its Life as the bar. The two icons are
-  ours, rendered from the pets' own models by `pipeline/pet_icons.py` (MuDream has no pet cell).
+  ours, rendered from the pets' own models by `pipeline/model_icons.py` (MuDream has no pet cell).
 - **Drawn** (`game/pets.h`): cooked as standalone figures on every map (`tools/cook.py`). The Imp
   rides `Bip01 L Clavicle` at (20,0,0) in the bone's frame (`Figure::mount`); the Angel flies
   GOBoid's steering at 25 Hz, drawn between its last two steps with an eased heading, at 0.7.

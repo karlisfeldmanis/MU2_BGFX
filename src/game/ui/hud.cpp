@@ -120,7 +120,7 @@ const char* buffArt(int32_t skill) {
     }
 }
 
-// The pets' cells, ours: each rendered from the pet's own model by pipeline/pet_icons.py.
+// The pets' cells, ours: each rendered from the pet's own model by pipeline/model_icons.py.
 const char* petArt(int pet) { return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : nullptr; }
 
 // The painted key labels: a dark cell on rows 164 to 177 under every box, the figure centred on
