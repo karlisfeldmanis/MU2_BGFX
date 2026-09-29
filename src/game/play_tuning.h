@@ -333,6 +333,10 @@ constexpr float kHeardReach = 1.5f;
 // taken out straight to nothing at kFireReach, where the loop stops. Ours: MU's fires are silent.
 constexpr float kFireFull = 8.0f;
 constexpr float kFireReach = 16.0f;
+// Lorencia's fountain, the same way and closer: water is a small sound, heard across the
+// square's middle and not from its edges. Ours: MU's fountain is silent too.
+constexpr float kFountainFull = 5.0f;
+constexpr float kFountainReach = 12.0f;
 
 // Where a figure's clock stands in its clip's own keys -- MU's AnimationFrame, which is what
 // every one of its sound tests reads. A looping clip is cooked with one closing key, so its

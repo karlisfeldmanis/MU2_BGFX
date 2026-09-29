@@ -423,6 +423,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.soil = sound_.load("player_step_soil", true);
     if (windy_) heard_.wind = sound_.load("world_wind", false);
     heard_.fire = sound_.load("world_bonfire", false);
+    heard_.fountain = sound_.load("world_fountain", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);
     // The townsfolk with a voice of their own. rand_fps_check(N) is one frame in N at the 60
     // the client's rolls are written against, so the roll comes up every N/60 seconds.

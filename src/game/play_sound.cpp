@@ -17,6 +17,7 @@
 #include "game/frustum.h"
 #include "game/play_tuning.h"
 #include "game/world/lamps.h"
+#include "game/world/ornaments.h"
 
 namespace mu::game {
 
@@ -271,19 +272,28 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
         this);
 }
 
-void Play::hearFire(const Lamps& lamps) {
-    if (!sound_.isOpen() || heard_.fire < 0) return;
+void Play::hearWorld(const Lamps* lamps, const Ornaments& ornaments) {
+    if (!sound_.isOpen()) return;
     const Drawn* hero = drawnOf(realm_.hero().id);
-    float at[3];
-    float d = kFireReach;
-    if (hero != nullptr && hero->placed && shotKnown_ && lamps.nearestBonfire(hero->crown, at)) {
-        const float dx = at[0] - hero->crown[0], dz = at[2] - hero->crown[2];
+    const bool placed = hero != nullptr && hero->placed && shotKnown_;
+    float fire[3], water[3];
+    const bool burns = placed && lamps != nullptr && lamps->nearestBonfire(hero->crown, fire);
+    const bool flows = placed && ornaments.nearestFountain(hero->crown, water);
+    hearFrom(heard_.fire, burns ? fire : nullptr, kFireFull, kFireReach);
+    hearFrom(heard_.fountain, flows ? water : nullptr, kFountainFull, kFountainReach);
+}
+
+void Play::hearFrom(int event, const float* at, float full, float reach) {
+    if (event < 0) return;
+    float d = reach;
+    if (at != nullptr) {
+        const float* ear = drawnOf(realm_.hero().id)->crown;
+        const float dx = at[0] - ear[0], dz = at[2] - ear[2];
         d = std::sqrt(dx * dx + dz * dz);
     }
-    sound_.loop(heard_.fire, d < kFireReach);
-    if (d >= kFireReach) return;
-    const float hush = std::clamp((kFireReach - d) / (kFireReach - kFireFull), 0.0f, 1.0f);
-    sound_.loopAt(heard_.fire, at, hush);
+    sound_.loop(event, d < reach);
+    if (d >= reach) return;
+    sound_.loopAt(event, at, std::clamp((reach - d) / (reach - full), 0.0f, 1.0f));
 }
 
 }  // namespace mu::game

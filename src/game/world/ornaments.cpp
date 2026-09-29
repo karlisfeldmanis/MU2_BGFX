@@ -167,6 +167,10 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
         const std::string& name = models[model].name;
         const content::Mesh* mesh = town.meshAt(model);
         if (name == "Waterspout01") {
+            const content::TownInstance& at = town.cooked().instances[i];
+            Place place;
+            for (int k = 0; k < 3; ++k) place.at[k] = at.position[k];
+            fountains_.push_back(place);
             Spout spout;
             spout.anchor = anchor(i, mesh, kLandingBone, kLanding, kLandingAcross);
             if (spout.anchor.bone >= 0) spouts_.push_back(spout);
@@ -266,7 +270,20 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
     return true;
 }
 
+bool Ornaments::nearestFountain(const float from[3], float at[3]) const {
+    float best = -1.0f;
+    for (const Place& one : fountains_) {
+        const float dx = one.at[0] - from[0], dz = one.at[2] - from[2];
+        const float d = dx * dx + dz * dz;
+        if (best >= 0.0f && d >= best) continue;
+        best = d;
+        for (int k = 0; k < 3; ++k) at[k] = one.at[k];
+    }
+    return best >= 0.0f;
+}
+
 void Ornaments::shutdown() {
+    fountains_.clear();
     spouts_.clear();
     lanterns_.clear();
     falls_.clear();

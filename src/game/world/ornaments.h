@@ -58,6 +58,9 @@ public:
     void gather(gfx::Effects& effects, const Sway& sway) const;
 
     uint32_t puffCount() const { return uint32_t(puffs_.size()); }
+    // Where the fountain nearest `from` stands, measured flat, into `at`; false when the town
+    // has none. What its water is heard from (Play::hearWorld).
+    bool nearestFountain(const float from[3], float at[3]) const;
     // The Chaos Machine's spark bursts due this frame, at bone 58, in world metres: MU's
     // CreateJoint(BITMAP_JOINT_SPARK) and CreateParticle(BITMAP_SPARK), eight pairs a burst,
     // which the caller throws through the forge (game/fx/forge.h), the smith's own recipe.
@@ -98,6 +101,11 @@ private:
         float reach[2] = {0, 0};  // half the scatter along each direction, metres
         float clock = 0.0f;
     };
+    // Each Waterspout01's placement, in world metres: where its water is heard from.
+    struct Place {
+        float at[3] = {0, 0, 0};
+    };
+    std::vector<Place> fountains_;
     struct Puff {
         float position[3] = {0, 0, 0};
         float age = 0.0f;

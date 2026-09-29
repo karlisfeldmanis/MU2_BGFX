@@ -47,6 +47,7 @@
 namespace mu::game {
 
 class Lamps;
+class Ornaments;
 
 class Play {
 public:
@@ -432,9 +433,10 @@ public:
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
-    // The nearest bonfire's crackle, after hear(): one loop, levelled and panned from that
-    // fire, on within kFireReach of the character and off past it. Ours.
-    void hearFire(const Lamps& lamps);
+    // The world's own water and fire, after hear(): the nearest bonfire's crackle and the
+    // nearest fountain's drip, each one loop levelled and panned from that place, on within
+    // its reach of the character and off past it. Ours. `lamps` is null with the lamps off.
+    void hearWorld(const Lamps* lamps, const Ornaments& ornaments);
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
     // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
@@ -705,6 +707,8 @@ private:
         int shock = -1, shockFemale = -1;                        // his flinch's scream, and hers
         int grass = -1, soil = -1;                               // his footsteps
         int wind = -1;                                           // Lorencia's air
+        int fire = -1;                                           // a bonfire's crackle
+        int fountain = -1;                                       // the fountain's water
         int hammer = -1;                                         // Hanzo at his anvil
         int itemDrop = -1, moneyDrop = -1, jewel = -1;  // a thing landing; a jewel's own ring
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
@@ -717,10 +721,11 @@ private:
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-        int fire = -1;                                           // a bonfire's crackle
     } heard_;
     // The sound a player's swing makes, from what is in his hands. -1 bare-handed.
     int swingSound(const sim::Body& body) const;
+    // One of hearWorld's loops: heard from `at`, or off when `at` is null or past `reach`.
+    void hearFrom(int event, const float* at, float full, float reach);
     // The hero's footsteps and the smith's hammer, after the clips have been advanced this
     // frame, since both are read off where a clip's clock stands.
     void steps();

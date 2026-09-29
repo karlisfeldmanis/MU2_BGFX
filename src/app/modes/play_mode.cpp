@@ -820,6 +820,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().hear(world_.camera(),
                              world_.indoors(world_.camera().target[0],
                                             world_.camera().target[2]));
+        world_.played().hearWorld(args.lampsOn ? &world_.lamps() : nullptr,
+                                  world_.ornaments());
     }
     // The lamps flicker, the fires burn, and the glows' levels go into the town before
     // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
@@ -843,7 +845,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                                gfx::Renderer::kMaxTransientLights - count);
         // And Power Wave's, three tiles of blue.
         count += world_.played().wave().lights(falling + count,
-        if (args.lampsOn) world_.played().hearFire(world_.lamps());
                                                gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().thunder().lights(falling + count,
                                                   gfx::Renderer::kMaxTransientLights - count);
