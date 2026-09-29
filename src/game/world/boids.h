@@ -84,6 +84,11 @@ struct Airs {
     // bat's own sound and a crow's beside it in the same chain; the butterfly is not in that
     // chain at all. A butterfly that chirps is a plausible mistake about a different animal.
     bool calls = true;
+    // A factor on the wing beat's clip clock. MuMain plays every boid at PlaySpeed 1, a key a
+    // frame (GOBoid.cpp:1390), but the cook spaces the butterfly's keys 0.25 s apart, a beat of
+    // 0.75 s; the user saw it flap too slowly in Noria (2026-09-29). The bird keeps 1: its keys
+    // are 0.16 s apart, also slower than MU's 0.04, and nobody has asked for it.
+    float flap = 1.0f;
 };
 
 // What a world flies, by the model name the cook knows it by, and how it flies. MU's own

@@ -68,6 +68,9 @@ Airs airsOf(const std::string& world) {
         airs.lit = false;
         airs.tint[0] = airs.tint[1] = airs.tint[2] = 1.0f;
         airs.calls = false;
+        // MU's key a frame over the cook's 0.25 s: 0.25 / 0.04, a beat of 0.12 s, eight a
+        // second, as a real butterfly's.
+        airs.flap = 6.25f;
     }
     return airs;
 }
@@ -214,7 +217,7 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
         }
         // The clock runs whether or not it is seen, as Sway's does, so a bird the camera turns
         // back to is where its own time has taken it.
-        figure.update(seconds, 1.0f);
+        figure.update(seconds, airs_.flap);
         const int posed = figure.pose(scratch_.data());
         paletteRows_[i] = posed > 0 ? renderer.addPalette(scratch_.data(), posed) : -1;
 
