@@ -340,6 +340,15 @@
       "gain_note": "A decibel down and no more. It ships at full scale where MU's own waves peak between 0.34 and 1.00, so it needs no lift at all -- the lifts on item_get and jewel_get are corrections for files recorded quiet in 1999, and this one was not. The one down is arithmetic and not a listening test: it peaks at 0.99 against pLevelUp's 1.00 but carries far more of its length near the top, so at 0.0 it would be the loudest thing a player hears in the inventory, and a level is the bigger moment. Worth a second pass by ear.",
       "note": "A swoosh and not a chime, and the picture is cut to it. It replaced eGem on 2026-09-23 at the user's asking, which had replaced pDrink the same day -- an orb went down the consumable branch with the potions, and a permanent skill sounding like a gulp was the first complaint. Unplaced: heard flat on the player, like the drink and the level-up, and not out at a point in the world. The aura thrown with it is `kLearning` in game/fx/aura.h, whose sixteen reference ticks are 0.64 s against this file's 0.60 -- the ribbons hold full light for the six ticks the swell takes to arrive and then fall on the flares' own 1/1.3 a tick, which is the same shape as the wave's own decay. Neither number was bent to the other: 16 ticks was picked because the fade law is ten ticks long and the swell is six."
     },
+    "quest_step_done": {
+      "files": [
+        "quest_step.wav"
+      ],
+      "gain_db": -3.0,
+      "from": "This project's: MU 0.75 has no quests. The file was given by the user on 2026-09-29: Cyberwave Orchestra's \"Fantasy Game Sword Cut\" (Pixabay 339824), for a quest step struck off the tracker.",
+      "trim_note": "The mp3 is 1.96 s, of which everything past 1.1 s is silence. Cut from 0.030 s (the first of the blade) with a 3 ms fade in, and a small room baked in at the user's asking ('some minimal reverb'): five early reflections at 11-47 ms and a dark diffuse tail of 0.45 s RT60, lowpassed at 3.5 kHz, the wet at -17 dB under the dry. 1.35 s with a 0.3 s fade out, stereo 44.1 kHz, peaking at 0.95. The hit lands 0.07 s into the file.",
+      "note": "Unplaced, heard flat on the player like the orb's swoosh. The tracker (game/ui/tracker.cpp) throws it as the gold light starts along the row, kFlareAt after the count reaches its goal, so the blade's hit falls on the check popping in. Three down because it is a full-scale file and a quest step is a smaller moment than the level-up."
+    },
     "player_eat_apple": {
       "files": [
         "peatapple.wav"

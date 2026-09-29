@@ -84,7 +84,7 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
     if (quest != o.quest || mode != o.mode || chosen != o.chosen || over != o.over ||
         pressing != o.pressing || x != o.x || y != o.y || unit != o.unit || scroll != o.scroll ||
         overThumb != o.overThumb || dragging != o.dragging || version != o.version ||
-        minutesLeft != o.minutesLeft || picture != o.picture) {
+        minutesLeft != o.minutesLeft || picture != o.picture || reading != o.reading) {
         return false;
     }
     for (int i = 0; i < 3; ++i) {
@@ -222,7 +222,7 @@ void QuestDialog::layout(const Play& play) {
     const float buttonTop = kTall - 18.0f - style::kButtonM;
     const float middle = kWide * 0.5f;
     for (Box& one : buttons_) one = {0, 0, 0, 0};
-    if (mode_ == Mode::Offer) {
+    if (mode_ == Mode::Offer && !reading_) {
         const float left = middle - kButtonW - style::kGap * 0.5f;
         buttons_[1] = {left, buttonTop, kButtonW, style::kButtonM};
         buttons_[0] = {left + kButtonW + style::kGap, buttonTop, kButtonW, style::kButtonM};
@@ -247,16 +247,17 @@ void QuestDialog::layout(const Play& play) {
     }
 }
 
-void QuestDialog::update(float seconds, const Play& play, int quest, float width, float height,
-                         const Pointer& pointer, float wheel, bool enter, bool escape,
-                         Stage* stage, Result* out) {
+void QuestDialog::update(float seconds, const Play& play, int quest, bool reading, float width,
+                         float height, const Pointer& pointer, float wheel, bool enter,
+                         bool escape, Stage* stage, Result* out) {
     if (quest < 0) {
         if (quest_ >= 0 || !canvas_.empty()) close();
         return;
     }
     const sim::Realm& realm = play.realm();
-    if (quest != quest_) {
+    if (quest != quest_ || reading != reading_) {
         quest_ = quest;
+        reading_ = reading;
         chosen_ = -1;
         over_ = pressing_ = -1;
         scroll_ = 0.0f;
@@ -265,7 +266,8 @@ void QuestDialog::update(float seconds, const Play& play, int quest, float width
     const sim::QuestProgress& progress = realm.quest(quest_);
     Mode mode = Mode::Offer;
     if (progress.state == sim::QuestState::Active) mode = Mode::Underway;
-    else if (progress.state == sim::QuestState::Ready) mode = Mode::HandIn;
+    // Read from the journal, away from him, a quest ready to hand in is still under way.
+    else if (progress.state == sim::QuestState::Ready) mode = reading_ ? Mode::Underway : Mode::HandIn;
     else if (progress.state == sim::QuestState::Resting && !realm.questOffered(quest_)) {
         mode = Mode::Resting;
     }
@@ -321,11 +323,12 @@ void QuestDialog::update(float seconds, const Play& play, int quest, float width
                                       : std::max(0.0f, lift_[which] - step);
     }
     if (pointer.pressed && !dragging_) pressing_ = over_;
-    bool primary = enter && !primaryOff && (mode_ == Mode::Offer || mode_ == Mode::HandIn);
+    bool primary = enter && !primaryOff && !reading_ &&
+                   (mode_ == Mode::Offer || mode_ == Mode::HandIn);
     bool cancel = escape;
     if (pointer.released) {
         if (pressing_ >= 0 && pressing_ == over_) {
-            if (pressing_ == 0 && !primaryOff) primary = true;
+            if (pressing_ == 0 && !primaryOff && !reading_) primary = true;
             else if (pressing_ == 1 || pressing_ == 2) cancel = true;
             else if (pressing_ >= 10) {
                 const int picked = cells_[size_t(pressing_ - 10)].choice;
@@ -366,6 +369,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, float width
     now.minutesLeft = std::max<int64_t>(0, progress.availableAt - realm.wallClock()) / 60;
     for (int s = 0; s < sim::kQuestSteps && s < 16; ++s) now.counts[s] = progress.counts[s];
     now.picture = stage && stage->picture().valid() ? stage->picture().handle.idx : 0xFFFF;
+    now.reading = reading_;
     if (built_ && now == drawn_) return;
     drawn_ = now;
     built_ = true;
@@ -428,7 +432,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     controls::rule(canvas_, x + 18.0f * u, wy(kTall - kFootTall + 4.0f), (kWide - 36.0f) * u, u);
     bool owed = false;
     for (const Cell& one : cells_) owed |= one.choice >= 0;
-    switch (mode_) {
+    switch (reading_ ? Mode::Resting : mode_) {
         case Mode::Offer:
             controls::button(canvas_, placed(x, y, buttons_[1], u), "Not now", controls::Kind::Secondary,
                              state(1, false), u);
@@ -440,8 +444,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                              controls::Kind::Primary, state(0, owed && chosen_ < 0), u);
             break;
         default:
-            controls::button(canvas_, placed(x, y, buttons_[1], u), "Farewell", controls::Kind::Secondary,
-                             state(1, false), u);
+            controls::button(canvas_, placed(x, y, buttons_[1], u), reading_ ? "Close" : "Farewell",
+                             controls::Kind::Secondary, state(1, false), u);
             break;
     }
 
@@ -496,7 +500,7 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         cy += float(index) * kStepRow;
         for (int s = 0; s < row.stepCount; ++s) {
             if (row.steps[s].kind != sim::QuestStepKind::Return) continue;
-            const bool ready = mode_ == Mode::HandIn;
+            const bool ready = progress.state == sim::QuestState::Ready;
             quest_marks::mark(body_, ready ? StepMark::Ready : StepMark::Waiting, sx(kInset + 7.0f),
                               by(cy + 8.0f), u);
             controls::label(body_, sx(kInset + 24.0f), by(cy + 13.0f), kBody * u,

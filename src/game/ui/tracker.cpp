@@ -38,6 +38,11 @@ constexpr float kBannerIn = style::kOpenSeconds, kBannerOut = 0.4f;
 // counted. The user, 2026-09-29: fade out when nothing is killed, the killed row alone at full.
 constexpr float kWakeHold = 5.0f, kWakeFade = 0.8f;
 constexpr float kDim = 0.35f;
+// Struck off, in seconds from the count reaching its goal: the bar has filled by kFlareAt, a
+// light runs along the row and the words turn gold and are struck through, it holds, and from
+// kFoldAt the row fades and folds away, gone at kStruckSeconds.
+constexpr float kFlareAt = 0.2f, kFlareSeconds = 0.5f;
+constexpr float kFoldAt = 1.3f, kStruckSeconds = 1.8f;
 // The edge pointer: how far in from the frame's edge it stands, and when the giver counts as
 // on the frame (the blade over his head takes over).
 constexpr float kEdgeInset = 64.0f;
@@ -84,6 +89,100 @@ float titleWidth(float size, float track, const std::string& text) {
 
 std::string grouped(int64_t n) { return panel::commas(n); }
 
+// Two packed colours mixed, `t` of the way from `a` to `b`, alpha and all.
+uint32_t mixed(uint32_t a, uint32_t b, float t) {
+    t = std::clamp(t, 0.0f, 1.0f);
+    uint32_t out = 0;
+    for (int shift = 0; shift < 32; shift += 8) {
+        const float x = float((a >> shift) & 0xFFu), y = float((b >> shift) & 0xFFu);
+        out |= uint32_t(std::lround(x + (y - x) * t)) << shift;
+    }
+    return out;
+}
+
+float smooth(float t) {
+    t = std::clamp(t, 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+// How much of a struck-off row is left standing, 1 until it folds and 0 when it is gone.
+float standing(float struck) {
+    return struck < 0.0f ? 1.0f : 1.0f - smooth((struck - kFoldAt) / (kStruckSeconds - kFoldAt));
+}
+
+// A step struck off, `t` seconds in, its row at `top`: a gold glow rising from its foot, a light
+// running along it, the check popping in gold, the words and the count turning gold and struck
+// through, a few motes lifting off -- then all of it fading at `alpha` as the row folds away.
+void strike(gfx::Canvas& canvas, int step, float t, float left, float right, float top,
+            float rowTall, float alpha, const std::string& words, int goal) {
+    const float u = tip::unit();
+    const float wide = right - left;
+    const float flare = (t - kFlareAt) / kFlareSeconds;  // 0..1 while the light runs
+    const float gold = smooth(flare * 2.0f);              // the words' turn to gold
+    // The glow: up fast with the light, then down to a warmth that goes with the row.
+    const float glow = t < kFlareAt ? 0.0f
+                                    : std::exp(-2.5f * std::max(0.0f, t - kFlareAt - 0.15f)) *
+                                          smooth((t - kFlareAt) / 0.15f);
+    if (glow > 0.0f) {
+        const uint32_t hot = faded(kGoldLit, 0.42f * glow * alpha), clear = faded(kGoldLit, 0.0f);
+        canvas.shade({left - 8.0f * u, top - 6.0f * u, wide + 16.0f * u, rowTall + 14.0f * u},
+                     clear, clear, hot, hot);
+    }
+    // The light: a soft band of pale gold sweeping left to right across the row.
+    if (flare > 0.0f && flare < 1.0f) {
+        const float band = 70.0f * u;
+        const float cx = left - band + (wide + band * 2.0f) * smooth(flare);
+        const float strength = std::sin(flare * 3.14159265f) * alpha;
+        const uint32_t lit = faded(style::kBoneHi, 0.55f * strength);
+        const uint32_t clear = faded(style::kBoneHi, 0.0f);
+        const float x0 = std::max(left - 8.0f * u, cx - band), x1 = std::min(right + 8.0f * u, cx + band);
+        const float y0 = top - 3.0f * u, h = rowTall + 6.0f * u;
+        if (cx > x0) canvas.shade({x0, y0, cx - x0, h}, clear, lit, lit, clear);
+        if (x1 > cx) canvas.shade({cx, y0, x1 - cx, h}, lit, clear, clear, lit);
+    }
+    // The check, popping in as the light passes the mark and settling to its size.
+    const float popT = std::clamp((t - kFlareAt) / 0.3f, 0.0f, 1.0f);
+    const float pop = popT <= 0.0f ? 0.0f : 1.0f + 0.7f * std::sin(popT * 3.14159265f) * (1.0f - popT);
+    const uint32_t ink = mixed(style::kBoneHi, kGoldLit, gold);
+    if (pop > 0.0f) {
+        quest_marks::mark(canvas, StepMark::Done, left + 7.0f * u, top + rowTall * 0.5f, u * pop,
+                          alpha * std::min(1.0f, popT * 3.0f), ink);
+    } else {
+        quest_marks::mark(canvas, StepMark::Live, left + 7.0f * u, top + rowTall * 0.5f, u, alpha);
+    }
+    const float size = kStep * u;
+    const float baseline = controls::middle(top, rowTall, size);
+    const float textX = left + kMarkRoom * u;
+    line(canvas, textX, baseline, size, ink, alpha, words);
+    const std::string figure = std::to_string(goal) + " / " + std::to_string(goal);
+    const float fw = lineWidth(size, figure);
+    line(canvas, right - fw, baseline, size, ink, alpha, figure);
+    // The stroke through the words, drawn left to right behind the passing light.
+    const float through = smooth((t - kFlareAt - 0.1f) / 0.4f);
+    if (through > 0.0f) {
+        const float tw = lineWidth(size, words);
+        const float h = std::max(1.0f, 1.5f * u);
+        const float sy = baseline - size * 0.32f;
+        canvas.rect({textX - 2.0f * u, sy + 1.0f, (tw + 4.0f * u) * through, h},
+                    faded(style::kDrop, alpha));
+        canvas.rect({textX - 2.0f * u, sy, (tw + 4.0f * u) * through, h}, faded(kGoldLit, alpha));
+    }
+    // The motes: a few sparks of gold lifting off the row and going out, each on its own path.
+    constexpr int kMotes = 9;
+    for (int m = 0; m < kMotes; ++m) {
+        const uint32_t seed = uint32_t(step * 131 + m * 977) * 2654435761u;
+        const float r0 = float(seed & 0xFFFu) / 4095.0f, r1 = float((seed >> 12) & 0xFFFu) / 4095.0f;
+        const float born = kFlareAt + 0.08f + r0 * 0.35f;
+        const float life = (t - born) / (0.8f + r1 * 0.4f);
+        if (life <= 0.0f || life >= 1.0f) continue;
+        const float x = left + wide * (0.08f + 0.84f * (float(m) + r1) / float(kMotes));
+        const float y = top + rowTall * 0.6f - (14.0f + 26.0f * r0) * u * smooth(life);
+        const float s = (1.5f + 1.5f * r1) * u * (1.0f - life * 0.5f);
+        const float a = alpha * std::sin(life * 3.14159265f);
+        canvas.rect({x - s * 0.5f, y - s * 0.5f, s, s}, faded(mixed(kGoldLit, style::kBoneHi, r0), a));
+    }
+}
+
 }  // namespace
 
 namespace quest_marks {
@@ -93,12 +192,13 @@ uint32_t faded(uint32_t abgr, float alpha) {
     return (abgr & 0x00FFFFFFu) | (uint32_t(std::lround(a)) << 24);
 }
 
-void mark(gfx::Canvas& canvas, StepMark kind, float cx, float cy, float u, float alpha) {
+void mark(gfx::Canvas& canvas, StepMark kind, float cx, float cy, float u, float alpha,
+          uint32_t tint) {
     constexpr int kSides = 20;
     constexpr float kTau = 6.2831853f;
     if (kind == StepMark::Done) {
         // The check: two strokes, each a thin quad, in ash ink.
-        const uint32_t ink = faded(style::kAshInk, alpha);
+        const uint32_t ink = faded(tint ? tint : style::kAshInk, alpha);
         const float pts[3][2] = {{cx - 4.0f * u, cy + 0.4f * u}, {cx - 1.2f * u, cy + 3.0f * u},
                                  {cx + 4.0f * u, cy - 3.0f * u}};
         const float half = 0.9f * u;
@@ -163,7 +263,7 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
     }
     for (int i = 0; i < sim::kQuestSteps; ++i) {
         if (counts[i] != o.counts[i] || embers[i] != o.embers[i] || lit[i] != o.lit[i] ||
-            progress.counts[i] != o.progress.counts[i]) {
+            struck[i] != o.struck[i] || progress.counts[i] != o.progress.counts[i]) {
             return false;
         }
     }
@@ -263,6 +363,28 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                                              : target;
             ember_[s] = std::max(0.0f, ember_[s] - seconds / kEmberSeconds);
         }
+        // Struck off: a count at its goal starts its flare the frame it gets there, and one found
+        // there when the tracker takes the quest up (a load, a restart) is gone from the start.
+        const sim::QuestRow& row = sim::questAt(quest_);
+        const bool fresh = quest_ != struckQuest_;
+        struckQuest_ = quest_;
+        for (int s = 0; s < sim::kQuestSteps; ++s) {
+            const bool counted = s < row.stepCount && row.steps[s].kind == sim::QuestStepKind::Clear;
+            const bool done = counted && now.counts[s] >= realm.questGoal(quest_, s);
+            if (!done) struck_[s] = -1.0f;
+            else if (fresh) struck_[s] = kStruckSeconds;
+            else if (struck_[s] < 0.0f) {
+                struck_[s] = 0.0f;
+                awake_ = std::max(awake_, kWakeHold);
+            } else {
+                const float was = struck_[s];
+                struck_[s] = std::min(kStruckSeconds, struck_[s] + seconds);
+                // The blade's sound, as the light starts along the row (game/ui/desk.cpp).
+                if (was < kFlareAt && struck_[s] >= kFlareAt) strikeHeard_ = true;
+            }
+        }
+    } else {
+        struckQuest_ = -1;
     }
 
     // Awake while a kill is fresh, and always while the giver waits for the hand-in.
@@ -274,7 +396,10 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
         const sim::QuestRow& row = sim::questAt(quest_);
         for (int s = 0; s < sim::kQuestSteps; ++s) {
             const bool counted = s < row.stepCount && row.steps[s].kind == sim::QuestStepKind::Clear;
-            const bool full = ready ? !counted : focus_ < 0 || s == focus_;
+            // A row being struck off stays at full through its flare, even as the quest turns
+            // Ready under it.
+            const bool striking = struck_[s] >= 0.0f && struck_[s] < kStruckSeconds;
+            const bool full = striking || (ready ? !counted : focus_ < 0 || s == focus_);
             const float target = full ? 1.0f : kDim;
             // Faded away, a row takes its new weight at once: the next kill shows it already set.
             if (wake_ <= 0.0f) lit_[s] = target;
@@ -344,6 +469,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
             now.counts[s] = int(counts_[s] * 8.0f);
             now.embers[s] = int(ember_[s] * 32.0f);
             now.lit[s] = int(std::lround(lit_[s] * 32.0f));
+            now.struck[s] = struck_[s] < 0.0f ? -1 : int(struck_[s] * 60.0f);
         }
         now.focus = ready ? -1 : focus_;
         if (now.progress.state == sim::QuestState::Resting) {
@@ -410,9 +536,11 @@ void Tracker::rebuild(const Play& play, int width, int height) {
     // middle at the screen's right edge and the tracker's middle, so it has no edge anywhere. A
     // rectangle fading one way only showed its top and bottom over bright paving.
     {
+        float rows = 0.0f;
+        for (int s = 0; s < row.stepCount; ++s) rows += standing(float(drawn_.struck[s]) / 60.0f);
         const float tall = now.state == sim::QuestState::Resting
                                ? 70.0f
-                               : 60.0f + float(row.stepCount) * (kStep + kRowGap);
+                               : 60.0f + rows * (kStep + kRowGap);
         const float cx = float(width), cy = y + tall * 0.5f * u;
         const float sx = kScrimWide * u * 0.55f, sy = tall * u * 0.42f;
         constexpr int kColumns = 12, kRows = 12;
@@ -471,8 +599,17 @@ void Tracker::rebuild(const Play& play, int width, int height) {
             ink = ready ? style::kBloodHi : style::kAshInk2;
         }
         const float rowTall = kStep * u;
+        // Struck off and folded away: gone from the list, the rows under it closed up.
+        const float struck = float(drawn_.struck[s]) / 60.0f;
+        const float keep = standing(struck);
+        if (keep <= 0.0f) continue;
         // The step just counted at full, the rest dimmed (Tracker::update).
         const float rowAlpha = alpha * float(drawn_.lit[s]) / 32.0f;
+        if (struck >= 0.0f) {
+            strike(canvas_, s, struck, left, right, y, rowTall, alpha * keep, want.line, goal);
+            y += (rowTall + kRowGap * u) * keep;
+            continue;
+        }
         // The ember under a count that just moved: the hover's own, rising from the row's foot.
         const float ember = float(drawn_.embers[s]) / 32.0f;
         if (ember > 0.0f) {

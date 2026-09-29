@@ -44,7 +44,9 @@ public:
     // shuts (`quest` < 0) to clear. `wheel` is the mouse wheel this frame, positive toward the
     // screen. `stage` photographs the rewards: the shelf's own, free whenever this is up (a giver
     // is not a counter).
-    void update(float seconds, const Play& play, int quest, float width, float height,
+    // `reading`: the quest journal (L), away from the giver -- the page as it stands, a quest ready
+    // to hand in shown under way, and one answer, Close; it never accepts or completes.
+    void update(float seconds, const Play& play, int quest, bool reading, float width, float height,
                 const Pointer& pointer, float wheel, bool enter, bool escape, Stage* stage,
                 Result* out);
     bool up() const { return quest_ >= 0; }
@@ -85,6 +87,7 @@ private:
     gfx::Canvas tip_;
     Stage* tipStage_ = nullptr;
     int quest_ = -1;
+    bool reading_ = false;
     Mode mode_ = Mode::Offer;
     int chosen_ = -1;
     int over_ = -1, pressing_ = -1;  // buttons: 0 primary, 1 secondary, 2 close; 10 + a cell
@@ -111,6 +114,7 @@ private:
         int64_t minutesLeft = 0;
         int counts[16] = {};
         uint16_t picture = 0xFFFF;
+        bool reading = false;
         bool operator==(const Drawn& o) const;
     };
     Drawn drawn_;

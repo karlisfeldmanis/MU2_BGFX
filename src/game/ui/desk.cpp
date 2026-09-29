@@ -143,7 +143,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // while it is up, and only otherwise is it the menu's. A scripted one always is, so a review
     // run can open the menu; a real one only when the game holds Escape (PlayMode::open).
     // And a quest giver's window, which is answered as the box is and takes Escape before the menu.
-    const bool questing = play.isOpen() && play.realm().questing() >= 0;
+    const bool questing = play.isOpen() && (play.realm().questing() >= 0 || journal_ >= 0);
     const bool escape =
         !typing && !questing && (scriptEscape_ || (holdEscape_ && window.escaped()));
     {
@@ -174,20 +174,25 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (play.isOpen()) {
         play.setWallClock(int64_t(std::time(nullptr)));
         const sim::Realm& realm = play.realm();
+        // Or the journal (L), the same window read away from him; reaching him takes it over.
         int quest = -1;
         if (realm.questing() >= 0) {
             quest = sim::questOf(realm.tables()->folk[size_t(realm.questing())].number);
+            journal_ = -1;
         }
+        const bool reading = quest < 0 && journal_ >= 0;
+        if (reading) quest = journal_;
         QuestDialog::Result result;
         const bool free = !typing && quest >= 0;
-        questDialog_.update(seconds, play, quest, float(window.width()), float(window.height()),
+        questDialog_.update(seconds, play, quest, reading, float(window.width()),
+                            float(window.height()),
                             free ? pointer : Pointer{}, free ? window.scroll() : 0.0f,
                             free && window.entered(),
                             free && (window.escaped() || scriptEscape_), shelfStage_, &result);
         // His voice reads the page, from the frame it comes up: a new page cuts the last one
         // and the window shutting stops him mid-line.
         const int page = questDialog_.page();
-        const int voiced = page < 0 ? -1 : quest * 4 + page;
+        const int voiced = page < 0 || reading ? -1 : quest * 4 + page;
         if (voiced != voiced_) {
             voiced_ = voiced;
             const char* who = voiced >= 0 ? sim::questAt(quest).voice : "";
@@ -199,8 +204,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 play.sound().stopVoice();
             }
         }
+        // A step struck off on the tracker last frame: the blade's cut on its flare, heard at the
+        // ears as the interface's are.
+        if (tracker_.takeStrike()) play.sound().play(play.sound().load("quest_step_done", false));
         if (result.close) {
-            play.closeQuest();
+            if (reading) journal_ = -1;
+            else play.closeQuest();
             click();
         } else if (result.accept) {
             if (play.acceptQuest(quest)) play.closeQuest();
@@ -271,6 +280,28 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     }
     if (!keysHeld && window.pressed(gfx::Window::Key::Character)) {
         characterOpen_ = !characterOpen_;
+        click();
+    }
+    // L, the quest journal: the tracked quest's page -- the one under way, else the one resting,
+    // else the first on offer -- and L again shuts it. With the bag up L is the bag's repair.
+    // Ours: MU 0.75 has no quests, and its L is only the repair.
+    if (!keysHeld && !inventoryOpen_ && play.isOpen() && play.realm().questing() < 0 &&
+        window.pressed(gfx::Window::Key::Repair)) {
+        if (journal_ >= 0) {
+            journal_ = -1;
+        } else {
+            const sim::Realm& realm = play.realm();
+            for (int q = 0; q < sim::kQuests && journal_ < 0; ++q) {
+                const sim::QuestState state = realm.quest(q).state;
+                if (state == sim::QuestState::Active || state == sim::QuestState::Ready) journal_ = q;
+            }
+            for (int q = 0; q < sim::kQuests && journal_ < 0; ++q) {
+                if (realm.quest(q).state == sim::QuestState::Resting && !realm.questOffered(q)) {
+                    journal_ = q;
+                }
+            }
+            if (journal_ < 0 && sim::kQuests > 0) journal_ = 0;
+        }
         click();
     }
 

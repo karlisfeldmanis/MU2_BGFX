@@ -23,8 +23,10 @@ class Play;
 namespace quest_marks {
 enum class StepMark : uint8_t { Waiting, Live, Done, Ready };
 // A step's 14u mark, centred on (cx, cy): an iron-low ring, a lit iron ring, an ash check, a
-// solid blood dot. Shared with the dialog, which lists the same steps.
-void mark(gfx::Canvas& canvas, StepMark kind, float cx, float cy, float u, float alpha = 1.0f);
+// solid blood dot. Shared with the dialog, which lists the same steps. `ink`, when not 0, paints
+// the check in another colour (the tracker's gold, as a step is struck off).
+void mark(gfx::Canvas& canvas, StepMark kind, float cx, float cy, float u, float alpha = 1.0f,
+          uint32_t ink = 0);
 // A packed colour with its alpha multiplied.
 uint32_t faded(uint32_t abgr, float alpha);
 // "11h 42m", "42m", "under a minute".
@@ -43,6 +45,12 @@ public:
     const gfx::Canvas& banner() const { return banner_; }
     bool showing() const { return !canvas_.empty(); }
     bool announcing() const { return !banner_.empty(); }
+    // Once, as a step struck off starts its flare: the desk plays quest_step_done on it.
+    bool takeStrike() {
+        const bool heard = strikeHeard_;
+        strikeHeard_ = false;
+        return heard;
+    }
 
 private:
     void rebuild(const Play& play, int width, int height);
@@ -69,6 +77,13 @@ private:
     int focus_ = -1;      // the step last counted, or -1 for all at full
     float lit_[sim::kQuestSteps] = {};
 
+    // Struck off: a count that reaches its goal flares gold, is struck through, and folds out of
+    // the list, the rows under it closing up. Seconds since it was done, -1 while it is not; at
+    // kStruckSeconds it is gone. A quest found already done (a load) starts its steps gone.
+    float struck_[sim::kQuestSteps] = {};
+    int struckQuest_ = -1;
+    bool strikeHeard_ = false;
+
     // The banner: what it says, and where it is in its life.
     std::string bannerKicker_, bannerTitle_, bannerLine_, bannerZen_;
     float bannerAge_ = -1.0f;
@@ -85,6 +100,7 @@ private:
         int counts[sim::kQuestSteps] = {};
         int embers[sim::kQuestSteps] = {};
         int lit[sim::kQuestSteps] = {};
+        int struck[sim::kQuestSteps] = {};
         int focus = -1;
         int shown = 0;
         int width = 0, height = 0;
