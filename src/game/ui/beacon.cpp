@@ -145,9 +145,9 @@ bool Beacon::bake(float unit) {
     art_ = {};
     cellW_ = int(std::ceil(kCellW * unit));
     cellH_ = int(std::ceil(kCellH * unit));
-    // Three cells side by side: the offer's "!", the hand-in's "?" and the grey "!" of a quest
-    // still to come.
-    const int wide = cellW_ * 3;
+    // Four cells side by side: the offer's "!", the hand-in's "?", and the same two in grey --
+    // a quest still to come, and one under way.
+    const int wide = cellW_ * 4;
     std::vector<uint8_t> rgba(size_t(wide) * size_t(cellH_) * 4, 0);
     const float texel = 1.0f / unit;  // one texel, in units
     constexpr int kSide = 4;          // samples a side
@@ -157,7 +157,7 @@ bool Beacon::bake(float unit) {
     for (int py = 0; py < cellH_; ++py) {
         for (int column = 0; column < wide; ++column) {
             const int cell = column / cellW_;
-            const bool ask = cell == 1, later = cell == 2;
+            const bool ask = cell == 1 || cell == 3, later = cell >= 2;
             const int px = column - cell * cellW_;
             Pre sum;
             for (int sy = 0; sy < kSide; ++sy) {
@@ -239,13 +239,16 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
     const float bob = std::sin(clock_ * kTau * kBobHz) * kBob * u;
     const sim::Realm& realm = play.realm();
     for (int folk : play.questGivers()) {
-        // Only while he has something for the hero: the quest on offer, or its hand-in. Taken
-        // and under way, or resting until it is his to give again, he is a townsperson.
+        // While he has something for the hero or is waiting on him: the quest on offer, under
+        // way, or its hand-in. Resting until it is his to give again, he is a townsperson.
         const int quest = sim::questOf(realm.tables()->folk[size_t(folk)].number);
         const bool ready = quest >= 0 && realm.quest(quest).state == sim::QuestState::Ready;
-        // No quest of his in the table: one still to come (Play::questGivers), marked grey.
+        // No quest of his in the table: one still to come (Play::questGivers), a grey "!". And
+        // his quest taken and under way, a grey "?", as WoW marks one not yet done (the user,
+        // 2026-09-30: Devin's mark was gone once his quest was taken).
         const bool later = quest < 0;
-        if (quest >= 0 && !realm.questOffered(quest) && !ready) continue;
+        const bool underway = quest >= 0 && realm.quest(quest).state == sim::QuestState::Active;
+        if (quest >= 0 && !realm.questOffered(quest) && !ready && !underway) continue;
         float x = 0.0f, y = 0.0f;
         if (!play.folkCrownOf(folk, viewProj, width, height, &x, &y)) continue;
         const float w = float(cellW_), h = float(cellH_);
@@ -254,7 +257,7 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         const float t = folk == named ? std::clamp(shown, 0.0f, 1.0f) : 0.0f;
         const float lift = kLift + (kLiftNamed - kLift) * t * t * (3.0f - 2.0f * t);
         canvas_.region(art_, {std::round(x - w * 0.5f), y - lift * u - h + bob, w, h},
-                       {ready ? w : (later ? w * 2.0f : 0.0f), 0.0f, w, h});
+                       {ready ? w : later ? w * 2.0f : underway ? w * 3.0f : 0.0f, 0.0f, w, h});
         showing_ = true;
     }
 }
