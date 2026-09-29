@@ -77,6 +77,14 @@ public:
     // posed. What MU's `b->TransformPosition(BoneTransform[n], p, Position)` does, for what
     // rides a bone without being drawn as a mesh: a lantern's glow, a spray's puff.
     bool pointOn(int bone, const float local[3], float out[3]) const;
+    // A bone's whole world matrix on the last pose, the placement included: what rides it
+    // rigidly -- the Imp on a shoulder -- is drawn in this frame. False when not posed.
+    bool boneWorld(int bone, float out[16]) const;
+    // Draws this figure in `parent`'s frame instead of at its own position and yaw: MU's
+    // unlinked RenderLinkObject, a model riding another's bone (game/pets.h). `unmount` puts
+    // it back on its own placement.
+    void mount(const float parent[16]);
+    void unmount() { mounted_ = false; }
     // Where `model` -- a point in the figure's own bind space, in metres -- stands in the
     // world: the placement alone, with no bone. For what is part of the model and never moves
     // with its clip, such as the coals in Hanzo's forge.
@@ -144,6 +152,8 @@ private:
     float fadeLength_ = 0.0f;
     bool safe_ = false;  // standing on a safe tile: weapon on the back, unarmed stance
     bool smooth_ = false;  // curved between keys; see smoothKeys
+    bool mounted_ = false;  // drawn in mount_'s frame; see mount
+    float mount_[16] = {};
 };
 
 // Who is standing in the town: the fourteen figures MU's own placement list carries, a

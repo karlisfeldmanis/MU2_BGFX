@@ -54,6 +54,7 @@ enum : int32_t {
     kGroupPants = 9,
     kGroupGloves = 10,
     kGroupBoots = 11,
+    kGroupPets = 13,
     kGroupPotions = 14,
 };
 
@@ -111,6 +112,10 @@ int defenseBonus(bool shield, int refinement);
 // by MU's own hand rule (a bow is Weapon[1], a crossbow Weapon[0]; arrows beside the bow and
 // bolts beside the crossbow), a shield the left hand, armour its group less five.
 int placeOf(const content::ItemRow& row);
+// A pet's powers (sim::PetPower): the Guardian Angel 13/0 and the Imp 13/1. Nothing for any
+// other row, and nothing -- the caller's to check -- for one whose life is gone.
+PetPower petPower(const content::ItemRow& row);
+
 // Whether it is ammunition: the bow group's 7 and 15.
 bool ammunition(const content::ItemRow& row);
 // Whether it is drunk for a pool: the apple and three healing potions, the three mana potions.

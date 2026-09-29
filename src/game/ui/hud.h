@@ -136,14 +136,19 @@ public:
         int32_t skill = 0;    // MU's own number, 0 for nothing standing
         bool ale = false;     // or the Ale's, which is no skill
         bool poison = false;  // or a poison on him, MU's eDeBuff_Poison
+        // Or his pet in slot 8: 0 the Guardian Angel, 1 the Imp, -1 none. It has no clock; its
+        // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
+        // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).
+        int pet = -1;
+        int life = 0, lifeMost = 0;
         float seconds = 0.0f; // what is left of it
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
-        bool empty() const { return skill == 0 && !ale && !poison; }
+        bool empty() const { return skill == 0 && !ale && !poison && pet < 0; }
         bool operator==(const Boon& o) const {
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
-            return skill == o.skill && ale == o.ale && poison == o.poison &&
-                   int(seconds * 10.0f) == int(o.seconds * 10.0f);
+            return skill == o.skill && ale == o.ale && poison == o.poison && pet == o.pet &&
+                   life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
     };
     static constexpr int kBoons = 4;

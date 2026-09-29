@@ -847,6 +847,20 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // The guard first and the Ale after it, whichever stands.
     Hud::Boon boons[Hud::kBoons];
     int standing = 0;
+    // His pet first, which stands as long as it has life: the Guardian Angel or the Imp in
+    // slot 8, its Life for the bar under it.
+    if (const sim::Held& pet = realm.satchel()[sim::kPet];
+        !pet.empty() && realm.tables() && size_t(pet.item) < realm.tables()->items.size()) {
+        const content::ItemRow& row = realm.tables()->items[size_t(pet.item)];
+        const int most = sim::maximumDurability(row, pet);
+        if (row.group == sim::kGroupPets && pet.durability > 0 && most > 0) {
+            Hud::Boon& boon = boons[standing++];
+            boon.pet = row.number;
+            boon.life = pet.durability;
+            boon.lifeMost = most;
+            boon.share = float(pet.durability) / float(most);
+        }
+    }
     if (hero.boonSkill != 0 && hero.boonUntil > realm.tick()) {
         const sim::SkillRow* row = sim::skillNumbered(hero.boonSkill);
         const float left = float(hero.boonUntil - realm.tick());
@@ -1124,7 +1138,10 @@ tip::Sheet Desk::skillSheet(const sim::SkillRow& row, const sim::Realm& realm) c
 // Whether a label is set bold: the jewels, BuildGroundItemLabelDescriptor's `boldTextItems`
 // (ZzzInventory.cpp:6077), of which the Bless, the Soul and the Chaos are the 0.75 rows.
 static bool boldOf(const content::Tables& tables, const sim::Lying& one) {
-    return !one.what.empty() && tables.items[size_t(one.what.item)].jewel();
+    // The pets share the jewels' drop group, not their bold name.
+    if (one.what.empty()) return false;
+    const content::ItemRow& row = tables.items[size_t(one.what.item)];
+    return row.jewel() && row.group != sim::kGroupPets;
 }
 
 // A ground label's colour: the item card's quality (describe's qualityOf, WoW's ladder since

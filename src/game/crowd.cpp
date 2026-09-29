@@ -302,6 +302,7 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
     // in the town is placed exactly as a barrel is. Pitch and roll are zero -- a figure
     // stands upright whatever the ground does, which is MU's own behaviour.
     content::placementTransform(0.0f, yaw_, 0.0f, scale_, position_, transform);
+    if (mounted_) std::memcpy(transform, mount_, sizeof(transform));
 
     for (size_t i = 0; i < body_->parts.size(); ++i) {
         const content::Mesh* part = body_->parts[i];
@@ -385,6 +386,19 @@ bool Figure::pointOn(int bone, const float local[3], float out[3]) const {
                  local[2] * placed[2 * 4 + j] + placed[3 * 4 + j];
     }
     return true;
+}
+
+bool Figure::boneWorld(int bone, float out[16]) const {
+    if (!body_ || bone < 0 || size_t(bone) * 16 + 16 > world_.size()) return false;
+    float transform[16];
+    content::placementTransform(pitch_, yaw_, roll_, scale_, position_, transform);
+    core::mulMatrix(&world_[size_t(bone) * 16], transform, out);
+    return true;
+}
+
+void Figure::mount(const float parent[16]) {
+    std::memcpy(mount_, parent, sizeof(mount_));
+    mounted_ = true;
 }
 
 bool Figure::pointOnBind(int bone, const float model[3], float out[3]) const {

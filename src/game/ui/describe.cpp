@@ -1,6 +1,7 @@
 #include "game/ui/describe.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cctype>
 #include <cstdio>
 #include <string>
@@ -48,6 +49,8 @@ std::string kindOf(const content::ItemRow& row) {
     if (sim::ammunition(row)) return "Ammunition";
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
     if (row.shield()) return "Shield";
+    // Before the jewel: the pets ride in the jewel drop group and are not jewels.
+    if (row.group == sim::kGroupPets) return "Pet";
     if (row.jewel()) return "Jewel";
     // In the potions' group as MU files it (14, 22), and not drunk: set in a socket.
     if (sim::creation(row)) return "Epic jewel";
@@ -194,7 +197,9 @@ tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
     if (sim::creation(row)) return Tone::Legendary;
     if (what.excellent != 0) return Tone::Epic;
     if (socketsOf(what) > 0) return Tone::Rare;
-    if (row.jewel() || what.refinement >= kRefinedFrom) return Tone::Artifact;
+    if ((row.jewel() && row.group != sim::kGroupPets) || what.refinement >= kRefinedFrom) {
+        return Tone::Artifact;
+    }
     if (what.skill || what.luck || what.option > 0) return Tone::Uncommon;
     return Tone::White;
 }
@@ -316,6 +321,29 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         line.mark = tip::Mark::Diamond;
         does.rows.push_back(line);
     }
+    // A pet's powers in MU's own words, which ZzzInventory prints for ITEM_GUARDIAN_ANGEL and
+    // ITEM_IMP (ZzzInventory.cpp:4258-4268; Game.en.resx "Absorb %d%% of Damage", "Max HP +%d
+    // increased", "Increase 30%% of attacking & Wizardry Dmg"), with the numbers off the rule the
+    // realm fights by (sim::petPower), so the card and the blow cannot disagree.
+    if (row.group == sim::kGroupPets) {
+        const sim::PetPower power = sim::petPower(row);
+        const auto say = [&](const std::string& words) {
+            Row line;
+            line.free = words;
+            line.freeTone = Tone::White;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        };
+        if (power.taken != 1.0) {
+            say("Absorb " + std::to_string(int(std::lround((1.0 - power.taken) * 100.0))) +
+                "% of Damage");
+        }
+        if (power.health > 0) say("Max HP +" + std::to_string(power.health) + " increased");
+        if (power.dealt != 1.0) {
+            say("Increase " + std::to_string(int(std::lround((power.dealt - 1.0) * 100.0))) +
+                "% of attacking & Wizardry Dmg");
+        }
+    }
     if (sim::heals(row) || sim::restores(row)) {
         Row line;
         line.free = sim::heals(row) ? "Restores life when it goes down."
@@ -326,7 +354,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     // A stack says how many, as MU's `Number of items` does; a quiver's shots are its wear and
     // go in the foot with everything else that is spent.
-    if (!sim::ammunition(row) && what.durability > 1 && !worn && !weapon) {
+    if (!sim::ammunition(row) && what.durability > 1 && !worn && !weapon &&
+        row.group != sim::kGroupPets) {
         does.rows.push_back(stat("Quantity", std::to_string(what.durability), Tone::Blue));
     }
     if (!does.rows.empty()) sheet.sections.push_back(does);
@@ -632,8 +661,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // warning icons and the slot's wash use.
     if (sim::wears(row)) {
         const int maximum = sim::maximumDurability(row, what);
-        sheet.wear = "Durability " + std::to_string(what.durability) + " / " +
-                     std::to_string(maximum);
+        // A pet's is its Life: MU's `Life: %d` (GT 70) for ITEM_HELPER to +7 (:4656-4661).
+        const char* word = row.group == sim::kGroupPets ? "Life " : "Durability ";
+        sheet.wear = word + std::to_string(what.durability) + " / " + std::to_string(maximum);
         sheet.worn = maximum > 0 ? float(what.durability) / float(maximum) : 0.0f;
         switch (sim::wornBand(what.durability, maximum)) {
             case sim::Worn::Broken:

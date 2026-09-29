@@ -81,6 +81,18 @@ int defenseBonus(bool shield, int refinement) {
     return shield ? at(kShieldDefense, refinement) : at(kArmourDefense, refinement);
 }
 
+PetPower petPower(const content::ItemRow& row) {
+    PetPower power;
+    if (row.group != kGroupPets) return power;
+    if (row.number == 0) {
+        power.taken = 0.8;
+        power.health = 50;
+    } else if (row.number == 1) {
+        power.dealt = 1.3;
+    }
+    return power;
+}
+
 bool ammunition(const content::ItemRow& row) {
     return row.group == kGroupBows && (row.number == 7 || row.number == 15);
 }
@@ -97,7 +109,9 @@ bool expensive(const content::Tables& tables, const Held& what) {
     constexpr int kGroupWings = 12;
     // And, ours, the Rune of Creation and anything with a socket: the user, 2026-09-29, "jewel of
     // creation or item with sockets is not dropobale".
-    return row.jewel() || (what.refinement > 6 && row.group < kGroupWings) || what.excellent != 0 ||
+    // The pets share the jewels' drop group and not their worth: IsHighValueItem names no helper.
+    const bool jewel = row.jewel() && row.group != kGroupPets;
+    return jewel || (what.refinement > 6 && row.group < kGroupWings) || what.excellent != 0 ||
            creation(row) || what.sockets > 0;
 }
 
@@ -240,6 +254,8 @@ int placeOf(const content::ItemRow& row) {
         return kWeaponRight;
     }
     if (row.group >= kGroupShields && row.group <= kGroupBoots) return row.group - 5;
+    // The Guardian Angel and the Imp: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
+    if (row.group == kGroupPets) return kPet;
     return -1;
 }
 

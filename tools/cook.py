@@ -1648,6 +1648,14 @@ def figure_set(world):
                 break
 
     # The placements the town cook dropped for having no mesh: these fourteen.
+    # The pets, on every map: a worn Guardian Angel or Imp is drawn with whoever wears it
+    # (game/pets.h), wherever that is. Each is one model playing its own one clip.
+    for one in index.get("objects", []):
+        if one.get("kind") == "pet" and one["name"] not in named:
+            mesh = reach(one.get("glb"))
+            if mesh:
+                standalone.append({"name": one["name"], "mesh": mesh})
+
     figures = {one["name"] for one in characters} | {one["name"] for one in standalone}
     per_tile = float(map_data["units_per_tile"])
     placements = []

@@ -62,14 +62,29 @@ jewel group (0.001 a kill, drop level ≤ monster level, no 12-level window).
   destroyed. Repair-all skips it; a single repair needs the pet trainer.
 - Price: `dropLevel³ + 100`, so Angel 12,200 buy / 4,000 sell, Imp 22,000 / 7,300.
 
-## Next steps
+## In the game (2026-09-29)
 
-1. **Sim.** Group 13 into the item rules: equip into `kPet` (level requirement only), the
-   ×0.8 / +50 / ×1.3 in the damage chain at OpenMU's place, the wear on hits taken, destruction
-   at 0, price. Then `pipeline/index.py` so they drop.
-2. **Worn Imp.** Draw Helper02 on `Bip01 L Clavicle` at (20,0,0) MU units, with its red light.
-3. **Flying Angel.** A follower object stepping GOBoid's maths per reference tick, with its
-   sparks and green light, playing action 0.
-4. **Bag and tooltip.** The slot-8 ghost is already cut (`bag_slot_pet`); the `Life:` line and
-   the two effect lines; the HUD life bar.
-5. Cook them (`cook_one`) once they are indexed.
+- **Rules** (`sim::PetPower`, `sim/items.cpp`): group 13 goes in slot 8 (`placeOf`); while its
+  Life is above 0 the Angel multiplies damage taken by 0.8 (with the guard skill's share, as two
+  DamageReceiveDecrement power-ups multiply) and adds 50 to maximum health before the excellent
+  x1.04; the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7).
+  Every hit taken wears it by damage/2000 and at 0 it is destroyed (`What::PetLost`).
+- **Price and shelf** (`sim/market.cpp`): `dropLevel^3 + 100`, 12,200 and 22,000, a third back.
+  Both on Lumen's shelf in the tavern, cells 2 and 3 -- ours, 0.75 sells them nowhere.
+- **Card** (`game/ui/describe.cpp`): type "Pet", MU's own lines ("Absorb 20% of Damage", "Max HP
+  +50 increased", "Increase 30% of attacking & Wizardry Dmg"), `Life n / 255` in the foot. They
+  ride in the jewel drop group but are not jewels: no gold name, droppable, not bold on the ground.
+- **Buff strip** (`game/ui/hud.cpp`): the pet's cell first, its Life as the bar. The two icons are
+  ours, rendered from the pets' own models by `pipeline/pet_icons.py` (MuDream has no pet cell).
+- **Drawn** (`game/pets.h`): cooked as standalone figures on every map (`tools/cook.py`). The Imp
+  rides `Bip01 L Clavicle` at (20,0,0) in the bone's frame (`Figure::mount`); the Angel flies
+  GOBoid's steering at 25 Hz, drawn between its last two steps with an eased heading, at 0.7.
+
+Test: `build/mu2 --world lorencia --play --level 30 --give Helper01:1:W` (or Helper02).
+
+## Still open
+
+1. The Angel's four grey sparks and green BITMAP_LIGHT, and the Imp's red one.
+2. The Imp's 1024² normal and ORM maps for a 58-triangle model: its recipe could bake smaller.
+3. Noria's and Devias's figures are not recooked yet (`cook.py --world noria --only figures`).
+4. The Horn of Uniria (13/2).

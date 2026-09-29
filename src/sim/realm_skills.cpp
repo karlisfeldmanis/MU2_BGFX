@@ -220,7 +220,7 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
             // elf's `wardShare`, off agility with no shield at all.
             hero.boonDamageTaken = 1.0f - boonShare(row, hero.points, hero.shieldDefense);
             hero.boonUntil = tick_ + row.boonTicks;
-            hero.stats.damageTaken = double(hero.boonDamageTaken);
+            hero.stats.damageTaken = double(hero.boonDamageTaken) * hero.pet.taken;
         }
     } else {
         Body* target = body(at);
@@ -412,8 +412,9 @@ bool Realm::armed(const Body& hero, const SkillRow& row) const {
 }
 
 void Realm::keepBoon(Body& hero) {
+    // The guard and the Guardian Angel multiply, as two DamageReceiveDecrement power-ups do.
     hero.stats.damageTaken =
-        hero.boonUntil > tick_ ? double(hero.boonDamageTaken) : 1.0;
+        (hero.boonUntil > tick_ ? double(hero.boonDamageTaken) : 1.0) * hero.pet.taken;
 }
 
 void Realm::shove(Body& target) {

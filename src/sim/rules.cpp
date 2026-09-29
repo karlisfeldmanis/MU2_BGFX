@@ -108,7 +108,9 @@ static void settle(Blow& blow, int damage, const Fighter& attacker, const Fighte
         damage = floorDamage;
     }
 
-    // 7. And what the defender is shrugging off, after the floor and only above 1.
+    // 7. What the attacker's Imp adds, on every blow, then what the defender is shrugging off
+    // -- the guard and the Guardian Angel -- only above 1 (AttackableExtensions.cs:220-224).
+    if (attacker.damageDealt != 1.0) damage = int(double(damage) * attacker.damageDealt);
     if (damage > 1) damage = int(double(damage) * defender.damageTaken);
 
     blow.damage = damage;
@@ -221,7 +223,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     out->defenseRate = float(double(out->defenseRate) * excel.defenseRateRate);
     out->excellentChance = excel.excellentChance;
     out->damageDecrease = excel.damageDecrease;
-    out->damageTaken = 1.0;
+    out->damageTaken = arms.pet.taken;
+    out->damageDealt = arms.pet.dealt;
     out->greaterDamage = arms.greaterDamage;
 
     // Truncated, and it is a departure of the same kind as the two above: OpenMU keeps
@@ -230,6 +233,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // 35 + 2 + 75 for a knight -- and this is marked rather than argued.
     *maxHealth = int(double(row.baseHealth) + double(level) * double(row.healthPerLevel) +
                      double(points.vitality) * double(row.healthPerVitality));
+    // The Guardian Angel's +50, raw, so the armour's rate below takes it too.
+    *maxHealth += arms.pet.health;
     // And the excellent armour's +4% a piece on top.
     if (excel.healthRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.healthRate);
 }

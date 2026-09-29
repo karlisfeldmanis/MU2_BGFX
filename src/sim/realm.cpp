@@ -477,7 +477,7 @@ void Realm::press() {
         hero.boonUntil = 0;
         hero.boonSkill = skill::kNone;
         hero.boonDamageTaken = 1.0f;
-        hero.stats.damageTaken = 1.0;
+        hero.stats.damageTaken = hero.pet.taken;
     }
     // And the Ale, off on its tick, with the swing re-reckoned without its twenty. MuMain's
     // HeroAttributeCalc clears ABILITY_FAST_ATTACK_SPEED the frame AbilityTime[0] runs out.
@@ -958,6 +958,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
                           happening.b);
             break;
         }
+        case What::PetLost:
+            std::snprintf(line, sizeof(line), "%6u %s lost his pet, row %d", happening.tick, who,
+                          happening.a);
+            break;
         case What::Worn:
             std::snprintf(line, sizeof(line), "%6u %s wore slot %d to %d/%d", happening.tick, who,
                           happening.a, happening.b, happening.c);

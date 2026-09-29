@@ -943,6 +943,10 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         one.figure.gather(palette, out);
         tint();
     }
+    // His pet, after him, so the Imp takes his clavicle as this frame posed it.
+    if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->visible) {
+        pets_.gather(renderer, hero->figure, scratch_, out, casters);
+    }
     for (size_t i = 0; i < folk_.size(); ++i) {
         Standing& one = folk_[i];
         const int bones = one.figure.pose(scratch_.data());

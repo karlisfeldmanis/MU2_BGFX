@@ -22,6 +22,16 @@ constexpr int kPointsPerLevel = 5;
 // What the excellent options he wears come to (ExcellentOptions.cs), summed off his worn slots
 // by Realm::rearm: the multiplying ones multiply per piece and the adding ones add, as their
 // AggregateType says. Neutral for a monster and for anybody wearing nothing excellent.
+// What a worn pet does while it has life left: OpenMU's Version075/Items/Pets.cs:32-35, the
+// base power-ups CreatePet hangs on the row, and ItemPowerUpFactory.cs:38-41 drops them at 0.
+//   Guardian Angel  DamageReceiveDecrement x0.8, MaximumHealth +50 (AddRaw)
+//   Imp             AttackDamageIncrease x1.3
+struct PetPower {
+    double taken = 1.0;  // on every blow he takes, after the floor and only above 1
+    double dealt = 1.0;  // on every blow he lands, after the floor
+    int health = 0;      // on his maximum, before the excellent armour's x1.04
+};
+
 struct Excellence {
     // On a weapon.
     double killMana = 0.0;        // 1: an eighth of max mana back after a kill
@@ -69,6 +79,9 @@ struct Fighter {
     // `Stats.GreaterDamageBonus`: the elf's Greater Damage, added to every blow after the
     // defence (AttackableExtensions.cs:185). Nought for anybody not under it.
     int greaterDamage = 0;
+    // Stats.AttackDamageIncrease: the Imp's x1.3, taken on every blow after the level floor and
+    // before damageTaken (AttackableExtensions.cs:220-224). 1 for everybody without one.
+    double damageDealt = 1.0;
     // The wizardry band, before a spell's own damage is added: `MinimumWizBaseDmg = energy / 9`
     // and `MaximumWizBaseDmg = energy / 4` (ClassDarkWizard.cs:72-73). Floats, because OpenMU
     // keeps them as float attributes and truncates only after the spell and the staff are in
@@ -193,6 +206,8 @@ struct Arms {
     bool archery = false;
     // Greater Damage while it stands (Fighter::greaterDamage).
     int greaterDamage = 0;
+    // The worn pet's, while its life lasts.
+    PetPower pet;
 };
 
 void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Fighter* out,

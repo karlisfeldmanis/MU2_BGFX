@@ -49,6 +49,7 @@ Arms Realm::armsOf(const Body& one) const {
         arms.criticalChance = double(one.luckyWorn) * kLuckCritical;
         arms.excel = one.excel;
         arms.staffRise = double(one.staffRise);
+        arms.pet = one.pet;
         arms.archery = one.archer != 0;
         arms.greaterDamage = one.mightUntil > tick_ ? one.might : 0;
     }
@@ -314,6 +315,9 @@ void Realm::rearm(Body& hero) {
             hero.wornDefenseRate += rate - int(float(rate) * cut);
         }
     }
+    // The pet in slot 8, while it has life (ItemPowerUpFactory.cs:38-41).
+    const content::ItemRow* pet = rowAt(kPet);
+    hero.pet = pet && bag_[kPet].durability > 0 ? petPower(*pet) : PetPower{};
     const int was = hero.maxHealth;
     reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
     // **A guard stands only behind the shield that raised it.** Taking the shield off ends
@@ -697,8 +701,8 @@ void Realm::leave(const Body& dead, const Body& killer) {
     };
 
     // The jewels group is not only the jewels: `AddItemToJewelItemDrop` puts the Ale (drop level
-    // 15) and the Town Portal Scroll (30) in it too, and the three pets, which have no rows
-    // here. Drawn by the monster's level alone, with no twelve-level gap (GenerateItemFromGroup's
+    // 15) and the Town Portal Scroll (30) in it too, and the three pets -- the Guardian Angel
+    // (23) and the Imp (28) have rows, carrying the flag; the Horn of Uniria has none. Drawn by the monster's level alone, with no twelve-level gap (GenerateItemFromGroup's
     // `isJewel`). In Lorencia that is the Chaos from level 12 and the Ale from 15; the Bless (25)
     // and the Soul (30) are never left by anything in the town.
     const auto jewelGroup = [](const content::ItemRow& r) {
@@ -956,9 +960,23 @@ void Realm::wearOnTaken(int took) {
         const content::ItemRow& row = tables_->items[size_t(h.item)];
         if ((row.shield() || row.armour()) && wears(row)) candidates[count++] = slot;
     }
-    if (count == 0) return;
-    const int slot = candidates[wearDice_.nextInt(0, count)];
-    wearDown(slot, double(took) / kDamagePerDurability);
+    if (count > 0) {
+        const int slot = candidates[wearDice_.nextInt(0, count)];
+        wearDown(slot, double(took) / kDamagePerDurability);
+    }
+    // And the pet, on every hit taken and at the armour's rate, as long as it has life: a
+    // pet that cannot be trained divides by DamagePerOneItemDurability too (Player.cs:1988,
+    // :2006-2025). Landing a blow wears it not at all. At nought it is destroyed rather than
+    // left broken (:1991-2001), and its powers go with it.
+    const Held& pet = bag_[kPet];
+    if (pet.empty() || pet.durability <= 0) return;
+    wearDown(kPet, double(took) / kDamagePerDurability);
+    if (bag_[kPet].durability > 0) return;
+    const int32_t lost = bag_[kPet].item;
+    bag_.lift(kPet);
+    Body& hero = bodies_[0];
+    say(What::PetLost, hero, lost);
+    rearm(hero);
 }
 
 void Realm::wearOnLanded() {

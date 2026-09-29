@@ -102,6 +102,8 @@ enum class What : uint8_t {
     Arrowless, // she drew and found no ammunition in hand or bag, and the attack stopped:
                // MuMain's "no more arrows" (CheckArrow). a: 1 for arrows, 2 for bolts
     Dismissed, // her summon gone without a blow: recast, or her death (Realm::dismiss)
+    PetLost,   // his pet's life ran out and it is gone from slot 8 (Player.cs:1991-2001):
+               // a: the item row
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -211,6 +213,8 @@ struct Body {
     // The share of the weapon's band its wear takes, 0 to 0.5, and 1 broken (sim/wear.h). The
     // defence's cut is taken piece by piece inside `wornDefense`.
     float weaponCut = 0.0f;
+    // What his pet does while its life lasts (sim::PetPower), read off slot 8 in rearm.
+    PetPower pet;
 
     // Tiles, and a tile's centre is its integer coordinate -- MU2's own reckoning
     // (Things.cs:71-82, `Column => (int)MathF.Round(X)`). The world's metres and the negation

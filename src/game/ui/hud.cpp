@@ -120,6 +120,9 @@ const char* buffArt(int32_t skill) {
     }
 }
 
+// The pets' cells, ours: each rendered from the pet's own model by pipeline/pet_icons.py.
+const char* petArt(int pet) { return pet == 0 ? "buff_angel" : pet == 1 ? "buff_imp" : nullptr; }
+
 // The painted key labels: a dark cell on rows 164 to 177 under every box, the figure centred on
 // the box. Measured off hud_base.png for this sprint; (15, 16, 17) is the cell's own dark.
 constexpr float kLabelTop = 164.0f, kLabelTall = 14.0f, kLabelWide = 20.0f;
@@ -618,7 +621,10 @@ std::string of(int now, int most) { return panel::grouped(now) + " / " + panel::
 tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     tip::Sheet sheet;
     sheet.wide = kCardWide;
-    const char* art = one.poison ? "buff_poison" : one.ale ? "buff_ale" : buffArt(one.skill);
+    const char* art = one.pet >= 0 ? petArt(one.pet)
+                      : one.poison ? "buff_poison"
+                      : one.ale    ? "buff_ale"
+                                   : buffArt(one.skill);
     if (art != nullptr) {
         const gfx::Art& icon = arts.get(art);
         if (icon.valid()) {
@@ -629,6 +635,27 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     sheet.wear = sim::spoken(one.seconds) + " left";
     sheet.worn = std::clamp(one.share, 0.0f, 1.0f);
     sheet.wearTone = tip::Tone::White;
+    if (one.pet >= 0) {
+        // What the pet does while it has life, in MU's words (the item card's own lines,
+        // sim::petPower), and its Life in the foot where a boon keeps its time.
+        const bool angel = one.pet == 0;
+        sheet.name = angel ? "Guardian Angel" : "Imp";
+        sheet.nameTone = tip::Tone::White;
+        sheet.base = "PET";
+        tip::Section what;
+        if (angel) {
+            what.rows.push_back(said("Absorbs", "20%", tip::Tone::Green));
+            what.rows.push_back(prose("of every blow that reaches you"));
+            what.rows.push_back(said("Max HP", "+50", tip::Tone::Green));
+        } else {
+            what.rows.push_back(said("Damage", "+30%", tip::Tone::Green));
+            what.rows.push_back(prose("attacking and wizardry, skills too"));
+        }
+        what.rows.push_back(prose("loses Life as you take damage, and is gone at none"));
+        sheet.sections.push_back(what);
+        sheet.wear = "Life " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);
+        return sheet;
+    }
     if (one.poison) {
         // 0.75's poison on him: a share of what he has left every three seconds.
         sheet.name = "Poisoned";
@@ -1005,7 +1032,8 @@ void Hud::rebuild() {
         const Boon& one = boons_[i];
         if (one.empty()) continue;
         const Box box = plate(s, buffPx(i));
-        const char* art = one.poison            ? "buff_poison"
+        const char* art = one.pet >= 0          ? petArt(one.pet)
+                          : one.poison           ? "buff_poison"
                           : one.ale              ? "buff_ale"
                           : buffArt(one.skill)   ? buffArt(one.skill)
                                                  : "buff_defense";

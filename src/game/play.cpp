@@ -1062,6 +1062,18 @@ void Play::update(double seconds) {
     said_.erase(std::remove_if(said_.begin(), said_.end(),
                                [](const Said& one) { return one.age >= kSaidSeconds; }),
                 said_.end());
+    // And his pet, off slot 8 while it has life: the Angel flies, the Imp rides (game/pets.h).
+    if (isOpen()) {
+        if (Drawn* hero = drawnOf(realm_.hero().id)) {
+            int pet = -1;
+            const sim::Held& worn = realm_.satchel()[sim::kPet];
+            if (!worn.empty() && size_t(worn.item) < tables_.items.size()) {
+                const content::ItemRow& row = tables_.items[size_t(worn.item)];
+                if (row.group == sim::kGroupPets && worn.durability > 0) pet = row.number;
+            }
+            pets_.update(float(seconds), hero->figure, pet, realm_.hero().alive());
+        }
+    }
 }
 
 std::string Play::nameOf(uint32_t id) const {

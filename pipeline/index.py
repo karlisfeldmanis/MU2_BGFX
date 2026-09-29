@@ -2503,9 +2503,11 @@ def main() -> None:
                 # the fight spends one at a time; on everything worn the wear it starts with,
                 # which the fight takes off and a merchant puts back (sim/wear.h). A stacking
                 # row's is its count and comes from the purchase, so it is not carried there.
-                # Worn is groups 0 to 11: the weapons, the shields and the five armour groups.
+                # Worn is groups 0 to 11: the weapons, the shields and the five armour groups --
+                # and 13, the pets, whose durability is their Life (sim/wear.h).
                 if stats.get("durability") and (
                     stats.get("is_ammunition") or 0 <= stats.get("group", -1) <= 11
+                    or stats.get("group") == 13
                 ):
                     entry["stats"]["durability"] = stats["durability"]
 

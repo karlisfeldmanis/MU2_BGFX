@@ -7,7 +7,7 @@ namespace {
 
 constexpr int kHelms = 7, kArmours = 8, kPants = 9, kGloves = 10, kBoots = 11, kShields = 6;
 constexpr int kSwords = 0, kAxes = 1, kMaces = 2, kSpears = 3, kBows = 4, kStaves = 5;
-constexpr int kOrbs = 12, kPotions = 14, kScrolls = 15;
+constexpr int kOrbs = 12, kPets = 13, kPotions = 14, kScrolls = 15;
 
 constexpr Offer gear(int slot, int group, int number, int refinement, bool skill = false) {
     return Offer{slot, group, number, refinement, 0, skill};
@@ -85,7 +85,12 @@ constexpr Offer kMage[] = {
 };
 
 // Lumen: the Ale and the Town Portal Scroll. Market.Barmaid.
-constexpr Offer kBarmaid[] = {sip(0, 9, 1), sip(1, 10, 1)};
+//
+// **And the two pets, which are ours** (the user, 2026-09-29): the Guardian Angel and the Imp on
+// the cells after the scroll. 0.75 sells neither anywhere -- MerchantStores has no group 13 line
+// and both only drop, from the 0.1% jewel group -- so the tavern is where they are bought for now.
+constexpr Offer kBarmaid[] = {sip(0, 9, 1), sip(1, 10, 1), gear(2, kPets, 0, 0),
+                              gear(3, kPets, 1, 0)};
 
 // Elf Lala and Eo the Craftsman, Noria's two. Market.ElfLala and Market.Craftsman.
 constexpr Offer kElfLala[] = {
@@ -205,6 +210,12 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     }
     if (row.group == kScrolls && spell(row.number) > 0) return round(spell(row.number));
     if (row.group == kOrbs && orb(row.number) > 0) return round(orb(row.number));
+    // The pets: `dropLevel^3 + 100`, the branch OpenMU gives group 13 with the capes and the
+    // scrolls (ItemPriceCalculator.cs:486-498) -- 12,200 for the Angel, 22,000 for the Imp.
+    if (row.group == kPets) {
+        const int64_t dropLevel = row.dropLevel + refinement * 3;
+        return round(dropLevel * dropLevel * dropLevel + 100);
+    }
     if (row.group == kPotions && worth(row.number) > 0) {
         const int64_t value = worth(row.number);
         int64_t price = value * value * 10 / 12;

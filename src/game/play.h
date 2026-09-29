@@ -36,6 +36,7 @@
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
 #include "game/crowd.h"
+#include "game/pets.h"
 #include "game/figures.h"
 #include "game/fx/marker.h"
 #include "game/fx/showing.h"
@@ -646,6 +647,8 @@ private:
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
     Figures* figures_ = nullptr;
+    // His pet, drawn: the Guardian Angel about him or the Imp on his shoulder (game/pets.h).
+    Pets pets_;
     std::string bare_;  // the naked class body redress() dresses back over; see open()
     // Whether the world's air is MU's wind loop. Not Noria's since 2026-09-29: its jungle bed
     // (game/world/weather.h) is the whole of its air, the user's word -- "dont use lorencia
