@@ -379,6 +379,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.crossbow = sound_.load("player_crossbow", true);
     heard_.hit = sound_.load("melee_hit", true);
     heard_.die = sound_.load("player_die", true);
+    heard_.dieFemale = sound_.load("player_die_female", true);
     heard_.grass = sound_.load("player_step_grass", true);
     heard_.soil = sound_.load("player_step_soil", true);
     heard_.wind = sound_.load("world_wind", false);
@@ -421,9 +422,12 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     }
     heard_.explosion = sound_.load("explosion", true);
     // The knight dies to the other branch of the same test a monster does: SOUND_HUMAN_SCREAM04,
-    // pMaleDie.wav. The elf's pFemaleScream2 is the same rule with another file, for when an
-    // elf can be played.
-    if (Drawn* hero = drawnOf(realm_.hero().id)) hero->cryDie = heard_.die;
+    // pMaleDie.wav. The elf is IsFemale's other side of it, pFemaleScream2 -- the figure's own
+    // `female`, the flag her poses are chosen by.
+    if (Drawn* hero = drawnOf(realm_.hero().id)) {
+        const FigureBody* look = hero->figure.body();
+        hero->cryDie = look && look->female ? heard_.dieFemale : heard_.die;
+    }
     int breeds = 0;
     for (size_t i = 0; i < drawn_.size() && i < realm_.bodies().size(); ++i) {
         const sim::Body& body = realm_.bodies()[i];

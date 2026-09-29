@@ -212,7 +212,7 @@ void Play::emit(int event, float x, float z, uint32_t following) {
     // The hero's big moments lean the world back (docs/spatial-sound.md, C): his fall, and a
     // skill he casts. Not a landed blow, which is every second of a fight.
     const uint32_t him = realm_.hero().id;
-    bool big = event == heard_.die;
+    bool big = event == heard_.die || event == heard_.dieFemale;
     for (int skill : heard_.skill) big = big || (skill >= 0 && event == skill && following == him);
     if (big) sound_.duck();
 }
