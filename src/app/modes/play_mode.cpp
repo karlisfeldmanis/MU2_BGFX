@@ -736,22 +736,23 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                 fightMusic_ = false;
             } else if (fightMusic_) {
                 fightPlayed_ += seconds;
-                // Out after 25 quiet seconds, or three minutes whatever the fight, and then a
-                // long rest so it stays an event.
-                if (fightQuiet_ > 25.0f || fightPlayed_ > 180.0f) {
+                // Out after 25 quiet seconds, or about one pass of the track whatever the fight,
+                // and then WoW's long silence -- 12 to 20 minutes -- so it stays an event (the
+                // user, 2026-09-29: "more rarely similiar like WoW").
+                if (fightQuiet_ > 25.0f || fightPlayed_ > 150.0f) {
                     fightMusic_ = false;
-                    fightRest_ = 300.0f;
+                    fightRest_ = 720.0f + float(fightSeed_ % 481u);
                 }
             } else if (fighting && fightRest_ <= 0.0f) {
                 fightSeed_ ^= fightSeed_ << 13;
                 fightSeed_ ^= fightSeed_ >> 17;
                 fightSeed_ ^= fightSeed_ << 5;
-                // One fight in three; a miss waits a minute before the next fight may roll.
-                if (fightSeed_ % 3 == 0) {
+                // One fight in four; a miss waits four minutes before the next fight may roll.
+                if (fightSeed_ % 4 == 0) {
                     fightMusic_ = true;
                     fightPlayed_ = 0.0f;
                 } else {
-                    fightRest_ = 60.0f;
+                    fightRest_ = 240.0f;
                 }
             }
             hunt = fightMusic_;

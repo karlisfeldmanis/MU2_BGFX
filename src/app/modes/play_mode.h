@@ -119,7 +119,7 @@ private:
     bool fightMusic_ = false;
     float fightQuiet_ = 0.0f;    // seconds since the last blow either way
     float fightPlayed_ = 0.0f;   // seconds this playing has lasted
-    float fightRest_ = 90.0f;    // seconds before a fight may start it again
+    float fightRest_ = 300.0f;   // seconds before a fight may start it again
     uint32_t fightSeed_ = 0x2545F491u;
 
     // The quick slot's skill the arena's order was last given with: the desk binds the wizard's
