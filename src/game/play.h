@@ -546,6 +546,9 @@ private:
         // Seconds of a flinch left to play, held as a swing is -- without it the idle took the
         // shock clip back on the next frame. A swing or a step ends it. See Play::flinch.
         float shocked = 0.0f;
+        // Seconds his weapon stays slung on his back: a guard's salute is given with the hand
+        // that holds it, and with the crossbow in it the salute was him aiming at Marlon.
+        float stowed = 0.0f;
         // The walk. `groundSpeed` is what the last tick actually covered, in metres a second,
         // and is the numerator of the clip's rate; `still` is how long it has covered nothing,
         // which is what decides whether a stop is a stop or a stumble; `walkPhase` is where

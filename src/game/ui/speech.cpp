@@ -160,7 +160,9 @@ void Speech::update(const Play& play, const float* viewProj, int width, int heig
         const bool placed = said.folk >= 0
                                 ? play.folkCrownOf(said.folk, viewProj, width, height, &x, &y)
                                 : play.crownOf(said.who, viewProj, width, height, &x, &y);
-        if (!placed) continue;
+        // Only over a speaker on the screen: one off it -- Lumen at her bar while the hero is at
+        // the gate -- has no bubble at all, rather than one pulled in from the edge far from him.
+        if (!placed || x < 0.0f || x > float(width) || y < 0.0f || y > float(height)) continue;
         const float scale = popped(said.age);
         if (scale <= 0.02f) continue;
         // Scaled about the tail's point, which stays on the speaker: the bubble grows out of him.
@@ -175,8 +177,8 @@ void Speech::update(const Play& play, const float* viewProj, int width, int heig
         const float tall = kLeading * k * float(lines.size() - 1) + drawn;
         const float boxW = wide + kPadX * k * 2.0f;
         const float boxH = tall + kPadY * k * 2.0f;
-        // Never off the top of the screen: a speaker near the top edge -- Lumen behind her bar,
-        // with the hero at the door -- has his bubble brought down to it, the tail shortened.
+        // Never off the top of the screen: a speaker whose head is on it but near its top edge
+        // -- Lumen behind her bar, with the hero at the door -- has his bubble brought down to it.
         const float room = std::round(8.0f * u);
         const float tip = std::max(std::round(y - kLift * u), room + boxH + kTailTall * k);
         const float foot = tip - kTailTall * k;

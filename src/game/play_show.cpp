@@ -636,7 +636,9 @@ void Play::follow(float seconds) {
         // the back and stands in the unarmed idle, and steps out of it with the weapon drawn.
         // `place` moves the weapon; the clip below is the other half of the same rule, and the
         // 0.18 s crossfade in Figure::play is what makes the change a blend rather than a cut.
-        const bool safe = tables_.grid.safe(body->column(), body->row());
+        // And a guard's salute slings his weapon for its length (Play::update, Shout::Salute).
+        one.stowed = std::max(0.0f, one.stowed - seconds);
+        const bool safe = tables_.grid.safe(body->column(), body->row()) || one.stowed > 0.0f;
         one.figure.place(position, one.yaw, safe);
         {
             const FigureBody* look = one.figure.body();

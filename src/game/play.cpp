@@ -250,9 +250,14 @@ void Play::update(double seconds) {
                         const int clip = guard->figure.body()->library->find(kSaluteAction);
                         if (clip >= 0) {
                             guard->figure.play(clip, true, kCastBlend);
-                            guard->casting = guard->swinging = guard->figure.length();
+                            // Held as a swing is, but not a cast: `casting` is what lays the
+                            // blade's streak, and a salute is no blow.
+                            guard->swinging = guard->figure.length();
                             guard->swingPace = 1.0f;
                             ++guard->swingToken;
+                            // Given with the weapon slung, the town's way of carrying it, and
+                            // taken back up a moment after the hand comes down.
+                            guard->stowed = guard->figure.length() + 0.3f;
                         }
                     }
                 }
