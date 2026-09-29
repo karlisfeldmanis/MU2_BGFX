@@ -1,5 +1,7 @@
 {
-  "note": "Lorencia in the rain, laid over the base night (sheets/lighting.json) and blended in by the weather's wetness (app/context.cpp, TimeOfDay::rain). The user, 2026-09-29: 'it suppost to become little bit darker when there is rain because sun is not so much'. Only a little: the moon behind cloud, weaker and cooler, the sky greyer, the ambient and exposure a step down, and the lamps a step up so the fires carry the square -- never too dark or foggy, so the dust is left as the night has it. Invention, judged by eye.",
+  "note": "Lorencia in the rain, laid over the base night (sheets/lighting.json) and blended in by the weather's wetness (app/context.cpp, TimeOfDay::rain). The user, 2026-09-29: 'it suppost to become little bit darker when there is rain because sun is not so much'. Only a little: the moon behind cloud, weaker and cooler, the sky greyer, the ambient and exposure a step down, and the lamps a step up so the fires carry the square -- never too dark or foggy. Invention, judged by eye. And 'when there is rain lets add minimal dust effect' (2026-09-29): the dust a step thicker, 0.0055 to 0.0065, and wet grey-blue instead of the night's sand, so the rain reads as a faint haze across the square.",
+  "dust_colour": [0.46, 0.48, 0.52],
+  "dust_density": 0.0065,
   "sun_colour": [0.8, 0.82, 0.86],
   "sun_strength": 1.15,
   "sky_colour": [0.18, 0.19, 0.24],
