@@ -328,6 +328,9 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
             const int slot = ground.floorAt(column, row);
             if (!ground.grassFloor(slot)) continue;
             if (size_t(slot) >= sheets_.size() || !bgfx::isValid(sheets_[size_t(slot)])) continue;
+            // No ground is drawn on a NoGround tile (Ground::splat), so nothing grows on it:
+            // Devias's chasms are floored with its grass slots and would sprout over the dark.
+            if (ground.attributesAt(column, row) & content::kNoGround) continue;
             ++counts_.grassy;
 
             // The tile's own square, in metres. x spans [column, column+1] and z spans

@@ -839,9 +839,19 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
     std::vector<int> groupOfSet(size_t(1) << std::min(slots, 20), -1);
     std::vector<int> groupOf(quadCount, -1);
     size_t trimmed = 0;
+    size_t voids = 0;
     for (size_t q = 0; q < quadCount; ++q) {
         std::vector<std::pair<float, int>> held;
         const int tc = quadTile[q] % n, tr = quadTile[q] / n;
+        // MU draws no ground at all on a NoGround tile (ZzzLodTerrain.cpp:2178, RenderTerrainTile
+        // returns before the face), and what shows through is the clear colour: Devias's chasms
+        // are that and nothing else -- the heights under them sit less than a metre below the
+        // banks, and the depth is the dark. So the quad goes into no draw. Its materials still
+        // weigh into the corners it shares, as a neighbour's texture does in MU.
+        if (grid_.at(tc, tr) & kNoGround) {
+            ++voids;
+            continue;
+        }
         for (int s = 0; s < slots; ++s) {
             float sum = 0.0f;
             for (int vr = std::max(tr - 1, 0); vr <= std::min(tr + 2, n); ++vr) {
@@ -1027,7 +1037,8 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
     indices.swap(cut);
     parts_.swap(parts);
     core::logf("ground splat: %zu draws by material, %zu tile(s) holding more than %d kept "
-               "their strongest", parts_.size(), trimmed, GroundPart::kLayers);
+               "their strongest, %zu NoGround tile(s) left undrawn", parts_.size(), trimmed,
+               GroundPart::kLayers, voids);
     return true;
 }
 
