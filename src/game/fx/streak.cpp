@@ -18,6 +18,11 @@ constexpr float kSpans = 2.9f / kReference;
 constexpr float kFades = 15.0f / kReference;
 // How bright the ribbon is at the blade. Additive and white; the sheet carries the shape.
 constexpr float kBrightest = 0.85f;
+// **invention**, the user's, 2026-09-29: a plain blow's ribbon is quieter and soft-edged -- "clean,
+// a little blurry". About half the skill's light, and laid in bands across the blade that fade to
+// nothing at the grip and the tip, since blur01 is flat across and would stop on a hard line.
+constexpr float kPlainBrightest = 0.45f;
+constexpr int kBands = 5;
 
 }  // namespace
 
@@ -122,33 +127,48 @@ void Streak::gather(gfx::Effects& effects) const {
             // linear ramp over 29 quads reads as a band with an edge on it rather than a smear.
             const float atNear = 1.0f - float(i) / float(one.count);
             const float atFar = 1.0f - float(i + 1) / float(one.count);
-            const float alpha = kBrightest * leaving * atNear * atNear;
+            const bool plain = one.sheet != Sheet::Skill;
+            const float alpha =
+                (plain ? kPlainBrightest : kBrightest) * leaving * atNear * atNear;
             if (alpha <= 0.004f) continue;
-
-            gfx::Sprite quad;
-            quad.placed = true;
-            quad.blend = gfx::Blend::Additive;
-            quad.sheet = sheets_[int(one.sheet)];
-            for (int k = 0; k < 3; ++k) quad.colour[k] = one.colour[k];
-            quad.colour[3] = alpha;
-            // The quad's own corners: the grip end and the tip of two consecutive samples, in
-            // the winding the pass wants (bottom left, bottom right, top right, top left).
-            for (int k = 0; k < 3; ++k) {
-                quad.corner[0][k] = near.a[k];
-                quad.corner[1][k] = far.a[k];
-                quad.corner[2][k] = far.b[k];
-                quad.corner[3][k] = near.b[k];
-                quad.position[k] = (near.a[k] + far.b[k]) * 0.5f;
-            }
-            // The sheet runs ALONG the ribbon -- u is how far down the streak this quad sits,
-            // v is across the blade -- so one picture is stretched over the whole arc rather
-            // than repeated once a quad, which is what MU's single blur bitmap is for.
             const float u0 = 1.0f - atNear, u1 = 1.0f - atFar;
-            quad.cornerUv[0][0] = u0; quad.cornerUv[0][1] = 1.0f;
-            quad.cornerUv[1][0] = u1; quad.cornerUv[1][1] = 1.0f;
-            quad.cornerUv[2][0] = u1; quad.cornerUv[2][1] = 0.0f;
-            quad.cornerUv[3][0] = u0; quad.cornerUv[3][1] = 0.0f;
-            effects.add(quad);
+            // Across the blade: one band for a skill, kBands for a plain blow, each lit by a
+            // sine bump so the ribbon has no edge at either end of the blade.
+            const int bands = plain ? kBands : 1;
+            for (int band = 0; band < bands; ++band) {
+                const float s0 = float(band) / float(bands), s1 = float(band + 1) / float(bands);
+                const float across =
+                    plain ? std::sin(3.14159265f * (s0 + s1) * 0.5f) : 1.0f;
+                gfx::Sprite quad;
+                quad.placed = true;
+                quad.blend = gfx::Blend::Additive;
+                quad.sheet = sheets_[int(one.sheet)];
+                for (int k = 0; k < 3; ++k) quad.colour[k] = one.colour[k];
+                quad.colour[3] = alpha * across;
+                // The quad's own corners: two points along the grip-to-tip line of two
+                // consecutive samples, in the winding the pass wants (bottom left, bottom
+                // right, top right, top left).
+                for (int k = 0; k < 3; ++k) {
+                    const float nearAt0 = near.a[k] + (near.b[k] - near.a[k]) * s0;
+                    const float nearAt1 = near.a[k] + (near.b[k] - near.a[k]) * s1;
+                    const float farAt0 = far.a[k] + (far.b[k] - far.a[k]) * s0;
+                    const float farAt1 = far.a[k] + (far.b[k] - far.a[k]) * s1;
+                    quad.corner[0][k] = nearAt0;
+                    quad.corner[1][k] = farAt0;
+                    quad.corner[2][k] = farAt1;
+                    quad.corner[3][k] = nearAt1;
+                    quad.position[k] = (nearAt0 + farAt1) * 0.5f;
+                }
+                // The sheet runs ALONG the ribbon -- u is how far down the streak this quad
+                // sits, v is across the blade, 1 at the grip and 0 at the tip -- so one picture
+                // is stretched over the whole arc rather than repeated once a quad, which is
+                // what MU's single blur bitmap is for.
+                quad.cornerUv[0][0] = u0; quad.cornerUv[0][1] = 1.0f - s0;
+                quad.cornerUv[1][0] = u1; quad.cornerUv[1][1] = 1.0f - s0;
+                quad.cornerUv[2][0] = u1; quad.cornerUv[2][1] = 1.0f - s1;
+                quad.cornerUv[3][0] = u0; quad.cornerUv[3][1] = 1.0f - s1;
+                effects.add(quad);
+            }
         }
     }
 }
