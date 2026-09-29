@@ -3024,6 +3024,14 @@ void testDeviasFolk() {
         check(made > 0, "Caren, Izabel and Zienna each have something on the shelf");
     }
     check(sim::repairsAt(246), "Zienna mends");
+    const int white = sim::questOf(406);
+    check(white >= 0, "Apostle Devin gives a quest");
+    if (white >= 0) {
+        const sim::QuestRow& row = sim::questAt(white);
+        int unmade = 0;
+        for (int i = 0; i < row.paidCount; ++i) unmade += devias.itemNamed(row.paid[i].item) < 0;
+        checkEqual((long long)unmade, 0LL, "and every thing he pays is a cooked item");
+    }
     if (master < 0) return;
 
     sim::Realm realm;

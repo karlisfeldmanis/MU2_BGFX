@@ -191,7 +191,76 @@ QuestRow peia() {
     return row;
 }
 
-const QuestRow kTable[kQuests] = {marlon(), peia()};
+// Apostle Devin's, and Devias's: "The White Silence", for every class (docs/devin-quest.md, the
+// user's of 2026-09-29). Devin is MU's own (Priest Devin 406, Season Six), his story is ours:
+// serious, short and clear, the Ice Queens the real danger and the Lost Tower named once, at the
+// hand-in. The steps are Devias's breeds weakest first on Marlon's ladder shape (Version075
+// Devias.cs's populations in the doc); the Elite Yeti stands for "Yetis", as Devias's plain Yeti
+// is a single camp.
+//
+// The reward is the doc's proposal, not yet agreed: every clear 3 Jewels of Bless, 100,000 Zen and
+// 60,000 experience, the first 250,000 and each class's top 0.75 armour with an empty socket --
+// Dragon (knight), Legendary (wizard), Guardian (elf). The socket waits for its rune, "Rune of the
+// Undying" (+20% maximum health), which has no Power yet.
+QuestRow devin() {
+    QuestRow row;
+    row.giver = 406;
+    row.giverName = "Apostle Devin";
+    row.place = "Devias";
+    row.title = "The White Silence";
+    row.offer[0] =
+        "\"So you are the one. Lorencia is quiet, and Noria's trees sing again. Word travels, "
+        "even this far north.\"";
+    row.offer[1] =
+        "\"I am Devin, and this is Devias. Snow buries the roads, Yetis roam the passes, and "
+        "Kundun's Assassins hunt anyone who walks alone.\"";
+    row.offer[2] =
+        "\"But the Ice Queens are the real danger. They call the storms down on us, and while "
+        "they live, the storms never stop.\"";
+    row.offer[3] =
+        "\"Clear the Worms, Ice Monsters, Hommerds, Assassins and Yetis. Then bring down the "
+        "Queens.\"";
+    row.offer[4] = "\"Dress for the cold, and come back alive.\"";
+    row.underway = "\"Not yet. The storms still rage, and the Queens still live.\"";
+    row.handIn[0] = "\"The sky over Devias is clear again. Thank you.\"";
+    row.handIn[1] =
+        "\"Take these. You will need them for what comes next: the Lost Tower. But that is a "
+        "story for another day.\"";
+    row.resting = "\"Rest now. By morning, the Queens will call the storms back.\"";
+    // None until the Lost Tower is decided (the doc's "Next").
+    row.next = "";
+    // Read by hand, not by voice.py's main(): source/voice/devin/recorded_with.py.txt.
+    row.voice = "devin";
+    row.steps[0] = {QuestStepKind::Clear, 24, 40, "Worms"};
+    row.steps[1] = {QuestStepKind::Clear, 22, 35, "Ice Monsters"};
+    row.steps[2] = {QuestStepKind::Clear, 23, 30, "Hommerds"};
+    row.steps[3] = {QuestStepKind::Clear, 21, 25, "Assassins"};
+    row.steps[4] = {QuestStepKind::Clear, 20, 30, "Elite Yetis"};
+    row.steps[5] = {QuestStepKind::Clear, 25, 10, "Ice Queens"};
+    row.steps[6] = {QuestStepKind::Return, 0, 1, "Return to Apostle Devin"};
+    row.stepCount = 7;
+    row.repeatSeconds = 12 * 60 * 60;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // Every class's: no 0.75 class is born in Devias, and all three come to it.
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    row.experience = 60000;
+    row.firstExperience = 250000;
+    row.zen = 100000;
+    row.paid[0] = {.item = "ArmorMale02", .kin = knight, .sockets = 1,
+                   .firstOnly = true};  // Dragon Armor
+    row.paid[1] = {.item = "ArmorMale04", .kin = wizard, .sockets = 1,
+                   .firstOnly = true};  // Legendary Armor
+    row.paid[2] = {.item = "ArmorElf05", .kin = elf, .sockets = 1,
+                   .firstOnly = true};  // Guardian Armor
+    row.paid[3] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paidCount = 4;
+    return row;
+}
+
+const QuestRow kTable[kQuests] = {marlon(), peia(), devin()};
 
 }  // namespace
 

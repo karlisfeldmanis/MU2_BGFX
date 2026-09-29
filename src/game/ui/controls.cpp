@@ -586,7 +586,9 @@ void frame(gfx::Canvas& canvas, const Box& window, float u, const std::string& t
     if (const gfx::Face* tf = panel::titleFace()) {
         // Centred, in the room the close button leaves at each end. A merchant's own name is
         // the title of his window and "Lumen the Barmaid" is seventeen tracked capitals: it is
-        // shrunk by up to a quarter and only then trimmed, in one pass that never grows.
+        // shrunk by up to a quarter and only then trimmed, in one pass that never grows. Trimmed
+        // only when the whole of it does not fit: the trim measures with its "..", and a title
+        // that just fit -- Devin's "The White Silence" -- lost its last letter to it.
         const float room = b.w - (12.0f * u + closeSize + 8.0f * u) * 2.0f;
         const auto wideAt = [&](float s, const std::string& t) {
             return tf->measure(s, t) + s * style::kTitleTrack * float(t.size() > 0 ? t.size() - 1 : 0);
@@ -594,7 +596,9 @@ void frame(gfx::Canvas& canvas, const Box& window, float u, const std::string& t
         float fitted = size;
         while (fitted > size * 0.62f && wideAt(fitted, caps) > room) fitted -= 0.5f;
         std::string text = caps;
-        while (text.size() > 1 && wideAt(fitted, text + "..") > room) text.pop_back();
+        if (wideAt(fitted, caps) > room) {
+            while (text.size() > 1 && wideAt(fitted, text + "..") > room) text.pop_back();
+        }
         if (text.size() != caps.size()) text += "..";
         const float tracking = fitted * style::kTitleTrack;
         const float x = std::round(b.midX() - wideAt(fitted, text) * 0.5f);
