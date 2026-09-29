@@ -321,7 +321,7 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                 bannerTitle_ = row.title;
                 bannerLine_ = grouped(row.experience) + " experience      ";
                 bannerZen_ = grouped(row.zen) + " Zen";
-                bannerHold_ = 3.0f;
+                bannerHold_ = 5.0f;  // longer than the others: the stinger is still going
                 bannerAge_ = 0.0f;
             }
             if (now.state != was.state) {

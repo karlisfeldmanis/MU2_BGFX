@@ -200,7 +200,10 @@ void QuestDialog::layout(const Play& play) {
         for (int s = 0; s < row.stepCount; ++s) {
             counted += row.steps[s].kind == sim::QuestStepKind::Clear ? 1 : 0;
         }
-        y += kSection * 0.5f + 24.0f + float(counted + 1) * kStepRow + kSection;
+        // The hand-in leaves the objectives out: every one is done, and the room is the
+        // reward's (the user, 2026-09-29).
+        y += mode_ == Mode::HandIn ? kSection * 0.5f
+                                   : kSection * 0.5f + 24.0f + float(counted + 1) * kStepRow + kSection;
         y += 16.0f + kPurse;
         // Two grids of the same cells: what his class is paid at this completion, then the
         // choice, when there is one, under its own line.
@@ -500,40 +503,43 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
     } else {
         controls::rule(body_, sx(kInset), by(cy - kSection * 0.5f), inner() * u, u);
         cy += kSection * 0.5f;
-        controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Objectives", u);
-        cy += 24.0f;
-        const bool shownCounts = mode_ != Mode::Offer;
-        const float columnWide = inner();
-        int index = 0;
-        for (int s = 0; s < row.stepCount; ++s) {
-            const sim::QuestStepRow& want = row.steps[s];
-            if (want.kind != sim::QuestStepKind::Clear) continue;
-            const int goal = realm.questGoal(quest_, s);
-            const int count = shownCounts ? int(progress.counts[s]) : 0;
-            const bool done = shownCounts && count >= goal;
-            const float colX = kInset;
-            const float rowY = cy + float(index) * kStepRow;
-            quest_marks::mark(body_, done ? StepMark::Done : StepMark::Live, sx(colX + 7.0f),
-                              by(rowY + 8.0f), u);
-            controls::label(body_, sx(colX + 24.0f), by(rowY + 13.0f), kBody * u,
-                            done ? style::kAshInk : style::kBoneHi, want.line);
-            const std::string figure =
-                shownCounts ? std::to_string(count) + " / " + std::to_string(goal) : std::to_string(goal);
-            controls::ranged(body_, sx(colX + columnWide), by(rowY + 13.0f), kBody * u,
-                             done ? style::kAshInk : style::kBone2, figure);
-            ++index;
+        if (mode_ != Mode::HandIn) {
+            controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Objectives", u);
+            cy += 24.0f;
+            const bool shownCounts = mode_ != Mode::Offer;
+            const float columnWide = inner();
+            int index = 0;
+            for (int s = 0; s < row.stepCount; ++s) {
+                const sim::QuestStepRow& want = row.steps[s];
+                if (want.kind != sim::QuestStepKind::Clear) continue;
+                const int goal = realm.questGoal(quest_, s);
+                const int count = shownCounts ? int(progress.counts[s]) : 0;
+                const bool done = shownCounts && count >= goal;
+                const float colX = kInset;
+                const float rowY = cy + float(index) * kStepRow;
+                quest_marks::mark(body_, done ? StepMark::Done : StepMark::Live, sx(colX + 7.0f),
+                                  by(rowY + 8.0f), u);
+                controls::label(body_, sx(colX + 24.0f), by(rowY + 13.0f), kBody * u,
+                                done ? style::kAshInk : style::kBoneHi, want.line);
+                const std::string figure = shownCounts
+                                               ? std::to_string(count) + " / " + std::to_string(goal)
+                                               : std::to_string(goal);
+                controls::ranged(body_, sx(colX + columnWide), by(rowY + 13.0f), kBody * u,
+                                 done ? style::kAshInk : style::kBone2, figure);
+                ++index;
+            }
+            cy += float(index) * kStepRow;
+            for (int s = 0; s < row.stepCount; ++s) {
+                if (row.steps[s].kind != sim::QuestStepKind::Return) continue;
+                const bool ready = progress.state == sim::QuestState::Ready;
+                quest_marks::mark(body_, ready ? StepMark::Ready : StepMark::Waiting,
+                                  sx(kInset + 7.0f), by(cy + 8.0f), u);
+                controls::label(body_, sx(kInset + 24.0f), by(cy + 13.0f), kBody * u,
+                                ready ? style::kBloodHi : style::kAshInk, row.steps[s].line);
+                cy += kStepRow;
+            }
+            cy += kSection;
         }
-        cy += float(index) * kStepRow;
-        for (int s = 0; s < row.stepCount; ++s) {
-            if (row.steps[s].kind != sim::QuestStepKind::Return) continue;
-            const bool ready = progress.state == sim::QuestState::Ready;
-            quest_marks::mark(body_, ready ? StepMark::Ready : StepMark::Waiting, sx(kInset + 7.0f),
-                              by(cy + 8.0f), u);
-            controls::label(body_, sx(kInset + 24.0f), by(cy + 13.0f), kBody * u,
-                            ready ? style::kBloodHi : style::kAshInk, row.steps[s].line);
-            cy += kStepRow;
-        }
-        cy += kSection;
 
         controls::kicker(body_, sx(kInset), by(cy + 10.0f), "Rewards", u);
         cy += 16.0f;
