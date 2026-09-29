@@ -239,6 +239,22 @@ void Play::update(double seconds) {
                     levelOn_ = happening.who;
                 }
             } else if (happening.what == sim::What::Shouted) {
+                // A salute is a pose as well as a line: MU's PLAYER_SALUTE1, action 219 of the
+                // player library a guard is animated from ("Salute 1" in player.muc), played
+                // once and held as a swing is held.
+                if (happening.a == int32_t(sim::Shout::Salute)) {
+                    constexpr int kSaluteAction = 219;
+                    if (Drawn* guard = drawnOf(happening.who);
+                        guard && guard->figure.body() && guard->figure.body()->library) {
+                        const int clip = guard->figure.body()->library->find(kSaluteAction);
+                        if (clip >= 0) {
+                            guard->figure.play(clip, true, kCastBlend);
+                            guard->casting = guard->swinging = guard->figure.length();
+                            guard->swingPace = 1.0f;
+                            ++guard->swingToken;
+                        }
+                    }
+                }
                 speak(happening);
             } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
                 levelOwed_ = true;
@@ -1077,7 +1093,12 @@ void Play::speak(const sim::Happening& happening) {
 
     const uint32_t pick = happening.whom + happening.tick;
     std::string line;
-    if (happening.a == int32_t(sim::Shout::Pointing)) {
+    if (happening.a == int32_t(sim::Shout::Salute)) {
+        // To the last knight of Lorencia, as he comes by the post (realm_folk.cpp).
+        static const char* const kSalutes[] = {"Sir Marlon!", "All quiet at the gate, sir.",
+                                               "The gate holds, sir."};
+        line = kSalutes[pick % 3];
+    } else if (happening.a == int32_t(sim::Shout::Pointing)) {
         // Where the rest of them are, as he turns to look -- and nothing when there are none. No
         // "thank you": the user's, 2026-09-28.
         if (happening.whom == 0) return;

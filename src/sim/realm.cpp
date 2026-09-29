@@ -367,8 +367,10 @@ void Realm::accept() {
             if (order_.target >= tables_->folk.size()) {
                 order_ = Request{};
             } else if (!serving(int(order_.target))) {
-                const content::Townsperson& one = tables_->folk[order_.target];
-                send(hero, one.x, one.y);
+                // Where he stands now: a townsperson on his rounds is not at his table's tile.
+                int column = 0, row = 0;
+                folkTile(int(order_.target), &column, &row);
+                send(hero, column, row);
             }
         } else if (order_.kind == Request::Kind::Perch) {
             if (order_.target >= tables_->perches.size()) {
@@ -826,7 +828,10 @@ std::string describe(const Happening& happening, const Realm& realm) {
             break;
         case What::Shouted:
             std::snprintf(line, sizeof(line), "%6u %s %s %s, pointing to %d,%d", happening.tick,
-                          who, happening.a == int32_t(Shout::Pointing) ? "points the hero on from" : "challenges",
+                          who,
+                          happening.a == int32_t(Shout::Pointing) ? "points the hero on from"
+                          : happening.a == int32_t(Shout::Salute) ? "salutes"
+                                                                  : "challenges",
                           name(happening.whom).c_str(), happening.b, happening.c);
             break;
         case What::Served:

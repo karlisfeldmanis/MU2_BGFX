@@ -717,7 +717,9 @@ void Play::follow(float seconds) {
         // PLAYER_POSE1 240 / 241, IsFemale deciding -- MU2's Poses.Clip. They loop, and that is
         // the whole of why a pose lasts.
         int posed = -1;
-        if (body->player && body->pose != sim::Pose::Standing && look->library) {
+        // A townsperson on his rounds sits too (realm_folk.cpp): the same clips, on the same rig.
+        if ((body->player || body->warden >= 0) && body->pose != sim::Pose::Standing &&
+            look->library) {
             const bool female = look->female;
             const int action = body->pose == sim::Pose::Sitting   ? (female ? 236 : 234)
                                : body->pose == sim::Pose::Hanging ? (female ? 239 : 238)

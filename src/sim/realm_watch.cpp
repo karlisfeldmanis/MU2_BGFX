@@ -80,11 +80,17 @@ void Realm::raiseWardens() {
         ++raised;
     }
     if (raised > 0) core::logf("realm: %zu guards at their posts", raised);
+    // And after them whoever walks rounds, so no guard's id moves for him.
+    raiseStrollers();
 }
 
 void Realm::watch(Body& guard) {
     const WardenRow* row = wardenRow(tables_->folk[size_t(guard.warden)].number);
-    if (row == nullptr) return;
+    // A warden body with no guard's row is a townsperson on his rounds (realm_folk.cpp).
+    if (row == nullptr) {
+        stroll(guard);
+        return;
+    }
     advance(guard);
 
     // The monster he is on, while it lives and has not led him past his leash; else the nearest

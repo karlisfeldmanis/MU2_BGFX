@@ -180,6 +180,44 @@ constexpr float kWardenShare = 0.25f;
 // ticks. **invention**, for the picture: long enough to read the line he said.
 constexpr int kPointTicks = 60;
 
+// ---- a townsperson's rounds (realm_folk.cpp) -------------------------------------------------
+// **invention**, all of it, on the user's word of 2026-09-29: "make Marlon do some walking to the
+// bar and sit, check on guards and go back to his spot", and the guards salute him. MU's NPCs
+// stand where they are put. A row is a loop of stops by tile, in Lorencia's grid: stand at his
+// own spot, sit at the tavern's bench by Lumen's bar, visit the Berdysh Guard at the south gate
+// and the Crossbow Guard at the west gate, and home. A Visit names the guard by his post.
+enum class StopKind : uint8_t { Stand, Sit, Visit };
+struct StrollStop {
+    StopKind kind;
+    int32_t column, row;
+    int32_t seconds;  // how long he stays, from the tick he arrives
+};
+constexpr int kStrollStops = 6;
+struct StrollRow {
+    int32_t number;  // MU's NPC number
+    int32_t count;
+    StrollStop stops[kStrollStops];
+};
+constexpr StrollRow kStrollers[] = {
+    {229, 4, {{StopKind::Stand, 130, 127, 40},     // Marlon: his own spot, his table's tile
+              {StopKind::Sit, 124, 133, 30},       // the bench before Lumen's bar
+              {StopKind::Visit, 131, 148, 6},      // the Berdysh Guard at the south gate
+              {StopKind::Visit, 114, 125, 6}}},    // the Crossbow Guard at the west gate
+};
+inline const StrollRow* strollRow(int32_t number) {
+    for (const StrollRow& row : kStrollers) {
+        if (row.number == number) return &row;
+    }
+    return nullptr;
+}
+// A walker's pace, ticks a tile: an unhurried man, slower than a guard's eight.
+constexpr int kStrollTicks = 10;
+// After the hero is done with him -- the talk over, the window shut -- he stands this long
+// before he goes on with his rounds, so the goodbye is not his back.
+constexpr int kStrollResumeTicks = 40;
+// How long a visited guard holds his salute and his turn toward him.
+constexpr int kSaluteTicks = 50;
+
 // ---- the monsters whose blow poisons -----------------------------------------------------------
 // 0.75's own, by MU's number: the Dungeon's Poison Bull (8) and Larva (12) and Lost Tower's Poison
 // Shadow (39), each `AttackSkill = Poison` (Version075/Maps/Dungeon.cs:666, :791; LostTower.cs:834).

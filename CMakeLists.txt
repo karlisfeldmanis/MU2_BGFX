@@ -207,6 +207,7 @@ add_executable(mu2
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
+  src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp
@@ -322,6 +323,7 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
+  src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
   src/sim/skills.cpp
   src/sim/audit.cpp

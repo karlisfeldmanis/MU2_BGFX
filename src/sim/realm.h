@@ -104,10 +104,13 @@ enum class What : uint8_t {
     Dismissed, // her summon gone without a blow: recast, or her death (Realm::dismiss)
 };
 
+struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
+
 // Why a guard spoke. See Realm::watch.
 enum class Shout : int32_t {
     Challenge = 0,  // he has seen a monster and is going for it
     Pointing = 1,   // one he fought died with the hero's help: he points him on to the rest
+    Salute = 2,     // a townsperson on his rounds came to his post (realm_folk.cpp); whom: him
 };
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
@@ -602,6 +605,9 @@ public:
     // any other order, as a counter is: his index in Tables::folk, or -1.
     int questing() const { return questing_; }
     void closeQuest() { questing_ = -1; }
+    // Where a townsperson stands now: his body's tile when he walks rounds (realm_folk.cpp) or
+    // guards a post, else his table's. False for an index off the table.
+    bool folkTile(int folk, int* column, int* row) const;
     const QuestProgress& quest(int index) const { return quests_[index]; }
     // A step's goal: its row's count, or for a Clear with none the breed's population here.
     int questGoal(int index, int step) const;
@@ -750,6 +756,11 @@ private:
     // looking for a monster near his post, going for it, and walking back when it is dead.
     void raiseWardens();
     void watch(Body& guard);
+    // A townsperson's rounds (realm_folk.cpp, kStrollers): raised beside the guards, as a body
+    // with `warden` naming his folk row, and walked stop to stop -- standing still and turning
+    // to the hero while the hero talks to him.
+    void raiseStrollers();
+    void stroll(Body& walker);
     // The summon's turn: guard her, peel what is on her, follow her, fight (realm_summon.cpp).
     void tend(Body& summon);
     // Raised beside her off the row's breed, scaled by her energy; or false with no breed cooked.
@@ -862,6 +873,18 @@ private:
     Vault vault_;
     QuestProgress quests_[kQuests];
     int questing_ = -1;
+    // The walkers on their rounds, by body id: which stop, and when he leaves it.
+    struct Stroller {
+        uint32_t id = 0;
+        const StrollRow* row = nullptr;
+        int stop = 0;
+        bool there = false;     // arrived at the stop and doing what it asks
+        int64_t leaves = 0;     // the tick he goes on to the next stop
+        bool held = false;      // the hero is talking to him
+        int64_t freeAt = 0;     // after a talk, the tick he takes up his rounds again
+        int perch = -1;         // the bench he sits on, while he sits
+    };
+    std::vector<Stroller> strollers_;
     int64_t wall_ = 0;
     // A monster the hero killed, counted against every live Clear of its breed.
     void countKill(const Body& dead);

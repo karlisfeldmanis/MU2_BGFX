@@ -833,8 +833,10 @@ bool Realm::serving(int folk) const {
     if (!tables_ || folk < 0 || size_t(folk) >= tables_->folk.size()) return false;
     const Body& hero = bodies_[0];
     if (!hero.alive()) return false;
-    const content::Townsperson& one = tables_->folk[size_t(folk)];
-    const float dx = hero.x - float(one.x), dy = hero.y - float(one.y);
+    // Measured to where he stands now, which for one on his rounds is not his table's tile.
+    int column = 0, row = 0;
+    folkTile(folk, &column, &row);
+    const float dx = hero.x - float(column), dy = hero.y - float(row);
     return dx * dx + dy * dy <= kCounter * kCounter;
 }
 

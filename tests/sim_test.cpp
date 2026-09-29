@@ -3082,8 +3082,12 @@ void testWardens(const content::Tables& tables) {
     std::printf("wardens\n");
     sim::Realm realm;
     check(realm.raise(&tables, 11, 178, 122), "a level-one knight raises at the east gate");
+    // A guard is a warden body with a guard's row: Marlon on his rounds is one without.
+    const auto isGuard = [&](const sim::Body& one) {
+        return one.warden >= 0 && sim::wardenRow(tables.folk[size_t(one.warden)].number) != nullptr;
+    };
     int guards = 0;
-    for (const sim::Body& one : realm.bodies()) guards += one.warden >= 0 ? 1 : 0;
+    for (const sim::Body& one : realm.bodies()) guards += isGuard(one) ? 1 : 0;
     checkEqual(guards, 6, "Lorencia stands its six guards");
 
     int challenged = 0, guardBlows = 0, thanked = 0, pointed = 0, struckGuard = 0;
@@ -3139,7 +3143,7 @@ void testWardens(const content::Tables& tables) {
             }
         }
         for (const sim::Body& one : realm.bodies()) {
-            if (one.warden < 0) continue;
+            if (!isGuard(one)) continue;
             standing &= one.alive();
             leashed &= std::max(std::abs(one.column() - one.homeColumn),
                                 std::abs(one.row() - one.homeRow)) <= 8 + 2;
@@ -3156,10 +3160,68 @@ void testWardens(const content::Tables& tables) {
     check(leashed, "and none follows a monster past his leash");
     bool home = true;
     for (const sim::Body& one : realm.bodies()) {
-        if (one.warden < 0 || one.quarry != 0) continue;
+        if (!isGuard(one) || one.quarry != 0) continue;
         home &= one.column() == one.homeColumn && one.row() == one.homeRow && !one.walking;
     }
     check(home, "and every guard with nothing to fight is back at his post");
+}
+
+// Marlon's rounds (realm_folk.cpp): from his spot to the tavern's bench, where he sits, to the two
+// gate guards, who salute him, and home. The hero talking to him stops him where he stands for
+// the talk and the quest window, and he goes on with his rounds after.
+void testStrollers(const content::Tables& tables) {
+    std::printf("strollers\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 3, 135, 124), "a knight raises in Lorencia's square");
+    int folk = -1;
+    for (size_t i = 0; i < tables.folk.size(); ++i) {
+        if (tables.folk[i].number == 229) folk = int(i);
+    }
+    uint32_t marlon = 0;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.warden == folk) marlon = one.id;
+    }
+    check(folk >= 0 && marlon != 0, "Marlon stands as a body");
+    if (marlon == 0) return;
+    int sat = 0, salutes = 0, offered = 0;
+    bool stillForTheTalk = true;
+    int talkColumn = -1, talkRow = -1;
+    for (int tick = 0; tick < 6000; ++tick) {
+        if (tick == 2400) {
+            sim::Request request;
+            request.kind = sim::Request::Kind::Talk;
+            request.target = uint32_t(folk);
+            realm.ask(request);
+        }
+        if (tick == 2700) realm.closeQuest();
+        realm.step();
+        const sim::Body* him = realm.find(marlon);
+        if (tick == 2401) {
+            talkColumn = him->column();
+            talkRow = him->row();
+        }
+        // Held from the click through the window and its moment after.
+        if (tick > 2401 && tick < 2700) {
+            stillForTheTalk &= him->column() == talkColumn && him->row() == talkRow;
+        }
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.what == sim::What::Posed && one.who == marlon &&
+                one.a == int32_t(sim::Pose::Sitting)) {
+                ++sat;
+            }
+            if (one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Salute) &&
+                one.whom == marlon) {
+                ++salutes;
+            }
+            if (one.what == sim::What::Offered) ++offered;
+        }
+    }
+    std::printf("  sat %d times, saluted %d times, his window opened %d times\n", sat, salutes,
+                offered);
+    check(sat >= 2, "he sits at the tavern's bench each round");
+    check(salutes >= 4, "and both gate guards salute him each round");
+    check(offered == 1, "the hero's talk reaches him wherever he is on his rounds");
+    check(stillForTheTalk, "and he stands where he was for the talk and the window");
 }
 
 void testRecovery(const content::Tables& tables) {
@@ -3516,6 +3578,7 @@ int main() {
     testWear(tables);
     testRecovery(tables);
     testWardens(tables);
+    testStrollers(tables);
     testArchery(tables);
     testElfSkills(tables);
     testSummons(tables);
