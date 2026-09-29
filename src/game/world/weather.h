@@ -37,8 +37,11 @@ public:
     // One frame. `indoors` takes the rain's sound off under a roof, with the wind's switch.
     void update(float seconds, bool indoors);
 
-    // How much of the air is rain, 0 to 1.
+    // How wet the spell is, 0 dry to 1 raining: what the light blends to its wet sheet by.
     float rain() const { return share_; }
+    // How much of the pool falls as drops, 0 to 1: the wetness times the world's peak, so
+    // Lorencia's drizzle darkens the night fully with a third of Noria's drops.
+    float pour() const { return share_ * peak_; }
     bool rains() const { return rains_; }
 
 private:
@@ -49,6 +52,7 @@ private:
     bool forest_ = false;   // this world has MU's forest birdsong
     bool forced_ = false;   // --weather held the spell
     bool wet_ = false;      // the spell now: dry or wet
+    float peak_ = 1.0f;     // the share a wet spell rises to
     float left_ = 0.0f;     // seconds of it left
     float share_ = 0.0f;    // RainCurrent, as a share
     float birdIn_ = 0.0f;   // seconds to the next birdsong

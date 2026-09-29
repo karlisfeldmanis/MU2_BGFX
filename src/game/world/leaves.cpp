@@ -86,7 +86,7 @@ constexpr float kRingSeconds = 20.0f / 25.0f;
 constexpr float kRingGrowth = 0.03f * 25.0f;  // scale a second
 constexpr float kRingHalfWidth = 0.18f;
 constexpr float kRingLift = 1.6f;
-constexpr float kRingAlpha = 0.35f;
+constexpr float kRingAlpha = 0.3f;  // 0.35 standing, 0.55 flat was "visible too much"
 
 }  // namespace
 
@@ -149,7 +149,7 @@ void Leaves::landRing(const float at[3], float faint) {
     Ring& ring = rings_[nextRing_];
     nextRing_ = (nextRing_ + 1) % kRings;
     ring.position[0] = at[0];
-    ring.position[1] = at[1] + 0.01f;
+    ring.position[1] = at[1] + 0.03f;
     ring.position[2] = at[2];
     ring.scale = between(0.8f, 1.3f);
     ring.life = kRingSeconds;
@@ -184,8 +184,13 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
             drop.position[1] = land;
             drop.live = false;
             // Not every drop shows where it lands: MU rings every one, which on this lit ground
-            // reads as a carpet of dots. One in three, and as faint as the drop was.
-            if (random01() < 0.33f) landRing(drop.position, drop.faint);
+            // reads as a carpet of dots. One in three at a full downpour, and more of a thinner
+            // rain's -- half of Lorencia's drizzle -- so the ground shows the rain whatever its
+            // weight (the user, 2026-09-29: "we can see drops on ground", then "rings visible
+            // too much" at every one).
+            if (random01() < std::min(0.5f, 0.33f / std::max(rain, 0.33f))) {
+                landRing(drop.position, drop.faint);
+            }
             continue;
         }
         const float dx = drop.position[0] - hero[0];
@@ -204,14 +209,15 @@ void Leaves::update(float seconds, const float hero[3], const float eye[3], bool
     }
     falling_ = falling;
 
-    // And the leaves take the rest: a slot the rain holds does not grow a new leaf, and the
-    // one already on the wind finishes its drift.
-    const int dryFrom = int(rain * float(kCount));
+    // And the leaves: none while it rains at all (the user, 2026-09-29: "when there is rain
+    // there has to be NOT leaves") -- no new one grows, and one still on the wind goes out as
+    // it does indoors. MU's pool shares its slots between the two instead.
+    const bool raining = rain > 0.0f;
     for (int i = 0; i < kCount; ++i) {
         Leaf& leaf = leaves_[i];
         if (!leaf.live) {
-            if (!indoors && i >= dryFrom) spawn(leaf, hero, eye, ground);
-        } else if (indoors) {
+            if (!indoors && !raining) spawn(leaf, hero, eye, ground);
+        } else if (indoors || raining) {
             // Inside: it is on its way out wherever it happens to be. No wind, no walk, no
             // landing -- just gone, quickly enough that the tavern is still.
             leaf.light -= kIndoorFade * factor;
@@ -317,10 +323,21 @@ void Leaves::gather(gfx::Effects& effects, const float eye[3]) const {
     }
     for (const Ring& ring : rings_) {
         if (!ring.live) continue;
+        // Laid flat on the ground, not stood up to the eye: the sheet's ellipse stretched to a
+        // square is a circle again, and the camera's own pitch squashes it as a puddle's ring.
         gfx::Sprite sprite;
+        sprite.placed = true;
         for (int a = 0; a < 3; ++a) sprite.position[a] = ring.position[a];
-        sprite.halfWidth = kRingHalfWidth * ring.scale;
-        sprite.halfHeight = sprite.halfWidth * 0.5f;
+        const float half = kRingHalfWidth * ring.scale;
+        const float offset[4][2] = {{-half, half}, {half, half}, {half, -half}, {-half, -half}};
+        const float uv[4][2] = {{0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f}};
+        for (int c = 0; c < 4; ++c) {
+            sprite.corner[c][0] = ring.position[0] + offset[c][0];
+            sprite.corner[c][1] = ring.position[1];
+            sprite.corner[c][2] = ring.position[2] + offset[c][1];
+            sprite.cornerUv[c][0] = uv[c][0];
+            sprite.cornerUv[c][1] = uv[c][1];
+        }
         sprite.sheet = ringSheet_;
         sprite.blend = gfx::Blend::Alpha;
         sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = kRingLift;

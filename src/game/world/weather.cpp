@@ -34,7 +34,12 @@ float Weather::random01() {
 void Weather::open(const std::string& world, Sound* sound, const std::string& force) {
     shutdown();
     sound_ = sound;
-    rains_ = world == "noria";
+    // Lorencia too since 2026-09-29 (the user: "enable also rain in lorencia"), on Noria's
+    // spells; its night has no wet sheet, so the rain there is drops, rings and sound only.
+    // And thin: a third of the pool at its heaviest (the user: "rain in lorencia too much
+    // visible"), a drizzle under the moon rather than Noria's downpour.
+    rains_ = world == "noria" || world == "lorencia";
+    peak_ = world == "lorencia" ? 0.33f : 1.0f;
     forest_ = world == "noria";
     if (force == "rain" || force == "dry") {
         forced_ = true;
@@ -82,7 +87,7 @@ void Weather::update(float seconds, bool indoors) {
     if (!sound_) return;
     if (rainSound_ >= 0) {
         sound_->loop(rainSound_, share_ > 0.0f && !indoors);
-        sound_->level(rainSound_, share_);
+        sound_->level(rainSound_, pour());
     }
     if (forestSound_ >= 0) {
         birdIn_ -= seconds;

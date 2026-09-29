@@ -97,7 +97,7 @@ private:
     // Drops, and the rings they leave. **Invention:** the client has the leaves' 80 slots for
     // both; see the header.
     static constexpr int kDrops = 700;
-    static constexpr int kRings = 240;
+    static constexpr int kRings = 480;
 
     struct Drop {
         float position[3] = {0.0f, 0.0f, 0.0f};

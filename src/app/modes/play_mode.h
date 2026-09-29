@@ -109,19 +109,21 @@ private:
     bool entrance_ = false;
     float entranceSeconds_ = 0.0f;
 
+    // Noria's and Lorencia's music out on the hunt, not in town: see the music in
+    // PlayMode::frame.
+    bool fightMusic_ = false;
+    bool fightHeard_ = false;    // the session's first fight has had its music
+    float fightQuiet_ = 0.0f;    // seconds since the last blow either way
+    float fightPlayed_ = 0.0f;   // seconds this playing has lasted
+    float fightRest_ = 60.0f;    // seconds before a fight may start it again
+    uint32_t fightSeed_ = 0;     // seeded from the clock on the first roll
+
     // Who the arena's hand is fighting. Kept here rather than read off the hero, because what
     // the hero has been ordered to attack is the realm's private `order_` and is deliberately
     // not published -- a window asks and redraws, it does not read the order back. So the hand
     // remembers what it asked for, exactly as a person at the mouse remembers what they
     // clicked, and asks again only when that body is down.
     uint32_t arenaTarget_ = 0;
-    // Noria's music out on the hunt, not in town: see the music in PlayMode::frame.
-    bool fightMusic_ = false;
-    float fightQuiet_ = 0.0f;    // seconds since the last blow either way
-    float fightPlayed_ = 0.0f;   // seconds this playing has lasted
-    float fightRest_ = 300.0f;   // seconds before a fight may start it again
-    uint32_t fightSeed_ = 0x2545F491u;
-
     // The quick slot's skill the arena's order was last given with: the desk binds the wizard's
     // Energy Ball a frame or two after the first order is raised, and the order is raised again
     // when it does, or the whole first fight is his staff.

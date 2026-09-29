@@ -127,6 +127,8 @@ bool PlayMode::open(Context& ctx) {
     // The world's own light over the base sheet -- Noria's tropical day over Lorencia's night --
     // or the base alone when the world has no sheet (game/world/maps.h).
     ctx.time.setScene(game::mapSheet(ctx.paths.sheets, args.world));
+    // And its rain, when it has one: sheets/worlds/<world>_rain.json, blended in by the share.
+    ctx.time.setWet(game::mapSheet(ctx.paths.sheets, args.world + "_rain"));
 
     // The game's own entrance, only when somebody is playing.
     entrance_ = args.play && (args.frames == 0 || args.entrance);
@@ -708,6 +710,12 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // never in town, but now and then out on the hunt when the elf is actually fighting --
         // a fight rolls for it at most every fightRest_ seconds, it plays while blows keep
         // landing, and goes out once the fight has been quiet a while or it has run its length.
+        // Lorencia the same, to its own main_theme.mp3 -- MU's field music off the tavern floor,
+        // brought back only for the fights (the user, 2026-09-29: "use main theme for lorencia
+        // combat"); the character screen has MuTheme instead.
+        const char* huntTrack = args.world == "noria"      ? "/music/Noria.mp3"
+                                : args.world == "lorencia" ? "/music/main_theme.mp3"
+                                                           : nullptr;
         bool hunt = false;
         if (huntTrack != nullptr) {
             const sim::Realm& realm = world_.played().realm();
@@ -731,12 +739,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             }
             const float seconds = float(deltaSeconds);
             fightRest_ = std::max(0.0f, fightRest_ - seconds);
-        // Lorencia the same, to its own main_theme.mp3 -- MU's field music off the tavern floor,
-        // brought back only for the fights (the user, 2026-09-29: "use main theme for lorencia
-        // combat"); the character screen has MuTheme instead.
-        const char* huntTrack = args.world == "noria"      ? "/music/Noria.mp3"
-                                : args.world == "lorencia" ? "/music/main_theme.mp3"
-                                                           : nullptr;
             fightQuiet_ = fighting ? 0.0f : fightQuiet_ + seconds;
             if (town) {
                 fightMusic_ = false;
@@ -750,11 +752,17 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                     fightRest_ = 720.0f + float(fightSeed_ % 481u);
                 }
             } else if (fighting && fightRest_ <= 0.0f) {
+                // Seeded from the clock: a fixed seed rolled the same misses every session, and
+                // its first two were misses, so no one heard it inside thirteen minutes.
+                if (fightSeed_ == 0) fightSeed_ = uint32_t(bx::getHPCounter()) | 1u;
                 fightSeed_ ^= fightSeed_ << 13;
                 fightSeed_ ^= fightSeed_ >> 17;
                 fightSeed_ ^= fightSeed_ << 5;
-                // One fight in four; a miss waits four minutes before the next fight may roll.
-                if (fightSeed_ % 4 == 0) {
+                // The first fight a minute in always has it (the user, 2026-09-29: "i was doing
+                // combat some time but no music"); after that one fight in four, and a miss
+                // waits four minutes before the next fight may roll.
+                if (!fightHeard_ || fightSeed_ % 4 == 0) {
+                    fightHeard_ = true;
                     fightMusic_ = true;
                     fightPlayed_ = 0.0f;
                 } else {
@@ -864,8 +872,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                               viewProj, ctx.renderer);
         // The weather first: how much of the leaves' pool is rain this frame. weather.h.
         world_.weather().update(float(deltaSeconds), inside);
+        ctx.time.rain(world_.weather().rain());
         world_.leaves().update(float(deltaSeconds), hero, eye.position, inside, world_.ground(),
-                               world_.weather().rain());
+                               world_.weather().pour());
         world_.leaves().gather(ctx.renderer.effects(), eye.position);
     }
     // The town's drawables are gathered fresh each frame into one vector that keeps
@@ -1189,6 +1198,7 @@ void PlayMode::shutdown(Context& ctx) {
     keep(ctx);
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
     ctx.time.setScene("");
+    ctx.time.setWet("");
     if (shadowLog_) std::fclose(shadowLog_);
     if (shadowPoints_) std::fclose(shadowPoints_);
     shadowLog_ = shadowPoints_ = nullptr;
