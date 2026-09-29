@@ -35,7 +35,9 @@ constexpr float kEdgeFade = 18.0f;        // the pane's edges soften where more 
 constexpr float kBody = 15.0f, kLead = 23.0f, kParagraph = 9.0f;
 constexpr float kSection = 18.0f;
 constexpr float kStepRow = 23.0f;
-constexpr float kCellGap = 12.0f, kCellTall = 96.0f, kNameRoom = 26.0f;
+// A reward as WoW lists one: a small picture with its name beside it, two across, the stack's
+// count on the picture's corner (the user, 2026-09-29: the tall cells were "very big").
+constexpr float kCellGap = 10.0f, kIcon = 44.0f, kNameGap = 8.0f, kName = 14.0f;
 constexpr float kChoiceColumns = 2.0f;
 constexpr float kPurse = 30.0f;  // the experience and the Zen, one line over the paid grid
 constexpr float kAsk = 22.0f;    // the choice's line over its grid
@@ -223,11 +225,10 @@ void QuestDialog::layout(const Play& play) {
                         describe(tables, held, realm.wearer(), realm.satchel()).nameTone);
                 }
                 cell.box = {kInset + float(column) * (cellWide + kCellGap),
-                            y + float(rowOf) * (kCellTall + kNameRoom + kCellGap), cellWide,
-                            kCellTall};
+                            y + float(rowOf) * (kIcon + kCellGap), cellWide, kIcon};
                 cells_.push_back(cell);
             }
-            y += float((int(items.size()) + across - 1) / across) * (kCellTall + kNameRoom + kCellGap);
+            y += float((int(items.size()) + across - 1) / across) * (kIcon + kCellGap);
         };
         std::vector<std::pair<int, const sim::QuestItem*>> paid, fits;
         const uint32_t completions = realm.quest(quest_).completions;
@@ -266,15 +267,14 @@ void QuestDialog::layout(const Play& play) {
     const float side = style::kSmallSquare;
     buttons_[2] = {kWide - style::kPad - side, (style::kHead - side) * 0.5f, side, side};
 
-    // The pictures, in window units, only those at least partly in the pane: each item eight
-    // units inside its cell, the one under the pointer or chosen turning.
+    // The pictures, in window units, only those at least partly in the pane: each item inside its
+    // picture's square, the one under the pointer or chosen turning.
     standing_.clear();
     for (size_t i = 0; i < cells_.size(); ++i) {
         const Cell& one = cells_[i];
-        Box at = one.box;
-        at.y = paneTop() + one.box.y - scroll_;
+        Box at{one.box.x, paneTop() + one.box.y - scroll_, kIcon, kIcon};
         if (at.bottom() < paneTop() || at.y > paneTop() + paneTall()) continue;
-        standing_.push_back({one.item, at.grown(-8.0f), one.plus,
+        standing_.push_back({one.item, at.grown(-4.0f), one.plus,
                              over_ == 10 + int(i) || (one.choice >= 0 && one.choice == chosen_)});
     }
 }
@@ -565,7 +565,8 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
         for (size_t i = 0; i < cells_.size(); ++i) {
             const Cell& one = cells_[i];
             const Box box = cellBox(one);
-            controls::cell(body_, box, over_ == 10 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);
+            const Box icon{box.x, box.y, box.h, box.h};
+            controls::cell(body_, icon, over_ == 10 + int(i) ? controls::Cell::Over : controls::Cell::Rest, u);
             if (one.choice >= 0 && one.choice == chosen_) {
                 // The chosen one: the hover's ember from its foot and a blood rim.
                 const uint32_t hot = quest_marks::faded(style::kBlood, style::kEmberAlpha);
@@ -576,10 +577,21 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
             const content::ItemRow& item = tables.items[size_t(one.item)];
             std::string name = item.label;
             if (one.plus > 0) name += " +" + std::to_string(one.plus);
-            if (one.count > 1) name += " x" + std::to_string(one.count);
-            const float nw = widthOf(15.0f * u, name);
-            controls::label(body_, box.x + (box.w - nw) * 0.5f, box.y + box.h + 18.0f * u, 15.0f * u,
-                            one.ink ? one.ink : kItemWhite, name);
+            // The name beside the picture, at most two lines, centred on it.
+            std::vector<std::string> lines;
+            wrap(name, kName, one.box.w - kIcon - kNameGap, lines);
+            if (lines.size() > 2) lines.resize(2);
+            const float lead = kName * 1.2f;
+            float ly = one.box.y + (kIcon - lead * float(lines.size())) * 0.5f + kName * 0.9f;
+            for (const std::string& line : lines) {
+                controls::label(body_, sx(one.box.x + kIcon + kNameGap), by(ly), kName * u,
+                                one.ink ? one.ink : kItemWhite, line);
+                ly += lead;
+            }
+            if (one.count > 1) {
+                controls::ranged(body_, icon.right() - 4.0f * u, icon.bottom() - 5.0f * u, 13.0f * u,
+                                 kItemWhite, std::to_string(one.count));
+            }
         }
     }
 
