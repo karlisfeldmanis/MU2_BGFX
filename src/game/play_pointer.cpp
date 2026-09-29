@@ -517,7 +517,33 @@ bool Play::folkCrownOf(int folk, const float* viewProj, int width, int height, f
         float clip[4];
         bx::vec4MulMtx(clip, world, viewProj);
         if (clip[3] <= 0.0f) return false;
-        *x = (clip[0] / clip[3] * 0.5f + 0.5f) * float(width);
+        // Across, from the face: a point raised over the head leans away from the screen's middle
+        // in the perspective, as the whole figure does, and the quest mark hung off to the side
+        // of anyone standing off-centre -- Sevina, at the left of the frame, by eleven pixels
+        // (the user, 2026-09-30). So the across is the head joint's, where the pose holds it;
+        // the height is still the raised point's.
+        float head[4] = {at[0], top, at[2], 1.0f};
+        if (const content::Mesh* skeleton = one.figure.body()->skeletonMesh) {
+            const std::vector<content::Bone>& bones = skeleton->bones();
+            for (size_t b = 0; b < bones.size(); ++b) {
+                if (bones[b].name != "Bip01 Head") continue;
+                // The joint's place in the model is its inverse bind's inverse.
+                float bind[16];
+                bx::mtxInverse(bind, bones[b].inverseBind);
+                const float joint[3] = {bind[12], bind[13], bind[14]};
+                float onPose[3];
+                if (one.figure.pointOnBind(int(b), joint, onPose)) {
+                    head[0] = onPose[0];
+                    head[1] = onPose[1];
+                    head[2] = onPose[2];
+                }
+                break;
+            }
+        }
+        float onHead[4];
+        bx::vec4MulMtx(onHead, head, viewProj);
+        const float across = onHead[3] > 0.0f ? onHead[0] / onHead[3] : clip[0] / clip[3];
+        *x = (across * 0.5f + 0.5f) * float(width);
         *y = (0.5f - clip[1] / clip[3] * 0.5f) * float(height);
         return true;
     }
