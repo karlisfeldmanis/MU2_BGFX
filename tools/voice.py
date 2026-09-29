@@ -55,6 +55,14 @@ VOICES = {
     "peia": dict(ref="af_nicole.wav", exaggeration=0.4, cfg_weight=0.3,
                  polish="asetrate=24000*0.94,aresample=24000,atempo=1.0638,"
                         "aecho=0.8:0.5:70|140:0.18|0.1," + POLISH),
+    # Devin: low, with a Nordic accent, but only a trace (the user, 2026-09-29: the full accent
+    # was "to strong", the trace "perfect"). His reference is Chatterbox's multilingual model
+    # (ChatterboxMultilingualTTS) reading one of his English lines as Swedish, language_id "sv",
+    # off bm_lewis; cloned here by the English model, the accent survives only as colour.
+    # Two semitones down (asetrate 0.89, tempo put back) and more chest: older than Marlon.
+    "devin": dict(ref="devin_sv.wav", exaggeration=0.45, cfg_weight=0.4,
+                  polish="asetrate=24000*0.89,aresample=24000,atempo=1.1236,"
+                         "bass=g=3:f=100," + POLISH),
 }
 
 
