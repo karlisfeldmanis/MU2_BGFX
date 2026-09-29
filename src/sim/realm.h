@@ -648,6 +648,9 @@ public:
     // Asked by `accept`, which drops the orders that would move him, and by the pointer, which
     // does not draw a destination marker for a walk that is not going to happen.
     bool casting() const { return tick_ < bodies_[0].castUntil; }
+    // What he was last told and is still doing: the drawing's flinch halts a walk and not a
+    // chase, and reads which it is here.
+    const Request& order() const { return order_; }
     const content::Tables* tables() const { return tables_; }
     const Router& router() const { return router_; }
     uint64_t draws() const { return dice_.draws(); }

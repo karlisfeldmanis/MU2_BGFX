@@ -542,6 +542,9 @@ private:
         float spawnFade = 1e9f;
         float swinging = 0.0f;   // seconds of it left to play before idle or walk take over
         float swingPace = 1.0f;  // how much faster than authored the swing clip must run
+        // Seconds of a flinch left to play, held as a swing is -- without it the idle took the
+        // shock clip back on the next frame. A swing or a step ends it. See Play::flinch.
+        float shocked = 0.0f;
         // The walk. `groundSpeed` is what the last tick actually covered, in metres a second,
         // and is the numerator of the clip's rate; `still` is how long it has covered nothing,
         // which is what decides whether a stop is a stop or a stumble; `walkPhase` is where
@@ -604,6 +607,11 @@ private:
     void fit(Drawn& one, const sim::Body& body, const FigureBody* look);
     // Starts every owed fall whose killing blow is no longer waiting to be shown.
     void fallWhenLanded();
+    // SetPlayerShock on a blow that did damage: a monster flinches one time in two, and so does
+    // the hero, who is halted and has a click to move refused until the clip has played.
+    void flinch(Drawn& struck, bool isHero);
+    // Plays a body's shock clip and holds it for as long as the clip lasts.
+    static void shock(Drawn& one, int clip);
     // Lets go of every held drop a beat after its dropper's killing blow lands, and rewrites
     // heldIds_.
     void releaseDrops();
@@ -669,11 +677,15 @@ private:
     // The wandering cry's own dice: the drawing's, so that hearing a spider never moves the
     // sim's seeded stream.
     uint32_t wanderDice_ = 0x6d2b79f5u;
+    // The flinch's coin, `rand_fps_check(2)` on a blow that lands: the drawing's too.
+    uint32_t flinchDice_ = 0x9e3779b9u;
     // The events that are not a breed's, as Sound handles, found once at openSound.
     struct Heard {
         int swing = -1, swingLong = -1, bow = -1, crossbow = -1;  // the character's swing
         int hit = -1;                                            // melee_hit, any landed blow
         int die = -1;                                            // pMaleDie, the knight's fall
+        int dieFemale = -1;                                      // pFemaleScream2, the elf's
+        int shock = -1, shockFemale = -1;                        // his flinch's scream, and hers
         int grass = -1, soil = -1;                               // his footsteps
         int wind = -1;                                           // Lorencia's air
         int hammer = -1;                                         // Hanzo at his anvil
@@ -681,14 +693,11 @@ private:
         int take = -1;                                  // pGetItem: a pickup, an equip, a bind
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept
-    // The flinch's coin, `rand_fps_check(2)` on a blow that lands: the drawing's too.
-    uint32_t flinchDice_ = 0x9e3779b9u;
         int warp = -1;                                  // sMagic: a Town Portal landing
         int click = -1, refused = -1, opened = -1;      // the windows
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
-        int dieFemale = -1;                                      // pFemaleScream2, the elf's
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     } heard_;

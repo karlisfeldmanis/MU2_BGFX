@@ -103,11 +103,9 @@ constexpr float kShockTiles = 2.0f;
 // 231 is what index.json's own `actions` table calls "Shock"; MuMain's enum numbers it 238,
 // and the two tables are not the same enumeration, which is why this reads ours.
 constexpr int kPlayerShockSlot = 231;
-// The HERO has none, and that is a decision rather than an omission. MU's quake
-// loop excludes the hero outright, so he never flinches for a meteor. MU *does* flinch him on
-// an ordinary blow only when the packet's success bit is up, which OpenMU never raises on a
-// hit -- so under 0.75 he never flinches, and everything else flinches one blow in two (the
-// cue loop in Play::update).
+// The HERO keeps none on his Drawn, and that is a decision rather than an omission. MU's quake
+// loop excludes the hero outright, so he never flinches for a meteor. His flinch from a blow
+// looks this slot up itself: Play::flinch.
 // PLAYER_DIE1, which the cook also holds (source/players/rig/actions.json, hold_at_end). The
 // hero plays it and lies there until the realm revives him at the gate -- no fade: MU leaves
 // the player's body on the ground for the whole wait.

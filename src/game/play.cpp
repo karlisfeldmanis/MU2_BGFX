@@ -405,7 +405,7 @@ void Play::update(double seconds) {
             if (happening.what == sim::What::Shoved) {
                 if (Drawn* pushed = drawnOf(happening.who);
                     pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {
-                    pushed->figure.play(pushed->shockClip, true);
+                    shock(*pushed, pushed->shockClip);
                 }
             }
             if (happening.what == sim::What::Loosed) {
@@ -943,7 +943,7 @@ void Play::update(double seconds) {
             if (body == nullptr || !body->alive()) continue;
             const float dx = one.crown[0] - impact.x;
             const float dz = one.crown[2] - impact.z;
-            if (dx * dx + dz * dz < kShockTiles * kShockTiles) one.figure.play(one.shockClip, true);
+            if (dx * dx + dz * dz < kShockTiles * kShockTiles) shock(one, one.shockClip);
         }
     }
 
@@ -1001,6 +1001,9 @@ void Play::update(double seconds) {
         if (heard_.hit >= 0 && swinger->placed) {
             emit(heard_.hit, swinger->crown[0], swinger->crown[2], swinger->id);
         }
+        if (!cue.miss && cue.damage > 0 && target->alive()) {
+            if (Drawn* struck = drawnOf(cue.target)) flinch(*struck, onHero);
+        }
     }
     // After the cues, so the fall comes in the same frame as the number and the blood of the
     // blow that caused it -- or at once, for a death no blow is still owed on.
@@ -1027,27 +1030,6 @@ void Play::update(double seconds) {
 
 std::string Play::nameOf(uint32_t id) const {
     const sim::Body* one = realm_.find(id);
-        // The flinch: SetPlayerShock (ZzzCharacter.cpp:1365), from ReceiveAttackDamage's `else`,
-        // which is every ordinary hit under OpenMU -- it never raises the target id's top bit
-        // on a hit. There the hero takes no shock at all, and anything else takes one on a
-        // blow that did damage, one time in two, unless it is mid-attack. MONSTER01_SHOCK,
-        // and on its first frame the breed's attack pair, `Sounds[2 + rand() % 2]`: SetAction
-        // to the clip already playing changes nothing, so a flinch in progress is not begun
-        // again and cries once. A killing blow is left to the fall that comes this frame.
-        Drawn* struck = drawnOf(cue.target);
-        if (!onHero && !cue.miss && cue.damage > 0 && target->alive() && struck &&
-            struck->placed && struck->shockClip >= 0 && struck->swinging <= 0.0f &&
-            struck->figure.clip() != struck->shockClip) {
-            flinchDice_ ^= flinchDice_ << 13;
-            flinchDice_ ^= flinchDice_ >> 17;
-            flinchDice_ ^= flinchDice_ << 5;
-            if (flinchDice_ & 1u) {
-                struck->figure.play(struck->shockClip, true);
-                if (struck->cryAttack >= 0) {
-                    emit(struck->cryAttack, struck->crown[0], struck->crown[2], struck->id);
-                }
-            }
-        }
     if (!one) return "nobody";
     if (one->player) return "the hero";
     if (one->warden >= 0) return tables_.folk[size_t(one->warden)].name + "#" + std::to_string(id);
@@ -1180,6 +1162,53 @@ void Play::announce(const sim::Happening& happening) {
             break;
         default:
             break;
+    }
+}
+
+void Play::shock(Drawn& one, int clip) {
+    one.figure.play(clip, true);
+    one.shocked = one.figure.length();
+}
+
+// The flinch: SetPlayerShock (ZzzCharacter.cpp:1365), from ReceiveAttackDamage's `else`, which is
+// every ordinary hit under OpenMU -- it never raises the target id's top bit on a hit. There
+// anything but the hero takes a shock one blow in two, unless it is mid-attack: MONSTER01_SHOCK,
+// and on its first frame the breed's attack pair, `Sounds[2 + rand() % 2]`. SetAction to the
+// clip already playing changes nothing, so a flinch in progress is not begun again and cries
+// once. A killing blow is left to the fall that comes this frame.
+//
+// The hero flinches too, and that is **ours**: under 0.75 the `else` has no shock for him, and
+// MU flinches him only from the `if` a Webzen server's success bit reaches. The user's, 2026-09-29,
+// on the same coin. What the `if` does to him is MU's: PLAYER_SHOCK, `c->Movement = false`, and
+// pMaleScream1-3 or pFemaleScream1-2 by IsFemale; and while the clip plays a click to move is
+// refused (ZzzInterface.cpp:3127). Not while he swings or casts -- MU's player branch cuts a
+// swing, but here the swing carries the landing cue of his own blow -- and not while he chases
+// a monster, which the halt would cancel: a stop that costs him his fight is not a flinch.
+void Play::flinch(Drawn& struck, bool isHero) {
+    if (!struck.placed || struck.swinging > 0.0f || struck.shocked > 0.0f) return;
+    const FigureBody* look = struck.figure.body();
+    int clip = struck.shockClip;
+    if (isHero) {
+        if (struck.casting > 0.0f || realm_.casting()) return;
+        const sim::Request& order = realm_.order();
+        if (realm_.hero().walking && order.kind == sim::Request::Kind::Attack) return;
+        clip = look && look->library ? look->library->find(kPlayerShockSlot) : -1;
+    }
+    if (clip < 0 || struck.figure.clip() == clip) return;
+    flinchDice_ ^= flinchDice_ << 13;
+    flinchDice_ ^= flinchDice_ >> 17;
+    flinchDice_ ^= flinchDice_ << 5;
+    if ((flinchDice_ & 1u) == 0) return;
+    shock(struck, clip);
+    const int cry = !isHero ? struck.cryAttack
+                            : (look && look->female ? heard_.shockFemale : heard_.shock);
+    if (cry >= 0) emit(cry, struck.crown[0], struck.crown[2], struck.id);
+    if (isHero && realm_.hero().walking) {
+        sim::Request stop;
+        stop.kind = sim::Request::Kind::Stop;
+        realm_.ask(stop);
+        mark_ = false;
+        marker_.dismiss();
     }
 }
 

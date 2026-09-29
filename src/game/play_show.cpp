@@ -672,6 +672,16 @@ void Play::follow(float seconds) {
         if (one.swinging > 0.0f && body->walking && one.casting <= 0.0f) one.swinging = 0.0f;
         if (one.swinging > 0.0f) {
             one.clipRate = one.swingPace;
+            one.shocked = 0.0f;
+            continue;
+        }
+        // A flinch holds the same way, and a step ends it -- a monster's chase goes on through
+        // it, as MU's MONSTER01_SHOCK gives way to the walk. Not the hero's: Play::flinch has
+        // halted him, and what is left of his walk is the drawing reaching the tile he stood on.
+        one.shocked = std::max(0.0f, one.shocked - seconds);
+        if (one.shocked > 0.0f && moving && !body->player) one.shocked = 0.0f;
+        if (one.shocked > 0.0f) {
+            one.clipRate = 1.0f;
             continue;
         }
         const FigureBody* look = one.figure.body();
