@@ -48,6 +48,12 @@ inline uint8_t powerAt(const sim::Held& held, int at) {
     return at >= 0 && at < kMostSockets ? held.powers[at] : 0;
 }
 
+// **A thing's quality**, the colour its name is drawn in on the card and on the ground: WoW's
+// ladder, the user's choice of 2026-09-29, since MU's refinement orange read a +3 as legendary.
+// Top down: the Rune of Creation legendary orange, excellent epic purple, socketed rare blue,
+// +7 and the jewels artifact gold, luck/skill/option uncommon green, the rest common white.
+tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what);
+
 // **What a spell does, as lines**: the band it rolls in his hands and the sum behind it, then
 // whom it strikes -- a channel's length and strikes, a line's sweep, a rain's area -- and a push.
 // One function for the spell's own card (`Desk::skillSheet`) and its scroll's (`describe`), so the

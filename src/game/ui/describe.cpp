@@ -188,6 +188,17 @@ uint32_t moneyColour(long long zen) {
     return gfx::rgba(150.0f / 255.0f, 220.0f / 255.0f, 1.0f);
 }
 
+tip::Tone qualityOf(const content::ItemRow& row, const sim::Held& what) {
+    // MU's rungs kept in its order (excellent over a socket over +7 over an option, the socket
+    // ours from 2026-09-28: "item drop with +socket is rare"), each in WoW's colour for its tier.
+    if (sim::creation(row)) return Tone::Legendary;
+    if (what.excellent != 0) return Tone::Epic;
+    if (socketsOf(what) > 0) return Tone::Rare;
+    if (row.jewel() || what.refinement >= kRefinedFrom) return Tone::Artifact;
+    if (what.skill || what.luck || what.option > 0) return Tone::Uncommon;
+    return Tone::White;
+}
+
 int32_t runeRow(const content::Tables& tables) {
     for (size_t i = 0; i < tables.items.size(); ++i) {
         if (sim::creation(tables.items[i])) return int32_t(i);
@@ -208,21 +219,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     sheet.artScale = std::clamp(float(std::max(row.width, row.height)) / 3.0f, 0.42f, 1.0f);
     // A summoning orb's plus is already in its name.
     sheet.name = sim::summoningOrb(row) ? row.label : label(row, plus);
-    // MU's name ladder, as far as these rows reach it: a jewel is yellow, +7 and above is
-    // yellow, anything carrying an option is blue, everything else white. Excellent, ancient
-    // and socket colours wait for the items that have them.
-    // Excellent is green whatever its plus: MU's rule 5, above the +7 yellow.
-    // A Rune of Creation is MU's orange, the epic colour (ours, as the jewel is).
-    sheet.nameTone = sim::creation(row) ? Tone::Orange
-                     : row.jewel() ? Tone::Yellow
-                     : what.excellent != 0 ? Tone::Green
-                     // Rare: a socket, which drops seldom (ours, the user's word 2026-09-28:
-                     // "item drop with +socket is rare", "we need color code for rare items").
-                     // Violet, MU's one ink the ladder had not taken; under excellent, over +7.
-                     : socketsOf(what) > 0 ? Tone::Violet
-                     : plus >= kRefinedFrom ? Tone::Yellow
-                     : what.skill || what.luck || what.option > 0 ? Tone::Blue
-                                  : Tone::White;
+    sheet.nameTone = qualityOf(row, what);
 
     static const char* const kNames[3] = {"Dark Wizard", "Fairy Elf", "Dark Knight"};
     int named = 0;

@@ -31,7 +31,11 @@
 namespace mu::game::tip {
 
 // What a value is drawn in. MU's TEXT_COLOR_* set, by the names its source uses.
-enum class Tone : uint8_t { White, Blue, Red, Yellow, Green, Gray, Violet, RedPurple, Orange };
+// The last five are an item name's quality, WoW's ladder and not MU's (the user, 2026-09-29).
+enum class Tone : uint8_t {
+    White, Blue, Red, Yellow, Green, Gray, Violet, RedPurple, Orange,
+    Uncommon, Rare, Epic, Legendary, Artifact
+};
 uint32_t colourOf(Tone tone);
 
 // One value on a row. `chip` boxes it -- a class you may be, or may not.

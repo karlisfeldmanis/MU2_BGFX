@@ -351,6 +351,12 @@ uint32_t colourOf(Tone tone) {
         case Tone::Violet: return gfx::rgba(0.7f, 0.4f, 1.0f);
         case Tone::RedPurple: return gfx::rgba(0.8f, 0.5f, 0.8f);
         case Tone::Orange: return gfx::rgba(0.9f, 0.42f, 0.04f);
+        // WoW's item quality colours, its own hex values.
+        case Tone::Uncommon: return gfx::rgba(0x1e / 255.0f, 1.0f, 0.0f);
+        case Tone::Rare: return gfx::rgba(0.0f, 0x70 / 255.0f, 0xdd / 255.0f);
+        case Tone::Epic: return gfx::rgba(0xa3 / 255.0f, 0x35 / 255.0f, 0xee / 255.0f);
+        case Tone::Legendary: return gfx::rgba(1.0f, 0x80 / 255.0f, 0.0f);
+        case Tone::Artifact: return gfx::rgba(0xe6 / 255.0f, 0xcc / 255.0f, 0x80 / 255.0f);
         case Tone::White:
         default: return gfx::rgba(1.0f, 1.0f, 1.0f);
     }

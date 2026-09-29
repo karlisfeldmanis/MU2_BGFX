@@ -1119,28 +1119,12 @@ static bool boldOf(const content::Tables& tables, const sim::Lying& one) {
     return !one.what.empty() && tables.items[size_t(one.what.item)].jewel();
 }
 
-// MU2's Drops.Tint, which is BuildGroundItemLabelDescriptor's ladder: the colour IS the
-// refinement, and Zen is gold whatever it is. Luck or an option is the blue rung, tested after
-// the +7 yellow and before the level ladder (`HasSkill || HasLuck || OptionLevel > 0`). And the
-// jewels are gold whatever they are too: they are
-// in its `yellowTextItems` beside Zen (ZzzInventory.cpp:6101), which the ladder skips.
+// A ground label's colour: the item card's quality (describe's qualityOf, WoW's ladder since
+// 2026-09-29), so the two cannot disagree. BuildGroundItemLabelDescriptor's own ladder coloured
+// by the plus -- +3 and +4 orange -- which read as legendary. Zen stays MU's gold.
 static uint32_t tintOf(const content::Tables& tables, const sim::Lying& one) {
-    const uint32_t yellow = gfx::rgba(1.0f, 0.8f, 0.1f);
-    // Ours above MU's ladder, as the item card's name has them (game/ui/describe.cpp): a Rune of
-    // Creation is the epic orange, and anything socketed the rare violet, under excellent.
-    if (!one.what.empty() && sim::creation(tables.items[size_t(one.what.item)])) {
-        return tip::colourOf(tip::Tone::Orange);
-    }
-    // Excellent is green, above the +7 yellow: `(ItemOption & 63) > 0` is tested first.
-    if (!one.what.empty() && one.what.excellent != 0) return gfx::rgba(0.1f, 1.0f, 0.5f);
-    if (!one.what.empty() && socketsOf(one.what) > 0) return tip::colourOf(tip::Tone::Violet);
-    if (one.what.empty() || one.what.refinement >= 7 || boldOf(tables, one)) return yellow;
-    if (one.what.luck || one.what.option > 0) return gfx::rgba(0.4f, 0.7f, 1.0f);
-    const int plus = one.what.refinement;
-    if (plus == 0) return gfx::rgba(0.7f, 0.7f, 0.7f);
-    if (plus < 3) return gfx::rgba(0.9f, 0.9f, 0.9f);
-    if (plus < 5) return gfx::rgba(1.0f, 0.5f, 0.2f);
-    return gfx::rgba(0.4f, 0.7f, 1.0f);
+    if (one.what.empty()) return gfx::rgba(1.0f, 0.8f, 0.1f);
+    return tip::colourOf(qualityOf(tables.items[size_t(one.what.item)], one.what));
 }
 
 void Desk::labelGround(const Play& play, int width, int height) {
