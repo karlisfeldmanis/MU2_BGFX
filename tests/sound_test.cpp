@@ -230,6 +230,24 @@ int main(int argc, char** argv) {
     check(std::fabs(two.both() / one.both() - std::sqrt(2.0)) < 0.05,
           "and is the square root of two louder", two.both() / one.both());
 
+    // B. A busy event swallows. Two plays on two frames take both its voices; a third while both
+    // still sound is not started, as MU's Play() on a playing DirectSound buffer is not -- the
+    // restart that made a pack of spiders stutter. The hero's own takes the older voice.
+    b.hush();
+    const int swallowedBefore = b.sound.tally().swallowed;
+    for (int k = 0; k < 3; ++k) {
+        b.frame();
+        b.sound.playAt(blast, 4.0f, 0.0f, 0.0f);
+    }
+    check(b.sound.tally().swallowed == swallowedBefore + 1 && b.sound.tally().sounding == 2,
+          "a third cry while both voices sound is swallowed",
+          double(b.sound.tally().swallowed - swallowedBefore));
+    b.frame();
+    b.sound.playAt(blast, 0.0f, 0.0f, 0.0f);
+    check(b.sound.tally().swallowed == swallowedBefore + 1 && b.sound.tally().sounding == 2,
+          "but the hero's own takes the older voice", double(b.sound.tally().sounding));
+    b.hush();
+
     // C. The duck: the hero's moment leans the world back to 0.6, in 50 ms.
     const Ears plain = playAndHear(b, blast, 0.0f, 0.0f);
     b.hush();

@@ -36,6 +36,10 @@ constexpr ma_uint64 kLoopFadeMs = 150;
 // monster family. MU2's Sounds.Voices.
 constexpr int kVoices = 2;
 
+// How long a voice taken from under a sound takes to go: a sample stopped mid-wave is a click,
+// and a crowd's worth of them read as the sound breaking. An invention, as the loop's fade is.
+constexpr float kReleaseMs = 25.0f;
+
 // --- docs/spatial-sound.md, steps A to D. Every number below is an invention. -------------
 
 // How wide the screen is heard: a thing at the frame's side edge is panned this far and no
@@ -274,6 +278,7 @@ struct Sound::Impl {
         int importance[kVoices] = {kCrowd, kCrowd};
         float gain[kVoices] = {0.0f, 0.0f};     // what mix() last set, before the trim
         float walled[kVoices] = {0.0f, 0.0f};   // 0 clear to 1 behind a wall, eased
+        bool released[kVoices] = {false, false};  // fading out under a steal: not sounding
         int plays = 0;  // for the log at shutdown: what a run was heard to say
         bool looping = false;  // an ambient that is on; see loop()
     };
@@ -293,12 +298,16 @@ struct Sound::Impl {
     // every soil step came out as a click. Heard a buffer late, as DirectSound heard them.
     void start(ma_sound& sound, float lead, bool buffered = false) {
         ma_sound_stop(&sound);
+        // A release still pending from a steal would end the new sound too, and its fader
+        // would start it at the level the release had got down to.
+        ma_sound_set_stop_time_in_pcm_frames(&sound, ~ma_uint64(0));
+        ma_sound_set_fade_in_pcm_frames(&sound, 1.0f, 1.0f, 0);
         ma_sound_seek_to_second(&sound, lead + (buffered ? latency : 0.0f));
         ma_sound_start(&sound);
     }
 
     bool playing(const Event& event, int v) {
-        if (event.sounding[v] < 0) return false;
+        if (event.sounding[v] < 0 || event.released[v]) return false;
         ma_sound& sound = event.files[size_t(event.sounding[v])]->sound[v];
         return ma_sound_is_playing(&sound) && !ma_sound_at_end(&sound);
     }
@@ -727,8 +736,9 @@ void Sound::shutdown() {
     }
     core::logf("sound: heard %s", heard.empty() ? "nothing" : heard.c_str());
     const Tally& t = impl_->counted;
-    core::logf("sound: the budget refused %d, merged %d and stole %d; %d of %d at the most",
-               t.refused, t.merged, t.stolen, impl_->peak, kVoicesTotal);
+    core::logf("sound: the budget refused %d, merged %d and stole %d, and %d were swallowed by "
+               "their own busy voices; %d of %d at the most",
+               t.refused, t.merged, t.stolen, t.swallowed, impl_->peak, kVoicesTotal);
     // Sounds before the filters they feed, filters before the buses, buses before the room,
     // the room before the engine.
     for (auto& event : impl_->events) {
@@ -889,7 +899,26 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
         ++im.counted.refused;
         return;
     }
-    const int voice = event.next;
+    // A free voice, the round-robin's own first. When both still sound, **MU's rule and not a
+    // restart**: PlayBuffer calls Play() on the next channel's buffer without stopping it, and
+    // Play() on a buffer that is playing leaves it playing -- the new cry is swallowed and the
+    // one sounding is heard out. Restarting it instead is what made a pack of walking spiders
+    // stutter: at one in sixteen frames each, four of them ask for a cry every tenth of a
+    // second, and every one cut the last off a few milliseconds in. The hero's own sounds are
+    // the exception, ours: his swing is the one noise that must go with what his hands do, so
+    // it takes the older voice.
+    int voice = -1;
+    for (int k = 0; k < kVoices && voice < 0; ++k) {
+        const int v = (event.next + k) % kVoices;
+        if (!im.playing(event, v)) voice = v;
+    }
+    if (voice < 0) {
+        if (weight.importance < kHero) {
+            ++im.counted.swallowed;
+            return;
+        }
+        voice = event.startedOn[0] <= event.startedOn[1] ? 0 : 1;
+    }
 
     // The budget. The event's own round-robin below steals within the event and does not
     // change the count; only a voice that is not already sounding needs a place.
@@ -917,19 +946,23 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
             ++im.counted.refused;
             return;
         }
-        ma_sound_stop(
-            &victim->files[size_t(victim->sounding[victimVoice])]->sound[victimVoice]);
+        // Released rather than stopped: it is heard going for a moment, and no longer counts.
+        ma_sound_stop_with_fade_in_milliseconds(
+            &victim->files[size_t(victim->sounding[victimVoice])]->sound[victimVoice],
+            ma_uint64(kReleaseMs));
+        victim->released[victimVoice] = true;
         victim->following[victimVoice] = 0;
         ++im.counted.stolen;
     }
-    event.next = (event.next + 1) % kVoices;
+    event.next = (voice + 1) % kVoices;
 
-    // The steal: whatever this voice was sounding stops, as DirectSound's round-robin does not
-    // wait for a buffer to finish before re-using it.
-    if (event.sounding[voice] >= 0) {
-        ma_sound_stop(&event.files[size_t(event.sounding[voice])]->sound[voice]);
-    }
     const int pick = int(im.roll() % uint32_t(event.files.size()));
+    // What this voice last sounded, if another file, is let go over the release; the same file
+    // is the same ma_sound, which start() stops -- only the hero's own ever gets here playing.
+    if (event.sounding[voice] >= 0 && event.sounding[voice] != pick) {
+        ma_sound_stop_with_fade_in_milliseconds(
+            &event.files[size_t(event.sounding[voice])]->sound[voice], ma_uint64(kReleaseMs));
+    }
     Impl::File& file = *event.files[size_t(pick)];
     if (voice >= file.ready) return;
     event.sounding[voice] = pick;
@@ -939,6 +972,7 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     event.at[voice][2] = z;
     event.startedOn[voice] = im.frame;
     event.merged[voice] = 1;
+    event.released[voice] = false;
     // Behind a wall from its first sample, not eased into one.
     event.walled[voice] = im.walledAt(at);
     // Levelled, panned and filtered before it starts, so no voice is ever briefly heard as
@@ -978,11 +1012,12 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
     if (now >= im.saidAt + kTallyEveryMs) {
         const Tally& t = im.counted;
         const Tally& was = im.lastSaid;
-        if (t.refused != was.refused || t.merged != was.merged || t.stolen != was.stolen) {
-            core::logf("sound: %d of %d voices at the most; %d refused, %d merged, %d stolen "
-                       "in the last %llu s",
+        if (t.refused != was.refused || t.merged != was.merged || t.stolen != was.stolen ||
+            t.swallowed != was.swallowed) {
+            core::logf("sound: %d of %d voices at the most; %d refused, %d merged, %d stolen, "
+                       "%d swallowed in the last %llu s",
                        im.peak, kVoicesTotal, t.refused - was.refused, t.merged - was.merged,
-                       t.stolen - was.stolen,
+                       t.stolen - was.stolen, t.swallowed - was.swallowed,
                        static_cast<unsigned long long>(kTallyEveryMs / 1000));
             im.lastSaid = t;
         }

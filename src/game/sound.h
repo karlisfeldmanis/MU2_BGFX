@@ -183,12 +183,14 @@ public:
     uint64_t render(float* out, uint64_t frames);
 
     // What the budget has done since open(): voices sounding now, and plays refused, merged
-    // into one already sounding, and stolen from a less important voice.
+    // into one already sounding, stolen from a less important voice, and swallowed because the
+    // event's own voices were all still sounding -- MU's busy DirectSound buffer.
     struct Tally {
         int sounding = 0;
         int refused = 0;
         int merged = 0;
         int stolen = 0;
+        int swallowed = 0;
     };
     Tally tally() const;
 
