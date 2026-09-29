@@ -599,8 +599,8 @@
       ],
       "from": "Not MU's file: MU 0.75's fountain makes no sound. dragon-studio 'water dripping' (Pixabay 364450, downloads/), given by the user 2026-09-29 for Lorencia's fountain: 22.1 s of 44.1 kHz stereo made 22 kHz mono 16-bit, 0.1 s off each end, with its last 1.5 s folded over its first at equal power so the loop has no seam. 20.4 s, an RMS of -36.8 dB, peaking at 0.40.",
       "loop": true,
-      "gain_db": -28.0,
-      "gain_note": "Twenty-eight down: the user found it too loud at its own level, at -9 and at -18 (2026-09-29). What carries is the drips, not the bed: they peak 29 dB over its RMS, so it is cut until a drip's peak (-36 dBFS) sits under the wind's (-32).",
+      "gain_db": -32.0,
+      "gain_note": "Thirty-two down: the user found it too loud at its own level, at -9, at -18, and a little at -28 (2026-09-29). What carries is the drips, not the bed: they peak 29 dB over its RMS, so it is cut until a drip's peak (-40 dBFS) sits well under the wind's (-32).",
       "note": "**An invention, marked** (docs/spatial-sound.md, G). The bonfire's shape: one loop levelled and panned from the nearest Waterspout01 (Play::hearWorld), full to 3 m and gone by 9."
     },
     "world_thunder": {
