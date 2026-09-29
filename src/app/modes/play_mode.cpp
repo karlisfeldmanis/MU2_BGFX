@@ -26,11 +26,13 @@ void PlayMode::readSave(Context& ctx) {
     if (!args.play) return;
     // An arena has no save of its own and must never touch the player's: it is a level-80
     // hero standing in a field of one breed, and writing that over the character somebody
-    // is playing would be the worst kind of helpful. A named `--save` is still obeyed,
-    // because then the caller asked for a file by name.
-    savePath_ = !args.savePath.empty()                     ? args.savePath
-                : (args.frames == 0 && args.arena.empty()) ? game::defaultSavePath()
-                                                           : std::string();
+    // is playing would be the worst kind of helpful. Nor a --quest-ready demo, whose quest was
+    // never walked. A named `--save` is still obeyed, because then the caller asked for a file
+    // by name.
+    const bool unsaved = args.frames != 0 || !args.arena.empty() || args.questReady;
+    savePath_ = !args.savePath.empty() ? args.savePath
+                : !unsaved             ? game::defaultSavePath()
+                                       : std::string();
     if (!savePath_.empty() && !args.fresh && game::loadSave(savePath_, saved_)) {
         if (saved_.fresh) {
             // Made on the character screen and not yet played: his class is all there is, and
@@ -336,6 +338,18 @@ void PlayMode::runScript(Context& ctx) {
     }
     if (world_.played().isOpen()) {
         if (args.zen > 0) world_.played().earn(args.zen);
+        // --quest-ready: every clear already walked, so the giver's mark is a ? and his talk is
+        // the hand-in -- the reward's demo, which is why it has no save.
+        if (args.questReady) {
+            sim::HeroRecord ready = world_.played().record();
+            for (int q = 0; q < sim::kQuests; ++q) {
+                ready.quests[q].state = sim::QuestState::Ready;
+                for (int s = 0; s < sim::kQuestSteps; ++s) {
+                    ready.quests[q].counts[s] = uint16_t(world_.played().realm().questGoal(q, s));
+                }
+            }
+            world_.played().restore(ready);
+        }
         if (!args.talk.empty()) world_.played().talkTo(args.talk);
         if (args.perch >= 0) world_.played().perch(args.perch);
     }

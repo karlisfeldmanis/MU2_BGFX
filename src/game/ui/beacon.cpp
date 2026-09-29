@@ -70,10 +70,39 @@ constexpr float kBlade[5][2] = {
     {kMid - kShoulderHalf, kShoulder},
 };
 
-// The mark's distance, in units, from a point in the cell: negative inside.
-float mark(float x, float y) {
+// The hand-in's "?": a hook of a ring open at its lower left, a stem down from the hook's foot,
+// and the same dot. Its stroke is the blade's width at the shoulder.
+constexpr float kHookR = 6.4f, kHookHalf = 1.9f;
+constexpr float kHookY = kTop + kHookR + kHookHalf;  // the ring's centre: its top on the blade's
+constexpr float kStemEnd = 33.0f;
+constexpr float kGapFrom = 1.5708f, kGapTo = 3.7525f;  // the opening, 90 to 215 degrees, y down
+
+float hook(float x, float y) {
+    const float dx = x - kMid, dy = y - kHookY;
+    float a = std::atan2(dy, dx);
+    if (a < 0.0f) a += 6.2831853f;
+    float d;
+    if (a > kGapFrom && a < kGapTo) {
+        // In the opening: the nearer of its two round ends.
+        const auto end = [&](float at) {
+            const float ex = x - (kMid + kHookR * std::cos(at)), ey = y - (kHookY + kHookR * std::sin(at));
+            return std::sqrt(ex * ex + ey * ey);
+        };
+        d = std::min(end(kGapFrom), end(kGapTo)) - kHookHalf;
+    } else {
+        d = std::fabs(std::sqrt(dx * dx + dy * dy) - kHookR) - kHookHalf;
+    }
+    // The stem, a capsule from the hook's foot down.
+    const float sy = std::clamp(y, kHookY + kHookR, kStemEnd);
+    const float stem = std::sqrt(dx * dx + (y - sy) * (y - sy)) - kHookHalf;
+    return std::min(d, stem);
+}
+
+// The mark's distance, in units, from a point in the cell: negative inside. `ask` is the "?",
+// else the "!".
+float mark(float x, float y, bool ask) {
     const float dx = x - kMid, dy = y - kDotY;
-    return std::min(polygon(x, y, kBlade), std::sqrt(dx * dx + dy * dy) - kDotR);
+    return std::min(ask ? hook(x, y) : polygon(x, y, kBlade), std::sqrt(dx * dx + dy * dy) - kDotR);
 }
 
 // Fine white noise, one value a texel, for the wear.
@@ -105,20 +134,24 @@ bool Beacon::bake(float unit) {
     art_ = {};
     cellW_ = int(std::ceil(kCellW * unit));
     cellH_ = int(std::ceil(kCellH * unit));
-    std::vector<uint8_t> rgba(size_t(cellW_) * size_t(cellH_) * 4, 0);
+    // Two cells side by side: the offer's "!" and the hand-in's "?".
+    const int wide = cellW_ * 2;
+    std::vector<uint8_t> rgba(size_t(wide) * size_t(cellH_) * 4, 0);
     const float texel = 1.0f / unit;  // one texel, in units
     constexpr int kSide = 4;          // samples a side
     // How much of a sample a shape at distance `d` covers: a texel's worth of edge, so the
     // shapes stay crisp and only their edges are soft.
     const auto cover = [&](float d) { return clamp01(0.5f - d / texel); };
     for (int py = 0; py < cellH_; ++py) {
-        for (int px = 0; px < cellW_; ++px) {
+        for (int column = 0; column < wide; ++column) {
+            const bool ask = column >= cellW_;
+            const int px = ask ? column - cellW_ : column;
             Pre sum;
             for (int sy = 0; sy < kSide; ++sy) {
                 for (int sx = 0; sx < kSide; ++sx) {
                     const float x = (float(px) + (float(sx) + 0.5f) / kSide) * texel;
                     const float y = (float(py) + (float(sy) + 0.5f) / kSide) * texel;
-                    const float d = mark(x, y);
+                    const float d = mark(x, y, ask);
                     Pre one;
                     // The halo, soft, and the hairline, crisp.
                     const float halo = clamp01(1.0f - (d - kRim) / kHalo);
@@ -147,7 +180,7 @@ bool Beacon::bake(float unit) {
                 }
             }
             constexpr float kShare = 1.0f / float(kSide * kSide);
-            uint8_t* out = &rgba[(size_t(py) * size_t(cellW_) + size_t(px)) * 4];
+            uint8_t* out = &rgba[(size_t(py) * size_t(wide) + size_t(column)) * 4];
             const float a = clamp01(sum.a * kShare);
             const float inv = a > 0.0f ? kShare / a : 0.0f;
             out[0] = uint8_t(clamp01(sum.r * inv) * 255.0f + 0.5f);
@@ -156,12 +189,12 @@ bool Beacon::bake(float unit) {
             out[3] = uint8_t(a * 255.0f + 0.5f);
         }
     }
-    texture_ = bgfx::createTexture2D(uint16_t(cellW_), uint16_t(cellH_), false, 1,
+    texture_ = bgfx::createTexture2D(uint16_t(wide), uint16_t(cellH_), false, 1,
                                      bgfx::TextureFormat::RGBA8, BGFX_SAMPLER_UVW_CLAMP,
                                      bgfx::copy(rgba.data(), uint32_t(rgba.size())));
     if (!bgfx::isValid(texture_)) return false;
     bgfx::setName(texture_, "quest marker");
-    art_ = {texture_, float(cellW_), float(cellH_)};
+    art_ = {texture_, float(wide), float(cellH_)};
     bakedUnit_ = unit;
     return true;
 }
@@ -192,10 +225,8 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         // Only while he has something for the hero: the quest on offer, or its hand-in. Taken
         // and under way, or resting until it is his to give again, he is a townsperson.
         const int quest = sim::questOf(realm.tables()->folk[size_t(folk)].number);
-        if (quest >= 0 && !realm.questOffered(quest) &&
-            realm.quest(quest).state != sim::QuestState::Ready) {
-            continue;
-        }
+        const bool ready = quest >= 0 && realm.quest(quest).state == sim::QuestState::Ready;
+        if (quest >= 0 && !realm.questOffered(quest) && !ready) continue;
         float x = 0.0f, y = 0.0f;
         if (!play.folkCrownOf(folk, viewProj, width, height, &x, &y)) continue;
         const float w = float(cellW_), h = float(cellH_);
@@ -204,7 +235,7 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         const float t = folk == named ? std::clamp(shown, 0.0f, 1.0f) : 0.0f;
         const float lift = kLift + (kLiftNamed - kLift) * t * t * (3.0f - 2.0f * t);
         canvas_.region(art_, {std::round(x - w * 0.5f), y - lift * u - h + bob, w, h},
-                       {0.0f, 0.0f, w, h});
+                       {ready ? w : 0.0f, 0.0f, w, h});
         showing_ = true;
     }
 }

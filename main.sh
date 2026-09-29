@@ -30,6 +30,9 @@
 #                                 (still in Lorencia: an elf's home is Noria and the map a
 #                                 class is made on is sprint 9's, with the gate between them)
 #   ./main.sh --new --level 10    a character further along, his points already spent
+#   ./main.sh --new --level 13 --quest-ready
+#                                 Lorencia already cleared: Marlon wears a ? and the talk is the
+#                                 hand-in and its reward; nothing is saved
 #
 # What the --new character is, and why each of these is what it is:
 #

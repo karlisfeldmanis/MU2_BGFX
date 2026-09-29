@@ -6,8 +6,8 @@
 // frame and no ornament. A slim forged blade -- a flat top with its corners cut, tapering to a
 // point -- over a small round dot, in old gold: a ridge down the middle with the left face lit
 // and the right in shade, a pale edge on the lit side, a little wear, a hairline of ink and a
-// soft dark halo so it reads over bright stone. No glow. The user turned down a rounded, bright
-// yellow capsule with a thick rim as cartoonish (2026-09-28): Diablo IV's are sharp and quiet.
+// soft dark halo so it reads over bright stone. A hand-in is a "?" of the same stroke and dot.
+// No glow. The user turned down a rounded, bright yellow capsule with a thick rim as cartoonish (2026-09-28): Diablo IV's are sharp and quiet.
 //
 // The picture is baked in code, as the controls' stone is, at the size it is drawn: a signed
 // distance per pixel, sixteen samples a pixel, rebuilt only when the interface unit changes. So

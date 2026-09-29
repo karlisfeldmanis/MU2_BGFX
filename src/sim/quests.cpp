@@ -53,11 +53,15 @@ QuestRow marlon() {
         "\"They will come back. They always do. Come back to me when it is done.\"";
     row.underway =
         "\"Not yet! I can still hear them in the fields, and the dead still walk the old road.\"";
+    // The hand-in is thanks, not more story, on the user's word of 2026-09-29: he is grateful,
+    // and hopes the reward helps the hero save the continent from the dark.
     row.handIn[0] =
-        "\"Quiet. The fields have not been this quiet since the seal began to crack.\"";
+        "\"Quiet. The fields have not been this quiet since the seal began to crack. You did "
+        "what my knights could not, and Lorencia will not forget it. Thank you.\"";
     row.handIn[1] =
-        "\"It will not last past nightfall. Kundun's brood never stays gone. Take your pay while "
-        "it does, and choose what suits your hand.\"";
+        "\"Take these, with an old knight's gratitude. Your road runs far beyond these walls, "
+        "and Kundun's darkness is waiting all along it. May they serve you well, until the "
+        "whole continent of MU stands free of him.\"";
     row.resting =
         "\"Rest while you can. By morning they will have crept up out of the Dungeon again, and "
         "I will need you.\"";
