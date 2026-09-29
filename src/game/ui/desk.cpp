@@ -1160,6 +1160,9 @@ void Desk::labelGround(const Play& play, int width, int height) {
             name = one->what.refinement > 0 && !sim::summoningOrb(raw)
                        ? row.label + " +" + std::to_string(one->what.refinement)
                        : row.label;
+            // Ours: excellent said on the label, first after the plus, since its purple alone did
+            // not say why (the user, 2026-09-29). MU puts "Excellent " before the name instead.
+            if (one->what.excellent != 0) name += " +Excellent";
             // BuildGroundItemLabelDescriptor's tail: the option, then the luck, after the plus.
             if (one->what.option > 0) name += " +Option";
             if (one->what.luck) name += " +Luck";
