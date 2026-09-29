@@ -545,6 +545,9 @@ void Realm::blink(Body& hero) {
     hero.route.clear();
     hero.onStep = 0;
     hero.repathsAt = 0;
+    // A summon, if one stands, goes with any warp of his (the Town Portal's rule): no summoner
+    // casts Teleport in 0.75, so this only keeps the rule whole.
+    if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
     say(What::Blinked, hero, hero.blinkColumn, hero.blinkRow);
 }
 

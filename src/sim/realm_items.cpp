@@ -484,6 +484,9 @@ bool Realm::useItem(int slot) {
             one.quarry = 0;
             one.provoked = false;
         }
+        // Her summon does not come along: a warp dismisses it, as her death does (the user,
+        // 2026-09-29). OpenMU places it at her landing gate instead (PlayerSummon.PlaceAtGate).
+        if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
         say(What::Warped, hero, landing.first, landing.second);
         return true;
     }

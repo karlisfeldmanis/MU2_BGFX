@@ -10,7 +10,9 @@
 //     (Realm::strikeAt), and it takes a monster that is on her before any other, so it peels
 //     them off her -- the guard's "one on the hero first" (realm_watch.cpp);
 //   * its kills are hers, drop and experience, as a guard's are when she helped (Realm::kill);
-//   * it goes with her death rather than standing over her body.
+//   * it goes with her death rather than standing over her body, and with any warp of hers --
+//     the Town Portal, and a map change, which raises a realm with its slot dormant (the user,
+//     2026-09-29; OpenMU carries it to her landing gate instead).
 //
 // The body is raised once, dormant, at the end of `bodies_` (Realm::raise) and reused, so casting
 // never moves a pointer into `bodies_`. Its fights roll off `summonDice_`.
