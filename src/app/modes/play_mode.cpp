@@ -703,18 +703,63 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             pub = tables && tables->grid.safe(hero.column(), hero.row()) &&
                   world_.indoors(feetX, feetZ);
         }
-        // And Noria's own, the same kind of rule: MUSIC_NORIA while he stands in its safe zone
-        // (SceneManager.cpp:1028, `if (Hero->SafeZone) PlayMp3(MUSIC_NORIA)`), stopped off it.
-        bool town = false;
+        // Noria's own is MUSIC_NORIA in its safe zone (SceneManager.cpp:1028,
+        // `if (Hero->SafeZone) PlayMp3(MUSIC_NORIA)`). Ours instead, the user's (2026-09-29):
+        // never in town, but now and then out on the hunt when the elf is actually fighting --
+        // a fight rolls for it at most every fightRest_ seconds, it plays while blows keep
+        // landing, and goes out once the fight has been quiet a while or it has run its length.
+        bool hunt = false;
         if (args.world == "noria") {
-            const sim::Body& hero = world_.played().realm().hero();
-            const content::Tables* tables = world_.played().realm().tables();
-            town = tables && tables->grid.safe(hero.column(), hero.row());
+            const sim::Realm& realm = world_.played().realm();
+            const sim::Body& hero = realm.hero();
+            const content::Tables* tables = realm.tables();
+            const bool town = tables && tables->grid.safe(hero.column(), hero.row());
+            // Fighting: something alive has him as its quarry and is at him, or he has an
+            // attack order on something alive.
+            bool fighting = false;
+            if (!town && hero.alive()) {
+                const sim::Request& order = realm.order();
+                if (order.kind == sim::Request::Kind::Attack) {
+                    const sim::Body* foe = realm.find(order.target);
+                    fighting = foe && foe->alive();
+                }
+                for (const sim::Body& body : realm.bodies()) {
+                    if (fighting) break;
+                    fighting = body.alive() && body.monster() && body.quarry == hero.id &&
+                               body.temper == sim::Temper::Fighting;
+                }
+            }
+            const float seconds = float(deltaSeconds);
+            fightRest_ = std::max(0.0f, fightRest_ - seconds);
+            fightQuiet_ = fighting ? 0.0f : fightQuiet_ + seconds;
+            if (town) {
+                fightMusic_ = false;
+            } else if (fightMusic_) {
+                fightPlayed_ += seconds;
+                // Out after 25 quiet seconds, or three minutes whatever the fight, and then a
+                // long rest so it stays an event.
+                if (fightQuiet_ > 25.0f || fightPlayed_ > 180.0f) {
+                    fightMusic_ = false;
+                    fightRest_ = 300.0f;
+                }
+            } else if (fighting && fightRest_ <= 0.0f) {
+                fightSeed_ ^= fightSeed_ << 13;
+                fightSeed_ ^= fightSeed_ >> 17;
+                fightSeed_ ^= fightSeed_ << 5;
+                // One fight in three; a miss waits a minute before the next fight may roll.
+                if (fightSeed_ % 3 == 0) {
+                    fightMusic_ = true;
+                    fightPlayed_ = 0.0f;
+                } else {
+                    fightRest_ = 60.0f;
+                }
+            }
+            hunt = fightMusic_;
         }
         const std::string path =
-            ctx.paths.assets + (town ? "/music/Noria.mp3" : "/music/Pub.mp3");
-        if ((pub || town) && core::fileExists(path)) world_.played().sound().music(path);
-        else if (!pub && !town) world_.played().sound().stopMusic();
+            ctx.paths.assets + (hunt ? "/music/Noria.mp3" : "/music/Pub.mp3");
+        if ((pub || hunt) && core::fileExists(path)) world_.played().sound().music(path);
+        else if (!pub && !hunt) world_.played().sound().stopMusic();
     }
     // The ears, onto the camera just placed: its heading is what the stereo field turns by.
     if (world_.played().isOpen()) {

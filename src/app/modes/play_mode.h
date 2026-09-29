@@ -115,6 +115,13 @@ private:
     // remembers what it asked for, exactly as a person at the mouse remembers what they
     // clicked, and asks again only when that body is down.
     uint32_t arenaTarget_ = 0;
+    // Noria's music out on the hunt, not in town: see the music in PlayMode::frame.
+    bool fightMusic_ = false;
+    float fightQuiet_ = 0.0f;    // seconds since the last blow either way
+    float fightPlayed_ = 0.0f;   // seconds this playing has lasted
+    float fightRest_ = 90.0f;    // seconds before a fight may start it again
+    uint32_t fightSeed_ = 0x2545F491u;
+
     // The quick slot's skill the arena's order was last given with: the desk binds the wizard's
     // Energy Ball a frame or two after the first order is raised, and the order is raised again
     // when it does, or the whole first fight is his staff.
