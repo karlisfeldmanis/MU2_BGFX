@@ -1173,8 +1173,18 @@ void Play::speak(const sim::Happening& happening) {
                     said_.end());
         Said one;
         one.who = happening.who;
-        const bool sevina = tables_.folk[size_t(folk)].number == sim::kSevina;
-        one.line = (sevina ? kSevina : kGuildMaster)[realm_.tick() % 3];
+        // And Devin, before Lorencia or Noria is cleared (the user, 2026-09-30): his quest waits
+        // on theirs, and he sends the hero back to them, in his short, serious register.
+        static const char* const kDevinNotYet[] = {
+            "Not yet. Lorencia and Noria still need you more than I do.",
+            "Help Marlon or Peia first. Then come to me.",
+            "The south is not safe yet. Finish there, and Devias will be waiting.",
+        };
+        const int32_t number = tables_.folk[size_t(folk)].number;
+        const char* const* lines = number == sim::kSevina ? kSevina
+                                   : sim::questOf(number) >= 0 ? kDevinNotYet
+                                                               : kGuildMaster;
+        one.line = lines[realm_.tick() % 3];
         one.folk = folk;
         said_.push_back(one);
         core::logf("greet: tick %lld, %s says \"%s\"", (long long)realm_.tick(),

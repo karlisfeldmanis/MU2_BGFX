@@ -641,6 +641,9 @@ public:
     int questGoal(int index, int step) const;
     // Whether the giver would offer it now: never taken, or resting and its time has come.
     bool questOffered(int index) const;
+    // Whether it waits on another quest (QuestRow::afterAny): never taken, and none of those
+    // handed in yet.
+    bool questLocked(int index) const;
     // The wall clock, in unix seconds, which a repeating quest waits on. Handed in by the game;
     // a run that never sets it (the headless hunt) never sees a quest come back.
     void setWallClock(int64_t unixSeconds) { wall_ = unixSeconds; }

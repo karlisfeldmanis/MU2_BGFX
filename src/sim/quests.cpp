@@ -240,6 +240,9 @@ QuestRow devin() {
     row.steps[6] = {QuestStepKind::Return, 0, 1, "Return to Apostle Devin"};
     row.stepCount = 7;
     row.repeatSeconds = 12 * 60 * 60;
+    // Only to one who has cleared Lorencia or Noria (the user, 2026-09-30): both of those
+    // hand-ins send the hero on to him.
+    row.afterAny = (1u << 0) | (1u << 1);
     constexpr int8_t knight = int8_t(Kin::DarkKnight);
     constexpr int8_t wizard = int8_t(Kin::DarkWizard);
     constexpr int8_t elf = int8_t(Kin::FairyElf);

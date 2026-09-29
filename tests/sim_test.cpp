@@ -3031,6 +3031,45 @@ void testDeviasFolk() {
         int unmade = 0;
         for (int i = 0; i < row.paidCount; ++i) unmade += devias.itemNamed(row.paid[i].item) < 0;
         checkEqual((long long)unmade, 0LL, "and every thing he pays is a cooked item");
+
+        // His quest waits on Lorencia's or Noria's (the user, 2026-09-30): before either is
+        // handed in he answers with a line; after, his dialog opens.
+        int devin = -1;
+        for (size_t i = 0; i < devias.folk.size(); ++i) {
+            if (devias.folk[i].number == 406) devin = int(i);
+        }
+        const auto talkTo = [&](sim::Realm& realm, bool* offered, bool* greeted) {
+            sim::Request talk;
+            talk.kind = sim::Request::Kind::Talk;
+            talk.target = uint32_t(devin);
+            realm.ask(talk);
+            *offered = *greeted = false;
+            for (int tick = 0; tick < 400 && !*offered && !*greeted; ++tick) {
+                realm.step();
+                for (const sim::Happening& one : realm.happenings()) {
+                    *offered |= one.what == sim::What::Offered;
+                    *greeted |= one.what == sim::What::Shouted &&
+                                one.a == int32_t(sim::Shout::Greet) && one.c == devin;
+                }
+            }
+        };
+        sim::Realm early;
+        check(early.raise(&devias, 7, 183, 37), "a realm raises by Devin");
+        check(early.questLocked(white) && !early.questOffered(white),
+              "his quest is locked before Lorencia or Noria is cleared");
+        bool offered = false, greeted = false;
+        talkTo(early, &offered, &greeted);
+        check(greeted && !offered, "and he answers with a line, no dialog");
+        sim::HeroRecord cleared = early.record();
+        cleared.quests[0].state = sim::QuestState::Resting;
+        cleared.quests[0].completions = 1;
+        sim::Realm later;
+        check(later.raise(&devias, 7, 183, 37), "a realm raises by Devin again");
+        later.restore(cleared);
+        check(!later.questLocked(white) && later.questOffered(white),
+              "once Marlon's is handed in, it is offered");
+        talkTo(later, &offered, &greeted);
+        check(offered && !greeted, "and his dialog opens");
     }
     if (master < 0) return;
 

@@ -85,6 +85,9 @@ struct QuestRow {
     int stepCount = 0;
     // Seconds between a hand-in and the offer standing again; 0 for once only.
     int64_t repeatSeconds = 0;
+    // Offered only once one of these quests has been handed in (bit i, quest i); 0 for none.
+    // Until then the giver wears a grey "!" and says he is not ready for him (Realm::questLocked).
+    uint32_t afterAny = 0;
     int64_t experience = 0;
     int64_t zen = 0;
     // Every one of these his class is paid (questPays), all of them.

@@ -243,12 +243,13 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         // way, or its hand-in. Resting until it is his to give again, he is a townsperson.
         const int quest = sim::questOf(realm.tables()->folk[size_t(folk)].number);
         const bool ready = quest >= 0 && realm.quest(quest).state == sim::QuestState::Ready;
-        // No quest of his in the table: one still to come (Play::questGivers), a grey "!". And
+        // No quest of his in the table, or his waiting on another -- Devin's, until Lorencia or
+        // Noria is cleared: one still to come (Play::questGivers), a grey "!". And
         // his quest taken and under way, a grey "?", as WoW marks one not yet done (the user,
         // 2026-09-30: Devin's mark was gone once his quest was taken).
-        const bool later = quest < 0;
+        const bool later = quest < 0 || realm.questLocked(quest);
         const bool underway = quest >= 0 && realm.quest(quest).state == sim::QuestState::Active;
-        if (quest >= 0 && !realm.questOffered(quest) && !ready && !underway) continue;
+        if (quest >= 0 && !realm.questOffered(quest) && !ready && !underway && !later) continue;
         float x = 0.0f, y = 0.0f;
         if (!play.folkCrownOf(folk, viewProj, width, height, &x, &y)) continue;
         const float w = float(cellW_), h = float(cellH_);

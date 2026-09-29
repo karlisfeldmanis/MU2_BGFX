@@ -29,10 +29,22 @@ bool Realm::questOffered(int index) const {
     if (index < 0 || index >= kQuests) return false;
     // Never to one born outside a giver's town who does not serve strangers.
     if (!questOpen(questAt(index), int(bodies_[0].kin))) return false;
+    if (questLocked(index)) return false;
     const QuestProgress& one = quests_[index];
     if (one.state == QuestState::Untaken) return true;
     return one.state == QuestState::Resting && questAt(index).repeatSeconds > 0 &&
            wall_ >= one.availableAt;
+}
+
+bool Realm::questLocked(int index) const {
+    if (index < 0 || index >= kQuests) return false;
+    const QuestRow& row = questAt(index);
+    const QuestProgress& one = quests_[index];
+    if (row.afterAny == 0 || one.state != QuestState::Untaken || one.completions > 0) return false;
+    for (int i = 0; i < kQuests; ++i) {
+        if (((row.afterAny >> i) & 1u) && quests_[i].completions > 0) return false;
+    }
+    return true;
 }
 
 bool Realm::questChoiceFits(int index, int choice) const {
