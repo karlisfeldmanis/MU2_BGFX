@@ -128,27 +128,49 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         if (target.temper == Temper::Asleep) target.temper = Temper::Wandering;
     }
     if (target.health <= 0) kill(target, attacker);
-    // His swing, landed: the Rune's power may answer it. Only a plain swing -- a skill's blow, a
-    // flight and the lightning itself (`thrown`) call nothing, so it cannot call itself.
-    if (attacker.player && row == nullptr && !thrown && pays) {
+    // His swing, landed: the Rune's power may answer it. A plain swing, a plain arrow, or any
+    // arrow of a Multi-Shot's fan (the user, 2026-09-29: "ice arrow also has to work on multi
+    // shot") -- every other skill's blow calls nothing, and the lightning and the rock a power
+    // throws are unpaid with no row (`pays` false), so it cannot call itself.
+    const bool fanned = row != nullptr && row->arrows > 0;
+    if (attacker.player && ((row == nullptr && pays) || fanned)) {
         stormcall(attacker, target, blow.damage);
     }
 }
 
 void Realm::stormcall(Body& hero, Body& struck, int wound) {
     if (!tables_) return;
-    const Held& hand = bag_[kWeaponRight];
-    if (hand.empty()) return;
-    // Each socket's power rolls on its own, in socket order.
-    for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
-        const PowerRow* power = powerOf(hand.powers[socket]);
-        if (power == nullptr || !power->weapon || power->kin != hero.kin) continue;
-        callDown(hero, struck, *power, wound);
-        if (!hero.alive()) return;
+    // Either hand: a sword is in the right, and MU puts a bow in the LEFT with the arrows in the
+    // right (a crossbow the other way round). Only a weapon takes a weapon's power, so a shield
+    // in the left carries none.
+    for (const int slot : {int(kWeaponRight), int(kWeaponLeft)}) {
+        const Held& hand = bag_[slot];
+        if (hand.empty()) continue;
+        // Each socket's power rolls on its own, in socket order.
+        for (int socket = 0; socket < std::min<int>(hand.sockets, kMostSockets); ++socket) {
+            const PowerRow* power = powerOf(hand.powers[socket]);
+            if (power == nullptr || !power->weapon || power->kin != hero.kin) continue;
+            callDown(hero, struck, *power, wound);
+            if (!hero.alive()) return;
+        }
     }
 }
 
 void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound) {
+    // Frost Arrow takes the monster her arrow struck: frozen where it stands, and wounded again
+    // for half the arrow, said as the wizard's Ice let go at it so the drawing freezes it there.
+    if (power.power == Power::Frost) {
+        if (!runeDice_.nextBool(kFrostChance)) return;
+        if (!struck.alive() || !struck.monster()) return;
+        struck.frozenUntil = tick_ + kFrostTicks;
+        say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
+        const int bite = std::max(1, int(float(wound) * kFrostWound));
+        struck.health = std::max(0, struck.health - bite);
+        say(What::Hit, hero, bite, bite, struck.health, struck.id);
+        core::logf("frost rune: tick %lld, on #%u, %d more", (long long)tick_, struck.id, bite);
+        if (struck.health <= 0) kill(struck, hero);
+        return;
+    }
     // Ice and Poison take the monster he struck, and only while it stands: the spell's element
     // without its blow, said as the spell let go at it so the drawing puts its ice or its cloud
     // there. A second of either restarts it, as the spell's own does.
@@ -719,6 +741,7 @@ void Realm::raiseBeast(Body& beast) {
     beast.guardedBy = 0;
     beast.heroStruck = false;
     beast.chilledUntil = 0;
+    beast.frozenUntil = 0;
     beast.poisonUntil = 0;
     beast.walking = false;
     beast.route.clear();

@@ -308,6 +308,8 @@ struct Body {
     int64_t blinkAt = 0;
     // Iced (`SkillRow::chillTicks`): walks at `kChillFactor` until this tick. 0 for never.
     int64_t chilledUntil = 0;
+    // Frozen (a Frost Arrow rune, sim/items.h): neither walks nor swings until this tick.
+    int64_t frozenUntil = 0;
     // Poisoned (`SkillRow::poisonTicks`): until this tick, its next pulse, how much a pulse takes,
     // and who poisoned it. 0 for never.
     int64_t poisonUntil = 0, poisonNext = 0;

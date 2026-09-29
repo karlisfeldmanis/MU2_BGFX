@@ -795,9 +795,19 @@ void Play::update(double seconds) {
                             if (row == nullptr || row->primary()) cue.skill = 0;
                         }
                         cue.thrown = happening.thrown;
-                        // Only a spell flies, so a thrown blow is wizardry -- asked of the blow and
-                        // not of `swingSkill`, which a dry wizard's staff may already have replaced.
-                        cue.magic = happening.thrown;
+                        // A thrown blow is wizardry -- asked of the blow and not of `swingSkill`,
+                        // which a dry wizard's staff may already have replaced -- except an
+                        // archer's arrow, which flies too and is archery: her plain shot and a
+                        // Multi-Shot's fan are numbered as a swing is (the user, 2026-09-29: "elf
+                        // shooting arrow damage numbers is same as magic numbers not like DK").
+                        bool arrow = false;
+                        if (happening.thrown) {
+                            const sim::Body* shooter = realm_.find(happening.who);
+                            const sim::SkillRow* shot = sim::skillNumbered(swinger->swingSkill);
+                            arrow = shooter != nullptr && shooter->archer != 0 &&
+                                    (shot == nullptr || shot->arrows > 0);
+                        }
+                        cue.magic = happening.thrown && !arrow;
                         // A poison's pulse is MU's DT_POISON green, not a blow's number.
                         cue.poison = happening.poisoned;
                         cue.critical = happening.critical;

@@ -351,7 +351,7 @@ inline int excellentCount(uint8_t mask) {
 // quest gives one, never a repeat, and later the highest drops. Set by dropping the rune on the
 // item, as a Bless goes on (`Realm::refine`), into its first empty socket. Each power set rolls
 // on its own. The design page is claude.ai/artifact/DPhyHWRcYTo97PHpa2FaAu.
-enum class Power : uint8_t { None = 0, Stormcall = 1, Meteor = 2, Ice = 3, Poison = 4 };
+enum class Power : uint8_t { None = 0, Stormcall = 1, Meteor = 2, Ice = 3, Poison = 4, Frost = 5 };
 struct PowerRow {
     Power power;
     const char* name;
@@ -393,5 +393,12 @@ constexpr float kMeteorForce = 1.5f;
 // No blow of their own. invention.
 constexpr double kIceRuneChance = 0.15;
 constexpr double kPoisonRuneChance = 0.15;
+// **Frost Arrow**, the Fairy Elf's first (the user, 2026-09-29: "15% chance to freeze monster
+// with some extra damage"), in a bow's or a crossbow's socket: an arrow that lands has the same
+// chance to freeze what it struck -- no step and no swing for `kFrostTicks` -- and to wound it
+// again for `kFrostWound` of the arrow's own. Drawn as the wizard's Ice on it. invention.
+constexpr double kFrostChance = 0.15;
+constexpr int64_t kFrostTicks = 40;  // two seconds of the realm's twenty ticks
+constexpr float kFrostWound = 0.5f;
 
 }  // namespace mu::sim

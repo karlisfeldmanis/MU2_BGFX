@@ -193,6 +193,10 @@ const PowerRow* powerOf(uint8_t power) {
          "A swing that lands has a 15% chance to poison the monster he struck, hurting it for "
          "twenty seconds",
          true, Kin::DarkKnight},
+        {Power::Frost, "Frost Arrow",
+         "An arrow that lands has a 15% chance to freeze the monster it struck for two seconds "
+         "and wound it again for half the arrow's damage",
+         true, Kin::FairyElf},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;

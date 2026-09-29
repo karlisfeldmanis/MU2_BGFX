@@ -3429,6 +3429,22 @@ void testRunes(const content::Tables& tables) {
           "nor in armour: it is a weapon's power");
     check(!sim::settable(tables, held(rune, 0, 0), held(serpent, 1, 0), dk),
           "and a Rune of Creation with no power sets nothing");
+    // Frost Arrow, the elf's: a bow's or a crossbow's socket, hers alone.
+    {
+        const int bow = tables.itemNamed("Bow04"), crossbow = tables.itemNamed("CrossBow03");
+        const uint8_t frost = uint8_t(sim::Power::Frost);
+        check(bow >= 0 && crossbow >= 0, "a Battle Bow and an Arquebus");
+        if (bow >= 0 && crossbow >= 0) {
+            const sim::Held frosty = held(rune, 0, frost);
+            check(sim::settable(tables, frosty, held(bow, 1, 0), sim::Kin::FairyElf),
+                  "Frost Arrow goes in an elf's socketed bow");
+            check(sim::settable(tables, frosty, held(crossbow, 1, 0), sim::Kin::FairyElf),
+                  "and her socketed crossbow");
+            check(!sim::settable(tables, frosty, held(bow, 1, 0), dk), "and not by a knight");
+            check(!sim::settable(tables, carried, held(bow, 1, 0), sim::Kin::FairyElf),
+                  "nor Stormcall by her");
+        }
+    }
     check(sim::expensive(tables, carried), "a Rune of Creation cannot be dropped");
     check(sim::expensive(tables, held(serpent, 1, 0)), "nor a sword with an empty socket");
     check(!sim::expensive(tables, held(serpent, 0, 0)), "but a +0 sword without one can");
