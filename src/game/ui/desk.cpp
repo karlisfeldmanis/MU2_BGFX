@@ -494,11 +494,16 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             }
         } else if (asked.outside >= 0 && hud_.quickAt(asked.outsideX, asked.outsideY) >= 0) {
             // Let go over a potion box: bound, and the thing stays in the bag. MU2's Caught.
+            // Heard as every other drop in the window is, and a thing that will not go on the
+            // bar is the interface's no rather than a silent snap back.
             const int key = hud_.quickAt(asked.outsideX, asked.outsideY);
             const sim::Held& what = play.realm().satchel()[asked.outside];
             if (!what.empty() && usable(*play.realm().tables(), what.item)) {
                 quick_[key] = what.item;
                 core::logf("window: slot %d bound to key %d", asked.outside, key + 1);
+                took();
+            } else {
+                refused();
             }
         } else if (asked.outside >= 0) {
             // The one gesture in the interface that gives something away, which is why it
