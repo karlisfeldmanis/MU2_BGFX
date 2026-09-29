@@ -1,0 +1,261 @@
+{
+  "item": "Sevina01",
+  "mu_name": "Sevina the Priestess",
+  "mu_name_from": "NPC/Sevina01.bmd, loaded as MODEL_NPC_SEVINA (ZzzOpenData.cpp:1915-1918), MuMain's MONSTER_SEVINA_THE_PRIESTESS. Type 235: the giver of MU's first class-change quest (Soul Master, Blade Knight, Muse Elf). Not Version075's: OpenMU's 0.95d stands her in Devias at 183,32 facing SouthEast (Version095d/Maps/Devias.cs:35).",
+  "world": "devias",
+  "object_type": -1,
+  "why_this_one": "The user asked to see the class-change quest's giver (2026-09-29). One mesh, one 128 sheet, 659 triangles.",
+  "profile": "npc",
+  "sheets": {
+    "sebina": "npc_sebina.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix.",
+  "sheet_materials": {
+    "sebina": "skin"
+  },
+  "sheet_materials_from": "One page carrying her face and her robe together, so skin, as every townsperson's shared page does.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 49,
+      "area": 4506.4,
+      "along": [
+        -22.1,
+        19.1
+      ],
+      "mu_uv": [
+        0.248,
+        0.002,
+        0.868,
+        1.003
+      ],
+      "bake_uv": [
+        0.659,
+        0.008,
+        0.927,
+        0.466
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 300,
+      "area": 8458.5,
+      "along": [
+        -13.5,
+        27.2
+      ],
+      "mu_uv": [
+        0.007,
+        0.224,
+        0.526,
+        0.972
+      ],
+      "bake_uv": [
+        0.348,
+        0.01,
+        0.916,
+        0.866
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 16,
+      "area": 831.1,
+      "along": [
+        -15.6,
+        14.2
+      ],
+      "mu_uv": [
+        0.22,
+        0.941,
+        0.507,
+        0.998
+      ],
+      "bake_uv": [
+        0.009,
+        0.883,
+        0.71,
+        0.959
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 6,
+      "area": 265.4,
+      "along": [
+        10.3,
+        19.5
+      ],
+      "mu_uv": [
+        0.221,
+        0.942,
+        0.503,
+        0.999
+      ],
+      "bake_uv": [
+        0.73,
+        0.939,
+        0.945,
+        0.983
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 6,
+      "area": 145.0,
+      "along": [
+        11.9,
+        17.6
+      ],
+      "mu_uv": [
+        0.221,
+        0.942,
+        0.503,
+        0.999
+      ],
+      "bake_uv": [
+        0.464,
+        0.948,
+        0.68,
+        0.992
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 24,
+      "area": 743.8,
+      "along": [
+        -12.9,
+        13.5
+      ],
+      "mu_uv": [
+        0.384,
+        0.251,
+        0.518,
+        0.385
+      ],
+      "bake_uv": [
+        0.091,
+        0.791,
+        0.194,
+        0.894
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 24,
+      "area": 422.0,
+      "along": [
+        -9.6,
+        10.3
+      ],
+      "mu_uv": [
+        0.384,
+        0.251,
+        0.518,
+        0.385
+      ],
+      "bake_uv": [
+        0.358,
+        0.847,
+        0.461,
+        0.95
+      ]
+    },
+    {
+      "island": 7,
+      "material": "skin",
+      "triangles": 24,
+      "area": 542.6,
+      "along": [
+        -11.0,
+        11.6
+      ],
+      "mu_uv": [
+        0.384,
+        0.251,
+        0.518,
+        0.385
+      ],
+      "bake_uv": [
+        0.866,
+        0.335,
+        0.969,
+        0.438
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 110,
+      "area": 14567.9,
+      "along": [
+        -24.8,
+        22.1
+      ],
+      "mu_uv": [
+        0.538,
+        0.001,
+        0.992,
+        0.998
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.531,
+        0.773
+      ]
+    },
+    {
+      "island": 9,
+      "material": "skin",
+      "triangles": 50,
+      "area": 1966.5,
+      "along": [
+        0.8,
+        30.2
+      ],
+      "mu_uv": [
+        0.141,
+        0.004,
+        0.225,
+        0.363
+      ],
+      "bake_uv": [
+        0.188,
+        0.587,
+        0.837,
+        0.92
+      ]
+    },
+    {
+      "island": 10,
+      "material": "skin",
+      "triangles": 50,
+      "area": 1901.6,
+      "along": [
+        -13.3,
+        15.1
+      ],
+      "mu_uv": [
+        0.008,
+        0.004,
+        0.092,
+        0.363
+      ],
+      "bake_uv": [
+        0.009,
+        0.016,
+        0.92,
+        0.911
+      ]
+    }
+  ]
+}

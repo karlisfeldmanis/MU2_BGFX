@@ -3003,7 +3003,7 @@ void testWear(const content::Tables& tables) {
     checkEqual(grown.repairAll(), 0, "and there is no repair-all away from a counter");
 }
 
-// Devias's townsfolk (2026-09-29): Version075's nine and Apostle Devin, the three shelves, Zienna's
+// Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin and Sevina, the three shelves, Zienna's
 // counter, and the Guild Master answering with a line where MU opens a guild window.
 void testDeviasFolk() {
     std::printf("devias folk\n");
@@ -3011,7 +3011,7 @@ void testDeviasFolk() {
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur";
     check(content::loadTables(path, devias, error), "Devias's tables load");
-    checkEqual(long(devias.folk.size()), 10L, "ten townsfolk stand in Devias");
+    checkEqual(long(devias.folk.size()), 11L, "eleven townsfolk stand in Devias");
     int master = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kGuildMaster) master = int(i);

@@ -1770,6 +1770,9 @@ FOLK_VERSION075 = {
         # where OpenMU's Season Six stands him (VersionSeasonSix/Maps/Devias.cs:36); the user
         # took that spot, 2026-09-29.
         (406, "Apostle Devin", "", 181, 35, 4),
+        # Ours: Sevina the Priestess (235), the class change's giver, where 0.95d stands her
+        # (Version095d/Maps/Devias.cs:35). 0.75 has no class change.
+        (235, "Sevina the Priestess", "", 183, 32, 4),
     ],
 }
 
