@@ -1192,13 +1192,35 @@ void Desk::labelGround(const Play& play, int width, int height) {
     // names): the lowest on screen keeps its place, and each one above it that would cross a
     // placed plate climbs to just over it, until it crosses none. Each climb clears one plate for
     // good, so a pile of n settles in n climbs at most.
-    std::vector<size_t> order(labels.size());
-    for (size_t i = 0; i < order.size(); ++i) order[i] = i;
-    std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {
-        const float ya = labels[a].plate.y + labels[a].plate.h;
-        const float yb = labels[b].plate.y + labels[b].plate.h;
-        return ya != yb ? ya > yb : labels[a].id < labels[b].id;
-    });
+    // Lowest first, but held: last time's order is where it starts, a new drop goes in by its
+    // height, and two trade places only when the upper has come down past the lower by a whole
+    // plate -- so a turning camera does not make a name jump a row as two cross.
+    const auto foot = [&](size_t i) { return labels[i].plate.y + labels[i].plate.h; };
+    std::vector<size_t> order;
+    order.reserve(labels.size());
+    for (uint32_t id : stacked_) {
+        for (size_t i = 0; i < labels.size(); ++i) {
+            if (labels[i].id == id) order.push_back(i);
+        }
+    }
+    for (size_t i = 0; i < labels.size(); ++i) {
+        if (std::find(stacked_.begin(), stacked_.end(), labels[i].id) != stacked_.end()) continue;
+        auto at = order.begin();
+        while (at != order.end() && foot(*at) >= foot(i)) ++at;
+        order.insert(at, i);
+    }
+    const float hold = face.height(size);
+    for (bool swapped = true; swapped;) {
+        swapped = false;
+        for (size_t k = 1; k < order.size(); ++k) {
+            if (foot(order[k]) > foot(order[k - 1]) + hold) {
+                std::swap(order[k], order[k - 1]);
+                swapped = true;
+            }
+        }
+    }
+    stacked_.clear();
+    for (size_t i : order) stacked_.push_back(labels[i].id);
     const float gap = panel::unit();
     const auto crosses = [gap](const gfx::Box& a, const gfx::Box& b) {
         return a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap &&

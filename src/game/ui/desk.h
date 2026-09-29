@@ -198,6 +198,9 @@ private:
         gfx::Box box;
     };
     std::vector<Plate> plates_;
+    // The order the names were stacked in last time, bottom first, so a turn of the camera does
+    // not reshuffle a pile whose drops stand at nearly one height (Desk::labelGround).
+    std::vector<uint32_t> stacked_;
     float viewProj_[16] = {};
     uint64_t groundRebuilds_ = 0;
     void labelGround(const Play& play, int width, int height);
