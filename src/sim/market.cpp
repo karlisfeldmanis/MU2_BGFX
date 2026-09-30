@@ -17,129 +17,142 @@ constexpr Offer sip(int slot, int number, int pieces) {
 }
 constexpr Offer scroll(int slot, int number) { return Offer{slot, kScrolls, number, 0, 0, false}; }
 
-// Potion Girl Amy: each potion twice, a single and a three on the row below. Market.PotionGirl.
+// WebZen's own shelves (the user, 2026-10-01: "do it"), off shop0..shop10 in WebZen's
+// 0.99.60T server package (github makaytrue/0.99.60T, Files.rar), whose headers name each
+// NPC and its tile and are dated 2004-08 to 2005-06; which NPC keeps which file is
+// user.cpp:4645-4659 of GameServer 1.00.93. Everything at +0, no luck, no option; a weapon
+// listed twice is once plain and once with its skill. Laid out as WebZen's CShop fills its
+// eight-wide shelf: each in list order on the first free cells. Left out as later than 0.97d:
+// the Armor of Guardman (Chaos Castle), the siege Contracts, the +1 potions, and the Devil's
+// Eye and Key (no Devil Square here). OpenMU's Version075 shelves, which these replace, were
+// Season 6's with its later rows taken out, at +3 with luck and options -- far fuller.
+
+// Potion Girl Amy (shop5): the eight potions, single and three, arrows and bolts to +2, the
+// Town Portal Scroll.
 constexpr Offer kPotionGirl[] = {
-    sip(0, 0, 1),  sip(8, 0, 3),  sip(1, 1, 1),  sip(9, 1, 3),  sip(2, 2, 1),  sip(10, 2, 3),
-    sip(3, 3, 1),  sip(11, 3, 3), sip(4, 4, 1),  sip(12, 4, 3), sip(5, 5, 1),  sip(13, 5, 3),
-    sip(6, 6, 1),  sip(14, 6, 3), sip(7, 8, 1),  sip(15, 8, 3), gear(16, kBows, 7, 0),
-    gear(17, kBows, 15, 0),       sip(18, 10, 1),
+    sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
+    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kBows, 7, 0),
+    gear(17, kBows, 7, 1), gear(18, kBows, 7, 2), gear(19, kBows, 15, 0), gear(20, kBows, 15, 1),
+    gear(21, kBows, 15, 2), sip(22, 10, 1),
 };
 
-// Martin and Harold: the same shop in two places. Market.Wandering.
-constexpr Offer kWandering[] = {
-    gear(0, kHelms, 5, 0),    gear(16, kArmours, 5, 0),  gear(40, kPants, 5, 0),
-    gear(56, kBoots, 5, 0),   gear(72, kGloves, 5, 0),   gear(2, kHelms, 0, 2),
-    gear(18, kArmours, 0, 2), gear(34, kPants, 0, 2),    gear(50, kBoots, 0, 2),
-    gear(66, kGloves, 0, 2),  gear(4, kHelms, 6, 3),     gear(20, kArmours, 6, 3),
-    gear(36, kPants, 6, 3),   gear(52, kBoots, 6, 3),    gear(68, kGloves, 6, 3),
-    gear(6, kHelms, 8, 3),    gear(22, kArmours, 8, 3),  gear(38, kPants, 8, 3),
-    gear(54, kBoots, 8, 3),   gear(70, kGloves, 8, 3),   gear(88, kHelms, 9, 3),
-    gear(104, kArmours, 9, 3), gear(82, kPants, 9, 3),   gear(98, kBoots, 9, 3),
-    gear(84, kGloves, 9, 3),
+// Harold (shop3), the wandering merchant east of town: the potions and the Leather set.
+constexpr Offer kHarold[] = {
+    sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
+    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kHelms, 5, 0),
+    gear(18, kPants, 5, 0), gear(20, kBoots, 5, 0), gear(22, kGloves, 5, 0),
+    gear(32, kArmours, 5, 0),
 };
 
-// Hanzo. Slot 73 twice, as the source has it: the second wins. Market.Blacksmith.
+// Martin (shop4), the wandering merchant in the west: the potions, the Bone and Scale pieces
+// Hanzo does not sell, Brass gloves and boots, two shields and a rack of weapons.
+constexpr Offer kMartin[] = {
+    sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
+    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kHelms, 4, 0),
+    gear(18, kPants, 4, 0), gear(20, kHelms, 6, 0), gear(22, kArmours, 6, 0),
+    gear(32, kPants, 6, 0), gear(34, kGloves, 8, 0), gear(36, kBoots, 8, 0),
+    gear(38, kShields, 2, 0), gear(48, kShields, 6, 0), gear(50, kSpears, 2, 0),
+    gear(52, kSwords, 3, 0), gear(53, kAxes, 3, 0), gear(54, kSpears, 6, 0),
+    gear(64, kMaces, 2, 0), gear(65, kSwords, 6, 0), gear(76, kSwords, 6, 0, true),
+    gear(82, kBows, 10, 0), gear(85, kBows, 10, 0, true), gear(88, kSpears, 1, 0),
+    gear(87, kSwords, 7, 0), gear(98, kSwords, 7, 0, true),
+};
+
+// Hanzo (shop0): the knight's first weapons, the Bronze set, Scale gloves and boots and three
+// shields. **And the knight's nine orbs after them, which are ours**: in 0.75 the weapon WAS
+// the skill (docs/skills-dk.md §1.2), and this shelf is the route that replaces it -- in the
+// ladder's own order, the level each asks being the drop level of the first weapon that carried
+// that skill.
 constexpr Offer kBlacksmith[] = {
-    gear(0, kShields, 0, 0),          gear(2, kShields, 4, 1, true),  gear(4, kShields, 1, 2),
-    gear(6, kShields, 2, 3),          gear(16, kShields, 6, 3, true), gear(18, kShields, 10, 3, true),
-    gear(20, kShields, 9, 3, true),   gear(22, kShields, 7, 3, true), gear(32, kShields, 5, 3, true),
-    gear(34, kShields, 8, 3, true),   gear(36, kShields, 11, 3, true), gear(38, kShields, 12, 3, true),
-    gear(48, kSwords, 1, 0),          gear(49, kAxes, 1, 1),          gear(50, kMaces, 1, 2),
-    gear(51, kSwords, 2, 2),          gear(52, kAxes, 2, 2),          gear(53, kSwords, 4, 3, true),
-    gear(54, kMaces, 1, 3, true),     gear(55, kAxes, 3, 3, true),    gear(72, kSwords, 0, 2),
-    gear(73, kSwords, 6, 3, true),    gear(73, kSwords, 7, 3, true),  gear(74, kSwords, 8, 3),
-    gear(75, kSwords, 5, 3, true),
-    // **And the knight's nine orbs**, on the two rows below everything else (96 is row 12 of
-    // fifteen; the swords above hang down to row 11). Ours, and not MerchantStores': 0.75 has no
-    // knight orb to sell because in 0.75 the weapon WAS the skill (docs/skills-dk.md §1.2), and
-    // this shelf is the route that replaces it -- bought here, read once, learned for good.
-    //
-    // In the ladder's own order, which is 0.75's: the level each one asks for is the drop level
-    // of the first weapon that carried that skill, so a knight meets his skills in the order MU
-    // gave them to him and the row he can afford is usually the row he can read.
-    //
-    // §3.3 kept Lunge and Slash off the shelf to leave something for the hunt; all nine are sold
-    // here for now, because nothing in the tree drops an orb yet and a skill that can only drop
-    // is a skill that cannot be tested. The day they drop, those two lines come out.
-    gear(96, kOrbs, 3, 0),  gear(97, kOrbs, 4, 0),  gear(98, kOrbs, 5, 0),
-    gear(99, kOrbs, 6, 0),  gear(100, kOrbs, 7, 0), gear(101, kOrbs, 25, 0),
-    gear(102, kOrbs, 12, 0), gear(103, kOrbs, 20, 0), gear(104, kOrbs, 19, 0),
+    gear(0, kSwords, 1, 0), gear(1, kSwords, 2, 0), gear(2, kSwords, 4, 0),
+    gear(3, kSwords, 4, 0, true), gear(4, kHelms, 0, 0), gear(6, kArmours, 0, 0),
+    gear(20, kPants, 0, 0), gear(22, kGloves, 0, 0), gear(24, kBoots, 0, 0),
+    gear(26, kGloves, 6, 0), gear(36, kBoots, 6, 0), gear(38, kAxes, 1, 0),
+    gear(39, kMaces, 0, 0), gear(40, kMaces, 1, 0), gear(41, kMaces, 1, 0, true),
+    gear(42, kAxes, 2, 0), gear(43, kAxes, 2, 0, true), gear(52, kSwords, 0, 0),
+    gear(61, kSpears, 5, 0), gear(64, kShields, 0, 0), gear(66, kShields, 4, 0),
+    gear(80, kShields, 1, 0), gear(53, kOrbs, 3, 0), gear(63, kOrbs, 4, 0), gear(68, kOrbs, 5, 0),
+    gear(71, kOrbs, 6, 0), gear(76, kOrbs, 7, 0), gear(79, kOrbs, 25, 0), gear(82, kOrbs, 12, 0),
+    gear(83, kOrbs, 20, 0), gear(84, kOrbs, 19, 0),
 };
 
-// Pasi: seven scrolls, then the robes and the staves. Market.Mage.
-//
-// **And the eighth, slot 7, which is ours**: the Scroll of Soul Barrier, the wizard's guard, on
-// the one cell left empty at the end of the scrolls' row (the user, 2026-09-28). Its price is
-// the curve's at drop level 6 -- `spell` has no value for number 15 -- which is exactly what the
-// knight's Orb of Defense costs at Hanzo's, so the two guards are bought for the same money.
+// Pasi (shop2): Fire Ball and Power Wave, the Pad set, Bone gloves and boots, two staves. **And
+// the Scroll of Soul Barrier after the two, which is ours** (the user, 2026-09-28): the wizard's
+// guard, priced as the knight's Orb of Defense. The other scrolls drop, or Izabel sells them.
 constexpr Offer kMage[] = {
-    scroll(0, 3),              scroll(1, 10),             scroll(2, 2),
-    scroll(3, 1),              scroll(4, 5),              scroll(5, 6),
-    scroll(6, 0),              scroll(7, 15),             gear(16, kHelms, 2, 0),    gear(32, kArmours, 2, 0),
-    gear(48, kPants, 2, 0),    gear(64, kBoots, 2, 0),    gear(80, kGloves, 2, 0),
-    gear(18, kHelms, 4, 2),    gear(34, kArmours, 4, 2),  gear(50, kPants, 4, 2),
-    gear(66, kBoots, 4, 2),    gear(82, kGloves, 4, 2),   gear(20, kHelms, 7, 3),
-    gear(36, kArmours, 7, 3),  gear(60, kPants, 7, 3),    gear(76, kBoots, 7, 3),
-    gear(92, kGloves, 7, 3),   gear(22, kStaves, 0, 0),   gear(46, kStaves, 1, 2),
-    gear(70, kStaves, 2, 3),   gear(94, kStaves, 3, 3),
+    scroll(0, 3), scroll(1, 10), scroll(2, 15), gear(3, kHelms, 2, 0), gear(5, kArmours, 2, 0),
+    gear(16, kPants, 2, 0), gear(18, kGloves, 2, 0), gear(20, kBoots, 2, 0),
+    gear(22, kGloves, 4, 0), gear(32, kBoots, 4, 0), gear(34, kStaves, 0, 0),
+    gear(35, kStaves, 1, 0),
 };
 
-// Lumen: the Ale and the Town Portal Scroll. Market.Barmaid.
-//
-// **And the two pets, which are ours** (the user, 2026-09-29): the Guardian Angel and the Imp on
-// the cells after the scroll. 0.75 sells neither anywhere -- MerchantStores has no group 13 line
-// and both only drop, from the 0.1% jewel group -- so the tavern is where they are bought for now.
-constexpr Offer kBarmaid[] = {sip(0, 9, 1), sip(1, 10, 1), gear(2, kPets, 0, 0),
-                              gear(3, kPets, 1, 0)};
+// Caren the Barmaid (shop6): the Ale. **And the two pets, which are ours** (the user,
+// 2026-09-29): WebZen sells neither anywhere, so the tavern is where they are bought for now.
+constexpr Offer kBarmaid[] = {
+    sip(0, 9, 1), gear(1, kPets, 0, 0), gear(2, kPets, 1, 0),
+};
 
-// Elf Lala and Eo the Craftsman, Noria's two. Market.ElfLala and Market.Craftsman.
+// **And Lumen's own, which is ours** (the user, 2026-09-30): the same bar with Amy's potions on
+// the two rows below it, laid out as Amy lays them, a single over its three. Lorencia only --
+// Caren keeps the plain bar, since Izabel sells the potions in Devias.
+constexpr Offer kLumen[] = {
+    sip(0, 9, 1),   sip(1, 10, 1),  gear(2, kPets, 0, 0), gear(3, kPets, 1, 0),
+    sip(16, 0, 1),  sip(24, 0, 3),  sip(17, 1, 1),  sip(25, 1, 3),  sip(18, 2, 1),  sip(26, 2, 3),
+    sip(19, 3, 1),  sip(27, 3, 3),  sip(20, 4, 1),  sip(28, 4, 3),  sip(21, 5, 1),  sip(29, 5, 3),
+    sip(22, 6, 1),  sip(30, 6, 3),  sip(23, 8, 1),  sip(31, 8, 3),
+};
+
+// Elf Lala (shop10): the potions, the Vine and Silk sets, the Wind helm, armour and pants, the
+// Town Portal Scroll and the Orb of Healing. **And the Orb of Skillshot after it, which is ours**
+// (sprint 15). Her other orbs drop.
 constexpr Offer kElfLala[] = {
-    sip(0, 0, 1),  sip(8, 0, 3),  sip(1, 1, 1),  sip(9, 1, 3),  sip(2, 2, 1),  sip(10, 2, 3),
-    sip(3, 3, 1),  sip(11, 3, 3), sip(4, 4, 1),  sip(12, 4, 3), sip(5, 5, 1),  sip(13, 5, 3),
-    sip(6, 6, 1),  sip(14, 6, 3), sip(7, 8, 1),  sip(15, 8, 3),
-    gear(16, kOrbs, 8, 0), gear(17, kOrbs, 9, 0), gear(18, kOrbs, 10, 0),
-    // Ours: the Orb of Skillshot, 12/21, on the free cell after her three (sprint 15).
-    gear(19, kOrbs, 21, 0), sip(21, 10, 1),
-    gear(22, kBows, 7, 0), gear(23, kBows, 15, 0), gear(24, kOrbs, 11, 0), gear(25, kOrbs, 11, 1),
-    gear(26, kOrbs, 11, 2), gear(27, kOrbs, 11, 3), gear(28, kOrbs, 11, 4),
-    gear(32, kHelms, 10, 0), gear(34, kArmours, 10, 0), gear(36, kPants, 10, 0),
-    gear(38, kGloves, 10, 3), gear(48, kBoots, 10, 3), gear(50, kHelms, 11, 2),
-    gear(52, kArmours, 11, 2), gear(54, kPants, 11, 2), gear(64, kGloves, 11, 2),
-    gear(66, kBoots, 11, 2), gear(68, kHelms, 12, 3), gear(70, kArmours, 12, 3),
-    gear(80, kPants, 12, 3), gear(82, kGloves, 12, 3), gear(84, kBoots, 12, 3),
-};
-constexpr Offer kCraftsman[] = {
-    gear(0, kHelms, 13, 3),   gear(2, kArmours, 13, 3),  gear(4, kPants, 13, 3),
-    gear(6, kGloves, 13, 3),  gear(16, kBoots, 13, 3),   gear(18, kHelms, 14, 3),
-    gear(20, kArmours, 14, 3), gear(22, kPants, 14, 3),  gear(32, kGloves, 14, 3),
-    gear(34, kBoots, 14, 3),  gear(36, kBows, 8, 1, true), gear(38, kBows, 9, 3, true),
-    gear(48, kBows, 0, 0, true), gear(50, kBows, 1, 0, true), gear(52, kBows, 2, 2, true),
-    gear(54, kBows, 3, 3, true), gear(72, kBows, 11, 3, true), gear(74, kBows, 4, 3, true),
-    gear(76, kBows, 10, 3, true), gear(78, kShields, 3, 3),
+    sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
+    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), gear(16, kHelms, 10, 0),
+    gear(18, kHelms, 12, 0), gear(20, kArmours, 10, 0), gear(22, kArmours, 12, 0),
+    gear(32, kPants, 10, 0), gear(34, kPants, 12, 0), gear(36, kGloves, 10, 0),
+    gear(38, kBoots, 10, 0), gear(48, kHelms, 11, 0), gear(50, kArmours, 11, 0),
+    gear(52, kPants, 11, 0), gear(54, kGloves, 11, 0), gear(64, kBoots, 11, 0), sip(66, 10, 1),
+    gear(67, kOrbs, 8, 0), gear(68, kOrbs, 21, 0),
 };
 
-// Izabel and Zienna, Devias's two (MerchantStores.cs:270-322 and :365-400). Caren the Barmaid
-// keeps Lumen's shop, as Version075 gives her. Transcribed whole: a line whose item is not
-// cooked yet drops off the shelf (PlayMode's Market rule) and comes back when it is -- on
-// 2026-09-29 the Legendary and Dragon sets, the Legendary Staff, the Lightning and Heliacal
-// swords, the Bill of Balrog and the Silver, Serpent and Bluewing bows were not.
-constexpr Offer kIzabel[] = {
-    sip(0, 0, 1),  sip(8, 0, 3),  sip(1, 1, 1),  sip(9, 1, 3),  sip(2, 2, 1),  sip(10, 2, 3),
-    sip(3, 3, 1),  sip(11, 3, 3), sip(4, 4, 1),  sip(12, 4, 3), sip(5, 5, 1),  sip(13, 5, 3),
-    sip(6, 6, 1),  sip(14, 6, 3), sip(7, 8, 1),  sip(15, 8, 3),
-    gear(16, kHelms, 3, 3),   gear(18, kArmours, 3, 3),  gear(20, kPants, 3, 3),
-    gear(22, kGloves, 3, 3),  gear(32, kBoots, 3, 3),    sip(34, 10, 1),
-    gear(35, kBows, 7, 0),    gear(36, kBows, 15, 0),    scroll(37, 4),
-    scroll(38, 7),            gear(48, kStaves, 4, 3),   gear(50, kStaves, 5, 3),
-    gear(52, kShields, 14, 3),
+// Eo the Craftsman (shop9): the bows and crossbows, most once plain and once with the skill,
+// and the arrows and bolts to +2.
+constexpr Offer kCraftsman[] = {
+    gear(0, kBows, 0, 0), gear(2, kBows, 0, 0, true), gear(4, kBows, 8, 0),
+    gear(6, kBows, 8, 0, true), gear(20, kBows, 1, 0), gear(22, kBows, 1, 0, true),
+    gear(24, kBows, 9, 0), gear(26, kBows, 9, 0, true), gear(40, kBows, 2, 0),
+    gear(42, kBows, 2, 0, true), gear(44, kBows, 10, 0), gear(46, kBows, 10, 0, true),
+    gear(60, kBows, 11, 0, true), gear(62, kBows, 4, 0, true), gear(64, kBows, 7, 0),
+    gear(65, kBows, 7, 1), gear(66, kBows, 7, 2), gear(67, kBows, 15, 0), gear(80, kBows, 15, 1),
+    gear(81, kBows, 15, 2),
 };
+
+// Izabel the Wizard (shop7): the potions, Meteorite, Lightning and Teleport, the Town Portal
+// Scroll, the Sphinx pieces with a Bone Armor, and the Serpent Staff.
+constexpr Offer kIzabel[] = {
+    sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
+    sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
+    sip(12, 4, 3), sip(13, 5, 3), sip(14, 6, 3), sip(15, 8, 3), scroll(16, 1), scroll(17, 2),
+    scroll(18, 5), sip(19, 10, 1), gear(20, kHelms, 7, 0), gear(22, kArmours, 4, 0),
+    gear(32, kPants, 7, 0), gear(34, kGloves, 7, 0), gear(36, kBoots, 7, 0),
+    gear(38, kStaves, 2, 0),
+};
+
+// Zienna (shop8): arrows and bolts, Brass helm and pants, Wind gloves and boots, three shields
+// and her weapons.
 constexpr Offer kZienna[] = {
-    gear(0, kHelms, 1, 3),         gear(2, kArmours, 1, 3),       gear(4, kPants, 1, 3),
-    gear(6, kGloves, 1, 3),        gear(16, kBoots, 1, 3),        gear(20, kSwords, 9, 3, true),
-    gear(22, kSwords, 11, 3, true), gear(32, kSwords, 13, 3, true), gear(33, kSwords, 14, 3, true),
-    gear(26, kSwords, 15, 3, true), gear(44, kSwords, 12, 3, true), gear(46, kBows, 12, 3, true),
-    gear(56, kSpears, 9, 3, true),  gear(50, kSpears, 8, 3, true),  gear(68, kBows, 5, 3, true),
-    gear(70, kBows, 13, 3, true),
+    gear(0, kBows, 7, 0), gear(1, kBows, 7, 1), gear(2, kBows, 7, 2), gear(3, kBows, 15, 0),
+    gear(4, kBows, 15, 1), gear(5, kBows, 15, 2), gear(6, kHelms, 8, 0), gear(16, kPants, 8, 0),
+    gear(18, kGloves, 12, 0), gear(20, kBoots, 12, 0), gear(22, kShields, 10, 0),
+    gear(32, kShields, 3, 0), gear(34, kShields, 9, 0), gear(36, kBows, 3, 0),
+    gear(38, kBows, 3, 0, true), gear(48, kAxes, 4, 0), gear(49, kSpears, 3, 0),
+    gear(59, kAxes, 5, 0), gear(61, kSwords, 8, 0), gear(62, kBows, 11, 0, true),
+    gear(80, kSwords, 9, 0), gear(82, kSwords, 9, 0, true), gear(84, kSwords, 5, 0, true),
+    gear(85, kSpears, 7, 0, true),
 };
 
 template <size_t N>
@@ -205,11 +218,13 @@ int64_t round(int64_t price) {
 
 const Offer* stockOf(int npc, int* count) {
     switch (npc) {
-        case 248: case 250: return table(kWandering, count);
+        case 248: return table(kMartin, count);
+        case 250: return table(kHarold, count);
         case 251: return table(kBlacksmith, count);
         case 253: return table(kPotionGirl, count);
         case 254: return table(kMage, count);
-        case 255: case 244: return table(kBarmaid, count);
+        case 255: return table(kLumen, count);
+        case 244: return table(kBarmaid, count);
         case 245: return table(kIzabel, count);
         case 246: return table(kZienna, count);
         case 242: return table(kElfLala, count);

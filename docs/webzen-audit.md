@@ -81,6 +81,15 @@ level-difference rule, mana regen, Heal and Greater Damage, poison/ice lengths, 
 monster's level, HP, damage, defense, ranges and speeds, the gates and safe zones of
 Lorencia/Noria/Devias, Bless 100% and Soul 50/75%, the price and sell formulas.
 
+## The shops (2026-10-01)
+
+WebZen's own shop0..shop10, from its 0.99.60T server package (github makaytrue/0.99.60T), replace
+OpenMU's Version075 shelves (sim/market.cpp): all +0, no luck or option, Harold and Martin apart.
+Kept on top as ours: Hanzo's nine knight orbs, Pasi's Soul Barrier, Lala's Orb of Skillshot,
+the pets at the barmaids and Lumen's potions. Cut as later than 0.97d: the Armor of Guardman,
+the siege Contracts, the +1 potions, the Devil's Eye and Key. Every item on them is already one
+of ours. The Poison and Ice scrolls and Lala's other orbs are no longer sold; they drop.
+
 ## Not built here, for later
 
 Jewel of Life 50% (a failure resets the option). Chaos Machine +10 50% / +11 45%,

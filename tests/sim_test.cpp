@@ -1929,6 +1929,27 @@ void testElfSkills(const content::Tables& tables) {
     bool sold = false;
     for (int i = 0; i < stocked; ++i) sold |= lala[i].group == 12 && lala[i].number == 21;
     check(sold, "Elf Lala sells the Orb of Skillshot");
+    // WebZen's shelves (sim/market.cpp): nothing refined but the arrows and bolts, Harold and
+    // Martin apart, the Barmaid's Ale first, and Hanzo's Bronze set.
+    {
+        bool refined = false, bronze = false;
+        for (int npc : {251, 254, 250, 248, 253, 244, 245, 246, 243, 242}) {
+            int n = 0;
+            const sim::Offer* shelf = sim::stockOf(npc, &n);
+            for (int i = 0; i < n; ++i) {
+                if (shelf[i].refinement > 0 && shelf[i].group != 4) refined = true;
+                if (npc == 251 && shelf[i].group == 8 && shelf[i].number == 0) bronze = true;
+            }
+        }
+        check(!refined, "WebZen's shelves sell nothing refined but ammunition");
+        check(bronze, "Hanzo sells the Bronze Armor");
+        int harold = 0, martin = 0, caren = 0;
+        sim::stockOf(250, &harold);
+        sim::stockOf(248, &martin);
+        const sim::Offer* bar = sim::stockOf(244, &caren);
+        check(harold != martin, "Harold and Martin keep shelves of their own");
+        check(caren > 0 && bar[0].group == 14 && bar[0].number == 9, "Caren's first is the Ale");
+    }
 }
 
 // Sprint 15, step 5: her summon. Raised beside her off the breed's row and scaled by her energy;
