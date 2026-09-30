@@ -28,6 +28,10 @@ struct Art {
     bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
     float width = 0.0f;
     float height = 0.0f;
+    // Colour already multiplied by alpha: a stage's picture, which the multisample resolve
+    // leaves premultiplied at every edge and whose glows add colour at no alpha. Laid on with
+    // ONE, not SRC_ALPHA, or the edges darken and a glow over nothing vanishes.
+    bool premultiplied = false;
     bool valid() const { return bgfx::isValid(handle) && width > 0.0f && height > 0.0f; }
 };
 
@@ -113,8 +117,9 @@ private:
         bgfx::TextureHandle texture;
         uint32_t firstIndex;
         uint32_t count;
+        bool premultiplied;
     };
-    void begin(bgfx::TextureHandle texture);
+    void begin(bgfx::TextureHandle texture, bool premultiplied = false);
     void quad(float x, float y, float w, float h, float u0, float v0, float u1, float v1,
               uint32_t abgr);
 

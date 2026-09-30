@@ -80,6 +80,7 @@ void ItemStage::resize(int width, int height) {
     picture_.handle = colour;
     picture_.width = float(width);
     picture_.height = float(height);
+    picture_.premultiplied = true;
     dirty_ = true;
 }
 

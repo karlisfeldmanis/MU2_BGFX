@@ -647,6 +647,8 @@ private:
     bgfx::ProgramHandle skinnedGlowProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle stageProgram_ = BGFX_INVALID_HANDLE;
     bgfx::ProgramHandle skinnedStageProgram_ = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle stageGlowProgram_ = BGFX_INVALID_HANDLE;         // an item's BlendMesh
+    bgfx::ProgramHandle skinnedStageGlowProgram_ = BGFX_INVALID_HANDLE;
 
     // --- the hover outline, sprint 9 ----------------------------------------------------
     // The mask: one fixed kOutlineMaskSize square target, R8 -- coverage is all it holds,

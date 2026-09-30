@@ -40,9 +40,10 @@ void Canvas::clear() {
     runs_.clear();
 }
 
-void Canvas::begin(bgfx::TextureHandle texture) {
-    if (runs_.empty() || runs_.back().texture.idx != texture.idx) {
-        runs_.push_back({texture, uint32_t(indices_.size()), 0});
+void Canvas::begin(bgfx::TextureHandle texture, bool premultiplied) {
+    if (runs_.empty() || runs_.back().texture.idx != texture.idx ||
+        runs_.back().premultiplied != premultiplied) {
+        runs_.push_back({texture, uint32_t(indices_.size()), 0, premultiplied});
     }
 }
 
@@ -58,17 +59,28 @@ void Canvas::quad(float x, float y, float w, float h, float u0, float v0, float 
     runs_.back().count += 6;
 }
 
+namespace {
+// A tint for a premultiplied picture is premultiplied too, so a fade still fades its colour.
+uint32_t tintFor(const Art& art, uint32_t abgr) {
+    if (!art.premultiplied) return abgr;
+    const uint32_t a = abgr >> 24;
+    const auto scale = [a](uint32_t c) { return (c * a + 127u) / 255u; };
+    return (a << 24) | (scale((abgr >> 16) & 0xFFu) << 16) | (scale((abgr >> 8) & 0xFFu) << 8) |
+           scale(abgr & 0xFFu);
+}
+}  // namespace
+
 void Canvas::image(const Art& art, const Box& to, uint32_t abgr) {
     if (!art.valid() || to.w <= 0.0f || to.h <= 0.0f) return;
-    begin(art.handle);
-    quad(to.x, to.y, to.w, to.h, 0.0f, 0.0f, 1.0f, 1.0f, abgr);
+    begin(art.handle, art.premultiplied);
+    quad(to.x, to.y, to.w, to.h, 0.0f, 0.0f, 1.0f, 1.0f, tintFor(art, abgr));
 }
 
 void Canvas::region(const Art& art, const Box& to, const Box& from, uint32_t abgr) {
     if (!art.valid() || to.w <= 0.0f || to.h <= 0.0f) return;
-    begin(art.handle);
+    begin(art.handle, art.premultiplied);
     quad(to.x, to.y, to.w, to.h, from.x / art.width, from.y / art.height,
-         from.right() / art.width, from.bottom() / art.height, abgr);
+         from.right() / art.width, from.bottom() / art.height, tintFor(art, abgr));
 }
 
 void Canvas::rect(const Box& box, uint32_t abgr) {
@@ -319,7 +331,8 @@ void Interface::submit(bgfx::ViewId view) {
                                  uint16_t(std::max(0.0f, c->clip_.y + c->clip_.h - y0)));
             }
             bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
-                           BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA,
+                           BGFX_STATE_BLEND_FUNC(run.premultiplied ? BGFX_STATE_BLEND_ONE
+                                                                   : BGFX_STATE_BLEND_SRC_ALPHA,
                                                  BGFX_STATE_BLEND_INV_SRC_ALPHA));
             bgfx::submit(view, program_);
             ++draws_;

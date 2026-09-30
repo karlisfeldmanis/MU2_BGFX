@@ -17,6 +17,9 @@ bool Renderer::openStages(const std::string& shaderDir) {
     if (bgfx::isValid(stageProgram_) && bgfx::isValid(skinnedStageProgram_)) return true;
     stageProgram_ = loadProgramFiles(shaderDir, "vs_static", "fs_stage");
     skinnedStageProgram_ = loadProgramFiles(shaderDir, "vs_skinned", "fs_stage");
+    // Without these an item's glow is left off its picture, as it was before there were any.
+    stageGlowProgram_ = loadProgramFiles(shaderDir, "vs_static", "fs_stage_glow");
+    skinnedStageGlowProgram_ = loadProgramFiles(shaderDir, "vs_skinned", "fs_stage_glow");
     const bool ok = bgfx::isValid(stageProgram_) && bgfx::isValid(skinnedStageProgram_);
     if (!ok) core::logError("the stage programs did not link; the windows draw names, not items");
     return ok;
@@ -25,8 +28,12 @@ bool Renderer::openStages(const std::string& shaderDir) {
 void Renderer::closeStages() {
     if (bgfx::isValid(stageProgram_)) bgfx::destroy(stageProgram_);
     if (bgfx::isValid(skinnedStageProgram_)) bgfx::destroy(skinnedStageProgram_);
+    if (bgfx::isValid(stageGlowProgram_)) bgfx::destroy(stageGlowProgram_);
+    if (bgfx::isValid(skinnedStageGlowProgram_)) bgfx::destroy(skinnedStageGlowProgram_);
     stageProgram_ = BGFX_INVALID_HANDLE;
     skinnedStageProgram_ = BGFX_INVALID_HANDLE;
+    stageGlowProgram_ = BGFX_INVALID_HANDLE;
+    skinnedStageGlowProgram_ = BGFX_INVALID_HANDLE;
 }
 
 void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, uint16_t width,
@@ -70,9 +77,30 @@ void Renderer::drawStage(bgfx::ViewId viewId, bgfx::FrameBufferHandle target, ui
         const bool skinned = mesh.isSkinned();
         for (const content::Part& part : mesh.parts()) {
             const content::Material& material = mesh.materials()[part.material];
-            // A glow is MU's additive BlendMesh, which a picture on a window has nothing
-            // behind it to add to.
-            if (material.glow) continue;
+            // A glow is MU's additive BlendMesh. It is drawn last-come and added, its colour
+            // alone: the picture's alpha stays what the solid parts made it, and the interface
+            // lays the picture on premultiplied (Art::premultiplied), so over an empty cell the
+            // glow is added to the window. Skipped once, which left the Bluewing Crossbow --
+            // every mesh a glow -- an empty cell, and the Legendary Staff without its shaft.
+            if (material.glow) {
+                const bgfx::ProgramHandle glowProgram =
+                    skinned ? skinnedStageGlowProgram_ : stageGlowProgram_;
+                if (!bgfx::isValid(glowProgram)) continue;
+                // MU's BlendMeshLight at the middle of its breathing: sin() * a + b, at sin 0.
+                const float glow[4] = {material.cutout, 0.0f, material.pulse[1], 0.0f};
+                bgfx::setUniform(uMaterial_, glow);
+                bgfx::setTexture(0, sAlbedo_, material.albedo);
+                if (skinned) bgfx::setTexture(12, sBones_, palette_);
+                bgfx::setVertexBuffer(0, mesh.vertexBuffer());
+                bgfx::setIndexBuffer(mesh.indexBuffer(), part.firstIndex, part.indexCount);
+                bgfx::setInstanceDataBuffer(&idb, i, 1);
+                bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_LESS |
+                               BGFX_STATE_MSAA |
+                               BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE));
+                bgfx::submit(viewId, glowProgram);
+                ++drawCount_;
+                continue;
+            }
             const float params[4] = {material.cutout,
                                      (material.twoSided ? 1.0f : 0.0f) +
                                          (material.calibrated ? 2.0f : 0.0f),
