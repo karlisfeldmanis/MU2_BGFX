@@ -1096,8 +1096,19 @@ void Hud::rebuild() {
             } else {
                 std::snprintf(figure, sizeof figure, "%d", whole);
             }
-            // On a dark band across the foot, larger and with a heavier drop: bare on the icon
-            // the figure was lost in its colours (the user: "time number was hard to read").
+            // A debuff's is one big figure at its centre over a wash on the whole icon (the user:
+            // "just use big number at center with some opacity background for debuffs time").
+            if (debuff) {
+                canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f));
+                // In the label face, not the default one, and smaller (the user: "number to big,
+                // use other font").
+                const float big = std::round(20.0f * kUnit * s.scale);
+                controls::label(canvas_, box.midX() - controls::labelWidth(big, figure) * 0.5f,
+                                box.midY() + big * 0.33f, big, kInk, figure);
+                continue;
+            }
+            // A buff's on a dark band across the foot, larger and with a heavier drop: bare on the
+            // icon the figure was lost in its colours (the user: "time number was hard to read").
             const float size = std::round(19.0f * kUnit * s.scale);
             const float band = std::round(size * 0.95f);
             canvas_.rect({box.x, box.bottom() - line - band, box.w, band},
