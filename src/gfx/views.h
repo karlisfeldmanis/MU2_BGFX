@@ -29,32 +29,34 @@ enum View : uint16_t {
     // The gold ring's own two views, inserted here so it sits where it has to: AFTER the
     // present pass's tonemap, so its colour is a display colour and not a linear one added
     // into HDR, and BEFORE the HUD, so a window drawn over a ringed monster still covers it.
-    // game/outline.cpp.
-    ViewOutlineMask = 16,   // the hovered thing's own meshes, into their own tiny target
-    ViewOutline = 17,       // the ring, composed into its box of the backbuffer
-    ViewHud = 18,
+    // game/outline.cpp. A pair a ring (kOutlineRings): the hover's gold in the first, the
+    // red flash of a monster turning on him in the rest, every mask before any compose.
+    ViewOutlineMask = 16,   // 16..19, the ringed thing's own meshes, into their own tiny target
+    ViewOutline = 20,       // 20..23, the ring, composed into its box of the backbuffer
+    ViewHud = 24,
     // Sprint 8c's reflection probe: six faces of the town round the player, then the
     // prefiltered copy a mip and a face at a time. AFTER the frame, and read by the next one's
     // shade pass: the faces are drawn a frame late in any case, since one face is drawn a
     // frame, and after the frame they read this frame's sun split rather than needing a view
     // of their own between the shadow and the shade.
-    ViewProbeFace = 19,     // 19..24, a face each
-    ViewProbeFilter = 25,   // 25..54, mip * 6 + face
-    // Sprint 7's item pictures: the bag's stage at 55 and the shelf's at 62, each its own
+    ViewProbeFace = 25,     // 25..30, a face each
+    ViewProbeFilter = 31,   // 31..60, mip * 6 + face
+    // Sprint 7's item pictures: the bag's stage at 61 and the shelf's at 68, each its own
     // target. After the HUD, so a restocked window shows its new picture a frame late; the
     // target keeps the old one meanwhile. game/items_stage.h.
-    ViewStageBag = 55,
-    ViewProbeChain = 56,    // 56..61, the chain of the face drawn this frame, a level each
-    ViewStageShelf = 62,
-    ViewStageQuick = 63,    // the potion boxes' pictures on the HUD's own stage
+    ViewStageBag = 61,
+    ViewProbeChain = 62,    // 62..67, the chain of the face drawn this frame, a level each
+    ViewStageShelf = 68,
+    ViewStageQuick = 69,    // the potion boxes' pictures on the HUD's own stage
     // The tooltip's own picture of the one thing under the pointer, at rest: the bag turns
     // what is hovered, and a turning picture in the tooltip's head is a picture that will not
     // hold still to be read.
-    ViewStageTip = 64,
+    ViewStageTip = 70,
     // The character screen's create window: the class's bust, photographed (game/bust.h).
-    ViewStageBust = 65,
-    ViewCount = 66,
+    ViewStageBust = 71,
+    ViewCount = 72,
 };
+constexpr int kOutlineRings = 4;  // the hover's, and three monsters turning at once
 constexpr int kBloomLevels = 5;
 constexpr int kProbeSize = 128;  // the raw cube's edge, texels
 constexpr int kProbeMips = 5;    // the prefiltered chain: 128 down to 8, roughness 0 to 1

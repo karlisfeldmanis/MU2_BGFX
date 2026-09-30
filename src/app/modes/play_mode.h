@@ -97,6 +97,11 @@ private:
     std::vector<gfx::Drawable> townDrawables_;
     std::vector<gfx::Drawable> townCasters_;
     std::vector<gfx::Drawable> hoverDrawables_;
+    // The monsters flashing red for turning on him, each its own run of `flashDrawables_`
+    // (Play::Flash), and the one being ringed copied out whole, as Outline::show wants it.
+    std::vector<gfx::Drawable> flashDrawables_;
+    std::vector<game::Play::Flash> flashes_;
+    std::vector<gfx::Drawable> flashOne_;
 
     std::string savePath_;
     game::Saved saved_;

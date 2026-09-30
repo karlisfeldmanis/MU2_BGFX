@@ -420,6 +420,12 @@ public:
         // which already stand on their own cast shadow -- see Outline.Shade in the C# this
         // was ported from.
         bool shadow = false;
+        // Which of the kOutlineRings view pairs and masks it draws in: 0 is the hover's, the
+        // rest a monster's aggro flash. Rings compose in slot order, so a flash on the
+        // hovered monster lies over its gold.
+        int slot = 0;
+        // The ring's display colour, and its opacity in a: MU2's gold unless told otherwise.
+        float edge[4] = {1.0f, 0.78f, 0.28f, 1.0f};
     };
     // How wide the ring is and how far its box must be grown to hold it, in pixels of the
     // real screen -- shared with game/outline.cpp's own box fit so the two agree on how much
@@ -657,8 +663,11 @@ private:
     // so a later part of the same thing simply overwrites an earlier one's 1.0 with its own.
     bool createOutline(const std::string& shaderDir);
     void destroyOutline();
-    bgfx::TextureHandle outlineMaskTex_ = BGFX_INVALID_HANDLE;
-    bgfx::FrameBufferHandle outlineMaskFb_ = BGFX_INVALID_HANDLE;
+    // A mask a ring, so two rings in one frame never read each other's silhouette.
+    bgfx::TextureHandle outlineMaskTex_[kOutlineRings] = {
+        BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE};
+    bgfx::FrameBufferHandle outlineMaskFb_[kOutlineRings] = {
+        BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE, BGFX_INVALID_HANDLE};
     bgfx::ProgramHandle outlineProgram_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineEdge_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uOutlineParams_ = BGFX_INVALID_HANDLE;

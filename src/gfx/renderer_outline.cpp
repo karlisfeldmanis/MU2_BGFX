@@ -29,23 +29,27 @@ bool Renderer::createOutline(const std::string& shaderDir) {
     // -- widening the search rings near the box's border -- finds the empty margin rather
     // than wrapping onto the far side of the texture.
     const uint64_t clamp = BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
-    outlineMaskTex_ = bgfx::createTexture2D(uint16_t(kOutlineMaskSize), uint16_t(kOutlineMaskSize),
-                                            false, 1, bgfx::TextureFormat::R8, clamp);
-    outlineMaskFb_ = bgfx::createFrameBuffer(1, &outlineMaskTex_, true);
-
-    const bool ok = bgfx::isValid(outlineProgram_) && bgfx::isValid(outlineMaskTex_) &&
-                    bgfx::isValid(outlineMaskFb_);
+    bool ok = bgfx::isValid(outlineProgram_);
+    for (int slot = 0; slot < kOutlineRings; ++slot) {
+        outlineMaskTex_[slot] =
+            bgfx::createTexture2D(uint16_t(kOutlineMaskSize), uint16_t(kOutlineMaskSize), false,
+                                  1, bgfx::TextureFormat::R8, clamp);
+        outlineMaskFb_[slot] = bgfx::createFrameBuffer(1, &outlineMaskTex_[slot], true);
+        ok = ok && bgfx::isValid(outlineMaskTex_[slot]) && bgfx::isValid(outlineMaskFb_[slot]);
+    }
     if (!ok) {
         core::logError("outline: program %d mask %d buffer %d", bgfx::isValid(outlineProgram_),
-                       bgfx::isValid(outlineMaskTex_), bgfx::isValid(outlineMaskFb_));
+                       bgfx::isValid(outlineMaskTex_[0]), bgfx::isValid(outlineMaskFb_[0]));
     }
     return ok;
 }
 
 void Renderer::destroyOutline() {
-    if (bgfx::isValid(outlineMaskFb_)) bgfx::destroy(outlineMaskFb_);
-    outlineMaskFb_ = BGFX_INVALID_HANDLE;
-    outlineMaskTex_ = BGFX_INVALID_HANDLE;  // the frame buffer owned it
+    for (int slot = 0; slot < kOutlineRings; ++slot) {
+        if (bgfx::isValid(outlineMaskFb_[slot])) bgfx::destroy(outlineMaskFb_[slot]);
+        outlineMaskFb_[slot] = BGFX_INVALID_HANDLE;
+        outlineMaskTex_[slot] = BGFX_INVALID_HANDLE;  // the frame buffer owned it
+    }
     if (bgfx::isValid(outlineProgram_)) bgfx::destroy(outlineProgram_);
     outlineProgram_ = BGFX_INVALID_HANDLE;
     for (bgfx::UniformHandle* u : {&uOutlineEdge_, &uOutlineParams_, &uOutlinePixel_,
@@ -60,6 +64,9 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
                            const OutlineParams& params, const std::vector<Drawable>& hovered) {
     if (!outlineOk_ || hovered.empty() || outWidth_ <= 0 || outHeight_ <= 0) return;
     if (params.screenW <= 0 || params.screenH <= 0) return;
+    if (params.slot < 0 || params.slot >= kOutlineRings) return;
+    const bgfx::ViewId maskView = bgfx::ViewId(ViewOutlineMask + params.slot);
+    const bgfx::ViewId ringView = bgfx::ViewId(ViewOutline + params.slot);
 
     // The box goes into the mask WHOLE, shrunk to fit when it is larger than the cap, and
     // both sides by the same factor so the silhouette keeps its shape.
@@ -158,24 +165,24 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     }
 
     // --- the mask: the hovered thing's meshes, and nothing else, over nothing -------------
-    bgfx::setViewFrameBuffer(ViewOutlineMask, outlineMaskFb_);
-    bgfx::setViewRect(ViewOutlineMask, 0, 0, uint16_t(maskW), uint16_t(maskH));
-    bgfx::setViewClear(ViewOutlineMask, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
-    bgfx::setViewTransform(ViewOutlineMask, mainView, maskProj);
-    submitBatches(ViewOutlineMask, shadowProgram_, skinnedShadowProgram_, outlineBatches_, idb,
+    bgfx::setViewFrameBuffer(maskView, outlineMaskFb_[params.slot]);
+    bgfx::setViewRect(maskView, 0, 0, uint16_t(maskW), uint16_t(maskH));
+    bgfx::setViewClear(maskView, BGFX_CLEAR_COLOR, 0x00000000, 1.0f, 0);
+    bgfx::setViewTransform(maskView, mainView, maskProj);
+    submitBatches(maskView, shadowProgram_, skinnedShadowProgram_, outlineBatches_, idb,
                  BGFX_STATE_WRITE_RGB, false);
 
     // --- the ring: one screen pass, its view rect the thing's own box of the backbuffer ---
-    bgfx::setViewFrameBuffer(ViewOutline, BGFX_INVALID_HANDLE);
-    bgfx::setViewRect(ViewOutline, uint16_t(std::max(0, params.screenX)),
+    bgfx::setViewFrameBuffer(ringView, BGFX_INVALID_HANDLE);
+    bgfx::setViewRect(ringView, uint16_t(std::max(0, params.screenX)),
                       uint16_t(std::max(0, params.screenY)), uint16_t(params.screenW),
                       uint16_t(params.screenH));
-    bgfx::setViewClear(ViewOutline, 0, 0, 1.0f, 0);
-    bgfx::setViewTransform(ViewOutline, nullptr, nullptr);
+    bgfx::setViewClear(ringView, 0, 0, 1.0f, 0);
+    bgfx::setViewTransform(ringView, nullptr, nullptr);
 
-    // Gold, MU2's own: Outline.Width, Outline.Shade and the shader's own drift and spread,
-    // carried over unchanged since they were the tuned numbers, not guesses.
-    const float edge[4] = {1.0f, 0.78f, 0.28f, 1.0f};
+    // Gold by default, MU2's own: Outline.Width, Outline.Shade and the shader's own drift and
+    // spread, carried over unchanged since they were the tuned numbers, not guesses.
+    const float* edge = params.edge;
     // The width and the shadow's drift are given to the shader in MASK texels, and a shrunk
     // box has smaller texels than the screen's: unscaled, the ring round a big figure would
     // come out as wide as the shrink factor made it -- thick round the thing that is nearest
@@ -199,11 +206,11 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     bgfx::setUniform(uOutlinePixel_, pixel);
     bgfx::setUniform(uOutlineDrift_, drift);
     bgfx::setUniform(uOutlineScale_, scale);
-    bgfx::setTexture(0, sOutlineMask_, outlineMaskTex_);
+    bgfx::setTexture(0, sOutlineMask_, outlineMaskTex_[params.slot]);
     bgfx::setVertexBuffer(0, screenVb_);
     bgfx::setState(BGFX_STATE_WRITE_RGB |
                    BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_INV_SRC_ALPHA));
-    bgfx::submit(ViewOutline, outlineProgram_);
+    bgfx::submit(ringView, outlineProgram_);
     ++drawCount_;
 }
 

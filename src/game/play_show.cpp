@@ -884,7 +884,8 @@ void Play::focus(float* column, float* row) const {
 }
 
 void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,
-                  std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover) {
+                  std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover,
+                  std::vector<gfx::Drawable>* flashed, std::vector<Flash>* flashes) {
     // One eased fade for every reason a body is not simply "there": the hero's own
     // door-opening appearance, a corpse going out at the end of its held pose, and a
     // respawn easing back in. All three are the same smoothstep on a different clock, so
@@ -932,6 +933,14 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         // than a monster behind him would ring both at once -- leftClick's own ladder, which
         // this has to agree with since the ring is meant to show what a click would answer.
         if (hover && pointedFolk_ < 0 && one.id == pointedAt_) one.figure.gather(palette, *hover);
+        // And its red flash, the same way, if it has just turned on him (Play::watchAggro).
+        if (flashed && flashes && !aggro_.empty()) {
+            if (const float strength = flashOf(one.id); strength > 0.0f) {
+                const size_t from = flashed->size();
+                one.figure.gather(palette, *flashed);
+                flashes->push_back({from, flashed->size(), strength});
+            }
+        }
         // An Ale in the hero is MuMain's red: while ABILITY_FAST_ATTACK_SPEED stands, RenderCharacter
         // multiplies his light by (0.9, 0.5, 0.5) and copies it into `c->Light`, which lights every
         // part he wears (ZzzCharacter.cpp:9320). The instance's `light` is that same multiplier.

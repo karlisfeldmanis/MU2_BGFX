@@ -947,6 +947,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     townDrawables_.clear();
     townCasters_.clear();
     hoverDrawables_.clear();
+    flashDrawables_.clear();
+    flashes_.clear();
     const std::vector<gfx::Drawable>* casters = nullptr;
     if (world_.town().isOpen()) {
         if (args.cullChunks) {
@@ -982,7 +984,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         ctx.renderer.setDrain(drain_);
         ctx.renderer.setDim(dim_);
         world_.played().gather(ctx.renderer, viewProj, townDrawables_,
-                               casters ? &townCasters_ : nullptr, &hoverDrawables_);
+                               casters ? &townCasters_ : nullptr, &hoverDrawables_,
+                               &flashDrawables_, &flashes_);
         if (desk_.ready()) {
             desk_.overhead(float(deltaSeconds), world_.played(), viewProj, ctx.window.width(),
                            ctx.window.height());
@@ -1085,6 +1088,20 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const bool shadow = world_.played().pointedFolk() < 0 && world_.played().pointedAt() == 0;
         outline_.show(ctx.renderer, eye, outlineView, outlineProj, ctx.window.width(),
                       ctx.window.height(), hoverDrawables_, shadow);
+    }
+    // And a monster that has just turned on him flashes red, in rings of its own after the
+    // gold, so a hovered one blinks red over its gold and back (Play::watchAggro).
+    if (!flashes_.empty()) {
+        float outlineView[16], outlineProj[16];
+        ctx.renderer.cameraMatrices(eye, outlineView, outlineProj);
+        for (size_t i = 0; i < flashes_.size() && i < size_t(game::Play::kFlashRings); ++i) {
+            const game::Play::Flash& flash = flashes_[i];
+            flashOne_.assign(flashDrawables_.begin() + ptrdiff_t(flash.from),
+                             flashDrawables_.begin() + ptrdiff_t(flash.to));
+            const float red[4] = {1.0f, 0.16f, 0.10f, flash.strength};
+            outline_.show(ctx.renderer, eye, outlineView, outlineProj, ctx.window.width(),
+                          ctx.window.height(), flashOne_, false, int(i) + 1, red);
+        }
     }
     if (desk_.ready()) desk_.submit(gfx::ViewHud, ctx.window.width(), ctx.window.height());
     // The tile the character stands on, over his head: the column and row `--at`

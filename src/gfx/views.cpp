@@ -49,7 +49,13 @@ const char* viewName(View v) {
         case ViewTransparent: return "effects";
         case ViewPresent: return "present";
         case ViewOutlineMask: return "outline_mask";
+        case ViewOutlineMask + 1: return "outline_mask2";
+        case ViewOutlineMask + 2: return "outline_mask3";
+        case ViewOutlineMask + 3: return "outline_mask4";
         case ViewOutline: return "outline";
+        case ViewOutline + 1: return "outline2";
+        case ViewOutline + 2: return "outline3";
+        case ViewOutline + 3: return "outline4";
         case ViewBloomDown: return "bloom_down1";
         case ViewBloomDown + 1: return "bloom_down2";
         case ViewBloomDown + 2: return "bloom_down3";

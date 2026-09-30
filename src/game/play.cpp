@@ -75,6 +75,42 @@ void Play::stand(Drawn& risen) {
     if (idle >= 0) risen.figure.play(idle, true, 0.0f);
 }
 
+void Play::watchAggro(float seconds) {
+    for (Aggro& one : aggro_) one.seconds += seconds;
+    aggro_.erase(std::remove_if(aggro_.begin(), aggro_.end(),
+                                [](const Aggro& one) { return one.seconds >= kFlashSeconds; }),
+                 aggro_.end());
+    // Every live monster after him now; one that was not last frame has just turned. A dead
+    // hero is nobody's quarry, so rising in town and being seen again flashes afresh.
+    const uint32_t heroId = realm_.hero().id;
+    huntingNow_.clear();
+    for (const sim::Body& one : realm_.bodies()) {
+        if (!one.monster() || !one.alive() || one.quarry != heroId) continue;
+        huntingNow_.push_back(one.id);
+        if (std::find(hunting_.begin(), hunting_.end(), one.id) == hunting_.end()) {
+            aggro_.erase(std::remove_if(aggro_.begin(), aggro_.end(),
+                                        [&](const Aggro& a) { return a.id == one.id; }),
+                         aggro_.end());
+            aggro_.push_back({one.id, 0.0f});
+        }
+    }
+    hunting_.swap(huntingNow_);
+}
+
+float Play::flashOf(uint32_t id) const {
+    // Only the newest kFlashRings: there are no more rings than that to draw them in.
+    const size_t first = aggro_.size() > size_t(kFlashRings) ? aggro_.size() - kFlashRings : 0;
+    for (size_t i = first; i < aggro_.size(); ++i) {
+        if (aggro_[i].id != id) continue;
+        // Two blinks over kFlashSeconds, out to nothing between and after: a flash, not a
+        // ring that lingers and could be taken for the hover's.
+        const float t = std::clamp(aggro_[i].seconds / kFlashSeconds, 0.0f, 1.0f);
+        const float blink = std::sin(t * 2.0f * bx::kPi);
+        return blink * blink * (1.0f - 0.35f * t);
+    }
+    return 0.0f;
+}
+
 void Play::update(double seconds) {
     if (!isOpen()) return;
     // This frame's gains, and only this frame's: whoever draws the lane runs after this and
@@ -1089,6 +1125,7 @@ void Play::update(double seconds) {
         rise();
     }
     releaseDrops();
+    watchAggro(float(seconds));
     showing_.update(float(seconds));
     aura_.update(float(seconds));
     warp_.update(float(seconds));

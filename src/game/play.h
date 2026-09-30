@@ -140,8 +140,19 @@ public:
     // `hover` collects the SAME drawables -- same transform, same palette row -- for whichever
     // body is `pointedAt()` or whichever townsperson is `pointedFolk()`, so the outline ring
     // can draw them a second time without a second pose. Null skips the collecting.
+    //
+    // `flashed` does the same for each monster flashing red because it has just turned on
+    // him, and `flashes` says which run of it is whose and how bright: the newest
+    // kFlashRings, so each has a ring of its own (gfx::kOutlineRings less the hover's).
+    struct Flash {
+        size_t from = 0, to = 0;  // into `flashed`
+        float strength = 0.0f;    // the ring's opacity this frame, 0 to 1
+    };
+    static constexpr int kFlashRings = gfx::kOutlineRings - 1;
     void gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,
-                std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover = nullptr);
+                std::vector<gfx::Drawable>* casters, std::vector<gfx::Drawable>* hover = nullptr,
+                std::vector<gfx::Drawable>* flashed = nullptr,
+                std::vector<Flash>* flashes = nullptr);
 
     // Where the camera should look, in tiles: the character, smoothed as he is drawn.
     void focus(float* column, float* row) const;
@@ -886,6 +897,20 @@ private:
     int pointedColumn_ = -1, pointedRow_ = -1;
     uint32_t pointedAt_ = 0;  // the body under the pointer, or 0
     std::string lastLine_;
+
+    // The red flash round a monster the frame it turns on him: its quarry becoming the hero,
+    // whether it saw him, was struck by him or left a summon for him. Read off the realm each
+    // frame and never told to it -- the realm decides, this only notices. INVENTION, the
+    // user's (2026-09-30): MU marks no aggro at all.
+    struct Aggro {
+        uint32_t id = 0;
+        float seconds = 0.0f;  // since it turned
+    };
+    static constexpr float kFlashSeconds = 0.7f;  // two blinks, the second a little fainter
+    std::vector<Aggro> aggro_;
+    std::vector<uint32_t> hunting_, huntingNow_;  // on him last frame, and this one
+    void watchAggro(float seconds);
+    float flashOf(uint32_t id) const;  // its ring's strength now, 0 for none
 };
 
 }  // namespace mu::game
