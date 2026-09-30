@@ -642,14 +642,30 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         sheet.name = angel ? "Guardian Angel" : "Imp";
         sheet.nameTone = tip::Tone::White;
         sheet.base = "PET";
+        content::ItemRow row;
+        row.group = sim::kGroupPets;
+        row.number = one.pet;
+        const sim::PetPower power = sim::petPower(row);
+        const auto percent = [](double share) {
+            return std::to_string(int(std::lround(share * 100.0))) + "%";
+        };
         tip::Section what;
-        if (angel) {
-            what.rows.push_back(said("Absorbs", "20%", tip::Tone::Green));
+        if (power.taken != 1.0) {
+            what.rows.push_back(said("Absorbs", percent(1.0 - power.taken), tip::Tone::Green));
             what.rows.push_back(prose("of every blow that reaches you"));
-            what.rows.push_back(said("Max HP", "+50", tip::Tone::Green));
-        } else {
-            what.rows.push_back(said("Damage", "+30%", tip::Tone::Green));
+        }
+        if (power.health > 0) {
+            what.rows.push_back(said("Max HP", "+" + std::to_string(power.health), tip::Tone::Green));
+        }
+        if (power.dealt != 1.0) {
+            what.rows.push_back(said("Damage", "+" + percent(power.dealt - 1.0), tip::Tone::Green));
             what.rows.push_back(prose("attacking and wizardry, skills too"));
+        }
+        // The Imp's price (sim::PetPower::lifeCost), the one thing a pet takes from him.
+        if (power.lifeCost > 0) {
+            what.rows.push_back(said("Life", "-" + std::to_string(power.lifeCost), tip::Tone::Red));
+            what.rows.push_back(prose("for every blow you land; no bonus at " +
+                                      std::to_string(power.lifeCost) + " Life or less"));
         }
         what.rows.push_back(prose("loses Life as you take damage, and is gone at none"));
         sheet.sections.push_back(what);
