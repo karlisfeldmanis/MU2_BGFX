@@ -72,6 +72,13 @@ private:
     static constexpr float kScorchTiles = 2.0f;
     static constexpr float kScorchLift = 0.05f;
     static constexpr float kGlow[3] = {1.0f, 0.4f, 0.0f};
+    // **A plume's brightness, ours.** MU draws them at one, and added in GL a pillar of a
+    // hundred and twenty clips to white through the core with a thin orange rim -- the
+    // InfinityMU clip. Here they are added in HDR and tonemapped, where the same stack settles
+    // yellow-orange and soft; this is what puts the white core back. Laid on twice rather than
+    // tinted, because a sprite's colour is eight bits and stops at one (gfx/effects.cpp), and
+    // the sheet's own colour is kept rather than read through fs_flame's heat ramp.
+    static constexpr int kPlumeLayers = 2;
     static constexpr float kGlowTiles = 3.0f;
 
     static constexpr int kFires = 8;

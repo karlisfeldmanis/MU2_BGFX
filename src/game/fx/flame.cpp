@@ -149,7 +149,7 @@ void Flame::gather(gfx::Effects& effects) const {
         sprite.spin = one.spin;
         sprite.sheet = sheet_;
         sprite.blend = gfx::Blend::Additive;
-        effects.add(sprite);
+        for (int layer = 0; layer < kPlumeLayers; ++layer) effects.add(sprite);
     }
 }
 
