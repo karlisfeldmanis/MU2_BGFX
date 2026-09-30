@@ -69,8 +69,8 @@ struct Saved {
     std::vector<Item> vaultItems;
 };
 
-// Where the save lives when --save does not say: ~/Library/Application Support/MU2/hero.json,
-// outside the build and the repo, so a clean rebuild or a checkout never touches it.
+// Where the save lives when --save does not say: saves/hero.json in the client folder
+// (core::userFolder), which git ignores, so a clean rebuild or a checkout never touches it.
 std::string defaultSavePath();
 
 // False when there is no file or it cannot be read as a save; the reason is in the log.

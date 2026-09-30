@@ -28,3 +28,6 @@ __pycache__/
 *.pyc
 
 .DS_Store
+
+# The player's own: options, characters, the vault. Kept in the client folder, never in git.
+saves/

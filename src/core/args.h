@@ -316,8 +316,13 @@ Args parseArgs(int argc, char** argv);
 
 void printUsage();
 
-// ~/Library/Application Support/MU2/options.txt, beside the characters: what --remember reads
-// and what the game menu writes back. `key value` a line; a key it does not know is passed by.
+// saves/ in the client folder (MU2_ROOT_DIR), made on the first ask: the options, the
+// characters, the vault and the old hero.json. Nothing the game keeps lives outside it --
+// not in ~/Library/Application Support, where it used to. Git ignores it.
+std::string userFolder();
+
+// saves/options.txt, beside the characters: what --remember reads and what the game menu
+// writes back. `key value` a line; a key it does not know is passed by.
 std::string optionsPath();
 void saveOptions(const Args& args);
 

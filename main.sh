@@ -9,7 +9,7 @@
 #   ./main.sh --roster DIR        characters from DIR instead of your own folder
 #
 # The game menu's Options -- fullscreen or windowed, the window's size, v-sync, volume and the
-# frame counter -- are kept in ~/Library/Application Support/MU2/options.txt and the next run
+# frame counter -- are kept in saves/options.txt in this folder and the next run
 # opens on them (`--remember`, after this script's own --fullscreen and --vsync so it overrides
 # them). A switch given here still wins for that run; delete the file to start from the defaults.
 #
@@ -22,7 +22,7 @@
 #   left click on a monster ...... go and fight it until one of you is dead
 #   right click .................. stop
 #
-# Your characters live in ~/Library/Application Support/MU2/characters, one file each. The
+# Your characters live in saves/characters in this folder, one file each. The
 # first run takes the old hero.json in as "DarkKnight" in slot 0 and leaves hero.json where it
 # is. A deleted character is moved to characters/deleted/, not erased.
 #

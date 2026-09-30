@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "core/args.h"
 #include "core/log.h"
 
 namespace mu::game {
@@ -59,8 +60,7 @@ void adoptOldHero(const fs::path& folder) {
 }  // namespace
 
 std::string rosterFolder() {
-    const char* home = std::getenv("HOME");
-    return std::string(home ? home : ".") + "/Library/Application Support/MU2/characters";
+    return core::userFolder() + "/characters";
 }
 
 std::vector<Seat> readRoster(const std::string& folderPath) {

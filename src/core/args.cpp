@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 
 #include "core/log.h"
 
@@ -43,9 +44,15 @@ void readOptions(Args& a) {
 
 }  // namespace
 
+std::string userFolder() {
+    const std::string folder = std::string(MU2_ROOT_DIR) + "/saves";
+    std::error_code error;
+    std::filesystem::create_directories(folder, error);
+    return folder;
+}
+
 std::string optionsPath() {
-    const char* home = std::getenv("HOME");
-    return std::string(home ? home : ".") + "/Library/Application Support/MU2/options.txt";
+    return userFolder() + "/options.txt";
 }
 
 void saveOptions(const Args& a) {

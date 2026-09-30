@@ -40,7 +40,7 @@ struct Seat {
     std::vector<Saved::Item> items;  // as read; slots 0 to 6 are what he wears
 };
 
-// ~/Library/Application Support/MU2/characters, beside the vault and the old hero.json.
+// saves/characters in the client folder, beside the vault and the old hero.json.
 std::string rosterFolder();
 
 // Every character in `folder`, by slot. The first time the folder is empty and an old

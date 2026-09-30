@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <filesystem>
 
+#include "core/args.h"
 #include "core/files.h"
 #include "core/json.h"
 #include "core/log.h"
@@ -107,8 +108,7 @@ bool finish(std::FILE* f, const std::string& temporary, const std::string& path)
 }  // namespace
 
 std::string defaultSavePath() {
-    const char* home = std::getenv("HOME");
-    return std::string(home ? home : ".") + "/Library/Application Support/MU2/hero.json";
+    return core::userFolder() + "/hero.json";
 }
 
 bool loadSave(const std::string& path, Saved& out) {
