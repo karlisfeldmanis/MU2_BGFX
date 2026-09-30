@@ -1051,6 +1051,11 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                                 : 0;
         grassDrawn = world_.grass().gather(world_.ground(), ctx.lighting, viewProj, eye.position,
                                            walkers, walking, float(at.elapsed), grassField);
+        // Devias's blizzard bows the grass the way its snow flies, harder in each gust: at 0.6
+        // of the wind a gust lays the sward over by about half, an ordinary blow by a quarter.
+        // "procedural grass was not reacting so good as storm snow flakes" (2026-09-30).
+        world_.leaves().stormWind(grassField.storm);
+        grassField.storm[0] *= 0.6f;
     }
     ctx.renderer.draw(eye, ctx.lighting, townDrawables_, &world_.ground(), casters,
                       grassDrawn ? &grassField : nullptr);

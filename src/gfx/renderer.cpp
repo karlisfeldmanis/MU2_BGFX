@@ -321,6 +321,7 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
         // 256x128 and the meadow's is 512x128, and a mip level is worked out per axis.
         const float size[4] = {batch.width, batch.height, density, colour};
         bgfx::setUniform(uGrassSize_, size);
+        bgfx::setUniform(uGrassStorm_, grass.storm);
         // Clamped, and it matters: a card's uv runs across ONE column of its sheet, and a
         bgfx::setUniform(uGrassWake_, grass.wake);
         // Only when there is a wake to read. This runs on every grass draw, and a measuring

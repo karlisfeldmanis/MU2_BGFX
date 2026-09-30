@@ -35,6 +35,7 @@ uniform vec4 u_grassReach;  // x: metres from the eye past which no card stands 
 uniform vec4 u_grassWalkers[8]; // xyz: somebody's feet, world space  w: how far round them the sward is parted (0 is an empty slot)
 uniform vec4 u_grassSteps[24];  // xy: a footprint, world xz  z: the second it was laid  w: the way they were walking, radians (under -50 is unknown)
 uniform vec4 u_grassWake;       // xy: the centre of every live footprint  z: the radius they all sit inside (0 is no wake)  w: the seconds now
+uniform vec4 u_grassStorm;      // x: how far a blizzard bows the field downwind (0 none)  yz: that way, world x and z
 
 // --- the hash ----------------------------------------------------------------------------
 //
@@ -314,6 +315,12 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	// So the card leans where its own habit and its own stiffness put it, always, and the wind
 	// is added afterwards as a push on the top.
 	vec2 ownLean = facing * u_grassCard.z * (1.24 - stiff * 0.48);
+	// Devias's blizzard (game::Leaves::stormWind): a steady bow downwind, swelling with the
+	// snow's own gusts, added to the card's habit before the rotation below, so the card bends
+	// over and keeps its length. A floppy tuft goes further over than a stalk. Unlike the sway it
+	// reads no phase off the card's place, so it can turn with the wind without the field
+	// flickering.
+	ownLean += u_grassStorm.yz * u_grassStorm.x * (1.3 - stiff * 0.6);
 	float leanLength = length(ownLean);
 	float reachFraction = min(leanLength, 0.93);
 	vec2 leanDir = leanLength > 1e-5 ? ownLean / leanLength : facing;

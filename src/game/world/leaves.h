@@ -104,6 +104,10 @@ public:
     // blows sideways at up to a storm wind in gusts, falls faster, fills a larger pool and
     // streaks, and what lands is blown on rather than lying. docs/devias-blizzard.md.
     void setStorm(float share) { storm_ = share; }
+    // The wind the snow is flying on now, for the grass to bow to (gfx::GrassField::storm):
+    // how hard, 0 calm to 1 a full storm's gust at its strongest, and which way on the level
+    // (world x and z). Nought and still outside a blizzard.
+    void stormWind(float out[4]) const;
 
     bool isOpen() const { return bgfx::isValid(sheet_); }
     uint32_t blowing() const { return blowing_; }

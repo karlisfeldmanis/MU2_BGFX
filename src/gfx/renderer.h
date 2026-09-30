@@ -122,6 +122,10 @@ struct GrassField {
     // (negative is sharper), and 1 when this draw is the meadow rather than the sward. The
     // sheet's own size rides per batch, above.
     float sheet[4] = {4.0f, 0.28f, -0.4f, 0.0f};
+    // Devias's blizzard: how far the grass bows downwind now (0 none), then that way on the
+    // level, world x and z. game::Leaves::stormWind; a lean added to each card's own, so it
+    // bends over and keeps its length, and it can turn with the wind -- u_grassWind cannot.
+    float storm[4] = {0.0f, 1.0f, 0.0f, 0.0f};
     // How far the field reaches, measured from the EYE and worked out per card in the vertex
     // shader: x is the metres past which no card stands, y the band before that over which a
     // card shrinks into the turf, z where the thinning with distance begins and w where it
@@ -670,6 +674,7 @@ private:
     bgfx::UniformHandle uDust_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uEdge_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uAbyss_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uGrassStorm_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sAbyss_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uCamPos_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uParams_ = BGFX_INVALID_HANDLE;

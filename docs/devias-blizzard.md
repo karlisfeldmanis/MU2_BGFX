@@ -37,6 +37,7 @@ Landed 2026-09-30:
 
 - **Grass and trees react** ("grass and trees has to react"):
   - the storm sheet's grass wind is 0.3 against the calm's 0.16. The grass keeps its one wind axis, and the snow's wind wanders about that same axis (45° off −x, `kWindBase`). A first try at 0.6, turned with the snow's heading, "looked buggy": the strength whipped and stretched the blades, and a turning heading sweeps fs_grass's wave phase (`dot(position, direction)` over hundreds of metres) so the field flickers;
+  - and a steady bow ("procedural grass was not reacting so good as storm snow flakes"): `u_grassStorm` adds a lean downwind to each card's own before its rotation, so blades bend over and keep their length. The amount is the snow's own wind strength and gust (`Leaves::stormWind`, times 0.6), so the grass bows hardest when the snow streams hardest. It reads no phase, so it turns with the wind without flicker;
   - the town's sway clips (the firs above all) run up to 2.5 times their rate by the share. That's faster, not wider: the clips are MU's.
 
 Still to do:

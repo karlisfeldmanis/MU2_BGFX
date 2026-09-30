@@ -361,6 +361,15 @@ void Leaves::spawn(Leaf& leaf, const float hero[3], const float eye[3],
     leaf.live = true;
 }
 
+void Leaves::stormWind(float out[4]) const {
+    // The field's share of the gust, as the flakes take it (their own phase aside): so the grass
+    // bows hardest in the same moment the snow streams hardest.
+    out[0] = snow_ ? storm_ * windStrength_ * stormGust(gust_) : 0.0f;
+    out[1] = -std::cos(windHeading_);
+    out[2] = std::sin(windHeading_);
+    out[3] = 0.0f;
+}
+
 void Leaves::spawnFlake(Leaf& flake, const float hero[3], const content::Ground& ground) {
     // The leaves' own field, CreateDeviasSnow's -800..799 by -500..899 units.
     flake.position[0] = hero[0] + between(-8.0f, 7.99f);
