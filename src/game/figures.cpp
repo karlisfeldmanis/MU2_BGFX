@@ -1028,11 +1028,17 @@ void Figures::addMonster(const core::Json& entry) {
         std::string bone = entry[boneField.c_str()].stringOr("");
         // The Skeleton Warrior names no bone and is on the player rig: it takes the
         // player's own grips, like the characters above.
+        const bool named = !bone.empty();
         if (bone.empty()) bone = std::string(side) == "right_hand" ? kRightGrip : kLeftGrip;
         HeldItem item;
         item.mesh = found;
         item.boneName = bone;
         describe(item);
+        // And a bow in the LEFT grip, whichever field names it, as a character's is (above):
+        // MU sets the Skeleton Archer's Elven Bow in Weapon[1]. Held in the right fist it lay
+        // across the body while the left hand drew an empty string (the user: "holding wrong
+        // bow").
+        if (!named && item.stance == "bow") item.boneName = kLeftGrip;
         made->held.push_back(item);
     }
     bind(*made);

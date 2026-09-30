@@ -1110,6 +1110,16 @@ void Hud::rebuild() {
                 const float big = std::round(20.0f * kUnit * s.scale);
                 controls::label(canvas_, box.midX() - controls::labelWidth(big, figure) * 0.5f,
                                 box.midY() + big * 0.33f, big, kInk, figure);
+                // A stacked poison's count in its top corner, "x3", from two up (ours).
+                if (one.stacks > 1) {
+                    char count[8];
+                    std::snprintf(count, sizeof count, "x%d", one.stacks);
+                    const float small = std::round(13.0f * kUnit * s.scale);
+                    const float pad = std::round(2.0f * kUnit * s.scale);
+                    controls::label(canvas_,
+                                    box.right() - pad - controls::labelWidth(small, count),
+                                    box.y + pad + small * 0.8f, small, kInk, count);
+                }
                 continue;
             }
             // A buff's on a dark band across the foot, larger and with a heavier drop: bare on the

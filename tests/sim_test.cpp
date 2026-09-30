@@ -3189,6 +3189,44 @@ void testWear(const content::Tables& tables) {
 
 // Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin, Sevina and the Messenger, the three shelves, Zienna's
 // counter, and the Guild Master answering with a line where MU opens a guild window.
+// A monster's poison stacks on him (ours, kPoisonStacksMost): among the Dungeon's Poison Bulls,
+// kept on his feet, the stacks climb past one and stop at the cap, and a pulse with more than one
+// on him bites more than the one 3% share of what he has left.
+void testPoisonStacks() {
+    std::printf("poison stacks\n");
+    content::Tables dungeon;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur";
+    check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
+    sim::Realm realm;
+    check(realm.raise(&dungeon, 7, 119, 47, sim::Kin::DarkKnight, 40), "a knight among the bulls");
+    int most = 0, stackedPulses = 0, overShare = 0;
+    for (int tick = 0; tick < 6000 && realm.hero().alive(); ++tick) {
+        if (realm.hero().health < realm.hero().maxHealth / 2) {
+            sim::HeroRecord record = realm.record();
+            record.health = realm.hero().maxHealth;
+            realm.restore(record);
+        }
+        const int before = realm.hero().health;
+        const int stacks = realm.hero().poisonStacks;
+        const bool on = realm.hero().poisonUntil > realm.tick();
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.what != sim::What::Hit || one.whom != realm.hero().id || !one.poisoned) continue;
+            if (on && stacks > 1) {
+                ++stackedPulses;
+                if (one.a > std::max(1, int(float(before) * sim::kHeroPoisonShare))) ++overShare;
+            }
+        }
+        if (realm.hero().poisonUntil > realm.tick()) most = std::max(most, realm.hero().poisonStacks);
+    }
+    std::printf("  poison: %d stacks at the most, %d stacked pulses, %d over one share\n", most,
+                stackedPulses, overShare);
+    check(most > 1, "a second poisoning while one is on stacks");
+    check(most <= sim::kPoisonStacksMost, "and never past the cap");
+    check(stackedPulses > 0 && overShare > 0, "and a stacked pulse bites more than one share");
+}
+
 void testDeviasFolk() {
     std::printf("devias folk\n");
     content::Tables devias;
@@ -4164,6 +4202,7 @@ int main() {
     testQuests(tables);
     testRunes(tables);
     testPets(tables);
+    testPoisonStacks();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

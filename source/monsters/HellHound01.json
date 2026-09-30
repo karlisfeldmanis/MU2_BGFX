@@ -1,0 +1,24 @@
+{
+  "item": "HellHound01",
+  "mu_name": "Hell Hound",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_HELL_HOUND = 5, drawn out of the Hound's own model (MONSTER_MODEL_HOUND, Monster02.bmd): `case MONSTER_HOUND: case MONSTER_HELL_HOUND: OpenMonsterModel(MONSTER_MODEL_HOUND)` (ZzzCharacter.cpp:14120-14140). The client's name is 헬하운드. OpenMU's Version075 Dungeon.cs:624-651 names number 5 'Hell Hound' at level 38 with 1400 health, 125-130 damage, 55 defense, MoveRange 3, AttackRange 1, ViewRange 4, AttackDelay 1200, respawn 10 s, no AttackSkill, resistance F3. Fourteen spots, all in Dungeon 2.",
+  "world": "dungeon",
+  "object_type": 5,
+  "mesh": "Hound01",
+  "mesh_from": "Monster02 a second time, as the Elite Bull Fighter is Monster01 a second time: every difference is a field CreateMonster sets beside the one loaded model, so this entry points at Hound01's glb and builds nothing of its own. See EliteBullFighter01's mesh_from.",
+  "monster": {
+    "model_index": 1,
+    "scale": 1.1
+  },
+  "monster_from": "The MONSTER_HELL_HOUND branch: `c->Object.HiddenMesh = 1; c->Weapon[0].Type = MODEL_FALCHION; c->Weapon[1].Type = MODEL_PLATE_SHIELD; c->Object.Scale = 1.1f; c->Level = 1;`. Level 1 draws nothing on the Hound: no case in MoveCharacterVisual or RenderCharacter reads it for MODEL_HOUND.",
+  "hidden_mesh": 1,
+  "hidden_part": "fur",
+  "hidden_mesh_from": "`c->Object.HiddenMesh = 1`, where the plain Hound hides mesh 0: the two variants each hide the other's head. Mesh 0 is hound_head01, the brass-trimmed helm over a dark mail hood, which Hound01's build ships as the part called `hidden` (the plain Hound puts it away); mesh 1 is hound_head02, the bare snarling head, which ships as `fur`. So the Hell Hound names its own part, `hidden_part: fur`, and the cook cuts it a mesh of its own (Hound01~fur) that drops the bare head and keeps the helm. Until this line it was cooked on the plain Hound's rule and wore the bare fur head with its helm dropped -- lighter than MU's (the user: 'i think hell hound was darker in MuMain').",
+  "right_hand": "Sword08",
+  "right_hand_bone": "Bone_left",
+  "left_hand": "Shield10",
+  "left_hand_bone": "bone_right",
+  "hands_from": "MODEL_FALCHION is Item/Sword08.bmd and MODEL_PLATE_SHIELD Item/Shield10.bmd, both cooked. The bones are the model's: `case MODEL_HOUND: c->Weapon[0].LinkBone = 19; c->Weapon[1].LinkBone = 14` (ZzzCharacter.cpp:12056-12058) -- 19 is Bone_left and 14 bone_right, the artist's names the wrong way round again, as the plain Hound's note says.",
+  "profile": "monster",
+  "sounds_from": "The Hound's model and so the Hound's five: SetMonsterSound is per model, not per breed. Wired as hellhound_*, the same files as hound_*."
+}

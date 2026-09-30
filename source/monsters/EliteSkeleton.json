@@ -1,0 +1,25 @@
+{
+  "item": "EliteSkeleton",
+  "mu_name": "Elite Skeleton",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_ELITE_SKELETON = 16; the client calls it 해골전사 대장, skeleton warrior captain. OpenMU's Version075 Dungeon.cs:866-892 names number 16 'Elite Skeleton' at level 42 with 1800 health, 135-140 damage, 65 defense, MoveRange 2, AttackRange 1, ViewRange 4, AttackDelay 1600, respawn 10 s, no AttackSkill. Twenty-one spots in Dungeon 2 and one in Dungeon 3.",
+  "kind": "character",
+  "parts": [
+    "Skeleton03"
+  ],
+  "right_hand": "Axe04",
+  "left_hand": "Shield07",
+  "stance": "sword",
+  "playable": false,
+  "world": "dungeon",
+  "object_type": 16,
+  "monster": {
+    "model_index": -1,
+    "scale": 1.2
+  },
+  "death": "bone_burst",
+  "note": "CreateMonster's case MONSTER_ELITE_SKELETON (ZzzCharacter.cpp:14218-14227): MODEL_PLAYER at Scale 1.2, `c->Weapon[0].Type = MODEL_TOMAHAWK; c->Weapon[1].Type = MODEL_SKULL_SHIELD;`, SubType MODEL_SKELETON3, Level 1, Blood.",
+  "hands_from": "MODEL_TOMAHAWK is Item/Axe04.bmd and MODEL_SKULL_SHIELD Item/Shield07.bmd, both cooked, on the player rig's own grip bones as the Warrior's.",
+  "stance_from": "A one-handed axe is in SetPlayerStop's sword group, as the Warrior's Gladius: PLAYER_STOP_SWORD and its walk.",
+  "death_from": "He does not fall over. CharacterDie in ZzzCharacter.cpp tests the sub-type before it reaches SetAction:\n\n    if (o->SubType >= MODEL_SKELETON1 && o->SubType <= MODEL_SKELETON3)\n    {\n        o->Live = false;\n        CreateEffect(MODEL_BONE1, o->Position, o->Angle, o->Light);\n        for (int j = 0; j < 10; j++)\n            CreateEffect(MODEL_BONE2, o->Position, o->Angle, o->Light);\n        PlayBuffer(SOUND_BONE2, o);\n    }\n    else\n        SetAction(&c->Object, PLAYER_DIE1);\n\nThe model is switched off outright and eleven loose bones are thrown where it stood - one large Bone01 and ten small Bone02, out of Data/Skill, with the clatter. He has PLAYER_DIE1 in his rig like every player-rigged thing and never plays it, which is why Crowd hands this figure no die clip at all: a death clip he cannot reach is a clip somebody would one day watch and call wrong. See assets/effects/bones and client/core/Bones.cs for the burst.",
+  "sounds_from": "As the Warrior's and the Archer's: wired as eliteskeleton_*, the Warrior's files."
+}

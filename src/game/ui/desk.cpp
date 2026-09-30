@@ -879,6 +879,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     if (hero.poisonUntil > realm.tick() && standing < Hud::kBoons) {
         Hud::Boon& boon = boons[standing++];
         boon.poison = true;
+        boon.stacks = hero.poisonStacks;
         const float left = float(hero.poisonUntil - realm.tick());
         boon.seconds = left * 0.05f;
         boon.share = left / float(sim::kHeroPoisonTicks);

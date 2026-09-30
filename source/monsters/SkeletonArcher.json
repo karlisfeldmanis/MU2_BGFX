@@ -1,0 +1,25 @@
+{
+  "item": "SkeletonArcher",
+  "mu_name": "Skeleton Archer",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_SKELETON_ARCHER = 15. OpenMU's Version075 Dungeon.cs:838-864 names number 15 'Skeleton Archer' at level 34 with 1100 health, 115-120 damage, 45 defense, MoveRange 2, AttackRange 5, ViewRange 7, AttackDelay 2000, respawn 10 s, no AttackSkill -- it shoots by its range. Seven spots in Dungeon 1 and eleven in Dungeon 2.",
+  "kind": "character",
+  "parts": [
+    "Skeleton02"
+  ],
+  "right_hand": "Bow03",
+  "stance": "bow",
+  "stance_from": "A bow's stance, as the Elf Archer guards stand: PLAYER_STOP_BOW and its walk, and the bow attack that draws and looses. Declared, because a monster row's stance is read off its own entry and not off the weapon -- without it the archer stood in no stance, held the bow as a blade and swung it, and shot nothing (the user: 'archers was not shooting bow and was holding it wrong').",
+  "playable": false,
+  "world": "dungeon",
+  "object_type": 15,
+  "monster": {
+    "model_index": -1,
+    "scale": 1.1
+  },
+  "death": "bone_burst",
+  "note": "CreateMonster's case MONSTER_SKELETON_ARCHER (ZzzCharacter.cpp:14209-14217): `CreateCharacter(Key, MODEL_PLAYER, ...)`, Scale 1.1, `c->Weapon[1].Type = MODEL_ELVEN_BOW`, SubType MODEL_SKELETON2, Level 1, Blood. A player in the archer's skeleton body with a bow, as the Skeleton Warrior is one in the warrior's (see SkeletonWarrior.json).",
+  "hands_from": "MODEL_ELVEN_BOW is Item/Bow03.bmd, cooked. MU sets it in Weapon[1], the bow hand, as it does for every bow; here it is right_hand, as the Elf Archer guards declare theirs, because the cook reads the stance off that field and the player rig's bow clips put a bow where a bow is held.",
+  "shoots_from": "AttackRange 5 and no skill: its blow is an arrow. Play::shoots looses a Wood arrow for a monster standing in the bow stance, as for a guard.",
+  "death_from": "He does not fall over. CharacterDie in ZzzCharacter.cpp tests the sub-type before it reaches SetAction:\n\n    if (o->SubType >= MODEL_SKELETON1 && o->SubType <= MODEL_SKELETON3)\n    {\n        o->Live = false;\n        CreateEffect(MODEL_BONE1, o->Position, o->Angle, o->Light);\n        for (int j = 0; j < 10; j++)\n            CreateEffect(MODEL_BONE2, o->Position, o->Angle, o->Light);\n        PlayBuffer(SOUND_BONE2, o);\n    }\n    else\n        SetAction(&c->Object, PLAYER_DIE1);\n\nThe model is switched off outright and eleven loose bones are thrown where it stood - one large Bone01 and ten small Bone02, out of Data/Skill, with the clatter. He has PLAYER_DIE1 in his rig like every player-rigged thing and never plays it, which is why Crowd hands this figure no die clip at all: a death clip he cannot reach is a clip somebody would one day watch and call wrong. See assets/effects/bones and client/core/Bones.cs for the burst.",
+  "sounds_from": "MODEL_PLAYER with a skeleton SubType, as the Warrior: mBone1 on the walk and the flinch, the player's bow on the swing, mBone2 at the burst. Wired as skeletonarcher_*, the Warrior's files."
+}

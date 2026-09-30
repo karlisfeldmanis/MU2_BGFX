@@ -26,7 +26,7 @@
   "sheet_from": "Three sheets for three meshes, one each, all out of Data/Monster beside the model and all .OZJ - two 64-squares for the heads and a 128-square for the body. No .OZT anywhere on this animal, so there is nothing on it with alpha.\n\nEvery copy under LEGACY is byte-identical in size to MuMain's, so there is no larger version and MuMain's is the art.\n\nThe hound_ prefix is shared with Data/Item's hound_sword1, hound_shield1 and hound_shield2, which are the Sword of Hero, the Plate Shield and the Big Round Shield and are not this model's: MU groups a set of late 0.75 art under the word rather than reserving it for the monster.",
   "cutout_from": "Not declared, and here there is nothing to decide. `cutout` means 'derive the mask from brightness instead of from the alpha channel', and all three sheets are .OZJ with no alpha at all - fully opaque, as decode_texture reports. mu2.sh's sniff finds no real alpha channel and does not set --cutout either, so the Hound is drawn solid, which is what it is.",
   "sheet_materials": {
-    "hound_head01": "brass",
+    "hound_head01": "painted_steel",
     "hound_head02": "fur",
     "hound_lower": "painted_steel"
   },
@@ -43,10 +43,11 @@
     }
   },
   "material_overrides_why": "The body is most of the model by screen area and reads noticeably flatter and more mirror-bright than a sword blade or a shield boss wearing the same material, which is the case painted_steel.json's own warning names on the other side: a broad surface reads differently from a thin one wearing the identical numbers, and its remedy for a broad dark surface is plate_steel. plate_steel was tried first here and is not it - it is metallic and goes through the F0 pull, which targets a grey-black steel and drove this violet paint to white chrome; see the earlier finding in this file's history. Judged live in Blender under the sheet's own rig (see docs/material-tuning.md): roughness 0.28 blows the pauldrons and the collar out to near-white wherever they catch the sky, and stepping it up alone - the only lever a dielectric has in this pipeline, there is no separate specular/IOR knob in the material schema or the exporter - keeps the drawn gold fluting legible while the plate stops reading as wet chrome and starts reading as armour in shade. Declared per asset rather than raised in painted_steel.json itself: that material also dresses several sword blades, three shields, a carriage, a sign and a house, all much smaller or more curved surfaces where 0.28 has been looked at and kept, and moving the library number would need the same look at each of them.",
+  "helm_material_note": "hound_head01, the Hell Hound's helm, is painted_steel with the body since 2026-09-30, not brass: a copper-bronze crown over a dark blue mail hood, painted as hound_lower is, and brass lifted the whole island to bright polished copper where MU's reads dark (the user: 'i think hell hound was darker in MuMain'). The plain Hound puts this part away, so only the Hell Hound shows it.",
   "islands": [
     {
       "island": 0,
-      "material": "brass",
+      "material": "painted_steel",
       "triangles": 172,
       "area": 21647.2,
       "along": [

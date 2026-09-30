@@ -1,0 +1,21 @@
+{
+  "item": "PoisonBull01",
+  "mu_name": "Poison Bull",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_POISON_BULL = 8, the third breed out of Monster01.bmd (`case MONSTER_BULL_FIGHTER: case MONSTER_ELITE_BULL_FIGHTER: case MONSTER_POISON_BULL:`, ZzzCharacter.cpp:14069-14097). The client's name is 포이즌 소뿔전사, poison bull warrior. OpenMU's Version075 Dungeon.cs:653-682 names number 8 'Poison Bull' at level 46 with 2500 health, 145-150 damage, 75 defense, MoveRange 3, AttackRange 1, ViewRange 5, AttackDelay 1400, respawn 10 s, AttackSkill Poison (1) with PoisonDamageMultiplier 0.03, resistance P6. Seven spots in Dungeon 2 and thirteen in Dungeon 3.",
+  "world": "dungeon",
+  "object_type": 8,
+  "mesh": "BullFighter01",
+  "mesh_from": "Monster01 a third time; see EliteBullFighter01's mesh_from.",
+  "monster": {
+    "model_index": 0,
+    "scale": 1.0
+  },
+  "monster_from": "The MONSTER_POISON_BULL branch: `c->Weapon[0].Type = MODEL_GREAT_SCYTHE; c->Object.Scale = 1.f; c->Level = 2; g_CharacterRegisterBuff((&c->Object), eDeBuff_Poison);`. No HiddenMesh, so like the Elite it keeps the horned crest the plain bull hides. Level 2 draws nothing on this model (the eyes want Level 1, ZzzCharacter.cpp:11210).",
+  "tint_from": "The buff is the look: it is registered at creation and never removed, and RenderObject lights anything carrying eDeBuff_Poison `(0.3, 1.0, 0.5)` (ZzzObject.cpp:1122-1124) -- a bull washed green for as long as it stands. The game draws it with the poisoned body's own tint, kPoisonedLight, held on (play_tuning.h kVenomousFigure).",
+  "poison_from": "Its bite poisons: AttackSkill Poison, the realm's kPoisoners (8 is there), twenty seconds at 3% of the health left every three.",
+  "right_hand": "Spear09",
+  "right_hand_bone": "left_bone",
+  "right_hand_from": "MODEL_GREAT_SCYTHE is Item/Spear09.bmd, cooked. Bone 42, left_bone under Bip01 R Hand, the model's own (see BullFighter01).",
+  "profile": "monster",
+  "sounds_from": "Monster01's five, as the Elite's: wired as poisonbull_*, the same files as bullfighter_*. It snorts as both bulls do (MODEL_BULL_FIGHTER's case, kSnortingFigure's list)."
+}

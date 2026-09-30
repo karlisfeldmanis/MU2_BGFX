@@ -395,8 +395,10 @@ bool Play::shoots(uint32_t id, Arrows::Model* model) {
     }
     // A guard: an arrow off a bow, and off a crossbow the Light Crossbow's own bolt, which is
     // the one every crossbow guard holds (MU's CreateArrow gives MODEL_LIGHT_CROSSBOW Laser).
+    // And a monster on the player rig holding a bow -- the Dungeon's Skeleton Archer, whose blow
+    // is an arrow at its AttackRange 5 -- as a guard does.
     const sim::Body* body = realm_.find(id);
-    if (!body || body->warden < 0) return false;
+    if (!body || (body->warden < 0 && !body->monster())) return false;
     if (look->stance == "bow") {
         *model = Arrows::Wood;
         return true;
@@ -426,6 +428,10 @@ void Play::volleyShot(uint32_t shooter, uint32_t target) {
     const float muzzle[3] = {from->crown[0] + fx * 0.6f + fz * 0.1f, feet + 1.35f,
                              from->crown[2] + fz * 0.6f - fx * 0.1f};
     arrows_.loose(muzzle, at, target, model, shooter);
+    // Read afterwards, as the meteor's line is: an arrow at two tiles is in the air for a tenth
+    // of a second, and no shot schedule proves it flew.
+    core::logf("arrow: tick %lld, #%u looses at #%u from %.1f m", (long long)realm_.tick(),
+               shooter, target, double(flat));
 }
 
 void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {

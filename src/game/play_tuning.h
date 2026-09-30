@@ -224,12 +224,21 @@ inline constexpr const char* kBreathingFigure = "BudgeDragon01";
 // need its own row here. Neither stands in Lorencia, and the day one does this becomes a
 // field in the cook rather than a name in a list.
 inline constexpr const char* kBurstingFigure = "SkeletonWarrior";
+// And the Dungeon's two other skeletons, SubType MODEL_SKELETON2 and 3: CharacterDie's test is
+// `SubType >= MODEL_SKELETON1 && <= MODEL_SKELETON3`, so all three come apart the same way.
+inline constexpr const char* kBurstingArcher = "SkeletonArcher";
+inline constexpr const char* kBurstingElite = "EliteSkeleton";
 // MODEL_STONE_GOLEM, which comes apart into stones the same way (Bones::rubble).
 inline constexpr const char* kCrumblingFigure = "StoneGolem01";
 // MODEL_ICE_MONSTER, which has no corpse either, but only once its death clip has played: the
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
 // it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).
 inline constexpr const char* kShatteringFigure = "IceMonster01";
+// MONSTER_GHOST, drawn seen-through: CreateMonster sets `c->Object.AlphaTarget = 0.4f`
+// (ZzzCharacter.cpp:14103), so the whole body is at 40%. It rides the body's own fade (its own
+// depth first, then blended, and its shadow dithered by the same number), times its death's.
+inline constexpr const char* kSeeThroughFigure = "Ghost01";
+inline constexpr float kSeeThroughAlpha = 0.4f;
 // MODEL_GIANT's own case in the same effect switch, and the whole of it is one call:
 //
 //     case MODEL_GIANT:
@@ -270,10 +279,22 @@ constexpr float kSandReach = 0.62f;
 // plain bull and the Elite share the model, so both snort. Keyed on the cooked row's name, as
 // the dragon's is, so each variant needs its own line here.
 inline constexpr const char* kSnortingFigure = "BullFighter01";
+// The Dungeon's Poison Bull, the third row out of the same model: it snorts as the other two,
+// and CreateMonster registers eDeBuff_Poison on it for good (ZzzCharacter.cpp:14096), which
+// RenderObject draws as the poisoned body's green (0.3, 1.0, 0.5) (ZzzObject.cpp:1122) -- a
+// standing tint, kPoisonedLight whether or not anything has poisoned it.
+inline constexpr const char* kVenomousFigure = "PoisonBull01";
+// The one Power Wave caster MU fans three ways (ZzzCharacter.cpp:5046); the rest throw one.
+inline constexpr const char* kFanningFigure = "IceQueen01";
 // And the one of them MU gives Level 1 to, which is what lights RenderEye (fx/eyes.h).
 inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
 // MODEL_CHAIN_SCORPION, which carries an orange light on its `light_point` bone.
 inline constexpr const char* kScorpionFigure = "ChainScorpion01";
+// MONSTER_GORGON's Gorgon Staff, whose star RenderCharacter's linked-weapon switch lights for
+// anyone holding it (ZzzCharacter.cpp:10270-10276): BITMAP_SHINY + 1 at Scale 2, 90 units down
+// the link bone (knife_gdf, the Gorgon's 30), in (0.4, 0.8, 0.6) * Luminosity.
+inline constexpr const char* kStarStaffFigure = "Gorgon01";
+inline constexpr const char* kStarStaffBone = "knife_gdf";
 // MODEL_ELITE_YETI's breath (ZzzCharacter.cpp:6181-6189): `rand_fps_check(4)` puts one
 // BITMAP_SMOKE at bone 22, Box03 under the head, offset zero, with no action gate -- it
 // breathes standing, walking, fighting and falling. The Bull Fighter's snort particle.

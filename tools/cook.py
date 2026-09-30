@@ -444,6 +444,11 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
     kept only for a glb with no part of that name.
     """
     document, binary = read_glb(path)
+    # A part named outright (a row's `hidden_part`): that material's primitives go, whatever
+    # the glb calls `hidden`.
+    by_name = hidden if isinstance(hidden, str) else None
+    if by_name is not None:
+        hidden = None
     named_hidden = hidden is not None and any(
         primitive_material_name(document, primitive) == "hidden"
         for mesh in document.get("meshes", []) for primitive in mesh.get("primitives", []))
@@ -476,6 +481,8 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
             if "POSITION" not in attributes:
                 continue
             primitive_index += 1
+            if by_name is not None and primitive_material_name(document, primitive) == by_name:
+                continue
             if hidden is not None and (
                     primitive_material_name(document, primitive) == "hidden" if named_hidden
                     else primitive_index == hidden):
@@ -1635,6 +1642,7 @@ def figure_set(world):
             "name": one["name"], "label": one.get("label", one["name"]), "mesh": mesh,
             "scale": float(one.get("scale", 1.0)),
             "hidden_mesh": one.get("hidden_mesh"),
+            "hidden_part": one.get("hidden_part"),
             "right_hand": reach(one.get("right_hand")),
             "right_hand_bone": one.get("right_hand_bone", ""),
             "left_hand": reach(one.get("left_hand")),
@@ -2840,8 +2848,20 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
     # Keyed by row instead, the elite's own null would overwrite the Bull Fighter's 0 and
     # both would be drawn wearing two axes.
     hidden_of = {}
+    # A row that names the part it puts away (`hidden_part`, a glb material name) gets a cut of
+    # its own, `<mesh>~<part>`, with the base's clips: the Hell Hound drops the bare head `fur`
+    # and keeps the helm the plain Hound's `hidden` part is. Done first, so neither the
+    # hidden_mesh table nor the whole copies below see it on the base mesh.
+    parted_of = {}
     for one in monsters:
-        if one.get("hidden_mesh") is not None:
+        if one.get("hidden_part"):
+            variant = one["mesh"] + "~" + one["hidden_part"]
+            parted_of[variant] = one["mesh"]
+            models[variant] = models[one["mesh"]]
+            hidden_of[variant] = one["hidden_part"]
+            one["mesh"] = variant
+    for one in monsters:
+        if one.get("hidden_mesh") is not None and one["mesh"] not in parted_of:
             hidden_of.setdefault(one["mesh"], one["hidden_mesh"])
     # And a row on that mesh which keeps the hidden part gets a whole copy of its own. The
     # Elite keeps the crest the plain Bull Fighter puts away, which is the whole of what tells
@@ -2853,6 +2873,7 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
             whole_of[variant] = one["mesh"]
             models[variant] = models[one["mesh"]]
             one["mesh"] = variant
+    whole_of.update(parted_of)                        # the cuts take their base's clips too
     mesh_table = {}
     clip_of = {}
     libraries = {}

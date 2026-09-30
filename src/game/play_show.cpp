@@ -921,7 +921,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     bones_.gather(out);
     for (Drawn& one : drawn_) {
         if (!one.visible || !one.figure.body()) continue;
-        const float fade = fadeOf(one);
+        const float fade = fadeOf(one) * one.seeThrough;
         if (fade <= 0.0f) continue;
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
@@ -950,7 +950,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         const sim::Body* inRealm = realm_.find(one.id);
         const bool iced = inRealm != nullptr && inRealm->chilledUntil > realm_.tick();
         // And a poisoned one green, MU's `eDeBuff_Poison` (0.3, 1.0, 0.5); both, (0.3, 1.0, 0.8).
-        const bool poisoned = inRealm != nullptr && inRealm->poisonUntil > realm_.tick();
+        const bool poisoned = one.venomous ||
+                              (inRealm != nullptr && inRealm->poisonUntil > realm_.tick());
         const size_t tintFrom = out.size();
         const auto tint = [&] {
             if (!soused && !iced && !poisoned) return;

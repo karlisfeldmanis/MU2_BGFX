@@ -2099,6 +2099,9 @@ def monster_entry(entry: dict, document: dict, root: Path, build: Path, combat: 
         "scale": float(beast.get("scale", 1.0)),
         **hands,
         **({"hidden_mesh": int(hidden)} if hidden is not None else {}),
+        # The glb part a variant puts away when it is not the one the base named `hidden`:
+        # the Hell Hound hides the bare head (`fur`) and keeps the helm the plain Hound hides.
+        **({"hidden_part": str(part)} if (part := document.get("hidden_part")) else {}),
         **({"number": number} if number is not None else {}),
         **({"combat": stats} if stats else {}),
         **({"spawns": spawns[number]} if number in spawns else {}),

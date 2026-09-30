@@ -187,6 +187,56 @@
       ],
       "from": "CharacterDie's skeleton branch, after the eleven bones are thrown: `PlayBuffer(SOUND_BONE2, o)` - Data\\\\Sound\\\\mBone2.wav, the pile landing. Played with the burst, not with a death clip, because there is none; see SkeletonWarrior.json's death_from."
     },
+    "skeletonarcher_move": {
+      "files": [
+        "mBone1.wav"
+      ],
+      "from": "The Warrior's: the client tests the SubType (MODEL_SKELETON1 to 3), not the breed, so every skeleton rattles, swings, flinches and bursts to the same four."
+    },
+    "skeletonarcher_attack": {
+      "files": [
+        "eswingweapon1.wav",
+        "eswingweapon2.wav"
+      ],
+      "from": "skeletonwarrior_attack's, by the same SubType test."
+    },
+    "skeletonarcher_shock": {
+      "files": [
+        "mBone1.wav"
+      ],
+      "from": "skeletonwarrior_shock's, by the same SubType test."
+    },
+    "skeletonarcher_die": {
+      "files": [
+        "mBone2.wav"
+      ],
+      "from": "skeletonwarrior_die's: the burst's pile landing."
+    },
+    "eliteskeleton_move": {
+      "files": [
+        "mBone1.wav"
+      ],
+      "from": "The Warrior's, by the SubType test (MODEL_SKELETON3)."
+    },
+    "eliteskeleton_attack": {
+      "files": [
+        "eswingweapon1.wav",
+        "eswingweapon2.wav"
+      ],
+      "from": "skeletonwarrior_attack's, by the same SubType test."
+    },
+    "eliteskeleton_shock": {
+      "files": [
+        "mBone1.wav"
+      ],
+      "from": "skeletonwarrior_shock's, by the same SubType test."
+    },
+    "eliteskeleton_die": {
+      "files": [
+        "mBone2.wav"
+      ],
+      "from": "skeletonwarrior_die's: the burst's pile landing."
+    },
     "lich_move": {
       "files": [
         "mWizard1.wav",
@@ -798,6 +848,247 @@
         "mWormDie.wav"
       ],
       "from": "Sounds[4]. SetMonsterSound(..., 53, 53, 55, 55, 55: 263 WORM1 twice, 265 WORMDIE three times) in ZzzOpenData.cpp:3489-3494; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "larva_move": {
+      "files": [
+        "mLarva1.wav",
+        "mLarva2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 30, 31, 30, 31, 31: 240 LARVA1, 241 LARVA2) in ZzzOpenData.cpp:3443-3446; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:187-188)."
+    },
+    "larva_attack": {
+      "files": [
+        "mLarva1.wav",
+        "mLarva2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 30, 31, 30, 31, 31) in ZzzOpenData.cpp:3443-3446."
+    },
+    "larva_shock": {
+      "files": [
+        "mLarva1.wav",
+        "mLarva2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., 30, 31, 30, 31, 31) in ZzzOpenData.cpp:3443-3446."
+    },
+    "larva_die": {
+      "files": [
+        "mLarva2.wav"
+      ],
+      "from": "Sounds[4], slot 31 - 241, SOUND_MONSTER_LARVA2. SetMonsterSound(..., 30, 31, 30, 31, 31) in ZzzOpenData.cpp:3443-3446."
+    },
+    "ghost_move": {
+      "files": [
+        "mGhost1.wav",
+        "mGhost2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 35, 36, 37, 38, 39: 245-249, GHOST1 to GHOSTDIE) in ZzzOpenData.cpp:3455-3463; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:192-196)."
+    },
+    "ghost_attack": {
+      "files": [
+        "mGhostAttack1.wav",
+        "mGhostAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 35, 36, 37, 38, 39) in ZzzOpenData.cpp:3455-3463."
+    },
+    "ghost_shock": {
+      "files": [
+        "mGhostAttack1.wav",
+        "mGhostAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch."
+    },
+    "ghost_die": {
+      "files": [
+        "mGhostDie.wav"
+      ],
+      "from": "Sounds[4], slot 39 - 249, SOUND_MONSTER_GHOSTDIE."
+    },
+    "cyclops_move": {
+      "files": [
+        "mOgre1.wav",
+        "mOgre2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 40, 41, 42, 43, 44: 250-254, OGRE1 to OGREDIE) in ZzzOpenData.cpp:3464-3472; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:197-201)."
+    },
+    "cyclops_attack": {
+      "files": [
+        "mOgreAttack1.wav",
+        "mOgreAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 40, 41, 42, 43, 44) in ZzzOpenData.cpp:3464-3472."
+    },
+    "cyclops_shock": {
+      "files": [
+        "mOgreAttack1.wav",
+        "mOgreAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch."
+    },
+    "cyclops_die": {
+      "files": [
+        "mOgreDie.wav"
+      ],
+      "from": "Sounds[4], slot 44 - 254, SOUND_MONSTER_OGREDIE."
+    },
+    "hellspider_move": {
+      "files": [
+        "mHellSpider1.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 32, 33, 33, 33, 34: 242 HELLSPIDER1, 243 HELLSPIDERATTACK1 three times, 244 HELLSPIDERDIE) in ZzzOpenData.cpp:3448-3454; offsets from SOUND_MONSTER_BULL1 = 210. Slot 1 is 33, the attack, so half its moves are the attack cry; filed as the move alone.",
+      "note": "Sounds[1] is slot 33, mHellSpiderAttack1: MU's wander noise is the move cry or the attack cry at even odds."
+    },
+    "hellspider_attack": {
+      "files": [
+        "mHellSpiderAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], slots 33 and 33 -- 243, SOUND_MONSTER_HELLSPIDERATTACK1 both."
+    },
+    "hellspider_shock": {
+      "files": [
+        "mHellSpiderAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch."
+    },
+    "hellspider_die": {
+      "files": [
+        "mHellSpiderDie.wav"
+      ],
+      "from": "Sounds[4], slot 34 - 244, SOUND_MONSTER_HELLSPIDERDIE."
+    },
+    "darkknight_move": {
+      "files": [
+        "mDarkKnight1.wav",
+        "mDarkKnight2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 15, 16, 17, 18, 19: 225-229, DARKKNIGHT1 to DARKKNIGHTDIE) in ZzzOpenData.cpp:3409-3418; offsets from SOUND_MONSTER_BULL1 = 210. The monster's, not the player's class."
+    },
+    "darkknight_attack": {
+      "files": [
+        "mDarkKnightAttack1.wav",
+        "mDarkKnightAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 15, 16, 17, 18, 19) in ZzzOpenData.cpp:3409-3418."
+    },
+    "darkknight_shock": {
+      "files": [
+        "mDarkKnightAttack1.wav",
+        "mDarkKnightAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch."
+    },
+    "darkknight_die": {
+      "files": [
+        "mDarkKnightDie.wav"
+      ],
+      "from": "Sounds[4], slot 19 - 229, SOUND_MONSTER_DARKKNIGHTDIE."
+    },
+    "hellhound_move": {
+      "files": [
+        "mHound1.wav",
+        "mHound2.wav"
+      ],
+      "from": "The Hound's model and so the Hound's five: SetMonsterSound is per model, not per breed (MONSTER_MODEL_HOUND). hound_move's files."
+    },
+    "hellhound_attack": {
+      "files": [
+        "mHoundAttack1.wav",
+        "mHoundAttack2.wav"
+      ],
+      "from": "hound_attack's files, the same model."
+    },
+    "hellhound_shock": {
+      "files": [
+        "mHoundAttack1.wav",
+        "mHoundAttack2.wav"
+      ],
+      "from": "hound_shock's files, the same model."
+    },
+    "hellhound_die": {
+      "files": [
+        "mHoundDie.wav"
+      ],
+      "from": "hound_die's file, the same model."
+    },
+    "poisonbull_move": {
+      "files": [
+        "mBull1.wav",
+        "mBull2.wav"
+      ],
+      "from": "Monster01's five, as the Elite's (MONSTER_MODEL_BULL_FIGHTER). bullfighter_move's files."
+    },
+    "poisonbull_attack": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "bullfighter_attack's files, the same model."
+    },
+    "poisonbull_shock": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "bullfighter_shock's files, the same model."
+    },
+    "poisonbull_die": {
+      "files": [
+        "mBullDie.wav"
+      ],
+      "from": "bullfighter_die's file, the same model."
+    },
+    "thunderlich_move": {
+      "files": [
+        "mWizard1.wav",
+        "mWizard2.wav"
+      ],
+      "from": "Monster05's five, the Lich's (MONSTER_MODEL_LICH). lich_move's files."
+    },
+    "thunderlich_attack": {
+      "files": [
+        "mWizardAttack1.wav",
+        "mWizardAttack2.wav"
+      ],
+      "from": "lich_attack's files, the same model."
+    },
+    "thunderlich_shock": {
+      "files": [
+        "mWizardAttack1.wav",
+        "mWizardAttack2.wav"
+      ],
+      "from": "lich_shock's files, the same model."
+    },
+    "thunderlich_die": {
+      "files": [
+        "mWizardDie.wav"
+      ],
+      "from": "lich_die's file, the same model."
+    },
+    "gorgon_move": {
+      "files": [
+        "mGorgon1.wav",
+        "mGorgon2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 45, 46, 47, 48, 49: 255-259, GORGON1 to GORGONDIE) in ZzzOpenData.cpp:3473-3482; offsets from SOUND_MONSTER_BULL1 = 210."
+    },
+    "gorgon_attack": {
+      "files": [
+        "mGorgonAttack1.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 45, 46, 47, 48, 49) in ZzzOpenData.cpp:3473-3482."
+    },
+    "gorgon_shock": {
+      "files": [
+        "mGorgonAttack1.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch."
+    },
+    "gorgon_die": {
+      "files": [
+        "mGorgonDie.wav"
+      ],
+      "from": "Sounds[4], slot 49 - 259, SOUND_MONSTER_GORGONDIE."
     },
     "icemonster_move": {
       "files": [

@@ -136,6 +136,7 @@ public:
         int32_t skill = 0;    // MU's own number, 0 for nothing standing
         bool ale = false;     // or the Ale's, which is no skill
         bool poison = false;  // or a poison on him, MU's eDeBuff_Poison
+        int stacks = 0;       // and how many (sim::kPoisonStacksMost), shown from two up
         bool chill = false;   // or iced, walking at kChillFactor: MU's eDeBuff_Freeze
         // Or his pet in slot 8: 0 the Guardian Angel, 1 the Imp, -1 none. It has no clock; its
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
@@ -150,7 +151,7 @@ public:
         bool operator==(const Boon& o) const {
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
-            return skill == o.skill && ale == o.ale && poison == o.poison &&
+            return skill == o.skill && ale == o.ale && poison == o.poison && stacks == o.stacks &&
                    chill == o.chill && pet == o.pet &&
                    life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }

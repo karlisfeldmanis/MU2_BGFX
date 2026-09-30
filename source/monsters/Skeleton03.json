@@ -1,0 +1,509 @@
+{
+  "item": "Skeleton03",
+  "mu_name": "Elite Skeleton body",
+  "mu_name_from": "Data/Skill/Skeleton03.bmd, the third of ZzzOpenData's three `AccessModel(MODEL_SKELETON1 + i, L\"Data\\\\Skill\\\\\", L\"Skeleton\", i + 1)`: the Elite Skeleton's body, drawn in place of the five body parts on a MODEL_PLAYER whose SubType is MODEL_SKELETON3.",
+  "why_this_one": "The Dungeon's Elite Skeleton (EliteSkeleton.json). Skeleton01's bones with grey plate over them: 676 triangles in two meshes, the bone (486, bons) and the armour (190, bons_b).",
+  "world": "lorencia",
+  "profile": "monster",
+  "rig_from": "A worn part and not a monster model, and the rig says so before anything else does: 56 bones, one mesh, one action - a bind pose whose tracks hold the same value in every key. The 56 are the player's own by name, Bip01 through knife_gdf, hand_bofdgne01 and Bone01 to Bone08, plus one Box01 and four dummies that the player's rig lacks; the player has Mesh01 to Mesh04 and gfh that this lacks. Exactly the shape of an armour part beside player.bmd, and it goes on the same way - mu2.sh finds no motion in the rig and borrows the player's 283 clips through the shared actions library. See docs/rigging.md.\n\nThat is also what makes the monster it belongs to different from every other in the town. A skeleton on the fighting floor is Crowd.Figure on the player's rig, standing in the sword stance and swinging the sword attacks, which is what MU does: CreateMonster builds it with CreateCharacter(Key, MODEL_PLAYER, ...) and sets SubType = MODEL_SKELETON1, and RenderCharacter's `else if (o->Type == MODEL_PLAYER && SubType in SKELETON1..3)` draws this one part with RenderPartObject in place of the five body parts.",
+  "maps": 384,
+  "sheets": {
+    "bons": "bons.png",
+    "bons_b": "bons_b.png"
+  },
+  "sheet_from": "Data/Skill/bons.OZJ (the bone sheet Skeleton01 and 02 share) and bons_b.OZJ, a 128-square of dark grey steel plate -- a studded pauldron, a cuirass with a boss, banded lames -- with pale highlights painted in, no alpha, from MuMain.",
+  "sheet_materials": {
+    "bons": "bone",
+    "bons_b": "painted_steel"
+  },
+  "sheet_materials_from": "bone as Skeleton01's. The armour is painted_steel, as Skeleton02's green plate: MU's metal as MU drew it, its highlights painted in.",
+  "cutout_from": "Not declared: neither sheet has an alpha channel.",
+  "maps_from": "Skeleton01's three times its 128-square sheets, as Skeleton02's.",
+  "islands_from": "Twenty-two islands for 676 triangles. 0-12 are Skeleton01's thirteen bone islands to the triangle (486, on bons): bone. 13-21 (190, on bons_b) are the plate -- pauldrons, cuirass, lames -- in painted_steel. They arrived as skin, the monster profile's default.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 62,
+      "area": 4115.5,
+      "along": [
+        -10.1,
+        15.5
+      ],
+      "mu_uv": [
+        -0.002,
+        0.46,
+        0.411,
+        0.997
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.371,
+        0.877
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bone",
+      "triangles": 44,
+      "area": 2340.5,
+      "along": [
+        -10.1,
+        8.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.486,
+        0.398,
+        0.881
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.517,
+        0.623
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bone",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -9.4,
+        13.7
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.011,
+        0.184,
+        0.754,
+        0.96
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bone",
+      "triangles": 32,
+      "area": 833.1,
+      "along": [
+        -4.3,
+        6.2
+      ],
+      "mu_uv": [
+        0.734,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.851,
+        0.459,
+        0.925,
+        0.864
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bone",
+      "triangles": 36,
+      "area": 1926.5,
+      "along": [
+        -4.9,
+        22.5
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.181,
+        0.238,
+        0.867,
+        0.948
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 32,
+      "area": 723.0,
+      "along": [
+        -3.7,
+        3.7
+      ],
+      "mu_uv": [
+        0.89,
+        0.475,
+        0.996,
+        1.004
+      ],
+      "bake_uv": [
+        0.396,
+        0.011,
+        0.803,
+        0.833
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bone",
+      "triangles": 42,
+      "area": 782.0,
+      "along": [
+        -3.7,
+        3.7
+      ],
+      "mu_uv": [
+        0.543,
+        0.005,
+        0.988,
+        0.529
+      ],
+      "bake_uv": [
+        0.011,
+        0.238,
+        0.843,
+        0.93
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 8,
+      "area": 406.3,
+      "along": [
+        -4.7,
+        1.5
+      ],
+      "mu_uv": [
+        0.477,
+        0.053,
+        0.747,
+        0.183
+      ],
+      "bake_uv": [
+        0.396,
+        0.165,
+        0.928,
+        0.905
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bone",
+      "triangles": 8,
+      "area": 259.7,
+      "along": [
+        -4.8,
+        -0.1
+      ],
+      "mu_uv": [
+        0.535,
+        0.069,
+        0.761,
+        0.168
+      ],
+      "bake_uv": [
+        0.539,
+        0.171,
+        0.664,
+        0.431
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bone",
+      "triangles": 32,
+      "area": 833.1,
+      "along": [
+        -4.3,
+        6.2
+      ],
+      "mu_uv": [
+        0.734,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.866,
+        0.238,
+        0.945,
+        0.864
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bone",
+      "triangles": 36,
+      "area": 1926.5,
+      "along": [
+        -4.9,
+        22.5
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.1,
+        0.632,
+        0.374,
+        0.948
+      ]
+    },
+    {
+      "island": 11,
+      "material": "bone",
+      "triangles": 32,
+      "area": 722.9,
+      "along": [
+        -3.7,
+        3.7
+      ],
+      "mu_uv": [
+        0.89,
+        0.475,
+        0.996,
+        1.004
+      ],
+      "bake_uv": [
+        0.459,
+        0.459,
+        0.803,
+        0.833
+      ]
+    },
+    {
+      "island": 12,
+      "material": "bone",
+      "triangles": 42,
+      "area": 783.9,
+      "along": [
+        -3.7,
+        3.7
+      ],
+      "mu_uv": [
+        0.543,
+        0.005,
+        0.988,
+        0.529
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.962,
+        0.78
+      ]
+    },
+    {
+      "island": 13,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 1441.6,
+      "along": [
+        -11.2,
+        11.3
+      ],
+      "mu_uv": [
+        0.681,
+        0.389,
+        0.995,
+        0.949
+      ],
+      "bake_uv": [
+        0.011,
+        0.238,
+        0.272,
+        0.45
+      ]
+    },
+    {
+      "island": 14,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 472.0,
+      "along": [
+        10.9,
+        18.3
+      ],
+      "mu_uv": [
+        0.005,
+        0.004,
+        0.157,
+        0.189
+      ],
+      "bake_uv": [
+        0.1,
+        0.836,
+        0.157,
+        0.906
+      ]
+    },
+    {
+      "island": 15,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 380.7,
+      "along": [
+        3.0,
+        16.0
+      ],
+      "mu_uv": [
+        0.499,
+        0.035,
+        0.734,
+        0.273
+      ],
+      "bake_uv": [
+        0.54,
+        0.77,
+        0.829,
+        0.969
+      ]
+    },
+    {
+      "island": 16,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1196.6,
+      "along": [
+        -8.9,
+        9.1
+      ],
+      "mu_uv": [
+        0.782,
+        0.013,
+        0.996,
+        0.365
+      ],
+      "bake_uv": [
+        0.096,
+        0.171,
+        0.709,
+        0.987
+      ]
+    },
+    {
+      "island": 17,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 1770.9,
+      "along": [
+        -11.9,
+        12.3
+      ],
+      "mu_uv": [
+        0.516,
+        0.013,
+        0.772,
+        0.373
+      ],
+      "bake_uv": [
+        0.181,
+        0.184,
+        0.517,
+        0.946
+      ]
+    },
+    {
+      "island": 18,
+      "material": "painted_steel",
+      "triangles": 16,
+      "area": 1446.7,
+      "along": [
+        -11.2,
+        11.3
+      ],
+      "mu_uv": [
+        0.681,
+        0.389,
+        0.995,
+        0.949
+      ],
+      "bake_uv": [
+        0.295,
+        0.238,
+        0.556,
+        0.45
+      ]
+    },
+    {
+      "island": 19,
+      "material": "painted_steel",
+      "triangles": 14,
+      "area": 380.7,
+      "along": [
+        3.0,
+        16.0
+      ],
+      "mu_uv": [
+        0.499,
+        0.035,
+        0.734,
+        0.273
+      ],
+      "bake_uv": [
+        0.651,
+        0.77,
+        0.829,
+        0.893
+      ]
+    },
+    {
+      "island": 20,
+      "material": "painted_steel",
+      "triangles": 32,
+      "area": 1196.6,
+      "along": [
+        -8.9,
+        9.1
+      ],
+      "mu_uv": [
+        0.782,
+        0.013,
+        0.996,
+        0.365
+      ],
+      "bake_uv": [
+        0.181,
+        0.011,
+        0.912,
+        0.989
+      ]
+    },
+    {
+      "island": 21,
+      "material": "painted_steel",
+      "triangles": 28,
+      "area": 1770.9,
+      "along": [
+        -11.9,
+        12.3
+      ],
+      "mu_uv": [
+        0.516,
+        0.013,
+        0.772,
+        0.373
+      ],
+      "bake_uv": [
+        0.3,
+        0.011,
+        0.948,
+        0.905
+      ]
+    }
+  ]
+}

@@ -819,6 +819,15 @@ void Play::update(double seconds) {
                             tables_.kinds[size_t(body->kind)].attackSkill == sim::skill::kIce) {
                             iceCasts_.push_back({happening.who, happening.whom, 15.0f / 25.0f});
                         }
+                        // A Thunder Lich (attackSkill == 3) calls Lightning at that frame, and
+                        // the bolt is there the moment it is called, so the blow shows with it.
+                        if (body && !body->player && body->kind >= 0 &&
+                            size_t(body->kind) < tables_.kinds.size() &&
+                            tables_.kinds[size_t(body->kind)].attackSkill ==
+                                sim::skill::kLightning) {
+                            thunderCasts_.push_back({happening.who, happening.whom, 15.0f / 25.0f});
+                            cue.fuse = 15.0f / 25.0f;
+                        }
                         cue.token = swinger->swingToken;
                         if (!begun) showing_.schedule(cue);
                     }
@@ -967,6 +976,25 @@ void Play::update(double seconds) {
     iceCasts_.erase(std::remove_if(iceCasts_.begin(), iceCasts_.end(),
                                    [](const IceCast& c) { return c.wait <= 0.0f; }),
                     iceCasts_.end());
+    for (IceCast& cast : thunderCasts_) {
+        cast.wait -= float(seconds);
+        if (cast.wait > 0.0f || ground_ == nullptr) continue;
+        const Drawn* caster = drawnOf(cast.caster);
+        const Drawn* target = drawnOf(cast.target);
+        if (caster == nullptr || target == nullptr || !caster->placed || !target->placed) continue;
+        // The middle of the target, and the caster's chest, as a hero's Lightning is drawn.
+        const FigureBody* look = target->figure.body();
+        const float tall = look ? look->height * look->scale : 1.0f;
+        const float to[3] = {target->crown[0], target->crown[1] - tall * 0.5f, target->crown[2]};
+        float from[3];
+        castFrom(*caster, to, from);
+        thunder_.strike(from, to, cast.target);
+        const int index = sim::skillIndexOf(sim::skill::kLightning);
+        if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2]);
+    }
+    thunderCasts_.erase(std::remove_if(thunderCasts_.begin(), thunderCasts_.end(),
+                                       [](const IceCast& c) { return c.wait <= 0.0f; }),
+                        thunderCasts_.end());
     arrows_.update(float(seconds), middle);
     for (uint32_t shooter : arrows_.landed()) showing_.rush(shooter);
     meteor_.fly(float(seconds), standing, middle);

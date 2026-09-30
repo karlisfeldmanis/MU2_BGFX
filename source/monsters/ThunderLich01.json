@@ -1,0 +1,19 @@
+{
+  "item": "ThunderLich01",
+  "mu_name": "Thunder Lich",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_THUNDER_LICH = 9, drawn out of the Lich's model (`case MONSTER_LICH: case MONSTER_THUNDER_LICH: OpenMonsterModel(MONSTER_MODEL_LICH)`, ZzzCharacter.cpp:14157-14173). The client's name is 썬더 리치. OpenMU's Version075 Dungeon.cs:684-712 names number 9 'Thunder Lich' at level 44 with 2000 health, 140-145 damage, 70 defense, MoveRange 3, AttackRange 4, ViewRange 7, AttackDelay 2200, respawn 10 s, AttackSkill Lightning (3), resistance W3. Thirteen spots in Dungeon 2 (two of them sealed 3x3 islands it shoots from) and eight in Dungeon 3.",
+  "world": "dungeon",
+  "object_type": 9,
+  "mesh": "Lich01",
+  "mesh_from": "Monster05 a second time; see EliteBullFighter01's mesh_from.",
+  "monster": {
+    "model_index": 4,
+    "scale": 1.1
+  },
+  "monster_from": "The else branch: `c->Weapon[0].Type = MODEL_THUNDER_STAFF; c->Level = 1; c->Object.Scale = 1.1f;`. Level 1 draws nothing on the Lich.",
+  "right_hand": "Staff04",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "MODEL_THUNDER_STAFF is Item/Staff04.bmd, cooked. Bone 41, knife_gdf, the Lich's own (`case MODEL_LICH: c->Weapon[0].LinkBone = 41`).",
+  "profile": "monster",
+  "sounds_from": "Monster05's five, the Lich's (mWizard*): wired as thunderlich_*, the same files as lich_*."
+}

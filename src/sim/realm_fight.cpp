@@ -57,11 +57,17 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
             target.poisonBy = attacker.id;
         }
         // 0.75's poison, whose pulse is a share of what he has left (`poisonDamage` 0).
-        if (target.player && target.alive() && !attacker.player && poisons(attacker) &&
-            !poisoned(target)) {
+        // And stacked when one is on already (ours, kPoisonStacksMost): the clock starts again
+        // and the pulses keep their beat.
+        if (target.player && target.alive() && !attacker.player && poisons(attacker)) {
+            if (!poisoned(target)) {
+                target.poisonNext = tick_ + kPoisonFirst;
+                target.poisonDamage = 0;
+                target.poisonStacks = 1;
+            } else {
+                target.poisonStacks = std::min(target.poisonStacks + 1, kPoisonStacksMost);
+            }
             target.poisonUntil = tick_ + kHeroPoisonTicks;
-            target.poisonNext = tick_ + kPoisonFirst;
-            target.poisonDamage = 0;
             target.poisonBy = attacker.id;
         }
     };
@@ -559,9 +565,11 @@ void Realm::poisonPulse(Body& beast) {
     Body* by = body(beast.poisonBy);
     if (by == nullptr) by = &beast;
     // A quarter of the wizard's blow on a monster; on him, 0.75's share of what is left.
+    // Times his stacks, when a monster's poison is what is on him.
     const int due = beast.poisonDamage > 0
                         ? beast.poisonDamage
-                        : std::max(1, int(float(beast.health) * kHeroPoisonShare));
+                        : std::max(1, int(float(beast.health) * kHeroPoisonShare)) *
+                              std::max(1, beast.player ? beast.poisonStacks : 1);
     // Never the last point: a poison leaves one health, and the kill is a blow's.
     const int bite = std::min(due, beast.health - 1);
     if (bite <= 0) return;
