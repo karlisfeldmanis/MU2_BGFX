@@ -363,7 +363,8 @@ enum class Power : uint8_t {
     Ice = 3,
     Poison = 4,
     Frost = 5,
-    Echo = 6
+    Echo = 6,
+    Undying = 7
 };
 struct PowerRow {
     Power power;
@@ -371,7 +372,13 @@ struct PowerRow {
     const char* tells;
     bool weapon;  // true a weapon's socket, false armour's or a shield's
     Kin kin;      // who may set it
+    bool everyone = false;  // every class may, and `kin` is not read
 };
+
+// **The Undying**, the first armour power and every class's (the user, 2026-09-30: "its for
+// all classes the same"): x1.2 on maximum health for each set in anything worn, armour or
+// shield. Devin's first clear pays it (sim/quests.cpp). Invention, as every rune is.
+constexpr double kUndyingHealth = 1.2;
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
 // The Rune of Creation's row: 14, 22.

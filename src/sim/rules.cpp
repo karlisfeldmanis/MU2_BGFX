@@ -237,6 +237,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     *maxHealth += arms.pet.health;
     // And the excellent armour's +4% a piece on top.
     if (excel.healthRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.healthRate);
+    // And the Rune of the Undying's, on everything above.
+    if (excel.undyingRate != 1.0) *maxHealth = int(double(*maxHealth) * excel.undyingRate);
 }
 
 int maximumMana(Kin kin, int level, const HeroPoints& points) {

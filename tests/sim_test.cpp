@@ -3534,6 +3534,46 @@ void testRunes(const content::Tables& tables) {
                   "nor Stormcall by her");
         }
     }
+    // The Undying, every class's armour power: in armour or a shield by anyone, never a weapon;
+    // x1.2 on maximum health each; and Devin's first clear pays it to every class.
+    {
+        const uint8_t undying = uint8_t(sim::Power::Undying);
+        const sim::Held hardy = held(rune, 0, undying);
+        const int shield = tables.itemAt(6, 0);
+        for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
+            check(sim::settable(tables, hardy, held(plate, 1, 0), kin),
+                  "the Undying goes in socketed armour, whoever wears it");
+        }
+        check(shield < 0 || sim::settable(tables, hardy, held(shield, 1, 0), dk),
+              "and in a socketed shield");
+        check(!sim::settable(tables, hardy, held(serpent, 1, 0), dk), "but not in a weapon");
+        sim::Fighter fighter;
+        int bare = 0, once = 0, twice = 0;
+        sim::Arms arms;
+        sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &bare);
+        arms.excel.undyingRate = sim::kUndyingHealth;
+        sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &once);
+        arms.excel.undyingRate = sim::kUndyingHealth * sim::kUndyingHealth;
+        sim::reckon(dk, 30, sim::startingPoints(dk), arms, &fighter, &twice);
+        checkEqual(once, int(double(bare) * 1.2), "one Undying is x1.2 on maximum health");
+        checkEqual(twice, int(double(bare) * 1.44), "and two are x1.44");
+        const int devin = sim::questOf(406);
+        check(devin >= 0, "Devin gives a quest");
+        if (devin >= 0) {
+            const sim::QuestRow& row = sim::questAt(devin);
+            for (int kin = 0; kin < 3; ++kin) {
+                int runes = 0, again = 0;
+                for (int i = 0; i < row.paidCount; ++i) {
+                    const sim::QuestItem& what = row.paid[i];
+                    if (what.power != undying) continue;
+                    runes += sim::questPays(what, kin, true) ? 1 : 0;
+                    again += sim::questPays(what, kin, false) ? 1 : 0;
+                }
+                checkEqual(runes, 1, "Devin's first clear pays every class one Undying");
+                checkEqual(again, 0, "and a repeat pays none");
+            }
+        }
+    }
     check(sim::expensive(tables, carried), "a Rune of Creation cannot be dropped");
     check(sim::expensive(tables, held(serpent, 1, 0)), "nor a sword with an empty socket");
     check(!sim::expensive(tables, held(serpent, 0, 0)), "but a +0 sword without one can");

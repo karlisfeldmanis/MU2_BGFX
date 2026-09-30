@@ -200,8 +200,9 @@ QuestRow peia() {
 //
 // The reward is the doc's proposal, not yet agreed: every clear 3 Jewels of Bless, 100,000 Zen and
 // 60,000 experience, the first 250,000 and each class's top 0.75 armour with an empty socket --
-// Dragon (knight), Legendary (wizard), Guardian (elf). The socket waits for its rune, "Rune of the
-// Undying" (+20% maximum health), which has no Power yet.
+// Dragon (knight), Legendary (wizard), Guardian (elf) -- and, the first time too, the rune for
+// its socket: a Rune of Creation carrying the Undying (+20% maximum health, sim/items.h), the
+// same for every class.
 QuestRow devin() {
     QuestRow row;
     row.giver = 406;
@@ -259,7 +260,10 @@ QuestRow devin() {
     row.paid[2] = {.item = "ArmorElf05", .kin = elf, .sockets = 1,
                    .firstOnly = true};  // Guardian Armor
     row.paid[3] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    row.paidCount = 4;
+    // And the rune for that socket, the same for every class (the user, 2026-09-30).
+    row.paid[4] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
+                   .firstOnly = true};  // Rune of Creation, the Undying
+    row.paidCount = 5;
     return row;
 }
 

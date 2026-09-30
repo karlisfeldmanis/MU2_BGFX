@@ -214,6 +214,7 @@ const PowerRow* powerOf(uint8_t power) {
         {Power::Echo, "Arcane Echo",
          "A spell he casts has a 15% chance to be cast a second time, for no mana", true,
          Kin::DarkWizard},
+        {Power::Undying, "Undying", "+20% maximum health", false, Kin::DarkKnight, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -239,7 +240,7 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (!known(jewel) || !known(target)) return false;
     if (!creation(tables.items[size_t(jewel.item)])) return false;
     const PowerRow* power = powerOf(jewel.powers[0]);
-    if (power == nullptr || power->kin != kin) return false;
+    if (power == nullptr || (!power->everyone && power->kin != kin)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!takesSockets(row) || freeSocket(target) < 0) return false;
     return power->weapon == (row.weapon() && !row.shield());

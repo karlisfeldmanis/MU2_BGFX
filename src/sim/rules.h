@@ -47,6 +47,10 @@ struct Excellence {
     double damageDecrease = 0.0;  // 4: 0.04 off what reaches him (ArmorDamageDecrease)
     double manaRate = 1.0;        // 5: x1.04 on max mana
     double healthRate = 1.0;      // 6: x1.04 on max life
+    // Not an option: the Rune of the Undying's x1.2 on max life, each one set in anything worn
+    // (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
+    // character window can say which is which.
+    double undyingRate = 1.0;
 };
 
 struct Fighter {

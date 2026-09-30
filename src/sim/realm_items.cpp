@@ -275,6 +275,16 @@ void Realm::rearm(Body& hero) {
             if (has(5)) e.excellentChance += 0.1;
         }
     }
+    // The Rune of the Undying, in any socket of anything worn that takes an armour's rune: the
+    // armour and the shield, not a weapon. sim::kUndyingHealth each.
+    for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
+        const content::ItemRow* row = rowAt(slot);
+        if (!row || (row->weapon() && !row->shield())) continue;
+        for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
+            const PowerRow* power = powerOf(bag_[slot].powers[at]);
+            if (power && power->power == Power::Undying) hero.excel.undyingRate *= kUndyingHealth;
+        }
+    }
     // Luck on anything worn, from the hands to the boots.
     hero.luckyWorn = 0;
     for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
