@@ -48,12 +48,15 @@ constexpr int kMargin = 8;
 // things "monsters get stuck" was. Two tiles of slack is the smallest thing that cannot be
 // crossed by a walk between two ticks (a tile takes eight).
 constexpr int kSleepSlack = 2;
-// How far a monster will be led from where it was put down before it gives up and walks back,
-// and twice that for one that has been hit. Both are MU2's bench inventions and are marked as
-// such where they are defined: OpenMU has no leash at all, and without one nothing that has
-// seen you can ever be outrun, because a monster walks exactly as fast as a character.
-constexpr int kLeash = 10;       // invention (MU2's Realm.cs Leash, and it says so itself)
-constexpr int kGrudge = 20;      // invention (MU2's Grudge = Leash * 2)
+// No leash any more (the user, 2026-09-30, WebZen's way, where MU2's bench had one of 10 and
+// 20). A hit sets WebZen's chase count to ten steps of 400 ms (gObjMonster.cpp:998-1165), and
+// past them the beast keeps him only while he is in its eyes; nor past the view box of fifteen
+// tiles at all (:620-621). That is what lets a hero outrun what walks as fast as he does. And
+// a beast wanders only within its MonsterSetBase row's Dis of home -- 30 on a box nest, every
+// nest of these three maps but Devias's points (10 there, taken as 30).
+constexpr int64_t kGrudgeTicks = 80;
+constexpr int kLoseSight = 15;
+constexpr int kWanderReach = 30;
 // How often a chase re-plans, in ticks. Realm.cs:1918.
 // How long a beast stands over what it has just killed before it turns away. **invention**, and
 // the only number in this file put here for the sake of what the SCREEN shows rather than for
@@ -311,22 +314,26 @@ constexpr Resistance kResistances[] = {
 // Dungeon's and the Ice Queen's 3 and 4 keep their drops low. ItemRate is not here: the item
 // chance is the user's (realm_items.cpp, Realm::leave). A breed missing from the list takes
 // {10, 6}.
+// And its RegTime, in seconds: the respawn is that and one more (realm_fight.cpp, kill).
 struct DropRate {
     int32_t number;
     int32_t moneyRate, maxPlus;
+    int32_t regen = 5;
 };
 constexpr DropRate kDropRates[] = {
     {0, 10, 6},  {1, 10, 6},  {2, 10, 6},  {3, 10, 6},  {4, 12, 6},  {6, 12, 6},
     {7, 12, 6},  {10, 14, 3}, {11, 14, 4}, {12, 14, 4}, {13, 14, 4}, {14, 12, 6},
     {17, 14, 4}, {18, 14, 3}, {19, 14, 6}, {20, 14, 6}, {21, 14, 6}, {22, 14, 6},
-    {23, 14, 6}, {24, 14, 6}, {25, 14, 3}, {26, 10, 6}, {27, 10, 6}, {28, 10, 6},
+    {23, 14, 6}, {24, 14, 6}, {25, 14, 3, 10}, {26, 10, 6}, {27, 10, 6}, {28, 10, 6},
     {29, 12, 6}, {30, 12, 6}, {31, 12, 6}, {32, 12, 6}, {33, 10, 6},
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {
         if (one.number == number) return one;
     }
-    return DropRate{number, 10, 6};
+    return DropRate{number, 10, 6, 5};
 }
+// A risen beast's five idle seconds (gObjMonster.cpp:185), in ticks.
+constexpr int64_t kRiseIdleTicks = 100;
 
 }  // namespace mu::sim

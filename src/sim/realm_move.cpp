@@ -220,7 +220,11 @@ void Realm::wander(Body& beast) {
     // wander that retried until it found somewhere would consume a variable number of draws.
     const int column = beast.column() + dice_.nextInt(-kind.moveRange, kind.moveRange + 1);
     const int row = beast.row() + dice_.nextInt(-kind.moveRange, kind.moveRange + 1);
-    if (tables_->grid.open(column, row, wallOf(beast))) send(beast, column, row);
+    // Only to a tile within its nest's reach: gObjMonsterMoveCheck refuses the rest
+    // (gObjMonster.cpp:546-555), so one led far off stands where it was left.
+    const bool near = std::max(std::abs(column - beast.homeColumn),
+                               std::abs(row - beast.homeRow)) <= kWanderReach;
+    if (near && tables_->grid.open(column, row, wallOf(beast))) send(beast, column, row);
 }
 
 void Realm::retreat(Body& beast) {
@@ -291,6 +295,7 @@ bool Realm::beside(const Body& target, int radius, const Body& walker, int* colu
 
 void Realm::think(Body& beast) {
     if (beast.frozenUntil > tick_) return;  // frozen: no thought and no swing until it thaws
+    if (beast.wakesAt > tick_) return;      // risen, and standing its five seconds
     const content::MonsterKind& kind = tables_->kinds[size_t(beast.kind)];
 
     // The quarry it has, while it is worth having; else the nearest that is. A target learned
@@ -302,10 +307,18 @@ void Realm::think(Body& beast) {
     // below.
     const uint32_t had = beast.quarry;
     uint32_t chosen = 0;
-    if (strayed(beast) <= (beast.provoked ? kGrudge : kLeash)) {
+    // No leash (the user, 2026-09-30, off WebZen's gObjMonsterProcess): a beast goes as far as
+    // its quarry leads it. What ends a chase it was provoked into is the quarry leaving its view
+    // box of fifteen tiles (gObjMonster.cpp:620-621, user.cpp:20572); an unprovoked one still
+    // lets go at its eyesight.
+    {
         if (const Body* held = find(beast.quarry)) {
             const bool keep = beast.provoked
-                                  ? held->alive() && !tables_->grid.safe(held->column(), held->row())
+                                  ? held->alive() &&
+                                        !tables_->grid.safe(held->column(), held->row()) &&
+                                        within(beast, *held, float(kLoseSight)) &&
+                                        (tick_ < beast.provokedUntil ||
+                                         worth(beast, *held, kind.viewRange))
                                   : worth(beast, *held, kind.viewRange);
             if (keep) chosen = held->id;
         }
@@ -352,11 +365,8 @@ void Realm::think(Body& beast) {
             return;
         }
 
-        if (strayed(beast) > kLeash) {
-            beast.temper = Temper::Homing;
-            retreat(beast);
-            return;
-        }
+        // And no walk home: it wanders where the chase left it, and not at all when that is
+        // past its nest's reach (wander, kWanderReach).
         beast.temper = Temper::Wandering;
         if (!beast.walking && tick_ >= beast.thinksAt) {
             beast.thinksAt = tick_ + kind.attackTicks;

@@ -79,9 +79,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (force != 1.0f) blow.damage = std::max(1, int(float(blow.damage) * force));
     // The shield takes nine tenths, and what it cannot cover falls through to health: a pool
     // with three points left protects by three and no more. MU2's Realm.Wound, off OpenMU's
-    // GetHitInfo shieldRatio and Player.HitAsync's overflow. Monsters have none.
+    // GetHitInfo shieldRatio and Player.HitAsync's overflow. Monsters have none. And only a
+    // player's blow meets it: WebZen's shield is the duel's alone (ObjAttack.cpp:2262-2281,
+    // 1.00.93, ADD_SHIELD_POINT_01_20060403), and a monster's blow goes to life -- the user's
+    // pick of 2026-09-30, where OpenMU's soaked every monster's nine tenths.
     int wound = blow.damage;
-    if (target.sd > 0) {
+    if (target.sd > 0 && attacker.player) {
         const int onto = int(float(blow.damage) * kShieldShare);
         const int over = onto - target.sd;
         target.sd = std::max(0, target.sd - onto);
@@ -91,6 +94,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // A guard is not killed: ten thousand health against Lorencia's blows is never reached, and
     // this is the floor that says so rather than a guard lying dead at the gate. invention.
     if (target.warden >= 0) target.health = std::max(1, target.health);
+    if (target.player && standFast_) target.health = std::max(1, target.health);
     // The hero's hand on a monster, which is what a guard asks after when it dies.
     if (attacker.player && target.monster() && wound > 0) target.heroStruck = true;
     // And what it cost the gear, on the health it took and nothing else: a blow the shield
@@ -142,6 +146,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         // or not it can see him. Without this half a caster outside its sight kills it without
         // it ever running a thought.
         target.provoked = true;
+        target.provokedUntil = tick_ + kGrudgeTicks;
         // **Her summon holds what it has struck** (the user's, 2026-09-28: "can hold aggro"):
         // her own shot does not turn a monster off her living summon onto her. Anybody else's
         // blow -- the summon's own included -- turns it as it always did.
@@ -738,7 +743,10 @@ void Realm::kill(Body& dead, Body& killer) {
     }
 
     const content::MonsterKind& kind = tables_->kinds[size_t(dead.kind)];
-    dead.risesAt = tick_ + kind.respawnTicks;
+    // WebZen's: its RegTime and a second more (user.cpp:5021, :21336, 1.00.93) -- six seconds,
+    // the Ice Queen eleven (kDropRates' regen) -- where the cook's OpenMU numbers were ten and
+    // fifty. The user's pick of 2026-09-30.
+    dead.risesAt = tick_ + int64_t(dropRateOf(kind.number).regen + 1) * 20;
     // Every monster the killer is still holding as a quarry forgets it, or a chase carries on
     // toward a corpse.
     for (Body& one : bodies_) {
@@ -775,6 +783,16 @@ void Realm::kill(Body& dead, Body& killer) {
     // What it leaves, before the experience is paid, so the Zen reads the killer's level as
     // it was when the blow landed.
     if (killer.player) leave(dead, killer);
+    // Life for the kill: its level, two seconds on (gObjMonsterDieLifePlus, sent by
+    // gObjAddMsgSendDelay at 2000 ms; user.cpp:13665-13669, :14243, 1.00.93) -- the user's pick
+    // of 2026-09-30. OpenMU gives nothing. Queued as a sip is, so a death before it is due spills it.
+    if (killer.player && killer.alive() && dead.level > 0) {
+        if (sipCount_ < 8) {
+            sips_[sipCount_++] = Sip{tick_ + kKillLifeTicks, int32_t(dead.level), false};
+        } else {
+            killer.health = std::min(killer.maxHealth, killer.health + int(dead.level));
+        }
+    }
     // An excellent weapon's first two: an eighth of each pool back after a kill (OpenMU's
     // Regeneration after monster kill, off the pool's maximum).
     if (killer.player && killer.alive()) {
@@ -891,8 +909,28 @@ void Realm::reviveHero() {
 void Realm::raiseBeast(Body& beast) {
     const content::MonsterKind& kind = tables_->kinds[size_t(beast.kind)];
     beast.health = beast.maxHealth;
+    // On a tile drawn again from its nest, as gObjMonsterRegen sets a new position
+    // (gObjMonster.cpp:283), and that is its home from now; the old one if twenty draws find
+    // nothing standable.
+    if (beast.nest >= 0 && size_t(beast.nest) < tables_->nests.size()) {
+        const content::MonsterNest& nest = tables_->nests[size_t(beast.nest)];
+        const bool point = nest.x1 == nest.x2 && nest.y1 == nest.y2 && nest.count > 1;
+        const int reach = point ? kPointScatter : 0;
+        for (int attempt = 0; attempt < 20; ++attempt) {
+            const int column = dice_.nextInt(nest.x1 - reach, nest.x2 + reach + 1);
+            const int row = dice_.nextInt(nest.y1 - reach, nest.y2 + reach + 1);
+            if (tables_->grid.open(column, row, content::kWallCharacter) &&
+                !tables_->grid.safe(column, row) && !nearPost(column, row)) {
+                beast.homeColumn = column;
+                beast.homeRow = row;
+                break;
+            }
+        }
+    }
     beast.x = float(beast.homeColumn);
     beast.y = float(beast.homeRow);
+    // And it stands five seconds before its first thought (gObjMonster.cpp:185).
+    beast.wakesAt = tick_ + kRiseIdleTicks;
     beast.temper = Temper::Asleep;
     beast.quarry = 0;
     beast.provoked = false;

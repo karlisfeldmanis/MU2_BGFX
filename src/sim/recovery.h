@@ -34,6 +34,15 @@ constexpr float kAttackManaShare = 0.05f;        // invention: a twentieth of th
 // part, so outside town 0.75 is played off potions. MU2's Realm.HealthRecoveryInSafeZone.
 constexpr float kHealthRecoveryInSafeZone = 0.01f;
 
+// At rest -- sat on a bench, leant on a wall, hung from a rail -- three hundredths of each pool
+// every five seconds, anywhere: WebZen's gObjRestPotionFill (user.cpp:23246-23380, 1.00.93),
+// run on the second and paying on every fifth, while m_Rest holds the sit, pose or healing
+// action. The user's pick of 2026-09-30; OpenMU has no rest.
+constexpr int32_t kRestEveryTicks = 100;  // 5000 ms at 20 Hz
+constexpr float kRestShare = 0.03f;
+// And the kill's life comes two seconds after it (kKillLifeTicks, realm_fight.cpp).
+constexpr int32_t kKillLifeTicks = 40;
+
 // The shield: its share of a blow and its safe-zone recovery, every three seconds. Rates.cs.
 constexpr float kShieldShare = 0.9f;
 constexpr float kShieldRecovery = 0.02f;

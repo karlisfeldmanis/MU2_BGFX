@@ -877,6 +877,7 @@ void testCastLock(const content::Tables& tables) {
                 wiz.ask(request);
             }
             wiz.step();
+            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Loosed) {
@@ -994,6 +995,7 @@ void testCastLock(const content::Tables& tables) {
                 wiz.ask(request);
             }
             wiz.step();
+            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBall) ++balls;
@@ -1054,6 +1056,7 @@ void testCastLock(const content::Tables& tables) {
                 wiz.ask(request);
             }
             wiz.step();
+            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kPowerWave) {
@@ -1134,8 +1137,8 @@ void testCastLock(const content::Tables& tables) {
                   tables.items[size_t(scroll)].teachesEnergy == 140,
               "the Scroll of Poison teaches skill 1 at a hundred and forty energy");
 
-        // Seed 5, not 7: with WebZen's round sight (realm_tuning.h, apart) fewer beasts walk up
-        // to a wizard who stands, and on 7 this one drifted to the town's edge after nine casts.
+        // Seed 5, not 7: on 7, under WebZen's round sight (realm_tuning.h, apart), no cast
+        // caught two bodies at once.
         sim::Realm wiz;
         check(wiz.raise(&tables, 5, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
         check(wiz.learn(sim::skill::kPoison), "who knows Poison");
@@ -1156,6 +1159,7 @@ void testCastLock(const content::Tables& tables) {
                 wiz.invoke(sim::skill::kPoison, nearest);
             }
             wiz.step();
+            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
                     one.a == sim::skill::kPoison) {
@@ -1240,6 +1244,7 @@ void testCastLock(const content::Tables& tables) {
                 wiz.invoke(sim::skill::kFlame, nearest);
             }
             wiz.step();
+            wiz.wholeAgain();
             int thisTick = 0;
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
@@ -1303,8 +1308,7 @@ void testCastLock(const content::Tables& tables) {
                   tables.items[size_t(scroll)].teachesEnergy == 120,
               "the Scroll of Ice teaches skill 7 at a hundred and twenty energy");
 
-        // Seed 3, not 7: as the Poison hunt's, 7 strands him at the town's edge under WebZen's
-        // round sight.
+        // Seed 3, not 7: on 7, under WebZen's round sight, no iced body was seen to walk.
         sim::Realm wiz;
         check(wiz.raise(&tables, 3, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
         check(wiz.learn(sim::skill::kIce), "who knows Ice");
@@ -1327,6 +1331,7 @@ void testCastLock(const content::Tables& tables) {
             was.clear();
             for (const sim::Body& one : wiz.bodies()) was.push_back({one.x, one.y});
             wiz.step();
+            wiz.wholeAgain();
             // An iced body never covers more than half its own ground in a tick.
             for (size_t i = 1; i < wiz.bodies().size() && i < was.size(); ++i) {
                 const sim::Body& one = wiz.bodies()[i];
@@ -1566,6 +1571,7 @@ void testCastLock(const content::Tables& tables) {
             // Running before this tick: the cast's own tick may finish the step he was on.
             const bool running = wiz.hero().channelSkill != 0;
             wiz.step();
+            wiz.wholeAgain();
             // He does not move while it runs.
             if (running && wiz.hero().channelSkill != 0 &&
                 (wiz.hero().x != wasX || wiz.hero().y != wasY)) {
@@ -1870,7 +1876,10 @@ void testElfSkills(const content::Tables& tables) {
     check(cast(sim::skill::kHeal), "Heal is cast");
     check(realm.hero().health <= realm.hero().maxHealth, "and never past the most she has");
     // Greater Damage lapses on its minute.
-    for (int wait = 0; wait < 1210; ++wait) realm.step();
+    for (int wait = 0; wait < 1210; ++wait) {
+        realm.step();
+        realm.wholeAgain();
+    }
     check(realm.hero().stats.greaterDamage == 0, "Greater Damage lapses after its minute");
 
     // Skillshot on the quick slot, at the nearest spider, over and over.
@@ -1932,16 +1941,27 @@ void testElfSkills(const content::Tables& tables) {
 // Sprint 15, step 5: her summon. Raised beside her off the breed's row and scaled by her energy;
 // it hunts round her, its kills are hers, it holds a monster against her own shots, and a second
 // cast dismisses it for nothing.
-void testSummons(const content::Tables& tables) {
+void testSummons(const content::Tables& lorencia) {
     std::printf("the elf's summon\n");
+    // Lorencia without its Liches: WebZen's 45 of them share the Skeleton Warriors' field, and
+    // their bolts with the camp's blows bring the golem down before it has killed anything.
+    content::Tables tables = lorencia;
+    tables.nests.erase(std::remove_if(tables.nests.begin(), tables.nests.end(),
+                                      [&](const content::MonsterNest& n) {
+                                          return tables.kinds[n.kind].number == 6;
+                                      }),
+                       tables.nests.end());
     // Among the Skeleton Warriors (525 health): a spider dies to one of the golem's blows and
     // never lives to turn on it. Found in a first realm, then stood three tiles off one.
     int standColumn = 212, standRow = 198;
     {
         sim::Realm look;
         look.raise(&tables, 5, 212, 198, sim::Kin::FairyElf, 40);
+        // One from the field's box, not WebZen's camp of five at 140-142, 218-220, which kills
+        // her in a tick.
         for (const sim::Body& one : look.bodies()) {
-            if (one.monster() && tables.kinds[size_t(one.kind)].number == 14) {
+            if (one.monster() && tables.kinds[size_t(one.kind)].number == 14 && one.nest >= 0 &&
+                tables.nests[size_t(one.nest)].x2 - tables.nests[size_t(one.nest)].x1 > 10) {
                 standColumn = one.homeColumn + 3;
                 standRow = one.homeRow;
                 break;
@@ -1984,6 +2004,7 @@ void testSummons(const content::Tables& tables) {
     uint32_t held = 0;
     for (int tick = 0; tick < 3000 && held == 0; ++tick) {
         realm.step();
+        realm.wholeAgain();
         for (const sim::Happening& h : realm.happenings()) {
             if (h.who == golemId && h.what == sim::What::Hit) ++blows;
         }
@@ -2003,6 +2024,7 @@ void testSummons(const content::Tables& tables) {
         bool turned = false, struck = false;
         for (int tick = 0; tick < 200; ++tick) {
             realm.step();
+            realm.wholeAgain();
             for (const sim::Happening& h : realm.happenings()) {
                 if (h.who == realm.hero().id && h.whom == held &&
                     (h.what == sim::What::Hit || h.what == sim::What::Missed)) {
@@ -2020,8 +2042,10 @@ void testSummons(const content::Tables& tables) {
     sim::Request stop;
     stop.kind = sim::Request::Kind::Stop;
     realm.ask(stop);
+    realm.standFast(true);
     for (int tick = 0; tick < 3000; ++tick) {
         realm.step();
+        realm.wholeAgain();
         for (const sim::Happening& h : realm.happenings()) {
             if (h.what == sim::What::Died && h.whom == golemId) ++kills;
         }
@@ -2488,6 +2512,7 @@ void testSkills(const content::Tables& tables) {
             }
         }
         realm.step();
+        realm.wholeAgain();
         sim::audit(realm, findings);
 
         const sim::Body& hero2 = realm.hero();
@@ -3138,6 +3163,8 @@ void testWear(const content::Tables& tables) {
               "a hundred times OpenMU's on the Dungeon's");
         checkEqual(sim::dropRateOf(25).maxPlus, 3, "the Ice Queen drops nothing past +3");
         checkEqual(sim::dropRateOf(3).moneyRate, 10, "a Spider leaves Zen on every itemless kill");
+        checkEqual(sim::dropRateOf(3).regen, 5, "a Spider's RegTime is five seconds");
+        checkEqual(sim::dropRateOf(25).regen, 10, "the Ice Queen's ten");
     }
 
     // Hanzo: one piece, then everything, and nothing without his counter.
@@ -4019,6 +4046,7 @@ void testRunes(const content::Tables& tables) {
                 realm.ask(request);
             }
             realm.step();
+            realm.wholeAgain();
             for (const sim::Happening& h : realm.happenings()) {
                 if (lightning && h.who == realm.hero().id && h.what == sim::What::Loosed &&
                     h.a == sim::skill::kLightning) {

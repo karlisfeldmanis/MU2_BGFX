@@ -56,6 +56,17 @@ void Realm::say(What what, const Body& who, int32_t a, int32_t b, int32_t c, uin
     happenings_.push_back(happening);
 }
 
+bool Realm::nearPost(int column, int row) const {
+    if (tables_->map != kClearedMap) return false;
+    for (const content::Townsperson& person : tables_->folk) {
+        if (wardenRow(person.number) == nullptr) continue;
+        if (std::max(std::abs(column - person.x), std::abs(row - person.y)) <= kPostClearing) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn,
                   int playerRow, Kin kin, int level) {
     tables_ = tables;
@@ -133,16 +144,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     // bounded rather than "until it works".
     size_t placed = 0, short_ = 0;
     // And kept clear of Noria's guard posts (kPostClearing).
-    const auto byPost = [&](int column, int row) {
-        if (tables_->map != kClearedMap) return false;
-        for (const content::Townsperson& person : tables_->folk) {
-            if (wardenRow(person.number) == nullptr) continue;
-            if (std::max(std::abs(column - person.x), std::abs(row - person.y)) <= kPostClearing) {
-                return true;
-            }
-        }
-        return false;
-    };
+    const auto byPost = [&](int column, int row) { return nearPost(column, row); };
     for (const content::MonsterNest& nest : tables_->nests) {
         const content::MonsterKind& kind = tables_->kinds[nest.kind];
         // A spot of many -- one tile with a count, Devias's two camps of ten Elite Yetis -- is a
@@ -193,6 +195,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
             beast.y = float(tileRow);
             beast.homeColumn = tileColumn;
             beast.homeRow = tileRow;
+            beast.nest = int32_t(&nest - tables_->nests.data());
             beast.temper = Temper::Asleep;
             // OpenMU's start delay, so a whole nest does not think on one tick forever after.
             beast.thinksAt = dice_.nextInt(0, 100);

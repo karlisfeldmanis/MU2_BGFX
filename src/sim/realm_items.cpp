@@ -632,6 +632,13 @@ void Realm::recover(Body& hero) {
         hero.manaCarry -= float(whole);
         if (whole > 0) hero.mana = std::min(hero.maxMana, hero.mana + whole);
     }
+    // At rest, both pools at once (kRestShare).
+    if (hero.alive() && hero.pose != Pose::Standing && tick_ % kRestEveryTicks == 0) {
+        hero.health = std::min(hero.maxHealth,
+                               hero.health + std::max(1, int(float(hero.maxHealth) * kRestShare)));
+        hero.mana = std::min(hero.maxMana,
+                             hero.mana + std::max(1, int(float(hero.maxMana) * kRestShare)));
+    }
     // Health on the same three seconds, a hundredth of the pool, and only on a safe tile.
     if (hero.alive() && tick_ % kRecoverEveryTicks == 0) {
         if (hero.health >= hero.maxHealth || !tables_->grid.safe(hero.column(), hero.row())) {
