@@ -179,6 +179,21 @@ int orb(int number) {
         default: return 0;
     }
 }
+// The jewels are priced by name, not by the curve: 9M the Bless, 6M the Soul, 810k the Chaos,
+// 45M the Life and 36M the Creation -- our Rune -- as WebZen's CItem::Value sets them
+// (zzzitem.cpp:1787-1806, 1.00.93; the 1000s above them are a Season 4 trial server's). OpenMU's
+// table left them on the curve, where a Bless at drop level 0 sold for ~1,700.
+int64_t jewel(int group, int number) {
+    if (group == kOrbs) return number == 15 ? 810000 : 0;
+    if (group != kPotions) return 0;
+    switch (number) {
+        case 13: return 9000000;
+        case 14: return 6000000;
+        case 16: return 45000000;
+        case 22: return 36000000;
+        default: return 0;
+    }
+}
 int quiver(int number) { return number == 15 ? 70 : (number == 7 ? 100 : 0); }
 
 // RoundPrice: hundreds above a thousand, tens above a hundred, nothing below.
@@ -208,6 +223,7 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     if (row.group == kBows && quiver(row.number) > 0) {
         return round(full <= 0 ? 0 : int64_t(quiver(row.number)) * shots / full);
     }
+    if (jewel(row.group, row.number) > 0) return jewel(row.group, row.number);
     if (row.group == kScrolls && spell(row.number) > 0) return round(spell(row.number));
     if (row.group == kOrbs && orb(row.number) > 0) return round(orb(row.number));
     // The pets: `dropLevel^3 + 100`, the branch OpenMU gives group 13 with the capes and the

@@ -38,8 +38,12 @@ Blow strike(const Fighter& attacker, const Fighter& defender, Random& dice) {
         blow.critical = true;
         blow.rolled = attacker.maximumDamage;
     } else {
-        // 3. rand(min, max), upper bound exclusive, and no draw at all when max <= min.
-        blow.rolled = dice.nextInt(attacker.minimumDamage, attacker.maximumDamage);
+        // 3. min + rand()%(max-min+1): the top of the band is a roll too (ObjAttack.cpp:3117
+        // for a monster, :3331 for a hero, 1.00.93), where OpenMU's upper-exclusive NextInt
+        // never reached it. No draw at all when max <= min.
+        blow.rolled = attacker.maximumDamage > attacker.minimumDamage
+                          ? dice.nextInt(attacker.minimumDamage, attacker.maximumDamage + 1)
+                          : attacker.minimumDamage;
     }
 
     // 4. Minus the defence, which cannot help the attacker.
@@ -75,8 +79,9 @@ Blow cast(const Fighter& attacker, const Fighter& defender, int skillDamage, Ran
         blow.rolled = high;
         damage = high - defense;
     } else {
-        // `if (baseMaxDamage <= baseMinDamage) dmg = baseMinDamage`: no draw, as nextInt.
-        blow.rolled = dice.nextInt(low, high);
+        // `if (baseMaxDamage <= baseMinDamage) dmg = baseMinDamage`: no draw. The top is a
+        // roll, as the swing's (ObjAttack.cpp:3694).
+        blow.rolled = high > low ? dice.nextInt(low, high + 1) : low;
         damage = blow.rolled - defense;
     }
     blow.afterDefense = damage;

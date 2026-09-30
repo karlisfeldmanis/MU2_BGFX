@@ -138,6 +138,22 @@ void testRules() {
     blow = sim::Blow{};
     for (int i = 0; i < 10000 && !blow.hit; ++i) blow = sim::strike(attacker, defender, dice);
     checkEqual(blow.damage, 3, "a level 30 attacker floors at level/10");
+
+    // The top of the band is a roll: min + rand()%(max-min+1) (ObjAttack.cpp:3117, 1.00.93).
+    attacker.attackRate = 1000;
+    attacker.minimumDamage = 4;
+    attacker.maximumDamage = 7;
+    defender.defenseRate = 0;
+    defender.defense = 0;
+    int lowest = 1 << 30, highest = 0;
+    for (int i = 0; i < 2000; ++i) {
+        blow = sim::strike(attacker, defender, dice);
+        if (!blow.hit) continue;
+        lowest = std::min(lowest, blow.rolled);
+        highest = std::max(highest, blow.rolled);
+    }
+    checkEqual(lowest, 4, "a 4-7 swing rolls its 4");
+    checkEqual(highest, 7, "and its 7");
 }
 
 // ---- the swing ----------------------------------------------------------------------------
@@ -2240,13 +2256,13 @@ void testSkills(const content::Tables& tables) {
                 lowest = std::min(lowest, blow.rolled);
                 highest = std::max(highest, blow.rolled);
             }
-            // int(3.33 + 3) = 6, and the top is exclusive: int(7.5 + 4) = 11, so 6 to 10.
+            // int(3.33 + 3) = 6, and the top is a roll (ObjAttack.cpp:3694): int(7.5 + 4) = 11.
             checkEqual(lowest, 6, "a 30-energy Energy Ball rolls from int(30/9 + 3) = 6");
-            checkEqual(highest, 10, "to under int(30/4 + 3 + 3/2) = 11");
+            checkEqual(highest, 11, "to int(30/4 + 3 + 3/2) = 11");
             caster.wizardryRate = 1.0 + 23.0 / 100.0;  // a staff of magic power 46
             int top = 0;
             for (int n = 0; n < 2000; ++n) top = std::max(top, sim::cast(caster, dummy, 3, dice).rolled);
-            checkEqual(top, 13, "and a 23-rise staff lifts the top to under int(11.5 x 1.23) = 14");
+            checkEqual(top, 14, "and a 23-rise staff lifts the top to int(11.5 x 1.23) = 14");
         }
     }
     check(!realm.learn(sim::skill::kSlash), "and learning one twice is refused");
@@ -2837,6 +2853,16 @@ void testOptions(const content::Tables& tables) {
               0.03, "an option at +4 is 60% on it");
     checkNear(double(sim::buyingPrice(krisRow, 0, 1, false, 1, 1, false, 2)) / double(base), 2.4,
               0.03, "and at +8, 0.7 x 2 more");
+
+    // The jewels by name, as WebZen's CItem::Value (zzzitem.cpp:1787-1806), a third back.
+    checkEqual((long long)sim::buyingPrice(tables.items[size_t(tables.itemAt(14, 13))], 0, 1, false),
+               9000000ll, "a Bless is 9M");
+    checkEqual((long long)sim::buyingPrice(tables.items[size_t(tables.itemAt(14, 14))], 0, 1, false),
+               6000000ll, "a Soul is 6M");
+    checkEqual((long long)sim::buyingPrice(tables.items[size_t(tables.itemAt(12, 15))], 0, 1, false),
+               810000ll, "a Chaos is 810k");
+    checkEqual((long long)sim::sellingPrice(tables.items[size_t(tables.itemAt(14, 13))], 0, 1, false),
+               3000000ll, "and a Bless sells for 3M");
 
     // The Soul on a lucky thing: three in four.
     int rose = 0, tries = 0;
