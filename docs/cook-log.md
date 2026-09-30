@@ -152,3 +152,5 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Shield04 | arm | 2026-09-28 21:18 | passed | pale feathered wings round a brass boss, MU's own; the wing edges are cut, not blended as MU blends them -- a closer look owed in the studio |
 | Spirit | set | 2026-09-28 21:25 | passed | dark green plate with pale fins, MU's own; bare arms skin; one boot highlight flashes white at dusk, a highlight and not a material |
 | Guardian | set | 2026-09-28 22:10 | passed | recooked with separate_meshes: the 44 arm triangles are skin at metal 0, the plate still plate_steel; MU's silver plate with gold trim |
+| Worm01 | figure | 2026-09-30 09:22 | passed | pale shaggy hide, red maw and fangs read at noon, dusk and night; fur, no sheen |
+| Assassin01 | figure | 2026-09-30 09:37 | passed | black robes with silver trim, a Katache in each hand with red grips; blades steel without blowout, readable at night |

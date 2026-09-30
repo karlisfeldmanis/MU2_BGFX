@@ -1,0 +1,555 @@
+{
+  "item": "Worm01",
+  "mu_name": "Worm",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_MODEL_WORM = 17, so OpenMonsterModel loads Monster{17 + 1}, Monster18.bmd. The client's name is 웜, the English word in Hangul; OpenMU's Version075 Devias.cs:227-245 names number 24 'Worm' at level 20 with 600 health, 75-80 damage, 25 defense, MoveRange 3, AttackRange 1, ViewRange 4, AttackDelay 1600, respawn 10 s. Sixty-five of them in 128-251 by 0-128, the town's quarter of the map (Devias.cs:68).\n\nIt is not a worm. The rig is a biped -- two thighs, calves, feet and toes -- with a long spine, a head and a three-bone jaw chain (Bone01-03 under Bip01 Head) and a tail box on the pelvis.",
+  "world": "devias",
+  "object_type": 24,
+  "monster": {
+    "model_index": 17,
+    "scale": 1.0
+  },
+  "monster_from": "ZzzCharacter.cpp:14008-14012, CreateMonster, case MONSTER_WORM:\n\n    OpenMonsterModel(MONSTER_MODEL_WORM);\n    c = CreateCharacter(Key, MODEL_WORM, PositionX, PositionY);\n    wcscpy(c->ID, L\"웜\");\n\nNothing else: no weapon, no Scale (so 1.0), no BlendMesh, no Level. Its only other line in the client is the bounding box it shares with the Budge Dragon, the Spider and the Goblin (ZzzCharacter.cpp:11806-11812, 50 by 50 by 80).",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 12, 12, 7, 9, 9, 13, 11. 24 bones, four of them dummies.\n\nPlay speeds are OpenMonsterModel's defaults with one override: `case MONSTER_MODEL_WORM: b->Actions[MONSTER01_WALK].PlaySpeed = 0.5f;` (ZzzOpenData.cpp:2626), against the table's 0.34 -- twelve and a half keys a second over a seven-key stride, a scurry. 17 is not in the multiplier list. No BoneHead is set in its sound case, so the model keeps the default.",
+  "sheets": {
+    "garp": "worm_garp.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/garp.OZJ, 64 by 64, no alpha; the .bmd's one mesh reads garp.jpg (258 triangles). Decoded under a worm_ prefix so the file says whose it is.",
+  "sheet_materials": {
+    "garp": "fur"
+  },
+  "sheet_materials_from": "Read off the sheet at 8x: a grey-brown shaggy hide in long streaks, white along the ridge of the back and the tail, over a red open maw with a row of white fangs. The hide is most of it and it is hair, not scale -- fur, as the Agon's. The mouth is a small corner of the one island and takes the fur's values; it is dark red painted, and the paint carries it.",
+  "effects_from": "None. MODEL_WORM appears in ZzzCharacter.cpp in CreateMonster and in the bounding-box switch alone -- not in MoveCharacterVisual's per-frame switch, not in RenderCharacter's, and not in the missile code. It raises nothing while it walks, fights or dies, and it bites: AttackRange 1 and no AttackSkill in OpenMU.",
+  "sounds_from": "ZzzOpenData.cpp:3489-3494: mWorm1, mWorm2 and mWormDie loaded, then SetMonsterSound(..., 53, 53, 55, 55, 55). Offsets from SOUND_MONSTER_BULL1: 53 is WORM1 and 55 is WORMDIE, so it moves to mWorm1 alone, and it swings, flinches and dies to mWormDie -- mWorm2 is loaded and never played. Wired as worm_* in sounds.json.",
+  "islands_from": "24 islands for 258 triangles -- the mirrored halves split, and the jaw, tail and toes in small runs. All fur: they arrived as skin, the monster profile's default (the trap Spider01 records), and were set by hand to the sheet's reading.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "fur",
+      "triangles": 27,
+      "area": 2446.3,
+      "along": [
+        -61.2,
+        25.0
+      ],
+      "mu_uv": [
+        0.3,
+        0.001,
+        0.974,
+        0.843
+      ],
+      "bake_uv": [
+        0.043,
+        0.286,
+        0.285,
+        0.873
+      ]
+    },
+    {
+      "island": 1,
+      "material": "fur",
+      "triangles": 116,
+      "area": 14536.1,
+      "along": [
+        -64.3,
+        65.3
+      ],
+      "mu_uv": [
+        -0.001,
+        0.062,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.773
+      ]
+    },
+    {
+      "island": 2,
+      "material": "fur",
+      "triangles": 13,
+      "area": 1249.1,
+      "along": [
+        -26.0,
+        25.0
+      ],
+      "mu_uv": [
+        0.3,
+        0.001,
+        0.746,
+        0.289
+      ],
+      "bake_uv": [
+        0.522,
+        0.836,
+        0.723,
+        0.931
+      ]
+    },
+    {
+      "island": 3,
+      "material": "fur",
+      "triangles": 12,
+      "area": 1012.9,
+      "along": [
+        -64.3,
+        -9.2
+      ],
+      "mu_uv": [
+        0.575,
+        0.548,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.611,
+        0.506,
+        0.776,
+        0.829
+      ]
+    },
+    {
+      "island": 4,
+      "material": "fur",
+      "triangles": 2,
+      "area": 169.5,
+      "along": [
+        52.9,
+        64.5
+      ],
+      "mu_uv": [
+        0.005,
+        0.186,
+        0.096,
+        0.405
+      ],
+      "bake_uv": [
+        0.088,
+        0.167,
+        0.195,
+        0.302
+      ]
+    },
+    {
+      "island": 5,
+      "material": "fur",
+      "triangles": 1,
+      "area": 96.6,
+      "along": [
+        49.3,
+        54.7
+      ],
+      "mu_uv": [
+        0.084,
+        0.203,
+        0.107,
+        0.405
+      ],
+      "bake_uv": [
+        0.063,
+        0.039,
+        0.071,
+        0.047
+      ]
+    },
+    {
+      "island": 6,
+      "material": "fur",
+      "triangles": 1,
+      "area": 188.4,
+      "along": [
+        48.2,
+        63.9
+      ],
+      "mu_uv": [
+        0.026,
+        0.438,
+        0.131,
+        0.638
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.08,
+        0.057
+      ]
+    },
+    {
+      "island": 7,
+      "material": "fur",
+      "triangles": 1,
+      "area": 173.4,
+      "along": [
+        -33.6,
+        -8.1
+      ],
+      "mu_uv": [
+        0.561,
+        0.27,
+        0.752,
+        0.418
+      ],
+      "bake_uv": [
+        0.741,
+        0.057,
+        0.906,
+        0.121
+      ]
+    },
+    {
+      "island": 8,
+      "material": "fur",
+      "triangles": 4,
+      "area": 386.2,
+      "along": [
+        -14.3,
+        -6.0
+      ],
+      "mu_uv": [
+        0.55,
+        0.14,
+        0.611,
+        0.427
+      ],
+      "bake_uv": [
+        0.151,
+        0.413,
+        0.192,
+        0.456
+      ]
+    },
+    {
+      "island": 9,
+      "material": "fur",
+      "triangles": 4,
+      "area": 345.1,
+      "along": [
+        -14.3,
+        25.0
+      ],
+      "mu_uv": [
+        0.3,
+        0.001,
+        0.611,
+        0.246
+      ],
+      "bake_uv": [
+        0.012,
+        0.166,
+        0.073,
+        0.421
+      ]
+    },
+    {
+      "island": 10,
+      "material": "fur",
+      "triangles": 3,
+      "area": 306.1,
+      "along": [
+        -18.0,
+        23.7
+      ],
+      "mu_uv": [
+        0.31,
+        0.001,
+        0.588,
+        0.125
+      ],
+      "bake_uv": [
+        0.624,
+        0.008,
+        0.85,
+        0.064
+      ]
+    },
+    {
+      "island": 11,
+      "material": "fur",
+      "triangles": 3,
+      "area": 242.0,
+      "along": [
+        -18.0,
+        23.7
+      ],
+      "mu_uv": [
+        0.31,
+        0.001,
+        0.588,
+        0.125
+      ],
+      "bake_uv": [
+        0.4,
+        0.782,
+        0.615,
+        0.832
+      ]
+    },
+    {
+      "island": 12,
+      "material": "fur",
+      "triangles": 1,
+      "area": 195.1,
+      "along": [
+        -64.3,
+        -46.6
+      ],
+      "mu_uv": [
+        0.879,
+        0.612,
+        0.99,
+        0.843
+      ],
+      "bake_uv": [
+        0.302,
+        0.473,
+        0.349,
+        0.615
+      ]
+    },
+    {
+      "island": 13,
+      "material": "fur",
+      "triangles": 27,
+      "area": 2446.1,
+      "along": [
+        -61.2,
+        25.0
+      ],
+      "mu_uv": [
+        0.3,
+        0.001,
+        0.974,
+        0.843
+      ],
+      "bake_uv": [
+        0.719,
+        0.26,
+        0.968,
+        0.832
+      ]
+    },
+    {
+      "island": 14,
+      "material": "fur",
+      "triangles": 13,
+      "area": 1249.8,
+      "along": [
+        -26.0,
+        25.0
+      ],
+      "mu_uv": [
+        0.3,
+        0.001,
+        0.746,
+        0.289
+      ],
+      "bake_uv": [
+        0.836,
+        0.231,
+        0.931,
+        0.433
+      ]
+    },
+    {
+      "island": 15,
+      "material": "fur",
+      "triangles": 12,
+      "area": 1012.9,
+      "along": [
+        -64.3,
+        -9.2
+      ],
+      "mu_uv": [
+        0.575,
+        0.548,
+        0.99,
+        0.999
+      ],
+      "bake_uv": [
+        0.105,
+        0.749,
+        0.427,
+        0.914
+      ]
+    },
+    {
+      "island": 16,
+      "material": "fur",
+      "triangles": 1,
+      "area": 96.6,
+      "along": [
+        49.3,
+        54.7
+      ],
+      "mu_uv": [
+        0.084,
+        0.203,
+        0.107,
+        0.405
+      ],
+      "bake_uv": [
+        0.039,
+        0.052,
+        0.046,
+        0.063
+      ]
+    },
+    {
+      "island": 17,
+      "material": "fur",
+      "triangles": 1,
+      "area": 188.4,
+      "along": [
+        48.2,
+        63.9
+      ],
+      "mu_uv": [
+        0.026,
+        0.438,
+        0.131,
+        0.638
+      ],
+      "bake_uv": [
+        0.242,
+        0.604,
+        0.29,
+        0.675
+      ]
+    },
+    {
+      "island": 18,
+      "material": "fur",
+      "triangles": 1,
+      "area": 173.7,
+      "along": [
+        -33.6,
+        -8.1
+      ],
+      "mu_uv": [
+        0.561,
+        0.27,
+        0.752,
+        0.418
+      ],
+      "bake_uv": [
+        0.742,
+        0.837,
+        0.906,
+        0.901
+      ]
+    },
+    {
+      "island": 19,
+      "material": "fur",
+      "triangles": 4,
+      "area": 386.0,
+      "along": [
+        -14.3,
+        -6.1
+      ],
+      "mu_uv": [
+        0.55,
+        0.14,
+        0.611,
+        0.427
+      ],
+      "bake_uv": [
+        0.089,
+        0.145,
+        0.13,
+        0.188
+      ]
+    },
+    {
+      "island": 20,
+      "material": "fur",
+      "triangles": 4,
+      "area": 345.3,
+      "along": [
+        -14.3,
+        25.0
+      ],
+      "mu_uv": [
+        0.3,
+        0.001,
+        0.611,
+        0.246
+      ],
+      "bake_uv": [
+        0.097,
+        0.008,
+        0.353,
+        0.068
+      ]
+    },
+    {
+      "island": 21,
+      "material": "fur",
+      "triangles": 3,
+      "area": 306.4,
+      "along": [
+        -18.0,
+        23.7
+      ],
+      "mu_uv": [
+        0.31,
+        0.001,
+        0.588,
+        0.125
+      ],
+      "bake_uv": [
+        0.008,
+        0.416,
+        0.064,
+        0.642
+      ]
+    },
+    {
+      "island": 22,
+      "material": "fur",
+      "triangles": 3,
+      "area": 242.2,
+      "along": [
+        -18.0,
+        23.7
+      ],
+      "mu_uv": [
+        0.31,
+        0.001,
+        0.588,
+        0.125
+      ],
+      "bake_uv": [
+        0.086,
+        0.349,
+        0.135,
+        0.564
+      ]
+    },
+    {
+      "island": 23,
+      "material": "fur",
+      "triangles": 1,
+      "area": 195.1,
+      "along": [
+        -64.3,
+        -46.6
+      ],
+      "mu_uv": [
+        0.879,
+        0.612,
+        0.99,
+        0.843
+      ],
+      "bake_uv": [
+        0.62,
+        0.556,
+        0.666,
+        0.698
+      ]
+    }
+  ]
+}

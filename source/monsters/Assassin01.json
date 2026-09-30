@@ -1,0 +1,359 @@
+{
+  "item": "Assassin01",
+  "mu_name": "Assassin",
+  "mu_name_from": "MuMain's _enum.h: MONSTER_MODEL_ASSASSIN = 14, so OpenMonsterModel loads Monster15.bmd. The client's name is 암살자, assassin; OpenMU's Version075 Devias.cs:140-158 names number 21 'Assassin' at level 26 with 800 health, 95-100 damage, 33 defense, MoveRange 2, AttackRange 1, ViewRange 7, AttackDelay 2000, respawn 10 s. Thirty-five of them in 128-251 by 0-128, the town's quarter, with the Worms (Devias.cs:69).",
+  "world": "devias",
+  "object_type": 21,
+  "monster": {
+    "model_index": 14,
+    "scale": 0.95
+  },
+  "monster_from": "ZzzCharacter.cpp:14028-14033, CreateMonster, case MONSTER_ASSASSIN:\n\n    OpenMonsterModel(MONSTER_MODEL_ASSASSIN);\n    c = CreateCharacter(Key, MODEL_ASSASSIN, PositionX, PositionY);\n    c->Object.Scale = 0.95f;\n\nNo Weapon[] is set: the sword is the model's own second mesh, skinned to the right hand, not an item hung on a link bone. No BlendMesh, no Level.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 20, 10, 7, 7, 7, 7, 7. 35 bones, five of them dummies, and jytrchant at the end.\n\nPlay speeds: the defaults, with the second idle at 0.35 (`b->Actions[MONSTER01_STOP2].PlaySpeed = 0.35f` in his sound case, ZzzOpenData.cpp:3517) and STOP2 looped (`case MONSTER_MODEL_ASSASSIN: b->Actions[MONSTER01_STOP2].Loop = true`, ZzzOpenData.cpp:3355-3360) -- which only decides that the clip wraps rather than holds, as every idle does here. BoneHead 20 is Bip01 Head.",
+  "sheets": {
+    "snowking": "assassin_snowking.png",
+    "sword05": "sword05.png"
+  },
+  "sheet_from": "Two meshes in Monster15.bmd: snowking.jpg, 604 triangles, the body; sword05.jpg, 132 triangles, the sword. snowking.OZJ is 128 by 128 with no alpha, decoded under an assassin_ prefix. sword05.OZJ decodes byte-identical to source/textures/sword05.png, which the Katache (Sword04) already wears, so that file is reused rather than copied: the Assassin's blade is painted from the same sheet as the Katache.",
+  "sheet_materials": {
+    "snowking": "cloth",
+    "sword05": "blade_steel"
+  },
+  "sheet_materials_from": "snowking at 4x: black robes -- a hood and cowl in heavy folds, a long tabard with a silver-edged panel and a painted sigil, a skull-and-crossbones plate on the back -- over a belt of dark studs with one red gem at the buckle. Almost all of it is black cloth, and the silver is trim painted on the cloth, not plate: cloth. sword05 at 8x: a pale steel blade with a dark fuller, a tan guard and a red grip: blade_steel for the blade. The Katache found the same sheet splits by geometry into blade, guard, grip and banner; see islands_from for what this mesh's islands turned out to be.",
+  "effects_from": "None on the body. MODEL_ASSASSIN is in CreateMonster and in two exceptions and in nothing else -- no per-frame switch in MoveCharacterVisual or RenderCharacter, no missile. The two exceptions are both things he does NOT do:\n\n- CreateBlood (ZzzEffectBlurSpark.cpp:456) skips him with the Ghost and the Ice Queen: no blood thrown from the head bone when he dies. The game draws no death blood for anyone yet, so there is nothing to turn off.\n- ZzzCharacter.cpp:1411: a monster struck cries Sounds[2 + rand()%2], `o->Type != MODEL_ASSASSIN`. He takes a blow in silence -- the flinch cry is skipped by type, in the game's Play::flinch.",
+  "sounds_from": "ZzzOpenData.cpp:3511-3518: mAssassinAttack1, mAssassinAttack2 and mAssassinDie, then SetMonsterSound(..., -1, -1, 65, 66, 67). The -1s leave him no idle or move cry at all, and he is struck silently (effects_from). He is heard only when he swings and when he dies. Wired as assassin_* in sounds.json; there is deliberately no assassin_move.",
+  "islands_from": "Fifteen islands. 0-8 are the body, 604 triangles, all cloth. 9-14 are TWO swords of 66 triangles each (132, sword05's count): he carries a blade in each hand, one along -146..-25 and one along -28..76. Each sword is the Katache's geometry to the texel -- its islands' mu_uv match Sword04's exactly -- without the Katache's two banner islands, so each takes Sword04's materials: the red grip (9, 12) leather_wrap, the blade (10, 13) blade_steel, the tan guard (11, 14) brass. They arrived as skin, the monster profile's default, and were set here.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 210,
+      "area": 20613.8,
+      "along": [
+        -35.4,
+        54.4
+      ],
+      "mu_uv": [
+        -0.025,
+        0.368,
+        0.619,
+        1.014
+      ],
+      "bake_uv": [
+        0.172,
+        0.016,
+        0.816,
+        0.95
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 36,
+      "area": 3023.7,
+      "along": [
+        -44.2,
+        -4.7
+      ],
+      "mu_uv": [
+        0.114,
+        0.214,
+        0.99,
+        0.391
+      ],
+      "bake_uv": [
+        0.21,
+        0.667,
+        0.826,
+        0.979
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 36,
+      "area": 2995.6,
+      "along": [
+        -4.8,
+        35.2
+      ],
+      "mu_uv": [
+        0.118,
+        0.213,
+        0.97,
+        0.391
+      ],
+      "bake_uv": [
+        0.01,
+        0.856,
+        0.952,
+        0.979
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 42,
+      "area": 2707.1,
+      "along": [
+        -55.0,
+        -22.2
+      ],
+      "mu_uv": [
+        0.543,
+        0.003,
+        0.998,
+        0.215
+      ],
+      "bake_uv": [
+        0.08,
+        0.47,
+        0.379,
+        0.854
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 42,
+      "area": 2694.3,
+      "along": [
+        11.7,
+        55.2
+      ],
+      "mu_uv": [
+        0.555,
+        -0.001,
+        0.969,
+        0.214
+      ],
+      "bake_uv": [
+        0.597,
+        0.51,
+        0.781,
+        0.89
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 58,
+      "area": 2212.3,
+      "along": [
+        42.0,
+        91.3
+      ],
+      "mu_uv": [
+        0.623,
+        0.298,
+        0.997,
+        0.592
+      ],
+      "bake_uv": [
+        0.349,
+        0.023,
+        0.725,
+        0.826
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 58,
+      "area": 2152.6,
+      "along": [
+        -33.3,
+        -8.2
+      ],
+      "mu_uv": [
+        0.621,
+        0.288,
+        0.873,
+        0.594
+      ],
+      "bake_uv": [
+        0.011,
+        0.488,
+        0.888,
+        0.89
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 30,
+      "area": 5756.1,
+      "along": [
+        -37.4,
+        15.7
+      ],
+      "mu_uv": [
+        0.637,
+        0.096,
+        0.978,
+        0.998
+      ],
+      "bake_uv": [
+        0.349,
+        0.01,
+        0.741,
+        0.439
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 92,
+      "area": 2232.6,
+      "along": [
+        -1.7,
+        27.9
+      ],
+      "mu_uv": [
+        0.029,
+        -0.004,
+        0.53,
+        0.211
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.862,
+        0.93
+      ]
+    },
+    {
+      "island": 9,
+      "material": "leather_wrap",
+      "triangles": 10,
+      "area": 484.7,
+      "along": [
+        -26.0,
+        4.5
+      ],
+      "mu_uv": [
+        0.802,
+        0.253,
+        0.997,
+        0.897
+      ],
+      "bake_uv": [
+        0.348,
+        0.009,
+        0.862,
+        0.85
+      ]
+    },
+    {
+      "island": 10,
+      "material": "blade_steel",
+      "triangles": 44,
+      "area": 1901.8,
+      "along": [
+        -146.1,
+        -25.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.113,
+        0.804,
+        0.652
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.331,
+        0.664
+      ]
+    },
+    {
+      "island": 11,
+      "material": "brass",
+      "triangles": 12,
+      "area": 171.8,
+      "along": [
+        -27.8,
+        -22.7
+      ],
+      "mu_uv": [
+        0.789,
+        0.026,
+        0.821,
+        0.944
+      ],
+      "bake_uv": [
+        0.886,
+        0.01,
+        0.971,
+        0.761
+      ]
+    },
+    {
+      "island": 12,
+      "material": "leather_wrap",
+      "triangles": 10,
+      "area": 484.7,
+      "along": [
+        70.5,
+        96.6
+      ],
+      "mu_uv": [
+        0.802,
+        0.253,
+        0.997,
+        0.897
+      ],
+      "bake_uv": [
+        0.5,
+        0.474,
+        0.882,
+        0.878
+      ]
+    },
+    {
+      "island": 13,
+      "material": "blade_steel",
+      "triangles": 44,
+      "area": 1901.8,
+      "along": [
+        -27.8,
+        75.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.113,
+        0.804,
+        0.652
+      ],
+      "bake_uv": [
+        0.01,
+        0.175,
+        0.671,
+        0.445
+      ]
+    },
+    {
+      "island": 14,
+      "material": "brass",
+      "triangles": 12,
+      "area": 171.8,
+      "along": [
+        67.5,
+        78.5
+      ],
+      "mu_uv": [
+        0.789,
+        0.026,
+        0.821,
+        0.944
+      ],
+      "bake_uv": [
+        0.906,
+        0.011,
+        0.989,
+        0.991
+      ]
+    }
+  ]
+}

@@ -764,6 +764,147 @@
       ],
       "from": "Sounds[4], slot 89 - 299, SOUND_MONSTER_HUNTERDIE, Data\\\\Sound\\\\mHunterDie.wav."
     },
+    "worm_move": {
+      "files": [
+        "mWorm1.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 53, 53, 55, 55, 55: 263 WORM1 twice, 265 WORMDIE three times) in ZzzOpenData.cpp:3489-3494; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "worm_attack": {
+      "files": [
+        "mWormDie.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 53, 53, 55, 55, 55: 263 WORM1 twice, 265 WORMDIE three times) in ZzzOpenData.cpp:3489-3494; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158).",
+      "note": "mWorm2.wav is loaded and never played: no slot names 54. The swing and the flinch are the death cry, as the client has it."
+    },
+    "worm_shock": {
+      "files": [
+        "mWormDie.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., 53, 53, 55, 55, 55: 263 WORM1 twice, 265 WORMDIE three times) in ZzzOpenData.cpp:3489-3494; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "worm_die": {
+      "files": [
+        "mWormDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., 53, 53, 55, 55, 55: 263 WORM1 twice, 265 WORMDIE three times) in ZzzOpenData.cpp:3489-3494; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icemonster_move": {
+      "files": [
+        "mIceMonster1.wav",
+        "mIceMonster2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 50, 51, 50, 50, 52: 260-261 ICEMONSTER1-2, 262 ICEMONSTERDIE) in ZzzOpenData.cpp:3482-3488; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icemonster_attack": {
+      "files": [
+        "mIceMonster1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 50, 51, 50, 50, 52: 260-261 ICEMONSTER1-2, 262 ICEMONSTERDIE) in ZzzOpenData.cpp:3482-3488; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icemonster_shock": {
+      "files": [
+        "mIceMonster1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., 50, 51, 50, 50, 52: 260-261 ICEMONSTER1-2, 262 ICEMONSTERDIE) in ZzzOpenData.cpp:3482-3488; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icemonster_die": {
+      "files": [
+        "mIceMonsterDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., 50, 51, 50, 50, 52: 260-261 ICEMONSTER1-2, 262 ICEMONSTERDIE) in ZzzOpenData.cpp:3482-3488; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "hommerd_move": {
+      "files": [
+        "mHomord1.wav",
+        "mHomord2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 56, 57, 58, 58, 59: 266-267 HOMORD1-2, 268 HOMORDATTACK1, 269 HOMORDDIE) in ZzzOpenData.cpp:3495-3501; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "hommerd_attack": {
+      "files": [
+        "mHomordAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 56, 57, 58, 58, 59: 266-267 HOMORD1-2, 268 HOMORDATTACK1, 269 HOMORDDIE) in ZzzOpenData.cpp:3495-3501; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "hommerd_shock": {
+      "files": [
+        "mHomordAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., 56, 57, 58, 58, 59: 266-267 HOMORD1-2, 268 HOMORDATTACK1, 269 HOMORDDIE) in ZzzOpenData.cpp:3495-3501; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "hommerd_die": {
+      "files": [
+        "mHomordDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., 56, 57, 58, 58, 59: 266-267 HOMORD1-2, 268 HOMORDATTACK1, 269 HOMORDDIE) in ZzzOpenData.cpp:3495-3501; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icequeen_move": {
+      "files": [
+        "mIceQueen1.wav",
+        "mIceQueen2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 60, 61, 62, 63, 64: 270-271 ICEQUEEN1-2, 272-273 ICEQUEENATTACK1-2, 274 ICEQUEENDIE) in ZzzOpenData.cpp:3502-3510; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icequeen_attack": {
+      "files": [
+        "mIceQueenAttack1.wav",
+        "mIceQueenAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 60, 61, 62, 63, 64: 270-271 ICEQUEEN1-2, 272-273 ICEQUEENATTACK1-2, 274 ICEQUEENDIE) in ZzzOpenData.cpp:3502-3510; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icequeen_shock": {
+      "files": [
+        "mIceQueenAttack1.wav",
+        "mIceQueenAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., 60, 61, 62, 63, 64: 270-271 ICEQUEEN1-2, 272-273 ICEQUEENATTACK1-2, 274 ICEQUEENDIE) in ZzzOpenData.cpp:3502-3510; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "icequeen_die": {
+      "files": [
+        "mIceQueenDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., 60, 61, 62, 63, 64: 270-271 ICEQUEEN1-2, 272-273 ICEQUEENATTACK1-2, 274 ICEQUEENDIE) in ZzzOpenData.cpp:3502-3510; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "assassin_attack": {
+      "files": [
+        "mAssassinAttack1.wav",
+        "mAssassinAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., -1, -1, 65, 66, 67: no move slots; 275-276 ASSASSINATTACK1-2, 277 ASSASSINDIE) in ZzzOpenData.cpp:3511-3518; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158).",
+      "note": "No move cry, and on purpose: slots 0 and 1 are -1, and the idle play at ZzzCharacter.cpp:1411 skips MODEL_ASSASSIN by name. He comes at you silent."
+    },
+    "assassin_die": {
+      "files": [
+        "mAssassinDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., -1, -1, 65, 66, 67: no move slots; 275-276 ASSASSINATTACK1-2, 277 ASSASSINDIE) in ZzzOpenData.cpp:3511-3518; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "eliteyeti_move": {
+      "files": [
+        "mYeti1.wav",
+        "mYeti2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., SetMonsterSound(MODEL_ELITE_YETI, 68, 69, 70, 70, 71): 278-279 YETI1-2, 280 YETIATTACK1, 281 YETIDIE) in ZzzOpenData.cpp:3519-3528; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "eliteyeti_attack": {
+      "files": [
+        "mYetiAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., SetMonsterSound(MODEL_ELITE_YETI, 68, 69, 70, 70, 71): 278-279 YETI1-2, 280 YETIATTACK1, 281 YETIDIE) in ZzzOpenData.cpp:3519-3528; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "eliteyeti_shock": {
+      "files": [
+        "mYetiAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., SetMonsterSound(MODEL_ELITE_YETI, 68, 69, 70, 70, 71): 278-279 YETI1-2, 280 YETIATTACK1, 281 YETIDIE) in ZzzOpenData.cpp:3519-3528; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
+    "eliteyeti_die": {
+      "files": [
+        "mYetiDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., SetMonsterSound(MODEL_ELITE_YETI, 68, 69, 70, 70, 71): 278-279 YETI1-2, 280 YETIATTACK1, 281 YETIDIE) in ZzzOpenData.cpp:3519-3528; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158)."
+    },
     "forestmonster_move": {
       "files": [
         "mWoodMon1.wav",

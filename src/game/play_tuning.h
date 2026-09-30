@@ -272,6 +272,9 @@ inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
 inline constexpr const char* kScorpionFigure = "ChainScorpion01";
 // MODEL_HUNTER, whose blow is a bolt out of its arquebus. See Play::hunterShot.
 inline constexpr const char* kHunterFigure = "Hunter01";
+// MODEL_ASSASSIN, the one breed struck in silence: the flinch's cry is skipped by type,
+// `o->Type != MODEL_ASSASSIN && Models[o->Type].Sounds[2] != -1` (ZzzCharacter.cpp:1411).
+inline constexpr const char* kSilentFlinchFigure = "Assassin01";
 // Where on the muzzle: `Vector(0.f, -4.f, 0.f, p)` in bone 24's frame, metres here.
 constexpr float kSnortAt[3] = {0.0f, -0.04f, 0.0f};
 // The four windows, in the clip's own keys: STOP1 15-20, STOP2 20-25, WALK 2-3 and 5-6.

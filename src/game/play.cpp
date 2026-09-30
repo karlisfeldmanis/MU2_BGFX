@@ -1375,7 +1375,8 @@ void Play::flinch(Drawn& struck, bool isHero) {
     flinchDice_ ^= flinchDice_ << 5;
     if ((flinchDice_ & 1u) == 0) return;
     shock(struck, clip);
-    const int cry = !isHero ? struck.cryAttack
+    const bool silent = look && look->name == kSilentFlinchFigure;
+    const int cry = !isHero ? (silent ? -1 : struck.cryAttack)
                             : (look && look->female ? heard_.shockFemale : heard_.shock);
     if (cry >= 0) emit(cry, struck.crown[0], struck.crown[2], struck.id);
     if (isHero && realm_.hero().walking) {
