@@ -270,6 +270,12 @@ inline constexpr const char* kSnortingFigure = "BullFighter01";
 inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
 // MODEL_CHAIN_SCORPION, which carries an orange light on its `light_point` bone.
 inline constexpr const char* kScorpionFigure = "ChainScorpion01";
+// MODEL_ELITE_YETI's breath (ZzzCharacter.cpp:6181-6189): `rand_fps_check(4)` puts one
+// BITMAP_SMOKE at bone 22, Box03 under the head, offset zero, with no action gate -- it
+// breathes standing, walking, fighting and falling. The Bull Fighter's snort particle.
+inline constexpr const char* kYetiFigure = "EliteYeti01";
+inline constexpr const char* kYetiBreathBone = "Box03";
+constexpr float kYetiBreathAt[3] = {0.0f, 0.0f, 0.0f};
 // MODEL_HUNTER, whose blow is a bolt out of its arquebus. See Play::hunterShot.
 inline constexpr const char* kHunterFigure = "Hunter01";
 // MODEL_ASSASSIN, the one breed struck in silence: the flinch's cry is skipped by type,

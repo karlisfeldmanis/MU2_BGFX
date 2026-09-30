@@ -1,0 +1,172 @@
+{
+  "item": "EliteYeti01",
+  "mu_name": "Elite Yeti",
+  "mu_name_from": "MuMain's _enum.h:4163: MONSTER_MODEL_ELITE_YETI = 13, so OpenMonsterModel loads Monster{13 + 1}, Monster14.bmd; the server's type is MONSTER_ELITE_YETI = 20 (_enum.h:4395). The client's name is 설인 대장, yeti chief (ZzzCharacter.cpp:14037). OpenMU's Version075 Devias.cs:104-134 names number 20 'Elite Yeti' at level 36 with 1200 health, 120-125 damage, 50 defense, MoveRange 3, AttackRange 1, ViewRange 6, AttackDelay 1400, respawn 3 s, no AttackSkill. Devias's commonest monster: two hundred in 0-251 by 128-245, the north of the map, fifteen in 210-242 by 210-220, and one each at 194,165 and 36,25 (Devias.cs:61-64).\n\nThe plain Yeti (19, MONSTER_MODEL_YETI = 12, Monster13.bmd, snowman.OZJ, Scale 1.1 at ZzzCharacter.cpp:14040-14045) shares its sound and effect cases but is not in Devias's spawn list (Devias.cs:61-69) and is not built.",
+  "world": "devias",
+  "object_type": 20,
+  "monster": {
+    "model_index": 13,
+    "scale": 1.4
+  },
+  "monster_from": "ZzzCharacter.cpp:14034-14039, CreateMonster, case MONSTER_ELITE_YETI:\n\n    OpenMonsterModel(MONSTER_MODEL_ELITE_YETI);\n    c = CreateCharacter(Key, MODEL_ELITE_YETI, PositionX, PositionY);\n    wcscpy(c->ID, L\"설인 대장\");\n    c->Object.Scale = 1.4f;\n\nNo weapon, no BlendMesh, no HiddenMesh, no Level. At 1.4 the 164-unit model stands about 2.3 m.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 20, 20, 7, 7, 7, 7, 16; the walk is the one locked action. 51 bones, five of them dummies. Bone 20 is Bip01 Head (BoneHead = 20, ZzzOpenData.cpp:3528); bone 22 is Box03, a child of the head with Box04 under it -- the muzzle, where the breath comes out (effects_from). Box08-12 hang off the right clavicle and Box01/02/05-07 off the left; ewr is on the pelvis.\n\nPlay speeds: OpenMonsterModel's defaults (ZzzOpenData.cpp:2598-2603) with one override, `case MONSTER_MODEL_ELITE_YETI: b->Actions[MONSTER01_WALK].PlaySpeed = 0.28f` (ZzzOpenData.cpp:2625), against the table's 0.34 -- a heavy seven-key stride, the plain Yeti's 0.3 slowed a little further. 13 is not in the multiplier list.",
+  "sheets": {
+    "snowman02": "eliteyeti_snowman02.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/snowman02.OZJ, 128 by 128, no alpha; the .bmd's one mesh reads snowman02.jpg (1054 triangles). Decoded under an eliteyeti_ prefix; no existing texture in source/textures matches it byte for byte. The plain Yeti's snowman.OZJ is a different sheet.",
+  "sheet_materials": {
+    "snowman02": "fur"
+  },
+  "sheet_materials_from": "Read off the sheet at 6x: nearly all of it is a shaggy white-grey pelt with dark grey rosettes, like a snow leopard's, laid out as a leg strip down the left edge, the torso and arms across the middle and right, and the head at the top. Fur, as the Worm's and the Bull Fighter's pelts. Two small things are not pelt: a dark green patch at the top left with white marks, which is the maw and teeth inside the head island and takes the fur's values; and a smooth steel-blue tapering shape at u 0.27-0.46, v 0.28-0.71 that three separate pieces of geometry wear -- one spike on the crown and one over each shoulder (y 103-164) -- which are horns: chitin, as the Bull Fighter's horns. See islands_from.",
+  "effects": [
+    {
+      "kind": "snort_smoke",
+      "bone": "Box03",
+      "offset": [
+        0,
+        0,
+        0
+      ],
+      "every_frames": 4,
+      "always": true
+    }
+  ],
+  "effects_from": "MoveCharacterVisual's per-frame switch, ZzzCharacter.cpp:6181-6189:\n\n    case MODEL_YETI:\n    case MODEL_ELITE_YETI:\n        if (rand_fps_check(4))\n        {\n            Vector(0.f, 0.f, 0.f, p);\n            b->TransformPosition(o->BoneTransform[22], p, Position, true);\n            CreateParticle(BITMAP_SMOKE, Position, o->Angle, o->Light);\n        }\n        break;\n\nIts breath in the cold: one BITMAP_SMOKE a fourth of the reference frames on average, at bone 22 itself (Box03, the muzzle), in every action -- idle, walk, fight and fall; no clip window, unlike the Bull Fighter's. BITMAP_SMOKE with no subtype is the Bull Fighter's snort particle exactly (ZzzEffectParticle.cpp:1145-1160 birth, :5271-5278 motion: 16 frames, scale 0.48-0.80 growing 0.05 a frame, rising on a Gravity growing 0.2 a frame, Luminosity = LifeTime / 8), which src/game/fx/snort.h already draws.\n\nThe plain Yeti's snowball (ZzzCharacter.cpp:5125-5128, `if (o->Type == MODEL_YETI) CreateEffect(MODEL_SNOW1, ...)`) is the plain one's alone; the Elite has no missile and no AttackSkill. It bleeds as anything else does (CreateBlood's ordinary branch, ZzzEffectBlurSpark.cpp:456-467).",
+  "sounds_from": "ZzzOpenData.cpp:3519-3529: mYeti1, mYeti2, mYetiAttack1 and mYetiDie, then SetMonsterSound(MODEL_ELITE_YETI, 68, 69, 70, 70, 71) -- offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158), so 278-279 YETI1-2, 280 YETIATTACK1 twice, 281 YETIDIE. (The plain Yeti's 68, 68 never plays mYeti2.) Wired as eliteyeti_* in sounds.json.",
+  "islands_from": "Six islands for 1054 triangles: the body with head and legs (0, 712), the two arms (1, 2, 119 each) in fur, and the three spikes -- the two on the shoulders (3, 4, 32 each) and the crown (5, 40) -- in chitin, the Bull Fighter's horn, for the smooth steel-blue taper painted on them. They arrived as skin, the monster profile's default, and were set here.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "fur",
+      "triangles": 712,
+      "area": 40352.6,
+      "along": [
+        -50.8,
+        55.0
+      ],
+      "mu_uv": [
+        0.003,
+        0.001,
+        0.994,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.009,
+        0.972,
+        0.991
+      ]
+    },
+    {
+      "island": 1,
+      "material": "fur",
+      "triangles": 119,
+      "area": 4572.3,
+      "along": [
+        -3.1,
+        66.3
+      ],
+      "mu_uv": [
+        0.366,
+        0.003,
+        0.713,
+        0.911
+      ],
+      "bake_uv": [
+        0.104,
+        0.01,
+        0.769,
+        0.719
+      ]
+    },
+    {
+      "island": 2,
+      "material": "fur",
+      "triangles": 119,
+      "area": 4566.2,
+      "along": [
+        3.3,
+        65.2
+      ],
+      "mu_uv": [
+        0.366,
+        0.003,
+        0.713,
+        0.911
+      ],
+      "bake_uv": [
+        0.181,
+        0.01,
+        0.743,
+        0.665
+      ]
+    },
+    {
+      "island": 3,
+      "material": "chitin",
+      "triangles": 32,
+      "area": 2499.6,
+      "along": [
+        -17.6,
+        47.6
+      ],
+      "mu_uv": [
+        0.27,
+        0.28,
+        0.457,
+        0.711
+      ],
+      "bake_uv": [
+        0.011,
+        0.01,
+        0.437,
+        0.294
+      ]
+    },
+    {
+      "island": 4,
+      "material": "chitin",
+      "triangles": 32,
+      "area": 2412.5,
+      "along": [
+        -13.5,
+        53.5
+      ],
+      "mu_uv": [
+        0.268,
+        0.28,
+        0.455,
+        0.711
+      ],
+      "bake_uv": [
+        0.337,
+        0.01,
+        0.739,
+        0.818
+      ]
+    },
+    {
+      "island": 5,
+      "material": "chitin",
+      "triangles": 40,
+      "area": 2430.6,
+      "along": [
+        32.5,
+        71.0
+      ],
+      "mu_uv": [
+        0.268,
+        0.28,
+        0.389,
+        0.7
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.833,
+        0.859
+      ]
+    }
+  ]
+}

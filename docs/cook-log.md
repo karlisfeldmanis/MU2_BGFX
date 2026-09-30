@@ -155,3 +155,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Worm01 | figure | 2026-09-30 09:22 | passed | pale shaggy hide, red maw and fangs read at noon, dusk and night; fur, no sheen |
 | Assassin01 | figure | 2026-09-30 09:37 | passed | black robes with silver trim, a Katache in each hand with red grips; blades steel without blowout, readable at night |
 | Hommerd01 | figure | 2026-09-30 09:47 | passed | blue painted plate with silver trim, crested helm, dark greaves; metallic 0 keeps it paint, not chrome; axe and shield judged in the arena |
+| EliteYeti01 | figure | 2026-09-30 09:54 | passed | pale grey shaggy pelt with dark marks, steel-blue spikes on crown and shoulders; fur and chitin, no sheen |

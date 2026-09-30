@@ -540,6 +540,9 @@ private:
         int snortBone = -1;
         int eyeBones[2] = {-1, -1};
         float snortOwed = 0.0f;
+        // An Elite Yeti's breath: the same puff out of Box03, in every action, one in four
+        // reference frames rather than one in two within the bull's windows.
+        bool snortAlways = false;
         // The Chain Scorpion's BITMAP_LIGHT at bone 7, `light_point` (ZzzCharacter.cpp:6151);
         // -1 on everything else. Drawn in gatherFolkLights.
         int lightBone = -1;

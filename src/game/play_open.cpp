@@ -563,6 +563,13 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     if (bones[b].name == "light_point") one.lightBone = int(b);
                 }
             }
+            if (look->name == kYetiFigure && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == kYetiBreathBone) one.snortBone = int(b);
+                }
+                one.snortAlways = one.snortBone >= 0;
+            }
             const bool elite = look->name == kEliteBullFigure;
             if ((elite || look->name == kSnortingFigure) && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();

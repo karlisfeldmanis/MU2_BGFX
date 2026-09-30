@@ -293,7 +293,7 @@ void Play::snort(float seconds) {
         if (one.snortBone < 0) continue;
         const int slot = slotOf(one.figure);
         const float key = keyOf(one.figure);
-        bool open = false;
+        bool open = one.snortAlways;
         for (const SnortWindow& w : kSnortWindows) {
             if (slot == w.slot && key >= w.from && key <= w.to) open = true;
         }
@@ -301,12 +301,12 @@ void Play::snort(float seconds) {
             one.snortOwed = 0.0f;
             continue;
         }
-        // rand_fps_check(2): one every second reference frame.
-        one.snortOwed += frames / 2.0f;
+        // rand_fps_check(2): one every second reference frame; the Yeti's breath is (4).
+        one.snortOwed += frames / (one.snortAlways ? 4.0f : 2.0f);
         while (one.snortOwed >= 1.0f) {
             one.snortOwed -= 1.0f;
             float at[3];
-            if (!one.figure.pointOn(one.snortBone, kSnortAt, at)) break;
+            if (!one.figure.pointOn(one.snortBone, one.snortAlways ? kYetiBreathAt : kSnortAt, at)) break;
             snort_.puff(at);
         }
     }
