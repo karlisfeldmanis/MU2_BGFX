@@ -578,7 +578,8 @@ void testLoot(const content::Tables& tables) {
         const sim::Body& hero = realm.hero();
         if (hero.alive() && realm.tick() % 10 == 0) {
             sim::Request request;
-            float best = 12.0f * 12.0f;
+            // Thirty tiles out, as nearestTo: what dies rises elsewhere in its nest.
+            float best = 30.0f * 30.0f;
             for (const sim::Lying& one : realm.lying()) {
                 const float dx = float(one.column) - hero.x, dy = float(one.row) - hero.y;
                 if (dx * dx + dy * dy < best) {
@@ -797,7 +798,7 @@ void testCastLock(const content::Tables& tables) {
             for (const sim::Body& one : fight.bodies()) {
                 if (!one.monster() || !one.alive()) continue;
                 const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
-                if (off <= 12.0f && off < closest) {
+                if (off <= 30.0f && off < closest) {
                     closest = off;
                     nearest = one.id;
                 }
@@ -836,6 +837,8 @@ void testCastLock(const content::Tables& tables) {
     // An Attack carrying Energy Ball: he stops at six tiles and throws, the bolt is let go at the
     // bottom of the clip and lands when it has crossed the gap, and a hit pays mana back. Then
     // the same order with his mana gone: he closes to arm's length and swings the staff.
+    // Thirty tiles, not twelve: a monster rises on a tile drawn anew from its nest (WebZen's
+    // respawn, 2026-09-30), so a hunt that waited on the spot it cleared would stand idle.
     const auto nearestTo = [](const sim::Realm& realm) {
         const sim::Body& hero = realm.hero();
         uint32_t nearest = 0;
@@ -843,7 +846,7 @@ void testCastLock(const content::Tables& tables) {
         for (const sim::Body& one : realm.bodies()) {
             if (!one.monster() || !one.alive()) continue;
             const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
-            if (off <= 12.0f && off < closest) {
+            if (off <= 30.0f && off < closest) {
                 closest = off;
                 nearest = one.id;
             }
@@ -1941,27 +1944,16 @@ void testElfSkills(const content::Tables& tables) {
 // Sprint 15, step 5: her summon. Raised beside her off the breed's row and scaled by her energy;
 // it hunts round her, its kills are hers, it holds a monster against her own shots, and a second
 // cast dismisses it for nothing.
-void testSummons(const content::Tables& lorencia) {
+void testSummons(const content::Tables& tables) {
     std::printf("the elf's summon\n");
-    // Lorencia without its Liches: WebZen's 45 of them share the Skeleton Warriors' field, and
-    // their bolts with the camp's blows bring the golem down before it has killed anything.
-    content::Tables tables = lorencia;
-    tables.nests.erase(std::remove_if(tables.nests.begin(), tables.nests.end(),
-                                      [&](const content::MonsterNest& n) {
-                                          return tables.kinds[n.kind].number == 6;
-                                      }),
-                       tables.nests.end());
     // Among the Skeleton Warriors (525 health): a spider dies to one of the golem's blows and
     // never lives to turn on it. Found in a first realm, then stood three tiles off one.
     int standColumn = 212, standRow = 198;
     {
         sim::Realm look;
         look.raise(&tables, 5, 212, 198, sim::Kin::FairyElf, 40);
-        // One from the field's box, not WebZen's camp of five at 140-142, 218-220, which kills
-        // her in a tick.
         for (const sim::Body& one : look.bodies()) {
-            if (one.monster() && tables.kinds[size_t(one.kind)].number == 14 && one.nest >= 0 &&
-                tables.nests[size_t(one.nest)].x2 - tables.nests[size_t(one.nest)].x1 > 10) {
+            if (one.monster() && tables.kinds[size_t(one.kind)].number == 14) {
                 standColumn = one.homeColumn + 3;
                 standRow = one.homeRow;
                 break;
@@ -2473,6 +2465,7 @@ void testSkills(const content::Tables& tables) {
     // one hand can no longer reach both shapes: a one-handed sword throws the spin (Cyclone) and
     // a two-handed one throws the sweep (Slash). Same keys, same checks, same counters -- only
     // what is in his hand changes between the two runs.
+    // Out to thirty tiles, as nearestTo: what dies rises elsewhere in its nest.
     const auto hunt = [&](int ticks) {
     for (int tick = 0; tick < ticks; ++tick) {
         const sim::Body& hero = realm.hero();
@@ -2482,7 +2475,7 @@ void testSkills(const content::Tables& tables) {
             for (const sim::Body& one : realm.bodies()) {
                 if (!one.monster() || !one.alive()) continue;
                 const float off = std::max(std::fabs(one.x - hero.x), std::fabs(one.y - hero.y));
-                if (off <= 12.0f && off < closest) {
+                if (off <= 30.0f && off < closest) {
                     closest = off;
                     nearest = one.id;
                 }

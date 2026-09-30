@@ -39,7 +39,8 @@ The user's picks, 2026-09-30: #3 WebZen's (the shield meets a player's blow only
 single-player game it soaks nothing; the skill hunts in sim_test keep their unspent heroes alive
 with Realm::wholeAgain, since without it they died mid-hunt), #4 both (life per kill, rest on a
 perch), #9 no leash and WebZen's respawn (the hit's chase is WebZen's ten steps, then eyesight;
-nothing past fifteen tiles), #13 WebZen's counts.
+nothing past fifteen tiles), #13 WebZen's counts -- taken back the same day: the user found
+OpenMU's placement better, and kept only the respawn on a tile drawn anew from the nest.
 
 Smaller, one line each:
 - Luck crit +4% per item, not 5% (zzzitem.cpp:3023).
