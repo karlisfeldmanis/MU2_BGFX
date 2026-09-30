@@ -154,3 +154,4 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Guardian | set | 2026-09-28 22:10 | passed | recooked with separate_meshes: the 44 arm triangles are skin at metal 0, the plate still plate_steel; MU's silver plate with gold trim |
 | Worm01 | figure | 2026-09-30 09:22 | passed | pale shaggy hide, red maw and fangs read at noon, dusk and night; fur, no sheen |
 | Assassin01 | figure | 2026-09-30 09:37 | passed | black robes with silver trim, a Katache in each hand with red grips; blades steel without blowout, readable at night |
+| Hommerd01 | figure | 2026-09-30 09:47 | passed | blue painted plate with silver trim, crested helm, dark greaves; metallic 0 keeps it paint, not chrome; axe and shield judged in the arena |

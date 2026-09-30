@@ -1,0 +1,258 @@
+{
+  "item": "Hommerd01",
+  "mu_name": "Hommerd",
+  "mu_name_from": "MuMain's _enum.h:4166: MONSTER_MODEL_HOMMERD = 16, so OpenMonsterModel (ZzzOpenData.cpp:2549-2561, AccessModel(..., L\"Monster\", Type + 1)) loads Monster17.bmd; MODEL_HOMMERD = MODEL_MONSTER01 + 16 (_enum.h:4941) and the server type MONSTER_HOMMERD = 23 (_enum.h:4398). The client's name is 호머드 (ZzzCharacter.cpp:14019), a transliteration. OpenMU's Version075 Devias.cs:194-219 names number 23 'Hommerd' at level 24 with 700 health, 85-90 damage, 29 defense, AttackRate 120, DefenseRate 29, ice resistance 3/255, MoveRange 3, AttackRange 1, ViewRange 5, MoveDelay 400, AttackDelay 1600, respawn 10 s. Seventy-five of them over 0-128 by 0-128 (Devias.cs:66, spawn id 105).",
+  "world": "devias",
+  "object_type": 23,
+  "monster": {
+    "model_index": 16,
+    "scale": 1.15
+  },
+  "monster_from": "ZzzCharacter.cpp:14013-14020, CreateMonster, case MONSTER_HOMMERD:\n\n    OpenMonsterModel(MONSTER_MODEL_HOMMERD);\n    c = CreateCharacter(Key, MODEL_HOMMERD, PositionX, PositionY);\n    c->Weapon[0].Type = MODEL_LARKAN_AXE;\n    c->Weapon[1].Type = MODEL_BIG_ROUND_SHIELD;\n    c->Object.Scale = 1.15f;\n\nNo BlendMesh, no HiddenMesh, no Level. The axe and shield are items hung on link bones, not meshes of the model (Monster17.bmd has one mesh).",
+  "right_hand": "Axe08",
+  "right_hand_bone": "knife_gdf",
+  "left_hand": "Shield11",
+  "left_hand_bone": "hand_bofdgne01",
+  "hands_from": "MODEL_LARKAN_AXE = MODEL_AXE + 7 (_enum.h:1536) and OpenItems loads `AccessModel(MODEL_AXE + i, L\"Data\\\\Item\\\\\", L\"Axe\", i + 1)` for i < 9 (ZzzOpenData.cpp:633-634), so i = 7 is Item/Axe08.bmd, the Larkan Axe. MODEL_BIG_ROUND_SHIELD = MODEL_SHIELD + 10 (_enum.h:1633) and `AccessModel(MODEL_SHIELD + i, ..., L\"Shield\", i + 1)` for i < 15 (ZzzOpenData.cpp:664-665), so i = 10 is Item/Shield11.bmd, the Big Round Shield. Both already built (source/items/weapons/Axe08.json, source/items/shields/Shield11.json); Axe08's why_this_one already names this monster.\n\nThe bones are CreateCharacter's weapon switch, ZzzCharacter.cpp:12036-12039: `case MODEL_HOMMERD: case MODEL_GORGON: c->Weapon[0].LinkBone = 30; c->Weapon[1].LinkBone = 39;`. On Monster17's rig bone 30 is knife_gdf, a child of 25 Bip01 R Hand, and 39 is hand_bofdgne01, a child of 34 Bip01 L Hand - the right way round. Neither carries a vertex. The Gorgon shares the numbers, not necessarily the names: they are this rig's.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 20, 20, 7, 7, 7, 7, 13; the walk (2) is the one locked action. 41 bones, five of them dummies (9, 16, 21, 29, 38); r85 under the pelvis, the toes, fingers past Finger0 and the neck carry no vertex.\n\nPlay speeds are OpenMonsterModel's shared defaults (ZzzOpenData.cpp:2598-2605) and nothing else: 16 is not in the multiplier list (3, 5, 25, 37, 42), not in the walk switch, not in the STOP2 Loop switch (ZzzOpenData.cpp:3353-3361). His sound case (ZzzOpenData.cpp:3495-3501) sets no BoneHead and no speed.",
+  "sheets": {
+    "w_merchant_a": "hommerd_w_merchant_a.png"
+  },
+  "sheet_from": "One mesh in Monster17.bmd: w_merchant_a.jpg, 598 triangles, 477 vertices. Data/Monster/w_merchant_a.OZJ is 128 by 128 with no alpha, decoded under a hommerd_ prefix because the w_merchant family is shared (w_merchant_b.png is already in source/textures). The decode is not byte-identical to any png in source/textures (md5 7ce9d92f).",
+  "sheet_materials": {
+    "w_merchant_a": "plate_steel"
+  },
+  "material_overrides": {
+    "plate_steel": {
+      "metallic": 0.0
+    }
+  },
+  "material_overrides_from": "Giant01's answer to the same kind of sheet, copied rather than re-argued: plate_steel for the hammered isotropic surface a suit of armour needs (painted_steel's grain along v smeared across the Giant's pauldrons and skirt), with metallic 0 so the F0 pull does not drive MU's painted highlights to white chrome, as the Hound's violet plate went. Unseen on this model: judge it in the build.",
+  "sheet_materials_from": "Read off the sheet at 6x and 8x and mapped by bone before it was named. He is a knight in a full suit, and the whole sheet is armour painted in MU's dark blues. The torso (Spine, Spine1, Pelvis, 112 triangles) takes the top-left block: a blue cuirass with a gold fan of wing feathers at the sternum, silver trim and a silver waist line. The upper arms (60) are pauldrons at the top corners of the same block. The thighs (70) are a skirt: a blue centre panel with a silver border between two purple-brown fluted tassets. The forearms (76) are teal vambraces between silver bands on the right-hand strip; the hands (52) are the gauntlet tile under it. The shins and feet (120) are the bottom right - dark greaves with a grey-green sheen - with a blue band at the top of the boot and lavender knee plates. The head (108) is the bottom-left strip, a blue helm with an amber gem on the brow and silver fluting, plus a 24-triangle patch of the top-right blue dome.\n\nNo bare skin, no cloth: plate_steel with metallic 0 (see material_overrides_from). The amber gem is a few texels of the helm and goes with it.",
+  "effects_from": "None. MODEL_HOMMERD / MONSTER_MODEL_HOMMERD / MONSTER_HOMMERD appear in MuMain only at _enum.h:4166, 4398, 4941, ZzzOpenData.cpp:2339 (the name table for the error log), ZzzOpenData.cpp:3495-3501 (sounds), ZzzCharacter.cpp:12036-12039 (link bones) and ZzzCharacter.cpp:14013-14020 (CreateMonster) - grep -rn HOMMERD over src/source. No per-frame switch in MoveCharacterVisual or RenderCharacter, no missile, no blood exception, no flinch exception, no bounding box override. The Larkan Axe and the Big Round Shield carry nothing beyond their meshes (docs/devias-drops.md:171).",
+  "sounds_from": "ZzzOpenData.cpp:3495-3501: mHomord1, mHomord2, mHomordAttack1 and mHomordDie loaded, then SetMonsterSound(..., 56, 57, 58, 58, 59). Offsets from SOUND_MONSTER_BULL1 at 210, so 266, 267, 268, 268, 269 - DSPlaySound.h:213-216's SOUND_MONSTER_HOMORD1, HOMORD2, HOMORDATTACK1, HOMORDDIE. Two idle cries, one attack cry that also serves the flinch, one death. Note the files are spelled Homord. Wired as hommerd_* in sounds.json.",
+  "islands_from": "Ten islands for 598 triangles, the mirrored halves of one painted suit. All plate_steel at metallic 0 (material_overrides), the Giant's precedent: they arrived as skin, the monster profile's default, and were set here to the sheet's reading.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 210,
+      "area": 21339.3,
+      "along": [
+        -43.9,
+        29.9
+      ],
+      "mu_uv": [
+        -0.025,
+        0.394,
+        0.619,
+        1.014
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.977,
+        0.991
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 36,
+      "area": 3496.9,
+      "along": [
+        -27.1,
+        7.5
+      ],
+      "mu_uv": [
+        0.114,
+        0.214,
+        0.99,
+        0.391
+      ],
+      "bake_uv": [
+        0.009,
+        0.296,
+        0.823,
+        0.879
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 36,
+      "area": 3479.8,
+      "along": [
+        -6.1,
+        31.0
+      ],
+      "mu_uv": [
+        0.118,
+        0.213,
+        0.97,
+        0.391
+      ],
+      "bake_uv": [
+        0.009,
+        0.166,
+        0.864,
+        0.95
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 3174.8,
+      "along": [
+        -41.8,
+        -3.3
+      ],
+      "mu_uv": [
+        0.543,
+        0.003,
+        0.998,
+        0.215
+      ],
+      "bake_uv": [
+        0.482,
+        0.743,
+        0.991,
+        0.929
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 42,
+      "area": 3214.3,
+      "along": [
+        4.9,
+        45.0
+      ],
+      "mu_uv": [
+        0.555,
+        -0.001,
+        0.969,
+        0.214
+      ],
+      "bake_uv": [
+        0.701,
+        0.009,
+        0.969,
+        0.277
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 58,
+      "area": 2188.1,
+      "along": [
+        -44.3,
+        -10.4
+      ],
+      "mu_uv": [
+        0.623,
+        0.298,
+        0.997,
+        0.592
+      ],
+      "bake_uv": [
+        0.194,
+        0.427,
+        0.99,
+        0.972
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 58,
+      "area": 2145.9,
+      "along": [
+        19.2,
+        57.8
+      ],
+      "mu_uv": [
+        0.621,
+        0.288,
+        0.873,
+        0.594
+      ],
+      "bake_uv": [
+        0.227,
+        0.413,
+        0.889,
+        0.774
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 92,
+      "area": 2998.5,
+      "along": [
+        -10.1,
+        19.5
+      ],
+      "mu_uv": [
+        0.029,
+        -0.004,
+        0.53,
+        0.211
+      ],
+      "bake_uv": [
+        0.009,
+        0.404,
+        0.979,
+        0.971
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 875.5,
+      "along": [
+        1.1,
+        24.8
+      ],
+      "mu_uv": [
+        0.674,
+        0.837,
+        0.887,
+        0.975
+      ],
+      "bake_uv": [
+        0.326,
+        0.483,
+        0.975,
+        0.882
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 875.5,
+      "along": [
+        1.1,
+        24.8
+      ],
+      "mu_uv": [
+        0.675,
+        0.837,
+        0.888,
+        0.975
+      ],
+      "bake_uv": [
+        0.227,
+        0.296,
+        0.978,
+        0.882
+      ]
+    }
+  ]
+}
