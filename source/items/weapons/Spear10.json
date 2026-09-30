@@ -1,0 +1,192 @@
+{
+  "item": "Spear10",
+  "mu_name": "Bill of Balrog",
+  "mu_name_from": "MuMain loads MODEL_SPEAR + i from Spear{i+1}; _enum.h names MODEL_BILL_OF_BALROG = MODEL_SPEAR + 9, and mu.db agrees: group 3 index 9, Item/Spear10.bmd.",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Bill of Balrog, and the shelf dropped the line for want of a cooked mesh.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(3, 9, 0, 22, 2, 4, true, \"Bill of Balrog\", 63, 76, 102, 25, 74, 0, 0, 80, 50, 0, 0, 0, 1, 1)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 3,
+    "number": 9,
+    "drop_level": 63,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 76,
+    "maximum_damage": 102,
+    "attack_speed": 25,
+    "durability": 74,
+    "requires": {
+      "level": 0,
+      "strength": 80,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "skill": 22
+  },
+  "stance": "scythe",
+  "stance_from": "MuWeapons.cs (the old client's table, LEGACY history 085a8169^:godot/Assets/Items/MuWeapons.cs): WeaponStance.Scythe, TwoHanded: true.",
+  "two_handed": true,
+  "sheets": {
+    "af": "af.png"
+  },
+  "sheet_from": "Data/Item/af.OZT (64x128), from MuMain at c0d74c4. The .bmd names af.tga on all 138 triangles; its alpha cuts 7% away.",
+  "sheet_note": "af is the Balrog's bill: a silver-white blade veined in magenta, a dark red haft band and black spikes.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 50,
+      "area": 6057.2,
+      "along": [
+        108.3,
+        170.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.037,
+        0.86,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.994,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 2691.8,
+      "along": [
+        -126.9,
+        92.3
+      ],
+      "mu_uv": [
+        0.396,
+        0.006,
+        0.999,
+        0.634
+      ],
+      "bake_uv": [
+        0.075,
+        0.007,
+        0.83,
+        0.807
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 611.8,
+      "along": [
+        76.4,
+        115.1
+      ],
+      "mu_uv": [
+        0.411,
+        0.32,
+        0.93,
+        0.453
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.607,
+        0.238
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 16,
+      "area": 575.1,
+      "along": [
+        97.0,
+        126.3
+      ],
+      "mu_uv": [
+        0.411,
+        0.32,
+        0.93,
+        0.453
+      ],
+      "bake_uv": [
+        0.278,
+        0.096,
+        0.624,
+        0.288
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 541.1,
+      "along": [
+        -100.4,
+        -67.7
+      ],
+      "mu_uv": [
+        0.464,
+        0.54,
+        0.999,
+        0.634
+      ],
+      "bake_uv": [
+        0.007,
+        0.027,
+        0.739,
+        0.641
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 539.9,
+      "along": [
+        -100.6,
+        -68.0
+      ],
+      "mu_uv": [
+        0.464,
+        0.54,
+        0.999,
+        0.634
+      ],
+      "bake_uv": [
+        0.007,
+        0.342,
+        0.703,
+        0.773
+      ]
+    }
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5,
+      "f0_desaturation": 1.0
+    }
+  },
+  "cutout": [
+    "af"
+  ],
+  "cutout_from": "Declared, not detected. af.tga's alpha cuts 7% away, and what it cuts is the veins drawn through the blade and a thin line down the haft - MU alpha-tests a .tga, so the Balrog's bill is cracked through.",
+  "material_note": "Six islands on af, sampled per triangle. Island 0 (50) is the bill's blade, silver-white washed red at (138, 99, 96): steel at 0.45. Island 1 (32) is the haft, dark red-brown (93, 35, 11), 2 and 3 (16 each) the black spikes (90, 21, 0), 4 and 5 (12 each) the butt: plate_steel at 0.5 as the Gorgon Staff's pole, with desaturation 1.0 so the red haft does not go grey. MU scrolls this model's BlendMeshTexCoordV (ZzzObject.cpp:5267) but sets no BlendMesh, so nothing is drawn added and the scroll moves nothing; no glow."
+}

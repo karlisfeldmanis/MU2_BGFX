@@ -1,0 +1,146 @@
+{
+  "item": "GloveMale04",
+  "mu_name": "Legendary Gloves",
+  "mu_name_from": "MuMain loads MODEL_GLOVES + i from GloveMale{i+1}, so file 04 is index 3, which openmu's 0.75 Armors.cs names the Legendary Gloves.",
+  "profile": "armour",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Legendary set; the body was built for Apostle Devin's reward and the shelf dropped the other four pieces for want of a cooked mesh.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(3, \"Legendary Gloves\", 44, 11, 0, 42, 20, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so the group is 10.",
+    "group": 10,
+    "number": 3,
+    "drop_level": 44,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 11,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "attack_speed": 0,
+    "durability": 42,
+    "requires": {
+      "level": 0,
+      "strength": 20,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone."
+  },
+  "sheets": [
+    "gloves_13m.png",
+    "hide_m.png"
+  ],
+  "sheet_from": "Data/Player/gloves_13m.OZJ (64x64) and hide_m.jpg, from MuMain's Player tree at c0d74c4. The .bmd names gloves_13m.jpg (158 triangles) and hide_m.jpg (6).",
+  "sheet_note": "gloves_13m is dark blue cuffs banded in gold with gold buckles, mean (40, 30, 41).",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.42,
+      "f0_from_art": 0.7,
+      "f0_desaturation": 1.0,
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "The Legendary Armor's override (ArmorMale04.json), so the set wears one metal: at the library's values the dark blue sheet lifts to grey chrome and grains. Desaturation 1.0 keeps the blue and the gold, f0 0.42 at 0.70 of the art keeps the filigree legible, roughness 0.55 takes the mirror off.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Legendary Armor: a dark small sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 68,
+      "area": 1826.5,
+      "along": [
+        -9.6,
+        7.9
+      ],
+      "mu_uv": [
+        0.028,
+        -0.001,
+        0.863,
+        0.999
+      ],
+      "bake_uv": [
+        0.218,
+        0.008,
+        0.774,
+        0.94
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 68,
+      "area": 1824.8,
+      "along": [
+        -9.6,
+        7.9
+      ],
+      "mu_uv": [
+        0.028,
+        -0.001,
+        0.863,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.788,
+        0.94
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 14,
+      "area": 886.1,
+      "along": [
+        -13.1,
+        12.4
+      ],
+      "mu_uv": [
+        0.881,
+        0.014,
+        0.994,
+        0.98
+      ],
+      "bake_uv": [
+        0.074,
+        0.008,
+        0.857,
+        0.96
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 14,
+      "area": 886.1,
+      "along": [
+        -13.1,
+        12.4
+      ],
+      "mu_uv": [
+        0.881,
+        0.014,
+        0.994,
+        0.98
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.992,
+        0.96
+      ]
+    }
+  ]
+}

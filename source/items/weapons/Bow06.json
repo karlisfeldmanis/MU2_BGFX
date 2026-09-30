@@ -1,0 +1,240 @@
+{
+  "item": "Bow06",
+  "mu_name": "Silver Bow",
+  "mu_name_from": "ZzzOpenData.cpp loads the bows as MODEL_BOW + i from Bow{i+1}, so number 5 is Bow06.bmd; _enum.h names MODEL_SILVER_BOW = MODEL_BOW + 5, and mu.db agrees.",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Silver Bow, and the shelf dropped the line for want of a cooked mesh.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(4, 5, 1, 24, 2, 4, true, \"Silver Bow\", 56, 59, 71, 40, 48, 0, 0, 30, 100, 0, 0, 0, 0, 1)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 4,
+    "number": 5,
+    "drop_level": 56,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 59,
+    "maximum_damage": 71,
+    "attack_speed": 40,
+    "durability": 48,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 100,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "skill": 24
+  },
+  "stance": "bow",
+  "stance_from": "MuWeapons.cs (the old client's table, LEGACY history 085a8169^:godot/Assets/Items/MuWeapons.cs): WeaponStance.Bow, TwoHanded: true. PLAYER_STOP_BOW 8, PLAYER_WALK_BOW 21.",
+  "two_handed": true,
+  "fires": "Arrow01",
+  "fires_from": "ZzzEffectMagicSkill.cpp's CreateArrow: `case MODEL_SILVER_BOW: CreateEffect(MODEL_ARROW, ...)`, the wooden arrow built in source/effects/missiles.",
+  "sheets": {
+    "bow06": "bow06.png",
+    "bow05_jpg": "bow05.jpg.png",
+    "bow01": "bow01.png",
+    "bow05_tga": "bow05.tga.png"
+  },
+  "sheet_from": "Data/Item/bow06.OZJ (64x64), and bow05.OZJ, bow05.ozt and bow01.OZJ already in the tree from the Tiger Bow. The .bmd names bow06.jpg on 80 triangles, bow05.jpg on 13, bow01.jpg on 10 (the nocked arrow) and bow05.tga on 3 (the string card).",
+  "sheet_note": "bow06 is silver limbs with gold scrollwork and a red gem, on a tan grid of padding. bow05.jpg is the Tiger Bow's gold fittings, bow05.tga its string card, bow01 the wooden arrow.",
+  "cutout": [
+    "bow05_tga"
+  ],
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 10,
+      "area": 481.2,
+      "along": [
+        5.4,
+        7.4
+      ],
+      "mu_uv": [
+        0.941,
+        0.014,
+        0.98,
+        0.51
+      ],
+      "bake_uv": [
+        0.007,
+        0.329,
+        0.167,
+        0.549
+      ],
+      "nocked": true,
+      "nocked_from": "bow01's ten triangles, bound to Bone10 - the arrow on the string."
+    },
+    {
+      "island": 1,
+      "material": "leather_wrap",
+      "triangles": 13,
+      "area": 674.0,
+      "along": [
+        -77.5,
+        92.0
+      ],
+      "mu_uv": [
+        0.323,
+        0.688,
+        0.34,
+        0.756
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.037,
+        0.037
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 1,
+      "area": 41.7,
+      "along": [
+        3.7,
+        8.8
+      ],
+      "mu_uv": [
+        0.569,
+        0.468,
+        0.889,
+        0.698
+      ],
+      "bake_uv": [
+        0.215,
+        0.398,
+        0.355,
+        0.499
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 2,
+      "area": 234.7,
+      "along": [
+        -0.9,
+        13.4
+      ],
+      "mu_uv": [
+        0.002,
+        0.79,
+        0.568,
+        0.999
+      ],
+      "bake_uv": [
+        0.325,
+        0.731,
+        0.572,
+        0.822
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 34,
+      "area": 3523.0,
+      "along": [
+        -79.9,
+        5.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.443,
+        0.962
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather_wrap",
+      "triangles": 6,
+      "area": 504.1,
+      "along": [
+        -1.2,
+        11.2
+      ],
+      "mu_uv": [
+        -0.003,
+        0.33,
+        0.361,
+        0.978
+      ],
+      "bake_uv": [
+        0.007,
+        0.07,
+        0.486,
+        0.479
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 34,
+      "area": 3523.0,
+      "along": [
+        7.0,
+        92.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.282,
+        0.279,
+        0.994,
+        0.994
+      ]
+    },
+    {
+      "island": 7,
+      "material": "leather_wrap",
+      "triangles": 6,
+      "area": 504.1,
+      "along": [
+        -1.0,
+        11.3
+      ],
+      "mu_uv": [
+        -0.003,
+        0.33,
+        0.361,
+        0.978
+      ],
+      "bake_uv": [
+        0.486,
+        0.007,
+        0.754,
+        0.634
+      ]
+    }
+  ],
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, as on every bow: this rig's Bone10 track is the Tiger Bow's to the decimal (-46.6, -23.4, -8.2, +4.4, then -54.5 on key 4), the arrow's root pulled back and let go.",
+  "material_note": "Eight islands, sampled per triangle at their MU-UV centres. Island 0 is the ten triangles of bow01, the nocked arrow, bound to Bone10 as on the Tiger Bow: wood. Islands 4 and 6 (34 each) are the limbs on bow06, silver with gold scrollwork at (146, 127, 103): steel at 0.45. Islands 5 and 7 (6 each) are the grip at the middle, (168, 144, 114): leather_wrap. Island 1 is bow05.jpg's thirteen triangles spanning the bow tip to tip one plane behind it - the string - leather_wrap as the crossbows' strings. Islands 2 and 3 are bow05.tga's three triangles, the cut-out card: cloth, as the Tiger Bow's.",
+  "glint_note": "Not in this recipe, as on the Tiger Bow: ZzzCharacter.cpp's linked-weapon switch puts MODEL_SILVER_BOW with the Tiger Bow and calls RenderBrightEffect for an orange glint on the limb joints. That is an effect for the client, not a material."
+}

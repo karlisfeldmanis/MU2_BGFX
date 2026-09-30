@@ -1,0 +1,101 @@
+{
+  "item": "BootMale02",
+  "mu_name": "Dragon Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1}, so file 02 is index 1, which openmu's 0.75 Armors.cs names the Dragon Boots.",
+  "profile": "armour",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Dragon set; the body was built for Apostle Devin's reward and the shelf dropped the other four pieces for want of a cooked mesh.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(1, 6, 2, 2, \"Dragon Boots\", 54, 15, 2, 68, 120, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 1,
+    "drop_level": 54,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 15,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 2,
+    "durability": 68,
+    "requires": {
+      "level": 0,
+      "strength": 120,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": [
+    "boots_03.png"
+  ],
+  "sheet_from": "Data/Player/boots_03.OZJ (64x64), from MuMain's Player tree at c0d74c4. The .bmd names boots_03.jpg on all 152 triangles.",
+  "sheet_note": "boots_03 is red greaves with bone-gold claws over the foot and knee, mean (94, 57, 48).",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.5,
+      "f0_from_art": 0.6,
+      "f0_desaturation": 1.0,
+      "roughness": 0.42
+    }
+  },
+  "material_overrides_why": "The Dragon Armor's override (ArmorMale02.json), so the set wears one metal: at the library's values the red lacquer and bone-gold lift to silver chrome and mirror MU's dithered paint as sparkle. Desaturation 1.0 keeps the red, f0 0.50 at 0.60 of the art and roughness 0.42 keep the metal the user asked for on the body.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Dragon Armor: a dark small sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 76,
+      "area": 5845.0,
+      "along": [
+        8.6,
+        67.3
+      ],
+      "mu_uv": [
+        -0.002,
+        -0.002,
+        0.987,
+        0.995
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.993,
+        0.93
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 76,
+      "area": 5843.4,
+      "along": [
+        -76.0,
+        7.2
+      ],
+      "mu_uv": [
+        -0.002,
+        -0.002,
+        0.987,
+        0.995
+      ],
+      "bake_uv": [
+        0.009,
+        0.007,
+        0.966,
+        0.979
+      ]
+    }
+  ]
+}

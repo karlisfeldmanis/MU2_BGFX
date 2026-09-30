@@ -98,51 +98,51 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Stone04 | world | 2026-09-22 11:30 | passed | rebuilt on today's pipeline: three small stones on ston01, pale grey on the turf at noon and dusk, the fire's light on them at night |
 | Stone05 | world | 2026-09-22 11:31 | passed | rebuilt on today's pipeline: a ring of stones on ston01, pale grey with the rock relief; reads at noon and dusk, fire-lit at night |
 | Straw01 | world | 2026-09-25 11:42 | passed | tan straw bundles with their bindings read at noon, warm on the fire side at dusk, dark away from it at night; the softened comb does not crawl on the sheet. Judged on the uncommitted cutout_soften + uv_heal recipe |
-| NewFace01 | bust | 2026-09-27 22:26 | awaiting |  |
-| NewFace02 | bust | 2026-09-27 22:27 | awaiting |  |
-| NewFace03 | bust | 2026-09-27 22:28 | awaiting |  |
-| Object01 | world | 2026-09-28 19:33 | passed | noria: broad-leaved plant, clean cutout, a cooler green than the grass -- reads tropical in Noria's light |
-| Object02 | world | 2026-09-28 19:35 | passed | noria, judged in the world: white-headed flower on thin stalks, subtle among the grass, sways |
-| Object03 | world | 2026-09-28 19:37 | passed | noria, in the world: yellow cup flowers on striped stalks, static as in MU |
-| Object04 | world | 2026-09-28 19:39 | passed | noria, in the world: clusters of brown spiky seed pods, MU's own art, reads as undergrowth |
-| Object05 | world | 2026-09-28 19:39 | passed | noria, in the world: low rosettes with cream-edged leaves, tropical |
-| Object06 | world | 2026-09-28 19:43 | passed | noria, in the world: small ferns in the grass |
-| Object07 | world | 2026-09-28 19:43 | passed | noria, in the world: vine climbing Object25's tree; MU's own saturated green, the brightest green in Noria -- a desaturate knob if it is judged too much in game |
-| Object08 | world | 2026-09-28 19:45 | passed | noria, in the world: large single taro leaves, tropical |
-| Object09 | world | 2026-09-28 19:45 | passed | noria, in the world: blue-capped mushrooms, crisp |
-| Object10 | world | 2026-09-28 19:46 | passed | noria, in the world: flower-lamp, the bud glows; its 14 lights placed; sways |
-| Object11 | world | 2026-09-28 19:46 | passed | noria, in the world: small wooden signboard |
-| Object12 | world | 2026-09-28 19:47 | passed | noria, in the world: a patch of MU's flowers, sways |
-| Object13 | world | 2026-09-28 19:47 | passed | noria, in the world: a patch of MU's flowers, sways |
-| Object14 | world | 2026-09-28 19:47 | passed | noria, in the world: a patch of MU's flowers, sways |
-| Object15 | world | 2026-09-28 19:48 | passed | noria, in the world: a patch of MU's flowers, sways |
-| Object16 | world | 2026-09-28 19:49 | passed | noria, in the world: a patch of MU's flowers, sways |
-| Object17 | world | 2026-09-28 19:49 | passed | noria, in the world: a patch of MU's flowers, sways |
-| Object18 | world | 2026-09-28 19:51 | passed | noria, in the world: big tree with yellow caps, its lamps placed, sways |
-| Object19 | world | 2026-09-28 19:52 | passed | noria, in the world: contraption in scrolling green ribbons (MU's BlendMeshTexCoordV), 4 s clip |
-| Object20 | world | 2026-09-28 19:52 | passed | noria, in the world: MU's translucent yellow light arches |
-| Object21 | world | 2026-09-28 19:54 | passed | noria, in the world: MU's plants, clip playing where it has one |
-| Object22 | world | 2026-09-28 19:55 | passed | noria, in the world: MU's plants, clip playing where it has one |
-| Object23 | world | 2026-09-28 19:56 | passed | noria, in the world: MU's plants, clip playing where it has one |
-| Object24 | world | 2026-09-28 19:57 | passed | noria, in the world: MU's plants and trees |
+| NewFace01 | bust | 2026-09-28 23:37 | awaiting |  |
+| NewFace02 | bust | 2026-09-28 23:37 | awaiting |  |
+| NewFace03 | bust | 2026-09-28 23:37 | awaiting |  |
+| Object01 | world | 2026-09-29 19:38 | awaiting |  |
+| Object02 | world | 2026-09-29 21:24 | awaiting |  |
+| Object03 | world | 2026-09-29 21:29 | awaiting |  |
+| Object04 | world | 2026-09-29 20:39 | awaiting |  |
+| Object05 | world | 2026-09-29 20:02 | awaiting |  |
+| Object06 | world | 2026-09-29 21:22 | awaiting |  |
+| Object07 | world | 2026-09-29 21:01 | awaiting |  |
+| Object08 | world | 2026-09-29 21:51 | awaiting |  |
+| Object09 | world | 2026-09-29 21:51 | awaiting |  |
+| Object10 | world | 2026-09-29 21:27 | awaiting |  |
+| Object11 | world | 2026-09-29 21:01 | awaiting |  |
+| Object12 | world | 2026-09-29 19:57 | awaiting |  |
+| Object13 | world | 2026-09-29 20:59 | awaiting |  |
+| Object14 | world | 2026-09-29 20:59 | awaiting |  |
+| Object15 | world | 2026-09-29 20:10 | awaiting |  |
+| Object16 | world | 2026-09-29 20:00 | awaiting |  |
+| Object17 | world | 2026-09-29 20:36 | awaiting |  |
+| Object18 | world | 2026-09-29 19:59 | awaiting |  |
+| Object19 | world | 2026-09-29 20:37 | awaiting |  |
+| Object20 | world | 2026-09-29 19:57 | awaiting |  |
+| Object21 | world | 2026-09-29 21:46 | awaiting |  |
+| Object22 | world | 2026-09-29 21:52 | awaiting |  |
+| Object23 | world | 2026-09-29 20:56 | awaiting |  |
+| Object24 | world | 2026-09-29 21:27 | awaiting |  |
 | Object25 | world | 2026-09-28 19:58 | passed | noria, in the world: MU's plants and trees |
-| Object26 | world | 2026-09-28 19:59 | passed | noria, in the world: MU's plants and trees |
+| Object26 | world | 2026-09-29 20:59 | awaiting |  |
 | Object27 | world | 2026-09-28 20:03 | passed | noria, in the world: lilies, palm, roots |
-| Object28 | world | 2026-09-28 20:04 | passed | noria, in the world: lilies, palm, roots |
+| Object28 | world | 2026-09-29 21:31 | awaiting |  |
 | Object29 | world | 2026-09-28 20:04 | passed | noria, in the world: lilies, palm, roots |
-| Object30 | world | 2026-09-28 20:08 | passed | noria, in the world: branch, the hollow giant tree, boulders |
-| Object31 | world | 2026-09-28 20:10 | passed | noria, in the world: branch, the hollow giant tree, boulders |
-| Object32 | world | 2026-09-28 20:10 | passed | noria, in the world: branch, the hollow giant tree, boulders |
+| Object30 | world | 2026-09-29 21:47 | awaiting |  |
+| Object31 | world | 2026-09-29 21:48 | awaiting |  |
+| Object32 | world | 2026-09-29 21:53 | awaiting |  |
 | Object33 | world | 2026-09-28 20:12 | passed | noria, in the world: stones, the slim plant |
-| Object34 | world | 2026-09-28 20:13 | passed | noria, in the world: stones, the slim plant |
-| Object35 | world | 2026-09-28 20:14 | passed | noria, in the world: stones, the slim plant |
-| Object36 | world | 2026-09-28 20:15 | passed | noria, in the world: bluebells with their lamp, bushes, light pools |
-| Object37 | world | 2026-09-28 20:15 | passed | noria, in the world: bluebells with their lamp, bushes, light pools |
-| Object38 | world | 2026-09-28 20:16 | passed | noria, in the world: bluebells with their lamp, bushes, light pools |
-| Object40 | world | 2026-09-28 20:18 | passed | noria, in the world: the Chaos Machine, its clip playing; its lights, sparks and sound owed (effects pass) |
-| Object41 | world | 2026-09-28 20:19 | passed | noria, in the world: the goblin at the machine, 2 s clip |
-| Object42 | world | 2026-09-28 20:20 | passed | noria, in the world: Chaos Machine part; its scroll owed where U (effects pass) |
-| Object43 | world | 2026-09-28 20:20 | passed | noria, in the world: Chaos Machine part; its scroll owed where U (effects pass) |
+| Object34 | world | 2026-09-29 21:30 | awaiting |  |
+| Object35 | world | 2026-09-29 21:26 | awaiting |  |
+| Object36 | world | 2026-09-29 21:26 | awaiting |  |
+| Object37 | world | 2026-09-29 21:33 | awaiting |  |
+| Object38 | world | 2026-09-29 20:59 | awaiting |  |
+| Object40 | world | 2026-09-29 21:52 | awaiting |  |
+| Object41 | world | 2026-09-29 21:00 | awaiting |  |
+| Object42 | world | 2026-09-29 21:33 | awaiting |  |
+| Object43 | world | 2026-09-29 21:28 | awaiting |  |
 | Silk | set | 2026-09-28 21:05 | passed | purple quilted silk with gold trim and the visored hood, MU's own colours; skin islands right; nothing blown at noon, dusk or night |
 | Wind | set | 2026-09-28 21:10 | passed | deep blue quilted set with the winged helm, MU's own; skin islands right; holds at all three times |
 | Bow03 | arm | 2026-09-28 21:13 | passed | green elven limbs and binding, MU's own; arrow nocked |
@@ -152,7 +152,99 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Shield04 | arm | 2026-09-28 21:18 | passed | pale feathered wings round a brass boss, MU's own; the wing edges are cut, not blended as MU blends them -- a closer look owed in the studio |
 | Spirit | set | 2026-09-28 21:25 | passed | dark green plate with pale fins, MU's own; bare arms skin; one boot highlight flashes white at dusk, a highlight and not a material |
 | Guardian | set | 2026-09-28 22:10 | passed | recooked with separate_meshes: the 44 arm triangles are skin at metal 0, the plate still plate_steel; MU's silver plate with gold trim |
+| Object74 | world | 2026-09-29 20:38 | awaiting |  |
+| Object59 | world | 2026-09-29 20:38 | awaiting |  |
+| Object86 | world | 2026-09-29 20:38 | awaiting |  |
+| Object70 | world | 2026-09-29 20:38 | awaiting |  |
+| Object85 | world | 2026-09-29 20:39 | awaiting |  |
+| Object100 | world | 2026-09-29 20:40 | awaiting |  |
+| Object78 | world | 2026-09-29 20:41 | awaiting |  |
+| Object71 | world | 2026-09-29 20:41 | awaiting |  |
+| Object60 | world | 2026-09-29 20:41 | awaiting |  |
+| Object79 | world | 2026-09-29 20:43 | awaiting |  |
+| Object94 | world | 2026-09-29 20:43 | awaiting |  |
+| Double Poleaxe | arm | 2026-09-29 21:14 | passed | steel 0.45, pole plate 0.5: silver crescents and green ornament read, no black head, no flare on the shaft |
+| Halberd | arm | 2026-09-29 21:15 | passed | steel 0.45: silver blades, bronze-gold socket (brass); the round-shaft flare at 0.21 is gone |
+| Flail | arm | 2026-09-29 21:38 | passed | frozen at action 1 (MU's rest), chain cards cut into 19 ring segments, bake_share 0.05 so the head keeps the map: handle, diamond grip, chain and spiked ball all read. Its swing clip is not played -- held items are rigid |
+| Elven Axe | arm | 2026-09-29 21:39 | passed | wood haft reads warm; the crescent head is a one-sided card seen near edge-on in the studio's flat pose, plate_steel after steel stayed black; to be judged in the hand |
+| Giant Trident | arm | 2026-09-29 21:18 | passed | steel 0.45 prongs, plate 0.5 pole: silver trident at noon and dusk, no flare |
+| Sword of Salamander | arm | 2026-09-29 21:18 | passed | steel 0.45: white blade and gold guard from the lit side; on edge its shaded face mirrors the ground -- the pose, as the Serpent Sword lying flat shows |
+| Object77 | world | 2026-09-29 20:57 | awaiting |  |
+| Object82 | world | 2026-09-29 20:57 | awaiting |  |
+| Object99 | world | 2026-09-29 20:58 | awaiting |  |
+| Object57 | world | 2026-09-29 20:59 | awaiting |  |
+| Object69 | world | 2026-09-29 20:59 | awaiting |  |
+| Object39 | world | 2026-09-29 20:59 | awaiting |  |
+| Object75 | world | 2026-09-29 21:00 | awaiting |  |
+| Object83 | world | 2026-09-29 21:00 | awaiting |  |
+| Object62 | world | 2026-09-29 21:01 | awaiting |  |
+| Object64 | world | 2026-09-29 21:22 | awaiting |  |
+| Object84 | world | 2026-09-29 21:22 | awaiting |  |
+| Object63 | world | 2026-09-29 21:23 | awaiting |  |
+| Object80 | world | 2026-09-29 21:24 | awaiting |  |
+| Object96 | world | 2026-09-29 21:26 | awaiting |  |
+| Object72 | world | 2026-09-29 21:28 | awaiting |  |
+| Object98 | world | 2026-09-29 21:28 | awaiting |  |
+| Object93 | world | 2026-09-29 21:29 | awaiting |  |
+| Object45 | world | 2026-09-29 21:29 | awaiting |  |
+| Object55 | world | 2026-09-29 21:29 | awaiting |  |
+| Object97 | world | 2026-09-29 21:31 | awaiting |  |
+| Object73 | world | 2026-09-29 21:31 | awaiting |  |
+| Object76 | world | 2026-09-29 21:32 | awaiting |  |
+| Object81 | world | 2026-09-29 21:32 | awaiting |  |
+| Object91 | world | 2026-09-29 21:34 | awaiting |  |
+| Object88 | world | 2026-09-29 21:35 | awaiting |  |
+| Object67 | world | 2026-09-29 21:46 | awaiting |  |
+| Object87 | world | 2026-09-29 21:47 | awaiting |  |
+| Object89 | world | 2026-09-29 21:47 | awaiting |  |
+| Object47 | world | 2026-09-29 21:48 | awaiting |  |
+| Object54 | world | 2026-09-29 21:48 | awaiting |  |
+| Object56 | world | 2026-09-29 21:48 | awaiting |  |
+| Object51 | world | 2026-09-29 21:49 | awaiting |  |
+| Object52 | world | 2026-09-29 21:50 | awaiting |  |
+| Object50 | world | 2026-09-29 21:50 | awaiting |  |
+| Object68 | world | 2026-09-29 21:50 | awaiting |  |
+| Object44 | world | 2026-09-29 21:52 | awaiting |  |
+| Object46 | world | 2026-09-29 21:52 | awaiting |  |
+| Object95 | world | 2026-09-29 21:52 | awaiting |  |
+| Object66 | world | 2026-09-29 21:53 | awaiting |  |
+| Object48 | world | 2026-09-29 21:53 | awaiting |  |
+| Object49 | world | 2026-09-29 21:53 | awaiting |  |
+| Object53 | world | 2026-09-29 21:54 | awaiting |  |
+| Object58 | world | 2026-09-29 21:54 | awaiting |  |
+| Object65 | world | 2026-09-29 21:55 | awaiting |  |
+| Legendary Sword | arm | 2026-09-29 22:17 | passed | steel 0.45: twin serrated white blade and purple guard from the lit side; on edge its shaded face goes dark, the pose as with the Salamander |
+| Larkan Axe | arm | 2026-09-29 22:17 | passed | brass head reads as MU's ornate gold double axe, dark grip and haft; silver bit reads warm (shares the brass island) |
+| Serpent Spear | arm | 2026-09-29 22:18 | passed | silver blades, gold serpent collars (brass), plate pole at 0.5: reads at noon from every angle |
+| Gorgon Staff | arm | 2026-09-29 22:19 | passed | bone skull, dark plate frame with gold trim, tan shaft; two-handed as 0.75 |
+| Blade | arm | 2026-09-29 23:04 | awaiting |  |
+| Serpent Shield | arm | 2026-09-29 23:03 | passed | fangs glow as MU's two thin yellow fangs at BlendMeshLight alone (were orange bars at the world's glow_strength 2.0); ivory scrolls and salmon tail tip are MU's paint (raw-sheet render) |
+| Bronze Shield | arm | 2026-09-29 23:05 | awaiting |  |
+| Light Spear | arm | 2026-09-29 23:07 | awaiting |  |
+| Double Blade | arm | 2026-09-29 23:08 | awaiting |  |
+| Legendary Shield | arm | 2026-09-29 23:11 | awaiting |  |
+| Dragon | set | 2026-09-30 09:17 | passed | full set: red lacquer and bone-gold helm, scaled legs, clawed gauntlets and greaves; helm at the body's first override (0.42/0.70/0.55) since its horns mirrored the fire as glowing spikes at the body's 0.50/0.60/0.42; whole, no floating parts |
+| Short Bow | arm | 2026-09-29 23:42 | awaiting |  |
+| Bow | arm | 2026-09-29 23:42 | awaiting |  |
+| Elven Bow | arm | 2026-09-29 23:42 | awaiting |  |
+| Battle Bow | arm | 2026-09-29 23:42 | awaiting |  |
+| Tiger Bow | arm | 2026-09-29 23:42 | awaiting |  |
+| Legendary | set | 2026-09-30 09:06 | passed | full set: blue enamel under gold filigree on helm, mantle, tasset, cuffs and greaves; face and fingers skin (glove islands 2-3), toe caps brass 0.6; whole, no floating parts, no see-through |
+| Crossbow | arm | 2026-09-29 23:42 | awaiting |  |
+| Golden Crossbow | arm | 2026-09-29 23:44 | awaiting |  |
+| Arquebus | arm | 2026-09-29 23:45 | awaiting |  |
+| Light Crossbow | arm | 2026-09-29 23:45 | passed | played on the shot: string and prod draw through action 51 on the CrossbowGuard bench, key 0 identical to the rigid rest |
+| Sword16 | arm | 2026-09-30 00:07 | passed | broad grey steel blade with dark grip, whole and solid at noon/dusk/night, no blowout |
+| Spear09 | arm | 2026-09-30 00:10 | passed | dark blue-steel crescent blade, thin pole and spike tip read whole; small highlight on the collar only, no blowout |
 | Worm01 | figure | 2026-09-30 09:22 | passed | pale shaggy hide, red maw and fangs read at noon, dusk and night; fur, no sheen |
 | Assassin01 | figure | 2026-09-30 09:37 | passed | black robes with silver trim, a Katache in each hand with red grips; blades steel without blowout, readable at night |
+| Staff06 | arm | 2026-09-30 09:57 | passed | fixed by dropping Staff06.rig.json (static 4-bone rig borrowed player.rig.json and 'Mesh01' matched the player's hand bone, tearing 40 verts off); re-shot at 2.0 and 3.2 m: cyan orb head, blue-gold wings at the foot, knot mid-shaft, MU's added shield11_a shimmer as the shaft between -- continuous, no gaps |
+| Sword15 | arm | 2026-09-30 09:45 | passed | steel 0.45 blade with sword15_2's blue lightning added and breathing over it, ornate guard and grip whole; no blowout |
 | Hommerd01 | figure | 2026-09-30 09:47 | passed | blue painted plate with silver trim, crested helm, dark greaves; metallic 0 keeps it paint, not chrome; axe and shield judged in the arena |
+| Sword13 | arm | 2026-09-30 09:50 | passed | silver blade with cut-out serrated teeth along both edges, brass 0.6 winged guard and pommel; whole, teeth solid not rectangles |
+| Spear10 | arm | 2026-09-30 09:53 | passed | silver-red bill with its veins cut through as MU alpha-tests af.tga, red haft (plate, desaturation 1.0) and black spikes; whole, no floating parts |
 | EliteYeti01 | figure | 2026-09-30 09:54 | passed | pale grey shaggy pelt with dark marks, steel-blue spikes on crown and shoulders; fur and chitin, no sheen |
+| Bow06 | arm | 2026-09-30 10:01 | passed | silver steel limbs with gold scroll paint, nocked arrow and string drawn, cut-out string cards solid; whole at noon/dusk/night |
+| IceMonster01 | figure | 2026-09-30 10:12 | awaiting |  |
+| CrossBow05 | arm | 2026-09-30 10:12 | passed | serpent-scaled limbs and stock in brass 0.6 with dark scale paint, bolt on the rail and string drawn mid-clip; whole, no blowout |
+| CrossBow06 | arm | 2026-09-30 10:20 | passed | drawn as MuMain draws it: ZzzObject.cpp:5243-5246 gives MODEL_BLUEWING_CROSSBOW BlendMesh -2 with BlendMeshLight sin*0.3+0.7, and ZzzBMD.cpp:1509 draws every mesh added when BlendMesh <= -2, so the whole crossbow is a breathing additive ghost; jk00 ships as a glow, stock and wings whole, pale steel-blue and see-through. jk01's coincident shell is welded away |

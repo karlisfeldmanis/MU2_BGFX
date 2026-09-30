@@ -1,0 +1,101 @@
+{
+  "item": "GloveMale02",
+  "mu_name": "Dragon Gloves",
+  "mu_name_from": "MuMain loads MODEL_GLOVES + i from GloveMale{i+1}, so file 02 is index 1, which openmu's 0.75 Armors.cs names the Dragon Gloves.",
+  "profile": "armour",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Dragon set; the body was built for Apostle Devin's reward and the shelf dropped the other four pieces for want of a cooked mesh.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateGloves(1, \"Dragon Gloves\", 52, 14, 6, 68, 120, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateGloves(number, name, dropLevel, defense, attackSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 5, so the group is 10.",
+    "group": 10,
+    "number": 1,
+    "drop_level": 52,
+    "drops_from_monsters": true,
+    "slot": 5,
+    "width": 2,
+    "height": 2,
+    "defense": 14,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "attack_speed": 6,
+    "durability": 68,
+    "requires": {
+      "level": 0,
+      "strength": 120,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": [
+    "gloves_03.png"
+  ],
+  "sheet_from": "Data/Player/gloves_03.OZJ (64x64), from MuMain's Player tree at c0d74c4. The .bmd names gloves_03.jpg on all 156 triangles.",
+  "sheet_note": "gloves_03 is bone-gold clawed gauntlets with a red cuff, mean (111, 83, 69).",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.5,
+      "f0_from_art": 0.6,
+      "f0_desaturation": 1.0,
+      "roughness": 0.42
+    }
+  },
+  "material_overrides_why": "The Dragon Armor's override (ArmorMale02.json), so the set wears one metal: at the library's values the red lacquer and bone-gold lift to silver chrome and mirror MU's dithered paint as sparkle. Desaturation 1.0 keeps the red, f0 0.50 at 0.60 of the art and roughness 0.42 keep the metal the user asked for on the body.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Dragon Armor: a dark small sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 78,
+      "area": 2001.2,
+      "along": [
+        -53.1,
+        -23.5
+      ],
+      "mu_uv": [
+        0.022,
+        0.008,
+        0.98,
+        1.007
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.78,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 78,
+      "area": 1957.1,
+      "along": [
+        4.4,
+        38.8
+      ],
+      "mu_uv": [
+        0.022,
+        0.008,
+        0.98,
+        1.007
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.983,
+        0.984
+      ]
+    }
+  ]
+}

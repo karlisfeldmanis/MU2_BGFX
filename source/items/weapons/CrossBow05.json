@@ -1,0 +1,191 @@
+{
+  "item": "CrossBow05",
+  "mu_name": "Serpent Crossbow",
+  "mu_name_from": "ZzzOpenData.cpp loads the crossbows as MODEL_BOW + i + 8 from CrossBow{i+1}, so number 12 is CrossBow05.bmd; _enum.h names MODEL_SERPENT_CROSSBOW = MODEL_BOW + 12, and mu.db agrees.",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Serpent Crossbow, and the shelf dropped the line for want of a cooked mesh.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(4, 12, 0, 24, 2, 3, true, \"Serpent Crossbow\", 48, 50, 61, 40, 45, 0, 0, 30, 100, 0, 0, 0, 0, 1)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 4,
+    "number": 12,
+    "drop_level": 48,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 50,
+    "maximum_damage": 61,
+    "attack_speed": 40,
+    "durability": 45,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 100,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "skill": 24
+  },
+  "stance": "crossbow",
+  "stance_from": "MuWeapons.cs (the old client's table, LEGACY history 085a8169^:godot/Assets/Items/MuWeapons.cs): WeaponStance.Crossbow, TwoHanded: true. Actions 9 and 22.",
+  "two_handed": true,
+  "fires_note": "ZzzEffectMagicSkill.cpp: `case MODEL_SERPENT_CROSSBOW: CreateEffect(MODEL_ARROW_THUNDER, ...)`. ArrowThunder is not built, so `fires` is left out and src/game/fx/arrow.cpp's modelFor sends number 12 to the steel bolt.",
+  "sheets": {
+    "crossbow05": "crossbow05.png"
+  },
+  "sheet_from": "Data/Item/crossbow05.OZJ (128x64), from MuMain, already in the tree as the other crossbows' bolt sheet. The .bmd names crossbow05.jpg on all 165 triangles. The .obj was exported earlier by another session; re-exported from MuMain it is identical.",
+  "sheet_note": "crossbow05 is gold serpent-scale fittings and a white-and-cyan scaled body, with the bolt strip along the top.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wrought_iron",
+      "triangles": 10,
+      "area": 492.3,
+      "along": [
+        12.4,
+        14.9
+      ],
+      "mu_uv": [
+        0.532,
+        0.377,
+        0.898,
+        0.451
+      ],
+      "bake_uv": [
+        0.009,
+        0.187,
+        0.498,
+        0.313
+      ],
+      "nocked": true,
+      "nocked_from": "Ten triangles bound to Bone02, the carriage chain the clip slides - the bolt."
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 114,
+      "area": 9534.5,
+      "along": [
+        -0.9,
+        62.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.102,
+        0.999,
+        0.995
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.965,
+        0.992
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 10,
+      "area": 248.8,
+      "along": [
+        -8.2,
+        6.9
+      ],
+      "mu_uv": [
+        0.839,
+        -0.001,
+        0.875,
+        0.176
+      ],
+      "bake_uv": [
+        0.058,
+        0.193,
+        0.543,
+        0.626
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 6,
+      "area": 107.1,
+      "along": [
+        7.7,
+        11.9
+      ],
+      "mu_uv": [
+        0.572,
+        0.209,
+        0.653,
+        0.315
+      ],
+      "bake_uv": [
+        0.386,
+        0.254,
+        0.502,
+        0.589
+      ]
+    },
+    {
+      "island": 4,
+      "material": "wrought_iron",
+      "triangles": 12,
+      "area": 561.4,
+      "along": [
+        5.2,
+        27.0
+      ],
+      "mu_uv": [
+        0.646,
+        0.228,
+        0.872,
+        0.338
+      ],
+      "bake_uv": [
+        0.275,
+        0.008,
+        0.877,
+        0.329
+      ]
+    },
+    {
+      "island": 5,
+      "material": "leather_wrap",
+      "triangles": 13,
+      "area": 457.3,
+      "along": [
+        9.8,
+        11.6
+      ],
+      "mu_uv": [
+        0.368,
+        0.95,
+        0.595,
+        0.979
+      ],
+      "bake_uv": [
+        0.009,
+        0.219,
+        0.403,
+        0.364
+      ]
+    }
+  ],
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    },
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "release": 0.571,
+  "release_from": "Key 4 of the seven, read off this rig's own tracks: Bone01, the carriage, runs z -116.1, -112.6, -108.7, -105.9 through keys 0 to 3 and then -141.7 on key 4 - 36 units forward in one key. That is the release, on the same key as the other crossbows.",
+  "material_note": "Six islands on crossbow05, identified by the bones they ride and sampled per triangle. Island 0 is ten triangles on Bone02, the carriage chain - the bolt, as on the Golden Crossbow: wrought_iron. Island 5 (13) rides the limb tips (Bone06, 07, 10) and spans them - the string: leather_wrap. Island 1 (114) is the body and prod, gold serpent fittings over pale scales, mean (105, 93, 57) with 73 of its triangles warm: brass at 0.6, the ceiling guard. On Bone04 with it: island 2 (10) a grey fitting (118, 109, 101), steel; island 3 (6) a gold one, brass; island 4 (12) a dark bracket (44, 39, 22), wrought_iron."
+}

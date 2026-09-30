@@ -1,0 +1,355 @@
+{
+  "item": "Staff06",
+  "mu_name": "Legendary Staff",
+  "mu_name_from": "MuMain loads MODEL_STAFF + i from Staff{i+1}; _enum.h names MODEL_LEGENDARY_STAFF = MODEL_STAFF + 5, and mu.db agrees: group 5 index 5, Item/Staff06.bmd.",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Legendary Staff, and the shelf dropped the line for want of a cooked mesh.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(5, 5, 0, 0, 1, 4, true, \"Legendary Staff\", 59, 29, 31, 25, 66, 59, 0, 50, 0, 0, 0, 1, 0, 0)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 5,
+    "number": 5,
+    "drop_level": 59,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 4,
+    "minimum_damage": 29,
+    "maximum_damage": 31,
+    "attack_speed": 25,
+    "magic_power": 59,
+    "durability": 66,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ]
+  },
+  "stance": "sword",
+  "stance_from": "MuWeapons.cs (the old client's table, LEGACY history 085a8169^:godot/Assets/Items/MuWeapons.cs): WeaponStance.Sword, TwoHanded: false - a one-handed staff, which the stance enum files under Sword. Width 1 in the call agrees.",
+  "two_handed": false,
+  "sheets": {
+    "a9": "a9.png",
+    "a_2": "a_2.png",
+    "shield11_a": "shield11_a.png"
+  },
+  "sheet_from": "Data/Item/a9.OZJ (32x64), a_2.OZJ (16x16) and shield11_a.OZJ, from MuMain at c0d74c4. The .bmd names a9.jpg on 276 triangles, a_2.jpg on 24 and shield11_a.jpg on 8; shield11_a.png was already in the tree from the Legendary Shield.",
+  "sheet_note": "a9 is the staff: a deep blue orb in gold filigree and a blue-and-gold shaft, mean near (70, 80, 140). a_2 is a pale cyan gradient, which MU never draws on this model (HiddenMesh 1, below). shield11_a is a dark blue speckle that MU draws added and jittered, a shimmer inside the head.",
+  "glow": {
+    "shield11_a": {
+      "jitter": 0.1
+    }
+  },
+  "glow_note": "MU's ItemObjectAttribute (ZzzObject.cpp:5290): `case MODEL_LEGENDARY_STAFF: BlendMesh = 2; BlendMeshTexCoordU/V = (rand()%10)*0.1` - texture 2, shield11_a, drawn added with its UVs jumping each frame, no BlendMeshLight: the blue shimmer in the head. RenderPartObject draws the staff with HiddenMesh 1 (ZzzObject.cpp:9083), so a_2, the cyan gradient, is never shown; its islands are flagged hidden. MU also hangs a blue BITMAP_SHINY+1 sprite and a BITMAP_LIGHTNING+1 at (0, -145, 0) off the staff when held (ZzzCharacter.cpp:10284-10291); those are client effects, not in this recipe.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.42,
+      "f0_from_art": 0.7,
+      "f0_desaturation": 1.0,
+      "roughness": 0.55
+    }
+  },
+  "material_note": "Eight islands on a9, sampled per triangle at their MU-UV centres: every one dark blue (means (15-24, 35-41, 80-94)) with thin gold filigree inside it - the head at the top (68), four wing-plates at the foot (40 each) and three shaft segments. Enamelled plate, as the Legendary set it belongs with, so plate_steel under the set's override: desaturation 1.0 keeps the blue and the gold, f0 0.42 at 0.70 of the art keeps the filigree, roughness 0.55. The gold cannot be split from the blue - it lies inside every island.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 68,
+      "area": 2067.3,
+      "along": [
+        89.2,
+        149.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.688,
+        0.689
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 40,
+      "area": 787.8,
+      "along": [
+        -63.9,
+        -24.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.111,
+        0.207,
+        0.699
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 40,
+      "area": 515.5,
+      "along": [
+        -48.4,
+        -22.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.03,
+        0.011,
+        0.526,
+        0.772
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 40,
+      "area": 1892.7,
+      "along": [
+        -97.7,
+        -40.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.791,
+        0.527
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 40,
+      "area": 1238.4,
+      "along": [
+        -83.4,
+        -29.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.03,
+        0.137,
+        0.819,
+        0.61
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 483.3,
+      "along": [
+        -54.7,
+        -27.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.5
+      ],
+      "bake_uv": [
+        0.011,
+        0.685,
+        0.353,
+        0.905
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 388.7,
+      "along": [
+        71.3,
+        93.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.5
+      ],
+      "bake_uv": [
+        0.595,
+        0.695,
+        0.903,
+        0.907
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 24,
+      "area": 657.3,
+      "along": [
+        -13.4,
+        16.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.5
+      ],
+      "bake_uv": [
+        0.279,
+        0.221,
+        0.907,
+        0.962
+      ]
+    },
+    {
+      "island": 8,
+      "material": "steel",
+      "triangles": 24,
+      "area": 616.7,
+      "along": [
+        124.6,
+        155.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.969,
+        0.99
+      ],
+      "note": "a_2, the cyan gradient: MU draws the staff with HiddenMesh 1 (ZzzObject.cpp:9083), so it is never seen.",
+      "hidden": true
+    },
+    {
+      "island": 9,
+      "material": "steel",
+      "triangles": 2,
+      "area": 953.4,
+      "along": [
+        12.6,
+        101.3
+      ],
+      "mu_uv": [
+        -1.739,
+        0.229,
+        0.672,
+        0.776
+      ],
+      "bake_uv": [
+        0.202,
+        0.011,
+        0.269,
+        0.026
+      ],
+      "note": "shield11_a, the glow."
+    },
+    {
+      "island": 10,
+      "material": "steel",
+      "triangles": 2,
+      "area": 420.4,
+      "along": [
+        -50.1,
+        -11.0
+      ],
+      "mu_uv": [
+        1.452,
+        0.224,
+        2.739,
+        0.771
+      ],
+      "bake_uv": [
+        0.011,
+        0.168,
+        0.047,
+        0.184
+      ],
+      "note": "shield11_a, the glow."
+    },
+    {
+      "island": 11,
+      "material": "steel",
+      "triangles": 2,
+      "area": 953.4,
+      "along": [
+        12.6,
+        101.3
+      ],
+      "mu_uv": [
+        -1.739,
+        0.229,
+        0.672,
+        0.776
+      ],
+      "bake_uv": [
+        0.038,
+        0.471,
+        0.105,
+        0.486
+      ],
+      "note": "shield11_a, the glow."
+    },
+    {
+      "island": 12,
+      "material": "steel",
+      "triangles": 2,
+      "area": 420.4,
+      "along": [
+        -50.1,
+        -11.0
+      ],
+      "mu_uv": [
+        1.452,
+        0.224,
+        2.739,
+        0.771
+      ],
+      "bake_uv": [
+        0.189,
+        0.141,
+        0.225,
+        0.156
+      ],
+      "note": "shield11_a, the glow."
+    }
+  ],
+  "rig_note": "No .rig.json, on purpose. Staff06.bmd has four bones (Sphere01, Sphere02, Mesh01, Box01) and one still key, so asset.sh reads it as a bind pose and borrows player.rig.json's motion - and joints are matched by name, where the player's skeleton has a Mesh01 of its own at the hand. The 40 a9 vertices bound to Mesh01 were skinned to it and flew off the staff: the gaps the user saw in game (2026-09-30). The .obj is MU's geometry already posed at action 0 key 0, which is all a rigid weapon needs, so the staff ships unskinned as the swords do."
+}

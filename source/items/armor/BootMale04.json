@@ -1,0 +1,149 @@
+{
+  "item": "BootMale04",
+  "mu_name": "Legendary Boots",
+  "mu_name_from": "MuMain loads MODEL_BOOTS + i from BootMale{i+1}, so file 04 is index 3, which openmu's 0.75 Armors.cs names the Legendary Boots.",
+  "profile": "armour",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Legendary set; the body was built for Apostle Devin's reward and the shelf dropped the other four pieces for want of a cooked mesh.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateBoots(3, 6, 2, 2, \"Legendary Boots\", 46, 12, 0, 42, 30, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateBoots(number, slot, width, height, name, dropLevel, defense, walkSpeed, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). Slot 6, so the group is 11.",
+    "group": 11,
+    "number": 3,
+    "drop_level": 46,
+    "drops_from_monsters": true,
+    "slot": 6,
+    "width": 2,
+    "height": 2,
+    "defense": 12,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "walk_speed": 0,
+    "durability": 42,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone."
+  },
+  "sheets": [
+    "boots_13m.png",
+    "hide_m.png"
+  ],
+  "sheet_from": "Data/Player/boots_13m.OZJ (64x64) and hide_m.jpg, from MuMain's Player tree at c0d74c4. The .bmd names boots_13m.jpg (126 triangles) and hide_m.jpg (6).",
+  "sheet_note": "boots_13m is blue greaves with a gold-scrolled knee and gold studs, mean (91, 71, 75).",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.42,
+      "f0_from_art": 0.7,
+      "f0_desaturation": 1.0,
+      "roughness": 0.55
+    },
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_why": "The Legendary Armor's override (ArmorMale04.json), so the set wears one metal: at the library's values the dark blue sheet lifts to grey chrome and grains. Desaturation 1.0 keeps the blue and the gold, f0 0.42 at 0.70 of the art keeps the filigree legible, roughness 0.55 takes the mirror off.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Legendary Armor: a dark small sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 56,
+      "area": 3176.1,
+      "along": [
+        -10.2,
+        21.4
+      ],
+      "mu_uv": [
+        0.04,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.007,
+        0.994,
+        0.92
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 56,
+      "area": 3181.8,
+      "along": [
+        -10.2,
+        21.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.992,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.87,
+        0.95
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 10,
+      "area": 579.0,
+      "along": [
+        3.5,
+        13.8
+      ],
+      "mu_uv": [
+        0.187,
+        0.52,
+        0.387,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.09,
+        0.643,
+        0.663
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 10,
+      "area": 579.0,
+      "along": [
+        3.5,
+        13.8
+      ],
+      "mu_uv": [
+        0.187,
+        0.52,
+        0.387,
+        0.999
+      ],
+      "bake_uv": [
+        0.308,
+        0.246,
+        0.41,
+        0.666
+      ]
+    }
+  ]
+}

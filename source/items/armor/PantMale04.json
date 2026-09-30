@@ -1,0 +1,102 @@
+{
+  "item": "PantMale04",
+  "mu_name": "Legendary Pants",
+  "mu_name_from": "MuMain loads MODEL_PANTS + i from PantMale{i+1}, so file 04 is index 3, which openmu's 0.75 Armors.cs names the Legendary Pants.",
+  "profile": "armour",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Legendary set; the body was built for Apostle Devin's reward and the shelf dropped the other four pieces for want of a cooked mesh.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(3, 4, 2, 2, \"Legendary Pants\", 53, 20, 42, 40, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 9,
+    "number": 3,
+    "drop_level": 53,
+    "drops_from_monsters": true,
+    "slot": 4,
+    "width": 2,
+    "height": 2,
+    "defense": 20,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 42,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone."
+  },
+  "sheets": {
+    "lower_13m_tga": "lower_13m.tga.png",
+    "lower_13m_jpg": "lower_13m.jpg.png",
+    "hide_m": "hide_m.png"
+  },
+  "sheet_from": "Data/Player/lower_13m.OZT (32x64, no alpha), lower_13m.OZJ (128x128) and hide_m.jpg, from MuMain's Player tree at c0d74c4. The .bmd names lower_13m.tga (24 triangles), lower_13m.jpg (81) and hide_m.jpg (12); both halves of the one stem are decoded carrying their extension, slots named as MuExtract writes them when basenames collide (as on Shield04).",
+  "sheet_note": "lower_13m.jpg is the robe's dark violet silk trousers with a gold-trimmed belt and a blue gem, mean (62, 51, 64); lower_13m.tga is the blue plate tasset with gold filigree, mean (53, 45, 57). hide_m is MU capping the openings.",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.42,
+      "f0_from_art": 0.7,
+      "f0_desaturation": 1.0,
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "The Legendary Armor's override (ArmorMale04.json), so the set wears one metal: at the library's values the dark blue sheet lifts to grey chrome and grains. Desaturation 1.0 keeps the blue and the gold, f0 0.42 at 0.70 of the art keeps the filigree legible, roughness 0.55 takes the mirror off.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Legendary Armor: a dark small sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 111,
+      "area": 11678.7,
+      "along": [
+        -31.4,
+        13.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.923,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 933.9,
+      "along": [
+        10.2,
+        18.9
+      ],
+      "mu_uv": [
+        0.559,
+        0.429,
+        0.987,
+        1.002
+      ],
+      "bake_uv": [
+        0.71,
+        0.466,
+        0.903,
+        0.724
+      ]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "item": "HelmMale02",
+  "mu_name": "Dragon Helm",
+  "mu_name_from": "MuMain loads MODEL_HELM + i from HelmMale{i+1}, so file 02 is index 1, which openmu's 0.75 Armors.cs names the Dragon Helm.",
+  "profile": "armour",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Dragon set; the body was built for Apostle Devin's reward and the shelf dropped the other four pieces for want of a cooked mesh.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(1, 2, 2, 2, \"Dragon Helm\", 57, 24, 68, 120, 30, 0, 1, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 1,
+    "drop_level": 57,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 24,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 68,
+    "requires": {
+      "level": 0,
+      "strength": 120,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are 0, 1, 0 - the Dark Knight alone."
+  },
+  "sheets": [
+    "head_03.png",
+    "skin_barbarian_01.png"
+  ],
+  "sheet_from": "Data/Player/head_03.OZJ (64x64) and skin_barbarian_01.OZJ, from MuMain's Player tree at c0d74c4 - the plain HelmMale02.bmd. The .bmd names head_03.jpg (143 triangles) and skin_barbarian_01.jpg (51): the helm carries its own face, so no keeps_head (helm index 1 is not in SetCharacterScale's condition).",
+  "sheet_note": "head_03 is the dragon's skull: red lacquered plate with bone-gold horns and jaw, mean (118, 63, 53).",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.42,
+      "f0_from_art": 0.7,
+      "f0_desaturation": 1.0,
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "The Dragon Armor's first override (f0 0.42 at 0.70 of the art, desaturation 1.0, roughness 0.55) rather than the body's later 0.50/0.60/0.42: at the body's values the two long bone horns, near-white on head_03, mirrored the stage's fire as glowing spikes at dusk and night, with a bloom halo. The calmer figure keeps the red and gold and puts the horns back to bone-gold; judged on the studio sheet 2026-09-30.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Dragon Armor: a dark small sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 140,
+      "area": 4804.2,
+      "along": [
+        -33.8,
+        25.3
+      ],
+      "mu_uv": [
+        -0.001,
+        0.007,
+        0.948,
+        0.993
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.893
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 54,
+      "area": 817.0,
+      "along": [
+        -6.7,
+        12.0
+      ],
+      "mu_uv": [
+        0.282,
+        0.273,
+        0.871,
+        0.985
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.901,
+        0.471
+      ]
+    }
+  ]
+}

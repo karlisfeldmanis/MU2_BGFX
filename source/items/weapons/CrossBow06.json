@@ -1,0 +1,112 @@
+{
+  "item": "CrossBow06",
+  "mu_name": "Bluewing Crossbow",
+  "mu_name_from": "ZzzOpenData.cpp loads the crossbows as MODEL_BOW + i + 8 from CrossBow{i+1}, so number 13 is CrossBow06.bmd; _enum.h names MODEL_BLUEWING_CROSSBOW = MODEL_BOW + 13, and mu.db agrees.",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Bluewing Crossbow, and the shelf dropped the line for want of a cooked mesh.",
+  "profile": "weapon",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateWeapon(4, 13, 0, 24, 2, 3, true, \"Bluewing Crossbow\", 68, 68, 82, 40, 56, 0, 0, 40, 110, 0, 0, 0, 0, 1)",
+    "call_note": "WeaponInitializerBase.CreateWeapon(group, number, slot, skillNumber, width, height, dropsFromMonsters, name, dropLevel, minimumDamage, maximumDamage, attackSpeed, durability, magicPower, levelRequirement, strengthRequirement, agilityRequirement, energyRequirement, vitalityRequirement, wizardClass, knightClass, elfClass).",
+    "group": 4,
+    "number": 13,
+    "drop_level": 68,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 68,
+    "maximum_damage": 82,
+    "attack_speed": 40,
+    "durability": 56,
+    "requires": {
+      "level": 0,
+      "strength": 40,
+      "agility": 110,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "elf"
+    ],
+    "skill": 24
+  },
+  "stance": "crossbow",
+  "stance_from": "MuWeapons.cs (the old client's table, LEGACY history 085a8169^:godot/Assets/Items/MuWeapons.cs): WeaponStance.Crossbow, TwoHanded: true. Actions 9 and 22.",
+  "two_handed": true,
+  "fires_note": "ZzzEffectMagicSkill.cpp: `case MODEL_BLUEWING_CROSSBOW: CreateEffect(MODEL_ARROW_WING, ...)`. ArrowWing is not built, so `fires` is left out and src/game/fx/arrow.cpp's modelFor sends number 13 to the steel bolt.",
+  "sheets": {
+    "jk00": "jk00.png",
+    "jk01": "jk01.png"
+  },
+  "sheet_from": "Data/Item/jk00.OZJ (128x64) and jk01.OZJ (64x32), from MuMain at c0d74c4. The .bmd names jk00.jpg on 112 triangles and jk01.jpg on 112.",
+  "sheet_note": "jk00 is dark gunmetal plates with a pale boss. jk01 is black with a few orange strokes - a sheet drawn to be added.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "glow_note": "MuMain draws this crossbow transparent. ItemObjectAttribute (ZzzObject.cpp:5243-5246): `case MODEL_BLUEWING_CROSSBOW: BlendMesh = -2; BlendMeshLight = sin(WorldTime*0.004)*0.3 + 0.7`, and BMD::RenderMesh (ZzzBMD.cpp:1509, `blendMeshIndex <= -2 || m->Texture == blendMeshIndex`) draws every mesh added when BlendMesh <= -2 - so the whole Bluewing is a breathing additive ghost, and both sheets are glows here. jk01 (black with orange strokes) is a shell coincident with jk00's and clean_lowpoly's weld drops it as duplicate faces, so its glow names no faces and export_gltf says so; jk00's shell carries the look alone.",
+  "material_note": "No baked material: MU draws both meshes added (see glow_note), so the crossbow ships as glow parts on MU's raw sheets. The islands below are what islands.py measured; their materials go unused.",
+  "glow": {
+    "jk00": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    },
+    "jk01": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    }
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 98,
+      "area": 7381.7,
+      "along": [
+        2.3,
+        22.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.008,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.962,
+        0.962
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 14,
+      "area": 538.8,
+      "along": [
+        -12.2,
+        12.7
+      ],
+      "mu_uv": [
+        0.762,
+        0.001,
+        0.89,
+        0.744
+      ],
+      "bake_uv": [
+        0.765,
+        0.007,
+        0.994,
+        0.558
+      ]
+    }
+  ]
+}

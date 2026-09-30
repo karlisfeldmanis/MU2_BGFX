@@ -1,0 +1,453 @@
+{
+  "item": "HelmMale04",
+  "mu_name": "Legendary Helm",
+  "mu_name_from": "MuMain loads MODEL_HELM + i from HelmMale{i+1}, so file 04 is index 3, which openmu's 0.75 Armors.cs names the Legendary Helm.",
+  "profile": "armour",
+  "why_this_one": "Devias's merchants (Izabel, Zienna in src/sim/market.cpp) list the Legendary set; the body was built for Apostle Devin's reward and the shelf dropped the other four pieces for want of a cooked mesh.",
+  "stats": {
+    "note": "The item's own row, copied from OpenMU's 0.75 initialiser rather than restated, with the call it came from beside it.",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs. The 0.75 table, which is the version this server is being built to.",
+    "call": "CreateArmor(3, 2, 2, 2, \"Legendary Helm\", 50, 18, 42, 30, 0, 1, 0, 0)",
+    "call_note": "ArmorInitializerBase.CreateArmor(number, slot, width, height, name, dropLevel, defense, durability, strengthRequirement, agilityRequirement, darkWizardClassLevel, darkKnightClassLevel, elfClassLevel). `armor.Group = (byte)(slot + 5)`, so slot 2 is group 7, 3 is 8 and 4 is 9.",
+    "group": 7,
+    "number": 3,
+    "drop_level": 50,
+    "drops_from_monsters": true,
+    "slot": 2,
+    "width": 2,
+    "height": 2,
+    "defense": 18,
+    "defense_note": "Points of defence, in the row and summed into Player.ArmourDefense by Wear - see shared/Rows.cs.",
+    "durability": 42,
+    "requires": {
+      "level": 0,
+      "strength": 30,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "classes_from": "The last three ints of the call are 1, 0, 0 - the Dark Wizard alone."
+  },
+  "sheets": [
+    "head_13m.png",
+    "skin_warrior_01.png"
+  ],
+  "sheet_from": "Data/Player/head_13m.OZJ (64x64) and skin_warrior_01.OZJ, from MuMain's Player tree at c0d74c4 - the plain HelmMale04.bmd. The .bmd names head_13m.jpg (61 triangles) and skin_warrior_01.jpg (45): the helm carries its own face, so no keeps_head (helm index 3 is not in SetCharacterScale's condition).",
+  "sheet_note": "head_13m is a deep blue crown with gold filigree over the brow and a gold rim, mean (84, 63, 67).",
+  "material_overrides": {
+    "plate_steel": {
+      "f0": 0.42,
+      "f0_from_art": 0.7,
+      "f0_desaturation": 1.0,
+      "roughness": 0.55
+    }
+  },
+  "material_overrides_why": "The Legendary Armor's override (ArmorMale04.json), so the set wears one metal: at the library's values the dark blue sheet lifts to grey chrome and grains. Desaturation 1.0 keeps the blue and the gold, f0 0.42 at 0.70 of the art keeps the filigree legible, roughness 0.55 takes the mirror off.",
+  "upscale": {
+    "factor": 3,
+    "detail": 0.35,
+    "pad": "edge",
+    "why": "3x at detail 0.35 as on the Legendary Armor: a dark small sheet at 0.65 grows generated grain."
+  },
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 26,
+      "area": 1678.1,
+      "along": [
+        -18.3,
+        15.0
+      ],
+      "mu_uv": [
+        0.052,
+        0.001,
+        0.999,
+        0.871
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.58,
+        0.629
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 6,
+      "area": 183.1,
+      "along": [
+        10.1,
+        16.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.083,
+        0.536,
+        0.613
+      ],
+      "bake_uv": [
+        0.678,
+        0.007,
+        0.993,
+        0.321
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 2,
+      "area": 286.3,
+      "along": [
+        -8.0,
+        12.7
+      ],
+      "mu_uv": [
+        0.184,
+        0.02,
+        0.759,
+        0.469
+      ],
+      "bake_uv": [
+        0.007,
+        0.647,
+        0.328,
+        0.891
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 3,
+      "area": 130.5,
+      "along": [
+        0.7,
+        14.6
+      ],
+      "mu_uv": [
+        0.078,
+        0.303,
+        0.759,
+        0.469
+      ],
+      "bake_uv": [
+        0.771,
+        0.534,
+        0.908,
+        0.67
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 2,
+      "area": 286.3,
+      "along": [
+        -8.0,
+        12.7
+      ],
+      "mu_uv": [
+        0.184,
+        0.02,
+        0.759,
+        0.469
+      ],
+      "bake_uv": [
+        0.488,
+        0.657,
+        0.809,
+        0.901
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 4,
+      "area": 335.0,
+      "along": [
+        -18.1,
+        15.0
+      ],
+      "mu_uv": [
+        0.828,
+        0.111,
+        0.994,
+        0.776
+      ],
+      "bake_uv": [
+        0.491,
+        0.413,
+        0.79,
+        0.79
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 132.3,
+      "along": [
+        -18.1,
+        8.8
+      ],
+      "mu_uv": [
+        0.828,
+        0.111,
+        0.994,
+        0.776
+      ],
+      "bake_uv": [
+        0.007,
+        0.542,
+        0.347,
+        0.633
+      ]
+    },
+    {
+      "island": 7,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 132.3,
+      "along": [
+        -18.1,
+        8.8
+      ],
+      "mu_uv": [
+        0.828,
+        0.111,
+        0.994,
+        0.776
+      ],
+      "bake_uv": [
+        0.588,
+        0.055,
+        0.678,
+        0.394
+      ]
+    },
+    {
+      "island": 8,
+      "material": "plate_steel",
+      "triangles": 4,
+      "area": 392.0,
+      "along": [
+        -18.3,
+        12.7
+      ],
+      "mu_uv": [
+        0.184,
+        0.001,
+        0.999,
+        0.037
+      ],
+      "bake_uv": [
+        0.378,
+        0.791,
+        0.471,
+        0.865
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 50.3,
+      "along": [
+        6.5,
+        15.0
+      ],
+      "mu_uv": [
+        0.052,
+        0.57,
+        0.293,
+        0.871
+      ],
+      "bake_uv": [
+        0.305,
+        0.603,
+        0.461,
+        0.715
+      ]
+    },
+    {
+      "island": 10,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 50.3,
+      "along": [
+        6.5,
+        15.0
+      ],
+      "mu_uv": [
+        0.052,
+        0.57,
+        0.293,
+        0.871
+      ],
+      "bake_uv": [
+        0.291,
+        0.731,
+        0.442,
+        0.846
+      ]
+    },
+    {
+      "island": 11,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 49.9,
+      "along": [
+        10.1,
+        15.0
+      ],
+      "mu_uv": [
+        0.052,
+        0.415,
+        0.192,
+        0.651
+      ],
+      "bake_uv": [
+        0.38,
+        0.007,
+        0.499,
+        0.083
+      ]
+    },
+    {
+      "island": 12,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 49.9,
+      "along": [
+        10.1,
+        15.0
+      ],
+      "mu_uv": [
+        0.052,
+        0.415,
+        0.192,
+        0.651
+      ],
+      "bake_uv": [
+        0.007,
+        0.39,
+        0.083,
+        0.509
+      ]
+    },
+    {
+      "island": 13,
+      "material": "plate_steel",
+      "triangles": 8,
+      "area": 260.2,
+      "along": [
+        4.6,
+        13.5
+      ],
+      "mu_uv": [
+        0.105,
+        0.022,
+        0.348,
+        0.34
+      ],
+      "bake_uv": [
+        0.726,
+        0.269,
+        0.922,
+        0.516
+      ]
+    },
+    {
+      "island": 14,
+      "material": "skin",
+      "triangles": 8,
+      "area": 645.8,
+      "along": [
+        -22.0,
+        -8.3
+      ],
+      "mu_uv": [
+        0.602,
+        0.005,
+        0.751,
+        0.155
+      ],
+      "bake_uv": [
+        0.537,
+        0.009,
+        0.625,
+        0.178
+      ]
+    },
+    {
+      "island": 15,
+      "material": "skin",
+      "triangles": 24,
+      "area": 221.5,
+      "along": [
+        3.6,
+        12.0
+      ],
+      "mu_uv": [
+        0.683,
+        0.854,
+        0.813,
+        0.961
+      ],
+      "bake_uv": [
+        0.266,
+        0.534,
+        0.342,
+        0.585
+      ]
+    },
+    {
+      "island": 16,
+      "material": "skin",
+      "triangles": 1,
+      "area": 2.0,
+      "along": [
+        10.7,
+        12.0
+      ],
+      "mu_uv": [
+        0.74,
+        0.854,
+        0.756,
+        0.858
+      ],
+      "bake_uv": [
+        0.007,
+        0.009,
+        0.01,
+        0.014
+      ]
+    },
+    {
+      "island": 17,
+      "material": "skin",
+      "triangles": 12,
+      "area": 418.4,
+      "along": [
+        -7.6,
+        7.4
+      ],
+      "mu_uv": [
+        0.6,
+        0.756,
+        0.885,
+        0.849
+      ],
+      "bake_uv": [
+        0.795,
+        0.685,
+        0.879,
+        0.772
+      ]
+    }
+  ]
+}
