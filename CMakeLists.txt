@@ -123,6 +123,7 @@ add_executable(mu2
   src/game/world/sway.cpp
   src/game/world/flight.cpp
   src/game/world/boids.cpp
+  src/game/world/scurry.cpp
   src/game/world/leaves.cpp
   src/game/save.cpp
   src/game/roster.cpp

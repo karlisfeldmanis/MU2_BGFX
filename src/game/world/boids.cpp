@@ -56,6 +56,8 @@ std::string boidOf(const std::string& world) {
     // Noria's: MODEL_BUTTERFLY01, which MuMain loads from Data/Object1 -- Lorencia's folder
     // -- for Noria (MapManager.cpp:89). tools/cook.py's AIRS cooks it into Noria from there.
     if (world == "noria") return "Butterfly01";
+    // The Dungeon's: MODEL_BAT01, as the Lost Tower's (GOBoid.cpp:1327-1328).
+    if (world == "dungeon") return "Bat01";
     return std::string();
 }
 
@@ -72,6 +74,14 @@ Airs airsOf(const std::string& world) {
         // second, as a real butterfly's.
         airs.flap = 6.25f;
     }
+    if (world == "dungeon") {
+        // The bat keeps the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1320), and calls
+        // SOUND_BAT01 alone. MU plays a boid a key a frame; the cook spaces Bat01's four keys
+        // 0.25 s apart, so 6.25 for the client's 0.04.
+        airs.flap = 6.25f;
+        airs.call[0] = "boid_bat";
+        airs.call[1] = nullptr;
+    }
     return airs;
 }
 
@@ -83,6 +93,8 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     flight_.reset();
     flight_.setPace(airs_.speed);
     flight_.setButterfly(model == "Butterfly01");
+    flight_.setBat(model == "Bat01");
+    scurry_.open(assetDir, world, crawlOf(world), textures, sound);
     if (model.empty()) return true;
 
     const std::string dir = core::join(assetDir, "cooked/" + world);
@@ -143,8 +155,8 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
     scratch_.assign(size_t(gfx::Renderer::kMaxBones) * 12, 0.0f);
 
     if (sound_ != nullptr && airs_.calls) {
-        call1_ = sound_->load("bird_1", true, true);
-        call2_ = sound_->load("bird_2", true, true);
+        if (airs_.call[0]) call1_ = sound_->load(airs_.call[0], true, true);
+        if (airs_.call[1]) call2_ = sound_->load(airs_.call[1], true, true);
     }
     core::logf("boids: %s flies over %s, %d birds at %.2f of a bird's pace, %s", model.c_str(),
                world.c_str(), Flight::kMaxBirds, double(airs_.speed),
@@ -153,6 +165,7 @@ bool Boids::open(const std::string& assetDir, const std::string& world, const st
 }
 
 void Boids::shutdown() {
+    scurry_.shutdown();
     body_.reset();
     library_.reset();
     if (mesh_) mesh_->shutdown();
@@ -168,6 +181,7 @@ void Boids::shutdown() {
 void Boids::update(float seconds, const float hero[3], bool walking, bool indoors,
                    const content::Ground& ground, const float* viewProj,
                    gfx::Renderer& renderer) {
+    scurry_.update(seconds, hero, ground, renderer);
     if (!body_) return;
 
     Looking looking{&ground, viewProj};
@@ -178,7 +192,9 @@ void Boids::update(float seconds, const float hero[3], bool walking, bool indoor
 
     BirdCall calls[Flight::kMostCalls];
     int called = 0;
-    flight_.update(seconds, hero, walking, indoors, sky, calls, &called);
+    // A bat is the underground's own: the Dungeon is "indoors" on every tile (World::indoors),
+    // and MU flies its bats there (GOBoid.cpp:1327). The roof rule is the birds'.
+    flight_.update(seconds, hero, walking, indoors && !flight_.isBat(), sky, calls, &called);
 
     // What sounded. Placed at the bird, which is one of the few sounds the client loads with 3D
     // enabled. The height is kept: MU's SetPosition dropped it, and here it only moves the pan
@@ -268,6 +284,7 @@ void Boids::stepGlow(float seconds) {
 }
 
 void Boids::gather(std::vector<gfx::Drawable>& out) const {
+    scurry_.gather(out);
     if (!body_) return;
     for (int i = 0; i < Flight::kMaxBirds; ++i) {
         if (!flight_.bird(i).live || paletteRows_[i] < 0) continue;

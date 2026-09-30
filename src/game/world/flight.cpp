@@ -21,6 +21,19 @@ constexpr float kCruise = 6.25f;
 constexpr float kSpawnRingMin = 8.0f;
 constexpr float kSpawnRingMax = 12.0f;
 constexpr float kFlockBox = 5.12f;
+// How far a bat strays before it turns back to the hero, so a flock roams the room around him
+// and crosses the frame now and then, heard when it passes within six metres. Ours; see
+// Flight::home. It was 5 m, and the user saw them 'all the time around player' (2026-09-30).
+constexpr float kBatTether = 9.0f;
+// The fastest a bat's jink turns, radians a second. Ours; see Flight::move.
+constexpr float kBatSwerve = 4.0f;
+// How long a flock of bats stays with him, seconds. Ours; see Flight::update.
+constexpr float kBatStayMin = 10.0f;
+constexpr float kBatStayMax = 20.0f;
+// And how long the cave is empty between flocks, seconds: longer than the birds' sky, since a
+// visit is longer than a pass. Ours, as the stay is.
+constexpr float kBatAwayMin = 30.0f;
+constexpr float kBatAwayMax = 90.0f;
 // How far off a bearing straight at the player the flock may set out, in degrees.
 constexpr float kAimSpread = 55.0f;
 
@@ -124,6 +137,16 @@ void Flight::update(float seconds, const float hero[3], bool walking, bool indoo
         if (wait_ <= 0.0f && !indoors) arrive(hero, sky);
     }
 
+    // The bats come on a visit, ours (the user's, 2026-09-30: 'i see bats to often'): a flock
+    // stays with him for its while, then every one of them is sent off, and they go out of the
+    // frame as any bird does, and the cave is empty a while before the next.
+    if (bat_ && flying_ > 0) {
+        stay_ -= seconds;
+        if (stay_ <= 0.0f) {
+            for (Bird& bird : birds_) bird.leaving = bird.leaving || bird.live;
+        }
+    }
+
     uint32_t flying = 0;
     for (Bird& bird : birds_) {
         if (!bird.live) continue;
@@ -142,9 +165,13 @@ void Flight::update(float seconds, const float hero[3], bool walking, bool indoo
         const float dx = bird.position[0] - hero[0];
         const float dy = bird.position[1] - hero[1];
         const float dz = bird.position[2] - hero[2];
-        const bool near = dx * dx + dy * dy + dz * dz < kHeard * kHeard;
-        const float odds = factor / kCallEvery;
-        for (int which = 0; which < 2; ++which) {
+        // MU's range is along the ground, `sqrtf(dx * dx + dy * dy)` over its two ground axes
+        // (GOBoid.cpp:1478-1480). The bat's is taken so: held 2 to 3.5 m up, it was heard only
+        // when nearly overhead. The bird keeps the height it has been judged with.
+        const float lift = bat_ ? 0.0f : dy;
+        const bool near = dx * dx + lift * lift + dz * dz < kHeard * kHeard;
+        const float odds = factor / (bat_ ? 256.0f : kCallEvery);
+        for (int which = 0; which < (bat_ ? 1 : 2); ++which) {
             const bool sounded = random01() < odds;
             if (!near || !sounded || calls == nullptr || callCount == nullptr) continue;
             if (*callCount >= kMostCalls) continue;
@@ -205,12 +232,15 @@ void Flight::arrive(const float hero[3], const Sky& sky) {
         bird.live = true;
         bird.leaving = false;
         bird.wasSeen = false;
+        bird.timer = float(int(random01() * 314.0f)) * 0.01f;
+        bird.swerve = 0.0f;
         // Where it is heading is set before anyone steers by it, or the first step's flocking
         // reads five stale points from the last flock.
         bird.heading[0] = bird.position[0] + std::sin(facing) * kCruise * kLookAhead;
         bird.heading[1] = bird.position[2] + std::cos(facing) * kCruise * kLookAhead;
     }
     flying_ = kMaxBirds;
+    stay_ = kBatStayMin + random01() * (kBatStayMax - kBatStayMin);
 }
 
 void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, float factor,
@@ -222,6 +252,21 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
     if (butterfly_) {
         bird.speed = 1.0f;
         flutter(bird, land, factor);
+    } else if (bat_) {
+        // MoveBat: 3.5 m over the floor less |sin| of 1.5 m, so it bobs between 2 and 3.5 m,
+        // the phase stepped 0.2 a reference frame. Set, not climbed toward, as the client sets
+        // it. Its `* FPS_ANIMATION_FACTOR` on the height is a slip that is 1 at 25 fps.
+        // And a jink, ours (the user's, 2026-09-30: 'more random movement for bats'): one frame
+        // in twelve it takes a new sharp turn and a new pace, held until the next roll, so it
+        // flits rather than sails. The flock and the tether still steer over it.
+        if (chance(1.0f / 12.0f, factor)) {
+            bird.swerve = (random01() * 2.0f - 1.0f) * kBatSwerve;
+            bird.speed = 0.8f + random01() * 0.5f;
+        }
+        bird.facing = wrapPi(bird.facing + bird.swerve * seconds);
+        bird.climb = 0.0f;
+        bird.position[1] = land + 3.5f - std::fabs(std::sin(bird.timer)) * 1.5f;
+        bird.timer += 0.2f * factor;
     } else switch (bird.state) {
         case State::Fly: {
             // Only during the first quarter of each cycle, and only from the middle distance --
@@ -277,8 +322,11 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
 
     // A perched bird neither flocks nor moves; it only waits.
     if (bird.state != State::Ground) {
+        const float fromX = bird.position[0] - hero[0], fromZ = bird.position[2] - hero[2];
         if (bird.leaving) {
             away(bird, hero, factor);
+        } else if (bat_ && fromX * fromX + fromZ * fromZ > kBatTether * kBatTether) {
+            home(bird, hero, factor);
         } else if (!butterfly_ || chance(0.25f, factor)) {
             flock(bird, factor);
         }
@@ -288,7 +336,9 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
     const float dx = bird.position[0] - hero[0];
     const float dz = bird.position[2] - hero[2];
     const float flat = std::sqrt(dx * dx + dz * dz);
-    if (flat >= kFlyDistance || chance(1.0f / 512.0f, factor)) bird.leaving = true;
+    // A bat stays with him: the client's five never leave the Dungeon (every slot is refilled
+    // the frame it empties, around the hero), so a bat goes only when he has walked away from it.
+    if (flat >= kFlyDistance || (!bat_ && chance(1.0f / 512.0f, factor))) bird.leaving = true;
 
     // And the only place a bird is actually taken off: out of the frame, or so far out of town
     // that it is under a pixel. Everything above only asks it to go.
@@ -303,6 +353,7 @@ void Flight::move(Bird& bird, const float hero[3], bool walking, float seconds, 
             // resident, and one arriving the instant the last left reads as a carousel. Clocked
             // from the last bird out, not the first: the slots refill together.
             wait_ = kRespawnMin + random01() * (kRespawnMax - kRespawnMin);
+            if (bat_) wait_ = kBatAwayMin + random01() * (kBatAwayMax - kBatAwayMin);
         }
     }
 }
@@ -376,6 +427,18 @@ void Flight::away(Bird& bird, const float hero[3], float factor) {
     const float outward[2] = {bird.position[0] - hero[0], bird.position[2] - hero[2]};
     if (outward[0] * outward[0] + outward[1] * outward[1] <= 0.0001f) return;
     const float desired = std::atan2(outward[0], outward[1]);
+    const float difference = wrapPi(desired - bird.facing);
+    const float turn = kTurnRate * kPi / 180.0f * factor;
+    bird.facing = wrapPi(bird.facing + std::clamp(difference, -turn, turn));
+}
+
+void Flight::home(Bird& bird, const float hero[3], float factor) {
+    // Ours, for the bat: past its tether it turns back toward the hero at the flock's own rate,
+    // so the cave's bats circle him as the client's do, which are born around him again whenever
+    // one strays -- without one ever appearing or vanishing in view.
+    const float inward[2] = {hero[0] - bird.position[0], hero[2] - bird.position[2]};
+    if (inward[0] * inward[0] + inward[1] * inward[1] <= 0.0001f) return;
+    const float desired = std::atan2(inward[0], inward[1]);
     const float difference = wrapPi(desired - bird.facing);
     const float turn = kTurnRate * kPi / 180.0f * factor;
     bird.facing = wrapPi(bird.facing + std::clamp(difference, -turn, turn));

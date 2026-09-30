@@ -60,6 +60,7 @@
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/world/flight.h"
+#include "game/world/scurry.h"
 #include "gfx/renderer.h"
 
 namespace mu::game {
@@ -89,6 +90,9 @@ struct Airs {
     // 0.75 s; the user saw it flap too slowly in Noria (2026-09-29). The bird keeps 1: its keys
     // are 0.16 s apart, also slower than MU's 0.04, and nobody has asked for it.
     float flap = 1.0f;
+    // The two calls' sound events, rolled independently; a null one is never rolled for. The
+    // bird's two, or the Dungeon bat's one (SOUND_BAT01).
+    const char* call[2] = {"bird_1", "bird_2"};
 };
 
 // What a world flies, by the model name the cook knows it by, and how it flies. MU's own
@@ -123,7 +127,7 @@ public:
     void stepGlow(float seconds);
     void glow(gfx::Effects& effects);
 
-    bool isOpen() const { return body_ != nullptr; }
+    bool isOpen() const { return body_ != nullptr || scurry_.isOpen(); }
     // --birds-now: the sky's FIRST flock arrives on the next frame rather than 20 to 90
     // seconds in. For a review run, which is a few seconds long. One-shot; see Flight::hurry.
     void hurry() { flight_.hurry(); }
@@ -132,6 +136,9 @@ public:
 
 private:
     Flight flight_;
+    // What runs along the floor under them: the Dungeon's rats, MU's fish slot. Opened, stepped
+    // and drawn with the birds, and empty on every other map (game/world/scurry.h).
+    Scurry scurry_;
     std::unique_ptr<content::Mesh> mesh_;
     std::unique_ptr<ClipLibrary> library_;
     std::unique_ptr<FigureBody> body_;

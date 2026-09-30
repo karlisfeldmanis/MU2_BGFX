@@ -85,6 +85,11 @@ public:
         // filled". The far backstop still applies, so a flock the camera never looks at is not
         // immortal.
         bool wasSeen = false;
+        // MoveBat's `o->Timer`: the bob's phase, drawn at birth as the client's `rand() % 314 *
+        // 0.01` and stepped 0.2 a reference frame.
+        float timer = 0.0f;
+        // The bat's jink: a turn rate in radians a second, redrawn on a roll. See Flight::move.
+        float swerve = 0.0f;
     };
 
     // `seed` makes a run repeatable, which is what lets a test say "this seed, this second, this
@@ -97,6 +102,11 @@ public:
     // the flock asked one frame in four (GOBoid.cpp:932 and :1135). See flutter().
     void setButterfly(bool on) { butterfly_ = on; }
     bool isButterfly() const { return butterfly_; }
+    // The Dungeon's bat rather than a bird: MoveBat in place of MoveBird (GOBoid.cpp:925-930),
+    // a height held over the floor rather than a dive, and one call at one frame in 256 rather
+    // than the bird's two at 512 (:1490-1494). The flock is the bird's MoveBoidGroup.
+    void setBat(bool on) { bat_ = on; }
+    bool isBat() const { return bat_; }
 
     // The first flock arrives on the next step rather than 20 to 90 seconds in. One-shot: a
     // caller with this in its frame loop would otherwise refill the sky the instant it empties,
@@ -121,6 +131,7 @@ private:
     void flock(Bird& bird, float factor);
     void flutter(Bird& bird, float land, float factor);
     void away(Bird& bird, const float hero[3], float factor);
+    void home(Bird& bird, const float hero[3], float factor);
     void step(Bird& bird, float speed, float seconds);
     float wander(float seconds);
     bool chance(float perFrame, float factor);
@@ -129,6 +140,9 @@ private:
     Bird birds_[kMaxBirds];
     float pace_ = 1.0f;
     bool butterfly_ = false;
+    bool bat_ = false;
+    // Seconds the bats' flock has left with him before it flies off. See Flight::update.
+    float stay_ = 0.0f;
     float wait_ = 0.0f;
     float cycle_ = 0.0f;
     uint32_t flying_ = 0;

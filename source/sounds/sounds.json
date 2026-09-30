@@ -995,6 +995,18 @@
         "mBone2.wav"
       ],
       "from": "CharacterDie's `case MODEL_STONE_GOLEM`, after the sixteen stones are thrown: `PlayBuffer(SOUND_BONE2, o)` - Data\\\\Sound\\\\mBone2.wav, the skeleton's clatter. Not Sounds[4]: that is mGolemDie, played on the death action's first key, and a golem is switched off before any action is set. The file is loaded and heard by nobody. See StoneGolem01.json's sounds_from."
+    },
+    "boid_bat": {
+      "files": [
+        "abat.wav"
+      ],
+      "from": "SOUND_BAT01, Data\\Sound\\aBat.wav (ZzzOpenData.cpp:4746). GOBoid.cpp plays it as PlayBuffer(SOUND_BAT01, o) at the bat on rand_fps_check(256) while it is within 600 units of the hero (:1490-1494): one roll, not the bird's two."
+    },
+    "boid_rat": {
+      "files": [
+        "amouse.wav"
+      ],
+      "from": "SOUND_RAT01, Data\\Sound\\aMouse.wav (ZzzOpenData.cpp:4747). MoveFishs plays it as PlayBuffer(SOUND_RAT01, o) at the rat on rand_fps_check(256) while it is within 600 units of the hero (GOBoid.cpp:1875-1877)."
     }
   },
   "not_built_yet": "The idle sound a monster makes while it wanders on its own clock - PlayMonsterSound in ZzzCharacter - is the one play in this family that is not tied to an action's first key, and it is left out until there is a monster whose Sounds[0] is worth hearing. On the Spider it would be mspider1.wav a fourth time."
