@@ -11,11 +11,17 @@
     "satan2": "satan2.png"
   },
   "sheet_from": "Data/Item/satan.OZJ (16x16, the body, 54 triangles) and satan2.ozt (32x32 with alpha, the wings, 4 triangles), from MuMain's own bin/Data. The .ozt's alpha cuts away 61% of the square and is a real mask, so no cutout is declared: the sheet's own alpha is used (see BudgeDragon01's cutout_from).",
+  "tiled": true,
+  "tiled_why": "The wings are two single quads seen from both sides, and the baked path gave them one atlas and one material: the 96-pixel atlas packed each wing flush against a body island, so the quad's edge sampled the body's opaque alpha (two thin dark lines off the wing edges), and the wing seen from its unlit side shaded near black, with nowhere to say it lets light through. Tiled keeps satan2 its own sheet, cut by its own alpha and lit through as Bat01's wings are (2026-09-30).",
   "sheet_materials": {
     "satan": "leather",
-    "satan2": "leather"
+    "satan2": "foliage"
   },
-  "sheet_materials_from": "A brown hide and bat wings, the Budge Dragon's membrane. Judged from the sheets.",
+  "sheet_materials_from": "A brown hide; the wings are foliage for Bat01's reason: a two-sided alpha card seen from either face, which a leaf's translucency lights from both. Judged from the sheets.",
+  "cutout": [
+    "satan2"
+  ],
+  "cutout_from": "satan2.ozt is 32 by 32 with 61% of it cut away: the wing's shape is its alpha.",
   "worn_note": "Not a flyer. MuMain creates no follower for the Imp (ChangeCharacterExt, ZzzCharacter.cpp:12650-12662, spawns one only for helper 0): it is drawn linked to the player's bone 34, Bip01 L Clavicle, at (20, 0, 0) from the bone, at the character's scale, with a red BITMAP_LIGHT of size 1.5 at (20, 0, 15) flickering 0.7-1.0 (ZzzCharacter.cpp:15433-15466). GOBoid.cpp has fly code for MODEL_IMP that nothing reaches.",
   "stats": {
     "note": "The item's own row, copied from OpenMU's 0.75 initialiser.",

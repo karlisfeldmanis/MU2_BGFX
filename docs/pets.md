@@ -17,7 +17,12 @@ is 0.75 too and is not in this pass.
   the sim can equip group 13 yet. Run `pipeline/index.py` only when step 1 below lands.
 
 Bench: `build/mu2 --model items/pets/Helper01/Helper01.glb` (static; `--model` plays no clip).
-Two thin dark lines show off the Imp's wing edges on the bench, unexplained yet.
+
+The Imp is tiled too since 2026-09-30 (the user: "something wrong with IMP wings"). Baked, its
+96² atlas packed each wing quad flush against a body island, so the quad edges sampled the
+body's opaque alpha -- two thin dark lines off the wings -- and the wing seen from its unlit
+side shaded near black. Now `satan2` is its own sheet, cut by its alpha and on `foliage`, lit
+through from both faces as Bat01's wings are; the .glb went from 900 KB to 44 KB.
 
 ## What MU does (MuMain, a Season 6 fork; the core of both is era logic)
 
@@ -62,6 +67,24 @@ jewel group (0.001 a kill, drop level ≤ monster level, no 12-level window).
   destroyed. Repair-all skips it; a single repair needs the pet trainer.
 - Price: `dropLevel³ + 100`, so Angel 12,200 buy / 4,000 sell, Imp 22,000 / 7,300.
 
+## Downsides, and where OpenMU leaves WebZen (researched 2026-09-30, nothing changed yet)
+
+WebZen's own GameServer, 1.00.93 (0.97d to Season 4.6, github ptr0x-real/Mu-GS-Webzen-MC-10093),
+cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
+
+- **The Imp costs 3 HP on every blow landed** (ObjAttack.cpp:1045-1060, `gObjSatanSprite`: "on
+  every attack, damage x1.3 and HP decreases"). If that would take Life below 0, it is clamped to 0 and that
+  blow gets no x1.3; it never kills. In all three sources and muonlinefanz's item page; OpenMU
+  and MuMain's tooltip leave it out. The Angel has no cost of any kind.
+- **The Angel absorbed 30%, not 20%**, unless `NEW_FORSKYLAND3` (ObjAttack.cpp:1077-1087, "30% cut
+  to 20%"). The flag reads as the Icarus update, after 0.75 -- an inference, not stated.
+- **Wear is far faster** (user.cpp `gObjSpriteDamage`): per hit taken the Angel loses damage x
+  0.3/10 and the Imp damage x 0.2/10 -- about 1 Life per 33 or 50 damage, 60-100x OpenMU's
+  damage/2000. The Angel's is taken on the damage before its own cut. The /10 is tagged
+  `happycat@20050201`, so 0.75 (2003) may have worn ten times faster again.
+- Attacking never wears either; no NPC repairs group 13 numbers 0-3 (protocol.cpp:5753); no map
+  or class restriction (InfinityMU's "DK can't use the Imp" is that server's own).
+
 ## In the game (2026-09-29)
 
 - **Rules** (`sim::PetPower`, `sim/items.cpp`): group 13 goes in slot 8 (`placeOf`); while its
@@ -85,6 +108,5 @@ Test: `build/mu2 --world lorencia --play --level 30 --give Helper01:1:W` (or Hel
 ## Still open
 
 1. The Angel's four grey sparks and green BITMAP_LIGHT, and the Imp's red one.
-2. The Imp's 1024² normal and ORM maps for a 58-triangle model: its recipe could bake smaller.
-3. Noria's and Devias's figures are not recooked yet (`cook.py --world noria --only figures`).
-4. The Horn of Uniria (13/2).
+2. The Horn of Uniria (13/2).
+3. Whether to take WebZen's Imp HP cost, 30% Angel and faster wear (above) over OpenMU's.
