@@ -508,6 +508,11 @@ for pair in sys.argv[4:]:
     if (asset.get("sheet_tint") or {}).get(group):
         entry["tint"] = str(asset["sheet_tint"][group])
 
+    # A colour baked into a calibrated metal's sheet, which reaches the game: the cook drops
+    # glTF's baseColorFactor, so `sheet_tint` never has. See tiled_maps.calibrated.
+    if (asset.get("sheet_f0_tint") or {}).get(group):
+        entry["f0_tint"] = str(asset["sheet_f0_tint"][group])
+
     # Parts of one sheet that are made of something else.
     #
     # Per sheet is the right level for most scenery and the wrong one for anything MU drew

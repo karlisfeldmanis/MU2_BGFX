@@ -457,8 +457,12 @@ def calibrated(slot: dict, material: dict, definition: Path, into: Path) -> None
     # along the streak came out chrome beside one laid along the dark, brown.
     keep = float(slot.get("f0_from_art", material.get("f0_from_art", 0.35)))
     f0 = float(slot.get("f0", material["f0"]))
+    # And a colour the asset bakes in (`sheet_f0_tint`), in the sheet's sRGB as it was written.
+    # A near-black sheet has no hue left for the pull to keep -- the floor greys it -- so its
+    # metal reflects the room's colour and nothing of its own: the Dungeon's worms went blue.
+    tint = str(slot.get("f0_tint", "")).lstrip("#")
     named = (f"_art{keep:.2f}" if "f0_from_art" in slot else "") + (
-        f"_f{f0:.2f}" if "f0" in slot else "")
+        f"_f{f0:.2f}" if "f0" in slot else "") + (f"_t{tint.lower()}" if tint else "")
     sheet = Path(slot["sheet"])
     out = into / f"{sheet.stem}_{slot['material']}{named}_basecolor.png"
     slot["sheet"] = str(out)
@@ -502,6 +506,9 @@ def calibrated(slot: dict, material: dict, definition: Path, into: Path) -> None
     if grey_pull < 1.0:
         grey = (rgb * weights).sum(axis=-1, keepdims=True)
         rgb = np.clip(grey + (rgb - grey) * grey_pull, 0.0, 1.0)
+
+    if tint:
+        rgb = rgb * np.array([int(tint[at:at + 2], 16) / 255.0 for at in (0, 2, 4)], np.float32)
 
     pixels[..., :3] = rgb
     done = Image.fromarray((pixels * 255.0).round().clip(0, 255).astype(np.uint8), "RGBA")
