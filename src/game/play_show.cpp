@@ -643,12 +643,18 @@ void Play::follow(float seconds) {
         // drawn at the body's own pace and finishes early, at `arrived` of the way through,
         // and the drawn body stands still on the spot for the rest of the tick. A jump of more
         // than two tiles is a respawn or a gate and is not walked at all.
+        // The pace it walks at: its own speed, halved while it is iced (realm_move.cpp's
+        // `kChillFactor`). Both the arrival below and the clip's rate answer to this and not to
+        // the nominal speed -- read nominal, an iced walk took every tick for an arrival and
+        // strode at full pace over half the ground, moonwalking.
+        const float pace =
+            body->speed * (body->chilledUntil > realm_.tick() ? sim::kChillFactor : 1.0f);
         const float covered = one.groundSpeed * float(kTickSeconds) / metresPerTile;
         const bool jumped = covered > 2.0f;
         float through = jumped ? 1.0f : through_;
         float arrived = 1.0f;
-        if (!body->walking && covered > 1e-4f && covered < body->speed * 0.999f) {
-            arrived = covered / body->speed;
+        if (!body->walking && covered > 1e-4f && covered < pace * 0.999f) {
+            arrived = covered / pace;
             through = std::min(1.0f, through_ / arrived);
         }
         // Whether the DRAWN body is covering ground at this instant. This, and not the sim's
@@ -833,7 +839,7 @@ void Play::follow(float seconds) {
         one.clipRate = 1.0f;
         if (isWalk(one.figure.clip())) {
             const float metresPerTile = ground_->metresPerTile();
-            const float gait = body->speed * metresPerTile / float(kTickSeconds);
+            const float gait = pace * metresPerTile / float(kTickSeconds);
             // The clip's own planted foot decides, and the cook's whole-cycle travel is the
             // fallback for a body that plants nothing measurable. The two disagree by 4% on
             // MU's walk, and the stance is the one to believe: `travel` counts the swinging
