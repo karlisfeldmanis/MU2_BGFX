@@ -480,7 +480,11 @@ bool Realm::useItem(int slot) {
     // window shut (HideAll), the hero stopped (SetPlayerStop), nothing selected and no attack
     // standing (`Attacking = -1`). The monsters that were on him lose him, since a warp takes
     // him out of every viewport that held him.
+    //
+    // Refused and kept while he already stands in the safe zone -- ours, the user's (2026-09-30);
+    // OpenMU would spend it and warp him to the gate across the square.
     if (portal(row)) {
+        if (tables_->grid.safe(hero.column(), hero.row())) return false;
         spendOne();
         rise(hero);
         dropBlow(hero);
