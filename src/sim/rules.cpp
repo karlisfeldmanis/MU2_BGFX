@@ -180,6 +180,8 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     // (CharacterClasses/CharacterClassInitialization.cs:103) -- a Plate Shield's 8 is worth 4.
     out->defense = int((agility * double(row.defensePerAgility) + double(arms.armourDefense)) *
                        0.5);
+    // A complete set on top of all of it, as CalculateDefense adds `Defense * addDefense` last.
+    out->defense += int(double(out->defense) * arms.setDefense);
     // The arms, and then what is in them. A naked level-1 knight doing one point to a Bull
     // Fighter is not a bug -- it is what 0.75 says about hitting an armoured animal six levels
     // up with your fists, and the damage floor is what he has instead of nothing. A weapon adds

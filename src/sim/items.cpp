@@ -137,6 +137,24 @@ int excellentBlock(const content::ItemRow& row) {
     return row.defenseRate * 25 / std::max(1, row.dropLevel) + 5;
 }
 
+int setOf(const content::ItemRow& row) {
+    return row.group >= kGroupHelms && row.group <= kGroupBoots ? row.number : -1;
+}
+
+double setDefense(const content::Tables& tables, const Satchel& bag) {
+    int set = -1;
+    bool excellent = true;
+    for (int slot = kHelm; slot <= kBoots; ++slot) {
+        const Held& worn = bag[slot];
+        if (worn.empty() || size_t(worn.item) >= tables.items.size()) return 0.0;
+        const int of = setOf(tables.items[size_t(worn.item)]);
+        if (of < 0 || (set >= 0 && of != set)) return 0.0;
+        set = of;
+        excellent = excellent && worn.excellent != 0;
+    }
+    return excellent ? kExcellentSetDefense : kSetDefense;
+}
+
 std::string excellentLine(const content::ItemRow& row, int bit) {
     if (!excellentable(row) || bit < 0 || bit >= kExcellentOptions) return std::string();
     // ExcellentOptions.CreateDefenseOptions, number 1 to 6. The Zen line is written with

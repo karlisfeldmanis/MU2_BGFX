@@ -446,6 +446,46 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
         sheet.sections.push_back(socket);
     }
+
+    // ---- its set -------------------------------------------------------------------------------
+    // Ours, the user's (2026-09-30), in MU's framed set block: the five pieces of its number,
+    // green where he wears them and gray where not, then the two steps of sim::setDefense, lit
+    // when they stand. The set's name is the row's label less its last word ("Leather Helm").
+    if (const int set = sim::setOf(row); set >= 0) {
+        Section pieces;
+        pieces.framed = true;
+        const size_t space = row.label.rfind(' ');
+        pieces.kicker = (space == std::string::npos ? row.label : row.label.substr(0, space)) + " Set";
+        bool all = true, excellent = true;
+        for (int slot = sim::kHelm; slot <= sim::kBoots; ++slot) {
+            const int group = slot - sim::kHelm + sim::kGroupHelms;
+            const content::ItemRow* piece = nullptr;
+            for (const content::ItemRow& r : tables.items) {
+                if (r.group == group && r.number == set) piece = &r;
+            }
+            const sim::Held& worn = bag[slot];
+            const bool on = !worn.empty() && size_t(worn.item) < tables.items.size() &&
+                            tables.items[size_t(worn.item)].group == group &&
+                            tables.items[size_t(worn.item)].number == set;
+            all = all && on;
+            excellent = excellent && on && worn.excellent != 0;
+            if (!piece) continue;
+            Row line;
+            line.free = piece->label;
+            line.freeTone = on ? Tone::Green : Tone::Gray;
+            pieces.rows.push_back(line);
+        }
+        const auto step = [&](const std::string& when, double rate, bool stands) {
+            Row line;
+            line.free = when + ": Defense";
+            line.tail = "+" + std::to_string(int(std::lround(rate * 100.0))) + "%";
+            line.freeTone = stands ? Tone::Green : Tone::Gray;
+            pieces.rows.push_back(line);
+        };
+        step("Complete set", sim::kSetDefense, all && !excellent);
+        step("Excellent set", sim::kExcellentSetDefense, excellent);
+        sheet.sections.push_back(pieces);
+    }
     // A Rune of Creation: the power it carries, what that does, and whose and where it goes.
     if (sim::creation(row)) {
         if (const sim::PowerRow* power = sim::powerOf(powerAt(what, 0))) {

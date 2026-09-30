@@ -347,6 +347,21 @@ inline int excellentCount(uint8_t mask) {
     return n;
 }
 
+// ---- a complete set -------------------------------------------------------------------------
+//
+// **Five pieces of one set worn together** -- helm, armour, pants, gloves and boots of one
+// number in groups 7 to 11, as MuMain's CheckFullSet matches them (`Type % MAX_ITEM_INDEX`) --
+// raise his whole defence by kSetDefense, and by kExcellentSetDefense when all five are
+// excellent. The user's, 2026-09-30. INVENTION: CheckFullSet pays nothing below +10 on every
+// piece, then 5% at +10 and 5% more a plus to 30% at +15 (ZzzInfomation.cpp:3306-3330, on the
+// final defence as here); a set of any plus, and the excellent step, are ours.
+constexpr double kSetDefense = 0.05;
+constexpr double kExcellentSetDefense = 0.10;
+// The set a row belongs to -- its number -- or -1 for anything that is not one of the five.
+int setOf(const content::ItemRow& row);
+// What the five worn pieces raise the defence by: 0, kSetDefense or kExcellentSetDefense.
+double setDefense(const content::Tables& tables, const Satchel& bag);
+
 // ---- sockets and the Rune of Creation ----------------------------------------------------
 //
 // **invention**, the user's (2026-09-28): an item may roll **+Socket** as it rolls +Luck -- up to

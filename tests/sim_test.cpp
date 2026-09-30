@@ -2869,6 +2869,50 @@ void testExcellent(const content::Tables& tables) {
     checkEqual(halved.damage, 10, "armour that takes half off leaves half of a 20");
 }
 
+void testSets(const content::Tables& tables) {
+    std::printf("sets\n");
+    const int leather = tables.itemNamed("ArmorMale01");
+    check(leather >= 0, "the leather armour the set tests use exists");
+    if (leather < 0) return;
+    const int set = tables.items[size_t(leather)].number;
+    int piece[5];
+    for (int at = 0; at < 5; ++at) piece[at] = tables.itemAt(sim::kGroupHelms + at, set);
+    const int stranger = tables.itemAt(sim::kGroupHelms, set == 0 ? 1 : 0);
+    check(piece[0] >= 0 && piece[4] >= 0 && stranger >= 0, "a whole set and a stranger's helm exist");
+    if (piece[0] < 0 || piece[4] < 0 || stranger < 0) return;
+
+    const auto dressed = [&](sim::Realm& realm, int pieces, uint8_t bits, int helm) {
+        check(realm.raise(&tables, 41, 138, 124), "a realm raises");
+        for (int at = 0; at < pieces; ++at) {
+            realm.give(at == 0 ? helm : piece[at], sim::kHelm + at, 0, -1, false, 0, bits);
+        }
+    };
+    {
+        sim::Realm four, five, fine, odd;
+        dressed(four, 4, 0, piece[0]);
+        dressed(five, 5, 0, piece[0]);
+        dressed(fine, 5, 1, piece[0]);
+        dressed(odd, 5, 0, stranger);
+        checkNear(sim::setDefense(tables, four.satchel()), 0.0, 1e-9, "four pieces are no set");
+        checkNear(sim::setDefense(tables, five.satchel()), sim::kSetDefense, 1e-9,
+                  "five of one number are a set, 5%");
+        checkNear(sim::setDefense(tables, fine.satchel()), sim::kExcellentSetDefense, 1e-9,
+                  "five excellent are 10%");
+        checkNear(sim::setDefense(tables, odd.satchel()), 0.0, 1e-9, "a stranger's helm breaks it");
+    }
+    // On the final defence, after the halving, truncated.
+    sim::Arms arms;
+    arms.armourDefense = 200;
+    sim::Fighter bare, whole;
+    int health = 0;
+    const sim::HeroPoints points = sim::startingPoints(sim::Kin::DarkKnight);
+    sim::reckon(sim::Kin::DarkKnight, 1, points, arms, &bare, &health);
+    arms.setDefense = sim::kSetDefense;
+    sim::reckon(sim::Kin::DarkKnight, 1, points, arms, &whole, &health);
+    checkEqual(whole.defense, bare.defense + int(double(bare.defense) * 0.05),
+               "a set raises the final defence by 5%");
+}
+
 void testWear(const content::Tables& tables) {
     std::printf("wear\n");
     const int shield = tables.itemAt(6, 0), leather = tables.itemNamed("ArmorMale01");
@@ -3893,6 +3937,7 @@ int main() {
     testRefine(tables);
     testOptions(tables);
     testExcellent(tables);
+    testSets(tables);
     testWear(tables);
     testRecovery(tables);
     testWardens(tables);
