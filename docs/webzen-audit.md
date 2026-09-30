@@ -35,9 +35,8 @@ swing keeps the larger axis as well, or a walker halts half a tile short), #10 f
 OpenMU's) and #12 (realm_fight.cpp; the Ice timer is not paused under poison as WebZen's is).
 The Poison and Ice hunts in sim_test moved off seed 7, where the round sight left them short.
 
-The user's picks, 2026-09-30: #3 WebZen's (the shield meets a player's blow only, so in this
-single-player game it soaks nothing; the skill hunts in sim_test keep their unspent heroes alive
-with Realm::wholeAgain, since without it they died mid-hunt), #4 both (life per kill, rest on a
+The user's picks, 2026-09-30: #3 WebZen's (the shield meets a player's blow only) -- taken back the
+same day: with no PvP it soaked nothing, and the shield soaks monsters' blows again as ours, #4 both (life per kill, rest on a
 perch), #9 no leash and WebZen's respawn (the hit's chase is WebZen's ten steps, then eyesight;
 nothing past fifteen tiles), #13 WebZen's counts -- taken back the same day: the user found
 OpenMU's placement better, and kept only the respawn on a tile drawn anew from the nest.

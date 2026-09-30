@@ -79,12 +79,12 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (force != 1.0f) blow.damage = std::max(1, int(float(blow.damage) * force));
     // The shield takes nine tenths, and what it cannot cover falls through to health: a pool
     // with three points left protects by three and no more. MU2's Realm.Wound, off OpenMU's
-    // GetHitInfo shieldRatio and Player.HitAsync's overflow. Monsters have none. And only a
-    // player's blow meets it: WebZen's shield is the duel's alone (ObjAttack.cpp:2262-2281,
-    // 1.00.93, ADD_SHIELD_POINT_01_20060403), and a monster's blow goes to life -- the user's
-    // pick of 2026-09-30, where OpenMU's soaked every monster's nine tenths.
+    // GetHitInfo shieldRatio and Player.HitAsync's overflow. Monsters have none. **Ours**, and
+    // not WebZen's, whose shield meets a player's blow alone (ObjAttack.cpp:2262-2281, 1.00.93):
+    // tried that way on 2026-09-30 and taken back the same day ("we need vs monsters also"), as
+    // with no PvP here the shield did nothing at all.
     int wound = blow.damage;
-    if (target.sd > 0 && attacker.player) {
+    if (target.sd > 0) {
         const int onto = int(float(blow.damage) * kShieldShare);
         const int over = onto - target.sd;
         target.sd = std::max(0, target.sd - onto);
@@ -94,7 +94,6 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // A guard is not killed: ten thousand health against Lorencia's blows is never reached, and
     // this is the floor that says so rather than a guard lying dead at the gate. invention.
     if (target.warden >= 0) target.health = std::max(1, target.health);
-    if (target.player && standFast_) target.health = std::max(1, target.health);
     // The hero's hand on a monster, which is what a guard asks after when it dies.
     if (attacker.player && target.monster() && wound > 0) target.heroStruck = true;
     // And what it cost the gear, on the health it took and nothing else: a blow the shield

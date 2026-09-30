@@ -537,14 +537,6 @@ public:
     bool refine(int jewelSlot, int targetSlot);
     // Zen in and out, for the merchants. `pay` refuses, whole, what he cannot afford.
     void earn(int64_t zen) { money_ += zen; }
-    // A test's hand on his health, whole again: the skill hunts are about the skill, and since
-    // the shield stopped soaking monsters' blows (2026-09-30) an unspent test hero dies in them.
-    void wholeAgain() {
-        if (bodies_[0].alive()) bodies_[0].health = bodies_[0].maxHealth;
-    }
-    // And one who cannot fall at all, as a guard cannot: two Skeleton Warriors' blows on one
-    // tick are more than a new elf of forty holds, whole or not.
-    void standFast(bool on) { standFast_ = on; }
     bool pay(int64_t zen);
     // Takes a carried thing out of the bag and hands it back: a sale. Worn things are not
     // sold (Shelf.Offer refuses a source outside the bag, and so does this).
@@ -1003,7 +995,6 @@ private:
     };
     Sip sips_[8];
     int sipCount_ = 0;
-    bool standFast_ = false;  // a test's hero who is never laid below one (standFast)
 };
 
 // The one line a happening becomes in the seeded log. Fixed precision throughout: a `%g` of a

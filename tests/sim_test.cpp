@@ -880,7 +880,6 @@ void testCastLock(const content::Tables& tables) {
                 wiz.ask(request);
             }
             wiz.step();
-            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Loosed) {
@@ -998,7 +997,6 @@ void testCastLock(const content::Tables& tables) {
                 wiz.ask(request);
             }
             wiz.step();
-            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kFireBall) ++balls;
@@ -1059,7 +1057,6 @@ void testCastLock(const content::Tables& tables) {
                 wiz.ask(request);
             }
             wiz.step();
-            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.who != wiz.hero().id) continue;
                 if (one.what == sim::What::Loosed && one.a == sim::skill::kPowerWave) {
@@ -1162,7 +1159,6 @@ void testCastLock(const content::Tables& tables) {
                 wiz.invoke(sim::skill::kPoison, nearest);
             }
             wiz.step();
-            wiz.wholeAgain();
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
                     one.a == sim::skill::kPoison) {
@@ -1247,7 +1243,6 @@ void testCastLock(const content::Tables& tables) {
                 wiz.invoke(sim::skill::kFlame, nearest);
             }
             wiz.step();
-            wiz.wholeAgain();
             int thisTick = 0;
             for (const sim::Happening& one : wiz.happenings()) {
                 if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
@@ -1334,7 +1329,6 @@ void testCastLock(const content::Tables& tables) {
             was.clear();
             for (const sim::Body& one : wiz.bodies()) was.push_back({one.x, one.y});
             wiz.step();
-            wiz.wholeAgain();
             // An iced body never covers more than half its own ground in a tick.
             for (size_t i = 1; i < wiz.bodies().size() && i < was.size(); ++i) {
                 const sim::Body& one = wiz.bodies()[i];
@@ -1574,7 +1568,6 @@ void testCastLock(const content::Tables& tables) {
             // Running before this tick: the cast's own tick may finish the step he was on.
             const bool running = wiz.hero().channelSkill != 0;
             wiz.step();
-            wiz.wholeAgain();
             // He does not move while it runs.
             if (running && wiz.hero().channelSkill != 0 &&
                 (wiz.hero().x != wasX || wiz.hero().y != wasY)) {
@@ -1879,10 +1872,7 @@ void testElfSkills(const content::Tables& tables) {
     check(cast(sim::skill::kHeal), "Heal is cast");
     check(realm.hero().health <= realm.hero().maxHealth, "and never past the most she has");
     // Greater Damage lapses on its minute.
-    for (int wait = 0; wait < 1210; ++wait) {
-        realm.step();
-        realm.wholeAgain();
-    }
+    for (int wait = 0; wait < 1210; ++wait) realm.step();
     check(realm.hero().stats.greaterDamage == 0, "Greater Damage lapses after its minute");
 
     // Skillshot on the quick slot, at the nearest spider, over and over.
@@ -1996,7 +1986,6 @@ void testSummons(const content::Tables& tables) {
     uint32_t held = 0;
     for (int tick = 0; tick < 3000 && held == 0; ++tick) {
         realm.step();
-        realm.wholeAgain();
         for (const sim::Happening& h : realm.happenings()) {
             if (h.who == golemId && h.what == sim::What::Hit) ++blows;
         }
@@ -2016,7 +2005,6 @@ void testSummons(const content::Tables& tables) {
         bool turned = false, struck = false;
         for (int tick = 0; tick < 200; ++tick) {
             realm.step();
-            realm.wholeAgain();
             for (const sim::Happening& h : realm.happenings()) {
                 if (h.who == realm.hero().id && h.whom == held &&
                     (h.what == sim::What::Hit || h.what == sim::What::Missed)) {
@@ -2034,10 +2022,8 @@ void testSummons(const content::Tables& tables) {
     sim::Request stop;
     stop.kind = sim::Request::Kind::Stop;
     realm.ask(stop);
-    realm.standFast(true);
     for (int tick = 0; tick < 3000; ++tick) {
         realm.step();
-        realm.wholeAgain();
         for (const sim::Happening& h : realm.happenings()) {
             if (h.what == sim::What::Died && h.whom == golemId) ++kills;
         }
@@ -2505,7 +2491,6 @@ void testSkills(const content::Tables& tables) {
             }
         }
         realm.step();
-        realm.wholeAgain();
         sim::audit(realm, findings);
 
         const sim::Body& hero2 = realm.hero();
@@ -4039,7 +4024,6 @@ void testRunes(const content::Tables& tables) {
                 realm.ask(request);
             }
             realm.step();
-            realm.wholeAgain();
             for (const sim::Happening& h : realm.happenings()) {
                 if (lightning && h.who == realm.hero().id && h.what == sim::What::Loosed &&
                     h.a == sim::skill::kLightning) {
