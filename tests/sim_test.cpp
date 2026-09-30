@@ -4005,6 +4005,7 @@ void testPets(const content::Tables& tables) {
     const sim::PetPower a = sim::petPower(tables.items[size_t(angel)]);
     const sim::PetPower i = sim::petPower(tables.items[size_t(imp)]);
     check(a.taken == 0.7 && a.health == 50 && a.lifeCost == 0, "the Angel takes 30% and adds 50");
+    check(a.dealt == 0.8, "and costs 20% of his own damage (ours)");
     check(i.dealt == 1.3 && i.lifeCost == 3, "the Imp adds 30% for 3 life a blow");
     check(a.wear == 0.03 && i.wear == 0.02, "and they wear at gObjSpriteDamage's rates");
 

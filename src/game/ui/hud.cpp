@@ -663,11 +663,16 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         if (power.health > 0) {
             what.rows.push_back(said("Max HP", "+" + std::to_string(power.health), tip::Tone::Green));
         }
-        if (power.dealt != 1.0) {
+        if (power.dealt > 1.0) {
             what.rows.push_back(said("Damage", "+" + percent(power.dealt - 1.0), tip::Tone::Green));
             what.rows.push_back(prose("attacking and wizardry, skills too"));
         }
-        // The Imp's price (sim::PetPower::lifeCost), the one thing a pet takes from him.
+        // The Angel's price (ours): his own blows lighter.
+        if (power.dealt < 1.0) {
+            what.rows.push_back(said("Damage", "-" + percent(1.0 - power.dealt), tip::Tone::Red));
+            what.rows.push_back(prose("attacking and wizardry, skills too"));
+        }
+        // The Imp's price (sim::PetPower::lifeCost).
         if (power.lifeCost > 0) {
             what.rows.push_back(said("Life", "-" + std::to_string(power.lifeCost), tip::Tone::Red));
             what.rows.push_back(prose("for every blow you land; no bonus at " +

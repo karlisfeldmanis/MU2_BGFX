@@ -27,6 +27,7 @@ constexpr int kPointsPerLevel = 5;
 // corrected where WebZen's own GameServer says otherwise (1.00.93, ObjAttack.cpp:1041-1087 and
 // user.cpp gObjSpriteDamage; docs/pets.md, 2026-09-30):
 //   Guardian Angel  damage taken x0.7 (the x0.8 is NEW_FORSKYLAND3's later cut), max HP +50,
+//                   damage dealt x0.8 (ours, the user's, no server has it),
 //                   wears damage x 3/10 / 10 a hit taken
 //   Imp             damage dealt x1.3 for 3 of his own life a blow, wears damage x 2/10 / 10
 struct PetPower {

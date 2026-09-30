@@ -89,6 +89,10 @@ PetPower petPower(const content::ItemRow& row) {
     if (row.number == 0) {
         power.taken = 0.7;
         power.health = 50;
+        // Ours (the user, 2026-09-30): the Angel's price, his own blows at x0.8. No WebZen
+        // server has it -- gObjAngelSprite is asked of the target only -- but it is how the
+        // user remembers the Angel, so the two pets trade: guard for the Angel, strike for the Imp.
+        power.dealt = 0.8;
         power.wear = 0.3 / 10.0;
     } else if (row.number == 1) {
         power.dealt = 1.3;

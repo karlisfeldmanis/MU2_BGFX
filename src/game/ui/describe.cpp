@@ -349,9 +349,18 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 "% of Damage");
         }
         if (power.health > 0) say("Max HP +" + std::to_string(power.health) + " increased");
-        if (power.dealt != 1.0) {
+        if (power.dealt > 1.0) {
             say("Increase " + std::to_string(int(std::lround((power.dealt - 1.0) * 100.0))) +
                 "% of attacking & Wizardry Dmg");
+        }
+        // The Angel's price (ours), in red beside the Imp's.
+        if (power.dealt < 1.0) {
+            Row line;
+            line.free = "Decrease " + std::to_string(int(std::lround((1.0 - power.dealt) * 100.0))) +
+                        "% of attacking & Wizardry Dmg";
+            line.freeTone = Tone::Red;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
         }
         // The Imp's price, which MuMain's card never printed and WebZen's server always took
         // (sim::PetPower::lifeCost). Ours, worded as muonlinefanz's item page has it, and red

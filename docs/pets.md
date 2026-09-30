@@ -90,7 +90,8 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
 - **Rules** (`sim::PetPower`, `sim/items.cpp`): group 13 goes in slot 8 (`placeOf`); while its
   Life is above 0 the Angel multiplies damage taken by 0.7 (with the guard skill's share, as two
   DamageReceiveDecrement power-ups multiply) and adds 50 to maximum health before the excellent
-  x1.04; the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7)
+  x1.04, and -- ours, the user's, 2026-09-30, no server has it -- multiplies his own blows by 0.8
+  (card: "Decrease 20% of attacking & Wizardry Dmg" in red); the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7)
   and takes 3 of his life for every blow that lands (`Realm::strikeAt`); with 3 or less he
   neither pays nor gets the x1.3 -- WebZen lays him at 0, ours stops short since 0 is dead here.
   Every hit taken wears the Angel by 3/100 of the damage before its cut and the Imp by 2/100
