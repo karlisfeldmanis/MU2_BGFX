@@ -413,15 +413,14 @@ constexpr SkillRow kRows[kSkills] = {
     // two strikes, `kBurnEvery` apart, a tile and a half round the fire -- MU's 150 units, where
     // OpenMU's `targetAreaDiameter: 2` would be one -- and whoever stands in it at each.
     //
-    // **A cooldown spell** (the user, 2026-09-30: every cooldown spell waits five seconds),
-    // before agility's haste, and so, as Lightning taught, each strike at **twice the band**.
-    // Thrown at a body, as Meteorite, Ice and Poison are, from the right button or a key; the
+    // **No cooldown**, a standard spell as Energy Ball and Fire Ball are (the user, 2026-09-30),
+    // its clip its pace and each strike at the band's own force. Thrown at a body, as Meteorite, Ice and Poison are, from the right button or a key; the
     // fire is lit on that body's tile, not under the pointer. Nine tiles, with the other spells
     // he throws at a body, where 0.75 gives six. Its clip is `SetPlayerMagic`'s two hands, 147
     // and 148 (ClassAttack.cpp:1383), and sFlame is the fire starting, not a blow landing.
     // The numbers past 0.75's are ours.
-    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 2.0f,
-     .coolTicks = 100, .spread = Spread::One,
+    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 1.0f,
+     .spread = Spread::One,
      .tells = "Sets the ground under a body up to nine tiles off alight, and the fire strikes "
               "everything standing in it twice.",
      .clip = 147, .sound = "spell_flame", .built = true, .families = arms::kNone,

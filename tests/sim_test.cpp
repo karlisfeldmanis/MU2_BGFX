@@ -1187,9 +1187,9 @@ void testCastLock(const content::Tables& tables) {
     // ---- Flame: a fire on the ground that strikes whoever is in it, twice -------------------
     {
         const sim::SkillRow& flame = *sim::skillNumbered(sim::skill::kFlame);
-        check(flame.wizardry && !flame.primary() && flame.damage == 25 && flame.mana == 50 &&
-                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.coolTicks == 100,
-              "Flame is a five-second cooldown spell of twenty-five damage and fifty mana, "
+        check(flame.wizardry && flame.primary() && flame.damage == 25 && flame.mana == 50 &&
+                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.0f,
+              "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
         check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 1,
               "and its row is the table's last, so no save's learned bit moves");
@@ -1265,12 +1265,12 @@ void testCastLock(const content::Tables& tables) {
         std::printf("  flame: %d cast, %d fires, %d strikes, %d at once at the most, %lld ticks "
                     "apart at the closest\n",
                     casts, int(fires.size()), strikes, widest, (long long)closest);
-        check(casts >= 8 && strikes > int(fires.size()), "he lights fires through a hunt and each "
+        check(casts >= 5 && strikes > int(fires.size()), "he lights fires through a hunt and each "
                                                         "strikes more than once on the whole");
         checkEqual(offBeat, 0, "every strike lands on the lighting or a burn after it");
         checkEqual(outside, 0, "and on nobody outside the fire");
-        check(closest >= wiz.coolsFor(sim::skill::kFlame) && closest >= 80,
-              "never inside its cooldown");
+        check(wiz.cooling(sim::skill::kFlame) == 0 && closest < 80,
+              "and with no cooldown, cast again as soon as the clip and the mana allow");
     }
 
     // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
