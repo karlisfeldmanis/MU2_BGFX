@@ -67,7 +67,7 @@ jewel group (0.001 a kill, drop level ≤ monster level, no 12-level window).
   destroyed. Repair-all skips it; a single repair needs the pet trainer.
 - Price: `dropLevel³ + 100`, so Angel 12,200 buy / 4,000 sell, Imp 22,000 / 7,300.
 
-## Downsides, and where OpenMU leaves WebZen (researched 2026-09-30, nothing changed yet)
+## Downsides, and where OpenMU leaves WebZen (researched 2026-09-30, in the game the same day)
 
 WebZen's own GameServer, 1.00.93 (0.97d to Season 4.6, github ptr0x-real/Mu-GS-Webzen-MC-10093),
 cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
@@ -88,14 +88,19 @@ cross-checked against a Season 6 1.00.90 decompile and the 0.97k emulator:
 ## In the game (2026-09-29)
 
 - **Rules** (`sim::PetPower`, `sim/items.cpp`): group 13 goes in slot 8 (`placeOf`); while its
-  Life is above 0 the Angel multiplies damage taken by 0.8 (with the guard skill's share, as two
+  Life is above 0 the Angel multiplies damage taken by 0.7 (with the guard skill's share, as two
   DamageReceiveDecrement power-ups multiply) and adds 50 to maximum health before the excellent
-  x1.04; the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7).
-  Every hit taken wears it by damage/2000 and at 0 it is destroyed (`What::PetLost`).
+  x1.04; the Imp multiplies every blow dealt by 1.3 after the level floor (`rules.cpp` step 7)
+  and takes 3 of his life for every blow that lands (`Realm::strikeAt`); with 3 or less he
+  neither pays nor gets the x1.3 -- WebZen lays him at 0, ours stops short since 0 is dead here.
+  Every hit taken wears the Angel by 3/100 of the damage before its cut and the Imp by 2/100
+  (`Realm::wearOnTaken`), and at 0 it is destroyed (`What::PetLost`). sim_test `testPets`.
 - **Price and shelf** (`sim/market.cpp`): `dropLevel^3 + 100`, 12,200 and 22,000, a third back.
   Both on Lumen's shelf in the tavern, cells 2 and 3 -- ours, 0.75 sells them nowhere.
-- **Card** (`game/ui/describe.cpp`): type "Pet", MU's own lines ("Absorb 20% of Damage", "Max HP
-  +50 increased", "Increase 30% of attacking & Wizardry Dmg"), `Life n / 255` in the foot. They
+- **Card** (`game/ui/describe.cpp`): type "Pet", MU's own lines ("Absorb 30% of Damage", "Max HP
+  +50 increased", "Increase 30% of attacking & Wizardry Dmg") with the numbers off `petPower`, and
+  the Imp's price in red, "Life -3 for each successful attack" (ours: MuMain never printed it),
+  `Life n / 255` in the foot. They
   ride in the jewel drop group but are not jewels: no gold name, droppable, not bold on the ground.
 - **Buff strip** (`game/ui/hud.cpp`): the pet's cell first, its Life as the bar. The two icons are
   ours, rendered from the pets' own models by `pipeline/model_icons.py` (MuDream has no pet cell).
@@ -109,4 +114,3 @@ Test: `build/mu2 --world lorencia --play --level 30 --give Helper01:1:W` (or Hel
 
 1. The Angel's four grey sparks and green BITMAP_LIGHT, and the Imp's red one.
 2. The Horn of Uniria (13/2).
-3. Whether to take WebZen's Imp HP cost, 30% Angel and faster wear (above) over OpenMU's.

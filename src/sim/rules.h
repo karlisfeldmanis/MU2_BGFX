@@ -23,13 +23,18 @@ constexpr int kPointsPerLevel = 5;
 // by Realm::rearm: the multiplying ones multiply per piece and the adding ones add, as their
 // AggregateType says. Neutral for a monster and for anybody wearing nothing excellent.
 // What a worn pet does while it has life left: OpenMU's Version075/Items/Pets.cs:32-35, the
-// base power-ups CreatePet hangs on the row, and ItemPowerUpFactory.cs:38-41 drops them at 0.
-//   Guardian Angel  DamageReceiveDecrement x0.8, MaximumHealth +50 (AddRaw)
-//   Imp             AttackDamageIncrease x1.3
+// base power-ups CreatePet hangs on the row, and ItemPowerUpFactory.cs:38-41 drops them at 0 --
+// corrected where WebZen's own GameServer says otherwise (1.00.93, ObjAttack.cpp:1041-1087 and
+// user.cpp gObjSpriteDamage; docs/pets.md, 2026-09-30):
+//   Guardian Angel  damage taken x0.7 (the x0.8 is NEW_FORSKYLAND3's later cut), max HP +50,
+//                   wears damage x 3/10 / 10 a hit taken
+//   Imp             damage dealt x1.3 for 3 of his own life a blow, wears damage x 2/10 / 10
 struct PetPower {
     double taken = 1.0;  // on every blow he takes, after the floor and only above 1
     double dealt = 1.0;  // on every blow he lands, after the floor
     int health = 0;      // on his maximum, before the excellent armour's x1.04
+    int lifeCost = 0;    // his own life, paid on every blow he lands that `dealt` lifts
+    double wear = 0.0;   // the pet's life lost per point of damage he takes
 };
 
 struct Excellence {

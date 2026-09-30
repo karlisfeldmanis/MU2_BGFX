@@ -23,8 +23,19 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     Random& dice = attacker.warden >= 0 || target.warden >= 0     ? wardenDice_
                    : attacker.summoner != 0 || target.summoner != 0 ? summonDice_
                                                                     : dice_;
+    // The Imp's price: 3 of his own life on every blow that lands, and the x1.3 only while he
+    // can pay it. WebZen's gObjAttack (1.00.93 ObjAttack.cpp:1045-1060) takes the 3 and, when
+    // that goes below nought, lays his life at 0 and gives that blow no x1.3; here a hero with
+    // 3 or less neither pays nor gets it, so the Imp never lays him at 0 -- ours, since nought
+    // is dead in this realm. OpenMU leaves the price out.
+    const int impCost = attacker.player ? attacker.pet.lifeCost : 0;
+    const bool impPaid = impCost > 0 && attacker.health > impCost;
+    const double dealt = attacker.stats.damageDealt;
+    if (impCost > 0 && !impPaid) attacker.stats.damageDealt = 1.0;
     Blow blow = row && row->wizardry ? cast(attacker.stats, target.stats, row->damage, dice)
                                      : strike(attacker.stats, target.stats, dice);
+    attacker.stats.damageDealt = dealt;
+    if (blow.hit && impPaid) attacker.health -= impCost;
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;

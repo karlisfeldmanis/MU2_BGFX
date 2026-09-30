@@ -979,13 +979,17 @@ void Realm::wearOnTaken(int took) {
         const int slot = candidates[wearDice_.nextInt(0, count)];
         wearDown(slot, double(took) / kDamagePerDurability);
     }
-    // And the pet, on every hit taken and at the armour's rate, as long as it has life: a
-    // pet that cannot be trained divides by DamagePerOneItemDurability too (Player.cs:1988,
-    // :2006-2025). Landing a blow wears it not at all. At nought it is destroyed rather than
-    // left broken (:1991-2001), and its powers go with it.
+    // And the pet, on every hit taken, as long as it has life. At WebZen's rate, not OpenMU's
+    // armour rate (Player.cs:1988, 60 to 100 times slower): gObjSpriteDamage (1.00.93 user.cpp)
+    // takes the Angel down by 3/100 of the damage and the Imp by 2/100, the Angel's on the
+    // damage BEFORE its own cut, since ObjAttack.cpp calls it ahead of gObjAngelSprite. Landing
+    // a blow wears it not at all. At nought it is destroyed rather than left broken
+    // (Player.cs:1991-2001), and its powers go with it.
     const Held& pet = bag_[kPet];
     if (pet.empty() || pet.durability <= 0) return;
-    wearDown(kPet, double(took) / kDamagePerDurability);
+    const PetPower power = petPower(tables_->items[size_t(pet.item)]);
+    const double uncut = double(took) / bodies_[0].pet.taken;
+    wearDown(kPet, uncut * power.wear);
     if (bag_[kPet].durability > 0) return;
     const int32_t lost = bag_[kPet].item;
     bag_.lift(kPet);

@@ -84,11 +84,16 @@ int defenseBonus(bool shield, int refinement) {
 PetPower petPower(const content::ItemRow& row) {
     PetPower power;
     if (row.group != kGroupPets) return power;
+    // gObjSpriteDamage divides both wear rates by fN = 10 (the `happycat@20050201` line); what
+    // 0.75 itself divided by is not in any source read, so the documented 1.00.93 rate stands.
     if (row.number == 0) {
-        power.taken = 0.8;
+        power.taken = 0.7;
         power.health = 50;
+        power.wear = 0.3 / 10.0;
     } else if (row.number == 1) {
         power.dealt = 1.3;
+        power.lifeCost = 3;
+        power.wear = 0.2 / 10.0;
     }
     return power;
 }

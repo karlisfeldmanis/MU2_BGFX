@@ -3995,6 +3995,71 @@ void testRunes(const content::Tables& tables) {
     check(more < 0.25, "at no more than its chance and some");
 }
 
+// The pets at WebZen's word (docs/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
+// landed blow, and their wear.
+void testPets(const content::Tables& tables) {
+    std::printf("pets\n");
+    const int angel = tables.itemAt(13, 0), imp = tables.itemAt(13, 1);
+    check(angel >= 0 && imp >= 0, "the Guardian Angel and the Imp are in the table");
+    if (angel < 0 || imp < 0) return;
+    const sim::PetPower a = sim::petPower(tables.items[size_t(angel)]);
+    const sim::PetPower i = sim::petPower(tables.items[size_t(imp)]);
+    check(a.taken == 0.7 && a.health == 50 && a.lifeCost == 0, "the Angel takes 30% and adds 50");
+    check(i.dealt == 1.3 && i.lifeCost == 3, "the Imp adds 30% for 3 life a blow");
+    check(a.wear == 0.03 && i.wear == 0.02, "and they wear at gObjSpriteDamage's rates");
+
+    // Life across the ticks the hero lands a blow and takes none, per blow, with and without
+    // the Imp: the difference is its price. The regeneration is the same in both and cancels.
+    const auto fight = [&](int pet, int* landed, int* paid, int* petLife) {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        if (pet >= 0) realm.give(pet, sim::kPet);
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 3000 && realm.hero().alive(); ++tick) {
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            const int before = hero.health;
+            realm.step();
+            int hits = 0;
+            bool struck = false;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what != sim::What::Hit) continue;
+                if (h.who == realm.hero().id) ++hits;
+                else if (h.whom == realm.hero().id) struck = true;
+            }
+            if (hits > 0 && !struck && realm.hero().alive()) {
+                *landed += hits;
+                *paid += before - realm.hero().health;
+            }
+        }
+        *petLife = realm.satchel()[sim::kPet].empty() ? 0 : realm.satchel()[sim::kPet].durability;
+    };
+    int landed = 0, paid = 0, life = 0, bareLanded = 0, barePaid = 0, bareLife = 0;
+    fight(imp, &landed, &paid, &life);
+    fight(-1, &bareLanded, &barePaid, &bareLife);
+    const double price = double(paid) / std::max(1, landed) - double(barePaid) / std::max(1, bareLanded);
+    std::printf("  %d blows with the Imp, %.2f life a blow over bare; its life %d\n", landed, price,
+                life);
+    check(landed > 20 && bareLanded > 20, "the knight fights");
+    check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -4037,6 +4102,7 @@ int main() {
     testSummons(tables);
     testQuests(tables);
     testRunes(tables);
+    testPets(tables);
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

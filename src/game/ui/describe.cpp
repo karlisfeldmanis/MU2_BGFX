@@ -353,6 +353,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
             say("Increase " + std::to_string(int(std::lround((power.dealt - 1.0) * 100.0))) +
                 "% of attacking & Wizardry Dmg");
         }
+        // The Imp's price, which MuMain's card never printed and WebZen's server always took
+        // (sim::PetPower::lifeCost). Ours, worded as muonlinefanz's item page has it, and red
+        // because it is a cost.
+        if (power.lifeCost > 0) {
+            Row line;
+            line.free = "Life -" + std::to_string(power.lifeCost) + " for each successful attack";
+            line.freeTone = Tone::Red;
+            line.mark = tip::Mark::Diamond;
+            does.rows.push_back(line);
+        }
     }
     if (sim::heals(row) || sim::restores(row)) {
         Row line;
