@@ -198,6 +198,10 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     if (!runeDice_.nextBool(meteor ? kMeteorChance : kStormcallChance)) return;
     // Every other living monster within reach of him, and of those one at random.
     const auto near = [&](const Body& b) {
+    // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
+    // asked where he casts; left to fall through, a wizard's plain staff swing called a knight's
+    // lightning.
+    if (power.power != Power::Stormcall && power.power != Power::Meteor) return;
         if (!b.monster() || !b.alive() || b.id == struck.id) return false;
         const float dx = b.x - hero.x, dy = b.y - hero.y;
         return dx * dx + dy * dy <= kStormcallReach * kStormcallReach;

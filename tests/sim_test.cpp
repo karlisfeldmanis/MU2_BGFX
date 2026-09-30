@@ -3945,7 +3945,8 @@ void testRunes(const content::Tables& tables) {
           "Arcane Echo goes in a wizard's socketed staff");
     check(!sim::settable(tables, held(rune, 0, echo), held(serpent, 1, 0), dk),
           "and not by a knight");
-    const auto casts = [&](uint8_t power, int* cast, int* loosed) {
+    const auto casts = [&](uint8_t power, int* cast, int* loosed, int32_t skill = sim::skill::kEnergyBall,
+                           int* lightning = nullptr) {
         sim::Realm realm;
         realm.raise(&tables, 3, 200, 160, sim::Kin::DarkWizard, 60);
         const uint8_t powers[3] = {power, 0, 0};
@@ -3968,7 +3969,7 @@ void testRunes(const content::Tables& tables) {
                 sim::Request request;
                 request.kind = sim::Request::Kind::Attack;
                 request.target = nearest;
-                request.skill = sim::skill::kEnergyBall;
+                request.skill = skill;
                 realm.ask(request);
             }
             realm.step();
@@ -4040,3 +4041,12 @@ int main() {
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;
 }
+                if (lightning && h.who == realm.hero().id && h.what == sim::What::Loosed &&
+                    h.a == sim::skill::kLightning) {
+                    ++*lightning;
+                }
+    // And his plain staff swings with it set call nothing: Echo fell through to Stormcall's
+    // lightning once, a knight's power on a wizard's staff.
+    int swingCast = 0, swingLoosed = 0, lightning = 0;
+    casts(echo, &swingCast, &swingLoosed, 0, &lightning);
+    checkEqual(lightning, 0, "an Echo staff's plain swings call no lightning");
