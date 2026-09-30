@@ -662,7 +662,14 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.channelSkill = 0;
         dead.channelUntil = 0;
         dead.blinkAt = 0;
+        // And every debuff, the Ice Monster's chill with the poison: he rises with nothing done
+        // to him still counting down (the user, 2026-09-30: "when char is killed remove all
+        // debuffs").
         dead.poisonUntil = 0;
+        dead.poisonNext = 0;
+        dead.poisonDamage = 0;
+        dead.chilledUntil = 0;
+        dead.frozenUntil = 0;
         dead.boonSkill = skill::kNone;
         dead.boonDamageTaken = 1.0f;
         dead.stats.damageTaken = dead.pet.taken;
