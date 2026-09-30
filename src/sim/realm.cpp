@@ -145,18 +145,32 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     };
     for (const content::MonsterNest& nest : tables_->nests) {
         const content::MonsterKind& kind = tables_->kinds[nest.kind];
+        // A spot of many -- one tile with a count, Devias's two camps of ten Elite Yetis -- is a
+        // MonsterSetBase point row whose scatter distance OpenMU's parser drops
+        // (BaseMapInitializer.cs:188-192), so as written all ten stand on one tile. Scattered
+        // here over free tiles within kPointScatter of it, each on a tile of its own. A nest
+        // that is a box draws as it always did, so no other map's dice move.
+        const bool point = nest.x1 == nest.x2 && nest.y1 == nest.y2 && nest.count > 1;
+        std::vector<std::pair<int, int>> taken;
         for (uint32_t n = 0; n < nest.count; ++n) {
             int tileColumn = 0, tileRow = 0;
             bool found = false;
             for (int attempt = 0; attempt < 20 && !found; ++attempt) {
-                tileColumn = dice_.nextInt(nest.x1, nest.x2 + 1);
-                tileRow = dice_.nextInt(nest.y1, nest.y2 + 1);
+                const int reach = point ? kPointScatter : 0;
+                tileColumn = dice_.nextInt(nest.x1 - reach, nest.x2 + reach + 1);
+                tileRow = dice_.nextInt(nest.y1 - reach, nest.y2 + reach + 1);
                 // Not in the town, either: two of Lorencia's nests clip the safe zone by a
                 // fraction of a percent, which is enough to put a Hound inside the ring where
                 // nothing may be attacked.
                 found = tables_->grid.open(tileColumn, tileRow, content::kWallCharacter) &&
                         !tables_->grid.safe(tileColumn, tileRow) && !byPost(tileColumn, tileRow);
+                if (found && point) {
+                    for (const auto& one : taken) {
+                        if (one.first == tileColumn && one.second == tileRow) found = false;
+                    }
+                }
             }
+            if (found && point) taken.emplace_back(tileColumn, tileRow);
             if (!found) {
                 ++short_;
                 continue;

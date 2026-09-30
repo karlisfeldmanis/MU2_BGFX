@@ -253,4 +253,44 @@ constexpr int32_t kPoisoners[] = {8, 12, 39};
 constexpr int32_t kHeroPoisonTicks = 400;
 constexpr float kHeroPoisonShare = 0.03f;
 
+// ---- the monsters whose blow ices -------------------------------------------------------------
+// Devias's Ice Monster (22), `AttackSkill = Ice` (Version075/Maps/Devias.cs:178). OpenMU's
+// Monster.AttackAsync hits with the plain blow and then, hit or miss, tries the skill's element on
+// him (Monster.cs:113-123, AttackableExtensions.cs:451-489): 1/(IceResistance+1), which is every
+// swing on a hero with none, and not again while it is on. Iced is ten seconds at half his speed
+// (SkillsInitializerBase.cs:205-207, :274-295; MovementSpeedConstants.cs:50) -- the wizard's own
+// chill, whose ticks and factor are Ice's row. A Ring of Ice's resistance is not carried.
+constexpr int32_t kChillers[] = {22};
+
+// ---- a spot of many -----------------------------------------------------------------------------
+// How far a one-tile nest with a count scatters its members (Realm's raise): **ours**, a
+// reconstruction. MonsterSetBase's point rows carry a scatter distance that OpenMU's parser drops
+// (BaseMapInitializer.cs:188-192) and nothing on disk recovers it; 3 is the Elite Yeti's own
+// MoveRange (Devias.cs:110), which keeps each of Devias's two camps of ten a camp.
+constexpr int kPointScatter = 3;
+constexpr int32_t kHeroChillTicks = 200;
+
+// ---- elemental resistance ---------------------------------------------------------------------
+// Only the two elements that do something in 0.75 (the Ice slow and the Poison), and only the
+// breeds that have one. The rest of the three maps' breeds have none: Lorencia's Lich carries
+// only Fire, which nothing in 0.75 acts on, and Noria's Goblin writes 0 to every element.
+// WebZen's word, not OpenMU's: gObjCheckResistance takes the raw number and turns the element
+// aside when rand()%(r+1) != 0, so r of every r+1 (user.cpp:8710-8711, 1.00.93) -- 3 is 75%,
+// the Ice Queen's 5 is 83%. OpenMU read it as r/255 and came to ~2%. Monster.txt's columns are
+// cold, poison, lightning, fire (public.h:37-40, MonsterAttr.cpp:233-236), which OpenMU's ice
+// and poison had swapped: Devias's own beasts take Ice and shrug off Poison. It never lessens
+// the damage. The Yeti (19) is here though it is spawned nowhere, for the day it is.
+struct Resistance {
+    int32_t number;
+    int32_t ice, poison;
+};
+constexpr Resistance kResistances[] = {
+    {19, 0, 3},  // Yeti
+    {20, 1, 4},  // Elite Yeti
+    {22, 0, 3},  // Ice Monster
+    {23, 0, 3},  // Hommerd
+    {24, 0, 2},  // Worm
+    {25, 4, 5},  // Ice Queen
+};
+
 }  // namespace mu::sim

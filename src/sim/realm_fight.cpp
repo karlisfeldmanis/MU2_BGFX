@@ -39,6 +39,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
+        chillHero(attacker, target);
         return;
     }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
@@ -93,12 +94,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
     // Ice's element: what it leaves standing walks at half speed for its ticks, the last one
     // wins (a second chill restarts the ten seconds, as OpenMU's re-applied effect does).
-    if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster()) {
+    if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster() &&
+        !resists(target, true, dice)) {
         target.chilledUntil = tick_ + row->chillTicks;
     }
     // Poison's: the pulses start three seconds on, each a quarter of this blow; a second poison
     // replaces the first, as OpenMU's re-applied effect does.
-    if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster()) {
+    if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster() &&
+        !resists(target, false, dice)) {
         target.poisonUntil = tick_ + row->poisonTicks;
         target.poisonNext = tick_ + kPoisonEvery;
         target.poisonDamage = std::max(1, blow.damage / 4);
@@ -112,6 +115,8 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         target.poisonDamage = 0;
         target.poisonBy = attacker.id;
     }
+    // An Ice Monster's: iced, whatever the blow did.
+    chillHero(attacker, target);
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent
     // back at whoever struck (Player.HitAsync's ReflectDamage). It takes no draw.
     if (target.player && target.alive() && !attacker.player && attacker.alive() &&
@@ -204,15 +209,15 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
                    struck.id);
         return;
     }
+    // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
+    // asked where he casts; left to fall through, a wizard's plain staff swing called a knight's
+    // lightning.
+    if (power.power != Power::Stormcall && power.power != Power::Meteor) return;
     const bool meteor = power.power == Power::Meteor;
     // Off the sockets' own stream, so a run is not moved by a power being worn.
     if (!runeDice_.nextBool(meteor ? kMeteorChance : kStormcallChance)) return;
     // Every other living monster within reach of him, and of those one at random.
     const auto near = [&](const Body& b) {
-    // Only Stormcall and Meteor call anything down past here. Arcane Echo is a spell's power,
-    // asked where he casts; left to fall through, a wizard's plain staff swing called a knight's
-    // lightning.
-    if (power.power != Power::Stormcall && power.power != Power::Meteor) return;
         if (!b.monster() || !b.alive() || b.id == struck.id) return false;
         const float dx = b.x - hero.x, dy = b.y - hero.y;
         return dx * dx + dy * dy <= kStormcallReach * kStormcallReach;
@@ -498,6 +503,36 @@ bool Realm::poisons(const Body& monster) const {
     const int32_t number = tables_->kinds[size_t(monster.kind)].number;
     for (const int32_t one : kPoisoners) {
         if (one == number) return true;
+    }
+    return false;
+}
+
+bool Realm::chills(const Body& monster) const {
+    if (monster.kind < 0 || size_t(monster.kind) >= tables_->kinds.size()) return false;
+    const int32_t number = tables_->kinds[size_t(monster.kind)].number;
+    for (const int32_t one : kChillers) {
+        if (one == number) return true;
+    }
+    return false;
+}
+
+void Realm::chillHero(const Body& attacker, Body& target) {
+    if (!target.player || !target.alive() || attacker.player || !chills(attacker)) return;
+    // Not again while it is on: OpenMU adds an effect only when it is not already active
+    // (AttackableExtensions.cs:473), so ten seconds from the first, not from the last.
+    if (target.chilledUntil > tick_) return;
+    target.chilledUntil = tick_ + kHeroChillTicks;
+}
+
+bool Realm::resists(const Body& target, bool ice, Random& dice) const {
+    if (target.kind < 0 || size_t(target.kind) >= tables_->kinds.size()) return false;
+    const int32_t number = tables_->kinds[size_t(target.kind)].number;
+    for (const Resistance& one : kResistances) {
+        if (one.number != number) continue;
+        const int32_t x = ice ? one.ice : one.poison;
+        if (x <= 0) return false;
+        // Takes with 1/(x + 1), as rand()%(r+1) == 0.
+        return !dice.nextBool(1.0 / (1.0 + double(x)));
     }
     return false;
 }

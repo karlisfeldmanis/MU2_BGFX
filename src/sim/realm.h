@@ -760,6 +760,13 @@ private:
     void poisonPulse(Body& beast);
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).
     bool poisons(const Body& monster) const;
+    // Whether this monster's blow ices the hero (realm_tuning.h, kChillers), and icing him when
+    // it does and he is not iced already -- on a hit and on a miss alike.
+    bool chills(const Body& monster) const;
+    void chillHero(const Body& attacker, Body& target);
+    // Whether a monster turns Ice's or Poison's element aside: its OpenMU resistance, rolled on
+    // `dice` only when it has one, so a breed with none takes no draw (kResistances).
+    bool resists(const Body& target, bool ice, Random& dice) const;
     // Teleport: where a blink toward `column, row` lands -- pulled back to its reach, and off a
     // wall toward him -- or false when nowhere on the line will take him.
     bool blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,
