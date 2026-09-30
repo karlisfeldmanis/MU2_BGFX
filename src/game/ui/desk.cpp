@@ -883,6 +883,14 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = left * 0.05f;
         boon.share = left / float(sim::kHeroPoisonTicks);
     }
+    // And iced, the Ice Monster's slow: a debuff cell of its own, its seconds counting down.
+    if (hero.chilledUntil > realm.tick() && standing < Hud::kBoons) {
+        Hud::Boon& boon = boons[standing++];
+        boon.chill = true;
+        const float left = float(hero.chilledUntil - realm.tick());
+        boon.seconds = left * 0.05f;
+        boon.share = left / float(sim::kHeroChillTicks);
+    }
     hud_.setBoons(boons, standing);
 
     const gfx::Window::Key keys[Hud::kSkillKeys] = {

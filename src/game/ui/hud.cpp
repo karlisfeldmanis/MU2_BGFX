@@ -98,6 +98,10 @@ constexpr Box kBuffsAt{292.0f, 12.0f, 40.0f, 56.0f};
 constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
+// A debuff's cell: the buffs' own hairline edge in a muted red, and a red bar, WoW's sign for
+// something done to you (ours). Thin: a two-pixel bright red frame was too loud (the user).
+constexpr uint32_t kDebuffEdge = gfx::rgba(0.72f, 0.22f, 0.18f, 0.75f);
+constexpr uint32_t kDebuffLeft = gfx::rgba(0.94f, 0.30f, 0.22f, 0.95f);
 
 // The gap between two cells of the row, in plate pixels: MuDream's own strip spaces its 80-wide
 // cells by a fifth of one, and this is that at the cell's 40.
@@ -672,11 +676,26 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         sheet.wear = "Life " + std::to_string(one.life) + " / " + std::to_string(one.lifeMost);
         return sheet;
     }
+    if (one.chill) {
+        // The Ice Monster's blow (sim::kChillers): half his pace for ten seconds, not renewed
+        // while it is on (Realm::chillHero).
+        sheet.name = "Chilled";
+        sheet.nameTone = tip::Tone::Blue;
+        sheet.base = "DEBUFF";
+        tip::Section what;
+        what.rows.push_back(said("Movement speed",
+                                 "-" + std::to_string(int(std::lround((1.0f - sim::kChillFactor) *
+                                                                     100.0f))) + "%",
+                                 tip::Tone::Red));
+        what.rows.push_back(prose("an Ice Monster's blow; it wears off on its own"));
+        sheet.sections.push_back(what);
+        return sheet;
+    }
     if (one.poison) {
         // 0.75's poison on him: a share of what he has left every three seconds.
         sheet.name = "Poisoned";
         sheet.nameTone = tip::Tone::Green;
-        sheet.base = "POISON";
+        sheet.base = "DEBUFF";
         tip::Section what;
         char share[32];
         std::snprintf(share, sizeof share, "%d%% of health left",
@@ -1050,18 +1069,41 @@ void Hud::rebuild() {
         const Box box = plate(s, buffPx(i));
         const char* art = one.pet >= 0          ? petArt(one.pet)
                           : one.poison           ? "buff_poison"
+                          : one.chill            ? "buff_ice"
                           : one.ale              ? "buff_ale"
                           : buffArt(one.skill)   ? buffArt(one.skill)
                                                  : "buff_defense";
         const gfx::Art& icon = arts.get(art);
         canvas_.rect(box, kBuffBack);
         if (icon.valid()) canvas_.image(icon, box);
-        canvas_.outline(box, std::max(1.0f, s.scale), kBuffEdge);
+        const bool debuff = one.debuff();
+        canvas_.outline(box, std::max(1.0f, s.scale), debuff ? kDebuffEdge : kBuffEdge);
         // And how much of it is left, as a hairline across its foot: the strip says WHAT is on
         // him and this says for how much longer, which is the half a bare icon cannot.
         const float left = std::clamp(one.share, 0.0f, 1.0f);
         const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
-        canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
+        canvas_.rect({box.x, box.bottom() - line, box.w * left, line},
+                     debuff ? kDebuffLeft : kBuffLeft);
+        // And the seconds in figures over its foot, as the skill keys print a cooldown: whole
+        // seconds from one up, minutes from sixty. The pet has no clock; its bar is its Life.
+        if (one.pet < 0 && one.seconds >= 1.0f) {
+            const int whole = int(one.seconds + 0.5f);
+            char figure[16];
+            if (whole >= 60) {
+                std::snprintf(figure, sizeof figure, "%d:%02d", whole / 60, whole % 60);
+            } else {
+                std::snprintf(figure, sizeof figure, "%d", whole);
+            }
+            // On a dark band across the foot, larger and with a heavier drop: bare on the icon
+            // the figure was lost in its colours (the user: "time number was hard to read").
+            const float size = std::round(19.0f * kUnit * s.scale);
+            const float band = std::round(size * 0.95f);
+            canvas_.rect({box.x, box.bottom() - line - band, box.w, band},
+                         gfx::rgba(0.0f, 0.0f, 0.0f, 0.62f));
+            canvas_.shadowed(box.midX(), box.bottom() - line - band * 0.18f, size, kInk,
+                             kInkShadow, std::max(1.0f, 1.5f * s.scale), figure,
+                             gfx::Align::Centre, 0.0f);
+        }
     }
 
     // ---- the list, open above the plate ------------------------------------------------------
