@@ -113,11 +113,12 @@ constexpr float kFlakeAlpha = 0.85f;
 // the leaves' own -x at up to fifteen metres a second -- MU's face-value fall is five to
 // fourteen, the leaves' note calls that a blizzard -- in gusts, and it falls up to four metres
 // a second faster, so the snow goes across the screen, not down it. Nine and three at first;
-// "storm snow flakes has to fly faster" (2026-09-30). Spawned upwind by the distance the wind
-// carries it while it falls, so the stream crosses the hero instead of leaving him in a lee.
+// "storm snow flakes has to fly faster" (2026-09-30). Spawned upwind by a random share of the
+// distance the wind carries it while it falls (spawnFlake), no further than kStormUpwind: past
+// the leaves' 16 m stray it would be taken back the frame it was made.
 constexpr float kStormWind = 15.0f;
 constexpr float kStormFall = 4.0f;
-constexpr float kStormUpwind = 11.0f;
+constexpr float kStormUpwind = 12.0f;
 // How fast a flake takes up the wind's speed: a second's tenth, so a gust sweeps through the
 // field and does not arrive in every flake at once.
 constexpr float kStormGrip = 10.0f;
@@ -375,12 +376,19 @@ void Leaves::spawnFlake(Leaf& flake, const float hero[3], const content::Ground&
     flake.position[0] = hero[0] + between(-8.0f, 7.99f);
     flake.position[2] = hero[2] - between(-5.0f, 8.99f);
     flake.position[1] = ground.heightAt(hero[0], hero[2]) + between(kFlakeLow, kFlakeHigh);
-    // In a blizzard, upwind of where the wind now blows from, falling faster, already on it.
+    // In a blizzard, falling faster and already on the wind, and set back upwind by a random
+    // share of the way it will be carried before it lands, so its flight passes over the spot
+    // drawn in the field: the stream then covers the whole view. A fixed 11 m back, most
+    // flakes landed before the middle and only one side of the screen had snow (the user,
+    // 2026-09-30: "covering only right side of screen").
     const float windX = -std::cos(windHeading_), windZ = std::sin(windHeading_);
-    flake.position[0] -= windX * storm_ * kStormUpwind;
-    flake.position[2] -= windZ * storm_ * kStormUpwind;
     const float fall = between(kFlakeSlow, kFlakeFast) + storm_ * between(0.5f, 1.0f) * kStormFall;
     const float blow = storm_ * kStormWind * windStrength_ * stormGust(gust_);
+    const float aloft = flake.position[1] - ground.heightAt(flake.position[0], flake.position[2]);
+    const float carried =
+        std::min(blow * std::max(aloft, 0.0f) / fall, kStormUpwind) * random01();
+    flake.position[0] -= windX * carried;
+    flake.position[2] -= windZ * carried;
     flake.velocity[0] = windX * blow;
     flake.velocity[1] = -fall;
     flake.velocity[2] = fall * kFlakeSlant + windZ * blow;

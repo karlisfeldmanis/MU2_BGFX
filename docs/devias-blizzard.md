@@ -28,7 +28,7 @@ Landed 2026-09-30:
 
 - **The snow storms** (`world/leaves.cpp`, `setStorm`):
   - the wind blows it along the grass's axis (45° off −x) at up to 15 m/s in gusts, and it falls 2 to 4 m/s faster (9 and 3 at first; "has to fly faster");
-  - it spawns upwind and streaks along its flight past 2.5 m/s;
+  - it spawns upwind by a random share of how far the wind will carry it before it lands (at most 12 m), so its flight crosses the field and the stream covers the whole view (a fixed 11 m left one side of the screen bare), and streaks along its flight past 2.5 m/s;
   - landed snow blows away;
   - the pool fills from 150 to 180.
 - **Softened** ("snow flakes too much visible"): at a full storm a flake shows 25% of its light and streaks half as wide (half and 30% were too visible, 15% too faint).
