@@ -1,0 +1,43 @@
+{
+  "item": "Object29",
+  "mu_name": "Object29",
+  "mu_name_from": "The Dungeon's object slot 28, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 28,
+  "placements": 11,
+  "profile": "world",
+  "sheets": {
+    "flower_vase": "dn_flower_vase.png",
+    "deep_wall04": "dn_deep_wall04.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "flower_vase": "ceramic",
+    "deep_wall04": "flagstone"
+  },
+  "why_this_one": "An urn, 11 of them, flower_vase. Seen in the world 2026-09-30 at 187.9,32.3 among the pots by the leaning tablets.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 78,
+      "area": 5191.6,
+      "along": [
+        -18.7,
+        18.3
+      ],
+      "mu_uv": [
+        -0.0,
+        0.001,
+        1.0,
+        0.999
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.902,
+        0.998
+      ]
+    }
+  ]
+}

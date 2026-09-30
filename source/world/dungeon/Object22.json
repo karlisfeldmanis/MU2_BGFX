@@ -1,0 +1,41 @@
+{
+  "item": "Object22",
+  "mu_name": "Object22",
+  "mu_name_from": "The Dungeon's object slot 21, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 21,
+  "placements": 20,
+  "profile": "world",
+  "sheets": {
+    "wood01": "dn_wood01.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "wood01": "timber"
+  },
+  "why_this_one": "An open wooden coffin, or its lid, 20 of them, wood01. Seen in the world 2026-09-30 at 43.5,127 in the coffin room, by the standing torch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 20,
+      "area": 33124.3,
+      "along": [
+        -42.4,
+        39.9
+      ],
+      "mu_uv": [
+        0.12,
+        0.071,
+        0.494,
+        0.402
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.798,
+        0.996
+      ]
+    }
+  ]
+}

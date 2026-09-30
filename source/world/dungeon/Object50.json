@@ -1,0 +1,41 @@
+{
+  "item": "Object50",
+  "mu_name": "Object50",
+  "mu_name_from": "The Dungeon's object slot 49, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 49,
+  "placements": 41,
+  "profile": "world",
+  "sheets": {
+    "TileRock01": "dn_tilerock01.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "TileRock01": "rock"
+  },
+  "why_this_one": "A second cave rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 398,
+      "area": 8224.4,
+      "along": [
+        -32.7,
+        31.8
+      ],
+      "mu_uv": [
+        -0.353,
+        0.001,
+        0.972,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.843
+      ]
+    }
+  ]
+}

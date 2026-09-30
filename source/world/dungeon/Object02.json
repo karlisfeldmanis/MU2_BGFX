@@ -1,0 +1,45 @@
+{
+  "item": "Object02",
+  "mu_name": "Object02",
+  "mu_name_from": "The Dungeon's object slot 1, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 1,
+  "placements": 58,
+  "profile": "world",
+  "sheets": {
+    "cobweb": "dn_cobweb_glow.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "cobweb": "lamplight"
+  },
+  "why_this_one": "A cobweb strung in a corner, 58 of them: the dimmed additive copy of its sheet (dn_cobweb_glow.png), since cut out it read too solid and too bright. Seen in the world 2026-09-30 at 130,241, faint over the iron grate, as asked.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 38780.0,
+      "along": [
+        -34.2,
+        71.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ]
+    }
+  ],
+  "additive": [
+    "cobweb"
+  ],
+  "additive_from": "A departure, marked. MU draws cobweb.tga and steel_02.tga alpha-blended; this engine has an opaque cutout or an added glow and nothing between, and as cutouts the threads stood full bright and solid (the user, 2026-09-30: 'spider webs look very light, they need to be more transparent'). So each is its own sheet premultiplied by its alpha and dimmed (cobweb 0.4, steel_02 0.55) into dn_*_glow.png, and added: black adds nothing, and a thread over the dark reads as a faint silver line with the room behind it."
+}

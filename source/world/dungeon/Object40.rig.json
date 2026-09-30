@@ -1,0 +1,18 @@
+{
+  "source": "Object40.bmd",
+  "bones": 1,
+  "actions_available": 1,
+  "skeleton": [
+    {"index": 0, "name": "Box10", "parent": -1, "source": 0, "dummy": false, "t": [0.019237,19.88053,149.8344], "r": [0.707107,0,0,0.707107]}
+  ],
+  "meshes": [
+    {"texture": "deep_wall01.jpg", "group": "deep_wall01", "vertices": 20, "vertex_bones": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},
+    {"texture": "deep_wall04.jpg", "group": "deep_wall04", "vertices": 4, "vertex_bones": [0,0,0,0]},
+    {"texture": "deep_wall06.jpg", "group": "deep_wall06", "vertices": 8, "vertex_bones": [0,0,0,0,0,0,0,0]}
+  ],
+  "animations": [
+    {"action": 0, "keys": 1, "locked": false, "tracks": [
+      {"bone": 0, "t": [[0.019237,19.88053,149.8344]], "r": [[0.707107,0,0,0.707107]]}
+    ]}
+  ]
+}

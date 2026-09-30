@@ -1,0 +1,39 @@
+{
+  "tileset": "dungeon",
+  "mu_name": "Dungeon ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "dn_tilegrass01.png",
+    "TileGrass02": "dn_tilegrass02.png",
+    "TileGround01": "dn_tileground01.png",
+    "TileGround02": "dn_tileground02.png",
+    "TileGround03": "dn_tileground03.png",
+    "TileWater01": "dn_tilewater01.png",
+    "TileWood01": "dn_tilewood01.png",
+    "TileRock01": "dn_tilerock01.png",
+    "TileRock02": "dn_tilerock02.png"
+  },
+  "sheet_from": "Data/World2/Tile*.OZJ, from MuMain, decoded under a dn_ prefix. The prefix is load-bearing as nr_ and dv_ are: assets/textures is one flat pool, and all nine names are Lorencia's too. docs/dungeon-port.md.",
+  "slot_note": "World2 ships no TileGrass .OZT, so nothing grows here (terrain.py GRASS_BY_MAP[1] is empty). The ground is flat at 1.7 m; the walls, pits and rocks are all objects, and 40% of the map is NoGround void drawn black.",
+  "sheet_materials": {
+    "TileGrass01": "flagstone",
+    "TileGrass02": "sand",
+    "TileGround01": "rock",
+    "TileGround02": "flagstone",
+    "TileGround03": "cobble",
+    "TileWater01": "water",
+    "TileWood01": "sand",
+    "TileRock01": "rock",
+    "TileRock02": "sand",
+    "TileGrass01_over": "flagstone",
+    "TileGrass02_over": "sand",
+    "TileGround01_over": "rock",
+    "TileGround02_over": "flagstone",
+    "TileGround03_over": "cobble",
+    "TileWater01_over": "water",
+    "TileWood01_over": "sand",
+    "TileRock01_over": "rock",
+    "TileRock02_over": "sand"
+  },
+  "material_note": "Read off the art; the names lie. TileGrass01 is the dungeon floor, 76% of it: square grey-brown flagstones in joints of four, and takes flagstone, never grass. TileGrass02 is pale dust and takes sand. TileGround01 is dark sharp gravel and takes rock. TileGround02 is smooth grey stone and takes flagstone. TileGround03 is crazy paving and takes cobble. TileWater01 is near-black, and it is water: MU slides it a sheet every twenty seconds and ripples it with the wind like every map's water (ZzzLodTerrain.cpp:1750-1766, 3595), and its 3313 tiles line the winding cave passages -- an underground stream along the rock, most of it past the path's edge. It takes water. TileWood01 is trodden brown earth and TileRock02 tan rubble, both sand. TileRock01 is the dark mossy rock that paints the winding cave passages, and takes rock."
+}

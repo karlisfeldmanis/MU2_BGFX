@@ -1,0 +1,43 @@
+{
+  "item": "Object26",
+  "mu_name": "Object26",
+  "mu_name_from": "The Dungeon's object slot 25, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 25,
+  "placements": 21,
+  "profile": "world",
+  "sheets": {
+    "deep_wall09": "dn_deep_wall09.png",
+    "deep_wall07": "dn_deep_wall07.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall09": "flagstone",
+    "deep_wall07": "flagstone"
+  },
+  "why_this_one": "An inscribed stone tablet, 21 of them, deep_wall09: fallen and lying at angles on the floor, or leaning on a wall. Seen in the world 2026-09-30 in the dragon room at 240.4,148.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 28,
+      "area": 16377.2,
+      "along": [
+        -5.4,
+        4.1
+      ],
+      "mu_uv": [
+        -1.041,
+        -0.382,
+        1.215,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.882
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "item": "Object60",
+  "mu_name": "Object60",
+  "mu_name_from": "The Dungeon's object slot 59, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 59,
+  "placements": 30,
+  "profile": "world",
+  "sheets": {
+    "deep_wall07": "dn_deep_wall07.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall07": "flagstone"
+  },
+  "why_this_one": "A stone seat: a plain block, 30 of them, deep_wall07. MOVEMENT_OPERATE sits the character on it (ZzzInterface.cpp:1705-1712), and tools/cook.py PERCHES now carries the Dungeon arm. Seen in the world 2026-09-30 in the dragon room at 244.5,145.5.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 10500.0,
+      "along": [
+        -24.7,
+        25.3
+      ],
+      "mu_uv": [
+        0.161,
+        -0.035,
+        0.816,
+        0.816
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.69
+      ]
+    }
+  ]
+}

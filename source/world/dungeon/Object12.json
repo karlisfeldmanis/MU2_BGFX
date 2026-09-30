@@ -1,0 +1,94 @@
+{
+  "item": "Object12",
+  "mu_name": "Object12",
+  "mu_name_from": "The Dungeon's object slot 11, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 11,
+  "placements": 52,
+  "profile": "world",
+  "sheets": {
+    "squid01": "dn_squid01.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "squid01": "brass"
+  },
+  "sheet_materials_from": "Brass as dark bronze on squid01 and squid02's opaque body; the sliding glow keeps lamplight. See sheet_f0_tint_from.",
+  "sheet_f0_tint": {
+    "squid01": "#E8C050"
+  },
+  "sheet_f0": {
+    "squid01": 0.45
+  },
+  "sheet_f0_tint_from": "The user's, 2026-09-30, in several passes. 'i think those tentacles has to be metallic', then 'looks blue', 'less bronze and more in sync', and at last MuMain's own picture of the pit, a pale olive gold (120:105:85, 1 : 0.87 : 0.70), and 'lets make it dark bronze'. So brass (cast, roughness 0.44) at f0 0.45, with #E8C050 baked into the metal sheet (sheet_f0_tint; the cook drops glTF's baseColorFactor, so a sheet_tint never reached the game). The blue is left out of the tint on purpose: the Dungeon's fill is cold, and any blue in a metal's f0 turned the worms mauve. Tried and turned down: plate steel (blue), #FF9A50 (copper), wrought iron at 0.25 (grey), #FFCC80 (mauve). An invention on MU's look: MU lights squid01 as any other sheet.",
+  "why_this_one": "A clump of black tentacles rising from the floor, 52 of them, up to 2.6 m, on an 8-bone 30-key clip at MU's 0.16. squid01 is near black, so they read as dark horns. Seen in the world 2026-09-30 at 42.5,210.6 among the coffins.",
+  "animation_note": "Rigged: its one action of 30 keys plays at CreateObject's default 0.16; MuMain's Dungeon arm sets it no speed of its own.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 54,
+      "area": 16194.5,
+      "along": [
+        -61.7,
+        -11.3
+      ],
+      "mu_uv": [
+        -0.34,
+        0.001,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.529,
+        0.452
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 54,
+      "area": 12245.4,
+      "along": [
+        30.2,
+        70.7
+      ],
+      "mu_uv": [
+        -0.34,
+        0.001,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.013,
+        0.368,
+        0.76,
+        0.76
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 54,
+      "area": 7494.4,
+      "along": [
+        -52.5,
+        -26.1
+      ],
+      "mu_uv": [
+        -0.34,
+        0.001,
+        0.998,
+        0.999
+      ],
+      "bake_uv": [
+        0.021,
+        0.017,
+        0.996,
+        0.652
+      ]
+    }
+  ]
+}

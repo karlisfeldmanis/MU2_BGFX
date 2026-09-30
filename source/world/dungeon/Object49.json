@@ -1,0 +1,41 @@
+{
+  "item": "Object49",
+  "mu_name": "Object49",
+  "mu_name_from": "The Dungeon's object slot 48, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 48,
+  "placements": 235,
+  "profile": "world",
+  "sheets": {
+    "TileRock01": "dn_tilerock01.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "TileRock01": "rock"
+  },
+  "why_this_one": "A cave rock, 235 of them, scaled up to 3.2: a tall leaning spike of TileRock01 that stands in Dungeon 3's cave as a stalagmite, often round a wall torch MU set inside the rocks. Seen in the world 2026-09-30 at 204,176.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 398,
+      "area": 19613.1,
+      "along": [
+        -23.9,
+        38.0
+      ],
+      "mu_uv": [
+        -0.353,
+        0.001,
+        0.972,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.843
+      ]
+    }
+  ]
+}

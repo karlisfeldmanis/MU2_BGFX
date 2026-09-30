@@ -1,0 +1,135 @@
+{
+  "item": "Bat01",
+  "mu_name": "Bat01",
+  "mu_name_from": "Object2/Bat01.bmd, which is not a placement: GOBoid.cpp's boid slot takes MODEL_BAT01 in the Dungeon and the Lost Tower (GOBoid.cpp:1327-1328) and keeps five of them around whoever is playing, as Lorencia's Bird01. Built like any world model and named in tools/cook.py's AIRS, since nothing on the map refers to it.",
+  "world": "dungeon",
+  "object_type": -1,
+  "why_this_one": "The Dungeon's bats: 38 triangles, 8 bones, one 4-key wing beat. MoveBat holds them 2 to 3.5 m over the floor, bobbing (GOBoid.cpp:925-930), flocking as the birds do, and one in 256 frames within six tiles each squeaks aBat.wav.",
+  "profile": "world",
+  "sheets": {
+    "bat01": "dn_bat01.png",
+    "bat02": "dn_bat02.png"
+  },
+  "sheet_from": "Object2/bat01.OZJ (the body) and bat02.OZT (the wings, alpha), decoded under the dn_ prefix.",
+  "sheet_materials": {
+    "bat01": "fur",
+    "bat02": "foliage"
+  },
+  "sheet_materials_from": "The body is fur. The wings are foliage for Bird01's reason: a two-sided alpha card seen from below as often as above, which a leaf's translucency lights from both faces.",
+  "cutout": [
+    "bat02"
+  ],
+  "cutout_from": "bat02 is 64 by 32 with 51% of it cut away: the wing's shape is its alpha.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 24,
+      "area": 365.8,
+      "along": [
+        -15.2,
+        14.1
+      ],
+      "mu_uv": [
+        0.014,
+        0.001,
+        0.999,
+        0.804
+      ],
+      "bake_uv": [
+        0.448,
+        0.004,
+        0.883,
+        0.723
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 5,
+      "area": 712.3,
+      "along": [
+        -15.3,
+        11.2
+      ],
+      "mu_uv": [
+        0.006,
+        0.015,
+        0.992,
+        0.99
+      ],
+      "bake_uv": [
+        0.004,
+        0.443,
+        0.44,
+        0.874
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 2,
+      "area": 61.2,
+      "along": [
+        8.3,
+        11.6
+      ],
+      "mu_uv": [
+        0.155,
+        0.247,
+        0.392,
+        0.963
+      ],
+      "bake_uv": [
+        0.891,
+        0.004,
+        0.996,
+        0.321
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 5,
+      "area": 684.7,
+      "along": [
+        -15.3,
+        11.2
+      ],
+      "mu_uv": [
+        0.006,
+        0.015,
+        0.992,
+        0.99
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.44,
+        0.435
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 2,
+      "area": 61.2,
+      "along": [
+        8.3,
+        11.6
+      ],
+      "mu_uv": [
+        0.155,
+        0.247,
+        0.392,
+        0.963
+      ],
+      "bake_uv": [
+        0.891,
+        0.329,
+        0.996,
+        0.645
+      ]
+    }
+  ]
+}

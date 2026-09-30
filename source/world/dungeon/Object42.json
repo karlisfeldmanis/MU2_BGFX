@@ -1,0 +1,113 @@
+{
+  "item": "Object42",
+  "mu_name": "Object42",
+  "mu_name_from": "The Dungeon's object slot 41, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 41,
+  "placements": 64,
+  "profile": "world",
+  "sheets": {
+    "wood01": "dn_wood01.png",
+    "fire0a": "dn_fire0a.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "wood01": "timber",
+    "fire0a": "lamplight"
+  },
+  "why_this_one": "The wall torch, 64 of them: a wooden bracket and a flame. With 43, the only moving light in the Dungeon.",
+  "material_note": "wood01 is an atlas of wheels, crates and planks; the torch brackets take timber.",
+  "additive": [
+    "fire0a"
+  ],
+  "additive_from": "A departure, as Lorencia's FireLight01 and 02 are. The client gives the Dungeon no blend mesh (ZzzObject.cpp CreateObject has no WD_1DUNGEON arm) because CreateFire's particles hide the painted flame; fire0a is flame on black, and drawn opaque it is a black card, so it is added.",
+  "emitters": [
+    {
+      "kind": "fire",
+      "colour": [
+        1.0,
+        0.6,
+        0.4
+      ],
+      "low": 0.6,
+      "high": 1.1,
+      "range_tiles": 4,
+      "flicker_hz": 3,
+      "smooth_seconds": 0.12,
+      "at": [
+        0,
+        -30,
+        240
+      ]
+    }
+  ],
+  "emitters_from": "MoveObject's WD_1DUNGEON arm, ZzzObject.cpp:3887-3889: CreateFire(0, o, 0, -30, 240), the same fire as Lorencia's braziers -- luminance 0.6 to 1.1 weighted (L, 0.6L, 0.4L), four tiles of reach, eased to 3 Hz as theirs are.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 500.7,
+      "along": [
+        21.3,
+        36.7
+      ],
+      "mu_uv": [
+        0.165,
+        0.197,
+        0.833,
+        0.835
+      ],
+      "bake_uv": [
+        0.007,
+        0.005,
+        0.977,
+        0.97
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 20,
+      "area": 1202.4,
+      "along": [
+        5.9,
+        35.6
+      ],
+      "mu_uv": [
+        0.061,
+        0.282,
+        0.304,
+        0.414
+      ],
+      "bake_uv": [
+        0.005,
+        0.776,
+        0.995,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 12,
+      "area": 794.1,
+      "along": [
+        -2.6,
+        19.7
+      ],
+      "mu_uv": [
+        0.895,
+        0.061,
+        0.915,
+        0.229
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.079,
+        0.249
+      ]
+    }
+  ]
+}

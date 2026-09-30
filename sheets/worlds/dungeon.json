@@ -1,0 +1,54 @@
+{
+  "note": "The Dungeon's light, laid over lighting.json while a character stands in the Dungeon (game/world/maps.h, app/modes/play_mode.cpp). MU draws it on its default black clear and fog (SceneManager.cpp:402, no Dungeon arm in SetWorldClearColor): no sky, no weather, no grass. Its TerrainLight (mean 108, 108, 140, blue-violet with near-white pools under the torches) carries the ground, and its 120 torches (Object42 and 43, CreateFire) are the only light that moves. So the torches lead here. The sun is not a sun: it is a faint cold key from high overhead, so a body still casts the short shadow MU draws in every map and the walls keep their shape between torches. The sky and ground ambient are near black and cold, and the haze is black, so what is far from the camera sinks into the dark as MU's black fog does. The lamps and the flames are pushed up and the bloom lowered, so a torch pools warm light and glows in the air. The grade splits cold shade from warm light. Invention on MU's look; first cut 2026-09-30. Then the user, the same day: 'little bit to dark' -- the exposure 1.5 to 1.7, the fill 1.1 to 1.35, the overhead key 0.9 to 1.1; and 'we need dust effect similiar which we used on devias and noria': the haze was near black and read as nothing but dark, so it is the stone dust in the air of Lorencia's and Noria's kind, a pale grey-brown at 0.004 (Devias's density), lit by the same light as everything else. And 'can we use some minimal dungeon tonemaping?': three shots side by side -- the ACES of every other map, Hill's ACES with a colder, greyer grade, and AgX punchy -- and the user took Hill's (tonemap 1): the torch's white core rolls off to gold instead of clipping, saturation 0.9 to 0.85 so the stone reads grey, the split 0.45 to 0.55 with the shade a touch more teal and the light more amber, and contrast 0.4 to 0.45. And 'char dont have drop shadow while standing on fire light': the lamps cast no shadow (shaders/lights.sh), so in a torch's pool the faint overhead key's shadow was washed out. lamp_shadow 0.85 lets that shadow take most of the lamps too, as MU draws a body's shadow whatever lights it. The key at 60 degrees: at 78 the shadow hid under the feet, at 55 the walls' bands on the floor grew long. And 'little bit stronger mist vibe': the haze 0.004 to 0.007, past Lorencia's 0.0055, and a shade paler and greyer, (0.46, 0.43, 0.40), so it reads as cold cellar mist rather than dust. And 'lets migrate water tiles': TileWater01 is the cave stream MU slides like any water, not the dark earth first read off its sheet -- the slot takes the water recipe and slides again at MU's own pace (water_flow 1). And 'dont see the water': MU's stream is its near-black sheet sliding, which flat and matte is black ground. water_sheen 4 (ours; 1 barely showed, 40 as a test blew the channels out white): the water layers take a wet glint of the torches and the key and the sky's reflection off their own ripples, so the stream shows where the light touches it. And 'we need some logical water stream and it has to be slower': the streams run along their own channels, fed at one end and drained at the other (terrain.py WATER_FLOW_BY_MAP[1], 25 of them), not all sliding one way as MU's do, at 0.35 of the pace. Then the water, three passes the user turned down -- a sky reflection that read as snow, steepened normals that glittered, and waves of our own -- before 'we need original water but like that so we can see it little bit without fire emitter': MU's own sheet flowing along its channel, lit faintly by itself in a cold tint so its pattern shows in the dark, and the torches' broad sheen on it by the fire (fs_ground). 'perfect'. And 'to dark' again: the exposure 1.7 to 1.9 and the fill 1.35 to 1.6. And 'we need to increase that dungeon mist little bit more' (2026-09-30): the mist 0.007 to 0.009.",
+  "elevation": 60.0,
+  "sun_colour": [
+    0.55,
+    0.62,
+    0.85
+  ],
+  "sun_strength": 1.1,
+  "sky_colour": [
+    0.08,
+    0.09,
+    0.15
+  ],
+  "horizon_paleness": 0.2,
+  "ground_colour": [
+    0.03,
+    0.025,
+    0.02
+  ],
+  "ambient_strength": 1.6,
+  "exposure": 1.9,
+  "dust_colour": [
+    0.46,
+    0.43,
+    0.4
+  ],
+  "dust_density": 0.009,
+  "lamp_strength": 8.5,
+  "flame_strength": 8.0,
+  "glow_strength": 2.5,
+  "bloom_threshold": 0.85,
+  "bloom_strength": 0.4,
+  "contrast": 0.45,
+  "saturation": 0.85,
+  "split": 0.55,
+  "tint_low": [
+    0.88,
+    0.97,
+    1.1
+  ],
+  "tint_high": [
+    1.12,
+    1.0,
+    0.84
+  ],
+  "ssao_strength": 1.2,
+  "grass": 0.0,
+  "probe": 0.0,
+  "water_flow": 0.35,
+  "tonemap": 1,
+  "lamp_shadow": 0.85,
+  "water_sheen": 4.0
+}

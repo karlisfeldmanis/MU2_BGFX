@@ -1,0 +1,43 @@
+{
+  "item": "Object31",
+  "mu_name": "Object31",
+  "mu_name_from": "The Dungeon's object slot 30, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 30,
+  "placements": 23,
+  "profile": "world",
+  "sheets": {
+    "deep_wall07": "dn_deep_wall07.png",
+    "deep_wall10": "dn_deep_wall10.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall07": "flagstone",
+    "deep_wall10": "rock"
+  },
+  "why_this_one": "A square stone pedestal, 23 of them, deep_wall07/10. Seen in the world 2026-09-30 at 209.5,164.5 beside a wall torch and a carved beast head.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 50,
+      "area": 32573.3,
+      "along": [
+        -40.1,
+        40.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        1.086
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.887,
+        0.997
+      ]
+    }
+  ]
+}

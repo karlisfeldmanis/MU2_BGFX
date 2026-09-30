@@ -1,0 +1,151 @@
+{
+  "item": "Object47",
+  "mu_name": "Object47",
+  "mu_name_from": "The Dungeon's object slot 46, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 46,
+  "placements": 79,
+  "profile": "world",
+  "sheets": {
+    "bons": "dn_bons.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "bons": "bone"
+  },
+  "why_this_one": "A heap of bones with a skull, 79 of them, off the bons sheet: the richer pile beside the loose scatter (Object48). Seen in the world 2026-09-30 by the standing torch at 143.5,129.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        11.0,
+        37.8
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.774,
+        0.858
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -9.1,
+        19.1
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.809,
+        0.928
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -15.0,
+        9.2
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.009,
+        0.045,
+        0.936,
+        0.95
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -35.4,
+        -11.3
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.105,
+        0.102,
+        0.969,
+        0.648
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        34.9,
+        62.0
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.86,
+        0.973
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 80,
+      "area": 1606.2,
+      "along": [
+        -45.2,
+        -17.0
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.008,
+        0.033,
+        0.992,
+        0.869
+      ]
+    }
+  ]
+}

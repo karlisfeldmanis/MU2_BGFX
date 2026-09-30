@@ -1,0 +1,44 @@
+{
+  "item": "Object03",
+  "mu_name": "Object03",
+  "mu_name_from": "The Dungeon's object slot 2, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 2,
+  "placements": 27,
+  "profile": "world",
+  "sheets": {
+    "deep_wall01": "dn_deep_wall01.png",
+    "deep_wall02": "dn_deep_wall02.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "deep_wall01": "flagstone",
+    "deep_wall02": "rock"
+  },
+  "why_this_one": "The wall block with the demon mask carved in it, deep_wall02: the Dungeon's own face, set among the plain ones.",
+  "material_note": "The deep_wall sheets are the Dungeon's masonry: 01, 04, 05, 07 and 08 are dressed stone blocks and friezes and take flagstone; 02 and 03 are carved demon reliefs and 12 dark cracked cave rock, and take rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 130,
+      "area": 247997.5,
+      "along": [
+        -113.7,
+        113.6
+      ],
+      "mu_uv": [
+        -0.244,
+        -0.169,
+        1.244,
+        1.599
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.993,
+        0.985
+      ]
+    }
+  ]
+}

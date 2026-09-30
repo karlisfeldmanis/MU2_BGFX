@@ -1,0 +1,42 @@
+{
+  "item": "Object15",
+  "mu_name": "Object15",
+  "mu_name_from": "The Dungeon's object slot 14, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 14,
+  "placements": 217,
+  "profile": "world",
+  "sheets": {
+    "deep_wall04": "dn_deep_wall04.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "deep_wall04": "flagstone"
+  },
+  "why_this_one": "Not a floor slab: an open square rim, 1 m across at the floor and sloping 9 cm out over 17 cm down, with no top face, in deep_wall04's bottom strip. It lines the pits' edges (107.5,120.5 to 111.5,123.5 round one pit), so under the floor it is hidden and at a pit's edge it is the carved lip. The '45 degree tilt' once reported is this chamfer: all 217 placements are square to the grid. Seen in the world 2026-09-30 at 108,124.",
+  "material_note": "The deep_wall sheets are the Dungeon's masonry: 01, 04, 05, 07 and 08 are dressed stone blocks and friezes and take flagstone; 02 and 03 are carved demon reliefs and 12 dark cracked cave rock, and take rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 9,
+      "area": 8383.6,
+      "along": [
+        -59.0,
+        59.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.926,
+        0.999,
+        1.181
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.998,
+        0.386
+      ]
+    }
+  ]
+}

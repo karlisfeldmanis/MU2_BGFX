@@ -1,0 +1,42 @@
+{
+  "item": "Object51",
+  "mu_name": "Object51",
+  "mu_name_from": "The Dungeon's object slot 50, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 50,
+  "placements": 178,
+  "profile": "world",
+  "sheets": {
+    "deep_wall12": "dn_deep_wall12.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "deep_wall12": "rock"
+  },
+  "why_this_one": "A cave wall block, 3 m wide and 2.9 m tall, in deep_wall12's dark cracked rock: the walls of Dungeon 3's caves, 178 of them. Seen in the world 2026-09-30 at 204,178.",
+  "material_note": "The deep_wall sheets are the Dungeon's masonry: 01, 04, 05, 07 and 08 are dressed stone blocks and friezes and take flagstone; 02 and 03 are carved demon reliefs and 12 dark cracked cave rock, and take rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 56,
+      "area": 166670.6,
+      "along": [
+        -3.4,
+        108.8
+      ],
+      "mu_uv": [
+        -1.102,
+        0.0,
+        1.41,
+        0.964
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.984,
+        0.993
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "item": "Rat01",
+  "mu_name": "Rat01",
+  "mu_name_from": "Object2/Rat01.bmd, which is not a placement: MoveFishs gives the fish slot MODEL_RAT01 in the Dungeon (GOBoid.cpp:1720-1722) and keeps three around whoever is playing, on floor tiles only. Named in tools/cook.py's AIRS beside the bat.",
+  "world": "dungeon",
+  "object_type": -1,
+  "why_this_one": "The Dungeon's rats: 36 triangles, 6 bones, a 5-key run. They dash in bursts at 0.6/scale units a frame, turn back at the void and stop to sit, scale 0.4 to 0.7, one in 256 frames within six tiles squeaking aMouse.wav (GOBoid.cpp:1659-1860).",
+  "profile": "world",
+  "sheets": {
+    "mouse": "dn_mouse.png"
+  },
+  "sheet_from": "Object2/mouse.OZJ, decoded under the dn_ prefix.",
+  "sheet_materials": {
+    "mouse": "fur"
+  },
+  "sheet_materials_from": "Fur, the whole animal on one sheet.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1249.0,
+      "along": [
+        -17.5,
+        20.6
+      ],
+      "mu_uv": [
+        -0.01,
+        0.001,
+        0.947,
+        0.917
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.997,
+        0.997
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 4,
+      "area": 396.6,
+      "along": [
+        -59.0,
+        -6.4
+      ],
+      "mu_uv": [
+        0.08,
+        0.736,
+        0.604,
+        0.996
+      ],
+      "bake_uv": [
+        0.004,
+        0.47,
+        0.454,
+        0.796
+      ]
+    }
+  ]
+}

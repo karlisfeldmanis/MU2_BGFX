@@ -1,0 +1,152 @@
+{
+  "item": "Object05",
+  "mu_name": "Object05",
+  "mu_name_from": "The Dungeon's object slot 4, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 4,
+  "placements": 59,
+  "profile": "world",
+  "sheets": {
+    "deep_wall01": "dn_deep_wall01.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "deep_wall01": "flagstone"
+  },
+  "why_this_one": "A plain wall piece in the corridor masonry.",
+  "material_note": "The deep_wall sheets are the Dungeon's masonry: 01, 04, 05, 07 and 08 are dressed stone blocks and friezes and take flagstone; 02 and 03 are carved demon reliefs and 12 dark cracked cave rock, and take rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 4,
+      "area": 433.6,
+      "along": [
+        6.7,
+        31.8
+      ],
+      "mu_uv": [
+        0.496,
+        0.282,
+        0.705,
+        0.479
+      ],
+      "bake_uv": [
+        0.705,
+        0.722,
+        0.995,
+        0.995
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 1957.2,
+      "along": [
+        -41.2,
+        -16.3
+      ],
+      "mu_uv": [
+        0.473,
+        0.66,
+        0.76,
+        0.855
+      ],
+      "bake_uv": [
+        0.411,
+        0.202,
+        0.834,
+        0.812
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 12,
+      "area": 2307.8,
+      "along": [
+        -59.6,
+        -31.0
+      ],
+      "mu_uv": [
+        0.632,
+        0.775,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.515,
+        0.638
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 18,
+      "area": 921.1,
+      "along": [
+        -11.1,
+        5.8
+      ],
+      "mu_uv": [
+        0.085,
+        0.486,
+        0.335,
+        0.619
+      ],
+      "bake_uv": [
+        0.007,
+        0.006,
+        0.814,
+        0.907
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 4,
+      "area": 469.3,
+      "along": [
+        -51.3,
+        -30.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.771,
+        0.277,
+        0.934
+      ],
+      "bake_uv": [
+        0.006,
+        0.63,
+        0.389,
+        0.857
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 4,
+      "area": 246.6,
+      "along": [
+        47.0,
+        67.7
+      ],
+      "mu_uv": [
+        0.089,
+        0.001,
+        0.228,
+        0.163
+      ],
+      "bake_uv": [
+        0.781,
+        0.316,
+        0.973,
+        0.541
+      ]
+    }
+  ]
+}

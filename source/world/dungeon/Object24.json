@@ -1,0 +1,69 @@
+{
+  "item": "Object24",
+  "mu_name": "Object24",
+  "mu_name_from": "The Dungeon's object slot 23, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 23,
+  "placements": 17,
+  "profile": "world",
+  "sheets": {
+    "squid01": "dn_squid01.png",
+    "squid02": "dn_squid02.png",
+    "squid02_body": "dn_squid02.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "squid01": "brass",
+    "squid02": "lamplight",
+    "squid02_body": "brass"
+  },
+  "sheet_materials_from": "Brass as dark bronze on squid01 and squid02's opaque body; the sliding glow keeps lamplight. See sheet_f0_tint_from.",
+  "sheet_f0_tint": {
+    "squid01": "#E8C050",
+    "squid02_body": "#E8C050"
+  },
+  "sheet_f0": {
+    "squid01": 0.45,
+    "squid02_body": 0.45
+  },
+  "sheet_f0_tint_from": "The user's, 2026-09-30, in several passes. 'i think those tentacles has to be metallic', then 'looks blue', 'less bronze and more in sync', and at last MuMain's own picture of the pit, a pale olive gold (120:105:85, 1 : 0.87 : 0.70), and 'lets make it dark bronze'. So brass (cast, roughness 0.44) at f0 0.45, with #E8C050 baked into the metal sheet (sheet_f0_tint; the cook drops glTF's baseColorFactor, so a sheet_tint never reached the game). The blue is left out of the tint on purpose: the Dungeon's fill is cold, and any blue in a metal's f0 turned the worms mauve. Tried and turned down: plate steel (blue), #FF9A50 (copper), wrought iron at 0.25 (grey), #FFCC80 (mauve). An invention on MU's look: MU lights squid01 as any other sheet.",
+  "why_this_one": "A giant worm, a second shape, 17 of them: the same body arched over the floor. Seen in the world 2026-09-30 at 131.9,246. See echo_from.",
+  "additive": [
+    "squid02"
+  ],
+  "additive_from": "A departure, marked. MoveObject's WD_1DUNGEON arm (ZzzObject.cpp:3880-3885) makes mesh 1 a StreamMesh: drawn unlit at full light and its V slid one sheet a second. squid02 is a soft glowing rib pattern on black, so unlit it is that pattern over dark; this engine slides only a glow, and added over black it reads the same.",
+  "glow": {
+    "squid02": {
+      "scrolls_per_second": 1.0
+    }
+  },
+  "echo": {
+    "squid02_body": "squid02"
+  },
+  "echo_from": "MU draws mesh 1 as a StreamMesh: opaque, unlit at the object's flat BodyLight, its V slid one sheet a second (ZzzBMD.cpp:1344-1369, :1819; ZzzObject.cpp:3880-3885). This engine slides only an added glow, and an added sheet that is black but for its ribs has no body: the worm drew with holes where its squid02 segments were, and read as separate dark pipes. So squid02's faces are drawn twice (export_gltf's tiled echo): once opaque as squid02_body, the same near-black sheet, lit and still, and once added and sliding as the glow. Black under an add is MU's opaque dark sheet with its ribs moving. Ours, marked: the body is lit rather than unlit, and its ribs do not slide under the glow's (squid02's mean is 6 of 255, so neither shows).",
+  "animation_note": "Rigged: its one action of 40 keys plays at CreateObject's default 0.16; MuMain's Dungeon arm sets it no speed of its own.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 130,
+      "area": 99780.3,
+      "along": [
+        -46.4,
+        36.5
+      ],
+      "mu_uv": [
+        -0.052,
+        -6.074,
+        0.962,
+        1.014
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.993
+      ]
+    }
+  ]
+}

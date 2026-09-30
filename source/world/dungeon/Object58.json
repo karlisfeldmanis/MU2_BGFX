@@ -1,0 +1,41 @@
+{
+  "item": "Object58",
+  "mu_name": "Object58",
+  "mu_name_from": "The Dungeon's object slot 57, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 57,
+  "placements": 24,
+  "profile": "world",
+  "sheets": {
+    "deep_wall07": "dn_deep_wall07.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall07": "flagstone"
+  },
+  "why_this_one": "A roof slab, 2 by 1.7 m and 20 cm thick, 24 of them, deep_wall07: laid across the wall tops at 3.4 m as a broken ceiling, so a character under it is hidden, as in MU (no roof fade in the Dungeon). Seen in the world 2026-09-30 at 49.3,225.9.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 31,
+      "area": 42005.5,
+      "along": [
+        -72.3,
+        94.1
+      ],
+      "mu_uv": [
+        -0.885,
+        -1.49,
+        2.539,
+        1.087
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.972,
+        0.994
+      ]
+    }
+  ]
+}

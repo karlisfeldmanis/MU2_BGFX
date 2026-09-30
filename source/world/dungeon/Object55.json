@@ -1,0 +1,87 @@
+{
+  "item": "Object55",
+  "mu_name": "Object55",
+  "mu_name_from": "The Dungeon's object slot 54, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 54,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "deep_wall11": "dn_deep_wall11.png",
+    "deep_wall10": "dn_deep_wall10.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall11": "rock",
+    "deep_wall10": "rock"
+  },
+  "why_this_one": "A tall carved stone, 2 m wide and 2.2 m tall, in deep_wall10/11, the only one, set a metre up in Dungeon 3's cave at 25.5,73.6. Seen in the world 2026-09-30, but only dimly: no torch reaches it, and it reads as a dark angular mass beside the worms.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 116,
+      "area": 71256.5,
+      "along": [
+        -69.2,
+        61.6
+      ],
+      "mu_uv": [
+        -0.366,
+        -0.366,
+        1.366,
+        1.366
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.949,
+        0.993
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 22,
+      "area": 4652.9,
+      "along": [
+        26.6,
+        130.3
+      ],
+      "mu_uv": [
+        -0.005,
+        -0.103,
+        0.98,
+        0.395
+      ],
+      "bake_uv": [
+        0.405,
+        0.552,
+        0.777,
+        0.831
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 22,
+      "area": 4652.9,
+      "along": [
+        26.6,
+        130.3
+      ],
+      "mu_uv": [
+        -0.005,
+        -0.103,
+        0.98,
+        0.395
+      ],
+      "bake_uv": [
+        0.118,
+        0.781,
+        0.829,
+        0.939
+      ]
+    }
+  ]
+}

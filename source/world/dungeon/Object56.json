@@ -1,0 +1,131 @@
+{
+  "item": "Object56",
+  "mu_name": "Object56",
+  "mu_name_from": "The Dungeon's object slot 55, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 55,
+  "placements": 12,
+  "profile": "world",
+  "sheets": {
+    "deep_wall09": "dn_deep_wall09.png",
+    "deep_wall10": "dn_deep_wall10.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall09": "flagstone",
+    "deep_wall10": "rock"
+  },
+  "why_this_one": "A tall carved pedestal, 12 of them, deep_wall09/10, often with a torch on it. Seen in the world 2026-09-30 at 7.4,74.5.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 36,
+      "area": 12394.7,
+      "along": [
+        -20.0,
+        20.0
+      ],
+      "mu_uv": [
+        0.17,
+        -0.269,
+        0.83,
+        1.269
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.74,
+        0.738
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 27,
+      "area": 2555.8,
+      "along": [
+        -3.4,
+        3.3
+      ],
+      "mu_uv": [
+        -0.366,
+        -0.128,
+        1.352,
+        1.366
+      ],
+      "bake_uv": [
+        0.008,
+        0.512,
+        0.544,
+        0.855
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 27,
+      "area": 2555.8,
+      "along": [
+        -3.3,
+        3.4
+      ],
+      "mu_uv": [
+        -0.366,
+        -0.128,
+        1.352,
+        1.366
+      ],
+      "bake_uv": [
+        0.29,
+        0.018,
+        0.86,
+        0.917
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 27,
+      "area": 2555.8,
+      "along": [
+        -1.0,
+        50.2
+      ],
+      "mu_uv": [
+        -0.366,
+        -0.128,
+        1.352,
+        1.366
+      ],
+      "bake_uv": [
+        0.015,
+        0.204,
+        0.986,
+        0.924
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 27,
+      "area": 2555.8,
+      "along": [
+        -50.2,
+        1.0
+      ],
+      "mu_uv": [
+        -0.366,
+        -0.128,
+        1.352,
+        1.366
+      ],
+      "bake_uv": [
+        0.356,
+        0.346,
+        0.993,
+        0.92
+      ]
+    }
+  ]
+}

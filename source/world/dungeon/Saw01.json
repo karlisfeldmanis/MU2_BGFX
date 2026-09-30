@@ -1,0 +1,41 @@
+{
+  "item": "Saw01",
+  "mu_name": "The Lance Trap's saw",
+  "mu_name_from": "MODEL_SAW, Data/Skill/Saw01.bmd (ZzzOpenData.cpp:4196), not a placement: the Lance Trap throws it when it strikes (CreateEffect(MODEL_SAW), ZzzCharacter.cpp:1223-1227). Built here with the Dungeon's objects because the trap is drawn with them (game/world/trap_show.h), and named in tools/cook.py's TRAP_MODELS since nothing places it.",
+  "world": "dungeon",
+  "object_type": -1,
+  "why_this_one": "A flat toothed disc 38 units across, the Arquebus's blade's own shape. Born 1.3 m up at the trap, it flies 60 units a frame along the trap's facing, spinning 30 degrees a frame about its upright axis, for ten frames (ZzzEffect.cpp:1825-1830, MoveHandlers.cpp:2755-2758, MoveParticle).",
+  "profile": "world",
+  "sheets": {
+    "toothed_whee": "dn_toothed_whee.png"
+  },
+  "sheet_from": "Data/Skill/toothed_whee.OZJ (toothed_wheel cut at the name field's length), decoded under the dn_ prefix.",
+  "sheet_materials": {
+    "toothed_whee": "painted_steel"
+  },
+  "sheet_materials_from": "painted_steel: MU's metal as MU drew it, a painted blade with no reflectance of its own; the cyan on each tooth is paint. CreateEffect leaves it BlendMesh -1, solid.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 108,
+      "area": 1810.6,
+      "along": [
+        -18.1,
+        19.5
+      ],
+      "mu_uv": [
+        0.031,
+        0.081,
+        0.997,
+        0.942
+      ],
+      "bake_uv": [
+        0.011,
+        0.011,
+        0.989,
+        0.986
+      ]
+    }
+  ]
+}

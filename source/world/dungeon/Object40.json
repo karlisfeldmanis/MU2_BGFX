@@ -1,0 +1,46 @@
+{
+  "item": "Object40",
+  "mu_name": "Object40",
+  "mu_name_from": "The Dungeon's object slot 39, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 39,
+  "placements": 27,
+  "profile": "world",
+  "sheets": {
+    "deep_wall01": "dn_deep_wall01.png",
+    "deep_wall04": "dn_deep_wall04.png",
+    "deep_wall06": "dn_deep_wall06.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall01": "flagstone",
+    "deep_wall04": "flagstone",
+    "deep_wall06": "flagstone"
+  },
+  "sheet_materials_from": "As the Dungeon's other masonry (flagstone) and its iron fences' wire_netting01 (timber).",
+  "why_this_one": "The Lance Trap, 27 of them, OpenMU's NPC 100. MuMain hides the placement (HiddenMesh -2, ZzzObject.cpp:3893-3897) and draws the live trap as this same model (ZzzCharacter.cpp:14274-14282), so the game draws it from the realm's trap (game/world/traps.h), not as scenery. It fires a saw blade out along its facing (CreateEffect(MODEL_SAW), ZzzCharacter.cpp:1223-1227).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 20,
+      "area": 30100.6,
+      "along": [
+        -19.9,
+        32.6
+      ],
+      "mu_uv": [
+        -0.629,
+        0.001,
+        1.629,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.928,
+        0.996
+      ]
+    }
+  ]
+}

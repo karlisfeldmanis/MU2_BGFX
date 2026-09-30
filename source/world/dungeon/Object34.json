@@ -1,0 +1,41 @@
+{
+  "item": "Object34",
+  "mu_name": "Object34",
+  "mu_name_from": "The Dungeon's object slot 33, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 33,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "deep_wall09": "dn_deep_wall09.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "deep_wall09": "flagstone"
+  },
+  "why_this_one": "An inscribed slab leaning on the wall, 10 of them, deep_wall09. Seen in the world 2026-09-30 at 185.9,32.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 28411.5,
+      "along": [
+        -5.7,
+        3.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.003,
+        0.003,
+        0.997,
+        0.997
+      ]
+    }
+  ]
+}

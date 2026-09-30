@@ -1,0 +1,239 @@
+{
+  "item": "Object35",
+  "mu_name": "Object35",
+  "mu_name_from": "The Dungeon's object slot 34, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 34,
+  "placements": 8,
+  "profile": "world",
+  "sheets": {
+    "wood01": "dn_wood01.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix.",
+  "sheet_materials": {
+    "wood01": "timber"
+  },
+  "why_this_one": "Wooden buckets, 8 of them, wood01. Seen in the world 2026-09-30 at 35.6,213 beside the sarcophagi.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 4,
+      "area": 350.7,
+      "along": [
+        -8.9,
+        11.3
+      ],
+      "mu_uv": [
+        0.145,
+        0.195,
+        0.354,
+        0.404
+      ],
+      "bake_uv": [
+        0.007,
+        0.509,
+        0.358,
+        0.915
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 12,
+      "area": 2919.3,
+      "along": [
+        -13.0,
+        15.4
+      ],
+      "mu_uv": [
+        0.375,
+        0.168,
+        0.512,
+        0.377
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.443,
+        0.511
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 4,
+      "area": 265.2,
+      "along": [
+        -7.5,
+        10.0
+      ],
+      "mu_uv": [
+        0.158,
+        0.208,
+        0.34,
+        0.391
+      ],
+      "bake_uv": [
+        0.617,
+        0.06,
+        0.923,
+        0.412
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 12,
+      "area": 170.0,
+      "along": [
+        -13.0,
+        15.4
+      ],
+      "mu_uv": [
+        0.512,
+        0.168,
+        0.512,
+        0.376
+      ],
+      "bake_uv": [
+        0.75,
+        0.66,
+        0.995,
+        0.943
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 12,
+      "area": 2231.1,
+      "along": [
+        -11.1,
+        13.5
+      ],
+      "mu_uv": [
+        0.392,
+        0.168,
+        0.512,
+        0.378
+      ],
+      "bake_uv": [
+        0.386,
+        0.323,
+        0.797,
+        0.797
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 10,
+      "area": 149.5,
+      "along": [
+        -16.8,
+        1.8
+      ],
+      "mu_uv": [
+        0.849,
+        0.066,
+        0.927,
+        0.233
+      ],
+      "bake_uv": [
+        0.361,
+        0.005,
+        0.617,
+        0.076
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 10,
+      "area": 141.6,
+      "along": [
+        -16.8,
+        1.8
+      ],
+      "mu_uv": [
+        0.849,
+        0.072,
+        0.927,
+        0.228
+      ],
+      "bake_uv": [
+        0.329,
+        0.006,
+        0.767,
+        0.131
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 1,
+      "area": 2.3,
+      "along": [
+        0.6,
+        1.8
+      ],
+      "mu_uv": [
+        0.849,
+        0.066,
+        0.857,
+        0.077
+      ],
+      "bake_uv": [
+        0.022,
+        0.02,
+        0.038,
+        0.038
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 1,
+      "area": 2.3,
+      "along": [
+        0.6,
+        1.8
+      ],
+      "mu_uv": [
+        0.849,
+        0.222,
+        0.857,
+        0.233
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.022,
+        0.024
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 10,
+      "area": 146.5,
+      "along": [
+        -16.4,
+        1.8
+      ],
+      "mu_uv": [
+        0.849,
+        0.066,
+        0.924,
+        0.233
+      ],
+      "bake_uv": [
+        0.448,
+        0.738,
+        0.736,
+        0.923
+      ]
+    }
+  ]
+}

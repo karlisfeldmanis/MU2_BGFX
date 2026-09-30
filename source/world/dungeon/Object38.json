@@ -1,0 +1,88 @@
+{
+  "item": "Object38",
+  "mu_name": "Object38",
+  "mu_name_from": "The Dungeon's object slot 37, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "dungeon",
+  "object_type": 37,
+  "placements": 16,
+  "profile": "world",
+  "sheets": {
+    "deep_wall07": "dn_deep_wall07.png",
+    "deep_wall08": "dn_deep_wall08.png"
+  },
+  "sheet_from": "Data/Object2/, from MuMain, decoded under a dn_ prefix: assets/textures is one flat pool, and wood01 and TileRock01 are other worlds' names too. TileRock01 is byte for byte World2's own, so the rocks wear the ground's copy.",
+  "sheet_materials": {
+    "deep_wall07": "flagstone",
+    "deep_wall08": "flagstone"
+  },
+  "why_this_one": "A low wall or plinth with the frieze band.",
+  "material_note": "The deep_wall sheets are the Dungeon's masonry: 01, 04, 05, 07 and 08 are dressed stone blocks and friezes and take flagstone; 02 and 03 are carved demon reliefs and 12 dark cracked cave rock, and take rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 42841.6,
+      "along": [
+        -16.6,
+        17.1
+      ],
+      "mu_uv": [
+        0.18,
+        -1.222,
+        0.851,
+        2.221
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.98,
+        0.789
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 10,
+      "area": 12104.4,
+      "along": [
+        -26.0,
+        26.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.146,
+        1.03,
+        1.927
+      ],
+      "bake_uv": [
+        0.638,
+        0.006,
+        0.865,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 10,
+      "area": 11005.6,
+      "along": [
+        -26.0,
+        26.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.225,
+        1.03,
+        1.047
+      ],
+      "bake_uv": [
+        0.006,
+        0.282,
+        0.936,
+        0.958
+      ]
+    }
+  ]
+}
