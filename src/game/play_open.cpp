@@ -457,6 +457,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.opened = sound_.load("window_open", false);
     heard_.repair = sound_.load("window_repair", false);
     heard_.meteorite = sound_.load("meteorite", true);
+    heard_.iceCast = sound_.load("spell_ice", true);
     // The knight's skills, by the table's own index, so a cast asks for its wave by the same
     // number its cooldown is kept under. Both `sKnightSkill4` names are the same file: MU plays
     // SWORD4 for Cyclone and for Slash alike.
@@ -548,6 +549,8 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 one.crumbles = true;
                 one.deathClip = -1;
             }
+            // The Ice Monster keeps its death clip and shatters at its end (sandOnDeath).
+            if (look->name == kShatteringFigure) one.shatters = true;
             if (look->name == kBreathingFigure && look->skeletonMesh) {
                 one.breathes = true;
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();

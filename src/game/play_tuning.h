@@ -226,6 +226,10 @@ inline constexpr const char* kBreathingFigure = "BudgeDragon01";
 inline constexpr const char* kBurstingFigure = "SkeletonWarrior";
 // MODEL_STONE_GOLEM, which comes apart into stones the same way (Bones::rubble).
 inline constexpr const char* kCrumblingFigure = "StoneGolem01";
+// MODEL_ICE_MONSTER, which has no corpse either, but only once its death clip has played: the
+// death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
+// it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).
+inline constexpr const char* kShatteringFigure = "IceMonster01";
 // MODEL_GIANT's own case in the same effect switch, and the whole of it is one call:
 //
 //     case MODEL_GIANT:

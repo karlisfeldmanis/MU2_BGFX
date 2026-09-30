@@ -30,6 +30,8 @@ public:
     // A block on the body standing at `feet` (world metres), turned to `yaw` -- the caster's, as
     // MU turns it -- and its five shards. `floor` is the ground there, for the shards' bounce.
     void freeze(const float feet[3], float yaw);
+    // An Ice Monster's death: its body out and ten shards off its feet, no block.
+    void shatter(const float feet[3]);
     // **Cold on the caster** while he casts it (the user, 2026-09-28: "character need some ice
     // smoke effect on cast"), ours, as Meteorite's burn is: frosty wisps born round his body --
     // `feet` and his drawn `tall` -- rising off him. Called every frame the cast runs.
@@ -75,6 +77,7 @@ private:
     static constexpr float kFadeStep = 0.05f;
     static constexpr float kBlockFrames = 50.0f;
     static constexpr int kShards = 5;
+    static constexpr int kShatterShards = 10;
     static constexpr float kShardLift = 50.0f;
     static constexpr float kShardLight = 0.3f;
     static constexpr float kWispFrames = 28.0f, kWispFades = 20.0f;
@@ -87,7 +90,7 @@ private:
     float frostDue_ = 0.0f;
 
     static constexpr int kBlocks = 16;
-    static constexpr int kMaxShards = 64;
+    static constexpr int kMaxShards = 96;
     static constexpr int kWisps = 96;
 
     std::vector<EffectCorner> keys_[6];
@@ -101,6 +104,7 @@ private:
     uint32_t dice_ = 0x1CE1CE1Cu;
     float unit();
     float between(float a, float b) { return a + (b - a) * unit(); }
+    void shards(const float feet[3], int count);
     Wisp* puff(const float at[3]);
 };
 

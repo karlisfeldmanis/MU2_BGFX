@@ -764,6 +764,13 @@ void Play::update(double seconds) {
                         } else {
                             cue.fuse = swinger->swinging * Showing::kLandingPoint;
                         }
+                        // An Ice Monster (attackSkill == 7): its blow is a bite, and the Ice it
+                        // casts with it lands fifteen reference frames on, hit or miss.
+                        if (body && !body->player && body->kind >= 0 &&
+                            size_t(body->kind) < tables_.kinds.size() &&
+                            tables_.kinds[size_t(body->kind)].attackSkill == sim::skill::kIce) {
+                            iceCasts_.push_back({happening.who, happening.whom, 15.0f / 25.0f});
+                        }
                         cue.token = swinger->swingToken;
                         if (!begun) showing_.schedule(cue);
                     }
@@ -895,6 +902,22 @@ void Play::update(double seconds) {
     volleys_.erase(std::remove_if(volleys_.begin(), volleys_.end(),
                                   [](const Volley& v) { return v.wait <= 0.0f; }),
                    volleys_.end());
+    for (IceCast& cast : iceCasts_) {
+        cast.wait -= float(seconds);
+        if (cast.wait > 0.0f || ground_ == nullptr) continue;
+        const Drawn* caster = drawnOf(cast.caster);
+        const Drawn* target = drawnOf(cast.target);
+        if (caster == nullptr || target == nullptr || !target->placed) continue;
+        // On the target's feet where it is drawn, turned to the caster's yaw, as MU turns it.
+        const float feet[3] = {target->crown[0],
+                               ground_->heightAt(target->crown[0], target->crown[2]),
+                               target->crown[2]};
+        ice_.freeze(feet, caster->yaw);
+        if (heard_.iceCast >= 0) emit(heard_.iceCast, feet[0], feet[2]);
+    }
+    iceCasts_.erase(std::remove_if(iceCasts_.begin(), iceCasts_.end(),
+                                   [](const IceCast& c) { return c.wait <= 0.0f; }),
+                    iceCasts_.end());
     arrows_.update(float(seconds), middle);
     for (uint32_t shooter : arrows_.landed()) showing_.rush(shooter);
     meteor_.fly(float(seconds), standing, middle);

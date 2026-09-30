@@ -2123,6 +2123,11 @@ def monster_entry(entry: dict, document: dict, root: Path, build: Path, combat: 
         # light - carried whole for the same reason.
         **({"sprites": sprites} if (sprites := document.get("sprites")) else {}),
 
+        # Its self-luminous submesh and how that moves - the Ice Monster's BlendMesh 0, the
+        # whole body drawn additive with its V scrolled - as an object's glow is carried. A
+        # monster row does not pass the object branch that carries it there.
+        **({"glow": glow} if (glow := document.get("glow")) else {}),
+
         # A darkened material, for the one monster here that has one. Not read
         # off MU - see tint_from in the asset that carries it - so this passes
         # whatever the asset states without deriving anything from the client.

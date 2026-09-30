@@ -58,7 +58,19 @@ void Ice::freeze(const float feet[3], float yaw) {
         block->yaw = yaw;
         block->left = kBlockFrames;
     }
-    for (int n = 0; n < kShards; ++n) {
+    shards(feet, kShards);
+}
+
+// CreateBlood's `case MODEL_ICE_MONSTER` (ZzzEffectBlurSpark.cpp:449-455): the body is put out
+// (`o->Live = false`) and ten MODEL_ICE_SMALL go up off its feet -- the same shard as the
+// block's, with no block.
+void Ice::shatter(const float feet[3]) {
+    if (keyCount_ == 0) return;
+    shards(feet, kShatterShards);
+}
+
+void Ice::shards(const float feet[3], int count) {
+    for (int n = 0; n < count; ++n) {
         Shard* shard = nullptr;
         for (Shard& one : shards_) {
             if (!one.alive) {

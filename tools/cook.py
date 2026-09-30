@@ -1632,6 +1632,10 @@ def figure_set(world):
             "stance": one.get("stance", ""),
             "action_keys": one.get("action_keys", {}),
             "action_travel": one.get("action_travel", {}),
+            # How fast its glow sheet scrolls, as cook_meshes reads an object's: the Ice
+            # Monster's BlendMeshTexCoordV. 0 for every other breed.
+            "scroll": next((float(g.get("scrolls_per_second", 0.0))
+                            for g in (one.get("glow") or {}).values()), 0.0),
             "spawns": [s for s in one.get("spawns", []) if s["map"] == number]})
 
     # The four standalone town figures -- Smith01, Wizard01 and two Storage01 -- are whole
@@ -2835,8 +2839,9 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
     triangles = vertices = 0
     for name, path in sorted(models.items()):
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
+        scroll = next((one.get("scroll", 0.0) for one in monsters if one["mesh"] == name), 0.0)
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest,
-                                              hidden_of.get(name))
+                                              hidden_of.get(name), scroll_per_second=scroll)
         triangles += tris
         vertices += verts
         mesh_table[name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,

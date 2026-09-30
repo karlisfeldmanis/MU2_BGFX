@@ -24,6 +24,28 @@ namespace mu::game {
 
 void Play::sandOnDeath() {
     if (ground_ == nullptr) return;
+    // The Ice Monster's shatter, on the death clip's last key: MU calls CreateBlood when the
+    // death action stops playing, so the body falls first and then is gone in ten shards.
+    for (Drawn& one : drawn_) {
+        if (!one.shatters) continue;
+        const sim::Body* body = realm_.find(one.id);
+        if (body && body->alive()) {
+            one.shattered = false;
+            continue;
+        }
+        if (one.shattered || !one.placed || !one.visible || one.deadFor < 0.0f) continue;
+        const FigureBody* look = one.figure.body();
+        if (!look || !look->library || slotOf(one.figure) != kMonsterDieSlot) continue;
+        const content::CookedClip& clip = look->library->clips.clips[size_t(one.figure.clip())];
+        if (keyOf(one.figure) < float(clip.frames - 1) - 0.01f) continue;
+        one.shattered = true;
+        const float feet[3] = {one.crown[0], ground_->heightAt(one.crown[0], one.crown[2]),
+                               one.crown[2]};
+        ice_.shatter(feet);
+        // Out at once, as Play::fall puts a skeleton: the end of the whole death is what
+        // takes a body off the screen in Play::follow.
+        one.deadFor = kDeathTotal;
+    }
     for (Drawn& one : drawn_) {
         if (!one.sands) continue;
         const sim::Body* body = realm_.find(one.id);

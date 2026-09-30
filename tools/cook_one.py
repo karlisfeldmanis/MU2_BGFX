@@ -236,6 +236,11 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
                 hidden.setdefault(row["mesh"], row["hidden_mesh"])
 
     scroll = extra.get("scroll_per_second", 0.0) if kind == "world" else 0.0
+    # A figure's is on its monster row (cook.figure_set's "scroll", the Ice Monster's); the
+    # meshes here are one model and its variants, so one number serves them all.
+    if kind == "figure":
+        scroll = next((row.get("scroll", 0.0) for row in extra.get("monsters", [])
+                       if row.get("mesh", "").split("~", 1)[0] in meshes), 0.0)
 
     cooked = {}
     for mesh_name, path in sorted(meshes.items()):

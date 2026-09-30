@@ -532,6 +532,9 @@ private:
         // Latched the frame its death clip crosses key 8, and cleared if it ever stands again.
         // MU throws twenty puffs once, not twenty a frame -- see Play::sandOnDeath.
         bool sanded = false;
+        // An Ice Monster: at the end of its death clip it is put out and bursts into ten ice
+        // shards (CreateBlood). `shattered` latches it, cleared if it stands again.
+        bool shatters = false, shattered = false;
         int headBone = -1;
         float fireOwed = 0.0f, dustOwed = 0.0f;
         // A Bull Fighter, either variant: smok_bone, which it snorts out of, and what of half
@@ -618,6 +621,15 @@ private:
         float wait = 0.0f;  // seconds to the release
     };
     std::vector<Volley> volleys_;
+    // An Ice Monster's blow casts Ice on its target (OpenMU's AttackSkill 7, shown on every
+    // swing): MU's ReceiveMagic starts AttackTime at 1 and at 15 reference frames the skill arm
+    // drops MODEL_ICE and five shards on the target and plays SOUND_ICE
+    // (WSclient.cpp:4196-4219, ZzzCharacter.cpp:4140, :4956-4970). `wait` is to that frame.
+    struct IceCast {
+        uint32_t caster = 0, target = 0;
+        float wait = 0.0f;
+    };
+    std::vector<IceCast> iceCasts_;
     // Whether a body's blow is drawn as a missile, and in which model: the Hunter's saw bolt,
     // or a guard's arrow or bolt by what she holds.
     bool shoots(uint32_t id, Arrows::Model* model);
@@ -729,6 +741,7 @@ private:
         int click = -1, refused = -1, opened = -1;      // the windows
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
+        int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.
         int skill[sim::kSkills] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
