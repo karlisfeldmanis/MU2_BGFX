@@ -544,7 +544,11 @@ void Play::fall(Drawn& dead) {
     // the tick, but the blow that did it lands on screen up to half a swing later, and the
     // message read as arriving before the fall. See the note in Play::update where the other
     // gains are collected.
-    if (dead.id == realm_.hero().id) gains_.push_back({Gain::Kind::Died, 0});
+    // And the user's bell, flat on the player: not MU's, which has only the scream.
+    if (dead.id == realm_.hero().id) {
+        gains_.push_back({Gain::Kind::Died, 0});
+        sound_.play(heard_.deathBell);
+    }
 }
 
 void Play::fallWhenLanded() {

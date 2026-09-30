@@ -736,6 +736,7 @@ private:
         int hit = -1;                                            // melee_hit, any landed blow
         int die = -1;                                            // pMaleDie, the knight's fall
         int dieFemale = -1;                                      // pFemaleScream2, the elf's
+        int deathBell = -1;                                      // the user's bell, his fall
         int shock = -1, shockFemale = -1;                        // his flinch's scream, and hers
         int grass = -1, soil = -1;                               // his footsteps
         int wind = -1;                                           // Lorencia's air

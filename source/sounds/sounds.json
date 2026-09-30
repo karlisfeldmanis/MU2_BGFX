@@ -322,6 +322,16 @@
       "note": "The same file as the second of her flinch screams; MU has no pFemaleDie. Stereo 44 kHz peaking at 0.51 against pMaleDie's 0.81, so lifted by the four decibels between them and she dies as loudly as he does.",
       "gain_db": 4.0
     },
+    "player_death_stinger": {
+      "files": [
+        "death_stinger.wav"
+      ],
+      "gain_db": 5.0,
+      "from": "This project's: MU plays only the scream when he falls. The file was given by the user on 2026-09-30 for the hero's death: coghezzi's \"Colossal Bell Stinger - Dark Fantasy Rune Lock\" (Pixabay 591739).",
+      "trim_note": "The mp3 is 10.03 s, a bell struck once and left to ring, -30 dB by 3.3 s and -40 dB by 7 s. Cut from 0.027 s, 3 ms ahead of the strike, with a 3 ms fade in, and to 7.0 s with a squared fade out over the last 1.5 s: 6.97 s, stereo 44.1 kHz, peaking at 0.44 and not normalised.",
+      "gain_note": "Five up, so its strike peaks near 0.78 like the orb's file; the scream still sits on top of it. Worth a pass by ear.",
+      "note": "Unplaced, heard flat on the player like the level-up. Play::fall throws it with the hero's own death cry, on the death clip's first key, beside \"You Died\"."
+    },
     "player_drink": {
       "files": [
         "pdrink.wav"

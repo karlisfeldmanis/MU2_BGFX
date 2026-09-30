@@ -420,6 +420,7 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.hit = sound_.load("melee_hit", true);
     heard_.die = sound_.load("player_die", true);
     heard_.dieFemale = sound_.load("player_die_female", true);
+    heard_.deathBell = sound_.load("player_death_stinger", false);
     heard_.shock = sound_.load("player_shock", true);
     heard_.shockFemale = sound_.load("player_shock_female", true);
     heard_.grass = sound_.load("player_step_grass", true);
