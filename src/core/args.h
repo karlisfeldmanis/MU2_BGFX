@@ -178,7 +178,7 @@ struct Args {
     // as the menu's Switch Character does.
     int lobbyEnter = -1;
     int lobbyBack = -1;
-    // And the map change's: `--travel-at F` presses M on frame F, once -- on to the next world
+    // And the map change's: `--travel-at F` travels on frame F, once -- on to the next world
     // (app/modes/play_mode.cpp, game/world/maps.h).
     int travelAt = -1;
     // A review harness and not a feature: every N frames it puts the pointer on a pixel from a

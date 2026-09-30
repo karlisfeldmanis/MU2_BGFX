@@ -105,7 +105,6 @@ public:
         Skill1, Skill2, Skill3, Skill4, Skill5,
         Repair,  // L: a mending counter's repair mode, Shift+L its repair-all (CNewUINPCShop); with
                  // the bag down, the quest journal (game/ui/desk.cpp)
-        Move,    // M: on to the next world, until there is a Move window (app/modes/play_mode)
         Count
     };
     bool pressed(Key key) const { return keyPressed_[size_t(key)]; }

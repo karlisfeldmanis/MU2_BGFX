@@ -554,11 +554,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     const double deltaSeconds = at.deltaSeconds;
     if (args.lobby && args.lobbyBack >= 0 && at.index >= args.lobbyBack) backNow_ = true;
 
-    // M: on to the next world in the table. A stand-in for MU's Move window, which is a
-    // window this game does not have yet, and for the gates, which are sprint 12's.
+    // --travel-at: on to the next world in the table, for a scripted run. No key does this; the
+    // gates are how a player changes map.
     const bool scripted = args.travelAt >= 0 && at.index >= args.travelAt;
-    if (world_.played().isOpen() && travelTo_.empty() && !ctx.window.typing() &&
-        (ctx.window.pressed(gfx::Window::Key::Move) || scripted)) {
+    if (world_.played().isOpen() && travelTo_.empty() && scripted) {
         args.travelAt = -1;  // once: the next world is opened with these same arguments
         travel(ctx, game::mapAfter(args.world)->world);
     }
