@@ -21,6 +21,7 @@ SAMPLER2D(s_mask, 0);
 uniform vec4 u_outlineEdge;
 // x: the ring's width, in the MASK's own pixels. y: how much of that width is feathered.
 // z: the drop shadow's strength, 0 for none -- a monster casts its own and needs none here.
+// w: how far a glow reaches past the ring, in mask pixels, 0 for none -- the aggro flash's.
 uniform vec4 u_outlineParams;
 // xy: one texel of the PHYSICAL mask texture, in its own 0..1 -- constant, since the
 // texture is one fixed size regardless of how much of it a given box fills.
@@ -71,10 +72,12 @@ void main()
 	float width = u_outlineParams.x;
 	float feather = u_outlineParams.y;
 	float shade = u_outlineParams.z;
+	float reach = u_outlineParams.w;
 
 	// Inside the shape draws nothing: the ring sits outside the silhouette so the model is
 	// never covered by its own highlight.
 	float strength = 0.0;
+	float glow = 0.0;
 	if (here <= 0.99)
 	{
 		float far = width + 1.0;
@@ -96,6 +99,31 @@ void main()
 		}
 		// Solid to within a feather of the full width, then out.
 		strength = 1.0 - smoothstep(width - feather, width, far);
+
+		// Past the ring, a halo: searched again over its own reach, only where the ring did
+		// not find the shape, and falling off as a square so it has no edge of its own.
+		if (reach > 0.0 && far > width)
+		{
+			float near = width + reach + 1.0;
+			for (int ring = 1; ring <= RINGS; ring++)
+			{
+				float span = width + reach * float(ring) / float(RINGS);
+				float found = 0.0;
+				for (int i = 0; i < STEPS; i++)
+				{
+					float turn = (float(i) + 0.5 * float(ring)) * (6.2831853 / float(STEPS));
+					vec2 along = vec2(cos(turn), sin(turn));
+					found = max(found, maskAt(at + along * u_outlinePixel.xy * span, lo, hi));
+				}
+				if (found > 0.5)
+				{
+					near = span;
+					break;
+				}
+			}
+			float t = clamp(1.0 - (near - width) / reach, 0.0, 1.0);
+			glow = t * t * 0.55;
+		}
 	}
 
 	// The shadow under a dropped item: the same mask, shifted, blurred, painted black. Two
@@ -116,12 +144,12 @@ void main()
 		dark = sum / float(1 + STEPS * 2) * shade;
 	}
 
-	if (strength <= 0.0 && dark <= 0.0) discard;
+	if (strength <= 0.0 && dark <= 0.0 && glow <= 0.0) discard;
 
 	// Faded where the model itself is, so neither the stroke nor the shadow overlaps the
 	// thing they belong to. Composited here rather than left to two draws: straight alpha
 	// out, the shadow contributing no colour of its own.
-	float ring = strength * (1.0 - here) * u_outlineEdge.a;
+	float ring = max(strength, glow) * (1.0 - here) * u_outlineEdge.a;
 	float under = dark * (1.0 - here);
 	float alpha = ring + under * (1.0 - ring);
 	if (alpha <= 0.0) discard;

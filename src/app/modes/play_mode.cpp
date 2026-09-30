@@ -1090,8 +1090,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                       ctx.window.height(), hoverDrawables_, shadow);
     }
     // And a monster that has just turned on him flashes red, in rings of its own after the
-    // gold, so a hovered one blinks red over its gold and back (Play::watchAggro).
+    // gold, so a hovered one blinks red over its gold and back (Play::watchAggro). A halo
+    // of kFlashGlow pixels past the ring, "add some glow to that flash" (2026-09-30).
     if (!flashes_.empty()) {
+        constexpr float kFlashGlow = 12.0f;
         float outlineView[16], outlineProj[16];
         ctx.renderer.cameraMatrices(eye, outlineView, outlineProj);
         for (size_t i = 0; i < flashes_.size() && i < size_t(game::Play::kFlashRings); ++i) {
@@ -1100,7 +1102,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
                              flashDrawables_.begin() + ptrdiff_t(flash.to));
             const float red[4] = {1.0f, 0.16f, 0.10f, flash.strength};
             outline_.show(ctx.renderer, eye, outlineView, outlineProj, ctx.window.width(),
-                          ctx.window.height(), flashOne_, false, int(i) + 1, red);
+                          ctx.window.height(), flashOne_, false, int(i) + 1, red, kFlashGlow);
         }
     }
     if (desk_.ready()) desk_.submit(gfx::ViewHud, ctx.window.width(), ctx.window.height());

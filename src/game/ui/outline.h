@@ -26,10 +26,11 @@ public:
     // camera is built from them, not recomputed, so the two pictures agree on where
     // everything is. Does nothing when `hovered` is empty or lands entirely off screen.
     // `slot` and `edge` are the renderer's OutlineParams: 0 and null are the hover's gold,
-    // a later slot and a colour of its own a monster's aggro flash.
+    // a later slot and a colour of its own a monster's aggro flash, with `glow` pixels of
+    // halo past its ring.
     void show(gfx::Renderer& renderer, const gfx::Camera& camera, const float* view,
               const float* proj, int width, int height, const std::vector<gfx::Drawable>& hovered,
-              bool shadow, int slot = 0, const float* edge = nullptr);
+              bool shadow, int slot = 0, const float* edge = nullptr, float glow = 0.0f);
 };
 
 }  // namespace mu::game

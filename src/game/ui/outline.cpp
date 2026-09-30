@@ -43,7 +43,7 @@ bool toPixel(const float* world, const float* viewProj, int width, int height, f
 void Outline::show(gfx::Renderer& renderer, const gfx::Camera& camera, const float* view,
                    const float* proj, int width, int height,
                    const std::vector<gfx::Drawable>& hovered, bool shadow, int slot,
-                   const float* edge) {
+                   const float* edge, float glow) {
     if (hovered.empty() || width <= 0 || height <= 0) return;
     gfx::Renderer::OutlineParams params;
 
@@ -90,7 +90,7 @@ done:
     const float margin =
         (shadow ? std::max(gfx::Renderer::kOutlineWidth, gfx::Renderer::kOutlineReach)
                 : gfx::Renderer::kOutlineWidth) +
-        2.0f;
+        glow + 2.0f;
     const int x0 = std::clamp(int(std::floor(least[0] - margin)), 0, width);
     const int y0 = std::clamp(int(std::floor(least[1] - margin)), 0, height);
     const int x1 = std::clamp(int(std::ceil(most[0] + margin)), 0, width);
@@ -103,6 +103,7 @@ done:
     params.screenH = y1 - y0;
     params.shadow = shadow;
     params.slot = slot;
+    params.glow = glow;
     if (edge) std::copy(edge, edge + 4, params.edge);
     renderer.drawOutline(view, camera, params, hovered);
 }

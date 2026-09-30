@@ -426,6 +426,9 @@ public:
         int slot = 0;
         // The ring's display colour, and its opacity in a: MU2's gold unless told otherwise.
         float edge[4] = {1.0f, 0.78f, 0.28f, 1.0f};
+        // A soft halo past the ring, in pixels of the real screen, 0 for none: the aggro
+        // flash's. The box must be grown by it as well (game/outline.cpp).
+        float glow = 0.0f;
     };
     // How wide the ring is and how far its box must be grown to hold it, in pixels of the
     // real screen -- shared with game/outline.cpp's own box fit so the two agree on how much

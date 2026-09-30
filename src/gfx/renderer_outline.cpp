@@ -191,7 +191,8 @@ void Renderer::drawOutline(const float* mainView, const Camera& camera,
     // across the square ringed the same). Never under a texel, or the search would land on
     // one sample and band.
     const float texels = std::max(1.0f, kOutlineWidth * fit);
-    const float outlineParams[4] = {texels, 0.9f, params.shadow ? 0.5f : 0.0f, 0.0f};
+    const float outlineParams[4] = {texels, 0.9f, params.shadow ? 0.5f : 0.0f,
+                                    params.glow > 0.0f ? std::max(1.0f, params.glow * fit) : 0.0f};
     // One texel of the PHYSICAL mask texture, not of the box: the box fills only its own
     // corner of the fixed kOutlineMaskSize square (see u_outlineScale in fs_outline.sc), and
     // a step sized to the box's own width would search too far or too little depending on
