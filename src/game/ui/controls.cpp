@@ -664,16 +664,15 @@ void well(gfx::Canvas& canvas, const Box& box, float u) {
 void cell(gfx::Canvas& canvas, const Box& box, Cell state, float u) {
     const Box b{std::round(box.x), std::round(box.y), std::round(box.w), std::round(box.h)};
     const float line = px(u);
-    uint32_t back = 0u, edge = style::kIronDk;
+    uint32_t back = 0u, edge = style::kCellLine;
     switch (state) {
-        case Cell::Rest: back = style::kVoid; break;
+        case Cell::Rest: back = style::kCellFloor; break;
         case Cell::Over: back = gfx::rgba(1.0f, 0.922f, 0.824f, 0.08f); edge = gfx::rgba(0.788f, 0.749f, 0.682f, 0.75f); break;
         case Cell::Held: back = gfx::rgba(0, 0, 0, 0.35f); break;
         case Cell::Fits: back = gfx::rgba(0.431f, 0.620f, 0.345f, 0.24f); edge = gfx::rgba(0.549f, 0.784f, 0.431f, 0.75f); break;
         case Cell::Blocked: back = gfx::rgba(0.702f, 0.149f, 0.118f, 0.26f); edge = gfx::rgba(0.941f, 0.380f, 0.314f, 0.8f); break;
     }
     canvas.rect(b, back);
-    if (state == Cell::Rest) stone(canvas, b, kWell);
     canvas.outline(b, line, edge);
 }
 
@@ -683,14 +682,15 @@ void grid(gfx::Canvas& canvas, const Box& box, int columns, int rows, float u) {
     // A seam of black round the block and the iron edge inside it, as a well is framed.
     canvas.outline(b.grown(line * 2.0f), line, style::kSeam);
     canvas.outline(b.grown(line), line, style::kIronLo);
-    canvas.rect(b, style::kVoid);
-    stone(canvas, b, kWell);
+    // Flat, without the well's stone: the grain fought the items for the eye (the user,
+    // 2026-09-30, "that texture is not helping").
+    canvas.rect(b, style::kCellFloor);
     const float pw = b.w / float(columns), ph = b.h / float(rows);
     for (int c = 1; c < columns; ++c) {
-        canvas.rect({std::floor(b.x + pw * float(c) - line * 0.5f + 0.5f), b.y, line, b.h}, style::kIronDk);
+        canvas.rect({std::floor(b.x + pw * float(c) - line * 0.5f + 0.5f), b.y, line, b.h}, style::kCellLine);
     }
     for (int r = 1; r < rows; ++r) {
-        canvas.rect({b.x, std::floor(b.y + ph * float(r) - line * 0.5f + 0.5f), b.w, line}, style::kIronDk);
+        canvas.rect({b.x, std::floor(b.y + ph * float(r) - line * 0.5f + 0.5f), b.w, line}, style::kCellLine);
     }
 }
 

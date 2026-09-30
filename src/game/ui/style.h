@@ -50,8 +50,12 @@ inline constexpr float kSheetAlpha = 0.98f;
 inline constexpr uint32_t kIronHi = gfx::rgba(0.659f, 0.545f, 0.424f);  // a rim under the pointer
 inline constexpr uint32_t kIron = gfx::rgba(0.420f, 0.337f, 0.271f);    // rims, frames
 inline constexpr uint32_t kIronLo = gfx::rgba(0.239f, 0.192f, 0.157f);  // a well's edge
-inline constexpr uint32_t kIronDk = gfx::rgba(0.141f, 0.106f, 0.082f);  // the lines between cells
+inline constexpr uint32_t kIronDk = gfx::rgba(0.141f, 0.106f, 0.082f);  // a dark rule, a field's edge
 inline constexpr uint32_t kSeam = gfx::rgba(0.0f, 0.0f, 0.0f);          // 1u outside a frame
+// An item grid's floor and its lines: lifted off kVoid and a shade cooler than the ash, so
+// dark steel, MU's reds and the added glows (the Bluewing, the Legendary Shield) stand off it.
+inline constexpr uint32_t kCellFloor = gfx::rgba(0.090f, 0.086f, 0.082f);
+inline constexpr uint32_t kCellLine = gfx::rgba(0.200f, 0.173f, 0.145f);
 
 // ---- blood: the one accent ---------------------------------------------------------------------
 
