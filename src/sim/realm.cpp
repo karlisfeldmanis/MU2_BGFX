@@ -457,6 +457,21 @@ void Realm::press() {
     // forward itself, so the order below sees a swing already spent and does not swing twice.
     if (wants_ != skill::kNone) {
         if (tick_ > wantsUntil_) {
+            // Said, because the window says nothing: the key's sweep answers a cooldown and
+            // nothing answers the rest. The user pressed a Meteorite that never fell and neither
+            // of us could say why.
+            const uint32_t at = wantsAt_ != 0 ? wantsAt_ : order_.target;
+            const Body* target = find(at);
+            const SkillRow* row = skillNumbered(wants_);
+            core::logf("skill: %s pressed and never thrown -- target #%u %s, %.1f tiles (reach "
+                       "%.0f), cooling %lld, mana %d of %d, he is %s the safe zone",
+                       row ? row->name : "?", at,
+                       !target ? "none" : !target->alive() ? "dead"
+                       : tables_->grid.safe(target->column(), target->row()) ? "sheltered"
+                                                                             : "standing",
+                       target ? double(reach(hero, *target)) : -1.0, row ? double(row->reach) : 0.0,
+                       (long long)cooling(wants_), hero.mana, row ? row->mana : 0,
+                       tables_->grid.safe(hero.column(), hero.row()) ? "in" : "out of");
             wants_ = skill::kNone;
         } else if (tick_ >= hero.swingsAt) {
             if (const SkillRow* row = skillNumbered(wants_)) {

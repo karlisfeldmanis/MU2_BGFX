@@ -1178,7 +1178,7 @@ void testCastLock(const content::Tables& tables) {
                     casts, widest, pulses, (long long)closest);
         check(casts > 10 && pulses > 0, "he throws Poison through a hunt and it pulses");
         check(widest >= 2, "and one cast poisons more than one body");
-        check(closest >= wiz.coolsFor(sim::skill::kPoison) && closest >= 100,
+        check(closest >= wiz.coolsFor(sim::skill::kPoison) && closest >= 80,
               "never inside its cooldown");
         checkEqual(pulseKills, 0, "a pulse never kills");
         std::printf("  poison: %d pulses off the three-second beat (a recast restarts it)\n", offBeat);
@@ -1401,7 +1401,7 @@ void testCastLock(const content::Tables& tables) {
                     casts, falls, landed, widest, (long long)closest, lock);
         check(lock > 20, "the arm-up clip has its length in the realm");
         check(casts > 10 && falls > 0 && landed > 0, "he calls Meteorite through a hunt and it lands");
-        check(closest >= wiz.coolsFor(sim::skill::kMeteorite) && closest >= 100,
+        check(closest >= wiz.coolsFor(sim::skill::kMeteorite) && closest >= 80,
               "never inside its cooldown");
         checkEqual(lateOrEarly, 0, "every rock lands its fall after the let-go");
         check(widest >= 2, "and one cast drops a rock on more than one body");
@@ -1413,8 +1413,8 @@ void testCastLock(const content::Tables& tables) {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
         check(bolt.wizardry && bolt.channelled() && !bolt.primary() && !bolt.thrown() &&
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
-                  bolt.mana == 40 && bolt.coolTicks == 200 && bolt.channelTicks == 42,
-              "Lightning is a channel round him as long as its clip, ten seconds to cool, and it "
+                  bolt.mana == 40 && bolt.coolTicks == 100 && bolt.channelTicks == 42,
+              "Lightning is a channel round him as long as its clip, five seconds to cool, and it "
               "pushes");
         check(bolt.force == 2.0f && sim::force(bolt, sim::HeroPoints{}) == 2.0f &&
                   sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.0f,

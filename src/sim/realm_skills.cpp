@@ -235,6 +235,12 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
         // does for a swing (`engage`), and the blow lands half a clip later by which time he has
         // come round. Set even on a refusal below -- a knight turns toward what he tried to hit.
         if (aimed) hero.aim = std::atan2(target->y - hero.y, target->x - hero.x);
+        // **A spell turns him at once.** A wizard's clip is cast from the tick it starts, and
+        // left to the turn a body coming round from behind began it facing away -- 150 degrees
+        // off, the user's "goes to the opposite direction", on two casts in 160 of a hunt. MU
+        // snaps the angle onto the target as it attacks (ZzzInterface.cpp:1303, `o->Angle[2] =
+        // CreateAngle2D`); the knight's swing keeps its turn, as above.
+        if (aimed && row.wizardry) hero.facing = hero.aim;
         if (row.spread == Spread::One || row.spread == Spread::Line ||
             row.spread == Spread::Fan) {
             // A line is thrown AT a body as a single blow is, and goes on through: it needs the

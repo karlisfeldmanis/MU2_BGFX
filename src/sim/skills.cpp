@@ -231,9 +231,9 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // **Each strike at twice the band** (`force` 2), the user's "lightning has to be stronger
     // because it's a cooldown spell": the spells that pay nothing to wait strike at one, and this
-    // one waits ten seconds. About 60-110 a strike at 120 energy against Fire Ball's 21-42 -- the
+    // one waits five seconds. About 60-110 a strike at 120 energy against Fire Ball's 21-42 -- the
     // hardest single blow he has, once a body, into everything round him.
-    {skill::kLightning, "Lightning", 40, 4.0f, 2.0f, 0.0f, 200, false, Spread::Ring, 0, 1.0f,
+    {skill::kLightning, "Lightning", 40, 4.0f, 2.0f, 0.0f, 100, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
      "another within four tiles and throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
@@ -251,7 +251,7 @@ constexpr SkillRow kRows[kSkills] = {
     // 2026-09-28), where 0.75 drops one on the one body.
     //
     // **A cooldown spell** (the user, 2026-09-28), and so, as Lightning taught, harder and dearer
-    // than the primaries: six seconds before agility's haste, **three times the band** (`force` 3,
+    // than the primaries: five seconds before agility's haste, **three times the band** (`force` 3,
     // about 100-170 at 104 energy against Fire Ball's 19-38 -- the heaviest single blow he has),
     // and thirty mana where 0.75 asks twelve. Nine tiles, with the other two he throws at a body.
     // All ours.
@@ -260,7 +260,7 @@ constexpr SkillRow kRows[kSkills] = {
     // lighting"): MU's "Skill recovery" (183), the arm thrown up to the sky, played once; the rock
     // is called at the middle of it, with the arm up, and he cannot walk out of it. MU casts it
     // with `SetPlayerMagic`'s two hands, 147/148.
-    {skill::kMeteorite, "Meteorite", 30, 9.0f, 3.0f, 0.0f, 120, false, Spread::One, 0, 1.0f,
+    {skill::kMeteorite, "Meteorite", 30, 9.0f, 3.0f, 0.0f, 100, false, Spread::One, 0, 1.0f,
      "With his arm raised to the sky he calls burning rocks down on a body up to nine tiles off "
      "and on everything within four tiles of it, one rock each.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
@@ -311,13 +311,13 @@ constexpr SkillRow kRows[kSkills] = {
     //
     // **A cooldown spell with an area** (the user, 2026-09-28, "also cooldown spell with aoe"), as
     // Ice is: everything within **four tiles** of the body he aims at takes the blow and the
-    // poison, at **twice the band**, on **six seconds** of cooldown before agility's haste.
+    // poison, at **twice the band**, on **five seconds** of cooldown before agility's haste.
     //
     // **Each pulse is a quarter of the blow that landed** (`Body::poisonDamage`), where 0.75's is
     // 3% of what health is left: at 3% a Bull Fighter lost three a pulse, which is no poison at
     // all. Six pulses, so the poison is half again the blow. It never kills on its own -- 0.75's
     // shape, which only ever takes a share of what is left -- and leaves one health. Ours.
-    {skill::kPoison, "Poison", 42, 9.0f, 2.0f, 0.0f, 120, false, Spread::One, 0, 1.0f,
+    {skill::kPoison, "Poison", 42, 9.0f, 2.0f, 0.0f, 100, false, Spread::One, 0, 1.0f,
      "A cloud of poison bursts on a body up to nine tiles off and on everything within four tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,

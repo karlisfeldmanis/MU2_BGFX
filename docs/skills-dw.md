@@ -268,7 +268,7 @@ cooldown 10 seconds"*, and *"we need additional UI feature for channeling spells
   (`Realm::push`), and not again until it has landed: no teleport, a flinch, no thinking or walking while it slides, never onto a
   blocked or sheltered tile, and a death mid-slide leaves the body on its tile. 0.75 moves a random
   neighbour at once. Nothing in Lorencia resists lightning, so the resistance roll is not made.
-- **Ten seconds of cooldown**, before agility's haste as every key's is (9.5 s on a young wizard),
+- **Five seconds of cooldown** (ten until 2026-09-30, when the user set every cooldown spell to five), before agility's haste as every key's is (4.8 s on a young wizard),
   floored at the channel and two seconds. Forty mana at the cast. It asks for something within
   four tiles before it goes, so it is never spent on empty air.
 - **He channels in it.** MU's "Skill recovery" (183) -- one arm thrown up to the sky -- looping for
@@ -310,7 +310,7 @@ energy. MuMain drops it where the body stands at the let-go, `CreateEffect(MODEL
 to->Position, ...)` and SOUND_METEORITE01 (ZzzCharacter.cpp:5008): the Lich's own rock. The rest is
 the user's, 2026-09-28:
 
-- **A cooldown spell**, so harder and dearer, as Lightning taught: **six seconds** before agility's
+- **A cooldown spell**, so harder and dearer, as Lightning taught: **five seconds** (six until 2026-09-30) before agility's
   haste (5.7 s on a level-30 wizard), **three times the band** (`force` 3, about 100-170 a rock at
   104 energy), **thirty mana** where 0.75 asks twelve, nine tiles like the other two he throws at a
   body.
@@ -417,7 +417,7 @@ SOUND_HEART, and draws the body green, (0.3, 1, 0.5) -- (0.3, 1, 0.8) when it is
 
 - **A cooldown spell with an area** (the user, 2026-09-28, *"also cooldown spell with aoe"*):
   everything within **four tiles** of the body he aims at takes the blow and the poison, Ice's shape
-  (`splash` 4 through `Realm::rain`), at **twice the band**, on **six seconds** of cooldown before
+  (`splash` 4 through `Realm::rain`), at **twice the band**, on **five seconds** (six until 2026-09-30) of cooldown before
   agility's haste. The mana and the twenty seconds are 0.75's.
 - **Each pulse is a quarter of the blow that landed** (`Body::poisonDamage`, `Realm::poisonPulse`),
   where 0.75's is 3% of the health left -- three a pulse on a Bull Fighter, which is no poison.
