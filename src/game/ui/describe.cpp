@@ -123,7 +123,7 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
     const int high = int((who.wizardMaximum + double(row.damage + row.damage / 2)) *
                          who.wizardryRate * times);
     // A channel's damage is each strike's and a rain's each rock's: the band is not the cast's.
-    const char* label = row.channelled()                          ? "Each strike"
+    const char* label = row.channelled() || row.burns > 0         ? "Each strike"
                         : row.splash > 0.0f && row.fallTicks > 0 ? "Each rock"
                         : row.splash > 0.0f                      ? "Each body"
                                                                  : "Damage";
@@ -157,6 +157,16 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
         out.push_back(stat("Area", "a line of " + std::to_string(int(sim::kLineTiles)) + " tiles",
                            tone(Tone::White)));
         note("strikes everything it passes through");
+    } else if (row.burns > 0) {
+        // Flame: a fire on the ground, `Realm::burn`.
+        char round[32], strikes[48];
+        std::snprintf(round, sizeof(round), "%.1f tiles round its target", double(row.burnTiles));
+        std::snprintf(strikes, sizeof(strikes), "%d, %.1f s apart", row.burns,
+                      double(sim::kBurnEvery) * 0.05);
+        out.push_back(stat("Range", reach, tone(Tone::White)));
+        out.push_back(stat("Area", round, tone(Tone::White)));
+        out.push_back(stat("Strikes", strikes, tone(Tone::White)));
+        note("the fire burns on the ground; whoever stands in it is struck");
     } else if (row.splash > 0.0f) {
         out.push_back(stat("Range", reach, tone(Tone::White)));
         out.push_back(stat("Area", std::to_string(int(row.splash)) + " tiles round its target",

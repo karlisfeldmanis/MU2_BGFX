@@ -72,6 +72,9 @@ constexpr int32_t kIce = 7;
 // And `AT_SKILL_POISON`, off the Scroll of Poison (group 15 number 0, `Book01`) at a hundred and
 // forty energy: a blow, and then a poison that goes on hurting.
 constexpr int32_t kPoison = 1;
+// And `AT_SKILL_FLAME`, off the Scroll of Flame (group 15 number 4, `Book05`) at a hundred and
+// sixty energy: a fire lit on the body's tile that burns twice.
+constexpr int32_t kFlame = 5;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
 // Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
 // "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
@@ -97,6 +100,12 @@ constexpr float kChillFactor = 0.5f;
 
 // A poison's pulse: OpenMU's `PoisonMagicEffect` ticks every three seconds (sixty ticks here).
 constexpr int32_t kPoisonEvery = 60;
+
+// A Flame's fire strikes every twenty reference frames -- MU's client asks
+// `AttackCharacterRange` when `(int)LifeTime % 20 == 0` over a forty-frame life
+// (MoveHandlers.cpp:1817) -- so twice, 0.8 s apart, which is sixteen ticks. OpenMU caps the
+// hits at two (`maximumHitsPerTarget`) and puts them 500 ms apart; the picture's pace is MU's.
+constexpr int32_t kBurnEvery = 16;
 
 // ---- the weapon families (docs/skills-dk.md §3.1b) ------------------------------------------
 //
@@ -308,6 +317,12 @@ struct SkillRow {
     int32_t arrows = 0;
     // **A summon**: the monster number it raises, 0 for none (the map above).
     int32_t summons = 0;
+    // ---- Flame's, appended after the elf's ------------------------------------------------
+    // **A fire on the ground**: lit at the let-go on the tile of the body it was thrown at, it
+    // strikes this many times, `kBurnEvery` apart, everything within `burnTiles` of the tile's
+    // centre -- whoever stands in it then, not whoever stood in it when it was lit. 0 for none.
+    int32_t burns = 0;
+    float burnTiles = 0.0f;
     // Whether it is cast on the caster and takes no target.
     bool onSelf() const { return boonTicks > 0 || mends || mightTicks > 0 || summons > 0; }
     // **A primary: no cooldown, cast over and over.** The wizard's Energy Ball on the quick
@@ -326,11 +341,11 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning, Meteorite, Teleport, Ice and Poison. Also
+// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, on the end past the elf's. Also
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 28;
+constexpr int kSkills = 29;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

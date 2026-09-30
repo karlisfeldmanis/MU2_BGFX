@@ -306,6 +306,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
         looseFan(hero, *row, at, force);
         return;
     }
+    // Flame: a fire on the ground under what he threw it at, striking on its own clock.
+    if (row && row->burns > 0) {
+        light(hero, *row, at, force);
+        return;
+    }
     // Meteorite: a rock on everything round what he called it on.
     if (row && row->splash > 0.0f) {
         rain(hero, *row, at, force);
@@ -532,6 +537,63 @@ void Realm::rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force)
     }
     for (int i = 0; i < found; ++i) {
         loose(hero, row, victims[i], force, true, victims[i] == aimedAt);
+    }
+}
+
+void Realm::light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force) {
+    // On the TILE the body stands on, at its centre, as MU lights it at `SkillX + 0.5`: a fire
+    // is a place, and the body is free to walk out of it before the second strike.
+    const Body* aimed = body(aimedAt);
+    if (aimed == nullptr || !aimed->alive()) return;
+    for (Fire& one : fires_) {
+        if (one.next != 0) continue;
+        one = Fire{tick_, float(aimed->column()), float(aimed->row()), row.number, row.burns,
+                   force, aimedAt};
+        // Said once, at the body, with no flight: the drawing lights its fire on that body's
+        // tile, and the wave with it. Its first strike is this tick's, when `step` burns.
+        say(What::Loosed, hero, row.number, 0, 0, aimedAt);
+        return;
+    }
+}
+
+void Realm::burn() {
+    Body& hero = bodies_[0];
+    for (Fire& fire : fires_) {
+        if (fire.next == 0 || fire.next > tick_) continue;
+        const SkillRow* row = skillNumbered(fire.skill);
+        const float radius = row ? row->burnTiles : 1.5f;
+        const bool first = fire.left == (row ? row->burns : 0);
+        // Everybody in it now, nearest the centre first and then by id, so the dice are drawn
+        // in a fixed order -- `rain`'s rule. Only the aimed body's first strike pays back.
+        uint32_t victims[kVictims];
+        float off[kVictims] = {};
+        int found = 0;
+        for (const Body& one : bodies_) {
+            if (!one.monster() || !one.alive()) continue;
+            if (tables_->grid.safe(one.column(), one.row())) continue;
+            const float gap = std::hypot(one.x - fire.x, one.y - fire.y);
+            if (gap > radius || found >= kVictims) continue;
+            int at = found;
+            while (at > 0 &&
+                   (off[at - 1] > gap || (off[at - 1] == gap && victims[at - 1] > one.id))) {
+                off[at] = off[at - 1];
+                victims[at] = victims[at - 1];
+                --at;
+            }
+            off[at] = gap;
+            victims[at] = one.id;
+            ++found;
+        }
+        for (int i = 0; i < found; ++i) {
+            if (Body* struck = body(victims[i]); struck && struck->alive()) {
+                strikeAt(hero, *struck, fire.force, row, true, first && victims[i] == fire.aimed);
+            }
+        }
+        if (--fire.left > 0) {
+            fire.next = tick_ + kBurnEvery;
+        } else {
+            fire = Fire{};
+        }
     }
 }
 

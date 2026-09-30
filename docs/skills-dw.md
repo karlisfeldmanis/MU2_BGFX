@@ -445,6 +445,30 @@ Measured in `sim_test`: a level-30 wizard hunting 6 000 ticks casts it 13 times,
 cooldown, poisons up to two bodies in one cast, and no pulse kills. Seen in the arena with
 `--arena-learn 1`: the cloud and puffs on the Bull Fighters and them green.
 
+## 2k. Flame -- a fire on the ground that strikes twice
+
+0.75's row (`Version075/SkillsInitializer.cs:45`): twenty-five damage, fifty mana, a hundred and
+sixty energy, fire, taught by the Scroll of Flame (15/4, Book05, 21 000 zen). Skill 5, on the END of
+the table (index 28, `kSkills` 29) so no save's learned bit moves.
+
+- **What it is, MU's.** `CreateEffect(BITMAP_FLAME, ..., 0)` at the let-go on a tile's centre
+  (ZzzCharacter.cpp:4480), forty frames; the client asks for damage every twenty
+  (`Move_BITMAP_FLAME`, MoveHandlers.cpp:1817) within 150 units. So `Realm::light` puts a fire on
+  the tile of the body it was thrown at, and `Realm::burn` strikes everything within **1.5 tiles**
+  of that tile's centre **twice, 16 ticks (0.8 s) apart** -- whoever stands in it then. OpenMU's
+  own numbers are two hits 500 ms apart in a two-tile diameter; the picture's pace is MU's.
+- **Ours.** A cooldown spell, five seconds before haste (the user, 2026-09-30), each strike at
+  twice the band; nine tiles; thrown at a body from the right button or a key, not at the ground
+  under the pointer. Only the aimed body's first strike pays mana back.
+- **The picture**, `fx/flame` off MU2's `client/core/Flame.cs`: six Flame01 plumes a frame at
+  +-25 units, climbing 19-38 units a frame for twenty frames, 0.64-1.27 of the sheet, white and
+  added -- the InfinityMU clip's pillar, orange at the edge and white in the core; the sheet laid
+  on the land two tiles square at a 0.8-1.1 shimmer; a stone one frame in eight off the meteor's
+  pile (`Meteor::stones`); (1, 0.4, 0) over three tiles. sFlame at the let-go.
+- **Measured**, `sim_test`: a level-30 wizard hunting 6 000 ticks lights 10 fires (mana-bound),
+  17 strikes, every one on the lighting tick or a burn after it and none outside the fire; never
+  inside the cooldown. Unseen in the window.
+
 ## 2b'. Where a spell leaves him
 
 **One place for every spell: the middle of his chest**, 60% of his drawn height up and 70 cm toward

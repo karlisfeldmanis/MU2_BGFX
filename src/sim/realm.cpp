@@ -717,8 +717,9 @@ void Realm::step() {
                        echo.target);
             release(hero, echo.target, echo.force, echo.skill);
         }
-        // And whatever he let go earlier and has now arrived.
+        // And whatever he let go earlier and has now arrived, and the fires on the ground.
         arrive();
+        burn();
         channel(hero);
         if (hero.blinkAt != 0 && tick_ >= hero.blinkAt) blink(hero);
         poisonPulse(hero);

@@ -93,6 +93,9 @@ public:
     void burn(const float feet[3], float tall, float seconds);
     // The realm said the blow missed: the fireball nearest that body flies on past and out.
     void missHurl(uint32_t target);
+    // `count` of the rock's stones thrown up off the ground at `x, z` -- a Flame's kicked-up
+    // debris, MU's `MODEL_STONE1 + rand() % 2` off the same ballistic arm (fx/flame.h).
+    void stones(float x, float z, float floor, int count) { stonesAt(x, z, floor, count); }
     // Advances the fireballs by the frame's seconds, steering each after where its target is
     // drawn -- `alive(id)` and `where(id, out)` as `Bolt::update` takes them. Call beside update().
     template <typename Alive, typename Where>

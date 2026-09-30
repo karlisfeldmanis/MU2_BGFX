@@ -402,6 +402,31 @@ constexpr SkillRow kRows[kSkills] = {
     {.number = skill::kSummonBali, .name = "Summon Bali", .mana = 250, .coolTicks = 60,
      .tells = "Bali at her side.", .clip = 151, .sound = "player_skill_defense", .built = false,
      .families = arms::kNone, .kin = Kin::FairyElf, .anyHand = true, .summons = 150},
+
+    // ---- Flame 5, the wizard's, on the end so no save's learned bit moves ----------------------
+    //
+    // 0.75's row: twenty-five damage, fifty mana, a hundred and sixty energy, fire
+    // (`Version075/SkillsInitializer.cs:45`), taught by the Scroll of Flame (Book05). What it is
+    // is MU's: a fire lit on a tile -- `CreateEffect(BITMAP_FLAME, ..., 0)` at the let-go
+    // (ZzzCharacter.cpp:4480) -- that asks for its damage twice over its forty frames, every
+    // twenty, on everything within 150 units (`Move_BITMAP_FLAME`, MoveHandlers.cpp:1817). So
+    // two strikes, `kBurnEvery` apart, a tile and a half round the fire -- MU's 150 units, where
+    // OpenMU's `targetAreaDiameter: 2` would be one -- and whoever stands in it at each.
+    //
+    // **A cooldown spell** (the user, 2026-09-30: every cooldown spell waits five seconds),
+    // before agility's haste, and so, as Lightning taught, each strike at **twice the band**.
+    // Thrown at a body, as Meteorite, Ice and Poison are, from the right button or a key; the
+    // fire is lit on that body's tile, not under the pointer. Nine tiles, with the other spells
+    // he throws at a body, where 0.75 gives six. Its clip is `SetPlayerMagic`'s two hands, 147
+    // and 148 (ClassAttack.cpp:1383), and sFlame is the fire starting, not a blow landing.
+    // The numbers past 0.75's are ours.
+    {.number = skill::kFlame, .name = "Flame", .mana = 50, .reach = 9.0f, .force = 2.0f,
+     .coolTicks = 100, .spread = Spread::One,
+     .tells = "Sets the ground under a body up to nine tiles off alight, and the fire strikes "
+              "everything standing in it twice.",
+     .clip = 147, .sound = "spell_flame", .built = true, .families = arms::kNone,
+     .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 25, .clipOther = 148,
+     .flies = 1000.0f, .burns = 2, .burnTiles = 1.5f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

@@ -482,6 +482,18 @@ void Play::update(double seconds) {
                     } else if (happening.a == sim::skill::kPoison) {
                         const float feet[3] = {to[0], ground_->heightAt(to[0], to[2]), to[2]};
                         poison_.cast(feet, caster->yaw);
+                    } else if (happening.a == sim::skill::kFlame) {
+                        // On the centre of the TILE the realm lit it on -- the body's tile on
+                        // this tick, which is where `Realm::light` put the fire -- as MU lights it
+                        // at `SkillX + 0.5`, not where the body is drawn.
+                        const float tile = ground_->metresPerTile();
+                        float at[3] = {to[0], 0.0f, to[2]};
+                        if (const sim::Body* lit = realm_.find(happening.whom)) {
+                            at[0] = (float(lit->column()) + 0.5f) * tile;
+                            at[2] = -(float(lit->row()) + 0.5f) * tile;
+                        }
+                        at[1] = ground_->heightAt(at[0], at[2]);
+                        flame_.light(at, caster->yaw);
                     } else if (happening.a == sim::skill::kIce) {
                         // The block where the body is drawn, turned to his yaw, as MU turns it.
                         const float floor = ground_->heightAt(to[0], to[2]);
@@ -926,6 +938,7 @@ void Play::update(double seconds) {
     blink_.update(float(seconds));
     ice_.update(float(seconds));
     poison_.update(float(seconds));
+    flame_.update(float(seconds));
     if (blinkOut_ >= 0.0f) blinkOut_ += float(seconds);
     // A blink the realm dropped -- he died in the fade -- is never put down: he is drawn again.
     if (blinkOut_ >= 0.0f && realm_.hero().blinkAt == 0) blinkOut_ = -1.0f;

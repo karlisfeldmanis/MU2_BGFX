@@ -753,6 +753,9 @@ private:
     void looseArrow(Body& hero, uint32_t at, float force);
     // Meteorite: a rock let go at every body within its splash of the one it was called on.
     void rain(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    // Flame: a fire lit on the tile of the body it was thrown at, and each tick's due strikes.
+    void light(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
+    void burn();
     // A poisoned body's pulse, when it is due -- a monster's or the hero's.
     void poisonPulse(Body& beast);
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).
@@ -899,6 +902,19 @@ private:
         float force = 1.0f;
     };
     Echo echo_;
+    // Flames burning on the ground (`SkillRow::burns`): where, when each strikes next and how
+    // many strikes are left. A fixed handful -- one cast every five seconds and an echo lights
+    // two -- and a fire that finds no room is not lit.
+    struct Fire {
+        int64_t next = 0;  // 0 for an empty place
+        float x = 0.0f, y = 0.0f;
+        int32_t skill = 0;
+        int32_t left = 0;
+        float force = 1.0f;
+        uint32_t aimed = 0;  // the body it was thrown at, whose first strike pays back
+    };
+    static constexpr int kFires = 8;
+    Fire fires_[kFires] = {};
     bool undying_ = false;  // `undying`
     int64_t tick_ = 0;
     std::string refusal_;

@@ -459,6 +459,9 @@ void Play::benchBolt(float tiles, float acrossX, float acrossZ, int32_t skill) {
     } else if (skill == sim::skill::kPowerWave) {
         const float ground[3] = {from[0], feet[1], from[2]};
         wave_.cast(ground, to);
+    } else if (skill == sim::skill::kFlame) {
+        const float at[3] = {to[0], ground_ ? ground_->heightAt(to[0], to[2]) : to[1], to[2]};
+        flame_.light(at, hero.yaw);
     } else {
         bolt_.cast(from, to, 0, atHand);
     }

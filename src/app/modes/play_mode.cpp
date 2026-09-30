@@ -255,6 +255,9 @@ bool PlayMode::open(Context& ctx) {
                                            world_.played().showing().table());
                 world_.played().poison().open(assets, ctx.textures,
                                               world_.played().showing().table());
+                world_.played().flame().open(assets, ctx.textures,
+                                             world_.played().showing().table(), &world_.ground(),
+                                             &world_.played().meteor());
                 world_.played().bones().open(assets, ctx.textures, &world_.ground());
                 world_.played().streak().open(assets, ctx.textures,
                                               world_.played().showing().table());
@@ -863,6 +866,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And a Poison cloud's green miasma, two tiles.
         count += world_.played().poison().lights(falling + count,
                                                  gfx::Renderer::kMaxTransientLights - count);
+        // And a Flame's orange, three tiles.
+        count += world_.played().flame().lights(falling + count,
+                                                gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));
@@ -1000,6 +1006,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().blink().gather(ctx.renderer.effects());
         world_.played().ice().gather(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());
+        world_.played().flame().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
         world_.played().gatherFolkLights(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,

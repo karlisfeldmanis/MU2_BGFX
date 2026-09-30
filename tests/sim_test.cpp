@@ -1184,6 +1184,95 @@ void testCastLock(const content::Tables& tables) {
         std::printf("  poison: %d pulses off the three-second beat (a recast restarts it)\n", offBeat);
     }
 
+    // ---- Flame: a fire on the ground that strikes whoever is in it, twice -------------------
+    {
+        const sim::SkillRow& flame = *sim::skillNumbered(sim::skill::kFlame);
+        check(flame.wizardry && !flame.primary() && flame.damage == 25 && flame.mana == 50 &&
+                  flame.burns == 2 && flame.burnTiles == 1.5f && flame.coolTicks == 100,
+              "Flame is a five-second cooldown spell of twenty-five damage and fifty mana, "
+              "striking twice within a tile and a half");
+        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 1,
+              "and its row is the table's last, so no save's learned bit moves");
+        const int32_t scroll = tables.itemAt(15, 4);
+        check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kFlame &&
+                  tables.items[size_t(scroll)].teachesEnergy == 160,
+              "the Scroll of Flame teaches skill 5 at a hundred and sixty energy");
+
+        sim::Realm wiz;
+        check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 30), "a wizard raises to hunt");
+        check(wiz.learn(sim::skill::kFlame), "who knows Flame");
+        struct Lit {
+            int64_t tick;
+            float x, y;
+        };
+        std::vector<Lit> fires;
+        int casts = 0, strikes = 0, offBeat = 0, outside = 0, widest = 0;
+        int64_t lastCast = -1, closest = 1 << 30;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 6000; ++tick) {
+            const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                wiz.ask(request);
+            }
+            if (nearest != 0 && wiz.cooling(sim::skill::kFlame) == 0) {
+                wiz.invoke(sim::skill::kFlame, nearest);
+            }
+            wiz.step();
+            int thisTick = 0;
+            for (const sim::Happening& one : wiz.happenings()) {
+                if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
+                    one.a == sim::skill::kFlame) {
+                    ++casts;
+                    if (lastCast >= 0) closest = std::min<int64_t>(closest, one.tick - lastCast);
+                    lastCast = one.tick;
+                }
+                if (one.what == sim::What::Loosed && one.a == sim::skill::kFlame) {
+                    if (const sim::Body* at = wiz.find(one.whom)) {
+                        fires.push_back({int64_t(one.tick), float(at->column()), float(at->row())});
+                    }
+                }
+            }
+            for (const sim::Happening& one : wiz.happenings()) {
+                if ((one.what != sim::What::Hit && one.what != sim::What::Missed) ||
+                    one.who != wiz.hero().id || !one.thrown) {
+                    continue;
+                }
+                // A strike of a fire: on the tick it was lit or a burn later, and inside it.
+                const Lit* mine = nullptr;
+                for (const Lit& fire : fires) {
+                    const int64_t after = int64_t(one.tick) - fire.tick;
+                    if (after == 0 || after == sim::kBurnEvery) mine = &fire;
+                }
+                if (mine == nullptr) {
+                    ++offBeat;
+                    continue;
+                }
+                ++strikes;
+                ++thisTick;
+                if (const sim::Body* struck = wiz.find(one.whom)) {
+                    // Where it stood when struck: this tick's position, less a push it took.
+                    if (std::hypot(struck->x - mine->x, struck->y - mine->y) > 1.5f + 1.0f) {
+                        ++outside;
+                    }
+                }
+            }
+            widest = std::max(widest, thisTick);
+        }
+        std::printf("  flame: %d cast, %d fires, %d strikes, %d at once at the most, %lld ticks "
+                    "apart at the closest\n",
+                    casts, int(fires.size()), strikes, widest, (long long)closest);
+        check(casts >= 8 && strikes > int(fires.size()), "he lights fires through a hunt and each "
+                                                        "strikes more than once on the whole");
+        checkEqual(offBeat, 0, "every strike lands on the lighting or a burn after it");
+        checkEqual(outside, 0, "and on nobody outside the fire");
+        check(closest >= wiz.coolsFor(sim::skill::kFlame) && closest >= 80,
+              "never inside its cooldown");
+    }
+
     // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
     {
         const sim::SkillRow& ice = *sim::skillNumbered(sim::skill::kIce);
