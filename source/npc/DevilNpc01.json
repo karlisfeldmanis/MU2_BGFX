@@ -1,0 +1,175 @@
+{
+  "item": "DevilNpc01",
+  "mu_name": "Charon",
+  "mu_name_from": "NPC/DevilNpc01.bmd, loaded as MODEL_NPC_DEVILSQUARE (ZzzOpenData.cpp:1911-1914), MuMain's MONSTER_CHARON at the default scale (ZzzCharacter.cpp:14392-14395). Type 237, OpenMU's 'Charon' with NpcWindow.DevilSquare. Not Version075's: OpenMU's 0.95d stands him in Noria at 171,105 facing SouthEast (Version095d/Maps/Noria.cs:32).",
+  "world": "noria",
+  "object_type": -1,
+  "why_this_one": "The user asked for Devil Square's NPC (2026-09-30). A robed figure in gilt plate, 456 triangles on one 256 sheet. Devil Square is not written, so he stands and says so.",
+  "profile": "npc",
+  "sheets": {
+    "npc": "npc_npc.png"
+  },
+  "sheet_from": "Out of Data/NPC, beside the model, decoded under an npc_ prefix.",
+  "sheet_materials": {
+    "npc": "skin"
+  },
+  "sheet_materials_from": "One page carrying his face, his robe and his plate together, so skin, as every townsperson's shared page does.",
+  "effects_from": "RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268), the light held in his hands, drawn in code (Play::gatherFolkLights, Play::orbs; play_tuning.h's kCharonOrb*): two BITMAP_LIGHTNING+1 (lightning_2) sprites at bone 20 offset (3.5, -12, 10), Scale 0.3, turning opposite ways at WorldTime/50 degrees, lit sin(WorldTime*0.002)*0.35+0.65 grey; and a BITMAP_JOINT_ENERGY wisp every half second from a point 50 units round it, rising twenty frames and homing back in. Ours: the wisp's ribbon is eight round `light` dots in JointEnergy01's pale blue, its homing a straight line, and the SOUND_GET_ENERGY on each landing is left out.",
+  "islands_from": "The build fills this.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 278,
+      "area": 36541.1,
+      "along": [
+        -22.3,
+        55.3
+      ],
+      "mu_uv": [
+        0.023,
+        0.001,
+        0.982,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.979,
+        0.993
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 45,
+      "area": 932.5,
+      "along": [
+        47.2,
+        72.2
+      ],
+      "mu_uv": [
+        0.277,
+        0.753,
+        0.391,
+        0.941
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.97,
+        0.626
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 1,
+      "area": 8.8,
+      "along": [
+        49.5,
+        59.3
+      ],
+      "mu_uv": [
+        0.352,
+        0.834,
+        0.376,
+        0.885
+      ],
+      "bake_uv": [
+        0.849,
+        0.531,
+        0.87,
+        0.576
+      ]
+    },
+    {
+      "island": 3,
+      "material": "skin",
+      "triangles": 45,
+      "area": 932.6,
+      "along": [
+        45.4,
+        69.4
+      ],
+      "mu_uv": [
+        0.277,
+        0.758,
+        0.391,
+        0.946
+      ],
+      "bake_uv": [
+        0.242,
+        0.119,
+        0.937,
+        0.888
+      ]
+    },
+    {
+      "island": 4,
+      "material": "skin",
+      "triangles": 1,
+      "area": 8.8,
+      "along": [
+        47.3,
+        57.3
+      ],
+      "mu_uv": [
+        0.352,
+        0.839,
+        0.376,
+        0.894
+      ],
+      "bake_uv": [
+        0.897,
+        0.794,
+        0.918,
+        0.842
+      ]
+    },
+    {
+      "island": 5,
+      "material": "skin",
+      "triangles": 37,
+      "area": 392.2,
+      "along": [
+        2.9,
+        12.7
+      ],
+      "mu_uv": [
+        0.497,
+        0.066,
+        0.547,
+        0.157
+      ],
+      "bake_uv": [
+        0.217,
+        0.488,
+        0.261,
+        0.569
+      ]
+    },
+    {
+      "island": 6,
+      "material": "skin",
+      "triangles": 49,
+      "area": 4468.5,
+      "along": [
+        -23.7,
+        24.5
+      ],
+      "mu_uv": [
+        0.401,
+        0.062,
+        0.549,
+        0.403
+      ],
+      "bake_uv": [
+        0.208,
+        0.012,
+        0.832,
+        0.838
+      ]
+    }
+  ]
+}

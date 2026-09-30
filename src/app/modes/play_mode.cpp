@@ -222,6 +222,14 @@ bool PlayMode::open(Context& ctx) {
                     world_.played().setFolkLight(ctx.textures.load(
                         core::join(assets, light->path), content::TextureRole::Albedo));
                 }
+                const content::Showing& shown = world_.played().showing().table();
+                const content::EffectSheet* orb = shown.effect("lightning_2");
+                const content::EffectSheet* wisp = shown.effect("joint_energy");
+                if (orb && wisp) {
+                    world_.played().setFolkOrb(
+                        ctx.textures.load(core::join(assets, orb->path), content::TextureRole::Albedo),
+                        ctx.textures.load(core::join(assets, wisp->path), content::TextureRole::Albedo));
+                }
                 world_.played().breath().open(assets, ctx.textures,
                                               world_.played().showing().table(),
                                               &world_.ground());

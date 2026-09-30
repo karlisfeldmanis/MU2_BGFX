@@ -114,6 +114,54 @@ void Play::hammer() {
 }
 
 void Play::gatherFolkLights(gfx::Effects& effects) const {
+    // Charon's light: two of the one sheet turning against each other, and the wisps homing in.
+    if (bgfx::isValid(orbSheet_)) {
+        const float lit = std::sin(folkClock_ * 1000.0f * 0.002f) * 0.35f + 0.65f;
+        for (const Standing& one : folk_) {
+            if (one.orbBone < 0) continue;
+            float at[3];
+            if (!one.figure.pointOn(one.orbBone, kCharonOrbAt, at)) continue;
+            for (const float turn : {1.0f, -1.0f}) {
+                gfx::Sprite sprite;
+                for (int i = 0; i < 3; ++i) sprite.position[i] = at[i];
+                sprite.halfWidth = sprite.halfHeight = kCharonOrbHalf;
+                sprite.spin = turn * std::fmod(folkClock_ * kCharonOrbSpin, 6.2831853f);
+                sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = lit;
+                sprite.sheet = orbSheet_;
+                sprite.blend = gfx::Blend::Additive;
+                effects.add(sprite);
+            }
+        }
+    }
+    if (bgfx::isValid(wispSheet_)) {
+        for (const Wisp& wisp : wisps_) {
+            // The ribbon's eight points, brightest at the head; and the head a spark of the
+            // orb's own sheet, MU's CreateParticle(BITMAP_LIGHTNING+1, ..., 3, 0.05f). Ours: the
+            // points are the round `light` sheet in JointEnergy01's own pale blue -- the 8x4
+            // strip is a ribbon's cross-section and drawn as a billboard it is a hard box.
+            const bgfx::TextureHandle dot = bgfx::isValid(folkLight_) ? folkLight_ : wispSheet_;
+            for (int t = 0; t < wisp.tails; ++t) {
+                gfx::Sprite sprite;
+                for (int i = 0; i < 3; ++i) sprite.position[i] = wisp.tail[t][i];
+                sprite.halfWidth = sprite.halfHeight = 0.10f * (1.0f - 0.08f * float(t));
+                const float fade = 1.0f - float(t) / 8.0f;
+                sprite.colour[0] = 0.40f * fade;
+                sprite.colour[1] = 0.42f * fade;
+                sprite.colour[2] = 0.60f * fade;
+                sprite.sheet = dot;
+                sprite.blend = gfx::Blend::Additive;
+                effects.add(sprite);
+            }
+            if (bgfx::isValid(orbSheet_)) {
+                gfx::Sprite spark;
+                for (int i = 0; i < 3; ++i) spark.position[i] = wisp.position[i];
+                spark.halfWidth = spark.halfHeight = 0.5f * 1.28f * 0.05f;
+                spark.sheet = orbSheet_;
+                spark.blend = gfx::Blend::Additive;
+                effects.add(spark);
+            }
+        }
+    }
     if (!bgfx::isValid(folkLight_)) return;
     const float luminosity = std::sin(folkClock_ * 1000.0f * 0.002f) * 0.3f + 0.7f;
     for (const Standing& one : folk_) {
@@ -145,6 +193,75 @@ void Play::gatherFolkLights(gfx::Effects& effects) const {
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
+}
+
+// Charon's wisps: thrown every half second from a point up to 50 units round his light, risen
+// 5 units a reference frame for the first twenty, then humming home at a speed that climbs 5 a
+// frame to 30, and gone inside 35 units of it or at 120 frames (ZzzEffectJoint.cpp:210-226,
+// 3282-3360). MU's MoveHumming turns by the speed in degrees a frame, which here is a straight
+// line home; and the SOUND_GET_ENERGY it plays on every landing, twice a second, is left out.
+void Play::orbs(float seconds) {
+    const float frames = seconds * 25.0f;
+    const auto roll = [&]() {
+        wispDice_ ^= wispDice_ << 13;
+        wispDice_ ^= wispDice_ >> 17;
+        wispDice_ ^= wispDice_ << 5;
+        return float(wispDice_ % 100) * 0.01f - 0.5f;  // -0.5 to 0.49 m: MU's rand()%100-50
+    };
+    for (Standing& one : folk_) {
+        if (one.orbBone < 0 || !bgfx::isValid(wispSheet_)) continue;
+        one.wispOwed += seconds / kCharonWispEvery;
+        while (one.wispOwed >= 1.0f) {
+            one.wispOwed -= 1.0f;
+            float orb[3];
+            if (!one.figure.pointOn(one.orbBone, kCharonOrbAt, orb) || wisps_.size() >= 32) break;
+            Wisp wisp;
+            for (int i = 0; i < 3; ++i) {
+                wisp.target[i] = orb[i];
+                wisp.position[i] = orb[i] + roll();
+            }
+            wisps_.push_back(wisp);
+        }
+    }
+    // The tail is laid a point a reference frame, as MU's joint keeps its last eight.
+    wispStep_ += frames;
+    const bool lay = wispStep_ >= 1.0f;
+    if (lay) wispStep_ = std::fmod(wispStep_, 1.0f);
+    for (Wisp& wisp : wisps_) {
+        wisp.age += frames;
+        float away[3], distance = 0.0f;
+        for (int i = 0; i < 3; ++i) {
+            away[i] = wisp.target[i] - wisp.position[i];
+            distance += away[i] * away[i];
+        }
+        distance = std::sqrt(distance);
+        if (wisp.age <= 20.0f) {
+            wisp.position[1] += 0.05f * frames;
+        } else if (distance > 0.0f) {
+            wisp.velocity = std::min(30.0f, wisp.velocity + 5.0f * frames);
+            const float step = std::min(distance, wisp.velocity * 0.01f * frames);
+            for (int i = 0; i < 3; ++i) wisp.position[i] += away[i] / distance * step;
+        }
+        if (lay) {
+            for (int t = std::min(wisp.tails, 7); t > 0; --t) {
+                for (int i = 0; i < 3; ++i) wisp.tail[t][i] = wisp.tail[t - 1][i];
+            }
+            for (int i = 0; i < 3; ++i) wisp.tail[0][i] = wisp.position[i];
+            wisp.tails = std::min(8, wisp.tails + 1);
+        }
+    }
+    wisps_.erase(std::remove_if(wisps_.begin(), wisps_.end(),
+                                [](const Wisp& w) {
+                                    if (w.age >= 120.0f) return true;
+                                    if (w.age <= 20.0f) return false;
+                                    float d = 0.0f;
+                                    for (int i = 0; i < 3; ++i) {
+                                        const float a = w.target[i] - w.position[i];
+                                        d += a * a;
+                                    }
+                                    return d <= 0.35f * 0.35f;
+                                }),
+                 wisps_.end());
 }
 
 void Play::chatter(float seconds) {

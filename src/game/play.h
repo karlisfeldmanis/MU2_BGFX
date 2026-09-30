@@ -405,6 +405,11 @@ public:
     // The townsfolk's RenderLight sprites, in `sheet` (the showing's `light`, MU's BITMAP_LIGHT):
     // `(1, 0.6, 0.4) * (sin(WorldTime * 0.002) * 0.3 + 0.7)`, one per glowing person.
     void setFolkLight(bgfx::TextureHandle sheet) { folkLight_ = sheet; }
+    // Charon's orb and its wisps: the showing's `lightning_2` and `joint_energy`.
+    void setFolkOrb(bgfx::TextureHandle orb, bgfx::TextureHandle wisp) {
+        orbSheet_ = orb;
+        wispSheet_ = wisp;
+    }
     void gatherFolkLights(gfx::Effects& effects) const;
     void gatherForge(gfx::Effects& effects, const float eye[3], const float near[3],
                      float daylight) const {
@@ -823,7 +828,28 @@ private:
         // 1.5 (ZzzCharacter.cpp:11243). See gatherFolkLights.
         int glowBone = -1;
         float glowScale = 1.0f;
+        // Charon's light in his hand, MU's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249):
+        // the bone it sits on, or -1, and what of half a second's wisp is owed. See orbs().
+        int orbBone = -1;
+        float wispOwed = 0.0f;
     };
+    // One of Charon's BITMAP_JOINT_ENERGY wisps (CreateJoint subtype 6), in MU's units and
+    // reference frames: it rises for twenty frames and then homes into the light it was
+    // thrown round, and dies inside 35 units of it.
+    struct Wisp {
+        float position[3];
+        float target[3];
+        float tail[8][3];
+        int tails = 0;
+        float age = 0.0f;       // reference frames lived
+        float velocity = 3.0f;  // units a reference frame, once it turns home
+    };
+    std::vector<Wisp> wisps_;
+    float wispStep_ = 0.0f;  // what of a reference frame the wisps are owed
+    uint32_t wispDice_ = 0x9e3779b9u;
+    bgfx::TextureHandle orbSheet_ = BGFX_INVALID_HANDLE;   // lightning_2, BITMAP_LIGHTNING+1
+    bgfx::TextureHandle wispSheet_ = BGFX_INVALID_HANDLE;  // joint_energy, BITMAP_JOINT_ENERGY
+    void orbs(float seconds);
     // Starts a townsperson who cycles: its own dice, a clip by the rule, and a clock put
     // somewhere in it so that two of a kind are not in step.
     void settle(Standing& one);

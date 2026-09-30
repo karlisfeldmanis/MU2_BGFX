@@ -1749,6 +1749,10 @@ FOLK_VERSION075 = {
         # Korean client names Peia, in the flower bed under the town's great tree where the user
         # put her (2026-09-29) -- OpenMU Season Six stands her four tiles west, at 167,118.
         (257, "Peia", "Peia", 171, 118, 3),
+        # Ours: Charon (237), Devil Square's gatekeeper, where 0.95d stands him
+        # (Version095d/Maps/Noria.cs:32). 0.75 has no Devil Square; until it is written he says
+        # the hero is not ready (the user, 2026-09-30).
+        (237, "Charon", "", 171, 105, 4),
         # Ours: Noria's watch (the user, 2026-09-29), which neither Version075 nor MuMain has.
         # An archer and a crossbow at each of the town's three roads, a tile outside the safe
         # bit. Every one fights on the Crossbow Guard's row, 247 -- five tiles is a bow's reach
@@ -1777,6 +1781,10 @@ FOLK_VERSION075 = {
         # Ours: Sevina the Priestess (235), the class change's giver, where 0.95d stands her
         # (Version095d/Maps/Devias.cs:35). 0.75 has no class change.
         (235, "Sevina the Priestess", "", 183, 32, 4),
+        # Ours: the Messenger of Archangel (233), Blood Castle's gatekeeper, at the first of the
+        # two tiles Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45). 0.75 has no
+        # Blood Castle; until it is written he says the hero is not ready (the user, 2026-09-30).
+        (233, "Messenger of Archangel", "", 217, 29, 4),
     ],
 }
 

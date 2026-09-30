@@ -249,3 +249,5 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | CrossBow05 | arm | 2026-09-30 10:12 | passed | serpent-scaled limbs and stock in brass 0.6 with dark scale paint, bolt on the rail and string drawn mid-clip; whole, no blowout |
 | CrossBow06 | arm | 2026-09-30 10:20 | passed | drawn as MuMain draws it: ZzzObject.cpp:5243-5246 gives MODEL_BLUEWING_CROSSBOW BlendMesh -2 with BlendMeshLight sin*0.3+0.7, and ZzzBMD.cpp:1509 draws every mesh added when BlendMesh <= -2, so the whole crossbow is a breathing additive ghost; jk00 ships as a glow, stock and wings whole, pale steel-blue and see-through. jk01's coincident shell is welded away |
 | IceMonster01 | figure | 2026-09-30 10:12 | passed | MU's additive ice body with its V scroll, unchanged; half-strength shadow (ours) outlines it on Devias's snow -- approved by the user in game |
+| BloodCastle02 | figure | 2026-09-30 12:05 | passed | plate drawn twice as MU does (opaque + added), shines pale blue with the white wings, as the user's reference |
+| DevilNpc01 | figure | 2026-09-30 12:18 | passed | robe and gilt plate as painted; the orb in his hands and its wisps drawn in code |

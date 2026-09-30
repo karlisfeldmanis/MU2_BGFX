@@ -297,6 +297,16 @@ constexpr SnortWindow kSnortWindows[] = {{0, 15.0f, 20.0f}, {1, 20.0f, 25.0f},
 // RenderEye's `Vector(±5.f, 0.f, 0.f, p)`: out along the left bone and back along the right.
 constexpr float kEyeAt[2][3] = {{0.05f, 0.0f, 0.0f}, {-0.05f, 0.0f, 0.0f}};
 
+// Charon's light, RenderCharacter's MODEL_NPC_DEVILSQUARE case (ZzzCharacter.cpp:11249-11268):
+// `Vector(3.5f, -12.f, 10.f, p)` on BoneTransform[20], two BITMAP_LIGHTNING+1 sprites at Scale
+// 0.3 over a 128-texel sheet, turned by +-WorldTime/50 degrees, lit
+// `sinf(WorldTime * 0.002f) * 0.35f + 0.65f` grey; and `rand_fps_check(30)` a wisp.
+inline constexpr int kCharonOrbBone = 20;
+constexpr float kCharonOrbAt[3] = {0.035f, -0.12f, 0.10f};
+constexpr float kCharonOrbHalf = 0.5f * 1.28f * 0.3f;
+constexpr float kCharonOrbSpin = 20.0f * 3.14159265f / 180.0f;  // radians a second
+constexpr float kCharonWispEvery = 30.0f / 60.0f;                // seconds
+
 // MONSTER01_ATTACK1, and the key its fire stops on: `AnimationFrame <= 4.f`.
 constexpr int kBreathSlot = 3;
 constexpr float kBreathThrough = 4.0f;

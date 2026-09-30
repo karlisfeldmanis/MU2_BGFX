@@ -1,6 +1,6 @@
 {
   "world": "devias",
-  "summary": "What the extraction cannot know, for Devias: its townspeople. Nine of Version075's, and Apostle Devin and Sevina the Priestess, who are ours. See docs/devias-port.md section 1.7.",
+  "summary": "What the extraction cannot know, for Devias: its townspeople. Nine of Version075's, and Apostle Devin, Sevina the Priestess and the Messenger of Archangel, who are ours. See docs/devias-port.md section 1.7.",
   "spawns": [
     {
       "model": "SnowMerchant01",
@@ -103,6 +103,16 @@
       ],
       "facing": 4,
       "ours": "the class-change quest's giver, NPC 235, where OpenMU's 0.95d stands her (Version095d/Maps/Devias.cs:35); Version075 has no class change"
+    },
+    {
+      "model": "BloodCastle02",
+      "who": "Messenger of Archangel",
+      "tile": [
+        217,
+        29
+      ],
+      "facing": 4,
+      "ours": "Blood Castle's gatekeeper, NPC 233, at the first of the two tiles OpenMU's Season Six stands him on (VersionSeasonSix/Maps/Devias.cs:45; the second is 217,20); Version075 has no Blood Castle. Word 5 there, safe and no-move, as Sevina's tile"
     }
   ],
   "spawns_from": [

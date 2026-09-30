@@ -71,6 +71,13 @@
       "ours": "the elf's quest giver, in the flower bed where the user put her (2026-09-29); OpenMU Season Six's Elf Soldier stands at 167,118"
     },
     {
+      "model": "DevilNpc01",
+      "who": "Charon",
+      "tile": [171, 105],
+      "facing": 4,
+      "ours": "Devil Square's gatekeeper, NPC 237, where OpenMU's 0.95d stands him (Version095d/Maps/Noria.cs:32); Version075 has no Devil Square. Word 1 there, safe and open"
+    },
+    {
       "model": "ElfArcher",
       "who": "Elf Archer",
       "tile": [166, 80],

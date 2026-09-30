@@ -538,9 +538,12 @@ void Realm::press() {
                 questing_ = int(order_.target);
                 say(What::Offered, hero, quest, questing_, int(quests_[quest].state));
             } else if (one.number == kGuildMaster || one.number == kSevina ||
+                       one.number == kMessenger || one.number == kCharon ||
                        questOf(one.number) >= 0) {
                 // Ours (the user, 2026-09-29): MU opens the guild window here, which a single
                 // player game has no use for, so he answers with a line instead of nothing.
+                // The Messenger and Charon likewise, whose Blood Castle and Devil Square windows
+                // have nothing behind them yet.
                 // And Sevina, whose class change is not written yet, and a giver whose quest
                 // waits on another (Devin, until Lorencia or Noria is cleared): not ready.
                 say(What::Shouted, hero, int32_t(Shout::Greet), 0, int(order_.target));

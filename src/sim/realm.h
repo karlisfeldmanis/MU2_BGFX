@@ -124,6 +124,11 @@ constexpr int kGuildMaster = 241;
 // Sevina the Priestess, MU's NPC 235: the class change's giver, whose quest is not written yet.
 // Until it is she wears a grey "!" and tells the hero he is not ready (the user, 2026-09-30).
 constexpr int kSevina = 235;
+// The Messenger of Archangel, MU's NPC 233: Blood Castle's gatekeeper, who has no castle to
+// open yet. Spoken to, he says so, as the Guild Master does (the user, 2026-09-30).
+constexpr int kMessenger = 233;
+// Charon, MU's NPC 237: Devil Square's gatekeeper in Noria, likewise (the user, 2026-09-30).
+constexpr int kCharon = 237;
 
 // What the hero is doing with his body when he is doing nothing: OpenMU's CharacterPose,
 // numbers included. These persist -- MU's StopAnimationSetting re-picks the idle only up to

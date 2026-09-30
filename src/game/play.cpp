@@ -868,6 +868,7 @@ void Play::update(double seconds) {
     steps();
     hammer();
     chatter(float(seconds));
+    orbs(float(seconds));
     smithy(float(seconds));
     exhale(float(seconds));
     snort(float(seconds));
@@ -1175,12 +1176,25 @@ void Play::speak(const sim::Happening& happening) {
     };
     std::string line;
     if (happening.a == int32_t(sim::Shout::Greet)) {
-        // The Guild Master or Sevina, spoken to (Realm's Talk). Ours, the user's of 2026-09-29: MU's guild
-        // window has nothing to open alone, so he says so, in Devin's plain register.
+        // The Guild Master, Sevina or the Messenger, spoken to (Realm's Talk). Ours, the user's of
+        // 2026-09-29: MU's guild window has nothing to open alone, so he says it is not ready yet
+        // (the user, 2026-09-30), in Devin's plain register.
         static const char* const kGuildMaster[] = {
-            "A guild is sworn by many hands. Come back when you have them.",
-            "Devias remembers those who stand together. Find yours.",
-            "No banner is raised alone, traveller.",
+            "The guild halls are not ready yet, traveller. Come back another day.",
+            "No banners are being sworn yet. Devias is not ready for guilds.",
+            "Not yet. When the guilds open, you will hear of it first.",
+        };
+        // The Messenger of Archangel, whose Blood Castle is still to come (the user, 2026-09-30).
+        static const char* const kMessenger[] = {
+            "The Archangel's castle is not open yet. Its gate is still sealed.",
+            "Not yet, warrior. Blood Castle is not ready for you.",
+            "The Archangel has not called for help yet. Wait for his word.",
+        };
+        // Charon, whose Devil Square is still to come (the user, 2026-09-30).
+        static const char* const kCharon[] = {
+            "The Devil's Square is not open yet. Its doors stay shut.",
+            "Not yet, mortal. The square is not ready for you.",
+            "Come back when the square opens. You will know the hour.",
         };
         // Sevina, whose class change is still to come (the user, 2026-09-30): the hero is not
         // ready. Hers is the quest the Soul Master and the Blade Knight are born of.
@@ -1204,7 +1218,9 @@ void Play::speak(const sim::Happening& happening) {
             "The south is not safe yet. Finish there, and Devias will be waiting.",
         };
         const int32_t number = tables_.folk[size_t(folk)].number;
-        const char* const* lines = number == sim::kSevina ? kSevina
+        const char* const* lines = number == sim::kSevina      ? kSevina
+                                   : number == sim::kMessenger ? kMessenger
+                                   : number == sim::kCharon    ? kCharon
                                    : sim::questOf(number) >= 0 ? kDevinNotYet
                                                                : kGuildMaster;
         one.line = lines[realm_.tick() % 3];

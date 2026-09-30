@@ -3003,7 +3003,7 @@ void testWear(const content::Tables& tables) {
     checkEqual(grown.repairAll(), 0, "and there is no repair-all away from a counter");
 }
 
-// Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin and Sevina, the three shelves, Zienna's
+// Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin, Sevina and the Messenger, the three shelves, Zienna's
 // counter, and the Guild Master answering with a line where MU opens a guild window.
 void testDeviasFolk() {
     std::printf("devias folk\n");
@@ -3011,7 +3011,7 @@ void testDeviasFolk() {
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/devias/devias.mur";
     check(content::loadTables(path, devias, error), "Devias's tables load");
-    checkEqual(long(devias.folk.size()), 11L, "eleven townsfolk stand in Devias");
+    checkEqual(long(devias.folk.size()), 12L, "twelve townsfolk stand in Devias");
     int master = -1;
     for (size_t i = 0; i < devias.folk.size(); ++i) {
         if (devias.folk[i].number == sim::kGuildMaster) master = int(i);
@@ -3089,6 +3089,27 @@ void testDeviasFolk() {
     }
     check(greeted, "walked to the Guild Master and he answered");
     check(realm.trading() < 0 && realm.banking() < 0, "and opened nothing");
+
+    // The Messenger of Archangel (2026-09-30): Blood Castle is not written, so he answers too.
+    int messenger = -1;
+    for (size_t i = 0; i < devias.folk.size(); ++i) {
+        if (devias.folk[i].number == sim::kMessenger) messenger = int(i);
+    }
+    check(messenger >= 0, "the Messenger of Archangel is in the table");
+    if (messenger < 0) return;
+    sim::Realm gate;
+    check(gate.raise(&devias, 7, 220, 27), "a realm raises by the Messenger");
+    talk.target = uint32_t(messenger);
+    gate.ask(talk);
+    bool answered = false;
+    for (int tick = 0; tick < 400 && !answered; ++tick) {
+        gate.step();
+        for (const sim::Happening& one : gate.happenings()) {
+            answered |= one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Greet) &&
+                        one.c == messenger;
+        }
+    }
+    check(answered, "walked to the Messenger and he said Blood Castle is not ready");
 }
 
 void testVault(const content::Tables& tables) {
@@ -3352,6 +3373,36 @@ void testRecovery(const content::Tables& tables) {
     const auto [outside, unsafe] = hurt(170, 66, "a realm raises on the grass east of town");
     check(!unsafe, "which is not safe");
     check(outside <= 0, "and nothing comes back there");
+}
+
+// Charon (2026-09-30): Devil Square is not written, so he answers that it is not ready.
+void testCharon() {
+    std::printf("charon\n");
+    content::Tables noria;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/noria/noria.mur";
+    check(content::loadTables(path, noria, error), "Noria's tables load");
+    int charon = -1;
+    for (size_t i = 0; i < noria.folk.size(); ++i) {
+        if (noria.folk[i].number == sim::kCharon) charon = int(i);
+    }
+    check(charon >= 0, "Charon is in Noria's table");
+    if (charon < 0) return;
+    sim::Realm square;
+    check(square.raise(&noria, 7, 175, 107), "a realm raises by Charon");
+    sim::Request talk;
+    talk.kind = sim::Request::Kind::Talk;
+    talk.target = uint32_t(charon);
+    square.ask(talk);
+    bool answered = false;
+    for (int tick = 0; tick < 400 && !answered; ++tick) {
+        square.step();
+        for (const sim::Happening& one : square.happenings()) {
+            answered |= one.what == sim::What::Shouted && one.a == int32_t(sim::Shout::Greet) &&
+                        one.c == charon;
+        }
+    }
+    check(answered, "walked to Charon and he said Devil Square is not ready");
 }
 
 // Lorencia's one quest (sim/quests.h): Marlon offers it, a kill of his own counts, a hand-in pays
@@ -3838,6 +3889,7 @@ int main() {
     testPerches(tables);
     testVault(tables);
     testDeviasFolk();
+    testCharon();
     testRefine(tables);
     testOptions(tables);
     testExcellent(tables);
