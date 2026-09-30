@@ -1,0 +1,280 @@
+{
+  "item": "DarkKnight01",
+  "mu_name": "Dark Knight",
+  "mu_name_from": "MuMain's _enum.h:4153: MONSTER_MODEL_DARK_KNIGHT = 3, and MODEL_DARK_KNIGHT = MODEL_MONSTER01 + 3 (:4928), so OpenMonsterModel loads Monster04.bmd; the server's type is MONSTER_DARK_KNIGHT = 10 (:4385). The client leaves it unnamed (`L\"Unknown10\"`, ZzzCharacter.cpp:14152); OpenMU's Version075 Dungeon.cs:714-744 names number 10 'Dark Knight' at level 48 with 3000 health, 150-155 damage, 80 defense, MoveRange 3, AttackRange 1, ViewRange 5, AttackDelay 1400, respawn 10 s, no AttackSkill, resistances P3 I3 W3 F3. Seven spots, all in Dungeon 3 (docs/dungeon-port.md A §1.6). The monster, not the player's class of the same name: this file is DarkKnight01, the class has no file here.",
+  "world": "dungeon",
+  "object_type": 10,
+  "monster": {
+    "model_index": 3,
+    "scale": 0.8
+  },
+  "monster_from": "ZzzCharacter.cpp:14149-14156, CreateMonster, case MONSTER_DARK_KNIGHT:\n\n    OpenMonsterModel(MONSTER_MODEL_DARK_KNIGHT);\n    c = CreateCharacter(Key, MODEL_DARK_KNIGHT, PositionX, PositionY);\n    wcscpy(c->ID, L\"Unknown10\");\n    c->Object.Scale = 0.8f;\n    c->Level = 1;\n    c->Weapon[0].Type = MODEL_DOUBLE_BLADE;\n\n`c->Level = 1` draws nothing on this model: the only readers of a monster's Level are the Bull Fighter's eyes (ZzzCharacter.cpp:11210) and the Bahamut's smoke (:6170).",
+  "right_hand": "Sword14",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "MODEL_DOUBLE_BLADE is Item/Sword14.bmd, already cooked in the wardrobe. Its bone is CreateCharacter's weapon switch: `case MODEL_DARK_KNIGHT: c->Weapon[0].LinkBone = 26; c->Weapon[1].LinkBone = 36` (ZzzCharacter.cpp:12041-12044). Bone 26 is knife_gdf under Bip01 R Hand -- the player's grip bone, as the Hell Spider's -- and 36 hand_bofdgne01 under the left, empty.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 20, 20, 7, 12, 12, 13, 8. 48 bones, a biped's with the player's grip bones.\n\nPlay speeds: OpenMonsterModel's defaults, and 3 is the first entry of the multiplier list -- `if (Type == 3) b->Actions[j].PlaySpeed *= 1.2f` for every action from STOP1 up to (not including) DIE (ZzzOpenData.cpp:2606-2610). So idles 0.3/0.24, walk 0.408, attacks 0.396, shock 0.6; the death stays 0.55. No walk override.",
+  "sheets": {
+    "baron01": "darkknight_baron01.png",
+    "baron": "darkknight_baron.png"
+  },
+  "sheet_from": "Two sheets. Data/Monster/baron01.OZJ, 128 by 128, no alpha, on the armour (754 triangles); baron.OZT, 64 by 64 with alpha cutting 37%, on the cape and the crest (34 triangles). Decoded under a darkknight_ prefix.",
+  "cutout_from": "baron is a .OZT whose alpha is the cape's hem and the crest's crescent -- cut out, as MU alpha-tests it.",
+  "sheet_materials": {
+    "baron01": "painted_steel",
+    "baron": "cloth"
+  },
+  "sheet_materials_from": "Read off the sheets at 4x. baron01: plate lacquered black and trimmed in raised gold filigree -- helm, cuirass, pauldrons, greaves -- with a grey stone-like block and a small pale face at the left. Black paint over steel: painted_steel, as the Legendary set's enamel. baron: a brown cape in long folds (cloth), and the crest, a black-and-gold crescent with a hole cut through it, which is armour and is taken island by island.",
+  "effects": [
+    {
+      "kind": "ground_dust"
+    }
+  ],
+  "effects_from": "ZzzCharacter.cpp:6148-6168, MoveCharacterVisual: MODEL_DARK_KNIGHT heads the case it shares with MODEL_LARVA and MODEL_CHAIN_SCORPION -- BITMAP_SMOKE + 1 scattered 32 units about the feet, a fourth of the frames, while it lives. The Budge Dragon's case above falls into it with no break, and its fire is behind the Budge Dragon's own `o->Type`, so it is not the Knight's. The Chain Scorpion's ground_dust, declared the same way.",
+  "sounds_from": "ZzzOpenData.cpp:3409-3418, shared with the Death Knight and the Titan: mDarkKnight1, mDarkKnight2, mDarkKnightAttack1, mDarkKnightAttack2, mDarkKnightDie, then SetMonsterSound(..., 15, 16, 17, 18, 19) -- offsets from SOUND_MONSTER_BULL1 = 210, so 225-229, the five it loads, one to a slot. Wired as darkknight_* in sounds.json; the player's class uses no darkknight_ events.",
+  "islands_from": "Eleven islands for 788 triangles. On baron: 0 (30, the cape) in cloth, and 1 and 2 (2 each, the crest's two faces) in painted_steel. On baron01: 8 (36, u 0-0.15 by v 0.40-0.55, the small pale face under the visor) in skin, and the rest -- 5 the body (420), 4, 6, 9 the limbs, 3 the shoulder guards, 7 and 10 the greaves -- in painted_steel. They arrived as skin, the monster profile's default.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 30,
+      "area": 18409.8,
+      "along": [
+        -129.1,
+        6.6
+      ],
+      "mu_uv": [
+        0.025,
+        0.001,
+        0.481,
+        0.999
+      ],
+      "bake_uv": [
+        0.509,
+        0.139,
+        0.729,
+        0.619
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 1313.5,
+      "along": [
+        -36.7,
+        12.3
+      ],
+      "mu_uv": [
+        0.513,
+        0.006,
+        0.994,
+        0.994
+      ],
+      "bake_uv": [
+        0.01,
+        0.01,
+        0.242,
+        0.485
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 2,
+      "area": 1313.5,
+      "along": [
+        -36.5,
+        12.4
+      ],
+      "mu_uv": [
+        0.513,
+        0.006,
+        0.994,
+        0.994
+      ],
+      "bake_uv": [
+        0.26,
+        0.014,
+        0.491,
+        0.489
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 10,
+      "area": 3832.9,
+      "along": [
+        -44.7,
+        -20.0
+      ],
+      "mu_uv": [
+        0.116,
+        0.288,
+        0.623,
+        0.861
+      ],
+      "bake_uv": [
+        0.022,
+        0.505,
+        0.362,
+        0.78
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 86,
+      "area": 5128.4,
+      "along": [
+        -19.2,
+        41.1
+      ],
+      "mu_uv": [
+        0.066,
+        0.12,
+        0.934,
+        0.537
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.958,
+        0.962
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 420,
+      "area": 48246.9,
+      "along": [
+        -78.5,
+        87.8
+      ],
+      "mu_uv": [
+        -0.0,
+        0.003,
+        0.996,
+        0.999
+      ],
+      "bake_uv": [
+        0.01,
+        0.011,
+        0.983,
+        0.991
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 55,
+      "area": 4453.0,
+      "along": [
+        7.7,
+        59.2
+      ],
+      "mu_uv": [
+        0.431,
+        0.104,
+        0.584,
+        0.491
+      ],
+      "bake_uv": [
+        0.098,
+        0.01,
+        0.91,
+        0.898
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 1080.1,
+      "along": [
+        48.5,
+        70.4
+      ],
+      "mu_uv": [
+        0.467,
+        0.008,
+        0.542,
+        0.159
+      ],
+      "bake_uv": [
+        0.922,
+        0.431,
+        0.962,
+        0.598
+      ]
+    },
+    {
+      "island": 8,
+      "material": "skin",
+      "triangles": 36,
+      "area": 745.8,
+      "along": [
+        7.5,
+        25.7
+      ],
+      "mu_uv": [
+        -0.001,
+        0.404,
+        0.147,
+        0.552
+      ],
+      "bake_uv": [
+        0.296,
+        0.871,
+        0.366,
+        0.942
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 55,
+      "area": 4338.0,
+      "along": [
+        -6.8,
+        53.9
+      ],
+      "mu_uv": [
+        0.431,
+        0.104,
+        0.584,
+        0.491
+      ],
+      "bake_uv": [
+        0.388,
+        0.591,
+        0.906,
+        0.902
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 46,
+      "area": 1226.5,
+      "along": [
+        40.7,
+        64.0
+      ],
+      "mu_uv": [
+        0.467,
+        0.008,
+        0.542,
+        0.159
+      ],
+      "bake_uv": [
+        0.429,
+        0.334,
+        0.966,
+        0.691
+      ]
+    }
+  ]
+}

@@ -921,7 +921,7 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
     bones_.gather(out);
     for (Drawn& one : drawn_) {
         if (!one.visible || !one.figure.body()) continue;
-        const float fade = fadeOf(one);
+        const float fade = fadeOf(one) * one.seeThrough;
         if (fade <= 0.0f) continue;
         const int bones = one.figure.pose(scratch_.data());
         const int palette = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;

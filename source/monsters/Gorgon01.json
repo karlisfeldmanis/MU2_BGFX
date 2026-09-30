@@ -1,0 +1,438 @@
+{
+  "item": "Gorgon01",
+  "mu_name": "Gorgon",
+  "mu_name_from": "MuMain's _enum.h:4161: MONSTER_MODEL_GORGON = 11, so OpenMonsterModel loads Monster12.bmd; the server's type is MONSTER_GORGON = 18 (:4393). The client's name is 고르곤 (ZzzCharacter.cpp:14049). OpenMU's Version075 Dungeon.cs:923-953 names number 18 'Gorgon' at level 55 with 6000 health, 165-175 damage, 100 defense, MoveRange 3, AttackRange 1, ViewRange 7, AttackDelay 1600, respawn 10 s, no AttackSkill, resistances P6 I6 W6 F6. The Dungeon's boss by its numbers alone -- no boss flag in 0.75 -- at four spots in Dungeon 3 (docs/dungeon-port.md A §1.6). Death Gorgon (35, Scale 1.3, two Crescent Axes, Level 2's fire) shares the model and is another map's.",
+  "world": "dungeon",
+  "object_type": 18,
+  "monster": {
+    "model_index": 11,
+    "scale": 1.5
+  },
+  "monster_from": "ZzzCharacter.cpp:14046-14053, CreateMonster, case MONSTER_GORGON:\n\n    OpenMonsterModel(MONSTER_MODEL_GORGON);\n    c = CreateCharacter(Key, MODEL_GORGON, PositionX, PositionY);\n    wcscpy(c->ID, L\"고르곤\");\n    c->Object.Scale = 1.5f;\n    c->Weapon[0].Type = MODEL_GORGON_STAFF;\n    c->Object.BlendMesh = 1;\n    c->Object.BlendMeshLight = 1.f;\n\nNo Level, so none of the Death Gorgon's fire (see effects_from).",
+  "right_hand": "Staff05",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "MODEL_GORGON_STAFF = MODEL_STAFF + 4 (_enum.h:1598), Item/Staff05.bmd, already cooked in the wardrobe (passed 2026-09-29). Its bone is CreateCharacter's weapon switch, shared with the Hommerd: `case MODEL_GORGON: c->Weapon[0].LinkBone = 30; c->Weapon[1].LinkBone = 39` (ZzzCharacter.cpp:12036-12039). Bone 30 is knife_gdf under Bip01 R Hand; 39 hand_bofdgne01 under the left, empty.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 12, 12, 12, 12, 12, 6, 22. BoneHead = 20, Bip01 Head (ZzzOpenData.cpp:3481). Play speeds are OpenMonsterModel's defaults; 11 has no override and is not in the multiplier list.",
+  "sheets": {
+    "boss": "gorgon_boss.png",
+    "boss_eye": "gorgon_boss_eye.png"
+  },
+  "sheet_from": "Two sheets. Data/Monster/boss.OZJ, 256 by 256, no alpha, on the body (848 triangles); boss_eye.OZJ, 16 by 16, no alpha, on the eyes (4 triangles). Decoded under a gorgon_ prefix: 'boss' is MU's working name.",
+  "sheet_materials": {
+    "boss": "painted_steel",
+    "boss_eye": "painted_steel"
+  },
+  "sheet_materials_from": "Read off boss at 2x: black plate trimmed and studded in bronze -- a cuirass, pauldrons, gauntlets, a skirt of lames -- over blue cloth showing at the joints, and at the top right a small skull, the face. Black paint on steel with its trim painted in, as the Dark Knight's: painted_steel. The skull is taken island by island. boss_eye is a green blur on black and is a glow, not a surface.",
+  "glow": {
+    "boss_eye": {
+      "pulse": [
+        0,
+        -1
+      ]
+    }
+  },
+  "glow_from": "`c->Object.BlendMesh = 1`: the mesh whose texture index is 1 is drawn added (ZzzBMD.cpp:1509-1516, GL_ONE, GL_ONE) -- Monster12's second mesh, boss_eye, four triangles in the skull's sockets. Added, its black is nothing and the green blur is a pair of burning eyes.\n\nAnd it flickers: MoveCharacterVisual's `case MODEL_GORGON: o->BlendMeshLight = (float)(rand() % 10) * 0.1f;` every frame (ZzzCharacter.cpp:6061-6062), one of ten steps from dark to 0.9, whatever the CreateMonster 1.0 said. `pulse [0, -1]` is how the renderer is told: a negative base is that roll (content::Material::pulse), drawn 25 times a second as MU's frames were, since at this renderer's rate a roll every frame is a strobe.",
+  "effects_from": "The rest of MODEL_GORGON's case is behind `if (c->Level == 2)` -- ten BITMAP_FIRE on random bones a frame and an orange terrain light -- and Level 2 is the Death Gorgon's (ZzzCharacter.cpp:13898-13905), not this one's, which sets no Level.",
+  "sounds_from": "ZzzOpenData.cpp:3473-3482: mGorgon1, mGorgon2, mGorgonAttack1, mGorgonAttack2, mGorgonDie, then SetMonsterSound(..., 45, 46, 47, 48, 49) -- offsets from SOUND_MONSTER_BULL1 = 210, so 255-259, the five it loads, one to a slot. Wired as gorgon_* in sounds.json.",
+  "sprites": [
+    {
+      "sheet": "shiny_02",
+      "tint": [
+        0.4,
+        0.8,
+        0.6
+      ],
+      "size": 2.0,
+      "flicker": "luminosity",
+      "at": [
+        {
+          "bone": "knife_gdf",
+          "offset": [
+            0,
+            0,
+            90
+          ]
+        }
+      ]
+    }
+  ],
+  "sprites_from": "The staff's own light, which is the Gorgon's because the Gorgon holds it. RenderCharacter's linked-weapon switch, for anyone holding one (`c->PK < PVP_MURDERER2 && c->Level != 4`):\n\n    case MODEL_GORGON_STAFF:\n        Vector(0.f, -90.f, 0.f, Position);\n        Vector(Luminosity * 0.4f, Luminosity * 0.8f, Luminosity * 0.6f, Light);\n        Models[o->Type].TransformPosition(o->BoneTransform[w->LinkBone], Position, p, true);\n        CreateSprite(BITMAP_SHINY + 1, p, 2.f, Light, o);\n\n(ZzzCharacter.cpp:10270-10276). 90 units down the link bone -- knife_gdf, bone 30 -- which is where the staff's skull sits in his fist; BITMAP_SHINY + 1 is Effect/Shiny02.jpg (ZzzOpenData.cpp:5263), at scale 2, in a pale sea-green, and Luminosity is the frame's roll, (rand()%8+2)*0.1 -- a guttering star, as the Chain Scorpion's sting. Drawn by game code, not off this row (as the Chain Scorpion's): play_tuning.h kStarStaffFigure, Play::gatherFolkLights. Two things differ from MU's words. The offset: MU says (0, -90, 0) in its link bone's frame, but the held staff sits on knife_gdf with no turn here and its length is its own +Z (Staff05.glb, the skull at 0.60-0.88 m), so the same 90 units is +Z -- at -Y the star floated a metre off the staff. The light, **ours**: 0.6 of MU's, since Shiny02 peaks at full white and added in HDR it burned to a white star (the user, 2026-09-30: 'too bright and weird'); Shiny02 is 32 texels wide, so Scale 2 is 0.64 m across. A hero holding the Gorgon Staff does not light it yet.",
+  "islands_from": "Seventeen islands for 852 triangles. 15 (56, u 0.87-1.0 by v 0.84-1.0, the skull at the sheet's top right) is the face: bone. 16 (4, on boss_eye) is the eyes' glow and takes no surface. The rest -- the body (1, 314), the arms and legs in their pairs -- are the black-and-bronze plate: painted_steel. They arrived as skin, the monster profile's default.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 2286.7,
+      "along": [
+        -20.4,
+        9.8
+      ],
+      "mu_uv": [
+        -0.003,
+        0.712,
+        0.252,
+        0.998
+      ],
+      "bake_uv": [
+        0.012,
+        0.075,
+        0.364,
+        0.899
+      ]
+    },
+    {
+      "island": 1,
+      "material": "painted_steel",
+      "triangles": 314,
+      "area": 26637.5,
+      "along": [
+        -35.9,
+        40.4
+      ],
+      "mu_uv": [
+        -0.0,
+        0.0,
+        0.978,
+        0.638
+      ],
+      "bake_uv": [
+        0.012,
+        0.012,
+        0.959,
+        0.95
+      ]
+    },
+    {
+      "island": 2,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 3544.8,
+      "along": [
+        -31.1,
+        7.7
+      ],
+      "mu_uv": [
+        0.643,
+        0.565,
+        0.803,
+        0.987
+      ],
+      "bake_uv": [
+        0.013,
+        0.137,
+        0.954,
+        0.976
+      ]
+    },
+    {
+      "island": 3,
+      "material": "painted_steel",
+      "triangles": 84,
+      "area": 4534.2,
+      "along": [
+        -22.2,
+        56.2
+      ],
+      "mu_uv": [
+        0.326,
+        0.531,
+        0.477,
+        0.996
+      ],
+      "bake_uv": [
+        0.861,
+        0.461,
+        0.933,
+        0.937
+      ]
+    },
+    {
+      "island": 4,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 3544.8,
+      "along": [
+        -13.0,
+        20.8
+      ],
+      "mu_uv": [
+        0.643,
+        0.565,
+        0.803,
+        0.987
+      ],
+      "bake_uv": [
+        0.292,
+        0.119,
+        0.53,
+        0.989
+      ]
+    },
+    {
+      "island": 5,
+      "material": "painted_steel",
+      "triangles": 84,
+      "area": 4559.4,
+      "along": [
+        -11.3,
+        45.0
+      ],
+      "mu_uv": [
+        0.326,
+        0.531,
+        0.477,
+        0.996
+      ],
+      "bake_uv": [
+        0.038,
+        0.63,
+        0.605,
+        0.946
+      ]
+    },
+    {
+      "island": 6,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 2320.8,
+      "along": [
+        -68.8,
+        -25.7
+      ],
+      "mu_uv": [
+        0.286,
+        0.146,
+        0.555,
+        0.541
+      ],
+      "bake_uv": [
+        0.31,
+        0.395,
+        0.745,
+        0.746
+      ]
+    },
+    {
+      "island": 7,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1620.5,
+      "along": [
+        -60.3,
+        -23.0
+      ],
+      "mu_uv": [
+        0.279,
+        0.144,
+        0.538,
+        0.546
+      ],
+      "bake_uv": [
+        0.698,
+        0.419,
+        0.899,
+        0.816
+      ]
+    },
+    {
+      "island": 8,
+      "material": "painted_steel",
+      "triangles": 30,
+      "area": 2320.8,
+      "along": [
+        -45.4,
+        -20.8
+      ],
+      "mu_uv": [
+        0.286,
+        0.145,
+        0.554,
+        0.54
+      ],
+      "bake_uv": [
+        0.282,
+        0.012,
+        0.746,
+        0.485
+      ]
+    },
+    {
+      "island": 9,
+      "material": "painted_steel",
+      "triangles": 24,
+      "area": 1620.5,
+      "along": [
+        -40.3,
+        -13.3
+      ],
+      "mu_uv": [
+        0.278,
+        0.143,
+        0.538,
+        0.545
+      ],
+      "bake_uv": [
+        0.127,
+        0.348,
+        0.818,
+        0.761
+      ]
+    },
+    {
+      "island": 10,
+      "material": "painted_steel",
+      "triangles": 8,
+      "area": 372.8,
+      "along": [
+        -5.1,
+        3.7
+      ],
+      "mu_uv": [
+        0.699,
+        0.464,
+        0.771,
+        0.536
+      ],
+      "bake_uv": [
+        0.146,
+        0.074,
+        0.443,
+        0.111
+      ]
+    },
+    {
+      "island": 11,
+      "material": "painted_steel",
+      "triangles": 29,
+      "area": 618.7,
+      "along": [
+        -9.4,
+        9.6
+      ],
+      "mu_uv": [
+        0.286,
+        0.146,
+        0.555,
+        0.541
+      ],
+      "bake_uv": [
+        0.049,
+        0.109,
+        0.752,
+        0.726
+      ]
+    },
+    {
+      "island": 12,
+      "material": "painted_steel",
+      "triangles": 29,
+      "area": 618.7,
+      "along": [
+        -9.4,
+        9.6
+      ],
+      "mu_uv": [
+        0.286,
+        0.145,
+        0.554,
+        0.54
+      ],
+      "bake_uv": [
+        0.27,
+        0.017,
+        0.497,
+        0.754
+      ]
+    },
+    {
+      "island": 13,
+      "material": "painted_steel",
+      "triangles": 23,
+      "area": 464.6,
+      "along": [
+        -11.4,
+        10.0
+      ],
+      "mu_uv": [
+        0.279,
+        0.144,
+        0.538,
+        0.546
+      ],
+      "bake_uv": [
+        0.722,
+        0.104,
+        0.925,
+        0.288
+      ]
+    },
+    {
+      "island": 14,
+      "material": "painted_steel",
+      "triangles": 23,
+      "area": 464.6,
+      "along": [
+        -11.4,
+        10.0
+      ],
+      "mu_uv": [
+        0.278,
+        0.143,
+        0.538,
+        0.545
+      ],
+      "bake_uv": [
+        0.452,
+        0.592,
+        0.895,
+        0.886
+      ]
+    },
+    {
+      "island": 15,
+      "material": "bone",
+      "triangles": 56,
+      "area": 864.2,
+      "along": [
+        -4.5,
+        7.7
+      ],
+      "mu_uv": [
+        0.869,
+        0.837,
+        1.004,
+        1.004
+      ],
+      "bake_uv": [
+        0.702,
+        0.012,
+        0.837,
+        0.937
+      ]
+    },
+    {
+      "island": 16,
+      "material": "painted_steel",
+      "triangles": 4,
+      "area": 115.4,
+      "along": [
+        6.7,
+        8.8
+      ],
+      "mu_uv": [
+        0.007,
+        0.008,
+        0.988,
+        0.973
+      ],
+      "bake_uv": [
+        0.79,
+        0.013,
+        0.942,
+        0.075
+      ]
+    }
+  ]
+}

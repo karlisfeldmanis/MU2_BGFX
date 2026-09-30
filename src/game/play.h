@@ -419,6 +419,8 @@ public:
     // The townsfolk's RenderLight sprites, in `sheet` (the showing's `light`, MU's BITMAP_LIGHT):
     // `(1, 0.6, 0.4) * (sin(WorldTime * 0.002) * 0.3 + 0.7)`, one per glowing person.
     void setFolkLight(bgfx::TextureHandle sheet) { folkLight_ = sheet; }
+    // The showing's `shiny_02`, MU's BITMAP_SHINY + 1: the Gorgon Staff's star.
+    void setStarSheet(bgfx::TextureHandle sheet) { starSheet_ = sheet; }
     // Charon's orb and its wisps: the showing's `lightning_2` and `joint_energy`.
     void setFolkOrb(bgfx::TextureHandle orb, bgfx::TextureHandle wisp) {
         orbSheet_ = orb;
@@ -502,6 +504,8 @@ private:
         int attackClip = -1;     // Attack 1, this body's first swing, found once at open
         int attackClip2 = -1;    // Attack 2, the second swing; -1 for breeds that have none
         int deathClip = -1;      // MONSTER01_DIE, found once at open the same way
+        // How much of it is there at its fullest: MU's AlphaTarget, 1 but for the Ghost's 0.4.
+        float seeThrough = 1.0f;
         // MU's SwordCount, incremented on each swing. `swordCount % 3 == 0` plays Attack 1,
         // the rest Attack 2 — ZzzCharacter.cpp:1269-1276. The drawing's own counter, not the
         // sim's: it draws from no seeded state.
@@ -568,6 +572,8 @@ private:
         // The Chain Scorpion's BITMAP_LIGHT at bone 7, `light_point` (ZzzCharacter.cpp:6151);
         // -1 on everything else. Drawn in gatherFolkLights.
         int lightBone = -1;
+        // The Gorgon's staff star, on its knife_gdf; -1 on everything else. gatherFolkLights.
+        int starBone = -1;
         // Negative while alive. Set to 0 the tick `Died` happens and counted up from there, so
         // the corpse holds its last pose and fades instead of vanishing on the tick it falls --
         // see kDeathHold and kDeathFade in play.cpp.
@@ -876,6 +882,7 @@ private:
     static int fidget(Standing& one);
     std::vector<Standing> folk_;
     bgfx::TextureHandle folkLight_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle starSheet_ = BGFX_INVALID_HANDLE;
     float folkClock_ = 0.0f;  // seconds, WorldTime's own, for the lights' breathing
     // MoveCharacterVisual's own Luminosity, `(rand() % 8 + 2) * 0.1` a frame, rolled at 25 Hz
     // here as the lanterns' is: the scorpion's flicker.
