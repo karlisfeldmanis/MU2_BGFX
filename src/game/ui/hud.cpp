@@ -94,7 +94,9 @@ constexpr float kReadingTall = 20.0f;
 //   * and it is filled to the plate's upper band rather than to thirty: the band between the
 //     plate's top edge and the shield rail is 64 pixels of empty ornament and the strip may
 //     have it. The user, 2026-09-23: the icon is a little too small.
-constexpr Box kBuffsAt{292.0f, 12.0f, 40.0f, 56.0f};
+//   * and 12 higher than that, so a cell's foot clears the experience bar rather than resting
+//     on it (the user, 2026-09-30: "so they dont touch HUD").
+constexpr Box kBuffsAt{292.0f, 0.0f, 40.0f, 56.0f};
 constexpr uint32_t kBuffEdge = gfx::rgba(0.627f, 0.549f, 0.373f, 0.55f);
 constexpr uint32_t kBuffBack = gfx::rgba(0.0f, 0.0f, 0.0f, 0.45f);
 constexpr uint32_t kBuffLeft = gfx::rgba(0.761f, 0.706f, 0.561f, 0.9f);
