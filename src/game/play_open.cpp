@@ -504,7 +504,6 @@ void Play::openSound(const std::string& assetDir, bool muted) {
 void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
     const float at[3] = {0, 0, 0};
     one.figure.stand(look, at, 0.0f, look->scale);
-    one.seeThrough = look->name == kSeeThroughFigure ? kSeeThroughAlpha : 1.0f;
     // The swing, found once, and **which TABLE it is looked up in is decided by the
     // rig and not by whether the body is the player**. MU draws its Skeleton Warrior
     // as a MODEL_PLAYER with a skeleton sub-type, so `SetPlayerAttack` takes the
@@ -569,13 +568,6 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {
                     if (bones[b].name == "light_point") one.lightBone = int(b);
-                }
-            }
-            one.starBone = -1;
-            if (look->name == kStarStaffFigure && look->skeletonMesh) {
-                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
-                for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == kStarStaffBone) one.starBone = int(b);
                 }
             }
             if (look->name == kYetiFigure && look->skeletonMesh) {

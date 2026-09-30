@@ -301,10 +301,14 @@ bool expensive(const content::Tables& tables, const Held& what);
 //
 // Who may carry them: every weapon, armour piece and shield (Weapons.cs:305-313,
 // ArmorInitializerBase.cs:185, 401-406), which is the refinable set -- the arrows and bolts
-// have neither. A drop draws luck at a quarter, then the option at a quarter and its level
-// evenly from 1 to 3 (`MaximumItemOptionLevelDrop = 3`).
-constexpr double kLuckChance = 0.25;    // CreateLuckOptionDefinition's AddChance
-constexpr double kOptionChance = 0.25;  // CreateOptionDefinition's AddChance
+// have neither. A drop's rolls are WebZen's, not OpenMU's quarter and quarter
+// (gObjMonster.cpp:4690-4714, 1.00.93): luck at 4 in 100, and the option by one of three draws,
+// each a third -- +12 under 4 in 100, +8 under 8, +4 under 12 -- so 8% in all, the higher the
+// rarer. An excellent thing draws luck at 1 in 100 and the option the same way. The skill's
+// 6 in 100 has no place here: skills are orbs.
+constexpr int kLuckIn100 = 4;
+constexpr int kExcellentLuckIn100 = 1;
+constexpr int kOptionUnder[3] = {4, 8, 12};  // for option level 3, 2, 1
 constexpr int kMostOptionDropped = 3;   // GameConfiguration.MaximumItemOptionLevelDrop
 constexpr int kMostOption = 4;          // Version075 Constants.MaximumOptionLevel
 constexpr double kLuckCritical = 0.05;  // Stats.CriticalDamageChance, a lucky thing worn
@@ -317,13 +321,14 @@ int optionValue(const content::ItemRow& row, int level);
 // ---- excellent ----------------------------------------------------------------------------
 //
 // Not 0.75: OpenMU adds excellent options in 0.95d (GameConfigurationInitializer.cs:33-35),
-// and this game takes them on the user's word (2026-09-27). OpenMU's rules, ExcellentOptions.cs
-// and DefaultDropGenerator: a group of its own at 0.0001 a drop slot, from a monster 25 levels
-// or more above what it drops (ExcellentItemDropLevelDelta), always at +0; one option always
-// and a second at 0.001, never the same one twice.
-constexpr double kExcellentChance = 0.0001;       // the excellent DropItemGroup's Chance
-constexpr int kExcellentLevelDelta = 25;          // GameConfiguration.ExcellentItemDropLevelDelta
-constexpr double kSecondExcellentChance = 0.001;  // the option definitions' AddChance
+// and this game takes them on the user's word (2026-09-27). WebZen's rules (gObjMonster.cpp,
+// 1.00.93): one kill in 2000 (m_wExcellentDropRate) is an excellent draw, which then drops only
+// as an item would (rand()%ItemRate < ItemDropPer) -- here the user's item chance, so 1/2000 of
+// it. From what a monster 25 levels lower drops (GetItem(Level-25)), always at +0, with
+// NewOptionRand's options (gObjMonster.cpp:3125-3142): one of six, the second bit (0x02) drawn
+// again half the time, and a quarter of the time a second bit or'ed on, which may be the same.
+constexpr double kExcellentShareOfItem = 1.0 / 2000.0;
+constexpr int kExcellentLevelDelta = 25;          // GetItem(lpObj->Level-25)
 constexpr int kExcellentOptions = 6;
 // Which six a row draws from: the defence family for armour and shields, the attack family
 // for weapons -- a staff's reading wizardry for damage -- and none for anything else.

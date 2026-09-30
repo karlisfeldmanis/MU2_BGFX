@@ -251,10 +251,3 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | IceMonster01 | figure | 2026-09-30 10:12 | passed | MU's additive ice body with its V scroll, unchanged; half-strength shadow (ours) outlines it on Devias's snow -- approved by the user in game |
 | BloodCastle02 | figure | 2026-09-30 12:05 | passed | plate drawn twice as MU does (opaque + added), shines pale blue with the white wings, as the user's reference |
 | DevilNpc01 | figure | 2026-09-30 12:18 | passed | robe and gilt plate as painted; the orb in his hands and its wisps drawn in code |
-| Larva01 | figure | 2026-09-30 19:39 | passed | dark umber grub hide with its ring folds and a red maw at noon, dusk and night; skin, no sheen; fang rows bone (cut from snake02); whole at 0.6 |
-| Ghost01 | figure | 2026-09-30 19:50 | passed | grey hooded shroud on long clawed arms, matte cloth throughout (the feathered hem is welded into the shroud's island); whole at noon, dusk and night; MU's 0.4 AlphaTarget declared, not yet drawn |
-| Axe09 | arm | 2026-09-30 20:13 | passed | silver crescent head with its engraved serpent scroll and painted dark edge, steel 0.45; thin plate haft and leather wraps whole; no blowout at noon, dusk, night |
-| Cyclops01 | figure | 2026-09-30 20:30 | passed | dark hide and tan leg wraps, worn grey pauldrons with horns at plate_steel 0.6 (0.35 blew out white), bone skull buckle; whole at noon, dusk, night |
-| HellSpider01 | figure | 2026-09-30 20:41 | passed | dark shell legs with gold bands and the gold-ridged torso, chitin with a soft sheen, no glare; whole at noon, dusk and night |
-| DarkKnight01 | figure | 2026-09-30 20:59 | passed | black enamel plate with raised gold filigree (painted_steel), crescent crest, brown cloth cape hanging in play (juts only in the stage pose); gold bright but no blowout at noon, dusk, night |
-| Gorgon01 | figure | 2026-09-30 21:21 | passed | black plate with bronze trim and studs (painted_steel), bone skull face, green added eyes in the sockets; no blowout at noon, dusk, night |

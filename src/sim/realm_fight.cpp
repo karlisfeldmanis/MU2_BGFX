@@ -36,9 +36,39 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                                      : strike(attacker.stats, target.stats, dice);
     attacker.stats.damageDealt = dealt;
     if (blow.hit && impPaid) attacker.health -= impCost;
+    // Ice's and Poison's elements, and a poisoner's bite on him. WebZen lays them before the
+    // miss is asked (ResistanceCheck at ObjAttack.cpp:578, MissCheck at :636, 1.00.93), so a
+    // miss ices and poisons as a hit does, and neither takes again while it is on
+    // (ObjBaseAttack.cpp:670-680, 770-777). Iced, a monster also swings kChillSwingTicks later
+    // (DelayActionTime 800). The wizard's pulse is a quarter of his blow (ours); a miss has no
+    // blow, so it takes WebZen's own 3% of what is left (user.cpp:25699-25710).
+    const auto elements = [&](int damage) {
+        if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster() &&
+            target.chilledUntil <= tick_ && !resists(target, true, dice)) {
+            target.chilledUntil = tick_ + row->chillTicks;
+        }
+        if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster() &&
+            !poisoned(target) && !resists(target, false, dice)) {
+            target.poisonUntil = tick_ + row->poisonTicks;
+            target.poisonNext = tick_ + kPoisonFirst;
+            target.poisonDamage = damage > 0
+                                      ? std::max(1, damage / 4)
+                                      : std::max(1, int(float(target.health) * kHeroPoisonShare));
+            target.poisonBy = attacker.id;
+        }
+        // 0.75's poison, whose pulse is a share of what he has left (`poisonDamage` 0).
+        if (target.player && target.alive() && !attacker.player && poisons(attacker) &&
+            !poisoned(target)) {
+            target.poisonUntil = tick_ + kHeroPoisonTicks;
+            target.poisonNext = tick_ + kPoisonFirst;
+            target.poisonDamage = 0;
+            target.poisonBy = attacker.id;
+        }
+    };
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
+        elements(0);
         chillHero(attacker, target);
         return;
     }
@@ -67,7 +97,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // soaked whole wears nothing, as a miss wears nothing (OpenMU reads HitInfo.HealthDamage).
     if (wound > 0) {
         if (target.player) wearOnTaken(wound);
-        if (attacker.player) wearOnLanded();
+        if (attacker.player) wearOnLanded(target.stats.defense);
     }
     // What the blow gives back. A landed SWING pays the knight a twentieth of his mana; a skill's
     // own blow pays nothing, which is what makes the basic attack the generator and the skill the
@@ -92,29 +122,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     happenings_.back().thrown = thrown;
     // The element, after the blow and only on what it left standing: 0.75's order.
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
-    // Ice's element: what it leaves standing walks at half speed for its ticks, the last one
-    // wins (a second chill restarts the ten seconds, as OpenMU's re-applied effect does).
-    if (row != nullptr && row->chillTicks > 0 && target.alive() && target.monster() &&
-        !resists(target, true, dice)) {
-        target.chilledUntil = tick_ + row->chillTicks;
-    }
-    // Poison's: the pulses start three seconds on, each a quarter of this blow; a second poison
-    // replaces the first, as OpenMU's re-applied effect does.
-    if (row != nullptr && row->poisonTicks > 0 && target.alive() && target.monster() &&
-        !resists(target, false, dice)) {
-        target.poisonUntil = tick_ + row->poisonTicks;
-        target.poisonNext = tick_ + kPoisonEvery;
-        target.poisonDamage = std::max(1, blow.damage / 4);
-        target.poisonBy = attacker.id;
-    }
-    // A poisoner's bite on him: 0.75's poison, whose pulse is a share of what he has left
-    // (`poisonDamage` 0). A second bite replaces the first.
-    if (target.player && target.alive() && !attacker.player && poisons(attacker)) {
-        target.poisonUntil = tick_ + kHeroPoisonTicks;
-        target.poisonNext = tick_ + kPoisonEvery;
-        target.poisonDamage = 0;
-        target.poisonBy = attacker.id;
-    }
+    elements(blow.damage);
     // An Ice Monster's: iced, whatever the blow did.
     chillHero(attacker, target);
     // An excellent armour's reflect: what reached him, health and shield, times the share, sent

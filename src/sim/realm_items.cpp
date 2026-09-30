@@ -677,10 +677,10 @@ void Realm::sip() {
 // What a death leaves: one roll against three groups, rarest first, each taking its own chance
 // out of what is left -- DefaultDropGenerator.SelectRandomGroup, as MU2's Realm.Leave walks
 // it. Loot.cs's numbers: a jewel at 0.001, an item at 0.3 from what the monster's level can
-// afford, Zen at 0.5 worth the kill's experience plus seven; otherwise nothing.
+// afford; failing those, Zen worth the kill's experience plus seven, at the breed's rate.
 //
-// Smaller than MU2's: no luck roll and no skill roll on a dropped piece. Its plus is
-// Loot.Refinement, `(monster level - drop level) / 3`, held to the cap of nine.
+// No skill roll on a dropped piece. Its plus is `(monster level - drop level) / 3`, held to
+// the cap of nine and to the breed's MaxItemLevel.
 void Realm::leave(const Body& dead, const Body& killer) {
     // What a kill leaves: a jewel, then an item, then Zen, then nothing.
     //
@@ -689,11 +689,24 @@ void Realm::leave(const Body& dead, const Body& killer) {
     // this is the rate the hunt was asked to have (2026-09-22). Zen and the jewel are MU2's
     // Loot untouched, so the commonest thing a monster leaves is still coins -- the change is
     // that three kills in four now leave coins or nothing.
-    constexpr double kJewel = 0.001, kItem = 0.1, kMoney = 0.5;
-    constexpr int kGap = 12;           // Loot.Gap: nothing more than twelve levels below it
+    //
+    // The rest is WebZen's (1.00.93): what drops is anything the monster's level reaches from
+    // fifteen below it, inclusive (MAX_MONSTER_ITEM_DROP_RANGE, zzzitem.cpp:5960 -- 18 only
+    // from a 2005 flag; OpenMU's Loot.Gap was twelve, exclusive), a potion from eight below
+    // (:5920); its plus `(level - drop level) / 3`, and a row whose plus would pass the breed's
+    // MaxItemLevel is not in the pool (MonsterItemMng.cpp:626). Zen is the breed's MoneyRate
+    // (kDropRates) where MU2's Loot had a flat half.
+    constexpr double kJewel = 0.001, kItem = 0.1;
+    constexpr double kExcellentChance = kItem * kExcellentShareOfItem;
+    constexpr int kGap = 15;
+    constexpr int kPotionGap = 8;
     constexpr int kBaseMoney = 7;      // Loot.BaseMoney
     constexpr int kMostRefined = kRefineCap;
     const int level = dead.level;
+    const DropRate rate = dropRateOf(
+        dead.kind >= 0 && size_t(dead.kind) < tables_->kinds.size()
+            ? tables_->kinds[size_t(dead.kind)].number
+            : -1);
     double roll = dice_.nextDouble();
     Lying one;
     std::tie(one.column, one.row) = clearing(dead.column(), dead.row());
@@ -713,6 +726,13 @@ void Realm::leave(const Body& dead, const Body& killer) {
             if (pick-- == 0) return int32_t(i);
         }
         return -1;
+    };
+    // The option: one of three draws, each a third, under 4, 8 or 12 in 100 for +12, +8, +4.
+    const auto rollOptions = [&](Held& what, int luckIn100) {
+        what.luck = dice_.nextInt(0, 100) < luckIn100;
+        const int under = dice_.nextInt(0, 100);
+        const int which = dice_.nextInt(0, 3);
+        if (under < kOptionUnder[which]) what.option = int8_t(kMostOptionDropped - which);
     };
 
     // The jewels group is not only the jewels: `AddItemToJewelItemDrop` puts the Ale (drop level
@@ -743,39 +763,34 @@ void Realm::leave(const Body& dead, const Body& killer) {
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];
         one.what = Held{item, 0, int16_t(fullDurability(row, 0))};
-        one.what.luck = dice_.nextBool(kLuckChance);
-        if (dice_.nextBool(kOptionChance)) {
-            one.what.option = int8_t(dice_.nextInt(1, kMostOptionDropped + 1));
-        }
-        const int first = dice_.nextInt(0, kExcellentOptions);
+        rollOptions(one.what, kExcellentLuckIn100);
+        int first = dice_.nextInt(0, kExcellentOptions);
+        if (first == 1 && dice_.nextInt(0, 2) != 0) first = dice_.nextInt(0, kExcellentOptions);
         one.what.excellent = uint8_t(1u << first);
-        one.what.durability = int16_t(maximumDurability(row, one.what));
-        if (dice_.nextBool(kSecondExcellentChance)) {
-            // AddRandomExcOptions draws again until it is not the first.
-            int second = dice_.nextInt(0, kExcellentOptions - 1);
-            if (second >= first) ++second;
-            one.what.excellent |= uint8_t(1u << second);
+        if (dice_.nextInt(0, 4) == 0) {
+            one.what.excellent |= uint8_t(1u << dice_.nextInt(0, kExcellentOptions));
         }
+        one.what.durability = int16_t(maximumDurability(row, one.what));
     } else if ((roll -= kExcellentChance) <= kItem) {
+        // Prize.TakesRefinement: the weapon and armour groups, ammunition taken back out.
+        const auto plusOf = [level, kMostRefined](const content::ItemRow& r) {
+            const bool refinable = r.group <= kGroupBoots && !ammunition(r);
+            return refinable ? std::clamp((level - r.dropLevel) / 3, 0, kMostRefined) : 0;
+        };
         const int32_t item = draw([&](const content::ItemRow& r) {
-            return r.dropsFromMonsters() && reaches(r) && r.dropLevel > level - kGap;
+            const int gap = r.group == kGroupPotions ? kPotionGap : kGap;
+            return r.dropsFromMonsters() && reaches(r) && r.dropLevel >= level - gap &&
+                   plusOf(r) <= rate.maxPlus;
         });
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];
-        // Prize.TakesRefinement: the weapon and armour groups, ammunition taken back out.
-        const bool refinable = row.group <= kGroupBoots && !ammunition(row);
-        const int plus = refinable ? std::clamp((level - row.dropLevel) / 3, 0, kMostRefined) : 0;
+        const int plus = plusOf(row);
         const bool stacks = heals(row) || restores(row);
         // Whole at its plus, as DefaultDropGenerator sets `GetMaximumDurabilityOfOnePiece`.
         one.what = Held{item, int16_t(plus), int16_t(stacks ? 1 : fullDurability(row, plus))};
-        // ApplyRandomOptions: its PossibleItemOptions in the order the initialisers add them,
-        // luck first and the additional option after, each at a quarter; the option's level from
-        // the levels up to MaximumItemOptionLevelDrop. No skill: skills are orbs here.
+        // Luck and the option (items.h). No skill: skills are orbs here.
         if (takesOptions(row)) {
-            one.what.luck = dice_.nextBool(kLuckChance);
-            if (dice_.nextBool(kOptionChance)) {
-                one.what.option = int8_t(dice_.nextInt(1, kMostOptionDropped + 1));
-            }
+            rollOptions(one.what, kLuckIn100);
             // Sockets: rare, and each further one rarer. invention.
             if (takesSockets(row) && runeDice_.nextBool(kSocketChance)) {
                 one.what.sockets = 1;
@@ -784,7 +799,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
                 }
             }
         }
-    } else if (roll - kItem <= kMoney) {
+    } else if (dice_.nextInt(0, rate.moneyRate) < 10) {
         // Zen is not left on the ground: it goes straight into the purse, with the excellent
         // armour's rate, and is said as picked up from the body it came off (a: the dead
         // body's id), so the showing can ring the coins when that body falls. INVENTION and
@@ -998,7 +1013,7 @@ void Realm::wearOnTaken(int took) {
     rearm(hero);
 }
 
-void Realm::wearOnLanded() {
+void Realm::wearOnLanded(int defense) {
     // GetRandomOffensiveItem: the two hands and the pendant, less a shield and ammunition, one
     // of them by `Rand.NextInt(3, 6) % 3` and the first there is when that one is empty.
     const auto offensive = [&](int slot) {
@@ -1017,7 +1032,7 @@ void Realm::wearOnLanded() {
     if (offensive(pick)) result = pick;
     // A weapon at nought is spared, as DecreaseWeaponDurabilityAfterHitAsync returns on it.
     if (bag_[result].durability <= 0) return;
-    wearDown(result, 1.0 / kHitsPerDurability);
+    wearDown(result, weaponWear(tables_->items[size_t(bag_[result].item)], bag_[result], defense));
 }
 
 void Realm::wearDown(int slot, double amount) {

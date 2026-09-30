@@ -313,7 +313,9 @@ void Realm::think(Body& beast) {
             float closest = 1e30f;
             for (uint32_t who : players_) {
                 const Body& one = bodies_[who];
-                if (!worth(beast, one, kind.viewRange)) continue;
+                if (!worth(beast, one, kind.viewRange) || apart(beast, one) >= kind.viewRange) {
+                    continue;
+                }
                 const float distance = reach(beast, one);
                 if (distance < closest) {
                     closest = distance;
@@ -367,7 +369,10 @@ void Realm::think(Body& beast) {
     // In reach: stop, face it, and swing when the swing comes off its own clock. A monster
     // standing in a safe zone cannot attack out of it, which is the same tile bit that stops
     // it being attacked there.
-    if (within(beast, quarry, float(kind.attackRange)) &&
+    // Both reaches: the larger axis on the bodies themselves, so a walker halts only where its
+    // arm meets him and not half a tile short, and WebZen's disc on their tiles, which takes a
+    // ranged beast's corners off (a reach of 4 no longer shoots from (4, 4)).
+    if (within(beast, quarry, float(kind.attackRange)) && apart(beast, quarry) <= kind.attackRange &&
         !tables_->grid.safe(beast.column(), beast.row())) {
         beast.temper = Temper::Fighting;
         engage(beast, quarry);
@@ -376,7 +381,8 @@ void Realm::think(Body& beast) {
             // field in MU2 once, so making a monster think oftener made it hit oftener, which
             // is a fight the player loses for reasons nothing on screen explains. It is also
             // where a per-skill cooldown will go.
-            beast.swingsAt = tick_ + kind.attackTicks;
+            beast.swingsAt =
+                tick_ + kind.attackTicks + (beast.chilledUntil > tick_ ? kChillSwingTicks : 0);
             strikeAt(beast, *body(chosen));
         }
         return;

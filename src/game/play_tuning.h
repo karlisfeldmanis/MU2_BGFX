@@ -230,11 +230,6 @@ inline constexpr const char* kCrumblingFigure = "StoneGolem01";
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
 // it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).
 inline constexpr const char* kShatteringFigure = "IceMonster01";
-// MONSTER_GHOST, drawn seen-through: CreateMonster sets `c->Object.AlphaTarget = 0.4f`
-// (ZzzCharacter.cpp:14103), so the whole body is at 40%. It rides the body's own fade (its own
-// depth first, then blended, and its shadow dithered by the same number), times its death's.
-inline constexpr const char* kSeeThroughFigure = "Ghost01";
-inline constexpr float kSeeThroughAlpha = 0.4f;
 // MODEL_GIANT's own case in the same effect switch, and the whole of it is one call:
 //
 //     case MODEL_GIANT:
@@ -279,11 +274,6 @@ inline constexpr const char* kSnortingFigure = "BullFighter01";
 inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
 // MODEL_CHAIN_SCORPION, which carries an orange light on its `light_point` bone.
 inline constexpr const char* kScorpionFigure = "ChainScorpion01";
-// MONSTER_GORGON's Gorgon Staff, whose star RenderCharacter's linked-weapon switch lights for
-// anyone holding it (ZzzCharacter.cpp:10270-10276): BITMAP_SHINY + 1 at Scale 2, 90 units down
-// the link bone (knife_gdf, the Gorgon's 30), in (0.4, 0.8, 0.6) * Luminosity.
-inline constexpr const char* kStarStaffFigure = "Gorgon01";
-inline constexpr const char* kStarStaffBone = "knife_gdf";
 // MODEL_ELITE_YETI's breath (ZzzCharacter.cpp:6181-6189): `rand_fps_check(4)` puts one
 // BITMAP_SMOKE at bone 22, Box03 under the head, offset zero, with no action gate -- it
 // breathes standing, walking, fighting and falling. The Bull Fighter's snort particle.

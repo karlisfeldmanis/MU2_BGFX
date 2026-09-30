@@ -760,6 +760,8 @@ private:
     void poisonPulse(Body& beast);
     // Whether this monster's blow poisons the hero (realm_tuning.h, kPoisoners).
     bool poisons(const Body& monster) const;
+    // Whether a poison is on it still, pulses to come.
+    bool poisoned(const Body& one) const { return one.poisonUntil != 0 && one.poisonUntil >= tick_; }
     // Whether this monster's blow ices the hero (realm_tuning.h, kChillers), and icing him when
     // it does and he is not iced already -- on a hit and on a miss alike.
     bool chills(const Body& monster) const;
@@ -836,7 +838,7 @@ private:
     // defending piece; `landed` a blow of his that did harm, which wears the weapon.
     // Player.DecreaseItemDurabilityAfterHitAsync and DecreaseWeaponDurabilityAfterHitAsync.
     void wearOnTaken(int took);
-    void wearOnLanded();
+    void wearOnLanded(int defense);
     // Takes `amount` off one worn slot, the fraction kept in `wearCarry_`, and re-reckons him
     // when a whole point goes.
     void wearDown(int slot, double amount);

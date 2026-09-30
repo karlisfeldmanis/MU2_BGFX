@@ -25,6 +25,24 @@ bool wears(const content::ItemRow& row) {
     return row.durability > 0 && placeOf(row) >= 0 && !ammunition(row);
 }
 
+double weaponWear(const content::ItemRow& row, const Held& held, int defense) {
+    constexpr int kStaves = 5;
+    const int option = optionValue(row, held.option);
+    const int armed = std::max(0, defense);
+    if (row.group == kStaves) {
+        const int magic = row.magicPower / 2 + held.refinement * 2;
+        const int divisor = magic + magic / 3 + option;
+        return divisor > 0 ? double(armed / divisor) / 1050.0 : 0.0;
+    }
+    if (row.group <= kGroupBows) {
+        const int least = row.minimumDamage;
+        const int divisor = least + least / 2 + option;
+        const double past = row.group == kGroupBows ? 780.0 : 564.0;
+        return divisor > 0 ? double(armed * 2 / divisor) / past : 0.0;
+    }
+    return 1.0 / kHitsPerDurability;
+}
+
 int maximumDurability(const content::ItemRow& row, int refinement) {
     if (!wears(row)) return 0;
     const int plus = std::clamp(refinement, 0, 15);

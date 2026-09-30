@@ -99,7 +99,13 @@ constexpr int32_t kSummonBali = 35;
 constexpr float kChillFactor = 0.5f;
 
 // A poison's pulse: OpenMU's `PoisonMagicEffect` ticks every three seconds (sixty ticks here).
+// The first comes two seconds on, as WebZen's count of twenty pulses on every third
+// (user.cpp:25695-25699, 1.00.93): at 2, 5, 8 ... 20 seconds, seven in all, not six from 3.
 constexpr int32_t kPoisonEvery = 60;
+constexpr int32_t kPoisonFirst = 40;
+// What an iced monster's swing waits on top of its own: WebZen's DelayActionTime of 800 ms,
+// added to every action it takes while iced (ObjBaseAttack.cpp:772, gObjMonster.cpp:1521).
+constexpr int32_t kChillSwingTicks = 16;
 
 // A Flame's fire strikes every twenty reference frames -- MU's client asks
 // `AttackCharacterRange` when `(int)LifeTime % 20 == 0` over a forty-frame life

@@ -26,8 +26,14 @@ are the user's calls and are not listed as faults.
 | 13 | Spawn counts | Noria 1005 vs WZ 477, Devias 560 vs ~110 (75 Ice Queens vs 14); Lorencia Lich/Giant/Skeleton 20/15/15 vs 45; WZ's small fixed clusters missing | decide |
 
 Done 2026-09-30: #2 (rules.cpp, both the swing and the spell) and #7 (market.cpp, with the
-Rune's row at the Jewel of Creation's 36M). #1 is in the working tree beside the Ice Monster's
-chill, which brought the resistance table in, and lands with it.
+Rune's row at the Jewel of Creation's 36M). #1 landed with the Ice Monster's chill, which
+brought the resistance table in.
+Also done 2026-09-30: #5 and #6 (Realm::leave, items.h; the excellent draw is 1/2000 of the
+user's item chance), #8 for the monsters' eyes and arms only (realm_tuning.h `apart`; the
+swing keeps the larger axis as well, or a walker halts half a tile short), #10 for Zen only
+(kDropRates; the 10% item chance is the user's), #11 (wear.h weaponWear; the pendant keeps
+OpenMU's) and #12 (realm_fight.cpp; the Ice timer is not paused under poison as WebZen's is).
+The Poison and Ice hunts in sim_test moved off seed 7, which the round sight strands.
 
 Smaller, one line each:
 - Luck crit +4% per item, not 5% (zzzitem.cpp:3023).

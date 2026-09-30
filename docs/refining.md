@@ -103,7 +103,7 @@ over 0.75's two option definitions, in the order the initialisers add them:
 
 | | chance | what it does worn | tooltip (MuMain, blue) |
 |---|---|---|---|
-| luck | 25% | +5% critical chance each (`Arms::criticalChance`); +25% on a Soul | `Luck (success rate of Jewel of Soul +25%)`, `Luck (critical damage rate +5%)` |
+| luck | 4% (WebZen) | +5% critical chance each (`Arms::criticalChance`); +25% on a Soul | `Luck (success rate of Jewel of Soul +25%)`, `Luck (critical damage rate +5%)` |
 | option | 25%, level 1 to 3 evenly | weapon: both ends of the band +4 a level, worn down with it; armour: defence +4 a level; shield: defence rate +5 a level; staff: wizardry, not reckoned yet | `Additional Dmg / Wizardry Dmg / defense / defense rate +N` |
 
 A critical is the top of the roll, and `strike` only draws for one when the chance is above

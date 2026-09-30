@@ -31,8 +31,16 @@ namespace mu::sim {
 
 // Accumulated health damage that takes one point off a defending piece (DamagePerOneItemDurability).
 constexpr double kDamagePerDurability = 2000.0;
-// Landed hits that take one point off the weapon or pendant (HitsPerOneItemDurability).
+// Landed hits that take one point off the pendant (HitsPerOneItemDurability).
 constexpr double kHitsPerDurability = 10000.0;
+// What one landed blow takes off a weapon, in points: WebZen's, not OpenMU's one in ten
+// thousand (CItem::NormalWeaponDurabilityDown, Bow-, Staff-, zzzitem.cpp:3831-3960, 1.00.93).
+// Each blow adds a whole `defence x 2 / (min + min/2 + option)` to a small count, and a point
+// goes past 564 (a bow's past 780); a staff adds `defence / (m + m/3 + option)`, m being half
+// its magic and two a plus, and goes past 1050. So a sword on Lorencia's thin-skinned beasts
+// barely wears and one on the Dungeon's goes a point in some fifty to a hundred and fifty
+// blows. The pendant keeps kHitsPerDurability. `defense` is the struck monster's.
+double weaponWear(const content::ItemRow& row, const Held& held, int defense);
 
 // What a self-repair from the bag costs over a merchant's (CalcRepairCost's SelfRepair, OpenMU's
 // `!npcDiscount`), and what a thing worn to nothing costs over a worn one (DestroyedItemPenalty).

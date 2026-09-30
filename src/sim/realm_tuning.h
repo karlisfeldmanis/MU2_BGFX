@@ -140,6 +140,16 @@ inline bool within(const Body& one, const Body& other, float range) {
     return reach(one, other) <= range;
 }
 
+// WebZen's gObjCalDistance (user.cpp:7042-7053, 1.00.93): the straight line between two tiles,
+// cut to whole tiles. A monster notices a hero strictly nearer than its view
+// (gObjMonster.cpp:899-903) and swings at one no farther than its reach (:2852) -- a disc,
+// where the larger axis above makes a square, 1.75 times the ground at a view of 5 and a pull
+// from seven tiles off on the diagonal. Asked by the monsters' eyes and arms only.
+inline int apart(const Body& one, const Body& other) {
+    const int dx = one.column() - other.column(), dy = one.row() - other.row();
+    return int(std::sqrt(double(dx * dx + dy * dy)));
+}
+
 inline int strayed(const Body& beast) {
     return std::max(std::abs(beast.column() - beast.homeColumn),
                     std::abs(beast.row() - beast.homeRow));
@@ -292,5 +302,31 @@ constexpr Resistance kResistances[] = {
     {24, 0, 2},  // Worm
     {25, 4, 5},  // Ice Queen
 };
+
+// ---- what each breed leaves -------------------------------------------------------------------
+// Monster.txt's MoneyRate and MaxItemLevel (WebZen 1.00.93, revision 2008-08-22), which OpenMU
+// does not carry. A kill that leaves no item leaves Zen when rand()%moneyRate < 10
+// (gObjMonster.cpp:4762): every kill at 10, five in six at 12, five in seven at 14. And a
+// breed drops nothing whose plus would pass its maxPlus (MonsterItemMng.cpp:626) -- the
+// Dungeon's and the Ice Queen's 3 and 4 keep their drops low. ItemRate is not here: the item
+// chance is the user's (realm_items.cpp, Realm::leave). A breed missing from the list takes
+// {10, 6}.
+struct DropRate {
+    int32_t number;
+    int32_t moneyRate, maxPlus;
+};
+constexpr DropRate kDropRates[] = {
+    {0, 10, 6},  {1, 10, 6},  {2, 10, 6},  {3, 10, 6},  {4, 12, 6},  {6, 12, 6},
+    {7, 12, 6},  {10, 14, 3}, {11, 14, 4}, {12, 14, 4}, {13, 14, 4}, {14, 12, 6},
+    {17, 14, 4}, {18, 14, 3}, {19, 14, 6}, {20, 14, 6}, {21, 14, 6}, {22, 14, 6},
+    {23, 14, 6}, {24, 14, 6}, {25, 14, 3}, {26, 10, 6}, {27, 10, 6}, {28, 10, 6},
+    {29, 12, 6}, {30, 12, 6}, {31, 12, 6}, {32, 12, 6}, {33, 10, 6},
+};
+constexpr DropRate dropRateOf(int32_t number) {
+    for (const DropRate& one : kDropRates) {
+        if (one.number == number) return one;
+    }
+    return DropRate{number, 10, 6};
+}
 
 }  // namespace mu::sim

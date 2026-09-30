@@ -193,30 +193,6 @@ void Play::gatherFolkLights(gfx::Effects& effects) const {
         sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
-    // And the Gorgon Staff's star in the Gorgon's fist: Scale 2 of Shiny02, 90 units along the
-    // staff from the grip, (0.4, 0.8, 0.6) on the same rolled Luminosity. MU writes it as
-    // (0, -90, 0) in its link bone's frame; the held staff here sits on knife_gdf with no turn
-    // (Figure::gather), its length on its own +Z (Staff05.glb: -0.85 to 1.39 m, the skull at
-    // 0.60-0.88), so the same 90 units is +Z in this bone's frame.
-    if (!bgfx::isValid(starSheet_)) return;
-    for (const Drawn& one : drawn_) {
-        if (one.starBone < 0 || !one.visible || !one.placed) continue;
-        gfx::Sprite sprite;
-        const float down[3] = {0.0f, 0.0f, 0.9f};
-        if (!one.figure.pointOn(one.starBone, down, sprite.position)) continue;
-        // Shiny02 is 32 texels wide, so Scale 2 is 64 units: 0.64 m across. And **ours**: the
-        // light at 0.6 of MU's -- the sheet peaks at full white (the flare at 154), and added in
-        // HDR it burned to a white star where MU's clipped GL add read pale green (the user,
-        // 2026-09-30: "too bright and weird").
-        sprite.halfWidth = sprite.halfHeight = 0.5f * 0.32f * 2.0f;
-        constexpr float kStarDim = 0.6f;
-        sprite.colour[0] = 0.4f * kStarDim * monsterLuminosity_;
-        sprite.colour[1] = 0.8f * kStarDim * monsterLuminosity_;
-        sprite.colour[2] = 0.6f * kStarDim * monsterLuminosity_;
-        sprite.sheet = starSheet_;
-        sprite.blend = gfx::Blend::Additive;
-        effects.add(sprite);
-    }
 }
 
 // Charon's wisps: thrown every half second from a point up to 50 units round his light, risen
