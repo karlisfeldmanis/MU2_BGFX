@@ -1,0 +1,87 @@
+{
+  "item": "Object15",
+  "mu_name": "Object15",
+  "mu_name_from": "Devias's object slot 14, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 14,
+  "placements": 184,
+  "profile": "world",
+  "sheets": {
+    "blockhead": "dv_blockhead.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "blockhead": "timber"
+  },
+  "material_note": "blockhead: a snow-capped wooden fence rail - read off the art as rock and wrong: seen standing it is the posts and rails that line the town's roads, snow along the top rail.",
+  "why_this_one": "184 of them, the third commonest: the snowy wooden fences along the town's roads.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches: static, unlit, nothing added.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 34,
+      "area": 10689.5,
+      "along": [
+        -9.7,
+        10.8
+      ],
+      "mu_uv": [
+        -0.431,
+        0.277,
+        1.418,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.915,
+        0.604
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 4104.6,
+      "along": [
+        -3.1,
+        7.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.021,
+        0.991,
+        0.234
+      ],
+      "bake_uv": [
+        0.005,
+        0.613,
+        0.838,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 4104.6,
+      "along": [
+        -3.1,
+        7.3
+      ],
+      "mu_uv": [
+        0.0,
+        0.021,
+        0.991,
+        0.234
+      ],
+      "bake_uv": [
+        0.005,
+        0.712,
+        0.838,
+        0.995
+      ]
+    }
+  ]
+}

@@ -267,12 +267,10 @@ void Play::leftClick() {
     // never going to walk to, plus the early tick under it, would be the drawing promising what
     // the rules have already said no to. An Attack is let through, as it is there.
     if (realm_.casting() && request.kind != sim::Request::Kind::Attack) return;
-    // Nor while he flinches: MU's click is refused in PLAYER_SHOCK (ZzzInterface.cpp:3127), and
-    // Play::flinch has just halted him.
-    if (const Drawn* hero = drawnOf(realm_.hero().id);
-        hero && hero->shocked > 0.0f && request.kind != sim::Request::Kind::Attack) {
-        return;
-    }
+    // A flinch does NOT hold the click, and that is ours: MU refuses it in PLAYER_SHOCK
+    // (ZzzInterface.cpp:3127), and the user turned that down on 2026-09-29 -- a click to move
+    // while he is struck is a click to get out, and eating it read as the game not answering.
+    // The walk it starts ends the flinch's clip (play_show.cpp, the flinch hold).
     realm_.ask(request);
     // Only from a stand; see Play::update for why never while walking.
     stepNow_ = !realm_.hero().walking && sinceEarly_ >= kEarlyApart &&
@@ -483,6 +481,15 @@ void Play::benchFace(float acrossX, float acrossZ) {
     // World x is the column and world z the negated row (docs/conventions.md).
     request.column = realm_.hero().column() + int(std::lround(acrossX / flat));
     request.row = realm_.hero().row() - int(std::lround(acrossZ / flat));
+    realm_.ask(request);
+}
+
+void Play::walkTo(int column, int row) {
+    if (!isOpen()) return;
+    sim::Request request;
+    request.kind = sim::Request::Kind::WalkTo;
+    request.column = column;
+    request.row = row;
     realm_.ask(request);
 }
 

@@ -67,6 +67,10 @@ public:
     // the way the shader reads them. Returns how many bones were written, and keeps the
     // bones' world matrices, which is what a held item rides.
     int pose(float* rows12);
+    // Poses each held item that carries a clip of its own -- a bow's or a crossbow's string
+    // -- into its own palette row, which gather then draws it with. After pose(): it reads
+    // the body's clip and clock. `rows12` is scratch of the renderer's kMaxBones rows.
+    void poseHeld(gfx::Renderer& renderer, float* rows12);
 
     // What the renderer draws: the parts against `row`, and the held items at their bone's
     // own place -- rigid, or, for a bow with its own small rig, against the renderer's bind
@@ -134,6 +138,7 @@ private:
     // because a held item needs exactly one of them and the walk that built them has just
     // finished.
     std::vector<float> world_;
+    std::vector<int> heldRows_;  // each held item's palette row from poseHeld, -1 for none
 
     const FigureBody* body_ = nullptr;
     float position_[3] = {0, 0, 0};

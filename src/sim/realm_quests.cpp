@@ -36,6 +36,25 @@ bool Realm::questOffered(int index) const {
            wall_ >= one.availableAt;
 }
 
+int Realm::questHere(int32_t giver) const {
+    int untaken = -1, back = -1, rested = -1, first = -1;
+    for (int i = 0; i < kQuests; ++i) {
+        if (questAt(i).giver != giver) continue;
+        if (first < 0) first = i;
+        const QuestState state = quests_[i].state;
+        if (state == QuestState::Active || state == QuestState::Ready) return i;
+        if (state == QuestState::Untaken && untaken < 0 && questOffered(i)) untaken = i;
+        if (state == QuestState::Resting) {
+            if (back < 0 && questOffered(i)) back = i;
+            rested = i;
+        }
+    }
+    // The chain moves on before a link comes back round: the Halls before the Catacombs again.
+    if (untaken >= 0) return untaken;
+    if (back >= 0) return back;
+    return rested >= 0 ? rested : first;
+}
+
 bool Realm::questLocked(int index) const {
     if (index < 0 || index >= kQuests) return false;
     const QuestRow& row = questAt(index);

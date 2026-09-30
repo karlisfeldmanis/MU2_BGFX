@@ -40,6 +40,34 @@ void Canvas::clear() {
     runs_.clear();
 }
 
+void Canvas::fadeSince(size_t mark, float alpha, float dx) {
+    if (mark >= vertices_.size()) return;
+    alpha = std::clamp(alpha, 0.0f, 1.0f);
+    // Which vertices are in a premultiplied run, where the colour fades with the alpha; in a
+    // straight run only the alpha does.
+    std::vector<uint8_t> pre(vertices_.size() - mark, 0);
+    for (const Run& run : runs_) {
+        if (!run.premultiplied) continue;
+        for (uint32_t i = run.firstIndex; i < run.firstIndex + run.count; ++i) {
+            const uint32_t v = indices_[i];
+            if (v >= mark) pre[v - mark] = 1;
+        }
+    }
+    const auto scale = [&](uint32_t c, int shift) {
+        const float was = float((c >> shift) & 0xFFu);
+        return uint32_t(std::lround(was * alpha)) << shift;
+    };
+    for (size_t v = mark; v < vertices_.size(); ++v) {
+        Vertex& one = vertices_[v];
+        one.x += dx;
+        const uint32_t c = one.abgr;
+        uint32_t out = scale(c, 24);
+        if (pre[v - mark]) out |= scale(c, 0) | scale(c, 8) | scale(c, 16);
+        else out |= c & 0x00FFFFFFu;
+        one.abgr = out;
+    }
+}
+
 void Canvas::begin(bgfx::TextureHandle texture, bool premultiplied) {
     if (runs_.empty() || runs_.back().texture.idx != texture.idx ||
         runs_.back().premultiplied != premultiplied) {
@@ -138,6 +166,21 @@ void Canvas::polygon(const float* xy, const uint32_t* abgr, int count) {
     const uint32_t base = uint32_t(vertices_.size());
     for (int i = 0; i < count; ++i) {
         vertices_.push_back({xy[i * 2], xy[i * 2 + 1], f.solidU(), f.solidV(), abgr[i]});
+    }
+    for (int i = 1; i + 1 < count; ++i) {
+        const uint32_t tri[3] = {base, base + uint32_t(i), base + uint32_t(i + 1)};
+        indices_.insert(indices_.end(), tri, tri + 3);
+        runs_.back().count += 3;
+    }
+}
+
+void Canvas::polygon(const Art& art, const float* xy, const float* uv, const uint32_t* abgr,
+                     int count) {
+    if (count < 3 || !art.valid()) return;
+    begin(art.handle);
+    const uint32_t base = uint32_t(vertices_.size());
+    for (int i = 0; i < count; ++i) {
+        vertices_.push_back({xy[i * 2], xy[i * 2 + 1], uv[i * 2], uv[i * 2 + 1], abgr[i]});
     }
     for (int i = 1; i + 1 < count; ++i) {
         const uint32_t tri[3] = {base, base + uint32_t(i), base + uint32_t(i + 1)};

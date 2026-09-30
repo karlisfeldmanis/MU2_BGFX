@@ -26,6 +26,7 @@ for the whole map and produces a picture that looks almost right.
 """
 
 import json
+import math
 import struct
 import sys
 from pathlib import Path
@@ -116,6 +117,11 @@ HIDDEN_TYPES = {130, 131, 132, 133}
 #: worklist, which is how Lorencia's PoseBox01 nearly got built.
 HIDDEN_BY_MAP = {
     0: HIDDEN_TYPES,
+    # The Dungeon's five (ZzzObject.cpp:3872-3897, 4660-4664): 39, 40 and 51 are the lance,
+    # iron-stick and fire traps, hidden as scenery because the server's trap monster draws the
+    # same model; 52 is the falling-stone emitter and 60 the lean box, which has no .bmd.
+    1: {39, 40, 51, 52, 60},
+    2: {91, 100},
     3: {38},
 }
 
@@ -131,15 +137,60 @@ HIDDEN_BY_MAP = {
 #: asset for a model can say which of its sheets is additive; see index.py and the `additive`
 #: key in an object's own json.
 BLEND_MESH_BY_MAP = {
+    2: {19: 0, 54: 1, 56: 1, 78: 3, 92: 0, 93: 0},
     3: {1: 1, 9: 3, 17: 0, 18: 2, 19: 0, 37: 0},
+}
+
+#: Where a world's grass grows, by map number, where its slots' recipes would say otherwise.
+#:
+#: MU grows a tuft on a slot when the world ships that slot's TileGrassNN.tga
+#: (MapManager.cpp:1465, ZzzLodTerrain.cpp:2077). Devias ships TileGrass02.OZT alone, a strip
+#: of frosted white blades, so it grows on the smoother snow and nowhere else -- and that snow
+#: wears the snow recipe, not grass. Noria's is what grew there before the engine matched its
+#: prefixed slots to their recipes; its TileGround01 takes grass by recipe and has MU's
+#: TileGrass03 behind it, which is a look decision rather than an extraction.
+GRASS_BY_MAP = {
+    # The Dungeon ships no TileGrass .OZT, and its TileGrass01 is the stone floor under 76% of
+    # the map: none, said outright, so a slot's name never sows a lawn underground.
+    1: [],
+    2: ["TileGrass02"],
+    3: ["TileGrass01", "TileGrass02"],
+}
+
+#: Where each world's rivers are fed and where they drain, as tile (column, row), for the
+#: engine's flow (content::buildFlow). Ours: MU slides every water tile the same way. Lorencia:
+#: the moat is fed at its north-west corner and runs both ways round the town to the canal at
+#: its south-east, which joins the east river; that runs from the north sea to the south-east
+#: one; the west river runs down its bend from the map's west edge back to it.
+WATER_FLOW_BY_MAP = {
+    # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at
+    # one end and drained at the other -- the two ends furthest apart along it, found by walking
+    # the water. MU's ground is flat here and says nothing of which way they run; the way is ours.
+    # The small pools are left out, and stand still.
+    1: {"sources": [[71, 250], [251, 228], [127, 33], [57, 228], [32, 105], [61, 246],
+              [107, 159], [232, 222], [65, 200], [68, 0], [66, 160], [118, 27],
+              [197, 166], [103, 145], [104, 152], [124, 141], [191, 176], [57, 150],
+              [126, 38], [223, 182], [161, 170], [151, 38], [150, 29], [170, 183],
+              [120, 170]],
+        "sinks": [[56, 197], [230, 182], [87, 0], [57, 202], [31, 82], [65, 230],
+              [109, 145], [237, 193], [65, 182], [40, 0], [87, 154], [103, 16],
+              [176, 166], [81, 146], [90, 146], [105, 140], [208, 170], [76, 147],
+              [118, 33], [216, 174], [171, 159], [134, 39], [134, 32], [172, 173],
+              [107, 168]]},
+    0: {"sources": [[110, 100], [236, 4], [2, 101]],
+        "sinks": [[236, 252], [2, 153]]},
 }
 
 #: Which types a character can pose against, per world, for the same reason OPERABLE_TYPES
 #: exists: their tiles must never be stamped solid behind the client's back.
 #:
 #: Noria's two are MOVEMENT_OPERATE's own — 8 sits, 38 hangs — and 38 is also the hidden one.
+#: Devias's seven (ZzzObject.cpp:4682-4690): 91 is a lean box and hidden too; 22, 25, 40 and 55
+#: sit and turn to the seat, 45 and 73 sit.
 OPERABLE_BY_MAP = {
     0: {6, 133, 145, 146},
+    1: {59, 60},  # the Dungeon's seat and lean box, ZzzInterface.cpp:1707-1712
+    2: {22, 25, 40, 45, 55, 73, 91},
     3: {8, 38},
 }
 
@@ -268,7 +319,12 @@ def baked_light(world: Path) -> np.ndarray | None:
              str(source), str(target)],
             check=True, capture_output=True)
 
-        return np.asarray(Image.open(target).convert("RGB"), dtype=np.uint8)
+        # The client decodes this JPEG bottom-up (OpenJpegBuffer, TJFLAG_BOTTOMUP,
+        # ZzzTexture.cpp:200), so its row 0 is the picture's last row -- the same order the
+        # height bitmap's rows are read in. PIL gives the picture top-down; flipped, it lands
+        # on the [y, x] grid the height and the tiles use. Lorencia's and Noria's light.png
+        # were extracted before this and are still mirrored in y.
+        return np.flipud(np.asarray(Image.open(target).convert("RGB"), dtype=np.uint8)).copy()
 
 
 def heights(world: Path) -> np.ndarray:
@@ -333,6 +389,14 @@ def objects(world: Path, number: int) -> list[dict]:
         position = struct.unpack_from("<3f", data, at + 2)
         angle = struct.unpack_from("<3f", data, at + 14)
         scale = struct.unpack_from("<f", data, at + 26)[0]
+
+        # Devias's file places two of its sliding doors (type 86, near x 4450) at a y that
+        # is not a number. The client copies it as the door's rest point (ZzzObject.cpp:4718)
+        # and never draws them; json cannot carry it, and the engine refuses the whole file.
+        if not all(math.isfinite(v) for v in (*position, *angle, scale)):
+            print(f"  objects    dropped a type {kind} placed at "
+                  f"{[round(v, 1) for v in position]}: not a number in MU's file")
+            continue
 
         entry = {
             "type": kind,
@@ -443,6 +507,9 @@ def main() -> None:
         "attributes": "attributes.png",
         "light": "light.png" if lit is not None else "",
         "tile_slots": {str(slot): tile for slot, tile in named},
+        **({"grass_slots": GRASS_BY_MAP[number - 1]} if number - 1 in GRASS_BY_MAP else {}),
+        **({"water_flow": WATER_FLOW_BY_MAP[number - 1]}
+           if number - 1 in WATER_FLOW_BY_MAP else {}),
         "objects": placed,
     }, indent=1) + "\n")
 

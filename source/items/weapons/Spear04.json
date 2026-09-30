@@ -1,0 +1,100 @@
+{
+  "item": "Spear04",
+  "mu_name": "Giant Trident",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:127 and mu.db's items row (group 3, index 3) name it the Giant Trident against Item/Spear04.bmd.",
+  "why_this_one": "Drop level 29: the Elite Yeti leaves it. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:127. The 0.75 table.",
+    "call": "CreateWeapon(3, 3, 0, 0, 2, 4, true, \"Giant Trident\", 29, 35, 43, 25, 44, 0, 0, 90, 30, 0, 0, 0, 1, 1)",
+    "group": 3,
+    "number": 3,
+    "drop_level": 29,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 35,
+    "maximum_damage": 43,
+    "attack_speed": 25,
+    "durability": 44,
+    "requires": {
+      "level": 0,
+      "strength": 90,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "skill": 0
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:377-383: the spear group, two-handed (width 2), and not the named Spear or Dragon Lance, stands PLAYER_STOP_SCYTHE.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "Javelins04": "javelins04.png"
+  },
+  "sheet_from": "Data/Item/Javelins04.OZJ (32x32), from MuMain. The .bmd names Javelins04.jpg.",
+  "material_note": "Metal throughout, as the Great Scythe: plate for the pole, steel for the prongs.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrored the grass: in the studio the head went black from above and the shaft flared white at grazing sun, the Gladius's fault (black at 0.2, right at 0.55) and the Salamander's in this batch. plate_steel to 0.5 for the pole, whose round shaft caught the sun in one white flare at 0.35.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 2187.7,
+      "along": [
+        -96.6,
+        168.8
+      ],
+      "mu_uv": [
+        0.005,
+        0.391,
+        0.686,
+        0.936
+      ],
+      "bake_uv": [
+        0.004,
+        0.639,
+        0.947,
+        0.894
+      ],
+      "note": "the shaft, -96 to 169: neutral the whole way (chroma 9; 66,66,74 to 211,211,211). A forged pole finished as the Great Scythe's."
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 28,
+      "area": 2468.1,
+      "along": [
+        111.2,
+        178.3
+      ],
+      "mu_uv": [
+        0.167,
+        0.001,
+        0.95,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.631
+      ],
+      "note": "the head, 111 to 178: the three prongs (255 white on their edges) over a dark worked collar (73,55,43 to 125,97,93). Chroma 14, so metal; the ground prongs decide it."
+    }
+  ]
+}

@@ -23,8 +23,10 @@
 #include "game/item_models.h"
 #include "game/ui/items_stage.h"
 #include "game/ui/menu.h"
+#include "game/ui/minimap.h"
 #include "game/ui/quest_dialog.h"
 #include "game/ui/tracker.h"
+#include "game/ui/travel.h"
 #include "game/ui/shelf.h"
 #include "game/ui/specimen.h"
 #include "game/ui/tally.h"
@@ -59,6 +61,8 @@ public:
     void scriptType(const std::string& text) {
         if (text == "enter") scriptEnter_ = true;
         else if (text == "escape") scriptEscape_ = true;
+        else if (text == "tab") scriptTab_ = true;
+        else if (text == "journal") scriptJournal_ = true;  // L, the quest journal
         else scriptTyped_ += text;
     }
     // Whether a box has the keyboard, which the window is told so Escape cancels the box
@@ -73,6 +77,10 @@ public:
     void setView(const float* viewProj) {
         for (int i = 0; i < 16; ++i) viewProj_[i] = viewProj[i];
     }
+    // And its view matrix alone, whose axes turn the minimap.
+    void setCamera(const float* view) { minimap_.setView(view); }
+    // And the land it charts, whose floor says where the water is.
+    void setGround(const content::Ground* ground) { minimap_.setGround(ground); }
     // The monster's health bar, once the frame has placed every body and the camera: run after
     // Play::update and World::update, so the bar is hung on the crown drawn THIS frame. Done in
     // update() it trailed a walking spider by a frame, which a bar over its head shows.
@@ -132,7 +140,9 @@ public:
         barRestored_ = any;
     }
     // The world's name comes up over the scene after `delay` seconds: see game/arrival.h.
-    void arrive(const std::string& world, float delay) { arrival_.announce(world, delay); }
+    void arrive(const std::string& world, float delay, const std::string& caption = {}) {
+        arrival_.announce(world, delay, caption);
+    }
     // The map's name, for the menu's foot: where he is standing.
     void setWorld(const std::string& world) { worldName_ = world; }
 
@@ -166,10 +176,15 @@ private:
     Amount amount_;
     // A quest giver's window and the quest on screen (game/ui/quest_dialog.h, tracker.h).
     QuestDialog questDialog_;
+    // The travel list, Tab's (game/ui/travel.h).
+    Travel travel_;
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
+    bool scriptJournal_ = false;  // a script's L for the next update (--ui-type FRAME:journal)
     bool questing_ = false;  // a giver's window was up last frame, so its opening is heard once
     int voiced_ = -1;  // the quest page whose voice was last started: quest * 4 + page, or -1
     Tracker tracker_;
+    // The map around him, top right over the tracker, always up in a played world (game/ui/minimap.h).
+    Minimap minimap_;
     Menu menu_;
     std::string worldName_;
     bool quitAsked_ = false;
@@ -178,6 +193,7 @@ private:
     bool settingsChanged_ = false;
     std::string scriptTyped_;
     bool scriptEnter_ = false, scriptEscape_ = false;
+    bool scriptTab_ = false;
     Endurance endurance_;
     Cursor cursor_;
     Vitals vitals_;
@@ -233,6 +249,8 @@ private:
     int32_t readyFor_[Hud::kSkillBoxes] = {0, 0, 0, 0, 0, 0};
     bool wasReady_[Hud::kSkillBoxes] = {false, false, false, false, false, false};
     float lastCooling_[Hud::kSkillBoxes] = {};  // last frame's wipe, to see one start over
+    // The skill the realm last threw: only its box wears the cast's wait, not every primary's.
+    int32_t lastThrown_ = 0;
     uint32_t autoBound_ = 0;  // skills that have had their one free key
     bool barRestored_ = false;
     // The list above the plate: latched open by a click on the gold box, and open anyway while

@@ -295,6 +295,69 @@ int Figure::pose(float* rows12) {
     return int(posed);
 }
 
+void Figure::poseHeld(gfx::Renderer& renderer, float* rows12) {
+    heldRows_.assign(body_ ? body_->held.size() : 0, -1);
+    if (!body_) return;
+
+    // Where the body is in a shot, in its own keys. MU plays a bow's action 0 at the attack's
+    // own PlaySpeed from the moment the attack starts (the weapon's frame is held at 0 until
+    // then, ZzzCharacter.cpp:10160-10166), so the weapon's key IS the body's key, wrapped
+    // round the weapon's seven: the string draws with the arm and looses at key 4 with it.
+    float key = -1.0f;
+    if (body_->library && clip_ >= 0 && size_t(clip_) < body_->library->clips.clips.size()) {
+        const content::CookedClip& one = body_->library->clips.clips[size_t(clip_)];
+        // PLAYER_ATTACK_BOW, _CROSSBOW, _FLY_BOW, _FLY_CROSSBOW: MuMain's enum, 50 to 53.
+        if (one.slot >= 50 && one.slot <= 53 && one.duration > 0.0f && one.frames > 1) {
+            key = time_ / one.duration * float(one.frames - 1);
+        }
+    }
+
+    for (size_t i = 0; i < body_->held.size(); ++i) {
+        const HeldItem& item = body_->held[i];
+        if (!item.clip || !item.mesh || !item.mesh->isSkinned()) continue;
+        const content::CookedClips& clips = *item.clip;
+        const content::CookedClip& one = clips.clips.front();
+        const std::vector<content::Bone>& bones = item.mesh->bones();
+        const size_t count = std::min({bones.size(), size_t(clips.bones), size_t(16),
+                                       size_t(gfx::Renderer::kMaxBones)});
+        if (count == 0 || one.frames == 0) continue;
+
+        // A looping clip's last key is its first again (content::CookedClip), so the cycle
+        // is frames - 1 keys long.
+        float where = 0.0f;
+        if (key >= 0.0f && item.onShot && one.frames > 1) {
+            const float period = float(one.frames - 1);
+            where = std::fmod(key, period);
+        }
+        uint32_t frame = uint32_t(where);
+        if (frame + 1 >= one.frames) frame = one.frames > 1 ? one.frames - 2 : 0;
+        const float t = one.frames > 1 ? std::min(std::max(where - float(frame), 0.0f), 1.0f)
+                                       : 0.0f;
+        const float* a = &clips.rows[(size_t(one.firstRow) + size_t(frame) * clips.bones) * 7];
+        const float* b = one.frames > 1 ? a + size_t(clips.bones) * 7 : a;
+
+        float world[16 * 16];
+        for (size_t j = 0; j < count; ++j) {
+            float rotation[4];
+            float translation[3];
+            core::nlerpQuat(a + j * 7, b + j * 7, t, rotation);
+            core::lerpVec3(a + j * 7 + 4, b + j * 7 + 4, t, translation);
+            float local[16];
+            core::composeMatrix(rotation, translation, local);
+            const int32_t parent = bones[j].parent;
+            if (parent < 0 || size_t(parent) >= j) {
+                std::memcpy(&world[j * 16], local, sizeof(local));
+            } else {
+                core::mulMatrix(local, &world[size_t(parent) * 16], &world[j * 16]);
+            }
+            float skin[16];
+            core::mulMatrix(bones[j].inverseBind, &world[j * 16], skin);
+            core::writePaletteRows(skin, &rows12[j * 12]);
+        }
+        heldRows_[i] = renderer.addPalette(rows12, int(count));
+    }
+}
+
 void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
     if (!body_) return;
     float transform[16];
@@ -311,6 +374,9 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         std::memcpy(drawable.transform, transform, sizeof(transform));
         drawable.paletteRow = part->isSkinned() ? row : -1;
         if (i < body_->partShine.size()) wear(body_->partShine[i], drawable);
+        // MU's Level 3 (Selection.cpp:106, body light +1.5): the Ice Queen is drawn at her
+        // sheet's own colour in any light. Its w is the flag vs_skinned reads.
+        if (body_->name == "IceQueen01") drawable.light[3] = 2.0f;
         out.push_back(drawable);
     }
 
@@ -325,7 +391,8 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
     // the shoulders. Inside a safe zone that is where the weapon goes, and the arrangement is
     // MU's own, per kind of thing.
     if (world_.empty()) return;
-    for (const HeldItem& item : body_->held) {
+    for (size_t index = 0; index < body_->held.size(); ++index) {
+        const HeldItem& item = body_->held[index];
         if (!item.mesh) continue;
         const bool slung = (safe_ || item.alwaysSlung) && body_->backBone >= 0;
         const int bone = slung ? body_->backBone : item.bone;
@@ -334,10 +401,10 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
         gfx::Drawable drawable;
         drawable.mesh = item.mesh;
         wear(item.shine, drawable);
-        // No row: a rigid item needs no palette, and a bow or a crossbow -- which carry a
-        // 12-bone rig of their own -- take the renderer's bind row, which is their own bind
-        // pose. Their one clip is the string, and it is owed with the items.
-        drawable.paletteRow = -1;
+        // No row for a rigid item. A bow or a crossbow -- a 12- or 13-bone rig of its own --
+        // takes the row poseHeld posed it into, its string drawn on the shot; without one
+        // (no clip cooked, or poseHeld not called) the renderer's bind row, its own rest.
+        drawable.paletteRow = index < heldRows_.size() ? heldRows_[index] : -1;
 
         float local[16];
         if (slung) {
@@ -525,11 +592,14 @@ void Crowd::gather(gfx::Renderer& renderer, const float* viewProj,
     for (Figure& figure : figures_) {
         const int bones = figure.pose(scratch_.data());
         const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        figure.poseHeld(renderer, scratch_.data());
 
         // The sun's list is every figure, as the town's is: a figure behind the camera still
         // casts into the frame, and culling the shadow pass with the camera's frustum is the
         // bug foundation 7 names.
-        if (casters) figure.gather(row, *casters);
+        // Save the Ice Queen, whom MU leaves out of its shadow block (ZzzCharacter.cpp:8666).
+        const bool shadowless = figure.body() && figure.body()->name == "IceQueen01";
+        if (casters && !shadowless) figure.gather(row, *casters);
 
         if (viewProj) {
             float centre[3] = {figure.position()[0],

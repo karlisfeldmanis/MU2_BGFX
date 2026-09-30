@@ -83,6 +83,13 @@ public:
     void setPaletteRow(uint32_t instance, int row) {
         if (instance < paletteRows_.size()) paletteRows_[instance] = row;
     }
+    // A placement stood somewhere else this frame: Devias's doors (game/world/doors.h). The
+    // chunk bounds are the cook's and stay; a door moves under a metre, a gate under four.
+    void movePlacement(uint32_t instance, float yaw, const float position[3]) {
+        if (instance >= town_.instances.size()) return;
+        town_.instances[instance].yaw = yaw;
+        for (int a = 0; a < 3; ++a) town_.instances[instance].position[a] = position[a];
+    }
     // The mesh a model index owns, for whoever poses a placement against it: Sway reads a
     // rig's bones off this the same way `append` reads its vertex and index buffers.
     const content::Mesh* meshAt(size_t model) const {

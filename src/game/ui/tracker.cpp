@@ -21,7 +21,7 @@ using quest_marks::StepMark;
 // The proposal's measures, in tip::unit() at 1080 lines.
 constexpr float kWide = 300.0f;
 constexpr float kRight = 44.0f;   // the right edge, in from the screen's
-constexpr float kTop = 196.0f;
+constexpr float kTop = 250.0f;   // under the minimap, which stands over it (game/ui/minimap.h)
 constexpr float kTitle = 18.0f, kTitleTrack = 0.08f;
 constexpr float kStep = 16.0f;    // a step's words
 constexpr float kRowGap = 16.0f;  // between rows
@@ -273,6 +273,24 @@ bool Tracker::Drawn::operator==(const Drawn& o) const {
     return true;
 }
 
+bool Tracker::here(const sim::Realm& realm, int quest) {
+    const content::Tables* tables = realm.tables();
+    if (tables == nullptr || quest < 0) return false;
+    const sim::QuestRow& row = sim::questAt(quest);
+    const sim::QuestProgress& progress = realm.quest(quest);
+    for (int s = 0; s < row.stepCount && s < sim::kQuestSteps; ++s) {
+        if (row.steps[s].kind != sim::QuestStepKind::Clear) continue;
+        if (progress.counts[s] >= realm.questGoal(quest, s)) continue;
+        for (const content::MonsterNest& nest : tables->nests) {
+            if (nest.kind < tables->kinds.size() &&
+                tables->kinds[nest.kind].number == row.steps[s].target) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void Tracker::open(const gfx::Interface& interface) {
     interface.adopt(canvas_);
     interface.adopt(banner_);
@@ -335,6 +353,10 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
                 awake_ = kWakeHold;
                 focus_ = -1;
             }
+            // A kill that counted for this quest pins it (pinned_), whichever is shown.
+            for (int s = 0; s < sim::kQuestSteps; ++s) {
+                if (now.counts[s] > was.counts[s]) pinned_ = q;
+            }
             if (q == quest_) {
                 for (int s = 0; s < sim::kQuestSteps; ++s) {
                     if (now.counts[s] > was.counts[s]) {
@@ -349,12 +371,23 @@ void Tracker::update(float seconds, const Play& play, bool hidden, const float* 
     }
     seen_ = true;
 
-    // The quest followed: the first that is live, then the first resting one (for its wait).
-    quest_ = -1;
-    for (int q = 0; q < sim::kQuests && quest_ < 0; ++q) {
+    // The quest followed: the one his last counted kill went to, while it is live and belongs to
+    // this map or no live quest does; else the first live one on this map; else the first live
+    // one; then the first resting one (for its wait).
+    const auto live = [&](int q) {
         const sim::QuestState state = realm.quest(q).state;
-        if (state == sim::QuestState::Active || state == sim::QuestState::Ready) quest_ = q;
+        return state == sim::QuestState::Active || state == sim::QuestState::Ready;
+    };
+    int firstHere = -1, firstLive = -1;
+    for (int q = 0; q < sim::kQuests; ++q) {
+        if (!live(q)) continue;
+        if (firstLive < 0) firstLive = q;
+        if (firstHere < 0 && here(realm, q)) firstHere = q;
     }
+    if (pinned_ >= 0 && !live(pinned_)) pinned_ = -1;
+    quest_ = -1;
+    if (pinned_ >= 0 && (firstHere < 0 || here(realm, pinned_))) quest_ = pinned_;
+    if (quest_ < 0) quest_ = firstHere >= 0 ? firstHere : firstLive;
     for (int q = 0; q < sim::kQuests && quest_ < 0; ++q) {
         if (realm.quest(q).state == sim::QuestState::Resting && !realm.questOffered(q)) quest_ = q;
     }

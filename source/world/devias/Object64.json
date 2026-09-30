@@ -1,0 +1,51 @@
+{
+  "item": "Object64",
+  "mu_name": "Object64",
+  "mu_name_from": "Devias's object slot 63, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 63,
+  "placements": 10,
+  "profile": "world",
+  "sheets": {
+    "titel_b03": "dv_titel_b03.png",
+    "titel_b04": "dv_titel_b04.png",
+    "titel_b06": "dv_titel_b06.png",
+    "ti05": "dv_ti05.png",
+    "titel_b01": "dv_titel_b01.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "titel_b03": "rock",
+    "titel_b04": "rock",
+    "titel_b06": "rock",
+    "ti05": "marble",
+    "titel_b01": "rock"
+  },
+  "material_note": "titel_b03: carved and frosted grey stone\ntitel_b04: carved and frosted grey stone\ntitel_b06: carved and frosted grey stone\nti05: black-gold marble\ntitel_b01: carved and frosted grey stone",
+  "why_this_one": "10: wall blocks with marble inlay.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches: static.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 64,
+      "area": 262559.0,
+      "along": [
+        -100.0,
+        80.8
+      ],
+      "mu_uv": [
+        -0.504,
+        -1.053,
+        1.646,
+        1.668
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.994
+      ]
+    }
+  ]
+}

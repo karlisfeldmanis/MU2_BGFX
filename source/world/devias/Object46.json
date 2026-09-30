@@ -1,0 +1,109 @@
+{
+  "item": "Object46",
+  "mu_name": "Object46",
+  "mu_name_from": "Devias's object slot 45, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 45,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "chair": "dv_chair.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "chair": "hardwood"
+  },
+  "material_note": "chair: a wooden chair.",
+  "why_this_one": "1: a chair.",
+  "effects_note": "CreateOperate (ZzzObject.cpp :4682-4690): a character sits on it. terrain.py OPERABLE_BY_MAP[2] keeps its tile open.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1234.4,
+      "along": [
+        -5.6,
+        4.6
+      ],
+      "mu_uv": [
+        0.536,
+        0.423,
+        0.661,
+        0.941
+      ],
+      "bake_uv": [
+        0.541,
+        0.005,
+        0.789,
+        0.497
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1234.4,
+      "along": [
+        2.6,
+        20.8
+      ],
+      "mu_uv": [
+        0.545,
+        0.424,
+        0.646,
+        0.939
+      ],
+      "bake_uv": [
+        0.564,
+        0.507,
+        0.766,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 1234.4,
+      "along": [
+        -21.5,
+        -2.2
+      ],
+      "mu_uv": [
+        0.542,
+        0.424,
+        0.657,
+        0.939
+      ],
+      "bake_uv": [
+        0.799,
+        0.005,
+        0.908,
+        0.991
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 18,
+      "area": 2074.7,
+      "along": [
+        -17.0,
+        16.3
+      ],
+      "mu_uv": [
+        0.23,
+        0.094,
+        0.864,
+        0.65
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.535,
+        0.875
+      ]
+    }
+  ]
+}

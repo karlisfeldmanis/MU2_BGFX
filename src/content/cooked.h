@@ -54,6 +54,11 @@ struct CookedMaterial {
     // one additive submesh slides -- the waterspout's fall, the two houses' lit windows.
     // Only ever set alongside glow (bit 1); see content::Material.
     float scrollPerSecond = 0.0f;
+    // An item glow's pulse and jump (bit 5): MU's ItemObjectAttribute. See content::Material.
+    float pulse[2] = {0.0f, 1.0f};
+    float jitter = 0.0f;
+    bool itemGlow = false;
+    float glowShadow = 0.0f;  // bit 6 and a float after. See content::Material.
 };
 
 // A skinned vertex is the static one with four joint bytes and four weight bytes on the end,

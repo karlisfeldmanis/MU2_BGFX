@@ -92,6 +92,11 @@ void Realm::watch(Body& guard) {
         return;
     }
     advance(guard);
+    // Whom he takes on, by distance from his post, and how far he may step: the town guards'
+    // leash for both, or a guard of his own rules' reach plus his own leash (WardenRow::leash).
+    const bool tethered = row->leash >= 0;
+    const int watches = tethered ? row->attackRange + row->leash : kWardenLeash;
+    const float share = row->share > 0.0f ? row->share : kWardenShare;
 
     // The monster he is on, while it lives and has not led him past his leash; else the nearest
     // awake one in his sight within the leash of his post -- one on the hero before any other --
@@ -100,7 +105,7 @@ void Realm::watch(Body& guard) {
     const Body* held = find(guard.quarry);
     const uint32_t heroId = bodies_[0].id;
     const bool keep = held != nullptr && held->alive() && held->monster() &&
-                      fromPost(guard, *held) <= kWardenLeash;
+                      fromPost(guard, *held) <= watches;
     // Looked for again whenever what he holds is not on the hero, so a monster that turns on the
     // hero takes him off one that is only at the gate.
     if (!keep || held->quarry != heroId) {
@@ -113,7 +118,7 @@ void Realm::watch(Body& guard) {
             // his gate before the hero ever walked out to it.
             if (one.temper == Temper::Asleep) continue;
             if (!within(guard, one, float(row->viewRange))) continue;
-            if (fromPost(guard, one) > kWardenLeash) continue;
+            if (fromPost(guard, one) > watches) continue;
             // One that is on the hero first, whatever else is nearer: he is there to keep the
             // hero as much as the gate, and a guard hacking at a spider while a dragon eats the
             // hero beside him is no guard.
@@ -165,7 +170,7 @@ void Realm::watch(Body& guard) {
             quarry.guardedBy = guard.id;
             // His band, scaled so a blow is about kWardenShare of what the monster can take.
             const float middle = 0.5f * float(row->minimumDamage + row->maximumDamage);
-            const float force = std::max(0.01f, float(quarry.maxHealth) * kWardenShare / middle);
+            const float force = std::max(0.01f, float(quarry.maxHealth) * share / middle);
             strikeAt(guard, quarry, force);
         }
         return;
@@ -178,7 +183,11 @@ void Realm::watch(Body& guard) {
             guard.chaseX = quarry.x;
             guard.chaseY = quarry.y;
             int column = 0, rowAt = 0;
-            if (beside(quarry, std::max(1, row->attackRange), guard, &column, &rowAt)) {
+            // A tethered guard steps only to a tile within his leash of the post, and otherwise
+            // waits where he is for it to come into his reach.
+            if (beside(quarry, std::max(1, row->attackRange), guard, &column, &rowAt) &&
+                (!tethered || std::max(std::abs(column - guard.homeColumn),
+                                       std::abs(rowAt - guard.homeRow)) <= row->leash)) {
                 send(guard, column, rowAt);
             }
         }

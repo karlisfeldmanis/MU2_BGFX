@@ -1,0 +1,67 @@
+# The Golden Archer's pages, recorded 2026-09-30 from docs/golden-archer.md (not yet in quests.cpp).
+# Each paragraph read whole, seed 7, VOICES["golden_archer"]; pauses held to 0.5 s (the sample the
+# user chose), paragraphs 0.9 s apart, then re-finished 0.25 s apart by refinished_with.py.txt (the user: "to big pauses between paragraphs"). "..." marks a spoken beat the card does not print.
+# Output: golden_archer_<part>_<page>.wav, part 1 Catacombs, 2 Halls, 3 Pit; moved afterwards into
+# source/voice/golden_archer_<part>/, each part its own row.voice (quests.cpp).
+import sys, subprocess, pathlib, tempfile, torch, torchaudio
+sys.path.insert(0, "/Users/karlisfeldmanis/Documents/muremaster2/MU2_BGFX/tools")
+import voice
+torch.set_num_threads(3)
+from chatterbox.tts import ChatterboxTTS
+PAGES = {
+ "1_offer": ["Stop there... You are alive, and you mean to go down. Few who do... come back.",
+             "Do not be afraid of me. I was a knight of Lorencia once. What you see... is what the Dungeon left.",
+             "Below us are the Catacombs, where Lorencia buried its dead. They do not stay buried now. Every night they climb, and every night I shoot them back down.",
+             "Go down the stair. Kill the Skeleton Warriors, the Larvae and the Cyclopes. Then the Ghosts, and the Skeleton Archers in the deep tombs.",
+             "I will count them as they fall. Come back... when I am done counting."],
+ "1_underway": ["I am still counting. They still climb."],
+ "1_handin": ["The Catacombs are quiet. I have not heard that... in a long time.",
+              "Take these. You fight like one of us. When you are ready, there is more below."],
+ "1_resting": ["They will climb again by morning. I will be here... counting."],
+ "2_offer": ["Under the Catacombs are the Halls. We built them, when Kundun fell, to hold what he left beneath Lorencia.",
+             "The traps are ours. Lances, iron and fire, set for his brood. They cannot tell you from it. Watch the floor.",
+             "His creatures hold our halls now. Kill the Hell Hounds, the Hell Spiders and the Elite Skeletons. Then the Thunder Liches, and the Poison Bulls at the far end.",
+             "Take our halls back. I cannot go down... to do it myself."],
+ "2_underway": ["The halls are not ours yet. Go back down."],
+ "2_handin": ["The Halls are ours again, for tonight. You have done what a whole company could not.",
+              "Take these. When you come back, I will tell you... why I stand here."],
+ "2_resting": ["Rest. The halls will fill again, and the traps will still be waiting."],
+ "3_offer": ["The last company of the oath went down into the Pit to hold it. I went with them. None of us came back... as we were.",
+             "The Gorgon waits at the bottom. It looked on my brothers, and they rose as Dark Knights. It looked on me... and I rose as this.",
+             "Kill the Poison Bulls and the Thunder Liches on the way down. Then find my brothers, and give them rest. Then... the Gorgon.",
+             "Marlon thinks he is the last of us. Do not tell him what you find down there. Not yet."],
+ "3_underway": ["My brothers still walk. Go back down."],
+ "3_handin": ["It is done. I felt it when they fell. My brothers... are at rest.",
+              "My name was Aldric. Remember it, even if Marlon cannot. Take these, with my thanks.",
+              "I will keep the gate. It is what I swore."],
+ "3_resting": ["The Gorgon will rise again. They always do. I will be here... counting."],
+}
+SQ = ("silenceremove=start_periods=1:start_threshold=-45dB:stop_periods=-1:"
+      "stop_duration=0.5:stop_threshold=-45dB:stop_silence=0.5,")
+how = voice.VOICES["golden_archer"]
+out = pathlib.Path("/Users/karlisfeldmanis/Documents/muremaster2/MU2_BGFX/source/voice/golden_archer")
+keep = pathlib.Path(sys.argv[1])          # raw takes kept here, for re-finishing without re-reading
+only = sys.argv[2:]
+model = ChatterboxTTS.from_pretrained(device="cpu")
+with tempfile.TemporaryDirectory() as scratch:
+    gap = pathlib.Path(scratch) / "gap.wav"
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+                    "-t", "0.3", "-sample_fmt", "s16", str(gap)], check=True)
+    for page, paragraphs in PAGES.items():
+        if only and page not in only: continue
+        parts = []
+        for i, words in enumerate(paragraphs):
+            torch.manual_seed(7)
+            wav = model.generate(voice.spoken(words), audio_prompt_path=str(voice.REFS / how["ref"]),
+                                 exaggeration=how["exaggeration"], cfg_weight=how["cfg_weight"], temperature=0.8)
+            raw = keep / f"{page}{i}.raw.wav"; torchaudio.save(str(raw), wav, model.sr)
+            part = pathlib.Path(scratch) / f"{page}{i}.wav"
+            subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", SQ + how["polish"],
+                            "-ar", "24000", "-ac", "1", "-sample_fmt", "s16", str(part)], check=True)
+            parts += [part, gap] if i < len(paragraphs) - 1 else [part]
+            print(f"{page} {i + 1}/{len(paragraphs)} {wav.shape[-1] / model.sr:.1f}s", flush=True)
+        listing = pathlib.Path(scratch) / f"{page}.txt"
+        listing.write_text("".join(f"file '{p}'\n" for p in parts))
+        subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-f", "concat", "-safe", "0", "-i", str(listing),
+                        "-c", "copy", str(out / f"golden_archer_{page}.wav")], check=True)
+        print("wrote", page, flush=True)

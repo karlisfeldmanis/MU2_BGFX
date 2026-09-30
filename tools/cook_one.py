@@ -250,6 +250,11 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
                                                scroll_per_second=scroll)
         cooked[mesh_name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,
                              "triangles": tris}
+        # A held weapon's own rig and clip (a bow's string): see cook.py's wardrobe step.
+        if area == "wardrobe" and 0 < bones <= 16:
+            clip_out = os.path.join(area_dir, "clips", mesh_name + ".muc")
+            if cook.cook_world_clip(mesh_name, path, clip_out):
+                print(f"cook_one: {mesh_name}: its own clip -> {os.path.relpath(clip_out, ROOT)}")
         print(f"cook_one: {mesh_name}: {tris} triangles -> {os.path.relpath(out_path, ROOT)}")
 
     if area == "wardrobe":

@@ -1,0 +1,47 @@
+{
+  "item": "Object20",
+  "mu_name": "Object20",
+  "mu_name_from": "Devias's object slot 19, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 19,
+  "placements": 136,
+  "profile": "world",
+  "sheets": {
+    "aurora": "dv_aurora.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "aurora": "lamplight"
+  },
+  "material_note": "aurora: violet and pink curtains fading into black - the aurora. Not a surface: drawn additively, so the black is nothing and the colour is light.",
+  "additive": [
+    "aurora"
+  ],
+  "additive_from": "ZzzObject.cpp, CreateObject, case WD_2DEVIAS: `o->BlendMesh = 0` for type 19 (:4697-4700), and the render path draws that submesh with RENDER_BRIGHT. It is the model's only mesh, so the whole curtain is light.",
+  "why_this_one": "136 of them hang 2 to 6 m over the whole map: Devias's aurora, which no earlier note had named.",
+  "animation_note": "Rigged: 7 bones, one action of 30 keys - the curtain ripples. Plays at CreateObject's 0.16; Devias's arm sets no velocity.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 64192.2,
+      "along": [
+        -14.0,
+        7.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.015,
+        0.999,
+        0.985
+      ],
+      "bake_uv": [
+        0.001,
+        0.015,
+        0.999,
+        0.985
+      ]
+    }
+  ]
+}

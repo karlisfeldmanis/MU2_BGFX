@@ -8,6 +8,7 @@
 #include "game/crowd.h"
 #include "game/figures.h"
 #include "game/world/boids.h"
+#include "game/world/doors.h"
 #include "game/world/grass.h"
 #include "game/world/lamps.h"
 #include "game/world/leaves.h"
@@ -84,7 +85,7 @@ public:
     bool characterAt(float* x, float* z) const;
 
     // Whether a point is inside a building, by MU's own test, which is blunter than anybody
-    // expects: the tile texture under it is Lorencia's interior floor. No volume and no idea
+    // expects: the tile texture under it is the map's interior floor. No volume and no idea
     // which house -- standing on that floor hides every roof in the town at once.
     bool indoors(float x, float z) const;
 
@@ -103,6 +104,8 @@ private:
     Leaves leaves_;
     Weather weather_;
     Portal portal_;
+    Doors doors_;
+    int doorSound_ = -1, gateSound_ = -1;  // world_door, world_gate
     // Held from open() so play() can load the boid's mesh and the leaf's sheet. Those two
     // pools follow the PLAYER -- they are spawned around him and exist nowhere else, which is
     // MU's own arrangement -- so they are raised when somebody is played and not when the
@@ -120,6 +123,10 @@ private:
     float focusColumn_ = 0.0f;
     float focusRow_ = 0.0f;
     bool focusSet_ = false;
+    // Devias floors its interiors with five slots rather than Lorencia's one. See indoors().
+    bool deviasFloors_ = false;
+    // The Dungeon is under a roof on every tile: no wind, a closed room, no leaves. See indoors().
+    bool underground_ = false;
 };
 
 }  // namespace mu::game

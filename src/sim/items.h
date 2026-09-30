@@ -384,7 +384,11 @@ enum class Power : uint8_t {
     Poison = 4,
     Frost = 5,
     Echo = 6,
-    Undying = 7
+    Undying = 7,
+    KeenEye = 8,
+    Bloodwell = 9,
+    Frenzy = 10,
+    Renewal = 11
 };
 struct PowerRow {
     Power power;
@@ -399,6 +403,25 @@ struct PowerRow {
 // all classes the same"): x1.2 on maximum health for each set in anything worn, armour or
 // shield. Devin's first clear pays it (sim/quests.cpp). Invention, as every rune is.
 constexpr double kUndyingHealth = 1.2;
+// The Dungeon's three, the Golden Archer's chain (the user, 2026-09-30: "same runes for all, for
+// helm, pants, boots ... life steal, mana gain back, increase attack speed, increased chance of
+// critical hit"). Every class's, in any armour's socket, as the Undying. Invention, all of it.
+// **Keen Eye** (the Catacombs' helm): critical chance, on top of luck's kLuckCritical a piece.
+constexpr double kKeenEyeCritical = 0.10;
+// **Bloodwell** (the Halls' pants): a share of every wound he deals comes back as life, spells
+// and arrows too, and a share of his mana after every kill (beside the excellent's eighth).
+constexpr double kBloodwellLife = 0.03;
+constexpr double kBloodwellMana = 0.05;
+// **Frenzy** (the Pit's boots): a blow he lands has this chance to raise his attack speed and a
+// spell's MagicSpeed by kFrenzySpeed for kFrenzyTicks -- the Ale's twenty, which rides beside it.
+constexpr double kFrenzyChance = 0.15;
+constexpr int kFrenzySpeed = 20;
+constexpr int64_t kFrenzyTicks = 60;  // three seconds of the realm's twenty ticks
+// **Renewal**, Devin's since 2026-09-30, in the Undying's place (the user: "life regeneration
+// rune which is much more important i think than just max hp"): this share of maximum health
+// every three seconds (kRecoverEveryTicks), anywhere, in a fight too -- 0.75 gives health back
+// only on a safe tile, at kHealthRecoveryInSafeZone, which it rides beside. Each one worn adds.
+constexpr double kRenewalShare = 0.03;
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
 // The Rune of Creation's row: 14, 22.

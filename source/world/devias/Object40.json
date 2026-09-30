@@ -1,0 +1,87 @@
+{
+  "item": "Object40",
+  "mu_name": "Object40",
+  "mu_name_from": "Devias's object slot 39, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 39,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "treasure_chest": "dv_treasure_chest.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "treasure_chest": "hardwood"
+  },
+  "material_note": "treasure_chest: a gold-banded treasure chest.",
+  "why_this_one": "1: a treasure chest.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches: static.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 32,
+      "area": 21922.9,
+      "along": [
+        -30.0,
+        29.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.375,
+        0.994,
+        1.02
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.716,
+        0.893
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 26,
+      "area": 35091.2,
+      "along": [
+        -30.0,
+        29.5
+      ],
+      "mu_uv": [
+        0.004,
+        0.002,
+        0.996,
+        0.979
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.974
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 8,
+      "area": 536.4,
+      "along": [
+        26.8,
+        34.4
+      ],
+      "mu_uv": [
+        0.004,
+        0.075,
+        0.194,
+        0.357
+      ],
+      "bake_uv": [
+        0.786,
+        0.336,
+        0.913,
+        0.526
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "item": "Object12",
+  "mu_name": "Object12",
+  "mu_name_from": "Devias's object slot 11, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 11,
+  "placements": 288,
+  "profile": "world",
+  "sheets": {
+    "ice_block01": "dv_ice_block01.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "ice_block01": "rock"
+  },
+  "material_note": "ice_block01: dark frozen rock, blue-grey under a skin of rime - the cliff blocks that line the chasms.",
+  "why_this_one": "Devias's second commonest object, 288 of them: the ice-rock cliffs every chasm is walled with.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches (CreateObject :4668, MoveObject :3900, RenderObjectVisual :2819): one static mesh, no light, no blend mesh.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 170,
+      "area": 485477.9,
+      "along": [
+        -147.2,
+        46.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        1.005
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.916,
+        0.996
+      ]
+    }
+  ]
+}

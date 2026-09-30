@@ -443,8 +443,12 @@ int main(int argc, char** argv) {
         return 2;
     }
     unsigned threadCount = std::thread::hardware_concurrency();
+    bool capped = false;
     for (int i = 2; i + 1 < argc; ++i) {
-        if (std::strcmp(argv[i], "--threads") == 0) threadCount = unsigned(atoi(argv[i + 1]));
+        if (std::strcmp(argv[i], "--threads") == 0) {
+            threadCount = unsigned(atoi(argv[i + 1]));
+            capped = true;
+        }
     }
     if (threadCount < 1) threadCount = 1;
 
@@ -486,7 +490,10 @@ int main(int argc, char** argv) {
     // threads and the strips' share the machine and the scheduler keeps it full. Dividing the
     // cores between the jobs left them idle whenever a fast job finished beside a slow one,
     // and with more jobs than cores the last 1024-square ran alone on one core for minutes.
-    g_stripThreads = threadCount;
+    // Unless --threads was given: then it is a ceiling on the whole machine, not a count per
+    // level -- N jobs each splitting its levels N ways ran N squared, and `--threads 3` took
+    // seven and a half cores for six minutes (2026-09-30). Capped, every job keeps one core.
+    g_stripThreads = capped ? 1 : threadCount;
 
     std::vector<Result> results(jobs.size());
     std::atomic<size_t> nextJob{0};

@@ -57,6 +57,14 @@ struct Excellence {
     // (sim::kUndyingHealth). Beside the excellent rate so the two multiply, kept apart so the
     // character window can say which is which.
     double undyingRate = 1.0;
+    // The Dungeon's runes, each set in anything worn (sim/items.h): Keen Eye's critical chance,
+    // Bloodwell's share of a wound back as life (its mana after a kill rides `killMana`), and how
+    // many Frenzies he wears, each rolling on its own.
+    double runeCritical = 0.0;
+    double lifeSteal = 0.0;
+    int frenzies = 0;
+    // Renewal's share of maximum health every three seconds, anywhere (sim::kRenewalShare).
+    double renewal = 0.0;
 };
 
 struct Fighter {

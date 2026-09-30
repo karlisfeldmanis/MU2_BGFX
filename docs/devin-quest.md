@@ -70,7 +70,15 @@ against the gaps before playing. The script is source/voice/devin/recorded_with.
 
 ## Open
 
-- Rewards: per class, like Marlon's and Peia's (the user, 2026-09-29); which items, the user
-  names at a later stage.
+- Rewards (the user, 2026-09-29): every clear pays Jewels of Bless, Zen and experience; the
+  FIRST clear also pays a socketed armour piece and a Rune of Creation. The rune is the same for
+  every class: +20% maximum HP, in an armour socket (PowerRow::weapon false), the first armour
+  rune; name proposed "Rune of the Undying", not yet confirmed. The armour is each class's top
+  0.75 set, a goal a little past the hunt's end (about level 48-50 from 30, at kExperienceRate 10):
+  Dragon Armor (knight; 59, asks 232 str 73 agi), Legendary Armor (wizard; 56, 87 str), Guardian
+  Armor (elf; 57, 88 str 157 agi) -- OpenMU Version075 Armors.cs:71,73,84 through `asks`.
+  Dragon and Legendary were not cooked in MU2_BGFX; Guardian (ArmorElf05) was. No potions.
+  Amounts are proposals, not yet agreed: 3 Bless, 100,000 Zen, 60,000 experience; the first
+  clear 250,000.
 - His position (Season 6: 181,35 SouthEast) and the user's nod on it.
 - Whether clearing the Queens should really still the planned blizzard until the repeat.

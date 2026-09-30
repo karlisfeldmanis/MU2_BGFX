@@ -1,0 +1,193 @@
+{
+  "item": "Sword10",
+  "mu_name": "Sword of Salamander",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:98 and mu.db's items row (group 0, index 9) name it the Sword of Salamander against Item/Sword10.bmd.",
+  "why_this_one": "Drop level 32: the Elite Yeti leaves it. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:98. The 0.75 table.",
+    "call": "CreateWeapon(0, 9, 0, 20, 2, 3, true, \"Sword of Salamander\", 32, 32, 46, 30, 40, 0, 0, 103, 0, 0, 0, 0, 1, 0)",
+    "group": 0,
+    "number": 9,
+    "drop_level": 32,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 32,
+    "maximum_damage": 46,
+    "attack_speed": 30,
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 103,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "skill": 20
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "ZzzCharacter.cpp:356-368: a sword, axe or mace that is TwoHand (width 2) stands PLAYER_STOP_TWO_HAND_SWORD.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "sword11_jpg": "sword11.jpg.png",
+    "sword11_tga": "sword11.tga.png"
+  },
+  "sheet_from": "Data/Item/sword11.OZJ (64x32) on 80 triangles and sword11.OZT (32x16, alpha) on 4, from MuMain; the file number runs one ahead of the model's, as MU's swords do.",
+  "material_note": "A white blade on a gold guard, and the saw-toothed edge that names it: sword11.tga is two cards of teeth, declared a cut-out. MU's alpha is feathered and the pipeline tests at 0.25, so the teeth come out hard-edged -- the same note the Elven Shield's wing carries.",
+  "cutout": [
+    "sword11_tga"
+  ],
+  "cutout_note": "Declared, not sniffed (tools/asset.sh reads `cutout` from the recipe). Without it the card draws as a solid quad.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "The white blade at steel's own 0.2 mirrored the grass and went black at five angles of eight in the studio, as the Gladius did (black at 0.2, dark grey at 0.4, right at 0.55). 0.45 keeps MU's white a polished white rather than a satin grey.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 36,
+      "area": 1013.4,
+      "along": [
+        9.1,
+        20.2
+      ],
+      "mu_uv": [
+        0.925,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.514,
+        0.242,
+        0.598,
+        0.743
+      ],
+      "note": "the crossguard, 9 to 20 along: warm gold and tan (146,104,64; 168,145,111; 193,171,134) with white highlights."
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 12,
+      "area": 1922.5,
+      "along": [
+        15.0,
+        157.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.386,
+        0.96,
+        0.605
+      ],
+      "bake_uv": [
+        0.514,
+        0.005,
+        0.995,
+        0.233
+      ],
+      "note": "the blade: white-grey from 48 to 128 (230,235,239 faces, 127-150 bevels), chroma 7."
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 292.9,
+      "along": [
+        -16.7,
+        9.1
+      ],
+      "mu_uv": [
+        0.007,
+        0.792,
+        0.367,
+        0.998
+      ],
+      "bake_uv": [
+        0.607,
+        0.638,
+        0.787,
+        0.854
+      ],
+      "note": "the grip and pommel, -15 to 1: grey-green (134,141,134) with a red jewel (104,23,30) and cream (209,208,190). Neutral in the bulk, so metal, finished rather than ground."
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 20,
+      "area": 350.2,
+      "along": [
+        10.0,
+        19.9
+      ],
+      "mu_uv": [
+        -0.03,
+        0.032,
+        0.175,
+        0.409
+      ],
+      "bake_uv": [
+        0.607,
+        0.242,
+        0.709,
+        0.629
+      ],
+      "note": "the guard's medallion and its setting, 10 to 20: tan and red-brown (126,105,78; 109,57,59), the round ornament at sword11's lower left."
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 2,
+      "area": 540.5,
+      "along": [
+        15.0,
+        113.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.017,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.505,
+        0.497
+      ],
+      "note": "the serrated teeth down one edge, on sword11.tga: white (229,234,238) with a feathered alpha, 58% cut away."
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 2,
+      "area": 531.7,
+      "along": [
+        15.0,
+        113.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.021,
+        0.999,
+        0.998
+      ],
+      "bake_uv": [
+        0.005,
+        0.506,
+        0.505,
+        0.995
+      ],
+      "note": "the teeth down the other edge, the same card."
+    }
+  ]
+}

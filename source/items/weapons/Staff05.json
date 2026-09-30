@@ -1,0 +1,186 @@
+{
+  "item": "Staff05",
+  "mu_name": "Gorgon Staff",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:156 and mu.db's items row (group 5, index 4) name it the Gorgon Staff against Item/Staff05.bmd.",
+  "why_this_one": "Drop level 52: the Ice Queen (52) is the only Devias monster that reaches it. See docs/devias-drops.md. Also the Gorgon's own staff (ZzzCharacter.cpp:14051).",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:156. The 0.75 table.",
+    "call": "CreateWeapon(5, 4, 0, 0, 2, 4, true, \"Gorgon Staff\", 52, 29, 32, 25, 65, 58, 0, 50, 0, 0, 0, 1, 0, 0)",
+    "group": 5,
+    "number": 4,
+    "drop_level": 52,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 29,
+    "maximum_damage": 32,
+    "attack_speed": 25,
+    "durability": 65,
+    "requires": {
+      "level": 0,
+      "strength": 50,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard"
+    ],
+    "skill": 0,
+    "magic_power": 58
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:389-394: a staff that is TwoHand (width 2) stands PLAYER_STOP_SCYTHE. Kept two-handed as 0.75 has it, like the Thunder Staff; the Angelic and Serpent Staves' one hand is ours (73fe60fa) and is not carried here.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "wand06": "wand06.png"
+  },
+  "sheet_from": "Data/Item/wand06.OZJ (64x64), from MuMain.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrors the grass; the Devias batch settled on 0.45 (and plate 0.5 on a pole) after the studio caught black heads and flaring shafts on all six. Set before the first look, and judged in the studio.",
+  "material_note": "The skull (80 triangles, 159,125,90 to 198,164,126) is bone; the frame round it and the foot are near-black with gold trim, plate; the shaft is the warm tan-orange strip of wand06 (180,115,59 to 211,180,136), timber.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 36,
+      "area": 2383.9,
+      "along": [
+        -84.5,
+        70.6
+      ],
+      "mu_uv": [
+        0.138,
+        0.001,
+        0.774,
+        0.913
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.986,
+        0.993
+      ]
+    },
+    {
+      "island": 1,
+      "material": "plate_steel",
+      "triangles": 29,
+      "area": 1440.2,
+      "along": [
+        58.5,
+        138.5
+      ],
+      "mu_uv": [
+        0.579,
+        0.004,
+        1.002,
+        0.969
+      ],
+      "bake_uv": [
+        0.225,
+        0.062,
+        0.56,
+        0.558
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 23,
+      "area": 384.4,
+      "along": [
+        -55.0,
+        -31.9
+      ],
+      "mu_uv": [
+        0.619,
+        0.198,
+        0.997,
+        0.955
+      ],
+      "bake_uv": [
+        0.574,
+        0.009,
+        0.886,
+        0.626
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bone",
+      "triangles": 80,
+      "area": 1860.7,
+      "along": [
+        59.7,
+        87.5
+      ],
+      "mu_uv": [
+        0.003,
+        0.387,
+        0.555,
+        0.994
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.784,
+        0.822
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 29,
+      "area": 1440.2,
+      "along": [
+        58.5,
+        138.5
+      ],
+      "mu_uv": [
+        0.579,
+        0.004,
+        1.002,
+        0.969
+      ],
+      "bake_uv": [
+        0.057,
+        0.008,
+        0.724,
+        0.724
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 23,
+      "area": 384.4,
+      "along": [
+        -55.0,
+        -31.9
+      ],
+      "mu_uv": [
+        0.619,
+        0.198,
+        0.997,
+        0.955
+      ],
+      "bake_uv": [
+        0.076,
+        0.46,
+        0.395,
+        0.894
+      ]
+    }
+  ]
+}

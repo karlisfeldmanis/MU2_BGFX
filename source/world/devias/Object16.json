@@ -1,0 +1,49 @@
+{
+  "item": "Object16",
+  "mu_name": "Object16",
+  "mu_name_from": "Devias's object slot 15, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 15,
+  "placements": 61,
+  "profile": "world",
+  "sheets": {
+    "titel_a06": "dv_titel_a06.png",
+    "titel_a03": "dv_titel_a03.png",
+    "titel_a05": "dv_titel_a05.png",
+    "sston": "dv_sston.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "titel_a06": "rock",
+    "titel_a03": "rock",
+    "titel_a05": "rock",
+    "sston": "rock"
+  },
+  "material_note": "titel_a06: a narrow carved border of knots and rings.\ntitel_a03: plain grey pitted stone.\ntitel_a05: grey stone washed pale with frost in the middle.\nsston: a square stone panel carved with a knotwork scroll.",
+  "why_this_one": "61 of them: the carved stone blocks of the walls, the other half of Object18's set.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches: static stone.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 34,
+      "area": 153389.8,
+      "along": [
+        -49.8,
+        166.7
+      ],
+      "mu_uv": [
+        0.001,
+        -1.992,
+        0.999,
+        1.972
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.915,
+        0.995
+      ]
+    }
+  ]
+}

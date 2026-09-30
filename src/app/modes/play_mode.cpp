@@ -17,11 +17,12 @@
 #include "game/shine.h"
 #include "game/world/maps.h"
 #include "gfx/views.h"
+#include "sim/gates.h"
 #include "sim/items.h"
 #include "sim/market.h"
+#include "sim/travel.h"
 
 namespace mu::app {
-
 void PlayMode::readSave(Context& ctx) {
     core::Args& args = ctx.args;
     if (!args.play) return;
@@ -70,13 +71,12 @@ void PlayMode::keep(Context& ctx) {
     now.slot = saved_.slot;
     now.world = ctx.args.world;
     now.hero = world_.played().record();
-    // On the way to another world the arguments already name it, so he is written standing on
-    // its spawn gate: the next world resumes him there, and a quit mid-load finds him there.
+    // On the way to another world the arguments already name it, so he is written standing
+    // where he comes in: the next world resumes him there, and a quit mid-load finds him there.
     if (!travelTo_.empty()) {
-        if (const game::MapRow* map = game::mapOf(travelTo_)) {
-            now.hero.column = map->arrive[0];
-            now.hero.row = map->arrive[1];
-        }
+        now.hero.column = arriveColumn_;
+        now.hero.row = arriveRow_;
+        if (arriveFaced_) now.hero.facing = arriveFacing_;
     }
     for (int key = 0; key < 5; ++key) now.quick[key] = desk_.quick(key);
     for (int key = 0; key < 6; ++key) now.bar[key] = desk_.bound(key);
@@ -182,12 +182,13 @@ bool PlayMode::open(Context& ctx) {
             core::Loading::stage("the realm", 0.48f, 0.49f);
             // Before the realm is raised, because all the arena is is the nest table the
             // realm is about to be handed. See Play::Arena.
-            if (!args.arena.empty()) {
+            if (!args.arena.empty() || args.peaceful) {
                 game::Play::Arena arena;
                 arena.breed = args.arena;
                 arena.count = args.arenaCount;
                 arena.learn = args.arenaLearn;
                 arena.undying = args.arenaUndying;
+                arena.peaceful = args.peaceful;
                 world_.played().setArena(arena);
                 world_.played().setArenaLeft(args.arenaLeft);
             }
@@ -257,6 +258,9 @@ bool PlayMode::open(Context& ctx) {
                                              world_.played().showing().table());
                 world_.played().ice().open(assets, ctx.textures,
                                            world_.played().showing().table());
+                world_.played().trapShow().open(assets, args.world, ctx.textures,
+                                                world_.played().showing().table());
+                world_.played().trapShow().stand(world_.played().realm().traps(), world_.ground());
                 world_.played().poison().open(assets, ctx.textures,
                                               world_.played().showing().table());
                 world_.played().flame().open(assets, ctx.textures,
@@ -275,8 +279,8 @@ bool PlayMode::open(Context& ctx) {
             // Hanzo's coals, into the lamps' static set before it goes to the renderer below.
             if (args.lampsOn) world_.played().lightForges(world_.lamps());
             core::Loading::stage("sounds", 0.53f, 0.58f);
-            world_.played().sound().setVolume(float(args.volume) / 100.0f);
             world_.played().openSound(assets, args.mute);
+            world_.played().sound().setVolume(float(args.volume) / 100.0f);
             core::Loading::stage("the weather", 0.58f, 0.60f);
             // And only now the air: the birds' calls come off the sound above and the leaves'
             // sheet off the showing's table. See World::raiseAirs.
@@ -323,7 +327,11 @@ bool PlayMode::open(Context& ctx) {
     // outlast the first frame, which compiles every pipeline and takes a tenth of a second.
     if (entrance_ && world_.played().isOpen()) world_.played().appear(0.3f);
     // And the map's name with him, MU's ShowMapName on entering a world.
-    if (entrance_ && world_.played().isOpen() && desk_.ready()) desk_.arrive(args.world, 0.3f);
+    if (entrance_ && world_.played().isOpen() && desk_.ready()) {
+        const sim::Body& hero = world_.played().realm().hero();
+        desk_.arrive(game::placeName(args.world, hero.column(), hero.row()), 0.3f,
+                     world_.played().zoneLevels());
+    }
 
     runScript(ctx);
 
@@ -388,6 +396,9 @@ void PlayMode::runScript(Context& ctx) {
         }
         if (!args.talk.empty()) world_.played().talkTo(args.talk);
         if (args.perch >= 0) world_.played().perch(args.perch);
+        // Once: a gate's next world is opened on these same arguments.
+        if (args.walkColumn >= 0) world_.played().walkTo(args.walkColumn, args.walkRow);
+        args.walkColumn = -1;
     }
     if (args.windows.find("inventory") != std::string::npos) desk_.setInventoryOpen(true);
     if (args.windows.find("character") != std::string::npos) desk_.setCharacterOpen(true);
@@ -554,12 +565,48 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     const double deltaSeconds = at.deltaSeconds;
     if (args.lobby && args.lobbyBack >= 0 && at.index >= args.lobbyBack) backNow_ = true;
 
+    // Through a gate on the last tick: on to the map it leads to, at the tile the realm chose
+    // there, facing the way the exit gate says (sim/gates.h).
+    int gateColumn = 0, gateRow = 0;
+    if (world_.played().isOpen() && travelTo_.empty()) {
+        if (const int32_t number = world_.played().gated(&gateColumn, &gateRow)) {
+            const sim::EnterGate* in = sim::enterGateNumbered(number);
+            const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
+            const game::MapRow* map = out ? game::mapNumbered(int(out->map)) : nullptr;
+            if (map != nullptr) {
+                travel(ctx, map->world, gateColumn, gateRow,
+                       std::atan2(float(out->dy), float(out->dx)));
+            } else {
+                core::logError("gate %d leads to a map this game has no world for", number);
+            }
+        }
+    }
+
+    // A Town Portal read in the Dungeon: to Lorencia's safe zone, its spawn gate (MapRow arrive),
+    // as OpenMU's SafezoneMap for a map with no spawn gate (BaseMapInitializer.cs:91).
+    if (world_.played().isOpen() && travelTo_.empty() && world_.played().takeHome()) {
+        if (const game::MapRow* home = game::mapNumbered(0)) travel(ctx, home->world);
+    }
+
     // --travel-at: on to the next world in the table, for a scripted run. No key does this; the
-    // gates are how a player changes map.
+    // gates above and Tab's list below are how a player changes map.
     const bool scripted = args.travelAt >= 0 && at.index >= args.travelAt;
     if (world_.played().isOpen() && travelTo_.empty() && scripted) {
         args.travelAt = -1;  // once: the next world is opened with these same arguments
         travel(ctx, game::mapAfter(args.world)->world);
+    }
+
+    // Tab's travel list (game/ui/travel.h): paid for in the realm, the map changed here as a
+    // gate's is. A Dungeon floor asked from inside the Dungeon is the same world opened again.
+    if (world_.played().isOpen() && travelTo_.empty()) {
+        const int row = world_.played().takeTravel();
+        const sim::TravelRow* to = row >= 0 ? &sim::travelAt(row) : nullptr;
+        const game::MapRow* map = to ? game::mapNumbered(int(to->map)) : nullptr;
+        if (map != nullptr) {
+            const bool faced = to->dx != 0 || to->dy != 0;
+            travel(ctx, map->world, to->column, to->row,
+                   faced ? std::atan2(float(to->dy), float(to->dx)) : 0.0f, !faced);
+        }
     }
 
     if (!savePath_.empty() &&
@@ -589,6 +636,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             float viewProjNow[16];
             bx::mtxMul(viewProjNow, view, proj);
             desk_.setView(viewProjNow);
+            desk_.setCamera(view);
+            desk_.setGround(&world_.ground());
             for (const auto& [f, k] : args.uiKeys) {
                 if (at.index == f) desk_.scriptKey(k - 1);
             }
@@ -742,9 +791,10 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // In Lorencia's safe zone MU plays Pub.mp3 while he stands on the tavern floor -- HeroTile 4,
     // which is what World::indoors asks -- and main_theme.mp3 everywhere else. Not here (the
     // user, 2026-09-27: "don't play main theme anymore in game ... but keep pub logic"), so off
-    // the tavern floor the town is silent of music; the main theme comes back for fights below.
+    // the tavern floor the town is silent of music.
     if (world_.played().isOpen()) {
         bool pub = false;
+        const char* roofTrack = nullptr;
         if (args.world == "lorencia") {
             const sim::Body& hero = world_.played().realm().hero();
             const content::Tables* tables = world_.played().realm().tables();
@@ -752,82 +802,22 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             world_.characterAt(&feetX, &feetZ);
             pub = tables && tables->grid.safe(hero.column(), hero.row()) &&
                   world_.indoors(feetX, feetZ);
+            roofTrack = "/music/Pub.mp3";
+        } else if (args.world == "devias") {
+            // Devias's theme under its roofs -- the planks and patterned floors World::indoors
+            // reads -- and silence in the snow. MU plays MUSIC_DEVIAS on the whole map
+            // (SceneManager.cpp); ours, the user's (2026-09-30: "when we go inside devias
+            // buildings play devias theme music").
+            float feetX = 0.0f, feetZ = 0.0f;
+            world_.characterAt(&feetX, &feetZ);
+            pub = world_.indoors(feetX, feetZ);
+            roofTrack = "/music/Devias.mp3";
         }
-        // Noria's own is MUSIC_NORIA in its safe zone (SceneManager.cpp:1028,
-        // `if (Hero->SafeZone) PlayMp3(MUSIC_NORIA)`). Ours instead, the user's (2026-09-29):
-        // never in town, but now and then out on the hunt when the elf is actually fighting --
-        // a fight rolls for it at most every fightRest_ seconds, it plays while blows keep
-        // landing, and goes out once the fight has been quiet a while or it has run its length.
-        // Lorencia the same, to its own main_theme.mp3 -- MU's field music off the tavern floor,
-        // brought back only for the fights (the user, 2026-09-29: "use main theme for lorencia
-        // combat"); the character screen has MuTheme instead.
-        // Off for now in both (the user, 2026-09-29: "lets dont play music at noria and
-        // lorencia for now, we figure out that later"); the rule below stands for when it
-        // returns, and the tavern's Pub.mp3 plays as before.
-        constexpr bool kHuntMusic = false;
-        const char* huntTrack = !kHuntMusic                ? nullptr
-                                : args.world == "noria"    ? "/music/Noria.mp3"
-                                : args.world == "lorencia" ? "/music/main_theme.mp3"
-                                                           : nullptr;
-        bool hunt = false;
-        if (huntTrack != nullptr) {
-            const sim::Realm& realm = world_.played().realm();
-            const sim::Body& hero = realm.hero();
-            const content::Tables* tables = realm.tables();
-            const bool town = tables && tables->grid.safe(hero.column(), hero.row());
-            // Fighting: something alive has him as its quarry and is at him, or he has an
-            // attack order on something alive.
-            bool fighting = false;
-            if (!town && hero.alive()) {
-                const sim::Request& order = realm.order();
-                if (order.kind == sim::Request::Kind::Attack) {
-                    const sim::Body* foe = realm.find(order.target);
-                    fighting = foe && foe->alive();
-                }
-                for (const sim::Body& body : realm.bodies()) {
-                    if (fighting) break;
-                    fighting = body.alive() && body.monster() && body.quarry == hero.id &&
-                               body.temper == sim::Temper::Fighting;
-                }
-            }
-            const float seconds = float(deltaSeconds);
-            fightRest_ = std::max(0.0f, fightRest_ - seconds);
-            fightQuiet_ = fighting ? 0.0f : fightQuiet_ + seconds;
-            if (town) {
-                fightMusic_ = false;
-            } else if (fightMusic_) {
-                fightPlayed_ += seconds;
-                // Out after 25 quiet seconds, or about one pass of the track whatever the fight,
-                // and then WoW's long silence -- 12 to 20 minutes -- so it stays an event (the
-                // user, 2026-09-29: "more rarely similiar like WoW").
-                if (fightQuiet_ > 25.0f || fightPlayed_ > 150.0f) {
-                    fightMusic_ = false;
-                    fightRest_ = 720.0f + float(fightSeed_ % 481u);
-                }
-            } else if (fighting && fightRest_ <= 0.0f) {
-                // Seeded from the clock: a fixed seed rolled the same misses every session, and
-                // its first two were misses, so no one heard it inside thirteen minutes.
-                if (fightSeed_ == 0) fightSeed_ = uint32_t(bx::getHPCounter()) | 1u;
-                fightSeed_ ^= fightSeed_ << 13;
-                fightSeed_ ^= fightSeed_ >> 17;
-                fightSeed_ ^= fightSeed_ << 5;
-                // The first fight a minute in always has it (the user, 2026-09-29: "i was doing
-                // combat some time but no music"); after that one fight in four, and a miss
-                // waits four minutes before the next fight may roll.
-                if (!fightHeard_ || fightSeed_ % 4 == 0) {
-                    fightHeard_ = true;
-                    fightMusic_ = true;
-                    fightPlayed_ = 0.0f;
-                } else {
-                    fightRest_ = 240.0f;
-                }
-            }
-            hunt = fightMusic_;
-        }
-        const std::string path =
-            ctx.paths.assets + (hunt ? huntTrack : "/music/Pub.mp3");
-        if ((pub || hunt) && core::fileExists(path)) world_.played().sound().music(path);
-        else if (!pub && !hunt) world_.played().sound().stopMusic();
+        // No music out on the hunt, and none for fights (the user, 2026-09-30: "we dont need
+        // fight music anymore"); Noria's MUSIC_NORIA in its safe zone is not played either.
+        const std::string path = ctx.paths.assets + (pub ? roofTrack : "");
+        if (pub && core::fileExists(path)) world_.played().sound().music(path);
+        else if (!pub) world_.played().sound().stopMusic();
     }
     // The ears, onto the camera just placed: its heading is what the stereo field turns by.
     if (world_.played().isOpen()) {
@@ -872,6 +862,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And a Flame's orange, three tiles.
         count += world_.played().flame().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count);
+        // And a Fire Trap's burst on the floor, two tiles.
+        count += world_.played().trapShow().lights(falling + count,
+                                                   gfx::Renderer::kMaxTransientLights - count);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));
@@ -978,6 +971,15 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // fifth black (GOBoid.cpp). Here the sun's split carries it like any other caster.
     world_.boids().gather(townDrawables_);
     if (casters) world_.boids().gather(townCasters_);
+    // The Dungeon's traps, posed and drawn with the scenery they stand among.
+    {
+        float feetX = 0.0f, feetZ = 0.0f;
+        world_.characterAt(&feetX, &feetZ);
+        const float hero[3] = {feetX, world_.ground().heightAt(feetX, feetZ), feetZ};
+        world_.played().trapShow().update(float(deltaSeconds), hero, ctx.renderer);
+    }
+    world_.played().trapShow().gather(townDrawables_);
+    if (casters) world_.played().trapShow().gather(townCasters_);
     if (world_.played().isOpen()) {
         float view[16];
         float proj[16];
@@ -1011,6 +1013,7 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().thunder().gather(ctx.renderer.effects());
         world_.played().blink().gather(ctx.renderer.effects());
         world_.played().ice().gather(ctx.renderer.effects());
+        world_.played().trapShow().gatherEffects(ctx.renderer.effects());
         world_.played().poison().gather(ctx.renderer.effects());
         world_.played().flame().gather(ctx.renderer.effects());
         world_.played().gatherStreak(ctx.renderer.effects());
@@ -1109,40 +1112,6 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
     if (desk_.ready()) desk_.submit(gfx::ViewHud, ctx.window.width(), ctx.window.height());
-    // The tile the character stands on, over his head: the column and row `--at`
-    // takes, so a screenshot of something to fix carries where it is. Under the
-    // curtain, over the windows' bar -- it is a note on the picture, not a window.
-    // Not while a box has the keyboard: the note sits over the middle of the screen, where the
-    // box does.
-    if (ctx.overlay.ready() && world_.played().isOpen() && !desk_.typing() &&
-        !desk_.menuUp() && !desk_.specimenOpen()) {
-        float feetX = 0.0f, feetZ = 0.0f;
-        world_.characterAt(&feetX, &feetZ);
-        const float headY = world_.ground().heightAt(feetX, feetZ) + 2.0f;
-        float view[16], proj[16], viewProj[16];
-        ctx.renderer.cameraMatrices(world_.camera(), view, proj);
-        bx::mtxMul(viewProj, view, proj);
-        const float clip[4] = {feetX, headY, feetZ, 1.0f};
-        float out[4];
-        bx::vec4MulMtx(out, clip, viewProj);
-        if (out[3] > 0.0f) {
-            const float w = float(ctx.window.width()), h = float(ctx.window.height());
-            const float px = (out[0] / out[3] * 0.5f + 0.5f) * w;
-            const float py = (0.5f - out[1] / out[3] * 0.5f) * h;
-            const sim::Body& hero = world_.played().realm().hero();
-            char label[32];
-            std::snprintf(label, sizeof label, "%d, %d", hero.column(), hero.row());
-            const float scale = 3.0f * h / 1080.0f;
-            const float across = ctx.overlay.measure(scale, label);
-            const float tall = gfx::Overlay::lineHeight(scale);
-            const float pad = 4.0f * scale;
-            ctx.overlay.begin(ctx.window.width(), ctx.window.height());
-            ctx.overlay.panel(px - across * 0.5f - pad, py - tall - pad * 0.5f,
-                              across + pad * 2.0f, tall + pad, 0xA0000000u);
-            ctx.overlay.text(px - across * 0.5f, py - tall, scale, 0xFFE8F4FFu, label);
-            ctx.overlay.submit(gfx::ViewHud);
-        }
-    }
     if (args.fps) ctx.readout.draw(ctx.overlay, ctx.window.width(), ctx.window.height());
     if (entrance_ && ctx.curtain.ready()) {
         if (at.index >= 2) entranceSeconds_ += float(deltaSeconds);
@@ -1265,12 +1234,17 @@ void PlayMode::report(Context& ctx) {
     }
 }
 
-void PlayMode::travel(Context& ctx, const std::string& world) {
+void PlayMode::travel(Context& ctx, const std::string& world, int column, int row,
+                      float facing, bool unfaced) {
     const game::MapRow* map = game::mapOf(world);
-    if (map == nullptr || world == ctx.args.world) return;
+    if (map == nullptr || (world == ctx.args.world && column < 0)) return;
     core::Args& args = ctx.args;
+    arriveFaced_ = column >= 0 && !unfaced;
+    arriveColumn_ = column >= 0 ? column : map->arrive[0];
+    arriveRow_ = column >= 0 ? row : map->arrive[1];
+    arriveFacing_ = facing;
     core::logf("travel: %s to %s, coming in at %d,%d", args.world.c_str(), world.c_str(),
-               map->arrive[0], map->arrive[1]);
+               arriveColumn_, arriveRow_);
     travelTo_ = world;
     args.world = world;
     args.play = true;
@@ -1278,8 +1252,8 @@ void PlayMode::travel(Context& ctx, const std::string& world) {
     // no save (a --frames review) has only these arguments, so the tile goes in them as well,
     // and a --fresh run stays fresh only until it has a file to resume from.
     args.atSet = true;
-    args.atColumn = float(map->arrive[0]);
-    args.atRow = float(map->arrive[1]);
+    args.atColumn = float(arriveColumn_);
+    args.atRow = float(arriveRow_);
     if (!savePath_.empty()) {
         args.savePath = savePath_;
         args.fresh = false;

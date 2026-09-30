@@ -16,6 +16,10 @@
 #include "gfx/interface.h"
 #include "sim/quests.h"
 
+namespace mu::sim {
+class Realm;
+}
+
 namespace mu::game {
 
 class Play;
@@ -44,6 +48,11 @@ public:
     const gfx::Canvas& canvas() const { return canvas_; }
     const gfx::Canvas& banner() const { return banner_; }
     bool showing() const { return !canvas_.empty(); }
+    // The quest it follows, or -1: what L opens the journal on.
+    int following() const { return quest_; }
+    // Whether a quest has a step still to kill for on the map the realm stands in: one of its
+    // counted breeds has a nest here.
+    static bool here(const sim::Realm& realm, int quest);
     bool announcing() const { return !banner_.empty(); }
     // Once, as a step struck off starts its flare: the desk plays quest_step_done on it.
     bool takeStrike() {
@@ -69,6 +78,10 @@ private:
     float counts_[sim::kQuestSteps] = {};
     float ember_[sim::kQuestSteps] = {};
     int quest_ = -1;  // the quest the tracker follows
+    // The quest his last counted kill went to: followed while it is under way and belongs to this
+    // map (or no other live one does), so fighting for the Golden Archer shows the Golden Archer's
+    // and not the first quest in the table (the user, 2026-09-30).
+    int pinned_ = -1;
 
     // Awake: a kill or a turn of the quest lifts the tracker for a few seconds, the step just
     // counted at full and the rest dimmed, then it fades away. Ready holds it up.

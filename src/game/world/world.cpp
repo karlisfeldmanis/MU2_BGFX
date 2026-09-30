@@ -91,6 +91,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
                  content::Textures& textures, int crowd, bool figures) {
     const std::string dir = core::join(assetDir, "world/" + name);
     textures_ = &textures;
+    deviasFloors_ = name == "devias";
+    underground_ = name == "dungeon";
     // Its share of the load, by what each took on a cold start (core/loading.h).
     core::Loading::stage("the land", 0.0f, 0.05f);
     if (!ground_.load(dir, name, textures)) return false;
@@ -102,8 +104,10 @@ bool World::open(const std::string& assetDir, const std::string& name,
     if (town_.isOpen()) lamps_.open(assetDir, town_, ground_, textures);
     core::Loading::stage("the town's lights and grass", 0.56f, 0.63f);
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
+    // Devias's doors, which swing and slide as he comes near. See game/world/doors.h.
+    if (town_.isOpen()) doors_.open(name, town_, ground_.metresPerTile());
     // And what rides the swaying bones: the fountain's spray, the lanterns; and the mill's fall.
-    if (town_.isOpen()) ornaments_.open(assetDir, town_, ground_, textures);
+    if (town_.isOpen()) ornaments_.open(assetDir, name, town_, ground_, textures);
     // And the shade MU hangs under each bridge. See game/world/shades.h.
     if (town_.isOpen()) shades_.open(assetDir, town_, textures);
     // The near field: the card strip, built once, and MU's own painted grass sheets for
@@ -200,7 +204,12 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
         boids_.setGlowSheet(
             textures_->load(assetDir + "/" + light->path, content::TextureRole::Albedo));
     }
-    leaves_.open(assetDir, *textures_, play_.showing().table(), name == "devias");
+    // No leaves blow underground: World2 ships no leaf sheet, and MU's weather has no arm for it.
+    if (!underground_) leaves_.open(assetDir, *textures_, play_.showing().table(), name == "devias");
+    if (doors_.isOpen()) {
+        doorSound_ = play_.sound().load("world_door", true);
+        gateSound_ = play_.sound().load("world_gate", true);
+    }
     // And the rain, which shares the leaves' slots, and the air's sounds. game/world/weather.h.
     weather_.open(name, &play_.sound(), weather);
 }
@@ -256,6 +265,22 @@ void World::update(double seconds, bool still) {
     const float pitch = kPitchDegrees * 3.14159265f / 180.0f;
     const float yaw = kYawDegrees * 3.14159265f / 180.0f;
 
+    // The Lost Tower beacon's level rule: 50, a knight's two thirds of it.
+    if (play_.isOpen()) {
+        const sim::Body& hero = play_.realm().hero();
+        ornaments_.setBeaconSeen(hero.level >= (hero.kin == sim::Kin::DarkKnight ? 33 : 50));
+    }
+    // The doors, on his feet, before the town is gathered; and their creaks where they stand.
+    if (doors_.isOpen()) {
+        doors_.update(dt, feetX, feetZ, town_);
+        if (play_.isOpen()) {
+            for (const Doors::Creak& creak : doors_.creaks()) {
+                const int sound = creak.gate ? gateSound_ : doorSound_;
+                if (sound >= 0) play_.sound().playAt(sound, creak.at[0], creak.at[1], creak.at[2]);
+            }
+        }
+    }
+
     // The roofs, on the feet the camera is framing: the character when one is played, the
     // focus when not, so `--at` inside a house shows the room as walking into it would.
     town_.setRoofsHidden(indoors(feetX, feetZ));
@@ -305,7 +330,14 @@ bool World::indoors(float x, float z) const {
     const float metresPerTile = ground_.metresPerTile();
     const int column = int(std::floor(x / metresPerTile));
     const int row = int(std::floor(-z / metresPerTile));
-    return ground_.floorAt(column, row) == kIndoorFloor;
+    const int floor = ground_.floorAt(column, row);
+    // Devias's planks and its four patterned floors, the church's marble and carpets:
+    // MuMain's HeroTile != 3 && HeroTile < 10 for WD_2DEVIAS (MainScene.cpp:81).
+    if (deviasFloors_) return floor == 3 || floor >= 10;
+    // The Dungeon has no open sky to stand under, and its slot 4 is a cobble, not a floor
+    // indoors. MuMain stops the wind by map there too: it never loads it (SceneManager.cpp:859).
+    if (underground_) return true;
+    return floor == kIndoorFloor;
 }
 
 void World::shutdown() {
@@ -314,6 +346,8 @@ void World::shutdown() {
     figures_.shutdown();
     lamps_.shutdown();
     sway_.shutdown();
+    doors_.shutdown();
+    doorSound_ = gateSound_ = -1;
     ornaments_.shutdown();
     shades_.shutdown();
     boids_.shutdown();

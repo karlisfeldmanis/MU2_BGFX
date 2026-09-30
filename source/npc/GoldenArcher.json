@@ -1,0 +1,21 @@
+{
+  "item": "GoldenArcher",
+  "mu_name": "Golden Archer",
+  "kind": "character",
+  "parts": [
+    "Skeleton02"
+  ],
+  "right_hand": "CrossBow02",
+  "slung": true,
+  "plus": {
+    "parts": 8,
+    "right_hand": 8
+  },
+  "note": "The Dungeon's quest giver (docs/golden-archer.md), MU's own NPC 236: 0.95d stands him in Lorencia at 175,120 (OpenMU Version095d/Maps/Lorencia.cs:32), not Version075. He stands at the Dungeon's arch because the user put him there (2026-09-30), and the quest he gives is ours.\n\nHe is a player in a skeleton body, the Skeleton Warrior's way: CreateMonster's case MONSTER_GOLDEN_ARCHER calls CreateCharacter(Key, MODEL_PLAYER, ...), sets SubType = MODEL_SKELETON2, Scale 1.0, Kind KIND_NPC and c->Level = 8 (ZzzCharacter.cpp:14383-14391). RenderCharacter's branch for an NPC skeleton in Lorencia draws the body with RenderPartObject at c->Level (:9345), so the body carries +8's shine, as Marlon's plate carries +7's.",
+  "parts_from": "MODEL_SKELETON2 is Data/Skill/Skeleton02.bmd, the Skeleton Archer's armoured body (source/monsters/Skeleton02.json, built by the Dungeon port 2026-09-30), drawn whole in place of the five body parts.",
+  "plus_from": "c->Level = 8, drawn by RenderPartObject(&c->Object, o->SubType, ..., c->Level, ...) at ZzzCharacter.cpp:9347. +8 lands on the first refined tier, as Marlon's +7/+8 do.",
+  "hands_from": "The Golden Crossbow +8 on his back. RenderCharacterBackItem swaps Weapon[0] for MODEL_GOLDEN_CROSSBOW (MODEL_BOW + 9, CrossBow02) at level 8 and sets bBack for an NPC skeleton in Lorencia (:15281-15288). That swap sits after `if (iType < 0) continue`, and CreateCharacterPointer clears his slots to -1 (:11768), so on MuMain's code alone it would never fire. But the user's screenshot of the live NPC (2026-09-30) shows the gold skeleton with a crossbow's limbs at his shoulders, so the server must fill the slot. `slung` keeps it on the back on any tile.",
+  "idle_from": "None named, so the stance picks it: at rest the crossbow is on his back (\"slung\", drawn only to fight) and he stands in the bare-handed PLAYER_STOP_MALE, action 1; in a fight he holds it in the crossbow's stop. He guards the arch since 2026-09-30 (the user: \"protect the gate, by one shoting monster which come close\"): src/sim/realm_tuning.h kWardens row 236.",
+  "facing_from": "AnimationCharacter forces an NPC skeleton in Lorencia to Angle z 90 every frame (ZzzCharacter.cpp:3697-3702). That is Look 5 in the spawn table, as Marlon's due east is.",
+  "playable": false
+}

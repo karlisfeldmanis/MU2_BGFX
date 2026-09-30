@@ -82,8 +82,13 @@ bool Play::useItem(int slot) {
         } else if (row && sim::portal(*row)) {
             // Read in silence: TryConsumeItem's scroll branch sends the use and plays nothing.
             // What it has is the arrival -- the hero put down at nought alpha, the warp's walls
-            // and circle under him, and sMagic, which is ours (see Play::warped).
-            warped();
+            // and circle under him, and sMagic, which is ours (see Play::warped). Or, on a map
+            // with no safe zone, the realm says he is owed Lorencia (`c`), and the mode takes him.
+            const std::vector<sim::Happening>& told = realm_.happenings();
+            if (!told.empty() && told.back().what == sim::What::Warped && told.back().c == 1)
+                homeOwed_ = true;
+            else
+                warped();
         } else {
             // The Ale is a potion to TryConsumeItem (`ITEM_APPLE <= Type <= ITEM_ALE`), so it
             // goes down with SOUND_DRINK01 like the rest.
@@ -109,7 +114,12 @@ bool Play::refine(int jewelSlot, int targetSlot) {
     const sim::Held thing =
         targetSlot >= 0 && targetSlot < sim::kSlots ? realm_.satchel()[targetSlot] : sim::Held{};
     const bool refined = realm_.refine(jewelSlot, targetSlot);
-    const int now = refined ? realm_.satchel()[targetSlot].refinement : thing.refinement;
+    // A worn thing that outgrew him is in the bag now and its slot is empty (Realm::refine); the
+    // Soul cannot miss that way, since a lower plus asks less.
+    const sim::Held& after = realm_.satchel()[targetSlot];
+    const int now = !refined ? thing.refinement
+                    : after.empty() ? thing.refinement + 1
+                                    : after.refinement;
     core::logf("window: jewel %d on %d %s (+%d -> +%d)", jewelSlot, targetSlot,
                refined ? "taken" : "refused", int(thing.refinement), now);
     if (!refined) return false;
@@ -315,8 +325,32 @@ bool Play::acceptQuest(int quest) {
     return taken;
 }
 
+bool Play::travel(int index) {
+    static const char* const kWhy[] = {"", "not opened", "already here", "dead", "level too low",
+                                       "short of zen"};
+    const sim::TravelRefusal why = realm_.travelRefusal(index);
+    const bool paid = realm_.travel(index);
+    core::logf("window: travel to %s %s", sim::travelAt(index).name,
+               paid ? "paid" : kWhy[int(why)]);
+    // A floor of this same map was set down in place by the realm; only another map is the mode's.
+    if (paid && sim::travelAt(index).map != int32_t(realm_.tables()->map)) travelled_ = index;
+    if (!paid) ui(Ui::Refused);
+    return paid;
+}
+
 bool Play::completeQuest(int quest, int choice) {
+    const size_t before = realm_.happenings().size();
     const bool paid = realm_.completeQuest(quest, choice);
+    // The experience is paid here, between ticks, and the next step clears what the realm said
+    // before update() reads it -- so each level the quest carried is taken off its word now.
+    // Owed on no kill: the first goes up in the frame the window closes, the rest after it.
+    for (size_t i = before; i < realm_.happenings().size(); ++i) {
+        const sim::Happening& happening = realm_.happenings()[i];
+        if (happening.what == sim::What::Levelled && happening.who == realm_.hero().id) {
+            ++levelsOwed_;
+            levelOn_ = 0;
+        }
+    }
     core::logf("window: hand in quest %d, choice %d, %s", quest, choice,
                paid ? "paid" : "refused (not ready, no choice, or no room)");
     // The user's stinger, under the "Quest complete" banner the tracker raises this same frame,

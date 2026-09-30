@@ -1,0 +1,133 @@
+{
+  "item": "Object21",
+  "mu_name": "Object21",
+  "mu_name_from": "Devias's object slot 20, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 20,
+  "placements": 6,
+  "profile": "world",
+  "sheets": {
+    "wall_door01": "dv_wall_door01.png",
+    "wall_door02": "dv_wall_door02.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "wall_door01": "plank",
+    "wall_door02": "wrought_iron"
+  },
+  "material_note": "wall_door01: a dark plank door leaf.\nwall_door02: its iron lion-head knocker and ring.",
+  "why_this_one": "6: swinging doors.",
+  "effects_note": "MoveObject, case WD_2DEVIAS (:3918-3963): swings open by up to 100 degrees as the hero comes within 200 units, SOUND_DOOR01, and eases shut. Built as a model now; the swing is not in MU2_BGFX yet and it stands closed.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 64,
+      "area": 147274.5,
+      "along": [
+        -24.1,
+        24.3
+      ],
+      "mu_uv": [
+        -0.364,
+        -1.28,
+        1.364,
+        1.775
+      ],
+      "bake_uv": [
+        0.009,
+        0.008,
+        0.924,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 42,
+      "area": 668.6,
+      "along": [
+        29.7,
+        32.7
+      ],
+      "mu_uv": [
+        0.632,
+        0.662,
+        0.96,
+        0.989
+      ],
+      "bake_uv": [
+        0.704,
+        0.009,
+        0.783,
+        0.342
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 22,
+      "area": 1364.1,
+      "along": [
+        13.7,
+        41.9
+      ],
+      "mu_uv": [
+        0.109,
+        0.009,
+        0.718,
+        0.698
+      ],
+      "bake_uv": [
+        0.009,
+        0.406,
+        0.446,
+        0.591
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 22,
+      "area": 1364.1,
+      "along": [
+        -42.0,
+        -13.8
+      ],
+      "mu_uv": [
+        0.109,
+        0.009,
+        0.718,
+        0.698
+      ],
+      "bake_uv": [
+        0.009,
+        0.489,
+        0.211,
+        0.637
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 42,
+      "area": 668.6,
+      "along": [
+        -32.8,
+        -29.8
+      ],
+      "mu_uv": [
+        0.632,
+        0.662,
+        0.96,
+        0.989
+      ],
+      "bake_uv": [
+        0.304,
+        0.171,
+        0.777,
+        0.786
+      ]
+    }
+  ]
+}

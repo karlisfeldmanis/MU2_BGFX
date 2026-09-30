@@ -93,5 +93,9 @@
     "39": 0.22,
     "41": 0.18
   },
+  "close_loops": {
+    "6": [2]
+  },
+  "close_loops_note": "Ours, not MU's, and asked for by the user one clip at a time (the players' actions.json close_loop is the same departure). Keyed by MONSTER_MODEL_ as walk_overrides is, the action numbers to close. 6 is the Larva: its walk (action 2) is LockPositions and its last key is not a copy of its first -- the grub's root drops 8 units and Box08, Box07 and Box09 snap 35, 20 and 15 degrees in one frame at every wrap, which at 0.6 is two and a half times a second and read as the Larva stuttering (the user, 2026-10-01: 'larva is moving wierd, like shuttering'). close_loop gives it the free action's closing key, so the wrap is one more interval of movement rather than a cut.",
   "walk_overrides_note": "Set outright after the multiplier pass, so an override discards whatever the multiplier did rather than compounding with it. Two are Lorencia's: the Budge Dragon flaps slower than the default and the Spider skitters at 1.2 — thirty keys a second, more than three times the Giant's rate, over a five-key cycle. It is as fast as it sounds, and it is what the client does. The table is the whole of OpenMonsterModel's switch, keyed by the MONSTER_MODEL_ enum rather than by name. Until Noria it held Lorencia's two correctly and four others one enum off - Cyclops at 11 for 10, Worm at 14 for 17, Larva at 16 for 6 - and none of those models was built, so nothing had played wrong. Noria's three are the Goblin at 19 (0.6), the Chain Scorpion at 20 (0.4) and the Beetle Monster at 21 (0.5)."
 }

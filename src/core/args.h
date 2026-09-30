@@ -154,6 +154,7 @@ struct Args {
     int arenaCount = 1;
     int arenaLearn = 0;  // `--arena-learn N`: the arena's hero is taught skill N
     bool arenaUndying = false;  // `--arena-undying`: the arena's hero is never felled
+    bool peaceful = false;      // `--peaceful`: no nests on the map (Play::Arena::peaceful)
     // The character's file. Empty means the default (game/save.cpp) for a played run and no
     // file at all for a review run (--frames): a scripted fight must not overwrite the
     // player's hero, nor start from wherever he last stood. `--fresh` ignores what is there
@@ -290,7 +291,8 @@ struct Args {
     bool entrance = false; // --entrance: the fade-up and the character's dissolve in a --frames run
     std::string talk;      // walk to this townsperson (by a piece of his name) at the start
     bool questReady = false;  // --quest-ready: every quest Ready, the hand-in's demo; no save
-    int perch = -1;        // walk to this perch (an index into the tables' perches) and take it
+    int walkColumn = -1, walkRow = -1;  // --walk-to: one walk to this tile at the start
+    int perch = -1;       // walk to this perch (an index into the tables' perches) and take it
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.
     std::string pick;

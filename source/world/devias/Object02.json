@@ -1,0 +1,45 @@
+{
+  "item": "Object02",
+  "mu_name": "Object02",
+  "mu_name_from": "Devias's object slot 1, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 1,
+  "placements": 8,
+  "profile": "world",
+  "sheets": {
+    "sston": "dv_sston.png",
+    "sston2": "dv_sston2.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "sston": "rock",
+    "sston2": "snow"
+  },
+  "material_note": "sston: carved stone.\nsston2: flat white - snow on it.",
+  "why_this_one": "8: carved stones.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches: static.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 44,
+      "area": 123849.7,
+      "along": [
+        -76.6,
+        75.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.703
+      ]
+    }
+  ]
+}

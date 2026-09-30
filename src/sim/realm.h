@@ -36,6 +36,7 @@
 #include "sim/route.h"
 #include "sim/rules.h"
 #include "sim/skills.h"
+#include "sim/travel.h"
 #include "sim/vault.h"
 
 namespace mu::sim {
@@ -84,7 +85,8 @@ enum class What : uint8_t {
     Repaired,  // a: the slot, or -1 for all of them, b: the Zen paid, c: pieces put right
     Refined,   // a jewel spent on a thing: a: its slot, b: the plus it had, c: the plus it has
     Soused,    // an Ale gone down: a: the ticks it lasts, b: the swing's ticks now
-    Warped,    // a Town Portal Scroll read: a: the column he stands on, b: the row
+    Warped,    // a Town Portal Scroll read: a: the column he stands on, b: the row; c: 1 when
+               // the map has no safe zone and he is owed Lorencia (the Dungeon)
     Loosed,    // a spell let go at the bottom of its clip: a: its number, b: the ticks it
                // will be in the air, whom: at whom. The `Hit` follows when it arrives.
     Blinked,   // a Teleport put him down: a: the column, b: the row
@@ -102,8 +104,17 @@ enum class What : uint8_t {
     Arrowless, // she drew and found no ammunition in hand or bag, and the attack stopped:
                // MuMain's "no more arrows" (CheckArrow). a: 1 for arrows, 2 for bolts
     Dismissed, // her summon gone without a blow: recast, or her death (Realm::dismiss)
+    Gated,     // he stepped into an enter gate and goes through it (sim/gates.h): a: the enter
+               // gate's number, b: the column he comes out on, c: the row. The realm stops him
+               // there; changing the map is the game's.
+    Barred,    // an enter gate he is too low for: a: its number, b: the level it asks.
+               // MuMain's "Only characters over level %d can enter".
     PetLost,   // his pet's life ran out and it is gone from slot 8 (Player.cs:1991-2001):
                // a: the item row
+    Climbed,   // through an enter gate to another floor of this same map (the Dungeon's
+               // stairs): a: the enter gate's number, b: the column he is put down on, c: the row
+    Trapped,   // a Dungeon trap fired at him (sim/traps.h): a: the damage, 0 on a miss, b: the
+               // trap's index in traps(), c: his health left. `who` is the hero.
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -175,6 +186,20 @@ struct Happening {
     float x = 0.0f, y = 0.0f;
 };
 
+// Running. The user's rule (2026-09-30), and not MU's: out of combat and off a safe tile every
+// class runs, at once, with the weapon on his back (a Mixamo run, action284); in combat he
+// walks with it drawn, and in town he walks. The speed is a notch under MU's: CharacterMoveSpeed
+// gives 15 against the walk's 12 (ZzzCharacter.cpp:6337-6343), a quarter faster over the
+// ground, and the user found that 'little bit to fast'. **ours**: 14.
+constexpr float kRunFactor = 14.0f / 12.0f;
+// How long a fight holds him in it after the last thing that says he is in one: a monster
+// chasing or fighting him, an attack order, a blow or a cast in the air. **invention**, so a
+// pause between two blows does not flip him into the run and back.
+constexpr int kCombatTicks = 60;
+// And how near a chasing monster must be to count, in tiles. **invention**: one that saw him
+// across the field is not yet a fight, and he may outrun it.
+constexpr float kCombatReach = 4.0f;
+
 // A body on the map: the player, or one monster. One struct for both, because the fight reads
 // the same six numbers off either side and a second body type is a second damage path.
 struct Body {
@@ -201,6 +226,9 @@ struct Body {
     float sdCarry = 0.0f;  // the fraction of a point a recovery tick owes and did not give
     float manaCarry = 0.0f;  // and the same for mana, whose share of a small pool is under one
     float healthCarry = 0.0f;  // and for health, which comes back in a safe zone alone
+    // And Bloodwell's, apart: recovery lays healthCarry at nought every three seconds off a
+    // safe tile, which ate a rune's share of every small wound before it made a point.
+    float stealCarry = 0.0f;
     Fighter stats;
     // What the player's worn pieces add, off the satchel at the last rearm: the armour and
     // shield's defence with their plus counted, and the weapon's plus on its damage band.
@@ -251,6 +279,10 @@ struct Body {
     size_t onStep = 0;
     bool walking = false;
     float speed = 0.125f;  // tiles a tick: one over the breed's own moveTicks
+    // The player's only: whether this tick's walk is a run (see kRunFactor), and the tick his
+    // fight lets go of him (kCombatTicks).
+    bool running = false;
+    int64_t combatUntil = 0;
 
     Temper temper = Temper::Asleep;
     uint32_t quarry = 0;  // an id, 0 for nobody
@@ -307,6 +339,9 @@ struct Body {
     // the boon and not through it, because the two are different effects in OpenMU (subtypes
     // 54 and the skill's own) and a guard raised with an Ale in him keeps both.
     int64_t aleUntil = 0;
+    // Until when a Frenzy rune's speed stands on him: kFrenzySpeed more attack and casting speed,
+    // read by `reswing` and `clipTicksOf`, beside the Ale's.
+    int64_t frenzyUntil = 0;
     // Greater Damage on her: the bonus reckoned at the cast, and the tick it lapses.
     int32_t might = 0;
     int64_t mightUntil = 0;
@@ -372,8 +407,7 @@ struct Body {
     int32_t summonedBy = 0;
 
     bool alive() const { return health > 0; }
-    bool monster() const { return !player && warden < 0 && summoner == 0; }
-    int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
+    bool monster() const { return !player && warden < 0 && summoner == 0; }    int column() const { return int(x + (x < 0.0f ? -0.5f : 0.5f)); }
     int row() const { return int(y + (y < 0.0f ? -0.5f : 0.5f)); }
 };
 
@@ -410,6 +444,8 @@ struct HeroRecord {
     Held slots[kSlots];
     // Every quest's progress, by sim/quests.h's index.
     QuestProgress quests[kQuests];
+    // The travel list's rows he has opened, a bit a row (sim/travel.h).
+    uint32_t found = 0;
 };
 
 // What the game asks the sim for. Nothing here is a skill, and that is on purpose: PLAN.md
@@ -533,6 +569,8 @@ public:
     bool useItem(int slot);
     // Whether an Ale stands on him, and the ticks it has left.
     int64_t aleLeft() const { return std::max<int64_t>(0, bodies_[0].aleUntil - tick_); }
+    // And a Frenzy's, the Dungeon's rune (sim::kFrenzyTicks).
+    int64_t frenzyLeft() const { return std::max<int64_t>(0, bodies_[0].frenzyUntil - tick_); }
     // A jewel let go over a thing: the Bless or the Soul, from a bag slot, onto a thing carried
     // or worn. Refused, whole and silent, where `refinable` says no. Otherwise the jewel is
     // spent whatever the roll gives, and the thing comes back at its new plus: OpenMU's
@@ -657,6 +695,10 @@ public:
     // Whether it waits on another quest (QuestRow::afterAny): never taken, and none of those
     // handed in yet.
     bool questLocked(int index) const;
+    // The quest a giver stands behind now, or -1. One for most; a chain for the Golden Archer
+    // (the Dungeon's three floors, quests.cpp), which shows the link under way or ready, else
+    // the first one offered and not handed in, else one come back round, else the last handed in.
+    int questHere(int32_t giver) const;
     // The wall clock, in unix seconds, which a repeating quest waits on. Handed in by the game;
     // a run that never sets it (the headless hunt) never sees a quest come back.
     void setWallClock(int64_t unixSeconds) { wall_ = unixSeconds; }
@@ -668,6 +710,27 @@ public:
     // Hand in, at the giver: ready, the choice his class may take (or -1 when none is offered
     // him), and room in the bag for all of it before anything is given. Pays and rests it.
     bool completeQuest(int index, int choice);
+    // ---- travel (sim/travel.h) ---------------------------------------------------------------
+    // The rows he has opened, a bit a row: his birth town's, each town whose giver he has spoken
+    // to, each giverless map he has stood in.
+    uint32_t found() const { return found_; }
+    // Why a trip on that row would be refused now, or None.
+    TravelRefusal travelRefusal(int index) const;
+    // The quest a row waits on (TravelRefusal::Quest): a Dungeon floor's link of the Golden
+    // Archer's chain, the n-th floor the n-th link; -1 for a row that waits on none.
+    int travelQuest(int index) const;
+    // The row he is standing in on a map of several (which of the Dungeon's floors), or -1.
+    int travelFloor() const;
+    // Pays for it and puts down whatever he had open; the map change is the game's. Refused whole
+    // for any reason travelRefusal gives.
+    bool travel(int index);
+    // Put him down on another floor of the map he is on -- the Dungeon's stairs, and any trip
+    // that lands on this same map -- at once, as a Town Portal does: stopped, nothing selected,
+    // the monsters on him losing him, her summon dismissed, facing (dx, dy) as sim/gates.h
+    // stores one, on the nearest standable tile to (column, row). Says What::Climbed with
+    // `gate` (-1 when no gate took him), which the game draws as a warp's landing.
+    void setHeroDown(int column, int row, int dx, int dy, int gate = -1);
+
     // Laid on the realm from the save, or emptied. Never refused: it is the account's.
     void restoreVault(const Vault& saved) { vault_ = saved; }
     // Bag to vault: a bag slot (never a worn one, as a sale is never a worn one) to a vault
@@ -688,6 +751,15 @@ public:
     int64_t tick() const { return tick_; }
     const std::vector<Happening>& happenings() const { return happenings_; }
     const std::vector<Body>& bodies() const { return bodies_; }
+    // The map's traps (sim/traps.h), raised with the realm. Not bodies: nothing targets them,
+    // they never move and never die, and they fire on their own clock (realm_traps.cpp).
+    struct Trap {
+        int32_t number = 0;
+        int32_t column = 0, row = 0;
+        int32_t dx = 0, dy = 0;
+        int64_t firesAt = 0;
+    };
+    const std::vector<Trap>& traps() const { return traps_; }
     // Her summon's body, alive or dormant, or null before `raise` (realm_summon.cpp).
     const Body* summoned() const {
         return summonSlot_ >= 0 ? &bodies_[size_t(summonSlot_)] : nullptr;
@@ -820,6 +892,8 @@ private:
     // The town's guards: raised off the folk table once the monsters are placed, and each tick
     // looking for a monster near his post, going for it, and walking back when it is dead.
     void raiseWardens();
+    void raiseTraps();
+    void fireTraps();
     void watch(Body& guard);
     // A townsperson's rounds (realm_folk.cpp, kStrollers): raised beside the guards, as a body
     // with `warden` naming his folk row, and walked stop to stop -- standing still and turning
@@ -844,6 +918,9 @@ private:
     std::pair<int, int> haven();
     // Puts him down on a tile with nothing in hand: no walk, no order, no blow, no counter.
     void setDown(Body& hero, int column, int row);
+    // MuMain's CheckGate on the tile he has just stepped onto: through an enter gate when his
+    // level allows (`Gated`, and true), told he is too low when it does not (`Barred`).
+    bool throughGate(Body& hero);
     void rearm(Body& hero);
     // A blow's wear on the player's gear: `took` the health a blow took off him, which wears one
     // defending piece; `landed` a blow of his that did harm, which wears the weapon.
@@ -955,6 +1032,9 @@ private:
     // The sockets' own (sim/items.h): whether a drop rolls them, and a power's chance and pick.
     // Off `dice_`, the one extra draw a drop moved every roll after it.
     Random runeDice_{0};
+    // The traps' own, as the guards' are: a run on another map is not moved by the Dungeon's.
+    Random trapDice_{0};
+    std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;
     // The fraction of a point each worn slot has lost and not yet shown, beside the item it
@@ -968,6 +1048,14 @@ private:
     Vault vault_;
     QuestProgress quests_[kQuests];
     int questing_ = -1;
+    uint32_t found_ = 0;  // the travel rows he has opened (sim/travel.h)
+    // On a map of several rows, which row's floor each tile is on (row-major, -1 for none): the
+    // tiles walkable from that row's landing, flood-filled once as the map is raised.
+    std::vector<int8_t> floors_;
+    // Opens every row of `map`; and the rows a character is raised or restored with -- his birth
+    // town's, and this map's when nobody here gives a quest (realm_travel.cpp).
+    void discover(int32_t map);
+    void settleFound(uint32_t saved);
     // The walkers on their rounds, by body id: which stop, and when he leaves it.
     struct Stroller {
         uint32_t id = 0;

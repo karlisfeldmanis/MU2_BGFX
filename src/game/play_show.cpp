@@ -652,7 +652,8 @@ void Play::follow(float seconds) {
         // the nominal speed -- read nominal, an iced walk took every tick for an arrival and
         // strode at full pace over half the ground, moonwalking.
         const float pace =
-            body->speed * (body->chilledUntil > realm_.tick() ? sim::kChillFactor : 1.0f);
+            body->speed * (body->chilledUntil > realm_.tick() ? sim::kChillFactor : 1.0f) *
+            (body->running ? sim::kRunFactor : 1.0f);
         const float covered = one.groundSpeed * float(kTickSeconds) / metresPerTile;
         const bool jumped = covered > 2.0f;
         float through = jumped ? 1.0f : through_;
@@ -689,8 +690,13 @@ void Play::follow(float seconds) {
         // `place` moves the weapon; the clip below is the other half of the same rule, and the
         // 0.18 s crossfade in Figure::play is what makes the change a blend rather than a cut.
         // And a guard's salute slings his weapon for its length (Play::update, Shout::Salute).
+        // And the player carries it slung out of combat as well, running or standing, and draws
+        // it when a fight takes him (the user, 2026-09-30; sim::kCombatTicks).
         one.stowed = std::max(0.0f, one.stowed - seconds);
-        const bool safe = tables_.grid.safe(body->column(), body->row()) || one.stowed > 0.0f;
+        const FigureBody* dressed = one.figure.body();
+        const bool safe = tables_.grid.safe(body->column(), body->row()) || one.stowed > 0.0f ||
+                          (body->player && body->combatUntil <= realm_.tick()) ||
+                          (dressed && dressed->slungAtRest && body->temper != sim::Temper::Fighting);
         one.figure.place(position, one.yaw, safe);
         {
             const FigureBody* look = one.figure.body();
@@ -735,10 +741,11 @@ void Play::follow(float seconds) {
             continue;
         }
         // A flinch holds the same way, and a step ends it -- a monster's chase goes on through
-        // it, as MU's MONSTER01_SHOCK gives way to the walk. Not the hero's: Play::flinch has
-        // halted him, and what is left of his walk is the drawing reaching the tile he stood on.
+        // it, as MU's MONSTER01_SHOCK gives way to the walk. The hero's ends on a walk the realm
+        // says he is taking, which is a click he made through it (Play::leftClick); not on the drawing
+        // still reaching the tile Play::flinch halted him on, which is `moving` without `walking`.
         one.shocked = std::max(0.0f, one.shocked - seconds);
-        if (one.shocked > 0.0f && moving && !body->player) one.shocked = 0.0f;
+        if (one.shocked > 0.0f && moving && (!body->player || body->walking)) one.shocked = 0.0f;
         if (one.shocked > 0.0f) {
             one.clipRate = 1.0f;
             continue;
@@ -751,10 +758,14 @@ void Play::follow(float seconds) {
         // as he steps out. Both walks count as "the walk" everywhere below -- stepping over
         // the zone's edge mid-stride is a change of walk, crossfaded and resumed at the same
         // phase, and must not read as stopping and setting off again.
-        const int walkHere =
-            (safe && look->walkSafeClip >= 0) ? look->walkSafeClip : look->walkClip;
+        // And the run is a third walk, which the realm decides (sim::Body::running), turned into
+        // and out of with the same phase-kept crossfade as the zone's edge.
+        const int walkHere = (body->running && look->runClip >= 0)   ? look->runClip
+                             : (safe && look->walkSafeClip >= 0) ? look->walkSafeClip
+                                                                 : look->walkClip;
         const auto isWalk = [&](int c) {
-            return c >= 0 && (c == look->walkClip || c == look->walkSafeClip);
+            return c >= 0 &&
+                   (c == look->walkClip || c == look->walkSafeClip || c == look->runClip);
         };
         // Walking is what the drawn body is doing, and nothing else sets a walk going: a body
         // the sim has walking but still turning on the spot stays in its idle until the first
@@ -809,6 +820,17 @@ void Play::follow(float seconds) {
                 // fade is only long enough not to be a cut: any longer is feet sliding under a
                 // body that is no longer going anywhere.
                 one.figure.play(clip, false, isWalk(was) ? kHalting : -1.0f);
+                // And the arrival's own cry: the bottom of SetPlayerStop, which a monster runs
+                // once when its walk ends (ZzzCharacter.cpp:429-443, from MovePath at :6444),
+                // one in sixteen, once -- not scaled by the frame, as it is one call.
+                if (isWalk(was) && !body->player && one.cryMove >= 0) {
+                    wanderDice_ ^= wanderDice_ << 13;
+                    wanderDice_ ^= wanderDice_ >> 17;
+                    wanderDice_ ^= wanderDice_ << 5;
+                    if ((wanderDice_ >> 8) % 16u == 0u) {
+                        emit(one.cryMove, one.crown[0], one.crown[2], one.id);
+                    }
+                }
             }
         }
 
@@ -854,7 +876,9 @@ void Play::follow(float seconds) {
             // with two sets of feet, and pacing the unarmed one by the armed one's stride
             // would slide it.
             const float plant =
-                (one.figure.clip() == look->walkSafeClip && look->walkSafeClip != look->walkClip
+                (one.figure.clip() == look->runClip
+                     ? look->plantSpeedRun
+                 : one.figure.clip() == look->walkSafeClip && look->walkSafeClip != look->walkClip
                      ? look->plantSpeedSafe
                      : look->plantSpeed) *
                 look->scale;
@@ -881,6 +905,15 @@ void Play::focus(float* column, float* row) const {
     const Drawn& hero = drawn_[0];
     *column = hero.wasX + (hero.nowX - hero.wasX) * through_;
     *row = hero.wasY + (hero.nowY - hero.wasY) * through_;
+}
+
+bool Play::shownAt(uint32_t id, float* column, float* row) const {
+    const size_t at = size_t(id) - 1;
+    if (at >= drawn_.size() || drawn_[at].id != id) return false;
+    const Drawn& one = drawn_[at];
+    *column = one.wasX + (one.nowX - one.wasX) * through_;
+    *row = one.wasY + (one.nowY - one.wasY) * through_;
+    return true;
 }
 
 void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gfx::Drawable>& out,

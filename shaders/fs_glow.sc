@@ -29,6 +29,6 @@ void main()
 	vec4 sheet = texture2D(s_albedo, uv);
 	// A figure's w is 2 + its fade (common.sh's figureFade), which was 1.0 here before there
 	// was a fade; so a figure's glow is its fade, and comes in with it.
-	float level = v_light.w >= 2.0 ? v_light.w - 2.0 : v_light.w;
+	float level = v_light.w >= 2.0 ? figureFade(v_light.w) : v_light.w;
 	gl_FragColor = vec4(sheet.rgb * (sheet.a * level * u_material.z), 1.0);
 }

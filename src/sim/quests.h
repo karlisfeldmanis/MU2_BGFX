@@ -23,7 +23,7 @@
 namespace mu::sim {
 
 // How many quests the table holds. A save carries one progress a quest by this index.
-inline constexpr int kQuests = 3;
+inline constexpr int kQuests = 6;
 inline constexpr int kQuestSteps = 9;
 inline constexpr int kQuestChoices = 7;
 inline constexpr int kQuestPaid = 6;
@@ -88,20 +88,21 @@ struct QuestRow {
     // Offered only once one of these quests has been handed in (bit i, quest i); 0 for none.
     // Until then the giver wears a grey "!" and says he is not ready for him (Realm::questLocked).
     uint32_t afterAny = 0;
-    int64_t experience = 0;
-    int64_t zen = 0;
-    // Every one of these his class is paid (questPays), all of them.
     // Who was born in the giver's town (1 << sim::Kin, each class its starting map). One born
     // elsewhere may take the quest only if `strangers`, and is then never paid the first clear's
     // things or experience -- the user's rule of 2026-09-29: an elf may clear Lorencia for its
-    // jewels, Zen and experience, but the weapon and the rune are Marlon's to his own, and Noria's
-    // quest is the elves' alone. `stranger` is what the giver says to one he will not serve.
+    // jewels, Zen and experience, but the weapon and the rune are Marlon's to his own; Peia's the
+    // same for a knight or a wizard (2026-09-30). `stranger` is what the giver says to one he
+    // will not serve.
     uint8_t natives = 0;
     bool strangers = false;
     const char* stranger = "";
-    QuestItem paid[kQuestPaid];
+    int64_t experience = 0;
     // Paid in place of `experience` on a native's first clear.
     int64_t firstExperience = 0;
+    int64_t zen = 0;
+    // Every one of these his class is paid (questPays), all of them.
+    QuestItem paid[kQuestPaid];
     int paidCount = 0;
     // One of these, the player's choice, from those his class may use. The table lists every
     // class's candidates; the dialog shows his. None, when the whole reward is `paid`.
@@ -109,9 +110,6 @@ struct QuestRow {
     int choiceCount = 0;
 };
 
-const QuestRow& questAt(int index);
-// The quest a giver hands out, by NPC number, or -1. One a giver.
-int questOf(int32_t giver);
 inline bool questNative(const QuestRow& row, int kin) { return (row.natives >> kin) & 1u; }
 // Whether a class may take the quest at all.
 inline bool questOpen(const QuestRow& row, int kin) { return row.strangers || questNative(row, kin); }
@@ -123,6 +121,9 @@ inline int64_t questExperience(const QuestRow& row, bool first) {
     return first && row.firstExperience > 0 ? row.firstExperience : row.experience;
 }
 
+const QuestRow& questAt(int index);
+// The quest a giver hands out, by NPC number, or -1. One a giver.
+int questOf(int32_t giver);
 
 enum class QuestState : uint8_t {
     Untaken = 0,

@@ -16,7 +16,7 @@
 #define MU2_LIGHTS_SH
 
 uniform vec4 u_lampGrid;    // xy: the grid's corner, world x and z  z: cells a metre  w: cells a side
-uniform vec4 u_lampParams;  // x: lamp_strength  y: 1 when any light is set  z: transient count  w: unused
+uniform vec4 u_lampParams;  // x: lamp_strength  y: 1 when any light is set  z: transient count  w: lamp_shadow
 
 SAMPLER2D(s_lamps, 13);
 SAMPLER2D(s_lampGrid, 14);

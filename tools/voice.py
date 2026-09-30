@@ -69,6 +69,19 @@ VOICES = {
     "devin": dict(ref="devin_sv_dramatic.wav", exaggeration=0.9, cfg_weight=0.3,
                   polish="asetrate=24000*0.89,aresample=24000,atempo=1.1236,"
                          "aecho=0.8:0.5:70|140:0.18|0.1,bass=g=3:f=100," + POLISH),
+    # The Golden Archer: a mythical skeleton (the user, 2026-09-30), the second of five finishes
+    # tried, "two voices". Kokoro-82M's bm_george (Apache 2.0), read slow and a little dramatic,
+    # three semitones down (asetrate 0.84) and a touch slower (atempo 1.10, not 1.19). Under it
+    # the same voice an octave lower at 0.45: the undertone. Then two short combs, 11 and 17 ms,
+    # for a hollow, boxed ring, and a stone room's tail at 190, 380 and 620 ms.
+    "golden_archer": dict(ref="bm_george.wav", exaggeration=0.55, cfg_weight=0.3,
+                          polish="asetrate=24000*0.84,aresample=24000,atempo=1.10,asplit[a][b];"
+                                 "[b]asetrate=24000*0.595,aresample=24000,atempo=1.681,volume=0.45[o];"
+                                 "[a][o]amix=inputs=2:normalize=0,highpass=f=60,"
+                                 "aecho=0.8:0.7:11|17:0.30|0.20,"
+                                 "aecho=0.8:0.55:190|380|620:0.22|0.12|0.06,"
+                                 "acompressor=threshold=0.15:ratio=2.5:attack=10:release=200,"
+                                 "apad=pad_dur=0.6,loudnorm=I=-16:TP=-1.5:LRA=11"),
 }
 
 

@@ -79,6 +79,8 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         material.calibrated = (flags & 8) != 0;
         const bool translucent = (flags & 4) != 0;
         const bool scrolls = (flags & 16) != 0;
+        const bool pulses = (flags & 32) != 0;
+        const bool casts = (flags & 64) != 0;
         reader.readString(material.name);
         reader.readString(material.albedo);
         reader.readString(material.normal);
@@ -88,6 +90,15 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         reader.read(material.metalFactor);
         if (translucent) reader.read(material.translucency);
         if (scrolls) reader.read(material.scrollPerSecond);
+        // Bit 5, an item glow's pulse (a, b) and jitter: three floats after the scroll.
+        if (pulses) {
+            material.itemGlow = true;
+            reader.read(material.pulse[0]);
+            reader.read(material.pulse[1]);
+            reader.read(material.jitter);
+        }
+        // Bit 6, a glow that casts the sun's shadow (the Ice Monster): its strength.
+        if (casts) reader.read(material.glowShadow);
         if (reader.failed()) break;
     }
 

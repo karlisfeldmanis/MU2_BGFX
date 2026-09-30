@@ -1,0 +1,295 @@
+{
+  "item": "Sword12",
+  "mu_name": "Legendary Sword",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:100 and mu.db's items row (group 0, index 11) name it the Legendary Sword against Item/Sword12.bmd.",
+  "why_this_one": "Drop level 44: the Ice Queen (52) is the only Devias monster that reaches it. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:100. The 0.75 table.",
+    "call": "CreateWeapon(0, 11, 0, 20, 2, 3, true, \"Legendary Sword\", 44, 56, 72, 20, 54, 0, 0, 120, 0, 0, 0, 0, 1, 0)",
+    "group": 0,
+    "number": 11,
+    "drop_level": 44,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 56,
+    "maximum_damage": 72,
+    "attack_speed": 20,
+    "durability": 54,
+    "requires": {
+      "level": 0,
+      "strength": 120,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "skill": 20
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "ZzzCharacter.cpp:356-368: a sword, axe or mace that is TwoHand (width 2) stands PLAYER_STOP_TWO_HAND_SWORD.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "sword13": "sword13.png"
+  },
+  "sheet_from": "Data/Item/sword13.OZJ (128x64), from MuMain; the file number runs one ahead of the model's.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrors the grass; the Devias batch settled on 0.45 (and plate 0.5 on a pole) after the studio caught black heads and flaring shafts on all six. Set before the first look, and judged in the studio.",
+  "material_note": "The white serrated blade (255,254,250 faces over a 193 bevel) is steel across both halves; its purple crossguard runs through the same two islands and stays paint. The grip (-20 to 6, dark purple 93,38,59) is a wrap; the pommel's single dark triangles are finished plate.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 55,
+      "area": 2521.9,
+      "along": [
+        6.0,
+        158.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.293,
+        0.845,
+        0.993
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 55,
+      "area": 2522.2,
+      "along": [
+        6.0,
+        158.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.149,
+        0.004,
+        0.996,
+        0.707
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 1,
+      "area": 166.4,
+      "along": [
+        34.4,
+        158.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.533,
+        0.783,
+        0.541
+      ],
+      "bake_uv": [
+        0.207,
+        0.023,
+        0.983,
+        0.04
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 2,
+      "area": 8.9,
+      "along": [
+        34.4,
+        34.4
+      ],
+      "mu_uv": [
+        0.783,
+        0.469,
+        0.783,
+        0.533
+      ],
+      "bake_uv": [
+        0.039,
+        0.005,
+        0.056,
+        0.026
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 1,
+      "area": 166.4,
+      "along": [
+        34.4,
+        158.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.459,
+        0.783,
+        0.469
+      ],
+      "bake_uv": [
+        0.175,
+        0.005,
+        0.951,
+        0.022
+      ]
+    },
+    {
+      "island": 5,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 66.0,
+      "along": [
+        -33.9,
+        -14.4
+      ],
+      "mu_uv": [
+        0.173,
+        0.897,
+        0.313,
+        0.969
+      ],
+      "bake_uv": [
+        0.144,
+        0.231,
+        0.27,
+        0.272
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 66.0,
+      "along": [
+        -33.9,
+        -14.4
+      ],
+      "mu_uv": [
+        0.173,
+        0.825,
+        0.313,
+        0.897
+      ],
+      "bake_uv": [
+        0.185,
+        0.274,
+        0.31,
+        0.316
+      ]
+    },
+    {
+      "island": 7,
+      "material": "leather_wrap",
+      "triangles": 8,
+      "area": 236.1,
+      "along": [
+        -33.9,
+        14.2
+      ],
+      "mu_uv": [
+        0.003,
+        0.825,
+        0.313,
+        0.969
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.058,
+        0.288
+      ]
+    },
+    {
+      "island": 8,
+      "material": "leather_wrap",
+      "triangles": 8,
+      "area": 236.1,
+      "along": [
+        -33.9,
+        14.2
+      ],
+      "mu_uv": [
+        0.003,
+        0.825,
+        0.313,
+        0.969
+      ],
+      "bake_uv": [
+        0.069,
+        0.004,
+        0.122,
+        0.288
+      ]
+    },
+    {
+      "island": 9,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 79.4,
+      "along": [
+        -33.9,
+        -14.4
+      ],
+      "mu_uv": [
+        0.173,
+        0.825,
+        0.313,
+        0.969
+      ],
+      "bake_uv": [
+        0.175,
+        0.097,
+        0.23,
+        0.232
+      ]
+    },
+    {
+      "island": 10,
+      "material": "plate_steel",
+      "triangles": 1,
+      "area": 79.4,
+      "along": [
+        -33.9,
+        -14.4
+      ],
+      "mu_uv": [
+        0.173,
+        0.825,
+        0.313,
+        0.969
+      ],
+      "bake_uv": [
+        0.121,
+        0.041,
+        0.176,
+        0.176
+      ]
+    }
+  ]
+}

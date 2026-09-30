@@ -1,0 +1,91 @@
+{
+  "item": "Object82",
+  "mu_name": "Object82",
+  "mu_name_from": "Devias's object slot 81, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 81,
+  "placements": 20,
+  "profile": "world",
+  "sheets": {
+    "show_ston01": "dv_show_ston01.png",
+    "tile_wood04": "dv_tile_wood04.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "show_ston01": "snow",
+    "tile_wood04": "shingle"
+  },
+  "material_note": "show_ston01: snow along the ridge.\ntile_wood04: grey weathered wooden shingles.",
+  "why_this_one": "20 of them: house roofs.",
+  "effects_note": "Fades while the hero is indoors.",
+  "roof_fade": true,
+  "roof_fade_from": "ZzzObject.cpp RenderObject, `gMapManager.WorldActive == 2`: types 81, 82, 96, 98 and 99 take AlphaTarget 0 while HeroTile == 3 || HeroTile >= 10 (the planks and the four patterned floors), 1 otherwise, eased by Alpha(o). Every roof of the kind fades together, as Lorencia's do; the indoor test is World::indoors' Devias arm.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 16,
+      "area": 310594.1,
+      "along": [
+        -200.2,
+        259.7
+      ],
+      "mu_uv": [
+        -2.785,
+        -0.424,
+        2.36,
+        2.693
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.91
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 8,
+      "area": 16021.1,
+      "along": [
+        -200.2,
+        149.9
+      ],
+      "mu_uv": [
+        -1.017,
+        0.001,
+        2.017,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.594,
+        0.978,
+        0.988
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 6,
+      "area": 15132.7,
+      "along": [
+        -200.3,
+        -185.4
+      ],
+      "mu_uv": [
+        -1.017,
+        0.597,
+        2.017,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.676,
+        0.957,
+        0.993
+      ]
+    }
+  ]
+}

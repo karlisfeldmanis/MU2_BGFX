@@ -8,6 +8,7 @@
 #include "core/log.h"
 #include "game/ui/controls.h"
 #include "game/ui/describe.h"
+#include "game/world/maps.h"
 
 namespace mu::game {
 
@@ -16,7 +17,10 @@ namespace mu::game {
 static bool usable(const content::Tables& tables, int32_t item) {
     if (item < 0) return false;
     const content::ItemRow& row = tables.items[size_t(item)];
-    return sim::heals(row) || sim::restores(row) || sim::ale(row) || sim::portal(row);
+    // And the Antidote, ours (the user, 2026-09-30: "i cant move antidote to potion quickslot"):
+    // MU's list has no antidote, and a poison that stacks wants one to hand.
+    return sim::heals(row) || sim::restores(row) || sim::ale(row) || sim::portal(row) ||
+           sim::antidote(row);
 }
 
 // Whether a carried row may stand in for a bound one: the same group, and either exactly the
@@ -26,7 +30,7 @@ static bool substitutes(const content::Tables& tables, int32_t carried, int32_t 
     const content::ItemRow& c = tables.items[size_t(carried)];
     const content::ItemRow& b = tables.items[size_t(bound)];
     if (c.group != b.group) return false;
-    if (sim::ale(b) || sim::portal(b)) return c.number == b.number;
+    if (sim::ale(b) || sim::portal(b) || sim::antidote(b)) return c.number == b.number;
     return c.number <= b.number && (b.number >= 4 ? sim::restores(c) : sim::heals(c));
 }
 
@@ -68,6 +72,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     amount_.open(interface_, &arts_);
     questDialog_.open(interface_);
     tracker_.open(interface_);
+    travel_.open(interface_, assetDir);
+    minimap_.open(interface_);
     menu_.open(interface_);
     endurance_.open(interface_, &arts_);
     cursor_.open(interface_, &arts_);
@@ -86,6 +92,8 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
 void Desk::shutdown() {
     questDialog_.close();
     tracker_.close();
+    travel_.close();
+    minimap_.close();
     specimen_.close();
     controls::close();
     panel::closeTitleFace();
@@ -177,11 +185,21 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         // Or the journal (L), the same window read away from him; reaching him takes it over.
         int quest = -1;
         if (realm.questing() >= 0) {
-            quest = sim::questOf(realm.tables()->folk[size_t(realm.questing())].number);
+            quest = realm.questHere(realm.tables()->folk[size_t(realm.questing())].number);
             journal_ = -1;
         }
         const bool reading = quest < 0 && journal_ >= 0;
         if (reading) quest = journal_;
+        // The live quests, for the journal's arrows: where this page is among them.
+        int live[sim::kQuests];
+        int lives = 0, liveAt = -1;
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestState state = realm.quest(q).state;
+            if (state != sim::QuestState::Active && state != sim::QuestState::Ready) continue;
+            if (q == quest) liveAt = lives;
+            live[lives++] = q;
+        }
+        questDialog_.setPages(reading && liveAt >= 0 ? liveAt + 1 : 0, reading && liveAt >= 0 ? lives : 0);
         QuestDialog::Result result;
         const bool free = !typing && quest >= 0;
         questDialog_.update(seconds, play, quest, reading, float(window.width()),
@@ -215,6 +233,13 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         questing_ = questing;
         if (result.picked) click();
+        // The journal's arrows: the live quest before or after, round the ends.
+        if (reading && result.turn != 0 && liveAt >= 0 && lives > 1) {
+            questDialog_.turning(result.turn);
+            journal_ = live[(liveAt + result.turn + lives) % lives];
+            // The page's own sound, not the click: the turn is timed to its two strokes.
+            play.sound().play(play.sound().load("quest_page_turn", false));
+        }
         if (result.close) {
             if (reading) journal_ = -1;
             else play.closeQuest();
@@ -232,15 +257,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (play.takeWarp()) {
         inventoryOpen_ = characterOpen_ = false;
         fanLatched_ = false;
-        arrival_.announce(worldName_, 0.0f);
+        arrival_.announce(hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_,
+                          0.0f, play.zoneLevels());
     }
     // **Escape, in MU's order and then the menu.** A box takes it first (above). With any window
     // open it shuts them all, as CNewUIManager's Escape closes the open windows before anything
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
-    const bool windowsOpen = inventoryOpen_ || characterOpen_ || trading_ || banking_;
+    const bool windowsOpen =
+        inventoryOpen_ || characterOpen_ || trading_ || banking_ || travel_.up();
     {
-        std::string place = worldName_;
+        std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
             place += (place.empty() ? "" : "  \xC2\xB7  ") + std::to_string(hero->column()) +
                      ", " + std::to_string(hero->row());
@@ -251,6 +278,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 inventoryOpen_ = characterOpen_ = false;
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
+                travel_.hide();
                 fanLatched_ = false;
             } else {
                 menu_.show();
@@ -293,12 +321,16 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // L, the quest journal: the tracked quest's page -- the one under way, else the one resting,
     // else the first on offer -- and L again shuts it. With the bag up L is the bag's repair.
     // Ours: MU 0.75 has no quests, and its L is only the repair.
+    const bool journalAsked = scriptJournal_;
+    scriptJournal_ = false;
     if (!keysHeld && !inventoryOpen_ && play.isOpen() && play.realm().questing() < 0 &&
-        window.pressed(gfx::Window::Key::Repair)) {
+        (window.pressed(gfx::Window::Key::Repair) || journalAsked)) {
         if (journal_ >= 0) {
             journal_ = -1;
         } else {
             const sim::Realm& realm = play.realm();
+            // The one the tracker follows first: the quest he is fighting for on this map.
+            journal_ = tracker_.following();
             for (int q = 0; q < sim::kQuests && journal_ < 0; ++q) {
                 const sim::QuestState state = realm.quest(q).state;
                 if (state == sim::QuestState::Active || state == sim::QuestState::Ready) journal_ = q;
@@ -311,6 +343,23 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             if (journal_ < 0 && sim::kQuests > 0) journal_ = 0;
         }
         click();
+    }
+
+    // Tab, the travel list (game/ui/travel.h): Tab again or Escape shuts it, and a map pressed
+    // on is asked of the realm, which takes the Zen; the mode changes the map (Play::takeTravel).
+    // Ours: 0.75 has only the `/move` command.
+    if (!keysHeld && play.isOpen() && (window.pressed(gfx::Window::Key::Travel) || scriptTab_)) {
+        travel_.toggle();
+        core::logf("window: travel %s", travel_.up() ? "up" : "down");
+        click();
+    }
+    scriptTab_ = false;
+    if (travel_.up() && play.isOpen()) {
+        const int go = travel_.update(play, pointer, window.width(), window.height());
+        if (go >= 0 && play.travel(go)) {
+            travel_.hide();
+            click();
+        }
     }
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
@@ -343,9 +392,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             play.spendPoint(spend);
             click();
         }
-        // The exit button hides it without a sound: CNewUICharacterInfoWindow's m_BtnExit has
-        // no PlayBuffer. Only Escape clicks, and the C key.
-        if (close) characterOpen_ = false;
+        // The exit button clicks as the C key does. INVENTION, the user's (2026-09-30):
+        // CNewUICharacterInfoWindow's m_BtnExit has no PlayBuffer, and a silent X read as broken.
+        if (close) {
+            characterOpen_ = false;
+            click();
+        }
     }
 
     // A merchant's counter opens the bag beside it and closes the character window, which is
@@ -520,8 +572,12 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             // redrawing from a satchel that never changed.
             if (!play.discard(asked.outside)) refused();
         }
-        // Silent, as CNewUIMyInventory's exit button is; the I and V keys click.
-        if (asked.close) inventoryOpen_ = false;
+        // Clicks as the I and V keys do. INVENTION, the user's (2026-09-30): CNewUIMyInventory's
+        // exit button is silent in MU.
+        if (asked.close) {
+            inventoryOpen_ = false;
+            click();
+        }
     }
 
     // The worn-gear warning, hung left of whatever stands against the right edge: MuMain moves it
@@ -548,8 +604,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (specimenOpen_) {
         specimen_.update(seconds, float(window.width()), float(window.height()), pointer);
     }
+    // The minimap, always up: it answers the pointer only for its names and the wheel's zoom,
+    // and neither while a box or the menu has the screen.
+    minimap_.update(seconds, play, typing || menuHeld ? Pointer{} : pointer,
+                    typing || menuHeld ? 0.0f : window.scroll(), window.width(), window.height());
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
+                    minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
+                    travel_.covers(pointer.x, pointer.y) ||
                     (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
@@ -875,6 +937,12 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         boon.seconds = float(left) * 0.05f;
         boon.share = float(left) / float(sim::kAleTicks);
     }
+    if (const int64_t left = realm.frenzyLeft(); left > 0 && standing < Hud::kBoons) {
+        Hud::Boon& boon = boons[standing++];
+        boon.frenzy = true;
+        boon.seconds = float(left) * 0.05f;
+        boon.share = float(left) / float(sim::kFrenzyTicks);
+    }
     // And a poison on him, last: MU's debuff cell, and the reason to drink an Antidote.
     if (hero.poisonUntil > realm.tick() && standing < Hud::kBoons) {
         Hud::Boon& boon = boons[standing++];
@@ -902,7 +970,11 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
         // and the realm throws it each time he is free (the user, 2026-09-28: "if I hold W and
         // there is no cooldown it has to continue"). A key with a cooldown is a press, as it was.
         const sim::SkillRow* held = sim::skillNumbered(bound_[key]);
-        const bool again = window.down(keys[key]) && held != nullptr && held->primary();
+        // Not while he is still in a cast: a held key renewed its wish all through Lightning's
+        // channel, and the last renewal threw one more after the key was let go (2026-09-30).
+        // A fresh press still queues its one throw, as ever.
+        const bool again = window.down(keys[key]) && held != nullptr && held->primary() &&
+                           !play.realm().casting();
         if (!window.pressed(keys[key]) && !again && scriptedSkill_ != key) continue;
         if (bound_[key] == 0) continue;
         // Aimed at what the pointer is over when it is over something, else at nothing -- the
@@ -916,6 +988,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     // The box rings on the realm's throw, not on the key: a press held until he is in reach
     // rings when he swings, and one refused rings never.
     if (const int32_t cast = play.heroCast()) {
+        lastThrown_ = cast;
         for (int key = 0; key < Hud::kSkillBoxes; ++key) {
             if (bound_[key] != cast) continue;
             // Not for a primary: it is thrown twice a second, and a ring on every one is a box
@@ -948,7 +1021,10 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
             // primary), so the box comes back -- and rings -- as he is free to cast it (the user,
             // 2026-09-28: "show the spell reset animation also for spells which don't have
             // cooldowns"). The figure never shows: the clip is under a second.
-            if (row != nullptr && row->primary()) {
+            // Only on the box of the spell he threw: the gate is the hero's and not the spell's,
+            // and worn by every primary it wiped and flashed the whole bar on one cast (the
+            // user, 2026-09-30: "dont flash all spells only which one is casted").
+            if (row != nullptr && row->primary() && box.number == lastThrown_) {
                 const int64_t gate = std::max<int64_t>(0, hero.swingsAt - realm.tick());
                 if (gate > 0 && whole > 0) {
                     box.cooling = std::min(1.0f, float(gate) / float(whole));
@@ -1345,6 +1421,9 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (arrival_.showing()) interface_.add(arrival_.canvas());
     if (tracker_.showing()) interface_.add(tracker_.canvas());
     if (tracker_.announcing()) interface_.add(tracker_.banner());
+    // Chrome like the plate, under every window that might open over its corner.
+    if (minimap_.showing()) interface_.add(minimap_.canvas());
+    if (travel_.up()) interface_.add(travel_.canvas());
     interface_.add(hud_.canvas());
     if (characterOpen_) interface_.add(card_.canvas());
     if (trading_) interface_.add(shelf_.canvas());

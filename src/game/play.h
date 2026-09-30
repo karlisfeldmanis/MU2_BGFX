@@ -30,6 +30,7 @@
 #include "game/fx/arrow.h"
 #include "game/fx/blink.h"
 #include "game/fx/ice.h"
+#include "game/world/trap_show.h"
 #include "game/fx/poison.h"
 #include "game/fx/flame.h"
 #include "game/fx/thunder.h"
@@ -68,6 +69,9 @@ public:
         int32_t learn = 0;
         // `--arena-undying`: the hero is never felled, so a long fight can be watched.
         bool undying = false;
+        // `--peaceful`: no nests at all, breed or none -- a map to walk and run in with nothing
+        // to rouse. For looking at locomotion.
+        bool peaceful = false;
         // Where the fight happens, and why this tile. Lorencia is the only cooked world, and
         // this is the brightest of the flat, empty, non-safe patches on it -- the grass east of
         // the town, above the spider field. Chosen by reading four of the map's own files
@@ -156,8 +160,14 @@ public:
 
     // Where the camera should look, in tiles: the character, smoothed as he is drawn.
     void focus(float* column, float* row) const;
+    // Where body `id` is drawn this frame, in tiles, as focus() is for him; false if it is not.
+    bool shownAt(uint32_t id, float* column, float* row) const;
 
     const sim::Realm& realm() const { return realm_; }
+    // The line under the map's name, "Level 2-40": its whole spawn table, taken before the
+    // breeds not yet cooked are held back, so a world still waiting on its figures says what it
+    // will hold. Empty for a world that spawns nothing.
+    const std::string& zoneLevels() const { return zoneLevels_; }
     // The windows' requests, which the realm decides. A window never changes what it shows by
     // itself: it asks here and redraws from the realm afterwards (sprint 7, "a mirror").
     // One point into strength (0), agility (1), vitality (2) or energy (3), refused where
@@ -219,6 +229,15 @@ public:
     bool acceptQuest(int quest);
     bool completeQuest(int quest, int choice);
     void closeQuest() { realm_.closeQuest(); }
+    // The travel list (Tab, game/ui/travel.h): the realm checks the row and takes the Zen, and
+    // the map change is the mode's, as a gate's is (`takeTravel`, app/modes/play_mode.cpp).
+    bool travel(int index);
+    // The row paid for since the mode last asked, once, or -1.
+    int takeTravel() {
+        const int row = travelled_;
+        travelled_ = -1;
+        return row;
+    }
     void setWallClock(int64_t unixSeconds) { realm_.setWallClock(unixSeconds); }
     // Zen, for a scripted run (`--zen`), and a walk to a townsperson by name (`--talk`): the
     // same Talk request a click on him raises.
@@ -301,6 +320,14 @@ public:
     // negative while he is alive. The step that raises him is the one whose tick reaches
     // `risesAt`, and the next step is `kTickSeconds - accumulator_` away.
     float heroRisesIn() const;
+    // The enter gate he went through (sim::What::Gated) and the tile he comes out on in the
+    // map it leads to, or 0 while he has gone through none. Held until the world closes: the
+    // map change is the mode's (app/modes/play_mode.cpp).
+    int32_t gated(int* column, int* row) const {
+        *column = gatedColumn_;
+        *row = gatedRow_;
+        return gated_;
+    }
     // Everybody standing in the field: the feet of every body that is placed, in view and
     // alive as drawn, as (x, ground height, z, 0), at most `most` of them, the hero first.
     // Returns how many were written. For the grass, which parts round whoever walks in it;
@@ -360,6 +387,13 @@ public:
     }
     // Whether he has warped since this was last asked, and forgets it: what the windows shut
     // on, as MuMain's ReceiveTeleport shuts every one (`g_pNewUISystem->HideAll()`).
+    // A Town Portal read where the map has no safe zone (the Dungeon): Lorencia is owed, and
+    // the map change is the mode's, as a gate's is. Once.
+    bool takeHome() {
+        const bool was = homeOwed_;
+        homeOwed_ = false;
+        return was;
+    }
     bool takeWarp() {
         const bool was = warpOwed_;
         warpOwed_ = false;
@@ -389,6 +423,8 @@ public:
     Blink& blink() { return blink_; }
     // And his Ice. fx/ice.h.
     Ice& ice() { return ice_; }
+    // The Dungeon's traps, drawn (game/world/trap_show.h).
+    TrapShow& trapShow() { return trapShow_; }
     // And his Poison. fx/poison.h.
     Poison& poison() { return poison_; }
     // And his Flame. fx/flame.h.
@@ -402,6 +438,8 @@ public:
     // And before it, a step that way, so he stands facing the throw: the bench asks the realm
     // for an ordinary walk of one tile, and the body turns as it always does.
     void benchFace(float acrossX, float acrossZ);
+    // `--walk-to`: one walk to a tile, as a click on the ground there would ask for.
+    void walkTo(int column, int row);
     void gatherMeteor(gfx::Effects& effects, const float eye[3]) const { meteor_.gather(effects, eye); }
     // The blade's ribbon behind a skill swing. Fed in `show`, off the pose the frame has already
     // computed -- see fx/streak.h, which is MU's own `CreateWeaponBlur` rung for a skill.
@@ -445,6 +483,15 @@ public:
     // `indoors` is whether the character's tile is under a roof (World::indoors), which is
     // what switches the wind off -- the same read that lifts the roofs, so the two agree.
     void hear(const gfx::Camera& camera, bool indoors);
+    // The world's own water and fire, after hear(): the nearest bonfire's crackle and the
+    // nearest fountain's drip, each one loop levelled and panned from that place, on within
+    // its reach of the character and off past it. Ours. `lamps` is null with the lamps off.
+    // `inside` says whether a point in metres is under a roof (World::indoors): a fire burning
+    // indoors is heard only by a character indoors too, and never through the wall (the user,
+    // 2026-09-29).
+    using Inside = bool (*)(void* context, float x, float z);
+    void hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside inside = nullptr,
+                   void* context = nullptr);
     // The interface's own noises, raised by the windows: a button acknowledging the finger
     // (SOUND_CLICK01), a request the realm said no to (iButtonError), and a thing going into
     // a slot -- MU has no equip or bind sound of its own and plays SOUND_GET_ITEM01 for both.
@@ -455,15 +502,6 @@ public:
         if (ground_) aura_.gather(effects, *ground_, eye);
     }
     // Throws the level-up on the hero where he is drawn now. What a `Levelled` does once the
-    // The world's own water and fire, after hear(): the nearest bonfire's crackle and the
-    // nearest fountain's drip, each one loop levelled and panned from that place, on within
-    // its reach of the character and off past it. Ours. `lamps` is null with the lamps off.
-    // `inside` says whether a point in metres is under a roof (World::indoors): a fire burning
-    // indoors is heard only by a character indoors too, and never through the wall (the user,
-    // 2026-09-29).
-    using Inside = bool (*)(void* context, float x, float z);
-    void hearWorld(const Lamps* lamps, const Ornaments& ornaments, Inside inside = nullptr,
-                   void* context = nullptr);
     // blow that earned it has landed, and what `--rise` does for a review run.
     void rise();
     // And the orb's: the ribbons and the swoosh together, thrown by `useItem` when what was
@@ -614,6 +652,9 @@ private:
         // to know which step of the ramp it is. An area skill says one `Swung` and a `Hit` per
         // body, so one field answers for all of them.
         int32_t swingSkill = 0;
+        // The swing whose release has sounded its hit: a Meteorite says `Loosed` once per body
+        // it falls on and a channel once per strike, and MU plays the hit once, at the release.
+        uint32_t heardToken = 0;
     };
 
     Drawn* drawnOf(uint32_t id);
@@ -622,18 +663,6 @@ private:
     bool castFrom(const Drawn& caster, const float to[3], float out[3]) const;
     // And an archer's arrow at `to`, from MU's muzzle, in the model her weapon throws.
     void shootArrow(const Drawn& shooter, const float to[3], uint32_t whom);
-    Arena arena_;
-    // One line for one happening, in an arena run only, with the TICK on it -- because a run is
-    // read afterwards and not watched, and under `--fixed-dt 16.667` a tick is exactly three
-    // frames, so the tick is what a shot's frame number is worked out from. The same spirit and
-    // the same shape as the `meteor: tick N` and `bones: tick N` lines beside it; those two stay
-    // where they are, since an effect knows things a happening does not.
-    void announce(const sim::Happening& happening);
-    // The breed's own name for those lines, or "the hero".
-    std::string nameOf(uint32_t id) const;
-    void remember();  // the tick's positions become "was", the sim's become "now"
-    // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
-    // frame's own, which the coast and the stop are measured in.
     // A Hunter's blow drawn as MU draws it: CreateArrows off its MODEL_ARQUEBUS, which throws
     // MODEL_ARROW_SAW (ZzzCharacter.cpp:4831, ZzzEffectMagicSkill.cpp:225). The rules resolve
     // the blow at range on the tick and are not told; this only draws the bolt it would be.
@@ -657,12 +686,29 @@ private:
         float wait = 0.0f;
     };
     std::vector<IceCast> iceCasts_;
+    // An Ice Queen's Power Wave (OpenMU's AttackSkill 11): at the same fifteenth reference frame
+    // MU's skill arm throws three MODEL_MAGIC2 off her feet at the target, the middle one
+    // straight and the other two ten degrees either side, and plays SOUND_MAGIC once
+    // (ZzzCharacter.cpp:5045-5055). The realm's blow is her one target; the side waves are show.
+    std::vector<IceCast> waveCasts_;
     // A Thunder Lich's Lightning (OpenMU's AttackSkill 3): the hero's own thunder, from its chest
     // to the target at the same fifteenth frame, with SOUND_THUNDER01 (WSclient.cpp:4186-4190).
     std::vector<IceCast> thunderCasts_;
     // Whether a body's blow is drawn as a missile, and in which model: the Hunter's saw bolt,
     // or a guard's arrow or bolt by what she holds.
     bool shoots(uint32_t id, Arrows::Model* model);
+    Arena arena_;
+    // One line for one happening, in an arena run only, with the TICK on it -- because a run is
+    // read afterwards and not watched, and under `--fixed-dt 16.667` a tick is exactly three
+    // frames, so the tick is what a shot's frame number is worked out from. The same spirit and
+    // the same shape as the `meteor: tick N` and `bones: tick N` lines beside it; those two stay
+    // where they are, since an effect knows things a happening does not.
+    void announce(const sim::Happening& happening);
+    // The breed's own name for those lines, or "the hero".
+    std::string nameOf(uint32_t id) const;
+    void remember();  // the tick's positions become "was", the sim's become "now"
+    // Clips, yaw and where each figure stands, at the smoothed position. `seconds` is the
+    // frame's own, which the coast and the stop are measured in.
     void follow(float seconds);
     // Starts a body's death clip, its hold and its fade.
     void fall(Drawn& dead);
@@ -693,6 +739,7 @@ private:
     std::vector<uint32_t> settled_;
 
     content::Tables tables_;
+    std::string zoneLevels_;
     sim::Realm realm_;
     sim::Findings findings_;
     const content::Ground* ground_ = nullptr;
@@ -704,12 +751,16 @@ private:
     // (game/world/weather.h) is the whole of its air, the user's word -- "dont use lorencia
     // wind in noria, we have our new ambient sound which is perfect".
     bool windy_ = true;
+    // The Dungeon's: its air is aDungeon, which rides the wind's slot (Play::openSound).
+    bool dungeonAir_ = false;
+    bool snowy_ = false;  // Devias: his steps are snow outdoors (PlayWalkSound)
 
     Showing showing_;
     Marker marker_;
     Aura aura_;
     Warp warp_;
     bool warpOwed_ = false;
+    bool homeOwed_ = false;
     Sound sound_;
     Breath breath_;
     Bones bones_;
@@ -721,11 +772,15 @@ private:
     int64_t lastThunderTick_ = -1;  // the tick a channel's pulse last sounded on
     Blink blink_;
     Ice ice_;
+    TrapShow trapShow_;
     Poison poison_;
     Flame flame_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;
+    int32_t gated_ = 0;
+    int gatedColumn_ = 0, gatedRow_ = 0;
+    int travelled_ = -1;
     int32_t quickSkill_ = 0;
     bool arenaLeft_ = false;
     // The drawing's coin for a spell's two hands, `PLAYER_SKILL_HAND1 + rand() % 2`: its own,
@@ -755,7 +810,8 @@ private:
     // The events that are not a breed's, as Sound handles, found once at openSound.
     struct Heard {
         int swing = -1, swingLong = -1, bow = -1, crossbow = -1;  // the character's swing
-        int hit = -1;                                            // melee_hit, any landed blow
+        int hit = -1;                                            // melee_hit, any blow let go
+        int missile = -1;                                        // missile_hit, an arrow's
         int die = -1;                                            // pMaleDie, the knight's fall
         int dieFemale = -1;                                      // pFemaleScream2, the elf's
         int deathBell = -1;                                      // the user's bell, his fall
@@ -770,6 +826,7 @@ private:
         int drink = -1, apple = -1;                     // a potion going down
         int orb = -1;                                   // an orb read, and the skill kept
         int warp = -1;                                  // sMagic: a Town Portal landing
+        int grate = -1, trapFlame = -1;                 // the traps' aGrate and sFlame
         int click = -1, refused = -1, opened = -1;      // the windows
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
@@ -800,11 +857,20 @@ private:
     // Whether each of the hero's feet has been heard on the walk cycle now playing, and whether
     // he was walking last frame. MU's c->Foot[0] and [1]; see steps().
     bool leftFoot_ = false, rightFoot_ = false, striding_ = false;
+    float stepKey_ = 0.0f;  // the walk's key on the last frame, so a wrap can be seen
+    int stepClip_ = -1;     // and which walk it was
     // A level the realm has given and the drawing has not shown: it waits, as MU2's did, for
     // the blow that killed `levelOn_` to land, so the flares do not go up half a swing before
-    // the monster that earned them is hit. 0 is no one, and shows at once.
-    bool levelOwed_ = false;
+    // the monster that earned them is hit. 0 is no one, and shows at once. Counted, not a flag:
+    // a quest paying three levels rises three times, one after another, `levelWait_` apart.
+    int levelsOwed_ = 0;
     uint32_t levelOn_ = 0;
+    float levelWait_ = 0.0f;
+    // Seconds between two rises: a rise's flares live 2 s (kRising's 50 ticks), and so does the
+    // loud part of plevelup.wav (3 s long, -12 dB to 1.8 s, -19 at 2). The sound has one voice
+    // and a replay cuts it, so at 1.2 s every level chopped the last one's ring off at full
+    // level; at 2 it is cut on its tail. Ours.
+    static constexpr float kLevelApart = 2.0f;
     // Whether the next Walked the hero says came from a click, and so puts the marker down.
     // Cleared by the first tick that runs after the ask, since that tick is the one the realm
     // takes the order on. One click is one walk: holding the button does not drag the walk

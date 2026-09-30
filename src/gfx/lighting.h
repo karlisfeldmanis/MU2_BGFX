@@ -72,6 +72,11 @@ struct Lighting {
     // at sun_strength pi. `glowStrength` multiplies every BlendMesh drawn in the transparent
     // pass. Both are judged by eye; docs/sprints/08a-the-lamps.md.
     float lampStrength = 3.14159265f;
+    // How much of the lamps the sun's shadow takes away, 0..1. The lamps cast no shadow of their
+    // own (shaders/lights.sh), so where a torch outshines the sun a body stood in its pool with
+    // no shadow at all; MU draws a body's shadow in every map whatever lights it. Ours: the
+    // Dungeon's sheet sets it with its sun overhead, so the shadow falls at the feet. 0 elsewhere.
+    float lampShadow = 0.0f;
     float glowStrength = 1.0f;
 
     // Bloom, sprint 8b: what in the linear HDR frame spills light into the air round it.
@@ -82,6 +87,11 @@ struct Lighting {
     // How fast the ground's water slides, as a share of MuMain's one sheet every twenty seconds.
     // 1 is Lorencia's river; 0 holds a world's water still.
     float waterFlow = 1.0f;
+    // How much a water layer of the ground shines, 0..1: a glint of the sun and the lamps and a
+    // reflection of the sky, off the water sheet's own ripples (fs_ground). Ours: MU's water
+    // is its painted sheet sliding and nothing else, which on the Dungeon's near-black stream
+    // is black ground. 0 is MU's, and every sheet but the Dungeon's leaves it there.
+    float waterSheen = 0.0f;
     float bloomThreshold = 1.2f;
     float bloomKnee = 0.6f;
     float bloomStrength = 0.25f;
@@ -219,6 +229,14 @@ struct Lighting {
     // sheet stays loaded and one number away, because it is MU's and this is a remaster.
     float grassPainted = 0.0f;
     float grassRootAo = 0.62f;      // the height ramp's floor: how dark the root sits
+    // What a blade lit from behind is pushed towards, and how far: a leaf's own saturated
+    // green (fs_grass). Devias's frosted grass is not a leaf, and the green read as ice there.
+    float grassThroughColour[3] = {0.78f, 1.28f, 0.58f};
+    float grassThrough = 0.75f;
+    // How far a card's own length strays from the sward's, 1 the 0.46 to 1.48 it always drew,
+    // and how much taller a rank tuft stands. Devias's frosted grass mixes stubble and stalks.
+    float grassLengthSpread = 1.0f;
+    float grassRankHeight = 1.85f;
     float grassRoughness = 0.45f;   // at the top; the root is rougher by a fixed 0.35
     // And the wind on top of the lean, not instead of it. At 0.22 a gust moved a card
     // further than its own habit ever did, which put the whole field on its side twice a

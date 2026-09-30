@@ -1,0 +1,208 @@
+{
+  "item": "Spear05",
+  "mu_name": "Serpent Spear",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:128 and mu.db's items row (group 3, index 4) name it the Serpent Spear against Item/Spear05.bmd.",
+  "why_this_one": "Drop level 46: the Ice Queen (52) is the only Devias monster that reaches it. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:128. The 0.75 table.",
+    "call": "CreateWeapon(3, 4, 0, 20, 2, 4, true, \"Serpent Spear\", 46, 58, 80, 20, 58, 0, 0, 90, 30, 0, 0, 0, 1, 1)",
+    "group": 3,
+    "number": 4,
+    "drop_level": 46,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 58,
+    "maximum_damage": 80,
+    "attack_speed": 20,
+    "durability": 58,
+    "requires": {
+      "level": 0,
+      "strength": 90,
+      "agility": 30,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "skill": 20
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:377-383: the spear group, two-handed (width 2), and not the named Spear or Dragon Lance, stands PLAYER_STOP_SCYTHE.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "Javelins05": "javelins05.png"
+  },
+  "sheet_from": "Data/Item/Javelins05.OZJ (128x32), from MuMain.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrors the grass; the Devias batch settled on 0.45 (and plate 0.5 on a pole) after the studio caught black heads and flaring shafts on all six. Set before the first look, and judged in the studio.",
+  "material_note": "Metal throughout except the serpent: its collars (orange-gold 190,130,58 and red-brown) are brass, the two blades steel (253,247,247 faces), and the 32-triangle pole pale blue-grey (166,175,192 to 255,252,247), plate as every pole in the batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "brass",
+      "triangles": 8,
+      "area": 398.2,
+      "along": [
+        82.0,
+        141.8
+      ],
+      "mu_uv": [
+        0.017,
+        0.88,
+        0.313,
+        0.971
+      ],
+      "bake_uv": [
+        0.299,
+        0.067,
+        0.607,
+        0.409
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 22,
+      "area": 1797.5,
+      "along": [
+        92.5,
+        184.9
+      ],
+      "mu_uv": [
+        0.022,
+        0.134,
+        0.995,
+        0.982
+      ],
+      "bake_uv": [
+        0.159,
+        0.007,
+        0.952,
+        0.994
+      ]
+    },
+    {
+      "island": 2,
+      "material": "brass",
+      "triangles": 10,
+      "area": 318.2,
+      "along": [
+        123.5,
+        127.7
+      ],
+      "mu_uv": [
+        0.624,
+        0.042,
+        0.669,
+        0.471
+      ],
+      "bake_uv": [
+        0.007,
+        0.093,
+        0.03,
+        0.681
+      ]
+    },
+    {
+      "island": 3,
+      "material": "brass",
+      "triangles": 10,
+      "area": 284.8,
+      "along": [
+        100.7,
+        104.9
+      ],
+      "mu_uv": [
+        0.864,
+        0.073,
+        0.909,
+        0.404
+      ],
+      "bake_uv": [
+        0.654,
+        0.007,
+        0.708,
+        0.71
+      ]
+    },
+    {
+      "island": 4,
+      "material": "brass",
+      "triangles": 8,
+      "area": 398.2,
+      "along": [
+        82.0,
+        141.8
+      ],
+      "mu_uv": [
+        0.017,
+        0.88,
+        0.313,
+        0.971
+      ],
+      "bake_uv": [
+        0.048,
+        0.007,
+        0.435,
+        0.054
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 22,
+      "area": 1797.5,
+      "along": [
+        92.5,
+        184.9
+      ],
+      "mu_uv": [
+        0.022,
+        0.134,
+        0.995,
+        0.982
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.591,
+        0.721
+      ]
+    },
+    {
+      "island": 6,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 2120.5,
+      "along": [
+        -83.5,
+        161.6
+      ],
+      "mu_uv": [
+        0.0,
+        0.0,
+        0.527,
+        0.874
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.67,
+        0.668
+      ]
+    }
+  ]
+}

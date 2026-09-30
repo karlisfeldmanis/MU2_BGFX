@@ -1,0 +1,97 @@
+{
+  "item": "Spear07",
+  "mu_name": "Halberd",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:130 and mu.db's items row (group 3, index 6) name it the Halberd against Item/Spear07.bmd.",
+  "why_this_one": "Drop level 19: the Worm, Ice Monster and Hommerd leave it, and the Ice Queen as an excellent. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:130. The 0.75 table.",
+    "call": "CreateWeapon(3, 6, 0, 0, 2, 4, true, \"Halberd\", 19, 25, 35, 30, 40, 0, 0, 70, 50, 0, 0, 0, 1, 1)",
+    "group": 3,
+    "number": 6,
+    "drop_level": 19,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 25,
+    "maximum_damage": 35,
+    "attack_speed": 30,
+    "durability": 40,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "skill": 0
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:377-383: the spear group, two-handed (width 2), and not the named Spear or Dragon Lance, stands PLAYER_STOP_SCYTHE.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "Polearms03": "polearms03.png"
+  },
+  "sheet_from": "Data/Item/Polearms03.OZJ (64x64), from MuMain. The .bmd names Polearms03.jpg.",
+  "material_note": "Steel and bronze. The halberd's sheet is grey blades on the left and a gold-carved dark bronze strip in the middle, and the two islands split along that line.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrored the grass: in the studio the head went black from above and the shaft flared white at grazing sun, the Gladius's fault (black at 0.2, right at 0.55) and the Salamander's in this batch.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 16,
+      "area": 2730.3,
+      "along": [
+        -75.7,
+        120.0
+      ],
+      "mu_uv": [
+        0.004,
+        0.51,
+        1.0,
+        0.973
+      ],
+      "bake_uv": [
+        0.005,
+        0.004,
+        0.551,
+        0.512
+      ],
+      "note": "the long piece, butt to crown: grey through the middle (172,174,187 against a 47 shadow), gold-bronze bands at both ends (194,136,99 at the butt, 214,166,120 at the top). The bands are paint on a metal pole; steel carries the bright middle where the blade planes sample."
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 36,
+      "area": 2014.4,
+      "along": [
+        74.8,
+        140.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.996,
+        0.996
+      ],
+      "note": "the socket and its crest, 85 to 111 along: dark bronze carved with gold (82,42,16 ground, 168,135,42 highlights), chroma up to 126. Cast ornament, not a ground edge."
+    }
+  ]
+}

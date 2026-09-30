@@ -95,6 +95,11 @@ private:
         // Heard: the crackle follows it (nearestBonfire). A bonfire, and Devias's hearth fires,
         // Object67 -- MU's CreateFire(0), the bonfire's own fire, in a torch's flame here.
         bool crackles = false;
+        // A dragon's breath: the Dungeon's wall torches MU hid in the mouths of its dragon
+        // heads (Object17), whose flames are thrown out along `drift` and not up. Lamps::open.
+        bool breath = false;
+        float mouth[3] = {0, 0, 0};   // a breath's: between the jaws, in the world
+        float facing[3] = {0, 0, 0};  // and the way the head looks, flat and unit length
         // What each kind is owed, in particles; a whole one is spawned and taken off.
         float clock = 0.0f, embers = 0.0f, smoke = 0.0f;
     };
@@ -111,6 +116,7 @@ private:
         float phase = 0.0f;
         uint8_t kind = kFlame;
         uint8_t cell = 0;
+        bool breath = false;
     };
 
     void step(Flicker& one, float seconds);

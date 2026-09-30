@@ -1,0 +1,47 @@
+{
+  "item": "Object100",
+  "mu_name": "Object100",
+  "mu_name_from": "Devias's object slot 99, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 99,
+  "placements": 25,
+  "profile": "world",
+  "sheets": {
+    "show_ston01": "dv_show_ston01.png",
+    "titel_b06": "dv_titel_b06.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "show_ston01": "snow",
+    "titel_b06": "rock"
+  },
+  "material_note": "show_ston01: snow heaped on the top.\ntitel_b06: the carved stone under it.",
+  "why_this_one": "25 of them: carved stone roofs under snow -- type 99, one of the five MuMain fades indoors. Read first as a half-buried block; it is a roof.",
+  "effects_note": "Fades while the hero is indoors.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 84,
+      "area": 257285.3,
+      "along": [
+        -200.1,
+        199.8
+      ],
+      "mu_uv": [
+        -0.344,
+        -1.504,
+        1.344,
+        2.504
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.929
+      ]
+    }
+  ],
+  "roof_fade": true,
+  "roof_fade_from": "ZzzObject.cpp RenderObject, `gMapManager.WorldActive == 2`: types 81, 82, 96, 98 and 99 take AlphaTarget 0 while HeroTile == 3 || HeroTile >= 10 (the planks and the four patterned floors), 1 otherwise, eased by Alpha(o). Every roof of the kind fades together, as Lorencia's do; the indoor test is World::indoors' Devias arm."
+}

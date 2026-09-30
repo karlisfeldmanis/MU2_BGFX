@@ -86,6 +86,10 @@ std::pair<int, int> stanceActions(const std::string& stance, bool female) {
     return female ? std::pair<int, int>{2, 16} : std::pair<int, int>{1, 15};
 }
 
+// The one run, whatever is carried: it is run with the weapon on the back (sim::kRunFactor), so
+// the stance has nothing to say. A Mixamo clip put on Bip01 by tools/mixamo.py, not MU's.
+constexpr int kRunAction = 284;
+
 int boneNamed(const content::Mesh& mesh, const std::string& name) {
     if (name.empty()) return -1;
     const std::vector<content::Bone>& bones = mesh.bones();
@@ -179,6 +183,14 @@ void Figures::bind(FigureBody& body) {
                        "pose", body.name.c_str(), missing, bones.size(),
                        body.library->name.c_str());
         }
+    }
+
+    // A held weapon with a rig of its own takes its own clip: a bow's or a crossbow's string,
+    // played on the shot (Figure::poseHeld). A staff on the player's rig is a part, not this.
+    for (HeldItem& item : body.held) {
+        if (!item.mesh || !item.mesh->isSkinned() || item.mesh->bones().size() > 16) continue;
+        item.clip = heldClip(item.mesh->name());
+        item.onShot = item.stance == "bow" || item.stance == "crossbow";
     }
 
     // The box the whole figure was bound in, over every part it wears.
@@ -391,6 +403,68 @@ float measurePlant(const FigureBody& body, int clip) {
     return far / took;
 }
 
+// The keys a clip's two feet come down on, for a clip that is not MU's and so has no
+// PlayWalkSound keys of its own (the run, action284). A strike is the first frame a foot is
+// back within 3 cm of its own lowest point after being above it, which is the heel landing
+// rather than the whole stance. Into `out` in cycle order; false if the rig has no Bip01 feet.
+bool measureStrikes(const FigureBody& body, int clip, float out[2]) {
+    if (!body.library || !body.skeletonMesh || clip < 0) return false;
+    const content::CookedClips& clips = body.library->clips;
+    if (size_t(clip) >= clips.clips.size()) return false;
+    const content::CookedClip& one = clips.clips[size_t(clip)];
+    const std::vector<content::Bone>& bones = body.skeletonMesh->bones();
+    if (one.frames < 3 || clips.bones == 0 || bones.empty()) return false;
+    int feet[2] = {-1, -1};
+    for (size_t i = 0; i < bones.size(); ++i) {
+        if (bones[i].name == "Bip01 L Foot") feet[0] = int(i);
+        if (bones[i].name == "Bip01 R Foot") feet[1] = int(i);
+    }
+    if (feet[0] < 0 || feet[1] < 0) return false;
+
+    // Each foot's height at every frame, by the same forward kinematics as measurePlant.
+    const size_t count = bones.size();
+    std::vector<float> world(count * 16);
+    std::vector<float> height[2];
+    for (uint32_t frame = 0; frame < one.frames; ++frame) {
+        const float* row = &clips.rows[(size_t(one.firstRow) + size_t(frame) * clips.bones) * 7];
+        for (size_t i = 0; i < count; ++i) {
+            float local[16];
+            const int32_t from = i < body.clipBoneOf.size() ? body.clipBoneOf[i] : -1;
+            if (from < 0) {
+                static constexpr float kRest[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+                static constexpr float kHere[3] = {0.0f, 0.0f, 0.0f};
+                core::composeMatrix(kRest, kHere, local);
+            } else {
+                const float* q = row + size_t(from) * 7;
+                core::composeMatrix(q, q + 4, local);
+            }
+            const int32_t parent = bones[i].parent;
+            if (parent < 0) {
+                std::memcpy(&world[i * 16], local, sizeof(local));
+            } else {
+                core::mulMatrix(local, &world[size_t(parent) * 16], &world[i * 16]);
+            }
+        }
+        for (int f = 0; f < 2; ++f) height[f].push_back(world[size_t(feet[f]) * 16 + 13]);
+    }
+    // The last frame is the cook's closing key, the first pose again: not a frame of its own.
+    const uint32_t cycle = one.frames - 1;
+    for (int f = 0; f < 2; ++f) {
+        const float low = *std::min_element(height[f].begin(), height[f].begin() + cycle) + 0.03f;
+        out[f] = -1.0f;
+        for (uint32_t frame = 0; frame < cycle; ++frame) {
+            const uint32_t before = (frame + cycle - 1) % cycle;
+            if (height[f][frame] <= low && height[f][before] > low) {
+                out[f] = float(frame);
+                break;
+            }
+        }
+        if (out[f] < 0.0f) return false;
+    }
+    if (out[0] > out[1]) std::swap(out[0], out[1]);
+    return true;
+}
+
 void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     // The stances are a table, and one row asks who is standing in it: empty hands are (1, 15)
     // for a man and (2, 16) for a woman, and every armed row is shared.
@@ -440,6 +514,10 @@ void Figures::posture(FigureBody& body, const std::string& namedIdle) {
     body.plantSpeedSafe = body.walkSafeClip == body.walkClip
                               ? body.plantSpeed
                               : measurePlant(body, body.walkSafeClip);
+    // The run, drawn only on a body the realm says is running.
+    body.runClip = body.library->find(kRunAction);
+    body.plantSpeedRun = body.runClip >= 0 ? measurePlant(body, body.runClip) : 0.0f;
+    if (!measureStrikes(body, body.runClip, body.runFeet)) body.runFeet[0] = body.runFeet[1] = -1.0f;
 }
 
 namespace {
@@ -500,6 +578,23 @@ const content::Mesh* Figures::wearable(const std::string& name) {
     meshIndex_[name] = meshes_.size();
     meshes_.push_back(std::move(made));
     return meshes_.back().get();
+}
+
+const content::CookedClips* Figures::heldClip(const std::string& name) {
+    auto found = heldClips_.find(name);
+    if (found != heldClips_.end()) return found->second.get();
+    std::unique_ptr<content::CookedClips>& slot = heldClips_[name];
+    const std::vector<uint8_t> bytes =
+        core::readFile(core::join(assetDir_, "cooked/wardrobe/clips/" + name + ".muc"));
+    if (bytes.empty()) return nullptr;
+    auto clips = std::make_unique<content::CookedClips>();
+    std::string error;
+    if (!content::parseCookedClips(bytes, *clips, error) || clips->clips.empty()) {
+        core::logError("%s's own clip: %s", name.c_str(), error.c_str());
+        return nullptr;
+    }
+    slot = std::move(clips);
+    return slot.get();
 }
 
 const FigureBody* Figures::dress(const std::string& name, const std::string& base,
@@ -629,6 +724,12 @@ void Figures::shine(const std::vector<content::ItemRow>& items) {
             for (size_t i = 0; i < body->parts.size(); ++i) {
                 if (const content::ItemRow* row = rowOf(body->parts[i])) {
                     body->partShine[i] = shineOf(*row, body->wornPlus);
+                } else if (body->parts.size() == 1) {
+                    // A body that is one model and no item: the Golden Archer's skeleton,
+                    // which RenderPartObject draws at c->Level (ZzzCharacter.cpp:9347). No
+                    // model table names it, so it takes the plus as its level and
+                    // PartObjectColor's orange for everything not named: MU's gold.
+                    body->partShine[i].level = body->wornPlus;
                 } else {
                     core::logError("%s wears %s at +%d, which the item table does not know, so "
                                    "it is drawn plain", name.c_str(),
@@ -909,6 +1010,9 @@ bool Figures::open(const std::string& assetDir, const std::string& world,
             item.boneName = item.stance == "bow" ? kLeftGrip : grip;
             made->held.push_back(item);
         }
+        // On the back at rest wherever he stands, drawn only to fight (the recipe's "slung"): the
+        // Golden Archer's Golden Crossbow, which MU slings for an NPC skeleton in Lorencia.
+        made->slungAtRest = entry["slung"].boolOr(false);
         bind(*made);
         posture(*made, entry["idle"].stringOr(""));
         bodies_[made->name] = std::move(made);

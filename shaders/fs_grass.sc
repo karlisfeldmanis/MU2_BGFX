@@ -169,7 +169,7 @@ void main()
 	//    wrap is allowed round the terminator. It is most of why lit grass reads as alive
 	//    rather than as painted cardboard -- which, here, it literally is.
 	float through = saturate(-ndotl);
-	vec3 litAlbedo = mix(albedo, albedo * vec3(0.78, 1.28, 0.58), through * 0.75);
+	vec3 litAlbedo = mix(albedo, albedo * u_grassThrough.rgb, through * u_grassThrough.w);
 	float wrapped = max(ndotl, through * 0.85);
 
 	vec3 diffuse = litAlbedo * v_colour.rgb;  // rgb alone: .a is the dryness, read above.

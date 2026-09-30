@@ -1,0 +1,20 @@
+{
+  "name": "ice",
+  "summary": "Packed ice: the frozen moat around Devias's town, laid over the water MU scrolls beneath it.",
+  "why": [
+    "Roughness 0.3. Rougher than water's 0.08, because ice that is walked on, snowed on and",
+    "frosted is scratched rather than glassy, and a mirror moat would reflect a sky MU never",
+    "drew. Glossier than snow by a long way, which is what reads as ice from MU's camera.",
+    "Depth 0.08, shallow: the sheet's cloudy blue is ice seen into, not relief on top.",
+    "Range 0.12, the widest here. Clear patches and frost-whitened patches sit next to each",
+    "other, and that difference in shine is the texture of ice."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.3,
+  "grain": {
+    "kind": "cast",
+    "scale": 260,
+    "depth": 0.08,
+    "roughness_range": 0.12
+  }
+}

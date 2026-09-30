@@ -384,6 +384,16 @@
       "idle": "action1",
       "idle_why": "inside the safe zone",
       "ours": "the quest giver, on the square where the user put him; MU has no Marlon in Lorencia's 0.75"
+    },
+    {
+      "model": "GoldenArcher",
+      "who": "Golden Archer",
+      "tile": [
+        120,
+        229
+      ],
+      "facing": 5,
+      "ours": "the Dungeon's quest giver, at the arch where the user put him (2026-09-30); MU (0.95d) stands him at 175,120, and forces his facing to angle 90"
     }
   ],
   "spawns_from": [

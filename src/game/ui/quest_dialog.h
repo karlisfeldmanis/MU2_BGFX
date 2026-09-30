@@ -38,7 +38,17 @@ public:
         bool complete = false;
         int choice = -1;  // with `complete`: the quest row's choice index, or -1 for none owed
         bool picked = false;  // a reward cell was chosen or unchosen this frame
+        int turn = 0;         // the journal's arrows this frame: -1 the quest before, +1 the next
     };
+    // The journal's place among the live quests, set before update: `at` 1-based of `of`. The
+    // arrows show while reading with more than one; 0, 0 for none.
+    void setPages(int at, int of) {
+        pageAt_ = at;
+        pages_ = of;
+    }
+    // Which way the journal is turning, said just before the desk hands it the next quest: +1
+    // the next (the new page comes in from the right), -1 the one before.
+    void turning(int direction) { turnDir_ = direction < 0 ? -1 : 1; }
     void open(const gfx::Interface& interface);
     void close();
     // One frame while the realm has a giver's window open (`quest` >= 0), and once more when it
@@ -70,6 +80,7 @@ public:
 private:
     // Stranger: one born outside the giver's town, whom he does not serve (sim::questOpen).
     enum class Mode : uint8_t { Offer, Underway, HandIn, Resting, Stranger };
+    static constexpr int kButtons = 5;
     struct Cell {
         int choice = -1;  // the row's choice index, or -1 for a paid item
         int32_t item = -1;
@@ -97,8 +108,17 @@ private:
     bool reading_ = false;
     Mode mode_ = Mode::Offer;
     int chosen_ = -1;
-    int over_ = -1, pressing_ = -1;  // buttons: 0 primary, 1 secondary, 2 close; 10 + a cell
-    float lift_[3] = {};
+    // buttons: 0 primary, 1 secondary, 2 close, 3 and 4 the journal's arrows; 10 + a cell
+    int over_ = -1, pressing_ = -1;
+    float lift_[kButtons] = {};
+    int pageAt_ = 0, pages_ = 0;
+    // A page turn: -1 to 0 the old page going out, 0 to 1 the new one coming in, 1 at rest. The
+    // quest handed in waits in `pending_` until the old page is out.
+    float turn_ = 1.0f;
+    int turnDir_ = 1;
+    int pending_ = -1;
+    float turnAlpha() const;
+    float turnShift() const;  // in window units
     float x_ = 0.0f, y_ = 0.0f, unit_ = 1.0f;
     float scroll_ = 0.0f;       // units scrolled down the body
     float bodyTall_ = 0.0f;     // the body's whole height, in units
@@ -109,12 +129,14 @@ private:
     // What layout() settled: the paragraphs as wrapped lines, the cells, the buttons.
     std::vector<std::string> lines_;
     std::vector<Cell> cells_;
-    gfx::Box buttons_[3];
+    gfx::Box buttons_[kButtons];
     std::vector<Standing> standing_;
 
     struct Drawn {
         int quest = -1, mode = 0, chosen = -1, over = -1, pressing = -1;
-        int lift[3] = {};
+        int lift[kButtons] = {};
+        int pageAt = 0, pages = 0;
+        int turn = 0;
         float x = 0, y = 0, unit = 0, scroll = 0;
         bool overThumb = false, dragging = false;
         uint32_t version = 0;

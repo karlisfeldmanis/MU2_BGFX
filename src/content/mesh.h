@@ -86,6 +86,23 @@ struct Material {
     // do: the waterspout's fall, House04's and House05's lit windows. Only glow (above) ever
     // carries a nonzero one. See fs_glow.sc and Renderer::submitBatches.
     float scrollPerSecond = 0.0f;
+    // An item's glow as ItemObjectAttribute sets it (ZzzObject.cpp:5199): its brightness
+    // `sin(WorldTime*0.004)*pulse[0] + pulse[1]` -- the Light Spear's and the two shields'
+    // breathing, 0/1 on a steady glow -- and `jitter`, the step of the per-frame random jump
+    // of its sheet, the Legendary Shield's shimmer (MU jumps U and V in tenths; here V only,
+    // carried where the scroll is). The cook's bit 5; see Renderer::submitBatches.
+    // A negative pulse[1] is not a sine: it is MU's per-frame roll, (rand()%10)*0.1 times
+    // -pulse[1] -- the Gorgon's eye (Renderer::submitBatches).
+    float pulse[2] = {0.0f, 1.0f};
+    float jitter = 0.0f;
+    // An item's glow rather than a lamp's: drawn at MU's BlendMeshLight alone, without the
+    // world sheet's glow_strength, which is tuned for fires and windows (2.0 in Lorencia).
+    bool itemGlow = false;
+    // A glow that casts the sun's shadow all the same, though it is drawn only in the glow
+    // pass, at this strength: 0 none, 1 full, between dithered by fs_shadow as a fading figure
+    // is. Ours, on the Ice Monster alone: MU draws it no shadow (ZzzCharacter.cpp:8668), and
+    // its additive body could not be seen on Devias's snow without one (the user, 2026-09-30).
+    float glowShadow = 0.0f;
     std::string name;
 };
 

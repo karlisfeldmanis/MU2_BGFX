@@ -588,7 +588,7 @@ def renormal(obj, flat: bool = False) -> None:
 STACK_LIMIT = 0.02
 
 
-def unwrap(obj, unstack: bool = True) -> None:
+def unwrap(obj, unstack: bool = True, shares: dict | None = None) -> None:
     """Gives the mesh a layout to bake into: MU's own where it can be, a new one where not.
 
     MU's own, wherever it is not stacked, and this is the whole of what makes the bake
@@ -657,6 +657,7 @@ def unwrap(obj, unstack: bool = True) -> None:
         # size and shape MU drew it. The art is duplicated where it was shared, which is
         # what a bake needs and costs nothing but map.
         unfold(obj)
+        shrink_shared(obj, shares)
 
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.mode_set(mode="EDIT")
@@ -717,7 +718,7 @@ def unwrap(obj, unstack: bool = True) -> None:
     # shell picks up whatever is next to it, and mipmapping widens the reach. The margin is
     # what keeps one island's bleed out of its neighbour.
     bpy.ops.object.mode_set(mode="OBJECT")
-    match_density(obj)
+    match_density(obj, shares)
     bpy.ops.object.mode_set(mode="EDIT")
 
     # Packed with a margin, because a bake bleeds: a normal map sampled at the edge of a
@@ -821,7 +822,40 @@ def uv_islands(bm, layer) -> list[list]:
     return islands
 
 
-def match_density(obj) -> None:
+def shrink_shared(obj, shares: dict | None) -> None:
+    """Scales down, in the bake layer, the islands of any sheet the asset gives a `bake_share`.
+
+    The unfold path packs MU's own layout as it stands, so match_density never sees it; a
+    share has to be applied here, before that pack, or it does nothing. Linear scale is the
+    square root of the share, since the share is of area.
+    """
+    if not shares:
+        return
+    mesh = obj.data
+    slots = [slot.name.lower() for slot in obj.material_slots]
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bake = bm.loops.layers.uv.get(BAKE_UV)
+    for group in uv_islands(bm, bake):
+        index = group[0].material_index
+        name = slots[index] if index < len(slots) else ""
+        wanted = next((float(v) for k, v in shares.items() if name.startswith(k.lower())), None)
+        if wanted is None or wanted <= 0:
+            continue
+        factor = wanted ** 0.5
+        loops = [loop for face in group for loop in face.loops]
+        cx = sum(loop[bake].uv.x for loop in loops) / len(loops)
+        cy = sum(loop[bake].uv.y for loop in loops) / len(loops)
+        for loop in loops:
+            uv = loop[bake].uv
+            uv.x = cx + (uv.x - cx) * factor
+            uv.y = cy + (uv.y - cy) * factor
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.update()
+
+
+def match_density(obj, shares: dict | None = None) -> None:
     """Rescales each bake island to the share of the map MU's own layout gave it.
 
     This is the difference between a bake that carries MU's picture and one that smears it.
@@ -842,6 +876,11 @@ def match_density(obj) -> None:
     sheet. Nothing is redrawn and nothing moves relative to anything inside an island; the
     packing afterwards decides where they sit and one uniform scale decides how big they
     all are.
+
+    `shares` is the asset's `bake_share`: a sheet's claim scaled by hand, keyed by its slot.
+    The measure counts UV area, not texels, and it counts a repeat as many times as it is
+    drawn. The Flail's chain is one 16-px ring drawn nineteen times down two cards, and at
+    face value it took four fifths of the map from a 32-px head drawn once.
     """
     mesh = obj.data
 
@@ -858,8 +897,16 @@ def match_density(obj) -> None:
     islands = uv_islands(bm, bake)
     measured = []
 
+    slots = [slot.name for slot in obj.material_slots]
+
+    def share(face) -> float:
+        if not shares or face.material_index >= len(slots):
+            return 1.0
+        name = slots[face.material_index].lower()
+        return next((float(v) for k, v in shares.items() if name.startswith(k.lower())), 1.0)
+
     for group in islands:
-        drawn = sum(uv_area(face, original) for face in group)
+        drawn = sum(uv_area(face, original) * share(face) for face in group)
         laid = sum(uv_area(face, bake) for face in group)
         measured.append((group, drawn, laid))
 
@@ -1115,12 +1162,19 @@ def main() -> None:
 
     # Whether this asset will have its mirrored UVs separated. See unwrap.
     unstack = True
+    shares = None
 
     if asset is not None and asset.exists():
         unstack = bool(json.loads(asset.read_text()).get("unstack", True))
+        shares = json.loads(asset.read_text()).get("bake_share")
+        # A glow's faces are drawn on MU's raw sheet (export_gltf.glow_material), never from
+        # the atlas, so they are given next to none of it.
+        glow = json.loads(asset.read_text()).get("glow") or {}
+        if glow:
+            shares = {**{k: 0.02 for k in glow}, **(shares or {})}
 
     was = coverage(obj.data, ORIGINAL_UV)
-    unwrap(obj, unstack)
+    unwrap(obj, unstack, shares)
     now = coverage(obj.data, BAKE_UV)
 
     print(f"  uv {ORIGINAL_UV:<12} {was[0]:.1%} covered, {was[1]:.1%} of it stacked  (kept)")

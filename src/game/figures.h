@@ -84,6 +84,14 @@ struct HeldItem {
     ShineLook shine;
     // That plus as the recipe gives it, before the item table turns it into `shine`.
     int plus = 0;
+    // The weapon's own clip, where its model carries a rig of its own: the bows' and the
+    // crossbows' string (tools/cook.py bakes it to cooked/wardrobe/clips/<mesh>.muc). Null on
+    // everything rigid. See Figure::poseHeld.
+    const content::CookedClips* clip = nullptr;
+    // Whether it plays on the shot, as MU plays a bow's or a crossbow's action 0 only while
+    // its archer is in PLAYER_ATTACK_BOW..FLY_CROSSBOW and holds it on key 0 otherwise
+    // (ZzzCharacter.cpp:10095-10106, 10160-10166).
+    bool onShot = false;
 };
 
 // Which of the manifest's three lists a body came out of. It is not the rig and not the
@@ -156,6 +164,9 @@ struct FigureBody {
     // branch of the stance code. An NPC with an idle named in index.json keeps it either way
     // -- that is MU's own table for that figure and not a stance this engine picks.
     int idleSafeClip = -1;
+    // Whether he carries his weapon on the back, and stands in the safe idle, whenever he is not
+    // fighting, safe tile or not: the Golden Archer, who draws his crossbow only to shoot.
+    bool slungAtRest = false;
     // And what it WALKS in there. The same chain, one row over: `c->SafeZone` gives
     // PLAYER_WALK_MALE (action 15, 16 for a woman) whatever is carried, so a knight crossing the
     // town square walks empty-handed with the axe on his back rather than in the axe's own
@@ -163,6 +174,13 @@ struct FigureBody {
     // town in combat stance. Its own plant speed, because it is its own clip with its own feet.
     int walkSafeClip = -1;
     float plantSpeedSafe = 0.0f;
+    // And what it runs in, once the realm says it is running (sim::Body::running): action284,
+    // one clip for every stance, -1 on a rig without it. Its own plant speed for the same reason.
+    int runClip = -1;
+    float plantSpeedRun = 0.0f;
+    // The keys its two feet land on, in cycle order (measureStrikes), -1 when unmeasured: the
+    // run's footsteps, where a MU walk has PlayWalkSound's 1.5 and 4.5.
+    float runFeet[2] = {-1.0f, -1.0f};
 
     size_t boneCount() const { return skeletonMesh ? skeletonMesh->bones().size() : 0; }
 };
@@ -263,6 +281,9 @@ private:
     // piece he puts on is read then, once, into the same store. Null when the wardrobe has no
     // such piece or it will not load.
     const content::Mesh* wearable(const std::string& name);
+    // A held weapon's own clip, by its mesh's name, read once from cooked/wardrobe/clips.
+    // Null where the cook wrote none -- everything but the bows and crossbows today.
+    const content::CookedClips* heldClip(const std::string& name);
     // Reads the wardrobe manifest's mesh paths and which helms keep the head, once.
     void readWardrobe();
     std::string assetDir_;
@@ -283,6 +304,9 @@ private:
     std::vector<std::unique_ptr<content::Mesh>> meshes_;  // stable addresses: a body points here
     std::unordered_map<std::string, std::unique_ptr<ClipLibrary>> libraries_;
     std::unordered_map<std::string, std::string> clipOf_;  // mesh name -> library name
+    // Held weapons' own clips, by mesh name; a null entry is a weapon asked for and found
+    // to have none, so it is not asked for again.
+    std::unordered_map<std::string, std::unique_ptr<content::CookedClips>> heldClips_;
     std::unordered_map<std::string, ItemRow> items_;       // mesh name -> what it is
     std::unordered_map<std::string, std::unique_ptr<FigureBody>> bodies_;
     std::vector<FigurePlacement> placements_;

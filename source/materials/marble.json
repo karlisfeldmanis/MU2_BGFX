@@ -1,0 +1,19 @@
+{
+  "name": "marble",
+  "summary": "Polished marble: the grey and the gold-veined black floors inside Devias's church and halls.",
+  "why": [
+    "Roughness 0.35. Polished stone that is walked on, shinier than flagstone's worked 0.72 -",
+    "these are the finest floors in MU's first three maps, and they should catch the lamps.",
+    "Depth 0.04, near nothing. A polished slab is flat; its veins are colour inside the",
+    "stone, and read as height they would turn the floor into a relief map.",
+    "Range 0.05. A polished floor is polished all over."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.35,
+  "grain": {
+    "kind": "cast",
+    "scale": 150,
+    "depth": 0.04,
+    "roughness_range": 0.05
+  }
+}

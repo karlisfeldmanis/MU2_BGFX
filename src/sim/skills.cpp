@@ -233,7 +233,13 @@ constexpr SkillRow kRows[kSkills] = {
     // because it's a cooldown spell": the spells that pay nothing to wait strike at one, and this
     // one waits five seconds. About 60-110 a strike at 120 energy against Fire Ball's 21-42 -- the
     // hardest single blow he has, once a body, into everything round him.
-    {skill::kLightning, "Lightning", 40, 4.0f, 2.0f, 0.0f, 100, false, Spread::Ring, 0, 1.0f,
+    // **No cooldown and the band's own force since 2026-09-30** -- Lightning, Meteorite, Ice and
+    // Poison alike (the user: "do we even need cooldowns for ice, poison, lighting, meteor spells?
+    // because animation is pretty long"): standard spells as Energy Ball, Fire Ball and Flame
+    // are, each paced by its own clip, and so no longer twice (Meteorite three times) the band --
+    // the doubling was the price of the wait, as Flame's was. The notes above and below that
+    // speak of five seconds and of twice the band are the rows' history; the numbers are these.
+    {skill::kLightning, "Lightning", 40, 4.0f, 1.0f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
      "another within four tiles and throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
@@ -260,7 +266,7 @@ constexpr SkillRow kRows[kSkills] = {
     // lighting"): MU's "Skill recovery" (183), the arm thrown up to the sky, played once; the rock
     // is called at the middle of it, with the arm up, and he cannot walk out of it. MU casts it
     // with `SetPlayerMagic`'s two hands, 147/148.
-    {skill::kMeteorite, "Meteorite", 30, 9.0f, 3.0f, 0.0f, 100, false, Spread::One, 0, 1.0f,
+    {skill::kMeteorite, "Meteorite", 30, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "With his arm raised to the sky he calls burning rocks down on a body up to nine tiles off "
      "and on everything within four tiles of it, one rock each.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
@@ -297,7 +303,7 @@ constexpr SkillRow kRows[kSkills] = {
     // it lands on the let-go), at **twice the band**, on five seconds of cooldown before agility's
     // haste. The mana is 0.75's. Nine tiles, with the other spells he throws at a body. Four and
     // not two, Meteorite's: two iced one of four Bull Fighters ("only 1 of 4 monsters was iced").
-    {skill::kIce, "Ice", 38, 9.0f, 2.0f, 0.0f, 100, false, Spread::One, 0, 1.0f,
+    {skill::kIce, "Ice", 38, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "Ice bursts on a body up to nine tiles off and on everything within four tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
      147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
@@ -317,7 +323,7 @@ constexpr SkillRow kRows[kSkills] = {
     // 3% of what health is left: at 3% a Bull Fighter lost three a pulse, which is no poison at
     // all. Six pulses, so the poison is half again the blow. It never kills on its own -- 0.75's
     // shape, which only ever takes a share of what is left -- and leaves one health. Ours.
-    {skill::kPoison, "Poison", 42, 9.0f, 2.0f, 0.0f, 100, false, Spread::One, 0, 1.0f,
+    {skill::kPoison, "Poison", 42, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A cloud of poison bursts on a body up to nine tiles off and on everything within four tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,
@@ -547,7 +553,7 @@ float force(const SkillRow& row, const HeroPoints& points) {
 }
 
 int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const content::Arm* right,
-                  const content::Arm* left, const SkillRow& row) {
+                  const content::Arm* left, const SkillRow& row, int extra) {
     const content::PlayerAction* clip = tables.action(row.clip);
     if (!clip || clip->keys <= 0) return 0;
     // The attack speed's own term, and it is the ATTACK one rather than the magic one: 60 to 64
@@ -563,8 +569,8 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     // and nothing from the weapon: `PLAYER_SKILL_HAND1..` play at `0.29 + MagicSpeed * 0.004`
     // (ZzzCharacter.cpp:939, the RGZ_FIX arm under 509).
     const float bonus = row.onSelf()     ? 0.0f
-                        : row.wizardry ? magicSpeedStat(kin, agility) * 0.004f
-                                       : attackSpeedStat(kin, agility, right, left) * 0.004f;
+                        : row.wizardry ? (magicSpeedStat(kin, agility) + float(extra)) * 0.004f
+                                       : (attackSpeedStat(kin, agility, right, left) + float(extra)) * 0.004f;
     const float rate = (clip->speed + bonus) * 25.0f;
     if (rate <= 0.0f) return 0;
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));

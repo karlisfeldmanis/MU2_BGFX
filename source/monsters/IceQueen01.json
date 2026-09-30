@@ -1,0 +1,683 @@
+{
+  "item": "IceQueen01",
+  "mu_name": "Ice Queen",
+  "mu_name_from": "MuMain's _enum.h:4400: MONSTER_ICE_QUEEN = 25 is the server's type, and CreateMonster answers it with OpenMonsterModel(MONSTER_MODEL_ICE_QUEEN), which is 18 (_enum.h:4168; MODEL_ICE_QUEEN = MODEL_MONSTER01 + 18 at :4943). OpenMonsterModel loads Monster{Type + 1:D2} (ZzzOpenData.cpp:2549-2562), so the file is Monster19.bmd. The client's name is 아이스퀸, the English words written in Hangul (ZzzCharacter.cpp:14006). OpenMU's Version075 Devias.cs:253-284 names number 25 'Ice Queen' at level 52 with 4000 health, 155-165 damage, 90 defense, MoveRange 3, AttackRange 4, ViewRange 7, MoveDelay 400, AttackDelay 1400, respawn 50 s, and AttackSkill PowerWave. Seventy-five of them in 0-128 by 128-245 (Devias.cs:65), the map's north-west, with the Elite Yetis. mu.db's monster_kinds row 25 already carries all of it, attack_skill 11 included.",
+  "world": "devias",
+  "object_type": 25,
+  "monster": {
+    "model_index": 18,
+    "scale": 1.1
+  },
+  "monster_from": "ZzzCharacter.cpp:13997-14007, CreateMonster, case MONSTER_ICE_QUEEN:\n\n    OpenMonsterModel(MONSTER_MODEL_ICE_QUEEN);\n    c = CreateCharacter(Key, MODEL_ICE_QUEEN, PositionX, PositionY);\n    c->Weapon[0].Type = MODEL_ANGELIC_STAFF;\n    c->Object.BlendMesh = 2;\n    c->Object.BlendMeshLight = 1.f;\n    c->Object.Scale = 1.1f;\n    c->Object.LightEnable = false;\n    c->Level = 3;\n\nScale 1.1 is the only size line. BlendMesh 2 is the glow (glow_from). LightEnable false and Level 3 are the same fact said twice, and neither is a glowing-eye flag: RenderEye is gated on the Bull Fighter's Level 1 alone (ZzzCharacter.cpp:11210). What Level 3 does is in Selection.cpp:100-107 -- SelectCharacter, which runs over every monster on the frames the pointer is over the world, sets `o->LightEnable = true` and then `o->Light` by c->Level, and case 3 is (1.5, 1.5, 1.5), against 0.2 for an ordinary monster and -0.4 for a Level 1 Elite. RenderCharacter draws her at `c->Light = terrain light + o->Light` (ZzzCharacter.cpp:9259), so her body light is at least 1.5 over whatever the ground gives, and MU's fixed-function colour clamps at one: she is drawn at her sheet's own colours, shade or sun, night or day. That is what 'unlit' means for this model, and the client has no way to draw it yet -- see open_question.",
+  "right_hand": "Staff02",
+  "right_hand_bone": "knife_gdf",
+  "right_hand_from": "MODEL_ANGELIC_STAFF is MODEL_STAFF + 1 (_enum.h:1595). OpenItems loads the staves as `AccessModel(MODEL_STAFF + i, L\"Data\\\\Item\\\\\", L\"Staff\", i + 1)` for i 0 to 8 (ZzzOpenData.cpp:674-675), so index 1 is Item/Staff02.bmd, the Angelic Staff -- already built, source/items/weapons/Staff02.json, OpenMU Version075 Weapons.cs `CreateWeapon(5, 1, ...)`.\n\nThe bone is CreateCharacter's weapon switch: `case MODEL_ICE_QUEEN: c->Weapon[0].LinkBone = 26; c->Weapon[1].LinkBone = 35;` (ZzzCharacter.cpp:12032-12035). Bone 26 on this rig is knife_gdf, a child of Bip01 R Hand; bone 35 is hand_bofdgne01, a child of Bip01 L Hand -- the player rig's own grip names, the same two the Lich carries at 41 and 32. Nothing hangs off 35: she sets no Weapon[1].Type, so the left hand is empty.",
+  "hidden_mesh_from": "Not declared: CreateMonster never assigns HiddenMesh for her, so all three of Monster19's meshes are drawn.",
+  "separate_meshes": true,
+  "separate_meshes_from": "Declared for the Lich's reason. Mesh 1 (snow_queen03, 46 triangles, all on Bip01 Head) is a flat plate standing behind the face and up over the crown -- 56 units wide, 193 to 233 high, 5 thick -- and it meets the head's own triangles on the same bone, so a weld would take it into the face's island and give it the face's material.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 20, 20, 13, 8, 8, 8, 31. The walk (slot 2) is the one locked action. 63 bones, five of them dummies (7, 12, 17, 25, 34). Past the biped: six chains of four Box bones -- Box01-04 and Box13/23/21/22 off Spine1, Box05-08, Box09-12, Box15/24/19/20 and Box14/18/16/17 off Spine -- which carry nothing but the glow mesh's streamers, and fdgre, 4y54 and QuadPatch02 off the pelvis.\n\nBoneHead 16 is Bip01 Head: `Models[MODEL_MONSTER01 + Type].BoneHead = 16` in her sound case, ZzzOpenData.cpp:3502-3510.\n\nPlay speeds are OpenMonsterModel's shared defaults (ZzzOpenData.cpp:2598-2605): 18 is not in the multiplier list (3, 5, 25, 37, 42; :2607-2615) and has no case in the walk switch (:2618-2640).",
+  "sheets": {
+    "snow_queen01": "icequeen_snow_queen01.png",
+    "snow_queen03": "icequeen_snow_queen03.png",
+    "snow_queen02": "icequeen_snow_queen02.png"
+  },
+  "sheet_from": "Three meshes in Monster19.bmd, in this order: 0 snow_queen01.jpg, 420 triangles, the body from the waist up; 1 snow_queen03.jpg, 46 triangles, the plate over the head; 2 snow_queen02.jpg, 264 triangles, the glow. Each mesh's own texture index in the .bmd is its position (0, 1, 2), read off the file's mesh headers, which is what BlendMesh compares against (glow_from). snow_queen01.OZJ is 128x128, 02 is 128x32, 03 is 32x32, all .OZJ with no alpha channel, fully opaque as decode_texture reports; no cutout. Decoded under an icequeen_ prefix. None is byte-identical to anything already in source/textures, and MuMain's Data/Monster is the only copy of the three on disk.",
+  "sheet_materials": {
+    "snow_queen01": "cloth",
+    "snow_queen03": "ice"
+  },
+  "sheet_materials_from": "snow_queen01 at 6x: a white gown on a mauve ground. The top row is the head -- a white brimmed hat with a grey ornament, a pale face with dark red lips under long grey-black hair, a gold pendant at the throat, and the back of the head as the same hair shading to violet. Below it the bodice front and back, white with grey lacing crossed down the middle and a low neckline showing skin; the lower left is the sleeves, white folds ending in thick white cuffs; a strip of bare skin for the hands; and down the right side a long pale-grey pleated panel with a jewelled V at its top, which the Spine bone wears (the skirt or cape below the bodice). A purple band with gold scrollwork sits beside the skin strip and no bone's uv box reaches it. Most of the sheet is white cloth: cloth, with the face, the hands and the hair wanting skin and hair once the islands show where they fall (the head is 94 triangles on Bip01 Head, the hands 83 on the hands and fingers).\n\nsnow_queen03 at 16x: a grey curl of filigree -- a scroll with a white rim and a mottled inside -- on a flat grey ground with a black corner. It is the plate behind her head, a tiara or crest. ice, and that is a reading and not a fact: nothing in the client says what it is made of, it has no hue at all, and metal is the trap the Giant recorded (a painted sheet at metallic 1 renders as chrome), so a dielectric that is glossier than the gown was chosen for the snow queen's crown. painted_steel is the other honest answer and its brushed grain barely matters on 46 triangles.\n\nsnow_queen02 is not here on purpose: it is the glow, drawn added on MU's raw sheet and not baked (glow_from).",
+  "glow": {
+    "snow_queen02": {}
+  },
+  "glow_from": "`c->Object.BlendMesh = 2` with `BlendMeshLight = 1.f` (ZzzCharacter.cpp:14001-14002). BlendMesh is compared against the mesh's texture index, not its position -- `else if (blendMeshIndex <= -2 || m->Texture == blendMeshIndex)` then `EnableAlphaBlend()`, MU's GL_ONE, GL_ONE add (ZzzBMD.cpp:1509-1516) -- and Monster19's third mesh has texture index 2, so it is snow_queen02. Drawn at `BodyLight * BlendMeshLight` (ZzzBMD.cpp:1523-1525), and with her body light at 1.5 and over (monster_from) that clamps to the sheet as painted.\n\nThe sheet at 6x is a streak: white at the left end, thinning into grey flecks and out to black at the right, on black. Added, the black is nothing and the white is a comet's head. Where it is: 316 of its vertices, and they are her whole lower half -- 67 on R Thigh, 26 on R Calf, 15 and 12 on the left leg, 52 on the spine, and the rest on the six Box chains -- spread 4.1 m across (x -207 to 207) and from the ground to 291 units, above her head at 214. The opaque body (mesh 0) stops at the waist, at 129 units. So she has no legs: below the bodice she is a column of icy streaks, with six streamers swinging out round her on the Box bones. The uv runs to 2.1 along v, so the sheet repeats along each streamer; export_gltf's glow sampler is REPEAT.\n\n{} because BlendMeshLight is a steady 1 -- no pulse, no jitter: nothing in MoveCharacterVisual or RenderCharacter touches her BlendMeshLight or BlendMeshTexCoord, where the Ice Monster's scrolls (ZzzCharacter.cpp:6078-6079) and the Gorgon's flickers (:6062).",
+  "maps": 512,
+  "maps_from": "Overridden, for the Lich's reason. settings.map_size gives 384, three times the 128 of her widest sheet, and that assumes the islands partition one sheet. The atlas has to hold snow_queen01 (16,384 texels) and snow_queen03 (1,024) side by side, 157k at the capped 3x, over the 147k a 384 holds before any gutter. The glow takes next to none of it (clean_lowpoly gives a glow slot a 0.02 share). 512 holds 262k.",
+  "effects_from": "None on the animation. MODEL_ICE_QUEEN and MONSTER_ICE_QUEEN appear, across all of MuMain, in: CreateMonster (ZzzCharacter.cpp:13997), the weapon link switch (:12032), MoveCharacter's Power Wave (:5046), the shadow exclusion (:8668), CreateBlood's exclusion (ZzzEffectBlurSpark.cpp:456), a Devil Square body tint (ZzzObject.cpp:494-499, `Vector(0.0f, 0.3f, 1.0f, b->BodyLight)` inside `if (gMapManager.InDevilSquare())` -- not Devias, so not hers here), the sound case (ZzzOpenData.cpp:3502) and the name table (:2341). None of the per-frame switches in MoveCharacterVisual or RenderCharacter has a case for her.\n\nThe three things she does NOT do, and what each costs here:\n\n- No shadow. RenderCharacter's shadow block is skipped for `c->MonsterIndex != MONSTER_ICE_QUEEN` with the Ice Monster, the Red Dragon, Lala, Zaikan and the Death Beam Knight (ZzzCharacter.cpp:8666-8695): the `o->EnableShadow = true; RenderPartObject(...)` that draws every other monster's shadow is inside it. A floating column of light casts nothing. The client has no per-figure switch for the sun's casters yet.\n- No blood when she dies: CreateBlood skips her with the Ghost and the Assassin (ZzzEffectBlurSpark.cpp:456). The game draws no death blood for anyone yet, so there is nothing to turn off.\n- No glowing eyes: Level 3 is not RenderEye's flag (monster_from).\n\nWhat she throws is the fight's and not the clip's, as the Lich's meteor is: see attack_skill_from.",
+  "attack_skill": 11,
+  "attack_skill_from": "OpenMU's Version075 Devias.cs:266: `monster.AttackSkill = ... SkillNumber.PowerWave`, with AttackRange 4 and AttackDelay 1400 in the same block. SkillNumber.PowerWave is 11 and so is MuMain's AT_SKILL_POWERWAVE, so mu.db's attack_skill column (already 11 on row 25) reaches the client's switch untranslated, as the Lich's 2 does.\n\nWhat it looks like, ZzzCharacter.cpp:5045-5055, in MoveCharacter's AttackTime block (the let-go at `AttackTime >= g_iLimitAttackTime`, 15 frames, :4140 and :172), with Angle[2] aimed at the target by `CreateAngle2D(o->Position, to->Position)` at :4891:\n\n    case AT_SKILL_POWERWAVE:\n        if (o->Type == MODEL_ICE_QUEEN)\n        {\n            Angle[2] += 10.f;  CreateEffect(MODEL_MAGIC2, o->Position, Angle, o->Light);\n            Angle[2] -= 20.f;  CreateEffect(MODEL_MAGIC2, o->Position, Angle, o->Light);\n            Angle[2] += 10.f;\n        }\n        CreateEffect(MODEL_MAGIC2, o->Position, Angle, o->Light);\n        PlayBuffer(SOUND_MAGIC);\n\nThree of the wizard's waves in a fan, ten degrees either side of the heading, from her own feet, and one SOUND_MAGIC. She is the only monster in 0.75 whose Power Wave is a fan (the Hell Spider's is one). The wave itself is already built -- source/effects/wave/Magic02.json and src/game/fx/wave.h -- and wants only to be cast three times.",
+  "sounds_from": "Five files, ZzzOpenData.cpp:3502-3510: mIceQueen1, mIceQueen2, mIceQueenAttack1, mIceQueenAttack2 and mIceQueenDie, then SetMonsterSound(MODEL_MONSTER01 + Type, 60, 61, 62, 63, 64) -- offsets from SOUND_MONSTER_BULL1 at 210, so 270 to 274, SOUND_MONSTER_ICEQUEEN1 through ICEQUEENDIE. Wired as icequeen_* in sounds.json, not here. The cast adds SOUND_MAGIC, Power Wave's own.",
+  "open_question": "Two things the client cannot yet say, and neither is a recipe key.\n\nHow bright she is. MU draws her at the sheet's own colours whatever the light (monster_from); this build will light the gown like any cloth, so under Devias's sun she will read close and at night she will go grey where MU's stays white. The honest port is a per-figure 'unlit' -- the albedo added back as emission, or the shade skipped -- and it is code. Until then she will look like an ordinary lit figure with a glowing lower half.\n\nWhich islands are skin and hair. The sheet reading is above; the island list appears only after the build, and the face, the hands and the hair should be set from it (skin, skin, hair) with the gown, sleeves and pleated panel left cloth and the gold pendant brass if it gets an island of its own.",
+  "islands_from": "Twenty-nine islands. 0 is the whole opaque body -- head, bodice, sleeves, hands, one weld of 420 triangles on snow_queen01 -- in cloth, the sheet's bulk; the face and hands are a small share of it and take cloth's values. 27 and 28 are mesh 1, the crest plate behind the head (46 on snow_queen03), in ice. 1-26 are mesh 2, the additive lower half and its six streamers (264 on snow_queen02), which leave the bake as the glow part and are set to cloth only so nothing is left at the profile's skin. They arrived as skin and were set here.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "cloth",
+      "triangles": 420,
+      "area": 13206.9,
+      "along": [
+        -14.8,
+        60.4
+      ],
+      "mu_uv": [
+        0.005,
+        0.085,
+        0.989,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.983,
+        0.98
+      ]
+    },
+    {
+      "island": 1,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 3653.8,
+      "along": [
+        -105.7,
+        0.8
+      ],
+      "mu_uv": [
+        0.386,
+        1.747,
+        0.791,
+        2.099
+      ],
+      "bake_uv": [
+        0.655,
+        0.946,
+        0.678,
+        0.966
+      ]
+    },
+    {
+      "island": 2,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 3051.9,
+      "along": [
+        -163.1,
+        -9.1
+      ],
+      "mu_uv": [
+        0.002,
+        0.033,
+        0.989,
+        0.986
+      ],
+      "bake_uv": [
+        0.889,
+        0.451,
+        0.943,
+        0.504
+      ]
+    },
+    {
+      "island": 3,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 3604.5,
+      "along": [
+        -104.2,
+        0.8
+      ],
+      "mu_uv": [
+        0.386,
+        1.747,
+        0.788,
+        2.097
+      ],
+      "bake_uv": [
+        0.734,
+        0.946,
+        0.756,
+        0.965
+      ]
+    },
+    {
+      "island": 4,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 2524.3,
+      "along": [
+        6.1,
+        52.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.039,
+        0.982,
+        0.992
+      ],
+      "bake_uv": [
+        0.91,
+        0.009,
+        0.964,
+        0.061
+      ]
+    },
+    {
+      "island": 5,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 2543.4,
+      "along": [
+        6.1,
+        52.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.04,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.889,
+        0.311,
+        0.944,
+        0.363
+      ]
+    },
+    {
+      "island": 6,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 3797.1,
+      "along": [
+        -131.8,
+        -6.8
+      ],
+      "mu_uv": [
+        0.006,
+        0.027,
+        0.99,
+        0.991
+      ],
+      "bake_uv": [
+        0.818,
+        0.591,
+        0.872,
+        0.644
+      ]
+    },
+    {
+      "island": 7,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 3814.1,
+      "along": [
+        -132.0,
+        -6.8
+      ],
+      "mu_uv": [
+        0.007,
+        0.026,
+        0.991,
+        0.99
+      ],
+      "bake_uv": [
+        0.818,
+        0.451,
+        0.872,
+        0.504
+      ]
+    },
+    {
+      "island": 8,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 3734.0,
+      "along": [
+        -37.1,
+        6.1
+      ],
+      "mu_uv": [
+        0.004,
+        0.02,
+        0.986,
+        0.983
+      ],
+      "bake_uv": [
+        0.818,
+        0.732,
+        0.872,
+        0.785
+      ]
+    },
+    {
+      "island": 9,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 4331.8,
+      "along": [
+        8.0,
+        24.7
+      ],
+      "mu_uv": [
+        0.004,
+        0.033,
+        0.988,
+        0.988
+      ],
+      "bake_uv": [
+        0.889,
+        0.591,
+        0.943,
+        0.644
+      ]
+    },
+    {
+      "island": 10,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 3804.3,
+      "along": [
+        -37.9,
+        6.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.014,
+        0.992,
+        0.98
+      ],
+      "bake_uv": [
+        0.818,
+        0.311,
+        0.872,
+        0.364
+      ]
+    },
+    {
+      "island": 11,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1668.9,
+      "along": [
+        -85.4,
+        -1.9
+      ],
+      "mu_uv": [
+        0.386,
+        1.747,
+        0.791,
+        2.099
+      ],
+      "bake_uv": [
+        0.695,
+        0.946,
+        0.717,
+        0.966
+      ]
+    },
+    {
+      "island": 12,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1396.2,
+      "along": [
+        -117.1,
+        -7.5
+      ],
+      "mu_uv": [
+        0.002,
+        0.033,
+        0.989,
+        0.986
+      ],
+      "bake_uv": [
+        0.889,
+        0.521,
+        0.943,
+        0.573
+      ]
+    },
+    {
+      "island": 13,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1617.8,
+      "along": [
+        -83.2,
+        -1.9
+      ],
+      "mu_uv": [
+        0.386,
+        1.747,
+        0.788,
+        2.097
+      ],
+      "bake_uv": [
+        0.505,
+        0.957,
+        0.527,
+        0.976
+      ]
+    },
+    {
+      "island": 14,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1168.5,
+      "along": [
+        -6.1,
+        4.9
+      ],
+      "mu_uv": [
+        0.001,
+        0.039,
+        0.982,
+        0.992
+      ],
+      "bake_uv": [
+        0.91,
+        0.078,
+        0.964,
+        0.13
+      ]
+    },
+    {
+      "island": 15,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1179.7,
+      "along": [
+        -6.4,
+        4.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.04,
+        0.99,
+        0.989
+      ],
+      "bake_uv": [
+        0.889,
+        0.38,
+        0.944,
+        0.432
+      ]
+    },
+    {
+      "island": 16,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1901.7,
+      "along": [
+        -99.6,
+        -6.3
+      ],
+      "mu_uv": [
+        0.006,
+        0.027,
+        0.99,
+        0.991
+      ],
+      "bake_uv": [
+        0.818,
+        0.661,
+        0.872,
+        0.715
+      ]
+    },
+    {
+      "island": 17,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1918.9,
+      "along": [
+        -99.8,
+        -6.3
+      ],
+      "mu_uv": [
+        0.007,
+        0.026,
+        0.991,
+        0.99
+      ],
+      "bake_uv": [
+        0.818,
+        0.521,
+        0.872,
+        0.574
+      ]
+    },
+    {
+      "island": 18,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1838.2,
+      "along": [
+        -44.9,
+        1.1
+      ],
+      "mu_uv": [
+        0.004,
+        0.02,
+        0.986,
+        0.983
+      ],
+      "bake_uv": [
+        0.889,
+        0.732,
+        0.943,
+        0.785
+      ]
+    },
+    {
+      "island": 19,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 2190.6,
+      "along": [
+        -10.7,
+        2.1
+      ],
+      "mu_uv": [
+        0.004,
+        0.033,
+        0.988,
+        0.988
+      ],
+      "bake_uv": [
+        0.889,
+        0.661,
+        0.943,
+        0.714
+      ]
+    },
+    {
+      "island": 20,
+      "material": "cloth",
+      "triangles": 6,
+      "area": 1878.9,
+      "along": [
+        -45.9,
+        1.1
+      ],
+      "mu_uv": [
+        0.003,
+        0.014,
+        0.992,
+        0.98
+      ],
+      "bake_uv": [
+        0.818,
+        0.381,
+        0.872,
+        0.434
+      ]
+    },
+    {
+      "island": 21,
+      "material": "cloth",
+      "triangles": 24,
+      "area": 10552.0,
+      "along": [
+        -16.9,
+        18.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.049,
+        0.999,
+        0.98
+      ],
+      "bake_uv": [
+        0.911,
+        0.223,
+        0.974,
+        0.855
+      ]
+    },
+    {
+      "island": 22,
+      "material": "cloth",
+      "triangles": 24,
+      "area": 8419.4,
+      "along": [
+        -108.8,
+        8.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.049,
+        0.999,
+        0.98
+      ],
+      "bake_uv": [
+        0.261,
+        0.872,
+        0.966,
+        0.977
+      ]
+    },
+    {
+      "island": 23,
+      "material": "cloth",
+      "triangles": 24,
+      "area": 8198.1,
+      "along": [
+        -50.6,
+        5.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.049,
+        0.999,
+        0.98
+      ],
+      "bake_uv": [
+        0.333,
+        0.154,
+        0.974,
+        0.977
+      ]
+    },
+    {
+      "island": 24,
+      "material": "cloth",
+      "triangles": 24,
+      "area": 7330.1,
+      "along": [
+        -86.9,
+        0.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.049,
+        0.999,
+        0.98
+      ],
+      "bake_uv": [
+        0.081,
+        0.925,
+        0.46,
+        0.982
+      ]
+    },
+    {
+      "island": 25,
+      "material": "cloth",
+      "triangles": 24,
+      "area": 6873.4,
+      "along": [
+        -207.5,
+        1.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.049,
+        0.999,
+        0.98
+      ],
+      "bake_uv": [
+        0.153,
+        0.928,
+        0.853,
+        0.982
+      ]
+    },
+    {
+      "island": 26,
+      "material": "cloth",
+      "triangles": 24,
+      "area": 6993.0,
+      "along": [
+        -139.5,
+        1.0
+      ],
+      "mu_uv": [
+        0.001,
+        0.049,
+        0.999,
+        0.98
+      ],
+      "bake_uv": [
+        0.009,
+        0.931,
+        0.966,
+        0.991
+      ]
+    },
+    {
+      "island": 27,
+      "material": "ice",
+      "triangles": 23,
+      "area": 1360.8,
+      "along": [
+        23.7,
+        29.3
+      ],
+      "mu_uv": [
+        -0.014,
+        0.022,
+        0.981,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.801,
+        0.787
+      ]
+    },
+    {
+      "island": 28,
+      "material": "ice",
+      "triangles": 23,
+      "area": 1360.8,
+      "along": [
+        23.7,
+        29.3
+      ],
+      "mu_uv": [
+        -0.012,
+        0.022,
+        0.983,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.801,
+        0.787
+      ]
+    }
+  ]
+}

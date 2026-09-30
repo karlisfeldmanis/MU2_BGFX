@@ -56,7 +56,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                                       : std::max(1, int(float(target.health) * kHeroPoisonShare));
             target.poisonBy = attacker.id;
         }
-        // 0.75's poison, whose pulse is a share of what he has left (`poisonDamage` 0).
+        // 0.75's poison, whose pulse is a share of what he has left (`poisonDamage` 0). One at a
+        // time: a bite while one is on neither adds to it nor starts it again. It stacked for an
+        // afternoon (2026-09-30) and was taken out as too strong ("remove stacking poison").
         // And stacked when one is on already (ours, kPoisonStacksMost): the clock starts again
         // and the pulses keep their beat.
         if (target.player && target.alive() && !attacker.player && poisons(attacker)) {
@@ -124,6 +126,34 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     if (attacker.player && generates && attacker.mana < attacker.maxMana) {
         const int back = std::max(1, int(float(attacker.maxMana) * kAttackManaShare));
         attacker.mana = std::min(attacker.maxMana, attacker.mana + back);
+    }
+    // The Dungeon's runes on a wound he dealt, swing, arrow or spell (sim/items.h): Bloodwell's
+    // share back as life, and each Frenzy's roll off the sockets' own stream -- drawn only when
+    // one is worn, so a run without them is not moved.
+    if (attacker.player && target.monster() && wound > 0 && attacker.alive()) {
+        if (attacker.excel.lifeSteal > 0.0 && attacker.health < attacker.maxHealth) {
+            attacker.stealCarry += float(double(wound) * attacker.excel.lifeSteal);
+            const int back = int(attacker.stealCarry);
+            attacker.stealCarry -= float(back);
+            attacker.health = std::min(attacker.maxHealth, attacker.health + back);
+            if (back > 0) {
+                core::logf("bloodwell rune: tick %lld, +%d life off a %d wound", (long long)tick_,
+                           back, wound);
+            }
+        }
+        for (int i = 0; i < attacker.excel.frenzies; ++i) {
+            if (!runeDice_.nextBool(kFrenzyChance)) continue;
+            if (attacker.frenzyUntil <= tick_) {
+                core::logf("frenzy rune: tick %lld, +%d speed for %lld ticks", (long long)tick_,
+                           kFrenzySpeed, (long long)kFrenzyTicks);
+            }
+            attacker.frenzyUntil = tick_ + kFrenzyTicks;
+            reswing(attacker);
+            break;
+        }
+    }
+    if (attacker.player && blow.critical) {
+        core::logf("critical: tick %lld, %d on #%u", (long long)tick_, blow.damage, target.id);
     }
     say(What::Hit, attacker, blow.damage, blow.rolled, target.health, target.id);
     happenings_.back().critical = blow.critical;
@@ -710,7 +740,10 @@ void Realm::kill(Body& dead, Body& killer) {
         dead.risesAt = tick_ + kRiseTicks;
         // And he rises with nothing standing on him: every buff ends with the death, as MU's
         // own do, rather than walking back out of town under a guard he raised in the field.
-        // The cooldown is left running, so a death is not a way to raise it again sooner.
+        // And every cooldown is spent with it, the buffs' and the potion's included: he stands
+        // up in town with his whole bar ready. The user's rule, 2026-09-30.
+        for (int64_t& cool : dead.cools) cool = 0;
+        potionUntil_ = 0;
         dead.boonUntil = 0;
         dead.mightUntil = 0;
         dead.might = 0;
@@ -732,8 +765,9 @@ void Realm::kill(Body& dead, Body& killer) {
         // sets StopByDeath false, so there he would rise still drunk. One rule for everything in
         // the buff strip was the user's (2026-09-25), and a knight who stands up in town with
         // the red still on him reads as a bug.
-        if (dead.aleUntil != 0) {
+        if (dead.aleUntil != 0 || dead.frenzyUntil != 0) {
             dead.aleUntil = 0;
+            dead.frenzyUntil = 0;
             reswing(dead);
         }
         order_ = Request{};
@@ -910,7 +944,14 @@ void Realm::reviveHero() {
     order_ = Request{};
     pending_ = Request{};
     wants_ = skill::kNone;
-    say(What::Rose, hero, hero.level, hero.health);
+    // A map with no safe box of its own -- the Dungeon -- sends him home to Lorencia, as the Town
+    // Portal does there: OpenMU respawns a dead player at his map's SafezoneMap, which falls back
+    // to Lorencia for a map with no spawn gate (Player.cs:1559-1562, BaseMapInitializer.cs:91;
+    // the user, 2026-10-01: "if char dies in dungeon, he has to respawn at lorencia"). `c` says
+    // the map change is owed; the mode takes it (Play::takeHome).
+    const int32_t* box = tables_->safeGate;
+    const bool home = !(box[2] > box[0] && box[3] > box[1]);
+    say(What::Rose, hero, hero.level, hero.health, home ? 1 : 0);
 }
 
 void Realm::raiseBeast(Body& beast) {

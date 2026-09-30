@@ -639,6 +639,7 @@ const std::vector<gfx::Drawable>& ModelBench::gatherSubject(gfx::Renderer& rende
     drawables_.resize(fixed_);
     const int bones = figure_.pose(scratch_.data());
     const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+    figure_.poseHeld(renderer, scratch_.data());
     const size_t first = drawables_.size();
     figure_.gather(row, drawables_);
     if (!shineByMesh_.empty()) {

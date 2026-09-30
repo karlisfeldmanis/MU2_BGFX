@@ -53,9 +53,12 @@ struct Place {
 };
 // MU 0.75's towns. "\xB7" is the middle dot the faces bake past ASCII.
 constexpr Place kPlaces[] = {
-    {"lorencia", "Lorencia", "Town \xB7 Safe zone"},
-    {"noria", "Noria", "Town \xB7 Safe zone"},
-    {"devias", "Devias", "Town \xB7 Safe zone"},
+    // No caption of their own: the line under the name is the map's monster levels
+    // (game/world/maps.h, zoneLevels), handed in by whoever announces.
+    {"lorencia", "Lorencia", ""},
+    {"noria", "Noria", ""},
+    {"devias", "Devias", ""},
+    {"dungeon", "Dungeon", ""},
 };
 
 std::string upper(std::string s) {
@@ -123,7 +126,7 @@ void Arrival::shutdown() {
     }
 }
 
-void Arrival::announce(const std::string& world, float delay) {
+void Arrival::announce(const std::string& world, float delay, const std::string& caption) {
     name_.clear();
     caption_.clear();
     for (const Place& p : kPlaces) {
@@ -136,6 +139,7 @@ void Arrival::announce(const std::string& world, float delay) {
         name_ = world;
         name_[0] = char(std::toupper(static_cast<unsigned char>(name_[0])));
     }
+    if (!caption.empty()) caption_ = caption;
     name_ = upper(name_);
     caption_ = upper(caption_);
     clock_ = -delay;

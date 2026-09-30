@@ -1,0 +1,119 @@
+{
+  "item": "Axe08",
+  "mu_name": "Larkan Axe",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:113 and mu.db's items row (group 1, index 7) name it the Larkan Axe against Item/Axe08.bmd.",
+  "why_this_one": "Drop level 46: the Ice Queen (52) is the only Devias monster that reaches it. See docs/devias-drops.md. Also the Hommerd's weapon in MuMain (ZzzCharacter.cpp:14016), beside the Big Round Shield.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:113. The 0.75 table.",
+    "call": "CreateWeapon(1, 7, 0, 19, 2, 3, true, \"Larkan Axe\", 46, 54, 67, 25, 55, 0, 0, 140, 0, 0, 0, 0, 1, 0)",
+    "group": 1,
+    "number": 7,
+    "drop_level": 46,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 54,
+    "maximum_damage": 67,
+    "attack_speed": 25,
+    "durability": 55,
+    "requires": {
+      "level": 0,
+      "strength": 140,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "skill": 19
+  },
+  "stance": "two_hand_sword",
+  "stance_from": "ZzzCharacter.cpp:356-368: a sword, axe or mace that is TwoHand (width 2) stands PLAYER_STOP_TWO_HAND_SWORD.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "Axes09": "axes09.png"
+  },
+  "sheet_from": "Data/Item/Axes09.OZJ (64x64), from MuMain.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrors the grass; the Devias batch settled on 0.45 (and plate 0.5 on a pole) after the studio caught black heads and flaring shafts on all six. Set before the first look, and judged in the studio.",
+  "material_note": "The ornate head is the gold pillar with a face on Axes09 (cream highlights 254,254,204 over 119,75,36) and is brass; the silver bit of the blade shares that island and will read warm -- judge it in the studio. The upper strip is dark brown timber (47,25,11 to 96,52,23); the grip is neutral dark grey with white edges, finished plate.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "wood",
+      "triangles": 12,
+      "area": 1097.4,
+      "along": [
+        18.0,
+        108.7
+      ],
+      "mu_uv": [
+        0.009,
+        0.506,
+        0.23,
+        0.992
+      ],
+      "bake_uv": [
+        0.14,
+        0.308,
+        0.779,
+        0.683
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 48,
+      "area": 3461.7,
+      "along": [
+        52.6,
+        117.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.994,
+        0.995
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 12,
+      "area": 1010.3,
+      "along": [
+        -31.9,
+        18.0
+      ],
+      "mu_uv": [
+        0.134,
+        0.461,
+        0.238,
+        0.988
+      ],
+      "bake_uv": [
+        0.006,
+        0.168,
+        0.13,
+        0.47
+      ]
+    }
+  ]
+}

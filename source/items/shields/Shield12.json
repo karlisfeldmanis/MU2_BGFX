@@ -41,12 +41,21 @@
     "shield082": "shield082.png"
   },
   "sheet_from": "Data/Item/shield08.OZJ (64x128) and shield082.OZJ (2x2), from MuMain. The .bmd names shield08.jpg on 56 triangles and shield082.jpg on 16, two meshes. The second sheet is two pixels square: it is a flat colour and nothing more, and it is what sixteen of the seventy-two triangles sample.",
-  "material_note": "Two sheets and two islands, and the triangle counts pair them without guessing: fifty-six on shield08 and sixteen on shield082.\n\nIsland 0 means (118, 85, 57) at chroma 62 - an amber-gold upper field studded with rivets over white scrollwork below. Island 1 is flat: shield082 is two pixels square and every one of them is (255, 192, 0), so sixteen triangles of the shield wear one gold with no variation in it at all.\n\nbrass on both. It is a cast copper alloy rather than a ground blade or a painted device - the rivets are the giveaway, and cast pitting with no direction is what the surface wants. Not ceramic, which the Kite and Tower shields take: those are paintings of charges on a field, and this is metal that happens to be yellow.",
+  "material_note": "Two sheets and two islands, and the triangle counts pair them without guessing: fifty-six on shield08 and sixteen on shield082.\n\nIsland 0 means (118, 85, 57) at chroma 62 - an amber-gold upper field studded with rivets over white scrollwork below. Island 1 is flat: shield082 is two pixels square and every one of them is (255, 192, 0), so sixteen triangles of the shield wear one gold with no variation in it at all.\n\nbrass on both. It is a cast copper alloy rather than a ground blade or a painted device - the rivets are the giveaway, and cast pitting with no direction is what the surface wants. Not ceramic, which the Kite and Tower shields take: those are paintings of charges on a field, and this is metal that happens to be yellow. 2026-09-29: island 0 moved to ceramic -- see its note. Island 1 is now the glow (glow_note).",
   "open_question": "Island 0's fifty-six triangles cover the gold field and the white scrolled lower half together, and the white reads as carved ivory rather than as metal. The gold is the larger part and the studs settle the surface, so the gold wins - the same limit the Battle Axe's head island records.",
+  "glow": {
+    "shield082": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    }
+  },
+  "glow_note": "MU's `ItemObjectAttribute` (ZzzObject.cpp:5199) draws this model's mesh 1 ADDED -- BlendMesh 1 -- and it is here drawn so: the slot leaves the bake and ships as a glow part on the raw sheet (export_gltf.glow_material). It was baked as opaque paint until 2026-09-29. `case MODEL_SERPENT_SHIELD: BlendMesh = 1; BlendMeshLight = sin(WorldTime*0.004)*0.3+0.7` (ZzzObject.cpp:5341): shield082 is flat yellow, a breathing yellow glow, not a brass part.",
   "islands": [
     {
       "island": 0,
-      "material": "brass",
+      "material": "ceramic",
       "triangles": 56,
       "area": 8710.3,
       "along": [
@@ -60,11 +69,12 @@
         1.004
       ],
       "bake_uv": [
-        0.505,
-        0.005,
-        0.995,
-        0.902
-      ]
+        0.007,
+        0.006,
+        0.968,
+        0.994
+      ],
+      "note": "the hood: the gold field and the white scrollwork in one island. Brass made the scrollwork dark bronze and the user found the shield 'a little weird' (2026-09-29); ceramic, as the Kite and Tower shields, shows MU's painting as drawn -- gold, ivory and the dark carved lines."
     },
     {
       "island": 1,
@@ -82,17 +92,11 @@
         0.999
       ],
       "bake_uv": [
-        0.005,
-        0.005,
-        0.495,
-        0.995
+        0.006,
+        0.006,
+        0.769,
+        0.52
       ]
     }
-  ],
-  "material_overrides": {
-    "brass": {
-      "roughness": 0.6
-    }
-  },
-  "material_overrides_note": "2026-09-21, from the studio sheet: at brass's 0.44 the serpent's gilt head and band blew out yellow-white with bloom at 225-315 deg. Brass at 0.6 spreads the highlight, as for the Serpent Sword's grip and the staves."
+  ]
 }

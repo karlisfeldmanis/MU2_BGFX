@@ -16,6 +16,7 @@
 #include "core/files.h"
 #include "core/log.h"
 #include "game/frustum.h"
+#include "game/world/maps.h"
 #include "game/play_tuning.h"
 
 namespace mu::game {
@@ -27,7 +28,10 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     ground_ = ground;
     figures_ = figures;
     bare_ = bareName;
-    windy_ = world != "noria";
+    // Noria's and the Dungeon's air is not wind: MU plays its jungle and aDungeon instead.
+    windy_ = world != "noria" && world != "dungeon";
+    dungeonAir_ = world == "dungeon";
+    snowy_ = world == "devias";
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
     std::string error;
     if (!content::loadTables(path, tables_, error)) {
@@ -102,6 +106,13 @@ bool Play::open(const std::string& assetDir, const std::string& world,
                    one.count, kind.label.c_str(), one.x1, one.x2, one.y1, one.y2, world.c_str(),
                    population);
     }
+
+    if (arena_.peaceful) {
+        core::logf("peaceful: none of %s's %u spawns", world.c_str(), tables_.population());
+        tables_.nests.clear();
+    }
+
+    zoneLevels_ = game::zoneLevels(tables_);
 
     // A breed with no cooked figure is not raised. The rules would still walk it and swing it,
     // and a monster nobody can see that hits the hero from the grass is a bug in any world --
@@ -418,6 +429,13 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.bow = sound_.load("player_bow", true);
     heard_.crossbow = sound_.load("player_crossbow", true);
     heard_.hit = sound_.load("melee_hit", true);
+    heard_.missile = sound_.load("missile_hit", true);
+    // The Dungeon's traps (ZzzCharacter.cpp:1223-1237): aGrate for the Lance and the Iron Stick,
+    // sFlame for the Fire Trap. Loaded wherever there is a trap to fire them.
+    if (!realm_.traps().empty()) {
+        heard_.grate = sound_.load("trap_grate", true);
+        heard_.trapFlame = sound_.load("spell_flame", true);
+    }
     heard_.die = sound_.load("player_die", true);
     heard_.dieFemale = sound_.load("player_die_female", true);
     heard_.deathBell = sound_.load("player_death_stinger", false);
@@ -426,6 +444,9 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.grass = sound_.load("player_step_grass", true);
     heard_.soil = sound_.load("player_step_soil", true);
     if (windy_) heard_.wind = sound_.load("world_wind", false);
+    // The Dungeon's air is aDungeon, played as the wind is: looping and unplaced, the whole map
+    // (SceneManager.cpp:859-861). It rides the wind's slot, which the Dungeon has no use for.
+    else if (dungeonAir_) heard_.wind = sound_.load("world_dungeon", false);
     heard_.fire = sound_.load("world_bonfire", false);
     heard_.fountain = sound_.load("world_fountain", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);

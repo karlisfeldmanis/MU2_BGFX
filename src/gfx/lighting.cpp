@@ -39,6 +39,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("shadow_normal_bias", &shadowNormalBias);
     doc.readInto("sun_angle_degrees", &sunAngleDegrees);
     doc.readInto("lamp_strength", &lampStrength);
+    doc.readInto("lamp_shadow", &lampShadow);
     doc.readInto("glow_strength", &glowStrength);
     doc.readInto("bloom_threshold", &bloomThreshold);
     doc.readInto("bloom_knee", &bloomKnee);
@@ -75,6 +76,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("grass_dry", &grassDry);
     doc.readInto("grass_vary", &grassVary);
     doc.readInto("water_flow", &waterFlow);
+    doc.readInto("water_sheen", &waterSheen);
     doc.readInto("grass_meadow", &grassMeadow);
     doc.readInto("grass_meadow_height", &grassMeadowHeight);
     doc.readInto("grass_widen", &grassWiden);
@@ -84,6 +86,10 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("grass_cutout", &grassCutout);
     doc.readInto("grass_painted", &grassPainted);
     doc.readInto("grass_root_ao", &grassRootAo);
+    doc.readVec3Into("grass_through_colour", grassThroughColour);
+    doc.readInto("grass_through", &grassThrough);
+    doc.readInto("grass_length_spread", &grassLengthSpread);
+    doc.readInto("grass_rank_height", &grassRankHeight);
     doc.readInto("grass_roughness", &grassRoughness);
     doc.readInto("grass_wind_strength", &grassWindStrength);
     doc.readInto("grass_wind_degrees", &grassWindDegrees);
@@ -91,9 +97,9 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     static const char* kKnown[] = {
         "azimuth", "elevation", "sun_colour", "sun_strength", "sky_colour", "horizon_paleness",
         "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
-        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "refine_strength", "refine_tint", "refine_stage_strength", "refine_star", "excellent_strength", "refine_glow",
+        "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "lamp_shadow", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "refine_strength", "refine_tint", "refine_stage_strength", "refine_star", "excellent_strength", "refine_glow",
         "grass", "grass_radius", "grass_fade", "grass_thin", "grass_mip_bias", "grass_density", "grass_height", "grass_aspect",
-        "grass_lean", "grass_rank", "grass_dry", "grass_vary", "water_flow", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao",
+        "grass_lean", "grass_rank", "grass_dry", "grass_vary", "water_flow", "water_sheen", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao", "grass_through_colour", "grass_through", "grass_length_spread", "grass_rank_height",
         "grass_roughness", "grass_wind_strength", "grass_wind_degrees", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;

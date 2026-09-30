@@ -43,8 +43,26 @@ NO_GROUND = 0x0008
 #: seats open on the other's grid would open tiles MU closed.
 OPERABLE_BY_MAP = {
     0: {6, 133, 145, 146},
+    1: {59, 60},
     2: {22, 25, 40, 45, 55, 73, 91},
     3: {8, 38},
+}
+
+#: The gates' boxes, by the server's map number: OpenMU Version075 Gates.cs, enter and exit
+#: both, the same numbers src/sim/gates.cpp walks by. A gate is a tile MU left open to be
+#: walked onto, so the solid-stamping pass must not close one -- Lorencia's west gate to Devias,
+#: (5, 38) to (6, 41), sits between boulders and a stone wall whose declared footprints covered
+#: all of it, and a hero walking west stopped a tile short of Devias.
+GATE_BOXES_BY_MAP = {
+    0: [(5, 38, 6, 41), (7, 38, 8, 41), (213, 246, 217, 247), (213, 244, 217, 245)],
+    # The Dungeon's sixteen, Gates.cs:119-125 and 186-192: the way out and its landing, and the
+    # three floors' stairs, each an enter box beside its exit box.
+    1: [(107, 247, 110, 247), (108, 248, 109, 248), (239, 149, 239, 150), (240, 149, 241, 151),
+        (231, 126, 234, 127), (232, 127, 233, 128), (2, 17, 2, 18), (3, 16, 6, 17),
+        (5, 34, 6, 34), (5, 32, 7, 33), (3, 83, 4, 86), (2, 84, 2, 85),
+        (29, 125, 30, 126), (29, 127, 30, 127)],
+    2: [(244, 34, 245, 37), (242, 34, 243, 37)],
+    3: [(148, 3, 155, 4), (148, 5, 155, 6)],
 }
 
 #: What the walker actually compares, which is a threshold and not a bit test: a tile is open
@@ -282,6 +300,10 @@ EFFECTS = {
     # These are the two sheets it spawns, copied in from MuMain like everything else here —
     # Fire01 is four 64-pixel frames in one 256 strip and smoke02 is a single 64 square.
     "fire": "effects/fire/fire01.png",
+    # BITMAP_FIRE + 1, Effect/Fire02.jpg: one 64 square of flame on black. The Dungeon's Fire
+    # Trap throws it out of its vent (CreateEffect(BITMAP_FIRE + 1), ZzzCharacter.cpp:1233-1237,
+    # its particle ZzzEffectParticle.cpp:500 and :4700). See game/world/trap_show.h.
+    "fire2": "effects/fire/fire02.png",
     "smoke": "effects/fire/smoke02.png",
 
     # BITMAP_SMOKE itself, which is not the dust's sheet: smoke01.jpg is a grey wisp on
@@ -501,6 +523,12 @@ EFFECTS = {
     # with no model and nothing for the item pipeline to do to it.
     "leaf": "effects/leaf/leaf01.png",
 
+    # Devias's snow, which is the same pool: World3's leaf01.jpg is a soft white dot and
+    # leaf02.jpg a six-pointed glint, both on black, and MU draws them with EnableAlphaBlend,
+    # where black drops out. So the brightness is carried into alpha over white.
+    "snow": "effects/leaf/devias_snow01.png",
+    "snow_star": "effects/leaf/devias_snow02.png",
+
     # The rain, which shares the leaves' pool in the client (CreateHeavenRain: the first
     # RainCurrent share of the slots are drops, the rest leaves). World1/rain01.OZT is
     # BITMAP_RAIN, a 4 by 32 streak whose shape is all alpha and whose colour is near black --
@@ -541,6 +569,9 @@ EFFECTS = {
 
     "grass_noria_0": "effects/grass/noria_TileGrass01.png",
     "grass_noria_2": "effects/grass/noria_TileGrass03.png",
+
+    # Devias ships one, the frosted white tuft on its smoother snow.
+    "grass_devias_1": "effects/grass/devias_TileGrass02.png",
 
     # The meadow's wild plants, which are not MU's: seed heads, weeds and flowers painted by
     # meadow.py and scattered through every world's green grass. See Turf.Meadow.
@@ -1315,6 +1346,10 @@ def stamp_blocked(declared: dict, grid: Path) -> int:
         if one.get("type") in OPERABLE_BY_MAP.get(
             int(declared.get("map_number", 1)) - 1, set()) and len(one.get("at") or []) >= 2
     }
+
+    # And the gates, which are walked onto for the same reason a seat is. GATE_BOXES_BY_MAP.
+    for x1, y1, x2, y2 in GATE_BOXES_BY_MAP.get(int(declared.get("map_number", 1)) - 1, []):
+        seats |= {(x, y) for x in range(x1, x2 + 1) for y in range(y1, y2 + 1)}
 
     if seats:
         tiles = [tile for tile in tiles
@@ -2206,6 +2241,12 @@ def main() -> None:
                 # and each hand is named on its own.
                 if (plus := document.get("plus")):
                     entry["plus"] = plus
+
+                # A weapon carried on the back wherever he stands, not only in a safe zone:
+                # the Golden Archer's crossbow, which RenderCharacterBackItem slings for an NPC
+                # skeleton in Lorencia whatever the tile (ZzzCharacter.cpp:15281-15288).
+                if document.get("slung"):
+                    entry["slung"] = True
 
                 # Whether anybody can *be* this one.
                 #

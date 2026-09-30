@@ -241,7 +241,7 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
     for (int folk : play.questGivers()) {
         // While he has something for the hero or is waiting on him: the quest on offer, under
         // way, or its hand-in. Resting until it is his to give again, he is a townsperson.
-        const int quest = sim::questOf(realm.tables()->folk[size_t(folk)].number);
+        const int quest = realm.questHere(realm.tables()->folk[size_t(folk)].number);
         const bool ready = quest >= 0 && realm.quest(quest).state == sim::QuestState::Ready;
         // No quest of his in the table, or his waiting on another -- Devin's, until Lorencia or
         // Noria is cleared: one still to come (Play::questGivers), a grey "!". And

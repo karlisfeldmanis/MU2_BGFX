@@ -1,0 +1,147 @@
+// The Realm's side of the travel list (sim/travel.h): which rows he has opened, and a trip asked
+// for, checked and paid. The map change itself is the game's (app/modes/play_mode.cpp), as a
+// gate's is. None of it draws a die.
+#include "core/log.h"
+#include "sim/quests.h"
+#include "sim/realm.h"
+
+namespace mu::sim {
+namespace {
+
+// `OM/Version075/Gates.cs:45-50`. The towns land on their spawn gates, whose middles are
+// game/world/maps.cpp's arrival tiles (gates 17, 27, 22), and face nowhere in particular; the
+// Dungeon's three on exit gates 2, 6 and 10 (docs/dungeon-port.md §1.2-1.3), facing as those do.
+constexpr TravelRow kRows[kTravels] = {
+    {"Lorencia", 0, 10, 2000, 142, 126, 0, 0},
+    {"Noria", 3, 10, 2000, 174, 112, 0, 0},
+    {"Devias", 2, 20, 2000, 207, 42, 0, 0},
+    {"Dungeon", 1, 30, 3000, 108, 247, -1, -1},
+    {"Dungeon 2", 1, 40, 3500, 232, 126, -1, -1},
+    {"Dungeon 3", 1, 50, 4000, 3, 84, 1, -1},
+};
+
+// Where each class is born: the elf in Noria, the rest in Lorencia (game/roster.cpp's `home`).
+int32_t homeMap(Kin kin) { return kin == Kin::FairyElf ? 3 : 0; }
+
+}  // namespace
+
+const TravelRow& travelAt(int index) { return kRows[index < 0 || index >= kTravels ? 0 : index]; }
+
+uint32_t travelRowsOf(int32_t map) {
+    uint32_t bits = 0;
+    for (int i = 0; i < kTravels; ++i) {
+        if (kRows[i].map == map) bits |= uint32_t(1) << i;
+    }
+    return bits;
+}
+
+void Realm::discover(int32_t map) {
+    const uint32_t rows = travelRowsOf(map);
+    if ((found_ & rows) == rows) return;
+    found_ |= rows;
+    core::logf("travel: %s opened", travelAt(__builtin_ctz(rows ? rows : 1)).name);
+}
+
+void Realm::settleFound(uint32_t saved) {
+    // The floors, once: a Dungeon's are separate walkable regions of the one map, and two of them
+    // share a bounding box (docs/dungeon-port.md §1.2), so each is filled from its landing.
+    const uint32_t rows = travelRowsOf(int32_t(tables_->map));
+    floors_.clear();
+    if (rows & (rows - 1)) {
+        const content::Grid& grid = tables_->grid;
+        const int size = grid.size();
+        floors_.assign(size_t(size) * size_t(size), int8_t(-1));
+        std::vector<int> queue;
+        for (int i = 0; i < kTravels; ++i) {
+            if (((rows >> i) & 1u) == 0) continue;
+            int column = kRows[i].column, row = kRows[i].row;
+            if (!router_.nearestOpen(column, row, content::kWallCharacter, 4, &column, &row)) continue;
+            queue.assign(1, row * size + column);
+            floors_[size_t(queue[0])] = int8_t(i);
+            for (size_t at = 0; at < queue.size(); ++at) {
+                const int c = queue[at] % size, r = queue[at] / size;
+                for (int dr = -1; dr <= 1; ++dr) {
+                    for (int dc = -1; dc <= 1; ++dc) {
+                        const int nc = c + dc, nr = r + dr;
+                        if (!grid.open(nc, nr)) continue;
+                        const size_t k = size_t(nr) * size_t(size) + size_t(nc);
+                        if (floors_[k] >= 0) continue;
+                        floors_[k] = int8_t(i);
+                        queue.push_back(int(k));
+                    }
+                }
+            }
+        }
+    }
+
+    found_ = saved & ((uint32_t(1) << kTravels) - 1);
+    found_ |= travelRowsOf(homeMap(bodies_[0].kin));
+    // A map nobody gives a quest on opens as he stands in it. Silently: a raise logs the same
+    // lines on every run.
+    bool giver = false;
+    for (const content::Townsperson& one : tables_->folk) {
+        if (questOf(one.number) >= 0) giver = true;
+    }
+    if (!giver) found_ |= travelRowsOf(int32_t(tables_->map));
+}
+
+int Realm::travelFloor() const {
+    if (floors_.empty()) return -1;
+    const Body& hero = bodies_[0];
+    const int size = tables_->grid.size();
+    if (!tables_->grid.inside(hero.column(), hero.row())) return -1;
+    return floors_[size_t(hero.row()) * size_t(size) + size_t(hero.column())];
+}
+
+int Realm::travelQuest(int index) const {
+    if (index < 0 || index >= kTravels) return -1;
+    const TravelRow& to = kRows[index];
+    // The Dungeon's floors, map 1: which of its rows this is, in the list's order.
+    constexpr int32_t kDungeon = 1;
+    constexpr int32_t kGoldenArcher = 236;
+    if (to.map != kDungeon) return -1;
+    int floor = 0;
+    for (int i = 0; i < index; ++i) floor += kRows[i].map == kDungeon ? 1 : 0;
+    // And the chain's links, in the quest table's order.
+    int link = 0;
+    for (int q = 0; q < kQuests; ++q) {
+        if (questAt(q).giver != kGoldenArcher) continue;
+        if (link++ == floor) return q;
+    }
+    return -1;
+}
+
+TravelRefusal Realm::travelRefusal(int index) const {
+    if (index < 0 || index >= kTravels || !tables_) return TravelRefusal::Unknown;
+    const TravelRow& to = kRows[index];
+    if (((found_ >> index) & 1u) == 0) return TravelRefusal::Unknown;
+    const uint32_t rows = travelRowsOf(to.map);
+    if (to.map == int32_t(tables_->map) && (rows & (rows - 1)) == 0) return TravelRefusal::Here;
+    if (to.map == int32_t(tables_->map) && travelFloor() == index) return TravelRefusal::Here;
+    // Its link of the chain, taken at least once: under way, ready, resting or ever handed in.
+    if (const int q = travelQuest(index); q >= 0) {
+        const QuestProgress& link = quests_[q];
+        if (link.state == QuestState::Untaken && link.completions == 0) return TravelRefusal::Quest;
+    }
+    const Body& hero = bodies_[0];
+    if (!hero.alive()) return TravelRefusal::Dead;
+    if (hero.level < to.level) return TravelRefusal::Level;
+    if (money_ < to.zen) return TravelRefusal::Zen;
+    return TravelRefusal::None;
+}
+
+bool Realm::travel(int index) {
+    if (travelRefusal(index) != TravelRefusal::None) return false;
+    const TravelRow& to = kRows[index];
+    money_ -= to.zen;
+    // Whatever he had open or was doing stays behind with the map.
+    trading_ = banking_ = questing_ = -1;
+    halt(bodies_[0]);
+    core::logf("travel: to %s for %lld zen", to.name, static_cast<long long>(to.zen));
+    // Another floor of the map he is on (the Dungeon's): set down there in place, as a same-map
+    // gate does, with no map change.
+    if (to.map == int32_t(tables_->map)) setHeroDown(to.column, to.row, to.dx, to.dy);
+    return true;
+}
+
+}  // namespace mu::sim

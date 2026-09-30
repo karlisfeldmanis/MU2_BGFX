@@ -335,6 +335,7 @@ void Pedestals::gather(gfx::Renderer& renderer, std::vector<gfx::Drawable>& out,
         if (scratch_.size() < need) scratch_.resize(need);
         const int bones = stand.figure.pose(scratch_.data());
         const int row = bones > 0 ? renderer.addPalette(scratch_.data(), bones) : -1;
+        stand.figure.poseHeld(renderer, scratch_.data());
         stand.figure.gather(row, out);
         if (casters) stand.figure.gather(row, *casters);
     }

@@ -23,6 +23,256 @@ bool g_layoutReady = false;
 
 bx::DefaultAllocator g_allocator;
 
+// Which way the water runs at every grid corner, as the flow band of the weight map: RGBA8,
+// rg the corner's drift in tiles a cycle over Ground::kFlowReach, stored 128 + 127 v, b a
+// smooth noise that staggers the cycle so the whole river does not pulse at once, a unused.
+//
+// MU slides every water tile along U by the same amount (WaterMove, ZzzLodTerrain.cpp), so
+// Lorencia's moat ran east on its north side and east on its south side, and the canal and
+// the river beside the town ran east across their own banks. Ours is potential flow, an
+// invention: the water is a region of the grid, each river is held at 1 where the world says
+// it is fed and at 0 where it drains, and Laplace's equation over the region gives a level
+// whose downhill runs along every channel, parallel to its banks, splits round an island and
+// meets again. A narrow reach runs faster than a wide one, which is what the level's slope
+// says too; each river's speeds are taken relative to its own middle speed, and clamped.
+//
+// The region is generous: a corner with a fifth of a water tile in it, grown by one corner,
+// because Lorencia's west river is rock over water along its banks and at half it broke into
+// pieces touching only at their corners. A bridge is water too -- a gap no wider than
+// kBridge tiles either side of which is water across one axis -- or the moat stopped at its
+// four bridges. Water no river reaches, a pond or the sea at the map's rim, is still.
+std::vector<uint8_t> buildFlow(int side, const std::vector<float>& wet,
+                               const std::vector<std::array<int, 2>>& sources,
+                               const std::vector<std::array<int, 2>>& sinks) {
+    const size_t cells = size_t(side) * size_t(side);
+    auto at = [side](int c, int r) { return size_t(r) * size_t(side) + size_t(c); };
+    auto inside = [side](int c, int r) { return c >= 0 && r >= 0 && c < side && r < side; };
+    const int dc4[4] = {1, -1, 0, 0};
+    const int dr4[4] = {0, 0, 1, -1};
+
+    std::vector<uint8_t> seed(cells, 0), water(cells, 0);
+    for (size_t v = 0; v < cells; ++v) seed[v] = wet[v] > 0.2f;
+    for (int r = 0; r < side; ++r) {
+        for (int c = 0; c < side; ++c) {
+            bool any = seed[at(c, r)];
+            for (int k = 0; k < 4 && !any; ++k) {
+                any = inside(c + dc4[k], r + dr4[k]) && seed[at(c + dc4[k], r + dr4[k])];
+            }
+            water[at(c, r)] = any;
+        }
+    }
+    constexpr int kBridge = 4;
+    std::vector<uint8_t> region = water;
+    auto reaches = [&](int c, int r, int dc, int dr) {
+        for (int k = 1; k <= kBridge; ++k) {
+            if (inside(c + dc * k, r + dr * k) && water[at(c + dc * k, r + dr * k)]) return true;
+        }
+        return false;
+    };
+    for (int r = 0; r < side; ++r) {
+        for (int c = 0; c < side; ++c) {
+            if (water[at(c, r)]) continue;
+            if ((reaches(c, r, 1, 0) && reaches(c, r, -1, 0)) ||
+                (reaches(c, r, 0, 1) && reaches(c, r, 0, -1))) {
+                region[at(c, r)] = 1;
+            }
+        }
+    }
+
+    // How far every corner of the region is from the nearest of some points, walked through
+    // the region: the guess the solve starts from, which on a river 250 tiles long is most
+    // of the answer. From a flat guess the east river had not settled in three thousand
+    // sweeps.
+    std::vector<uint8_t> fixed(cells, 0);
+    std::vector<float> level(cells, 0.5f);
+    auto walk = [&](const std::vector<std::array<int, 2>>& points, float value) {
+        std::vector<int> d(cells, -1);
+        std::vector<size_t> queue;
+        for (const auto& p : points) {
+            for (int r = p[1] - 2; r <= p[1] + 2; ++r) {
+                for (int c = p[0] - 2; c <= p[0] + 2; ++c) {
+                    if (!inside(c, r) || !region[at(c, r)] || d[at(c, r)] == 0) continue;
+                    d[at(c, r)] = 0;
+                    fixed[at(c, r)] = 1;
+                    level[at(c, r)] = value;
+                    queue.push_back(at(c, r));
+                }
+            }
+        }
+        for (size_t head = 0; head < queue.size(); ++head) {
+            const int c = int(queue[head] % size_t(side)), r = int(queue[head] / size_t(side));
+            for (int k = 0; k < 4; ++k) {
+                const int cc = c + dc4[k], rr = r + dr4[k];
+                if (!inside(cc, rr) || !region[at(cc, rr)] || d[at(cc, rr)] >= 0) continue;
+                d[at(cc, rr)] = d[queue[head]] + 1;
+                queue.push_back(at(cc, rr));
+            }
+        }
+        return d;
+    };
+    const std::vector<int> fromSource = walk(sources, 1.0f);
+    const std::vector<int> fromSink = walk(sinks, 0.0f);
+    // Only water that is both fed and drained runs.
+    std::vector<uint8_t> runs(cells, 0);
+    for (size_t v = 0; v < cells; ++v) {
+        if (fromSource[v] < 0 || fromSink[v] < 0) continue;
+        runs[v] = 1;
+        if (!fixed[v]) {
+            level[v] = float(fromSink[v]) / float(fromSource[v] + fromSink[v]);
+        }
+    }
+
+    // Laplace, by red-black over-relaxation. A bank is a wall: a corner averages only the
+    // neighbours in the region, so nothing flows through it.
+    for (int sweep = 0; sweep < 1500; ++sweep) {
+        for (int colour = 0; colour < 2; ++colour) {
+            for (int r = 0; r < side; ++r) {
+                for (int c = (r + colour) & 1; c < side; c += 2) {
+                    const size_t v = at(c, r);
+                    if (!runs[v] || fixed[v]) continue;
+                    float sum = 0.0f;
+                    int count = 0;
+                    for (int k = 0; k < 4; ++k) {
+                        const int cc = c + dc4[k], rr = r + dr4[k];
+                        if (!inside(cc, rr) || !runs[at(cc, rr)]) continue;
+                        sum += level[at(cc, rr)];
+                        ++count;
+                    }
+                    if (count) level[v] += 1.95f * (sum / float(count) - level[v]);
+                }
+            }
+        }
+    }
+
+    // Downhill, by the neighbours in the region on each axis.
+    std::vector<float> fx(cells, 0.0f), fr(cells, 0.0f), speed(cells, 0.0f);
+    auto slope = [&](int c, int r, int dc, int dr) {
+        const bool ahead = inside(c + dc, r + dr) && runs[at(c + dc, r + dr)];
+        const bool behind = inside(c - dc, r - dr) && runs[at(c - dc, r - dr)];
+        const float here = level[at(c, r)];
+        const float a = ahead ? level[at(c + dc, r + dr)] : here;
+        const float b = behind ? level[at(c - dc, r - dr)] : here;
+        const int span = int(ahead) + int(behind);
+        return span ? (a - b) / float(span) : 0.0f;
+    };
+    for (int r = 0; r < side; ++r) {
+        for (int c = 0; c < side; ++c) {
+            if (!runs[at(c, r)]) continue;
+            fx[at(c, r)] = -slope(c, r, 1, 0);
+            fr[at(c, r)] = -slope(c, r, 0, 1);
+            speed[at(c, r)] = std::hypot(fx[at(c, r)], fr[at(c, r)]);
+        }
+    }
+
+    // Each river's speeds against its own middle one. A short river falls its whole level in
+    // sixty tiles and a long one in two hundred and fifty, so the slope alone would run the
+    // west river four times as fast as the east.
+    std::vector<int> river(cells, -1);
+    int rivers = 0;
+    for (size_t start = 0; start < cells; ++start) {
+        if (!runs[start] || river[start] >= 0) continue;
+        std::vector<size_t> members{start};
+        river[start] = rivers;
+        for (size_t head = 0; head < members.size(); ++head) {
+            const int c = int(members[head] % size_t(side)), r = int(members[head] / size_t(side));
+            for (int k = 0; k < 4; ++k) {
+                const int cc = c + dc4[k], rr = r + dr4[k];
+                if (!inside(cc, rr) || !runs[at(cc, rr)] || river[at(cc, rr)] >= 0) continue;
+                river[at(cc, rr)] = rivers;
+                members.push_back(at(cc, rr));
+            }
+        }
+        std::vector<float> speeds;
+        for (size_t v : members) speeds.push_back(speed[v]);
+        std::nth_element(speeds.begin(), speeds.begin() + speeds.size() / 2, speeds.end());
+        const float middle = std::max(speeds[speeds.size() / 2], 1e-6f);
+        for (size_t v : members) {
+            const float s = speed[v];
+            const float scaled = std::clamp(s / middle, 0.35f, 1.8f);
+            if (s > 1e-9f) {
+                fx[v] *= scaled / s;
+                fr[v] *= scaled / s;
+            }
+        }
+        ++rivers;
+    }
+
+    // Two box passes over the running water, which take the corners' stair out of the
+    // direction where a channel turns.
+    for (int pass = 0; pass < 2; ++pass) {
+        std::vector<float> sx(cells, 0.0f), sr(cells, 0.0f);
+        for (int r = 0; r < side; ++r) {
+            for (int c = 0; c < side; ++c) {
+                if (!runs[at(c, r)]) continue;
+                float ax = 0.0f, ar = 0.0f;
+                int count = 0;
+                for (int dr = -1; dr <= 1; ++dr) {
+                    for (int dc = -1; dc <= 1; ++dc) {
+                        if (!inside(c + dc, r + dr) || !runs[at(c + dc, r + dr)]) continue;
+                        ax += fx[at(c + dc, r + dr)];
+                        ar += fr[at(c + dc, r + dr)];
+                        ++count;
+                    }
+                }
+                sx[at(c, r)] = ax / float(count);
+                sr[at(c, r)] = ar / float(count);
+            }
+        }
+        fx.swap(sx);
+        fr.swap(sr);
+    }
+
+    // The stagger: hashed per corner and blurred wide, so neighbours are near in phase and
+    // the cross-fade drifts over the river in patches rather than blinking tile by tile.
+    std::vector<float> noise(cells);
+    for (size_t v = 0; v < cells; ++v) {
+        uint32_t h = uint32_t(v) * 2654435761u;
+        h ^= h >> 15;
+        h *= 2246822519u;
+        h ^= h >> 13;
+        noise[v] = float(h & 0xffffu) / 65535.0f;
+    }
+    for (int pass = 0; pass < 6; ++pass) {
+        std::vector<float> blurred(cells);
+        for (int r = 0; r < side; ++r) {
+            for (int c = 0; c < side; ++c) {
+                float sum = 0.0f;
+                int count = 0;
+                for (int dr = -2; dr <= 2; ++dr) {
+                    for (int dc = -2; dc <= 2; ++dc) {
+                        if (!inside(c + dc, r + dr)) continue;
+                        sum += noise[at(c + dc, r + dr)];
+                        ++count;
+                    }
+                }
+                blurred[at(c, r)] = sum / float(count);
+            }
+        }
+        noise.swap(blurred);
+    }
+    const auto [lo, hi] = std::minmax_element(noise.begin(), noise.end());
+    const float low = *lo, range = std::max(*hi - *lo, 1e-6f);
+
+    // MU's own rate is the middle speed: a sheet every twenty seconds at a repeat of a
+    // quarter, 0.2 tiles a second, over a cycle of kFlowCycle.
+    const float middleShift = 0.2f * Ground::kFlowCycle;
+    std::vector<uint8_t> texels(cells * 4, 0);
+    for (size_t v = 0; v < cells; ++v) {
+        auto store = [](float x) {
+            return uint8_t(std::lround(128.0f + 127.0f * std::clamp(x, -1.0f, 1.0f)));
+        };
+        texels[v * 4 + 0] = store(fx[v] * middleShift / Ground::kFlowReach);
+        texels[v * 4 + 1] = store(fr[v] * middleShift / Ground::kFlowReach);
+        texels[v * 4 + 2] = uint8_t(std::lround((noise[v] - low) / range * 255.0f));
+        texels[v * 4 + 3] = 255;
+    }
+    size_t running = 0;
+    for (uint8_t x : runs) running += x;
+    core::logf("water flow: %d river(s) over %zu corners, from %zu source(s) to %zu sink(s)",
+               rivers, running, sources.size(), sinks.size());
+    return texels;
+}
+
 // Reads one of MU's grids into bytes, `channels` apart. The grids are pictures of data:
 // height is a single channel, attributes and light are RGB with the value in the red.
 std::vector<uint8_t> readGrid(const std::string& path, int* width, int* height, int channel) {
@@ -438,7 +688,9 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     if (!slots.isNull()) {
         // Which surface each slot is floored with, so the slot can be asked what it is MADE of
         // rather than what it is CALLED. Matched on the base albedo's stem, which is the slot's
-        // own name: "TileGrass02 1_tiling_hd.png" is TileGrass02.
+        // own name once tileKey takes the dressing off: "TileGrass02 1_tiling_hd.png" and
+        // Devias's "dv_tilegrass02_x3_tiling_hd.png" are both TileGrass02. Compared bare, every
+        // prefixed world matched nothing, grew grass by the name and drew with no splat.
         core::Json surfaceList = core::parseJsonFile(core::join(worldDir, "ground_surfaces.json"));
         for (int slot = 0; slot < 64; ++slot) {
             const std::string key = std::to_string(slot);
@@ -453,7 +705,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
             std::string recipe;
             for (size_t i = 0; i < surfaceList.size(); ++i) {
                 const core::Json& base = surfaceList.at(i)["base"];
-                if (surfaceStem(base["albedo"].stringOr("")) != name) continue;
+                if (tileKey(surfaceStem(base["albedo"].stringOr(""))) != tileKey(name)) continue;
                 recipe = recipeOf(base);
                 break;
             }
@@ -466,6 +718,39 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
             // name, which is what this did before and is better than growing nothing.
             grassSlots_[size_t(slot)] =
                 recipe.empty() ? (name.rfind("TileGrass", 0) == 0) : (recipe == "grass");
+        }
+        // A world may say outright where its grass grows, and then that is the answer. Devias
+        // grows MU's frosted tuft on its smoother snow, TileGrass02, which wears snow and not
+        // grass; Noria's list holds what grew there before the slots matched their recipes.
+        // pipeline/terrain.py GRASS_BY_MAP.
+        const core::Json named = doc["grass_slots"];
+        if (!named.isNull()) {
+            std::fill(grassSlots_.begin(), grassSlots_.end(), false);
+            for (size_t i = 0; i < named.size(); ++i) {
+                const std::string want = named.at(i).stringOr("");
+                for (size_t slot = 0; slot < slotNames_.size(); ++slot) {
+                    if (slotNames_[slot] == want) grassSlots_[slot] = true;
+                }
+            }
+        }
+    }
+
+    // Where each river is fed and where it drains, as tile (column, row) pairs. buildFlow.
+    flowSources_.clear();
+    flowSinks_.clear();
+    flowRow_ = -1.0f;
+    {
+        const core::Json flow = doc["water_flow"];
+        auto points = [](const core::Json& list, std::vector<std::array<int, 2>>* out) {
+            for (size_t i = 0; i < list.size(); ++i) {
+                const core::Json& p = list.at(i);
+                if (p.size() < 2) continue;
+                out->push_back({int(p.at(0).numberOr(-1.0)), int(p.at(1).numberOr(-1.0))});
+            }
+        };
+        if (!flow.isNull()) {
+            points(flow["sources"], &flowSources_);
+            points(flow["sinks"], &flowSinks_);
         }
     }
 
@@ -688,7 +973,10 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
             for (const char* side : {"base", "overlay"}) {
                 for (size_t i = 0; i < surfaces.size() && !found; ++i) {
                     const core::Json& layer = surfaces.at(i)[side];
-                    if (layer.isNull() || surfaceStem(layer["albedo"].stringOr("")) != name) continue;
+                    if (layer.isNull() ||
+                        tileKey(surfaceStem(layer["albedo"].stringOr(""))) != tileKey(name)) {
+                        continue;
+                    }
                     found = readLayer(layer, worldDir, cookedManifest, assetsDir, textures,
                                       &slotLayers[slot]);
                 }
@@ -1178,10 +1466,25 @@ bool Ground::splat(std::vector<GroundVertex>& vertices, std::vector<uint32_t>& i
     // The shared mixtures as a picture, four slots a band, for the shader to read through a
     // B-spline: vertex (c, r) is texel (c, band * bandRows + kWeightPad + r). Each band is
     // padded with its own edge rows, so a tap at the map's edge does not read the next band.
-    const int bands = (slots + 3) / 4;
+    // And one band more where the world names its rivers: which way its water runs.
+    const int slotBands = (slots + 3) / 4;
+    std::vector<uint8_t> flow;
+    if (!flowSources_.empty() && !flowSinks_.empty()) {
+        flow = buildFlow(side, wet, flowSources_, flowSinks_);
+    }
+    const int bands = slotBands + (flow.empty() ? 0 : 1);
     const int bandRows = side + 2 * kWeightPad;
     std::vector<uint8_t> texels(size_t(side) * size_t(bandRows) * size_t(bands) * 4, 0);
-    for (int band = 0; band < bands; ++band) {
+    flowRow_ = -1.0f;
+    if (!flow.empty()) {
+        for (int y = 0; y < bandRows; ++y) {
+            const int vr = std::clamp(y - kWeightPad, 0, n);
+            std::memcpy(&texels[(size_t(slotBands) * size_t(bandRows) + size_t(y)) * size_t(side) * 4],
+                        &flow[size_t(vr) * size_t(side) * 4], size_t(side) * 4);
+        }
+        flowRow_ = float(slotBands * bandRows + kWeightPad);
+    }
+    for (int band = 0; band < slotBands; ++band) {
         for (int y = 0; y < bandRows; ++y) {
             const int vr = std::clamp(y - kWeightPad, 0, n);
             for (int vc = 0; vc < side; ++vc) {
@@ -1297,6 +1600,9 @@ void Ground::shutdown() {
     grid_.clear();
     if (bgfx::isValid(weights_)) bgfx::destroy(weights_);
     weights_ = BGFX_INVALID_HANDLE;
+    flowSources_.clear();
+    flowSinks_.clear();
+    flowRow_ = -1.0f;
 }
 
 }  // namespace mu::content

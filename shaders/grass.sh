@@ -28,6 +28,8 @@ uniform vec4 u_grassCard;   // x: height m  y: width over height  z: lean  w: ho
 uniform vec4 u_grassWind;   // xy: the wind's direction  z: its strength  w: time in seconds
 uniform vec4 u_grassRoot;   // rgb: what the sheet is tinted towards at the root  w: the AO at the root
 uniform vec4 u_grassTip;    // rgb: and at the tip  w: roughness
+uniform vec4 u_grassThrough; // rgb: what a blade lit from behind is pushed towards  w: how far
+uniform vec4 u_grassShape;   // x: how far a card's own length strays from the mean  y: a rank tuft's height over the sward
 uniform vec4 u_grassVary;   // x: cards a patch  y: the stratification's side  z: the rank share  w: how dry a dry tuft goes
 uniform vec4 u_grassSheet;  // x: columns  y: the alpha the cutout tests  z: a bias on the mip level, negative is sharper  w: 1 the meadow; the sward's grass_vary times 0.2 (0 to 2.4), so under 0.5 is still the sward
 uniform vec4 u_grassSize;   // xy: THIS sheet's size in texels  z: a scale on the patch's density  w: how far the colour grade goes
@@ -271,10 +273,13 @@ Card grassCard(vec4 d0, vec4 d1, vec4 d3, float wallsHigh, float index)
 	// A WIDE spread, on purpose: this is the random length the field is asked for, and a
 	// narrow one reads as one plant at one size however many of them there are.
 	// A plant's own spread is narrower (Turf's 0.8 to 1.2): a daisy is a daisy's size.
-	float own = meadow ? 0.8 + grassHash(id + 7.7) * 0.4 : 0.46 + grassHash(id + 7.7) * 1.02;
+	// `grass_length_spread` widens the card's own draw about its mean of 0.97, 1 as it was:
+	// Devias's snow grass wants stubble and stalks together (the user, 2026-09-29).
+	float own = meadow ? 0.8 + grassHash(id + 7.7) * 0.4
+	                   : max(0.12, 0.97 + (grassHash(id + 7.7) * 1.02 - 0.51) * u_grassShape.x);
 	float rank = step(1.0 - u_grassVary.z, grassHash(id + 13.9));
 	float scale = own * (0.84 + bunch * 0.32) * (0.84 + vigour * 0.36);
-	scale *= mix(1.0, 1.85, rank);
+	scale *= mix(1.0, meadow ? 1.85 : u_grassShape.y, rank);
 	float height = u_grassCard.x * scale * alive;
 
 	c.tint = grassHash(id + 11.3);

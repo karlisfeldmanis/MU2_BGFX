@@ -47,7 +47,7 @@ Arms Realm::armsOf(const Body& one) const {
         // `DamageMin - (WORD)(DamageMin * percent)`. A broken weapon adds nothing.
         arms.weaponMinimumDamage -= int(float(arms.weaponMinimumDamage) * one.weaponCut);
         arms.weaponMaximumDamage -= int(float(arms.weaponMaximumDamage) * one.weaponCut);
-        arms.criticalChance = double(one.luckyWorn) * kLuckCritical;
+        arms.criticalChance = double(one.luckyWorn) * kLuckCritical + one.excel.runeCritical;
         arms.excel = one.excel;
         arms.staffRise = double(one.staffRise);
         arms.pet = one.pet;
@@ -68,7 +68,8 @@ void Realm::reswing(Body& hero) {
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
     // An Ale's twenty ride with the excellent option's seven: both are AttackSpeedAny in OpenMU.
-    const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0);
+    const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
+                      (hero.frenzyUntil > tick_ ? kFrenzySpeed : 0);
     const int milliseconds =
         swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left, extra);
     hero.swingMs = milliseconds;
@@ -283,7 +284,25 @@ void Realm::rearm(Body& hero) {
         if (!row || (row->weapon() && !row->shield())) continue;
         for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
             const PowerRow* power = powerOf(bag_[slot].powers[at]);
-            if (power && power->power == Power::Undying) hero.excel.undyingRate *= kUndyingHealth;
+            if (!power) continue;
+            Excellence& e = hero.excel;
+            if (power->power == Power::Undying) e.undyingRate *= kUndyingHealth;
+            if (power->power == Power::KeenEye) e.runeCritical += kKeenEyeCritical;
+            if (power->power == Power::Bloodwell) {
+                e.lifeSteal += kBloodwellLife;
+                e.killMana += kBloodwellMana;
+            }
+            if (power->power == Power::Frenzy) ++e.frenzies;
+            if (power->power == Power::Renewal) e.renewal += kRenewalShare;
+        }
+    }
+    // Said once a change, when any is worn, so a run's log shows what the fight below it had.
+    {
+        const Excellence& e = hero.excel;
+        if (e.runeCritical > 0.0 || e.lifeSteal > 0.0 || e.frenzies > 0 || e.renewal > 0.0) {
+            core::logf("runes worn: keen eye +%.2f crit, bloodwell %.2f life a wound, %d frenzy, "
+                       "renewal %.2f health a 3 s",
+                       e.runeCritical, e.lifeSteal, e.frenzies, e.renewal);
         }
     }
     // Luck on anything worn, from the hands to the boots.
@@ -506,7 +525,13 @@ bool Realm::useItem(int slot) {
         // Her summon does not come along: a warp dismisses it, as her death does (the user,
         // 2026-09-29). OpenMU places it at her landing gate instead (PlayerSummon.PlaceAtGate).
         if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
-        say(What::Warped, hero, landing.first, landing.second);
+        // A map with no safe box of its own -- the Dungeon, which has no spawn gate -- sends him
+        // to Lorencia's: OpenMU's SafezoneMapNumber falls back to Lorencia for a map with no
+        // spawn gate (BaseMapInitializer.cs:91). He is not set down here; `c` says the map
+        // change is owed, and it is the mode's, as a gate's is (Play::takeHome).
+        const int32_t* box = tables_->safeGate;
+        const bool home = !(box[2] > box[0] && box[3] > box[1]);
+        say(What::Warped, hero, landing.first, landing.second, home ? 1 : 0);
         return true;
     }
 
@@ -592,6 +617,21 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
     const bool soul = jewelOf(tables_->items[size_t(jewel.item)]) == Jewel::Soul;
 
     const int was = thing.refinement;
+    // A plus asks more (`asks`), so a worn thing can outgrow him: it comes off into the bag, as
+    // `movable` would never have let him put it on. Ours, the user's -- MU leaves it worn and
+    // red. With no room for it the jewel is refused before anything is rolled or spent. Room
+    // is asked of the bag as it will be, the last jewel of a stack already gone from its cell.
+    Held raised = thing;
+    raised.refinement = int16_t(was + 1);
+    const bool outgrows = wearable(targetSlot) && !fits(*tables_, wearer(), raised);
+    if (outgrows) {
+        Satchel after = bag_;
+        if (jewel.durability <= 1) after.lift(jewelSlot);
+        if (after.free(*tables_, row.width, row.height) < 0) {
+            refusal_ = "no room in the bag for what he could no longer wear";
+            return false;
+        }
+    }
     constexpr int kSoulLuck = 25;      // SuccessRateBonusWithLuckPercentage
     const int chance = kSoulChance + (thing.luck ? kSoulLuck : 0);
     const bool took = !soul || dice_.nextInt(0, 100) < chance;  // NextRandomBool(percent)
@@ -613,8 +653,14 @@ bool Realm::refine(int jewelSlot, int targetSlot) {
         bag_.lift(jewelSlot);
     }
     bag_.put(targetSlot, thing);
+    int landed = targetSlot;
+    if (took && outgrows) {
+        bag_.lift(targetSlot);
+        landed = bag_.free(*tables_, row.width, row.height);
+        bag_.put(landed, thing);
+    }
     if (wearable(targetSlot)) rearm(hero);
-    say(What::Refined, hero, targetSlot, was, thing.refinement);
+    say(What::Refined, hero, landed, was, thing.refinement);
     return true;
 }
 
@@ -639,14 +685,21 @@ void Realm::recover(Body& hero) {
         hero.mana = std::min(hero.maxMana,
                              hero.mana + std::max(1, int(float(hero.maxMana) * kRestShare)));
     }
-    // Health on the same three seconds, a hundredth of the pool, and only on a safe tile.
+    // Health on the same three seconds, a hundredth of the pool, and only on a safe tile -- and
+    // a Renewal rune's share anywhere, beside it (sim::kRenewalShare).
     if (hero.alive() && tick_ % kRecoverEveryTicks == 0) {
-        if (hero.health >= hero.maxHealth || !tables_->grid.safe(hero.column(), hero.row())) {
+        const float share =
+            (tables_->grid.safe(hero.column(), hero.row()) ? kHealthRecoveryInSafeZone : 0.0f) +
+            float(hero.excel.renewal);
+        if (hero.health >= hero.maxHealth || share <= 0.0f) {
             hero.healthCarry = 0.0f;
         } else {
-            hero.healthCarry += float(hero.maxHealth) * kHealthRecoveryInSafeZone;
+            hero.healthCarry += float(hero.maxHealth) * share;
             const int whole = int(hero.healthCarry);
             hero.healthCarry -= float(whole);
+            if (whole > 0 && hero.excel.renewal > 0.0) {
+                core::logf("renewal rune: tick %lld, +%d health", (long long)tick_, whole);
+            }
             if (whole > 0) hero.health = std::min(hero.maxHealth, hero.health + whole);
         }
     }
@@ -755,17 +808,15 @@ void Realm::leave(const Body& dead, const Body& killer) {
         if (item < 0) return;
         one.what = Held{item, 0, 1};
     } else if ((roll -= kJewel) <= kExcellentChance) {
-        // GenerateRandomExcellentItem: nothing from a monster under 25, and otherwise what a
-        // monster 25 levels lower would drop, at +0, with luck and the option rolled as on any
-        // drop, then one excellent option and a rare second. OpenMU's list admits a row with no
-        // excellent options at all -- a potion comes out "excellent" with nothing on it -- and
-        // that quirk is left out here: only a row that can carry them is drawn.
+        // Nothing from a monster under 25, and otherwise what a monster 25 levels lower would
+        // drop, at +0, luck at 1 in 100, the option as on any drop, and NewOptionRand's options.
+        // Only a row that can carry them is drawn.
         const int lower = level - kExcellentLevelDelta;
         if (lower < 0) return;
         const int32_t item = draw([&](const content::ItemRow& r) {
             return r.dropsFromMonsters() && excellentable(r) && r.dropLevel <= lower &&
                    (r.maximumDropLevel == 0 || lower <= r.maximumDropLevel) &&
-                   r.dropLevel > lower - kGap;
+                   r.dropLevel >= lower - kGap;
         });
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];

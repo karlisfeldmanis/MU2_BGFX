@@ -14,6 +14,7 @@
 #include <cstdio>
 
 #include "core/log.h"
+#include "sim/gates.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::sim {
@@ -117,6 +118,31 @@ void Realm::advance(Body& one) {
     // A body that is standing still still comes round: a fighter between two blows turns onto
     // what it is hitting, and a walk that has just been given spends its first tick or two
     // turning before any ground is covered.
+    // Whether he is in a fight, standing or walking (kCombatTicks), and so whether a walk is a
+    // run: out of one and off a safe tile, every class alike.
+    // A chase counts only when it is close (kCombatReach): the field is full of things that
+    // have seen him, and counting every one of them held him in the walk from the town gate on.
+    if (one.player) {
+        const Body* foe = order_.kind == Request::Kind::Attack ? find(order_.target) : nullptr;
+        const char* why = foe != nullptr && foe->alive() ? "his attack"
+                          : one.blowAt != 0              ? "a blow in the air"
+                          : one.castUntil > tick_ || one.channelSkill != 0 ? "a cast"
+                                                                           : nullptr;
+        for (size_t i = 1; why == nullptr && i < bodies_.size(); ++i) {
+            const Body& other = bodies_[i];
+            if (!other.monster() || !other.alive() || other.quarry != one.id) continue;
+            if (other.temper == Temper::Fighting ||
+                (other.temper == Temper::Chasing && within(one, other, kCombatReach))) {
+                why = "a monster on him";
+            }
+        }
+        if (why != nullptr) {
+            if (one.combatUntil <= tick_) core::logf("combat: tick %lld, %s", (long long)tick_, why);
+            one.combatUntil = tick_ + kCombatTicks;
+        }
+        one.running = one.walking && one.combatUntil <= tick_ &&
+                      !tables_->grid.safe(one.column(), one.row());
+    }
     if (!one.walking) {
         turn(one);
         return;
@@ -133,8 +159,9 @@ void Realm::advance(Body& one) {
     // its route: a pulled route's points are the ends of long legs, and the log's Stepped
     // still means one tile.
     const int wasColumn = one.column(), wasRow = one.row();
-    // Iced, it covers half the ground a tick (`kChillFactor`).
-    float left = one.speed * (one.chilledUntil > tick_ ? kChillFactor : 1.0f);
+    // Iced, it covers half the ground a tick (`kChillFactor`); running, a quarter more.
+    float left = one.speed * (one.chilledUntil > tick_ ? kChillFactor : 1.0f) *
+                 (one.running ? kRunFactor : 1.0f);
     while (left > 0.0f && one.onStep < one.route.size()) {
         const Step& target = one.route[one.onStep];
         const float dx = float(target.column) - one.x;
@@ -158,6 +185,7 @@ void Realm::advance(Body& one) {
     }
     if (one.column() != wasColumn || one.row() != wasRow) {
         say(What::Stepped, one, one.column(), one.row());
+        if (one.player && throughGate(one)) return;
     }
     if (one.onStep >= one.route.size()) {
         one.walking = false;
@@ -166,6 +194,88 @@ void Realm::advance(Body& one) {
         settle(one);
         say(What::Halted, one);
     }
+}
+
+// ---- the gates -------------------------------------------------------------------------
+//
+// MuMain's CheckGate runs on the hero's tile every frame and fires the moment it lies inside an
+// enter gate of the map he is on; the realm asks the same of the tile a step has just put him
+// on, which is the only time the answer can change. The level test is the client's (MU shows
+// the refusal itself and sends nothing) and the server's again in WarpGateAction; the landing
+// is Player.WarpToAsync's, a random tile in the target gate's box. The next map is found
+// standable by the realm that raises him there, which moves him to the nearest free tile.
+//
+// Invention: MuMain repeats the refusal every fifty frames he stands in the box (LoadingWorld =
+// 50); here it is said once for each step into it.
+
+bool Realm::throughGate(Body& hero) {
+    const EnterGate* gate = enterGateAt(tables_->map, hero.column(), hero.row());
+    if (gate == nullptr) return false;
+    // A sealed gate refuses everyone: Barred with level 0 is the drawing's "sealed".
+    if (gate->target < 0) {
+        say(What::Barred, hero, gate->number, 0);
+        return false;
+    }
+    if (hero.level < gate->level) {
+        say(What::Barred, hero, gate->number, gate->level);
+        return false;
+    }
+    const ExitGate* out = exitGate(gate->target);
+    if (out == nullptr) return false;
+    int column = dice_.nextInt(out->box.x1, out->box.x2 + 1);
+    int row = dice_.nextInt(out->box.y1, out->box.y2 + 1);
+    // Ours: never onto a tile of an enter gate. The Dungeon's exit 6 shares two tiles with enter
+    // 7 beside it (Gates.cs:120, 188), and a landing there stood in the stair back up.
+    for (int tries = 0; tries < 16 && enterGateAt(out->map, column, row) != nullptr; ++tries) {
+        column = dice_.nextInt(out->box.x1, out->box.x2 + 1);
+        row = dice_.nextInt(out->box.y1, out->box.y2 + 1);
+    }
+    // What a map change takes on MuMain's side (CheckGate's success branch): nothing selected,
+    // no attack standing, and he stops where he is. Nothing that follows in this world is his.
+    rise(hero);
+    dropBlow(hero);
+    order_ = Request{};
+    pending_ = Request{};
+    wants_ = skill::kNone;
+    trading_ = -1;
+    banking_ = -1;
+    // A gate to a floor of this same map -- the Dungeon's stairs between its three floors, one
+    // grid with three regions the router cannot cross -- is not a map change: he is put down
+    // there now, as a Town Portal puts him down (realm_items.cpp), the monsters on him lose
+    // him, and her summon is dismissed.
+    if (out->map == tables_->map) {
+        setHeroDown(column, row, out->dx, out->dy, gate->number);
+        return true;
+    }
+    setDown(hero, hero.column(), hero.row());
+    say(What::Gated, hero, gate->number, column, row);
+    return true;
+}
+
+void Realm::setHeroDown(int column, int row, int dx, int dy, int gate) {
+    Body& hero = bodies_[0];
+    rise(hero);
+    dropBlow(hero);
+    order_ = Request{};
+    pending_ = Request{};
+    wants_ = skill::kNone;
+    trading_ = -1;
+    banking_ = -1;
+    int open = column, openRow = row;
+    if (router_.nearestOpen(column, row, content::kWallCharacter, 8, &open, &openRow)) {
+        column = open;
+        row = openRow;
+    }
+    setDown(hero, column, row);
+    hero.facing = std::atan2(float(dy), float(dx));
+    hero.turning = false;
+    for (Body& one : bodies_) {
+        if (one.player || one.quarry != hero.id) continue;
+        one.quarry = 0;
+        one.provoked = false;
+    }
+    if (summonSlot_ >= 0) dismiss(bodies_[size_t(summonSlot_)]);
+    say(What::Climbed, hero, gate, column, row);
 }
 
 // ---- the mind --------------------------------------------------------------------------

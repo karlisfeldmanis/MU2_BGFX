@@ -46,7 +46,17 @@ constexpr uint32_t kZenGold = gfx::rgba(1.0f, 0.8f, 0.102f);
 constexpr uint32_t kItemWhite = gfx::rgba(1.0f, 1.0f, 1.0f);
 
 float inner() { return kWide - kInset * 2.0f - 10.0f; }  // leaving room for the bar
-float paneTop() { return style::kHead + kPaneTopGap; }
+// The header band under the frame's head: the quest's name, its map and its giver, and in the
+// journal the arrows to the next live quest either side (the user, 2026-09-30).
+constexpr float kBanner = 64.0f;
+// A page turn's two halves, out and in (the user, 2026-09-30: "nice fadein/out animation when
+// we switch between quests"), timed to quest_page.wav, which plays on the arrow ("sync with
+// sound"): the page lifts on its first stroke and lands on its second, 0.14 s in, where the new
+// page starts to come up; it is in by the rustle's end. And how far a page slides as it goes.
+constexpr float kTurnOut = 0.14f;
+constexpr float kTurnIn = 0.20f;
+constexpr float kTurnSlide = 22.0f;
+float paneTop() { return style::kHead + kBanner + kPaneTopGap; }
 float paneTall() { return kTall - paneTop() - kFootTall; }
 
 float widthOf(float size, const std::string& text) {
@@ -103,10 +113,11 @@ bool QuestDialog::Drawn::operator==(const Drawn& o) const {
     if (quest != o.quest || mode != o.mode || chosen != o.chosen || over != o.over ||
         pressing != o.pressing || x != o.x || y != o.y || unit != o.unit || scroll != o.scroll ||
         overThumb != o.overThumb || dragging != o.dragging || version != o.version ||
-        minutesLeft != o.minutesLeft || picture != o.picture || reading != o.reading) {
+        minutesLeft != o.minutesLeft || picture != o.picture || reading != o.reading ||
+        pageAt != o.pageAt || pages != o.pages || turn != o.turn) {
         return false;
     }
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < kButtons; ++i) {
         if (lift[i] != o.lift[i]) return false;
     }
     for (int i = 0; i < 16; ++i) {
@@ -146,8 +157,19 @@ Box QuestDialog::thumb() const {
     return {kWide - kBarRight - kBarWide, trackTop + at, kBarWide, tall};
 }
 
+float QuestDialog::turnAlpha() const {
+    const float t = std::clamp(std::fabs(turn_), 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+float QuestDialog::turnShift() const {
+    // In, from the side of the arrow pressed; out, toward the other.
+    const float away = 1.0f - turnAlpha();
+    return (turn_ < 0.0f ? -float(turnDir_) : float(turnDir_)) * away * kTurnSlide;
+}
+
 int QuestDialog::buttonAt(float ux, float uy) const {
-    for (int which = 0; which < 3; ++which) {
+    for (int which = 0; which < kButtons; ++which) {
         if (buttons_[which].w > 0.0f && buttons_[which].has(ux, uy)) return which;
     }
     return -1;
@@ -273,6 +295,13 @@ void QuestDialog::layout(const Play& play) {
     }
     const float side = style::kSmallSquare;
     buttons_[2] = {kWide - style::kPad - side, (style::kHead - side) * 0.5f, side, side};
+    // The journal's arrows, at the band's two ends, while there is more than one live quest.
+    if (reading_ && pages_ > 1) {
+        const float arrow = style::kSmallSquare + 6.0f;
+        const float top = style::kHead + (kBanner - arrow) * 0.5f;
+        buttons_[3] = {kInset - 6.0f, top, arrow, arrow};
+        buttons_[4] = {kWide - kInset + 6.0f - arrow, top, arrow, arrow};
+    }
 
     // The pictures, in window units, only those at least partly in the pane: each item inside its
     // picture's square, the one under the pointer or chosen turning.
@@ -294,6 +323,22 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         return;
     }
     const sim::Realm& realm = play.realm();
+    // A page turn in the journal: the old page out, then the new one in. The quest the desk hands
+    // over waits in pending_ while the old page leaves.
+    if (reading && reading_ && quest_ >= 0 && quest != quest_) {
+        if (pending_ != quest) {
+            pending_ = quest;
+            if (turn_ >= 0.0f) turn_ = -std::min(1.0f, turn_);  // out from wherever it stood
+        }
+    } else if (!(reading && reading_)) {
+        pending_ = -1;
+        turn_ = 1.0f;
+    }
+    if (turn_ < 1.0f) turn_ = std::min(1.0f, turn_ + seconds / (turn_ < 0.0f ? kTurnOut : kTurnIn));
+    if (pending_ >= 0) {
+        if (turn_ < 0.0f) quest = quest_;  // the old page, still going
+        else pending_ = -1;
+    }
     if (quest != quest_ || reading != reading_) {
         quest_ = quest;
         reading_ = reading;
@@ -357,7 +402,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
         if (cell >= 0 && mode_ == Mode::HandIn) over = 10 + cell;
     }
     over_ = over;
-    for (int which = 0; which < 3; ++which) {
+    for (int which = 0; which < kButtons; ++which) {
         const float step = seconds / style::kHoverSeconds;
         lift_[which] = over_ == which ? std::min(1.0f, lift_[which] + step)
                                       : std::max(0.0f, lift_[which] - step);
@@ -367,10 +412,13 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
                    (mode_ == Mode::Offer || mode_ == Mode::HandIn);
     bool cancel = escape;
     bool chose = false;
+    int turn = 0;
     if (pointer.released) {
         if (pressing_ >= 0 && pressing_ == over_) {
             if (pressing_ == 0 && !primaryOff && !reading_) primary = true;
             else if (pressing_ == 1 || pressing_ == 2) cancel = true;
+            else if (pressing_ == 3) turn = -1;
+            else if (pressing_ == 4) turn = 1;
             else if (pressing_ >= 10) {
                 const int picked = cells_[size_t(pressing_ - 10)].choice;
                 chosen_ = chosen_ == picked ? -1 : picked;
@@ -381,6 +429,7 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     }
     if (out) {
         out->picked = chose;
+        out->turn = turn;
         if (cancel) out->close = true;
         else if (primary && mode_ == Mode::Offer) out->accept = true;
         else if (primary && mode_ == Mode::HandIn) {
@@ -401,7 +450,10 @@ void QuestDialog::update(float seconds, const Play& play, int quest, bool readin
     now.chosen = chosen_;
     now.over = over_;
     now.pressing = pressing_;
-    for (int i = 0; i < 3; ++i) now.lift[i] = int(lift_[i] * 32.0f);
+    for (int i = 0; i < kButtons; ++i) now.lift[i] = int(lift_[i] * 32.0f);
+    now.pageAt = pageAt_;
+    now.pages = pages_;
+    now.turn = int(turn_ * 64.0f);
     now.x = x_;
     now.y = y_;
     now.unit = unit_;
@@ -452,12 +504,40 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
 
     // ---- the frame, the scrollbar and the answers -------------------------------------------
     canvas_.rect({0.0f, 0.0f, 1e5f, 1e5f}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.22f));
-    controls::frame(canvas_, placed(x, y, {0.0f, 0.0f, kWide, kTall}, u), u, row.title);
+    controls::frame(canvas_, placed(x, y, {0.0f, 0.0f, kWide, kTall}, u), u,
+                    reading_ ? "Quest Journal" : "Quest");
     const auto state = [&](int which, bool off) {
         const float t = lift_[which] * lift_[which] * (3.0f - 2.0f * lift_[which]);
         return controls::State{t, pressing_ == which && over_ == which, off};
     };
     controls::square(canvas_, placed(x, y, buttons_[2], u), controls::Glyph::Close, state(2, false), u);
+
+    // ---- the header band: the quest's name, its map and its giver, the arrows at its ends ----
+    {
+        const float top = style::kHead;
+        canvas_.rect(placed(x, y, {kPaneSide, top + 4.0f, kWide - kPaneSide * 2.0f, kBanner - 8.0f}, u),
+                     style::kAsh1);
+        const float title = std::round(22.0f * u);
+        const float small = std::round(13.5f * u);
+        const std::string name = row.title;
+        const size_t turning = canvas_.mark();
+        controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(title, name) * 0.5f,
+                        wy(top + 30.0f), title, style::kBoneHi, name);
+        std::string where = std::string(row.place) + "   \xC2\xB7   " + row.giverName;
+        if (reading_ && pages_ > 1) {
+            where += "   \xC2\xB7   " + std::to_string(pageAt_) + " of " + std::to_string(pages_);
+        }
+        controls::label(canvas_, sx(kWide * 0.5f) - controls::labelWidth(small, where) * 0.5f,
+                        wy(top + 50.0f), small, style::kAshInk, where);
+        canvas_.fadeSince(turning, turnAlpha(), turnShift() * u);
+        if (buttons_[3].w > 0.0f) {
+            controls::square(canvas_, placed(x, y, buttons_[3], u), controls::Glyph::Left,
+                             state(3, false), u);
+            controls::square(canvas_, placed(x, y, buttons_[4], u), controls::Glyph::Right,
+                             state(4, false), u);
+        }
+        controls::rule(canvas_, x + 18.0f * u, wy(top + kBanner), (kWide - 36.0f) * u, u);
+    }
     if (scrollMost() > 0.0f) {
         // A thin iron track and its thumb, lit under the pointer or held: WoW's bar, without its
         // arrows and in Sanctuary's iron.
@@ -625,6 +705,9 @@ void QuestDialog::rebuild(const Play& play, Stage* stage) {
                        gfx::rgba(0.0f, 0.0f, 0.0f, 0.8f), std::max(1.0f, u),
                        std::to_string(one.count), gfx::Align::Right, icon.w - 4.0f * u);
     }
+
+    // The page turning, when it is: everything on it faded and slid, the pane's edges not.
+    if (turn_ < 1.0f) body_.fadeSince(0, turnAlpha(), turnShift() * u);
 
     // And the pane's edges soften into the sheet where more lies past them, so a line cut by the
     // pane reads as scrolled rather than broken.

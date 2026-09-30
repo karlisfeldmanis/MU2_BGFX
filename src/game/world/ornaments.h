@@ -46,9 +46,13 @@ public:
     // points into their bones' own frames. The sheets are the showing's `smoke01` (MU's
     // BITMAP_SMOKE) and `light` (Effect/flare01, MU's BITMAP_LIGHT); without one, that
     // ornament is not drawn and the log says so. The ground keeps the mill's fall's landing
-    // from being put under the land it lands on.
-    bool open(const std::string& assetDir, const Town& town, const content::Ground& ground,
-              content::Textures& textures);
+    // from being put under the land it lands on. `world` gates the tables that are one map's:
+    // Noria's glows are named Object02..Object40, names every numbered world uses.
+    // RenderObject draws Devias's type 100 only while the hero is level 50, or 33 for a Dark
+    // Knight (ZzzObject.cpp:3446-3460); World says which each frame.
+    void setBeaconSeen(bool seen) { beaconSeen_ = seen; }
+    bool open(const std::string& assetDir, const std::string& world, const Town& town,
+              const content::Ground& ground, content::Textures& textures);
     void shutdown();
 
     // Steps the puffs, throws new ones where a fountain was posed, and re-rolls the lanterns.
@@ -132,8 +136,22 @@ private:
 
     std::vector<Spout> spouts_;
     std::vector<Lantern> lanterns_;
+    // Devias's Lost Tower beacon: type 100 is a hidden placement (HiddenMesh -2), so there is
+    // nothing posed to hang it on, and it stands at the placement's own point. Shown only to a
+    // hero MuMain would show it to -- see setBeaconSeen.
+    bool beacon_ = false;
+    bool beaconSeen_ = false;
     std::vector<Fall> falls_;
     std::vector<Puff> puffs_;
+    // The Lost Tower beacon's mist (ours): pale wisps rising through its light.
+    struct Mist {
+        float position[3] = {0, 0, 0};
+        float drift[2] = {0, 0};  // metres a second, x and z
+        float age = 0.0f;         // seconds
+        float spin = 0.0f, turn = 0.0f;
+    };
+    std::vector<Mist> mist_;
+    float mistClock_ = 0.0f;
     std::vector<Glint> glints_;
     std::vector<Thrower> throwers_;
     float strikes_[4][3] = {};

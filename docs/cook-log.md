@@ -102,7 +102,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | NewFace02 | bust | 2026-09-28 23:37 | awaiting |  |
 | NewFace03 | bust | 2026-09-28 23:37 | awaiting |  |
 | Object01 | world | 2026-09-29 19:38 | awaiting |  |
-| Object02 | world | 2026-09-29 21:24 | awaiting |  |
+| Object02 | world | 2026-09-30 14:04 | awaiting |  |
 | Object03 | world | 2026-09-29 21:29 | awaiting |  |
 | Object04 | world | 2026-09-29 20:39 | awaiting |  |
 | Object05 | world | 2026-09-29 20:02 | awaiting |  |
@@ -112,20 +112,20 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object09 | world | 2026-09-29 21:51 | awaiting |  |
 | Object10 | world | 2026-09-29 21:27 | awaiting |  |
 | Object11 | world | 2026-09-29 21:01 | awaiting |  |
-| Object12 | world | 2026-09-29 19:57 | awaiting |  |
+| Object12 | world | 2026-09-30 17:49 | awaiting |  |
 | Object13 | world | 2026-09-29 20:59 | awaiting |  |
 | Object14 | world | 2026-09-29 20:59 | awaiting |  |
 | Object15 | world | 2026-09-29 20:10 | awaiting |  |
 | Object16 | world | 2026-09-29 20:00 | awaiting |  |
 | Object17 | world | 2026-09-29 20:36 | awaiting |  |
-| Object18 | world | 2026-09-29 19:59 | awaiting |  |
+| Object18 | world | 2026-09-30 14:11 | awaiting |  |
 | Object19 | world | 2026-09-29 20:37 | awaiting |  |
 | Object20 | world | 2026-09-29 19:57 | awaiting |  |
 | Object21 | world | 2026-09-29 21:46 | awaiting |  |
 | Object22 | world | 2026-09-29 21:52 | awaiting |  |
-| Object23 | world | 2026-09-29 20:56 | awaiting |  |
-| Object24 | world | 2026-09-29 21:27 | awaiting |  |
-| Object25 | world | 2026-09-28 19:58 | passed | noria, in the world: MU's plants and trees |
+| Object23 | world | 2026-09-30 17:45 | awaiting |  |
+| Object24 | world | 2026-09-30 17:47 | awaiting |  |
+| Object25 | world | 2026-09-30 17:31 | awaiting |  |
 | Object26 | world | 2026-09-29 20:59 | awaiting |  |
 | Object27 | world | 2026-09-28 20:03 | passed | noria, in the world: lilies, palm, roots |
 | Object28 | world | 2026-09-29 21:31 | awaiting |  |
@@ -139,8 +139,8 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object36 | world | 2026-09-29 21:26 | awaiting |  |
 | Object37 | world | 2026-09-29 21:33 | awaiting |  |
 | Object38 | world | 2026-09-29 20:59 | awaiting |  |
-| Object40 | world | 2026-09-29 21:52 | awaiting |  |
-| Object41 | world | 2026-09-29 21:00 | awaiting |  |
+| Object40 | world | 2026-09-30 19:08 | awaiting |  |
+| Object41 | world | 2026-09-30 19:10 | awaiting |  |
 | Object42 | world | 2026-09-29 21:33 | awaiting |  |
 | Object43 | world | 2026-09-29 21:28 | awaiting |  |
 | Silk | set | 2026-09-28 21:05 | passed | purple quilted silk with gold trim and the visored hood, MU's own colours; skin islands right; nothing blown at noon, dusk or night |
@@ -201,7 +201,7 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Object54 | world | 2026-09-29 21:48 | awaiting |  |
 | Object56 | world | 2026-09-29 21:48 | awaiting |  |
 | Object51 | world | 2026-09-29 21:49 | awaiting |  |
-| Object52 | world | 2026-09-29 21:50 | awaiting |  |
+| Object52 | world | 2026-09-30 19:12 | awaiting |  |
 | Object50 | world | 2026-09-29 21:50 | awaiting |  |
 | Object68 | world | 2026-09-29 21:50 | awaiting |  |
 | Object44 | world | 2026-09-29 21:52 | awaiting |  |
@@ -245,13 +245,17 @@ with `tools/cook_one.py --pass NAME "note"` or `--fail NAME "note"`.
 | Spear10 | arm | 2026-09-30 09:53 | passed | silver-red bill with its veins cut through as MU alpha-tests af.tga, red haft (plate, desaturation 1.0) and black spikes; whole, no floating parts |
 | EliteYeti01 | figure | 2026-09-30 09:54 | passed | pale grey shaggy pelt with dark marks, steel-blue spikes on crown and shoulders; fur and chitin, no sheen |
 | Bow06 | arm | 2026-09-30 10:01 | passed | silver steel limbs with gold scroll paint, nocked arrow and string drawn, cut-out string cards solid; whole at noon/dusk/night |
-| IceMonster01 | figure | 2026-09-30 10:12 | awaiting |  |
+| IceMonster01 | figure | 2026-09-30 10:12 | passed | MU's additive ice body with its V scroll, unchanged; half-strength shadow (ours) outlines it on Devias's snow -- approved by the user in game |
 | CrossBow05 | arm | 2026-09-30 10:12 | passed | serpent-scaled limbs and stock in brass 0.6 with dark scale paint, bolt on the rail and string drawn mid-clip; whole, no blowout |
 | CrossBow06 | arm | 2026-09-30 10:20 | passed | drawn as MuMain draws it: ZzzObject.cpp:5243-5246 gives MODEL_BLUEWING_CROSSBOW BlendMesh -2 with BlendMeshLight sin*0.3+0.7, and ZzzBMD.cpp:1509 draws every mesh added when BlendMesh <= -2, so the whole crossbow is a breathing additive ghost; jk00 ships as a glow, stock and wings whole, pale steel-blue and see-through. jk01's coincident shell is welded away |
-| IceMonster01 | figure | 2026-09-30 10:12 | passed | MU's additive ice body with its V scroll, unchanged; half-strength shadow (ours) outlines it on Devias's snow -- approved by the user in game |
+| IceQueen01 | figure | 2026-09-30 14:10 | awaiting |  |
 | BloodCastle02 | figure | 2026-09-30 12:05 | passed | plate drawn twice as MU does (opaque + added), shines pale blue with the white wings, as the user's reference |
 | DevilNpc01 | figure | 2026-09-30 12:18 | passed | robe and gilt plate as painted; the orb in his hands and its wisps drawn in code |
+| Bat01 | world | 2026-09-30 18:21 | awaiting |  |
+| Rat01 | world | 2026-09-30 18:21 | awaiting |  |
+| Saw01 | world | 2026-09-30 19:28 | awaiting |  |
 | Larva01 | figure | 2026-09-30 19:39 | passed | dark umber grub hide with its ring folds and a red maw at noon, dusk and night; skin, no sheen; fang rows bone (cut from snake02); whole at 0.6 |
+| DungeonStone01 | world | 2026-09-30 19:48 | awaiting |  |
 | Ghost01 | figure | 2026-09-30 19:50 | passed | grey hooded shroud on long clawed arms, matte cloth throughout (the feathered hem is welded into the shroud's island); whole at noon, dusk and night; MU's 0.4 AlphaTarget declared, not yet drawn |
 | Axe09 | arm | 2026-09-30 20:13 | passed | silver crescent head with its engraved serpent scroll and painted dark edge, steel 0.45; thin plate haft and leather wraps whole; no blowout at noon, dusk, night |
 | Cyclops01 | figure | 2026-09-30 20:30 | passed | dark hide and tan leg wraps, worn grey pauldrons with horns at plate_steel 0.6 (0.35 blew out white), bone skull buckle; whole at noon, dusk, night |

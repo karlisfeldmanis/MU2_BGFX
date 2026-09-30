@@ -94,6 +94,9 @@ def main() -> None:
     speeds = resolve(table, model_index)
     named = table.get("actions", {})
     holds = {int(one) for one in table.get("hold_at_end", [])}
+    # The locked clips this model closes anyway (close_loops, keyed by model as walk_overrides
+    # is): passed through as the players' close_loop, which export_gltf.read_closes reads.
+    closes = {int(one) for one in table.get("close_loops", {}).get(str(model_index), [])}
 
     # Written in the exporter's own shape, which is the player rig's shape, so that
     # export_gltf needs no idea that monsters exist. It reads a play_speed per action index
@@ -109,6 +112,7 @@ def main() -> None:
                 "name": named.get(str(index), {}).get("name", f"Action {index}"),
                 "play_speed": round(speed, 6),
                 **({"hold_at_end": True} if index in holds else {}),
+                **({"close_loop": True} if index in closes else {}),
             }
             for index, speed in sorted(speeds.items())
         },

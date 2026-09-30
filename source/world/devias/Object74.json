@@ -1,0 +1,43 @@
+{
+  "item": "Object74",
+  "mu_name": "Object74",
+  "mu_name_from": "Devias's object slot 73, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 73,
+  "placements": 32,
+  "profile": "world",
+  "sheets": {
+    "snow_ston": "dv_snow_ston.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "snow_ston": "snow"
+  },
+  "material_note": "snow_ston: a stone under a cap of snow.",
+  "why_this_one": "32 of them: snow-capped stones, and a seat.",
+  "effects_note": "CreateOperate (ZzzObject.cpp :4682-4690, type 73): a character sits on it -- MOVEMENT_OPERATE's plain sit, no turn. terrain.py OPERABLE_BY_MAP[2] keeps its tile open. No light or blend.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 26,
+      "area": 11393.5,
+      "along": [
+        -32.0,
+        33.0
+      ],
+      "mu_uv": [
+        0.004,
+        0.016,
+        0.986,
+        0.997
+      ],
+      "bake_uv": [
+        0.004,
+        0.016,
+        0.986,
+        0.997
+      ]
+    }
+  ]
+}

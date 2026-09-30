@@ -242,6 +242,16 @@ const PowerRow* powerOf(uint8_t power) {
          "A spell he casts has a 15% chance to be cast a second time, for no mana", true,
          Kin::DarkWizard},
         {Power::Undying, "Undying", "+20% maximum health", false, Kin::DarkKnight, true},
+        {Power::KeenEye, "Keen Eye", "+10% critical hit chance", false, Kin::DarkKnight, true},
+        {Power::Bloodwell, "Bloodwell",
+         "3% of the damage you deal comes back as life, and 5% of your mana after a kill", false,
+         Kin::DarkKnight, true},
+        {Power::Frenzy, "Frenzy",
+         "A blow that lands has a 15% chance to raise attack and casting speed by 20 for three "
+         "seconds",
+         false, Kin::DarkKnight, true},
+        {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
+         false, Kin::DarkKnight, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -319,7 +329,9 @@ bool portal(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 10;
 }
 
-bool stacks(const content::ItemRow& row) { return heals(row) || restores(row); }
+// And the Antidote, the user's (2026-09-30: "antidotes are not stacking"): the Dungeon's poisons
+// stack now, and a player carries a few.
+bool stacks(const content::ItemRow& row) { return heals(row) || restores(row) || antidote(row); }
 
 bool tops(const content::Tables& tables, const Held& onto, const Held& what) {
     if (onto.empty() || onto.item != what.item || onto.refinement != what.refinement) return false;

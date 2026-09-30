@@ -104,7 +104,7 @@ private:
     static constexpr float kGhostLight[kGhosts] = {0.35f, 0.18f};
     static constexpr float kBrightest = 0.8f;
 
-    static constexpr int kMaxWaves = 8;
+    static constexpr int kMaxWaves = 24;  // an Ice Queen throws three a cast
     static constexpr int kMaxPuffs = 200;
 
     std::vector<EffectCorner> curtain_;

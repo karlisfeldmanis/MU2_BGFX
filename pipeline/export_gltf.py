@@ -246,7 +246,9 @@ def tangents(mesh) -> list[tuple] | None:
 def mesh_attributes(obj, mesh, tiled: bool = False,
                     upright: "set[int] | None" = None,
                     repeat: "dict[int, float] | None" = None,
-                    parts: "dict[int, str] | None" = None) -> tuple[dict, dict, dict]:
+                    parts: "dict[int, str] | None" = None,
+                    swapped: "set[str] | None" = None,
+                    echo: "dict[int, str] | None" = None) -> tuple[dict, dict, dict]:
     """Splits MU's triangle soup into glTF vertices: one per distinct corner.
 
     A glTF vertex is a single tuple of attributes, so a corner where the UV or the normal
@@ -304,7 +306,15 @@ def mesh_attributes(obj, mesh, tiled: bool = False,
     upright = upright or set()
     repeat = repeat or {}
 
-    for triangle in mesh.loop_triangles:
+    # Each triangle once in its own part, and a second time in `echo`'s: a glow drawn OVER the
+    # opaque mesh rather than instead of it (the recipe's `glow.<slot>.over`). See main.
+    echo = echo or {}
+    passes = [(t, (parts or {}).get(t.polygon_index, t.material_index))
+              for t in mesh.loop_triangles]
+    passes += [(t, echo[t.polygon_index]) for t in mesh.loop_triangles
+               if t.polygon_index in echo]
+
+    for triangle, key in passes:
         # A BMD is several meshes, one per sheet, and clean_lowpoly keeps them as material
         # slots on one object. Untiled that is ignored, because everything ends up in one
         # baked atlas and one material; tiled it is the whole structure of the file.
@@ -316,8 +326,12 @@ def mesh_attributes(obj, mesh, tiled: bool = False,
         # steel head — and the slot cannot tell those apart. The island can, which is what
         # the asset's island list has been assigning materials to all along, and `parts`
         # carries that assignment in as one name per face.
-        indices = groups.setdefault(
-            (parts or {}).get(triangle.polygon_index, triangle.material_index), [])
+        indices = groups.setdefault(key, [])
+
+        # A glow part samples MU's own sheet at MU's own coordinates, not the bake: it is
+        # drawn added on the raw sheet, the one thing on an item that is not baked. So its
+        # TEXCOORD_0 is MU's layer and the baked one rides second. See `glow` in main.
+        near, far = (follow, lead) if swapped and key in swapped and follow else (lead, follow)
 
         # Whether this slot's normals are replaced with straight up. See the note on the
         # foliage material: a bush is crossed cards standing on edge, every true normal
@@ -368,8 +382,8 @@ def mesh_attributes(obj, mesh, tiled: bool = False,
             vertex = (
                 (point.x * scale, point.z * scale, -point.y * scale),
                 (normal.x, normal.z, -normal.y),
-                (lead[corner].uv[0] * over, (1.0 - lead[corner].uv[1]) * over),
-                (follow[corner].uv[0], 1.0 - follow[corner].uv[1]) if follow else None,
+                (near[corner].uv[0] * over, (1.0 - near[corner].uv[1]) * over),
+                (far[corner].uv[0], 1.0 - far[corner].uv[1]) if far else None,
             )
 
             if frames is not None:
@@ -1503,6 +1517,55 @@ def pbr_material(
     return 0
 
 
+def glow_material(document: dict, binary: "Binary", slot: str, said: dict,
+                  sheet: Path) -> int:
+    """An item's glow: MU's BlendMesh, one mesh of the model drawn ADDED on its own sheet.
+
+    The world's tiled glows have been this shape since sprint 8a -- base colour black, the
+    sheet as emission, BLEND -- and the cook reads BLEND as its glow flag, which the renderer
+    draws in its own pass and in no other (src/gfx/renderer.cpp). An item is baked, so its
+    glow could not be said until now: the Blade's blue flame and the Serpent Shield's yellow
+    came out as opaque paint in the atlas. This part is not baked; it samples the upscaled
+    raw sheet at MU's own UVs (mesh_attributes' `swapped`).
+
+    `said` is the recipe's `glow.<slot>`: `pulse` [amplitude, base] for MU's
+    `BlendMeshLight = sin(WorldTime*0.004)*a + b`, and `jitter`, the step of MU's per-frame
+    `BlendMeshTexCoordU/V = (rand()%10)*0.1`. Both ride in `extras` for the cook.
+    """
+    data = sheet.read_bytes()
+    document.setdefault("images", []).append({
+        "name": sheet.stem,
+        "bufferView": binary.view(data),
+        "mimeType": "image/jpeg" if data.startswith(b"\xff\xd8") else "image/png",
+    })
+    document.setdefault("samplers", [{"magFilter": LINEAR, "minFilter": LINEAR_MIPMAP_LINEAR,
+                                      "wrapS": REPEAT, "wrapT": REPEAT}])
+    document.setdefault("textures", []).append(
+        {"sampler": 0, "source": len(document["images"]) - 1})
+    texture = len(document["textures"]) - 1
+    material = {
+        "name": f"glow_{slot}",
+        "pbrMetallicRoughness": {
+            "baseColorTexture": {"index": texture, "texCoord": 0},
+            "baseColorFactor": [0.0, 0.0, 0.0, 1.0],
+            "metallicFactor": 0.0,
+            "roughnessFactor": 1.0,
+        },
+        "emissiveTexture": {"index": texture, "texCoord": 0},
+        "emissiveFactor": [1.0, 1.0, 1.0],
+        "alphaMode": "BLEND",
+        "doubleSided": True,
+    }
+    # `item` marks this as an item's glow and not a lamp's: MU adds it at its own
+    # BlendMeshLight and nothing else, so the renderer leaves the world's glow_strength (2.0
+    # in Lorencia, tuned for fires and lit windows) off it. With it on, the Serpent Shield's
+    # two fangs came out as blown-out orange bars.
+    material["extras"] = {"item": True,
+                          **{k: said[k] for k in ("pulse", "jitter", "shadow") if said.get(k)}}
+    document["materials"].append(material)
+    return len(document["materials"]) - 1
+
+
 def write_glb(path: Path, document: dict, blob: bytearray) -> None:
     """The container: a header, the JSON chunk, then the bytes.
 
@@ -1791,8 +1854,48 @@ def main() -> None:
                 if len(set(parts.values())) < 2:
                     parts = None
 
+    # The glows: sheets the asset names under `glow`, whose faces leave the bake and ship as
+    # a part of their own, drawn added. See glow_material.
+    glowing: dict = {}
+    echo: dict = {}
+    recipe = json.loads(islands_file.read_text()) if islands_file and islands_file.exists() else {}
+    if not slots and recipe.get("glow"):
+        glowing = {k.lower(): v for k, v in recipe["glow"].items()}
+        slot_names = [m.name.lower().split(".")[0] if m else "" for m in obj.data.materials]
+        parts = dict(parts) if parts else {face.index: "mu2" for face in mesh.polygons}
+        for face in mesh.polygons:
+            name = slot_names[face.material_index] if face.material_index < len(slot_names) else ""
+            if name in glowing and glowing[name].get("over"):
+                # Stays in the bake and is drawn again, added: MU's second RENDER_BRIGHT pass
+                # of an opaque mesh (the Messenger of Archangel's plate, ZzzObject.cpp:2644).
+                echo[face.index] = "glow:" + name
+            elif name in glowing:
+                parts[face.index] = "glow:" + name
+        found = {v[5:] for v in list(parts.values()) + list(echo.values())
+                 if v.startswith("glow:")}
+        for missing in set(glowing) - found:
+            print(f"error: glow '{missing}' names no slot of this mesh ({slot_names})",
+                  file=sys.stderr)
+
+    # The tiled path's echo: a slot the recipe names under `echo` draws another slot's faces
+    # a second time, as itself. For MU's StreamMesh, which is opaque and unlit with its V
+    # sliding (ZzzBMD.cpp:1365-1369): this engine slides only a glow, which adds and so has no
+    # body, and the Dungeon's worms (Object23-25) came out with holes where squid02 was. The
+    # echo is the opaque body under the sliding glow.
+    if slots and recipe.get("echo"):
+        slot_names = [m.name.lower().split(".")[0] if m else "" for m in obj.data.materials]
+        wanted = {of.lower(): body for body, of in recipe["echo"].items()}
+        for face in mesh.polygons:
+            name = slot_names[face.material_index] if face.material_index < len(slot_names) else ""
+            if name in wanted:
+                echo[face.index] = wanted[name]
+        for missing in set(wanted) - set(slot_names):
+            print(f"error: echo of '{missing}' names no slot of this mesh ({slot_names})",
+                  file=sys.stderr)
+
     attributes, groups, counts = mesh_attributes(
-        obj, mesh, tiled=bool(slots), upright=upright, repeat=repeat, parts=parts)
+        obj, mesh, tiled=bool(slots), upright=upright, repeat=repeat, parts=parts,
+        swapped={"glow:" + k for k in glowing}, echo=echo)
 
     # The rig, read before any accessor is built — because the vertex bones are rewritten
     # here and an accessor packed from the old numbering cannot be taken back.
@@ -1935,6 +2038,20 @@ def main() -> None:
 
             if name is None:
                 one["material"] = base
+                continue
+
+            if name.startswith("glow:"):
+                slot = name[5:]
+                file = next((f for k, f in (recipe.get("sheets") or {}).items()
+                             if k.lower() == slot), f"{slot}.png")
+                # The upscaled sheet the bake itself read, beside the output; MU's own
+                # decode in source/textures if the upscale is not there.
+                sheet = destination.parent / f"{Path(file).stem}_x3.png"
+                if not sheet.exists():
+                    sheet = Path(__file__).resolve().parent.parent / "source" / "textures" / file
+                one["material"] = glow_material(document, binary, slot, glowing[slot], sheet)
+                print(f"  glow       {slot}: {sheet.name}, "
+                      f"{', '.join(f'{k} {v}' for k, v in glowing[slot].items() if k != 'note') or 'steady'}")
                 continue
 
             copy = json.loads(json.dumps(document["materials"][base]))

@@ -71,6 +71,8 @@ struct Cue {
     // drops a cue whose swing has moved on does not apply to it -- the damage is real and the
     // bolt that carried it has just arrived on screen.
     bool thrown = false;
+    // An arrow's blow, a monster archer's or hers: its hit is eMissileHit, not eMeleeHit.
+    bool arrow = false;
     // Wizardry damage, which is drawn in its own colour: a spell is not a swing.
     bool magic = false;
     bool poison = false;  // a poison's pulse (Happening::poisoned)

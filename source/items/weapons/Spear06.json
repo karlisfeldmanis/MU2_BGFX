@@ -1,0 +1,101 @@
+{
+  "item": "Spear06",
+  "mu_name": "Double Poleaxe",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:129 and mu.db's items row (group 3, index 5) name it the Double Poleaxe against Item/Spear06.bmd.",
+  "why_this_one": "The lowest Devias weapon still unbuilt: drop level 13, so the Worm, the Ice Monster and the Hommerd can all leave it, and until it is built their windows draw from the rest. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:129. The 0.75 table.",
+    "call": "CreateWeapon(3, 5, 0, 0, 2, 4, true, \"Double Poleaxe\", 13, 19, 31, 30, 38, 0, 0, 70, 50, 0, 0, 0, 1, 1)",
+    "group": 3,
+    "number": 5,
+    "drop_level": 13,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 19,
+    "maximum_damage": 31,
+    "attack_speed": 30,
+    "durability": 38,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 50,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "skill": 0
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:377-383: the spear group, two-handed (width 2), and not the named Spear or Dragon Lance, stands PLAYER_STOP_SCYTHE -- as the Great Scythe and the Berdysh.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "Polearms02": "polearms02.png"
+  },
+  "sheet_from": "Data/Item/Polearms02.OZJ (64x64), from MuMain. The .bmd names Polearms02.jpg.",
+  "material_note": "Metal throughout, as the Great Scythe. Sampled per triangle at its own UV centre along the length: the shaft never leaves neutral grey, and the only colour on the weapon is the green ornament round the socket, too small and too tangled with the blade to own an island.",
+  "open_question": "The green ornament shares the head's island. If it reads as chrome in the studio, a finer split of island 1 is the fix, not a different material for the whole head.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrored the grass: in the studio the head went black from above and the shaft flared white at grazing sun, the Gladius's fault (black at 0.2, right at 0.55) and the Salamander's in this batch. plate_steel to 0.5 for the pole, whose round shaft caught the sun in one white flare at 0.35.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 22,
+      "area": 2399.0,
+      "along": [
+        -74.4,
+        113.0
+      ],
+      "mu_uv": [
+        0.011,
+        0.156,
+        0.793,
+        0.991
+      ],
+      "bake_uv": [
+        0.004,
+        0.075,
+        0.699,
+        0.699
+      ],
+      "note": "the shaft, the whole length from butt to head: the blue-grey strip down the left of Polearms02, neutral from end to end (73,67,69 at the butt, 77,77,85 below the head). A forged pole, finished as the Great Scythe's shaft is, not a ground edge."
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 40,
+      "area": 1485.7,
+      "along": [
+        73.1,
+        128.3
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.612
+      ],
+      "note": "the head: both crescent blades, silver ground faces (170-198 grey), and the dark core with its green scaled ornament. The ornament is in the same island, so the blade's steel carries it; the green is painted and stays paint."
+    }
+  ]
+}

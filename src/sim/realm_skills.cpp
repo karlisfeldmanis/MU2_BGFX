@@ -99,7 +99,8 @@ int32_t Realm::clipTicksOf(const Body& hero, const SkillRow& row) const {
     const content::Arm* left = hero.shield >= 0 && size_t(hero.shield) < tables_->arms.size()
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
-    return castTicks(*tables_, hero.kin, hero.points.agility, right, left, row);
+    return castTicks(*tables_, hero.kin, hero.points.agility, right, left, row,
+                     hero.frenzyUntil > tick_ ? kFrenzySpeed : 0);
 }
 
 // The refusals, in the order `TargetedSkillDefaultPlugin` refuses them, with the two this
@@ -288,9 +289,11 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // **Not a primary.** The wizard's Energy Ball is thrown over and over, and a lock on every
     // clip would be a wizard who can never be walked away from a fight. Like a swing it is
     // cancelled by a click until it leaves his hand; after that it is in the air and lands.
-    hero.castUntil = row.primary()      ? tick_
-                     : row.channelled() ? tick_ + row.channelTicks
-                                        : tick_ + clip;
+    // A channel first, primary or not: Lightning has had no cooldown since 2026-09-30 and still
+    // roots him for the whole ring.
+    hero.castUntil = row.channelled() ? tick_ + row.channelTicks
+                     : row.primary()  ? tick_
+                                      : tick_ + clip;
     if (row.channelled()) {
         hero.channelSkill = row.number;
         hero.channelFrom = tick_;

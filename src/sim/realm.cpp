@@ -76,6 +76,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     wearDice_.seed(seed ^ 0x9e3779b97f4a7c15ull);
     wardenDice_.seed(seed ^ 0xc2b2ae3d27d4eb4full);
     runeDice_.seed(seed ^ 0x165667b19e3779f9ull);
+    trapDice_.seed(seed ^ 0x27d4eb2f165667c5ull);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
@@ -136,6 +137,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     }
     bodies_.push_back(std::move(hero));
     reswing(bodies_[0]);
+    settleFound(0);
 
     // Then every nest, in the table's own order. Placement rejects a tile the threshold
     // refuses and draws again: between 6% and 12% of every Lorencia nest rectangle is
@@ -213,6 +215,8 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     }
     // And the guards, last, so every monster keeps the id it had before there were any.
     raiseWardens();
+    // The traps take no id: they are not bodies (realm_traps.cpp).
+    raiseTraps();
     // And after them the one summon body, dormant until she casts (realm_summon.cpp): raised
     // here so a cast never grows `bodies_` under a reference to it, and last so no guard's id
     // moves. Kind 0 only so a reader of `kind` never indexes past the table; it is not drawn.
@@ -266,6 +270,7 @@ HeroRecord Realm::record() const {
     for (int i = 0; i < kSkills; ++i) out.coolsLeft[i] = std::max<int64_t>(0, hero.cools[i] - tick_);
     for (int slot = 0; slot < kSlots; ++slot) out.slots[slot] = bag_[slot];
     for (int i = 0; i < kQuests; ++i) out.quests[i] = quests_[i];
+    out.found = found_;
     return out;
 }
 
@@ -319,6 +324,7 @@ void Realm::restore(const HeroRecord& saved) {
     }
     hero.health = saved.health > 0 ? std::min(saved.health, hero.maxHealth) : hero.maxHealth;
     hero.mana = std::max(0, std::min(saved.mana, hero.maxMana));
+    settleFound(saved.found);
 }
 
 bool Realm::spend(int strength, int agility, int vitality, int energy) {
@@ -382,6 +388,14 @@ void Realm::accept() {
         trading_ = -1;
         banking_ = -1;
         questing_ = -1;
+        // **And a skill still waiting to be thrown is dropped by an order that moves him**: a
+        // wish outlives a channel (kWishTicks), so a key pressed during Lightning threw it again
+        // round him after he had walked on (the user, 2026-09-30: "when i am done with casting
+        // spell, and move on it still is casted").
+        if (order_.kind == Request::Kind::WalkTo || order_.kind == Request::Kind::Pick ||
+            order_.kind == Request::Kind::Talk || order_.kind == Request::Kind::Perch) {
+            wants_ = skill::kNone;
+        }
         if (order_.kind == Request::Kind::WalkTo) {
             send(hero, order_.column, order_.row);
         } else if (order_.kind == Request::Kind::Stop) {
@@ -517,6 +531,11 @@ void Realm::press() {
         hero.aleUntil = 0;
         reswing(hero);
     }
+    // And a Frenzy's speed, the same way.
+    if (hero.frenzyUntil != 0 && tick_ >= hero.frenzyUntil) {
+        hero.frenzyUntil = 0;
+        reswing(hero);
+    }
     // And Greater Damage, off on its tick and the band re-reckoned without it.
     if (hero.mightUntil != 0 && tick_ >= hero.mightUntil) {
         hero.mightUntil = 0;
@@ -558,13 +577,16 @@ void Realm::press() {
         if (serving(int(order_.target))) {
             const content::Townsperson& one = tables_->folk[order_.target];
             halt(hero);
+            // A quest giver spoken to opens his town on the travel list (sim/travel.h), whatever
+            // he has to say, even that he is not ready for him yet.
+            if (questOf(one.number) >= 0) discover(int32_t(tables_->map));
             if (sells(one.number)) {
                 trading_ = int(order_.target);
                 say(What::Served, hero, trading_, one.number);
             } else if (one.number == kVaultKeeper) {
                 banking_ = int(order_.target);
                 say(What::Served, hero, banking_, one.number);
-            } else if (const int quest = questOf(one.number); quest >= 0 && !questLocked(quest)) {
+            } else if (const int quest = questHere(one.number); quest >= 0 && !questLocked(quest)) {
                 // A quest giver: his dialog opens, whatever it has to say -- the offer, the
                 // quest under way, the hand-in, or that it is not his to give again yet.
                 questing_ = int(order_.target);
@@ -743,6 +765,7 @@ void Realm::step() {
         accept();
         advance(hero);
         press();
+        fireTraps();
     } else if (tick_ >= hero.risesAt) {
         reviveHero();
     }
@@ -904,6 +927,28 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Warped:
             std::snprintf(line, sizeof(line), "%6u %s reads a town portal to %d,%d",
                           happening.tick, who, happening.a, happening.b);
+            break;
+        case What::Gated:
+            std::snprintf(line, sizeof(line), "%6u %s goes through gate %d, out at %d,%d",
+                          happening.tick, who, happening.a, happening.b, happening.c);
+            break;
+        case What::Climbed:
+            std::snprintf(line, sizeof(line), "%6u %s takes the stair of gate %d to %d,%d",
+                          happening.tick, who, happening.a, happening.b, happening.c);
+            break;
+        case What::Trapped:
+            std::snprintf(line, sizeof(line), "%6u %s is caught by trap %d for %d, %d left",
+                          happening.tick, who, happening.b, happening.a, happening.c);
+            break;
+        case What::Barred:
+            if (happening.b == 0) {
+                std::snprintf(line, sizeof(line), "%6u %s finds gate %d sealed", happening.tick,
+                              who, happening.a);
+            } else {
+                std::snprintf(line, sizeof(line),
+                              "%6u %s is too low for gate %d, which asks level %d",
+                              happening.tick, who, happening.a, happening.b);
+            }
             break;
         case What::Shouted:
             std::snprintf(line, sizeof(line), "%6u %s %s %s, pointing to %d,%d", happening.tick,

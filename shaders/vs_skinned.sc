@@ -19,7 +19,8 @@ void main()
 	v_wpos = wpos.xyz;
 	v_texcoord0 = a_texcoord0;
 	// w is 2 + the figure's fade (i_data5.y); common.sh's figureFade says why the 2.
-	v_light = vec4(i_data4.xyz, 2.0 + i_data5.y);
+	// And 2 more on a self-lit figure, whose instance light's w is 2 (Figure::gather).
+	v_light = vec4(i_data4.xyz, 2.0 + i_data5.y + (i_data4.w >= 2.0 ? 2.0 : 0.0));
 	// As vs_static takes it apart.
 	float packed = i_data5.w;
 	float red = floor((packed + 0.5) / 10201.0);

@@ -41,6 +41,21 @@
   },
   "sheet_from": "Data/Item/shield09.OZJ (32x64) and shield092.OZJ (16x16), from MuMain. The .bmd names shield09.jpg on 110 triangles and shield092.jpg on 4, two meshes.",
   "material_note": "Island 0 is a hundred and ten triangles on shield09 - the whole face - at (79, 92, 54) and chroma 56. Islands 1 and 2 are two triangles each on shield092, a sixteen-square sheet, and both sample flat green.\n\nThe face is a green field with a gold beast rampant on it and pale studs around the rim, and the green is the point: this is the Bronze Shield and MU painted it as bronze gone green. brass says exactly that - a soft cast alloy, poured rather than forged, never polished since - and the colour comes from MU's own painting rather than from the material, so nothing here is being tinted by the choice.\n\nNot ceramic, which the two heraldic shields in this batch take. The green is not a charge painted on a field; it is what the metal has turned, and a patina is still a surface on metal.",
+  "material_overrides": {
+    "brass": {
+      "roughness": 0.6
+    }
+  },
+  "material_overrides_note": "2026-09-21, from the studio sheet: at brass's 0.44 the gilt lion's face at the centre blew out yellow-white at 0 and 315 deg, against MU's verdigris green. Brass at 0.6 spreads the highlight, as for the Serpent Sword's grip and the staves.",
+  "glow": {
+    "shield092": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    }
+  },
+  "glow_note": "MU's `ItemObjectAttribute` (ZzzObject.cpp:5199) draws this model's mesh 1 ADDED -- BlendMesh 1 -- and it is here drawn so: the slot leaves the bake and ships as a glow part on the raw sheet (export_gltf.glow_material). It was baked as opaque paint until 2026-09-29. `case MODEL_BRONZE_SHIELD`, the Serpent Shield's case (ZzzObject.cpp:5342): shield092's green gradient is its gems, breathing, not brass.",
   "islands": [
     {
       "island": 0,
@@ -58,9 +73,9 @@
         0.999
       ],
       "bake_uv": [
-        0.006,
         0.005,
-        0.954,
+        0.005,
+        0.952,
         0.995
       ]
     },
@@ -80,10 +95,10 @@
         0.649
       ],
       "bake_uv": [
-        0.633,
-        0.589,
-        0.745,
-        0.973
+        0.201,
+        0.006,
+        0.217,
+        0.06
       ]
     },
     {
@@ -102,17 +117,11 @@
         0.649
       ],
       "bake_uv": [
-        0.779,
+        0.175,
         0.006,
-        0.891,
-        0.39
+        0.191,
+        0.06
       ]
     }
-  ],
-  "material_overrides": {
-    "brass": {
-      "roughness": 0.6
-    }
-  },
-  "material_overrides_note": "2026-09-21, from the studio sheet: at brass's 0.44 the gilt lion's face at the centre blew out yellow-white at 0 and 315 deg, against MU's verdigris green. Brass at 0.6 spreads the highlight, as for the Serpent Sword's grip and the staves."
+  ]
 }

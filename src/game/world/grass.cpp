@@ -118,9 +118,10 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
     // The world's own copy first -- MU repaints its grass per map, and Noria's is not
     // Lorencia's -- then the shared one, which is what a map with no copy of its own gets.
     const std::string dir = core::join(assetDir, "effects/grass");
-    size_t found = 0;
+    size_t found = 0, asked = 0;
     for (int slot = 0; slot < 32; ++slot) {
         if (!ground.grassFloor(slot)) continue;
+        ++asked;
         const std::string& name = ground.floorName(slot);
         if (name.empty()) continue;
         // Asked only when it is there: a world with no copy of its own is the ordinary case (the
@@ -171,6 +172,12 @@ bool Grass::build(const std::string& assetDir, const std::string& world,
         core::logf("no wild.png under %s -- the sward grows no flowers", dir.c_str());
     }
 
+    // A world that names no grass slot at all -- the Dungeon, whose grass_slots is empty on
+    // purpose -- has nothing to grow, and that is not an error.
+    if (asked == 0) {
+        core::logf("%s grows no grass: it names no grass slot", world.c_str());
+        return false;
+    }
     if (found == 0) {
         core::logError("%s names no grass slot with a sheet behind it; no field will grow",
                        world.c_str());
@@ -614,6 +621,10 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     field.root[3] = look.grassRootAo;
     for (int i = 0; i < 3; ++i) field.tip[i] = look.grassTipColour[i];
     field.tip[3] = look.grassRoughness;
+    for (int i = 0; i < 3; ++i) field.through[i] = look.grassThroughColour[i];
+    field.through[3] = look.grassThrough;
+    field.shape[0] = look.grassLengthSpread;
+    field.shape[1] = look.grassRankHeight;
 
     field.vary[0] = float(kCardsPerPatch);
     field.vary[1] = float(kStratification);
@@ -631,7 +642,9 @@ bool Grass::gather(const content::Ground& ground, const gfx::Lighting& look, con
     // The meadow, over the same patches and the same instance buffer.
     field.meadow.sheet = meadow_;
     field.meadow.first = 0;
-    field.meadow.count = bgfx::isValid(meadow_) ? counts_.drawn : 0;
+    // None at all where the sheet asks for none: Devias's snow grows no weeds, and a rate of
+    // nought still let the meadow's own tall plants through as dark specks on white.
+    field.meadow.count = bgfx::isValid(meadow_) && look.grassMeadow > 0.0f ? counts_.drawn : 0;
     field.meadow.width = meadowSize_.first;
     field.meadow.height = meadowSize_.second;
     field.meadowVary[0] = float(kMeadowCards);

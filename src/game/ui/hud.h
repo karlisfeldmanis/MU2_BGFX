@@ -138,6 +138,7 @@ public:
         bool poison = false;  // or a poison on him, MU's eDeBuff_Poison
         int stacks = 0;       // and how many (sim::kPoisonStacksMost), shown from two up
         bool chill = false;   // or iced, walking at kChillFactor: MU's eDeBuff_Freeze
+        bool frenzy = false;  // or a Frenzy rune's speed, the Dungeon's (sim::kFrenzyTicks)
         // Or his pet in slot 8: 0 the Guardian Angel, 1 the Imp, -1 none. It has no clock; its
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
         // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).
@@ -145,18 +146,18 @@ public:
         int life = 0, lifeMost = 0;
         float seconds = 0.0f; // what is left of it
         float share = 0.0f;   // and that as a fraction of its whole, for the bar under it
-        bool empty() const { return skill == 0 && !ale && !poison && !chill && pet < 0; }
+        bool empty() const { return skill == 0 && !ale && !poison && !chill && !frenzy && pet < 0; }
         // Something done TO him: its cell wears a red edge, as a debuff does in WoW's strip.
         bool debuff() const { return poison || chill; }
         bool operator==(const Boon& o) const {
             // Tenths, as the cooldown's sweep is compared: a strip that redrew on every frame
             // of four seconds would be eighty redraws for a number that changes forty times.
-            return skill == o.skill && ale == o.ale && poison == o.poison && stacks == o.stacks &&
-                   chill == o.chill && pet == o.pet &&
+            return skill == o.skill && ale == o.ale && poison == o.poison &&
+                   chill == o.chill && frenzy == o.frenzy && pet == o.pet && stacks == o.stacks &&
                    life == o.life && int(seconds * 10.0f) == int(o.seconds * 10.0f);
         }
     };
-    // The pet, a skill's boon, the Ale, and the two debuffs: room for all five and one over.
+    // The pet, a skill's boon, the Ale, a Frenzy and the two debuffs: all six.
     static constexpr int kBoons = 6;
     // The cells for this frame, packed from the left; what is not handed is empty.
     void setBoons(const Boon* boons, int count) {

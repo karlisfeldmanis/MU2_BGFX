@@ -44,6 +44,21 @@ struct Profile {
 // A torch: the cages and the bridges' and the gate's fires, FireLight01/02 and the rest.
 constexpr Profile kTorch = {38.0f, {0.42f, 0.62f}, {0.38f, 0.62f}, {0.45f, 0.8f}, 1.8f,
                             0.07f, 0.12f, 0.05f, 0.7f, 0.0f};
+// A dragon's breath (Fire::breath): how far a torch may stand from an Object17's origin and
+// be one of its mouths -- the heads' torches stand 2.5 to 2.9 m off it, the nearest other
+// torch 6 m -- and how its flames go: thrown out along the mouth at kBreathSpeed, slowing,
+// rising only a little, and gone sooner than a torch's. Ours, judged by eye.
+constexpr float kBreathReach = 3.5f;
+constexpr float kBreathSpeed[2] = {3.0f, 4.2f};
+constexpr float kBreathLift = 0.45f;
+constexpr float kBreathDrag = 1.1f;
+// The mouth, in the dragon's own frame, ours (x, up, forward) in metres: Object17's two
+// deep_dragon heads are centred at MU local x -150 and +150, end at local y -290, and open
+// their jaws between z 88 and 139 -- so between the jaws at 1.13 m, and a little inside the
+// tip, as the user asked ("a little bit inside the dragon's mouth").
+constexpr float kMouthSide = 1.5f;
+constexpr float kMouthHeight = 1.13f;
+constexpr float kMouthForward = 2.9f - 0.15f;
 // A bonfire, Bonfire01: wider, taller, more of it, embers and smoke. MU's emitter point is
 // 60 units over the logs, where the light belongs; the flames start at the logs.
 constexpr Profile kBonfire = {60.0f, {0.75f, 1.15f}, {0.6f, 1.0f}, {0.55f, 0.95f}, 2.0f,
@@ -216,6 +231,37 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         for (int j = 0; j < 3; ++j) drift[j] = turn[2 * 4 + j] / kPerMetre;
         const std::string& model = cooked.models[instance.model].name;
         const char* rides = riddenBone(model);
+        // OURS: the Dungeon's dragons breathe. MU hid a wall torch, Object42, inside each of
+        // the two heads an Object17 carries -- at the mouth, turned the way the head faces
+        // (docs/dungeon-port.md) -- and its fire rises there like any torch's, which on a
+        // dragon reads as a head on fire (the user, 2026-09-30: "it has to go from mouth and
+        // more horizontally"). A torch within kBreathReach of an Object17's origin throws its
+        // flames out along its drift instead. Only the Dungeon's Object42 carries a fire.
+        bool breathes = false;
+        float mouth[3] = {0, 0, 0}, facing[3] = {0, 0, 0};
+        if (model == "Object42") {
+            for (const content::TownInstance& other : cooked.instances) {
+                if (cooked.models[other.model].name != "Object17") continue;
+                const float dx = other.position[0] - instance.position[0];
+                const float dz = other.position[2] - instance.position[2];
+                if (dx * dx + dz * dz >= kBreathReach * kBreathReach) continue;
+                breathes = true;
+                float head[16];
+                content::placementTransform(other.pitch, other.yaw, other.roll, 1.0f,
+                                            other.position, head);
+                // The head of the two this torch is in: the side nearer the torch.
+                const float side = (-dx) * head[0] + (-dz) * head[2] >= 0.0f ? kMouthSide
+                                                                              : -kMouthSide;
+                const float local[3] = {side, kMouthHeight, kMouthForward};
+                for (int j = 0; j < 3; ++j) {
+                    mouth[j] = local[0] * head[0 * 4 + j] + local[1] * head[1 * 4 + j] +
+                               local[2] * head[2 * 4 + j] + head[3 * 4 + j];
+                }
+                const float fl = std::sqrt(head[8] * head[8] + head[10] * head[10]);
+                facing[0] = fl > 1e-4f ? head[8] / fl : 0.0f;
+                facing[2] = fl > 1e-4f ? head[10] / fl : 0.0f;
+            }
+        }
         for (const content::TownEmitter* one : carried[instance.model]) {
             float at[3];
             for (int j = 0; j < 3; ++j) {
@@ -226,8 +272,17 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
             float away[3];
             const bool sided = sideOf(*one, cooked.models[instance.model], turn, away);
             const bool bonfire = model == "Bonfire01";
+            const size_t firesBefore = fires_.size();
             place(*one, at, drift, instance.pitch, bonfire, bonfire || model == "Object67",
                   sided ? away : nullptr);
+            if (breathes && fires_.size() > firesBefore) {
+                Fire& fire = fires_.back();
+                fire.breath = true;
+                for (int j = 0; j < 3; ++j) {
+                    fire.mouth[j] = mouth[j];
+                    fire.facing[j] = facing[j];
+                }
+            }
             if (rides != nullptr && set_.size() > before) {
                 Rider rider;
                 rider.light = uint32_t(before);
@@ -387,6 +442,21 @@ void Lamps::spawn(const Fire& fire, uint8_t kind) {
         one.velocity[0] = lean[0] + (unit() - 0.5f) * 0.16f;
         one.velocity[1] = mix(p.rise[0], p.rise[1], unit());
         one.velocity[2] = lean[2] + (unit() - 0.5f) * 0.16f;
+        if (fire.breath) {
+            // Out of the mouth, flat, the way the head looks.
+            const float out[3] = {fire.facing[0], 0.0f, fire.facing[2]};
+            const float speed = mix(kBreathSpeed[0], kBreathSpeed[1], unit());
+            one.breath = true;
+            // From between the jaws, a hand's width of jitter across, none along.
+            const float across = (unit() - 0.5f) * 0.1f;
+            one.position[0] = fire.mouth[0] - out[2] * across;
+            one.position[1] = fire.mouth[1] + (unit() - 0.5f) * 0.08f;
+            one.position[2] = fire.mouth[2] + out[0] * across;
+            one.life *= 1.15f;
+            one.velocity[0] = out[0] * speed + (unit() - 0.5f) * 0.35f;
+            one.velocity[1] = (unit() - 0.3f) * 0.25f;
+            one.velocity[2] = out[2] * speed + (unit() - 0.5f) * 0.35f;
+        }
     } else if (kind == kEmber) {
         one.life = mix(1.2f, 2.4f, unit());
         one.size = mix(0.08f, 0.14f, unit());
@@ -430,7 +500,13 @@ void Lamps::update(float seconds, Town& town, gfx::Renderer& renderer, const flo
         // A sway that is the particle's own: two sines, so no two flames beat together.
         const float swayX = std::sin(one.phase + one.age * 7.0f) + 0.5f * std::sin(one.phase * 2.3f + one.age * 13.0f);
         const float swayZ = std::cos(one.phase * 1.7f + one.age * 6.0f);
-        if (one.kind == kFlame) {
+        if (one.kind == kFlame && one.breath) {
+            // A breath slows as it leaves the mouth and curls up a little at its end.
+            const float keep = std::exp(-kBreathDrag * dt);
+            one.velocity[0] *= keep;
+            one.velocity[2] *= keep;
+            one.velocity[1] += kBreathLift * dt;
+        } else if (one.kind == kFlame) {
             one.velocity[1] += kTorch.lift * dt;
             one.velocity[0] += swayX * 0.9f * dt;
             one.velocity[2] += swayZ * 0.9f * dt;

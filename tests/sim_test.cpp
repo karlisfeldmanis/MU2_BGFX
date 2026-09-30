@@ -25,6 +25,7 @@
 #include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/swings.h"
+#include "sim/traps.h"
 #include "sim/wear.h"
 
 using namespace mu;
@@ -437,14 +438,16 @@ void testItems(const content::Tables& tables) {
     checkEqual(long(tables.items.size()), 157, "157 item rows cooked");
     // And Noria's three shops sell only what is cooked: Elf Lala, Eo the Craftsman and Potion
     // Girl Amy, every offer a row (the user, 2026-09-28: "fill Noria's vendors").
-    for (const int npc : {242, 243, 253}) {
+    // And Lumen's, whose Guardian Angel and Imp are ours (the user, 2026-09-30: "put imp and
+    // guardian angel in lorencia tavern vendor").
+    for (const int npc : {242, 243, 253, 255}) {
         int stocked = 0;
         const sim::Offer* offers = sim::stockOf(npc, &stocked);
         int unmade = 0;
         for (int i = 0; i < stocked; ++i) {
             if (tables.itemAt(offers[i].group, offers[i].number) < 0) ++unmade;
         }
-        checkEqual((long long)unmade, 0LL, "every offer on a Noria shelf is a cooked item");
+        checkEqual((long long)unmade, 0LL, "every offer on a Noria shelf and Lumen's is a cooked item");
     }
     const int shield = tables.itemAt(6, 0), axe = tables.itemAt(1, 0), staff = tables.itemAt(5, 0);
     const int small = tables.itemAt(14, 1);
@@ -1128,10 +1131,10 @@ void testCastLock(const content::Tables& tables) {
     // ---- Poison: a cooldown burst that goes on hurting ---------------------------------------
     {
         const sim::SkillRow& poison = *sim::skillNumbered(sim::skill::kPoison);
-        check(poison.wizardry && !poison.primary() && poison.damage == 12 && poison.mana == 42 &&
-                  poison.poisonTicks == 400 && poison.splash == 4.0f,
-              "Poison is a cooldown spell of twelve damage and forty-two mana, poisoning twenty "
-              "seconds within four tiles");
+        check(poison.wizardry && poison.primary() && poison.force == 1.0f && poison.damage == 12 &&
+                  poison.mana == 42 && poison.poisonTicks == 400 && poison.splash == 4.0f,
+              "Poison is a standard spell of twelve damage at the band and forty-two mana, "
+              "poisoning twenty seconds within four tiles");
         const int32_t scroll = tables.itemAt(15, 0);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPoison &&
                   tables.items[size_t(scroll)].teachesEnergy == 140,
@@ -1199,8 +1202,7 @@ void testCastLock(const content::Tables& tables) {
                     casts, widest, pulses, (long long)closest);
         check(casts > 10 && pulses > 0, "he throws Poison through a hunt and it pulses");
         check(widest >= 2, "and one cast poisons more than one body");
-        check(closest >= wiz.coolsFor(sim::skill::kPoison) && closest >= 80,
-              "never inside its cooldown");
+        check(closest >= 10, "paced by its own clip, with no cooldown");
         checkEqual(pulseKills, 0, "a pulse never kills");
         std::printf("  poison: %d pulses off the three-second beat (a recast restarts it)\n", offBeat);
     }
@@ -1297,10 +1299,10 @@ void testCastLock(const content::Tables& tables) {
     // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
     {
         const sim::SkillRow& ice = *sim::skillNumbered(sim::skill::kIce);
-        check(ice.wizardry && !ice.primary() && ice.damage == 10 && ice.mana == 38 &&
-                  ice.chillTicks == 200 && ice.splash == 4.0f,
-              "Ice is a cooldown spell of ten damage and thirty-eight mana, chilling ten seconds "
-              "within four tiles");
+        check(ice.wizardry && ice.primary() && ice.force == 1.0f && ice.damage == 10 &&
+                  ice.mana == 38 && ice.chillTicks == 200 && ice.splash == 4.0f,
+              "Ice is a standard spell of ten damage at the band and thirty-eight mana, chilling "
+              "ten seconds within four tiles");
         const int32_t scroll = tables.itemAt(15, 6);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kIce &&
                   tables.items[size_t(scroll)].teachesEnergy == 120,
@@ -1360,7 +1362,7 @@ void testCastLock(const content::Tables& tables) {
                     casts, struck, widest, (long long)closest, icedSteps, fastWhileIced);
         check(casts > 10 && struck > 0, "he throws Ice through a hunt and it strikes");
         check(widest >= 2, "and one cast ices more than one body");
-        check(closest >= wiz.coolsFor(sim::skill::kIce) && closest >= 80, "never inside its cooldown");
+        check(closest >= 10, "paced by its own clip, with no cooldown");
         check(icedSteps > 0, "iced bodies still walk");
         checkEqual(fastWhileIced, 0, "at half their pace");
     }
@@ -1427,10 +1429,10 @@ void testCastLock(const content::Tables& tables) {
     // ---- Meteorite: a cooldown spell, off its scroll at a hundred and four energy ----------
     {
         const sim::SkillRow& rock = *sim::skillNumbered(sim::skill::kMeteorite);
-        check(rock.wizardry && !rock.primary() && rock.thrown() && rock.damage == 21 &&
-                  rock.fallTicks == 7 && rock.clip == 183 && rock.force == 3.0f,
-              "Meteorite is a thrown cooldown spell at twenty-one damage, three times the band, "
-              "falling seven ticks, cast in the arm-up clip");
+        check(rock.wizardry && rock.primary() && rock.thrown() && rock.damage == 21 &&
+                  rock.fallTicks == 7 && rock.clip == 183 && rock.force == 1.0f,
+              "Meteorite is a thrown standard spell at twenty-one damage, at the band, falling "
+              "seven ticks, cast in the arm-up clip");
         const int32_t scroll = tables.itemAt(15, 1);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kMeteorite &&
                   tables.items[size_t(scroll)].teachesEnergy == 104,
@@ -1512,8 +1514,7 @@ void testCastLock(const content::Tables& tables) {
                     casts, falls, landed, widest, (long long)closest, lock);
         check(lock > 20, "the arm-up clip has its length in the realm");
         check(casts > 10 && falls > 0 && landed > 0, "he calls Meteorite through a hunt and it lands");
-        check(closest >= wiz.coolsFor(sim::skill::kMeteorite) && closest >= 80,
-              "never inside its cooldown");
+        check(closest >= 10, "paced by its own clip, with no cooldown");
         checkEqual(lateOrEarly, 0, "every rock lands its fall after the let-go");
         check(widest >= 2, "and one cast drops a rock on more than one body");
         checkEqual(movedWhile, 0, "and he does not move while he calls it");
@@ -1522,14 +1523,14 @@ void testCastLock(const content::Tables& tables) {
     // ---- Lightning: a channel -- three seconds of pulses into everything around him ----------
     {
         const sim::SkillRow& bolt = *sim::skillNumbered(sim::skill::kLightning);
-        check(bolt.wizardry && bolt.channelled() && !bolt.primary() && !bolt.thrown() &&
+        check(bolt.wizardry && bolt.channelled() && bolt.primary() && !bolt.thrown() &&
                   bolt.pushes && bolt.spread == sim::Spread::Ring && bolt.damage == 17 &&
-                  bolt.mana == 40 && bolt.coolTicks == 100 && bolt.channelTicks == 42,
-              "Lightning is a channel round him as long as its clip, five seconds to cool, and it "
+                  bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 42,
+              "Lightning is a channel round him as long as its clip, with no cooldown, and it "
               "pushes");
-        check(bolt.force == 2.0f && sim::force(bolt, sim::HeroPoints{}) == 2.0f &&
+        check(bolt.force == 1.0f && sim::force(bolt, sim::HeroPoints{}) == 1.0f &&
                   sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.0f,
-              "and each strike is twice the band, where the other spells are once");
+              "and each strike is at the band, as the other spells are");
         check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32 &&
                   bolt.strikesEach == 1,
               "and it strikes every three ticks while his arm is up, once at most a body");
@@ -1544,6 +1545,9 @@ void testCastLock(const content::Tables& tables) {
         int channels = 0, pushes = 0, away = 0, widest = 0, stillWhile = 0;
         int64_t lastCast = -1, closest = 1 << 30, pulseTick = -1, earliest = 1 << 30;
         int pulses = 0, mostPulses = 0, thisPulse = 0, thisChannel = 0, sweptMost = 0;
+        // Channels cast with two or more bodies in reach: with no cooldown (2026-09-30) he casts
+        // the moment one comes near, and a hunt may never gather company for one to go round.
+        int withCompany = 0;
         uint32_t swept[16] = {};
         int sweptTimes[16] = {};
         int sweptCount = 0, mostOnOne = 0;
@@ -1592,6 +1596,15 @@ void testCastLock(const content::Tables& tables) {
                 if (one.what == sim::What::Cast && one.who == wiz.hero().id &&
                     one.a == sim::skill::kLightning) {
                     ++channels;
+                    int near = 0;
+                    const sim::Body& me = wiz.hero();
+                    const float reach = sim::skillNumbered(sim::skill::kLightning)->reach;
+                    for (const sim::Body& b : wiz.bodies()) {
+                        if (b.monster() && b.alive() && std::hypot(b.x - me.x, b.y - me.y) <= reach) {
+                            ++near;
+                        }
+                    }
+                    if (near >= 2) ++withCompany;
                     if (lastCast >= 0) closest = std::min<int64_t>(closest, one.tick - lastCast);
                     lastCast = one.tick;
                     mostPulses = std::max(mostPulses, thisChannel);
@@ -1649,12 +1662,13 @@ void testCastLock(const content::Tables& tables) {
         // cast strikes as many times as there are bodies round him, to seven.
         check(mostPulses >= 1 && mostPulses <= 7, "and a channel strikes up to seven times");
         check(earliest >= 14, "and never before his arm is up");
-        check(closest >= wiz.coolsFor(sim::skill::kLightning) && closest >= 60,
-              "and never twice inside its cooldown");
+        check(closest >= sim::skillNumbered(sim::skill::kLightning)->channelTicks,
+              "and never twice inside one channel");
         // One body a strike, and round the ring: a channel with company strikes more than one.
         checkEqual(widest, 1, "and each strike goes to one body");
         check(mostOnOne <= 1, "and no body is struck more than once in a cast");
-        check(sweptMost >= 2, "and a channel goes round to more than one");
+        check(sweptMost >= 2 || withCompany == 0,
+              "and a channel cast among company goes round to more than one");
         checkEqual(stillWhile, 0, "and he stands still while it runs");
         // A strike at twice the band kills most of what it hits here, and the dead are not
         // pushed; what survives is.
@@ -2813,6 +2827,60 @@ void testRefine(const content::Tables& tables) {
     check(armed.hero().weaponBonus > bonusBefore, "harder than before");
     check(!armed.refine(sim::kWeaponRight, sim::kWorn + 20), "a worn slot is never the jewel");
 
+    // Outgrown: a plus that asks more than he has takes the thing off his hand into the bag.
+    // The first knight's weapon he wears at some plus and not at the next one.
+    {
+        sim::Realm grown;
+        check(grown.raise(&tables, 13, 138, 124), "a realm raises for an outgrown refinement");
+        int found = -1, plus = 0;
+        for (size_t i = 0; i < tables.items.size() && found < 0; ++i) {
+            const content::ItemRow& row = tables.items[i];
+            if (sim::placeOf(row) != sim::kWeaponRight || row.twoHanded()) continue;
+            for (int p = 0; p < 5 && found < 0; ++p) {
+                if (sim::fits(tables, grown.wearer(), held(int(i), p)) &&
+                    !sim::fits(tables, grown.wearer(), held(int(i), p + 1))) {
+                    found = int(i);
+                    plus = p;
+                }
+            }
+        }
+        check(found >= 0, "a weapon he outgrows by one plus");
+        if (found >= 0) {
+            check(grown.give(found, sim::kWeaponRight, plus) == sim::kWeaponRight, "worn");
+            const int gem2 = grown.give(bless);
+            check(grown.refine(gem2, sim::kWeaponRight), "the Bless is taken on the worn weapon");
+            check(grown.satchel()[sim::kWeaponRight].empty(), "and it comes off his hand");
+            int into = -1;
+            for (int s = sim::kWorn; s < sim::kSlots; ++s) {
+                if (grown.satchel()[s].item == found) into = s;
+            }
+            check(into >= 0, "into the bag");
+            if (into >= 0) checkEqual(int(grown.satchel()[into].refinement), plus + 1, "at its new plus");
+            checkEqual(grown.hero().weapon, -1, "and he holds nothing");
+
+            // A full bag: a single Bless in every cell, so there is nowhere for it to come down.
+            sim::Realm full;
+            check(full.raise(&tables, 13, 138, 124), "a realm raises for a full bag");
+            full.give(found, sim::kWeaponRight, plus);
+            for (int s = sim::kWorn; s < sim::kSlots; ++s) full.give(bless, s);
+            const content::ItemRow& foundRow = tables.items[size_t(found)];
+            int cells[sim::kSlots];
+            const int count = full.satchel().covered(sim::kWorn, foundRow.width, foundRow.height, cells);
+            if (count > 1) {
+                check(!full.refine(cells[count - 1], sim::kWeaponRight), "a full bag refuses the jewel");
+                checkEqual(int(full.satchel()[sim::kWeaponRight].refinement), plus,
+                           "the weapon stays worn at its plus");
+                check(!full.satchel()[cells[count - 1]].empty(), "and the jewel is kept");
+                // Clear the footprint but the first cell: the last jewel there frees the rest of
+                // the room, and the refine goes through into it.
+                for (int i = 1; i < count; ++i) full.sell(cells[i]);
+                check(full.refine(cells[0], sim::kWeaponRight), "the last jewel's own cell is room");
+                check(full.satchel()[sim::kWeaponRight].empty(), "the weapon comes off");
+                checkEqual(int(full.satchel()[cells[0]].item), found, "into the jewel's place");
+            }
+        }
+    }
+
     // IsHighValueItem: a jewel and a +7 stay in the bag; a +6 and a potion may be thrown.
     check(sim::expensive(tables, held(bless, 0)) && sim::expensive(tables, held(chaos, 0)),
           "a jewel is too dear to throw away");
@@ -3248,6 +3316,92 @@ void testPoisonStacks() {
     check(stackedPulses > 0 && overShare > 0, "and a stacked pulse bites more than one share");
 }
 
+// A skill pressed late in a cast and then walked away from is not thrown after the walk (the
+// user, 2026-09-30: "when i am done with casting spell, and move on it still is casted"): the
+// order that moves him drops the wish still waiting.
+void testWishDropsOnWalk(const content::Tables& tables) {
+    std::printf("a wish and a walk\n");
+    sim::Realm wiz;
+    check(wiz.raise(&tables, 7, 190, 110, sim::Kin::DarkWizard, 40), "a wizard raises");
+    check(wiz.learn(sim::skill::kLightning), "who knows Lightning");
+    const auto fill = [&] {
+        sim::HeroRecord record = wiz.record();
+        record.mana = 100000;
+        wiz.restore(record);
+    };
+    fill();
+    // At the nearest monster, which is what the key names in play.
+    uint32_t prey = 0;
+    float nearest = 1e9f;
+    for (const sim::Body& b : wiz.bodies()) {
+        if (!b.monster() || !b.alive()) continue;
+        const float d = std::hypot(b.x - wiz.hero().x, b.y - wiz.hero().y);
+        if (d < nearest) {
+            nearest = d;
+            prey = b.id;
+        }
+    }
+    sim::Request fight;
+    fight.kind = sim::Request::Kind::Attack;
+    fight.target = prey;
+    wiz.ask(fight);
+    wiz.invoke(sim::skill::kLightning, prey);
+    bool cast = false;
+    for (int t = 0; t < 600 && !cast; ++t) {
+        if (t % 20 == 0) wiz.invoke(sim::skill::kLightning, prey);  // as he closes in
+        wiz.step();
+        for (const sim::Happening& one : wiz.happenings()) {
+            cast |= one.what == sim::What::Cast && one.a == sim::skill::kLightning;
+        }
+    }
+    check(cast && wiz.casting(), "he channels Lightning");
+    // Pressed again near the channel's end, so the wish outlives it.
+    while (wiz.casting() && wiz.hero().castUntil - wiz.tick() > 10) wiz.step();
+    fill();
+    wiz.invoke(sim::skill::kLightning, prey);
+    while (wiz.casting()) wiz.step();
+    sim::Request go;
+    go.kind = sim::Request::Kind::WalkTo;
+    go.column = wiz.hero().column() + 6;
+    go.row = wiz.hero().row();
+    wiz.ask(go);
+    int again = 0;
+    for (int t = 0; t < 40; ++t) {
+        wiz.step();
+        for (const sim::Happening& one : wiz.happenings()) {
+            if (one.what == sim::What::Cast && one.a == sim::skill::kLightning) ++again;
+        }
+    }
+    checkEqual(again, 0, "and a walk ordered as it ends drops the press he made during it");
+}
+
+// A Dungeon floor's trip waits on its link of the Golden Archer's chain (ours, the user,
+// 2026-09-30): refused for the quest until the link is taken, then not for that.
+void testTravelQuestLock() {
+    std::printf("travel and the chain\n");
+    content::Tables dungeon;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur";
+    check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
+    sim::Realm realm;
+    check(realm.raise(&dungeon, 7, 108, 247, sim::Kin::DarkKnight, 60), "a knight in the Dungeon");
+    realm.earn(1000000);
+    int second = -1, seen = 0;
+    for (int i = 0; i < sim::kTravels; ++i) {
+        if (sim::travelAt(i).map == 1 && seen++ == 1) second = i;
+    }
+    check(second >= 0, "the Dungeon has a second floor's row");
+    if (second < 0) return;
+    const int link = realm.travelQuest(second);
+    check(link >= 0 && sim::questAt(link).giver == 236, "which waits on a Golden Archer link");
+    checkEqual(int(realm.travelRefusal(second)), int(sim::TravelRefusal::Quest),
+               "refused before the link is taken");
+    sim::HeroRecord record = realm.record();
+    record.quests[link].state = sim::QuestState::Active;
+    realm.restore(record);
+    check(realm.travelRefusal(second) != sim::TravelRefusal::Quest, "and not for it once taken");
+}
+
 void testDeviasFolk() {
     std::printf("devias folk\n");
     content::Tables devias;
@@ -3441,7 +3595,8 @@ void testWardens(const content::Tables& tables) {
     };
     int guards = 0;
     for (const sim::Body& one : realm.bodies()) guards += isGuard(one) ? 1 : 0;
-    checkEqual(guards, 6, "Lorencia stands its six guards");
+    // Six town guards and, since 2026-09-30, the Golden Archer at the Dungeon's arch.
+    checkEqual(guards, 7, "Lorencia stands its six guards and the Golden Archer");
 
     int challenged = 0, guardBlows = 0, thanked = 0, pointed = 0, struckGuard = 0;
     bool leashed = true, standing = true;
@@ -3618,6 +3773,256 @@ void testRecovery(const content::Tables& tables) {
     check(outside <= 0, "and nothing comes back there");
 }
 
+// Lorencia's gate 23 to Noria (sim/gates.h): a level 10 hero walked into it goes through to a
+// tile of Noria's gate 24 and stops; a level 1 hero is told it asks level 10 and does not.
+// The Dungeon's gates (sim/gates.cpp, docs/dungeon-port.md): Lorencia's stair down and the way
+// back to the arch, and a stair between floors -- one map, so the realm puts him down in place
+// (What::Climbed) and the tables stay the Dungeon's.
+// The Dungeon's traps (sim/traps.h), each kind on its own rule: the hero stood in its reach is
+// caught within two of its seconds and wounded, and stood out of it is not. The spot is found,
+// not assumed: a trap's reach is a line of tiles and many of them are walls, so the first open
+// tile in reach is where he stands.
+void testTraps() {
+    std::printf("the Dungeon's traps\n");
+    content::Tables dungeon;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur";
+    check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
+    size_t count = 0;
+    const sim::TrapSpot* spots = sim::trapSpots(&count);
+    checkEqual(int64_t(count), 58, "OpenMU's 58 trap spots");
+    {
+        sim::Realm realm;
+        check(realm.raise(&dungeon, 7, 108, 246), "a realm raises in the Dungeon");
+        checkEqual(int64_t(realm.traps().size()), 58, "and raises every trap");
+    }
+    check(sim::octantOf(0, -1) == sim::octantOf(0, -3) && sim::octantOf(0, -1) != sim::octantOf(0, 1),
+          "a direction is an octant: along it agrees, against it does not");
+
+    // Stood at (column, row), how many times in 50 ticks the trap at `index` caught him, and
+    // whether he stood where asked (the realm puts him on the nearest open tile otherwise).
+    const auto standAt = [&](int column, int row, size_t index, bool* stood, int* hurt) {
+        sim::Realm realm;
+        realm.raise(&dungeon, 7, column, row, sim::Kin::DarkKnight, 60);
+        *stood = realm.hero().column() == column && realm.hero().row() == row;
+        const int before = realm.hero().health + realm.hero().sd;
+        int caught = 0;
+        for (int tick = 0; tick < 50; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.what == sim::What::Trapped && size_t(one.b) == index) ++caught;
+            }
+        }
+        *hurt = before - (realm.hero().health + realm.hero().sd);
+        return caught;
+    };
+
+    // One trap of each kind with an open tile in its reach, tried in the table's order.
+    const struct { int32_t number; const char* name; } kinds[] = {
+        {101, "Iron Stick"}, {102, "Fire Trap"}, {100, "Lance Trap"}};
+    for (const auto& want : kinds) {
+        const sim::TrapKind* kind = sim::trapKind(want.number);
+        bool tested = false;
+        int reachable = 0;
+        for (size_t i = 0; i < count; ++i) {
+            const sim::TrapSpot& spot = spots[i];
+            if (spot.number != want.number) continue;
+            const int reach = kind->pressed ? 0 : kind->attackRange;
+            bool found = false;
+            for (int step = kind->pressed ? 0 : 1; step <= reach && !found; ++step) {
+                const int column = spot.column + spot.dx * step, row = spot.row + spot.dy * step;
+                bool stood = false;
+                int hurt = 0;
+                const int caught = standAt(column, row, i, &stood, &hurt);
+                if (!stood) continue;
+                found = true;
+                ++reachable;
+                if (tested) continue;
+                tested = true;
+                std::printf("  %s at %d,%d caught him %d time(s) at %d,%d for %d\n", want.name,
+                            spot.column, spot.row, caught, column, row, hurt);
+                check(caught >= 1, (std::string(want.name) + " catches him in its reach").c_str());
+                check(hurt > 0, (std::string(want.name) + " wounds him").c_str());
+                // And behind it, the way it does not face: never.
+                const int backColumn = spot.column - spot.dx * std::max(step, 1);
+                const int backRow = spot.row - spot.dy * std::max(step, 1);
+                bool backStood = false;
+                int backHurt = 0;
+                const int back = standAt(backColumn, backRow, i, &backStood, &backHurt);
+                if (backStood) {
+                    checkEqual(back, 0, (std::string(want.name) + " leaves him be behind it").c_str());
+                }
+            }
+        }
+        std::printf("  %s: %d of its spots can reach a standing hero\n", want.name, reachable);
+        check(tested, (std::string(want.name) + " has a spot with an open tile in reach").c_str());
+    }
+}
+
+void testDungeonGates(const content::Tables& lorencia) {
+    std::printf("dungeon gates\n");
+    struct Seen { int gated = 0, climbed = 0, barred = 0, column = 0, row = 0; };
+    const auto walk = [](const content::Tables& tables, int fromC, int fromR, int toC, int toR,
+                         int level) {
+        Seen seen;
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, fromC, fromR, sim::Kin::DarkKnight, level),
+              "a realm raises by the gate");
+        sim::Request go;
+        go.kind = sim::Request::Kind::WalkTo;
+        go.column = toC;
+        go.row = toR;
+        realm.ask(go);
+        for (int tick = 0; tick < 400 && seen.gated == 0 && seen.climbed == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Gated) seen.gated = one.a;
+                if (one.what == sim::What::Climbed) seen.climbed = one.a;
+                if (one.what == sim::What::Barred && seen.barred == 0) seen.barred = one.b;
+                if (one.what == sim::What::Gated || one.what == sim::What::Climbed) {
+                    seen.column = one.b;
+                    seen.row = one.c;
+                }
+            }
+        }
+        if (seen.climbed != 0) {
+            checkEqual(realm.hero().column(), seen.column, "he stands where the stair said");
+            checkEqual(realm.hero().row(), seen.row, "on its row too");
+        }
+        return seen;
+    };
+    Seen s = walk(lorencia, 122, 229, 122, 233, 20);
+    checkEqual(s.gated, 1, "a level 20 knight takes Lorencia's stair down, gate 1");
+    check(s.column >= 107 && s.column <= 110 && s.row == 247, "out on the Dungeon's gate 2");
+    s = walk(lorencia, 122, 229, 122, 233, 19);
+    checkEqual(s.gated, 0, "a level 19 knight does not");
+    checkEqual(s.barred, 20, "and is told it asks level 20");
+
+    content::Tables dungeon;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur";
+    check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
+    s = walk(dungeon, 108, 246, 108, 248, 1);
+    checkEqual(s.gated, 3, "the way out, gate 3, asks nothing");
+    check(s.column >= 121 && s.column <= 123 && s.row == 231, "out in front of Lorencia's arch");
+    s = walk(dungeon, 242, 152, 239, 150, 20);
+    checkEqual(s.climbed, 5, "gate 5 is a stair down, taken in place");
+    checkEqual(s.gated, 0, "and not a map change");
+    check(s.column >= 228 && s.column <= 237 && s.row >= 123 && s.row <= 130,
+          "he is put down at Dungeon 2's gate 6");
+    check(!(s.column >= 232 && s.column <= 233 && s.row >= 127 && s.row <= 128),
+          "and not inside gate 7 beside it");
+    s = walk(dungeon, 242, 152, 239, 150, 19);
+    checkEqual(s.climbed, 0, "a level 19 knight is not");
+    checkEqual(s.barred, 20, "and is told it asks level 20");
+
+    // The Dungeon's perches: MOVEMENT_OPERATE's WD_1DUNGEON arm, 59 sits and 60 leans
+    // (ZzzInterface.cpp:1705-1712). The seat at (244, 145) in the dragon room, walked to and sat on.
+    checkEqual(int64_t(dungeon.perches.size()), 39, "the Dungeon has 30 seats and 9 lean boxes");
+    int seat = -1;
+    for (size_t i = 0; i < dungeon.perches.size(); ++i) {
+        const content::Perch& one = dungeon.perches[i];
+        if (one.column == 244 && one.row == 145) seat = int(i);
+    }
+    check(seat >= 0 && dungeon.perches[size_t(seat)].pose == uint8_t(sim::Pose::Sitting),
+          "the dragon room's seat at (244, 145) sits");
+    if (seat >= 0) {
+        sim::Realm realm;
+        check(realm.raise(&dungeon, 7, 243, 147, sim::Kin::DarkKnight, 20),
+              "a realm raises in the dragon room");
+        sim::Request sit;
+        sit.kind = sim::Request::Kind::Perch;
+        sit.target = seat;
+        realm.ask(sit);
+        for (int tick = 0; tick < 100 && realm.hero().pose == sim::Pose::Standing; ++tick)
+            realm.step();
+        check(realm.hero().pose == sim::Pose::Sitting, "he sits on it");
+        check(realm.hero().column() == 244 && realm.hero().row() == 145, "on its own tile");
+    }
+
+    // A Town Portal read in the Dungeon owes him Lorencia: the map has no spawn gate, so
+    // OpenMU's safe-zone map is Lorencia's (BaseMapInitializer.cs:91). The realm spends it and
+    // says so with `c`; the map change is the mode's.
+    {
+        sim::Realm realm;
+        check(realm.raise(&dungeon, 7, 243, 147, sim::Kin::DarkKnight, 20),
+              "a realm raises in the dragon room");
+        const int scroll = dungeon.itemAt(14, 10);
+        const int slot = scroll >= 0 ? realm.give(scroll) : -1;
+        check(slot >= 0 && realm.useItem(slot), "a Town Portal Scroll is read in the Dungeon");
+        const std::vector<sim::Happening>& said = realm.happenings();
+        check(!said.empty() && said.back().what == sim::What::Warped && said.back().c == 1,
+              "and he is owed Lorencia");
+        check(slot >= 0 && realm.satchel()[slot].empty(), "and the scroll is spent");
+    }
+}
+
+void testGates(const content::Tables& tables) {
+    std::printf("gates\n");
+    const auto walkIn = [&](int level, int* gate, int* column, int* row, int* barredAt) {
+        sim::Realm realm;
+        check(realm.raise(&tables, 7, 215, 238, sim::Kin::DarkKnight, level),
+              "a realm raises above Lorencia's south gate");
+        sim::Request walk;
+        walk.kind = sim::Request::Kind::WalkTo;
+        walk.column = 215;
+        walk.row = 247;
+        realm.ask(walk);
+        *gate = 0;
+        *barredAt = 0;
+        for (int tick = 0; tick < 400 && *gate == 0; ++tick) {
+            realm.step();
+            for (const sim::Happening& one : realm.happenings()) {
+                if (one.who != realm.hero().id) continue;
+                if (one.what == sim::What::Gated) {
+                    *gate = one.a;
+                    *column = one.b;
+                    *row = one.c;
+                }
+                if (one.what == sim::What::Barred && *barredAt == 0) *barredAt = one.b;
+            }
+        }
+        return !realm.hero().walking;
+    };
+    int gate = 0, column = 0, row = 0, barred = 0;
+    const bool stopped = walkIn(10, &gate, &column, &row, &barred);
+    checkEqual(gate, 23, "a level 10 knight goes through gate 23");
+    check(column >= 148 && column <= 155 && row >= 5 && row <= 6,
+          "and comes out on a tile of Noria's gate 24");
+    check(stopped, "and stops at the gate");
+    walkIn(1, &gate, &column, &row, &barred);
+    checkEqual(gate, 0, "a level 1 knight does not");
+    checkEqual(barred, 10, "and is told the gate asks level 10");
+
+    // And back: from where gate 24 put him, up into Noria's gate 25, out on Lorencia's 26.
+    content::Tables noria;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/noria/noria.mur";
+    check(content::loadTables(path, noria, error), "Noria's tables load");
+    sim::Realm realm;
+    check(realm.raise(&noria, 7, 151, 6, sim::Kin::DarkKnight, 10), "a realm raises in Noria");
+    sim::Request walk;
+    walk.kind = sim::Request::Kind::WalkTo;
+    walk.column = 151;
+    walk.row = 3;
+    realm.ask(walk);
+    gate = 0;
+    for (int tick = 0; tick < 400 && gate == 0; ++tick) {
+        realm.step();
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.who == realm.hero().id && one.what == sim::What::Gated) {
+                gate = one.a;
+                column = one.b;
+                row = one.c;
+            }
+        }
+    }
+    checkEqual(gate, 25, "from Noria he goes through gate 25");
+    check(column >= 213 && column <= 217 && row >= 244 && row <= 245,
+          "and comes out on a tile of Lorencia's gate 26");
+}
+
 // Charon (2026-09-30): Devil Square is not written, so he answers that it is not ready.
 void testCharon() {
     std::printf("charon\n");
@@ -3715,6 +4120,10 @@ void testQuests(const content::Tables& tables) {
     for (int s = 0; s < sim::kQuestSteps; ++s) {
         record.quests[quest].counts[s] = uint16_t(realm.questGoal(quest, s));
     }
+    // Handed in at level 10, where the first clear's 100,000 is several levels (at 60 it is not
+    // one): what makes the drawing rise once a level, in a row.
+    record.level = 10;
+    record.experience = sim::neededExperience(10);
     realm.restore(record);
     talk();
     checkEqual(realm.questing(), marlon, "back at Marlon with the clear done");
@@ -3740,8 +4149,25 @@ void testQuests(const content::Tables& tables) {
     tally(realm, &falchion, &runes, &bless, &potions);
     const int blessBefore = bless, potionsBefore = potions;
     const int64_t purse = realm.money();
+    const int levelBefore = realm.hero().level;
+    const size_t saidBefore = realm.happenings().size();
     check(realm.completeQuest(quest, -1), "handed in with no choice to make");
     checkEqual(realm.money() - purse, int64_t(50000), "and the purse is paid");
+    // The first clear's experience is paid between ticks, and each level it carries is said
+    // there, once a level -- Play::completeQuest reads them off before the next step clears them.
+    const auto levelsSaid = [&](size_t from) {
+        int said = 0;
+        for (size_t i = from; i < realm.happenings().size(); ++i) {
+            const sim::Happening& one = realm.happenings()[i];
+            said += one.what == sim::What::Levelled && one.who == realm.hero().id ? 1 : 0;
+        }
+        return said;
+    };
+    check(realm.hero().level - levelBefore >= 2, "the first clear carries more than one level");
+    checkEqual(levelsSaid(saidBefore), realm.hero().level - levelBefore,
+               "each level the hand-in paid is said, one Levelled a level");
+    realm.step();
+    checkEqual(levelsSaid(0), 0, "and the next step clears them, so the drawing reads them at once");
     tally(realm, &falchion, &runes, &bless, &potions);
     check(falchion, "a lucky Falchion with an empty socket is in his bag");
     checkEqual(runes, 1, "and a Rune of Creation carrying Stormcall");
@@ -3859,13 +4285,83 @@ void testRunes(const content::Tables& tables) {
                 int runes = 0, again = 0;
                 for (int i = 0; i < row.paidCount; ++i) {
                     const sim::QuestItem& what = row.paid[i];
-                    if (what.power != undying) continue;
+                    if (what.power != uint8_t(sim::Power::Renewal)) continue;
                     runes += sim::questPays(what, kin, true) ? 1 : 0;
                     again += sim::questPays(what, kin, false) ? 1 : 0;
                 }
-                checkEqual(runes, 1, "Devin's first clear pays every class one Undying");
+                checkEqual(runes, 1, "Devin's first clear pays every class one Renewal");
                 checkEqual(again, 0, "and a repeat pays none");
             }
+        }
+    }
+    // The Dungeon's three and Devin's Renewal: every class's, armour only, like the Undying; and
+    // the Golden Archer's chain pays each of its three once, the first time, to every class.
+    {
+        const int helm = tables.itemNamed("HelmMale09"), boots = tables.itemNamed("BootElf05");
+        for (sim::Power power : {sim::Power::KeenEye, sim::Power::Bloodwell, sim::Power::Frenzy,
+                                 sim::Power::Renewal}) {
+            const sim::Held one = held(rune, 0, uint8_t(power));
+            check(sim::powerOf(uint8_t(power)) != nullptr, "the Dungeon's rune has a row");
+            for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
+                check(helm < 0 || sim::settable(tables, one, held(helm, 1, 0), kin),
+                      "it goes in a socketed helm, whoever wears it");
+                check(boots < 0 || sim::settable(tables, one, held(boots, 1, 0), kin),
+                      "and in socketed boots");
+            }
+            check(!sim::settable(tables, one, held(serpent, 1, 0), dk), "but not in a weapon");
+        }
+        const sim::Power chain[3] = {sim::Power::KeenEye, sim::Power::Bloodwell, sim::Power::Frenzy};
+        for (int link = 0; link < 3; ++link) {
+            const sim::QuestRow& row = sim::questAt(3 + link);
+            checkEqual(int(row.giver), 236, "the chain is the Golden Archer's");
+            for (int kin = 0; kin < 3; ++kin) {
+                int runes = 0, pieces = 0, again = 0;
+                for (int i = 0; i < row.paidCount; ++i) {
+                    const sim::QuestItem& what = row.paid[i];
+                    const bool first = sim::questPays(what, kin, true);
+                    if (what.power == uint8_t(chain[link])) runes += first ? 1 : 0;
+                    if (what.sockets == 1) pieces += first ? 1 : 0;
+                    if (what.item == std::string("Jewel22") || what.sockets == 1) {
+                        again += sim::questPays(what, kin, false) ? 1 : 0;
+                    }
+                }
+                checkEqual(runes, 1, "each link's first clear pays every class its rune");
+                checkEqual(pieces, 1, "and one socketed piece of his own");
+                checkEqual(again, 0, "and a repeat pays neither");
+            }
+        }
+    }
+    // The Golden Archer's chain in order (Realm::questHere): the Catacombs first, the Halls and
+    // the Pit locked behind it; each handed in moves him on; all rested, the Pit's rest; and the
+    // Catacombs again once its twelve hours are up.
+    {
+        sim::Realm realm;
+        check(realm.raise(&tables, 11, 131, 128, sim::Kin::DarkKnight, 30), "a chain realm raises");
+        realm.setWallClock(1000000);
+        checkEqual(realm.questHere(236), 3, "the Golden Archer offers the Catacombs first");
+        check(realm.questLocked(4) && realm.questLocked(5), "the Halls and the Pit wait on it");
+        const auto rest = [&](int q, int64_t at) {
+            sim::HeroRecord record = realm.record();
+            record.quests[q].state = sim::QuestState::Resting;
+            record.quests[q].availableAt = at;
+            record.quests[q].completions = 1;
+            realm.restore(record);
+        };
+        const int64_t later = 1000000 + 12 * 60 * 60;
+        rest(3, later);
+        checkEqual(realm.questHere(236), 4, "the Catacombs handed in, he offers the Halls");
+        rest(4, later);
+        checkEqual(realm.questHere(236), 5, "and then the Pit");
+        rest(5, later);
+        checkEqual(realm.questHere(236), 5, "all three rested, he says the Pit's rest");
+        realm.setWallClock(later);
+        checkEqual(realm.questHere(236), 3, "and the Catacombs come back round first");
+    }
+    // Every item any quest pays is one the table knows.
+    for (int q = 0; q < sim::kQuests; ++q) {
+        const sim::QuestRow& row = sim::questAt(q);
+        for (int i = 0; i < row.paidCount; ++i) {
+            check(tables.itemNamed(row.paid[i].item) >= 0, "a quest pays an item the table knows");
         }
     }
     check(sim::expensive(tables, carried), "a Rune of Creation cannot be dropped");
@@ -4116,6 +4612,182 @@ void testRunes(const content::Tables& tables) {
 
 // The pets at WebZen's word (docs/pets.md, 2026-09-30): the Angel's 30%, the Imp's 3 life a
 // landed blow, and their wear.
+// The Dungeon's runes (sim/items.h) and Devin's Renewal, by what they DO in a fight, each against
+// the same seeded fight without it: Keen Eye's crits, Bloodwell's life on a wound, Frenzy's
+// quicker swing and cast, and Renewal's health off a safe tile with nothing near.
+void testDungeonRunes(const content::Tables& tables) {
+    std::printf("dungeon runes\n");
+    const int helm = tables.itemNamed("HelmMale09"), pants = tables.itemNamed("PantMale10");
+    const int boots = tables.itemNamed("BootMale02");
+    check(helm >= 0 && pants >= 0 && boots >= 0, "a Brass Helm, Plate Pants and Dragon Boots");
+    if (helm < 0 || pants < 0 || boots < 0) return;
+    struct Tally {
+        int blows = 0, crits = 0, dealt = 0, healed = 0, frenzied = 0;
+        int swingBare = 0, fastest = 1 << 30;
+        double critChance = 0.0;
+        sim::Excellence excel;
+    };
+    // testPets' fight: the knight on the nearest monster, the ticks he lands and is not struck
+    // (and does not level, which fills him) counted for what they give back.
+    const auto fight = [&](int item, int slot, sim::Power power, Tally* t) {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        if (item >= 0) {
+            const uint8_t powers[3] = {uint8_t(power), 0, 0};
+            realm.give(item, slot, 0, -1, false, 0, 0, 1, powers);
+        }
+        t->swingBare = realm.hero().swingTicks;
+        t->critChance = realm.hero().stats.criticalChance;
+        t->excel = realm.hero().excel;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 20000 && realm.hero().alive(); ++tick) {
+            // Kept on his feet, so both fights last: filled when low, and that tick not counted.
+            if (realm.hero().health < realm.hero().maxHealth / 3) {
+                sim::HeroRecord record = realm.record();
+                record.health = realm.hero().maxHealth;
+                realm.restore(record);
+                fighting = 0;
+                realm.step();
+                continue;
+            }
+            const sim::Body& hero = realm.hero();
+            uint32_t nearest = 0;
+            float best = 1e9f;
+            for (const sim::Body& one : realm.bodies()) {
+                if (!one.monster() || !one.alive()) continue;
+                const float dx = one.x - hero.x, dy = one.y - hero.y;
+                if (dx * dx + dy * dy < best) {
+                    best = dx * dx + dy * dy;
+                    nearest = one.id;
+                }
+            }
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            const int before = hero.health;
+            realm.step();
+            int wound = 0;
+            bool struck = false, levelled = false;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Levelled) levelled = true;
+                if (h.what != sim::What::Hit || h.reflected) continue;
+                if (h.who == realm.hero().id) {
+                    ++t->blows;
+                    t->crits += h.critical ? 1 : 0;
+                    wound += h.a;
+                } else if (h.whom == realm.hero().id) {
+                    struck = true;
+                }
+            }
+            if (wound > 0 && !struck && !levelled && realm.hero().alive()) {
+                t->dealt += wound;
+                t->healed += std::max(0, realm.hero().health - before);
+            }
+            if (realm.hero().frenzyUntil > realm.tick()) {
+                ++t->frenzied;
+                t->fastest = std::min(t->fastest, realm.hero().swingTicks);
+            }
+        }
+    };
+    Tally bare, keen, blood, frenzy;
+    fight(-1, 0, sim::Power::None, &bare);
+    fight(helm, sim::kHelm, sim::Power::KeenEye, &keen);
+    fight(pants, sim::kPants, sim::Power::Bloodwell, &blood);
+    fight(boots, sim::kBoots, sim::Power::Frenzy, &frenzy);
+    const auto rate = [](int n, int of) { return double(n) / double(std::max(1, of)); };
+    std::printf("  bare: %d blows, %.3f crit; keen eye: %d blows, %.3f crit\n", bare.blows,
+                rate(bare.crits, bare.blows), keen.blows, rate(keen.crits, keen.blows));
+    std::printf("  bloodwell: %d dealt, %d healed (%.3f); bare healed %d of %d\n", blood.dealt,
+                blood.healed, rate(blood.healed, blood.dealt), bare.healed, bare.dealt);
+    std::printf("  frenzy: %d ticks frenzied, swing %d ticks bare, %d at its fastest\n",
+                frenzy.frenzied, frenzy.swingBare, frenzy.fastest);
+
+    // Keen Eye: exactly its tenth on the chance, and about a tenth more crits in the fight.
+    check(std::fabs(keen.critChance - bare.critChance - sim::kKeenEyeCritical) < 1e-9,
+          "Keen Eye adds a tenth to his critical chance");
+    check(bare.blows > 500 && keen.blows > 500, "both knights fight long enough to count");
+    const double more = rate(keen.crits, keen.blows) - rate(bare.crits, bare.blows);
+    check(more > 0.05 && more < 0.15, "and about a tenth more of his blows are critical");
+
+    // And the rule alone, off the fight: a tenth of the blows that land, at Keen Eye's chance.
+    {
+        sim::Fighter hitter, target;
+        hitter.level = 40;
+        hitter.attackRate = 200.0f;
+        hitter.minimumDamage = 10;
+        hitter.maximumDamage = 20;
+        hitter.criticalChance = sim::kKeenEyeCritical;
+        target.level = 20;
+        target.defenseRate = 20.0f;
+        sim::Random dice(7);
+        int hits = 0, crits = 0;
+        for (int i = 0; i < 100000; ++i) {
+            const sim::Blow blow = sim::strike(hitter, target, dice);
+            hits += blow.hit ? 1 : 0;
+            crits += blow.critical ? 1 : 0;
+        }
+        std::printf("  keen eye alone: %d of %d hits critical (%.3f)\n", crits, hits,
+                    rate(crits, hits));
+        check(std::fabs(rate(crits, hits) - sim::kKeenEyeCritical) < 0.01,
+              "at its chance a tenth of landed blows are critical");
+    }
+
+    // Bloodwell: its shares on him, about 3% of every wound back as life, none without it.
+    check(std::fabs(blood.excel.lifeSteal - sim::kBloodwellLife) < 1e-9 &&
+              std::fabs(blood.excel.killMana - sim::kBloodwellMana) < 1e-9,
+          "Bloodwell carries 3% life a wound and 5% mana a kill");
+    const double back = rate(blood.healed, blood.dealt);
+    check(blood.dealt > 1000 && back > 0.02 && back < 0.04,
+          "about 3% of what he deals comes back as life");
+    checkEqual(bare.healed, 0, "and none without it, off a safe tile");
+
+    // Frenzy: it fires, and while it stands his swing is shorter.
+    check(frenzy.frenzied > 0, "Frenzy fires in a fight");
+    check(frenzy.fastest < frenzy.swingBare, "and his swing is shorter while it stands");
+    // And the cast: a wizard's Energy Ball with the Frenzy's twenty is quicker.
+    if (const sim::SkillRow* ball = sim::skillNumbered(sim::skill::kEnergyBall)) {
+        const int agility = sim::startingPoints(sim::Kin::DarkWizard).agility;
+        const int32_t plain = sim::castTicks(tables, sim::Kin::DarkWizard, agility, nullptr,
+                                             nullptr, *ball);
+        const int32_t quick = sim::castTicks(tables, sim::Kin::DarkWizard, agility, nullptr,
+                                             nullptr, *ball, sim::kFrenzySpeed);
+        std::printf("  energy ball: %d ticks, %d with a Frenzy\n", plain, quick);
+        check(plain > 0 && quick < plain, "and a wizard's Energy Ball casts quicker under it");
+    }
+
+    // Renewal: with no monster on the map and off a safe tile, 3% of his health every three
+    // seconds; nothing without it.
+    content::Tables quiet = tables;
+    quiet.nests.clear();
+    const auto renew = [&](bool worn) {
+        sim::Realm realm;
+        realm.raise(&quiet, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        if (worn) {
+            const uint8_t powers[3] = {uint8_t(sim::Power::Renewal), 0, 0};
+            realm.give(boots, sim::kBoots, 0, -1, false, 0, 0, 1, powers);
+        }
+        sim::HeroRecord record = realm.record();
+        record.health = 1;
+        realm.restore(record);
+        check(!quiet.grid.safe(realm.hero().column(), realm.hero().row()), "he stands off a safe tile");
+        const int from = realm.hero().health;
+        for (int tick = 0; tick < 30 * 20; ++tick) realm.step();
+        return std::pair<int, int>(realm.hero().health - from, realm.hero().maxHealth);
+    };
+    const auto [gained, most] = renew(true);
+    const auto [bareGained, bareMost] = renew(false);
+    std::printf("  renewal: %d of %d back in 30 s; bare %d\n", gained, most, bareGained);
+    const int expected = int(double(most) * sim::kRenewalShare * 10.0);
+    check(std::abs(gained - expected) <= int(double(most) * sim::kRenewalShare) + 1,
+          "Renewal gives back 3% of his health every three seconds");
+    checkEqual(bareGained, 0, "and none without it, off a safe tile");
+    (void)bareMost;
+}
+
 void testPets(const content::Tables& tables) {
     std::printf("pets\n");
     const int angel = tables.itemAt(13, 0), imp = tables.itemAt(13, 1);
@@ -4220,10 +4892,16 @@ int main() {
     testArchery(tables);
     testElfSkills(tables);
     testSummons(tables);
+    testGates(tables);
+    testDungeonGates(tables);
+    testTraps();
     testQuests(tables);
+    testDungeonRunes(tables);
     testRunes(tables);
     testPets(tables);
     testPoisonStacks();
+    testWishDropsOnWalk(tables);
+    testTravelQuestLock();
 
     std::printf("%d checks, %d failed\n", g_checks, g_failures);
     return g_failures ? 1 : 0;

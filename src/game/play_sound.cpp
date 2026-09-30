@@ -55,7 +55,8 @@ void Play::steps() {
     const FigureBody* look = hero ? hero->figure.body() : nullptr;
     const int clip = hero ? hero->figure.clip() : -1;
     const bool walking = hero && look && him.alive() && hero->visible && clip >= 0 &&
-                         (clip == look->walkClip || clip == look->walkSafeClip);
+                         (clip == look->walkClip || clip == look->walkSafeClip ||
+                          clip == look->runClip);
     if (!walking || ground_ == nullptr) {
         // Not walking, so the next cycle starts fresh: the client clears both latches the
         // moment the animation is not running.
@@ -63,31 +64,46 @@ void Play::steps() {
         return;
     }
     const float key = keyOf(hero->figure);
+    // A change of walk -- into the run or out of it, over the zone's edge -- keeps the phase
+    // but not the key count, so it is a fresh start and not a wrap.
+    if (clip != stepClip_) striding_ = false;
+    stepClip_ = clip;
+    // The run is not MU's and lands its feet where its own clip does (FigureBody::runFeet).
+    const bool run = clip == look->runClip && look->runFeet[0] >= 0.0f;
+    const float firstFoot = run ? look->runFeet[0] : kFirstFoot;
+    const float secondFoot = run ? look->runFeet[1] : kSecondFoot;
     // Setting off part way through a cycle -- a walk resumes where it was left -- a foot the
     // phase has already gone past counts as heard, or a walk picked up at three quarters would
     // crunch on the frame it starts with no foot landing under it.
     if (!striding_) {
         striding_ = true;
-        leftFoot_ = key >= kFirstFoot;
-        rightFoot_ = key >= kSecondFoot;
+        leftFoot_ = key > firstFoot;
+        rightFoot_ = key > secondFoot;
+        stepKey_ = key;
     }
-    // The cycle wrapped, which is where MU clears them.
-    if (key < kFirstFoot) {
-        leftFoot_ = rightFoot_ = false;
-        return;
-    }
+    // The cycle wrapped, which is where MU clears them. Seen as the key going back rather than
+    // as MU's `key < 1.5`, because the run's first foot may land on key 0.
+    if (key < stepKey_) leftFoot_ = rightFoot_ = false;
+    stepKey_ = key;
+    if (key < firstFoot) return;
     const auto tread = [&]() {
         const float metresPerTile = ground_->metresPerTile();
         const int column = int(std::floor(hero->crown[0] / metresPerTile));
         const int row = int(std::floor(-hero->crown[2] / metresPerTile));
-        const int sound = ground_->floorAt(column, row) == kGrassFloor ? heard_.grass : heard_.soil;
+        const int floor = ground_->floorAt(column, row);
+        // Devias's arm comes first in PlayWalkSound: snow everywhere but its planks and its
+        // four patterned floors, which fall through to the soil step. The snow is heard as the
+        // grass step, not MU's pWalk(Snow): the user's call (2026-09-29), it made more sense.
+        const int sound = snowy_ ? (floor != 3 && floor < 10 ? heard_.grass : heard_.soil)
+                          : floor == kGrassFloor ? heard_.grass
+                                                 : heard_.soil;
         if (sound >= 0) emit(sound, hero->crown[0], hero->crown[2], hero->id);
     };
     if (!leftFoot_) {
         leftFoot_ = true;
         tread();
     }
-    if (!rightFoot_ && key >= kSecondFoot) {
+    if (!rightFoot_ && key >= secondFoot) {
         rightFoot_ = true;
         tread();
     }
@@ -373,7 +389,9 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     if (!sound_.isOpen()) return;
     // The air: on while he is not under a roof, which is the client's own switch -- it stops
     // SOUND_WIND01 on HeroTile 4. Unplaced: wind is not somewhere, it is everywhere.
-    sound_.loop(heard_.wind, !indoors);
+    // The Dungeon's aDungeon rides that slot, and the Dungeon is under a roof on every tile:
+    // its air plays throughout, as SceneManager.cpp:859-861 loops it for the whole map.
+    sound_.loop(heard_.wind, !indoors || dungeonAir_);
     // And the same switch is the room: a slap off the town's walls in the open, a small room
     // under a roof (docs/spatial-sound.md, E).
     sound_.room(indoors ? Sound::Room::Roofed : Sound::Room::Open);

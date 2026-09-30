@@ -384,8 +384,10 @@ float force(const SkillRow& row, const HeroPoints& points);
 // How long the clip itself takes, in ticks, at this character's attack speed -- `keys /
 // ((authored + attackSpeed * 0.004) * 25)`, the same chain `sim/swings.cpp` walks for a swing.
 // Zero when the cooked tables do not carry the action, in which case the caller keeps the base.
+// `extra` is speed standing on him beside the stat -- a Frenzy rune's -- added to whichever of
+// AttackSpeed or MagicSpeed the clip reads.
 int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const content::Arm* right,
-                  const content::Arm* left, const SkillRow& row);
+                  const content::Arm* left, const SkillRow& row, int extra = 0);
 
 // A wizard's MagicSpeed: what his spells' clips are quickened by, as AttackSpeed quickens a swing.
 float magicSpeedStat(Kin kin, int agility);

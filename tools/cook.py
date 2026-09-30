@@ -58,7 +58,9 @@ The .mum format, version 3 (static) and 4 (skinned), little-endian throughout:
     vertices:  position[3] normal[3] tangent[4] uv[2], 48 bytes, content::Vertex exactly
     indices:   u32 each
     parts:     u32 firstIndex, u32 indexCount, u32 material
-    materials: f32 cutout (-1 for none), u8 flags (bit 0 two-sided, bit 1 a glow: MU's
+    materials: f32 cutout (-1 for none), u8 flags (bit 5: a glow's pulse a, b and jitter
+               follow as three f32 after everything else; bit 6: a glow that casts a shadow, its
+               strength one f32 after those), (bit 0 two-sided, bit 1 a glow: MU's
                BlendMesh, drawn added and nowhere else, bit 2 translucent), then five
                strings -- name, albedo, normal, orm, emissive -- each u16 length and its
                bytes, the four texture strings being paths under assets/ or empty for none,
@@ -202,6 +204,9 @@ AIRS = {"lorencia": "Bird01", "noria": "Butterfly01", "dungeon": "Bat01"}
 # MODEL_RAT01 (GOBoid.cpp:1720-1722). Unplaced for the same reason, so named here too; the
 # engine's pool is game/world/scurry.h.
 CRAWLS = {"dungeon": "Rat01"}
+# And what a trap throws: the Lance Trap's saw (MODEL_SAW), and the ceiling's falling pebble
+# (MODEL_DUNGEON_STONE01), drawn by game/world/trap_show.h and placed by nothing.
+TRAP_MODELS = {"dungeon": ("Saw01", "DungeonStone01")}
 # Where a world's boid is built, when it is not the world's own: MuMain loads Noria's
 # MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:89).
 AIRS_FROM = {"noria": "lorencia"}
@@ -241,7 +246,7 @@ def collect(world, out_dir, raw_dir):
 
     # The boid's sheet comes with the town's, not with the effects': it is a MODEL's albedo,
     # cooked by the same rules and looked up through the same textures.json the .mum names.
-    models = sorted({one["model"] for one in map_data["objects"]} | set(filter(None, [flying(world), crawling(world)])))
+    models = sorted({one["model"] for one in map_data["objects"]} | set(filter(None, [flying(world), crawling(world)])) | set(TRAP_MODELS.get(world, ())))
     jobs = []
     manifest = {}
     seen = {}
@@ -595,6 +600,22 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         # this reads the same as it always did.
         if flags & 2 and scroll_per_second:
             flags |= 16
+        # Bit 5: an item's glow -- drawn at its own level, not the world's glow_strength --
+        # and whether it pulses or jumps, as MU's ItemObjectAttribute makes it --
+        # BlendMeshLight = sin(WorldTime*0.004)*a + b, and a per-frame BlendMeshTexCoord jump in
+        # steps of `jitter`. Said by export_gltf.glow_material in the material's extras. Three
+        # floats follow: a, b (0, 1 for no pulse), jitter (0 for none).
+        said = material.get("extras") or {}
+        pulse = said.get("pulse") or [0.0, 1.0]
+        jitter = float(said.get("jitter") or 0.0)
+        if flags & 2 and (said.get("item") or said.get("pulse") or jitter):
+            flags |= 32
+        # Bit 6: a glow that casts the sun's shadow all the same, at a strength (1 full) --
+        # one float after bit 5's. Ours: the Ice Monster, whose additive body is seen on
+        # Devias's snow by the shadow under it.
+        shadow = float(said.get("shadow") or 0.0)
+        if flags & 2 and shadow > 0.0:
+            flags |= 64
         maps = {"albedo": "", "normal": "", "orm": "", "emissive": ""}
         # By the glb's own name: a `~whole` variant is a second cut of the same file, and the
         # manifest only knows the file. Keyed by the variant, the Elite came out untextured.
@@ -610,6 +631,10 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
             materials += struct.pack("<f", translucency)
         if flags & 16:
             materials += struct.pack("<f", float(scroll_per_second))
+        if flags & 32:
+            materials += struct.pack("<3f", float(pulse[0]), float(pulse[1]), jitter)
+        if flags & 64:
+            materials += struct.pack("<f", shadow)
     # The fallback a primitive with no material of its own draws with, as content/mesh.cpp
     # appends it. Rough and not metal, for the reason orm_factors gives.
     materials += struct.pack("<fB", -1.0, 0) + write_string("none")
@@ -727,7 +752,7 @@ def cook_meshes(world, out_dir):
     # town's and the engine opens them by name. It is NOT in the .mut -- Sway walks the town's
     # placements and finds none of it, which is what leaves the pool to game/world/boids.cpp.
     for model in sorted({one["model"] for one in map_data["objects"]} |
-                        set(filter(None, [flying(world), crawling(world)]))):
+                        set(filter(None, [flying(world), crawling(world)])) | set(TRAP_MODELS.get(world, ()))):
         path = boid_glb(world, model)
         if not os.path.exists(path):
             continue
@@ -1098,7 +1123,11 @@ def read_png(path):
 # is a town with tufts of grass at head height. Height comes from the terrain, pitch and roll
 # are dropped, yaw is kept: a tuft has a direction it faces and no business leaning. A
 # placement placements.json marks `as_stored` is the exception, and stands as MU stores it.
-GROUNDED_TYPES = range(20, 28)
+#
+# Per world, because a type number is a different object in each: Devias's 20 to 27 are its
+# doors, benches and desks, which stand on raised floors and would sink into the terrain.
+# Noria's stays as it has cooked since its objects stood, until somebody judges it.
+GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
 
 # OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
 # data. The heightmap is MuMain's TerrainHeight.OZB byte for byte, heights are bytes x 1.5 in
@@ -1408,7 +1437,7 @@ def cook_placements(world, out_dir, chunk_tiles):
         flags = 0
         # Unless placements.json names it as MU's own, to be stood where the map stores it:
         # the fountain's planting is on the stone and in the bowl, not on the terrain.
-        if one["type"] in GROUNDED_TYPES and not one.get("as_stored"):
+        if one["type"] in GROUNDED_TYPES.get(world, ()) and not one.get("as_stored"):
             y = terrain(column, row)
             pitch = 0.0
             roll = 0.0
@@ -1429,7 +1458,9 @@ def cook_placements(world, out_dir, chunk_tiles):
         # first key, as it does the treasure chest. Nothing else that sways in Lorencia is
         # past half: two street lights come nearest, at 43% and 50%.
         bottom, top = models[model][2][1], models[model][2][4]
-        if one["model"] in swaying and not flags & 1 and top > bottom and \
+        # Not in the Dungeon: its ground is a flat sheet at 1.7 m over a void, and the
+        # animated spines that hang down into the dark read as buried here while MU plays them.
+        if world != "dungeon" and one["model"] in swaying and not flags & 1 and top > bottom and \
                 terrain(column, row) - (y + bottom * float(one.get("scale", 1.0))) > \
                 0.6 * (top - bottom) * float(one.get("scale", 1.0)):
             flags |= 4
@@ -1612,7 +1643,9 @@ def figure_set(world):
                  "idle": one.get("idle", ""),
                  # The plus each piece is drawn at ({"parts": 7, "right_hand": 8}); the game
                  # turns it into a shine once it has the item table. Empty is +0.
-                 "plus": one.get("plus", {})}
+                 "plus": one.get("plus", {}),
+                 # On the back wherever he stands: the Golden Archer's crossbow.
+                 "slung": bool(one.get("slung"))}
         entry["parts"] = [p for p in entry["parts"] if p]
         characters.append(entry)
 
@@ -1757,6 +1790,10 @@ FOLK_VERSION075 = {
         # where the user placed him (2026-09-28), square to the wall at his back -- OpenMU Season Six has him wandering from
         # 136,88 by the north bridge. Lorencia is the scope, so here he stays.
         (229, "Marlon", "Marlon", 130, 127, 5),
+        # Ours, not Version075's: the Dungeon's quest giver (docs/golden-archer.md), MU's
+        # MONSTER_GOLDEN_ARCHER, at the arch where the user put him (2026-09-30), facing 5 as
+        # MuMain forces an NPC skeleton in Lorencia to angle 90. 0.95d stands him at 175,120.
+        (236, "Golden Archer", "GoldenArcher", 120, 229, 5),
     ],
     3: [  # Noria
         (253, "Potion Girl Amy", "PotionGirlAmy", 169, 109, 4),
@@ -1822,6 +1859,11 @@ PERCHES = {
         6: (2, False, False, False),    # Tree07, the fallen log
         145: (2, True, False, False),   # Furniture06
         146: (2, False, False, False),  # Furniture07
+    },
+    1: {  # the Dungeon: MOVEMENT_OPERATE's WD_1DUNGEON arm (ZzzInterface.cpp:1705-1712), 60 on
+          # RenderCursor's lean list (:4053) and given the 160-unit box (ZzzObject.cpp:4661-4663)
+        60: (3, True, True, True),      # Object61, the lean box, invisible and with no .bmd
+        59: (2, False, False, False),   # Object60, the stone seat
     },
     2: {  # Devias: MOVEMENT_OPERATE's WD_2DEVIAS arm (ZzzInterface.cpp:1715-1726), and 91 on
           # RenderCursor's lean list (:4054). 44 lean boxes, 85 seats in the church and the inns.
@@ -2755,6 +2797,17 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
     stood before its monsters were judged -- and a breed with no figure is held back by the
     game rather than walked invisible (Play::open)."""
     models, characters, monsters, standalone, placements, index = figure_set(world)
+    # A breed already in the world's table stays in it. `only` and --no-monsters rebuilt the
+    # table from the breeds named alone, so cooking a world's townsfolk or its next breed threw
+    # out every breed approved before: Noria stood with none of its eight and Devias with none
+    # of its four (2026-09-30). Only a whole cook, which names none, starts from the index.
+    if only is not None or not with_monsters:
+        try:
+            with open(os.path.join(out_dir, figures_table(world))) as handle:
+                cooked = {one["name"] for one in json.load(handle).get("monsters", [])}
+        except (OSError, ValueError):
+            cooked = set()
+        only = set(only or ()) | cooked
     # `only`: just these breeds, by name -- a world's monsters brought in one at a time, each
     # judged before the next (the user, 2026-09-28: "don't cook all at the same time, we need
     # to approve"). The rest are left out exactly as --no-monsters leaves them all.
@@ -3138,6 +3191,12 @@ def cook_wardrobe(out_dir, texcook, threads):
     for name, path in sorted(models.items()):
         out_path = os.path.join(out_dir, "meshes", name + ".mum")
         tris, verts, _size, bones = cook_mesh(name, path, out_path, manifest)
+        # A weapon with a rig of its own -- a bow's or a crossbow's string -- carries its one
+        # clip in the same glb, as a world object does; baked beside the mesh for the figure
+        # that holds it to play (crowd.cpp, Figure::poseHeld). Never a staff, whose 60 bones
+        # are the player's and whose clips are the player's library.
+        if 0 < bones <= 16:
+            cook_world_clip(name, path, os.path.join(out_dir, "clips", name + ".muc"))
         triangles += tris
         vertices += verts
         mesh_table[name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,

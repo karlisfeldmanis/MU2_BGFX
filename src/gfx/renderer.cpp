@@ -190,8 +190,14 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
         const bgfx::ProgramHandle batchProgram = skinned ? skinnedProgram : program;
         for (const content::Part& part : mesh.parts()) {
             const content::Material& material = mesh.materials()[part.material];
-            // A glow is drawn in its own pass and in no other. See the header.
-            if (material.glow != glowPass) continue;
+            // A glow is drawn in its own pass and in no other. See the header. Except that a
+            // glow that casts (Material::glowShadow) is in the sun's split as well, and in the
+            // hover ring's mask, solid: the Ice Monster's body is that glow, and without it the
+            // mask held only its few solid parts and the ring cut across its body.
+            const bool casting = material.glowShadow > 0.0f && view == ViewShadow;
+            const bool ringed = material.glowShadow > 0.0f && view >= ViewOutlineMask &&
+                                view < ViewOutlineMask + kOutlineRings;
+            if (material.glow != glowPass && !casting && !ringed) continue;
             // Nor grass, flowers or leaves: hundreds of small cutout draws that, at the blur a
             // reflection is read at, are the green the ground under them already gives.
             if (probePass_ && (batch.posed || material.translucency > 0.0f)) continue;
@@ -208,11 +214,44 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
             // scroll, which reads as no offset at all.
             // y carries two flags: 1 two-sided, 2 calibrated (the albedo's metal is already
             // reflectance, so the sheet's metal_gain stays off it). fs_shade unpacks them.
-            const float scrollOffset = -std::fmod(elapsed_ * material.scrollPerSecond, 1.0f);
+            float scrollOffset = -std::fmod(elapsed_ * material.scrollPerSecond, 1.0f);
+            // An item's glow as ItemObjectAttribute sets it: BlendMeshLight's breathing,
+            // sin(WorldTime*0.004)*a + b with WorldTime in ms, and a random jump of its sheet in
+            // steps of `jitter` (MU's (rand()%10)*0.1 each frame it draws). The jump is drawn 25
+            // times a second, MU's own frame rate, keyed by the clock and the material, since
+            // at this renderer's rate a jump every frame is a strobe rather than a shimmer.
+            float glowLevel = material.itemGlow ? 1.0f : glowStrength_;
+            if (glowPass && material.pulse[1] < 0.0f) {
+                // A negative base is MoveCharacterVisual's flicker, the Gorgon's
+                // `BlendMeshLight = (rand()%10)*0.1` rolled each frame (ZzzCharacter.cpp:6062):
+                // one of 0.0 to 0.9, times -base, rolled 25 times a second as the jitter is.
+                uint32_t h = uint32_t(elapsed_ * 25.0f) * 2246822519u ^
+                             uint32_t(reinterpret_cast<uintptr_t>(&material));
+                h ^= h >> 15;
+                h *= 2654435761u;
+                h ^= h >> 13;
+                glowLevel *= float(h % 10u) * 0.1f * -material.pulse[1];
+            } else if (glowPass) {
+                glowLevel *= std::sin(elapsed_ * 4.0f) * material.pulse[0] + material.pulse[1];
+                if (material.jitter > 0.0f) {
+                    uint32_t h = uint32_t(elapsed_ * 25.0f) * 2654435761u ^
+                                 uint32_t(reinterpret_cast<uintptr_t>(&material));
+                    h ^= h >> 15;
+                    h *= 2246822519u;
+                    h ^= h >> 13;
+                    scrollOffset += float(h % 10u) * material.jitter;
+                }
+            }
             const float materialParams[4] = {material.cutout,
                                              (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f),
-                                             glowPass ? glowStrength_ : material.roughnessFactor,
+                                             glowPass ? glowLevel
+                                             // In a depth-only pass z is how much of the
+                                             // shadow is thinned away by fs_shadow's dither:
+                                             // 0, but a casting glow's 1 - strength.
+                                             : !bindMaterial
+                                                 ? (casting ? 1.0f - material.glowShadow : 0.0f)
+                                                 : material.roughnessFactor,
                                              glowPass ? scrollOffset : material.metalFactor};
             bgfx::setUniform(uMaterial_, materialParams);
             // The albedo is bound even in the depth passes, because the cutout reads its alpha.
@@ -314,6 +353,8 @@ void Renderer::submitGrass(bgfx::ViewId view, bgfx::ProgramHandle program,
         bgfx::setUniform(uGrassRoot_, grass.root);
         bgfx::setUniform(uGrassTip_, grass.tip);
         bgfx::setUniform(uGrassVary_, vary);
+        bgfx::setUniform(uGrassThrough_, grass.through);
+        bgfx::setUniform(uGrassShape_, grass.shape);
         bgfx::setUniform(uGrassSheet_, sheet);
         bgfx::setUniform(uGrassReach_, grass.reach);
         bgfx::setUniform(uGrassWalkers_, grass.walkers, GrassField::kMaxWalkers);
@@ -383,9 +424,16 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
             // many layers the part weighs: most of the land is one, and reads one set.
             // Times the sheet's water_flow: Noria's water is puddles, and a puddle sliding a
             // sheet every twenty seconds reads as a river in a hole (the user, 2026-09-28).
+            //
+            // Unless the world names its rivers (content::buildFlow): then the water runs
+            // along each channel instead, and x is where the cross-fade's cycle is, y the
+            // texel row of the weight map's flow band, z how far a copy is dragged in tiles.
+            // y is -1 without one, and z is MU's slide.
+            const float row = g.flowRow();
             const float slide = std::fmod(elapsed_ * waterFlow_, 20.0f) * 0.05f;
-            const float blend[4] = {l[0].water ? slide : 0.0f, l[1].water ? slide : 0.0f,
-                                    l[2].water ? slide : 0.0f, float(part.layerCount)};
+            const float cycle = std::fmod(elapsed_ * waterFlow_ / content::Ground::kFlowCycle, 1.0f);
+            const float blend[4] = {cycle, row, row >= 0.0f ? content::Ground::kFlowReach : slide,
+                                    float(part.layerCount)};
             bgfx::setUniform(uGroundBlend_, blend);
             bgfx::setTexture(0, sAlbedo_, l[0].albedo);
             bgfx::setTexture(1, sNormal_, l[0].normal);
@@ -471,6 +519,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
         lampsDirty_ = false;
     }
     lampParams_[0] = lighting.lampStrength;
+    lampParams_[3] = lighting.lampShadow;
     glowStrength_ = lighting.glowStrength;
     probeOn_ = lighting.probe > 0.5f;
     probeView_ = lighting.probeView;
@@ -727,7 +776,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
             const float skyColour[4] = {lighting.skyColour[0], lighting.skyColour[1],
                                         lighting.skyColour[2], lighting.horizonPaleness};
             const float groundColour[4] = {lighting.groundColour[0], lighting.groundColour[1],
-                                           lighting.groundColour[2], 0.0f};
+                                           lighting.groundColour[2], lighting.waterSheen};
             const float dust[4] = {lighting.dustColour[0], lighting.dustColour[1],
                                    lighting.dustColour[2], lighting.dustDensity};
             const float camPos[4] = {camera.position[0], camera.position[1], camera.position[2],

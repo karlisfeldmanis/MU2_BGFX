@@ -1,0 +1,148 @@
+{
+  "item": "Shield15",
+  "mu_name": "Legendary Shield",
+  "mu_name_from": "OpenMU Version075 Items/Armors.cs:50 and mu.db's items row (group 6, index 14) name it the Legendary Shield against Item/Shield15.bmd.",
+  "why_this_one": "Drop level 48: the Ice Queen leaves it. The Wizard's and the Elf's. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Armors.cs:50. The 0.75 table.",
+    "call": "CreateShield(14, 1, 0, 2, 3, \"Legendary Shield\", 48, 7, 48, 50, 90, 25, 1, 0, 1)",
+    "group": 6,
+    "number": 14,
+    "drop_level": 48,
+    "drops_from_monsters": true,
+    "slot": 1,
+    "width": 2,
+    "height": 3,
+    "defense": 7,
+    "defense_rate": 48,
+    "skill": 0,
+    "durability": 50,
+    "requires": {
+      "level": 0,
+      "strength": 90,
+      "agility": 25,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "elf"
+    ]
+  },
+  "sheets": {
+    "shield11": "shield11.png",
+    "shield11_a": "shield11_a.png"
+  },
+  "sheet_from": "Data/Item/shield11.OZT (32x128, 49% cut away) on 106 triangles, shield11_a.OZJ (16x32, blue noise) on 52.",
+  "cutout": [
+    "shield11"
+  ],
+  "cutout_note": "Declared, not sniffed (tools/asset.sh reads `cutout`). shield11 is a TGA and its frame is fretwork.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrors the grass; the Devias batch settled on 0.45 (plate 0.5) after the studio caught black heads and flaring shafts.",
+  "glow": {
+    "shield11_a": {
+      "jitter": 0.1
+    }
+  },
+  "glow_note": "`case MODEL_LEGENDARY_SHIELD: BlendMesh = 1; BlendMeshTexCoordU/V = (rand()%10)*0.1` (ZzzObject.cpp:5270-5274): the blue noise jumps every frame, a shimmer across the face. Drawn added on its raw sheet, the jump in V only (content::Material::jitter).",
+  "material_note": "Near black with gold edges (0,0,0 to 47,35,12) -- plate; the fretwork island (74 triangles, orange-gold 229,135,64, 58 of 255 alpha on average) is brass. The shimmer face is the glow part (shield11_a).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 856.4,
+      "along": [
+        -7.8,
+        9.1
+      ],
+      "mu_uv": [
+        0.011,
+        0.121,
+        0.391,
+        0.328
+      ],
+      "bake_uv": [
+        0.006,
+        0.903,
+        0.707,
+        0.994
+      ]
+    },
+    {
+      "island": 1,
+      "material": "brass",
+      "triangles": 74,
+      "area": 11324.4,
+      "along": [
+        -42.4,
+        22.1
+      ],
+      "mu_uv": [
+        0.011,
+        0.001,
+        1.036,
+        0.999
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.985,
+        0.96
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 32,
+      "area": 791.8,
+      "along": [
+        -7.5,
+        8.7
+      ],
+      "mu_uv": [
+        -0.06,
+        0.121,
+        0.391,
+        0.328
+      ],
+      "bake_uv": [
+        0.719,
+        0.973,
+        0.961,
+        0.99
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 20,
+      "area": 4679.8,
+      "along": [
+        -40.8,
+        21.3
+      ],
+      "mu_uv": [
+        0.007,
+        0.016,
+        0.965,
+        1.003
+      ],
+      "bake_uv": [
+        0.719,
+        0.641,
+        0.985,
+        0.964
+      ]
+    }
+  ]
+}

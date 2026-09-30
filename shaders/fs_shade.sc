@@ -141,10 +141,12 @@ void main()
 		return;
 	}
 
-	// The sun.
+	// The sun. Its shadow is kept for the lamps too where the sheet asks (lamp_shadow).
+	float sunLit = 1.0;
 	if (ndotl > 0.0)
 	{
 		float shadow = sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel);
+		sunLit = shadow;
 		vec3 h = normalize(l + v);
 		float ndoth = saturate(dot(n, h));
 		float vdoth = saturate(dot(v, h));
@@ -189,7 +191,8 @@ void main()
 	// light: lights.sh says why.
 	// On refined steel the lamps' share is coloured by the chrome first: shine.sh's shineLamps.
 	float plus = shinePlus(v_refine.x);
-	vec3 lamps = lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0);
+	vec3 lamps = lampLight(v_wpos, n, v, albedoTex.rgb * (1.0 - metal), f0, roughness, ndotv, 1.0)
+	           * mix(1.0, sunLit, u_lampParams.w);
 	colour += shineLamps(plus, v_refine.yzw, lamps);
 
 	// The refinement ladder: MuMain tints the light an item is drawn in, so the tint takes
@@ -211,6 +214,11 @@ void main()
 		emissive *= v_light.rgb * sky * u_translucency.x;
 	}
 	colour += emissive;
+
+	// A self-lit figure: MU's Level 3, whose body light Selection.cpp:106 raises by 1.5 over
+	// the ground's, so fixed-function clamps it to the sheet's own colour in any light -- the
+	// Ice Queen. Never darker than her sheet; the sun still adds its highlights by day.
+	colour = mix(colour, max(colour, albedoTex.rgb * 0.9), selfLit(v_light.w));
 
 	gl_FragColor = vec4(abyss(dusty(colour, v_wpos), v_wpos), fade);
 }

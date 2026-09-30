@@ -53,9 +53,16 @@ private:
     // Application opens the next world as the character screen opens the first. Everything a
     // world owns -- land, town, realm, windows -- is shut down and raised again, which is the
     // same path Switch Character has always taken and so the one that is known to let go of
-    // what it held. The stand-in trigger is the M key; the gates and a Move window come later.
-    void travel(Context& ctx, const std::string& world);
+    // what it held. Walking into an enter gate (sim/gates.h) sends him to the tile the realm
+    // chose in the target gate, facing the way that gate says; the M key, the stand-in for a
+    // Move window, sends him to the world's spawn gate with `column` below 0.
+    // `unfaced`: a tile given with no facing to keep, as a town's travel row lands.
+    void travel(Context& ctx, const std::string& world, int column = -1, int row = -1,
+                float facing = 0.0f, bool unfaced = false);
     std::string travelTo_;
+    int arriveColumn_ = 0, arriveRow_ = 0;
+    float arriveFacing_ = 0.0f;
+    bool arriveFaced_ = false;
     // How much colour is out of the world, and where it is going: the game greys while he is
     // down and comes back as he gets up. The message that says so is the interface's
     // (game/ui/tally.cpp) and is deliberately NOT drained with it.
@@ -113,15 +120,6 @@ private:
     // measures nothing.
     bool entrance_ = false;
     float entranceSeconds_ = 0.0f;
-
-    // Noria's and Lorencia's music out on the hunt, not in town: see the music in
-    // PlayMode::frame.
-    bool fightMusic_ = false;
-    bool fightHeard_ = false;    // the session's first fight has had its music
-    float fightQuiet_ = 0.0f;    // seconds since the last blow either way
-    float fightPlayed_ = 0.0f;   // seconds this playing has lasted
-    float fightRest_ = 60.0f;    // seconds before a fight may start it again
-    uint32_t fightSeed_ = 0;     // seeded from the clock on the first roll
 
     // Who the arena's hand is fighting. Kept here rather than read off the hero, because what
     // the hero has been ordered to attack is the realm's private `order_` and is deliberately

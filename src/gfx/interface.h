@@ -63,6 +63,10 @@ class Canvas {
 public:
     void clear();
     bool empty() const { return indices_.empty(); }
+    // A place in what has been drawn, and everything drawn since it faded to `alpha` of itself
+    // and moved `dx` pixels across: a window's page turning (game/ui/quest_dialog.cpp).
+    size_t mark() const { return vertices_.size(); }
+    void fadeSince(size_t mark, float alpha, float dx);
 
     // The whole of a picture, stretched to a box.
     void image(const Art& art, const Box& to, uint32_t abgr = 0xFFFFFFFFu);
@@ -82,6 +86,8 @@ public:
     // The same, solid, with a colour a vertex: a rounded panel that grades down its own shape,
     // corners included.
     void polygon(const float* xy, const uint32_t* abgr, int count);
+    // And a picture with a colour a vertex: a chart that fades out toward its rim.
+    void polygon(const Art& art, const float* xy, const float* uv, const uint32_t* abgr, int count);
 
     // A line of text on a baseline, at a Godot font size. `width` is the box a centred or
     // right-aligned line is set in, from `x` -- Godot's DrawString(width:) exactly. Returns

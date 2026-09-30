@@ -11,7 +11,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 #include "lights.sh"
 
 uniform vec4 u_groundRepeat;  // xyz: each layer's repeat  w: the bite
-uniform vec4 u_groundBlend;   // xyz: each layer's water slide  w: how many layers this part weighs
+uniform vec4 u_groundBlend;   // x: the flow's cycle  y: its band's row, or -1  z: reach, or MU's slide  w: layers
 uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are water, a bit each
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
@@ -60,22 +60,54 @@ vec3 unpackNormal(vec2 xy)
 	return vec3(n, sqrt(max(0.0, 1.0 - dot(n, n))));
 }
 
+// A layer's texel, or on running water the two dragged copies cross-faded: `run` is a
+// uniform's, so the branch keeps the mips' derivatives whole, and a still layer reads once.
+#define LAYER(s, a, b, run) ((run) ? mix(texture2D(s, a), texture2D(s, b), flowFade) : texture2D(s, a))
+
 void main()
 {
-	// A water layer slides along U, as MU's does; zero on every other. See submitGround.
-	vec2 uv0 = v_texcoord0 * u_groundRepeat.x + vec2(u_groundBlend.x, 0.0);
-	vec2 uv1 = v_texcoord0 * u_groundRepeat.y + vec2(u_groundBlend.y, 0.0);
-	vec2 uv2 = v_texcoord0 * u_groundRepeat.z + vec2(u_groundBlend.z, 0.0);
+	vec3 isWater = mod(floor(vec3_splat(u_groundRelief.w) / vec3(1.0, 2.0, 4.0)), 2.0);
 	float layers = u_groundBlend.w;
+
+	// Where the world names its rivers, a water layer runs the way its channel runs
+	// (content::buildFlow): two copies of the sheet, each dragged along the flow for a cycle
+	// and taken back while the other shows, the corner's noise staggering the cycle so the
+	// river does not breathe as one. Otherwise it slides along U, as MU's does. submitGround.
+	vec2 flowA = v_texcoord0;
+	vec2 flowB = v_texcoord0;
+	float flowFade = 0.0;
+	bool flowing = u_groundBlend.y >= 0.0 && u_groundSlots.w > 0.5 && u_groundRelief.w > 0.5;
+	vec2 slide = vec2(u_groundBlend.y >= 0.0 ? 0.0 : u_groundBlend.z, 0.0);
+	if (flowing)
+	{
+		vec2 at = v_texcoord0 + vec2(0.5, 0.5 + u_groundBlend.y);
+		vec4 fl = texture2DLod(s_groundWeights, at / u_groundWeights.xy, 0.0);
+		vec2 drift = (fl.xy * 255.0 - 128.0) / 127.0 * u_groundBlend.z;
+		float phaseA = fract(u_groundBlend.x + fl.z);
+		float phaseB = fract(phaseA + 0.5);
+		flowA = v_texcoord0 - drift * phaseA;
+		flowB = v_texcoord0 - drift * phaseB;
+		// A's weight is nought as it jumps back, at 0 and 1; B's as it does, at a half.
+		flowFade = abs(2.0 * phaseA - 1.0);
+	}
+	bool run0 = flowing && isWater.x > 0.5;
+	bool run1 = flowing && isWater.y > 0.5;
+	bool run2 = flowing && isWater.z > 0.5;
+	vec2 uv0 = (run0 ? flowA : v_texcoord0) * u_groundRepeat.x + slide * isWater.x;
+	vec2 uv1 = (run1 ? flowA : v_texcoord0) * u_groundRepeat.y + slide * isWater.y;
+	vec2 uv2 = (run2 ? flowA : v_texcoord0) * u_groundRepeat.z + slide * isWater.z;
+	vec2 uv0b = flowB * u_groundRepeat.x;
+	vec2 uv1b = flowB * u_groundRepeat.y;
+	vec2 uv2b = flowB * u_groundRepeat.z;
 
 	// Only the layers this part has. The branch is on a uniform, so every fragment of a draw
 	// takes the same side and the mips' derivatives stay whole. Most of the land is one
 	// material, and that part reads one set.
-	vec3 albedo0 = texture2D(s_albedo, uv0).rgb;
+	vec3 albedo0 = LAYER(s_albedo, uv0, uv0b, run0).rgb;
 	vec3 albedo1 = albedo0;
 	vec3 albedo2 = albedo0;
-	if (layers > 1.5) albedo1 = texture2D(s_albedo2, uv1).rgb;
-	if (layers > 2.5) albedo2 = texture2D(s_albedo3, uv2).rgb;
+	if (layers > 1.5) albedo1 = LAYER(s_albedo2, uv1, uv1b, run1).rgb;
+	if (layers > 2.5) albedo2 = LAYER(s_albedo3, uv2, uv2b, run2).rgb;
 
 	// The weight MU painted, as a water level, with the layers' own relief deciding which
 	// side of it a texel falls. This is MU2's blend, traced from its GroundSource rather than
@@ -130,8 +162,7 @@ void main()
 		// three quarters water, which is where it reads as water. Only down at the water's
 		// level: v_weight.w is how much lead a corner takes, and up on a bridge's deck it is
 		// nought, which takes the water out of the corner altogether. See Ground::splat.
-		vec3 isWater = mod(floor(vec3_splat(u_groundRelief.w) / vec3(1.0, 2.0, 4.0)), 2.0);
-		w *= vec3_splat(1.0) + isWater * (3.0 * v_weight.w - 1.0);
+		w *=vec3_splat(1.0) + isWater * (3.0 * v_weight.w - 1.0);
 		w /= max(w.x + w.y + w.z, 1e-5);
 	}
 	// Each layer's relief measured from its own mean, which is its last mip. Measured from
@@ -146,14 +177,14 @@ void main()
 	w /= max(w.x + w.y + w.z, 1e-5);
 
 	vec3 albedo = albedo0 * w.x + albedo1 * w.y + albedo2 * w.z;
-	vec3 orm0 = texture2D(s_orm, uv0).rgb;
+	vec3 orm0 = LAYER(s_orm, uv0, uv0b, run0).rgb;
 	vec3 orm = orm0 * w.x;
-	vec3 nm0 = unpackNormal(texture2D(s_normal, uv0).xy);
+	vec3 nm0 = unpackNormal(LAYER(s_normal, uv0, uv0b, run0).xy);
 	vec3 nm = nm0 * w.x;
 	if (layers > 1.5)
 	{
-		orm += texture2D(s_orm2, uv1).rgb * w.y;
-		nm += unpackNormal(texture2D(s_normal2, uv1).xy) * w.y;
+		orm += LAYER(s_orm2, uv1, uv1b, run1).rgb * w.y;
+		nm += unpackNormal(LAYER(s_normal2, uv1, uv1b, run1).xy) * w.y;
 	}
 	else
 	{
@@ -162,8 +193,8 @@ void main()
 	}
 	if (layers > 2.5)
 	{
-		orm += texture2D(s_orm3, uv2).rgb * w.z;
-		nm += unpackNormal(texture2D(s_normal3, uv2).xy) * w.z;
+		orm += LAYER(s_orm3, uv2, uv2b, run2).rgb * w.z;
+		nm += unpackNormal(LAYER(s_normal3, uv2, uv2b, run2).xy) * w.z;
 	}
 	else
 	{
@@ -223,9 +254,12 @@ void main()
 		gl_FragColor = vec4_splat(sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel));
 		return;
 	}
+	// The sun's shadow, kept for the lamps too where the sheet asks (lamp_shadow, u_lampParams.w).
+	float sunLit = 1.0;
 	if (ndotl > 0.0)
 	{
 		float shadow = sunShadow(v_wpos, ng, saturate(dot(ng, l)), pixel);
+		sunLit = shadow;
 		// Diffuse only. See the note under the ambient.
 		vec3 kd = diffuseColour / 3.14159265;
 		colour += kd * u_sunColour.rgb * u_sunDir.w * ndotl * shadow;
@@ -238,7 +272,34 @@ void main()
 	// falloff's direction and nothing else, since the specular is switched off.
 	vec3 v = normalize(u_camPos.xyz - v_wpos);
 	colour += lampLight(v_wpos, n, v, ownAlbedo * (1.0 - metal), vec3_splat(0.0), roughness,
-	                    saturate(dot(n, v)) + 1e-5, 0.0);
+	                    saturate(dot(n, v)) + 1e-5, 0.0) * mix(1.0, sunLit, u_lampParams.w);
+
+	// Water's sheen, where the sheet asks for one (water_sheen, u_groundColour.w). Ours: MU's
+	// water is its painted sheet sliding, and the Dungeon's is near black, so away from a
+	// torch the stream could not be seen at all. The sheet itself is kept -- MU's own water,
+	// flowing along its channel -- and two things are added. A faint cold light of its own,
+	// on the sheet as painted, so its pattern shows moving in the dark; and the lamps'
+	// highlight on its own normals through the same GGX the town takes, broad enough to be a
+	// sheen by the fire and not a spark. Tried and taken out, the user's judgement on
+	// 2026-09-30: a sky reflection, which lay pale on the far water and read as snow;
+	// steepened normals, which glittered; and waves of our own, which were not MU's water.
+	// Only the water layers, by the weights the albedo used.
+	float wetMask = dot(w, isWater);
+	float sheen = u_groundColour.w;
+	if (wetMask > 0.001 && sheen > 0.0)
+	{
+		float wr = 0.22;
+		vec3 wf0 = vec3_splat(0.02);
+		float wndotv = saturate(dot(n, v)) + 1e-5;
+		vec3 glint = lampLight(v_wpos, n, v, vec3_splat(0.0), wf0, wr, wndotv, 1.0)
+		           * mix(1.0, sunLit, u_lampParams.w);
+		// The water sheet's own share and nothing else: lit off the blend, the brighter rock
+		// and sand the water fades into took it too, and the shore came up as a pale band.
+		vec3 waterAlbedo = albedo0 * (isWater.x * w.x) + albedo1 * (isWater.y * w.y)
+		                 + albedo2 * (isWater.z * w.z);
+		vec3 own = waterAlbedo * vec3(0.55, 0.68, 0.9) * 0.2;
+		colour += (glint * wetMask + own) * sheen;
+	}
 
 	// No sky reflection and no sun specular on dry ground. MU's ground art has its own
 	// lighting painted into it, so a sheen on top is a second highlight on a surface that

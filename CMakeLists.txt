@@ -121,9 +121,11 @@ add_executable(mu2
   src/game/world/grass.cpp
   src/game/world/lamps.cpp
   src/game/world/sway.cpp
+  src/game/world/doors.cpp
   src/game/world/flight.cpp
   src/game/world/boids.cpp
   src/game/world/scurry.cpp
+  src/game/world/trap_show.cpp
   src/game/world/leaves.cpp
   src/game/save.cpp
   src/game/roster.cpp
@@ -185,6 +187,8 @@ add_executable(mu2
   src/game/ui/speech.cpp
   src/game/ui/beacon.cpp
   src/game/ui/tracker.cpp
+  src/game/ui/travel.cpp
+  src/game/ui/minimap.cpp
   src/game/ui/quest_dialog.cpp
   src/game/ui/controls.cpp
   src/game/ui/specimen.cpp
@@ -202,14 +206,18 @@ add_executable(mu2
   src/sim/market.cpp
   src/sim/wear.cpp
   src/sim/vault.cpp
+  src/sim/gates.cpp
+  src/sim/traps.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_quests.cpp
   src/sim/quests.cpp
+  src/sim/realm_travel.cpp
   src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
+  src/sim/realm_traps.cpp
   src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
   src/sim/skills.cpp
@@ -318,14 +326,18 @@ add_executable(sim_test EXCLUDE_FROM_ALL
   src/sim/market.cpp
   src/sim/wear.cpp
   src/sim/vault.cpp
+  src/sim/gates.cpp
+  src/sim/traps.cpp
   src/sim/realm.cpp
   src/sim/realm_items.cpp
   src/sim/realm_quests.cpp
   src/sim/quests.cpp
+  src/sim/realm_travel.cpp
   src/sim/realm_move.cpp
   src/sim/realm_fight.cpp
   src/sim/realm_skills.cpp
   src/sim/realm_watch.cpp
+  src/sim/realm_traps.cpp
   src/sim/realm_folk.cpp
   src/sim/realm_summon.cpp
   src/sim/skills.cpp

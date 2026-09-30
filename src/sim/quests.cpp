@@ -172,12 +172,11 @@ QuestRow peia() {
     row.stepCount = 9;
     row.repeatSeconds = 12 * 60 * 60;
     constexpr int8_t elf = int8_t(Kin::FairyElf);
-    // The elves' alone: one born in Lorencia is turned away (quests.h, `natives`).
+    // The elves' born; a knight or a wizard may come for the jewels, Zen and experience, and goes
+    // without the bow, the rune and the first clear's experience, as an elf does at Marlon's (the
+    // user, 2026-09-30).
     row.natives = uint8_t(1u << elf);
-    row.strangers = false;
-    row.stranger =
-        "\"The forest does not know your step, traveller. Its song is for the elves to mend. Go "
-        "back to Lorencia -- Marlon will have work for you there.\"";
+    row.strangers = true;
     row.experience = 25000;
     row.firstExperience = 100000;  // Marlon's, for the same ladder
     row.zen = 50000;
@@ -201,8 +200,8 @@ QuestRow peia() {
 // The reward is the doc's proposal, not yet agreed: every clear 3 Jewels of Bless, 100,000 Zen and
 // 60,000 experience, the first 250,000 and each class's top 0.75 armour with an empty socket --
 // Dragon (knight), Legendary (wizard), Guardian (elf) -- and, the first time too, the rune for
-// its socket: a Rune of Creation carrying the Undying (+20% maximum health, sim/items.h), the
-// same for every class.
+// its socket: a Rune of Creation carrying Renewal (health back anywhere, sim/items.h; it was the
+// Undying's +20% maximum health until 2026-09-30), the same for every class.
 QuestRow devin() {
     QuestRow row;
     row.giver = 406;
@@ -260,14 +259,178 @@ QuestRow devin() {
     row.paid[2] = {.item = "ArmorElf05", .kin = elf, .sockets = 1,
                    .firstOnly = true};  // Guardian Armor
     row.paid[3] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
-    // And the rune for that socket, the same for every class (the user, 2026-09-30).
-    row.paid[4] = {.item = "Jewel22", .power = uint8_t(Power::Undying),
-                   .firstOnly = true};  // Rune of Creation, the Undying
+    // And the rune for that socket, the same for every class (the user, 2026-09-30): Renewal,
+    // health back anywhere, in the Undying's place since the same day ("life regeneration rune
+    // which is much more important i think than just max hp").
+    row.paid[4] = {.item = "Jewel22", .power = uint8_t(Power::Renewal),
+                   .firstOnly = true};  // Rune of Creation, Renewal
     row.paidCount = 5;
     return row;
 }
 
-const QuestRow kTable[kQuests] = {marlon(), peia(), devin()};
+// The Golden Archer's chain, the Dungeon's (docs/golden-archer.md): three links, a floor each,
+// each unlocked by the one before, every one paying and the first time of each also a socketed
+// item and a rune (the user, 2026-09-30). MU's NPC 236, a gold skeleton at the Dungeon's arch;
+// the story is ours: the knights' archer, the last of the oath's last company, who fell to the
+// Gorgon and keeps the gate. The steps are each floor's breeds weakest first (dungeon-port.md
+// A §1.6), counts the doc's proposals. The rewards are the user's of 2026-09-30: a socketed helm,
+// pants and boots with the Dungeon's three runes (sim/items.h), three Bless each, a Soul at the Pit;
+// the Zen and experience are proposals.
+QuestRow archer() {
+    QuestRow row;
+    row.giver = 236;
+    row.giverName = "Golden Archer";
+    row.place = "Lorencia";
+    row.repeatSeconds = 12 * 60 * 60;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    // Every class's, as Devin's: the Dungeon is under Lorencia, but all three go down.
+    row.natives = uint8_t((1u << knight) | (1u << wizard) | (1u << elf));
+    row.strangers = true;
+    return row;
+}
+
+QuestRow catacombs() {
+    QuestRow row = archer();
+    row.title = "The Catacombs";
+    row.offer[0] =
+        "\"Stop there. You are alive, and you mean to go down. Few who do come back.\"";
+    row.offer[1] =
+        "\"Do not be afraid of me. I was a knight of Lorencia once. What you see is what the "
+        "Dungeon left.\"";
+    row.offer[2] =
+        "\"Below us are the Catacombs, where Lorencia buried its dead. They do not stay buried "
+        "now. Every night they climb, and every night I shoot them back down.\"";
+    row.offer[3] =
+        "\"Go down the stair. Kill the Skeleton Warriors, the Larvae and the Cyclopes. Then the "
+        "Ghosts, and the Skeleton Archers in the deep tombs.\"";
+    row.offer[4] = "\"I will count them as they fall. Come back when I am done counting.\"";
+    row.underway = "\"I am still counting. They still climb.\"";
+    row.handIn[0] = "\"The Catacombs are quiet. I have not heard that in a long time.\"";
+    row.handIn[1] = "\"Take these. You fight like one of us. When you are ready, there is more below.\"";
+    row.resting = "\"They will climb again by morning. I will be here, counting.\"";
+    row.next = "The Golden Archer has more below: the Knights' Halls";
+    row.voice = "golden_archer_1";
+    row.steps[0] = {QuestStepKind::Clear, 14, 30, "Skeleton Warriors"};
+    row.steps[1] = {QuestStepKind::Clear, 12, 25, "Larvae"};
+    row.steps[2] = {QuestStepKind::Clear, 17, 25, "Cyclopes"};
+    row.steps[3] = {QuestStepKind::Clear, 11, 30, "Ghosts"};
+    row.steps[4] = {QuestStepKind::Clear, 15, 7, "Skeleton Archers"};
+    row.steps[5] = {QuestStepKind::Return, 0, 1, "Return to the Golden Archer"};
+    row.stepCount = 6;
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.experience = 50000;
+    row.firstExperience = 150000;
+    row.zen = 60000;
+    // The user's (2026-09-30): a helm with a socket, and Keen Eye for it, every class's rune;
+    // three Jewels of Bless. The helms are each class's near the floor's level.
+    row.paid[0] = {.item = "HelmMale09", .kin = knight, .sockets = 1, .firstOnly = true};  // Brass
+    row.paid[1] = {.item = "HelmMale08", .kin = wizard, .sockets = 1, .firstOnly = true};  // Sphinx
+    row.paid[2] = {.item = "HelmElf03", .kin = elf, .sockets = 1, .firstOnly = true};      // Wind
+    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::KeenEye), .firstOnly = true};
+    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paidCount = 5;
+    return row;
+}
+
+QuestRow halls() {
+    QuestRow row = archer();
+    row.title = "The Knights' Halls";
+    row.offer[0] =
+        "\"Under the Catacombs are the Halls. We built them, when Kundun fell, to hold what he "
+        "left beneath Lorencia.\"";
+    row.offer[1] =
+        "\"The traps are ours. Lances, iron and fire, set for his brood. They cannot tell you "
+        "from it. Watch the floor.\"";
+    row.offer[2] =
+        "\"His creatures hold our halls now. Kill the Hell Hounds, the Hell Spiders and the Elite "
+        "Skeletons. Then the Thunder Liches, and the Poison Bulls at the far end.\"";
+    row.offer[3] = "\"Take our halls back. I cannot go down to do it myself.\"";
+    row.underway = "\"The halls are not ours yet. Go back down.\"";
+    row.handIn[0] =
+        "\"The Halls are ours again, for tonight. You have done what a whole company could "
+        "not.\"";
+    row.handIn[1] = "\"Take these. When you come back, I will tell you why I stand here.\"";
+    row.resting = "\"Rest. The halls will fill again, and the traps will still be waiting.\"";
+    row.next = "The Golden Archer will tell you why he keeps the gate";
+    row.voice = "golden_archer_2";
+    row.steps[0] = {QuestStepKind::Clear, 5, 20, "Hell Hounds"};
+    row.steps[1] = {QuestStepKind::Clear, 13, 15, "Hell Spiders"};
+    row.steps[2] = {QuestStepKind::Clear, 16, 25, "Elite Skeletons"};
+    row.steps[3] = {QuestStepKind::Clear, 9, 15, "Thunder Liches"};
+    row.steps[4] = {QuestStepKind::Clear, 8, 10, "Poison Bulls"};
+    row.steps[5] = {QuestStepKind::Return, 0, 1, "Return to the Golden Archer"};
+    row.stepCount = 6;
+    row.afterAny = 1u << 3;  // the Catacombs handed in
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.experience = 70000;
+    row.firstExperience = 250000;
+    row.zen = 80000;
+    // The user's: pants with a socket, and Bloodwell for them; three Jewels of Bless. The knight's
+    // are Plate, the oath-knights' own set.
+    row.paid[0] = {.item = "PantMale10", .kin = knight, .sockets = 1, .firstOnly = true};  // Plate
+    row.paid[1] = {.item = "PantMale04", .kin = wizard, .sockets = 1, .firstOnly = true};  // Legendary
+    row.paid[2] = {.item = "PantElf04", .kin = elf, .sockets = 1, .firstOnly = true};      // Spirit
+    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Bloodwell), .firstOnly = true};
+    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paidCount = 5;
+    return row;
+}
+
+QuestRow pit() {
+    QuestRow row = archer();
+    row.title = "The Pit";
+    row.offer[0] =
+        "\"The last company of the oath went down into the Pit to hold it. I went with them. None "
+        "of us came back as we were.\"";
+    row.offer[1] =
+        "\"The Gorgon waits at the bottom. It looked on my brothers, and they rose as Dark "
+        "Knights. It looked on me, and I rose as this.\"";
+    row.offer[2] =
+        "\"Kill the Poison Bulls and the Thunder Liches on the way down. Then find my brothers, "
+        "and give them rest. Then the Gorgon.\"";
+    row.offer[3] =
+        "\"Marlon thinks he is the last of us. Do not tell him what you find down there. Not "
+        "yet.\"";
+    row.underway = "\"My brothers still walk. Go back down.\"";
+    row.handIn[0] = "\"It is done. I felt it when they fell. My brothers are at rest.\"";
+    // The card holds two hand-in paragraphs, so the doc's third joins the second.
+    row.handIn[1] =
+        "\"My name was Aldric. Remember it, even if Marlon cannot. Take these, with my thanks. "
+        "I will keep the gate. It is what I swore.\"";
+    row.resting = "\"The Gorgon will rise again. They always do. I will be here, counting.\"";
+    row.voice = "golden_archer_3";
+    row.steps[0] = {QuestStepKind::Clear, 8, 15, "Poison Bulls"};
+    row.steps[1] = {QuestStepKind::Clear, 9, 10, "Thunder Liches"};
+    row.steps[2] = {QuestStepKind::Clear, 10, 7, "Dark Knights"};
+    row.steps[3] = {QuestStepKind::Clear, 18, 1, "The Gorgon"};
+    row.steps[4] = {QuestStepKind::Return, 0, 1, "Return to the Golden Archer"};
+    row.stepCount = 5;
+    row.afterAny = 1u << 4;  // the Halls handed in
+    constexpr int8_t knight = int8_t(Kin::DarkKnight);
+    constexpr int8_t wizard = int8_t(Kin::DarkWizard);
+    constexpr int8_t elf = int8_t(Kin::FairyElf);
+    row.experience = 100000;
+    row.firstExperience = 400000;
+    row.zen = 120000;
+    // The user's: boots with a socket, and Frenzy for them; three Jewels of Bless and a Jewel of
+    // Soul on top, the chain's last. Each class's top set, about the Gorgon's level.
+    row.paid[0] = {.item = "BootMale02", .kin = knight, .sockets = 1, .firstOnly = true};  // Dragon
+    row.paid[1] = {.item = "BootMale04", .kin = wizard, .sockets = 1, .firstOnly = true};  // Legendary
+    row.paid[2] = {.item = "BootElf05", .kin = elf, .sockets = 1, .firstOnly = true};      // Guardian
+    row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
+    row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
+    row.paid[5] = {.item = "Jewel02"};              // Jewel of Soul
+    row.paidCount = 6;
+    return row;
+}
+
+const QuestRow kTable[kQuests] = {marlon(), peia(), devin(), catacombs(), halls(), pit()};
 
 }  // namespace
 

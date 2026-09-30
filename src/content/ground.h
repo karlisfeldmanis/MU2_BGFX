@@ -8,6 +8,7 @@
 // second shader, not a fourth flag.
 #pragma once
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -142,6 +143,15 @@ public:
     bgfx::TextureHandle abyss() const { return abyss_; }
     const float* abyssParams() const { return abyssParams_; }
     const float* weightSize() const { return weightSize_; }
+    // Which texel row of weights() the water's flow band starts on, kWeightPad included, or
+    // -1 where the world names no river: its water then slides along U as MU's does. A
+    // corner's texel is (dx, dy) of its flow in tiles a cycle over kFlowReach, stored
+    // 128 + 127 v, and z a smooth noise that staggers the cycle. buildFlow.
+    float flowRow() const { return flowRow_; }
+    // A flowing sheet is two copies cross-faded, each dragged along the flow for kFlowCycle
+    // seconds and then taken back; kFlowReach is the furthest a copy is dragged, in tiles.
+    static constexpr float kFlowReach = 1.2f;
+    static constexpr float kFlowCycle = 3.0f;
 
     static const bgfx::VertexLayout& layout();
 
@@ -159,6 +169,11 @@ private:
     uint32_t indexCount_ = 0;
     bgfx::TextureHandle weights_ = BGFX_INVALID_HANDLE;
     float weightSize_[3] = {1.0f, 1.0f, 1.0f};
+    // Where each river is fed and where it drains, as tile (column, row), out of the world
+    // json's "water_flow". Empty on a world that names none.
+    std::vector<std::array<int, 2>> flowSources_;
+    std::vector<std::array<int, 2>> flowSinks_;
+    float flowRow_ = -1.0f;
 
     int size_ = 0;
     float metresPerTile_ = 1.0f;

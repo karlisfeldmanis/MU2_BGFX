@@ -11,6 +11,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "sim/gates.h"
 #include "sim/realm_tuning.h"
 
 namespace mu::game {
@@ -303,9 +304,11 @@ void Play::update(double seconds) {
                 }
                 speak(happening);
             } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
-                levelOwed_ = true;
+                ++levelsOwed_;
             } else if (happening.what == sim::What::Rose) {
                 if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
+                // Risen on a map with no safe zone: owed Lorencia, as a Town Portal read there is.
+                if (happening.who == heroId && happening.c == 1) homeOwed_ = true;
             } else if (happening.what == sim::What::Spawned) {
                 // Her summon raised (Realm::conjure): the one body whose figure changes, to the
                 // breed she called, stood up where the realm put it. Every other Spawned is the
@@ -436,6 +439,58 @@ void Play::update(double seconds) {
                 bolt_.miss(happening.whom);
                 meteor_.missHurl(happening.whom);
             }
+            // Through a gate: the mode changes the map on the next frame (PlayMode::frame).
+            if (happening.what == sim::What::Gated && happening.who == heroId && gated_ == 0) {
+                gated_ = happening.a;
+                gatedColumn_ = happening.b;
+                gatedRow_ = happening.c;
+            }
+            // A stair to another floor of this map: he is already down there in the realm; the
+            // drawing, the camera and the marker follow him as they do a Town Portal's.
+            if (happening.what == sim::What::Climbed && happening.who == heroId) warped();
+            // A Dungeon trap caught him (sim/traps.h): the number and the blood on him now, as a
+            // poison's pulse is shown -- no swing is behind it -- and he flinches. The Iron Stick
+            // strikes, and the trap sounds where it stands: aGrate, or sFlame for the Fire Trap
+            // (ZzzCharacter.cpp:1223-1237).
+            if (happening.what == sim::What::Trapped && happening.who == heroId) {
+                int32_t taken = 0;
+                if (Drawn* hero = drawnOf(heroId)) {
+                    taken = std::max(0, hero->health - happening.c);
+                    hero->health = happening.c;
+                }
+                Cue cue;
+                cue.attacker = heroId;
+                cue.target = heroId;
+                cue.damage = happening.a;
+                cue.taken = taken;
+                cue.miss = happening.a == 0;
+                cue.thrown = true;
+                cue.fuse = 0.0f;
+                showing_.schedule(cue);
+                float at[3] = {0.0f, 0.0f, 0.0f}, facing[2] = {0.0f, 0.0f};
+                int32_t number = 0;
+                trapShow_.fired(size_t(happening.b), at);
+                if (trapShow_.where(size_t(happening.b), at, facing, &number)) {
+                    const int sound = number == 102 ? heard_.trapFlame : heard_.grate;
+                    if (sound >= 0) emit(sound, at[0], at[2]);
+                }
+            }
+            if (happening.what == sim::What::Barred && happening.who == heroId) {
+                // Said over him, once a step into the box: MU's refusal is a system line
+                // (CheckGate, ZzzInterface.cpp:2709); a sealed gate's is ours.
+                const sim::EnterGate* sealed = sim::enterGateNumbered(happening.a);
+                const std::string line =
+                    happening.b == 0
+                        ? std::string(sealed && sealed->sealed ? sealed->sealed : "The way")
+                              + " is sealed. Its door will not open."
+                        : "Only characters of level " + std::to_string(happening.b) +
+                              " or higher can enter.";
+                said_.erase(std::remove_if(said_.begin(), said_.end(),
+                                           [&](const Said& one) { return one.who == heroId; }),
+                            said_.end());
+                said_.push_back({heroId, line, 0.0f});
+                core::logf("gate: %d refuses him: %s", happening.a, line.c_str());
+            }
             // Put down by a Teleport: drawn there from this frame, not slid there; the sparks and
             // SOUND_MAGIC again (CreateTeleportEnd), and the fade back in.
             if (happening.what == sim::What::Blinked && happening.who == heroId) {
@@ -468,6 +523,23 @@ void Play::update(double seconds) {
                 if (Drawn* pushed = drawnOf(happening.who);
                     pushed != nullptr && pushed->placed && pushed->shockClip >= 0) {
                     shock(*pushed, pushed->shockClip);
+                }
+            }
+            // The hit, on the caster at the release, as MU plays it for a spell and an arrow alike
+            // (ZzzCharacter.cpp:5251-5310): not when the thing arrives. Once a swing, and only for
+            // the skill the swing was thrown with -- a rune's Ice, Lightning or rock says `Loosed`
+            // on a swing that was something else, and MU has no rune to play a hit for.
+            if (happening.what == sim::What::Loosed && happening.whom != 0) {
+                if (Drawn* caster = drawnOf(happening.who);
+                    caster != nullptr && caster->placed && happening.a == caster->swingSkill &&
+                    caster->heardToken != caster->swingToken) {
+                    caster->heardToken = caster->swingToken;
+                    const sim::Body* shooter = realm_.find(happening.who);
+                    const sim::SkillRow* shot = sim::skillNumbered(happening.a);
+                    const bool arrow = shooter != nullptr && shooter->archer != 0 &&
+                                       (shot == nullptr || shot->arrows > 0);
+                    const int hit = arrow ? heard_.missile : heard_.hit;
+                    if (hit >= 0) emit(hit, caster->crown[0], caster->crown[2], caster->id);
                 }
             }
             if (happening.what == sim::What::Loosed) {
@@ -712,7 +784,9 @@ void Play::update(double seconds) {
                             };
                             const int32_t ticks =
                                 sim::castTicks(tables_, body->kin, body->points.agility,
-                                               armAt(body->weapon), armAt(body->shield), *spell);
+                                               armAt(body->weapon), armAt(body->shield), *spell,
+                                               body->frenzyUntil > realm_.tick() ? sim::kFrenzySpeed
+                                                                                 : 0);
                             const float fits = float(ticks) * float(kTickSeconds);
                             if (fits > 0.01f && clip > fits) swinger->swingPace = clip / fits;
                         }
@@ -809,6 +883,7 @@ void Play::update(double seconds) {
                             const float release = std::min(15.0f / 25.0f, swinger->swinging);
                             volleys_.push_back({happening.who, happening.whom, release});
                             cue.fuse = release + 0.6f;
+                            cue.arrow = true;
                         } else {
                             cue.fuse = swinger->swinging * Showing::kLandingPoint;
                         }
@@ -818,6 +893,21 @@ void Play::update(double seconds) {
                             size_t(body->kind) < tables_.kinds.size() &&
                             tables_.kinds[size_t(body->kind)].attackSkill == sim::skill::kIce) {
                             iceCasts_.push_back({happening.who, happening.whom, 15.0f / 25.0f});
+                        }
+                        // An Ice Queen (attackSkill == 11) throws Power Wave at the same frame,
+                        // and her blow is shown when the middle wave reaches the target: the
+                        // release, and the flat distance at the wave's 15 m a second.
+                        if (body && !body->player && body->kind >= 0 &&
+                            size_t(body->kind) < tables_.kinds.size() &&
+                            tables_.kinds[size_t(body->kind)].attackSkill ==
+                                sim::skill::kPowerWave) {
+                            waveCasts_.push_back({happening.who, happening.whom, 15.0f / 25.0f});
+                            const Drawn* target = drawnOf(happening.whom);
+                            if (target && swinger->placed && target->placed) {
+                                const float dx = target->crown[0] - swinger->crown[0];
+                                const float dz = target->crown[2] - swinger->crown[2];
+                                cue.fuse = 15.0f / 25.0f + std::sqrt(dx * dx + dz * dz) / 15.0f;
+                            }
                         }
                         // A Thunder Lich (attackSkill == 3) calls Lightning at that frame, and
                         // the bolt is there the moment it is called, so the blow shows with it.
@@ -872,6 +962,7 @@ void Play::update(double seconds) {
                                     (shot == nullptr || shot->arrows > 0);
                         }
                         cue.magic = happening.thrown && !arrow;
+                        cue.arrow = arrow;
                         // A poison's pulse is MU's DT_POISON green, not a blow's number.
                         cue.poison = happening.poisoned;
                         cue.critical = happening.critical;
@@ -976,6 +1067,37 @@ void Play::update(double seconds) {
     iceCasts_.erase(std::remove_if(iceCasts_.begin(), iceCasts_.end(),
                                    [](const IceCast& c) { return c.wait <= 0.0f; }),
                     iceCasts_.end());
+    for (IceCast& cast : waveCasts_) {
+        cast.wait -= float(seconds);
+        if (cast.wait > 0.0f || ground_ == nullptr) continue;
+        const Drawn* caster = drawnOf(cast.caster);
+        const Drawn* target = drawnOf(cast.target);
+        if (caster == nullptr || target == nullptr || !caster->placed || !target->placed) continue;
+        // Off her feet, as MU's o->Position; the wave keeps a flat heading, so only the
+        // target's x and z steer it. The fan turns that heading ten degrees either way.
+        const float from[3] = {caster->crown[0],
+                               ground_->heightAt(caster->crown[0], caster->crown[2]),
+                               caster->crown[2]};
+        const float dx = target->crown[0] - from[0], dz = target->crown[2] - from[2];
+        // Three only for the Ice Queen: `if (o->Type == MODEL_ICE_QUEEN)` adds the two side
+        // waves, and every other caster -- the Hell Spider -- throws the middle one alone
+        // (ZzzCharacter.cpp:5045-5055).
+        const FigureBody* casterLook = caster->figure.body();
+        const bool fans = casterLook != nullptr && casterLook->name == kFanningFigure;
+        for (float degrees : {0.0f, 10.0f, -10.0f}) {
+            if (degrees != 0.0f && !fans) continue;
+            const float turn = degrees * 3.14159265f / 180.0f;
+            const float c = std::cos(turn), s = std::sin(turn);
+            const float to[3] = {from[0] + dx * c - dz * s, from[1] + 1.0f,
+                                 from[2] + dx * s + dz * c};
+            wave_.cast(from, to);
+        }
+        const int index = sim::skillIndexOf(sim::skill::kPowerWave);
+        if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], from[0], from[2]);
+    }
+    waveCasts_.erase(std::remove_if(waveCasts_.begin(), waveCasts_.end(),
+                                    [](const IceCast& c) { return c.wait <= 0.0f; }),
+                     waveCasts_.end());
     for (IceCast& cast : thunderCasts_) {
         cast.wait -= float(seconds);
         if (cast.wait > 0.0f || ground_ == nullptr) continue;
@@ -1092,7 +1214,7 @@ void Play::update(double seconds) {
     // tenths of a second before the number that killed it appeared over the corpse.
     showing_.advance(float(seconds), due_);
     for (const Cue& cue : due_) {
-        const Drawn* swinger = drawnOf(cue.attacker);
+        Drawn* swinger = drawnOf(cue.attacker);
         // The gate. A cue belongs to one swing, and if the body has moved on -- a step
         // cancels a swing here -- the cue drops itself. A dropped cue costs a splash and a
         // number and never a fact: the damage was taken on the tick either way.
@@ -1134,9 +1256,18 @@ void Play::update(double seconds) {
         showing_.land(cue, feet, height, man, swinger->yaw, onHero, told);
         // The hit, on the attacker, which is where MoveCharacter plays it: one of MU's four,
         // at random, for every ordinary blow with a target -- a MISS as well. The sound sits in
-        // the AttackTime block beside the blood, and only the blood asks `tc->Hit`.
-        if (heard_.hit >= 0 && swinger->placed) {
-            emit(heard_.hit, swinger->crown[0], swinger->crown[2], swinger->id);
+        // the AttackTime block beside the blood, and only the blood asks `tc->Hit`. Once a
+        // swing: a spin settling on four bodies is one release. A blow that FLEW sounded its
+        // hit at the release (`Loosed`, above), and a poison's pulse or a trap has none.
+        if (!cue.thrown && swinger->placed && swinger->heardToken != cue.token) {
+            swinger->heardToken = cue.token;
+            const int hit = cue.arrow ? heard_.missile : heard_.hit;
+            if (hit >= 0) emit(hit, swinger->crown[0], swinger->crown[2], swinger->id);
+        }
+        // Her own arrow sounds again where it goes in (CheckClientArrow, ZzzEffect.cpp:6620),
+        // miss or not: the client's own test found the body, not the server.
+        if (cue.thrown && cue.arrow && cue.attacker == realm_.hero().id && heard_.missile >= 0) {
+            emit(heard_.missile, x, z);
         }
         if (!cue.miss && cue.damage > 0 && target->alive()) {
             if (Drawn* struck = drawnOf(cue.target)) flinch(*struck, onHero);
@@ -1147,9 +1278,16 @@ void Play::update(double seconds) {
     fallWhenLanded();
     // And the level, in the same frame as the blow that earned it -- MU2's Rose, reached from
     // the kill's cue. A dropped cue still clears `awaits`, so a level is never lost to one.
-    if (levelOwed_ && (levelOn_ == 0 || !showing_.awaits(levelOn_))) {
-        levelOwed_ = false;
+    // More than one level is a sequence, each its own rise and sound, kLevelApart after the last
+    // -- INVENTION, the user's (2026-09-30): MU's while loop sends one ReceiveLevelUp a level,
+    // all on the same frame, and a quest's three levels read as one.
+    levelWait_ = std::max(0.0f, levelWait_ - float(seconds));
+    if (levelsOwed_ > 0 && levelWait_ <= 0.0f && (levelOn_ == 0 || !showing_.awaits(levelOn_))) {
+        --levelsOwed_;
         levelOn_ = 0;
+        levelWait_ = kLevelApart;
+        core::logf("level: the rise at %d, %d more owed", realm_.hero().level - levelsOwed_,
+                   levelsOwed_);
         rise();
     }
     releaseDrops();
@@ -1386,6 +1524,13 @@ void Play::speak(const sim::Happening& happening) {
         for (const Lines& one : kChallenges) {
             if (label.find(one.breed) != std::string::npos) line = one.lines[pick % 3];
         }
+        // The Golden Archer keeps the gate in his own few words, and keeps count (golden-archer.md).
+        static const char* const kArcher[] = {"None pass the gate.", "Back down the stair.",
+                                              "One more for the count."};
+        if (const sim::Body* speaker = realm_.find(happening.who);
+            speaker && speaker->warden >= 0 && tables_.folk[size_t(speaker->warden)].number == 236) {
+            line = kArcher[pick % 3];
+        }
     }
     // One line a speaker, and a challenge does not talk over one of his still being read: at a
     // gate a guard takes on the next monster the tick after the last falls, and every one of
@@ -1472,8 +1617,9 @@ void Play::shock(Drawn& one, int clip) {
 // The hero flinches too, and that is **ours**: under 0.75 the `else` has no shock for him, and
 // MU flinches him only from the `if` a Webzen server's success bit reaches. The user's, 2026-09-29,
 // on the same coin. What the `if` does to him is MU's: PLAYER_SHOCK, `c->Movement = false`, and
-// pMaleScream1-3 or pFemaleScream1-2 by IsFemale; and while the clip plays a click to move is
-// refused (ZzzInterface.cpp:3127). Not while he swings or casts -- MU's player branch cuts a
+// pMaleScream1-3 or pFemaleScream1-2 by IsFemale. MU also refuses a click to move while the clip
+// plays (ZzzInterface.cpp:3127); here it does not, on the user's word of 2026-09-29, and the walk
+// the click starts ends the clip. Not while he swings or casts -- MU's player branch cuts a
 // swing, but here the swing carries the landing cue of his own blow -- and not while he chases
 // a monster, which the halt would cancel: a stop that costs him his fight is not a flinch.
 void Play::flinch(Drawn& struck, bool isHero) {
@@ -1482,8 +1628,11 @@ void Play::flinch(Drawn& struck, bool isHero) {
     int clip = struck.shockClip;
     if (isHero) {
         if (struck.casting > 0.0f || realm_.casting()) return;
-        const sim::Request& order = realm_.order();
-        if (realm_.hero().walking && order.kind == sim::Request::Kind::Attack) return;
+        // Not while he walks, either: the flinch's stop cancelled the walk, so under a Lich's
+        // fire at Lorencia's dungeon arch every click was undone within a second and he could
+        // not reach the stair (the user, 2026-09-30: "monster keep hitting char and you are not
+        // going inside"). A walking hero takes the blow and walks on.
+        if (realm_.hero().walking) return;
         clip = look && look->library ? look->library->find(kPlayerShockSlot) : -1;
     }
     if (clip < 0 || struck.figure.clip() == clip) return;
@@ -1496,13 +1645,7 @@ void Play::flinch(Drawn& struck, bool isHero) {
     const int cry = !isHero ? (silent ? -1 : struck.cryAttack)
                             : (look && look->female ? heard_.shockFemale : heard_.shock);
     if (cry >= 0) emit(cry, struck.crown[0], struck.crown[2], struck.id);
-    if (isHero && realm_.hero().walking) {
-        sim::Request stop;
-        stop.kind = sim::Request::Kind::Stop;
-        realm_.ask(stop);
-        mark_ = false;
-        marker_.dismiss();
-    }
 }
 
 }  // namespace mu::game
+

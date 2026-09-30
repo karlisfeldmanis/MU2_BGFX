@@ -1,0 +1,111 @@
+{
+  "item": "Object95",
+  "mu_name": "Object95",
+  "mu_name_from": "Devias's object slot 94, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 94,
+  "placements": 1,
+  "profile": "world",
+  "sheets": {
+    "wall_door03": "dv_wall_door03.png",
+    "desk": "dv_desk.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "wall_door03": "plank",
+    "desk": "wood"
+  },
+  "material_note": "wall_door03: iron-bound planks.\ndesk: a desk top.",
+  "why_this_one": "1: a counter.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches: static.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 16,
+      "area": 2646.7,
+      "along": [
+        -29.8,
+        9.6
+      ],
+      "mu_uv": [
+        0.002,
+        0.151,
+        0.203,
+        0.997
+      ],
+      "bake_uv": [
+        0.447,
+        0.307,
+        0.977,
+        0.863
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 26,
+      "area": 16954.7,
+      "along": [
+        -32.3,
+        43.7
+      ],
+      "mu_uv": [
+        0.001,
+        -0.002,
+        1.193,
+        0.999
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.869,
+        0.987
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 24,
+      "area": 38047.7,
+      "along": [
+        -22.1,
+        32.0
+      ],
+      "mu_uv": [
+        0.08,
+        0.077,
+        0.93,
+        0.999
+      ],
+      "bake_uv": [
+        0.424,
+        0.007,
+        0.988,
+        0.993
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 12,
+      "area": 2165.5,
+      "along": [
+        -20.8,
+        23.2
+      ],
+      "mu_uv": [
+        0.29,
+        0.001,
+        0.71,
+        0.078
+      ],
+      "bake_uv": [
+        0.008,
+        0.622,
+        0.555,
+        0.826
+      ]
+    }
+  ]
+}

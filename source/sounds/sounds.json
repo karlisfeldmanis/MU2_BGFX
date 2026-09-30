@@ -5,7 +5,7 @@
     "A monster does not name its sounds. It carries five slots - SetMonsterSound(Type, s1..s5) in ZzzOpenData - and the client indexes them by what is happening: Sounds[0] or Sounds[1] at random while it stands and moves, Sounds[2 + rand()%2] when it swings and again when it flinches, Sounds[4] when it dies. Several models fill every slot with one file, so the shape is a table with repeats in it rather than five separate recordings.",
     "The plays all happen on the same instant: `if (c->Object.AnimationFrame == 0.f)`. The sound is fired on the first key of the action, not when the server resolves the hit, which is why a missed swing is still audible.",
     "A player is the other branch of the same if. He swings eSwingWeapon1 or 2 at random with a weapon in hand, eSwingLightSword for a Light Saber or a Spear, and a bow or crossbow has its own; he screams pMaleScream1 to 3 when he flinches and pMaleDie when he goes down. Those are the male lines. A female character - the elf - takes the other branch of IsFemale: pFemaleScream1 or 2 when she flinches and pFemaleScream2 when she goes down (player_shock_female, player_die_female). The Dark Lord's lines are the same rule with different files and are not built here.",
-    "The hit is separate from the swing and belongs to the attacker: eMeleeHit1 to 4 at random, played where the damage lands. A swing that misses plays the swing and not the hit, which is the whole reason the two are different events."
+    "The hit is separate from the swing and belongs to the attacker: eMeleeHit1 to 4 at random, or eMissileHit1 to 4 for an arrow, played at the release, when AttackTime reaches g_iLimitAttackTime (ZzzCharacter.cpp:5251-5310) - for every blow with a target, a miss as well, and for a damage spell as well as a swing; buffs, heals and summons are the skills that play none. A spell's hit therefore sounds at the cast with the spell's own wave, not when the bolt arrives. The one hit heard where it lands is the hero's own arrow (CheckClientArrow, ZzzEffect.cpp:6620), which plays eMissileHit again at the arrow on its way into a body."
   ],
   "events": {
     "bird_1": {
@@ -314,8 +314,18 @@
         "emeleehit3.wav",
         "emeleehit4.wav"
       ],
-      "from": "SOUND_ATTACK_MELEE_HIT1 + rand()%4, played on the attacker when a melee hit lands.",
-      "note": "Four of the five loaded. The fifth, eMeleeHit5, is loaded by the client and not reachable from this line - the bow branch takes +5 and lands past it - so it is left out rather than guessed at."
+      "from": "SOUND_ATTACK_MELEE_HIT1 + rand()%4, played on the attacker at the release of every blow with a target that is not an arrow - a swing, a damage spell, a monster's bite.",
+      "note": "Four of the five loaded. The fifth, eMeleeHit5, is reached from one effect alone (MoveHandlers.cpp:8578) and is left out. The bow branch's +5 does not land on it: it lands on SOUND_ATTACK_MISSILE_HIT1 (75), which is missile_hit."
+    },
+    "missile_hit": {
+      "files": [
+        "emissilehit1.wav",
+        "emissilehit2.wav",
+        "emissilehit3.wav",
+        "emissilehit4.wav"
+      ],
+      "from": "SOUND_ATTACK_MELEE_HIT1 + 5 + rand()%4, which is SOUND_ATTACK_MISSILE_HIT1 to 4 (75-78). Played on the shooter at an arrow's release (ZzzCharacter.cpp:5303), and again where the hero's own arrow enters a body (CheckClientArrow, ZzzEffect.cpp:6620; not for Penetration or Ice Arrow).",
+      "note": "MU picks the release's missile branch off the HERO's hands - CharacterMachine->Equipment, a bow group item in both, which a bow and its arrows or a crossbow and its bolts are - whoever is shooting, so a monster archer's arrow sounds as melee_hit unless you are an elf, and a knight's swing as missile_hit if you are. INVENTION: asked of the shooter instead, so an arrow is missile_hit and a swing melee_hit whoever watches."
     },
     "money_drop": {
       "files": [
@@ -408,6 +418,14 @@
       "from": "This project's: MU 0.75 has no quests. The file was given by the user on 2026-09-29: floraphonic's \"Percussive Drum Hit 1\" (Pixabay 189787), for a quest taken from its giver.",
       "trim_note": "The mp3 is 2.57 s, of which everything past 1.7 s is under -46 dB. Cut from 0.027 s, 3 ms ahead of the first hit, with a 3 ms fade in, and to 1.70 s with a squared fade out over the last 0.30 s: 1.67 s, stereo 44.1 kHz, peaking at 0.95 and not normalised. The loudest stroke lands 0.2 s in.",
       "note": "Unplaced, heard flat on the player like the step's blade. Play::acceptQuest throws it in place of the window's own open sound when the realm takes the quest; refused, the window's no. Three down, as the step's, because it is a full-scale file."
+    },
+    "quest_page_turn": {
+      "files": [
+        "quest_page.wav"
+      ],
+      "from": "This project's: MU 0.75 has no quests. The file was given by the user on 2026-09-30: CreatorsHome's \"Turn a Page\" (Pixabay 336933), for the quest journal's arrows.",
+      "trim_note": "The mp3 is 1.03 s, silent past 0.45 s. Cut from 3 ms before its onset (20.7 ms) to 0.48 s, a 3 ms fade in and a 0.12 s fade out, normalised to 0.95, 48 kHz stereo: 0.46 s. Two strokes -- the page lifting at the start and landing 140 ms in -- and the journal's turn is timed to them (game/ui/quest_dialog.cpp kTurnOut, kTurnIn).",
+      "note": "Unplaced, heard flat as the interface's are. Played by the desk on an arrow's turn, in place of the click."
     },
     "quest_step_done": {
       "files": [
@@ -1173,7 +1191,7 @@
         "mAssassinAttack2.wav"
       ],
       "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., -1, -1, 65, 66, 67: no move slots; 275-276 ASSASSINATTACK1-2, 277 ASSASSINDIE) in ZzzOpenData.cpp:3511-3518; offsets from SOUND_MONSTER_BULL1 = 210 (DSPlaySound.h:158).",
-      "note": "No move cry, and on purpose: slots 0 and 1 are -1, and the idle play at ZzzCharacter.cpp:1411 skips MODEL_ASSASSIN by name. He comes at you silent."
+      "note": "No move cry, and on purpose: slots 0 and 1 are -1 (ZzzOpenData.cpp:3517), so he never cries walking or arriving; and he is struck silently too -- the flinch's cry at ZzzCharacter.cpp:1411 skips MODEL_ASSASSIN by name. He comes at you silent."
     },
     "assassin_die": {
       "files": [
@@ -1287,6 +1305,36 @@
       ],
       "from": "CharacterDie's `case MODEL_STONE_GOLEM`, after the sixteen stones are thrown: `PlayBuffer(SOUND_BONE2, o)` - Data\\\\Sound\\\\mBone2.wav, the skeleton's clatter. Not Sounds[4]: that is mGolemDie, played on the death action's first key, and a golem is switched off before any action is set. The file is loaded and heard by nobody. See StoneGolem01.json's sounds_from."
     },
+    "player_step_snow": {
+      "files": [
+        "pwalk_snow.wav"
+      ],
+      "from": "SOUND_HUMAN_WALK_SNOW, which ZzzOpenData loads from Data\\Sound\\pWalk(Snow).wav with two voices (ZzzOpenData.cpp:4741). PlayWalkSound picks it first of all its arms: `WorldActive == WD_2DEVIAS && (HeroTile != 3 && HeroTile < 10)` -- Devias outdoors -- and its planks and patterned floors fall through to the soil step (ZzzCharacter.cpp PlayWalkSound).",
+      "note": "Latched two a cycle as the grass and soil steps are; the hero's alone."
+    },
+    "world_door": {
+      "files": [
+        "adoor.wav"
+      ],
+      "from": "SOUND_DOOR01, Data\\Sound\\aDoor.wav, one voice (ZzzOpenData.cpp:4749). MoveObject plays it for Devias's swinging doors, types 20, 65 and 88, every frame the hero is within 200 units of one (ZzzObject.cpp:3954); one voice, so a playing door is not restarted.",
+      "note": "Played once as a door starts to open and once as it starts to shut, at the door -- placed, where MU plays it unplaced every frame and lets its one voice swallow the repeats. game/world/doors.h."
+    },
+    "world_gate": {
+      "files": [
+        "acastledoor.wav"
+      ],
+      "from": "SOUND_DOOR02, Data\\Sound\\aCastleDoor.wav, one voice (ZzzOpenData.cpp:4750). MoveObject plays it for Devias's sliding gates, type 86 (ZzzObject.cpp:3942).",
+      "note": "As world_door: at the gate, as it starts to open and to shut."
+    },
+    "world_dungeon": {
+      "files": [
+        "adungeon.wav"
+      ],
+      "from": "SOUND_DUNGEON01, Data\\Sound\\aDungeon.wav (ZzzOpenData.cpp:4733). PlayWorldAmbientSounds plays it looping and unplaced while the Dungeon is the world (SceneManager.cpp:859-861) and stops it elsewhere (:940-943). The Dungeon's air, in place of Lorencia's wind.",
+      "loop": true,
+      "gain_db": -16.0,
+      "gain_note": "The file's RMS is -28.0 dB against aWind's -27.4, so a gain one step under the wind's -17 puts the two beds at the same place, near -44 dB (2026-09-30)."
+    },
     "boid_bat": {
       "files": [
         "abat.wav"
@@ -1298,7 +1346,13 @@
         "amouse.wav"
       ],
       "from": "SOUND_RAT01, Data\\Sound\\aMouse.wav (ZzzOpenData.cpp:4747). MoveFishs plays it as PlayBuffer(SOUND_RAT01, o) at the rat on rand_fps_check(256) while it is within 600 units of the hero (GOBoid.cpp:1875-1877)."
+    },
+    "trap_grate": {
+      "files": [
+        "agrate.wav"
+      ],
+      "from": "SOUND_TRAP01, Data\\Sound\\aGrate.wav (ZzzOpenData.cpp:4748). ZzzCharacter.cpp:1223-1232 plays it at the Lance Trap and the Iron Stick Trap as they strike, PlayBuffer(SOUND_TRAP01, o)."
     }
   },
-  "not_built_yet": "The idle sound a monster makes while it wanders on its own clock - PlayMonsterSound in ZzzCharacter - is the one play in this family that is not tied to an action's first key, and it is left out until there is a monster whose Sounds[0] is worth hearing. On the Spider it would be mspider1.wav a fourth time."
+  "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."
 }

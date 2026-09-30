@@ -1,0 +1,218 @@
+{
+  "item": "Spear01",
+  "mu_name": "Light Spear",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:124 and mu.db's items row (group 3, index 0) name it the Light Spear against Item/Spear01.bmd.",
+  "why_this_one": "Drop level 42: the Ice Queen (52) leaves it. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:124. The 0.75 table.",
+    "call": "CreateWeapon(3, 0, 0, 22, 2, 4, true, \"Light Spear\", 42, 50, 63, 25, 56, 0, 0, 60, 70, 0, 0, 0, 1, 1)",
+    "group": 3,
+    "number": 0,
+    "drop_level": 42,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 4,
+    "minimum_damage": 50,
+    "maximum_damage": 63,
+    "attack_speed": 25,
+    "durability": 56,
+    "requires": {
+      "level": 0,
+      "strength": 60,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "skill": 22
+  },
+  "stance": "scythe",
+  "stance_from": "ZzzCharacter.cpp:377-383: group 3, two-handed, and not MODEL__SPEAR (the Spear, index 1) or the Dragon Lance, stands PLAYER_STOP_SCYTHE. The Light Spear is MODEL_SPEAR itself, index 0.",
+  "two_handed": true,
+  "two_handed_from": "Width 2 in the call; OpenMU's `group < Bows && width == 2` and MuMain's ItemAttribute TwoHand agree.",
+  "sheets": {
+    "sword12": "sword12.png",
+    "sword12_3": "sword12_3.png"
+  },
+  "sheet_from": "Data/Item/sword12.OZJ (shared with the Light Saber and the Spear) on 116 triangles, sword12_3.OZJ (32x16, a blue beam on black) on 12.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrors the grass; the Devias batch settled on 0.45 (plate 0.5) after the studio caught black heads and flaring shafts.",
+  "glow": {
+    "sword12_3": {
+      "pulse": [
+        0.3,
+        0.7
+      ]
+    }
+  },
+  "glow_note": "`case MODEL_SPEAR` with the Light Saber: BlendMesh 1, BlendMeshLight = sin(WorldTime*0.004)*0.3+0.7 (ZzzObject.cpp:5309-5312) -- the blue beam breathes. Drawn added on its raw sheet (export_gltf.glow_material).",
+  "material_note": "The body (116 triangles) is pale blue-steel (163,176,180, highlights 239,255,254) -- steel. The twelve beam triangles are the glow part and wear no material here; their island rows keep steel for the bake only.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 116,
+      "area": 1434.4,
+      "along": [
+        -64.9,
+        18.2
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.994,
+        0.928
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2158.0,
+      "along": [
+        16.2,
+        137.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.004,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.233,
+        0.007,
+        0.296,
+        0.069
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2158.0,
+      "along": [
+        16.2,
+        137.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.075,
+        0.006,
+        0.138,
+        0.069
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2158.0,
+      "along": [
+        16.2,
+        137.4
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.178,
+        0.33,
+        0.24,
+        0.392
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2158.0,
+      "along": [
+        -184.3,
+        -63.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.004,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.312,
+        0.007,
+        0.375,
+        0.069
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2158.0,
+      "along": [
+        -184.3,
+        -63.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.154,
+        0.006,
+        0.217,
+        0.069
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 2,
+      "area": 2158.0,
+      "along": [
+        -184.3,
+        -63.1
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.997
+      ],
+      "bake_uv": [
+        0.255,
+        0.33,
+        0.318,
+        0.392
+      ]
+    }
+  ]
+}

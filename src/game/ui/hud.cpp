@@ -630,6 +630,7 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
     const char* art = one.pet >= 0 ? petArt(one.pet)
                       : one.poison ? "buff_poison"
                       : one.ale    ? "buff_ale"
+                      : one.frenzy ? "buff_frenzy"
                                    : buffArt(one.skill);
     if (art != nullptr) {
         const gfx::Art& icon = arts.get(art);
@@ -719,6 +720,20 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         sheet.base = "POTION";
         tip::Section what;
         what.rows.push_back(said("Attack speed", "+" + std::to_string(sim::kAleSpeed),
+                                 tip::Tone::Green));
+        sheet.sections.push_back(what);
+        return sheet;
+    }
+    if (one.frenzy) {
+        // The Dungeon's boots rune, ours: a landed blow's 15% roll, sim::kFrenzySpeed for three
+        // seconds on the swing and the cast.
+        sheet.name = "Frenzy";
+        sheet.nameTone = tip::Tone::Yellow;
+        sheet.base = "RUNE";
+        tip::Section what;
+        what.rows.push_back(said("Attack speed", "+" + std::to_string(sim::kFrenzySpeed),
+                                 tip::Tone::Green));
+        what.rows.push_back(said("Casting speed", "+" + std::to_string(sim::kFrenzySpeed),
                                  tip::Tone::Green));
         sheet.sections.push_back(what);
         return sheet;
@@ -1078,6 +1093,7 @@ void Hud::rebuild() {
                           : one.poison           ? "buff_poison"
                           : one.chill            ? "buff_ice"
                           : one.ale              ? "buff_ale"
+                          : one.frenzy           ? "buff_frenzy"
                           : buffArt(one.skill)   ? buffArt(one.skill)
                                                  : "buff_defense";
         const gfx::Art& icon = arts.get(art);

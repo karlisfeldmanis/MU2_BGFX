@@ -167,10 +167,22 @@ inline int strayed(const Body& beast) {
 struct WardenRow {
     int32_t number, level, health, minimumDamage, maximumDamage, defense;
     int32_t attackRange, viewRange, moveTicks, attackTicks, attackRate, defenseRate;
+    // A guard of his own rules, ours: how many tiles he may step off his post (-1: the town
+    // guards' kWardenLeash, and then he takes on anything within it), and his blow's share of
+    // what it hits (0: kWardenShare). With a leash of his own he takes on only what comes within
+    // his reach of the post plus that leash.
+    int32_t leash = -1;
+    float share = 0.0f;
 };
 constexpr WardenRow kWardens[] = {
     {247, 90, 10000, 180, 195, 70, 5, 7, 8, 30, 300, 100},  // Crossbow Guard
     {249, 90, 10000, 180, 195, 70, 2, 7, 8, 30, 300, 100},  // Berdysh Guard
+    // The Golden Archer at the Dungeon's arch (docs/golden-archer.md), ours, the user's of
+    // 2026-09-30: "has to protect the gate, by one shoting monster which come close ... dont
+    // move to much just 1". A crossbow's six tiles, a step off his post at most, and a blow of
+    // twice what it hits -- the band's spread and the defence cannot save it -- at an attack rate
+    // no Dungeon monster's defence rate comes near, so he does not miss.
+    {236, 90, 10000, 180, 195, 70, 6, 7, 8, 30, 1000, 100, 1, 2.0f},  // Golden Archer
 };
 inline const WardenRow* wardenRow(int32_t number) {
     for (const WardenRow& row : kWardens) {

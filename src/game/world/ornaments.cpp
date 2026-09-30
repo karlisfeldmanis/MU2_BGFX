@@ -109,6 +109,30 @@ constexpr NoriaGlow kNoriaGlows[] = {
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
 constexpr float kStarDegreesPerSecond = 100.0f;
+// Devias's Lost Tower beacon, RenderObjectVisual case 100 (ZzzObject.cpp:2821-2828): two
+// BITMAP_LIGHTNING+1 sprites at scale 2.5, one at +Rotation and one at -Rotation on the star's
+// own 100 degrees a second, 150 units over bone 0, in Luminosity white. The placement is
+// devias.json's one type 100, MU (328.9, 24764.4, 255.2) -- tile 3.3, 247.6 at the Lost Tower
+// gate -- and its bone 0 is taken as its origin.
+constexpr float kBeaconAt[3] = {3.289f, 2.552f + 1.5f, -247.644f};
+constexpr float kBeaconScale = 2.5f;
+// Ours, not MU's (the user, 2026-09-30: "make beacon more blurry, with some smoke effect"): the
+// two stars a little wider and softer, a broad flare01 bloom behind them, and a slow column of
+// pale mist curling up through the light. Wisps are born a few a second round the beacon, rise
+// and drift, swell and fade in and out again, added as vapour lit by the beacon.
+constexpr float kBeaconSoften = 1.5f;       // the stars' size over MU's 2.5
+constexpr float kBeaconStarLevel = 0.5f;    // and their light, of the luminosity roll
+constexpr float kBeaconBloom = 3.2f;        // the flare's half width, metres
+constexpr float kBeaconBloomLevel = 0.7f;
+constexpr float kBeaconBloomColour[3] = {0.75f, 0.85f, 1.0f};
+constexpr float kMistEvery = 0.3f;          // seconds between wisps
+constexpr float kMistLife = 4.5f;           // seconds
+constexpr float kMistRise = 0.3f;           // metres a second
+constexpr float kMistDrift = 0.15f;         // metres a second, sideways
+constexpr float kMistBorn = 1.4f, kMistGrown = 3.6f;  // the wisp's width, metres
+constexpr float kMistPeak = 0.35f;         // its most light, mid-life
+constexpr float kMistColour[3] = {0.82f, 0.88f, 0.96f};
+constexpr size_t kMostMist = 24;
 // And its throwers. Bones 61 to 65 roll rand_fps_check(32) each and throw two BITMAP_SHINY,
 // subtypes 0 and 1, in white; bone 58 rolls rand_fps_check(8) and throws a burst of eight
 // spark pairs. A glint lives 18 frames at Scale `sin(LifeTime * 10 deg)` -- nothing, up to one
@@ -143,7 +167,7 @@ uint32_t Ornaments::next() {
 
 float Ornaments::unit() { return float(next() & 0xFFFFFF) / float(0x1000000); }
 
-bool Ornaments::open(const std::string& assetDir, const Town& town,
+bool Ornaments::open(const std::string& assetDir, const std::string& world, const Town& town,
                      const content::Ground& ground, content::Textures& textures) {
     const auto& models = town.cooked().models;
     // The bind pose's model-space point, carried into the bone's own frame through its
@@ -202,7 +226,7 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
                 for (int a = 0; a < 3; ++a) lantern.colour[a] = kLanternColour[a];
                 if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
             }
-        } else {
+        } else if (world == "noria") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
             for (const NoriaGlow& glow : kNoriaGlows) {
@@ -245,6 +269,7 @@ bool Ornaments::open(const std::string& assetDir, const Town& town,
             }
         }
     }
+    beacon_ = world == "devias";
     puffs_.reserve(kMostPuffs);
     glints_.reserve(kMostGlints);
 
@@ -286,8 +311,10 @@ void Ornaments::shutdown() {
     fountains_.clear();
     spouts_.clear();
     lanterns_.clear();
+    beacon_ = beaconSeen_ = false;
     falls_.clear();
     puffs_.clear();
+    mist_.clear();
     glints_.clear();
     throwers_.clear();
     strikeCount_ = 0;
@@ -309,6 +336,39 @@ void Ornaments::update(float seconds, const Sway& sway) {
     puffs_.erase(std::remove_if(puffs_.begin(), puffs_.end(),
                                 [](const Puff& p) { return p.age >= kPuffLife; }),
                  puffs_.end());
+
+    // The beacon's mist: aged and moved, and new wisps while it is shown.
+    for (Mist& one : mist_) {
+        one.age += dt;
+        one.position[0] += one.drift[0] * dt;
+        one.position[1] += kMistRise * dt;
+        one.position[2] += one.drift[1] * dt;
+        one.spin += one.turn * dt;
+    }
+    mist_.erase(std::remove_if(mist_.begin(), mist_.end(),
+                               [](const Mist& m) { return m.age >= kMistLife; }),
+                mist_.end());
+    if (beacon_ && beaconSeen_) {
+        mistClock_ += dt;
+        while (mistClock_ >= kMistEvery) {
+            mistClock_ -= kMistEvery;
+            if (mist_.size() >= kMostMist) continue;
+            Mist one;
+            const float way = unit() * 6.2831853f;
+            const float off = unit() * 0.6f;
+            one.position[0] = kBeaconAt[0] + std::cos(way) * off;
+            one.position[1] = kBeaconAt[1] - 1.2f + unit() * 0.6f;
+            one.position[2] = kBeaconAt[2] + std::sin(way) * off;
+            const float drift = unit() * 6.2831853f;
+            one.drift[0] = std::cos(drift) * kMistDrift;
+            one.drift[1] = std::sin(drift) * kMistDrift;
+            one.spin = unit() * 6.2831853f;
+            one.turn = (unit() - 0.5f) * 0.6f;
+            mist_.push_back(one);
+        }
+    } else {
+        mistClock_ = 0.0f;
+    }
 
     for (Spout& spout : spouts_) {
         const Figure* figure = sway.posedAt(spout.anchor.townIndex);
@@ -422,6 +482,51 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
             sprite.halfWidth = sprite.halfHeight = 0.5f * kShinyMetres * scale;
             sprite.spin = glint.spin - (glint.small ? glint.age * 12.0f * 3.14159265f / 180.0f : 0.0f);
             sprite.sheet = shiny_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    // The beacon's mist, under its light.
+    if (bgfx::isValid(smoke_)) {
+        for (const Mist& one : mist_) {
+            const float t = one.age / kMistLife;
+            gfx::Sprite sprite;
+            for (int k = 0; k < 3; ++k) sprite.position[k] = one.position[k];
+            sprite.halfWidth = sprite.halfHeight = 0.5f * (kMistBorn + (kMistGrown - kMistBorn) * t);
+            sprite.spin = one.spin;
+            // Added, lit by the beacon: mixed over the light as smoke it laid a grey hole in the
+            // core, and vapour round a lamp glows rather than shades.
+            const float level = kMistPeak * std::sin(t * 3.14159265f);
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = kMistColour[k] * level;
+            sprite.colour[3] = 1.0f;
+            sprite.sheet = smoke_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    // And its bloom, a broad soft flare behind the stars (ours, with the mist above).
+    if (beacon_ && beaconSeen_ && bgfx::isValid(light_)) {
+        gfx::Sprite sprite;
+        for (int a = 0; a < 3; ++a) sprite.position[a] = kBeaconAt[a];
+        sprite.halfWidth = sprite.halfHeight = kBeaconBloom;
+        for (int k = 0; k < 3; ++k) {
+            sprite.colour[k] = kBeaconBloomColour[k] * kBeaconBloomLevel * luminosity_;
+        }
+        sprite.colour[3] = 1.0f;
+        sprite.sheet = light_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
+    }
+    if (beacon_ && beaconSeen_ && bgfx::isValid(lightning_)) {
+        for (float way : {1.0f, -1.0f}) {
+            gfx::Sprite sprite;
+            for (int a = 0; a < 3; ++a) sprite.position[a] = kBeaconAt[a];
+            sprite.halfWidth = sprite.halfHeight =
+                0.5f * kSheetMetres * kBeaconScale * kBeaconSoften;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = luminosity_ * kBeaconStarLevel;
+            sprite.colour[3] = 1.0f;
+            sprite.spin = way * kStarDegreesPerSecond * spun_ * 3.14159265f / 180.0f;
+            sprite.sheet = lightning_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }

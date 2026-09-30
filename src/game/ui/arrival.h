@@ -1,5 +1,6 @@
 // The map's name as the character comes in: "LORENCIA" in wide Roman capitals over a hairline
-// with a diamond, "TOWN · SAFE ZONE" beneath, just above the HUD. It fades in, holds and goes.
+// with a diamond, "LEVEL 2-38" beneath -- the lowest and highest monster on the map -- just
+// above the HUD. It fades in, holds and goes.
 //
 // MU's CUIMapName (MuMain UI/Legacy/UIMapName.cpp) is what it stands for: a 166x90 picture per
 // map from Local/Eng/ImgsMapName, centred at y 220 of 480, alpha 0.2 to 1 at 0.015 a frame, five
@@ -44,8 +45,9 @@ public:
     void shutdown();
 
     // The world's name comes up after `delay` seconds. A world with no entry in the table is
-    // named by its own id, capitalised, and has no caption.
-    void announce(const std::string& world, float delay);
+    // named by its own id, capitalised, and has no caption. A `caption` given replaces the
+    // table's: where he came in, when that is not the town (app/modes/play_mode.cpp).
+    void announce(const std::string& world, float delay, const std::string& caption = {});
     // Advances the clock and redraws while it is showing.
     void update(float seconds, float width, float height);
 

@@ -8,7 +8,7 @@
 uniform vec4 u_sunDir;      // xyz: towards the sun, world space. w: its strength
 uniform vec4 u_sunColour;   // rgb: linear. w: ambient strength
 uniform vec4 u_skyColour;   // rgb: the zenith. w: the horizon's paleness
-uniform vec4 u_groundColour;// rgb: the turf that bounces light up. w: unused
+uniform vec4 u_groundColour;// rgb: the turf that bounces light up. w: water_sheen (fs_ground)
 uniform vec4 u_dust;        // rgb: the dust's own colour, an albedo. w: its density per metre
 uniform vec4 u_edge;        // xy: the map's far corner in metres (+x and -z). z: how many
                             // metres of dark stand at its border. 0 is a world with no border
@@ -232,7 +232,15 @@ float ditherAt(vec2 pixel)
 // Where the fade rides: v_light.w. A static mesh already uses that for a glow's flicker, 0 to 1
 // (fs_glow), so a figure sends 2 + fade and only a w of 2 or more is read as one. Anything
 // under 2 is all there.
+//
+// A self-lit figure sends 4 + fade instead (vs_skinned, off the instance light's w): MU's
+// Level 3, the Ice Queen, drawn at her sheet's own colour in any light. See selfLit.
 float figureFade(float w)
 {
-	return w >= 2.0 ? w - 2.0 : 1.0;
+	return w >= 4.0 ? w - 4.0 : (w >= 2.0 ? w - 2.0 : 1.0);
+}
+
+float selfLit(float w)
+{
+	return step(4.0, w);
 }

@@ -1,0 +1,24 @@
+{
+  "name": "snow",
+  "summary": "Lying snow: Devias's snowfield, its drifts, and the rime that frosts its ground.",
+  "why": [
+    "Not grass, and the difference is load-bearing: ground.cpp sows the sward on every slot",
+    "whose recipe is grass, and Devias's two 'grass' sheets are snow.",
+    "Roughness 0.78. Fresh snow is a heap of tiny ice crystals, so it is rough at walking",
+    "distance but not as dead as dry sand - it keeps a soft sheen toward the sun, which is",
+    "most of what tells snow from white plaster.",
+    "Depth 0.14 on a cast grain, a little over sand's 0.10. MU's sheet paints drifts and",
+    "creases in pale blue; read as height they give the snowfield its soft relief. Much more",
+    "and the snow turns to crusted gravel.",
+    "Range 0.10. Wind-packed and loose snow lie side by side, so a snowfield varies more",
+    "than sand does."
+  ],
+  "metallic": 0.0,
+  "roughness": 0.78,
+  "grain": {
+    "kind": "cast",
+    "scale": 260,
+    "depth": 0.14,
+    "roughness_range": 0.1
+  }
+}

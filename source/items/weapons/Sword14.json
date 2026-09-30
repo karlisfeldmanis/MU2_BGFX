@@ -1,0 +1,167 @@
+{
+  "item": "Sword14",
+  "mu_name": "Double Blade",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:102 and mu.db's items row (group 0, index 13) name it the Double Blade against Item/Sword14.bmd.",
+  "why_this_one": "Drop level 48: the Ice Queen leaves it. See docs/devias-drops.md.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:102. The 0.75 table.",
+    "call": "CreateWeapon(0, 13, 0, 22, 1, 3, true, \"Double Blade\", 48, 48, 56, 30, 43, 0, 0, 70, 70, 0, 0, 0, 1, 1)",
+    "group": 0,
+    "number": 13,
+    "drop_level": 48,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 1,
+    "height": 3,
+    "minimum_damage": 48,
+    "maximum_damage": 56,
+    "attack_speed": 30,
+    "durability": 43,
+    "requires": {
+      "level": 0,
+      "strength": 70,
+      "agility": 70,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight",
+      "elf"
+    ],
+    "skill": 22
+  },
+  "stance": "sword",
+  "stance_from": "ZzzCharacter.cpp:356-360: a sword that is not TwoHand (width 1) stands PLAYER_STOP_SWORD and leaves the shield hand free.",
+  "sheets": {
+    "sword015": "sword015.png",
+    "sword015_2": "sword015_2.png"
+  },
+  "sheet_from": "Data/Item/sword015.OZJ (64x64) on 102 triangles, sword015_2.OZJ (32x32, a red smear on pale) on 78.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    },
+    "plate_steel": {
+      "roughness": 0.5
+    }
+  },
+  "material_overrides_note": "Steel's own 0.2 mirrors the grass; the Devias batch settled on 0.45 (plate 0.5) after the studio caught black heads and flaring shafts.",
+  "glow": {
+    "sword015_2": {}
+  },
+  "glow_note": "`case MODEL_DOUBLE_BLADE` with the Blade: BlendMesh 1, steady (ZzzObject.cpp:5314-5316). Its swing blur is red in MU (ZzzCharacter.cpp:3951), which play_show's streak does not yet say per weapon.",
+  "material_note": "The winged blade is lacquered red on black (163,15,13 over 1,1,1) -- a broad painted metal face, plate. The grip (-28 to 12, near black with a pale band) is a wrap. The two 39-triangle islands are the glow (sword015_2).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "plate_steel",
+      "triangles": 38,
+      "area": 2028.3,
+      "along": [
+        2.7,
+        45.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.915,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.919,
+        0.824
+      ]
+    },
+    {
+      "island": 1,
+      "material": "leather_wrap",
+      "triangles": 26,
+      "area": 677.2,
+      "along": [
+        -27.9,
+        17.0
+      ],
+      "mu_uv": [
+        0.418,
+        0.351,
+        0.999,
+        0.555
+      ],
+      "bake_uv": [
+        0.019,
+        0.831,
+        0.743,
+        0.949
+      ]
+    },
+    {
+      "island": 2,
+      "material": "plate_steel",
+      "triangles": 38,
+      "area": 2028.3,
+      "along": [
+        2.7,
+        45.6
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.915,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.01,
+        0.952,
+        0.992
+      ]
+    },
+    {
+      "island": 3,
+      "material": "plate_steel",
+      "triangles": 39,
+      "area": 2341.1,
+      "along": [
+        17.7,
+        153.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.052,
+        0.113,
+        0.192
+      ]
+    },
+    {
+      "island": 4,
+      "material": "plate_steel",
+      "triangles": 39,
+      "area": 2341.1,
+      "along": [
+        17.7,
+        153.7
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.192,
+        0.07
+      ]
+    }
+  ]
+}

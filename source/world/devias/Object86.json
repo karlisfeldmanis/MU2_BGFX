@@ -1,0 +1,72 @@
+{
+  "item": "Object86",
+  "mu_name": "Object86",
+  "mu_name_from": "Devias's object slot 85, which is the model index: every world but Lorencia runs its objects in one straight sequence, so type N is Object{N+1}.bmd and there is no friendlier name in the client than the number.",
+  "world": "devias",
+  "object_type": 85,
+  "placements": 29,
+  "profile": "world",
+  "sheets": {
+    "badge_02": "dv_badge_02.png",
+    "Javelins03": "dv_javelins03.png"
+  },
+  "sheet_from": "Data/Object3/*.OZJ and .OZT, from MuMain, decoded under a dv_ prefix. The prefix is load-bearing as nr_ is for Noria: assets/textures is one flat pool, and 39 of Object3's sheet names are already in it.",
+  "sheet_materials": {
+    "badge_02": "cloth",
+    "Javelins03": "steel"
+  },
+  "material_note": "badge_02: a pale banner with a red and gold crest, its edge cut out.\nJavelins03: the steel spear the banner hangs from.",
+  "cutout": [
+    "badge_02"
+  ],
+  "cutout_from": "Each carries a real alpha channel, as decode_texture reports it.",
+  "why_this_one": "29 of them: the town's crested banners.",
+  "animation_note": "Rigged: 8 bones, one action of 25 keys, the banner stirring. Plays at CreateObject's 0.16.",
+  "effects_note": "No arm in MuMain's WD_2DEVIAS switches beyond its own clip. Not the sliding door -- that is type 86, Object87.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 8,
+      "area": 4751.4,
+      "along": [
+        -88.9,
+        -0.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.52,
+        0.52
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 28,
+      "area": 3109.4,
+      "along": [
+        -5.9,
+        5.9
+      ],
+      "mu_uv": [
+        0.034,
+        0.027,
+        0.946,
+        0.975
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.989
+      ]
+    }
+  ]
+}

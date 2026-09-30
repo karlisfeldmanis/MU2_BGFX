@@ -1,0 +1,30 @@
+# Re-finish the Golden Archer's pages from the kept raw takes, with shorter paragraph gaps
+# (the user, 2026-09-30: "to big pauses between paragraphs"). No re-reading.
+import sys, subprocess, pathlib, tempfile
+sys.path.insert(0, "/Users/karlisfeldmanis/Documents/muremaster2/MU2_BGFX/tools")
+import voice
+GAP = float(sys.argv[1]) if len(sys.argv) > 1 else 0.25
+SQ = ("silenceremove=start_periods=1:start_threshold=-45dB:stop_periods=-1:"
+      "stop_duration=0.5:stop_threshold=-45dB:stop_silence=0.5,")
+polish = voice.VOICES["golden_archer"]["polish"].replace("apad=pad_dur=0.6,", "")
+TRIM = ",areverse,silenceremove=start_periods=1:start_threshold=-50dB,areverse"
+raw = pathlib.Path("raw")
+out = pathlib.Path("/Users/karlisfeldmanis/Documents/muremaster2/MU2_BGFX/source/voice")
+pages = sorted({p.name.split(".")[0][:-1] for p in raw.glob("*.raw.wav")})
+run = lambda *a: subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *a], check=True)
+with tempfile.TemporaryDirectory() as t:
+    t = pathlib.Path(t)
+    run("-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono", "-t", str(GAP), "-sample_fmt", "s16", str(t / "gap.wav"))
+    run("-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono", "-t", "0.5", "-sample_fmt", "s16", str(t / "tail.wav"))
+    for page in pages:
+        takes = sorted(raw.glob(f"{page}[0-9].raw.wav"))
+        parts = []
+        for i, take in enumerate(takes):
+            part = t / f"{page}{i}.wav"
+            run("-i", str(take), "-af", SQ + polish + TRIM, "-ar", "24000", "-ac", "1", "-sample_fmt", "s16", str(part))
+            parts += [part, t / ("gap.wav" if i < len(takes) - 1 else "tail.wav")]
+        (t / "list.txt").write_text("".join(f"file '{p}'\n" for p in parts))
+        part_no = page.split("_")[0]
+        target = out / f"golden_archer_{part_no}" / f"golden_archer_{page}.wav"
+        run("-f", "concat", "-safe", "0", "-i", str(t / "list.txt"), "-c", "copy", str(target))
+        print(page, len(takes), "paragraphs ->", target.name)

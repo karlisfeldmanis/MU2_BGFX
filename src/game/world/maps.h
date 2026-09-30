@@ -9,6 +9,10 @@
 
 #include <string>
 
+namespace mu::content {
+struct Tables;
+}
+
 namespace mu::game {
 
 struct MapRow {
@@ -22,9 +26,23 @@ struct MapRow {
 // The row for `world`, or nullptr for one not in the table.
 const MapRow* mapOf(const std::string& world);
 
+// The row for MU's map number, or nullptr: where a gate's target map is found.
+const MapRow* mapNumbered(int number);
+
 // The next world in the table after `world`, wrapping: the stand-in for a Move window until
 // there is one (app/modes/play_mode.cpp, the M key).
 const MapRow* mapAfter(const std::string& world);
+
+// The line under the map's name as he comes in: "Level 2-38", the lowest and the highest level
+// of the monsters the map's nests raise. Empty on a map with no nests. Invention: MU's
+// ShowMapName is the map's picture alone.
+std::string zoneLevels(const content::Tables& tables);
+
+// The name to show for a tile of `world`: "Dungeon 1", "Dungeon 2" or "Dungeon 3" by the floor
+// the tile is on -- three disconnected regions of one map, the Move list's Dungeon, Dungeon2 and
+// Dungeon3 (OpenMU Version075 Gates.cs:48-50; docs/dungeon-port.md §1.2) -- and `world` itself
+// on every other map. The user's, 2026-09-30.
+std::string placeName(const std::string& world, int column, int row);
 
 // The lighting overlay for a world, laid over sheets/lighting.json by TimeOfDay::setScene:
 // `sheetsDir`/worlds/<world>.json when the file exists, and empty -- the base sheet alone --
