@@ -364,6 +364,8 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
                             const content::Ground& g, uint64_t state, bool lit) {
     for (const content::GroundPart& part : g.parts()) {
         if (lit) {
+            // First: it binds stages 6 and 15, and the land wants its own on both.
+            bindShadeInputs();
             const content::GroundLayer* l = part.layers;
             // The bite is MU2's own 0.35, in w.
             const float repeat[4] = {l[0].repeat, l[1].repeat, l[2].repeat, 0.35f};
