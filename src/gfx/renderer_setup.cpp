@@ -56,6 +56,7 @@ bool Renderer::init(int width, int height, const std::string& shaderDir, int msa
     uGroundBlend_ = bgfx::createUniform("u_groundBlend", bgfx::UniformType::Vec4);
     uGroundRelief_ = bgfx::createUniform("u_groundRelief", bgfx::UniformType::Vec4);
     uWaterGlow_ = bgfx::createUniform("u_waterGlow", bgfx::UniformType::Vec4);
+    uWaterWave_ = bgfx::createUniform("u_waterWave", bgfx::UniformType::Vec4);
     uGroundSlots_ = bgfx::createUniform("u_groundSlots", bgfx::UniformType::Vec4);
     uGroundWeights_ = bgfx::createUniform("u_groundWeights", bgfx::UniformType::Vec4);
     sGroundWeights_ = bgfx::createUniform("s_groundWeights", bgfx::UniformType::Sampler);
@@ -392,7 +393,7 @@ void Renderer::shutdown() {
     }
     for (bgfx::UniformHandle* u :
          {&uSunDir_, &uSunColour_, &uSkyColour_, &uGroundColour_, &uDust_, &uEdge_, &uAbyss_, &sAbyss_, &uGrassStorm_, &uCamPos_, &uParams_,
-          &uMaterial_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
+          &uMaterial_, &uTranslucency_, &uRefine_, &uRefineStar_, &sChrome_, &sShiny_, &sChrome2_, &uShadowMtx_, &uShadowParams_, &uShadowDebug_, &uShadowReach_, &uCamRay_, &uPrepassSize_, &uGroundRepeat_, &uGroundBlend_, &uGroundRelief_, &uWaterGlow_, &uWaterWave_, &uGroundSlots_, &uGroundWeights_, &sGroundWeights_, &sAlbedo3_, &sNormal3_, &sOrm3_, &uGrassCard_, &uGrassWind_, &uGrassRoot_, &uGrassTip_, &uGrassVary_, &uGrassThrough_, &uGrassShape_, &uGrassSheet_, &uGrassSize_, &uGrassReach_, &uGrassWalkers_, &sAlbedo2_, &sNormal2_, &sOrm2_, &sAlbedo_,
           &sNormal_, &sOrm_, &sEmissive_, &sShadowCompare_, &sShadowDepth_, &sPrepass_, &sAo_,
           &uGrassSteps_, &uGrassWake_,
           &sColour_, &sBones_, &uLampGrid_, &uLampParams_, &uTransientAt_, &uTransientColour_, &uTransientTo_, &sLamps_, &sLampGrid_, &uBloom_, &uPresent_, &uGrade_, &uTintLow_, &uTintHigh_, &uBloomTexel_,

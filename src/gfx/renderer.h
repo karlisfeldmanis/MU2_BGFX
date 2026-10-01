@@ -536,6 +536,7 @@ private:
     float elapsed_ = 0.0f;
     float waterFlow_ = 1.0f;  // the sheet's water_flow, taken at draw() for submitGround
     float waterGlow_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // the sheet's water_glow, likewise
+    float waterWobble_ = 0.0f;                        // and its water_wobble
     // The shine (setShine): its sheets, and u_refine, bound for each draw by bindShine() off
     // the same play clock. `shineStrength_` is how strongly the chrome is added, and
     // `shineTint_` how much of MuMain's tint the lit colour takes; 1 is MuMain's own for both.
@@ -707,6 +708,7 @@ private:
     bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRelief_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uWaterGlow_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uWaterWave_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundSlots_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundWeights_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sGroundWeights_ = BGFX_INVALID_HANDLE;

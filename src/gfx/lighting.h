@@ -97,6 +97,11 @@ struct Lighting {
     // tower with no torch is the only warm light (docs/lost-tower-port.md). Ours. 0 everywhere
     // else, so their water is as it was.
     float waterGlow[3] = {0.0f, 0.0f, 0.0f};
+    // How much a water layer wobbles, 1 MU's: every water tile's V nudged by
+    // `TerrainGrassWind * 0.002`, a sine of the clock and the column, about two hundredths of a
+    // sheet at ten radians a second (ZzzLodTerrain.cpp:1763, 3301-3306). MU does it to all its
+    // water; here only a sheet that asks, the Lost Tower's lava, so the rest is as it was.
+    float waterWobble = 0.0f;
     float bloomThreshold = 1.2f;
     float bloomKnee = 0.6f;
     float bloomStrength = 0.25f;

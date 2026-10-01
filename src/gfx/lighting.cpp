@@ -78,6 +78,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
     doc.readInto("water_flow", &waterFlow);
     doc.readInto("water_sheen", &waterSheen);
     doc.readVec3Into("water_glow", waterGlow);
+    doc.readInto("water_wobble", &waterWobble);
     doc.readInto("grass_meadow", &grassMeadow);
     doc.readInto("grass_meadow_height", &grassMeadowHeight);
     doc.readInto("grass_widen", &grassWiden);
@@ -100,7 +101,7 @@ void Lighting::apply(const core::Json& doc, const std::string& from) {
         "ground_colour", "ambient_strength", "exposure", "dust_colour", "dust_density", "shadow_range", "shadow_fit_below", "shadow_bias_metres",
         "shadow_normal_bias", "sun_angle_degrees", "lamp_strength", "lamp_shadow", "glow_strength", "bloom_threshold", "bloom_knee", "bloom_strength", "flame_strength", "sharpen", "contrast", "tonemap", "saturation", "split", "tint_low", "tint_high", "ssao_radius", "ssao_strength", "probe", "probe_view", "metal_gain", "refine_strength", "refine_tint", "refine_stage_strength", "refine_star", "excellent_strength", "refine_glow",
         "grass", "grass_radius", "grass_fade", "grass_thin", "grass_mip_bias", "grass_density", "grass_height", "grass_aspect",
-        "grass_lean", "grass_rank", "grass_dry", "grass_vary", "water_flow", "water_sheen", "water_glow", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao", "grass_through_colour", "grass_through", "grass_length_spread", "grass_rank_height",
+        "grass_lean", "grass_rank", "grass_dry", "grass_vary", "water_flow", "water_sheen", "water_glow", "water_wobble", "grass_meadow", "grass_meadow_height", "grass_widen", "grass_root_colour", "grass_tip_colour", "grass_colour", "grass_cutout", "grass_painted", "grass_root_ao", "grass_through_colour", "grass_through", "grass_length_spread", "grass_rank_height",
         "grass_roughness", "grass_wind_strength", "grass_wind_degrees", "note"};
     for (const auto& [key, value] : doc.members) {
         bool known = false;

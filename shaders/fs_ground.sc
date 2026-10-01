@@ -14,6 +14,7 @@ uniform vec4 u_groundRepeat;  // xyz: each layer's repeat  w: the bite
 uniform vec4 u_groundBlend;   // x: the flow's cycle  y: its band's row, or -1  z: reach, or MU's slide  w: layers
 uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are water, a bit each
 uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)
+uniform vec4 u_waterWave;     // x: the sheet's water_wobble, 1 MU's  y: MU's WindSpeed, radians
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
 
@@ -79,6 +80,10 @@ void main()
 	float flowFade = 0.0;
 	bool flowing = u_groundBlend.y >= 0.0 && u_groundSlots.w > 0.5 && u_groundRelief.w > 0.5;
 	vec2 slide = vec2(u_groundBlend.y >= 0.0 ? 0.0 : u_groundBlend.z, 0.0);
+	// MU's wobble across the slide: V nudged by `TerrainGrassWind * 0.002`, the wind being
+	// `sin(WindSpeed + column * 5) * 10` (ZzzLodTerrain.cpp:1763, 3306). MU takes it at each
+	// tile's corners; here at every pixel, so it bends where MU's sheared. Off unless asked.
+	slide.y += u_waterWave.x * 0.02 * sin(u_waterWave.y + v_texcoord0.x * 5.0);
 	if (flowing)
 	{
 		vec2 at = v_texcoord0 + vec2(0.5, 0.5 + u_groundBlend.y);

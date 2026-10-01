@@ -418,6 +418,10 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
                                            (l[2].water ? 4 : 0))};
             bgfx::setUniform(uGroundRelief_, relief);
             bgfx::setUniform(uWaterGlow_, waterGlow_);
+            // MU's WindSpeed, `WorldTime % 36000 * 0.01`: ten radians a second, round every
+            // thirty-six seconds (ZzzLodTerrain.cpp:3262).
+            const float wave[4] = {waterWobble_, std::fmod(elapsed_, 36.0f) * 10.0f, 0.0f, 0.0f};
+            bgfx::setUniform(uWaterWave_, wave);
             // xyz are each layer's water slide, in widths of its own sheet: MuMain's
             // WaterMove, `(WorldTime % 20000) * 0.00005` (ZzzLodTerrain.cpp), added to U on
             // every tile that wears TileWater01 -- one sheet width every twenty seconds, along
@@ -494,6 +498,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     drawCount_ = 0;
     waterFlow_ = lighting.waterFlow;
     for (int i = 0; i < 3; ++i) waterGlow_[i] = lighting.waterGlow[i];
+    waterWobble_ = lighting.waterWobble;
     // The chasms' dark, which is the world's and not the sheet's. content::Ground::abyss.
     abyss_ = ground ? ground->abyss() : bgfx::TextureHandle{bgfx::kInvalidHandle};
     if (bgfx::isValid(abyss_)) {
