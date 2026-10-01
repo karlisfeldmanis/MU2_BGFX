@@ -1,0 +1,91 @@
+{
+  "item": "Object24",
+  "mu_name": "Object24",
+  "mu_name_from": "The Lost Tower's object slot 23, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 23,
+  "placements": 163,
+  "profile": "world",
+  "sheets": {
+    "re_07": "lt_re_07.png",
+    "re_008": "lt_re_008.png"
+  },
+  "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix.",
+  "sheet_materials": {
+    "re_07": "rock",
+    "re_008": "lamplight"
+  },
+  "why_this_one": "The tower's lamp post, 163 of them in rows round the squares and along the walks: a 1.3 m post of carved stone and a small orb of blue light on top at 1.58 m, on a 12-key clip. The user: 'lets work ono light emiters'.",
+  "material_note": "re_07 is the green-gold relief, MU's own here (the walls wear a copy graded grey, Object04): on a lone post it reads as the lamp's bronze-worked stone. re_008 is cyan light dots on black (brightest 7, 185, 237), added.",
+  "additive": [
+    "re_008"
+  ],
+  "additive_from": "MoveObject's WD_4LOSTTOWER arm sets BlendMesh 1 on type 23 (ZzzObject.cpp:4013-4017): re_008's blue dots drawn RENDER_BRIGHT at BlendMeshLight 1.",
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        0,
+        0,
+        158
+      ],
+      "colour": [
+        0.35,
+        0.75,
+        1.0
+      ],
+      "low": 0.55,
+      "high": 0.65,
+      "range_tiles": 3,
+      "flicker_hz": 1,
+      "smooth_seconds": 0.5
+    }
+  ],
+  "emitters_from": "Ours, marked. MU adds no light here: the lamp's BITMAP_LIGHT at bone 1 is commented out in that same arm, and the tower's light is all painted into TerrainLight. But the tower has no torch, and the user asked for its light emitters; so each orb lights three tiles round it in its own cyan, steady but for a slow breath, at the orb's height (158, the re_008 faces' centre) rather than the post's foot.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 80,
+      "area": 894.9,
+      "along": [
+        -8.5,
+        9.0
+      ],
+      "mu_uv": [
+        -0.15,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.399,
+        0.347
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 26,
+      "area": 31435.7,
+      "along": [
+        -32.9,
+        32.8
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.005,
+        0.006,
+        0.993,
+        0.995
+      ]
+    }
+  ]
+}
