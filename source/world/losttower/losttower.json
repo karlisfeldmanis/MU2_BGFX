@@ -21,6 +21,11 @@
   "10": "TileRock04"
  },
  "grass_slots": [],
+ "void": {
+  "start": 0.1,
+  "depth": 1.6,
+  "rim": true
+ },
  "objects": [
   {
    "type": 1,

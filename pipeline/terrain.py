@@ -170,6 +170,15 @@ GRASS_BY_MAP = {
 #: the moat is fed at its north-west corner and runs both ways round the town to the canal at
 #: its south-east, which joins the east river; that runs from the north sea to the south-east
 #: one; the west river runs down its bend from the map's west edge back to it.
+#: How each world's NoGround chasm meets its ground (content::Ground, the world json's `void`).
+#: The Lost Tower's causeways and floor edges stand over the void with no wall on them, and
+#: their sides fall 1.7 m to the void's corners: `rim` takes a corner touching the void to the
+#: walkway's level, and the abyss takes everything below it to black over 1.7 m, so the sides
+#: melt into the dark as MU's do (the user's MU shot of floor 7's causeway, 2026-10-01).
+VOID_BY_MAP = {
+    4: {"start": 0.1, "depth": 1.6, "rim": True},
+}
+
 WATER_FLOW_BY_MAP = {
     # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at
     # one end and drained at the other -- the two ends furthest apart along it, found by walking
@@ -516,6 +525,7 @@ def main() -> None:
         "light": "light.png" if lit is not None else "",
         "tile_slots": {str(slot): tile for slot, tile in named},
         **({"grass_slots": GRASS_BY_MAP[number - 1]} if number - 1 in GRASS_BY_MAP else {}),
+        **({"void": VOID_BY_MAP[number - 1]} if number - 1 in VOID_BY_MAP else {}),
         **({"water_flow": WATER_FLOW_BY_MAP[number - 1]}
            if number - 1 in WATER_FLOW_BY_MAP else {}),
         "objects": placed,

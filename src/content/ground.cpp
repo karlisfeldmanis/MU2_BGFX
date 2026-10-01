@@ -645,6 +645,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     voidSink_ = float(chasm["sink"].numberOr(8.0));
     abyssStart_ = float(chasm["start"].numberOr(1.5));
     abyssDepth_ = float(chasm["depth"].numberOr(5.0));
+    abyssRim_ = chasm["rim"].boolOr(false);
 
     if (!readGrids(worldDir, doc["height"].stringOr("height.png"),
                    doc["attributes"].stringOr("attributes.png"))) {
@@ -1079,9 +1080,37 @@ void Ground::buildAbyss() {
             }
         }
     }
+    // The rim's level at each ground point: its own height, or with `rim` and a void tile
+    // beside it, the highest corner of the ground tiles beside it -- so a side falling from a
+    // causeway to the void's corners is below its rim, and goes into the dark, as MU's terrain
+    // light takes it (MU darkens a steep face by its normal; this engine lights it).
+    std::vector<float> rimLevel(height_.begin(), height_.end());
+    if (abyssRim_) {
+        for (int r = 0; r < n; ++r) {
+            for (int c = 0; c < n; ++c) {
+                bool touchesVoid = false;
+                float high = -1e9f;
+                for (int tr = r - 1; tr <= r; ++tr) {
+                    for (int tc = c - 1; tc <= c; ++tc) {
+                        if (tc < 0 || tr < 0 || tc >= n || tr >= n) continue;
+                        if (isVoid(tc, tr)) {
+                            touchesVoid = true;
+                            continue;
+                        }
+                        for (int kr = tr; kr <= std::min(tr + 1, n - 1); ++kr) {
+                            for (int kc = tc; kc <= std::min(tc + 1, n - 1); ++kc) {
+                                high = std::max(high, height_[size_t(kr) * size_t(n) + size_t(kc)]);
+                            }
+                        }
+                    }
+                }
+                if (touchesVoid && high > -1e8f) rimLevel[size_t(r) * size_t(n) + size_t(c)] = high;
+            }
+        }
+    }
     std::vector<uint16_t> texels(source.size());
     for (size_t i = 0; i < source.size(); ++i) {
-        const float level = source[i] >= 0 ? height_[size_t(source[i])] : height_[i];
+        const float level = source[i] >= 0 ? rimLevel[size_t(source[i])] : height_[i];
         texels[i] = bx::halfFromFloat(level);
     }
     abyss_ = bgfx::createTexture2D(uint16_t(n), uint16_t(n), false, 1, bgfx::TextureFormat::R16F,

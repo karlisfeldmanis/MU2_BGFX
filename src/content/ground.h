@@ -188,6 +188,10 @@ private:
     float voidSink_ = 8.0f;
     float abyssStart_ = 1.5f;
     float abyssDepth_ = 5.0f;
+    // A corner touching the void takes the highest ground beside it as its rim, not its own
+    // height: the Lost Tower's causeways, whose sides fall to the void's corners at 0 and with
+    // no wall over them stood up as lit grey slopes. The world's `void.rim`.
+    bool abyssRim_ = false;
     bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
     float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     std::vector<float> height_;  // metres, [row * size + column]
