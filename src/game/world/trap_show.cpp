@@ -57,10 +57,14 @@ constexpr Marker kMarkers[] = {
 };
 // Only markers this near him drop anything: MU moves only what is in view.
 constexpr float kStoneReach = 25.0f;
-// And never more than this many in the air, which the 29 at their one-in-three never reach.
+// And never more than this many in the air, which the 29 markers never reach.
 // MU's size is kept: a 6 cm pebble is grit at this camera, and the user took it as it is
 // (2026-09-30: "if they have to be small then let it be").
 constexpr size_t kMostStones = 600;
+// One frame in this many drops a pebble at a marker. MU's rand_fps_check(3) is about eight a
+// second at each, a steady trickle; ours, at the user's word (2026-10-01: 'we need this stone
+// droping aniamtions happend more rarely'), a pebble every second or so.
+constexpr uint32_t kStoneOdds = 30;
 
 }  // namespace
 
@@ -244,7 +248,7 @@ void TrapShow::update(float seconds, const float hero[3], gfx::Renderer& rendere
                 const float mx = m.x * kUnit, mz = -m.y * kUnit;
                 const float dx = mx - hero[0], dz = mz - hero[2];
                 if (dx * dx + dz * dz > kStoneReach * kStoneReach) continue;
-                if (roll() % 3u != 0u || stones_.size() >= kMostStones) continue;
+                if (roll() % kStoneOdds != 0u || stones_.size() >= kMostStones) continue;
                 const float px = float(int(roll() % 64u) - 32);
                 const float py = -float(roll() % 32u + 50u);
                 const float pz = float(roll() % 128u + 200u);
