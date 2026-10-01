@@ -32,7 +32,6 @@ enum class Mark : uint8_t {
     Taken,     // a blow on him, MU's red
     Absorbed,  // what his shield ate of it, blue and small, beside the red
     Miss,      // the word
-    Magic,     // a spell's damage, lavender: wizardry and not the weapon (the user, 2026-09-28)
     Poison,    // a poison's pulse, MuMain's DT_POISON green (0, 1, 0), at a swing's size
 };
 
@@ -73,8 +72,6 @@ struct Cue {
     bool thrown = false;
     // An arrow's blow, a monster archer's or hers: its hit is eMissileHit, not eMeleeHit.
     bool arrow = false;
-    // Wizardry damage, which is drawn in its own colour: a spell is not a swing.
-    bool magic = false;
     bool poison = false;  // a poison's pulse (Happening::poisoned)
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the

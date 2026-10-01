@@ -151,7 +151,6 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         if (cue.reflected) return Mark::Reflected;
         if (cue.excellent) return Mark::Excellent;
         if (cue.critical) return Mark::Critical;
-        if (cue.magic) return Mark::Magic;
         return cue.skill != 0 ? Mark::Skill : Mark::Swing;
     };
     const auto raise = [&](Mark mark, int32_t value) {
