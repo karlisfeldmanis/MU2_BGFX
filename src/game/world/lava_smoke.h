@@ -2,9 +2,9 @@
 // sheet and nothing over it (the user, 2026-10-01: 'can we add minimal smoke layer sitting of
 // top of lava?').
 //
-// A few dozen wisps of smoke02, each a flat sheet a couple of metres across hanging half a
-// metre over a lava tile near the camera, drifting slowly one way and turning slower still,
-// faded in and out over ten seconds or so. Flat rather than facing the eye, because a
+// A hundred and forty wisps of smoke02, each a flat sheet 5-7 m across hanging half a metre
+// over a lava tile near the camera, overlapping into one thin layer over all the lava in view,
+// drifting slowly one way and turning slower still, faded in and out over ten seconds or so. Flat rather than facing the eye, because a
 // billboard that low cuts into the lava with a hard line (the slab flares did on the floor),
 // and a layer is what was asked for. Lit from below: warm grey, not the dark of a fire's smoke.
 // The user dislikes busy effects, so it is faint and slow; nothing here flickers.

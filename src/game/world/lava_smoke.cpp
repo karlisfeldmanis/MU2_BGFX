@@ -9,21 +9,24 @@
 namespace mu::game {
 namespace {
 
-constexpr int kWisps = 40;
+// Enough, and large enough, that they overlap into one layer over all the lava in view rather
+// than patches (the user: 'that smoke above lava layer has to be not on some spots bot all of
+// lava').
+constexpr int kWisps = 140;
 // Spawned within this of the camera's point, and let go past a little more.
-constexpr float kReach = 16.0f;
-constexpr float kLetGo = 20.0f;
+constexpr float kReach = 22.0f;
+constexpr float kLetGo = 26.0f;
 // Each wisp's life, its height over the lava, its half width and how far it grows.
 constexpr float kLifeMin = 9.0f, kLifeMax = 15.0f;
 constexpr float kHeightMin = 0.35f, kHeightMax = 0.8f;
-constexpr float kSizeMin = 1.6f, kSizeMax = 2.6f;
+constexpr float kSizeMin = 2.5f, kSizeMax = 3.5f;
 constexpr float kGrowth = 0.25f;  // of its size over its life
 // One slow drift for the whole layer, a little scatter each, and a slow turn.
 constexpr float kDrift[2] = {0.18f, -0.08f};
 constexpr float kScatter = 0.06f;
 constexpr float kSpin = 0.06f;  // radians a second at most
 // How much it covers at the middle of its life, and its colour: warm grey, lit from below.
-constexpr float kAlpha = 0.16f;
+constexpr float kAlpha = 0.10f;
 constexpr float kColour[3] = {0.62f, 0.46f, 0.38f};
 
 }  // namespace
