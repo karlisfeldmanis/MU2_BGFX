@@ -149,6 +149,8 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         if (cue.poison) return Mark::Poison;
         if (onHero) return Mark::Taken;
         if (cue.reflected) return Mark::Reflected;
+        // A rune's blow keeps its colour whatever the roll: its critical is its own step.
+        if (cue.rune) return cue.critical || cue.excellent ? Mark::RuneCritical : Mark::Rune;
         if (cue.excellent) return Mark::Excellent;
         if (cue.critical) return Mark::Critical;
         return cue.skill != 0 ? Mark::Skill : Mark::Swing;
@@ -163,7 +165,8 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         figure.value = value;
         figure.mark = mark;
         figure.onHero = onHero;
-        figure.life = mark == Mark::Critical ? kCriticalLife : kFigureLife;
+        figure.life =
+            mark == Mark::Critical || mark == Mark::RuneCritical ? kCriticalLife : kFigureLife;
         // Which row over the body: how many are already standing there, just put up.
         int stacked = 0;
         for (const Figure& other : figures_) {

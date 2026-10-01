@@ -159,6 +159,9 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     happenings_.back().critical = blow.critical;
     happenings_.back().excellent = blow.excellent;
     happenings_.back().thrown = thrown;
+    // A power's blow is the only one of his with no row that pays nothing: Stormcall's
+    // lightning and Meteor's rock (`callDown`, and the rock's flight in `arrive`).
+    happenings_.back().rune = attacker.player && row == nullptr && !pays;
     // The element, after the blow and only on what it left standing: 0.75's order.
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
     elements(blow.damage);
@@ -229,12 +232,23 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         struck.frozenUntil = tick_ + kFrostTicks;
         say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
         const int energy = hero.points.energy;
-        const int bite = std::max(1, int(float(wound) * kFrostWound)) +
-                         runeDice_.nextInt(int(energy * kRuneEnergyLow),
-                                           int(energy * kRuneEnergyHigh) + 1);
+        // It may land critical as his swing may (the user, 2026-10-01: "they can critical
+        // hit"), off his own chance and the sockets' stream: the top of the energy band, as a
+        // critical is the maximum in `strike`, and the whole arrow where a plain one takes
+        // `kFrostWound` of it. ours.
+        const bool critical = hero.stats.criticalChance > 0.0 &&
+                              runeDice_.nextBool(hero.stats.criticalChance);
+        const int high = int(energy * kRuneEnergyHigh);
+        const int bite =
+            critical ? std::max(1, wound) + high
+                     : std::max(1, int(float(wound) * kFrostWound)) +
+                           runeDice_.nextInt(int(energy * kRuneEnergyLow), high + 1);
         struck.health = std::max(0, struck.health - bite);
         say(What::Hit, hero, bite, bite, struck.health, struck.id);
-        core::logf("frost rune: tick %lld, on #%u, %d more", (long long)tick_, struck.id, bite);
+        happenings_.back().critical = critical;
+        happenings_.back().rune = true;
+        core::logf("frost rune: tick %lld, on #%u, %d more%s", (long long)tick_, struck.id, bite,
+                   critical ? " (critical)" : "");
         if (struck.health <= 0) kill(struck, hero);
         return;
     }

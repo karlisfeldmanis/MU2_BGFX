@@ -33,6 +33,8 @@ enum class Mark : uint8_t {
     Absorbed,  // what his shield ate of it, blue and small, beside the red
     Miss,      // the word
     Poison,    // a poison's pulse, MuMain's DT_POISON green (0, 1, 0), at a swing's size
+    Rune,      // a Rune of Creation's power, ice blue, at a skill's size
+    RuneCritical,  // and its critical, paler, at a critical's size
 };
 
 // A blow that has landed on the tick and has not yet been shown.
@@ -73,6 +75,7 @@ struct Cue {
     // An arrow's blow, a monster archer's or hers: its hit is eMissileHit, not eMeleeHit.
     bool arrow = false;
     bool poison = false;  // a poison's pulse (Happening::poisoned)
+    bool rune = false;    // a rune power's blow (Happening::rune)
     // Seconds left on the drawing's own clock. NOT the wall clock: MU2 found that at haste
     // every timed thing fell behind the simulation, because the animation was scaled and the
     // fuses were not. See Showing::advance.

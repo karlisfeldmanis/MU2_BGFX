@@ -161,6 +161,11 @@ const uint32_t kTakenInk = byteColour(239, 74, 60);
 const uint32_t kAbsorbedInk = byteColour(234, 160, 81);
 // A poison's pulse: MuMain's DT_POISON, pure green (WSclient.cpp's `case 5`).
 const uint32_t kPoisonInk = byteColour(40, 235, 60);
+// A rune power's blow, its own colour apart from the ramp (the user, 2026-10-01: "rune damage
+// has to be in different color"): an ice blue nothing else in the fight wears, and its critical
+// paler, as the ramp's gold is paler than its amber.
+const uint32_t kRuneInk = byteColour(92, 182, 255);
+const uint32_t kRuneCriticalInk = byteColour(180, 224, 255);
 const uint32_t kMissInk = byteColour(207, 199, 184);
 const uint32_t kMissOnHeroInk = byteColour(236, 228, 214);
 // The lane's own inks, and they are deliberately not the fight's: experience is the ramp's
@@ -183,6 +188,8 @@ float sizeOf(Mark mark) {
         case Mark::Skill: return kSkillSize;
         case Mark::Critical: return kCriticalSize;
         case Mark::Excellent: return kCriticalSize;
+        case Mark::Rune: return kSkillSize;
+        case Mark::RuneCritical: return kCriticalSize;
         case Mark::Reflected: break;
         case Mark::Miss: return kMissSize;
         case Mark::Absorbed: return kAbsorbedSize;
@@ -202,6 +209,8 @@ uint32_t inkOf(const Showing::Figure& figure) {
         case Mark::Taken: return kTakenInk;
         case Mark::Absorbed: return kAbsorbedInk;
         case Mark::Poison: return kPoisonInk;
+        case Mark::Rune: return kRuneInk;
+        case Mark::RuneCritical: return kRuneCriticalInk;
         case Mark::Miss: return figure.onHero ? kMissOnHeroInk : kMissInk;
         case Mark::Swing: break;
     }

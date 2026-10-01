@@ -992,6 +992,7 @@ void Play::update(double seconds) {
                         cue.arrow = arrow;
                         // A poison's pulse is MU's DT_POISON green, not a blow's number.
                         cue.poison = happening.poisoned;
+                        cue.rune = happening.rune;
                         cue.critical = happening.critical;
                         cue.excellent = happening.excellent;
                         cue.fuse = 0.0f;

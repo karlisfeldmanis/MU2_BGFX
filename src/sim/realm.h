@@ -181,6 +181,9 @@ struct Happening {
     bool thrown = false;
     // A `Hit` that is a poison's pulse and not a blow: drawn green, as MU's DT_POISON is.
     bool poisoned = false;
+    // A `Hit` a Rune of Creation's power dealt -- Stormcall's lightning, Meteor's rock, Frost
+    // Arrow's second wound -- drawn in the rune's own colour (the user, 2026-10-01).
+    bool rune = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;
