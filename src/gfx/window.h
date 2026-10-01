@@ -105,8 +105,8 @@ public:
         Skill1, Skill2, Skill3, Skill4, Skill5,
         Repair,  // L: a mending counter's repair mode, Shift+L its repair-all (CNewUINPCShop); with
                  // the bag down, the quest journal (game/ui/desk.cpp)
-        Travel,  // Tab: the travel list, shown and shut (game/ui/travel.h)
-        Map,     // M: the whole map over the middle of the screen (game/ui/minimap.h)
+        Travel,  // M: the travel list, shown and shut (game/ui/travel.h)
+        Map,     // Tab, held: the whole map over the middle of the screen (game/ui/minimap.h)
         Count
     };
     bool pressed(Key key) const { return keyPressed_[size_t(key)]; }

@@ -231,7 +231,7 @@ public:
     bool acceptQuest(int quest);
     bool completeQuest(int quest, int choice);
     void closeQuest() { realm_.closeQuest(); }
-    // The travel list (Tab, game/ui/travel.h): the realm checks the row and takes the Zen, and
+    // The travel list (M, game/ui/travel.h): the realm checks the row and takes the Zen, and
     // the map change is the mode's, as a gate's is (`takeTravel`, app/modes/play_mode.cpp).
     bool travel(int index);
     // The row paid for since the mode last asked, once, or -1.

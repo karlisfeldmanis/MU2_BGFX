@@ -267,8 +267,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
     const bool windowsOpen =
-        inventoryOpen_ || characterOpen_ || trading_ || banking_ || travel_.up() ||
-        minimap_.full();
+        inventoryOpen_ || characterOpen_ || trading_ || banking_ || travel_.up();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -277,14 +276,11 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         const bool wasUp = menu_.up();
         if (!wasUp && escape) {
-            // The whole map shut by Escape turns its page as M's does.
-            if (minimap_.full()) play.sound().play(play.sound().load("quest_page_turn", false));
             if (windowsOpen) {
                 inventoryOpen_ = characterOpen_ = false;
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
                 travel_.hide();
-                minimap_.setFull(false);
                 fanLatched_ = false;
             } else {
                 menu_.show();
@@ -351,7 +347,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         click();
     }
 
-    // Tab, the travel list (game/ui/travel.h): Tab again or Escape shuts it, and a map pressed
+    // M, the travel list (game/ui/travel.h): M again or Escape shuts it, and a map pressed
     // on is asked of the realm, which takes the Zen; the mode changes the map (Play::takeTravel).
     // Ours: 0.75 has only the `/move` command.
     if (!keysHeld && play.isOpen() && (window.pressed(gfx::Window::Key::Travel) || scriptTab_)) {
@@ -360,11 +356,16 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         click();
     }
     scriptTab_ = false;
-    // M, the whole map over the middle of the screen: M again or Escape shuts it. Ours: 0.75 has
-    // no map at all (Season 3's full map is on Tab).
-    if (!keysHeld && play.isOpen() && (window.pressed(gfx::Window::Key::Map) || scriptMap_)) {
-        minimap_.setFull(!minimap_.full());
-        core::logf("window: map %s", minimap_.full() ? "up" : "down");
+    // Tab, held: the whole map over the middle of the screen, down again when it is let go (the
+    // user, 2026-10-01: 'm opens world list tab opens (on hold) big map'). A scripted "map"
+    // latches it instead, as there is no key to hold. Ours: 0.75 has no map at all (Season 3's
+    // full map is on Tab).
+    if (scriptMap_) scriptMapHeld_ = !scriptMapHeld_;
+    const bool mapWanted = play.isOpen() && ((!keysHeld && window.down(gfx::Window::Key::Map)) ||
+                                             scriptMapHeld_);
+    if (mapWanted != minimap_.full()) {
+        minimap_.setFull(mapWanted);
+        core::logf("window: map %s", mapWanted ? "up" : "down");
         // The journal's page turn, not the click (the user, 2026-10-01: 'we need same sound top
         // to open/close full map').
         play.sound().play(play.sound().load("quest_page_turn", false));
