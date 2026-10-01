@@ -28,14 +28,14 @@
         0.5,
         0.17
       ],
-      "low": 0.22,
-      "high": 0.3,
+      "low": 0.24,
+      "high": 0.27,
       "range_tiles": 2,
-      "flicker_hz": 4,
-      "smooth_seconds": 0.15
+      "flicker_hz": 1,
+      "smooth_seconds": 0.5
     }
   ],
-  "emitters_from": "Ours, marked. MU's slab flare (the missing break, ZzzObject.cpp:2981-2991) lights nothing: it is a sprite. Drawn alone as a small glow over the slab it read as a brown dot (the user: 'they dont look like light objects but just planted brown points'), so each lit slab casts a faint warm pool over itself and the floor, in the flare's own hue (0.6, 0.3, 0.1) at full strength, from the glow's height (43 units the slab's top, 30 more the glow's lift), eased on the flare's 0.15 s. Lamps spaces them 3 m apart along the rows (lightSpacing), so steps of adjacent slabs do not stack into a band, as the hall's lamp posts did.",
+  "emitters_from": "Ours, marked. MU's slab flare (the missing break, ZzzObject.cpp:2981-2991) lights nothing: it is a sprite. Drawn alone as a small glow over the slab it read as a brown dot (the user: 'they dont look like light objects but just planted brown points'), so each lit slab casts a faint warm pool over itself and the floor, in the flare's own hue (0.6, 0.3, 0.1) at full strength, from the glow's height (43 units the slab's top, 30 more the glow's lift), eased on the flare's 0.15 s. Lamps spaces them 3 m apart along the rows (lightSpacing), so steps of adjacent slabs do not stack into a band, as the hall's lamp posts did. Calmed the same day (the user: 'they are little bit to active'): 0.24-0.27, one change a second eased over half a second, the lamp posts' breath rather than a flame's flicker.",
   "islands": [
     {
       "island": 0,

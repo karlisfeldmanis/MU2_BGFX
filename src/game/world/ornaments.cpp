@@ -139,10 +139,13 @@ constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
 constexpr float kSlabFlareScale = 5.0f * kLanternGlowShare;
 // MU's hue at full strength: at its own 0.6 it read as a brown dot, not a light (the user:
 // 'they dont look like light objects but just planted brown points'). Ours.
-constexpr float kSlabFlareColour[3] = {1.0f, 0.5f, 0.17f};
+// And then at 0.4 of it, with the light doing the lighting: at full strength the glow's core
+// stood out as a point (the user: 'i dont like that i can very good see that brown point').
+constexpr float kSlabFlareColour[3] = {0.4f, 0.2f, 0.07f};
 constexpr float kSlabTopMetres = 0.43f;    // Object10's top, 42.6 units over its origin
 constexpr float kSlabFlareLift = 0.3f;     // clear of the top under MU's pitched camera
-constexpr float kSlabFlareEaseSeconds = 0.15f;
+// Half a second, the light's own ease: 'they are little bit to active'.
+constexpr float kSlabFlareEaseSeconds = 0.5f;
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
