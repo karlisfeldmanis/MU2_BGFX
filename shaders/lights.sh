@@ -158,10 +158,10 @@ vec3 lampLight(vec3 wpos, vec3 n, vec3 v, vec3 diffuseColour, vec3 f0, float rou
 	}
 	ivec2 cell = ivec2(cellF);
 
-	// Numbers are one more than the light's column, so a zero byte ends the list. Read as
-	// unorm and put back: 255 steps, exact at every one of them.
-	vec4 first = texelFetch(s_lampGrid, ivec2(cell.x * 2, cell.y), 0) * 255.0 + 0.5;
-	vec4 second = texelFetch(s_lampGrid, ivec2(cell.x * 2 + 1, cell.y), 0) * 255.0 + 0.5;
+	// Numbers are one more than the light's column, so a zero ends the list. Sixteen-bit unorm,
+	// read and put back: 65535 steps, exact at every one of them in a float's 24 bits.
+	vec4 first = texelFetch(s_lampGrid, ivec2(cell.x * 2, cell.y), 0) * 65535.0 + 0.5;
+	vec4 second = texelFetch(s_lampGrid, ivec2(cell.x * 2 + 1, cell.y), 0) * 65535.0 + 0.5;
 
 	for (int i = 0; i < 8; ++i)
 	{

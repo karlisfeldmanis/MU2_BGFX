@@ -175,7 +175,8 @@ static_assert(sizeof(TownInstance) == 36, "the town instance layout drifted from
 
 // One light a model carries, or one the world carries on its own (a hidden anchor). 48 bytes,
 // packed by the cook in exactly this order. docs/sprints/08a-the-lamps.md.
-enum class EmitterKind : uint8_t { Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4 };
+// Vent: the Lost Tower's Flame vents, dark but for a burst (game/world/lamps.h).
+enum class EmitterKind : uint8_t { Lamp = 0, Fire = 1, Candle = 2, Window = 3, Smoke = 4, Vent = 5 };
 struct TownEmitter {
     static constexpr uint16_t kWorld = 0xFFFF;
     uint16_t model;       // the model that carries it, or kWorld

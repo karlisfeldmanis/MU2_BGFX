@@ -47,7 +47,7 @@ void Renderer::setPointLights(const PointLight* lights, uint32_t count, float mi
     // its reach on the ground, tested against the cell's square, so a pixel on a wall above a
     // cell still finds the light that reaches it through that cell's column.
     const int cells = lightCount_ > 0 ? std::max(1, int(std::ceil(side / kLightCellMetres))) : 0;
-    std::vector<uint8_t> grid(size_t(std::max(cells, 1)) * 2 * 4 * size_t(std::max(cells, 1)), 0);
+    std::vector<uint16_t> grid(size_t(std::max(cells, 1)) * 2 * 4 * size_t(std::max(cells, 1)), 0);
     int worst = 0, crowded = 0, lit = 0;
     std::vector<std::pair<float, int>> wanted;
     wanted.reserve(64);
@@ -73,19 +73,19 @@ void Renderer::setPointLights(const PointLight* lights, uint32_t count, float mi
                 ++crowded;
                 std::sort(wanted.begin(), wanted.end());
             }
-            uint8_t* out = &grid[(size_t(cz) * size_t(cells) * 2 + size_t(cx) * 2) * 4];
+            uint16_t* out = &grid[(size_t(cz) * size_t(cells) * 2 + size_t(cx) * 2) * 4];
             for (int k = 0; k < std::min(int(wanted.size()), kLightsPerCell); ++k) {
-                out[k] = uint8_t(wanted[size_t(k)].second + 1);
+                out[k] = uint16_t(wanted[size_t(k)].second + 1);
             }
         }
     }
     if (bgfx::isValid(lampGrid_)) bgfx::destroy(lampGrid_);
     const int w = std::max(cells, 1) * 2, h = std::max(cells, 1);
     lampGrid_ = bgfx::createTexture2D(uint16_t(w), uint16_t(h), false, 1,
-                                      bgfx::TextureFormat::RGBA8,
+                                      bgfx::TextureFormat::RGBA16,
                                       BGFX_SAMPLER_POINT | BGFX_SAMPLER_U_CLAMP |
                                           BGFX_SAMPLER_V_CLAMP,
-                                      bgfx::copy(grid.data(), uint32_t(grid.size())));
+                                      bgfx::copy(grid.data(), uint32_t(grid.size() * 2)));
     lampGridUniform_[0] = minX;
     lampGridUniform_[1] = minZ;
     lampGridUniform_[2] = 1.0f / kLightCellMetres;

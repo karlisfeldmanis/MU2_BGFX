@@ -838,6 +838,13 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
     // it is gathered, since each rides in its instance. docs/sprints/08a-the-lamps.md.
     if (args.lampsOn) {
         world_.lamps().update(float(deltaSeconds), world_.town(), ctx.renderer, eye.target);
+        // The Lost Tower's vents that caught this frame burn the wizard's Flame, whose light is
+        // the vent's own lamp rather than a transient slot.
+        if (world_.played().isOpen()) {
+            for (const game::Lamps::VentStart& vent : world_.lamps().ventsLit()) {
+                world_.played().flame().light(vent.at, vent.yaw, false);
+            }
+        }
         // What the day gives an unlit puff of smoke: the ambient and the sun on a flat
         // surface, over what the default sheet's noon gives it.
         world_.lamps().gather(ctx.renderer.effects(), eye.target, daylightOf(ctx.lighting));

@@ -33,11 +33,12 @@ bool Flame::open(const std::string& assetDir, content::Textures& textures,
     return bgfx::isValid(sheet_);
 }
 
-void Flame::light(const float at[3], float yaw) {
+void Flame::light(const float at[3], float yaw, bool glows) {
     for (Fire& one : fires_) {
         if (one.alive) continue;
         one = Fire{};
         one.alive = true;
+        one.glows = glows;
         for (int k = 0; k < 3; ++k) one.at[k] = at[k];
         one.yaw = yaw;
         one.left = kFrames;
@@ -157,7 +158,7 @@ uint32_t Flame::lights(gfx::PointLight* out, uint32_t max) const {
     uint32_t count = 0;
     const float tile = ground_ ? ground_->metresPerTile() : 1.0f;
     for (const Fire& one : fires_) {
-        if (!one.alive || count >= max) continue;
+        if (!one.alive || !one.glows || count >= max) continue;
         gfx::PointLight& light = out[count++];
         for (int k = 0; k < 3; ++k) light.position[k] = one.at[k];
         light.reach = kGlowTiles * tile;

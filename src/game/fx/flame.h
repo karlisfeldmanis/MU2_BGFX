@@ -34,8 +34,10 @@ public:
     bool open(const std::string& assetDir, content::Textures& textures,
               const content::Showing& table, const content::Ground* ground, Meteor* debris);
     // A fire at `at` (world metres: a tile's centre, on the ground), the scorch turned by the
-    // caster's `yaw`.
-    void light(const float at[3], float yaw);
+    // caster's `yaw`. `glows` false keeps it out of lights(): a Lost Tower vent, whose light is
+    // its own lamp in the static grid (Lamps), so ninety-five of them leave the transient slots
+    // to the spells.
+    void light(const float at[3], float yaw, bool glows = true);
     void update(float seconds);
     void gather(gfx::Effects& effects) const;
     uint32_t lights(gfx::PointLight* out, uint32_t max) const;
@@ -49,6 +51,7 @@ private:
         float owed = 0.0f;   // frames of plumes and stone coins not yet thrown
         float scorch = 1.0f;  // this frame's shimmer on the ground
         float glow = 1.0f;    // and on the light
+        bool glows = true;    // lights() hands it on
     };
     struct Plume {
         bool alive = false;
@@ -81,8 +84,10 @@ private:
     static constexpr int kPlumeLayers = 2;
     static constexpr float kGlowTiles = 3.0f;
 
-    static constexpr int kFires = 8;
-    static constexpr int kMostPlumes = 320;
+    // Room for the Lost Tower's vents near the camera beside a wizard's own: a fire keeps about
+    // a hundred and twenty plumes in the air (six a frame, twenty frames each).
+    static constexpr int kFires = 24;
+    static constexpr int kMostPlumes = 1200;
 
     const content::Ground* ground_ = nullptr;
     Meteor* debris_ = nullptr;

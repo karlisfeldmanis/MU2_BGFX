@@ -1152,7 +1152,11 @@ ANCHOR_KINDS = {"Light01": 1, "Light02": 4, "Light03": 4}
 # ones: GMEmpireGuardian4 hides types 79 and 132 (HiddenMesh = -2) and hangs a fire off 79 --
 # a light sprite and flame particles, RenderObjectVisual case 79 -- and smoke off 132 (case 132).
 # Type 129's blue cloud is not carried: the user keeps that sky black.
-ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4}}
+# The Lost Tower's 95 Flame vents (Object25, hidden): MoveObject's WD_4LOSTTOWER arm lights
+# the wizard's Flame on one a frame in 64 (ZzzObject.cpp:4020-4024). Kind 5, a vent: Lamps
+# rolls it and Play burns it (game/world/lamps.h).
+ANCHOR_KINDS_BY_WORLD = {"charscene": {"Object80": 1, "Object133": 4},
+                         "losttower": {"Object25": 5}}
 BRAZIER_BOWLS = {"charscene": ("Object15",)}
 # World 74's meshes MU never draws: GMEmpireGuardian4::MoveObject sets HiddenMesh = -2 on types
 # 79 to 86 and 129 to 132 (models Object80.. and Object130..133). Type 129's cloud anchor is
@@ -1164,7 +1168,10 @@ HIDDEN_BY_WORLD = {"charscene": {"Object80", "Object81", "Object83", "Object84",
 # colour (L, 0.6L, 0.4L), range 4 -- with index.json's flicker for every other fire. Smoke
 # throws no light. Colour, low, high, reach, hz, smoothing.
 ANCHOR_LIGHT = {1: ((1.0, 0.6, 0.4), 0.6, 1.1, 4.0, 3.0, 0.12),
-                4: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0)}
+                4: ((1.0, 1.0, 1.0), 0.0, 0.0, 0.0, 0.0, 0.0),
+                # A vent's light is the Flame's, (1, 0.4, 0) over three tiles (MoveHandlers.cpp:
+                # 1815-1816), and dark until it burns: Lamps drives its level.
+                5: ((1.0, 0.4, 0.0), 0.0, 0.0, 3.0, 0.0, 0.0)}
 
 
 # Where the town's own stone stands in the lawn, for the grass to stay out of. The .walls
@@ -1535,7 +1542,7 @@ def cook_placements(world, out_dir, chunk_tiles):
     # The lights. Per model in its own frame, and the anchors in the world's.
     emitters = bytearray()
     emitter_count = 0
-    kinds = {"lamp": 0, "fire": 1, "candle": 2, "window": 3, "smoke": 4}
+    kinds = {"lamp": 0, "fire": 1, "candle": 2, "window": 3, "smoke": 4, "vent": 5}
 
     def emitter(model, kind, at, colour, low, high, reach, hz, smooth):
         return struct.pack("<HBx3f3f5f", model, kind, *at, *colour, low, high, reach, hz, smooth)

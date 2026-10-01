@@ -304,7 +304,14 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
     // Two in Lorencia. A gap, marked.
     const float still[3] = {0.0f, 0.0f, 0.0f};
     for (const content::TownEmitter* one : anchors) {
+        const size_t before = lights_.size();
         place(*one, one->at, still, 0.0f, false, false, nullptr);
+        if (one->kind == content::EmitterKind::Vent && lights_.size() > before) {
+            Vent vent;
+            vent.light = uint32_t(before);
+            for (int i = 0; i < 3; ++i) vent.at[i] = one->at[i];
+            vents_.push_back(vent);
+        }
     }
 
     levels_.assign(lights_.size(), 1.0f);
@@ -487,6 +494,30 @@ void Lamps::update(float seconds, Town& town, gfx::Renderer& renderer, const flo
     for (size_t i = 0; i < lights_.size(); ++i) {
         step(lights_[i].flicker, seconds);
         levels_[i] = lights_[i].flicker.current;
+    }
+    // The vents: each rolled as MU rolls it, one reference frame in 64, and burning forty. Its
+    // light is the Flame's (1, 0.4, 0) at the preamble's 0.7-1.0 (MoveHandlers.cpp:1815), eased
+    // in over the first frames and out over the last so it does not snap; ours, the easing.
+    ventsLit_.clear();
+    const float frames = seconds * kVentFps;
+    const float odds = 1.0f - std::pow(1.0f - 1.0f / kVentOdds, frames);
+    for (Vent& vent : vents_) {
+        if (vent.left > 0.0f) {
+            vent.left = std::max(0.0f, vent.left - frames);
+        } else if (unit() < odds) {
+            vent.left = kVentFrames;
+            const float dx = vent.at[0] - near[0], dz = vent.at[2] - near[2];
+            if (dx * dx + dz * dz < kVentNear * kVentNear) {
+                ventsLit_.push_back({{vent.at[0], vent.at[1], vent.at[2]}, unit() * 6.2831853f});
+            }
+        }
+        float level = 0.0f;
+        if (vent.left > 0.0f) {
+            const float age = kVentFrames - vent.left;
+            const float ease = std::min({1.0f, age / 3.0f, vent.left / 8.0f});
+            level = ease * (0.7f + 0.3f * unit());
+        }
+        levels_[vent.light] = level;
     }
     if (!levels_.empty()) renderer.setPointLightLevels(levels_.data(), uint32_t(levels_.size()));
     for (Glow& glow : glows_) {

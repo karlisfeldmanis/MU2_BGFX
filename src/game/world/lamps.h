@@ -63,6 +63,16 @@ public:
     bool nearestBonfire(const float from[3], float at[3], Heard heard = nullptr,
                         void* context = nullptr) const;
 
+    // The Lost Tower's vents that caught this frame, near enough to draw: each is the wizard's
+    // Flame (Play's, lit with `glows` false, its light being the vent's own here). MU rolls each
+    // one a frame in 64 at 25 a second and burns it forty frames (ZzzObject.cpp:4020-4024).
+    struct VentStart {
+        float at[3];
+        float yaw;
+    };
+    const std::vector<VentStart>& ventsLit() const { return ventsLit_; }
+    uint32_t ventCount() const { return uint32_t(vents_.size()); }
+
     uint32_t lightCount() const { return uint32_t(lights_.size()); }
     uint32_t fireCount() const { return uint32_t(fires_.size()); }
     uint32_t flameCount() const { return uint32_t(particles_.size()); }
@@ -74,6 +84,18 @@ private:
     // MU2's answer to MU's re-roll: MU picks a new brightness every rendered frame, which on a
     // LIGHT is a strobe -- the pool on the ground jitters at the frame rate. So each flickers
     // at a rate and eases to it. Lamps.cs, and the numbers are index.json's.
+    struct Vent {
+        uint32_t light = 0;  // its lamp in set_ and lights_
+        float at[3] = {};
+        float left = 0.0f;   // reference frames still burning, 0 when cold
+    };
+    std::vector<Vent> vents_;
+    std::vector<VentStart> ventsLit_;
+    static constexpr float kVentFps = 25.0f;
+    static constexpr float kVentFrames = 40.0f;   // the Flame's LifeTime (ZzzEffect.cpp:1080)
+    static constexpr float kVentOdds = 64.0f;     // rand_fps_check(64)
+    static constexpr float kVentNear = 25.0f;     // metres from the camera's target a burst is drawn
+
     struct Flicker {
         float low = 1.0f, high = 1.0f, hz = 0.0f, smooth = 0.0f;
         float current = 1.0f, target = 1.0f, wait = 0.0f;

@@ -370,7 +370,9 @@ public:
     // `side` are the square of the world the grid covers, in metres. Null and zero clears it.
     // At most kMaxPointLights; a cell holds at most kLightsPerCell, the nearest ones, and the
     // log says when a cell wanted more.
-    static constexpr uint32_t kMaxPointLights = 255;
+    // 511: the grid's slots are sixteen bits (renderer_lights.cpp), so the cap is the lamp
+    // table's width, raised from 255 for the Lost Tower's 163 lamps and 95 vents.
+    static constexpr uint32_t kMaxPointLights = 511;
     static constexpr int kLightsPerCell = 8;
     static constexpr float kLightCellMetres = 2.0f;
     void setPointLights(const PointLight* lights, uint32_t count, float minX, float minZ,
