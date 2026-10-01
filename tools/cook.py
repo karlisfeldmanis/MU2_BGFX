@@ -1129,6 +1129,10 @@ def read_png(path):
 # Noria's stays as it has cooked since its objects stood, until somebody judges it.
 #: How many tiles round a placement its baked light is the median of, by world: 1 is the 3x3
 #: every world takes, wider where the painted light jumps between neighbours. See `lit`.
+#: Worlds whose ground is one flat sheet over a black void, where a swaying placement that
+#: reaches below it is hanging into the dark, not buried. See the buried test in the placements.
+FLAT_OVER_VOID = {"dungeon", "losttower"}
+
 LIGHT_REACH_BY_WORLD = {"losttower": 5}
 
 GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
@@ -1479,9 +1483,10 @@ def cook_placements(world, out_dir, chunk_tiles):
         # first key, as it does the treasure chest. Nothing else that sways in Lorencia is
         # past half: two street lights come nearest, at 43% and 50%.
         bottom, top = models[model][2][1], models[model][2][4]
-        # Not in the Dungeon: its ground is a flat sheet at 1.7 m over a void, and the
-        # animated spines that hang down into the dark read as buried here while MU plays them.
-        if world != "dungeon" and one["model"] in swaying and not flags & 1 and top > bottom and \
+        # Not in the Dungeon or the Lost Tower: their ground is a flat sheet at 1.7 m over a
+        # void, and the animated spines and hung skeletons that reach down into the dark read
+        # as buried here while MU plays them (the tower's Object35-37: 72 of 111 caught).
+        if world not in FLAT_OVER_VOID and one["model"] in swaying and not flags & 1 and top > bottom and \
                 terrain(column, row) - (y + bottom * float(one.get("scale", 1.0))) > \
                 0.6 * (top - bottom) * float(one.get("scale", 1.0)):
             flags |= 4
