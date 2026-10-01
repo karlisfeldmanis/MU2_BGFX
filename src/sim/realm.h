@@ -740,6 +740,8 @@ public:
     int travelQuest(int index) const;
     // The row he is standing in on a map of several (which of the Dungeon's floors), or -1.
     int travelFloor() const;
+    // And the row a tile is on, or -1: the bot's (tools/bot), which hunts the floor it stands on.
+    int floorAt(int column, int row) const;
     // Pays for it and puts down whatever he had open; the map change is the game's. Refused whole
     // for any reason travelRefusal gives.
     bool travel(int index);

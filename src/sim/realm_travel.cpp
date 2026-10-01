@@ -113,11 +113,12 @@ void Realm::reachFloor() {
 }
 
 int Realm::travelFloor() const {
-    if (floors_.empty()) return -1;
-    const Body& hero = bodies_[0];
-    const int size = tables_->grid.size();
-    if (!tables_->grid.inside(hero.column(), hero.row())) return -1;
-    return floors_[size_t(hero.row()) * size_t(size) + size_t(hero.column())];
+    return floorAt(bodies_[0].column(), bodies_[0].row());
+}
+
+int Realm::floorAt(int column, int row) const {
+    if (floors_.empty() || !tables_->grid.inside(column, row)) return -1;
+    return floors_[size_t(row) * size_t(tables_->grid.size()) + size_t(column)];
 }
 
 int Realm::travelQuest(int index) const {

@@ -1,51 +1,80 @@
-// The Lorencia bot: a character played from level 1 with no window, the way a player would --
-// hunting what his level can take, drinking potions, resting in town when he is low, picking up
-// what falls, wearing what is better, learning the orbs he can read, and walking to town to
-// sell, repair, restock potions and buy gear. It writes what happened, and when.
+// The bot: a character played from level 1 with no window, the way a player would -- hunting
+// what his level can take, drinking potions, resting in town when he is low, picking up what
+// falls, wearing what is better, learning the orbs he can read, walking to town to sell, repair,
+// restock and buy gear, and doing the quests: Marlon's in Lorencia, Peia's in Noria, Apostle
+// Devin's in Devias and the Golden Archer's three floors of the Dungeon. It writes what happened,
+// and when.
 //
 // The hand is the bot's and not the sim's: it only asks the realm what a player may ask --
-// requests, potion right-clicks, drags, counters -- so whatever it finds (a jewel's wait, a
-// breed that kills him, a shelf nobody can afford) is the game's answer and not a shortcut's.
-// It draws from its own dice, seeded from the run's seed, as game/headless.cpp's hand does.
+// requests, potion right-clicks, drags, counters, a giver's dialog, a gate walked into or a trip
+// paid for -- so whatever it finds (a jewel's wait, a breed that kills him, a quest he cannot
+// finish) is the game's answer and not a shortcut's. A map change is the mode's in the game
+// (PlayMode::travel): the hero's record is taken and laid on a realm raised on the next world,
+// and the bot does exactly that. The quests' twelve hours run on a wall clock the bot keeps off
+// its own ticks, so a long run sees them come back.
 //
 // Not the seeded hunt: `mu2 --headless` is the log the tests compare, and this changes nothing
 // in it.
 //
-//   build/bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] [--until-jewel] [--quiet]
+//   build/bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] [--until-jewel]
+//             [--no-quests] [--quiet]
 
 #include <algorithm>
+#include <cstdarg>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include "content/tables.h"
 #include "core/log.h"
+#include "sim/gates.h"
 #include "sim/items.h"
 #include "sim/market.h"
+#include "sim/quests.h"
 #include "sim/random.h"
 #include "sim/realm.h"
 #include "sim/skills.h"
+#include "sim/travel.h"
 #include "sim/wear.h"
 
 using namespace mu;
 
 namespace {
 
-constexpr int kTown[2] = {138, 124};  // where a Lorencia character is born and rises
 constexpr float kSight = 12.0f;       // MU's InfoRange, as the headless hand looks
 constexpr float kLootReach = 10.0f;
 constexpr int kThink = 5;             // ticks between decisions: four a second
 constexpr int64_t kGiveUp = 30 * 20;  // a target not won in thirty seconds is out of reach
 constexpr int64_t kForget = 5 * 60 * 20;
 constexpr int64_t kFear = 15 * 60 * 20;  // a breed that killed him twice is left this long
+constexpr int64_t kEpoch = 1800000000;   // the wall clock's start, unix seconds
 
-// MU's NPC numbers (Tables::folk carries them).
-constexpr int kAmy = 253, kHanzo = 251, kPasi = 254, kHarold = 250, kMartin = 248;
+
+// The worlds a quest takes him to: MU's map number, the cooked world, where one arrives.
+struct WorldRow {
+    int map;
+    const char* name;
+    int arrive[2];
+};
+constexpr WorldRow kWorlds[] = {
+    {0, "lorencia", {138, 124}},  // the birth tile every seeded run starts from
+    {1, "dungeon", {108, 247}},
+    {2, "devias", {207, 42}},
+    {3, "noria", {174, 112}},
+    {4, "losttower", {208, 75}},
+};
+const WorldRow* worldOf(int map) {
+    for (const WorldRow& w : kWorlds) {
+        if (w.map == map) return &w;
+    }
+    return nullptr;
+}
 
 struct Options {
     sim::Kin kin = sim::Kin::DarkKnight;
@@ -53,6 +82,7 @@ struct Options {
     int runs = 1;
     double hours = 4.0;
     bool untilJewel = false;
+    bool quests = true;
     bool quiet = false;
 };
 
@@ -73,6 +103,15 @@ const char* kinName(sim::Kin kin) {
     return "?";
 }
 
+const char* cradleWeapon(sim::Kin kin) {
+    switch (kin) {
+        case sim::Kin::DarkWizard: return "Staff01";
+        case sim::Kin::FairyElf: return "Bow01";
+        case sim::Kin::DarkKnight: return "Axe01";
+    }
+    return "";
+}
+
 // What a run ends with, for the summary across seeds.
 struct Outcome {
     int64_t ticks = 0;
@@ -80,102 +119,49 @@ struct Outcome {
     int64_t zen = 0, firstJewelTick = -1;
     int firstJewelKills = 0, firstJewelLevel = 0;
     std::string firstJewel;
-    int jewels = 0, runes = 0, trips = 0, bought = 0, sold = 0, drunk = 0;
+    int jewels = 0, runes = 0, trips = 0, bought = 0, sold = 0, drunk = 0, maps = 0;
+    int handedIn[sim::kQuests] = {};
+    int64_t firstHandIn[sim::kQuests];
+    Outcome() { std::fill(std::begin(firstHandIn), std::end(firstHandIn), int64_t(-1)); }
 };
 
 class Bot {
 public:
-    Bot(const content::Tables& tables, sim::Realm& realm, const Options& options, uint64_t seed)
-        : tables_(tables), realm_(realm), options_(options), dice_(seed ^ 0x424f54ull /* 'BOT' */) {
-        for (size_t i = 0; i < tables.folk.size(); ++i) {
-            const int npc = tables.folk[i].number;
-            if (npc == kAmy) amy_ = int(i);
-            if (npc == kHanzo) hanzo_ = int(i);
-            if (npc == kPasi) pasi_ = int(i);
-            if (npc == kHarold) harold_ = int(i);
-            if (npc == kMartin) martin_ = int(i);
-        }
+    Bot(const Options& options, uint64_t seed) : options_(options), seed_(seed) {}
+
+    bool start() {
+        const WorldRow& home = kWorlds[0];
+        tables_ = world(home.map);
+        if (!tables_) return false;
+        realm_ = std::make_unique<sim::Realm>();
+        if (!realm_->raise(tables_, seed_, home.arrive[0], home.arrive[1], options_.kin, 1)) return false;
+        const int32_t weapon = tables_->armNamed(cradleWeapon(options_.kin));
+        if (!realm_->equip(weapon, -1)) realm_->equip(weapon, -1, true);
+        settle();
+        return true;
     }
 
-    // Before the realm's step: one decision every kThink ticks.
-    void play() {
-        const int64_t now = realm_.tick();
-        if (now % kThink != 0) return;
-        const sim::Body& hero = realm_.hero();
-        if (!hero.alive()) {
-            mode_ = Mode::Hunt;
-            errands_.clear();
-            return;
-        }
-        spend();
-        drink();
-        if (now >= nextSort_) {
-            sortBag();
-            nextSort_ = now + 100;
-        }
-
-        switch (mode_) {
-            case Mode::Hunt: hunt(); break;
-            case Mode::Rest: rest(); break;
-            case Mode::Town: town(); break;
-        }
-    }
-
-    // After the step: what happened to him.
-    void heard() {
-        const uint32_t me = realm_.hero().id;
-        for (const sim::Happening& h : realm_.happenings()) {
-            if (h.what == sim::What::Died) {
-                if (h.who == me) {
-                    ++out_.deaths;
-                    const sim::Body* killer = bodyOf(h.whom);
-                    const int breed = killer ? killer->kind : -1;
-                    const std::string name = breed >= 0 ? tables_.kinds[size_t(breed)].label : "something";
-                    if (breed >= 0) {
-                        const int level = tables_.kinds[size_t(breed)].level;
-                        if (++deathsTo_[level] >= 2) {
-                            fearUntil_[level] = realm_.tick() + kFear;
-                            deathsTo_[level] = 0;
-                            say("killed by %s; leaves level-%d breeds for 15 min", name.c_str(), level);
-                        } else {
-                            say("killed by %s", name.c_str());
-                        }
-                    }
-                } else if (h.whom == me) {
-                    ++out_.kills;
-                    const sim::Body* dead = bodyOf(h.who);
-                    if (dead && dead->kind >= 0) ++killsOf_[tables_.kinds[size_t(dead->kind)].label];
-                }
-            } else if (h.what == sim::What::Dropped && h.b >= 0 && size_t(h.b) < tables_.items.size()) {
-                const content::ItemRow& row = tables_.items[size_t(h.b)];
-                if (sim::refiningJewel(row) || sim::creation(row)) {
-                    sim::creation(row) ? ++out_.runes : ++out_.jewels;
-                    if (out_.firstJewelTick < 0) {
-                        out_.firstJewelTick = realm_.tick();
-                        out_.firstJewel = row.label;
-                        out_.firstJewelKills = out_.kills;
-                        out_.firstJewelLevel = realm_.hero().level;
-                    }
-                    say("** %s dropped (kill %d, level %d)", row.label.c_str(), out_.kills,
-                        realm_.hero().level);
-                }
-            }
-        }
-        const int level = realm_.hero().level;
-        if (level > lastLevel_) {
-            if (level / 10 > lastLevel_ / 10 || level <= 5) {
-                say("level %d (%d kills, %lld zen)", level, out_.kills, (long long)realm_.money());
-            }
-            lastLevel_ = level;
-        }
-    }
-
+    int64_t now() const { return clock_; }
     bool foundJewel() const { return out_.firstJewelTick >= 0; }
 
+    // One tick: a decision when one is due, the realm's step, what came of it, and a map change
+    // when one is owed.
+    void tick() {
+        if (clock_ % kThink == 0) play();
+        realm_->step();
+        ++clock_;
+        heard();
+        if (owedMap_ >= 0) {
+            const int map = owedMap_;
+            owedMap_ = -1;
+            enter(map, owedColumn_, owedRow_);
+        }
+    }
+
     Outcome finish() {
-        out_.ticks = realm_.tick();
-        out_.level = realm_.hero().level;
-        out_.zen = realm_.money();
+        out_.ticks = clock_;
+        out_.level = realm_->hero().level;
+        out_.zen = realm_->money();
         return out_;
     }
 
@@ -185,48 +171,335 @@ public:
         std::sort(rows.rbegin(), rows.rend());
         std::printf("  kills:");
         for (const auto& [n, name] : rows) std::printf(" %s %d,", name.c_str(), n);
-        std::printf("\n  worn:");
-        for (int slot = 0; slot < sim::kWorn; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
-            if (!one.empty()) {
-                std::printf(" %s%s", tables_.items[size_t(one.item)].label.c_str(),
-                            one.refinement ? (" +" + std::to_string(one.refinement)).c_str() : "");
-                std::printf(",");
+        std::printf("\n  quests:");
+        for (int q = 0; q < sim::kQuests; ++q) {
+            const sim::QuestProgress& p = realm_->quest(q);
+            const char* state = p.state == sim::QuestState::Active    ? "under way"
+                                : p.state == sim::QuestState::Ready   ? "ready"
+                                : p.state == sim::QuestState::Resting ? "resting"
+                                                                      : "not taken";
+            std::printf(" %s x%d (%s);", sim::questAt(q).title, out_.handedIn[q], state);
+        }
+        // What is left of each quest under way, and what a kill of each breed costs him now.
+        for (int q = 0; q < sim::kQuests; ++q) {
+            if (realm_->quest(q).state != sim::QuestState::Active) continue;
+            const sim::QuestRow& row = sim::questAt(q);
+            std::printf("\n    %s left:", row.title);
+            for (int s = 0; s < row.stepCount; ++s) {
+                const sim::QuestStepRow& step = row.steps[s];
+                if (step.kind != sim::QuestStepKind::Clear || realm_->quest(q).counts[s] >= step.count) continue;
+                const int home = const_cast<Bot*>(this)->homeOf(step.target);
+                const content::MonsterKind* kind = home >= 0 ? const_cast<Bot*>(this)->kindOf(home, step.target) : nullptr;
+                std::printf(" %s %d/%d (a kill costs %.0f of %d)", step.line, realm_->quest(q).counts[s], step.count,
+                            kind ? costOf(*kind) : -1.0, realm_->hero().maxHealth);
             }
         }
-        const sim::Body& hero = realm_.hero();
-        std::printf("\n  damage %d-%d, defence %d, health %d, points %d/%d/%d/%d\n",
+        std::printf("\n  worn:");
+        for (int slot = 0; slot < sim::kWorn; ++slot) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (one.empty()) continue;
+            std::printf(" %s", tables_->items[size_t(one.item)].label.c_str());
+            if (one.refinement) std::printf(" +%d", one.refinement);
+            std::printf(",");
+        }
+        const sim::Body& hero = realm_->hero();
+        std::printf("\n  damage %d-%d, defence %d, health %d, points %d/%d/%d/%d, in %s\n",
                     hero.stats.minimumDamage, hero.stats.maximumDamage, hero.stats.defense,
                     hero.maxHealth, hero.points.strength, hero.points.agility,
-                    hero.points.vitality, hero.points.energy);
+                    hero.points.vitality, hero.points.energy, worldOf(map())->name);
     }
 
 private:
     enum class Mode { Hunt, Rest, Town };
-    enum class Errand { Hanzo, Pasi, Harold, Amy };
+    // What he is after, chosen every two seconds: a quest to hand in, one to hunt for, one to
+    // take, or none -- the grind, on the map whose breeds suit him best.
+    enum class Aim { Grind, HandIn, Hunt, Accept };
 
-    template <typename... A>
-    void say(const char* format, A... args) {
+    // ---- worlds ---------------------------------------------------------------------------
+    // A world's tables, loaded the first time it is asked for and kept: a realm holds a pointer.
+    const content::Tables* world(int map) {
+        auto it = worlds_.find(map);
+        if (it != worlds_.end()) return it->second.get();
+        const WorldRow* row = worldOf(map);
+        if (!row) return nullptr;
+        auto tables = std::make_unique<content::Tables>();
+        const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/" + row->name + "/" + row->name + ".mur";
+        std::string error;
+        if (!content::loadTables(path, *tables, error)) {
+            std::printf("bot: %s: %s\n", path.c_str(), error.c_str());
+            worlds_[map] = nullptr;
+            return nullptr;
+        }
+        return (worlds_[map] = std::move(tables)).get();
+    }
+    int map() const { return int(tables_->map); }
+
+    // Onto another map, as PlayMode::travel takes him: his record laid on a realm raised there.
+    void enter(int map, int column, int row) {
+        const content::Tables* next = world(map);
+        if (!next) return;
+        const sim::HeroRecord record = realm_->record();
+        auto realm = std::make_unique<sim::Realm>();
+        if (!realm->raise(next, seed_ + uint64_t(++out_.maps) * 7919u, column, row, options_.kin, record.level)) return;
+        realm->restore(record);
+        realm_ = std::move(realm);
+        tables_ = next;
+        settle();
+        say("-> %s", worldOf(map)->name);
+    }
+
+    // What hangs off a realm, set again after each one: the clock, the merchants, the targets.
+    void settle() {
+        realm_->setWallClock(kEpoch + clock_ / 20);
+        banned_.clear();
+        chasing_ = 0;
+        errands_.clear();
+        mode_ = Mode::Hunt;
+        sellers_.clear();
+        for (size_t i = 0; i < tables_->folk.size(); ++i) {
+            if (sim::sells(tables_->folk[i].number)) sellers_.push_back(int(i));
+        }
+        // Gear first, potions last: what is left after gear buys the potions.
+        std::stable_sort(sellers_.begin(), sellers_.end(), [&](int a, int b) {
+            return potionShelf(a) < potionShelf(b);
+        });
+        const int32_t* box = tables_->safeGate;
+        safe_ = box[2] > box[0] && box[3] > box[1];
+        restAt_[0] = (box[0] + box[2]) / 2;
+        restAt_[1] = (box[1] + box[3]) / 2;
+        // Home for the counters or a rest: what he came for, now he is here.
+        if (tripOwed_ && !sellers_.empty()) {
+            tripOwed_ = false;
+            startTrip(false);
+        } else if (restOwed_ && safe_) {
+            restOwed_ = false;
+            mode_ = Mode::Rest;
+        }
+    }
+
+    bool potionShelf(int folk) const {
+        int count = 0;
+        const sim::Offer* shelf = sim::stockOf(tables_->folk[size_t(folk)].number, &count);
+        for (int i = 0; i < count; ++i) {
+            const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
+            if (item >= 0 && sim::heals(tables_->items[size_t(item)])) return true;
+        }
+        return false;
+    }
+
+    // The way to another map from this one: a paid trip when its row is open and he may take
+    // it, else the nearest gate that leads there (or toward it, one map at a time). False with
+    // neither. `gate` gets the enter gate to walk into, or -1 for the trip in `travel`.
+    bool way(int to, int* gate, int* travel) const {
+        *gate = -1;
+        *travel = -1;
+        for (int i = 0; i < sim::kTravels; ++i) {
+            const sim::TravelRow& row = sim::travelAt(i);
+            if (row.map != to) continue;
+            if (realm_->travelRefusal(i) == sim::TravelRefusal::None && realm_->money() >= row.zen + 500) {
+                *travel = i;
+                return true;
+            }
+        }
+        // Breadth first over the gates, from this map, each a hop he has the level for.
+        std::map<int, int> firstGate;  // map -> the gate on this map that starts the way there
+        std::vector<int> frontier{map()};
+        firstGate[map()] = -1;
+        for (size_t at = 0; at < frontier.size(); ++at) {
+            const int from = frontier[at];
+            for (int n = 0; n < 512; ++n) {
+                const sim::EnterGate* in = sim::enterGateNumbered(n);
+                if (!in || int(in->map) != from || in->target < 0) continue;
+                if (in->level > realm_->hero().level) continue;
+                const sim::ExitGate* out = sim::exitGate(in->target);
+                if (!out || !worldOf(int(out->map)) || firstGate.count(int(out->map))) continue;
+                firstGate[int(out->map)] = from == map() ? n : firstGate[from];
+                frontier.push_back(int(out->map));
+            }
+        }
+        const auto it = firstGate.find(to);
+        if (it == firstGate.end() || it->second < 0) return false;
+        *gate = it->second;
+        return true;
+    }
+
+    bool reachable(int to) const {
+        int gate, travel;
+        return to == map() || way(to, &gate, &travel);
+    }
+
+    // A step toward another map: pays for the trip, or walks into the gate. True while he is
+    // on his way.
+    bool goTo(int to) {
+        if (to == map()) return false;
+        int gate, travel;
+        if (!way(to, &gate, &travel)) return false;
+        if (travel >= 0) {
+            const sim::TravelRow& row = sim::travelAt(travel);
+            if (realm_->travel(travel)) {
+                say("pays %lld zen to travel to %s", (long long)row.zen, row.name);
+                if (row.map != map()) {
+                    owedMap_ = row.map;
+                    owedColumn_ = row.column;
+                    owedRow_ = row.row;
+                }
+            }
+            return true;
+        }
+        const sim::EnterGate* in = sim::enterGateNumbered(gate);
+        const sim::Body& hero = realm_->hero();
+        if (!hero.walking || walkingTo_ != gate) {
+            sim::Request request;
+            request.kind = sim::Request::Kind::WalkTo;
+            request.column = (in->box.x1 + in->box.x2) / 2;
+            request.row = (in->box.y1 + in->box.y2) / 2;
+            realm_->ask(request);
+            walkingTo_ = gate;
+        }
+        return true;
+    }
+
+    // ---- what happened --------------------------------------------------------------------
+    void heard() {
+        const uint32_t me = realm_->hero().id;
+        for (const sim::Happening& h : realm_->happenings()) {
+            switch (h.what) {
+                case sim::What::Died:
+                    if (h.who == me) {
+                        died(h.whom);
+                    } else if (h.whom == me) {
+                        ++out_.kills;
+                        const sim::Body* dead = bodyOf(h.who);
+                        if (dead && dead->kind >= 0) ++killsOf_[tables_->kinds[size_t(dead->kind)].label];
+                    }
+                    break;
+                case sim::What::Dropped:
+                    if (h.b >= 0 && size_t(h.b) < tables_->items.size()) dropped(tables_->items[size_t(h.b)]);
+                    break;
+                case sim::What::Gated:
+                    // Through a gate to another map: the exit gate's, at the tile the realm chose.
+                    if (h.who == me) {
+                        const sim::EnterGate* in = sim::enterGateNumbered(h.a);
+                        const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
+                        if (out) {
+                            owedMap_ = int(out->map);
+                            owedColumn_ = h.b;
+                            owedRow_ = h.c;
+                        }
+                    }
+                    break;
+                case sim::What::Rose:
+                    // Risen on a map with no safe zone: owed Lorencia, as the mode takes him.
+                    if (h.who == me && h.c == 1) {
+                        owedMap_ = 0;
+                        owedColumn_ = kWorlds[0].arrive[0];
+                        owedRow_ = kWorlds[0].arrive[1];
+                    }
+                    break;
+                case sim::What::QuestStep:
+                    if (h.a >= 0 && h.a < sim::kQuests && h.c >= 0 && h.c < sim::questAt(h.a).stepCount &&
+                        h.b == sim::questAt(h.a).steps[h.c].count) {
+                        say("  %s: %s done", sim::questAt(h.a).title, sim::questAt(h.a).steps[h.c].line);
+                    }
+                    break;
+                case sim::What::QuestReady:
+                    say("quest done: %s -- back to %s", sim::questAt(h.a).title, sim::questAt(h.a).giverName);
+                    break;
+                default:
+                    break;
+            }
+        }
+        const int level = realm_->hero().level;
+        if (level > lastLevel_) {
+            if (level / 10 > lastLevel_ / 10 || level <= 5) {
+                say("level %d (%d kills, %lld zen)", level, out_.kills, (long long)realm_->money());
+            }
+            lastLevel_ = level;
+        }
+    }
+
+    void died(uint32_t by) {
+        ++out_.deaths;
+        const sim::Body* killer = bodyOf(by);
+        const int breed = killer ? killer->kind : -1;
+        if (breed < 0) {
+            say("dies");
+            return;
+        }
+        const content::MonsterKind& kind = tables_->kinds[size_t(breed)];
+        if (++deathsTo_[kind.number] >= 2) {
+            fearUntil_[kind.number] = clock_ + kFear;
+            deathsTo_[kind.number] = 0;
+            say("killed by %s; leaves them for 15 min", kind.label.c_str());
+        } else {
+            say("killed by %s", kind.label.c_str());
+        }
+    }
+
+    void dropped(const content::ItemRow& row) {
+        if (!sim::refiningJewel(row) && !sim::creation(row)) return;
+        sim::creation(row) ? ++out_.runes : ++out_.jewels;
+        if (out_.firstJewelTick < 0) {
+            out_.firstJewelTick = clock_;
+            out_.firstJewel = row.label;
+            out_.firstJewelKills = out_.kills;
+            out_.firstJewelLevel = realm_->hero().level;
+        }
+        say("** %s dropped (kill %d, level %d)", row.label.c_str(), out_.kills, realm_->hero().level);
+    }
+
+    __attribute__((format(printf, 2, 3))) void say(const char* format, ...) {
         if (options_.quiet) return;
-        std::printf("  [%s] ", clock(realm_.tick()).c_str());
-        std::printf(format, args...);
+        std::printf("  [%s] ", clock(clock_).c_str());
+        va_list args;
+        va_start(args, format);
+        std::vprintf(format, args);
+        va_end(args);
         std::printf("\n");
     }
 
     const sim::Body* bodyOf(uint32_t id) const {
-        for (const sim::Body& b : realm_.bodies()) {
+        for (const sim::Body& b : realm_->bodies()) {
             if (b.id == id) return &b;
         }
         return nullptr;
     }
 
-    const content::ItemRow& rowOf(const sim::Held& held) const { return tables_.items[size_t(held.item)]; }
+    const content::ItemRow& rowOf(const sim::Held& held) const { return tables_->items[size_t(held.item)]; }
+
+    // ---- a decision -----------------------------------------------------------------------
+    void play() {
+        realm_->setWallClock(kEpoch + clock_ / 20);
+        const sim::Body& hero = realm_->hero();
+        if (!hero.alive()) {
+            mode_ = Mode::Hunt;
+            errands_.clear();
+            return;
+        }
+        spend();
+        drink();
+        mend();
+        learnCaution();
+        if (clock_ >= nextSort_) {
+            sortBag();
+            nextSort_ = clock_ + 100;
+        }
+        if (clock_ >= nextAim_) {
+            choose();
+            nextAim_ = clock_ + 40;
+        }
+        switch (mode_) {
+            case Mode::Hunt: hunt(); break;
+            case Mode::Rest: rest(); break;
+            case Mode::Town: town(); break;
+        }
+    }
 
     // ---- points ---------------------------------------------------------------------------
     // Each class's usual build: the knight strength and vitality, the wizard energy, the elf
     // agility. The weights are the bot's, a common player's choice.
     void spend() {
-        const int points = realm_.hero().pointsInHand;
+        const int points = realm_->hero().pointsInHand;
         if (points <= 0) return;
         int w[4] = {4, 2, 3, 0};  // strength, agility, vitality, energy
         if (options_.kin == sim::Kin::DarkWizard) { w[0] = 2; w[1] = 2; w[2] = 2; w[3] = 4; }
@@ -239,14 +512,14 @@ private:
             left -= give[i];
         }
         give[options_.kin == sim::Kin::DarkWizard ? 3 : options_.kin == sim::Kin::FairyElf ? 1 : 0] += left;
-        realm_.spend(give[0], give[1], give[2], give[3]);
+        realm_->spend(give[0], give[1], give[2], give[3]);
     }
 
     // ---- potions --------------------------------------------------------------------------
     int countOf(bool (*kind)(const content::ItemRow&)) const {
         int n = 0;
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
+            const sim::Held& one = realm_->satchel()[slot];
             if (!one.empty() && kind(rowOf(one))) n += std::max<int>(1, one.durability);
         }
         return n;
@@ -254,8 +527,8 @@ private:
 
     bool drinkOne(bool (*kind)(const content::ItemRow&)) {
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
-            if (!one.empty() && kind(rowOf(one)) && realm_.useItem(slot)) {
+            const sim::Held& one = realm_->satchel()[slot];
+            if (!one.empty() && kind(rowOf(one)) && realm_->useItem(slot)) {
                 ++out_.drunk;  // counted here: the next step clears what useItem says
                 return true;
             }
@@ -263,16 +536,29 @@ private:
         return false;
     }
 
+    // What his own potions say about the estimate: more than twenty drunk in five minutes and
+    // every fight is reckoned half as dear again; under five and it eases back toward the band.
+    void learnCaution() {
+        if (clock_ < cautionAt_) return;
+        cautionAt_ = clock_ + 5 * 60 * 20;
+        const int drunk = out_.drunk - drunkAt_;
+        drunkAt_ = out_.drunk;
+        const double was = caution_;
+        if (drunk > 20) caution_ = std::min(8.0, caution_ * 1.5);
+        else if (drunk < 5) caution_ = std::max(1.0, caution_ / 1.2);
+        if (caution_ > was) say("%d potions in 5 min: fights reckoned x%.1f", drunk, caution_);
+    }
+
     bool casts() const {
         if (options_.kin != sim::Kin::DarkKnight) return true;
         for (int i = 0; i < sim::skillCount(); ++i) {
-            if (realm_.knows(sim::skillAt(i).number)) return true;
+            if (realm_->knows(sim::skillAt(i).number)) return true;
         }
         return false;
     }
 
     void drink() {
-        const sim::Body& hero = realm_.hero();
+        const sim::Body& hero = realm_->hero();
         if (hero.health * 2 < hero.maxHealth) drinkOne(sim::heals);
         if (casts() && hero.mana * 10 < hero.maxMana * 3) drinkOne(sim::restores);
     }
@@ -281,7 +567,7 @@ private:
     int freeCells() const {
         bool taken[sim::kBagRows][sim::kBagColumns] = {};
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
+            const sim::Held& one = realm_->satchel()[slot];
             if (one.empty()) continue;
             const int at = slot - sim::kWorn, r0 = at / sim::kBagColumns, c0 = at % sim::kBagColumns;
             const content::ItemRow& row = rowOf(one);
@@ -294,16 +580,20 @@ private:
         return n;
     }
 
+    double blow() const {
+        const sim::Body& hero = realm_->hero();
+        if (options_.kin == sim::Kin::DarkWizard) {
+            const sim::Wearer w = realm_->wearer();
+            return (w.wizardMinimum + w.wizardMaximum) / 2.0 * (1.0 + w.staffRise);
+        }
+        return (hero.stats.minimumDamage + hero.stats.maximumDamage) / 2.0 +
+               (hero.stats.offhandMinimumDamage + hero.stats.offhandMaximumDamage) / 2.0;
+    }
+
     // How good he is now: his blow and his guard, as the realm has re-reckoned them.
     double score() const {
-        const sim::Body& hero = realm_.hero();
-        double blow = (hero.stats.minimumDamage + hero.stats.maximumDamage) / 2.0 +
-                      (hero.stats.offhandMinimumDamage + hero.stats.offhandMaximumDamage) / 2.0;
-        if (options_.kin == sim::Kin::DarkWizard) {
-            const sim::Wearer w = realm_.wearer();
-            blow = (w.wizardMinimum + w.wizardMaximum) / 2.0 * (1.0 + w.staffRise);
-        }
-        return blow * 2.0 + hero.stats.defense + hero.stats.defenseRate * 0.5;
+        const sim::Body& hero = realm_->hero();
+        return blow() * 2.0 + hero.stats.defense + hero.stats.defenseRate * 0.5;
     }
 
     // Tries each bag piece in each place it may go, and keeps it there only if he is better.
@@ -311,27 +601,54 @@ private:
     bool wearBest() {
         bool any = false;
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-            const sim::Held held = realm_.satchel()[slot];
+            const sim::Held held = realm_->satchel()[slot];
             if (held.empty()) continue;
             const content::ItemRow& row = rowOf(held);
             if (sim::placeOf(row) < 0 || sim::ammunition(row)) continue;
-            // An elf keeps to the bow: her skills and her arrows are its.
-            if (options_.kin == sim::Kin::FairyElf && (row.shield() || (row.weapon() && row.group != sim::kGroupBows))) continue;
+            // An elf keeps to the bow: her skills and her arrows are its. And to the one she can
+            // feed: a crossbow shoots bolts where a bow shoots arrows, and a switch with no
+            // quiver for it and no Zen for one leaves her nothing to shoot.
+            if (options_.kin == sim::Kin::FairyElf &&
+                (row.shield() || (row.weapon() && row.group != sim::kGroupBows))) continue;
+            if (options_.kin == sim::Kin::FairyElf && row.weapon() && archer() &&
+                sim::placeOf(row) != (ammoHand() == sim::kWeaponRight ? int(sim::kWeaponLeft) : int(sim::kWeaponRight)) &&
+                realm_->money() < 1000) continue;
             for (const int place : {int(sim::kWeaponRight), int(sim::kWeaponLeft), sim::placeOf(row)}) {
                 if (!sim::placesIn(row, options_.kin, place)) continue;
-                if (!sim::movable(tables_, realm_.wearer(), realm_.satchel(), slot, place)) continue;
-                const bool wasEmpty = realm_.satchel()[place].empty();
-                const double before = score();
-                if (!realm_.moveItem(slot, place)) continue;
+                // A two-hander wants the other hand empty: that hand's thing into the bag first,
+                // and back if the trade is not better.
+                int freed = -1;
+                const double beforeFreed = score();
+                if (row.twoHanded() && !realm_->satchel()[sim::kWeaponLeft].empty() && place == sim::kWeaponRight) {
+                    for (int to = sim::kWorn; to < sim::kSlots && freed < 0; ++to) {
+                        if (to != slot && sim::movable(*tables_, realm_->wearer(), realm_->satchel(), sim::kWeaponLeft, to) &&
+                            realm_->moveItem(sim::kWeaponLeft, to)) freed = to;
+                    }
+                    if (freed < 0) continue;
+                }
+                const auto putBack = [&] {
+                    if (freed >= 0) realm_->moveItem(freed, sim::kWeaponLeft);
+                };
+                if (!sim::movable(*tables_, realm_->wearer(), realm_->satchel(), slot, place)) {
+                    putBack();
+                    continue;
+                }
+                const bool wasEmpty = realm_->satchel()[place].empty();
+                const double before = freed >= 0 ? beforeFreed : score();
+                if (!realm_->moveItem(slot, place)) {
+                    putBack();
+                    continue;
+                }
                 if (score() > before + 0.5) {
-                    say("wears %s%s", row.label.c_str(),
-                        held.refinement ? (" +" + std::to_string(held.refinement)).c_str() : "");
+                    if (held.refinement) say("wears %s +%d", row.label.c_str(), held.refinement);
+                    else say("wears %s", row.label.c_str());
                     any = true;
                     break;
                 }
                 // Back as it was.
-                if (wasEmpty) realm_.moveItem(place, slot);
-                else realm_.moveItem(slot, place);
+                if (wasEmpty) realm_->moveItem(place, slot);
+                else realm_->moveItem(slot, place);
+                putBack();
             }
         }
         return any;
@@ -340,10 +657,10 @@ private:
     // Reads the orbs and scrolls he can; what he cannot is sold with the rest.
     void readOrbs() {
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
+            const sim::Held& one = realm_->satchel()[slot];
             if (one.empty() || rowOf(one).teaches == 0) continue;
             const std::string label = rowOf(one).label;
-            if (realm_.useItem(slot)) say("learns from %s", label.c_str());
+            if (realm_->useItem(slot)) say("learns from %s", label.c_str());
         }
     }
 
@@ -352,64 +669,194 @@ private:
         wearBest();
     }
 
-    // What he keeps through a sale: jewels, runes, potions, and what he can still read.
+    // What he keeps through a sale: jewels, runes, potions, ammunition and pets.
     bool keeps(const sim::Held& one) const {
         const content::ItemRow& row = rowOf(one);
         return sim::refiningJewel(row) || sim::creation(row) || sim::heals(row) ||
                sim::restores(row) || sim::ammunition(row) || row.group == sim::kGroupPets;
     }
 
-    // ---- hunting --------------------------------------------------------------------------
-    // The level of the breed he hunts: the strongest a fight with costs him no more than a
-    // third of his health, reckoned off his band and guard against the breed's (0.75's hit
-    // chance, 1 - defence rate / attack rate, floored at 3%), and that has not killed him twice
-    // lately. The weakest breed when none passes.
+    // ---- what a fight costs ---------------------------------------------------------------
+    // His band and guard against the breed's, 0.75's hit chance (1 - defence rate / attack
+    // rate, floored at 3%): the health a kill of it costs him.
     static double hitChance(double attackRate, double defenseRate) {
         if (attackRate <= 0.0) return 0.03;
         return std::clamp(1.0 - defenseRate / attackRate, 0.03, 1.0);
     }
     double costOf(const content::MonsterKind& kind) const {
-        const sim::Body& hero = realm_.hero();
-        double blow = (hero.stats.minimumDamage + hero.stats.maximumDamage) / 2.0 +
-                      (hero.stats.offhandMinimumDamage + hero.stats.offhandMaximumDamage) / 2.0;
-        if (options_.kin == sim::Kin::DarkWizard) {
-            const sim::Wearer w = realm_.wearer();
-            blow = (w.wizardMinimum + w.wizardMaximum) / 2.0 * (1.0 + w.staffRise);
-        }
-        const double landed = std::max(1.0, blow - kind.defense) *
+        const sim::Body& hero = realm_->hero();
+        const double landed = std::max(1.0, blow() - kind.defense) *
                               hitChance(hero.stats.attackRate, float(kind.defenseRate));
         const double seconds = kind.health / landed * std::max(1, hero.swingTicks) / 20.0;
-        const double taken = std::max(0.0, (kind.minimumDamage + kind.maximumDamage) / 2.0 - hero.stats.defense) *
-                             hitChance(float(kind.attackRate), hero.stats.defenseRate);
-        return taken * seconds * 20.0 / std::max(1, kind.attackTicks);
+        const double taken =
+            std::max(0.0, (kind.minimumDamage + kind.maximumDamage) / 2.0 - hero.stats.defense) *
+            hitChance(float(kind.attackRate), hero.stats.defenseRate);
+        // A wizard's spell is his blow only while his mana lasts, and between potions it does
+        // not: his fights run about twice what the band says (the bot's runs, 2026-10-01).
+        const double wizard = options_.kin == sim::Kin::DarkWizard ? 2.0 : 1.0;
+        return caution_ * wizard * taken * seconds * 20.0 / std::max(1, kind.attackTicks);
     }
-    int quarryLevel() const {
-        const int64_t now = realm_.tick();
-        const sim::Body& hero = realm_.hero();
-        int best = -1, weakest = 1 << 30;
-        for (const content::MonsterNest& nest : tables_.nests) {
-            const content::MonsterKind& kind = tables_.kinds[nest.kind];
-            weakest = std::min(weakest, kind.level);
-            const auto fear = fearUntil_.find(kind.level);
-            if (fear != fearUntil_.end() && fear->second > now) continue;
-            if (costOf(kind) * 3.0 > hero.maxHealth) continue;
-            if (kind.level > best) best = kind.level;
+    // Whether he takes this breed on: a kill costs him under a third of his health (a half to
+    // keep at a quest already under way), and it has not killed him twice lately.
+    bool takes(const content::MonsterKind& kind, double share = 3.0) const {
+        const auto fear = fearUntil_.find(kind.number);
+        if (fear != fearUntil_.end() && fear->second > clock_) return false;
+        return costOf(kind) * share <= realm_->hero().maxHealth;
+    }
+    // The strongest breed level on a map he takes, or -1.
+    int bestOn(const content::Tables& tables) const {
+        int best = -1;
+        for (const content::MonsterNest& nest : tables.nests) {
+            const content::MonsterKind& kind = tables.kinds[nest.kind];
+            if (takes(kind) && kind.level > best) best = kind.level;
         }
-        return best < 0 ? weakest : best;
+        return best;
     }
 
+    // ---- the aim --------------------------------------------------------------------------
+    // The Clear steps of a quest still short of their goal, as breed numbers.
+    std::vector<int> wanted(int q) const {
+        std::vector<int> out;
+        const sim::QuestRow& row = sim::questAt(q);
+        const sim::QuestProgress& p = realm_->quest(q);
+        for (int s = 0; s < row.stepCount; ++s) {
+            if (row.steps[s].kind != sim::QuestStepKind::Clear) continue;
+            if (p.counts[s] < row.steps[s].count) out.push_back(row.steps[s].target);
+        }
+        return out;
+    }
+    // Where a breed lives, among the worlds: the first map with a nest of it, or -1.
+    int homeOf(int breed) {
+        for (const WorldRow& w : kWorlds) {
+            const content::Tables* t = world(w.map);
+            if (!t) continue;
+            for (const content::MonsterNest& nest : t->nests) {
+                if (t->kinds[nest.kind].number == breed) return w.map;
+            }
+        }
+        return -1;
+    }
+    const content::MonsterKind* kindOf(int map, int breed) {
+        const content::Tables* t = world(map);
+        if (!t) return nullptr;
+        for (const content::MonsterKind& k : t->kinds) {
+            if (k.number == breed) return &k;
+        }
+        return nullptr;
+    }
+    // Which map a giver stands on, or -1.
+    int giverMap(int q) {
+        for (const WorldRow& w : kWorlds) {
+            const content::Tables* t = world(w.map);
+            if (!t) continue;
+            for (const content::Townsperson& f : t->folk) {
+                if (f.number == sim::questAt(q).giver) return w.map;
+            }
+        }
+        return -1;
+    }
+    // The quest's breeds he can take now, on the map they live on: the map, or -1 for none.
+    int huntable(int q, std::vector<int>* breeds, double share = 3.0) {
+        breeds->clear();
+        if (aside_[q] > clock_) return -1;
+        int where = -1;
+        for (const int breed : wanted(q)) {
+            const int home = homeOf(breed);
+            const content::MonsterKind* kind = home >= 0 ? kindOf(home, breed) : nullptr;
+            if (!kind || !takes(*kind, share) || !reachable(home)) continue;
+            if (where < 0) where = home;
+            if (home == where) breeds->push_back(breed);
+        }
+        return where;
+    }
+
+    void choose() {
+        const Aim was = aim_;
+        const int wasQuest = aimQuest_;
+        aim_ = Aim::Grind;
+        aimQuest_ = -1;
+        quarry_.clear();
+        if (options_.quests) {
+            // The quest he is hunting for keeps him while it still can, on a looser test: a
+            // breed on the line between two would have him paying to cross the map both ways.
+            if (was == Aim::Hunt && wasQuest >= 0 && realm_->quest(wasQuest).state == sim::QuestState::Active) {
+                std::vector<int> breeds;
+                const int where = huntable(wasQuest, &breeds, 2.0);
+                if (where >= 0) {
+                    aim_ = Aim::Hunt;
+                    aimQuest_ = wasQuest;
+                    aimMap_ = where;
+                    quarry_ = breeds;
+                }
+            }
+            // Hand in first, then hunt what is under way, then take what is offered.
+            for (int q = 0; q < sim::kQuests && aim_ != Aim::HandIn; ++q) {
+                if (realm_->quest(q).state == sim::QuestState::Ready && reachable(giverMap(q))) {
+                    aim_ = Aim::HandIn;
+                    aimQuest_ = q;
+                    aimMap_ = giverMap(q);
+                }
+            }
+            for (int q = 0; q < sim::kQuests && aim_ == Aim::Grind; ++q) {
+                if (realm_->quest(q).state != sim::QuestState::Active) continue;
+                std::vector<int> breeds;
+                const int where = huntable(q, &breeds);
+                if (where < 0) continue;
+                aim_ = Aim::Hunt;
+                aimQuest_ = q;
+                aimMap_ = where;
+                quarry_ = breeds;
+            }
+            for (int q = 0; q < sim::kQuests && aim_ == Aim::Grind; ++q) {
+                if (!realm_->questOffered(q)) continue;
+                const int at = giverMap(q);
+                std::vector<int> breeds;
+                if (at < 0 || !reachable(at) || huntable(q, &breeds) < 0) continue;
+                aim_ = Aim::Accept;
+                aimQuest_ = q;
+                aimMap_ = at;
+            }
+        }
+        if (aim_ == Aim::Grind) {
+            // The map with the strongest breed he takes, where he is on a tie.
+            aimMap_ = map();
+            int best = bestOn(*tables_);
+            for (const WorldRow& w : kWorlds) {
+                const content::Tables* t = world(w.map);
+                if (!t || !reachable(w.map)) continue;
+                const int b = bestOn(*t);
+                if (b > best) {
+                    best = b;
+                    aimMap_ = w.map;
+                }
+            }
+        }
+        if (aim_ != lastAim_ || aimQuest_ != lastQuest_ || aimMap_ != lastMap_) {
+            const char* names[] = {"grinds", "hands in", "hunts for", "takes"};
+            if (aimQuest_ >= 0) {
+                say("%s %s (%s)", names[int(aim_)], sim::questAt(aimQuest_).title, worldOf(aimMap_)->name);
+            } else {
+                say("grinds in %s", worldOf(aimMap_)->name);
+            }
+            lastAim_ = aim_;
+            lastQuest_ = aimQuest_;
+            lastMap_ = aimMap_;
+        }
+    }
+
+    // ---- hunting --------------------------------------------------------------------------
     bool barred(uint32_t id) const {
         const auto it = banned_.find(id);
-        return it != banned_.end() && it->second > realm_.tick();
+        return it != banned_.end() && it->second > clock_;
     }
 
     void ask(sim::Request request) {
         if (request.kind == sim::Request::Kind::Attack || request.kind == sim::Request::Kind::Pick) {
             if (request.target != chasing_) {
                 chasing_ = request.target;
-                chasedSince_ = realm_.tick();
-            } else if (realm_.tick() - chasedSince_ > kGiveUp) {
-                banned_[chasing_] = realm_.tick() + kForget;
+                chasedSince_ = clock_;
+            } else if (clock_ - chasedSince_ > kGiveUp) {
+                banned_[chasing_] = clock_ + kForget;
                 chasing_ = 0;
                 return;
             }
@@ -417,7 +864,7 @@ private:
         if (options_.kin == sim::Kin::DarkWizard && request.kind == sim::Request::Kind::Attack) {
             request.skill = sim::skill::kEnergyBall;
         }
-        realm_.ask(request);
+        realm_->ask(request);
     }
 
     // Presses a skill that is ready on the body he fights, in turn, as the headless hand does.
@@ -425,9 +872,9 @@ private:
         for (int n = 1; n <= sim::skillCount(); ++n) {
             const int i = (pressed_ + n) % sim::skillCount();
             const sim::SkillRow& row = sim::skillAt(i);
-            if (!realm_.knows(row.number) || realm_.cooling(row.number) > 0) continue;
-            if (realm_.hero().mana < row.mana) continue;
-            realm_.invoke(row.number, at);
+            if (!realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
+            if (realm_->hero().mana < row.mana) continue;
+            realm_->invoke(row.number, at);
             pressed_ = i;
             return;
         }
@@ -436,28 +883,47 @@ private:
     // Whether he needs the town: potions out, the bag full, the gear worn down, or money enough
     // that a shelf may hold something better.
     const char* needsTown() const {
-        const int64_t money = realm_.money();
-        if (countOf(sim::heals) < 3 && money >= 240) return "out of potions";
-        if (options_.kin == sim::Kin::DarkWizard && countOf(sim::restores) < 3 && money >= 240) {
+        if (clock_ < noTripUntil_) return nullptr;
+        const int64_t money = realm_->money();
+        const int64_t bundle = potionPrice(healTier());
+        if (countOf(sim::heals) < 3 && money >= bundle) return "out of potions";
+        if (options_.kin == sim::Kin::DarkWizard && countOf(sim::restores) < 3 && money >= bundle) {
             return "out of mana potions";
         }
         if (freeCells() < 6) return "bag full";
+        if (wornDown() >= 0 && !realm_->selfMending()) return "gear worn down";
+        if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
+        if (clock_ - lastTrip_ > 30 * 60 * 20 && money >= 5000 && const_cast<Bot*>(this)->shopWorth()) {
+            return "something on a shelf";
+        }
+        return nullptr;
+    }
+
+    // The first worn piece down to a quarter, or -1.
+    int wornDown() const {
         for (int slot = 0; slot < sim::kWorn; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
+            const sim::Held& one = realm_->satchel()[slot];
             if (one.empty() || sim::ammunition(rowOf(one))) continue;
             const int full = sim::maximumDurability(rowOf(one), one);
-            if (full > 0 && one.durability * 4 < full) return "gear worn down";
+            if (full > 0 && one.durability * 4 < full) return slot;
         }
-        if (archer() && ammo() < 30 && money >= 70) return "out of arrows";
-        if (realm_.tick() - lastTrip_ > 30 * 60 * 20 && money >= 5000) return "zen to spend";
-        return nullptr;
+        return -1;
+    }
+    // Mends what is worn down by his own hand where he stands, once he may (selfMending).
+    void mend() {
+        if (!realm_->selfMending()) return;
+        for (int slot = wornDown(); slot >= 0; slot = wornDown()) {
+            const int64_t cost = realm_->repairCost(slot);
+            if (!realm_->repair(slot)) return;
+            say("mends his %s for %lld zen", rowOf(realm_->satchel()[slot]).label.c_str(), (long long)cost);
+        }
     }
 
     // An elf's: the hand her bow or crossbow leaves for its ammunition (a bow is held left and
     // its arrows right, a crossbow right and its bolts left -- placeOf), or -1 with neither.
     int ammoHand() const {
         for (const int slot : {int(sim::kWeaponRight), int(sim::kWeaponLeft)}) {
-            const sim::Held& one = realm_.satchel()[slot];
+            const sim::Held& one = realm_->satchel()[slot];
             if (!one.empty() && rowOf(one).group == sim::kGroupBows && !sim::ammunition(rowOf(one))) {
                 return slot == sim::kWeaponRight ? sim::kWeaponLeft : sim::kWeaponRight;
             }
@@ -470,7 +936,7 @@ private:
         const int hand = ammoHand();
         int n = 0;
         for (int slot = 0; slot < sim::kSlots; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
+            const sim::Held& one = realm_->satchel()[slot];
             if (!one.empty() && sim::ammunition(rowOf(one)) && sim::placeOf(rowOf(one)) == hand) {
                 n += one.durability;
             }
@@ -478,20 +944,33 @@ private:
         return n;
     }
 
+    // Whether a body is one he would go after now: a quest's breed while hunting for one, else
+    // whatever he takes.
+    bool quarry(const sim::Body& body, bool anyFloor = false) const {
+        if (!body.monster() || !body.alive() || barred(body.id) || body.kind < 0) return false;
+        // On a map of floors, only what stands on his.
+        const int floor = realm_->travelFloor();
+        if (!anyFloor && floor >= 0 && realm_->floorAt(body.column(), body.row()) != floor) return false;
+        const content::MonsterKind& kind = tables_->kinds[size_t(body.kind)];
+        if (aim_ == Aim::Hunt && aimMap_ == map()) {
+            return std::find(quarry_.begin(), quarry_.end(), kind.number) != quarry_.end();
+        }
+        return takes(kind);
+    }
+
     void hunt() {
-        const sim::Body& hero = realm_.hero();
-        // Low, and nothing to drink: back to town to sit it out.
+        const sim::Body& hero = realm_->hero();
+        // Low, and nothing to drink: to a safe tile to sit it out.
         if (hero.health * 10 < hero.maxHealth * 3 && countOf(sim::heals) == 0) {
             say("retreats at %d/%d health, no potions", hero.health, hero.maxHealth);
             mode_ = Mode::Rest;
             return;
         }
-        const int cap = quarryLevel();
         sim::Request request;
         // Whatever is on him first.
         float closest = 6.0f * 6.0f;
         bool engaged = false;
-        for (const sim::Body& body : realm_.bodies()) {
+        for (const sim::Body& body : realm_->bodies()) {
             if (!body.monster() || !body.alive() || body.quarry != hero.id || barred(body.id)) continue;
             const float dx = body.x - hero.x, dy = body.y - hero.y;
             if (dx * dx + dy * dy < closest) {
@@ -503,8 +982,8 @@ private:
         }
         // Town, if it is time: when nothing is on him, or after a minute of never being free
         // while he is still well -- a crowded nest never lets him go otherwise.
-        if (!engaged) freeSince_ = realm_.tick();
-        const bool pressed = realm_.tick() - freeSince_ > 60 * 20 && hero.health * 10 > hero.maxHealth * 7;
+        if (!engaged) freeSince_ = clock_;
+        const bool pressed = clock_ - freeSince_ > 60 * 20 && hero.health * 10 > hero.maxHealth * 7;
         if (!engaged || pressed) {
             if (const char* why = needsTown()) {
                 say("goes to town: %s", why);
@@ -512,11 +991,19 @@ private:
                 return;
             }
         }
+        // A giver to see, or another map: there first, when nothing is on him.
+        if (!engaged) {
+            if ((aim_ == Aim::HandIn || aim_ == Aim::Accept) && aimMap_ == map()) {
+                visitGiver();
+                return;
+            }
+            if (aimMap_ != map() && goTo(aimMap_)) return;
+        }
         // Then what fell, while the bag has room.
         if (!engaged) {
             closest = kLootReach * kLootReach;
             const int room = freeCells();
-            for (const sim::Lying& one : realm_.lying()) {
+            for (const sim::Lying& one : realm_->lying()) {
                 if (one.what.empty() || barred(one.id)) continue;
                 const content::ItemRow& row = rowOf(one.what);
                 if (row.width * row.height > room) continue;
@@ -528,47 +1015,161 @@ private:
                 }
             }
         }
-        // Then the nearest he can take in sight.
+        // Then the nearest he would go after, in sight, and then anywhere on the map: the
+        // strongest such breed while grinding.
         if (request.kind == sim::Request::Kind::None) {
-            closest = kSight * kSight;
-            for (const sim::Body& body : realm_.bodies()) {
-                if (!body.monster() || !body.alive() || body.level > cap || barred(body.id)) continue;
-                const float dx = body.x - hero.x, dy = body.y - hero.y;
-                if (dx * dx + dy * dy < closest) {
-                    closest = dx * dx + dy * dy;
-                    request.kind = sim::Request::Kind::Attack;
-                    request.target = body.id;
+            const int cap = aim_ == Aim::Hunt ? 1 << 30 : bestOn(*tables_);
+            for (const float reach : {kSight, 1e15f}) {
+                closest = reach * reach;
+                for (const sim::Body& body : realm_->bodies()) {
+                    if (!quarry(body)) continue;
+                    if (reach > kSight && aim_ != Aim::Hunt && body.level != cap) continue;
+                    const float dx = body.x - hero.x, dy = body.y - hero.y;
+                    if (dx * dx + dy * dy < closest) {
+                        closest = dx * dx + dy * dy;
+                        request.kind = sim::Request::Kind::Attack;
+                        request.target = body.id;
+                    }
                 }
+                if (request.kind != sim::Request::Kind::None) break;
             }
         }
-        // Then off to the nearest of the breed he hunts, wherever it is.
+        // Nothing he can reach here: on a map of floors, the next floor he may go to.
         if (request.kind == sim::Request::Kind::None) {
-            closest = 1e30f;
-            for (const sim::Body& body : realm_.bodies()) {
-                if (!body.monster() || !body.alive() || body.level != cap || barred(body.id)) continue;
-                const float dx = body.x - hero.x, dy = body.y - hero.y;
-                if (dx * dx + dy * dy < closest) {
-                    closest = dx * dx + dy * dy;
-                    request.kind = sim::Request::Kind::Attack;
-                    request.target = body.id;
-                }
-            }
+            nextFloor();
+            return;
         }
-        if (request.kind == sim::Request::Kind::None) return;
         ask(request);
         if (request.kind == sim::Request::Kind::Attack) press(request.target);
     }
 
-    // Sits in the safe zone until he is nearly whole, then goes shopping if he must.
+    // The Dungeon's floors are one map the router cannot cross: what lives on another is out of
+    // reach until he pays to be put down there (this map's travel rows) or walks its stairs (an
+    // enter gate whose exit is on this same map). Toward the floor of the nearest he would go
+    // after, when his own has none; a quest whose breeds he cannot reach at all is set aside.
+    void nextFloor() {
+        const int here = realm_->travelFloor();
+        const sim::Body& hero = realm_->hero();
+        float closest = 1e30f;
+        int to = -1;
+        for (const sim::Body& body : realm_->bodies()) {
+            if (here < 0 || !quarry(body, true)) continue;
+            const int floor = realm_->floorAt(body.column(), body.row());
+            if (floor < 0 || floor == here) continue;
+            const float dx = body.x - hero.x, dy = body.y - hero.y;
+            if (dx * dx + dy * dy < closest) {
+                closest = dx * dx + dy * dy;
+                to = floor;
+            }
+        }
+        if (to < 0) {
+            setAside();
+            return;
+        }
+        const sim::TravelRow& row = sim::travelAt(to);
+        if (realm_->travelRefusal(to) == sim::TravelRefusal::None && realm_->money() >= row.zen + potionReserve()) {
+            if (clock_ >= nextFloorAt_ && realm_->travel(to)) {
+                say("pays %lld zen down to %s", (long long)row.zen, row.name);
+                banned_.clear();
+                nextFloorAt_ = clock_ + 30 * 20;
+            }
+            return;
+        }
+        // The stairs: a gate on his floor to this same map, the one to that floor if there is
+        // one, else to any other.
+        int stair = -1;
+        for (int n = 0; n < 512; ++n) {
+            const sim::EnterGate* in = sim::enterGateNumbered(n);
+            const sim::ExitGate* out = in && in->target >= 0 ? sim::exitGate(in->target) : nullptr;
+            if (!out || int(in->map) != map() || int(out->map) != map() || in->level > hero.level) continue;
+            if (realm_->floorAt((in->box.x1 + in->box.x2) / 2, (in->box.y1 + in->box.y2) / 2) != here) continue;
+            const int lands = realm_->floorAt((out->box.x1 + out->box.x2) / 2, (out->box.y1 + out->box.y2) / 2);
+            if (lands == here) continue;
+            if (stair < 0 || lands == to) stair = n;
+            if (lands == to) break;
+        }
+        if (stair < 0) {
+            setAside();
+            return;
+        }
+        if (!hero.walking) {
+            const sim::EnterGate* in = sim::enterGateNumbered(stair);
+            sim::Request request;
+            request.kind = sim::Request::Kind::WalkTo;
+            request.column = (in->box.x1 + in->box.x2) / 2;
+            request.row = (in->box.y1 + in->box.y2) / 2;
+            realm_->ask(request);
+        }
+    }
+
+    void setAside() {
+        if (aim_ != Aim::Hunt || aimQuest_ < 0) return;
+        aside_[aimQuest_] = clock_ + 10 * 60 * 20;
+        say("sets %s aside for 10 min: its breeds are out of reach", sim::questAt(aimQuest_).title);
+        nextAim_ = clock_;
+    }
+
+    // The giver's dialog: walked to and opened by a Talk, and then the quest taken or handed in.
+    void visitGiver() {
+        const sim::QuestRow& row = sim::questAt(aimQuest_);
+        int folk = -1;
+        for (size_t i = 0; i < tables_->folk.size(); ++i) {
+            if (tables_->folk[i].number == row.giver) folk = int(i);
+        }
+        if (folk < 0) return;
+        if (realm_->questing() != folk) {
+            sim::Request request;
+            request.kind = sim::Request::Kind::Talk;
+            request.target = uint32_t(folk);
+            realm_->ask(request);
+            return;
+        }
+        if (aim_ == Aim::Accept) {
+            if (realm_->acceptQuest(aimQuest_)) say("takes %s from %s", row.title, row.giverName);
+        } else {
+            int choice = -1;
+            for (int c = 0; c < row.choiceCount && choice < 0; ++c) {
+                if (realm_->questChoiceFits(aimQuest_, c)) choice = c;
+            }
+            const int level = realm_->hero().level;
+            const int64_t zen = realm_->money();
+            if (realm_->completeQuest(aimQuest_, choice)) {
+                ++out_.handedIn[aimQuest_];
+                if (out_.firstHandIn[aimQuest_] < 0) out_.firstHandIn[aimQuest_] = clock_;
+                say("** hands in %s to %s: +%lld zen, level %d -> %d%s%s", row.title, row.giverName,
+                    (long long)(realm_->money() - zen), level, realm_->hero().level,
+                    choice >= 0 ? ", chose " : "", choice >= 0 ? row.choices[choice].item : "");
+                sortBag();
+            } else if (freeCells() < 10) {
+                say("no room for %s's reward: to the counters", row.giverName);
+                realm_->closeQuest();
+                startTrip();
+                return;
+            }
+        }
+        realm_->closeQuest();
+        nextAim_ = clock_;  // choose again at once
+    }
+
+    // Sits in the safe zone until he is nearly whole, then goes shopping if he must. A map with
+    // no safe zone sends him home.
     void rest() {
-        const sim::Body& hero = realm_.hero();
-        if (!tables_.grid.safe(hero.column(), hero.row())) {
+        const sim::Body& hero = realm_->hero();
+        if (!safe_) {
+            restOwed_ = true;
+            if (!goTo(0)) {
+                restOwed_ = false;
+                mode_ = Mode::Hunt;
+            }
+            return;
+        }
+        if (!tables_->grid.safe(hero.column(), hero.row())) {
             if (!hero.walking) {
                 sim::Request request;
                 request.kind = sim::Request::Kind::WalkTo;
-                request.column = kTown[0];
-                request.row = kTown[1];
-                realm_.ask(request);
+                request.column = restAt_[0];
+                request.row = restAt_[1];
+                realm_->ask(request);
             }
             return;
         }
@@ -583,44 +1184,81 @@ private:
     }
 
     // ---- town -----------------------------------------------------------------------------
-    void startTrip() {
+    void startTrip(bool fresh = true) {
         errands_.clear();
-        if (hanzo_ >= 0) errands_.push_back(hanzo_);
-        if (options_.kin == sim::Kin::DarkWizard && pasi_ >= 0) errands_.push_back(pasi_);
-        if (harold_ >= 0) errands_.push_back(harold_);
-        // Martin wanders the west road with the Bone, Scale and Brass pieces: worth the walk
-        // only with the Zen for one.
-        if (martin_ >= 0 && realm_.money() >= 8000 + potionReserve()) errands_.push_back(martin_);
-        if (amy_ >= 0) errands_.push_back(amy_);
+        // Every counter in town; each after the first is asked again on the way whether it is
+        // worth the walk (`town`), since the first one's sales are what pay for the rest.
+        errands_ = sellers_;
         mode_ = Mode::Town;
-        tripSince_ = realm_.tick();
-        lastTrip_ = realm_.tick();
-        ++out_.trips;
+        tripSince_ = clock_;
+        lastTrip_ = clock_;
+        if (fresh) ++out_.trips;
+    }
+
+    // Whether a counter in this town mends (sim::repairsAt: Hanzo's, Eo's).
+    bool smithHere() const {
+        for (const int folk : sellers_) {
+            if (sim::repairsAt(tables_->folk[size_t(folk)].number)) return true;
+        }
+        return false;
+    }
+    // Whether a counter in this town sells ammunition for her hand.
+    bool ammoHere() const {
+        const int hand = ammoHand();
+        for (const int folk : sellers_) {
+            int count = 0;
+            const sim::Offer* shelf = sim::stockOf(tables_->folk[size_t(folk)].number, &count);
+            for (int i = 0; i < count; ++i) {
+                const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
+                if (item >= 0 && sim::ammunition(tables_->items[size_t(item)]) &&
+                    sim::placeOf(tables_->items[size_t(item)]) == hand) return true;
+            }
+        }
+        return false;
     }
 
     void town() {
+        // No counter on this map (the Dungeon), or none with the arrows she is out of: home to
+        // Lorencia's, where Amy sells both quivers.
+        if (sellers_.empty() || (map() != 0 && archer() && ammo() < 30 && !ammoHere()) ||
+            (map() != 0 && wornDown() >= 0 && !realm_->selfMending() && !smithHere())) {
+            tripOwed_ = true;
+            if (!goTo(0)) {
+                say("cannot get to Lorencia's counters; tries again in 10 min");
+                tripOwed_ = false;
+                noTripUntil_ = clock_ + 10 * 60 * 20;
+                mode_ = Mode::Hunt;
+            }
+            return;
+        }
         if (errands_.empty()) {
             mode_ = Mode::Hunt;
             return;
         }
         const int folk = errands_.front();
-        if (realm_.trading() == folk) {
-            serve(folk);
-            realm_.closeTrade();
+        // Past the first counter: only one with something worth trying, or the potions.
+        if (errands_.size() < sellers_.size() && realm_->trading() != folk && !potionShelf(folk) &&
+            !shelfWorth(*tables_, tables_->folk[size_t(folk)].number) && !(archer() && ammo() < 500)) {
             errands_.erase(errands_.begin());
-            tripSince_ = realm_.tick();
             return;
         }
-        if (realm_.tick() - tripSince_ > 90 * 20) {  // could not reach him: the next one
-            say("could not reach %s", tables_.folk[size_t(folk)].name.c_str());
+        if (realm_->trading() == folk) {
+            serve(folk);
+            realm_->closeTrade();
             errands_.erase(errands_.begin());
-            tripSince_ = realm_.tick();
+            tripSince_ = clock_;
+            return;
+        }
+        if (clock_ - tripSince_ > 90 * 20) {  // could not reach him: the next one
+            say("could not reach %s", tables_->folk[size_t(folk)].name.c_str());
+            errands_.erase(errands_.begin());
+            tripSince_ = clock_;
             return;
         }
         sim::Request request;
         request.kind = sim::Request::Kind::Talk;
         request.target = uint32_t(folk);
-        realm_.ask(request);
+        realm_->ask(request);
     }
 
     // What the potions he needs will cost, kept back from gear.
@@ -630,22 +1268,22 @@ private:
     }
     // Small, medium or large: by how much a small one would mend of him.
     int healTier() const {
-        const int maxHealth = realm_.hero().maxHealth;
+        const int maxHealth = realm_->hero().maxHealth;
         return maxHealth < 400 ? 0 : maxHealth < 1200 ? 1 : 2;
     }
     static int64_t potionPrice(int tier) { return tier == 0 ? 240 : tier == 1 ? 990 : 2200; }
 
     void serve(int folk) {
-        const int npc = tables_.folk[size_t(folk)].number;
-        const std::string& name = tables_.folk[size_t(folk)].name;
+        const int npc = tables_->folk[size_t(folk)].number;
+        const std::string& name = tables_->folk[size_t(folk)].name;
         // Sell what is not kept and not worn better.
         wearBest();
         int sold = 0;
         int64_t got = 0;
         for (int slot = sim::kWorn; slot < sim::kSlots; ++slot) {
-            const sim::Held& one = realm_.satchel()[slot];
+            const sim::Held& one = realm_->satchel()[slot];
             if (one.empty() || keeps(one)) continue;
-            const int64_t paid = realm_.sellItem(slot);
+            const int64_t paid = realm_->sellItem(slot);
             if (paid >= 0) {
                 ++sold;
                 got += paid;
@@ -655,28 +1293,27 @@ private:
             out_.sold += sold;
             say("sells %d things to %s for %lld zen", sold, name.c_str(), (long long)got);
         }
-        if (realm_.mending()) {
-            const int64_t cost = realm_.repairAllCost();
-            if (cost > 0 && realm_.repairAll() > 0) say("repairs for %lld zen", (long long)cost);
+        if (realm_->mending()) {
+            const int64_t cost = realm_->repairAllCost();
+            if (cost > 0 && realm_->repairAll() > 0) say("repairs for %lld zen", (long long)cost);
         }
         int count = 0;
         const sim::Offer* shelf = sim::stockOf(npc, &count);
-        if (npc == kAmy) {
-            buyPotions(shelf, count);
-        } else {
-            buyGear(shelf, count);
-        }
+        // An archer's quiver before anything: without it she cannot earn the rest.
+        buyAmmo(shelf, count);
+        buyGear(shelf, count);
+        if (potionShelf(folk)) buyPotions(shelf, count);
     }
 
     int buyOne(const sim::Offer& offer, const char* why) {
-        const int item = tables_.itemAt(offer.group, offer.number);
+        const int item = tables_->itemAt(offer.group, offer.number);
         if (item < 0) return -1;
-        const int64_t before = realm_.money();
-        const int slot = realm_.buy(offer.slot);
+        const int64_t before = realm_->money();
+        const int slot = realm_->buy(offer.slot);
         if (slot >= 0) {
             ++out_.bought;
-            if (why) say("buys %s for %lld zen%s", tables_.items[size_t(item)].label.c_str(),
-                         (long long)(before - realm_.money()), why);
+            if (why) say("buys %s for %lld zen%s", tables_->items[size_t(item)].label.c_str(),
+                         (long long)(before - realm_->money()), why);
         }
         return slot;
     }
@@ -686,9 +1323,9 @@ private:
         const auto find = [&](bool (*kind)(const content::ItemRow&), int pieces, int want) -> const sim::Offer* {
             int seen = 0;
             for (int i = 0; i < count; ++i) {
-                const int item = tables_.itemAt(shelf[i].group, shelf[i].number);
-                if (item < 0 || !kind(tables_.items[size_t(item)]) || shelf[i].pieces != pieces) continue;
-                if (tables_.items[size_t(item)].number == 0 && kind == sim::heals) continue;  // the apple
+                const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
+                if (item < 0 || !kind(tables_->items[size_t(item)]) || shelf[i].pieces != pieces) continue;
+                if (tables_->items[size_t(item)].number == 0 && kind == sim::heals) continue;  // the apple
                 if (seen++ == want) return &shelf[i];
             }
             return nullptr;
@@ -697,14 +1334,14 @@ private:
         int bought = 0, mana = 0;
         const auto heal = [&](int upTo) {
             if (const sim::Offer* offer = find(sim::heals, 3, tier)) {
-                while (countOf(sim::heals) < upTo && realm_.money() >= potionPrice(tier) &&
+                while (countOf(sim::heals) < upTo && realm_->money() >= potionPrice(tier) &&
                        buyOne(*offer, nullptr) >= 0) bought += 3;
             }
         };
         const auto restore = [&](int upTo) {
             if (!casts()) return;
             if (const sim::Offer* offer = find(sim::restores, 3, tier)) {
-                while (countOf(sim::restores) < upTo && realm_.money() >= potionPrice(tier) &&
+                while (countOf(sim::restores) < upTo && realm_->money() >= potionPrice(tier) &&
                        buyOne(*offer, nullptr) >= 0) mana += 3;
             }
         };
@@ -717,18 +1354,22 @@ private:
             restore(21);
         }
         if (bought || mana) say("buys %d healing and %d mana potions (%lld zen left)", bought, mana,
-                                (long long)realm_.money());
+                                (long long)realm_->money());
+    }
+
+    // An archer's quiver, from whichever counter has the one for her hand.
+    void buyAmmo(const sim::Offer* shelf, int count) {
         const int hand = ammoHand();
         for (int i = 0; hand >= 0 && i < count; ++i) {
-            const int item = tables_.itemAt(shelf[i].group, shelf[i].number);
+            const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
             if (item < 0 || shelf[i].refinement) continue;
-            const content::ItemRow& row = tables_.items[size_t(item)];
+            const content::ItemRow& row = tables_->items[size_t(item)];
             if (!sim::ammunition(row) || sim::placeOf(row) != hand) continue;
             const int64_t price = sim::buyingPrice(row, 0, shelf[i].pieces, shelf[i].skill);
-            while (ammo() < 200 && realm_.money() >= price) {
+            while (ammo() < 500 && realm_->money() >= price) {
                 const int slot = buyOne(shelf[i], " (ammunition)");
                 if (slot < 0) break;
-                if (realm_.satchel()[hand].empty()) realm_.moveItem(slot, hand);
+                if (realm_->satchel()[hand].empty()) realm_->moveItem(slot, hand);
             }
         }
     }
@@ -736,43 +1377,76 @@ private:
     // Gear and orbs from a shelf: an orb he can read, then any piece that makes him better,
     // within what is left over the potions he will need. A purchase that does not go on or
     // cannot be read is bought back at once.
+    // Whether an offer is worth trying: an orb his class can read now, or a piece he can wear
+    // that promises more than what he wears in its place, within the Zen over his potions.
+    bool worthTrying(const content::Tables& tables, const sim::Offer& offer) const {
+        const int item = tables.itemAt(offer.group, offer.number);
+        if (item < 0) return false;
+        const content::ItemRow& row = tables.items[size_t(item)];
+        // Tried on lately and handed back: not again for a while.
+        const auto tried = triedOn_.find(row.name);
+        if (tried != triedOn_.end() && tried->second > clock_) return false;
+        const bool orb = row.teaches != 0;
+        if (!orb && (sim::placeOf(row) < 0 || sim::ammunition(row))) return false;
+        if (orb && realm_->knows(row.teaches)) return false;
+        const sim::Held held{item, int16_t(offer.refinement), int16_t(1)};
+        // `fits` is for what is worn; an orb is asked its class here and the rest by useItem,
+        // which says no to what he cannot read yet.
+        if (orb) {
+            if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) return false;
+            if (realm_->hero().level < row.teachesLevel || realm_->hero().points.energy < row.teachesEnergy) {
+                return false;
+            }
+        } else if (!sim::fits(tables, realm_->wearer(), held)) {
+            return false;
+        }
+        const int64_t price = sim::buyingPrice(row, offer.refinement, offer.pieces, offer.skill);
+        if (price > realm_->money() - potionReserve()) return false;
+        return orb || promising(row, offer.refinement);
+    }
+    bool shelfWorth(const content::Tables& tables, int npc) const {
+        int count = 0;
+        const sim::Offer* shelf = sim::stockOf(npc, &count);
+        for (int i = 0; i < count; ++i) {
+            if (worthTrying(tables, shelf[i])) return true;
+        }
+        return false;
+    }
+    // Whether any shelf in this town, or Lorencia's from a map with none, holds such a thing.
+    bool shopWorth() {
+        const content::Tables* town = sellers_.empty() ? world(0) : tables_;
+        if (!town) return false;
+        for (const content::Townsperson& f : town->folk) {
+            if (shelfWorth(*town, f.number)) return true;
+        }
+        return false;
+    }
+
     void buyGear(const sim::Offer* shelf, int count) {
         for (int i = 0; i < count; ++i) {
-            const int item = tables_.itemAt(shelf[i].group, shelf[i].number);
-            if (item < 0) continue;
-            const content::ItemRow& row = tables_.items[size_t(item)];
+            if (!worthTrying(*tables_, shelf[i])) continue;
+            const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
+            const content::ItemRow& row = tables_->items[size_t(item)];
             const bool orb = row.teaches != 0;
-            if (!orb && (sim::placeOf(row) < 0 || sim::ammunition(row))) continue;
-            if (orb && realm_.knows(row.teaches)) continue;
-            const sim::Held held{item, int16_t(shelf[i].refinement), int16_t(1)};
-            // `fits` is for what is worn; an orb is asked its class here and the rest by
-            // useItem, which says no to what he cannot read yet.
-            if (orb) {
-                if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) continue;
-                if (realm_.hero().level < row.teachesLevel ||
-                    realm_.hero().points.energy < row.teachesEnergy) continue;
-            } else if (!sim::fits(tables_, realm_.wearer(), held)) {
-                continue;
-            }
             const int64_t price = sim::buyingPrice(row, shelf[i].refinement, shelf[i].pieces, shelf[i].skill);
-            if (price > realm_.money() - potionReserve()) continue;
-            if (!orb && !promising(row, shelf[i].refinement)) continue;
             const int slot = buyOne(shelf[i], nullptr);
             if (slot < 0) continue;
             if (orb) {
-                if (realm_.useItem(slot)) {
+                if (realm_->useItem(slot)) {
                     say("buys %s for %lld zen and learns it", row.label.c_str(), (long long)price);
                 } else {
-                    realm_.buyBack();
+                    realm_->buyBack();
                     --out_.bought;
+                    triedOn_[row.name] = clock_ + 2 * 3600 * 20;
                 }
                 continue;
             }
-            if (wearBest() && realm_.satchel()[slot].item != item) {
+            if (wearBest() && realm_->satchel()[slot].item != item) {
                 say("  (bought %s for %lld zen)", row.label.c_str(), (long long)price);
             } else {
-                realm_.buyBack();
+                realm_->buyBack();
                 --out_.bought;
+                triedOn_[row.name] = clock_ + 2 * 3600 * 20;
             }
         }
     }
@@ -781,46 +1455,55 @@ private:
     // what he wears in its place.
     bool promising(const content::ItemRow& row, int plus) const {
         const int place = sim::placeOf(row);
-        const sim::Held& worn = realm_.satchel()[place];
+        const sim::Held& worn = realm_->satchel()[place];
         if (options_.kin == sim::Kin::DarkWizard && row.weapon()) {
             return worn.empty() || row.magicPower > rowOf(worn).magicPower;
         }
         if (worn.empty()) return true;
         const content::ItemRow& has = rowOf(worn);
+        // A shield against a second weapon in that hand is not a like-for-like trade.
+        if (row.shield() != has.shield()) return false;
         if (row.weapon()) {
-            return row.minimumDamage + row.maximumDamage + 2 * sim::damageBonus(plus) >
-                   has.minimumDamage + has.maximumDamage + 2 * sim::damageBonus(worn.refinement);
+            // A two-handed one takes both hands: against what both hold.
+            int held = has.minimumDamage + has.maximumDamage + 2 * sim::damageBonus(worn.refinement);
+            const sim::Held& left = realm_->satchel()[sim::kWeaponLeft];
+            if (row.twoHanded() && place == sim::kWeaponRight && !left.empty() && rowOf(left).weapon()) {
+                held += rowOf(left).minimumDamage + rowOf(left).maximumDamage + 2 * sim::damageBonus(left.refinement);
+            }
+            return row.minimumDamage + row.maximumDamage + 2 * sim::damageBonus(plus) > held;
         }
         return row.defense + sim::defenseBonus(row.shield(), plus) >
                has.defense + sim::defenseBonus(has.shield(), worn.refinement);
     }
 
-    const content::Tables& tables_;
-    sim::Realm& realm_;
     Options options_;
-    sim::Random dice_;
+    uint64_t seed_;
+    std::map<int, std::unique_ptr<content::Tables>> worlds_;
+    const content::Tables* tables_ = nullptr;
+    std::unique_ptr<sim::Realm> realm_;
+    int64_t clock_ = 0;
     Outcome out_;
     Mode mode_ = Mode::Hunt;
-    std::vector<int> errands_;
-    int amy_ = -1, hanzo_ = -1, pasi_ = -1, harold_ = -1, martin_ = -1;
-    int64_t tripSince_ = 0, lastTrip_ = 0, nextSort_ = 0, freeSince_ = 0;
+    Aim aim_ = Aim::Grind, lastAim_ = Aim::Grind;
+    int aimQuest_ = -1, aimMap_ = 0, lastQuest_ = -2, lastMap_ = -1;
+    std::vector<int> quarry_;
+    int64_t aside_[sim::kQuests] = {};
+    int owedMap_ = -1, owedColumn_ = 0, owedRow_ = 0, walkingTo_ = -1;
+    std::vector<int> errands_, sellers_;
+    bool safe_ = true, tripOwed_ = false, restOwed_ = false;
+    int restAt_[2] = {0, 0};
+    int64_t tripSince_ = 0, lastTrip_ = 0, nextSort_ = 0, freeSince_ = 0, nextAim_ = 0, nextFloorAt_ = 0, noTripUntil_ = 0;
     std::unordered_map<uint32_t, int64_t> banned_;
-    std::map<int, int64_t> fearUntil_;
+    std::map<int, int64_t> fearUntil_;  // by breed number
     std::map<int, int> deathsTo_;
     std::map<std::string, int> killsOf_;
+    std::map<std::string, int64_t> triedOn_;  // an item's name -> when it may be tried again
     uint32_t chasing_ = 0;
     int64_t chasedSince_ = 0;
-    int pressed_ = 0, lastLevel_ = 1;
+    int pressed_ = 0, lastLevel_ = 1, drunkAt_ = 0;
+    double caution_ = 1.0;
+    int64_t cautionAt_ = 0;
 };
-
-const char* cradleWeapon(sim::Kin kin) {
-    switch (kin) {
-        case sim::Kin::DarkWizard: return "Staff01";
-        case sim::Kin::FairyElf: return "Bow01";
-        case sim::Kin::DarkKnight: return "Axe01";
-    }
-    return "";
-}
 
 }  // namespace
 
@@ -836,50 +1519,43 @@ int main(int argc, char** argv) {
         else if (a == "--runs") options.runs = std::max(1, std::atoi(next()));
         else if (a == "--hours") options.hours = std::atof(next());
         else if (a == "--until-jewel") options.untilJewel = true;
+        else if (a == "--no-quests") options.quests = false;
         else if (a == "--quiet") options.quiet = true;
         else {
             std::printf("usage: bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] "
-                        "[--until-jewel] [--quiet]\n");
+                        "[--until-jewel] [--no-quests] [--quiet]\n");
             return 2;
         }
     }
     core::logSilence(true);
-    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
-    content::Tables tables;
-    std::string error;
-    if (!content::loadTables(path, tables, error)) {
-        std::printf("bot: %s: %s\n", path.c_str(), error.c_str());
-        return 1;
-    }
 
     std::vector<Outcome> outcomes;
     for (int run = 0; run < options.runs; ++run) {
         const uint64_t seed = options.seed + uint64_t(run);
-        sim::Realm realm;
-        if (!realm.raise(&tables, seed, kTown[0], kTown[1], options.kin, 1)) {
+        std::printf("%s, seed %llu\n", kinName(options.kin), (unsigned long long)seed);
+        Bot bot(options, seed);
+        if (!bot.start()) {
             std::printf("bot: the realm did not raise\n");
             return 1;
         }
-        const int32_t weapon = tables.armNamed(cradleWeapon(options.kin));
-        if (!realm.equip(weapon, -1)) realm.equip(weapon, -1, true);
-        std::printf("%s, seed %llu\n", kinName(options.kin), (unsigned long long)seed);
-        Bot bot(tables, realm, options, seed);
         const int64_t cap = int64_t(options.hours * 3600.0 * 20.0);
-        while (realm.tick() < cap && !(options.untilJewel && bot.foundJewel())) {
-            bot.play();
-            realm.step();
-            bot.heard();
-        }
+        while (bot.now() < cap && !(options.untilJewel && bot.foundJewel())) bot.tick();
         const Outcome o = bot.finish();
         std::printf("  after %s: level %d, %d kills, %d deaths, %lld zen, %d trips to town, "
-                    "%d bought, %d sold, %d potions drunk, %d jewels, %d runes\n",
+                    "%d bought, %d sold, %d potions drunk, %d jewels, %d runes, %d map changes\n",
                     clock(o.ticks).c_str(), o.level, o.kills, o.deaths, (long long)o.zen, o.trips,
-                    o.bought, o.sold, o.drunk, o.jewels, o.runes);
+                    o.bought, o.sold, o.drunk, o.jewels, o.runes, o.maps);
         if (o.firstJewelTick >= 0) {
             std::printf("  first jewel: %s at %s, kill %d, level %d\n", o.firstJewel.c_str(),
                         clock(o.firstJewelTick).c_str(), o.firstJewelKills, o.firstJewelLevel);
         } else {
             std::printf("  no jewel\n");
+        }
+        for (int q = 0; q < sim::kQuests; ++q) {
+            if (o.firstHandIn[q] >= 0) {
+                std::printf("  first hand-in: %s at %s\n", sim::questAt(q).title,
+                            clock(o.firstHandIn[q]).c_str());
+            }
         }
         bot.printKills();
         outcomes.push_back(o);
@@ -905,6 +1581,17 @@ int main(int argc, char** argv) {
                         kills[kills.size() / 2]);
         }
         std::printf("; none in %d\n", none);
+        for (int q = 0; q < sim::kQuests; ++q) {
+            std::vector<double> at;
+            for (const Outcome& o : outcomes) {
+                if (o.firstHandIn[q] >= 0) at.push_back(double(o.firstHandIn[q]) / 1200.0);
+            }
+            if (at.empty()) continue;
+            std::sort(at.begin(), at.end());
+            std::printf("%s: first handed in by %zu of %zu, median %.0f min (%.0f-%.0f)\n",
+                        sim::questAt(q).title, at.size(), outcomes.size(), at[at.size() / 2],
+                        at.front(), at.back());
+        }
     }
     return 0;
 }
