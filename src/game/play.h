@@ -458,7 +458,7 @@ public:
     // breath; fed in `snort`.
     Snort& snorts() { return snort_; }
     Eyes& eyes() { return eyes_; }
-    // The Shadows' stars and sparks: opened by the caller as the eyes are; fed in `shade`.
+    // The Shadows' stars: opened by the caller as the eyes are; fed in `shade`.
     ShadowStars& shadowStars() { return shadowStars_; }
     // The townsfolk's RenderLight sprites, in `sheet` (the showing's `light`, MU's BITMAP_LIGHT):
     // `(1, 0.6, 0.4) * (sin(WorldTime * 0.002) * 0.3 + 0.7)`, one per glowing person.
@@ -557,11 +557,9 @@ private:
         // The Poison Bull's standing eDeBuff_Poison: drawn in the poisoned green always.
         bool venomous = false;
         // A Shadow's joints, which wear its stars every frame it is drawn (fx/shadow_stars.h), and
-        // whether it is the Poison Shadow; empty on everything else. `shadeOwed` is the part of
-        // four reference frames its swing has run since the last sparks.
+        // whether it is the Poison Shadow; empty on everything else.
         std::vector<int> shadeBones;
         bool shadePoison = false;
-        float shadeOwed = 0.0f;
         // MU's SwordCount, incremented on each swing. `swordCount % 3 == 0` plays Attack 1,
         // the rest Attack 2 — ZzzCharacter.cpp:1269-1276. The drawing's own counter, not the
         // sim's: it draws from no seeded state.
@@ -817,7 +815,7 @@ private:
     Eyes eyes_;
     ShadowStars shadowStars_;
     // The Shadows' stars, off the same posed frame as the eyes. fx/shadow_stars.h.
-    void shade(float seconds);
+    void shade();
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
     // The Bull Fighters' snorts and the Elite's eyes, off the same posed frame.

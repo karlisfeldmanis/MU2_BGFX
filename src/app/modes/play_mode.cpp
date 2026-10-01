@@ -880,6 +880,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And a Fire Trap's burst on the floor, two tiles.
         count += world_.played().trapShow().lights(falling + count,
                                                    gfx::Renderer::kMaxTransientLights - count);
+        // And the nearest Poison Shadows' faint green (fx/shadow_stars.h; ours).
+        count += world_.played().shadowStars().lights(
+            falling + count, gfx::Renderer::kMaxTransientLights - count, eye.target);
         count += world_.played().gleam().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count,
                                                 daylightOf(ctx.lighting));

@@ -502,7 +502,8 @@ EFFECTS = {
     "shiny_02": "effects/summon/shiny02.png",
     # Ours: the Lost Tower's Shadows wear Shiny02 and Magic_Ground2 on every joint, and drawn
     # crisp the thirty-nine read as spikes and streaks; the user asked for them blurrier
-    # (2026-10-01). Gaussian-blurred copies of the two, lifted back toward their peak.
+    # (2026-10-01), then "not its to blurry": Gaussian-blurred copies of the two at radius 3, a
+    # little lifted back toward their peak.
     "shiny_02_soft": "effects/shadow/shiny02_soft.png",
     "magic_ground_soft": "effects/shadow/magic_ground_soft.png",
     "lightning_2": "effects/summon/lightning2.png",

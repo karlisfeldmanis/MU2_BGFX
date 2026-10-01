@@ -19,9 +19,11 @@
 // (Level 1). A sprite of subtype 1 goes through EnableAlphaBlendMinus, so the Shadow's stars
 // darken: a black X of Shiny02 (32 by 64 texels, so 0.8 by 1.6 m at 2.5) over every joint. The
 // Poison Shadow's are Magic_Ground2's soft ring (128 square, 1.02 m at 0.8), added in green.
-// BITMAP_ENERGY subtype 0 is Thunder01 at 0.6-1.3 of its 64 units, turned at random and turning
-// 20 degrees a reference frame, for its two frames of life (ZzzEffectParticle.cpp:721-724, the
-// CreateParticle default LifeTime 2).
+//
+// **Ours**, the user's asks of 2026-10-01 ("more bluryy", "to active", "it has to be more
+// subtle", "more elegant and subtle"): both sheets blurred, a dozen of the body's joints rather
+// than thirty-nine (play_tuning.h kShadowJoints), both far fainter than MU's, and no
+// BITMAP_ENERGY sparks.
 //
 // The caller finds the bones and feeds the points each frame; this draws them.
 #pragma once
@@ -33,6 +35,7 @@
 #include "content/showing.h"
 #include "content/texture.h"
 #include "gfx/effects.h"
+#include "gfx/renderer.h"
 
 namespace mu::game {
 
@@ -42,13 +45,18 @@ public:
               const content::Showing& table);
     void shutdown();
 
-    // Forgets the last frame's stars and ages the sparks. Called before the feed.
-    void update(float seconds);
+    // Forgets the last frame's stars. Called before the feed.
+    void update();
     // One joint for this frame: a Shadow's dark star, or a Poison Shadow's green ring. `fade`
     // is the body's own, 0..1, so a corpse's go with it.
     void star(const float at[3], bool poison, float fade);
-    // One BITMAP_ENERGY spark off a joint while it swings.
-    void spark(const float at[3], bool poison);
+    // **Ours** (the user, 2026-10-01: "it also probably be a minimal light emiter"): a Poison
+    // Shadow's middle, for a faint green light on what is round it. MU's MODEL_SHADOW case
+    // lights nothing.
+    void glow(const float at[3], float fade);
+    // The nearest of this frame's glows to `near`, at most two, into the renderer's moving
+    // lights; after the spells, which keep their slots.
+    uint32_t lights(gfx::PointLight* out, uint32_t max, const float near[3]) const;
 
     void gather(gfx::Effects& effects) const;
 
@@ -58,19 +66,14 @@ private:
         bool poison;
         float fade;
     };
-    struct Spark {
-        float position[3];
-        float halfSize;
-        float spin;   // radians
-        float left;   // reference frames
-        bool poison;
-    };
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle ring_ = BGFX_INVALID_HANDLE;
-    bgfx::TextureHandle energy_ = BGFX_INVALID_HANDLE;
     std::vector<Star> stars_;
-    std::vector<Spark> sparks_;
-    uint32_t dice_ = 0x9e3779b9u;
+    struct Glow {
+        float position[3];
+        float fade;
+    };
+    std::vector<Glow> glows_;
     bool open_ = false;
 };
 
