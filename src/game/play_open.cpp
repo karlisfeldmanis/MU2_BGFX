@@ -31,7 +31,9 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     // Noria's and the Dungeon's air is not wind: MU plays its jungle and aDungeon instead.
     const MapRow* map = mapOf(world);
     windy_ = world != "noria" && !(map && map->underground);
-    dungeonAir_ = world == "dungeon";
+    dungeonAir_ = world == "dungeon" || world == "losttower";
+    towerAir_ = world == "losttower";
+    grassy_ = world == "lorencia" || world == "noria";
     snowy_ = world == "devias";
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");
     std::string error;
@@ -447,7 +449,8 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     if (windy_) heard_.wind = sound_.load("world_wind", false);
     // The Dungeon's air is aDungeon, played as the wind is: looping and unplaced, the whole map
     // (SceneManager.cpp:859-861). It rides the wind's slot, which the Dungeon has no use for.
-    else if (dungeonAir_) heard_.wind = sound_.load("world_dungeon", false);
+    // The tower's is aTower (SceneManager.cpp:873-875), the same way.
+    else if (dungeonAir_) heard_.wind = sound_.load(towerAir_ ? "world_tower" : "world_dungeon", false);
     heard_.fire = sound_.load("world_bonfire", false);
     heard_.fountain = sound_.load("world_fountain", false);
     heard_.hammer = sound_.load("npc_blacksmith", true);

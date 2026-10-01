@@ -199,7 +199,7 @@ def safe(name):
 # It is a world's fact and not a boid's, which is why it is a table and not a constant: the
 # velocity, whether the terrain's light falls on it and whether it calls are the same kind of
 # fact and live beside it in the engine (game/world/boids.h), as MU2's `Airs.cs` gathered them.
-AIRS = {"lorencia": "Bird01", "noria": "Butterfly01", "dungeon": "Bat01"}
+AIRS = {"lorencia": "Bird01", "noria": "Butterfly01", "dungeon": "Bat01", "losttower": "Bat01"}
 # And what runs along the floor: MU's fish slot (MoveFishs), which the Dungeon fills with
 # MODEL_RAT01 (GOBoid.cpp:1720-1722). Unplaced for the same reason, so named here too; the
 # engine's pool is game/world/scurry.h.
@@ -209,7 +209,8 @@ CRAWLS = {"dungeon": "Rat01"}
 TRAP_MODELS = {"dungeon": ("Saw01", "DungeonStone01")}
 # Where a world's boid is built, when it is not the world's own: MuMain loads Noria's
 # MODEL_BUTTERFLY01 from Data/Object1, Lorencia's objects (MapManager.cpp:89).
-AIRS_FROM = {"noria": "lorencia"}
+# And the Lost Tower's MODEL_BAT01, the Dungeon's (MapManager.cpp:51-58 loads it for both).
+AIRS_FROM = {"noria": "lorencia", "losttower": "dungeon"}
 
 
 def boid_glb(world, model):

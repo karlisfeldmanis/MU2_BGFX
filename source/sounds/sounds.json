@@ -1342,6 +1342,15 @@
       "gain_db": -16.0,
       "gain_note": "The file's RMS is -28.0 dB against aWind's -27.4, so a gain one step under the wind's -17 puts the two beds at the same place, near -44 dB (2026-09-30)."
     },
+    "world_tower": {
+      "files": [
+        "atower.wav"
+      ],
+      "from": "SOUND_TOWER01, Data\\Sound\\aTower.wav (ZzzOpenData.cpp:4735). PlayWorldAmbientSounds plays it looping and unplaced while the Lost Tower is the world (SceneManager.cpp:873-875) and stops it elsewhere (:948-951). The tower's air, as aDungeon is the Dungeon's.",
+      "loop": true,
+      "gain_db": -10.0,
+      "note": "-10 rather than world_dungeon's -16: aTower's RMS is -33.8 dBFS against aDungeon's -28.0, so the two airs sit at one level."
+    },
     "boid_bat": {
       "files": [
         "abat.wav"

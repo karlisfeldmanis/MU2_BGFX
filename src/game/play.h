@@ -760,8 +760,13 @@ private:
     // (game/world/weather.h) is the whole of its air, the user's word -- "dont use lorencia
     // wind in noria, we have our new ambient sound which is perfect".
     bool windy_ = true;
-    // The Dungeon's: its air is aDungeon, which rides the wind's slot (Play::openSound).
+    // The Dungeon's and the Lost Tower's: their air is aDungeon or aTower, which rides the
+    // wind's slot (Play::openSound).
     bool dungeonAir_ = false;
+    bool towerAir_ = false;
+    // Whether MU plays the grass step on a grass floor here: Lorencia and Noria alone
+    // (PlayWalkSound), so the Dungeon's and the tower's slot 0 is stone underfoot.
+    bool grassy_ = true;
     bool snowy_ = false;  // Devias: his steps are snow outdoors (PlayWalkSound)
 
     Showing showing_;

@@ -57,7 +57,7 @@ std::string boidOf(const std::string& world) {
     // -- for Noria (MapManager.cpp:89). tools/cook.py's AIRS cooks it into Noria from there.
     if (world == "noria") return "Butterfly01";
     // The Dungeon's: MODEL_BAT01, as the Lost Tower's (GOBoid.cpp:1327-1328).
-    if (world == "dungeon") return "Bat01";
+    if (world == "dungeon" || world == "losttower") return "Bat01";
     return std::string();
 }
 
@@ -74,7 +74,7 @@ Airs airsOf(const std::string& world) {
         // second, as a real butterfly's.
         airs.flap = 6.25f;
     }
-    if (world == "dungeon") {
+    if (world == "dungeon" || world == "losttower") {
         // The bat keeps the bird's 1.0, its light and its 0.5 (GOBoid.cpp:1316-1320), and calls
         // SOUND_BAT01 alone. MU plays a boid a key a frame; the cook spaces Bat01's four keys
         // 0.25 s apart, so 6.25 for the client's 0.04.

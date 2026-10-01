@@ -94,8 +94,10 @@ void Play::steps() {
         // Devias's arm comes first in PlayWalkSound: snow everywhere but its planks and its
         // four patterned floors, which fall through to the soil step. The snow is heard as the
         // grass step, not MU's pWalk(Snow): the user's call (2026-09-29), it made more sense.
+        // Elsewhere the grass step is Lorencia's and Noria's alone (grassy_); the Dungeon's and
+        // the Lost Tower's slot 0 is their stone floor, and MU walks it on the soil step.
         const int sound = snowy_ ? (floor != 3 && floor < 10 ? heard_.grass : heard_.soil)
-                          : floor == kGrassFloor ? heard_.grass
+                          : floor == kGrassFloor && grassy_ ? heard_.grass
                                                  : heard_.soil;
         if (sound >= 0) emit(sound, hero->crown[0], hero->crown[2], hero->id);
     };
@@ -397,7 +399,11 @@ void Play::hear(const gfx::Camera& camera, bool indoors) {
     sound_.loop(heard_.wind, !indoors || dungeonAir_);
     // And the same switch is the room: a slap off the town's walls in the open, a small room
     // under a roof (docs/spatial-sound.md, E).
-    sound_.room(indoors ? Sound::Room::Roofed : Sound::Room::Open);
+    // The Dungeon and the Lost Tower are stone buildings throughout: a hall's reverb, on every
+    // step, voice and blow the world's bus carries.
+    sound_.room(dungeonAir_ ? Sound::Room::Stone
+                : indoors   ? Sound::Room::Roofed
+                            : Sound::Room::Open);
     // The walls are the rules' own line of sight on the tile grid (F). The far end is pulled a
     // tile back toward the ears first: a smith at his anvil or a thing lying against a house
     // stands on or beside a closed tile, and is not behind it. Within two tiles nothing is.

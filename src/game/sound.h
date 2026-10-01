@@ -169,7 +169,8 @@ public:
 
     // The room the character is in, eased into over a moment. Dry is no reverb at all, which
     // nothing in the game asks for; it is how the test hears the pan unmixed.
-    enum class Room { Dry, Open, Roofed };
+    // Stone is the Dungeon's and the Lost Tower's halls, a little more than a house's roof.
+    enum class Room { Dry, Open, Roofed, Stone };
     void room(Room which);
 
     // Whether the straight line between two points in world metres is clear of walls. Set
