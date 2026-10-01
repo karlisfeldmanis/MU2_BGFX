@@ -14,7 +14,7 @@
     "re_08": "rock"
   },
   "why_this_one": "A low slab, 2 m long, 0.43 m tall and a metre deep, set in rows: the kerbs and low inner walls along the walks and round the squares, 200 of them. The user: 'tehre was some inner walls'.",
-  "material_note": "re_08 is dark streaked stone, rock. MuMain hangs a warm flare on this type by a missing break (ZzzObject.cpp:2981-2991, docs/lost-tower-port.md, Decision 5) at an undefined point; drawn as ours at the slab's own origin, on the user's word (game/world/ornaments.cpp).",
+  "material_note": "re_08 is dark streaked stone, rock. MuMain hangs a warm flare on this type by a missing break (ZzzObject.cpp:2981-2991, docs/lost-tower-port.md, Decision 5) at an undefined point. The sprite is not drawn: tried and dropped the same day (the user: 'still to much vissible points, but i like emiters'); the slab carries a warm light instead, below.",
   "emitters": [
     {
       "kind": "lamp",
@@ -35,7 +35,7 @@
       "smooth_seconds": 0.5
     }
   ],
-  "emitters_from": "Ours, marked. MU's slab flare (the missing break, ZzzObject.cpp:2981-2991) lights nothing: it is a sprite. Drawn alone as a small glow over the slab it read as a brown dot (the user: 'they dont look like light objects but just planted brown points'), so each lit slab casts a faint warm pool over itself and the floor, in the flare's own hue (0.6, 0.3, 0.1) at full strength, from the glow's height (43 units the slab's top, 30 more the glow's lift), eased on the flare's 0.15 s. Lamps spaces them 3 m apart along the rows (lightSpacing), so steps of adjacent slabs do not stack into a band, as the hall's lamp posts did. Calmed the same day (the user: 'they are little bit to active'): 0.24-0.27, one change a second eased over half a second, the lamp posts' breath rather than a flame's flicker.",
+  "emitters_from": "Ours, marked. MU's slab flare (the missing break, ZzzObject.cpp:2981-2991) lights nothing: it is a sprite. Drawn alone as a small glow over the slab it read as a brown dot (the user: 'they dont look like light objects but just planted brown points'), so each lit slab casts a faint warm pool over itself and the floor, in the flare's own hue (0.6, 0.3, 0.1) at full strength, from the glow's height (43 units the slab's top, 30 more the glow's lift), eased on the flare's 0.15 s. Lamps spaces them 3 m apart along the rows (lightSpacing), so steps of adjacent slabs do not stack into a band, as the hall's lamp posts did. Calmed the same day (the user: 'they are little bit to active'): 0.24-0.27, one change a second eased over half a second, the lamp posts' breath rather than a flame's flicker. The flare sprite itself was then taken out, the light kept (the user: 'still to much vissible points, but i like emiters'): the slabs give off light and show no source.",
   "islands": [
     {
       "island": 0,

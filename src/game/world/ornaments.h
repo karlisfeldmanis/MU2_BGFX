@@ -136,12 +136,6 @@ private:
 
     std::vector<Spout> spouts_;
     std::vector<Lantern> lanterns_;
-    // The Lost Tower's slab flares (Object10): a BITMAP_LIGHT at each slab's own origin, which
-    // stands still, so it is the placement's point and needs no pose. See ornaments.cpp.
-    struct Flare {
-        float at[3] = {0, 0, 0};
-    };
-    std::vector<Flare> flares_;
     // Devias's Lost Tower beacon: type 100 is a hidden placement (HiddenMesh -2), so there is
     // nothing posed to hang it on, and it stands at the placement's own point. Shown only to a
     // hero MuMain would show it to -- see setBeaconSeen.
@@ -163,7 +157,6 @@ private:
     float strikes_[4][3] = {};
     size_t strikeCount_ = 0;
     float luminosity_ = 1.0f;  // this frame's roll, shared by every lantern as MU's is
-    float flareLevel_ = 0.85f;  // the slab flares' level, eased towards luminosity_
     float lanternWait_ = 0.0f;
     float spun_ = 0.0f;  // seconds, for the machine's star: WorldTime's own clock, wrapped
     uint32_t seed_ = 0x51AB1Eu;

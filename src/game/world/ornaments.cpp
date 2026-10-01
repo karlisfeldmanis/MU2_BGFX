@@ -124,28 +124,6 @@ constexpr TowerGlow kTowerGlows[] = {
 constexpr int kTowerBones[3] = {15, 19, 21};
 constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
 
-// Type 9 (Object10, the 200 low slabs): MuMain's WD_4LOSTTOWER arm has no `break`, so it
-// falls into WD_6STADIUM's (ZzzObject.cpp:2981-2991), whose case 9 hangs a BITMAP_LIGHT
-// (flare01) on the slab, Scale `Luminosity * 5`, colour `Luminosity * (0.6, 0.3, 0.1)`. Its
-// point is TransformPosition(BoneTransform[1], Position) with `Position` never set (:2779) and
-// a one-bone model, so where MU drew it is undefined. Ours, on the user's word ('there was
-// some more lighting thingies', then the slab glows; then 'need improbments, looked buggy'):
-// - on top of the slab and lifted clear of it: at the slab's foot the floor cut the glow
-//   with a hard edge, since a sprite has no soft depth;
-// - a quarter of MU's Scale, the share Lorencia's lanterns take for the same reason
-//   (kLanternGlowShare), so it does not cut through the steps beside it either;
-// - its size held, and its level eased towards each roll rather than jumping to it 25 times a
-//   second, which read as a fault rather than a flame.
-constexpr float kSlabFlareScale = 5.0f * kLanternGlowShare;
-// MU's hue at full strength: at its own 0.6 it read as a brown dot, not a light (the user:
-// 'they dont look like light objects but just planted brown points'). Ours.
-// And then at 0.4 of it, with the light doing the lighting: at full strength the glow's core
-// stood out as a point (the user: 'i dont like that i can very good see that brown point').
-constexpr float kSlabFlareColour[3] = {0.4f, 0.2f, 0.07f};
-constexpr float kSlabTopMetres = 0.43f;    // Object10's top, 42.6 units over its origin
-constexpr float kSlabFlareLift = 0.3f;     // clear of the top under MU's pitched camera
-// Half a second, the light's own ease: 'they are little bit to active'.
-constexpr float kSlabFlareEaseSeconds = 0.5f;
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
@@ -267,16 +245,6 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                 for (int a = 0; a < 3; ++a) lantern.colour[a] = kLanternColour[a];
                 if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
             }
-        } else if (world == "losttower" && name == "Object10") {
-            Flare flare;
-            // The slab's top middle, through the placement's own transform (pitch, scale and
-            // all), then straight up.
-            const content::TownInstance& at = town.cooked().instances[i];
-            float m[16];
-            content::placementTransform(at.pitch, at.yaw, at.roll, at.scale, at.position, m);
-            for (int a = 0; a < 3; ++a) flare.at[a] = kSlabTopMetres * m[4 + a] + m[12 + a];
-            flare.at[1] += kSlabFlareLift;
-            flares_.push_back(flare);
         } else if (world == "losttower") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
@@ -356,11 +324,10 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
         magic_ = take("magic_ground");     // Effect/Magic_Ground2, MU's BITMAP_MAGIC+1
         shiny_ = take("shiny");    // Effect/Shiny01, MU's BITMAP_SHINY
     }
-    if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty() || !flares_.empty()) {
-        core::logf("ornaments: %zu fountain spray, %zu mill falls, %zu lanterns, %zu slab flares; "
-                   "sheets: smoke01 %s, light %s",
-                   spouts_.size(), falls_.size(), lanterns_.size(), flares_.size(),
-                   bgfx::isValid(smoke_) ? "yes" : "NO",
+    if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
+        core::logf("ornaments: %zu fountain spray, %zu mill falls, %zu lanterns; sheets: "
+                   "smoke01 %s, light %s",
+                   spouts_.size(), falls_.size(), lanterns_.size(), bgfx::isValid(smoke_) ? "yes" : "NO",
                    bgfx::isValid(light_) ? "yes" : "NO");
     }
     return true;
@@ -382,7 +349,6 @@ void Ornaments::shutdown() {
     fountains_.clear();
     spouts_.clear();
     lanterns_.clear();
-    flares_.clear();
     beacon_ = beaconSeen_ = false;
     falls_.clear();
     puffs_.clear();
@@ -523,8 +489,6 @@ void Ornaments::update(float seconds, const Sway& sway) {
         lanternWait_ = 1.0f / kLanternHz;
         luminosity_ = float(next() % 30u + 70u) * 0.01f;
     }
-    flareLevel_ += (luminosity_ - flareLevel_) *
-                   (1.0f - std::exp(-seconds / kSlabFlareEaseSeconds));
 }
 
 void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
@@ -601,18 +565,6 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
             sprite.colour[3] = 1.0f;
             sprite.spin = way * kStarDegreesPerSecond * spun_ * 3.14159265f / 180.0f;
             sprite.sheet = lightning_;
-            sprite.blend = gfx::Blend::Additive;
-            effects.add(sprite);
-        }
-    }
-    if (bgfx::isValid(light_)) {
-        for (const Flare& flare : flares_) {
-            gfx::Sprite sprite;
-            for (int a = 0; a < 3; ++a) sprite.position[a] = flare.at[a];
-            sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * kSlabFlareScale;
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = kSlabFlareColour[k] * flareLevel_;
-            sprite.colour[3] = 1.0f;
-            sprite.sheet = light_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }
