@@ -88,6 +88,39 @@ private:
     bool announce_ = false;
 };
 
+// Go Back!: the spot in the field he left by magic -- a Town Portal Scroll, or a Tab trip --
+// and the five minutes he has to sell, buy and come back to it. Ours: 0.75 has nothing like it.
+//
+// The Application's and not a mode's, because a Tab trip shuts this world's mode and raises the
+// next one, and the way back has to come along. Dropped on the way to the character screen or
+// out of the game: a save does not keep it.
+struct GoBack {
+    static constexpr double kSeconds = 300.0;
+    static constexpr double kClosedSeconds = 3.0;  // "Go Back! has closed", then nothing
+    std::string world;  // where it goes, empty for none
+    int column = -1, row = -1;
+    float facing = 0.0f;
+    double left = 0.0;    // seconds of play left; 0 with `world` set is the closed line
+    double closed = 0.0;  // how long the closed line has shown
+    // The next world was come into by magic, and is owed the warp's sound and ring when he is
+    // in it: a Tab trip, a Town Portal to another map, or Go Back! itself.
+    bool landing = false;
+
+    bool open() const { return !world.empty() && left > 0.0; }
+    void arm(const std::string& to, int c, int r, float f) {
+        world = to;
+        column = c;
+        row = r;
+        facing = f;
+        left = kSeconds;
+        closed = 0.0;
+    }
+    void clear() {
+        world.clear();
+        left = closed = 0.0;
+    }
+};
+
 struct Context {
     core::Args& args;
     const Paths& paths;
@@ -104,6 +137,7 @@ struct Context {
     // The spinner's black and the entrance's fade up out of it. Its own overlay, because it
     // is drawn over the list rather than among it.
     gfx::Overlay& curtain;
+    GoBack& goBack;
 };
 
 // What the day gives an unlit puff of smoke: the ambient and the sun on a flat surface, over

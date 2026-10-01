@@ -61,6 +61,9 @@ bool Play::moveItem(int from, int to) {
 
 bool Play::useItem(int slot) {
     const int32_t item = slot >= 0 && slot < sim::kSlots ? realm_.satchel()[slot].item : -1;
+    // Where he stood, for Go Back! should this be a Town Portal that takes.
+    const int fromColumn = realm_.hero().column(), fromRow = realm_.hero().row();
+    const float fromFacing = realm_.hero().facing;
     // The swing before and after, so a use that moves it -- the Ale -- shows by how much.
     const int swingMs = realm_.hero().swingMs, swingTicks = realm_.hero().swingTicks;
     const bool used = realm_.useItem(slot);
@@ -81,6 +84,9 @@ bool Play::useItem(int slot) {
         if (row && row->teaches != 0) {
             learned();
         } else if (row && sim::portal(*row)) {
+            portalFrom_[0] = fromColumn;
+            portalFrom_[1] = fromRow;
+            portalFacing_ = fromFacing;
             // Read in silence: TryConsumeItem's scroll branch sends the use and plays nothing.
             // What it has is the arrival -- the hero put down at nought alpha, the warp's walls
             // and circle under him, and sMagic, which is ours (see Play::warped). Or, on a map
@@ -349,6 +355,15 @@ bool Play::acceptQuest(int quest) {
     if (taken) sound_.play(sound_.load("quest_accept", false));
     else ui(Ui::Refused);
     return taken;
+}
+
+void Play::goBack(int column, int row, float facing) {
+    core::logf("window: go back to %d,%d", column, row);
+    realm_.setHeroDown(column, row, int(std::lround(std::cos(facing) * 100.0f)),
+                       int(std::lround(std::sin(facing) * 100.0f)));
+    // Said between ticks, so the next step clears the Climbed before update() reads it: the
+    // landing is shown here, as a Town Portal's is.
+    warped();
 }
 
 bool Play::travel(int index) {

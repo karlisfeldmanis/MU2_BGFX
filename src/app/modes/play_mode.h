@@ -60,6 +60,11 @@ private:
     void travel(Context& ctx, const std::string& world, int column = -1, int row = -1,
                 float facing = 0.0f, bool unfaced = false);
     std::string travelTo_;
+    // Go Back! (app/context.h): the clock run down, the plate told, its click taken, and a world
+    // come into by magic given its landing. Every frame, before the pointer.
+    void goBack(Context& ctx, double seconds);
+    bool landed_ = false;  // this world's first frame has been through goBack()
+    static constexpr double kGoBackWaits = 5.4;  // the map name's time on screen (game/ui/arrival.h)
     int arriveColumn_ = 0, arriveRow_ = 0;
     float arriveFacing_ = 0.0f;
     bool arriveFaced_ = false;

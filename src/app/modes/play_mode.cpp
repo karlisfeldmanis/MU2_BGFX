@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cctype>
 #include <cstdlib>
 
 #include "app/options.h"
@@ -579,6 +580,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
             const sim::ExitGate* out = in ? sim::exitGate(in->target) : nullptr;
             const game::MapRow* map = out ? game::mapNumbered(int(out->map)) : nullptr;
             if (map != nullptr) {
+                // Walked out through a gate: the way back by magic is given up.
+                ctx.goBack.clear();
                 travel(ctx, map->world, gateColumn, gateRow,
                        std::atan2(float(out->dy), float(out->dx)));
             } else {
@@ -587,10 +590,25 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         }
     }
 
+    // Go Back!'s way back is opened by a Town Portal Scroll read in the field -- a scroll is
+    // refused in a safe zone -- before the Dungeon's below takes him to another map.
+    if (world_.played().isOpen()) {
+        int column = 0, row = 0;
+        float facing = 0.0f;
+        if (world_.played().takePortalFrom(&column, &row, &facing)) {
+            ctx.goBack.arm(args.world, column, row, facing);
+            core::logf("go back: open for %.0f s, to %s %d,%d", GoBack::kSeconds,
+                       args.world.c_str(), column, row);
+        }
+    }
+
     // A Town Portal read in the Dungeon: to Lorencia's safe zone, its spawn gate (MapRow arrive),
     // as OpenMU's SafezoneMap for a map with no spawn gate (BaseMapInitializer.cs:91).
     if (world_.played().isOpen() && travelTo_.empty() && world_.played().takeHome()) {
-        if (const game::MapRow* home = game::mapNumbered(0)) travel(ctx, home->world);
+        if (const game::MapRow* home = game::mapNumbered(0)) {
+            ctx.goBack.landing = true;
+            travel(ctx, home->world);
+        }
     }
 
     // --travel-at: on to the next world in the table, for a scripted run. No key does this; the
@@ -608,11 +626,27 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         const sim::TravelRow* to = row >= 0 ? &sim::travelAt(row) : nullptr;
         const game::MapRow* map = to ? game::mapNumbered(int(to->map)) : nullptr;
         if (map != nullptr) {
+            // Left from the field, the way back opens; left from a town, one already open is
+            // given up -- he chose to go elsewhere. Either way he goes by magic and is heard
+            // landing (the user, 2026-10-01: 'we need also teleport sound effect when we use TAB
+            // teleport').
+            const sim::Body& hero = world_.played().realm().hero();
+            const content::Tables* tables = world_.played().realm().tables();
+            if (tables && !tables->grid.safe(hero.column(), hero.row())) {
+                ctx.goBack.arm(args.world, hero.column(), hero.row(), hero.facing);
+                core::logf("go back: open for %.0f s, to %s %d,%d", GoBack::kSeconds,
+                           args.world.c_str(), hero.column(), hero.row());
+            } else {
+                ctx.goBack.clear();
+            }
+            ctx.goBack.landing = true;
             const bool faced = to->dx != 0 || to->dy != 0;
             travel(ctx, map->world, to->column, to->row,
                    faced ? std::atan2(float(to->dy), float(to->dx)) : 0.0f, !faced);
         }
     }
+
+    goBack(ctx, deltaSeconds);
 
     if (!savePath_.empty() &&
         double(bx::getHPCounter() - keptAt_) / double(bx::getHPFrequency()) > 15.0) {
@@ -1284,7 +1318,71 @@ void PlayMode::travel(Context& ctx, const std::string& world, int column, int ro
     }
 }
 
+void PlayMode::goBack(Context& ctx, double seconds) {
+    GoBack& back = ctx.goBack;
+    if (!world_.played().isOpen()) return;
+    const sim::Body& hero = world_.played().realm().hero();
+
+    // Come into this world by magic: the warp's sound and ring as he stands in it. And a way
+    // back that has brought him somewhere with no safe ground under him -- a Tab trip to the
+    // Dungeon -- is not a town to sell in, so it closes quietly.
+    if (!landed_) {
+        landed_ = true;
+        if (back.landing) world_.played().landed();
+        back.landing = false;
+        const content::Tables* tables = world_.played().realm().tables();
+        if (back.open() && tables && !tables->grid.safe(hero.column(), hero.row())) back.clear();
+    }
+    if (back.world.empty()) {
+        desk_.goBack(false, 0, false, {});
+        return;
+    }
+    // Dead in town, the way back goes with him.
+    if (!hero.alive()) {
+        back.clear();
+        desk_.goBack(false, 0, false, {});
+        return;
+    }
+    if (back.open()) {
+        back.left = std::max(0.0, back.left - seconds);
+        if (back.left <= 0.0) core::logf("go back: closed");
+    } else {
+        back.closed += seconds;
+        if (back.closed >= GoBack::kClosedSeconds) {
+            back.clear();
+            desk_.goBack(false, 0, false, {});
+            return;
+        }
+    }
+
+    if (desk_.takeGoBack() && back.open()) {
+        const std::string world = back.world;
+        const int column = back.column, row = back.row;
+        const float facing = back.facing;
+        back.clear();
+        if (world == ctx.args.world) {
+            world_.played().goBack(column, row, facing);
+        } else {
+            back.landing = true;
+            travel(ctx, world, column, row, facing);
+        }
+        desk_.goBack(false, 0, false, {});
+        return;
+    }
+
+    // Up once the map's name has come and gone (game/ui/arrival.h's 5.4 s), so the two never
+    // stand on the screen together; the clock is running from the landing all the same.
+    std::string where = game::placeName(back.world, back.column, back.row);
+    if (!where.empty()) where[0] = char(std::toupper(static_cast<unsigned char>(where[0])));
+    where += " " + std::to_string(back.column) + ", " + std::to_string(back.row);
+    const bool shown = !back.open() || GoBack::kSeconds - back.left >= kGoBackWaits;
+    desk_.goBack(shown, int(std::ceil(back.left)), !back.open(), where);
+}
+
 void PlayMode::shutdown(Context& ctx) {
+    // Out of the game or back to the character screen: the way back is not kept. On to another
+    // world it comes along.
+    if (travelTo_.empty()) ctx.goBack.clear();
     keep(ctx);
     if (!savePath_.empty()) core::logf("save: kept in %s", savePath_.c_str());
     ctx.time.setScene("");

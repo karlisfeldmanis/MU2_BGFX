@@ -48,6 +48,7 @@ private:
     gfx::Overlay overlay_;
     gfx::Readout readout_;
     gfx::Overlay curtain_;
+    GoBack goBack_;
 
     int probeSprites_ = 0;
     bgfx::TextureHandle probeSheet_ = BGFX_INVALID_HANDLE;

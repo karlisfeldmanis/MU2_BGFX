@@ -158,7 +158,7 @@ int Application::run(int argc, char** argv) {
     }
 
     Context ctx{args_,     paths_,    window_,   renderer_, textures_,
-                lighting_, time_,     overlay_,  readout_,  curtain_};
+                lighting_, time_,     overlay_,  readout_,  curtain_, goBack_};
 
     // Either a world or the bench, never both: they are two different things to look at and
     // the camera belongs to whichever it is.

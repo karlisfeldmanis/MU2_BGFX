@@ -503,6 +503,18 @@ void Play::warped() {
     core::logf("warp: lands at tile %d,%d", body.column(), body.row());
 }
 
+void Play::landed() {
+    sound_.play(heard_.warp);
+    if (ground_ == nullptr) return;
+    const sim::Body& body = realm_.hero();
+    const float metres = ground_->metresPerTile();
+    const float x = (body.x + 0.5f) * metres;
+    const float z = -(body.y + 0.5f) * metres;
+    const float feet[3] = {x, ground_->heightAt(x, z), z};
+    warp_.land(feet, metres);
+    core::logf("warp: comes in at tile %d,%d", body.column(), body.row());
+}
+
 // The knight's guard raised, and then kept on him while it stands -- and the wizard's Soul
 // Barrier, which is the same cage on the user's word of 2026-09-28.
 //

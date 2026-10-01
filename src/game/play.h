@@ -396,6 +396,24 @@ public:
         homeOwed_ = false;
         return was;
     }
+    // Where the last Town Portal Scroll was read -- the tile and the way he faced -- once, or
+    // false: what Go Back! takes him back to (app/modes/play_mode.cpp). A scroll is refused in a
+    // safe zone, so this is always the field.
+    bool takePortalFrom(int* column, int* row, float* facing) {
+        if (portalFrom_[0] < 0) return false;
+        *column = portalFrom_[0];
+        *row = portalFrom_[1];
+        *facing = portalFacing_;
+        portalFrom_[0] = portalFrom_[1] = -1;
+        return true;
+    }
+    // Go Back!: put down on a tile of this same map as a Town Portal lands, facing `facing` --
+    // the realm's setHeroDown, and the landing drawn and heard as a warp's (`warped`).
+    void goBack(int column, int row, float facing);
+    // A warp's landing heard and seen where he stands, and nothing else: sMagic and the ring, for
+    // a map come into by magic -- a Tab trip, a Town Portal to another map, Go Back! -- where the
+    // world was raised around him rather than him set down in it.
+    void landed();
     bool takeWarp() {
         const bool was = warpOwed_;
         warpOwed_ = false;
@@ -790,6 +808,8 @@ private:
     Warp warp_;
     bool warpOwed_ = false;
     bool homeOwed_ = false;
+    int portalFrom_[2] = {-1, -1};  // takePortalFrom's tile, -1 for none
+    float portalFacing_ = 0.0f;
     Sound sound_;
     Breath breath_;
     Bones bones_;

@@ -18,6 +18,7 @@
 #include "game/ui/card.h"
 #include "game/ui/chest.h"
 #include "game/ui/endurance.h"
+#include "game/ui/go_back.h"
 #include "game/ui/cursor.h"
 #include "game/ui/hud.h"
 #include "game/item_models.h"
@@ -146,6 +147,20 @@ public:
     }
     // The map's name, for the menu's foot: where he is standing.
     void setWorld(const std::string& world) { worldName_ = world; }
+    // Go Back! (game/ui/go_back.h), told each frame by the mode, which keeps the spot and the
+    // clock: `secondsLeft` above 0 is the plate, 0 with `closed` the closed line, `shown` false
+    // neither. And whether it was clicked since this was last asked, once.
+    void goBack(bool shown, int secondsLeft, bool closed, const std::string& where) {
+        goBackShown_ = shown;
+        goBackLeft_ = secondsLeft;
+        goBackClosed_ = closed;
+        goBackWhere_ = where;
+    }
+    bool takeGoBack() {
+        const bool was = goBackAsked_;
+        goBackAsked_ = false;
+        return was;
+    }
 
     // The game menu (game/ui/menu.h) is up. The world goes on behind it.
     bool menuUp() const { return menu_.up(); }
@@ -179,6 +194,11 @@ private:
     QuestDialog questDialog_;
     // The travel list, Tab's (game/ui/travel.h).
     Travel travel_;
+    // Go Back!, over the HUD's middle while the way back to the field is open.
+    GoBackPlate goBack_;
+    bool goBackShown_ = false, goBackClosed_ = false, goBackAsked_ = false;
+    int goBackLeft_ = 0;
+    std::string goBackWhere_;
     int journal_ = -1;  // the quest the journal (L) is reading, away from its giver, or -1
     bool scriptJournal_ = false;  // a script's L for the next update (--ui-type FRAME:journal)
     bool questing_ = false;  // a giver's window was up last frame, so its opening is heard once

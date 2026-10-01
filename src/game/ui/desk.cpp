@@ -73,6 +73,7 @@ bool Desk::open(const std::string& shaderDir, const std::string& assetDir,
     questDialog_.open(interface_);
     tracker_.open(interface_);
     travel_.open(interface_, assetDir);
+    goBack_.open(interface_);
     minimap_.open(interface_);
     menu_.open(interface_);
     endurance_.open(interface_, &arts_);
@@ -93,6 +94,7 @@ void Desk::shutdown() {
     questDialog_.close();
     tracker_.close();
     travel_.close();
+    goBack_.close();
     minimap_.close();
     specimen_.close();
     controls::close();
@@ -375,6 +377,17 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
             click();
         }
     }
+    // Go Back!: clicked, it clicks, and the mode takes him back (app/modes/play_mode.cpp), where
+    // the warp's own sMagic plays as he lands. Not while a box or the menu has the screen.
+    {
+        const bool held = amount_.up() || menu_.up();
+        if (goBack_.update(seconds, goBackShown_ && play.isOpen(), goBackLeft_, goBackClosed_,
+                           goBackWhere_, held ? Pointer{} : pointer, window.width(),
+                           window.height(), hud_.plateTop())) {
+            goBackAsked_ = true;
+            click();
+        }
+    }
 
     bool toggleInventory = false, toggleCharacter = false, toggleMenu = false;
     hud_.update(seconds, float(window.width()), float(window.height()), pointer, inventoryOpen_,
@@ -625,7 +638,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     takesPointer_ = typing || amount_.up() || menuHeld || hud_.covers(pointer.x, pointer.y) ||
                     minimap_.covers(pointer.x, pointer.y) ||
                     questDialog_.covers(pointer.x, pointer.y) ||
-                    travel_.covers(pointer.x, pointer.y) ||
+                    travel_.covers(pointer.x, pointer.y) || goBack_.covers(pointer.x, pointer.y) ||
                     (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
                     liftedQuick_ >= 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
@@ -1458,6 +1471,8 @@ void Desk::submit(bgfx::ViewId view, int width, int height) {
     if (arrival_.showing()) interface_.add(arrival_.canvas());
     if (tracker_.showing()) interface_.add(tracker_.canvas());
     if (tracker_.announcing()) interface_.add(tracker_.banner());
+    // Go Back! over the HUD's middle: chrome, under every window.
+    if (goBack_.showing()) interface_.add(goBack_.canvas());
     // Chrome like the plate, under every window that might open over its corner.
     if (minimap_.showing()) interface_.add(minimap_.canvas());
     if (travel_.up()) interface_.add(travel_.canvas());
