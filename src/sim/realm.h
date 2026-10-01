@@ -364,6 +364,10 @@ struct Body {
     // runs the body neither thinks nor walks.
     float pushX = 0.0f, pushY = 0.0f;
     int32_t pushTicks = 0;
+    // A beast's Lightning push on him, held until its bolt lands (kBeastPushDelay): the tick it
+    // goes, 0 for none, and where the beast stood when it struck.
+    int64_t pushAt = 0;
+    float pushFromX = 0.0f, pushFromY = 0.0f;
     // A channel running (`Realm::channel`): which skill, when it began and ends, and the tick of
     // its next pulse. 0 for none. The interface reads the first three for its bar.
     int32_t channelSkill = 0;
@@ -388,9 +392,6 @@ struct Body {
     // and who poisoned it. 0 for never.
     int64_t poisonUntil = 0, poisonNext = 0;
     int32_t poisonDamage = 0;
-    // How many monster poisons are on him at once (kPoisonStacksMost): each pulse bites that
-    // many times over. 1 from a fresh poisoning; read only while he is poisoned.
-    int32_t poisonStacks = 0;
     uint32_t poisonBy = 0;
     int32_t blinkColumn = 0, blinkRow = 0;
     // Sitting, leaning or hanging, and off which perch (an index into Tables::perches, -1 for
@@ -906,7 +907,8 @@ private:
     void callDown(Body& hero, Body& struck, const PowerRow& power, int wound);
     // The Lightning push: one tile straight away from `from`, slid over `kPushTicks`, onto
     // something standable or not at all.
-    void push(Body& target, const Body& from);
+    void push(Body& target, const Body& from) { push(target, from.x, from.y); }
+    void push(Body& target, float fromX, float fromY);
     // The channel's tick: a pulse when one is due, and the end when it is over.
     void channel(Body& hero);
     // How long the clip this skill plays takes, and so what its cooldown cannot go under.

@@ -767,7 +767,13 @@ void Realm::step() {
         poisonPulse(hero);
         accept();
         // Pushed by a beast's Lightning: he slides as a pushed monster does, and walks on when
-        // he lands.
+        // he lands. The push goes when the bolt lands; one whose beast is far off by then --
+        // he teleported or left the map -- is dropped.
+        if (hero.pushAt != 0 && tick_ >= hero.pushAt) {
+            hero.pushAt = 0;
+            const float dx = hero.x - hero.pushFromX, dy = hero.y - hero.pushFromY;
+            if (dx * dx + dy * dy < 12.0f * 12.0f) push(hero, hero.pushFromX, hero.pushFromY);
+        }
         if (hero.pushTicks > 0) {
             hero.x += hero.pushX;
             hero.y += hero.pushY;

@@ -577,13 +577,13 @@ void Realm::blink(Body& hero) {
 // ticks the worst tick was 0.42 of a tile; at six it is 0.35.
 constexpr int32_t kPushTicks = 6;
 
-void Realm::push(Body& target, const Body& from) {
+void Realm::push(Body& target, float fromX, float fromY) {
     // Not again while it is still sliding: a push restarted mid-slide begins off the tile's
     // centre and can go two tiles in five ticks. The next strike finds it landed.
     if (target.pushTicks > 0) return;
     // Straight away from him, snapped to the nearest of the eight compass steps. No draw is taken,
     // so the seeded log's dice are the same with or without it.
-    const float dx = target.x - from.x, dy = target.y - from.y;
+    const float dx = target.x - fromX, dy = target.y - fromY;
     const float far = std::sqrt(dx * dx + dy * dy);
     if (far < 1e-3f) return;
     const int stepX = int(std::lround(dx / far)), stepY = int(std::lround(dy / far));

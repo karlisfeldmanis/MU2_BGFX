@@ -58,17 +58,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         }
         // 0.75's poison, whose pulse is a share of what he has left (`poisonDamage` 0). One at a
         // time: a bite while one is on neither adds to it nor starts it again. It stacked for an
-        // afternoon (2026-09-30) and was taken out as too strong ("remove stacking poison").
-        // And stacked when one is on already (ours, kPoisonStacksMost): the clock starts again
-        // and the pulses keep their beat.
-        if (target.player && target.alive() && !attacker.player && poisons(attacker)) {
-            if (!poisoned(target)) {
-                target.poisonNext = tick_ + kPoisonFirst;
-                target.poisonDamage = 0;
-                target.poisonStacks = 1;
-            } else {
-                target.poisonStacks = std::min(target.poisonStacks + 1, kPoisonStacksMost);
-            }
+        // afternoon (2026-09-30) and was taken out as too strong ("remove stacking poison");
+        // that removal reached only this comment until 2026-10-01 ("poison damage from monsters
+        // seems to overpowered").
+        if (target.player && target.alive() && !attacker.player && poisons(attacker) &&
+            !poisoned(target)) {
+            target.poisonNext = tick_ + kPoisonFirst;
+            target.poisonDamage = 0;
             target.poisonUntil = tick_ + kHeroPoisonTicks;
             target.poisonBy = attacker.id;
         }
@@ -172,10 +168,14 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // A beast that strikes with Lightning -- the Thunder Lich and the Devil, whose AttackSkill is
     // 3 -- pushes the hero as the wizard's Lightning pushes a monster: a tile straight away, never
     // onto a safe one (the user, 2026-10-01: "when dungeon lich attack ... there is no push back").
+    // Held until its bolt lands (kBeastPushDelay), from where it stood; one at a time.
     if (target.player && target.alive() && !attacker.player && attacker.kind >= 0 &&
         size_t(attacker.kind) < tables_->kinds.size() &&
-        tables_->kinds[size_t(attacker.kind)].attackSkill == skill::kLightning) {
-        push(target, attacker);
+        tables_->kinds[size_t(attacker.kind)].attackSkill == skill::kLightning &&
+        target.pushAt == 0 && target.pushTicks == 0) {
+        target.pushAt = tick_ + kBeastPushDelay;
+        target.pushFromX = attacker.x;
+        target.pushFromY = attacker.y;
     }
     elements(blow.damage);
     // An Ice Monster's: iced, whatever the blow did.
@@ -651,11 +651,9 @@ void Realm::poisonPulse(Body& beast) {
     Body* by = body(beast.poisonBy);
     if (by == nullptr) by = &beast;
     // A quarter of the wizard's blow on a monster; on him, 0.75's share of what is left.
-    // Times his stacks, when a monster's poison is what is on him.
     const int due = beast.poisonDamage > 0
                         ? beast.poisonDamage
-                        : std::max(1, int(float(beast.health) * kHeroPoisonShare)) *
-                              std::max(1, beast.player ? beast.poisonStacks : 1);
+                        : std::max(1, int(float(beast.health) * kHeroPoisonShare));
     // His shield's nine tenths first, as every blow and trap on him (Realm::strikeAt): the user,
     // 2026-10-01, "DS shield has absorb also poison damage, all damage". Monsters carry none.
     int wound = due;
@@ -776,6 +774,7 @@ void Realm::kill(Body& dead, Body& killer) {
     dead.temper = Temper::Dead;
     dead.walking = false;
     // A push in hand ends with the body: it lies where the blow found it, on its tile.
+    dead.pushAt = 0;
     if (dead.pushTicks > 0) {
         dead.pushTicks = 0;
         dead.x = float(dead.column());
