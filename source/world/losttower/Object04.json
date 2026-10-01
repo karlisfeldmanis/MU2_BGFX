@@ -10,14 +10,14 @@
     "re_05": "lt_re_05.png",
     "re02": "lt_re02_slot.png",
     "re02_body": "lt_re02_body.png",
-    "re_07": "lt_re_07.png"
+    "re_07": "lt_re_07_grey.png"
   },
   "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix: assets/textures is one flat pool, and Object5's sheet names are other worlds' too.",
   "sheet_materials": {
     "re_05": "flagstone",
     "re02_body": "flagstone",
     "re02": "lamplight",
-    "re_07": "rock"
+    "re_07": "flagstone"
   },
   "why_this_one": "A wall with a slot: three metres of grey carved stone, a band of re02 across it where MU streams red light behind the stone. 211 of them. Its box is 3.00 x 1.00 m, 2.87 m tall.",
   "material_note": "re_04 and re_05 are dressed, carved stone -- panels, friezes, a pointed arch -- and take flagstone; re_07 is a green-grey relief worn to the stone, rock. re02 is the slot's red light, an added glow.",
@@ -227,5 +227,6 @@
         0.883
       ]
     }
-  ]
+  ],
+  "sheet_grade_from": "Ours, the user's 'some of walls has not mathcing colors to sibling walls' (2026-10-01). re_07, the three panels between this wall's pilasters, is a pale olive-gold relief (mean 88, 89, 72) stretched sideways into streaks, and beside the re_05 pilasters (64, 64, 66) and the re_04 walls it read as another material. lt_re_07_grey.png is it pulled to re_05's grey, a fifth of its own colour kept and its mean brought to re_05's, so its carving shows in the same stone; and it takes flagstone with the rest of the masonry rather than rock."
 }
