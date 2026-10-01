@@ -107,10 +107,12 @@ struct Ambient {
         // loading screen was heard.
         ma_sound_reset_stop_time_and_fade(&track);
         ma_sound_seek_to_pcm_frame(&track, 0);
-        // +6 dB: the file is quiet, peaking at -9.6 dBFS and -28 dB on average. The user asked
-        // twice for louder, which took it to 2.8 times, the most it goes without clipping, and
-        // then 'little bit too loud' (2026-10-01): 3 dB back off that.
-        ma_sound_set_volume(&track, 2.0f);
+        // -6 dB. The first ambient was quiet (-28 dB on average) and the user set it at +6 dB,
+        // about -22 heard; Dragon Studio's track that replaced it is -17 dB on average and
+        // peaks at -0.6, so the same +6 played it eleven louder and clipping (the user,
+        // 2026-10-01: 'loadign screen ambient to loud'). Half lays it a decibel under the
+        // level the first was liked at.
+        ma_sound_set_volume(&track, 0.5f);
         ma_sound_set_fade_in_milliseconds(&track, 0.0f, 1.0f, 400);
         ma_sound_start(&track);
     }
