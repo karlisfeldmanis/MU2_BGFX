@@ -14,6 +14,9 @@ namespace {
 using gfx::Box;
 
 // The proposal's measures, in tip::unit() at 1080 lines.
+// The whole plate at 85% of the page's measures: drawn at 1:1 it was too large over the HUD
+// (the user, 2026-10-01: 'scale Go Back button little bit its to large').
+constexpr float kScale = 0.85f;
 constexpr float kTall = 64.0f;
 constexpr float kPadLeft = 22.0f;
 constexpr float kPadRight = 20.0f;
@@ -136,7 +139,7 @@ bool GoBackPlate::update(float seconds, bool shown, int secondsLeft, bool closed
         box_ = {};
         return false;
     }
-    const float u = tip::unit();
+    const float u = tip::unit() * kScale;
     // The closed line is a reading, not a button.
     box_ = layout(width, plateTop, closed, where, u);
     const bool hover = shown && !closed && box_.has(pointer.x, pointer.y);
@@ -161,7 +164,7 @@ bool GoBackPlate::update(float seconds, bool shown, int secondsLeft, bool closed
 
 void GoBackPlate::rebuild(const Drawn& now) {
     canvas_.clear();
-    const float u = tip::unit();
+    const float u = tip::unit() * kScale;
     const float a = float(now.alpha) / 64.0f;
     const Box b = box_;
     const bool late = !now.closed && now.secondsLeft <= kLateSeconds;
