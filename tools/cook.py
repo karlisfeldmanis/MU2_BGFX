@@ -1922,6 +1922,12 @@ FOLK_VERSION075 = {
         # Blood Castle; until it is written he says the hero is not ready (the user, 2026-09-30).
         (233, "Messenger of Archangel", "", 217, 29, 4),
     ],
+    4: [  # Lost Tower: Version075/Maps/LostTower.cs:47-48, both in the safe hall. Baz is
+        # named Storage01 here because the tower's own placements have no vault for him to
+        # take, as Lorencia's and Noria's do.
+        (253, "Potion Girl Amy", "PotionGirlAmy", 207, 76, 2),
+        (240, "Baz The Vault Keeper", "Storage01", 201, 76, 4),
+    ],
 }
 
 
