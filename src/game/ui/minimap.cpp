@@ -57,6 +57,18 @@ constexpr int kZooms = int(sizeof kSpans / sizeof kSpans[0]);
 constexpr int kMapTiles = 256;
 // How fast the arrow comes round to his facing: most of the way in a tenth of a second.
 constexpr float kTurnRate = 14.0f;
+// The whole map, M's: the square it is fitted in, as a share of the screen's shorter side, and
+// fitted at the worst turn the camera can give it, a diagonal, so it never grows or shrinks as
+// the camera turns. The world behind it darkened, the menu's way.
+constexpr float kFullShare = 0.55f;
+// Its middle a little over the screen's, so its lowest corner clears the action bar.
+constexpr float kFullMiddle = 0.48f;
+// A plate of the void under the chart, so the world does not show through the map as it does
+// through the corner's disc: here the map is the thing being read.
+constexpr float kFullPlate = 0.82f;
+constexpr float kFullFit = 1.41421356f;
+constexpr float kFullScrim = 0.72f;
+constexpr float kFullTitle = 22.0f;  // the map's name over it
 
 // ---- the chart -----------------------------------------------------------------------------------
 //
@@ -223,13 +235,17 @@ constexpr float kBadgeRing = 0.6f;   // the ring's half-width, just inside the d
 constexpr float kBadgeSign = 0.72f;  // the sign's scale inside it
 constexpr float kBadgeDark = 0.82f;  // the disc's own alpha
 
+constexpr uint32_t kHandInGold = gfx::rgba(1.0f, 0.78f, 0.16f);
+
 // The tone each is drawn in: bone for what matters, the quieter inks for the rest.
 uint32_t toneOf(Minimap::Glyph glyph) {
     using Glyph = Minimap::Glyph;
     switch (glyph) {
         case Glyph::Hero:
-        case Glyph::Offer:
-        case Glyph::HandIn: return style::kBoneHi;
+        case Glyph::Offer: return style::kBoneHi;
+        // A quest ready to hand in is the map's one gold, the user's (2026-10-01): "lets color
+        // finished quests more vissible gold color". Bone sank into the lit ground.
+        case Glyph::HandIn: return kHandInGold;
         // The one colour on the map, Sanctuary's one accent: what the quest wants killed (the
         // user, 2026-09-29, "quest monsters as red circles").
         case Glyph::Quarry: return style::kBloodHi;
@@ -496,18 +512,31 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
         built_ = false;
     }
 
-    const float side = std::round(kSide * u), at = std::round(kInset * u);
-    // The fade stands past the disc that reads, so it is the disc inside it that lines up.
-    const float right = float(width) - kRight * u + kFade * u;
-    map_ = {std::round(right - side), at, side, side};
-    outer_ = map_;
-    radius_ = side * 0.5f;
-
-    if (scroll != 0.0f && covers(pointer.x, pointer.y)) {
-        zoom_ = std::clamp(zoom_ + (scroll > 0.0f ? -1 : 1), 0, kZooms - 1);
-    }
-    scale_ = side / kSpans[zoom_];
     play.focus(&heroX_, &heroY_);
+    if (full_) {
+        // The whole map in the middle of the screen, its own middle at the screen's.
+        const float side = std::round(float(std::min(width, height)) * kFullShare);
+        map_ = {std::round((float(width) - side) * 0.5f), std::round(float(height) * kFullMiddle - side * 0.5f),
+                side, side};
+        outer_ = map_;
+        radius_ = side * 0.5f;
+        scale_ = side / (chartTiles_ * kFullFit);
+        focusX_ = focusY_ = chartTiles_ * 0.5f - 0.5f;
+    } else {
+        const float side = std::round(kSide * u), at = std::round(kInset * u);
+        // The fade stands past the disc that reads, so it is the disc inside it that lines up.
+        const float right = float(width) - kRight * u + kFade * u;
+        map_ = {std::round(right - side), at, side, side};
+        outer_ = map_;
+        radius_ = side * 0.5f;
+
+        if (scroll != 0.0f && covers(pointer.x, pointer.y)) {
+            zoom_ = std::clamp(zoom_ + (scroll > 0.0f ? -1 : 1), 0, kZooms - 1);
+        }
+        scale_ = side / kSpans[zoom_];
+        focusX_ = heroX_;
+        focusY_ = heroY_;
+    }
 
     // His facing, eased round the short way.
     const sim::Body& hero = realm.hero();
@@ -527,11 +556,13 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     // `hold`, and any other fades with the rim it is under and is left off past it.
     const auto put = [&](Glyph glyph, float column, float row, bool pins, int name, int32_t kind) {
         float sx = 0.0f, sy = 0.0f;
-        place(column - heroX_, row - heroY_, &sx, &sy);
+        place(column - focusX_, row - focusY_, &sx, &sy);
         bool pinned = false;
         const float out = std::sqrt(sx * sx + sy * sy);
         int shown = 16;
-        if (pins && out > hold) {
+        // The whole map holds everything on it: nothing is out of reach.
+        if (full_) {
+        } else if (pins && out > hold) {
             sx *= hold / out;
             sy *= hold / out;
             pinned = true;
@@ -634,10 +665,12 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     {
         float fx = 0.0f, fy = 0.0f;
         place(std::cos(facing_), std::sin(facing_), &fx, &fy);
+        float hx = 0.0f, hy = 0.0f;
+        place(heroX_ - focusX_, heroY_ - focusY_, &hx, &hy);
         Mark mark;
         mark.glyph = Glyph::Hero;
-        mark.x = int(std::lround(cx * 16.0f));
-        mark.y = int(std::lround(cy * 16.0f));
+        mark.x = int(std::lround((cx + hx) * 16.0f));
+        mark.y = int(std::lround((cy + hy) * 16.0f));
         mark.angle = int(std::lround(std::atan2(fx, -fy) * 1800.0f / 3.14159265f));
         marks.push_back(mark);
     }
@@ -662,6 +695,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     now_.heroY = int(std::lround(heroY_ * 16.0f));
     now_.turn = int(std::lround(std::atan2(right_[1], right_[0]) * 1800.0f / 3.14159265f));
     now_.zoom = zoom_;
+    now_.full = full_;
     now_.column = int(std::lround(hero.x));
     now_.row = int(std::lround(hero.y));
     showing_ = true;
@@ -669,6 +703,71 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
     rebuild(play);
     drawn_ = now_;
     built_ = true;
+}
+
+// The whole map: the world darkened behind it, the chart as one quad from the map's four corners,
+// turned by the camera as the disc is, a bone hairline round its edge, and its name and where he
+// stands over it.
+void Minimap::fullChart(const Play& play) {
+    const float u = tip::unit();
+    const float cx = map_.midX(), cy = map_.midY();
+    {
+        const float w = float(now_.width), h = float(now_.height);
+        const float xy[8] = {0.0f, 0.0f, w, 0.0f, w, h, 0.0f, h};
+        const uint32_t ink = (style::kVoid & 0x00FFFFFFu) | (uint32_t(kFullScrim * 255.0f + 0.5f) << 24);
+        const uint32_t tones[4] = {ink, ink, ink, ink};
+        canvas_.polygon(xy, tones, 4);
+    }
+    if (!chart_.valid()) return;
+    const float lo = -0.5f, hi = chartTiles_ - 0.5f;
+    const float corners[4][2] = {{lo, lo}, {hi, lo}, {hi, hi}, {lo, hi}};
+    float xy[8];
+    for (int i = 0; i < 4; ++i) {
+        place(corners[i][0] - focusX_, corners[i][1] - focusY_, &xy[i * 2], &xy[i * 2 + 1]);
+        xy[i * 2] += cx;
+        xy[i * 2 + 1] += cy;
+    }
+    {
+        const uint32_t ink = (style::kVoid & 0x00FFFFFFu) | (uint32_t(kFullPlate * 255.0f + 0.5f) << 24);
+        const uint32_t tones[4] = {ink, ink, ink, ink};
+        canvas_.polygon(xy, tones, 4);
+    }
+    const float uv[8] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
+    canvas_.polygon(&chart_, xy, uv, 4, gfx::rgba(1, 1, 1, kChartAlpha));
+    // The edge: each side a thin quad laid outward from the chart, a dark hairline past it.
+    const auto stroke = [&](float from, float to, uint32_t tone) {
+        for (int i = 0; i < 4; ++i) {
+            const int j = (i + 1) % 4;
+            const float ax = xy[i * 2], ay = xy[i * 2 + 1], bx = xy[j * 2], by = xy[j * 2 + 1];
+            float nx = by - ay, ny = -(bx - ax);
+            const float length = std::sqrt(nx * nx + ny * ny);
+            if (length < 1e-3f) continue;
+            nx /= length;
+            ny /= length;
+            // Outward is away from the middle, whichever way round the corners run.
+            if (nx * ((ax + bx) * 0.5f - cx) + ny * ((ay + by) * 0.5f - cy) < 0.0f) {
+                nx = -nx;
+                ny = -ny;
+            }
+            const float quad[8] = {ax + nx * from, ay + ny * from, bx + nx * from, by + ny * from,
+                                   bx + nx * to,   by + ny * to,   ax + nx * to,   ay + ny * to};
+            const uint32_t tones[4] = {tone, tone, tone, tone};
+            canvas_.polygon(quad, tones, 4);
+        }
+    };
+    const float line = std::max(1.0f, kRimLine * u);
+    stroke(0.0f, line, gfx::rgba(kLine[0], kLine[1], kLine[2], kRimAlpha));
+    stroke(line, line + std::max(1.0f, u), style::kVoid & 0x00FFFFFFu | (uint32_t(kRimShadow * 255.0f) << 24));
+
+    // The map's name over it, and where he stands beside it.
+    const std::string title = std::string(mapName(play.realm().tables()->map)) + "  \xC2\xB7  " +
+                              std::to_string(now_.column) + ", " + std::to_string(now_.row);
+    float top = xy[1];
+    for (int i = 1; i < 4; ++i) top = std::min(top, xy[i * 2 + 1]);
+    const float size = kFullTitle * u;
+    const float wide = controls::labelWidth(size, title);
+    controls::label(canvas_, std::round(cx - wide * 0.5f), std::round(std::max(top - 10.0f * u, size * 1.2f)),
+                    size, style::kBone, title);
 }
 
 void Minimap::rebuild(const Play& play) {
@@ -682,14 +781,16 @@ void Minimap::rebuild(const Play& play) {
     // under half, then none, which is near enough a smoothstep that no ring shows. Each vertex's
     // texel is found by turning the screen back into tiles, the inverse of place(). Off the map
     // the clamp holds the map's own edge, which is the blocked tone.
-    if (chart_.valid()) {
+    if (full_) {
+        fullChart(play);
+    } else if (chart_.valid()) {
         const float a = right_[0], b = right_[1], c = -up_[0], d = -up_[1];
         const float det = a * d - b * c;
         const auto texel = [&](float x, float y, float* uv) {
             const float sx = (x - cx) / scale_, sy = (y - cy) / scale_;
             const float dc = (d * sx - b * sy) / det, dr = (-c * sx + a * sy) / det;
-            uv[0] = (heroX_ + dc + 0.5f) / chartTiles_;
-            uv[1] = (heroY_ + dr + 0.5f) / chartTiles_;
+            uv[0] = (focusX_ + dc + 0.5f) / chartTiles_;
+            uv[1] = (focusY_ + dr + 0.5f) / chartTiles_;
         };
         // The scrim is solid to the rim and fades past it; the chart eases a little inside it and
         // stops on it, where the ring is drawn.
@@ -786,7 +887,10 @@ void Minimap::rebuild(const Play& play) {
         uint32_t tone = toneOf(mark.glyph);
         // Held at the rim, it is the way there rather than the place: quieter. Under the rim's
         // fade, it fades with it.
-        const float shown = mark.pinned ? 0.7f : float(mark.fade) / 16.0f;
+        // A quest to hand in is never quieted: it is the one mark worth walking to.
+        const float shown = mark.glyph == Glyph::HandIn ? 1.0f
+                            : mark.pinned               ? 0.7f
+                                                        : float(mark.fade) / 16.0f;
         tone = (tone & 0x00FFFFFFu) | (uint32_t(shown * 255.0f + 0.5f) << 24);
         if (mark.glyph == Glyph::Hero) {
             const float a = float(mark.angle) * 3.14159265f / 1800.0f;
@@ -809,14 +913,16 @@ void Minimap::rebuild(const Play& play) {
     }
 
     // Where he stands, MU's own "(130, 127)" (CNewUIHeroPositionInfo), under the disc, on the
-    // scrim's fading shadow just past the rim.
+    // scrim's fading shadow just past the rim. The whole map has it beside its name instead.
     char where[32];
     std::snprintf(where, sizeof where, "%d, %d", now_.column, now_.row);
-    const float figure = kFigure * u;
-    const float wide = controls::labelWidth(figure, where);
-    controls::label(canvas_, std::round(cx - wide * 0.5f),
-                    std::round(cy + radius_ - fade * kRimIn + 5.0f * u + figure * 0.8f), figure,
-                    style::kBone2, where);
+    if (!full_) {
+        const float figure = kFigure * u;
+        const float wide = controls::labelWidth(figure, where);
+        controls::label(canvas_, std::round(cx - wide * 0.5f),
+                        std::round(cy + radius_ - fade * kRimIn + 5.0f * u + figure * 0.8f), figure,
+                        style::kBone2, where);
+    }
 
     // The name of the mark under the pointer, over it and inside the screen.
     if (now_.hovered >= 0) {

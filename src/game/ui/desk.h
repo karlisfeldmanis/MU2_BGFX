@@ -62,6 +62,7 @@ public:
         if (text == "enter") scriptEnter_ = true;
         else if (text == "escape") scriptEscape_ = true;
         else if (text == "tab") scriptTab_ = true;
+        else if (text == "map") scriptMap_ = true;  // M, the whole map
         else if (text == "journal") scriptJournal_ = true;  // L, the quest journal
         else scriptTyped_ += text;
     }
@@ -194,6 +195,7 @@ private:
     std::string scriptTyped_;
     bool scriptEnter_ = false, scriptEscape_ = false;
     bool scriptTab_ = false;
+    bool scriptMap_ = false;
     Endurance endurance_;
     Cursor cursor_;
     Vitals vitals_;

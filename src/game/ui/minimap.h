@@ -16,6 +16,9 @@
 // always shown. Where he stands, MU's own coordinates, is set small in the lower corner. The
 // pointer on a mark names it; the wheel over the square zooms.
 //
+// M lays the whole map over the middle of the screen instead (setFull): the same chart and marks,
+// fitted whole and darkening the world behind it, until M or Escape takes it down. Ours too.
+//
 // Turned by the camera's heading, read off the view matrix each frame, so up on the square is
 // up on the screen and a step to the right is to the right. MU 0.75 has no minimap (Season 3's
 // CNewUIMiniMap is the later thing); having one at all is ours.
@@ -61,8 +64,13 @@ public:
     }
 
     bool showing() const { return showing_; }
-    // Whether a point is over it, so a click there does not walk him.
+    // The whole map over the middle of the screen, in place of the corner's disc.
+    void setFull(bool on) { full_ = on; }
+    bool full() const { return full_; }
+    // Whether a point is over it, so a click there does not walk him. The whole map holds the
+    // whole screen: a click meant for it should not send him off under it.
     bool covers(float x, float y) const {
+        if (showing_ && full_) return true;
         const float dx = x - map_.midX(), dy = y - map_.midY();
         return showing_ && dx * dx + dy * dy < radius_ * radius_;
     }
@@ -96,11 +104,14 @@ private:
     // The chart of `tables`' map, off its attribute grid: see minimap.cpp.
     bool bakeChart(const content::Tables& tables, const content::Ground* ground);
     void rebuild(const Play& play);
+    // The whole map's own picture: the scrim, the chart as one quad, its edge and its name.
+    void fullChart(const Play& play);
     // Screen offset from the square's middle, in pixels, of a point `dc, dr` tiles from him.
     void place(float dc, float dr, float* sx, float* sy) const;
 
     gfx::Canvas canvas_;
     bool showing_ = false;
+    bool full_ = false;
     uint64_t rebuilds_ = 0;
 
     // The glyphs, one strip of white cells baked at the interface unit and tinted when drawn.
@@ -137,6 +148,7 @@ private:
     float radius_ = 0.0f;
     float scale_ = 1.0f;  // pixels a tile at this zoom
     float heroX_ = 0.0f, heroY_ = 0.0f;  // his tile
+    float focusX_ = 0.0f, focusY_ = 0.0f;  // the tile at the middle: his, or the whole map's
 
     // What the canvas shows, and what this frame would show: rebuilt when they differ.
     struct Face {
@@ -145,12 +157,13 @@ private:
         int heroX = 0, heroY = 0; // his tile in sixteenths, which slides the chart
         int turn = 0;             // the camera's heading in tenths of a degree, which turns it
         int zoom = -1;
+        bool full = false;
         int hovered = -1;
         std::vector<Mark> marks;
         bool operator==(const Face& o) const {
             return width == o.width && height == o.height && column == o.column &&
                    row == o.row && heroX == o.heroX && heroY == o.heroY && turn == o.turn &&
-                   zoom == o.zoom && hovered == o.hovered && marks == o.marks;
+                   zoom == o.zoom && full == o.full && hovered == o.hovered && marks == o.marks;
         }
     };
     Face now_, drawn_;

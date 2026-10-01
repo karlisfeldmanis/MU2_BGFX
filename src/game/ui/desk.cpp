@@ -265,7 +265,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     // else; only with nothing open does it raise the menu. And up, the menu has it: back a page,
     // or down.
     const bool windowsOpen =
-        inventoryOpen_ || characterOpen_ || trading_ || banking_ || travel_.up();
+        inventoryOpen_ || characterOpen_ || trading_ || banking_ || travel_.up() ||
+        minimap_.full();
     {
         std::string place = hero ? placeName(worldName_, hero->column(), hero->row()) : worldName_;
         if (hero) {
@@ -279,6 +280,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                 if (trading_) play.closeTrade();
                 if (banking_) play.closeVault();
                 travel_.hide();
+                minimap_.setFull(false);
                 fanLatched_ = false;
             } else {
                 menu_.show();
@@ -354,6 +356,14 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         click();
     }
     scriptTab_ = false;
+    // M, the whole map over the middle of the screen: M again or Escape shuts it. Ours: 0.75 has
+    // no map at all (Season 3's full map is on Tab).
+    if (!keysHeld && play.isOpen() && (window.pressed(gfx::Window::Key::Map) || scriptMap_)) {
+        minimap_.setFull(!minimap_.full());
+        core::logf("window: map %s", minimap_.full() ? "up" : "down");
+        click();
+    }
+    scriptMap_ = false;
     if (travel_.up() && play.isOpen()) {
         const int go = travel_.update(play, pointer, window.width(), window.height());
         if (go >= 0 && play.travel(go)) {
