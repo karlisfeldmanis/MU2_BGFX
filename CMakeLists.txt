@@ -122,6 +122,7 @@ add_executable(mu2
   src/game/world/lamps.cpp
   src/game/world/sway.cpp
   src/game/world/doors.cpp
+  src/game/world/skulls.cpp
   src/game/world/flight.cpp
   src/game/world/boids.cpp
   src/game/world/scurry.cpp

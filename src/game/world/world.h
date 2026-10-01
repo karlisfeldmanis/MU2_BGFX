@@ -16,6 +16,7 @@
 #include "game/world/weather.h"
 #include "game/world/ornaments.h"
 #include "game/world/shades.h"
+#include "game/world/skulls.h"
 #include "game/play.h"
 #include "game/world/sway.h"
 #include "game/world/town.h"
@@ -106,6 +107,8 @@ private:
     Portal portal_;
     Doors doors_;
     int doorSound_ = -1, gateSound_ = -1;  // world_door, world_gate
+    Skulls skulls_;
+    int skullSound_ = -1;  // world_skull
     // Held from open() so play() can load the boid's mesh and the leaf's sheet. Those two
     // pools follow the PLAYER -- they are spawned around him and exist nowhere else, which is
     // MU's own arrangement -- so they are raised when somebody is played and not when the

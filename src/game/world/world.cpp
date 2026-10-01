@@ -107,6 +107,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     if (town_.isOpen()) sway_.open(assetDir, name, town_);
     // Devias's doors, which swing and slide as he comes near. See game/world/doors.h.
     if (town_.isOpen()) doors_.open(name, town_, ground_.metresPerTile());
+    // The Lost Tower's skulls and chips, which he kicks as he walks. See game/world/skulls.h.
+    if (town_.isOpen()) skulls_.open(name, town_, ground_.metresPerTile());
     // And what rides the swaying bones: the fountain's spray, the lanterns; and the mill's fall.
     if (town_.isOpen()) ornaments_.open(assetDir, name, town_, ground_, textures);
     // And the shade MU hangs under each bridge. See game/world/shades.h.
@@ -211,6 +213,7 @@ void World::raiseAirs(const std::string& assetDir, const std::string& name,
         doorSound_ = play_.sound().load("world_door", true);
         gateSound_ = play_.sound().load("world_gate", true);
     }
+    if (skulls_.isOpen()) skullSound_ = play_.sound().load("world_skull", true);
     // And the rain, which shares the leaves' slots, and the air's sounds. game/world/weather.h.
     weather_.open(name, &play_.sound(), weather);
 }
@@ -282,6 +285,18 @@ void World::update(double seconds, bool still) {
         }
     }
 
+    // The skulls, on his feet as the doors are, kicked only while he walks or runs; and their
+    // clatter where they lie. Nobody walks a world that is not played, so nothing is kicked.
+    if (skulls_.isOpen()) {
+        const bool walking = play_.isOpen() && play_.realm().hero().walking;
+        skulls_.update(dt, feetX, feetZ, walking, town_);
+        if (play_.isOpen() && skullSound_ >= 0) {
+            for (const Skulls::Clatter& clatter : skulls_.clatters()) {
+                play_.sound().playAt(skullSound_, clatter.at[0], clatter.at[1], clatter.at[2]);
+            }
+        }
+    }
+
     // The roofs, on the feet the camera is framing: the character when one is played, the
     // focus when not, so `--at` inside a house shows the room as walking into it would.
     town_.setRoofsHidden(indoors(feetX, feetZ));
@@ -349,6 +364,8 @@ void World::shutdown() {
     sway_.shutdown();
     doors_.shutdown();
     doorSound_ = gateSound_ = -1;
+    skulls_.shutdown();
+    skullSound_ = -1;
     ornaments_.shutdown();
     shades_.shutdown();
     boids_.shutdown();

@@ -90,6 +90,15 @@ public:
         town_.instances[instance].yaw = yaw;
         for (int a = 0; a < 3; ++a) town_.instances[instance].position[a] = position[a];
     }
+    // The same with the piece tumbling as well: the Lost Tower's kicked skulls
+    // (game/world/skulls.h). Radians, the cook's pitch and roll.
+    void posePlacement(uint32_t instance, float pitch, float yaw, float roll,
+                       const float position[3]) {
+        if (instance >= town_.instances.size()) return;
+        town_.instances[instance].pitch = pitch;
+        town_.instances[instance].roll = roll;
+        movePlacement(instance, yaw, position);
+    }
     // The mesh a model index owns, for whoever poses a placement against it: Sway reads a
     // rig's bones off this the same way `append` reads its vertex and index buffers.
     const content::Mesh* meshAt(size_t model) const {
