@@ -54,6 +54,10 @@ struct Ambient {
         }
         if (!open) return;
         ma_engine_set_volume(&engine, std::clamp(level, 0.0f, 1.0f));
+        // The last load's fade out is a stop scheduled on the track, and it outlives the stop:
+        // started again without clearing it, the track stopped at once and only the first
+        // loading screen was heard.
+        ma_sound_reset_stop_time_and_fade(&track);
         ma_sound_seek_to_pcm_frame(&track, 0);
         ma_sound_set_volume(&track, 0.5f);
         ma_sound_set_fade_in_milliseconds(&track, 0.0f, 1.0f, 400);
