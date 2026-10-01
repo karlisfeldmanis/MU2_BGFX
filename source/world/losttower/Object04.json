@@ -7,10 +7,10 @@
   "placements": 211,
   "profile": "world",
   "sheets": {
-    "re_05": "lt_re_05.png",
+    "re_05": "lt_re_05_warm.png",
     "re02": "lt_re02_slot.png",
-    "re02_body": "lt_re02_body.png",
-    "re_07": "lt_re_07_grey.png"
+    "re02_body": "lt_re02_body_warm.png",
+    "re_07": "lt_re_07_warm.png"
   },
   "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix: assets/textures is one flat pool, and Object5's sheet names are other worlds' too.",
   "sheet_materials": {
@@ -228,5 +228,10 @@
       ]
     }
   ],
-  "sheet_grade_from": "Ours, the user's 'some of walls has not mathcing colors to sibling walls' (2026-10-01). re_07, the three panels between this wall's pilasters, is a pale olive-gold relief (mean 88, 89, 72) stretched sideways into streaks, and beside the re_05 pilasters (64, 64, 66) and the re_04 walls it read as another material. lt_re_07_grey.png is it pulled to re_05's grey, a fifth of its own colour kept and its mean brought to re_05's, so its carving shows in the same stone; and it takes flagstone with the rest of the masonry rather than rock."
+  "sheet_grade_from": "Ours, the user's 'these walls stand of with there colors and texture repeating' (2026-10-01): the re_05 masonry -- the low blocks, the pilasters, the slotted walls -- is a neutral grey that went blue under the tower's cold key beside the main walls' warm brown re_04, and its painted motif, lit by a relief derived from the art, caught that key in bright blotches block after block. So it wears copies graded to re_04's hue and mean (lt_*_warm.png, its own light and dark kept), and its relief at 0.35 of the material's, nearer MU's flat-lit painting.",
+  "sheet_relief": {
+    "re_05": 0.35,
+    "re_07": 0.35,
+    "re02_body": 0.35
+  }
 }

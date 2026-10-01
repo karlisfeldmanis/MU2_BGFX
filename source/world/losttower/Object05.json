@@ -7,9 +7,9 @@
   "placements": 399,
   "profile": "world",
   "sheets": {
-    "re_05": "lt_re_05.png",
+    "re_05": "lt_re_05_warm.png",
     "re02": "lt_re02_slot.png",
-    "re02_body": "lt_re02_body.png"
+    "re02_body": "lt_re02_body_warm.png"
   },
   "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix: assets/textures is one flat pool, and Object5's sheet names are other worlds' too.",
   "sheet_materials": {
@@ -93,5 +93,10 @@
         0.928
       ]
     }
-  ]
+  ],
+  "sheet_relief": {
+    "re_05": 0.35,
+    "re02_body": 0.35
+  },
+  "sheet_grade_from": "Ours, the user's 'these walls stand of with there colors and texture repeating' (2026-10-01): the re_05 masonry -- the low blocks, the pilasters, the slotted walls -- is a neutral grey that went blue under the tower's cold key beside the main walls' warm brown re_04, and its painted motif, lit by a relief derived from the art, caught that key in bright blotches block after block. So it wears copies graded to re_04's hue and mean (lt_*_warm.png, its own light and dark kept), and its relief at 0.35 of the material's, nearer MU's flat-lit painting."
 }
