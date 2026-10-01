@@ -1,0 +1,196 @@
+{
+  "item": "Object18",
+  "mu_name": "Object18",
+  "mu_name_from": "The Lost Tower's object slot 17, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 17,
+  "placements": 51,
+  "profile": "world",
+  "sheets": {
+    "bons": "dn_bons.png"
+  },
+  "sheet_from": "Data/Object5/bons.OZJ is byte for byte Data/Object2's, so the Dungeon's dn_bons.png is worn as it is.",
+  "sheet_materials": {
+    "bons": "bone"
+  },
+  "why_this_one": "A smaller heap of bones, 51. Its box is 1.08 x 1.57 m, 0.26 m tall. Batch 1 of the scenery, the user: 'lets continou to work on objects, add missing objects, but lets do with small batches so we can check them'.",
+  "material_note": "bons takes bone as the Dungeon's piles do; re_08 is the tower's dark streaked stone, rock, as Object10's slabs.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1183.0,
+      "along": [
+        -31.8,
+        20.5
+      ],
+      "mu_uv": [
+        0.734,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.838,
+        0.008,
+        0.983,
+        0.482
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 36,
+      "area": 2172.5,
+      "along": [
+        -61.1,
+        -9.6
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.008,
+        0.008,
+        0.826,
+        0.842
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 32,
+      "area": 848.8,
+      "along": [
+        -71.8,
+        -47.1
+      ],
+      "mu_uv": [
+        0.89,
+        0.475,
+        0.996,
+        1.004
+      ],
+      "bake_uv": [
+        0.388,
+        0.279,
+        0.684,
+        0.837
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 42,
+      "area": 953.4,
+      "along": [
+        8.6,
+        43.8
+      ],
+      "mu_uv": [
+        0.543,
+        0.005,
+        0.988,
+        0.529
+      ],
+      "bake_uv": [
+        0.248,
+        0.283,
+        0.667,
+        0.965
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 32,
+      "area": 1183.0,
+      "along": [
+        23.9,
+        35.7
+      ],
+      "mu_uv": [
+        0.734,
+        0.499,
+        0.828,
+        0.979
+      ],
+      "bake_uv": [
+        0.847,
+        0.372,
+        0.992,
+        0.846
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 36,
+      "area": 2088.7,
+      "along": [
+        35.3,
+        85.0
+      ],
+      "mu_uv": [
+        0.523,
+        0.017,
+        0.837,
+        0.53
+      ],
+      "bake_uv": [
+        0.008,
+        0.201,
+        0.554,
+        0.867
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 32,
+      "area": 848.8,
+      "along": [
+        -19.4,
+        28.4
+      ],
+      "mu_uv": [
+        0.89,
+        0.475,
+        0.996,
+        1.004
+      ],
+      "bake_uv": [
+        0.682,
+        0.324,
+        0.837,
+        0.761
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 42,
+      "area": 951.7,
+      "along": [
+        2.9,
+        51.2
+      ],
+      "mu_uv": [
+        0.543,
+        0.005,
+        0.988,
+        0.529
+      ],
+      "bake_uv": [
+        0.449,
+        0.008,
+        0.835,
+        0.988
+      ]
+    }
+  ]
+}

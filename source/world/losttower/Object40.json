@@ -1,0 +1,42 @@
+{
+  "item": "Object40",
+  "mu_name": "Object40",
+  "mu_name_from": "The Lost Tower's object slot 39, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 39,
+  "placements": 335,
+  "profile": "world",
+  "sheets": {
+    "re_08": "lt_re_08.png"
+  },
+  "sheet_from": "Data/Object5/re_08.OZJ, decoded under the lt_ prefix.",
+  "sheet_materials": {
+    "re_08": "rock"
+  },
+  "why_this_one": "A stone chip, 18 cm, 335 of them; kicked as the skulls are (CheckSkull), still here for now. Its box is 0.17 x 0.36 m, 0.14 m tall. Batch 1 of the scenery, the user: 'lets continou to work on objects, add missing objects, but lets do with small batches so we can check them'.",
+  "material_note": "bons takes bone as the Dungeon's piles do; re_08 is the tower's dark streaked stone, rock, as Object10's slabs.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 12,
+      "area": 2707.6,
+      "along": [
+        -17.9,
+        17.9
+      ],
+      "mu_uv": [
+        0.042,
+        0.029,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.893,
+        0.996
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "item": "Object39",
+  "mu_name": "Object39",
+  "mu_name_from": "The Lost Tower's object slot 38, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 38,
+  "placements": 777,
+  "profile": "world",
+  "sheets": {
+    "bons": "dn_bons.png"
+  },
+  "sheet_from": "Data/Object5/bons.OZJ is byte for byte Data/Object2's, so the Dungeon's dn_bons.png is worn as it is.",
+  "sheet_materials": {
+    "bons": "bone"
+  },
+  "why_this_one": "A skull, 777 of them, the most of any kind here, most in the painted pools of light. MU kicks one along the floor when the hero walks within half a tile (CheckSkull, ZzzEffectFireLeave.cpp:94-120, with mBone2); here it stands still for now. Its box is 0.24 x 0.33 m, 0.28 m tall. Batch 1 of the scenery, the user: 'lets continou to work on objects, add missing objects, but lets do with small batches so we can check them'.",
+  "material_note": "bons takes bone as the Dungeon's piles do; re_08 is the tower's dark streaked stone, rock, as Object10's slabs.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 80,
+      "area": 2390.6,
+      "along": [
+        -16.4,
+        16.4
+      ],
+      "mu_uv": [
+        0.449,
+        0.4,
+        0.725,
+        0.713
+      ],
+      "bake_uv": [
+        0.004,
+        0.003,
+        0.997,
+        0.824
+      ]
+    }
+  ]
+}
