@@ -498,6 +498,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
     drawCount_ = 0;
     waterFlow_ = lighting.waterFlow;
     for (int i = 0; i < 3; ++i) waterGlow_[i] = lighting.waterGlow[i];
+    waterGlow_[3] = lighting.waterVariety;
     // The chasms' dark, which is the world's and not the sheet's. content::Ground::abyss.
     abyss_ = ground ? ground->abyss() : bgfx::TextureHandle{bgfx::kInvalidHandle};
     if (bgfx::isValid(abyss_)) {

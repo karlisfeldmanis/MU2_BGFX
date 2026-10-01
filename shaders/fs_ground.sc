@@ -13,7 +13,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 uniform vec4 u_groundRepeat;  // xyz: each layer's repeat  w: the bite
 uniform vec4 u_groundBlend;   // x: the flow's cycle  y: its band's row, or -1  z: reach, or MU's slide  w: layers
 uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are water, a bit each
-uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)
+uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)  w: water_variety
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
 
@@ -59,6 +59,35 @@ vec3 unpackNormal(vec2 xy)
 {
 	vec2 n = xy * 2.0 - 1.0;
 	return vec3(n, sqrt(max(0.0, 1.0 - dot(n, n))));
+}
+
+// A smooth value noise over the land, 0 to 1, for what must not repeat with the sheet.
+float landHash(vec2 p)
+{
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float landNoise(vec2 p)
+{
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(landHash(i), landHash(i + vec2(1.0, 0.0)), f.x),
+	           mix(landHash(i + vec2(0.0, 1.0)), landHash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+// A still water sheet kept from repeating (water_variety, the Lost Tower's lava; ours): a
+// second copy of it turned 37 degrees and at 0.57 of the scale, blended in where a slow noise
+// says, and the whole drifting brighter and darker on another. MU stamps its one sheet tile
+// after tile, which the flooded void showed as a grid.
+vec2 turned(vec2 uv)
+{
+	return mul(mat2(0.8, -0.6, 0.6, 0.8), uv * 0.57) + vec2(0.37, 0.71);
+}
+vec3 varied(vec3 texel, vec3 other, vec2 tile, float variety)
+{
+	float pick = smoothstep(0.3, 0.7, landNoise(tile * 0.13));
+	float gain = 1.0 + (landNoise(tile * 0.07 + vec2(17.0, 5.0)) - 0.5) * 0.7;
+	return mix(texel, other, pick * variety) * mix(1.0, gain, variety);
 }
 
 // A layer's texel, or on running water the two dragged copies cross-faded: `run` is a
@@ -109,6 +138,15 @@ void main()
 	vec3 albedo2 = albedo0;
 	if (layers > 1.5) albedo1 = LAYER(s_albedo2, uv1, uv1b, run1).rgb;
 	if (layers > 2.5) albedo2 = LAYER(s_albedo3, uv2, uv2b, run2).rgb;
+	if (u_waterGlow.w > 0.0)
+	{
+		if (isWater.x > 0.5 && !run0)
+			albedo0 = varied(albedo0, texture2D(s_albedo, turned(uv0)).rgb, v_texcoord0, u_waterGlow.w);
+		if (layers > 1.5 && isWater.y > 0.5 && !run1)
+			albedo1 = varied(albedo1, texture2D(s_albedo2, turned(uv1)).rgb, v_texcoord0, u_waterGlow.w);
+		if (layers > 2.5 && isWater.z > 0.5 && !run2)
+			albedo2 = varied(albedo2, texture2D(s_albedo3, turned(uv2)).rgb, v_texcoord0, u_waterGlow.w);
+	}
 
 	// The weight MU painted, as a water level, with the layers' own relief deciding which
 	// side of it a texel falls. This is MU2's blend, traced from its GroundSource rather than

@@ -97,6 +97,12 @@ struct Lighting {
     // tower with no torch is the only warm light (docs/lost-tower-port.md). Ours. 0 everywhere
     // else, so their water is as it was.
     float waterGlow[3] = {0.0f, 0.0f, 0.0f};
+    // How far a still water sheet is kept from repeating, 0 to 1: a second copy of it, turned
+    // and at another scale, blended in by a slow noise over the land, and its brightness drifting
+    // with a second one (fs_ground). The Lost Tower's lava, flooded over the void, showed MU's
+    // one sheet stamped tile after tile (the user: 'make that lava repeating pattern is not so
+    // repeatative'). Ours. 0 everywhere else, so their water is as it was.
+    float waterVariety = 0.0f;
     float bloomThreshold = 1.2f;
     float bloomKnee = 0.6f;
     float bloomStrength = 0.25f;
