@@ -64,6 +64,7 @@ Arms Realm::armsOf(const Body& one) const {
         arms.staffRise = double(one.staffRise);
         arms.pet = one.pet;
         arms.archery = one.archer != 0;
+        arms.quiverPlus = one.quiverPlus;
         arms.greaterDamage = one.mightUntil > tick_ ? one.might : 0;
     }
     return arms;
@@ -204,7 +205,22 @@ bool Realm::nock(Body& hero) {
     } else {
         bag_.put(hand, left);
     }
+    // A quiver of another plus came into the hand, or the last one left it: the band follows.
+    if (quiverPlusOf(hero) != hero.quiverPlus) {
+        hero.quiverPlus = int8_t(quiverPlusOf(hero));
+        reckon(hero.kin, hero.level, hero.points, armsOf(hero), &hero.stats, &hero.maxHealth);
+    }
     return true;
+}
+
+int Realm::quiverPlusOf(const Body& hero) const {
+    if (hero.archer == 0) return 0;
+    const Held& h = bag_[hero.archer == 1 ? kWeaponRight : kWeaponLeft];
+    if (h.empty() || h.durability <= 0) return 0;
+    const content::ItemRow& row = tables_->items[size_t(h.item)];
+    const int wanted = hero.archer == 1 ? kArrowsNumber : kBoltNumber;
+    return row.group == kGroupBows && row.number == wanted ? std::clamp(int(h.refinement), 0, 3)
+                                                           : 0;
 }
 
 bool Realm::quivered(const Body& hero) const {
@@ -246,6 +262,7 @@ void Realm::rearm(Body& hero) {
         const content::Arm& held = tables_->arms[size_t(hero.weapon)];
         hero.archer = held.bow() ? 1 : held.crossbow() ? 2 : 0;
     }
+    hero.quiverPlus = int8_t(quiverPlusOf(hero));
     // The additional option on the weapon adds to both ends of the band, as Stats.PhysicalBaseDmg
     // does, and wears with it. A staff's is wizardry damage, which nothing here reckons yet.
     if (weaponSlot >= 0 && rowAt(weaponSlot)->magicPower == 0) {

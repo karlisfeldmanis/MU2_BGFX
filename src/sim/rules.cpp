@@ -230,13 +230,22 @@ void reckon(Kin kin, int level, const HeroPoints& points, const Arms& arms, Figh
     }
     // Her archery band, which REPLACES the melee pair while a bow type is drawn: the two are
     // conditional on ArcheryAttackMode and MeleeAttackMode, one of which is always nought
-    // (ClassFairyElf.cs:78-81, :87-93). Ammunition adds nothing in 0.75 -- AmmunitionDamageBonus
-    // is 0.95d's (Version095d/Items/Weapons.cs:213).
+    // (ClassFairyElf.cs:78-81, :87-93). A +0 quiver adds nothing; OpenMU's AmmunitionDamageBonus
+    // is 0.95d's (Version095d/Items/Weapons.cs:213), and the plus below is WebZen's.
     if (arms.archery && kin == Kin::FairyElf) {
         out->minimumDamage =
             int(agility / 7.0 + strength / 14.0) + arms.weaponMinimumDamage;
         out->maximumDamage =
             int(agility / 4.0 + strength / 8.0) + arms.weaponMaximumDamage;
+        // A quiver with a plus: 3%, 5% or 7% of both ends and one more, the 0.97d rule WebZen
+        // dates 2003-02-28 (1.00.93 ObjCalCharacter.cpp:1457-1497; the +3 its 2008 flag).
+        // Truncated each, as its (WORD) cast takes them.
+        static const float kQuiverRise[4] = {0.0f, 0.03f, 0.05f, 0.07f};
+        if (arms.quiverPlus > 0) {
+            const float rise = kQuiverRise[std::clamp(arms.quiverPlus, 0, 3)];
+            out->minimumDamage += int(float(out->minimumDamage) * rise + 1.0f);
+            out->maximumDamage += int(float(out->maximumDamage) * rise + 1.0f);
+        }
     }
     // The luck option is 0.75's only source: a twentieth for each lucky thing worn.
     out->criticalChance = arms.criticalChance;

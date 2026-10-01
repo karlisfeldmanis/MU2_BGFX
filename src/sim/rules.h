@@ -234,6 +234,9 @@ struct Arms {
     // A bow or a crossbow in hand, which puts the Fairy Elf's damage on her archery band
     // (ClassFairyElf.cs:78-81, ArcheryAttackMode :88-89) in place of her melee one.
     bool archery = false;
+    // The plus of the quiver in the hand her bow leaves free, 0 to 3, which raises the archery
+    // band (sim::reckon).
+    int quiverPlus = 0;
     // Greater Damage while it stands (Fighter::greaterDamage).
     int greaterDamage = 0;
     // The worn pet's, while its life lasts.

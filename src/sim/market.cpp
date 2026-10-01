@@ -1,5 +1,6 @@
 #include "sim/market.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace mu::sim {
@@ -213,7 +214,15 @@ int64_t jewel(int group, int number) {
         default: return 0;
     }
 }
-int quiver(int number) { return number == 15 ? 70 : (number == 7 ? 100 : 0); }
+// A full quiver by its plus: the arrows 70, 1,200, 2,000, 2,800 and the bolt 100, 1,400,
+// 2,200, 3,000 (WebZen 1.00.93 zzzitem.cpp:1702-1760; the +3 is its 2008 flag). Was the +0's
+// price at every plus, so a +2 sold for what a +0 did.
+int quiver(int number, int refinement) {
+    static const int kArrows[4] = {70, 1200, 2000, 2800};
+    static const int kBolt[4] = {100, 1400, 2200, 3000};
+    const int plus = std::clamp(refinement, 0, 3);
+    return number == 15 ? kArrows[plus] : (number == 7 ? kBolt[plus] : 0);
+}
 
 // RoundPrice: hundreds above a thousand, tens above a hundred, nothing below.
 int64_t round(int64_t price) {
@@ -241,8 +250,8 @@ const Offer* stockOf(int npc, int* count) {
 
 int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, bool skill,
                     int shots, int full, bool luck, int option, int excellent) {
-    if (row.group == kBows && quiver(row.number) > 0) {
-        return round(full <= 0 ? 0 : int64_t(quiver(row.number)) * shots / full);
+    if (row.group == kBows && quiver(row.number, refinement) > 0) {
+        return round(full <= 0 ? 0 : int64_t(quiver(row.number, refinement)) * shots / full);
     }
     if (jewel(row.group, row.number) > 0) return jewel(row.group, row.number);
     if (row.group == kScrolls && spell(row.number) > 0) return round(spell(row.number));

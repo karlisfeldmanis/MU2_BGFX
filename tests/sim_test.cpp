@@ -1871,6 +1871,22 @@ void testArchery(const content::Tables& tables) {
     check(bag[sim::kWeaponRight].empty(), "and leaves the hand empty");
     std::printf("  %d drawn, %d shots, %d from range, %d in the air, %d landed on time\n", drawn, loosed, far,
                 flewAtAll, landedOnTime);
+
+    // A quiver's plus: 3%, 5%, 7% of the band and one more (WebZen ObjCalCharacter.cpp:1457),
+    // and its price off WebZen's table, the arrows 70 / 1,200 / 2,000 / 2,800.
+    const int arrows = tables.itemAt(4, 15), bolt = tables.itemAt(4, 7);
+    const int bare = realm.hero().stats.maximumDamage;
+    check(realm.give(arrows, sim::kWeaponRight, 2) == sim::kWeaponRight, "a +2 quiver in hand");
+    checkEqual(realm.hero().quiverPlus, 2, "and her band knows its plus");
+    checkEqual(realm.hero().stats.maximumDamage, bare + int(float(bare) * 0.05f + 1.0f),
+               "and it adds 5% and one to her damage");
+    const int64_t prices[4] = {70, 1200, 2000, 2800}, bolts[4] = {100, 1400, 2200, 3000};
+    for (int plus = 0; plus < 4; ++plus) {
+        checkEqual((long long)sim::buyingPrice(tables.items[size_t(arrows)], plus, 1, false, 255, 255),
+                   (long long)prices[plus], "a full quiver of arrows at its plus");
+        checkEqual((long long)sim::buyingPrice(tables.items[size_t(bolt)], plus, 1, false, 255, 255),
+                   (long long)bolts[plus], "and of bolts");
+    }
 }
 
 // Sprint 15, step 4: the elf's four. Greater Defense is her guard on the knight's curve with no

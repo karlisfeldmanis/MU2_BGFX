@@ -245,6 +245,8 @@ struct Body {
     // A bow (+1) or a crossbow (+2) in hand at the last rearm, 0 for anything else: she shoots
     // from `kArcherReach`, spends ammunition from the other hand, and reckons her archery band.
     int8_t archer = 0;
+    // The plus of the quiver in that other hand, 0 when it holds none (Arms::quiverPlus).
+    int8_t quiverPlus = 0;
     // How many lucky things he wears, each 5% of critical chance (sim::kLuckCritical).
     int32_t luckyWorn = 0;
     // And what his excellent pieces come to (sim::Excellence), summed in rearm.
@@ -832,6 +834,8 @@ private:
     bool nock(Body& hero);
     // Whether `nock` would find one, spending nothing: what Skillshot asks before it is cast.
     bool quivered(const Body& hero) const;
+    // The plus of the quiver in the hand her bow leaves free, 0 when it holds none of hers.
+    int quiverPlusOf(const Body& hero) const;
     // Skillshot let go: `arrows` lanes fanned round the body it was aimed at, an arrow into
     // every body in each lane, each paid for as it is loosed.
     void looseFan(Body& hero, const SkillRow& row, uint32_t aimedAt, float force);
