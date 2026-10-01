@@ -60,12 +60,23 @@ void Outline::show(gfx::Renderer& renderer, const gfx::Camera& camera, const flo
     bool found = false;
     for (const gfx::Drawable& d : hovered) {
         if (!d.mesh) continue;
+        // A posed mesh is not in the box it was bound in: the Ghost's arm swung out past its
+        // bind box and the ring stopped at the box's edge, a straight cut through the stroke.
+        // Widened as Figure::radius widens it for the cull -- half again of the bind radius
+        // round the centre, every axis, since a limb turned towards the eye moves along the
+        // axis the bind box is thinnest in.
         const content::Bounds& b = d.mesh->bounds();
+        float lo[3], hi[3];
+        for (int axis = 0; axis < 3; ++axis) {
+            const float half = d.paletteRow >= 0 ? b.radius * 1.5f : 0.0f;
+            lo[axis] = std::min(b.min[axis], b.centre[axis] - half);
+            hi[axis] = std::max(b.max[axis], b.centre[axis] + half);
+        }
         for (int corner = 0; corner < 8; ++corner) {
             const float local[3] = {
-                (corner & 1) ? b.max[0] : b.min[0],
-                (corner & 2) ? b.max[1] : b.min[1],
-                (corner & 4) ? b.max[2] : b.min[2],
+                (corner & 1) ? hi[0] : lo[0],
+                (corner & 2) ? hi[1] : lo[1],
+                (corner & 4) ? hi[2] : lo[2],
             };
             float world[3];
             transformPoint(local, d.transform, world);
