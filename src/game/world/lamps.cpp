@@ -135,6 +135,9 @@ const char* riddenBone(const std::string& model) {
 // one already lit casts no light of its own.
 float lightSpacing(const std::string& model) {
     if (model == "Object24") return 3.5f;
+    // The tower's slabs (Object10), which stand in rows a step apart: their flare's light is
+    // ours too (losttower/Object10.json), and one per 3 m keeps a flight of steps to a pool.
+    if (model == "Object10") return 3.0f;
     return 0.0f;
 }
 

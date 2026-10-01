@@ -137,7 +137,9 @@ constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
 // - its size held, and its level eased towards each roll rather than jumping to it 25 times a
 //   second, which read as a fault rather than a flame.
 constexpr float kSlabFlareScale = 5.0f * kLanternGlowShare;
-constexpr float kSlabFlareColour[3] = {0.6f, 0.3f, 0.1f};
+// MU's hue at full strength: at its own 0.6 it read as a brown dot, not a light (the user:
+// 'they dont look like light objects but just planted brown points'). Ours.
+constexpr float kSlabFlareColour[3] = {1.0f, 0.5f, 0.17f};
 constexpr float kSlabTopMetres = 0.43f;    // Object10's top, 42.6 units over its origin
 constexpr float kSlabFlareLift = 0.3f;     // clear of the top under MU's pitched camera
 constexpr float kSlabFlareEaseSeconds = 0.15f;
