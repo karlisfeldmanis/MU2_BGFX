@@ -439,6 +439,11 @@ void Realm::think(Body& beast) {
                 if (!worth(beast, one, kind.viewRange) || apart(beast, one) >= kind.viewRange) {
                     continue;
                 }
+                // And it must see him: a wall between them hides him (the user, 2026-10-01: "dont
+                // take agro from monsters which are behind the walls"). Only the noticing asks
+                // it; a quarry it already has, or one that struck it, is chased round the wall.
+                // ours.
+                if (!router_.sees(beast.x, beast.y, one.x, one.y, content::kWallNoMove)) continue;
                 const float distance = reach(beast, one);
                 if (distance < closest) {
                     closest = distance;

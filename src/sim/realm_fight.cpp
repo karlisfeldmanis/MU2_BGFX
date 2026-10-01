@@ -267,11 +267,13 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     const bool meteor = power.power == Power::Meteor;
     // Off the sockets' own stream, so a run is not moved by a power being worn.
     if (!runeDice_.nextBool(meteor ? kMeteorChance : kStormcallChance)) return;
-    // Every other living monster within reach of him, and of those one at random.
+    // Every other living monster within reach of him and in his sight -- not one behind a wall
+    // -- and of those one at random.
     const auto near = [&](const Body& b) {
         if (!b.monster() || !b.alive() || b.id == struck.id) return false;
         const float dx = b.x - hero.x, dy = b.y - hero.y;
-        return dx * dx + dy * dy <= kStormcallReach * kStormcallReach;
+        return dx * dx + dy * dy <= kStormcallReach * kStormcallReach &&
+               router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove);
     };
     int count = 0;
     for (const Body& b : bodies_) count += near(b) ? 1 : 0;
