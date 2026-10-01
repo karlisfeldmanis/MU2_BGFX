@@ -163,6 +163,8 @@ void BenchMode::drawList(Context& ctx) {
     ctx.window.pointer(&px, &py);
     const game::ListHit hit = game::drawBrowserList(ctx.overlay, bench_, ctx.window.width(),
                                                     ctx.window.height(), px, py);
+    const game::ListHit clips = game::drawClipList(ctx.overlay, bench_, ctx.window.width(),
+                                                   ctx.window.height(), px, py);
     // Under the panel rather than in it: which clip is running, where its clock
     // stands and how long it is. A still cannot show that a clip is playing, and
     // a monster frozen on frame one looks exactly like one standing still.
@@ -189,6 +191,11 @@ void BenchMode::drawList(Context& ctx) {
         if (wheel != 0.0f) {
             bench_.step(wheel > 0.0f ? -1 : 1, ctx.textures);
         }
+    } else if (clips.over) {
+        // The clip list the same way: a click plays the row, the wheel steps the clip.
+        if (ctx.window.clicked(0) && clips.hovered >= 0) bench_.playClip(size_t(clips.hovered));
+        const float wheel = ctx.window.scroll();
+        if (wheel != 0.0f) bench_.stepClip(wheel > 0.0f ? -1 : 1);
     } else {
         if (ctx.window.held(0)) {
             float dx = 0.0f, dy = 0.0f;

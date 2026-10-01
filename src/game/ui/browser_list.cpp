@@ -131,4 +131,69 @@ ListHit drawBrowserList(gfx::Overlay& overlay, const ModelBench& bench, int widt
     return hit;
 }
 
+ListHit drawClipList(gfx::Overlay& overlay, const ModelBench& bench, int width, int height,
+                     float pointerX, float pointerY) {
+    ListHit hit;
+    const size_t count = bench.clipCount();
+    if (count == 0) return hit;
+    // The left list's face and colours, a little smaller: a player's library runs to 285.
+    constexpr float kScale = 2.4f;
+    constexpr float kPad = 10.0f;
+    constexpr uint32_t kBack = 0xD8140d0au;
+    constexpr uint32_t kInk = 0xFFc8c8c8u;
+    constexpr uint32_t kChosen = 0xFFffffffu;
+    constexpr uint32_t kDim = 0xFF8a8a8au;
+    constexpr uint32_t kChosenBar = 0xB0705030u;
+    constexpr uint32_t kHoverBar = 0x60606060u;
+    constexpr uint32_t kRule = 0x40ffffffu;
+    const float line = gfx::Overlay::lineHeight(kScale) * 1.25f;
+    const float header = line * 1.6f;
+    const float footer = line * 1.6f;
+
+    size_t rows = size_t((float(height) * 0.75f - kPad * 3.0f - header - footer) / line);
+    if (rows < 1) rows = 1;
+    if (rows > count) rows = count;
+    const size_t playing = bench.clipIndex() >= 0 ? size_t(bench.clipIndex()) : 0;
+    const size_t half = rows / 2;
+    size_t first = playing > half ? playing - half : 0;
+    if (first + rows > count) first = count > rows ? count - rows : 0;
+    const size_t last = first + rows;
+
+    float widest = overlay.measure(kScale, "ANIMATIONS  999/999");
+    for (size_t i = first; i < last; ++i) {
+        const float w = overlay.measure(kScale, bench.clipName(i));
+        if (w > widest) widest = w;
+    }
+    hit.w = widest + kPad * 3.0f;
+    hit.h = header + float(rows) * line + footer + kPad;
+    hit.x = float(width) - hit.w - kPad;
+    hit.y = kPad;
+    overlay.panel(hit.x, hit.y, hit.w, hit.h, kBack);
+    hit.over = pointerX >= hit.x && pointerX < hit.x + hit.w && pointerY >= hit.y &&
+               pointerY < hit.y + hit.h;
+
+    char label[64];
+    std::snprintf(label, sizeof(label), "ANIMATIONS  %zu/%zu", playing + 1, count);
+    overlay.text(hit.x + kPad, hit.y + kPad * 0.6f, kScale, kDim, label);
+    overlay.panel(hit.x + kPad, hit.y + header - 3.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
+
+    const float top = hit.y + header;
+    for (size_t i = first; i < last; ++i) {
+        const float y = top + float(i - first) * line;
+        const bool chosen = i == playing;
+        const bool over = hit.over && pointerY >= y && pointerY < y + line;
+        if (over) hit.hovered = (long long)i;
+        if (chosen || over) {
+            overlay.panel(hit.x + 2.0f, y - 1.0f, hit.w - 4.0f, line, chosen ? kChosenBar
+                                                                             : kHoverBar);
+        }
+        overlay.text(hit.x + kPad, y, kScale, chosen ? kChosen : kInk, bench.clipName(i));
+    }
+    const float footTop = top + float(rows) * line;
+    overlay.panel(hit.x + kPad, footTop + 2.0f, hit.w - kPad * 2.0f, 1.0f, kRule);
+    overlay.text(hit.x + kPad, footTop + 6.0f, kScale * 0.85f, kDim,
+                 "Click plays   Wheel or [ ] steps");
+    return hit;
+}
+
 }  // namespace mu::game

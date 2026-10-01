@@ -539,7 +539,26 @@ bool ModelBench::stepClip(int by) {
     // a broken key.
     long long wanted = (long long)figure_.clip() + by;
     wanted = ((wanted % count) + count) % count;
-    figure_.play(int(wanted), true);
+    return playClip(size_t(wanted));
+}
+
+size_t ModelBench::clipCount() const {
+    if (!haveFigure_ || !figure_.body() || !figure_.body()->library) return 0;
+    return figure_.body()->library->clips.clips.size();
+}
+
+int ModelBench::clipIndex() const { return clipCount() > 0 ? figure_.clip() : -1; }
+
+std::string ModelBench::clipName(size_t index) const {
+    if (index >= clipCount()) return std::string();
+    const content::CookedClip& one = figure_.body()->library->clips.clips[index];
+    // The label where the cook gave one, then the action it is: "Stop scythe  action7".
+    return one.label.empty() ? one.name : one.label + "  " + one.name;
+}
+
+bool ModelBench::playClip(size_t index) {
+    if (index >= clipCount()) return false;
+    figure_.play(int(index), true);
     core::logf("browser: %s", clipLine().c_str());
     return true;
 }

@@ -100,6 +100,12 @@ public:
     // The next or previous clip of whatever figure is standing, for the figure categories.
     // Does nothing where there is no figure or no library.
     bool stepClip(int by);
+    // The same clips by index, for the viewer's clip list: how many, which is playing (-1 for
+    // none), what its row says, and one played by index. Empty where no figure stands.
+    size_t clipCount() const;
+    int clipIndex() const;
+    std::string clipName(size_t index) const;
+    bool playClip(size_t index);
     bool browsing() const { return !categories_.empty(); }
     // "MONSTERS  17/105  Budge Dragon", for the log line once a second.
     std::string browseLine() const;

@@ -28,4 +28,10 @@ struct ListHit {
 ListHit drawBrowserList(gfx::Overlay& overlay, const ModelBench& bench, int width, int height,
                         float pointerX, float pointerY);
 
+// The standing figure's clips, down the right, the same way: the playing one held in the
+// middle, the row under the pointer in `hovered`. Nothing where no figure stands. After
+// drawBrowserList, which is what begins the overlay's frame.
+ListHit drawClipList(gfx::Overlay& overlay, const ModelBench& bench, int width, int height,
+                     float pointerX, float pointerY);
+
 }  // namespace mu::game
