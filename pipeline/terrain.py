@@ -179,6 +179,13 @@ VOID_BY_MAP = {
     4: {"start": 0.1, "depth": 1.6, "rim": True},
 }
 
+#: How much of MU's baked light's variation the ground keeps, where a world differs from
+#: ground.py's LIGHT_DEPTH (0.5, Lorencia's: a baked shadow halved so it does not read as a
+#: smudge under the live sun). The Lost Tower keeps all of it: its floors and causeways fade
+#: into the void only because MU paints their edge corners 0, and halved they stood grey to
+#: a hard edge (the user: 'you did not migrated void blending with long road').
+LIGHT_DEPTH_BY_MAP = {4: 1.0}
+
 WATER_FLOW_BY_MAP = {
     # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at
     # one end and drained at the other -- the two ends furthest apart along it, found by walking
@@ -526,6 +533,7 @@ def main() -> None:
         "tile_slots": {str(slot): tile for slot, tile in named},
         **({"grass_slots": GRASS_BY_MAP[number - 1]} if number - 1 in GRASS_BY_MAP else {}),
         **({"void": VOID_BY_MAP[number - 1]} if number - 1 in VOID_BY_MAP else {}),
+        **({"light_depth": LIGHT_DEPTH_BY_MAP[number - 1]} if number - 1 in LIGHT_DEPTH_BY_MAP else {}),
         **({"water_flow": WATER_FLOW_BY_MAP[number - 1]}
            if number - 1 in WATER_FLOW_BY_MAP else {}),
         "objects": placed,

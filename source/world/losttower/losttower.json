@@ -26,6 +26,7 @@
   "depth": 1.6,
   "rim": true
  },
+ "light_depth": 1.0,
  "objects": [
   {
    "type": 1,

@@ -198,14 +198,18 @@ LIGHT_SCALE = 0.72
 LIGHT_DEPTH = 0.5
 
 
-def corner_light(lit: np.ndarray | None, size: int) -> np.ndarray:
-    """MU's baked light at every corner, wrapped, in 0..1. White where there is none."""
+def corner_light(lit: np.ndarray | None, size: int, depth: float = LIGHT_DEPTH) -> np.ndarray:
+    """MU's baked light at every corner, wrapped, in 0..1. White where there is none.
+
+    `depth` is the world's own LIGHT_DEPTH where it sets one (`light_depth` in its json): the
+    Lost Tower keeps all of MU's variation, since its floors fade to black where they meet the
+    void only because MU paints those corners 0, and halved about the mean they stood grey."""
     if lit is None:
         return np.ones((size + 1, size + 1, 3), dtype=np.float32)
 
     grid = np.ones((size + 1, size + 1, 3), dtype=np.float32)
     plane = np.power(lit.astype(np.float32) / 255.0, LIGHT_CONTRAST) * LIGHT_SCALE
-    plane = plane.mean() + (plane - plane.mean()) * LIGHT_DEPTH
+    plane = plane.mean() + (plane - plane.mean()) * depth
 
     grid[:size, :size] = plane
     grid[size, :size] = plane[0, :]
@@ -384,7 +388,7 @@ def main() -> None:
         print(f"  light      MU's own, mean "
               f"{lit.reshape(-1, 3).mean(axis=0).round().astype(int).tolist()} of 255")
 
-    light = corner_light(lit, size)
+    light = corner_light(lit, size, float(world.get("light_depth", LIGHT_DEPTH)))
 
     def sheet_for(name: str, blended: bool = False):
         """The prepared sheet for a slot, how far it reaches, and its material.
