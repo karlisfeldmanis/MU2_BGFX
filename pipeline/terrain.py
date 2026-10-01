@@ -179,6 +179,59 @@ VOID_BY_MAP = {
     4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
 }
 
+#: How far a world's lava spills into its void, in tiles. Ours, marked: MU framed its maps for a
+#: 4:3 screen, and the Lost Tower's long lava field (floor 1's east strip, 150-185 x 0-140)
+#: ends in a hard line against the black where MU's camera never looked; at 16:9 and pulled
+#: back, that line is on screen (the user, 2026-10-01: 'we need find a way how we can expand
+#: lava zones, because this game was made 25 years ago for 4:3 monitors'). A void tile whose
+#: nearest ground is lava, within this many tiles, becomes that lava tile again -- its sheet,
+#: height, painted light and flags, so it is as unwalkable as the lava it extends. It stops
+#: halfway across a gap, where another floor's edge is the nearer ground, and the void's own
+#: blend (VOID_BY_MAP) takes its far edge to black.
+LAVA_SPILL_BY_MAP = {4: 10}
+
+#: The slot MU's lava (TileWater01) sits in.
+LAVA_SLOT = 5
+
+
+def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndarray,
+               alpha: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Which void tiles the lava spills into, and the lava tile each copies, as flat indices.
+
+    A breadth-first walk out from every tile with ground, eight ways, so each void tile learns
+    which ground it reaches first and how far that is; the ones that reach lava first, within
+    `reach`, spill. On the [y, x] grid every plane here shares.
+    """
+    from collections import deque
+
+    lava = ((layer1 == LAVA_SLOT) | ((layer2 == LAVA_SLOT) & (alpha > 127))) & ~void
+    size_y, size_x = void.shape
+    distance = np.full(void.shape, np.iinfo(np.int32).max, dtype=np.int64)
+    source = np.full(void.shape, -1, dtype=np.int64)
+    queue = deque()
+    for y, x in zip(*np.nonzero(~void)):
+        distance[y, x] = 0
+        source[y, x] = y * size_x + x
+        queue.append((y, x))
+    while queue:
+        y, x = queue.popleft()
+        step = distance[y, x] + 1
+        if step > reach:
+            continue
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                ny, nx = y + dy, x + dx
+                if 0 <= ny < size_y and 0 <= nx < size_x and distance[ny, nx] > step:
+                    distance[ny, nx] = step
+                    source[ny, nx] = source[y, x]
+                    queue.append((ny, nx))
+    reached = void & (source >= 0)
+    from_lava = np.zeros(void.shape, dtype=bool)
+    from_lava[reached] = lava.reshape(-1)[source[reached]]
+    spilled = np.flatnonzero(from_lava)
+    return spilled, source.reshape(-1)[spilled]
+
+
 #: How much of MU's baked light's variation the ground keeps, where a world differs from
 #: ground.py's LIGHT_DEPTH (0.5, Lorencia's: a baked shadow halved so it does not read as a
 #: smudge under the live sun). The Lost Tower keeps all of it: its floors and causeways fade
@@ -492,6 +545,25 @@ def main() -> None:
         print(f"               {slot:3d}  {tile:14s} {share:5.1f}% of the ground")
 
     flags = attributes(world, number)
+
+    lit = baked_light(world)
+
+    # The lava's spill into the void, before anything is written (see LAVA_SPILL_BY_MAP).
+    if (reach := LAVA_SPILL_BY_MAP.get(number - 1)):
+        spilled, copied = spill_lava(reach, (flags & NO_GROUND) != 0, layer1, layer2, alpha)
+        grid, layer1, layer2, alpha, flags = (np.array(plane) for plane in
+                                              (grid, layer1, layer2, alpha, flags))
+        lit = np.array(lit) if lit is not None else None
+        for plane in (grid, layer1, layer2, alpha, flags):
+            flat = plane.reshape(-1)
+            flat[spilled] = flat[copied]
+        if lit is not None:
+            flat = lit.reshape(-1, lit.shape[-1])
+            flat[spilled] = flat[copied]
+        Image.fromarray(grid, "L").save(out / "height.png")
+        Image.fromarray(np.stack([layer1, layer2, alpha], axis=-1), "RGB").save(out / "tiles.png")
+        print(f"  lava       spilled into {len(spilled)} void tiles, up to {reach} out")
+
     blocked = (flags & (NO_MOVE | NO_GROUND)) != 0
     safe = (flags & SAFE_ZONE) != 0
 
@@ -506,8 +578,6 @@ def main() -> None:
 
     print(f"  walkable   {(~blocked).mean() * 100:.1f}% of the map, "
           f"{safe.mean() * 100:.1f}% is a safe zone  -> attributes.png")
-
-    lit = baked_light(world)
 
     if lit is not None:
         Image.fromarray(lit, "RGB").save(out / "light.png")
