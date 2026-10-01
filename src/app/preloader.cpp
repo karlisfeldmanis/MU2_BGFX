@@ -36,12 +36,50 @@ namespace {
 // the character screen's load keeps it going (Preloader::run's `keepAmbient`), the screen
 // plays it in place of MuTheme, and the world's load fades it out once the world is up. A
 // track already sounding goes on where it is rather than starting over.
+//
+// Looped without a seam (the user, 2026-10-01: 'blend ambient loading music better on loop so
+// its not cuted instantly'): the file ends loud, -19 dB over its last seconds against -35 at
+// its head, and the wrap cut straight from one to the other. So it is decoded whole, once, its
+// first kSeamSeconds are laid over its last under an equal-power crossfade, and it loops from
+// kSeamSeconds in: the end has become the opening, and runs on into what followed it. The
+// first play still starts at the file's own quiet head. Ours.
+constexpr float kSeamSeconds = 4.0f;
+
 struct Ambient {
     ma_engine engine{};
+    ma_audio_buffer loop{};
     ma_sound track{};
+    float* frames = nullptr;  // the decode, crossfaded in place; lives as long as the process
     bool open = false;
     bool tried = false;
     bool playing = false;  // started and not yet asked to stop
+
+    // The decode, its head crossfaded into its tail, as the buffer the track loops over.
+    bool openLoop(const std::string& path) {
+        constexpr ma_uint32 kChannels = 2;
+        ma_decoder_config config =
+            ma_decoder_config_init(ma_format_f32, kChannels, ma_engine_get_sample_rate(&engine));
+        ma_uint64 count = 0;
+        void* decoded = nullptr;
+        if (ma_decode_file(path.c_str(), &config, &count, &decoded) != MA_SUCCESS) return false;
+        frames = static_cast<float*>(decoded);
+        const ma_uint64 seam = std::min<ma_uint64>(
+            ma_uint64(kSeamSeconds * float(config.sampleRate)), count / 4);
+        const ma_uint64 tail = count - seam;
+        for (ma_uint64 i = 0; i < seam; ++i) {
+            const float t = (float(i) + 0.5f) / float(seam);
+            const float in = std::sin(t * 1.5707963f), out = std::cos(t * 1.5707963f);
+            for (ma_uint32 c = 0; c < kChannels; ++c) {
+                float& end = frames[(tail + i) * kChannels + c];
+                end = end * out + frames[i * kChannels + c] * in;
+            }
+        }
+        ma_audio_buffer_config buffer =
+            ma_audio_buffer_config_init(ma_format_f32, kChannels, count, frames, nullptr);
+        buffer.sampleRate = config.sampleRate;
+        if (ma_audio_buffer_init(&buffer, &loop) != MA_SUCCESS) return false;
+        return ma_data_source_set_loop_point_in_pcm_frames(&loop, seam, count) == MA_SUCCESS;
+    }
 
     void start(const std::string& path, float level) {
         if (!tried) {
@@ -49,9 +87,9 @@ struct Ambient {
             if (!core::fileExists(path)) return;
             ma_engine_config config = ma_engine_config_init();
             if (ma_engine_init(&config, &engine) != MA_SUCCESS) return;
-            const ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
-            if (ma_sound_init_from_file(&engine, path.c_str(), flags, nullptr, nullptr,
-                                        &track) != MA_SUCCESS) {
+            if (!openLoop(path) ||
+                ma_sound_init_from_data_source(&engine, &loop, MA_SOUND_FLAG_NO_SPATIALIZATION,
+                                               nullptr, &track) != MA_SUCCESS) {
                 core::logError("preloader: %s would not open", path.c_str());
                 ma_engine_uninit(&engine);
                 return;

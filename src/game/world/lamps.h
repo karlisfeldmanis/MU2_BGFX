@@ -62,6 +62,9 @@ public:
     using Heard = bool (*)(void* context, const float at[3]);
     bool nearestBonfire(const float from[3], float at[3], Heard heard = nullptr,
                         void* context = nullptr) const;
+    // The same over every fire, crackling or not: the character screen's set burns no
+    // Bonfire01, and its fires are heard all the same (LobbyMode).
+    bool nearestFire(const float from[3], float at[3]) const;
 
     // The Lost Tower's vents that caught this frame, near enough to draw: each is the wizard's
     // Flame (Play's, lit with `glows` false, its light being the vent's own here). MU rolls each

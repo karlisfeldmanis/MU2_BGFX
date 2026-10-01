@@ -63,6 +63,10 @@ private:
     content::Showing showing_;
     game::Sound sound_;
     int click_ = -1, refused_ = -1;
+    // The set's fire, heard behind the screen: the one burning nearest the pedestals.
+    int fire_ = -1;
+    bool fireHeard_ = false;
+    float fireAt_[3] = {0, 0, 0};
 
     gfx::Camera camera_;
     std::vector<gfx::Drawable> drawables_;

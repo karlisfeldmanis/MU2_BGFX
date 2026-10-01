@@ -24,6 +24,10 @@ constexpr const char* kTablesWorld = "lorencia";
 // is where the pedestals stand. Nothing here walks; the grass and the town cull round it.
 constexpr float kFocusColumn = 80.0f, kFocusRow = 193.0f;
 
+// The set's crackle, 0 to 1 of the game's own at that distance: in the background, under the
+// loading ambient. Ours, by ear.
+constexpr float kFireLevel = 0.5f;
+
 // The sky over world 74: black, as MuMain clears it (CharacterScene.cpp:251), with stars in it
 // -- the user, 2026-09-27: "keep sky black and add some stars". Points on a plane far behind
 // the set, scattered by a fixed hash so they hold still from frame to frame and allocate
@@ -198,6 +202,7 @@ bool LobbyMode::open(Context& ctx) {
             sound_.setVolume(float(args.volume) / 100.0f);
             click_ = sound_.load("window_click", false);
             refused_ = sound_.load("window_refused", false);
+            fire_ = sound_.load("world_bonfire", false);
             // No anthem: the loading ambient plays on here from the spinner before it, and the
             // world's load ends it (the user, 2026-10-01, over MuTheme; app/preloader.cpp).
             // MuMain plays login_theme.mp3 from the login screen through this one until
@@ -213,6 +218,16 @@ bool LobbyMode::open(Context& ctx) {
     pedestals_.aim(camera_);
     // World 74's torches, as lights on the set: the lamps' static grid, once (see PlayMode).
     if (args.lampsOn) world_.lamps().light(ctx.renderer);
+    // One of them heard, not all: the crackle of the fire nearest the pedestals, panned from
+    // where it burns and kept low under the ambient (the user, 2026-10-01: 'play bonfire from
+    // them but not all just in background'). The set has no Bonfire01, so any fire. Ours.
+    fireHeard_ = fire_ >= 0 && args.lampsOn &&
+                 world_.lamps().nearestFire(camera_.target, fireAt_);
+    if (fireHeard_) {
+        const float dx = fireAt_[0] - camera_.target[0], dz = fireAt_[2] - camera_.target[2];
+        core::logf("lobby: the crackle burns %.1f m from the pedestals",
+                   std::sqrt(dx * dx + dz * dz));
+    }
     // The scene's own air: world 74 is drawn from much further off than the town, and the night
     // sheet's dust, tuned for Lorencia's street, fogs the gate behind the pedestals.
     ctx.time.setScene(core::join(ctx.paths.sheets, "lobby.json"));
@@ -408,6 +423,10 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
         const uint32_t count = pedestals_.lights(lit, gfx::Renderer::kMaxTransientLights);
         ctx.renderer.setTransientLights(lit, count);
     }
+    // The fire's crackle, heard from the pedestals as the camera frames them.
+    sound_.listen(0, camera_.target, viewProj);
+    sound_.loop(fire_, fireHeard_);
+    if (fireHeard_) sound_.loopAt(fire_, fireAt_, kFireLevel);
     if (args.lampsOn) {
         world_.lamps().update(seconds, world_.town(), ctx.renderer, camera_.target);
         world_.lamps().gather(ctx.renderer.effects(), camera_.target, daylightOf(ctx.lighting));
