@@ -291,9 +291,18 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // cancelled by a click until it leaves his hand; after that it is in the air and lands.
     // A channel first, primary or not: Lightning has had no cooldown since 2026-09-30 and still
     // roots him for the whole ring.
+    //
+    // **A knight's skill holds him for the clip the drawing plays**, which is the authored pace:
+    // timed off `clip`, quickened by his attack speed, the lock ran out while Twisting Slash was
+    // still turning and a click walked him out of the spin (the user, 2026-10-01: "dont allow to
+    // use click to move if twisting slash animation is not played to the end"). And no blow of
+    // his own begins inside it either.
+    const int32_t held =
+        row.wizardry ? clip : std::max(clip, authoredCastTicks(*tables_, row));
     hero.castUntil = row.channelled() ? tick_ + row.channelTicks
                      : row.primary()  ? tick_
-                                      : tick_ + clip;
+                                      : tick_ + held;
+    hero.swingsAt = std::max(hero.swingsAt, hero.castUntil);
     if (row.channelled()) {
         hero.channelSkill = row.number;
         hero.channelFrom = tick_;

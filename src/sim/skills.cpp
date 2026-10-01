@@ -580,6 +580,12 @@ int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const con
     return swingTicks(int(float(clip->keys) / rate * 1000.0f));
 }
 
+int32_t authoredCastTicks(const content::Tables& tables, const SkillRow& row) {
+    const content::PlayerAction* clip = tables.action(row.clip);
+    if (!clip || clip->keys <= 0 || clip->speed <= 0.0f) return 0;
+    return swingTicks(int(float(clip->keys) / (clip->speed * 25.0f) * 1000.0f));
+}
+
 float magicSpeedStat(Kin kin, int agility) {
     // Only the wizard's class file relates agility to MagicSpeed at a rate this game can reach;
     // nobody else casts a spell here.

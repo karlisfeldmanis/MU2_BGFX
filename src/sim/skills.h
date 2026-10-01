@@ -389,6 +389,10 @@ float force(const SkillRow& row, const HeroPoints& points);
 int32_t castTicks(const content::Tables& tables, Kin kin, int agility, const content::Arm* right,
                   const content::Arm* left, const SkillRow& row, int extra = 0);
 
+// How long the clip takes at its authored pace, in ticks -- what the drawing plays a knight's
+// skill at (game/play.cpp, `swingPace` 1 on a cast). Zero as castTicks is.
+int32_t authoredCastTicks(const content::Tables& tables, const SkillRow& row);
+
 // A wizard's MagicSpeed: what his spells' clips are quickened by, as AttackSpeed quickens a swing.
 float magicSpeedStat(Kin kin, int agility);
 
