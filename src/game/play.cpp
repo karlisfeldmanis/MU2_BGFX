@@ -1047,6 +1047,7 @@ void Play::update(double seconds) {
     smithy(float(seconds));
     exhale(float(seconds));
     snort(float(seconds));
+    shade(float(seconds));
     // Before the puffs are aged, so a Giant's sand is thrown on the same frame its clip reached
     // the key that throws it, exactly as the dragon's dust is.
     sandOnDeath();

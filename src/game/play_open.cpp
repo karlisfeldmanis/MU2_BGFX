@@ -615,6 +615,19 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                 }
                 one.snortAlways = one.snortBone >= 0;
             }
+            // The Shadows: every joint but the dummies and the claws (fx/shadow_stars.h). The cooked
+            // skeleton keeps no dummy, so the claws are what is left to leave out.
+            one.shadeBones.clear();
+            const bool shadow = look->name == kShadowFigure || look->name == kPoisonShadowFigure;
+            one.shadePoison = look->name == kPoisonShadowFigure;
+            if (shadow && look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    bool claw = bones[b].name.rfind("dummy", 0) == 0;
+                    for (const char* name : kShadowClaws) claw = claw || bones[b].name == name;
+                    if (!claw) one.shadeBones.push_back(int(b));
+                }
+            }
             const bool elite = look->name == kEliteBullFigure;
             one.venomous = look->name == kVenomousFigure;
             if ((elite || one.venomous || look->name == kSnortingFigure) && look->skeletonMesh) {

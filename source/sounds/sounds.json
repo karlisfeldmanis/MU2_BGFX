@@ -1368,6 +1368,60 @@
         "agrate.wav"
       ],
       "from": "SOUND_TRAP01, Data\\Sound\\aGrate.wav (ZzzOpenData.cpp:4748). ZzzCharacter.cpp:1223-1232 plays it at the Lance Trap and the Iron Stick Trap as they strike, PlayBuffer(SOUND_TRAP01, o)."
+    },
+    "shadow_move": {
+      "files": [
+        "mShadow1.wav",
+        "mShadow2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 113, 114, 115, 116, 117) in ZzzOpenData.cpp:3607-3613; offsets from SOUND_MONSTER_BULL1 = 210, so 323 SHADOW1 to 327 SHADOWDIE (DSPlaySound.h:270)."
+    },
+    "shadow_attack": {
+      "files": [
+        "mShadowAttack1.wav",
+        "mShadowAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 113, 114, 115, 116, 117) in ZzzOpenData.cpp:3607-3613; offsets from SOUND_MONSTER_BULL1 = 210, so 323 SHADOW1 to 327 SHADOWDIE (DSPlaySound.h:270)."
+    },
+    "shadow_shock": {
+      "files": [
+        "mShadowAttack1.wav",
+        "mShadowAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again -- the client reuses the attack pair for the flinch. SetMonsterSound(..., 113, 114, 115, 116, 117) in ZzzOpenData.cpp:3607-3613; offsets from SOUND_MONSTER_BULL1 = 210, so 323 SHADOW1 to 327 SHADOWDIE (DSPlaySound.h:270)."
+    },
+    "shadow_die": {
+      "files": [
+        "mShadowDie.wav"
+      ],
+      "from": "Sounds[4], 327 SHADOWDIE. SetMonsterSound(..., 113, 114, 115, 116, 117) in ZzzOpenData.cpp:3607-3613; offsets from SOUND_MONSTER_BULL1 = 210, so 323 SHADOW1 to 327 SHADOWDIE (DSPlaySound.h:270)."
+    },
+    "poisonshadow_move": {
+      "files": [
+        "mShadow1.wav",
+        "mShadow2.wav"
+      ],
+      "from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed (MONSTER_MODEL_SHADOW). shadow_move's files."
+    },
+    "poisonshadow_attack": {
+      "files": [
+        "mShadowAttack1.wav",
+        "mShadowAttack2.wav"
+      ],
+      "from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed (MONSTER_MODEL_SHADOW). shadow_attack's files."
+    },
+    "poisonshadow_shock": {
+      "files": [
+        "mShadowAttack1.wav",
+        "mShadowAttack2.wav"
+      ],
+      "from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed (MONSTER_MODEL_SHADOW). shadow_shock's files."
+    },
+    "poisonshadow_die": {
+      "files": [
+        "mShadowDie.wav"
+      ],
+      "from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed (MONSTER_MODEL_SHADOW). shadow_die's files."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

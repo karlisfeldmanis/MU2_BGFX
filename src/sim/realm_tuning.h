@@ -278,8 +278,8 @@ constexpr int kChatTicks = 70;
 // ---- the monsters whose blow poisons -----------------------------------------------------------
 // 0.75's own, by MU's number: the Dungeon's Poison Bull (8) and Larva (12) and Lost Tower's Poison
 // Shadow (39), each `AttackSkill = Poison` (Version075/Maps/Dungeon.cs:666, :791; LostTower.cs:834).
-// None of them is cooked yet. Nothing in Lorencia poisons -- not its Spider (3), which was ours for
-// a day and taken out (the user, 2026-09-28).
+// Nothing in Lorencia poisons -- not its Spider (3), which was ours for a day and taken out (the
+// user, 2026-09-28).
 constexpr int32_t kPoisoners[] = {8, 12, 39};
 // A poison on him: 0.75's twenty seconds, a pulse every three at `PoisonDamageMultiplier` 0.03 of
 // the health left (Dungeon.cs:677), never the last point.
@@ -330,6 +330,16 @@ constexpr Resistance kResistances[] = {
     {23, 0, 3},  // Hommerd
     {24, 0, 2},  // Worm
     {25, 4, 5},  // Ice Queen
+    // The Lost Tower's eight (Version075/Maps/LostTower.cs, every breed's own rows, OpenMU's
+    // poison and ice read the other way about as above; WZD Monster.txt agrees).
+    {34, 5, 5},    // Cursed Wizard
+    {35, 6, 6},    // Death Gorgon
+    {36, 3, 3},    // Shadow
+    {37, 5, 5},    // Devil
+    {38, 10, 10},  // Balrog
+    {39, 6, 4},    // Poison Shadow
+    {40, 6, 6},    // Death Knight
+    {41, 5, 5},    // Death Cow
 };
 
 // ---- what each breed leaves -------------------------------------------------------------------
@@ -352,6 +362,11 @@ constexpr DropRate kDropRates[] = {
     {17, 14, 4}, {18, 14, 3}, {19, 14, 6}, {20, 14, 6}, {21, 14, 6}, {22, 14, 6},
     {23, 14, 6}, {24, 14, 6}, {25, 14, 3, 10}, {26, 10, 6}, {27, 10, 6}, {28, 10, 6},
     {29, 12, 6}, {30, 12, 6}, {31, 12, 6}, {32, 12, 6}, {33, 10, 6},
+    // The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The
+    // Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md,
+    // Decision 3, not yet answered).
+    {34, 14, 3}, {35, 14, 3}, {36, 14, 3}, {37, 14, 3}, {38, 14, 3, 10}, {39, 14, 3},
+    {40, 14, 3}, {41, 14, 3},
 };
 constexpr DropRate dropRateOf(int32_t number) {
     for (const DropRate& one : kDropRates) {

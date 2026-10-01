@@ -227,11 +227,13 @@ void Effects::draw(uint16_t view, const float* viewMtx, const float* projMtx, co
         // effects. Premultiplied, the fade lives in the rgb and both modes honour it.
         const bool added = first.blend == Blend::Additive || first.blend == Blend::Flame ||
                            first.blend == Blend::Breath;
-        const uint64_t blend = added
-                                   ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE,
-                                                           BGFX_STATE_BLEND_ONE)
-                                   : BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE,
-                                                           BGFX_STATE_BLEND_INV_SRC_ALPHA);
+        // `Minus` is MU's own (ZERO, ONE_MINUS_SRC_COLOR): premultiplied, the fade dims the
+        // darkening with the rest.
+        const uint64_t blend =
+            first.blend == Blend::Minus
+                ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ZERO, BGFX_STATE_BLEND_INV_SRC_COLOR)
+            : added ? BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+                    : BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_INV_SRC_ALPHA);
         bgfx::setState(common | blend);
         // The WHOLE vertex buffer, and the run selected by the index range alone.
         //

@@ -336,6 +336,65 @@ void Play::snort(float seconds) {
     }
 }
 
+// The Shadows: a star on every joint every frame the body is drawn, through the fall and the
+// fade as RenderCharacter draws it, and while it swings a spark off each joint one reference
+// frame in four. fx/shadow_stars.h has the client's code.
+void Play::shade(float seconds) {
+    shadowStars_.update(seconds);
+    const float frames = seconds * 25.0f;
+    for (Drawn& one : drawn_) {
+        if (one.shadeBones.empty()) continue;
+        if (!one.visible || !one.placed) {
+            one.shadeOwed = 0.0f;
+            continue;
+        }
+        float fade = 1.0f;
+        if (one.deadFor >= kDeathHold) {
+            const float t = std::clamp((one.deadFor - kDeathHold) / kDeathFade, 0.0f, 1.0f);
+            fade = 1.0f - t * t * (3.0f - 2.0f * t);
+        } else if (one.spawnFade < kSpawnFadeSeconds) {
+            const float t = std::clamp(one.spawnFade / kSpawnFadeSeconds, 0.0f, 1.0f);
+            fade = t * t * (3.0f - 2.0f * t);
+        }
+        // MONSTER01_ATTACK1 to ATTACK2, the slots `open` takes the two swings from.
+        const int slot = slotOf(one.figure);
+        const bool swinging = one.deadFor < 0.0f && (slot == 3 || slot == 4);
+        bool sparks = false;
+        if (swinging) {
+            // rand_fps_check(4): one reference frame in four, the first at once.
+            one.shadeOwed += frames / 4.0f;
+            if (one.shadeOwed >= 1.0f) {
+                one.shadeOwed -= std::floor(one.shadeOwed);
+                sparks = true;
+            }
+        } else {
+            one.shadeOwed = 1.0f;
+        }
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        // **Ours**: MU throws a spark off every one of the thirty-nine joints on those frames;
+        // here one of them, picked at random: the user found it "too active" whole, and still
+        // at three.
+        constexpr int kSparksAThrow = 1;
+        int picks[kSparksAThrow] = {-1};
+        if (sparks) {
+            for (int& pick : picks) {
+                wanderDice_ ^= wanderDice_ << 13;
+                wanderDice_ ^= wanderDice_ >> 17;
+                wanderDice_ ^= wanderDice_ << 5;
+                pick = int(wanderDice_ % uint32_t(one.shadeBones.size()));
+            }
+        }
+        for (size_t b = 0; b < one.shadeBones.size(); ++b) {
+            float at[3];
+            if (!one.figure.pointOn(one.shadeBones[b], origin, at)) continue;
+            shadowStars_.star(at, one.shadePoison, fade);
+            for (const int pick : picks) {
+                if (pick == int(b)) shadowStars_.spark(at, one.shadePoison);
+            }
+        }
+    }
+}
+
 // Hanzo at his anvil: MU's sparks off the hammer's head while the blow is between keys 5 and
 // 6, and the hearth's smoke and embers while he stands there, which are ours. fx/forge.h.
 void Play::smithy(float seconds) {

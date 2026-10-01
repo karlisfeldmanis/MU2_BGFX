@@ -500,6 +500,11 @@ EFFECTS = {
     # over black, all additive. See client/core/Summoning.cs and docs/summoning.md.
     "joint_energy": "effects/summon/joint_energy01.png",
     "shiny_02": "effects/summon/shiny02.png",
+    # Ours: the Lost Tower's Shadows wear Shiny02 and Magic_Ground2 on every joint, and drawn
+    # crisp the thirty-nine read as spikes and streaks; the user asked for them blurrier
+    # (2026-10-01). Gaussian-blurred copies of the two, lifted back toward their peak.
+    "shiny_02_soft": "effects/shadow/shiny02_soft.png",
+    "magic_ground_soft": "effects/shadow/magic_ground_soft.png",
     "lightning_2": "effects/summon/lightning2.png",
 
     # And what a barrier looks like, which is a different sheet and not a tint of the one

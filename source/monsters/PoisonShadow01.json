@@ -1,0 +1,17 @@
+{
+  "item": "PoisonShadow01",
+  "mu_name": "Poison Shadow",
+  "mu_name_from": "MuMain's MONSTER_POISON_SHADOW = 39, drawn out of the Shadow's own model (MONSTER_MODEL_SHADOW, Monster29.bmd). The client's name is 포이즈 쉐도우 (ZzzCharacter.cpp:13861-13867). OpenMU's Version075 LostTower.cs:821-853 names number 39 'Poison Shadow' at level 50 with 3500 health, 155-160 damage, 85 defense, MoveRange 3, AttackRange 1, ViewRange 5, AttackDelay 1400, AttackSkill Poison (1) with PoisonDamageMultiplier 0.03. 87 spots: 27 on Lost Tower 1, 60 on 2.",
+  "world": "losttower",
+  "object_type": 39,
+  "mesh": "Shadow01",
+  "mesh_from": "Monster29 a second time, as the Hell Hound is Monster02 a second time: every difference is a field CreateMonster sets beside the one loaded model.",
+  "monster": {
+    "model_index": 28,
+    "scale": 1.2
+  },
+  "monster_from": "The MONSTER_POISON_SHADOW branch: `c->Object.Scale = 1.2f; c->Level = 1;`. Level 1 is what RenderCharacter's MODEL_SHADOW case reads: green Magic_Ground2 rings where the Shadow has dark stars (Shadow01's effects_from).",
+  "profile": "monster",
+  "effects_from": "Shadow01's, at Level 1: CreateSprite(BITMAP_MAGIC + 1, Position, 0.8f, Light (0.2, 0.7, 0.1), o, 0.f) on the same 39 bones, additive (subtype 0), and the same ENERGY sparks in that green while it swings. ZzzCharacter.cpp:2344-2360's thunder off its link bone sits under `c->Skill == AT_SKILL_LIGHTNING`, and its skill is Poison, so MU never draws it for this breed. Its poison is the realm's (realm_tuning.h kPoisoners), as the Larva's: no missile.",
+  "sounds_from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed. Wired as poisonshadow_*, the same files as shadow_*."
+}

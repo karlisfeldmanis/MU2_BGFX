@@ -27,7 +27,10 @@ namespace mu::gfx {
 // `Dust` is mixed like `Alpha` through fs_dust: the Budge Dragon's smoke02, drawn as a soft
 // cloud. `Breath` is added through fs_breath, which is fs_flame's heat ramp softened -- the
 // same dragon's fire, which is bigger and further off than the town's candles.
-enum class Blend : uint8_t { Alpha, Additive, Flame, Smoke, Dust, Breath };
+// `Minus` darkens: what is behind is multiplied by one less the sprite, MU's
+// EnableAlphaBlendMinus, (ZERO, ONE_MINUS_SRC_COLOR) (ZzzOpenglUtil.cpp:423-431) -- the Shadow's
+// stars, a sprite of subtype 1.
+enum class Blend : uint8_t { Alpha, Additive, Flame, Smoke, Dust, Breath, Minus };
 
 // One quad for one frame. Filled by the caller, read once, and not remembered: the pass has
 // no notion of an effect that persists between frames, which is what keeps the lifetime

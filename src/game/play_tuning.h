@@ -288,6 +288,14 @@ inline constexpr const char* kVenomousFigure = "PoisonBull01";
 inline constexpr const char* kFanningFigure = "IceQueen01";
 // And the one of them MU gives Level 1 to, which is what lights RenderEye (fx/eyes.h).
 inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
+// The Lost Tower's Shadow and Poison Shadow, one model at Level 0 and 1: a sprite on every joint
+// but the arms' claws (fx/shadow_stars.h). Their joints are found by name; these are the claws, MU's
+// bones 15-20 and 27-32 on Monster29.
+inline constexpr const char* kShadowFigure = "Shadow01";
+inline constexpr const char* kPoisonShadowFigure = "PoisonShadow01";
+inline constexpr const char* kShadowClaws[] = {"Box03", "Box04", "Box05", "Box06",
+                                               "Box07", "Box08", "Box09", "Box10",
+                                               "Box11", "Box12", "Box13", "Box14"};
 // MODEL_CHAIN_SCORPION, which carries an orange light on its `light_point` bone.
 inline constexpr const char* kScorpionFigure = "ChainScorpion01";
 // MONSTER_GORGON's Gorgon Staff, whose star RenderCharacter's linked-weapon switch lights for

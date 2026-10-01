@@ -155,6 +155,7 @@ add_executable(mu2
   src/game/fx/breath.cpp
   src/game/fx/snort.cpp
   src/game/fx/eyes.cpp
+  src/game/fx/shadow_stars.cpp
   src/game/fx/forge.cpp
   src/game/fx/meteor.cpp
   src/game/fx/effect_mesh.cpp
