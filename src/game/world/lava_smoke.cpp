@@ -28,7 +28,9 @@ constexpr float kSpin = 0.06f;  // radians a second at most
 // How much it covers at the middle of its life, and its colour: warm grey, lit from below.
 // 0.10 read a little strong once it covered everything (the user: 'make little bit less
 // vissible').
-constexpr float kAlpha = 0.07f;
+// And 0.07 still a little much (the user: 'lets not remove that smoke effect from lava but
+// make it less vissible').
+constexpr float kAlpha = 0.045f;
 constexpr float kColour[3] = {0.62f, 0.46f, 0.38f};
 
 }  // namespace
