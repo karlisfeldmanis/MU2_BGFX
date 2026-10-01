@@ -295,31 +295,35 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // whole, two kinds at sim::kMixedPair each.
     if (weapon && sim::offHanded(row, who.kin)) {
         static const char* const kKinds[4] = {"sword", "axe", "mace", "spear"};
+        static const char* const kPairs[4] = {"swords", "axes", "maces", "spears"};
         const sim::Held& partner = &what == &bag[sim::kWeaponRight] ? bag[sim::kWeaponLeft]
                                                                     : bag[sim::kWeaponRight];
         const content::ItemRow* other =
             partner.empty() || size_t(partner.item) >= tables.items.size()
                 ? nullptr
                 : &tables.items[size_t(partner.item)];
-        const int share = int(std::lround(sim::kMixedPair * 100.0));
-        const auto say = [&](const std::string& words, Tone tone) {
+        const std::string share = std::to_string(int(std::lround(sim::kMixedPair * 100.0))) + "%";
+        // In the affix grammar: "Dual Wield" named first, the value last and heavier. Green for
+        // the pair that hits whole, red for the one cut, white for the rule when he holds none.
+        const auto say = [&](const std::string& words, const std::string& value, Tone tone) {
             Row line;
+            line.keyword = "Dual Wield";
             line.free = words;
+            line.tail = value;
             line.freeTone = tone;
             line.mark = tip::Mark::Diamond;
+            line.markTone = tone;
             does.rows.push_back(line);
         };
+        const std::string mine = kKinds[row.group];
         if (other && sim::offHanded(*other, who.kin) && other->group == row.group) {
-            say("Paired with a " + std::string(kKinds[row.group]) + ": 100% damage each hand",
+            say(std::string("two ") + kPairs[row.group] + ", each hand deals", "100%",
                 Tone::Green);
         } else if (other && sim::offHanded(*other, who.kin)) {
-            say("Paired with a " + std::string(kKinds[other->group]) + ": " +
-                    std::to_string(share) + "% damage each hand",
-                Tone::Red);
+            say(mine + " and " + kKinds[other->group] + ", each hand deals", share, Tone::Red);
         } else {
-            say("Two-weapon: with a second " + std::string(kKinds[row.group]) +
-                    " 100% damage, with another kind " + std::to_string(share) + "%",
-                Tone::White);
+            say("with another " + mine + ", each hand deals", "100%", Tone::White);
+            say("with another weapon type, each hand deals", share, Tone::Gray);
         }
     }
     const bool worn = row.armour() || row.shield();
