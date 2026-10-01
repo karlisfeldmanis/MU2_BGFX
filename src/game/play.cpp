@@ -942,17 +942,17 @@ void Play::update(double seconds) {
                         // The swing's own skill, remembered when it began: this is the settling
                         // half, and the cast that named it was two ticks ago.
                         cue.skill = swinger->swingSkill;
-                        // A primary spell's number is drawn as a swing's: it is his basic attack,
-                        // and the skill ramp is for the keys.
-                        if (happening.thrown) {
-                            const sim::SkillRow* row = sim::skillNumbered(cue.skill);
-                            if (row == nullptr || row->primary()) cue.skill = 0;
-                        }
+                        // A primary's number is drawn as a swing's, the skill ramp being for the
+                        // skills that wait. Thrown or not: Lightning is a channel round him and
+                        // flies nowhere, and has no cooldown since 2026-09-30 as the rest have not.
+                        if (const sim::SkillRow* row = sim::skillNumbered(cue.skill);
+                            row != nullptr && row->primary())
+                            cue.skill = 0;
                         cue.thrown = happening.thrown;
                         // An archer's arrow, hers or a monster's, asked of the shooter and not of
                         // `swingSkill`, which a dry wizard's staff may already have replaced. A
                         // spell's number is a swing's or a skill's as the knight's are -- white
-                        // for his primary, amber off a key -- and no longer lavender (the user,
+                        // for a primary, amber for one with a cooldown -- and no longer lavender (the user,
                         // 2026-10-01: "use standard damage color also for DW damage numbers"),
                         // which is MU's own: it draws a spell's number in the swing's white.
                         bool arrow = false;
