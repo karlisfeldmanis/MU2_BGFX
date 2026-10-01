@@ -457,9 +457,10 @@ bool creation(const content::ItemRow& row);
 inline bool takesSockets(const content::ItemRow& row) { return takesOptions(row); }
 constexpr int kMostSockets = 3;
 // A drop's chance of a socket, drawn after luck and the option, and then of each further one
-// (the user, 2026-09-28: "item drop with +socket is rare"). invention.
-constexpr double kSocketChance = 0.005;
-constexpr double kMoreSocketChance = 0.25;
+// (the user, 2026-09-28: "item drop with +socket is rare"; 2026-10-01: "incerase drop rate for
+// armors,weapons with +socket" -- 0.5% and 25% were). invention.
+constexpr double kSocketChance = 0.03;
+constexpr double kMoreSocketChance = 0.30;
 // A kill's jewels (the user, 2026-10-01: "increase drop rate for jewel of bless, jewel of soul,
 // jewel of chaos and jewel of creation"). invention, all of it. MU drops the three from its
 // jewel group at 1 in 1000 (Loot.Jewel, the group shared with the Ale, the Town Portal and the
