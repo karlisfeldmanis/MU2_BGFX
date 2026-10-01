@@ -1,6 +1,7 @@
 #include "game/world/lamps.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "content/placement.h"
@@ -127,6 +128,16 @@ const char* riddenBone(const std::string& model) {
     return nullptr;
 }
 
+// How far apart the lights a model carries must stand, in metres; 0 lights every one. The Lost
+// Tower's lamp posts (Object24, their light ours): 66 of its 163 line the safe hall a metre
+// apart, and a light on each stacked into a bright cyan band along every wall (the user: 'safe
+// zone looks kind of brighteden'). Every post still stands and glows; a post within this of
+// one already lit casts no light of its own.
+float lightSpacing(const std::string& model) {
+    if (model == "Object24") return 3.5f;
+    return 0.0f;
+}
+
 float mix(float a, float b, float t) { return a + (b - a) * t; }
 float smooth(float a, float b, float x) {
     const float t = std::clamp((x - a) / (b - a), 0.0f, 1.0f);
@@ -208,6 +219,8 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         }
     };
 
+    std::vector<std::pair<uint16_t, std::array<float, 2>>> spaced;  // the lit, by lightSpacing
+    thinned_ = 0;
     for (uint32_t index = 0; index < cooked.instances.size(); ++index) {
         const content::TownInstance& instance = cooked.instances[index];
         if (glowOf[instance.model] != nullptr) {
@@ -265,6 +278,20 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
                 facing[0] = fl > 1e-4f ? head[8] / fl : 0.0f;
                 facing[2] = fl > 1e-4f ? head[10] / fl : 0.0f;
             }
+        }
+        if (const float spacing = lightSpacing(model); spacing > 0.0f && !carried[instance.model].empty()) {
+            bool near = false;
+            for (const auto& kept : spaced) {
+                if (kept.first != instance.model) continue;
+                const float dx = kept.second[0] - instance.position[0];
+                const float dz = kept.second[1] - instance.position[2];
+                if (dx * dx + dz * dz < spacing * spacing) near = true;
+            }
+            if (near) {
+                ++thinned_;
+                continue;
+            }
+            spaced.push_back({instance.model, {instance.position[0], instance.position[2]}});
         }
         for (const content::TownEmitter* one : carried[instance.model]) {
             float at[3];
@@ -339,9 +366,9 @@ bool Lamps::open(const std::string& assetDir, const Town& town, const content::G
         core::logError("no cooked 'fire' sheet: %zu fires will burn with no flame drawn "
                        "(tools/cook.py --only showing)", fires_.size());
     }
-    core::logf("lamps: %zu lights (%zu lighting only their own side of their holder), %zu fires, "
-               "%zu flickering glows; sheets: fire %s, ember %s, smoke %s", lights_.size(), sided,
-               fires_.size(), glows_.size(),
+    core::logf("lamps: %zu lights (%zu lighting only their own side of their holder, %u left out "
+               "by spacing), %zu fires, %zu flickering glows; sheets: fire %s, ember %s, smoke %s",
+               lights_.size(), sided, thinned_, fires_.size(), glows_.size(),
                bgfx::isValid(sheet_) ? "yes" : "NO", bgfx::isValid(spark_) ? "yes" : "NO",
                bgfx::isValid(smoke_) ? "yes" : "NO");
     return true;

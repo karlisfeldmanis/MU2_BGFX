@@ -90,6 +90,7 @@ private:
         float left = 0.0f;   // reference frames still burning, 0 when cold
     };
     std::vector<Vent> vents_;
+    uint32_t thinned_ = 0;  // carried lights left out by lightSpacing
     std::vector<VentStart> ventsLit_;
     static constexpr float kVentFps = 25.0f;
     static constexpr float kVentFrames = 40.0f;   // the Flame's LifeTime (ZzzEffect.cpp:1080)
