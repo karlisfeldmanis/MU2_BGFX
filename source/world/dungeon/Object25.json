@@ -26,6 +26,11 @@
     "squid01": 0.45,
     "squid02_body": 0.45
   },
+  "sheet_roughness": {
+    "squid01": 0.7,
+    "squid02_body": 0.7
+  },
+  "sheet_roughness_from": "The user's, 2026-10-01, at 149,218: 'some objects are very mated/glossy'. Cast brass at 0.44 drew one hard gold streak down each worm's back, a wet sheen on a body MU painted dull. 0.7 keeps the dark bronze metal and spreads the highlight to a dull sheen. Same number as Object12's tentacles, so the two stay one metal.",
   "sheet_f0_tint_from": "The user's, 2026-09-30, in several passes. 'i think those tentacles has to be metallic', then 'looks blue', 'less bronze and more in sync', and at last MuMain's own picture of the pit, a pale olive gold (120:105:85, 1 : 0.87 : 0.70), and 'lets make it dark bronze'. So brass (cast, roughness 0.44) at f0 0.45, with #E8C050 baked into the metal sheet (sheet_f0_tint; the cook drops glTF's baseColorFactor, so a sheet_tint never reached the game). The blue is left out of the tint on purpose: the Dungeon's fill is cold, and any blue in a metal's f0 turned the worms mauve. Tried and turned down: plate steel (blue), #FF9A50 (copper), wrought iron at 0.25 (grey), #FFCC80 (mauve). An invention on MU's look: MU lights squid01 as any other sheet.",
   "why_this_one": "A giant worm lying in a pit, 5 m long and scaled up to 2.2, 50 of them: a dark segmented body (squid01, a pale spine on black) whose squid02 segments carry ribs that slide along it, MU's StreamMesh, while the body writhes on its 40-key clip. Seen in the world 2026-09-30 in the pit at 112,117. The first cut drew squid02 added only, so the worm had holes and read as separate dark pipes; see echo_from.",
   "additive": [

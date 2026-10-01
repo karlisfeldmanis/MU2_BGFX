@@ -20,6 +20,10 @@
   "sheet_f0": {
     "squid01": 0.45
   },
+  "sheet_roughness": {
+    "squid01": 0.7
+  },
+  "sheet_roughness_from": "The user's, 2026-10-01, at 149,218: 'some objects are very mated/glossy'. Cast brass at 0.44 lit the tentacles' edges in bright gold streaks. 0.7 keeps the dark bronze metal and dulls the sheen, as on Object25's worms.",
   "sheet_f0_tint_from": "The user's, 2026-09-30, in several passes. 'i think those tentacles has to be metallic', then 'looks blue', 'less bronze and more in sync', and at last MuMain's own picture of the pit, a pale olive gold (120:105:85, 1 : 0.87 : 0.70), and 'lets make it dark bronze'. So brass (cast, roughness 0.44) at f0 0.45, with #E8C050 baked into the metal sheet (sheet_f0_tint; the cook drops glTF's baseColorFactor, so a sheet_tint never reached the game). The blue is left out of the tint on purpose: the Dungeon's fill is cold, and any blue in a metal's f0 turned the worms mauve. Tried and turned down: plate steel (blue), #FF9A50 (copper), wrought iron at 0.25 (grey), #FFCC80 (mauve). An invention on MU's look: MU lights squid01 as any other sheet.",
   "why_this_one": "A clump of black tentacles rising from the floor, 52 of them, up to 2.6 m, on an 8-bone 30-key clip at MU's 0.16. squid01 is near black, so they read as dark horns. Seen in the world 2026-09-30 at 42.5,210.6 among the coffins.",
   "animation_note": "Rigged: its one action of 30 keys plays at CreateObject's default 0.16; MuMain's Dungeon arm sets it no speed of its own.",
