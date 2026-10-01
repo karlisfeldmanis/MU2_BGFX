@@ -366,9 +366,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (mapWanted != minimap_.full()) {
         minimap_.setFull(mapWanted);
         core::logf("window: map %s", mapWanted ? "up" : "down");
-        // The journal's page turn, not the click (the user, 2026-10-01: 'we need same sound top
-        // to open/close full map').
-        play.sound().play(play.sound().load("quest_page_turn", false));
+        // The journal's page turn, on opening only (the user, 2026-10-01: 'plat map sound only
+        // when open TAB, not close').
+        if (mapWanted) play.sound().play(play.sound().load("quest_page_turn", false));
     }
     scriptMap_ = false;
     if (travel_.up() && play.isOpen()) {
