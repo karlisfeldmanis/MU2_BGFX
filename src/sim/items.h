@@ -449,8 +449,9 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
 
 // **Stormcall**, the Dark Knight's first power: a swing that lands has this chance to call
 // lightning down on another monster within `kStormcallReach` tiles of him, which takes his
-// swing's roll at `kStormcallForce` and is pushed as Lightning pushes. invention.
-constexpr double kStormcallChance = 0.15;
+// swing's roll at `kStormcallForce` and is pushed as Lightning pushes. invention. 20%, as the
+// first quests' three runes all are (the user, 2026-10-01).
+constexpr double kStormcallChance = 0.20;
 constexpr float kStormcallReach = 4.0f;
 constexpr float kStormcallForce = 1.0f;
 // **Meteor**, his second: the same chance and reach, and a burning rock -- the wizard's
@@ -468,7 +469,7 @@ constexpr double kPoisonRuneChance = 0.15;
 // with some extra damage"), in a bow's or a crossbow's socket: an arrow that lands has the same
 // chance to freeze what it struck -- no step and no swing for `kFrostTicks` -- and to wound it
 // again for `kFrostWound` of the arrow's own. Drawn as the wizard's Ice on it. invention.
-constexpr double kFrostChance = 0.15;
+constexpr double kFrostChance = 0.20;  // 20% since 2026-10-01, as Stormcall
 constexpr int64_t kFrostTicks = 40;  // two seconds of the realm's twenty ticks
 constexpr float kFrostWound = 0.5f;
 // **Arcane Echo**, the Dark Wizard's first (the user, 2026-09-29: "casting abilities has 15%
@@ -476,7 +477,7 @@ constexpr float kFrostWound = 0.5f;
 // again `kEchoTicks` later -- the same spell, at the same aim and force, for no mana and no
 // cooldown, and an echo never echoes. Lightning's echo is its sweep run once more when the
 // channel ends, without his arm and without holding him. invention.
-constexpr double kEchoChance = 0.15;
+constexpr double kEchoChance = 0.20;  // 20% since 2026-10-01, as Stormcall
 constexpr int64_t kEchoTicks = 6;  // 0.3 s: two throws, read apart
 
 }  // namespace mu::sim

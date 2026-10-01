@@ -4427,6 +4427,8 @@ void testRunes(const content::Tables& tables) {
     // A knight in the hunting ground, swinging at the nearest thing: with a power worn, some of
     // his landed swings call it, each on a monster other than the one he struck; with the same
     // sword and its sockets empty, none do.
+    int lit = 0, grudged = 0;
+    std::vector<uint32_t> litIds, cameIds;
     const auto hunt = [&](uint8_t power, int* swings, int* calls, int* onTarget, int* landed) {
         sim::Realm realm;
         realm.raise(&tables, 3, 200, 160, sim::Kin::DarkKnight, 60);
@@ -4455,6 +4457,11 @@ void testRunes(const content::Tables& tables) {
             realm.step();
             uint32_t struck = 0;
             for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Hit && h.whom == realm.hero().id &&
+                    std::find(litIds.begin(), litIds.end(), h.who) != litIds.end() &&
+                    std::find(cameIds.begin(), cameIds.end(), h.who) == cameIds.end()) {
+                    cameIds.push_back(h.who);
+                }
                 if (h.who != realm.hero().id) continue;
                 if (h.what == sim::What::Hit && !h.thrown) {
                     ++*swings;
@@ -4465,7 +4472,16 @@ void testRunes(const content::Tables& tables) {
                     ++*calls;
                     if (h.whom == struck) ++*onTarget;
                 }
-                if (h.what == sim::What::Hit && h.thrown) ++*landed;
+                if (h.what == sim::What::Hit && h.thrown) {
+                    ++*landed;
+                    // What the lightning struck turns on him, as anything he hits does.
+                    const sim::Body* hit = realm.find(h.whom);
+                    if (hit && hit->alive() && hit->monster()) {
+                        ++lit;
+                        if (hit->quarry == realm.hero().id && hit->provoked) ++grudged;
+                        litIds.push_back(h.whom);
+                    }
+                }
             }
         }
     };
@@ -4476,6 +4492,9 @@ void testRunes(const content::Tables& tables) {
     check(calls > 0, "and Stormcall calls lightning");
     check(double(calls) <= double(swings) * 0.25, "at no more than its chance and some");
     checkEqual(onTarget, 0, "never on the monster he struck");
+    std::printf("  %d struck by lightning and standing, %d of them after him, %d came and hit "
+                "him\n", lit, grudged, int(cameIds.size()));
+    check(lit > 0 && grudged == lit, "and what the lightning struck turns on him");
     int bareSwings = 0, bareCalls = 0, bareOn = 0, bareLanded = 0;
     hunt(0, &bareSwings, &bareCalls, &bareOn, &bareLanded);
     checkEqual(bareCalls, 0, "and none from the same sword with its socket empty");

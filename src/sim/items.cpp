@@ -220,7 +220,7 @@ bool refinable(const content::Tables& tables, const Held& jewel, const Held& tar
 const PowerRow* powerOf(uint8_t power) {
     static const PowerRow kPowers[] = {
         {Power::Stormcall, "Stormcall",
-         "A swing that lands has a 15% chance to call lightning down on another monster near him",
+         "A swing that lands has a 20% chance to call lightning down on another monster near him",
          true, Kin::DarkKnight},
         {Power::Meteor, "Meteor",
          "A swing that lands has a 15% chance to bring a burning rock down on another monster "
@@ -235,11 +235,11 @@ const PowerRow* powerOf(uint8_t power) {
          "twenty seconds",
          true, Kin::DarkKnight},
         {Power::Frost, "Frost Arrow",
-         "An arrow that lands has a 15% chance to freeze the monster it struck for two seconds "
+         "An arrow that lands has a 20% chance to freeze the monster it struck for two seconds "
          "and wound it again for half the arrow's damage",
          true, Kin::FairyElf},
         {Power::Echo, "Arcane Echo",
-         "A spell he casts has a 15% chance to be cast a second time, for no mana", true,
+         "A spell he casts has a 20% chance to be cast a second time, for no mana", true,
          Kin::DarkWizard},
         {Power::Undying, "Undying", "+20% maximum health", false, Kin::DarkKnight, true},
         {Power::KeenEye, "Keen Eye", "+10% critical hit chance", false, Kin::DarkKnight, true},

@@ -292,7 +292,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     }
     // A knight's second weapon (sim::offHanded), and what it pairs to: the weapon in his other
     // hand -- the left's partner is the right, anything else's is the right. Two of one kind hit
-    // whole, two kinds at sim::kMixedPair each, and neither hand holds the shield Defense asks.
+    // whole, two kinds at sim::kMixedPair each.
     if (weapon && sim::offHanded(row, who.kin)) {
         static const char* const kKinds[4] = {"sword", "axe", "mace", "spear"};
         const sim::Held& partner = &what == &bag[sim::kWeaponRight] ? bag[sim::kWeaponLeft]
@@ -321,7 +321,6 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                     " 100% damage, with another kind " + std::to_string(share) + "%",
                 Tone::White);
         }
-        say("No Defense while holding two weapons", Tone::White);
     }
     const bool worn = row.armour() || row.shield();
     const int defense = worn ? row.defense + sim::defenseBonus(row.shield(), plus) +

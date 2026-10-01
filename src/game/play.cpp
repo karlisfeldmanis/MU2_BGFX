@@ -545,6 +545,19 @@ void Play::update(double seconds) {
                     if (hit >= 0) emit(hit, caster->crown[0], caster->crown[2], caster->id);
                 }
             }
+            // A rune's lightning -- Stormcall, Loosed on a swing that was not Lightning -- always
+            // shakes what it struck (the user, 2026-10-01: "monster is not reacting to that
+            // lighting"). Only its push flinched it, and a push into a wall or a safe tile is
+            // not taken, which left the blow's one-in-two coin as its only answer.
+            if (happening.what == sim::What::Loosed && happening.a == sim::skill::kLightning &&
+                happening.who == heroId) {
+                const Drawn* caster = drawnOf(happening.who);
+                Drawn* struck = drawnOf(happening.whom);
+                if (caster && caster->swingSkill != sim::skill::kLightning && struck &&
+                    struck->placed && struck->shockClip >= 0 && struck->shocked <= 0.0f) {
+                    shock(*struck, struck->shockClip);
+                }
+            }
             if (happening.what == sim::What::Loosed) {
                 const Drawn* caster = drawnOf(happening.who);
                 const Drawn* target = drawnOf(happening.whom);
