@@ -66,13 +66,17 @@ constexpr Offer kMartin[] = {
 // the skill (docs/skills-dk.md §1.2), and this shelf is the route that replaces it -- in the
 // ladder's own order, the level each asks being the drop level of the first weapon that carried
 // that skill.
+//
+// **Without the source's three +S copies** (the user, 2026-10-01: "dublivated item"): the
+// Sword of Assassin, the Morning Star and the Double Axe stood twice, plain and with their skill. With the
+// skill on the orbs the copy taught nothing and only cost more, so it was the same sword twice.
 constexpr Offer kBlacksmith[] = {
     gear(0, kSwords, 1, 0), gear(1, kSwords, 2, 0), gear(2, kSwords, 4, 0),
-    gear(3, kSwords, 4, 0, true), gear(4, kHelms, 0, 0), gear(6, kArmours, 0, 0),
+    gear(4, kHelms, 0, 0), gear(6, kArmours, 0, 0),
     gear(20, kPants, 0, 0), gear(22, kGloves, 0, 0), gear(24, kBoots, 0, 0),
     gear(26, kGloves, 6, 0), gear(36, kBoots, 6, 0), gear(38, kAxes, 1, 0),
-    gear(39, kMaces, 0, 0), gear(40, kMaces, 1, 0), gear(41, kMaces, 1, 0, true),
-    gear(42, kAxes, 2, 0), gear(43, kAxes, 2, 0, true), gear(52, kSwords, 0, 0),
+    gear(39, kMaces, 0, 0), gear(40, kMaces, 1, 0),
+    gear(42, kAxes, 2, 0), gear(52, kSwords, 0, 0),
     gear(61, kSpears, 5, 0), gear(64, kShields, 0, 0), gear(66, kShields, 4, 0),
     gear(80, kShields, 1, 0), gear(53, kOrbs, 3, 0), gear(63, kOrbs, 4, 0), gear(68, kOrbs, 5, 0),
     gear(71, kOrbs, 6, 0), gear(76, kOrbs, 7, 0), gear(79, kOrbs, 25, 0), gear(82, kOrbs, 12, 0),
