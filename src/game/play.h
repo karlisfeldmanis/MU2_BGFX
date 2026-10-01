@@ -862,7 +862,8 @@ private:
     // A level the realm has given and the drawing has not shown: it waits, as MU2's did, for
     // the blow that killed `levelOn_` to land, so the flares do not go up half a swing before
     // the monster that earned them is hit. 0 is no one, and shows at once. Counted, not a flag:
-    // a quest paying three levels rises three times, one after another, `levelWait_` apart.
+    // a quest paying three levels rises three times, one after another, `levelWait_` apart; a
+    // kill paying three owes one.
     int levelsOwed_ = 0;
     uint32_t levelOn_ = 0;
     float levelWait_ = 0.0f;

@@ -304,7 +304,10 @@ void Play::update(double seconds) {
                 }
                 speak(happening);
             } else if (happening.what == sim::What::Levelled && happening.who == heroId) {
-                ++levelsOwed_;
+                // Off a kill, one rise however many levels it carried: the realm has added them
+                // all, and only a quest's are shown one by one (the user, 2026-10-01). A rise
+                // already owed covers this one too.
+                levelsOwed_ = std::max(levelsOwed_, 1);
             } else if (happening.what == sim::What::Rose) {
                 if (Drawn* risen = drawnOf(happening.who)) stand(*risen);
                 // Risen on a map with no safe zone: owed Lorencia, as a Town Portal read there is.
@@ -1278,9 +1281,10 @@ void Play::update(double seconds) {
     fallWhenLanded();
     // And the level, in the same frame as the blow that earned it -- MU2's Rose, reached from
     // the kill's cue. A dropped cue still clears `awaits`, so a level is never lost to one.
-    // More than one level is a sequence, each its own rise and sound, kLevelApart after the last
+    // A quest's levels are a sequence, each its own rise and sound, kLevelApart after the last
     // -- INVENTION, the user's (2026-09-30): MU's while loop sends one ReceiveLevelUp a level,
-    // all on the same frame, and a quest's three levels read as one.
+    // all on the same frame, and a quest's three levels read as one. A kill's levels rise once
+    // (the user, 2026-10-01: "if by killing we get multiple lvls we play it once").
     levelWait_ = std::max(0.0f, levelWait_ - float(seconds));
     if (levelsOwed_ > 0 && levelWait_ <= 0.0f && (levelOn_ == 0 || !showing_.awaits(levelOn_))) {
         --levelsOwed_;
