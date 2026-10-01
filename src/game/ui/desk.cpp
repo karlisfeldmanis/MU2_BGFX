@@ -275,6 +275,8 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
         }
         const bool wasUp = menu_.up();
         if (!wasUp && escape) {
+            // The whole map shut by Escape turns its page as M's does.
+            if (minimap_.full()) play.sound().play(play.sound().load("quest_page_turn", false));
             if (windowsOpen) {
                 inventoryOpen_ = characterOpen_ = false;
                 if (trading_) play.closeTrade();
@@ -361,7 +363,9 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (!keysHeld && play.isOpen() && (window.pressed(gfx::Window::Key::Map) || scriptMap_)) {
         minimap_.setFull(!minimap_.full());
         core::logf("window: map %s", minimap_.full() ? "up" : "down");
-        click();
+        // The journal's page turn, not the click (the user, 2026-10-01: 'we need same sound top
+        // to open/close full map').
+        play.sound().play(play.sound().load("quest_page_turn", false));
     }
     scriptMap_ = false;
     if (travel_.up() && play.isOpen()) {
