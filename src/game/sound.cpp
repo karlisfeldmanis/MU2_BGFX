@@ -99,6 +99,10 @@ struct Preset {
     float wet;   // the send's return, linear
     float room;  // Freeverb's room size, 0..1
     float damp;  // and its damping, 0..1
+    // How much of it the plain lane sends -- steps, swings, hits, everything placed that is not
+    // a voice (Sound::load's `voiced`) -- as a share of the voices' send. 1 everywhere but the
+    // stone halls.
+    float plain = 1.0f;
 };
 constexpr Preset kDry = {0.0f, 0.5f, 0.5f};
 // Drier, shorter and duller than it was (open 0.126 wet 0.35 room 0.6 damp, roofed 0.22 / 0.6 /
@@ -114,7 +118,10 @@ constexpr Preset kRoofed = {0.126f, 0.52f, 0.5f};   // -18 dB
 // step, not a cathedral, for the two times before it was asked down. Then down again, the same
 // day, after a walk in it: 'rever is to much' -- from -16 dB, room 0.62, damp 0.45 to a little
 // under the house's roof: drier, a smaller room, a duller tail.
-constexpr Preset kStone = {0.089f, 0.50f, 0.55f};   // -21 dB
+//
+// And then off for all but voices: 'lets reduce reverb more, or even remove it but keep for
+// voice'. Cries, hurts and deaths keep this room; steps, swings and blows go dry (plain 0).
+constexpr Preset kStone = {0.089f, 0.50f, 0.55f, 0.0f};   // -21 dB, voices alone
 constexpr float kRoomEaseMs = 150.0f;
 
 enum Importance { kCrowd = 0, kNearHero = 1, kHero = 2 };
@@ -216,6 +223,9 @@ struct Sound::Impl {
     // The buses: the interface, the placed world, and the ambience. Everything placed goes
     // through its own low-pass into `world`.
     ma_sound_group ui{}, world{}, ambience{};
+    // The plain lane of the world: every placed sound that is not a voice. Mixed with `world`
+    // in every way but its reverb send, which the room may close (Preset::plain).
+    ma_sound_group worldPlain{};
     bool groups = false;
     // The music, streamed from its file and looping: one track playing at a time (see
     // Sound::music), in two slots so the one going out can fade while the next comes in.
@@ -232,6 +242,8 @@ struct Sound::Impl {
 
     // The room: the world's bus split into the dry and the reverb's send.
     ma_splitter_node split{};
+    ma_splitter_node splitPlain{};
+    bool plainSplit = false;
     Reverb reverb{};
     bool roomed = false;
     Preset roomNow = kOpenAir, roomWanted = kOpenAir;
@@ -288,6 +300,11 @@ struct Sound::Impl {
         bool released[kVoices] = {false, false};  // fading out under a steal: not sounding
         int plays = 0;  // for the log at shutdown: what a run was heard to say
         bool looping = false;  // an ambient that is on; see loop()
+        // Sound::vary: the ranges, the last play's rolls, and each voice's own.
+        float semitones = 0.0f, dropDb = 0.0f, darken = 0.0f;
+        float lastPitch = 0.0f, lastDrop = 0.0f;  // the rolls, 0..1 of their range
+        float trim[kVoices] = {1.0f, 1.0f};       // its level, times the cooked one
+        float tone[kVoices] = {1.0f, 1.0f};       // its low-pass, times the air's
     };
     std::vector<std::unique_ptr<Event>> events;
 
@@ -297,14 +314,15 @@ struct Sound::Impl {
         dice ^= dice << 5;
         return dice;
     }
+    // 0..1, and at least a third of the way from `last`, wrapping: a step a hair off the last
+    // reads as the same step.
+    float rollAway(float last) {
+        const float r = last + (1.0f + float(roll() >> 8) / float(1u << 24)) / 3.0f;
+        return r - std::floor(r);
+    }
 
     // Past the silence, and -- for the level-up alone -- past what the device's buffer will
     // hold it back by, so its swell is where the flares are. Not for anything else: MU's own
-        // Sound::vary: the ranges, the last play's rolls, and each voice's own.
-        float semitones = 0.0f, dropDb = 0.0f, darken = 0.0f;
-        float lastPitch = 0.0f, lastDrop = 0.0f;  // the rolls, 0..1 of their range
-        float trim[kVoices] = {1.0f, 1.0f};       // its level, times the cooked one
-        float tone[kVoices] = {1.0f, 1.0f};       // its low-pass, times the air's
     // attack sounds put their impact in the first tens of milliseconds, and skipping a 30 ms
     // buffer took 31% of eMeleeHit1's energy and 61% of pWalk_Soil's, so one hit in four and
     // every soil step came out as a click. Heard a buffer late, as DirectSound heard them.
@@ -314,12 +332,6 @@ struct Sound::Impl {
         // would start it at the level the release had got down to.
         ma_sound_set_stop_time_in_pcm_frames(&sound, ~ma_uint64(0));
         ma_sound_set_fade_in_pcm_frames(&sound, 1.0f, 1.0f, 0);
-    // 0..1, and at least a third of the way from `last`, wrapping: a step a hair off the last
-    // reads as the same step.
-    float rollAway(float last) {
-        const float r = last + (1.0f + float(roll() >> 8) / float(1u << 24)) / 3.0f;
-        return r - std::floor(r);
-    }
         ma_sound_seek_to_second(&sound, lead + (buffered ? latency : 0.0f));
         ma_sound_start(&sound);
     }
@@ -409,6 +421,7 @@ struct Sound::Impl {
     void duck() {
         if (!groups) return;
         ma_sound_group_set_fade_in_milliseconds(&world, -1.0f, kDuck, kDuckInMs);
+        ma_sound_group_set_fade_in_milliseconds(&worldPlain, -1.0f, kDuck, kDuckInMs);
         ma_sound_group_set_fade_in_milliseconds(&ambience, -1.0f, kDuck, kDuckInMs);
         duckEnds = ma_engine_get_time_in_milliseconds(&engine) + kDuckHoldMs;
     }
@@ -419,6 +432,7 @@ struct Sound::Impl {
         reverb.room = p.room;
         reverb.damp = p.damp;
         ma_node_set_output_bus_volume(&reverb, 0, p.wet);
+        if (plainSplit) ma_node_set_output_bus_volume(&splitPlain, 1, p.plain);
     }
 
     int sounding() {
@@ -465,6 +479,7 @@ bool Sound::open(const std::string& assetDir, const content::Showing& table, boo
     impl_->groups =
         ma_sound_group_init(&impl_->engine, 0, nullptr, &impl_->ui) == MA_SUCCESS &&
         ma_sound_group_init(&impl_->engine, 0, nullptr, &impl_->world) == MA_SUCCESS &&
+        ma_sound_group_init(&impl_->engine, 0, nullptr, &impl_->worldPlain) == MA_SUCCESS &&
         ma_sound_group_init(&impl_->engine, 0, nullptr, &impl_->ambience) == MA_SUCCESS;
     if (!impl_->groups) core::logError("sound: no buses; everything mixes straight to the end");
 
@@ -490,6 +505,14 @@ bool Sound::open(const std::string& assetDir, const content::Showing& table, boo
                 ma_node_attach_output_bus(&impl_->split, 1, &impl_->reverb, 0);
                 ma_node_attach_output_bus(&impl_->reverb, 0, end, 0);
                 impl_->roomed = true;
+                // The plain lane: its own split, dry to the end and its send into the same
+                // reverb, at the room's `plain` share.
+                if (ma_splitter_node_init(graph, &split, nullptr, &impl_->splitPlain) == MA_SUCCESS) {
+                    ma_node_attach_output_bus(&impl_->worldPlain, 0, &impl_->splitPlain, 0);
+                    ma_node_attach_output_bus(&impl_->splitPlain, 0, end, 0);
+                    ma_node_attach_output_bus(&impl_->splitPlain, 1, &impl_->reverb, 0);
+                    impl_->plainSplit = true;
+                }
             } else {
                 ma_splitter_node_uninit(&impl_->split, nullptr);
             }
@@ -520,6 +543,14 @@ bool Sound::open(const std::string& assetDir, const content::Showing& table, boo
 }
 
 int Sound::load(const std::string& name, bool placed, bool quietly) {
+    // A voice -- a cry, a hurt, a death, a monster's call -- or plain: steps, swings, blows. The
+    // stone halls keep their reverb on voices alone (Preset::plain), by the event's own name.
+    const auto endsWith = [&](const char* tail) {
+        const size_t n = std::char_traits<char>::length(tail);
+        return name.size() >= n && name.compare(name.size() - n, n, tail) == 0;
+    };
+    const bool voiced = endsWith("_shock") || endsWith("_die") || endsWith("_female") ||
+                        endsWith("_move");
     if (!impl_->open || impl_->table == nullptr) return -1;
     for (size_t i = 0; i < impl_->events.size(); ++i) {
         // By its name AND its kind. One wave can be both: `spell_magic` is the Town Portal's
@@ -606,8 +637,9 @@ int Sound::load(const std::string& name, bool placed, bool quietly) {
             file->cutoff[v] = open;
             ma_node_attach_output_bus(&sound, 0, &file->air[v], 0);
             ma_node_attach_output_bus(&file->air[v], 0,
-                                      impl_->groups ? static_cast<ma_node*>(&impl_->world)
-                                                    : ma_engine_get_endpoint(&impl_->engine),
+                                      !impl_->groups ? ma_engine_get_endpoint(&impl_->engine)
+                                      : voiced       ? static_cast<ma_node*>(&impl_->world)
+                                                     : static_cast<ma_node*>(&impl_->worldPlain),
                                       0);
         }
         if (file->ready == 0) {
@@ -769,8 +801,13 @@ void Sound::shutdown() {
     if (impl_->groups) {
         ma_sound_group_uninit(&impl_->ui);
         ma_sound_group_uninit(&impl_->world);
+        ma_sound_group_uninit(&impl_->worldPlain);
         ma_sound_group_uninit(&impl_->ambience);
         impl_->groups = false;
+    }
+    if (impl_->plainSplit) {
+        ma_splitter_node_uninit(&impl_->splitPlain, nullptr);
+        impl_->plainSplit = false;
     }
     if (impl_->roomed) {
         ma_splitter_node_uninit(&impl_->split, nullptr);
@@ -893,6 +930,14 @@ void Sound::loopAt(int handle, const float at[3], float level) {
     ma_sound_set_volume(&sound, event.volume * w.gain * std::clamp(level, 0.0f, 1.0f));
 }
 
+void Sound::vary(int handle, float semitones, float dropDb, float darkenOctaves) {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    event.semitones = std::max(semitones, 0.0f);
+    event.dropDb = std::max(dropDb, 0.0f);
+    event.darken = std::max(darkenOctaves, 0.0f);
+}
+
 void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
     if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
     Impl& im = *impl_;
@@ -930,14 +975,6 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
         const int v = (event.next + k) % kVoices;
         if (!im.playing(event, v)) voice = v;
     }
-void Sound::vary(int handle, float semitones, float dropDb, float darkenOctaves) {
-    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
-    Impl::Event& event = *impl_->events[size_t(handle)];
-    event.semitones = std::max(semitones, 0.0f);
-    event.dropDb = std::max(dropDb, 0.0f);
-    event.darken = std::max(darkenOctaves, 0.0f);
-}
-
     if (voice < 0) {
         if (weight.importance < kHero) {
             ++im.counted.swallowed;
@@ -1001,6 +1038,17 @@ void Sound::vary(int handle, float semitones, float dropDb, float darkenOctaves)
     event.released[voice] = false;
     // Behind a wall from its first sample, not eased into one.
     event.walled[voice] = im.walledAt(at);
+    // Sound::vary. The pitch and the level each rolled away from the last play's; the tone
+    // free, since a darker step under a quieter one is how a foot set down softer sounds.
+    if (event.semitones > 0.0f || event.dropDb > 0.0f || event.darken > 0.0f) {
+        event.lastPitch = im.rollAway(event.lastPitch);
+        event.lastDrop = im.rollAway(event.lastDrop);
+        const float tone = float(im.roll() >> 8) / float(1u << 24);
+        ma_sound_set_pitch(&file.sound[voice],
+                           std::exp2((event.lastPitch * 2.0f - 1.0f) * event.semitones / 12.0f));
+        event.trim[voice] = std::pow(10.0f, -event.lastDrop * event.dropDb / 20.0f);
+        event.tone[voice] = std::exp2(-tone * event.darken);
+    }
     // Levelled, panned and filtered before it starts, so no voice is ever briefly heard as
     // the last one was.
     im.mix(event, voice);
@@ -1027,10 +1075,12 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
         const Preset& to = im.roomWanted;
         const Preset& was = im.roomNow;
         im.setRoom({was.wet + (to.wet - was.wet) * step, was.room + (to.room - was.room) * step,
-                    was.damp + (to.damp - was.damp) * step});
+                    was.damp + (to.damp - was.damp) * step,
+                    was.plain + (to.plain - was.plain) * step});
     }
     if (im.duckEnds != 0 && now >= im.duckEnds) {
         ma_sound_group_set_fade_in_milliseconds(&im.world, -1.0f, 1.0f, kDuckOutMs);
+        ma_sound_group_set_fade_in_milliseconds(&im.worldPlain, -1.0f, 1.0f, kDuckOutMs);
         ma_sound_group_set_fade_in_milliseconds(&im.ambience, -1.0f, 1.0f, kDuckOutMs);
         im.duckEnds = 0;
     }
@@ -1038,17 +1088,6 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
     if (now >= im.saidAt + kTallyEveryMs) {
         const Tally& t = im.counted;
         const Tally& was = im.lastSaid;
-    // Sound::vary. The pitch and the level each rolled away from the last play's; the tone
-    // free, since a darker step under a quieter one is how a foot set down softer sounds.
-    if (event.semitones > 0.0f || event.dropDb > 0.0f || event.darken > 0.0f) {
-        event.lastPitch = im.rollAway(event.lastPitch);
-        event.lastDrop = im.rollAway(event.lastDrop);
-        const float tone = float(im.roll() >> 8) / float(1u << 24);
-        ma_sound_set_pitch(&file.sound[voice],
-                           std::exp2((event.lastPitch * 2.0f - 1.0f) * event.semitones / 12.0f));
-        event.trim[voice] = std::pow(10.0f, -event.lastDrop * event.dropDb / 20.0f);
-        event.tone[voice] = std::exp2(-tone * event.darken);
-    }
         if (t.refused != was.refused || t.merged != was.merged || t.stolen != was.stolen ||
             t.swallowed != was.swallowed) {
             core::logf("sound: %d of %d voices at the most; %d refused, %d merged, %d stolen, "
