@@ -125,13 +125,12 @@ constexpr Offer kElfLala[] = {
     gear(67, kOrbs, 8, 0), gear(68, kOrbs, 21, 0),
 };
 
-// Eo the Craftsman (shop9): the bows and crossbows, most once plain and once with the skill,
-// and the arrows and bolts to +2.
+// Eo the Craftsman (shop9): the bows and crossbows and the arrows and bolts to +2. The source
+// sells most bows twice, plain and with the skill; the +S copy of one sold plain is left out
+// (the user, 2026-10-01), and the two sold only +S stay.
 constexpr Offer kCraftsman[] = {
-    gear(0, kBows, 0, 0), gear(2, kBows, 0, 0, true), gear(4, kBows, 8, 0),
-    gear(6, kBows, 8, 0, true), gear(20, kBows, 1, 0), gear(22, kBows, 1, 0, true),
-    gear(24, kBows, 9, 0), gear(26, kBows, 9, 0, true), gear(40, kBows, 2, 0),
-    gear(42, kBows, 2, 0, true), gear(44, kBows, 10, 0), gear(46, kBows, 10, 0, true),
+    gear(0, kBows, 0, 0), gear(4, kBows, 8, 0), gear(20, kBows, 1, 0),
+    gear(24, kBows, 9, 0), gear(40, kBows, 2, 0), gear(44, kBows, 10, 0),
     gear(60, kBows, 11, 0, true), gear(62, kBows, 4, 0, true), gear(64, kBows, 7, 0),
     gear(65, kBows, 7, 1), gear(66, kBows, 7, 2), gear(67, kBows, 15, 0), gear(80, kBows, 15, 1),
     gear(81, kBows, 15, 2),
@@ -149,15 +148,16 @@ constexpr Offer kIzabel[] = {
 };
 
 // Zienna (shop8): arrows and bolts, Brass helm and pants, Wind gloves and boots, three shields
-// and her weapons.
+// and her weapons -- without the +S copies of the two she also sells plain (the user,
+// 2026-10-01).
 constexpr Offer kZienna[] = {
     gear(0, kBows, 7, 0), gear(1, kBows, 7, 1), gear(2, kBows, 7, 2), gear(3, kBows, 15, 0),
     gear(4, kBows, 15, 1), gear(5, kBows, 15, 2), gear(6, kHelms, 8, 0), gear(16, kPants, 8, 0),
     gear(18, kGloves, 12, 0), gear(20, kBoots, 12, 0), gear(22, kShields, 10, 0),
     gear(32, kShields, 3, 0), gear(34, kShields, 9, 0), gear(36, kBows, 3, 0),
-    gear(38, kBows, 3, 0, true), gear(48, kAxes, 4, 0), gear(49, kSpears, 3, 0),
+    gear(48, kAxes, 4, 0), gear(49, kSpears, 3, 0),
     gear(59, kAxes, 5, 0), gear(61, kSwords, 8, 0), gear(62, kBows, 11, 0, true),
-    gear(80, kSwords, 9, 0), gear(82, kSwords, 9, 0, true), gear(84, kSwords, 5, 0, true),
+    gear(80, kSwords, 9, 0), gear(84, kSwords, 5, 0, true),
     gear(85, kSpears, 7, 0, true),
 };
 
