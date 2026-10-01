@@ -1422,6 +1422,57 @@
         "mShadowDie.wav"
       ],
       "from": "The Shadow's model and so the Shadow's five: SetMonsterSound is per model, not per breed (MONSTER_MODEL_SHADOW). shadow_die's files."
+    },
+    "deathcow_move": {
+      "files": [
+        "mBull1.wav",
+        "mBull2.wav"
+      ],
+      "from": "The Bull Fighter's model files: SetMonsterSound(..., 0, 1, 2, 3, 4) for MONSTER_MODEL_DEATH_COW (ZzzOpenData.cpp:3380-3387). bullfighter_move's files."
+    },
+    "deathcow_attack": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "The Bull Fighter's model files: SetMonsterSound(..., 0, 1, 2, 3, 4) for MONSTER_MODEL_DEATH_COW (ZzzOpenData.cpp:3380-3387). bullfighter_attack's files."
+    },
+    "deathcow_shock": {
+      "files": [
+        "mBullAttack1.wav",
+        "mBullAttack2.wav"
+      ],
+      "from": "The Bull Fighter's model files: SetMonsterSound(..., 0, 1, 2, 3, 4) for MONSTER_MODEL_DEATH_COW (ZzzOpenData.cpp:3380-3387). bullfighter_shock's files."
+    },
+    "deathcow_die": {
+      "files": [
+        "mBone2.wav"
+      ],
+      "from": "SOUND_BONE2, which CharacterDie plays as the Death Cow comes apart into bones (ZzzCharacter.cpp:1480-1486)."
+    },
+    "devil_move": {
+      "files": [
+        "mYeti1.wav"
+      ],
+      "from": "Sounds[0] and [1], both 105 YETI1. SetMonsterSound(..., 105, 105, 106, 106, 107) in ZzzOpenData.cpp:3590-3596."
+    },
+    "devil_attack": {
+      "files": [
+        "mSatanAttack1.wav"
+      ],
+      "from": "Sounds[2] and [3], both 106 SATANATTACK1. SetMonsterSound(..., 105, 105, 106, 106, 107) in ZzzOpenData.cpp:3590-3596."
+    },
+    "devil_shock": {
+      "files": [
+        "mSatanAttack1.wav"
+      ],
+      "from": "Sounds[2 + rand()%2], the flinch on the attack pair. SetMonsterSound(..., 105, 105, 106, 106, 107) in ZzzOpenData.cpp:3590-3596."
+    },
+    "devil_die": {
+      "files": [
+        "mYetiDie.wav"
+      ],
+      "from": "Sounds[4], 107 YETIDIE. SetMonsterSound(..., 105, 105, 106, 106, 107) in ZzzOpenData.cpp:3590-3596."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

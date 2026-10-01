@@ -1,0 +1,92 @@
+{
+  "item": "Devil01",
+  "mu_name": "Devil",
+  "mu_name_from": "MuMain's MONSTER_MODEL_DEVIL = 26, so OpenMonsterModel loads Monster27.bmd; the server's type is MONSTER_DEVIL = 37. The client's name is 데빌 (ZzzCharacter.cpp:13877-13881). OpenMU's Version075 LostTower.cs:755-786 names number 37 'Devil' at level 60 with 5000 health, 180-195 damage, 115 defense, MoveRange 3, AttackRange 4, ViewRange 7, AttackDelay 2000, AttackSkill Lightning (3). 54 spots: 15 on Lost Tower 4, 19 on 5, 12 on 6, 8 on 7.",
+  "world": "losttower",
+  "object_type": 37,
+  "monster": {
+    "model_index": 26,
+    "scale": 1.1
+  },
+  "monster_from": "ZzzCharacter.cpp:13877-13881, CreateMonster, case MONSTER_DEVIL: `c->Object.Scale = 1.1f;` -- no weapon, no Level. MoveCharacterVisual scrolls its BlendMeshTexCoordU (:6016-6018), but no BlendMesh is ever set for it, so nothing reads the scroll.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 6, 6, 7, 6, 6, 6, 11. 55 bones, a biped with the player's grip names (knife_gdf 16, hand_bofdgne01 25 -- CreateCharacter's `case MODEL_DEVIL: Weapon[0].LinkBone = 16; Weapon[1].LinkBone = 25`, holding nothing) and a five-bone tail. BoneHead = 6, Bip01 Head (ZzzOpenData.cpp:3595). OpenMonsterModel's default play speeds.",
+  "sheets": {
+    "satan_a": "devil_satan_a.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/satan_a.OZT, 256 by 256, alpha cutting 7% -- thin lines through the plates -- on all 662 triangles. Decoded under a devil_ prefix. Its own alpha is the cutout, as MU alpha-tests it.",
+  "sheet_materials": {
+    "satan_a": "skin"
+  },
+  "sheet_materials_from": "Read off the sheet: a dark bronze-brown hide in ridged, segmented plates -- horns, a ribbed tail, clawed limbs and a horned face with pale eyes -- a creature's own body, not worn metal, so skin, the monster default.",
+  "effects_from": "Its blow is Lightning (AttackSkill 3), so the game calls the hero's own Lightning at its swing, as for the Thunder Lich (game/play.cpp, thunderCasts_). MU draws its own for it instead -- four BITMAP_JOINT_LASER+1 and fire from both hands with SOUND_EVIL (ZzzCharacter.cpp:2295-2313) -- not built yet.",
+  "sounds_from": "ZzzOpenData.cpp:3590-3596: mYeti1, mSatanAttack1 and mYetiDie, SetMonsterSound(..., 105, 105, 106, 106, 107): the move is mYeti1, the attack and the flinch mSatanAttack1, the death mYetiDie. Wired as devil_*.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "skin",
+      "triangles": 566,
+      "area": 32596.2,
+      "along": [
+        -71.4,
+        48.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.907
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.992,
+        0.992
+      ]
+    },
+    {
+      "island": 1,
+      "material": "skin",
+      "triangles": 48,
+      "area": 19877.1,
+      "along": [
+        -89.8,
+        23.5
+      ],
+      "mu_uv": [
+        0.242,
+        0.479,
+        0.896,
+        0.999
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.59,
+        0.591
+      ]
+    },
+    {
+      "island": 2,
+      "material": "skin",
+      "triangles": 48,
+      "area": 18337.2,
+      "along": [
+        -85.8,
+        32.3
+      ],
+      "mu_uv": [
+        0.242,
+        0.479,
+        0.896,
+        0.999
+      ],
+      "bake_uv": [
+        0.106,
+        0.174,
+        0.746,
+        0.746
+      ]
+    }
+  ]
+}

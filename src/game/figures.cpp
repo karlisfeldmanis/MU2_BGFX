@@ -1135,12 +1135,25 @@ void Figures::addMonster(const core::Json& entry) {
     const content::Mesh* body = mesh(entry["mesh"].string);
     if (!body) return;
     made->parts.push_back(body);
+    // A monster dressed as a man -- the Cursed Wizard in the five Legendary pieces -- wears
+    // every one of them, at the plus its row gives them, as a character does (above).
+    for (const core::Json& part : entry["parts"].items) {
+        if (part.string == entry["mesh"].string) continue;
+        if (const content::Mesh* found = mesh(part.string)) made->parts.push_back(found);
+    }
+    made->wornPlus = int(entry["plus"]["parts"].numberOr(0.0));
     made->library = libraryFor(body->name());
     for (const char* side : {"right_hand", "left_hand"}) {
         const std::string name = entry[side].stringOr("");
         if (name.empty()) continue;
         const content::Mesh* found = mesh(name);
         if (!found) continue;
+        // A staff skinned to the whole player rig is worn and not held, as a character's is:
+        // hung off a grip it stood loose beside the Cursed Wizard, at the rig's own size.
+        if (found->isSkinned() && found->bones().size() == body->bones().size()) {
+            made->parts.push_back(found);
+            continue;
+        }
         const std::string boneField = std::string(side) + "_bone";
         std::string bone = entry[boneField.c_str()].stringOr("");
         // The Skeleton Warrior names no bone and is on the player rig: it takes the
@@ -1150,6 +1163,7 @@ void Figures::addMonster(const core::Json& entry) {
         HeldItem item;
         item.mesh = found;
         item.boneName = bone;
+        item.plus = int(entry["plus"][side].numberOr(0.0));
         describe(item);
         // And a bow in the LEFT grip, whichever field names it, as a character's is (above):
         // MU sets the Skeleton Archer's Elven Bow in Weapon[1]. Held in the right fist it lay

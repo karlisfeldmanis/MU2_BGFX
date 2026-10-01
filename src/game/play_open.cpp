@@ -533,6 +533,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
     const float at[3] = {0, 0, 0};
     one.figure.stand(look, at, 0.0f, look->scale);
     one.seeThrough = look->name == kSeeThroughFigure ? kSeeThroughAlpha : 1.0f;
+    one.murderer = look->name == kMurdererFigure;
     // The swing, found once, and **which TABLE it is looked up in is decided by the
     // rig and not by whether the body is the player**. MU draws its Skeleton Warrior
     // as a MODEL_PLAYER with a skeleton sub-type, so `SetPlayerAttack` takes the
@@ -549,7 +550,26 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
         if (onPlayerRig) {
             one.attackClip = look->library->find(attackSlotFor(look->stance));
             if (one.attackClip < 0) one.attackClip = look->library->find(38);
+            one.attackClip2 = -1;
             if (body.player) dualSwings(one, look);
+            // A monster on the player rig whose blow is a spell casts it as a player does: MU
+            // hands a MODEL_PLAYER the skill's SetPlayerMagic, PLAYER_SKILL_HAND1 + rand() % 2
+            // (ZzzCharacter.cpp:1339) -- the Lost Tower's Cursed Wizard and his Meteorite --
+            // rather than his weapon's swing. Both hands, and the swing counter's one-in-three
+            // stands in for the coin.
+            if (!body.player && body.kind >= 0 && size_t(body.kind) < tables_.kinds.size()) {
+                const sim::SkillRow* spell =
+                    sim::skillNumbered(tables_.kinds[size_t(body.kind)].attackSkill);
+                if (spell != nullptr && spell->clip != 0) {
+                    const int hand = look->library->find(spell->clip);
+                    if (hand >= 0) {
+                        one.attackClip = hand;
+                        if (spell->clipOther != 0) {
+                            one.attackClip2 = look->library->find(spell->clipOther);
+                        }
+                    }
+                }
+            }
             // And no second swing: the 1-in-3 SwordCount alternation is the MONSTER
             // branch's, and the player branch picks one clip by the stance. Left as
             // -1, `swordCount` counts on and always chooses this one.
@@ -582,6 +602,10 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             if (look->name == kCrumblingFigure) {
                 one.bursts = true;
                 one.crumbles = true;
+                one.deathClip = -1;
+            }
+            if (look->name == kDeathCowFigure) {
+                one.bursts = true;
                 one.deathClip = -1;
             }
             // The Ice Monster keeps its death clip and shatters at its end (sandOnDeath).
@@ -627,12 +651,15 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
                     }
                 }
             }
-            const bool elite = look->name == kEliteBullFigure;
+            const bool elite = look->name == kEliteBullFigure || look->name == kDeathCowFigure;
             one.venomous = look->name == kVenomousFigure;
             if ((elite || one.venomous || look->name == kSnortingFigure) && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                // The Death Cow has the eyes and not the snort: MoveCharacterVisual's smoke is
+                // MODEL_BULL_FIGHTER's case alone.
+                const bool snorts = look->name != kDeathCowFigure;
                 for (size_t b = 0; b < bones.size(); ++b) {
-                    if (bones[b].name == "smok_bone") one.snortBone = int(b);
+                    if (snorts && bones[b].name == "smok_bone") one.snortBone = int(b);
                     if (elite && bones[b].name == "top_bone02") one.eyeBones[0] = int(b);
                     if (elite && bones[b].name == "top_bone01") one.eyeBones[1] = int(b);
                 }

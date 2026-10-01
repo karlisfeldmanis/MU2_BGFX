@@ -1,0 +1,140 @@
+{
+  "item": "Mace04",
+  "mu_name": "Great Hammer",
+  "mu_name_from": "OpenMU Version075 Items/Weapons.cs:119 and mu.db's items row (group 2, index 3) name it the Great Hammer against Item/Mace04.bmd.",
+  "why_this_one": "MODEL_GREAT_HAMMER, the Lost Tower's Death Cow's weapon (ZzzCharacter.cpp:13846); and a drop at level 38.",
+  "profile": "weapon",
+  "stats": {
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Weapons.cs:119. The 0.75 table.",
+    "call": "CreateWeapon(2, 3, 0, 19, 2, 3, true, \"Great Hammer\", 38, 45, 56, 15, 50, 0, 0, 150, 0, 0, 0, 0, 1, 0)",
+    "group": 2,
+    "number": 3,
+    "drop_level": 38,
+    "drops_from_monsters": true,
+    "slot": 0,
+    "width": 2,
+    "height": 3,
+    "minimum_damage": 45,
+    "maximum_damage": 56,
+    "attack_speed": 15,
+    "durability": 50,
+    "requires": {
+      "level": 0,
+      "strength": 150,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "skill": 19
+  },
+  "stance": "two_hand_sword",
+  "two_handed": true,
+  "stance_from": "Width 2, as every two-wide mace of the table: MU's Item.bmd TwoHand is not read here, and a two-wide weapon leaves no hand for a shield, so PLAYER_STOP_TWO_HAND_SWORD. Ours, inferred.",
+  "sheets": {
+    "maul03": "maul03.png"
+  },
+  "sheet_from": "Data/Item/maul03.OZJ, 32 by 32, no alpha, on all 54 triangles, from MuMain.",
+  "sheet_materials": {
+    "maul03": "steel"
+  },
+  "sheet_materials_from": "Read off the sheet: a banded steel head with a rust-orange wrapped haft; steel, the head being most of what shows.",
+  "material_overrides": {
+    "steel": {
+      "roughness": 0.45
+    }
+  },
+  "material_overrides_note": "As the Flail's: steel's own 0.2 mirrors the ground.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 8,
+      "area": 1014.9,
+      "along": [
+        16.1,
+        82.2
+      ],
+      "mu_uv": [
+        0.707,
+        0.015,
+        0.989,
+        0.99
+      ],
+      "bake_uv": [
+        0.005,
+        0.505,
+        0.686,
+        0.996
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 12,
+      "area": 939.9,
+      "along": [
+        -22.4,
+        16.1
+      ],
+      "mu_uv": [
+        0.312,
+        0.001,
+        0.688,
+        0.999
+      ],
+      "bake_uv": [
+        0.25,
+        0.005,
+        0.889,
+        0.983
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 22,
+      "area": 3255.0,
+      "along": [
+        73.8,
+        98.9
+      ],
+      "mu_uv": [
+        0.025,
+        0.001,
+        0.695,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.005,
+        0.689,
+        0.507
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 12,
+      "area": 217.8,
+      "along": [
+        94.1,
+        100.0
+      ],
+      "mu_uv": [
+        0.19,
+        0.783,
+        0.467,
+        0.941
+      ],
+      "bake_uv": [
+        0.696,
+        0.518,
+        0.835,
+        0.687
+      ]
+    }
+  ]
+}

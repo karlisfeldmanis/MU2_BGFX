@@ -146,6 +146,11 @@ constexpr float kIcedLight[3] = {0.3f, 0.5f, 1.0f};
 // A poisoned body's, `eDeBuff_Poison`, and one both poisoned and iced (ZzzObject.cpp:1118-1123).
 constexpr float kPoisonedLight[3] = {0.3f, 1.0f, 0.5f};
 constexpr float kPoisonIcedLight[3] = {0.3f, 1.0f, 0.8f};
+// A murderer's light: `if (c->PK >= PVP_MURDERER2) Vector(1.f, 0.1f, 0.1f, c->Light)`
+// (ZzzCharacter.cpp:9990-9993), every part he wears lit blood red. CreateMonster sets the
+// Lost Tower's Cursed Wizard PVP_MURDERER2 (:13926); nobody else here is one.
+constexpr float kMurdererLight[3] = {1.0f, 0.1f, 0.1f};
+inline constexpr const char* kMurdererFigure = "CursedWizard";
 
 // How far from the camera a body is drawn at all, in tiles. MU's camera is fixed and close and
 // sees about twenty tiles; posing all 290 of Lorencia's bodies every frame would spend the
@@ -230,6 +235,10 @@ inline constexpr const char* kBurstingArcher = "SkeletonArcher";
 inline constexpr const char* kBurstingElite = "EliteSkeleton";
 // MODEL_STONE_GOLEM, which comes apart into stones the same way (Bones::rubble).
 inline constexpr const char* kCrumblingFigure = "StoneGolem01";
+// MODEL_DEATH_COW, the Lost Tower's: `o->Live = false`, MODEL_BONE1 and ten MODEL_BONE2
+// (ZzzCharacter.cpp:1480-1486), the skeletons' burst on its own model. And RenderEye(o, 22, 23)
+// always (:11209-11211), the Elite Bull Fighter's eyes, on the same bone names.
+inline constexpr const char* kDeathCowFigure = "DeathCow01";
 // MODEL_ICE_MONSTER, which has no corpse either, but only once its death clip has played: the
 // death action ends, EtcStopAnimationSetting calls CreateBlood, and CreateBlood's own case puts
 // it out and throws ten MODEL_ICE_SMALL (ZzzCharacter.cpp:3521-3528, ZzzEffectBlurSpark.cpp:449).

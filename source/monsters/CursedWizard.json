@@ -1,0 +1,34 @@
+{
+  "item": "CursedWizard",
+  "mu_name": "Cursed Wizard",
+  "mu_name_from": "MuMain's MONSTER_CURSED_WIZARD = 34. The client's name is 저주받은 법사, cursed wizard (ZzzCharacter.cpp:13908-13930). OpenMU's Version075 LostTower.cs:657-688 names number 34 'Cursed Wizard' at level 54 with 4000 health, 160-170 damage, 95 defense, MoveRange 3, AttackRange 4, ViewRange 7, AttackDelay 2000, AttackSkill Meteorite (2). 49 spots: 21 on Lost Tower 2, 28 on 3.",
+  "kind": "character",
+  "parts": [
+    "HelmMale04",
+    "ArmorMale04",
+    "PantMale04",
+    "GloveMale04",
+    "BootMale04"
+  ],
+  "right_hand": "Staff06",
+  "left_hand": "Shield15",
+  "plus": {
+    "parts": 9
+  },
+  "stance": "sword",
+  "playable": false,
+  "world": "losttower",
+  "object_type": 34,
+  "monster": {
+    "model_index": -1,
+    "scale": 0.9
+  },
+  "note": "Not a monster model: CreateMonster's case calls CreateCharacter(Key, MODEL_PLAYER, ...) and dresses him -- a wizard in the Legendary set, the Dark Wizard's own Male04 pieces, with the Legendary Staff and the Legendary Shield.",
+  "parts_from": "c->BodyPart[HELM..BOOTS].Type = MODEL_LEGENDARY_HELM .. MODEL_LEGENDARY_BOOTS, which are Player/HelmMale04 .. BootMale04, all cooked. SetCharacterScale gives the Legendary helm no head (it is not in the bare-head list, ZzzCharacter.cpp:12116-12129), so the helm is the head as on the wardrobe's own.",
+  "hands_from": "MODEL_LEGENDARY_STAFF is Item/Staff06.bmd and MODEL_LEGENDARY_SHIELD Item/Shield15.bmd, both cooked. Held on the player rig's own grip bones, as the Skeleton Warrior's are.",
+  "plus_from": "`Level = 9` on all five body parts (ZzzCharacter.cpp:13918-13923); the two weapons' lines are commented out, so the staff and the shield stay +0.",
+  "monster_from": "SetCharacterScale outside the character scene: Skin 0 and class 0, the wizard's, so Scale 0.9 (ZzzCharacter.cpp:12141-12145). model_index -1: the player's own play-speed table.",
+  "stance_from": "Staff06 declares the sword stance -- a one-handed staff is in the sword group for SetPlayerStop -- and a monster row has no weapon row to read it off, so it is repeated here.",
+  "not_built_note": "`c->PK = PVP_MURDERER2` (ZzzCharacter.cpp:13926) is drawn: RenderCharacter lights a murderer (1, 0.1, 0.1) (:9990-9993), every part he wears blood red (play_tuning.h kMurdererLight). Not drawn: the name in a murderer's colour, which this game's monster names do not carry. His attack's thunder (:2315-2329) sits under `c->Skill == AT_SKILL_LIGHTNING` and his skill is Meteorite, so MU draws the meteor for him, as for the Lich (game/play.cpp, attackSkill 2), cast with the spell's hand clip as SetPlayerMagic gives a MODEL_PLAYER (play_open.cpp).",
+  "sounds_from": "MODEL_PLAYER, whose Sounds[] are empty: no monster voice. His blows sound as any player's do."
+}

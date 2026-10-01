@@ -1758,13 +1758,20 @@ def figure_set(world):
         # clips of its own, animated out of the player library. A parser written against the
         # other fifteen rows takes the wrong branch here and says nothing.
         glb = one["glb"]
+        # And a monster dressed as a man -- the Lost Tower's Cursed Wizard, a wizard in the
+        # five Legendary pieces at +9 -- lists every piece: the first is its `mesh`, and all of
+        # them its `parts`, worn as a character's are.
+        parts = []
         if isinstance(glb, list):
+            parts = [reach(p) for p in glb]
+            parts = [p for p in parts if p]
             glb = glb[0]
         mesh = reach(glb)
         if mesh is None:
             continue
         monsters.append({
             "name": one["name"], "label": one.get("label", one["name"]), "mesh": mesh,
+            **({"parts": parts, "plus": one.get("plus", {})} if len(parts) > 1 else {}),
             "scale": float(one.get("scale", 1.0)),
             "hidden_mesh": one.get("hidden_mesh"),
             "hidden_part": one.get("hidden_part"),

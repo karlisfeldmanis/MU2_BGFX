@@ -1039,11 +1039,14 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
                               (inRealm != nullptr && inRealm->poisonUntil > realm_.tick());
         const size_t tintFrom = out.size();
         const auto tint = [&] {
-            if (!soused && !iced && !poisoned) return;
+            if (!soused && !iced && !poisoned && !one.murderer) return;
+            // A debuff's light over a murderer's red: MU sets c->Light first and the debuff's
+            // BodyLight after it.
             const float* by = poisoned && iced ? kPoisonIcedLight
                               : poisoned       ? kPoisonedLight
                               : iced           ? kIcedLight
-                                               : kSousedLight;
+                              : soused         ? kSousedLight
+                                               : kMurdererLight;
             for (size_t i = tintFrom; i < out.size(); ++i) {
                 out[i].light[0] *= by[0];
                 out[i].light[1] *= by[1];

@@ -556,6 +556,8 @@ private:
         float seeThrough = 1.0f;
         // The Poison Bull's standing eDeBuff_Poison: drawn in the poisoned green always.
         bool venomous = false;
+        // A murderer, lit red always (kMurdererLight): the Cursed Wizard.
+        bool murderer = false;
         // A Shadow's joints, which wear its stars every frame it is drawn (fx/shadow_stars.h), and
         // whether it is the Poison Shadow; empty on everything else.
         std::vector<int> shadeBones;

@@ -1,0 +1,536 @@
+{
+  "item": "DeathCow01",
+  "mu_name": "Death Cow",
+  "mu_name_from": "MuMain's MONSTER_MODEL_DEATH_COW = 30, so OpenMonsterModel loads Monster31.bmd; the server's type is MONSTER_DEATH_COW = 41. The client's name is 데쓰 카우 (ZzzCharacter.cpp:13842-13849). OpenMU's Version075 LostTower.cs:887-917 names number 41 'Death Cow' at level 57 with 4500 health, 170-180 damage, 110 defense, MoveRange 3, AttackRange 1, ViewRange 7, AttackDelay 1600, no AttackSkill. 51 spots: 32 on Lost Tower 3, 19 on 4.",
+  "world": "losttower",
+  "object_type": 41,
+  "monster": {
+    "model_index": 30,
+    "scale": 1.1
+  },
+  "monster_from": "ZzzCharacter.cpp:13842-13849, CreateMonster, case MONSTER_DEATH_COW: `c->Weapon[0].Type = MODEL_GREAT_HAMMER; c->Object.Scale = 1.1f;` (Level 1 commented out). No BlendMesh, no HiddenMesh.",
+  "right_hand": "Mace04",
+  "right_hand_bone": "left_bone",
+  "right_hand_from": "MODEL_GREAT_HAMMER is Item/Mace04.bmd (new here). Its bone is CreateCharacter's weapon switch, the Bull Fighter's: `case MODEL_BULL_FIGHTER: case MODEL_DEATH_COW: c->Weapon[0].LinkBone = 42; c->Weapon[1].LinkBone = 33` (ZzzCharacter.cpp:12045-12048). Bone 42 is left_bone on this rig too, the artist's name the wrong way round as on the Bull Fighter.",
+  "profile": "monster",
+  "rig_from": "Seven actions, slots 0 to 6, exported with --actions=0,1,2,3,4,5,6. Keys: 20, 30, 7, 8, 8, 12, 12. 45 bones, the Bull Fighter's names: smok_bone (24), top_bone02 and top_bone01 (22, 23), left_bone (42), right_bone01 (33). BoneHead = 20, Bip01 Head (ZzzOpenData.cpp:3387). OpenMonsterModel's default play speeds; 30 is not in the override list.",
+  "sheets": {
+    "wwo": "deathcow_wwo.png"
+  },
+  "sheet_from": "One sheet, Data/Monster/wwo.OZJ, 128 by 128, no alpha, on all 1109 triangles. Decoded under a deathcow_ prefix.",
+  "sheet_materials": {
+    "wwo": "bone"
+  },
+  "sheet_materials_from": "Read off the sheet at 2x: a horned bovine skull, a human skull, ribbed plates and a clawed hand, all in the same weathered brown-bone -- an armour of bones, so bone.",
+  "effects_from": "Two of the client's, both by name in game/play_open.cpp. RenderEye(o, 22, 23) for MODEL_DEATH_COW always (ZzzCharacter.cpp:11209-11211), the Elite Bull Fighter's red eyes (fx/eyes.h). And CharacterDie's case (:1480-1486): `o->Live = false`, MODEL_BONE1 and ten MODEL_BONE2, PlayBuffer(SOUND_BONE2) -- it comes apart into bones as the skeletons do (Bones::burst). The Bull Fighter's snort is MODEL_BULL_FIGHTER's case alone; the Death Cow does not snort.",
+  "sounds_from": "ZzzOpenData.cpp:3380-3387: the Bull Fighter's mBull1/2, mBullAttack1/2 and mBullDie, SetMonsterSound(..., 0, 1, 2, 3, 4). Wired as deathcow_*; its die is mBone2, the SOUND_BONE2 CharacterDie plays as the bones fly, since the body is gone before a death clip could cry.",
+  "islands_from": "23 islands for 1109 triangles, all bone: the sheet is one weathered armour of skulls and ribbed plates, so every island takes the sheet's reading. They arrived as skin, the monster profile's default (islands.py never reads sheet_materials).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "bone",
+      "triangles": 154,
+      "area": 8013.3,
+      "along": [
+        20.7,
+        87.1
+      ],
+      "mu_uv": [
+        0.01,
+        0.478,
+        0.646,
+        0.984
+      ],
+      "bake_uv": [
+        0.011,
+        0.012,
+        0.974,
+        0.825
+      ]
+    },
+    {
+      "island": 1,
+      "material": "bone",
+      "triangles": 84,
+      "area": 3067.5,
+      "along": [
+        -12.7,
+        12.4
+      ],
+      "mu_uv": [
+        0.344,
+        0.509,
+        0.557,
+        0.92
+      ],
+      "bake_uv": [
+        0.13,
+        0.701,
+        0.577,
+        0.856
+      ]
+    },
+    {
+      "island": 2,
+      "material": "bone",
+      "triangles": 36,
+      "area": 2033.0,
+      "along": [
+        27.4,
+        53.7
+      ],
+      "mu_uv": [
+        0.372,
+        0.468,
+        0.83,
+        1.001
+      ],
+      "bake_uv": [
+        0.012,
+        0.011,
+        0.618,
+        0.497
+      ]
+    },
+    {
+      "island": 3,
+      "material": "bone",
+      "triangles": 84,
+      "area": 2841.7,
+      "along": [
+        -23.2,
+        19.3
+      ],
+      "mu_uv": [
+        0.324,
+        0.627,
+        0.612,
+        0.912
+      ],
+      "bake_uv": [
+        0.385,
+        0.755,
+        0.695,
+        0.904
+      ]
+    },
+    {
+      "island": 4,
+      "material": "bone",
+      "triangles": 84,
+      "area": 3126.1,
+      "along": [
+        1.2,
+        36.7
+      ],
+      "mu_uv": [
+        0.344,
+        0.509,
+        0.557,
+        0.92
+      ],
+      "bake_uv": [
+        0.239,
+        0.686,
+        0.734,
+        0.863
+      ]
+    },
+    {
+      "island": 5,
+      "material": "bone",
+      "triangles": 36,
+      "area": 2033.1,
+      "along": [
+        50.1,
+        86.9
+      ],
+      "mu_uv": [
+        0.372,
+        0.468,
+        0.83,
+        1.001
+      ],
+      "bake_uv": [
+        0.012,
+        0.066,
+        0.571,
+        0.642
+      ]
+    },
+    {
+      "island": 6,
+      "material": "bone",
+      "triangles": 84,
+      "area": 2841.7,
+      "along": [
+        -30.5,
+        1.6
+      ],
+      "mu_uv": [
+        0.324,
+        0.627,
+        0.612,
+        0.912
+      ],
+      "bake_uv": [
+        0.483,
+        0.84,
+        0.834,
+        0.948
+      ]
+    },
+    {
+      "island": 7,
+      "material": "bone",
+      "triangles": 36,
+      "area": 2364.3,
+      "along": [
+        -1.1,
+        42.7
+      ],
+      "mu_uv": [
+        0.372,
+        0.468,
+        0.83,
+        1.001
+      ],
+      "bake_uv": [
+        0.011,
+        0.294,
+        0.642,
+        0.616
+      ]
+    },
+    {
+      "island": 8,
+      "material": "bone",
+      "triangles": 36,
+      "area": 2372.5,
+      "along": [
+        -51.8,
+        -8.1
+      ],
+      "mu_uv": [
+        0.372,
+        0.468,
+        0.83,
+        1.001
+      ],
+      "bake_uv": [
+        0.29,
+        0.011,
+        0.662,
+        0.621
+      ]
+    },
+    {
+      "island": 9,
+      "material": "bone",
+      "triangles": 13,
+      "area": 654.3,
+      "along": [
+        -8.3,
+        2.9
+      ],
+      "mu_uv": [
+        0.4,
+        0.582,
+        0.53,
+        0.835
+      ],
+      "bake_uv": [
+        0.013,
+        0.869,
+        0.439,
+        0.967
+      ]
+    },
+    {
+      "island": 10,
+      "material": "bone",
+      "triangles": 34,
+      "area": 2013.8,
+      "along": [
+        -3.4,
+        21.9
+      ],
+      "mu_uv": [
+        0.367,
+        0.582,
+        0.559,
+        0.956
+      ],
+      "bake_uv": [
+        0.869,
+        0.012,
+        0.933,
+        0.271
+      ]
+    },
+    {
+      "island": 11,
+      "material": "bone",
+      "triangles": 84,
+      "area": 1742.9,
+      "along": [
+        2.5,
+        38.9
+      ],
+      "mu_uv": [
+        0.273,
+        0.566,
+        0.637,
+        0.917
+      ],
+      "bake_uv": [
+        0.376,
+        0.559,
+        0.709,
+        0.712
+      ]
+    },
+    {
+      "island": 12,
+      "material": "bone",
+      "triangles": 32,
+      "area": 4792.5,
+      "along": [
+        -38.2,
+        45.2
+      ],
+      "mu_uv": [
+        0.02,
+        0.561,
+        0.438,
+        0.727
+      ],
+      "bake_uv": [
+        0.127,
+        0.012,
+        0.539,
+        0.937
+      ]
+    },
+    {
+      "island": 13,
+      "material": "bone",
+      "triangles": 28,
+      "area": 2643.2,
+      "along": [
+        -21.9,
+        22.1
+      ],
+      "mu_uv": [
+        0.882,
+        0.001,
+        0.994,
+        0.81
+      ],
+      "bake_uv": [
+        0.751,
+        0.012,
+        0.848,
+        0.266
+      ]
+    },
+    {
+      "island": 14,
+      "material": "bone",
+      "triangles": 34,
+      "area": 2013.8,
+      "along": [
+        -51.3,
+        -5.7
+      ],
+      "mu_uv": [
+        0.367,
+        0.582,
+        0.559,
+        0.956
+      ],
+      "bake_uv": [
+        0.871,
+        0.573,
+        0.937,
+        0.933
+      ]
+    },
+    {
+      "island": 15,
+      "material": "bone",
+      "triangles": 84,
+      "area": 1745.5,
+      "along": [
+        33.6,
+        72.9
+      ],
+      "mu_uv": [
+        0.273,
+        0.566,
+        0.637,
+        0.917
+      ],
+      "bake_uv": [
+        0.185,
+        0.602,
+        0.545,
+        0.732
+      ]
+    },
+    {
+      "island": 16,
+      "material": "bone",
+      "triangles": 28,
+      "area": 4169.7,
+      "along": [
+        -8.9,
+        39.0
+      ],
+      "mu_uv": [
+        0.882,
+        0.001,
+        0.994,
+        0.81
+      ],
+      "bake_uv": [
+        0.758,
+        0.543,
+        0.856,
+        0.821
+      ]
+    },
+    {
+      "island": 17,
+      "material": "bone",
+      "triangles": 28,
+      "area": 2456.6,
+      "along": [
+        -39.2,
+        16.2
+      ],
+      "mu_uv": [
+        0.882,
+        0.001,
+        0.994,
+        0.81
+      ],
+      "bake_uv": [
+        0.013,
+        0.29,
+        0.815,
+        0.863
+      ]
+    },
+    {
+      "island": 18,
+      "material": "bone",
+      "triangles": 28,
+      "area": 2643.2,
+      "along": [
+        -22.2,
+        21.6
+      ],
+      "mu_uv": [
+        0.882,
+        0.001,
+        0.994,
+        0.81
+      ],
+      "bake_uv": [
+        0.644,
+        0.199,
+        0.878,
+        0.546
+      ]
+    },
+    {
+      "island": 19,
+      "material": "bone",
+      "triangles": 28,
+      "area": 4169.7,
+      "along": [
+        -9.3,
+        36.7
+      ],
+      "mu_uv": [
+        0.882,
+        0.001,
+        0.994,
+        0.81
+      ],
+      "bake_uv": [
+        0.072,
+        0.012,
+        0.723,
+        0.896
+      ]
+    },
+    {
+      "island": 20,
+      "material": "bone",
+      "triangles": 28,
+      "area": 2456.7,
+      "along": [
+        -39.2,
+        16.2
+      ],
+      "mu_uv": [
+        0.882,
+        0.001,
+        0.994,
+        0.81
+      ],
+      "bake_uv": [
+        0.326,
+        0.292,
+        0.742,
+        0.9
+      ]
+    },
+    {
+      "island": 21,
+      "material": "bone",
+      "triangles": 13,
+      "area": 654.3,
+      "along": [
+        7.6,
+        13.0
+      ],
+      "mu_uv": [
+        0.4,
+        0.582,
+        0.53,
+        0.835
+      ],
+      "bake_uv": [
+        0.896,
+        0.131,
+        0.989,
+        0.376
+      ]
+    },
+    {
+      "island": 22,
+      "material": "bone",
+      "triangles": 13,
+      "area": 654.3,
+      "along": [
+        -43.7,
+        -16.7
+      ],
+      "mu_uv": [
+        0.4,
+        0.582,
+        0.53,
+        0.835
+      ],
+      "bake_uv": [
+        0.904,
+        0.402,
+        0.989,
+        0.581
+      ]
+    }
+  ]
+}
