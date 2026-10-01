@@ -1,0 +1,42 @@
+{
+  "item": "Object10",
+  "mu_name": "Object10",
+  "mu_name_from": "The Lost Tower's object slot 9, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 9,
+  "placements": 200,
+  "profile": "world",
+  "sheets": {
+    "re_08": "lt_re_08.png"
+  },
+  "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix: assets/textures is one flat pool, and Object5's sheet names are other worlds' too.",
+  "sheet_materials": {
+    "re_08": "rock"
+  },
+  "why_this_one": "A low slab, 2 m long, 0.43 m tall and a metre deep, set in rows: the kerbs and low inner walls along the walks and round the squares, 200 of them. The user: 'tehre was some inner walls'.",
+  "material_note": "re_08 is dark streaked stone, rock. MuMain hangs a warm flare on this type by a missing break (ZzzObject.cpp:2981-2991, docs/lost-tower-port.md, Decision 5); not drawn.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 24,
+      "area": 33567.6,
+      "along": [
+        -49.4,
+        49.3
+      ],
+      "mu_uv": [
+        -1.997,
+        -0.232,
+        0.988,
+        1.997
+      ],
+      "bake_uv": [
+        0.005,
+        0.005,
+        0.995,
+        0.895
+      ]
+    }
+  ]
+}
