@@ -125,6 +125,13 @@ public:
     // apart. -1 when none sounds.
     int heard(int event, float ahead, float* seconds) const;
 
+    // How far each play of a placed event strays from the file, so one sample is not heard as
+    // the same sample every time: its pitch by up to `semitones` either way, its level by up to
+    // `dropDb` down (never up), and its brightness -- the low-pass closed by up to
+    // `darkenOctaves`. Each play is rolled away from the last, so two in a row never match.
+    // The footsteps: WoW's trick for one recording. Ours; MU plays every step identical.
+    void vary(int event, float semitones, float dropDb, float darkenOctaves);
+
     // Starts a placed event at a point, in world metres. `following` is the body it belongs
     // to, whose position follow() keeps it on, or 0 for a blow that lands at a point and
     // belongs to nothing -- MU's NULL.

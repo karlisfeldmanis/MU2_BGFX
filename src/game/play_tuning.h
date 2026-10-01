@@ -338,6 +338,11 @@ constexpr float kBreathNear = 0.32f, kBreathFar = 0.64f;
 // `>= 4.5f` in ZzzCharacter.cpp's PlayWalkSound, each latched by its own c->Foot[n] so a mark
 // several frames wide sounds once. Two a cycle, which is a pair of legs. MU2's Crowd.FirstFoot.
 constexpr float kFirstFoot = 1.5f, kSecondFoot = 4.5f;
+// And how far each step strays from the one recording (Sound::vary), so a walk is not the
+// same crunch twice a cycle: pitch up to a semitone either way, up to 4 dB softer, and the
+// air closed by up to an octave and a half -- from 16 kHz to about 5.7, under the 11 kHz the
+// 22 kHz files hold, so it is heard. WoW's way with one sample; MU plays every step identical.
+constexpr float kStepSemitones = 1.0f, kStepDropDb = 4.0f, kStepDarken = 1.5f;
 
 // The window of the smith's first action his hammer lands in: `CurrentAction == 0 &&
 // AnimationFrame >= 5.f && <= 10.f`, in keys and not seconds. MU2's Scenery.HammerFrom.

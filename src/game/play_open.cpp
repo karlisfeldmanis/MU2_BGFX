@@ -446,6 +446,9 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.shockFemale = sound_.load("player_shock_female", true);
     heard_.grass = sound_.load("player_step_grass", true);
     heard_.soil = sound_.load("player_step_soil", true);
+    for (int step : {heard_.grass, heard_.soil}) {
+        sound_.vary(step, kStepSemitones, kStepDropDb, kStepDarken);
+    }
     if (windy_) heard_.wind = sound_.load("world_wind", false);
     // The Dungeon's air is aDungeon, played as the wind is: looping and unplaced, the whole map
     // (SceneManager.cpp:859-861). It rides the wind's slot, which the Dungeon has no use for.

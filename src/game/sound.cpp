@@ -300,6 +300,11 @@ struct Sound::Impl {
 
     // Past the silence, and -- for the level-up alone -- past what the device's buffer will
     // hold it back by, so its swell is where the flares are. Not for anything else: MU's own
+        // Sound::vary: the ranges, the last play's rolls, and each voice's own.
+        float semitones = 0.0f, dropDb = 0.0f, darken = 0.0f;
+        float lastPitch = 0.0f, lastDrop = 0.0f;  // the rolls, 0..1 of their range
+        float trim[kVoices] = {1.0f, 1.0f};       // its level, times the cooked one
+        float tone[kVoices] = {1.0f, 1.0f};       // its low-pass, times the air's
     // attack sounds put their impact in the first tens of milliseconds, and skipping a 30 ms
     // buffer took 31% of eMeleeHit1's energy and 61% of pWalk_Soil's, so one hit in four and
     // every soil step came out as a click. Heard a buffer late, as DirectSound heard them.
@@ -309,6 +314,12 @@ struct Sound::Impl {
         // would start it at the level the release had got down to.
         ma_sound_set_stop_time_in_pcm_frames(&sound, ~ma_uint64(0));
         ma_sound_set_fade_in_pcm_frames(&sound, 1.0f, 1.0f, 0);
+    // 0..1, and at least a third of the way from `last`, wrapping: a step a hair off the last
+    // reads as the same step.
+    float rollAway(float last) {
+        const float r = last + (1.0f + float(roll() >> 8) / float(1u << 24)) / 3.0f;
+        return r - std::floor(r);
+    }
         ma_sound_seek_to_second(&sound, lead + (buffered ? latency : 0.0f));
         ma_sound_start(&sound);
     }
@@ -377,12 +388,12 @@ struct Sound::Impl {
         event.importance[v] = w.importance;
         ma_sound& sound = file.sound[v];
         ma_sound_set_pan(&sound, w.pan);
-        ma_sound_set_volume(&sound,
-                            event.volume * std::sqrt(float(event.merged[v])) * event.gain[v]);
+        ma_sound_set_volume(&sound, event.volume * event.trim[v] *
+                                        std::sqrt(float(event.merged[v])) * event.gain[v]);
         if (v < file.filtered) {
             const float rate = float(ma_engine_get_sample_rate(&engine));
             // Behind a wall the filter closes toward the muffle, in the log of the frequency.
-            const float open = std::min(w.cutoff, rate * 0.45f);
+            const float open = std::min(w.cutoff * event.tone[v], rate * 0.45f);
             const float cutoff =
                 std::exp(std::log(open) +
                          (std::log(std::min(kMuffled, open)) - std::log(open)) * walled);
@@ -919,6 +930,14 @@ void Sound::playAt(int handle, float x, float y, float z, uint32_t following) {
         const int v = (event.next + k) % kVoices;
         if (!im.playing(event, v)) voice = v;
     }
+void Sound::vary(int handle, float semitones, float dropDb, float darkenOctaves) {
+    if (!impl_->open || handle < 0 || size_t(handle) >= impl_->events.size()) return;
+    Impl::Event& event = *impl_->events[size_t(handle)];
+    event.semitones = std::max(semitones, 0.0f);
+    event.dropDb = std::max(dropDb, 0.0f);
+    event.darken = std::max(darkenOctaves, 0.0f);
+}
+
     if (voice < 0) {
         if (weight.importance < kHero) {
             ++im.counted.swallowed;
@@ -1019,6 +1038,17 @@ void Sound::listen(uint32_t hero, const float at[3], const float shot[16]) {
     if (now >= im.saidAt + kTallyEveryMs) {
         const Tally& t = im.counted;
         const Tally& was = im.lastSaid;
+    // Sound::vary. The pitch and the level each rolled away from the last play's; the tone
+    // free, since a darker step under a quieter one is how a foot set down softer sounds.
+    if (event.semitones > 0.0f || event.dropDb > 0.0f || event.darken > 0.0f) {
+        event.lastPitch = im.rollAway(event.lastPitch);
+        event.lastDrop = im.rollAway(event.lastDrop);
+        const float tone = float(im.roll() >> 8) / float(1u << 24);
+        ma_sound_set_pitch(&file.sound[voice],
+                           std::exp2((event.lastPitch * 2.0f - 1.0f) * event.semitones / 12.0f));
+        event.trim[voice] = std::pow(10.0f, -event.lastDrop * event.dropDb / 20.0f);
+        event.tone[voice] = std::exp2(-tone * event.darken);
+    }
         if (t.refused != was.refused || t.merged != was.merged || t.stolen != was.stolen ||
             t.swallowed != was.swallowed) {
             core::logf("sound: %d of %d voices at the most; %d refused, %d merged, %d stolen, "
