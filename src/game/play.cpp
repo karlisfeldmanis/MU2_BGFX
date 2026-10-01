@@ -580,10 +580,10 @@ void Play::update(double seconds) {
                         caster->crown[0], ground_->heightAt(caster->crown[0], caster->crown[2]),
                         caster->crown[2]};
                     spirits_.release(happening.who, feet);
-                    // Once, played to its end (3.3 s, 66 ticks): the spell has no cooldown, and
-                    // under MU's two voices a cast every clip cut it back to its start each time
-                    // -- a stutter, heard as a loop (the user, 2026-10-01: "wierd looping sound").
-                    // Ours; the spirits of the casts in between go out unheard.
+                    // Not again until it is half through (kEvilSoundTicks): the spell has no
+                    // cooldown, and under MU's two voices a cast every clip cut it back to its
+                    // start each time -- a stutter, heard as a loop (the user, 2026-10-01:
+                    // "wierd looping sound"). Ours; a cast in between goes out unheard.
                     const int index = sim::skillIndexOf(sim::skill::kEvilSpirit);
                     const bool sounding = int64_t(happening.tick) - lastEvilTick_ < kEvilSoundTicks;
                     if (!sounding) lastEvilTick_ = int64_t(happening.tick);

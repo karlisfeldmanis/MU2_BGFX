@@ -1559,7 +1559,9 @@
       "files": [
         "sEvil.wav"
       ],
-      "from": "SOUND_EVIL, played as Evil Spirit's spirits are let go (ZzzCharacter.cpp:4603): the wizard's spell and the shield's Evil Spirit rune."
+      "from": "SOUND_EVIL, played as Evil Spirit's spirits are let go (ZzzCharacter.cpp:4603): the wizard's spell and the shield's Evil Spirit rune.",
+      "gain_db": 6.0,
+      "gain_from": "sEvil.wav peaks at -11.4 dB with an RMS of -25.4 dB against sFlame's -8.2 and -19.8 and sHellFire's -4.6 and -20.1: under a fight's hits it was not heard (the user, 2026-10-01: 'did not hear sound'). Six lifts it level with Flame. Ours."
     },
     "devil_evil": {
       "files": [
