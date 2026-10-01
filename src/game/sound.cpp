@@ -111,8 +111,10 @@ constexpr Preset kRoofed = {0.126f, 0.52f, 0.5f};   // -18 dB
 // The Dungeon's and the Lost Tower's stone halls: a step past the house -- a little wetter, a
 // larger room, a shade brighter off the stone (the user, 2026-10-01: 'lets also add little
 // reverb to dungeon and lost tower because its building', 'for steps,voice,attacks'). Kept a
-// step, not a cathedral, for the two times before it was asked down.
-constexpr Preset kStone = {0.158f, 0.62f, 0.45f};   // -16 dB
+// step, not a cathedral, for the two times before it was asked down. Then down again, the same
+// day, after a walk in it: 'rever is to much' -- from -16 dB, room 0.62, damp 0.45 to a little
+// under the house's roof: drier, a smaller room, a duller tail.
+constexpr Preset kStone = {0.089f, 0.50f, 0.55f};   // -21 dB
 constexpr float kRoomEaseMs = 150.0f;
 
 enum Importance { kCrowd = 0, kNearHero = 1, kHero = 2 };
