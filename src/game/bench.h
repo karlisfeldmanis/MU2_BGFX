@@ -159,6 +159,8 @@ public:
         wantsFixedDistance_ = distance > 0.0f;
     }
     float distance() const { return distance_; }
+    // A weapon shown in its bearer's hands rather than alone (--bearer).
+    void showBearer(bool show) { showBearer_ = show; }
 
 private:
     // The plot's size and which of the world's surfaces it wears. 24 tiles is wide enough
@@ -250,6 +252,7 @@ private:
     float zoom_ = 1.0f;
     // --dist was given, so the browser must not re-frame on each model.
     bool wantsFixedDistance_ = false;
+    bool showBearer_ = false;
     float height_ = 0.0f;
     float focus_[3] = {0.0f, 0.0f, 0.0f};
 };

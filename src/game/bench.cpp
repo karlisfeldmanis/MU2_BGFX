@@ -423,12 +423,17 @@ bool ModelBench::pick(const std::string& needle, content::Textures& textures) {
     // The open category first, then every other one: --pick budge alone should find the Budge
     // Dragon without also being told which tab it is on, but --category monsters --pick bull
     // must not wander off into the world's objects looking for a bull.
-    for (size_t pass = 0; pass < 2; ++pass) {
+    // A whole name before a part of one, or --pick spear opens the Light Spear and the Spear
+    // itself cannot be asked for.
+    for (size_t pass = 0; pass < 4; ++pass) {
         for (size_t c = 0; c < categories_.size(); ++c) {
-            if ((pass == 0) != (c == category_)) continue;
+            if ((pass % 2 == 0) != (c == category_)) continue;
             const BrowseCategory& one = categories_[c];
             for (size_t i = 0; i < one.entries.size(); ++i) {
-                if (!holds(one.entries[i].name, needle)) continue;
+                const std::string& name = one.entries[i].name;
+                if (pass < 2 ? !(holds(name, needle) && name.size() == needle.size())
+                             : !holds(name, needle))
+                    continue;
                 category_ = c;
                 categories_[c].at = i;
                 return loadCurrent(textures);
@@ -504,7 +509,7 @@ bool ModelBench::standFigure(const FigureBody* body) {
     if (gameFrame_) frameAsGame(radius);
 
     // A weapon alone: framed on its own size, and followed each frame in gatherSubject.
-    bearerHidden_ = body->kind == BodyKind::Weapon;
+    bearerHidden_ = body->kind == BodyKind::Weapon && !showBearer_;
     if (bearerHidden_ && !wantsFixedDistance_) {
         float heldRadius = 0.0f;
         for (const HeldItem& item : body->held) {

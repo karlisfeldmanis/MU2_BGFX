@@ -39,6 +39,7 @@
 #                                     trying to look at one face of a thing
 #   ./viewer.sh --category monsters --pick spider                opens on one thing
 #   ./viewer.sh --category armour                                and the same for a suit
+#   ./viewer.sh --category weapons --pick spear --bearer         a weapon in its bearer's hands
 #   ./viewer.sh --frames 200 --shot 100 --shot-path /abs/dir     a review run
 #
 #   left / right ..... one entry            tab .............. next category

@@ -89,6 +89,7 @@ bool BenchMode::open(Context& ctx) {
         }
         // Where the browser opens, for a run with nobody at the keyboard. Neither is fatal: a
         // category or a name that is not there has said so, and the viewer is still a viewer.
+        bench_.showBearer(args.bearer);
         if (!args.category.empty()) bench_.openCategory(args.category, ctx.textures);
         if (!args.pick.empty()) bench_.pick(args.pick, ctx.textures);
         core::logf("browser: %s", bench_.browseLine().c_str());

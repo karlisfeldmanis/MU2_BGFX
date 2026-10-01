@@ -296,6 +296,9 @@ struct Args {
     // And which entry in it: the first whose name holds this, ignoring case. "budge" lands on
     // the Budge Dragon wherever it sits in the list.
     std::string pick;
+    // --bearer: a weapon on the Weapons tab is shown in the hands of whoever holds it, rather
+    // than alone -- how the grip is judged.
+    bool bearer = false;
     // The plus every item on the viewer's subject is shown at, 0 to 15: the refinement shine,
     // judged on the bench (docs/sprints/14-the-shine.md). 0 is the item as it is.
     int plus = 0;

@@ -641,6 +641,8 @@ Args parseArgs(int argc, char** argv) {
             if (const char* v = next(s)) a.shadowSlideMm = float(std::atof(v));
         } else if (!std::strcmp(s, "--still")) {
             a.still = true;
+        } else if (!std::strcmp(s, "--bearer")) {
+            a.bearer = true;
         } else if (!std::strcmp(s, "--no-cull")) {
             a.cullChunks = false;
         } else if (!std::strcmp(s, "--help") || !std::strcmp(s, "-h")) {
