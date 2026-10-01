@@ -27,7 +27,7 @@
   "rim": true,
   "blend": 2.0
  },
- "light_depth": 1.0,
+ "light_depth": 0.6,
  "objects": [
   {
    "type": 1,

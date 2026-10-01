@@ -238,8 +238,10 @@ def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndar
 #: ground.py's LIGHT_DEPTH (0.5, Lorencia's: a baked shadow halved so it does not read as a
 #: smudge under the live sun). The Lost Tower keeps all of it: its floors and causeways fade
 #: into the void only because MU paints their edge corners 0, and halved they stood grey to
-#: a hard edge (the user: 'you did not migrated void blending with long road').
-LIGHT_DEPTH_BY_MAP = {4: 1.0}
+#: a hard edge (the user: 'you did not migrated void blending with long road'). Then 0.6, the
+#: user: 'we ened more actual shadows and little bit less baked in' -- the floors' edges now
+#: reach the void's black by the void's own blend (VOID_BY_MAP), and most void is lava.
+LIGHT_DEPTH_BY_MAP = {4: 0.6}
 
 WATER_FLOW_BY_MAP = {
     # The Dungeon's cave streams: 25 channels of 40 tiles or more along the rock, each fed at

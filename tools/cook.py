@@ -1156,6 +1156,12 @@ FLAT_OVER_VOID = {"dungeon", "losttower"}
 
 LIGHT_REACH_BY_WORLD = {"losttower": 5}
 
+#: How much of MU's baked light's variation a world's objects keep, about the mean of its ground's
+#: light, as ground.py's LIGHT_DEPTH does for the ground. Ours. The Lost Tower took MU's painted
+#: light whole and its shade was nearly all baked; the user: 'we ened more actual shadows and
+#: little bit less baked in'. 1 (all of it) everywhere else.
+OBJECT_LIGHT_DEPTH_BY_WORLD = {"losttower": 0.6}
+
 GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
 
 # OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
@@ -1438,6 +1444,20 @@ def cook_placements(world, out_dir, chunk_tiles):
         middle = len(around) // 2
         return tuple(sorted(one[channel] for one in around)[middle] for channel in range(3))
 
+    # The objects' share of the baked light's variation (OBJECT_LIGHT_DEPTH_BY_WORLD), about the
+    # mean of the light over the ground the world draws.
+    depth = OBJECT_LIGHT_DEPTH_BY_WORLD.get(world, 1.0)
+    if depth != 1.0:
+        drawn = [texel(cx, cy) for cy in range(light_h) for cx in range(light_w)
+                 if no_ground is None or not no_ground(cx, cy)]
+        mean = [sum(one[k] for one in drawn) / max(len(drawn), 1) for k in range(3)]
+
+    def deep(rgb):
+        if depth == 1.0:
+            return rgb
+        return tuple(int(round(min(max(mean[k] + (rgb[k] - mean[k]) * depth, 0), 255)))
+                     for k in range(3))
+
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}
     dropped_hidden = dropped_model = grounded = outside = roofed = lowered_count = buried = 0
@@ -1538,7 +1558,7 @@ def cook_placements(world, out_dir, chunk_tiles):
         chunk = (chunk_of(column), chunk_of(row))
         buckets.setdefault(chunk, []).append(
             (model, x, y, z, yaw, pitch, roll, float(one.get("scale", 1.0)),
-             lit(column, row), flags))
+             deep(lit(column, row)), flags))
         models[model][3] += 1
 
     # Sorted once: by chunk, then by model inside it, so a surviving chunk is a run of
