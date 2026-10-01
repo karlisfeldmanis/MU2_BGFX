@@ -184,6 +184,10 @@ struct Happening {
     // A `Hit` a Rune of Creation's power dealt -- Stormcall's lightning, Meteor's rock, Frost
     // Arrow's second wound -- drawn in the rune's own colour (the user, 2026-10-01).
     bool rune = false;
+    // A boss's Flame of Evil: the Death Gorgon's and the Balrog's one blow in five (WebZen's
+    // `rand() % 5 == 0` on A.Type 150, gObjMonster.cpp:1849-1925), its damage the monster's own
+    // band as WebZen sends it -- the drawing's cue, nothing else changes.
+    bool boss = false;
     // Where it happened, in tiles. Written for everything that has a place, because a log line
     // with a position in it is the one that catches a sim drifting apart from itself.
     float x = 0.0f, y = 0.0f;
@@ -864,6 +868,9 @@ private:
     // Whether this monster's blow ices the hero (realm_tuning.h, kChillers), and icing him when
     // it does and he is not iced already -- on a hit and on a miss alike.
     bool chills(const Body& monster) const;
+    // Whether this blow is a boss's Flame of Evil (realm_tuning.h kBosses): one in five, off
+    // bossDice_; false and no draw for every other breed.
+    bool bossBlow(const Body& monster);
     void chillHero(const Body& attacker, Body& target);
     // Whether a monster turns Ice's or Poison's element aside: its OpenMU resistance, rolled on
     // `dice` only when it has one, so a breed with none takes no draw (kResistances).
@@ -1050,6 +1057,8 @@ private:
     Random runeDice_{0};
     // The traps' own, as the guards' are: a run on another map is not moved by the Dungeon's.
     Random trapDice_{0};
+    // The bosses' own, for their one blow in five: a run with none of them is not moved.
+    Random bossDice_{0};
     std::vector<Trap> traps_;
     // Where the one summon body sits in `bodies_`, or -1 before `raise`.
     int summonSlot_ = -1;

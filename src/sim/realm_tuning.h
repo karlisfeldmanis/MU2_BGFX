@@ -301,6 +301,13 @@ constexpr float kHeroPoisonShare = 0.03f;
 // chill, whose ticks and factor are Ice's row. A Ring of Ice's resistance is not carried.
 constexpr int32_t kChillers[] = {22};
 
+// ---- the bosses' Flame of Evil -----------------------------------------------------------------
+// The Lost Tower's Death Gorgon (35) and Balrog (38), A.Type 150 in WebZen's Monster.txt: one blow
+// in five is skill 50, Flame of Evil, on everyone within five tiles (gObjMonster.cpp:1849-1925,
+// 1738-1752) -- with one player, the blow on him, at the monster's own damage band. OpenMU 075
+// never creates its skill 150, so there they only melee; WebZen's, docs/lost-tower-port.md.
+constexpr int32_t kBosses[] = {35, 38};
+
 // ---- a spot of many -----------------------------------------------------------------------------
 // How far a one-tile nest with a count scatters its members (Realm's raise): **ours**, a
 // reconstruction. MonsterSetBase's point rows carry a scatter distance that OpenMU's parser drops
@@ -364,7 +371,7 @@ constexpr DropRate kDropRates[] = {
     {29, 12, 6}, {30, 12, 6}, {31, 12, 6}, {32, 12, 6}, {33, 10, 6},
     // The Lost Tower's: MoneyRate 14 and MaxItemLevel 3 for all eight (WZD Monster.txt). The
     // Balrog's RegTime 10 is WebZen's, 11 s, against OpenMU's 150 s (docs/lost-tower-port.md,
-    // Decision 3, not yet answered).
+    // Decision 3: the user kept WebZen's, 2026-10-01).
     {34, 14, 3}, {35, 14, 3}, {36, 14, 3}, {37, 14, 3}, {38, 14, 3, 10}, {39, 14, 3},
     {40, 14, 3}, {41, 14, 3},
 };

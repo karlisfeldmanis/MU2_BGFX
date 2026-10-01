@@ -73,9 +73,13 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
             target.poisonBy = attacker.id;
         }
     };
+    // A boss's Flame of Evil, one blow in five (realm_tuning.h kBosses): drawn from its own
+    // stream, so a map without one is not moved. Hit or missed, the drawing shows the blow.
+    const bool flame = !attacker.player && target.player && bossBlow(attacker);
     if (!blow.hit) {
         say(What::Missed, attacker, 0, 0, 0, target.id);
         happenings_.back().thrown = thrown;
+        happenings_.back().boss = flame;
         elements(0);
         chillHero(attacker, target);
         return;
@@ -162,6 +166,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
     // A power's blow is the only one of his with no row that pays nothing: Stormcall's
     // lightning and Meteor's rock (`callDown`, and the rock's flight in `arrive`).
     happenings_.back().rune = attacker.player && row == nullptr && !pays;
+    happenings_.back().boss = flame;
     // The element, after the blow and only on what it left standing: 0.75's order.
     if (row != nullptr && row->pushes && target.alive() && !target.player) push(target, attacker);
     elements(blow.damage);
@@ -588,6 +593,14 @@ bool Realm::poisons(const Body& monster) const {
         if (one == number) return true;
     }
     return false;
+}
+
+bool Realm::bossBlow(const Body& monster) {
+    if (monster.kind < 0 || size_t(monster.kind) >= tables_->kinds.size()) return false;
+    const int32_t number = tables_->kinds[size_t(monster.kind)].number;
+    bool boss = false;
+    for (const int32_t one : kBosses) boss = boss || one == number;
+    return boss && bossDice_.nextInt(0, 4) == 0;
 }
 
 bool Realm::chills(const Body& monster) const {

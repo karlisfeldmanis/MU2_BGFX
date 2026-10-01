@@ -77,6 +77,7 @@ bool Realm::raise(const content::Tables* tables, uint64_t seed, int playerColumn
     wardenDice_.seed(seed ^ 0xc2b2ae3d27d4eb4full);
     runeDice_.seed(seed ^ 0x165667b19e3779f9ull);
     trapDice_.seed(seed ^ 0x27d4eb2f165667c5ull);
+    bossDice_.seed(seed ^ 0x165667b19e3779f9ull);
     for (int slot = 0; slot < kWorn; ++slot) {
         wearCarry_[slot] = 0.0;
         wearItem_[slot] = -1;
