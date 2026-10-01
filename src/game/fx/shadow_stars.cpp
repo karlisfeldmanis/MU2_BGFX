@@ -1,6 +1,7 @@
 #include "game/fx/shadow_stars.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "core/log.h"
 
@@ -35,6 +36,18 @@ constexpr float kEmberLife = 12.0f;
 constexpr float kEmberRise = 0.6f;   // metres a second
 constexpr float kEmberDim = 0.45f;
 constexpr size_t kEmbers = 96;
+// The Devil's beam: MU's 50-unit joint, ours at this half width and light.
+constexpr float kBeamHalf = 0.18f;
+constexpr float kBeamDim = 0.5f;
+// The Death Gorgon's rolling fireballs: this fast, this long, this big, this bright. Ours.
+constexpr float kRollSpeed = 4.0f;    // metres a second
+constexpr float kRollLife = 0.7f;     // seconds
+constexpr float kRollHalf = 0.35f;
+constexpr float kRollDim = 0.7f;
+// The Balrog's circle: out to this radius over its life, at this light. Ours.
+constexpr float kCircleRadius = 4.0f;  // metres
+constexpr float kCircleLife = 0.9f;    // seconds
+constexpr float kCircleDim = 0.5f;
 
 }  // namespace
 
@@ -52,6 +65,7 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     shiny_ = load("shiny_02_soft");
     ring_ = load("magic_ground_soft");
     fire_ = load("fire");
+    laser_ = load("joint_laser");
     stars_.reserve(kStars);
     embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
@@ -66,6 +80,19 @@ void ShadowStars::shutdown() {
 void ShadowStars::update(float seconds) {
     stars_.clear();
     glows_.clear();
+    beams_.clear();
+    for (Roll& one : rolls_) {
+        one.age += seconds;
+        one.position[0] += one.dx * kRollSpeed * seconds;
+        one.position[2] += one.dz * kRollSpeed * seconds;
+    }
+    rolls_.erase(std::remove_if(rolls_.begin(), rolls_.end(),
+                                [](const Roll& one) { return one.age >= kRollLife; }),
+                 rolls_.end());
+    for (Circle& one : circles_) one.age += seconds;
+    circles_.erase(std::remove_if(circles_.begin(), circles_.end(),
+                                  [](const Circle& one) { return one.age >= kCircleLife; }),
+                   circles_.end());
     for (Ember& one : embers_) {
         one.age += seconds * 25.0f;
         one.position[1] += kEmberRise * seconds;
@@ -82,6 +109,36 @@ void ShadowStars::glow(const float at[3], float fade, const float colour[3]) {
     one.fade = fade;
     for (int i = 0; i < 3; ++i) one.colour[i] = colour[i];
     glows_.push_back(one);
+}
+
+void ShadowStars::beam(const float from[3], const float to[3]) {
+    if (!open_ || !bgfx::isValid(laser_) || beams_.size() >= 16) return;
+    Beam one;
+    for (int i = 0; i < 3; ++i) {
+        one.from[i] = from[i];
+        one.to[i] = to[i];
+    }
+    beams_.push_back(one);
+}
+
+void ShadowStars::roll(const float at[3], float dx, float dz) {
+    if (!open_ || !bgfx::isValid(fire_) || rolls_.size() >= 48) return;
+    Roll one;
+    for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    one.position[1] += kRollHalf;
+    one.dx = dx;
+    one.dz = dz;
+    one.age = 0.0f;
+    rolls_.push_back(one);
+}
+
+void ShadowStars::circle(const float at[3]) {
+    if (!open_ || circles_.size() >= 8) return;
+    Circle one;
+    for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    one.position[1] += 0.05f;
+    one.age = 0.0f;
+    circles_.push_back(one);
 }
 
 void ShadowStars::ember(const float at[3]) {
@@ -142,6 +199,72 @@ void ShadowStars::gather(gfx::Effects& effects) const {
             sprite.sheet = shiny_;
             sprite.blend = gfx::Blend::Minus;
         }
+        effects.add(sprite);
+    }
+    // The beams: two crossed quads along each, one lying flat and one standing, so it has width
+    // from any angle without the camera.
+    for (const Beam& one : beams_) {
+        const float d[3] = {one.to[0] - one.from[0], one.to[1] - one.from[1], one.to[2] - one.from[2]};
+        const float flat = std::sqrt(d[0] * d[0] + d[2] * d[2]);
+        if (flat < 0.01f) continue;
+        const float side[2][3] = {{-d[2] / flat * kBeamHalf, 0.0f, d[0] / flat * kBeamHalf},
+                                  {0.0f, kBeamHalf, 0.0f}};
+        for (const auto& s : side) {
+            gfx::Sprite sprite;
+            for (int i = 0; i < 3; ++i) sprite.position[i] = 0.5f * (one.from[i] + one.to[i]);
+            sprite.placed = true;
+            for (int i = 0; i < 3; ++i) {
+                sprite.corner[0][i] = one.from[i] - s[i];
+                sprite.corner[1][i] = one.to[i] - s[i];
+                sprite.corner[2][i] = one.to[i] + s[i];
+                sprite.corner[3][i] = one.from[i] + s[i];
+            }
+            const float uv[4][2] = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+            for (int k = 0; k < 4; ++k) {
+                sprite.cornerUv[k][0] = uv[k][0];
+                sprite.cornerUv[k][1] = uv[k][1];
+            }
+            sprite.colour[0] = sprite.colour[1] = sprite.colour[2] = kBeamDim;
+            sprite.sheet = laser_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    for (const Roll& one : rolls_) {
+        gfx::Sprite sprite;
+        for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
+        sprite.halfWidth = sprite.halfHeight = kRollHalf;
+        const int cell = std::min(3, int(one.age / kRollLife * 4.0f));
+        sprite.u0 = float(cell) * 0.25f;
+        sprite.u1 = sprite.u0 + 0.25f;
+        const float left = 1.0f - one.age / kRollLife;
+        for (int i = 0; i < 3; ++i) sprite.colour[i] = kRollDim * left;
+        sprite.sheet = fire_;
+        sprite.blend = gfx::Blend::Additive;
+        effects.add(sprite);
+    }
+    // The circle: a flat ring on the ground, its own Magic_Ground2 grown from nothing.
+    for (const Circle& one : circles_) {
+        const float t = one.age / kCircleLife;
+        const float r = kCircleRadius * std::sqrt(t);
+        gfx::Sprite sprite;
+        for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
+        sprite.placed = true;
+        const float c[4][2] = {{-r, r}, {r, r}, {r, -r}, {-r, -r}};
+        const float uv[4][2] = {{0, 1}, {1, 1}, {1, 0}, {0, 0}};
+        for (int k = 0; k < 4; ++k) {
+            sprite.corner[k][0] = one.position[0] + c[k][0];
+            sprite.corner[k][1] = one.position[1];
+            sprite.corner[k][2] = one.position[2] + c[k][1];
+            sprite.cornerUv[k][0] = uv[k][0];
+            sprite.cornerUv[k][1] = uv[k][1];
+        }
+        const float left = 1.0f - t;
+        sprite.colour[0] = 1.0f * kCircleDim * left;
+        sprite.colour[1] = 0.35f * kCircleDim * left;
+        sprite.colour[2] = 0.05f * kCircleDim * left;
+        sprite.sheet = ring_;
+        sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
     for (const Ember& one : embers_) {

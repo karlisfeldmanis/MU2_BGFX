@@ -306,6 +306,15 @@ inline constexpr const char* kShadowFigure = "Shadow01";
 // (fx/shadow_stars.h), one ember every this many reference frames -- ours; MU throws ten a frame.
 inline constexpr const char* kDeathGorgonFigure = "DeathGorgon01";
 constexpr float kEmberEveryFrames = 3.0f;
+// The Death Knight: MU's BITMAP_FIRE at bone 2, Bip01 Pelvis, one reference frame in two
+// (ZzzCharacter.cpp:6007-6011); ours, the same embers, one in four.
+inline constexpr const char* kDeathKnightFigure = "DeathKnight01";
+constexpr float kKnightEmberEveryFrames = 4.0f;
+// The Devil, whose Lightning blow MU draws as its own: four BITMAP_JOINT_LASER + 1 from its two
+// link bones to the hero and fire off them while it swings, with SOUND_EVIL
+// (ZzzCharacter.cpp:2295-2313); ours, a beam a hand for this long.
+inline constexpr const char* kDevilFigure = "Devil01";
+constexpr float kDevilBeamSeconds = 0.6f;
 // **Ours** (the user, 2026-10-01: "if monster has some special effects use minimal light
 // emiter", "like electricy our fire, it could be also weapon"): a faint light in the colour of
 // what a breed burns with, hung on the bone where that is -- its body's spine, or the grip of a

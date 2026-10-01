@@ -342,7 +342,10 @@ void Play::snort(float seconds) {
 void Play::shade(float seconds) {
     shadowStars_.update(seconds);
     for (Drawn& one : drawn_) {
-        if ((one.shadeBones.empty() && one.auraBone < 0) || !one.visible || !one.placed) continue;
+        if ((one.shadeBones.empty() && one.auraBone < 0 && !one.embers) || !one.visible ||
+            !one.placed) {
+            continue;
+        }
         float fade = 1.0f;
         if (one.deadFor >= kDeathHold) {
             const float t = std::clamp((one.deadFor - kDeathHold) / kDeathFade, 0.0f, 1.0f);
@@ -362,13 +365,17 @@ void Play::shade(float seconds) {
         // A Death Gorgon: an ember now and then off a joint picked at random.
         if (one.embers) {
             if (one.deadFor >= 0.0f) continue;
-            one.emberOwed += seconds * 25.0f / kEmberEveryFrames;
+            one.emberOwed += seconds * 25.0f / one.emberEvery;
             while (one.emberOwed >= 1.0f) {
                 one.emberOwed -= 1.0f;
                 wanderDice_ ^= wanderDice_ << 13;
                 wanderDice_ ^= wanderDice_ >> 17;
                 wanderDice_ ^= wanderDice_ << 5;
-                const int bone = one.shadeBones[wanderDice_ % uint32_t(one.shadeBones.size())];
+                const int bone = one.emberBone >= 0 ? one.emberBone
+                                 : one.shadeBones.empty()
+                                     ? -1
+                                     : one.shadeBones[wanderDice_ % uint32_t(one.shadeBones.size())];
+                if (bone < 0) break;
                 float at[3];
                 if (one.figure.pointOn(bone, origin, at)) shadowStars_.ember(at);
             }
@@ -379,6 +386,22 @@ void Play::shade(float seconds) {
             if (one.figure.pointOn(bone, origin, at)) shadowStars_.star(at, one.shadePoison, fade);
         }
     }
+    // The Devil's beams, a hand each to the middle of whoever it swung at, while they last.
+    for (IceCast& cast : laserCasts_) {
+        cast.wait -= seconds;
+        const Drawn* devil = drawnOf(cast.caster);
+        const Drawn* target = drawnOf(cast.target);
+        if (devil == nullptr || target == nullptr || !devil->placed || !target->placed) continue;
+        const float to[3] = {target->crown[0], target->crown[1] - 0.7f, target->crown[2]};
+        const float origin[3] = {0.0f, 0.0f, 0.0f};
+        for (const int hand : devil->handBones) {
+            float from[3];
+            if (hand >= 0 && devil->figure.pointOn(hand, origin, from)) shadowStars_.beam(from, to);
+        }
+    }
+    laserCasts_.erase(std::remove_if(laserCasts_.begin(), laserCasts_.end(),
+                                     [](const IceCast& one) { return one.wait <= 0.0f; }),
+                      laserCasts_.end());
 }
 
 // Hanzo at his anvil: MU's sparks off the hammer's head while the blow is between keys 5 and

@@ -586,6 +586,11 @@ private:
         // Its faint light (kAuraLights): the bone it hangs on, -1 for none, and its colour.
         int auraBone = -1;
         float auraColour[3] = {0.0f, 0.0f, 0.0f};
+        // The one bone its embers rise off (the Death Knight's pelvis), -1 for a random one.
+        int emberBone = -1;
+        float emberEvery = 0.0f;   // reference frames between embers
+        // The Devil's two hands, its beams' ends; -1 on everything else.
+        int handBones[2] = {-1, -1};
         // MU's SwordCount, incremented on each swing. `swordCount % 3 == 0` plays Attack 1,
         // the rest Attack 2 — ZzzCharacter.cpp:1269-1276. The drawing's own counter, not the
         // sim's: it draws from no seeded state.
@@ -736,6 +741,8 @@ private:
     // A Thunder Lich's Lightning (OpenMU's AttackSkill 3): the hero's own thunder, from its chest
     // to the target at the same fifteenth frame, with SOUND_THUNDER01 (WSclient.cpp:4186-4190).
     std::vector<IceCast> thunderCasts_;
+    // The Devil's swing: its beams from both hands to the hero while `wait` lasts (seconds).
+    std::vector<IceCast> laserCasts_;
     // Whether a body's blow is drawn as a missile, and in which model: the Hunter's saw bolt,
     // or a guard's arrow or bolt by what she holds.
     bool shoots(uint32_t id, Arrows::Model* model);
@@ -885,6 +892,7 @@ private:
         int click = -1, refused = -1, opened = -1;      // the windows
         int repair = -1;                                // SOUND_REPAIR: a counter mended
         int meteorite = -1, explosion = -1;               // the Lich's throw and its landing
+        int evil = -1, hellfire = -1;  // the Devil's sEvil and the Balrog's sHellFire
         int iceCast = -1;                                 // spell_ice, on an Ice Monster's cast
         // The knight's skills, one wave each -- and Cyclone and Slash share SWORD4, which is
         // MU's own reuse. Indexed by the skill table's own index, as the cooldowns are.

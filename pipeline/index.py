@@ -506,6 +506,9 @@ EFFECTS = {
     # little lifted back toward their peak.
     "shiny_02_soft": "effects/shadow/shiny02_soft.png",
     "magic_ground_soft": "effects/shadow/magic_ground_soft.png",
+    # The Devil's beam, MU's BITMAP_JOINT_LASER + 1: Effect/JointLaser02.OZJ, 128 by 32, an orange
+    # streak with a dark arrow on black, drawn added (ZzzOpenData.cpp:5290; ZzzCharacter.cpp:2307).
+    "joint_laser": "effects/devil/joint_laser02.png",
     "lightning_2": "effects/summon/lightning2.png",
 
     # And what a barrier looks like, which is a different sheet and not a tint of the one

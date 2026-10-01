@@ -489,6 +489,8 @@ void Play::openSound(const std::string& assetDir, bool muted) {
     heard_.opened = sound_.load("window_open", false);
     heard_.repair = sound_.load("window_repair", false);
     heard_.meteorite = sound_.load("meteorite", true);
+    heard_.evil = sound_.load("devil_evil", true);
+    heard_.hellfire = sound_.load("balrog_hellfire", true);
     heard_.iceCast = sound_.load("spell_ice", true);
     // The knight's skills, by the table's own index, so a cast asks for its wave by the same
     // number its cooldown is kept under. Both `sKnightSkill4` names are the same file: MU plays
@@ -643,7 +645,21 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.shadeBones.clear();
             const bool shadow = look->name == kShadowFigure || look->name == kPoisonShadowFigure;
             one.shadePoison = look->name == kPoisonShadowFigure;
-            one.embers = look->name == kDeathGorgonFigure;
+            one.embers = look->name == kDeathGorgonFigure || look->name == kDeathKnightFigure;
+            one.emberBone = -1;
+            one.emberEvery = look->name == kDeathKnightFigure ? kKnightEmberEveryFrames
+                                                              : kEmberEveryFrames;
+            one.handBones[0] = one.handBones[1] = -1;
+            if (look->skeletonMesh) {
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (look->name == kDeathKnightFigure && bones[b].name == "Bip01 Pelvis") {
+                        one.emberBone = int(b);
+                    }
+                    if (look->name == kDevilFigure && bones[b].name == "knife_gdf") one.handBones[0] = int(b);
+                    if (look->name == kDevilFigure && bones[b].name == "hand_bofdgne01") one.handBones[1] = int(b);
+                }
+            }
             one.auraBone = -1;
             for (const AuraLight& aura : kAuraLights) {
                 if (look->name != aura.figure || !look->skeletonMesh) continue;

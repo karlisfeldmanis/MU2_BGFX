@@ -1554,6 +1554,18 @@
         "mBalrogDie.wav"
       ],
       "from": "Sounds[4]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp)."
+    },
+    "devil_evil": {
+      "files": [
+        "sEvil.wav"
+      ],
+      "from": "SOUND_EVIL, played as the Devil's attack begins (ZzzCharacter.cpp:2295-2299, c->CheckAttackTime(1))."
+    },
+    "balrog_hellfire": {
+      "files": [
+        "sHellFire.wav"
+      ],
+      "from": "SOUND_HELLFIRE, played with the Balrog's skill blow's circle (ZzzCharacter.cpp:1974-1981)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

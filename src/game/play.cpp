@@ -953,38 +953,56 @@ void Play::update(double seconds) {
                             size_t(body->kind) < tables_.kinds.size() &&
                             tables_.kinds[size_t(body->kind)].attackSkill ==
                                 sim::skill::kLightning) {
-                            thunderCasts_.push_back({happening.who, happening.whom, 15.0f / 25.0f});
-                            cue.fuse = 15.0f / 25.0f;
+                            // The Devil draws its own (kDevilFigure): its beams from both
+                            // hands and sEvil as the swing begins, the blow with the swing.
+                            const Drawn* devil = drawnOf(happening.who);
+                            const bool own = devil && devil->handBones[0] >= 0;
+                            if (own) {
+                                laserCasts_.push_back({happening.who, happening.whom,
+                                                       kDevilBeamSeconds});
+                                if (heard_.evil >= 0 && devil->placed) {
+                                    emit(heard_.evil, devil->crown[0], devil->crown[2]);
+                                }
+                            } else {
+                                thunderCasts_.push_back(
+                                    {happening.who, happening.whom, 15.0f / 25.0f});
+                                cue.fuse = 15.0f / 25.0f;
+                            }
                         }
                         // A boss's Flame of Evil, one blow in five (sim kBosses). MU throws the
                         // Death Gorgon's as a ring of eighteen MODEL_FIRE rolling out from it and
                         // the Balrog's as its Hellfire circle with meteors raining round it
-                        // (ZzzCharacter.cpp:1959-1990); **ours**, with the meteor the Lich throws
-                        // and few of them, as the user wants the tower's effects: the Gorgon's six
-                        // in a ring two tiles out, the Balrog's four at random within MU's
-                        // 512 units. eMeteorite once. The blow itself shows as a swing's does.
+                        // (ZzzCharacter.cpp:1959-1990); **ours**, and few, as the user wants the
+                        // tower's effects: the Gorgon's six fireballs rolling out along the ground
+                        // with eMeteorite; the Balrog's flat ring of fire spreading on the ground
+                        // with sHellFire, and four of the Lich's meteors at random within MU's
+                        // 512 units. The blow itself shows as a swing's does.
                         if (happening.boss && body && ground_) {
                             const float tile = ground_->metresPerTile();
                             const float bx = (body->x + 0.5f) * tile, bz = -(body->y + 0.5f) * tile;
                             const bool gorgon = body->kind >= 0 &&
                                                 size_t(body->kind) < tables_.kinds.size() &&
                                                 tables_.kinds[size_t(body->kind)].number == 35;
-                            for (int i = 0; i < (gorgon ? 6 : 4); ++i) {
-                                handDice_ ^= handDice_ << 13;
-                                handDice_ ^= handDice_ >> 17;
-                                handDice_ ^= handDice_ << 5;
-                                float x = bx, z = bz;
-                                if (gorgon) {
+                            const float floor[3] = {bx, ground_->heightAt(bx, bz), bz};
+                            if (gorgon) {
+                                for (int i = 0; i < 6; ++i) {
                                     const float turn = float(i) * 6.2831853f / 6.0f;
-                                    x += std::cos(turn) * 2.0f * tile;
-                                    z += std::sin(turn) * 2.0f * tile;
-                                } else {
-                                    x += (float(handDice_ % 1024) - 512.0f) * 0.01f;
-                                    z += (float((handDice_ >> 10) % 1024) - 512.0f) * 0.01f;
+                                    shadowStars_.roll(floor, std::cos(turn), std::sin(turn));
                                 }
-                                meteor_.cast(x, z, 0);
+                                if (heard_.meteorite >= 0) emit(heard_.meteorite, bx, bz);
+                            } else {
+                                shadowStars_.circle(floor);
+                                if (heard_.hellfire >= 0) emit(heard_.hellfire, bx, bz);
+                                for (int i = 0; i < 4; ++i) {
+                                    handDice_ ^= handDice_ << 13;
+                                    handDice_ ^= handDice_ >> 17;
+                                    handDice_ ^= handDice_ << 5;
+                                    const float x = bx + (float(handDice_ % 1024) - 512.0f) * 0.01f;
+                                    const float z =
+                                        bz + (float((handDice_ >> 10) % 1024) - 512.0f) * 0.01f;
+                                    meteor_.cast(x, z, 0);
+                                }
                             }
-                            if (heard_.meteorite >= 0) emit(heard_.meteorite, bx, bz);
                             core::logf("boss: tick %lld, %s#%u throws its Flame of Evil",
                                        (long long)realm_.tick(),
                                        tables_.kinds[size_t(body->kind)].label.c_str(),

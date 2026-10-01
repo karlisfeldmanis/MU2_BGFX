@@ -57,6 +57,15 @@ public:
     // One of a Death Gorgon's embers: MU's ten BITMAP_FIRE a frame on random bones (:6064-6071),
     // ours as one now and then, rising and burning out through Fire01's four frames.
     void ember(const float at[3]);
+    // The Devil's beam for this frame only: MU's BITMAP_JOINT_LASER + 1 from a hand to the hero
+    // (ZzzCharacter.cpp:2300-2311), ours as one faint strip a hand, drawn as two crossed quads.
+    void beam(const float from[3], const float to[3]);
+    // One of a Death Gorgon's Flame of Evil fireballs, rolling out along the ground from `at` the
+    // way (dx, dz) points: MU's MODEL_FIRE subtype 1 (:1959-1968), ours as a Fire01 sprite.
+    void roll(const float at[3], float dx, float dz);
+    // A Balrog's Flame of Evil circle on the ground at `at`, spreading and fading: MU's
+    // MODEL_CIRCLE and CIRCLE_LIGHT (:1976-1978), ours as a flat ring of Magic_Ground2 in orange.
+    void circle(const float at[3]);
     // The nearest of this frame's glows to `near`, at most two, into the renderer's moving
     // lights; after the spells, which keep their slots.
     uint32_t lights(gfx::PointLight* out, uint32_t max, const float near[3]) const;
@@ -84,6 +93,22 @@ private:
     };
     std::vector<Ember> embers_;
     bgfx::TextureHandle fire_ = BGFX_INVALID_HANDLE;
+    struct Beam {
+        float from[3], to[3];
+    };
+    std::vector<Beam> beams_;
+    bgfx::TextureHandle laser_ = BGFX_INVALID_HANDLE;
+    struct Roll {
+        float position[3];
+        float dx, dz;
+        float age;   // seconds
+    };
+    std::vector<Roll> rolls_;
+    struct Circle {
+        float position[3];
+        float age;   // seconds
+    };
+    std::vector<Circle> circles_;
     bool open_ = false;
 };
 
