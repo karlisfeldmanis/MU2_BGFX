@@ -232,7 +232,7 @@ constexpr float kBadgeRing = 0.6f;   // the ring's half-width, just inside the d
 constexpr float kBadgeSign = 0.72f;  // the sign's scale inside it
 constexpr float kBadgeDark = 0.82f;  // the disc's own alpha
 
-constexpr uint32_t kHandInGold = gfx::rgba(1.0f, 0.78f, 0.16f);
+constexpr uint32_t kHandInGold = gfx::rgba(0.86f, 0.64f, 0.12f);  // "little bit darker"
 
 // The tone each is drawn in: bone for what matters, the quieter inks for the rest.
 uint32_t toneOf(Minimap::Glyph glyph) {
