@@ -68,7 +68,7 @@ struct Ambient {
         // loading screen was heard.
         ma_sound_reset_stop_time_and_fade(&track);
         ma_sound_seek_to_pcm_frame(&track, 0);
-        ma_sound_set_volume(&track, 0.5f);
+        ma_sound_set_volume(&track, 1.0f);  // its full level: half was too quiet (the user)
         ma_sound_set_fade_in_milliseconds(&track, 0.0f, 1.0f, 400);
         ma_sound_start(&track);
     }
