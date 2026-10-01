@@ -1127,6 +1127,10 @@ def read_png(path):
 # Per world, because a type number is a different object in each: Devias's 20 to 27 are its
 # doors, benches and desks, which stand on raised floors and would sink into the terrain.
 # Noria's stays as it has cooked since its objects stood, until somebody judges it.
+#: How many tiles round a placement its baked light is the median of, by world: 1 is the 3x3
+#: every world takes, wider where the painted light jumps between neighbours. See `lit`.
+LIGHT_REACH_BY_WORLD = {"losttower": 5}
+
 GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
 
 # OURS, not MU's: three rocks by the river west of Lorencia stand in the air in MU's own
@@ -1376,10 +1380,20 @@ def cook_placements(world, out_dir, chunk_tiles):
     # texels where a wall meets the ground: the railing at Lorencia (122,109) stood on
     # (10,5,1) and its four metres of iron went black beside a neighbour on (102,94,91). A
     # median ignores one such texel and is the centre wherever the light is smooth.
+    #
+    # Wider in the Lost Tower, the user's 'some of walls has not mathcing colors to sibling
+    # walls' (2026-10-01): its light is painted in pools and dark patches a few tiles across,
+    # and on 3x3 two walls side by side came out up to 139 of 255 apart, one in a pool and its
+    # neighbour beside it. 11x11 takes the floor's light rather than the tile's: neighbours at
+    # most 62 apart, none over 40. Ours; MU lights each object at its own tile.
+    reach = LIGHT_REACH_BY_WORLD.get(world, 1)
+
     def lit(column, row):
         x, y = int(column), int(row)
-        around = [texel(x + dx, y + dy) for dy in (-1, 0, 1) for dx in (-1, 0, 1)]
-        return tuple(sorted(one[channel] for one in around)[4] for channel in range(3))
+        around = [texel(x + dx, y + dy) for dy in range(-reach, reach + 1)
+                  for dx in range(-reach, reach + 1)]
+        middle = len(around) // 2
+        return tuple(sorted(one[channel] for one in around)[middle] for channel in range(3))
 
     chunks_across = (size + chunk_tiles - 1) // chunk_tiles
     buckets = {}

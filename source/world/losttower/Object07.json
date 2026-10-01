@@ -1,0 +1,130 @@
+{
+  "item": "Object07",
+  "mu_name": "Object07",
+  "mu_name_from": "The Lost Tower's object slot 6, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 6,
+  "placements": 351,
+  "profile": "world",
+  "sheets": {
+    "re_05": "lt_re_05.png"
+  },
+  "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix: assets/textures is one flat pool, and Object5's sheet names are other worlds' too.",
+  "sheet_materials": {
+    "re_05": "flagstone"
+  },
+  "why_this_one": "A low block, 2 m by 1, a parapet along the walks. 351. Its box is 2.00 x 1.00 m, 1.13 m tall.",
+  "material_note": "re_04 and re_05 are dressed, carved stone -- panels, friezes, a pointed arch -- and take flagstone; re_07 is a green-grey relief worn to the stone, rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 10,
+      "area": 71594.8,
+      "along": [
+        -50.0,
+        50.0
+      ],
+      "mu_uv": [
+        -1.005,
+        -0.007,
+        2.025,
+        1.004
+      ],
+      "bake_uv": [
+        0.007,
+        0.007,
+        0.988,
+        0.884
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 14,
+      "area": 1932.9,
+      "along": [
+        15.9,
+        40.6
+      ],
+      "mu_uv": [
+        -2.799,
+        0.229,
+        1.93,
+        1.075
+      ],
+      "bake_uv": [
+        0.007,
+        0.673,
+        0.933,
+        0.97
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 14,
+      "area": 1933.0,
+      "along": [
+        -40.4,
+        -15.8
+      ],
+      "mu_uv": [
+        -2.799,
+        0.229,
+        1.93,
+        1.075
+      ],
+      "bake_uv": [
+        0.1,
+        0.761,
+        0.839,
+        0.97
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 14,
+      "area": 1932.9,
+      "along": [
+        15.9,
+        40.6
+      ],
+      "mu_uv": [
+        -2.799,
+        0.229,
+        1.93,
+        1.075
+      ],
+      "bake_uv": [
+        0.286,
+        0.673,
+        0.934,
+        0.97
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 14,
+      "area": 1933.0,
+      "along": [
+        -40.4,
+        -15.8
+      ],
+      "mu_uv": [
+        -2.799,
+        0.229,
+        1.93,
+        1.075
+      ],
+      "bake_uv": [
+        0.473,
+        0.673,
+        0.934,
+        0.993
+      ]
+    }
+  ]
+}

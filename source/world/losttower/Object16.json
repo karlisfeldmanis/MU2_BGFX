@@ -1,0 +1,42 @@
+{
+  "item": "Object16",
+  "mu_name": "Object16",
+  "mu_name_from": "The Lost Tower's object slot 15, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 15,
+  "placements": 7,
+  "profile": "world",
+  "sheets": {
+    "re_04": "lt_re_04.png"
+  },
+  "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix: assets/textures is one flat pool, and Object5's sheet names are other worlds' too.",
+  "sheet_materials": {
+    "re_04": "flagstone"
+  },
+  "why_this_one": "A short wall piece. 7. Its box is 0.86 x 0.96 m, 0.38 m tall.",
+  "material_note": "re_04 and re_05 are dressed, carved stone -- panels, friezes, a pointed arch -- and take flagstone; re_07 is a green-grey relief worn to the stone, rock.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 46,
+      "area": 17352.0,
+      "along": [
+        -47.1,
+        48.6
+      ],
+      "mu_uv": [
+        -0.622,
+        0.459,
+        0.981,
+        0.993
+      ],
+      "bake_uv": [
+        0.002,
+        0.002,
+        0.998,
+        0.487
+      ]
+    }
+  ]
+}
