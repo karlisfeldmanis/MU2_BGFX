@@ -228,7 +228,10 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         if (!struck.alive() || !struck.monster()) return;
         struck.frozenUntil = tick_ + kFrostTicks;
         say(What::Loosed, hero, skill::kIce, 0, 0, struck.id);
-        const int bite = std::max(1, int(float(wound) * kFrostWound));
+        const int energy = hero.points.energy;
+        const int bite = std::max(1, int(float(wound) * kFrostWound)) +
+                         runeDice_.nextInt(int(energy * kRuneEnergyLow),
+                                           int(energy * kRuneEnergyHigh) + 1);
         struck.health = std::max(0, struck.health - bite);
         say(What::Hit, hero, bite, bite, struck.health, struck.id);
         core::logf("frost rune: tick %lld, on #%u, %d more", (long long)tick_, struck.id, bite);
@@ -304,7 +307,17 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     say(What::Loosed, hero, skill::kLightning, 0, 0, struckBy->id);
     core::logf("stormcall: tick %lld, lightning on #%u beside #%u", (long long)tick_,
                struckBy->id, struck.id);
+    // His energy's band on both ends of the swing's, for this one blow, as the Imp's price
+    // lays its rate for one in strikeAt. The first hand's band only: a second hand's is summed
+    // in anyway, and raising an empty one would roll a weapon he does not hold.
+    const Fighter swing = hero.stats;
+    const int low = int(hero.points.energy * kRuneEnergyLow);
+    const int high = int(hero.points.energy * kRuneEnergyHigh);
+    hero.stats.minimumDamage += low;
+    hero.stats.maximumDamage += high;
     strikeAt(hero, *struckBy, kStormcallForce, nullptr, true, false);
+    hero.stats.minimumDamage = swing.minimumDamage;
+    hero.stats.maximumDamage = swing.maximumDamage;
     if (struckBy->alive()) push(*struckBy, hero);
 }
 

@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <string>
 
+#include "sim/rules.h"
 #include "sim/skills.h"
 #include "sim/wear.h"
 
@@ -502,6 +503,43 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
                 line.freeTone = Tone::Orange;
                 line.mark = tip::Mark::RingSet;
                 line.markTone = Tone::Orange;
+                socket.rows.push_back(line);
+                // What the rune strikes for in his hands with THIS weapon (the user, 2026-10-01:
+                // "show damage for dps runes based on base dmg and scaling"): the swing's band as
+                // `sim::reckon` makes it off his strength and agility and this weapon, its share,
+                // and his energy's band on top (sim/items.h, kRuneEnergyLow/High).
+                const bool storm = power->power == sim::Power::Stormcall;
+                const bool frost = power->power == sim::Power::Frost;
+                if ((storm || frost) && weapon) {
+                    sim::Arms arms;
+                    arms.weaponMinimumDamage = row.minimumDamage + bonus;
+                    arms.weaponMaximumDamage = row.maximumDamage + bonus;
+                    const int32_t arm = tables.armNamed(row.name);
+                    arms.archery = arm >= 0 && size_t(arm) < tables.arms.size() &&
+                                   tables.arms[size_t(arm)].missile();
+                    sim::Fighter swing;
+                    int health = 0;
+                    sim::reckon(who.kin, who.level, who.points, arms, &swing, &health);
+                    const float share = storm ? sim::kStormcallForce : sim::kFrostWound;
+                    const int energy = who.points.energy;
+                    const int eLow = int(energy * sim::kRuneEnergyLow);
+                    const int eHigh = int(energy * sim::kRuneEnergyHigh);
+                    const int low = std::max(1, int(float(swing.minimumDamage) * share)) + eLow;
+                    const int high = std::max(1, int(float(swing.maximumDamage) * share)) + eHigh;
+                    socket.rows.push_back(stat(storm ? "Lightning" : "Frost wound",
+                                               std::to_string(low) + " ~ " + std::to_string(high),
+                                               Tone::Yellow));
+                    char sum[96];
+                    std::snprintf(sum, sizeof(sum), "%s %d ~ %d, +%d ~ %d from %d ene",
+                                  storm ? "his swing" : "half the arrow",
+                                  int(float(swing.minimumDamage) * share),
+                                  int(float(swing.maximumDamage) * share), eLow, eHigh, energy);
+                    Row how;
+                    how.free = sum;
+                    how.freeTone = Tone::Gray;
+                    socket.rows.push_back(how);
+                }
+                continue;
             } else {
                 line.free = "Empty Socket";
                 line.freeTone = Tone::Blue;
