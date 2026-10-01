@@ -30,11 +30,18 @@ namespace {
 // Its own device rather than the game's Sound, which the worker opens partway through the load
 // and the mode owns. Kept for the life of the process, so the fade out at the end of one load
 // runs on after the spinner has gone, and the next load fades the same track in again.
+//
+// And one stretch from the first spinner to the world (the user, 2026-10-01: 'use that loading
+// sound also in char selection screen ... we stop playing only when we connected to world'):
+// the character screen's load keeps it going (Preloader::run's `keepAmbient`), the screen
+// plays it in place of MuTheme, and the world's load fades it out once the world is up. A
+// track already sounding goes on where it is rather than starting over.
 struct Ambient {
     ma_engine engine{};
     ma_sound track{};
     bool open = false;
     bool tried = false;
+    bool playing = false;  // started and not yet asked to stop
 
     void start(const std::string& path, float level) {
         if (!tried) {
@@ -54,6 +61,8 @@ struct Ambient {
         }
         if (!open) return;
         ma_engine_set_volume(&engine, std::clamp(level, 0.0f, 1.0f));
+        if (playing) return;
+        playing = true;
         // The last load's fade out is a stop scheduled on the track, and it outlives the stop:
         // started again without clearing it, the track stopped at once and only the first
         // loading screen was heard.
@@ -65,7 +74,9 @@ struct Ambient {
     }
     // Faded rather than cut, so the world's own sound comes up under its tail.
     void stop() {
-        if (open) ma_sound_stop_with_fade_in_milliseconds(&track, 1200);
+        if (!open || !playing) return;
+        ma_sound_stop_with_fade_in_milliseconds(&track, 1200);
+        playing = false;
     }
 };
 
@@ -76,7 +87,12 @@ Ambient& ambient() {
 
 }  // namespace
 
-bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly) {
+void Preloader::ambientVolume(float level) {
+    if (ambient().open) ma_engine_set_volume(&ambient().engine, std::clamp(level, 0.0f, 1.0f));
+}
+
+bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
+                    bool keepAmbient) {
     std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
     core::Loading::reset();
     ambient().start(core::join(ctx.paths.assets, "music/loading.mp3"),
@@ -286,7 +302,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         }
     }
     loader.join();
-    ambient().stop();
+    if (!keepAmbient) ambient().stop();
     ctx.window.holdVsync(false);
     if (bgfx::isValid(dot)) bgfx::destroy(dot);
     core::logf("preloader: the world loaded behind the spinner in %.2f s; %d spinner frames "

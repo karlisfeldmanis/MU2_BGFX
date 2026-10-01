@@ -198,16 +198,13 @@ bool LobbyMode::open(Context& ctx) {
             sound_.setVolume(float(args.volume) / 100.0f);
             click_ = sound_.load("window_click", false);
             refused_ = sound_.load("window_refused", false);
-            // MU's anthem. MuMain plays login_theme.mp3 here, from the login screen through
-            // this one until loading (LoginScene.cpp:384, LoadingScene.cpp:84), and MuTheme.mp3
-            // on its login window (LoginMainWin.cpp:112). The user chose main_theme.mp3 on
-            // 2026-09-27, then on 2026-09-29 moved it to Lorencia's fights ("use other music
-            // when game start"), so MuTheme here. Ours.
-            const std::string theme = core::join(assets, "music/MuTheme.mp3");
-            if (core::fileExists(theme)) sound_.music(theme);
+            // No anthem: the loading ambient plays on here from the spinner before it, and the
+            // world's load ends it (the user, 2026-10-01, over MuTheme; app/preloader.cpp).
+            // MuMain plays login_theme.mp3 from the login screen through this one until
+            // loading (LoginScene.cpp:384, LoadingScene.cpp:84). Ours.
         }
         return interfaceUp_;
-    }, &quitEarly_);
+    }, &quitEarly_, /*keepAmbient=*/true);
     if (!up) {
         core::logError("the character screen did not open");
         world_.shutdown();
@@ -312,6 +309,7 @@ void LobbyMode::frame(Context& ctx, const Frame& at) {
             const game::Menu::Settings& set = menu_.settings();
             applySettings(ctx.window, set, args);
             sound_.setVolume(float(set.volume) / 100.0f);
+            Preloader::ambientVolume(args.mute ? 0.0f : float(set.volume) / 100.0f);
         }
     } else {
         menu_.update(seconds, w, h, game::Pointer{}, false, "Character Select", nullptr);

@@ -27,7 +27,13 @@ public:
     // leaves.
     //
     // The return is `load`'s own answer.
-    static bool run(Context& ctx, const std::function<bool()>& load, bool* quitEarly);
+    //
+    // The loading ambient plays under the spinner and fades out when it goes, unless
+    // `keepAmbient`: the character screen's load, which leaves it playing on the screen.
+    static bool run(Context& ctx, const std::function<bool()>& load, bool* quitEarly,
+                    bool keepAmbient = false);
+    // The ambient's level, 0 to 1, as the menu's volume changes; a muted run stays silent.
+    static void ambientVolume(float level);
 };
 
 }  // namespace mu::app
