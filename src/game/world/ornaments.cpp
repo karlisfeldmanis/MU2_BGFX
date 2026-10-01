@@ -129,10 +129,18 @@ constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
 // (flare01) on the slab, Scale `Luminosity * 5`, colour `Luminosity * (0.6, 0.3, 0.1)`. Its
 // point is TransformPosition(BoneTransform[1], Position) with `Position` never set (:2779) and
 // a one-bone model, so where MU drew it is undefined. Ours, on the user's word ('there was
-// some more lighting thingies', then the slab glows): at the slab's own origin, the middle of
-// its foot, at MU's size and colour.
-constexpr float kSlabFlareScale = 5.0f;
+// some more lighting thingies', then the slab glows; then 'need improbments, looked buggy'):
+// - on top of the slab and lifted clear of it: at the slab's foot the floor cut the glow
+//   with a hard edge, since a sprite has no soft depth;
+// - a quarter of MU's Scale, the share Lorencia's lanterns take for the same reason
+//   (kLanternGlowShare), so it does not cut through the steps beside it either;
+// - its size held, and its level eased towards each roll rather than jumping to it 25 times a
+//   second, which read as a fault rather than a flame.
+constexpr float kSlabFlareScale = 5.0f * kLanternGlowShare;
 constexpr float kSlabFlareColour[3] = {0.6f, 0.3f, 0.1f};
+constexpr float kSlabTopMetres = 0.43f;    // Object10's top, 42.6 units over its origin
+constexpr float kSlabFlareLift = 0.3f;     // clear of the top under MU's pitched camera
+constexpr float kSlabFlareEaseSeconds = 0.15f;
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
@@ -256,7 +264,13 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
             }
         } else if (world == "losttower" && name == "Object10") {
             Flare flare;
-            for (int a = 0; a < 3; ++a) flare.at[a] = town.cooked().instances[i].position[a];
+            // The slab's top middle, through the placement's own transform (pitch, scale and
+            // all), then straight up.
+            const content::TownInstance& at = town.cooked().instances[i];
+            float m[16];
+            content::placementTransform(at.pitch, at.yaw, at.roll, at.scale, at.position, m);
+            for (int a = 0; a < 3; ++a) flare.at[a] = kSlabTopMetres * m[4 + a] + m[12 + a];
+            flare.at[1] += kSlabFlareLift;
             flares_.push_back(flare);
         } else if (world == "losttower") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
@@ -504,6 +518,8 @@ void Ornaments::update(float seconds, const Sway& sway) {
         lanternWait_ = 1.0f / kLanternHz;
         luminosity_ = float(next() % 30u + 70u) * 0.01f;
     }
+    flareLevel_ += (luminosity_ - flareLevel_) *
+                   (1.0f - std::exp(-seconds / kSlabFlareEaseSeconds));
 }
 
 void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
@@ -588,9 +604,8 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
         for (const Flare& flare : flares_) {
             gfx::Sprite sprite;
             for (int a = 0; a < 3; ++a) sprite.position[a] = flare.at[a];
-            sprite.halfWidth = sprite.halfHeight =
-                0.5f * kSheetMetres * kSlabFlareScale * luminosity_;
-            for (int k = 0; k < 3; ++k) sprite.colour[k] = kSlabFlareColour[k] * luminosity_;
+            sprite.halfWidth = sprite.halfHeight = 0.5f * kSheetMetres * kSlabFlareScale;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = kSlabFlareColour[k] * flareLevel_;
             sprite.colour[3] = 1.0f;
             sprite.sheet = light_;
             sprite.blend = gfx::Blend::Additive;

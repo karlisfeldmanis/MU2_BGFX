@@ -163,6 +163,7 @@ private:
     float strikes_[4][3] = {};
     size_t strikeCount_ = 0;
     float luminosity_ = 1.0f;  // this frame's roll, shared by every lantern as MU's is
+    float flareLevel_ = 0.85f;  // the slab flares' level, eased towards luminosity_
     float lanternWait_ = 0.0f;
     float spun_ = 0.0f;  // seconds, for the machine's star: WorldTime's own clock, wrapped
     uint32_t seed_ = 0x51AB1Eu;
