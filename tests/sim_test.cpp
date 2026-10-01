@@ -3845,7 +3845,14 @@ void testTraps() {
     check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
     size_t count = 0;
     const sim::TrapSpot* spots = sim::trapSpots(&count);
-    checkEqual(int64_t(count), 58, "OpenMU's 58 trap spots");
+    // The Dungeon's own; the table carries the Lost Tower's 148 Meteorite Traps too.
+    int64_t inDungeon = 0, inTower = 0;
+    for (size_t i = 0; i < count; ++i) {
+        if (spots[i].map == 1) ++inDungeon;
+        if (spots[i].map == 4 && spots[i].number == 103) ++inTower;
+    }
+    checkEqual(inDungeon, 58, "OpenMU's 58 trap spots");
+    checkEqual(inTower, 148, "and the Lost Tower's 148 Meteorite Traps");
     {
         sim::Realm realm;
         check(realm.raise(&dungeon, 7, 108, 246), "a realm raises in the Dungeon");

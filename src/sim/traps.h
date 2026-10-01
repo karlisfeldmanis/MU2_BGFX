@@ -1,4 +1,5 @@
-// The Dungeon's traps: OpenMU Version075's three trap breeds and their 58 spots, carried in code
+// The Dungeon's traps and the Lost Tower's: OpenMU Version075's three trap breeds and their 58
+// spots in the Dungeon, and the tower's Meteorite Trap on 148 (see below), carried in code
 // as the gates are (sim/gates.h) -- mu.db has neither, and a trap is not a monster: it has no
 // body to hit, never moves and never dies (TrapIntelligenceBase.RegisterHit throws).
 //
@@ -12,6 +13,12 @@
 //   tiles nobody can enter, so as OpenMU has them they never fire. Fired here as the Fire Trap
 //   fires, at its own AttackRange 4 -- ours, the user's (2026-09-30), docs/dungeon-port.md
 //   decision 2.
+//
+// - **Meteorite Trap (103)**, the Lost Tower's, AttackAreaWhenPressedTrapIntelligence: when a
+//   player stands ON its tile, everyone within its AttackRange (3) off a safe tile. With one
+//   player that is the hero on its tile, so it is `pressed`, its 3 kept as recorded. MuMain draws
+//   it as Object26 (CreateCharacter(Key, 25, ...), ZzzCharacter.cpp:14283-14284), and its blow
+//   as a meteor (game/play.cpp).
 //
 // The client has a 59th, a Fire Trap object at 69,73 with no OpenMU row; left out, the user's
 // (decision 3). MuMain draws each as the Dungeon object it stands on: 100 as model 39

@@ -471,14 +471,25 @@ void Play::update(double seconds) {
                 cue.miss = happening.a == 0;
                 cue.thrown = true;
                 cue.fuse = 0.0f;
-                showing_.schedule(cue);
                 float at[3] = {0.0f, 0.0f, 0.0f}, facing[2] = {0.0f, 0.0f};
                 int32_t number = 0;
                 trapShow_.fired(size_t(happening.b), at);
-                if (trapShow_.where(size_t(happening.b), at, facing, &number)) {
+                const bool placed = trapShow_.where(size_t(happening.b), at, facing, &number);
+                // The Lost Tower's Meteorite Trap: its Flame of Evil drawn as a meteor on him,
+                // eMeteorite where it lands (ZzzCharacter.cpp:1999), and the blow shown as the
+                // Lich's is, when the stone lands.
+                if (placed && number == 103 && ground_) {
+                    const sim::Body& body = realm_.hero();
+                    const float tile = ground_->metresPerTile();
+                    const float tx = (body.x + 0.5f) * tile, tz = -(body.y + 0.5f) * tile;
+                    meteor_.cast(tx, tz, 0);
+                    if (heard_.meteorite >= 0) emit(heard_.meteorite, tx, tz);
+                    cue.fuse = Meteor::fallSeconds();
+                } else if (placed) {
                     const int sound = number == 102 ? heard_.trapFlame : heard_.grate;
                     if (sound >= 0) emit(sound, at[0], at[2]);
                 }
+                showing_.schedule(cue);
             }
             if (happening.what == sim::What::Barred && happening.who == heroId) {
                 // Said over him, once a step into the box: MU's refusal is a system line

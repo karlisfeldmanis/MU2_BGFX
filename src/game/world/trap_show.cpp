@@ -65,13 +65,17 @@ constexpr size_t kMostStones = 600;
 // second at each, a steady trickle; ours, at the user's word (2026-10-01: 'we need this stone
 // droping aniamtions happend more rarely'), a pebble every second or so.
 constexpr uint32_t kStoneOdds = 30;
+// The Meteorite Trap's plate: how far it is sunk (Object26 is 9.3 cm thick; at 8.5 cm the uneven
+// floor swallowed it whole) and its light's share.
+constexpr float kPlateSink = 0.04f;
+constexpr float kPlateShade = 0.6f;
 
 }  // namespace
 
 bool TrapShow::open(const std::string& assetDir, const std::string& world,
                     content::Textures& textures, const content::Showing& table) {
     shutdown();
-    if (world != "dungeon") return true;
+    if (world != "dungeon" && world != "losttower") return true;
     const std::string dir = core::join(assetDir, "cooked/" + world);
     const auto load = [&](const char* model) -> const content::Mesh* {
         std::vector<uint8_t> bytes = core::readFile(core::join(dir, std::string("meshes/") + model + ".mum"));
@@ -87,6 +91,10 @@ bool TrapShow::open(const std::string& assetDir, const std::string& world,
         meshes_.push_back(std::move(mesh));
         return meshes_.back().get();
     };
+    if (world == "losttower") {
+        plate_ = load("Object26");
+        return true;
+    }
     lance_ = load("Object40");
     stick_ = load("Object41");
     fire_ = load("Object52");
@@ -140,7 +148,7 @@ void TrapShow::shutdown() {
     library_.reset();
     for (auto& mesh : meshes_) mesh->shutdown();
     meshes_.clear();
-    lance_ = stick_ = fire_ = saw_ = stone_ = nullptr;
+    lance_ = stick_ = fire_ = saw_ = stone_ = plate_ = nullptr;
     ground_ = nullptr;
     stones_.clear();
     fire2_ = BGFX_INVALID_HANDLE;  // the Textures cache owns it
@@ -163,7 +171,10 @@ void TrapShow::stand(const std::vector<sim::Realm::Trap>& traps, const content::
     for (const sim::Realm::Trap& trap : traps) {
         Stood one;
         one.number = trap.number;
-        one.mesh = trap.number == 100 ? lance_ : trap.number == 101 ? stick_ : fire_;
+        one.mesh = trap.number == 100   ? lance_
+                   : trap.number == 101 ? stick_
+                   : trap.number == 103 ? plate_
+                                        : fire_;
         one.position[0] = (float(trap.column) + 0.5f) * perTile;
         one.position[2] = -(float(trap.row) + 0.5f) * perTile;
         one.position[1] = ground.heightAt(one.position[0], one.position[2]);
@@ -172,6 +183,14 @@ void TrapShow::stand(const std::vector<sim::Realm::Trap>& traps, const content::
         one.facing[0] = float(trap.dx);
         one.facing[1] = -float(trap.dy);
         ground.lightAt(trap.column, trap.row, one.light);
+        // **Ours** (the user, 2026-10-01: "trat trap is very good vissible, need to integrate it
+        // better on world"): the Meteorite Trap's plate sunk to lie flush with the floor, its
+        // 9 cm edge below the ground, and lit a little under the floor round it, so it reads as a
+        // carved tile of the floor rather than a slab laid on it.
+        if (trap.number == 103) {
+            one.position[1] -= kPlateSink;
+            for (float& channel : one.light) channel *= kPlateShade;
+        }
         if (trap.number == 101 && body_ && figure < figures_.size()) {
             one.figure = int(figure);
             Figure& f = figures_[figure++];

@@ -10,6 +10,9 @@
 //     (MapManager.cpp:1131-1134) -- ten keys a second over the cook's four. Its rest is held on
 //     the strike's first key: the cook keeps the one clip, and action 0 is one key.
 //
+// And the Lost Tower's Meteorite Trap (103) as Object26, a carved plate on its tile; its blow is a
+// meteor on him (game/play.cpp).
+//
 // Each stands on its tile's centre on the ground, turned to its facing: MU's placement angle is
 // 0 for SouthWest, 90 for SouthEast and 180 for NorthEast, which is atan2(dx, -dy).
 #pragma once
@@ -75,6 +78,8 @@ private:
     const content::Mesh* lance_ = nullptr;
     const content::Mesh* stick_ = nullptr;
     const content::Mesh* fire_ = nullptr;
+    // The Lost Tower's Meteorite Trap: its plate, Object26 (sim/traps.h).
+    const content::Mesh* plate_ = nullptr;
     std::unique_ptr<ClipLibrary> library_;
     std::unique_ptr<FigureBody> body_;
     // The Lance Trap's saw in the air (ZzzEffect.cpp:1825-1830): MU's units a reference frame.

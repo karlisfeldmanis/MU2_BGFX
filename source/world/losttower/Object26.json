@@ -1,0 +1,46 @@
+{
+  "item": "Object26",
+  "mu_name": "Object26",
+  "mu_name_from": "The Lost Tower's object slot 25, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1123).",
+  "world": "losttower",
+  "object_type": 25,
+  "placements": 148,
+  "profile": "world",
+  "sheets": {
+    "t17": "lt_t17_warm.png"
+  },
+  "sheet_from": "Data/Object5/t17, 64 square, already decoded under the tower's lt_ prefix.",
+  "sheet_materials": {
+    "t17": "flagstone"
+  },
+  "sheet_materials_from": "Read off the sheet: grey stone carved with a ring and a scroll border, the floor's own flagstone.",
+  "why_this_one": "The Meteorite Trap, OpenMU's NPC 103: MuMain hides type 25 as scenery (HiddenMesh -2, ZzzObject.cpp:4026-4028) and draws the live trap from this model (CreateCharacter(Key, 25, ...), ZzzCharacter.cpp:14283-14284). A 1.25 m square plate, four triangles, laid on each of the 148 trap tiles by game/world/trap_show.h.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 4,
+      "area": 15789.3,
+      "along": [
+        -62.5,
+        62.5
+      ],
+      "mu_uv": [
+        -0.001,
+        -0.005,
+        1.008,
+        1.002
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.982,
+        0.996
+      ]
+    }
+  ],
+  "sheet_relief": {
+    "t17": 0.35
+  },
+  "sheet_grade_from": "Ours, as the floor machines' (Object20, Object21): the plate's grey t17 graded to the main walls' warm re_04 (lt_t17_warm) and its relief at 0.35, so it lies in the same masonry rather than going blue under the cold key (the user, 2026-10-01: 'somewthing wroong with color for traps, not intergrated well')."
+}
