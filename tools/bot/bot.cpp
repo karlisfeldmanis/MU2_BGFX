@@ -14,10 +14,11 @@
 // its own ticks, so a long run sees them come back.
 //
 // Not the seeded hunt: `mu2 --headless` is the log the tests compare, and this changes nothing
-// in it.
+// in it. The realm's own log is silenced for the hours of play; BOT_LOG=1 lets it through, which
+// is where a skill pressed and never thrown says why.
 //
 //   build/bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] [--until-jewel]
-//             [--no-quests] [--fights] [--build s,a,v,e] [--quiet]
+//             [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]
 
 #include <algorithm>
 #include <cstdarg>
@@ -86,6 +87,7 @@ struct Options {
     bool quiet = false;
     bool fights = false;  // --fights: a line every half hour on how he fights
     int build[4] = {};    // --build s,a,v,e: the weights his points are spent by, else his class's
+    bool noShopSkills = false;  // --no-shop-skills: buys no orb or scroll, reads only what drops
 };
 
 std::string clock(int64_t tick) {
@@ -368,6 +370,10 @@ private:
     }
 
     // ---- how he fights (--fights) ---------------------------------------------------------
+    static bool isSpell(int skill) {
+        const sim::SkillRow* row = sim::skillNumbered(skill);
+        return row && row->wizardry;
+    }
     struct Tally {
         int landed = 0, missed = 0, kills = 0, drunk = 0;
         int64_t dealt = 0, taken = 0, alive = 0, dry = 0, walking = 0;
@@ -448,7 +454,9 @@ private:
                     if (h.who == me) ++tally_.missed;
                     break;
                 case sim::What::Loosed:
-                    if (h.who == me) ++tally_.cast[h.a];
+                case sim::What::Cast:
+                    // A spell says Loosed when it leaves his hands; a knight's skill says Cast.
+                    if (h.who == me && (h.what == sim::What::Loosed || !isSpell(h.a))) ++tally_.cast[h.a];
                     break;
                 case sim::What::QuestStep:
                     if (h.a >= 0 && h.a < sim::kQuests && h.c >= 0 && h.c < sim::questAt(h.a).stepCount &&
@@ -924,17 +932,29 @@ private:
         realm_->ask(request);
     }
 
-    // Presses a skill that is ready on the body he fights, in turn, as the headless hand does.
+    // Presses the strongest skill that is ready on the body he fights: a blow's force times
+    // what it rolls on (a spell adds its own damage to the band), the guards and buffs aside.
     void press(uint32_t at) {
-        for (int n = 1; n <= sim::skillCount(); ++n) {
-            const int i = (pressed_ + n) % sim::skillCount();
+        const sim::Body& hero = realm_->hero();
+        const sim::Wearer w = realm_->wearer();
+        int best = -1;
+        double strongest = 0.0;
+        for (int i = 0; i < sim::skillCount(); ++i) {
             const sim::SkillRow& row = sim::skillAt(i);
             if (!realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
-            if (realm_->hero().mana < row.mana) continue;
-            realm_->invoke(row.number, at);
-            pressed_ = i;
-            return;
+            if (hero.mana < row.mana || row.onSelf() || !row.suits(w.hand)) continue;
+            const double base = row.wizardry
+                                    ? ((w.wizardMinimum + w.wizardMaximum) / 2.0 + row.damage * 1.25) * w.wizardryRate
+                                    : blow();
+            const double hit = base * sim::force(row, hero.points);
+            if (hit > strongest) {
+                strongest = hit;
+                best = i;
+            }
         }
+        if (best < 0) return;
+        realm_->invoke(sim::skillAt(best).number, at);
+        pressed_ = best;
     }
 
     // Whether he needs the town: potions out, the bag full, the gear worn down, or money enough
@@ -1444,6 +1464,7 @@ private:
         const auto tried = triedOn_.find(row.name);
         if (tried != triedOn_.end() && tried->second > clock_) return false;
         const bool orb = row.teaches != 0;
+        if (orb && options_.noShopSkills) return false;
         if (!orb && (sim::placeOf(row) < 0 || sim::ammunition(row))) return false;
         if (orb && realm_->knows(row.teaches)) return false;
         const sim::Held held{item, int16_t(offer.refinement), int16_t(1)};
@@ -1451,6 +1472,10 @@ private:
         // which says no to what he cannot read yet.
         if (orb) {
             if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) return false;
+            // A knight's skill is thrown with a family of weapons: one his hand cannot throw is
+            // not worth the Zen yet (a guard is read off the shield, and is his either way).
+            const sim::SkillRow* teaches = sim::skillNumbered(row.teaches);
+            if (teaches && !teaches->onSelf() && !teaches->suits(realm_->wearer().hand)) return false;
             if (realm_->hero().level < row.teachesLevel || realm_->hero().points.energy < row.teachesEnergy) {
                 return false;
             }
@@ -1480,7 +1505,11 @@ private:
     }
 
     void buyGear(const sim::Offer* shelf, int count) {
+        // Orbs and scrolls first, then gear: a skill his weapon throws outlasts any piece.
+        for (int pass = 0; pass < 2; ++pass)
         for (int i = 0; i < count; ++i) {
+            const int at = tables_->itemAt(shelf[i].group, shelf[i].number);
+            if (at < 0 || (tables_->items[size_t(at)].teaches != 0) != (pass == 0)) continue;
             if (!worthTrying(*tables_, shelf[i])) continue;
             const int item = tables_->itemAt(shelf[i].group, shelf[i].number);
             const content::ItemRow& row = tables_->items[size_t(item)];
@@ -1578,6 +1607,7 @@ int main(int argc, char** argv) {
         else if (a == "--until-jewel") options.untilJewel = true;
         else if (a == "--no-quests") options.quests = false;
         else if (a == "--fights") options.fights = true;
+        else if (a == "--no-shop-skills") options.noShopSkills = true;
         else if (a == "--build") {
             std::sscanf(next(), "%d,%d,%d,%d", &options.build[0], &options.build[1], &options.build[2],
                         &options.build[3]);
@@ -1585,11 +1615,11 @@ int main(int argc, char** argv) {
         else if (a == "--quiet") options.quiet = true;
         else {
             std::printf("usage: bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] "
-                        "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--quiet]\n");
+                        "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--no-shop-skills] [--quiet]\n");
             return 2;
         }
     }
-    core::logSilence(true);
+    if (!std::getenv("BOT_LOG")) core::logSilence(true);
 
     std::vector<Outcome> outcomes;
     for (int run = 0; run < options.runs; ++run) {

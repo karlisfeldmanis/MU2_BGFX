@@ -88,9 +88,13 @@ constexpr Offer kBlacksmith[] = {
 
 // Pasi (shop2): Fire Ball and Power Wave, the Pad set, Bone gloves and boots, two staves. **And
 // the Scroll of Soul Barrier after the two, which is ours** (the user, 2026-09-28): the wizard's
-// guard, priced as the knight's Orb of Defense. The other scrolls drop, or Izabel sells them.
+// guard, priced as the knight's Orb of Defense. **And the Scroll of Meteorite in the column by
+// the Pad Armor, ours too** (the user, 2026-10-01: "let Pasi sell Meteorite"): the first spell a
+// wizard can buy with a multiplier on it (its force is 2), since the bot's runs showed him
+// trailing the knight at a flat one. The other scrolls drop, or Izabel sells them.
 constexpr Offer kMage[] = {
     scroll(0, 3), scroll(1, 10), scroll(2, 15), gear(3, kHelms, 2, 0), gear(5, kArmours, 2, 0),
+    scroll(7, 1),
     gear(16, kPants, 2, 0), gear(18, kGloves, 2, 0), gear(20, kBoots, 2, 0),
     gear(22, kGloves, 4, 0), gear(32, kBoots, 4, 0), gear(34, kStaves, 0, 0),
     gear(35, kStaves, 1, 0),
