@@ -712,6 +712,8 @@ void Play::update(double seconds) {
                     cue.target = happening.whom;
                     cue.damage = happening.a;
                     cue.taken = taken;
+                    // And what his shield took of the pulse, which shows ABSORBED as a blow's does.
+                    cue.absorbed = absorbed;
                     cue.poison = true;
                     cue.thrown = true;
                     cue.fuse = 0.0f;

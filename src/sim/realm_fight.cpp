@@ -600,11 +600,22 @@ void Realm::poisonPulse(Body& beast) {
                         ? beast.poisonDamage
                         : std::max(1, int(float(beast.health) * kHeroPoisonShare)) *
                               std::max(1, beast.player ? beast.poisonStacks : 1);
+    // His shield's nine tenths first, as every blow and trap on him (Realm::strikeAt): the user,
+    // 2026-10-01, "DS shield has absorb also poison damage, all damage". Monsters carry none.
+    int wound = due;
+    if (beast.sd > 0) {
+        const int onto = int(float(due) * kShieldShare);
+        const int over = onto - beast.sd;
+        beast.sd = std::max(0, beast.sd - onto);
+        wound = due - onto + std::max(0, over);
+    }
     // Never the last point: a poison leaves one health, and the kill is a blow's.
-    const int bite = std::min(due, beast.health - 1);
-    if (bite <= 0) return;
-    beast.health -= bite;
-    say(What::Hit, *by, bite, bite, beast.health, beast.id);
+    const int bite = std::min(wound, beast.health - 1);
+    const int said = due - wound + std::max(0, bite);
+    if (said <= 0) return;
+    if (bite > 0) beast.health -= bite;
+    // The pulse whole, as a blow says its damage: the drawing reads the shield's share off it.
+    say(What::Hit, *by, said, said, beast.health, beast.id);
     happenings_.back().thrown = true;
     happenings_.back().poisoned = true;
 }
