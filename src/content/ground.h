@@ -192,6 +192,11 @@ private:
     // height: the Lost Tower's causeways, whose sides fall to the void's corners at 0 and with
     // no wall over them stood up as lit grey slopes. The world's `void.rim`.
     bool abyssRim_ = false;
+    // How many tiles in from the void the ground fades to its black, in the frame and after
+    // the haze (fs_ground's abyssEdge), so a floor's last metres reach the void's own black:
+    // the Lost Tower's causeways, which MU's terrain light takes down to its black fog. 0 off.
+    // The world's `void.blend`.
+    float abyssBlend_ = 0.0f;
     bgfx::TextureHandle abyss_ = BGFX_INVALID_HANDLE;
     float abyssParams_[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     std::vector<float> height_;  // metres, [row * size + column]

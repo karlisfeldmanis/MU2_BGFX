@@ -176,7 +176,7 @@ GRASS_BY_MAP = {
 #: walkway's level, and the abyss takes everything below it to black over 1.7 m, so the sides
 #: melt into the dark as MU's do (the user's MU shot of floor 7's causeway, 2026-10-01).
 VOID_BY_MAP = {
-    4: {"start": 0.1, "depth": 1.6, "rim": True},
+    4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
 }
 
 #: How much of MU's baked light's variation the ground keeps, where a world differs from

@@ -131,6 +131,13 @@ vec3 abyss(vec3 colour, vec3 wpos)
 	float level = texture2D(s_abyss, vec2(wpos.x, -wpos.z) * u_abyss.z + u_abyss.w).r;
 	return colour * (1.0 - smoothstep(u_abyss.x, u_abyss.x + u_abyss.y, level - wpos.y));
 }
+// And how near the void a point is, 0 at its edge to 1 a few tiles in (the world's void.blend),
+// 1 everywhere else: the ground's own fade into the void, laid after the haze (fs_ground).
+float abyssEdge(vec3 wpos)
+{
+	if (u_abyss.y <= 0.0) return 1.0;
+	return texture2D(s_abyss, vec2(wpos.x, -wpos.z) * u_abyss.z + u_abyss.w).g;
+}
 #endif
 
 // Karis' analytic fit to the split-sum BRDF, so there is no lookup texture to carry.

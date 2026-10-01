@@ -24,7 +24,8 @@
  "void": {
   "start": 0.1,
   "depth": 1.6,
-  "rim": true
+  "rim": true,
+  "blend": 2.0
  },
  "light_depth": 1.0,
  "objects": [

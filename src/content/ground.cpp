@@ -646,6 +646,7 @@ bool Ground::load(const std::string& worldDir, const std::string& worldName, Tex
     abyssStart_ = float(chasm["start"].numberOr(1.5));
     abyssDepth_ = float(chasm["depth"].numberOr(5.0));
     abyssRim_ = chasm["rim"].boolOr(false);
+    abyssBlend_ = float(chasm["blend"].numberOr(0.0));
 
     if (!readGrids(worldDir, doc["height"].stringOr("height.png"),
                    doc["attributes"].stringOr("attributes.png"))) {
@@ -1108,12 +1109,60 @@ void Ground::buildAbyss() {
             }
         }
     }
-    std::vector<uint16_t> texels(source.size());
+    // And with `blend`, how far each point is from the void, in tiles, eased from 0 at a point
+    // touching a void tile to 1 at `blend`: an eight-way walk out from the void's edge, the
+    // diagonal step its true length. 1 everywhere without it.
+    std::vector<float> edge(source.size(), 1.0f);
+    if (abyssBlend_ > 0.0f) {
+        std::vector<float> dist(source.size(), 1e9f);
+        std::vector<int> open;
+        for (int r = 0; r < n; ++r) {
+            for (int c = 0; c < n; ++c) {
+                bool touches = false;
+                for (int tr = r - 1; tr <= r && !touches; ++tr) {
+                    for (int tc = c - 1; tc <= c && !touches; ++tc) touches = isVoid(tc, tr);
+                }
+                if (touches) {
+                    dist[size_t(r * n + c)] = 0.0f;
+                    open.push_back(r * n + c);
+                }
+            }
+        }
+        // A few sweeps of relaxation, enough to carry `blend` tiles in from every edge.
+        const int sweeps = int(std::ceil(abyssBlend_)) * 2 + 2;
+        for (int s = 0; s < sweeps; ++s) {
+            bool moved = false;
+            for (int r = 0; r < n; ++r) {
+                for (int c = 0; c < n; ++c) {
+                    float& here = dist[size_t(r * n + c)];
+                    for (int dr = -1; dr <= 1; ++dr) {
+                        for (int dc = -1; dc <= 1; ++dc) {
+                            const int rr = r + dr, cc = c + dc;
+                            if ((dr == 0 && dc == 0) || rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
+                            const float step = (dr != 0 && dc != 0) ? 1.41421356f : 1.0f;
+                            const float via = dist[size_t(rr * n + cc)] + step;
+                            if (via < here) {
+                                here = via;
+                                moved = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!moved) break;
+        }
+        for (size_t i = 0; i < edge.size(); ++i) {
+            const float t = std::clamp(dist[i] / abyssBlend_, 0.0f, 1.0f);
+            edge[i] = t * t * (3.0f - 2.0f * t);
+        }
+    }
+    std::vector<uint16_t> texels(source.size() * 2);
     for (size_t i = 0; i < source.size(); ++i) {
         const float level = source[i] >= 0 ? rimLevel[size_t(source[i])] : height_[i];
-        texels[i] = bx::halfFromFloat(level);
+        texels[i * 2] = bx::halfFromFloat(level);
+        texels[i * 2 + 1] = bx::halfFromFloat(edge[i]);
     }
-    abyss_ = bgfx::createTexture2D(uint16_t(n), uint16_t(n), false, 1, bgfx::TextureFormat::R16F,
+    abyss_ = bgfx::createTexture2D(uint16_t(n), uint16_t(n), false, 1, bgfx::TextureFormat::RG16F,
                                    BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP,
                                    bgfx::copy(texels.data(), uint32_t(texels.size() * 2)));
     // Texel (c, r) is the point at x = c tiles and z = -r tiles, sampled at its centre.
