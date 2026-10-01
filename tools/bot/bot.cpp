@@ -563,8 +563,23 @@ private:
     // monster's whole defence off it; at four tenths he dealt a third of the damage and killed
     // half as much (the bot's runs, 2026-10-01).
     void spend() {
-        const int points = realm_->hero().pointsInHand;
+        int points = realm_->hero().pointsInHand;
         if (points <= 0) return;
+        // First the strength his class's best armour at his level asks (Needs: 3 x drop level x
+        // raw / 100 + 20), as a player keeps up with his set: a wizard of level 114 with all of it
+        // in energy had 21 and could not wear even the Pad Armor, which asks 29.
+        const sim::Body& hero = realm_->hero();
+        int asked = 0;
+        for (const content::ItemRow& row : tables_->items) {
+            if (!row.armour() || row.dropLevel > hero.level) continue;
+            if (row.classes != 0 && (row.classes & (1 << int(options_.kin))) == 0) continue;
+            asked = std::max(asked, sim::asks(row, 0).strength);
+        }
+        if (const int short_ = std::min(points, asked - hero.points.strength); short_ > 0) {
+            realm_->spend(short_, 0, 0, 0);
+            points -= short_;
+            if (points <= 0) return;
+        }
         int w[4] = {4, 2, 3, 0};  // strength, agility, vitality, energy
         if (options_.kin == sim::Kin::DarkWizard) { w[0] = 1; w[1] = 1; w[2] = 2; w[3] = 6; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
@@ -979,6 +994,22 @@ private:
         realm_->ask(request);
     }
 
+    // Raises his guard when it has lapsed and something is on him: the knight's Defense or the
+    // wizard's Soul Barrier, each drawn up behind a shield (SkillRow::suits off the left hand).
+    bool guard() {
+        const sim::Body& hero = realm_->hero();
+        if (hero.boonUntil > realm_->tick()) return false;
+        const sim::Wearer w = realm_->wearer();
+        for (int i = 0; i < sim::skillCount(); ++i) {
+            const sim::SkillRow& row = sim::skillAt(i);
+            if (row.boonTicks <= 0 || !realm_->knows(row.number) || realm_->cooling(row.number) > 0) continue;
+            if (hero.mana < row.mana || !row.suits(w.offHand)) continue;
+            realm_->invoke(row.number, hero.id);
+            return true;
+        }
+        return false;
+    }
+
     // Presses the strongest skill that is ready on the body he fights: a blow's force times
     // what it rolls on (a spell adds its own damage to the band), the guards and buffs aside.
     void press(uint32_t at) {
@@ -1164,6 +1195,7 @@ private:
             return;
         }
         ask(request);
+        if (engaged && guard()) return;
         if (request.kind == sim::Request::Kind::Attack) press(request.target);
     }
 
