@@ -296,12 +296,13 @@ bool Realm::throwSkill(Body& hero, const SkillRow& row, uint32_t at) {
     // timed off `clip`, quickened by his attack speed, the lock ran out while Twisting Slash was
     // still turning and a click walked him out of the spin (the user, 2026-10-01: "dont allow to
     // use click to move if twisting slash animation is not played to the end"). And no blow of
-    // his own begins inside it either.
+    // his own begins inside it either. A knight's primary is held as well -- Twisting Slash lost
+    // its cooldown the same day, and the walk-out is the wizard's alone.
     const int32_t held =
         row.wizardry ? clip : std::max(clip, authoredCastTicks(*tables_, row));
-    hero.castUntil = row.channelled() ? tick_ + row.channelTicks
-                     : row.primary()  ? tick_
-                                      : tick_ + held;
+    hero.castUntil = row.channelled()                ? tick_ + row.channelTicks
+                     : row.primary() && row.wizardry ? tick_
+                                                     : tick_ + held;
     hero.swingsAt = std::max(hero.swingsAt, hero.castUntil);
     if (row.channelled()) {
         hero.channelSkill = row.number;

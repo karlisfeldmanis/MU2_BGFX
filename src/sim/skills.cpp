@@ -98,7 +98,10 @@ constexpr SkillRow kRows[kSkills] = {
     // here that every family may throw, and it is what keeps the mace and the spear from having
     // a bar of two. Its mana is MU's: MuMain's own orb tooltip reads `Twisting Slash Skill
     // (Mana:22)` (docs/mu-scrolls-and-orbs.md §5).
-    {skill::kTwistingSlash, "Twisting Slash", 22, 1.0f, 1.2f, 1.0f / 1500.0f, 90, false,
+    //
+    // **No cooldown** (the user, 2026-10-01: "remove cooldown from twisting slash"), which makes
+    // it a primary: paced by its spin alone, held on the key, its mana the only limit.
+    {skill::kTwistingSlash, "Twisting Slash", 22, 1.0f, 1.2f, 1.0f / 1500.0f, 0, false,
      Spread::Ring, 0, 1.0f,
      "A whirl of whatever he is holding, into everything within a tile. Every weapon can throw "
      "it; none throws it hard.",
