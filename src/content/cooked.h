@@ -54,6 +54,9 @@ struct CookedMaterial {
     // one additive submesh slides -- the waterspout's fall, the two houses' lit windows.
     // Only ever set alongside glow (bit 1); see content::Material.
     float scrollPerSecond = 0.0f;
+    // bit 7 and a byte after bit 6's float: bit 0 the scroll runs along U, bit 1 the sheet's
+    // alpha holds still while its colour slides. See content::Material.
+    uint8_t scrollMode = 0;
     // An item glow's pulse and jump (bit 5): MU's ItemObjectAttribute. See content::Material.
     float pulse[2] = {0.0f, 1.0f};
     float jitter = 0.0f;

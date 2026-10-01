@@ -86,6 +86,12 @@ struct Material {
     // do: the waterspout's fall, House04's and House05's lit windows. Only glow (above) ever
     // carries a nonzero one. See fs_glow.sc and Renderer::submitBatches.
     float scrollPerSecond = 0.0f;
+    // MoveObject's BlendMeshTexCoordU instead: the Lost Tower's slotted walls and machines,
+    // whose red Chrome01 streams sideways behind a band that stays put. `scrollAlongU` slides
+    // U rather than V; `maskHeld` samples the sheet's alpha at its own place while its colour
+    // slides, so the stream moves and the band it shows through does not. The cook's bit 7.
+    bool scrollAlongU = false;
+    bool maskHeld = false;
     // An item's glow as ItemObjectAttribute sets it (ZzzObject.cpp:5199): its brightness
     // `sin(WorldTime*0.004)*pulse[0] + pulse[1]` -- the Light Spear's and the two shields'
     // breathing, 0/1 on a steady glow -- and `jitter`, the step of the per-frame random jump

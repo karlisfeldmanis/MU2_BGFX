@@ -148,14 +148,17 @@ def resolve(name, world):
         # The scroll rate off its own row in index.json, the one thing about this model that
         # is not in its glb: MoveObject's BlendMeshTexCoordV, the waterspout's fall and the
         # two houses' lit windows sliding behind their panes. See cook.py's cook_meshes.
+        # This world's row: four worlds have an Object20, and the first by name was Devias's.
         scroll = 0.0
+        table = None
         for one in index.get("objects", []):
-            if one.get("name") == name:
-                for glow in (one.get("glow") or {}).values():
+            if one.get("name") == name and one.get("world") in (None, world):
+                table = one.get("glow") or None
+                for glow in (table or {}).values():
                     scroll = float(glow.get("scrolls_per_second", 0.0))
                     break
                 break
-        return "world", world, {name: world_glb}, {"scroll_per_second": scroll}
+        return "world", world, {name: world_glb}, {"scroll_per_second": scroll, "scrolls": table}
     return None, None, None, None
 
 
@@ -247,7 +250,9 @@ def cook_item(kind, area, meshes, extra, texcook, world="lorencia"):
         out_path = os.path.join(mesh_dir, mesh_name + ".mum")
         tris, _verts, _size, bones = cook_mesh(mesh_name, path, out_path, manifest,
                                                hidden.get(mesh_name),
-                                               scroll_per_second=scroll)
+                                               scroll_per_second=scroll,
+                                               scrolls=extra.get("scrolls") if kind == "world"
+                                               else None)
         cooked[mesh_name] = {"mesh": os.path.relpath(out_path, ASSETS), "bones": bones,
                              "triangles": tris}
         # A held weapon's own rig and clip (a bow's string): see cook.py's wardrobe step.

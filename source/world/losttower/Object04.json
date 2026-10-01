@@ -27,7 +27,21 @@
   "echo": {
     "re02_body": "re02"
   },
-  "echo_from": "MU draws types 3 and 4 twice (ZzzObject.cpp:1035-1059): first the whole body with every sheet swapped for Chrome01, lit flat red (1, 0.2, 0.1), its mesh 1 sliding a sheet a second along U; then as painted, where re02's transparent band lets that red show through -- red light streaming behind a slot in the stone. Here re02's faces are drawn twice as the Dungeon's worms are: once opaque as re02_body (re02 with its band filled black), and once added as re02, lt_re02_slot.png -- Chrome01 at the same coordinates, tinted (1, 0.2, 0.1), inside the band alone. Black under an add is the slot lit red. Ours, marked: the red holds still, since this engine slides a glow along V and MU's runs along U, across the band.",
+  "glow": {
+    "re02": {
+      "scrolls_per_second": 1.0,
+      "axis": "u",
+      "mask_held": true
+    }
+  },
+  "glow_from": "MoveObject's BlendMeshTexCoordU, -(WorldTime % 1000) * 0.001: one sheet a second along U (ZzzObject.cpp:4003-4009). The stream's sheet carries Chrome01 tinted (1, 0.2, 0.1) whole in its colour and the band in its alpha, and the alpha is held while the colour slides (mask_held), so the red streams behind a slot that does not move, as MU's chrome pass does under the painted one. Built 2026-10-01 (the user: 'i think most of lost tower orb obhecst was amianted. check if we missed some animation on objects'); before it the red held still, this engine sliding a glow only along V.",
+  "echo_from": "MU draws types 3 and 4 twice (ZzzObject.cpp:1035-1059): first the whole body with every sheet swapped for Chrome01, lit flat red (1, 0.2, 0.1), its mesh 1 sliding a sheet a second along U; then as painted, where re02's transparent band lets that red show through -- red light streaming behind a slot in the stone. Here re02's faces are drawn twice as the Dungeon's worms are: once opaque as re02_body (re02 with its band filled black), and once added as re02, lt_re02_slot.png -- Chrome01 at the same coordinates, tinted (1, 0.2, 0.1), inside the band alone. Black under an add is the slot lit red.",
+  "sheet_grade_from": "Ours, the user's 'these walls stand of with there colors and texture repeating' (2026-10-01): the re_05 masonry -- the low blocks, the pilasters, the slotted walls -- is a neutral grey that went blue under the tower's cold key beside the main walls' warm brown re_04, and its painted motif, lit by a relief derived from the art, caught that key in bright blotches block after block. So it wears copies graded to re_04's hue and mean (lt_*_warm.png, its own light and dark kept), and its relief at 0.35 of the material's, nearer MU's flat-lit painting.",
+  "sheet_relief": {
+    "re_05": 0.35,
+    "re_07": 0.35,
+    "re02_body": 0.35
+  },
   "islands": [
     {
       "island": 0,
@@ -45,10 +59,10 @@
         1.0
       ],
       "bake_uv": [
-        0.013,
-        0.013,
-        0.986,
-        0.986
+        0.011,
+        0.011,
+        0.989,
+        0.964
       ]
     },
     {
@@ -67,10 +81,10 @@
         1.0
       ],
       "bake_uv": [
-        0.013,
-        0.013,
-        0.859,
-        0.86
+        0.011,
+        0.011,
+        0.697,
+        0.83
       ]
     },
     {
@@ -89,10 +103,10 @@
         1.0
       ],
       "bake_uv": [
-        0.013,
-        0.013,
-        0.603,
-        0.987
+        0.011,
+        0.011,
+        0.989,
+        0.835
       ]
     },
     {
@@ -111,10 +125,10 @@
         1.0
       ],
       "bake_uv": [
-        0.013,
-        0.013,
-        0.987,
-        0.965
+        0.011,
+        0.157,
+        0.843,
+        0.875
       ]
     },
     {
@@ -133,10 +147,10 @@
         1.0
       ],
       "bake_uv": [
-        0.013,
-        0.013,
-        0.987,
-        0.987
+        0.011,
+        0.011,
+        0.989,
+        0.964
       ]
     },
     {
@@ -155,10 +169,10 @@
         1.0
       ],
       "bake_uv": [
-        0.372,
-        0.013,
-        0.987,
-        0.755
+        0.011,
+        0.403,
+        0.883,
+        0.91
       ]
     },
     {
@@ -177,10 +191,10 @@
         1.0
       ],
       "bake_uv": [
-        0.013,
-        0.395,
-        0.859,
-        0.934
+        0.011,
+        0.157,
+        0.843,
+        0.83
       ]
     },
     {
@@ -199,10 +213,10 @@
         0.999
       ],
       "bake_uv": [
-        0.013,
-        0.065,
-        0.987,
-        0.544
+        0.011,
+        0.302,
+        0.843,
+        0.799
       ]
     },
     {
@@ -221,17 +235,11 @@
         1.0
       ],
       "bake_uv": [
-        0.013,
-        0.569,
-        0.987,
-        0.883
+        0.011,
+        0.011,
+        0.843,
+        0.94
       ]
     }
-  ],
-  "sheet_grade_from": "Ours, the user's 'these walls stand of with there colors and texture repeating' (2026-10-01): the re_05 masonry -- the low blocks, the pilasters, the slotted walls -- is a neutral grey that went blue under the tower's cold key beside the main walls' warm brown re_04, and its painted motif, lit by a relief derived from the art, caught that key in bright blotches block after block. So it wears copies graded to re_04's hue and mean (lt_*_warm.png, its own light and dark kept), and its relief at 0.35 of the material's, nearer MU's flat-lit painting.",
-  "sheet_relief": {
-    "re_05": 0.35,
-    "re_07": 0.35,
-    "re02_body": 0.35
-  }
+  ]
 }

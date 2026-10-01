@@ -25,8 +25,15 @@ $input v_wpos, v_texcoord0, v_normal, v_tangent, v_vnormal, v_vpos, v_light, v_r
 
 void main()
 {
-	vec2 uv = v_texcoord0 + vec2(0.0, u_material.w);
+	// u_material.y says how it runs (Renderer::submitBatches): +1 along U, MoveObject's
+	// BlendMeshTexCoordU, and +2 with the sheet's alpha read where it stands, so the Lost
+	// Tower's red chrome streams behind a band that does not move.
+	float mode = u_material.y;
+	float alongU = mod(mode, 2.0);
+	float held = step(1.5, mode);
+	vec2 uv = v_texcoord0 + u_material.w * vec2(alongU, 1.0 - alongU);
 	vec4 sheet = texture2D(s_albedo, uv);
+	sheet.a = mix(sheet.a, texture2D(s_albedo, v_texcoord0).a, held);
 	// A figure's w is 2 + its fade (common.sh's figureFade), which was 1.0 here before there
 	// was a fade; so a figure's glow is its fade, and comes in with it.
 	float level = v_light.w >= 2.0 ? figureFade(v_light.w) : v_light.w;

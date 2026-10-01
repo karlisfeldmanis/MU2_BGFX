@@ -423,7 +423,8 @@ def primitive_material_name(document, primitive):
     return materials[index].get("name", "") if index is not None and index < len(materials) else ""
 
 
-def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.0):
+def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.0,
+              scrolls=None):
     """One .glb into one .mum. Returns (triangles, vertices, bytes, bones).
 
     A skinned .glb writes version 4: a 56-byte vertex with four joint bytes and four weight
@@ -440,6 +441,14 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
     panes. It rides on the model's glow material (flag bit 2, the only BLEND material a
     world object has ever shipped with two of), and is nothing on every other kind of mesh,
     which is why it is a parameter here and not read from the glb: a glb has no clock in it.
+
+    `scrolls` is the asset's whole `glow` table, for a model whose glows do not all slide alike:
+    a sheet named there with an `axis` or a `mask_held` scrolls by its own entry and the
+    model's other glows stand still. The Lost Tower's machines are the case -- MU slides their
+    t20 orb and taa01's red rings along U, and taa03's red centre not at all (ZzzObject.cpp:
+    1035-1059, 4006-4009). `axis` "u" slides U instead of V; `mask_held` keeps the sheet's
+    alpha where it is while its colour slides, which is MU's chrome streaming behind a band
+    that does not move. Bit 7 carries both, as one byte after bit 6's float.
 
     The number is MU's mesh index in the .bmd and not a glb primitive index. MU2's exporter
     groups primitives by material and ships the mesh to put away as a part called `hidden`,
@@ -598,8 +607,17 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         # it -- MoveObject's BlendMeshTexCoordV, the waterspout's fall and the two houses'
         # lit windows. A model with none writes nothing extra, so every file cooked before
         # this reads the same as it always did.
-        if flags & 2 and scroll_per_second:
+        rate = scroll_per_second
+        mode = 0
+        if scrolls and any(("axis" in one or "mask_held" in one) for one in scrolls.values()):
+            own = scrolls.get(material.get("name", ""))
+            rate = float(own.get("scrolls_per_second", 0.0)) if own else 0.0
+            if own:
+                mode = (1 if own.get("axis") == "u" else 0) | (2 if own.get("mask_held") else 0)
+        if flags & 2 and rate:
             flags |= 16
+        if flags & 16 and mode:
+            flags |= 128
         # Bit 5: an item's glow -- drawn at its own level, not the world's glow_strength --
         # and whether it pulses or jumps, as MU's ItemObjectAttribute makes it --
         # BlendMeshLight = sin(WorldTime*0.004)*a + b, and a per-frame BlendMeshTexCoord jump in
@@ -630,11 +648,13 @@ def cook_mesh(model, path, out_path, textures, hidden=None, scroll_per_second=0.
         if flags & 4:
             materials += struct.pack("<f", translucency)
         if flags & 16:
-            materials += struct.pack("<f", float(scroll_per_second))
+            materials += struct.pack("<f", float(rate))
         if flags & 32:
             materials += struct.pack("<3f", float(pulse[0]), float(pulse[1]), jitter)
         if flags & 64:
             materials += struct.pack("<f", shadow)
+        if flags & 128:
+            materials += struct.pack("<B", mode)
     # The fallback a primitive with no material of its own draws with, as content/mesh.cpp
     # appends it. Rough and not metal, for the reason orm_factors gives.
     materials += struct.pack("<fB", -1.0, 0) + write_string("none")
@@ -762,7 +782,8 @@ def cook_meshes(world, out_dir):
             break
         tris, verts, size, _bones = cook_mesh(model, path,
                                               os.path.join(mesh_dir, model + ".mum"), textures,
-                                              scroll_per_second=scroll)
+                                              scroll_per_second=scroll,
+                                              scrolls=carried.get(model, {}).get("glow"))
         triangles += tris
         vertices += verts
         cooked += size

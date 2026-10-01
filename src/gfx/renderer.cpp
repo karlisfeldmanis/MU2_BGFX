@@ -242,8 +242,12 @@ void Renderer::submitBatches(bgfx::ViewId view, bgfx::ProgramHandle program,
                     scrollOffset += float(h % 10u) * material.jitter;
                 }
             }
+            // In the glow pass y is how the scroll runs instead, which fs_glow alone reads: 1
+            // along U, 2 with the sheet's alpha held still (content::Material::maskHeld).
             const float materialParams[4] = {material.cutout,
-                                             (material.twoSided ? 1.0f : 0.0f) +
+                                             glowPass ? (material.scrollAlongU ? 1.0f : 0.0f) +
+                                                            (material.maskHeld ? 2.0f : 0.0f)
+                                             : (material.twoSided ? 1.0f : 0.0f) +
                                                  (material.calibrated ? 2.0f : 0.0f),
                                              glowPass ? glowLevel
                                              // In a depth-only pass z is how much of the

@@ -81,6 +81,7 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         const bool scrolls = (flags & 16) != 0;
         const bool pulses = (flags & 32) != 0;
         const bool casts = (flags & 64) != 0;
+        const bool scrollMode = (flags & 128) != 0;
         reader.readString(material.name);
         reader.readString(material.albedo);
         reader.readString(material.normal);
@@ -99,6 +100,8 @@ bool parseCookedMesh(const std::vector<uint8_t>& bytes, CookedMesh& out, std::st
         }
         // Bit 6, a glow that casts the sun's shadow (the Ice Monster): its strength.
         if (casts) reader.read(material.glowShadow);
+        // Bit 7, how a scroll runs: along U, and with the sheet's alpha held (the Lost Tower).
+        if (scrollMode) reader.read(material.scrollMode);
         if (reader.failed()) break;
     }
 
