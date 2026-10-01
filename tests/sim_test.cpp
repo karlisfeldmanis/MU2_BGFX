@@ -990,6 +990,7 @@ void testCastLock(const content::Tables& tables) {
         uint32_t fighting = 0;
         for (int tick = 0; tick < 3000; ++tick) {
             const int manaBefore = wiz.hero().mana;
+            const int levelBefore = wiz.hero().level;
             const uint32_t nearest = wiz.hero().alive() ? nearestTo(wiz) : 0;
             if (nearest != 0 && nearest != fighting) {
                 fighting = nearest;
@@ -1006,7 +1007,11 @@ void testCastLock(const content::Tables& tables) {
                 if (one.what == sim::What::Hit && one.thrown) {
                     ++landed;
                     // Off the three-second regeneration tick, a landed spell must not raise him.
-                    if (wiz.tick() % 60 != 0 && wiz.hero().mana > manaBefore) ++paidBack;
+                    // A kill that levels him refills him, which is the level and not the spell.
+                    if (wiz.tick() % 60 != 0 && wiz.hero().level == levelBefore &&
+                        wiz.hero().mana > manaBefore) {
+                        ++paidBack;
+                    }
                 }
                 if (one.what == sim::What::Swung && one.a == 0) ++swings;
             }

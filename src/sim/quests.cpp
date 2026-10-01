@@ -24,7 +24,7 @@ namespace {
 // never a repeat (sim/items.h). The Falchion asks 106 strength (MU's formula over its raw 120
 // at drop level 24). It is the next built one-hander past the Gladius, and it carries Uppercut.
 // At kExperienceRate 10 the ladder walked weakest first from level 1 ended near level 28 (higher
-// at 20, since 2026-10-01), so he can hold it at once. (Its note once said 13 and "a level or two short", but that was at the
+// at 100, since 2026-10-01), so he can hold it at once. (Its note once said 13 and "a level or two short", but that was at the
 // original rate of 1.)
 QuestRow marlon() {
     QuestRow row;
