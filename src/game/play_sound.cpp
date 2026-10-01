@@ -342,7 +342,10 @@ void Play::landed(uint32_t drop) {
         if (one.what.empty()) return;
         int sound = heard_.itemDrop;
         if (one.what.item >= 0 && size_t(one.what.item) < tables_.items.size() &&
-                   tables_.items[size_t(one.what.item)].jewel() && heard_.jewel >= 0) {
+                   tables_.items[size_t(one.what.item)].jewel() &&
+                   tables_.items[size_t(one.what.item)].group != sim::kGroupPets &&
+                   heard_.jewel >= 0) {
+            // A pet carries the jewel flag in the table but lands as any other thing.
             sound = heard_.jewel;
         }
         const float metresPerTile = ground_->metresPerTile();

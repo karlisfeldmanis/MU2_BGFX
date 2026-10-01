@@ -252,7 +252,9 @@ void Play::update(double seconds) {
                     if (happening.b >= 0 && happening.b < sim::kSlots) {
                         const int32_t item = realm_.satchel()[happening.b].item;
                         if (item >= 0 && size_t(item) < tables_.items.size() &&
-                            tables_.items[size_t(item)].jewel() && heard_.jewel >= 0) {
+                            tables_.items[size_t(item)].jewel() &&
+                            tables_.items[size_t(item)].group != sim::kGroupPets &&
+                            heard_.jewel >= 0) {
                             sound = -1;
                             const Drawn* hero = drawnOf(heroId);
                             if (hero && hero->placed) {
