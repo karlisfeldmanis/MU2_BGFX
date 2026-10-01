@@ -21,6 +21,9 @@ struct MapRow {
     // The tile a character comes in on: the middle of mu.db's spawn gate for the map (gates
     // 17 and 27, both spawn = 1). The realm moves him to the nearest tile he may stand on.
     int arrive[2];
+    // Under a roof on every tile: no sky's leaves, no wind, the room's air. The Dungeon and the
+    // Lost Tower, which MU draws on its black clear with no weather (SceneManager.cpp:402).
+    bool underground = false;
 };
 
 // The row for `world`, or nullptr for one not in the table.

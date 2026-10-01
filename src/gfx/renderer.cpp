@@ -417,6 +417,7 @@ void Renderer::submitGround(bgfx::ViewId view, bgfx::ProgramHandle program,
                                      float((l[0].water ? 1 : 0) | (l[1].water ? 2 : 0) |
                                            (l[2].water ? 4 : 0))};
             bgfx::setUniform(uGroundRelief_, relief);
+            bgfx::setUniform(uWaterGlow_, waterGlow_);
             // xyz are each layer's water slide, in widths of its own sheet: MuMain's
             // WaterMove, `(WorldTime % 20000) * 0.00005` (ZzzLodTerrain.cpp), added to U on
             // every tile that wears TileWater01 -- one sheet width every twenty seconds, along
@@ -492,6 +493,7 @@ void Renderer::draw(const Camera& camera, const Lighting& lighting,
                     const std::vector<Drawable>* casters, const GrassField* grass) {
     drawCount_ = 0;
     waterFlow_ = lighting.waterFlow;
+    for (int i = 0; i < 3; ++i) waterGlow_[i] = lighting.waterGlow[i];
     // The chasms' dark, which is the world's and not the sheet's. content::Ground::abyss.
     abyss_ = ground ? ground->abyss() : bgfx::TextureHandle{bgfx::kInvalidHandle};
     if (bgfx::isValid(abyss_)) {

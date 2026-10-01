@@ -1,0 +1,42 @@
+{
+  "tileset": "losttower",
+  "mu_name": "Lost Tower ground",
+  "profile": "tiles",
+  "sheets": {
+    "TileGrass01": "lt_tilegrass01.png",
+    "TileGrass02": "lt_tilegrass02.png",
+    "TileGround01": "lt_tileground01.png",
+    "TileGround03": "lt_tileground03.png",
+    "TileWater01": "lt_tilewater01.png",
+    "TileWood01": "lt_tilewood01.png",
+    "TileRock01": "lt_tilerock01.png",
+    "TileRock02": "lt_tilerock02.png",
+    "TileRock03": "lt_tilerock03.png",
+    "TileRock04": "lt_tilerock04.png"
+  },
+  "sheet_from": "Data/World5/Tile*.OZJ, from MuMain, decoded under an lt_ prefix: assets/textures is one flat pool, and all ten names are Lorencia's or the Dungeon's too. Slot 3 (TileGround02, a blue water sheet) is in World5 but no tile wears it, so it is not decoded. docs/lost-tower-port.md.",
+  "slot_note": "World5 ships no TileGrass .OZT, so nothing grows here (terrain.py GRASS_BY_MAP[4] is empty). Seven flat floors at 1.7 m over a NoGround void drawn black; the lava pits are sunk to 0 and blocked.",
+  "sheet_materials": {
+    "TileGrass01": "flagstone",
+    "TileGrass02": "flagstone",
+    "TileGround01": "rock",
+    "TileGround03": "rock",
+    "TileWater01": "water",
+    "TileWood01": "sand",
+    "TileRock01": "rock",
+    "TileRock02": "flagstone",
+    "TileRock03": "flagstone",
+    "TileRock04": "rock",
+    "TileGrass01_over": "flagstone",
+    "TileGrass02_over": "flagstone",
+    "TileGround01_over": "rock",
+    "TileGround03_over": "rock",
+    "TileWater01_over": "water",
+    "TileWood01_over": "sand",
+    "TileRock01_over": "rock",
+    "TileRock02_over": "flagstone",
+    "TileRock03_over": "flagstone",
+    "TileRock04_over": "rock"
+  },
+  "material_note": "Read off the art; the names lie. TileGrass01 is the tower floor, 65% of it: dark grey cracked slabs, flagstone. TileGrass02 is a carved green-grey tiling, TileRock02 the blue-and-gold diamond mosaic of floors 4 and 6, TileRock03 a dark teal rose-window floor: all laid stone, flagstone. TileGround01 is a black carved frieze, TileGround03, TileRock01 and TileRock04 cracked grey-brown stone: rock. TileWood01 is the tan dust laid over nearly everything: sand. TileWater01 is lava, orange-red under a dark crust, 10.5% of the map in the pits; it takes water so it slides as MU slides every TileWater01 tile, one sheet every twenty seconds (ZzzLodTerrain.cpp:1944-1948, 3594-3596), and the world sheet gives it no wet sheen."
+}

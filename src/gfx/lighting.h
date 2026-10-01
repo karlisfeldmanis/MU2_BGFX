@@ -92,6 +92,11 @@ struct Lighting {
     // is its painted sheet sliding and nothing else, which on the Dungeon's near-black stream
     // is black ground. 0 is MU's, and every sheet but the Dungeon's leaves it there.
     float waterSheen = 0.0f;
+    // A light of the water sheet's own, in its own colours, times this: the Lost Tower's lava,
+    // which MU slides as water and paints bright orange under its TerrainLight, and which in a
+    // tower with no torch is the only warm light (docs/lost-tower-port.md). Ours. 0 everywhere
+    // else, so their water is as it was.
+    float waterGlow[3] = {0.0f, 0.0f, 0.0f};
     float bloomThreshold = 1.2f;
     float bloomKnee = 0.6f;
     float bloomStrength = 0.25f;

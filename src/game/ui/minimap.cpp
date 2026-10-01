@@ -250,6 +250,14 @@ const char* floorName(int32_t exitGate) {
         case 2: case 8: return "Dungeon 1";
         case 6: case 12: case 16: return "Dungeon 2";
         case 10: case 14: return "Dungeon 3";
+        // The Lost Tower's (Gates.cs:138-145): every stair goes down, so each floor has one.
+        case 29: case 42: return "Lost Tower 1";
+        case 31: return "Lost Tower 2";
+        case 33: return "Lost Tower 3";
+        case 35: return "Lost Tower 4";
+        case 37: return "Lost Tower 5";
+        case 39: return "Lost Tower 6";
+        case 41: return "Lost Tower 7";
         default: return "another floor";
     }
 }
@@ -260,6 +268,7 @@ const char* mapName(uint32_t map) {
         case 1: return "Dungeon";
         case 2: return "Devias";
         case 3: return "Noria";
+        case 4: return "Lost Tower";
         default: return "another map";
     }
 }

@@ -13,6 +13,7 @@ $input v_wpos, v_texcoord0, v_normal, v_colour, v_vnormal, v_vpos, v_weight
 uniform vec4 u_groundRepeat;  // xyz: each layer's repeat  w: the bite
 uniform vec4 u_groundBlend;   // x: the flow's cycle  y: its band's row, or -1  z: reach, or MU's slide  w: layers
 uniform vec4 u_groundRelief;  // xyz: each layer's relief  w: which layers are water, a bit each
+uniform vec4 u_waterGlow;     // rgb: the water sheet's own light, the sheet's water_glow (lava)
 uniform vec4 u_groundSlots;   // xyz: each layer's slot in the weight map  w: 1 when it is bound
 uniform vec4 u_groundWeights; // xy: the weight map's size in texels  z: rows a band  w: pad rows
 
@@ -300,6 +301,11 @@ void main()
 		vec3 own = waterAlbedo * vec3(0.55, 0.68, 0.9) * 0.2;
 		colour += (glint * wetMask + own) * sheen;
 	}
+
+	// The water sheet's own light in its own colours, where the sheet asks for one
+	// (water_glow): the Lost Tower's lava. Ours; zero on every other world.
+	colour += (albedo0 * (isWater.x * w.x) + albedo1 * (isWater.y * w.y)
+	         + albedo2 * (isWater.z * w.z)) * u_waterGlow.rgb;
 
 	// No sky reflection and no sun specular on dry ground. MU's ground art has its own
 	// lighting painted into it, so a sheen on top is a second highlight on a surface that

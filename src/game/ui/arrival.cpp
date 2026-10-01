@@ -59,6 +59,7 @@ constexpr Place kPlaces[] = {
     {"noria", "Noria", ""},
     {"devias", "Devias", ""},
     {"dungeon", "Dungeon", ""},
+    {"losttower", "Lost Tower", ""},
 };
 
 std::string upper(std::string s) {

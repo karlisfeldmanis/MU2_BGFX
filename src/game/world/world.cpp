@@ -92,7 +92,8 @@ bool World::open(const std::string& assetDir, const std::string& name,
     const std::string dir = core::join(assetDir, "world/" + name);
     textures_ = &textures;
     deviasFloors_ = name == "devias";
-    underground_ = name == "dungeon";
+    const MapRow* row = mapOf(name);
+    underground_ = row && row->underground;
     // Its share of the load, by what each took on a cold start (core/loading.h).
     core::Loading::stage("the land", 0.0f, 0.05f);
     if (!ground_.load(dir, name, textures)) return false;

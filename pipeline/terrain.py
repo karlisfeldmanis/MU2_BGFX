@@ -123,6 +123,9 @@ HIDDEN_BY_MAP = {
     1: {39, 40, 51, 52, 60},
     2: {91, 100},
     3: {38},
+    # The Lost Tower's two (ZzzObject.cpp:4020-4028): 24 the Flame vent, 95 of them, and 25 the
+    # Meteorite Trap's plate, 148, which the server's trap monster draws. docs/lost-tower-port.md.
+    4: {24, 25},
 }
 
 #: What each world draws additively, by map number and placement type.
@@ -139,6 +142,9 @@ HIDDEN_BY_MAP = {
 BLEND_MESH_BY_MAP = {
     2: {19: 0, 54: 1, 56: 1, 78: 3, 92: 0, 93: 0},
     3: {1: 1, 9: 3, 17: 0, 18: 2, 19: 0, 37: 0},
+    # The Lost Tower's (MoveObject, ZzzObject.cpp:4006-4017): the light shaft's light01, the
+    # floor machines' cyan orb and the lamp posts' blue dots.
+    4: {18: 1, 19: 4, 20: 4, 23: 1},
 }
 
 #: Where a world's grass grows, by map number, where its slots' recipes would say otherwise.
@@ -155,6 +161,8 @@ GRASS_BY_MAP = {
     1: [],
     2: ["TileGrass02"],
     3: ["TileGrass01", "TileGrass02"],
+    # The Lost Tower ships no TileGrass .OZT either, and its TileGrass01 is the stone floor.
+    4: [],
 }
 
 #: Where each world's rivers are fed and where they drain, as tile (column, row), for the

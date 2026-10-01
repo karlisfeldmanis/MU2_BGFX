@@ -29,7 +29,8 @@ bool Play::open(const std::string& assetDir, const std::string& world,
     figures_ = figures;
     bare_ = bareName;
     // Noria's and the Dungeon's air is not wind: MU plays its jungle and aDungeon instead.
-    windy_ = world != "noria" && world != "dungeon";
+    const MapRow* map = mapOf(world);
+    windy_ = world != "noria" && !(map && map->underground);
     dungeonAir_ = world == "dungeon";
     snowy_ = world == "devias";
     const std::string path = core::join(assetDir, "cooked/" + world + "/" + world + ".mur");

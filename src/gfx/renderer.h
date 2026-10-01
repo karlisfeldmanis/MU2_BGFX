@@ -535,6 +535,7 @@ private:
     // content::Material::scrollPerSecond, and setClock() for why it is not the wall clock.
     float elapsed_ = 0.0f;
     float waterFlow_ = 1.0f;  // the sheet's water_flow, taken at draw() for submitGround
+    float waterGlow_[4] = {0.0f, 0.0f, 0.0f, 0.0f};  // the sheet's water_glow, likewise
     // The shine (setShine): its sheets, and u_refine, bound for each draw by bindShine() off
     // the same play clock. `shineStrength_` is how strongly the chrome is added, and
     // `shineTint_` how much of MuMain's tint the lit colour takes; 1 is MuMain's own for both.
@@ -705,6 +706,7 @@ private:
     bgfx::UniformHandle uGroundRepeat_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundBlend_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundRelief_ = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle uWaterGlow_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundSlots_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle uGroundWeights_ = BGFX_INVALID_HANDLE;
     bgfx::UniformHandle sGroundWeights_ = BGFX_INVALID_HANDLE;
