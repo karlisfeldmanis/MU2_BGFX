@@ -64,7 +64,7 @@ constexpr float kFullShare = 0.7f;
 // Its middle a little over the screen's, so its lowest corner clears the action bar.
 constexpr float kFullMiddle = 0.47f;
 constexpr float kFullFit = 1.41421356f;
-constexpr float kFullScrim = 0.35f;
+constexpr float kFullScrim = 0.5f;
 constexpr float kFullTitle = 22.0f;  // the map's name over it
 
 // ---- the chart -----------------------------------------------------------------------------------
