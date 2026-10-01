@@ -26,6 +26,10 @@
       }
     ]
   },
+  "sheet_roughness": {
+    "guard_gold2": 0.6
+  },
+  "sheet_roughness_from": "Ours: painted_steel's 0.28 laid a broad blue sheen over the black plate, which read silver. The user: 'fallen warrior armor is kind of bright. no?'. Rougher, so the painted highlights carry the metal as MU drew them.",
   "why_this_one": "A fallen black-and-gold knight, sat against a stone, about a metre tall, 11 placed (the port doc called them statues; in the world they lie and sit among the skulls as dead knights). 4-5 bones and no animation: MU draws the bind pose (key 0 is identical), so the OBJ is static. Scenery batch 4.",
   "material_note": "guard_gold2 is black armour with its highlights and gold scrollwork painted in: painted_steel, as MU drew it; as a real metal the black would come back as chrome. No arm in MuMain's WD_4LOSTTOWER switches (ZzzObject.cpp:1035-1066, 2931-2989, 3996-4029): static. The face at the sheet's top is a region of skin, as the NPC guard's page is skin (npc/Master01.json).",
   "islands": [
