@@ -24,8 +24,6 @@ namespace {
 constexpr float kSwingSize = 21.0f;
 constexpr float kSkillSize = 27.0f;
 constexpr float kCriticalSize = 32.0f;
-// The shield's share is the quiet end of the ramp: it is read, not felt.
-constexpr float kSmallSize = 15.5f;
 // And a miss is quieter still -- a word, not a figure, and the one thing on the ramp that says
 // nothing happened. Smaller again at the user's word, 2026-09-23.
 constexpr float kMissSize = 12.0f;
@@ -184,7 +182,7 @@ float sizeOf(Mark mark) {
         case Mark::Excellent: return kCriticalSize;
         case Mark::Reflected: break;
         case Mark::Miss: return kMissSize;
-        case Mark::Absorbed: return kSmallSize;
+        case Mark::Absorbed: return kMissSize;
         case Mark::Swing:
         case Mark::Poison:
         case Mark::Taken: break;
@@ -444,12 +442,13 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
                         float(figure.slot) * kStackStep * unit;
 
         const float size = sizeOf(figure.mark) * unit * popped(u);
-        const std::string text = figure.mark == Mark::Miss
-                                     ? std::string("MISS")
-                                     : std::to_string(figure.value < 0 ? 0 : figure.value);
+        const bool word = figure.mark == Mark::Miss || figure.mark == Mark::Absorbed;
+        const std::string text = figure.mark == Mark::Miss       ? std::string("MISS")
+                                 : figure.mark == Mark::Absorbed ? std::string("ABSORBED")
+                                 : std::to_string(figure.value < 0 ? 0 : figure.value);
         // A miss is a word, so it takes the lane's own tracking rather than the ramp's: set
-        // solid at this size it reads as one long glyph.
-        const float tracking = figure.mark == Mark::Miss ? 0.14f : kTracking;
+        // solid at this size it reads as one long glyph. So is what his shield absorbed.
+        const float tracking = word ? 0.14f : kTracking;
         write(std::round(x), std::round(y), size, withAlpha(inkOf(figure), alpha), text, tracking);
     }
 

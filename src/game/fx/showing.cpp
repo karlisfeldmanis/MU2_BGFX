@@ -179,10 +179,16 @@ void Showing::land(const Cue& cue, const float feet[3], float height, float man,
         figure.lean = unit() * 2.0f - 1.0f;
         figures_.push_back(figure);
     };
-    raise(markOf(), cue.damage);
-    // And what his shield ate of it, small and blue beside the red. Only ever his: nothing
-    // else in 0.75 carries a shield pool.
-    if (!cue.miss && cue.absorbed > 0) raise(Mark::Absorbed, cue.absorbed);
+    // What his shield ate of it is a word and not a figure -- the user, 2026-10-01: "show
+    // Absorbed text not damage number" -- and the red beside it is then only what reached his
+    // health, none at all when the pool took the whole blow. Only ever his: nothing else in
+    // 0.75 carries a shield pool.
+    if (!cue.miss && cue.absorbed > 0) {
+        if (cue.taken > 0) raise(markOf(), cue.taken);
+        raise(Mark::Absorbed, 0);
+    } else {
+        raise(markOf(), cue.damage);
+    }
 
     if (cue.miss) return;  // nothing bleeds from a blow that did not land
 
