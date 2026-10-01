@@ -98,6 +98,16 @@ def main() -> None:
 
     write_glb(destination, document, binary.blob)
 
+    # And our own clips back on top: the player's library is this file plus tools/mixamo.py's
+    # OURS, and a re-export without them wiped the run once (2026-10-01).
+    if rig_path.name == "player.rig.json":
+        tools = Path(__file__).resolve().parent.parent / "tools"
+        sys.path.insert(0, str(tools))
+        import mixamo  # noqa: E402
+        for name, fbx, options in mixamo.OURS:
+            mixamo.main([str(tools.parent / fbx), f"--name={name}",
+                         f"--library={destination}"] + options)
+
     print(
         f"\n=== {rig_path.name} -> {destination.name} ===\n"
         f"  bones      {len(bones)}\n"

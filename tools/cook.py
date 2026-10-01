@@ -3059,6 +3059,17 @@ def cook_figures(world, out_dir, texcook, threads, with_monsters=True, only=None
                       f"here -- tools/sync.sh copies it", file=sys.stderr)
                 continue
             stem = os.path.basename(library)[: -len(".actions.glb")]
+            if stem == "player" and stem not in libraries:
+                # Our Mixamo clips are not in player.rig.json, and a re-export without them
+                # cooked the knight walking everywhere (2026-10-01). Refused, not warned.
+                sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+                import mixamo  # noqa: PLC0415
+                have = {a.get("name") for a in read_glb(library)[0].get("animations", [])}
+                lost = [n for n, _fbx, _options in mixamo.OURS if n not in have]
+                if lost:
+                    sys.exit(f"cook: {os.path.relpath(library, ASSETS)} has lost "
+                             f"{', '.join(lost)} -- put them back with tools/mixamo.py "
+                             f"(its OURS list), sync_one, then cook")
             libraries[stem] = library
             clip_of[name] = stem
 

@@ -11,9 +11,10 @@ The clip lands in workshop/players/rig/player.actions.glb as the animation calle
 to `ClipLibrary::find`, so a new clip takes a number past MU's own 283. --seconds overrides
 the clip's own length, and --even makes a cycle the same on both feet (see `even`).
 
-Ours, and the list of them, because a re-export undoes it: pipeline/export_actions.py writes
-this library afresh from player.rig.json and knows nothing of Mixamo, so after one run this
-again for each clip here --
+Ours, and the list of them is OURS below, because a re-export writes this library afresh from
+player.rig.json. It wiped the run once (2026-10-01, a re-export at 16:46, the knight walking
+everywhere by evening), so now pipeline/export_actions.py puts every clip in OURS back itself,
+and tools/cook.py refuses a player library missing one of them. A new clip goes in OURS.
 
     action284  source/players/rig/mixamo/SlowRun.fbx --even  the out-of-combat run, weapon on the back
 
@@ -126,6 +127,13 @@ UP = [0.0, 0.0, 1.0]
 #: MU's walk, because it is the plainest thing the rig does: the character upright, facing his
 #: own way, arms down. Only the bones in UPRIGHT read it.
 NEUTRAL_CLIP = "action15"
+
+# Every clip this tool has put in the player's library, as (name, .fbx under the project, the
+# options it was made with). Read by pipeline/export_actions.py, which re-applies them after
+# a re-export, and by tools/cook.py, which refuses a library missing one.
+OURS = [
+    ("action284", "source/players/rig/mixamo/SlowRun.fbx", ["--even"]),  # the run
+]
 
 #: Bones whose long axis is stood upright after posing, however the clip left them.
 #:
@@ -497,8 +505,9 @@ def clip_pose(document: dict, binary: bytes, name: str, parent: dict,
     return posed
 
 
-def main() -> None:
-    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+def main(argv=None) -> None:
+    if argv is None:
+        argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 
     def option(flag: str, default=None):
         return next((a.split("=", 1)[1] for a in argv if a.startswith(flag + "=")), default)
