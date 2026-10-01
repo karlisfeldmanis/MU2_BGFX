@@ -364,6 +364,9 @@ claim on `shade`, on `gpu`, or on an account that does not exist all exit 2.
 
 ## The sweep
 
+What the sweep cannot tell yet, and the improvements it needs before it can drive
+optimisation that keeps the picture: `docs/perf-sweep.md`.
+
 Found missing on 2026-10-01: the Lost Tower was over budget, and that was known only because
 somebody measured it by hand at tiles they picked (the safe hall 205,79 at 5.29 ms, the lava
 163,40 at 5.54, the Balrog's room 31,209 at 6.31 mid-fight and 6.05 peaceful with the timers
