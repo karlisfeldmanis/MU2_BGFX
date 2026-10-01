@@ -14,7 +14,7 @@
     "re_08": "rock"
   },
   "why_this_one": "A low slab, 2 m long, 0.43 m tall and a metre deep, set in rows: the kerbs and low inner walls along the walks and round the squares, 200 of them. The user: 'tehre was some inner walls'.",
-  "material_note": "re_08 is dark streaked stone, rock. MuMain hangs a warm flare on this type by a missing break (ZzzObject.cpp:2981-2991, docs/lost-tower-port.md, Decision 5); not drawn.",
+  "material_note": "re_08 is dark streaked stone, rock. MuMain hangs a warm flare on this type by a missing break (ZzzObject.cpp:2981-2991, docs/lost-tower-port.md, Decision 5) at an undefined point; drawn as ours at the slab's own origin, on the user's word (game/world/ornaments.cpp).",
   "islands": [
     {
       "island": 0,

@@ -124,6 +124,15 @@ constexpr TowerGlow kTowerGlows[] = {
 constexpr int kTowerBones[3] = {15, 19, 21};
 constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
 
+// Type 9 (Object10, the 200 low slabs): MuMain's WD_4LOSTTOWER arm has no `break`, so it
+// falls into WD_6STADIUM's (ZzzObject.cpp:2981-2991), whose case 9 hangs a BITMAP_LIGHT
+// (flare01) on the slab, Scale `Luminosity * 5`, colour `Luminosity * (0.6, 0.3, 0.1)`. Its
+// point is TransformPosition(BoneTransform[1], Position) with `Position` never set (:2779) and
+// a one-bone model, so where MU drew it is undefined. Ours, on the user's word ('there was
+// some more lighting thingies', then the slab glows): at the slab's own origin, the middle of
+// its foot, at MU's size and colour.
+constexpr float kSlabFlareScale = 5.0f;
+constexpr float kSlabFlareColour[3] = {0.6f, 0.3f, 0.1f};
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
@@ -245,6 +254,10 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                 for (int a = 0; a < 3; ++a) lantern.colour[a] = kLanternColour[a];
                 if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
             }
+        } else if (world == "losttower" && name == "Object10") {
+            Flare flare;
+            for (int a = 0; a < 3; ++a) flare.at[a] = town.cooked().instances[i].position[a];
+            flares_.push_back(flare);
         } else if (world == "losttower") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
@@ -324,10 +337,11 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
         magic_ = take("magic_ground");     // Effect/Magic_Ground2, MU's BITMAP_MAGIC+1
         shiny_ = take("shiny");    // Effect/Shiny01, MU's BITMAP_SHINY
     }
-    if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
-        core::logf("ornaments: %zu fountain spray, %zu mill falls, %zu lanterns; sheets: "
-                   "smoke01 %s, light %s",
-                   spouts_.size(), falls_.size(), lanterns_.size(), bgfx::isValid(smoke_) ? "yes" : "NO",
+    if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty() || !flares_.empty()) {
+        core::logf("ornaments: %zu fountain spray, %zu mill falls, %zu lanterns, %zu slab flares; "
+                   "sheets: smoke01 %s, light %s",
+                   spouts_.size(), falls_.size(), lanterns_.size(), flares_.size(),
+                   bgfx::isValid(smoke_) ? "yes" : "NO",
                    bgfx::isValid(light_) ? "yes" : "NO");
     }
     return true;
@@ -349,6 +363,7 @@ void Ornaments::shutdown() {
     fountains_.clear();
     spouts_.clear();
     lanterns_.clear();
+    flares_.clear();
     beacon_ = beaconSeen_ = false;
     falls_.clear();
     puffs_.clear();
@@ -565,6 +580,19 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
             sprite.colour[3] = 1.0f;
             sprite.spin = way * kStarDegreesPerSecond * spun_ * 3.14159265f / 180.0f;
             sprite.sheet = lightning_;
+            sprite.blend = gfx::Blend::Additive;
+            effects.add(sprite);
+        }
+    }
+    if (bgfx::isValid(light_)) {
+        for (const Flare& flare : flares_) {
+            gfx::Sprite sprite;
+            for (int a = 0; a < 3; ++a) sprite.position[a] = flare.at[a];
+            sprite.halfWidth = sprite.halfHeight =
+                0.5f * kSheetMetres * kSlabFlareScale * luminosity_;
+            for (int k = 0; k < 3; ++k) sprite.colour[k] = kSlabFlareColour[k] * luminosity_;
+            sprite.colour[3] = 1.0f;
+            sprite.sheet = light_;
             sprite.blend = gfx::Blend::Additive;
             effects.add(sprite);
         }
