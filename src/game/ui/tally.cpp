@@ -155,7 +155,8 @@ const uint32_t kCriticalInk = byteColour(255, 224, 138);
 const uint32_t kExcellentInk = byteColour(0, 255, 153);
 const uint32_t kReflectedInk = byteColour(255, 0, 255);
 const uint32_t kTakenInk = byteColour(239, 74, 60);
-const uint32_t kAbsorbedInk = byteColour(111, 182, 255);
+// The SD bar's own orange (hud_bar_shield.png's bright end), so the word reads as the pool.
+const uint32_t kAbsorbedInk = byteColour(234, 160, 81);
 // A poison's pulse: MuMain's DT_POISON, pure green (WSclient.cpp's `case 5`).
 const uint32_t kPoisonInk = byteColour(40, 235, 60);
 const uint32_t kMissInk = byteColour(207, 199, 184);
@@ -447,8 +448,9 @@ void Tally::rebuild(const Play& play, const float* viewProj, int width, int heig
                                  : figure.mark == Mark::Absorbed ? std::string("ABSORBED")
                                  : std::to_string(figure.value < 0 ? 0 : figure.value);
         // A miss is a word, so it takes the lane's own tracking rather than the ramp's: set
-        // solid at this size it reads as one long glyph. So is what his shield absorbed.
-        const float tracking = word ? 0.14f : kTracking;
+        // solid at this size it reads as one long glyph. ABSORBED is set solid all the same,
+        // the user's, 2026-10-01.
+        const float tracking = figure.mark == Mark::Absorbed ? 0.0f : word ? 0.14f : kTracking;
         write(std::round(x), std::round(y), size, withAlpha(inkOf(figure), alpha), text, tracking);
     }
 

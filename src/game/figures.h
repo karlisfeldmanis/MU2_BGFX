@@ -79,6 +79,9 @@ struct HeldItem {
     // A shield is placed by its middle rather than by its origin: MU places one by a point
     // inside its mesh and the disc then sinks into the armour. MU2 centres it instead.
     bool centred = false;
+    // A knight's second weapon is slung as the mirror of the first across his spine: the axis
+    // of the back socket that points across him, or -1 for anything else.
+    int mirrorAxis = -1;
     // How its plus shows. A body Figures::dress made carries one, and so does a townsperson
     // whose recipe names a plus (Figures::shine).
     ShineLook shine;

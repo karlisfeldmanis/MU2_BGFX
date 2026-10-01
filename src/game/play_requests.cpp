@@ -17,6 +17,7 @@
 #include "core/log.h"
 #include "game/frustum.h"
 #include "game/play_tuning.h"
+#include "sim/swings.h"
 #include "sim/wear.h"
 
 namespace mu::game {
@@ -214,6 +215,25 @@ void Play::redress() {
     if (look->library) {
         drawn.attackClip = look->library->find(attackSlotFor(look->stance));
         if (drawn.attackClip < 0) drawn.attackClip = look->library->find(38);
+    }
+    dualSwings(drawn, look);
+}
+
+void Play::dualSwings(Drawn& drawn, const FigureBody* look) const {
+    for (int& clip : drawn.dualClips) clip = -1;
+    const sim::Body& hero = realm_.hero();
+    if (!hero.dual || !look || !look->library) return;
+    const auto armAt = [&](int32_t at) -> const content::Arm* {
+        return at >= 0 && size_t(at) < tables_.arms.size() ? &tables_.arms[size_t(at)] : nullptr;
+    };
+    int32_t actions[4] = {};
+    if (sim::attackActions(armAt(hero.weapon), armAt(hero.shield), actions) != 4) return;
+    for (int i = 0; i < 4; ++i) {
+        drawn.dualClips[i] = look->library->find(actions[i]);
+        if (drawn.dualClips[i] < 0) {
+            for (int& clip : drawn.dualClips) clip = -1;
+            return;
+        }
     }
 }
 

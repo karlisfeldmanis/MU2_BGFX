@@ -431,6 +431,20 @@ void Figure::gather(int row, std::vector<gfx::Drawable>& out) const {
                                         item.backRotation[1] * 3.14159265f / 180.0f,
                                         item.backRotation[2] * 3.14159265f / 180.0f, 1.0f,
                                         offset, local);
+            // Mirrored across the socket's axis that runs across his back (a column, the turn
+            // and the offset both), and the item across its own thinnest axis (a row) -- the
+            // flat of the blade, where a reflection changes nothing one can see. Two
+            // reflections, so it stays a rotation and the head stays at its own end.
+            if (item.mirrorAxis >= 0 && item.mirrorAxis < 3) {
+                const int m = item.mirrorAxis;
+                const content::Bounds& box = item.mesh->bounds();
+                int thin = 0;
+                for (int axis = 1; axis < 3; ++axis) {
+                    if (box.max[axis] - box.min[axis] < box.max[thin] - box.min[thin]) thin = axis;
+                }
+                for (int i = 0; i < 4; ++i) local[i * 4 + m] = -local[i * 4 + m];
+                for (int j = 0; j < 3; ++j) local[thin * 4 + j] = -local[thin * 4 + j];
+            }
         } else {
             std::memcpy(local, kIdentity, sizeof(local));
         }

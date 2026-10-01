@@ -746,7 +746,9 @@ void Play::update(double seconds) {
                     const bool cast = swinger->castSkill != 0 && swinger->castClip >= 0;
                     int swing = swinger->castClip;
                     if (!cast) {
-                        swing = (swinger->attackClip2 >= 0 && swinger->swordCount % 3 != 0)
+                        swing = swinger->dualClips[0] >= 0
+                                    ? swinger->dualClips[swinger->swordCount % 4]
+                                : (swinger->attackClip2 >= 0 && swinger->swordCount % 3 != 0)
                                     ? swinger->attackClip2 : swinger->attackClip;
                         ++swinger->swordCount;
                     }

@@ -542,6 +542,7 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
         if (onPlayerRig) {
             one.attackClip = look->library->find(attackSlotFor(look->stance));
             if (one.attackClip < 0) one.attackClip = look->library->find(38);
+            if (body.player) dualSwings(one, look);
             // And no second swing: the 1-in-3 SwordCount alternation is the MONSTER
             // branch's, and the player branch picks one clip by the stance. Left as
             // -1, `swordCount` counts on and always chooses this one.
