@@ -27,6 +27,8 @@ constexpr float kCriticalSize = 32.0f;
 // And a miss is quieter still -- a word, not a figure, and the one thing on the ramp that says
 // nothing happened. Smaller again at the user's word, 2026-09-23.
 constexpr float kMissSize = 12.0f;
+// And ABSORBED quieter than a miss, the user's of 2026-10-01: a long word beside the red.
+constexpr float kAbsorbedSize = 9.0f;
 // None on a figure. Roman capitals want air between LETTERS, and Cinzel's own drawing already
 // carries it; a number is one object and tracking it made 27 read as 2 7 (the user, on sight,
 // 2026-09-23). The word MISS keeps its own, below, because a word is not a number.
@@ -183,7 +185,7 @@ float sizeOf(Mark mark) {
         case Mark::Excellent: return kCriticalSize;
         case Mark::Reflected: break;
         case Mark::Miss: return kMissSize;
-        case Mark::Absorbed: return kMissSize;
+        case Mark::Absorbed: return kAbsorbedSize;
         case Mark::Swing:
         case Mark::Poison:
         case Mark::Taken: break;
