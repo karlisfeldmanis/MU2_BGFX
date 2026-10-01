@@ -81,8 +81,11 @@ std::vector<Seat> readRoster(const std::string& folderPath) {
         std::sort(found.begin(), found.end());
         return found;
     };
+    // Taken in only while there is no folder yet: once there is one, an empty roster is one
+    // whose characters were all deleted, and the old hero coming back was a fifth undead.
+    const bool first = !fs::exists(folder, error);
     std::vector<fs::path> files = saves();
-    if (files.empty()) {
+    if (files.empty() && first) {
         adoptOldHero(folder);
         files = saves();
     }

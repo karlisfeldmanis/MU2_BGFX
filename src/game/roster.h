@@ -43,10 +43,11 @@ struct Seat {
 // saves/characters in the client folder, beside the vault and the old hero.json.
 std::string rosterFolder();
 
-// Every character in `folder`, by slot. The first time the folder is empty and an old
-// `hero.json` stands beside it, that hero is copied in as slot 0 -- named for his class, since
-// he was made before names existed -- so the character somebody has been playing is on the
-// screen the first time it opens. The old file is left where it is.
+// Every character in `folder`, by slot. The first time, before the folder exists, an old
+// `hero.json` beside it is copied in as slot 0 -- named for his class, since he was made before
+// names existed -- so the character somebody has been playing is on the screen the first time
+// it opens. The old file is left where it is. Only that first time: a roster emptied by
+// deleting every character stays empty (the user, 2026-10-01, "allow me to delete all chars").
 std::vector<Seat> readRoster(const std::string& folder);
 
 // Why a name cannot be made, or None. MU's own words for each are the screen's.
