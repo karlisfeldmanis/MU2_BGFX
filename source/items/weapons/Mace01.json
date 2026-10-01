@@ -15,12 +15,22 @@
     "slot": 0,
     "width": 1,
     "height": 3,
-    "minimum_damage": 13,
-    "maximum_damage": 15,
-    "attack_speed": 21,
-    "durability": 100,
-    "strength_requirement": 100,
-    "agility_requirement": 0,
+    "minimum_damage": 7,
+    "maximum_damage": 13,
+    "attack_speed": 15,
+    "durability": 21,
+    "requires": {
+      "level": 0,
+      "strength": 100,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "knight"
+    ],
+    "classes_from": "The last three ints of the call are the wizard, knight and elf flags: 0, 1, 0. This row once read the call one column late -- damage 13-15, speed 21, durability 100, which is the strength -- and listed no classes, so anybody could hold it.",
+    "skill": 0,
     "two_handed": false,
     "two_handed_from": "MuWeapons.cs's own row states TwoHanded: false, and width 1 (not 2) in the call above agrees - see Axe01.json's width_note for how OpenMU keeps two-handedness in that column and why the two must not disagree."
   },

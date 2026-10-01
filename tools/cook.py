@@ -2191,7 +2191,10 @@ def cook_tables(world, out_dir):
         arm_names.append(one["name"])
         stance = one.get("stance", "")
         flags = 0
-        if stance in ("two_hand_sword", "scythe", "bow", "crossbow"):
+        # The row's own word, which pipeline/index.py copies off the item: the stance list
+        # this was read from left out "spear", and the Spear and the Dragon Lance went in one
+        # hand beside a shield.
+        if one.get("two_handed"):
             flags |= kTwoHanded
         if stance == "bow":
             flags |= kBow
@@ -2229,7 +2232,7 @@ def cook_tables(world, out_dir):
             flags |= kItemDrops
         if stats.get("jewel"):
             flags |= kItemJewel
-        if one.get("stance", "") in ("two_hand_sword", "scythe", "bow", "crossbow"):
+        if one.get("two_handed"):
             flags |= kItemTwoHanded
         if one.get("kind") == "armor":
             flags |= kItemArmour
