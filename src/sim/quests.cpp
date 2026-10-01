@@ -428,14 +428,14 @@ QuestRow pit() {
     row.paid[5] = {.item = "Jewel02"};              // Jewel of Soul
     // And a second rune with a new thing to set it in (the user, 2026-10-01: "give dungeon 3
     // other jewel of rune and new weapon ... shield with socket and rune which on miss has
-    // chance to cast evil spirits"): a socketed shield each class may wear, and Evil Spirit for
-    // it. The knight's Serpent Shield (45) and the wizard's and the elf's Legendary Shield (48),
-    // the top each takes about the Gorgon's level. An elf's bow fills the shield's hand.
-    row.paid[6] = {.item = "Shield12", .kin = knight, .sockets = 1, .firstOnly = true};  // Serpent
-    row.paid[7] = {.item = "Shield15", .kin = wizard, .sockets = 1, .firstOnly = true};  // Legendary
-    row.paid[8] = {.item = "Shield15", .kin = elf, .sockets = 1, .firstOnly = true};     // Legendary
-    row.paid[9] = {.item = "Jewel22", .power = uint8_t(Power::Spirits), .firstOnly = true};
-    row.paidCount = 10;
+    // chance to cast evil spirits"): Evil Spirit, and for every class a Ring of Ice with one
+    // socket, which takes Evil Spirit alone (sim::settable). It was a socketed shield each, and
+    // then the ring for the elf whose bow fills the shield's hand; the user settled it the same
+    // day: "give ring with +1 sockets, and give only evil spirits rune", "everbody get the ring",
+    // "not shield".
+    row.paid[6] = {.item = "Ring01", .sockets = 1, .firstOnly = true};  // of Ice
+    row.paid[7] = {.item = "Jewel22", .power = uint8_t(Power::Spirits), .firstOnly = true};
+    row.paidCount = 8;
     return row;
 }
 

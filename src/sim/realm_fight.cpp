@@ -62,7 +62,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         // that removal reached only this comment until 2026-10-01 ("poison damage from monsters
         // seems to overpowered").
         if (target.player && target.alive() && !attacker.player && poisons(attacker) &&
-            !poisoned(target)) {
+            !poisoned(target) && !heroResists(target.excel.poisonResistance)) {
             target.poisonNext = tick_ + kPoisonFirst;
             target.poisonDamage = 0;
             target.poisonUntil = tick_ + kHeroPoisonTicks;
@@ -139,8 +139,7 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         attacker.mana = std::min(attacker.maxMana, attacker.mana + back);
     }
     // The Dungeon's runes on a wound he dealt, swing, arrow or spell (sim/items.h): Bloodwell's
-    // share back as life, and each Frenzy's roll off the sockets' own stream -- drawn only when
-    // one is worn, so a run without them is not moved.
+    // share back as life, and a Frenzy's stack (sim::kFrenzyStackSpeed). Neither draws.
     if (attacker.player && target.monster() && wound > 0 && attacker.alive()) {
         if (attacker.excel.lifeSteal > 0.0 && attacker.health < attacker.maxHealth) {
             attacker.stealCarry += float(double(wound) * attacker.excel.lifeSteal);
@@ -152,15 +151,17 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
                            back, wound);
             }
         }
-        for (int i = 0; i < attacker.excel.frenzies; ++i) {
-            if (!runeDice_.nextBool(kFrenzyChance)) continue;
-            if (attacker.frenzyUntil <= tick_) {
-                core::logf("frenzy rune: tick %lld, +%d speed for %lld ticks", (long long)tick_,
-                           kFrenzySpeed, (long long)kFrenzyTicks);
+        if (attacker.excel.frenzies > 0) {
+            if (attacker.frenzyUntil <= tick_) attacker.frenzyStacks = 0;
+            const bool more = attacker.frenzyStacks < kFrenzyMostStacks;
+            if (more) {
+                ++attacker.frenzyStacks;
+                core::logf("frenzy rune: tick %lld, stack %d, +%d speed for %lld ticks",
+                           (long long)tick_, attacker.frenzyStacks, attacker.frenzyStacks *
+                           kFrenzyStackSpeed, (long long)kFrenzyTicks);
             }
             attacker.frenzyUntil = tick_ + kFrenzyTicks;
-            reswing(attacker);
-            break;
+            if (more) reswing(attacker);
         }
     }
     if (attacker.player && blow.critical) {
@@ -701,7 +702,16 @@ void Realm::chillHero(const Body& attacker, Body& target) {
     // Not again while it is on: OpenMU adds an effect only when it is not already active
     // (AttackableExtensions.cs:473), so ten seconds from the first, not from the last.
     if (target.chilledUntil > tick_) return;
+    if (heroResists(target.excel.iceResistance)) return;
     target.chilledUntil = tick_ + kHeroChillTicks;
+}
+
+// His ring's or pendant's resistance r turns the element aside r times in r + 1, the monsters'
+// own roll (gObjCheckResistance). Drawn off the sockets' stream, and only when he wears one, so
+// a run without one is not moved.
+bool Realm::heroResists(int resistance) {
+    if (resistance <= 0) return false;
+    return !runeDice_.nextBool(1.0 / (1.0 + double(resistance)));
 }
 
 bool Realm::resists(const Body& target, bool ice, Random& dice) const {
@@ -910,6 +920,7 @@ void Realm::kill(Body& dead, Body& killer) {
         if (dead.aleUntil != 0 || dead.frenzyUntil != 0) {
             dead.aleUntil = 0;
             dead.frenzyUntil = 0;
+            dead.frenzyStacks = 0;
             reswing(dead);
         }
         order_ = Request{};

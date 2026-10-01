@@ -4431,8 +4431,8 @@ void testRunes(const content::Tables& tables) {
                     const sim::QuestItem& what = row.paid[i];
                     const bool first = sim::questPays(what, kin, true);
                     if (what.power == uint8_t(chain[link])) runes += first ? 1 : 0;
-                    if (what.sockets == 1) pieces += first ? 1 : 0;
-                    if (what.item == std::string("Jewel22") || what.sockets == 1) {
+                    if (what.sockets > 0) pieces += first ? 1 : 0;
+                    if (what.item == std::string("Jewel22") || what.sockets > 0) {
                         again += sim::questPays(what, kin, false) ? 1 : 0;
                     }
                 }
@@ -4455,6 +4455,16 @@ void testRunes(const content::Tables& tables) {
         check(serpentShield < 0 || sim::settable(tables, spirit, held(serpentShield, 1, 0), dk),
               "and in the knight's Serpent Shield");
         check(!sim::settable(tables, spirit, held(serpent, 1, 0), dk), "nor in a weapon");
+        // The Pit's ring (docs/jewellery.md): Evil Spirit alone, from any class.
+        const int ice = tables.itemNamed("Ring01");
+        check(ice >= 0, "the Ring of Ice is in the table");
+        for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
+            check(ice < 0 || sim::settable(tables, spirit, held(ice, 1, 0), kin),
+                  "Evil Spirit goes in the socketed ring, whoever wears it");
+            check(ice < 0 || !sim::settable(tables, held(rune, 0, uint8_t(sim::Power::Frenzy)),
+                                            held(ice, 1, 0), kin),
+                  "and no other rune does");
+        }
         const sim::QuestRow& pit = sim::questAt(5);
         for (int kin = 0; kin < 3; ++kin) {
             int spirits = 0, shields = 0;
@@ -4463,10 +4473,11 @@ void testRunes(const content::Tables& tables) {
                 if (!sim::questPays(what, kin, true)) continue;
                 if (what.power == uint8_t(sim::Power::Spirits)) ++spirits;
                 const int item = tables.itemNamed(what.item);
-                if (item >= 0 && tables.items[size_t(item)].shield() && what.sockets == 1) ++shields;
+                if (item >= 0 && sim::ring(tables.items[size_t(item)]) && what.sockets == 1) ++shields;
+                if (item >= 0 && tables.items[size_t(item)].shield()) shields += 100;
             }
             checkEqual(spirits, 1, "the Pit's first clear pays every class Evil Spirit");
-            checkEqual(shields, 1, "and a socketed shield to set it in");
+            checkEqual(shields, 1, "and a ring with a socket to set it in, and no shield");
         }
     }
     // The Golden Archer's chain in order (Realm::questHere): the Catacombs first, the Halls and
@@ -4794,7 +4805,7 @@ void testDungeonRunes(const content::Tables& tables) {
     if (helm < 0 || pants < 0 || boots < 0) return;
     struct Tally {
         int blows = 0, crits = 0, dealt = 0, healed = 0, frenzied = 0;
-        int swingBare = 0, fastest = 1 << 30;
+        int swingBare = 0, fastest = 1 << 30, mostStacks = 0;
         double critChance = 0.0;
         sim::Excellence excel;
     };
@@ -4868,6 +4879,7 @@ void testDungeonRunes(const content::Tables& tables) {
             if (realm.hero().frenzyUntil > realm.tick()) {
                 ++t->frenzied;
                 t->fastest = std::min(t->fastest, realm.hero().swingTicks);
+                t->mostStacks = std::max(t->mostStacks, realm.hero().frenzyStacks);
             }
         }
     };
@@ -4926,13 +4938,16 @@ void testDungeonRunes(const content::Tables& tables) {
     // Frenzy: it fires, and while it stands his swing is shorter.
     check(frenzy.frenzied > 0, "Frenzy fires in a fight");
     check(frenzy.fastest < frenzy.swingBare, "and his swing is shorter while it stands");
-    // And the cast: a wizard's Energy Ball with the Frenzy's twenty is quicker.
+    // Diablo 3's shape: a stack a wound, up to five, never more.
+    checkEqual(frenzy.mostStacks, sim::kFrenzyMostStacks, "and it stacks to five in a fight");
+    // And the cast: a wizard's Energy Ball under five stacks is quicker.
     if (const sim::SkillRow* ball = sim::skillNumbered(sim::skill::kEnergyBall)) {
         const int agility = sim::startingPoints(sim::Kin::DarkWizard).agility;
         const int32_t plain = sim::castTicks(tables, sim::Kin::DarkWizard, agility, nullptr,
                                              nullptr, *ball);
         const int32_t quick = sim::castTicks(tables, sim::Kin::DarkWizard, agility, nullptr,
-                                             nullptr, *ball, sim::kFrenzySpeed);
+                                             nullptr, *ball,
+                                             sim::kFrenzyStackSpeed * sim::kFrenzyMostStacks);
         std::printf("  energy ball: %d ticks, %d with a Frenzy\n", plain, quick);
         check(plain > 0 && quick < plain, "and a wizard's Energy Ball casts quicker under it");
     }
@@ -4964,6 +4979,45 @@ void testDungeonRunes(const content::Tables& tables) {
           "Renewal gives back 3% of his health every three seconds");
     checkEqual(bareGained, 0, "and none without it, off a safe tile");
     (void)bareMost;
+}
+
+// The four 0.75 pieces (docs/jewellery.md): where they go, what they carry, what they do worn.
+void testJewellery(const content::Tables& tables) {
+    std::printf("rings and pendants\n");
+    const int ice = tables.itemAt(13, 8), poison = tables.itemAt(13, 9);
+    const int lightning = tables.itemAt(13, 12), fire = tables.itemAt(13, 13);
+    check(ice >= 0 && poison >= 0 && lightning >= 0 && fire >= 0, "the four are in the table");
+    if (ice < 0 || poison < 0 || lightning < 0 || fire < 0) return;
+    const content::ItemRow& ring = tables.items[size_t(ice)];
+    const content::ItemRow& pendant = tables.items[size_t(fire)];
+    check(ring.dropsFromMonsters() && !ring.jewel(), "a ring drops as an item, not a jewel");
+    checkEqual(ring.dropLevel, 20, "the Ring of Ice from level 20");
+    checkEqual(sim::placeOf(ring), int(sim::kRingRight), "a ring goes on the right hand");
+    check(sim::placesIn(ring, sim::Kin::DarkWizard, sim::kRingLeft), "or the left");
+    checkEqual(sim::placeOf(pendant), int(sim::kAmulet), "a pendant is the amulet");
+    check(sim::placeOf(tables.items[size_t(tables.itemAt(13, 0))]) == sim::kPet,
+          "the Angel is still a pet");
+    check(!sim::takesOptions(ring) && sim::excellentable(ring), "no luck, but excellent");
+    checkEqual(sim::optionValue(ring, 3), 3, "its option is 3% regeneration at 3");
+    check(sim::excellentLine(ring, 5) == "Increase Max HP +4%", "a ring's family is the armour's");
+    check(sim::excellentLine(tables.items[size_t(lightning)], 3) == "Increase Wizardry Dmg +2%",
+          "the Pendant of Lightning's is the staff's");
+    checkEqual(sim::resistanceOf(ring, 0), 0, "+0 resists nothing");
+    checkEqual(sim::resistanceOf(ring, 4), 4, "+4 resists four");
+
+    sim::Realm realm;
+    realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+    check(realm.give(ice, sim::kRingRight, 3, -1, true, 2) >= 0, "a ring is worn on the right");
+    check(realm.give(poison, sim::kRingLeft, 4, -1, false, 1) >= 0, "and one on the left");
+    check(realm.give(fire, sim::kAmulet, 2, -1, false, 0) >= 0, "and the pendant");
+    const sim::Excellence& e = realm.hero().excel;
+    checkEqual(e.iceResistance, 3, "ice: the +3 ring's");
+    checkEqual(e.poisonResistance, 4, "poison: the +4 ring's");
+    checkEqual(e.lifeRegen, 3, "the two options summed");
+    check(!realm.satchel()[sim::kRingRight].luck, "luck asked for is not kept");
+    check(sim::sellingPrice(ring, 0, 1, false, 0, 0, false, 2, 0) >
+              sim::sellingPrice(ring, 0, 1, false, 0, 0, false, 0, 0),
+          "the option prices a ring up");
 }
 
 void testPets(const content::Tables& tables) {
@@ -5324,6 +5378,7 @@ int main() {
     testDungeonRunes(tables);
     testEvilSpirit(tables);
     testRunes(tables);
+    testJewellery(tables);
     testPets(tables);
     testPoisonOnce();
     testWishDropsOnWalk(tables);

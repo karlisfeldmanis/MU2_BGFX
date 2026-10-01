@@ -100,7 +100,7 @@ int32_t Realm::clipTicksOf(const Body& hero, const SkillRow& row) const {
                                    ? &tables_->arms[size_t(hero.shield)]
                                    : nullptr;
     return castTicks(*tables_, hero.kin, hero.points.agility, right, left, row,
-                     hero.frenzyUntil > tick_ ? kFrenzySpeed : 0);
+                     hero.frenzySpeed(tick_));
 }
 
 // The refusals, in the order `TargetedSkillDefaultPlugin` refuses them, with the two this

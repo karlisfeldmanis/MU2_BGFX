@@ -535,6 +535,7 @@ void Realm::press() {
     // And a Frenzy's speed, the same way.
     if (hero.frenzyUntil != 0 && tick_ >= hero.frenzyUntil) {
         hero.frenzyUntil = 0;
+        hero.frenzyStacks = 0;
         reswing(hero);
     }
     // And Greater Damage, off on its tick and the band re-reckoned without it.

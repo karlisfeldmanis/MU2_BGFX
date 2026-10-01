@@ -50,6 +50,9 @@ std::string kindOf(const content::ItemRow& row) {
     if (sim::ammunition(row)) return "Ammunition";
     if (row.weapon()) return row.twoHanded() ? "Two-handed weapon" : "One-handed weapon";
     if (row.shield()) return "Shield";
+    // Before the pets: the rings and pendants share their group 13 (docs/jewellery.md).
+    if (sim::ring(row)) return "Ring";
+    if (sim::pendant(row)) return "Pendant";
     // Before the jewel: the pets ride in the jewel drop group and are not jewels.
     if (row.group == sim::kGroupPets) return "Pet";
     if (row.jewel()) return "Jewel";
@@ -372,7 +375,16 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // ITEM_IMP (ZzzInventory.cpp:4258-4268; Game.en.resx "Absorb %d%% of Damage", "Max HP +%d
     // increased", "Increase 30%% of attacking & Wizardry Dmg"), with the numbers off the rule the
     // realm fights by (sim::petPower), so the card and the blow cannot disagree.
-    if (row.group == sim::kGroupPets) {
+    // A ring's or a pendant's resistance, 1 a plus in its element (docs/jewellery.md); MuMain's
+    // card says it as "Ice Resistance +%d" and the rest alike.
+    if (sim::jewellery(row)) {
+        static const char* const kElement[] = {"", "Ice resistance", "Poison resistance",
+                                               "Lightning resistance", "Fire resistance"};
+        const int resists = sim::resistanceOf(row, what.refinement);
+        does.rows.push_back(stat(kElement[int(sim::elementOf(row))], "+" + std::to_string(resists),
+                                 resists > 0 ? Tone::White : Tone::Gray));
+    }
+    if (row.group == sim::kGroupPets && !sim::jewellery(row)) {
         const sim::PetPower power = sim::petPower(row);
         const auto say = [&](const std::string& words) {
             Row line;
@@ -436,7 +448,7 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     // what a drop rolls, a green star for an excellent option. The text stays MU's blue. Luck's
     // two lines become "Luck" as a keyword on each, which is the only change to MU's wording.
     const bool carriesSkill = what.skill && row.skill > 0;
-    if (sim::takesOptions(row) &&
+    if ((sim::takesOptions(row) || sim::jewellery(row)) &&
         (what.luck || what.option > 0 || what.excellent != 0 || carriesSkill)) {
         Section options;
         // MU's line split at its last word where that word is the value: "Increase Max HP +4%"
@@ -472,7 +484,9 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
         }
         if (what.option > 0) {
             const std::string value = std::to_string(sim::optionValue(row, what.option));
-            if (row.shield()) rolled("", "Additional defense rate +" + value);
+            // A ring's and a pendant's is AT_LIFE_REGENERATION, MuMain's "Automatic HP recovery".
+            if (sim::jewellery(row)) rolled("", "Automatic HP recovery +" + value + "%");
+            else if (row.shield()) rolled("", "Additional defense rate +" + value);
             else if (row.armour()) rolled("", "Additional defense +" + value);
             else if (row.magicPower > 0) rolled("", "Additional Wizardry Dmg +" + value);
             else rolled("", "Additional Dmg +" + value);
@@ -806,7 +820,8 @@ Sheet describe(const content::Tables& tables, const sim::Held& what, const sim::
     if (sim::wears(row)) {
         const int maximum = sim::maximumDurability(row, what);
         // A pet's is its Life: MU's `Life: %d` (GT 70) for ITEM_HELPER to +7 (:4656-4661).
-        const char* word = row.group == sim::kGroupPets ? "Life " : "Durability ";
+        const char* word =
+            row.group == sim::kGroupPets && !sim::jewellery(row) ? "Life " : "Durability ";
         sheet.wear = word + std::to_string(what.durability) + " / " + std::to_string(maximum);
         sheet.worn = maximum > 0 ? float(what.durability) / float(maximum) : 0.0f;
         switch (sim::wornBand(what.durability, maximum)) {

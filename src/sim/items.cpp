@@ -102,6 +102,25 @@ PetPower petPower(const content::ItemRow& row) {
     return power;
 }
 
+bool ring(const content::ItemRow& row) {
+    return row.group == kGroupPets && (row.number == 8 || row.number == 9);
+}
+
+bool pendant(const content::ItemRow& row) {
+    return row.group == kGroupPets && (row.number == 12 || row.number == 13);
+}
+
+Element elementOf(const content::ItemRow& row) {
+    if (row.group != kGroupPets) return Element::None;
+    switch (row.number) {
+        case 8: return Element::Ice;
+        case 9: return Element::Poison;
+        case 12: return Element::Lightning;
+        case 13: return Element::Fire;
+        default: return Element::None;
+    }
+}
+
 bool ammunition(const content::ItemRow& row) {
     return row.group == kGroupBows && (row.number == 7 || row.number == 15);
 }
@@ -128,7 +147,7 @@ bool takesOptions(const content::ItemRow& row) {
     return row.group <= kGroupBoots && !ammunition(row);
 }
 
-bool excellentable(const content::ItemRow& row) { return takesOptions(row); }
+bool excellentable(const content::ItemRow& row) { return takesOptions(row) || jewellery(row); }
 
 int excellentDamage(const content::ItemRow& row) {
     if (!excellentable(row) || row.minimumDamage <= 0) return 0;
@@ -194,12 +213,15 @@ std::string excellentLine(const content::ItemRow& row, int bit) {
         "Increase Wizardry Dmg +level/20",
         "Excellent Damage rate +10%",
     };
-    if (row.armour() || row.shield()) return kDefense[bit];
-    return row.magicPower > 0 ? kWizardry[bit] : kAttack[bit];
+    if (row.armour() || row.shield() || ring(row)) return kDefense[bit];
+    return row.magicPower > 0 || elementOf(row) == Element::Lightning ? kWizardry[bit]
+                                                                      : kAttack[bit];
 }
 
 int optionValue(const content::ItemRow& row, int level) {
     if (level <= 0) return 0;
+    // A ring's and a pendant's is life regeneration, a percent a level (AT_LIFE_REGENERATION).
+    if (jewellery(row)) return level;
     return level * (row.shield() ? 5 : 4);
 }
 
@@ -290,6 +312,9 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || (!power->everyone && power->kin != kin)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!takesSockets(row) || freeSocket(target) < 0) return false;
+    // A ring's socket (the Pit's, the only one there is) takes Evil Spirit alone: the user,
+    // 2026-10-01, "give ring with +1 sockets, and give only evil spirits rune".
+    if (ring(row)) return power->power == Power::Spirits;
     if (power->shieldOnly) return row.shield();
     return power->weapon == (row.weapon() && !row.shield());
 }
@@ -304,7 +329,11 @@ int placeOf(const content::ItemRow& row) {
     }
     if (row.group >= kGroupShields && row.group <= kGroupBoots) return row.group - 5;
     // The Guardian Angel and the Imp: EQUIPMENT_HELPER, OpenMU's slot type holding 8 (CreatePet).
-    if (row.group == kGroupPets) return kPet;
+    // A ring in the right ring slot and a pendant as the amulet (ZzzInfomation.cpp:1085-1094);
+    // placesIn lets a ring into the left one too.
+    if (ring(row)) return kRingRight;
+    if (pendant(row)) return kAmulet;
+    if (row.group == kGroupPets && row.number <= 1) return kPet;
     return -1;
 }
 
@@ -316,6 +345,7 @@ bool offHanded(const content::ItemRow& row, Kin kin) {
 bool placesIn(const content::ItemRow& row, Kin kin, int slot) {
     const int place = placeOf(row);
     if (place == slot) return true;
+    if (slot == kRingLeft && place == kRingRight) return true;
     return slot == kWeaponLeft && place == kWeaponRight && offHanded(row, kin);
 }
 

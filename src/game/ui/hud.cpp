@@ -727,16 +727,19 @@ tip::Sheet Hud::boonSheet(const Boon& one, panel::Arts& arts) const {
         return sheet;
     }
     if (one.frenzy) {
-        // The Dungeon's boots rune, ours: a landed blow's 15% roll, sim::kFrenzySpeed for three
-        // seconds on the swing and the cast.
+        // The Dungeon's boots rune, ours and Diablo 3's shape: a stack a wound, each
+        // sim::kFrenzyStackSpeed on the swing and the cast, four seconds from the last.
         sheet.name = "Frenzy";
         sheet.nameTone = tip::Tone::Yellow;
         sheet.base = "RUNE";
         tip::Section what;
-        what.rows.push_back(said("Attack speed", "+" + std::to_string(sim::kFrenzySpeed),
+        const std::string speed = "+" + std::to_string(one.stacks * sim::kFrenzyStackSpeed);
+        what.rows.push_back(said("Stacks",
+                                 std::to_string(one.stacks) + " of " +
+                                     std::to_string(sim::kFrenzyMostStacks),
                                  tip::Tone::Green));
-        what.rows.push_back(said("Casting speed", "+" + std::to_string(sim::kFrenzySpeed),
-                                 tip::Tone::Green));
+        what.rows.push_back(said("Attack speed", speed, tip::Tone::Green));
+        what.rows.push_back(said("Casting speed", speed, tip::Tone::Green));
         sheet.sections.push_back(what);
         return sheet;
     }
@@ -1108,42 +1111,49 @@ void Hud::rebuild() {
         if (icon.valid()) canvas_.image(icon, box);
         const bool debuff = one.debuff();
         canvas_.outline(box, std::max(1.0f, s.scale), debuff ? kDebuffEdge : kBuffEdge);
-        // And how much of it is left, as a hairline across its foot: the strip says WHAT is on
-        // him and this says for how much longer, which is the half a bare icon cannot.
+        // Diablo 4's cell (the user's pick, 2026-10-02), at the strip's own size ("it has to be
+        // same size as other buffs"). What is gone of a buff's time is a dark
+        // sweep down over the icon from its top, so the lit part left is the time left; a
+        // Frenzy's stacks are one clean figure in the bottom right corner. A pet has no clock --
+        // its hairline under the cell is its Life -- and a debuff keeps its big centred seconds
+        // over a wash (the user: "just use big number at center with some opacity background for
+        // debuffs time").
         const float left = std::clamp(one.share, 0.0f, 1.0f);
-        const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
-        canvas_.rect({box.x, box.bottom() - line, box.w * left, line},
-                     debuff ? kDebuffLeft : kBuffLeft);
-        // And the seconds in figures over its foot, as the skill keys print a cooldown: whole
-        // seconds from one up, minutes from sixty. The pet has no clock; its bar is its Life.
-        if (one.pet < 0 && one.seconds >= 1.0f) {
-            const int whole = int(one.seconds + 0.5f);
-            char figure[16];
-            if (whole >= 60) {
-                std::snprintf(figure, sizeof figure, "%d:%02d", whole / 60, whole % 60);
-            } else {
-                std::snprintf(figure, sizeof figure, "%d", whole);
-            }
-            // A debuff's is one big figure at its centre over a wash on the whole icon (the user:
-            // "just use big number at center with some opacity background for debuffs time").
-            if (debuff) {
+        if (one.pet >= 0) {
+            const float line = std::max(1.0f, 2.0f * kUnit * s.scale);
+            canvas_.rect({box.x, box.bottom() - line, box.w * left, line}, kBuffLeft);
+            continue;
+        }
+        if (debuff) {
+            canvas_.rect({box.x, box.bottom() - std::max(1.0f, 2.0f * kUnit * s.scale),
+                          box.w * left, std::max(1.0f, 2.0f * kUnit * s.scale)},
+                         kDebuffLeft);
+            if (one.seconds >= 1.0f) {
+                const int whole = int(one.seconds + 0.5f);
+                char figure[16];
+                if (whole >= 60) {
+                    std::snprintf(figure, sizeof figure, "%d:%02d", whole / 60, whole % 60);
+                } else {
+                    std::snprintf(figure, sizeof figure, "%d", whole);
+                }
                 canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.5f));
-                // In the label face, not the default one, and smaller (the user: "number to big,
-                // use other font").
+                // In the label face, not the default one (the user: "number to big, use other
+                // font").
                 const float big = std::round(20.0f * kUnit * s.scale);
                 controls::label(canvas_, box.midX() - controls::labelWidth(big, figure) * 0.5f,
                                 box.midY() + big * 0.33f, big, kInk, figure);
-                continue;
             }
-            // A buff's on a dark band across the foot, larger and with a heavier drop: bare on the
-            // icon the figure was lost in its colours (the user: "time number was hard to read").
+            continue;
+        }
+        const float gone = std::round(box.h * (1.0f - left));
+        if (gone > 0.0f) canvas_.rect({box.x, box.y, box.w, gone}, gfx::rgba(0.0f, 0.0f, 0.0f, 0.58f));
+        if (one.frenzy && one.stacks > 0) {
+            char count[8];
+            std::snprintf(count, sizeof count, "%d", one.stacks);
             const float size = std::round(19.0f * kUnit * s.scale);
-            const float band = std::round(size * 0.95f);
-            canvas_.rect({box.x, box.bottom() - line - band, box.w, band},
-                         gfx::rgba(0.0f, 0.0f, 0.0f, 0.62f));
-            canvas_.shadowed(box.midX(), box.bottom() - line - band * 0.18f, size, kInk,
-                             kInkShadow, std::max(1.0f, 1.5f * s.scale), figure,
-                             gfx::Align::Centre, 0.0f);
+            const float in = std::round(4.0f * kUnit * s.scale);
+            canvas_.shadowed(box.right() - in, box.bottom() - in * 2.0f, size, kInk, kInkShadow,
+                             std::max(1.0f, s.scale), count, gfx::Align::Right, 0.0f);
         }
     }
 

@@ -99,8 +99,8 @@ sim::Held rewardHeld(const content::Tables& tables, int32_t item, int plus, int 
     what.refinement = int16_t(plus);
     what.durability =
         int16_t(sim::stacks(row) ? std::max(1, count) : sim::fullDurability(row, plus));
-    if (sim::takesOptions(row)) {
-        what.luck = luck;
+    if (sim::takesOptions(row) || sim::takesSockets(row)) {
+        what.luck = luck && sim::takesOptions(row);
         what.sockets = uint8_t(std::min<int>(sockets, sim::kMostSockets));
     }
     if (sim::creation(row)) what.powers[0] = power;

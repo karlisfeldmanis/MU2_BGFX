@@ -1,5 +1,7 @@
 #include "sim/market.h"
 
+#include "sim/items.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -262,9 +264,12 @@ int64_t buyingPrice(const content::ItemRow& row, int refinement, int pieces, boo
     if (row.group == kOrbs && orb(row.number) > 0) return round(orb(row.number));
     // The pets: `dropLevel^3 + 100`, the branch OpenMU gives group 13 with the capes and the
     // scrolls (ItemPriceCalculator.cs:486-498) -- 12,200 for the Angel, 22,000 for the Imp.
+    // A ring and a pendant on the same branch, times one and its option (WebZen's
+    // `Gold += Gold * m_Option3` for AT_LIFE_REGENERATION, zzzitem.cpp:2532).
     if (row.group == kPets) {
         const int64_t dropLevel = row.dropLevel + refinement * 3;
-        return round(dropLevel * dropLevel * dropLevel + 100);
+        const int64_t base = dropLevel * dropLevel * dropLevel + 100;
+        return round(jewellery(row) ? base * (1 + std::max(0, option)) : base);
     }
     if (row.group == kPotions && worth(row.number) > 0) {
         const int64_t value = worth(row.number);

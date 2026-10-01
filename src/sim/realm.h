@@ -356,9 +356,14 @@ struct Body {
     // the boon and not through it, because the two are different effects in OpenMU (subtypes
     // 54 and the skill's own) and a guard raised with an Ale in him keeps both.
     int64_t aleUntil = 0;
-    // Until when a Frenzy rune's speed stands on him: kFrenzySpeed more attack and casting speed,
-    // read by `reswing` and `clipTicksOf`, beside the Ale's.
+    // Until when a Frenzy rune's stacks stand on him, and how many: kFrenzyStackSpeed more attack
+    // and casting speed each, read by `reswing` and `clipTicksOf` through frenzySpeed, beside the
+    // Ale's.
     int64_t frenzyUntil = 0;
+    int frenzyStacks = 0;
+    int frenzySpeed(int64_t tick) const {
+        return frenzyUntil > tick ? frenzyStacks * kFrenzyStackSpeed : 0;
+    }
     // Greater Damage on her: the bonus reckoned at the cast, and the tick it lapses.
     int32_t might = 0;
     int64_t mightUntil = 0;
@@ -880,6 +885,8 @@ private:
     // Whether a monster turns Ice's or Poison's element aside: its OpenMU resistance, rolled on
     // `dice` only when it has one, so a breed with none takes no draw (kResistances).
     bool resists(const Body& target, bool ice, Random& dice) const;
+    // Whether his worn resistance `resistance` turns an element aside (docs/jewellery.md).
+    bool heroResists(int resistance);
     // Teleport: where a blink toward `column, row` lands -- pulled back to its reach, and off a
     // wall toward him -- or false when nowhere on the line will take him.
     bool blinkTo(const Body& hero, const SkillRow& row, int column, int row_, int* outColumn,

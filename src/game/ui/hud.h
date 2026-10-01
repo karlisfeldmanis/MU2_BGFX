@@ -141,6 +141,7 @@ public:
         bool poison = false;  // or a poison on him, MU's eDeBuff_Poison
         bool chill = false;   // or iced, walking at kChillFactor: MU's eDeBuff_Freeze
         bool frenzy = false;  // or a Frenzy rune's speed, the Dungeon's (sim::kFrenzyTicks)
+        int stacks = 0;       // and its stacks, 1 to sim::kFrenzyMostStacks
         // Or his pet in slot 8: 0 the Guardian Angel, 1 the Imp, -1 none. It has no clock; its
         // bar is its Life, `life` of `lifeMost`. Ours, as the strip is: MuMain shows a worn pet
         // in no status cell, only in its own life bar (NewUIItemEnduranceInfo).

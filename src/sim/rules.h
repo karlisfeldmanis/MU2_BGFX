@@ -65,8 +65,15 @@ struct Excellence {
     int frenzies = 0;
     // Renewal's share of maximum health every three seconds, anywhere (sim::kRenewalShare).
     double renewal = 0.0;
-    // How many Evil Spirit runes his shield carries, each rolling on a miss (sim::kSpiritChance).
+    // How many Evil Spirit runes his shield and his rings carry, each rolling on a miss
+    // (sim::kSpiritChance).
     int spirits = 0;
+    // Not options either: the rings' and the pendant's (docs/jewellery.md). The largest
+    // resistance worn to Ice and to Poison, each turning the element aside r times in r + 1, and
+    // the percent of maximum life the worn pieces' options give back every kJewelleryRegenTicks.
+    int iceResistance = 0;
+    int poisonResistance = 0;
+    int lifeRegen = 0;
 };
 
 struct Fighter {

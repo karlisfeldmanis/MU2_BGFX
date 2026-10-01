@@ -1,0 +1,224 @@
+{
+  "item": "Necklace02",
+  "mu_name": "Pendant of Fire",
+  "mu_name_from": "MuMain loads group 13 number 13 as Data/Item/Necklace02.bmd: `AccessModel(MODEL_HELPER + i + 12, L\"Data\\\\Item\\\\\", L\"Necklace\", i + 1)` (ZzzOpenData.cpp:716). OpenMU's 0.75 Jewelery.cs names it 'Pendant of Fire'. docs/jewellery.md.",
+  "why_this_one": "The four 0.75 rings and pendants, so they drop as they did (the user, 2026-10-01: 'we need to drop also rings and pendants how it was in MuMain').",
+  "profile": "weapon",
+  "profile_note": "As Gem05: a small painted sheet on a made object seen close.",
+  "stats": {
+    "note": "The item's own row, from OpenMU's 0.75 initialiser, checked against WebZen's item.txt (group 13 row 13: level 13, durability 50, fire resistance 1).",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Jewelery.cs:47-51 and CreateJewelery (:146-184).",
+    "call": "CreatePendant(13, \"Pendant of Fire\", 13, 50, Stats.FireResistance)",
+    "group": 13,
+    "number": 13,
+    "drop_level": 13,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 50,
+    "slot": 9,
+    "requires": {
+      "level": 13,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_note": "Every class (CreateJewelery :176-179).",
+    "resistance": "fire",
+    "resistance_note": "1 a plus in this element, the largest of the worn pieces counting (sim/items.h, jewellery)."
+  },
+  "sheets": {
+    "ring": "ring.png"
+  },
+  "sheet_from": "Data/Item/ring.OZJ (16x16), from MuMain; the .bmd names ring.jpg and all four pieces share it, each on its own cells.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "sheet_materials": {
+    "ring": "steel"
+  },
+  "sheet_materials_from": "ring.OZJ is silver set with two painted stones: a green one in the top-left cell and a violet one under it, and a silver ramp down the right half. The metal stays the weapon profile's steel; an island wholly on a stone's cell is glass, as Gem05's painted ball (judged from the sheet's pixels).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 48,
+      "area": 227.3,
+      "along": [
+        -10.4,
+        2.8
+      ],
+      "mu_uv": [
+        0.638,
+        0.056,
+        0.964,
+        0.485
+      ],
+      "bake_uv": [
+        0.008,
+        0.009,
+        0.797,
+        0.783
+      ]
+    },
+    {
+      "island": 1,
+      "material": "steel",
+      "triangles": 10,
+      "area": 463.4,
+      "along": [
+        -1.8,
+        18.3
+      ],
+      "mu_uv": [
+        0.315,
+        0.108,
+        0.851,
+        0.59
+      ],
+      "bake_uv": [
+        0.007,
+        0.008,
+        0.647,
+        0.623
+      ]
+    },
+    {
+      "island": 2,
+      "material": "steel",
+      "triangles": 4,
+      "area": 74.5,
+      "along": [
+        0.2,
+        15.2
+      ],
+      "mu_uv": [
+        0.833,
+        0.333,
+        0.947,
+        0.898
+      ],
+      "bake_uv": [
+        0.799,
+        0.219,
+        0.922,
+        0.918
+      ]
+    },
+    {
+      "island": 3,
+      "material": "steel",
+      "triangles": 4,
+      "area": 55.8,
+      "along": [
+        -1.0,
+        9.1
+      ],
+      "mu_uv": [
+        0.83,
+        0.479,
+        0.95,
+        0.86
+      ],
+      "bake_uv": [
+        0.885,
+        0.008,
+        0.993,
+        0.553
+      ]
+    },
+    {
+      "island": 4,
+      "material": "steel",
+      "triangles": 4,
+      "area": 57.4,
+      "along": [
+        -1.8,
+        8.7
+      ],
+      "mu_uv": [
+        0.83,
+        0.361,
+        0.941,
+        0.856
+      ],
+      "bake_uv": [
+        0.54,
+        0.62,
+        0.724,
+        0.946
+      ]
+    },
+    {
+      "island": 5,
+      "material": "steel",
+      "triangles": 4,
+      "area": 61.9,
+      "along": [
+        -8.3,
+        -4.6
+      ],
+      "mu_uv": [
+        0.826,
+        0.337,
+        0.961,
+        0.891
+      ],
+      "bake_uv": [
+        0.662,
+        0.285,
+        0.832,
+        0.832
+      ]
+    },
+    {
+      "island": 6,
+      "material": "steel",
+      "triangles": 4,
+      "area": 64.5,
+      "along": [
+        -5.0,
+        -0.2
+      ],
+      "mu_uv": [
+        0.815,
+        0.438,
+        0.948,
+        0.888
+      ],
+      "bake_uv": [
+        0.339,
+        0.582,
+        0.526,
+        0.887
+      ]
+    },
+    {
+      "island": 7,
+      "material": "steel",
+      "triangles": 4,
+      "area": 56.6,
+      "along": [
+        -2.8,
+        3.7
+      ],
+      "mu_uv": [
+        0.827,
+        0.362,
+        0.938,
+        0.897
+      ],
+      "bake_uv": [
+        0.226,
+        0.008,
+        0.914,
+        0.91
+      ]
+    }
+  ]
+}

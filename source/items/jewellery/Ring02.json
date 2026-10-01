@@ -1,0 +1,70 @@
+{
+  "item": "Ring02",
+  "mu_name": "Ring of Poison",
+  "mu_name_from": "MuMain loads group 13 number 9 as Data/Item/Ring02.bmd: `AccessModel(MODEL_HELPER + i + 8, L\"Data\\\\Item\\\\\", L\"Ring\", i + 1)` (ZzzOpenData.cpp:711). OpenMU's 0.75 Jewelery.cs names it 'Ring of Poison'. docs/jewellery.md.",
+  "why_this_one": "The four 0.75 rings and pendants, so they drop as they did (the user, 2026-10-01: 'we need to drop also rings and pendants how it was in MuMain').",
+  "profile": "weapon",
+  "profile_note": "As Gem05: a small painted sheet on a made object seen close.",
+  "stats": {
+    "note": "The item's own row, from OpenMU's 0.75 initialiser, checked against WebZen's item.txt (group 13 row 9: level 17, durability 50, poison resistance 1).",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Jewelery.cs:47-51 and CreateJewelery (:146-184).",
+    "call": "CreateRing(9, \"Ring of Poison\", 17, 50, Stats.PoisonResistance)",
+    "group": 13,
+    "number": 9,
+    "drop_level": 17,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 50,
+    "slot": 10,
+    "requires": {
+      "level": 17,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_note": "Every class (CreateJewelery :176-179).",
+    "resistance": "poison",
+    "resistance_note": "1 a plus in this element, the largest of the worn pieces counting (sim/items.h, jewellery)."
+  },
+  "sheets": {
+    "ring": "ring.png"
+  },
+  "sheet_from": "Data/Item/ring.OZJ (16x16), from MuMain; the .bmd names ring.jpg and all four pieces share it, each on its own cells.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "sheet_materials": {
+    "ring": "steel"
+  },
+  "sheet_materials_from": "ring.OZJ is silver set with two painted stones: a green one in the top-left cell and a violet one under it, and a silver ramp down the right half. The metal stays the weapon profile's steel; an island wholly on a stone's cell is glass, as Gem05's painted ball (judged from the sheet's pixels).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "steel",
+      "triangles": 50,
+      "area": 951.7,
+      "along": [
+        -9.7,
+        10.3
+      ],
+      "mu_uv": [
+        0.006,
+        0.001,
+        0.994,
+        0.999
+      ],
+      "bake_uv": [
+        0.004,
+        0.004,
+        0.996,
+        0.909
+      ]
+    }
+  ]
+}

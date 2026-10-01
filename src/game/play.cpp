@@ -839,8 +839,7 @@ void Play::update(double seconds) {
                             const int32_t ticks =
                                 sim::castTicks(tables_, body->kin, body->points.agility,
                                                armAt(body->weapon), armAt(body->shield), *spell,
-                                               body->frenzyUntil > realm_.tick() ? sim::kFrenzySpeed
-                                                                                 : 0);
+                                               body->frenzySpeed(realm_.tick()));
                             const float fits = float(ticks) * float(kTickSeconds);
                             if (fits > 0.01f && clip > fits) swinger->swingPace = clip / fits;
                         }

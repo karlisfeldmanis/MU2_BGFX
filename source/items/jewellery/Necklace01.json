@@ -1,0 +1,136 @@
+{
+  "item": "Necklace01",
+  "mu_name": "Pendant of Lightning",
+  "mu_name_from": "MuMain loads group 13 number 12 as Data/Item/Necklace01.bmd: `AccessModel(MODEL_HELPER + i + 12, L\"Data\\\\Item\\\\\", L\"Necklace\", i + 1)` (ZzzOpenData.cpp:716). OpenMU's 0.75 Jewelery.cs names it 'Pendant of Lightning' (spelt 'Lighting' there and in MuMain's enum). docs/jewellery.md.",
+  "why_this_one": "The four 0.75 rings and pendants, so they drop as they did (the user, 2026-10-01: 'we need to drop also rings and pendants how it was in MuMain').",
+  "profile": "weapon",
+  "profile_note": "As Gem05: a small painted sheet on a made object seen close.",
+  "stats": {
+    "note": "The item's own row, from OpenMU's 0.75 initialiser, checked against WebZen's item.txt (group 13 row 12: level 21, durability 50, lightning resistance 1).",
+    "from": "openmu/src/Persistence/Initialization/Version075/Items/Jewelery.cs:47-51 and CreateJewelery (:146-184).",
+    "call": "CreatePendant(12, \"Pendant of Lighting\", 21, 50, Stats.LightningResistance)",
+    "group": 13,
+    "number": 12,
+    "drop_level": 21,
+    "drops_from_monsters": true,
+    "width": 1,
+    "height": 1,
+    "durability": 50,
+    "slot": 9,
+    "requires": {
+      "level": 21,
+      "strength": 0,
+      "agility": 0,
+      "energy": 0,
+      "vitality": 0
+    },
+    "classes": [
+      "wizard",
+      "knight",
+      "elf"
+    ],
+    "classes_note": "Every class (CreateJewelery :176-179).",
+    "resistance": "lightning",
+    "resistance_note": "1 a plus in this element, the largest of the worn pieces counting (sim/items.h, jewellery)."
+  },
+  "sheets": {
+    "ring": "ring.png"
+  },
+  "sheet_from": "Data/Item/ring.OZJ (16x16), from MuMain; the .bmd names ring.jpg and all four pieces share it, each on its own cells.",
+  "cutout": false,
+  "cutout_from": "No alpha in the .OZJ.",
+  "sheet_materials": {
+    "ring": "steel"
+  },
+  "sheet_materials_from": "ring.OZJ is silver set with two painted stones: a green one in the top-left cell and a violet one under it, and a silver ramp down the right half. The metal stays the weapon profile's steel; an island wholly on a stone's cell is glass, as Gem05's painted ball (judged from the sheet's pixels).",
+  "islands": [
+    {
+      "island": 0,
+      "material": "glass",
+      "triangles": 48,
+      "area": 252.8,
+      "along": [
+        -13.3,
+        2.6
+      ],
+      "mu_uv": [
+        0.242,
+        0.117,
+        0.379,
+        0.415
+      ],
+      "bake_uv": [
+        0.261,
+        0.007,
+        0.579,
+        0.947
+      ]
+    },
+    {
+      "island": 1,
+      "material": "glass",
+      "triangles": 10,
+      "area": 217.4,
+      "along": [
+        0.7,
+        14.5
+      ],
+      "mu_uv": [
+        0.237,
+        0.542,
+        0.506,
+        0.928
+      ],
+      "bake_uv": [
+        0.006,
+        0.005,
+        0.29,
+        0.831
+      ]
+    },
+    {
+      "island": 2,
+      "material": "glass",
+      "triangles": 10,
+      "area": 47.5,
+      "along": [
+        0.5,
+        7.3
+      ],
+      "mu_uv": [
+        0.237,
+        0.542,
+        0.506,
+        0.928
+      ],
+      "bake_uv": [
+        0.262,
+        0.005,
+        0.913,
+        0.542
+      ]
+    },
+    {
+      "island": 3,
+      "material": "glass",
+      "triangles": 10,
+      "area": 47.5,
+      "along": [
+        -3.3,
+        1.4
+      ],
+      "mu_uv": [
+        0.237,
+        0.542,
+        0.506,
+        0.928
+      ],
+      "bake_uv": [
+        0.485,
+        0.363,
+        0.993,
+        0.995
+      ]
+    }
+  ]
+}

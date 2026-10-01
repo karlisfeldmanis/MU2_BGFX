@@ -82,7 +82,7 @@ void Realm::reswing(Body& hero) {
                                    : nullptr;
     // An Ale's twenty ride with the excellent option's seven: both are AttackSpeedAny in OpenMU.
     const int extra = hero.excel.speed + (hero.aleUntil > tick_ ? kAleSpeed : 0) +
-                      (hero.frenzyUntil > tick_ ? kFrenzySpeed : 0);
+                      hero.frenzySpeed(tick_);
     const int milliseconds =
         swingMilliseconds(*tables_, hero.kin, hero.points.agility, right, left, extra);
     hero.swingMs = milliseconds;
@@ -297,35 +297,39 @@ void Realm::rearm(Body& hero) {
         hero.offhandBonus = damageBonus(h.refinement) + optionValue(*left, h.option) +
                             (h.excellent != 0 ? excellentDamage(*left) : 0);
     }
-    // What the excellent options come to: a weapon's from the hands, the defence family's from
-    // the shield and the five armour slots. ExcellentOptions.cs, bit n being option n + 1.
+    // What the excellent options come to: a weapon's from the hands and the pendant, the defence
+    // family's from the shield, the five armour slots and the rings. ExcellentOptions.cs, bit n
+    // being option n + 1; the jewellery's families are WebZen's (zzzitem.cpp:1380-1440).
     hero.excel = Excellence{};
-    for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
+    for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         const uint8_t bits = bag_[slot].excellent;
         if (!row || bits == 0) continue;
         const auto has = [bits](int n) { return (bits >> n) & 1; };
         Excellence& e = hero.excel;
-        if (row->armour() || row->shield()) {
+        if (row->armour() || row->shield() || ring(*row)) {
             if (has(0)) e.zenRate *= 1.4;
             if (has(1)) e.defenseRateRate *= 1.1;
             if (has(2)) e.reflect += 0.05;
             if (has(3)) e.damageDecrease += 0.04;
             if (has(4)) e.manaRate *= 1.04;
             if (has(5)) e.healthRate *= 1.04;
-        } else if (row->weapon() && !ammunition(*row)) {
+        } else if ((row->weapon() && !ammunition(*row)) || pendant(*row)) {
             if (has(0)) e.killMana += 1.0 / 8.0;
             if (has(1)) e.killLife += 1.0 / 8.0;
             if (has(2)) e.speed += 7;
-            // A staff's 4 and 5 are wizardry damage, which nothing here reckons yet.
-            if (has(3) && row->magicPower == 0) e.damageRate *= 1.02;
-            if (has(4) && row->magicPower == 0) ++e.levelPieces;
+            // A staff's 4 and 5 are wizardry damage, which nothing here reckons yet, and the
+            // Pendant of Lightning's are the staff's.
+            const bool wizardry = row->magicPower > 0 || elementOf(*row) == Element::Lightning;
+            if (has(3) && !wizardry) e.damageRate *= 1.02;
+            if (has(4) && !wizardry) ++e.levelPieces;
             if (has(5)) e.excellentChance += 0.1;
         }
     }
     // The Rune of the Undying, in any socket of anything worn that takes an armour's rune: the
-    // armour and the shield, not a weapon. sim::kUndyingHealth each.
-    for (int slot = kWeaponRight; slot <= kBoots; ++slot) {
+    // armour and the shield, not a weapon. sim::kUndyingHealth each. A ring's socket holds only
+    // Evil Spirit (sim::settable).
+    for (int slot = kWeaponRight; slot <= kRingLeft; ++slot) {
         const content::ItemRow* row = rowAt(slot);
         if (!row || (row->weapon() && !row->shield())) continue;
         for (int at = 0; at < std::min<int>(bag_[slot].sockets, kMostSockets); ++at) {
@@ -340,8 +344,21 @@ void Realm::rearm(Body& hero) {
             }
             if (power->power == Power::Frenzy) ++e.frenzies;
             if (power->power == Power::Renewal) e.renewal += kRenewalShare;
-            if (power->power == Power::Spirits && row->shield()) ++e.spirits;
+            if (power->power == Power::Spirits && (row->shield() || ring(*row))) ++e.spirits;
         }
+    }
+    // The rings and the pendant: the largest resistance worn in each element (Max3), and every
+    // piece's life regeneration summed (docs/jewellery.md).
+    for (int slot : {kAmulet, kRingRight, kRingLeft}) {
+        const content::ItemRow* row = rowAt(slot);
+        if (!row || !jewellery(*row)) continue;
+        Excellence& e = hero.excel;
+        const int resists = resistanceOf(*row, bag_[slot].refinement);
+        if (elementOf(*row) == Element::Ice) e.iceResistance = std::max(e.iceResistance, resists);
+        if (elementOf(*row) == Element::Poison) {
+            e.poisonResistance = std::max(e.poisonResistance, resists);
+        }
+        e.lifeRegen += optionValue(*row, bag_[slot].option);
     }
     // Said once a change, when any is worn, so a run's log shows what the fight below it had.
     {
@@ -453,8 +470,9 @@ int Realm::give(int32_t item, int slot, int refinement, int durability, bool luc
     }
     if (durability < 0) durability = fullDurability(row, refinement);
     Held put{item, int16_t(refinement), int16_t(durability)};
-    if (takesOptions(row)) {
-        put.luck = luck;
+    if (takesOptions(row) || jewellery(row)) {
+        // No luck on a ring or a pendant: nothing in CItem::Convert reads it there.
+        put.luck = luck && takesOptions(row);
         put.option = int8_t(std::clamp(option, 0, kMostOption));
         put.excellent = uint8_t(excellent & 63);
         put.sockets = uint8_t(std::min<int>(sockets, kMostSockets));
@@ -734,6 +752,14 @@ void Realm::recover(Body& hero) {
         hero.mana = std::min(hero.maxMana,
                              hero.mana + std::max(1, int(float(hero.maxMana) * kRestShare)));
     }
+    // The rings' and the pendant's life regeneration: their options' percent of the pool every
+    // seventh second, anywhere (gObjRestPotionFill off rest, user.cpp:23387-23520; whole points,
+    // as there).
+    if (hero.alive() && hero.excel.lifeRegen > 0 && tick_ % kJewelleryRegenTicks == 0 &&
+        hero.health < hero.maxHealth) {
+        const int back = std::max(1, hero.maxHealth * hero.excel.lifeRegen / 100);
+        hero.health = std::min(hero.maxHealth, hero.health + back);
+    }
     // Health on the same three seconds, a hundredth of the pool, and only on a safe tile -- and
     // a Renewal rune's share anywhere, beside it (sim::kRenewalShare).
     if (hero.alive() && tick_ % kRecoverEveryTicks == 0) {
@@ -896,7 +922,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
         if (item < 0) return;
         const content::ItemRow& row = tables_->items[size_t(item)];
         one.what = Held{item, 0, int16_t(fullDurability(row, 0))};
-        rollOptions(one.what, kExcellentLuckIn100);
+        rollOptions(one.what, jewellery(row) ? 0 : kExcellentLuckIn100);
         int first = dice_.nextInt(0, kExcellentOptions);
         if (first == 1 && dice_.nextInt(0, 2) != 0) first = dice_.nextInt(0, kExcellentOptions);
         one.what.excellent = uint8_t(1u << first);
@@ -906,8 +932,10 @@ void Realm::leave(const Body& dead, const Body& killer) {
         one.what.durability = int16_t(maximumDurability(row, one.what));
     } else if ((roll -= kExcellentChance) <= kItem) {
         // Prize.TakesRefinement: the weapon and armour groups, ammunition taken back out.
+        // A ring's and a pendant's the same way, to +4 (GetLevelItem, docs/jewellery.md).
         const auto plusOf = [level, kMostRefined](const content::ItemRow& r) {
             const bool refinable = r.group <= kGroupBoots && !ammunition(r);
+            if (jewellery(r)) return std::clamp((level - r.dropLevel) / 3, 0, kJewelleryMostPlus);
             return refinable ? std::clamp((level - r.dropLevel) / 3, 0, kMostRefined) : 0;
         };
         const int32_t item = draw([&](const content::ItemRow& r) {
@@ -921,7 +949,9 @@ void Realm::leave(const Body& dead, const Body& killer) {
         const bool stacks = heals(row) || restores(row);
         // Whole at its plus, as DefaultDropGenerator sets `GetMaximumDurabilityOfOnePiece`.
         one.what = Held{item, int16_t(plus), int16_t(stacks ? 1 : fullDurability(row, plus))};
-        // Luck and the option (items.h). No skill: skills are orbs here.
+        // Luck and the option (items.h). No skill: skills are orbs here. A ring or a pendant
+        // takes the option alone, its life regeneration.
+        if (jewellery(row)) rollOptions(one.what, 0);
         if (takesOptions(row)) {
             rollOptions(one.what, kLuckIn100);
             // Sockets: rare, and each further one rarer. invention.
@@ -1404,8 +1434,8 @@ uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t
     // Whole, as `leave` makes what a kill leaves.
     one.what = Held{item, int16_t(std::clamp(refinement, 0, kRefineCap)),
                     int16_t(std::max(1, fullDurability(row, refinement)))};
-    if (takesOptions(row)) {
-        one.what.luck = luck;
+    if (takesOptions(row) || jewellery(row)) {
+        one.what.luck = luck && takesOptions(row);
         one.what.option = int8_t(std::clamp(option, 0, kMostOption));
         one.what.excellent = uint8_t(excellent & 63);
         one.what.sockets = uint8_t(std::min<int>(sockets, kMostSockets));

@@ -991,6 +991,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     if (const int64_t left = realm.frenzyLeft(); left > 0 && standing < Hud::kBoons) {
         Hud::Boon& boon = boons[standing++];
         boon.frenzy = true;
+        boon.stacks = hero.frenzyStacks;
         boon.seconds = float(left) * 0.05f;
         boon.share = float(left) / float(sim::kFrenzyTicks);
     }

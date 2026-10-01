@@ -124,6 +124,28 @@ bool placesIn(const content::ItemRow& row, Kin kin, int slot);
 // other row, and nothing -- the caller's to check -- for one whose life is gone.
 PetPower petPower(const content::ItemRow& row);
 
+// ---- rings and pendants (docs/jewellery.md) ------------------------------------------------
+//
+// The four 0.75 pieces in group 13 beside the pets: the Rings of Ice (8) and Poison (9), worn in
+// either ring slot, and the Pendants of Lightning (12) and Fire (13), worn as the amulet. A
+// dropped one is +0 to +4 (GetLevelItem's MODIFY_DROP_PREVENT_OF_RING_N_NECKLACE_LV_5_OVER) and its
+// option is life regeneration, +1% to +3% of maximum life every kJewelleryRegenTicks
+// (gObjRestPotionFill off rest, both rings and the pendant summed). Its resistance is WebZen's
+// item.txt 1 in its own element times the plus (CItem::Convert), the largest worn counting
+// (ObjCalCharacter's Max3); only Ice and Poison act on him in 0.75. A ring takes the armour's
+// excellent family and a pendant the weapon's -- Lightning the staff's.
+enum class Element : uint8_t { None, Ice, Poison, Lightning, Fire };
+bool ring(const content::ItemRow& row);
+bool pendant(const content::ItemRow& row);
+inline bool jewellery(const content::ItemRow& row) { return ring(row) || pendant(row); }
+Element elementOf(const content::ItemRow& row);
+// What a piece at `refinement` resists in its element: 1 a plus.
+inline int resistanceOf(const content::ItemRow& row, int refinement) {
+    return jewellery(row) ? std::max(0, refinement) : 0;
+}
+constexpr int kJewelleryMostPlus = 4;
+constexpr int64_t kJewelleryRegenTicks = 7 * 20;  // m_LifeFillCount > 6, once a second
+
 // Whether it is ammunition: the bow group's 7 and 15.
 bool ammunition(const content::ItemRow& row);
 // Whether it is drunk for a pool: the apple and three healing potions, the three mana potions.
@@ -422,11 +444,15 @@ constexpr double kKeenEyeCritical = 0.10;
 // and arrows too, and a share of his mana after every kill (beside the excellent's eighth).
 constexpr double kBloodwellLife = 0.03;
 constexpr double kBloodwellMana = 0.05;
-// **Frenzy** (the Pit's boots): a blow he lands has this chance to raise his attack speed and a
-// spell's MagicSpeed by kFrenzySpeed for kFrenzyTicks -- the Ale's twenty, which rides beside it.
-constexpr double kFrenzyChance = 0.15;
-constexpr int kFrenzySpeed = 20;
-constexpr int64_t kFrenzyTicks = 60;  // three seconds of the realm's twenty ticks
+// **Frenzy** (the Pit's boots), Diablo 3's Barbarian's shape (the user, 2026-10-02: "in diablo 3
+// frenzy was little bit different"): every wound he deals -- swing, arrow or spell -- adds a stack
+// of kFrenzyStackSpeed attack speed and spell MagicSpeed, up to kFrenzyMostStacks, and sets the
+// time left back to kFrenzyTicks; when it runs out the stacks go together. D3's is +15% a stack,
+// five, four seconds; this speed is MU's points (the Ale's twenty rides beside it), so a stack is
+// eight and the five are forty. One stack a wound however many runes he wears. invention.
+constexpr int kFrenzyStackSpeed = 8;
+constexpr int kFrenzyMostStacks = 5;
+constexpr int64_t kFrenzyTicks = 80;  // four seconds of the realm's twenty ticks
 // **Renewal**, Devin's since 2026-09-30, in the Undying's place (the user: "life regeneration
 // rune which is much more important i think than just max hp"): this share of maximum health
 // every three seconds (kRecoverEveryTicks), anywhere, in a fight too -- 0.75 gives health back
@@ -453,8 +479,9 @@ constexpr int64_t kSpiritDelayTicks = 40;  // rand()%2000 ms, the realm's twenty
 const PowerRow* powerOf(uint8_t power);
 // The Rune of Creation's row: 14, 22.
 bool creation(const content::ItemRow& row);
-// Who may roll sockets: the option-bearing set, weapons, armour and shields.
-inline bool takesSockets(const content::ItemRow& row) { return takesOptions(row); }
+// Who may carry sockets: the option-bearing set, weapons, armour and shields, and a ring, which
+// only the Pit's reward gives one (a drop's roll is under takesOptions).
+inline bool takesSockets(const content::ItemRow& row) { return takesOptions(row) || ring(row); }
 constexpr int kMostSockets = 3;
 // A drop's chance of a socket, drawn after luck and the option, and then of each further one
 // (the user, 2026-09-28: "item drop with +socket is rare"; 2026-10-01: "incerase drop rate for
