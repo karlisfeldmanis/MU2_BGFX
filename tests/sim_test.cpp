@@ -1131,9 +1131,9 @@ void testCastLock(const content::Tables& tables) {
     // ---- Poison: a cooldown burst that goes on hurting ---------------------------------------
     {
         const sim::SkillRow& poison = *sim::skillNumbered(sim::skill::kPoison);
-        check(poison.wizardry && poison.primary() && poison.force == 1.0f && poison.damage == 12 &&
+        check(poison.wizardry && poison.primary() && poison.force == 1.5f && poison.damage == 12 &&
                   poison.mana == 42 && poison.poisonTicks == 400 && poison.splash == 4.0f,
-              "Poison is a standard spell of twelve damage at the band and forty-two mana, "
+              "Poison is a standard spell of twelve damage at half again the band and forty-two mana, "
               "poisoning twenty seconds within four tiles");
         const int32_t scroll = tables.itemAt(15, 0);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kPoison &&
@@ -1299,9 +1299,9 @@ void testCastLock(const content::Tables& tables) {
     // ---- Ice: a cooldown spell that bursts round its target and halves the walk -------------
     {
         const sim::SkillRow& ice = *sim::skillNumbered(sim::skill::kIce);
-        check(ice.wizardry && ice.primary() && ice.force == 1.0f && ice.damage == 10 &&
+        check(ice.wizardry && ice.primary() && ice.force == 1.5f && ice.damage == 10 &&
                   ice.mana == 38 && ice.chillTicks == 200 && ice.splash == 4.0f,
-              "Ice is a standard spell of ten damage at the band and thirty-eight mana, chilling "
+              "Ice is a standard spell of ten damage at half again the band and thirty-eight mana, chilling "
               "ten seconds within four tiles");
         const int32_t scroll = tables.itemAt(15, 6);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kIce &&
@@ -1430,8 +1430,8 @@ void testCastLock(const content::Tables& tables) {
     {
         const sim::SkillRow& rock = *sim::skillNumbered(sim::skill::kMeteorite);
         check(rock.wizardry && rock.primary() && rock.thrown() && rock.damage == 21 &&
-                  rock.fallTicks == 7 && rock.clip == 183 && rock.force == 1.0f,
-              "Meteorite is a thrown standard spell at twenty-one damage, at the band, falling "
+                  rock.fallTicks == 7 && rock.clip == 183 && rock.force == 2.0f,
+              "Meteorite is a thrown standard spell at twenty-one damage, at twice the band, falling "
               "seven ticks, cast in the arm-up clip");
         const int32_t scroll = tables.itemAt(15, 1);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kMeteorite &&
@@ -1528,9 +1528,9 @@ void testCastLock(const content::Tables& tables) {
                   bolt.mana == 40 && bolt.coolTicks == 0 && bolt.channelTicks == 42,
               "Lightning is a channel round him as long as its clip, with no cooldown, and it "
               "pushes");
-        check(bolt.force == 1.0f && sim::force(bolt, sim::HeroPoints{}) == 1.0f &&
+        check(bolt.force == 1.5f && sim::force(bolt, sim::HeroPoints{}) == 1.5f &&
                   sim::force(*sim::skillNumbered(sim::skill::kFireBall), sim::HeroPoints{}) == 1.0f,
-              "and each strike is at the band, as the other spells are");
+              "and each strike is at half again the band, its long clip being its wait, where Fire Ball's is at one");
         check(bolt.pulseTicks == 3 && bolt.strikeFrom == 14 && bolt.strikeUntil == 32 &&
                   bolt.strikesEach == 1,
               "and it strikes every three ticks while his arm is up, once at most a body");

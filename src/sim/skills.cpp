@@ -239,7 +239,11 @@ constexpr SkillRow kRows[kSkills] = {
     // are, each paced by its own clip, and so no longer twice (Meteorite three times) the band --
     // the doubling was the price of the wait, as Flame's was. The notes above and below that
     // speak of five seconds and of twice the band are the rows' history; the numbers are these.
-    {skill::kLightning, "Lightning", 40, 4.0f, 1.0f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
+    // **And half the doubling back on 2026-10-01** (the user: "we need to increase DW cooldown
+    // spells damage because now we are using longer cast animation, which i really like"): the
+    // long clip is a wait of its own, so Lightning, Ice and Poison strike at half again the band
+    // and Meteorite at twice it -- half of what the five seconds had bought each. Ours.
+    {skill::kLightning, "Lightning", 40, 4.0f, 1.5f, 0.0f, 0, false, Spread::Ring, 0, 1.0f,
      "With his arm raised to the sky, lightning sweeps round him, leaping into one body after "
      "another within four tiles and throwing each back a step.",
      183, "spell_thunder", true, arms::kNone, 0, Kin::DarkWizard, true, 17, 0, 15.0f, true, 42,
@@ -266,7 +270,7 @@ constexpr SkillRow kRows[kSkills] = {
     // lighting"): MU's "Skill recovery" (183), the arm thrown up to the sky, played once; the rock
     // is called at the middle of it, with the arm up, and he cannot walk out of it. MU casts it
     // with `SetPlayerMagic`'s two hands, 147/148.
-    {skill::kMeteorite, "Meteorite", 30, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    {skill::kMeteorite, "Meteorite", 30, 9.0f, 2.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "With his arm raised to the sky he calls burning rocks down on a body up to nine tiles off "
      "and on everything within four tiles of it, one rock each.",
      183, "meteorite", true, arms::kNone, 0, Kin::DarkWizard, true, 21, 0, 15.0f, false, 0, 0, 0,
@@ -303,7 +307,7 @@ constexpr SkillRow kRows[kSkills] = {
     // it lands on the let-go), at **twice the band**, on five seconds of cooldown before agility's
     // haste. The mana is 0.75's. Nine tiles, with the other spells he throws at a body. Four and
     // not two, Meteorite's: two iced one of four Bull Fighters ("only 1 of 4 monsters was iced").
-    {skill::kIce, "Ice", 38, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    {skill::kIce, "Ice", 38, 9.0f, 1.5f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "Ice bursts on a body up to nine tiles off and on everything within four tiles of it; what "
      "it strikes walks at half speed for ten seconds.",
      147, "spell_ice", true, arms::kNone, 0, Kin::DarkWizard, true, 10, 148, 1000.0f, false, 0, 0,
@@ -323,7 +327,7 @@ constexpr SkillRow kRows[kSkills] = {
     // 3% of what health is left: at 3% a Bull Fighter lost three a pulse, which is no poison at
     // all. Six pulses, so the poison is half again the blow. It never kills on its own -- 0.75's
     // shape, which only ever takes a share of what is left -- and leaves one health. Ours.
-    {skill::kPoison, "Poison", 42, 9.0f, 1.0f, 0.0f, 0, false, Spread::One, 0, 1.0f,
+    {skill::kPoison, "Poison", 42, 9.0f, 1.5f, 0.0f, 0, false, Spread::One, 0, 1.0f,
      "A cloud of poison bursts on a body up to nine tiles off and on everything within four tiles "
      "of it, and goes on hurting them for twenty seconds.",
      147, "spell_heart", true, arms::kNone, 0, Kin::DarkWizard, true, 12, 148, 1000.0f, false, 0,

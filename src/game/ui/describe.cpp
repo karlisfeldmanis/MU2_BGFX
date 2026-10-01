@@ -117,7 +117,7 @@ void spellLines(const sim::SkillRow& row, const sim::Wearer& who, bool dim,
     };
     // The band it rolls in, `sim::cast`'s own two lines: energy over nine and over four, the
     // spell's damage on the bottom and half again on the top, times the staff and the spell's own
-    // multiplier (one but on the two cooldown spells).
+    // multiplier (one but on Lightning, Ice and Poison's half again and Meteorite's twice).
     const double times = double(sim::force(row, who.points));
     const int low = int((who.wizardMinimum + double(row.damage)) * who.wizardryRate * times);
     const int high = int((who.wizardMaximum + double(row.damage + row.damage / 2)) *
