@@ -1398,11 +1398,22 @@ def cook_placements(world, out_dir, chunk_tiles):
     # neighbour beside it. 11x11 takes the floor's light rather than the tile's: neighbours at
     # most 62 apart, none over 40. Ours; MU lights each object at its own tile.
     reach = LIGHT_REACH_BY_WORLD.get(world, 1)
+    #
+    # And in the tower, without the void: MU never draws a NoGround tile and its light there is
+    # a flat 142, so on floor 7's three-tile causeway the window was mostly void and every skull
+    # on it came out lit bright to the edge, where MU's painted light falls to 0 and the
+    # causeway blends into the dark (the user: 'we need that nice blending with void').
+    no_ground = None
+    if world in FLAT_OVER_VOID and world in LIGHT_REACH_BY_WORLD:
+        aw, ah, ac, attrs = read_png(os.path.join(world_dir, map_data["attributes"]))
+        no_ground = lambda x, y: (attrs[(min(max(y, 0), ah - 1) * aw + min(max(x, 0), aw - 1)) * ac] & 8) != 0
 
     def lit(column, row):
         x, y = int(column), int(row)
-        around = [texel(x + dx, y + dy) for dy in range(-reach, reach + 1)
-                  for dx in range(-reach, reach + 1)]
+        cells = [(x + dx, y + dy) for dy in range(-reach, reach + 1) for dx in range(-reach, reach + 1)]
+        if no_ground is not None:
+            cells = [c for c in cells if not no_ground(*c)] or [(x, y)]
+        around = [texel(cx, cy) for cx, cy in cells]
         middle = len(around) // 2
         return tuple(sorted(one[channel] for one in around)[middle] for channel in range(3))
 
