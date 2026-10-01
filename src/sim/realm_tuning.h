@@ -57,6 +57,14 @@ constexpr int kSleepSlack = 2;
 constexpr int64_t kGrudgeTicks = 80;
 constexpr int kLoseSight = 15;
 constexpr int kWanderReach = 30;
+// And the leash back on top of them (the user, 2026-10-01: "monster leash is to far"): past
+// kLeash tiles of home a beast lets go and walks back, twice that once it has been hit -- MU2's
+// bench numbers, ours, as WebZen has none. A beast walking home notices nobody until it is
+// within kHomeAgain of its nest, so it cannot turn on the hero at the leash's edge and turn
+// back again; a blow still turns it.
+constexpr int kLeash = 10;
+constexpr int kGrudge = 20;
+constexpr int kHomeAgain = 3;
 // How often a chase re-plans, in ticks. Realm.cs:1918.
 // How long a beast stands over what it has just killed before it turns away. **invention**, and
 // the only number in this file put here for the sake of what the SCREEN shows rather than for

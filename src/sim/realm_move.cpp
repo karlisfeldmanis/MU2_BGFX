@@ -417,11 +417,12 @@ void Realm::think(Body& beast) {
     // below.
     const uint32_t had = beast.quarry;
     uint32_t chosen = 0;
-    // No leash (the user, 2026-09-30, off WebZen's gObjMonsterProcess): a beast goes as far as
-    // its quarry leads it. What ends a chase it was provoked into is the quarry leaving its view
+    // WebZen's chase (the user, 2026-09-30, off gObjMonsterProcess). What ends a chase it was provoked into is the quarry leaving its view
     // box of fifteen tiles (gObjMonster.cpp:620-621, user.cpp:20572); an unprovoked one still
-    // lets go at its eyesight.
-    {
+    // lets go at its eyesight. And the leash over all of it (kLeash, the user's of 2026-10-01).
+    const bool homing = beast.temper == Temper::Homing && !beast.provoked &&
+                        strayed(beast) > kHomeAgain;
+    if (!homing && strayed(beast) <= (beast.provoked ? kGrudge : kLeash)) {
         if (const Body* held = find(beast.quarry)) {
             const bool keep = beast.provoked
                                   ? held->alive() &&
@@ -480,8 +481,12 @@ void Realm::think(Body& beast) {
             return;
         }
 
-        // And no walk home: it wanders where the chase left it, and not at all when that is
-        // past its nest's reach (wander, kWanderReach).
+        // Past the leash, or still on the way back from it: home.
+        if (strayed(beast) > (beast.temper == Temper::Homing ? kHomeAgain : kLeash)) {
+            beast.temper = Temper::Homing;
+            retreat(beast);
+            return;
+        }
         beast.temper = Temper::Wandering;
         if (!beast.walking && tick_ >= beast.thinksAt) {
             beast.thinksAt = tick_ + kind.attackTicks;

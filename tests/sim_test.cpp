@@ -4728,6 +4728,8 @@ void testDungeonRunes(const content::Tables& tables) {
         t->critChance = realm.hero().stats.criticalChance;
         t->excel = realm.hero().excel;
         uint32_t fighting = 0;
+        // And not the ticks a kill's life lands (kKillLifeTicks after it), which is no steal.
+        std::vector<int64_t> killLife;
         for (int tick = 0; tick < 20000 && realm.hero().alive(); ++tick) {
             // Kept on his feet, so both fights last: filled when low, and that tick not counted.
             if (realm.hero().health < realm.hero().maxHealth / 3) {
@@ -4762,6 +4764,9 @@ void testDungeonRunes(const content::Tables& tables) {
             bool struck = false, levelled = false;
             for (const sim::Happening& h : realm.happenings()) {
                 if (h.what == sim::What::Levelled) levelled = true;
+                if (h.what == sim::What::Died && h.whom == realm.hero().id) {
+                    killLife.push_back(realm.tick() + sim::kKillLifeTicks);
+                }
                 if (h.what != sim::What::Hit || h.reflected) continue;
                 if (h.who == realm.hero().id) {
                     ++t->blows;
@@ -4771,7 +4776,9 @@ void testDungeonRunes(const content::Tables& tables) {
                     struck = true;
                 }
             }
-            if (wound > 0 && !struck && !levelled && realm.hero().alive()) {
+            bool sipped = false;
+            for (int64_t due : killLife) sipped |= std::abs(realm.tick() - due) <= 1;
+            if (wound > 0 && !struck && !levelled && !sipped && realm.hero().alive()) {
                 t->dealt += wound;
                 t->healed += std::max(0, realm.hero().health - before);
             }
