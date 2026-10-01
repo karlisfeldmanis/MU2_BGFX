@@ -60,14 +60,11 @@ constexpr float kTurnRate = 14.0f;
 // The whole map, M's: the square it is fitted in, as a share of the screen's shorter side, and
 // fitted at the worst turn the camera can give it, a diagonal, so it never grows or shrinks as
 // the camera turns. The world behind it darkened, the menu's way.
-constexpr float kFullShare = 0.55f;
+constexpr float kFullShare = 0.7f;
 // Its middle a little over the screen's, so its lowest corner clears the action bar.
-constexpr float kFullMiddle = 0.48f;
-// A plate of the void under the chart, so the world does not show through the map as it does
-// through the corner's disc: here the map is the thing being read.
-constexpr float kFullPlate = 0.82f;
+constexpr float kFullMiddle = 0.47f;
 constexpr float kFullFit = 1.41421356f;
-constexpr float kFullScrim = 0.72f;
+constexpr float kFullScrim = 0.35f;
 constexpr float kFullTitle = 22.0f;  // the map's name over it
 
 // ---- the chart -----------------------------------------------------------------------------------
@@ -706,8 +703,9 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
 }
 
 // The whole map: the world darkened behind it, the chart as one quad from the map's four corners,
-// turned by the camera as the disc is, a bone hairline round its edge, and its name and where he
-// stands over it.
+// turned by the camera as the disc is, and its name and where he stands over it. Flat: no plate
+// and no line round its edge, only the land's own lines on the darkened world -- the user's "remove
+// outline so its flat", "container outlines" (2026-10-01).
 void Minimap::fullChart(const Play& play) {
     const float u = tip::unit();
     const float cx = map_.midX(), cy = map_.midY();
@@ -727,38 +725,8 @@ void Minimap::fullChart(const Play& play) {
         xy[i * 2] += cx;
         xy[i * 2 + 1] += cy;
     }
-    {
-        const uint32_t ink = (style::kVoid & 0x00FFFFFFu) | (uint32_t(kFullPlate * 255.0f + 0.5f) << 24);
-        const uint32_t tones[4] = {ink, ink, ink, ink};
-        canvas_.polygon(xy, tones, 4);
-    }
     const float uv[8] = {0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f};
     canvas_.polygon(&chart_, xy, uv, 4, gfx::rgba(1, 1, 1, kChartAlpha));
-    // The edge: each side a thin quad laid outward from the chart, a dark hairline past it.
-    const auto stroke = [&](float from, float to, uint32_t tone) {
-        for (int i = 0; i < 4; ++i) {
-            const int j = (i + 1) % 4;
-            const float ax = xy[i * 2], ay = xy[i * 2 + 1], bx = xy[j * 2], by = xy[j * 2 + 1];
-            float nx = by - ay, ny = -(bx - ax);
-            const float length = std::sqrt(nx * nx + ny * ny);
-            if (length < 1e-3f) continue;
-            nx /= length;
-            ny /= length;
-            // Outward is away from the middle, whichever way round the corners run.
-            if (nx * ((ax + bx) * 0.5f - cx) + ny * ((ay + by) * 0.5f - cy) < 0.0f) {
-                nx = -nx;
-                ny = -ny;
-            }
-            const float quad[8] = {ax + nx * from, ay + ny * from, bx + nx * from, by + ny * from,
-                                   bx + nx * to,   by + ny * to,   ax + nx * to,   ay + ny * to};
-            const uint32_t tones[4] = {tone, tone, tone, tone};
-            canvas_.polygon(quad, tones, 4);
-        }
-    };
-    const float line = std::max(1.0f, kRimLine * u);
-    stroke(0.0f, line, gfx::rgba(kLine[0], kLine[1], kLine[2], kRimAlpha));
-    stroke(line, line + std::max(1.0f, u), style::kVoid & 0x00FFFFFFu | (uint32_t(kRimShadow * 255.0f) << 24));
-
     // The map's name over it, and where he stands beside it.
     const std::string title = std::string(mapName(play.realm().tables()->map)) + "  \xC2\xB7  " +
                               std::to_string(now_.column) + ", " + std::to_string(now_.row);

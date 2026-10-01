@@ -104,7 +104,7 @@ private:
     // The chart of `tables`' map, off its attribute grid: see minimap.cpp.
     bool bakeChart(const content::Tables& tables, const content::Ground* ground);
     void rebuild(const Play& play);
-    // The whole map's own picture: the scrim, the chart as one quad, its edge and its name.
+    // The whole map's own picture: the scrim, the chart as one quad and its name.
     void fullChart(const Play& play);
     // Screen offset from the square's middle, in pixels, of a point `dc, dr` tiles from him.
     void place(float dc, float dr, float* sx, float* sy) const;
