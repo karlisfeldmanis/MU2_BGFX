@@ -1247,8 +1247,18 @@ void testCastLock(const content::Tables& tables) {
                   flame.burns == 2 && flame.burnTiles == 1.5f && flame.force == 1.0f,
               "Flame is a no-cooldown spell of twenty-five damage and fifty mana, "
               "striking twice within a tile and a half");
-        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 1,
-              "and its row is the table's last, so no save's learned bit moves");
+        check(sim::skillIndexOf(sim::skill::kFlame) == sim::kSkills - 2,
+              "and its row is past the elf's, so no save's learned bit moves");
+        const sim::SkillRow& spirit = *sim::skillNumbered(sim::skill::kEvilSpirit);
+        check(spirit.wizardry && spirit.primary() && spirit.damage == 45 && spirit.mana == 90 &&
+                  spirit.built && spirit.kin == sim::Kin::DarkWizard,
+              "Evil Spirit is a no-cooldown spell of forty-five damage and ninety mana");
+        check(sim::skillIndexOf(sim::skill::kEvilSpirit) == sim::kSkills - 1,
+              "and its row is the table's last");
+        const int32_t evilScroll = tables.itemAt(15, 8);
+        check(evilScroll >= 0 && tables.items[size_t(evilScroll)].teaches == sim::skill::kEvilSpirit &&
+                  tables.items[size_t(evilScroll)].teachesEnergy == 220,
+              "the Scroll of Evil Spirit teaches skill 9 at two hundred and twenty energy");
         const int32_t scroll = tables.itemAt(15, 4);
         check(scroll >= 0 && tables.items[size_t(scroll)].teaches == sim::skill::kFlame &&
                   tables.items[size_t(scroll)].teachesEnergy == 160,
@@ -4427,9 +4437,36 @@ void testRunes(const content::Tables& tables) {
                     }
                 }
                 checkEqual(runes, 1, "each link's first clear pays every class its rune");
-                checkEqual(pieces, 1, "and one socketed piece of his own");
+                // The Pit's two: its boots, and the shield for Evil Spirit (2026-10-01).
+                checkEqual(pieces, link == 2 ? 2 : 1, "and one socketed piece of his own");
                 checkEqual(again, 0, "and a repeat pays neither");
             }
+        }
+        // Evil Spirit: every class's, in a shield and nothing else, and the Pit pays it.
+        const sim::Held spirit = held(rune, 0, uint8_t(sim::Power::Spirits));
+        const int serpentShield = tables.itemNamed("Shield12"), legend = tables.itemNamed("Shield15");
+        check(sim::powerOf(uint8_t(sim::Power::Spirits)) != nullptr, "Evil Spirit has a row");
+        for (sim::Kin kin : {sim::Kin::DarkWizard, sim::Kin::FairyElf, sim::Kin::DarkKnight}) {
+            check(legend < 0 || sim::settable(tables, spirit, held(legend, 1, 0), kin),
+                  "Evil Spirit goes in a socketed shield, whoever wears it");
+            check(helm < 0 || !sim::settable(tables, spirit, held(helm, 1, 0), kin),
+                  "but not in a helm");
+        }
+        check(serpentShield < 0 || sim::settable(tables, spirit, held(serpentShield, 1, 0), dk),
+              "and in the knight's Serpent Shield");
+        check(!sim::settable(tables, spirit, held(serpent, 1, 0), dk), "nor in a weapon");
+        const sim::QuestRow& pit = sim::questAt(5);
+        for (int kin = 0; kin < 3; ++kin) {
+            int spirits = 0, shields = 0;
+            for (int i = 0; i < pit.paidCount; ++i) {
+                const sim::QuestItem& what = pit.paid[i];
+                if (!sim::questPays(what, kin, true)) continue;
+                if (what.power == uint8_t(sim::Power::Spirits)) ++spirits;
+                const int item = tables.itemNamed(what.item);
+                if (item >= 0 && tables.items[size_t(item)].shield() && what.sockets == 1) ++shields;
+            }
+            checkEqual(spirits, 1, "the Pit's first clear pays every class Evil Spirit");
+            checkEqual(shields, 1, "and a socketed shield to set it in");
         }
     }
     // The Golden Archer's chain in order (Realm::questHere): the Catacombs first, the Halls and
@@ -5049,6 +5086,134 @@ void testLichPush() {
     check(realm.hero().x == float(realm.hero().column()), "he stands on his tile after it");
 }
 
+// Evil Spirit (sim/items.h kSpiritChance): a knight with the rune in his shield among Lorencia's
+// monsters lets the spirits go only on a tick a monster missed him, at about the rune's share of
+// those misses, and each release strikes in three beats kSpiritEveryTicks apart, only what is
+// within kSpiritReach; and the wizard's spell lets the same go for its ninety mana with no
+// cooldown.
+void testEvilSpirit(const content::Tables& tables) {
+    std::printf("evil spirit\n");
+    const int shield = tables.itemNamed("Shield12");
+    check(shield >= 0, "a Serpent Shield");
+    if (shield < 0) return;
+    const auto nearestTo = [](const sim::Realm& realm) {
+        const sim::Body& hero = realm.hero();
+        uint32_t nearest = 0;
+        float best = 1e9f;
+        for (const sim::Body& one : realm.bodies()) {
+            if (!one.monster() || !one.alive()) continue;
+            const float dx = one.x - hero.x, dy = one.y - hero.y;
+            if (dx * dx + dy * dy < best) {
+                best = dx * dx + dy * dy;
+                nearest = one.id;
+            }
+        }
+        return nearest;
+    };
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkKnight, 40);
+        realm.undying(true);
+        const uint8_t powers[3] = {uint8_t(sim::Power::Spirits), 0, 0};
+        check(realm.give(shield, sim::kWeaponLeft, 0, -1, false, 0, 0, 1, powers) >= 0,
+              "he wears the shield with the rune");
+        checkEqual(realm.hero().excel.spirits, 1, "and it counts as one Evil Spirit");
+        int misses = 0, releases = 0, offMiss = 0, beats = 0, far = 0, offBeat = 0;
+        std::vector<int64_t> released;
+        uint32_t fighting = 0;
+        for (int tick = 0; tick < 20000; ++tick) {
+            const uint32_t nearest = nearestTo(realm);
+            if (nearest != 0 && nearest != fighting) {
+                fighting = nearest;
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            bool missed = false;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Missed && h.whom == realm.hero().id) missed = true;
+            }
+            misses += missed ? 1 : 0;
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Spirits) {
+                    ++releases;
+                    offMiss += missed ? 1 : 0;
+                    released.push_back(realm.tick());
+                }
+                if ((h.what == sim::What::Hit || h.what == sim::What::Missed) &&
+                    h.who == realm.hero().id && h.rune && h.thrown) {
+                    ++beats;
+                    const sim::Body* struck = realm.find(h.whom);
+                    if (struck) {
+                        const float dx = struck->x - realm.hero().x, dy = struck->y - realm.hero().y;
+                        far += dx * dx + dy * dy > sim::kSpiritReach * sim::kSpiritReach + 0.01f;
+                    }
+                    bool onBeat = false;
+                    for (int64_t at : released) {
+                        for (int k = 0; k < sim::kSpiritPulses; ++k) {
+                            onBeat |= realm.tick() ==
+                                      at + sim::kSpiritFirstTicks + k * sim::kSpiritEveryTicks;
+                        }
+                    }
+                    offBeat += onBeat ? 0 : 1;
+                }
+            }
+        }
+        std::printf("  %d misses on him, %d releases, %d spirit blows\n", misses, releases, beats);
+        check(releases > 0 && offMiss == releases, "the spirits go only on a monster's miss");
+        const double share = double(releases) / double(std::max(1, misses));
+        check(share > 0.05 && share < sim::kSpiritChance + 0.03,
+              "at about the rune's chance of his misses, fewer while one goes");
+        check(beats >= releases, "and they strike");
+        checkEqual(offBeat, 0, "only on their three beats");
+        checkEqual(far, 0, "and only what is within their reach");
+    }
+    {
+        sim::Realm realm;
+        realm.raise(&tables, 5, 200, 160, sim::Kin::DarkWizard, 60);
+        realm.undying(true);
+        check(realm.learn(sim::skill::kEvilSpirit), "the wizard learns Evil Spirit");
+        sim::HeroRecord record = realm.record();
+        record.mana = realm.hero().maxMana;
+        realm.restore(record);
+        int casts = 0, blows = 0;
+        int64_t cooled = 0;
+        for (int tick = 0; tick < 4000 && casts < 3; ++tick) {
+            const uint32_t nearest = nearestTo(realm);
+            const sim::Body* aim = realm.find(nearest);
+            if (aim && std::hypot(aim->x - realm.hero().x, aim->y - realm.hero().y) < 3.5f &&
+                realm.hero().mana >= 90) {
+                realm.invoke(sim::skill::kEvilSpirit, nearest);
+            } else if (nearest != 0) {
+                sim::Request request;
+                request.kind = sim::Request::Kind::Attack;
+                request.target = nearest;
+                realm.ask(request);
+            }
+            realm.step();
+            for (const sim::Happening& h : realm.happenings()) {
+                if (h.what == sim::What::Spirits && h.who == realm.hero().id) {
+                    ++casts;
+                    cooled = std::max(cooled, realm.cooling(sim::skill::kEvilSpirit));
+                }
+                if (h.what == sim::What::Hit && h.who == realm.hero().id && h.thrown && !h.rune) {
+                    ++blows;
+                }
+            }
+            if (realm.hero().mana < 90) {
+                sim::HeroRecord again = realm.record();
+                again.mana = realm.hero().maxMana;
+                realm.restore(again);
+            }
+        }
+        check(casts >= 3, "the wizard's Evil Spirit lets the spirits go");
+        checkEqual(int(cooled), 0, "with no cooldown");
+        check(blows > 0, "and they strike in his own colour");
+    }
+}
+
 // What deaths leave, counted over many of them with no hunt (Realm::dropFor): the three jewels
 // at kJewelChance shared among those a level reaches, the Rune of Creation at kCreationChance
 // from kCreationLevel with a power the killer may set, the group's others still at MU's 1 in
@@ -5159,6 +5324,7 @@ int main() {
     testTraps();
     testQuests(tables);
     testDungeonRunes(tables);
+    testEvilSpirit(tables);
     testRunes(tables);
     testPets(tables);
     testPoisonOnce();

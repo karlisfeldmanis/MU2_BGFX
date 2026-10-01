@@ -65,6 +65,8 @@ struct Excellence {
     int frenzies = 0;
     // Renewal's share of maximum health every three seconds, anywhere (sim::kRenewalShare).
     double renewal = 0.0;
+    // How many Evil Spirit runes his shield carries, each rolling on a miss (sim::kSpiritChance).
+    int spirits = 0;
 };
 
 struct Fighter {

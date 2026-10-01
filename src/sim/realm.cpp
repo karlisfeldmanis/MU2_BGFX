@@ -734,6 +734,13 @@ void Realm::step() {
         // same tick is too late to stop it -- which is the honest boundary and is where the
         // player's own hand is.
         if (hero.blowAt != 0 && tick_ >= hero.blowAt) land(hero);
+        // Evil Spirit, a beat at a time while it goes round him.
+        for (Spirits& one : spirits_) {
+            if (one.at == 0 || tick_ < one.at || !hero.alive()) continue;
+            const Spirits beat = one;
+            one.at = --one.left > 0 ? tick_ + kSpiritEveryTicks : 0;
+            spiritPulse(hero, beat);
+        }
         // An Arcane Echo's second throw, let go as the first was, paying nothing.
         if (echo_.at != 0 && tick_ >= echo_.at) {
             Echo echo = echo_;
@@ -959,6 +966,14 @@ std::string describe(const Happening& happening, const Realm& realm) {
         case What::Trapped:
             std::snprintf(line, sizeof(line), "%6u %s is caught by trap %d for %d, %d left",
                           happening.tick, who, happening.b, happening.a, happening.c);
+            break;
+        case What::Spirits:
+            if (happening.whom == 0) {
+                std::snprintf(line, sizeof(line), "%6u %s casts evil spirit", happening.tick, who);
+            } else {
+                std::snprintf(line, sizeof(line), "%6u %s lets evil spirits go off %s's miss",
+                              happening.tick, who, name(happening.whom).c_str());
+            }
             break;
         case What::Barred:
             if (happening.b == 0) {

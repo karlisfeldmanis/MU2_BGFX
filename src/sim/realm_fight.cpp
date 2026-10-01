@@ -78,6 +78,17 @@ void Realm::strikeAt(Body& attacker, Body& target, float force, const SkillRow* 
         happenings_.back().boss = flame;
         elements(0);
         chillHero(attacker, target);
+        // His shield's Evil Spirit, each worn rolling off the sockets' stream -- drawn only
+        // when one is worn and none is going, so a run without it is not moved.
+        if (target.player && target.alive() && !attacker.player && !spiritsGoing()) {
+            for (int i = 0; i < target.excel.spirits; ++i) {
+                if (!runeDice_.nextBool(kSpiritChance)) continue;
+                core::logf("evil spirit rune: tick %lld, off #%u's miss", (long long)tick_,
+                           attacker.id);
+                if (letSpiritsGo(target, 1.0f, true)) happenings_.back().whom = attacker.id;
+                break;
+            }
+        }
         return;
     }
     // A skill's multiplier, and it goes exactly here: after the roll, the defence and the level
@@ -356,6 +367,60 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
     if (struckBy->alive()) push(*struckBy, hero);
 }
 
+bool Realm::spiritsGoing() const {
+    for (const Spirits& one : spirits_) {
+        if (one.at != 0) return true;
+    }
+    return false;
+}
+
+// Evil Spirit let go round him, his spell's or his shield rune's: its beats on the realm's clock
+// (`step`), and said once so the drawing sends the spirits out. a: the ticks to its last beat.
+bool Realm::letSpiritsGo(Body& hero, float force, bool rune) {
+    for (Spirits& one : spirits_) {
+        if (one.at != 0) continue;
+        one = Spirits{tick_ + kSpiritFirstTicks, kSpiritPulses, force, rune};
+        say(What::Spirits, hero,
+            int32_t(kSpiritFirstTicks + (kSpiritPulses - 1) * kSpiritEveryTicks));
+        return true;
+    }
+    return false;
+}
+
+// One beat of Evil Spirit: MU's skill 9 at its own 45 (its row, sim/skills.cpp), a wizardry blow
+// on every living monster within kSpiritReach of him and in his sight. A knight's or an elf's
+// wizardry band is nought, so his energy's is laid for the beat, as Stormcall lays it on his
+// swing; a wizard's is that band already. What it does to what it strikes is MU's for any spell:
+// the number, and a flinch (ReceiveAttackDamage, WSclient.cpp:3237-3300) -- no element, nothing
+// more; the spirits pass through.
+void Realm::spiritPulse(Body& hero, const Spirits& beat) {
+    const SkillRow* row = skillNumbered(skill::kEvilSpirit);
+    if (row == nullptr) return;
+    const Fighter own = hero.stats;
+    if (hero.stats.wizardMinimum <= 0.0 && hero.stats.wizardMaximum <= 0.0) {
+        hero.stats.wizardMinimum = double(hero.points.energy) * kRuneEnergyLow;
+        hero.stats.wizardMaximum = double(hero.points.energy) * kRuneEnergyHigh;
+    }
+    int struck = 0;
+    for (size_t i = 0; i < bodies_.size(); ++i) {
+        Body& b = bodies_[i];
+        if (!b.monster() || !b.alive()) continue;
+        const float dx = b.x - hero.x, dy = b.y - hero.y;
+        if (dx * dx + dy * dy > kSpiritReach * kSpiritReach) continue;
+        if (!router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove)) continue;
+        const size_t said = happenings_.size();
+        strikeAt(hero, b, beat.force, row, true, false);
+        // Its Hit or Missed is the first thing the blow says, shown whatever his body is
+        // playing (`thrown`), and in the rune's colour when the shield let it go.
+        if (said < happenings_.size()) happenings_[said].rune = beat.rune;
+        ++struck;
+        if (!hero.alive()) break;
+    }
+    hero.stats.wizardMinimum = own.wizardMinimum;
+    hero.stats.wizardMaximum = own.wizardMaximum;
+    core::logf("evil spirit rune: tick %lld, a beat on %d", (long long)tick_, struck);
+}
+
 // A blow begun. The clip starts now and the damage is settled when the arm comes down -- half the
 // swing later, which is exactly where the drawing has always put the number, the blood and the
 // fall (`Showing::kLandingPoint`). Only the player swings this way: a monster's blow still lands
@@ -420,6 +485,11 @@ void Realm::release(Body& hero, uint32_t at, float force, int32_t skill) {
     // Skillshot's fan, aimed at the body and flying on whether or not it still stands.
     if (row && row->spread == Spread::Fan) {
         looseFan(hero, *row, at, force);
+        return;
+    }
+    // Evil Spirit: the spirits round him, striking on their own clock, whatever he aimed at.
+    if (row && row->number == skill::kEvilSpirit) {
+        letSpiritsGo(hero, force, false);
         return;
     }
     // Flame: a fire on the ground under what he threw it at, striking on its own clock.
@@ -845,6 +915,7 @@ void Realm::kill(Body& dead, Body& killer) {
         // And his spells in the air, for the same reason.
         for (Flight& one : flights_) one = Flight{};
         echo_ = Echo{};
+        for (Spirits& one : spirits_) one = Spirits{};
         dead.channelEcho = false;
         return;
     }

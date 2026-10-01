@@ -175,6 +175,14 @@ Only seven Skeleton Archers spawn on Dungeon 1. Either keep the count at seven, 
   | Halls | pants: Plate Pants / Legendary Pants / Spirit Pants | **Bloodwell**: 3% of damage dealt back as life, 5% mana after a kill |
   | Pit | boots: Dragon / Legendary / Guardian Boots | **Frenzy**: 15% on a landed blow, +20 attack and casting speed for 3 s (a buff cell, MU's cell 44 chevrons) |
 
+  The Pit's first clear also pays, since 2026-10-01 (the user: "give dungeon 3 other jewel of
+  rune and new weapon ... shield with socket and rune which on miss has chance to cast evil
+  spirits"), a socketed shield -- Serpent Shield (knight), Legendary Shield (wizard and elf) --
+  and **Evil Spirit** for it: a shield's rune, every class's; a monster's blow that misses him has
+  a 15% chance to let MU's Evil Spirit go round him, three beats on everything within four tiles,
+  raised by his energy. The wizard can now also learn Evil Spirit as a spell (Scroll of Evil
+  Spirit, 220 energy, 90 mana, no cooldown).
+
   Devin's rune changed the same day from the Undying (+20% max health) to **Renewal**: 3% of max
   health back every 3 s, anywhere.
 - **Repeat.** Once the chain has been cleared, does the whole chain repeat every 12 hours, as

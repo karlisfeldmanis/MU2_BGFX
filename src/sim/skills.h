@@ -75,6 +75,10 @@ constexpr int32_t kPoison = 1;
 // And `AT_SKILL_FLAME`, off the Scroll of Flame (group 15 number 4, `Book05`) at a hundred and
 // sixty energy: a fire lit on the body's tile that burns twice.
 constexpr int32_t kFlame = 5;
+// `AT_SKILL_EVIL_SPIRIT`, off the Scroll of Evil Spirit (group 15 number 8) at two hundred and
+// twenty energy: spirits round him, striking three times. The shield's Evil Spirit rune lets the
+// same go off a miss (sim/items.h kSpiritChance).
+constexpr int32_t kEvilSpirit = 9;
 // **The Fairy Elf's** (sprint 15), at 0.75's own numbers: Triple Shot 24, Heal 26, Greater
 // Defense 27, Greater Damage 28 (`Version075/SkillsInitializer.cs:64-67`). 24 is called
 // "Skillshot" here and taught by an orb, the user's of 2026-09-28; 0.75 grants it only off a bow
@@ -347,11 +351,12 @@ struct SkillRow {
 
 // How many skills the sim has room for: the knight's six of 0.75, the three that fill out the
 // families past it, and the wizard's Energy Ball, Soul Barrier, Fire Ball, Power Wave and
-// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame, on the end past the elf's. Also
+// Lightning, Meteorite, Teleport, Ice and Poison -- and Flame and Evil Spirit, on the end past
+// the elf's. Also
 // the width of the save's learned mask and of a body's cooldown array --
 // and the learned mask is by INDEX, so a new row goes on the END of the table or an old save
 // gives a knight somebody else's skill.
-constexpr int kSkills = 29;
+constexpr int kSkills = 30;
 
 // How many bodies one area skill may catch. Nine tiles are within a spin's reach and nothing
 // stands two deep on one, so this is roomy on purpose -- it is a bound so that a cast allocates

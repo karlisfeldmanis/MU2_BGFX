@@ -426,7 +426,16 @@ QuestRow pit() {
     row.paid[3] = {.item = "Jewel22", .power = uint8_t(Power::Frenzy), .firstOnly = true};
     row.paid[4] = {.item = "Jewel01", .count = 3};  // Jewels of Bless
     row.paid[5] = {.item = "Jewel02"};              // Jewel of Soul
-    row.paidCount = 6;
+    // And a second rune with a new thing to set it in (the user, 2026-10-01: "give dungeon 3
+    // other jewel of rune and new weapon ... shield with socket and rune which on miss has
+    // chance to cast evil spirits"): a socketed shield each class may wear, and Evil Spirit for
+    // it. The knight's Serpent Shield (45) and the wizard's and the elf's Legendary Shield (48),
+    // the top each takes about the Gorgon's level. An elf's bow fills the shield's hand.
+    row.paid[6] = {.item = "Shield12", .kin = knight, .sockets = 1, .firstOnly = true};  // Serpent
+    row.paid[7] = {.item = "Shield15", .kin = wizard, .sockets = 1, .firstOnly = true};  // Legendary
+    row.paid[8] = {.item = "Shield15", .kin = elf, .sockets = 1, .firstOnly = true};     // Legendary
+    row.paid[9] = {.item = "Jewel22", .power = uint8_t(Power::Spirits), .firstOnly = true};
+    row.paidCount = 10;
     return row;
 }
 

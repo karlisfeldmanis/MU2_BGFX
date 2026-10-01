@@ -439,6 +439,28 @@ constexpr SkillRow kRows[kSkills] = {
      .clip = 147, .sound = "spell_flame", .built = true, .families = arms::kNone,
      .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 25, .clipOther = 148,
      .flies = 1000.0f, .burns = 2, .burnTiles = 1.5f},
+
+    // ---- Evil Spirit 9, the wizard's, after Flame for the same reason ---------------------------
+    //
+    // 0.75's row: forty-five damage, ninety mana, two hundred and twenty energy, no element
+    // (`Version075/SkillsInitializer.cs:51-52`), taught by the Scroll of Evil Spirit (Book09).
+    // What it is is MU's: four spirits (eight joints, a wide and a thin each way) let go round
+    // the caster with SOUND_EVIL, wandering round him for 49 frames and striking all near each
+    // three times (ZzzCharacter.cpp:4585-4603, ZzzEffectJoint.cpp:3737-3765) -- the realm's
+    // `letSpiritsGo`, three beats on everything within sim::kSpiritReach of him. Its clip is
+    // SetPlayerMagic's two hands, as Flame's (ClassAttack.cpp:1357-1362).
+    //
+    // **No cooldown**, a standard spell as Flame is (the user, 2026-10-01: "so he can use like
+    // normal spell without cooldown"). Aimed at a body within the spirits' own reach, so what he
+    // points at is always among what they strike; they go round him, not it. The shield's Evil
+    // Spirit rune lets the same spirits go off a miss (sim/items.h). The reach is ours.
+    {.number = skill::kEvilSpirit, .name = "Evil Spirit", .mana = 90, .reach = 4.0f,
+     .force = 1.0f, .spread = Spread::One,
+     .tells = "Lets evil spirits loose around him, striking every monster within four tiles "
+              "three times.",
+     .clip = 147, .sound = "spell_evil", .built = true, .families = arms::kNone,
+     .needLevel = 0, .kin = Kin::DarkWizard, .wizardry = true, .damage = 45, .clipOther = 148,
+     .flies = 1000.0f},
 };
 
 // The energy term is 0.75's own and is kept rather than replaced: a knight who spends on energy

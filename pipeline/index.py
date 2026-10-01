@@ -509,6 +509,10 @@ EFFECTS = {
     # The Devil's beam, MU's BITMAP_JOINT_LASER + 1: Effect/JointLaser02.OZJ, 128 by 32, an orange
     # streak with a dark arrow on black, drawn added (ZzzOpenData.cpp:5290; ZzzCharacter.cpp:2307).
     "joint_laser": "effects/devil/joint_laser02.png",
+    # Evil Spirit's spirits, MU's BITMAP_JOINT_SPIRIT: Effect/JointSpirit01.OZJ, 256 by 32, a pale
+    # violet streak with its head at the right on black, drawn subtracted (RENDER_TYPE_ALPHA_BLEND
+    # _MINUS) so it darkens (ZzzOpenData.cpp:5287; ZzzEffectJoint.cpp:642-650).
+    "joint_spirit": "effects/spirit/joint_spirit01.png",
     "lightning_2": "effects/summon/lightning2.png",
 
     # And what a barrier looks like, which is a different sheet and not a tint of the one

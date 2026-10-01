@@ -253,6 +253,10 @@ const PowerRow* powerOf(uint8_t power) {
          false, Kin::DarkKnight, true},
         {Power::Renewal, "Renewal", "Restores 3% of maximum health every three seconds, anywhere",
          false, Kin::DarkKnight, true},
+        {Power::Spirits, "Evil Spirit",
+         "A blow that misses you has a 15% chance to release evil spirits around you, striking "
+         "every monster near you three times, raised by your energy",
+         false, Kin::DarkKnight, true, true},
     };
     for (const PowerRow& row : kPowers) {
         if (uint8_t(row.power) == power) return &row;
@@ -286,6 +290,7 @@ bool settable(const content::Tables& tables, const Held& jewel, const Held& targ
     if (power == nullptr || (!power->everyone && power->kin != kin)) return false;
     const content::ItemRow& row = tables.items[size_t(target.item)];
     if (!takesSockets(row) || freeSocket(target) < 0) return false;
+    if (power->shieldOnly) return row.shield();
     return power->weapon == (row.weapon() && !row.shield());
 }
 

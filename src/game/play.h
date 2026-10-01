@@ -34,6 +34,7 @@
 #include "game/world/trap_show.h"
 #include "game/fx/poison.h"
 #include "game/fx/flame.h"
+#include "game/fx/spirits.h"
 #include "game/fx/thunder.h"
 #include "game/fx/wheel.h"
 #include "game/fx/meteor.h"
@@ -452,6 +453,8 @@ public:
     Poison& poison() { return poison_; }
     // And his Flame. fx/flame.h.
     Flame& flame() { return flame_; }
+    // And Evil Spirit's spirits round him, the spell's and the shield rune's. fx/spirits.h.
+    Spirits& spirits() { return spirits_; }
     // The knight's Twisting Slash: his weapon flung round him. fx/wheel.h.
     Wheel& wheel() { return wheel_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
@@ -834,6 +837,7 @@ private:
     TrapShow trapShow_;
     Poison poison_;
     Flame flame_;
+    Spirits spirits_;
     Wheel wheel_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.

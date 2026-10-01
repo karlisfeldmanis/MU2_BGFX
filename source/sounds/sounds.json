@@ -1555,6 +1555,12 @@
       ],
       "from": "Sounds[4]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp)."
     },
+    "spell_evil": {
+      "files": [
+        "sEvil.wav"
+      ],
+      "from": "SOUND_EVIL, played as Evil Spirit's spirits are let go (ZzzCharacter.cpp:4603): the wizard's spell and the shield's Evil Spirit rune."
+    },
     "devil_evil": {
       "files": [
         "sEvil.wav"

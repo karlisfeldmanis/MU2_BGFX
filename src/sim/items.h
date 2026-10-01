@@ -396,7 +396,8 @@ enum class Power : uint8_t {
     KeenEye = 8,
     Bloodwell = 9,
     Frenzy = 10,
-    Renewal = 11
+    Renewal = 11,
+    Spirits = 12
 };
 struct PowerRow {
     Power power;
@@ -405,6 +406,7 @@ struct PowerRow {
     bool weapon;  // true a weapon's socket, false armour's or a shield's
     Kin kin;      // who may set it
     bool everyone = false;  // every class may, and `kin` is not read
+    bool shieldOnly = false;  // a shield's socket and no armour's
 };
 
 // **The Undying**, the first armour power and every class's (the user, 2026-09-30: "its for
@@ -430,6 +432,22 @@ constexpr int64_t kFrenzyTicks = 60;  // three seconds of the realm's twenty tic
 // every three seconds (kRecoverEveryTicks), anywhere, in a fight too -- 0.75 gives health back
 // only on a safe tile, at kHealthRecoveryInSafeZone, which it rides beside. Each one worn adds.
 constexpr double kRenewalShare = 0.03;
+// **Evil Spirit**, the Pit's shield (the user, 2026-10-01: "shield with socket and rune which on
+// miss has chance to cast evil spirits"), every class's and in a shield alone: a monster's blow
+// that misses him has this chance to let MU's Evil Spirit go round him for nothing -- the
+// wizard's skill 9 (Version075 SkillsInitializer.cs:51-52: damage 45, no element). MuMain throws
+// four spirits that wander round the caster for 49 frames, each striking all within 150 units
+// whenever its LifeTime is a multiple of 15 -- frames 4, 19 and 34 (ZzzCharacter.cpp:4585-4603,
+// ZzzEffectJoint.cpp:3737-3765); here every monster within kSpiritReach tiles and in his sight
+// takes kSpiritPulses wizardry blows that far apart, his energy's band on top as every magic rune
+// takes it (kRuneEnergyLow). A miss while any is going rolls nothing. The wizard casts the same
+// spirits off the Scroll of Evil Spirit (sim/skills.cpp). Invention: the trigger, the reach and
+// the rune are ours, the spell and its beat MU's.
+constexpr double kSpiritChance = 0.15;
+constexpr int kSpiritPulses = 3;
+constexpr int64_t kSpiritFirstTicks = 3;   // MU's four frames, 0.16 s
+constexpr int64_t kSpiritEveryTicks = 12;  // MU's fifteen, 0.6 s
+constexpr float kSpiritReach = 4.0f;
 // Nullptr for none and for a number no row has.
 const PowerRow* powerOf(uint8_t power);
 // The Rune of Creation's row: 14, 22.

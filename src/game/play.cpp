@@ -571,6 +571,21 @@ void Play::update(double seconds) {
                     shock(*struck, struck->shockClip);
                 }
             }
+            // Evil Spirit let go round him, his spell's or his shield rune's (fx/spirits.h), with
+            // SOUND_EVIL as MU plays it at the release (ZzzCharacter.cpp:4603).
+            if (happening.what == sim::What::Spirits) {
+                if (const Drawn* caster = drawnOf(happening.who);
+                    caster != nullptr && caster->placed && ground_) {
+                    const float feet[3] = {
+                        caster->crown[0], ground_->heightAt(caster->crown[0], caster->crown[2]),
+                        caster->crown[2]};
+                    spirits_.release(happening.who, feet);
+                    const int index = sim::skillIndexOf(sim::skill::kEvilSpirit);
+                    if (index >= 0 && heard_.skill[index] >= 0) {
+                        emit(heard_.skill[index], feet[0], feet[2], caster->id);
+                    }
+                }
+            }
             if (happening.what == sim::What::Loosed) {
                 const Drawn* caster = drawnOf(happening.who);
                 const Drawn* target = drawnOf(happening.whom);
@@ -1217,6 +1232,14 @@ void Play::update(double seconds) {
     ice_.update(float(seconds));
     poison_.update(float(seconds));
     flame_.update(float(seconds));
+    spirits_.update(float(seconds), [&](uint32_t id, float* feet) {
+        const Drawn* drawn = drawnOf(id);
+        if (drawn == nullptr || !drawn->placed || !ground_) return false;
+        feet[0] = drawn->crown[0];
+        feet[1] = ground_->heightAt(drawn->crown[0], drawn->crown[2]);
+        feet[2] = drawn->crown[2];
+        return true;
+    });
     if (blinkOut_ >= 0.0f) blinkOut_ += float(seconds);
     // A blink the realm dropped -- he died in the fade -- is never put down: he is drawn again.
     if (blinkOut_ >= 0.0f && realm_.hero().blinkAt == 0) blinkOut_ = -1.0f;

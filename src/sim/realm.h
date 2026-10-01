@@ -115,6 +115,8 @@ enum class What : uint8_t {
                // stairs): a: the enter gate's number, b: the column he is put down on, c: the row
     Trapped,   // a Dungeon trap fired at him (sim/traps.h): a: the damage, 0 on a miss, b: the
                // trap's index in traps(), c: his health left. `who` is the hero.
+    Spirits,   // his shield's Evil Spirit let go round him (sim/items.h kSpiritChance): a: the
+               // ticks until its last pulse, whom: the monster whose miss let it go
 };
 
 struct StrollRow;  // a townsperson's rounds (realm_tuning.h)
@@ -1026,6 +1028,20 @@ private:
         float force = 1.0f;
     };
     Echo echo_;
+    // Evil Spirit going round him, his spell's or his shield's rune's: the next beat's tick, how
+    // many are left, and the force. A handful, as the spell has no cooldown and its clip is
+    // shorter than its beats; a cast that finds no room lets nothing go.
+    struct Spirits {
+        int64_t at = 0;  // 0 for none
+        int left = 0;
+        float force = 1.0f;
+        bool rune = false;  // his shield's, drawn in the rune's colour
+    };
+    static constexpr int kSpiritsMost = 4;
+    Spirits spirits_[kSpiritsMost] = {};
+    bool spiritsGoing() const;
+    bool letSpiritsGo(Body& hero, float force, bool rune);
+    void spiritPulse(Body& hero, const Spirits& beat);
     // Flames burning on the ground (`SkillRow::burns`): where, when each strikes next and how
     // many strikes are left. A fixed handful -- one cast every five seconds and an echo lights
     // two -- and a fire that finds no room is not lit.

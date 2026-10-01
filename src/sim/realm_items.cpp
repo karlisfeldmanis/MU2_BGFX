@@ -340,15 +340,17 @@ void Realm::rearm(Body& hero) {
             }
             if (power->power == Power::Frenzy) ++e.frenzies;
             if (power->power == Power::Renewal) e.renewal += kRenewalShare;
+            if (power->power == Power::Spirits && row->shield()) ++e.spirits;
         }
     }
     // Said once a change, when any is worn, so a run's log shows what the fight below it had.
     {
         const Excellence& e = hero.excel;
-        if (e.runeCritical > 0.0 || e.lifeSteal > 0.0 || e.frenzies > 0 || e.renewal > 0.0) {
+        if (e.runeCritical > 0.0 || e.lifeSteal > 0.0 || e.frenzies > 0 || e.renewal > 0.0 ||
+            e.spirits > 0) {
             core::logf("runes worn: keen eye +%.2f crit, bloodwell %.2f life a wound, %d frenzy, "
-                       "renewal %.2f health a 3 s",
-                       e.runeCritical, e.lifeSteal, e.frenzies, e.renewal);
+                       "renewal %.2f health a 3 s, %d evil spirit",
+                       e.runeCritical, e.lifeSteal, e.frenzies, e.renewal, e.spirits);
         }
     }
     // Luck on anything worn, from the hands to the boots.
