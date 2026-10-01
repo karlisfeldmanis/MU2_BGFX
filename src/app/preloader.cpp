@@ -68,7 +68,9 @@ struct Ambient {
         // loading screen was heard.
         ma_sound_reset_stop_time_and_fade(&track);
         ma_sound_seek_to_pcm_frame(&track, 0);
-        ma_sound_set_volume(&track, 1.0f);  // its full level: half was too quiet (the user)
+        // +9 dB: the file is quiet, peaking at -9.6 dBFS and -28 dB on average, so 2.8 times is
+        // as loud as it goes without clipping (the user, twice: louder).
+        ma_sound_set_volume(&track, 2.8f);
         ma_sound_set_fade_in_milliseconds(&track, 0.0f, 1.0f, 400);
         ma_sound_start(&track);
     }
