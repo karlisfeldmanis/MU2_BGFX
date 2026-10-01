@@ -47,7 +47,9 @@ constexpr Offer kHarold[] = {
 };
 
 // Martin (shop4), the wandering merchant in the west: the potions, the Bone and Scale pieces
-// Hanzo does not sell, Brass gloves and boots, two shields and a rack of weapons.
+// Hanzo does not sell, Brass gloves and boots, two shields and a rack of weapons. Without the
+// source's +S copies of the Gladius, the Falchion and the Arquebus, as Hanzo is without his
+// (the user, 2026-10-01): with the skills on the orbs a copy was the same weapon dearer.
 constexpr Offer kMartin[] = {
     sip(0, 0, 1), sip(1, 1, 1), sip(2, 2, 1), sip(3, 3, 1), sip(4, 4, 1), sip(5, 5, 1),
     sip(6, 6, 1), sip(7, 8, 1), sip(8, 0, 3), sip(9, 1, 3), sip(10, 2, 3), sip(11, 3, 3),
@@ -56,9 +58,9 @@ constexpr Offer kMartin[] = {
     gear(32, kPants, 6, 0), gear(34, kGloves, 8, 0), gear(36, kBoots, 8, 0),
     gear(38, kShields, 2, 0), gear(48, kShields, 6, 0), gear(50, kSpears, 2, 0),
     gear(52, kSwords, 3, 0), gear(53, kAxes, 3, 0), gear(54, kSpears, 6, 0),
-    gear(64, kMaces, 2, 0), gear(65, kSwords, 6, 0), gear(76, kSwords, 6, 0, true),
-    gear(82, kBows, 10, 0), gear(85, kBows, 10, 0, true), gear(88, kSpears, 1, 0),
-    gear(87, kSwords, 7, 0), gear(98, kSwords, 7, 0, true),
+    gear(64, kMaces, 2, 0), gear(65, kSwords, 6, 0),
+    gear(82, kBows, 10, 0), gear(88, kSpears, 1, 0),
+    gear(87, kSwords, 7, 0),
 };
 
 // Hanzo (shop0): the knight's first weapons, the Bronze set, Scale gloves and boots and three
