@@ -12,7 +12,9 @@ namespace {
 // Enough, and large enough, that they overlap into one layer over all the lava in view rather
 // than patches (the user: 'that smoke above lava layer has to be not on some spots bot all of
 // lava').
-constexpr int kWisps = 140;
+// 280 when all the ring is lava: the 140 the user judged at 163,40 stood on about half a ring
+// of lava, and update() lets live only the lava's share of these.
+constexpr int kWisps = 280;
 // Spawned within this of the camera's point, and let go past a little more.
 constexpr float kReach = 22.0f;
 constexpr float kLetGo = 26.0f;
@@ -105,8 +107,32 @@ bool LavaSmoke::spawn(Wisp& wisp, const float near[3], bool anyAge) {
     return false;
 }
 
+bool LavaSmoke::lavaAt(float x, float z) const {
+    const int c = int(std::floor(x / metresPerTile_));
+    const int r = int(std::floor(-z / metresPerTile_));
+    if (c < 0 || r < 0 || c >= size_ || r >= size_) return false;
+    return lava_[size_t(r) * size_t(size_) + size_t(c)] != 0;
+}
+
 void LavaSmoke::update(float seconds, const float near[3]) {
     if (lava_.empty()) return;
+    // How much of the ring round the camera is lava, on a fixed 16 x 16 lattice over it: only
+    // that share of the wisps may live, so the smoke is as thick over a narrow strip as over a
+    // wide field. Without it every dead wisp searched until it found lava, and all of them piled
+    // onto whatever little was in reach (the user, at 247,97: 'smoke look skind of wierd on
+    // this place').
+    int inside = 0, onLava = 0;
+    for (int i = 0; i < 16; ++i) {
+        for (int j = 0; j < 16; ++j) {
+            const float u = (float(i) + 0.5f) / 8.0f - 1.0f, v = (float(j) + 0.5f) / 8.0f - 1.0f;
+            if (u * u + v * v > 1.0f) continue;
+            ++inside;
+            onLava += lavaAt(near[0] + u * kReach, near[2] + v * kReach) ? 1 : 0;
+        }
+    }
+    const int allowed = inside > 0 ? (kWisps * onLava + inside - 1) / inside : 0;
+    int alive = 0;
+    for (const Wisp& wisp : wisps_) alive += wisp.alive ? 1 : 0;
     for (Wisp& wisp : wisps_) {
         if (wisp.alive) {
             wisp.age += seconds;
@@ -116,8 +142,9 @@ void LavaSmoke::update(float seconds, const float near[3]) {
             const float dx = wisp.at[0] - near[0], dz = wisp.at[2] - near[2];
             if (wisp.age >= wisp.life || dx * dx + dz * dz > kLetGo * kLetGo) wisp.alive = false;
         }
-        // A dead wisp tries for a new spot each frame; off the lava it simply waits.
-        if (!wisp.alive) spawn(wisp, near, wisp.life == 0.0f);
+        // A dead wisp tries for a new spot while the lava in reach has room for it; off the lava
+        // it simply waits.
+        if (!wisp.alive && alive < allowed && spawn(wisp, near, wisp.life == 0.0f)) ++alive;
     }
 }
 

@@ -43,6 +43,7 @@ private:
         bool alive = false;
     };
     bool spawn(Wisp& wisp, const float near[3], bool anyAge);
+    bool lavaAt(float x, float z) const;
     float unit();
 
     const content::Ground* ground_ = nullptr;
