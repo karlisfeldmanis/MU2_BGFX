@@ -163,6 +163,7 @@ private:
     bgfx::TextureHandle smoke_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle light_ = BGFX_INVALID_HANDLE;
     bgfx::TextureHandle lightning_ = BGFX_INVALID_HANDLE;
+    bgfx::TextureHandle magic_ = BGFX_INVALID_HANDLE;  // Effect/Magic_Ground2, MU's BITMAP_MAGIC+1
     bgfx::TextureHandle shiny_ = BGFX_INVALID_HANDLE;  // Effect/Shiny01, MU's BITMAP_SHINY  // lightning2, MU's BITMAP_LIGHTNING+1
 };
 

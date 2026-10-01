@@ -105,6 +105,25 @@ constexpr NoriaGlow kNoriaGlows[] = {
     {"Object36", {3}, 1, 1.5f, {0.4f, 0.7f, 1.0f}, false, 0},              // case 35
     {"Object40", {61, 62, 63, 64, 65}, 5, 1.0f, {1.0f, 1.0f, 1.0f}, true, 0},  // case 39
 };
+// ---- The Lost Tower's floor machines: RenderObjectVisual, case WD_4LOSTTOWER -----------
+//
+// Types 19 and 20 (Object20, Object21; ZzzObject.cpp:2931-2956): at bones 15, 19 and 21, each
+// at the bone's own origin, two sprites of one sheet turning opposite ways at `WorldTime * 0.1`
+// degrees, 0.3, 0.3 and 1.5 of the sheet, in `Luminosity` times the colour. Object20's are
+// BITMAP_MAGIC+1 (Magic_Ground2) in (1, 0.2, 0), Object21's BITMAP_LIGHTNING+1 in (0.4, 0.8, 1).
+// Bones 15 and 19 hang under the two orbs the clip spins, so those stars swing round with them.
+struct TowerGlow {
+    const char* model;
+    float colour[3];
+    int sheet;  // 1 lightning2, 2 magic_ground
+};
+constexpr TowerGlow kTowerGlows[] = {
+    {"Object20", {1.0f, 0.2f, 0.0f}, 2},
+    {"Object21", {0.4f, 0.8f, 1.0f}, 1},
+};
+constexpr int kTowerBones[3] = {15, 19, 21};
+constexpr float kTowerScales[3] = {0.3f, 0.3f, 1.5f};
+
 // case 39's star, `WorldTime * 0.1` degrees with WorldTime in milliseconds.
 constexpr int kStarBone = 57;
 constexpr float kStarColour[3] = {0.4f, 0.8f, 1.0f};
@@ -226,6 +245,24 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
                 for (int a = 0; a < 3; ++a) lantern.colour[a] = kLanternColour[a];
                 if (lantern.anchor.bone >= 0) lanterns_.push_back(lantern);
             }
+        } else if (world == "losttower") {
+            static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
+            static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
+            for (const TowerGlow& glow : kTowerGlows) {
+                if (name != glow.model) continue;
+                for (int b = 0; b < 3; ++b) {
+                    for (float way : {1.0f, -1.0f}) {
+                        Lantern star;
+                        star.anchor = anchor(i, mesh, kTowerBones[b], kOrigin, kNoAcross);
+                        for (int a = 0; a < 3; ++a) star.anchor.point[a] = 0.0f;
+                        star.scale = kTowerScales[b];
+                        for (int a = 0; a < 3; ++a) star.colour[a] = glow.colour[a];
+                        star.sheet = glow.sheet;
+                        star.spin = way * kStarDegreesPerSecond;
+                        if (star.anchor.bone >= 0) lanterns_.push_back(star);
+                    }
+                }
+            }
         } else if (world == "noria") {
             static const float kOrigin[3] = {0.0f, 0.0f, 0.0f};
             static const float kNoAcross[2][3] = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}};
@@ -284,6 +321,7 @@ bool Ornaments::open(const std::string& assetDir, const std::string& world, cons
         smoke_ = take("smoke01");  // Effect/smoke01, MU's BITMAP_SMOKE
         light_ = take("light");    // Effect/flare01, MU's BITMAP_LIGHT
         lightning_ = take("lightning_2");  // Effect/lightning2, MU's BITMAP_LIGHTNING+1
+        magic_ = take("magic_ground");     // Effect/Magic_Ground2, MU's BITMAP_MAGIC+1
         shiny_ = take("shiny");    // Effect/Shiny01, MU's BITMAP_SHINY
     }
     if (!spouts_.empty() || !lanterns_.empty() || !falls_.empty()) {
@@ -318,7 +356,7 @@ void Ornaments::shutdown() {
     glints_.clear();
     throwers_.clear();
     strikeCount_ = 0;
-    smoke_ = light_ = lightning_ = shiny_ = BGFX_INVALID_HANDLE;
+    smoke_ = light_ = lightning_ = shiny_ = magic_ = BGFX_INVALID_HANDLE;
 }
 
 void Ornaments::update(float seconds, const Sway& sway) {
@@ -533,7 +571,8 @@ void Ornaments::gather(gfx::Effects& effects, const Sway& sway) const {
     }
     if (bgfx::isValid(light_)) {
         for (const Lantern& lantern : lanterns_) {
-            const bgfx::TextureHandle sheet = lantern.sheet == 1 ? lightning_ : light_;
+            const bgfx::TextureHandle sheet =
+                lantern.sheet == 2 ? magic_ : lantern.sheet == 1 ? lightning_ : light_;
             if (!bgfx::isValid(sheet)) continue;
             const Figure* figure = sway.posedAt(lantern.anchor.townIndex);
             if (!figure) continue;
