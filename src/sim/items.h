@@ -441,6 +441,19 @@ constexpr int kMostSockets = 3;
 // (the user, 2026-09-28: "item drop with +socket is rare"). invention.
 constexpr double kSocketChance = 0.005;
 constexpr double kMoreSocketChance = 0.25;
+// A kill's jewels (the user, 2026-10-01: "increase drop rate for jewel of bless, jewel of soul,
+// jewel of chaos and jewel of creation"). invention, all of it. MU drops the three from its
+// jewel group at 1 in 1000 (Loot.Jewel, the group shared with the Ale, the Town Portal and the
+// pets, which keep that rate); here they have their own roll, five times it, still bound by
+// their drop levels -- the Chaos from 12 to 66, the Bless from 25, the Soul from 30. The Rune of
+// Creation, which fell from nothing, falls from a monster at kCreationLevel or over, one kill in
+// 2000, carrying a power the killer's class may set.
+constexpr double kJewelChance = 0.005;
+constexpr double kJewelGroupChance = 0.001;
+constexpr double kCreationChance = 0.0005;
+constexpr int kCreationLevel = 15;
+// The Bless (14, 13), the Soul (14, 14) and the Chaos (12, 15): the three kJewelChance draws.
+bool refiningJewel(const content::ItemRow& row);
 // The first socket with nothing set in it, or -1.
 int freeSocket(const Held& thing);
 // Whether this rune may be set into that thing by this class: a Creation with a power, a thing

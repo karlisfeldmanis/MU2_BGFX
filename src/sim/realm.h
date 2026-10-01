@@ -609,6 +609,9 @@ public:
     // lies, from nobody's bag, for looking at a drop Lorencia never leaves. Its id, or 0.
     uint32_t lay(int32_t item, int refinement = 0, bool luck = false, int option = 0,
                  uint8_t excellent = 0, uint8_t sockets = 0);
+    // The tests', and no rule of MU's: a death's drop as `leave` rolls it, for a monster of
+    // `level` slain by him beside him, with no hunt. What falls is in lying() and happenings().
+    void dropFor(int level);
 
     // ---- the merchants (sprint 7) ---------------------------------------------------------
     // The townsperson whose counter is open, as an index into Tables::folk, or -1. Opened by a

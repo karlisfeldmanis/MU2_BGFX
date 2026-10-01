@@ -271,6 +271,11 @@ bool creation(const content::ItemRow& row) {
     return row.group == kGroupPotions && row.number == 22;
 }
 
+bool refiningJewel(const content::ItemRow& row) {
+    return (row.group == kGroupPotions && (row.number == 13 || row.number == 14)) ||
+           (row.group == 12 && row.number == 15);
+}
+
 bool settable(const content::Tables& tables, const Held& jewel, const Held& target, Kin kin) {
     const auto known = [&](const Held& h) {
         return !h.empty() && size_t(h.item) < tables.items.size();

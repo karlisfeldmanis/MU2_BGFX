@@ -803,7 +803,7 @@ void Realm::leave(const Body& dead, const Body& killer) {
     // (:5920); its plus `(level - drop level) / 3`, and a row whose plus would pass the breed's
     // MaxItemLevel is not in the pool (MonsterItemMng.cpp:626). Zen is the breed's MoneyRate
     // (kDropRates) where MU2's Loot had a flat half.
-    constexpr double kJewel = 0.001, kItem = 0.1;
+    constexpr double kJewel = kJewelGroupChance, kItem = 0.1;
     constexpr double kExcellentChance = kItem * kExcellentShareOfItem;
     constexpr int kGap = 15;
     constexpr int kPotionGap = 8;
@@ -847,10 +847,36 @@ void Realm::leave(const Body& dead, const Body& killer) {
     // (23) and the Imp (28) have rows, carrying the flag; the Horn of Uniria has none. Drawn by the monster's level alone, with no twelve-level gap (GenerateItemFromGroup's
     // `isJewel`). In Lorencia that is the Chaos from level 12 and the Ale from 15; the Bless (25)
     // and the Soul (30) are never left by anything in the town.
+    // The Bless, the Soul and the Chaos have their own roll ahead of it (kJewelChance), and the
+    // Rune of Creation one ahead of that, so the group's own draw leaves them out.
     const auto jewelGroup = [](const content::ItemRow& r) {
-        return r.jewel() || (r.group == kGroupPotions && (r.number == 9 || r.number == 10));
+        return (r.jewel() || (r.group == kGroupPotions && (r.number == 9 || r.number == 10))) &&
+               !refiningJewel(r);
     };
-    if (roll <= kJewel) {
+    const double creationChance = level >= kCreationLevel ? kCreationChance : 0.0;
+    if (roll < creationChance) {
+        const int32_t item = draw([](const content::ItemRow& r) { return creation(r); });
+        if (item < 0) return;
+        // A power the killer's class may set, drawn evenly.
+        uint8_t powers[kMostSockets] = {};
+        int count = 0;
+        for (int p = 1; powerOf(uint8_t(p)); ++p) {
+            const PowerRow* row = powerOf(uint8_t(p));
+            count += row->everyone || row->kin == killer.kin ? 1 : 0;
+        }
+        int pick = count > 0 ? dice_.nextInt(0, count) : -1;
+        for (int p = 1; pick >= 0 && powerOf(uint8_t(p)); ++p) {
+            const PowerRow* row = powerOf(uint8_t(p));
+            if ((row->everyone || row->kin == killer.kin) && pick-- == 0) powers[0] = uint8_t(p);
+        }
+        one.what = Held{item, 0, 1};
+        one.what.powers[0] = powers[0];
+    } else if ((roll -= creationChance) < kJewelChance) {
+        const int32_t item =
+            draw([&](const content::ItemRow& r) { return refiningJewel(r) && reaches(r); });
+        if (item < 0) return;
+        one.what = Held{item, 0, 1};
+    } else if ((roll -= kJewelChance) <= kJewel) {
         const int32_t item = draw([&](const content::ItemRow& r) { return jewelGroup(r) && reaches(r); });
         if (item < 0) return;
         one.what = Held{item, 0, 1};
@@ -1353,6 +1379,18 @@ uint32_t Realm::discard(int slot) {
     // does NOT hear it -- see the note on discard() in realm.h.
     say(What::Dropped, hero, int32_t(one.id), one.what.item, one.what.refinement);
     return one.id;
+}
+
+// The ground is swept first, so a run of a million deaths is not a million drops searched for
+// a bare tile.
+void Realm::dropFor(int level) {
+    if (!tables_) return;
+    lying_.clear();
+    Body dead = bodies_[0];
+    dead.player = false;
+    dead.kind = -1;
+    dead.level = level;
+    leave(dead, bodies_[0]);
 }
 
 uint32_t Realm::lay(int32_t item, int refinement, bool luck, int option, uint8_t excellent,

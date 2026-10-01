@@ -4947,6 +4947,68 @@ void testPets(const content::Tables& tables) {
     check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
 }
 
+// What deaths leave, counted over many of them with no hunt (Realm::dropFor): the three jewels
+// at kJewelChance shared among those a level reaches, the Rune of Creation at kCreationChance
+// from kCreationLevel with a power the killer may set, the group's others still at MU's 1 in
+// 1000, and the item chance untouched.
+void testDrops(const content::Tables& tables) {
+    std::printf("drops\n");
+    const int bless = tables.itemAt(14, 13), soul = tables.itemAt(14, 14);
+    const int chaos = tables.itemAt(12, 15), rune = tables.itemAt(14, 22);
+    check(bless >= 0 && soul >= 0 && chaos >= 0 && rune >= 0, "the four jewels are in the table");
+    if (bless < 0 || soul < 0 || chaos < 0 || rune < 0) return;
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 138, 124, sim::Kin::DarkKnight, 50), "a realm raises");
+    constexpr int kDeaths = 400000;
+    const auto near = [](int got, double want, double slack) {
+        return std::abs(double(got) - want) <= want * slack;
+    };
+    for (const int level : {10, 14, 26, 40, 70}) {
+        int b = 0, s = 0, c = 0, r = 0, others = 0, items = 0, unsettable = 0;
+        for (int i = 0; i < kDeaths; ++i) {
+            realm.dropFor(level);
+            if (realm.lying().empty()) continue;
+            const sim::Held& what = realm.lying().back().what;
+            const content::ItemRow& row = tables.items[size_t(what.item)];
+            if (what.item == bless) ++b;
+            else if (what.item == soul) ++s;
+            else if (what.item == chaos) ++c;
+            else if (what.item == rune) {
+                ++r;
+                const sim::PowerRow* power = sim::powerOf(what.powers[0]);
+                unsettable += !power || !(power->everyone || power->kin == sim::Kin::DarkKnight);
+            } else if (row.jewel() || (row.group == 14 && (row.number == 9 || row.number == 10))) {
+                ++others;
+            } else {
+                ++items;
+            }
+        }
+        std::printf("  level %d, %d deaths: bless %d, soul %d, chaos %d, rune %d, group %d, items %d\n",
+                    level, kDeaths, b, s, c, r, others, items);
+        const bool hasBless = level >= 25, hasSoul = level >= 30, hasChaos = level >= 12 && level <= 66;
+        const int reached = int(hasBless) + int(hasSoul) + int(hasChaos);
+        const double each = reached ? kDeaths * sim::kJewelChance / reached : 0.0;
+        const auto said = [level](const char* what) {
+            static std::string line;
+            line = std::string(what) + " at level " + std::to_string(level);
+            return line.c_str();
+        };
+        check(hasBless ? near(b, each, 0.15) : b == 0, said("the Bless at its share"));
+        check(hasSoul ? near(s, each, 0.15) : s == 0, said("the Soul at its share"));
+        check(hasChaos ? near(c, each, 0.15) : c == 0, said("the Chaos at its share"));
+        check(level >= sim::kCreationLevel ? near(r, kDeaths * sim::kCreationChance, 0.25) : r == 0,
+              said("the Rune of Creation at its chance"));
+        checkEqual((long long)unsettable, 0LL, said("every dropped rune holds a power he may set"));
+        check(near(items, kDeaths * 0.1, 0.05), said("the item chance is untouched"));
+        // The group's others also fall as items within fifteen levels of theirs (the Portal at
+        // 30, the pets at 23 and 28), so the group is checked only past that, where all fall.
+        if (level > 45) {
+            check(near(others, kDeaths * sim::kJewelGroupChance, 0.25),
+                  said("the group's others at 1 in 1000"));
+        }
+    }
+}
+
 int main() {
     const std::string path =
         std::string(MU2_ASSET_DIR) + "/cooked/lorencia/lorencia.mur";
@@ -4969,6 +5031,7 @@ int main() {
     testInvariants(tables);
     testItems(tables);
     testLoot(tables);
+    testDrops(tables);
     testStandsOverTheKill(tables);
     testSkills(tables);
     testCastLock(tables);
