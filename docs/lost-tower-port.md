@@ -859,7 +859,7 @@ Type = model index - 1 (`MapManager.cpp:1121-1128` loads `Object{i+1}` from `Obj
 | 5 | Object06 | 357 | 146 | 1 | re_04 | 1.2 × 4.7 m column (re_04, stands 1 m down) |
 | 6-8 | Object07-09 | 351 / 65 / 172 | 38-94 | 1-2 | re_05 | low 1.1 m blocks, 2 × 1 / 2 × 2 / 1 × 1 m: plinths, parapets |
 | **9** | Object10 | 200 | 24 | 1 | re_08 | 2 × 0.43 × 1 m slab (step/kerb). **Stadium fall-through glow**, see §2 |
-| 10-12 | Object11-13 | 14 / 8 / 11 | 650-770 | 4-5 bones, static | **guard_gold2** | black-and-gold knight statues (armour atlas with a face). The sheet differs from the NPC guard_gold2 |
+| 10-12 | Object11-13 | 14 / 8 / 11 | 650-770 | 4-5 bones, static | **guard_gold2** | black-and-gold **fallen knights**, lying, slumped or sat among the skulls (armour atlas with a face). The sheet differs from the NPC guard_gold2 |
 | 13-15 | Object14-16 | 25 / 10 / 7 | 44-54 | 1 | re_04 | small wall bits (1 m) |
 | 16, 17 | Object17, 18 | **418**, 51 | 480, 284 | 1 | bons | flat bone litter, 0.8 × 0.3 × 1.2 m |
 | **18** | Object19 | 68 | 228 | 3 | re_04 + **light01** | wall 3 × 3.1 m with a light shaft. **BlendMesh 1**: light01 added (warm brown-orange glow streak) |
