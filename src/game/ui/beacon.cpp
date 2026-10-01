@@ -54,6 +54,11 @@ constexpr Rgb kInk = {0.07f, 0.045f, 0.025f};
 constexpr Rgb kLitLater = {0.70f, 0.70f, 0.68f};
 constexpr Rgb kShadeLater = {0.50f, 0.50f, 0.49f};
 constexpr Rgb kEdgeLater = {0.86f, 0.86f, 0.84f};
+// A quest the hero has cleared once and may take again, every twelve hours: WoW's daily blue
+// (the user, 2026-10-01), lit and shaded as the gold is. Its hand-in is the blue "?".
+constexpr Rgb kLitAgain = {0.56f, 0.80f, 1.00f};
+constexpr Rgb kShadeAgain = {0.27f, 0.54f, 0.93f};
+constexpr Rgb kEdgeAgain = {0.88f, 0.96f, 1.00f};
 
 float clamp01(float v) { return std::clamp(v, 0.0f, 1.0f); }
 
@@ -145,9 +150,9 @@ bool Beacon::bake(float unit) {
     art_ = {};
     cellW_ = int(std::ceil(kCellW * unit));
     cellH_ = int(std::ceil(kCellH * unit));
-    // Four cells side by side: the offer's "!", the hand-in's "?", and the same two in grey --
-    // a quest still to come, and one under way.
-    const int wide = cellW_ * 4;
+    // Six cells side by side: the offer's "!", the hand-in's "?", the same two in grey -- a
+    // quest still to come, and one under way -- and in blue, a repeat's offer and hand-in.
+    const int wide = cellW_ * 6;
     std::vector<uint8_t> rgba(size_t(wide) * size_t(cellH_) * 4, 0);
     const float texel = 1.0f / unit;  // one texel, in units
     constexpr int kSide = 4;          // samples a side
@@ -157,7 +162,8 @@ bool Beacon::bake(float unit) {
     for (int py = 0; py < cellH_; ++py) {
         for (int column = 0; column < wide; ++column) {
             const int cell = column / cellW_;
-            const bool ask = cell == 1 || cell == 3, later = cell >= 2;
+            const bool ask = cell % 2 == 1;
+            const int tone = cell / 2;  // 0 gold, 1 grey, 2 blue
             const int px = column - cell * cellW_;
             Pre sum;
             for (int sy = 0; sy < kSide; ++sy) {
@@ -179,14 +185,15 @@ bool Beacon::bake(float unit) {
                         const bool lit = x < kMid;
                         const float fall = 1.0f - 0.18f * clamp01((y - kTop) / (kDotY - kTop));
                         const float wear = 1.0f + kGrain * grain(px, py);
-                        const Rgb& face = later ? (lit ? kLitLater : kShadeLater)
-                                                : (lit ? kLit : kShade);
+                        const Rgb& face = tone == 1   ? (lit ? kLitLater : kShadeLater)
+                                          : tone == 2 ? (lit ? kLitAgain : kShadeAgain)
+                                                      : (lit ? kLit : kShade);
                         one.over({clamp01(face.r * fall * wear), clamp01(face.g * fall * wear),
                                   clamp01(face.b * fall * wear)},
                                  inside);
                         // The pale edge along the lit side and the flat of the top.
                         if (lit || y < kShoulder) {
-                            one.over(later ? kEdgeLater : kEdge,
+                            one.over(tone == 1 ? kEdgeLater : tone == 2 ? kEdgeAgain : kEdge,
                                      0.8f * inside * clamp01(1.0f + d / kEdgeLight));
                         }
                     }
@@ -250,6 +257,9 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         const bool later = quest < 0 || realm.questLocked(quest);
         const bool underway = quest >= 0 && realm.quest(quest).state == sim::QuestState::Active;
         if (quest >= 0 && !realm.questOffered(quest) && !ready && !underway && !later) continue;
+        // Cleared once already: its offer and hand-in in blue, a repeat (the user, 2026-10-01).
+        // Under way it stays the grey "?".
+        const bool again = !later && realm.quest(quest).completions > 0;
         float x = 0.0f, y = 0.0f;
         if (!play.folkCrownOf(folk, viewProj, width, height, &x, &y)) continue;
         const float w = float(cellW_), h = float(cellH_);
@@ -258,7 +268,9 @@ void Beacon::update(float seconds, const Play& play, int named, float shown,
         const float t = folk == named ? std::clamp(shown, 0.0f, 1.0f) : 0.0f;
         const float lift = kLift + (kLiftNamed - kLift) * t * t * (3.0f - 2.0f * t);
         canvas_.region(art_, {std::round(x - w * 0.5f), y - lift * u - h + bob, w, h},
-                       {ready ? w : later ? w * 2.0f : underway ? w * 3.0f : 0.0f, 0.0f, w, h});
+                       {(ready ? w : later ? w * 2.0f : underway ? w * 3.0f : 0.0f) +
+                            (again && !underway ? w * 4.0f : 0.0f),
+                        0.0f, w, h});
         showing_ = true;
     }
 }

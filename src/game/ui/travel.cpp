@@ -42,6 +42,8 @@ constexpr float kScrim = 360.0f;  // how far in from the left edge the dark reac
 constexpr uint32_t kGold = gfx::rgba(0.722f, 0.600f, 0.353f);
 constexpr uint32_t kGoldHi = gfx::rgba(0.886f, 0.776f, 0.541f);
 constexpr uint32_t kGoldDk = gfx::rgba(0.431f, 0.353f, 0.196f);
+// A repeat's marks: the beacon's blue (game/ui/beacon.cpp), for a quest cleared once already.
+constexpr uint32_t kAgainHi = gfx::rgba(0.56f, 0.80f, 1.00f);
 // **The events and when they run**: OpenMU's default timetables, every period from midnight, the
 // local clock (`OM/GameLogic/PlugIns/PeriodicTasks/BloodCastleStartConfiguration.cs:21-22`,
 // `DevilSquareStartConfiguration.cs:21-22`), each on the map whose gatekeeper lets you in --
@@ -106,7 +108,7 @@ bool Travel::Drawn::operator==(const Drawn& o) const {
         if (refusals[i] != o.refusals[i] || lockedBy[i] != o.lockedBy[i]) return false;
     }
     for (int i = 0; i < sim::kQuests; ++i) {
-        if (quests[i] != o.quests[i] || shares[i] != o.shares[i]) return false;
+        if (quests[i] != o.quests[i] || shares[i] != o.shares[i] || again[i] != o.again[i]) return false;
     }
     for (int i = 0; i < kPlaces; ++i) {
         if (events[i] != o.events[i] || eventSeconds[i] != o.eventSeconds[i]) return false;
@@ -223,6 +225,7 @@ int Travel::update(const Play& play, const Pointer& pointer, int width, int heig
     // its goal, summed.
     for (int q = 0; q < sim::kQuests; ++q) {
         const sim::QuestProgress& one = realm.quest(q);
+        now.again[q] = one.completions > 0;
         if (realm.questOffered(q)) {
             now.quests[q] = kOffered;
             continue;
@@ -442,15 +445,16 @@ void Travel::rebuild(const Drawn& now) {
                 const bool offered = now.quests[q] == kOffered;
                 const bool ready = now.quests[q] == uint8_t(sim::QuestState::Ready);
                 const float x0 = b.x + kPadX * u;
+                const uint32_t hi = now.again[q] ? kAgainHi : kGoldHi;
                 controls::caps(canvas_, x0, controls::middle(b.y + kLine2 * u, kLineTall * u, markSize),
-                               markSize, offered || ready ? kGoldHi : style::kAshInk,
+                               markSize, offered || ready ? hi : style::kAshInk,
                                offered ? "!" : "?", 0.0f);
                 const std::string right = offered ? "" : ready ? "Hand in"
                                                                : std::to_string(now.shares[q]) + "%";
                 const float rightW = right.empty() ? 0.0f : controls::labelWidth(size, right);
                 if (!right.empty()) {
                     controls::ranged(canvas_, b.right() - kPadX * u, base, size,
-                                     ready ? kGoldHi : style::kAshInk, right);
+                                     ready ? hi : style::kAshInk, right);
                 }
                 // The title, trimmed to the room left between the mark and the figure.
                 const float tx = x0 + 12.0f * u;

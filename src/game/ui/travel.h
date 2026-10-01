@@ -69,6 +69,8 @@ private:
         // Each quest under way or done and not handed in, and how far along, in percent.
         uint8_t quests[sim::kQuests] = {};
         uint8_t shares[sim::kQuests] = {};
+        // Each quest cleared before: its marks in the beacon's repeat blue.
+        bool again[sim::kQuests] = {};
         int hoverPlace = -1, hoverFloor = -1;
         bool operator==(const Drawn& o) const;
     };

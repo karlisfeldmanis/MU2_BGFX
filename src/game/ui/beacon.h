@@ -9,6 +9,8 @@
 // soft dark halo so it reads over bright stone. A hand-in is a "?" of the same stroke and dot.
 // A quest still to come -- Sevina's, until the class change is written -- is the "!" in grey.
 // A quest taken and under way is the "?" in grey, gold again once it can be handed in.
+// Once the hero has cleared a quest, its "!" and hand-in "?" are blue: WoW's daily, since it comes
+// round again every twelve hours.
 // No glow. The user turned down a rounded, bright yellow capsule with a thick rim as cartoonish (2026-09-28): Diablo IV's are sharp and quiet.
 //
 // The picture is baked in code, as the controls' stone is, at the size it is drawn: a signed
