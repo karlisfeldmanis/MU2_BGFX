@@ -17,7 +17,7 @@
 // in it.
 //
 //   build/bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] [--until-jewel]
-//             [--no-quests] [--quiet]
+//             [--no-quests] [--fights] [--build s,a,v,e] [--quiet]
 
 #include <algorithm>
 #include <cstdarg>
@@ -84,6 +84,8 @@ struct Options {
     bool untilJewel = false;
     bool quests = true;
     bool quiet = false;
+    bool fights = false;  // --fights: a line every half hour on how he fights
+    int build[4] = {};    // --build s,a,v,e: the weights his points are spent by, else his class's
 };
 
 std::string clock(int64_t tick) {
@@ -148,6 +150,12 @@ public:
     // when one is owed.
     void tick() {
         if (clock_ % kThink == 0) play();
+        if (realm_->hero().alive()) {
+            ++tally_.alive;
+            if (realm_->hero().mana < 3) ++tally_.dry;
+            if (realm_->hero().walking) ++tally_.walking;
+        }
+        if (options_.fights && clock_ > 0 && clock_ % (30 * 60 * 20) == 0) fights();
         realm_->step();
         ++clock_;
         heard();
@@ -359,6 +367,38 @@ private:
         return true;
     }
 
+    // ---- how he fights (--fights) ---------------------------------------------------------
+    struct Tally {
+        int landed = 0, missed = 0, kills = 0, drunk = 0;
+        int64_t dealt = 0, taken = 0, alive = 0, dry = 0, walking = 0;
+        std::map<int, int> cast;
+    } tally_;
+
+    void fights() {
+        const Tally& t = tally_;
+        const double minutes = 30.0;
+        const sim::Body& hero = realm_->hero();
+        std::printf("  [%s] level %d, %.1f kills/min, %d blows landed and %d missed (%.0f%%), "
+                    "%.0f a blow, %.0f dealt and %.0f taken a minute, %.0f potions a minute; "
+                    "out of mana %.0f%% and walking %.0f%% of the time; health %d mana %d\n",
+                    clock(clock_).c_str(), hero.level, (out_.kills - t.kills) / minutes, t.landed,
+                    t.missed, 100.0 * t.landed / std::max(1, t.landed + t.missed),
+                    double(t.dealt) / std::max(1, t.landed), t.dealt / minutes, t.taken / minutes,
+                    (out_.drunk - t.drunk) / minutes, 100.0 * t.dry / std::max<int64_t>(1, t.alive),
+                    100.0 * t.walking / std::max<int64_t>(1, t.alive), hero.maxHealth, hero.maxMana);
+        if (!t.cast.empty()) {
+            std::printf("             casts:");
+            for (const auto& [skill, n] : t.cast) {
+                const sim::SkillRow* row = sim::skillNumbered(skill);
+                std::printf(" %s %d,", row ? row->name : "?", n);
+            }
+            std::printf("\n");
+        }
+        tally_ = Tally{};
+        tally_.kills = out_.kills;
+        tally_.drunk = out_.drunk;
+    }
+
     // ---- what happened --------------------------------------------------------------------
     void heard() {
         const uint32_t me = realm_->hero().id;
@@ -395,6 +435,20 @@ private:
                         owedColumn_ = kWorlds[0].arrive[0];
                         owedRow_ = kWorlds[0].arrive[1];
                     }
+                    break;
+                case sim::What::Hit:
+                    if (h.who == me) {
+                        ++tally_.landed;
+                        tally_.dealt += h.a;
+                    } else if (h.whom == me) {
+                        tally_.taken += h.a;
+                    }
+                    break;
+                case sim::What::Missed:
+                    if (h.who == me) ++tally_.missed;
+                    break;
+                case sim::What::Loosed:
+                    if (h.who == me) ++tally_.cast[h.a];
                     break;
                 case sim::What::QuestStep:
                     if (h.a >= 0 && h.a < sim::kQuests && h.c >= 0 && h.c < sim::questAt(h.a).stepCount &&
@@ -496,14 +550,19 @@ private:
     }
 
     // ---- points ---------------------------------------------------------------------------
-    // Each class's usual build: the knight strength and vitality, the wizard energy, the elf
-    // agility. The weights are the bot's, a common player's choice.
+    // Each class's usual build, or --build's: the knight strength and vitality, the elf agility,
+    // the wizard energy -- six tenths of it, since every spell is energy/9 to energy/4 with the
+    // monster's whole defence off it; at four tenths he dealt a third of the damage and killed
+    // half as much (the bot's runs, 2026-10-01).
     void spend() {
         const int points = realm_->hero().pointsInHand;
         if (points <= 0) return;
         int w[4] = {4, 2, 3, 0};  // strength, agility, vitality, energy
-        if (options_.kin == sim::Kin::DarkWizard) { w[0] = 2; w[1] = 2; w[2] = 2; w[3] = 4; }
+        if (options_.kin == sim::Kin::DarkWizard) { w[0] = 1; w[1] = 1; w[2] = 2; w[3] = 6; }
         if (options_.kin == sim::Kin::FairyElf) { w[0] = 2; w[1] = 5; w[2] = 2; w[3] = 1; }
+        if (options_.build[0] + options_.build[1] + options_.build[2] + options_.build[3] > 0) {
+            std::copy(std::begin(options_.build), std::end(options_.build), w);
+        }
         const int sum = w[0] + w[1] + w[2] + w[3];
         int give[4];
         int left = points;
@@ -691,10 +750,7 @@ private:
         const double taken =
             std::max(0.0, (kind.minimumDamage + kind.maximumDamage) / 2.0 - hero.stats.defense) *
             hitChance(float(kind.attackRate), hero.stats.defenseRate);
-        // A wizard's spell is his blow only while his mana lasts, and between potions it does
-        // not: his fights run about twice what the band says (the bot's runs, 2026-10-01).
-        const double wizard = options_.kin == sim::Kin::DarkWizard ? 2.0 : 1.0;
-        return caution_ * wizard * taken * seconds * 20.0 / std::max(1, kind.attackTicks);
+        return caution_ * taken * seconds * 20.0 / std::max(1, kind.attackTicks);
     }
     // Whether he takes this breed on: a kill costs him under a third of his health (a half to
     // keep at a quest already under way), and it has not killed him twice lately.
@@ -1520,10 +1576,15 @@ int main(int argc, char** argv) {
         else if (a == "--hours") options.hours = std::atof(next());
         else if (a == "--until-jewel") options.untilJewel = true;
         else if (a == "--no-quests") options.quests = false;
+        else if (a == "--fights") options.fights = true;
+        else if (a == "--build") {
+            std::sscanf(next(), "%d,%d,%d,%d", &options.build[0], &options.build[1], &options.build[2],
+                        &options.build[3]);
+        }
         else if (a == "--quiet") options.quiet = true;
         else {
             std::printf("usage: bot [--kin dk|dw|elf] [--seed N] [--runs N] [--hours H] "
-                        "[--until-jewel] [--no-quests] [--quiet]\n");
+                        "[--until-jewel] [--no-quests] [--fights] [--build s,a,v,e] [--quiet]\n");
             return 2;
         }
     }
