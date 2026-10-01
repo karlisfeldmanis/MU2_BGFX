@@ -179,16 +179,16 @@ VOID_BY_MAP = {
     4: {"start": 0.1, "depth": 1.6, "rim": True, "blend": 2.0},
 }
 
-#: How far a world's lava spills into its void, in tiles. Ours, marked: MU framed its maps for a
+#: How far a world's lava floods its void, in tiles. Ours, marked: MU framed its maps for a
 #: 4:3 screen, and the Lost Tower's long lava field (floor 1's east strip, 150-185 x 0-140)
 #: ends in a hard line against the black where MU's camera never looked; at 16:9 and pulled
 #: back, that line is on screen (the user, 2026-10-01: 'we need find a way how we can expand
-#: lava zones, because this game was made 25 years ago for 4:3 monitors'). A void tile whose
-#: nearest ground is lava, within this many tiles, becomes that lava tile again -- its sheet,
-#: height, painted light and flags, so it is as unwalkable as the lava it extends. It stops
-#: halfway across a gap, where another floor's edge is the nearer ground, and the void's own
-#: blend (VOID_BY_MAP) takes its far edge to black.
-LAVA_SPILL_BY_MAP = {4: 10}
+#: lava zones, because this game was made 25 years ago for 4:3 monitors'). Every void tile
+#: within this many tiles of lava, walking through the void alone, becomes the nearest lava
+#: tile again -- its sheet, height, painted light and flags, so it is as unwalkable as the lava
+#: it extends. It fills the gaps right up to the next floor's edge: stopping halfway left the
+#: black on screen (the user: 'laav suppost to fill whole left corner screen').
+LAVA_SPILL_BY_MAP = {4: 32}
 
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5
@@ -196,11 +196,11 @@ LAVA_SLOT = 5
 
 def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndarray,
                alpha: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Which void tiles the lava spills into, and the lava tile each copies, as flat indices.
+    """Which void tiles the lava floods, and the lava tile each copies, as flat indices.
 
-    A breadth-first walk out from every tile with ground, eight ways, so each void tile learns
-    which ground it reaches first and how far that is; the ones that reach lava first, within
-    `reach`, spill. On the [y, x] grid every plane here shares.
+    A breadth-first walk out from every lava tile, eight ways, through void tiles alone, so a
+    floor's ground stops it and a gap between floors fills to the far edge. On the [y, x]
+    grid every plane here shares.
     """
     from collections import deque
 
@@ -209,7 +209,7 @@ def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndar
     distance = np.full(void.shape, np.iinfo(np.int32).max, dtype=np.int64)
     source = np.full(void.shape, -1, dtype=np.int64)
     queue = deque()
-    for y, x in zip(*np.nonzero(~void)):
+    for y, x in zip(*np.nonzero(lava)):
         distance[y, x] = 0
         source[y, x] = y * size_x + x
         queue.append((y, x))
@@ -221,14 +221,12 @@ def spill_lava(reach: int, void: np.ndarray, layer1: np.ndarray, layer2: np.ndar
         for dy in (-1, 0, 1):
             for dx in (-1, 0, 1):
                 ny, nx = y + dy, x + dx
-                if 0 <= ny < size_y and 0 <= nx < size_x and distance[ny, nx] > step:
+                if 0 <= ny < size_y and 0 <= nx < size_x and void[ny, nx] \
+                        and distance[ny, nx] > step:
                     distance[ny, nx] = step
                     source[ny, nx] = source[y, x]
                     queue.append((ny, nx))
-    reached = void & (source >= 0)
-    from_lava = np.zeros(void.shape, dtype=bool)
-    from_lava[reached] = lava.reshape(-1)[source[reached]]
-    spilled = np.flatnonzero(from_lava)
+    spilled = np.flatnonzero(void & (source >= 0))
     return spilled, source.reshape(-1)[spilled]
 
 
