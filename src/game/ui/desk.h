@@ -234,7 +234,7 @@ private:
     // them (mu.db's character_hotkeys is where MU2 kept them).
     int32_t quick_[Hud::kQuickKeys] = {-1, -1, -1, -1, -1};
     int scriptedKey_ = -1;
-    void quickKeys(const gfx::Window& window, Play& play);
+    void quickKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
     // What is on Q W E R, by MU's skill number. A newly learned skill takes the first free key
     // ONCE -- `autoBound_` is what stops it coming back the moment the player takes it off -- and
     // after that the bar is his: right-click a box to open the list, drag a row onto a key, drag
@@ -260,6 +260,7 @@ private:
     std::vector<Hud::FanCell> fan_;
     int32_t carrying_ = 0;    // the skill the pointer is holding, 0 for none
     int carryFrom_ = -1;      // the key it was lifted off, or -1 out of the list
+    int liftedQuick_ = -1;    // the potion box the pointer is holding, or -1
     int scriptedSkill_ = -1;
     void skillKeys(const gfx::Window& window, Play& play, const Pointer& pointer);
     // No `why` any more: the card carries every refusal as one of its own rows (2026-09-23), so

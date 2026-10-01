@@ -339,9 +339,10 @@ bool Hud::Face::operator==(const Face& o) const {
            (!tip || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(boons, boons + kBoons, o.boons) && fanOpen == o.fanOpen &&
            fanOver == o.fanOver &&
-           carrying == o.carrying &&
+           carrying == o.carrying && liftedQuick == o.liftedQuick &&
            fan == o.fan &&
-           (carrying == 0 || (pointerX == o.pointerX && pointerY == o.pointerY)) &&
+           ((carrying == 0 && liftedQuick < 0) ||
+            (pointerX == o.pointerX && pointerY == o.pointerY)) &&
            std::equal(quick, quick + kQuickKeys, o.quick) &&
            std::equal(struck, struck + kQuickKeys, o.struck) &&
            std::equal(skillStruck, skillStruck + kSkillBoxes, o.skillStruck) &&
@@ -559,6 +560,7 @@ void Hud::update(float seconds, float width, float height, const Pointer& pointe
         now_.fanOpen = fanOpen_;
         now_.fan = fan_;
         now_.carrying = carrying_;
+        now_.liftedQuick = liftedQuick_;
         now_.fanOver = fanAt(pointer.x, pointer.y);
         // What stands on the potion boxes' stage: each bound row in its box, in MU units from
         // the plate's corner. The same list twice is no redraw (Stage::stand).
@@ -989,6 +991,11 @@ void Hud::rebuild() {
         if (q.item < 0) continue;
         const Box box = plate(s, boxPx(kFirstQuick + i));
         const uint32_t ink = q.count > 0 ? kInk : kDeadIcon;
+        if (i == liftedQuick_) {
+            // Lifted: the box reads as left, and the bottle is at the pointer.
+            canvas_.rect(box, gfx::rgba(0.0f, 0.0f, 0.0f, 0.7f));
+            continue;
+        }
         if (!picture.valid()) {
             std::string word = q.label.substr(0, std::min<size_t>(q.label.size(), 5));
             canvas_.shadowed(box.midX(), box.midY(), quickSize, ink, kInkShadow, 1.0f, word,
@@ -1187,6 +1194,24 @@ void Hud::rebuild() {
                                kChipTall * u};
                 controls::keycap(canvas_, chip, cap, tip::unit());
             }
+        }
+    }
+
+    // A lifted potion box, at the pointer: its own square of the stage's picture, so the bottle
+    // moves and not a word.
+    if (liftedQuick_ >= 0 && quick_[liftedQuick_].item >= 0) {
+        const Box from = boxPx(kFirstQuick + liftedQuick_);
+        const Box box = plate(s, from);
+        const Box to{now_.pointerX - box.w * 0.5f, now_.pointerY - box.h * 0.5f, box.w, box.h};
+        if (picture.valid() && !standing_.empty()) {
+            const float sx = picture.width / kPlateW, sy = picture.height / kPlateH;
+            canvas_.region(picture, to, {from.x * sx, from.y * sy, from.w * sx, from.h * sy},
+                           gfx::rgba(1.0f, 1.0f, 1.0f, 0.85f));
+        } else {
+            const std::string& label = quick_[liftedQuick_].label;
+            canvas_.shadowed(to.midX(), to.midY(), quickSize, kInk, kInkShadow, 1.0f,
+                             label.substr(0, std::min<size_t>(label.size(), 5)),
+                             gfx::Align::Centre, 0.0f);
         }
     }
 

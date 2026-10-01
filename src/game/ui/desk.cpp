@@ -595,7 +595,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
     if (play.isOpen()) {
         labelGround(play, window.width(), window.height());
         if (!keysHeld) {
-            quickKeys(window, play);
+            quickKeys(window, play, pointer);
             skillKeys(window, play, pointer);
         }
     }
@@ -613,6 +613,7 @@ void Desk::update(float seconds, const gfx::Window& window, Play& play, float po
                     questDialog_.covers(pointer.x, pointer.y) ||
                     travel_.covers(pointer.x, pointer.y) ||
                     (specimenOpen_ && specimen_.covers(pointer.x, pointer.y)) || carrying_ != 0 ||
+                    liftedQuick_ >= 0 ||
                     (characterOpen_ && card_.covers(pointer.x, pointer.y)) ||
                     (inventoryOpen_ && (bag_.covers(pointer.x, pointer.y) || bag_.dragging())) ||
                     (trading_ && shelf_.covers(pointer.x, pointer.y)) ||
@@ -654,10 +655,32 @@ void Desk::script(float x, float y, bool press, bool release, bool right) {
                double(x), double(y));
 }
 
-void Desk::quickKeys(const gfx::Window& window, Play& play) {
+void Desk::quickKeys(const gfx::Window& window, Play& play, const Pointer& pointer) {
     const sim::Realm& realm = play.realm();
     const content::Tables& tables = *realm.tables();
     const sim::Satchel& bag = realm.satchel();
+    // **The boxes rearrange by dragging**, as the skill keys do (the user, 2026-10-01: "i cant
+    // reorder potions / drag/drop"). A press lifts a bound box; let go on another box it is a
+    // swap, on its own box nothing, and anywhere off the boxes it is taken off the bar -- the
+    // bottles stay in the bag either way.
+    if (pointer.pressed && liftedQuick_ < 0 && carrying_ == 0) {
+        const int key = hud_.quickAt(pointer.x, pointer.y);
+        if (key >= 0 && quick_[key] >= 0) liftedQuick_ = key;
+    }
+    if (liftedQuick_ >= 0 && pointer.released) {
+        const int onto = hud_.quickAt(pointer.x, pointer.y);
+        if (onto >= 0 && onto != liftedQuick_) {
+            std::swap(quick_[onto], quick_[liftedQuick_]);
+            core::logf("window: key %d moved to key %d", liftedQuick_ + 1, onto + 1);
+            play.ui(Play::Ui::Took);
+        } else if (onto < 0) {
+            quick_[liftedQuick_] = -1;
+            core::logf("window: key %d taken off the bar", liftedQuick_ + 1);
+            play.ui(Play::Ui::Took);
+        }
+        liftedQuick_ = -1;
+    }
+    hud_.liftQuick(liftedQuick_);
     const gfx::Window::Key keys[Hud::kQuickKeys] = {
         gfx::Window::Key::Potion1, gfx::Window::Key::Potion2, gfx::Window::Key::Potion3,
         gfx::Window::Key::Potion4, gfx::Window::Key::Potion5};

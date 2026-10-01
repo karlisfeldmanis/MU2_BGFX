@@ -63,6 +63,9 @@ public:
     }
     // Which potion box a point is over, 0 to 4, or -1: where a drag from the bag binds.
     int quickAt(float x, float y) const;
+    // The potion box the pointer has lifted, or -1: drawn empty in its box and at the pointer
+    // until it is let go (Desk::quickKeys swaps or clears).
+    void liftQuick(int key) { liftedQuick_ = key; }
 
     // A box that just fired. The realm answers a potion silently -- the bottle leaves the bag,
     // the gem fills, and the box itself says nothing -- so a key pressed in a fight and a key
@@ -277,6 +280,7 @@ private:
         bool fanOpen = false;
         int fanOver = -1;           // the cell under the pointer
         int32_t carrying = 0;       // what the pointer is holding out of the list
+        int liftedQuick = -1;       // the potion box the pointer is holding
         std::vector<FanCell> fan;   // the entries, in the order they are laid out
         uint16_t picture = 0xFFFF;  // the stage's picture, so its first render is a rebuild
         bool operator==(const Face& o) const;
@@ -311,6 +315,7 @@ private:
     Boon boons_[kBoons];
     bool fanOpen_ = false;
     int32_t carrying_ = 0;
+    int liftedQuick_ = -1;
     std::vector<FanCell> fan_;
     tip::Sheet fanSheet_;
     float width_ = 0.0f, height_ = 0.0f;
