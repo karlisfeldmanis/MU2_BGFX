@@ -13,15 +13,70 @@
 #include <string>
 #include <thread>
 
+#include <miniaudio.h>
+
 #include "core/loading.h"
 #include "core/log.h"
+#include "core/files.h"
 #include "gfx/views.h"
 
 namespace mu::app {
 
+namespace {
+
+// The loading screen's ambient, music/loading.mp3 (freesound's "some ambient", the user's pick
+// 2026-10-01). Ours: MU's loading screen keeps the login theme going (LoadingScene.cpp:84).
+//
+// Its own device rather than the game's Sound, which the worker opens partway through the load
+// and the mode owns. Kept for the life of the process, so the fade out at the end of one load
+// runs on after the spinner has gone, and the next load fades the same track in again.
+struct Ambient {
+    ma_engine engine{};
+    ma_sound track{};
+    bool open = false;
+    bool tried = false;
+
+    void start(const std::string& path, float level) {
+        if (!tried) {
+            tried = true;
+            if (!core::fileExists(path)) return;
+            ma_engine_config config = ma_engine_config_init();
+            if (ma_engine_init(&config, &engine) != MA_SUCCESS) return;
+            const ma_uint32 flags = MA_SOUND_FLAG_STREAM | MA_SOUND_FLAG_NO_SPATIALIZATION;
+            if (ma_sound_init_from_file(&engine, path.c_str(), flags, nullptr, nullptr,
+                                        &track) != MA_SUCCESS) {
+                core::logError("preloader: %s would not open", path.c_str());
+                ma_engine_uninit(&engine);
+                return;
+            }
+            ma_sound_set_looping(&track, MA_TRUE);
+            open = true;
+        }
+        if (!open) return;
+        ma_engine_set_volume(&engine, std::clamp(level, 0.0f, 1.0f));
+        ma_sound_seek_to_pcm_frame(&track, 0);
+        ma_sound_set_volume(&track, 0.5f);
+        ma_sound_set_fade_in_milliseconds(&track, 0.0f, 1.0f, 400);
+        ma_sound_start(&track);
+    }
+    // Faded rather than cut, so the world's own sound comes up under its tail.
+    void stop() {
+        if (open) ma_sound_stop_with_fade_in_milliseconds(&track, 1200);
+    }
+};
+
+Ambient& ambient() {
+    static Ambient one;
+    return one;
+}
+
+}  // namespace
+
 bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitEarly) {
     std::atomic<int> loaded{0};  // 0 loading, 1 ready, -1 what was asked for did not open
     core::Loading::reset();
+    ambient().start(core::join(ctx.paths.assets, "music/loading.mp3"),
+                    ctx.args.mute ? 0.0f : float(ctx.args.volume) / 100.0f);
     std::thread loader([&]() { loaded.store(load() ? 1 : -1); });
 
     ctx.curtain.init(ctx.paths.shaders);
@@ -227,6 +282,7 @@ bool Preloader::run(Context& ctx, const std::function<bool()>& load, bool* quitE
         }
     }
     loader.join();
+    ambient().stop();
     ctx.window.holdVsync(false);
     if (bgfx::isValid(dot)) bgfx::destroy(dot);
     core::logf("preloader: the world loaded behind the spinner in %.2f s; %d spinner frames "
