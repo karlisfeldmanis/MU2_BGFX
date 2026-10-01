@@ -282,9 +282,14 @@ constexpr int kChatTicks = 70;
 // user, 2026-09-28).
 constexpr int32_t kPoisoners[] = {8, 12, 39};
 // A poison on him: 0.75's twenty seconds, a pulse every three at `PoisonDamageMultiplier` 0.03 of
-// the health left (Dungeon.cs:677), never the last point. One at a time: a bite while one is on
-// neither adds to it nor starts the twenty seconds again (ObjBaseAttack.cpp:770-777).
+// the health left (Dungeon.cs:677), never the last point.
 constexpr int32_t kHeroPoisonTicks = 400;
+// **Ours**: a monster's poison stacks on him (the user, 2026-09-30: "allow posion to stack").
+// 0.75 does not -- a poison "takes not again while it is on" (ObjBaseAttack.cpp:770-777) -- and
+// here each blow that poisons while one is on adds a stack, up to this many, and sets the twenty
+// seconds going again; every pulse bites once for each stack. The wizard's own Poison on a
+// monster keeps 0.75's rule.
+constexpr int32_t kPoisonStacksMost = 5;
 constexpr float kHeroPoisonShare = 0.03f;
 
 // ---- the monsters whose blow ices -------------------------------------------------------------

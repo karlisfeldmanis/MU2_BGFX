@@ -3333,18 +3333,18 @@ void testWear(const content::Tables& tables) {
 
 // Devias's townsfolk (2026-09-29): Version075's nine, Apostle Devin, Sevina and the Messenger, the three shelves, Zienna's
 // counter, and the Guild Master answering with a line where MU opens a guild window.
-// A monster's poison on him is 0.75's, one at a time (the user, 2026-10-01: "poison damage from
-// monsters seems to overpowered"): a bite while one is on neither adds to it nor starts it
-// again, and every pulse takes one share of what he has left.
-void testPoisonOnce() {
-    std::printf("poison once\n");
+// A monster's poison stacks on him (ours, kPoisonStacksMost): among the Dungeon's Poison Bulls,
+// kept on his feet, the stacks climb past one and stop at the cap, and a pulse with more than one
+// on him bites more than the one 3% share of what he has left.
+void testPoisonStacks() {
+    std::printf("poison stacks\n");
     content::Tables dungeon;
     std::string error;
     const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur";
     check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
     sim::Realm realm;
     check(realm.raise(&dungeon, 7, 119, 47, sim::Kin::DarkKnight, 40), "a knight among the bulls");
-    int pulses = 0, overShare = 0, restarted = 0;
+    int most = 0, stackedPulses = 0, overShare = 0;
     for (int tick = 0; tick < 6000 && realm.hero().alive(); ++tick) {
         if (realm.hero().health < realm.hero().maxHealth / 2) {
             sim::HeroRecord record = realm.record();
@@ -3352,21 +3352,23 @@ void testPoisonOnce() {
             realm.restore(record);
         }
         const int before = realm.hero().health;
-        const int64_t until = realm.hero().poisonUntil;
-        const bool on = until > realm.tick();
+        const int stacks = realm.hero().poisonStacks;
+        const bool on = realm.hero().poisonUntil > realm.tick();
         realm.step();
-        if (on && realm.hero().poisonUntil > until) ++restarted;
         for (const sim::Happening& one : realm.happenings()) {
             if (one.what != sim::What::Hit || one.whom != realm.hero().id || !one.poisoned) continue;
-            ++pulses;
-            if (one.a > std::max(1, int(float(before) * sim::kHeroPoisonShare))) ++overShare;
+            if (on && stacks > 1) {
+                ++stackedPulses;
+                if (one.a > std::max(1, int(float(before) * sim::kHeroPoisonShare))) ++overShare;
+            }
         }
+        if (realm.hero().poisonUntil > realm.tick()) most = std::max(most, realm.hero().poisonStacks);
     }
-    std::printf("  poison: %d pulses, %d over one share, %d restarted while on\n", pulses,
-                overShare, restarted);
-    check(pulses > 0, "the bulls poison him");
-    check(overShare == 0, "and a pulse never bites more than one share");
-    check(restarted == 0, "and a bite while one is on does not start it again");
+    std::printf("  poison: %d stacks at the most, %d stacked pulses, %d over one share\n", most,
+                stackedPulses, overShare);
+    check(most > 1, "a second poisoning while one is on stacks");
+    check(most <= sim::kPoisonStacksMost, "and never past the cap");
+    check(stackedPulses > 0 && overShare > 0, "and a stacked pulse bites more than one share");
 }
 
 // A skill pressed late in a cast and then walked away from is not thrown after the walk (the
@@ -4952,6 +4954,52 @@ void testPets(const content::Tables& tables) {
     check(price > 2.5 && price < 3.5, "the Imp costs 3 life a landed blow");
 }
 
+// A Thunder Lich's Lightning pushes him a tile straight away, slid as a pushed monster slides
+// (the user, 2026-10-01). Undying beside one in the Dungeon, standing still, until it strikes.
+void testLichPush() {
+    std::printf("a Thunder Lich pushes him\n");
+    content::Tables dungeon;
+    std::string error;
+    const std::string path = std::string(MU2_ASSET_DIR) + "/cooked/dungeon/dungeon.mur";
+    check(content::loadTables(path, dungeon, error), "the Dungeon's tables load");
+    sim::Realm realm;
+    check(realm.raise(&dungeon, 5, 108, 246, sim::Kin::DarkKnight, 60), "a realm raises in the Dungeon");
+    realm.undying(true);
+    // One with open floor three and four tiles east of it, where he stands and where he goes.
+    const auto clear = [&](int column, int row) {
+        return dungeon.grid.open(column, row, content::kWallCharacter) && !dungeon.grid.safe(column, row);
+    };
+    const sim::Body* lich = nullptr;
+    for (const sim::Body& body : realm.bodies()) {
+        if (body.monster() && body.kind >= 0 && dungeon.kinds[size_t(body.kind)].number == 9 &&
+            clear(body.column() + 1, body.row()) && clear(body.column() + 2, body.row()) &&
+            clear(body.column() + 3, body.row()) && clear(body.column() + 4, body.row())) {
+            lich = &body;
+            break;
+        }
+    }
+    check(lich != nullptr, "a Thunder Lich stands in the Dungeon");
+    if (!lich) return;
+    realm.setHeroDown(lich->column() + 3, lich->row(), -1, 0);
+    int shoved = 0;
+    float slid = 0.0f;
+    for (int tick = 0; tick < 600 && shoved == 0; ++tick) {
+        const float x = realm.hero().x, y = realm.hero().y;
+        realm.step();
+        for (const sim::Happening& h : realm.happenings()) {
+            if (h.what == sim::What::Shoved && h.who == realm.hero().id) ++shoved;
+            if (std::getenv("PUSH_TRACE") && h.what != sim::What::Stepped) std::printf("    %s\n", sim::describe(h, realm).c_str());
+        }
+        if (shoved) {
+            for (int t = 0; t < 8; ++t) realm.step();
+            slid = std::max(std::fabs(realm.hero().x - x), std::fabs(realm.hero().y - y));
+        }
+    }
+    check(shoved > 0, "its Lightning pushed him");
+    check(slid >= 0.9f && slid <= 1.1f, "a tile, slid and landed");
+    check(realm.hero().x == float(realm.hero().column()), "he stands on his tile after it");
+}
+
 // What deaths leave, counted over many of them with no hunt (Realm::dropFor): the three jewels
 // at kJewelChance shared among those a level reaches, the Rune of Creation at kCreationChance
 // from kCreationLevel with a power the killer may set, the group's others still at MU's 1 in
@@ -5037,6 +5085,7 @@ int main() {
     testItems(tables);
     testLoot(tables);
     testDrops(tables);
+    testLichPush();
     testStandsOverTheKill(tables);
     testSkills(tables);
     testCastLock(tables);
@@ -5062,7 +5111,7 @@ int main() {
     testDungeonRunes(tables);
     testRunes(tables);
     testPets(tables);
-    testPoisonOnce();
+    testPoisonStacks();
     testWishDropsOnWalk(tables);
     testTravelQuestLock();
 

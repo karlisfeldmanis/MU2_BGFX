@@ -18,7 +18,7 @@ static bool usable(const content::Tables& tables, int32_t item) {
     if (item < 0) return false;
     const content::ItemRow& row = tables.items[size_t(item)];
     // And the Antidote, ours (the user, 2026-09-30: "i cant move antidote to potion quickslot"):
-    // MU's list has no antidote, and the Dungeon's poisons want one to hand.
+    // MU's list has no antidote, and a poison that stacks wants one to hand.
     return sim::heals(row) || sim::restores(row) || sim::ale(row) || sim::portal(row) ||
            sim::antidote(row);
 }
@@ -998,6 +998,7 @@ void Desk::skillKeys(const gfx::Window& window, Play& play, const Pointer& point
     if (hero.poisonUntil > realm.tick() && standing < Hud::kBoons) {
         Hud::Boon& boon = boons[standing++];
         boon.poison = true;
+        boon.stacks = hero.poisonStacks;
         const float left = float(hero.poisonUntil - realm.tick());
         boon.seconds = left * 0.05f;
         boon.share = left / float(sim::kHeroPoisonTicks);

@@ -766,7 +766,18 @@ void Realm::step() {
         if (hero.blinkAt != 0 && tick_ >= hero.blinkAt) blink(hero);
         poisonPulse(hero);
         accept();
-        advance(hero);
+        // Pushed by a beast's Lightning: he slides as a pushed monster does, and walks on when
+        // he lands.
+        if (hero.pushTicks > 0) {
+            hero.x += hero.pushX;
+            hero.y += hero.pushY;
+            if (--hero.pushTicks == 0) {
+                hero.x = float(hero.column());
+                hero.y = float(hero.row());
+            }
+        } else {
+            advance(hero);
+        }
         press();
         fireTraps();
     } else if (tick_ >= hero.risesAt) {
