@@ -67,10 +67,11 @@ public:
     // The whole map over the middle of the screen, in place of the corner's disc.
     void setFull(bool on) { full_ = on; }
     bool full() const { return full_; }
-    // Whether a point is over it, so a click there does not walk him. The whole map holds the
-    // whole screen: a click meant for it should not send him off under it.
+    // Whether a point is over it, so a click there does not walk him. The whole map takes no
+    // click at all: he walks under it, as with it shut (the user, 2026-10-01: 'allow to use
+    // click to move when map (M) is opened').
     bool covers(float x, float y) const {
-        if (showing_ && full_) return true;
+        if (full_) return false;
         const float dx = x - map_.midX(), dy = y - map_.midY();
         return showing_ && dx * dx + dy * dy < radius_ * radius_;
     }

@@ -674,7 +674,7 @@ void Minimap::update(float seconds, const Play& play, const Pointer& pointer, fl
 
     // The mark under the pointer, nearest first, him excepted.
     now_.hovered = -1;
-    if (covers(pointer.x, pointer.y)) {
+    if (full_ || covers(pointer.x, pointer.y)) {
         float best = kReach * u * kReach * u;
         for (size_t i = 0; i + 1 < marks.size(); ++i) {
             const float dx = float(marks[i].x) / 16.0f - pointer.x, dy = float(marks[i].y) / 16.0f - pointer.y;
