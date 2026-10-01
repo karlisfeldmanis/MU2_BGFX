@@ -4433,7 +4433,7 @@ void testRunes(const content::Tables& tables) {
     // A knight in the hunting ground, swinging at the nearest thing: with a power worn, some of
     // his landed swings call it, each on a monster other than the one he struck; with the same
     // sword and its sockets empty, none do.
-    int lit = 0, grudged = 0;
+    int lit = 0, grudged = 0, stood = 0;
     std::vector<uint32_t> litIds, cameIds;
     const auto hunt = [&](uint8_t power, int* swings, int* calls, int* onTarget, int* landed,
                           uint64_t seed = 3) {
@@ -4473,6 +4473,7 @@ void testRunes(const content::Tables& tables) {
                 if (h.what == sim::What::Hit && !h.thrown) {
                     ++*swings;
                     struck = h.whom;
+                    if (h.c > 0) ++stood;  // left it standing, so the rune has it to take
                 }
                 if (h.what == sim::What::Loosed &&
                     (h.a == sim::skill::kLightning || h.a == sim::skill::kMeteorite)) {
@@ -4501,8 +4502,14 @@ void testRunes(const content::Tables& tables) {
     std::printf("  %d landed swings, %d lightning calls, %d landed\n", swings, calls, landed);
     check(swings > 50, "the knight lands swings");
     check(calls > 0, "and Stormcall calls lightning");
-    check(double(calls) <= double(swings) * 0.25, "at no more than its chance and some");
-    checkEqual(onTarget, 0, "never on the monster he struck");
+    // At about its chance now that a lone monster takes it itself (2026-10-01): before, the
+    // roll was thrown away with nobody else near, and a hunt saw one swing in twenty-five.
+    // Measured on the swings that left their monster standing: a swing that killed the only
+    // one near has nothing for the lightning to take, and a level-60 knight kills most at a blow.
+    std::printf("  %d of them on the monster he struck, alone; %d swings left it standing\n",
+                onTarget, stood);
+    check(double(calls) >= double(stood) * 0.12 && double(calls) <= double(swings) * 0.28,
+          "at about its chance, 20%");
     std::printf("  %d struck by lightning and standing, %d of them after him, %d came and hit "
                 "him\n", lit, grudged, int(cameIds.size()));
     check(lit > 0 && grudged == lit, "and what the lightning struck turns on him");
@@ -4512,10 +4519,12 @@ void testRunes(const content::Tables& tables) {
 
     // Meteor: the same, with a rock whose blow lands after its fall.
     int mSwings = 0, rocks = 0, mOn = 0, mLanded = 0;
+    stood = 0;
     hunt(meteor, &mSwings, &rocks, &mOn, &mLanded);
     std::printf("  %d landed swings, %d rocks called, %d landed\n", mSwings, rocks, mLanded);
     check(rocks > 0, "Meteor calls rocks down");
-    checkEqual(mOn, 0, "never on the monster he struck");
+    check(double(rocks) >= double(stood) * 0.08 && double(rocks) <= double(mSwings) * 0.22,
+          "at about its chance, 15%, a lone one taking its own");
     check(mLanded > 0 && mLanded <= rocks, "and they land, one blow a rock at most");
 
     // Ice and Poison: on the very monster he struck, the spell's element and no blow of its own

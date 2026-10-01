@@ -275,16 +275,22 @@ void Realm::callDown(Body& hero, Body& struck, const PowerRow& power, int wound)
         return dx * dx + dy * dy <= kStormcallReach * kStormcallReach &&
                router_.sees(hero.x, hero.y, b.x, b.y, content::kWallNoMove);
     };
+    // With none, the one he struck, while it stands (the user, 2026-10-01: "trigger on single
+    // monsters, ... its triggering very rare but it says 20%"): a lone monster threw the roll
+    // away, so a hunt took about one swing in twenty-five where the card says one in five.
     int count = 0;
     for (const Body& b : bodies_) count += near(b) ? 1 : 0;
-    if (count == 0) return;
-    int pick = runeDice_.nextInt(0, count);
     Body* struckBy = nullptr;
-    for (Body& b : bodies_) {
-        if (!near(b)) continue;
-        if (pick-- == 0) {
-            struckBy = &b;
-            break;
+    if (count == 0) {
+        if (struck.alive() && struck.monster()) struckBy = &struck;
+    } else {
+        int pick = runeDice_.nextInt(0, count);
+        for (Body& b : bodies_) {
+            if (!near(b)) continue;
+            if (pick-- == 0) {
+                struckBy = &b;
+                break;
+            }
         }
     }
     if (struckBy == nullptr) return;
