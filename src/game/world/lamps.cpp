@@ -120,6 +120,10 @@ bool sideOf(const content::TownEmitter& one, const content::TownModel& holder,
 
 const char* riddenBone(const std::string& model) {
     if (model == "StreetLight01") return "Bone02";
+    // The Lost Tower's lamp post: its orb and re_008's light dots are weighted to Box03 alone,
+    // which its clip bobs 12 cm down and back every three seconds; the light (ours) bobs with it.
+    // The name is only the tower's here: no other world's Object24 carries a light.
+    if (model == "Object24") return "Box03";
     return nullptr;
 }
 
