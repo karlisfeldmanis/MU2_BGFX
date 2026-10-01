@@ -66,9 +66,13 @@ constexpr size_t kMostStones = 600;
 // droping aniamtions happend more rarely'), a pebble every second or so.
 constexpr uint32_t kStoneOdds = 30;
 // The Meteorite Trap's plate: how far it is sunk (Object26 is 9.3 cm thick; at 8.5 cm the uneven
-// floor swallowed it whole) and its light's share.
+// floor swallowed it whole, and deeper than 4 cm only a shrinking centre showed) and its light's
+// share -- the floor's own, darkening it read as a black hole rather than a tile.
 constexpr float kPlateSink = 0.04f;
-constexpr float kPlateShade = 0.6f;
+constexpr float kPlateShade = 1.0f;
+// And how much of it is drawn over the floor: the rest is the floor showing through, so it is a
+// tile worked into the ground at its full size rather than a slab on it.
+constexpr float kPlateFade = 0.3f;
 
 }  // namespace
 
@@ -184,9 +188,10 @@ void TrapShow::stand(const std::vector<sim::Realm::Trap>& traps, const content::
         one.facing[1] = -float(trap.dy);
         ground.lightAt(trap.column, trap.row, one.light);
         // **Ours** (the user, 2026-10-01: "trat trap is very good vissible, need to integrate it
-        // better on world"): the Meteorite Trap's plate sunk to lie flush with the floor, its
-        // 9 cm edge below the ground, and lit a little under the floor round it, so it reads as a
-        // carved tile of the floor rather than a slab laid on it.
+        // better on world", "trap has to be minimal vissible, but vissible", "dont make it
+        // smaller, size was fine just blend better with ground"): the Meteorite Trap's plate sunk
+        // 4 cm, its edge below the uneven floor, and drawn faded over it (kPlateFade, gather), so
+        // the floor's own stone reads through a carved tile of its full size.
         if (trap.number == 103) {
             one.position[1] -= kPlateSink;
             for (float& channel : one.light) channel *= kPlateShade;
@@ -427,6 +432,7 @@ void TrapShow::gather(std::vector<gfx::Drawable>& out) const {
         }
         for (size_t at = first; at < out.size(); ++at) {
             for (int k = 0; k < 3; ++k) out[at].light[k] = one.light[k];
+            if (one.number == 103) out[at].fade = kPlateFade;
         }
     }
 }

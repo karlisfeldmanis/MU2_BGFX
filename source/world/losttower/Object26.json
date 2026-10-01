@@ -42,5 +42,5 @@
   "sheet_relief": {
     "t17": 0.35
   },
-  "sheet_grade_from": "Ours, as the floor machines' (Object20, Object21): the plate's grey t17 graded to the main walls' warm re_04 (lt_t17_warm) and its relief at 0.35, so it lies in the same masonry rather than going blue under the cold key (the user, 2026-10-01: 'somewthing wroong with color for traps, not intergrated well')."
+  "sheet_grade_from": "Ours, as the floor machines' (Object20, Object21): the plate's grey t17 graded to the main walls' warm re_04 (lt_t17_warm) and its relief at 0.35, so it lies in the same masonry rather than going blue under the cold key (the user, 2026-10-01: 'somewthing wroong with color for traps, not intergrated well'). And laid by world/trap_show.h sunk 4 cm and drawn at 0.3 over the floor, the floor's stone reading through ('dont make it smaller, size was fine just blend better with ground')."
 }
