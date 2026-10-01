@@ -72,7 +72,9 @@ public:
                float* y) const;
 
     int picked() const { return picked_; }
-    void pick(int slot) { picked_ = slot >= 0 && slot < kRosterSlots && stands_[slot].up ? slot : -1; }
+    // A figure newly picked greets the camera once, its class's own gesture, and goes back to
+    // its idle (see kGreeting in pedestals.cpp).
+    void pick(int slot);
     bool standing(int slot) const;
     // The first pedestal nobody stands on, or -1.
     int freeSlot() const {
@@ -95,13 +97,16 @@ private:
         bool up = false;
         Figure figure;
         float height = 2.0f;  // the body's own height, metres, at the scene's scale
+        sim::Kin kin = sim::Kin::DarkKnight;
+        int idle = -1;           // the clip it stands in
+        float greeting = 0.0f;   // seconds of its greeting left, 0 when it stands idle
     };
     struct Mote {
         float at[3];
         float life, light, rise, half[2];
         bool blob;
     };
-    void standAt(int slot, const FigureBody* body);
+    void standAt(int slot, const FigureBody* body, sim::Kin kin);
     // Who the rings, the streams and the light are on: the create window's class while it
     // stands on its pedestal, and the pick otherwise.
     const Stand* subject() const;

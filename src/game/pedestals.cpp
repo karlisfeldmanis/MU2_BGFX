@@ -36,6 +36,13 @@ constexpr float kBalloonClear = 0.55f;
 constexpr float kRingLift = 0.12f;
 // MU's frame, which the particles are counted in.
 constexpr float kMuFrame = 1.0f / 25.0f;
+// The greeting a figure gives when it is picked, by class (the user, 2026-10-01: 'some elegant
+// greeting animations for each class'). Ours: MU's pick only lights the figure. MU's action
+// numbers, read off the bench and not off the labels, which run a slot off in this library
+// (see Play's salute): 218 the knight's hand brought to the brow and held, 187 the wizard's
+// bow, 188 the elf's greeting, a lean and a wave. Faded in and out so the idle is not cut.
+constexpr int kGreetKnight = 218, kGreetWizard = 187, kGreetElf = 188;
+constexpr float kGreetIn = 0.25f, kGreetOut = 0.45f;
 // MU2's SparkDrawn: MU's own spark is right in world size and was drawn into a 430-line viewport,
 // where it was an eight-pixel dot; on a 1080-line frame the sheet's flat core becomes a shape.
 // Drawn smaller by hand so it still reads as dust.
@@ -169,7 +176,7 @@ const FigureBody* Pedestals::dressed(int slot, sim::Kin kin,
                            wornShine, weaponShine, shieldShine);
 }
 
-void Pedestals::standAt(int slot, const FigureBody* body) {
+void Pedestals::standAt(int slot, const FigureBody* body, sim::Kin kin) {
     const int where = slot == kRosterSlots ? previewSlot_ : slot;
     Stand& stand = stands_[slot];
     stand = Stand{};
@@ -184,6 +191,8 @@ void Pedestals::standAt(int slot, const FigureBody* body) {
     stand.figure.stand(body, at, yaw, body->scale * kSceneScale, true);
     stand.height = body->height * body->scale * kSceneScale;
     stand.up = true;
+    stand.kin = kin;
+    stand.idle = stand.figure.clip();
     // A seeded phase each, so five idles do not breathe in step.
     stand.figure.setClock(0.37f * float(slot));
 }
@@ -192,7 +201,7 @@ void Pedestals::raise(const std::vector<Seat>& roster) {
     for (int slot = 0; slot < kRosterSlots; ++slot) stands_[slot] = Stand{};
     for (const Seat& one : roster) {
         if (one.slot < 0 || one.slot >= kRosterSlots) continue;
-        standAt(one.slot, dressed(one.slot, one.kin, one.items));
+        standAt(one.slot, dressed(one.slot, one.kin, one.items), one.kin);
     }
     if (picked_ >= 0 && !standing(picked_)) picked_ = -1;
 }
@@ -202,7 +211,23 @@ void Pedestals::preview(int slot, sim::Kin kin) {
     previewSlot_ = -1;
     if (slot < 0 || slot >= kRosterSlots || stands_[slot].up) return;
     previewSlot_ = slot;
-    standAt(kRosterSlots, dressed(kRosterSlots, kin, {}));
+    standAt(kRosterSlots, dressed(kRosterSlots, kin, {}), kin);
+}
+
+void Pedestals::pick(int slot) {
+    const int was = picked_;
+    picked_ = slot >= 0 && slot < kRosterSlots && stands_[slot].up ? slot : -1;
+    if (picked_ < 0 || picked_ == was) return;
+    Stand& stand = stands_[picked_];
+    const FigureBody* body = stand.figure.body();
+    if (!body || !body->library) return;
+    const int action = stand.kin == sim::Kin::DarkWizard ? kGreetWizard
+                       : stand.kin == sim::Kin::FairyElf ? kGreetElf
+                                                          : kGreetKnight;
+    const int clip = body->library->find(action);
+    if (clip < 0) return;
+    stand.figure.play(clip, true, kGreetIn);
+    stand.greeting = stand.figure.length();
 }
 
 void Pedestals::aim(gfx::Camera& camera) const {
@@ -300,7 +325,17 @@ void Pedestals::spawn(const float feet[3], bool blob) {
 void Pedestals::update(float seconds) {
     clock_ += seconds;
     for (Stand& stand : stands_) {
-        if (stand.up) stand.figure.update(seconds);
+        if (!stand.up) continue;
+        stand.figure.update(seconds);
+        // Back to the idle as the greeting ends, the fade begun before its last key so the
+        // clip never wraps round to its start.
+        if (stand.greeting > 0.0f) {
+            stand.greeting -= seconds;
+            if (stand.greeting <= kGreetOut && stand.idle >= 0) {
+                stand.figure.play(stand.idle, false, kGreetOut);
+                stand.greeting = 0.0f;
+            }
+        }
     }
     const Stand* pick = subject();
     if (pick) {
