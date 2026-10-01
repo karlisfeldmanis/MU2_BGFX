@@ -18,6 +18,8 @@ std::recursive_mutex g_lock;
 // a complaint about them must not be lost.
 std::string g_pending;
 std::atomic<bool> g_silent{false};
+LogTap g_tap = nullptr;
+void* g_tapUser = nullptr;
 
 // Wall clock, not `clock()`. `clock()` counts this process's own CPU time, and a run that
 // waits -- for the drawable, for a file, for the compositor -- spends wall seconds it never
@@ -63,6 +65,12 @@ void logClose() {
 
 void logSilence(bool on) { g_silent = on; }
 
+void logTap(LogTap fn, void* user) {
+    std::lock_guard<std::recursive_mutex> hold(g_lock);
+    g_tap = fn;
+    g_tapUser = user;
+}
+
 void logv(const char* fmt, va_list args) {
     if (g_silent) return;
     char line[2048];
@@ -77,6 +85,7 @@ void logv(const char* fmt, va_list args) {
     if (m < 0) return;
 
     std::lock_guard<std::recursive_mutex> hold(g_lock);
+    if (g_tap) g_tap(line, g_tapUser);
     std::fwrite(stamped, 1, size_t(m), stdout);
     if (g_file) {
         std::fwrite(stamped, 1, size_t(m), g_file);

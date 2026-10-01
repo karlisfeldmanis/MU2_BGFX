@@ -15,6 +15,11 @@ void logClose();
 // Drops every line from here on, printed or kept: the bot's (tools/bot), whose hours of play
 // would print the realm's every blow and keep them all waiting for a log nobody opens.
 void logSilence(bool on);
+// Every line logged from here on is also handed to `fn`, unstamped, under the log's lock and on
+// whichever thread logged it; nullptr takes it off. One tap at a time: the sweep's
+// (app/sweep.h), which keeps what a frame said beside that frame's time.
+using LogTap = void (*)(const char* line, void* user);
+void logTap(LogTap fn, void* user);
 
 void logv(const char* fmt, va_list args);
 

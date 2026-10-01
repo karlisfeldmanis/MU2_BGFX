@@ -410,6 +410,9 @@ public:
     // Go Back!: put down on a tile of this same map as a Town Portal lands, facing `facing` --
     // the realm's setHeroDown, and the landing drawn and heard as a warp's (`warped`).
     void goBack(int column, int row, float facing);
+    // The performance sweep's (app/sweep.h): the realm's setHeroDown and nothing drawn or heard,
+    // so the warp's ring and sound are not in the frames being measured.
+    void setDown(int column, int row) { realm_.setHeroDown(column, row, 0, 100); }
     // A warp's landing heard and seen where he stands, and nothing else: sMagic and the ring, for
     // a map come into by magic -- a Tab trip, a Town Portal to another map, Go Back! -- where the
     // world was raised around him rather than him set down in it.

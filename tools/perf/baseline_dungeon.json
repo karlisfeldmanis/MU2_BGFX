@@ -1,0 +1,125 @@
+{
+ "commit": "fca11cba",
+ "level": 400,
+ "load": 15.7,
+ "preset": "light",
+ "resolution": "1920x1080",
+ "spots": {
+  "fight": {
+   "d1-arrival": {
+    "draws": 512,
+    "hitch_kinds": [],
+    "mean": 4.178,
+    "p99": 8.814,
+    "spread": 0.021,
+    "tile": [
+     108,
+     247
+    ]
+   },
+   "d1-hall": {
+    "draws": 526,
+    "hitch_kinds": [],
+    "mean": 4.338,
+    "p99": 9.407,
+    "spread": 0.011,
+    "tile": [
+     120,
+     230
+    ]
+   },
+   "d2-arrival": {
+    "draws": 495,
+    "hitch_kinds": [],
+    "mean": 4.325,
+    "p99": 8.657,
+    "spread": 0.095,
+    "tile": [
+     232,
+     126
+    ]
+   },
+   "d3-arrival": {
+    "draws": 502,
+    "hitch_kinds": [],
+    "mean": 3.899,
+    "p99": 9.179,
+    "spread": 0.475,
+    "tile": [
+     3,
+     84
+    ]
+   },
+   "gorgon": {
+    "draws": 547,
+    "hitch_kinds": [],
+    "mean": 4.169,
+    "p99": 9.594,
+    "spread": 0.05,
+    "tile": [
+     43,
+     111
+    ]
+   }
+  },
+  "peaceful": {
+   "d1-arrival": {
+    "draws": 466,
+    "hitch_kinds": [],
+    "mean": 4.123,
+    "p99": 8.832,
+    "spread": 0.098,
+    "tile": [
+     108,
+     247
+    ]
+   },
+   "d1-hall": {
+    "draws": 472,
+    "hitch_kinds": [],
+    "mean": 4.182,
+    "p99": 8.806,
+    "spread": 0.102,
+    "tile": [
+     120,
+     230
+    ]
+   },
+   "d2-arrival": {
+    "draws": 464,
+    "hitch_kinds": [],
+    "mean": 4.233,
+    "p99": 8.616,
+    "spread": 0.084,
+    "tile": [
+     232,
+     126
+    ]
+   },
+   "d3-arrival": {
+    "draws": 410,
+    "hitch_kinds": [],
+    "mean": 3.651,
+    "p99": 9.542,
+    "spread": 0.079,
+    "tile": [
+     3,
+     84
+    ]
+   },
+   "gorgon": {
+    "draws": 407,
+    "hitch_kinds": [],
+    "mean": 3.798,
+    "p99": 8.786,
+    "spread": 0.093,
+    "tile": [
+     43,
+     111
+    ]
+   }
+  }
+ },
+ "taken": "2026-10-01",
+ "world": "dungeon"
+}

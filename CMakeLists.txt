@@ -80,6 +80,7 @@ add_executable(mu2
   src/app/application.cpp
   src/app/context.cpp
   src/app/preloader.cpp
+  src/app/sweep.cpp
   src/app/modes/play_mode.cpp
   src/app/modes/lobby_mode.cpp
   src/app/modes/bench_mode.cpp

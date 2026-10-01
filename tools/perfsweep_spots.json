@@ -1,0 +1,35 @@
+{
+  "_comment": "Hand-picked tiles tools/perfsweep.py measures in every preset (column, row as --at takes them). The light preset is these alone; the full preset adds a walkable grid. Arrivals are sim/realm_travel.cpp's rows; the five 2026-10-01 numbers are docs/budget.md's 'The sweep'.",
+  "lorencia": [
+    {"name": "square", "at": [142, 126], "note": "town square, the travel arrival"},
+    {"name": "hero-spot", "at": [148, 142], "note": "the shine's measuring tile, docs/budget.md"},
+    {"name": "field-east", "at": [180, 130], "note": "the open field east of town"},
+    {"name": "noria-gate", "at": [64, 243], "note": "the road out to Noria"}
+  ],
+  "noria": [
+    {"name": "square", "at": [174, 112], "note": "town square, the travel arrival"},
+    {"name": "field", "at": [200, 150], "note": "the hunting ground south-east"}
+  ],
+  "devias": [
+    {"name": "square", "at": [207, 42], "note": "the travel arrival"},
+    {"name": "town", "at": [215, 30], "note": "inside the town"}
+  ],
+  "dungeon": [
+    {"name": "d1-arrival", "at": [108, 247], "note": "Dungeon 1's travel arrival"},
+    {"name": "d1-hall", "at": [120, 229], "note": "4.47 ms by hand, 2026-10-01"},
+    {"name": "d2-arrival", "at": [232, 126], "note": "Dungeon 2's travel arrival"},
+    {"name": "d3-arrival", "at": [3, 84], "note": "Dungeon 3's travel arrival"},
+    {"name": "gorgon", "at": [43, 111], "note": "a Gorgon spawn, the boss room"}
+  ],
+  "losttower": [
+    {"name": "hall", "at": [205, 79], "note": "the safe hall, 5.29 ms by hand"},
+    {"name": "lava", "at": [163, 40], "note": "Lost Tower 1's lava, 5.54 ms by hand"},
+    {"name": "balrog", "at": [31, 209], "note": "the Balrog's room, 6.31 ms mid-fight by hand, 6.05 peaceful"},
+    {"name": "lt2-arrival", "at": [242, 237], "note": "Lost Tower 2's travel arrival"},
+    {"name": "lt3-arrival", "at": [86, 167], "note": "Lost Tower 3's travel arrival"},
+    {"name": "lt4-arrival", "at": [87, 87], "note": "Lost Tower 4's travel arrival"},
+    {"name": "lt5-arrival", "at": [129, 53], "note": "Lost Tower 5's travel arrival"},
+    {"name": "lt6-arrival", "at": [53, 53], "note": "Lost Tower 6's travel arrival"},
+    {"name": "lt7-arrival", "at": [8, 86], "note": "Lost Tower 7's travel arrival"}
+  ]
+}

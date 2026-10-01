@@ -195,7 +195,10 @@ void printUsage() {
         "  --lobby-name S            and S typed into its name\n"
         "  --lobby-delete            the deletion's question over the pick\n"
         "  --lobby-enter F           enter the pick on frame F (review)\n"
-        "  --lobby-back F            and go back to the screen on frame F (review)");
+        "  --lobby-back F            and go back to the screen on frame F (review)\n"
+        "  --sweep PATH              the performance sweep: stand on each tile of this JSON in\n"
+        "                            turn and measure it (tools/perfsweep.py writes it)\n"
+        "  --sweep-out PATH          and a JSON row a tile here");
 }
 
 Args parseArgs(int argc, char** argv) {
@@ -645,6 +648,16 @@ Args parseArgs(int argc, char** argv) {
             a.bearer = true;
         } else if (!std::strcmp(s, "--no-cull")) {
             a.cullChunks = false;
+        } else if (!std::strcmp(s, "--sweep")) {
+            if (const char* v = next(s)) {
+                a.sweepPath = v;
+                wantsAbsolute("--sweep", a.sweepPath, &a.valid);
+            }
+        } else if (!std::strcmp(s, "--sweep-out")) {
+            if (const char* v = next(s)) {
+                a.sweepOut = v;
+                wantsAbsolute("--sweep-out", a.sweepOut, &a.valid);
+            }
         } else if (!std::strcmp(s, "--help") || !std::strcmp(s, "-h")) {
             printUsage();
             a.valid = false;
@@ -679,6 +692,10 @@ Args parseArgs(int argc, char** argv) {
         // the one every class may hold; `--weapon` (with an empty name for bare hands) is how
         // a different swing is photographed.
         if (!a.weaponAsked) a.weapon = "Sword01";
+    }
+    if (a.sweepPath.empty() != a.sweepOut.empty()) {
+        logError("--sweep and --sweep-out go together");
+        a.valid = false;
     }
     if (a.width <= 0 || a.height <= 0) {
         logError("a backbuffer of %dx%d is not a backbuffer", a.width, a.height);

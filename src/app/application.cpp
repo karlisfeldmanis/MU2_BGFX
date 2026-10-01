@@ -15,6 +15,7 @@
 #include "app/modes/bench_mode.h"
 #include "app/modes/lobby_mode.h"
 #include "app/modes/play_mode.h"
+#include "app/sweep.h"
 #include "content/showing.h"
 #include "core/log.h"
 #include "game/headless.h"
@@ -188,6 +189,17 @@ int Application::run(int argc, char** argv) {
                    "than the same run without it. Take numbers from a run with no shots.");
     }
 
+    // The performance sweep, when asked: the hero put down on each tile of a list in turn and
+    // each measured, with the world loaded once (app/sweep.h). It ends the run itself.
+    Sweep sweep;
+    if (!args_.sweepPath.empty() && !sweep.open(ctx, *mode)) {
+        mode->shutdown(ctx);
+        mode.reset();
+        teardown();
+        core::logClose();
+        return 1;
+    }
+
     gfx::Stats stats;
     stats.begin(args_.statsPath, args_.budgetOverrides);
 
@@ -227,6 +239,7 @@ int Application::run(int argc, char** argv) {
         renderer_.effects().begin();
         submitProbe(*mode);
 
+        sweep.before();
         mode->frame(ctx, at);
 
         const bool lastFrame = args_.frames && at.index + 1 >= args_.frames;
@@ -295,6 +308,7 @@ int Application::run(int argc, char** argv) {
         // Six runs of the command as written measured 2.16 ms for both. The cost of taking a
         // picture belongs to the reviewer, not to the frame being reviewed.
         if (!shotThisFrame) stats.sample(cpuMs);
+        sweep.after(cpuMs);
 
         // Wall time, so the line stays a line a second when the run is paced.
         sinceLine += frameMs;
@@ -328,6 +342,7 @@ int Application::run(int argc, char** argv) {
         // world -- the lamps' grid, a moving light, the grey of a death -- is cleared, since
         // the next world sets its own and may not set all of them.
         if (const Mode::Next next = mode->next(); next != Mode::Next::None) {
+            sweep.abort("the world handed the run on (a gate, or the lobby)");
             mode->shutdown(ctx);
             mode.reset();
             renderer_.setPointLights(nullptr, 0, 0.0f, 0.0f, 0.0f);
@@ -353,6 +368,7 @@ int Application::run(int argc, char** argv) {
         }
 
         ++at.index;
+        if (sweep.done()) break;
         if (args_.frames && at.index >= args_.frames) {
             // One segment done. With --repeat the world stays loaded and the next segment
             // starts from a fresh warmup: what separates them is then the machine's own
@@ -373,6 +389,8 @@ int Application::run(int argc, char** argv) {
     }
 
     const bool withinBudget = stats.finish(args_.budget);
+    if (sweep.active()) sweep.abort("the window closed or the frames ran out");
+    sweep.close();
 
     if (!handoffFailed) mode->shutdown(ctx);
     mode.reset();

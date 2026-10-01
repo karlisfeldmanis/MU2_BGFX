@@ -37,6 +37,8 @@ public:
     }
     void frame(Context& ctx, const Frame& at) override;
     const gfx::Camera& camera() const override { return world_.camera(); }
+    // The world and its realm, for the performance sweep (app/sweep.h).
+    game::World& world() { return world_; }
     void report(Context& ctx) override;
     void shutdown(Context& ctx) override;
 

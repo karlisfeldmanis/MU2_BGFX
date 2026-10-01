@@ -154,7 +154,7 @@ only. MU2 measured a probe grid at 2.7 ms for a faint sheen on painted art; not 
                      (the layers, and the arrows between them: docs/architecture.md)
       shaders/
       sheets/        (lighting.json and the benches' live-reloaded json)
-      tools/sync.sh  tools/cook.py
+      tools/sync.sh  tools/cook.py  tools/perfsweep.py (walks a world for slow tiles; docs/budget.md)
       tests/
       assets/  extern/  build/     (gitignored)
 

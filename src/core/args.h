@@ -312,6 +312,12 @@ struct Args {
     // arrangement without walking the camera into the square.
     bool safe = false;
 
+    // The performance sweep (app/sweep.h, tools/perfsweep.py): the tiles to stand on, as JSON,
+    // and where each one's row is written. Both absolute. A played world and --frames are still
+    // asked for; the sweep ends the run when its last tile is measured.
+    std::string sweepPath;
+    std::string sweepOut;
+
     bool valid = true;
 };
 

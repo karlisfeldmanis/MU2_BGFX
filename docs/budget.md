@@ -361,3 +361,87 @@ This matters because a gate that cannot fail is not a gate. Sprint 0's proving s
 stopped being true: the account check sat behind a condition that was false on every run, so
 `--budget shade=0.001` passed. Proved again after the fix: an honest run exits 0, a false
 claim on `shade`, on `gpu`, or on an account that does not exist all exit 2.
+
+## The sweep
+
+Found missing on 2026-10-01: the Lost Tower was over budget, and that was known only because
+somebody measured it by hand at tiles they picked (the safe hall 205,79 at 5.29 ms, the lava
+163,40 at 5.54, the Balrog's room 31,209 at 6.31 mid-fight and 6.05 peaceful with the timers
+on, the Dungeon's 120,229 at 4.47; 1920x1080, `--repeat 3`). `tools/perfsweep.py` walks a world
+for its bad places instead.
+
+    python3 tools/perfsweep.py --world losttower --preset light            # ~2.5 min a world
+    python3 tools/perfsweep.py --world losttower,dungeon --preset light --update-baseline
+    python3 tools/perfsweep.py --world lorencia --preset full              # occasional
+    python3 tools/perfsweep.py --report build/perfsweep/<run>              # re-read, no launch
+
+**Light** is the hand list in `tools/perfsweep_spots.json` (town squares, every travel arrival,
+the boss rooms, the five tiles above), three passes of 90 settling and 400 measured frames a
+tile. Run it after a batch that touches rendering, effects or a world's content. **Full** adds
+every standable tile on a 16-tile lattice, read by the game off the cooked attribute grid (a
+wall or the void is never measured), one pass of 300 frames: about 135 tiles on the Lost Tower,
+a few minutes a launch.
+
+**How it measures.** Two launches a world, each loading it once: a fight launch (the map's
+monsters, the hero at `--level 400` so he stands, hitting back at what comes within six tiles)
+and a `--peaceful` one. The difference is the `monsters` column, what the fight costs on that
+tile apart from the room. Inside a launch the game's `--sweep SPOTS --sweep-out ROWS` mode
+(`src/app/sweep.cpp`) puts the hero down on each tile with the realm's own `setHeroDown`, no
+warp drawn or heard, settles, measures, writes one JSON row, and goes round the list again for
+each pass. Vsync off, muted, 1920x1080 by default; the resolution printed is the log's
+`Metal, WxH`, never assumed. The numbers are the same wall frame `--budget` enforces, means
+and never medians, and a tile's figure is the mean of its pass means; its spread is the pass
+means' max minus min.
+
+**What a row holds**: mean, p99, worst frame, GPU (diagnostic, as above), draws, triangles,
+the sim's milliseconds a tick, the most monsters awake, the mean within 12 tiles, blows traded,
+kills and deaths, and the worst frame while settling after the put-down with what caused it
+(the arrival: figures and sheets met for the first time).
+
+**Hitches.** A frame over twice its tile's mean is written with what was logged during it
+(a texture or mesh read, a shader, a warning) and the realm's happenings of any tick that ran
+in it or the frame before -- spawns, deaths, blows begun, casts, traps, landings, named by
+breed. Every hitch with a cause is listed. A 2-4x frame with nothing logged and nothing
+happening is counted per tile, not listed: on this Mac it is the drawable wait landing twice,
+the second hump of the distribution above, and there are a handful in every 400 frames. A frame
+over 250 ms is a machine stall (the ~1 s frame this page already knew about); its pass is left
+out of the tile's mean when another pass can stand for it, and the report says so.
+
+**Reading the report** (stdout ranked worst first, `report.md` and a heat map per world and
+launch in `build/perfsweep/<run>/`). Flags, in the order to read them:
+
+- `launch-shift`: the whole launch moved -- 80% of tiles the same way past 0.3 ms against the
+  baseline, or peaceful slower than fight on most tiles, which monsters cannot cause. The
+  machine changed under it (a scanner, an indexer, another session's build or bot). Re-run
+  before believing any tile. It was raised on the run that taught it: the Dungeon's peaceful
+  launch at 6.2-6.9 ms against 4.18 by hand, under a VS Code indexer at load 13.
+- `slower`: a tile past its baseline by more than the larger of the two spreads, never under
+  0.1 ms, and 0.2 when a single pass gave no spread. Exit status 1. Inside a shifted launch it
+  is `slower-launch` and is not counted.
+- `over`: a tile's mean over 5.5 ms. A fact about the world, not a regression.
+- `new-hitch`: a hitch cause, numbers stripped, that the baseline never saw on that tile.
+
+The baselines are `tools/perf/baseline_<world>.json`, merged tile by tile by
+`--update-baseline`, with the commit, resolution and load average they were taken at. Take one
+on a quiet machine; `run.json` and the report name what else was running.
+
+**First numbers**: the baselines, 2026-10-01, 1920x1080, light, mean of 3 passes, taken at
+load 15 (another session's bot, Defender and VS Code's indexer); the confirming run at load 21
+landed every tile within 0.19 ms of them and flagged nothing:
+
+| tile | fight | peaceful | by hand |
+|---|---|---|---|
+| Lost Tower, Balrog's room 31,209 | 5.84 | 5.30 | 6.31 mid-fight, 6.05 peaceful with timers |
+| Lost Tower, lava 163,40 | 5.25 | 4.96 | 5.54 |
+| Lost Tower, safe hall 205,79 | 5.09 | 4.75 | 5.29 |
+| Dungeon 1, 120,229 (lands on 120,230) | 4.34 | 4.18 | 4.47; 4.31 and 4.18 again that evening |
+
+The Balrog's room is the one tile of the fourteen over budget, and peaceful at 5.30 it is the
+room before it is the monsters (+0.55 ms of fight). Its blows (8-10 a pass) caused no hitch.
+The sweep reads 0.2-0.3 ms under the hand numbers of the afternoon; by hand that evening, the
+Dungeon's tile read the same as the sweep, so the difference is the day, not the method.
+
+**The ~1 s frame.** Three of the first runs held one frame of 1004-1008 ms, nothing logged and
+nothing happening, on a different tile each time -- the same length every time, which is a
+timeout's shape rather than a load's. CAMetalLayer's `nextDrawable` waits up to a second; that
+is a guess, not checked. The sweep leaves such a pass out (above), so it moves no baseline.
