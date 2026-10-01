@@ -20,6 +20,45 @@
   "additive": [
     "light01"
   ],
+  "emitters": [
+    {
+      "kind": "lamp",
+      "at": [
+        55,
+        -270,
+        40
+      ],
+      "colour": [
+        1.0,
+        0.61,
+        0.37
+      ],
+      "low": 0.4,
+      "high": 0.45,
+      "range_tiles": 2,
+      "flicker_hz": 1,
+      "smooth_seconds": 0.5
+    },
+    {
+      "kind": "lamp",
+      "at": [
+        -55,
+        -270,
+        40
+      ],
+      "colour": [
+        1.0,
+        0.61,
+        0.37
+      ],
+      "low": 0.4,
+      "high": 0.45,
+      "range_tiles": 2,
+      "flicker_hz": 1,
+      "smooth_seconds": 0.5
+    }
+  ],
+  "emitters_from": "Ours, marked. MU's shaft is light01 added and nothing more (BlendMesh 1, ZzzObject.cpp:4010-4012): it lights no one. The user, with a shot of two shafts over the floor: 'also can we make that this is actual a light where char step in and gets exposed?'. So each of the two beams carries a warm light where it lands, 2.7 m out from the wall and 0.55 m either side of its middle (light01's lowest faces, z 213-336 and x 3-97 in the OBJ), 0.4 m up so it takes the body of whoever stands in it, in light01's own colour (its lit texels average 1 : 0.61 : 0.37), 0.40-0.45 over two tiles, breathing once a second as the slab lights do.",
   "islands": [
     {
       "island": 0,
