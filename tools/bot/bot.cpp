@@ -643,7 +643,8 @@ private:
         const sim::Body& hero = realm_->hero();
         if (options_.kin == sim::Kin::DarkWizard) {
             const sim::Wearer w = realm_->wearer();
-            return (w.wizardMinimum + w.wizardMaximum) / 2.0 * (1.0 + w.staffRise);
+            // The staff's rise is a percentage: the band times 1 + rise/100 (rules.cpp).
+            return (w.wizardMinimum + w.wizardMaximum) / 2.0 * w.wizardryRate;
         }
         return (hero.stats.minimumDamage + hero.stats.maximumDamage) / 2.0 +
                (hero.stats.offhandMinimumDamage + hero.stats.offhandMaximumDamage) / 2.0;
