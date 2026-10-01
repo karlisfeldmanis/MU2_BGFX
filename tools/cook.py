@@ -1175,7 +1175,20 @@ GROUNDED_TYPES = {"lorencia": range(20, 28), "noria": range(20, 28)}
 # model and MU's stored (x, y); metres to lower by.
 LOWERED = {("Stone04", 3076.018, 14026.856): 1.53,
            ("Stone03", 2708.711, 13432.253): 1.55,
-           ("Stone01", 2430.678, 13666.117): 0.82}
+           ("Stone01", 2430.678, 13666.117): 0.82,
+           # OURS as well: Devias's laid tables. MU stands every goblet, cup and laid dish at
+           # 2.75 or 2.85 m, the heights of a dish on the 1.05 m plank table (Object24) -- so the
+           # ones at 2.85 hang 5-10 cm over it, and the three on the low 0.87 m tables by the
+           # tavern's fireplace (Object42) 28 cm. Each is lowered onto its table top (the user,
+           # 2026-10-01, at 229,25: "food items on desk is floating in air").
+           ("Object45", 18760.168, 4690.292): 0.047,
+           ("Object45", 22764.312, 2426.084): 0.097,
+           ("Object45", 22768.709, 2558.278): 0.097,
+           ("Object45", 22761.578, 2385.642): 0.097,
+           ("Object50", 22758.562, 2639.753): 0.093,
+           ("Object48", 23079.238, 2668.118): 0.281,
+           ("Object49", 23456.195, 2655.718): 0.276,
+           ("Object50", 23462.506, 2375.241): 0.281}
 
 # MU's hidden anchors in Lorencia: MoveObject's WD_0LORENCIA calls CreateFire(0|1|2, o, 0,0,0)
 # on MODEL_LIGHT01..03 and hides the holder (ZzzObject.cpp). Kind 1 is a fire, 4 a smoke.
@@ -1643,7 +1656,7 @@ def cook_placements(world, out_dir, chunk_tiles):
 
     print(f"cook: {written} placements in {len(chunk_records)} chunks of {chunk_tiles} tiles, "
           f"{len(models)} models, {grounded} laid on the terrain, {lowered_count} of {len(LOWERED)} "
-          f"floating rocks lowered, {roofed} roofs, {buried} buried and held still, "
+          f"floating placements lowered, {roofed} roofs, {buried} buried and held still, "
           f"{dropped_hidden} hidden and {dropped_model} without a mesh dropped, "
           f"{outside} standing off the grid, "
           f"{emitter_count} lights and smokes ({len(anchors)} of them hidden anchors), "
