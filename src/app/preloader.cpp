@@ -24,18 +24,19 @@ namespace mu::app {
 
 namespace {
 
-// The loading screen's ambient, music/loading.mp3 (freesound's "some ambient", the user's pick
-// 2026-10-01). Ours: MU's loading screen keeps the login theme going (LoadingScene.cpp:84).
+// The loading screen's ambient, music/loading.mp3: Dragon Studio's "Dark Horror Ambient 05"
+// (Pixabay 425468, 21.7 s), the user's pick of 2026-10-01 over freesound's "some ambient" the
+// same day. Ours: MU's loading screen keeps the login theme going (LoadingScene.cpp:84).
 //
 // Its own device rather than the game's Sound, which the worker opens partway through the load
 // and the mode owns. Kept for the life of the process, so the fade out at the end of one load
 // runs on after the spinner has gone, and the next load fades the same track in again.
 //
-// And one stretch from the first spinner to the world (the user, 2026-10-01: 'use that loading
-// sound also in char selection screen ... we stop playing only when we connected to world'):
-// the character screen's load keeps it going (Preloader::run's `keepAmbient`), the screen
-// plays it in place of MuTheme, and the world's load fades it out once the world is up. A
-// track already sounding goes on where it is rather than starting over.
+// The loading screens only, since the user's later word of 2026-10-01 ('use ... for loading
+// screens and Mutheme in char selection screen'): the character screen's load fades it out as
+// any other does, and that screen plays MuTheme. `keepAmbient` is kept for a load that wants
+// the track to run on; nothing asks for it now. A track already sounding goes on where it is
+// rather than starting over.
 //
 // Looped without a seam (the user, 2026-10-01: 'blend ambient loading music better on loop so
 // its not cuted instantly'): the file ends loud, -19 dB over its last seconds against -35 at

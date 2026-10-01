@@ -203,13 +203,16 @@ bool LobbyMode::open(Context& ctx) {
             click_ = sound_.load("window_click", false);
             refused_ = sound_.load("window_refused", false);
             fire_ = sound_.load("world_bonfire", false);
-            // No anthem: the loading ambient plays on here from the spinner before it, and the
-            // world's load ends it (the user, 2026-10-01, over MuTheme; app/preloader.cpp).
-            // MuMain plays login_theme.mp3 from the login screen through this one until
-            // loading (LoginScene.cpp:384, LoadingScene.cpp:84). Ours.
+            // MU's anthem, MuTheme.mp3, which MuMain plays on its login window
+            // (LoginMainWin.cpp:112); MuMain plays login_theme.mp3 here, from the login screen
+            // through this one until loading (LoginScene.cpp:384, LoadingScene.cpp:84). The
+            // loading ambient ran on here for an afternoon and was given back to the loading
+            // screens alone (the user, 2026-10-01: 'Mutheme in char selection screen'). Ours.
+            const std::string theme = core::join(assets, "music/MuTheme.mp3");
+            if (core::fileExists(theme)) sound_.music(theme);
         }
         return interfaceUp_;
-    }, &quitEarly_, /*keepAmbient=*/true);
+    }, &quitEarly_);
     if (!up) {
         core::logError("the character screen did not open");
         world_.shutdown();
