@@ -333,6 +333,76 @@ int main(int argc, char** argv) {
     check(b.sound.tally().stolen == full.stolen + 1 && b.sound.tally().sounding == 24,
           "the hero's own blast takes a crowd voice", double(b.sound.tally().stolen - full.stolen));
 
+    // G. A varied event (Sound::vary): the footsteps, one recording, each play a little off the
+    // last. Measured one step at a time, at the hero and dry: its level, its length -- pitch is
+    // speed, so a semitone up ends 6% sooner -- and its brightness. The game's numbers
+    // (play_tuning.h kStepSemitones, kStepDropDb, kStepDarken).
+    b.settle(mu::game::Sound::Room::Dry);
+    const int soil = b.sound.load("player_step_soil", true);
+    struct Heard {
+        double level, length, bright;
+    };
+    std::vector<float> steps;
+    const auto stepOnce = [&]() {
+        b.hush();
+        b.frame();
+        b.sound.playAt(soil, 0.0f, 0.0f, 0.0f, kHero);
+        b.frame();
+        b.sound.follow(nullptr, nullptr);
+        const std::vector<float> got = b.pull(0.3f);
+        steps.insert(steps.end(), got.begin(), got.end());
+        steps.insert(steps.end(), size_t(kRate / 4) * 2, 0.0f);  // a quarter second apart
+        float peak = 0.0f;
+        for (float s : got) peak = std::max(peak, std::fabs(s));
+        size_t last = 0;
+        for (size_t i = 0; i < got.size(); ++i) {
+            if (std::fabs(got[i]) > peak * 0.01f) last = i;
+        }
+        return Heard{rms(got).both(), double(last / 2) / kRate, brightness(got)};
+    };
+    const auto spread = [](const std::vector<Heard>& h, double Heard::*m) {
+        double lo = 1e30, hi = 0.0;
+        for (const Heard& one : h) {
+            lo = std::min(lo, one.*m);
+            hi = std::max(hi, one.*m);
+        }
+        return hi / lo;
+    };
+    std::vector<Heard> same, varied;
+    for (int i = 0; i < 12; ++i) same.push_back(stepOnce());
+    check(spread(same, &Heard::level) < 1.001 && spread(same, &Heard::length) < 1.001,
+          "unvaried, a step is the same step every time", spread(same, &Heard::level));
+    steps.clear();
+    b.sound.vary(soil, 1.0f, 4.0f, 1.5f);
+    for (int i = 0; i < 24; ++i) varied.push_back(stepOnce());
+    b.sound.vary(soil, 0.0f, 0.0f, 0.0f);
+    const double levelSpread = 20.0 * std::log10(spread(varied, &Heard::level));
+    const double lengthSpread = spread(varied, &Heard::length);
+    check(levelSpread > 2.0 && levelSpread < 6.0, "varied, the level spreads over a few dB",
+          levelSpread);
+    check(lengthSpread > 1.05 && lengthSpread < 1.15, "and the pitch over a semitone or two",
+          lengthSpread);
+    check(spread(varied, &Heard::bright) > 1.1, "and some steps are duller",
+          spread(varied, &Heard::bright));
+    double loudest = 0.0;
+    for (const Heard& h : varied) loudest = std::max(loudest, h.level);
+    check(loudest <= same.front().level * 1.02, "never louder than the recording",
+          loudest / same.front().level);
+    // Rolled away from the last: two in a row are always a hearable step apart in pitch.
+    double closest = 1e30;
+    for (size_t i = 1; i < varied.size(); ++i) {
+        closest = std::min(closest, std::fabs(std::log2(varied[i].length / varied[i - 1].length)) * 12.0);
+    }
+    check(closest > 0.4, "and no two in a row at one pitch (semitones apart)", closest);
+    std::string stepsWav = "sound_test_steps.wav";
+    if (argc > 0) {
+        const std::string self = argv[0];
+        const size_t slash = self.find_last_of('/');
+        if (slash != std::string::npos) stepsWav = self.substr(0, slash + 1) + stepsWav;
+    }
+    writeWav(stepsWav, steps);
+    std::printf("  the varied steps are in %s\n", stepsWav.c_str());
+
     // For the ear: one step every quarter second, walking the screen left to right, in the
     // open town as the game hears it.
     b.settle(mu::game::Sound::Room::Open);
