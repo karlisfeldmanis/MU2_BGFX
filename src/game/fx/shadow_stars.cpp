@@ -21,13 +21,20 @@ constexpr float kRingDim = 0.08f;
 constexpr float kStarDim = 0.5f;
 // A dozen joints a Shadow; room for a pack of them in sight.
 constexpr size_t kStars = 12 * 32;
-// The Poison Shadow's light: its own green at this much, about a quarter of the Poison spell's
-// miasma (fx/poison.h), over this reach, hung this high; and no more than this many at once,
-// of the renderer's four moving lights.
+// A monster's faint light (play_tuning.h kAuraLights): its colour at this much -- for the Poison
+// Shadow's green about a quarter of the Poison spell's miasma (fx/poison.h) -- over this reach,
+// hung this high; and no more than this many at once, of the renderer's four moving lights.
 constexpr float kGlowDim = 0.3f;
 constexpr float kGlowReach = 2.5f;
 constexpr float kGlowHeight = 1.5f;
 constexpr uint32_t kGlowsMost = 2;
+// Its embers: a 64-unit Fire01 cell, burning through the strip's four cells over this many
+// reference frames while rising this fast, at this much of full light. Ours.
+constexpr float kEmberHalf = 0.64f * 0.5f * 0.6f;
+constexpr float kEmberLife = 12.0f;
+constexpr float kEmberRise = 0.6f;   // metres a second
+constexpr float kEmberDim = 0.45f;
+constexpr size_t kEmbers = 96;
 
 }  // namespace
 
@@ -44,7 +51,9 @@ bool ShadowStars::open(const std::string& assetDir, content::Textures& textures,
     // Ours: blurred copies of MU's two sheets (pipeline/index.py), the user's "more blurry".
     shiny_ = load("shiny_02_soft");
     ring_ = load("magic_ground_soft");
+    fire_ = load("fire");
     stars_.reserve(kStars);
+    embers_.reserve(kEmbers);
     open_ = bgfx::isValid(shiny_) && bgfx::isValid(ring_);
     return open_;
 }
@@ -54,17 +63,33 @@ void ShadowStars::shutdown() {
     open_ = false;
 }
 
-void ShadowStars::update() {
+void ShadowStars::update(float seconds) {
     stars_.clear();
     glows_.clear();
+    for (Ember& one : embers_) {
+        one.age += seconds * 25.0f;
+        one.position[1] += kEmberRise * seconds;
+    }
+    embers_.erase(std::remove_if(embers_.begin(), embers_.end(),
+                                 [](const Ember& one) { return one.age >= kEmberLife; }),
+                  embers_.end());
 }
 
-void ShadowStars::glow(const float at[3], float fade) {
+void ShadowStars::glow(const float at[3], float fade, const float colour[3]) {
     if (!open_ || fade <= 0.0f || glows_.size() >= 32) return;
     Glow one;
     for (int i = 0; i < 3; ++i) one.position[i] = at[i];
     one.fade = fade;
+    for (int i = 0; i < 3; ++i) one.colour[i] = colour[i];
     glows_.push_back(one);
+}
+
+void ShadowStars::ember(const float at[3]) {
+    if (!open_ || !bgfx::isValid(fire_) || embers_.size() >= kEmbers) return;
+    Ember one;
+    for (int i = 0; i < 3; ++i) one.position[i] = at[i];
+    one.age = 0.0f;
+    embers_.push_back(one);
 }
 
 uint32_t ShadowStars::lights(gfx::PointLight* out, uint32_t max, const float near[3]) const {
@@ -86,7 +111,7 @@ uint32_t ShadowStars::lights(gfx::PointLight* out, uint32_t max, const float nea
         for (int i = 0; i < 3; ++i) light.position[i] = one->position[i];
         light.reach = kGlowReach;
         light.height = kGlowHeight;
-        for (int i = 0; i < 3; ++i) light.colour[i] = kGreen[i] * kGlowDim * one->fade;
+        for (int i = 0; i < 3; ++i) light.colour[i] = one->colour[i] * kGlowDim * one->fade;
     }
     return count;
 }
@@ -117,6 +142,19 @@ void ShadowStars::gather(gfx::Effects& effects) const {
             sprite.sheet = shiny_;
             sprite.blend = gfx::Blend::Minus;
         }
+        effects.add(sprite);
+    }
+    for (const Ember& one : embers_) {
+        gfx::Sprite sprite;
+        for (int i = 0; i < 3; ++i) sprite.position[i] = one.position[i];
+        sprite.halfWidth = sprite.halfHeight = kEmberHalf;
+        const int cell = std::min(3, int(one.age / kEmberLife * 4.0f));
+        sprite.u0 = float(cell) * 0.25f;
+        sprite.u1 = sprite.u0 + 0.25f;
+        const float left = 1.0f - one.age / kEmberLife;
+        for (int i = 0; i < 3; ++i) sprite.colour[i] = kEmberDim * left;
+        sprite.sheet = fire_;
+        sprite.blend = gfx::Blend::Additive;
         effects.add(sprite);
     }
 }

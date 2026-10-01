@@ -45,15 +45,18 @@ public:
               const content::Showing& table);
     void shutdown();
 
-    // Forgets the last frame's stars. Called before the feed.
-    void update();
+    // Forgets the last frame's stars and ages the embers. Called before the feed.
+    void update(float seconds);
     // One joint for this frame: a Shadow's dark star, or a Poison Shadow's green ring. `fade`
     // is the body's own, 0..1, so a corpse's go with it.
     void star(const float at[3], bool poison, float fade);
-    // **Ours** (the user, 2026-10-01: "it also probably be a minimal light emiter"): a Poison
-    // Shadow's middle, for a faint green light on what is round it. MU's MODEL_SHADOW case
-    // lights nothing.
-    void glow(const float at[3], float fade);
+    // **Ours** (the user, 2026-10-01: "it also probably be a minimal light emiter"): a faint
+    // light in `colour` at a monster's effect -- a Poison Shadow's green, a Death Gorgon's
+    // orange, a Death Knight's sword (game/play_tuning.h kAuraLights).
+    void glow(const float at[3], float fade, const float colour[3]);
+    // One of a Death Gorgon's embers: MU's ten BITMAP_FIRE a frame on random bones (:6064-6071),
+    // ours as one now and then, rising and burning out through Fire01's four frames.
+    void ember(const float at[3]);
     // The nearest of this frame's glows to `near`, at most two, into the renderer's moving
     // lights; after the spells, which keep their slots.
     uint32_t lights(gfx::PointLight* out, uint32_t max, const float near[3]) const;
@@ -72,8 +75,15 @@ private:
     struct Glow {
         float position[3];
         float fade;
+        float colour[3];
     };
     std::vector<Glow> glows_;
+    struct Ember {
+        float position[3];
+        float age;   // reference frames
+    };
+    std::vector<Ember> embers_;
+    bgfx::TextureHandle fire_ = BGFX_INVALID_HANDLE;
     bool open_ = false;
 };
 

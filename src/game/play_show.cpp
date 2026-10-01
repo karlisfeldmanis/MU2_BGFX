@@ -339,10 +339,10 @@ void Play::snort(float seconds) {
 // The Shadows: a star on each of their joints every frame the body is drawn, through the fall
 // and the fade as RenderCharacter draws it. fx/shadow_stars.h has the client's code; MU's sparks
 // while it swings are left out, ours, for the user's "still to active".
-void Play::shade() {
-    shadowStars_.update();
+void Play::shade(float seconds) {
+    shadowStars_.update(seconds);
     for (Drawn& one : drawn_) {
-        if (one.shadeBones.empty() || !one.visible || !one.placed) continue;
+        if ((one.shadeBones.empty() && one.auraBone < 0) || !one.visible || !one.placed) continue;
         float fade = 1.0f;
         if (one.deadFor >= kDeathHold) {
             const float t = std::clamp((one.deadFor - kDeathHold) / kDeathFade, 0.0f, 1.0f);
@@ -352,18 +352,31 @@ void Play::shade() {
             fade = t * t * (3.0f - 2.0f * t);
         }
         const float origin[3] = {0.0f, 0.0f, 0.0f};
-        float middle[3] = {0.0f, 0.0f, 0.0f};
-        int counted = 0;
+        // Its faint light, where its effect is (kAuraLights).
+        if (one.auraBone >= 0) {
+            float at[3];
+            if (one.figure.pointOn(one.auraBone, origin, at)) {
+                shadowStars_.glow(at, fade, one.auraColour);
+            }
+        }
+        // A Death Gorgon: an ember now and then off a joint picked at random.
+        if (one.embers) {
+            if (one.deadFor >= 0.0f) continue;
+            one.emberOwed += seconds * 25.0f / kEmberEveryFrames;
+            while (one.emberOwed >= 1.0f) {
+                one.emberOwed -= 1.0f;
+                wanderDice_ ^= wanderDice_ << 13;
+                wanderDice_ ^= wanderDice_ >> 17;
+                wanderDice_ ^= wanderDice_ << 5;
+                const int bone = one.shadeBones[wanderDice_ % uint32_t(one.shadeBones.size())];
+                float at[3];
+                if (one.figure.pointOn(bone, origin, at)) shadowStars_.ember(at);
+            }
+            continue;
+        }
         for (const int bone : one.shadeBones) {
             float at[3];
-            if (!one.figure.pointOn(bone, origin, at)) continue;
-            shadowStars_.star(at, one.shadePoison, fade);
-            for (int i = 0; i < 3; ++i) middle[i] += at[i];
-            ++counted;
-        }
-        if (one.shadePoison && counted > 0) {
-            for (float& axis : middle) axis /= float(counted);
-            shadowStars_.glow(middle, fade);
+            if (one.figure.pointOn(bone, origin, at)) shadowStars_.star(at, one.shadePoison, fade);
         }
     }
 }

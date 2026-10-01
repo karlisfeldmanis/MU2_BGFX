@@ -1,0 +1,31 @@
+{
+  "item": "DeathGorgon01",
+  "mu_name": "Death Gorgon",
+  "mu_name_from": "MuMain's MONSTER_DEATH_GORGON = 35, drawn out of the Gorgon's own model (MONSTER_MODEL_GORGON, Monster12.bmd). The client's name is 데쓰 고르곤 (ZzzCharacter.cpp:13897-13906). OpenMU's Version075 LostTower.cs:690-721 names number 35 'Death Gorgon' at level 64 with 6000 health, 200-210 damage, 130 defense, MoveRange 3, AttackRange 1, ViewRange 7, AttackDelay 2000, MonsterSkill (150) -- WebZen's one-in-five Flame of Evil, not built yet. 61 spots: 11 on Lost Tower 6, 50 on 7.",
+  "world": "losttower",
+  "object_type": 35,
+  "mesh": "Gorgon01",
+  "mesh_from": "Monster12 a second time, as the Hell Hound is Monster02 a second time.",
+  "monster": {
+    "model_index": 11,
+    "scale": 1.3
+  },
+  "monster_from": "The MONSTER_DEATH_GORGON branch: `c->Object.Scale = 1.3f; c->Weapon[0].Type = MODEL_CRESCENT_AXE; c->Weapon[1].Type = MODEL_CRESCENT_AXE; c->Object.BlendMesh = 1; c->Object.BlendMeshLight = 1.f; c->Level = 2;`.",
+  "right_hand": "Axe09",
+  "right_hand_bone": "knife_gdf",
+  "left_hand": "Axe09",
+  "left_hand_bone": "hand_bofdgne01",
+  "hands_from": "MODEL_CRESCENT_AXE is Item/Axe09.bmd, cooked for the Cyclops. The bones are the Gorgon's: `case MODEL_GORGON: c->Weapon[0].LinkBone = 30; c->Weapon[1].LinkBone = 39` (ZzzCharacter.cpp:12037-12040), knife_gdf and hand_bofdgne01.",
+  "profile": "monster",
+  "glow": {
+    "boss_eye": {
+      "pulse": [
+        0,
+        -1
+      ]
+    }
+  },
+  "glow_from": "The Gorgon's: BlendMesh 1, its eyes added and their light rolled each frame (Gorgon01's glow_from).",
+  "effects_from": "Level 2 is what MoveCharacterVisual's MODEL_GORGON case reads (ZzzCharacter.cpp:6061-6076): every frame ten BITMAP_FIRE on random bones, and AddTerrainLight of (1, 0.2, 0) times the rolled Luminosity, two tiles. Drawn in game/fx/shadow_stars.h, ours and subtle as the Shadows' (the user's asks of 2026-10-01): a few faint embers off random joints rather than ten a frame, and a faint orange light on the nearest two.",
+  "sounds_from": "The Gorgon's model and so the Gorgon's five (ZzzOpenData.cpp:3473-3482). Wired as deathgorgon_*, gorgon_*'s files."
+}

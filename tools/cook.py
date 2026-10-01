@@ -1771,7 +1771,10 @@ def figure_set(world):
             continue
         monsters.append({
             "name": one["name"], "label": one.get("label", one["name"]), "mesh": mesh,
-            **({"parts": parts, "plus": one.get("plus", {})} if len(parts) > 1 else {}),
+            **({"parts": parts} if len(parts) > 1 else {}),
+            # The plus its gear is drawn at: the Cursed Wizard's Legendary pieces at +9, the
+            # Balrog's Bill of Balrog at +9 ({"right_hand": 9}).
+            **({"plus": one["plus"]} if one.get("plus") else {}),
             "scale": float(one.get("scale", 1.0)),
             "hidden_mesh": one.get("hidden_mesh"),
             "hidden_part": one.get("hidden_part"),

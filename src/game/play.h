@@ -562,6 +562,12 @@ private:
         // whether it is the Poison Shadow; empty on everything else.
         std::vector<int> shadeBones;
         bool shadePoison = false;
+        // A Death Gorgon: its bones throw embers and it lights orange, rather than wear stars.
+        bool embers = false;
+        float emberOwed = 0.0f;
+        // Its faint light (kAuraLights): the bone it hangs on, -1 for none, and its colour.
+        int auraBone = -1;
+        float auraColour[3] = {0.0f, 0.0f, 0.0f};
         // MU's SwordCount, incremented on each swing. `swordCount % 3 == 0` plays Attack 1,
         // the rest Attack 2 — ZzzCharacter.cpp:1269-1276. The drawing's own counter, not the
         // sim's: it draws from no seeded state.
@@ -817,7 +823,7 @@ private:
     Eyes eyes_;
     ShadowStars shadowStars_;
     // The Shadows' stars, off the same posed frame as the eyes. fx/shadow_stars.h.
-    void shade();
+    void shade(float seconds);
     // The Budge Dragons' fire and dust, after the clips have been advanced this frame.
     void exhale(float seconds);
     // The Bull Fighters' snorts and the Elite's eyes, off the same posed frame.

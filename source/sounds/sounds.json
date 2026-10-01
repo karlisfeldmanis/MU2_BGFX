@@ -1473,6 +1473,87 @@
         "mYetiDie.wav"
       ],
       "from": "Sounds[4], 107 YETIDIE. SetMonsterSound(..., 105, 105, 106, 106, 107) in ZzzOpenData.cpp:3590-3596."
+    },
+    "deathknight_move": {
+      "files": [
+        "mDarkKnight1.wav",
+        "mDarkKnight2.wav"
+      ],
+      "from": "The Dark Knight's model case, shared with MONSTER_MODEL_DEATH_KNIGHT (ZzzOpenData.cpp:3409-3420). darkknight_move's files."
+    },
+    "deathknight_attack": {
+      "files": [
+        "mDarkKnightAttack1.wav",
+        "mDarkKnightAttack2.wav"
+      ],
+      "from": "The Dark Knight's model case, shared with MONSTER_MODEL_DEATH_KNIGHT (ZzzOpenData.cpp:3409-3420). darkknight_attack's files."
+    },
+    "deathknight_shock": {
+      "files": [
+        "mDarkKnightAttack1.wav",
+        "mDarkKnightAttack2.wav"
+      ],
+      "from": "The Dark Knight's model case, shared with MONSTER_MODEL_DEATH_KNIGHT (ZzzOpenData.cpp:3409-3420). darkknight_shock's files."
+    },
+    "deathknight_die": {
+      "files": [
+        "mDarkKnightDie.wav"
+      ],
+      "from": "The Dark Knight's model case, shared with MONSTER_MODEL_DEATH_KNIGHT (ZzzOpenData.cpp:3409-3420). darkknight_die's files."
+    },
+    "deathgorgon_move": {
+      "files": [
+        "mGorgon1.wav",
+        "mGorgon2.wav"
+      ],
+      "from": "The Gorgon's model and so the Gorgon's five: SetMonsterSound is per model (MONSTER_MODEL_GORGON). gorgon_move's files."
+    },
+    "deathgorgon_attack": {
+      "files": [
+        "mGorgonAttack1.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "The Gorgon's model and so the Gorgon's five: SetMonsterSound is per model (MONSTER_MODEL_GORGON). gorgon_attack's files."
+    },
+    "deathgorgon_shock": {
+      "files": [
+        "mGorgonAttack1.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "The Gorgon's model and so the Gorgon's five: SetMonsterSound is per model (MONSTER_MODEL_GORGON). gorgon_shock's files."
+    },
+    "deathgorgon_die": {
+      "files": [
+        "mGorgonDie.wav"
+      ],
+      "from": "The Gorgon's model and so the Gorgon's five: SetMonsterSound is per model (MONSTER_MODEL_GORGON). gorgon_die's files."
+    },
+    "balrog_move": {
+      "files": [
+        "mBalrog1.wav",
+        "mBalrog2.wav"
+      ],
+      "from": "Sounds[rand()%2]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp)."
+    },
+    "balrog_attack": {
+      "files": [
+        "mWizardAttack2.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp)."
+    },
+    "balrog_shock": {
+      "files": [
+        "mWizardAttack2.wav",
+        "mGorgonAttack2.wav"
+      ],
+      "from": "Sounds[2 + rand()%2] again, the flinch on the attack pair. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp)."
+    },
+    "balrog_die": {
+      "files": [
+        "mBalrogDie.wav"
+      ],
+      "from": "Sounds[4]. SetMonsterSound(..., 108, 109, 110, 111, 112) for MONSTER_MODEL_BALROG (ZzzOpenData.cpp)."
     }
   },
   "not_built_yet": "Built: a monster's Sounds[0]/[1] while it walks (SetPlayerWalk's rand_fps_check(16), every frame it moves, ZzzCharacter.cpp:788-804) and once as its walk ends (SetPlayerStop's, one in sixteen, :429-443) -- game/play_show.cpp. MuMain has no cry on an idle loop: PlayMonsterSound (:216-237) is map-specific and handles no 0.75 monster. Not built: SetPlayerStop's other callers (a refused path, a server stand), which the realm has no counterpart for."

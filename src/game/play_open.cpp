@@ -643,6 +643,21 @@ void Play::fit(Drawn& one, const sim::Body& body, const FigureBody* look) {
             one.shadeBones.clear();
             const bool shadow = look->name == kShadowFigure || look->name == kPoisonShadowFigure;
             one.shadePoison = look->name == kPoisonShadowFigure;
+            one.embers = look->name == kDeathGorgonFigure;
+            one.auraBone = -1;
+            for (const AuraLight& aura : kAuraLights) {
+                if (look->name != aura.figure || !look->skeletonMesh) continue;
+                const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
+                for (size_t b = 0; b < bones.size(); ++b) {
+                    if (bones[b].name == aura.bone) one.auraBone = int(b);
+                }
+                for (int i = 0; i < 3; ++i) one.auraColour[i] = aura.colour[i];
+            }
+            if (one.embers && look->skeletonMesh) {
+                for (size_t b = 0; b < look->skeletonMesh->bones().size(); ++b) {
+                    one.shadeBones.push_back(int(b));
+                }
+            }
             if (shadow && look->skeletonMesh) {
                 const std::vector<content::Bone>& bones = look->skeletonMesh->bones();
                 for (size_t b = 0; b < bones.size(); ++b) {

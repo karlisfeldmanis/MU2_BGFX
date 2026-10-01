@@ -302,6 +302,30 @@ inline constexpr const char* kEliteBullFigure = "EliteBullFighter01";
 // own, so the aura holds still rather than flickering over every plate and finger (the user,
 // 2026-10-01: "still to active it has to be more elegant and subtle").
 inline constexpr const char* kShadowFigure = "Shadow01";
+// The Death Gorgon, the Gorgon at Level 2: embers off random bones and an orange light
+// (fx/shadow_stars.h), one ember every this many reference frames -- ours; MU throws ten a frame.
+inline constexpr const char* kDeathGorgonFigure = "DeathGorgon01";
+constexpr float kEmberEveryFrames = 3.0f;
+// **Ours** (the user, 2026-10-01: "if monster has some special effects use minimal light
+// emiter", "like electricy our fire, it could be also weapon"): a faint light in the colour of
+// what a breed burns with, hung on the bone where that is -- its body's spine, or the grip of a
+// weapon that is the effect. fx/shadow_stars.h, the nearest two, after the spells' lights.
+struct AuraLight {
+    const char* figure;
+    float colour[3];
+    const char* bone;
+};
+inline constexpr AuraLight kAuraLights[] = {
+    // The Poison Shadow's own green Light (ZzzCharacter.cpp:11318).
+    {"PoisonShadow01", {0.2f, 0.7f, 0.1f}, "Bip01 Spine"},
+    // The Death Gorgon's AddTerrainLight (1, 0.2, 0) (:6073-6074).
+    {"DeathGorgon01", {1.0f, 0.2f, 0.0f}, "Bip01 Spine"},
+    // The Death Knight's Lightning Sword, its bolts the brightest thing on it: the blue of the
+    // Lightning spell's own light.
+    {"DeathKnight01", {0.4f, 0.6f, 1.0f}, "knife_gdf"},
+    // The Balrog's red stream mesh.
+    {"Balrog01", {1.0f, 0.15f, 0.05f}, "Bip01 Spine"},
+};
 inline constexpr const char* kPoisonShadowFigure = "PoisonShadow01";
 inline constexpr const char* kShadowJoints[] = {
     "Bip01 Pelvis",     "Bip01 Spine",      "Bip01 Neck",      "Bip01 Head",
