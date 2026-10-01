@@ -125,26 +125,31 @@ void Forge::shutdown() {
 
 void Forge::strike(const float at[3]) {
     if (!open_) return;
-    for (int i = 0; i < 4; ++i) {
-        // Vector(rand() % 60 + 60 + 90, 0, rand() % 30, Angle): Angle[0] is AngleMatrix's
-        // roll, about MU's x, and Angle[2] its yaw.
-        const float r = float(roll() % 60 + 150) * kDegrees;
+    // Vector(rand() % 60 + 60 + 90, 0, rand() % 30, Angle).
+    for (int i = 0; i < 4; ++i) fling(at, 150.0f, 0.0f, i < kStreaksPerBurst, i < kMotesPerBurst);
+}
+
+void Forge::fling(const float at[3], float rollFrom, float yawFrom, bool streak, bool mote) {
+    if (!open_) return;
+    {
+        // Angle[0] is AngleMatrix's roll, about MU's x, and Angle[2] its yaw.
+        const float r = (float(roll() % 60) + rollFrom) * kDegrees;
         const float sr = std::sin(r), cr = std::cos(r);
 
-        if (i < kStreaksPerBurst && bgfx::isValid(streak_) && streaks_.size() < kStreaks) {
+        if (streak && bgfx::isValid(streak_) && streaks_.size() < kStreaks) {
             // (0, -Velocity, 0) through AngleMatrix: (cr sy, -cr cy, -sr) * Velocity.
-            const float y = float(roll() % 30) * kDegrees;
+            const float y = (float(roll() % 30) + yawFrom) * kDegrees;
             const float v = float(roll() % 20 + 6) * kUnit * kStreakPace;
             Streak one;
             for (int k = 0; k < 3; ++k) one.position[k] = at[k];
             fromMu(cr * std::sin(y) * v, -cr * std::cos(y) * v, -sr * v, one.velocity);
             one.life = float(roll() % 8 + 8) * kStreakPace;
             streaks_.push_back(one);
-        } else if (i < kStreaksPerBurst && bgfx::isValid(streak_)) {
+        } else if (streak && bgfx::isValid(streak_)) {
             ++refused_;
         }
 
-        if (i >= kMotesPerBurst) continue;
+        if (!mote) return;
         if (bgfx::isValid(mote_) && motes_.size() < kMotes) {
             // Subtype 0 throws the yaw away: Angle[2] = rand() % 360. Then (0, v, 0) through
             // AngleMatrix: (-cr sy, cr cy, sr) * v -- mostly outward, and up to half of it up

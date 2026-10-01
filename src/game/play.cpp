@@ -824,6 +824,11 @@ void Play::update(double seconds) {
                             // A spell's wave is not on its wind-up: MU plays SOUND_MAGIC on the
                             // line after the bolt is made, so it goes with `Loosed`.
                             if (spell && spell->wizardry) cry = -1;
+                            // Twisting Slash's goes with its wheel, fifteen frames in.
+                            if (swinger->castSkill == sim::skill::kTwistingSlash) {
+                                cry = -1;
+                                throwWheel(*swinger, body);
+                            }
                         }
                         if (cry >= 0 && swinger->placed) {
                             emit(cry, swinger->crown[0], swinger->crown[2],
@@ -1153,6 +1158,22 @@ void Play::update(double seconds) {
         if (blinkIn_ >= kBlinkFadeSeconds) blinkIn_ = -1.0f;
     }
     thunder_.update(float(seconds), standing, middle);
+    // Twisting Slash's wheel follows him as he is drawn, and sounds as it starts to turn.
+    wheel_.update(
+        float(seconds),
+        [&](uint32_t id, float* feet, float& yaw) {
+            const Drawn* drawn = drawnOf(id);
+            if (drawn == nullptr || !drawn->placed || drawn->deadFor >= 0.0f) return false;
+            feet[0] = drawn->crown[0];
+            feet[2] = drawn->crown[2];
+            feet[1] = ground_ ? ground_->heightAt(feet[0], feet[2]) : 0.0f;
+            yaw = drawn->yaw;
+            return true;
+        },
+        [&](uint32_t id, const float* feet) {
+            const int index = sim::skillIndexOf(sim::skill::kTwistingSlash);
+            if (index >= 0 && heard_.skill[index] >= 0) emit(heard_.skill[index], feet[0], feet[2], id);
+        });
     // The fire on him while he calls a Meteorite down: while its clip is on him, not while the
     // realm holds him -- a cast on the tick he arrives is held while the drawn body is still
     // sliding in on its run, and the fire read as a man on fire running.

@@ -102,6 +102,8 @@ int boneNamed(const content::Mesh& mesh, const std::string& name) {
 
 }  // namespace
 
+bool inRightHand(const HeldItem& item) { return item.boneName == kRightGrip; }
+
 const content::Mesh* Figures::mesh(const std::string& name) const {
     auto found = meshIndex_.find(name);
     return found == meshIndex_.end() ? nullptr : meshes_[found->second].get();

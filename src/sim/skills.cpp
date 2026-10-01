@@ -88,10 +88,10 @@ constexpr SkillRow kRows[kSkills] = {
     // this project's, in §3.2's shape: no OpenMU row for any of them exists in 0.75 to be
     // followed, and inventing one and calling it traced would be worse than saying this.
     //
-    // Their clips are 0.75's five, reused. MuMain plays Twisting Slash on its own action and
-    // this library does not have it, so the nearest blow is played instead and the note is here
-    // rather than in the drawing: the sword-spin for the spin, the overhead for the crush, the
-    // thrust for the stab.
+    // Twisting Slash plays MU's own spin, `PLAYER_ATTACK_SKILL_WHEEL` (action 65,
+    // SkillCast.cpp:306-312), 13 keys at 0.24 -- slower than a sword skill, as MU's is. The other
+    // two reuse 0.75's clips, the nearest blow, and the note is here rather than in the drawing:
+    // the overhead for the crush, the thrust for the stab.
     //
     // Twisting Slash is the one skill of the three MU puts no weapon requirement on at all --
     // it is the knight's staple, "whirl his weapon violently around him" -- so it is the one row
@@ -102,7 +102,7 @@ constexpr SkillRow kRows[kSkills] = {
      Spread::Ring, 0, 1.0f,
      "A whirl of whatever he is holding, into everything within a tile. Every weapon can throw "
      "it; none throws it hard.",
-     63, "player_skill_sword4", true, arms::kEvery, 28},
+     65, "player_skill_sword4", true, arms::kEvery, 28},
     // Rageful Blow: **any weapon**, on the user's word of 2026-09-23. It was written for the
     // heavy hands -- MU's description is a "colossal area attack that unleashes shockwaves ... to
     // crush multiple opponents", which reads as something brought DOWN rather than drawn across --

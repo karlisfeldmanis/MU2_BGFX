@@ -70,6 +70,11 @@ public:
     // One reference frame of a blow: MU's four streaks and four motes at `at`, the hammer's
     // head, in world metres.
     void strike(const float at[3]);
+    // One of a burst's four: a streak and a mote, either or both, at `at`. The streak flies on
+    // MU's `Angle` of (rand() % 60 + rollFrom, 0, rand() % 30 + yawFrom), in degrees; the mote
+    // takes the roll alone, as subtype 0 does. The forge's own burst is strike(); Twisting
+    // Slash's wheel throws its sparks through this, aimed by its own numbers (fx/wheel.h).
+    void fling(const float at[3], float rollFrom, float yawFrom, bool streak, bool mote);
     // The hearth at `at` working for `seconds`: its smoke and its embers, owed and paid whole.
     // `owed` is the caller's, a pair a forge, so two smiths never share a debt.
     void smoulder(const float at[3], float seconds, float owed[2]);

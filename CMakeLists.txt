@@ -163,6 +163,7 @@ add_executable(mu2
   src/game/fx/ice.cpp
   src/game/fx/poison.cpp
   src/game/fx/flame.cpp
+  src/game/fx/wheel.cpp
   src/game/fx/bolt.cpp
   src/game/sound.cpp
   src/game/miniaudio.cpp

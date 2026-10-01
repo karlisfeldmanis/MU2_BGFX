@@ -399,7 +399,7 @@ cd = max(floor, base / (1 + H))
 | Falling Slash 19 | 4.0 s | clip (~1.0 s) | 3.8 | 2.0 | 1.3 | 1.0 | **1.0** |
 | Cyclone 22 | 5.0 s | clip (~1.0 s) | 4.7 | 2.5 | 1.7 | 1.2 | **1.0** |
 | Slash 23 | 6.0 s | clip (~1.1 s) | 5.6 | 3.0 | 2.0 | 1.4 | 1.1 |
-| Twisting Slash 41 | 4.5 s | clip (~1.0 s) | 4.2 | 2.3 | 1.5 | 1.1 | **1.0** |
+| Twisting Slash 41 | 4.5 s | clip 65, MU's wheel (13 keys at 0.24, slower than the others) | 4.2 | 2.3 | 1.5 | 1.1 | **1.0** |
 | Rageful Blow 42 | 8.5 s | clip (~1.0 s) | 8.0 | 4.3 | 2.8 | 2.0 | 1.6 |
 | Death Stab 43 | 5.5 s | clip (~0.9 s) | 5.2 | 2.8 | 1.8 | 1.3 | 1.0 |
 | Defense 18 | 12.0 s | duration + 2 s | 11.3 | 6.0 | **6.0** | **6.0** | **6.0** |
@@ -702,9 +702,17 @@ cap, a permanent Defense unless it is special-cased, and a spam rate limited onl
   two-handed sword, axe, spear — so every shape in the table is thrown by something.
 
 **Owed.** An orb that DROPS (the rows say `dropsFromMonsters`, and nothing in the loot tables
-reaches group 12 yet), which is what would let §3.3 take Lunge and Slash back off the shelf; a
-Twisting Slash clip of its own, rather than the sword-spin borrowed for it; and a re-cut of the
-three icons at MuDream's 80×112 the day that container opens.
+reaches group 12 yet), which is what would let §3.3 take Lunge and Slash back off the shelf; and a
+re-cut of the three icons at MuDream's 80×112 the day that container opens.
+
+**Twisting Slash, from MuMain (2026-10-01).** It plays MU's own `PLAYER_ATTACK_SKILL_WHEEL`,
+action 65 (13 keys at 0.24), and no longer borrows Cyclone's sword-spin; `tools/cook.py` carries
+the clip into every world's tables, so its cooldown floor is the longer wheel. And it draws
+MuMain's WHEEL1/WHEEL2 (`game/fx/wheel.h`). Fifteen frames in, five copies of his right hand's
+weapon orbit him 1.5 tiles out (1.8 with a polearm), lying flat a metre up and spinning. They
+fade 1, 1, 0.6, 0.5, 0.4, and each throws smoke, sparks and a flare where it passes. SOUND_SKILL_SWORD4
+plays as the wheel starts, and there is no blade streak, as MU has none on that action. The sparks
+are calmed as the forge's are, and the five ground lights are one at the hub; both are ours.
 
 ### 6.1 The four on the bar, 2026-09-23
 

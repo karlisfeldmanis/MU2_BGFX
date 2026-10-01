@@ -132,6 +132,8 @@ void Play::exhale(float seconds) {
             skill && row && row->wizardry) {
             continue;
         }
+        // Nor the wheel: MU blurs SKILL_SWORD1..5 and its action is past them. fx/wheel.h.
+        if (skill && one.swingSkill == sim::skill::kTwistingSlash) continue;
         const FigureBody* look = one.figure.body();
         if (look == nullptr) continue;
         // Three keys of wind-up: the client's `AnimationFrame >= 3`, so the gathering of the
@@ -363,6 +365,24 @@ void Play::smithy(float seconds) {
             forge_.strike(head);
         }
     }
+}
+
+// MU's `o->Weapon = c->Weapon[0].Type - MODEL_SWORD`: the right hand's, or with that hand empty
+// whatever weapon he holds. A polearm flies wider and smaller -- MU's group 3.
+void Play::throwWheel(const Drawn& swinger, const sim::Body* body) {
+    const HeldItem* weapon = nullptr;
+    if (const FigureBody* look = swinger.figure.body()) {
+        for (const HeldItem& held : look->held) {
+            if (held.kind != "weapon" || held.mesh == nullptr) continue;
+            if (weapon == nullptr || inRightHand(held)) weapon = &held;
+            if (inRightHand(held)) break;
+        }
+    }
+    const bool polearm = body != nullptr && body->weapon >= 0 &&
+                         size_t(body->weapon) < tables_.arms.size() &&
+                         tables_.arms[size_t(body->weapon)].group == 3;
+    wheel_.cast(swinger.id, weapon ? weapon->mesh : nullptr, weapon ? weapon->shine : ShineLook{},
+                polearm);
 }
 
 void Play::lightForges(Lamps& lamps) const {
@@ -1018,6 +1038,8 @@ void Play::gather(gfx::Renderer& renderer, const float* viewProj, std::vector<gf
         one.figure.gather(palette, out);
         tint();
     }
+    // Twisting Slash's copies of his weapon, the camera's alone.
+    wheel_.gather(out);
     // His pet, after him, so the Imp takes his clavicle as this frame posed it.
     if (Drawn* hero = drawnOf(realm_.hero().id); hero && hero->visible) {
         pets_.gather(renderer, hero->figure, scratch_, out, casters);

@@ -34,6 +34,7 @@
 #include "game/fx/poison.h"
 #include "game/fx/flame.h"
 #include "game/fx/thunder.h"
+#include "game/fx/wheel.h"
 #include "game/fx/meteor.h"
 #include "game/fx/gleam.h"
 #include "game/fx/streak.h"
@@ -429,6 +430,8 @@ public:
     Poison& poison() { return poison_; }
     // And his Flame. fx/flame.h.
     Flame& flame() { return flame_; }
+    // The knight's Twisting Slash: his weapon flung round him. fx/wheel.h.
+    Wheel& wheel() { return wheel_; }
     void gatherBolt(gfx::Effects& effects, const float eye[3]) const { bolt_.gather(effects, eye); }
     // The bolt bench (`--bolt-every`): one thrown from where he stands at a point `tiles` east,
     // drawing only -- the realm is not asked and nothing is hit. What the trail and the arrival
@@ -781,6 +784,7 @@ private:
     TrapShow trapShow_;
     Poison poison_;
     Flame flame_;
+    Wheel wheel_;
     // A Teleport's fade on the hero: seconds since he began to fade out, or since he was put
     // down and began to fade back in; -1 for neither. MU's tenth of alpha a frame, both ways.
     float blinkOut_ = -1.0f, blinkIn_ = -1.0f;
@@ -803,6 +807,8 @@ private:
     void snort(float seconds);
     // Hanzo's sparks and his hearth's smoke, read off his clip as hammer() reads its ring.
     void smithy(float seconds);
+    // Twisting Slash's wheel, thrown with the weapon in his right hand. fx/wheel.h.
+    void throwWheel(const Drawn& swinger, const sim::Body* body);
     // The Giant's death sand, thrown between keys 8 and 9 of its death clip. Read per frame off
     // the clip's own clock, so it starts a third of the way down the fall and stops itself.
     void sandOnDeath();

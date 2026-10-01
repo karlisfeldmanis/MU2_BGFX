@@ -97,6 +97,10 @@ struct HeldItem {
     bool onShot = false;
 };
 
+// Whether it hangs off the right grip: MU's `Weapon[0]`, what a skill that draws the weapon
+// itself draws (Twisting Slash's wheel, fx/wheel.h).
+bool inRightHand(const HeldItem& item);
+
 // Which of the manifest's three lists a body came out of. It is not the rig and not the
 // behaviour -- the Skeleton Warrior is a monster on the player's rig -- it is the row that
 // made it, which is what the viewer's categories are cut along: a list of monsters is what

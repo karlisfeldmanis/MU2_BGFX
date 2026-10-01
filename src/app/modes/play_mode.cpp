@@ -272,6 +272,9 @@ bool PlayMode::open(Context& ctx) {
                 world_.played().forge().open(assets, ctx.textures,
                                              world_.played().showing().table(),
                                              &world_.ground());
+                world_.played().wheel().open(assets, ctx.textures,
+                                             world_.played().showing().table(),
+                                             &world_.ground());
                 // The refinement shine's two sheets: Chrome01 for +7, Shiny01 for +9.
                 game::lendShine(world_.played().showing().table(), assets, ctx.textures,
                                 ctx.renderer);
@@ -862,6 +865,9 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         // And a Flame's orange, three tiles.
         count += world_.played().flame().lights(falling + count,
                                                 gfx::Renderer::kMaxTransientLights - count);
+        // And Twisting Slash's wheel, the grey MU lays under each copy, as one.
+        count += world_.played().wheel().lights(falling + count,
+                                                gfx::Renderer::kMaxTransientLights - count);
         // And a Fire Trap's burst on the floor, two tiles.
         count += world_.played().trapShow().lights(falling + count,
                                                    gfx::Renderer::kMaxTransientLights - count);
@@ -1020,6 +1026,8 @@ void PlayMode::frame(Context& ctx, const Frame& at) {
         world_.played().gatherFolkLights(ctx.renderer.effects());
         world_.played().gatherForge(ctx.renderer.effects(), eye.position, eye.target,
                                     daylightOf(ctx.lighting));
+        world_.played().wheel().gatherEffects(ctx.renderer.effects(), eye.position, eye.target,
+                                              daylightOf(ctx.lighting));
         // And what is lying on the grass: MU2's Drops, tossed up out of the corpse and
         // laid down where they land.
         openItems(ctx);
