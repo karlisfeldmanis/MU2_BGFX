@@ -143,8 +143,14 @@ void Realm::watch(Body& guard) {
 
     if (guard.quarry == 0) {
         guard.temper = Temper::Wandering;
-        // Looking where he pointed the hero, for as long as the line takes to read.
-        if (tick_ < guard.standsUntil) return;
+        // Looking where he pointed the hero, for as long as the line takes to read -- or where
+        // he shot, until he could have shot again, still in his fighting stance: a guard who
+        // kills with the blow would otherwise turn his back on it the tick after, and the
+        // Golden Archer sling his crossbow while its shot still plays.
+        if (tick_ < guard.standsUntil) {
+            if (tick_ < guard.swingsAt) guard.temper = Temper::Fighting;
+            return;
+        }
         const bool home = guard.column() == guard.homeColumn && guard.row() == guard.homeRow;
         if (!home) {
             guard.temper = Temper::Homing;
@@ -172,6 +178,9 @@ void Realm::watch(Body& guard) {
             const float middle = 0.5f * float(row->minimumDamage + row->maximumDamage);
             const float force = std::max(0.01f, float(quarry.maxHealth) * share / middle);
             strikeAt(guard, quarry, force);
+            // Facing what he struck until his next blow is due, if it fell (above); a pointing
+            // the kill started (pointOn) is held its own longer while.
+            guard.standsUntil = std::max(guard.standsUntil, guard.swingsAt);
         }
         return;
     }

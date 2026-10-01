@@ -3727,6 +3727,47 @@ void testWardens(const content::Tables& tables) {
     check(home, "and every guard with nothing to fight is back at his post");
 }
 
+// The Golden Archer one-shots what comes to the Dungeon's arch, and keeps facing it, crossbow
+// drawn, until his next shot would be due -- not turning his back on it the tick after (the
+// user, 2026-10-01: "not facing the monster which he one shot ... holding bow when he shoots").
+void testArcherHolds(const content::Tables& tables) {
+    std::printf("the Golden Archer holds his shot\n");
+    sim::Realm realm;
+    check(realm.raise(&tables, 11, 127, 228), "a knight raises beside the Dungeon's arch");
+    const sim::WardenRow* row = sim::wardenRow(236);
+    uint32_t archer = 0;
+    for (const sim::Body& one : realm.bodies()) {
+        if (one.warden >= 0 && tables.folk[size_t(one.warden)].number == 236) archer = one.id;
+    }
+    check(archer != 0 && row != nullptr, "the Golden Archer stands at his post");
+    if (archer == 0 || row == nullptr) return;
+    int kills = 0, held = 0, turned = 0, slung = 0;
+    int64_t killedAt = -1;
+    float killAim = 0.0f;
+    for (int tick = 0; tick < 6000; ++tick) {
+        realm.step();
+        const sim::Body& him = *realm.find(archer);
+        for (const sim::Happening& one : realm.happenings()) {
+            if (one.what != sim::What::Died || one.whom != archer) continue;
+            ++kills;
+            killedAt = tick;
+            killAim = him.aim;
+        }
+        // Over the ticks after a kill, while he has taken nothing else on.
+        if (killedAt >= 0 && tick > killedAt && tick < killedAt + row->attackTicks - 1 &&
+            him.quarry == 0) {
+            ++held;
+            if (him.aim != killAim) ++turned;
+            if (him.temper != sim::Temper::Fighting) ++slung;
+        }
+    }
+    std::printf("  %d kills, %d ticks after one held\n", kills, held);
+    check(kills > 0, "he shoots what comes to the arch");
+    check(held > 0, "and stands after a kill with nothing else on him");
+    checkEqual(turned, 0, "facing what he shot");
+    checkEqual(slung, 0, "his crossbow still drawn");
+}
+
 // Marlon's rounds (realm_folk.cpp): from his spot to the tavern's bench, where he sits, to the two
 // gate guards, who salute him, and home. The hero talking to him stops him where he stands for
 // the talk and the quest window, and he goes on with his rounds after.
@@ -5108,6 +5149,7 @@ int main() {
     testWear(tables);
     testRecovery(tables);
     testWardens(tables);
+    testArcherHolds(tables);
     testStrollers(tables);
     testArchery(tables);
     testElfSkills(tables);
