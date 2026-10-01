@@ -17,6 +17,7 @@ std::recursive_mutex g_lock;
 // What is logged before logOpen: the arguments are parsed before the log path is known, and
 // a complaint about them must not be lost.
 std::string g_pending;
+std::atomic<bool> g_silent{false};
 
 // Wall clock, not `clock()`. `clock()` counts this process's own CPU time, and a run that
 // waits -- for the drawable, for a file, for the compositor -- spends wall seconds it never
@@ -60,7 +61,10 @@ void logClose() {
     }
 }
 
+void logSilence(bool on) { g_silent = on; }
+
 void logv(const char* fmt, va_list args) {
+    if (g_silent) return;
     char line[2048];
     va_list copy;
     va_copy(copy, args);

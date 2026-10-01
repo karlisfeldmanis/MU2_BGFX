@@ -356,6 +356,22 @@ target_include_directories(sim_test PRIVATE src)
 target_compile_definitions(sim_test PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_compile_options(sim_test PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
+# The Lorencia bot: a character played from level one with no window -- hunting, potions,
+# loot, gear and the town's counters -- and what happened, when (tools/bot/bot.cpp).
+add_executable(bot EXCLUDE_FROM_ALL
+  tools/bot/bot.cpp
+  src/sim/rules.cpp src/sim/swings.cpp src/sim/route.cpp src/sim/items.cpp src/sim/market.cpp
+  src/sim/wear.cpp src/sim/vault.cpp src/sim/gates.cpp src/sim/traps.cpp src/sim/realm.cpp
+  src/sim/realm_items.cpp src/sim/realm_quests.cpp src/sim/quests.cpp src/sim/realm_travel.cpp
+  src/sim/realm_move.cpp src/sim/realm_fight.cpp src/sim/realm_skills.cpp src/sim/realm_watch.cpp
+  src/sim/realm_traps.cpp src/sim/realm_folk.cpp src/sim/realm_summon.cpp src/sim/skills.cpp
+  src/sim/audit.cpp src/content/grid.cpp src/content/tables.cpp src/core/files.cpp
+  src/core/log.cpp
+)
+target_include_directories(bot PRIVATE src)
+target_compile_definitions(bot PRIVATE MU2_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
+target_compile_options(bot PRIVATE -Wall -Wextra -Wno-unused-parameter)
+
 # ---- checks ---------------------------------------------------------------------------------
 # One target that runs everything which can say "no" without a window: the three tests, the
 # cook's own reader, and the material audit. A check that has to be remembered is a check that

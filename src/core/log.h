@@ -12,6 +12,9 @@ namespace mu::core {
 // Everything logged before this is buffered and flushed on open.
 void logOpen(const char* path);
 void logClose();
+// Drops every line from here on, printed or kept: the bot's (tools/bot), whose hours of play
+// would print the realm's every blow and keep them all waiting for a log nobody opens.
+void logSilence(bool on);
 
 void logv(const char* fmt, va_list args);
 
