@@ -1,0 +1,130 @@
+{
+  "item": "Object29",
+  "mu_name": "Object29",
+  "mu_name_from": "The Lost Tower's object slot 28, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 28,
+  "placements": 15,
+  "profile": "world",
+  "sheets": {
+    "d_003": "lt_d_003.png"
+  },
+  "sheet_from": "Data/Object5/d_003.OZJ, decoded under the lt_ prefix: an atlas of a dragon's horned skull, cracked bony brown.",
+  "sheet_materials": {
+    "d_003": "bone"
+  },
+  "why_this_one": "A piece of a dragon's skeleton -- skull, spine, ribs or claws; together they lie as whole dragons across the floors and through the lava --, 15 placed, box 2.11 x 2.93 m, 1.51 m tall, scaled 0.44-1.00, standing at 0.96-4.08 m. Batch 2 of the scenery: the user, 'next'.",
+  "material_note": "d_003 is bone painted as horn: bone.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 140,
+      "area": 27367.4,
+      "along": [
+        31.6,
+        126.2
+      ],
+      "mu_uv": [
+        0.431,
+        0.35,
+        0.757,
+        0.694
+      ],
+      "bake_uv": [
+        0.006,
+        0.006,
+        0.808,
+        0.345
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 140,
+      "area": 22212.0,
+      "along": [
+        -33.3,
+        65.1
+      ],
+      "mu_uv": [
+        0.431,
+        0.35,
+        0.757,
+        0.694
+      ],
+      "bake_uv": [
+        0.008,
+        0.093,
+        0.872,
+        0.802
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 140,
+      "area": 18027.8,
+      "along": [
+        -82.1,
+        7.6
+      ],
+      "mu_uv": [
+        0.431,
+        0.35,
+        0.757,
+        0.694
+      ],
+      "bake_uv": [
+        0.117,
+        0.179,
+        0.586,
+        0.907
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 140,
+      "area": 17228.7,
+      "along": [
+        -131.3,
+        -36.3
+      ],
+      "mu_uv": [
+        0.431,
+        0.35,
+        0.757,
+        0.694
+      ],
+      "bake_uv": [
+        0.086,
+        0.151,
+        0.966,
+        0.65
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 140,
+      "area": 15487.6,
+      "along": [
+        -166.6,
+        -82.7
+      ],
+      "mu_uv": [
+        0.431,
+        0.35,
+        0.757,
+        0.694
+      ],
+      "bake_uv": [
+        0.017,
+        0.293,
+        0.714,
+        0.994
+      ]
+    }
+  ]
+}

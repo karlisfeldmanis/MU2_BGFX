@@ -1,0 +1,64 @@
+{
+  "item": "Object27",
+  "mu_name": "Object27",
+  "mu_name_from": "The Lost Tower's object slot 26, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 26,
+  "placements": 15,
+  "profile": "world",
+  "sheets": {
+    "d_003": "lt_d_003.png"
+  },
+  "sheet_from": "Data/Object5/d_003.OZJ, decoded under the lt_ prefix: an atlas of a dragon's horned skull, cracked bony brown.",
+  "sheet_materials": {
+    "d_003": "bone"
+  },
+  "why_this_one": "A piece of a dragon's skeleton -- skull, spine, ribs or claws; together they lie as whole dragons across the floors and through the lava --, 15 placed, box 2.14 x 2.92 m, 1.62 m tall, scaled 0.58-1.24, standing at 1.29-5.64 m. Batch 2 of the scenery: the user, 'next'.",
+  "material_note": "d_003 is bone painted as horn: bone.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 735,
+      "area": 90245.0,
+      "along": [
+        -148.1,
+        143.5
+      ],
+      "mu_uv": [
+        0.001,
+        0.001,
+        0.999,
+        0.999
+      ],
+      "bake_uv": [
+        0.018,
+        0.002,
+        0.998,
+        0.998
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 1,
+      "area": 73.3,
+      "along": [
+        1.7,
+        26.2
+      ],
+      "mu_uv": [
+        0.492,
+        0.252,
+        0.553,
+        0.27
+      ],
+      "bake_uv": [
+        0.002,
+        0.023,
+        0.013,
+        0.073
+      ]
+    }
+  ]
+}

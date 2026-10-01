@@ -1,0 +1,350 @@
+{
+  "item": "Object28",
+  "mu_name": "Object28",
+  "mu_name_from": "The Lost Tower's object slot 27, the model index: type N is Object{N+1}.bmd (MapManager.cpp:1121-1128).",
+  "world": "losttower",
+  "object_type": 27,
+  "placements": 142,
+  "profile": "world",
+  "sheets": {
+    "d_003": "lt_d_003.png"
+  },
+  "sheet_from": "Data/Object5/d_003.OZJ, decoded under the lt_ prefix: an atlas of a dragon's horned skull, cracked bony brown.",
+  "sheet_materials": {
+    "d_003": "bone"
+  },
+  "why_this_one": "A piece of a dragon's skeleton -- skull, spine, ribs or claws; together they lie as whole dragons across the floors and through the lava --, 142 placed, box 2.74 x 2.06 m, 2.71 m tall, scaled 0.44-1.90, standing at -1.66-5.24 m. Batch 2 of the scenery: the user, 'next'.",
+  "material_note": "d_003 is bone painted as horn: bone.",
+  "islands": [
+    {
+      "island": 0,
+      "material": "rock",
+      "triangles": 108,
+      "area": 8400.4,
+      "along": [
+        12.8,
+        41.2
+      ],
+      "mu_uv": [
+        0.014,
+        0.348,
+        0.235,
+        0.994
+      ],
+      "bake_uv": [
+        0.466,
+        0.553,
+        0.647,
+        0.929
+      ]
+    },
+    {
+      "island": 1,
+      "material": "rock",
+      "triangles": 108,
+      "area": 6644.9,
+      "along": [
+        -21.4,
+        64.6
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.009,
+        0.009,
+        0.45,
+        0.623
+      ]
+    },
+    {
+      "island": 2,
+      "material": "rock",
+      "triangles": 108,
+      "area": 10244.6,
+      "along": [
+        9.1,
+        36.0
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.111,
+        0.009,
+        0.623,
+        0.626
+      ]
+    },
+    {
+      "island": 3,
+      "material": "rock",
+      "triangles": 108,
+      "area": 6330.3,
+      "along": [
+        -52.4,
+        -10.5
+      ],
+      "mu_uv": [
+        0.014,
+        0.348,
+        0.235,
+        0.994
+      ],
+      "bake_uv": [
+        0.756,
+        0.01,
+        0.936,
+        0.247
+      ]
+    },
+    {
+      "island": 4,
+      "material": "rock",
+      "triangles": 108,
+      "area": 5043.5,
+      "along": [
+        -91.4,
+        -18.3
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.208,
+        0.055,
+        0.342,
+        0.629
+      ]
+    },
+    {
+      "island": 5,
+      "material": "rock",
+      "triangles": 108,
+      "area": 7740.9,
+      "along": [
+        -66.1,
+        -32.9
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.298,
+        0.101,
+        0.651,
+        0.383
+      ]
+    },
+    {
+      "island": 6,
+      "material": "rock",
+      "triangles": 108,
+      "area": 4067.5,
+      "along": [
+        -103.7,
+        -55.6
+      ],
+      "mu_uv": [
+        0.014,
+        0.348,
+        0.235,
+        0.994
+      ],
+      "bake_uv": [
+        0.771,
+        0.596,
+        0.945,
+        0.853
+      ]
+    },
+    {
+      "island": 7,
+      "material": "rock",
+      "triangles": 108,
+      "area": 3279.9,
+      "along": [
+        -141.6,
+        -86.1
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.381,
+        0.055,
+        0.715,
+        0.718
+      ]
+    },
+    {
+      "island": 8,
+      "material": "rock",
+      "triangles": 108,
+      "area": 4996.2,
+      "along": [
+        -122.8,
+        -89.2
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.009,
+        0.255,
+        0.153,
+        0.735
+      ]
+    },
+    {
+      "island": 9,
+      "material": "rock",
+      "triangles": 108,
+      "area": 8400.4,
+      "along": [
+        12.8,
+        41.2
+      ],
+      "mu_uv": [
+        0.014,
+        0.348,
+        0.235,
+        0.994
+      ],
+      "bake_uv": [
+        0.214,
+        0.632,
+        0.774,
+        0.969
+      ]
+    },
+    {
+      "island": 10,
+      "material": "rock",
+      "triangles": 108,
+      "area": 10244.6,
+      "along": [
+        9.1,
+        36.0
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.449,
+        0.016,
+        0.735,
+        0.534
+      ]
+    },
+    {
+      "island": 11,
+      "material": "rock",
+      "triangles": 108,
+      "area": 6330.3,
+      "along": [
+        -52.4,
+        -10.5
+      ],
+      "mu_uv": [
+        0.014,
+        0.348,
+        0.235,
+        0.994
+      ],
+      "bake_uv": [
+        0.328,
+        0.268,
+        0.972,
+        0.87
+      ]
+    },
+    {
+      "island": 12,
+      "material": "rock",
+      "triangles": 108,
+      "area": 7740.9,
+      "along": [
+        -66.1,
+        -32.9
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.108,
+        0.301,
+        0.25,
+        0.784
+      ]
+    },
+    {
+      "island": 13,
+      "material": "rock",
+      "triangles": 108,
+      "area": 4067.5,
+      "along": [
+        -103.7,
+        -55.6
+      ],
+      "mu_uv": [
+        0.014,
+        0.348,
+        0.235,
+        0.994
+      ],
+      "bake_uv": [
+        0.01,
+        0.344,
+        0.893,
+        0.992
+      ]
+    },
+    {
+      "island": 14,
+      "material": "rock",
+      "triangles": 108,
+      "area": 4996.1,
+      "along": [
+        -122.8,
+        -89.2
+      ],
+      "mu_uv": [
+        0.002,
+        0.344,
+        0.233,
+        0.993
+      ],
+      "bake_uv": [
+        0.476,
+        0.009,
+        0.801,
+        0.603
+      ]
+    }
+  ]
+}
