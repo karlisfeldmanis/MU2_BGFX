@@ -38,6 +38,7 @@
   "stance": "sword",
   "stance_from": "OURS, not 0.75: MuWeapons.cs has it WeaponStance.Scythe, TwoHanded: true, and this one is held one-handed by choice (2026-09-28). The mesh is 196 units long, inside the one-handed swords' reach (Sword03 is 171) and well short of the spears (230-343), so it reads as a one-handed staff. Width cannot object - OpenMU never tests width on group 5 - and the stance enum says a one-handed staff takes Sword: 'a one-handed sword, mace, or a one-handed staff'. Actions 4 and 17, and the shield hand is free, as on the Skull Staff. The Thunder Staff (288, a spear's length) stays two-handed.",
   "two_handed": false,
+  "two_handed_from": "The user's call, 2026-10-01: it stays one-handed. OpenMU's width 2 would make it two-handed, and a check against Version075 Weapons.cs will say so; this is a decision and not a slip.",
   "sheets": {
     "wand04": "wand04.png"
   },
