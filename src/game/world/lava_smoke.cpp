@@ -26,7 +26,9 @@ constexpr float kDrift[2] = {0.18f, -0.08f};
 constexpr float kScatter = 0.06f;
 constexpr float kSpin = 0.06f;  // radians a second at most
 // How much it covers at the middle of its life, and its colour: warm grey, lit from below.
-constexpr float kAlpha = 0.10f;
+// 0.10 read a little strong once it covered everything (the user: 'make little bit less
+// vissible').
+constexpr float kAlpha = 0.07f;
 constexpr float kColour[3] = {0.62f, 0.46f, 0.38f};
 
 }  // namespace
