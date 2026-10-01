@@ -134,7 +134,7 @@ public:
     Bot(const Options& options, uint64_t seed) : options_(options), seed_(seed) {}
 
     bool start() {
-        const WorldRow& home = kWorlds[0];
+        const WorldRow& home = *worldOf(homeMap());
         tables_ = world(home.map);
         if (!tables_) return false;
         realm_ = std::make_unique<sim::Realm>();
@@ -678,6 +678,8 @@ private:
             // quiver for it and no Zen for one leaves her nothing to shoot.
             if (options_.kin == sim::Kin::FairyElf &&
                 (row.shield() || (row.weapon() && row.group != sim::kGroupBows))) continue;
+            // And a wizard to his staff: his spells are its rise.
+            if (options_.kin == sim::Kin::DarkWizard && row.weapon() && row.magicPower <= 0) continue;
             if (options_.kin == sim::Kin::FairyElf && row.weapon() && archer() &&
                 sim::placeOf(row) != (ammoHand() == sim::kWeaponRight ? int(sim::kWeaponLeft) : int(sim::kWeaponRight)) &&
                 realm_->money() < 1000) continue;
@@ -835,6 +837,40 @@ private:
         return where;
     }
 
+    // Where his class is born, as the realm has it (realm_travel.cpp homeMap): an elf in Noria,
+    // the others in Lorencia.
+    int homeMap() const { return options_.kin == sim::Kin::FairyElf ? 3 : 0; }
+    // A town's own quest: the first in the table whose giver stands there and waits on nothing --
+    // Marlon's in Lorencia, Peia's in Noria (the Golden Archer stands in Lorencia too, later).
+    int townQuest(int map) {
+        for (int q = 0; q < sim::kQuests; ++q) {
+            if (sim::questAt(q).afterAny == 0 && giverMap(q) == map) return q;
+        }
+        return -1;
+    }
+    bool handedIn(int q) const { return q >= 0 && realm_->quest(q).completions > 0; }
+    // The user's order (2026-10-01): his own town's quest, then the other town's, and only once
+    // both are handed in anything in Devias or the Dungeon -- quests and the grind both.
+    bool townsDone() {
+        return handedIn(townQuest(homeMap())) && handedIn(townQuest(homeMap() == 0 ? 3 : 0));
+    }
+    bool allowed(int q) {
+        const int home = townQuest(homeMap()), other = townQuest(homeMap() == 0 ? 3 : 0);
+        if (q == home) return true;
+        if (q == other) return handedIn(home);
+        return townsDone();
+    }
+    // The quests in the order he takes them: his town's, the other town's, then the table's.
+    std::vector<int> questOrder() {
+        const int home = townQuest(homeMap()), other = townQuest(homeMap() == 0 ? 3 : 0);
+        std::vector<int> out;
+        for (const int q : {home, other}) if (q >= 0) out.push_back(q);
+        for (int q = 0; q < sim::kQuests; ++q) {
+            if (q != home && q != other) out.push_back(q);
+        }
+        return out;
+    }
+
     void choose() {
         const Aim was = aim_;
         const int wasQuest = aimQuest_;
@@ -844,7 +880,8 @@ private:
         if (options_.quests) {
             // The quest he is hunting for keeps him while it still can, on a looser test: a
             // breed on the line between two would have him paying to cross the map both ways.
-            if (was == Aim::Hunt && wasQuest >= 0 && realm_->quest(wasQuest).state == sim::QuestState::Active) {
+            if (was == Aim::Hunt && wasQuest >= 0 && allowed(wasQuest) &&
+                realm_->quest(wasQuest).state == sim::QuestState::Active) {
                 std::vector<int> breeds;
                 const int where = huntable(wasQuest, &breeds, 2.0);
                 if (where >= 0) {
@@ -855,15 +892,18 @@ private:
                 }
             }
             // Hand in first, then hunt what is under way, then take what is offered.
-            for (int q = 0; q < sim::kQuests && aim_ != Aim::HandIn; ++q) {
+            const std::vector<int> order = questOrder();
+            for (const int q : order) {
+                if (aim_ == Aim::HandIn) break;
                 if (realm_->quest(q).state == sim::QuestState::Ready && reachable(giverMap(q))) {
                     aim_ = Aim::HandIn;
                     aimQuest_ = q;
                     aimMap_ = giverMap(q);
                 }
             }
-            for (int q = 0; q < sim::kQuests && aim_ == Aim::Grind; ++q) {
-                if (realm_->quest(q).state != sim::QuestState::Active) continue;
+            for (const int q : order) {
+                if (aim_ != Aim::Grind) break;
+                if (!allowed(q) || realm_->quest(q).state != sim::QuestState::Active) continue;
                 std::vector<int> breeds;
                 const int where = huntable(q, &breeds);
                 if (where < 0) continue;
@@ -872,8 +912,9 @@ private:
                 aimMap_ = where;
                 quarry_ = breeds;
             }
-            for (int q = 0; q < sim::kQuests && aim_ == Aim::Grind; ++q) {
-                if (!realm_->questOffered(q)) continue;
+            for (const int q : order) {
+                if (aim_ != Aim::Grind) break;
+                if (!allowed(q) || !realm_->questOffered(q)) continue;
                 const int at = giverMap(q);
                 std::vector<int> breeds;
                 if (at < 0 || !reachable(at) || huntable(q, &breeds) < 0) continue;
@@ -886,9 +927,15 @@ private:
             // The map with the strongest breed he takes, where he is on a tie.
             aimMap_ = map();
             int best = bestOn(*tables_);
+            // Lorencia and Noria only, until both their quests are in.
+            const bool open = !options_.quests || townsDone();
+            if (!open && map() != 0 && map() != 3) {
+                aimMap_ = homeMap();
+                best = -1;
+            }
             for (const WorldRow& w : kWorlds) {
                 const content::Tables* t = world(w.map);
-                if (!t || !reachable(w.map)) continue;
+                if (!t || !reachable(w.map) || (!open && w.map != 0 && w.map != 3)) continue;
                 const int b = bestOn(*t);
                 if (b > best) {
                     best = b;
@@ -1217,7 +1264,9 @@ private:
                     (long long)(realm_->money() - zen), level, realm_->hero().level,
                     choice >= 0 ? ", chose " : "", choice >= 0 ? row.choices[choice].item : "");
                 sortBag();
-            } else if (freeCells() < 10) {
+            } else {
+                // Refused when it is ready: the room, which a bag of scattered cells can lack
+                // with plenty free. To the counters to sell, and back.
                 say("no room for %s's reward: to the counters", row.giverName);
                 realm_->closeQuest();
                 startTrip();
