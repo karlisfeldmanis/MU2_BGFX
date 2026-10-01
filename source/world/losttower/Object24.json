@@ -8,7 +8,7 @@
   "profile": "world",
   "sheets": {
     "re_07": "lt_re_07.png",
-    "re_008": "lt_re_008_bright.png"
+    "re_008": "lt_re_008.png"
   },
   "sheet_from": "Data/Object5/, from MuMain, decoded under an lt_ prefix.",
   "sheet_materials": {
@@ -34,14 +34,14 @@
         0.65,
         1.0
       ],
-      "low": 0.45,
-      "high": 0.5,
-      "range_tiles": 3,
+      "low": 0.15,
+      "high": 0.18,
+      "range_tiles": 2,
       "flicker_hz": 1,
       "smooth_seconds": 0.5
     }
   ],
-  "emitters_from": "Ours, marked. MU adds no light here: the lamp's BITMAP_LIGHT at bone 1 is commented out in that same arm, and the tower's light is all painted into TerrainLight. But the tower has no torch, and the user asked for its light emitters; so each orb lights three tiles round it in its own cyan, steady but for a slow breath, at the orb's height (158, the re_008 faces' centre) rather than the post's foot. Tuned the same day: at (0.35, 0.75, 1.0) and 0.55-0.65 the pools went silver-white under the grade and bleached the stone round each post; (0.2, 0.65, 1.0) at 0.45-0.5 keeps them the orb's cyan.",
+  "emitters_from": "Ours, marked. MU adds no light here: the lamp's BITMAP_LIGHT at bone 1 is commented out in that same arm, and the tower's light is all painted into TerrainLight. But the tower has no torch, and the user asked for its light emitters; so each orb lights three tiles round it in its own cyan, steady but for a slow breath, at the orb's height (158, the re_008 faces' centre) rather than the post's foot. Tuned the same day: at (0.35, 0.75, 1.0) and 0.55-0.65 the pools went silver-white under the grade and bleached the stone round each post; (0.2, 0.65, 1.0) at 0.45-0.5 keeps them the orb's cyan. And the user, the same day: 'on mumain thos blue lights are much less active'. MU's lamps cast no light at all and their orb is re_008 at its own brightness, so the brightened copy is gone and the light is a faint glow, 0.15-0.18 over two tiles: the orbs read as lamps with a hint of blue round them, and the hall is near MU's dark. Shot against no light at all (MU's exactly) at 208,75 and 206,42.",
   "islands": [
     {
       "island": 0,
@@ -87,6 +87,5 @@
         0.995
       ]
     }
-  ],
-  "sheet_grade_from": "Ours (2026-10-01, the user's 'fine tune new object details'): re_008 at twice its brightness, lt_re_008_bright.png. Its dots are small and dark-centred (mean 2, 35, 45), and added at the tower's glow they left the orb a faint pale cap on the post rather than a blue light."
+  ]
 }
