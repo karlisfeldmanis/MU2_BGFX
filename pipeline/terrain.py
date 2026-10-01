@@ -187,8 +187,12 @@ VOID_BY_MAP = {
 #: within this many tiles of lava, walking through the void alone, becomes the nearest lava
 #: tile again -- its sheet, height, painted light and flags, so it is as unwalkable as the lava
 #: it extends. It fills the gaps right up to the next floor's edge: stopping halfway left the
-#: black on screen (the user: 'laav suppost to fill whole left corner screen').
-LAVA_SPILL_BY_MAP = {4: 32}
+#: black on screen (the user: 'laav suppost to fill whole left corner screen'), and at 32 tiles
+#: it ended in a straight line across the wide void at 225,138 ('also on this coords i seee
+#: lava is ended'). So the whole map: every void tile the lava reaches through the void, 15166
+#: of them. What stays void is what no lava touches -- floor 7's causeways and the chasm round
+#: them, whose blending into the black the user tuned.
+LAVA_SPILL_BY_MAP = {4: 256}
 
 #: The slot MU's lava (TileWater01) sits in.
 LAVA_SLOT = 5
